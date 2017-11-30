@@ -36,18 +36,18 @@ fn main() {
         (about: env!("CARGO_PKG_DESCRIPTION"))
 
         (@subcommand init =>
-            (about: "Creates a new rojo project")
+            (about: "Creates a new Rojo project")
             (@arg PATH: "Path to the place to create the project. Defaults to the current directory.")
         )
 
         (@subcommand serve =>
-            (about: "Serves the project's files for use with the rojo dev plugin.")
+            (about: "Serves the project's files for use with the Rojo Studio plugin.")
             (@arg PROJECT: "Path to the project to serve. Defaults to the current directory.")
             (@arg port: --port +takes_value "The port to listen on. Defaults to 8000.")
         )
 
         (@subcommand pack =>
-            (about: "Packs the project into a GUI installer bundle.")
+            (about: "Packs the project into a GUI installer bundle. NOT YET IMPLEMENTED!")
             (@arg PROJECT: "Path to the project to pack. Defaults to the current directory.")
         )
 
@@ -171,7 +171,7 @@ fn main() {
             loop {}
         },
         ("pack", _) => {
-            eprintln!("Not implemented.");
+            eprintln!("'rojo pack' is not yet implemented!");
             std::process::exit(1);
         },
         _ => {

@@ -10,18 +10,31 @@
 
 <div>&nbsp;</div>
 
+**EARLY DEVELOPMENT, USE WITH CARE**
+
 Rojo is a flexible multi-tool designed for creating robust Roblox projects.
 
 It's designed for power users who want to use the best tools available for building games, libraries, and plugins.
 
-It has a number of desirable features:
+It has a number of desirable features *right now*:
 
 * Work from the filesystem, in your favorite editor
 * Version your place, library, or plugin using Git or another VCS
+
+Soon, Rojo will be able to:
+
 * Create installation scripts for libraries to be used in standalone places
+	* Similar to [rbxpacker](https://github.com/LPGhatguy/rbxpacker), another one of my projects
 * Add strongly-versioned dependencies to your project
 
 ## Installation
+Rojo has two components:
+* The binary, written in Rust
+* The [Roblox Studio plugin](https://www.roblox.com/library/1211549683/Rojo-v0-0-0), written in Lua
+
+To install the binary, there are two options:
+* Cargo, which requires you to have Rust installed
+* Pre-built binaries from the [the GitHub releases page](https://github.com/LPGhatguy/rojo/releases)
 
 ### Cargo (Recommended)
 Make sure you have [Rust 1.21 or newer](https://www.rust-lang.org/) installed.
@@ -51,7 +64,7 @@ cd my-new-project
 rojo init
 ```
 
-Rojo will ask you questions to get your project configured correctly.
+Rojo will create an empty project in the directory.
 
 ### Migrating an Existing Roblox Project
 Coming soon!
