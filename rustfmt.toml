@@ -1,0 +1,12 @@
+reorder_imports = true
+reorder_imported_names = true
+reorder_imports_in_group = true
+attributes_on_same_line_as_field = false
+attributes_on_same_line_as_variant = false
+chain_split_single_child = true
+wrap_comments = true
+imports_indent = "Block"
+match_block_trailing_comma = true
+match_pattern_separator_break_point = "Front"
+error_on_line_overflow = false
+struct_lit_multiline_style = "ForceMulti"
