@@ -3,6 +3,8 @@ name = "rojo"
 version = "0.1.0"
 authors = ["Lucien Greathouse <me@lpghatguy.com>"]
 description = "A tool to create robust Roblox projects"
+license = "MIT"
+repository = "https://github.com/LPGhatguy/rojo"
 
 [[bin]]
 name = "rojo"
