@@ -164,7 +164,7 @@ function Reconciler.reconcile(rbx, item, fileName, parent)
 		for _, childRbx in ipairs(rbx:GetChildren()) do
 			-- Child was deleted!
 			if not visitedChildren[childRbx.Name] then
-				Reconciler.reconcile(childRbx, nil, nil)
+				childRbx:Destroy()
 			end
 		end
 
