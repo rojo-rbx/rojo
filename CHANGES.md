@@ -3,5 +3,9 @@
 ## Current Master
 * *No changes*
 
+## 0.2.0
+* Support for `init.lua` like rbxfs and rbxpacker
+* More robust syncing with a new reconciler
+
 ## 0.1.0
 * Initial release, functionally very similar to [rbxfs](https://github.com/LPGhatguy/rbxfs)

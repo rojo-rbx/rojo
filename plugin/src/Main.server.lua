@@ -7,7 +7,7 @@ local Plugin = require(script.Parent.Plugin)
 local function main()
 	local pluginInstance = Plugin.new()
 
-	local toolbar = plugin:CreateToolbar("Rojo Plugin 0.1.0")
+	local toolbar = plugin:CreateToolbar("Rojo Plugin 0.2.0")
 
 	toolbar:CreateButton("Test Connection", "Connect to Rojo Server", "")
 		.Click:Connect(function()
