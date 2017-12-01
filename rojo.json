@@ -1,9 +1,10 @@
 {
   "name": "rojo",
+  "servePort": 8000,
   "partitions": {
-    "Rojo": {
+    "plugin": {
       "path": "plugin/src",
-      "target": "ReplicatedStorage.Rojo"
+      "target": "ReplicatedStorage.Rojo Plugin"
     }
   }
 }
