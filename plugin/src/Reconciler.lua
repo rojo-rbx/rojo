@@ -1,7 +1,7 @@
 local Reconciler = {}
 
 local function isInit(item, itemFileName)
-	if item.type == "dir" then
+	if item and item.type == "dir" then
 		return
 	end
 
@@ -99,11 +99,30 @@ end
 function Reconciler.reconcile(rbx, item, fileName, parent)
 	-- Item was deleted!
 	if not item then
-		if rbx then
-			rbx:Destroy()
-		end
+		if isInit(item, fileName) then
+			if not parent then
+				return
+			end
 
-		return
+			-- Un-usurp parent!
+			local newParent = Instance.new("Folder")
+			newParent.Name = parent.Name
+
+			for _, child in ipairs(parent:GetChildren()) do
+				child.Parent = newParent
+			end
+
+			newParent.Parent = parent.Parent
+			parent:Destroy()
+
+			return
+		else
+			if rbx then
+				rbx:Destroy()
+			end
+
+			return
+		end
 	end
 
 	if item.type == "dir" then
@@ -120,10 +139,12 @@ function Reconciler.reconcile(rbx, item, fileName, parent)
 			if rbx.ClassName == initClassName then
 				setValues(rbx, initItem, initFileName)
 			else
+				rbx:Destroy()
 				return Reconciler._reify(item, fileName, parent)
 			end
 		else
 			if rbx.ClassName ~= "Folder" then
+				rbx:Destroy()
 				return Reconciler._reify(item, fileName, parent)
 			end
 		end
@@ -150,22 +171,41 @@ function Reconciler.reconcile(rbx, item, fileName, parent)
 		return rbx
 	elseif item.type == "file" then
 		if isInit(item, fileName) then
-			-- TODO: usurp parent
+			-- Usurp our container!
+			local _, className = itemToName(item, fileName)
+
+			if parent.ClassName == className then
+				rbx = parent
+			else
+				rbx = Reconciler._reify(item, fileName, parent.Parent)
+				rbx.Name = parent.Name
+
+				for _, child in ipairs(parent:GetChildren()) do
+					child.Parent = rbx
+				end
+
+				parent:Destroy()
+			end
+
+			setValues(rbx, item, fileName)
+
+			return rbx
+		else
+			if not rbx then
+				return Reconciler._reify(item, fileName, parent)
+			end
+
+			local _, className = itemToName(item, fileName)
+
+			if rbx.ClassName ~= className then
+				rbx:Destroy()
+				return Reconciler._reify(item, fileName, parent)
+			end
+
+			setValues(rbx, item, fileName)
+
+			return rbx
 		end
-
-		if not rbx then
-			return Reconciler._reify(item, fileName, parent)
-		end
-
-		local _, className = itemToName(item, fileName)
-
-		if rbx.ClassName ~= className then
-			return Reconciler._reify(item, fileName, parent)
-		end
-
-		setValues(rbx, item, fileName)
-
-		return rbx
 	else
 		error("unknown item type " .. tostring(item.type))
 	end
@@ -191,17 +231,7 @@ function Reconciler.reconcileRoute(route, item)
 
 	local name = itemToName(item, fileName)
 	local rbx = location:FindFirstChild(name)
-	local newRbx = Reconciler.reconcile(rbx, item, fileName, location)
-
-	if newRbx ~= rbx then
-		if rbx then
-			rbx:Destroy()
-		end
-
-		if newRbx then
-			newRbx.Parent = location
-		end
-	end
+	Reconciler.reconcile(rbx, item, fileName, location)
 end
 
 return Reconciler
