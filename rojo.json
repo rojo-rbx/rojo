@@ -2,9 +2,9 @@
   "name": "rojo",
   "servePort": 8081,
   "partitions": {
-    "test-folder": {
-      "path": "test-folder",
-      "target": "ReplicatedStorage.test"
+    "Rojo": {
+      "path": "plugin/src",
+      "target": "ReplicatedStorage.Rojo"
     }
   }
 }
