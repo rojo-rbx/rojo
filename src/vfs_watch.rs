@@ -6,17 +6,20 @@ use notify::{DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher};
 
 use vfs::Vfs;
 use pathext::path_to_route;
+use core::Config;
 
 pub struct VfsWatcher {
     vfs: Arc<Mutex<Vfs>>,
     watchers: Vec<RecommendedWatcher>,
+    config: Config,
 }
 
 impl VfsWatcher {
-    pub fn new(vfs: Arc<Mutex<Vfs>>) -> VfsWatcher {
+    pub fn new(config: Config, vfs: Arc<Mutex<Vfs>>) -> VfsWatcher {
         VfsWatcher {
             vfs,
             watchers: Vec::new(),
+            config,
         }
     }
 
@@ -40,12 +43,17 @@ impl VfsWatcher {
 
                 {
                     let vfs = self.vfs.clone();
+                    let config = self.config.clone();
 
                     thread::spawn(move || {
                         loop {
                             let event = rx.recv().unwrap();
                             let mut vfs = vfs.lock().unwrap();
                             let current_time = vfs.current_time();
+
+                            if config.verbose {
+                                println!("FS event {:?}", event);
+                            }
 
                             match event {
                                 DebouncedEvent::Write(ref change_path) |

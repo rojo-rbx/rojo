@@ -5,6 +5,8 @@ use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
+use core::Config;
+
 /// Represents a virtual layer over multiple parts of the filesystem.
 ///
 /// Paths in this system are represented as slices of strings, and are always
@@ -21,6 +23,8 @@ pub struct Vfs {
     /// A chronologically-sorted list of routes that changed since the Vfs was
     /// created, along with a timestamp denoting when.
     pub change_history: Vec<VfsChange>,
+
+    config: Config,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -38,11 +42,12 @@ pub enum VfsItem {
 }
 
 impl Vfs {
-    pub fn new() -> Vfs {
+    pub fn new(config: Config) -> Vfs {
         Vfs {
             partitions: HashMap::new(),
             start_time: Instant::now(),
             change_history: Vec::new(),
+            config,
         }
     }
 
@@ -140,6 +145,10 @@ impl Vfs {
     }
 
     pub fn add_change(&mut self, timestamp: f64, route: Vec<String>) {
+        if self.config.verbose {
+            println!("Added change {:?}", route);
+        }
+
         self.change_history.push(VfsChange {
             timestamp,
             route,

@@ -128,7 +128,7 @@ fn main() {
             }
 
             let vfs = {
-                let mut vfs = Vfs::new();
+                let mut vfs = Vfs::new(config.clone());
 
                 for (name, project_partition) in &project.partitions {
                     let path = {
@@ -158,9 +158,10 @@ fn main() {
 
             {
                 let vfs = vfs.clone();
+                let config = config.clone();
 
                 thread::spawn(move || {
-                    VfsWatcher::new(vfs).start();
+                    VfsWatcher::new(config, vfs).start();
                 });
             }
 
