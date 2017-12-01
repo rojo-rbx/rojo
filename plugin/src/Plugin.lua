@@ -2,6 +2,7 @@ local Config = require(script.Parent.Config)
 local Http = require(script.Parent.Http)
 local Server = require(script.Parent.Server)
 local Promise = require(script.Parent.Promise)
+local Reconciler = require(script.Parent.Reconciler)
 
 local function collectMatch(source, pattern)
 	local result = {}
@@ -11,85 +12,6 @@ local function collectMatch(source, pattern)
 	end
 
 	return result
-end
-
-local function fileToName(filename)
-	if filename:find("%.server%.lua$") then
-		return filename:match("^(.-)%.server%.lua$"), "Script"
-	elseif filename:find("%.client%.lua$") then
-		return filename:match("^(.-)%.client%.lua$"), "LocalScript"
-	elseif filename:find("%.lua") then
-		return filename:match("^(.-)%.lua$"), "ModuleScript"
-	else
-		return filename, "StringValue"
-	end
-end
-
-local function nameToInstance(filename, contents)
-	local name, className = fileToName(filename)
-
-	local instance = Instance.new(className)
-	instance.Name = name
-
-	if className:find("Script$") then
-		instance.Source = contents
-	else
-		instance.Value = contents
-	end
-
-	return instance
-end
-
-local function make(item, name)
-	if item.type == "dir" then
-		local instance = Instance.new("Folder")
-		instance.Name = name
-
-		for childName, child in pairs(item.children) do
-			make(child, childName).Parent = instance
-		end
-
-		return instance
-	elseif item.type == "file" then
-		return nameToInstance(name, item.contents)
-	else
-		error("not implemented")
-	end
-end
-
-local function write(parent, route, item)
-	local location = parent
-
-	for index = 1, #route - 1 do
-		local piece = route[index]
-		local newLocation = location:FindFirstChild(piece)
-
-		if not newLocation then
-			newLocation = Instance.new("Folder")
-			newLocation.Name = piece
-			newLocation.Parent = location
-		end
-
-		location = newLocation
-	end
-
-	local fileName = route[#route]
-	local name = fileToName(fileName)
-
-	local existing = location:FindFirstChild(name)
-
-	local new
-	if item then
-		new = make(item, fileName)
-	end
-
-	if existing then
-		existing:Destroy()
-	end
-
-	if new then
-		new.Parent = location
-	end
 end
 
 local Plugin = {}
@@ -188,14 +110,14 @@ function Plugin:_pull(server, project, routes)
 		local route = routes[index]
 		local partitionName = route[1]
 		local partition = project.partitions[partitionName]
-		local data = items[index]
+		local item = items[index]
 
 		local fullRoute = collectMatch(partition.target, "[^.]+")
 		for i = 2, #route do
 			table.insert(fullRoute, routes[index][i])
 		end
 
-		write(game, fullRoute, data)
+		Reconciler.reconcileRoute(fullRoute, item)
 	end
 end
 
