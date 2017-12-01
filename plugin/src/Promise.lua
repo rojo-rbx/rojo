@@ -2,7 +2,7 @@
 	An implementation of Promises similar to Promise/A+.
 ]]
 
-local PROMISE_DEBUG = true
+local PROMISE_DEBUG = false
 
 -- If promise debugging is on, use a version of pcall that warns on failure.
 -- This is useful for finding errors that happen within Promise itself.
@@ -89,6 +89,9 @@ function Promise.new(callback)
 		-- Only valid if _status is set to something besides Started
 		_value = nil,
 
+		-- If an error occurs with no observers, this will be set.
+		_unhandledRejection = false,
+
 		-- Queues representing functions we should invoke when we update!
 		_queuedResolve = {},
 		_queuedReject = {},
@@ -157,6 +160,8 @@ end
 	The given callbacks are invoked depending on that result.
 ]]
 function Promise:andThen(successHandler, failureHandler)
+	self._unhandledRejection = false
+
 	-- Create a new promise to follow this part of the chain
 	return Promise.new(function(resolve, reject)
 		-- Our default callbacks just pass values onto the next promise.
@@ -199,6 +204,8 @@ end
 	This matches the execution model of normal Roblox functions.
 ]]
 function Promise:await()
+	self._unhandledRejection = false
+
 	if self._status == Promise.Status.Started then
 		local result
 		local bindable = Instance.new("BindableEvent")
@@ -279,11 +286,22 @@ function Promise:_reject(...)
 		-- synchronously. We'll wait one tick, and if there are still no
 		-- observers, then we should put a message in the console.
 
-		local message = ("Unhandled promise rejection:\n\n%s\n\n%s"):format(
-			tostring((...)),
-			self._source
-		)
-		warn(message)
+		self._unhandledRejection = true
+		local err = tostring((...))
+
+		spawn(function()
+			-- Someone observed the error, hooray!
+			if not self._unhandledRejection then
+				return
+			end
+
+			-- Build a reasonable message
+			local message = ("Unhandled promise rejection:\n\n%s\n\n%s"):format(
+				err,
+				self._source
+			)
+			warn(message)
+		end)
 	end
 end
 

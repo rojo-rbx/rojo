@@ -149,7 +149,7 @@ end
 function Plugin:connect()
 	print("Testing connection...")
 
-	self:server()
+	return self:server()
 		:andThen(function(server)
 			return server:getInfo()
 		end)
@@ -163,8 +163,10 @@ end
 function Plugin:togglePolling()
 	if self._polling then
 		self:stopPolling()
+
+		return Promise.resolve(nil)
 	else
-		self:startPolling()
+		return self:startPolling()
 	end
 end
 
@@ -173,10 +175,28 @@ function Plugin:stopPolling()
 		return
 	end
 
-	print("Stopping polling...")
+	print("Stopped polling.")
 
 	self._polling = false
 	self._label.Enabled = false
+end
+
+function Plugin:_pull(server, project, routes)
+	local items = server:read(routes):await()
+
+	for index = 1, #routes do
+		local route = routes[index]
+		local partitionName = route[1]
+		local partition = project.partitions[partitionName]
+		local data = items[index]
+
+		local fullRoute = collectMatch(partition.target, "[^.]+")
+		for i = 2, #route do
+			table.insert(fullRoute, routes[index][i])
+		end
+
+		write(game, fullRoute, data)
+	end
 end
 
 function Plugin:startPolling()
@@ -204,17 +224,7 @@ function Plugin:startPolling()
 					table.insert(routes, change.route)
 				end
 
-				local items = server:read(routes):await()
-
-				for index = 1, #routes do
-					local partitionName = routes[index][1]
-					local partition = project.partitions[partitionName]
-					local data = items[index]
-
-					local fullRoute = collectMatch(partition.target, "[^.]+")
-
-					write(game, fullRoute, data)
-				end
+				self:_pull(server, project, routes)
 
 				wait(Config.pollingRate)
 			end
@@ -231,23 +241,13 @@ function Plugin:syncIn()
 		:andThen(function(server)
 			local project = server:getInfo():await().project
 
-			local readRoutes = {}
+			local routes = {}
 
 			for name in pairs(project.partitions) do
-				table.insert(readRoutes, {name})
+				table.insert(routes, {name})
 			end
 
-			local items = server:read(readRoutes):await()
-
-			for index = 1, #readRoutes do
-				local partitionName = readRoutes[index][1]
-				local partition = project.partitions[partitionName]
-				local data = items[index]
-
-				local fullRoute = collectMatch(partition.target, "[^.]+")
-
-				write(game, fullRoute, data)
-			end
+			self:_pull(server, project, routes)
 
 			print("Sync successful!")
 		end)
