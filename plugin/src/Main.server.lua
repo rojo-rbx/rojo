@@ -3,11 +3,12 @@ if not plugin then
 end
 
 local Plugin = require(script.Parent.Plugin)
+local Config = require(script.Parent.Config)
 
 local function main()
 	local pluginInstance = Plugin.new()
 
-	local toolbar = plugin:CreateToolbar("Rojo Plugin vDEV")
+	local toolbar = plugin:CreateToolbar("Rojo Plugin v" .. Config.version)
 
 	toolbar:CreateButton("Test Connection", "Connect to Rojo Server", "")
 		.Click:Connect(function()

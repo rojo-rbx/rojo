@@ -3,6 +3,10 @@
 ## Current Master
 * *No changes*
 
+## 0.2.1
+* Plugin only release
+* Changes default port to 8000
+
 ## 0.2.0
 * Support for `init.lua` like rbxfs and rbxpacker
 * More robust syncing with a new reconciler
