@@ -1,6 +1,5 @@
 {
   "name": "rojo",
-  "servePort": 8081,
   "partitions": {
     "Rojo": {
       "path": "plugin/src",
