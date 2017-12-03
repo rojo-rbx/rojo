@@ -127,10 +127,11 @@ Will turn into this tree in Roblox:
 There are lots of other tools that sync scripts into Roblox, or otherwise work to improve the development flow outside of Roblox Studio.
 
 Here are a few, if you're looking for alternatives or supplements to Rojo:
-* [rbxmk by Anaminus](https://github.com/anaminus/rbxmk)
+* [Studio Bridge by Vocksel](https://github.com/vocksel/studio-bridge)
 * [RbxRefresh by Osyris](https://github.com/osyrisrblx/RbxRefresh)
 * [RbxSync by evaera](https://github.com/evaera/RbxSync)
 * [CodeSync](https://github.com/MemoryPenguin/CodeSync) and [rbx-exteditor](https://github.com/MemoryPenguin/rbx-exteditor) by [MemoryPenguin](https://github.com/MemoryPenguin)
+* [rbxmk by Anaminus](https://github.com/anaminus/rbxmk)
 
 I also have a couple tools that Rojo intends to replace:
 * [rbxfs](https://github.com/LPGhatguy/rbxfs), which has been deprecated by Rojo
