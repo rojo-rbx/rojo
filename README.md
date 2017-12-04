@@ -110,17 +110,17 @@ Creation of Roblox instances follows a simple set of rules. The first rule that 
 | `*.lua`        | `ModuleScript` | `Source` will contain the file's contents |
 | `*`            | `StringValue`  | `Value` will contain the file's contents  |
 
-Any folders on the filesystem will turn into `Folder` objects unless they contain a file named `init` with any extension. Following the convention of Lua, those objects will instead be whatever the `init` file would turn into.
+Any folders on the filesystem will turn into `Folder` objects unless they contain a file named `init.lua`, `init.server.lua`, or `init.client.lua`. Following the convention of Lua, those objects will instead be whatever the `init` file would turn into.
 
 For example, this file tree:
 
 * my-game
-	* init.lua
+	* init.client.lua
 	* foo.lua
 
 Will turn into this tree in Roblox:
 
-* `my-game` (`ModuleScript` with source from `my-game/init.lua`)
+* `my-game` (`LocalScript` with source from `my-game/init.client.lua`)
 	* `foo` (`ModuleScript` with source from `my-game/foo.lua`)
 
 ## Inspiration

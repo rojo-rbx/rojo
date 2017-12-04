@@ -1,13 +1,27 @@
 local Reconciler = {}
 
+--[[
+	The set of file names that should pass as init files
+	These files usurp their parents.
+]]
+local initNames = {
+	["init.lua"] = true,
+	["init.server.lua"] = true,
+	["init.client.lua"] = true,
+}
+
 local function isInit(item, itemFileName)
 	if item and item.type == "dir" then
 		return
 	end
 
-	return not not itemFileName:find("^init%.")
+	return initNames[itemFileName] or false
 end
 
+--[[
+	Determines if the given VFS item has an init file. Yields information about
+	the file.
+]]
 local function findInit(item)
 	if item.type ~= "dir" then
 		return nil, nil
@@ -22,6 +36,12 @@ local function findInit(item)
 	return nil, nil
 end
 
+--[[
+	Given a VFS item, returns a Name and ClassName for a corresponding Roblox
+	instance.
+
+	Doesn't take into account init files.
+]]
 local function itemToName(item, fileName)
 	if item and item.type == "dir" then
 		return fileName, "Folder"
@@ -40,6 +60,10 @@ local function itemToName(item, fileName)
 	end
 end
 
+--[[
+	Given a VFS item, assigns all relevant values (except Name!) to a Roblox
+	instance.
+]]
 local function setValues(rbx, item, fileName)
 	local _, className = itemToName(item, fileName)
 
@@ -79,6 +103,9 @@ function Reconciler._reifyShallow(item, fileName)
 	end
 end
 
+--[[
+	Construct a new Roblox instance tree that corresponds to the given VFS item.
+]]
 function Reconciler._reify(item, fileName, parent)
 	local rbx = Reconciler._reifyShallow(item, fileName)
 

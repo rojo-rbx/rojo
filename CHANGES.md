@@ -1,7 +1,8 @@
 # Rojo Change Log
 
 ## Current Master
-* *No changes*
+* Tightened `init` file rules to only match script files
+	* Previously, Rojo would sometimes pick up the wrong file when syncing
 
 ## 0.2.2
 * Plugin only release
