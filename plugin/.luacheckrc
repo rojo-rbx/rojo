@@ -51,6 +51,6 @@ files["**/*.server.lua"] = {
 	std = "+plugin",
 }
 
-files["**/*-spec.lua"] = {
+files["**/*.spec.lua"] = {
 	std = "+testez",
 }
