@@ -1,0 +1,10 @@
+{
+  "name": "test-project",
+  "servePort": 8001,
+  "partitions": {
+    "src": {
+      "path": "src",
+      "target": "ReplicatedStorage.TestProject"
+    }
+  }
+}
