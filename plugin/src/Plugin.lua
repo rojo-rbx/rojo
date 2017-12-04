@@ -19,7 +19,7 @@ Plugin.__index = Plugin
 
 function Plugin.new()
 	local address = "localhost"
-	local port = 8000
+	local port = Config.dev and 8001 or 8000
 
 	local remote = ("http://%s:%d"):format(address, port)
 

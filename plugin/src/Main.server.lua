@@ -8,7 +8,9 @@ local Config = require(script.Parent.Config)
 local function main()
 	local pluginInstance = Plugin.new()
 
-	local toolbar = plugin:CreateToolbar("Rojo Plugin v" .. Config.version)
+	local displayedVersion = Config.dev and "DEV" or Config.version
+
+	local toolbar = plugin:CreateToolbar("Rojo Plugin v" .. displayedVersion)
 
 	toolbar:CreateButton("Test Connection", "Connect to Rojo Server", "")
 		.Click:Connect(function()

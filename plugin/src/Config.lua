@@ -1,4 +1,5 @@
 return {
 	pollingRate = 0.3,
-	version = "DEV",
+	version = "v0.2.2",
+	dev = false,
 }
