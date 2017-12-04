@@ -10,7 +10,7 @@ local function main()
 
 	local displayedVersion = Config.dev and "DEV" or Config.version
 
-	local toolbar = plugin:CreateToolbar("Rojo Plugin v" .. displayedVersion)
+	local toolbar = plugin:CreateToolbar("Rojo Plugin " .. displayedVersion)
 
 	toolbar:CreateButton("Test Connection", "Connect to Rojo Server", "")
 		.Click:Connect(function()
