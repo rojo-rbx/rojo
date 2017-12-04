@@ -4,7 +4,23 @@
   "partitions": {
     "plugin": {
       "path": "plugin/src",
-      "target": "ReplicatedStorage.Rojo Plugin"
+      "target": "ReplicatedStorage.Rojo"
+    },
+    "modules/Roact": {
+      "path": "modules/Roact/lib",
+      "target": "ReplicatedStorage.Rojo.modules.Roact"
+    },
+    "modules/Rodux": {
+      "path": "modules/Rodux/lib",
+      "target": "ReplicatedStorage.Rojo.modules.Rodux"
+    },
+    "modules/RoactRodux": {
+      "path": "modules/RoactRodux/lib",
+      "target": "ReplicatedStorage.Rojo.modules.RoactRodux"
+    },
+    "modules/TestEZ": {
+      "path": "modules/TestEZ/lib",
+      "target": "ReplicatedStorage.TestEZ"
     }
   }
 }
