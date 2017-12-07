@@ -1,7 +1,7 @@
 <h1 align="center">Rojo</h1>
 <div align="center">
-	<a href="https://travis-ci.org/LPGhatguy/Rojo">
-		<img src="https://api.travis-ci.org/LPGhatguy/Rojo.svg?branch=master" alt="Travis-CI Build Status" />
+	<a href="https://travis-ci.org/LPGhatguy/rojo">
+		<img src="https://api.travis-ci.org/LPGhatguy/rojo.svg?branch=master" alt="Travis-CI Build Status" />
 	</a>
 </div>
 
