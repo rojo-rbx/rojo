@@ -62,7 +62,12 @@ impl Vfs {
             None => return None,
         };
 
-        let full_path = {
+        // It's possible that the partition points to a file if `rest` is empty.
+        // Joining "" onto a path will put a trailing slash on, which causes
+        // file reads to fail.
+        let full_path = if rest.is_empty() {
+            partition.clone()
+        } else {
             let joined = rest.join("/");
             let relative = Path::new(&joined);
 
