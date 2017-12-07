@@ -33,6 +33,15 @@ fn test_path_to_route() {
 
     t(Path::new("/a/b/c"), Path::new("/a/b/c/d"), Some(vec!["d".to_string()]));
     t(Path::new("/a/b"), Path::new("a"), None);
+}
+
+#[test]
+#[cfg(target_os = "windows")]
+fn test_path_to_route_windows() {
+    fn t(root: &Path, value: &Path, result: Option<Vec<String>>) {
+        assert_eq!(path_to_route(root, value), result);
+    }
+
     t(Path::new("C:\\foo"), Path::new("C:\\foo\\bar\\baz"), Some(vec!["bar".to_string(), "baz".to_string()]));
 }
 
