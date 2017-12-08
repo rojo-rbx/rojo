@@ -1,36 +1,36 @@
 matrix:
   include:
-  - language: rust
-    rust:
-      - stable
-      - beta
-      - nightly
-    matrix:
-      allow_failures:
-        - rust: nightly
-    cache: cargo
+    - language: rust
+      rust:
+        - stable
+        - beta
+        - nightly
+      matrix:
+        allow_failures:
+          - rust: nightly
+      cache: cargo
 
-  # http://kiki.to/blog/2016/02/04/talk-continuous-integration-with-lua/
-  - language: python
-    env:
-      - LUA="lua=5.1"
+    # http://kiki.to/blog/2016/02/04/talk-continuous-integration-with-lua/
+    - language: python
+      env:
+        - LUA="lua=5.1"
 
-    before_install:
-      - pip install hererocks
-      - hererocks lua_install -r^ --$LUA
-      - export PATH=$PATH:$PWD/lua_install/bin
+      before_install:
+        - pip install hererocks
+        - hererocks lua_install -r^ --$LUA
+        - export PATH=$PATH:$PWD/lua_install/bin
 
-    install:
-      - luarocks install luafilesystem
-      - luarocks install busted
-      - luarocks install luacov
-      - luarocks install luacov-coveralls
-      - luarocks install luacheck
-      - git submodule update --init --recursive
+      install:
+        - luarocks install luafilesystem
+        - luarocks install busted
+        - luarocks install luacov
+        - luarocks install luacov-coveralls
+        - luarocks install luacheck
+        - git submodule update --init --recursive
 
-    script:
-      - cd plugin && luacheck .
-      - lua -lluacov spec.lua
+      script:
+        - cd plugin && luacheck .
+        - lua -lluacov spec.lua
 
-    after_success:
-      - luacov-coveralls -e $TRAVIS_BUILD_DIR/lua_install
+      after_success:
+        - luacov-coveralls -e $TRAVIS_BUILD_DIR/lua_install
