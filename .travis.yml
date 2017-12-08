@@ -1,14 +1,16 @@
-language: python
+language: rust
+
+rust:
+  - stable
+  - beta
 
 env:
-  - RUST="stable" LUA="lua=5.1"
-  - RUST="beta" LUA="lua=5.1"
+  - LUA="lua=5.1"
 
 before_install:
   - pip install hererocks
   - hererocks lua_install -r^ --$LUA
   - export PATH=$PATH:$PWD/lua_install/bin
-  - curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain $RUST
 
 install:
   - luarocks install luafilesystem
