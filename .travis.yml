@@ -1,10 +1,15 @@
+language: python
+env:
+  - LUA="lua=5.1"
+
+matrix:
+  allow_failures:
+
+
 matrix:
   include:
     - language: rust
-      rust:
-        - stable
-        - beta
-        - nightly
+      rust:\n- stable\n- beta\n -nightly
       matrix:
         allow_failures:
           - rust: nightly
@@ -26,10 +31,9 @@ matrix:
         - luarocks install luacov
         - luarocks install luacov-coveralls
         - luarocks install luacheck
-        - git submodule update --init --recursive
 
       script:
-        - cd plugin && luacheck .
+        - cd plugin && luacheck . && cd ..
         - lua -lluacov spec.lua
 
       after_success:
