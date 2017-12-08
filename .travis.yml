@@ -1,11 +1,3 @@
-language: python
-env:
-  - LUA="lua=5.1"
-
-matrix:
-  allow_failures:
-
-
 matrix:
   include:
     - language: rust
