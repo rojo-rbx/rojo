@@ -242,7 +242,10 @@ function Promise:_resolve(...)
 	if Promise.is((...)) then
 		-- Without this warning, arguments sometimes mysteriously disappear
 		if select("#", ...) > 1 then
-			local message = ("When returning a Promise from andThen, extra arguments are discarded! See:\n\n%s"):format(
+			local message = (
+				"When returning a Promise from andThen, extra arguments are " ..
+				"discarded! See:\n\n%s"
+			):format(
 				self._source
 			)
 			warn(message)
