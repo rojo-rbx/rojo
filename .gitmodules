@@ -1,12 +1,15 @@
-[submodule "modules/Roact"]
-	path = modules/Roact
-	url = https://github.com/Roblox/Roact.git
-[submodule "modules/Rodux"]
-	path = modules/Rodux
-	url = https://github.com/Roblox/Rodux.git
-[submodule "modules/RoactRodux"]
-	path = modules/RoactRodux
-	url = https://github.com/Roblox/RoactRodux.git
-[submodule "modules/TestEZ"]
-	path = modules/TestEZ
-	url = https://github.com/Roblox/TestEZ.git
+[submodule "modules/roact"]
+	path = modules/roact
+	url = https://github.com/Roblox/roact.git
+[submodule "modules/rodux"]
+	path = modules/rodux
+	url = https://github.com/Roblox/rodux.git
+[submodule "modules/roact-rodux"]
+	path = modules/roact-rodux
+	url = https://github.com/Roblox/roact-rodux.git
+[submodule "modules/testez"]
+	path = modules/testez
+	url = https://github.com/Roblox/testez.git
+[submodule "modules/lemur"]
+	path = modules/lemur
+	url = https://github.com/LPGhatguy/lemur.git
