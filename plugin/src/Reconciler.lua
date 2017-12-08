@@ -171,8 +171,13 @@ function Reconciler.reconcile(rbx, item, fileName, parent)
 			end
 		else
 			if rbx.ClassName ~= "Folder" then
-				rbx:Destroy()
-				return Reconciler._reify(item, fileName, parent)
+				-- Certain objects (services) can't be destroyed.
+				-- If we target one of these, leave it alone!
+				local ok = pcall(rbx.Destroy, rbx)
+
+				if ok then
+					return Reconciler._reify(item, fileName, parent)
+				end
 			end
 		end
 
