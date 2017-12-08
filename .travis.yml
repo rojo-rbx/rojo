@@ -1,7 +1,10 @@
 matrix:
   include:
     - language: rust
-      rust:\n- stable\n- beta\n -nightly
+      rust:
+      - stable
+      - beta
+      - nightly
       matrix:
         allow_failures:
           - rust: nightly
