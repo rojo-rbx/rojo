@@ -11,6 +11,8 @@ Rojo is a flexible multi-tool designed for creating robust Roblox projects. It's
 
 It's designed for power users who want to use the **best tools available** for building games, libraries, and plugins.
 
+This is the main Rojo repository, containing the binary server component. For the source for the Roblox plugin, [see the rojo-plugin repository](https://github.com/LPGhatguy/rojo-plugin).
+
 ## Features
 
 Rojo has a number of desirable features *right now*:
@@ -28,7 +30,7 @@ Soon, Rojo will be able to:
 ## Installation
 Rojo has two components:
 * The command line tool, written in Rust
-* The [Roblox Studio plugin](https://www.roblox.com/library/1211549683/Rojo-v0-0-0), written in Lua
+* The [Roblox Studio plugin](https://www.roblox.com/library/1211549683/Rojo), written in Lua
 
 To install the command line tool, there are two options:
 * Cargo, if you have Rust installed
