@@ -1,6 +1,9 @@
 # Rojo Change Log
 
 ## Current Master
+* *No changes*
+
+## 0.3.0
 * Factored out the plugin into a separate repository
 * Fixed server when using a file as a partition
 	* Previously, trailing slashes were put on the end of a partition even if the read request was an empty string. This broke file reading on Windows when a partition pointed to a file instead of a directory!
