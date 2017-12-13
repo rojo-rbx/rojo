@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::io::Read;
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -5,12 +6,98 @@ use std::thread;
 use rouille;
 use serde;
 use serde_json;
+use regex::Regex;
 
 use core::Config;
 use project::Project;
 use vfs::{Vfs, VfsChange, VfsItem};
 
 static MAX_BODY_SIZE: usize = 25 * 1024 * 1025; // 25 MiB
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct RbxItem {
+    name: String,
+    class_name: String,
+    children: Vec<RbxItem>,
+    properties: HashMap<String, RbxValue>,
+}
+
+impl RbxItem {
+    pub fn from_vfs_item(file_name: &String, item: &VfsItem) -> RbxItem {
+        lazy_static! {
+            static ref PT_MODULE: Regex = Regex::new(r"^(.*?)\.lua$").unwrap();
+        }
+
+        match item {
+            &VfsItem::File { ref contents } => {
+                let mut properties = HashMap::new();
+
+                properties.insert("Source".to_string(), RbxValue::String {
+                    value: contents.clone()
+                });
+
+                let rbx_name = {
+                    if let Some(captures) = PT_MODULE.captures(file_name) {
+                        captures.get(1).unwrap().as_str().to_string()
+                    } else {
+                        file_name.clone()
+                    }
+                };
+
+                RbxItem {
+                    name: rbx_name,
+                    class_name: "ModuleScript".to_string(),
+                    children: Vec::new(),
+                    properties,
+                }
+            },
+            &VfsItem::Dir { ref children } => {
+                let init = children.get(&"init.lua".to_string());
+
+                if let Some(init) = init {
+                    let mut rbx_children = Vec::new();
+
+                    for (name, child_item) in children {
+                        if name != "init.lua" {
+                            rbx_children.push(RbxItem::from_vfs_item(&name, &child_item));
+                        }
+                    }
+
+                    let init_rbx = RbxItem::from_vfs_item(&"init.lua".to_string(), &init);
+
+                    RbxItem {
+                        name: file_name.clone(),
+                        class_name: init_rbx.class_name,
+                        children: rbx_children,
+                        properties: init_rbx.properties,
+                    }
+                } else {
+                    let mut rbx_children = Vec::new();
+
+                    for (name, child_item) in children {
+                        rbx_children.push(RbxItem::from_vfs_item(&name, &child_item));
+                    }
+
+                    RbxItem {
+                        name: file_name.clone(),
+                        class_name: "Folder".to_string(),
+                        children: rbx_children,
+                        properties: HashMap::new(),
+                    }
+                }
+            },
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase", tag = "type")]
+enum RbxValue {
+    String {
+        value: String,
+    },
+}
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -25,7 +112,7 @@ struct ServerInfo<'a> {
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct ReadResult<'a> {
-    items: Vec<Option<VfsItem>>,
+    items: Vec<Option<RbxItem>>,
     server_id: &'a str,
     current_time: f64,
 }
@@ -110,7 +197,7 @@ pub fn start(config: Config, project: Project, vfs: Arc<Mutex<Vfs>>) {
 
 					json(ServerInfo {
                         server_version: env!("CARGO_PKG_VERSION"),
-                        protocol_version: 0,
+                        protocol_version: 1,
                         server_id: &server_id,
                         project: &project,
                         current_time,
@@ -152,9 +239,19 @@ pub fn start(config: Config, project: Project, vfs: Arc<Mutex<Vfs>>) {
                         (items, current_time)
                     };
 
+                    let rbx_items = items
+                        .iter()
+                        .map(|item| {
+                            match *item {
+                                Some(ref item) => Some(RbxItem::from_vfs_item(&"src".to_string(), item)),
+                                None => None,
+                            }
+                        })
+                        .collect::<Vec<_>>();
+
                     json(ReadResult {
                         server_id: &server_id,
-                        items,
+                        items: rbx_items,
                         current_time,
                     })
 				},

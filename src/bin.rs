@@ -7,10 +7,14 @@ extern crate rouille;
 #[macro_use]
 extern crate clap;
 
+#[macro_use]
+extern crate lazy_static;
+
 extern crate notify;
 extern crate rand;
 extern crate serde;
 extern crate serde_json;
+extern crate regex;
 
 pub mod web;
 pub mod core;
