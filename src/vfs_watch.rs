@@ -4,9 +4,9 @@ use std::time::Duration;
 
 use notify::{DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher};
 
-use vfs::Vfs;
-use pathext::path_to_route;
 use core::Config;
+use pathext::path_to_route;
+use vfs::Vfs;
 
 pub struct VfsWatcher {
     vfs: Arc<Mutex<Vfs>>,

@@ -8,7 +8,7 @@ use serde_json;
 
 use core::Config;
 use project::Project;
-use vfs::{Vfs, VfsItem, VfsChange};
+use vfs::{Vfs, VfsChange, VfsItem};
 
 static MAX_BODY_SIZE: usize = 25 * 1024 * 1025; // 25 MiB
 

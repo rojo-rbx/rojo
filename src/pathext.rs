@@ -31,7 +31,11 @@ fn test_path_to_route() {
         assert_eq!(path_to_route(root, value), result);
     }
 
-    t(Path::new("/a/b/c"), Path::new("/a/b/c/d"), Some(vec!["d".to_string()]));
+    t(
+        Path::new("/a/b/c"),
+        Path::new("/a/b/c/d"),
+        Some(vec!["d".to_string()]),
+    );
     t(Path::new("/a/b"), Path::new("a"), None);
 }
 
@@ -42,7 +46,11 @@ fn test_path_to_route_windows() {
         assert_eq!(path_to_route(root, value), result);
     }
 
-    t(Path::new("C:\\foo"), Path::new("C:\\foo\\bar\\baz"), Some(vec!["bar".to_string(), "baz".to_string()]));
+    t(
+        Path::new("C:\\foo"),
+        Path::new("C:\\foo\\bar\\baz"),
+        Some(vec!["bar".to_string(), "baz".to_string()]),
+    );
 }
 
 /// Turns the path into an absolute one, using the current working directory if
