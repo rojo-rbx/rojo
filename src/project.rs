@@ -13,7 +13,7 @@ pub enum ProjectLoadError {
     DidNotExist,
     FailedToOpen,
     FailedToRead,
-    Invalid,
+    InvalidJson(serde_json::Error),
 }
 
 #[derive(Debug)]
@@ -116,7 +116,7 @@ impl Project {
 
         match serde_json::from_str(&contents) {
             Ok(v) => Ok(v),
-            Err(_) => return Err(ProjectLoadError::Invalid),
+            Err(e) => return Err(ProjectLoadError::InvalidJson(e)),
         }
     }
 

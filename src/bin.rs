@@ -25,7 +25,7 @@ use std::thread;
 
 use core::Config;
 use pathext::canonicalish;
-use project::Project;
+use project::{Project, ProjectLoadError};
 use vfs::Vfs;
 use vfs_watch::VfsWatcher;
 
@@ -98,8 +98,32 @@ fn main() {
                     println!("Using project from {}", project_path.display());
                     v
                 },
-                Err(_) => {
-                    println!("Using default project...");
+                Err(err) => {
+                    match err {
+                        ProjectLoadError::InvalidJson(serde_err) => {
+                            eprintln!(
+                                "Found invalid JSON!\nProject in: {}\nError: {}",
+                                project_path.display(),
+                                serde_err,
+                            );
+
+                            std::process::exit(1);
+                        },
+                        ProjectLoadError::FailedToOpen | ProjectLoadError::FailedToRead => {
+                            eprintln!("Found project file, but failed to read it!");
+                            eprintln!(
+                                "Check the permissions of the project file at\n{}",
+                                project_path.display(),
+                            );
+
+                            std::process::exit(1);
+                        },
+                        _ => {
+                            // Any other error is fine; use the default project.
+                        },
+                    }
+
+                    println!("Found no project file, using default project...");
                     Project::default()
                 },
             };

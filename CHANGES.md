@@ -1,7 +1,8 @@
 # Rojo Change Log
 
 ## Current Master
-* *No changes*
+* Improved error reporting when invalid JSON is found in a `rojo.json` project
+	* These messages are passed on from Serde
 
 ## 0.3.0
 * Factored out the plugin into a separate repository
