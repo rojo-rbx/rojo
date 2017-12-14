@@ -1,6 +1,9 @@
 # Rojo Change Log
 
 ## Current Master
+* *No changes*
+
+## 0.3.1
 * Improved error reporting when invalid JSON is found in a `rojo.json` project
 	* These messages are passed on from Serde
 
