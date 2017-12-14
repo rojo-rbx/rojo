@@ -22,6 +22,9 @@ pub mod project;
 pub mod pathext;
 pub mod vfs;
 pub mod vfs_watch;
+pub mod rbx;
+pub mod plugin;
+pub mod plugins;
 
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};

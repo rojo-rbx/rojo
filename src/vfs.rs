@@ -37,8 +37,8 @@ pub struct VfsChange {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", tag = "type")]
 pub enum VfsItem {
-    File { contents: String },
-    Dir { children: HashMap<String, VfsItem> },
+    File { name: String, contents: String },
+    Dir { name: String, children: HashMap<String, VfsItem> },
 }
 
 impl Vfs {
@@ -78,6 +78,7 @@ impl Vfs {
     }
 
     fn read_dir<P: AsRef<Path>>(&self, path: P) -> Result<VfsItem, ()> {
+        let path = path.as_ref();
         let reader = match fs::read_dir(path) {
             Ok(v) => v,
             Err(_) => return Err(()),
@@ -104,11 +105,13 @@ impl Vfs {
         }
 
         Ok(VfsItem::Dir {
+            name: path.file_name().unwrap().to_string_lossy().into_owned(),
             children,
         })
     }
 
     fn read_file<P: AsRef<Path>>(&self, path: P) -> Result<VfsItem, ()> {
+        let path = path.as_ref();
         let mut file = match File::open(path) {
             Ok(v) => v,
             Err(_) => return Err(()),
@@ -122,6 +125,7 @@ impl Vfs {
         }
 
         Ok(VfsItem::File {
+            name: path.file_name().unwrap().to_string_lossy().into_owned(),
             contents,
         })
     }
