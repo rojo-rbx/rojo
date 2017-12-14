@@ -12,6 +12,10 @@ lazy_static! {
     static ref MODULE_PATTERN: Regex = Regex::new(r"^(.*?)\.lua$").unwrap();
 }
 
+static SERVER_INIT: &'static str = "init.server.lua";
+static CLIENT_INIT: &'static str = "init.client.lua";
+static MODULE_INIT: &'static str = "init.lua";
+
 pub struct ScriptPlugin;
 
 impl ScriptPlugin {
@@ -50,7 +54,42 @@ impl Plugin for ScriptPlugin {
                 }))
             },
             &VfsItem::Dir { ref children, ref name } => {
-                PluginResult::Pass
+                let init_item = {
+                    let maybe_item = children.get(SERVER_INIT)
+                        .or(children.get(CLIENT_INIT))
+                        .or(children.get(MODULE_INIT));
+
+                    match maybe_item {
+                        Some(v) => v,
+                        None => return PluginResult::Pass,
+                    }
+                };
+
+                let mut rbx_item = match self.transform_file(plugins, init_item) {
+                    PluginResult::Value(Some(item)) => item,
+                    _ => {
+                        eprintln!("Inconsistency detected in ScriptPlugin!");
+                        return PluginResult::Pass;
+                    },
+                };
+
+                rbx_item.name.clear();
+                rbx_item.name.push_str(name);
+
+                for (child_name, child_item) in children {
+                    if child_name == init_item.name() {
+                        continue;
+                    }
+
+                    match plugins.transform_file(child_item) {
+                        Some(child_rbx_item) => {
+                            rbx_item.children.push(child_rbx_item);
+                        },
+                        _ => {},
+                    }
+                }
+
+                PluginResult::Value(Some(rbx_item))
             },
         }
     }
