@@ -41,6 +41,15 @@ pub enum VfsItem {
     Dir { name: String, children: HashMap<String, VfsItem> },
 }
 
+impl VfsItem {
+    pub fn name(&self) -> &String {
+        match self {
+            &VfsItem::File { ref name, .. } => name,
+            &VfsItem::Dir { ref name, .. } => name,
+        }
+    }
+}
+
 impl Vfs {
     pub fn new(config: Config) -> Vfs {
         Vfs {
