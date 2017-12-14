@@ -85,7 +85,7 @@ fn main() {
             let sub_matches = sub_matches.unwrap();
 
             let project_path = match sub_matches.value_of("PROJECT") {
-                Some(v) => PathBuf::from(v),
+                Some(v) => canonicalish(PathBuf::from(v)),
                 None => std::env::current_dir().unwrap(),
             };
 

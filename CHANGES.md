@@ -1,7 +1,7 @@
 # Rojo Change Log
 
 ## Current Master
-* *No changes*
+* Fixed `rojo serve` failing to correctly construct an absolute root path when passed as an argument
 
 ## 0.3.1
 * Improved error reporting when invalid JSON is found in a `rojo.json` project
