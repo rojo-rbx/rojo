@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::io::Read;
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -6,13 +5,12 @@ use std::thread;
 use rouille;
 use serde;
 use serde_json;
-use regex::Regex;
 
 use core::Config;
 use project::Project;
-use vfs::{Vfs, VfsChange, VfsItem};
-use rbx::{RbxItem, RbxValue};
-use plugin::{Plugin, PluginResult};
+use vfs::{Vfs, VfsChange};
+use rbx::RbxItem;
+use plugin::PluginChain;
 use plugins::DefaultPlugin;
 
 static MAX_BODY_SIZE: usize = 25 * 1024 * 1025; // 25 MiB
@@ -103,6 +101,13 @@ pub fn start(config: Config, project: Project, vfs: Arc<Mutex<Vfs>>) {
 
     let server_id = config.server_id.to_string();
 
+    // Fine, rouille, I'll put things in a 'static Arc<Mutex>...
+    lazy_static! {
+        static ref PLUGIN_CHAIN: Arc<Mutex<PluginChain>> = Arc::new(Mutex::new(PluginChain::new(vec![
+            Box::new(DefaultPlugin::new()),
+        ])));
+    }
+
     thread::spawn(move || {
         rouille::start_server(address, move |request| {
             router!(request,
@@ -135,6 +140,8 @@ pub fn start(config: Config, project: Project, vfs: Arc<Mutex<Vfs>>) {
                 },
 
 				(POST) (/read) => {
+                    let plugin_chain = PLUGIN_CHAIN.lock().unwrap();
+
                     let read_request: Vec<Vec<String>> = match read_json(&request) {
                         Some(v) => v,
                         None => return rouille::Response::empty_400(),
@@ -161,12 +168,7 @@ pub fn start(config: Config, project: Project, vfs: Arc<Mutex<Vfs>>) {
                         .iter()
                         .map(|item| {
                             match *item {
-                                Some(ref item) => {
-                                    match DefaultPlugin::transform(item) {
-                                        PluginResult::Value(rbx_item) => rbx_item,
-                                        _ => None,
-                                    }
-                                },
+                                Some(ref item) => plugin_chain.transform_file(item),
                                 None => None,
                             }
                         })
