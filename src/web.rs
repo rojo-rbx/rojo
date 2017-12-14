@@ -11,7 +11,7 @@ use project::Project;
 use vfs::{Vfs, VfsChange};
 use rbx::RbxItem;
 use plugin::PluginChain;
-use plugins::DefaultPlugin;
+use plugins::{ScriptPlugin, DefaultPlugin};
 
 static MAX_BODY_SIZE: usize = 25 * 1024 * 1025; // 25 MiB
 
@@ -104,6 +104,7 @@ pub fn start(config: Config, project: Project, vfs: Arc<Mutex<Vfs>>) {
     // Fine, rouille, I'll put things in a 'static Arc<Mutex>...
     lazy_static! {
         static ref PLUGIN_CHAIN: Arc<Mutex<PluginChain>> = Arc::new(Mutex::new(PluginChain::new(vec![
+            Box::new(ScriptPlugin::new()),
             Box::new(DefaultPlugin::new()),
         ])));
     }

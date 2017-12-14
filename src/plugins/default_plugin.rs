@@ -4,6 +4,9 @@ use plugin::{Plugin, PluginChain, PluginResult};
 use rbx::{RbxItem, RbxValue};
 use vfs::VfsItem;
 
+/// A plugin with simple transforms:
+/// * Directories become Folder instances
+/// * Files become StringValue objects with 'Value' as their contents
 pub struct DefaultPlugin;
 
 impl DefaultPlugin {
