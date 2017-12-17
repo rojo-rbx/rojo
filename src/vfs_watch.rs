@@ -92,6 +92,8 @@ impl VfsWatcher {
             }
         }
 
-        loop {}
+        loop {
+            thread::sleep(Duration::from_secs(1));
+        }
     }
 }
