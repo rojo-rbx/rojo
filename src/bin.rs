@@ -195,7 +195,7 @@ fn main() {
             println!("Server listening on port {}", port);
 
             loop {
-                thread::sleep(Duration::from_secs(1));
+                thread::park();
             }
         },
         ("pack", _) => {
