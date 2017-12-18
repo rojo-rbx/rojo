@@ -109,85 +109,83 @@ pub fn start(config: Config, project: Project, vfs: Arc<Mutex<Vfs>>) {
         ])));
     }
 
-    thread::spawn(move || {
-        rouille::start_server(address, move |request| {
-            router!(request,
-				(GET) (/) => {
-                    let current_time = {
-                        let vfs = vfs.lock().unwrap();
-
-                        vfs.current_time()
-                    };
-
-					json(ServerInfo {
-                        server_version: env!("CARGO_PKG_VERSION"),
-                        protocol_version: 1,
-                        server_id: &server_id,
-                        project: &project,
-                        current_time,
-                    })
-				},
-
-                (GET) (/changes/{ last_time: f64 }) => {
+    rouille::start_server(address, move |request| {
+        router!(request,
+            (GET) (/) => {
+                let current_time = {
                     let vfs = vfs.lock().unwrap();
+
+                    vfs.current_time()
+                };
+
+                json(ServerInfo {
+                    server_version: env!("CARGO_PKG_VERSION"),
+                    protocol_version: 1,
+                    server_id: &server_id,
+                    project: &project,
+                    current_time,
+                })
+            },
+
+            (GET) (/changes/{ last_time: f64 }) => {
+                let vfs = vfs.lock().unwrap();
+                let current_time = vfs.current_time();
+                let changes = vfs.changes_since(last_time);
+
+                json(ChangesResult {
+                    changes,
+                    server_id: &server_id,
+                    current_time,
+                })
+            },
+
+            (POST) (/read) => {
+                let plugin_chain = PLUGIN_CHAIN.lock().unwrap();
+
+                let read_request: Vec<Vec<String>> = match read_json(&request) {
+                    Some(v) => v,
+                    None => return rouille::Response::empty_400(),
+                };
+
+                let (items, current_time) = {
+                    let vfs = vfs.lock().unwrap();
+
                     let current_time = vfs.current_time();
-                    let changes = vfs.changes_since(last_time);
 
-                    json(ChangesResult {
-                        changes,
-                        server_id: &server_id,
-                        current_time,
-                    })
-                },
+                    let mut items = Vec::new();
 
-				(POST) (/read) => {
-                    let plugin_chain = PLUGIN_CHAIN.lock().unwrap();
-
-                    let read_request: Vec<Vec<String>> = match read_json(&request) {
-                        Some(v) => v,
-                        None => return rouille::Response::empty_400(),
-                    };
-
-                    let (items, current_time) = {
-                        let vfs = vfs.lock().unwrap();
-
-                        let current_time = vfs.current_time();
-
-                        let mut items = Vec::new();
-
-                        for route in &read_request {
-                            match vfs.read(&route) {
-                                Ok(v) => items.push(Some(v)),
-                                Err(_) => items.push(None),
-                            }
+                    for route in &read_request {
+                        match vfs.read(&route) {
+                            Ok(v) => items.push(Some(v)),
+                            Err(_) => items.push(None),
                         }
+                    }
 
-                        (items, current_time)
-                    };
+                    (items, current_time)
+                };
 
-                    let rbx_items = items
-                        .iter()
-                        .map(|item| {
-                            match *item {
-                                Some(ref item) => plugin_chain.transform_file(item),
-                                None => None,
-                            }
-                        })
-                        .collect::<Vec<_>>();
-
-                    json(ReadResult {
-                        server_id: &server_id,
-                        items: rbx_items,
-                        current_time,
+                let rbx_items = items
+                    .iter()
+                    .map(|item| {
+                        match *item {
+                            Some(ref item) => plugin_chain.transform_file(item),
+                            None => None,
+                        }
                     })
-				},
+                    .collect::<Vec<_>>();
 
-                (POST) (/write) => {
-                    rouille::Response::empty_404()
-                },
+                json(ReadResult {
+                    server_id: &server_id,
+                    items: rbx_items,
+                    current_time,
+                })
+            },
 
-				_ => rouille::Response::empty_404()
-			)
-        });
+            (POST) (/write) => {
+                rouille::Response::empty_404()
+            },
+
+            _ => rouille::Response::empty_404()
+        )
     });
 }
