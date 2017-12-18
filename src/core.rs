@@ -4,3 +4,5 @@ pub struct Config {
     pub verbose: bool,
     pub server_id: u64,
 }
+
+pub type Route = Vec<String>;

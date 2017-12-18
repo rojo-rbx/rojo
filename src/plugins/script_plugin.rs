@@ -2,7 +2,8 @@ use std::collections::HashMap;
 
 use regex::Regex;
 
-use plugin::{Plugin, PluginChain, PluginResult};
+use core::Route;
+use plugin::{Plugin, PluginChain, TransformResult, FileChangeResult};
 use rbx::{RbxItem, RbxValue};
 use vfs::VfsItem;
 
@@ -25,7 +26,7 @@ impl ScriptPlugin {
 }
 
 impl Plugin for ScriptPlugin {
-    fn transform_file(&self, plugins: &PluginChain, vfs_item: &VfsItem) -> PluginResult {
+    fn transform_file(&self, plugins: &PluginChain, vfs_item: &VfsItem) -> TransformResult {
         match vfs_item {
             &VfsItem::File { ref contents, ref name } => {
                 let (class_name, rbx_name) = {
@@ -36,7 +37,7 @@ impl Plugin for ScriptPlugin {
                     } else if let Some(captures) = MODULE_PATTERN.captures(name) {
                         ("ModuleScript".to_string(), captures.get(1).unwrap().as_str().to_string())
                     } else {
-                        return PluginResult::Pass;
+                        return TransformResult::Pass;
                     }
                 };
 
@@ -46,7 +47,7 @@ impl Plugin for ScriptPlugin {
                     value: contents.clone(),
                 });
 
-                PluginResult::Value(Some(RbxItem {
+                TransformResult::Value(Some(RbxItem {
                     name: rbx_name,
                     class_name: class_name,
                     children: Vec::new(),
@@ -61,15 +62,15 @@ impl Plugin for ScriptPlugin {
 
                     match maybe_item {
                         Some(v) => v,
-                        None => return PluginResult::Pass,
+                        None => return TransformResult::Pass,
                     }
                 };
 
                 let mut rbx_item = match self.transform_file(plugins, init_item) {
-                    PluginResult::Value(Some(item)) => item,
+                    TransformResult::Value(Some(item)) => item,
                     _ => {
                         eprintln!("Inconsistency detected in ScriptPlugin!");
-                        return PluginResult::Pass;
+                        return TransformResult::Pass;
                     },
                 };
 
@@ -89,8 +90,28 @@ impl Plugin for ScriptPlugin {
                     }
                 }
 
-                PluginResult::Value(Some(rbx_item))
+                TransformResult::Value(Some(rbx_item))
             },
+        }
+    }
+
+    fn handle_file_change(&self, route: &Route) -> FileChangeResult {
+        let leaf = match route.last() {
+            Some(v) => v,
+            None => return FileChangeResult::Pass,
+        };
+
+        let is_init = leaf == SERVER_INIT
+            || leaf == CLIENT_INIT
+            || leaf == MODULE_INIT;
+
+        if is_init {
+            let mut changed = route.clone();
+            changed.pop();
+
+            FileChangeResult::MarkChanged(Some(vec![changed]))
+        } else {
+            FileChangeResult::Pass
         }
     }
 }
