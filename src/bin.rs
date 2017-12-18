@@ -193,7 +193,9 @@ fn main() {
 
             println!("Server listening on port {}", port);
 
-            loop {}
+            loop {
+                thread::park();
+            }
         },
         ("pack", _) => {
             eprintln!("'rojo pack' is not yet implemented!");
