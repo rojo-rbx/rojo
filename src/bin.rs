@@ -22,7 +22,6 @@ pub mod vfs_watch;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::thread;
-use std::time::Duration;
 
 use core::Config;
 use pathext::canonicalish;
