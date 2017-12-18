@@ -92,6 +92,8 @@ impl VfsWatcher {
             }
         }
 
-        loop {}
+        loop {
+            thread::park();
+        }
     }
 }
