@@ -18,11 +18,11 @@ pub trait Plugin {
 }
 
 pub struct PluginChain {
-    plugins: Vec<Box<Plugin + Send>>,
+    plugins: Vec<Box<Plugin + Send + Sync>>,
 }
 
 impl PluginChain {
-    pub fn new(plugins: Vec<Box<Plugin + Send>>) -> PluginChain {
+    pub fn new(plugins: Vec<Box<Plugin + Send + Sync>>) -> PluginChain {
         PluginChain {
             plugins,
         }
@@ -33,6 +33,17 @@ impl PluginChain {
             match plugin.transform_file(self, vfs_item) {
                 TransformResult::Value(rbx_item) => return rbx_item,
                 TransformResult::Pass => {},
+            }
+        }
+
+        None
+    }
+
+    pub fn handle_file_change(&self, route: &Route) -> Option<Vec<Route>> {
+        for plugin in &self.plugins {
+            match plugin.handle_file_change(route) {
+                FileChangeResult::MarkChanged(changes) => return changes,
+                FileChangeResult::Pass => {},
             }
         }
 

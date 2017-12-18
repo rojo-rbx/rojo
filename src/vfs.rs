@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 use std::time::Instant;
 
 use core::Config;
+use plugin::PluginChain;
 
 /// Represents a virtual layer over multiple parts of the filesystem.
 ///
@@ -23,6 +24,8 @@ pub struct Vfs {
     /// A chronologically-sorted list of routes that changed since the Vfs was
     /// created, along with a timestamp denoting when.
     pub change_history: Vec<VfsChange>,
+
+    plugin_chain: &'static PluginChain,
 
     config: Config,
 }
@@ -51,11 +54,12 @@ impl VfsItem {
 }
 
 impl Vfs {
-    pub fn new(config: Config) -> Vfs {
+    pub fn new(config: Config, plugin_chain: &'static PluginChain) -> Vfs {
         Vfs {
             partitions: HashMap::new(),
             start_time: Instant::now(),
             change_history: Vec::new(),
+            plugin_chain,
             config,
         }
     }
@@ -164,13 +168,20 @@ impl Vfs {
 
     pub fn add_change(&mut self, timestamp: f64, route: Vec<String>) {
         if self.config.verbose {
-            println!("Added change {:?}", route);
+            println!("Received change {:?}, running through plugins...", route);
         }
 
-        self.change_history.push(VfsChange {
-            timestamp,
-            route,
-        });
+        match self.plugin_chain.handle_file_change(&route) {
+            Some(routes) => {
+                for route in routes {
+                    self.change_history.push(VfsChange {
+                        timestamp,
+                        route,
+                    });
+                }
+            },
+            None => {}
+        }
     }
 
     pub fn changes_since(&self, timestamp: f64) -> &[VfsChange] {
