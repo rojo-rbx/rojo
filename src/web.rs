@@ -10,7 +10,6 @@ use project::Project;
 use vfs::{Vfs, VfsChange};
 use rbx::RbxItem;
 use plugin::PluginChain;
-use plugins::{ScriptPlugin, DefaultPlugin};
 
 static MAX_BODY_SIZE: usize = 25 * 1024 * 1025; // 25 MiB
 
@@ -102,18 +101,10 @@ where
     Some(parsed)
 }
 
-pub fn start(config: Config, project: Project, vfs: Arc<Mutex<Vfs>>) {
+pub fn start(config: Config, project: Project, plugin_chain: &'static PluginChain, vfs: Arc<Mutex<Vfs>>) {
     let address = format!("localhost:{}", config.port);
 
     let server_id = config.server_id.to_string();
-
-    // Fine, rouille, I'll put things in a 'static Arc<Mutex>...
-    lazy_static! {
-        static ref PLUGIN_CHAIN: Arc<Mutex<PluginChain>> = Arc::new(Mutex::new(PluginChain::new(vec![
-            Box::new(ScriptPlugin::new()),
-            Box::new(DefaultPlugin::new()),
-        ])));
-    }
 
     rouille::start_server(address, move |request| {
         router!(request,
@@ -146,8 +137,6 @@ pub fn start(config: Config, project: Project, vfs: Arc<Mutex<Vfs>>) {
             },
 
             (POST) (/read) => {
-                let plugin_chain = PLUGIN_CHAIN.lock().unwrap();
-
                 let read_request: Vec<Vec<String>> = match read_json(&request) {
                     Some(v) => v,
                     None => return rouille::Response::empty_400(),
@@ -188,8 +177,6 @@ pub fn start(config: Config, project: Project, vfs: Arc<Mutex<Vfs>>) {
             },
 
             (POST) (/write) => {
-                let _plugin_chain = PLUGIN_CHAIN.lock().unwrap();
-
                 let _write_request: Vec<WriteSpecifier> = match read_json(&request) {
                     Some(v) => v,
                     None => return rouille::Response::empty_400(),

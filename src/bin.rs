@@ -207,7 +207,7 @@ fn main() {
 
             println!("Server listening on port {}", port);
 
-            web::start(config.clone(), project.clone(), vfs.clone());
+            web::start(config.clone(), project.clone(), &PLUGIN_CHAIN, vfs.clone());
         },
         ("pack", _) => {
             eprintln!("'rojo pack' is not yet implemented!");
