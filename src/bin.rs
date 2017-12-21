@@ -7,10 +7,14 @@ extern crate rouille;
 #[macro_use]
 extern crate clap;
 
+#[macro_use]
+extern crate lazy_static;
+
 extern crate notify;
 extern crate rand;
 extern crate serde;
 extern crate serde_json;
+extern crate regex;
 
 pub mod web;
 pub mod core;
@@ -18,6 +22,9 @@ pub mod project;
 pub mod pathext;
 pub mod vfs;
 pub mod vfs_watch;
+pub mod rbx;
+pub mod plugin;
+pub mod plugins;
 
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
@@ -26,6 +33,8 @@ use std::thread;
 use core::Config;
 use pathext::canonicalish;
 use project::{Project, ProjectLoadError};
+use plugin::{PluginChain};
+use plugins::{DefaultPlugin, ScriptPlugin};
 use vfs::Vfs;
 use vfs_watch::VfsWatcher;
 
@@ -141,6 +150,13 @@ fn main() {
                 }
             };
 
+            lazy_static! {
+                static ref PLUGIN_CHAIN: PluginChain = PluginChain::new(vec![
+                    Box::new(ScriptPlugin::new()),
+                    Box::new(DefaultPlugin::new()),
+                ]);
+            }
+
             let config = Config {
                 port,
                 verbose,
@@ -152,7 +168,7 @@ fn main() {
             }
 
             let vfs = {
-                let mut vfs = Vfs::new(config.clone());
+                let mut vfs = Vfs::new(config.clone(), &PLUGIN_CHAIN);
 
                 for (name, project_partition) in &project.partitions {
                     let path = {
@@ -189,13 +205,9 @@ fn main() {
                 });
             }
 
-            web::start(config.clone(), project.clone(), vfs.clone());
-
             println!("Server listening on port {}", port);
 
-            loop {
-                thread::park();
-            }
+            web::start(config.clone(), project.clone(), &PLUGIN_CHAIN, vfs.clone());
         },
         ("pack", _) => {
             eprintln!("'rojo pack' is not yet implemented!");

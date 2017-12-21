@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 use std::time::Instant;
 
 use core::Config;
+use plugin::PluginChain;
 
 /// Represents a virtual layer over multiple parts of the filesystem.
 ///
@@ -24,6 +25,8 @@ pub struct Vfs {
     /// created, along with a timestamp denoting when.
     pub change_history: Vec<VfsChange>,
 
+    plugin_chain: &'static PluginChain,
+
     config: Config,
 }
 
@@ -37,16 +40,26 @@ pub struct VfsChange {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", tag = "type")]
 pub enum VfsItem {
-    File { contents: String },
-    Dir { children: HashMap<String, VfsItem> },
+    File { name: String, contents: String },
+    Dir { name: String, children: HashMap<String, VfsItem> },
+}
+
+impl VfsItem {
+    pub fn name(&self) -> &String {
+        match self {
+            &VfsItem::File { ref name, .. } => name,
+            &VfsItem::Dir { ref name, .. } => name,
+        }
+    }
 }
 
 impl Vfs {
-    pub fn new(config: Config) -> Vfs {
+    pub fn new(config: Config, plugin_chain: &'static PluginChain) -> Vfs {
         Vfs {
             partitions: HashMap::new(),
             start_time: Instant::now(),
             change_history: Vec::new(),
+            plugin_chain,
             config,
         }
     }
@@ -78,6 +91,7 @@ impl Vfs {
     }
 
     fn read_dir<P: AsRef<Path>>(&self, path: P) -> Result<VfsItem, ()> {
+        let path = path.as_ref();
         let reader = match fs::read_dir(path) {
             Ok(v) => v,
             Err(_) => return Err(()),
@@ -104,11 +118,13 @@ impl Vfs {
         }
 
         Ok(VfsItem::Dir {
+            name: path.file_name().unwrap().to_string_lossy().into_owned(),
             children,
         })
     }
 
     fn read_file<P: AsRef<Path>>(&self, path: P) -> Result<VfsItem, ()> {
+        let path = path.as_ref();
         let mut file = match File::open(path) {
             Ok(v) => v,
             Err(_) => return Err(()),
@@ -122,6 +138,7 @@ impl Vfs {
         }
 
         Ok(VfsItem::File {
+            name: path.file_name().unwrap().to_string_lossy().into_owned(),
             contents,
         })
     }
@@ -151,13 +168,20 @@ impl Vfs {
 
     pub fn add_change(&mut self, timestamp: f64, route: Vec<String>) {
         if self.config.verbose {
-            println!("Added change {:?}", route);
+            println!("Received change {:?}, running through plugins...", route);
         }
 
-        self.change_history.push(VfsChange {
-            timestamp,
-            route,
-        });
+        match self.plugin_chain.handle_file_change(&route) {
+            Some(routes) => {
+                for route in routes {
+                    self.change_history.push(VfsChange {
+                        timestamp,
+                        route,
+                    });
+                }
+            },
+            None => {}
+        }
     }
 
     pub fn changes_since(&self, timestamp: f64) -> &[VfsChange] {
