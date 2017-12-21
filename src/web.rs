@@ -11,7 +11,7 @@ use vfs::{Vfs, VfsChange};
 use rbx::RbxItem;
 use plugin::PluginChain;
 
-static MAX_BODY_SIZE: usize = 25 * 1024 * 1025; // 25 MiB
+static MAX_BODY_SIZE: usize = 25 * 1024 * 1024; // 25 MiB
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
