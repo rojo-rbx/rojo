@@ -40,6 +40,13 @@ struct ChangesResult<'a> {
     current_time: f64,
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct WriteSpecifier {
+    route: String,
+    item: RbxItem,
+}
+
 fn json<T: serde::Serialize>(value: T) -> rouille::Response {
     let data = serde_json::to_string(&value).unwrap();
     rouille::Response::from_data("application/json", data)
@@ -181,6 +188,13 @@ pub fn start(config: Config, project: Project, vfs: Arc<Mutex<Vfs>>) {
             },
 
             (POST) (/write) => {
+                let _plugin_chain = PLUGIN_CHAIN.lock().unwrap();
+
+                let _write_request: Vec<WriteSpecifier> = match read_json(&request) {
+                    Some(v) => v,
+                    None => return rouille::Response::empty_400(),
+                };
+
                 rouille::Response::empty_404()
             },
 

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RbxItem {
     pub name: String,
@@ -9,7 +9,7 @@ pub struct RbxItem {
     pub properties: HashMap<String, RbxValue>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", tag = "type")]
 pub enum RbxValue {
     String {
