@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use regex::Regex;
 
 use core::Route;
-use plugin::{Plugin, PluginChain, TransformResult, FileChangeResult};
+use plugin::{Plugin, PluginChain, TransformFileResult, FileChangeResult};
 use rbx::{RbxItem, RbxValue};
 use vfs::VfsItem;
 
@@ -26,7 +26,7 @@ impl ScriptPlugin {
 }
 
 impl Plugin for ScriptPlugin {
-    fn transform_file(&self, plugins: &PluginChain, vfs_item: &VfsItem) -> TransformResult {
+    fn transform_file(&self, plugins: &PluginChain, vfs_item: &VfsItem) -> TransformFileResult {
         match vfs_item {
             &VfsItem::File { ref contents, ref name } => {
                 let (class_name, rbx_name) = {
@@ -37,7 +37,7 @@ impl Plugin for ScriptPlugin {
                     } else if let Some(captures) = MODULE_PATTERN.captures(name) {
                         ("ModuleScript".to_string(), captures.get(1).unwrap().as_str().to_string())
                     } else {
-                        return TransformResult::Pass;
+                        return TransformFileResult::Pass;
                     }
                 };
 
@@ -47,7 +47,7 @@ impl Plugin for ScriptPlugin {
                     value: contents.clone(),
                 });
 
-                TransformResult::Value(Some(RbxItem {
+                TransformFileResult::Value(Some(RbxItem {
                     name: rbx_name,
                     class_name: class_name,
                     children: Vec::new(),
@@ -62,15 +62,15 @@ impl Plugin for ScriptPlugin {
 
                     match maybe_item {
                         Some(v) => v,
-                        None => return TransformResult::Pass,
+                        None => return TransformFileResult::Pass,
                     }
                 };
 
                 let mut rbx_item = match self.transform_file(plugins, init_item) {
-                    TransformResult::Value(Some(item)) => item,
+                    TransformFileResult::Value(Some(item)) => item,
                     _ => {
                         eprintln!("Inconsistency detected in ScriptPlugin!");
-                        return TransformResult::Pass;
+                        return TransformFileResult::Pass;
                     },
                 };
 
@@ -90,7 +90,7 @@ impl Plugin for ScriptPlugin {
                     }
                 }
 
-                TransformResult::Value(Some(rbx_item))
+                TransformFileResult::Value(Some(rbx_item))
             },
         }
     }

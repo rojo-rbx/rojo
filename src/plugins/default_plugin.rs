@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use core::Route;
-use plugin::{Plugin, PluginChain, TransformResult, FileChangeResult};
+use plugin::{Plugin, PluginChain, TransformFileResult, FileChangeResult};
 use rbx::{RbxItem, RbxValue};
 use vfs::VfsItem;
 
@@ -17,7 +17,7 @@ impl DefaultPlugin {
 }
 
 impl Plugin for DefaultPlugin {
-    fn transform_file(&self, plugins: &PluginChain, vfs_item: &VfsItem) -> TransformResult {
+    fn transform_file(&self, plugins: &PluginChain, vfs_item: &VfsItem) -> TransformFileResult {
         match vfs_item {
             &VfsItem::File { ref contents, ref name } => {
                 let mut properties = HashMap::new();
@@ -26,7 +26,7 @@ impl Plugin for DefaultPlugin {
                     value: contents.clone(),
                 });
 
-                TransformResult::Value(Some(RbxItem {
+                TransformFileResult::Value(Some(RbxItem {
                     name: name.clone(),
                     class_name: "StringValue".to_string(),
                     children: Vec::new(),
@@ -45,7 +45,7 @@ impl Plugin for DefaultPlugin {
                     }
                 }
 
-                TransformResult::Value(Some(RbxItem {
+                TransformFileResult::Value(Some(RbxItem {
                     name: name.clone(),
                     class_name: "Folder".to_string(),
                     children: rbx_children,
