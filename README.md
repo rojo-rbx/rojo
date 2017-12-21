@@ -13,6 +13,8 @@ It's designed for power users who want to use the **best tools available** for b
 
 This is the main Rojo repository, containing the binary server component. For the source for the Roblox plugin, [see the rojo-plugin repository](https://github.com/LPGhatguy/rojo-plugin).
 
+The master branches of both respositories should always pass all tests and be functional, but are not suitable for production use!
+
 ## Features
 
 Rojo has a number of desirable features *right now*:
