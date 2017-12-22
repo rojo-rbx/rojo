@@ -14,12 +14,16 @@ Accepts a `Vec<{ Route, RbxItem }>` of items to write.
 I imagine that the `Name` attribute of the top-level `RbxItem` would be ignored in favor of the route name?
 
 ## CLI
+The `rojo serve` command uses three major components:
+* A Virtual Filesystem (VFS), which exposes the filesystem as `VfsItem` objects
+* A VFS watcher, which tracks changes to the filesystem and logs them
+* An HTTP API, which exposes an interface to the Roblox Studio plugin
 
 ### Transform Plugins
 Transform plugins (or filter plugins?) can interject in three places:
-* Transform a `VfsItem` that's being read into an `RbxItem`
-* Transform an `Rbxitem` that's being written into a `VfsItem`
-* Transform a file change into paths that need to be updated
+* Transform a `VfsItem` that's being read into an `RbxItem` in the VFS
+* Transform an `Rbxitem` that's being written into a `VfsItem` in the VFS
+* Transform a file change into paths that need to be updated in the VFS watcher
 
 The plan is to have several built-in plugins that can be rearranged/configured in project settings:
 
