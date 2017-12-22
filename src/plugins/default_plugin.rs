@@ -59,7 +59,7 @@ impl Plugin for DefaultPlugin {
         FileChangeResult::MarkChanged(Some(vec![route.clone()]))
     }
 
-    fn handle_rbx_change(&self, route: &Route, rbx_item: &RbxItem) -> RbxChangeResult {
+    fn handle_rbx_change(&self, _route: &Route, _rbx_item: &RbxItem) -> RbxChangeResult {
         RbxChangeResult::Pass
     }
 }

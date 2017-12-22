@@ -2,6 +2,7 @@ use rbx::RbxItem;
 use vfs::VfsItem;
 use core::Route;
 
+// TODO: Add error case?
 pub enum TransformFileResult {
     Value(Option<RbxItem>),
     Pass,

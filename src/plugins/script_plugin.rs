@@ -115,7 +115,7 @@ impl Plugin for ScriptPlugin {
         }
     }
 
-    fn handle_rbx_change(&self, route: &Route, rbx_item: &RbxItem) -> RbxChangeResult {
+    fn handle_rbx_change(&self, _route: &Route, _rbx_item: &RbxItem) -> RbxChangeResult {
         RbxChangeResult::Pass
     }
 }
