@@ -1,0 +1,24 @@
+{
+  "name": "hello",
+  "className": "Model",
+  "children": [
+    {
+      "name": "Some Part",
+      "className": "Part",
+      "children": [],
+      "properties": {}
+    },
+    {
+      "name": "Some StringValue",
+      "className": "StringValue",
+      "children": [],
+      "properties": {
+        "Value": {
+          "type": "string",
+          "value": "Hello, world!"
+        }
+      }
+    }
+  ],
+  "properties": {}
+}

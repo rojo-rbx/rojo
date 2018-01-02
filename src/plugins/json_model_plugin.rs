@@ -29,7 +29,11 @@ impl Plugin for JsonModelPlugin {
 
                 let mut rbx_item: RbxItem = match serde_json::from_str(contents) {
                     Ok(v) => v,
-                    Err(_) => return TransformFileResult::Pass, // This should be an error in the future
+                    Err(_) => {
+                        eprintln!("Unable to parse JSON Model File named {}", name);
+
+                        return TransformFileResult::Pass; // This should be an error in the future!
+                    },
                 };
 
                 rbx_item.properties.insert("Name".to_string(), RbxValue::String {

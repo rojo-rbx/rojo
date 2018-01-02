@@ -34,7 +34,7 @@ use core::Config;
 use pathext::canonicalish;
 use project::{Project, ProjectLoadError};
 use plugin::{PluginChain};
-use plugins::{DefaultPlugin, ScriptPlugin};
+use plugins::{DefaultPlugin, JsonModelPlugin, ScriptPlugin};
 use vfs::Vfs;
 use vfs_watch::VfsWatcher;
 
@@ -153,6 +153,7 @@ fn main() {
             lazy_static! {
                 static ref PLUGIN_CHAIN: PluginChain = PluginChain::new(vec![
                     Box::new(ScriptPlugin::new()),
+                    Box::new(JsonModelPlugin::new()),
                     Box::new(DefaultPlugin::new()),
                 ]);
             }
