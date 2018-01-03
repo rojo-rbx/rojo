@@ -141,5 +141,12 @@ I also have a couple tools that Rojo intends to replace:
 * [rbxfs](https://github.com/LPGhatguy/rbxfs), which has been deprecated by Rojo
 * [rbxpacker](https://github.com/LPGhatguy/rbxpacker), which is still useful
 
+## Contributing
+Pull requests are welcome!
+
+The `master` branch of both repositories have tests running on Travis for every commit and pull request. The test suite on `master` should always pass!
+
+The Rojo and Rojo Plugin repositories should stay in sync with eachother, so that the current `master` of each repository can be used together.
+
 ## License
 Rojo is available under the terms of the MIT license. See [LICENSE.md](LICENSE.md) for details.
