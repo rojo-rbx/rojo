@@ -173,6 +173,10 @@ impl Vfs {
 
         match self.plugin_chain.handle_file_change(&route) {
             Some(routes) => {
+                if self.config.verbose {
+                    println!("Adding changes from plugin: {:?}", routes);
+                }
+
                 for route in routes {
                     self.change_history.push(VfsChange {
                         timestamp,

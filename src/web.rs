@@ -169,6 +169,11 @@ pub fn start(config: Config, project: Project, plugin_chain: &'static PluginChai
                     })
                     .collect::<Vec<_>>();
 
+                if config.verbose {
+                    println!("Got read request: {:?}", read_request);
+                    println!("Responding with:\n\t{:?}", rbx_items);
+                }
+
                 json(ReadResult {
                     server_id: &server_id,
                     items: rbx_items,
