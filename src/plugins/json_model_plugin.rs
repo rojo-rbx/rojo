@@ -21,8 +21,8 @@ impl JsonModelPlugin {
 impl Plugin for JsonModelPlugin {
     fn transform_file(&self, _plugins: &PluginChain, vfs_item: &VfsItem) -> TransformFileResult {
         match vfs_item {
-            &VfsItem::File { ref contents, ref name } => {
-                let rbx_name = match JSON_MODEL_PATTERN.captures(name) {
+            &VfsItem::File { ref contents, .. } => {
+                let rbx_name = match JSON_MODEL_PATTERN.captures(vfs_item.name()) {
                     Some(captures) => captures.get(1).unwrap().as_str().to_string(),
                     None => return TransformFileResult::Pass,
                 };
@@ -30,7 +30,7 @@ impl Plugin for JsonModelPlugin {
                 let mut rbx_item: RbxItem = match serde_json::from_str(contents) {
                     Ok(v) => v,
                     Err(_) => {
-                        eprintln!("Unable to parse JSON Model File named {}", name);
+                        eprintln!("Unable to parse JSON Model File named {}", vfs_item.name());
 
                         return TransformFileResult::Pass; // This should be an error in the future!
                     },

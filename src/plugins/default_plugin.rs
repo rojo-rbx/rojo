@@ -19,7 +19,7 @@ impl DefaultPlugin {
 impl Plugin for DefaultPlugin {
     fn transform_file(&self, plugins: &PluginChain, vfs_item: &VfsItem) -> TransformFileResult {
         match vfs_item {
-            &VfsItem::File { ref contents, ref name } => {
+            &VfsItem::File { ref contents, .. } => {
                 let mut properties = HashMap::new();
 
                 properties.insert("Value".to_string(), RbxValue::String {
@@ -27,13 +27,13 @@ impl Plugin for DefaultPlugin {
                 });
 
                 TransformFileResult::Value(Some(RbxItem {
-                    name: name.clone(),
+                    name: vfs_item.name().clone(),
                     class_name: "StringValue".to_string(),
                     children: Vec::new(),
                     properties,
                 }))
             },
-            &VfsItem::Dir { ref children, ref name } => {
+            &VfsItem::Dir { ref children, .. } => {
                 let mut rbx_children = Vec::new();
 
                 for (_, child_item) in children {
@@ -46,7 +46,7 @@ impl Plugin for DefaultPlugin {
                 }
 
                 TransformFileResult::Value(Some(RbxItem {
-                    name: name.clone(),
+                    name: vfs_item.name().clone(),
                     class_name: "Folder".to_string(),
                     children: rbx_children,
                     properties: HashMap::new(),

@@ -1,4 +1,3 @@
-use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::fs::{self, File};
 use std::io::Read;
@@ -40,15 +39,25 @@ pub struct VfsChange {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", tag = "type")]
 pub enum VfsItem {
-    File { name: String, contents: String },
-    Dir { name: String, children: HashMap<String, VfsItem> },
+    File {
+        route: Vec<String>,
+        contents: String,
+    },
+    Dir {
+        route: Vec<String>,
+        children: HashMap<String, VfsItem>,
+    },
 }
 
 impl VfsItem {
     pub fn name(&self) -> &String {
+        self.route().last().unwrap()
+    }
+
+    pub fn route(&self) -> &[String] {
         match self {
-            &VfsItem::File { ref name, .. } => name,
-            &VfsItem::Dir { ref name, .. } => name,
+            &VfsItem::File { ref route, .. } => route,
+            &VfsItem::Dir { ref route, .. } => route,
         }
     }
 }
@@ -64,9 +73,9 @@ impl Vfs {
         }
     }
 
-    fn route_to_path<R: Borrow<str>>(&self, route: &[R]) -> Option<PathBuf> {
+    fn route_to_path(&self, route: &[String]) -> Option<PathBuf> {
         let (partition_name, rest) = match route.split_first() {
-            Some((first, rest)) => (first.borrow(), rest),
+            Some((first, rest)) => (first, rest),
             None => return None,
         };
 
@@ -90,7 +99,7 @@ impl Vfs {
         Some(full_path)
     }
 
-    fn read_dir<P: AsRef<Path>>(&self, path: P) -> Result<VfsItem, ()> {
+    fn read_dir<P: AsRef<Path>>(&self, route: &[String], path: P) -> Result<VfsItem, ()> {
         let path = path.as_ref();
         let reader = match fs::read_dir(path) {
             Ok(v) => v,
@@ -106,11 +115,13 @@ impl Vfs {
             };
 
             let path = entry.path();
+            let name = path.file_name().unwrap().to_string_lossy().into_owned();
 
-            match self.read_path(&path) {
+            let mut child_route = route.iter().cloned().collect::<Vec<_>>();
+            child_route.push(name.clone());
+
+            match self.read_path(&child_route, &path) {
                 Ok(child_item) => {
-                    let name = path.file_name().unwrap().to_string_lossy().into_owned();
-
                     children.insert(name, child_item);
                 },
                 Err(_) => {},
@@ -118,12 +129,12 @@ impl Vfs {
         }
 
         Ok(VfsItem::Dir {
-            name: path.file_name().unwrap().to_string_lossy().into_owned(),
+            route: route.iter().cloned().collect::<Vec<_>>(),
             children,
         })
     }
 
-    fn read_file<P: AsRef<Path>>(&self, path: P) -> Result<VfsItem, ()> {
+    fn read_file<P: AsRef<Path>>(&self, route: &[String], path: P) -> Result<VfsItem, ()> {
         let path = path.as_ref();
         let mut file = match File::open(path) {
             Ok(v) => v,
@@ -138,12 +149,12 @@ impl Vfs {
         }
 
         Ok(VfsItem::File {
-            name: path.file_name().unwrap().to_string_lossy().into_owned(),
+            route: route.iter().cloned().collect::<Vec<_>>(),
             contents,
         })
     }
 
-    fn read_path<P: AsRef<Path>>(&self, path: P) -> Result<VfsItem, ()> {
+    fn read_path<P: AsRef<Path>>(&self, route: &[String], path: P) -> Result<VfsItem, ()> {
         let path = path.as_ref();
 
         let metadata = match fs::metadata(path) {
@@ -152,9 +163,9 @@ impl Vfs {
         };
 
         if metadata.is_dir() {
-            self.read_dir(path)
+            self.read_dir(route, path)
         } else if metadata.is_file() {
-            self.read_file(path)
+            self.read_file(route, path)
         } else {
             Err(())
         }
@@ -206,18 +217,18 @@ impl Vfs {
         }
     }
 
-    pub fn read<R: Borrow<str>>(&self, route: &[R]) -> Result<VfsItem, ()> {
+    pub fn read(&self, route: &[String]) -> Result<VfsItem, ()> {
         match self.route_to_path(route) {
-            Some(path) => self.read_path(&path),
+            Some(path) => self.read_path(route, &path),
             None => Err(()),
         }
     }
 
-    pub fn write<R: Borrow<str>>(&self, _route: &[R], _item: VfsItem) -> Result<(), ()> {
+    pub fn write(&self, _route: &[String], _item: VfsItem) -> Result<(), ()> {
         unimplemented!()
     }
 
-    pub fn delete<R: Borrow<str>>(&self, _route: &[R]) -> Result<(), ()> {
+    pub fn delete(&self, _route: &[String]) -> Result<(), ()> {
         unimplemented!()
     }
 }

@@ -28,7 +28,9 @@ impl ScriptPlugin {
 impl Plugin for ScriptPlugin {
     fn transform_file(&self, plugins: &PluginChain, vfs_item: &VfsItem) -> TransformFileResult {
         match vfs_item {
-            &VfsItem::File { ref contents, ref name } => {
+            &VfsItem::File { ref contents, .. } => {
+                let name = vfs_item.name();
+
                 let (class_name, rbx_name) = {
                     if let Some(captures) = SERVER_PATTERN.captures(name) {
                         ("Script".to_string(), captures.get(1).unwrap().as_str().to_string())
@@ -54,7 +56,7 @@ impl Plugin for ScriptPlugin {
                     properties,
                 }))
             },
-            &VfsItem::Dir { ref children, ref name } => {
+            &VfsItem::Dir { ref children, .. } => {
                 let init_item = {
                     let maybe_item = children.get(SERVER_INIT)
                         .or(children.get(CLIENT_INIT))
@@ -75,7 +77,7 @@ impl Plugin for ScriptPlugin {
                 };
 
                 rbx_item.name.clear();
-                rbx_item.name.push_str(name);
+                rbx_item.name.push_str(vfs_item.name());
 
                 for (child_name, child_item) in children {
                     if child_name == init_item.name() {
