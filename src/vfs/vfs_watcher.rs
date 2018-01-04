@@ -25,7 +25,7 @@ impl VfsWatcher {
     pub fn start(mut self) {
         let outer_vfs = self.vfs.lock().unwrap();
 
-        for (partition_name, root_path) in &outer_vfs.partitions {
+        for (partition_name, root_path) in outer_vfs.get_partitions() {
             let (tx, rx) = mpsc::channel();
             let partition_name = partition_name.clone();
             let root_path = root_path.clone();

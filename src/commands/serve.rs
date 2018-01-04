@@ -79,7 +79,7 @@ pub fn serve(project_path: &PathBuf, verbose: bool, port: Option<u64>) {
                 }
             };
 
-            vfs.partitions.insert(name.clone(), path);
+            vfs.insert_partition(name, path);
         }
 
         Arc::new(Mutex::new(vfs))

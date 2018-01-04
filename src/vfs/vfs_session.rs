@@ -15,14 +15,14 @@ pub struct VfsSession {
     /// Contains all of the partitions mounted by the Vfs.
     ///
     /// These must be absolute paths!
-    pub partitions: HashMap<String, PathBuf>,
-
-    /// When the Vfs was initialized; used for change tracking.
-    pub start_time: Instant,
+    partitions: HashMap<String, PathBuf>,
 
     /// A chronologically-sorted list of routes that changed since the Vfs was
     /// created, along with a timestamp denoting when.
-    pub change_history: Vec<VfsChange>,
+    change_history: Vec<VfsChange>,
+
+    /// When the Vfs was initialized; used for change tracking.
+    start_time: Instant,
 
     plugin_chain: &'static PluginChain,
 }
@@ -42,6 +42,18 @@ impl VfsSession {
             change_history: Vec::new(),
             plugin_chain,
         }
+    }
+
+    pub fn get_partitions(&self) -> &HashMap<String, PathBuf> {
+        &self.partitions
+    }
+
+    pub fn insert_partition<P: Into<PathBuf>>(&mut self, name: &str, path: P) {
+        let path = path.into();
+
+        assert!(path.is_absolute());
+
+        self.partitions.insert(name.to_string(), path.into());
     }
 
     fn route_to_path(&self, route: &[String]) -> Option<PathBuf> {
