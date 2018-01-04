@@ -14,7 +14,7 @@ pub fn serve(project_path: &PathBuf, verbose: bool, port: Option<u64>) {
     let server_id = rand::random::<u64>();
 
     if verbose {
-        println!("Attempting to locate project at {}", project_path.display());
+        println!("Attempting to locate project at {}...", project_path.display());
     }
 
     let project = match Project::load(project_path) {
@@ -44,11 +44,10 @@ pub fn serve(project_path: &PathBuf, verbose: bool, port: Option<u64>) {
                 },
                 _ => {
                     // Any other error is fine; use the default project.
+                    println!("Found no project file, using default project...");
+                    Project::default()
                 },
             }
-
-            println!("Found no project file, using default project...");
-            Project::default()
         },
     };
 
@@ -66,10 +65,6 @@ pub fn serve(project_path: &PathBuf, verbose: bool, port: Option<u64>) {
         ]);
     }
 
-    if verbose {
-        println!("Loading VFS...");
-    }
-
     let vfs = {
         let mut vfs = VfsSession::new(&PLUGIN_CHAIN);
 
@@ -83,15 +78,6 @@ pub fn serve(project_path: &PathBuf, verbose: bool, port: Option<u64>) {
                     project_path.join(given_path)
                 }
             };
-
-            if verbose {
-                println!(
-                    "Partition '{}': {} @ {}",
-                    name,
-                    project_partition.target,
-                    project_partition.path
-                );
-            }
 
             vfs.partitions.insert(name.clone(), path);
         }
