@@ -1,10 +1,10 @@
-use rbx::RbxItem;
+use rbx::RbxInstance;
 use vfs::VfsItem;
 use core::Route;
 
 // TODO: Add error case?
 pub enum TransformFileResult {
-    Value(Option<RbxItem>),
+    Value(Option<RbxInstance>),
     Pass,
 }
 
@@ -20,7 +20,7 @@ pub enum FileChangeResult {
 
 pub trait Plugin {
     fn transform_file(&self, plugins: &PluginChain, vfs_item: &VfsItem) -> TransformFileResult;
-    fn handle_rbx_change(&self, route: &Route, rbx_item: &RbxItem) -> RbxChangeResult;
+    fn handle_rbx_change(&self, route: &Route, rbx_item: &RbxInstance) -> RbxChangeResult;
     fn handle_file_change(&self, route: &Route) -> FileChangeResult;
 }
 
@@ -35,7 +35,7 @@ impl PluginChain {
         }
     }
 
-    pub fn transform_file(&self, vfs_item: &VfsItem) -> Option<RbxItem> {
+    pub fn transform_file(&self, vfs_item: &VfsItem) -> Option<RbxInstance> {
         for plugin in &self.plugins {
             match plugin.transform_file(self, vfs_item) {
                 TransformFileResult::Value(rbx_item) => return rbx_item,
@@ -46,7 +46,7 @@ impl PluginChain {
         None
     }
 
-    pub fn handle_rbx_change(&self, route: &Route, rbx_item: &RbxItem) -> Option<VfsItem> {
+    pub fn handle_rbx_change(&self, route: &Route, rbx_item: &RbxInstance) -> Option<VfsItem> {
         for plugin in &self.plugins {
             match plugin.handle_rbx_change(route, rbx_item) {
                 RbxChangeResult::Write(vfs_item) => return vfs_item,

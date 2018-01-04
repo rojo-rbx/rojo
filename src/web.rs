@@ -8,7 +8,7 @@ use serde_json;
 use core::Config;
 use project::Project;
 use vfs::{Vfs, VfsChange};
-use rbx::RbxItem;
+use rbx::RbxInstance;
 use plugin::PluginChain;
 
 static MAX_BODY_SIZE: usize = 25 * 1024 * 1024; // 25 MiB
@@ -26,7 +26,7 @@ struct ServerInfo<'a> {
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct ReadResult<'a> {
-    items: Vec<Option<RbxItem>>,
+    items: Vec<Option<RbxInstance>>,
     server_id: &'a str,
     current_time: f64,
 }
@@ -43,7 +43,7 @@ struct ChangesResult<'a> {
 #[serde(rename_all = "camelCase")]
 struct WriteSpecifier {
     route: String,
-    item: RbxItem,
+    item: RbxInstance,
 }
 
 fn json<T: serde::Serialize>(value: T) -> rouille::Response {

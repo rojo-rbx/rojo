@@ -4,7 +4,7 @@ use regex::Regex;
 
 use core::Route;
 use plugin::{Plugin, PluginChain, TransformFileResult, RbxChangeResult, FileChangeResult};
-use rbx::{RbxItem, RbxValue};
+use rbx::{RbxInstance, RbxValue};
 use vfs::VfsItem;
 
 lazy_static! {
@@ -49,7 +49,7 @@ impl Plugin for ScriptPlugin {
                     value: contents.clone(),
                 });
 
-                TransformFileResult::Value(Some(RbxItem {
+                TransformFileResult::Value(Some(RbxInstance {
                     name: rbx_name,
                     class_name: class_name,
                     children: Vec::new(),
@@ -117,7 +117,7 @@ impl Plugin for ScriptPlugin {
         }
     }
 
-    fn handle_rbx_change(&self, _route: &Route, _rbx_item: &RbxItem) -> RbxChangeResult {
+    fn handle_rbx_change(&self, _route: &Route, _rbx_item: &RbxInstance) -> RbxChangeResult {
         RbxChangeResult::Pass
     }
 }

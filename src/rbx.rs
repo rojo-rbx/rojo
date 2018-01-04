@@ -2,10 +2,10 @@ use std::collections::HashMap;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct RbxItem {
+pub struct RbxInstance {
     pub name: String,
     pub class_name: String,
-    pub children: Vec<RbxItem>,
+    pub children: Vec<RbxInstance>,
     pub properties: HashMap<String, RbxValue>,
 }
 

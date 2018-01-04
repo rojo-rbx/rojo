@@ -3,7 +3,7 @@ use serde_json;
 
 use core::Route;
 use plugin::{Plugin, PluginChain, TransformFileResult, RbxChangeResult, FileChangeResult};
-use rbx::{RbxItem, RbxValue};
+use rbx::{RbxInstance, RbxValue};
 use vfs::VfsItem;
 
 lazy_static! {
@@ -27,7 +27,7 @@ impl Plugin for JsonModelPlugin {
                     None => return TransformFileResult::Pass,
                 };
 
-                let mut rbx_item: RbxItem = match serde_json::from_str(contents) {
+                let mut rbx_item: RbxInstance = match serde_json::from_str(contents) {
                     Ok(v) => v,
                     Err(_) => {
                         eprintln!("Unable to parse JSON Model File named {}", vfs_item.name());
@@ -50,7 +50,7 @@ impl Plugin for JsonModelPlugin {
         FileChangeResult::Pass
     }
 
-    fn handle_rbx_change(&self, _route: &Route, _rbx_item: &RbxItem) -> RbxChangeResult {
+    fn handle_rbx_change(&self, _route: &Route, _rbx_item: &RbxInstance) -> RbxChangeResult {
         RbxChangeResult::Pass
     }
 }
