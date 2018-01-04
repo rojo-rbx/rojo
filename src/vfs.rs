@@ -36,6 +36,10 @@ pub struct VfsChange {
     route: Vec<String>,
 }
 
+/// A VfsItem represents either a file or directory as it came from the filesystem.
+///
+/// The interface here is intentionally simplified to make it easier to traverse
+/// files that have been read into memory.
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", tag = "type")]
 pub enum VfsItem {
@@ -171,12 +175,15 @@ impl Vfs {
         }
     }
 
+    /// Get the current time, used for logging timestamps for file changes.
     pub fn current_time(&self) -> f64 {
         let elapsed = self.start_time.elapsed();
 
         elapsed.as_secs() as f64 + elapsed.subsec_nanos() as f64 * 1e-9
     }
 
+    /// Register a new change to the filesystem at the given timestamp and VFS
+    /// route.
     pub fn add_change(&mut self, timestamp: f64, route: Vec<String>) {
         if self.config.verbose {
             println!("Received change {:?}, running through plugins...", route);
@@ -199,6 +206,7 @@ impl Vfs {
         }
     }
 
+    /// Collect a list of changes that occured since the given timestamp.
     pub fn changes_since(&self, timestamp: f64) -> &[VfsChange] {
         let mut marker: Option<usize> = None;
 
@@ -217,6 +225,7 @@ impl Vfs {
         }
     }
 
+    /// Read an item from the filesystem using the given VFS route.
     pub fn read(&self, route: &[String]) -> Result<VfsItem, ()> {
         match self.route_to_path(route) {
             Some(path) => self.read_path(route, &path),

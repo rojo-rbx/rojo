@@ -8,6 +8,8 @@ use core::Config;
 use pathext::path_to_route;
 use vfs::Vfs;
 
+/// An object that registers watchers on the real filesystem and relays those
+/// changes to the virtual filesystem layer.
 pub struct VfsWatcher {
     vfs: Arc<Mutex<Vfs>>,
     watchers: Vec<RecommendedWatcher>,
