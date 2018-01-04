@@ -1,15 +1,7 @@
-#[macro_use]
-extern crate serde_derive;
-
-#[macro_use]
-extern crate rouille;
-
-#[macro_use]
-extern crate clap;
-
-#[macro_use]
-extern crate lazy_static;
-
+#[macro_use] extern crate serde_derive;
+#[macro_use] extern crate rouille;
+#[macro_use] extern crate clap;
+#[macro_use] extern crate lazy_static;
 extern crate notify;
 extern crate rand;
 extern crate serde;
@@ -21,22 +13,15 @@ pub mod core;
 pub mod project;
 pub mod pathext;
 pub mod vfs;
-pub mod vfs_watch;
 pub mod rbx;
 pub mod plugin;
 pub mod plugins;
+pub mod commands;
 
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex};
-use std::thread;
+use std::process;
 
-use core::Config;
 use pathext::canonicalish;
-use project::{Project, ProjectLoadError};
-use plugin::{PluginChain};
-use plugins::{DefaultPlugin, JsonModelPlugin, ScriptPlugin};
-use vfs::Vfs;
-use vfs_watch::VfsWatcher;
 
 fn main() {
     let matches = clap_app!(rojo =>
@@ -68,27 +53,13 @@ fn main() {
         _ => true,
     };
 
-    let server_id = rand::random::<u64>();
-
-    if verbose {
-        println!("Server ID: {}", server_id);
-    }
-
     match matches.subcommand() {
         ("init", sub_matches) => {
             let sub_matches = sub_matches.unwrap();
             let project_path = Path::new(sub_matches.value_of("PATH").unwrap_or("."));
             let full_path = canonicalish(project_path);
 
-            match Project::init(&full_path) {
-                Ok(_) => {
-                    println!("Created new empty project at {}", full_path.display());
-                },
-                Err(e) => {
-                    eprintln!("Failed to create new project.\n{}", e);
-                    std::process::exit(1);
-                },
-            }
+            commands::init(&full_path);
         },
         ("serve", sub_matches) => {
             let sub_matches = sub_matches.unwrap();
@@ -98,126 +69,29 @@ fn main() {
                 None => std::env::current_dir().unwrap(),
             };
 
-            if verbose {
-                println!("Attempting to locate project at {}", project_path.display());
-            }
-
-            let project = match Project::load(&project_path) {
-                Ok(v) => {
-                    println!("Using project from {}", project_path.display());
-                    v
-                },
-                Err(err) => {
-                    match err {
-                        ProjectLoadError::InvalidJson(serde_err) => {
-                            eprintln!(
-                                "Found invalid JSON!\nProject in: {}\nError: {}",
-                                project_path.display(),
-                                serde_err,
-                            );
-
-                            std::process::exit(1);
-                        },
-                        ProjectLoadError::FailedToOpen | ProjectLoadError::FailedToRead => {
-                            eprintln!("Found project file, but failed to read it!");
-                            eprintln!(
-                                "Check the permissions of the project file at\n{}",
-                                project_path.display(),
-                            );
-
-                            std::process::exit(1);
-                        },
-                        _ => {
-                            // Any other error is fine; use the default project.
-                        },
-                    }
-
-                    println!("Found no project file, using default project...");
-                    Project::default()
-                },
-            };
-
             let port = {
                 match sub_matches.value_of("port") {
                     Some(source) => match source.parse::<u64>() {
-                        Ok(value) => value,
+                        Ok(value) => Some(value),
                         Err(_) => {
                             eprintln!("Invalid port '{}'", source);
-                            std::process::exit(1);
+                            process::exit(1);
                         },
                     },
-                    None => project.serve_port,
+                    None => None,
                 }
             };
 
-            lazy_static! {
-                static ref PLUGIN_CHAIN: PluginChain = PluginChain::new(vec![
-                    Box::new(ScriptPlugin::new()),
-                    Box::new(JsonModelPlugin::new()),
-                    Box::new(DefaultPlugin::new()),
-                ]);
-            }
-
-            let config = Config {
-                port,
-                verbose,
-                server_id,
-            };
-
-            if verbose {
-                println!("Loading VFS...");
-            }
-
-            let vfs = {
-                let mut vfs = Vfs::new(config.clone(), &PLUGIN_CHAIN);
-
-                for (name, project_partition) in &project.partitions {
-                    let path = {
-                        let given_path = Path::new(&project_partition.path);
-
-                        if given_path.is_absolute() {
-                            given_path.to_path_buf()
-                        } else {
-                            project_path.join(given_path)
-                        }
-                    };
-
-                    if verbose {
-                        println!(
-                            "Partition '{}': {} @ {}",
-                            name,
-                            project_partition.target,
-                            project_partition.path
-                        );
-                    }
-
-                    vfs.partitions.insert(name.clone(), path);
-                }
-
-                Arc::new(Mutex::new(vfs))
-            };
-
-            {
-                let vfs = vfs.clone();
-                let config = config.clone();
-
-                thread::spawn(move || {
-                    VfsWatcher::new(config, vfs).start();
-                });
-            }
-
-            println!("Server listening on port {}", port);
-
-            web::start(config.clone(), project.clone(), &PLUGIN_CHAIN, vfs.clone());
+            commands::serve(&project_path, verbose, port);
         },
         ("pack", _) => {
             eprintln!("'rojo pack' is not yet implemented!");
-            std::process::exit(1);
+            process::exit(1);
         },
         _ => {
             eprintln!("Please specify a subcommand!");
             eprintln!("Try 'rojo help' for information.");
-            std::process::exit(1);
+            process::exit(1);
         },
     }
 }

@@ -1,0 +1,114 @@
+use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex};
+use std::thread;
+use std::process;
+
+use rand;
+
+use project::{Project, ProjectLoadError};
+use plugin::{PluginChain};
+use plugins::{DefaultPlugin, JsonModelPlugin, ScriptPlugin};
+use vfs::{VfsSession, VfsWatcher};
+use web;
+
+pub fn serve(project_path: &PathBuf, verbose: bool, port: Option<u64>) {
+    let server_id = rand::random::<u64>();
+
+    if verbose {
+        println!("Attempting to locate project at {}", project_path.display());
+    }
+
+    let project = match Project::load(project_path) {
+        Ok(v) => {
+            println!("Using project from {}", project_path.display());
+            v
+        },
+        Err(err) => {
+            match err {
+                ProjectLoadError::InvalidJson(serde_err) => {
+                    eprintln!(
+                        "Found invalid JSON!\nProject in: {}\nError: {}",
+                        project_path.display(),
+                        serde_err,
+                    );
+
+                    process::exit(1);
+                },
+                ProjectLoadError::FailedToOpen | ProjectLoadError::FailedToRead => {
+                    eprintln!("Found project file, but failed to read it!");
+                    eprintln!(
+                        "Check the permissions of the project file at\n{}",
+                        project_path.display(),
+                    );
+
+                    process::exit(1);
+                },
+                _ => {
+                    // Any other error is fine; use the default project.
+                },
+            }
+
+            println!("Found no project file, using default project...");
+            Project::default()
+        },
+    };
+
+    let web_config = web::WebConfig {
+        verbose,
+        port: port.unwrap_or(project.serve_port),
+        server_id,
+    };
+
+    lazy_static! {
+        static ref PLUGIN_CHAIN: PluginChain = PluginChain::new(vec![
+            Box::new(ScriptPlugin::new()),
+            Box::new(JsonModelPlugin::new()),
+            Box::new(DefaultPlugin::new()),
+        ]);
+    }
+
+    if verbose {
+        println!("Loading VFS...");
+    }
+
+    let vfs = {
+        let mut vfs = VfsSession::new(&PLUGIN_CHAIN);
+
+        for (name, project_partition) in &project.partitions {
+            let path = {
+                let given_path = Path::new(&project_partition.path);
+
+                if given_path.is_absolute() {
+                    given_path.to_path_buf()
+                } else {
+                    project_path.join(given_path)
+                }
+            };
+
+            if verbose {
+                println!(
+                    "Partition '{}': {} @ {}",
+                    name,
+                    project_partition.target,
+                    project_partition.path
+                );
+            }
+
+            vfs.partitions.insert(name.clone(), path);
+        }
+
+        Arc::new(Mutex::new(vfs))
+    };
+
+    {
+        let vfs = vfs.clone();
+
+        thread::spawn(move || {
+            VfsWatcher::new(vfs).start();
+        });
+    }
+
+    println!("Server listening on port {}", web_config.port);
+
+    web::start(web_config, project.clone(), &PLUGIN_CHAIN, vfs.clone());
+}

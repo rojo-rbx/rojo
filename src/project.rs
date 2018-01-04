@@ -44,10 +44,19 @@ impl fmt::Display for ProjectInitError {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ProjectPartition {
+    /// A slash-separated path to a file or folder, relative to the project's
+    /// directory.
     pub path: String,
+
+    /// A dot-separated route to a Roblox instance, relative to game.
     pub target: String,
 }
 
+/// Represents a project configured by a user for use with Rojo. Holds anything
+/// that can be configured with `rojo.json`.
+///
+/// In the future, this object will hold dependency information and other handy
+/// configurables
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct Project {
@@ -57,6 +66,7 @@ pub struct Project {
 }
 
 impl Project {
+    /// Creates a new empty Project object with the given name.
     pub fn new<T: Into<String>>(name: T) -> Project {
         Project {
             name: name.into(),
@@ -64,10 +74,12 @@ impl Project {
         }
     }
 
+    /// Initializes a new project inside the given folder path.
     pub fn init<T: AsRef<Path>>(location: T) -> Result<Project, ProjectInitError> {
         let location = location.as_ref();
         let package_path = location.join(PROJECT_FILENAME);
 
+        // We abort if the project file already exists.
         match fs::metadata(&package_path) {
             Ok(_) => return Err(ProjectInitError::AlreadyExists),
             Err(_) => {},
@@ -78,11 +90,14 @@ impl Project {
             Err(_) => return Err(ProjectInitError::FailedToCreate),
         };
 
+        // Try to give the project a meaningful name.
+        // If we can't, we'll just fall back to a default.
         let name = match location.file_name() {
             Some(v) => v.to_string_lossy().into_owned(),
             None => "new-project".to_string(),
         };
 
+        // Configure the project with all of the values we know so far.
         let project = Project::new(name);
         let serialized = serde_json::to_string_pretty(&project).unwrap();
 
@@ -94,6 +109,8 @@ impl Project {
         Ok(project)
     }
 
+    /// Attempts to load a project from the file named PROJECT_FILENAME from the
+    /// given folder.
     pub fn load<T: AsRef<Path>>(location: T) -> Result<Project, ProjectLoadError> {
         let package_path = location.as_ref().join(Path::new(PROJECT_FILENAME));
 
@@ -120,6 +137,7 @@ impl Project {
         }
     }
 
+    /// Saves the given project file to the given folder with the appropriate name.
     pub fn save<T: AsRef<Path>>(&self, location: T) -> Result<(), ProjectSaveError> {
         let package_path = location.as_ref().join(Path::new(PROJECT_FILENAME));
 
@@ -139,7 +157,7 @@ impl Project {
 impl Default for Project {
     fn default() -> Project {
         Project {
-            name: "some-project".to_string(),
+            name: "new-project".to_string(),
             serve_port: 8000,
             partitions: HashMap::new(),
         }

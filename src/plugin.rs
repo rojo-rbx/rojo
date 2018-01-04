@@ -2,15 +2,18 @@ use rbx::RbxInstance;
 use vfs::VfsItem;
 use core::Route;
 
-// TODO: Add error case?
 pub enum TransformFileResult {
     Value(Option<RbxInstance>),
     Pass,
+
+    // TODO: Error case
 }
 
 pub enum RbxChangeResult {
     Write(Option<VfsItem>),
     Pass,
+
+    // TODO: Error case
 }
 
 pub enum FileChangeResult {
@@ -19,11 +22,20 @@ pub enum FileChangeResult {
 }
 
 pub trait Plugin {
+    /// Invoked when a file is read from the filesystem and needs to be turned
+    /// into a Roblox instance.
     fn transform_file(&self, plugins: &PluginChain, vfs_item: &VfsItem) -> TransformFileResult;
+
+    /// Invoked when a Roblox Instance change is reported by the Roblox Studio
+    /// plugin and needs to be turned into a file to save.
     fn handle_rbx_change(&self, route: &Route, rbx_item: &RbxInstance) -> RbxChangeResult;
+
+    /// Invoked when a file changes on the filesystem. The result defines what
+    /// routes are marked as needing to be refreshed.
     fn handle_file_change(&self, route: &Route) -> FileChangeResult;
 }
 
+/// A set of plugins that are composed in order.
 pub struct PluginChain {
     plugins: Vec<Box<Plugin + Send + Sync>>,
 }

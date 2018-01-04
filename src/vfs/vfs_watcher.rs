@@ -4,24 +4,21 @@ use std::time::Duration;
 
 use notify::{DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher};
 
-use core::Config;
 use pathext::path_to_route;
-use vfs::Vfs;
+use vfs::VfsSession;
 
 /// An object that registers watchers on the real filesystem and relays those
 /// changes to the virtual filesystem layer.
 pub struct VfsWatcher {
-    vfs: Arc<Mutex<Vfs>>,
+    vfs: Arc<Mutex<VfsSession>>,
     watchers: Vec<RecommendedWatcher>,
-    config: Config,
 }
 
 impl VfsWatcher {
-    pub fn new(config: Config, vfs: Arc<Mutex<Vfs>>) -> VfsWatcher {
+    pub fn new(vfs: Arc<Mutex<VfsSession>>) -> VfsWatcher {
         VfsWatcher {
             vfs,
             watchers: Vec::new(),
-            config,
         }
     }
 
@@ -45,17 +42,12 @@ impl VfsWatcher {
 
                 {
                     let vfs = self.vfs.clone();
-                    let config = self.config.clone();
 
                     thread::spawn(move || {
                         loop {
                             let event = rx.recv().unwrap();
                             let mut vfs = vfs.lock().unwrap();
                             let current_time = vfs.current_time();
-
-                            if config.verbose {
-                                println!("FS event {:?}", event);
-                            }
 
                             match event {
                                 DebouncedEvent::Write(ref change_path) |

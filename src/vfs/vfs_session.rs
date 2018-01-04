@@ -4,14 +4,14 @@ use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
-use core::Config;
 use plugin::PluginChain;
+use vfs::VfsItem;
 
 /// Represents a virtual layer over multiple parts of the filesystem.
 ///
 /// Paths in this system are represented as slices of strings, and are always
 /// relative to a partition, which is an absolute path into the real filesystem.
-pub struct Vfs {
+pub struct VfsSession {
     /// Contains all of the partitions mounted by the Vfs.
     ///
     /// These must be absolute paths!
@@ -25,8 +25,6 @@ pub struct Vfs {
     pub change_history: Vec<VfsChange>,
 
     plugin_chain: &'static PluginChain,
-
-    config: Config,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -36,44 +34,13 @@ pub struct VfsChange {
     route: Vec<String>,
 }
 
-/// A VfsItem represents either a file or directory as it came from the filesystem.
-///
-/// The interface here is intentionally simplified to make it easier to traverse
-/// files that have been read into memory.
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase", tag = "type")]
-pub enum VfsItem {
-    File {
-        route: Vec<String>,
-        contents: String,
-    },
-    Dir {
-        route: Vec<String>,
-        children: HashMap<String, VfsItem>,
-    },
-}
-
-impl VfsItem {
-    pub fn name(&self) -> &String {
-        self.route().last().unwrap()
-    }
-
-    pub fn route(&self) -> &[String] {
-        match self {
-            &VfsItem::File { ref route, .. } => route,
-            &VfsItem::Dir { ref route, .. } => route,
-        }
-    }
-}
-
-impl Vfs {
-    pub fn new(config: Config, plugin_chain: &'static PluginChain) -> Vfs {
-        Vfs {
+impl VfsSession {
+    pub fn new(plugin_chain: &'static PluginChain) -> VfsSession {
+        VfsSession {
             partitions: HashMap::new(),
             start_time: Instant::now(),
             change_history: Vec::new(),
             plugin_chain,
-            config,
         }
     }
 
@@ -185,16 +152,8 @@ impl Vfs {
     /// Register a new change to the filesystem at the given timestamp and VFS
     /// route.
     pub fn add_change(&mut self, timestamp: f64, route: Vec<String>) {
-        if self.config.verbose {
-            println!("Received change {:?}, running through plugins...", route);
-        }
-
         match self.plugin_chain.handle_file_change(&route) {
             Some(routes) => {
-                if self.config.verbose {
-                    println!("Adding changes from plugin: {:?}", routes);
-                }
-
                 for route in routes {
                     self.change_history.push(VfsChange {
                         timestamp,

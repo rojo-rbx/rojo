@@ -22,7 +22,7 @@ The `rojo serve` command uses three major components:
 ### Transform Plugins
 Transform plugins (or filter plugins?) can interject in three places:
 * Transform a `VfsItem` that's being read into an `RbxInstance` in the VFS
-* Transform an `Rbxitem` that's being written into a `VfsItem` in the VFS
+* Transform an `RbxInstance` that's being written into a `VfsItem` in the VFS
 * Transform a file change into paths that need to be updated in the VFS watcher
 
 The plan is to have several built-in plugins that can be rearranged/configured in project settings:
