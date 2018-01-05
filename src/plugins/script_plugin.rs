@@ -54,6 +54,7 @@ impl Plugin for ScriptPlugin {
                     class_name: class_name,
                     children: Vec::new(),
                     properties,
+                    route: Some(vfs_item.route().to_vec()),
                 }))
             },
             &VfsItem::Dir { ref children, .. } => {

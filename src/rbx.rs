@@ -8,6 +8,9 @@ pub struct RbxInstance {
     pub class_name: String,
     pub children: Vec<RbxInstance>,
     pub properties: HashMap<String, RbxValue>,
+
+    /// The route that this instance was generated from, if there was one.
+    pub route: Option<Vec<String>>,
 }
 
 /// Any kind value that can be used by Roblox

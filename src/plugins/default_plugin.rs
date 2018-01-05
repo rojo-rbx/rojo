@@ -31,6 +31,7 @@ impl Plugin for DefaultPlugin {
                     class_name: "StringValue".to_string(),
                     children: Vec::new(),
                     properties,
+                    route: Some(vfs_item.route().to_vec()),
                 }))
             },
             &VfsItem::Dir { ref children, .. } => {
@@ -50,6 +51,7 @@ impl Plugin for DefaultPlugin {
                     class_name: "Folder".to_string(),
                     children: rbx_children,
                     properties: HashMap::new(),
+                    route: Some(vfs_item.route().to_vec()),
                 }))
             },
         }
