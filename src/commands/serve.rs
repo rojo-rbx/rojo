@@ -1,6 +1,7 @@
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex};
 use std::process;
+use std::sync::{Arc, Mutex};
+use std::thread;
 
 use rand;
 
@@ -87,6 +88,12 @@ pub fn serve(project_path: &PathBuf, verbose: bool, port: Option<u64>) {
 
     println!("Server listening on port {}", web_config.port);
 
-    VfsWatcher::new(vfs.clone()).start();
+    {
+        let vfs = vfs.clone();
+        thread::spawn(move || {
+            VfsWatcher::new(vfs).start();
+        });
+    }
+
     web::start(web_config, project.clone(), &PLUGIN_CHAIN, vfs.clone());
 }
