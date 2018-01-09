@@ -29,8 +29,8 @@ impl Plugin for JsonModelPlugin {
 
                 let mut rbx_item: RbxInstance = match serde_json::from_str(contents) {
                     Ok(v) => v,
-                    Err(_) => {
-                        eprintln!("Unable to parse JSON Model File named {}", vfs_item.name());
+                    Err(e) => {
+                        eprintln!("Unable to parse JSON Model File named {}: {}", vfs_item.name(), e);
 
                         return TransformFileResult::Pass; // This should be an error in the future!
                     },
