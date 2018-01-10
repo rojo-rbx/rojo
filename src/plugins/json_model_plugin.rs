@@ -3,7 +3,7 @@ use serde_json;
 
 use core::Route;
 use plugin::{Plugin, PluginChain, TransformFileResult, RbxChangeResult, FileChangeResult};
-use rbx::{RbxInstance, RbxValue};
+use rbx::RbxInstance;
 use vfs::VfsItem;
 
 lazy_static! {
@@ -37,10 +37,7 @@ impl Plugin for JsonModelPlugin {
                 };
 
                 rbx_item.route = Some(vfs_item.route().to_vec());
-
-                rbx_item.properties.insert("Name".to_string(), RbxValue::String {
-                    value: rbx_name,
-                });
+                rbx_item.name = rbx_name;
 
                 TransformFileResult::Value(Some(rbx_item))
             },
