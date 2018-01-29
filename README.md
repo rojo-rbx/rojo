@@ -1,17 +1,22 @@
-<h1 align="center">Rojo</h1>
+<div align="center">
+  <img src="assets/rojo-logo.png" alt="Rojo" height="150" />
+</div>
+
+<div>&nbsp;</div>
+
 <div align="center">
 	<a href="https://travis-ci.org/LPGhatguy/rojo">
 		<img src="https://api.travis-ci.org/LPGhatguy/rojo.svg?branch=master" alt="Travis-CI Build Status" />
 	</a>
 </div>
 
-<div>&nbsp;</div>
+<hr />
 
-Rojo is a flexible multi-tool designed for creating robust Roblox projects. It's in early development, but is still useful for many projects.
+**Rojo** is a flexible multi-tool designed for creating robust Roblox projects. It's in early development, but is still useful for many projects.
 
 It's designed for power users who want to use the **best tools available** for building games, libraries, and plugins.
 
-This is the main Rojo repository, containing the binary server component. For the source for the Roblox plugin, [see the rojo-plugin repository](https://github.com/LPGhatguy/rojo-plugin).
+This is the main Rojo repository, containing the binary and project server component. For the source for the Roblox plugin, [see the rojo-plugin repository](https://github.com/LPGhatguy/rojo-plugin).
 
 The master branches of both respositories should always pass all tests and be functional, but are not suitable for production use!
 
