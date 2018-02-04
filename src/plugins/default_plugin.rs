@@ -48,7 +48,7 @@ impl Plugin for DefaultPlugin {
 
                 TransformFileResult::Value(Some(RbxInstance {
                     name: vfs_item.name().clone(),
-                    class_name: "Folder".to_string(),
+                    class_name: "*".to_string(),
                     children: rbx_children,
                     properties: HashMap::new(),
                     route: Some(vfs_item.route().to_vec()),
