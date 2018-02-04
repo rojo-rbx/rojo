@@ -20,7 +20,12 @@ pub enum RbxValue {
     String {
         value: String,
     },
+    Bool {
+        value: bool,
+    },
+    Number {
+        value: f64,
+    },
 
-    // TODO: Other primitives
     // TODO: Compound types like Vector3
 }
