@@ -1,24 +1,24 @@
 {
-  "name": "hello",
-  "className": "Model",
-  "children": [
+  "Name": "hello",
+  "ClassName": "Model",
+  "Children": [
     {
-      "name": "Some Part",
-      "className": "Part",
-      "children": [],
-      "properties": {}
+      "Name": "Some Part",
+      "ClassName": "Part",
+      "Children": [],
+      "Properties": {}
     },
     {
-      "name": "Some StringValue",
-      "className": "StringValue",
-      "children": [],
-      "properties": {
+      "Name": "Some StringValue",
+      "ClassName": "StringValue",
+      "Children": [],
+      "Properties": {
         "Value": {
-          "type": "string",
-          "value": "Hello, world!"
+          "Type": "String",
+          "Value": "Hello, world!"
         }
       }
     }
   ],
-  "properties": {}
+  "Properties": {}
 }
