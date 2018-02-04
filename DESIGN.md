@@ -37,3 +37,13 @@ The plan is to have several built-in plugins that can be rearranged/configured i
 
 ## Roblox Studio Plugin
 With the protocol version 1 change, the Roblox Studio plugin got a lot simpler. Notably, the plugin doesn't need to be aware of anything about the filesystem's semantics, which is super handy.
+
+## Bi-directional syncing
+Quenty laid out a good way to handle bi-directional syncing.
+
+When receiving a change from the plugin:
+1. Hash the new contents of the file, store it in a map from routes to hashes
+2. Write the new file contents to the filesystem
+3. Later down the line, receive a change event from the filesystem watcher
+4. When receiving a change, if the item is in the hash map, read it and hash those contents
+5. If the hash matches the last noted hash, discard the change, else continue as normal
