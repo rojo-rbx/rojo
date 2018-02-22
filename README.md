@@ -26,10 +26,11 @@ Rojo has a number of desirable features *right now*:
 
 * Work on scripts from the filesystem, in your favorite editor
 * Version your place, library, or plugin using Git or another VCS
+* Sync JSON-format models from the filesystem into your game
 
-Soon, Rojo will be able to:
+Later this year, Rojo will be able to:
 
-* Sync Roblox objects (including models) bi-directionally between the filesystem and Roblox Studio
+* Sync rbxmx-format Roblox models bi-directionally between the filesystem and Roblox Studio
 * Create installation scripts for libraries to be used in standalone places
 	* Similar to [rbxpacker](https://github.com/LPGhatguy/rbxpacker), another one of my projects
 * Add strongly-versioned dependencies to your project
@@ -103,7 +104,7 @@ For example, if you want to map your `src` directory to an object named `My Cool
 
 The `path` parameter is relative to the project file.
 
-The `target` starts at `game` and crawls down the tree. If any objects don't exist along the way, they'll be created as `Folder` instances.
+The `target` parameter is a path to a Roblox object to link the partition to. It starts at `game` and crawls down the tree. If any objects don't exist along the way, they'll be created as `Folder` instances.
 
 Run `rojo serve` in the directory containing this project, then press the "Sync In" or "Toggle Polling" buttons in the Roblox Studio plugin to move code into your game.
 
@@ -117,6 +118,7 @@ Creation of Roblox instances follows a simple set of rules. The first rule that 
 | `*.server.lua` | `Script`       | `Source` will contain the file's contents |
 | `*.client.lua` | `LocalScript`  | `Source` will contain the file's contents |
 | `*.lua`        | `ModuleScript` | `Source` will contain the file's contents |
+| `*.model.json` | *Varies*         | See [this file](test-project/src/hello.model.json) for an example model |
 | `*`            | `StringValue`  | `Value` will contain the file's contents  |
 
 Any folders on the filesystem will turn into `Folder` objects unless they contain a file named `init.lua`, `init.server.lua`, or `init.client.lua`. Following the convention of Lua, those objects will instead be whatever the `init` file would turn into.
