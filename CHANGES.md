@@ -1,10 +1,14 @@
 # Rojo Change Log
 
-## Current Master (0.4.0)
+## Current Master
+*No changes*
+
+## 0.4.0
 * Protocol version 1, which shifts more responsibility onto the server
 	* This is a **major breaking** change!
 	* The server now has a content of 'filter plugins', which transform data at various stages in the pipeline
 	* The server now exposes Roblox instance objects instead of file contents, which lines up with how `rojo pack` will work, and paves the way for more robust syncing.
+* Improved error messages in some cases ([#46](https://github.com/LPGhatguy/rojo/issues/46))
 
 ## 0.3.2
 * Fixed `rojo serve` failing to correctly construct an absolute root path when passed as an argument
