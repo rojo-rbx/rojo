@@ -8,6 +8,8 @@
 	<a href="https://travis-ci.org/LPGhatguy/rojo">
 		<img src="https://api.travis-ci.org/LPGhatguy/rojo.svg?branch=master" alt="Travis-CI Build Status" />
 	</a>
+  <img src="https://img.shields.io/badge/server_version-0.4.0-brightgreen.svg" alt="Current server version" />
+  <img src="https://img.shields.io/badge/plugin_version-0.4.0-brightgreen.svg" alt="Current plugin version" />
 </div>
 
 <hr />
@@ -16,9 +18,7 @@
 
 It's designed for power users who want to use the **best tools available** for building games, libraries, and plugins.
 
-This is the main Rojo repository, containing the binary and project server component. For the source for the Roblox plugin, [see the rojo-plugin repository](https://github.com/LPGhatguy/rojo-plugin).
-
-The master branches of both respositories should always pass all tests and be functional, but are not suitable for production use!
+This is the main Rojo repository, containing the Rojo CLI. The Roblox Studio plugin is contained in [the rojo-plugin repository](https://github.com/LPGhatguy/rojo-plugin).
 
 ## Features
 
@@ -31,13 +31,11 @@ Rojo has a number of desirable features *right now*:
 Later this year, Rojo will be able to:
 
 * Sync rbxmx-format Roblox models bi-directionally between the filesystem and Roblox Studio
-* Create installation scripts for libraries to be used in standalone places
-	* Similar to [rbxpacker](https://github.com/LPGhatguy/rbxpacker), another one of my projects
-* Add strongly-versioned dependencies to your project
+* Package libraries and plugins into `rbxmx` files from the command line
 
 ## Installation
 Rojo has two components:
-* The command line tool, written in Rust
+* The command line interface (CLI), written in Rust
 * The [Roblox Studio plugin](https://www.roblox.com/library/1211549683/Rojo), written in Lua
 
 To install the command line tool, there are two options:
@@ -71,7 +69,7 @@ The default project looks like this:
 ```
 
 ### Start Dev Server
-To create a server that allows the Rojo Dev Plugin to access your project, use:
+To create a server that allows the Rojo Studio plugin to access your project, use:
 
 ```sh
 rojo serve
@@ -80,12 +78,14 @@ rojo serve
 The tool will tell you whether it found an existing project. You should then be able to connect and use the project from within Roblox Studio!
 
 ### Migrating an Existing Roblox Project
-**Coming soon!**
+[Bi-directional script syncing](https://github.com/LPGhatguy/rojo/issues/5) is on the roadmap for Rojo this year, but isn't implemented.
+
+In the mean-time, manually migrating scripts is probably the best route forward.
 
 ### Syncing into Roblox
-In order to sync code into Roblox, you'll need to add one or more "partitions" to your configuration. A partition tells Rojo how to map directories to Roblox objects.
+In order to sync code into Roblox, you'll need toadd one or more *partitions* to your configuration. A partition tells Rojo how to map directories on your filesystem to Roblox objects.
 
-Each entry in the partitions table has a unique name, a filesystem path, and the full name of the Roblox object to sync into.
+Each entry in the `partitions` map has a unique name, a filesystem path, and the full name of the Roblox object to sync into.
 
 For example, if you want to map your `src` directory to an object named `My Cool Game` in `ReplicatedStorage`, you could use this configuration:
 
@@ -104,12 +104,14 @@ For example, if you want to map your `src` directory to an object named `My Cool
 
 The `path` parameter is relative to the project file.
 
-The `target` parameter is a path to a Roblox object to link the partition to. It starts at `game` and crawls down the tree. If any objects don't exist along the way, they'll be created as `Folder` instances.
+The `target` parameter is a path to a Roblox object to link the partition to, starting at `game`. If any objects don't exist along the way, Rojo will try to create them.
 
-Run `rojo serve` in the directory containing this project, then press the "Sync In" or "Toggle Polling" buttons in the Roblox Studio plugin to move code into your game.
+**Any objects in a partition may be wiped away by Rojo after syncing! If this is not desired, use multiple, smaller partitions.**
+
+Run `rojo serve` in the directory containing this project, then press the "Sync In" or "Toggle Polling" buttons in the Roblox Studio plugin to sync into your game.
 
 ### Sync Details
-The structure of files and folders on the filesystem are preserved when syncing into game.
+The structure of files and diectories on the filesystem are preserved when syncing into game.
 
 Creation of Roblox instances follows a simple set of rules. The first rule that matches the file name is chosen:
 
@@ -118,10 +120,16 @@ Creation of Roblox instances follows a simple set of rules. The first rule that 
 | `*.server.lua` | `Script`       | `Source` will contain the file's contents |
 | `*.client.lua` | `LocalScript`  | `Source` will contain the file's contents |
 | `*.lua`        | `ModuleScript` | `Source` will contain the file's contents |
-| `*.model.json` | *Varies*         | See [this file](test-project/src/hello.model.json) for an example model |
+| `*.model.json` | *Varies*       | See the example below                     |
 | `*`            | `StringValue`  | `Value` will contain the file's contents  |
 
-Any folders on the filesystem will turn into `Folder` objects unless they contain a file named `init.lua`, `init.server.lua`, or `init.client.lua`. Following the convention of Lua, those objects will instead be whatever the `init` file would turn into.
+Any directories on the filesystem will turn into `Folder` objects.
+
+Any directory containing one of these files will instead be a `ModuleScript`, `Script`, `LocalScript` containing the directory's contents:
+
+* `init.lua`
+* `init.server.lua`
+* `init.client.lua`
 
 For example, this file tree:
 
@@ -129,15 +137,47 @@ For example, this file tree:
 	* init.client.lua
 	* foo.lua
 
-Will turn into this tree in Roblox:
+Will turn into these instances in Roblox:
 
 * `my-game` (`LocalScript` with source from `my-game/init.client.lua`)
 	* `foo` (`ModuleScript` with source from `my-game/foo.lua`)
 
+`*.model.json` files are intended as a simple way to represent non-script Roblox instances on the filesystem until `rbxmx` and `rbxlx` support is implemented in Rojo.
+
+JSON Model files are fairly strict, with every property being required. They generally look like this:
+
+```json
+{
+  "Name": "hello",
+  "ClassName": "Model",
+  "Children": [
+    {
+      "Name": "Some Part",
+      "ClassName": "Part",
+      "Children": [],
+      "Properties": {}
+    },
+    {
+      "Name": "Some StringValue",
+      "ClassName": "StringValue",
+      "Children": [],
+      "Properties": {
+        "Value": {
+          "Type": "String",
+          "Value": "Hello, world!"
+        }
+      }
+    }
+  ],
+  "Properties": {}
+}
+```
+
 ## Inspiration
-There are lots of other tools that sync scripts into Roblox, or otherwise work to improve the development flow outside of Roblox Studio.
+There are lots of other tools that sync scripts into Roblox or provide other tools for working with Roblox places.
 
 Here are a few, if you're looking for alternatives or supplements to Rojo:
+
 * [Studio Bridge by Vocksel](https://github.com/vocksel/studio-bridge)
 * [RbxRefresh by Osyris](https://github.com/osyrisrblx/RbxRefresh)
 * [RbxSync by evaera](https://github.com/evaera/RbxSync)
@@ -145,6 +185,7 @@ Here are a few, if you're looking for alternatives or supplements to Rojo:
 * [rbxmk by Anaminus](https://github.com/anaminus/rbxmk)
 
 I also have a couple tools that Rojo intends to replace:
+
 * [rbxfs](https://github.com/LPGhatguy/rbxfs), which has been deprecated by Rojo
 * [rbxpacker](https://github.com/LPGhatguy/rbxpacker), which is still useful
 
