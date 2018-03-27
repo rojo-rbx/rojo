@@ -78,11 +78,14 @@ impl VfsWatcher {
                 let (tx, rx) = mpsc::channel();
 
                 let mut watcher: RecommendedWatcher = Watcher::new(tx, Duration::from_secs(1))
-                    .expect("Unable to create watcher!");
+                    .expect("Unable to create watcher! This is a bug in Rojo.");
 
-                watcher
-                    .watch(&root_path, RecursiveMode::Recursive)
-                    .expect("Unable to watch path!");
+                match watcher.watch(&root_path, RecursiveMode::Recursive) {
+                    Ok(_) => (),
+                    Err(_) => {
+                        panic!("Unable to watch partition {}, with path {}! Make sure that it's a file or directory.", partition_name, root_path.display());
+                    },
+                }
 
                 watchers.push(watcher);
 
