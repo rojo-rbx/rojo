@@ -27,33 +27,34 @@ Rojo lets you:
 
 Later this year, Rojo will be able to:
 
-* Sync rbxmx-format Roblox models between the filesystem and Roblox Studio
-* Package libraries and plugins into `rbxmx` files from the command line
+* Sync `rbxmx` models between the filesystem and Roblox Studio
+* Package projects into `rbxmx` files from the command line
 
 ## Installation
 Rojo has two components:
 
 * The server, a binary written in Rust
-* The client, a Roblox Studio plugin written in Lua
+* The plugin, a Roblox Studio plugin written in Lua
 
-To install the server, there are two options:
+It's important that the plugin and server are compatible. The plugin will show errors in the Roblox Studio Output window if there is a version mismatch.
 
-* Cargo, if you have Rust installed
-	* Use `cargo install rojo` -- Rojo will be available with the `rojo` command
-* Download a pre-built Windows binary from [the GitHub releases page](https://github.com/LPGhatguy/rojo/releases)
+To install the server, either:
 
-To install the client, there are two options:
+* If you have Rust installed, use `cargo install rojo`
+* Or, download a pre-built Windows binary from [the GitHub releases page](https://github.com/LPGhatguy/rojo/releases)
 
-* Install the plugin from the [Roblox page](https://www.roblox.com/library/1211549683/Rojo).
+To install the plugin, either:
+
+* Install the plugin from the [Roblox plugin page](https://www.roblox.com/library/1211549683/Rojo).
   * This gives you less control over what version you install -- you will always have the latest version.
-* Download the latest release from [the releases section](https://github.com/LPGhatguy/rojo/releases) and install it into your Roblox plugins folder
-  * On Windows, this is at `%LocalAppData%\Roblox\Plugins`
+* Or, download the latest release from [the GitHub releases section](https://github.com/LPGhatguy/rojo/releases) and install it into your Roblox plugins folder
+  * You can open this folder by clicking the "Plugins Folder" button from the Plugins toolbar in Roblox Studio
 
 ## Server Usage
 For more help, use `rojo help`.
 
 ### New Project
-Just create a new folder and tell Rojo to initialize it!
+Create a new folder, then use `rojo init` inside that folder to initialize an empty project:
 
 ```sh
 mkdir my-new-project
@@ -62,9 +63,9 @@ cd my-new-project
 rojo init
 ```
 
-Rojo will create an empty project in the directory.
+Rojo will create an empty project file named `rojo.json` in the directory.
 
-The default project looks like this:
+The default project file is:
 
 ```json
 {
