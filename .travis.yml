@@ -1,5 +1,35 @@
-language: rust
+matrix:
+  include:
+    - language: python
+      env:
+        - LUA="lua=5.1"
 
-rust:
-  - stable
-  - beta
+      before_install:
+        - pip install hererocks
+        - hererocks lua_install -r^ --$LUA
+        - export PATH=$PATH:$PWD/lua_install/bin
+
+      install:
+        - luarocks install luafilesystem
+        - luarocks install busted
+        - luarocks install luacov
+        - luarocks install luacov-coveralls
+        - luarocks install luacheck
+
+      script:
+        - cd plugin
+        - luacheck src
+        - lua -lluacov spec.lua
+
+      after_success:
+        - cd plugin
+        - luacov-coveralls -e $TRAVIS_BUILD_DIR/lua_install
+
+    - language: rust
+      rust:
+        - stable
+        - beta
+
+      script:
+        - cd server
+        - cargo test --verbose
