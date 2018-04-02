@@ -1,0 +1,20 @@
+site_name: Rojo Documentation
+site_url: https://lpghatguy.github.io/rojo/
+repo_name: LPGhatguy/rojo
+repo_url: https://github.com/LPGhatguy/rojo
+
+theme:
+  name: material
+  palette:
+    primary: 'Red'
+    accent: 'Red'
+
+pages:
+  - Home: index.md
+
+markdown_extensions:
+  - admonition
+  - codehilite:
+      guess_lang: false
+  - toc:
+      permalink: true
