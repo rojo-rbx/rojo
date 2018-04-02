@@ -1,7 +1,10 @@
 # Rojo Change Log
 
 ## Current Master
-* Merged plugin repository into main Rojo repository for easier tracking
+*No changes*
+
+## 0.4.1 (April 1, 2018)
+* Merged plugin repository into main Rojo repository for easier tracking.
 * Improved `RouteMap` object tracking; this should fix some cases of duplicated instances being synced into the tree.
 
 ## 0.4.0 (March 27, 2018)
