@@ -3,5 +3,5 @@ return {
 	version = {0, 4, 1},
 	expectedServerVersionString = "0.4.x",
 	protocolVersion = 1,
-	dev = true,
+	dev = false,
 }
