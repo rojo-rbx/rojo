@@ -1,0 +1,30 @@
+{
+  "name": "rojo",
+  "servePort": 8000,
+  "partitions": {
+    "plugin": {
+      "path": "src",
+      "target": "ReplicatedStorage.Rojo.plugin"
+    },
+    "modules/roact": {
+      "path": "modules/roact/lib",
+      "target": "ReplicatedStorage.Rojo.modules.Roact"
+    },
+    "modules/rodux": {
+      "path": "modules/rodux/lib",
+      "target": "ReplicatedStorage.Rojo.modules.Rodux"
+    },
+    "modules/roact-rodux": {
+      "path": "modules/roact-rodux/lib",
+      "target": "ReplicatedStorage.Rojo.modules.RoactRodux"
+    },
+    "modules/testez": {
+      "path": "modules/testez/lib",
+      "target": "ReplicatedStorage.TestEZ"
+    },
+    "tests": {
+      "path": "tests",
+      "target": "TestService"
+    }
+  }
+}

@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/rojo-logo.png" alt="Rojo" height="150" />
+  <img src="assets/rojo-logo.png" alt="Rojo" height="217" />
 </div>
 
 <div>&nbsp;</div>
@@ -14,15 +14,12 @@
 
 <hr />
 
-**Rojo** is a flexible multi-tool designed for creating robust Roblox projects. It's in early development, but is still useful for many projects.
+**Rojo** is a flexible multi-tool designed for creating robust Roblox projects.
 
 It's designed for power users who want to use the **best tools available** for building games, libraries, and plugins.
 
-This is the main Rojo repository, containing the Rojo CLI. The Roblox Studio plugin is contained in [the rojo-plugin repository](https://github.com/LPGhatguy/rojo-plugin).
-
 ## Features
-
-Rojo has a number of desirable features *right now*:
+Rojo lets you:
 
 * Work on scripts from the filesystem, in your favorite editor
 * Version your place, library, or plugin using Git or another VCS
@@ -30,24 +27,34 @@ Rojo has a number of desirable features *right now*:
 
 Later this year, Rojo will be able to:
 
-* Sync rbxmx-format Roblox models bi-directionally between the filesystem and Roblox Studio
-* Package libraries and plugins into `rbxmx` files from the command line
+* Sync `rbxmx` models between the filesystem and Roblox Studio
+* Package projects into `rbxmx` files from the command line
 
 ## Installation
 Rojo has two components:
-* The command line interface (CLI), written in Rust
-* The [Roblox Studio plugin](https://www.roblox.com/library/1211549683/Rojo), written in Lua
 
-To install the command line tool, there are two options:
-* Cargo, if you have Rust installed
-	* Use `cargo install rojo` -- Rojo will be available with the `rojo` command
-* Download a pre-built Windows binary from [the GitHub releases page](https://github.com/LPGhatguy/rojo/releases)
+* The server, a binary written in Rust
+* The plugin, a Roblox Studio plugin written in Lua
 
-## Usage
+It's important that the plugin and server are compatible. The plugin will show errors in the Roblox Studio Output window if there is a version mismatch.
+
+To install the server, either:
+
+* If you have Rust installed, use `cargo install rojo`
+* Or, download a pre-built Windows binary from [the GitHub releases page](https://github.com/LPGhatguy/rojo/releases)
+
+To install the plugin, either:
+
+* Install the plugin from the [Roblox plugin page](https://www.roblox.com/library/1211549683/Rojo).
+  * This gives you less control over what version you install -- you will always have the latest version.
+* Or, download the latest release from [the GitHub releases section](https://github.com/LPGhatguy/rojo/releases) and install it into your Roblox plugins folder
+  * You can open this folder by clicking the "Plugins Folder" button from the Plugins toolbar in Roblox Studio
+
+## Server Usage
 For more help, use `rojo help`.
 
 ### New Project
-Just create a new folder and tell Rojo to initialize it!
+Create a new folder, then use `rojo init` inside that folder to initialize an empty project:
 
 ```sh
 mkdir my-new-project
@@ -56,9 +63,9 @@ cd my-new-project
 rojo init
 ```
 
-Rojo will create an empty project in the directory.
+Rojo will create an empty project file named `rojo.json` in the directory.
 
-The default project looks like this:
+The default project file is:
 
 ```json
 {
@@ -69,7 +76,7 @@ The default project looks like this:
 ```
 
 ### Start Dev Server
-To create a server that allows the Rojo Studio plugin to access your project, use:
+To start the Rojo dev server, use:
 
 ```sh
 rojo serve
@@ -83,7 +90,7 @@ The tool will tell you whether it found an existing project. You should then be 
 In the mean-time, manually migrating scripts is probably the best route forward.
 
 ### Syncing into Roblox
-In order to sync code into Roblox, you'll need toadd one or more *partitions* to your configuration. A partition tells Rojo how to map directories on your filesystem to Roblox objects.
+In order to sync code into Roblox, you'll need to add one or more *partitions* to your configuration. A partition tells Rojo how to map directories on your filesystem to Roblox objects.
 
 Each entry in the `partitions` map has a unique name, a filesystem path, and the full name of the Roblox object to sync into.
 
@@ -142,9 +149,11 @@ Will turn into these instances in Roblox:
 * `my-game` (`LocalScript` with source from `my-game/init.client.lua`)
 	* `foo` (`ModuleScript` with source from `my-game/foo.lua`)
 
-`*.model.json` files are intended as a simple way to represent non-script Roblox instances on the filesystem until `rbxmx` and `rbxlx` support is implemented in Rojo.
+`*.model.json` files are a way to represent simple Roblox instances on the filesystem until `rbxmx` and `rbxlx` support is implemented in Rojo.
 
-JSON Model files are fairly strict, with every property being required. They generally look like this:
+This feature is intended for small instances, like `RemoteEvent` or `*Value` objects.
+
+JSON Model files are strict, with every property being required. They look like this:
 
 ```json
 {
@@ -192,9 +201,7 @@ I also have a couple tools that Rojo intends to replace:
 ## Contributing
 Pull requests are welcome!
 
-The `master` branch of both repositories have tests running on Travis for every commit and pull request. The test suite on `master` should always pass!
-
-The Rojo and Rojo Plugin repositories should stay in sync with eachother, so that the current `master` of each repository can be used together.
+All pull requests are run against a test suite on Travis CI. That test suite should always pass!
 
 ## License
 Rojo is available under the terms of the MIT license. See [LICENSE.md](LICENSE.md) for details.

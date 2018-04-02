@@ -1,7 +1,8 @@
 # Rojo Change Log
 
 ## Current Master
-*No changes*
+* Merged plugin repository into main Rojo repository for easier tracking
+* Improved `RouteMap` object tracking; this should fix some cases of duplicated instances being synced into the tree.
 
 ## 0.4.0 (March 27, 2018)
 * Protocol version 1, which shifts more responsibility onto the server
