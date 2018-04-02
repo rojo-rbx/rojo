@@ -26,9 +26,7 @@ matrix:
         - luacov-coveralls -e $TRAVIS_BUILD_DIR/lua_install
 
     - language: rust
-      rust:
-        - stable
-        - beta
+      rust: stable
 
       script:
         - cd server
