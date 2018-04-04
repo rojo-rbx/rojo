@@ -110,3 +110,8 @@ If a mismatch is detected, the server should immediately abort the request and r
 If the client detects an error in this way, it should delete any connection metadata, including `Id` mappings -- this data is no longer relevant to any new connections.
 
 If the returned project name matches the value that the client was using before, the client should begin a *session restart* by reinitializing the connection to the server and creating new metadata.
+
+## Other Changes
+These changes aren't directly related to this refactor, but are changes that need to be made to Rojo.
+
+* Unknown instances will no longer sync as `StringValue` instances

@@ -21,10 +21,10 @@ pub enum FileChangeResult {
     Pass,
 }
 
-pub trait Plugin {
+pub trait Middleware {
     /// Invoked when a file is read from the filesystem and needs to be turned
     /// into a Roblox instance.
-    fn transform_file(&self, plugins: &PluginChain, vfs_item: &VfsItem) -> TransformFileResult;
+    fn transform_file(&self, plugins: &MiddlewareChain, vfs_item: &VfsItem) -> TransformFileResult;
 
     /// Invoked when a Roblox Instance change is reported by the Roblox Studio
     /// plugin and needs to be turned into a file to save.
@@ -36,13 +36,13 @@ pub trait Plugin {
 }
 
 /// A set of plugins that are composed in order.
-pub struct PluginChain {
-    plugins: Vec<Box<Plugin + Send + Sync>>,
+pub struct MiddlewareChain {
+    plugins: Vec<Box<Middleware + Send + Sync>>,
 }
 
-impl PluginChain {
-    pub fn new(plugins: Vec<Box<Plugin + Send + Sync>>) -> PluginChain {
-        PluginChain {
+impl MiddlewareChain {
+    pub fn new(plugins: Vec<Box<Middleware + Send + Sync>>) -> MiddlewareChain {
+        MiddlewareChain {
             plugins,
         }
     }

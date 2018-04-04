@@ -4,7 +4,7 @@ use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
-use plugin::PluginChain;
+use middleware::MiddlewareChain;
 use vfs::VfsItem;
 
 /// Represents a virtual layer over multiple parts of the filesystem.
@@ -24,7 +24,7 @@ pub struct VfsSession {
     /// When the Vfs was initialized; used for change tracking.
     start_time: Instant,
 
-    plugin_chain: &'static PluginChain,
+    middleware_chain: &'static MiddlewareChain,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -35,12 +35,12 @@ pub struct VfsChange {
 }
 
 impl VfsSession {
-    pub fn new(plugin_chain: &'static PluginChain) -> VfsSession {
+    pub fn new(middleware_chain: &'static MiddlewareChain) -> VfsSession {
         VfsSession {
             partitions: HashMap::new(),
             start_time: Instant::now(),
             change_history: Vec::new(),
-            plugin_chain,
+            middleware_chain,
         }
     }
 
@@ -164,7 +164,7 @@ impl VfsSession {
     /// Register a new change to the filesystem at the given timestamp and VFS
     /// route.
     pub fn add_change(&mut self, timestamp: f64, route: Vec<String>) {
-        match self.plugin_chain.handle_file_change(&route) {
+        match self.middleware_chain.handle_file_change(&route) {
             Some(routes) => {
                 for route in routes {
                     self.change_history.push(VfsChange {

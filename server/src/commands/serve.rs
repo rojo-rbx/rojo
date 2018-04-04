@@ -6,8 +6,8 @@ use std::thread;
 use rand;
 
 use project::{Project, ProjectLoadError};
-use plugin::{PluginChain};
-use plugins::{DefaultPlugin, JsonModelPlugin, ScriptPlugin};
+use middleware::{MiddlewareChain};
+use middlewares::{DefaultMiddleware, JsonModelMiddleware, ScriptMiddleware};
 use vfs::{VfsSession, VfsWatcher};
 use web;
 
@@ -59,10 +59,10 @@ pub fn serve(project_path: &PathBuf, verbose: bool, port: Option<u64>) {
     };
 
     lazy_static! {
-        static ref PLUGIN_CHAIN: PluginChain = PluginChain::new(vec![
-            Box::new(ScriptPlugin::new()),
-            Box::new(JsonModelPlugin::new()),
-            Box::new(DefaultPlugin::new()),
+        static ref PLUGIN_CHAIN: MiddlewareChain = MiddlewareChain::new(vec![
+            Box::new(ScriptMiddleware::new()),
+            Box::new(JsonModelMiddleware::new()),
+            Box::new(DefaultMiddleware::new()),
         ]);
     }
 

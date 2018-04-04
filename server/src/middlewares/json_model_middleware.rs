@@ -2,7 +2,7 @@ use regex::Regex;
 use serde_json;
 
 use core::Route;
-use plugin::{Plugin, PluginChain, TransformFileResult, RbxChangeResult, FileChangeResult};
+use middleware::{Middleware, MiddlewareChain, TransformFileResult, RbxChangeResult, FileChangeResult};
 use rbx::RbxInstance;
 use vfs::VfsItem;
 
@@ -10,16 +10,16 @@ lazy_static! {
     static ref JSON_MODEL_PATTERN: Regex = Regex::new(r"^(.*?)\.model\.json$").unwrap();
 }
 
-pub struct JsonModelPlugin;
+pub struct JsonModelMiddleware;
 
-impl JsonModelPlugin {
-    pub fn new() -> JsonModelPlugin {
-        JsonModelPlugin
+impl JsonModelMiddleware {
+    pub fn new() -> JsonModelMiddleware {
+        JsonModelMiddleware
     }
 }
 
-impl Plugin for JsonModelPlugin {
-    fn transform_file(&self, _plugins: &PluginChain, vfs_item: &VfsItem) -> TransformFileResult {
+impl Middleware for JsonModelMiddleware {
+    fn transform_file(&self, _middlewares: &MiddlewareChain, vfs_item: &VfsItem) -> TransformFileResult {
         match vfs_item {
             &VfsItem::File { ref contents, .. } => {
                 let rbx_name = match JSON_MODEL_PATTERN.captures(vfs_item.name()) {

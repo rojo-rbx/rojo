@@ -1,23 +1,23 @@
 use std::collections::HashMap;
 
 use core::Route;
-use plugin::{Plugin, PluginChain, TransformFileResult, RbxChangeResult, FileChangeResult};
+use middleware::{Middleware, MiddlewareChain, TransformFileResult, RbxChangeResult, FileChangeResult};
 use rbx::{RbxInstance, RbxValue};
 use vfs::VfsItem;
 
-/// A plugin with simple transforms:
+/// A middleware with simple transforms:
 /// * Directories become Folder instances
 /// * Files become StringValue objects with 'Value' as their contents
-pub struct DefaultPlugin;
+pub struct DefaultMiddleware;
 
-impl DefaultPlugin {
-    pub fn new() -> DefaultPlugin {
-        DefaultPlugin
+impl DefaultMiddleware {
+    pub fn new() -> DefaultMiddleware {
+        DefaultMiddleware
     }
 }
 
-impl Plugin for DefaultPlugin {
-    fn transform_file(&self, plugins: &PluginChain, vfs_item: &VfsItem) -> TransformFileResult {
+impl Middleware for DefaultMiddleware {
+    fn transform_file(&self, middlewares: &MiddlewareChain, vfs_item: &VfsItem) -> TransformFileResult {
         match vfs_item {
             &VfsItem::File { ref contents, .. } => {
                 let mut properties = HashMap::new();
@@ -38,7 +38,7 @@ impl Plugin for DefaultPlugin {
                 let mut rbx_children = Vec::new();
 
                 for (_, child_item) in children {
-                    match plugins.transform_file(child_item) {
+                    match middlewares.transform_file(child_item) {
                         Some(rbx_item) => {
                             rbx_children.push(rbx_item);
                         },

@@ -8,7 +8,7 @@ use serde_json;
 use project::Project;
 use vfs::{VfsSession, VfsChange};
 use rbx::RbxInstance;
-use plugin::PluginChain;
+use middleware::MiddlewareChain;
 
 static MAX_BODY_SIZE: usize = 25 * 1024 * 1024; // 25 MiB
 
@@ -117,7 +117,7 @@ where
 }
 
 /// Start the Rojo web server and park our current thread.
-pub fn start(config: WebConfig, project: Project, plugin_chain: &'static PluginChain, vfs: Arc<Mutex<VfsSession>>) {
+pub fn start(config: WebConfig, project: Project, middleware_chain: &'static MiddlewareChain, vfs: Arc<Mutex<VfsSession>>) {
     let address = format!("localhost:{}", config.port);
 
     let server_id = config.server_id.to_string();
@@ -190,7 +190,7 @@ pub fn start(config: WebConfig, project: Project, plugin_chain: &'static PluginC
                     .iter()
                     .map(|item| {
                         match *item {
-                            Some(ref item) => plugin_chain.transform_file(item),
+                            Some(ref item) => middleware_chain.transform_file(item),
                             None => None,
                         }
                     })

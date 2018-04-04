@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use regex::Regex;
 
 use core::Route;
-use plugin::{Plugin, PluginChain, TransformFileResult, RbxChangeResult, FileChangeResult};
+use middleware::{Middleware, MiddlewareChain, TransformFileResult, RbxChangeResult, FileChangeResult};
 use rbx::{RbxInstance, RbxValue};
 use vfs::VfsItem;
 
@@ -17,16 +17,16 @@ static SERVER_INIT: &'static str = "init.server.lua";
 static CLIENT_INIT: &'static str = "init.client.lua";
 static MODULE_INIT: &'static str = "init.lua";
 
-pub struct ScriptPlugin;
+pub struct ScriptMiddleware;
 
-impl ScriptPlugin {
-    pub fn new() -> ScriptPlugin {
-        ScriptPlugin
+impl ScriptMiddleware {
+    pub fn new() -> ScriptMiddleware {
+        ScriptMiddleware
     }
 }
 
-impl Plugin for ScriptPlugin {
-    fn transform_file(&self, plugins: &PluginChain, vfs_item: &VfsItem) -> TransformFileResult {
+impl Middleware for ScriptMiddleware {
+    fn transform_file(&self, middlewares: &MiddlewareChain, vfs_item: &VfsItem) -> TransformFileResult {
         match vfs_item {
             &VfsItem::File { ref contents, .. } => {
                 let name = vfs_item.name();
@@ -69,10 +69,10 @@ impl Plugin for ScriptPlugin {
                     }
                 };
 
-                let mut rbx_item = match self.transform_file(plugins, init_item) {
+                let mut rbx_item = match self.transform_file(middlewares, init_item) {
                     TransformFileResult::Value(Some(item)) => item,
                     _ => {
-                        eprintln!("Inconsistency detected in ScriptPlugin!");
+                        eprintln!("Inconsistency detected in ScriptMiddleware!");
                         return TransformFileResult::Pass;
                     },
                 };
@@ -85,7 +85,7 @@ impl Plugin for ScriptPlugin {
                         continue;
                     }
 
-                    match plugins.transform_file(child_item) {
+                    match middlewares.transform_file(child_item) {
                         Some(child_rbx_item) => {
                             rbx_item.children.push(child_rbx_item);
                         },

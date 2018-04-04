@@ -14,8 +14,8 @@ pub mod project;
 pub mod pathext;
 pub mod vfs;
 pub mod rbx;
-pub mod plugin;
-pub mod plugins;
+pub mod middleware;
+pub mod middlewares;
 pub mod commands;
 
 use std::path::{Path, PathBuf};
