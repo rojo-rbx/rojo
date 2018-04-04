@@ -5,9 +5,9 @@
 <div>&nbsp;</div>
 
 <div align="center">
-	<a href="https://travis-ci.org/LPGhatguy/rojo">
-		<img src="https://api.travis-ci.org/LPGhatguy/rojo.svg?branch=master" alt="Travis-CI Build Status" />
-	</a>
+  <a href="https://travis-ci.org/LPGhatguy/rojo">
+    <img src="https://api.travis-ci.org/LPGhatguy/rojo.svg?branch=master" alt="Travis-CI Build Status" />
+  </a>
   <img src="https://img.shields.io/badge/latest_version-0.4.1-brightgreen.svg" alt="Current server version" />
 </div>
 
