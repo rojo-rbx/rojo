@@ -1,49 +1,112 @@
-# Rojo Design - Protocol Version 1
-This is a super rough draft that I'm trying to use to lay out some of my thoughts.
+# Rojo - Protocol v2 Design
+This spec is a work in progress.
 
-## API
+The aim is to rewrite most of Rojo to drop the notion of routes almost entirely in favor of generated IDs and make the server much more stateful. This should make change description completely robust in all cases, including models with many duplicated instance names.
 
-### POST `/read`
-Accepts a `Vec<Route>` of items to read.
+## Base Terms
 
-Returns `Vec<Option<RbxInstance>>`, in the same order as the request.
+* **Server**: The binary portion of Rojo, in Rust.
+* **Client**: The Roblox Studio plugin portion of Rojo, in Lua.
+* **Middleware**: Part of the server, transforms files to Roblox representations and back.
+* **VFS**: The Virtual File System specifically that middleware deal with; it is in-memory.
+* **Roblox Instance**: An actual Roblox object derived from `Instance` on the client.
 
-### POST `/write`
-Accepts a `Vec<{ Route, RbxInstance }>` of items to write.
+## Initialization
+On server initialization, Rojo reads all files in each partition and runs each through our middleware stack (renamed from plugins). Middleware transform a `VfsItem` into  a list of `RbxInstance` objects with these properties:
 
-I imagine that the `Name` attribute of the top-level `RbxInstance` would be ignored in favor of the route name?
+* name: `String`
+* class_name: `String`
+* parent: `Option<Id>`
+* properties: `HashMap<String, RbxValue>`
+* route: `Route` (does not have to serialize)
+* id: `Id`
+* rbx_referent: `Option<RbxReferent>`
 
-## CLI
-The `rojo serve` command uses three major components:
-* A Virtual Filesystem (VFS), which exposes the filesystem as `VfsItem` objects
-* A VFS watcher, which tracks changes to the filesystem and logs them
-* An HTTP API, which exposes an interface to the Roblox Studio plugin
+The server should keep these book-keeping maps:
 
-### Transform Plugins
-Transform plugins (or filter plugins?) can interject in three places:
-* Transform a `VfsItem` that's being read into an `RbxInstance` in the VFS
-* Transform an `RbxInstance` that's being written into a `VfsItem` in the VFS
-* Transform a file change into paths that need to be updated in the VFS watcher
+* `HashMap<Id, RbxInstance`, to serve as an index
+* `HashMap<Route, Id>`, to manage filesystem changes
+* `HashMap<Id, Route>`, to manage changes from the client
+* `HashMap<Route, String>`, to disambiguate and debounce changes written to the filesystem
+* `HashMap<RbxReferent, Id>`, when loading `rbxmx` format models from disk
 
-The plan is to have several built-in plugins that can be rearranged/configured in project settings:
+On initial sync, the client should receive:
 
-* Base plugin
-	* Transforms all unhandled files to/from StringValue objects
-* Script plugin
-	* Transforms `*.lua` files to their appropriate file types
-* JSON/rbxmx/rbxlx model plugin
-* External binary plugin
-	* User passes a binary name (like `moonc`) that modifies file contents
+* A list of every `RbxInstance` the server knows of.
+* A map from `Id` to a Roblox route, containing an entry for every partition and where they should be mounted.
 
-## Roblox Studio Plugin
-With the protocol version 1 change, the Roblox Studio plugin got a lot simpler. Notably, the plugin doesn't need to be aware of anything about the filesystem's semantics, which is super handy.
+## File Changes
+Whenever a file is changed, the server should:
 
-## Bi-directional syncing
-Quenty laid out a good way to handle bi-directional syncing.
+* Convert its path to a `Route`.
+* Read the file into a `VfsItem` object.
+* Compare the contents of the file with the last-seen contents from the map from `Route` to `String`.
+	* If they're the same, that means this change was caused by the server itself, and should be discarded.
+	* Else, clear the value from the map.
+* Pass the `VfsItem` through the middleware chain to a tree of `RbxInstance` objects.
+	* TODO: How should this tree be represented? The normal `RbxInstance` case should just reference children by ID, but that's super inconvenient here.
+* Check the existing map from `Route` to `Id`.
+	* If an existing instance exists with the root's `Id`, reuse it and replace the root's `Id`.
+	* Else, generate a new ID.
+* For each child instance:
+	* If an `RbxReferent` value is present on the instance, attempt to map it to an existing `Id`, falling back to creating a new `Id`.
+* Log a change event `(Timestamp, Id)` for the root instance into a sorted list that's client queryable.
 
-When receiving a change from the plugin:
-1. Hash the new contents of the file, store it in a map from routes to hashes
-2. Write the new file contents to the filesystem
-3. Later down the line, receive a change event from the filesystem watcher
-4. When receiving a change, if the item is in the hash map, read it and hash those contents
-5. If the hash matches the last noted hash, discard the change, else continue as normal
+The client will then:
+
+* Receive notice of changes by receiving a list of `Id`s that have changed.
+* Ask the server for the contents of each `Id` that has changed.
+* Apply the properties the server returns to each instance.
+
+If an `Id` was not previously tracked by the client, the associated `RbxInstance`'s `parent` field will point to another `Id`. The client will either have knowledge of that `Id`, or request it from the server if it isn't known. This can potentially continue up the tree until the client reaches a partition mount point, which should be known by the client due to the initialization process.
+
+## Client Changes
+The client should keep list of mutations to track any uncommitted changes to Roblox Instances tracked by Rojo.
+
+Those changes should come in three flavors:
+
+* Changed a property (need `id`, `key`, and `value`)
+* Deleted a known instance (need `id`)
+* Created a new instance (need `clientId`)
+
+Every sync period, which could be around 100ms, the plugin should send a request with every Roblox Instance mutation all at once.
+
+In order to correctly serialize changes received from the client, some care needs to be taken.
+
+For every *Changed* or *Deleted* mutation received from the client, the server should:
+
+* Attempt to locate the `RbxInstance` associated with the `id`.
+	* If it doesn't exist, abort the change and output a warning to the console.
+* Modify the `RbxInstance` in-place.
+* Traverse up the tree by following the `parent` property until an `RbxInstance` is found that has a `route` property.
+* Use the middleware chain to serialize these nodes to a single `VfsItem` object.
+* Insert the contents of the `VfsItem` into the server's map from `Route` to `String`, which is used by the "File Changes" process.
+* Write the file or directory to the disk atomically using *write-and-rename*.
+
+For every *Created* mutation received from the client, the server should:
+
+* Attempt to locate the `RbxInstance` associated with the instance's `parent` `Id`
+	* If it doesn't exist, abort the change and output a warning to the console.
+* Generate a new `Id` for the instance being created.
+* Use the middleware chain to process the added instance, its parent, and generate a list of `VfsItem` objects to commit to disk.
+* Insert the `RbxInstance` into all of the server's relevant maps.
+* Yield the generated `Id` to the client, indexed by the request's `clientId`, which can be used for later updates in both directions.
+
+## State and Session Restart
+Previously, only the client had meaningful state with regards to what instances were loaded; the server in 0.3.x only tracks a list of changes by route.
+
+Both the Rojo server and client in the Stateful IDs redesign have a significant amount of state, which requires using a field already present, but unused, in the sync protocol.
+
+During initialization and initial sync, the server should send the client two values:
+* A server ID value generated randomly on each startup
+* A project name, specified in `rojo.json`
+
+The client should store the server ID as connection metadata, and the project name as place metadata that it may persist.
+
+Every request from the client should attach both the server ID and the project name. As a first validation check, the server must compare both values to its own.
+
+If a mismatch is detected, the server should immediately abort the request and return an error containing its server ID and loaded project name.
+
+If the client detects an error in this way, it should delete any connection metadata, including `Id` mappings -- this data is no longer relevant to any new connections.
+
+If the returned project name matches the value that the client was using before, the client should begin a *session restart* by reinitializing the connection to the server and creating new metadata.
