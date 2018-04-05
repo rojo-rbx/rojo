@@ -1,14 +1,13 @@
 use std::path::{Path, PathBuf};
 use std::process;
 use std::sync::{Arc, Mutex};
-use std::thread;
 
 use rand;
 
 use project::{Project, ProjectLoadError};
 use middleware::{MiddlewareChain};
 use middlewares::{DefaultMiddleware, JsonModelMiddleware, ScriptMiddleware};
-use vfs::{VfsSession, VfsWatcher};
+use vfs::{VfsSession};
 use web;
 
 pub fn serve(project_path: &PathBuf, verbose: bool, port: Option<u64>) {
@@ -87,13 +86,6 @@ pub fn serve(project_path: &PathBuf, verbose: bool, port: Option<u64>) {
     };
 
     println!("Server listening on port {}", web_config.port);
-
-    {
-        let vfs = vfs.clone();
-        thread::spawn(move || {
-            VfsWatcher::new(vfs).start();
-        });
-    }
 
     web::start(web_config, project.clone(), &PLUGIN_CHAIN, vfs.clone());
 }
