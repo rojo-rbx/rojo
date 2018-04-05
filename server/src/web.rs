@@ -1,10 +1,9 @@
 use std::sync::{Arc, Mutex};
+use std::time::Instant;
 
 use rouille;
 
 use project::Project;
-use vfs::{VfsSession};
-use middleware::MiddlewareChain;
 use web_util::json;
 
 /// The set of configuration the web server needs to start.
@@ -25,7 +24,7 @@ struct ServerInfo<'a> {
 }
 
 /// Start the Rojo web server and park our current thread.
-pub fn start(config: WebConfig, project: Project, _middleware_chain: &'static MiddlewareChain, vfs: Arc<Mutex<VfsSession>>) {
+pub fn start(config: WebConfig, project: Project, start_time: Instant) {
     let address = format!("localhost:{}", config.port);
 
     let server_id = config.server_id.to_string();
@@ -36,9 +35,9 @@ pub fn start(config: WebConfig, project: Project, _middleware_chain: &'static Mi
                 // Get a summary of information about the server.
 
                 let current_time = {
-                    let vfs = vfs.lock().unwrap();
+                    let elapsed = start_time.elapsed();
 
-                    vfs.current_time()
+                    elapsed.as_secs() as f64 + elapsed.subsec_nanos() as f64 / 1_000_000_000.0
                 };
 
                 json(ServerInfo {

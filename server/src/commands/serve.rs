@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 use std::process;
-use std::sync::{Arc, Mutex};
+use std::time::Instant;
 
 use rand;
 
@@ -87,5 +87,5 @@ pub fn serve(project_path: &PathBuf, verbose: bool, port: Option<u64>) {
 
     println!("Server listening on port {}", web_config.port);
 
-    web::start(web_config, project.clone(), &PLUGIN_CHAIN, vfs.clone());
+    web::start(web_config, project.clone(), Instant::now());
 }
