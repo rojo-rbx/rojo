@@ -49,11 +49,18 @@ struct RbxInstance {
 struct RbxSession {
     partitions_path: HashMap<String, PathBuf>,
     partition_instances: HashMap<String, Id>,
+    partition_files: HashMap<String, FileItem>,
 }
 
 impl RbxSession {
-    fn load(&self) {
+    fn load(&mut self) {
         for (partition_name, partition_path) in &self.partitions_path {
+            let file_item = self.read(&FileRoute {
+                partition: partition_name.clone(),
+                route: vec![],
+            }).expect("aaagh");
+
+            self.partition_files.insert(partition_name.clone(), file_item);
         }
     }
 
