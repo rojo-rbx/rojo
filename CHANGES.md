@@ -1,7 +1,10 @@
 # Rojo Change Log
 
 ## Current Master
-* Fixed instances that were reconciled not being inserted into the RouteMap.
+*No changes*
+
+## 0.4.2 (April 4, 2018)
+* Fixed final case of duplicated instance insertion, caused by reconciled instances not being inserted into `RouteMap`.
 	* The reconciler is still not a perfect solution, especially if script instances get moved around without being destroyed. I don't think this can be fixed before a big refactor.
 
 ## 0.4.1 (April 1, 2018)
