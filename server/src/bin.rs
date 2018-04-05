@@ -8,6 +8,8 @@ extern crate serde;
 extern crate serde_json;
 extern crate regex;
 
+pub mod rbx_session;
+pub mod id;
 pub mod web;
 pub mod core;
 pub mod project;
