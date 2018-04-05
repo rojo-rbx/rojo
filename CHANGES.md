@@ -1,7 +1,8 @@
 # Rojo Change Log
 
 ## Current Master
-*No changes*
+* Fixed instances that were reconciled not being inserted into the RouteMap.
+	* The reconciler is still not a perfect solution, especially if script instances get moved around without being destroyed. I don't think this can be fixed before a big refactor.
 
 ## 0.4.1 (April 1, 2018)
 * Merged plugin repository into main Rojo repository for easier tracking.
