@@ -13,6 +13,7 @@ extern crate tempfile;
 pub mod rbx_session;
 pub mod id;
 pub mod web;
+pub mod web_util;
 pub mod core;
 pub mod project;
 pub mod pathext;
