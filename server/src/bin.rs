@@ -24,11 +24,6 @@ fn main() {
             (@arg port: --port +takes_value "The port to listen on. Defaults to 8000.")
         )
 
-        (@subcommand pack =>
-            (about: "Packs the project into a GUI installer bundle. NOT YET IMPLEMENTED!")
-            (@arg PROJECT: "Path to the project to pack. Defaults to the current directory.")
-        )
-
         (@arg verbose: --verbose "Enable extended logging.")
     ).get_matches();
 
@@ -67,10 +62,6 @@ fn main() {
             };
 
             rojo_core::commands::serve(&project_path, verbose, port);
-        },
-        ("pack", _) => {
-            eprintln!("'rojo pack' is not yet implemented!");
-            process::exit(1);
         },
         _ => {
             eprintln!("Please specify a subcommand!");
