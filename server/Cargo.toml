@@ -6,6 +6,10 @@ description = "A tool to create robust Roblox projects"
 license = "MIT"
 repository = "https://github.com/LPGhatguy/rojo"
 
+[lib]
+name = "rojo_core"
+path = "src/lib.rs"
+
 [[bin]]
 name = "rojo"
 path = "src/bin.rs"
