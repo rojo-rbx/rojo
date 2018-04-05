@@ -7,6 +7,9 @@ extern crate serde;
 extern crate serde_json;
 extern crate regex;
 
+#[cfg(test)]
+extern crate tempfile;
+
 pub mod rbx_session;
 pub mod id;
 pub mod web;
