@@ -1,13 +1,10 @@
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process;
 use std::time::Instant;
 
 use rand;
 
 use project::{Project, ProjectLoadError};
-use middleware::{MiddlewareChain};
-use middlewares::{DefaultMiddleware, JsonModelMiddleware, ScriptMiddleware};
-use vfs::{VfsSession};
 use web;
 
 pub fn serve(project_path: &PathBuf, verbose: bool, port: Option<u64>) {
@@ -55,34 +52,6 @@ pub fn serve(project_path: &PathBuf, verbose: bool, port: Option<u64>) {
         verbose,
         port: port.unwrap_or(project.serve_port),
         server_id,
-    };
-
-    lazy_static! {
-        static ref PLUGIN_CHAIN: MiddlewareChain = MiddlewareChain::new(vec![
-            Box::new(ScriptMiddleware::new()),
-            Box::new(JsonModelMiddleware::new()),
-            Box::new(DefaultMiddleware::new()),
-        ]);
-    }
-
-    let vfs = {
-        let mut vfs = VfsSession::new(&PLUGIN_CHAIN);
-
-        for (name, project_partition) in &project.partitions {
-            let path = {
-                let given_path = Path::new(&project_partition.path);
-
-                if given_path.is_absolute() {
-                    given_path.to_path_buf()
-                } else {
-                    project_path.join(given_path)
-                }
-            };
-
-            vfs.insert_partition(name, path);
-        }
-
-        Arc::new(Mutex::new(vfs))
     };
 
     println!("Server listening on port {}", web_config.port);
