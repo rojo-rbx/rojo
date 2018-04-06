@@ -32,17 +32,15 @@ pub fn serve(project_path: &PathBuf, verbose: bool, port: Option<u64>) {
                 },
                 ProjectLoadError::FailedToOpen | ProjectLoadError::FailedToRead => {
                     eprintln!("Found project file, but failed to read it!");
-                    eprintln!(
-                        "Check the permissions of the project file at\n{}",
-                        project_path.display(),
-                    );
+                    eprintln!("Check the permissions of the project file in folder {}", project_path.display());
 
                     process::exit(1);
                 },
                 _ => {
-                    // Any other error is fine; use the default project.
-                    println!("Found no project file, using default project...");
-                    Project::default()
+                    eprintln!("Unable to find project file in folder {}", project_path.display());
+                    eprintln!("Use 'rojo init' to create a new project file.");
+
+                    process::exit(1);
                 },
             }
         },
