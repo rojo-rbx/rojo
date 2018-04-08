@@ -1,8 +1,12 @@
 # Rojo Change Log
 
 ## Current Master
+*No changes*
+
+## 0.4.3 (April 7, 2018)
 * Plugin now automatically selects `HttpService` if it determines that HTTP isn't enabled ([#58](https://github.com/LPGhatguy/rojo/pull/58))
 * Plugin now has much more robust handling and will wipe all state when the server changes.
+	* This should fix issues that would otherwise be solved by restarting Roblox Studio.
 
 ## 0.4.2 (April 4, 2018)
 * Fixed final case of duplicated instance insertion, caused by reconciled instances not being inserted into `RouteMap`.
