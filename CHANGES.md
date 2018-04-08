@@ -3,6 +3,9 @@
 ## Current Master
 *No changes*
 
+## 0.4.4 (April 7, 2018)
+* Fix small regression introduced in 0.4.3
+
 ## 0.4.3 (April 7, 2018)
 * Plugin now automatically selects `HttpService` if it determines that HTTP isn't enabled ([#58](https://github.com/LPGhatguy/rojo/pull/58))
 * Plugin now has much more robust handling and will wipe all state when the server changes.
