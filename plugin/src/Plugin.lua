@@ -188,7 +188,11 @@ function Plugin:startPolling()
 			end
 
 			while self._polling do
-				local changes = api:getChanges():await()
+				local changesOk, changes = api:getChanges():await()
+
+				if not changesOk then
+					return Promise.reject(changes)
+				end
 
 				if #changes > 0 then
 					local routes = {}
