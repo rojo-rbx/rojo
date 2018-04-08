@@ -1,7 +1,11 @@
 # Rojo Change Log
 
 ## Current Master
-*No changes*
+* Plugin now automatically selects `HttpService` if it determines that HTTP isn't enabled ([#58](https://github.com/LPGhatguy/rojo/pull/58))
+
+## 0.4.2 (April 4, 2018)
+* Fixed final case of duplicated instance insertion, caused by reconciled instances not being inserted into `RouteMap`.
+	* The reconciler is still not a perfect solution, especially if script instances get moved around without being destroyed. I don't think this can be fixed before a big refactor.
 
 ## 0.4.1 (April 1, 2018)
 * Merged plugin repository into main Rojo repository for easier tracking.

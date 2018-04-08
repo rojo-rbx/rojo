@@ -67,12 +67,10 @@ local function main()
 		.Click:Connect(function()
 			checkUpgrade()
 
-			spawn(function()
-				pluginInstance:togglePolling()
-					:catch(function(err)
-						warn(err)
-					end)
-			end)
+			pluginInstance:togglePolling()
+				:catch(function(err)
+					warn(err)
+				end)
 		end)
 end
 

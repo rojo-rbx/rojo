@@ -161,6 +161,10 @@ function Reconciler:reconcile(rbx, item)
 	-- Use a dumb algorithm for reconciling children
 	self:_reconcileChildren(rbx, item)
 
+	if item.Route then
+		self._routeMap:insert(item.Route, rbx)
+	end
+
 	return rbx
 end
 
