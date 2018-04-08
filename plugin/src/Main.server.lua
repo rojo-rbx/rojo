@@ -11,6 +11,11 @@ local Version = require(script.Parent.Version)
 	are, show them a reminder to make sure they check their server version.
 ]]
 local function checkUpgrade()
+	-- When developing Rojo, there's no use in doing version checks
+	if Config.dev then
+		return
+	end
+
 	local lastVersion = plugin:GetSetting("LastRojoVersion")
 
 	if lastVersion then
@@ -30,10 +35,7 @@ local function checkUpgrade()
 		end
 	end
 
-	-- When developing Rojo, there's no use in storing that version number.
-	if not Config.dev then
-		plugin:SetSetting("LastRojoVersion", Config.version)
-	end
+	plugin:SetSetting("LastRojoVersion", Config.version)
 end
 
 local function main()

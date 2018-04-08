@@ -1,6 +1,6 @@
 local Config = require(script.Parent.Config)
 local Http = require(script.Parent.Http)
-local Server = require(script.Parent.Server)
+local Api = require(script.Parent.Api)
 local Promise = require(script.Parent.Promise)
 local Reconciler = require(script.Parent.Reconciler)
 
@@ -26,7 +26,7 @@ function Plugin.new()
 	local self = {
 		_http = Http.new(remote),
 		_reconciler = Reconciler.new(),
-		_server = nil,
+		_api = nil,
 		_polling = false,
 	}
 
@@ -57,37 +57,58 @@ function Plugin.new()
 	return self
 end
 
-function Plugin:server()
-	if not self._server then
-		self._server = Server.connect(self._http)
+--[[
+	Clears all state and issues a notice to the user that the plugin has
+	restarted.
+]]
+function Plugin:restart()
+	warn("The server has changed since the last request, reloading plugin...")
+
+	self._reconciler:clear()
+	self._api = nil
+	self._polling = false
+end
+
+function Plugin:api()
+	if not self._api then
+		self._api = Api.connect(self._http)
 			:catch(function(err)
-				self._server = nil
+				self._api = nil
 				return Promise.reject(err)
 			end)
 	end
 
-	return self._server
+	return self._api
 end
 
 function Plugin:connect()
 	print("Testing connection...")
 
-	return self:server()
-		:andThen(function(server)
-			return server:getInfo()
-		end)
-		:andThen(function(result)
+	return self:api()
+		:andThen(function(api)
+			local ok, info = api:getInfo():await()
+
+			if not ok then
+				return Promise.reject(info)
+			end
+
 			print("Server found!")
-			print("Protocol version:", result.protocolVersion)
-			print("Server version:", result.serverVersion)
+			print("Protocol version:", info.protocolVersion)
+			print("Server version:", info.serverVersion)
+		end)
+		:catch(function(err)
+			if err == Api.Error.ServerIdMismatch then
+				self:restart()
+				return self:connect()
+			else
+				return Promise.reject(err)
+			end
 		end)
 end
 
 function Plugin:togglePolling()
 	if self._polling then
-		self:stopPolling()
-
-		return Promise.resolve(nil)
+		return self:stopPolling()
 	else
 		return self:startPolling()
 	end
@@ -95,48 +116,51 @@ end
 
 function Plugin:stopPolling()
 	if not self._polling then
-		return
+		return Promise.resolve(false)
 	end
 
 	print("Stopped polling.")
 
 	self._polling = false
 	self._label.Enabled = false
+
+	return Promise.resolve(true)
 end
 
-function Plugin:_pull(server, project, routes)
-	local items = server:read(routes):await()
+function Plugin:_pull(api, project, routes)
+	return api:read(routes)
+		:andThen(function(items)
+			for index = 1, #routes do
+				local itemRoute = routes[index]
+				local partitionName = itemRoute[1]
+				local partition = project.partitions[partitionName]
+				local item = items[index]
 
-	for index = 1, #routes do
-		local itemRoute = routes[index]
-		local partitionName = itemRoute[1]
-		local partition = project.partitions[partitionName]
-		local item = items[index]
+				local partitionRoute = collectMatch(partition.target, "[^.]+")
 
-		local partitionRoute = collectMatch(partition.target, "[^.]+")
+				-- If the item route's length was 1, we need to rename the instance to
+				-- line up with the partition's root object name.
+				--
+				-- This is a HACK!
+				if #itemRoute == 1 then
+					if item then
+						local objectName = partition.target:match("[^.]+$")
+						item.Name = objectName
+					end
+				end
 
-		-- If the item route's length was 1, we need to rename the instance to
-		-- line up with the partition's root object name.
-		--
-		-- This is a HACK!
-		if #itemRoute == 1 then
-			if item then
-				local objectName = partition.target:match("[^.]+$")
-				item.Name = objectName
+				local fullRoute = {}
+				for _, piece in ipairs(partitionRoute) do
+					table.insert(fullRoute, piece)
+				end
+
+				for i = 2, #itemRoute do
+					table.insert(fullRoute, itemRoute[i])
+				end
+
+				self._reconciler:reconcileRoute(fullRoute, item, itemRoute)
 			end
-		end
-
-		local fullRoute = {}
-		for _, piece in ipairs(partitionRoute) do
-			table.insert(fullRoute, piece)
-		end
-
-		for i = 2, #itemRoute do
-			table.insert(fullRoute, itemRoute[i])
-		end
-
-		self._reconciler:reconcileRoute(fullRoute, item, itemRoute)
-	end
+		end)
 end
 
 function Plugin:startPolling()
@@ -149,14 +173,22 @@ function Plugin:startPolling()
 	self._polling = true
 	self._label.Enabled = true
 
-	return self:server()
-		:andThen(function(server)
-			self:syncIn():await()
+	return self:api()
+		:andThen(function(api)
+			local syncOk, result = self:syncIn():await()
 
-			local project = server:getInfo():await().project
+			if not syncOk then
+				return Promise.reject(result)
+			end
+
+			local infoOk, info = api:getInfo():await()
+
+			if not infoOk then
+				return Promise.reject(info)
+			end
 
 			while self._polling do
-				local changes = server:getChanges():await()
+				local changes = api:getChanges():await()
 
 				if #changes > 0 then
 					local routes = {}
@@ -165,33 +197,56 @@ function Plugin:startPolling()
 						table.insert(routes, change.route)
 					end
 
-					self:_pull(server, project, routes)
+					local pullOk, pullResult = self:_pull(api, info.project, routes):await()
+
+					if not pullOk then
+						return Promise.reject(pullResult)
+					end
 				end
 
 				wait(Config.pollingRate)
 			end
 		end)
-		:catch(function()
+		:catch(function(err)
 			self:stopPolling()
+
+			if err == Api.Error.ServerIdMismatch then
+				self:restart()
+				return self:startPolling()
+			else
+				return Promise.reject(err)
+			end
 		end)
 end
 
 function Plugin:syncIn()
 	print("Syncing from server...")
 
-	return self:server()
-		:andThen(function(server)
-			local project = server:getInfo():await().project
+	return self:api()
+		:andThen(function(api)
+			local ok, info = api:getInfo():await()
+
+			if not ok then
+				return Promise.reject(info)
+			end
 
 			local routes = {}
 
-			for name in pairs(project.partitions) do
+			for name in pairs(info.project.partitions) do
 				table.insert(routes, {name})
 			end
 
-			self:_pull(server, project, routes)
+			self:_pull(api, info.project, routes)
 
 			print("Sync successful!")
+		end)
+		:catch(function(err)
+			if err == Api.Error.ServerIdMismatch then
+				self:restart()
+				return self:syncIn()
+			else
+				return Promise.reject(err)
+			end
 		end)
 end
 

@@ -71,8 +71,8 @@ function RouteMap:clear()
 	self._map = {}
 	self._reverseMap = {}
 
-	for object in pairs(self._connectionsByRbx) do
-		object:Disconnect()
+	for _, connection in pairs(self._connectionsByRbx) do
+		connection:Disconnect()
 	end
 
 	self._connectionsByRbx = {}
