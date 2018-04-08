@@ -52,6 +52,9 @@ end
 
 function HttpError:report()
 	warn(self.message)
+	if self.type == HttpError.Error.HttpNotEnabled then
+		game:GetService("Selection"):Set{game:GetService("HttpService")}
+	end
 end
 
 return HttpError
