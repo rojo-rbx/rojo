@@ -4,32 +4,43 @@ local Config = require(script.Parent.Config)
 local Promise = require(script.Parent.Promise)
 local Version = require(script.Parent.Version)
 
-local Server = {}
-Server.__index = Server
+local Api = {}
+Api.__index = Api
+
+Api.Error = {
+	ServerIdMismatch = "ServerIdMismatch",
+}
+
+setmetatable(Api.Error, {
+	__index = function(_, key)
+		error("Invalid API.Error name " .. key, 2)
+	end
+})
 
 --[[
-	Create a new Server using the given HTTP implementation and replacer.
+	Api.connect(Http) -> Promise<Api>
 
-	If the context becomes invalid, `replacer` will be invoked with a new
-	context that should be suitable to replace this one.
+	Create a new Api using the given HTTP implementation.
 
 	Attempting to invoke methods on an invalid conext will throw errors!
 ]]
-function Server.connect(http)
+function Api.connect(http)
 	local context = {
 		http = http,
 		serverId = nil,
 		currentTime = 0,
 	}
 
-	setmetatable(context, Server)
+	setmetatable(context, Api)
 
 	return context:_start()
 end
 
-function Server:_start()
-	return self:getInfo()
+function Api:_start()
+	return self.http:get("/")
 		:andThen(function(response)
+			response = response:json()
+
 			if response.protocolVersion ~= Config.protocolVersion then
 				local message = (
 					"Found a Rojo dev server, but it's using a different protocol version, and is incompatible." ..
@@ -39,7 +50,7 @@ function Server:_start()
 					"\n\nGo to https://github.com/LPGhatguy/rojo for more details."
 				):format(
 					Version.display(Config.version), Config.protocolVersion,
-					Config.expectedServerVersionString,
+					Config.expectedApiVersionString,
 					response.serverVersion, response.protocolVersion
 				)
 
@@ -53,32 +64,44 @@ function Server:_start()
 		end)
 end
 
-function Server:getInfo()
+function Api:getInfo()
 	return self.http:get("/")
 		:andThen(function(response)
 			response = response:json()
+
+			if response.serverId ~= self.serverId then
+				return Promise.reject(Api.Error.ServerIdMismatch)
+			end
 
 			return response
 		end)
 end
 
-function Server:read(paths)
+function Api:read(paths)
 	local body = HttpService:JSONEncode(paths)
 
 	return self.http:post("/read", body)
 		:andThen(function(response)
 			response = response:json()
 
+			if response.serverId ~= self.serverId then
+				return Promise.reject(Api.Error.ServerIdMismatch)
+			end
+
 			return response.items
 		end)
 end
 
-function Server:getChanges()
+function Api:getChanges()
 	local url = ("/changes/%f"):format(self.currentTime)
 
 	return self.http:get(url)
 		:andThen(function(response)
 			response = response:json()
+
+			if response.serverId ~= self.serverId then
+				return Promise.reject(Api.Error.ServerIdMismatch)
+			end
 
 			self.currentTime = response.currentTime
 
@@ -86,4 +109,4 @@ function Server:getChanges()
 		end)
 end
 
-return Server
+return Api

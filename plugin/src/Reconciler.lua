@@ -125,6 +125,13 @@ function Reconciler:_reify(item)
 end
 
 --[[
+	Clears any state that the Reconciler has, effectively restarting it.
+]]
+function Reconciler:clear()
+	self._routeMap:clear()
+end
+
+--[[
 	Apply the changes represented by the given item to a Roblox object that's a
 	child of the given instance.
 ]]

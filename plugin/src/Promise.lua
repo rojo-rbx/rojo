@@ -221,15 +221,11 @@ function Promise:await()
 		local ok = bindable.Event:Wait()
 		bindable:Destroy()
 
-		if not ok then
-			error(tostring(result[1]), 2)
-		end
-
-		return unpack(result)
+		return ok, unpack(result)
 	elseif self._status == Promise.Status.Resolved then
-		return unpack(self._value)
+		return true, unpack(self._value)
 	elseif self._status == Promise.Status.Rejected then
-		error(tostring(self._value[1]), 2)
+		return false, unpack(self._value)
 	end
 end
 
