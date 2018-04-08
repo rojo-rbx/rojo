@@ -11,8 +11,14 @@ theme:
 
 pages:
   - Home: index.md
+  - Why Rojo?: why-rojo.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Creating a Project: getting-started/creating-a-project.md
+  - Sync Details: sync-details.md
 
 markdown_extensions:
+  - attr_list
   - admonition
   - codehilite:
       guess_lang: false

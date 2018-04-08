@@ -1,14 +1,14 @@
 <div align="center">
-  <img src="assets/rojo-logo.png" alt="Rojo" height="217" />
+    <img src="assets/rojo-logo.png" alt="Rojo" height="217" />
 </div>
 
 <div>&nbsp;</div>
 
 <div align="center">
-  <a href="https://travis-ci.org/LPGhatguy/rojo">
-    <img src="https://api.travis-ci.org/LPGhatguy/rojo.svg?branch=master" alt="Travis-CI Build Status" />
-  </a>
-  <img src="https://img.shields.io/badge/latest_version-0.4.4-brightgreen.svg" alt="Current server version" />
+    <a href="https://travis-ci.org/LPGhatguy/rojo">
+        <img src="https://api.travis-ci.org/LPGhatguy/rojo.svg?branch=master" alt="Travis-CI Build Status" />
+    </a>
+    <img src="https://img.shields.io/badge/latest_version-0.4.4-brightgreen.svg" alt="Current server version" />
 </div>
 
 <hr />
@@ -45,9 +45,9 @@ To install the server, either:
 To install the plugin, either:
 
 * Install the plugin from the [Roblox plugin page](https://www.roblox.com/library/1211549683/Rojo).
-  * This gives you less control over what version you install -- you will always have the latest version.
+    * This gives you less control over what version you install -- you will always have the latest version.
 * Or, download the latest release from [the GitHub releases section](https://github.com/LPGhatguy/rojo/releases) and install it into your Roblox plugins folder
-  * You can open this folder by clicking the "Plugins Folder" button from the Plugins toolbar in Roblox Studio
+    * You can open this folder by clicking the "Plugins Folder" button from the Plugins toolbar in Roblox Studio
 
 ## Server Usage
 For more help, use `rojo help`.
@@ -68,9 +68,9 @@ The default project file is:
 
 ```json
 {
-  "name": "my-new-project",
-  "servePort": 8000,
-  "partitions": {}
+    "name": "my-new-project",
+    "servePort": 8000,
+    "partitions": {}
 }
 ```
 
@@ -97,14 +97,14 @@ For example, if you want to map your `src` directory to an object named `My Cool
 
 ```json
 {
-  "name": "rojo",
-  "servePort": 8000,
-  "partitions": {
-    "game": {
-      "path": "src",
-      "target": "ReplicatedStorage.My Cool Game"
+    "name": "rojo",
+    "servePort": 8000,
+    "partitions": {
+        "game": {
+            "path": "src",
+            "target": "ReplicatedStorage.My Cool Game"
+        }
     }
-  }
 }
 ```
 
@@ -140,13 +140,13 @@ Any directory containing one of these files will instead be a `ModuleScript`, `S
 For example, this file tree:
 
 * my-game
-	* init.client.lua
-	* foo.lua
+    * init.client.lua
+    * foo.lua
 
 Will turn into these instances in Roblox:
 
 * `my-game` (`LocalScript` with source from `my-game/init.client.lua`)
-	* `foo` (`ModuleScript` with source from `my-game/foo.lua`)
+    * `foo` (`ModuleScript` with source from `my-game/foo.lua`)
 
 `*.model.json` files are a way to represent simple Roblox instances on the filesystem until `rbxmx` and `rbxlx` support is implemented in Rojo.
 
@@ -156,28 +156,28 @@ JSON Model files are strict, with every property being required. They look like 
 
 ```json
 {
-  "Name": "hello",
-  "ClassName": "Model",
-  "Children": [
-    {
-      "Name": "Some Part",
-      "ClassName": "Part",
-      "Children": [],
-      "Properties": {}
-    },
-    {
-      "Name": "Some StringValue",
-      "ClassName": "StringValue",
-      "Children": [],
-      "Properties": {
-        "Value": {
-          "Type": "String",
-          "Value": "Hello, world!"
+    "Name": "hello",
+    "ClassName": "Model",
+    "Children": [
+        {
+            "Name": "Some Part",
+            "ClassName": "Part",
+            "Children": [],
+            "Properties": {}
+        },
+        {
+            "Name": "Some StringValue",
+            "ClassName": "StringValue",
+            "Children": [],
+            "Properties": {
+                "Value": {
+                    "Type": "String",
+                    "Value": "Hello, world!"
+                }
+            }
         }
-      }
-    }
-  ],
-  "Properties": {}
+    ],
+    "Properties": {}
 }
 ```
 
