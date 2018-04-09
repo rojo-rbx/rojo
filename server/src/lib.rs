@@ -20,5 +20,4 @@ pub mod pathext;
 pub mod vfs;
 pub mod rbx;
 pub mod middleware;
-pub mod middlewares;
 pub mod commands;

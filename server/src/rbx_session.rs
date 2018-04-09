@@ -1,13 +1,13 @@
 use std::path::{Path, PathBuf};
 use std::collections::HashMap;
-use std::io::{Read, Write};
+use std::io::Read;
 use std::fs::{self, File};
 
 use id::{Id};
 
-// TODO: Add lifetime, switch to using Cow<'a, str> instead of String. It's
+// TODO: Add lifetime, switch to using Cow<'a, str> instead of String? It's
 // possible that it would be too cumbersome!
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Hash)]
 struct FileRoute {
     pub partition: String,
     pub route: Vec<String>,
@@ -54,13 +54,38 @@ enum FileItem {
 }
 
 struct RbxInstance {
+    pub class_name: String,
     pub parent: Option<Id>,
+    pub properties: HashMap<String, String>,
 }
 
 struct RbxSession {
     pub partition_paths: HashMap<String, PathBuf>,
     pub partition_instances: HashMap<String, Id>,
     pub partition_files: HashMap<String, FileItem>,
+    pub instances: HashMap<Id, RbxInstance>,
+}
+
+fn file_to_instance(file_item: &FileItem) -> RbxInstance {
+    match file_item {
+        &FileItem::File { ref contents } => {
+            let mut properties = HashMap::new();
+            properties.insert("Value".to_string(), contents.clone());
+
+            RbxInstance {
+                class_name: "StringValue".to_string(),
+                parent: None,
+                properties,
+            }
+        },
+        &FileItem::Directory { ref children } => {
+            RbxInstance {
+                class_name: "Folder".to_string(),
+                parent: None,
+                properties: HashMap::new(),
+            }
+        }
+    }
 }
 
 impl RbxSession {
@@ -69,11 +94,12 @@ impl RbxSession {
             partition_paths: HashMap::new(),
             partition_instances: HashMap::new(),
             partition_files: HashMap::new(),
+            instances: HashMap::new(),
         }
     }
 
-    fn load(&mut self) {
-        for (partition_name, partition_path) in &self.partition_paths {
+    fn load_files(&mut self) {
+        for partition_name in self.partition_paths.keys() {
             let route = FileRoute {
                 partition: partition_name.clone(),
                 route: vec![],
@@ -166,6 +192,8 @@ mod tests {
 
     #[test]
     fn file_items_correct() {
+        use std::io::Write;
+
         let root_dir = tempfile::tempdir().unwrap();
 
         let foo_path = root_dir.path().join("foo.txt");
@@ -183,7 +211,7 @@ mod tests {
 
         session.partition_paths.insert("agh".to_string(), root_dir.path().to_path_buf());
 
-        session.load();
+        session.load_files();
 
         assert_eq!(session.partition_files.len(), 1);
 
