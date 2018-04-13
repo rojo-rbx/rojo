@@ -6,7 +6,7 @@ use serde_json;
 
 static MAX_BODY_SIZE: usize = 25 * 1024 * 1024; // 25 MiB
 
-pub fn json<T: serde::Serialize>(value: T) -> rouille::Response {
+pub fn json_response<T: serde::Serialize>(value: T) -> rouille::Response {
     let data = serde_json::to_string(&value).unwrap();
     rouille::Response::from_data("application/json", data)
 }
@@ -15,7 +15,7 @@ pub fn json<T: serde::Serialize>(value: T) -> rouille::Response {
 ///
 /// Doesn't do any actual parsing -- all this method does is verify the content
 /// type of the request and read the request's body.
-pub fn read_json_text(request: &rouille::Request) -> Option<String> {
+fn read_json_text(request: &rouille::Request) -> Option<String> {
     // Bail out if the request body isn't marked as JSON
     match request.header("Content-Type") {
         Some(header) => if !header.starts_with("application/json") {

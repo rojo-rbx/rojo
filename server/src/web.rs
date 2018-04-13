@@ -3,7 +3,7 @@ use std::time::Instant;
 use rouille;
 
 use project::Project;
-use web_util::json;
+use web_util::json_response;
 
 /// The set of configuration the web server needs to start.
 pub struct WebConfig {
@@ -39,7 +39,7 @@ pub fn start(config: WebConfig, project: Project, start_time: Instant) {
                     elapsed.as_secs() as f64 + elapsed.subsec_nanos() as f64 / 1_000_000_000.0
                 };
 
-                json(ServerInfo {
+                json_response(ServerInfo {
                     server_version: env!("CARGO_PKG_VERSION"),
                     protocol_version: 1,
                     server_id: &server_id,
