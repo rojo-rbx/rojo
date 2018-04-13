@@ -20,29 +20,8 @@ pub fn serve(project_path: &PathBuf, verbose: bool, port: Option<u64>) {
             v
         },
         Err(err) => {
-            match err {
-                ProjectLoadError::InvalidJson(serde_err) => {
-                    eprintln!(
-                        "Found invalid JSON!\nProject in: {}\nError: {}",
-                        project_path.display(),
-                        serde_err,
-                    );
-
-                    process::exit(1);
-                },
-                ProjectLoadError::FailedToOpen | ProjectLoadError::FailedToRead => {
-                    eprintln!("Found project file, but failed to read it!");
-                    eprintln!("Check the permissions of the project file in folder {}", project_path.display());
-
-                    process::exit(1);
-                },
-                _ => {
-                    eprintln!("Unable to find project file in folder {}", project_path.display());
-                    eprintln!("Use 'rojo init' to create a new project file.");
-
-                    process::exit(1);
-                },
-            }
+            eprintln!("{}", err);
+            process::exit(1);
         },
     };
 

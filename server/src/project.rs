@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fmt;
 use std::fs::{self, File};
 use std::io::{Read, Write};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use serde_json;
 
@@ -10,10 +10,26 @@ pub static PROJECT_FILENAME: &'static str = "rojo.json";
 
 #[derive(Debug)]
 pub enum ProjectLoadError {
-    DidNotExist,
-    FailedToOpen,
-    FailedToRead,
-    InvalidJson(serde_json::Error),
+    DidNotExist(PathBuf),
+    FailedToOpen(PathBuf),
+    FailedToRead(PathBuf),
+    InvalidJson(PathBuf, serde_json::Error),
+}
+
+impl fmt::Display for ProjectLoadError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            &ProjectLoadError::InvalidJson(ref project_path, ref serde_err) => {
+                write!(f, "Found invalid JSON reading project: {}\nError: {}", project_path.display(), serde_err)
+            },
+            &ProjectLoadError::FailedToOpen(ref project_path) | &ProjectLoadError::FailedToRead(ref project_path) => {
+                write!(f, "Found project file, but failed to read it: {}", project_path.display())
+            },
+            &ProjectLoadError::DidNotExist(ref project_path) => {
+                write!(f, "Could not locate a project file at {}", project_path.display())
+            },
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -116,24 +132,24 @@ impl Project {
 
         match fs::metadata(&package_path) {
             Ok(_) => {},
-            Err(_) => return Err(ProjectLoadError::DidNotExist),
+            Err(_) => return Err(ProjectLoadError::DidNotExist(package_path.clone())),
         }
 
         let mut file = match File::open(&package_path) {
             Ok(f) => f,
-            Err(_) => return Err(ProjectLoadError::FailedToOpen),
+            Err(_) => return Err(ProjectLoadError::FailedToOpen(package_path.clone())),
         };
 
         let mut contents = String::new();
 
         match file.read_to_string(&mut contents) {
             Ok(_) => {},
-            Err(_) => return Err(ProjectLoadError::FailedToRead),
+            Err(_) => return Err(ProjectLoadError::FailedToRead(package_path.clone())),
         }
 
         match serde_json::from_str(&contents) {
             Ok(v) => Ok(v),
-            Err(e) => return Err(ProjectLoadError::InvalidJson(e)),
+            Err(e) => return Err(ProjectLoadError::InvalidJson(package_path.clone(), e)),
         }
     }
 
