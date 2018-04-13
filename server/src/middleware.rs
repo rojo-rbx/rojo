@@ -1,6 +1,7 @@
 use rbx::RbxInstance;
 use vfs::VfsItem;
-use core::Route;
+
+type Route = Vec<String>;
 
 pub enum TransformFileResult {
     Value(Option<RbxInstance>),
