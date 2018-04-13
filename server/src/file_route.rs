@@ -1,5 +1,7 @@
 use std::path::{Path, PathBuf};
 
+use partition::Partition;
+
 // TODO: Add lifetime, switch to using Cow<'a, str> instead of String? It's
 // possible that it would be too cumbersome!
 #[derive(Debug, Clone, PartialEq, Hash)]
@@ -33,5 +35,22 @@ impl FileRoute {
         }
 
         result
+    }
+
+    /// This function is totally wrong and should be handled by middleware, heh.
+    pub fn name(&self, partition: &Partition) -> String { // I guess??
+        if self.route.len() == 0 {
+            // This FileRoute refers to the partition itself
+
+            if partition.target.len() == 0 {
+                // We're targeting the game itself!
+                "game".to_string()
+            } else {
+                partition.target.last().unwrap().clone()
+            }
+        } else {
+            // This FileRoute refers to an item in a partition
+            self.route.last().unwrap().clone()
+        }
     }
 }

@@ -12,23 +12,32 @@ The aim is to rewrite most of Rojo to drop the notion of routes almost entirely 
 * **Roblox Instance**: An actual Roblox object derived from `Instance` on the client.
 
 ## Initialization
-On server initialization, Rojo reads all files in each partition and runs each through our middleware stack (renamed from plugins). Middleware transform a `VfsItem` into  a list of `RbxInstance` objects with these properties:
+On server initialization, Rojo reads all files in each partition and runs each through our middleware stack (renamed from plugins). Middleware transform a `VfsItem` into a set of `RbxInstance` objects with these properties:
 
 * name: `String`
 * class_name: `String`
 * parent: `Option<Id>`
 * properties: `HashMap<String, RbxValue>`
-* route: `Route` (does not have to serialize)
+* file_route: `FileRoute`
 * id: `Id`
 * rbx_referent: `Option<RbxReferent>`
 
 The server should keep these book-keeping maps:
 
-* `HashMap<Id, RbxInstance`, to serve as an index
-* `HashMap<Route, Id>`, to manage filesystem changes
-* `HashMap<Id, Route>`, to manage changes from the client
-* `HashMap<Route, String>`, to disambiguate and debounce changes written to the filesystem
-* `HashMap<RbxReferent, Id>`, when loading `rbxmx` format models from disk
+* partitions: `HashMap<String, Partition>`, to read partitions from disk
+* partition_instances: `HashMap<String, Id>`, to track partition instances
+* partition_files: `HashMap<String, VfsItem>`, to serve as an in-memory filesystem
+* instances: `HashMap<Id, RbxInstance>`, to serve as an index
+* instances_by_route: `HashMap<FileRoute, Id>`, to handle filesystem changes
+
+As a future extension, the server should also track:
+
+* `referent_to_id`: `HashMap<RbxReferent, Id>`, when loading `rbxmx` format models from disk.
+
+`Partition` is defined as:
+
+* path: `PathBuf`
+* target: `Vec<String>`
 
 On initial sync, the client should receive:
 
@@ -38,14 +47,13 @@ On initial sync, the client should receive:
 ## File Changes
 Whenever a file is changed, the server should:
 
-* Convert its path to a `Route`.
+* Convert its path to a `FileRoute`.
 * Read the file into a `VfsItem` object.
-* Compare the contents of the file with the last-seen contents from the map from `Route` to `String`.
+* Compare the contents of the file with the last-seen contents from the map from `FileRoute` to `String`.
 	* If they're the same, that means this change was caused by the server itself, and should be discarded.
 	* Else, clear the value from the map.
-* Pass the `VfsItem` through the middleware chain to a tree of `RbxInstance` objects.
-	* TODO: How should this tree be represented? The normal `RbxInstance` case should just reference children by ID, but that's super inconvenient here.
-* Check the existing map from `Route` to `Id`.
+* Pass the `VfsItem` through the middleware chain to create a tree of `RbxInstance` objects.
+* Check the existing map from `FileRoute` to `Id`.
 	* If an existing instance exists with the root's `Id`, reuse it and replace the root's `Id`.
 	* Else, generate a new ID.
 * For each child instance:
@@ -69,7 +77,7 @@ Those changes should come in three flavors:
 * Deleted a known instance (need `id`)
 * Created a new instance (need `clientId`)
 
-Every sync period, which could be around 100ms, the plugin should send a request with every Roblox Instance mutation all at once.
+Every sync period, which could be around 50ms, the plugin should send a request with every Roblox Instance mutation all at once.
 
 In order to correctly serialize changes received from the client, some care needs to be taken.
 

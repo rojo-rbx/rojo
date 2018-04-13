@@ -3,52 +3,95 @@ use std::collections::HashMap;
 use std::io::Read;
 use std::fs::{self, File};
 
-use id::{Id};
+use id::{Id, get_id};
 use file_route::FileRoute;
+use partition::Partition;
 
 /// Represents a file or directory that has been read from the filesystem.
-// TODO: Keep track of file Path or FileRoute?
 #[derive(Debug, Clone)]
 enum FileItem {
     File {
         contents: String,
+        route: FileRoute,
     },
     Directory {
         children: HashMap<String, FileItem>,
+        route: FileRoute,
     },
 }
 
+// TODO: Switch to enum to represent more value types
+type RbxValue = String;
+
+#[derive(Debug, Clone)]
 struct RbxInstance {
+    /// Maps to the `Name` property on Instance.
+    pub name: String,
+
+    /// Maps to the `ClassName` property on Instance.
     pub class_name: String,
+
+    /// Maps to the `Parent` property on Instance.
     pub parent: Option<Id>,
-    pub properties: HashMap<String, String>,
+
+    /// Contains all other properties of an Instance.
+    pub properties: HashMap<String, RbxValue>,
 }
 
 struct RbxSession {
-    pub partition_paths: HashMap<String, PathBuf>,
+    pub partitions: HashMap<String, Partition>,
+
+    /// The RbxInstance that represents each partition.
     pub partition_instances: HashMap<String, Id>,
+
+    /// The in-memory files associated with each partition.
     pub partition_files: HashMap<String, FileItem>,
+
+    /// The store of all instances in the session.
     pub instances: HashMap<Id, RbxInstance>,
+    // pub instances_by_route: HashMap<FileRoute, Id>,
 }
 
-fn file_to_instance(file_item: &FileItem) -> RbxInstance {
+fn file_to_instance(file_item: &FileItem, partition: &Partition) -> (Id, HashMap<Id, RbxInstance>) {
     match file_item {
-        &FileItem::File { ref contents } => {
+        &FileItem::File { ref contents, ref route } => {
             let mut properties = HashMap::new();
             properties.insert("Value".to_string(), contents.clone());
 
-            RbxInstance {
+            let primary_id = get_id();
+            let mut instances = HashMap::new();
+
+            instances.insert(primary_id, RbxInstance {
+                name: route.name(partition).to_string(),
                 class_name: "StringValue".to_string(),
                 parent: None,
                 properties,
-            }
+            });
+
+            (primary_id, instances)
         },
-        &FileItem::Directory { ref children } => {
-            RbxInstance {
+        &FileItem::Directory { ref children, ref route } => {
+            let primary_id = get_id();
+            let mut instances = HashMap::new();
+
+            instances.insert(primary_id, RbxInstance {
+                name: route.name(partition).to_string(),
                 class_name: "Folder".to_string(),
                 parent: None,
                 properties: HashMap::new(),
+            });
+
+            for child_file_item in children.values() {
+                let (child_id, mut child_instances) = file_to_instance(child_file_item, partition);
+
+                child_instances.get_mut(&child_id).unwrap().parent = Some(primary_id);
+
+                for (instance_id, instance) in child_instances.drain() {
+                    instances.insert(instance_id, instance);
+                }
             }
+
+            (primary_id, instances)
         }
     }
 }
@@ -56,7 +99,7 @@ fn file_to_instance(file_item: &FileItem) -> RbxInstance {
 impl RbxSession {
     fn new() -> RbxSession {
         RbxSession {
-            partition_paths: HashMap::new(),
+            partitions: HashMap::new(),
             partition_instances: HashMap::new(),
             partition_files: HashMap::new(),
             instances: HashMap::new(),
@@ -64,7 +107,7 @@ impl RbxSession {
     }
 
     fn load_files(&mut self) {
-        for partition_name in self.partition_paths.keys() {
+        for partition_name in self.partitions.keys() {
             let route = FileRoute {
                 partition: partition_name.clone(),
                 route: vec![],
@@ -76,12 +119,25 @@ impl RbxSession {
         }
     }
 
-    fn read(&self, route: &FileRoute) -> Result<FileItem, ()> {
-        let partition_path = self.partition_paths.get(&route.partition)
-            .ok_or(())?;
-        let path = route.to_path_buf(partition_path);
+    fn load_instances(&mut self) {
+        for (partition_name, file_item) in &self.partition_files {
+            let partition = self.partitions.get(partition_name).unwrap();
+            let (root_id, mut instances) = file_to_instance(&file_item, partition);
 
-        println!("Read {:?}, path {}", route, path.display());
+            // there has to be an std method for this
+            // oh well
+            for (instance_id, instance) in instances.drain() {
+                self.instances.insert(instance_id, instance);
+            }
+
+            self.partition_instances.insert(partition_name.clone(), root_id);
+        }
+    }
+
+    fn read(&self, route: &FileRoute) -> Result<FileItem, ()> {
+        let partition_path = &self.partitions.get(&route.partition)
+            .ok_or(())?.path;
+        let path = route.to_path_buf(partition_path);
 
         let metadata = fs::metadata(path)
             .map_err(|_| ())?;
@@ -96,8 +152,8 @@ impl RbxSession {
     }
 
     fn read_file(&self, route: &FileRoute) -> Result<FileItem, ()> {
-        let partition_path = self.partition_paths.get(&route.partition)
-            .ok_or(())?;
+        let partition_path = &self.partitions.get(&route.partition)
+            .ok_or(())?.path;
         let path = route.to_path_buf(partition_path);
 
         let mut file = File::open(path)
@@ -110,12 +166,13 @@ impl RbxSession {
 
         Ok(FileItem::File {
             contents,
+            route: route.clone(),
         })
     }
 
     fn read_directory(&self, route: &FileRoute) -> Result<FileItem, ()> {
-        let partition_path = self.partition_paths.get(&route.partition)
-            .ok_or(())?;
+        let partition_path = &self.partitions.get(&route.partition)
+            .ok_or(())?.path;
         let path = route.to_path_buf(partition_path);
 
         let reader = fs::read_dir(path)
@@ -139,6 +196,7 @@ impl RbxSession {
 
         Ok(FileItem::Directory {
             children,
+            route: route.clone(),
         })
     }
 }
@@ -174,21 +232,40 @@ mod tests {
 
         let mut session = RbxSession::new();
 
-        session.partition_paths.insert("agh".to_string(), root_dir.path().to_path_buf());
+        let partition = Partition {
+            path: root_dir.path().to_path_buf(),
+            target: vec!["ReplicatedStorage".to_string()],
+        };
+
+        session.partitions.insert("agh".to_string(), partition);
 
         session.load_files();
 
         assert_eq!(session.partition_files.len(), 1);
 
-        let folder = session.partition_files.values().nth(0).unwrap();
+        {
+            let folder = session.partition_files.values().nth(0).unwrap();
 
-        let children = match folder {
-            &FileItem::Directory { ref children } => children,
-            _ => panic!("Not a directory!"),
-        };
+            let children = match folder {
+                &FileItem::Directory { ref children, .. } => children,
+                _ => panic!("Not a directory!"),
+            };
 
-        assert_eq!(children.len(), 2);
-        assert!(children.get("foo.txt").is_some());
-        assert!(children.get("bar.tsv").is_some());
+            assert_eq!(children.len(), 2);
+            assert!(children.get("foo.txt").is_some());
+            assert!(children.get("bar.tsv").is_some());
+        }
+
+        session.load_instances();
+
+        assert_eq!(session.instances.len(), 3);
+        assert_eq!(session.partition_instances.len(), 1);
+
+        {
+            let folder_id = session.partition_instances.values().nth(0).unwrap();
+
+            let folder = session.instances.get(folder_id).unwrap();
+            assert_eq!(folder.name, "ReplicatedStorage");
+        }
    }
 }
