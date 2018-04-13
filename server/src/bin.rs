@@ -24,13 +24,7 @@ fn main() {
             (@arg port: --port +takes_value "The port to listen on. Defaults to 8000.")
         )
 
-        (@arg verbose: --verbose "Enable extended logging.")
     ).get_matches();
-
-    let verbose = match matches.occurrences_of("verbose") {
-        0 => false,
-        _ => true,
-    };
 
     match matches.subcommand() {
         ("init", sub_matches) => {
@@ -61,7 +55,7 @@ fn main() {
                 }
             };
 
-            rojo_core::commands::serve(&project_path, verbose, port);
+            rojo_core::commands::serve(&project_path, port);
         },
         _ => {
             eprintln!("Please specify a subcommand!");

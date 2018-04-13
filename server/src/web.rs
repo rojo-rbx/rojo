@@ -8,7 +8,6 @@ use web_util::json_response;
 /// The set of configuration the web server needs to start.
 pub struct WebConfig {
     pub port: u64,
-    pub verbose: bool,
     pub server_id: u64,
 }
 
