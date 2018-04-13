@@ -57,4 +57,4 @@ Pull requests are welcome!
 All pull requests are run against a test suite on Travis CI. That test suite should always pass!
 
 ## License
-Rojo is available under the terms of the MIT license. See [LICENSE.md](LICENSE.md) for details.
+Rojo is available under the terms of the Mozilla Public License, Version 2.0. See [LICENSE](LICENSE) for details.
