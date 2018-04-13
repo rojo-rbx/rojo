@@ -24,9 +24,11 @@ pub fn serve(project_path: &PathBuf, port: Option<u64>) {
     let web_config = web::WebConfig {
         port: port.unwrap_or(project.serve_port),
         server_id,
+        project: project.clone(),
+        start_time: Instant::now(),
     };
 
     println!("Server listening on port {}", web_config.port);
 
-    web::start(web_config, project.clone(), Instant::now());
+    web::start(web_config);
 }
