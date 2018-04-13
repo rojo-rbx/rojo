@@ -10,13 +10,14 @@ extern crate regex;
 #[cfg(test)]
 extern crate tempfile;
 
-pub mod rbx_session;
+pub mod commands;
+pub mod file_route;
 pub mod id;
+pub mod middleware;
+pub mod pathext;
+pub mod project;
+pub mod rbx;
+pub mod rbx_session;
+pub mod vfs;
 pub mod web;
 pub mod web_util;
-pub mod project;
-pub mod pathext;
-pub mod vfs;
-pub mod rbx;
-pub mod middleware;
-pub mod commands;
