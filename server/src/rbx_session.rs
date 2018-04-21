@@ -96,13 +96,18 @@ fn file_to_instance(file_item: &FileItem, partition: &Partition) -> (Id, HashMap
 }
 
 impl RbxSession {
-    fn new() -> RbxSession {
+    pub fn new() -> RbxSession {
         RbxSession {
             partitions: HashMap::new(),
             partition_instances: HashMap::new(),
             partition_files: HashMap::new(),
             instances: HashMap::new(),
         }
+    }
+
+    pub fn init(&mut self) {
+        self.load_files();
+        self.load_instances();
     }
 
     fn load_files(&mut self) {
