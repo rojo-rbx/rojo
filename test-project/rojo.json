@@ -5,6 +5,10 @@
     "src": {
       "path": "src",
       "target": "ReplicatedFirst"
+    },
+    "extra": {
+      "path": "extra-script.lua",
+      "target": "ReplicatedStorage.ExtraScript"
     }
   }
 }
