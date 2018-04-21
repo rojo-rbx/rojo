@@ -28,6 +28,7 @@ function Plugin.new()
 		_reconciler = Reconciler.new(),
 		_api = nil,
 		_polling = false,
+		_syncInProgress = false,
 	}
 
 	setmetatable(self, Plugin)
@@ -62,11 +63,12 @@ end
 	restarted.
 ]]
 function Plugin:restart()
-	warn("The server has changed since the last request, reloading plugin...")
+	warn("Rojo: The server has changed since the last request, reloading plugin...")
 
 	self._reconciler:clear()
 	self._api = nil
 	self._polling = false
+	self._syncInProgress = false
 end
 
 function Plugin:api()
@@ -82,7 +84,7 @@ function Plugin:api()
 end
 
 function Plugin:connect()
-	print("Testing connection...")
+	print("Rojo: Testing connection...")
 
 	return self:api()
 		:andThen(function(api)
@@ -92,9 +94,9 @@ function Plugin:connect()
 				return Promise.reject(info)
 			end
 
-			print("Server found!")
-			print("Protocol version:", info.protocolVersion)
-			print("Server version:", info.serverVersion)
+			print("Rojo: Server found!")
+			print("Rojo: Protocol version:", info.protocolVersion)
+			print("Rojo: Server version:", info.serverVersion)
 		end)
 		:catch(function(err)
 			if err == Api.Error.ServerIdMismatch then
@@ -119,7 +121,7 @@ function Plugin:stopPolling()
 		return Promise.resolve(false)
 	end
 
-	print("Stopped polling.")
+	print("Rojo Stopped polling server for changes.")
 
 	self._polling = false
 	self._label.Enabled = false
@@ -168,7 +170,7 @@ function Plugin:startPolling()
 		return
 	end
 
-	print("Starting to poll...")
+	print("Rojo: Polling server for changes...")
 
 	self._polling = true
 	self._label.Enabled = true
@@ -224,7 +226,14 @@ function Plugin:startPolling()
 end
 
 function Plugin:syncIn()
-	print("Syncing from server...")
+	if self._syncInProgress then
+		warn("Rojo: Can't sync right now, because a sync is already in progress.")
+
+		return Promise.resolve()
+	end
+
+	self._syncInProgress = true
+	print("Rojo: Syncing from server...")
 
 	return self:api()
 		:andThen(function(api)
@@ -242,9 +251,12 @@ function Plugin:syncIn()
 
 			self:_pull(api, info.project, routes)
 
-			print("Sync successful!")
+			self._syncInProgress = false
+			print("Rojo: Sync successful!")
 		end)
 		:catch(function(err)
+			self._syncInProgress = false
+
 			if err == Api.Error.ServerIdMismatch then
 				self:restart()
 				return self:syncIn()

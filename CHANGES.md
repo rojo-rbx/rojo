@@ -2,6 +2,7 @@
 
 ## Current Master
 * Rojo now throws an error if no project file is found. ([#63](https://github.com/LPGhatguy/rojo/issues/63))
+* Fixed multiple sync operations occuring at the same time. ([#61](https://github.com/LPGhatguy/rojo/issues/61))
 
 ## 0.4.4 (April 7, 2018)
 * Fix small regression introduced in 0.4.3
