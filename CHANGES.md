@@ -1,7 +1,7 @@
 # Rojo Change Log
 
 ## Current Master
-*No changes*
+* Rojo now throws an error if no project file is found. ([#63](https://github.com/LPGhatguy/rojo/issues/63))
 
 ## 0.4.4 (April 7, 2018)
 * Fix small regression introduced in 0.4.3

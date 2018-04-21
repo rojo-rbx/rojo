@@ -14,10 +14,6 @@ use web;
 pub fn serve(project_path: &PathBuf, verbose: bool, port: Option<u64>) {
     let server_id = rand::random::<u64>();
 
-    if verbose {
-        println!("Attempting to locate project at {}...", project_path.display());
-    }
-
     let project = match Project::load(project_path) {
         Ok(v) => {
             println!("Using project from {}", project_path.display());
@@ -26,27 +22,23 @@ pub fn serve(project_path: &PathBuf, verbose: bool, port: Option<u64>) {
         Err(err) => {
             match err {
                 ProjectLoadError::InvalidJson(serde_err) => {
-                    eprintln!(
-                        "Found invalid JSON!\nProject in: {}\nError: {}",
-                        project_path.display(),
-                        serde_err,
-                    );
+                    eprintln!("Project contained invalid JSON!");
+                    eprintln!("{}", project_path.display());
+                    eprintln!("Error: {}", serde_err);
 
                     process::exit(1);
                 },
                 ProjectLoadError::FailedToOpen | ProjectLoadError::FailedToRead => {
                     eprintln!("Found project file, but failed to read it!");
-                    eprintln!(
-                        "Check the permissions of the project file at\n{}",
-                        project_path.display(),
-                    );
+                    eprintln!("Check the permissions of the project file at {}", project_path.display());
 
                     process::exit(1);
                 },
-                _ => {
-                    // Any other error is fine; use the default project.
-                    println!("Found no project file, using default project...");
-                    Project::default()
+                ProjectLoadError::DidNotExist => {
+                    eprintln!("Found no project file! Create one using 'rojo init'");
+                    eprintln!("Checked for a project at {}", project_path.display());
+
+                    process::exit(1);
                 },
             }
         },
