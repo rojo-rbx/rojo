@@ -18,6 +18,10 @@
       "path": "modules/roact-rodux/lib",
       "target": "ReplicatedStorage.Rojo.modules.RoactRodux"
     },
+    "modules/promise": {
+      "path": "modules/promise/lib",
+      "target": "ReplicatedStorage.Rojo.modules.Promise"
+    },
     "modules/testez": {
       "path": "modules/testez/lib",
       "target": "ReplicatedStorage.TestEZ"

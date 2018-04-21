@@ -1,7 +1,8 @@
+local Promise = require(script.Parent.Parent.modules.Promise)
+
 local Config = require(script.Parent.Config)
 local Http = require(script.Parent.Http)
 local Api = require(script.Parent.Api)
-local Promise = require(script.Parent.Promise)
 local Reconciler = require(script.Parent.Reconciler)
 
 local function collectMatch(source, pattern)
