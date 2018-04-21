@@ -9,17 +9,22 @@ use std::collections::HashMap;
 pub enum VfsItem {
     File {
         route: Vec<String>,
+        file_name: String,
         contents: String,
     },
     Dir {
         route: Vec<String>,
+        file_name: String,
         children: HashMap<String, VfsItem>,
     },
 }
 
 impl VfsItem {
     pub fn name(&self) -> &String {
-        self.route().last().unwrap()
+        match self {
+            &VfsItem::File { ref file_name , .. } => file_name,
+            &VfsItem::Dir { ref file_name , .. } => file_name,
+        }
     }
 
     pub fn route(&self) -> &[String] {

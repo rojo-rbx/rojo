@@ -111,8 +111,11 @@ impl VfsSession {
             }
         }
 
+        let file_name = path.file_name().unwrap().to_string_lossy().into_owned();
+
         Ok(VfsItem::Dir {
             route: route.iter().cloned().collect::<Vec<_>>(),
+            file_name,
             children,
         })
     }
@@ -131,8 +134,11 @@ impl VfsSession {
             Err(_) => return Err(()),
         }
 
+        let file_name = path.file_name().unwrap().to_string_lossy().into_owned();
+
         Ok(VfsItem::File {
             route: route.iter().cloned().collect::<Vec<_>>(),
+            file_name,
             contents,
         })
     }
