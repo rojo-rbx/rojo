@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Partition {
     /// The path on the filesystem that this partition maps to.
     pub path: PathBuf,
