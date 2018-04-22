@@ -123,3 +123,4 @@ If the returned project name matches the value that the client was using before,
 These changes aren't directly related to this refactor, but are changes that need to be made to Rojo.
 
 * Unknown instances will no longer sync as `StringValue` instances
+* `rojo init` generates project files with random port numbers
