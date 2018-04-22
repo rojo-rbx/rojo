@@ -26,7 +26,7 @@ impl fmt::Display for ProjectLoadError {
                 write!(f, "Found project file, but failed to read it: {}", project_path.display())
             },
             &ProjectLoadError::DidNotExist(ref project_path) => {
-                write!(f, "Could not locate a project file at {}", project_path.display())
+                write!(f, "Could not locate a project file at {}.\nUse 'rojo init' to create one.", project_path.display())
             },
         }
     }
