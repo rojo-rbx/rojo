@@ -4,6 +4,8 @@ use std::fs::{self, File};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 
+use rand::{self, Rng};
+
 use serde_json;
 
 pub static PROJECT_FILENAME: &'static str = "rojo.json";
@@ -82,14 +84,6 @@ pub struct Project {
 }
 
 impl Project {
-    /// Creates a new empty Project object with the given name.
-    pub fn new<T: Into<String>>(name: T) -> Project {
-        Project {
-            name: name.into(),
-            ..Default::default()
-        }
-    }
-
     /// Initializes a new project inside the given folder path.
     pub fn init<T: AsRef<Path>>(location: T) -> Result<Project, ProjectInitError> {
         let location = location.as_ref();
@@ -113,8 +107,15 @@ impl Project {
             None => "new-project".to_string(),
         };
 
+        // Generate a random port to run the server on.
+        let serve_port = rand::thread_rng().gen_range(10000, 40000);
+
         // Configure the project with all of the values we know so far.
-        let project = Project::new(name);
+        let project = Project {
+            name,
+            serve_port,
+            partitions: HashMap::new(),
+        };
         let serialized = serde_json::to_string_pretty(&project).unwrap();
 
         match file.write(serialized.as_bytes()) {
