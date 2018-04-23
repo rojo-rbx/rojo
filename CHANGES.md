@@ -2,6 +2,7 @@
 
 ## Current Master
 * Fixed server to notice file changes *much* more quickly. (200ms vs 1000ms)
+* Server now lists name of project when starting up.
 * Rojo now throws an error if no project file is found. ([#63](https://github.com/LPGhatguy/rojo/issues/63))
 * Fixed multiple sync operations occuring at the same time. ([#61](https://github.com/LPGhatguy/rojo/issues/61))
 * Partitions targeting files directly now work as expected. ([#57](https://github.com/LPGhatguy/rojo/issues/57))

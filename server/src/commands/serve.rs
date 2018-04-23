@@ -15,9 +15,9 @@ pub fn serve(project_path: &PathBuf, verbose: bool, port: Option<u64>) {
     let server_id = rand::random::<u64>();
 
     let project = match Project::load(project_path) {
-        Ok(v) => {
-            println!("Using project from {}", project_path.display());
-            v
+        Ok(project) => {
+            println!("Using project \"{}\" from {}", project.name, project_path.display());
+            project
         },
         Err(err) => {
             match err {
@@ -42,12 +42,6 @@ pub fn serve(project_path: &PathBuf, verbose: bool, port: Option<u64>) {
                 },
             }
         },
-    };
-
-    let web_config = web::WebConfig {
-        verbose,
-        port: port.unwrap_or(project.serve_port),
-        server_id,
     };
 
     lazy_static! {
@@ -78,14 +72,20 @@ pub fn serve(project_path: &PathBuf, verbose: bool, port: Option<u64>) {
         Arc::new(Mutex::new(vfs))
     };
 
-    println!("Server listening on port {}", web_config.port);
-
     {
         let vfs = vfs.clone();
         thread::spawn(move || {
             VfsWatcher::new(vfs).start();
         });
     }
+
+    let web_config = web::WebConfig {
+        verbose,
+        port: port.unwrap_or(project.serve_port),
+        server_id,
+    };
+
+    println!("Server listening on port {}", web_config.port);
 
     web::start(web_config, project.clone(), &PLUGIN_CHAIN, vfs.clone());
 }
