@@ -1,8 +1,9 @@
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::process;
-use std::time::Instant;
-use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 use std::thread;
+use std::time::Instant;
 
 use rand;
 
@@ -55,10 +56,22 @@ pub fn serve(project_path: &PathBuf, port: Option<u64>) {
 
     println!("Using session config {:#?}", config);
 
-    let mut session = FsSession::new(&config);
-    session.init();
+    let session = {
+        let mut session = FsSession::new(config.clone());
+        session.init();
+
+        Arc::new(Mutex::new(session))
+    };
+
+    // TODO: Let FsSession handle the main loop and spawn a bunch of threads
+    // ...since Rust stable doesn't have a channel select implementation
+    thread::spawn(move || {
+        loop {
+            session.lock().unwrap().step();
+        }
+    });
 
     loop {
-        session.step();
+        thread::park();
     }
 }

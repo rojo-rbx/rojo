@@ -27,8 +27,8 @@ pub enum FileItem {
     },
 }
 
-pub struct FsSession<'a> {
-    pub config: &'a SessionConfig,
+pub struct FsSession {
+    pub config: SessionConfig,
 
     /// The in-memory files associated with each partition.
     pub partition_files: HashMap<String, FileItem>,
@@ -36,10 +36,10 @@ pub struct FsSession<'a> {
     watchers: HashMap<String, FileWatcher>,
 }
 
-impl<'a> FsSession<'a> {
-    pub fn new(config: &SessionConfig) -> FsSession {
+impl FsSession {
+    pub fn new(config: SessionConfig) -> FsSession {
         FsSession {
-            config,
+            config: config,
             partition_files: HashMap::new(),
             watchers: HashMap::new(),
         }
