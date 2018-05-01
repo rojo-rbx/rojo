@@ -122,7 +122,7 @@ function Plugin:stopPolling()
 		return Promise.resolve(false)
 	end
 
-	print("Rojo Stopped polling server for changes.")
+	print("Rojo: Stopped polling server for changes.")
 
 	self._polling = false
 	self._label.Enabled = false
