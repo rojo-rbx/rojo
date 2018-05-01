@@ -1,6 +1,10 @@
 # Rojo Change Log
 
 ## Current Master
+*No changes*
+
+## 0.4.5 (May 1, 2018)
+* Rojo messages are now prefixed with `Rojo: ` to make them stand out in the output more.
 * Fixed server to notice file changes *much* more quickly. (200ms vs 1000ms)
 * Server now lists name of project when starting up.
 * Rojo now throws an error if no project file is found. ([#63](https://github.com/LPGhatguy/rojo/issues/63))
