@@ -1,0 +1,26 @@
+digraph G {
+	ranksep=0.7;
+	node [
+		fontname="Hack",
+		shape="box",
+	];
+
+	plugin -> web_server [style="dashed", dir="both"];
+
+	web_server -> rbx_session;
+
+	session -> rbx_session [dir="both"];
+	session -> middlewares;
+	session -> watchers [dir="both"];
+	session -> vfs_session;
+
+	vfs_session -> fs;
+
+	fs [label="Filesystem"];
+	middlewares [label="Vec<Middleware>"];
+	watchers [label="Vec<PartitionWatcher>"];
+	session [label="Session"];
+	web_server [label="Rouille Server"];
+	vfs_session [label="Arc<RwLock<VfsSession>>"];
+	rbx_session [label="Arc<RwLock<RbxSession>>"];
+}
