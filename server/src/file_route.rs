@@ -9,9 +9,13 @@ pub struct FileRoute {
 }
 
 impl FileRoute {
+    pub fn from_path(path: &Path, partition: &Partition) -> FileRoute {
+        // TODO: Needed for PartitionWatcher to changes onto FileRoute
+        unimplemented!()
+    }
+
     /// Creates a PathBuf out of the `FileRoute` based on the given partition
     /// `Path`.
-    // TODO: Tests
     pub fn to_path_buf(&self, partition_path: &Path) -> PathBuf {
         let mut result = partition_path.to_path_buf();
 
@@ -24,7 +28,6 @@ impl FileRoute {
 
     /// Creates a version of the FileRoute with the given extra pieces appended
     /// to the end.
-    // TODO: Test
     pub fn extended_with(&self, pieces: &[&str]) -> FileRoute {
         let mut result = self.clone();
 
