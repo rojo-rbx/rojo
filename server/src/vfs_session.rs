@@ -1,18 +1,9 @@
 use std::collections::HashMap;
 use std::io::Read;
 use std::fs::{self, File};
-use std::sync::mpsc::{channel, Receiver};
-use std::time::Duration;
-
-use notify::{DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher, watcher};
 
 use file_route::FileRoute;
-use session_config::SessionConfig;
-
-struct FileWatcher {
-    watcher: RecommendedWatcher,
-    rx: Receiver<DebouncedEvent>,
-}
+use session::SessionConfig;
 
 /// Represents a file or directory that has been read from the filesystem.
 #[derive(Debug, Clone)]
@@ -27,66 +18,43 @@ pub enum FileItem {
     },
 }
 
-pub struct FsSession {
+#[derive(Debug, Clone, Copy)]
+pub enum FileChange {
+    Created,
+    Deleted,
+    Modified,
+}
+
+pub struct VfsSession {
     pub config: SessionConfig,
 
     /// The in-memory files associated with each partition.
     pub partition_files: HashMap<String, FileItem>,
-
-    watchers: HashMap<String, FileWatcher>,
 }
 
-impl FsSession {
-    pub fn new(config: SessionConfig) -> FsSession {
-        FsSession {
+impl VfsSession {
+    pub fn new(config: SessionConfig) -> VfsSession {
+        VfsSession {
             config: config,
             partition_files: HashMap::new(),
-            watchers: HashMap::new(),
         }
     }
 
-    pub fn init(&mut self) {
-        self.load_partitions();
-        self.watch_partitions();
-    }
-
-    pub fn step(&mut self) {
-        for (partition_name, watcher) in self.watchers.iter() {
-            let change_event = match watcher.rx.try_recv() {
-                Ok(v) => v,
-                Err(_) => continue,
-            };
-
-            println!("Change event on partition {}: {:?}", partition_name, change_event);
-        }
-    }
-
-    fn watch_partitions(&mut self) {
-        for (partition_name, partition) in self.config.partitions.iter() {
-            let (tx, rx) = channel();
-
-            let mut watcher = watcher(tx, Duration::from_millis(300)).unwrap();
-
-            watcher.watch(&partition.path, RecursiveMode::Recursive).unwrap();
-
-            self.watchers.insert(partition_name.clone(), FileWatcher {
-                watcher,
-                rx,
-            });
-        }
-    }
-
-    fn load_partitions(&mut self) {
+    pub fn read_partitions(&mut self) {
         for partition_name in self.config.partitions.keys() {
             let route = FileRoute {
                 partition: partition_name.clone(),
-                route: vec![],
+                route: Vec::new(),
             };
 
             let file_item = self.read(&route).expect("Couldn't load partitions");
 
             self.partition_files.insert(partition_name.clone(), file_item);
         }
+    }
+
+    pub fn handle_change(&mut self, route: &FileRoute, change: FileChange) {
+        // TODO: Update in-memory files
     }
 
     fn read(&self, route: &FileRoute) -> Result<FileItem, ()> {

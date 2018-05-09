@@ -2,6 +2,9 @@ use std::path::PathBuf;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Partition {
+    /// The unique name of this partition, used for debugging.
+    pub name: String,
+
     /// The path on the filesystem that this partition maps to.
     pub path: PathBuf,
 

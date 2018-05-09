@@ -2,8 +2,6 @@ use std::path::{Path, PathBuf};
 
 use partition::Partition;
 
-// TODO: Add lifetime, switch to using Cow<'a, str> instead of String? It's
-// possible that it would be too cumbersome!
 #[derive(Debug, Clone, PartialEq, Hash)]
 pub struct FileRoute {
     pub partition: String,
@@ -43,7 +41,7 @@ impl FileRoute {
             // This FileRoute refers to the partition itself
 
             if partition.target.len() == 0 {
-                // We're targeting the game itself!
+                // We're targeting the game!
                 "game".to_string()
             } else {
                 partition.target.last().unwrap().clone()

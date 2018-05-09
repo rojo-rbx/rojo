@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::process;
-use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Instant;
 
@@ -9,8 +8,7 @@ use rand;
 
 use project::Project;
 use web;
-use session_config::SessionConfig;
-use fs_session::FsSession;
+use session::{Session, SessionConfig};
 use partition::Partition;
 
 pub fn serve(project_path: &PathBuf, port: Option<u64>) {
@@ -47,6 +45,7 @@ pub fn serve(project_path: &PathBuf, port: Option<u64>) {
         partitions.insert(partition_name.clone(), Partition {
             path,
             target,
+            name: partition_name.clone(),
         });
     }
 
@@ -56,20 +55,8 @@ pub fn serve(project_path: &PathBuf, port: Option<u64>) {
 
     println!("Using session config {:#?}", config);
 
-    let session = {
-        let mut session = FsSession::new(config.clone());
-        session.init();
-
-        Arc::new(Mutex::new(session))
-    };
-
-    // TODO: Let FsSession handle the main loop and spawn a bunch of threads
-    // ...since Rust stable doesn't have a channel select implementation
-    thread::spawn(move || {
-        loop {
-            session.lock().unwrap().step();
-        }
-    });
+    let mut session = Session::new(config.clone());
+    session.start();
 
     loop {
         thread::park();
