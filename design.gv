@@ -5,6 +5,7 @@ digraph G {
 		shape="box",
 	];
 
+	roblox_studio -> plugin [dir="both"];
 	plugin -> web_server [style="dashed", dir="both"];
 
 	web_server -> rbx_session;
@@ -16,6 +17,7 @@ digraph G {
 
 	vfs_session -> fs;
 
+	roblox_studio [label="Roblox Studio"];
 	fs [label="Filesystem"];
 	middlewares [label="Vec<Middleware>"];
 	watchers [label="Vec<PartitionWatcher>"];
