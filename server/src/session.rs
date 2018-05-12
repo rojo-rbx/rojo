@@ -105,6 +105,9 @@ impl Session {
         }
     }
 
+    pub fn stop(self) {
+    }
+
     pub fn get_vfs_session(&self) -> Arc<RwLock<VfsSession>> {
         self.vfs_session.clone()
     }
