@@ -42,7 +42,7 @@ pub fn start(config: WebConfig) {
 
                 json_response(ServerInfo {
                     server_version: env!("CARGO_PKG_VERSION"),
-                    protocol_version: 1,
+                    protocol_version: 2,
                     server_id: &server_id,
                     project: &config.project,
                     current_time,
