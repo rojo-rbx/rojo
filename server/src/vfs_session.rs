@@ -58,6 +58,22 @@ impl VfsSession {
         println!("Got change {:?}", change);
     }
 
+    pub fn get_file_item(&self, route: &FileRoute) -> Option<&FileItem> {
+        let partition = self.partition_files.get(&route.partition)?;
+        let mut current = partition;
+
+        for piece in &route.route {
+            match current {
+                FileItem::File { .. } => return None,
+                FileItem::Directory { children, .. } => {
+                    current = children.get(piece)?;
+                },
+            }
+        }
+
+        Some(current)
+    }
+
     fn read(&self, route: &FileRoute) -> Result<FileItem, ()> {
         let partition_path = &self.config.partitions.get(&route.partition)
             .ok_or(())?.path;

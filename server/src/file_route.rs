@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf, Component};
 
 use partition::Partition;
 
-#[derive(Debug, Clone, PartialEq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct FileRoute {
     pub partition: String,
     pub route: Vec<String>,
