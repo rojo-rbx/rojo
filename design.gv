@@ -11,11 +11,13 @@ digraph G {
 	web_server -> rbx_session;
 
 	session -> rbx_session [dir="both"];
-	session -> middlewares;
-	session -> watchers [dir="both"];
 	session -> vfs_session;
+	session -> watchers [dir="both"];
 
 	vfs_session -> fs;
+
+	rbx_session -> vfs_session [constraint=false];
+	rbx_session -> middlewares;
 
 	roblox_studio [label="Roblox Studio"];
 	fs [label="Filesystem"];
