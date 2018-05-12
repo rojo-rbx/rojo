@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::{Path, PathBuf, Component};
 
 use partition::Partition;
 
@@ -9,9 +9,25 @@ pub struct FileRoute {
 }
 
 impl FileRoute {
-    pub fn from_path(path: &Path, partition: &Partition) -> FileRoute {
-        // TODO: Needed for PartitionWatcher to changes onto FileRoute
-        unimplemented!()
+    pub fn from_path(path: &Path, partition: &Partition) -> Option<FileRoute> {
+        assert!(path.is_absolute());
+
+        let relative_path = path.strip_prefix(&partition.path).ok()?;
+        let mut route = Vec::new();
+
+        for component in relative_path.components() {
+            match component {
+                Component::Normal(piece) => {
+                    route.push(piece.to_string_lossy().into_owned());
+                },
+                _ => panic!("Unexpected path component: {:?}", component),
+            }
+        }
+
+        Some(FileRoute {
+            partition: partition.name.clone(),
+            route,
+        })
     }
 
     /// Creates a PathBuf out of the `FileRoute` based on the given partition

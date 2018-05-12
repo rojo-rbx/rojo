@@ -18,11 +18,12 @@ pub enum FileItem {
     },
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum FileChange {
-    Created,
-    Deleted,
-    Modified,
+    Created(FileRoute),
+    Deleted(FileRoute),
+    Updated(FileRoute),
+    Moved(FileRoute, FileRoute),
 }
 
 pub struct VfsSession {
@@ -53,8 +54,8 @@ impl VfsSession {
         }
     }
 
-    pub fn handle_change(&mut self, route: &FileRoute, change: FileChange) {
-        // TODO: Update in-memory files
+    pub fn handle_change(&mut self, change: FileChange) {
+        println!("Got change {:?}", change);
     }
 
     fn read(&self, route: &FileRoute) -> Result<FileItem, ()> {

@@ -3,7 +3,6 @@ use std::sync::{mpsc, Arc, RwLock};
 use std::thread;
 
 use id::{Id, get_id};
-use file_route::FileRoute;
 use partition::Partition;
 use rbx::RbxInstance;
 use rbx_session::RbxSession;
@@ -90,16 +89,20 @@ impl Session {
             self.watchers.push(watcher);
         }
 
-        thread::spawn(move || {
-            loop {
-                match rx.recv() {
-                    Ok((partition_name, change)) => {
-                        println!("Got change {:?} on partition {}", change, partition_name);
-                    },
-                    Err(_) => break,
+        {
+            let vfs_session = self.vfs_session.clone();
+            thread::spawn(move || {
+                loop {
+                    match rx.recv() {
+                        Ok(change) => {
+                            let mut vfs_session = vfs_session.write().unwrap();
+                            vfs_session.handle_change(change);
+                        },
+                        Err(_) => break,
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     pub fn get_vfs_session(&self) -> Arc<RwLock<VfsSession>> {
