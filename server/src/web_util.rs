@@ -4,7 +4,7 @@ use rouille;
 use serde;
 use serde_json;
 
-static MAX_BODY_SIZE: usize = 25 * 1024 * 1024; // 25 MiB
+static MAX_BODY_SIZE: usize = 100 * 1024 * 1024; // 100 MiB
 
 pub fn json_response<T: serde::Serialize>(value: T) -> rouille::Response {
     let data = serde_json::to_string(&value).unwrap();
