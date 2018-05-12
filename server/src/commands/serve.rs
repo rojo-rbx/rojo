@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use std::process;
 use std::thread;
 use std::time::Instant;
+use std::fs;
 
 use rand;
 
@@ -16,7 +17,7 @@ pub fn serve(project_path: &PathBuf, port: Option<u64>) {
 
     let project = match Project::load(project_path) {
         Ok(v) => {
-            println!("Using project from {}", project_path.display());
+            println!("Using project from {}", fs::canonicalize(project_path).unwrap().display());
             v
         },
         Err(err) => {
@@ -39,7 +40,7 @@ pub fn serve(project_path: &PathBuf, port: Option<u64>) {
     let mut partitions = HashMap::new();
 
     for (partition_name, partition) in project.partitions.iter() {
-        let path = project_path.join(&partition.path);
+        let path = fs::canonicalize(project_path.join(&partition.path)).unwrap();
         let target = partition.target.split(".").map(String::from).collect::<Vec<_>>();
 
         partitions.insert(partition_name.clone(), Partition {
