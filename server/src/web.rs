@@ -2,14 +2,12 @@ use std::time::Instant;
 
 use rouille;
 
-use project::Project;
 use web_util::json_response;
 
 /// The set of configuration the web server needs to start.
 pub struct WebConfig {
     pub port: u64,
     pub server_id: u64,
-    pub project: Project,
     pub start_time: Instant,
 }
 
@@ -19,13 +17,13 @@ struct ServerInfo<'a> {
     server_version: &'static str,
     protocol_version: u64,
     server_id: &'a str,
-    project: &'a Project,
     current_time: f64,
 }
 
 /// Start the Rojo web server and park our current thread.
 pub fn start(config: WebConfig) {
     let address = format!("localhost:{}", config.port);
+    let server_version = env!("CARGO_PKG_VERSION");
 
     let server_id = config.server_id.to_string();
 
@@ -41,10 +39,9 @@ pub fn start(config: WebConfig) {
                 };
 
                 json_response(ServerInfo {
-                    server_version: env!("CARGO_PKG_VERSION"),
+                    server_version,
                     protocol_version: 2,
                     server_id: &server_id,
-                    project: &config.project,
                     current_time,
                 })
             },
