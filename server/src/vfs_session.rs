@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::io::Read;
 use std::fs::{self, File};
+use std::mem;
 
 use file_route::FileRoute;
 use session::SessionConfig;
@@ -63,59 +64,28 @@ impl VfsSession {
         }
     }
 
-    pub fn handle_change(&mut self, change: FileChange) {
+    pub fn handle_change(&mut self, change: FileChange) -> Option<()> {
         println!("Got file change {:?}", change);
 
         match change {
             FileChange::Created(route) | FileChange::Updated(route) => {
-
+                let new_item = self.read(&route).ok()?;
+                self.set_file_item(new_item);
             },
             FileChange::Deleted(route) => {
+                self.delete_route(&route);
             },
             FileChange::Moved(from_route, to_route) => {
+                let new_item = self.read(&to_route).ok()?;
+                self.delete_route(&from_route);
+                self.set_file_item(new_item);
             },
         }
+
+        None
     }
 
-    // fn set_file_item(&mut self, item: FileItem) -> Option<()> {
-    //     let mut parent = {
-    //         if item.get_route().route.len() == 0 {
-    //             let partition_name = item.get_route().partition.clone();
-    //             self.partition_files.insert(partition_name, item);
-    //             return Some(());
-    //         }
-
-    //         let route = item.get_route();
-
-    //         let mut current = self.partition_files.get_mut(&route.partition)?;
-
-    //         for i in (0..(route.route.len() - 1)) {
-    //             let mut next = match current {
-    //                 FileItem::File { .. } => return None,
-    //                 FileItem::Directory { children, .. } => {
-    //                     children.get_mut(&route.route[i])?
-    //                 },
-    //             };
-
-    //             current = next;
-    //         }
-
-    //         current
-    //     };
-
-    //     let leaf_name = item.get_route().route.iter().last().cloned().unwrap();
-
-    //     match parent {
-    //         FileItem::File { .. } => return None,
-    //         FileItem::Directory { ref mut children, .. } => {
-    //             children.insert(leaf_name, item);
-    //         },
-    //     }
-
-    //     Some(())
-    // }
-
-    pub fn get_file_item(&self, route: &FileRoute) -> Option<&FileItem> {
+    pub fn get_by_route(&self, route: &FileRoute) -> Option<&FileItem> {
         let partition = self.partition_files.get(&route.partition)?;
         let mut current = partition;
 
@@ -131,20 +101,80 @@ impl VfsSession {
         Some(current)
     }
 
-    // pub fn get_file_item_mut(&mut self, route: &FileRoute) -> Option<&mut FileItem> {
-    //     let mut current = self.partition_files.get_mut(&route.partition)?;
+    pub fn get_by_route_mut(&mut self, route: &FileRoute) -> Option<&mut FileItem> {
+        let mut current = self.partition_files.get_mut(&route.partition)?;
 
-    //     for piece in &route.route {
-    //         current = match current {
-    //             FileItem::File { .. } => return None,
-    //             FileItem::Directory { children, .. } => {
-    //                 children.get_mut(piece)?
-    //             },
-    //         };
-    //     }
+        for piece in &route.route {
+            let mut next = match { current } {
+                FileItem::File { .. } => return None,
+                FileItem::Directory { children, .. } => {
+                    children.get_mut(piece)?
+                },
+            };
 
-    //     Some(current)
-    // }
+            current = next;
+        }
+
+        Some(current)
+    }
+
+    pub fn set_file_item(&mut self, item: FileItem) {
+        match self.get_by_route_mut(item.get_route()) {
+            Some(existing) => {
+                mem::replace(existing, item);
+                return;
+            },
+            None => {},
+        }
+
+        if item.get_route().route.len() > 0 {
+            let mut parent_route = item.get_route().clone();
+            let child_name = parent_route.route.pop().unwrap();
+
+            let mut parent_children = HashMap::new();
+            parent_children.insert(child_name, item);
+
+            let parent_item = FileItem::Directory {
+                route: parent_route,
+                children: parent_children,
+            };
+
+            self.set_file_item(parent_item);
+        } else {
+            self.partition_files.insert(item.get_route().partition.clone(), item);
+        }
+    }
+
+    pub fn delete_route(&mut self, route: &FileRoute) -> Option<()> {
+        if route.route.len() == 0 {
+            self.partition_files.remove(&route.partition);
+            return Some(());
+        }
+
+        let mut current = self.partition_files.get_mut(&route.partition)?;
+
+        for i in 0..(route.route.len() - 1) {
+            let piece = &route.route[i];
+
+            let mut next = match { current } {
+                FileItem::File { .. } => return None,
+                FileItem::Directory { children, .. } => {
+                    children.get_mut(piece)?
+                },
+            };
+
+            current = next;
+        }
+
+        match current {
+            FileItem::Directory { children, .. } => {
+                children.remove(route.route.last().unwrap().as_str());
+            },
+            _ => {},
+        }
+
+        Some(())
+    }
 
     fn read(&self, route: &FileRoute) -> Result<FileItem, ()> {
         let partition_path = &self.config.partitions.get(&route.partition)

@@ -84,7 +84,7 @@ impl RbxSession {
                 partition: partition.name.clone(),
                 route: Vec::new(),
             };
-            let file_item = vfs_session.get_file_item(&route).unwrap();
+            let file_item = vfs_session.get_by_route(&route).unwrap();
             let root_id = file_to_instances(file_item, partition, &mut self.instances);
 
             self.partition_instances.insert(partition.name.clone(), root_id);
