@@ -18,6 +18,15 @@ pub enum FileItem {
     },
 }
 
+impl FileItem {
+    pub fn get_route(&self) -> &FileRoute {
+        match self {
+            FileItem::File { route, .. } => route,
+            FileItem::Directory { route, .. } => route,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum FileChange {
     Created(FileRoute),
@@ -55,8 +64,56 @@ impl VfsSession {
     }
 
     pub fn handle_change(&mut self, change: FileChange) {
-        println!("Got change {:?}", change);
+        println!("Got file change {:?}", change);
+
+        match change {
+            FileChange::Created(route) | FileChange::Updated(route) => {
+
+            },
+            FileChange::Deleted(route) => {
+            },
+            FileChange::Moved(from_route, to_route) => {
+            },
+        }
     }
+
+    // fn set_file_item(&mut self, item: FileItem) -> Option<()> {
+    //     let mut parent = {
+    //         if item.get_route().route.len() == 0 {
+    //             let partition_name = item.get_route().partition.clone();
+    //             self.partition_files.insert(partition_name, item);
+    //             return Some(());
+    //         }
+
+    //         let route = item.get_route();
+
+    //         let mut current = self.partition_files.get_mut(&route.partition)?;
+
+    //         for i in (0..(route.route.len() - 1)) {
+    //             let mut next = match current {
+    //                 FileItem::File { .. } => return None,
+    //                 FileItem::Directory { children, .. } => {
+    //                     children.get_mut(&route.route[i])?
+    //                 },
+    //             };
+
+    //             current = next;
+    //         }
+
+    //         current
+    //     };
+
+    //     let leaf_name = item.get_route().route.iter().last().cloned().unwrap();
+
+    //     match parent {
+    //         FileItem::File { .. } => return None,
+    //         FileItem::Directory { ref mut children, .. } => {
+    //             children.insert(leaf_name, item);
+    //         },
+    //     }
+
+    //     Some(())
+    // }
 
     pub fn get_file_item(&self, route: &FileRoute) -> Option<&FileItem> {
         let partition = self.partition_files.get(&route.partition)?;
@@ -73,6 +130,21 @@ impl VfsSession {
 
         Some(current)
     }
+
+    // pub fn get_file_item_mut(&mut self, route: &FileRoute) -> Option<&mut FileItem> {
+    //     let mut current = self.partition_files.get_mut(&route.partition)?;
+
+    //     for piece in &route.route {
+    //         current = match current {
+    //             FileItem::File { .. } => return None,
+    //             FileItem::Directory { children, .. } => {
+    //                 children.get_mut(piece)?
+    //             },
+    //         };
+    //     }
+
+    //     Some(current)
+    // }
 
     fn read(&self, route: &FileRoute) -> Result<FileItem, ()> {
         let partition_path = &self.config.partitions.get(&route.partition)
