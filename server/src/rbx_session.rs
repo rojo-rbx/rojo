@@ -8,13 +8,15 @@ use rbx::RbxInstance;
 use session::SessionConfig;
 use vfs_session::{VfsSession, FileItem};
 
-fn file_to_instances(file_item: &FileItem, partition: &Partition, output: &mut HashMap<Id, RbxInstance>) -> Id {
+fn file_to_instances(file_item: &FileItem, partition: &Partition, output: &mut HashMap<Id, RbxInstance>, instances_by_route: &mut HashMap<FileRoute, Id>) -> Id {
     match file_item {
         FileItem::File { contents, route } => {
             let mut properties = HashMap::new();
             properties.insert("Value".to_string(), contents.clone());
 
             let primary_id = get_id();
+
+            instances_by_route.insert(route.clone(), primary_id);
 
             output.insert(primary_id, RbxInstance {
                 name: route.name(partition).to_string(),
@@ -28,6 +30,8 @@ fn file_to_instances(file_item: &FileItem, partition: &Partition, output: &mut H
         FileItem::Directory { children, route } => {
             let primary_id = get_id();
 
+            instances_by_route.insert(route.clone(), primary_id);
+
             output.insert(primary_id, RbxInstance {
                 name: route.name(partition).to_string(),
                 class_name: "Folder".to_string(),
@@ -37,7 +41,7 @@ fn file_to_instances(file_item: &FileItem, partition: &Partition, output: &mut H
 
             for child_file_item in children.values() {
                 let mut child_instances = HashMap::new();
-                let child_id = file_to_instances(child_file_item, partition, &mut child_instances);
+                let child_id = file_to_instances(child_file_item, partition, &mut child_instances, instances_by_route);
 
                 child_instances.get_mut(&child_id).unwrap().parent = Some(primary_id);
 
@@ -47,7 +51,7 @@ fn file_to_instances(file_item: &FileItem, partition: &Partition, output: &mut H
             }
 
             primary_id
-        }
+        },
     }
 }
 
@@ -62,7 +66,8 @@ pub struct RbxSession {
     /// The store of all instances in the session.
     instances: HashMap<Id, RbxInstance>,
 
-    // instances_by_route: HashMap<FileRoute, Id>,
+    /// A map from files in the VFS to instances loaded in the session.
+    instances_by_route: HashMap<FileRoute, Id>,
 }
 
 impl RbxSession {
@@ -72,12 +77,13 @@ impl RbxSession {
             vfs_session,
             partition_instances: HashMap::new(),
             instances: HashMap::new(),
-            // instances_by_route: HashMap::new(),
+            instances_by_route: HashMap::new(),
         }
     }
 
     pub fn read_partitions(&mut self) {
-        let vfs_session = self.vfs_session.read().unwrap();
+        let vfs_session_arc = self.vfs_session.clone();
+        let vfs_session = vfs_session_arc.read().unwrap();
 
         for partition in self.config.partitions.values() {
             let route = FileRoute {
@@ -85,8 +91,7 @@ impl RbxSession {
                 route: Vec::new(),
             };
             let file_item = vfs_session.get_by_route(&route).unwrap();
-            let root_id = file_to_instances(file_item, partition, &mut self.instances);
-
+            let root_id = file_to_instances(file_item, partition, &mut self.instances, &mut self.instances_by_route);
             self.partition_instances.insert(partition.name.clone(), root_id);
         }
     }
