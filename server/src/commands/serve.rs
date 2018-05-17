@@ -26,12 +26,6 @@ pub fn serve(project_path: &PathBuf, port: Option<u64>) {
         },
     };
 
-    let web_config = web::WebConfig {
-        port: port.unwrap_or(project.serve_port),
-        server_id,
-        start_time: Instant::now(),
-    };
-
     let mut partitions = HashMap::new();
 
     for (partition_name, partition) in project.partitions.iter() {
@@ -53,6 +47,13 @@ pub fn serve(project_path: &PathBuf, port: Option<u64>) {
 
     let mut session = Session::new(config.clone());
     session.start();
+
+    let web_config = web::WebConfig {
+        port: port.unwrap_or(project.serve_port),
+        server_id,
+        start_time: Instant::now(),
+        rbx_session: session.get_rbx_session(),
+    };
 
     println!("Server listening on port {}", web_config.port);
 

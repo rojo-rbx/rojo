@@ -64,7 +64,7 @@ pub struct RbxSession {
     partition_instances: HashMap<String, Id>,
 
     /// The store of all instances in the session.
-    instances: HashMap<Id, RbxInstance>,
+    pub instances: HashMap<Id, RbxInstance>,
 
     /// A map from files in the VFS to instances loaded in the session.
     instances_by_route: HashMap<FileRoute, Id>,
