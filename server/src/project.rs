@@ -108,7 +108,7 @@ impl Project {
         };
 
         // Generate a random port to run the server on.
-        let serve_port = rand::thread_rng().gen_range(10000, 40000);
+        let serve_port = rand::thread_rng().gen_range(2000, 49151);
 
         // Configure the project with all of the values we know so far.
         let project = Project {
