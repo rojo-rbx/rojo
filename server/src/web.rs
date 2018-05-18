@@ -1,13 +1,14 @@
 use std::collections::HashMap;
 use std::time::Instant;
-use std::sync::{RwLock, Arc};
+use std::sync::{mpsc, RwLock, Mutex, Arc};
 
 use rouille;
 
 use web_util::json_response;
-use id::Id;
+use id::{Id, get_id};
 use rbx::RbxInstance;
 use rbx_session::RbxSession;
+use session::SessionEvent;
 
 /// The set of configuration the web server needs to start.
 pub struct WebConfig {
@@ -15,6 +16,8 @@ pub struct WebConfig {
     pub server_id: u64,
     pub start_time: Instant,
     pub rbx_session: Arc<RwLock<RbxSession>>,
+    pub events: Arc<RwLock<Vec<SessionEvent>>>,
+    pub event_listeners: Arc<Mutex<HashMap<Id, mpsc::Sender<()>>>>,
 }
 
 #[derive(Debug, Serialize)]
@@ -34,7 +37,15 @@ struct ReadAllResponse<'a> {
     instances: &'a HashMap<Id, RbxInstance>,
 }
 
+#[derive(Debug, Serialize)]
+struct SubscribeResponse<'a> {
+    server_id: &'a str,
+    events: &'a [SessionEvent],
+    cursor: i32,
+}
+
 /// Start the Rojo web server and park our current thread.
+#[allow(unreachable_code)]
 pub fn start(config: WebConfig) {
     let address = format!("localhost:{}", config.port);
     let server_version = env!("CARGO_PKG_VERSION");
@@ -58,6 +69,56 @@ pub fn start(config: WebConfig) {
                     server_id: &server_id,
                     current_time,
                 })
+            },
+
+            (GET) (/subscribe/{ cursor: i32 }) => {
+                // Retrieve any messages past the given cursor index, and if
+                // there weren't any, subscribe to receive any new messages.
+
+                // Did the client miss any messages since the last subscribe?
+                {
+                    let events = config.events.read().unwrap();
+                    if cursor < events.len() as i32 - 1 {
+                        let new_events = &events[cursor as usize + 1..];
+                        let new_cursor = cursor + new_events.len() as i32;
+
+                        return json_response(SubscribeResponse {
+                            server_id: &server_id,
+                            events: new_events,
+                            cursor: new_cursor,
+                        });
+                    }
+                }
+
+                let sender_id = get_id();
+                let (tx, rx) = mpsc::channel();
+
+                {
+                    let mut event_listeners = config.event_listeners.lock().unwrap();
+                    event_listeners.insert(sender_id, tx);
+                }
+
+                match rx.recv() {
+                    Ok(_) => (),
+                    Err(_) => return rouille::Response::text("error!").with_status_code(500),
+                }
+
+                {
+                    let mut event_listeners = config.event_listeners.lock().unwrap();
+                    event_listeners.remove(&sender_id);
+                }
+
+                {
+                    let events = config.events.read().unwrap();
+                    let new_events = &events[cursor as usize + 1..];
+                    let new_cursor = cursor + new_events.len() as i32;
+
+                    return json_response(SubscribeResponse {
+                        server_id: &server_id,
+                        events: new_events,
+                        cursor: new_cursor,
+                    });
+                }
             },
 
             (GET) (/read_all) => {

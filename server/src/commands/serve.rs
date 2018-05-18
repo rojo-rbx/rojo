@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::process;
-use std::thread;
 use std::time::Instant;
 use std::fs;
 
@@ -53,13 +52,11 @@ pub fn serve(project_path: &PathBuf, port: Option<u64>) {
         server_id,
         start_time: Instant::now(),
         rbx_session: session.get_rbx_session(),
+        events: session.get_events(),
+        event_listeners: session.get_event_listeners(),
     };
 
     println!("Server listening on port {}", web_config.port);
 
     web::start(web_config);
-
-    // loop {
-    //     thread::park();
-    // }
 }

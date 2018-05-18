@@ -1,11 +1,12 @@
 use std::collections::HashMap;
-use std::sync::{mpsc, Arc, RwLock};
+use std::sync::{mpsc, Arc, RwLock, Mutex};
 use std::thread;
 
 use partition::Partition;
 use rbx_session::RbxSession;
 use vfs_session::VfsSession;
 use partition_watcher::PartitionWatcher;
+use id::Id;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct SessionConfig {
@@ -16,12 +17,19 @@ pub struct SessionConfig {
 trait Middleware {
 }
 
+#[derive(Debug, Clone, Serialize)]
+pub enum SessionEvent {
+    Something,
+}
+
 pub struct Session {
     config: SessionConfig,
     vfs_session: Arc<RwLock<VfsSession>>,
     rbx_session: Arc<RwLock<RbxSession>>,
     middlewares: Vec<Box<Middleware>>,
     watchers: Vec<PartitionWatcher>,
+    events: Arc<RwLock<Vec<SessionEvent>>>,
+    event_listeners: Arc<Mutex<HashMap<Id, mpsc::Sender<()>>>>,
 }
 
 impl Session {
@@ -34,6 +42,8 @@ impl Session {
             rbx_session,
             middlewares: Vec::new(),
             watchers: Vec::new(),
+            events: Arc::new(RwLock::new(Vec::new())),
+            event_listeners: Arc::new(Mutex::new(HashMap::new())),
             config,
         }
     }
@@ -82,5 +92,13 @@ impl Session {
 
     pub fn get_rbx_session(&self) -> Arc<RwLock<RbxSession>> {
         self.rbx_session.clone()
+    }
+
+    pub fn get_events(&self) -> Arc<RwLock<Vec<SessionEvent>>> {
+        self.events.clone()
+    }
+
+    pub fn get_event_listeners(&self) -> Arc<Mutex<HashMap<Id, mpsc::Sender<()>>>> {
+        self.event_listeners.clone()
     }
 }
