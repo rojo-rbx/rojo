@@ -1,7 +1,7 @@
 return {
-	pollingRate = 0.2,
-	version = {0, 4, 4},
-	expectedServerVersionString = "0.4.x",
-	protocolVersion = 1,
+	version = {0, 5, 0},
+	expectedServerVersionString = "0.5.x",
+	protocolVersion = 2,
+	port = 34872,
 	dev = false,
 }

@@ -13,26 +13,13 @@ local function dprint(...)
 end
 
 local Http = {}
-Http.__index = Http
 
-function Http.new(baseUrl)
-	assert(type(baseUrl) == "string", "Http.new needs a baseUrl!")
-
-	local http = {
-		baseUrl = baseUrl
-	}
-
-	setmetatable(http, Http)
-
-	return http
-end
-
-function Http:get(endpoint)
-	dprint("\nGET", endpoint)
+function Http.get(url)
+	dprint("\nGET", url)
 	return Promise.new(function(resolve, reject)
 		spawn(function()
 			local ok, result = pcall(function()
-				return HttpService:GetAsync(self.baseUrl .. endpoint, true)
+				return HttpService:GetAsync(url, true)
 			end)
 
 			if ok then
@@ -45,13 +32,13 @@ function Http:get(endpoint)
 	end)
 end
 
-function Http:post(endpoint, body)
-	dprint("\nPOST", endpoint)
+function Http.post(url, body)
+	dprint("\nPOST", url)
 	dprint(body)
 	return Promise.new(function(resolve, reject)
 		spawn(function()
 			local ok, result = pcall(function()
-				return HttpService:PostAsync(self.baseUrl .. endpoint, body)
+				return HttpService:PostAsync(url, body)
 			end)
 
 			if ok then

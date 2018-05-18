@@ -2,7 +2,7 @@ if not plugin then
 	return
 end
 
-local Plugin = require(script.Parent.Plugin)
+local Session = require(script.Parent.Session)
 local Config = require(script.Parent.Config)
 local Version = require(script.Parent.Version)
 
@@ -39,40 +39,16 @@ local function checkUpgrade()
 end
 
 local function main()
-	local pluginInstance = Plugin.new()
-
 	local displayedVersion = Config.dev and "DEV" or Version.display(Config.version)
 
-	local toolbar = plugin:CreateToolbar("Rojo Plugin " .. displayedVersion)
+	local toolbar = plugin:CreateToolbar("Rojo " .. displayedVersion)
 
-	toolbar:CreateButton("Test Connection", "Connect to Rojo Server", "")
+	toolbar:CreateButton("Connect", "Connect to Rojo Session", "")
 		.Click:Connect(function()
 			checkUpgrade()
+			Session.new()
 
-			pluginInstance:connect()
-				:catch(function(err)
-					warn(err)
-				end)
-		end)
-
-	toolbar:CreateButton("Sync In", "Sync into Roblox Studio", "")
-		.Click:Connect(function()
-			checkUpgrade()
-
-			pluginInstance:syncIn()
-				:catch(function(err)
-					warn(err)
-				end)
-		end)
-
-	toolbar:CreateButton("Toggle Polling", "Poll server for changes", "")
-		.Click:Connect(function()
-			checkUpgrade()
-
-			pluginInstance:togglePolling()
-				:catch(function(err)
-					warn(err)
-				end)
+			error("NYI")
 		end)
 end
 
