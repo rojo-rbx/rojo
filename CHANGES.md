@@ -1,6 +1,7 @@
 # Rojo Change Log
 
 ## Current master
+* Rojo handles being restarted by Roblox Studio more gracefully ([#67](https://github.com/LPGhatguy/rojo/issues/67))
 * Folders should no longer get collapsed when syncing occurs.
 * **Significant** robustness improvements with regards to caching.
     * **This should catch all existing script duplication bugs.**
