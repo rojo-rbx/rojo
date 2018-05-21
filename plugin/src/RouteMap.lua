@@ -25,6 +25,10 @@ end
 function RouteMap:insert(route, rbx)
 	local hashed = hashRoute(route)
 
+	-- Make sure that each route and instance are only present in RouteMap once.
+	self:removeByRoute(route)
+	self:removeByRbx(rbx)
+
 	self._map[hashed] = rbx
 	self._reverseMap[rbx] = hashed
 	self._connectionsByRbx[rbx] = rbx.AncestryChanged:Connect(function(_, parent)
@@ -42,26 +46,36 @@ function RouteMap:removeByRoute(route)
 	local hashedRoute = hashRoute(route)
 	local rbx = self._map[hashedRoute]
 
-	if rbx then
-		self._map[hashedRoute] = nil
-		self._reverseMap[rbx] = nil
-		self._connectionsByRbx[rbx] = nil
+	if rbx ~= nil then
+		self:_removeInternal(hashedRoute, rbx)
 	end
 end
 
 function RouteMap:removeByRbx(rbx)
 	local hashedRoute = self._reverseMap[rbx]
 
-	if hashedRoute then
-		self._map[hashedRoute] = nil
-		self._reverseMap[rbx] = nil
-		self._connectionsByRbx[rbx] = nil
+	if hashedRoute ~= nil then
+		self:_removeInternal(hashedRoute, rbx)
 	end
+end
+
+--[[
+	Correcly removes the given Roblox Instance/Route pair from the RouteMap.
+]]
+function RouteMap:_removeInternal(rbx, hashedRoute)
+	self._map[hashedRoute] = nil
+	self._reverseMap[rbx] = nil
+	self._connectionsByRbx[rbx]:Disconnect()
+	self._connectionsByRbx[rbx] = nil
 
 	self:removeRbxDescendants(rbx)
 end
 
-function RouteMap:removeRbxDescendants(parentRbx)
+--[[
+	Ensure that there are no descendants of the given Roblox Instance still
+	present in the map, guaranteeing that it has been cleaned out.
+]]
+function RouteMap:_removeRbxDescendants(parentRbx)
 	for rbx in pairs(self._reverseMap) do
 		if rbx:IsDescendantOf(parentRbx) then
 			self:removeByRbx(rbx)
@@ -69,7 +83,11 @@ function RouteMap:removeRbxDescendants(parentRbx)
 	end
 end
 
-function RouteMap:clear()
+--[[
+	Remove all items from the map and disconnect all connections, cleaning up
+	the RouteMap.
+]]
+function RouteMap:destruct()
 	self._map = {}
 	self._reverseMap = {}
 

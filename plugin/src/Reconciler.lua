@@ -1,13 +1,26 @@
 local RouteMap = require(script.Parent.RouteMap)
 
-local function classEqual(rbx, className)
-	if className == "*" then
+local function classEqual(a, b)
+	if a == "*" or b == "*" then
 		return true
 	end
 
-	return rbx.ClassName == className
+	return a == b
 end
 
+local function applyProperties(target, properties)
+	for key, property in pairs(properties) do
+		-- TODO: Transform property value based on property.Type
+		-- Right now, we assume that 'value' is primitive!
+		target[key] = property.Value
+	end
+end
+
+--[[
+	Attempt to parent `rbx` to `parent`, doing nothing if:
+	* parent is already `parent`
+	* Changing parent threw an error
+]]
 local function reparent(rbx, parent)
 	if rbx then
 		if rbx.Parent == parent then
@@ -42,7 +55,7 @@ local function findNextChildPair(primaryChildren, secondaryChildren, visited)
 			visited[primaryChild] = true
 
 			for _, secondaryChild in ipairs(secondaryChildren) do
-				if primaryChild.ClassName == secondaryChild.ClassName and primaryChild.Name == secondaryChild.Name then
+				if classEqual(primaryChild.ClassName, secondaryChild.ClassName) and primaryChild.Name == secondaryChild.Name then
 					visited[secondaryChild] = true
 
 					return primaryChild, secondaryChild
@@ -114,12 +127,11 @@ function Reconciler:_reify(item)
 	local rbx = Instance.new(className)
 	rbx.Name = item.Name
 
-	for key, property in pairs(item.Properties) do
-		-- TODO: Check for compound types, like Vector3!
-		rbx[key] = property.Value
-	end
+	applyProperties(rbx, item.Properties)
 
-	self:_reconcileChildren(rbx, item)
+	for _, child in ipairs(item.Children) do
+		reparent(self:_reify(child), rbx)
+	end
 
 	if item.Route then
 		self._routeMap:insert(item.Route, rbx)
@@ -129,10 +141,10 @@ function Reconciler:_reify(item)
 end
 
 --[[
-	Clears any state that the Reconciler has, effectively restarting it.
+	Clears any state that the Reconciler has, stopping it completely.
 ]]
-function Reconciler:clear()
-	self._routeMap:clear()
+function Reconciler:destruct()
+	self._routeMap:destruct()
 end
 
 --[[
@@ -156,27 +168,15 @@ function Reconciler:reconcile(rbx, item)
 	end
 
 	-- Item changed type!
-	if not classEqual(rbx, item.ClassName) then
+	if not classEqual(rbx.ClassName, item.ClassName) then
 		self._routeMap:removeByRbx(rbx)
 		rbx:Destroy()
 
 		return self:_reify(item)
 	end
 
-	-- Apply all properties, Roblox will de-duplicate changes
-	for key, property in pairs(item.Properties) do
-		-- TODO: Transform property value based on property.Type
-		-- Right now, we assume that 'value' is primitive!
-
-		rbx[key] = property.Value
-	end
-
-	-- Use a dumb algorithm for reconciling children
+	applyProperties(rbx, item.Properties)
 	self:_reconcileChildren(rbx, item)
-
-	if item.Route then
-		self._routeMap:insert(item.Route, rbx)
-	end
 
 	return rbx
 end

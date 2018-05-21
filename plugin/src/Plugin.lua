@@ -66,7 +66,9 @@ end
 function Plugin:restart()
 	warn("Rojo: The server has changed since the last request, reloading plugin...")
 
-	self._reconciler:clear()
+	self._reconciler:destruct()
+	self._reconciler = Reconciler.new()
+
 	self._api = nil
 	self._polling = false
 	self._syncInProgress = false
