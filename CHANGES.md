@@ -1,6 +1,9 @@
 # Rojo Change Log
 
 ## Current master
+* *No changes*
+
+## 0.4.6 (May 21, 2018)
 * Rojo handles being restarted by Roblox Studio more gracefully ([#67](https://github.com/LPGhatguy/rojo/issues/67))
 * Folders should no longer get collapsed when syncing occurs.
 * **Significant** robustness improvements with regards to caching.
