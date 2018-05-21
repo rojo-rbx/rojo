@@ -1,9 +1,12 @@
+local CoreGui = game:GetService("CoreGui")
+
 local Promise = require(script.Parent.Parent.modules.Promise)
 
 local Config = require(script.Parent.Config)
 local Http = require(script.Parent.Http)
 local Api = require(script.Parent.Api)
 local Reconciler = require(script.Parent.Reconciler)
+local Version = require(script.Parent.Version)
 
 local function collectMatch(source, pattern)
 	local result = {}
@@ -35,9 +38,23 @@ function Plugin.new()
 	setmetatable(self, Plugin)
 
 	do
+		local uiName = ("Rojo %s UI"):format(Version.display(Config.version))
+
+		if Config.dev then
+			uiName = "Rojo Dev UI"
+		end
+
+		-- If there's an existing Rojo UI, like from a Roblox plugin upgrade
+		-- that wasn't Rojo, make sure we clean it up.
+		local existingUi = CoreGui:FindFirstChild(uiName)
+
+		if existingUi ~= nil then
+			existingUi:Destroy()
+		end
+
 		local screenGui = Instance.new("ScreenGui")
-		screenGui.Name = "Rojo UI"
-		screenGui.Parent = game.CoreGui
+		screenGui.Name = uiName
+		screenGui.Parent = CoreGui
 		screenGui.DisplayOrder = -1
 		screenGui.Enabled = false
 
@@ -54,6 +71,18 @@ function Plugin.new()
 		label.Parent = screenGui
 
 		self._label = screenGui
+
+		-- If our UI was destroyed, we assume it was from another instance of
+		-- the Rojo plugin coming online.
+		--
+		-- Roblox doesn't notify plugins when they get unloaded, so this is the
+		-- best trigger we have right now unless we create a dedicated event
+		-- object.
+		screenGui.AncestryChanged:Connect(function(_, parent)
+			if parent == nil then
+				self:restart()
+			end
+		end)
 	end
 
 	return self
@@ -65,6 +94,8 @@ end
 ]]
 function Plugin:restart()
 	warn("Rojo: The server has changed since the last request, reloading plugin...")
+
+	self:stopPolling()
 
 	self._reconciler:destruct()
 	self._reconciler = Reconciler.new()
