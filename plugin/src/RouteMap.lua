@@ -57,6 +57,8 @@ function RouteMap:removeByRbx(rbx)
 		self._reverseMap[rbx] = nil
 		self._connectionsByRbx[rbx] = nil
 	end
+
+	self:removeRbxDescendants(rbx)
 end
 
 function RouteMap:removeRbxDescendants(parentRbx)
