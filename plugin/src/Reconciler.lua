@@ -10,6 +10,10 @@ end
 
 local function reparent(rbx, parent)
 	if rbx then
+		if rbx.Parent == parent then
+			return
+		end
+
 		-- It's possible that 'rbx' is a service or some other object that we
 		-- can't change the parent of. That's the only reason why Parent would
 		-- fail except for rbx being previously destroyed!
