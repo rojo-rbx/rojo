@@ -143,6 +143,7 @@ function Reconciler:reconcile(rbx, item)
 	-- Item was deleted
 	if not item then
 		if rbx then
+			self._routeMap:removeByRbx(rbx)
 			rbx:Destroy()
 		end
 
@@ -156,9 +157,10 @@ function Reconciler:reconcile(rbx, item)
 
 	-- Item changed type!
 	if not classEqual(rbx, item.ClassName) then
+		self._routeMap:removeByRbx(rbx)
 		rbx:Destroy()
 
-		rbx = self:_reify(item)
+		return self:_reify(item)
 	end
 
 	-- Apply all properties, Roblox will de-duplicate changes
