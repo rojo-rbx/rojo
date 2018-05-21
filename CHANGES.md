@@ -1,7 +1,9 @@
 # Rojo Change Log
 
 ## Current Master
-*No changes*
+* Folders should no longer get collapsed when syncing occurs.
+* Improved robustness of route caching, which should catch the remaining script duplication bugs.
+* Fixed message in plugin not being prefixed with `Rojo: `.
 
 ## 0.4.5 (May 1, 2018)
 * Rojo messages are now prefixed with `Rojo: ` to make them stand out in the output more.
