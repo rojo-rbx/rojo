@@ -1,9 +1,10 @@
 # Rojo Change Log
 
-## Current Master
+## Current master
 * Folders should no longer get collapsed when syncing occurs.
 * **Significant** robustness improvements with regards to caching.
-    * If there are any bugs with script duplication or caching in the future, restarting the Rojo server process should fix them for that session.
+    * **This should catch all existing script duplication bugs.**
+    * If there are any bugs with script duplication or caching in the future, restarting the Rojo server process will fix them for that session.
 * Fixed message in plugin not being prefixed with `Rojo: `.
 
 ## 0.4.5 (May 1, 2018)
