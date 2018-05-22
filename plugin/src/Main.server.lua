@@ -45,7 +45,7 @@ local function main()
 
 	local toolbar = plugin:CreateToolbar("Rojo Plugin " .. displayedVersion)
 
-	toolbar:CreateButton("Test Connection", "Connect to Rojo Server", "")
+	toolbar:CreateButton("Test Connection", "Connect to Rojo Server", Config.icons.testConnection)
 		.Click:Connect(function()
 			checkUpgrade()
 
@@ -55,7 +55,7 @@ local function main()
 				end)
 		end)
 
-	toolbar:CreateButton("Sync In", "Sync into Roblox Studio", "")
+	toolbar:CreateButton("Sync In", "Sync into Roblox Studio", Config.icons.syncIn)
 		.Click:Connect(function()
 			checkUpgrade()
 
@@ -65,7 +65,7 @@ local function main()
 				end)
 		end)
 
-	toolbar:CreateButton("Toggle Polling", "Poll server for changes", "")
+	toolbar:CreateButton("Toggle Polling", "Poll server for changes", Config.icons.togglePolling)
 		.Click:Connect(function()
 			checkUpgrade()
 
