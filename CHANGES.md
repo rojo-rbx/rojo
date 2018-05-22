@@ -1,7 +1,7 @@
 # Rojo Change Log
 
 ## Current master
-* *No changes*
+* Added icons to the Rojo plugin, made by [@Vorlias](https://github.com/Vorlias)! ([#70](https://github.com/LPGhatguy/rojo/pull/70))
 
 ## 0.4.6 (May 21, 2018)
 * Rojo handles being restarted by Roblox Studio more gracefully ([#67](https://github.com/LPGhatguy/rojo/issues/67))
