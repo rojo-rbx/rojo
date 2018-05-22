@@ -2,6 +2,7 @@
 
 ## Current master
 * Added icons to the Rojo plugin, made by [@Vorlias](https://github.com/Vorlias)! ([#70](https://github.com/LPGhatguy/rojo/pull/70))
+* Server will now issue a warning if no partitions are specified in `rojo serve` ([#40](https://github.com/LPGhatguy/rojo/issues/40))
 
 ## 0.4.6 (May 21, 2018)
 * Rojo handles being restarted by Roblox Studio more gracefully ([#67](https://github.com/LPGhatguy/rojo/issues/67))

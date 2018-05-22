@@ -44,6 +44,13 @@ pub fn serve(project_path: &PathBuf, verbose: bool, port: Option<u64>) {
         },
     };
 
+    if project.partitions.len() == 0 {
+        println!("");
+        println!("This project has no partitions and will not do anything when served!");
+        println!("This is usually a mistake -- edit rojo.json!");
+        println!("");
+    }
+
     lazy_static! {
         static ref PLUGIN_CHAIN: PluginChain = PluginChain::new(vec![
             Box::new(ScriptPlugin::new()),
