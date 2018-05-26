@@ -57,14 +57,35 @@ function ApiContext:connect()
 
 			self.serverId = body.serverId
 			self.connected = true
-
-			return self:_retrieveMessages()
 		end)
 end
 
-function ApiContext:_retrieveMessages()
+function ApiContext:readAll()
 	if not self.connected then
-		return Promise.resolve()
+		return Promise.reject()
+	end
+
+	return Http.get(self.url .. "/read_all")
+		:andThen(function(response)
+			local body = response:json()
+
+			if body.serverId ~= self.serverId then
+				return Promise.reject("server changed ID")
+			end
+
+			self.messageCursor = body.messageCursor
+
+			return body.instances
+		end, function(err)
+			self.connected = false
+
+			return Promise.reject(err)
+		end)
+end
+
+function ApiContext:retrieveMessages()
+	if not self.connected then
+		return Promise.reject()
 	end
 
 	return Http.get(self.url .. "/subscribe/" .. self.messageCursor)
@@ -81,7 +102,7 @@ function ApiContext:_retrieveMessages()
 
 			self.messageCursor = body.messageCursor
 
-			return self:_retrieveMessages()
+			return self:retrieveMessages()
 		end, function(err)
 			self.connected = false
 

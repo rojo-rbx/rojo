@@ -5,7 +5,7 @@ use std::thread;
 use partition::Partition;
 use partition_watcher::PartitionWatcher;
 use rbx_session::RbxSession;
-use message_session::{MessageSession, Message};
+use message_session::MessageSession;
 use vfs_session::VfsSession;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -62,7 +62,6 @@ impl Session {
         {
             let vfs_session = self.vfs_session.clone();
             let rbx_session = self.rbx_session.clone();
-            let message_session = self.message_session.clone();
 
             thread::spawn(move || {
                 loop {
@@ -77,8 +76,6 @@ impl Session {
                                 let mut rbx_session = rbx_session.write().unwrap();
                                 rbx_session.handle_change(&change);
                             }
-
-                            message_session.push_messages(&[Message::Something]);
                         },
                         Err(_) => break,
                     }

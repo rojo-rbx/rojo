@@ -4,8 +4,14 @@ use std::sync::{mpsc, Arc, RwLock, Mutex};
 use id::{Id, get_id};
 
 #[derive(Debug, Clone, Serialize)]
+#[serde(tag = "type")]
 pub enum Message {
-    Something,
+    InstanceChanged {
+        id: Id,
+    },
+    Error {
+        message: String
+    },
 }
 
 #[derive(Clone)]

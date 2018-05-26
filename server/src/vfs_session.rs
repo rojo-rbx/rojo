@@ -65,8 +65,6 @@ impl VfsSession {
     }
 
     pub fn handle_change(&mut self, change: &FileChange) -> Option<()> {
-        println!("Got file change {:?}", change);
-
         match change {
             FileChange::Created(route) | FileChange::Updated(route) => {
                 let new_item = self.read(&route).ok()?;
