@@ -68,7 +68,7 @@ function RouteMap:_removeInternal(rbx, hashedRoute)
 	self._connectionsByRbx[rbx]:Disconnect()
 	self._connectionsByRbx[rbx] = nil
 
-	self:removeRbxDescendants(rbx)
+	self:_removeRbxDescendants(rbx)
 end
 
 --[[
