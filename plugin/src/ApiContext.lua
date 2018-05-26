@@ -8,6 +8,7 @@ local HttpError = require(script.Parent.HttpError)
 local ApiContext = {}
 ApiContext.__index = ApiContext
 
+-- TODO: Audit cases of errors and create enum values for each of them.
 ApiContext.Error = {
 	ServerIdMismatch = "ServerIdMismatch",
 }

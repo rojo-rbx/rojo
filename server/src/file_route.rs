@@ -2,6 +2,8 @@ use std::path::{Path, PathBuf, Component};
 
 use partition::Partition;
 
+// TODO: Change backing data structure to use a single allocation with slices
+// taken out of it for each portion
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct FileRoute {
     pub partition: String,

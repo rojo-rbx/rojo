@@ -13,6 +13,7 @@ local function dprint(...)
 	end
 end
 
+-- TODO: Factor out into separate library, especially error handling
 local Http = {}
 
 function Http.get(url)

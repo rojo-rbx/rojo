@@ -11,8 +11,8 @@ function Session.new()
 
 	setmetatable(self, Session)
 
+	-- TODO: Rewrite all instance tracking logic and implement a real reconciler
 	local created = {}
-
 	created["0"] = game:GetService("ReplicatedFirst")
 
 	local api

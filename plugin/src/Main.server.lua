@@ -45,6 +45,8 @@ local function main()
 
 	local currentSession
 
+	-- TODO: More robust session tracking to handle errors
+	-- TODO: Icon!
 	toolbar:CreateButton("Connect", "Connect to Rojo Session", "")
 		.Click:Connect(function()
 			checkUpgrade()

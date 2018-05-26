@@ -128,6 +128,8 @@ pub fn start(config: WebConfig) {
                 })
             },
 
+            // TODO: API to read only specific instances
+
             _ => rouille::Response::empty_404()
         )
     });

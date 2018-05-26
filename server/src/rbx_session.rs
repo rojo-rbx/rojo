@@ -9,6 +9,8 @@ use session::SessionConfig;
 use vfs_session::{VfsSession, FileItem, FileChange};
 use message_session::{Message, MessageSession};
 
+// TODO: Rethink data structure and insertion/update behavior. Maybe break some
+// pieces off into a new object?
 fn file_to_instances(
     file_item: &FileItem,
     partition: &Partition,
@@ -81,6 +83,8 @@ fn file_to_instances(
                 output.get_mut(&child_id).unwrap().parent = Some(primary_id);
 
                 changed_ids.push(child_id);
+
+                // TODO: Should I stop using drain on Vecs of Copyable types?
                 for id in child_changed_ids.drain(..) {
                     changed_ids.push(id);
                 }
@@ -99,6 +103,7 @@ pub struct RbxSession {
     message_session: MessageSession,
 
     /// The RbxInstance that represents each partition.
+    // TODO: Can this be removed in favor of instances_by_route?
     partition_instances: HashMap<String, Id>,
 
     /// The store of all instances in the session.
@@ -153,6 +158,7 @@ impl RbxSession {
                 self.message_session.push_messages(&messages);
             },
             FileChange::Deleted(route) => {
+                // TODO: Handle deletion of children here and in Moved case.
                 match self.instances_by_route.get(route) {
                     Some(id) => {
                         self.instances.remove(id);

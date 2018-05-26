@@ -9,9 +9,6 @@ pub enum Message {
     InstanceChanged {
         id: Id,
     },
-    Error {
-        message: String
-    },
 }
 
 #[derive(Clone)]
