@@ -3,6 +3,7 @@ local Promise = require(script.Parent.Parent.modules.Promise)
 local Config = require(script.Parent.Config)
 local Version = require(script.Parent.Version)
 local Http = require(script.Parent.Http)
+local HttpError = require(script.Parent.HttpError)
 
 local ApiContext = {}
 ApiContext.__index = ApiContext
@@ -104,6 +105,10 @@ function ApiContext:retrieveMessages()
 
 			return self:retrieveMessages()
 		end, function(err)
+			if err.type == HttpError.Error.Timeout then
+				return self:retrieveMessages()
+			end
+
 			self.connected = false
 
 			return Promise.reject(err)

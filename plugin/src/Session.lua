@@ -43,7 +43,6 @@ function Session.new()
 
 				for id, instance in pairs(instances) do
 					if id ~= "0" then
-						print("parent", created[id], created[tostring(instance.parent)])
 						created[id].Parent = created[tostring(instance.parent)]
 					end
 				end
@@ -57,8 +56,6 @@ function Session.new()
 	end
 
 	api = ApiContext.new(REMOTE_URL, function(message)
-		print("got message", message)
-
 		if message.type == "InstanceChanged" then
 			print("Instance", message.id, "changed!")
 			readAll()
