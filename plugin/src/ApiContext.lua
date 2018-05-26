@@ -26,7 +26,7 @@ function ApiContext.new(url, onMessage)
 		onMessage = onMessage,
 		serverId = nil,
 		connected = false,
-		eventCursor = -1,
+		messageCursor = -1,
 	}
 
 	setmetatable(context, ApiContext)
@@ -67,7 +67,7 @@ function ApiContext:_retrieveMessages()
 		return Promise.resolve()
 	end
 
-	return Http.get(self.url .. "/subscribe/" .. self.eventCursor)
+	return Http.get(self.url .. "/subscribe/" .. self.messageCursor)
 		:andThen(function(response)
 			local body = response:json()
 
@@ -75,11 +75,11 @@ function ApiContext:_retrieveMessages()
 				return Promise.reject("server changed ID")
 			end
 
-			for _, event in ipairs(body.events) do
-				self.onMessage(event)
+			for _, message in ipairs(body.messages) do
+				self.onMessage(message)
 			end
 
-			self.eventCursor = body.eventCursor
+			self.messageCursor = body.messageCursor
 
 			return self:_retrieveMessages()
 		end, function(err)
