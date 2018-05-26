@@ -1,5 +1,3 @@
-local HttpService = game:GetService("HttpService")
-
 local Config = require(script.Parent.Config)
 local Promise = require(script.Parent.Promise)
 local Version = require(script.Parent.Version)

@@ -13,6 +13,9 @@ function Session.new()
 
 	setmetatable(self, Session)
 
+	local api = ApiContext.new(REMOTE_URL)
+	api:connect()
+
 	return self
 end
 

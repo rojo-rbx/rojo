@@ -51,4 +51,12 @@ function Http.post(url, body)
 	end)
 end
 
+function Http.jsonEncode(object)
+	return HttpService:JSONEncode(object)
+end
+
+function Http.jsonDecode(source)
+	return HttpService:JSONDecode(source)
+end
+
 return Http
