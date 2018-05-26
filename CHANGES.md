@@ -1,7 +1,7 @@
 # Rojo Change Log
 
 ## Current master
-* *No changes*
+* Fixed warning when renaming or removing files that would sometimes corrupt the instance cache (#72)
 
 ## 0.4.8 (May 26, 2018)
 * Hotfix to prevent errors from being thrown when objects managed by Rojo are deleted
