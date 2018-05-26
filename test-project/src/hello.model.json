@@ -4,14 +4,11 @@
   "Children": [
     {
       "Name": "Some Part",
-      "ClassName": "Part",
-      "Children": [],
-      "Properties": {}
+      "ClassName": "Part"
     },
     {
       "Name": "Some StringValue",
       "ClassName": "StringValue",
-      "Children": [],
       "Properties": {
         "Value": {
           "Type": "String",
@@ -19,6 +16,5 @@
         }
       }
     }
-  ],
-  "Properties": {}
+  ]
 }

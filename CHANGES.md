@@ -2,6 +2,7 @@
 
 ## Current master
 * Fixed warning when renaming or removing files that would sometimes corrupt the instance cache (#72)
+* JSON models are no longer as strict -- `Children` and `Properties` are now optional.
 
 ## 0.4.8 (May 26, 2018)
 * Hotfix to prevent errors from being thrown when objects managed by Rojo are deleted

@@ -6,7 +6,11 @@ use std::collections::HashMap;
 pub struct RbxInstance {
     pub name: String,
     pub class_name: String,
+
+    #[serde(default = "Vec::new")]
     pub children: Vec<RbxInstance>,
+
+    #[serde(default = "HashMap::new")]
     pub properties: HashMap<String, RbxValue>,
 
     /// The route that this instance was generated from, if there was one.
