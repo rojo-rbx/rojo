@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use regex::Regex;
 
 use core::Route;
-use plugin::{Plugin, PluginChain, TransformFileResult, RbxChangeResult, FileChangeResult};
+use plugin::{Plugin, PluginChain, TransformFileResult, FileChangeResult};
 use rbx::{RbxInstance, RbxValue};
 use vfs::VfsItem;
 
@@ -116,9 +116,5 @@ impl Plugin for ScriptPlugin {
         } else {
             FileChangeResult::Pass
         }
-    }
-
-    fn handle_rbx_change(&self, _route: &Route, _rbx_item: &RbxInstance) -> RbxChangeResult {
-        RbxChangeResult::Pass
     }
 }

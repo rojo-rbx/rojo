@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use core::Route;
-use plugin::{Plugin, PluginChain, TransformFileResult, RbxChangeResult, FileChangeResult};
+use plugin::{Plugin, PluginChain, TransformFileResult, FileChangeResult};
 use rbx::{RbxInstance, RbxValue};
 use vfs::VfsItem;
 
@@ -59,9 +59,5 @@ impl Plugin for DefaultPlugin {
 
     fn handle_file_change(&self, route: &Route) -> FileChangeResult {
         FileChangeResult::MarkChanged(Some(vec![route.clone()]))
-    }
-
-    fn handle_rbx_change(&self, _route: &Route, _rbx_item: &RbxInstance) -> RbxChangeResult {
-        RbxChangeResult::Pass
     }
 }

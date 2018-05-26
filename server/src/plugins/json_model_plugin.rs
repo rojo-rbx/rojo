@@ -2,7 +2,7 @@ use regex::Regex;
 use serde_json;
 
 use core::Route;
-use plugin::{Plugin, PluginChain, TransformFileResult, RbxChangeResult, FileChangeResult};
+use plugin::{Plugin, PluginChain, TransformFileResult, FileChangeResult};
 use rbx::RbxInstance;
 use vfs::VfsItem;
 
@@ -47,9 +47,5 @@ impl Plugin for JsonModelPlugin {
 
     fn handle_file_change(&self, _route: &Route) -> FileChangeResult {
         FileChangeResult::Pass
-    }
-
-    fn handle_rbx_change(&self, _route: &Route, _rbx_item: &RbxInstance) -> RbxChangeResult {
-        RbxChangeResult::Pass
     }
 }
