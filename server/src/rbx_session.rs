@@ -162,6 +162,25 @@ impl RbxSession {
                 }
             },
             FileChange::Moved(from_route, to_route) => {
+                let mut messages = Vec::new();
+
+                match self.instances_by_route.get(from_route) {
+                    Some(id) => {
+                        self.instances.remove(id);
+                        messages.push(Message::InstanceChanged { id: *id });
+                    },
+                    None => (),
+                }
+
+                let file_item = vfs_session.get_by_route(to_route).unwrap();
+                let partition = self.config.partitions.get(&to_route.partition).unwrap();
+                let (_, changed_ids) = file_to_instances(file_item, partition, &mut self.instances, &mut self.instances_by_route);
+
+                for id in changed_ids {
+                    messages.push(Message::InstanceChanged { id });
+                }
+
+                self.message_session.push_messages(&messages);
             },
         }
     }
