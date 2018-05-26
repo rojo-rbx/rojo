@@ -1,5 +1,6 @@
+local Promise = require(script.Parent.Parent.modules.Promise)
+
 local Config = require(script.Parent.Config)
-local Promise = require(script.Parent.Promise)
 local Version = require(script.Parent.Version)
 local Http = require(script.Parent.Http)
 
@@ -24,7 +25,8 @@ function ApiContext.new(url, onMessage)
 		url = url,
 		onMessage = onMessage,
 		serverId = nil,
-		currentTime = 0,
+		connected = false,
+		eventCursor = -1,
 	}
 
 	setmetatable(context, ApiContext)
@@ -35,9 +37,9 @@ end
 function ApiContext:connect()
 	return Http.get(self.url)
 		:andThen(function(response)
-			response = response:json()
+			local body = response:json()
 
-			if response.protocolVersion ~= Config.protocolVersion then
+			if body.protocolVersion ~= Config.protocolVersion then
 				local message = (
 					"Found a Rojo dev server, but it's using a different protocol version, and is incompatible." ..
 					"\nMake sure you have matching versions of both the Rojo plugin and server!" ..
@@ -47,14 +49,43 @@ function ApiContext:connect()
 				):format(
 					Version.display(Config.version), Config.protocolVersion,
 					Config.expectedApiContextVersionString,
-					response.serverVersion, response.protocolVersion
+					body.serverVersion, body.protocolVersion
 				)
 
 				return Promise.reject(message)
 			end
 
-			self.serverId = response.serverId
-			self.currentTime = response.currentTime
+			self.serverId = body.serverId
+			self.connected = true
+
+			return self:_retrieveMessages()
+		end)
+end
+
+function ApiContext:_retrieveMessages()
+	if not self.connected then
+		return Promise.resolve()
+	end
+
+	return Http.get(self.url .. "/subscribe/" .. self.eventCursor)
+		:andThen(function(response)
+			local body = response:json()
+
+			if body.serverId ~= self.serverId then
+				return Promise.reject("server changed ID")
+			end
+
+			for _, event in ipairs(body.events) do
+				self.onMessage(event)
+			end
+
+			self.eventCursor = body.eventCursor
+
+			return self:_retrieveMessages()
+		end, function(err)
+			self.connected = false
+
+			return Promise.reject(err)
 		end)
 end
 

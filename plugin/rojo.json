@@ -22,6 +22,10 @@
       "path": "modules/testez/lib",
       "target": "ReplicatedStorage.TestEZ"
     },
+    "modules/promise": {
+      "path": "modules/promise/lib",
+      "target": "ReplicatedStorage.Rojo.modules.Promise"
+    },
     "tests": {
       "path": "tests",
       "target": "TestService"

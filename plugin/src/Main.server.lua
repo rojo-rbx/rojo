@@ -43,12 +43,19 @@ local function main()
 
 	local toolbar = plugin:CreateToolbar("Rojo " .. displayedVersion)
 
+	local currentSession
+
 	toolbar:CreateButton("Connect", "Connect to Rojo Session", "")
 		.Click:Connect(function()
 			checkUpgrade()
-			Session.new()
 
-			error("NYI")
+			if currentSession ~= nil then
+				warn("Rojo: A session is already running!")
+				return
+			end
+
+			print("Rojo: Started session.")
+			currentSession = Session.new()
 		end)
 end
 

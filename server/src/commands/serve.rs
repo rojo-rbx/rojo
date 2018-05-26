@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::process;
-use std::time::Instant;
 use std::fs;
 
 use rand;
@@ -50,7 +49,6 @@ pub fn serve(project_path: &PathBuf, port: Option<u64>) {
     let web_config = web::WebConfig {
         port: port.unwrap_or(project.serve_port),
         server_id,
-        start_time: Instant::now(),
         rbx_session: session.get_rbx_session(),
         events: session.get_events(),
         event_listeners: session.get_event_listeners(),

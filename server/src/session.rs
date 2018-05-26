@@ -26,7 +26,7 @@ pub struct Session {
     config: SessionConfig,
     vfs_session: Arc<RwLock<VfsSession>>,
     rbx_session: Arc<RwLock<RbxSession>>,
-    middlewares: Vec<Box<Middleware>>,
+    // middlewares: Vec<Box<Middleware>>,
     watchers: Vec<PartitionWatcher>,
     events: Arc<RwLock<Vec<SessionEvent>>>,
     event_listeners: Arc<Mutex<HashMap<Id, mpsc::Sender<()>>>>,
@@ -40,7 +40,7 @@ impl Session {
         Session {
             vfs_session,
             rbx_session,
-            middlewares: Vec::new(),
+            // middlewares: Vec::new(),
             watchers: Vec::new(),
             events: Arc::new(RwLock::new(Vec::new())),
             event_listeners: Arc::new(Mutex::new(HashMap::new())),
@@ -69,12 +69,32 @@ impl Session {
 
         {
             let vfs_session = self.vfs_session.clone();
+            let event_listeners = self.event_listeners.clone();
+            let events = self.events.clone();
+
             thread::spawn(move || {
                 loop {
                     match rx.recv() {
                         Ok(change) => {
-                            let mut vfs_session = vfs_session.write().unwrap();
-                            vfs_session.handle_change(change);
+                            {
+                                let mut vfs_session = vfs_session.write().unwrap();
+                                vfs_session.handle_change(change);
+                            }
+
+                            // TODO: Handle change in RbxSession
+
+                            {
+                                let mut events = events.write().unwrap();
+                                events.push(SessionEvent::Something);
+                            }
+
+                            {
+                                let listeners = event_listeners.lock().unwrap();
+
+                                for listener in listeners.values() {
+                                    listener.send(()).unwrap();
+                                }
+                            }
                         },
                         Err(_) => break,
                     }

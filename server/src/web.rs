@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::time::Instant;
 use std::sync::{mpsc, RwLock, Mutex, Arc};
 
 use rouille;
@@ -14,7 +13,6 @@ use session::SessionEvent;
 pub struct WebConfig {
     pub port: u64,
     pub server_id: u64,
-    pub start_time: Instant,
     pub rbx_session: Arc<RwLock<RbxSession>>,
     pub events: Arc<RwLock<Vec<SessionEvent>>>,
     pub event_listeners: Arc<Mutex<HashMap<Id, mpsc::Sender<()>>>>,
@@ -26,22 +24,22 @@ struct ServerInfoResponse<'a> {
     server_version: &'static str,
     protocol_version: u64,
     server_id: &'a str,
-    current_time: f64,
 }
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct ReadAllResponse<'a> {
     server_id: &'a str,
-    current_time: f64,
     instances: &'a HashMap<Id, RbxInstance>,
+    event_cursor: i32,
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 struct SubscribeResponse<'a> {
     server_id: &'a str,
     events: &'a [SessionEvent],
-    cursor: i32,
+    event_cursor: i32,
 }
 
 /// Start the Rojo web server and park our current thread.
@@ -57,17 +55,10 @@ pub fn start(config: WebConfig) {
             (GET) (/) => {
                 // Get a summary of information about the server.
 
-                let current_time = {
-                    let elapsed = config.start_time.elapsed();
-
-                    elapsed.as_secs() as f64 + elapsed.subsec_nanos() as f64 / 1_000_000_000.0
-                };
-
                 json_response(ServerInfoResponse {
                     server_version,
                     protocol_version: 2,
                     server_id: &server_id,
-                    current_time,
                 })
             },
 
@@ -79,13 +70,13 @@ pub fn start(config: WebConfig) {
                 {
                     let events = config.events.read().unwrap();
                     if cursor < events.len() as i32 - 1 {
-                        let new_events = &events[cursor as usize + 1..];
+                        let new_events = &events[(cursor + 1) as usize..];
                         let new_cursor = cursor + new_events.len() as i32;
 
                         return json_response(SubscribeResponse {
                             server_id: &server_id,
                             events: new_events,
-                            cursor: new_cursor,
+                            event_cursor: new_cursor,
                         });
                     }
                 }
@@ -110,13 +101,13 @@ pub fn start(config: WebConfig) {
 
                 {
                     let events = config.events.read().unwrap();
-                    let new_events = &events[cursor as usize + 1..];
+                    let new_events = &events[(cursor + 1) as usize..];
                     let new_cursor = cursor + new_events.len() as i32;
 
                     return json_response(SubscribeResponse {
                         server_id: &server_id,
                         events: new_events,
-                        cursor: new_cursor,
+                        event_cursor: new_cursor,
                     });
                 }
             },
@@ -124,15 +115,14 @@ pub fn start(config: WebConfig) {
             (GET) (/read_all) => {
                 let rbx_session = config.rbx_session.read().unwrap();
 
-                let current_time = {
-                    let elapsed = config.start_time.elapsed();
-
-                    elapsed.as_secs() as f64 + elapsed.subsec_nanos() as f64 / 1_000_000_000.0
+                let event_cursor = {
+                    let events = config.events.read().unwrap();
+                    events.len() as i32 - 1
                 };
 
                 json_response(ReadAllResponse {
                     server_id: &server_id,
-                    current_time,
+                    event_cursor,
                     instances: &rbx_session.instances,
                 })
             },
