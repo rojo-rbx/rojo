@@ -20,16 +20,22 @@ fn file_to_instances(
             let mut properties = HashMap::new();
             properties.insert("Value".to_string(), contents.clone());
 
-            let (primary_id, parent) = match instances_by_route.get(&file_item.get_route()) {
-                Some(&id) => {
-                    (id, output.get(&id).unwrap().parent)
-                },
+            let primary_id = match instances_by_route.get(&file_item.get_route()) {
+                Some(&id) => id,
                 None => {
                     let id = get_id();
                     instances_by_route.insert(route.clone(), id);
 
-                    (id, None)
+                    id
                 },
+            };
+
+            let parent = match file_item.get_route().parent() {
+                Some(parent_route) => match instances_by_route.get(&parent_route) {
+                    Some(parent_id) => Some(*parent_id),
+                    None => None,
+                },
+                None => None,
             };
 
             output.insert(primary_id, RbxInstance {
@@ -42,16 +48,22 @@ fn file_to_instances(
             (primary_id, vec![primary_id])
         },
         FileItem::Directory { children, route } => {
-            let (primary_id, parent) = match instances_by_route.get(&file_item.get_route()) {
-                Some(&id) => {
-                    (id, output.get(&id).unwrap().parent)
-                },
+            let primary_id = match instances_by_route.get(&file_item.get_route()) {
+                Some(&id) => id,
                 None => {
                     let id = get_id();
                     instances_by_route.insert(route.clone(), id);
 
-                    (id, None)
+                    id
                 },
+            };
+
+            let parent = match file_item.get_route().parent() {
+                Some(parent_route) => match instances_by_route.get(&parent_route) {
+                    Some(parent_id) => Some(*parent_id),
+                    None => None,
+                },
+                None => None,
             };
 
             output.insert(primary_id, RbxInstance {
@@ -141,6 +153,13 @@ impl RbxSession {
                 self.message_session.push_messages(&messages);
             },
             FileChange::Deleted(route) => {
+                match self.instances_by_route.get(route) {
+                    Some(id) => {
+                        self.instances.remove(id);
+                        self.message_session.push_messages(&[Message::InstanceChanged { id: *id }]);
+                    },
+                    None => (),
+                }
             },
             FileChange::Moved(from_route, to_route) => {
             },

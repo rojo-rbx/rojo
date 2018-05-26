@@ -68,6 +68,15 @@ pub fn start(config: WebConfig) {
                 // Did the client miss any messages since the last subscribe?
                 {
                     let messages = config.message_session.messages.read().unwrap();
+
+                    if cursor > messages.len() as i32 {
+                        return json_response(SubscribeResponse {
+                            server_id: &server_id,
+                            messages: &[],
+                            message_cursor: messages.len() as i32 - 1,
+                        });
+                    }
+
                     if cursor < messages.len() as i32 - 1 {
                         let new_messages = &messages[(cursor + 1) as usize..];
                         let new_cursor = cursor + new_messages.len() as i32;

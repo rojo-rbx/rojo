@@ -21,7 +21,9 @@ function Session.new()
 
 		return api:readAll()
 			:andThen(function(instances)
+				local visited = {}
 				for id, instance in pairs(instances) do
+					visited[id] = true
 					if id ~= "0" then
 						local existing = created[id]
 						if existing ~= nil then
@@ -43,6 +45,12 @@ function Session.new()
 					if id ~= "0" then
 						print("parent", created[id], created[tostring(instance.parent)])
 						created[id].Parent = created[tostring(instance.parent)]
+					end
+				end
+
+				for id, object in pairs(created) do
+					if not visited[id] then
+						object:Destroy()
 					end
 				end
 			end)

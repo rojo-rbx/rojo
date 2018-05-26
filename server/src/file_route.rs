@@ -30,6 +30,20 @@ impl FileRoute {
         })
     }
 
+    pub fn parent(&self) -> Option<FileRoute> {
+        if self.route.len() == 0 {
+            return None;
+        }
+
+        let mut new_route = self.route.clone();
+        new_route.pop();
+
+        Some(FileRoute {
+            partition: self.partition.clone(),
+            route: new_route,
+        })
+    }
+
     /// Creates a PathBuf out of the `FileRoute` based on the given partition
     /// `Path`.
     pub fn to_path_buf(&self, partition_path: &Path) -> PathBuf {
