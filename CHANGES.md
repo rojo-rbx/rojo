@@ -1,6 +1,9 @@
 # Rojo Change Log
 
 ## Current master
+* *No changes*
+
+## 0.4.8 (May 26, 2018)
 * Hotfix to prevent errors from being thrown when objects managed by Rojo are deleted
 
 ## 0.4.7 (May 25, 2018)
