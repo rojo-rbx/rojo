@@ -6,7 +6,8 @@ use id::{Id, get_id};
 use partition::Partition;
 use rbx::RbxInstance;
 use session::SessionConfig;
-use vfs_session::{VfsSession, FileItem};
+use vfs_session::{VfsSession, FileItem, FileChange};
+use message_session::MessageSession;
 
 fn file_to_instances(file_item: &FileItem, partition: &Partition, output: &mut HashMap<Id, RbxInstance>, instances_by_route: &mut HashMap<FileRoute, Id>) -> Id {
     match file_item {
@@ -71,7 +72,7 @@ pub struct RbxSession {
 }
 
 impl RbxSession {
-    pub fn new(config: SessionConfig, vfs_session: Arc<RwLock<VfsSession>>) -> RbxSession {
+    pub fn new(config: SessionConfig, vfs_session: Arc<RwLock<VfsSession>>, message_session: MessageSession) -> RbxSession {
         RbxSession {
             config,
             vfs_session,
@@ -94,5 +95,9 @@ impl RbxSession {
             let root_id = file_to_instances(file_item, partition, &mut self.instances, &mut self.instances_by_route);
             self.partition_instances.insert(partition.name.clone(), root_id);
         }
+    }
+
+    pub fn handle_change(&mut self, change: &FileChange) {
+        println!("Handle RBX change {:?}", change);
     }
 }

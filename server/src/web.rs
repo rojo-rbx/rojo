@@ -1,21 +1,20 @@
 use std::collections::HashMap;
-use std::sync::{mpsc, RwLock, Mutex, Arc};
+use std::sync::{mpsc, RwLock, Arc};
 
 use rouille;
 
 use web_util::json_response;
-use id::{Id, get_id};
+use id::Id;
 use rbx::RbxInstance;
 use rbx_session::RbxSession;
-use session::SessionEvent;
+use message_session::{MessageSession, Message};
 
 /// The set of configuration the web server needs to start.
 pub struct WebConfig {
     pub port: u64,
     pub server_id: u64,
     pub rbx_session: Arc<RwLock<RbxSession>>,
-    pub events: Arc<RwLock<Vec<SessionEvent>>>,
-    pub event_listeners: Arc<Mutex<HashMap<Id, mpsc::Sender<()>>>>,
+    pub message_session: MessageSession,
 }
 
 #[derive(Debug, Serialize)]
@@ -31,15 +30,15 @@ struct ServerInfoResponse<'a> {
 struct ReadAllResponse<'a> {
     server_id: &'a str,
     instances: &'a HashMap<Id, RbxInstance>,
-    event_cursor: i32,
+    message_cursor: i32,
 }
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct SubscribeResponse<'a> {
     server_id: &'a str,
-    events: &'a [SessionEvent],
-    event_cursor: i32,
+    messages: &'a [Message],
+    message_cursor: i32,
 }
 
 /// Start the Rojo web server and park our current thread.
@@ -68,46 +67,39 @@ pub fn start(config: WebConfig) {
 
                 // Did the client miss any messages since the last subscribe?
                 {
-                    let events = config.events.read().unwrap();
-                    if cursor < events.len() as i32 - 1 {
-                        let new_events = &events[(cursor + 1) as usize..];
-                        let new_cursor = cursor + new_events.len() as i32;
+                    let messages = config.message_session.messages.read().unwrap();
+                    if cursor < messages.len() as i32 - 1 {
+                        let new_messages = &messages[(cursor + 1) as usize..];
+                        let new_cursor = cursor + new_messages.len() as i32;
 
                         return json_response(SubscribeResponse {
                             server_id: &server_id,
-                            events: new_events,
-                            event_cursor: new_cursor,
+                            messages: new_messages,
+                            message_cursor: new_cursor,
                         });
                     }
                 }
 
-                let sender_id = get_id();
                 let (tx, rx) = mpsc::channel();
 
-                {
-                    let mut event_listeners = config.event_listeners.lock().unwrap();
-                    event_listeners.insert(sender_id, tx);
-                }
+                let sender_id = config.message_session.subscribe(tx);
 
                 match rx.recv() {
                     Ok(_) => (),
                     Err(_) => return rouille::Response::text("error!").with_status_code(500),
                 }
 
-                {
-                    let mut event_listeners = config.event_listeners.lock().unwrap();
-                    event_listeners.remove(&sender_id);
-                }
+                config.message_session.unsubscribe(sender_id);
 
                 {
-                    let events = config.events.read().unwrap();
-                    let new_events = &events[(cursor + 1) as usize..];
-                    let new_cursor = cursor + new_events.len() as i32;
+                    let messages = config.message_session.messages.read().unwrap();
+                    let new_messages = &messages[(cursor + 1) as usize..];
+                    let new_cursor = cursor + new_messages.len() as i32;
 
                     return json_response(SubscribeResponse {
                         server_id: &server_id,
-                        events: new_events,
-                        event_cursor: new_cursor,
+                        messages: new_messages,
+                        message_cursor: new_cursor,
                     });
                 }
             },
@@ -115,14 +107,14 @@ pub fn start(config: WebConfig) {
             (GET) (/read_all) => {
                 let rbx_session = config.rbx_session.read().unwrap();
 
-                let event_cursor = {
-                    let events = config.events.read().unwrap();
-                    events.len() as i32 - 1
+                let message_cursor = {
+                    let messages = config.message_session.messages.read().unwrap();
+                    messages.len() as i32 - 1
                 };
 
                 json_response(ReadAllResponse {
                     server_id: &server_id,
-                    event_cursor,
+                    message_cursor,
                     instances: &rbx_session.instances,
                 })
             },

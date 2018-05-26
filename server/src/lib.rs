@@ -13,6 +13,7 @@ extern crate tempfile;
 pub mod commands;
 pub mod file_route;
 pub mod id;
+pub mod message_session;
 pub mod partition;
 pub mod partition_watcher;
 pub mod pathext;

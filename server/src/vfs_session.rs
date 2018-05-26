@@ -64,7 +64,7 @@ impl VfsSession {
         }
     }
 
-    pub fn handle_change(&mut self, change: FileChange) -> Option<()> {
+    pub fn handle_change(&mut self, change: &FileChange) -> Option<()> {
         println!("Got file change {:?}", change);
 
         match change {

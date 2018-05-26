@@ -50,8 +50,7 @@ pub fn serve(project_path: &PathBuf, port: Option<u64>) {
         port: port.unwrap_or(project.serve_port),
         server_id,
         rbx_session: session.get_rbx_session(),
-        events: session.get_events(),
-        event_listeners: session.get_event_listeners(),
+        message_session: session.get_message_session(),
     };
 
     println!("Server listening on port {}", web_config.port);
