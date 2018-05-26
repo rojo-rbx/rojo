@@ -1,7 +1,7 @@
 # Rojo Change Log
 
 ## Current master
-* *No changes*
+* Hotfix to prevent errors from being thrown when objects managed by Rojo are deleted
 
 ## 0.4.7 (May 25, 2018)
 * Added icons to the Rojo plugin, made by [@Vorlias](https://github.com/Vorlias)! ([#70](https://github.com/LPGhatguy/rojo/pull/70))

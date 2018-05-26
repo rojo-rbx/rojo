@@ -47,7 +47,7 @@ function RouteMap:removeByRoute(route)
 	local rbx = self._map[hashedRoute]
 
 	if rbx ~= nil then
-		self:_removeInternal(hashedRoute, rbx)
+		self:_removeInternal(rbx, hashedRoute)
 	end
 end
 
@@ -55,7 +55,7 @@ function RouteMap:removeByRbx(rbx)
 	local hashedRoute = self._reverseMap[rbx]
 
 	if hashedRoute ~= nil then
-		self:_removeInternal(hashedRoute, rbx)
+		self:_removeInternal(rbx, hashedRoute)
 	end
 end
 
