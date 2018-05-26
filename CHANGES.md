@@ -1,6 +1,9 @@
 # Rojo Change Log
 
 ## Current master
+* *No changes*
+
+## 0.4.7 (May 25, 2018)
 * Added icons to the Rojo plugin, made by [@Vorlias](https://github.com/Vorlias)! ([#70](https://github.com/LPGhatguy/rojo/pull/70))
 * Server will now issue a warning if no partitions are specified in `rojo serve` ([#40](https://github.com/LPGhatguy/rojo/issues/40))
 
