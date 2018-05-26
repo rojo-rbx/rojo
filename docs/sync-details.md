@@ -26,13 +26,16 @@ Will turn into these instances in Roblox:
 ![Example of Roblox instances](/images/sync-example.png)
 
 ## Models
-Rojo supports a JSON model format for representing simple models. It's designed for instance types like `BindableEvent` or `*Value` objects, and is not suitable for larger models.
+Rojo supports a JSON model format for representing simple models. It's designed for instance types like `BindableEvent` or `Value` objects, and is not suitable for larger models.
+
+Rojo JSON models are stored in `.model.json` files.
 
 !!! info
     In the future, Rojo will support `.rbxmx` models. See [issue #7](https://github.com/LPGhatguy/rojo/issues/7) for more details and updates on this feature.
 
 JSON model files are strict, with every property being required. They look like this:
 
+`hello.model.json`
 ```json
 {
     "Name": "hello",
