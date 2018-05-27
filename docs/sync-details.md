@@ -33,6 +33,9 @@ Rojo JSON models are stored in `.model.json` files.
 !!! info
     In the future, Rojo will support `.rbxmx` models. See [issue #7](https://github.com/LPGhatguy/rojo/issues/7) for more details and updates on this feature.
 
+!!! warning
+    Prior to version 0.4.9, the `Properties` and `Children` properties are required on all instances in JSON models!
+
 JSON model files are fairly strict; any syntax errors will cause the model to fail to sync! They look like this:
 
 `hello.model.json`
