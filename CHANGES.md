@@ -1,7 +1,10 @@
 # Rojo Change Log
 
 ## Current master
-* Fixed warning when renaming or removing files that would sometimes corrupt the instance cache (#72)
+* *No changes*
+
+## 0.4.9 (May 26, 2018)
+* Fixed warning when renaming or removing files that would sometimes corrupt the instance cache ([#72](https://github.com/LPGhatguy/rojo/pull/72))
 * JSON models are no longer as strict -- `Children` and `Properties` are now optional.
 
 ## 0.4.8 (May 26, 2018)
