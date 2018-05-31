@@ -38,7 +38,7 @@ pub fn serve(project_path: &PathBuf, port: Option<u64>) {
     }
 
     let config = SessionConfig {
-        partitions
+        partitions: partitions.clone(),
     };
 
     println!("Using session config {:#?}", config);
@@ -51,6 +51,7 @@ pub fn serve(project_path: &PathBuf, port: Option<u64>) {
         server_id,
         rbx_session: session.get_rbx_session(),
         message_session: session.get_message_session(),
+        partitions,
     };
 
     println!("Server listening on port {}", web_config.port);
