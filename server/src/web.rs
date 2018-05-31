@@ -3,7 +3,7 @@ use std::sync::{mpsc, RwLock, Arc};
 
 use rouille;
 
-use web_util::json_response;
+use web_util::{read_json, json_response};
 use id::Id;
 use rbx::RbxInstance;
 use rbx_session::RbxSession;
@@ -138,7 +138,14 @@ pub fn start(config: WebConfig) {
                 })
             },
 
-            // TODO: API to read only specific instances
+            (POST) (/read) => {
+                let body = match read_json::<Vec<Vec<String>>>(request) {
+                    Some(body) => body,
+                    None => return rouille::Response::text("Malformed JSON").with_status_code(400),
+                };
+
+                rouille::Response::json(&body)
+            },
 
             _ => rouille::Response::empty_404()
         )
