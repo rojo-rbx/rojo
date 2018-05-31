@@ -14,11 +14,9 @@ pub struct RbxInstance {
     /// Maps to the `ClassName` property on Instance.
     pub class_name: String,
 
-    /// Maps to the `Parent` property on Instance.
-    pub parent: Option<Id>,
-
     /// Contains all other properties of an Instance.
     pub properties: HashMap<String, RbxValue>,
 
-    // TODO: children property, Vec<Id>
+    /// All of the children of this instance. Order is relevant to preserve!
+    pub children: Vec<Id>,
 }

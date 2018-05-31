@@ -162,19 +162,7 @@ pub fn start(config: WebConfig) {
                 let mut instances = HashMap::new();
 
                 for requested_id in &requested_ids {
-                    let requested_instance = match rbx_session.instances.get(requested_id) {
-                        Some(instance) => instance,
-                        None => continue,
-                    };
-
-                    instances.insert(*requested_id, requested_instance);
-
-                    // Oops; this needs to be recursive.
-                    for (child_id, instance) in &rbx_session.instances {
-                        if instance.parent == Some(*requested_id) {
-                            instances.insert(*child_id, instance);
-                        }
-                    }
+                    rbx_session.retrieve_instance(*requested_id, &mut instances);
                 }
 
                 Response::json(&ReadResponse {

@@ -32,19 +32,11 @@ fn file_to_instances(
                 },
             };
 
-            let parent = match file_item.get_route().parent() {
-                Some(parent_route) => match instances_by_route.get(&parent_route) {
-                    Some(parent_id) => Some(*parent_id),
-                    None => None,
-                },
-                None => None,
-            };
-
             output.insert(primary_id, RbxInstance {
                 name: route.name(partition).to_string(),
                 class_name: "StringValue".to_string(),
-                parent,
                 properties,
+                children: Vec::new(),
             });
 
             (primary_id, vec![primary_id])
@@ -60,28 +52,14 @@ fn file_to_instances(
                 },
             };
 
-            let parent = match file_item.get_route().parent() {
-                Some(parent_route) => match instances_by_route.get(&parent_route) {
-                    Some(parent_id) => Some(*parent_id),
-                    None => None,
-                },
-                None => None,
-            };
-
-            output.insert(primary_id, RbxInstance {
-                name: route.name(partition).to_string(),
-                class_name: "Folder".to_string(),
-                parent,
-                properties: HashMap::new(),
-            });
+            let mut child_ids = Vec::new();
 
             let mut changed_ids = vec![primary_id];
 
             for child_file_item in children.values() {
                 let (child_id, mut child_changed_ids) = file_to_instances(child_file_item, partition, output, instances_by_route);
 
-                output.get_mut(&child_id).unwrap().parent = Some(primary_id);
-
+                child_ids.push(child_id);
                 changed_ids.push(child_id);
 
                 // TODO: Should I stop using drain on Vecs of Copyable types?
@@ -89,6 +67,13 @@ fn file_to_instances(
                     changed_ids.push(id);
                 }
             }
+
+            output.insert(primary_id, RbxInstance {
+                name: route.name(partition).to_string(),
+                class_name: "Folder".to_string(),
+                properties: HashMap::new(),
+                children: child_ids,
+            });
 
             (primary_id, changed_ids)
         },
@@ -122,6 +107,19 @@ impl RbxSession {
             partition_instances: HashMap::new(),
             instances: HashMap::new(),
             instances_by_route: HashMap::new(),
+        }
+    }
+
+    pub fn retrieve_instance<'a, 'b>(&'a self, id: Id, output: &'b mut HashMap<Id, &'a RbxInstance>) {
+        let requested_instance = match self.instances.get(&id) {
+            Some(instance) => instance,
+            None => return,
+        };
+
+        output.insert(id, requested_instance);
+
+        for child_id in &requested_instance.children {
+            self.retrieve_instance(*child_id, output);
         }
     }
 
