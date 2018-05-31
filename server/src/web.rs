@@ -142,7 +142,7 @@ pub fn start(config: WebConfig) {
                 Response::json(&ReadAllResponse {
                     server_id: &server_id,
                     message_cursor,
-                    instances: &rbx_session.instances,
+                    instances: rbx_session.tree.get_all_instances(),
                 })
             },
 
@@ -162,7 +162,7 @@ pub fn start(config: WebConfig) {
                 let mut instances = HashMap::new();
 
                 for requested_id in &requested_ids {
-                    rbx_session.get_instance(*requested_id, &mut instances);
+                    rbx_session.tree.get_instance(*requested_id, &mut instances);
                 }
 
                 Response::json(&ReadResponse {

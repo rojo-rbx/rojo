@@ -4,23 +4,17 @@ use std::sync::{Arc, RwLock};
 use file_route::FileRoute;
 use id::{Id, get_id};
 use partition::Partition;
-use rbx::RbxInstance;
+use rbx::{RbxInstance, RbxTree};
 use session::SessionConfig;
 use vfs_session::{VfsSession, FileItem, FileChange};
 use message_session::{Message, MessageSession};
-
-fn insert_if_missing<T: PartialEq>(vec: &mut Vec<T>, value: T) {
-    if !vec.contains(&value) {
-        vec.push(value);
-    }
-}
 
 // TODO: Rethink data structure and insertion/update behavior. Maybe break some
 // pieces off into a new object?
 fn file_to_instances(
     file_item: &FileItem,
     partition: &Partition,
-    output: &mut HashMap<Id, RbxInstance>,
+    tree: &mut RbxTree,
     instances_by_route: &mut HashMap<FileRoute, Id>,
     parent_id: Option<Id>,
 ) -> (Id, Vec<Id>) {
@@ -39,7 +33,7 @@ fn file_to_instances(
                 },
             };
 
-            output.insert(primary_id, RbxInstance {
+            tree.insert_instance(primary_id, RbxInstance {
                 name: route.name(partition).to_string(),
                 class_name: "StringValue".to_string(),
                 properties,
@@ -65,7 +59,7 @@ fn file_to_instances(
             let mut changed_ids = vec![primary_id];
 
             for child_file_item in children.values() {
-                let (child_id, mut child_changed_ids) = file_to_instances(child_file_item, partition, output, instances_by_route, Some(primary_id));
+                let (child_id, mut child_changed_ids) = file_to_instances(child_file_item, partition, tree, instances_by_route, Some(primary_id));
 
                 child_ids.push(child_id);
                 changed_ids.push(child_id);
@@ -76,7 +70,7 @@ fn file_to_instances(
                 }
             }
 
-            output.insert(primary_id, RbxInstance {
+            tree.insert_instance(primary_id, RbxInstance {
                 name: route.name(partition).to_string(),
                 class_name: "Folder".to_string(),
                 properties: HashMap::new(),
@@ -100,8 +94,8 @@ pub struct RbxSession {
     // TODO: Can this be removed in favor of instances_by_route?
     partition_instances: HashMap<String, Id>,
 
-    /// The store of all instances in the session.
-    pub instances: HashMap<Id, RbxInstance>,
+    /// Keeps track of all of the instances in the tree
+    pub tree: RbxTree,
 
     /// A map from files in the VFS to instances loaded in the session.
     instances_by_route: HashMap<FileRoute, Id>,
@@ -114,61 +108,8 @@ impl RbxSession {
             vfs_session,
             message_session,
             partition_instances: HashMap::new(),
-            instances: HashMap::new(),
+            tree: RbxTree::new(),
             instances_by_route: HashMap::new(),
-        }
-    }
-
-    pub fn delete_instance(&mut self, id: Id) -> Vec<Id> {
-        let mut ids_to_visit = vec![id];
-        let mut ids_deleted = Vec::new();
-
-        for instance in self.instances.values_mut() {
-            match instance.children.iter().position(|&v| v == id) {
-                Some(index) => {
-                    instance.children.remove(index);
-                },
-                None => {},
-            }
-        }
-
-        loop {
-            let id = match ids_to_visit.pop() {
-                Some(id) => id,
-                None => break,
-            };
-
-            match self.instances.get(&id) {
-                Some(instance) => ids_to_visit.extend_from_slice(&instance.children),
-                None => continue,
-            }
-
-            self.instances.remove(&id);
-            ids_deleted.push(id);
-        }
-
-        ids_deleted
-    }
-
-    pub fn get_instance<'a, 'b>(&'a self, id: Id, output: &'b mut HashMap<Id, &'a RbxInstance>) {
-        let mut ids_to_visit = vec![id];
-
-        loop {
-            let id = match ids_to_visit.pop() {
-                Some(id) => id,
-                None => break,
-            };
-
-            match self.instances.get(&id) {
-                Some(instance) => {
-                    output.insert(id, instance);
-
-                    for child_id in &instance.children {
-                        ids_to_visit.push(*child_id);
-                    }
-                },
-                None => continue,
-            }
         }
     }
 
@@ -191,11 +132,7 @@ impl RbxSession {
                 None => None,
             };
 
-            let (root_id, _) = file_to_instances(file_item, partition, &mut self.instances, &mut self.instances_by_route, parent_id);
-
-            if let Some(parent_id) = parent_id {
-                insert_if_missing(&mut self.instances.get_mut(&parent_id).unwrap().children, root_id);
-            }
+            let (root_id, _) = file_to_instances(file_item, partition, &mut self.tree, &mut self.instances_by_route, parent_id);
 
             self.partition_instances.insert(partition.name.clone(), root_id);
         }
@@ -218,11 +155,7 @@ impl RbxSession {
                     None => None,
                 };
 
-                let (root_id, changed_ids) = file_to_instances(file_item, partition, &mut self.instances, &mut self.instances_by_route, parent_id);
-
-                if let Some(parent_id) = parent_id {
-                    insert_if_missing(&mut self.instances.get_mut(&parent_id).unwrap().children, root_id);
-                }
+                let (_, changed_ids) = file_to_instances(file_item, partition, &mut self.tree, &mut self.instances_by_route, parent_id);
 
                 let messages = changed_ids
                     .iter()
@@ -234,7 +167,7 @@ impl RbxSession {
             FileChange::Deleted(route) => {
                 match self.instances_by_route.get(route) {
                     Some(&id) => {
-                        self.delete_instance(id);
+                        self.tree.delete_instance(id);
                         self.instances_by_route.remove(route);
                         self.message_session.push_messages(&[Message::InstanceChanged { id }]);
                     },
@@ -246,7 +179,7 @@ impl RbxSession {
 
                 match self.instances_by_route.get(from_route) {
                     Some(&id) => {
-                        self.delete_instance(id);
+                        self.tree.delete_instance(id);
                         self.instances_by_route.remove(from_route);
                         messages.push(Message::InstanceChanged { id });
                     },
@@ -264,11 +197,7 @@ impl RbxSession {
                     None => None,
                 };
 
-                let (root_id, changed_ids) = file_to_instances(file_item, partition, &mut self.instances, &mut self.instances_by_route, parent_id);
-
-                if let Some(parent_id) = parent_id {
-                    insert_if_missing(&mut self.instances.get_mut(&parent_id).unwrap().children, root_id);
-                }
+                let (_, changed_ids) = file_to_instances(file_item, partition, &mut self.tree, &mut self.instances_by_route, parent_id);
 
                 for id in changed_ids {
                     messages.push(Message::InstanceChanged { id });
