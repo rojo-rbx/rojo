@@ -19,4 +19,6 @@ pub struct RbxInstance {
 
     /// Contains all other properties of an Instance.
     pub properties: HashMap<String, RbxValue>,
+
+    // TODO: children property, Vec<Id>
 }

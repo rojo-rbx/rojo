@@ -22,9 +22,9 @@ pub struct WebConfig {
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct ServerInfoResponse<'a> {
+    server_id: &'a str,
     server_version: &'static str,
     protocol_version: u64,
-    server_id: &'a str,
     partitions: &'a HashMap<String, &'a [String]>,
 }
 
@@ -32,16 +32,24 @@ struct ServerInfoResponse<'a> {
 #[serde(rename_all = "camelCase")]
 struct ReadAllResponse<'a> {
     server_id: &'a str,
-    instances: &'a HashMap<Id, RbxInstance>,
     message_cursor: i32,
+    instances: &'a HashMap<Id, RbxInstance>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ReadResponse<'a> {
+    server_id: &'a str,
+    message_cursor: i32,
+    instances: HashMap<Id, &'a RbxInstance>,
 }
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct SubscribeResponse<'a> {
     server_id: &'a str,
-    messages: &'a [Message],
     message_cursor: i32,
+    messages: &'a [Message],
 }
 
 /// Start the Rojo web server and park our current thread.
@@ -139,12 +147,41 @@ pub fn start(config: WebConfig) {
             },
 
             (POST) (/read) => {
-                let body = match read_json::<Vec<Vec<String>>>(request) {
+                let requested_ids = match read_json::<Vec<Id>>(request) {
                     Some(body) => body,
                     None => return rouille::Response::text("Malformed JSON").with_status_code(400),
                 };
 
-                Response::json(&body)
+                let rbx_session = config.rbx_session.read().unwrap();
+
+                let message_cursor = {
+                    let messages = config.message_session.messages.read().unwrap();
+                    messages.len() as i32 - 1
+                };
+
+                let mut instances = HashMap::new();
+
+                for requested_id in &requested_ids {
+                    let requested_instance = match rbx_session.instances.get(requested_id) {
+                        Some(instance) => instance,
+                        None => continue,
+                    };
+
+                    instances.insert(*requested_id, requested_instance);
+
+                    // Oops; this needs to be recursive.
+                    for (child_id, instance) in &rbx_session.instances {
+                        if instance.parent == Some(*requested_id) {
+                            instances.insert(*child_id, instance);
+                        }
+                    }
+                }
+
+                Response::json(&ReadResponse {
+                    server_id: &server_id,
+                    message_cursor,
+                    instances,
+                })
             },
 
             _ => Response::empty_404()
