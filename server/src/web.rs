@@ -162,7 +162,7 @@ pub fn start(config: WebConfig) {
                 let mut instances = HashMap::new();
 
                 for requested_id in &requested_ids {
-                    rbx_session.retrieve_instance(*requested_id, &mut instances);
+                    rbx_session.get_instance(*requested_id, &mut instances);
                 }
 
                 Response::json(&ReadResponse {
