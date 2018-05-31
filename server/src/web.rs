@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 use std::sync::{mpsc, RwLock, Arc};
 
-use rouille;
+use rouille::{self, Response};
 
-use web_util::{read_json, json_response};
+use web_util::read_json;
 use id::Id;
 use rbx::RbxInstance;
 use rbx_session::RbxSession;
@@ -63,7 +63,7 @@ pub fn start(config: WebConfig) {
                     partitions.insert(partition.name.clone(), partition.target.as_slice());
                 }
 
-                json_response(ServerInfoResponse {
+                Response::json(&ServerInfoResponse {
                     server_version,
                     protocol_version: 2,
                     server_id: &server_id,
@@ -80,7 +80,7 @@ pub fn start(config: WebConfig) {
                     let messages = config.message_session.messages.read().unwrap();
 
                     if cursor > messages.len() as i32 {
-                        return json_response(SubscribeResponse {
+                        return Response::json(&SubscribeResponse {
                             server_id: &server_id,
                             messages: &[],
                             message_cursor: messages.len() as i32 - 1,
@@ -91,7 +91,7 @@ pub fn start(config: WebConfig) {
                         let new_messages = &messages[(cursor + 1) as usize..];
                         let new_cursor = cursor + new_messages.len() as i32;
 
-                        return json_response(SubscribeResponse {
+                        return Response::json(&SubscribeResponse {
                             server_id: &server_id,
                             messages: new_messages,
                             message_cursor: new_cursor,
@@ -105,7 +105,7 @@ pub fn start(config: WebConfig) {
 
                 match rx.recv() {
                     Ok(_) => (),
-                    Err(_) => return rouille::Response::text("error!").with_status_code(500),
+                    Err(_) => return Response::text("error!").with_status_code(500),
                 }
 
                 config.message_session.unsubscribe(sender_id);
@@ -115,11 +115,11 @@ pub fn start(config: WebConfig) {
                     let new_messages = &messages[(cursor + 1) as usize..];
                     let new_cursor = cursor + new_messages.len() as i32;
 
-                    return json_response(SubscribeResponse {
+                    Response::json(&SubscribeResponse {
                         server_id: &server_id,
                         messages: new_messages,
                         message_cursor: new_cursor,
-                    });
+                    })
                 }
             },
 
@@ -131,7 +131,7 @@ pub fn start(config: WebConfig) {
                     messages.len() as i32 - 1
                 };
 
-                json_response(ReadAllResponse {
+                Response::json(&ReadAllResponse {
                     server_id: &server_id,
                     message_cursor,
                     instances: &rbx_session.instances,
@@ -144,10 +144,10 @@ pub fn start(config: WebConfig) {
                     None => return rouille::Response::text("Malformed JSON").with_status_code(400),
                 };
 
-                rouille::Response::json(&body)
+                Response::json(&body)
             },
 
-            _ => rouille::Response::empty_404()
+            _ => Response::empty_404()
         )
     });
 }

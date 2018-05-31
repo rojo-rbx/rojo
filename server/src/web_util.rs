@@ -6,11 +6,6 @@ use serde_json;
 
 static MAX_BODY_SIZE: usize = 100 * 1024 * 1024; // 100 MiB
 
-pub fn json_response<T: serde::Serialize>(value: T) -> rouille::Response {
-    let data = serde_json::to_string(&value).unwrap();
-    rouille::Response::from_data("application/json", data)
-}
-
 /// Pulls text that may be JSON out of a Rouille Request object.
 ///
 /// Doesn't do any actual parsing -- all this method does is verify the content
