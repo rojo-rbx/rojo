@@ -25,6 +25,7 @@ struct ServerInfoResponse<'a> {
     server_version: &'static str,
     protocol_version: u64,
     server_id: &'a str,
+    partitions: &'a HashMap<String, &'a [String]>,
 }
 
 #[derive(Debug, Serialize)]
@@ -32,7 +33,6 @@ struct ServerInfoResponse<'a> {
 struct ReadAllResponse<'a> {
     server_id: &'a str,
     instances: &'a HashMap<Id, RbxInstance>,
-    partitions: &'a HashMap<String, &'a [String]>,
     message_cursor: i32,
 }
 
@@ -57,10 +57,17 @@ pub fn start(config: WebConfig) {
             (GET) (/) => {
                 // Get a summary of information about the server.
 
+                let mut partitions = HashMap::new();
+
+                for partition in config.partitions.values() {
+                    partitions.insert(partition.name.clone(), partition.target.as_slice());
+                }
+
                 json_response(ServerInfoResponse {
                     server_version,
                     protocol_version: 2,
                     server_id: &server_id,
+                    partitions: &partitions,
                 })
             },
 
@@ -124,16 +131,9 @@ pub fn start(config: WebConfig) {
                     messages.len() as i32 - 1
                 };
 
-                let mut partitions = HashMap::new();
-
-                for partition in config.partitions.values() {
-                    partitions.insert(partition.name.clone(), partition.target.as_slice());
-                }
-
                 json_response(ReadAllResponse {
                     server_id: &server_id,
                     message_cursor,
-                    partitions: &partitions,
                     instances: &rbx_session.instances,
                 })
             },
