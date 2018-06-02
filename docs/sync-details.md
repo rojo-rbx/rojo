@@ -30,11 +30,13 @@ Rojo supports a JSON model format for representing simple models. It's designed 
 
 Rojo JSON models are stored in `.model.json` files.
 
+Starting in Rojo version **0.4.10**, model files named `init.model.json` that are located in folders will replace that folder, much like Rojo's `init.lua` support. This can be useful to version instances like `Tool` that tend to contain several instances as well as one or more scripts.
+
 !!! info
     In the future, Rojo will support `.rbxmx` models. See [issue #7](https://github.com/LPGhatguy/rojo/issues/7) for more details and updates on this feature.
 
 !!! warning
-    Prior to version 0.4.9, the `Properties` and `Children` properties are required on all instances in JSON models!
+    Prior to Rojo version **0.4.9**, the `Properties` and `Children` properties are required on all instances in JSON models!
 
 JSON model files are fairly strict; any syntax errors will cause the model to fail to sync! They look like this:
 
