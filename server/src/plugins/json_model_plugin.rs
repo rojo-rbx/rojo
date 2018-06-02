@@ -78,7 +78,21 @@ impl Plugin for JsonModelPlugin {
         }
     }
 
-    fn handle_file_change(&self, _route: &Route) -> FileChangeResult {
-        FileChangeResult::Pass
+    fn handle_file_change(&self, route: &Route) -> FileChangeResult {
+        let leaf = match route.last() {
+            Some(v) => v,
+            None => return FileChangeResult::Pass,
+        };
+
+        let is_init = leaf == JSON_MODEL_INIT;
+
+        if is_init {
+            let mut changed = route.clone();
+            changed.pop();
+
+            FileChangeResult::MarkChanged(Some(vec![changed]))
+        } else {
+            FileChangeResult::Pass
+        }
     }
 }
