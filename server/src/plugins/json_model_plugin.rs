@@ -10,6 +10,8 @@ lazy_static! {
     static ref JSON_MODEL_PATTERN: Regex = Regex::new(r"^(.*?)\.model\.json$").unwrap();
 }
 
+static JSON_MODEL_INIT: &'static str = "init.model.json";
+
 pub struct JsonModelPlugin;
 
 impl JsonModelPlugin {
@@ -19,7 +21,7 @@ impl JsonModelPlugin {
 }
 
 impl Plugin for JsonModelPlugin {
-    fn transform_file(&self, _plugins: &PluginChain, vfs_item: &VfsItem) -> TransformFileResult {
+    fn transform_file(&self, plugins: &PluginChain, vfs_item: &VfsItem) -> TransformFileResult {
         match vfs_item {
             &VfsItem::File { ref contents, .. } => {
                 let rbx_name = match JSON_MODEL_PATTERN.captures(vfs_item.name()) {
@@ -41,7 +43,38 @@ impl Plugin for JsonModelPlugin {
 
                 TransformFileResult::Value(Some(rbx_item))
             },
-            &VfsItem::Dir { .. } => TransformFileResult::Pass,
+            &VfsItem::Dir { ref children, .. } => {
+                let init_item = match children.get(JSON_MODEL_INIT) {
+                    Some(v) => v,
+                    None => return TransformFileResult::Pass,
+                };
+
+                let mut rbx_item = match self.transform_file(plugins, init_item) {
+                    TransformFileResult::Value(Some(item)) => item,
+                    TransformFileResult::Value(None) | TransformFileResult::Pass => {
+                        eprintln!("Inconsistency detected in JsonModelPlugin!");
+                        return TransformFileResult::Pass;
+                    },
+                };
+
+                rbx_item.name.clear();
+                rbx_item.name.push_str(vfs_item.name());
+
+                for (child_name, child_item) in children {
+                    if child_name == init_item.name() {
+                        continue;
+                    }
+
+                    match plugins.transform_file(child_item) {
+                        Some(child_rbx_item) => {
+                            rbx_item.children.push(child_rbx_item);
+                        },
+                        _ => {},
+                    }
+                }
+
+                TransformFileResult::Value(Some(rbx_item))
+            },
         }
     }
 
