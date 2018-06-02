@@ -1,8 +1,9 @@
 # Rojo Change Log
 
 ## Current master
-* Fixed obscure error when syncing into an invalid service
-* Fixed multiple sync processes occurring when a server ID mismatch is detected
+* Added support for `init.model.json` files, which enable versioning `Tool` instances (among other things) with Rojo. ([#66](https://github.com/LPGhatguy/rojo/issues/66))
+* Fixed obscure error when syncing into an invalid service.
+* Fixed multiple sync processes occurring when a server ID mismatch is detected.
 
 ## 0.4.9 (May 26, 2018)
 * Fixed warning when renaming or removing files that would sometimes corrupt the instance cache ([#72](https://github.com/LPGhatguy/rojo/pull/72))
