@@ -8,6 +8,9 @@ local Api = require(script.Parent.Api)
 local Reconciler = require(script.Parent.Reconciler)
 local Version = require(script.Parent.Version)
 
+local MESSAGE_SERVER_CHANGED = "Rojo: The server has changed since the last request, reloading plugin..."
+local MESSAGE_PLUGIN_CHANGED = "Rojo: Another instance of Rojo came online, unloading..."
+
 local function collectMatch(source, pattern)
 	local result = {}
 
@@ -80,6 +83,7 @@ function Plugin.new()
 		-- object.
 		screenGui.AncestryChanged:Connect(function(_, parent)
 			if parent == nil then
+				warn(MESSAGE_PLUGIN_CHANGED)
 				self:restart()
 			end
 		end)
@@ -93,8 +97,6 @@ end
 	restarted.
 ]]
 function Plugin:restart()
-	warn("Rojo: The server has changed since the last request, reloading plugin...")
-
 	self:stopPolling()
 
 	self._reconciler:destruct()
@@ -105,22 +107,25 @@ function Plugin:restart()
 	self._syncInProgress = false
 end
 
-function Plugin:api()
-	if not self._api then
-		self._api = Api.connect(self._http)
-			:catch(function(err)
-				self._api = nil
+function Plugin:getApi()
+	if self._api == nil then
+		return Api.connect(self._http)
+			:andThen(function(api)
+				self._api = api
+
+				return api
+			end, function(err)
 				return Promise.reject(err)
 			end)
 	end
 
-	return self._api
+	return Promise.resolve(self._api)
 end
 
 function Plugin:connect()
 	print("Rojo: Testing connection...")
 
-	return self:api()
+	return self:getApi()
 		:andThen(function(api)
 			local ok, info = api:getInfo():await()
 
@@ -134,6 +139,7 @@ function Plugin:connect()
 		end)
 		:catch(function(err)
 			if err == Api.Error.ServerIdMismatch then
+				warn(MESSAGE_SERVER_CHANGED)
 				self:restart()
 				return self:connect()
 			else
@@ -204,23 +210,23 @@ function Plugin:startPolling()
 		return
 	end
 
-	print("Rojo: Polling server for changes...")
+	print("Rojo: Starting to poll server for changes...")
 
 	self._polling = true
 	self._label.Enabled = true
 
-	return self:api()
+	return self:getApi()
 		:andThen(function(api)
-			local syncOk, result = self:syncIn():await()
-
-			if not syncOk then
-				return Promise.reject(result)
-			end
-
 			local infoOk, info = api:getInfo():await()
 
 			if not infoOk then
 				return Promise.reject(info)
+			end
+
+			local syncOk, result = self:syncIn():await()
+
+			if not syncOk then
+				return Promise.reject(result)
 			end
 
 			while self._polling do
@@ -248,12 +254,12 @@ function Plugin:startPolling()
 			end
 		end)
 		:catch(function(err)
-			self:stopPolling()
-
 			if err == Api.Error.ServerIdMismatch then
+				warn(MESSAGE_SERVER_CHANGED)
 				self:restart()
 				return self:startPolling()
 			else
+				self:stopPolling()
 				return Promise.reject(err)
 			end
 		end)
@@ -269,7 +275,7 @@ function Plugin:syncIn()
 	self._syncInProgress = true
 	print("Rojo: Syncing from server...")
 
-	return self:api()
+	return self:getApi()
 		:andThen(function(api)
 			local ok, info = api:getInfo():await()
 
@@ -292,6 +298,7 @@ function Plugin:syncIn()
 			self._syncInProgress = false
 
 			if err == Api.Error.ServerIdMismatch then
+				warn(MESSAGE_SERVER_CHANGED)
 				self:restart()
 				return self:syncIn()
 			else

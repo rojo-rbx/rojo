@@ -35,6 +35,9 @@ function Api.connect(http)
 	setmetatable(context, Api)
 
 	return context:_start()
+		:andThen(function()
+			return context
+		end)
 end
 
 function Api:_start()
@@ -60,8 +63,6 @@ function Api:_start()
 
 			self.serverId = response.serverId
 			self.currentTime = response.currentTime
-
-			return self
 		end)
 end
 
