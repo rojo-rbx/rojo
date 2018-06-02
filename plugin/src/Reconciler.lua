@@ -1,6 +1,9 @@
 local RouteMap = require(script.Parent.RouteMap)
 
 local function classEqual(a, b)
+	assert(typeof(a) == "string")
+	assert(typeof(b) == "string")
+
 	if a == "*" or b == "*" then
 		return true
 	end
@@ -9,6 +12,9 @@ local function classEqual(a, b)
 end
 
 local function applyProperties(target, properties)
+	assert(typeof(target) == "Instance")
+	assert(typeof(properties) == "table")
+
 	for key, property in pairs(properties) do
 		-- TODO: Transform property value based on property.Type
 		-- Right now, we assume that 'value' is primitive!
@@ -22,18 +28,19 @@ end
 	* Changing parent threw an error
 ]]
 local function reparent(rbx, parent)
-	if rbx then
-		if rbx.Parent == parent then
-			return
-		end
+	assert(typeof(rbx) == "Instance")
+	assert(typeof(parent) == "Instance")
 
-		-- It's possible that 'rbx' is a service or some other object that we
-		-- can't change the parent of. That's the only reason why Parent would
-		-- fail except for rbx being previously destroyed!
-		pcall(function()
-			rbx.Parent = parent
-		end)
+	if rbx.Parent == parent then
+		return
 	end
+
+	-- Setting `Parent` can fail if:
+	-- * The object has been destroyed
+	-- * The object is a service and cannot be reparented
+	pcall(function()
+		rbx.Parent = parent
+	end)
 end
 
 --[[
@@ -98,7 +105,11 @@ function Reconciler:_reconcileChildren(rbx, item)
 			break
 		end
 
-		reparent(self:reconcile(rbxChild, itemChild), rbx)
+		local newRbxChild = self:reconcile(rbxChild, itemChild)
+
+		if newRbxChild ~= nil then
+			newRbxChild.Parent = rbx
+		end
 	end
 
 	-- Reconcile any children that were deleted
@@ -109,7 +120,11 @@ function Reconciler:_reconcileChildren(rbx, item)
 			break
 		end
 
-		reparent(self:reconcile(rbxChild, itemChild), rbx)
+		local newRbxChild = self:reconcile(rbxChild, itemChild)
+
+		if newRbxChild ~= nil then
+			newRbxChild.Parent = rbx
+		end
 	end
 end
 
