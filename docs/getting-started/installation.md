@@ -21,3 +21,6 @@ To install the plugin, either:
   * This gives you less control over what version you install -- you will always have the latest version.
 * Or, download the latest release from [the GitHub releases section](https://github.com/LPGhatguy/rojo/releases) and install it into your Roblox plugins folder
   * You can open this folder by clicking the "Plugins Folder" button from the Plugins toolbar in Roblox Studio
+
+## Visual Studio Code Extension
+If you use Visual Studio Code on Windows, you can install [Evaera's unofficial Rojo extension](https://marketplace.visualstudio.com/items?itemName=evaera.vscode-rojo), which will install both halves of Rojo for you. It even has a nifty UI to add partitions and start/stop the Rojo server!
