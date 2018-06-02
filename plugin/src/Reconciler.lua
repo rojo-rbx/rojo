@@ -192,12 +192,17 @@ function Reconciler:reconcileRoute(route, item, itemRoute)
 
 		-- We should get services instead of making folders here.
 		if rbx == game and not child then
-			local _
-			_, child = pcall(game.GetService, game, piece)
+			local success
+			success, child = pcall(game.GetService, game, piece)
+
+			-- That isn't a valid service!
+			if not success then
+				child = nil
+			end
 		end
 
 		-- We don't want to create a folder if we're reaching our target item!
-		if not child and i ~= #route then
+		if child == nil and i ~= #route then
 			child = Instance.new("Folder")
 			child.Parent = rbx
 			child.Name = piece
@@ -208,7 +213,7 @@ function Reconciler:reconcileRoute(route, item, itemRoute)
 	end
 
 	-- Let's check the route map!
-	if not rbx then
+	if rbx == nil then
 		rbx = self._routeMap:get(itemRoute)
 	end
 
