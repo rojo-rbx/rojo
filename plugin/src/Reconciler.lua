@@ -94,7 +94,7 @@ function Reconciler:_reconcileChildren(rbx, item)
 	while true do
 		local itemChild, rbxChild = findNextChildPair(item.Children, rbxChildren, visited)
 
-		if not itemChild then
+		if itemChild == nil then
 			break
 		end
 
@@ -105,7 +105,7 @@ function Reconciler:_reconcileChildren(rbx, item)
 	while true do
 		local rbxChild, itemChild = findNextChildPair(rbxChildren, item.Children, visited)
 
-		if not rbxChild then
+		if rbxChild == nil then
 			break
 		end
 
@@ -133,7 +133,7 @@ function Reconciler:_reify(item)
 		reparent(self:_reify(child), rbx)
 	end
 
-	if item.Route then
+	if item.Route ~= nil then
 		self._routeMap:insert(item.Route, rbx)
 	end
 
@@ -153,8 +153,8 @@ end
 ]]
 function Reconciler:reconcile(rbx, item)
 	-- Item was deleted
-	if not item then
-		if rbx then
+	if item == nil then
+		if rbx ~= nil then
 			self._routeMap:removeByRbx(rbx)
 			rbx:Destroy()
 		end
@@ -163,7 +163,7 @@ function Reconciler:reconcile(rbx, item)
 	end
 
 	-- Item was created!
-	if not rbx then
+	if rbx == nil then
 		return self:_reify(item)
 	end
 
@@ -191,7 +191,7 @@ function Reconciler:reconcileRoute(route, item, itemRoute)
 		local child = rbx:FindFirstChild(piece)
 
 		-- We should get services instead of making folders here.
-		if rbx == game and not child then
+		if rbx == game and child == nil then
 			local success
 			success, child = pcall(game.GetService, game, piece)
 
