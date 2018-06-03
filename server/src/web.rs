@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::{mpsc, RwLock, Arc};
 
-use rouille::{self, Response};
+use rouille::{self, Request, Response};
 
 use web_util::read_json;
 use id::Id;
@@ -52,29 +52,36 @@ struct SubscribeResponse<'a> {
     messages: &'a [Message],
 }
 
-/// Start the Rojo web server and park our current thread.
-#[allow(unreachable_code)]
-pub fn start(config: WebConfig) {
-    let address = format!("localhost:{}", config.port);
-    let server_version = env!("CARGO_PKG_VERSION");
+struct Server {
+    config: WebConfig,
+    server_version: &'static str,
+    server_id: String,
+}
 
-    let server_id = config.server_id.to_string();
+impl Server {
+    fn new(config: WebConfig) -> Server {
+        Server {
+            server_version: env!("CARGO_PKG_VERSION"),
+            server_id: config.server_id.to_string(),
+            config,
+        }
+    }
 
-    rouille::start_server(address, move |request| {
+    fn handle_request(&self, request: &Request) -> Response {
         router!(request,
             (GET) (/) => {
                 // Get a summary of information about the server.
 
                 let mut partitions = HashMap::new();
 
-                for partition in config.partitions.values() {
+                for partition in self.config.partitions.values() {
                     partitions.insert(partition.name.clone(), partition.target.as_slice());
                 }
 
                 Response::json(&ServerInfoResponse {
-                    server_version,
+                    server_version: self.server_version,
                     protocol_version: 2,
-                    server_id: &server_id,
+                    server_id: &self.server_id,
                     partitions: &partitions,
                 })
             },
@@ -85,11 +92,11 @@ pub fn start(config: WebConfig) {
 
                 // Did the client miss any messages since the last subscribe?
                 {
-                    let messages = config.message_session.messages.read().unwrap();
+                    let messages = self.config.message_session.messages.read().unwrap();
 
                     if cursor > messages.len() as i32 {
                         return Response::json(&SubscribeResponse {
-                            server_id: &server_id,
+                            server_id: &self.server_id,
                             messages: &[],
                             message_cursor: messages.len() as i32 - 1,
                         });
@@ -100,7 +107,7 @@ pub fn start(config: WebConfig) {
                         let new_cursor = cursor + new_messages.len() as i32;
 
                         return Response::json(&SubscribeResponse {
-                            server_id: &server_id,
+                            server_id: &self.server_id,
                             messages: new_messages,
                             message_cursor: new_cursor,
                         });
@@ -109,22 +116,22 @@ pub fn start(config: WebConfig) {
 
                 let (tx, rx) = mpsc::channel();
 
-                let sender_id = config.message_session.subscribe(tx);
+                let sender_id = self.config.message_session.subscribe(tx);
 
                 match rx.recv() {
                     Ok(_) => (),
                     Err(_) => return Response::text("error!").with_status_code(500),
                 }
 
-                config.message_session.unsubscribe(sender_id);
+                self.config.message_session.unsubscribe(sender_id);
 
                 {
-                    let messages = config.message_session.messages.read().unwrap();
+                    let messages = self.config.message_session.messages.read().unwrap();
                     let new_messages = &messages[(cursor + 1) as usize..];
                     let new_cursor = cursor + new_messages.len() as i32;
 
                     Response::json(&SubscribeResponse {
-                        server_id: &server_id,
+                        server_id: &self.server_id,
                         messages: new_messages,
                         message_cursor: new_cursor,
                     })
@@ -132,15 +139,15 @@ pub fn start(config: WebConfig) {
             },
 
             (GET) (/read_all) => {
-                let rbx_session = config.rbx_session.read().unwrap();
+                let rbx_session = self.config.rbx_session.read().unwrap();
 
                 let message_cursor = {
-                    let messages = config.message_session.messages.read().unwrap();
+                    let messages = self.config.message_session.messages.read().unwrap();
                     messages.len() as i32 - 1
                 };
 
                 Response::json(&ReadAllResponse {
-                    server_id: &server_id,
+                    server_id: &self.server_id,
                     message_cursor,
                     instances: rbx_session.tree.get_all_instances(),
                 })
@@ -152,10 +159,10 @@ pub fn start(config: WebConfig) {
                     None => return rouille::Response::text("Malformed JSON").with_status_code(400),
                 };
 
-                let rbx_session = config.rbx_session.read().unwrap();
+                let rbx_session = self.config.rbx_session.read().unwrap();
 
                 let message_cursor = {
-                    let messages = config.message_session.messages.read().unwrap();
+                    let messages = self.config.message_session.messages.read().unwrap();
                     messages.len() as i32 - 1
                 };
 
@@ -166,7 +173,7 @@ pub fn start(config: WebConfig) {
                 }
 
                 Response::json(&ReadResponse {
-                    server_id: &server_id,
+                    server_id: &self.server_id,
                     message_cursor,
                     instances,
                 })
@@ -174,5 +181,14 @@ pub fn start(config: WebConfig) {
 
             _ => Response::empty_404()
         )
-    });
+    }
+}
+
+/// Start the Rojo web server and park our current thread.
+#[allow(unreachable_code)]
+pub fn start(config: WebConfig) {
+    let address = format!("localhost:{}", config.port);
+    let server = Server::new(config);
+
+    rouille::start_server(address, move |request| server.handle_request(request));
 }
