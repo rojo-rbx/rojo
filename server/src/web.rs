@@ -3,20 +3,33 @@ use std::sync::{mpsc, RwLock, Arc};
 
 use rouille::{self, Request, Response};
 
-use web_util::read_json;
 use id::Id;
+use message_session::{MessageSession, Message};
+use project::Project;
 use rbx::RbxInstance;
 use rbx_session::RbxSession;
-use message_session::{MessageSession, Message};
-use partition::Partition;
+use session::Session;
+use web_util::read_json;
 
 /// The set of configuration the web server needs to start.
 pub struct WebConfig {
     pub port: u64,
+    pub project: Project,
     pub server_id: u64,
     pub rbx_session: Arc<RwLock<RbxSession>>,
     pub message_session: MessageSession,
-    pub partitions: HashMap<String, Partition>,
+}
+
+impl WebConfig {
+    pub fn from_session(server_id: u64, port: u64, session: &Session) -> WebConfig {
+        WebConfig {
+            port,
+            server_id,
+            project: session.project.clone(),
+            rbx_session: session.get_rbx_session(),
+            message_session: session.get_message_session(),
+        }
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -78,7 +91,7 @@ impl Server {
 
                 let mut partitions = HashMap::new();
 
-                for partition in self.config.partitions.values() {
+                for partition in self.config.project.partitions.values() {
                     partitions.insert(partition.name.clone(), partition.target.as_slice());
                 }
 

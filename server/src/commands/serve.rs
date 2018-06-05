@@ -5,10 +5,10 @@ use std::fs;
 use rand;
 
 use project::Project;
-use web;
+use web::{self, WebConfig};
 use session::Session;
 
-pub fn serve(project_path: &PathBuf, port: Option<u64>) {
+pub fn serve(project_path: &PathBuf, override_port: Option<u64>) {
     let server_id = rand::random::<u64>();
 
     let project = match Project::load(project_path) {
@@ -22,20 +22,16 @@ pub fn serve(project_path: &PathBuf, port: Option<u64>) {
         },
     };
 
+    let port = override_port.unwrap_or(project.serve_port);
+
     println!("Using project {:#?}", project);
 
     let mut session = Session::new(project.clone());
     session.start();
 
-    let web_config = web::WebConfig {
-        port: port.unwrap_or(project.serve_port),
-        server_id,
-        rbx_session: session.get_rbx_session(),
-        message_session: session.get_message_session(),
-        partitions: project.partitions,
-    };
+    let web_config = WebConfig::from_session(server_id, port, &session);
 
-    println!("Server listening on port {}", web_config.port);
+    println!("Server listening on port {}", port);
 
     web::start(web_config);
 }

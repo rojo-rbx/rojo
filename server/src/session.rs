@@ -12,7 +12,7 @@ trait Middleware {
 }
 
 pub struct Session {
-    project: Project,
+    pub project: Project,
     vfs_session: Arc<RwLock<VfsSession>>,
     rbx_session: Arc<RwLock<RbxSession>>,
     message_session: MessageSession,
