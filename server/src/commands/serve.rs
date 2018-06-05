@@ -6,7 +6,7 @@ use rand;
 
 use project::Project;
 use web;
-use session::{Session, SessionConfig};
+use session::Session;
 
 pub fn serve(project_path: &PathBuf, port: Option<u64>) {
     let server_id = rand::random::<u64>();
@@ -22,13 +22,9 @@ pub fn serve(project_path: &PathBuf, port: Option<u64>) {
         },
     };
 
-    let config = SessionConfig {
-        partitions: project.partitions.clone(),
-    };
+    println!("Using project {:#?}", project);
 
-    println!("Using session config {:#?}", config);
-
-    let mut session = Session::new(config.clone());
+    let mut session = Session::new(project.clone());
     session.start();
 
     let web_config = web::WebConfig {

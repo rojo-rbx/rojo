@@ -4,7 +4,7 @@ use std::fs::{self, File};
 use std::mem;
 
 use file_route::FileRoute;
-use session::SessionConfig;
+use project::Project;
 
 /// Represents a file or directory that has been read from the filesystem.
 #[derive(Debug, Clone)]
@@ -37,22 +37,22 @@ pub enum FileChange {
 }
 
 pub struct VfsSession {
-    pub config: SessionConfig,
+    pub project: Project,
 
     /// The in-memory files associated with each partition.
     pub partition_files: HashMap<String, FileItem>,
 }
 
 impl VfsSession {
-    pub fn new(config: SessionConfig) -> VfsSession {
+    pub fn new(project: Project) -> VfsSession {
         VfsSession {
-            config: config,
+            project,
             partition_files: HashMap::new(),
         }
     }
 
     pub fn read_partitions(&mut self) {
-        for partition_name in self.config.partitions.keys() {
+        for partition_name in self.project.partitions.keys() {
             let route = FileRoute {
                 partition: partition_name.clone(),
                 route: Vec::new(),
@@ -175,7 +175,7 @@ impl VfsSession {
     }
 
     fn read(&self, route: &FileRoute) -> Result<FileItem, ()> {
-        let partition_path = &self.config.partitions.get(&route.partition)
+        let partition_path = &self.project.partitions.get(&route.partition)
             .ok_or(())?.path;
         let path = route.to_path_buf(partition_path);
 
@@ -192,7 +192,7 @@ impl VfsSession {
     }
 
     fn read_file(&self, route: &FileRoute) -> Result<FileItem, ()> {
-        let partition_path = &self.config.partitions.get(&route.partition)
+        let partition_path = &self.project.partitions.get(&route.partition)
             .ok_or(())?.path;
         let path = route.to_path_buf(partition_path);
 
@@ -211,7 +211,7 @@ impl VfsSession {
     }
 
     fn read_directory(&self, route: &FileRoute) -> Result<FileItem, ()> {
-        let partition_path = &self.config.partitions.get(&route.partition)
+        let partition_path = &self.project.partitions.get(&route.partition)
             .ok_or(())?.path;
         let path = route.to_path_buf(partition_path);
 

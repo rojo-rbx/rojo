@@ -1,24 +1,18 @@
-use std::collections::HashMap;
 use std::sync::{mpsc, Arc, RwLock};
 use std::thread;
 
-use partition::Partition;
-use partition_watcher::PartitionWatcher;
-use rbx_session::RbxSession;
 use message_session::MessageSession;
+use partition_watcher::PartitionWatcher;
+use project::Project;
+use rbx_session::RbxSession;
 use vfs_session::VfsSession;
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct SessionConfig {
-    pub partitions: HashMap<String, Partition>,
-}
 
 /// Stub trait for middleware
 trait Middleware {
 }
 
 pub struct Session {
-    config: SessionConfig,
+    project: Project,
     vfs_session: Arc<RwLock<VfsSession>>,
     rbx_session: Arc<RwLock<RbxSession>>,
     message_session: MessageSession,
@@ -26,17 +20,17 @@ pub struct Session {
 }
 
 impl Session {
-    pub fn new(config: SessionConfig) -> Session {
+    pub fn new(project: Project) -> Session {
         let message_session = MessageSession::new();
-        let vfs_session = Arc::new(RwLock::new(VfsSession::new(config.clone())));
-        let rbx_session = Arc::new(RwLock::new(RbxSession::new(config.clone(), vfs_session.clone(), message_session.clone())));
+        let vfs_session = Arc::new(RwLock::new(VfsSession::new(project.clone())));
+        let rbx_session = Arc::new(RwLock::new(RbxSession::new(project.clone(), vfs_session.clone(), message_session.clone())));
 
         Session {
             vfs_session,
             rbx_session,
             watchers: Vec::new(),
             message_session,
-            config,
+            project,
         }
     }
 
@@ -53,7 +47,7 @@ impl Session {
 
         let (tx, rx) = mpsc::channel();
 
-        for partition in self.config.partitions.values() {
+        for partition in self.project.partitions.values() {
             let watcher = PartitionWatcher::start_new(partition.clone(), tx.clone());
 
             self.watchers.push(watcher);

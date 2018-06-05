@@ -3,11 +3,11 @@ use std::sync::{Arc, RwLock};
 
 use file_route::FileRoute;
 use id::{Id, get_id};
-use partition::Partition;
-use rbx::{RbxInstance, RbxTree};
-use session::SessionConfig;
-use vfs_session::{VfsSession, FileItem, FileChange};
 use message_session::{Message, MessageSession};
+use partition::Partition;
+use project::Project;
+use rbx::{RbxInstance, RbxTree};
+use vfs_session::{VfsSession, FileItem, FileChange};
 
 // TODO: Rethink data structure and insertion/update behavior. Maybe break some
 // pieces off into a new object?
@@ -84,7 +84,7 @@ fn file_to_instances(
 }
 
 pub struct RbxSession {
-    config: SessionConfig,
+    project: Project,
 
     vfs_session: Arc<RwLock<VfsSession>>,
 
@@ -102,9 +102,9 @@ pub struct RbxSession {
 }
 
 impl RbxSession {
-    pub fn new(config: SessionConfig, vfs_session: Arc<RwLock<VfsSession>>, message_session: MessageSession) -> RbxSession {
+    pub fn new(project: Project, vfs_session: Arc<RwLock<VfsSession>>, message_session: MessageSession) -> RbxSession {
         RbxSession {
-            config,
+            project,
             vfs_session,
             message_session,
             partition_instances: HashMap::new(),
@@ -117,7 +117,7 @@ impl RbxSession {
         let vfs_session_arc = self.vfs_session.clone();
         let vfs_session = vfs_session_arc.read().unwrap();
 
-        for partition in self.config.partitions.values() {
+        for partition in self.project.partitions.values() {
             let route = FileRoute {
                 partition: partition.name.clone(),
                 route: Vec::new(),
@@ -145,7 +145,7 @@ impl RbxSession {
         match change {
             FileChange::Created(route) | FileChange::Updated(route) => {
                 let file_item = vfs_session.get_by_route(route).unwrap();
-                let partition = self.config.partitions.get(&route.partition).unwrap();
+                let partition = self.project.partitions.get(&route.partition).unwrap();
 
                 let parent_id = match route.parent() {
                     Some(parent_route) => match self.instances_by_route.get(&parent_route) {
@@ -187,7 +187,7 @@ impl RbxSession {
                 }
 
                 let file_item = vfs_session.get_by_route(to_route).unwrap();
-                let partition = self.config.partitions.get(&to_route.partition).unwrap();
+                let partition = self.project.partitions.get(&to_route.partition).unwrap();
 
                 let parent_id = match to_route.parent() {
                     Some(parent_route) => match self.instances_by_route.get(&parent_route) {
