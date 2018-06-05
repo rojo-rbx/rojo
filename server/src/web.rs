@@ -32,13 +32,13 @@ impl WebConfig {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct ServerInfoResponse<'a> {
-    server_id: &'a str,
-    server_version: &'static str,
-    protocol_version: u64,
-    partitions: &'a HashMap<String, &'a [String]>,
+pub struct ServerInfoResponse<'a> {
+    pub server_id: &'a str,
+    pub server_version: &'a str,
+    pub protocol_version: u64,
+    pub partitions: HashMap<String, Vec<String>>,
 }
 
 #[derive(Debug, Serialize)]
@@ -92,14 +92,14 @@ impl Server {
                 let mut partitions = HashMap::new();
 
                 for partition in self.config.project.partitions.values() {
-                    partitions.insert(partition.name.clone(), partition.target.as_slice());
+                    partitions.insert(partition.name.clone(), partition.target.clone());
                 }
 
                 Response::json(&ServerInfoResponse {
                     server_version: self.server_version,
                     protocol_version: 2,
                     server_id: &self.server_id,
-                    partitions: &partitions,
+                    partitions: partitions,
                 })
             },
 

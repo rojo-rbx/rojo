@@ -8,12 +8,12 @@ use project::Project;
 use web::{self, WebConfig};
 use session::Session;
 
-pub fn serve(project_path: &PathBuf, override_port: Option<u64>) {
+pub fn serve(project_dir: &PathBuf, override_port: Option<u64>) {
     let server_id = rand::random::<u64>();
 
-    let project = match Project::load(project_path) {
+    let project = match Project::load(project_dir) {
         Ok(v) => {
-            println!("Using project from {}", fs::canonicalize(project_path).unwrap().display());
+            println!("Using project from {}", fs::canonicalize(project_dir).unwrap().display());
             v
         },
         Err(err) => {
