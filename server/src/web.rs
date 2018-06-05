@@ -70,6 +70,10 @@ impl Server {
     fn handle_request(&self, request: &Request) -> Response {
         router!(request,
             (GET) (/) => {
+                Response::text("Rojo up and running!")
+            },
+
+            (GET) (/api/rojo) => {
                 // Get a summary of information about the server.
 
                 let mut partitions = HashMap::new();
@@ -86,7 +90,7 @@ impl Server {
                 })
             },
 
-            (GET) (/subscribe/{ cursor: i32 }) => {
+            (GET) (/api/subscribe/{ cursor: i32 }) => {
                 // Retrieve any messages past the given cursor index, and if
                 // there weren't any, subscribe to receive any new messages.
 
@@ -138,7 +142,7 @@ impl Server {
                 }
             },
 
-            (GET) (/read_all) => {
+            (GET) (/api/read_all) => {
                 let rbx_session = self.config.rbx_session.read().unwrap();
 
                 let message_cursor = {
@@ -153,7 +157,7 @@ impl Server {
                 })
             },
 
-            (POST) (/read) => {
+            (POST) (/api/read) => {
                 let requested_ids = match read_json::<Vec<Id>>(request) {
                     Some(body) => body,
                     None => return rouille::Response::text("Malformed JSON").with_status_code(400),
@@ -184,7 +188,7 @@ impl Server {
     }
 }
 
-/// Start the Rojo web server and park our current thread.
+/// Start the Rojo web server, taking over the current thread.
 #[allow(unreachable_code)]
 pub fn start(config: WebConfig) {
     let address = format!("localhost:{}", config.port);
