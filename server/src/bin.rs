@@ -1,11 +1,11 @@
 #[macro_use] extern crate clap;
 
-extern crate rojo_core;
+extern crate librojo;
 
 use std::path::{Path, PathBuf};
 use std::process;
 
-use rojo_core::pathext::canonicalish;
+use librojo::pathext::canonicalish;
 
 fn main() {
     let matches = clap_app!(rojo =>
@@ -32,7 +32,7 @@ fn main() {
             let project_path = Path::new(sub_matches.value_of("PATH").unwrap_or("."));
             let full_path = canonicalish(project_path);
 
-            rojo_core::commands::init(&full_path);
+            librojo::commands::init(&full_path);
         },
         ("serve", sub_matches) => {
             let sub_matches = sub_matches.unwrap();
@@ -55,7 +55,7 @@ fn main() {
                 }
             };
 
-            rojo_core::commands::serve(&project_path, port);
+            librojo::commands::serve(&project_path, port);
         },
         _ => {
             eprintln!("Please specify a subcommand!");

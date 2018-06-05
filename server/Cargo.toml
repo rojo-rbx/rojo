@@ -7,7 +7,7 @@ license = "MIT"
 repository = "https://github.com/LPGhatguy/rojo"
 
 [lib]
-name = "rojo_core"
+name = "librojo"
 path = "src/lib.rs"
 
 [[bin]]

@@ -52,14 +52,14 @@ struct SubscribeResponse<'a> {
     messages: &'a [Message],
 }
 
-struct Server {
+pub struct Server {
     config: WebConfig,
     server_version: &'static str,
     server_id: String,
 }
 
 impl Server {
-    fn new(config: WebConfig) -> Server {
+    pub fn new(config: WebConfig) -> Server {
         Server {
             server_version: env!("CARGO_PKG_VERSION"),
             server_id: config.server_id.to_string(),
@@ -67,7 +67,7 @@ impl Server {
         }
     }
 
-    fn handle_request(&self, request: &Request) -> Response {
+    pub fn handle_request(&self, request: &Request) -> Response {
         router!(request,
             (GET) (/) => {
                 Response::text("Rojo up and running!")
@@ -145,10 +145,7 @@ impl Server {
             (GET) (/api/read_all) => {
                 let rbx_session = self.config.rbx_session.read().unwrap();
 
-                let message_cursor = {
-                    let messages = self.config.message_session.messages.read().unwrap();
-                    messages.len() as i32 - 1
-                };
+                let message_cursor = self.config.message_session.get_message_cursor();
 
                 Response::json(&ReadAllResponse {
                     server_id: &self.server_id,
@@ -165,10 +162,7 @@ impl Server {
 
                 let rbx_session = self.config.rbx_session.read().unwrap();
 
-                let message_cursor = {
-                    let messages = self.config.message_session.messages.read().unwrap();
-                    messages.len() as i32 - 1
-                };
+                let message_cursor = self.config.message_session.get_message_cursor();
 
                 let mut instances = HashMap::new();
 

@@ -26,14 +26,14 @@ impl MessageSession {
     }
 
     pub fn push_messages(&self, new_messages: &[Message]) {
+        let message_listeners = self.message_listeners.lock().unwrap();
+
         {
             let mut messages = self.messages.write().unwrap();
             messages.extend_from_slice(new_messages);
         }
 
         {
-            let message_listeners = self.message_listeners.lock().unwrap();
-
             for listener in message_listeners.values() {
                 listener.send(()).unwrap();
             }
@@ -56,5 +56,9 @@ impl MessageSession {
             let mut message_listeners = self.message_listeners.lock().unwrap();
             message_listeners.remove(&id);
         }
+    }
+
+    pub fn get_message_cursor(&self) -> i32 {
+        self.messages.read().unwrap().len() as i32 - 1
     }
 }
