@@ -1,10 +1,10 @@
 use std::path::PathBuf;
 use std::process;
 
-use project::SourceProject;
+use project::Project;
 
 pub fn init(project_path: &PathBuf) {
-    match SourceProject::init(project_path) {
+    match Project::init(project_path) {
         Ok(_) => {
             println!("Created new empty project at {}", project_path.display());
         },
