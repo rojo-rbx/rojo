@@ -5,7 +5,7 @@ use std::fs;
 
 use rand;
 
-use project::Project;
+use project::SourceProject;
 use web;
 use session::{Session, SessionConfig};
 use partition::Partition;
@@ -13,7 +13,7 @@ use partition::Partition;
 pub fn serve(project_path: &PathBuf, port: Option<u64>) {
     let server_id = rand::random::<u64>();
 
-    let project = match Project::load(project_path) {
+    let project = match SourceProject::load(project_path) {
         Ok(v) => {
             println!("Using project from {}", fs::canonicalize(project_path).unwrap().display());
             v

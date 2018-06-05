@@ -63,7 +63,7 @@ impl fmt::Display for ProjectInitError {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ProjectPartition {
+pub struct SourceProjectPartition {
     /// A slash-separated path to a file or folder, relative to the project's
     /// directory.
     pub path: String,
@@ -79,15 +79,15 @@ pub struct ProjectPartition {
 /// configurables
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
-pub struct Project {
+pub struct SourceProject {
     pub name: String,
     pub serve_port: u64,
-    pub partitions: HashMap<String, ProjectPartition>,
+    pub partitions: HashMap<String, SourceProjectPartition>,
 }
 
-impl Project {
+impl SourceProject {
     /// Initializes a new project inside the given folder path.
-    pub fn init<T: AsRef<Path>>(location: T) -> Result<Project, ProjectInitError> {
+    pub fn init<T: AsRef<Path>>(location: T) -> Result<SourceProject, ProjectInitError> {
         let location = location.as_ref();
         let package_path = location.join(PROJECT_FILENAME);
 
@@ -109,7 +109,7 @@ impl Project {
         let serve_port = rand::thread_rng().gen_range(2000, 49151);
 
         // Configure the project with all of the values we know so far.
-        let project = Project {
+        let project = SourceProject {
             name,
             serve_port,
             partitions: HashMap::new(),
@@ -124,7 +124,7 @@ impl Project {
 
     /// Attempts to load a project from the file named PROJECT_FILENAME from the
     /// given folder.
-    pub fn load<T: AsRef<Path>>(location: T) -> Result<Project, ProjectLoadError> {
+    pub fn load<T: AsRef<Path>>(location: T) -> Result<SourceProject, ProjectLoadError> {
         let package_path = location.as_ref().join(Path::new(PROJECT_FILENAME));
 
         fs::metadata(&package_path)
@@ -157,9 +157,9 @@ impl Project {
     }
 }
 
-impl Default for Project {
-    fn default() -> Project {
-        Project {
+impl Default for SourceProject {
+    fn default() -> SourceProject {
+        SourceProject {
             name: "new-project".to_string(),
             serve_port: 8000,
             partitions: HashMap::new(),
