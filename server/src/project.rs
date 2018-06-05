@@ -24,7 +24,8 @@ impl fmt::Display for ProjectLoadError {
             &ProjectLoadError::InvalidJson(ref project_path, ref serde_err) => {
                 write!(f, "Found invalid JSON reading project: {}\nError: {}", project_path.display(), serde_err)
             },
-            &ProjectLoadError::FailedToOpen(ref project_path) | &ProjectLoadError::FailedToRead(ref project_path) => {
+            &ProjectLoadError::FailedToOpen(ref project_path) |
+            &ProjectLoadError::FailedToRead(ref project_path) => {
                 write!(f, "Found project file, but failed to read it: {}", project_path.display())
             },
             &ProjectLoadError::DidNotExist(ref project_path) => {
@@ -52,7 +53,8 @@ impl fmt::Display for ProjectInitError {
             &ProjectInitError::AlreadyExists => {
                 write!(f, "A project already exists at that location.")
             },
-            &ProjectInitError::FailedToCreate | &ProjectInitError::FailedToWrite => {
+            &ProjectInitError::FailedToCreate |
+            &ProjectInitError::FailedToWrite => {
                 write!(f, "Failed to write to the given location.")
             },
         }
@@ -90,15 +92,11 @@ impl Project {
         let package_path = location.join(PROJECT_FILENAME);
 
         // We abort if the project file already exists.
-        match fs::metadata(&package_path) {
-            Ok(_) => return Err(ProjectInitError::AlreadyExists),
-            Err(_) => {},
-        }
+        fs::metadata(&package_path)
+            .map_err(|_| ProjectInitError::AlreadyExists)?;
 
-        let mut file = match File::create(&package_path) {
-            Ok(f) => f,
-            Err(_) => return Err(ProjectInitError::FailedToCreate),
-        };
+        let mut file = File::create(&package_path)
+            .map_err(|_| ProjectInitError::FailedToCreate)?;
 
         // Try to give the project a meaningful name.
         // If we can't, we'll just fall back to a default.
@@ -118,10 +116,8 @@ impl Project {
         };
         let serialized = serde_json::to_string_pretty(&project).unwrap();
 
-        match file.write(serialized.as_bytes()) {
-            Ok(_) => {},
-            Err(_) => return Err(ProjectInitError::FailedToWrite),
-        }
+        file.write(serialized.as_bytes())
+            .map_err(|_| ProjectInitError::FailedToWrite)?;
 
         Ok(project)
     }
@@ -131,37 +127,27 @@ impl Project {
     pub fn load<T: AsRef<Path>>(location: T) -> Result<Project, ProjectLoadError> {
         let package_path = location.as_ref().join(Path::new(PROJECT_FILENAME));
 
-        match fs::metadata(&package_path) {
-            Ok(_) => {},
-            Err(_) => return Err(ProjectLoadError::DidNotExist(package_path.clone())),
-        }
+        fs::metadata(&package_path)
+            .map_err(|_| ProjectLoadError::DidNotExist(package_path.clone()))?;
 
-        let mut file = match File::open(&package_path) {
-            Ok(f) => f,
-            Err(_) => return Err(ProjectLoadError::FailedToOpen(package_path.clone())),
-        };
+        let mut file = File::open(&package_path)
+            .map_err(|_| ProjectLoadError::FailedToOpen(package_path.clone()))?;
 
         let mut contents = String::new();
 
-        match file.read_to_string(&mut contents) {
-            Ok(_) => {},
-            Err(_) => return Err(ProjectLoadError::FailedToRead(package_path.clone())),
-        }
+        file.read_to_string(&mut contents)
+            .map_err(|_| ProjectLoadError::FailedToRead(package_path.clone()))?;
 
-        match serde_json::from_str(&contents) {
-            Ok(v) => Ok(v),
-            Err(e) => return Err(ProjectLoadError::InvalidJson(package_path.clone(), e)),
-        }
+        serde_json::from_str(&contents)
+            .map_err(|e| ProjectLoadError::InvalidJson(package_path.clone(), e))
     }
 
     /// Saves the given project file to the given folder with the appropriate name.
     pub fn save<T: AsRef<Path>>(&self, location: T) -> Result<(), ProjectSaveError> {
         let package_path = location.as_ref().join(Path::new(PROJECT_FILENAME));
 
-        let mut file = match File::create(&package_path) {
-            Ok(f) => f,
-            Err(_) => return Err(ProjectSaveError::FailedToCreate),
-        };
+        let mut file = File::create(&package_path)
+            .map_err(|_| ProjectSaveError::FailedToCreate)?;
 
         let serialized = serde_json::to_string_pretty(self).unwrap();
 
