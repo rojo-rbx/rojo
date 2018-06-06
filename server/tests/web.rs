@@ -4,29 +4,17 @@ extern crate serde;
 
 extern crate librojo;
 
+mod test_util;
+use test_util::*;
+
 use std::collections::HashMap;
 use std::path::PathBuf;
-
-use rouille::Request;
 
 use librojo::{
     session::Session,
     project::Project,
     web::{Server, WebConfig, ServerInfoResponse},
 };
-
-fn get(server: &Server, url: &str) -> String {
-    let info_request = Request::fake_http("GET", url, vec![], vec![]);
-    let response = server.handle_request(&info_request);
-
-    assert_eq!(response.status_code, 200);
-
-    let (mut reader, _) = response.data.into_reader_and_size();
-    let mut body = String::new();
-    reader.read_to_string(&mut body).unwrap();
-
-    body
-}
 
 #[test]
 fn empty() {
@@ -44,7 +32,7 @@ fn empty() {
     let server = Server::new(web_config);
 
     {
-        let body = get(&server, "/api/rojo");
+        let body = server.get_string("/api/rojo");
         let response = serde_json::from_str::<ServerInfoResponse>(&body).unwrap();
 
         assert_eq!(response.server_id, "0");
