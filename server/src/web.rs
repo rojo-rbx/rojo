@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::sync::{mpsc, RwLock, Arc};
 
@@ -41,28 +42,28 @@ pub struct ServerInfoResponse<'a> {
     pub partitions: HashMap<String, Vec<String>>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct ReadAllResponse<'a> {
-    server_id: &'a str,
-    message_cursor: i32,
-    instances: &'a HashMap<Id, RbxInstance>,
+pub struct ReadAllResponse<'a> {
+    pub server_id: &'a str,
+    pub message_cursor: i32,
+    pub instances: Cow<'a, HashMap<Id, RbxInstance>>,
 }
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
-struct ReadResponse<'a> {
-    server_id: &'a str,
-    message_cursor: i32,
-    instances: HashMap<Id, &'a RbxInstance>,
+pub struct ReadResponse<'a> {
+    pub server_id: &'a str,
+    pub message_cursor: i32,
+    pub instances: HashMap<Id, &'a RbxInstance>,
 }
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
-struct SubscribeResponse<'a> {
-    server_id: &'a str,
-    message_cursor: i32,
-    messages: &'a [Message],
+pub struct SubscribeResponse<'a> {
+    pub server_id: &'a str,
+    pub message_cursor: i32,
+    pub messages: Cow<'a, [Message]>,
 }
 
 pub struct Server {
@@ -114,7 +115,7 @@ impl Server {
                     if cursor > messages.len() as i32 {
                         return Response::json(&SubscribeResponse {
                             server_id: &self.server_id,
-                            messages: &[],
+                            messages: Cow::Borrowed(&[]),
                             message_cursor: messages.len() as i32 - 1,
                         });
                     }
@@ -125,7 +126,7 @@ impl Server {
 
                         return Response::json(&SubscribeResponse {
                             server_id: &self.server_id,
-                            messages: new_messages,
+                            messages: Cow::Borrowed(new_messages),
                             message_cursor: new_cursor,
                         });
                     }
@@ -149,7 +150,7 @@ impl Server {
 
                     Response::json(&SubscribeResponse {
                         server_id: &self.server_id,
-                        messages: new_messages,
+                        messages: Cow::Borrowed(new_messages),
                         message_cursor: new_cursor,
                     })
                 }
@@ -163,7 +164,7 @@ impl Server {
                 Response::json(&ReadAllResponse {
                     server_id: &self.server_id,
                     message_cursor,
-                    instances: rbx_session.tree.get_all_instances(),
+                    instances: Cow::Borrowed(rbx_session.tree.get_all_instances()),
                 })
             },
 

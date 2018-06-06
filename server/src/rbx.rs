@@ -5,7 +5,7 @@ use id::Id;
 // TODO: Switch to enum to represent more value types
 pub type RbxValue = String;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RbxInstance {
     /// Maps to the `Name` property on Instance.
