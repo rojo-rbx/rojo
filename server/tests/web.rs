@@ -13,7 +13,7 @@ use std::path::PathBuf;
 use librojo::{
     session::Session,
     project::Project,
-    web::{Server, WebConfig, ServerInfoResponse, ReadAllResponse},
+    web::{Server, WebConfig, ServerInfoResponse, ReadResponse, ReadAllResponse},
 };
 
 #[test]
@@ -47,5 +47,14 @@ fn empty() {
         assert_eq!(response.server_id, "0");
         assert_eq!(response.message_cursor, -1);
         assert_eq!(response.instances.as_ref(), &HashMap::new());
+    }
+
+    {
+        let body = server.get_string("/api/read/0");
+        let response = serde_json::from_str::<ReadResponse>(&body).unwrap();
+
+        assert_eq!(response.server_id, "0");
+        assert_eq!(response.message_cursor, -1);
+        assert_eq!(response.instances, HashMap::new());
     }
 }

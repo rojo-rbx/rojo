@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::collections::HashMap;
 
 use id::Id;
@@ -21,6 +22,12 @@ pub struct RbxInstance {
     pub children: Vec<Id>,
 
     pub parent: Option<Id>,
+}
+
+impl<'a> From<&'a RbxInstance> for Cow<'a, RbxInstance> {
+    fn from(instance: &'a RbxInstance) -> Cow<'a, RbxInstance> {
+        Cow::Borrowed(instance)
+    }
 }
 
 pub struct RbxTree {
@@ -81,7 +88,9 @@ impl RbxTree {
         ids_deleted
     }
 
-    pub fn get_instance<'a, 'b>(&'a self, id: Id, output: &'b mut HashMap<Id, &'a RbxInstance>) {
+    pub fn get_instance<'a, 'b, T>(&'a self, id: Id, output: &'b mut HashMap<Id, T>)
+        where T: From<&'a RbxInstance>
+    {
         let mut ids_to_visit = vec![id];
 
         loop {
@@ -92,7 +101,7 @@ impl RbxTree {
 
             match self.instances.get(&id) {
                 Some(instance) => {
-                    output.insert(id, instance);
+                    output.insert(id, instance.into());
 
                     for child_id in &instance.children {
                         ids_to_visit.push(*child_id);

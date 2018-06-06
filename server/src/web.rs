@@ -49,12 +49,12 @@ pub struct ReadAllResponse<'a> {
     pub instances: Cow<'a, HashMap<Id, RbxInstance>>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ReadResponse<'a> {
     pub server_id: &'a str,
     pub message_cursor: i32,
-    pub instances: HashMap<Id, &'a RbxInstance>,
+    pub instances: HashMap<Id, Cow<'a, RbxInstance>>,
 }
 
 #[derive(Debug, Serialize)]
