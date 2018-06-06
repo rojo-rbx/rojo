@@ -10,7 +10,6 @@ use project::Project;
 use rbx::RbxInstance;
 use rbx_session::RbxSession;
 use session::Session;
-use web_util::read_json;
 
 /// The set of configuration the web server needs to start.
 pub struct WebConfig {
@@ -168,10 +167,15 @@ impl Server {
                 })
             },
 
-            (POST) (/api/read) => {
-                let requested_ids = match read_json::<Vec<Id>>(request) {
-                    Some(body) => body,
-                    None => return rouille::Response::text("Malformed JSON").with_status_code(400),
+            (GET) (/api/read/{ id_list: String }) => {
+                let requested_ids = id_list
+                    .split(",")
+                    .map(str::parse::<Id>)
+                    .collect::<Result<Vec<Id>, _>>();
+
+                let requested_ids = match requested_ids {
+                    Ok(v) => v,
+                    Err(_) => return rouille::Response::text("Malformed ID list").with_status_code(400),
                 };
 
                 let rbx_session = self.config.rbx_session.read().unwrap();
