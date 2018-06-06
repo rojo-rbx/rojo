@@ -24,6 +24,8 @@ pub struct RbxInstance {
     pub parent: Option<Id>,
 }
 
+// This seems like a really bad idea?
+// Why isn't there a blanket impl for this for all T?
 impl<'a> From<&'a RbxInstance> for Cow<'a, RbxInstance> {
     fn from(instance: &'a RbxInstance) -> Cow<'a, RbxInstance> {
         Cow::Borrowed(instance)
