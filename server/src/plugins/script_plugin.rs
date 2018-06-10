@@ -79,6 +79,7 @@ impl Plugin for ScriptPlugin {
 
                 rbx_item.name.clear();
                 rbx_item.name.push_str(vfs_item.name());
+                rbx_item.route = Some(vfs_item.route().to_vec());
 
                 for (child_name, child_item) in children {
                     if child_name == init_item.name() {
