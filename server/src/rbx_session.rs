@@ -20,9 +20,6 @@ fn file_to_instances(
 ) -> (Id, Vec<Id>) {
     match file_item {
         FileItem::File { contents, route } => {
-            let mut properties = HashMap::new();
-            properties.insert("Value".to_string(), contents.clone());
-
             let primary_id = match instances_by_route.get(&file_item.get_route()) {
                 Some(&id) => id,
                 None => {
@@ -33,9 +30,33 @@ fn file_to_instances(
                 },
             };
 
+            // This is placeholder logic; this whole function is!
+            let (class_name, property_key, name) = {
+                // TODO: Root instances have an empty route
+                let file_name = route.route.last().unwrap();
+
+                fn strip_suffix<'a>(source: &'a str, suffix: &'static str) -> &'a str {
+                    &source[..source.len() - suffix.len()]
+                }
+
+                if file_name.ends_with(".client.lua") {
+                    ("LocalScript", "Source", strip_suffix(&file_name, ".client.lua"))
+                } else if file_name.ends_with(".server.lua") {
+                    ("Script", "Source", strip_suffix(&file_name, ".server.lua"))
+                } else if file_name.ends_with(".lua") {
+                    ("ModuleScript", "Source", strip_suffix(&file_name, ".lua"))
+                } else {
+                    // TODO: Error/warn/skip instead of falling back
+                    ("StringValue", "Value", file_name.as_str())
+                }
+            };
+
+            let mut properties = HashMap::new();
+            properties.insert(property_key.to_string(), contents.clone());
+
             tree.insert_instance(primary_id, RbxInstance {
-                name: route.name(partition).to_string(),
-                class_name: "StringValue".to_string(),
+                name: name.to_string(),
+                class_name: class_name.to_string(),
                 properties,
                 children: Vec::new(),
                 parent: parent_id,
@@ -92,7 +113,7 @@ pub struct RbxSession {
 
     /// The RbxInstance that represents each partition.
     // TODO: Can this be removed in favor of instances_by_route?
-    partition_instances: HashMap<String, Id>,
+    pub partition_instances: HashMap<String, Id>,
 
     /// Keeps track of all of the instances in the tree
     pub tree: RbxTree,

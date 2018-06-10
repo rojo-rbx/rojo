@@ -1,0 +1,10 @@
+{
+  "name": "one-partition",
+  "servePort": 23456,
+  "partitions": {
+    "lib": {
+      "path": "lib",
+      "target": "ReplicatedStorage.OnePartition"
+    }
+  }
+}

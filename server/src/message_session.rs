@@ -3,7 +3,7 @@ use std::sync::{mpsc, Arc, RwLock, Mutex};
 
 use id::{Id, get_id};
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum Message {
     InstanceChanged {

@@ -47,6 +47,7 @@ pub struct ReadAllResponse<'a> {
     pub server_id: &'a str,
     pub message_cursor: i32,
     pub instances: Cow<'a, HashMap<Id, RbxInstance>>,
+    pub partition_instances: Cow<'a, HashMap<String, Id>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -57,7 +58,7 @@ pub struct ReadResponse<'a> {
     pub instances: HashMap<Id, Cow<'a, RbxInstance>>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SubscribeResponse<'a> {
     pub server_id: &'a str,
@@ -164,6 +165,7 @@ impl Server {
                     server_id: &self.server_id,
                     message_cursor,
                     instances: Cow::Borrowed(rbx_session.tree.get_all_instances()),
+                    partition_instances: Cow::Borrowed(&rbx_session.partition_instances),
                 })
             },
 
