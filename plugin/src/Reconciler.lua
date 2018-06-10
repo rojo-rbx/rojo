@@ -202,12 +202,12 @@ function Reconciler:reconcile(rbx, item)
 	return rbx
 end
 
-function Reconciler:reconcileRoute(route, item, itemRoute)
+function Reconciler:reconcileRoute(rbxRoute, item, fileRoute)
 	local parent
 	local rbx = game
 
-	for i = 1, #route do
-		local piece = route[i]
+	for i = 1, #rbxRoute do
+		local piece = rbxRoute[i]
 
 		local child = rbx:FindFirstChild(piece)
 
@@ -223,7 +223,7 @@ function Reconciler:reconcileRoute(route, item, itemRoute)
 		end
 
 		-- We don't want to create a folder if we're reaching our target item!
-		if child == nil and i ~= #route then
+		if child == nil and i ~= #rbxRoute then
 			child = Instance.new("Folder")
 			child.Parent = rbx
 			child.Name = piece
@@ -235,7 +235,7 @@ function Reconciler:reconcileRoute(route, item, itemRoute)
 
 	-- Let's check the route map!
 	if rbx == nil then
-		rbx = self._routeMap:get(itemRoute)
+		rbx = self._routeMap:get(fileRoute)
 	end
 
 	rbx = self:reconcile(rbx, item)

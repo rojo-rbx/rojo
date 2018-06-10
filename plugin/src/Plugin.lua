@@ -169,38 +169,34 @@ function Plugin:stopPolling()
 	return Promise.resolve(true)
 end
 
-function Plugin:_pull(api, project, routes)
-	return api:read(routes)
+function Plugin:_pull(api, project, fileRoutes)
+	return api:read(fileRoutes)
 		:andThen(function(items)
-			for index = 1, #routes do
-				local itemRoute = routes[index]
-				local partitionName = itemRoute[1]
+			for index = 1, #fileRoutes do
+				local fileRoute = fileRoutes[index]
+				local partitionName = fileRoute[1]
 				local partition = project.partitions[partitionName]
 				local item = items[index]
 
-				local partitionRoute = collectMatch(partition.target, "[^.]+")
+				local partitionTargetRbxRoute = collectMatch(partition.target, "[^.]+")
 
 				-- If the item route's length was 1, we need to rename the instance to
 				-- line up with the partition's root object name.
-				--
-				-- This is a HACK!
-				if #itemRoute == 1 then
-					if item then
-						local objectName = partition.target:match("[^.]+$")
-						item.Name = objectName
-					end
+				if item ~= nil and #fileRoute == 1 then
+					local objectName = partition.target:match("[^.]+$")
+					item.Name = objectName
 				end
 
-				local fullRoute = {}
-				for _, piece in ipairs(partitionRoute) do
-					table.insert(fullRoute, piece)
+				local itemRbxRoute = {}
+				for _, piece in ipairs(partitionTargetRbxRoute) do
+					table.insert(itemRbxRoute, piece)
 				end
 
-				for i = 2, #itemRoute do
-					table.insert(fullRoute, itemRoute[i])
+				for i = 2, #fileRoute do
+					table.insert(itemRbxRoute, fileRoute[i])
 				end
 
-				self._reconciler:reconcileRoute(fullRoute, item, itemRoute)
+				self._reconciler:reconcileRoute(itemRbxRoute, item, fileRoute)
 			end
 		end)
 end
@@ -283,13 +279,13 @@ function Plugin:syncIn()
 				return Promise.reject(info)
 			end
 
-			local routes = {}
+			local fileRoutes = {}
 
 			for name in pairs(info.project.partitions) do
-				table.insert(routes, {name})
+				table.insert(fileRoutes, {name})
 			end
 
-			local pullSuccess, pullResult = self:_pull(api, info.project, routes):await()
+			local pullSuccess, pullResult = self:_pull(api, info.project, fileRoutes):await()
 
 			self._syncInProgress = false
 
