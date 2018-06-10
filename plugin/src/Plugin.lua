@@ -289,9 +289,14 @@ function Plugin:syncIn()
 				table.insert(routes, {name})
 			end
 
-			self:_pull(api, info.project, routes)
+			local pullSuccess, pullResult = self:_pull(api, info.project, routes):await()
 
 			self._syncInProgress = false
+
+			if not pullSuccess then
+				return Promise.reject(pullResult)
+			end
+
 			print("Rojo: Sync successful!")
 		end)
 		:catch(function(err)
