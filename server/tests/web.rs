@@ -37,7 +37,7 @@ fn empty() {
 
         assert_eq!(response.server_id, "0");
         assert_eq!(response.protocol_version, 2);
-        assert_eq!(response.partitions, HashMap::new());
+        assert_eq!(response.partitions.len(), 0);
     }
 
     {
@@ -46,7 +46,7 @@ fn empty() {
 
         assert_eq!(response.server_id, "0");
         assert_eq!(response.message_cursor, -1);
-        assert_eq!(response.instances.as_ref(), &HashMap::new());
+        assert_eq!(response.instances.len(), 0);
     }
 
     {
@@ -55,7 +55,7 @@ fn empty() {
 
         assert_eq!(response.server_id, "0");
         assert_eq!(response.message_cursor, -1);
-        assert_eq!(response.instances, HashMap::new());
+        assert_eq!(response.instances.len(), 0);
     }
 }
 
