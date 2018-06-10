@@ -190,6 +190,12 @@ function Reconciler:reconcile(rbx, item)
 		return self:_reify(item)
 	end
 
+	-- It's possible that the instance we're associating with this item hasn't
+	-- been inserted into the RouteMap yet.
+	if item.Route ~= nil then
+		self._routeMap:insert(item.Route, rbx)
+	end
+
 	applyProperties(rbx, item.Properties)
 	self:_reconcileChildren(rbx, item)
 
@@ -235,6 +241,9 @@ function Reconciler:reconcileRoute(route, item, itemRoute)
 	rbx = self:reconcile(rbx, item)
 
 	reparent(rbx, parent)
+
+	print("Post reconcileRoute RouteMap:")
+	print(self._routeMap:visualize())
 end
 
 return Reconciler
