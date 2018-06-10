@@ -241,9 +241,6 @@ function Reconciler:reconcileRoute(rbxRoute, item, fileRoute)
 	rbx = self:reconcile(rbx, item)
 
 	reparent(rbx, parent)
-
-	print("Post reconcileRoute RouteMap:")
-	print(self._routeMap:visualize())
 end
 
 return Reconciler
