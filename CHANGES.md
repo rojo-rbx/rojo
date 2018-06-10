@@ -1,6 +1,9 @@
 # Rojo Change Log
 
 ## Current master
+* *No changes*
+
+## 0.4.11 (June 10, 2018)
 * Defensively insert existing instances into RouteMap; should fix most duplication cases when syncing into existing trees.
 * Fixed incorrect synchronization from `Plugin:_pull` that would cause polling to create issues
 * Fixed incorrect file routes being assigned to `init.lua` and `init.model.json` files
