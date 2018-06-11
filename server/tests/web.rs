@@ -377,4 +377,7 @@ fn one_partition() {
 
         assert_eq!(response.instances, initial_response.instances);
     }
+
+    // TODO: Test to change existing instance
+    // TODO: Copy each project into temp dir before using them
 }
