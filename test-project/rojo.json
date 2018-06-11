@@ -1,6 +1,6 @@
 {
   "name": "test-project",
-  "servePort": 8001,
+  "servePort": 34872,
   "partitions": {
     "src": {
       "path": "src",
