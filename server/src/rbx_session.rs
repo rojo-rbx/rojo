@@ -32,8 +32,7 @@ fn file_to_instances(
 
             // This is placeholder logic; this whole function is!
             let (class_name, property_key, name) = {
-                // TODO: Root instances have an empty route
-                let file_name = route.route.last().unwrap();
+                let file_name = route.route.last().unwrap_or(&route.partition);
 
                 fn strip_suffix<'a>(source: &'a str, suffix: &'static str) -> &'a str {
                     &source[..source.len() - suffix.len()]
