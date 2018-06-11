@@ -221,6 +221,9 @@ fn one_partition() {
             assert_eq!(response.server_id, "0");
             assert_eq!(response.message_cursor, 0);
             assert_eq!(response.messages.len(), 1);
+
+            // TODO: Read which instance was changed and try to access it with
+            // /read
         }
 
         let body = server.get_string("/api/read_all");
