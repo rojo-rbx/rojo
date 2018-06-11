@@ -9,6 +9,7 @@ use test_util::*;
 
 use std::collections::HashMap;
 use std::path::PathBuf;
+use std::borrow::Cow;
 
 use librojo::{
     session::Session,
@@ -86,7 +87,7 @@ fn one_partition() {
         assert_eq!(response.partitions, partitions);
     }
 
-    {
+    let check_base_read_all = || {
         let body = server.get_string("/api/read_all");
         let response = serde_json::from_str::<ReadAllResponse>(&body).unwrap();
 
@@ -96,18 +97,18 @@ fn one_partition() {
         assert_eq!(response.message_cursor, -1);
         assert_eq!(response.instances.len(), 4); // root and three children
 
-        let mut found_root = false;
-        let mut found_module = false;
-        let mut found_client = false;
-        let mut found_server = false;
+        let mut root_id = None;
+        let mut module_id = None;
+        let mut client_id = None;
+        let mut server_id = None;
 
         for (id, instance) in response.instances.iter() {
             match instance.class_name.as_str() {
                 // TOOD: Should partition roots (and other directories) be some
                 // magical object instead of Folder?
                 "Folder" => {
-                    assert!(!found_root);
-                    found_root = true;
+                    assert!(root_id.is_none());
+                    root_id = Some(*id);
 
                     assert_eq!(*id, partition_id);
 
@@ -118,10 +119,17 @@ fn one_partition() {
                     assert_eq!(instance.properties.len(), 0);
                     assert_eq!(instance.parent, None);
                     assert_eq!(instance.children.len(), 3);
+
+                    let single_body = server.get_string(&format!("/api/read/{}", id));
+                    let single_response = serde_json::from_str::<ReadResponse>(&single_body).unwrap();
+
+                    let single_instance = single_response.instances.get(id).unwrap();
+
+                    assert_eq!(single_instance, &Cow::Borrowed(instance));
                 },
                 "ModuleScript" => {
-                    assert!(!found_module);
-                    found_module = true;
+                    assert!(module_id.is_none());
+                    module_id = Some(*id);
 
                     let mut properties = HashMap::new();
                     properties.insert("Source".to_string(), "-- a.lua".to_string());
@@ -130,10 +138,17 @@ fn one_partition() {
                     assert_eq!(instance.properties, properties);
                     assert_eq!(instance.parent, Some(partition_id));
                     assert_eq!(instance.children.len(), 0);
+
+                    let single_body = server.get_string(&format!("/api/read/{}", id));
+                    let single_response = serde_json::from_str::<ReadResponse>(&single_body).unwrap();
+
+                    let single_instance = single_response.instances.get(id).unwrap();
+
+                    assert_eq!(single_instance, &Cow::Borrowed(instance));
                 },
                 "LocalScript" => {
-                    assert!(!found_client);
-                    found_client = true;
+                    assert!(client_id.is_none());
+                    client_id = Some(*id);
 
                     let mut properties = HashMap::new();
                     properties.insert("Source".to_string(), "-- b.client.lua".to_string());
@@ -142,10 +157,17 @@ fn one_partition() {
                     assert_eq!(instance.properties, properties);
                     assert_eq!(instance.parent, Some(partition_id));
                     assert_eq!(instance.children.len(), 0);
+
+                    let single_body = server.get_string(&format!("/api/read/{}", id));
+                    let single_response = serde_json::from_str::<ReadResponse>(&single_body).unwrap();
+
+                    let single_instance = single_response.instances.get(id).unwrap();
+
+                    assert_eq!(single_instance, &Cow::Borrowed(instance));
                 },
                 "Script" => {
-                    assert!(!found_server);
-                    found_server = true;
+                    assert!(server_id.is_none());
+                    server_id = Some(*id);
 
                     let mut properties = HashMap::new();
                     properties.insert("Source".to_string(), "-- a.server.lua".to_string());
@@ -154,17 +176,26 @@ fn one_partition() {
                     assert_eq!(instance.properties, properties);
                     assert_eq!(instance.parent, Some(partition_id));
                     assert_eq!(instance.children.len(), 0);
+
+                    let single_body = server.get_string(&format!("/api/read/{}", id));
+                    let single_response = serde_json::from_str::<ReadResponse>(&single_body).unwrap();
+
+                    let single_instance = single_response.instances.get(id).unwrap();
+
+                    assert_eq!(single_instance, &Cow::Borrowed(instance));
                 },
                 _ => panic!("Unexpected instance!"),
             }
         }
 
-        assert!(found_root);
-        assert!(found_module);
-        assert!(found_client);
-        assert!(found_server);
-    }
+        module_id.unwrap();
+        client_id.unwrap();
+        server_id.unwrap();
 
-    // TODO: Test /read
+        root_id.unwrap()
+    };
+
+    check_base_read_all();
+
     // TODO: Test /subscribe
 }
