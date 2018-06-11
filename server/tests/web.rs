@@ -95,7 +95,7 @@ fn one_partition() {
 
         assert_eq!(response.server_id, "0");
         assert_eq!(response.message_cursor, -1);
-        assert_eq!(response.instances.len(), 4); // root and three children
+        assert_eq!(response.instances.len(), 4);
 
         let mut root_id = None;
         let mut module_id = None;
@@ -103,18 +103,16 @@ fn one_partition() {
         let mut server_id = None;
 
         for (id, instance) in response.instances.iter() {
-            match instance.class_name.as_str() {
+            match (instance.name.as_str(), instance.class_name.as_str()) {
                 // TOOD: Should partition roots (and other directories) be some
                 // magical object instead of Folder?
-                "Folder" => {
+                // TODO: Should this name actually equal the last part of the
+                // partition's target?
+                ("OnePartition", "Folder") => {
                     assert!(root_id.is_none());
                     root_id = Some(*id);
 
                     assert_eq!(*id, partition_id);
-
-                    // TODO: Should this actually equal the last part of the
-                    // partition's target?
-                    assert_eq!(instance.name, "OnePartition");
 
                     assert_eq!(instance.properties.len(), 0);
                     assert_eq!(instance.parent, None);
@@ -127,14 +125,13 @@ fn one_partition() {
 
                     assert_eq!(single_instance, &Cow::Borrowed(instance));
                 },
-                "ModuleScript" => {
+                ("a", "ModuleScript") => {
                     assert!(module_id.is_none());
                     module_id = Some(*id);
 
                     let mut properties = HashMap::new();
                     properties.insert("Source".to_string(), "-- a.lua".to_string());
 
-                    assert_eq!(instance.name, "a");
                     assert_eq!(instance.properties, properties);
                     assert_eq!(instance.parent, Some(partition_id));
                     assert_eq!(instance.children.len(), 0);
@@ -146,7 +143,7 @@ fn one_partition() {
 
                     assert_eq!(single_instance, &Cow::Borrowed(instance));
                 },
-                "LocalScript" => {
+                ("b", "LocalScript") => {
                     assert!(client_id.is_none());
                     client_id = Some(*id);
 
@@ -165,7 +162,7 @@ fn one_partition() {
 
                     assert_eq!(single_instance, &Cow::Borrowed(instance));
                 },
-                "Script" => {
+                ("a", "Script") => {
                     assert!(server_id.is_none());
                     server_id = Some(*id);
 
@@ -184,15 +181,20 @@ fn one_partition() {
 
                     assert_eq!(single_instance, &Cow::Borrowed(instance));
                 },
-                _ => panic!("Unexpected instance!"),
+                _ => {},
             }
         }
 
-        module_id.unwrap();
-        client_id.unwrap();
-        server_id.unwrap();
+        let root_id = root_id.unwrap();
+        let module_id = module_id.unwrap();
+        let client_id = client_id.unwrap();
+        let server_id = server_id.unwrap();
 
-        root_id.unwrap()
+        let root_instance = response.instances.get(&root_id).unwrap();
+
+        assert!(root_instance.children.contains(&module_id));
+        assert!(root_instance.children.contains(&client_id));
+        assert!(root_instance.children.contains(&server_id));
     };
 
     check_base_read_all();
