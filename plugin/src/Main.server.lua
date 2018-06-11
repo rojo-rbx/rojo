@@ -2,7 +2,7 @@ if not plugin then
 	return
 end
 
-local Plugin = require(script.Parent.Plugin)
+local Session = require(script.Parent.Session)
 local Config = require(script.Parent.Config)
 local Version = require(script.Parent.Version)
 
@@ -39,40 +39,25 @@ local function checkUpgrade()
 end
 
 local function main()
-	local pluginInstance = Plugin.new()
-
 	local displayedVersion = Config.dev and "DEV" or Version.display(Config.version)
 
-	local toolbar = plugin:CreateToolbar("Rojo Plugin " .. displayedVersion)
+	local toolbar = plugin:CreateToolbar("Rojo " .. displayedVersion)
 
-	toolbar:CreateButton("Test Connection", "Connect to Rojo Server", Config.icons.testConnection)
+	local currentSession
+
+	-- TODO: More robust session tracking to handle errors
+	-- TODO: Icon!
+	toolbar:CreateButton("Connect", "Connect to Rojo Session", "")
 		.Click:Connect(function()
 			checkUpgrade()
 
-			pluginInstance:connect()
-				:catch(function(err)
-					warn(err)
-				end)
-		end)
+			if currentSession ~= nil then
+				warn("Rojo: A session is already running!")
+				return
+			end
 
-	toolbar:CreateButton("Sync In", "Sync into Roblox Studio", Config.icons.syncIn)
-		.Click:Connect(function()
-			checkUpgrade()
-
-			pluginInstance:syncIn()
-				:catch(function(err)
-					warn(err)
-				end)
-		end)
-
-	toolbar:CreateButton("Toggle Polling", "Poll server for changes", Config.icons.togglePolling)
-		.Click:Connect(function()
-			checkUpgrade()
-
-			pluginInstance:togglePolling()
-				:catch(function(err)
-					warn(err)
-				end)
+			print("Rojo: Started session.")
+			currentSession = Session.new()
 		end)
 end
 

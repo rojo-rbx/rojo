@@ -10,6 +10,9 @@ HttpError.Error = {
 		message = "Rojo plugin couldn't connect to the Rojo server.\n" ..
 			"Make sure the server is running -- use 'Rojo serve' to run it!",
 	},
+	Timeout = {
+		message = "Rojo timed out during a request.",
+	},
 	Unknown = {
 		message = "Rojo encountered an unknown error: {{message}}",
 	},
@@ -44,7 +47,11 @@ function HttpError.fromErrorString(err)
 	end
 
 	if err:find("^curl error") then
-		return HttpError.new(HttpError.Error.ConnectFailed)
+		if err:find("couldn't connect to server") then
+			return HttpError.new(HttpError.Error.ConnectFailed)
+		elseif err:find("timeout was reached") then
+			return HttpError.new(HttpError.Error.Timeout)
+		end
 	end
 
 	return HttpError.new(HttpError.Error.Unknown, err)
