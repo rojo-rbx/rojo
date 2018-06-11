@@ -1,27 +1,11 @@
-#[macro_use] extern crate serde_derive;
-#[macro_use] extern crate rouille;
 #[macro_use] extern crate clap;
-#[macro_use] extern crate lazy_static;
-extern crate notify;
-extern crate rand;
-extern crate serde;
-extern crate serde_json;
-extern crate regex;
 
-pub mod web;
-pub mod core;
-pub mod project;
-pub mod pathext;
-pub mod vfs;
-pub mod rbx;
-pub mod plugin;
-pub mod plugins;
-pub mod commands;
+extern crate librojo;
 
 use std::path::{Path, PathBuf};
 use std::process;
 
-use pathext::canonicalish;
+use librojo::pathext::canonicalish;
 
 fn main() {
     let matches = clap_app!(rojo =>
@@ -40,18 +24,7 @@ fn main() {
             (@arg port: --port +takes_value "The port to listen on. Defaults to 8000.")
         )
 
-        (@subcommand pack =>
-            (about: "Packs the project into a GUI installer bundle. NOT YET IMPLEMENTED!")
-            (@arg PROJECT: "Path to the project to pack. Defaults to the current directory.")
-        )
-
-        (@arg verbose: --verbose "Enable extended logging.")
     ).get_matches();
-
-    let verbose = match matches.occurrences_of("verbose") {
-        0 => false,
-        _ => true,
-    };
 
     match matches.subcommand() {
         ("init", sub_matches) => {
@@ -59,7 +32,7 @@ fn main() {
             let project_path = Path::new(sub_matches.value_of("PATH").unwrap_or("."));
             let full_path = canonicalish(project_path);
 
-            commands::init(&full_path);
+            librojo::commands::init(&full_path);
         },
         ("serve", sub_matches) => {
             let sub_matches = sub_matches.unwrap();
@@ -82,11 +55,7 @@ fn main() {
                 }
             };
 
-            commands::serve(&project_path, verbose, port);
-        },
-        ("pack", _) => {
-            eprintln!("'rojo pack' is not yet implemented!");
-            process::exit(1);
+            librojo::commands::serve(&project_path, port);
         },
         _ => {
             eprintln!("Please specify a subcommand!");
