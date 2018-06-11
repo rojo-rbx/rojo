@@ -8,6 +8,8 @@ use partition::Partition;
 use vfs_session::FileChange;
 use file_route::FileRoute;
 
+const WATCH_TIMEOUT_MS: u64 = 100;
+
 pub struct PartitionWatcher {
     pub watcher: RecommendedWatcher,
 }
@@ -16,7 +18,7 @@ impl PartitionWatcher {
     pub fn start_new(partition: Partition, tx: Sender<FileChange>) -> PartitionWatcher {
         let (watch_tx, watch_rx) = channel();
 
-        let mut watcher = watcher(watch_tx, Duration::from_millis(100)).unwrap();
+        let mut watcher = watcher(watch_tx, Duration::from_millis(WATCH_TIMEOUT_MS)).unwrap();
 
         watcher.watch(&partition.path, RecursiveMode::Recursive).unwrap();
 
