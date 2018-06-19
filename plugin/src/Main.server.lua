@@ -64,8 +64,16 @@ local function main()
 			end)
 	end
 
-	toolbar:CreateButton("Sync In", "Sync into Roblox Studio", Config.icons.syncIn).Click:Connect(syncIn)
-	plugin:CreatePluginAction("RojoSyncIn", "Sync In Rojo Project", "Pulls the connected Rojo project into Studio.").Triggered:Connect(syncIn)
+	toolbar:CreateButton("Sync In",
+		"Sync into Roblox Studio",
+		Config.icons.syncIn)
+		.Click:Connect(syncIn)
+		
+	plugin:CreatePluginAction(
+		"RojoSyncIn",
+		"Sync In Rojo Project",
+		"Pulls the connected Rojo project into Studio.")
+		.Triggered:Connect(syncIn)
 
 	toolbar:CreateButton("Toggle Polling", "Poll server for changes", Config.icons.togglePolling)
 		.Click:Connect(function()
