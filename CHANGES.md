@@ -1,6 +1,9 @@
 # Rojo Change Log
 
 ## Current master
+* *No changes*
+
+## 0.4.12 (June 21, 2018)
 * Fixed obscure assertion failure when renaming or deleting files ([#78](https://github.com/LPGhatguy/rojo/issues/78))
 * Added a `PluginAction` for the sync in command, which should help with some automation scripts ([#80](https://github.com/LPGhatguy/rojo/pull/80))
 
