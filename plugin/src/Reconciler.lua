@@ -242,7 +242,9 @@ function Reconciler:reconcileRoute(rbxRoute, item, fileRoute)
 
 	rbx = self:reconcile(rbx, item)
 
-	reparent(rbx, parent)
+	if rbx ~= nil then
+		reparent(rbx, parent)
+	end
 end
 
 return Reconciler
