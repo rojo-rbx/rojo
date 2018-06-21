@@ -2,6 +2,7 @@
 
 ## Current master
 * Fixed obscure assertion failure when renaming or deleting files ([#78](https://github.com/LPGhatguy/rojo/issues/78))
+* Added a `PluginAction` for the sync in command, which should help with some automation scripts ([#80](https://github.com/LPGhatguy/rojo/pull/80))
 
 ## 0.4.11 (June 10, 2018)
 * Defensively insert existing instances into RouteMap; should fix most duplication cases when syncing into existing trees.
