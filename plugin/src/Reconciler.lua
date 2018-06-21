@@ -170,6 +170,8 @@ function Reconciler:reconcile(rbx, item)
 	-- Item was deleted
 	if item == nil then
 		if rbx ~= nil then
+			-- TODO: If this is a partition root, should we leave it alone?
+
 			self._routeMap:removeByRbx(rbx)
 			rbx:Destroy()
 		end
