@@ -55,15 +55,21 @@ local function main()
 				end)
 		end)
 
-	toolbar:CreateButton("Sync In", "Sync into Roblox Studio", Config.icons.syncIn)
-		.Click:Connect(function()
-			checkUpgrade()
+	local function syncIn()
+		checkUpgrade()
 
-			pluginInstance:syncIn()
-				:catch(function(err)
-					warn(err)
-				end)
-		end)
+		pluginInstance:syncIn()
+			:catch(function(err)
+				warn(err)
+			end)
+	end
+
+	local dShort = "Sync In"
+	local dLong = "Sync into Roblox Studio"
+
+	toolbar:CreateButton(dShort, dLong, Config.icons.syncIn).Click:Connect(syncIn)
+
+	plugin:CreatePluginAction("RojoSyncIn", dShort, dLong).Triggered:Connect(syncIn)
 
 	toolbar:CreateButton("Toggle Polling", "Poll server for changes", Config.icons.togglePolling)
 		.Click:Connect(function()
