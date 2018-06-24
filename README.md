@@ -8,7 +8,7 @@
     <a href="https://travis-ci.org/LPGhatguy/rojo">
         <img src="https://api.travis-ci.org/LPGhatguy/rojo.svg?branch=master" alt="Travis-CI Build Status" />
     </a>
-    <img src="https://img.shields.io/badge/latest_version-0.4.11-brightgreen.svg" alt="Current server version" />
+    <img src="https://img.shields.io/badge/latest_version-0.4.12-brightgreen.svg" alt="Current server version" />
     <a href="https://lpghatguy.github.io/rojo">
         <img src="https://img.shields.io/badge/documentation-website-brightgreen.svg" alt="Rojo Documentation" />
     </a>
