@@ -3,8 +3,13 @@ use std::collections::HashMap;
 
 use id::Id;
 
-// TODO: Switch to enum to represent more value types
-pub type RbxValue = String;
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub enum RbxValue {
+    String {
+        value: String,
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

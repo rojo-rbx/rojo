@@ -6,7 +6,7 @@ use id::{Id, get_id};
 use message_session::{Message, MessageSession};
 use partition::Partition;
 use project::Project;
-use rbx::{RbxInstance, RbxTree};
+use rbx::{RbxInstance, RbxTree, RbxValue};
 use vfs_session::{VfsSession, FileItem, FileChange};
 
 // TODO: Rethink data structure and insertion/update behavior. Maybe break some
@@ -51,7 +51,7 @@ fn file_to_instances(
             };
 
             let mut properties = HashMap::new();
-            properties.insert(property_key.to_string(), contents.clone());
+            properties.insert(property_key.to_string(), RbxValue::String { value: contents.clone() });
 
             tree.insert_instance(primary_id, RbxInstance {
                 name: name.to_string(),

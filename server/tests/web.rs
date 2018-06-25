@@ -19,6 +19,7 @@ use librojo::{
     session::Session,
     project::Project,
     web::{Server, WebConfig, ServerInfoResponse, ReadResponse, ReadAllResponse, SubscribeResponse},
+    rbx::RbxValue,
 };
 
 #[test]
@@ -144,7 +145,7 @@ fn one_partition() {
                     module_id = Some(*id);
 
                     let mut properties = HashMap::new();
-                    properties.insert("Source".to_string(), "-- a.lua".to_string());
+                    properties.insert("Source".to_string(), RbxValue::String { value: "-- a.lua".to_string() });
 
                     assert_eq!(instance.properties, properties);
                     assert_eq!(instance.parent, Some(partition_id));
@@ -162,7 +163,7 @@ fn one_partition() {
                     client_id = Some(*id);
 
                     let mut properties = HashMap::new();
-                    properties.insert("Source".to_string(), "-- b.client.lua".to_string());
+                    properties.insert("Source".to_string(), RbxValue::String { value: "-- b.client.lua".to_string() });
 
                     assert_eq!(instance.properties, properties);
                     assert_eq!(instance.parent, Some(partition_id));
@@ -180,7 +181,7 @@ fn one_partition() {
                     server_id = Some(*id);
 
                     let mut properties = HashMap::new();
-                    properties.insert("Source".to_string(), "-- a.server.lua".to_string());
+                    properties.insert("Source".to_string(), RbxValue::String { value: "-- a.server.lua".to_string() });
 
                     assert_eq!(instance.properties, properties);
                     assert_eq!(instance.parent, Some(partition_id));
@@ -277,7 +278,7 @@ fn one_partition() {
                     module_id = Some(*id);
 
                     let mut properties = HashMap::new();
-                    properties.insert("Source".to_string(), "-- a.lua".to_string());
+                    properties.insert("Source".to_string(), RbxValue::String { value: "-- a.lua".to_string() });
 
                     assert_eq!(instance.properties, properties);
                     assert_eq!(instance.parent, Some(partition_id));
@@ -295,7 +296,7 @@ fn one_partition() {
                     client_id = Some(*id);
 
                     let mut properties = HashMap::new();
-                    properties.insert("Source".to_string(), "-- b.client.lua".to_string());
+                    properties.insert("Source".to_string(), RbxValue::String { value: "-- b.client.lua".to_string() });
 
                     assert_eq!(instance.properties, properties);
                     assert_eq!(instance.parent, Some(partition_id));
@@ -313,7 +314,7 @@ fn one_partition() {
                     server_id = Some(*id);
 
                     let mut properties = HashMap::new();
-                    properties.insert("Source".to_string(), "-- a.server.lua".to_string());
+                    properties.insert("Source".to_string(), RbxValue::String { value: "-- a.server.lua".to_string() });
 
                     assert_eq!(instance.properties, properties);
                     assert_eq!(instance.parent, Some(partition_id));
@@ -331,7 +332,7 @@ fn one_partition() {
                     new_id = Some(*id);
 
                     let mut properties = HashMap::new();
-                    properties.insert("Source".to_string(), "-- c.client.lua".to_string());
+                    properties.insert("Source".to_string(), RbxValue::String { value: "-- c.client.lua".to_string() });
 
                     assert_eq!(instance.properties, properties);
                     assert_eq!(instance.parent, Some(partition_id));
