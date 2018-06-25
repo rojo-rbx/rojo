@@ -24,3 +24,4 @@ pub mod session;
 pub mod vfs_session;
 pub mod web;
 pub mod web_util;
+pub mod roblox_studio;
