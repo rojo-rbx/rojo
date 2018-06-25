@@ -187,7 +187,7 @@ impl Server {
                 let mut instances = HashMap::new();
 
                 for requested_id in &requested_ids {
-                    rbx_session.tree.get_instance(*requested_id, &mut instances);
+                    rbx_session.tree.get_instance_and_descendants(*requested_id, &mut instances);
                 }
 
                 Response::json(&ReadResponse {

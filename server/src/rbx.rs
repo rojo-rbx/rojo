@@ -68,13 +68,18 @@ impl RbxTree {
         let mut ids_to_visit = vec![id];
         let mut ids_deleted = Vec::new();
 
-        for instance in self.instances.values_mut() {
-            match instance.children.iter().position(|&v| v == id) {
-                Some(index) => {
-                    instance.children.remove(index);
-                },
-                None => {},
-            }
+        // We only need to explicitly remove a child from the first instance we
+        // delete, since all others will descend from this instance.
+        let parent_id = match self.instances.get(&id) {
+            Some(instance) => instance.parent,
+            None => None,
+        };
+
+        if let Some(parent_id) = parent_id {
+            let mut parent = self.instances.get_mut(&parent_id).unwrap();
+            let index = parent.children.iter().position(|&v| v == id).unwrap();
+
+            parent.children.remove(index);
         }
 
         loop {
@@ -95,7 +100,7 @@ impl RbxTree {
         ids_deleted
     }
 
-    pub fn get_instance<'a, 'b, T>(&'a self, id: Id, output: &'b mut HashMap<Id, T>)
+    pub fn get_instance_and_descendants<'a, 'b, T>(&'a self, id: Id, output: &'b mut HashMap<Id, T>)
         where T: From<&'a RbxInstance>
     {
         let mut ids_to_visit = vec![id];
