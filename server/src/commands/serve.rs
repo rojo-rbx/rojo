@@ -7,6 +7,7 @@ use rand;
 use project::Project;
 use web::{self, WebConfig};
 use session::Session;
+use roblox_studio;
 
 pub fn serve(project_dir: &PathBuf, override_port: Option<u64>) {
     let server_id = rand::random::<u64>();
@@ -25,6 +26,8 @@ pub fn serve(project_dir: &PathBuf, override_port: Option<u64>) {
     let port = override_port.unwrap_or(project.serve_port);
 
     println!("Using project {:#?}", project);
+
+    roblox_studio::install_bundled_plugin();
 
     let mut session = Session::new(project.clone());
     session.start();

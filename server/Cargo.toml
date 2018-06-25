@@ -14,6 +14,10 @@ path = "src/lib.rs"
 name = "rojo"
 path = "src/bin.rs"
 
+[features]
+default = []
+bundle-plugin = []
+
 [dependencies]
 clap = "2.27"
 rouille = "2.1"
