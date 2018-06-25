@@ -1,6 +1,8 @@
 extern crate rouille;
 extern crate serde_json;
 extern crate serde;
+extern crate tempfile;
+extern crate walkdir;
 
 extern crate librojo;
 
@@ -21,11 +23,16 @@ use librojo::{
 
 #[test]
 fn empty() {
-    let project_path = {
+    let original_project_path = {
         let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         path.push("test-projects/empty");
         path
     };
+
+    let project_tempdir = tempfile::tempdir().unwrap();
+    let project_path = project_tempdir.path();
+
+    copy_recursive(&original_project_path, &project_path).unwrap();
 
     let project = Project::load(&project_path).unwrap();
     let mut session = Session::new(project.clone());
@@ -64,11 +71,16 @@ fn empty() {
 
 #[test]
 fn one_partition() {
-    let project_path = {
+    let original_project_path = {
         let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         path.push("test-projects/one-partition");
         path
     };
+
+    let project_tempdir = tempfile::tempdir().unwrap();
+    let project_path = project_tempdir.path();
+
+    copy_recursive(&original_project_path, &project_path).unwrap();
 
     let project = Project::load(&project_path).unwrap();
     let mut session = Session::new(project.clone());
@@ -202,11 +214,7 @@ fn one_partition() {
     };
 
     {
-        let temp_name = {
-            let mut path = project_path.clone();
-            path.push("lib/c.client.lua");
-            path
-        };
+        let temp_name = project_path.join("lib/c.client.lua");
 
         {
             let mut file = File::create(&temp_name).unwrap();

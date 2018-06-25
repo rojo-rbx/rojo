@@ -15,15 +15,16 @@ name = "rojo"
 path = "src/bin.rs"
 
 [dependencies]
-clap = "2.27.1"
+clap = "2.27"
 rouille = "2.1"
 serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"
-notify = "4.0.0"
+notify = "4.0"
 rand = "0.4"
 regex = "1.0"
 lazy_static = "1.0"
 
 [dev-dependencies]
-tempfile = "3"
+tempfile = "3.0"
+walkdir = "2.1"
