@@ -23,5 +23,6 @@ pub fn install_location() -> Option<PathBuf> {
 
 #[cfg(not(any(target_os = "windows", target_os = "macos")))]
 pub fn install_location() -> Option<PathBuf> {
+    // Roblox Studio doesn't install on any other platforms!
     None
 }
