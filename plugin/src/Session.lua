@@ -11,9 +11,6 @@ function Session.new()
 
 	setmetatable(self, Session)
 
-	-- TODO: Rewrite all instance tracking logic and implement a real reconciler
-	local instancesById = {}
-
 	local function createFoldersUntil(location, route)
 		for i = 1, #route - 1 do
 			local piece = route[i]
