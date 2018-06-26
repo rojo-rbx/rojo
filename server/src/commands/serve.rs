@@ -27,7 +27,7 @@ pub fn serve(project_dir: &PathBuf, override_port: Option<u64>) {
 
     println!("Using project {:#?}", project);
 
-    roblox_studio::install_bundled_plugin();
+    roblox_studio::install_bundled_plugin().unwrap();
 
     let mut session = Session::new(project.clone());
     session.start();
