@@ -29,6 +29,7 @@ function ApiContext.new(url, onMessage)
 		serverId = nil,
 		connected = false,
 		messageCursor = -1,
+		partitionRoutes = nil,
 	}
 
 	setmetatable(context, ApiContext)
@@ -37,7 +38,7 @@ function ApiContext.new(url, onMessage)
 end
 
 function ApiContext:connect()
-	return Http.get(self.url)
+	return Http.get(self.url .. "/api/rojo")
 		:andThen(function(response)
 			local body = response:json()
 
@@ -59,6 +60,7 @@ function ApiContext:connect()
 
 			self.serverId = body.serverId
 			self.connected = true
+			self.partitionRoutes = body.partitions
 		end)
 end
 
@@ -67,17 +69,17 @@ function ApiContext:readAll()
 		return Promise.reject()
 	end
 
-	return Http.get(self.url .. "/read_all")
+	return Http.get(self.url .. "/api/read_all")
 		:andThen(function(response)
 			local body = response:json()
 
 			if body.serverId ~= self.serverId then
-				return Promise.reject("server changed ID")
+				return Promise.reject("Server changed ID")
 			end
 
 			self.messageCursor = body.messageCursor
 
-			return body.instances
+			return body
 		end, function(err)
 			self.connected = false
 
@@ -90,12 +92,12 @@ function ApiContext:retrieveMessages()
 		return Promise.reject()
 	end
 
-	return Http.get(self.url .. "/subscribe/" .. self.messageCursor)
+	return Http.get(self.url .. "/api/subscribe/" .. self.messageCursor)
 		:andThen(function(response)
 			local body = response:json()
 
 			if body.serverId ~= self.serverId then
-				return Promise.reject("server changed ID")
+				return Promise.reject("Server changed ID")
 			end
 
 			for _, message in ipairs(body.messages) do

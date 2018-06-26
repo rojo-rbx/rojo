@@ -12,45 +12,56 @@ function Session.new()
 	setmetatable(self, Session)
 
 	-- TODO: Rewrite all instance tracking logic and implement a real reconciler
-	local created = {}
-	created["0"] = game:GetService("ReplicatedFirst")
+	local instancesById = {}
+
+	local function createFoldersUntil(location, route)
+		for i = 1, #route - 1 do
+			local piece = route[i]
+
+			local child = location:FindFirstChild(piece)
+
+			if child == nil then
+				child = Instance.new("Folder")
+				child.Name = piece
+				child.Parent = location
+			end
+
+			location = child
+		end
+
+		return location
+	end
+
+	local function reify(instancesById, id)
+		local object = instancesById[tostring(id)]
+		local instance = Instance.new(object.className)
+		instance.Name = object.name
+
+		for key, property in pairs(object.properties) do
+			instance[key] = property.value
+		end
+
+		for _, childId in ipairs(object.children) do
+			reify(instancesById, childId).Parent = instance
+		end
+
+		return instance
+	end
 
 	local api
 	local function readAll()
 		print("Reading all...")
 
 		return api:readAll()
-			:andThen(function(instances)
-				local visited = {}
-				for id, instance in pairs(instances) do
-					visited[id] = true
-					if id ~= "0" then
-						local existing = created[id]
-						if existing ~= nil then
-							pcall(existing.Destroy, existing)
-						end
+			:andThen(function(response)
+				for partitionName, partitionRoute in pairs(api.partitionRoutes) do
+					local parent = createFoldersUntil(game, partitionRoute)
 
-						local real = Instance.new(instance.className)
-						real.Name = instance.name
+					local rootInstanceId = response.partitionInstances[partitionName]
 
-						for key, value in pairs(instance.properties) do
-							real[key] = value
-						end
+					print("Root for", partitionName, "is", rootInstanceId)
 
-						created[id] = real
-					end
-				end
-
-				for id, instance in pairs(instances) do
-					if id ~= "0" then
-						created[id].Parent = created[tostring(instance.parent)]
-					end
-				end
-
-				for id, object in pairs(created) do
-					if not visited[id] then
-						object:Destroy()
-					end
+					reify(response.instances, rootInstanceId).Parent = parent
 				end
 			end)
 	end
@@ -58,7 +69,7 @@ function Session.new()
 	api = ApiContext.new(REMOTE_URL, function(message)
 		if message.type == "InstanceChanged" then
 			print("Instance", message.id, "changed!")
-			readAll()
+			-- readAll()
 		else
 			warn("Unknown message type " .. message.type)
 		end

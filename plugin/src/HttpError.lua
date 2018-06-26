@@ -8,7 +8,7 @@ HttpError.Error = {
 	},
 	ConnectFailed = {
 		message = "Rojo plugin couldn't connect to the Rojo server.\n" ..
-			"Make sure the server is running -- use 'Rojo serve' to run it!",
+			"Make sure the server is running -- use 'rojo serve' to run it!",
 	},
 	Timeout = {
 		message = "Rojo timed out during a request.",
