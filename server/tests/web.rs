@@ -448,4 +448,38 @@ fn partition_to_file() {
 
         assert_eq!(&Cow::Borrowed(instance), single_instance);
     }
+
+    let file_path = project_path.join("foo.lua");
+
+    {
+        let mut file = File::create(file_path).unwrap();
+        file.write_all(b"-- modified").unwrap();
+    }
+
+    {
+        // Block until Rojo detects our file being modified
+        let body = server.get_string("/api/subscribe/-1");
+        let response = serde_json::from_str::<SubscribeResponse>(&body).unwrap();
+
+        assert_eq!(response.server_id, "0");
+        assert_eq!(response.message_cursor, 0);
+        assert_eq!(response.messages.len(), 1);
+    }
+
+    {
+        let body = server.get_string("/api/read/0");
+        let response = serde_json::from_str::<ReadResponse>(&body).unwrap();
+
+        assert_eq!(response.server_id, "0");
+        assert_eq!(response.message_cursor, 0);
+        assert_eq!(response.instances.len(), 1);
+
+        let instance = response.instances.values().next().unwrap();
+
+        assert_eq!(instance.name, "bar");
+        assert_eq!(instance.class_name, "ModuleScript");
+        assert_eq!(instance.properties.get("Source"), Some(&RbxValue::String { value: "-- modified".to_string() }));
+        assert_eq!(instance.children.len(), 0);
+        assert_eq!(instance.parent, None);
+    }
 }
