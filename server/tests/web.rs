@@ -194,7 +194,9 @@ fn one_partition() {
 
                     assert_eq!(single_instance, &Cow::Borrowed(instance));
                 },
-                _ => {},
+                _ => {
+                    panic!("Unexpected instance named {} of class {}", instance.name, instance.class_name);
+                },
             }
         }
 
@@ -388,5 +390,4 @@ fn one_partition() {
     }
 
     // TODO: Test to change existing instance
-    // TODO: Copy each project into temp dir before using them
 }

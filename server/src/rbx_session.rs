@@ -9,6 +9,43 @@ use project::Project;
 use rbx::{RbxInstance, RbxTree, RbxValue};
 use vfs_session::{VfsSession, FileItem, FileChange};
 
+static SERVICES: &'static [&'static str] = &[
+    "Chat",
+    "Lighting",
+    "LocalizationService",
+    "Players",
+    "ReplicatedFirst",
+    "ReplicatedStorage",
+    "ServerScriptService",
+    "ServerStorage",
+    "SoundService",
+    "StarterGui",
+    "StarterPack",
+    "StarterPlayer",
+    "TestService",
+    "Workspace",
+];
+
+fn get_partition_target_class_name(target: &[String]) -> &'static str {
+    match target.len() {
+        1 => {
+            let target_name = &target[0];
+
+            for &service in SERVICES {
+                if service == target_name {
+                    return service;
+                }
+            }
+
+            "Folder"
+        },
+        2 => {
+            "Folder"
+        },
+        _ => "Folder",
+    }
+}
+
 // TODO: Rethink data structure and insertion/update behavior. Maybe break some
 // pieces off into a new object?
 fn file_to_instances(
@@ -32,10 +69,13 @@ fn file_to_instances(
 
             // This is placeholder logic; this whole function is!
             let (class_name, property_key, name) = {
-                let file_name = route.route.last().unwrap_or(&route.partition);
+                let file_name = match route.route.last() {
+                    Some(v) => v.to_string(),
+                    None => partition.path.file_name().unwrap().to_str().unwrap().to_string()
+                };
 
-                fn strip_suffix<'a>(source: &'a str, suffix: &'static str) -> &'a str {
-                    &source[..source.len() - suffix.len()]
+                fn strip_suffix<'a>(source: &'a str, suffix: &'static str) -> String {
+                    source[..source.len() - suffix.len()].to_string()
                 }
 
                 if file_name.ends_with(".client.lua") {
@@ -46,7 +86,7 @@ fn file_to_instances(
                     ("ModuleScript", "Source", strip_suffix(&file_name, ".lua"))
                 } else {
                     // TODO: Error/warn/skip instead of falling back
-                    ("StringValue", "Value", file_name.as_str())
+                    ("StringValue", "Value", file_name)
                 }
             };
 
@@ -54,7 +94,7 @@ fn file_to_instances(
             properties.insert(property_key.to_string(), RbxValue::String { value: contents.clone() });
 
             tree.insert_instance(primary_id, RbxInstance {
-                name: name.to_string(),
+                name,
                 class_name: class_name.to_string(),
                 properties,
                 children: Vec::new(),
@@ -90,9 +130,13 @@ fn file_to_instances(
                 }
             }
 
+            let class_name = get_partition_target_class_name(&route.route).to_string();
+
+            let name = route.name(partition);
+
             tree.insert_instance(primary_id, RbxInstance {
-                name: route.name(partition).to_string(),
-                class_name: "Folder".to_string(),
+                name,
+                class_name,
                 properties: HashMap::new(),
                 children: child_ids,
                 parent: parent_id,

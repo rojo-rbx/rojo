@@ -1,0 +1,10 @@
+{
+  "name": "partition-to-file",
+  "servePort": 23456,
+  "partitions": {
+    "lib": {
+      "path": "foo.lua",
+      "target": "ReplicatedStorage.foo"
+    }
+  }
+}
