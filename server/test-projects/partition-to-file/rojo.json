@@ -4,7 +4,7 @@
   "partitions": {
     "lib": {
       "path": "foo.lua",
-      "target": "ReplicatedStorage.foo"
+      "target": "ReplicatedStorage.bar"
     }
   }
 }

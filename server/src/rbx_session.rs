@@ -74,19 +74,47 @@ fn file_to_instances(
                     None => partition.path.file_name().unwrap().to_str().unwrap().to_string()
                 };
 
+                let use_partition_name = route.route.len() == 0;
+
+                let partition_name = partition.target.last().unwrap();
+
                 fn strip_suffix<'a>(source: &'a str, suffix: &'static str) -> String {
                     source[..source.len() - suffix.len()].to_string()
                 }
 
                 if file_name.ends_with(".client.lua") {
-                    ("LocalScript", "Source", strip_suffix(&file_name, ".client.lua"))
+                    let name = if use_partition_name {
+                        partition_name.clone()
+                    } else {
+                        strip_suffix(&file_name, ".client.lua")
+                    };
+
+                    ("LocalScript", "Source", name)
                 } else if file_name.ends_with(".server.lua") {
-                    ("Script", "Source", strip_suffix(&file_name, ".server.lua"))
+                    let name = if use_partition_name {
+                        partition_name.clone()
+                    } else {
+                        strip_suffix(&file_name, ".server.lua")
+                    };
+
+                    ("Script", "Source", name)
                 } else if file_name.ends_with(".lua") {
-                    ("ModuleScript", "Source", strip_suffix(&file_name, ".lua"))
+                    let name = if use_partition_name {
+                        partition_name.clone()
+                    } else {
+                        strip_suffix(&file_name, ".lua")
+                    };
+
+                    ("ModuleScript", "Source", name)
                 } else {
+                    let name = if use_partition_name {
+                        partition_name.clone()
+                    } else {
+                        file_name
+                    };
+
                     // TODO: Error/warn/skip instead of falling back
-                    ("StringValue", "Value", file_name)
+                    ("StringValue", "Value", name)
                 }
             };
 
@@ -132,7 +160,11 @@ fn file_to_instances(
 
             let class_name = get_partition_target_class_name(&route.route).to_string();
 
-            let name = route.name(partition);
+            let name = if route.route.len() == 0 {
+                partition.target.last().unwrap().clone()
+            } else {
+                route.file_name(partition)
+            };
 
             tree.insert_instance(primary_id, RbxInstance {
                 name,

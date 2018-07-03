@@ -13,6 +13,7 @@ pub struct FileRoute {
 impl FileRoute {
     pub fn from_path(path: &Path, partition: &Partition) -> Option<FileRoute> {
         assert!(path.is_absolute());
+        assert!(path.starts_with(&partition.path));
 
         let relative_path = path.strip_prefix(&partition.path).ok()?;
         let mut route = Vec::new();
@@ -70,20 +71,96 @@ impl FileRoute {
         result
     }
 
-    /// This function is totally wrong and should be handled by middleware, heh.
-    pub fn name(&self, partition: &Partition) -> String { // I guess??
+    pub fn file_name(&self, partition: &Partition) -> String {
         if self.route.len() == 0 {
-            // This FileRoute refers to the partition itself
-
-            if partition.target.len() == 0 {
-                // We're targeting the game!
-                "game".to_string()
-            } else {
-                partition.target.last().unwrap().clone()
-            }
+            partition.path.file_name().unwrap().to_str().unwrap().to_string()
         } else {
-            // This FileRoute refers to an item in a partition
             self.route.last().unwrap().clone()
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[cfg(windows)]
+    const ROOT_PATH: &'static str = "C:\\";
+
+    #[cfg(not(windows))]
+    const ROOT_PATH: &'static str = "/";
+
+    #[test]
+    fn from_path_empty() {
+        let path = Path::new(ROOT_PATH).join("a/b/c");
+
+        let partition = Partition {
+            name: "foo".to_string(),
+            path: path.clone(),
+            target: vec![],
+        };
+
+        let route = FileRoute::from_path(&path, &partition);
+
+        assert_eq!(route, Some(FileRoute {
+            partition: "foo".to_string(),
+            route: vec![],
+        }));
+    }
+
+    #[test]
+    fn from_path_non_empty() {
+        let partition_path = Path::new(ROOT_PATH).join("a/b/c");
+
+        let inside_path = partition_path.join("d");
+
+        let partition = Partition {
+            name: "bar".to_string(),
+            path: partition_path,
+            target: vec![],
+        };
+
+        let route = FileRoute::from_path(&inside_path, &partition);
+
+        assert_eq!(route, Some(FileRoute {
+            partition: "bar".to_string(),
+            route: vec!["d".to_string()],
+        }));
+    }
+
+    #[test]
+    fn file_name_empty_route() {
+        let partition_path = Path::new(ROOT_PATH).join("a/b/c");
+
+        let partition = Partition {
+            name: "bar".to_string(),
+            path: partition_path,
+            target: vec![],
+        };
+
+        let route = FileRoute {
+            partition: "bar".to_string(),
+            route: vec![],
+        };
+
+        assert_eq!(route.file_name(&partition), "c");
+    }
+
+    #[test]
+    fn file_name_non_empty_route() {
+        let partition_path = Path::new(ROOT_PATH).join("a/b/c");
+
+        let partition = Partition {
+            name: "bar".to_string(),
+            path: partition_path,
+            target: vec![],
+        };
+
+        let route = FileRoute {
+            partition: "bar".to_string(),
+            route: vec!["foo".to_string(), "hello.lua".to_string()],
+        };
+
+        assert_eq!(route.file_name(&partition), "hello.lua");
     }
 }
