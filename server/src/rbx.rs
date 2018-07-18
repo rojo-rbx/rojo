@@ -26,6 +26,7 @@ pub struct RbxInstance {
     /// All of the children of this instance. Order is relevant to preserve!
     pub children: Vec<Id>,
 
+    /// The parent of the instance, if there is one.
     pub parent: Option<Id>,
 }
 
