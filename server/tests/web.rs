@@ -1,3 +1,5 @@
+#[macro_use] extern crate lazy_static;
+
 extern crate rouille;
 extern crate serde_json;
 extern crate serde;
@@ -22,13 +24,17 @@ use librojo::{
     rbx::RbxValue,
 };
 
-#[test]
-fn empty() {
-    let original_project_path = {
+lazy_static! {
+    static ref TEST_PROJECTS_ROOT: PathBuf = {
         let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        path.push("test-projects/empty");
+        path.push("../test-projects");
         path
     };
+}
+
+#[test]
+fn empty() {
+    let original_project_path = TEST_PROJECTS_ROOT.join("empty");
 
     let project_tempdir = tempfile::tempdir().unwrap();
     let project_path = project_tempdir.path();
@@ -72,11 +78,7 @@ fn empty() {
 
 #[test]
 fn one_partition() {
-    let original_project_path = {
-        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        path.push("test-projects/one-partition");
-        path
-    };
+    let original_project_path = TEST_PROJECTS_ROOT.join("one-partition");
 
     let project_tempdir = tempfile::tempdir().unwrap();
     let project_path = project_tempdir.path();
@@ -394,11 +396,7 @@ fn one_partition() {
 
 #[test]
 fn partition_to_file() {
-    let original_project_path = {
-        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        path.push("test-projects/partition-to-file");
-        path
-    };
+    let original_project_path = TEST_PROJECTS_ROOT.join("partition-to-file");
 
     let project_tempdir = tempfile::tempdir().unwrap();
     let project_path = project_tempdir.path();
