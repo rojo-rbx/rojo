@@ -4,7 +4,8 @@
 
 -- If you add any dependencies, add them to this table so they'll be loaded!
 local LOAD_MODULES = {
-	{"src", "Plugin"},
+	{"src", "plugin"},
+	{"modules/promise/lib", "Promise"},
 	{"modules/testez/lib", "TestEZ"},
 }
 
@@ -31,7 +32,7 @@ end
 -- Load TestEZ and run our tests
 local TestEZ = habitat:require(Root.TestEZ)
 
-local results = TestEZ.TestBootstrap:run(Root.Plugin, TestEZ.Reporters.TextReporter)
+local results = TestEZ.TestBootstrap:run(Root.plugin, TestEZ.Reporters.TextReporter)
 
 -- Did something go wrong?
 if results.failureCount > 0 then

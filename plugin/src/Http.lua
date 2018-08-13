@@ -2,7 +2,7 @@ local HttpService = game:GetService("HttpService")
 
 local HTTP_DEBUG = false
 
-local Promise = require(script.Parent.Parent.modules.Promise)
+local Promise = require(script.Parent.Parent.Promise)
 
 local HttpError = require(script.Parent.HttpError)
 local HttpResponse = require(script.Parent.HttpResponse)

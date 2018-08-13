@@ -1,4 +1,4 @@
-local Promise = require(script.Parent.Parent.modules.Promise)
+local Promise = require(script.Parent.Parent.Promise)
 
 local Config = require(script.Parent.Config)
 local Version = require(script.Parent.Version)
