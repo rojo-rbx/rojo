@@ -427,7 +427,7 @@ fn partition_to_file() {
         assert_eq!(response.message_cursor, -1);
         assert_eq!(response.instances.len(), 1);
 
-        let instance = response.instances.values().next().unwrap();
+        let (id, instance) = response.instances.iter().next().unwrap();
 
         assert_eq!(instance.name, "bar");
         assert_eq!(instance.class_name, "ModuleScript");
@@ -435,7 +435,7 @@ fn partition_to_file() {
         assert_eq!(instance.children.len(), 0);
         assert_eq!(instance.parent, None);
 
-        let body = server.get_string("/api/read/0");
+        let body = server.get_string(&format!("/api/read/{}", id));
         let response = serde_json::from_str::<ReadResponse>(&body).unwrap();
 
         assert_eq!(response.server_id, "0");
