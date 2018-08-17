@@ -1,5 +1,5 @@
 return {
-	pollingRate = 0.2,
+	pollingRate = 0.3,
 	version = {0, 4, 12},
 	expectedServerVersionString = "0.4.x",
 	protocolVersion = 1,
