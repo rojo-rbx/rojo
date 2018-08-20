@@ -18,5 +18,6 @@ pub mod project;
 pub mod rbx;
 pub mod roblox_studio;
 pub mod session;
+pub mod vfs;
 pub mod web;
 pub mod web_util;
