@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::sync::{mpsc, Arc, RwLock, Mutex};
+use std::sync::{mpsc, RwLock, Mutex};
 
 use id::{Id, get_id};
 
@@ -11,17 +11,16 @@ pub enum Message {
     },
 }
 
-#[derive(Clone)]
 pub struct MessageSession {
-   pub messages: Arc<RwLock<Vec<Message>>>,
-   pub message_listeners: Arc<Mutex<HashMap<Id, mpsc::Sender<()>>>>,
+   messages: RwLock<Vec<Message>>,
+   message_listeners: Mutex<HashMap<Id, mpsc::Sender<()>>>,
 }
 
 impl MessageSession {
     pub fn new() -> MessageSession {
         MessageSession {
-            messages: Arc::new(RwLock::new(Vec::new())),
-            message_listeners: Arc::new(Mutex::new(HashMap::new())),
+            messages: RwLock::new(Vec::new()),
+            message_listeners: Mutex::new(HashMap::new()),
         }
     }
 
@@ -58,7 +57,25 @@ impl MessageSession {
         }
     }
 
-    pub fn get_message_cursor(&self) -> i32 {
-        self.messages.read().unwrap().len() as i32 - 1
+    pub fn get_message_cursor(&self) -> u32 {
+        self.messages.read().unwrap().len() as u32
+    }
+
+    pub fn get_messages_since(&self, cursor: u32) -> (u32, Vec<Message>) {
+        let messages = self.messages.read().unwrap();
+
+        let current_cursor = messages.len() as u32;
+
+        // Cursor is out of bounds
+        if cursor > current_cursor {
+            return (current_cursor, Vec::new());
+        }
+
+        // No new messages
+        if cursor == current_cursor {
+            return (current_cursor, Vec::new());
+        }
+
+        (current_cursor, messages[(cursor as usize)..].to_vec())
     }
 }

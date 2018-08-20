@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use id::Id;
+use id::{Id, get_id};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type")]
@@ -30,6 +30,12 @@ pub struct RbxInstance {
 
     /// The parent of the instance, if there is one.
     parent: Option<Id>,
+}
+
+impl RbxInstance {
+    pub fn get_id(&self) -> Id {
+        self.id
+    }
 }
 
 pub struct Descendants<'a> {
@@ -65,12 +71,27 @@ impl<'a> Iterator for Descendants<'a> {
 
 pub struct RbxTree {
     instances: HashMap<Id, RbxInstance>,
+    pub root_instance_id: Id,
 }
 
 impl RbxTree {
     pub fn new() -> RbxTree {
+        let root_instance_id = get_id();
+        let root_instance = RbxInstance {
+            name: "game".to_string(),
+            class_name: "DataModel".to_string(),
+            properties: HashMap::new(),
+            id: root_instance_id,
+            children: Vec::new(),
+            parent: None,
+        };
+
+        let mut instances = HashMap::new();
+        instances.insert(root_instance_id, root_instance);
+
         RbxTree {
-            instances: HashMap::new(),
+            instances,
+            root_instance_id,
         }
     }
 
@@ -82,18 +103,23 @@ impl RbxTree {
         &self.instances
     }
 
-    pub fn insert_instance(&mut self, instance: RbxInstance) {
-        if let Some(parent_id) = instance.parent {
-            match self.instances.get_mut(&parent_id) {
-                Some(mut parent) => {
-                    if !parent.children.contains(&instance.id) {
-                        parent.children.push(instance.id);
+    pub fn insert_instance(&mut self, mut instance: RbxInstance) {
+        match instance.parent {
+            Some(parent_id) => {
+                match self.instances.get_mut(&parent_id) {
+                    Some(mut parent) => {
+                        if !parent.children.contains(&instance.id) {
+                            parent.children.push(instance.id);
+                        }
+                    },
+                    None => {
+                        panic!("Tree consistency error, parent {} was not present in tree.", parent_id);
                     }
-                },
-                None => {
-                    panic!("Tree consistency error, parent {} was not present in tree.", parent_id);
                 }
-            }
+            },
+            None => {
+                instance.parent = Some(self.root_instance_id);
+            },
         }
 
         self.instances.insert(instance.id, instance);
@@ -136,9 +162,19 @@ impl RbxTree {
     }
 
     pub fn iter_descendants<'a>(&'a self, id: Id) -> Descendants<'a> {
-        Descendants {
-            tree: self,
-            ids_to_visit: vec![id],
+        match self.get_instance(id) {
+            Some(instance) => {
+                Descendants {
+                    tree: self,
+                    ids_to_visit: instance.children.clone(),
+                }
+            },
+            None => {
+                Descendants {
+                    tree: self,
+                    ids_to_visit: vec![],
+                }
+            },
         }
     }
 }
