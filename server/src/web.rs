@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use std::sync::{mpsc, Arc};
 
 use rouille::{self, Request, Response};
-use rand;
 
 use ::{
     id::Id,
@@ -16,7 +15,7 @@ use ::{
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ServerInfoResponse<'a> {
-    pub server_id: &'a str,
+    pub session_id: &'a str,
     pub server_version: &'a str,
     pub protocol_version: u64,
     pub root_instance_id: Id,
@@ -25,7 +24,7 @@ pub struct ServerInfoResponse<'a> {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ReadResponse<'a> {
-    pub server_id: &'a str,
+    pub session_id: &'a str,
     pub message_cursor: u32,
     pub instances: HashMap<Id, Cow<'a, RbxInstance>>,
 }
@@ -33,7 +32,7 @@ pub struct ReadResponse<'a> {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SubscribeResponse<'a> {
-    pub server_id: &'a str,
+    pub session_id: &'a str,
     pub message_cursor: u32,
     pub messages: Cow<'a, [Message]>,
 }
@@ -41,17 +40,13 @@ pub struct SubscribeResponse<'a> {
 pub struct Server {
     session: Arc<Session>,
     server_version: &'static str,
-    server_id: String,
 }
 
 impl Server {
     pub fn new(session: Arc<Session>) -> Server {
-        let server_id = rand::random::<u64>().to_string();
-
         Server {
             session: session,
             server_version: env!("CARGO_PKG_VERSION"),
-            server_id,
         }
     }
 
@@ -70,7 +65,7 @@ impl Server {
                 Response::json(&ServerInfoResponse {
                     server_version: self.server_version,
                     protocol_version: 2,
-                    server_id: &self.server_id,
+                    session_id: &self.session.session_id,
                     root_instance_id: tree.root_instance_id,
                 })
             },
@@ -87,7 +82,7 @@ impl Server {
 
                     if new_messages.len() > 0 {
                         return Response::json(&SubscribeResponse {
-                            server_id: &self.server_id,
+                            session_id: &self.session.session_id,
                             messages: Cow::Borrowed(&[]),
                             message_cursor: new_cursor,
                         })
@@ -109,7 +104,7 @@ impl Server {
                     let (new_cursor, new_messages) = message_queue.get_messages_since(cursor);
 
                     return Response::json(&SubscribeResponse {
-                        server_id: &self.server_id,
+                        session_id: &self.session.session_id,
                         messages: Cow::Owned(new_messages),
                         message_cursor: new_cursor,
                     })
@@ -149,7 +144,7 @@ impl Server {
                 }
 
                 Response::json(&ReadResponse {
-                    server_id: &self.server_id,
+                    session_id: &self.session.session_id,
                     message_cursor,
                     instances,
                 })
