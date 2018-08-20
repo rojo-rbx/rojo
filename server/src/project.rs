@@ -107,11 +107,28 @@ impl fmt::Display for ProjectInitError {
 }
 
 #[derive(Debug)]
-pub enum ProjectLoadFuzzyError {}
+pub enum ProjectLoadFuzzyError {
+    NotFound,
+    IoError(io::Error),
+    JsonError(serde_json::Error),
+}
+
+impl From<ProjectLoadExactError> for ProjectLoadFuzzyError {
+    fn from(error: ProjectLoadExactError) -> ProjectLoadFuzzyError {
+        match error {
+            ProjectLoadExactError::IoError(inner) => ProjectLoadFuzzyError::IoError(inner),
+            ProjectLoadExactError::JsonError(inner) => ProjectLoadFuzzyError::JsonError(inner),
+        }
+    }
+}
 
 impl fmt::Display for ProjectLoadFuzzyError {
     fn fmt(&self, output: &mut fmt::Formatter) -> fmt::Result {
-        write!(output, "ProjectLoadFuzzyError")
+        match self {
+            ProjectLoadFuzzyError::NotFound => write!(output, "Project not found."),
+            ProjectLoadFuzzyError::IoError(inner) => write!(output, "{}", inner),
+            ProjectLoadFuzzyError::JsonError(inner) => write!(output, "{}", inner),
+        }
     }
 }
 
@@ -149,12 +166,39 @@ impl Project {
         unimplemented!();
     }
 
-    pub fn locate(_start_location: &Path) -> Option<PathBuf> {
-        unimplemented!();
+    pub fn locate(start_location: &Path) -> Option<PathBuf> {
+        // TODO: Check for specific error kinds, convert 'not found' to Result.
+        let location_metadata = fs::metadata(start_location).ok()?;
+
+        // If this is a file, we should assume it's the config we want
+        if location_metadata.is_file() {
+            return Some(start_location.to_path_buf());
+        } else if location_metadata.is_dir() {
+            let with_file = start_location.join(PROJECT_FILENAME);
+
+            match fs::metadata(&with_file) {
+                Ok(with_file_metadata) => {
+                    if with_file_metadata.is_file() {
+                        return Some(with_file);
+                    } else {
+                        return None;
+                    }
+                },
+                Err(_) => {},
+            }
+        }
+
+        match start_location.parent() {
+            Some(parent_location) => Self::locate(parent_location),
+            None => None,
+        }
     }
 
-    pub fn load_fuzzy(_fuzzy_project_location: &Path) -> Result<Project, ProjectLoadFuzzyError> {
-        unimplemented!();
+    pub fn load_fuzzy(fuzzy_project_location: &Path) -> Result<Project, ProjectLoadFuzzyError> {
+        let project_path = Self::locate(fuzzy_project_location)
+            .ok_or(ProjectLoadFuzzyError::NotFound)?;
+
+        Self::load_exact(&project_path).map_err(From::from)
     }
 
     pub fn load_exact(project_file_location: &Path) -> Result<Project, ProjectLoadExactError> {
@@ -168,6 +212,8 @@ impl Project {
     }
 
     pub fn save(&self) -> Result<(), ProjectSaveError> {
+        let _source_project = self.to_source_project();
+
         unimplemented!();
     }
 
