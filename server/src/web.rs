@@ -8,28 +8,16 @@ use id::Id;
 use message_session::{MessageSession, Message};
 use project::Project;
 use rbx::RbxInstance;
-use rbx_session::RbxSession;
-use session::Session;
+// use rbx_session::RbxSession;
+// use session::Session;
 
 /// The set of configuration the web server needs to start.
 pub struct WebConfig {
     pub port: u64,
     pub project: Project,
     pub server_id: u64,
-    pub rbx_session: Arc<RwLock<RbxSession>>,
+    // pub rbx_session: Arc<RwLock<RbxSession>>,
     pub message_session: MessageSession,
-}
-
-impl WebConfig {
-    pub fn from_session(server_id: u64, port: u64, session: &Session) -> WebConfig {
-        WebConfig {
-            port,
-            server_id,
-            project: session.project.clone(),
-            rbx_session: session.get_rbx_session(),
-            message_session: session.get_message_session(),
-        }
-    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -38,7 +26,7 @@ pub struct ServerInfoResponse<'a> {
     pub server_id: &'a str,
     pub server_version: &'a str,
     pub protocol_version: u64,
-    pub partitions: HashMap<String, Vec<String>>,
+    // pub partitions: HashMap<String, Vec<String>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -46,8 +34,8 @@ pub struct ServerInfoResponse<'a> {
 pub struct ReadAllResponse<'a> {
     pub server_id: &'a str,
     pub message_cursor: i32,
-    pub instances: Cow<'a, HashMap<Id, RbxInstance>>,
-    pub partition_instances: Cow<'a, HashMap<String, Id>>,
+    // pub instances: Cow<'a, HashMap<Id, RbxInstance>>,
+    // pub partition_instances: Cow<'a, HashMap<String, Id>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -55,7 +43,7 @@ pub struct ReadAllResponse<'a> {
 pub struct ReadResponse<'a> {
     pub server_id: &'a str,
     pub message_cursor: i32,
-    pub instances: HashMap<Id, Cow<'a, RbxInstance>>,
+    // pub instances: HashMap<Id, Cow<'a, RbxInstance>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -90,17 +78,17 @@ impl Server {
             (GET) (/api/rojo) => {
                 // Get a summary of information about the server.
 
-                let mut partitions = HashMap::new();
+                // let mut partitions = HashMap::new();
 
-                for partition in self.config.project.partitions.values() {
-                    partitions.insert(partition.name.clone(), partition.target.clone());
-                }
+                // for partition in self.config.project.partitions.values() {
+                //     partitions.insert(partition.name.clone(), partition.target.clone());
+                // }
 
                 Response::json(&ServerInfoResponse {
                     server_version: self.server_version,
                     protocol_version: 2,
                     server_id: &self.server_id,
-                    partitions: partitions,
+                    // partitions: partitions,
                 })
             },
 
@@ -157,15 +145,15 @@ impl Server {
             },
 
             (GET) (/api/read_all) => {
-                let rbx_session = self.config.rbx_session.read().unwrap();
+                // let rbx_session = self.config.rbx_session.read().unwrap();
 
                 let message_cursor = self.config.message_session.get_message_cursor();
 
                 Response::json(&ReadAllResponse {
                     server_id: &self.server_id,
                     message_cursor,
-                    instances: Cow::Borrowed(rbx_session.tree.get_all_instances()),
-                    partition_instances: Cow::Borrowed(&rbx_session.partition_instances),
+                    // instances: Cow::Borrowed(rbx_session.tree.get_all_instances()),
+                    // partition_instances: Cow::Borrowed(&rbx_session.partition_instances),
                 })
             },
 
@@ -180,20 +168,20 @@ impl Server {
                     Err(_) => return rouille::Response::text("Malformed ID list").with_status_code(400),
                 };
 
-                let rbx_session = self.config.rbx_session.read().unwrap();
+                // let rbx_session = self.config.rbx_session.read().unwrap();
 
                 let message_cursor = self.config.message_session.get_message_cursor();
 
-                let mut instances = HashMap::new();
+                // let mut instances = HashMap::new();
 
-                for requested_id in &requested_ids {
-                    rbx_session.tree.get_instance_and_descendants(*requested_id, &mut instances);
-                }
+                // for requested_id in &requested_ids {
+                //     rbx_session.tree.get_instance_and_descendants(*requested_id, &mut instances);
+                // }
 
                 Response::json(&ReadResponse {
                     server_id: &self.server_id,
                     message_cursor,
-                    instances,
+                    // instances,
                 })
             },
 

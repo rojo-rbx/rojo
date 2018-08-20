@@ -4,7 +4,7 @@ extern crate librojo;
 
 use std::{
     collections::HashMap,
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 
 use librojo::{
@@ -13,9 +13,7 @@ use librojo::{
 
 lazy_static! {
     static ref TEST_PROJECTS_ROOT: PathBuf = {
-        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        path.push("../test-projects");
-        path
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("../test-projects")
     };
 }
 

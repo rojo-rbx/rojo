@@ -16,6 +16,6 @@ pub mod message_session;
 pub mod pathext;
 pub mod project;
 pub mod rbx;
-// pub mod web;
+pub mod web;
 pub mod web_util;
 pub mod roblox_studio;

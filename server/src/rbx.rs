@@ -1,4 +1,3 @@
-use std::borrow::Cow;
 use std::collections::HashMap;
 
 use id::Id;
@@ -23,18 +22,44 @@ pub struct RbxInstance {
     /// Contains all other properties of an Instance.
     pub properties: HashMap<String, RbxValue>,
 
+    /// The unique ID of the instance
+    id: Id,
+
     /// All of the children of this instance. Order is relevant to preserve!
-    pub children: Vec<Id>,
+    children: Vec<Id>,
 
     /// The parent of the instance, if there is one.
-    pub parent: Option<Id>,
+    parent: Option<Id>,
 }
 
-// This seems like a really bad idea?
-// Why isn't there a blanket impl for this for all T?
-impl<'a> From<&'a RbxInstance> for Cow<'a, RbxInstance> {
-    fn from(instance: &'a RbxInstance) -> Cow<'a, RbxInstance> {
-        Cow::Borrowed(instance)
+pub struct Descendants<'a> {
+    tree: &'a RbxTree,
+    ids_to_visit: Vec<Id>,
+}
+
+impl<'a> Iterator for Descendants<'a> {
+    type Item = &'a RbxInstance;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            let id = match self.ids_to_visit.pop() {
+                Some(id) => id,
+                None => break,
+            };
+
+            match self.tree.get_instance(id) {
+                Some(instance) => {
+                    for child_id in &instance.children {
+                        self.ids_to_visit.push(*child_id);
+                    }
+
+                    return Some(instance);
+                },
+                None => continue,
+            }
+        }
+
+        None
     }
 }
 
@@ -49,20 +74,29 @@ impl RbxTree {
         }
     }
 
+    pub fn get_instance(&self, id: Id) -> Option<&RbxInstance> {
+        self.instances.get(&id)
+    }
+
     pub fn get_all_instances(&self) -> &HashMap<Id, RbxInstance> {
         &self.instances
     }
 
-    pub fn insert_instance(&mut self, id: Id, instance: RbxInstance) {
+    pub fn insert_instance(&mut self, instance: RbxInstance) {
         if let Some(parent_id) = instance.parent {
-            if let Some(mut parent) = self.instances.get_mut(&parent_id) {
-                if !parent.children.contains(&id) {
-                    parent.children.push(id);
+            match self.instances.get_mut(&parent_id) {
+                Some(mut parent) => {
+                    if !parent.children.contains(&instance.id) {
+                        parent.children.push(instance.id);
+                    }
+                },
+                None => {
+                    panic!("Tree consistency error, parent {} was not present in tree.", parent_id);
                 }
             }
         }
 
-        self.instances.insert(id, instance);
+        self.instances.insert(instance.id, instance);
     }
 
     pub fn delete_instance(&mut self, id: Id) -> Vec<Id> {
@@ -101,27 +135,10 @@ impl RbxTree {
         ids_deleted
     }
 
-    pub fn get_instance_and_descendants<'a, 'b, T>(&'a self, id: Id, output: &'b mut HashMap<Id, T>)
-        where T: From<&'a RbxInstance>
-    {
-        let mut ids_to_visit = vec![id];
-
-        loop {
-            let id = match ids_to_visit.pop() {
-                Some(id) => id,
-                None => break,
-            };
-
-            match self.instances.get(&id) {
-                Some(instance) => {
-                    output.insert(id, instance.into());
-
-                    for child_id in &instance.children {
-                        ids_to_visit.push(*child_id);
-                    }
-                },
-                None => continue,
-            }
+    pub fn iter_descendants<'a>(&'a self, id: Id) -> Descendants<'a> {
+        Descendants {
+            tree: self,
+            ids_to_visit: vec![id],
         }
     }
 }
