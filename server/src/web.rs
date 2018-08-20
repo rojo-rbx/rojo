@@ -7,12 +7,11 @@ use rand;
 
 use ::{
     id::Id,
-    message_session::Message,
+    message_queue::Message,
     project::Project,
     rbx::RbxInstance,
     serve_session::ServeSession,
 };
-
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -28,7 +27,7 @@ pub struct ServerInfoResponse<'a> {
 pub struct ReadResponse<'a> {
     pub server_id: &'a str,
     pub message_cursor: u32,
-    // pub instances: HashMap<Id, Cow<'a, RbxInstance>>,
+    pub instances: HashMap<Id, Cow<'a, RbxInstance>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -80,7 +79,7 @@ impl Server {
 
                 // Did the client miss any messages since the last subscribe?
                 {
-                    let (new_cursor, new_messages) = self.session.get_messages().get_messages_since(cursor);
+                    let (new_cursor, new_messages) = self.session.get_message_queue().get_messages_since(cursor);
 
                     if new_messages.len() > 0 {
                         return Response::json(&SubscribeResponse {
@@ -93,17 +92,17 @@ impl Server {
 
                 let (tx, rx) = mpsc::channel();
 
-                let sender_id = self.session.get_messages().subscribe(tx);
+                let sender_id = self.session.get_message_queue().subscribe(tx);
 
                 match rx.recv() {
                     Ok(_) => (),
                     Err(_) => return Response::text("error!").with_status_code(500),
                 }
 
-                self.session.get_messages().unsubscribe(sender_id);
+                self.session.get_message_queue().unsubscribe(sender_id);
 
                 {
-                    let (new_cursor, new_messages) = self.session.get_messages().get_messages_since(cursor);
+                    let (new_cursor, new_messages) = self.session.get_message_queue().get_messages_since(cursor);
 
                     return Response::json(&SubscribeResponse {
                         server_id: &self.server_id,
@@ -126,17 +125,17 @@ impl Server {
 
                 let rbx_tree = self.session.get_tree();
 
-                let message_cursor = self.session.get_messages().get_message_cursor();
+                let message_cursor = self.session.get_message_queue().get_message_cursor();
 
                 let mut instances = HashMap::new();
 
                 for &requested_id in &requested_ids {
                     match rbx_tree.get_instance(requested_id) {
                         Some(instance) => {
-                            instances.insert(instance.get_id(), instance);
+                            instances.insert(instance.get_id(), Cow::Borrowed(instance));
 
                             for descendant in rbx_tree.iter_descendants(requested_id) {
-                                instances.insert(descendant.get_id(), descendant);
+                                instances.insert(descendant.get_id(), Cow::Borrowed(descendant));
                             }
                         },
                         None => {},
@@ -146,7 +145,7 @@ impl Server {
                 Response::json(&ReadResponse {
                     server_id: &self.server_id,
                     message_cursor,
-                    // instances,
+                    instances,
                 })
             },
 

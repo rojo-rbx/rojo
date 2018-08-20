@@ -3,14 +3,14 @@ use std::{
 };
 
 use ::{
-    message_session::MessageSession,
+    message_queue::MessageQueue,
     rbx::RbxTree,
     project::Project,
 };
 
 pub struct ServeSession {
     project: Project,
-    messages: Arc<MessageSession>,
+    message_queue: Arc<MessageQueue>,
     tree: Arc<RbxTree>,
 }
 
@@ -18,7 +18,7 @@ impl ServeSession {
     pub fn new(project: Project) -> ServeSession {
         ServeSession {
             project,
-            messages: Arc::new(MessageSession::new()),
+            message_queue: Arc::new(MessageQueue::new()),
             tree: Arc::new(RbxTree::new()),
         }
     }
@@ -27,8 +27,8 @@ impl ServeSession {
         &self.project
     }
 
-    pub fn get_messages(&self) -> &MessageSession {
-        &self.messages
+    pub fn get_message_queue(&self) -> &MessageQueue {
+        &self.message_queue
     }
 
     pub fn get_tree(&self) -> &RbxTree {

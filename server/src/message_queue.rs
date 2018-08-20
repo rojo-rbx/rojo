@@ -11,14 +11,14 @@ pub enum Message {
     },
 }
 
-pub struct MessageSession {
+pub struct MessageQueue {
    messages: RwLock<Vec<Message>>,
    message_listeners: Mutex<HashMap<Id, mpsc::Sender<()>>>,
 }
 
-impl MessageSession {
-    pub fn new() -> MessageSession {
-        MessageSession {
+impl MessageQueue {
+    pub fn new() -> MessageQueue {
+        MessageQueue {
             messages: RwLock::new(Vec::new()),
             message_listeners: Mutex::new(HashMap::new()),
         }
@@ -66,13 +66,8 @@ impl MessageSession {
 
         let current_cursor = messages.len() as u32;
 
-        // Cursor is out of bounds
-        if cursor > current_cursor {
-            return (current_cursor, Vec::new());
-        }
-
-        // No new messages
-        if cursor == current_cursor {
+        // Cursor is out of bounds or there are no new messages
+        if cursor >= current_cursor {
             return (current_cursor, Vec::new());
         }
 

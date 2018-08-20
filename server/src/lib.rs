@@ -12,7 +12,7 @@ extern crate tempfile;
 
 pub mod commands;
 pub mod id;
-pub mod message_session;
+pub mod message_queue;
 pub mod pathext;
 pub mod project;
 pub mod rbx;
