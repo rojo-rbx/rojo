@@ -1,6 +1,8 @@
-use std::borrow::Cow;
-use std::collections::HashMap;
-use std::sync::{mpsc, Arc};
+use std::{
+    borrow::Cow,
+    collections::HashMap,
+    sync::{mpsc, Arc},
+};
 
 use rouille::{self, Request, Response};
 
