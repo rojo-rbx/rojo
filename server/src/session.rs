@@ -1,5 +1,5 @@
 use std::{
-    sync::Arc,
+    sync::{Arc, RwLock},
 };
 
 use ::{
@@ -10,8 +10,8 @@ use ::{
 
 pub struct Session {
     project: Project,
-    message_queue: Arc<MessageQueue>,
-    tree: Arc<RbxTree>,
+    pub message_queue: Arc<MessageQueue>,
+    pub tree: Arc<RwLock<RbxTree>>,
 }
 
 impl Session {
@@ -19,19 +19,11 @@ impl Session {
         Session {
             project,
             message_queue: Arc::new(MessageQueue::new()),
-            tree: Arc::new(RbxTree::new()),
+            tree: Arc::new(RwLock::new(RbxTree::new())),
         }
     }
 
     pub fn get_project(&self) -> &Project {
         &self.project
-    }
-
-    pub fn get_message_queue(&self) -> &MessageQueue {
-        &self.message_queue
-    }
-
-    pub fn get_tree(&self) -> &RbxTree {
-        &self.tree
     }
 }

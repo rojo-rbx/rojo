@@ -65,11 +65,13 @@ impl Server {
             (GET) (/api/rojo) => {
                 // Get a summary of information about the server.
 
+                let tree = self.session.tree.read().unwrap();
+
                 Response::json(&ServerInfoResponse {
                     server_version: self.server_version,
                     protocol_version: 2,
                     server_id: &self.server_id,
-                    root_instance_id: self.session.get_tree().root_instance_id,
+                    root_instance_id: tree.root_instance_id,
                 })
             },
 
@@ -77,9 +79,11 @@ impl Server {
                 // Retrieve any messages past the given cursor index, and if
                 // there weren't any, subscribe to receive any new messages.
 
+                let message_queue = Arc::clone(&self.session.message_queue);
+
                 // Did the client miss any messages since the last subscribe?
                 {
-                    let (new_cursor, new_messages) = self.session.get_message_queue().get_messages_since(cursor);
+                    let (new_cursor, new_messages) = message_queue.get_messages_since(cursor);
 
                     if new_messages.len() > 0 {
                         return Response::json(&SubscribeResponse {
@@ -92,17 +96,17 @@ impl Server {
 
                 let (tx, rx) = mpsc::channel();
 
-                let sender_id = self.session.get_message_queue().subscribe(tx);
+                let sender_id = message_queue.subscribe(tx);
 
                 match rx.recv() {
                     Ok(_) => (),
                     Err(_) => return Response::text("error!").with_status_code(500),
                 }
 
-                self.session.get_message_queue().unsubscribe(sender_id);
+                message_queue.unsubscribe(sender_id);
 
                 {
-                    let (new_cursor, new_messages) = self.session.get_message_queue().get_messages_since(cursor);
+                    let (new_cursor, new_messages) = message_queue.get_messages_since(cursor);
 
                     return Response::json(&SubscribeResponse {
                         server_id: &self.server_id,
@@ -113,6 +117,8 @@ impl Server {
             },
 
             (GET) (/api/read/{ id_list: String }) => {
+                let message_queue = Arc::clone(&self.session.message_queue);
+
                 let requested_ids: Result<Vec<Id>, _> = id_list
                     .split(",")
                     .map(str::parse)
@@ -123,18 +129,18 @@ impl Server {
                     Err(_) => return rouille::Response::text("Malformed ID list").with_status_code(400),
                 };
 
-                let rbx_tree = self.session.get_tree();
+                let tree = self.session.tree.read().unwrap();
 
-                let message_cursor = self.session.get_message_queue().get_message_cursor();
+                let message_cursor = message_queue.get_message_cursor();
 
                 let mut instances = HashMap::new();
 
                 for &requested_id in &requested_ids {
-                    match rbx_tree.get_instance(requested_id) {
+                    match tree.get_instance(requested_id) {
                         Some(instance) => {
                             instances.insert(instance.get_id(), Cow::Borrowed(instance));
 
-                            for descendant in rbx_tree.iter_descendants(requested_id) {
+                            for descendant in tree.iter_descendants(requested_id) {
                                 instances.insert(descendant.get_id(), Cow::Borrowed(descendant));
                             }
                         },
