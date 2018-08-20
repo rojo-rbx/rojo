@@ -7,7 +7,7 @@ use std::{
 use ::{
     project::Project,
     web::Server,
-    serve_session::ServeSession,
+    session::Session,
     roblox_studio,
 };
 
@@ -25,7 +25,7 @@ pub fn serve(fuzzy_project_location: &Path) {
 
     roblox_studio::install_bundled_plugin().unwrap();
 
-    let session = Arc::new(ServeSession::new(project));
+    let session = Arc::new(Session::new(project));
     let server = Server::new(Arc::from(session));
 
     println!("Server listening on port 8000.");

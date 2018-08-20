@@ -10,7 +10,7 @@ use ::{
     message_queue::Message,
     project::Project,
     rbx::RbxInstance,
-    serve_session::ServeSession,
+    session::Session,
 };
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -39,13 +39,13 @@ pub struct SubscribeResponse<'a> {
 }
 
 pub struct Server {
-    session: Arc<ServeSession>,
+    session: Arc<Session>,
     server_version: &'static str,
     server_id: String,
 }
 
 impl Server {
-    pub fn new(session: Arc<ServeSession>) -> Server {
+    pub fn new(session: Arc<Session>) -> Server {
         let server_id = rand::random::<u64>().to_string();
 
         Server {

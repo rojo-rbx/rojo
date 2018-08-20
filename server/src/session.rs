@@ -8,15 +8,15 @@ use ::{
     project::Project,
 };
 
-pub struct ServeSession {
+pub struct Session {
     project: Project,
     message_queue: Arc<MessageQueue>,
     tree: Arc<RbxTree>,
 }
 
-impl ServeSession {
-    pub fn new(project: Project) -> ServeSession {
-        ServeSession {
+impl Session {
+    pub fn new(project: Project) -> Session {
+        Session {
             project,
             message_queue: Arc::new(MessageQueue::new()),
             tree: Arc::new(RbxTree::new()),
