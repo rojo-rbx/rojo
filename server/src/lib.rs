@@ -11,17 +11,11 @@ extern crate regex;
 extern crate tempfile;
 
 pub mod commands;
-pub mod file_route;
 pub mod id;
 pub mod message_session;
-pub mod partition;
-pub mod partition_watcher;
 pub mod pathext;
 pub mod project;
 pub mod rbx;
-pub mod rbx_session;
-pub mod session;
-pub mod vfs_session;
-pub mod web;
+// pub mod web;
 pub mod web_util;
 pub mod roblox_studio;

@@ -1,40 +1,36 @@
-use std::path::PathBuf;
+use std::path::Path;
 use std::process;
 use std::fs;
 
 use rand;
 
 use project::Project;
-use web::{self, WebConfig};
-use session::Session;
+// use web::{self, WebConfig};
+// use session::Session;
 use roblox_studio;
 
-pub fn serve(project_dir: &PathBuf, override_port: Option<u64>) {
+pub fn serve(fuzzy_project_location: &Path) {
     let server_id = rand::random::<u64>();
 
-    let project = match Project::load(project_dir) {
-        Ok(v) => {
-            println!("Using project from {}", fs::canonicalize(project_dir).unwrap().display());
-            v
+    let project = match Project::load_fuzzy(fuzzy_project_location) {
+        Ok(project) => {
+            println!("Using project from {}", fs::canonicalize(&project.file_location).unwrap().display());
+            project
         },
-        Err(err) => {
-            eprintln!("{}", err);
+        Err(error) => {
+            eprintln!("{}", error);
             process::exit(1);
         },
     };
-
-    let port = override_port.unwrap_or(project.serve_port);
 
     println!("Using project {:#?}", project);
 
     roblox_studio::install_bundled_plugin().unwrap();
 
-    let mut session = Session::new(project.clone());
-    session.start();
+    // let mut session = Session::new(project.clone());
+    // session.start();
 
-    let web_config = WebConfig::from_session(server_id, port, &session);
+    // let web_config = WebConfig::from_session(server_id, port, &session);
 
-    println!("Server listening on port {}", port);
-
-    web::start(web_config);
+    // web::start(web_config);
 }
