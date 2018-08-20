@@ -1,13 +1,13 @@
 use std::borrow::Cow;
 use std::collections::HashMap;
-use std::sync::{mpsc, RwLock, Arc};
+use std::sync::{mpsc, Arc};
 
 use rouille::{self, Request, Response};
 use rand;
 
 use ::{
     id::Id,
-    message_session::{MessageSession, Message},
+    message_session::Message,
     project::Project,
     rbx::RbxInstance,
     serve_session::ServeSession,
@@ -56,6 +56,7 @@ impl Server {
         }
     }
 
+    #[allow(unreachable_code)]
     pub fn handle_request(&self, request: &Request) -> Response {
         router!(request,
             (GET) (/) => {
@@ -153,7 +154,6 @@ impl Server {
         )
     }
 
-    // #[allow(unreachable_code)]
     pub fn listen(self, port: u64) {
         let address = format!("localhost:{}", port);
 

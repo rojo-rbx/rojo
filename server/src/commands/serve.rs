@@ -1,36 +1,34 @@
-use std::path::Path;
-use std::process;
-use std::fs;
+use std::{
+    path::Path,
+    process,
+    sync::Arc,
+};
 
-use rand;
-
-use project::Project;
-// use web::{self, WebConfig};
-// use session::Session;
-use roblox_studio;
+use ::{
+    project::Project,
+    web::Server,
+    serve_session::ServeSession,
+    roblox_studio,
+};
 
 pub fn serve(fuzzy_project_location: &Path) {
-    let server_id = rand::random::<u64>();
-
     let project = match Project::load_fuzzy(fuzzy_project_location) {
-        Ok(project) => {
-            println!("Using project from {}", fs::canonicalize(&project.file_location).unwrap().display());
-            project
-        },
+        Ok(project) => project,
         Err(error) => {
-            eprintln!("{}", error);
+            eprintln!("Fatal: {}", error);
             process::exit(1);
         },
     };
 
+    println!("Found project at {}", project.file_location.display());
     println!("Using project {:#?}", project);
 
     roblox_studio::install_bundled_plugin().unwrap();
 
-    // let mut session = Session::new(project.clone());
-    // session.start();
+    let session = Arc::new(ServeSession::new(project));
+    let server = Server::new(Arc::from(session));
 
-    // let web_config = WebConfig::from_session(server_id, port, &session);
+    println!("Server listening on port 8000.");
 
-    // web::start(web_config);
+    server.listen(8000);
 }
