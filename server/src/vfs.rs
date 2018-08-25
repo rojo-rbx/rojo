@@ -5,6 +5,7 @@ use std::{
     io,
 };
 
+#[derive(Debug)]
 pub struct Vfs {
     contents: HashMap<PathBuf, Vec<u8>>,
     items: HashMap<PathBuf, VfsItem>,
@@ -79,26 +80,18 @@ impl Vfs {
     }
 }
 
+#[derive(Debug)]
 pub struct VfsFile {
     path: PathBuf,
 }
 
-impl VfsFile {
-    pub fn read_contents<'file, 'vfs>(&'file self, vfs: &'vfs mut Vfs) -> io::Result<&'vfs [u8]> {
-        if !vfs.contents.contains_key(&self.path) {
-            let contents = fs::read(&self.path)?;
-            vfs.contents.insert(self.path.clone(), contents);
-        }
-
-        Ok(vfs.contents.get(&self.path).unwrap())
-    }
-}
-
+#[derive(Debug)]
 pub struct VfsDirectory {
     path: PathBuf,
     children: HashSet<PathBuf>,
 }
 
+#[derive(Debug)]
 pub enum VfsItem {
     File(VfsFile),
     Directory(VfsDirectory),

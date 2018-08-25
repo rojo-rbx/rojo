@@ -87,8 +87,6 @@ impl Session {
                     loop {
                         match watch_rx.recv() {
                             Ok(event) => {
-                                println!("Event: {:?}", event);
-
                                 match event {
                                     DebouncedEvent::Create(path) | DebouncedEvent::Write(path) => {
                                         let mut vfs = vfs.lock().unwrap();
