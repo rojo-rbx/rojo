@@ -33,7 +33,7 @@ pub fn serve(fuzzy_project_location: &Path) {
 
     let server = Server::new(Arc::clone(&session));
 
-    println!("Server listening on port 8000.");
+    println!("Server listening on port 34872");
 
-    server.listen(8000);
+    server.listen(34872);
 }
