@@ -8,7 +8,9 @@
     <a href="https://travis-ci.org/LPGhatguy/rojo">
         <img src="https://api.travis-ci.org/LPGhatguy/rojo.svg?branch=master" alt="Travis-CI Build Status" />
     </a>
-    <img src="https://img.shields.io/badge/latest_version-0.4.12-brightgreen.svg" alt="Current server version" />
+    <a href="https://crates.io/crates/rojo">
+        <img src="https://img.shields.io/crates/v/rojo.svg?label=version" alt="Latest server version" />
+    </a>
     <a href="https://lpghatguy.github.io/rojo">
         <img src="https://img.shields.io/badge/documentation-website-brightgreen.svg" alt="Rojo Documentation" />
     </a>
@@ -41,7 +43,7 @@ There are lots of other tools that sync scripts into Roblox or provide other too
 Here are a few, if you're looking for alternatives or supplements to Rojo:
 
 * [rbxmk by Anaminus](https://github.com/anaminus/rbxmk)
-* [RbxRefresh by Osyris](https://github.com/osyrisrblx/RbxRefresh)
+* [Rofresh](https://github.com/osyrisrblx/rofresh) and [RbxRefresh](https://github.com/osyrisrblx/RbxRefresh) by [Osyris](https://github.com/osyrisrblx)
 * [Studio Bridge by Vocksel](https://github.com/vocksel/studio-bridge)
 * [RbxSync by evaera](https://github.com/evaera/RbxSync)
 * [CodeSync](https://github.com/MemoryPenguin/CodeSync) and [rbx-exteditor](https://github.com/MemoryPenguin/rbx-exteditor) by [MemoryPenguin](https://github.com/MemoryPenguin)

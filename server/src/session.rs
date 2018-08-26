@@ -1,95 +1,121 @@
-use std::sync::{mpsc, Arc, RwLock};
-use std::thread;
+use std::{
+    sync::{Arc, RwLock, Mutex, mpsc},
+    thread,
+    io,
+    time::Duration,
+};
 
-use message_session::MessageSession;
-use partition_watcher::PartitionWatcher;
-use project::Project;
-use rbx_session::RbxSession;
-use vfs_session::VfsSession;
+use rand;
 
-/// Stub trait for middleware
-trait Middleware {
-}
+use notify::{
+    self,
+    DebouncedEvent,
+    RecommendedWatcher,
+    RecursiveMode,
+    Watcher,
+};
+
+use ::{
+    message_queue::MessageQueue,
+    rbx::RbxTree,
+    project::{Project, ProjectNode},
+    vfs::Vfs,
+};
+
+const WATCH_TIMEOUT_MS: u64 = 100;
 
 pub struct Session {
-    pub project: Project,
-    vfs_session: Arc<RwLock<VfsSession>>,
-    rbx_session: Arc<RwLock<RbxSession>>,
-    message_session: MessageSession,
-    watchers: Vec<PartitionWatcher>,
+    project: Project,
+    pub session_id: String,
+    pub message_queue: Arc<MessageQueue>,
+    pub tree: Arc<RwLock<RbxTree>>,
+    vfs: Arc<Mutex<Vfs>>,
+    watchers: Vec<RecommendedWatcher>,
 }
 
 impl Session {
     pub fn new(project: Project) -> Session {
-        let message_session = MessageSession::new();
-        let vfs_session = Arc::new(RwLock::new(VfsSession::new(project.clone())));
-        let rbx_session = Arc::new(RwLock::new(RbxSession::new(project.clone(), vfs_session.clone(), message_session.clone())));
+        let session_id = rand::random::<u64>().to_string();
 
         Session {
-            vfs_session,
-            rbx_session,
-            watchers: Vec::new(),
-            message_session,
+            session_id,
             project,
+            message_queue: Arc::new(MessageQueue::new()),
+            tree: Arc::new(RwLock::new(RbxTree::new())),
+            vfs: Arc::new(Mutex::new(Vfs::new())),
+            watchers: Vec::new(),
         }
     }
 
-    pub fn start(&mut self) {
-        {
-            let mut vfs_session = self.vfs_session.write().unwrap();
-            vfs_session.read_partitions();
-        }
-
-        {
-            let mut rbx_session = self.rbx_session.write().unwrap();
-            rbx_session.read_partitions();
-        }
-
-        let (tx, rx) = mpsc::channel();
-
-        for partition in self.project.partitions.values() {
-            let watcher = PartitionWatcher::start_new(partition.clone(), tx.clone());
-
-            self.watchers.push(watcher);
-        }
-
-        {
-            let vfs_session = self.vfs_session.clone();
-            let rbx_session = self.rbx_session.clone();
-
-            thread::spawn(move || {
-                loop {
-                    match rx.recv() {
-                        Ok(change) => {
-                            {
-                                let mut vfs_session = vfs_session.write().unwrap();
-                                vfs_session.handle_change(&change);
-                            }
-
-                            {
-                                let mut rbx_session = rbx_session.write().unwrap();
-                                rbx_session.handle_change(&change);
-                            }
-                        },
-                        Err(_) => break,
+    pub fn start(&mut self) -> io::Result<()> {
+        fn add_sync_points(vfs: &mut Vfs, project_node: &ProjectNode) -> io::Result<()> {
+            match project_node {
+                ProjectNode::Regular { children, .. } => {
+                    for child in children.values() {
+                        add_sync_points(vfs, child)?;
                     }
-                }
-            });
+                },
+                ProjectNode::SyncPoint { path } => {
+                    vfs.add_root(path)?;
+                },
+            }
+
+            Ok(())
         }
+
+        {
+            let mut vfs = self.vfs.lock().unwrap();
+
+            for child in self.project.tree.values() {
+                add_sync_points(&mut vfs, child)?;
+            }
+
+            for root in vfs.get_roots() {
+                println!("Watching {}", root.display());
+
+                let (watch_tx, watch_rx) = mpsc::channel();
+
+                let mut watcher = notify::watcher(watch_tx, Duration::from_millis(WATCH_TIMEOUT_MS)).unwrap();
+
+                watcher.watch(root, RecursiveMode::Recursive).unwrap();
+                self.watchers.push(watcher);
+
+                let vfs = Arc::clone(&self.vfs);
+
+                thread::spawn(move || {
+                    println!("Thread started");
+                    loop {
+                        match watch_rx.recv() {
+                            Ok(event) => {
+                                match event {
+                                    DebouncedEvent::Create(path) | DebouncedEvent::Write(path) => {
+                                        let mut vfs = vfs.lock().unwrap();
+                                        vfs.add_or_update(&path).unwrap();
+                                    },
+                                    DebouncedEvent::Remove(path) => {
+                                        let mut vfs = vfs.lock().unwrap();
+                                        vfs.remove(&path);
+                                    },
+                                    DebouncedEvent::Rename(from_path, to_path) => {
+                                        let mut vfs = vfs.lock().unwrap();
+                                        vfs.remove(&from_path);
+                                        vfs.add_or_update(&to_path).unwrap();
+                                    },
+                                    _ => continue,
+                                };
+                            },
+                            Err(_) => break,
+                        };
+                    }
+                    println!("Thread stopped");
+                });
+            }
+        }
+
+        Ok(())
     }
 
-    pub fn stop(self) {
-    }
-
-    pub fn get_vfs_session(&self) -> Arc<RwLock<VfsSession>> {
-        self.vfs_session.clone()
-    }
-
-    pub fn get_rbx_session(&self) -> Arc<RwLock<RbxSession>> {
-        self.rbx_session.clone()
-    }
-
-    pub fn get_message_session(&self) -> MessageSession {
-        self.message_session.clone()
+    pub fn get_project(&self) -> &Project {
+        &self.project
     }
 }

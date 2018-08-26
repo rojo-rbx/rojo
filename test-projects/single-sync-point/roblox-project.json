@@ -1,0 +1,11 @@
+{
+  "name": "empty",
+  "tree": {
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "Foo": {
+        "$path": "lib"
+      }
+    }
+  }
+}

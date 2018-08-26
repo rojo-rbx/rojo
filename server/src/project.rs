@@ -1,246 +1,223 @@
-use std::collections::HashMap;
-use std::fmt;
-use std::fs::{self, File};
-use std::io::{Read, Write};
-use std::path::{Path, PathBuf};
-
-use rand::{self, Rng};
-
+use std::{
+    collections::HashMap,
+    fmt,
+    fs,
+    io,
+    path::{Path, PathBuf},
+};
 use serde_json;
 
-use partition::Partition;
+pub static PROJECT_FILENAME: &'static str = "roblox-project.json";
 
-pub static PROJECT_FILENAME: &'static str = "rojo.json";
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(untagged)]
+enum SourceProjectNode {
+    Regular {
+        #[serde(rename = "$className")]
+        class_name: String,
 
-#[derive(Debug)]
-pub enum ProjectLoadError {
-    DidNotExist(PathBuf),
-    FailedToOpen(PathBuf),
-    FailedToRead(PathBuf),
-    InvalidJson(PathBuf, serde_json::Error),
+        // #[serde(rename = "$ignoreUnknown", default = "false")]
+        // ignore_unknown: bool,
+
+        #[serde(flatten)]
+        children: HashMap<String, SourceProjectNode>,
+    },
+    SyncPoint {
+        #[serde(rename = "$path")]
+        path: String,
+    }
 }
 
-impl fmt::Display for ProjectLoadError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl SourceProjectNode {
+    pub fn into_project_node(self, project_file_location: &Path) -> ProjectNode {
         match self {
-            &ProjectLoadError::InvalidJson(ref project_path, ref serde_err) => {
-                write!(f, "Found invalid JSON reading project: {}\nError: {}", project_path.display(), serde_err)
+            SourceProjectNode::Regular { class_name, mut children } => {
+                let mut new_children = HashMap::new();
+
+                for (node_name, node) in children.drain() {
+                    new_children.insert(node_name, node.into_project_node(project_file_location));
+                }
+
+                ProjectNode::Regular {
+                    class_name,
+                    children: new_children,
+                }
             },
-            &ProjectLoadError::FailedToOpen(ref project_path) |
-            &ProjectLoadError::FailedToRead(ref project_path) => {
-                write!(f, "Found project file, but failed to read it: {}", project_path.display())
-            },
-            &ProjectLoadError::DidNotExist(ref project_path) => {
-                write!(f, "Could not locate a project file at {}.\nUse 'rojo init' to create one.", project_path.display())
-            },
-        }
-    }
-}
+            SourceProjectNode::SyncPoint { path: source_path } => {
+                let path = if Path::new(&source_path).is_absolute() {
+                    PathBuf::from(source_path)
+                } else {
+                    let project_folder_location = project_file_location.parent().unwrap();
+                    project_folder_location.join(source_path)
+                };
 
-#[derive(Debug)]
-pub enum ProjectSaveError {
-    FailedToCreate,
-}
-
-#[derive(Debug)]
-pub enum ProjectInitError {
-    AlreadyExists,
-    FailedToCreate,
-    FailedToWrite,
-}
-
-impl fmt::Display for ProjectInitError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            &ProjectInitError::AlreadyExists => {
-                write!(f, "A project already exists at that location.")
-            },
-            &ProjectInitError::FailedToCreate |
-            &ProjectInitError::FailedToWrite => {
-                write!(f, "Failed to write to the given location.")
-            },
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SourceProjectPartition {
-    /// A slash-separated path to a file or folder, relative to the project's
-    /// directory.
-    pub path: String,
-
-    /// A dot-separated route to a Roblox instance, relative to game.
-    pub target: String,
-}
-
-/// Represents a Rojo project in the format that's most convenient for users to
-/// edit. This should generally line up with `Project`, but can diverge when
-/// there's either compatibility shims or when the data structures that Rojo
-/// want are too verbose to write in JSON but easy to convert from something
-/// else.
-//
-/// Holds anything that can be configured with `rojo.json`.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(default, rename_all = "camelCase")]
-pub struct SourceProject {
-    pub name: String,
-    pub serve_port: u64,
-    pub partitions: HashMap<String, SourceProjectPartition>,
-}
-
-impl Default for SourceProject {
-    fn default() -> SourceProject {
-        SourceProject {
-            name: "new-project".to_string(),
-            serve_port: 8000,
-            partitions: HashMap::new(),
-        }
-    }
-}
-
-/// Represents a Rojo project in the format that's convenient for Rojo to work
-/// with.
-#[derive(Debug, Clone)]
-pub struct Project {
-    /// The path to the project file that this project is associated with.
-    pub project_path: PathBuf,
-
-    /// The name of this project, used for user-facing labels.
-    pub name: String,
-
-    /// The port that this project will run a web server on.
-    pub serve_port: u64,
-
-    /// All of the project's partitions, laid out in an expanded way.
-    pub partitions: HashMap<String, Partition>,
-}
-
-impl Project {
-    fn from_source_project(source_project: SourceProject, project_path: PathBuf) -> Project {
-        let mut partitions = HashMap::new();
-
-        {
-            let project_directory = project_path.parent().unwrap();
-
-            for (partition_name, partition) in source_project.partitions.into_iter() {
-                let path = project_directory.join(&partition.path);
-                let target = partition.target
-                    .split(".")
-                    .map(String::from)
-                    .collect::<Vec<_>>();
-
-                partitions.insert(partition_name.clone(), Partition {
+                ProjectNode::SyncPoint {
                     path,
-                    target,
-                    name: partition_name,
-                });
-            }
+                }
+            },
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SourceProject {
+    name: String,
+    tree: HashMap<String, SourceProjectNode>,
+}
+
+impl SourceProject {
+    pub fn into_project(mut self, project_file_location: &Path) -> Project {
+        let mut tree = HashMap::new();
+
+        for (node_name, node) in self.tree.drain() {
+            tree.insert(node_name, node.into_project_node(project_file_location));
         }
 
         Project {
-            project_path,
-            name: source_project.name,
-            serve_port: source_project.serve_port,
-            partitions,
+            name: self.name,
+            tree: tree,
+            file_location: PathBuf::from(project_file_location),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum ProjectLoadExactError {
+    IoError(io::Error),
+    JsonError(serde_json::Error),
+}
+
+impl fmt::Display for ProjectLoadExactError {
+    fn fmt(&self, output: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ProjectLoadExactError::IoError(inner) => write!(output, "{}", inner),
+            ProjectLoadExactError::JsonError(inner) => write!(output, "{}", inner),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum ProjectInitError {}
+
+impl fmt::Display for ProjectInitError {
+    fn fmt(&self, output: &mut fmt::Formatter) -> fmt::Result {
+        write!(output, "ProjectInitError")
+    }
+}
+
+#[derive(Debug)]
+pub enum ProjectLoadFuzzyError {
+    NotFound,
+    IoError(io::Error),
+    JsonError(serde_json::Error),
+}
+
+impl From<ProjectLoadExactError> for ProjectLoadFuzzyError {
+    fn from(error: ProjectLoadExactError) -> ProjectLoadFuzzyError {
+        match error {
+            ProjectLoadExactError::IoError(inner) => ProjectLoadFuzzyError::IoError(inner),
+            ProjectLoadExactError::JsonError(inner) => ProjectLoadFuzzyError::JsonError(inner),
+        }
+    }
+}
+
+impl fmt::Display for ProjectLoadFuzzyError {
+    fn fmt(&self, output: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ProjectLoadFuzzyError::NotFound => write!(output, "Project not found."),
+            ProjectLoadFuzzyError::IoError(inner) => write!(output, "{}", inner),
+            ProjectLoadFuzzyError::JsonError(inner) => write!(output, "{}", inner),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum ProjectSaveError {}
+
+impl fmt::Display for ProjectSaveError {
+    fn fmt(&self, output: &mut fmt::Formatter) -> fmt::Result {
+        write!(output, "ProjectSaveError")
+    }
+}
+
+#[derive(Debug)]
+pub enum ProjectNode {
+    Regular {
+        class_name: String,
+        children: HashMap<String, ProjectNode>,
+
+        // ignore_unknown: bool,
+    },
+    SyncPoint {
+        path: PathBuf,
+    },
+}
+
+#[derive(Debug)]
+pub struct Project {
+    pub name: String,
+    pub tree: HashMap<String, ProjectNode>,
+    pub file_location: PathBuf,
+}
+
+impl Project {
+    pub fn init(_project_folder_location: &Path) -> Result<(), ProjectInitError> {
+        unimplemented!();
+    }
+
+    pub fn locate(start_location: &Path) -> Option<PathBuf> {
+        // TODO: Check for specific error kinds, convert 'not found' to Result.
+        let location_metadata = fs::metadata(start_location).ok()?;
+
+        // If this is a file, we should assume it's the config we want
+        if location_metadata.is_file() {
+            return Some(start_location.to_path_buf());
+        } else if location_metadata.is_dir() {
+            let with_file = start_location.join(PROJECT_FILENAME);
+
+            match fs::metadata(&with_file) {
+                Ok(with_file_metadata) => {
+                    if with_file_metadata.is_file() {
+                        return Some(with_file);
+                    } else {
+                        return None;
+                    }
+                },
+                Err(_) => {},
+            }
+        }
+
+        match start_location.parent() {
+            Some(parent_location) => Self::locate(parent_location),
+            None => None,
         }
     }
 
-    fn as_source_project(&self) -> SourceProject {
-        let mut partitions = HashMap::new();
+    pub fn load_fuzzy(fuzzy_project_location: &Path) -> Result<Project, ProjectLoadFuzzyError> {
+        let project_path = Self::locate(fuzzy_project_location)
+            .ok_or(ProjectLoadFuzzyError::NotFound)?;
 
-        for partition in self.partitions.values() {
-            let path = partition.path.strip_prefix(&self.project_path)
-                .unwrap_or_else(|_| &partition.path)
-                .to_str()
-                .unwrap()
-                .to_string();
-
-            let target = partition.target.join(".");
-
-            partitions.insert(partition.name.clone(), SourceProjectPartition {
-                path,
-                target,
-            });
-        }
-
-        SourceProject {
-            partitions,
-            name: self.name.clone(),
-            serve_port: self.serve_port,
-        }
+        Self::load_exact(&project_path).map_err(From::from)
     }
 
-    /// Initializes a new project inside the given folder path.
-    pub fn init<T: AsRef<Path>>(location: T) -> Result<Project, ProjectInitError> {
-        let location = location.as_ref();
-        let project_path = location.join(PROJECT_FILENAME);
+    pub fn load_exact(project_file_location: &Path) -> Result<Project, ProjectLoadExactError> {
+        let contents = fs::read_to_string(project_file_location)
+            .map_err(ProjectLoadExactError::IoError)?;
 
-        // We abort if the project file already exists.
-        fs::metadata(&project_path)
-            .map_err(|_| ProjectInitError::AlreadyExists)?;
+        let parsed: SourceProject = serde_json::from_str(&contents)
+            .map_err(ProjectLoadExactError::JsonError)?;
 
-        let mut file = File::create(&project_path)
-            .map_err(|_| ProjectInitError::FailedToCreate)?;
-
-        // Try to give the project a meaningful name.
-        // If we can't, we'll just fall back to a default.
-        let name = match location.file_name() {
-            Some(v) => v.to_string_lossy().into_owned(),
-            None => "new-project".to_string(),
-        };
-
-        // Generate a random port to run the server on.
-        let serve_port = rand::thread_rng().gen_range(2000, 49151);
-
-        // Configure the project with all of the values we know so far.
-        let source_project = SourceProject {
-            name,
-            serve_port,
-            partitions: HashMap::new(),
-        };
-        let serialized = serde_json::to_string_pretty(&source_project).unwrap();
-
-        file.write(serialized.as_bytes())
-            .map_err(|_| ProjectInitError::FailedToWrite)?;
-
-        Ok(Project::from_source_project(source_project, project_path))
+        Ok(parsed.into_project(project_file_location))
     }
 
-    /// Attempts to load a project from the file named PROJECT_FILENAME from the
-    /// given folder.
-    pub fn load<T: AsRef<Path>>(location: T) -> Result<Project, ProjectLoadError> {
-        let project_path = location.as_ref().join(Path::new(PROJECT_FILENAME));
+    pub fn save(&self) -> Result<(), ProjectSaveError> {
+        let _source_project = self.to_source_project();
 
-        fs::metadata(&project_path)
-            .map_err(|_| ProjectLoadError::DidNotExist(project_path.clone()))?;
-
-        let mut file = File::open(&project_path)
-            .map_err(|_| ProjectLoadError::FailedToOpen(project_path.clone()))?;
-
-        let mut contents = String::new();
-
-        file.read_to_string(&mut contents)
-            .map_err(|_| ProjectLoadError::FailedToRead(project_path.clone()))?;
-
-        let source_project = serde_json::from_str(&contents)
-            .map_err(|e| ProjectLoadError::InvalidJson(project_path.clone(), e))?;
-
-        Ok(Project::from_source_project(source_project, project_path))
+        unimplemented!();
     }
 
-    /// Saves the given project file to the given folder with the appropriate name.
-    pub fn save<T: AsRef<Path>>(&self, location: T) -> Result<(), ProjectSaveError> {
-        let project_path = location.as_ref().join(Path::new(PROJECT_FILENAME));
-
-        let mut file = File::create(&project_path)
-            .map_err(|_| ProjectSaveError::FailedToCreate)?;
-
-        let source_project = self.as_source_project();
-        let serialized = serde_json::to_string_pretty(&source_project).unwrap();
-
-        file.write(serialized.as_bytes()).unwrap();
-
-        Ok(())
+    fn to_source_project(&self) -> SourceProject {
+        unimplemented!();
     }
 }

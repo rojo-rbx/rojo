@@ -42,20 +42,7 @@ fn main() {
                 None => std::env::current_dir().unwrap(),
             };
 
-            let port = {
-                match sub_matches.value_of("port") {
-                    Some(source) => match source.parse::<u64>() {
-                        Ok(value) => Some(value),
-                        Err(_) => {
-                            eprintln!("Invalid port '{}'", source);
-                            process::exit(1);
-                        },
-                    },
-                    None => None,
-                }
-            };
-
-            librojo::commands::serve(&project_path, port);
+            librojo::commands::serve(&project_path);
         },
         _ => {
             eprintln!("Please specify a subcommand!");
