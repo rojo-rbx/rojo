@@ -20,7 +20,9 @@
 
 **Rojo** is a flexible multi-tool designed for creating robust Roblox projects.
 
-It's designed for power users who want to use the **best tools available** for building games, libraries, and plugins.
+It lets Roblox developers use industry-leading tools like Git and VS Code, and crucial utilities like Luacheck.
+
+Rojo is designed for **power users** who want to use the **best tools available** for building games, libraries, and plugins.
 
 ## Features
 Rojo lets you:
@@ -29,15 +31,17 @@ Rojo lets you:
 * Version your place, library, or plugin using Git or another VCS
 * Sync JSON-format models from the filesystem into your game
 
-Later this year, Rojo will be able to:
+Later in 2018, Rojo will be able to:
 
+* Sync scripts from Roblox Studio to the filesystem
+* Compile MoonScript and sync it into Roblox Studio
 * Sync `rbxmx` models between the filesystem and Roblox Studio
 * Package projects into `rbxmx` files from the command line
 
-## [Documentation Website](https://lpghatguy.github.io/rojo)
-You can also view the documentation by browsing the [docs folder of the repository](https://github.com/LPGhatguy/rojo/tree/master/docs), but because it uses a number of Markdown extensions, it may not be very readable.
+## [Documentation](https://lpghatguy.github.io/rojo)
+You can also view the documentation by browsing the [docs](https://github.com/LPGhatguy/rojo/tree/master/docs) folder of the repository, but because it uses a number of Markdown extensions, it may not be very readable.
 
-## Inspiration
+## Inspiration and Alternatives
 There are lots of other tools that sync scripts into Roblox or provide other tools for working with Roblox places.
 
 Here are a few, if you're looking for alternatives or supplements to Rojo:
@@ -51,6 +55,8 @@ Here are a few, if you're looking for alternatives or supplements to Rojo:
 If you use a plugin that _isn't_ Rojo for syncing code, open an issue and let me know why! I'd like Rojo to be the end-all tool so that people stop reinventing solutions to this problem.
 
 ## Contributing
+The `master` branch is undergoing a rewrite right now known as 'Epiphany'. It includes a breaking change to the project configuration format and an infrastructure overhaul.
+
 Pull requests are welcome!
 
 All pull requests are run against a test suite on Travis CI. That test suite should always pass!
