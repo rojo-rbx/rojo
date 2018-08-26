@@ -19,14 +19,15 @@ setmetatable(ApiContext.Error, {
 	end
 })
 
-function ApiContext.new(url, onMessage)
-	assert(type(url) == "string")
+function ApiContext.new(baseUrl, onMessage)
+	assert(type(baseUrl) == "string")
 	assert(type(onMessage) == "function")
 
 	local context = {
-		url = url,
+		baseUrl = baseUrl,
 		onMessage = onMessage,
 		serverId = nil,
+		rootInstanceId = nil,
 		connected = false,
 		messageCursor = -1,
 		partitionRoutes = nil,
@@ -38,7 +39,9 @@ function ApiContext.new(url, onMessage)
 end
 
 function ApiContext:connect()
-	return Http.get(self.url .. "/api/rojo")
+	local url = ("%s/api/rojo"):format(self.baseUrl)
+
+	return Http.get(url)
 		:andThen(function(response)
 			local body = response:json()
 
@@ -61,15 +64,18 @@ function ApiContext:connect()
 			self.serverId = body.serverId
 			self.connected = true
 			self.partitionRoutes = body.partitions
+			self.rootInstanceId = body.rootInstanceId
 		end)
 end
 
-function ApiContext:readAll()
+function ApiContext:read(ids)
 	if not self.connected then
 		return Promise.reject()
 	end
 
-	return Http.get(self.url .. "/api/read_all")
+	local url = ("%s/api/read/%s"):format(self.baseUrl, table.concat(ids, ","))
+
+	return Http.get(url)
 		:andThen(function(response)
 			local body = response:json()
 
@@ -92,7 +98,9 @@ function ApiContext:retrieveMessages()
 		return Promise.reject()
 	end
 
-	return Http.get(self.url .. "/api/subscribe/" .. self.messageCursor)
+	local url = ("%s/api/subscribe/%s"):format(self.baseUrl, self.messageCursor)
+
+	return Http.get(url)
 		:andThen(function(response)
 			local body = response:json()
 
