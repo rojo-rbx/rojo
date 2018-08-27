@@ -25,7 +25,7 @@ function Http.get(url)
 			end)
 
 			if ok then
-				dprint("\t", result, "\n")
+				dprint("\t", result)
 				resolve(HttpResponse.new(result))
 			else
 				reject(HttpError.fromErrorString(result))
@@ -44,7 +44,7 @@ function Http.post(url, body)
 			end)
 
 			if ok then
-				dprint("\t", result, "\n")
+				dprint("\t", result)
 				resolve(HttpResponse.new(result))
 			else
 				reject(HttpError.fromErrorString(result))
