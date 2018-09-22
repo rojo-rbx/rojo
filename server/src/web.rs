@@ -9,7 +9,6 @@ use rouille::{self, Request, Response};
 use ::{
     id::Id,
     message_queue::Message,
-    project::Project,
     rbx::RbxInstance,
     session::Session,
 };
@@ -54,6 +53,8 @@ impl Server {
 
     #[allow(unreachable_code)]
     pub fn handle_request(&self, request: &Request) -> Response {
+        trace!("Request {} {}", request.method(), request.url());
+
         router!(request,
             (GET) (/) => {
                 Response::text("Rojo is up and running!")

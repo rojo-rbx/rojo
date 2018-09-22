@@ -1,6 +1,7 @@
 #[macro_use] extern crate serde_derive;
 #[macro_use] extern crate rouille;
 #[macro_use] extern crate lazy_static;
+#[macro_use] extern crate log;
 extern crate notify;
 extern crate rand;
 extern crate serde;
@@ -16,7 +17,7 @@ pub mod message_queue;
 pub mod pathext;
 pub mod project;
 pub mod rbx;
-pub mod roblox_studio;
+// pub mod roblox_studio;
 pub mod session;
 pub mod vfs;
 pub mod web;

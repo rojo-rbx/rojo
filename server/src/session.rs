@@ -71,7 +71,7 @@ impl Session {
             }
 
             for root in vfs.get_roots() {
-                println!("Watching {}", root.display());
+                info!("Watching {}", root.display());
 
                 let (watch_tx, watch_rx) = mpsc::channel();
 
@@ -83,7 +83,6 @@ impl Session {
                 let vfs = Arc::clone(&self.vfs);
 
                 thread::spawn(move || {
-                    println!("Thread started");
                     loop {
                         match watch_rx.recv() {
                             Ok(event) => {
@@ -107,7 +106,7 @@ impl Session {
                             Err(_) => break,
                         };
                     }
-                    println!("Thread stopped");
+                    info!("Watcher thread stopped");
                 });
             }
         }

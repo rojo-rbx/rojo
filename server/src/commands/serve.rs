@@ -8,22 +8,24 @@ use ::{
     project::Project,
     web::Server,
     session::Session,
-    roblox_studio,
+    // roblox_studio,
 };
 
 pub fn serve(fuzzy_project_location: &Path) {
+    info!("Looking for project at {}", fuzzy_project_location.display());
+
     let project = match Project::load_fuzzy(fuzzy_project_location) {
         Ok(project) => project,
         Err(error) => {
-            eprintln!("Fatal: {}", error);
+            error!("{}", error);
             process::exit(1);
         },
     };
 
-    println!("Found project at {}", project.file_location.display());
-    println!("Using project {:#?}", project);
+    info!("Found project at {}", project.file_location.display());
+    info!("Using project {:#?}", project);
 
-    roblox_studio::install_bundled_plugin().unwrap();
+    // roblox_studio::install_bundled_plugin().unwrap();
 
     let session = Arc::new({
         let mut session = Session::new(project);

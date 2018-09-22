@@ -1,4 +1,6 @@
 #[macro_use] extern crate clap;
+#[macro_use] extern crate log;
+extern crate env_logger;
 
 extern crate librojo;
 
@@ -8,6 +10,10 @@ use std::process;
 use librojo::pathext::canonicalish;
 
 fn main() {
+    env_logger::Builder::from_default_env()
+        .default_format_timestamp(false)
+        .init();
+
     let matches = clap_app!(rojo =>
         (version: env!("CARGO_PKG_VERSION"))
         (author: env!("CARGO_PKG_AUTHORS"))
@@ -45,8 +51,8 @@ fn main() {
             librojo::commands::serve(&project_path);
         },
         _ => {
-            eprintln!("Please specify a subcommand!");
-            eprintln!("Try 'rojo help' for information.");
+            error!("Please specify a subcommand!");
+            error!("Try 'rojo help' for information.");
             process::exit(1);
         },
     }
