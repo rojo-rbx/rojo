@@ -7,7 +7,19 @@ use id::{Id, get_id};
 pub enum RbxValue {
     String {
         value: String,
-    }
+    },
+    Number {
+        value: f64,
+    },
+    Bool {
+        value: bool,
+    },
+    Vector3 {
+        value: [f64; 3],
+    },
+    Color3 {
+        value: [u8; 3],
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -71,6 +83,7 @@ impl<'a> Iterator for Descendants<'a> {
 
 pub struct RbxTree {
     instances: HashMap<Id, RbxInstance>,
+    // TODO: Make private
     pub root_instance_id: Id,
 }
 
@@ -101,6 +114,30 @@ impl RbxTree {
 
     pub fn get_all_instances(&self) -> &HashMap<Id, RbxInstance> {
         &self.instances
+    }
+
+    // TODO: Test this function!
+    pub fn insert_tree(&mut self, parent_id: Id, tree: &RbxTree) {
+        let mut to_visit = vec![tree.root_instance_id];
+
+        loop {
+            let id = match to_visit.pop() {
+                Some(id) => id,
+                None => break,
+            };
+
+            let mut new_child = tree.get_instance(id).unwrap().clone();
+
+            for child in &new_child.children {
+                to_visit.push(*child);
+            }
+
+            if id == tree.root_instance_id {
+                new_child.parent = Some(parent_id);
+            }
+
+            self.insert_instance(new_child);
+        }
     }
 
     pub fn insert_instance(&mut self, mut instance: RbxInstance) {
