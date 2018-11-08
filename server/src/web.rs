@@ -5,11 +5,10 @@ use std::{
 };
 
 use rouille::{self, Request, Response};
+use rbx_tree::{RbxId, RootedRbxInstance};
 
 use ::{
-    id::Id,
     message_queue::Message,
-    rbx::RbxInstance,
     session::Session,
 };
 
@@ -19,7 +18,7 @@ pub struct ServerInfoResponse<'a> {
     pub session_id: &'a str,
     pub server_version: &'a str,
     pub protocol_version: u64,
-    pub root_instance_id: Id,
+    pub root_instance_id: RbxId,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -27,7 +26,7 @@ pub struct ServerInfoResponse<'a> {
 pub struct ReadResponse<'a> {
     pub session_id: &'a str,
     pub message_cursor: u32,
-    pub instances: HashMap<Id, Cow<'a, RbxInstance>>,
+    pub instances: HashMap<RbxId, Cow<'a, RootedRbxInstance>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -69,7 +68,7 @@ impl Server {
                     server_version: self.server_version,
                     protocol_version: 2,
                     session_id: &self.session.session_id,
-                    root_instance_id: tree.root_instance_id,
+                    root_instance_id: *tree.get_root_ids().iter().nth(0).unwrap(), // TODO
                 })
             },
 
@@ -117,14 +116,14 @@ impl Server {
             (GET) (/api/read/{ id_list: String }) => {
                 let message_queue = Arc::clone(&self.session.message_queue);
 
-                let requested_ids: Result<Vec<Id>, _> = id_list
+                let requested_ids: Option<Vec<RbxId>> = id_list
                     .split(",")
-                    .map(str::parse)
+                    .map(RbxId::parse_str)
                     .collect();
 
                 let requested_ids = match requested_ids {
-                    Ok(id) => id,
-                    Err(_) => return rouille::Response::text("Malformed ID list").with_status_code(400),
+                    Some(id) => id,
+                    None => return rouille::Response::text("Malformed ID list").with_status_code(400),
                 };
 
                 let tree = self.session.tree.read().unwrap();
@@ -138,7 +137,7 @@ impl Server {
                         Some(instance) => {
                             instances.insert(instance.get_id(), Cow::Borrowed(instance));
 
-                            for descendant in tree.iter_descendants(requested_id) {
+                            for descendant in tree.descendants(requested_id) {
                                 instances.insert(descendant.get_id(), Cow::Borrowed(descendant));
                             }
                         },

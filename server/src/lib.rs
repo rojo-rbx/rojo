@@ -7,6 +7,7 @@ extern crate rand;
 extern crate serde;
 extern crate serde_json;
 extern crate regex;
+extern crate rbx_tree;
 
 #[cfg(test)]
 extern crate tempfile;
@@ -16,7 +17,6 @@ pub mod id;
 pub mod message_queue;
 pub mod pathext;
 pub mod project;
-pub mod rbx;
 // pub mod roblox_studio;
 pub mod session;
 pub mod vfs;

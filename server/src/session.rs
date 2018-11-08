@@ -15,9 +15,10 @@ use notify::{
     Watcher,
 };
 
+use rbx_tree::RbxTree;
+
 use ::{
     message_queue::MessageQueue,
-    rbx::RbxTree,
     project::{Project, ProjectNode},
     vfs::Vfs,
 };
