@@ -3,7 +3,6 @@
 extern crate librojo;
 
 use std::{
-    collections::HashMap,
     path::{Path, PathBuf},
 };
 
