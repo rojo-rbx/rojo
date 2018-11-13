@@ -83,7 +83,8 @@ impl VfsWatcher {
                 match watcher.watch(&root_path, RecursiveMode::Recursive) {
                     Ok(_) => (),
                     Err(_) => {
-                        panic!("Unable to watch partition {}, with path {}! Make sure that it's a file or directory.", partition_name, root_path.display());
+                        eprintln!("WARNING: Unable to watch partition {}, with path {}\nMake sure that it's a file or directory.", partition_name, root_path.display());
+                        continue;
                     },
                 }
 
