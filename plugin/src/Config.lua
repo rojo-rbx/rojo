@@ -1,6 +1,6 @@
 return {
 	pollingRate = 0.3,
-	version = {0, 4, 12},
+	version = {0, 4, 13},
 	expectedServerVersionString = "0.4.x",
 	protocolVersion = 1,
 	icons = {

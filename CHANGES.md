@@ -1,6 +1,9 @@
 # Rojo Change Log
 
 ## Current master
+* *No changes*
+
+## 0.4.13 (November 12, 2018)
 * When `rojo.json` points to a file or directory that does not exist, Rojo now issues a warning instead of throwing an error and exiting
 
 ## 0.4.12 (June 21, 2018)
