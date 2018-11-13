@@ -1,7 +1,7 @@
 # Rojo Change Log
 
 ## Current master
-* *No changes*
+* When `rojo.json` points to a file or directory that does not exist, Rojo now issues a warning instead of throwing an error and exiting
 
 ## 0.4.12 (June 21, 2018)
 * Fixed obscure assertion failure when renaming or deleting files ([#78](https://github.com/LPGhatguy/rojo/issues/78))

@@ -9,6 +9,10 @@
     "extra": {
       "path": "extra-script.lua",
       "target": "ReplicatedStorage.ExtraScript"
+    },
+    "does-not-exist": {
+      "path": "hahah",
+      "target": "ReplicatedStorage.Never"
     }
   }
 }
