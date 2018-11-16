@@ -1,11 +1,10 @@
 use std::{
+    collections::HashMap,
     sync::{Arc, RwLock, Mutex, mpsc},
     thread,
     io,
     time::Duration,
 };
-
-use rand;
 
 use notify::{
     self,
@@ -15,73 +14,65 @@ use notify::{
     Watcher,
 };
 
-use rbx_tree::RbxTree;
+use rbx_tree::{RbxTree, RbxInstance};
 
-use ::{
+use crate::{
     message_queue::MessageQueue,
     project::{Project, ProjectNode},
     vfs::Vfs,
+    session_id::SessionId,
 };
 
 const WATCH_TIMEOUT_MS: u64 = 100;
 
 pub struct Session {
     project: Project,
-    pub session_id: String,
+    pub session_id: SessionId,
     pub message_queue: Arc<MessageQueue>,
     pub tree: Arc<RwLock<RbxTree>>,
     vfs: Arc<Mutex<Vfs>>,
     watchers: Vec<RecommendedWatcher>,
 }
 
-impl Session {
-    pub fn new(project: Project) -> Session {
-        let session_id = rand::random::<u64>().to_string();
-
-        Session {
-            session_id,
-            project,
-            message_queue: Arc::new(MessageQueue::new()),
-            tree: Arc::new(RwLock::new(RbxTree::new())),
-            vfs: Arc::new(Mutex::new(Vfs::new())),
-            watchers: Vec::new(),
-        }
+fn add_sync_points(vfs: &mut Vfs, project_node: &ProjectNode) -> io::Result<()> {
+    match project_node {
+        ProjectNode::Regular { children, .. } => {
+            for child in children.values() {
+                add_sync_points(vfs, child)?;
+            }
+        },
+        ProjectNode::SyncPoint { path } => {
+            vfs.add_root(path)?;
+        },
     }
 
-    pub fn start(&mut self) -> io::Result<()> {
-        fn add_sync_points(vfs: &mut Vfs, project_node: &ProjectNode) -> io::Result<()> {
-            match project_node {
-                ProjectNode::Regular { children, .. } => {
-                    for child in children.values() {
-                        add_sync_points(vfs, child)?;
-                    }
-                },
-                ProjectNode::SyncPoint { path } => {
-                    vfs.add_root(path)?;
-                },
-            }
+    Ok(())
+}
 
-            Ok(())
-        }
+impl Session {
+    pub fn new(project: Project) -> io::Result<Session> {
+        let session_id = SessionId::new();
+        let vfs = Arc::new(Mutex::new(Vfs::new()));
+        let message_queue = Arc::new(MessageQueue::new());
+        let mut watchers = Vec::new();
 
         {
-            let mut vfs = self.vfs.lock().unwrap();
+            let mut vfs_temp = vfs.lock().unwrap();
 
-            for child in self.project.tree.values() {
-                add_sync_points(&mut vfs, child)?;
-            }
+            add_sync_points(&mut vfs_temp, &project.tree)
+                .expect("Could not add sync points when starting new Rojo session");
 
-            for root in vfs.get_roots() {
-                info!("Watching {}", root.display());
-
+            for root in vfs_temp.get_roots() {
                 let (watch_tx, watch_rx) = mpsc::channel();
 
                 let mut watcher = notify::watcher(watch_tx, Duration::from_millis(WATCH_TIMEOUT_MS)).unwrap();
 
-                watcher.watch(root, RecursiveMode::Recursive).unwrap();
-                self.watchers.push(watcher);
+                watcher.watch(root, RecursiveMode::Recursive)
+                    .expect("Could not watch directory");
 
-                let vfs = Arc::clone(&self.vfs);
+                watchers.push(watcher);
+
+                let vfs = Arc::clone(&vfs);
 
                 thread::spawn(move || {
                     loop {
@@ -112,7 +103,20 @@ impl Session {
             }
         }
 
-        Ok(())
+        let tree = RbxTree::new(RbxInstance {
+            name: "ahhhh".to_string(),
+            class_name: "ahhh help me".to_string(),
+            properties: HashMap::new(),
+        });
+
+        Ok(Session {
+            session_id,
+            project,
+            message_queue,
+            tree: Arc::new(RwLock::new(tree)),
+            vfs,
+            watchers: Vec::new(),
+        })
     }
 
     pub fn get_project(&self) -> &Project {

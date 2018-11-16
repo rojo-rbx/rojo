@@ -31,6 +31,7 @@ lazy_static = "1.0"
 log = "0.4"
 env_logger = "0.5"
 rbx-tree = { path = "../../rbx-tree" }
+uuid = { version = "0.7", features = ["v4", "serde"] }
 
 [dev-dependencies]
 tempfile = "3.0"

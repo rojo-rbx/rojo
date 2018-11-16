@@ -7,15 +7,16 @@ use std::{
 use rouille::{self, Request, Response};
 use rbx_tree::{RbxId, RootedRbxInstance};
 
-use ::{
+use crate::{
     message_queue::Message,
     session::Session,
+    session_id::SessionId,
 };
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ServerInfoResponse<'a> {
-    pub session_id: &'a str,
+    pub session_id: SessionId,
     pub server_version: &'a str,
     pub protocol_version: u64,
     pub root_instance_id: RbxId,
@@ -24,7 +25,7 @@ pub struct ServerInfoResponse<'a> {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ReadResponse<'a> {
-    pub session_id: &'a str,
+    pub session_id: SessionId,
     pub message_cursor: u32,
     pub instances: HashMap<RbxId, Cow<'a, RootedRbxInstance>>,
 }
@@ -32,7 +33,7 @@ pub struct ReadResponse<'a> {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SubscribeResponse<'a> {
-    pub session_id: &'a str,
+    pub session_id: SessionId,
     pub message_cursor: u32,
     pub messages: Cow<'a, [Message]>,
 }
@@ -67,8 +68,8 @@ impl Server {
                 Response::json(&ServerInfoResponse {
                     server_version: self.server_version,
                     protocol_version: 2,
-                    session_id: &self.session.session_id,
-                    root_instance_id: *tree.get_root_ids().iter().nth(0).unwrap(), // TODO
+                    session_id: self.session.session_id,
+                    root_instance_id: tree.get_root_id(),
                 })
             },
 
@@ -84,7 +85,7 @@ impl Server {
 
                     if new_messages.len() > 0 {
                         return Response::json(&SubscribeResponse {
-                            session_id: &self.session.session_id,
+                            session_id: self.session.session_id,
                             messages: Cow::Borrowed(&[]),
                             message_cursor: new_cursor,
                         })
@@ -106,7 +107,7 @@ impl Server {
                     let (new_cursor, new_messages) = message_queue.get_messages_since(cursor);
 
                     return Response::json(&SubscribeResponse {
-                        session_id: &self.session.session_id,
+                        session_id: self.session.session_id,
                         messages: Cow::Owned(new_messages),
                         message_cursor: new_cursor,
                     })
@@ -146,7 +147,7 @@ impl Server {
                 }
 
                 Response::json(&ReadResponse {
-                    session_id: &self.session.session_id,
+                    session_id: self.session.session_id,
                     message_cursor,
                     instances,
                 })

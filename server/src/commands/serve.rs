@@ -27,12 +27,7 @@ pub fn serve(fuzzy_project_location: &Path) {
 
     // roblox_studio::install_bundled_plugin().unwrap();
 
-    let session = Arc::new({
-        let mut session = Session::new(project);
-        session.start().unwrap();
-        session
-    });
-
+    let session = Arc::new(Session::new(project).unwrap());
     let server = Server::new(Arc::clone(&session));
 
     println!("Server listening on port 34872");

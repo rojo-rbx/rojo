@@ -63,20 +63,16 @@ impl SourceProjectNode {
 #[serde(rename_all = "camelCase")]
 struct SourceProject {
     name: String,
-    tree: HashMap<String, SourceProjectNode>,
+    tree: SourceProjectNode,
 }
 
 impl SourceProject {
-    pub fn into_project(mut self, project_file_location: &Path) -> Project {
-        let mut tree = HashMap::new();
-
-        for (node_name, node) in self.tree.drain() {
-            tree.insert(node_name, node.into_project_node(project_file_location));
-        }
+    pub fn into_project(self, project_file_location: &Path) -> Project {
+        let tree = self.tree.into_project_node(project_file_location);
 
         Project {
             name: self.name,
-            tree: tree,
+            tree,
             file_location: PathBuf::from(project_file_location),
         }
     }
@@ -157,7 +153,7 @@ pub enum ProjectNode {
 #[derive(Debug)]
 pub struct Project {
     pub name: String,
-    pub tree: HashMap<String, ProjectNode>,
+    pub tree: ProjectNode,
     pub file_location: PathBuf,
 }
 
