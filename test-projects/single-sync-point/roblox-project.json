@@ -1,6 +1,7 @@
 {
   "name": "empty",
   "tree": {
+    "$className": "DataModel",
     "ReplicatedStorage": {
       "$className": "ReplicatedStorage",
       "Foo": {
