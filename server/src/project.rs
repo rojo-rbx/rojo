@@ -137,13 +137,15 @@ impl fmt::Display for ProjectSaveError {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
 pub enum ProjectNode {
     Instance(InstanceProjectNode),
     SyncPoint(SyncPointProjectNode),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct InstanceProjectNode {
     pub class_name: String,
     pub children: HashMap<String, ProjectNode>,
@@ -151,12 +153,13 @@ pub struct InstanceProjectNode {
     // ignore_unknown: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SyncPointProjectNode {
     pub path: PathBuf,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Project {
     pub name: String,
     pub tree: ProjectNode,

@@ -16,6 +16,7 @@ use crate::{
 pub struct RbxSession {
     tree: RbxTree,
     paths_to_ids: HashMap<PathBuf, RbxId>,
+    ids_to_project_paths: HashMap<RbxId, String>,
     message_queue: Arc<MessageQueue>,
     vfs: Arc<Mutex<Vfs>>,
     project: Arc<Project>,
@@ -23,7 +24,7 @@ pub struct RbxSession {
 
 impl RbxSession {
     pub fn new(project: Arc<Project>, vfs: Arc<Mutex<Vfs>>, message_queue: Arc<MessageQueue>) -> RbxSession {
-        let (tree, paths_to_ids) = {
+        let (tree, paths_to_ids, ids_to_project_paths) = {
             let temp_vfs = vfs.lock().unwrap();
             construct_initial_tree(&project, &temp_vfs)
         };
@@ -31,6 +32,7 @@ impl RbxSession {
         RbxSession {
             tree,
             paths_to_ids,
+            ids_to_project_paths,
             message_queue,
             vfs,
             project,
@@ -56,14 +58,19 @@ impl RbxSession {
     pub fn get_tree(&self) -> &RbxTree {
         &self.tree
     }
+
+    pub fn get_project_path_map(&self) -> &HashMap<RbxId, String> {
+        &self.ids_to_project_paths
+    }
 }
 
 fn construct_initial_tree(
     project: &Project,
     vfs: &Vfs,
-) -> (RbxTree, HashMap<PathBuf, RbxId>) {
-    let mut paths_to_ids = HashMap::new();
-    let mut tree = RbxTree::new(RbxInstance {
+) -> (RbxTree, HashMap<PathBuf, RbxId>, HashMap<RbxId, String>) {
+    let paths_to_ids = HashMap::new();
+    let ids_to_project_paths = HashMap::new();
+    let tree = RbxTree::new(RbxInstance {
         name: "this isn't supposed to be here".to_string(),
         class_name: "ahhh, help me".to_string(),
         properties: HashMap::new(),
@@ -71,59 +78,80 @@ fn construct_initial_tree(
 
     let root_id = tree.get_root_id();
 
-    construct_initial_tree_node(&mut tree, vfs, &mut paths_to_ids, root_id, "<<<ROOT>>>", &project.tree);
+    let mut context = ConstructContext {
+        tree,
+        vfs,
+        paths_to_ids,
+        ids_to_project_paths,
+    };
 
-    (tree, paths_to_ids)
+    construct_project_node(
+        &mut context,
+        root_id,
+        "<<<ROOT>>>".to_string(),
+        "<<<ROOT>>>",
+        &project.tree,
+    );
+
+    (context.tree, context.paths_to_ids, context.ids_to_project_paths)
 }
 
-fn construct_initial_tree_node(
-    tree: &mut RbxTree,
-    vfs: &Vfs,
-    paths_to_ids: &mut HashMap<PathBuf, RbxId>,
+struct ConstructContext<'a> {
+    tree: RbxTree,
+    vfs: &'a Vfs,
+    paths_to_ids: HashMap<PathBuf, RbxId>,
+    ids_to_project_paths: HashMap<RbxId, String>,
+}
+
+fn construct_project_node(
+    context: &mut ConstructContext,
     parent_instance_id: RbxId,
+    instance_path: String,
     instance_name: &str,
     project_node: &ProjectNode,
 ) {
     match project_node {
         ProjectNode::Instance(node) => {
-            construct_instance_node(tree, vfs, paths_to_ids, parent_instance_id, instance_name, node);
+            let id = construct_instance_node(context, parent_instance_id, &instance_path, instance_name, node);
+            context.ids_to_project_paths.insert(id, instance_path.to_string());
         },
         ProjectNode::SyncPoint(node) => {
-            construct_sync_point_node(tree, vfs, paths_to_ids, parent_instance_id, instance_name, &node.path);
+            let id = construct_sync_point_node(context, parent_instance_id, instance_name, &node.path);
+            context.ids_to_project_paths.insert(id, instance_path.to_string());
         },
     }
 }
 
 fn construct_instance_node(
-    tree: &mut RbxTree,
-    vfs: &Vfs,
-    paths_to_ids: &mut HashMap<PathBuf, RbxId>,
+    context: &mut ConstructContext,
     parent_instance_id: RbxId,
+    instance_path: &str,
     instance_name: &str,
     project_node: &InstanceProjectNode,
-) {
+) -> RbxId {
     let instance = RbxInstance {
         class_name: project_node.class_name.clone(),
         name: instance_name.to_string(),
         properties: HashMap::new(),
     };
 
-    let id = tree.insert_instance(instance, parent_instance_id);
+    let id = context.tree.insert_instance(instance, parent_instance_id);
 
     for (child_name, child_project_node) in &project_node.children {
-        construct_initial_tree_node(tree, vfs, paths_to_ids, id, child_name, child_project_node);
+        let child_path = format!("{}/{}", instance_path, child_name);
+        construct_project_node(context, id, child_path, child_name, child_project_node);
     }
+
+    id
 }
 
 fn construct_sync_point_node(
-    tree: &mut RbxTree,
-    vfs: &Vfs,
-    paths_to_ids: &mut HashMap<PathBuf, RbxId>,
+    context: &mut ConstructContext,
     parent_instance_id: RbxId,
     instance_name: &str,
     file_path: &Path,
-) {
-    match vfs.get(&file_path) {
+) -> RbxId {
+    match context.vfs.get(&file_path) {
         Some(VfsItem::File(file)) => {
             let contents = str::from_utf8(&file.contents).unwrap();
 
@@ -136,8 +164,10 @@ fn construct_sync_point_node(
                 properties,
             };
 
-            let id = tree.insert_instance(instance, parent_instance_id);
-            paths_to_ids.insert(file.path.clone(), id);
+            let id = context.tree.insert_instance(instance, parent_instance_id);
+            context.paths_to_ids.insert(file.path.clone(), id);
+
+            id
         },
         Some(VfsItem::Directory(directory)) => {
             let instance = RbxInstance {
@@ -146,13 +176,15 @@ fn construct_sync_point_node(
                 properties: HashMap::new(),
             };
 
-            let id = tree.insert_instance(instance, parent_instance_id);
-            paths_to_ids.insert(directory.path.clone(), id);
+            let id = context.tree.insert_instance(instance, parent_instance_id);
+            context.paths_to_ids.insert(directory.path.clone(), id);
 
             for child_path in &directory.children {
                 let child_instance_name = child_path.file_name().unwrap().to_str().unwrap();
-                construct_sync_point_node(tree, vfs, paths_to_ids, id, child_instance_name, child_path);
+                construct_sync_point_node(context, id, child_instance_name, child_path);
             }
+
+            id
         },
         None => panic!("Couldn't read {} from disk", file_path.display()),
     }

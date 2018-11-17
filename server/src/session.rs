@@ -24,7 +24,7 @@ use crate::{
 const WATCH_TIMEOUT_MS: u64 = 100;
 
 pub struct Session {
-    project: Arc<Project>,
+    pub project: Arc<Project>,
     pub session_id: SessionId,
     pub message_queue: Arc<MessageQueue>,
     pub rbx_session: Arc<Mutex<RbxSession>>,

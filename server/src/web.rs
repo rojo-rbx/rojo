@@ -11,6 +11,7 @@ use crate::{
     message_queue::Message,
     session::Session,
     session_id::SessionId,
+    project::Project,
 };
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -20,6 +21,8 @@ pub struct ServerInfoResponse<'a> {
     pub server_version: &'a str,
     pub protocol_version: u64,
     pub root_instance_id: RbxId,
+    pub project: Cow<'a, Project>,
+    pub project_paths_to_ids: Cow<'a, HashMap<RbxId, String>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -71,6 +74,8 @@ impl Server {
                     protocol_version: 2,
                     session_id: self.session.session_id,
                     root_instance_id: tree.get_root_id(),
+                    project: Cow::Borrowed(&self.session.project),
+                    project_paths_to_ids: Cow::Borrowed(rbx_session.get_project_path_map()),
                 })
             },
 
