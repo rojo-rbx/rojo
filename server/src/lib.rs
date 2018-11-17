@@ -14,6 +14,7 @@ extern crate tempfile;
 
 // pub mod roblox_studio;
 pub mod commands;
+pub mod fs_watcher;
 pub mod message_queue;
 pub mod project;
 pub mod rbx_session;
