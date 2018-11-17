@@ -63,7 +63,8 @@ impl Server {
             (GET) (/api/rojo) => {
                 // Get a summary of information about the server.
 
-                let tree = self.session.tree.read().unwrap();
+                let rbx_session = self.session.rbx_session.lock().unwrap();
+                let tree = rbx_session.get_tree();
 
                 Response::json(&ServerInfoResponse {
                     server_version: self.server_version,
@@ -127,7 +128,8 @@ impl Server {
                     None => return rouille::Response::text("Malformed ID list").with_status_code(400),
                 };
 
-                let tree = self.session.tree.read().unwrap();
+                let rbx_session = self.session.rbx_session.lock().unwrap();
+                let tree = rbx_session.get_tree();
 
                 let message_cursor = message_queue.get_message_cursor();
 

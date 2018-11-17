@@ -18,6 +18,7 @@ pub mod commands;
 pub mod message_queue;
 pub mod pathext;
 pub mod project;
+pub mod rbx_session;
 pub mod session;
 pub mod session_id;
 pub mod vfs;

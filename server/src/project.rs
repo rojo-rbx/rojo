@@ -12,7 +12,7 @@ pub static PROJECT_FILENAME: &'static str = "roblox-project.json";
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 enum SourceProjectNode {
-    Regular {
+    Instance {
         #[serde(rename = "$className")]
         class_name: String,
 
@@ -31,17 +31,17 @@ enum SourceProjectNode {
 impl SourceProjectNode {
     pub fn into_project_node(self, project_file_location: &Path) -> ProjectNode {
         match self {
-            SourceProjectNode::Regular { class_name, mut children } => {
+            SourceProjectNode::Instance { class_name, mut children } => {
                 let mut new_children = HashMap::new();
 
                 for (node_name, node) in children.drain() {
                     new_children.insert(node_name, node.into_project_node(project_file_location));
                 }
 
-                ProjectNode::Regular {
+                ProjectNode::Instance(InstanceProjectNode {
                     class_name,
                     children: new_children,
-                }
+                })
             },
             SourceProjectNode::SyncPoint { path: source_path } => {
                 let path = if Path::new(&source_path).is_absolute() {
@@ -51,9 +51,9 @@ impl SourceProjectNode {
                     project_folder_location.join(source_path)
                 };
 
-                ProjectNode::SyncPoint {
+                ProjectNode::SyncPoint(SyncPointProjectNode {
                     path,
-                }
+                })
             },
         }
     }
@@ -139,15 +139,21 @@ impl fmt::Display for ProjectSaveError {
 
 #[derive(Debug)]
 pub enum ProjectNode {
-    Regular {
-        class_name: String,
-        children: HashMap<String, ProjectNode>,
-        // properties: HashMap<String, RbxValue>,
-        // ignore_unknown: bool,
-    },
-    SyncPoint {
-        path: PathBuf,
-    },
+    Instance(InstanceProjectNode),
+    SyncPoint(SyncPointProjectNode),
+}
+
+#[derive(Debug)]
+pub struct InstanceProjectNode {
+    pub class_name: String,
+    pub children: HashMap<String, ProjectNode>,
+    // properties: HashMap<String, RbxValue>,
+    // ignore_unknown: bool,
+}
+
+#[derive(Debug)]
+pub struct SyncPointProjectNode {
+    pub path: PathBuf,
 }
 
 #[derive(Debug)]
