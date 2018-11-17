@@ -33,11 +33,18 @@ impl Vfs {
         &self.roots
     }
 
-    pub fn get(&mut self, path: &Path) -> Option<&VfsItem> {
+    pub fn get(&self, path: &Path) -> Option<&VfsItem> {
         debug_assert!(path.is_absolute());
         debug_assert!(self.is_valid_path(path));
 
         self.items.get(path)
+    }
+
+    pub fn get_contents(&self, path: &Path) -> Option<&[u8]> {
+        debug_assert!(path.is_absolute());
+        debug_assert!(self.is_valid_path(path));
+
+        self.contents.get(path).map(Vec::as_slice)
     }
 
     pub fn remove(&mut self, path: &Path) {
@@ -82,13 +89,13 @@ impl Vfs {
 
 #[derive(Debug)]
 pub struct VfsFile {
-    path: PathBuf,
+    pub path: PathBuf,
 }
 
 #[derive(Debug)]
 pub struct VfsDirectory {
-    path: PathBuf,
-    children: HashSet<PathBuf>,
+    pub path: PathBuf,
+    pub children: HashSet<PathBuf>,
 }
 
 #[derive(Debug)]

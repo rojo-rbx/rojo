@@ -142,7 +142,7 @@ pub enum ProjectNode {
     Regular {
         class_name: String,
         children: HashMap<String, ProjectNode>,
-
+        // properties: HashMap<String, RbxValue>,
         // ignore_unknown: bool,
     },
     SyncPoint {
