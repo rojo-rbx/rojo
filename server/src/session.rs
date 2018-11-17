@@ -71,7 +71,7 @@ impl Session {
             let vfs_temp = vfs.lock().unwrap();
 
             for root in vfs_temp.get_roots() {
-                println!("Watching {}", root.display());
+                info!("Watching path {}", root.display());
 
                 let (watch_tx, watch_rx) = mpsc::channel();
 

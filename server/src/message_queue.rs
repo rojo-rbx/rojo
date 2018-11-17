@@ -1,19 +1,37 @@
-use std::collections::HashMap;
-use std::sync::{mpsc, RwLock, Mutex};
+use std::{
+    collections::HashMap,
+    sync::{
+        mpsc,
+        atomic::{AtomicUsize, Ordering},
+        RwLock,
+        Mutex,
+    },
+};
 
-use id::{Id, get_id};
+use rbx_tree::RbxId;
+
+/// A unique identifier, not guaranteed to be generated in any order.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct ListenerId(usize);
+
+/// Generate a new ID, which has no defined ordering.
+pub fn get_listener_id() -> ListenerId {
+    static LAST_ID: AtomicUsize = AtomicUsize::new(0);
+
+    ListenerId(LAST_ID.fetch_add(1, Ordering::SeqCst))
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum Message {
     InstanceChanged {
-        id: Id,
+        id: RbxId,
     },
 }
 
 pub struct MessageQueue {
    messages: RwLock<Vec<Message>>,
-   message_listeners: Mutex<HashMap<Id, mpsc::Sender<()>>>,
+   message_listeners: Mutex<HashMap<ListenerId, mpsc::Sender<()>>>,
 }
 
 impl MessageQueue {
@@ -39,8 +57,8 @@ impl MessageQueue {
         }
     }
 
-    pub fn subscribe(&self, sender: mpsc::Sender<()>) -> Id {
-        let id = get_id();
+    pub fn subscribe(&self, sender: mpsc::Sender<()>) -> ListenerId {
+        let id = get_listener_id();
 
         {
             let mut message_listeners = self.message_listeners.lock().unwrap();
@@ -50,7 +68,7 @@ impl MessageQueue {
         id
     }
 
-    pub fn unsubscribe(&self, id: Id) {
+    pub fn unsubscribe(&self, id: ListenerId) {
         {
             let mut message_listeners = self.message_listeners.lock().unwrap();
             message_listeners.remove(&id);

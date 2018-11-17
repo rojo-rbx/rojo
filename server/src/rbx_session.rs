@@ -28,11 +28,6 @@ impl RbxSession {
             construct_initial_tree(&project, &temp_vfs)
         };
 
-        {
-            use serde_json;
-            println!("{}", serde_json::to_string(&tree).unwrap());
-        }
-
         RbxSession {
             tree,
             paths_to_ids,
@@ -43,15 +38,15 @@ impl RbxSession {
     }
 
     pub fn path_created_or_updated(&mut self, path: &Path) {
-        println!("Path changed: {}", path.display());
+        info!("Path changed: {}", path.display());
     }
 
     pub fn path_removed(&mut self, path: &Path) {
-        println!("Path removed: {}", path.display());
+        info!("Path removed: {}", path.display());
     }
 
     pub fn path_renamed(&mut self, from_path: &Path, to_path: &Path) {
-        println!("Path renamed from {} to {}", from_path.display(), to_path.display());
+        info!("Path renamed from {} to {}", from_path.display(), to_path.display());
     }
 
     pub fn get_tree(&self) -> &RbxTree {

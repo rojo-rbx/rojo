@@ -4,10 +4,20 @@ extern crate env_logger;
 
 extern crate librojo;
 
-use std::path::{Path, PathBuf};
-use std::process;
+use std::{
+    path::{Path, PathBuf},
+    process,
+    env,
+};
 
-use librojo::pathext::canonicalish;
+fn make_path_absolute(value: &Path) -> PathBuf {
+    if value.is_absolute() {
+        PathBuf::from(value)
+    } else {
+        let current_dir = env::current_dir().unwrap();
+        current_dir.join(value)
+    }
+}
 
 fn main() {
     env_logger::Builder::from_default_env()
@@ -36,7 +46,7 @@ fn main() {
         ("init", sub_matches) => {
             let sub_matches = sub_matches.unwrap();
             let project_path = Path::new(sub_matches.value_of("PATH").unwrap_or("."));
-            let full_path = canonicalish(project_path);
+            let full_path = make_path_absolute(project_path);
 
             librojo::commands::init(&full_path);
         },
@@ -44,7 +54,7 @@ fn main() {
             let sub_matches = sub_matches.unwrap();
 
             let project_path = match sub_matches.value_of("PROJECT") {
-                Some(v) => canonicalish(PathBuf::from(v)),
+                Some(v) => make_path_absolute(Path::new(v)),
                 None => std::env::current_dir().unwrap(),
             };
 
