@@ -35,3 +35,4 @@ uuid = { version = "0.7", features = ["v4", "serde"] }
 [dev-dependencies]
 tempfile = "3.0"
 walkdir = "2.1"
+lazy_static = "1.2"

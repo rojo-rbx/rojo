@@ -20,6 +20,6 @@ pub mod project;
 pub mod rbx_session;
 pub mod session;
 pub mod session_id;
-pub mod vfs;
+pub mod imfs;
 pub mod web;
 pub mod web_util;

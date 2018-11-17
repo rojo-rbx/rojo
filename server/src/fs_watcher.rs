@@ -13,18 +13,18 @@ use notify::{
 };
 
 use crate::{
-    vfs::Vfs,
+    imfs::Imfs,
     rbx_session::RbxSession,
 };
 
 const WATCH_TIMEOUT: Duration = Duration::from_millis(100);
 
-fn handle_event(vfs: &Mutex<Vfs>, rbx_session: &Mutex<RbxSession>, event: DebouncedEvent) {
+fn handle_event(imfs: &Mutex<Imfs>, rbx_session: &Mutex<RbxSession>, event: DebouncedEvent) {
     match event {
         DebouncedEvent::Create(path) => {
             {
-                let mut vfs = vfs.lock().unwrap();
-                vfs.path_created(&path).unwrap();
+                let mut imfs = imfs.lock().unwrap();
+                imfs.path_created(&path).unwrap();
             }
 
             {
@@ -34,8 +34,8 @@ fn handle_event(vfs: &Mutex<Vfs>, rbx_session: &Mutex<RbxSession>, event: Deboun
         },
         DebouncedEvent::Write(path) => {
             {
-                let mut vfs = vfs.lock().unwrap();
-                vfs.path_updated(&path).unwrap();
+                let mut imfs = imfs.lock().unwrap();
+                imfs.path_updated(&path).unwrap();
             }
 
             {
@@ -45,8 +45,8 @@ fn handle_event(vfs: &Mutex<Vfs>, rbx_session: &Mutex<RbxSession>, event: Deboun
         },
         DebouncedEvent::Remove(path) => {
             {
-                let mut vfs = vfs.lock().unwrap();
-                vfs.path_removed(&path).unwrap();
+                let mut imfs = imfs.lock().unwrap();
+                imfs.path_removed(&path).unwrap();
             }
 
             {
@@ -56,8 +56,8 @@ fn handle_event(vfs: &Mutex<Vfs>, rbx_session: &Mutex<RbxSession>, event: Deboun
         },
         DebouncedEvent::Rename(from_path, to_path) => {
             {
-                let mut vfs = vfs.lock().unwrap();
-                vfs.path_moved(&from_path, &to_path).unwrap();
+                let mut imfs = imfs.lock().unwrap();
+                imfs.path_moved(&from_path, &to_path).unwrap();
             }
 
             {
@@ -77,13 +77,13 @@ pub struct FsWatcher {
 }
 
 impl FsWatcher {
-    pub fn start(vfs: Arc<Mutex<Vfs>>, rbx_session: Arc<Mutex<RbxSession>>) -> FsWatcher {
+    pub fn start(imfs: Arc<Mutex<Imfs>>, rbx_session: Arc<Mutex<RbxSession>>) -> FsWatcher {
         let mut watchers = Vec::new();
 
         {
-            let vfs_temp = vfs.lock().unwrap();
+            let imfs_temp = imfs.lock().unwrap();
 
-            for root_path in vfs_temp.get_roots() {
+            for root_path in imfs_temp.get_roots() {
                 let (watch_tx, watch_rx) = mpsc::channel();
 
                 let mut watcher = notify::watcher(watch_tx, WATCH_TIMEOUT)
@@ -94,7 +94,7 @@ impl FsWatcher {
 
                 watchers.push(watcher);
 
-                let vfs = Arc::clone(&vfs);
+                let imfs = Arc::clone(&imfs);
                 let rbx_session = Arc::clone(&rbx_session);
                 let root_path = root_path.clone();
 
@@ -102,7 +102,7 @@ impl FsWatcher {
                     info!("Watcher thread ({}) started", root_path.display());
                     loop {
                         match watch_rx.recv() {
-                            Ok(event) => handle_event(&vfs, &rbx_session, event),
+                            Ok(event) => handle_event(&imfs, &rbx_session, event),
                             Err(_) => break,
                         };
                     }

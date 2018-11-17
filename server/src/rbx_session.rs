@@ -10,7 +10,7 @@ use rbx_tree::{RbxTree, RbxId, RbxInstance, RbxValue};
 use crate::{
     project::{Project, ProjectNode, InstanceProjectNode},
     message_queue::MessageQueue,
-    vfs::{Vfs, VfsItem},
+    imfs::{Imfs, ImfsItem},
 };
 
 pub struct RbxSession {
@@ -18,15 +18,15 @@ pub struct RbxSession {
     paths_to_ids: HashMap<PathBuf, RbxId>,
     ids_to_project_paths: HashMap<RbxId, String>,
     message_queue: Arc<MessageQueue>,
-    vfs: Arc<Mutex<Vfs>>,
+    imfs: Arc<Mutex<Imfs>>,
     project: Arc<Project>,
 }
 
 impl RbxSession {
-    pub fn new(project: Arc<Project>, vfs: Arc<Mutex<Vfs>>, message_queue: Arc<MessageQueue>) -> RbxSession {
+    pub fn new(project: Arc<Project>, imfs: Arc<Mutex<Imfs>>, message_queue: Arc<MessageQueue>) -> RbxSession {
         let (tree, paths_to_ids, ids_to_project_paths) = {
-            let temp_vfs = vfs.lock().unwrap();
-            construct_initial_tree(&project, &temp_vfs)
+            let temp_imfs = imfs.lock().unwrap();
+            construct_initial_tree(&project, &temp_imfs)
         };
 
         RbxSession {
@@ -34,7 +34,7 @@ impl RbxSession {
             paths_to_ids,
             ids_to_project_paths,
             message_queue,
-            vfs,
+            imfs,
             project,
         }
     }
@@ -66,7 +66,7 @@ impl RbxSession {
 
 fn construct_initial_tree(
     project: &Project,
-    vfs: &Vfs,
+    imfs: &Imfs,
 ) -> (RbxTree, HashMap<PathBuf, RbxId>, HashMap<RbxId, String>) {
     let paths_to_ids = HashMap::new();
     let ids_to_project_paths = HashMap::new();
@@ -80,7 +80,7 @@ fn construct_initial_tree(
 
     let mut context = ConstructContext {
         tree,
-        vfs,
+        imfs,
         paths_to_ids,
         ids_to_project_paths,
     };
@@ -98,7 +98,7 @@ fn construct_initial_tree(
 
 struct ConstructContext<'a> {
     tree: RbxTree,
-    vfs: &'a Vfs,
+    imfs: &'a Imfs,
     paths_to_ids: HashMap<PathBuf, RbxId>,
     ids_to_project_paths: HashMap<RbxId, String>,
 }
@@ -151,8 +151,8 @@ fn construct_sync_point_node(
     instance_name: &str,
     file_path: &Path,
 ) -> RbxId {
-    match context.vfs.get(&file_path) {
-        Some(VfsItem::File(file)) => {
+    match context.imfs.get(&file_path) {
+        Some(ImfsItem::File(file)) => {
             let contents = str::from_utf8(&file.contents).unwrap();
 
             let mut properties = HashMap::new();
@@ -169,7 +169,7 @@ fn construct_sync_point_node(
 
             id
         },
-        Some(VfsItem::Directory(directory)) => {
+        Some(ImfsItem::Directory(directory)) => {
             let instance = RbxInstance {
                 class_name: "Folder".to_string(),
                 name: instance_name.to_string(),

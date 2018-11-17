@@ -1,6 +1,7 @@
 {
   "name": "foo",
   "tree": {
+    "$className": "DataModel",
     "ReplicatedStorage": {
       "$className": "ReplicatedStorage",
       "Rojo": {

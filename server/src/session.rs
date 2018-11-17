@@ -6,7 +6,7 @@ use std::{
 use crate::{
     message_queue::MessageQueue,
     project::{Project, ProjectNode},
-    vfs::Vfs,
+    imfs::Imfs,
     session_id::SessionId,
     rbx_session::RbxSession,
     fs_watcher::FsWatcher,
@@ -20,15 +20,15 @@ pub struct Session {
     fs_watcher: FsWatcher,
 }
 
-fn add_sync_points(vfs: &mut Vfs, project_node: &ProjectNode) -> io::Result<()> {
+fn add_sync_points(imfs: &mut Imfs, project_node: &ProjectNode) -> io::Result<()> {
     match project_node {
         ProjectNode::Instance(node) => {
             for child in node.children.values() {
-                add_sync_points(vfs, child)?;
+                add_sync_points(imfs, child)?;
             }
         },
         ProjectNode::SyncPoint(node) => {
-            vfs.add_root(&node.path)?;
+            imfs.add_root(&node.path)?;
         },
     }
 
@@ -37,23 +37,23 @@ fn add_sync_points(vfs: &mut Vfs, project_node: &ProjectNode) -> io::Result<()> 
 
 impl Session {
     pub fn new(project: Project) -> io::Result<Session> {
-        let mut vfs = Vfs::new();
+        let mut imfs = Imfs::new();
 
-        add_sync_points(&mut vfs, &project.tree)
+        add_sync_points(&mut imfs, &project.tree)
             .expect("Could not add sync points when starting new Rojo session");
 
-        let vfs = Arc::new(Mutex::new(vfs));
+        let imfs = Arc::new(Mutex::new(imfs));
         let project = Arc::new(project);
         let message_queue = Arc::new(MessageQueue::new());
 
         let rbx_session = Arc::new(Mutex::new(RbxSession::new(
             Arc::clone(&project),
-            Arc::clone(&vfs),
+            Arc::clone(&imfs),
             Arc::clone(&message_queue),
         )));
 
         let fs_watcher = FsWatcher::start(
-            Arc::clone(&vfs),
+            Arc::clone(&imfs),
             Arc::clone(&rbx_session),
         );
 

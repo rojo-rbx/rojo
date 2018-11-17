@@ -5,15 +5,18 @@ use std::{
     io,
 };
 
+/// The in-memory filesystem keeps a mirror of all files being watcher by Rojo
+/// in order to deduplicate file changes in the case of bidirectional syncing
+/// from Roblox Studio.
 #[derive(Debug)]
-pub struct Vfs {
-    items: HashMap<PathBuf, VfsItem>,
+pub struct Imfs {
+    items: HashMap<PathBuf, ImfsItem>,
     roots: HashSet<PathBuf>,
 }
 
-impl Vfs {
-    pub fn new() -> Vfs {
-        Vfs {
+impl Imfs {
+    pub fn new() -> Imfs {
+        Imfs {
             items: HashMap::new(),
             roots: HashSet::new(),
         }
@@ -23,7 +26,7 @@ impl Vfs {
         &self.roots
     }
 
-    pub fn get(&self, path: &Path) -> Option<&VfsItem> {
+    pub fn get(&self, path: &Path) -> Option<&ImfsItem> {
         debug_assert!(path.is_absolute());
         debug_assert!(self.is_within_roots(path));
 
@@ -36,7 +39,7 @@ impl Vfs {
 
         self.roots.insert(path.to_path_buf());
 
-        VfsItem::read_from_disk(self, path)?;
+        ImfsItem::read_from_disk(self, path)?;
         Ok(())
     }
 
@@ -50,7 +53,7 @@ impl Vfs {
             }
         }
 
-        VfsItem::read_from_disk(self, path)?;
+        ImfsItem::read_from_disk(self, path)?;
         Ok(())
     }
 
@@ -64,7 +67,7 @@ impl Vfs {
             }
         }
 
-        VfsItem::read_from_disk(self, path)?;
+        ImfsItem::read_from_disk(self, path)?;
         Ok(())
     }
 
@@ -74,14 +77,14 @@ impl Vfs {
 
         if let Some(parent_path) = path.parent() {
             if self.is_within_roots(parent_path) {
-                if let Some(VfsItem::Directory(parent)) = self.items.get_mut(parent_path) {
+                if let Some(ImfsItem::Directory(parent)) = self.items.get_mut(parent_path) {
                     parent.children.remove(path);
                 }
             }
         }
 
         match self.items.remove(path) {
-            Some(VfsItem::Directory(directory)) => {
+            Some(ImfsItem::Directory(directory)) => {
                 for child_path in &directory.children {
                     self.path_removed(child_path)?;
                 }
@@ -115,30 +118,30 @@ impl Vfs {
 }
 
 #[derive(Debug)]
-pub struct VfsFile {
+pub struct ImfsFile {
     pub path: PathBuf,
     pub contents: Vec<u8>,
 }
 
 #[derive(Debug)]
-pub struct VfsDirectory {
+pub struct ImfsDirectory {
     pub path: PathBuf,
     pub children: HashSet<PathBuf>,
 }
 
 #[derive(Debug)]
-pub enum VfsItem {
-    File(VfsFile),
-    Directory(VfsDirectory),
+pub enum ImfsItem {
+    File(ImfsFile),
+    Directory(ImfsDirectory),
 }
 
-impl VfsItem {
-    fn read_from_disk<'a, 'b>(vfs: &'a mut Vfs, path: &'b Path) -> io::Result<&'a VfsItem> {
+impl ImfsItem {
+    fn read_from_disk<'a, 'b>(vfs: &'a mut Imfs, path: &'b Path) -> io::Result<&'a ImfsItem> {
         let metadata = fs::metadata(path)?;
 
         if metadata.is_file() {
             let contents = fs::read(path)?;
-            let item = VfsItem::File(VfsFile {
+            let item = ImfsItem::File(ImfsFile {
                 path: path.to_path_buf(),
                 contents,
             });
@@ -153,12 +156,12 @@ impl VfsItem {
                 let entry = entry?;
                 let child_path = entry.path();
 
-                VfsItem::read_from_disk(vfs, &child_path)?;
+                ImfsItem::read_from_disk(vfs, &child_path)?;
 
                 children.insert(child_path);
             }
 
-            let item = VfsItem::Directory(VfsDirectory {
+            let item = ImfsItem::Directory(ImfsDirectory {
                 path: path.to_path_buf(),
                 children,
             });

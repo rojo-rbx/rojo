@@ -22,7 +22,6 @@ fn foo() {
     let project = Project::load_exact(&project_file_location).unwrap();
 
     assert_eq!(project.name, "foo");
-    assert_eq!(project.tree.len(), 1);
 }
 
 #[test]
@@ -31,5 +30,4 @@ fn empty() {
     let project = Project::load_exact(&project_file_location).unwrap();
 
     assert_eq!(project.name, "empty");
-    assert_eq!(project.tree.len(), 0);
 }
