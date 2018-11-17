@@ -1,30 +1,39 @@
 digraph G {
-	ranksep=0.7;
+	graph [
+		ranksep = "0.7",
+		nodesep = "1.0",
+	];
 	node [
-		fontname="Hack",
-		shape="box",
+		fontname = "Hack",
+		shape = "record",
 	];
 
-	roblox_studio -> plugin [dir="both"];
-	plugin -> web_server [style="dashed", dir="both"];
+	roblox_studio -> plugin [dir = "both"];
+	plugin -> web_server [style = "dashed", dir = "both"];
 
-	web_server -> rbx_session;
+	web_server -> session;
 
-	session -> rbx_session [dir="both"];
-	session -> vfs_session;
-	session -> watchers [dir="both"];
+	session -> rbx_session;
+	session -> fs_watcher;
+	session -> message_queue;
 
-	vfs_session -> fs;
+	fs_watcher -> imfs [weight = "10"];
+	fs_watcher -> rbx_session [constraint = "false"];
 
-	rbx_session -> vfs_session [constraint=false];
-	rbx_session -> middlewares;
+	imfs -> fs;
 
-	roblox_studio [label="Roblox Studio"];
-	fs [label="Filesystem"];
-	middlewares [label="Vec<Middleware>"];
-	watchers [label="Vec<PartitionWatcher>"];
-	session [label="Session"];
-	web_server [label="Rouille Server"];
-	vfs_session [label="Arc<RwLock<VfsSession>>"];
-	rbx_session [label="Arc<RwLock<RbxSession>>"];
+	rbx_session -> imfs;
+	rbx_session -> middlewares [weight = "10"];
+	rbx_session -> message_queue [constraint = "false"];
+
+	plugin [label = "Studio Plugin"];
+	roblox_studio [label = "Roblox Studio"];
+	fs [label = "Filesystem"];
+	fs_watcher [label = "Filesystem Watcher"];
+	session [label = "Session"];
+	web_server [label = "Web API"];
+	imfs [label = "In-Memory Filesystem"];
+	rbx_session [label = "RbxSession"];
+	message_queue [label = "MessageQueue"];
+	middlewares [label = "Middlewares"];
 }
