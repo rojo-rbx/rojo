@@ -7,7 +7,6 @@ use std::{
 
 #[derive(Debug)]
 pub struct Vfs {
-    contents: HashMap<PathBuf, Vec<u8>>,
     items: HashMap<PathBuf, VfsItem>,
     roots: HashSet<PathBuf>,
 }
@@ -15,18 +14,9 @@ pub struct Vfs {
 impl Vfs {
     pub fn new() -> Vfs {
         Vfs {
-            contents: HashMap::new(),
             items: HashMap::new(),
             roots: HashSet::new(),
         }
-    }
-
-    pub fn add_root<'a, 'b>(&'a mut self, root_path: &'b Path) -> io::Result<&'a VfsItem> {
-        debug_assert!(root_path.is_absolute());
-
-        self.roots.insert(root_path.to_path_buf());
-
-        VfsItem::get(self, root_path)
     }
 
     pub fn get_roots(&self) -> &HashSet<PathBuf> {
@@ -35,61 +25,99 @@ impl Vfs {
 
     pub fn get(&self, path: &Path) -> Option<&VfsItem> {
         debug_assert!(path.is_absolute());
-        debug_assert!(self.is_valid_path(path));
+        debug_assert!(self.is_within_roots(path));
 
         self.items.get(path)
     }
 
-    pub fn get_contents(&self, path: &Path) -> Option<&[u8]> {
+    pub fn add_root(&mut self, path: &Path) -> io::Result<()> {
         debug_assert!(path.is_absolute());
-        debug_assert!(self.is_valid_path(path));
+        debug_assert!(!self.is_within_roots(path));
 
-        self.contents.get(path).map(Vec::as_slice)
+        self.roots.insert(path.to_path_buf());
+
+        VfsItem::read_from_disk(self, path)?;
+        Ok(())
     }
 
-    pub fn remove(&mut self, path: &Path) {
+    pub fn path_created(&mut self, path: &Path) -> io::Result<()> {
         debug_assert!(path.is_absolute());
-        debug_assert!(self.is_valid_path(path));
+        debug_assert!(self.is_within_roots(path));
 
-        match self.items.remove(path) {
-            Some(item) => match item {
-                VfsItem::File(_) => {
-                    self.contents.remove(path);
-                },
-                VfsItem::Directory(VfsDirectory { children, .. }) => {
-                    for child_path in &children {
-                        self.remove(child_path);
-                    }
-                },
-            },
-            None => {},
-        }
-    }
-
-    pub fn add_or_update<'a, 'b>(&'a mut self, path: &'b Path) -> io::Result<&'a VfsItem> {
-        debug_assert!(path.is_absolute());
-        debug_assert!(self.is_valid_path(path));
-
-        VfsItem::get(self, path)
-    }
-
-    fn is_valid_path(&self, path: &Path) -> bool {
-        let mut is_valid_path = false;
-
-        for root_path in &self.roots {
-            if path.starts_with(root_path) {
-                is_valid_path = true;
-                break;
+        if let Some(parent_path) = path.parent() {
+            if self.is_within_roots(parent_path) && self.get(parent_path).is_none() {
+                self.path_created(parent_path)?;
             }
         }
 
-        is_valid_path
+        VfsItem::read_from_disk(self, path)?;
+        Ok(())
+    }
+
+    pub fn path_updated(&mut self, path: &Path) -> io::Result<()> {
+        debug_assert!(path.is_absolute());
+        debug_assert!(self.is_within_roots(path));
+
+        if let Some(parent_path) = path.parent() {
+            if self.is_within_roots(parent_path) && self.get(parent_path).is_none() {
+                self.path_created(parent_path)?;
+            }
+        }
+
+        VfsItem::read_from_disk(self, path)?;
+        Ok(())
+    }
+
+    pub fn path_removed(&mut self, path: &Path) -> io::Result<()> {
+        debug_assert!(path.is_absolute());
+        debug_assert!(self.is_within_roots(path));
+
+        if let Some(parent_path) = path.parent() {
+            if self.is_within_roots(parent_path) {
+                if let Some(VfsItem::Directory(parent)) = self.items.get_mut(parent_path) {
+                    parent.children.remove(path);
+                }
+            }
+        }
+
+        match self.items.remove(path) {
+            Some(VfsItem::Directory(directory)) => {
+                for child_path in &directory.children {
+                    self.path_removed(child_path)?;
+                }
+            },
+            _ => {},
+        }
+
+        Ok(())
+    }
+
+    pub fn path_moved(&mut self, from_path: &Path, to_path: &Path) -> io::Result<()> {
+        debug_assert!(from_path.is_absolute());
+        debug_assert!(self.is_within_roots(from_path));
+        debug_assert!(to_path.is_absolute());
+        debug_assert!(self.is_within_roots(to_path));
+
+        self.path_removed(from_path)?;
+        self.path_created(to_path)?;
+        Ok(())
+    }
+
+    fn is_within_roots(&self, path: &Path) -> bool {
+        for root_path in &self.roots {
+            if path.starts_with(root_path) {
+                return true;
+            }
+        }
+
+        false
     }
 }
 
 #[derive(Debug)]
 pub struct VfsFile {
     pub path: PathBuf,
+    pub contents: Vec<u8>,
 }
 
 #[derive(Debug)]
@@ -105,42 +133,41 @@ pub enum VfsItem {
 }
 
 impl VfsItem {
-    fn get<'a, 'b>(vfs: &'a mut Vfs, root_path: &'b Path) -> io::Result<&'a VfsItem> {
-        let metadata = fs::metadata(root_path)?;
+    fn read_from_disk<'a, 'b>(vfs: &'a mut Vfs, path: &'b Path) -> io::Result<&'a VfsItem> {
+        let metadata = fs::metadata(path)?;
 
         if metadata.is_file() {
+            let contents = fs::read(path)?;
             let item = VfsItem::File(VfsFile {
-                path: root_path.to_path_buf(),
+                path: path.to_path_buf(),
+                contents,
             });
 
-            vfs.items.insert(root_path.to_path_buf(), item);
+            vfs.items.insert(path.to_path_buf(), item);
 
-            let contents = fs::read(root_path)?;
-            vfs.contents.insert(root_path.to_path_buf(), contents);
-
-            Ok(vfs.items.get(root_path).unwrap())
+            Ok(vfs.items.get(path).unwrap())
         } else if metadata.is_dir() {
             let mut children = HashSet::new();
 
-            for entry in fs::read_dir(root_path)? {
+            for entry in fs::read_dir(path)? {
                 let entry = entry?;
-                let path = entry.path();
+                let child_path = entry.path();
 
-                VfsItem::get(vfs, &path)?;
+                VfsItem::read_from_disk(vfs, &child_path)?;
 
-                children.insert(path);
+                children.insert(child_path);
             }
 
             let item = VfsItem::Directory(VfsDirectory {
-                path: root_path.to_path_buf(),
+                path: path.to_path_buf(),
                 children,
             });
 
-            vfs.items.insert(root_path.to_path_buf(), item);
+            vfs.items.insert(path.to_path_buf(), item);
 
-            Ok(vfs.items.get(root_path).unwrap())
+            Ok(vfs.items.get(path).unwrap())
         } else {
-            unimplemented!();
+            panic!("Unexpected non-file, non-directory item");
         }
     }
 }

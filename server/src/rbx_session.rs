@@ -37,8 +37,12 @@ impl RbxSession {
         }
     }
 
-    pub fn path_created_or_updated(&mut self, path: &Path) {
-        info!("Path changed: {}", path.display());
+    pub fn path_created(&mut self, path: &Path) {
+        info!("Path created: {}", path.display());
+    }
+
+    pub fn path_updated(&mut self, path: &Path) {
+        info!("Path updated: {}", path.display());
     }
 
     pub fn path_removed(&mut self, path: &Path) {
@@ -121,7 +125,7 @@ fn construct_sync_point_node(
 ) {
     match vfs.get(&file_path) {
         Some(VfsItem::File(file)) => {
-            let contents = str::from_utf8(vfs.get_contents(&file.path).unwrap()).unwrap();
+            let contents = str::from_utf8(&file.contents).unwrap();
 
             let mut properties = HashMap::new();
             properties.insert("Source".to_string(), RbxValue::String { value: contents.to_string() });

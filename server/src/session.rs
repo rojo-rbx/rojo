@@ -90,21 +90,32 @@ impl Session {
                         match watch_rx.recv() {
                             Ok(event) => {
                                 match event {
-                                    DebouncedEvent::Create(path) | DebouncedEvent::Write(path) => {
+                                    DebouncedEvent::Create(path) => {
                                         {
                                             let mut vfs = vfs.lock().unwrap();
-                                            vfs.add_or_update(&path).unwrap();
+                                            vfs.path_created(&path).unwrap();
                                         }
 
                                         {
                                             let mut rbx_session = rbx_session.lock().unwrap();
-                                            rbx_session.path_created_or_updated(&path);
+                                            rbx_session.path_created(&path);
+                                        }
+                                    },
+                                    DebouncedEvent::Write(path) => {
+                                        {
+                                            let mut vfs = vfs.lock().unwrap();
+                                            vfs.path_updated(&path).unwrap();
+                                        }
+
+                                        {
+                                            let mut rbx_session = rbx_session.lock().unwrap();
+                                            rbx_session.path_updated(&path);
                                         }
                                     },
                                     DebouncedEvent::Remove(path) => {
                                         {
                                             let mut vfs = vfs.lock().unwrap();
-                                            vfs.remove(&path);
+                                            vfs.path_removed(&path).unwrap();
                                         }
 
                                         {
@@ -115,8 +126,7 @@ impl Session {
                                     DebouncedEvent::Rename(from_path, to_path) => {
                                         {
                                             let mut vfs = vfs.lock().unwrap();
-                                            vfs.remove(&from_path);
-                                            vfs.add_or_update(&to_path).unwrap();
+                                            vfs.path_moved(&from_path, &to_path).unwrap();
                                         }
 
                                         {
