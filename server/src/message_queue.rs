@@ -24,8 +24,8 @@ pub fn get_listener_id() -> ListenerId {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum Message {
-    InstanceChanged {
-        id: RbxId,
+    InstancesRemoved {
+        ids: Vec<RbxId>,
     },
 }
 
@@ -50,29 +50,23 @@ impl MessageQueue {
             messages.extend_from_slice(new_messages);
         }
 
-        {
-            for listener in message_listeners.values() {
-                listener.send(()).unwrap();
-            }
+        for listener in message_listeners.values() {
+            listener.send(()).unwrap();
         }
     }
 
     pub fn subscribe(&self, sender: mpsc::Sender<()>) -> ListenerId {
         let id = get_listener_id();
 
-        {
-            let mut message_listeners = self.message_listeners.lock().unwrap();
-            message_listeners.insert(id, sender);
-        }
+        let mut message_listeners = self.message_listeners.lock().unwrap();
+        message_listeners.insert(id, sender);
 
         id
     }
 
     pub fn unsubscribe(&self, id: ListenerId) {
-        {
-            let mut message_listeners = self.message_listeners.lock().unwrap();
-            message_listeners.remove(&id);
-        }
+        let mut message_listeners = self.message_listeners.lock().unwrap();
+        message_listeners.remove(&id);
     }
 
     pub fn get_message_cursor(&self) -> u32 {

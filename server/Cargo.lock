@@ -641,7 +641,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "rbx-tree"
 version = "0.1.0"
-source = "git+https://github.com/LPGhatguy/rbx-tree.git#124175066fa31e114fe55cca627dad4cae571a63"
+source = "git+https://github.com/LPGhatguy/rbx-tree.git#258b458cffbcbd01e3f1cf5bbd701cc75260f01a"
 dependencies = [
  "serde 1.0.75 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.75 (registry+https://github.com/rust-lang/crates.io-index)",
