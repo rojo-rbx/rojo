@@ -1,5 +1,5 @@
 {
-  "name": "empty",
+  "name": "single-sync-point",
   "tree": {
     "$className": "DataModel",
     "ReplicatedStorage": {
