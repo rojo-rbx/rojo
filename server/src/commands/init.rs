@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use std::process;
 
-use project::Project;
+use crate::project::Project;
 
 pub fn init(project_path: &PathBuf) {
     match Project::init(project_path) {

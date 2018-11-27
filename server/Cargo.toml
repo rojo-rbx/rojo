@@ -5,6 +5,7 @@ authors = ["Lucien Greathouse <me@lpghatguy.com>"]
 description = "A tool to create robust Roblox projects"
 license = "MIT"
 repository = "https://github.com/LPGhatguy/rojo"
+edition = "2018"
 
 [lib]
 name = "librojo"

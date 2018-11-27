@@ -55,7 +55,9 @@ Here are a few, if you're looking for alternatives or supplements to Rojo:
 If you use a plugin that _isn't_ Rojo for syncing code, open an issue and let me know why! I'd like Rojo to be the end-all tool so that people stop reinventing solutions to this problem.
 
 ## Contributing
-The `master` branch is undergoing a rewrite right now known as 'Epiphany'. It includes a breaking change to the project configuration format and an infrastructure overhaul.
+The `master` branch is a rewrite known as **Epiphany**. It includes a breaking change to the project configuration format and an infrastructure overhaul.
+
+Building Rojo requires the latest Rust beta in order to use **2018 Edition** features. Once Rust 1.31 is stable on **December 6, 2018**, Rojo `master` will compile on Rust stable again.
 
 Pull requests are welcome!
 

@@ -5,6 +5,7 @@ use std::{
     io,
     path::{Path, PathBuf},
 };
+
 use serde_json;
 
 pub static PROJECT_FILENAME: &'static str = "roblox-project.json";
