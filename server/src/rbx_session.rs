@@ -35,7 +35,7 @@ impl PathIdTree {
 
     pub fn insert(&mut self, path: &Path, id: RbxId) {
         if let Some(parent_path) = path.parent() {
-            if let Some(mut parent) = self.nodes.get_mut(parent_path) {
+            if let Some(parent) = self.nodes.get_mut(parent_path) {
                 parent.children.insert(path.to_path_buf());
             }
         }
@@ -48,7 +48,7 @@ impl PathIdTree {
 
     pub fn remove(&mut self, root_path: &Path) -> Option<RbxId> {
         if let Some(parent_path) = root_path.parent() {
-            if let Some(mut parent) = self.nodes.get_mut(parent_path) {
+            if let Some(parent) = self.nodes.get_mut(parent_path) {
                 parent.children.remove(root_path);
             }
         }

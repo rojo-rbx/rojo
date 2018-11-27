@@ -1,8 +1,5 @@
 #[macro_use] extern crate clap;
 #[macro_use] extern crate log;
-extern crate env_logger;
-
-extern crate librojo;
 
 use std::{
     path::{Path, PathBuf},
