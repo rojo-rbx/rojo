@@ -5,6 +5,23 @@ use std::{
     io,
 };
 
+use crate::project::{Project, ProjectNode};
+
+fn add_sync_points(imfs: &mut Imfs, project_node: &ProjectNode) -> io::Result<()> {
+    match project_node {
+        ProjectNode::Instance(node) => {
+            for child in node.children.values() {
+                add_sync_points(imfs, child)?;
+            }
+        },
+        ProjectNode::SyncPoint(node) => {
+            imfs.add_root(&node.path)?;
+        },
+    }
+
+    Ok(())
+}
+
 /// The in-memory filesystem keeps a mirror of all files being watcher by Rojo
 /// in order to deduplicate file changes in the case of bidirectional syncing
 /// from Roblox Studio.
@@ -15,7 +32,15 @@ pub struct Imfs {
 }
 
 impl Imfs {
-    pub fn new() -> Imfs {
+    pub fn new(project: &Project) -> io::Result<Imfs> {
+        let mut imfs = Imfs::empty();
+
+        add_sync_points(&mut imfs, &project.tree)?;
+
+        Ok(imfs)
+    }
+
+    pub fn empty() -> Imfs {
         Imfs {
             items: HashMap::new(),
             roots: HashSet::new(),

@@ -5,7 +5,7 @@ use std::{
 
 use crate::{
     message_queue::MessageQueue,
-    project::{Project, ProjectNode},
+    project::Project,
     imfs::Imfs,
     session_id::SessionId,
     rbx_session::RbxSession,
@@ -20,29 +20,9 @@ pub struct Session {
     fs_watcher: FsWatcher,
 }
 
-fn add_sync_points(imfs: &mut Imfs, project_node: &ProjectNode) -> io::Result<()> {
-    match project_node {
-        ProjectNode::Instance(node) => {
-            for child in node.children.values() {
-                add_sync_points(imfs, child)?;
-            }
-        },
-        ProjectNode::SyncPoint(node) => {
-            imfs.add_root(&node.path)?;
-        },
-    }
-
-    Ok(())
-}
-
 impl Session {
     pub fn new(project: Project) -> io::Result<Session> {
-        let mut imfs = Imfs::new();
-
-        add_sync_points(&mut imfs, &project.tree)
-            .expect("Could not add sync points when starting new Rojo session");
-
-        let imfs = Arc::new(Mutex::new(imfs));
+        let imfs = Arc::new(Mutex::new(Imfs::new(&project)?));
         let project = Arc::new(project);
         let message_queue = Arc::new(MessageQueue::new());
 

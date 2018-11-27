@@ -157,6 +157,10 @@ impl RbxSession {
     }
 }
 
+pub fn construct_oneoff_tree(project: &Project, imfs: &Imfs) -> RbxTree {
+    construct_initial_tree(project, imfs).0
+}
+
 struct ConstructContext<'a> {
     tree: RbxTree,
     imfs: &'a Imfs,

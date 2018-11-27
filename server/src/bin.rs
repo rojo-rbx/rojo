@@ -1,9 +1,9 @@
-#[macro_use] extern crate clap;
-
 use std::{
     path::{Path, PathBuf},
     env,
 };
+
+use clap::clap_app;
 
 use librojo::commands;
 
