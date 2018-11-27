@@ -1,9 +1,7 @@
 #[macro_use] extern crate clap;
-#[macro_use] extern crate log;
 
 use std::{
     path::{Path, PathBuf},
-    process,
     env,
 };
 
@@ -23,7 +21,7 @@ fn main() {
         .default_format_timestamp(false)
         .init();
 
-    let matches = clap_app!(rojo =>
+    let mut app = clap_app!(Rojo =>
         (version: env!("CARGO_PKG_VERSION"))
         (author: env!("CARGO_PKG_AUTHORS"))
         (about: env!("CARGO_PKG_DESCRIPTION"))
@@ -40,23 +38,23 @@ fn main() {
         )
 
         (@subcommand build =>
-            (about: "Generates a .model.json, rbxm, or rbxmx model from the project.")
+            (about: "Generates an rbxmx model file from the project.")
             (@arg PROJECT: "Path to the project to serve. Defaults to the current directory.")
             (@arg output: --output +takes_value +required "Where to output the result.")
         )
-    ).get_matches();
+    );
+
+    // `get_matches` consumes self for some reason.
+    let matches = app.clone().get_matches();
 
     match matches.subcommand() {
-        ("init", sub_matches) => {
-            let sub_matches = sub_matches.unwrap();
+        ("init", Some(sub_matches)) => {
             let project_path = Path::new(sub_matches.value_of("PATH").unwrap_or("."));
             let full_path = make_path_absolute(project_path);
 
             librojo::commands::init(&full_path);
         },
-        ("serve", sub_matches) => {
-            let sub_matches = sub_matches.unwrap();
-
+        ("serve", Some(sub_matches)) => {
             let project_path = match sub_matches.value_of("PROJECT") {
                 Some(v) => make_path_absolute(Path::new(v)),
                 None => std::env::current_dir().unwrap(),
@@ -64,9 +62,7 @@ fn main() {
 
             librojo::commands::serve(&project_path);
         },
-        ("build", sub_matches) => {
-            let sub_matches = sub_matches.unwrap();
-
+        ("build", Some(sub_matches)) => {
             let fuzzy_project_path = match sub_matches.value_of("PROJECT") {
                 Some(v) => make_path_absolute(Path::new(v)),
                 None => std::env::current_dir().unwrap(),
@@ -82,9 +78,7 @@ fn main() {
             commands::build(&options);
         },
         _ => {
-            error!("Please specify a subcommand!");
-            error!("Try 'rojo help' for information.");
-            process::exit(1);
+            app.print_help().expect("Could not print help text to stdout!");
         },
     }
 }
