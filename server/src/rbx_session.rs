@@ -289,7 +289,7 @@ fn construct_sync_point_node(
             context.path_id_tree.insert(&directory.path, id);
 
             for child_path in &directory.children {
-                let child_instance_name = child_path.file_name().unwrap().to_str().unwrap();
+                let child_instance_name = child_path.file_stem().unwrap().to_str().unwrap();
                 construct_sync_point_node(context, Some(id), child_instance_name, child_path);
             }
 
