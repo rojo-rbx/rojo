@@ -185,8 +185,8 @@ fn construct_initial_tree(
     construct_project_node(
         &mut context,
         None,
-        "<<<ROOT>>>".to_string(),
-        "<<<ROOT>>>",
+        project.name.clone(),
+        &project.name,
         &project.tree,
     );
 
