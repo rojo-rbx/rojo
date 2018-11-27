@@ -1,9 +1,6 @@
 {
   "name": "empty",
   "tree": {
-    "$className": "Folder",
-    "Library": {
-      "$path": "src"
-    }
+    "$path": "src"
   }
 }

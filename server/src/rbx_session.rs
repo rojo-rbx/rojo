@@ -162,7 +162,7 @@ pub fn construct_oneoff_tree(project: &Project, imfs: &Imfs) -> RbxTree {
 }
 
 struct ConstructContext<'a> {
-    tree: RbxTree,
+    tree: Option<RbxTree>,
     imfs: &'a Imfs,
     path_id_tree: PathIdTree,
     ids_to_project_paths: HashMap<RbxId, String>,
@@ -174,16 +174,9 @@ fn construct_initial_tree(
 ) -> (RbxTree, PathIdTree, HashMap<RbxId, String>) {
     let path_id_tree = PathIdTree::new();
     let ids_to_project_paths = HashMap::new();
-    let tree = RbxTree::new(RbxInstance {
-        name: "this isn't supposed to be here".to_string(),
-        class_name: "ahhh, help me".to_string(),
-        properties: HashMap::new(),
-    });
-
-    let root_id = tree.get_root_id();
 
     let mut context = ConstructContext {
-        tree,
+        tree: None,
         imfs,
         path_id_tree,
         ids_to_project_paths,
@@ -191,18 +184,35 @@ fn construct_initial_tree(
 
     construct_project_node(
         &mut context,
-        root_id,
+        None,
         "<<<ROOT>>>".to_string(),
         "<<<ROOT>>>",
         &project.tree,
     );
 
-    (context.tree, context.path_id_tree, context.ids_to_project_paths)
+    let tree = context.tree.unwrap();
+
+    (tree, context.path_id_tree, context.ids_to_project_paths)
+}
+
+fn insert_or_create_tree(context: &mut ConstructContext, parent_instance_id: Option<RbxId>, instance: RbxInstance) -> RbxId {
+    match (&mut context.tree, parent_instance_id) {
+        (Some(tree), Some(parent_instance_id)) => {
+            tree.insert_instance(instance, parent_instance_id)
+        },
+        _ => {
+            let new_tree = RbxTree::new(instance);
+            let root_id = new_tree.get_root_id();
+
+            context.tree = Some(new_tree);
+            root_id
+        },
+    }
 }
 
 fn construct_project_node(
     context: &mut ConstructContext,
-    parent_instance_id: RbxId,
+    parent_instance_id: Option<RbxId>,
     instance_path: String,
     instance_name: &str,
     project_node: &ProjectNode,
@@ -221,7 +231,7 @@ fn construct_project_node(
 
 fn construct_instance_node(
     context: &mut ConstructContext,
-    parent_instance_id: RbxId,
+    parent_instance_id: Option<RbxId>,
     instance_path: &str,
     instance_name: &str,
     project_node: &InstanceProjectNode,
@@ -232,11 +242,11 @@ fn construct_instance_node(
         properties: HashMap::new(),
     };
 
-    let id = context.tree.insert_instance(instance, parent_instance_id);
+    let id = insert_or_create_tree(context, parent_instance_id, instance);
 
     for (child_name, child_project_node) in &project_node.children {
         let child_path = format!("{}/{}", instance_path, child_name);
-        construct_project_node(context, id, child_path, child_name, child_project_node);
+        construct_project_node(context, Some(id), child_path, child_name, child_project_node);
     }
 
     id
@@ -244,7 +254,7 @@ fn construct_instance_node(
 
 fn construct_sync_point_node(
     context: &mut ConstructContext,
-    parent_instance_id: RbxId,
+    parent_instance_id: Option<RbxId>,
     instance_name: &str,
     file_path: &Path,
 ) -> RbxId {
@@ -261,7 +271,8 @@ fn construct_sync_point_node(
                 properties,
             };
 
-            let id = context.tree.insert_instance(instance, parent_instance_id);
+            let id = insert_or_create_tree(context, parent_instance_id, instance);
+
             context.path_id_tree.insert(&file.path, id);
 
             id
@@ -273,12 +284,13 @@ fn construct_sync_point_node(
                 properties: HashMap::new(),
             };
 
-            let id = context.tree.insert_instance(instance, parent_instance_id);
+            let id = insert_or_create_tree(context, parent_instance_id, instance);
+
             context.path_id_tree.insert(&directory.path, id);
 
             for child_path in &directory.children {
                 let child_instance_name = child_path.file_name().unwrap().to_str().unwrap();
-                construct_sync_point_node(context, id, child_instance_name, child_path);
+                construct_sync_point_node(context, Some(id), child_instance_name, child_path);
             }
 
             id
