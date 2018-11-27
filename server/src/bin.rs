@@ -1,6 +1,9 @@
+#[macro_use] extern crate log;
+
 use std::{
     path::{Path, PathBuf},
     env,
+    process,
 };
 
 use clap::clap_app;
@@ -73,9 +76,16 @@ fn main() {
             let options = commands::BuildOptions {
                 fuzzy_project_path,
                 output_file,
+                output_kind: None, // TODO: Accept from argument
             };
 
-            commands::build(&options);
+            match commands::build(&options) {
+                Ok(_) => {},
+                Err(e) => {
+                    error!("{}", e);
+                    process::exit(1);
+                },
+            }
         },
         _ => {
             app.print_help().expect("Could not print help text to stdout!");
