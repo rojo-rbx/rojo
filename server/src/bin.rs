@@ -10,6 +10,8 @@ use std::{
     env,
 };
 
+use librojo::commands;
+
 fn make_path_absolute(value: &Path) -> PathBuf {
     if value.is_absolute() {
         PathBuf::from(value)
@@ -40,6 +42,11 @@ fn main() {
             (@arg port: --port +takes_value "The port to listen on. Defaults to 8000.")
         )
 
+        (@subcommand build =>
+            (about: "Generates a .model.json, rbxm, or rbxmx model from the project.")
+            (@arg PROJECT: "Path to the project to serve. Defaults to the current directory.")
+            (@arg output: --output +takes_value +required "Where to output the result.")
+        )
     ).get_matches();
 
     match matches.subcommand() {
@@ -59,6 +66,23 @@ fn main() {
             };
 
             librojo::commands::serve(&project_path);
+        },
+        ("build", sub_matches) => {
+            let sub_matches = sub_matches.unwrap();
+
+            let fuzzy_project_path = match sub_matches.value_of("PROJECT") {
+                Some(v) => make_path_absolute(Path::new(v)),
+                None => std::env::current_dir().unwrap(),
+            };
+
+            let output_file = make_path_absolute(Path::new(sub_matches.value_of("output").unwrap()));
+
+            let options = commands::BuildOptions {
+                fuzzy_project_path,
+                output_file,
+            };
+
+            commands::build(&options);
         },
         _ => {
             error!("Please specify a subcommand!");
