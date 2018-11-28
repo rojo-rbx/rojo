@@ -7,6 +7,7 @@ use std::{
 };
 
 use serde_json;
+use rbx_tree::RbxValue;
 
 pub static PROJECT_FILENAME: &'static str = "roblox-project.json";
 
@@ -16,6 +17,9 @@ enum SourceProjectNode {
     Instance {
         #[serde(rename = "$className")]
         class_name: String,
+
+        #[serde(rename = "$properties", default="HashMap::new")]
+        properties: HashMap<String, RbxValue>,
 
         // #[serde(rename = "$ignoreUnknown", default = "false")]
         // ignore_unknown: bool,
@@ -32,7 +36,7 @@ enum SourceProjectNode {
 impl SourceProjectNode {
     pub fn into_project_node(self, project_file_location: &Path) -> ProjectNode {
         match self {
-            SourceProjectNode::Instance { class_name, mut children } => {
+            SourceProjectNode::Instance { class_name, mut children, properties } => {
                 let mut new_children = HashMap::new();
 
                 for (node_name, node) in children.drain() {
@@ -42,6 +46,7 @@ impl SourceProjectNode {
                 ProjectNode::Instance(InstanceProjectNode {
                     class_name,
                     children: new_children,
+                    properties,
                 })
             },
             SourceProjectNode::SyncPoint { path: source_path } => {
@@ -150,7 +155,7 @@ pub enum ProjectNode {
 pub struct InstanceProjectNode {
     pub class_name: String,
     pub children: HashMap<String, ProjectNode>,
-    // properties: HashMap<String, RbxValue>,
+    pub properties: HashMap<String, RbxValue>,
     // ignore_unknown: bool,
 }
 
