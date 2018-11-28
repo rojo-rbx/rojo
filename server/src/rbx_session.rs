@@ -10,7 +10,7 @@ use rbx_tree::{RbxTree, RbxId, RbxInstance, RbxValue};
 use crate::{
     project::{Project, ProjectNode, InstanceProjectNode},
     message_queue::{Message, MessageQueue},
-    imfs::{Imfs, ImfsItem},
+    imfs::{Imfs, ImfsItem, ImfsFile},
 };
 
 #[derive(Debug)]
@@ -252,6 +252,27 @@ fn construct_instance_node(
     id
 }
 
+#[derive(Debug, Clone, Copy)]
+enum FileType {
+    ModuleScript,
+    ServerScript,
+    ClientScript,
+}
+
+fn classify_file(file: &ImfsFile) -> Option<FileType> {
+    let file_name = file.path.file_name()?.to_str()?;
+
+    if file_name.ends_with(".server.lua") {
+        Some(FileType::ServerScript)
+    } else if file_name.ends_with(".client.lua") {
+        Some(FileType::ClientScript)
+    } else if file_name.ends_with(".lua") {
+        Some(FileType::ModuleScript)
+    } else {
+        None
+    }
+}
+
 fn construct_sync_point_node(
     context: &mut ConstructContext,
     parent_instance_id: Option<RbxId>,
@@ -260,13 +281,21 @@ fn construct_sync_point_node(
 ) -> RbxId {
     match context.imfs.get(&file_path) {
         Some(ImfsItem::File(file)) => {
+            let file_type = classify_file(file).unwrap(); // TODO: Don't die here!
+
+            let class_name = match file_type {
+                FileType::ModuleScript => "ModuleScript",
+                FileType::ServerScript => "Script",
+                FileType::ClientScript => "LocalScript",
+            };
+
             let contents = str::from_utf8(&file.contents).unwrap();
 
             let mut properties = HashMap::new();
             properties.insert("Source".to_string(), RbxValue::String { value: contents.to_string() });
 
             let instance = RbxInstance {
-                class_name: "ModuleScript".to_string(),
+                class_name: class_name.to_string(),
                 name: instance_name.to_string(),
                 properties,
             };
@@ -278,19 +307,31 @@ fn construct_sync_point_node(
             id
         },
         Some(ImfsItem::Directory(directory)) => {
-            let instance = RbxInstance {
-                class_name: "Folder".to_string(),
-                name: instance_name.to_string(),
-                properties: HashMap::new(),
+            let init_path = directory.path.join("init.lua");
+
+            let id = if directory.children.contains(&init_path) {
+                construct_sync_point_node(context, parent_instance_id, instance_name, &init_path)
+            } else {
+                let instance = RbxInstance {
+                    class_name: "Folder".to_string(),
+                    name: instance_name.to_string(),
+                    properties: HashMap::new(),
+                };
+
+                let id = insert_or_create_tree(context, parent_instance_id, instance);
+                context.path_id_tree.insert(&directory.path, id);
+                id
             };
 
-            let id = insert_or_create_tree(context, parent_instance_id, instance);
-
-            context.path_id_tree.insert(&directory.path, id);
-
             for child_path in &directory.children {
-                let child_instance_name = child_path.file_stem().unwrap().to_str().unwrap();
-                construct_sync_point_node(context, Some(id), child_instance_name, child_path);
+                if child_path != &init_path {
+                    let child_instance_name = match context.imfs.get(child_path).unwrap() {
+                        ImfsItem::File(_) => child_path.file_stem().unwrap().to_str().unwrap(),
+                        ImfsItem::Directory(_) => child_path.file_name().unwrap().to_str().unwrap(),
+                    };
+
+                    construct_sync_point_node(context, Some(id), child_instance_name, child_path);
+                }
             }
 
             id
