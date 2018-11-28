@@ -11,6 +11,11 @@ use rbx_tree::RbxValue;
 
 pub static PROJECT_FILENAME: &'static str = "roblox-project.json";
 
+// Serde is silly,
+const fn yeah() -> bool {
+    true
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 enum SourceProjectNode {
@@ -18,11 +23,11 @@ enum SourceProjectNode {
         #[serde(rename = "$className")]
         class_name: String,
 
-        #[serde(rename = "$properties", default="HashMap::new")]
+        #[serde(rename = "$properties", default = "HashMap::new")]
         properties: HashMap<String, RbxValue>,
 
-        // #[serde(rename = "$ignoreUnknown", default = "false")]
-        // ignore_unknown: bool,
+        #[serde(rename = "$ignoreUnknown", default = "yeah")]
+        ignore_unknown: bool,
 
         #[serde(flatten)]
         children: HashMap<String, SourceProjectNode>,
@@ -36,7 +41,7 @@ enum SourceProjectNode {
 impl SourceProjectNode {
     pub fn into_project_node(self, project_file_location: &Path) -> ProjectNode {
         match self {
-            SourceProjectNode::Instance { class_name, mut children, properties } => {
+            SourceProjectNode::Instance { class_name, mut children, properties, .. } => {
                 let mut new_children = HashMap::new();
 
                 for (node_name, node) in children.drain() {
