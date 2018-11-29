@@ -29,6 +29,7 @@ pub enum Message {
     },
 }
 
+#[derive(Default)]
 pub struct MessageQueue {
    messages: RwLock<Vec<Message>>,
    message_listeners: Mutex<HashMap<ListenerId, mpsc::Sender<()>>>,

@@ -61,20 +61,15 @@ impl PathIdTree {
         let root_id = root_node.id;
         let mut to_visit: Vec<PathBuf> = root_node.children.drain().collect();
 
-        loop {
-            let next_path = match to_visit.pop() {
-                Some(path) => path,
-                None => break,
-            };
-
-            match self.nodes.remove(&next_path) {
+        while let Some(path) = to_visit.pop() {
+            match self.nodes.remove(&path) {
                 Some(mut node) => {
                     for child in node.children.drain() {
                         to_visit.push(child);
                     }
                 },
                 None => {
-                    warn!("Consistency issue; tried to remove {} but it was already removed", next_path.display());
+                    warn!("Consistency issue; tried to remove {} but it was already removed", path.display());
                 },
             }
         }
@@ -88,12 +83,10 @@ pub struct RbxSession {
     path_id_tree: PathIdTree,
     ids_to_project_paths: HashMap<RbxId, String>,
     message_queue: Arc<MessageQueue>,
-    imfs: Arc<Mutex<Imfs>>,
-    project: Arc<Project>,
 }
 
 impl RbxSession {
-    pub fn new(project: Arc<Project>, imfs: Arc<Mutex<Imfs>>, message_queue: Arc<MessageQueue>) -> RbxSession {
+    pub fn new(project: &Arc<Project>, imfs: Arc<Mutex<Imfs>>, message_queue: Arc<MessageQueue>) -> RbxSession {
         let (tree, path_id_tree, ids_to_project_paths) = {
             let temp_imfs = imfs.lock().unwrap();
             construct_initial_tree(&project, &temp_imfs)
@@ -104,8 +97,6 @@ impl RbxSession {
             path_id_tree,
             ids_to_project_paths,
             message_queue,
-            imfs,
-            project,
         }
     }
 
@@ -185,7 +176,7 @@ fn construct_initial_tree(
     construct_project_node(
         &mut context,
         None,
-        project.name.clone(),
+        &project.name,
         &project.name,
         &project.tree,
     );
@@ -213,7 +204,7 @@ fn insert_or_create_tree(context: &mut ConstructContext, parent_instance_id: Opt
 fn construct_project_node(
     context: &mut ConstructContext,
     parent_instance_id: Option<RbxId>,
-    instance_path: String,
+    instance_path: &str,
     instance_name: &str,
     project_node: &ProjectNode,
 ) {
@@ -246,7 +237,7 @@ fn construct_instance_node(
 
     for (child_name, child_project_node) in &project_node.children {
         let child_path = format!("{}/{}", instance_path, child_name);
-        construct_project_node(context, Some(id), child_path, child_name, child_project_node);
+        construct_project_node(context, Some(id), &child_path, child_name, child_project_node);
     }
 
     id

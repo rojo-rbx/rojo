@@ -17,7 +17,6 @@ pub struct Session {
     pub session_id: SessionId,
     pub message_queue: Arc<MessageQueue>,
     pub rbx_session: Arc<Mutex<RbxSession>>,
-    fs_watcher: FsWatcher,
 }
 
 impl Session {
@@ -27,14 +26,14 @@ impl Session {
         let message_queue = Arc::new(MessageQueue::new());
 
         let rbx_session = Arc::new(Mutex::new(RbxSession::new(
-            Arc::clone(&project),
+            &Arc::clone(&project),
             Arc::clone(&imfs),
             Arc::clone(&message_queue),
         )));
 
-        let fs_watcher = FsWatcher::start(
-            Arc::clone(&imfs),
-            Arc::clone(&rbx_session),
+        FsWatcher::start(
+            &Arc::clone(&imfs),
+            &Arc::clone(&rbx_session),
         );
 
         let session_id = SessionId::new();
@@ -44,7 +43,6 @@ impl Session {
             session_id,
             message_queue,
             rbx_session,
-            fs_watcher,
         })
     }
 
