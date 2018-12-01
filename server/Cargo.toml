@@ -32,6 +32,7 @@ log = "0.4"
 env_logger = "0.5"
 rbx-tree = { git = "https://github.com/LPGhatguy/rbx-tree.git" }
 rbxmx = { git = "https://github.com/LPGhatguy/rbx-tree.git" }
+rbxm = { git = "https://github.com/LPGhatguy/rbx-tree.git" }
 uuid = { version = "0.7", features = ["v4", "serde"] }
 
 [dev-dependencies]

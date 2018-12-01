@@ -5,8 +5,6 @@ use std::{
     fmt,
 };
 
-use rbxmx;
-
 use crate::{
     rbx_session::construct_oneoff_tree,
     project::{Project, ProjectLoadFuzzyError},
@@ -17,6 +15,8 @@ use crate::{
 pub enum OutputKind {
     Rbxmx,
     Rbxlx,
+    Rbxm,
+    Rbxl,
 }
 
 fn detect_output_kind(options: &BuildOptions) -> Option<OutputKind> {
@@ -25,6 +25,8 @@ fn detect_output_kind(options: &BuildOptions) -> Option<OutputKind> {
     match extension {
         "rbxlx" => Some(OutputKind::Rbxlx),
         "rbxmx" => Some(OutputKind::Rbxmx),
+        "rbxl" => Some(OutputKind::Rbxl),
+        "rbxm" => Some(OutputKind::Rbxm),
         _ => None,
     }
 }
@@ -99,6 +101,15 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
             let root_id = tree.get_root_id();
             let top_level_ids = tree.get_instance(root_id).unwrap().get_children_ids();
             rbxmx::encode(&tree, top_level_ids, &mut file);
+        },
+        OutputKind::Rbxm => {
+            let root_id = tree.get_root_id();
+            rbxm::encode(&tree, &[root_id], &mut file)?;
+        },
+        OutputKind::Rbxl => {
+            let root_id = tree.get_root_id();
+            let top_level_ids = tree.get_instance(root_id).unwrap().get_children_ids();
+            rbxm::encode(&tree, top_level_ids, &mut file)?;
         },
     }
 
