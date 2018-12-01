@@ -33,6 +33,10 @@ impl PathIdTree {
         }
     }
 
+    pub fn get_id(&self, path: &Path) -> Option<RbxId> {
+        self.nodes.get(path).map(|v| v.id)
+    }
+
     pub fn insert(&mut self, path: &Path, id: RbxId) {
         if let Some(parent_path) = path.parent() {
             if let Some(parent) = self.nodes.get_mut(parent_path) {
@@ -111,10 +115,24 @@ impl RbxSession {
 
     pub fn path_created(&mut self, path: &Path) {
         info!("Path created: {}", path.display());
+        self.path_updated(path);
     }
 
     pub fn path_updated(&mut self, path: &Path) {
         info!("Path updated: {}", path.display());
+
+        let imfs = self.imfs.lock().unwrap();
+
+        // If the path doesn't exist or it's a directory, we don't care if it
+        // updated
+        let file = match imfs.get(path) {
+            Some(ImfsItem::Directory(_)) | None => return,
+            Some(ImfsItem::File(file)) => file,
+        };
+
+        // TODO: Crawl up path to find first node represented in the tree or a
+        // sync point root. That path immediately before we find an existing
+        // node should be read into the tree.
     }
 
     pub fn path_removed(&mut self, path: &Path) {
