@@ -77,7 +77,7 @@ pub struct FsWatcher {
 }
 
 impl FsWatcher {
-    pub fn start(imfs: &Arc<Mutex<Imfs>>, rbx_session: &Arc<Mutex<RbxSession>>) -> FsWatcher {
+    pub fn start(imfs: Arc<Mutex<Imfs>>, rbx_session: Arc<Mutex<RbxSession>>) -> FsWatcher {
         let mut watchers = Vec::new();
 
         {

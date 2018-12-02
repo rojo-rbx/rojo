@@ -83,10 +83,12 @@ pub struct RbxSession {
     path_id_tree: PathIdTree,
     ids_to_project_paths: HashMap<RbxId, String>,
     message_queue: Arc<MessageQueue>,
+    imfs: Arc<Mutex<Imfs>>,
+    project: Arc<Project>,
 }
 
 impl RbxSession {
-    pub fn new(project: &Arc<Project>, imfs: Arc<Mutex<Imfs>>, message_queue: Arc<MessageQueue>) -> RbxSession {
+    pub fn new(project: Arc<Project>, imfs: Arc<Mutex<Imfs>>, message_queue: Arc<MessageQueue>) -> RbxSession {
         let (tree, path_id_tree, ids_to_project_paths) = {
             let temp_imfs = imfs.lock().unwrap();
             construct_initial_tree(&project, &temp_imfs)
@@ -97,6 +99,8 @@ impl RbxSession {
             path_id_tree,
             ids_to_project_paths,
             message_queue,
+            imfs,
+            project,
         }
     }
 
