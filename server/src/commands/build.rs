@@ -2,8 +2,9 @@ use std::{
     path::PathBuf,
     fs::File,
     io,
-    fmt,
 };
+
+use failure::Fail;
 
 use crate::{
     rbx_session::construct_oneoff_tree,
@@ -38,22 +39,16 @@ pub struct BuildOptions {
     pub output_kind: Option<OutputKind>,
 }
 
+#[derive(Debug, Fail)]
 pub enum BuildError {
+    #[fail(display = "Could not detect what kind of file to create")]
     UnknownOutputKind,
-    ProjectLoadError(ProjectLoadFuzzyError),
-    IoError(io::Error),
-}
 
-impl fmt::Display for BuildError {
-    fn fmt(&self, output: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            BuildError::UnknownOutputKind => {
-                write!(output, "Could not detect what kind of output file to create")
-            },
-            BuildError::ProjectLoadError(inner) => write!(output, "{}", inner),
-            BuildError::IoError(inner) => write!(output, "{}", inner),
-        }
-    }
+    #[fail(display = "Project load error: {}", _0)]
+    ProjectLoadError(#[fail(cause)] ProjectLoadFuzzyError),
+
+    #[fail(display = "IO error: {}", _0)]
+    IoError(#[fail(cause)] io::Error),
 }
 
 impl From<ProjectLoadFuzzyError> for BuildError {

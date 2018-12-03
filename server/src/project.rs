@@ -1,17 +1,16 @@
 use std::{
     collections::HashMap,
-    fmt,
     fs,
     io,
     path::{Path, PathBuf},
 };
 
-use serde_json;
+use failure::Fail;
 use rbx_tree::RbxValue;
 
 pub static PROJECT_FILENAME: &'static str = "roblox-project.json";
 
-// Serde is silly,
+// Serde is silly.
 const fn yeah() -> bool {
     true
 }
@@ -89,35 +88,25 @@ impl SourceProject {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Fail)]
 pub enum ProjectLoadExactError {
-    IoError(io::Error),
-    JsonError(serde_json::Error),
+    #[fail(display = "IO error: {}", _0)]
+    IoError(#[fail(cause)] io::Error),
+
+    #[fail(display = "JSON error: {}", _0)]
+    JsonError(#[fail(cause)] serde_json::Error),
 }
 
-impl fmt::Display for ProjectLoadExactError {
-    fn fmt(&self, output: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            ProjectLoadExactError::IoError(inner) => write!(output, "{}", inner),
-            ProjectLoadExactError::JsonError(inner) => write!(output, "{}", inner),
-        }
-    }
-}
-
-#[derive(Debug)]
-pub enum ProjectInitError {}
-
-impl fmt::Display for ProjectInitError {
-    fn fmt(&self, output: &mut fmt::Formatter) -> fmt::Result {
-        write!(output, "ProjectInitError")
-    }
-}
-
-#[derive(Debug)]
+#[derive(Debug, Fail)]
 pub enum ProjectLoadFuzzyError {
+    #[fail(display = "Project not found")]
     NotFound,
-    IoError(io::Error),
-    JsonError(serde_json::Error),
+
+    #[fail(display = "IO error: {}", _0)]
+    IoError(#[fail(cause)] io::Error),
+
+    #[fail(display = "JSON error: {}", _0)]
+    JsonError(#[fail(cause)] serde_json::Error),
 }
 
 impl From<ProjectLoadExactError> for ProjectLoadFuzzyError {
@@ -129,24 +118,13 @@ impl From<ProjectLoadExactError> for ProjectLoadFuzzyError {
     }
 }
 
-impl fmt::Display for ProjectLoadFuzzyError {
-    fn fmt(&self, output: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            ProjectLoadFuzzyError::NotFound => write!(output, "Project not found."),
-            ProjectLoadFuzzyError::IoError(inner) => write!(output, "{}", inner),
-            ProjectLoadFuzzyError::JsonError(inner) => write!(output, "{}", inner),
-        }
-    }
-}
+#[derive(Debug, Fail)]
+#[fail(display = "Project init error")]
+pub struct ProjectInitError;
 
-#[derive(Debug)]
-pub enum ProjectSaveError {}
-
-impl fmt::Display for ProjectSaveError {
-    fn fmt(&self, output: &mut fmt::Formatter) -> fmt::Result {
-        write!(output, "ProjectSaveError")
-    }
-}
+#[derive(Debug, Fail)]
+#[fail(display = "Project save error")]
+pub struct ProjectSaveError;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type")]
