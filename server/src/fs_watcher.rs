@@ -100,11 +100,8 @@ impl FsWatcher {
 
                 thread::spawn(move || {
                     info!("Watcher thread ({}) started", root_path.display());
-                    loop {
-                        match watch_rx.recv() {
-                            Ok(event) => handle_event(&imfs, &rbx_session, event),
-                            Err(_) => break,
-                        };
+                    while let Ok(event) = watch_rx.recv() {
+                        handle_event(&imfs, &rbx_session, event);
                     }
                     info!("Watcher thread ({}) stopped", root_path.display());
                 });

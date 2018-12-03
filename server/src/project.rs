@@ -192,15 +192,12 @@ impl Project {
         } else if location_metadata.is_dir() {
             let with_file = start_location.join(PROJECT_FILENAME);
 
-            match fs::metadata(&with_file) {
-                Ok(with_file_metadata) => {
-                    if with_file_metadata.is_file() {
-                        return Some(with_file);
-                    } else {
-                        return None;
-                    }
-                },
-                Err(_) => {},
+            if let Ok(with_file_metadata) = fs::metadata(&with_file) {
+                if with_file_metadata.is_file() {
+                    return Some(with_file);
+                } else {
+                    return None;
+                }
             }
         }
 

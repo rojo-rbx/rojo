@@ -17,7 +17,7 @@ pub struct Session {
     pub session_id: SessionId,
     pub message_queue: Arc<MessageQueue>,
     pub rbx_session: Arc<Mutex<RbxSession>>,
-    fs_watcher: FsWatcher,
+    _fs_watcher: FsWatcher,
 }
 
 impl Session {
@@ -44,7 +44,7 @@ impl Session {
             session_id,
             message_queue,
             rbx_session,
-            fs_watcher,
+            _fs_watcher: fs_watcher,
         })
     }
 

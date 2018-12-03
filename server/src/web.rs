@@ -54,7 +54,7 @@ pub struct Server {
 impl Server {
     pub fn new(session: Arc<Session>) -> Server {
         Server {
-            session: session,
+            session,
             server_version: env!("CARGO_PKG_VERSION"),
         }
     }
@@ -94,7 +94,7 @@ impl Server {
                 {
                     let (new_cursor, new_messages) = message_queue.get_messages_since(cursor);
 
-                    if new_messages.len() > 0 {
+                    if !new_messages.is_empty() {
                         return Response::json(&SubscribeResponse {
                             session_id: self.session.session_id,
                             messages: Cow::Borrowed(&[]),
@@ -129,7 +129,7 @@ impl Server {
                 let message_queue = Arc::clone(&self.session.message_queue);
 
                 let requested_ids: Option<Vec<RbxId>> = id_list
-                    .split(",")
+                    .split(',')
                     .map(RbxId::parse_str)
                     .collect();
 
@@ -146,15 +146,12 @@ impl Server {
                 let mut instances = HashMap::new();
 
                 for &requested_id in &requested_ids {
-                    match tree.get_instance(requested_id) {
-                        Some(instance) => {
-                            instances.insert(instance.get_id(), Cow::Borrowed(instance));
+                    if let Some(instance) = tree.get_instance(requested_id) {
+                        instances.insert(instance.get_id(), Cow::Borrowed(instance));
 
-                            for descendant in tree.descendants(requested_id) {
-                                instances.insert(descendant.get_id(), Cow::Borrowed(descendant));
-                            }
-                        },
-                        None => {},
+                        for descendant in tree.descendants(requested_id) {
+                            instances.insert(descendant.get_id(), Cow::Borrowed(descendant));
+                        }
                     }
                 }
 

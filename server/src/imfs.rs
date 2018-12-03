@@ -108,13 +108,10 @@ impl Imfs {
             }
         }
 
-        match self.items.remove(path) {
-            Some(ImfsItem::Directory(directory)) => {
-                for child_path in &directory.children {
-                    self.path_removed(child_path)?;
-                }
-            },
-            _ => {},
+        if let Some(ImfsItem::Directory(directory)) = self.items.remove(path) {
+            for child_path in &directory.children {
+                self.path_removed(child_path)?;
+            }
         }
 
         Ok(())
@@ -173,7 +170,7 @@ impl ImfsItem {
 
             vfs.items.insert(path.to_path_buf(), item);
 
-            Ok(vfs.items.get(path).unwrap())
+            Ok(&vfs.items[path])
         } else if metadata.is_dir() {
             let mut children = HashSet::new();
 
@@ -193,7 +190,7 @@ impl ImfsItem {
 
             vfs.items.insert(path.to_path_buf(), item);
 
-            Ok(vfs.items.get(path).unwrap())
+            Ok(&vfs.items[path])
         } else {
             panic!("Unexpected non-file, non-directory item");
         }
