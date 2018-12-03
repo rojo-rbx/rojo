@@ -87,7 +87,7 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
             // descendants.
 
             let root_id = tree.get_root_id();
-            rbxmx::encode(&tree, &[root_id], &mut file);
+            rbx_xml::encode(&tree, &[root_id], &mut file);
         },
         OutputKind::Rbxlx => {
             // Place files don't contain an entry for the DataModel, but our
@@ -95,16 +95,16 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
 
             let root_id = tree.get_root_id();
             let top_level_ids = tree.get_instance(root_id).unwrap().get_children_ids();
-            rbxmx::encode(&tree, top_level_ids, &mut file);
+            rbx_xml::encode(&tree, top_level_ids, &mut file);
         },
         OutputKind::Rbxm => {
             let root_id = tree.get_root_id();
-            rbxm::encode(&tree, &[root_id], &mut file)?;
+            rbx_binary::encode(&tree, &[root_id], &mut file)?;
         },
         OutputKind::Rbxl => {
             let root_id = tree.get_root_id();
             let top_level_ids = tree.get_instance(root_id).unwrap().get_children_ids();
-            rbxm::encode(&tree, top_level_ids, &mut file)?;
+            rbx_binary::encode(&tree, top_level_ids, &mut file)?;
         },
     }
 
