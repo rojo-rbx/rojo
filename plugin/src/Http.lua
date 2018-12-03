@@ -18,38 +18,47 @@ local Http = {}
 
 function Http.get(url)
 	dprint("\nGET", url)
+
 	return Promise.new(function(resolve, reject)
-		spawn(function()
-			local ok, result = pcall(function()
-				return HttpService:GetAsync(url, true)
+		coroutine.wrap(function()
+			local success, response = pcall(function()
+				return HttpService:RequestAsync({
+					Url = url,
+					Method = "GET",
+				})
 			end)
 
-			if ok then
-				dprint("\t", result)
-				resolve(HttpResponse.new(result))
+			if success then
+				dprint("\t", response)
+				resolve(HttpResponse.fromRobloxResponse(response))
 			else
-				reject(HttpError.fromErrorString(result))
+				reject(HttpError.fromErrorString(response))
 			end
-		end)
+		end)()
 	end)
 end
 
 function Http.post(url, body)
 	dprint("\nPOST", url)
-	dprint(body)
+	dprint(body);
+
 	return Promise.new(function(resolve, reject)
-		spawn(function()
-			local ok, result = pcall(function()
-				return HttpService:PostAsync(url, body)
+		coroutine.wrap(function()
+			local success, response = pcall(function()
+				return HttpService:RequestAsync({
+					Url = url,
+					Method = "POST",
+					Body = body,
+				})
 			end)
 
-			if ok then
-				dprint("\t", result)
-				resolve(HttpResponse.new(result))
+			if success then
+				dprint("\t", response)
+				resolve(HttpResponse.fromRobloxResponse(response))
 			else
-				reject(HttpError.fromErrorString(result))
+				reject(HttpError.fromErrorString(response))
 			end
-		end)
+		end)()
 	end)
 end
 
