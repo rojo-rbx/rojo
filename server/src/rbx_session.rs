@@ -198,7 +198,7 @@ fn construct_initial_tree(
     construct_project_node(
         &mut context,
         None,
-        &project.name,
+        "",
         &project.name,
         &project.tree,
     );
@@ -258,7 +258,12 @@ fn construct_instance_node(
     let id = insert_or_create_tree(context, parent_instance_id, instance);
 
     for (child_name, child_project_node) in &project_node.children {
-        let child_path = format!("{}/{}", instance_path, child_name);
+        let child_path = if instance_path.is_empty() {
+            child_name.clone()
+        } else {
+            format!("{}/{}", instance_path, child_name)
+        };
+
         construct_project_node(context, Some(id), &child_path, child_name, child_project_node);
     }
 

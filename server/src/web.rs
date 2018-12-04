@@ -27,7 +27,7 @@ pub struct ServerInfoResponse<'a> {
     pub protocol_version: u64,
     pub root_instance_id: RbxId,
     pub project: Cow<'a, Project>,
-    pub project_paths_to_ids: Cow<'a, HashMap<RbxId, String>>,
+    pub ids_to_project_paths: Cow<'a, HashMap<RbxId, String>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -80,7 +80,7 @@ impl Server {
                     session_id: self.session.session_id,
                     root_instance_id: tree.get_root_id(),
                     project: Cow::Borrowed(&self.session.project),
-                    project_paths_to_ids: Cow::Borrowed(rbx_session.get_project_path_map()),
+                    ids_to_project_paths: Cow::Borrowed(rbx_session.get_project_path_map()),
                 })
             },
 
