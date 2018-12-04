@@ -1,5 +1,6 @@
+local DevSettings = require(script.Parent.DevSettings)
+
 local testLogLevel = nil
-local configValue = game:FindFirstChild("ROJO_LOG")
 
 local Level = {
 	Error = 0,
@@ -17,11 +18,16 @@ local function getLogLevel()
 		return _G.ROJO_LOG
 	end
 
-	if configValue ~= nil then
-		return configValue.Value
+	local hyperValue = DevSettings:getLogLevel()
+	if hyperValue ~= nil then
+		return hyperValue
 	end
 
 	return Level.Info
+end
+
+local function addTags(tag, message)
+	return tag .. message:gsub("\n", "\n" .. tag)
 end
 
 local Log = {}
@@ -30,19 +36,19 @@ Log.Level = Level
 
 function Log.trace(template, ...)
 	if getLogLevel() >= Level.Trace then
-		print("[Rojo-Trace] " .. string.format(template, ...))
+		print(addTags("[Rojo-Trace] ", string.format(template, ...)))
 	end
 end
 
 function Log.info(template, ...)
 	if getLogLevel() >= Level.Info then
-		print("[Rojo-Info] " .. string.format(template, ...))
+		print(addTags("[Rojo-Info] ", string.format(template, ...)))
 	end
 end
 
 function Log.warn(template, ...)
 	if getLogLevel() >= Level.Warning then
-		warn("[Rojo-Warn] " .. string.format(template, ...))
+		warn(addTags("[Rojo-Warn] ", string.format(template, ...)))
 	end
 end
 

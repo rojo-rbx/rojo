@@ -12,14 +12,11 @@ HttpError.Error = {
 			"Check your game settings, located in the 'Home' tab of Studio.",
 	},
 	ConnectFailed = {
-		message = "Rojo plugin couldn't connect to the Rojo server.\n" ..
+		message = "Couldn't connect to the Rojo server.\n" ..
 			"Make sure the server is running -- use 'rojo serve' to run it!",
 	},
-	Timeout = {
-		message = "Rojo timed out during a request.",
-	},
 	Unknown = {
-		message = "Rojo encountered an unknown error: {{message}}",
+		message = "Unknown error: {{message}}",
 	},
 }
 
@@ -44,22 +41,18 @@ end
 --[[
 	This method shouldn't have to exist. Ugh.
 ]]
-function HttpError.fromErrorString(err)
-	err = err:lower()
+function HttpError.fromErrorString(message)
+	local lower = message:lower()
 
-	if err:find("^http requests are not enabled") then
+	if lower:find("^http requests are not enabled") then
 		return HttpError.new(HttpError.Error.HttpNotEnabled)
 	end
 
-	if err:find("^curl error") then
-		if err:find("couldn't connect to server") then
-			return HttpError.new(HttpError.Error.ConnectFailed)
-		elseif err:find("timeout was reached") then
-			return HttpError.new(HttpError.Error.Timeout)
-		end
+	if lower:find("^httperror: connectfail") then
+		return HttpError.new(HttpError.Error.ConnectFailed)
 	end
 
-	return HttpError.new(HttpError.Error.Unknown, err)
+	return HttpError.new(HttpError.Error.Unknown, message)
 end
 
 function HttpError:report()

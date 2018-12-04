@@ -2,10 +2,11 @@ if not plugin then
 	return
 end
 
-local Session = require(script.Parent.Session)
-local Config = require(script.Parent.Config)
-local Version = require(script.Parent.Version)
-local Logging = require(script.Parent.Logging)
+local Session = require(script.Session)
+local Config = require(script.Config)
+local Version = require(script.Version)
+local Logging = require(script.Logging)
+local DevSettings = require(script.DevSettings)
 
 --[[
 	Check if the user is using a newer version of Rojo than last time. If they
@@ -13,7 +14,7 @@ local Logging = require(script.Parent.Logging)
 ]]
 local function checkUpgrade()
 	-- When developing Rojo, there's no use in doing version checks
-	if Config.dev then
+	if DevSettings:isEnabled() then
 		return
 	end
 
@@ -26,7 +27,7 @@ local function checkUpgrade()
 			local message = (
 				"\nRojo detected an upgrade from version %s to version %s." ..
 				"\nMake sure you have also upgraded your server!" ..
-				"\n\nRojo version %s is intended for use with server version %s.\n"
+				"\n\nRojo plugin version %s is intended for use with server version %s.\n"
 			):format(
 				Version.display(lastVersion), Version.display(Config.version),
 				Version.display(Config.version), Config.expectedServerVersionString
@@ -40,7 +41,7 @@ local function checkUpgrade()
 end
 
 local function main()
-	local displayedVersion = Config.dev and "DEV" or Version.display(Config.version)
+	local displayedVersion = DevSettings:isEnabled() and "DEV" or Version.display(Config.version)
 
 	Logging.trace("Rojo %s initialized", displayedVersion)
 

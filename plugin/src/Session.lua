@@ -28,6 +28,9 @@ function Session.new()
 		:andThen(function()
 			return api:retrieveMessages()
 		end)
+		:catch(function(message)
+			Logging.warn("Couldn't start a new Rojo session: %s", tostring(message))
+		end)
 
 	return setmetatable(self, Session)
 end
