@@ -5,6 +5,7 @@ end
 local Session = require(script.Parent.Session)
 local Config = require(script.Parent.Config)
 local Version = require(script.Parent.Version)
+local Logging = require(script.Parent.Logging)
 
 --[[
 	Check if the user is using a newer version of Rojo than last time. If they
@@ -41,6 +42,8 @@ end
 local function main()
 	local displayedVersion = Config.dev and "DEV" or Version.display(Config.version)
 
+	Logging.trace("Rojo %s initialized", displayedVersion)
+
 	local toolbar = plugin:CreateToolbar("Rojo " .. displayedVersion)
 
 	local currentSession
@@ -52,11 +55,11 @@ local function main()
 			checkUpgrade()
 
 			if currentSession ~= nil then
-				warn("Rojo: A session is already running!")
+				Logging.warn("A session is already running!")
 				return
 			end
 
-			print("Rojo: Started session.")
+			Logging.info("Started new session.")
 			currentSession = Session.new()
 		end)
 end

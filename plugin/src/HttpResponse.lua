@@ -13,16 +13,6 @@ function HttpResponse:__tostring()
 	return stringTemplate:format(self.code, self.body)
 end
 
-function HttpResponse.new(body)
-	local response = {
-		body = body,
-	}
-
-	setmetatable(response, HttpResponse)
-
-	return response
-end
-
 function HttpResponse.fromRobloxResponse(response)
 	local self = {
 		body = response.Body,

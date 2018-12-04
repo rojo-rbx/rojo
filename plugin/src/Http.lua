@@ -1,23 +1,21 @@
 local HttpService = game:GetService("HttpService")
 
-local HTTP_DEBUG = true
-
 local Promise = require(script.Parent.Parent.Promise)
 
+local Logging = require(script.Parent.Logging)
 local HttpError = require(script.Parent.HttpError)
 local HttpResponse = require(script.Parent.HttpResponse)
 
-local function dprint(...)
-	if HTTP_DEBUG then
-		print(...)
-	end
-end
+local lastRequestId = 0
 
 -- TODO: Factor out into separate library, especially error handling
 local Http = {}
 
 function Http.get(url)
-	dprint("\nGET", url)
+	local requestId = lastRequestId + 1
+	lastRequestId = requestId
+
+	Logging.trace("GET(%d) %s", requestId, url)
 
 	return Promise.new(function(resolve, reject)
 		coroutine.wrap(function()
@@ -29,9 +27,10 @@ function Http.get(url)
 			end)
 
 			if success then
-				dprint("\t", response)
+				Logging.trace("Request %d success: status code %s", requestId, response.StatusCode)
 				resolve(HttpResponse.fromRobloxResponse(response))
 			else
+				Logging.trace("Request %d failure: %s", requestId, response)
 				reject(HttpError.fromErrorString(response))
 			end
 		end)()
@@ -39,8 +38,10 @@ function Http.get(url)
 end
 
 function Http.post(url, body)
-	dprint("\nPOST", url)
-	dprint(body);
+	local requestId = lastRequestId + 1
+	lastRequestId = requestId
+
+	Logging.trace("POST(%d) %s\n%s", requestId, url, body)
 
 	return Promise.new(function(resolve, reject)
 		coroutine.wrap(function()
@@ -53,9 +54,10 @@ function Http.post(url, body)
 			end)
 
 			if success then
-				dprint("\t", response)
+				Logging.trace("Request %d success: status code %s", requestId, response.StatusCode)
 				resolve(HttpResponse.fromRobloxResponse(response))
 			else
+				Logging.trace("Request %d failure: %s", requestId, response)
 				reject(HttpError.fromErrorString(response))
 			end
 		end)()

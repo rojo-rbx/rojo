@@ -1,5 +1,6 @@
 local Config = require(script.Parent.Config)
 local ApiContext = require(script.Parent.ApiContext)
+local Logging = require(script.Parent.Logging)
 
 local REMOTE_URL = ("http://localhost:%d"):format(Config.port)
 
@@ -9,16 +10,14 @@ Session.__index = Session
 function Session.new()
 	local self = {}
 
-	setmetatable(self, Session)
-
 	local api
 
 	api = ApiContext.new(REMOTE_URL, function(message)
 		if message.type == "InstanceChanged" then
-			print("Instance", message.id, "changed!")
+			Logging.trace("Instance %s changed!", message.id)
 			-- readAll()
 		else
-			warn("Unknown message type " .. message.type)
+			Logging.warn("Unknown message type %s", message.type)
 		end
 	end)
 
@@ -30,7 +29,7 @@ function Session.new()
 			return api:retrieveMessages()
 		end)
 
-	return self
+	return setmetatable(self, Session)
 end
 
 return Session
