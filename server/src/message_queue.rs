@@ -27,6 +27,9 @@ pub enum Message {
     InstancesRemoved {
         ids: Vec<RbxId>,
     },
+    InstancesUpdated {
+        ids: Vec<RbxId>,
+    },
 }
 
 #[derive(Default)]

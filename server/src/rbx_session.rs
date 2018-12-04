@@ -40,26 +40,36 @@ impl RbxSession {
         }
     }
 
+    fn path_created_or_updated(&mut self, path: &Path) {
+        if let Some(instance_id) = self.path_id_tree.get(path) {
+            // TODO: Replace instance with ID `instance_id` with new instance
+        }
+
+        // TODO: Crawl up path to find first node represented in the tree or a
+        // sync point root. That path immediately before we find an existing
+        // node should be read into the tree.
+    }
+
     pub fn path_created(&mut self, path: &Path) {
         info!("Path created: {}", path.display());
-        self.path_updated(path);
+        self.path_created_or_updated(path);
     }
 
     pub fn path_updated(&mut self, path: &Path) {
         info!("Path updated: {}", path.display());
 
-        let imfs = self.imfs.lock().unwrap();
+        {
+            let imfs = self.imfs.lock().unwrap();
 
-        // If the path doesn't exist or it's a directory, we don't care if it
-        // updated
-        let file = match imfs.get(path) {
-            Some(ImfsItem::Directory(_)) | None => return,
-            Some(ImfsItem::File(file)) => file,
-        };
+            // If the path doesn't exist or it's a directory, we don't care if it
+            // updated
+            match imfs.get(path) {
+                Some(ImfsItem::Directory(_)) | None => return,
+                Some(ImfsItem::File(_)) => {},
+            }
+        }
 
-        // TODO: Crawl up path to find first node represented in the tree or a
-        // sync point root. That path immediately before we find an existing
-        // node should be read into the tree.
+        self.path_created_or_updated(path);
     }
 
     pub fn path_removed(&mut self, path: &Path) {
