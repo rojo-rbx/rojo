@@ -14,13 +14,9 @@ local function getLogLevel()
 		return testLogLevel
 	end
 
-	if _G.ROJO_LOG ~= nil then
-		return _G.ROJO_LOG
-	end
-
-	local hyperValue = DevSettings:getLogLevel()
-	if hyperValue ~= nil then
-		return hyperValue
+	local devValue = DevSettings:getLogLevel()
+	if devValue ~= nil then
+		return devValue
 	end
 
 	return Level.Info
