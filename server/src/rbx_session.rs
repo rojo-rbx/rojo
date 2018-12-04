@@ -1,6 +1,6 @@
 use std::{
-    collections::{HashMap, HashSet},
-    path::{Path, PathBuf},
+    collections::HashMap,
+    path::Path,
     sync::{Arc, Mutex},
     str,
 };
@@ -11,80 +11,12 @@ use crate::{
     project::{Project, ProjectNode, InstanceProjectNode},
     message_queue::{Message, MessageQueue},
     imfs::{Imfs, ImfsItem, ImfsFile},
+    path_map::PathMap,
 };
-
-#[derive(Debug)]
-struct PathIdNode {
-    id: RbxId,
-    children: HashSet<PathBuf>,
-}
-
-/// A map from paths to instance IDs, with a bit of additional data that enables
-/// removing a path and all of its child paths from the tree in constant time.
-#[derive(Debug)]
-struct PathIdTree {
-    nodes: HashMap<PathBuf, PathIdNode>,
-}
-
-impl PathIdTree {
-    pub fn new() -> PathIdTree {
-        PathIdTree {
-            nodes: HashMap::new(),
-        }
-    }
-
-    pub fn get_id(&self, path: &Path) -> Option<RbxId> {
-        self.nodes.get(path).map(|v| v.id)
-    }
-
-    pub fn insert(&mut self, path: &Path, id: RbxId) {
-        if let Some(parent_path) = path.parent() {
-            if let Some(parent) = self.nodes.get_mut(parent_path) {
-                parent.children.insert(path.to_path_buf());
-            }
-        }
-
-        self.nodes.insert(path.to_path_buf(), PathIdNode {
-            id,
-            children: HashSet::new(),
-        });
-    }
-
-    pub fn remove(&mut self, root_path: &Path) -> Option<RbxId> {
-        if let Some(parent_path) = root_path.parent() {
-            if let Some(parent) = self.nodes.get_mut(parent_path) {
-                parent.children.remove(root_path);
-            }
-        }
-
-        let mut root_node = match self.nodes.remove(root_path) {
-            Some(node) => node,
-            None => return None,
-        };
-
-        let root_id = root_node.id;
-        let mut to_visit: Vec<PathBuf> = root_node.children.drain().collect();
-
-        while let Some(path) = to_visit.pop() {
-            match self.nodes.remove(&path) {
-                Some(mut node) => {
-                    for child in node.children.drain() {
-                        to_visit.push(child);
-                    }
-                },
-                None => {
-                    warn!("Consistency issue; tried to remove {} but it was already removed", path.display());
-                },
-            }
-        }
-
-        Some(root_id)
-    }
-}
 
 pub struct RbxSession {
     tree: RbxTree,
-    path_id_tree: PathIdTree,
+    path_id_tree: PathMap<RbxId>,
     ids_to_project_paths: HashMap<RbxId, String>,
     message_queue: Arc<MessageQueue>,
     imfs: Arc<Mutex<Imfs>>,
@@ -177,15 +109,15 @@ pub fn construct_oneoff_tree(project: &Project, imfs: &Imfs) -> RbxTree {
 struct ConstructContext<'a> {
     tree: Option<RbxTree>,
     imfs: &'a Imfs,
-    path_id_tree: PathIdTree,
+    path_id_tree: PathMap<RbxId>,
     ids_to_project_paths: HashMap<RbxId, String>,
 }
 
 fn construct_initial_tree(
     project: &Project,
     imfs: &Imfs,
-) -> (RbxTree, PathIdTree, HashMap<RbxId, String>) {
-    let path_id_tree = PathIdTree::new();
+) -> (RbxTree, PathMap<RbxId>, HashMap<RbxId, String>) {
+    let path_id_tree = PathMap::new();
     let ids_to_project_paths = HashMap::new();
 
     let mut context = ConstructContext {
@@ -320,7 +252,7 @@ fn construct_sync_point_node(
 
             let id = insert_or_create_tree(context, parent_instance_id, instance);
 
-            context.path_id_tree.insert(&file.path, id);
+            context.path_id_tree.insert(file.path.clone(), id);
 
             id
         },
@@ -337,7 +269,7 @@ fn construct_sync_point_node(
                 };
 
                 let id = insert_or_create_tree(context, parent_instance_id, instance);
-                context.path_id_tree.insert(&directory.path, id);
+                context.path_id_tree.insert(directory.path.clone(), id);
                 id
             };
 
