@@ -8,6 +8,19 @@ local Version = require(script.Version)
 local Logging = require(script.Logging)
 local DevSettings = require(script.DevSettings)
 
+local function showUpgradeMessage(lastVersion)
+	local message = (
+		"Rojo detected an upgrade from version %s to version %s." ..
+		"\nMake sure you have also upgraded your server!" ..
+		"\n\nRojo plugin version %s is intended for use with server version %s."
+	):format(
+		Version.display(lastVersion), Version.display(Config.version),
+		Version.display(Config.version), Config.expectedServerVersionString
+	)
+
+	Logging.info(message)
+end
+
 --[[
 	Check if the user is using a newer version of Rojo than last time. If they
 	are, show them a reminder to make sure they check their server version.
@@ -24,16 +37,7 @@ local function checkUpgrade()
 		local wasUpgraded = Version.compare(Config.version, lastVersion) == 1
 
 		if wasUpgraded then
-			local message = (
-				"\nRojo detected an upgrade from version %s to version %s." ..
-				"\nMake sure you have also upgraded your server!" ..
-				"\n\nRojo plugin version %s is intended for use with server version %s.\n"
-			):format(
-				Version.display(lastVersion), Version.display(Config.version),
-				Version.display(Config.version), Config.expectedServerVersionString
-			)
-
-			print(message)
+			showUpgradeMessage(lastVersion)
 		end
 	end
 
@@ -41,7 +45,9 @@ local function checkUpgrade()
 end
 
 local function main()
-	local displayedVersion = DevSettings:isEnabled() and "DEV" or Version.display(Config.version)
+	local displayedVersion = DevSettings:isEnabled()
+		and Config.codename
+		or Version.display(Config.version)
 
 	Logging.trace("Rojo %s initialized", displayedVersion)
 
