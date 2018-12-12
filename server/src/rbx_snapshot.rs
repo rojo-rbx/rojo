@@ -4,57 +4,62 @@ use std::{
     collections::HashMap,
 };
 
-use rbx_tree::{RbxTree, RbxId};
-
-use crate::{
-    imfs::{Imfs, ImfsItem, ImfsFile, ImfsDirectory},
-};
+use rbx_tree::{RbxTree, RbxId, RbxInstance, RbxValue};
 
 pub struct RbxSnapshotInstance<'a> {
-    name: String,
-    class_name: String,
-    properties: HashMap<String, RbxSnapshotValue<'a>>,
-    children: Vec<RbxSnapshotInstance<'a>>,
+    pub name: Cow<'a, str>,
+    pub class_name: Cow<'a, str>,
+    pub properties: HashMap<String, RbxSnapshotValue<'a>>,
+    pub children: Vec<RbxSnapshotInstance<'a>>,
 }
 
 pub enum RbxSnapshotValue<'a> {
     String(Cow<'a, str>),
 }
 
-pub fn reify(snapshot: RbxSnapshotInstance, tree: &mut RbxTree, parent_id: RbxId) {
-    unimplemented!()
+impl<'a> RbxSnapshotValue<'a> {
+    pub fn to_rbx_value(&self) -> RbxValue {
+        match self {
+            RbxSnapshotValue::String(value) => RbxValue::String {
+                value: value.to_string(),
+            },
+        }
+    }
 }
 
-pub fn render<'a>(imfs: &'a Imfs, imfs_item: &'a ImfsItem) -> RbxSnapshotInstance<'a> {
-    match imfs_item {
-        ImfsItem::File(file) => {
-            let name = file.path.file_stem().unwrap().to_str().unwrap();
-            let source = str::from_utf8(&file.contents).unwrap();
-            let mut properties = HashMap::new();
-            properties.insert("Source".to_string(), RbxSnapshotValue::String(Cow::Borrowed(source)));
+fn reify_core(snapshot: &RbxSnapshotInstance) -> RbxInstance {
+    let mut properties = HashMap::new();
 
-            RbxSnapshotInstance {
-                name: name.to_string(),
-                class_name: "ModuleScript".to_string(),
-                properties,
-                children: Vec::new(),
-            }
-        },
-        ImfsItem::Directory(directory) => {
-            let name = directory.path.file_name().unwrap().to_str().unwrap();
-            let mut children = Vec::new();
+    for (key, value) in &snapshot.properties {
+        properties.insert(key.clone(), value.to_rbx_value());
+    }
 
-            for child_path in &directory.children {
-                let child_item = imfs.get(child_path).unwrap();
-                children.push(render(imfs, child_item));
-            }
+    let instance = RbxInstance {
+        name: snapshot.name.to_string(),
+        class_name: snapshot.class_name.to_string(),
+        properties,
+    };
 
-            RbxSnapshotInstance {
-                name: name.to_string(),
-                class_name: "Folder".to_string(),
-                properties: HashMap::new(),
-                children,
-            }
-        },
+    instance
+}
+
+pub fn reify_root(snapshot: &RbxSnapshotInstance) -> RbxTree {
+    let instance = reify_core(snapshot);
+    let mut tree = RbxTree::new(instance);
+    let root_id = tree.get_root_id();
+
+    for child in &snapshot.children {
+        reify_child(child, &mut tree, root_id);
+    }
+
+    tree
+}
+
+fn reify_child(snapshot: &RbxSnapshotInstance, tree: &mut RbxTree, parent_id: RbxId) {
+    let instance = reify_core(snapshot);
+    let id = tree.insert_instance(instance, parent_id);
+
+    for child in &snapshot.children {
+        reify_child(child, tree, id);
     }
 }

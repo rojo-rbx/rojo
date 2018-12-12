@@ -1,17 +1,19 @@
 use std::{
+    borrow::Cow,
     collections::HashMap,
     path::Path,
     sync::{Arc, Mutex},
     str,
 };
 
-use rbx_tree::{RbxTree, RbxId, RbxInstance, RbxValue};
+use rbx_tree::{RbxTree, RbxId};
 
 use crate::{
     project::{Project, ProjectNode, InstanceProjectNode},
     message_queue::{Message, MessageQueue},
     imfs::{Imfs, ImfsItem, ImfsFile},
     path_map::PathMap,
+    rbx_snapshot::{RbxSnapshotInstance, RbxSnapshotValue, reify_root},
 };
 
 pub struct RbxSession {
@@ -25,10 +27,14 @@ pub struct RbxSession {
 
 impl RbxSession {
     pub fn new(project: Arc<Project>, imfs: Arc<Mutex<Imfs>>, message_queue: Arc<MessageQueue>) -> RbxSession {
-        let (tree, path_id_tree, ids_to_project_paths) = {
+        let tree = {
             let temp_imfs = imfs.lock().unwrap();
             construct_initial_tree(&project, &temp_imfs)
         };
+
+        // TODO: Restore these?
+        let path_id_tree = PathMap::new();
+        let ids_to_project_paths = HashMap::new();
 
         RbxSession {
             tree,
@@ -113,11 +119,10 @@ impl RbxSession {
 }
 
 pub fn construct_oneoff_tree(project: &Project, imfs: &Imfs) -> RbxTree {
-    construct_initial_tree(project, imfs).0
+    construct_initial_tree(project, imfs)
 }
 
 struct ConstructContext<'a> {
-    tree: Option<RbxTree>,
     imfs: &'a Imfs,
     path_id_tree: PathMap<RbxId>,
     ids_to_project_paths: HashMap<RbxId, String>,
@@ -126,78 +131,49 @@ struct ConstructContext<'a> {
 fn construct_initial_tree(
     project: &Project,
     imfs: &Imfs,
-) -> (RbxTree, PathMap<RbxId>, HashMap<RbxId, String>) {
+) -> RbxTree {
     let path_id_tree = PathMap::new();
     let ids_to_project_paths = HashMap::new();
 
     let mut context = ConstructContext {
-        tree: None,
         imfs,
         path_id_tree,
         ids_to_project_paths,
     };
 
-    construct_project_node(
+    let snapshot = construct_project_node(
         &mut context,
-        None,
         "",
         &project.name,
         &project.tree,
     );
 
-    let tree = context.tree.unwrap();
-
-    (tree, context.path_id_tree, context.ids_to_project_paths)
+    reify_root(&snapshot)
 }
 
-fn insert_or_create_tree(context: &mut ConstructContext, parent_instance_id: Option<RbxId>, instance: RbxInstance) -> RbxId {
-    match (&mut context.tree, parent_instance_id) {
-        (Some(tree), Some(parent_instance_id)) => {
-            tree.insert_instance(instance, parent_instance_id)
-        },
-        _ => {
-            let new_tree = RbxTree::new(instance);
-            let root_id = new_tree.get_root_id();
-
-            context.tree = Some(new_tree);
-            root_id
-        },
-    }
-}
-
-fn construct_project_node(
-    context: &mut ConstructContext,
-    parent_instance_id: Option<RbxId>,
+fn construct_project_node<'a>(
+    context: &mut ConstructContext<'a>,
     instance_path: &str,
-    instance_name: &str,
-    project_node: &ProjectNode,
-) {
+    instance_name: &'a str,
+    project_node: &'a ProjectNode,
+) -> RbxSnapshotInstance<'a> {
     match project_node {
         ProjectNode::Instance(node) => {
-            let id = construct_instance_node(context, parent_instance_id, &instance_path, instance_name, node);
-            context.ids_to_project_paths.insert(id, instance_path.to_string());
+            construct_instance_node(context, &instance_path, instance_name, node)
         },
         ProjectNode::SyncPoint(node) => {
-            let id = construct_sync_point_node(context, parent_instance_id, instance_name, &node.path);
-            context.ids_to_project_paths.insert(id, instance_path.to_string());
+            construct_sync_point_node(context, instance_name, &node.path)
         },
     }
 }
 
-fn construct_instance_node(
-    context: &mut ConstructContext,
-    parent_instance_id: Option<RbxId>,
+fn construct_instance_node<'a>(
+    context: &mut ConstructContext<'a>,
     instance_path: &str,
-    instance_name: &str,
-    project_node: &InstanceProjectNode,
-) -> RbxId {
-    let instance = RbxInstance {
-        class_name: project_node.class_name.clone(),
-        name: instance_name.to_string(),
-        properties: HashMap::new(),
-    };
-
-    let id = insert_or_create_tree(context, parent_instance_id, instance);
+    instance_name: &'a str,
+    project_node: &'a InstanceProjectNode,
+) -> RbxSnapshotInstance<'a> {
+    let mut children = Vec::new();
 
     for (child_name, child_project_node) in &project_node.children {
         let child_path = if instance_path.is_empty() {
@@ -206,10 +182,15 @@ fn construct_instance_node(
             format!("{}/{}", instance_path, child_name)
         };
 
-        construct_project_node(context, Some(id), &child_path, child_name, child_project_node);
+        children.push(construct_project_node(context, &child_path, child_name, child_project_node));
     }
 
-    id
+    RbxSnapshotInstance {
+        class_name: Cow::Borrowed(&project_node.class_name),
+        name: Cow::Borrowed(instance_name),
+        properties: HashMap::new(),
+        children,
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -233,12 +214,11 @@ fn classify_file(file: &ImfsFile) -> Option<FileType> {
     }
 }
 
-fn construct_sync_point_node(
-    context: &mut ConstructContext,
-    parent_instance_id: Option<RbxId>,
-    instance_name: &str,
+fn construct_sync_point_node<'a>(
+    context: &mut ConstructContext<'a>,
+    instance_name: &'a str,
     file_path: &Path,
-) -> RbxId {
+) -> RbxSnapshotInstance<'a> {
     match context.imfs.get(&file_path) {
         Some(ImfsItem::File(file)) => {
             let file_type = classify_file(file).unwrap(); // TODO: Don't die here!
@@ -252,35 +232,29 @@ fn construct_sync_point_node(
             let contents = str::from_utf8(&file.contents).unwrap();
 
             let mut properties = HashMap::new();
-            properties.insert("Source".to_string(), RbxValue::String { value: contents.to_string() });
+            properties.insert("Source".to_string(), RbxSnapshotValue::String(Cow::Borrowed(contents)));
 
-            let instance = RbxInstance {
-                class_name: class_name.to_string(),
-                name: instance_name.to_string(),
+            let instance = RbxSnapshotInstance {
+                class_name: Cow::Borrowed(class_name),
+                name: Cow::Borrowed(instance_name),
                 properties,
+                children: Vec::new(),
             };
 
-            let id = insert_or_create_tree(context, parent_instance_id, instance);
-
-            context.path_id_tree.insert(file.path.clone(), id);
-
-            id
+            instance
         },
         Some(ImfsItem::Directory(directory)) => {
             let init_path = directory.path.join("init.lua");
 
-            let id = if directory.children.contains(&init_path) {
-                construct_sync_point_node(context, parent_instance_id, instance_name, &init_path)
+            let mut instance = if directory.children.contains(&init_path) {
+                construct_sync_point_node(context, instance_name, &init_path)
             } else {
-                let instance = RbxInstance {
-                    class_name: "Folder".to_string(),
-                    name: instance_name.to_string(),
+                RbxSnapshotInstance {
+                    class_name: Cow::Borrowed("Folder"),
+                    name: Cow::Borrowed(instance_name),
                     properties: HashMap::new(),
-                };
-
-                let id = insert_or_create_tree(context, parent_instance_id, instance);
-                context.path_id_tree.insert(directory.path.clone(), id);
-                id
+                    children: Vec::new(),
+                }
             };
 
             for child_path in &directory.children {
@@ -290,11 +264,11 @@ fn construct_sync_point_node(
                         ImfsItem::Directory(_) => child_path.file_name().unwrap().to_str().unwrap(),
                     };
 
-                    construct_sync_point_node(context, Some(id), child_instance_name, child_path);
+                    instance.children.push(construct_sync_point_node(context, child_instance_name, child_path));
                 }
             }
 
-            id
+            instance
         },
         None => panic!("Couldn't read {} from disk", file_path.display()),
     }
