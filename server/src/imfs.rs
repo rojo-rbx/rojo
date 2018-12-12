@@ -76,9 +76,10 @@ impl Imfs {
             if self.is_within_roots(parent_path) && self.get(parent_path).is_none() {
                 self.path_created(parent_path)?;
             }
+        } else {
+            ImfsItem::read_from_disk(self, path)?;
         }
 
-        ImfsItem::read_from_disk(self, path)?;
         Ok(())
     }
 
@@ -90,9 +91,10 @@ impl Imfs {
             if self.is_within_roots(parent_path) && self.get(parent_path).is_none() {
                 self.path_created(parent_path)?;
             }
+        } else {
+            ImfsItem::read_from_disk(self, path)?;
         }
 
-        ImfsItem::read_from_disk(self, path)?;
         Ok(())
     }
 

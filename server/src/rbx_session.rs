@@ -122,28 +122,12 @@ pub fn construct_oneoff_tree(project: &Project, imfs: &Imfs) -> RbxTree {
     construct_initial_tree(project, imfs)
 }
 
-struct ConstructContext<'a> {
-    imfs: &'a Imfs,
-    path_id_tree: PathMap<RbxId>,
-    ids_to_project_paths: HashMap<RbxId, String>,
-}
-
 fn construct_initial_tree(
     project: &Project,
     imfs: &Imfs,
 ) -> RbxTree {
-    let path_id_tree = PathMap::new();
-    let ids_to_project_paths = HashMap::new();
-
-    let mut context = ConstructContext {
-        imfs,
-        path_id_tree,
-        ids_to_project_paths,
-    };
-
     let snapshot = construct_project_node(
-        &mut context,
-        "",
+        imfs,
         &project.name,
         &project.tree,
     );
@@ -152,37 +136,30 @@ fn construct_initial_tree(
 }
 
 fn construct_project_node<'a>(
-    context: &mut ConstructContext<'a>,
-    instance_path: &str,
+    imfs: &'a Imfs,
     instance_name: &'a str,
     project_node: &'a ProjectNode,
 ) -> RbxSnapshotInstance<'a> {
     match project_node {
         ProjectNode::Instance(node) => {
-            construct_instance_node(context, &instance_path, instance_name, node)
+            construct_instance_node(imfs, instance_name, node)
         },
         ProjectNode::SyncPoint(node) => {
-            construct_sync_point_node(context, instance_name, &node.path)
+            snapshot_instances_from_imfs(imfs, &node.path)
+                .expect("Could not reify nodes from Imfs")
         },
     }
 }
 
 fn construct_instance_node<'a>(
-    context: &mut ConstructContext<'a>,
-    instance_path: &str,
+    imfs: &'a Imfs,
     instance_name: &'a str,
     project_node: &'a InstanceProjectNode,
 ) -> RbxSnapshotInstance<'a> {
     let mut children = Vec::new();
 
     for (child_name, child_project_node) in &project_node.children {
-        let child_path = if instance_path.is_empty() {
-            child_name.clone()
-        } else {
-            format!("{}/{}", instance_path, child_name)
-        };
-
-        children.push(construct_project_node(context, &child_path, child_name, child_project_node));
+        children.push(construct_project_node(imfs, child_name, child_project_node));
     }
 
     RbxSnapshotInstance {
@@ -190,6 +167,7 @@ fn construct_instance_node<'a>(
         name: Cow::Borrowed(instance_name),
         properties: HashMap::new(),
         children,
+        update_trigger_paths: Vec::new(),
     }
 }
 
@@ -200,28 +178,33 @@ enum FileType {
     ClientScript,
 }
 
-fn classify_file(file: &ImfsFile) -> Option<FileType> {
-    let file_name = file.path.file_name()?.to_str()?;
-
-    if file_name.ends_with(".server.lua") {
-        Some(FileType::ServerScript)
-    } else if file_name.ends_with(".client.lua") {
-        Some(FileType::ClientScript)
-    } else if file_name.ends_with(".lua") {
-        Some(FileType::ModuleScript)
+fn get_trailing<'a>(input: &'a str, trailer: &str) -> Option<&'a str> {
+    if input.ends_with(trailer) {
+        let end = input.len().saturating_sub(trailer.len());
+        Some(&input[..end])
     } else {
         None
     }
 }
 
-fn construct_sync_point_node<'a>(
-    context: &mut ConstructContext<'a>,
-    instance_name: &'a str,
-    file_path: &Path,
-) -> RbxSnapshotInstance<'a> {
-    match context.imfs.get(&file_path) {
-        Some(ImfsItem::File(file)) => {
-            let file_type = classify_file(file).unwrap(); // TODO: Don't die here!
+fn classify_file(file: &ImfsFile) -> Option<(&str, FileType)> {
+    let file_name = file.path.file_name()?.to_str()?;
+
+    if let Some(instance_name) = get_trailing(file_name, ".server.lua") {
+        Some((instance_name, FileType::ServerScript))
+    } else if let Some(instance_name) = get_trailing(file_name, ".client.lua") {
+        Some((instance_name, FileType::ClientScript))
+    } else if let Some(instance_name) = get_trailing(file_name, ".lua") {
+        Some((instance_name, FileType::ModuleScript))
+    } else {
+        None
+    }
+}
+
+fn snapshot_instances_from_imfs<'a>(imfs: &'a Imfs, imfs_path: &Path) -> Option<RbxSnapshotInstance<'a>> {
+    match imfs.get(imfs_path)? {
+        ImfsItem::File(file) => {
+            let (instance_name, file_type) = classify_file(file)?;
 
             let class_name = match file_type {
                 FileType::ModuleScript => "ModuleScript",
@@ -229,47 +212,44 @@ fn construct_sync_point_node<'a>(
                 FileType::ClientScript => "LocalScript",
             };
 
-            let contents = str::from_utf8(&file.contents).unwrap();
+            let contents = str::from_utf8(&file.contents)
+                .expect("File did not contain UTF-8 data, which is required for scripts.");
 
             let mut properties = HashMap::new();
-            properties.insert("Source".to_string(), RbxSnapshotValue::String(Cow::Borrowed(contents)));
+            properties.insert(String::from("Source"), RbxSnapshotValue::String(Cow::Borrowed(contents)));
 
-            let instance = RbxSnapshotInstance {
-                class_name: Cow::Borrowed(class_name),
+            Some(RbxSnapshotInstance {
                 name: Cow::Borrowed(instance_name),
+                class_name: Cow::Borrowed(class_name),
                 properties,
                 children: Vec::new(),
-            };
-
-            instance
+                update_trigger_paths: vec![file.path.clone()],
+            })
         },
-        Some(ImfsItem::Directory(directory)) => {
+        ImfsItem::Directory(directory) => {
             let init_path = directory.path.join("init.lua");
 
             let mut instance = if directory.children.contains(&init_path) {
-                construct_sync_point_node(context, instance_name, &init_path)
+                snapshot_instances_from_imfs(imfs, &init_path)?
             } else {
                 RbxSnapshotInstance {
                     class_name: Cow::Borrowed("Folder"),
-                    name: Cow::Borrowed(instance_name),
+                    name: Cow::Borrowed(""), // Assigned later in the method
                     properties: HashMap::new(),
                     children: Vec::new(),
+                    update_trigger_paths: vec![directory.path.clone()],
                 }
             };
 
+            instance.name = Cow::Borrowed(directory.path.file_name()?.to_str()?);
+
             for child_path in &directory.children {
                 if child_path != &init_path {
-                    let child_instance_name = match context.imfs.get(child_path).unwrap() {
-                        ImfsItem::File(_) => child_path.file_stem().unwrap().to_str().unwrap(),
-                        ImfsItem::Directory(_) => child_path.file_name().unwrap().to_str().unwrap(),
-                    };
-
-                    instance.children.push(construct_sync_point_node(context, child_instance_name, child_path));
+                    instance.children.push(snapshot_instances_from_imfs(imfs, child_path)?);
                 }
             }
 
-            instance
+            Some(instance)
         },
-        None => panic!("Couldn't read {} from disk", file_path.display()),
     }
 }

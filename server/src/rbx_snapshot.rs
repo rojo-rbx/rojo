@@ -2,6 +2,7 @@ use std::{
     str,
     borrow::Cow,
     collections::HashMap,
+    path::PathBuf,
 };
 
 use rbx_tree::{RbxTree, RbxId, RbxInstance, RbxValue};
@@ -11,6 +12,7 @@ pub struct RbxSnapshotInstance<'a> {
     pub class_name: Cow<'a, str>,
     pub properties: HashMap<String, RbxSnapshotValue<'a>>,
     pub children: Vec<RbxSnapshotInstance<'a>>,
+    pub update_trigger_paths: Vec<PathBuf>,
 }
 
 pub enum RbxSnapshotValue<'a> {
