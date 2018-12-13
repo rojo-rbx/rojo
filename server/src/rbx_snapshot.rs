@@ -123,14 +123,47 @@ fn reconcile_instance_properties(instance: &mut RbxInstance, snapshot: &RbxSnaps
     has_diffs
 }
 
-fn reconcile_instance_children(tree: &mut RbxTree, id: RbxId, snapshot: &RbxSnapshotInstance, changed_ids: &mut Vec<RbxId>) {
+fn reconcile_instance_children(tree: &mut RbxTree, id: RbxId, snapshot: &RbxSnapshotInstance) {
     // TODO: enumerate and match up children, update props, construct and delete IDs
-}
+    let children_ids = tree.get_instance(id).unwrap().get_children_ids().to_vec();
+    let child_count = children_ids.len().max(snapshot.children.len());
 
-pub fn reconcile_subtree(tree: &mut RbxTree, id: RbxId, snapshot: &RbxSnapshotInstance, changed_ids: &mut Vec<RbxId>) {
-    if reconcile_instance_properties(tree.get_instance_mut().unwrap(), snapshot) {
-        changed_ids.push(id);
+    let mut children_to_add = Vec::new();
+    let mut children_to_update = Vec::new();
+    let mut children_to_remove = Vec::new();
+
+    for i in 0..child_count {
+        let instance_child_foo = children_ids.get(i).map(|&id| tree.get_instance_mut(id).unwrap());
+        let snapshot_child_foo = snapshot.children.get(i);
+
+        match (instance_child_foo, snapshot_child_foo) {
+            (Some(instance_child), Some(snapshot_child)) => {
+                children_to_update.push((instance_child.get_id(), snapshot_child));
+            },
+            (Some(instance_child), None) => {
+                children_to_remove.push(instance_child.get_id());
+            },
+            (None, Some(snapshot_child)) => {
+                children_to_add.push(snapshot_child);
+            },
+            (None, None) => unreachable!(),
+        }
     }
 
-    reconcile_instance_children(tree, id, snapshot, changed_ids);
+    for child_snapshot in &children_to_add {
+        reify_child(child_snapshot, tree, id);
+    }
+
+    for child_id in &children_to_remove {
+        tree.remove_instance(*child_id);
+    }
+
+    for (child_id, child_snapshot) in &children_to_update {
+        reconcile_subtree(tree, *child_id, child_snapshot);
+    }
+}
+
+pub fn reconcile_subtree(tree: &mut RbxTree, id: RbxId, snapshot: &RbxSnapshotInstance) {
+    reconcile_instance_properties(tree.get_instance_mut(id).unwrap(), snapshot);
+    reconcile_instance_children(tree, id, snapshot);
 }
