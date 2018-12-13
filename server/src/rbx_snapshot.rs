@@ -119,10 +119,12 @@ fn reconcile_instance_children(tree: &mut RbxTree, id: RbxId, snapshot: &RbxSnap
     let mut children_to_remove = Vec::new();
 
     for i in 0..child_count {
-        let instance_child_foo = children_ids.get(i).map(|&id| tree.get_instance_mut(id).unwrap());
-        let snapshot_child_foo = snapshot.children.get(i);
+        let instance_child = children_ids
+            .get(i)
+            .map(|&id| tree.get_instance_mut(id).unwrap());
+        let snapshot_child = snapshot.children.get(i);
 
-        match (instance_child_foo, snapshot_child_foo) {
+        match (instance_child, snapshot_child) {
             (Some(instance_child), Some(snapshot_child)) => {
                 children_to_update.push((instance_child.get_id(), snapshot_child));
             },
