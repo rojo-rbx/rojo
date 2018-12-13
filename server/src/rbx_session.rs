@@ -18,7 +18,7 @@ use crate::{
 
 pub struct RbxSession {
     tree: RbxTree,
-    path_id_tree: PathMap<RbxId>,
+    paths_to_node_ids: PathMap<RbxId>,
     ids_to_project_paths: HashMap<RbxId, String>,
     message_queue: Arc<MessageQueue>,
     imfs: Arc<Mutex<Imfs>>,
@@ -33,12 +33,12 @@ impl RbxSession {
         };
 
         // TODO: Restore these?
-        let path_id_tree = PathMap::new();
+        let paths_to_node_ids = PathMap::new();
         let ids_to_project_paths = HashMap::new();
 
         RbxSession {
             tree,
-            path_id_tree,
+            paths_to_node_ids,
             ids_to_project_paths,
             message_queue,
             imfs,
@@ -47,7 +47,7 @@ impl RbxSession {
     }
 
     fn path_created_or_updated(&mut self, path: &Path) {
-        if let Some(instance_id) = self.path_id_tree.get(path) {
+        if let Some(instance_id) = self.paths_to_node_ids.get(path) {
             // TODO: Replace instance with ID `instance_id` with new instance
         }
 
@@ -81,7 +81,7 @@ impl RbxSession {
     pub fn path_removed(&mut self, path: &Path) {
         info!("Path removed: {}", path.display());
 
-        let instance_id = match self.path_id_tree.remove(path) {
+        let instance_id = match self.paths_to_node_ids.remove(path) {
             Some(id) => id,
             None => return,
         };
