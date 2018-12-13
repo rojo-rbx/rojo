@@ -10,30 +10,16 @@ use rbx_tree::{RbxTree, RbxId, RbxInstance, RbxValue};
 pub struct RbxSnapshotInstance<'a> {
     pub name: Cow<'a, str>,
     pub class_name: Cow<'a, str>,
-    pub properties: HashMap<String, RbxSnapshotValue<'a>>,
+    pub properties: HashMap<String, RbxValue>,
     pub children: Vec<RbxSnapshotInstance<'a>>,
     pub update_trigger_paths: Vec<PathBuf>,
-}
-
-pub enum RbxSnapshotValue<'a> {
-    String(Cow<'a, str>),
-}
-
-impl<'a> RbxSnapshotValue<'a> {
-    pub fn to_rbx_value(&self) -> RbxValue {
-        match self {
-            RbxSnapshotValue::String(value) => RbxValue::String {
-                value: value.to_string(),
-            },
-        }
-    }
 }
 
 fn reify_core(snapshot: &RbxSnapshotInstance) -> RbxInstance {
     let mut properties = HashMap::new();
 
     for (key, value) in &snapshot.properties {
-        properties.insert(key.clone(), value.to_rbx_value());
+        properties.insert(key.clone(), value.clone());
     }
 
     let instance = RbxInstance {
@@ -84,7 +70,7 @@ fn reconcile_instance_properties(instance: &mut RbxInstance, snapshot: &RbxSnaps
     for (key, instance_value) in &instance.properties {
         match snapshot.properties.get(key) {
             Some(snapshot_value) => {
-                if &snapshot_value.to_rbx_value() != instance_value {
+                if snapshot_value != instance_value {
                     property_updates.insert(key.clone(), Some(snapshot_value.clone()));
                 }
             },
@@ -101,7 +87,7 @@ fn reconcile_instance_properties(instance: &mut RbxInstance, snapshot: &RbxSnaps
 
         match instance.properties.get(key) {
             Some(instance_value) => {
-                if &snapshot_value.to_rbx_value() != instance_value {
+                if snapshot_value != instance_value {
                     property_updates.insert(key.clone(), Some(snapshot_value.clone()));
                 }
             },
@@ -115,7 +101,7 @@ fn reconcile_instance_properties(instance: &mut RbxInstance, snapshot: &RbxSnaps
 
     for (key, change) in property_updates.drain() {
         match change {
-            Some(value) => instance.properties.insert(key, value.to_rbx_value()),
+            Some(value) => instance.properties.insert(key, value),
             None => instance.properties.remove(&key),
         };
     }

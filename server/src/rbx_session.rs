@@ -6,14 +6,14 @@ use std::{
     str,
 };
 
-use rbx_tree::{RbxTree, RbxId};
+use rbx_tree::{RbxTree, RbxValue, RbxId};
 
 use crate::{
     project::{Project, ProjectNode, InstanceProjectNode},
     message_queue::{Message, MessageQueue},
     imfs::{Imfs, ImfsItem, ImfsFile},
     path_map::PathMap,
-    rbx_snapshot::{RbxSnapshotInstance, RbxSnapshotValue, reify_root},
+    rbx_snapshot::{RbxSnapshotInstance, reify_root},
 };
 
 pub struct RbxSession {
@@ -216,7 +216,9 @@ fn snapshot_instances_from_imfs<'a>(imfs: &'a Imfs, imfs_path: &Path) -> Option<
                 .expect("File did not contain UTF-8 data, which is required for scripts.");
 
             let mut properties = HashMap::new();
-            properties.insert(String::from("Source"), RbxSnapshotValue::String(Cow::Borrowed(contents)));
+            properties.insert(String::from("Source"), RbxValue::String {
+                value: contents.to_string(),
+            });
 
             Some(RbxSnapshotInstance {
                 name: Cow::Borrowed(instance_name),
