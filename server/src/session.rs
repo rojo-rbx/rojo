@@ -22,7 +22,12 @@ pub struct Session {
 
 impl Session {
     pub fn new(project: Project) -> io::Result<Session> {
-        let imfs = Arc::new(Mutex::new(Imfs::new(&project)?));
+        let imfs = {
+            let mut imfs = Imfs::new();
+            imfs.add_roots_from_project(&project)?;
+
+            Arc::new(Mutex::new(imfs))
+        };
         let project = Arc::new(project);
         let message_queue = Arc::new(MessageQueue::new());
 

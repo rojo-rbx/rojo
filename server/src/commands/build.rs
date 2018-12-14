@@ -77,7 +77,8 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
     info!("Found project at {}", project.file_location.display());
     info!("Using project {:#?}", project);
 
-    let imfs = Imfs::new(&project)?;
+    let mut imfs = Imfs::new();
+    imfs.add_roots_from_project(&project)?;
     let tree = construct_oneoff_tree(&project, &imfs);
     let mut file = File::create(&options.output_file)?;
 

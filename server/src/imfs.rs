@@ -32,23 +32,23 @@ pub struct Imfs {
 }
 
 impl Imfs {
-    pub fn new(project: &Project) -> io::Result<Imfs> {
-        let mut imfs = Imfs::empty();
-
-        add_sync_points(&mut imfs, &project.tree)?;
-
-        Ok(imfs)
-    }
-
-    pub fn empty() -> Imfs {
+    pub fn new() -> Imfs {
         Imfs {
             items: HashMap::new(),
             roots: HashSet::new(),
         }
     }
 
+    pub fn add_roots_from_project(&mut self, project: &Project) -> io::Result<()> {
+        add_sync_points(self, &project.tree)
+    }
+
     pub fn get_roots(&self) -> &HashSet<PathBuf> {
         &self.roots
+    }
+
+    pub fn get_items(&self) -> &HashMap<PathBuf, ImfsItem> {
+        &self.items
     }
 
     pub fn get(&self, path: &Path) -> Option<&ImfsItem> {
@@ -141,19 +141,19 @@ impl Imfs {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct ImfsFile {
     pub path: PathBuf,
     pub contents: Vec<u8>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct ImfsDirectory {
     pub path: PathBuf,
     pub children: HashSet<PathBuf>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum ImfsItem {
     File(ImfsFile),
     Directory(ImfsDirectory),
