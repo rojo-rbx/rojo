@@ -11,6 +11,7 @@ use librojo::{
     imfs::{Imfs, ImfsItem, ImfsFile, ImfsDirectory},
 };
 
+#[allow(unused)]
 enum FsEvent {
     Created(PathBuf),
     Updated(PathBuf),
@@ -125,7 +126,7 @@ fn base_tree() -> io::Result<(TempDir, Imfs, ExpectedImfs, TestResources)> {
 
 #[test]
 fn initial_read() -> io::Result<()> {
-    let (_, imfs, expected_imfs, _) = base_tree()?;
+    let (_root, imfs, expected_imfs, _resources) = base_tree()?;
 
     check_expected(&imfs, &expected_imfs);
 
@@ -178,7 +179,7 @@ fn adding_files() -> io::Result<()> {
 
 #[test]
 fn adding_folder() -> io::Result<()> {
-    let (root, mut imfs, mut expected_imfs, resources) = base_tree()?;
+    let (root, imfs, mut expected_imfs, _resources) = base_tree()?;
 
     check_expected(&imfs, &expected_imfs);
 
@@ -236,7 +237,7 @@ fn adding_folder() -> io::Result<()> {
     for events in &possible_event_sequences {
         let mut imfs = imfs.clone();
 
-        send_events(&mut imfs, events);
+        send_events(&mut imfs, events)?;
         check_expected(&imfs, &expected_imfs);
     }
 
@@ -269,7 +270,7 @@ fn removing_file() -> io::Result<()> {
 
 #[test]
 fn removing_folder() -> io::Result<()> {
-    let (root, mut imfs, mut expected_imfs, resources) = base_tree()?;
+    let (root, imfs, mut expected_imfs, resources) = base_tree()?;
 
     check_expected(&imfs, &expected_imfs);
 
@@ -298,7 +299,7 @@ fn removing_folder() -> io::Result<()> {
     for events in &possible_event_sequences {
         let mut imfs = imfs.clone();
 
-        send_events(&mut imfs, events);
+        send_events(&mut imfs, events)?;
         check_expected(&imfs, &expected_imfs);
     }
 

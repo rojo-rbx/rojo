@@ -78,15 +78,7 @@ impl Imfs {
         debug_assert!(path.is_absolute());
         debug_assert!(self.is_within_roots(path));
 
-        if let Some(parent_path) = path.parent() {
-            if self.is_within_roots(parent_path) && self.get(parent_path).is_none() {
-                self.path_created(parent_path)?;
-            }
-        } else {
-            self.read_from_disk(path)?;
-        }
-
-        Ok(())
+        self.read_from_disk(path)
     }
 
     pub fn path_removed(&mut self, path: &Path) -> io::Result<()> {
@@ -192,31 +184,14 @@ impl Imfs {
     }
 
     fn is_within_roots(&self, path: &Path) -> bool {
-        let kind = self.classify_path(path);
-
-        kind == PathKind::Root || kind == PathKind::InRoot
-    }
-
-    fn classify_path(&self, path: &Path) -> PathKind {
         for root_path in &self.roots {
-            if root_path == path {
-                return PathKind::Root;
-            }
-
             if path.starts_with(root_path) {
-                return PathKind::InRoot;
+                return true;
             }
         }
 
-        PathKind::NotInRoot
+        false
     }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-enum PathKind {
-    Root,
-    InRoot,
-    NotInRoot,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
