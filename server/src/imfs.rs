@@ -64,23 +64,14 @@ impl Imfs {
 
         self.roots.insert(path.to_path_buf());
 
-        ImfsItem::read_from_disk(self, path)?;
-        Ok(())
+        self.read_from_disk(path)
     }
 
     pub fn path_created(&mut self, path: &Path) -> io::Result<()> {
         debug_assert!(path.is_absolute());
         debug_assert!(self.is_within_roots(path));
 
-        if let Some(parent_path) = path.parent() {
-            if self.is_within_roots(parent_path) && self.get(parent_path).is_none() {
-                self.path_created(parent_path)?;
-            }
-        } else {
-            ImfsItem::read_from_disk(self, path)?;
-        }
-
-        Ok(())
+        self.read_from_disk(path)
     }
 
     pub fn path_updated(&mut self, path: &Path) -> io::Result<()> {
@@ -92,7 +83,7 @@ impl Imfs {
                 self.path_created(parent_path)?;
             }
         } else {
-            ImfsItem::read_from_disk(self, path)?;
+            self.read_from_disk(path)?;
         }
 
         Ok(())
@@ -103,11 +94,7 @@ impl Imfs {
         debug_assert!(self.is_within_roots(path));
 
         if let Some(parent_path) = path.parent() {
-            if self.is_within_roots(parent_path) {
-                if let Some(ImfsItem::Directory(parent)) = self.items.get_mut(parent_path) {
-                    parent.children.remove(path);
-                }
-            }
+            self.unlink_child(parent_path, path);
         }
 
         if let Some(ImfsItem::Directory(directory)) = self.items.remove(path) {
@@ -130,37 +117,35 @@ impl Imfs {
         Ok(())
     }
 
-    fn is_within_roots(&self, path: &Path) -> bool {
-        for root_path in &self.roots {
-            if path.starts_with(root_path) {
-                return true;
+    fn unlink_child(&mut self, parent: &Path, child: &Path) {
+        let parent_item = self.items.get_mut(parent);
+
+        match parent_item {
+            Some(ImfsItem::Directory(directory)) => {
+                directory.children.remove(child);
+            },
+            _ => {
+                panic!("Tried to unlink child of path that wasn't a directory!");
+            },
+        }
+    }
+
+    fn link_child(&mut self, parent: &Path, child: &Path) {
+        if self.is_within_roots(parent) {
+            let parent_item = self.items.get_mut(parent);
+
+            match parent_item {
+                Some(ImfsItem::Directory(directory)) => {
+                    directory.children.insert(child.to_path_buf());
+                },
+                _ => {
+                    panic!("Tried to link child of path that wasn't a directory!");
+                },
             }
         }
-
-        false
     }
-}
 
-#[derive(Debug, PartialEq)]
-pub struct ImfsFile {
-    pub path: PathBuf,
-    pub contents: Vec<u8>,
-}
-
-#[derive(Debug, PartialEq)]
-pub struct ImfsDirectory {
-    pub path: PathBuf,
-    pub children: HashSet<PathBuf>,
-}
-
-#[derive(Debug, PartialEq)]
-pub enum ImfsItem {
-    File(ImfsFile),
-    Directory(ImfsDirectory),
-}
-
-impl ImfsItem {
-    fn read_from_disk<'a, 'b>(vfs: &'a mut Imfs, path: &'b Path) -> io::Result<&'a ImfsItem> {
+    fn read_from_disk(&mut self, path: &Path) -> io::Result<()> {
         let metadata = fs::metadata(path)?;
 
         if metadata.is_file() {
@@ -170,31 +155,80 @@ impl ImfsItem {
                 contents,
             });
 
-            vfs.items.insert(path.to_path_buf(), item);
+            self.items.insert(path.to_path_buf(), item);
 
-            Ok(&vfs.items[path])
+            if let Some(parent_path) = path.parent() {
+                self.link_child(parent_path, path);
+            }
+
+            Ok(())
         } else if metadata.is_dir() {
-            let mut children = HashSet::new();
+            let item = ImfsItem::Directory(ImfsDirectory {
+                path: path.to_path_buf(),
+                children: HashSet::new(),
+            });
+
+            self.items.insert(path.to_path_buf(), item);
 
             for entry in fs::read_dir(path)? {
                 let entry = entry?;
                 let child_path = entry.path();
 
-                ImfsItem::read_from_disk(vfs, &child_path)?;
-
-                children.insert(child_path);
+                self.read_from_disk(&child_path)?;
             }
 
-            let item = ImfsItem::Directory(ImfsDirectory {
-                path: path.to_path_buf(),
-                children,
-            });
+            if let Some(parent_path) = path.parent() {
+                self.link_child(parent_path, path);
+            }
 
-            vfs.items.insert(path.to_path_buf(), item);
-
-            Ok(&vfs.items[path])
+            Ok(())
         } else {
             panic!("Unexpected non-file, non-directory item");
         }
     }
+
+    fn is_within_roots(&self, path: &Path) -> bool {
+        let kind = self.classify_path(path);
+
+        kind == PathKind::Root || kind == PathKind::InRoot
+    }
+
+    fn classify_path(&self, path: &Path) -> PathKind {
+        for root_path in &self.roots {
+            if root_path == path {
+                return PathKind::Root;
+            }
+
+            if path.starts_with(root_path) {
+                return PathKind::InRoot;
+            }
+        }
+
+        PathKind::NotInRoot
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum PathKind {
+    Root,
+    InRoot,
+    NotInRoot,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+pub struct ImfsFile {
+    pub path: PathBuf,
+    pub contents: Vec<u8>,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+pub struct ImfsDirectory {
+    pub path: PathBuf,
+    pub children: HashSet<PathBuf>,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+pub enum ImfsItem {
+    File(ImfsFile),
+    Directory(ImfsDirectory),
 }
