@@ -11,6 +11,27 @@ use librojo::{
     imfs::{Imfs, ImfsItem, ImfsFile, ImfsDirectory},
 };
 
+enum FsEvent {
+    Created(PathBuf),
+    Updated(PathBuf),
+    Removed(PathBuf),
+    Moved(PathBuf, PathBuf),
+}
+
+fn send_events(imfs: &mut Imfs, events: &[FsEvent]) -> io::Result<()> {
+    for event in events {
+        match event {
+            FsEvent::Created(path) => imfs.path_created(path)?,
+            FsEvent::Updated(path) => imfs.path_updated(path)?,
+            FsEvent::Removed(path) => imfs.path_removed(path)?,
+            FsEvent::Moved(from, to) => imfs.path_moved(from, to)?,
+        }
+    }
+
+    Ok(())
+}
+
+#[derive(Debug, Clone, PartialEq)]
 struct ExpectedImfs {
     roots: HashSet<PathBuf>,
     items: HashMap<PathBuf, ImfsItem>,
@@ -123,9 +144,6 @@ fn adding_files() -> io::Result<()> {
     fs::write(&add_one_path, b"add_one")?;
     fs::write(&add_two_path, b"add_two")?;
 
-    imfs.path_created(&add_one_path)?;
-    imfs.path_created(&add_two_path)?;
-
     match expected_imfs.items.get_mut(root.path()) {
         Some(ImfsItem::Directory(directory)) => {
             directory.children.insert(add_one_path.clone());
@@ -150,6 +168,9 @@ fn adding_files() -> io::Result<()> {
         contents: b"add_two".to_vec(),
     }));
 
+    imfs.path_created(&add_one_path)?;
+    imfs.path_created(&add_two_path)?;
+
     check_expected(&imfs, &expected_imfs);
 
     Ok(())
@@ -168,10 +189,6 @@ fn adding_folder() -> io::Result<()> {
     fs::create_dir(&folder_path)?;
     fs::write(&file1_path, b"file1")?;
     fs::write(&file2_path, b"file2")?;
-
-    // TODO: Enumerate all possible combinations of file changed events this
-    // could trigger.
-    imfs.path_created(&folder_path)?;
 
     match expected_imfs.items.get_mut(root.path()) {
         Some(ImfsItem::Directory(directory)) => {
@@ -205,7 +222,23 @@ fn adding_folder() -> io::Result<()> {
     });
     expected_imfs.items.insert(file2_path.clone(), file2_item);
 
-    check_expected(&imfs, &expected_imfs);
+    let possible_event_sequences = vec![
+        vec![
+            FsEvent::Created(folder_path.clone())
+        ],
+        vec![
+            FsEvent::Created(folder_path.clone()),
+            FsEvent::Created(file1_path.clone()),
+            FsEvent::Created(file2_path.clone()),
+        ],
+    ];
+
+    for events in &possible_event_sequences {
+        let mut imfs = imfs.clone();
+
+        send_events(&mut imfs, events);
+        check_expected(&imfs, &expected_imfs);
+    }
 
     Ok(())
 }
@@ -242,10 +275,6 @@ fn removing_folder() -> io::Result<()> {
 
     fs::remove_dir_all(&resources.foo_path)?;
 
-    // TODO: Enumerate all possible combinations of file changed events this
-    // could trigger.
-    imfs.path_removed(&resources.foo_path)?;
-
     match expected_imfs.items.get_mut(root.path()) {
         Some(ImfsItem::Directory(directory)) => {
             directory.children.remove(&resources.foo_path);
@@ -256,7 +285,22 @@ fn removing_folder() -> io::Result<()> {
     expected_imfs.items.remove(&resources.foo_path);
     expected_imfs.items.remove(&resources.baz_path);
 
-    check_expected(&imfs, &expected_imfs);
+    let possible_event_sequences = vec![
+        vec![
+            FsEvent::Removed(resources.foo_path.clone()),
+        ],
+        vec![
+            FsEvent::Removed(resources.baz_path.clone()),
+            FsEvent::Removed(resources.foo_path.clone()),
+        ],
+    ];
+
+    for events in &possible_event_sequences {
+        let mut imfs = imfs.clone();
+
+        send_events(&mut imfs, events);
+        check_expected(&imfs, &expected_imfs);
+    }
 
     Ok(())
 }

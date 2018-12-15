@@ -25,7 +25,7 @@ fn add_sync_points(imfs: &mut Imfs, project_node: &ProjectNode) -> io::Result<()
 /// The in-memory filesystem keeps a mirror of all files being watcher by Rojo
 /// in order to deduplicate file changes in the case of bidirectional syncing
 /// from Roblox Studio.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Imfs {
     items: HashMap<PathBuf, ImfsItem>,
     roots: HashSet<PathBuf>,
@@ -219,19 +219,19 @@ enum PathKind {
     NotInRoot,
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ImfsFile {
     pub path: PathBuf,
     pub contents: Vec<u8>,
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ImfsDirectory {
     pub path: PathBuf,
     pub children: HashSet<PathBuf>,
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum ImfsItem {
     File(ImfsFile),
     Directory(ImfsDirectory),
