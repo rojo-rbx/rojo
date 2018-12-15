@@ -93,14 +93,10 @@ impl Imfs {
         debug_assert!(path.is_absolute());
         debug_assert!(self.is_within_roots(path));
 
+        self.remove_item(path);
+
         if let Some(parent_path) = path.parent() {
             self.unlink_child(parent_path, path);
-        }
-
-        if let Some(ImfsItem::Directory(directory)) = self.items.remove(path) {
-            for child_path in &directory.children {
-                self.path_removed(child_path)?;
-            }
         }
 
         Ok(())
@@ -115,6 +111,14 @@ impl Imfs {
         self.path_removed(from_path)?;
         self.path_created(to_path)?;
         Ok(())
+    }
+
+    fn remove_item(&mut self, path: &Path) {
+        if let Some(ImfsItem::Directory(directory)) = self.items.remove(path) {
+            for child_path in &directory.children {
+                self.remove_item(child_path);
+            }
+        }
     }
 
     fn unlink_child(&mut self, parent: &Path, child: &Path) {

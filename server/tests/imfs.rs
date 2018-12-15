@@ -24,7 +24,14 @@ struct TestResources {
 
 fn check_expected(real: &Imfs, expected: &ExpectedImfs) {
     assert_eq!(real.get_roots(), &expected.roots);
-    assert_eq!(real.get_items(), &expected.items);
+
+    let real_items = real.get_items();
+    if real_items != &expected.items {
+        let real_str = serde_json::to_string(real_items).unwrap();
+        let expected_str = serde_json::to_string(&expected.items).unwrap();
+
+        panic!("Items differed!\nReal:\n{}\nExpected:\n{}\n", real_str, expected_str);
+    }
 }
 
 fn base_tree() -> io::Result<(TempDir, Imfs, ExpectedImfs, TestResources)> {
@@ -97,7 +104,7 @@ fn base_tree() -> io::Result<(TempDir, Imfs, ExpectedImfs, TestResources)> {
 
 #[test]
 fn initial_read() -> io::Result<()> {
-    let (root, imfs, expected_imfs, _) = base_tree()?;
+    let (_, imfs, expected_imfs, _) = base_tree()?;
 
     check_expected(&imfs, &expected_imfs);
 
@@ -143,9 +150,111 @@ fn adding_files() -> io::Result<()> {
         contents: b"add_two".to_vec(),
     }));
 
-    println!("{}", serde_json::to_string(imfs.get_items()).unwrap());
-    println!("---------------------------------------------------------------");
-    println!("{}", serde_json::to_string(&expected_imfs.items).unwrap());
+    check_expected(&imfs, &expected_imfs);
+
+    Ok(())
+}
+
+#[test]
+fn adding_folder() -> io::Result<()> {
+    let (root, mut imfs, mut expected_imfs, resources) = base_tree()?;
+
+    check_expected(&imfs, &expected_imfs);
+
+    let folder_path = root.path().join("folder");
+    let file1_path = folder_path.join("file1.txt");
+    let file2_path = folder_path.join("file2.txt");
+
+    fs::create_dir(&folder_path)?;
+    fs::write(&file1_path, b"file1")?;
+    fs::write(&file2_path, b"file2")?;
+
+    // TODO: Enumerate all possible combinations of file changed events this
+    // could trigger.
+    imfs.path_created(&folder_path)?;
+
+    match expected_imfs.items.get_mut(root.path()) {
+        Some(ImfsItem::Directory(directory)) => {
+            directory.children.insert(folder_path.clone());
+        },
+        _ => unreachable!(),
+    }
+
+    let folder_item = {
+        let mut children = HashSet::new();
+        children.insert(file1_path.clone());
+        children.insert(file2_path.clone());
+
+        ImfsItem::Directory(ImfsDirectory {
+            path: folder_path.clone(),
+            children,
+        })
+    };
+
+    expected_imfs.items.insert(folder_path.clone(), folder_item);
+
+    let file1_item = ImfsItem::File(ImfsFile {
+        path: file1_path.clone(),
+        contents: b"file1".to_vec(),
+    });
+    expected_imfs.items.insert(file1_path.clone(), file1_item);
+
+    let file2_item = ImfsItem::File(ImfsFile {
+        path: file2_path.clone(),
+        contents: b"file2".to_vec(),
+    });
+    expected_imfs.items.insert(file2_path.clone(), file2_item);
+
+    check_expected(&imfs, &expected_imfs);
+
+    Ok(())
+}
+
+#[test]
+fn removing_file() -> io::Result<()> {
+    let (root, mut imfs, mut expected_imfs, resources) = base_tree()?;
+
+    check_expected(&imfs, &expected_imfs);
+
+    fs::remove_file(&resources.bar_path)?;
+
+    imfs.path_removed(&resources.bar_path)?;
+
+    match expected_imfs.items.get_mut(root.path()) {
+        Some(ImfsItem::Directory(directory)) => {
+            directory.children.remove(&resources.bar_path);
+        },
+        _ => unreachable!(),
+    }
+
+    expected_imfs.items.remove(&resources.bar_path);
+
+    check_expected(&imfs, &expected_imfs);
+
+    Ok(())
+}
+
+#[test]
+fn removing_folder() -> io::Result<()> {
+    let (root, mut imfs, mut expected_imfs, resources) = base_tree()?;
+
+    check_expected(&imfs, &expected_imfs);
+
+    fs::remove_dir_all(&resources.foo_path)?;
+
+    // TODO: Enumerate all possible combinations of file changed events this
+    // could trigger.
+    imfs.path_removed(&resources.foo_path)?;
+
+    match expected_imfs.items.get_mut(root.path()) {
+        Some(ImfsItem::Directory(directory)) => {
+            directory.children.remove(&resources.foo_path);
+        },
+        _ => unreachable!(),
+    }
+
+    expected_imfs.items.remove(&resources.foo_path);
+    expected_imfs.items.remove(&resources.baz_path);
 
     check_expected(&imfs, &expected_imfs);
 
