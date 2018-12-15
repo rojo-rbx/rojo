@@ -105,6 +105,16 @@ impl Imfs {
         Ok(())
     }
 
+    pub fn get_root_for_path<'a>(&'a self, path: &Path) -> Option<&'a Path> {
+        for root_path in &self.roots {
+            if path.starts_with(root_path) {
+                return Some(root_path);
+            }
+        }
+
+        None
+    }
+
     fn remove_item(&mut self, path: &Path) {
         if let Some(ImfsItem::Directory(directory)) = self.items.remove(path) {
             for child_path in &directory.children {

@@ -12,7 +12,7 @@ pub struct RbxSnapshotInstance<'a> {
     pub class_name: Cow<'a, str>,
     pub properties: HashMap<String, RbxValue>,
     pub children: Vec<RbxSnapshotInstance<'a>>,
-    pub update_trigger_paths: Vec<PathBuf>,
+    pub source_path: Option<PathBuf>,
 }
 
 fn reify_core(snapshot: &RbxSnapshotInstance) -> RbxInstance {

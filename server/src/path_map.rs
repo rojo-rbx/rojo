@@ -1,5 +1,5 @@
 use std::{
-    path::{Path, PathBuf},
+    path::{self, Path, PathBuf},
     collections::{HashMap, HashSet},
 };
 
@@ -69,5 +69,28 @@ impl<T> PathMap<T> {
         }
 
         Some(root_value)
+    }
+
+    pub fn descend(&self, start_path: &Path, target_path: &Path) -> PathBuf {
+        let relative_path = target_path.strip_prefix(start_path)
+            .expect("target_path did not begin with start_path");
+        let mut current_path = start_path.to_path_buf();
+
+        for component in relative_path.components() {
+            match component {
+                path::Component::Normal(name) => {
+                    let next_path = current_path.join(name);
+
+                    if self.nodes.contains_key(&next_path) {
+                        current_path = next_path;
+                    } else {
+                        return current_path;
+                    }
+                },
+                _ => unreachable!(),
+            }
+        }
+
+        current_path
     }
 }

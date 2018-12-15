@@ -13,7 +13,7 @@ use crate::{
     message_queue::{Message, MessageQueue},
     imfs::{Imfs, ImfsItem, ImfsFile},
     path_map::PathMap,
-    rbx_snapshot::{RbxSnapshotInstance, reify_root},
+    rbx_snapshot::{RbxSnapshotInstance, reify_root, reconcile_subtree},
 };
 
 pub struct RbxSession {
@@ -47,13 +47,16 @@ impl RbxSession {
     }
 
     fn path_created_or_updated(&mut self, path: &Path) {
-        if let Some(instance_id) = self.paths_to_node_ids.get(path) {
-            // TODO: Replace instance with ID `instance_id` with new instance
-        }
+        let imfs = self.imfs.lock().unwrap();
+        let root_path = imfs.get_root_for_path(path)
+            .expect("Path was outside in-memory filesystem roots");
 
-        // TODO: Crawl up path to find first node represented in the tree or a
-        // sync point root. That path immediately before we find an existing
-        // node should be read into the tree.
+        let closest_path = self.paths_to_node_ids.descend(root_path, path);
+        let &instance_id = self.paths_to_node_ids.get(&closest_path).unwrap();
+
+        let snapshot = snapshot_instances_from_imfs(&imfs, &closest_path)
+            .expect("Could not generate instance snapshot");
+        reconcile_subtree(&mut self.tree, instance_id, &snapshot);
     }
 
     pub fn path_created(&mut self, path: &Path) {
@@ -167,7 +170,7 @@ fn construct_instance_node<'a>(
         name: Cow::Borrowed(instance_name),
         properties: HashMap::new(),
         children,
-        update_trigger_paths: Vec::new(),
+        source_path: None,
     }
 }
 
@@ -225,7 +228,7 @@ fn snapshot_instances_from_imfs<'a>(imfs: &'a Imfs, imfs_path: &Path) -> Option<
                 class_name: Cow::Borrowed(class_name),
                 properties,
                 children: Vec::new(),
-                update_trigger_paths: vec![file.path.clone()],
+                source_path: Some(file.path.clone()),
             })
         },
         ImfsItem::Directory(directory) => {
@@ -239,7 +242,7 @@ fn snapshot_instances_from_imfs<'a>(imfs: &'a Imfs, imfs_path: &Path) -> Option<
                     name: Cow::Borrowed(""), // Assigned later in the method
                     properties: HashMap::new(),
                     children: Vec::new(),
-                    update_trigger_paths: vec![directory.path.clone()],
+                    source_path: Some(directory.path.clone()),
                 }
             };
 
