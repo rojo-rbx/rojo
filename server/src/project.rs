@@ -126,14 +126,14 @@ pub struct ProjectInitError;
 #[fail(display = "Project save error")]
 pub struct ProjectSaveError;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum ProjectNode {
     Instance(InstanceProjectNode),
     SyncPoint(SyncPointProjectNode),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct InstanceProjectNode {
     pub class_name: String,
@@ -142,13 +142,13 @@ pub struct InstanceProjectNode {
     // ignore_unknown: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SyncPointProjectNode {
     pub path: PathBuf,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Project {
     pub name: String,
     pub tree: ProjectNode,
