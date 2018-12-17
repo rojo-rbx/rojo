@@ -16,11 +16,17 @@ use crate::{
     rbx_snapshot::{RbxSnapshotInstance, reify_root, reconcile_subtree},
 };
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct InstanceChanges {
     pub added: HashSet<RbxId>,
     pub removed: HashSet<RbxId>,
     pub updated: HashSet<RbxId>,
+}
+
+impl InstanceChanges {
+    pub fn is_empty(&self) -> bool {
+        self.added.is_empty() && self.removed.is_empty() && self.updated.is_empty()
+    }
 }
 
 pub struct RbxSession {
@@ -67,7 +73,9 @@ impl RbxSession {
 
         let snapshot = snapshot_instances_from_imfs(&imfs, &closest_path)
             .expect("Could not generate instance snapshot");
-        reconcile_subtree(&mut self.tree, instance_id, &snapshot);
+
+        let mut changes = InstanceChanges::default();
+        reconcile_subtree(&mut self.tree, instance_id, &snapshot, &mut changes);
     }
 
     pub fn path_created(&mut self, path: &Path) {
@@ -108,15 +116,13 @@ impl RbxSession {
             },
         };
 
-        let removed_ids: HashSet<RbxId> = removed_subtree.iter_all_ids().collect();
+        let changes = InstanceChanges {
+            added: HashSet::new(),
+            removed: removed_subtree.iter_all_ids().collect(),
+            updated: HashSet::new(),
+        };
 
-        self.message_queue.push_messages(&[
-            InstanceChanges {
-                added: HashSet::new(),
-                removed: removed_ids,
-                updated: HashSet::new(),
-            }
-        ]);
+        self.message_queue.push_messages(&[changes]);
     }
 
     pub fn path_renamed(&mut self, from_path: &Path, to_path: &Path) {
@@ -148,7 +154,9 @@ fn construct_initial_tree(
         &project.tree,
     );
 
-    reify_root(&snapshot)
+    let mut changes = InstanceChanges::default();
+
+    reify_root(&snapshot, &mut changes)
 }
 
 fn construct_project_node<'a>(
