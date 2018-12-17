@@ -13,10 +13,10 @@ use rouille::{
 use rbx_tree::{RbxId, RootedRbxInstance};
 
 use crate::{
-    message_queue::Message,
     session::Session,
     session_id::SessionId,
     project::Project,
+    rbx_session::{InstanceChanges},
 };
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -43,7 +43,7 @@ pub struct ReadResponse<'a> {
 pub struct SubscribeResponse<'a> {
     pub session_id: SessionId,
     pub message_cursor: u32,
-    pub messages: Cow<'a, [Message]>,
+    pub messages: Cow<'a, [InstanceChanges]>,
 }
 
 pub struct Server {

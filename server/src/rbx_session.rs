@@ -1,6 +1,6 @@
 use std::{
     borrow::Cow,
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     path::Path,
     sync::{Arc, Mutex},
     str,
@@ -10,23 +10,34 @@ use rbx_tree::{RbxTree, RbxValue, RbxId};
 
 use crate::{
     project::{Project, ProjectNode, InstanceProjectNode},
-    message_queue::{Message, MessageQueue},
+    message_queue::MessageQueue,
     imfs::{Imfs, ImfsItem, ImfsFile},
     path_map::PathMap,
     rbx_snapshot::{RbxSnapshotInstance, reify_root, reconcile_subtree},
 };
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct InstanceChanges {
+    pub added: HashSet<RbxId>,
+    pub removed: HashSet<RbxId>,
+    pub updated: HashSet<RbxId>,
+}
+
 pub struct RbxSession {
     tree: RbxTree,
     paths_to_node_ids: PathMap<RbxId>,
     ids_to_project_paths: HashMap<RbxId, String>,
-    message_queue: Arc<MessageQueue>,
+    message_queue: Arc<MessageQueue<InstanceChanges>>,
     imfs: Arc<Mutex<Imfs>>,
     project: Arc<Project>,
 }
 
 impl RbxSession {
-    pub fn new(project: Arc<Project>, imfs: Arc<Mutex<Imfs>>, message_queue: Arc<MessageQueue>) -> RbxSession {
+    pub fn new(
+        project: Arc<Project>,
+        imfs: Arc<Mutex<Imfs>>,
+        message_queue: Arc<MessageQueue<InstanceChanges>>,
+    ) -> RbxSession {
         let tree = {
             let temp_imfs = imfs.lock().unwrap();
             construct_initial_tree(&project, &temp_imfs)
@@ -97,12 +108,14 @@ impl RbxSession {
             },
         };
 
-        let removed_ids: Vec<RbxId> = removed_subtree.iter_all_ids().collect();
+        let removed_ids: HashSet<RbxId> = removed_subtree.iter_all_ids().collect();
 
         self.message_queue.push_messages(&[
-            Message::InstancesRemoved {
-                ids: removed_ids,
-            },
+            InstanceChanges {
+                added: HashSet::new(),
+                removed: removed_ids,
+                updated: HashSet::new(),
+            }
         ]);
     }
 

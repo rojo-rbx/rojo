@@ -8,14 +8,14 @@ use crate::{
     project::Project,
     imfs::Imfs,
     session_id::SessionId,
-    rbx_session::RbxSession,
+    rbx_session::{RbxSession, InstanceChanges},
     fs_watcher::FsWatcher,
 };
 
 pub struct Session {
     pub project: Arc<Project>,
     pub session_id: SessionId,
-    pub message_queue: Arc<MessageQueue>,
+    pub message_queue: Arc<MessageQueue<InstanceChanges>>,
     pub rbx_session: Arc<Mutex<RbxSession>>,
     _fs_watcher: FsWatcher,
 }

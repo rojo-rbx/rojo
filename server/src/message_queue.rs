@@ -8,8 +8,6 @@ use std::{
     },
 };
 
-use rbx_tree::RbxId;
-
 /// A unique identifier, not guaranteed to be generated in any order.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ListenerId(usize);
@@ -21,32 +19,21 @@ pub fn get_listener_id() -> ListenerId {
     ListenerId(LAST_ID.fetch_add(1, Ordering::SeqCst))
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "type")]
-pub enum Message {
-    InstancesRemoved {
-        ids: Vec<RbxId>,
-    },
-    InstancesUpdated {
-        ids: Vec<RbxId>,
-    },
-}
-
 #[derive(Default)]
-pub struct MessageQueue {
-   messages: RwLock<Vec<Message>>,
+pub struct MessageQueue<T> {
+   messages: RwLock<Vec<T>>,
    message_listeners: Mutex<HashMap<ListenerId, mpsc::Sender<()>>>,
 }
 
-impl MessageQueue {
-    pub fn new() -> MessageQueue {
+impl<T: Clone> MessageQueue<T> {
+    pub fn new() -> MessageQueue<T> {
         MessageQueue {
             messages: RwLock::new(Vec::new()),
             message_listeners: Mutex::new(HashMap::new()),
         }
     }
 
-    pub fn push_messages(&self, new_messages: &[Message]) {
+    pub fn push_messages(&self, new_messages: &[T]) {
         let message_listeners = self.message_listeners.lock().unwrap();
 
         {
@@ -77,7 +64,7 @@ impl MessageQueue {
         self.messages.read().unwrap().len() as u32
     }
 
-    pub fn get_messages_since(&self, cursor: u32) -> (u32, Vec<Message>) {
+    pub fn get_messages_since(&self, cursor: u32) -> (u32, Vec<T>) {
         let messages = self.messages.read().unwrap();
 
         let current_cursor = messages.len() as u32;
