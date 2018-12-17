@@ -15,6 +15,32 @@ pub struct RbxSnapshotInstance<'a> {
     pub source_path: Option<PathBuf>,
 }
 
+pub fn reify_root(snapshot: &RbxSnapshotInstance) -> RbxTree {
+    let instance = reify_core(snapshot);
+    let mut tree = RbxTree::new(instance);
+    let root_id = tree.get_root_id();
+
+    for child in &snapshot.children {
+        reify_subtree(child, &mut tree, root_id);
+    }
+
+    tree
+}
+
+pub fn reify_subtree(snapshot: &RbxSnapshotInstance, tree: &mut RbxTree, parent_id: RbxId) {
+    let instance = reify_core(snapshot);
+    let id = tree.insert_instance(instance, parent_id);
+
+    for child in &snapshot.children {
+        reify_subtree(child, tree, id);
+    }
+}
+
+pub fn reconcile_subtree(tree: &mut RbxTree, id: RbxId, snapshot: &RbxSnapshotInstance) {
+    reconcile_instance_properties(tree.get_instance_mut(id).unwrap(), snapshot);
+    reconcile_instance_children(tree, id, snapshot);
+}
+
 fn reify_core(snapshot: &RbxSnapshotInstance) -> RbxInstance {
     let mut properties = HashMap::new();
 
@@ -29,27 +55,6 @@ fn reify_core(snapshot: &RbxSnapshotInstance) -> RbxInstance {
     };
 
     instance
-}
-
-pub fn reify_root(snapshot: &RbxSnapshotInstance) -> RbxTree {
-    let instance = reify_core(snapshot);
-    let mut tree = RbxTree::new(instance);
-    let root_id = tree.get_root_id();
-
-    for child in &snapshot.children {
-        reify_child(child, &mut tree, root_id);
-    }
-
-    tree
-}
-
-fn reify_child(snapshot: &RbxSnapshotInstance, tree: &mut RbxTree, parent_id: RbxId) {
-    let instance = reify_core(snapshot);
-    let id = tree.insert_instance(instance, parent_id);
-
-    for child in &snapshot.children {
-        reify_child(child, tree, id);
-    }
 }
 
 fn reconcile_instance_properties(instance: &mut RbxInstance, snapshot: &RbxSnapshotInstance) -> bool {
@@ -139,7 +144,7 @@ fn reconcile_instance_children(tree: &mut RbxTree, id: RbxId, snapshot: &RbxSnap
     }
 
     for child_snapshot in &children_to_add {
-        reify_child(child_snapshot, tree, id);
+        reify_subtree(child_snapshot, tree, id);
     }
 
     for child_id in &children_to_remove {
@@ -149,9 +154,4 @@ fn reconcile_instance_children(tree: &mut RbxTree, id: RbxId, snapshot: &RbxSnap
     for (child_id, child_snapshot) in &children_to_update {
         reconcile_subtree(tree, *child_id, child_snapshot);
     }
-}
-
-pub fn reconcile_subtree(tree: &mut RbxTree, id: RbxId, snapshot: &RbxSnapshotInstance) {
-    reconcile_instance_properties(tree.get_instance_mut(id).unwrap(), snapshot);
-    reconcile_instance_children(tree, id, snapshot);
 }
