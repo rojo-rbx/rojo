@@ -13,21 +13,8 @@ use crate::{
     message_queue::MessageQueue,
     imfs::{Imfs, ImfsItem, ImfsFile},
     path_map::PathMap,
-    rbx_snapshot::{RbxSnapshotInstance, reify_root, reconcile_subtree},
+    rbx_snapshot::{RbxSnapshotInstance, InstanceChanges, reify_root, reconcile_subtree},
 };
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct InstanceChanges {
-    pub added: HashSet<RbxId>,
-    pub removed: HashSet<RbxId>,
-    pub updated: HashSet<RbxId>,
-}
-
-impl InstanceChanges {
-    pub fn is_empty(&self) -> bool {
-        self.added.is_empty() && self.removed.is_empty() && self.updated.is_empty()
-    }
-}
 
 pub struct RbxSession {
     tree: RbxTree,

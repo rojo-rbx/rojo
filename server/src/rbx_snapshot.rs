@@ -1,13 +1,24 @@
 use std::{
     str,
     borrow::Cow,
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     path::PathBuf,
 };
 
 use rbx_tree::{RbxTree, RbxId, RbxInstance, RbxValue};
 
-use crate::rbx_session::InstanceChanges;
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct InstanceChanges {
+    pub added: HashSet<RbxId>,
+    pub removed: HashSet<RbxId>,
+    pub updated: HashSet<RbxId>,
+}
+
+impl InstanceChanges {
+    pub fn is_empty(&self) -> bool {
+        self.added.is_empty() && self.removed.is_empty() && self.updated.is_empty()
+    }
+}
 
 pub struct RbxSnapshotInstance<'a> {
     pub name: Cow<'a, str>,

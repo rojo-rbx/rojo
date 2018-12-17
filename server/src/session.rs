@@ -8,7 +8,8 @@ use crate::{
     project::Project,
     imfs::Imfs,
     session_id::SessionId,
-    rbx_session::{RbxSession, InstanceChanges},
+    rbx_session::RbxSession,
+    rbx_snapshot::InstanceChanges,
     fs_watcher::FsWatcher,
 };
 

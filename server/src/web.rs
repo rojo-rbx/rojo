@@ -16,7 +16,7 @@ use crate::{
     session::Session,
     session_id::SessionId,
     project::Project,
-    rbx_session::{InstanceChanges},
+    rbx_snapshot::InstanceChanges,
 };
 
 #[derive(Debug, Serialize, Deserialize)]
