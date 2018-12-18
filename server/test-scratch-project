@@ -2,11 +2,17 @@
 
 set -e
 
+if [ ! -d "../test-projects/$1" ]
+then
+	echo "Pick a project that exists!"
+	exit 1
+fi
+
 if [ -d "scratch" ]
 then
 	rm -rf scratch
 fi
 
 mkdir -p scratch
-cp -r ../test-projects/test-model scratch
-cargo run -- serve scratch/test-model
+cp -r "../test-projects/$1" scratch
+cargo run -- serve "scratch/$1"
