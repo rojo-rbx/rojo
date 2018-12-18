@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -e
+
+if [ -d "scratch" ]
+then
+	rm -rf scratch
+fi
+
+mkdir -p scratch
+cp -r ../test-projects/test-model scratch
+cargo run -- serve scratch/test-model
