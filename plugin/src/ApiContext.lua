@@ -19,6 +19,7 @@ setmetatable(ApiContext.Error, {
 	end
 })
 
+-- TODO: Switch to onMessages and batch processing
 function ApiContext.new(baseUrl, onMessage)
 	assert(type(baseUrl) == "string")
 	assert(type(onMessage) == "function")
@@ -108,6 +109,8 @@ function ApiContext:retrieveMessages()
 				return Promise.reject("Server changed ID")
 			end
 
+			-- TODO: Wait for all messages to be processed before resuming.
+			-- This callback will return a promise!
 			for _, message in ipairs(body.messages) do
 				self.onMessage(message)
 			end

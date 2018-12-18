@@ -4,25 +4,124 @@ local Logging = require(script.Parent.Logging)
 
 local REMOTE_URL = ("http://localhost:%d"):format(Config.port)
 
-local function reify(instanceData, id, parent)
+local function makeInstanceMap()
+	local self = {
+		fromIds = {},
+		fromInstances = {},
+	}
+
+	function self:insert(id, instance)
+		self.fromIds[id] = instance
+		self.fromInstances[instance] = id
+	end
+
+	function self:removeId(id)
+		local instance = self.fromIds[id]
+
+		if instance then
+			self.fromIds[id] = nil
+			self.fromInstances[instance] = nil
+		end
+	end
+
+	function self:removeInstance(instance)
+		local id = self.fromInstances[instance]
+
+		if id then
+			self.fromInstances[instance] = nil
+			self.fromIds[id] = nil
+		end
+	end
+
+	return self
+end
+
+local function setProperty(instance, key, value)
+	local ok, err = pcall(function()
+		instance[key] = value
+	end)
+
+	if not ok then
+		error(("Cannot set property %s on class %s: %s"):format(tostring(key), instance.ClassName, err), 2)
+	end
+end
+
+-- TODO: Pull this from project configuration instead
+local function shouldClearUnknown(instance)
+	return instance.ClassName ~= "DataModel" and instance.ClassName ~= "ReplicatedStorage"
+end
+
+local function reify(instanceData, instanceMap, id, parent)
 	local data = instanceData[id]
 
 	local instance = Instance.new(data.ClassName)
 
 	for key, value in pairs(data.Properties) do
 		-- TODO: Branch on value.Type
-		instance[key] = value.Value
+		setProperty(instance, key, value.Value)
 	end
 
 	instance.Name = data.Name
 
 	for _, childId in ipairs(data.Children) do
-		reify(instanceData, childId, instance)
+		reify(instanceData, instanceMap, childId, instance)
 	end
 
-	instance.Parent = parent
+	setProperty(instance, "Parent", parent)
+	instanceMap:insert(id, instance)
 
 	return instance
+end
+
+local function reconcile(instanceData, instanceMap, id, existingInstance)
+	local data = instanceData[id]
+
+	assert(data.ClassName == existingInstance.ClassName)
+
+	for key, value in pairs(data.Properties) do
+		setProperty(existingInstance, key, value.Value)
+	end
+
+	local existingChildren = existingInstance:GetChildren()
+
+	local unvisitedExistingChildren = {}
+	for _, child in ipairs(existingChildren) do
+		unvisitedExistingChildren[child] = true
+	end
+
+	for _, childId in ipairs(data.Children) do
+		local childData = instanceData[childId]
+
+		local existingChildInstance
+		for instance in pairs(unvisitedExistingChildren) do
+			local ok, name, className = pcall(function()
+				return instance.Name, instance.ClassName
+			end)
+
+			if ok then
+				if name == childData.Name and className == childData.ClassName then
+					existingChildInstance = instance
+					break
+				end
+			end
+		end
+
+		if existingChildInstance ~= nil then
+			unvisitedExistingChildren[existingChildInstance] = nil
+			reconcile(instanceData, instanceMap, childId, existingChildInstance)
+		else
+			reify(instanceData, instanceMap, childId, existingInstance)
+		end
+	end
+
+	if shouldClearUnknown(existingInstance) then
+		for existingChildInstance in pairs(unvisitedExistingChildren) do
+			instanceMap:removeInstance(existingChildInstance)
+			existingChildInstance:Destroy()
+		end
+	end
+
+	return existingInstance
 end
 
 local Session = {}
@@ -31,15 +130,48 @@ Session.__index = Session
 function Session.new()
 	local self = {}
 
+	local instanceMap = makeInstanceMap()
+
 	local api
 
 	api = ApiContext.new(REMOTE_URL, function(message)
-		if message.type == "InstanceChanged" then
-			Logging.trace("Instance %s changed!", message.id)
-			-- readAll()
-		else
-			Logging.warn("Unknown message type %s", message.type)
+		local idsToGet = {}
+
+		for _, id in ipairs(message.added) do
+			table.insert(idsToGet, id)
 		end
+
+		for _, id in ipairs(message.updated) do
+			table.insert(idsToGet, id)
+		end
+
+		for _, id in ipairs(message.removed) do
+			table.insert(idsToGet, id)
+		end
+
+		coroutine.wrap(function()
+			-- TODO: This section is a mess
+			local _, response = assert(api:read(idsToGet):await())
+
+			for _, id in ipairs(idsToGet) do
+				local data = response.instances[id]
+				local instance = instanceMap.fromIds[id]
+
+				if data == nil then
+					-- TOO: Destroy descendants too
+					if instance ~= nil then
+						instanceMap:removeInstance(instance)
+						instance:Destroy()
+					end
+				else
+					if instance ~= nil then
+						reconcile(response.instances, instanceMap, id, instance)
+					else
+						error("TODO: Crawl up to nearest parent, use that?")
+					end
+				end
+			end
+		end)()
 	end)
 
 	api:connect()
@@ -47,7 +179,8 @@ function Session.new()
 			return api:read({api.rootInstanceId})
 		end)
 		:andThen(function(response)
-			reify(response.instances, api.rootInstanceId, game.ReplicatedStorage)
+			reconcile(response.instances, instanceMap, api.rootInstanceId, game)
+			-- reify(response.instances, instanceMap, api.rootInstanceId, game.ReplicatedStorage)
 			return api:retrieveMessages()
 		end)
 		:catch(function(message)
