@@ -18,8 +18,7 @@ use crate::{
 
 pub struct RbxSession {
     tree: RbxTree,
-    paths_to_node_ids: PathMap<RbxId>,
-    ids_to_project_paths: HashMap<RbxId, String>,
+    path_map: PathMap<RbxId>,
     message_queue: Arc<MessageQueue<InstanceChanges>>,
     imfs: Arc<Mutex<Imfs>>,
     project: Arc<Project>,
@@ -31,19 +30,16 @@ impl RbxSession {
         imfs: Arc<Mutex<Imfs>>,
         message_queue: Arc<MessageQueue<InstanceChanges>>,
     ) -> RbxSession {
+        let mut path_map = PathMap::new();
+
         let tree = {
             let temp_imfs = imfs.lock().unwrap();
-            construct_initial_tree(&project, &temp_imfs)
+            construct_initial_tree(&project, &temp_imfs, &mut path_map)
         };
-
-        // TODO: Restore these?
-        let paths_to_node_ids = PathMap::new();
-        let ids_to_project_paths = HashMap::new();
 
         RbxSession {
             tree,
-            paths_to_node_ids,
-            ids_to_project_paths,
+            path_map,
             message_queue,
             imfs,
             project,
@@ -51,18 +47,25 @@ impl RbxSession {
     }
 
     fn path_created_or_updated(&mut self, path: &Path) {
-        let imfs = self.imfs.lock().unwrap();
-        let root_path = imfs.get_root_for_path(path)
-            .expect("Path was outside in-memory filesystem roots");
-
-        let closest_path = self.paths_to_node_ids.descend(root_path, path);
-        let &instance_id = self.paths_to_node_ids.get(&closest_path).unwrap();
-
-        let snapshot = snapshot_instances_from_imfs(&imfs, &closest_path)
-            .expect("Could not generate instance snapshot");
-
         let mut changes = InstanceChanges::default();
-        reconcile_subtree(&mut self.tree, instance_id, &snapshot, &mut changes);
+
+        {
+            let imfs = self.imfs.lock().unwrap();
+            let root_path = imfs.get_root_for_path(path)
+                .expect("Path was outside in-memory filesystem roots");
+
+            let closest_path = self.path_map.descend(root_path, path);
+            let &instance_id = self.path_map.get(&closest_path).unwrap();
+
+            let snapshot = snapshot_instances_from_imfs(&imfs, &closest_path)
+                .expect("Could not generate instance snapshot");
+
+            reconcile_subtree(&mut self.tree, instance_id, &snapshot, &mut self.path_map, &mut changes);
+        }
+
+        if !changes.is_empty() {
+            self.message_queue.push_messages(&[changes]);
+        }
     }
 
     pub fn path_created(&mut self, path: &Path) {
@@ -90,7 +93,7 @@ impl RbxSession {
     pub fn path_removed(&mut self, path: &Path) {
         info!("Path removed: {}", path.display());
 
-        let instance_id = match self.paths_to_node_ids.remove(path) {
+        let instance_id = match self.path_map.remove(path) {
             Some(id) => id,
             None => return,
         };
@@ -121,19 +124,17 @@ impl RbxSession {
     pub fn get_tree(&self) -> &RbxTree {
         &self.tree
     }
-
-    pub fn get_project_path_map(&self) -> &HashMap<RbxId, String> {
-        &self.ids_to_project_paths
-    }
 }
 
 pub fn construct_oneoff_tree(project: &Project, imfs: &Imfs) -> RbxTree {
-    construct_initial_tree(project, imfs)
+    let mut path_map = PathMap::new();
+    construct_initial_tree(project, imfs, &mut path_map)
 }
 
 fn construct_initial_tree(
     project: &Project,
     imfs: &Imfs,
+    path_map: &mut PathMap<RbxId>,
 ) -> RbxTree {
     let snapshot = construct_project_node(
         imfs,
@@ -142,8 +143,9 @@ fn construct_initial_tree(
     );
 
     let mut changes = InstanceChanges::default();
+    let tree = reify_root(&snapshot, path_map, &mut changes);
 
-    reify_root(&snapshot, &mut changes)
+    tree
 }
 
 fn construct_project_node<'a>(

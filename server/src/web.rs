@@ -27,7 +27,6 @@ pub struct ServerInfoResponse<'a> {
     pub protocol_version: u64,
     pub root_instance_id: RbxId,
     pub project: Cow<'a, Project>,
-    pub ids_to_project_paths: Cow<'a, HashMap<RbxId, String>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -80,7 +79,6 @@ impl Server {
                     session_id: self.session.session_id,
                     root_instance_id: tree.get_root_id(),
                     project: Cow::Borrowed(&self.session.project),
-                    ids_to_project_paths: Cow::Borrowed(rbx_session.get_project_path_map()),
                 })
             },
 
@@ -97,7 +95,7 @@ impl Server {
                     if !new_messages.is_empty() {
                         return Response::json(&SubscribeResponse {
                             session_id: self.session.session_id,
-                            messages: Cow::Borrowed(&[]),
+                            messages: Cow::Borrowed(&new_messages),
                             message_cursor: new_cursor,
                         })
                     }

@@ -7,6 +7,8 @@ use std::{
 
 use rbx_tree::{RbxTree, RbxId, RbxInstance, RbxValue};
 
+use crate::path_map::PathMap;
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct InstanceChanges {
     pub added: HashSet<RbxId>,
@@ -28,37 +30,61 @@ pub struct RbxSnapshotInstance<'a> {
     pub source_path: Option<PathBuf>,
 }
 
-pub fn reify_root(snapshot: &RbxSnapshotInstance, changes: &mut InstanceChanges) -> RbxTree {
+pub fn reify_root(
+    snapshot: &RbxSnapshotInstance,
+    path_map: &mut PathMap<RbxId>,
+    changes: &mut InstanceChanges,
+) -> RbxTree {
     let instance = reify_core(snapshot);
     let mut tree = RbxTree::new(instance);
     let root_id = tree.get_root_id();
 
+    if let Some(source_path) = &snapshot.source_path {
+        path_map.insert(source_path.clone(), root_id);
+    }
+
     changes.added.insert(root_id);
 
     for child in &snapshot.children {
-        reify_subtree(child, &mut tree, root_id, changes);
+        reify_subtree(child, &mut tree, root_id, path_map, changes);
     }
 
     tree
 }
 
-pub fn reify_subtree(snapshot: &RbxSnapshotInstance, tree: &mut RbxTree, parent_id: RbxId, changes: &mut InstanceChanges) {
+pub fn reify_subtree(
+    snapshot: &RbxSnapshotInstance,
+    tree: &mut RbxTree,
+    parent_id: RbxId,
+    path_map: &mut PathMap<RbxId>,
+    changes: &mut InstanceChanges,
+) {
     let instance = reify_core(snapshot);
     let id = tree.insert_instance(instance, parent_id);
+
+    if let Some(source_path) = &snapshot.source_path {
+        path_map.insert(source_path.clone(), id);
+    }
 
     changes.added.insert(id);
 
     for child in &snapshot.children {
-        reify_subtree(child, tree, id, changes);
+        reify_subtree(child, tree, id, path_map, changes);
     }
 }
 
-pub fn reconcile_subtree(tree: &mut RbxTree, id: RbxId, snapshot: &RbxSnapshotInstance, changes: &mut InstanceChanges) {
+pub fn reconcile_subtree(
+    tree: &mut RbxTree,
+    id: RbxId,
+    snapshot: &RbxSnapshotInstance,
+    path_map: &mut PathMap<RbxId>,
+    changes: &mut InstanceChanges,
+) {
     if reconcile_instance_properties(tree.get_instance_mut(id).unwrap(), snapshot) {
         changes.updated.insert(id);
     }
 
-    reconcile_instance_children(tree, id, snapshot, changes);
+    reconcile_instance_children(tree, id, snapshot, path_map, changes);
 }
 
 fn reify_core(snapshot: &RbxSnapshotInstance) -> RbxInstance {
@@ -138,7 +164,8 @@ fn reconcile_instance_children(
     tree: &mut RbxTree,
     id: RbxId,
     snapshot: &RbxSnapshotInstance,
-    changes: &mut InstanceChanges
+    path_map: &mut PathMap<RbxId>,
+    changes: &mut InstanceChanges,
 ) {
     let children_ids = tree.get_instance(id).unwrap().get_children_ids().to_vec();
     let child_count = children_ids.len().max(snapshot.children.len());
@@ -168,7 +195,7 @@ fn reconcile_instance_children(
     }
 
     for child_snapshot in &children_to_add {
-        reify_subtree(child_snapshot, tree, id, changes);
+        reify_subtree(child_snapshot, tree, id, path_map, changes);
     }
 
     for child_id in &children_to_remove {
@@ -180,6 +207,6 @@ fn reconcile_instance_children(
     }
 
     for (child_id, child_snapshot) in &children_to_update {
-        reconcile_subtree(tree, *child_id, child_snapshot, changes);
+        reconcile_subtree(tree, *child_id, child_snapshot, path_map, changes);
     }
 }
