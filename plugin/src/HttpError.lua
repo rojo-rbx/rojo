@@ -15,10 +15,19 @@ HttpError.Error = {
 		message = "Couldn't connect to the Rojo server.\n" ..
 			"Make sure the server is running -- use 'rojo serve' to run it!",
 	},
+	Timeout = {
+		message = "Request timed out.",
+	},
 	Unknown = {
 		message = "Unknown error: {{message}}",
 	},
 }
+
+setmetatable(HttpError.Error, {
+	__index = function(_, key)
+		error(("%q is not a valid member of HttpError.Error"):format(tostring(key)), 2)
+	end,
+})
 
 function HttpError.new(type, extraMessage)
 	extraMessage = extraMessage or ""
@@ -46,6 +55,10 @@ function HttpError.fromErrorString(message)
 
 	if lower:find("^http requests are not enabled") then
 		return HttpError.new(HttpError.Error.HttpNotEnabled)
+	end
+
+	if lower:find("^httperror: timedout") then
+		return HttpError.new(HttpError.Error.Timeout)
 	end
 
 	if lower:find("^httperror: connectfail") then
