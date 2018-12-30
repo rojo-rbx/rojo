@@ -15,18 +15,17 @@ ApiContext.Error = {
 
 setmetatable(ApiContext.Error, {
 	__index = function(_, key)
-		error("Invalid API.Error name " .. key, 2)
+		error("Invalid ApiContext.Error name " .. key, 2)
 	end
 })
 
 -- TODO: Switch to onMessages and batch processing
-function ApiContext.new(baseUrl, onMessage)
+function ApiContext.new(baseUrl)
 	assert(type(baseUrl) == "string")
-	assert(type(onMessage) == "function")
 
-	local context = {
+	local self = {
 		baseUrl = baseUrl,
-		onMessage = onMessage,
+		onMessageCallback = nil,
 		serverId = nil,
 		rootInstanceId = nil,
 		connected = false,
@@ -34,9 +33,13 @@ function ApiContext.new(baseUrl, onMessage)
 		partitionRoutes = nil,
 	}
 
-	setmetatable(context, ApiContext)
+	setmetatable(self, ApiContext)
 
-	return context
+	return self
+end
+
+function ApiContext:onMessage(callback)
+	self.onMessageCallback = callback
 end
 
 function ApiContext:connect()
@@ -77,6 +80,11 @@ function ApiContext:read(ids)
 	local url = ("%s/api/read/%s"):format(self.baseUrl, table.concat(ids, ","))
 
 	return Http.get(url)
+		:catch(function(err)
+			self.connected = false
+
+			return Promise.reject(err)
+		end)
 		:andThen(function(response)
 			local body = response:json()
 
@@ -87,10 +95,6 @@ function ApiContext:read(ids)
 			self.messageCursor = body.messageCursor
 
 			return body
-		end, function(err)
-			self.connected = false
-
-			return Promise.reject(err)
 		end)
 end
 
@@ -102,23 +106,7 @@ function ApiContext:retrieveMessages()
 	local url = ("%s/api/subscribe/%s"):format(self.baseUrl, self.messageCursor)
 
 	return Http.get(url)
-		:andThen(function(response)
-			local body = response:json()
-
-			if body.serverId ~= self.serverId then
-				return Promise.reject("Server changed ID")
-			end
-
-			-- TODO: Wait for all messages to be processed before resuming.
-			-- This callback will return a promise!
-			for _, message in ipairs(body.messages) do
-				self.onMessage(message)
-			end
-
-			self.messageCursor = body.messageCursor
-
-			return self:retrieveMessages()
-		end, function(err)
+		:catch(function(err)
 			if err.type == HttpError.Error.Timeout then
 				return self:retrieveMessages()
 			end
@@ -126,6 +114,28 @@ function ApiContext:retrieveMessages()
 			self.connected = false
 
 			return Promise.reject(err)
+		end)
+		:andThen(function(response)
+			local body = response:json()
+
+			if body.serverId ~= self.serverId then
+				return Promise.reject("Server changed ID")
+			end
+
+			local promise = Promise.resolve(nil)
+
+			for _, message in ipairs(body.messages) do
+				promise = promise:andThen(function()
+					return self.onMessageCalllback(message)
+				end)
+			end
+
+			self.messageCursor = body.messageCursor
+
+			return promise
+		end)
+		:andThen(function()
+			return self:retrieveMessages()
 		end)
 end
 

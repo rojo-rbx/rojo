@@ -132,9 +132,9 @@ function Session.new()
 
 	local instanceMap = makeInstanceMap()
 
-	local api
+	local api = ApiContext.new(REMOTE_URL)
 
-	api = ApiContext.new(REMOTE_URL, function(message)
+	ApiContext:onMessage(function(message)
 		local idsToGet = {}
 
 		for _, id in ipairs(message.added) do
