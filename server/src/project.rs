@@ -130,6 +130,7 @@ pub struct ProjectInitError;
 pub struct ProjectSaveError;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct InstanceProjectNodeConfig {
     pub ignore_unknown: bool,
 }
