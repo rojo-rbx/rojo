@@ -26,25 +26,29 @@ local function addTags(tag, message)
 	return tag .. message:gsub("\n", "\n" .. tag)
 end
 
+local INFO_TAG = (" "):rep(15) .. "[Rojo-Info] "
+local TRACE_TAG = (" "):rep(15) .. "[Rojo-Trace] "
+local WARN_TAG = "[Rojo-Warn] "
+
 local Log = {}
 
 Log.Level = Level
 
 function Log.trace(template, ...)
 	if getLogLevel() >= Level.Trace then
-		print(addTags("[Rojo-Trace] ", string.format(template, ...)))
+		print(addTags(TRACE_TAG, string.format(template, ...)))
 	end
 end
 
 function Log.info(template, ...)
 	if getLogLevel() >= Level.Info then
-		print(addTags("[Rojo-Info] ", string.format(template, ...)))
+		print(addTags(INFO_TAG, string.format(template, ...)))
 	end
 end
 
 function Log.warn(template, ...)
 	if getLogLevel() >= Level.Warning then
-		warn(addTags("[Rojo-Warn] ", string.format(template, ...)))
+		warn(addTags(WARN_TAG, string.format(template, ...)))
 	end
 end
 
