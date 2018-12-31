@@ -158,8 +158,12 @@ fn construct_project_node<'a>(
             construct_instance_node(imfs, instance_name, node)
         },
         ProjectNode::SyncPoint(node) => {
-            snapshot_instances_from_imfs(imfs, &node.path)
-                .expect("Could not reify nodes from Imfs")
+            let mut snapshot = snapshot_instances_from_imfs(imfs, &node.path)
+                .expect("Could not reify nodes from Imfs");
+
+            snapshot.name = Cow::Borrowed(instance_name);
+
+            snapshot
         },
     }
 }
