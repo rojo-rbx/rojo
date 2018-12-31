@@ -46,12 +46,15 @@ local function setProperty(instance, key, value)
 	end
 end
 
--- TODO: Pull this from project configuration instead
-local function shouldClearUnknown(instance)
-	return instance.ClassName ~= "DataModel" and instance.ClassName ~= "ReplicatedStorage"
+local function shouldClearUnknown(id, configMap)
+	if configMap[id] then
+		return not configMap[id].ignoreUnknown
+	else
+		return true
+	end
 end
 
-local function reify(instanceData, instanceMap, id, parent)
+local function reify(instanceData, instanceMap, configMap, id, parent)
 	local data = instanceData[id]
 
 	local instance = Instance.new(data.ClassName)
@@ -64,7 +67,7 @@ local function reify(instanceData, instanceMap, id, parent)
 	instance.Name = data.Name
 
 	for _, childId in ipairs(data.Children) do
-		reify(instanceData, instanceMap, childId, instance)
+		reify(instanceData, instanceMap, configMap, childId, instance)
 	end
 
 	setProperty(instance, "Parent", parent)
@@ -73,7 +76,7 @@ local function reify(instanceData, instanceMap, id, parent)
 	return instance
 end
 
-local function reconcile(instanceData, instanceMap, id, existingInstance)
+local function reconcile(instanceData, instanceMap, configMap, id, existingInstance)
 	local data = instanceData[id]
 
 	assert(data.ClassName == existingInstance.ClassName)
@@ -108,13 +111,13 @@ local function reconcile(instanceData, instanceMap, id, existingInstance)
 
 		if existingChildInstance ~= nil then
 			unvisitedExistingChildren[existingChildInstance] = nil
-			reconcile(instanceData, instanceMap, childId, existingChildInstance)
+			reconcile(instanceData, instanceMap, configMap, childId, existingChildInstance)
 		else
-			reify(instanceData, instanceMap, childId, existingInstance)
+			reify(instanceData, instanceMap, configMap, childId, existingInstance)
 		end
 	end
 
-	if shouldClearUnknown(existingInstance) then
+	if shouldClearUnknown(id, configMap) then
 		for existingChildInstance in pairs(unvisitedExistingChildren) do
 			instanceMap:removeInstance(existingChildInstance)
 			existingChildInstance:Destroy()
@@ -165,7 +168,7 @@ function Session.new()
 					end
 				else
 					if instance ~= nil then
-						reconcile(response.instances, instanceMap, id, instance)
+						reconcile(response.instances, instanceMap, api.configMap, id, instance)
 					else
 						error("TODO: Crawl up to nearest parent, use that?")
 					end
@@ -179,8 +182,8 @@ function Session.new()
 			return api:read({api.rootInstanceId})
 		end)
 		:andThen(function(response)
-			reconcile(response.instances, instanceMap, api.rootInstanceId, game)
-			-- reify(response.instances, instanceMap, api.rootInstanceId, game.ReplicatedStorage)
+			reconcile(response.instances, instanceMap, api.configMap, api.rootInstanceId, game)
+			-- reify(response.instances, instanceMap, configMap, api.rootInstanceId, game.ReplicatedStorage)
 			return api:retrieveMessages()
 		end)
 		:catch(function(message)

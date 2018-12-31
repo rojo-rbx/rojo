@@ -28,6 +28,7 @@ function ApiContext.new(baseUrl)
 		onMessageCallback = nil,
 		serverId = nil,
 		rootInstanceId = nil,
+		configMap = nil,
 		connected = false,
 		messageCursor = -1,
 		partitionRoutes = nil,
@@ -69,6 +70,7 @@ function ApiContext:connect()
 			self.connected = true
 			self.partitionRoutes = body.partitions
 			self.rootInstanceId = body.rootInstanceId
+			self.configMap = body.configMap
 		end)
 end
 
@@ -126,7 +128,7 @@ function ApiContext:retrieveMessages()
 
 			for _, message in ipairs(body.messages) do
 				promise = promise:andThen(function()
-					return self.onMessageCalllback(message)
+					return self.onMessageCallback(message)
 				end)
 			end
 
