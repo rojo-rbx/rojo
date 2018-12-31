@@ -9,7 +9,7 @@ use std::{
 use rbx_tree::{RbxTree, RbxValue, RbxId};
 
 use crate::{
-    project::{Project, ProjectNode, InstanceProjectNode},
+    project::{Project, ProjectNode, InstanceProjectNode, InstanceProjectNodeConfig},
     message_queue::MessageQueue,
     imfs::{Imfs, ImfsItem, ImfsFile},
     path_map::PathMap,
@@ -19,6 +19,7 @@ use crate::{
 pub struct RbxSession {
     tree: RbxTree,
     path_map: PathMap<RbxId>,
+    config_map: HashMap<RbxId, InstanceProjectNodeConfig>,
     message_queue: Arc<MessageQueue<InstanceChanges>>,
     imfs: Arc<Mutex<Imfs>>,
     project: Arc<Project>,
@@ -31,15 +32,17 @@ impl RbxSession {
         message_queue: Arc<MessageQueue<InstanceChanges>>,
     ) -> RbxSession {
         let mut path_map = PathMap::new();
+        let mut config_map = HashMap::new();
 
         let tree = {
             let temp_imfs = imfs.lock().unwrap();
-            construct_initial_tree(&project, &temp_imfs, &mut path_map)
+            construct_initial_tree(&project, &temp_imfs, &mut path_map, &mut config_map)
         };
 
         RbxSession {
             tree,
             path_map,
+            config_map,
             message_queue,
             imfs,
             project,
@@ -60,7 +63,7 @@ impl RbxSession {
             let snapshot = snapshot_instances_from_imfs(&imfs, &closest_path)
                 .expect("Could not generate instance snapshot");
 
-            reconcile_subtree(&mut self.tree, instance_id, &snapshot, &mut self.path_map, &mut changes);
+            reconcile_subtree(&mut self.tree, instance_id, &snapshot, &mut self.path_map, &mut self.config_map, &mut changes);
         }
 
         if !changes.is_empty() {
@@ -124,17 +127,23 @@ impl RbxSession {
     pub fn get_tree(&self) -> &RbxTree {
         &self.tree
     }
+
+    pub fn get_config_map(&self) -> &HashMap<RbxId, InstanceProjectNodeConfig> {
+        &self.config_map
+    }
 }
 
 pub fn construct_oneoff_tree(project: &Project, imfs: &Imfs) -> RbxTree {
     let mut path_map = PathMap::new();
-    construct_initial_tree(project, imfs, &mut path_map)
+    let mut config_map = HashMap::new();
+    construct_initial_tree(project, imfs, &mut path_map, &mut config_map)
 }
 
 fn construct_initial_tree(
     project: &Project,
     imfs: &Imfs,
     path_map: &mut PathMap<RbxId>,
+    config_map: &mut HashMap<RbxId, InstanceProjectNodeConfig>,
 ) -> RbxTree {
     let snapshot = construct_project_node(
         imfs,
@@ -143,7 +152,7 @@ fn construct_initial_tree(
     );
 
     let mut changes = InstanceChanges::default();
-    let tree = reify_root(&snapshot, path_map, &mut changes);
+    let tree = reify_root(&snapshot, path_map, config_map, &mut changes);
 
     tree
 }
@@ -185,6 +194,7 @@ fn construct_instance_node<'a>(
         properties: HashMap::new(),
         children,
         source_path: None,
+        config: Some(project_node.config.clone()),
     }
 }
 
@@ -243,6 +253,7 @@ fn snapshot_instances_from_imfs<'a>(imfs: &'a Imfs, imfs_path: &Path) -> Option<
                 properties,
                 children: Vec::new(),
                 source_path: Some(file.path.clone()),
+                config: None,
             })
         },
         ImfsItem::Directory(directory) => {
@@ -257,6 +268,7 @@ fn snapshot_instances_from_imfs<'a>(imfs: &'a Imfs, imfs_path: &Path) -> Option<
                     properties: HashMap::new(),
                     children: Vec::new(),
                     source_path: Some(directory.path.clone()),
+                    config: None,
                 }
             };
 

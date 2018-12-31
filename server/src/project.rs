@@ -40,7 +40,7 @@ enum SourceProjectNode {
 impl SourceProjectNode {
     pub fn into_project_node(self, project_file_location: &Path) -> ProjectNode {
         match self {
-            SourceProjectNode::Instance { class_name, mut children, properties, .. } => {
+            SourceProjectNode::Instance { class_name, mut children, properties, ignore_unknown } => {
                 let mut new_children = HashMap::new();
 
                 for (node_name, node) in children.drain() {
@@ -51,6 +51,9 @@ impl SourceProjectNode {
                     class_name,
                     children: new_children,
                     properties,
+                    config: InstanceProjectNodeConfig {
+                        ignore_unknown,
+                    },
                 })
             },
             SourceProjectNode::SyncPoint { path: source_path } => {
@@ -127,6 +130,11 @@ pub struct ProjectInitError;
 pub struct ProjectSaveError;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct InstanceProjectNodeConfig {
+    pub ignore_unknown: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum ProjectNode {
     Instance(InstanceProjectNode),
@@ -139,7 +147,7 @@ pub struct InstanceProjectNode {
     pub class_name: String,
     pub children: HashMap<String, ProjectNode>,
     pub properties: HashMap<String, RbxValue>,
-    // ignore_unknown: bool,
+    pub config: InstanceProjectNodeConfig,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
