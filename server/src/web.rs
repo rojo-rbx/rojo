@@ -26,7 +26,7 @@ pub struct ServerInfoResponse<'a> {
     pub server_version: &'a str,
     pub protocol_version: u64,
     pub root_instance_id: RbxId,
-    pub config_map: Cow<'a, HashMap<RbxId, InstanceProjectNodeConfig>>,
+    pub instance_metadata_map: Cow<'a, HashMap<RbxId, InstanceProjectNodeConfig>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -78,7 +78,7 @@ impl Server {
                     protocol_version: 2,
                     session_id: self.session.session_id,
                     root_instance_id: tree.get_root_id(),
-                    config_map: Cow::Borrowed(rbx_session.get_config_map()),
+                    instance_metadata_map: Cow::Borrowed(rbx_session.get_instance_metadata_map()),
                 })
             },
 
