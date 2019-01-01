@@ -9,7 +9,7 @@ use rbx_tree::{RbxTree, RbxId, RbxInstance, RbxValue};
 
 use crate::{
     path_map::PathMap,
-    project::InstanceProjectNodeConfig,
+    project::InstanceProjectNodeMetadata,
 };
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -31,13 +31,13 @@ pub struct RbxSnapshotInstance<'a> {
     pub properties: HashMap<String, RbxValue>,
     pub children: Vec<RbxSnapshotInstance<'a>>,
     pub source_path: Option<PathBuf>,
-    pub config: Option<InstanceProjectNodeConfig>,
+    pub metadata: Option<InstanceProjectNodeMetadata>,
 }
 
 pub fn reify_root(
     snapshot: &RbxSnapshotInstance,
     path_map: &mut PathMap<RbxId>,
-    config_map: &mut HashMap<RbxId, InstanceProjectNodeConfig>,
+    instance_metadata_map: &mut HashMap<RbxId, InstanceProjectNodeMetadata>,
     changes: &mut InstanceChanges,
 ) -> RbxTree {
     let instance = reify_core(snapshot);
@@ -48,14 +48,14 @@ pub fn reify_root(
         path_map.insert(source_path.clone(), root_id);
     }
 
-    if let Some(config) = &snapshot.config {
-        config_map.insert(root_id, config.clone());
+    if let Some(metadata) = &snapshot.metadata {
+        instance_metadata_map.insert(root_id, metadata.clone());
     }
 
     changes.added.insert(root_id);
 
     for child in &snapshot.children {
-        reify_subtree(child, &mut tree, root_id, path_map, config_map, changes);
+        reify_subtree(child, &mut tree, root_id, path_map, instance_metadata_map, changes);
     }
 
     tree
@@ -66,7 +66,7 @@ pub fn reify_subtree(
     tree: &mut RbxTree,
     parent_id: RbxId,
     path_map: &mut PathMap<RbxId>,
-    config_map: &mut HashMap<RbxId, InstanceProjectNodeConfig>,
+    instance_metadata_map: &mut HashMap<RbxId, InstanceProjectNodeMetadata>,
     changes: &mut InstanceChanges,
 ) {
     let instance = reify_core(snapshot);
@@ -76,14 +76,14 @@ pub fn reify_subtree(
         path_map.insert(source_path.clone(), id);
     }
 
-    if let Some(config) = &snapshot.config {
-        config_map.insert(id, config.clone());
+    if let Some(metadata) = &snapshot.metadata {
+        instance_metadata_map.insert(id, metadata.clone());
     }
 
     changes.added.insert(id);
 
     for child in &snapshot.children {
-        reify_subtree(child, tree, id, path_map, config_map, changes);
+        reify_subtree(child, tree, id, path_map, instance_metadata_map, changes);
     }
 }
 
@@ -92,14 +92,14 @@ pub fn reconcile_subtree(
     id: RbxId,
     snapshot: &RbxSnapshotInstance,
     path_map: &mut PathMap<RbxId>,
-    config_map: &mut HashMap<RbxId, InstanceProjectNodeConfig>,
+    instance_metadata_map: &mut HashMap<RbxId, InstanceProjectNodeMetadata>,
     changes: &mut InstanceChanges,
 ) {
     if reconcile_instance_properties(tree.get_instance_mut(id).unwrap(), snapshot) {
         changes.updated.insert(id);
     }
 
-    reconcile_instance_children(tree, id, snapshot, path_map, config_map, changes);
+    reconcile_instance_children(tree, id, snapshot, path_map, instance_metadata_map, changes);
 }
 
 fn reify_core(snapshot: &RbxSnapshotInstance) -> RbxInstance {
@@ -180,7 +180,7 @@ fn reconcile_instance_children(
     id: RbxId,
     snapshot: &RbxSnapshotInstance,
     path_map: &mut PathMap<RbxId>,
-    config_map: &mut HashMap<RbxId, InstanceProjectNodeConfig>,
+    instance_metadata_map: &mut HashMap<RbxId, InstanceProjectNodeMetadata>,
     changes: &mut InstanceChanges,
 ) {
     let children_ids = tree.get_instance(id).unwrap().get_children_ids().to_vec();
@@ -211,19 +211,19 @@ fn reconcile_instance_children(
     }
 
     for child_snapshot in &children_to_add {
-        reify_subtree(child_snapshot, tree, id, path_map, config_map, changes);
+        reify_subtree(child_snapshot, tree, id, path_map, instance_metadata_map, changes);
     }
 
     for child_id in &children_to_remove {
         if let Some(subtree) = tree.remove_instance(*child_id) {
             for id in subtree.iter_all_ids() {
-                config_map.remove(&id);
+                instance_metadata_map.remove(&id);
                 changes.removed.insert(id);
             }
         }
     }
 
     for (child_id, child_snapshot) in &children_to_update {
-        reconcile_subtree(tree, *child_id, child_snapshot, path_map, config_map, changes);
+        reconcile_subtree(tree, *child_id, child_snapshot, path_map, instance_metadata_map, changes);
     }
 }

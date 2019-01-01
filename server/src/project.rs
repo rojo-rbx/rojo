@@ -51,7 +51,7 @@ impl SourceProjectNode {
                     class_name,
                     children: new_children,
                     properties,
-                    config: InstanceProjectNodeConfig {
+                    metadata: InstanceProjectNodeMetadata {
                         ignore_unknown,
                     },
                 })
@@ -131,8 +131,16 @@ pub struct ProjectSaveError;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct InstanceProjectNodeConfig {
+pub struct InstanceProjectNodeMetadata {
     pub ignore_unknown: bool,
+}
+
+impl Default for InstanceProjectNodeMetadata {
+    fn default() -> InstanceProjectNodeMetadata {
+        InstanceProjectNodeMetadata {
+            ignore_unknown: true,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -148,7 +156,7 @@ pub struct InstanceProjectNode {
     pub class_name: String,
     pub children: HashMap<String, ProjectNode>,
     pub properties: HashMap<String, RbxValue>,
-    pub config: InstanceProjectNodeConfig,
+    pub metadata: InstanceProjectNodeMetadata,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

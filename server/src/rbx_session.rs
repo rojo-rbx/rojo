@@ -9,7 +9,7 @@ use std::{
 use rbx_tree::{RbxTree, RbxValue, RbxId};
 
 use crate::{
-    project::{Project, ProjectNode, InstanceProjectNode, InstanceProjectNodeConfig},
+    project::{Project, ProjectNode, InstanceProjectNode, InstanceProjectNodeMetadata},
     message_queue::MessageQueue,
     imfs::{Imfs, ImfsItem, ImfsFile},
     path_map::PathMap,
@@ -19,7 +19,7 @@ use crate::{
 pub struct RbxSession {
     tree: RbxTree,
     path_map: PathMap<RbxId>,
-    instance_metadata_map: HashMap<RbxId, InstanceProjectNodeConfig>,
+    instance_metadata_map: HashMap<RbxId, InstanceProjectNodeMetadata>,
     message_queue: Arc<MessageQueue<InstanceChanges>>,
     imfs: Arc<Mutex<Imfs>>,
     project: Arc<Project>,
@@ -128,7 +128,7 @@ impl RbxSession {
         &self.tree
     }
 
-    pub fn get_instance_metadata_map(&self) -> &HashMap<RbxId, InstanceProjectNodeConfig> {
+    pub fn get_instance_metadata_map(&self) -> &HashMap<RbxId, InstanceProjectNodeMetadata> {
         &self.instance_metadata_map
     }
 }
@@ -143,7 +143,7 @@ fn construct_initial_tree(
     project: &Project,
     imfs: &Imfs,
     path_map: &mut PathMap<RbxId>,
-    instance_metadata_map: &mut HashMap<RbxId, InstanceProjectNodeConfig>,
+    instance_metadata_map: &mut HashMap<RbxId, InstanceProjectNodeMetadata>,
 ) -> RbxTree {
     let snapshot = construct_project_node(
         imfs,
@@ -194,7 +194,7 @@ fn construct_instance_node<'a>(
         properties: HashMap::new(),
         children,
         source_path: None,
-        config: Some(project_node.config.clone()),
+        metadata: Some(project_node.metadata.clone()),
     }
 }
 
@@ -253,7 +253,7 @@ fn snapshot_instances_from_imfs<'a>(imfs: &'a Imfs, imfs_path: &Path) -> Option<
                 properties,
                 children: Vec::new(),
                 source_path: Some(file.path.clone()),
-                config: None,
+                metadata: None,
             })
         },
         ImfsItem::Directory(directory) => {
@@ -268,7 +268,7 @@ fn snapshot_instances_from_imfs<'a>(imfs: &'a Imfs, imfs_path: &Path) -> Option<
                     properties: HashMap::new(),
                     children: Vec::new(),
                     source_path: Some(directory.path.clone()),
-                    config: None,
+                    metadata: None,
                 }
             };
 

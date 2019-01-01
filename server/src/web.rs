@@ -15,7 +15,7 @@ use rbx_tree::{RbxId, RootedRbxInstance};
 use crate::{
     session::Session,
     session_id::SessionId,
-    project::InstanceProjectNodeConfig,
+    project::InstanceProjectNodeMetadata,
     rbx_snapshot::InstanceChanges,
 };
 
@@ -26,7 +26,7 @@ pub struct ServerInfoResponse<'a> {
     pub server_version: &'a str,
     pub protocol_version: u64,
     pub root_instance_id: RbxId,
-    pub instance_metadata_map: Cow<'a, HashMap<RbxId, InstanceProjectNodeConfig>>,
+    pub instance_metadata_map: Cow<'a, HashMap<RbxId, InstanceProjectNodeMetadata>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

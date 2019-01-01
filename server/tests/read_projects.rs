@@ -66,6 +66,7 @@ fn single_sync_point() {
             class_name: "ReplicatedStorage".to_string(),
             children: replicated_storage_children,
             properties: HashMap::new(),
+            metadata: Default::default(),
         });
 
         let mut root_children = HashMap::new();
@@ -75,6 +76,7 @@ fn single_sync_point() {
             class_name: "DataModel".to_string(),
             children: root_children,
             properties: HashMap::new(),
+            metadata: Default::default(),
         });
 
         Project {
