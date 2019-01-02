@@ -18,6 +18,6 @@ pub mod rbx_session;
 pub mod rbx_snapshot;
 pub mod session;
 pub mod session_id;
-pub mod visualize_tree;
+pub mod visualize;
 pub mod web;
 pub mod web_util;

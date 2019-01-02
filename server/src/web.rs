@@ -1,8 +1,6 @@
 use std::{
     borrow::Cow,
     collections::HashMap,
-    io::Write,
-    process::{Command, Stdio},
     sync::{mpsc, Arc},
 };
 
@@ -19,7 +17,7 @@ use crate::{
     session_id::SessionId,
     project::InstanceProjectNodeMetadata,
     rbx_snapshot::InstanceChanges,
-    visualize_tree::VisualizeTree,
+    visualize::{VisualizeRbxTree, VisualizeImfs, graphviz_to_svg},
 };
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -163,27 +161,21 @@ impl Server {
                 })
             },
 
-            (GET) (/api/visualize) => {
+            (GET) (/visualize/rbx) => {
                 let rbx_session = self.session.rbx_session.lock().unwrap();
                 let tree = rbx_session.get_tree();
 
-                let dot_source = format!("{}", VisualizeTree(tree));
+                let dot_source = format!("{}", VisualizeRbxTree(tree));
 
-                let mut child = Command::new("dot")
-                    .arg("-Tsvg")
-                    .stdin(Stdio::piped())
-                    .stdout(Stdio::piped())
-                    .spawn()
-                    .expect("Failed to spawn GraphViz process -- make sure it's installed in order to use /api/visualize");
+                Response::svg(graphviz_to_svg(&dot_source))
+            },
 
-                {
-                    let stdin = child.stdin.as_mut().expect("Failed to open stdin");
-                    stdin.write_all(dot_source.as_bytes()).expect("Failed to write to stdin");
-                }
+            (GET) (/visualize/imfs) => {
+                let imfs = self.session.imfs.lock().unwrap();
 
-                let output = child.wait_with_output().expect("Failed to read stdout");
+                let dot_source = format!("{}", VisualizeImfs(&imfs));
 
-                Response::svg(String::from_utf8_lossy(&output.stdout))
+                Response::svg(graphviz_to_svg(&dot_source))
             },
 
             _ => Response::empty_404()

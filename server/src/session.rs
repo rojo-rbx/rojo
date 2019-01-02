@@ -18,6 +18,7 @@ pub struct Session {
     pub session_id: SessionId,
     pub message_queue: Arc<MessageQueue<InstanceChanges>>,
     pub rbx_session: Arc<Mutex<RbxSession>>,
+    pub imfs: Arc<Mutex<Imfs>>,
     _fs_watcher: FsWatcher,
 }
 
@@ -50,6 +51,7 @@ impl Session {
             session_id,
             message_queue,
             rbx_session,
+            imfs,
             _fs_watcher: fs_watcher,
         })
     }
