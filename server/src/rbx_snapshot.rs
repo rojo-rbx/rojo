@@ -2,6 +2,7 @@ use std::{
     str,
     borrow::Cow,
     collections::{HashMap, HashSet},
+    fmt,
     path::PathBuf,
 };
 
@@ -17,6 +18,35 @@ pub struct InstanceChanges {
     pub added: HashSet<RbxId>,
     pub removed: HashSet<RbxId>,
     pub updated: HashSet<RbxId>,
+}
+
+impl fmt::Display for InstanceChanges {
+    fn fmt(&self, output: &mut fmt::Formatter) -> fmt::Result {
+        writeln!(output, "InstanceChanges {{")?;
+
+        if !self.added.is_empty() {
+            writeln!(output, "    Added:")?;
+            for id in &self.added {
+                writeln!(output, "        {}", id)?;
+            }
+        }
+
+        if !self.removed.is_empty() {
+            writeln!(output, "    Removed:")?;
+            for id in &self.removed {
+                writeln!(output, "        {}", id)?;
+            }
+        }
+
+        if !self.updated.is_empty() {
+            writeln!(output, "    Updated:")?;
+            for id in &self.updated {
+                writeln!(output, "        {}", id)?;
+            }
+        }
+
+        writeln!(output, "}}")
+    }
 }
 
 impl InstanceChanges {

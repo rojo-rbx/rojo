@@ -63,13 +63,18 @@ impl RbxSession {
             let closest_path = self.path_map.descend(root_path, path);
             let &instance_id = self.path_map.get(&closest_path).unwrap();
 
+            trace!("Snapshotting path {}", closest_path.display());
+
             let snapshot = snapshot_instances_from_imfs(&imfs, &closest_path, &mut self.sync_point_names)
                 .expect("Could not generate instance snapshot");
 
             reconcile_subtree(&mut self.tree, instance_id, &snapshot, &mut self.path_map, &mut self.instance_metadata_map, &mut changes);
         }
 
-        if !changes.is_empty() {
+        if changes.is_empty() {
+            trace!("No instance changes triggered from file update.");
+        } else {
+            trace!("Pushing changes: {}", changes);
             self.message_queue.push_messages(&[changes]);
         }
     }
@@ -88,7 +93,10 @@ impl RbxSession {
             // If the path doesn't exist or it's a directory, we don't care if it
             // updated
             match imfs.get(path) {
-                Some(ImfsItem::Directory(_)) | None => return,
+                Some(ImfsItem::Directory(_)) | None => {
+                    trace!("Updated path was a directory, ignoring.");
+                    return;
+                },
                 Some(ImfsItem::File(_)) => {},
             }
         }
@@ -101,7 +109,12 @@ impl RbxSession {
 
         let instance_id = match self.path_map.remove(path) {
             Some(id) => id,
-            None => return,
+            None => {
+                // TODO: init.lua files won't be in the path map, that should be
+                // patched up!
+                trace!("Path was not in path map, ignoring removal.");
+                return;
+            },
         };
 
         let removed_subtree = match self.tree.remove_instance(instance_id) {
@@ -117,6 +130,8 @@ impl RbxSession {
             removed: removed_subtree.iter_all_ids().collect(),
             updated: HashSet::new(),
         };
+
+        trace!("Pushing changes: {}", changes);
 
         self.message_queue.push_messages(&[changes]);
     }
