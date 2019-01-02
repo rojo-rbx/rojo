@@ -178,6 +178,12 @@ impl Server {
                 Response::svg(graphviz_to_svg(&dot_source))
             },
 
+            (GET) (/visualize/path_map) => {
+                let rbx_session = self.session.rbx_session.lock().unwrap();
+
+                Response::json(&rbx_session.debug_get_path_map())
+            },
+
             _ => Response::empty_404()
         )
     }

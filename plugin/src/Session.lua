@@ -21,6 +21,8 @@ local function makeInstanceMap()
 		if instance ~= nil then
 			self.fromIds[id] = nil
 			self.fromInstances[instance] = nil
+		else
+			Logging.warn("Attempted to remove nonexistant ID %s", tostring(id))
 		end
 	end
 
@@ -30,12 +32,14 @@ local function makeInstanceMap()
 		if id ~= nil then
 			self.fromInstances[instance] = nil
 			self.fromIds[id] = nil
+		else
+			Logging.warn("Attempted to remove nonexistant instance %s", tostring(instance))
 		end
 	end
 
 	function self:destroyId(id)
-		self:removeId(id)
 		local instance = self.fromIds[id]
+		self:removeId(id)
 
 		if instance ~= nil then
 			local descendantsToDestroy = {}
@@ -51,6 +55,8 @@ local function makeInstanceMap()
 			end
 
 			instance:Destroy()
+		else
+			Logging.warn("Attempted to destroy nonexistant ID %s", tostring(id))
 		end
 	end
 

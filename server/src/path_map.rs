@@ -3,7 +3,7 @@ use std::{
     collections::{HashMap, HashSet},
 };
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 struct PathMapNode<T> {
     value: T,
     children: HashSet<PathBuf>,
@@ -11,7 +11,7 @@ struct PathMapNode<T> {
 
 /// A map from paths to instance IDs, with a bit of additional data that enables
 /// removing a path and all of its child paths from the tree more quickly.
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct PathMap<T> {
     nodes: HashMap<PathBuf, PathMapNode<T>>,
 }

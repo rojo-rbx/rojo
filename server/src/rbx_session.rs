@@ -66,7 +66,9 @@ impl RbxSession {
             trace!("Snapshotting path {}", closest_path.display());
 
             let snapshot = snapshot_instances_from_imfs(&imfs, &closest_path, &mut self.sync_point_names)
-                .expect("Could not generate instance snapshot");
+                .unwrap_or_else(|| panic!("Could not generate instance snapshot for path {}", closest_path.display()));
+
+            trace!("Snapshot: {:#?}", snapshot);
 
             reconcile_subtree(&mut self.tree, instance_id, &snapshot, &mut self.path_map, &mut self.instance_metadata_map, &mut changes);
         }
@@ -106,40 +108,14 @@ impl RbxSession {
 
     pub fn path_removed(&mut self, path: &Path) {
         info!("Path removed: {}", path.display());
-
-        let instance_id = match self.path_map.remove(path) {
-            Some(id) => id,
-            None => {
-                // TODO: init.lua files won't be in the path map, that should be
-                // patched up!
-                trace!("Path was not in path map, ignoring removal.");
-                return;
-            },
-        };
-
-        let removed_subtree = match self.tree.remove_instance(instance_id) {
-            Some(tree) => tree,
-            None => {
-                warn!("Rojo tried to remove an instance that was half cleaned-up. This is probably a bug in Rojo.");
-                return;
-            },
-        };
-
-        let changes = InstanceChanges {
-            added: HashSet::new(),
-            removed: removed_subtree.iter_all_ids().collect(),
-            updated: HashSet::new(),
-        };
-
-        trace!("Pushing changes: {}", changes);
-
-        self.message_queue.push_messages(&[changes]);
+        self.path_map.remove(path);
+        self.path_created_or_updated(path);
     }
 
     pub fn path_renamed(&mut self, from_path: &Path, to_path: &Path) {
         info!("Path renamed from {} to {}", from_path.display(), to_path.display());
-        self.path_removed(from_path);
-        self.path_created(to_path);
+        self.path_created_or_updated(from_path);
+        self.path_created_or_updated(to_path);
     }
 
     pub fn get_tree(&self) -> &RbxTree {
@@ -148,6 +124,10 @@ impl RbxSession {
 
     pub fn get_instance_metadata_map(&self) -> &HashMap<RbxId, InstanceProjectNodeMetadata> {
         &self.instance_metadata_map
+    }
+
+    pub fn debug_get_path_map(&self) -> &PathMap<RbxId> {
+        &self.path_map
     }
 }
 
@@ -291,6 +271,7 @@ fn snapshot_instances_from_imfs<'a>(
             })
         },
         ImfsItem::Directory(directory) => {
+            // TODO: Expand init support to handle server and client scripts
             let init_path = directory.path.join("init.lua");
 
             let mut instance = if directory.children.contains(&init_path) {
@@ -306,7 +287,7 @@ fn snapshot_instances_from_imfs<'a>(
                 }
             };
 
-            instance.name = if let Some(actual_name) = sync_point_names.get(imfs_path) {
+            instance.name = if let Some(actual_name) = sync_point_names.get(&directory.path) {
                 Cow::Owned(actual_name.clone())
             } else {
                 Cow::Borrowed(directory.path.file_name()?.to_str()?)

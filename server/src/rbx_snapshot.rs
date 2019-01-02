@@ -55,6 +55,7 @@ impl InstanceChanges {
     }
 }
 
+#[derive(Debug)]
 pub struct RbxSnapshotInstance<'a> {
     pub name: Cow<'a, str>,
     pub class_name: Cow<'a, str>,
@@ -125,6 +126,14 @@ pub fn reconcile_subtree(
     instance_metadata_map: &mut HashMap<RbxId, InstanceProjectNodeMetadata>,
     changes: &mut InstanceChanges,
 ) {
+    if let Some(source_path) = &snapshot.source_path {
+        path_map.insert(source_path.clone(), id);
+    }
+
+    if let Some(metadata) = &snapshot.metadata {
+        instance_metadata_map.insert(id, metadata.clone());
+    }
+
     if reconcile_instance_properties(tree.get_instance_mut(id).unwrap(), snapshot) {
         changes.updated.insert(id);
     }
