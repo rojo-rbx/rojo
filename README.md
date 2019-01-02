@@ -57,8 +57,6 @@ If you use a plugin that _isn't_ Rojo for syncing code, open an issue and let me
 ## Contributing
 The `master` branch is a rewrite known as **Epiphany**. It includes a breaking change to the project configuration format and an infrastructure overhaul.
 
-Building Rojo requires the latest Rust beta in order to use **2018 Edition** features. Once Rust 1.31 is stable on **December 6, 2018**, Rojo `master` will compile on Rust stable again.
-
 Pull requests are welcome!
 
 All pull requests are run against a test suite on Travis CI. That test suite should always pass!

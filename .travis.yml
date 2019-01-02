@@ -25,14 +25,12 @@ matrix:
         - cd plugin
         - luacov-coveralls -e $TRAVIS_BUILD_DIR/lua_install
 
-    # Stable builds can be re-enabled after 2018-12-06, when Rust 1.31 is stable
+    - language: rust
+      rust: stable
 
-    # - language: rust
-    #   rust: stable
-
-    #   script:
-    #     - cd server
-    #     - cargo test --verbose
+      script:
+        - cd server
+        - cargo test --verbose
 
     - language: rust
       rust: beta
