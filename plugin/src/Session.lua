@@ -100,7 +100,13 @@ end
 local function reconcile(instanceData, instanceMap, instanceMetadataMap, id, existingInstance)
 	local data = instanceData[id]
 
-	assert(data.ClassName == existingInstance.ClassName)
+	if data.ClassName ~= existingInstance.ClassName then
+		-- TODO: Preserve existing children instead?
+		local parent = existingInstance.Parent
+		instanceMap:destroyId(id)
+		reify(instanceData, instanceMap, instanceMetadataMap, id, parent)
+		return
+	end
 
 	for key, value in pairs(data.Properties) do
 		setProperty(existingInstance, key, value.Value)
