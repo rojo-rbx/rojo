@@ -1,7 +1,6 @@
 local ApiContext = require(script.Parent.ApiContext)
 local Config = require(script.Parent.Config)
 local Logging = require(script.Parent.Logging)
-local Promise = require(script.Parent.Parent.Promise)
 
 local REMOTE_URL = ("http://localhost:%d"):format(Config.port)
 
@@ -182,7 +181,9 @@ local function applyUpdatePiece(id, visitedIds, responseData, instanceMap, insta
 	-- work from there instead.
 	local parentData = responseData[data.Parent]
 	if parentData ~= nil then
-		assert(not visitedIds[data.Parent], "Rojo bug: An instance was present and marked as visited but its instance was missing")
+		if visitedIds[data.Parent] then
+			error("Rojo bug: An instance was present and marked as visited but its instance was missing")
+		end
 
 		applyUpdatePiece(data.Parent, visitedIds, responseData, instanceMap, instanceMetadataMap)
 		return
