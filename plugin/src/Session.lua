@@ -1,6 +1,7 @@
-local Config = require(script.Parent.Config)
 local ApiContext = require(script.Parent.ApiContext)
+local Config = require(script.Parent.Config)
 local Logging = require(script.Parent.Logging)
+local Promise = require(script.Parent.Parent.Promise)
 
 local REMOTE_URL = ("http://localhost:%d"):format(Config.port)
 
@@ -18,7 +19,7 @@ local function makeInstanceMap()
 	function self:removeId(id)
 		local instance = self.fromIds[id]
 
-		if instance then
+		if instance ~= nil then
 			self.fromIds[id] = nil
 			self.fromInstances[instance] = nil
 		end
@@ -27,9 +28,30 @@ local function makeInstanceMap()
 	function self:removeInstance(instance)
 		local id = self.fromInstances[instance]
 
-		if id then
+		if id ~= nil then
 			self.fromInstances[instance] = nil
 			self.fromIds[id] = nil
+		end
+	end
+
+	function self:destroyId(id)
+		self:removeId(id)
+		local instance = self.fromIds[id]
+
+		if instance ~= nil then
+			local descendantsToDestroy = {}
+
+			for otherInstance in pairs(self.fromInstances) do
+				if otherInstance:IsDescendantOf(instance) then
+					table.insert(descendantsToDestroy, otherInstance)
+				end
+			end
+
+			for _, otherInstance in ipairs(descendantsToDestroy) do
+				self:removeInstance(otherInstance)
+			end
+
+			instance:Destroy()
 		end
 	end
 
@@ -127,6 +149,58 @@ local function reconcile(instanceData, instanceMap, instanceMetadataMap, id, exi
 	return existingInstance
 end
 
+local function applyUpdatePiece(id, visitedIds, responseData, instanceMap, instanceMetadataMap)
+	if visitedIds[id] then
+		return
+	end
+
+	visitedIds[id] = true
+
+	local data = responseData[id]
+	local instance = instanceMap.fromIds[id]
+
+	-- The instance was deleted in this update
+	if data == nil then
+		instanceMap:destroyId(id)
+		return
+	end
+
+	-- An instance we know about was updated
+	if instance ~= nil then
+		reconcile(responseData, instanceMap, instanceMetadataMap, id, instance)
+		return instance
+	end
+
+	-- If the instance's parent already exists, we can stick it there
+	local parentInstance = instanceMap.fromIds[data.Parent]
+	if parentInstance ~= nil then
+		reify(responseData, instanceMap, instanceMetadataMap, id, parentInstance)
+		return
+	end
+
+	-- Otherwise, we can check if this response payload contained the parent and
+	-- work from there instead.
+	local parentData = responseData[data.Parent]
+	if parentData ~= nil then
+		assert(not visitedIds[data.Parent], "Rojo bug: An instance was present and marked as visited but its instance was missing")
+
+		applyUpdatePiece(data.Parent, visitedIds, responseData, instanceMap, instanceMetadataMap)
+		return
+	end
+
+	error("Rojo NYI: Instances with parents that weren't mentioned in an update payload")
+end
+
+local function applyUpdate(requestedIds, responseData, instanceMap, instanceMetadataMap)
+	-- This function may eventually be asynchronous; it will require calls to
+	-- the server to resolve instances that don't exist yet.
+	local visitedIds = {}
+
+	for _, id in ipairs(requestedIds) do
+		applyUpdatePiece(id, visitedIds, responseData, instanceMap, instanceMetadataMap)
+	end
+end
+
 local Session = {}
 Session.__index = Session
 
@@ -138,43 +212,24 @@ function Session.new()
 	local api = ApiContext.new(REMOTE_URL)
 
 	ApiContext:onMessage(function(message)
-		local idsToGet = {}
+		local requestedIds = {}
 
 		for _, id in ipairs(message.added) do
-			table.insert(idsToGet, id)
+			table.insert(requestedIds, id)
 		end
 
 		for _, id in ipairs(message.updated) do
-			table.insert(idsToGet, id)
+			table.insert(requestedIds, id)
 		end
 
 		for _, id in ipairs(message.removed) do
-			table.insert(idsToGet, id)
+			table.insert(requestedIds, id)
 		end
 
-		coroutine.wrap(function()
-			-- TODO: This section is a mess
-			local _, response = assert(api:read(idsToGet):await())
-
-			for _, id in ipairs(idsToGet) do
-				local data = response.instances[id]
-				local instance = instanceMap.fromIds[id]
-
-				if data == nil then
-					-- TOO: Destroy descendants too
-					if instance ~= nil then
-						instanceMap:removeInstance(instance)
-						instance:Destroy()
-					end
-				else
-					if instance ~= nil then
-						reconcile(response.instances, instanceMap, api.instanceMetadataMap, id, instance)
-					else
-						error("TODO: Crawl up to nearest parent, use that?")
-					end
-				end
-			end
-		end)()
+		return api:read(requestedIds)
+			:andThen(function(response)
+				return applyUpdate(requestedIds, response.instances, instanceMap, api.instanceMetadataMap)
+			end)
 	end)
 
 	api:connect()
