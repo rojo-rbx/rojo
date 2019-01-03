@@ -58,7 +58,7 @@ impl<'a> fmt::Display for VisualizeRbxTree<'a> {
 fn visualize_rbx_node(tree: &RbxTree, id: RbxId, output: &mut fmt::Formatter) -> fmt::Result {
     let node = tree.get_instance(id).unwrap();
 
-    writeln!(output, "    \"{}\" [label=\"{} ({})\"]", id, node.name, node.class_name)?;
+    writeln!(output, "    \"{}\" [label=\"{} ({})|{}\"]", id, node.name, node.class_name, id)?;
 
     for &child_id in node.get_children_ids() {
         writeln!(output, "    \"{}\" -> \"{}\"", id, child_id)?;
