@@ -65,7 +65,9 @@ end
 
 local function setProperty(instance, key, value)
 	local ok, err = pcall(function()
-		instance[key] = value
+		if instance[key] ~= value then
+			instance[key] = value
+		end
 	end)
 
 	if not ok then
@@ -81,20 +83,20 @@ local function shouldClearUnknown(id, instanceMetadataMap)
 	end
 end
 
-local function reify(instanceData, instanceMap, instanceMetadataMap, id, parent)
-	local data = instanceData[id]
+local function reify(virtualInstancesById, instanceMap, instanceMetadataMap, id, parent)
+	local virtualInstance = virtualInstancesById[id]
 
-	local instance = Instance.new(data.ClassName)
+	local instance = Instance.new(virtualInstance.ClassName)
 
-	for key, value in pairs(data.Properties) do
+	for key, value in pairs(virtualInstance.Properties) do
 		-- TODO: Branch on value.Type
 		setProperty(instance, key, value.Value)
 	end
 
-	instance.Name = data.Name
+	instance.Name = virtualInstance.Name
 
-	for _, childId in ipairs(data.Children) do
-		reify(instanceData, instanceMap, instanceMetadataMap, childId, instance)
+	for _, childId in ipairs(virtualInstance.Children) do
+		reify(virtualInstancesById, instanceMap, instanceMetadataMap, childId, instance)
 	end
 
 	setProperty(instance, "Parent", parent)
@@ -103,18 +105,29 @@ local function reify(instanceData, instanceMap, instanceMetadataMap, id, parent)
 	return instance
 end
 
-local function reconcile(instanceData, instanceMap, instanceMetadataMap, id, existingInstance)
-	local data = instanceData[id]
+--[[
+	Update an existing instance, including its properties and children, to match
+	the given information.
+]]
+local function reconcile(virtualInstancesById, instanceMap, instanceMetadataMap, id, existingInstance)
+	local virtualInstance = virtualInstancesById[id]
 
-	if data.ClassName ~= existingInstance.ClassName then
+	-- If an instance changes ClassName, we assume it's very different. That's
+	-- not always the case!
+	if virtualInstance.ClassName ~= existingInstance.ClassName then
 		-- TODO: Preserve existing children instead?
 		local parent = existingInstance.Parent
 		instanceMap:destroyId(id)
-		reify(instanceData, instanceMap, instanceMetadataMap, id, parent)
+		reify(virtualInstancesById, instanceMap, instanceMetadataMap, id, parent)
 		return
 	end
 
-	for key, value in pairs(data.Properties) do
+	instanceMap:insert(id, existingInstance)
+
+	-- Some instances don't like being named, even if their name already matches
+	setProperty(existingInstance, "Name", virtualInstance.Name)
+
+	for key, value in pairs(virtualInstance.Properties) do
 		setProperty(existingInstance, key, value.Value)
 	end
 
@@ -125,8 +138,8 @@ local function reconcile(instanceData, instanceMap, instanceMetadataMap, id, exi
 		unvisitedExistingChildren[child] = true
 	end
 
-	for _, childId in ipairs(data.Children) do
-		local childData = instanceData[childId]
+	for _, childId in ipairs(virtualInstance.Children) do
+		local childData = virtualInstancesById[childId]
 
 		local existingChildInstance
 		for instance in pairs(unvisitedExistingChildren) do
@@ -144,9 +157,9 @@ local function reconcile(instanceData, instanceMap, instanceMetadataMap, id, exi
 
 		if existingChildInstance ~= nil then
 			unvisitedExistingChildren[existingChildInstance] = nil
-			reconcile(instanceData, instanceMap, instanceMetadataMap, childId, existingChildInstance)
+			reconcile(virtualInstancesById, instanceMap, instanceMetadataMap, childId, existingChildInstance)
 		else
-			reify(instanceData, instanceMap, instanceMetadataMap, childId, existingInstance)
+			reify(virtualInstancesById, instanceMap, instanceMetadataMap, childId, existingInstance)
 		end
 	end
 
@@ -157,67 +170,86 @@ local function reconcile(instanceData, instanceMap, instanceMetadataMap, id, exi
 		end
 	end
 
+	-- The root instance of a project won't have a parent, like the DataModel,
+	-- so we need to be careful here.
+	if virtualInstance.Parent ~= nil then
+		local parent = instanceMap.fromIds[virtualInstance.Parent]
+
+		if parent == nil then
+			Logging.info("Instance %s wanted parent of %s", tostring(id), tostring(virtualInstance.Parent))
+			error("Rojo bug: During reconciliation, an instance referred to an instance ID as parent that does not exist.")
+		end
+
+		-- Some instances, like services, don't like having their Parent
+		-- property poked, even if we're setting it to the same value.
+		setProperty(existingInstance, "Parent", parent)
+		if existingInstance.Parent ~= parent then
+			existingInstance.Parent = parent
+		end
+	end
+
 	return existingInstance
 end
 
-local function applyUpdatePiece(id, visitedIds, responseData, instanceMap, instanceMetadataMap)
+local function applyUpdatePiece(id, visitedIds, virtualInstancesById, instanceMap, instanceMetadataMap)
 	if visitedIds[id] then
 		return
 	end
 
 	visitedIds[id] = true
 
-	local data = responseData[id]
+	local virtualInstance = virtualInstancesById[id]
 	local instance = instanceMap.fromIds[id]
 
 	-- The instance was deleted in this update
-	if data == nil then
+	if virtualInstance == nil then
 		instanceMap:destroyId(id)
 		return
 	end
 
 	-- An instance we know about was updated
 	if instance ~= nil then
-		reconcile(responseData, instanceMap, instanceMetadataMap, id, instance)
+		reconcile(virtualInstancesById, instanceMap, instanceMetadataMap, id, instance)
 		return instance
 	end
 
 	-- If the instance's parent already exists, we can stick it there
-	local parentInstance = instanceMap.fromIds[data.Parent]
+	local parentInstance = instanceMap.fromIds[virtualInstance.Parent]
 	if parentInstance ~= nil then
-		reify(responseData, instanceMap, instanceMetadataMap, id, parentInstance)
+		reify(virtualInstancesById, instanceMap, instanceMetadataMap, id, parentInstance)
 		return
 	end
 
 	-- Otherwise, we can check if this response payload contained the parent and
 	-- work from there instead.
-	local parentData = responseData[data.Parent]
+	local parentData = virtualInstancesById[virtualInstance.Parent]
 	if parentData ~= nil then
-		if visitedIds[data.Parent] then
+		if visitedIds[virtualInstance.Parent] then
 			error("Rojo bug: An instance was present and marked as visited but its instance was missing")
 		end
 
-		applyUpdatePiece(data.Parent, visitedIds, responseData, instanceMap, instanceMetadataMap)
+		applyUpdatePiece(virtualInstance.Parent, visitedIds, virtualInstancesById, instanceMap, instanceMetadataMap)
 		return
 	end
 
+	Logging.trace("Instance ID %s, parent ID %s", tostring(id), tostring(virtualInstance.Parent))
 	error("Rojo NYI: Instances with parents that weren't mentioned in an update payload")
 end
 
-local function applyUpdate(requestedIds, responseData, instanceMap, instanceMetadataMap)
+local function applyUpdate(requestedIds, virtualInstancesById, instanceMap, instanceMetadataMap)
 	-- This function may eventually be asynchronous; it will require calls to
 	-- the server to resolve instances that don't exist yet.
 	local visitedIds = {}
 
 	for _, id in ipairs(requestedIds) do
-		applyUpdatePiece(id, visitedIds, responseData, instanceMap, instanceMetadataMap)
+		applyUpdatePiece(id, visitedIds, virtualInstancesById, instanceMap, instanceMetadataMap)
 	end
 end
 
 local Session = {}
 Session.__index = Session
 
-function Session.new()
+function Session.new(onError)
 	local self = {}
 
 	local instanceMap = makeInstanceMap()
@@ -243,6 +275,10 @@ function Session.new()
 			:andThen(function(response)
 				return applyUpdate(requestedIds, response.instances, instanceMap, api.instanceMetadataMap)
 			end)
+			:catch(function(message)
+				Logging.warn("%s", tostring(message))
+				onError()
+			end)
 	end)
 
 	api:connect()
@@ -255,7 +291,8 @@ function Session.new()
 			return api:retrieveMessages()
 		end)
 		:catch(function(message)
-			Logging.warn("Couldn't start a new Rojo session: %s", tostring(message))
+			Logging.warn("%s", tostring(message))
+			onError()
 		end)
 
 	return setmetatable(self, Session)

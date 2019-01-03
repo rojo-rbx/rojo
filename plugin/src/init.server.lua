@@ -67,7 +67,10 @@ local function main()
 			end
 
 			Logging.info("Started new session.")
-			currentSession = Session.new()
+			currentSession = Session.new(function()
+				Logging.info("Session terminated.")
+				currentSession = nil
+			end)
 		end)
 end
 
