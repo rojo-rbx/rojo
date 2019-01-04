@@ -66,6 +66,36 @@ function ApiContext:connect()
 				return Promise.reject(message)
 			end
 
+			if body.expectedPlaceIds ~= nil then
+				local foundId = false
+
+				for _, id in ipairs(body.expectedPlaceIds) do
+					if id == game.PlaceId then
+						foundId = true
+						break
+					end
+				end
+
+				if not foundId then
+					local idList = {}
+					for _, id in ipairs(body.expectedPlaceIds) do
+						table.insert(idList, "- " .. tostring(id))
+					end
+
+					local message = (
+						"Found a Rojo server, but its project is set to only be used with a specific list of places." ..
+						"\nYour place ID is %s, but needs to be one of these:" ..
+						"\n%s" ..
+						"\n\nTo change this list, edit 'servePlaceIds' in roblox-project.json"
+					):format(
+						tostring(game.PlaceId),
+						table.concat(idList, "\n")
+					)
+
+					return Promise.reject(message)
+				end
+			end
+
 			self.serverId = body.serverId
 			self.connected = true
 			self.partitionRoutes = body.partitions
