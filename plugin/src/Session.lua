@@ -2,8 +2,6 @@ local ApiContext = require(script.Parent.ApiContext)
 local Config = require(script.Parent.Config)
 local Logging = require(script.Parent.Logging)
 
-local REMOTE_URL = ("http://localhost:%d"):format(Config.port)
-
 local function makeInstanceMap()
 	local self = {
 		fromIds = {},
@@ -249,12 +247,16 @@ end
 local Session = {}
 Session.__index = Session
 
-function Session.new(onError)
+function Session.new(config)
 	local self = {}
+
+	self.onError = config.onError
 
 	local instanceMap = makeInstanceMap()
 
-	local api = ApiContext.new(REMOTE_URL)
+	local remoteUrl = ("http://%s:%s"):format(config.address, config.port)
+
+	local api = ApiContext.new(remoteUrl)
 
 	ApiContext:onMessage(function(message)
 		local requestedIds = {}
@@ -277,7 +279,7 @@ function Session.new(onError)
 			end)
 			:catch(function(message)
 				Logging.warn("%s", tostring(message))
-				onError()
+				self.onError()
 			end)
 	end)
 
@@ -292,7 +294,7 @@ function Session.new(onError)
 		end)
 		:catch(function(message)
 			Logging.warn("%s", tostring(message))
-			onError()
+			self.onError()
 		end)
 
 	return setmetatable(self, Session)

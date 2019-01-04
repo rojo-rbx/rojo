@@ -18,6 +18,7 @@ function FitText:render()
 	local containerProps = Dictionary.merge(self.props, {
 		Kind = Dictionary.None,
 		Padding = Dictionary.None,
+		MinSize = Dictionary.None,
 		Size = self.sizeBinding
 	})
 
@@ -33,6 +34,7 @@ function FitText:didUpdate()
 end
 
 function FitText:updateTextMeasurements()
+	local minSize = self.props.MinSize or Vector2.new(0, 0)
 	local padding = self.props.Padding or Vector2.new(0, 0)
 
 	local text = self.props.Text or ""
@@ -41,8 +43,8 @@ function FitText:updateTextMeasurements()
 
 	local measuredText = TextService:GetTextSize(text, textSize, font, Vector2.new(9e6, 9e6))
 	local totalSize = UDim2.new(
-		0, padding.X * 2 + measuredText.X,
-		0, padding.Y * 2 + measuredText.Y)
+		0, math.max(minSize.X, padding.X * 2 + measuredText.X),
+		0, math.max(minSize.Y, padding.Y * 2 + measuredText.Y))
 
 	self.setSize(totalSize)
 end

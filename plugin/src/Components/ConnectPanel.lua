@@ -5,6 +5,8 @@ local FitText = require(script.Parent.FitText)
 
 local e = Roact.createElement
 
+local FORM_TEXT_SIZE = 20
+
 local ConnectPanel = Roact.Component:extend("ConnectPanel")
 
 function ConnectPanel:init()
@@ -37,7 +39,7 @@ function ConnectPanel:render()
 
 	return e(FitList, {
 		containerProps = {
-			BackgroundColor3 = Color3.fromRGB(8, 8, 8),
+			BackgroundColor3 = Color3.fromRGB(32, 32, 32),
 			BorderColor3 = Color3.fromRGB(64, 64, 64),
 			Position = UDim2.new(0.5, 0, 0, 0),
 			AnchorPoint = Vector2.new(0.5, 0),
@@ -63,12 +65,13 @@ function ConnectPanel:render()
 			},
 		}, {
 			Label = e(FitText, {
+				MinSize = Vector2.new(0, 24),
 				Kind = "TextLabel",
 				LayoutOrder = 1,
 				BackgroundTransparency = 1,
 				TextXAlignment = Enum.TextXAlignment.Left,
 				Font = Enum.Font.SourceSans,
-				TextSize = 16,
+				TextSize = FORM_TEXT_SIZE,
 				Text = "Address",
 				TextColor3 = Color3.fromRGB(245, 245, 245),
 
@@ -81,23 +84,30 @@ function ConnectPanel:render()
 				}),
 			}),
 
-			Input = e("TextBox", {
+			InputOuter = e("Frame", {
 				LayoutOrder = 2,
-				Size = UDim2.new(0, 300, 0, 20),
-				Font = Enum.Font.SourceSans,
-				ClearTextOnFocus = false,
-				TextXAlignment = Enum.TextXAlignment.Left,
-				TextSize = 16,
-				Text = self.state.address,
-				TextColor3 = Color3.fromRGB(245, 245, 245),
-				BackgroundColor3 = Color3.fromRGB(8, 8, 8),
+				Size = UDim2.new(0, 300, 0, 24),
+				BackgroundColor3 = Color3.fromRGB(32, 32, 32),
 				BorderColor3 = Color3.fromRGB(64, 64, 64),
+			}, {
+				InputInner = e("TextBox", {
+					BackgroundTransparency = 1,
+					Size = UDim2.new(1, -8, 1, -8),
+					Position = UDim2.new(0.5, 0, 0.5, 0),
+					AnchorPoint = Vector2.new(0.5, 0.5),
+					Font = Enum.Font.SourceSans,
+					ClearTextOnFocus = false,
+					TextXAlignment = Enum.TextXAlignment.Left,
+					TextSize = FORM_TEXT_SIZE,
+					Text = self.state.address,
+					TextColor3 = Color3.fromRGB(245, 245, 245),
 
-				[Roact.Change.Text] = function(rbx)
-					self:setState({
-						address = rbx.Text,
-					})
-				end,
+					[Roact.Change.Text] = function(rbx)
+						self:setState({
+							address = rbx.Text,
+						})
+					end,
+				}),
 			}),
 		}),
 
@@ -112,12 +122,13 @@ function ConnectPanel:render()
 			},
 		}, {
 			Label = e(FitText, {
+				MinSize = Vector2.new(0, 24),
 				Kind = "TextLabel",
 				LayoutOrder = 1,
 				BackgroundTransparency = 1,
 				TextXAlignment = Enum.TextXAlignment.Left,
 				Font = Enum.Font.SourceSans,
-				TextSize = 16,
+				TextSize = FORM_TEXT_SIZE,
 				Text = "Port",
 				TextColor3 = Color3.fromRGB(245, 245, 245),
 
@@ -130,23 +141,30 @@ function ConnectPanel:render()
 				}),
 			}),
 
-			Input = e("TextBox", {
+			InputOuter = e("Frame", {
 				LayoutOrder = 2,
-				Size = UDim2.new(0, 300, 0, 20),
-				Font = Enum.Font.SourceSans,
-				ClearTextOnFocus = false,
-				TextXAlignment = Enum.TextXAlignment.Left,
-				TextSize = 16,
-				Text = self.state.port,
-				TextColor3 = Color3.fromRGB(245, 245, 245),
-				BackgroundColor3 = Color3.fromRGB(8, 8, 8),
+				Size = UDim2.new(0, 300, 0, 24),
+				BackgroundColor3 = Color3.fromRGB(32, 32, 32),
 				BorderColor3 = Color3.fromRGB(64, 64, 64),
+			}, {
+				InputInner = e("TextBox", {
+					BackgroundTransparency = 1,
+					Size = UDim2.new(1, -8, 1, -8),
+					Position = UDim2.new(0.5, 0, 0.5, 0),
+					AnchorPoint = Vector2.new(0.5, 0.5),
+					Font = Enum.Font.SourceSans,
+					ClearTextOnFocus = false,
+					TextXAlignment = Enum.TextXAlignment.Left,
+					TextSize = FORM_TEXT_SIZE,
+					Text = self.state.port,
+					TextColor3 = Color3.fromRGB(245, 245, 245),
 
-				[Roact.Change.Text] = function(rbx)
-					self:setState({
-						port = rbx.Text,
-					})
-				end,
+					[Roact.Change.Text] = function(rbx)
+						self:setState({
+							port = rbx.Text,
+						})
+					end,
+				}),
 			}),
 		}),
 
@@ -163,10 +181,13 @@ function ConnectPanel:render()
 			e(FitText, {
 				Kind = "TextButton",
 				LayoutOrder = 1,
-				BackgroundColor3 = Color3.fromRGB(16, 16, 16),
+				BackgroundColor3 = Color3.fromRGB(32, 32, 32),
 				BorderColor3 = Color3.fromRGB(64, 64, 64),
 				TextColor3 = Color3.fromRGB(245, 245, 245),
 				Text = "Start",
+				Font = Enum.Font.SourceSans,
+				TextSize = FORM_TEXT_SIZE,
+				Padding = Vector2.new(12, 3),
 
 				[Roact.Event.Activated] = function()
 					if startSession ~= nil then
@@ -178,10 +199,13 @@ function ConnectPanel:render()
 			e(FitText, {
 				Kind = "TextButton",
 				LayoutOrder = 2,
-				BackgroundColor3 = Color3.fromRGB(16, 16, 16),
+				BackgroundColor3 = Color3.fromRGB(32, 32, 32),
 				BorderColor3 = Color3.fromRGB(64, 64, 64),
 				TextColor3 = Color3.fromRGB(245, 245, 245),
 				Text = "Cancel",
+				Font = Enum.Font.SourceSans,
+				TextSize = FORM_TEXT_SIZE,
+				Padding = Vector2.new(12, 3),
 
 				[Roact.Event.Activated] = function()
 					if cancel ~= nil then
