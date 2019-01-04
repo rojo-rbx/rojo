@@ -188,7 +188,7 @@ impl Server {
         )
     }
 
-    pub fn listen(self, port: u64) {
+    pub fn listen(self, port: u16) {
         let address = format!("0.0.0.0:{}", port);
 
         rouille::start_server(address, move |request| self.handle_request(request));

@@ -55,15 +55,37 @@ fn main() {
             let project_path = Path::new(sub_matches.value_of("PATH").unwrap_or("."));
             let full_path = make_path_absolute(project_path);
 
-            librojo::commands::init(&full_path);
+            commands::init(&full_path);
         },
         ("serve", Some(sub_matches)) => {
-            let project_path = match sub_matches.value_of("PROJECT") {
+            let fuzzy_project_path = match sub_matches.value_of("PROJECT") {
                 Some(v) => make_path_absolute(Path::new(v)),
                 None => std::env::current_dir().unwrap(),
             };
 
-            librojo::commands::serve(&project_path);
+            let port = match sub_matches.value_of("port") {
+                Some(v) => match v.parse::<u16>() {
+                    Ok(port) => port,
+                    Err(_) => {
+                        error!("Invalid port {}", v);
+                        process::exit(1);
+                    },
+                },
+                None => None,
+            };
+
+            let options = commands::ServeOptions {
+                fuzzy_project_path,
+                port,
+            };
+
+            match commands::serve(&options) {
+                Ok(_) => {},
+                Err(e) => {
+                    error!("{}", e);
+                    process::exit(1);
+                },
+            }
         },
         ("build", Some(sub_matches)) => {
             let fuzzy_project_path = match sub_matches.value_of("PROJECT") {
