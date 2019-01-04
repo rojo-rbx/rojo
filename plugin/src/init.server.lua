@@ -2,11 +2,18 @@ if not plugin then
 	return
 end
 
+local Roact = require(script.Parent.Roact)
+
+Roact.setGlobalConfig({
+	elementTracing = true,
+})
+
 local Session = require(script.Session)
 local Config = require(script.Config)
 local Version = require(script.Version)
 local Logging = require(script.Logging)
 local DevSettings = require(script.DevSettings)
+local App = require(script.Components.App)
 
 local function showUpgradeMessage(lastVersion)
 	local message = (
@@ -53,25 +60,29 @@ local function main()
 
 	local toolbar = plugin:CreateToolbar("Rojo " .. displayedVersion)
 
+	Roact.mount(Roact.createElement(App), game:GetService("CoreGui"), "Rojo UI")
+
 	local currentSession
 
-	-- TODO: More robust session tracking to handle errors
 	-- TODO: Icon!
-	toolbar:CreateButton("Connect", "Connect to Rojo Session", "")
-		.Click:Connect(function()
-			checkUpgrade()
+	local connectButton = toolbar:CreateButton("Connect", "Connect to Rojo Session", "")
+	connectButton.ClickableWhenViewportHidden = true
 
-			if currentSession ~= nil then
-				Logging.warn("A session is already running!")
-				return
-			end
+	connectButton.Click:Connect(function()
+		connectButton:SetActive(false)
+		checkUpgrade()
 
-			Logging.info("Started new session.")
-			currentSession = Session.new(function()
-				Logging.info("Session terminated.")
-				currentSession = nil
-			end)
+		if currentSession ~= nil then
+			Logging.warn("A session is already running!")
+			return
+		end
+
+		Logging.info("Started new session.")
+		currentSession = Session.new(function()
+			Logging.info("Session terminated.")
+			currentSession = nil
 		end)
+	end)
 end
 
 main()
