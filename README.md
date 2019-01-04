@@ -31,7 +31,7 @@ Rojo lets you:
 * Version your place, library, or plugin using Git or another VCS
 * Sync JSON-format models from the filesystem into your game
 
-Later in 2018, Rojo will be able to:
+Soon, Rojo will be able to:
 
 * Sync scripts from Roblox Studio to the filesystem
 * Compile MoonScript and sync it into Roblox Studio
