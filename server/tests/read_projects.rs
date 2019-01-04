@@ -82,6 +82,8 @@ fn single_sync_point() {
         Project {
             name: "single-sync-point".to_string(),
             tree: root_node,
+            serve_port: None,
+            serve_place_ids: None,
             file_location: project_file_location.clone(),
         }
     };
