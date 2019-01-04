@@ -25,8 +25,8 @@ enum SourceProjectNode {
         #[serde(rename = "$properties", default = "HashMap::new")]
         properties: HashMap<String, RbxValue>,
 
-        #[serde(rename = "$ignoreUnknown", default = "yeah")]
-        ignore_unknown: bool,
+        #[serde(rename = "$ignoreUnknownInstances", default = "yeah")]
+        ignore_unknown_instances: bool,
 
         #[serde(flatten)]
         children: HashMap<String, SourceProjectNode>,
@@ -40,7 +40,7 @@ enum SourceProjectNode {
 impl SourceProjectNode {
     pub fn into_project_node(self, project_file_location: &Path) -> ProjectNode {
         match self {
-            SourceProjectNode::Instance { class_name, mut children, properties, ignore_unknown } => {
+            SourceProjectNode::Instance { class_name, mut children, properties, ignore_unknown_instances } => {
                 let mut new_children = HashMap::new();
 
                 for (node_name, node) in children.drain() {
@@ -52,7 +52,7 @@ impl SourceProjectNode {
                     children: new_children,
                     properties,
                     metadata: InstanceProjectNodeMetadata {
-                        ignore_unknown,
+                        ignore_unknown_instances,
                     },
                 })
             },
@@ -137,13 +137,13 @@ pub struct ProjectSaveError;
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct InstanceProjectNodeMetadata {
-    pub ignore_unknown: bool,
+    pub ignore_unknown_instances: bool,
 }
 
 impl Default for InstanceProjectNodeMetadata {
     fn default() -> InstanceProjectNodeMetadata {
         InstanceProjectNodeMetadata {
-            ignore_unknown: true,
+            ignore_unknown_instances: true,
         }
     }
 }

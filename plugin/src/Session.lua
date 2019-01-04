@@ -74,7 +74,7 @@ end
 
 local function shouldClearUnknown(id, instanceMetadataMap)
 	if instanceMetadataMap[id] then
-		return not instanceMetadataMap[id].ignoreUnknown
+		return not instanceMetadataMap[id].ignoreUnknownInstances
 	else
 		return true
 	end
