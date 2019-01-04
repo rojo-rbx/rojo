@@ -2,28 +2,9 @@ local TextService = game:GetService("TextService")
 
 local Roact = require(script:FindFirstAncestor("Rojo").Roact)
 
+local Dictionary = require(script.Parent.Parent.Dictionary)
+
 local e = Roact.createElement
-
-local None = newproxy(false)
-local function merge(...)
-	local output = {}
-
-	for i = 1, select("#", ...) do
-		local source = select(i, ...)
-
-		if source ~= nil then
-			for key, value in pairs(source) do
-				if value == None then
-					output[key] = nil
-				else
-					output[key] = value
-				end
-			end
-		end
-	end
-
-	return output
-end
 
 local FitText = Roact.Component:extend("FitText")
 
@@ -34,9 +15,9 @@ end
 function FitText:render()
 	local kind = self.props.Kind
 
-	local containerProps = merge(self.props, {
-		Kind = None,
-		Padding = None,
+	local containerProps = Dictionary.merge(self.props, {
+		Kind = Dictionary.None,
+		Padding = Dictionary.None,
 		Size = self.sizeBinding
 	})
 

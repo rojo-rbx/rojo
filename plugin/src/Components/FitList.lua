@@ -1,22 +1,8 @@
 local Roact = require(script:FindFirstAncestor("Rojo").Roact)
 
+local Dictionary = require(script.Parent.Parent.Dictionary)
+
 local e = Roact.createElement
-
-local function merge(...)
-	local output = {}
-
-	for i = 1, select("#", ...) do
-		local source = select(i, ...)
-
-		if source ~= nil then
-			for key, value in pairs(source) do
-				output[key] = value
-			end
-		end
-	end
-
-	return output
-end
 
 local FitList = Roact.Component:extend("FitList")
 
@@ -34,8 +20,8 @@ function FitList:render()
 		padding = e("UIPadding", paddingProps)
 	end
 
-	local children = merge(self.props[Roact.Children], {
-		["$Layout"] = e("UIListLayout", merge({
+	local children = Dictionary.merge(self.props[Roact.Children], {
+		["$Layout"] = e("UIListLayout", Dictionary.merge({
 			SortOrder = Enum.SortOrder.LayoutOrder,
 			[Roact.Change.AbsoluteContentSize] = function(instance)
 				local size = instance.AbsoluteContentSize
@@ -53,7 +39,7 @@ function FitList:render()
 		["$Padding"] = padding,
 	})
 
-	local fullContainerProps = merge(containerProps, {
+	local fullContainerProps = Dictionary.merge(containerProps, {
 		Size = self.sizeBinding,
 	})
 
