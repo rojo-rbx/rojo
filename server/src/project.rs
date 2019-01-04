@@ -1,5 +1,5 @@
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     fs,
     io,
     path::{Path, PathBuf},
@@ -78,6 +78,7 @@ struct SourceProject {
     name: String,
     tree: SourceProjectNode,
     serve_port: Option<u16>,
+    serve_place_ids: Option<HashSet<u64>>,
     serve_place_id: Option<u64>,
 }
 
@@ -89,7 +90,7 @@ impl SourceProject {
             name: self.name,
             tree,
             serve_port: self.serve_port,
-            serve_place_id: self.serve_place_id,
+            serve_place_ids: self.serve_place_ids,
             file_location: PathBuf::from(project_file_location),
         }
     }
@@ -174,7 +175,7 @@ pub struct Project {
     pub name: String,
     pub tree: ProjectNode,
     pub serve_port: Option<u16>,
-    pub serve_place_id: Option<u64>,
+    pub serve_place_ids: Option<HashSet<u64>>,
     pub file_location: PathBuf,
 }
 

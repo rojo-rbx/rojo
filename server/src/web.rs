@@ -1,6 +1,6 @@
 use std::{
     borrow::Cow,
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     sync::{mpsc, Arc},
 };
 
@@ -26,6 +26,7 @@ pub struct ServerInfoResponse<'a> {
     pub session_id: SessionId,
     pub server_version: &'a str,
     pub protocol_version: u64,
+    pub expected_place_ids: Option<HashSet<u64>>,
     pub root_instance_id: RbxId,
     pub instance_metadata_map: Cow<'a, HashMap<RbxId, InstanceProjectNodeMetadata>>,
 }
@@ -78,6 +79,7 @@ impl Server {
                     server_version: self.server_version,
                     protocol_version: 2,
                     session_id: self.session.session_id,
+                    expected_place_ids: self.session.project.serve_place_ids.clone(),
                     root_instance_id: tree.get_root_id(),
                     instance_metadata_map: Cow::Borrowed(rbx_session.get_instance_metadata_map()),
                 })
