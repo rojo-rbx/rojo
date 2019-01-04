@@ -32,6 +32,9 @@ function ConnectPanel:updateLabelSize(name, size)
 end
 
 function ConnectPanel:render()
+	local startSession = self.props.startSession
+	local cancel = self.props.cancel
+
 	return e(FitList, {
 		containerProps = {
 			BackgroundColor3 = Color3.fromRGB(8, 8, 8),
@@ -68,6 +71,7 @@ function ConnectPanel:render()
 				TextSize = 16,
 				Text = "Address",
 				TextColor3 = Color3.fromRGB(245, 245, 245),
+
 				[Roact.Change.AbsoluteSize] = function(rbx)
 					self:updateLabelSize("address", rbx.AbsoluteSize)
 				end,
@@ -85,14 +89,15 @@ function ConnectPanel:render()
 				TextXAlignment = Enum.TextXAlignment.Left,
 				TextSize = 16,
 				Text = self.state.address,
+				TextColor3 = Color3.fromRGB(245, 245, 245),
+				BackgroundColor3 = Color3.fromRGB(8, 8, 8),
+				BorderColor3 = Color3.fromRGB(64, 64, 64),
+
 				[Roact.Change.Text] = function(rbx)
 					self:setState({
 						address = rbx.Text,
 					})
 				end,
-				TextColor3 = Color3.fromRGB(245, 245, 245),
-				BackgroundColor3 = Color3.fromRGB(8, 8, 8),
-				BorderColor3 = Color3.fromRGB(64, 64, 64),
 			}),
 		}),
 
@@ -115,6 +120,7 @@ function ConnectPanel:render()
 				TextSize = 16,
 				Text = "Port",
 				TextColor3 = Color3.fromRGB(245, 245, 245),
+
 				[Roact.Change.AbsoluteSize] = function(rbx)
 					self:updateLabelSize("port", rbx.AbsoluteSize)
 				end,
@@ -132,14 +138,15 @@ function ConnectPanel:render()
 				TextXAlignment = Enum.TextXAlignment.Left,
 				TextSize = 16,
 				Text = self.state.port,
+				TextColor3 = Color3.fromRGB(245, 245, 245),
+				BackgroundColor3 = Color3.fromRGB(8, 8, 8),
+				BorderColor3 = Color3.fromRGB(64, 64, 64),
+
 				[Roact.Change.Text] = function(rbx)
 					self:setState({
 						port = rbx.Text,
 					})
 				end,
-				TextColor3 = Color3.fromRGB(245, 245, 245),
-				BackgroundColor3 = Color3.fromRGB(8, 8, 8),
-				BorderColor3 = Color3.fromRGB(64, 64, 64),
 			}),
 		}),
 
@@ -160,6 +167,12 @@ function ConnectPanel:render()
 				BorderColor3 = Color3.fromRGB(64, 64, 64),
 				TextColor3 = Color3.fromRGB(245, 245, 245),
 				Text = "Start",
+
+				[Roact.Event.Activated] = function()
+					if startSession ~= nil then
+						startSession(self.state.address, self.state.port)
+					end
+				end,
 			}),
 
 			e(FitText, {
@@ -169,6 +182,12 @@ function ConnectPanel:render()
 				BorderColor3 = Color3.fromRGB(64, 64, 64),
 				TextColor3 = Color3.fromRGB(245, 245, 245),
 				Text = "Cancel",
+
+				[Roact.Event.Activated] = function()
+					if cancel ~= nil then
+						cancel()
+					end
+				end,
 			}),
 		})
 	})
