@@ -77,6 +77,7 @@ impl SourceProjectNode {
 struct SourceProject {
     name: String,
     tree: SourceProjectNode,
+    serve_port: Option<u16>,
 }
 
 impl SourceProject {
@@ -86,6 +87,7 @@ impl SourceProject {
         Project {
             name: self.name,
             tree,
+            serve_port: self.serve_port,
             file_location: PathBuf::from(project_file_location),
         }
     }
@@ -169,6 +171,7 @@ pub struct SyncPointProjectNode {
 pub struct Project {
     pub name: String,
     pub tree: ProjectNode,
+    pub serve_port: Option<u16>,
     pub file_location: PathBuf,
 }
 

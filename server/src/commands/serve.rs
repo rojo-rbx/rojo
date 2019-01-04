@@ -34,16 +34,16 @@ impl From<ProjectLoadFuzzyError> for ServeError {
 pub fn serve(options: &ServeOptions) -> Result<(), ServeError> {
     info!("Looking for project at {}", options.fuzzy_project_path.display());
 
-    let project = Project::load_fuzzy(&options.fuzzy_project_path)?;
+    let project = Arc::new(Project::load_fuzzy(&options.fuzzy_project_path)?);
 
     info!("Found project at {}", project.file_location.display());
     info!("Using project {:#?}", project);
 
-    let session = Arc::new(Session::new(project).unwrap());
+    let session = Arc::new(Session::new(Arc::clone(&project)).unwrap());
     let server = Server::new(Arc::clone(&session));
 
     let port = options.port
-        // .or(project.serve_port)
+        .or(project.serve_port)
         .unwrap_or(DEFAULT_PORT);
 
     println!("Rojo server listening on port {}", port);

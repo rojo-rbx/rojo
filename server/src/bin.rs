@@ -65,7 +65,7 @@ fn main() {
 
             let port = match sub_matches.value_of("port") {
                 Some(v) => match v.parse::<u16>() {
-                    Ok(port) => port,
+                    Ok(port) => Some(port),
                     Err(_) => {
                         error!("Invalid port {}", v);
                         process::exit(1);

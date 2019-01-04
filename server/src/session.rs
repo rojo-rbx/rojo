@@ -23,14 +23,13 @@ pub struct Session {
 }
 
 impl Session {
-    pub fn new(project: Project) -> io::Result<Session> {
+    pub fn new(project: Arc<Project>) -> io::Result<Session> {
         let imfs = {
             let mut imfs = Imfs::new();
             imfs.add_roots_from_project(&project)?;
 
             Arc::new(Mutex::new(imfs))
         };
-        let project = Arc::new(project);
         let message_queue = Arc::new(MessageQueue::new());
 
         let rbx_session = Arc::new(Mutex::new(RbxSession::new(
