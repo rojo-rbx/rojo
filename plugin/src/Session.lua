@@ -1,5 +1,4 @@
 local ApiContext = require(script.Parent.ApiContext)
-local Config = require(script.Parent.Config)
 local Logging = require(script.Parent.Logging)
 
 local function makeInstanceMap()
