@@ -3,5 +3,6 @@ return {
 	version = {0, 5, 0},
 	expectedServerVersionString = "0.5.0 or newer",
 	protocolVersion = 2,
-	port = 34872,
+	defaultHost = "localhost",
+	defaultPort = 34872,
 }
