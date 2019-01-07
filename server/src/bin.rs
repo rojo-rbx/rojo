@@ -45,6 +45,13 @@ fn main() {
             (@arg PROJECT: "Path to the project to serve. Defaults to the current directory.")
             (@arg output: --output +takes_value +required "Where to output the result.")
         )
+
+        (@subcommand upload =>
+            (about: "Generates a place file out of the project and uploads it to Roblox.")
+            (@arg PROJECT: "Path to the project to upload. Defaults to the current directory.")
+            (@arg cookie: --cookie +takes_value +required "Security cookie to authenticate with.")
+            (@arg place_id: --place_id +takes_value +required "Place ID to upload to.")
+        )
     );
 
     // `get_matches` consumes self for some reason.
@@ -102,6 +109,40 @@ fn main() {
             };
 
             match commands::build(&options) {
+                Ok(_) => {},
+                Err(e) => {
+                    error!("{}", e);
+                    process::exit(1);
+                },
+            }
+        },
+        ("upload", Some(sub_matches)) => {
+            let fuzzy_project_path = match sub_matches.value_of("PROJECT") {
+                Some(v) => make_path_absolute(Path::new(v)),
+                None => std::env::current_dir().unwrap(),
+            };
+
+            let security_cookie = sub_matches.value_of("cookie").unwrap();
+
+            let place_id: u64 = {
+                let arg = sub_matches.value_of("place_id").unwrap();
+
+                match arg.parse() {
+                    Ok(v) => v,
+                    Err(_) => {
+                        error!("Invalid place ID {}", arg);
+                        process::exit(1);
+                    },
+                }
+            };
+
+            let options = commands::UploadOptions {
+                fuzzy_project_path,
+                security_cookie: security_cookie.to_string(),
+                place_id,
+            };
+
+            match commands::upload(&options) {
                 Ok(_) => {},
                 Err(e) => {
                     error!("{}", e);
