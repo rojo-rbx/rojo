@@ -54,6 +54,9 @@ pub struct UploadOptions {
 }
 
 pub fn upload(options: &UploadOptions) -> Result<(), UploadError> {
+    // TODO: Support uploading models too
+    // TODO: Switch to uploading binary format?
+
     info!("Looking for project at {}", options.fuzzy_project_path.display());
 
     let project = Project::load_fuzzy(&options.fuzzy_project_path)?;
