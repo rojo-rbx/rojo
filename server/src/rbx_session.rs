@@ -16,6 +16,10 @@ use crate::{
     rbx_snapshot::{RbxSnapshotInstance, InstanceChanges, reify_root, reconcile_subtree},
 };
 
+const INIT_SCRIPT: &str = "init.lua";
+const INIT_SERVER_SCRIPT: &str = "init.server.lua";
+const INIT_CLIENT_SCRIPT: &str = "init.client.lua";
+
 pub struct RbxSession {
     tree: RbxTree,
     path_map: PathMap<RbxId>,
@@ -23,7 +27,6 @@ pub struct RbxSession {
     sync_point_names: HashMap<PathBuf, String>,
     message_queue: Arc<MessageQueue<InstanceChanges>>,
     imfs: Arc<Mutex<Imfs>>,
-    project: Arc<Project>,
 }
 
 impl RbxSession {
@@ -48,11 +51,12 @@ impl RbxSession {
             sync_point_names,
             message_queue,
             imfs,
-            project,
         }
     }
 
     fn path_created_or_updated(&mut self, path: &Path) {
+        // TODO: Track paths actually updated in each step so we can ignore
+        // redundant changes.
         let mut changes = InstanceChanges::default();
 
         {
@@ -60,17 +64,34 @@ impl RbxSession {
             let root_path = imfs.get_root_for_path(path)
                 .expect("Path was outside in-memory filesystem roots");
 
-            let closest_path = self.path_map.descend(root_path, path);
-            let &instance_id = self.path_map.get(&closest_path).unwrap();
+            // Find the closest instance in the tree that still exists
+            let mut path_to_snapshot = self.path_map.descend(root_path, path);
+            let &instance_id = self.path_map.get(&path_to_snapshot).unwrap();
 
-            trace!("Snapshotting path {}", closest_path.display());
+            // If this is a file that might affect its parent if modified, we
+            // should snapshot the parent instead.
+            match path_to_snapshot.file_name().unwrap().to_str() {
+                Some(INIT_SCRIPT) | Some(INIT_SERVER_SCRIPT) | Some(INIT_CLIENT_SCRIPT) => {
+                    path_to_snapshot.pop();
+                },
+                _ => {},
+            }
 
-            let snapshot = snapshot_instances_from_imfs(&imfs, &closest_path, &mut self.sync_point_names)
-                .unwrap_or_else(|| panic!("Could not generate instance snapshot for path {}", closest_path.display()));
+            trace!("Snapshotting path {}", path_to_snapshot.display());
+
+            let snapshot = snapshot_instances_from_imfs(&imfs, &path_to_snapshot, &mut self.sync_point_names)
+                .unwrap_or_else(|| panic!("Could not generate instance snapshot for path {}", path_to_snapshot.display()));
 
             trace!("Snapshot: {:#?}", snapshot);
 
-            reconcile_subtree(&mut self.tree, instance_id, &snapshot, &mut self.path_map, &mut self.instance_metadata_map, &mut changes);
+            reconcile_subtree(
+                &mut self.tree,
+                instance_id,
+                &snapshot,
+                &mut self.path_map,
+                &mut self.instance_metadata_map,
+                &mut changes,
+            );
         }
 
         if changes.is_empty() {
@@ -272,10 +293,16 @@ fn snapshot_instances_from_imfs<'a>(
         },
         ImfsItem::Directory(directory) => {
             // TODO: Expand init support to handle server and client scripts
-            let init_path = directory.path.join("init.lua");
+            let init_path = directory.path.join(INIT_SCRIPT);
+            let init_server_path = directory.path.join(INIT_SERVER_SCRIPT);
+            let init_client_path = directory.path.join(INIT_CLIENT_SCRIPT);
 
             let mut instance = if directory.children.contains(&init_path) {
                 snapshot_instances_from_imfs(imfs, &init_path, sync_point_names)?
+            } else if directory.children.contains(&init_server_path) {
+                snapshot_instances_from_imfs(imfs, &init_server_path, sync_point_names)?
+            } else if directory.children.contains(&init_client_path) {
+                snapshot_instances_from_imfs(imfs, &init_client_path, sync_point_names)?
             } else {
                 RbxSnapshotInstance {
                     class_name: Cow::Borrowed("Folder"),
@@ -294,8 +321,13 @@ fn snapshot_instances_from_imfs<'a>(
             };
 
             for child_path in &directory.children {
-                if child_path != &init_path {
-                    instance.children.push(snapshot_instances_from_imfs(imfs, child_path, sync_point_names)?);
+                match child_path.file_name().unwrap().to_str() {
+                    Some(INIT_SCRIPT) | Some(INIT_SERVER_SCRIPT) | Some(INIT_CLIENT_SCRIPT) => {
+                        // These modify the parent, we can skip them
+                    },
+                    _ => {
+                        instance.children.push(snapshot_instances_from_imfs(imfs, child_path, sync_point_names)?);
+                    },
                 }
             }
 
