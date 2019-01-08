@@ -222,30 +222,51 @@ fn reconcile_instance_children(
     instance_metadata_map: &mut HashMap<RbxId, InstanceProjectNodeMetadata>,
     changes: &mut InstanceChanges,
 ) {
-    let children_ids = tree.get_instance(id).unwrap().get_children_ids().to_vec();
-    let child_count = children_ids.len().max(snapshot.children.len());
+    let mut visited_snapshot_indices = HashSet::new();
 
     let mut children_to_update: Vec<(RbxId, &RbxSnapshotInstance)> = Vec::new();
     let mut children_to_add: Vec<&RbxSnapshotInstance> = Vec::new();
     let mut children_to_remove: Vec<RbxId> = Vec::new();
 
-    for i in 0..child_count {
-        let instance_child = children_ids
-            .get(i)
-            .map(|&id| tree.get_instance_mut(id).unwrap());
-        let snapshot_child = snapshot.children.get(i);
+    let children_ids = tree.get_instance(id).unwrap().get_children_ids();
 
-        match (instance_child, snapshot_child) {
-            (Some(instance_child), Some(snapshot_child)) => {
-                children_to_update.push((instance_child.get_id(), snapshot_child));
+    // Find all instances that were removed or updated, which we derive by
+    // trying to pair up existing instances to snapshots.
+    for &child_id in children_ids {
+        let child_instance = tree.get_instance(child_id).unwrap();
+
+        // Locate a matching snapshot for this instance
+        let mut matching_snapshot = None;
+        for (snapshot_index, child_snapshot) in snapshot.children.iter().enumerate() {
+            if visited_snapshot_indices.contains(&snapshot_index) {
+                continue;
+            }
+
+            // We assume that instances with the same name are probably pretty
+            // similar. This heuristic is similar to React's reconciliation
+            // strategy.
+            if child_snapshot.name == child_instance.name {
+                visited_snapshot_indices.insert(snapshot_index);
+                matching_snapshot = Some(child_snapshot);
+                break;
+            }
+        }
+
+        match matching_snapshot {
+            Some(child_snapshot) => {
+                children_to_update.push((child_instance.get_id(), child_snapshot));
             },
-            (Some(instance_child), None) => {
-                children_to_remove.push(instance_child.get_id());
+            None => {
+                children_to_remove.push(child_instance.get_id());
             },
-            (None, Some(snapshot_child)) => {
-                children_to_add.push(snapshot_child);
-            },
-            (None, None) => unreachable!(),
+        }
+    }
+
+    // Find all instancs that were added, which is just the snapshots we didn't
+    // match up to existing instances above.
+    for (snapshot_index, child_snapshot) in snapshot.children.iter().enumerate() {
+        if !visited_snapshot_indices.contains(&snapshot_index) {
+            children_to_add.push(child_snapshot);
         }
     }
 

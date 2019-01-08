@@ -135,6 +135,7 @@ impl RbxSession {
 
     pub fn path_renamed(&mut self, from_path: &Path, to_path: &Path) {
         info!("Path renamed from {} to {}", from_path.display(), to_path.display());
+        self.path_map.remove(from_path);
         self.path_created_or_updated(from_path);
         self.path_created_or_updated(to_path);
     }
