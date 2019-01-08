@@ -9,7 +9,7 @@ use std::{
 use rbx_tree::{RbxTree, RbxValue, RbxId};
 
 use crate::{
-    project::{Project, ProjectNode, InstanceProjectNode, InstanceProjectNodeMetadata},
+    project::{Project, ProjectNode, InstanceProjectNodeMetadata},
     message_queue::MessageQueue,
     imfs::{Imfs, ImfsItem, ImfsFile},
     path_map::PathMap,
@@ -64,12 +64,12 @@ impl RbxSession {
             let root_path = imfs.get_root_for_path(path)
                 .expect("Path was outside in-memory filesystem roots");
 
-            // Find the closest instance in the tree that still exists
+            // Find the closest instance in the tree that currently exists
             let mut path_to_snapshot = self.path_map.descend(root_path, path);
             let &instance_id = self.path_map.get(&path_to_snapshot).unwrap();
 
             // If this is a file that might affect its parent if modified, we
-            // should snapshot the parent instead.
+            // should snapshot its parent instead.
             match path_to_snapshot.file_name().unwrap().to_str() {
                 Some(INIT_SCRIPT) | Some(INIT_SERVER_SCRIPT) | Some(INIT_CLIENT_SCRIPT) => {
                     path_to_snapshot.pop();
@@ -113,7 +113,7 @@ impl RbxSession {
         {
             let imfs = self.imfs.lock().unwrap();
 
-            // If the path doesn't exist or it's a directory, we don't care if it
+            // If the path doesn't exist or is a directory, we don't care if it
             // updated
             match imfs.get(path) {
                 Some(ImfsItem::Directory(_)) | None => {
@@ -187,7 +187,20 @@ fn construct_project_node<'a>(
 ) -> RbxSnapshotInstance<'a> {
     match project_node {
         ProjectNode::Instance(node) => {
-            construct_instance_node(imfs, instance_name, node, sync_point_names)
+            let mut children = Vec::new();
+
+            for (child_name, child_project_node) in &node.children {
+                children.push(construct_project_node(imfs, child_name, child_project_node, sync_point_names));
+            }
+
+            RbxSnapshotInstance {
+                class_name: Cow::Borrowed(&node.class_name),
+                name: Cow::Borrowed(instance_name),
+                properties: HashMap::new(),
+                children,
+                source_path: None,
+                metadata: Some(node.metadata.clone()),
+            }
         },
         ProjectNode::SyncPoint(node) => {
             let mut snapshot = snapshot_instances_from_imfs(imfs, &node.path, sync_point_names)
@@ -198,28 +211,6 @@ fn construct_project_node<'a>(
 
             snapshot
         },
-    }
-}
-
-fn construct_instance_node<'a>(
-    imfs: &'a Imfs,
-    instance_name: &'a str,
-    project_node: &'a InstanceProjectNode,
-    sync_point_names: &mut HashMap<PathBuf, String>,
-) -> RbxSnapshotInstance<'a> {
-    let mut children = Vec::new();
-
-    for (child_name, child_project_node) in &project_node.children {
-        children.push(construct_project_node(imfs, child_name, child_project_node, sync_point_names));
-    }
-
-    RbxSnapshotInstance {
-        class_name: Cow::Borrowed(&project_node.class_name),
-        name: Cow::Borrowed(instance_name),
-        properties: HashMap::new(),
-        children,
-        source_path: None,
-        metadata: Some(project_node.metadata.clone()),
     }
 }
 
@@ -253,6 +244,8 @@ fn classify_file(file: &ImfsFile) -> Option<(&str, FileType)> {
     }
 }
 
+// TODO: Return a Result wrapping an Option so that failure can be represented
+// separately from "this thing is unknown"
 fn snapshot_instances_from_imfs<'a>(
     imfs: &'a Imfs,
     imfs_path: &Path,
@@ -306,7 +299,7 @@ fn snapshot_instances_from_imfs<'a>(
             } else {
                 RbxSnapshotInstance {
                     class_name: Cow::Borrowed("Folder"),
-                    name: Cow::Borrowed(""), // Assigned later in the method
+                    name: Cow::Borrowed(""),
                     properties: HashMap::new(),
                     children: Vec::new(),
                     source_path: Some(directory.path.clone()),
@@ -314,6 +307,9 @@ fn snapshot_instances_from_imfs<'a>(
                 }
             };
 
+            // We have to be careful not to lose instance names that are
+            // specified in the project manifest. We store them in
+            // sync_point_names when the original tree is constructed.
             instance.name = if let Some(actual_name) = sync_point_names.get(&directory.path) {
                 Cow::Owned(actual_name.clone())
             } else {
@@ -323,10 +319,14 @@ fn snapshot_instances_from_imfs<'a>(
             for child_path in &directory.children {
                 match child_path.file_name().unwrap().to_str() {
                     Some(INIT_SCRIPT) | Some(INIT_SERVER_SCRIPT) | Some(INIT_CLIENT_SCRIPT) => {
-                        // These modify the parent, we can skip them
+                        // The existence of files with these names modifies the
+                        // parent instance and is handled above, so we can skip
+                        // them here.
                     },
                     _ => {
-                        instance.children.push(snapshot_instances_from_imfs(imfs, child_path, sync_point_names)?);
+                        // TODO: Ignore this child instead?
+                        let child = snapshot_instances_from_imfs(imfs, child_path, sync_point_names)?;
+                        instance.children.push(child);
                     },
                 }
             }
