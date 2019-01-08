@@ -225,9 +225,9 @@ fn reconcile_instance_children(
     let children_ids = tree.get_instance(id).unwrap().get_children_ids().to_vec();
     let child_count = children_ids.len().max(snapshot.children.len());
 
-    let mut children_to_add = Vec::new();
-    let mut children_to_update = Vec::new();
-    let mut children_to_remove = Vec::new();
+    let mut children_to_update: Vec<(RbxId, &RbxSnapshotInstance)> = Vec::new();
+    let mut children_to_add: Vec<&RbxSnapshotInstance> = Vec::new();
+    let mut children_to_remove: Vec<RbxId> = Vec::new();
 
     for i in 0..child_count {
         let instance_child = children_ids
