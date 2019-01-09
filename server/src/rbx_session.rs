@@ -87,7 +87,10 @@ impl RbxSession {
 
             let snapshot = match maybe_snapshot {
                 Some(snapshot) => snapshot,
-                None => return,
+                None => {
+                    trace!("Path resulted in no snapshot being generated.");
+                    return;
+                },
             };
 
             trace!("Snapshot: {:#?}", snapshot);
