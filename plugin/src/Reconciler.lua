@@ -60,6 +60,13 @@ local function makeInstanceMap()
 end
 
 local function setProperty(instance, key, value)
+	-- The 'Contents' property of LocalizationTable isn't directly exposed, but
+	-- has corresponding (deprecated) getters and setters.
+	if key == "Contents" and instance.ClassName == "LocalizationTable" then
+		instance:SetContents(value)
+		return
+	end
+
 	local ok, err = pcall(function()
 		if instance[key] ~= value then
 			instance[key] = value
