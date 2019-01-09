@@ -6,7 +6,22 @@
     "ReplicatedStorage": {
       "$className": "ReplicatedStorage",
       "Rojo": {
-        "$path": "."
+        "$className": "Folder",
+        "Plugin": {
+          "$path": "src"
+        },
+        "Roact": {
+          "$path": "modules/roact/lib"
+        },
+        "Rodux": {
+          "$path": "modules/rodux/lib"
+        },
+        "RoactRodux": {
+          "$path": "modules/roact-rodux/lib"
+        },
+        "Promise": {
+          "$path": "modules/promise/lib"
+        }
       },
       "TestEZ": {
         "$path": "modules/testez/lib"
