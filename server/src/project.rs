@@ -180,7 +180,11 @@ pub struct Project {
 }
 
 impl Project {
-    pub fn init(_project_folder_location: &Path) -> Result<(), ProjectInitError> {
+    pub fn init_place(_project_fuzzy_location: &Path) -> Result<PathBuf, ProjectInitError> {
+        unimplemented!();
+    }
+
+    pub fn init_model(_project_fuzzy_location: &Path) -> Result<PathBuf, ProjectInitError> {
         unimplemented!();
     }
 

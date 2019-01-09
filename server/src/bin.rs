@@ -32,6 +32,7 @@ fn main() {
         (@subcommand init =>
             (about: "Creates a new Rojo project")
             (@arg PATH: "Path to the place to create the project. Defaults to the current directory.")
+            (@arg kind: --kind +takes_value "The kind of project to create, 'place' or 'model'. Defaults to place.")
         )
 
         (@subcommand serve =>
@@ -59,10 +60,21 @@ fn main() {
 
     match matches.subcommand() {
         ("init", Some(sub_matches)) => {
-            let project_path = Path::new(sub_matches.value_of("PATH").unwrap_or("."));
-            let full_path = make_path_absolute(project_path);
+            let fuzzy_project_path = make_path_absolute(Path::new(sub_matches.value_of("PATH").unwrap_or(".")));
+            let kind = sub_matches.value_of("kind");
 
-            commands::init(&full_path);
+            let options = commands::InitOptions {
+                fuzzy_project_path,
+                kind,
+            };
+
+            match commands::init(&options) {
+                Ok(_) => {},
+                Err(e) => {
+                    error!("{}", e);
+                    process::exit(1);
+                },
+            }
         },
         ("serve", Some(sub_matches)) => {
             let fuzzy_project_path = match sub_matches.value_of("PROJECT") {
