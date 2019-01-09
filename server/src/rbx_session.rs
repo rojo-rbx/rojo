@@ -1,10 +1,13 @@
 use std::{
     borrow::Cow,
     collections::HashMap,
+    fmt,
     path::{Path, PathBuf},
-    sync::{Arc, Mutex},
     str,
+    sync::{Arc, Mutex},
 };
+
+use failure::Fail;
 
 use rbx_tree::{RbxTree, RbxValue, RbxId};
 
@@ -79,8 +82,13 @@ impl RbxSession {
 
             trace!("Snapshotting path {}", path_to_snapshot.display());
 
-            let snapshot = snapshot_instances_from_imfs(&imfs, &path_to_snapshot, &mut self.sync_point_names)
-                .unwrap_or_else(|| panic!("Could not generate instance snapshot for path {}", path_to_snapshot.display()));
+            let maybe_snapshot = snapshot_instances_from_imfs(&imfs, &path_to_snapshot, &mut self.sync_point_names)
+                .unwrap_or_else(|_| panic!("Could not generate instance snapshot for path {}", path_to_snapshot.display()));
+
+            let snapshot = match maybe_snapshot {
+                Some(snapshot) => snapshot,
+                None => return,
+            };
 
             trace!("Snapshot: {:#?}", snapshot);
 
@@ -204,8 +212,10 @@ fn construct_project_node<'a>(
             }
         },
         ProjectNode::SyncPoint(node) => {
+            // TODO: Propagate errors upward instead of dying
             let mut snapshot = snapshot_instances_from_imfs(imfs, &node.path, sync_point_names)
-                .expect("Could not reify nodes from Imfs");
+                .expect("Could not reify nodes from Imfs")
+                .expect("Sync point node did not result in an instance");
 
             snapshot.name = Cow::Borrowed(instance_name);
             sync_point_names.insert(node.path.clone(), instance_name.to_string());
@@ -281,16 +291,40 @@ struct LocalizationEntryJson {
     values: HashMap<String, String>,
 }
 
-// TODO: Return a Result wrapping an Option so that failure can be represented
-// separately from "this thing is unknown"
+#[derive(Debug, Fail)]
+enum SnapshotError {
+    DidNotExist(PathBuf),
+
+    // TODO: Add file path to the error message?
+    Utf8Error {
+        #[fail(cause)]
+        inner: str::Utf8Error,
+        path: PathBuf,
+    },
+}
+
+impl fmt::Display for SnapshotError {
+    fn fmt(&self, output: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            SnapshotError::DidNotExist(path) => write!(output, "Path did not exist: {}", path.display()),
+            SnapshotError::Utf8Error { inner, path } => {
+                write!(output, "Invalid UTF-8: {} in path {}", inner, path.display())
+            },
+        }
+    }
+}
+
 fn snapshot_instances_from_imfs<'a>(
     imfs: &'a Imfs,
     imfs_path: &Path,
     sync_point_names: &HashMap<PathBuf, String>,
-) -> Option<RbxSnapshotInstance<'a>> {
-    match imfs.get(imfs_path)? {
-        ImfsItem::File(file) => {
-            let (instance_name, file_type) = classify_file(file)?;
+) -> Result<Option<RbxSnapshotInstance<'a>>, SnapshotError> {
+    match imfs.get(imfs_path) {
+        Some(ImfsItem::File(file)) => {
+            let (instance_name, file_type) = match classify_file(file) {
+                Some(info) => info,
+                None => return Ok(None),
+            };
 
             let instance_name = if let Some(actual_name) = sync_point_names.get(imfs_path) {
                 Cow::Owned(actual_name.clone())
@@ -306,7 +340,10 @@ fn snapshot_instances_from_imfs<'a>(
             };
 
             let contents = str::from_utf8(&file.contents)
-                .expect("File did not contain UTF-8 data, which is required for scripts.");
+                .map_err(|inner| SnapshotError::Utf8Error {
+                    inner,
+                    path: imfs_path.to_path_buf(),
+                })?;
 
             let mut properties = HashMap::new();
 
@@ -332,16 +369,16 @@ fn snapshot_instances_from_imfs<'a>(
                 },
             }
 
-            Some(RbxSnapshotInstance {
+            Ok(Some(RbxSnapshotInstance {
                 name: instance_name,
                 class_name: Cow::Borrowed(class_name),
                 properties,
                 children: Vec::new(),
                 source_path: Some(file.path.clone()),
                 metadata: None,
-            })
+            }))
         },
-        ImfsItem::Directory(directory) => {
+        Some(ImfsItem::Directory(directory)) => {
             // TODO: Expand init support to handle server and client scripts
             let init_path = directory.path.join(INIT_SCRIPT);
             let init_server_path = directory.path.join(INIT_SERVER_SCRIPT);
@@ -349,10 +386,13 @@ fn snapshot_instances_from_imfs<'a>(
 
             let mut instance = if directory.children.contains(&init_path) {
                 snapshot_instances_from_imfs(imfs, &init_path, sync_point_names)?
+                    .expect("Could not snapshot instance from file that existed!")
             } else if directory.children.contains(&init_server_path) {
                 snapshot_instances_from_imfs(imfs, &init_server_path, sync_point_names)?
+                    .expect("Could not snapshot instance from file that existed!")
             } else if directory.children.contains(&init_client_path) {
                 snapshot_instances_from_imfs(imfs, &init_client_path, sync_point_names)?
+                    .expect("Could not snapshot instance from file that existed!")
             } else {
                 RbxSnapshotInstance {
                     class_name: Cow::Borrowed("Folder"),
@@ -370,25 +410,31 @@ fn snapshot_instances_from_imfs<'a>(
             instance.name = if let Some(actual_name) = sync_point_names.get(&directory.path) {
                 Cow::Owned(actual_name.clone())
             } else {
-                Cow::Borrowed(directory.path.file_name()?.to_str()?)
+                Cow::Borrowed(directory.path
+                    .file_name().expect("Could not extract file name")
+                    .to_str().expect("Could not convert path to UTF-8"))
             };
 
             for child_path in &directory.children {
-                match child_path.file_name().unwrap().to_str() {
-                    Some(INIT_SCRIPT) | Some(INIT_SERVER_SCRIPT) | Some(INIT_CLIENT_SCRIPT) => {
+                match child_path.file_name().unwrap().to_str().unwrap() {
+                    INIT_SCRIPT | INIT_SERVER_SCRIPT | INIT_CLIENT_SCRIPT => {
                         // The existence of files with these names modifies the
                         // parent instance and is handled above, so we can skip
                         // them here.
                     },
                     _ => {
-                        // TODO: Ignore this child instead?
-                        let child = snapshot_instances_from_imfs(imfs, child_path, sync_point_names)?;
-                        instance.children.push(child);
+                        match snapshot_instances_from_imfs(imfs, child_path, sync_point_names)? {
+                            Some(child) => {
+                                instance.children.push(child);
+                            },
+                            None => {},
+                        }
                     },
                 }
             }
 
-            Some(instance)
+            Ok(Some(instance))
         },
+        None => Err(SnapshotError::DidNotExist(imfs_path.to_path_buf())),
     }
 }
