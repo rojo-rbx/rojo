@@ -1,7 +1,25 @@
 # Rojo Change Log
 
 ## Current master
-The `master` branch is currently undergoing a major rewrite to lay the groundwork for bidirectional syncing and other robustness improvements. Check out the `v0.4.x` branch for the current release.
+* "Epiphany" rewrite, in progress since the beginning of time
+* New live sync protocol
+    * Uses HTTP long polling to reduce request count and improve responsiveness
+* New project format
+    * Hierarchical, preventing overlapping partitions
+* Added `rojo build` command
+    * Generates `rbxm`, `rbxmx`, `rbxl`, or `rbxlx` files out of your project
+    * Usage: `rojo build <PROJECT> --output <OUTPUT>.rbxm`
+* Added `rojo upload` command
+    * Generates and uploads a place file to roblox.com out of your project
+    * Usage: `rojo upload <PROJECT> --cookie "<ROBLOSECURITY>" --place_id <PLACE_ID>`
+* New plugin
+    * Only one button now, "Connect"
+    * New UI to pick server address and port
+    * Better error reporting
+* Added support for `.csv` files turning into `LocalizationTable` instances
+
+## 0.4.13 (November 12, 2018)
+* When `rojo.json` points to a file or directory that does not exist, Rojo now issues a warning instead of throwing an error and exiting
 
 ## 0.4.12 (June 21, 2018)
 * Fixed obscure assertion failure when renaming or deleting files ([#78](https://github.com/LPGhatguy/rojo/issues/78))
