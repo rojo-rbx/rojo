@@ -220,6 +220,7 @@ enum FileType {
     ModuleScript,
     ServerScript,
     ClientScript,
+    LocalizationTable,
 }
 
 fn get_trailing<'a>(input: &'a str, trailer: &str) -> Option<&'a str> {
@@ -240,9 +241,44 @@ fn classify_file(file: &ImfsFile) -> Option<(&str, FileType)> {
         Some((instance_name, FileType::ClientScript))
     } else if let Some(instance_name) = get_trailing(file_name, ".lua") {
         Some((instance_name, FileType::ModuleScript))
+    } else if let Some(instance_name) = get_trailing(file_name, ".csv") {
+        Some((instance_name, FileType::LocalizationTable))
     } else {
         None
     }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+struct LocalizationEntryCsv {
+    key: String,
+    context: String,
+    example: String,
+    source: String,
+    #[serde(flatten)]
+    values: HashMap<String, String>,
+}
+
+impl LocalizationEntryCsv {
+    fn to_json(self) -> LocalizationEntryJson {
+        LocalizationEntryJson {
+            key: self.key,
+            context: self.context,
+            example: self.example,
+            source: self.source,
+            values: self.values,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct LocalizationEntryJson {
+    key: String,
+    context: String,
+    example: String,
+    source: String,
+    values: HashMap<String, String>,
 }
 
 // TODO: Return a Result wrapping an Option so that failure can be represented
@@ -266,15 +302,35 @@ fn snapshot_instances_from_imfs<'a>(
                 FileType::ModuleScript => "ModuleScript",
                 FileType::ServerScript => "Script",
                 FileType::ClientScript => "LocalScript",
+                FileType::LocalizationTable => "LocalizationTable",
             };
 
             let contents = str::from_utf8(&file.contents)
                 .expect("File did not contain UTF-8 data, which is required for scripts.");
 
             let mut properties = HashMap::new();
-            properties.insert(String::from("Source"), RbxValue::String {
-                value: contents.to_string(),
-            });
+
+            match file_type {
+                FileType::ModuleScript | FileType::ServerScript | FileType::ClientScript => {
+                    properties.insert(String::from("Source"), RbxValue::String {
+                        value: contents.to_string(),
+                    });
+                },
+                FileType::LocalizationTable => {
+                    let entries: Vec<LocalizationEntryJson> = csv::Reader::from_reader(contents.as_bytes())
+                        .deserialize()
+                        .map(|result| result.expect("Malformed localization table found!"))
+                        .map(LocalizationEntryCsv::to_json)
+                        .collect();
+
+                    let table_contents = serde_json::to_string(&entries)
+                        .expect("Could not encode JSON for localization table");
+
+                    properties.insert(String::from("Contents"), RbxValue::String {
+                        value: table_contents,
+                    });
+                },
+            }
 
             Some(RbxSnapshotInstance {
                 name: instance_name,
