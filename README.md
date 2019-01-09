@@ -47,10 +47,13 @@ There are lots of other tools that sync scripts into Roblox or provide other too
 Here are a few, if you're looking for alternatives or supplements to Rojo:
 
 * [rbxmk by Anaminus](https://github.com/anaminus/rbxmk)
-* [Rofresh](https://github.com/osyrisrblx/rofresh) and [RbxRefresh](https://github.com/osyrisrblx/RbxRefresh) by [Osyris](https://github.com/osyrisrblx)
+* [Rofresh by Osyris](https://github.com/osyrisrblx/rofresh)
+* [RbxRefresh by Osyris](https://github.com/osyrisrblx/RbxRefresh)
 * [Studio Bridge by Vocksel](https://github.com/vocksel/studio-bridge)
+* [Elixir by Vocksel](https://github.com/vocksel/elixir)
 * [RbxSync by evaera](https://github.com/evaera/RbxSync)
-* [CodeSync](https://github.com/MemoryPenguin/CodeSync) and [rbx-exteditor](https://github.com/MemoryPenguin/rbx-exteditor) by [MemoryPenguin](https://github.com/MemoryPenguin)
+* [CodeSync by MemoryPenguin](https://github.com/MemoryPenguin/CodeSync)
+* [rbx-exteditor by MemoryPenguin](https://github.com/MemoryPenguin/rbx-exteditor)
 
 If you use a plugin that _isn't_ Rojo for syncing code, open an issue and let me know why! I'd like Rojo to be the end-all tool so that people stop reinventing solutions to this problem.
 
