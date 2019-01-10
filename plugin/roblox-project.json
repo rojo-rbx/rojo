@@ -1,38 +1,21 @@
 {
-  "name": "rojo",
+  "name": "Rojo",
   "tree": {
-    "$className": "DataModel",
-
-    "ReplicatedStorage": {
-      "$className": "ReplicatedStorage",
-      "Rojo": {
-        "$className": "Folder",
-        "Plugin": {
-          "$path": "src"
-        },
-        "Roact": {
-          "$path": "modules/roact/lib"
-        },
-        "Rodux": {
-          "$path": "modules/rodux/lib"
-        },
-        "RoactRodux": {
-          "$path": "modules/roact-rodux/lib"
-        },
-        "Promise": {
-          "$path": "modules/promise/lib"
-        }
-      },
-      "TestEZ": {
-        "$path": "modules/testez/lib"
-      }
+    "$className": "Folder",
+    "Plugin": {
+      "$path": "src"
     },
-
-    "TestService": {
-      "$className": "TestService",
-      "TestBootstrap": {
-        "$path": "testBootstrap.server.lua"
-      }
+    "Roact": {
+      "$path": "modules/roact/lib"
+    },
+    "Rodux": {
+      "$path": "modules/rodux/lib"
+    },
+    "RoactRodux": {
+      "$path": "modules/roact-rodux/lib"
+    },
+    "Promise": {
+      "$path": "modules/promise/lib"
     }
   }
 }
