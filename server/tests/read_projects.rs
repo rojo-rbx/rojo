@@ -7,6 +7,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use rbx_tree::RbxValue;
+
 use librojo::{
     project::{Project, ProjectNode, InstanceProjectNode, SyncPointProjectNode},
 };
@@ -15,14 +17,6 @@ lazy_static! {
     static ref TEST_PROJECTS_ROOT: PathBuf = {
         Path::new(env!("CARGO_MANIFEST_DIR")).join("../test-projects")
     };
-}
-
-#[test]
-fn tour_de_force() {
-    let project_file_location = TEST_PROJECTS_ROOT.join("example.json");
-    let project = Project::load_exact(&project_file_location).unwrap();
-
-    assert_eq!(project.name, "example");
 }
 
 #[test]
@@ -69,8 +63,21 @@ fn single_sync_point() {
             metadata: Default::default(),
         });
 
+        let mut http_service_properties = HashMap::new();
+        http_service_properties.insert("HttpEnabled".to_string(), RbxValue::Bool {
+            value: true,
+        });
+
+        let http_service = ProjectNode::Instance(InstanceProjectNode {
+            class_name: "HttpService".to_string(),
+            children: HashMap::new(),
+            properties: http_service_properties,
+            metadata: Default::default(),
+        });
+
         let mut root_children = HashMap::new();
         root_children.insert("ReplicatedStorage".to_string(), replicated_storage);
+        root_children.insert("HttpService".to_string(), http_service);
 
         let root_node = ProjectNode::Instance(InstanceProjectNode {
             class_name: "DataModel".to_string(),

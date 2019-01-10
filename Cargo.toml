@@ -1,0 +1,5 @@
+[workspace]
+members = [
+	"server",
+	"rojo-e2e",
+]

@@ -29,12 +29,10 @@ matrix:
       rust: stable
 
       script:
-        - cd server
         - cargo test --verbose
 
     - language: rust
       rust: beta
 
       script:
-        - cd server
         - cargo test --verbose

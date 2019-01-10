@@ -1161,9 +1161,10 @@ dependencies = [
 [[package]]
 name = "rbx_binary"
 version = "0.1.0"
-source = "git+https://github.com/LPGhatguy/rbx-tree.git#cb68b560bc2c5e922b4b19368ead78f775109065"
+source = "git+https://github.com/LPGhatguy/rbx-tree.git#34794a857f8654167b219e229937853388aef822"
 dependencies = [
  "byteorder 1.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "lz4 1.23.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "rbx_tree 0.1.0 (git+https://github.com/LPGhatguy/rbx-tree.git)",
 ]
@@ -1171,7 +1172,7 @@ dependencies = [
 [[package]]
 name = "rbx_tree"
 version = "0.1.0"
-source = "git+https://github.com/LPGhatguy/rbx-tree.git#cb68b560bc2c5e922b4b19368ead78f775109065"
+source = "git+https://github.com/LPGhatguy/rbx-tree.git#34794a857f8654167b219e229937853388aef822"
 dependencies = [
  "serde 1.0.84 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.84 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1181,8 +1182,9 @@ dependencies = [
 [[package]]
 name = "rbx_xml"
 version = "0.1.0"
-source = "git+https://github.com/LPGhatguy/rbx-tree.git#cb68b560bc2c5e922b4b19368ead78f775109065"
+source = "git+https://github.com/LPGhatguy/rbx-tree.git#34794a857f8654167b219e229937853388aef822"
 dependencies = [
+ "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "rbx_tree 0.1.0 (git+https://github.com/LPGhatguy/rbx-tree.git)",
  "xml-rs 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -1300,6 +1302,10 @@ dependencies = [
  "uuid 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "walkdir 2.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "rojo-e2e"
+version = "0.1.0"
 
 [[package]]
 name = "rouille"
