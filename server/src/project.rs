@@ -6,6 +6,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use maplit::hashmap;
 use failure::Fail;
 use rbx_tree::RbxValue;
 
@@ -238,50 +239,41 @@ pub struct Project {
 
 impl Project {
     pub fn init_place(project_fuzzy_path: &Path) -> Result<PathBuf, ProjectInitError> {
-        let is_exact = project_fuzzy_path.extension().is_some();
-
-        let project_name = if is_exact {
+        let project_path = Project::init_pick_path(project_fuzzy_path)?;
+        let project_folder_path = project_path.parent().unwrap();
+        let project_name = if project_fuzzy_path == project_path {
             project_fuzzy_path.parent().unwrap().file_name().unwrap().to_str().unwrap()
         } else {
             project_fuzzy_path.file_name().unwrap().to_str().unwrap()
         };
 
-        // TODO: Add children for src folder, potentially client, server, and
-        // common?
-
-        let mut http_service_properties = HashMap::new();
-        http_service_properties.insert("HttpEnabled".to_string(), RbxValue::Bool {
-            value: true,
-        });
-
-        let http_service = ProjectNode::Instance(InstanceProjectNode {
-            class_name: "HttpService".to_string(),
-            children: HashMap::new(),
-            properties: http_service_properties,
-            metadata: Default::default(),
-        });
-
-        let replicated_storage_children = HashMap::new();
-
-        let replicated_storage = ProjectNode::Instance(InstanceProjectNode {
-            class_name: "ReplicatedStorage".to_string(),
-            children: replicated_storage_children,
-            properties: HashMap::new(),
-            metadata: Default::default(),
-        });
-
-        let mut root_children = HashMap::new();
-        root_children.insert("ReplicatedStorage".to_string(), replicated_storage);
-        root_children.insert("HttpService".to_string(), http_service);
-
         let tree = ProjectNode::Instance(InstanceProjectNode {
             class_name: "DataModel".to_string(),
-            children: root_children,
+            children: hashmap! {
+                String::from("ReplicatedStorage") => ProjectNode::Instance(InstanceProjectNode {
+                    class_name: String::from("ReplicatedStorage"),
+                    children: hashmap! {
+                        String::from("Source") => ProjectNode::SyncPoint(SyncPointProjectNode {
+                            path: project_folder_path.join("src"),
+                        }),
+                    },
+                    properties: HashMap::new(),
+                    metadata: Default::default(),
+                }),
+                String::from("HttpService") => ProjectNode::Instance(InstanceProjectNode {
+                    class_name: String::from("HttpService"),
+                    children: HashMap::new(),
+                    properties: hashmap! {
+                        String::from("HttpEnabled") => RbxValue::Bool {
+                            value: true,
+                        },
+                    },
+                    metadata: Default::default(),
+                }),
+            },
             properties: HashMap::new(),
             metadata: Default::default(),
         });
-
-        let project_path = Project::init_pick_path(project_fuzzy_path)?;
 
         let project = Project {
             name: project_name.to_string(),
