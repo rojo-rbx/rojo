@@ -289,8 +289,31 @@ impl Project {
         Ok(project_path)
     }
 
-    pub fn init_model(_project_fuzzy_path: &Path) -> Result<PathBuf, ProjectInitError> {
-        unimplemented!();
+    pub fn init_model(project_fuzzy_path: &Path) -> Result<PathBuf, ProjectInitError> {
+        let project_path = Project::init_pick_path(project_fuzzy_path)?;
+        let project_folder_path = project_path.parent().unwrap();
+        let project_name = if project_fuzzy_path == project_path {
+            project_fuzzy_path.parent().unwrap().file_name().unwrap().to_str().unwrap()
+        } else {
+            project_fuzzy_path.file_name().unwrap().to_str().unwrap()
+        };
+
+        let tree = ProjectNode::SyncPoint(SyncPointProjectNode {
+            path: project_folder_path.join("src"),
+        });
+
+        let project = Project {
+            name: project_name.to_string(),
+            tree,
+            serve_port: None,
+            serve_place_ids: None,
+            file_location: project_path.clone(),
+        };
+
+        project.save()
+            .map_err(ProjectInitError::SaveError)?;
+
+        Ok(project_path)
     }
 
     fn init_pick_path(project_fuzzy_path: &Path) -> Result<PathBuf, ProjectInitError> {
