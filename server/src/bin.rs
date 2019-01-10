@@ -60,7 +60,7 @@ fn main() {
 
     match matches.subcommand() {
         ("init", Some(sub_matches)) => {
-            let fuzzy_project_path = make_path_absolute(Path::new(sub_matches.value_of("PATH").unwrap_or(".")));
+            let fuzzy_project_path = make_path_absolute(Path::new(sub_matches.value_of("PATH").unwrap_or("")));
             let kind = sub_matches.value_of("kind");
 
             let options = commands::InitOptions {

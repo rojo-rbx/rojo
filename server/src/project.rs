@@ -16,6 +16,10 @@ const fn yeah() -> bool {
     true
 }
 
+const fn is_true(value: &bool) -> bool {
+    *value
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 enum SourceProjectNode {
@@ -23,10 +27,10 @@ enum SourceProjectNode {
         #[serde(rename = "$className")]
         class_name: String,
 
-        #[serde(rename = "$properties", default = "HashMap::new")]
+        #[serde(rename = "$properties", default = "HashMap::new", skip_serializing_if = "HashMap::is_empty")]
         properties: HashMap<String, RbxValue>,
 
-        #[serde(rename = "$ignoreUnknownInstances", default = "yeah")]
+        #[serde(rename = "$ignoreUnknownInstances", default = "yeah", skip_serializing_if = "is_true")]
         ignore_unknown_instances: bool,
 
         #[serde(flatten)]
@@ -78,9 +82,10 @@ impl SourceProjectNode {
 struct SourceProject {
     name: String,
     tree: SourceProjectNode,
+    #[serde(skip_serializing_if = "Option::is_none")]
     serve_port: Option<u16>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     serve_place_ids: Option<HashSet<u64>>,
-    serve_place_id: Option<u64>,
 }
 
 impl SourceProject {
@@ -174,6 +179,39 @@ pub enum ProjectNode {
     SyncPoint(SyncPointProjectNode),
 }
 
+impl ProjectNode {
+    fn to_source_node(&self, project_file_location: &Path) -> SourceProjectNode {
+        match self {
+            ProjectNode::Instance(node) => {
+                let mut children = HashMap::new();
+
+                for (key, child) in &node.children {
+                    children.insert(key.clone(), child.to_source_node(project_file_location));
+                }
+
+                SourceProjectNode::Instance {
+                    class_name: node.class_name.clone(),
+                    children,
+                    properties: node.properties.clone(),
+                    ignore_unknown_instances: node.metadata.ignore_unknown_instances,
+                }
+            },
+            ProjectNode::SyncPoint(sync_node) => {
+                let project_folder_location = project_file_location.parent().unwrap();
+
+                let friendly_path = match sync_node.path.strip_prefix(project_folder_location) {
+                    Ok(stripped) => stripped.to_str().unwrap().replace("\\", "/"),
+                    Err(_) => format!("{}", sync_node.path.display()),
+                };
+
+                SourceProjectNode::SyncPoint {
+                    path: friendly_path,
+                }
+            },
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct InstanceProjectNode {
@@ -199,17 +237,29 @@ pub struct Project {
 }
 
 impl Project {
-    pub fn init_place(project_fuzzy_location: &Path) -> Result<PathBuf, ProjectInitError> {
-        let is_exact = project_fuzzy_location.extension().is_some();
+    pub fn init_place(project_fuzzy_path: &Path) -> Result<PathBuf, ProjectInitError> {
+        let is_exact = project_fuzzy_path.extension().is_some();
 
         let project_name = if is_exact {
-            project_fuzzy_location.parent().unwrap().file_name().unwrap().to_str().unwrap()
+            project_fuzzy_path.parent().unwrap().file_name().unwrap().to_str().unwrap()
         } else {
-            project_fuzzy_location.file_name().unwrap().to_str().unwrap()
+            project_fuzzy_path.file_name().unwrap().to_str().unwrap()
         };
 
         // TODO: Add children for src folder, potentially client, server, and
         // common?
+
+        let mut http_service_properties = HashMap::new();
+        http_service_properties.insert("HttpEnabled".to_string(), RbxValue::Bool {
+            value: true,
+        });
+
+        let http_service = ProjectNode::Instance(InstanceProjectNode {
+            class_name: "HttpService".to_string(),
+            children: HashMap::new(),
+            properties: http_service_properties,
+            metadata: Default::default(),
+        });
 
         let replicated_storage_children = HashMap::new();
 
@@ -222,6 +272,7 @@ impl Project {
 
         let mut root_children = HashMap::new();
         root_children.insert("ReplicatedStorage".to_string(), replicated_storage);
+        root_children.insert("HttpService".to_string(), http_service);
 
         let tree = ProjectNode::Instance(InstanceProjectNode {
             class_name: "DataModel".to_string(),
@@ -230,42 +281,44 @@ impl Project {
             metadata: Default::default(),
         });
 
+        let project_path = Project::init_pick_path(project_fuzzy_path)?;
+
         let project = Project {
             name: project_name.to_string(),
             tree,
             serve_port: None,
             serve_place_ids: None,
-            file_location: project_fuzzy_location.to_path_buf(),
+            file_location: project_path.clone(),
         };
 
-        Project::init_internal(project_fuzzy_location, &project)
+        project.save()
+            .map_err(ProjectInitError::SaveError)?;
+
+        Ok(project_path)
     }
 
-    pub fn init_model(_project_fuzzy_location: &Path) -> Result<PathBuf, ProjectInitError> {
+    pub fn init_model(_project_fuzzy_path: &Path) -> Result<PathBuf, ProjectInitError> {
         unimplemented!();
     }
 
-    fn init_internal(project_fuzzy_location: &Path, project: &Project) -> Result<PathBuf, ProjectInitError> {
-        let is_exact = project_fuzzy_location.extension().is_some();
+    fn init_pick_path(project_fuzzy_path: &Path) -> Result<PathBuf, ProjectInitError> {
+        let is_exact = project_fuzzy_path.extension().is_some();
 
-        let project_location = if is_exact {
-            project_fuzzy_location.to_path_buf()
+        let project_path = if is_exact {
+            project_fuzzy_path.to_path_buf()
         } else {
-            project_fuzzy_location.join(PROJECT_FILENAME)
+            project_fuzzy_path.join(PROJECT_FILENAME)
         };
 
-        match fs::metadata(&project_location) {
+        match fs::metadata(&project_path) {
             Err(error) => match error.kind() {
                 io::ErrorKind::NotFound => {},
                 _ => return Err(ProjectInitError::IoError(error)),
             },
-            Ok(_) => return Err(ProjectInitError::AlreadyExists(project_location)),
+            Ok(_) => return Err(ProjectInitError::AlreadyExists(project_path)),
         }
 
-        project.save(&project_location)
-            .map_err(ProjectInitError::SaveError)?;
-
-        Ok(project_location)
+        Ok(project_path)
     }
 
     pub fn locate(start_location: &Path) -> Option<PathBuf> {
@@ -310,9 +363,9 @@ impl Project {
         Ok(parsed.into_project(project_file_location))
     }
 
-    pub fn save(&self, path: &Path) -> Result<(), ProjectSaveError> {
+    pub fn save(&self) -> Result<(), ProjectSaveError> {
         let source_project = self.to_source_project();
-        let mut file = File::create(path)
+        let mut file = File::create(&self.file_location)
             .map_err(ProjectSaveError::IoError)?;
 
         serde_json::to_writer_pretty(&mut file, &source_project)
@@ -322,6 +375,11 @@ impl Project {
     }
 
     fn to_source_project(&self) -> SourceProject {
-        unimplemented!();
+        SourceProject {
+            name: self.name.clone(),
+            tree: self.tree.to_source_node(&self.file_location),
+            serve_port: self.serve_port,
+            serve_place_ids: self.serve_place_ids.clone(),
+        }
     }
 }

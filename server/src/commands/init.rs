@@ -40,7 +40,7 @@ pub fn init(options: &InitOptions) -> Result<(), InitError> {
         Some(invalid) => return Err(InitError::InvalidKind(invalid.to_string())),
     };
 
-    println!("Created new {} project at {}", project_kind, project_path.display());
+    println!("Created new {} project file at {}", project_kind, project_path.display());
 
     Ok(())
 }
