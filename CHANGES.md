@@ -17,6 +17,12 @@
     * New UI to pick server address and port
     * Better error reporting
 * Added support for `.csv` files turning into `LocalizationTable` instances
+* Added debug visualization code to diagnose problems
+    * `/visualize/rbx` and `/visualize/imfs` show instance and file state respectively; they require GraphViz to be installed on your machine.
+* Added optional place ID restrictions to project files
+    * This helps prevent syncing in content to the wrong place
+    * Multiple places can be specified, like when building a multi-place game
+* Added support for specifying properties on services in project files
 
 ## 0.4.13 (November 12, 2018)
 * When `rojo.json` points to a file or directory that does not exist, Rojo now issues a warning instead of throwing an error and exiting
