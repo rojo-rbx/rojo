@@ -1,6 +1,7 @@
 use std::{
     collections::{HashMap, HashSet},
-    fs,
+    fmt,
+    fs::{self, File},
     io,
     path::{Path, PathBuf},
 };
@@ -127,12 +128,30 @@ impl From<ProjectLoadExactError> for ProjectLoadFuzzyError {
 }
 
 #[derive(Debug, Fail)]
-#[fail(display = "Project init error")]
-pub struct ProjectInitError;
+pub enum ProjectInitError {
+    AlreadyExists(PathBuf),
+    IoError(#[fail(cause)] io::Error),
+    SaveError(#[fail(cause)] ProjectSaveError),
+}
+
+impl fmt::Display for ProjectInitError {
+    fn fmt(&self, output: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ProjectInitError::AlreadyExists(path) => write!(output, "Path {} already exists", path.display()),
+            ProjectInitError::IoError(inner) => write!(output, "IO error: {}", inner),
+            ProjectInitError::SaveError(inner) => write!(output, "{}", inner),
+        }
+    }
+}
 
 #[derive(Debug, Fail)]
-#[fail(display = "Project save error")]
-pub struct ProjectSaveError;
+pub enum ProjectSaveError {
+    #[fail(display = "JSON error: {}", _0)]
+    JsonError(#[fail(cause)] serde_json::Error),
+
+    #[fail(display = "IO error: {}", _0)]
+    IoError(#[fail(cause)] io::Error),
+}
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -180,12 +199,73 @@ pub struct Project {
 }
 
 impl Project {
-    pub fn init_place(_project_fuzzy_location: &Path) -> Result<PathBuf, ProjectInitError> {
-        unimplemented!();
+    pub fn init_place(project_fuzzy_location: &Path) -> Result<PathBuf, ProjectInitError> {
+        let is_exact = project_fuzzy_location.extension().is_some();
+
+        let project_name = if is_exact {
+            project_fuzzy_location.parent().unwrap().file_name().unwrap().to_str().unwrap()
+        } else {
+            project_fuzzy_location.file_name().unwrap().to_str().unwrap()
+        };
+
+        // TODO: Add children for src folder, potentially client, server, and
+        // common?
+
+        let replicated_storage_children = HashMap::new();
+
+        let replicated_storage = ProjectNode::Instance(InstanceProjectNode {
+            class_name: "ReplicatedStorage".to_string(),
+            children: replicated_storage_children,
+            properties: HashMap::new(),
+            metadata: Default::default(),
+        });
+
+        let mut root_children = HashMap::new();
+        root_children.insert("ReplicatedStorage".to_string(), replicated_storage);
+
+        let tree = ProjectNode::Instance(InstanceProjectNode {
+            class_name: "DataModel".to_string(),
+            children: root_children,
+            properties: HashMap::new(),
+            metadata: Default::default(),
+        });
+
+        let project = Project {
+            name: project_name.to_string(),
+            tree,
+            serve_port: None,
+            serve_place_ids: None,
+            file_location: project_fuzzy_location.to_path_buf(),
+        };
+
+        Project::init_internal(project_fuzzy_location, &project)
     }
 
     pub fn init_model(_project_fuzzy_location: &Path) -> Result<PathBuf, ProjectInitError> {
         unimplemented!();
+    }
+
+    fn init_internal(project_fuzzy_location: &Path, project: &Project) -> Result<PathBuf, ProjectInitError> {
+        let is_exact = project_fuzzy_location.extension().is_some();
+
+        let project_location = if is_exact {
+            project_fuzzy_location.to_path_buf()
+        } else {
+            project_fuzzy_location.join(PROJECT_FILENAME)
+        };
+
+        match fs::metadata(&project_location) {
+            Err(error) => match error.kind() {
+                io::ErrorKind::NotFound => {},
+                _ => return Err(ProjectInitError::IoError(error)),
+            },
+            Ok(_) => return Err(ProjectInitError::AlreadyExists(project_location)),
+        }
+
+        project.save(&project_location)
+            .map_err(ProjectInitError::SaveError)?;
+
+        Ok(project_location)
     }
 
     pub fn locate(start_location: &Path) -> Option<PathBuf> {
@@ -230,10 +310,15 @@ impl Project {
         Ok(parsed.into_project(project_file_location))
     }
 
-    pub fn save(&self) -> Result<(), ProjectSaveError> {
-        let _source_project = self.to_source_project();
+    pub fn save(&self, path: &Path) -> Result<(), ProjectSaveError> {
+        let source_project = self.to_source_project();
+        let mut file = File::create(path)
+            .map_err(ProjectSaveError::IoError)?;
 
-        unimplemented!();
+        serde_json::to_writer_pretty(&mut file, &source_project)
+            .map_err(ProjectSaveError::JsonError)?;
+
+        Ok(())
     }
 
     fn to_source_project(&self) -> SourceProject {
