@@ -14,8 +14,9 @@ pages:
   - Why Rojo?: why-rojo.md
   - Getting Started:
     - Installation: getting-started/installation.md
-    - Creating a Project: getting-started/creating-a-project.md
+    - Creating a Place with Rojo: getting-started/creating-a-place.md
   - Sync Details: sync-details.md
+  - Migrating from 0.4.x to 0.5.x: migrating-to-epiphany.md
 
 markdown_extensions:
   - attr_list

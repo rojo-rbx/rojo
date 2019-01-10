@@ -1,4 +1,3 @@
-# Installation
 Rojo has two components:
 
 * The server, a binary written in Rust

@@ -1,4 +1,3 @@
-# Why Rojo?
 There are a number of existing plugins for Roblox that move code from the filesystem into Roblox.
 
 Besides Rojo, there is:
