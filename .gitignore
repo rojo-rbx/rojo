@@ -2,3 +2,4 @@
 /target
 /server/scratch
 **/*.rs.bk
+/generate-docs.run
