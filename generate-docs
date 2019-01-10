@@ -11,6 +11,7 @@ CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
 echo "Building 0.4.x"
 git checkout v0.4.x
+git pull
 mkdocs build --site-dir site
 mkdocs build --site-dir site/0.4.x
 
