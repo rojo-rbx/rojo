@@ -208,7 +208,7 @@ fn construct_project_node<'a>(
             RbxSnapshotInstance {
                 class_name: Cow::Borrowed(&node.class_name),
                 name: Cow::Borrowed(instance_name),
-                properties: HashMap::new(),
+                properties: node.properties.clone(),
                 children,
                 source_path: None,
                 metadata: Some(node.metadata.clone()),
