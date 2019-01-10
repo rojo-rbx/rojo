@@ -1,0 +1,6 @@
+Key,Context,Example,Source,es-es,de
+,ClickableGroup:BuilderGui:TextLabel,You got 22 hearts!,You got {1} hearts!,,
+,,"Team ""Red"" wins!","Team ""{1}"" wins!","¡Gana el equipo ""{1}""!","¡Gana el equipo ""{1}""!"
+,Frame:TextLabel,,"{1} killed {2}, with a {3}","{1} mató a {2} con
+una escopeta","{1} mató a {2} con
+una escopeta"

@@ -7,6 +7,15 @@
       "Foo": {
         "$path": "lib"
       }
+    },
+    "HttpService": {
+      "$className": "HttpService",
+      "$properties": {
+        "HttpEnabled": {
+          "Type": "Bool",
+          "Value": true
+        }
+      }
     }
   }
 }
