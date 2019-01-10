@@ -44,7 +44,7 @@ fn main() {
         (@subcommand build =>
             (about: "Generates an rbxmx model file from the project.")
             (@arg PROJECT: "Path to the project to serve. Defaults to the current directory.")
-            (@arg output: --output +takes_value +required "Where to output the result.")
+            (@arg output: --output -o +takes_value +required "Where to output the result.")
         )
 
         (@subcommand upload =>
