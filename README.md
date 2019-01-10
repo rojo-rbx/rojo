@@ -11,8 +11,8 @@
     <a href="https://crates.io/crates/rojo">
         <img src="https://img.shields.io/crates/v/rojo.svg?label=version" alt="Latest server version" />
     </a>
-    <a href="https://lpghatguy.github.io/rojo">
-        <img src="https://img.shields.io/badge/documentation-website-brightgreen.svg" alt="Rojo Documentation" />
+    <a href="https://lpghatguy.github.io/rojo/0.4.x">
+        <img src="https://img.shields.io/badge/documentation-0.4.x-brightgreen.svg" alt="Rojo Documentation" />
     </a>
 </div>
 
@@ -38,7 +38,7 @@ Soon, Rojo will be able to:
 * Sync `rbxmx` models between the filesystem and Roblox Studio
 * Package projects into `rbxmx` files from the command line
 
-## [Documentation](https://lpghatguy.github.io/rojo)
+## [Documentation](https://lpghatguy.github.io/rojo/0.4.x)
 You can also view the documentation by browsing the [docs](https://github.com/LPGhatguy/rojo/tree/master/docs) folder of the repository, but because it uses a number of Markdown extensions, it may not be very readable.
 
 ## Inspiration and Alternatives

@@ -1,6 +1,6 @@
 This is the documentation home for Rojo.
 
-Other versions of these docs:
+Available versions of these docs:
 
 * [0.5.x](https://lpghatguy.github.io/rojo/0.5.x)
 * [0.4.x](https://lpghatguy.github.io/rojo/0.4.x)
