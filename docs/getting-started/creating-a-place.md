@@ -60,5 +60,5 @@ You'll need an existing place on Roblox.com as well as the `.ROBLOSECURITY` cook
 Generating and uploading your place file is as simple as:
 
 ```sh
-rojo upload --place_id [PLACE ID] --cookie "[SECURITY COOKIE]"
+rojo upload --asset_id [PLACE ID] --cookie "[SECURITY COOKIE]"
 ```

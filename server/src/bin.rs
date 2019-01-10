@@ -48,10 +48,11 @@ fn main() {
         )
 
         (@subcommand upload =>
-            (about: "Generates a place file out of the project and uploads it to Roblox.")
+            (about: "Generates a place or model file out of the project and uploads it to Roblox.")
             (@arg PROJECT: "Path to the project to upload. Defaults to the current directory.")
+            (@arg kind: --kind +takes_value "The kind of asset to generate, 'place', or 'model'. Defaults to place.")
             (@arg cookie: --cookie +takes_value +required "Security cookie to authenticate with.")
-            (@arg place_id: --place_id +takes_value +required "Place ID to upload to.")
+            (@arg asset_id: --asset_id +takes_value +required "Asset ID to upload to.")
         )
     );
 
@@ -134,10 +135,11 @@ fn main() {
                 None => std::env::current_dir().unwrap(),
             };
 
+            let kind = sub_matches.value_of("kind");
             let security_cookie = sub_matches.value_of("cookie").unwrap();
 
-            let place_id: u64 = {
-                let arg = sub_matches.value_of("place_id").unwrap();
+            let asset_id: u64 = {
+                let arg = sub_matches.value_of("asset_id").unwrap();
 
                 match arg.parse() {
                     Ok(v) => v,
@@ -151,7 +153,8 @@ fn main() {
             let options = commands::UploadOptions {
                 fuzzy_project_path,
                 security_cookie: security_cookie.to_string(),
-                place_id,
+                asset_id,
+                kind,
             };
 
             match commands::upload(&options) {

@@ -5,7 +5,7 @@ use std::{
 
 use failure::Fail;
 
-use reqwest::header::{USER_AGENT, CONTENT_TYPE, COOKIE};
+use reqwest::header::{ACCEPT, USER_AGENT, CONTENT_TYPE, COOKIE};
 
 use crate::{
     rbx_session::construct_oneoff_tree,
@@ -17,6 +17,9 @@ use crate::{
 pub enum UploadError {
     #[fail(display = "Roblox API Error: {}", _0)]
     RobloxApiError(String),
+
+    #[fail(display = "Invalid asset kind: {}", _0)]
+    InvalidKind(String),
 
     #[fail(display = "Project load error: {}", _0)]
     ProjectLoadError(#[fail(cause)] ProjectLoadFuzzyError),
@@ -47,14 +50,14 @@ impl From<reqwest::Error> for UploadError {
 }
 
 #[derive(Debug)]
-pub struct UploadOptions {
+pub struct UploadOptions<'a> {
     pub fuzzy_project_path: PathBuf,
     pub security_cookie: String,
-    pub place_id: u64,
+    pub asset_id: u64,
+    pub kind: Option<&'a str>,
 }
 
 pub fn upload(options: &UploadOptions) -> Result<(), UploadError> {
-    // TODO: Support uploading models too
     // TODO: Switch to uploading binary format?
 
     info!("Looking for project at {}", options.fuzzy_project_path.display());
@@ -69,11 +72,20 @@ pub fn upload(options: &UploadOptions) -> Result<(), UploadError> {
     let tree = construct_oneoff_tree(&project, &imfs);
 
     let root_id = tree.get_root_id();
-    let top_level_ids = tree.get_instance(root_id).unwrap().get_children_ids();
     let mut contents = Vec::new();
-    rbx_xml::encode(&tree, top_level_ids, &mut contents);
 
-    let url = format!("https://data.roblox.com/Data/Upload.ashx?json=1&type=Place&assetid={}", options.place_id);
+    match options.kind {
+        Some("place") | None => {
+            let top_level_ids = tree.get_instance(root_id).unwrap().get_children_ids();
+            rbx_xml::encode(&tree, top_level_ids, &mut contents);
+        },
+        Some("model") => {
+            rbx_xml::encode(&tree, &[root_id], &mut contents);
+        },
+        Some(invalid) => return Err(UploadError::InvalidKind(invalid.to_owned())),
+    }
+
+    let url = format!("https://data.roblox.com/Data/Upload.ashx?assetid={}", options.asset_id);
 
     let client = reqwest::Client::new();
     let mut response = client.post(&url)
@@ -81,6 +93,7 @@ pub fn upload(options: &UploadOptions) -> Result<(), UploadError> {
         .header(USER_AGENT, "Roblox/WinInet")
         .header("Requester", "Client")
         .header(CONTENT_TYPE, "application/xml")
+        .header(ACCEPT, "application/json")
         .body(contents)
         .send()?;
 
