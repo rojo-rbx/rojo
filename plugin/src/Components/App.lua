@@ -85,13 +85,13 @@ function App:render()
 		children = {
 			ConnectPanel = e(ConnectPanel, {
 				startSession = function(address, port)
-					Logging.info("Starting new session")
+					Logging.trace("Starting new session")
 
 					self.currentSession = Session.new({
 						address = address,
 						port = port,
 						onError = function()
-							Logging.info("Session terminated")
+							Logging.trace("Session terminated")
 							self.currentSession = nil
 
 							self:setState({
@@ -105,7 +105,7 @@ function App:render()
 					})
 				end,
 				cancel = function()
-					Logging.info("Canceling session configuration")
+					Logging.trace("Canceling session configuration")
 
 					self:setState({
 						sessionStatus = SessionStatus.Disconnected,
@@ -132,17 +132,17 @@ function App:didMount()
 		checkUpgrade(self.props.plugin)
 
 		if self.state.sessionStatus == SessionStatus.Connected then
-			Logging.info("Disconnecting session")
+			Logging.trace("Disconnecting session")
 
 			error("NYI")
 		elseif self.state.sessionStatus == SessionStatus.Disconnected then
-			Logging.info("Starting session configuration")
+			Logging.trace("Starting session configuration")
 
 			self:setState({
 				sessionStatus = SessionStatus.Configuring,
 			})
 		elseif self.state.sessionStatus == SessionStatus.Configuring then
-			Logging.info("Canceling session configuration")
+			Logging.trace("Canceling session configuration")
 
 			self:setState({
 				sessionStatus = SessionStatus.Disconnected,
