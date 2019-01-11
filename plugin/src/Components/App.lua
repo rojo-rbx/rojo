@@ -1,13 +1,16 @@
 local Roact = require(script:FindFirstAncestor("Rojo").Roact)
 
-local Session = require(script.Parent.Parent.Session)
-local Config = require(script.Parent.Parent.Config)
-local Version = require(script.Parent.Parent.Version)
-local Logging = require(script.Parent.Parent.Logging)
-local DevSettings = require(script.Parent.Parent.DevSettings)
+local Plugin = script:FindFirstAncestor("Plugin")
 
-local ConnectPanel = require(script.Parent.ConnectPanel)
-local ConnectionActivePanel = require(script.Parent.ConnectionActivePanel)
+local Icons = require(Plugin.Icons)
+local Session = require(Plugin.Session)
+local Config = require(Plugin.Config)
+local Version = require(Plugin.Version)
+local Logging = require(Plugin.Logging)
+local DevSettings = require(Plugin.DevSettings)
+
+local ConnectPanel = require(Plugin.Components.ConnectPanel)
+local ConnectionActivePanel = require(Plugin.Components.ConnectionActivePanel)
 
 local e = Roact.createElement
 
@@ -50,7 +53,7 @@ end
 local SessionStatus = {
 	Disconnected = "Disconnected",
 	Connected = "Connected",
-	Configuring = "Configuring",
+	ConfiguringSession = "ConfiguringSession",
 	-- TODO: Error?
 }
 
@@ -67,6 +70,8 @@ function App:init()
 		sessionStatus = SessionStatus.Disconnected,
 	})
 
+	self.connectButton = nil
+	self.configButton = nil
 	self.currentSession = nil
 
 	self.displayedVersion = DevSettings:isEnabled()
@@ -81,7 +86,7 @@ function App:render()
 		children = {
 			ConnectionActivePanel = e(ConnectionActivePanel),
 		}
-	elseif self.state.sessionStatus == SessionStatus.Configuring then
+	elseif self.state.sessionStatus == SessionStatus.ConfiguringSession then
 		children = {
 			ConnectPanel = e(ConnectPanel, {
 				startSession = function(address, port)
@@ -126,25 +131,30 @@ function App:didMount()
 
 	local toolbar = self.props.plugin:CreateToolbar("Rojo " .. self.displayedVersion)
 
-	-- TODO: Icon!
-	local connectButton = toolbar:CreateButton("Connect", "Connect to Rojo Session", "")
-	connectButton.ClickableWhenViewportHidden = true
-
-	connectButton.Click:Connect(function()
-		connectButton:SetActive(false)
+	self.connectButton = toolbar:CreateButton(
+		"Connect",
+		"Connect to a running Rojo session",
+		Icons.StartSession)
+	self.connectButton.ClickableWhenViewportHidden = false
+	self.connectButton.Click:Connect(function()
 		checkUpgrade(self.props.plugin)
 
 		if self.state.sessionStatus == SessionStatus.Connected then
 			Logging.trace("Disconnecting session")
 
-			error("NYI")
+			self.currentSession = nil
+			self:setState({
+				sessionStatus = SessionStatus.Disconnected,
+			})
+
+			error("TODO: Actually disconnect old session")
 		elseif self.state.sessionStatus == SessionStatus.Disconnected then
 			Logging.trace("Starting session configuration")
 
 			self:setState({
-				sessionStatus = SessionStatus.Configuring,
+				sessionStatus = SessionStatus.ConfiguringSession,
 			})
-		elseif self.state.sessionStatus == SessionStatus.Configuring then
+		elseif self.state.sessionStatus == SessionStatus.ConfiguringSession then
 			Logging.trace("Canceling session configuration")
 
 			self:setState({
@@ -152,6 +162,28 @@ function App:didMount()
 			})
 		end
 	end)
+
+	self.configButton = toolbar:CreateButton(
+		"Configure",
+		"Configure the Rojo plugin",
+		Icons.Configure)
+	self.configButton.ClickableWhenViewportHidden = false
+	self.configButton.Click:Connect(function()
+		self.configButton:SetActive(false)
+	end)
+end
+
+function App:didUpdate()
+	local connectActive = self.state.sessionStatus == SessionStatus.ConfiguringSession
+		or self.state.sessionStatus == SessionStatus.Connected
+
+	self.connectButton:SetActive(connectActive)
+
+	if self.state.sessionStatus == SessionStatus.Connected then
+		self.connectButton.Icon = Icons.SessionActive
+	else
+		self.connectButton.Icon = Icons.StartSession
+	end
 end
 
 return App

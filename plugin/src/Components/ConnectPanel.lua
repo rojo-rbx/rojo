@@ -51,7 +51,7 @@ function ConnectPanel:render()
 			LayoutOrder = 1,
 			Font = Enum.Font.SourceSans,
 			TextSize = 22,
-			Text = "Start Rojo Session",
+			Text = "Start New Rojo Session",
 			Size = UDim2.new(1, 0, 0, 28),
 			BackgroundTransparency = 1,
 			TextColor3 = Color3.new(1, 1, 1),
