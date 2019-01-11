@@ -233,6 +233,7 @@ enum FileType {
     ModuleScript,
     ServerScript,
     ClientScript,
+    StringValue,
     LocalizationTable,
 }
 
@@ -256,6 +257,8 @@ fn classify_file(file: &ImfsFile) -> Option<(&str, FileType)> {
         Some((instance_name, FileType::ModuleScript))
     } else if let Some(instance_name) = get_trailing(file_name, ".csv") {
         Some((instance_name, FileType::LocalizationTable))
+    } else if let Some(instance_name) = get_trailing(file_name, ".txt") {
+        Some((instance_name, FileType::StringValue))
     } else {
         None
     }
@@ -339,6 +342,7 @@ fn snapshot_instances_from_imfs<'a>(
                 FileType::ModuleScript => "ModuleScript",
                 FileType::ServerScript => "Script",
                 FileType::ClientScript => "LocalScript",
+                FileType::StringValue => "StringValue",
                 FileType::LocalizationTable => "LocalizationTable",
             };
 
@@ -353,6 +357,11 @@ fn snapshot_instances_from_imfs<'a>(
             match file_type {
                 FileType::ModuleScript | FileType::ServerScript | FileType::ClientScript => {
                     properties.insert(String::from("Source"), RbxValue::String {
+                        value: contents.to_string(),
+                    });
+                },
+                FileType::StringValue => {
+                    properties.insert(String::from("Value"), RbxValue::String {
                         value: contents.to_string(),
                     });
                 },
