@@ -65,6 +65,24 @@ pub struct RbxSnapshotInstance<'a> {
     pub metadata: Option<InstanceProjectNodeMetadata>,
 }
 
+pub fn snapshot_from_tree(tree: &RbxTree, id: RbxId) -> Option<RbxSnapshotInstance<'static>> {
+    let instance = tree.get_instance(id)?;
+
+    let mut children = Vec::new();
+    for &child_id in instance.get_children_ids() {
+        children.push(snapshot_from_tree(tree, child_id)?);
+    }
+
+    Some(RbxSnapshotInstance {
+        name: Cow::Owned(instance.name.to_owned()),
+        class_name: Cow::Owned(instance.class_name.to_owned()),
+        properties: instance.properties.clone(),
+        children,
+        source_path: None,
+        metadata: None,
+    })
+}
+
 pub fn reify_root(
     snapshot: &RbxSnapshotInstance,
     path_map: &mut PathMap<RbxId>,

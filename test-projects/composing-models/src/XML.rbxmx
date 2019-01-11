@@ -1,0 +1,16 @@
+<roblox xmlns:xmime="http://www.w3.org/2005/05/xmlmime" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.roblox.com/roblox.xsd" version="4">
+	<Meta name="ExplicitAutoJoints">true</Meta>
+	<External>null</External>
+	<External>nil</External>
+	<Item class="Script" referent="RBX634A9A9988354E4B9D971B2A4DEBD26E">
+		<Properties>
+			<bool name="Disabled">false</bool>
+			<Content name="LinkedSource"><null></null></Content>
+			<string name="Name">Lone Script</string>
+			<string name="ScriptGuid">{C62CD9FB-FF28-4FD9-9712-AD28A1E92C84}</string>
+			<ProtectedString name="Source"><![CDATA[print("Hello world!")
+]]></ProtectedString>
+			<BinaryString name="Tags"></BinaryString>
+		</Properties>
+	</Item>
+</roblox>

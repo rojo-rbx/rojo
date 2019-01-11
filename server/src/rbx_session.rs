@@ -9,14 +9,14 @@ use std::{
 
 use failure::Fail;
 
-use rbx_tree::{RbxTree, RbxValue, RbxId};
+use rbx_tree::{RbxTree, RbxInstance, RbxValue, RbxId};
 
 use crate::{
     project::{Project, ProjectNode, InstanceProjectNodeMetadata},
     message_queue::MessageQueue,
     imfs::{Imfs, ImfsItem, ImfsFile},
     path_map::PathMap,
-    rbx_snapshot::{RbxSnapshotInstance, InstanceChanges, reify_root, reconcile_subtree},
+    rbx_snapshot::{RbxSnapshotInstance, InstanceChanges, snapshot_from_tree, reify_root, reconcile_subtree},
 };
 
 const INIT_SCRIPT: &str = "init.lua";
@@ -235,6 +235,8 @@ enum FileType {
     ClientScript,
     StringValue,
     LocalizationTable,
+    XmlModel,
+    BinaryModel,
 }
 
 fn get_trailing<'a>(input: &'a str, trailer: &str) -> Option<&'a str> {
@@ -247,21 +249,25 @@ fn get_trailing<'a>(input: &'a str, trailer: &str) -> Option<&'a str> {
 }
 
 fn classify_file(file: &ImfsFile) -> Option<(&str, FileType)> {
+    static EXTENSIONS_TO_TYPES: &[(&str, FileType)] = &[
+        (".server.lua", FileType::ServerScript),
+        (".client.lua", FileType::ClientScript),
+        (".lua", FileType::ModuleScript),
+        (".csv", FileType::LocalizationTable),
+        (".txt", FileType::StringValue),
+        (".rbxmx", FileType::XmlModel),
+        (".rbxm", FileType::BinaryModel),
+    ];
+
     let file_name = file.path.file_name()?.to_str()?;
 
-    if let Some(instance_name) = get_trailing(file_name, ".server.lua") {
-        Some((instance_name, FileType::ServerScript))
-    } else if let Some(instance_name) = get_trailing(file_name, ".client.lua") {
-        Some((instance_name, FileType::ClientScript))
-    } else if let Some(instance_name) = get_trailing(file_name, ".lua") {
-        Some((instance_name, FileType::ModuleScript))
-    } else if let Some(instance_name) = get_trailing(file_name, ".csv") {
-        Some((instance_name, FileType::LocalizationTable))
-    } else if let Some(instance_name) = get_trailing(file_name, ".txt") {
-        Some((instance_name, FileType::StringValue))
-    } else {
-        None
+    for (extension, file_type) in EXTENSIONS_TO_TYPES {
+        if let Some(instance_name) = get_trailing(file_name, extension) {
+            return Some((instance_name, *file_type))
+        }
     }
+
+    None
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -307,6 +313,16 @@ enum SnapshotError {
         inner: str::Utf8Error,
         path: PathBuf,
     },
+
+    XmlModelDecodeError {
+        inner: rbx_xml::DecodeError,
+        path: PathBuf,
+    },
+
+    BinaryModelDecodeError {
+        inner: rbx_binary::DecodeError,
+        path: PathBuf,
+    },
 }
 
 impl fmt::Display for SnapshotError {
@@ -316,7 +332,75 @@ impl fmt::Display for SnapshotError {
             SnapshotError::Utf8Error { inner, path } => {
                 write!(output, "Invalid UTF-8: {} in path {}", inner, path.display())
             },
+            SnapshotError::XmlModelDecodeError { inner, path } => {
+                write!(output, "Malformed rbxmx model: {:?} in path {}", inner, path.display())
+            },
+            SnapshotError::BinaryModelDecodeError { inner, path } => {
+                write!(output, "Malformed rbxm model: {:?} in path {}", inner, path.display())
+            },
         }
+    }
+}
+
+fn snapshot_xml_model<'a>(
+    instance_name: Cow<'a, str>,
+    file: &ImfsFile,
+) -> Result<Option<RbxSnapshotInstance<'a>>, SnapshotError> {
+    let mut temp_tree = RbxTree::new(RbxInstance {
+        name: "Temp".to_owned(),
+        class_name: "Folder".to_owned(),
+        properties: HashMap::new(),
+    });
+
+    let root_id = temp_tree.get_root_id();
+    rbx_xml::decode(&mut temp_tree, root_id, file.contents.as_slice())
+        .map_err(|inner| SnapshotError::XmlModelDecodeError {
+            inner,
+            path: file.path.clone(),
+        })?;
+
+    let root_instance = temp_tree.get_instance(root_id).unwrap();
+    let children = root_instance.get_children_ids();
+
+    match children.len() {
+        0 => Ok(None),
+        1 => {
+            let mut snapshot = snapshot_from_tree(&temp_tree, children[0]).unwrap();
+            snapshot.name = instance_name;
+            Ok(Some(snapshot))
+        },
+        _ => panic!("Rojo doesn't have support for model files with multiple roots yet"),
+    }
+}
+
+fn snapshot_binary_model<'a>(
+    instance_name: Cow<'a, str>,
+    file: &ImfsFile,
+) -> Result<Option<RbxSnapshotInstance<'a>>, SnapshotError> {
+    let mut temp_tree = RbxTree::new(RbxInstance {
+        name: "Temp".to_owned(),
+        class_name: "Folder".to_owned(),
+        properties: HashMap::new(),
+    });
+
+    let root_id = temp_tree.get_root_id();
+    rbx_binary::decode(&mut temp_tree, root_id, file.contents.as_slice())
+        .map_err(|inner| SnapshotError::BinaryModelDecodeError {
+            inner,
+            path: file.path.clone(),
+        })?;
+
+    let root_instance = temp_tree.get_instance(root_id).unwrap();
+    let children = root_instance.get_children_ids();
+
+    match children.len() {
+        0 => Ok(None),
+        1 => {
+            let mut snapshot = snapshot_from_tree(&temp_tree, children[0]).unwrap();
+            snapshot.name = instance_name;
+            Ok(Some(snapshot))
+        },
+        _ => panic!("Rojo doesn't have support for model files with multiple roots yet"),
     }
 }
 
@@ -344,6 +428,8 @@ fn snapshot_instances_from_imfs<'a>(
                 FileType::ClientScript => "LocalScript",
                 FileType::StringValue => "StringValue",
                 FileType::LocalizationTable => "LocalizationTable",
+                FileType::XmlModel => return snapshot_xml_model(instance_name, file),
+                FileType::BinaryModel => return snapshot_binary_model(instance_name, file),
             };
 
             let contents = str::from_utf8(&file.contents)
@@ -379,6 +465,7 @@ fn snapshot_instances_from_imfs<'a>(
                         value: table_contents,
                     });
                 },
+                FileType::XmlModel | FileType::BinaryModel => unreachable!(),
             }
 
             Ok(Some(RbxSnapshotInstance {
