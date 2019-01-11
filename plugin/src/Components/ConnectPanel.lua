@@ -9,6 +9,7 @@ local Assets = require(Plugin.Assets)
 local FitList = require(Plugin.Components.FitList)
 local FitText = require(Plugin.Components.FitText)
 local FormButton = require(Plugin.Components.FormButton)
+local FormTextInput = require(Plugin.Components.FormTextInput)
 
 local WhiteCross = Assets.Sprites.WhiteCross
 local GrayBox = Assets.Slices.GrayBox
@@ -153,34 +154,15 @@ function ConnectPanel:render()
 					}),
 				}),
 
-				InputOuter = e("ImageLabel", {
-					LayoutOrder = 2,
-					Image = GrayBox.asset,
-					ImageRectOffset = GrayBox.offset,
-					ImageRectSize = GrayBox.size,
-					ScaleType = Enum.ScaleType.Slice,
-					SliceCenter = GrayBox.center,
-					Size = UDim2.new(0, 300, 0, 24),
-					BackgroundTransparency = 1,
-				}, {
-					InputInner = e("TextBox", {
-						BackgroundTransparency = 1,
-						Size = UDim2.new(1, -8, 1, -8),
-						Position = UDim2.new(0.5, 0, 0.5, 0),
-						AnchorPoint = Vector2.new(0.5, 0.5),
-						Font = Enum.Font.SourceSans,
-						ClearTextOnFocus = false,
-						TextXAlignment = Enum.TextXAlignment.Left,
-						TextSize = FORM_TEXT_SIZE,
-						Text = self.state.address,
-						TextColor3 = TEXT_COLOR,
-
-						[Roact.Change.Text] = function(rbx)
-							self:setState({
-								address = rbx.Text,
-							})
-						end,
-					}),
+				Input = e(FormTextInput, {
+					layoutOrder = 2,
+					size = UDim2.new(0, 300, 0, 24),
+					value = self.state.address,
+					onValueChange = function(newValue)
+						self:setState({
+							address = newValue,
+						})
+					end,
 				}),
 			}),
 
@@ -214,34 +196,15 @@ function ConnectPanel:render()
 					}),
 				}),
 
-				InputOuter = e("ImageLabel", {
-					LayoutOrder = 2,
-					Image = GrayBox.asset,
-					ImageRectOffset = GrayBox.offset,
-					ImageRectSize = GrayBox.size,
-					ScaleType = Enum.ScaleType.Slice,
-					SliceCenter = GrayBox.center,
-					Size = UDim2.new(0, 300, 0, 24),
-					BackgroundTransparency = 1,
-				}, {
-					InputInner = e("TextBox", {
-						BackgroundTransparency = 1,
-						Size = UDim2.new(1, -8, 1, -8),
-						Position = UDim2.new(0.5, 0, 0.5, 0),
-						AnchorPoint = Vector2.new(0.5, 0.5),
-						Font = Enum.Font.SourceSans,
-						ClearTextOnFocus = false,
-						TextXAlignment = Enum.TextXAlignment.Left,
-						TextSize = FORM_TEXT_SIZE,
-						Text = self.state.port,
-						TextColor3 = TEXT_COLOR,
-
-						[Roact.Change.Text] = function(rbx)
-							self:setState({
-								port = rbx.Text,
-							})
-						end,
-					}),
+				Input = e(FormTextInput, {
+					layoutOrder = 2,
+					size = UDim2.new(0, 300, 0, 24),
+					value = self.state.port,
+					onValueChange = function(newValue)
+						self:setState({
+							port = newValue,
+						})
+					end,
 				}),
 			}),
 
