@@ -11,6 +11,7 @@ function FitList:init()
 end
 
 function FitList:render()
+	local containerKind = self.props.containerKind or "Frame"
 	local containerProps = self.props.containerProps
 	local layoutProps = self.props.layoutProps
 	local paddingProps = self.props.paddingProps
@@ -43,7 +44,7 @@ function FitList:render()
 		Size = self.sizeBinding,
 	})
 
-	return e("Frame", fullContainerProps, children)
+	return e(containerKind, fullContainerProps, children)
 end
 
 return FitList

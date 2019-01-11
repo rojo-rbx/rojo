@@ -13,7 +13,7 @@ function FitText:init()
 end
 
 function FitText:render()
-	local kind = self.props.Kind
+	local kind = self.props.Kind or "TextLabel"
 
 	local containerProps = Dictionary.merge(self.props, {
 		Kind = Dictionary.None,

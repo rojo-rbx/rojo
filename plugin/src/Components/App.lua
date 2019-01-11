@@ -2,7 +2,7 @@ local Roact = require(script:FindFirstAncestor("Rojo").Roact)
 
 local Plugin = script:FindFirstAncestor("Plugin")
 
-local Icons = require(Plugin.Icons)
+local Assets = require(Plugin.Assets)
 local Session = require(Plugin.Session)
 local Config = require(Plugin.Config)
 local Version = require(Plugin.Version)
@@ -123,7 +123,10 @@ function App:render()
 		}
 	end
 
-	return e("ScreenGui", nil, children)
+	return e("ScreenGui", {
+		AutoLocalize = false,
+		ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+	}, children)
 end
 
 function App:didMount()
@@ -134,7 +137,7 @@ function App:didMount()
 	self.connectButton = toolbar:CreateButton(
 		"Connect",
 		"Connect to a running Rojo session",
-		Icons.StartSession)
+		Assets.StartSession)
 	self.connectButton.ClickableWhenViewportHidden = false
 	self.connectButton.Click:Connect(function()
 		checkUpgrade(self.props.plugin)
@@ -166,7 +169,7 @@ function App:didMount()
 	self.configButton = toolbar:CreateButton(
 		"Configure",
 		"Configure the Rojo plugin",
-		Icons.Configure)
+		Assets.Configure)
 	self.configButton.ClickableWhenViewportHidden = false
 	self.configButton.Click:Connect(function()
 		self.configButton:SetActive(false)
@@ -180,9 +183,9 @@ function App:didUpdate()
 	self.connectButton:SetActive(connectActive)
 
 	if self.state.sessionStatus == SessionStatus.Connected then
-		self.connectButton.Icon = Icons.SessionActive
+		self.connectButton.Icon = Assets.SessionActive
 	else
-		self.connectButton.Icon = Icons.StartSession
+		self.connectButton.Icon = Assets.StartSession
 	end
 end
 
