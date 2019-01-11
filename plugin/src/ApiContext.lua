@@ -19,17 +19,14 @@ setmetatable(ApiContext.Error, {
 	end
 })
 
--- TODO: Switch to onMessages and batch processing
 function ApiContext.new(baseUrl)
 	assert(type(baseUrl) == "string")
 
 	local self = {
 		baseUrl = baseUrl,
-		onMessageCallback = nil,
 		serverId = nil,
 		rootInstanceId = nil,
 		instanceMetadataMap = nil,
-		connected = false,
 		messageCursor = -1,
 		partitionRoutes = nil,
 	}
@@ -100,21 +97,14 @@ function ApiContext:connect()
 			self.partitionRoutes = body.partitions
 			self.rootInstanceId = body.rootInstanceId
 			self.instanceMetadataMap = body.instanceMetadataMap
-			self.connected = true
 		end)
 end
 
 function ApiContext:read(ids)
-	if not self.connected then
-		return Promise.reject()
-	end
-
 	local url = ("%s/api/read/%s"):format(self.baseUrl, table.concat(ids, ","))
 
 	return Http.get(url)
 		:catch(function(err)
-			self.connected = false
-
 			return Promise.reject(err)
 		end)
 		:andThen(function(response)
@@ -131,10 +121,6 @@ function ApiContext:read(ids)
 end
 
 function ApiContext:retrieveMessages()
-	if not self.connected then
-		return Promise.reject()
-	end
-
 	local url = ("%s/api/subscribe/%s"):format(self.baseUrl, self.messageCursor)
 
 	return Http.get(url)
@@ -142,8 +128,6 @@ function ApiContext:retrieveMessages()
 			if err.type == HttpError.Error.Timeout then
 				return self:retrieveMessages()
 			end
-
-			self.connected = false
 
 			return Promise.reject(err)
 		end)
@@ -154,20 +138,9 @@ function ApiContext:retrieveMessages()
 				return Promise.reject("Server changed ID")
 			end
 
-			local promise = Promise.resolve(nil)
-
-			for _, message in ipairs(body.messages) do
-				promise = promise:andThen(function()
-					return self.onMessageCallback(message)
-				end)
-			end
-
 			self.messageCursor = body.messageCursor
 
-			return promise
-		end)
-		:andThen(function()
-			return self:retrieveMessages()
+			return body.messages
 		end)
 end
 

@@ -95,8 +95,9 @@ function App:render()
 					local success, session = Session.new({
 						address = address,
 						port = port,
-						onError = function()
-							Logging.trace("Session terminated")
+						onError = function(message)
+							Logging.warn("%s", tostring(message))
+							Logging.trace("Session terminated due to error")
 							self.currentSession = nil
 
 							self:setState({
@@ -145,12 +146,13 @@ function App:didMount()
 		if self.state.sessionStatus == SessionStatus.Connected then
 			Logging.trace("Disconnecting session")
 
+			self.currentSession:disconnect()
 			self.currentSession = nil
 			self:setState({
 				sessionStatus = SessionStatus.Disconnected,
 			})
 
-			error("TODO: Actually disconnect old session")
+			Logging.trace("Session terminated by user")
 		elseif self.state.sessionStatus == SessionStatus.Disconnected then
 			Logging.trace("Starting session configuration")
 

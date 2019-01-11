@@ -1,66 +1,99 @@
+local Rojo = script:FindFirstAncestor("Rojo")
+
+local Promise = require(Rojo.Promise)
+
 local ApiContext = require(script.Parent.ApiContext)
-local Logging = require(script.Parent.Logging)
 local Reconciler = require(script.Parent.Reconciler)
 
 local Session = {}
 Session.__index = Session
 
 function Session.new(config)
-	local self = {}
-
-	self.onError = config.onError
-
-	local hasErrors = false
-
-	local reconciler
-
 	local remoteUrl = ("http://%s:%s"):format(config.address, config.port)
-
 	local api = ApiContext.new(remoteUrl)
 
-	ApiContext:onMessage(function(message)
-		local requestedIds = {}
-
-		for _, id in ipairs(message.added) do
-			table.insert(requestedIds, id)
-		end
-
-		for _, id in ipairs(message.updated) do
-			table.insert(requestedIds, id)
-		end
-
-		for _, id in ipairs(message.removed) do
-			table.insert(requestedIds, id)
-		end
-
-		return api:read(requestedIds)
-			:andThen(function(response)
-				return reconciler:applyUpdate(requestedIds, response.instances)
-			end)
-			:catch(function(message)
-				hasErrors = true
-				Logging.warn("%s", tostring(message))
-				self.onError()
-			end)
-	end)
+	local self = {
+		onError = config.onError,
+		disconnected = false,
+		reconciler = nil,
+		api = api,
+	}
 
 	api:connect()
 		:andThen(function()
-			reconciler = Reconciler.new(api.instanceMetadataMap)
+			if self.disconnected then
+				return Promise.resolve()
+			end
+
+			self.reconciler = Reconciler.new(api.instanceMetadataMap)
 
 			return api:read({api.rootInstanceId})
-		end)
-		:andThen(function(response)
-			reconciler:reconcile(response.instances, api.rootInstanceId, game)
-			return api:retrieveMessages()
+				:andThen(function(response)
+					if self.disconnected then
+						return Promise.resolve()
+					end
+
+					self.reconciler:reconcile(response.instances, api.rootInstanceId, game)
+					return self:__processMessages()
+				end)
 		end)
 		:catch(function(message)
-			hasErrors = true
-			Logging.warn("%s", tostring(message))
-			self.onError()
+			self.disconnected = true
+			self.onError(message)
 		end)
 
-	return not hasErrors, setmetatable(self, Session)
+	return not self.disconnected, setmetatable(self, Session)
+end
+
+function Session:__processMessages()
+	if self.disconnected then
+		return Promise.resolve()
+	end
+
+	return self.api:retrieveMessages()
+		:andThen(function(messages)
+			local promise = Promise.resolve(nil)
+
+			for _, message in ipairs(messages) do
+				promise = promise:andThen(function()
+					return self:__onMessage(message)
+				end)
+			end
+
+			return promise
+		end)
+		:andThen(function()
+			return self:__processMessages()
+		end)
+end
+
+function Session:__onMessage(message)
+	if self.disconnected then
+		return Promise.resolve()
+	end
+
+	local requestedIds = {}
+
+	for _, id in ipairs(message.added) do
+		table.insert(requestedIds, id)
+	end
+
+	for _, id in ipairs(message.updated) do
+		table.insert(requestedIds, id)
+	end
+
+	for _, id in ipairs(message.removed) do
+		table.insert(requestedIds, id)
+	end
+
+	return self.api:read(requestedIds)
+		:andThen(function(response)
+			return self.reconciler:applyUpdate(requestedIds, response.instances)
+		end)
+end
+
+function Session:disconnect()
+	self.disconnected = true
 end
 
 return Session
