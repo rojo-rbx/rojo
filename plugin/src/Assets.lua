@@ -11,8 +11,8 @@ local Assets = {
 	Slices = {
 		GrayBox = {
 			asset = sheetAsset,
-			offset = Vector2.new(148, 433),
-			size = Vector2.new(36, 36),
+			offset = Vector2.new(147, 433),
+			size = Vector2.new(38, 36),
 			center = Rect.new(8, 8, 9, 9),
 		},
 		GrayButton02 = {
