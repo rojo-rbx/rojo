@@ -97,10 +97,10 @@ function ApiContext:connect()
 			end
 
 			self.serverId = body.serverId
-			self.connected = true
 			self.partitionRoutes = body.partitions
 			self.rootInstanceId = body.rootInstanceId
 			self.instanceMetadataMap = body.instanceMetadataMap
+			self.connected = true
 		end)
 end
 

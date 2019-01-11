@@ -87,7 +87,7 @@ function App:render()
 				startSession = function(address, port)
 					Logging.trace("Starting new session")
 
-					self.currentSession = Session.new({
+					local success, session = Session.new({
 						address = address,
 						port = port,
 						onError = function()
@@ -100,9 +100,12 @@ function App:render()
 						end
 					})
 
-					self:setState({
-						sessionStatus = SessionStatus.Connected,
-					})
+					if success then
+						self.currentSession = session
+						self:setState({
+							sessionStatus = SessionStatus.Connected,
+						})
+					end
 				end,
 				cancel = function()
 					Logging.trace("Canceling session configuration")

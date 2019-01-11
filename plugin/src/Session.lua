@@ -10,6 +10,8 @@ function Session.new(config)
 
 	self.onError = config.onError
 
+	local hasErrors = false
+
 	local reconciler
 
 	local remoteUrl = ("http://%s:%s"):format(config.address, config.port)
@@ -36,6 +38,7 @@ function Session.new(config)
 				return reconciler:applyUpdate(requestedIds, response.instances)
 			end)
 			:catch(function(message)
+				hasErrors = true
 				Logging.warn("%s", tostring(message))
 				self.onError()
 			end)
@@ -52,11 +55,12 @@ function Session.new(config)
 			return api:retrieveMessages()
 		end)
 		:catch(function(message)
+			hasErrors = true
 			Logging.warn("%s", tostring(message))
 			self.onError()
 		end)
 
-	return setmetatable(self, Session)
+	return not hasErrors, setmetatable(self, Session)
 end
 
 return Session

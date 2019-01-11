@@ -1,6 +1,3 @@
-local Selection = game:GetService("Selection")
-local HttpService = game:GetService("HttpService")
-
 local Logging = require(script.Parent.Logging)
 
 local HttpError = {}
@@ -70,10 +67,6 @@ end
 
 function HttpError:report()
 	Logging.warn(self.message)
-
-	if self.type == HttpError.Error.HttpNotEnabled then
-		Selection:Set(HttpService)
-	end
 end
 
 return HttpError
