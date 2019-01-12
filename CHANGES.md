@@ -10,13 +10,14 @@
     * Generates `rbxm`, `rbxmx`, `rbxl`, or `rbxlx` files out of your project
     * Usage: `rojo build <PROJECT> --output <OUTPUT>.rbxm`
 * Added `rojo upload` command
-    * Generates and uploads a place file to roblox.com out of your project
-    * Usage: `rojo upload <PROJECT> --cookie "<ROBLOSECURITY>" --place_id <PLACE_ID>`
+    * Generates and uploads a place or model to roblox.com out of your project
+    * Usage: `rojo upload <PROJECT> --cookie "<ROBLOSECURITY>" --asset_id <PLACE_ID>`
 * New plugin
     * Only one button now, "Connect"
     * New UI to pick server address and port
     * Better error reporting
 * Added support for `.csv` files turning into `LocalizationTable` instances
+* Added support for `.txt` files turning into `StringValue` instances
 * Added debug visualization code to diagnose problems
     * `/visualize/rbx` and `/visualize/imfs` show instance and file state respectively; they require GraphViz to be installed on your machine.
 * Added optional place ID restrictions to project files
