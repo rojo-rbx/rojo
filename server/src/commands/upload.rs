@@ -29,6 +29,9 @@ pub enum UploadError {
 
     #[fail(display = "HTTP error: {}", _0)]
     HttpError(#[fail(cause)] reqwest::Error),
+
+    #[fail(display = "XML model file error")]
+    XmlModelEncodeError(rbx_xml::EncodeError),
 }
 
 impl From<ProjectLoadFuzzyError> for UploadError {
@@ -46,6 +49,12 @@ impl From<io::Error> for UploadError {
 impl From<reqwest::Error> for UploadError {
     fn from(error: reqwest::Error) -> UploadError {
         UploadError::HttpError(error)
+    }
+}
+
+impl From<rbx_xml::EncodeError> for UploadError {
+    fn from(error: rbx_xml::EncodeError) -> UploadError {
+        UploadError::XmlModelEncodeError(error)
     }
 }
 
@@ -77,10 +86,10 @@ pub fn upload(options: &UploadOptions) -> Result<(), UploadError> {
     match options.kind {
         Some("place") | None => {
             let top_level_ids = tree.get_instance(root_id).unwrap().get_children_ids();
-            rbx_xml::encode(&tree, top_level_ids, &mut contents);
+            rbx_xml::encode(&tree, top_level_ids, &mut contents)?;
         },
         Some("model") => {
-            rbx_xml::encode(&tree, &[root_id], &mut contents);
+            rbx_xml::encode(&tree, &[root_id], &mut contents)?;
         },
         Some(invalid) => return Err(UploadError::InvalidKind(invalid.to_owned())),
     }

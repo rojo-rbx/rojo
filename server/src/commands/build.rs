@@ -49,6 +49,9 @@ pub enum BuildError {
 
     #[fail(display = "IO error: {}", _0)]
     IoError(#[fail(cause)] io::Error),
+
+    #[fail(display = "XML model file error")]
+    XmlModelEncodeError(rbx_xml::EncodeError),
 }
 
 impl From<ProjectLoadFuzzyError> for BuildError {
@@ -60,6 +63,12 @@ impl From<ProjectLoadFuzzyError> for BuildError {
 impl From<io::Error> for BuildError {
     fn from(error: io::Error) -> BuildError {
         BuildError::IoError(error)
+    }
+}
+
+impl From<rbx_xml::EncodeError> for BuildError {
+    fn from(error: rbx_xml::EncodeError) -> BuildError {
+        BuildError::XmlModelEncodeError(error)
     }
 }
 
@@ -88,7 +97,7 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
             // descendants.
 
             let root_id = tree.get_root_id();
-            rbx_xml::encode(&tree, &[root_id], &mut file);
+            rbx_xml::encode(&tree, &[root_id], &mut file)?;
         },
         OutputKind::Rbxlx => {
             // Place files don't contain an entry for the DataModel, but our
@@ -96,7 +105,7 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
 
             let root_id = tree.get_root_id();
             let top_level_ids = tree.get_instance(root_id).unwrap().get_children_ids();
-            rbx_xml::encode(&tree, top_level_ids, &mut file);
+            rbx_xml::encode(&tree, top_level_ids, &mut file)?;
         },
         OutputKind::Rbxm => {
             let root_id = tree.get_root_id();
