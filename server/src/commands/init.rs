@@ -15,11 +15,9 @@ pub enum InitError {
     ProjectInitError(#[fail(cause)] ProjectInitError)
 }
 
-impl From<ProjectInitError> for InitError {
-    fn from(error: ProjectInitError) -> InitError {
-        InitError::ProjectInitError(error)
-    }
-}
+impl_from!(InitError {
+    ProjectInitError => ProjectInitError,
+});
 
 #[derive(Debug)]
 pub struct InitOptions<'a> {

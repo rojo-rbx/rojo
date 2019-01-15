@@ -58,29 +58,12 @@ pub enum BuildError {
     BinaryModelEncodeError(rbx_binary::EncodeError)
 }
 
-impl From<ProjectLoadFuzzyError> for BuildError {
-    fn from(error: ProjectLoadFuzzyError) -> BuildError {
-        BuildError::ProjectLoadError(error)
-    }
-}
-
-impl From<io::Error> for BuildError {
-    fn from(error: io::Error) -> BuildError {
-        BuildError::IoError(error)
-    }
-}
-
-impl From<rbx_xml::EncodeError> for BuildError {
-    fn from(error: rbx_xml::EncodeError) -> BuildError {
-        BuildError::XmlModelEncodeError(error)
-    }
-}
-
-impl From<rbx_binary::EncodeError> for BuildError {
-    fn from(error: rbx_binary::EncodeError) -> BuildError {
-        BuildError::BinaryModelEncodeError(error)
-    }
-}
+impl_from!(BuildError {
+    ProjectLoadFuzzyError => ProjectLoadError,
+    io::Error => IoError,
+    rbx_xml::EncodeError => XmlModelEncodeError,
+    rbx_binary::EncodeError => BinaryModelEncodeError
+});
 
 pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
     let output_kind = options.output_kind

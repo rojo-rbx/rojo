@@ -35,29 +35,12 @@ pub enum UploadError {
     XmlModelEncodeError(rbx_xml::EncodeError),
 }
 
-impl From<ProjectLoadFuzzyError> for UploadError {
-    fn from(error: ProjectLoadFuzzyError) -> UploadError {
-        UploadError::ProjectLoadError(error)
-    }
-}
-
-impl From<io::Error> for UploadError {
-    fn from(error: io::Error) -> UploadError {
-        UploadError::IoError(error)
-    }
-}
-
-impl From<reqwest::Error> for UploadError {
-    fn from(error: reqwest::Error) -> UploadError {
-        UploadError::HttpError(error)
-    }
-}
-
-impl From<rbx_xml::EncodeError> for UploadError {
-    fn from(error: rbx_xml::EncodeError) -> UploadError {
-        UploadError::XmlModelEncodeError(error)
-    }
-}
+impl_from!(UploadError {
+    ProjectLoadFuzzyError => ProjectLoadError,
+    io::Error => IoError,
+    reqwest::Error => HttpError,
+    rbx_xml::EncodeError => XmlModelEncodeError,
+});
 
 #[derive(Debug)]
 pub struct UploadOptions<'a> {

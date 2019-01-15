@@ -26,11 +26,9 @@ pub enum ServeError {
    ProjectLoadError(#[fail(cause)] ProjectLoadFuzzyError),
 }
 
-impl From<ProjectLoadFuzzyError> for ServeError {
-    fn from(error: ProjectLoadFuzzyError) -> ServeError {
-        ServeError::ProjectLoadError(error)
-    }
-}
+impl_from!(ServeError {
+    ProjectLoadFuzzyError => ProjectLoadError,
+});
 
 pub fn serve(options: &ServeOptions) -> Result<(), ServeError> {
     info!("Looking for project at {}", options.fuzzy_project_path.display());

@@ -1,3 +1,8 @@
+// Macros
+#[macro_use]
+pub mod impl_from;
+
+// Other modules
 pub mod commands;
 pub mod fs_watcher;
 pub mod imfs;
