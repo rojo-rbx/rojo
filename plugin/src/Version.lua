@@ -34,7 +34,13 @@ function Version.compare(a, b)
 end
 
 function Version.display(version)
-	return table.concat(version, ".")
+	local output = ("%d.%d.%d"):format(version[1], version[2], version[3])
+
+	if version[4] ~= nil then
+		output = output .. version[4]
+	end
+
+	return output
 end
 
 return Version
