@@ -9,7 +9,7 @@ use std::{
 
 use failure::Fail;
 
-use rbx_tree::{RbxTree, RbxInstance, RbxValue, RbxId};
+use rbx_tree::{RbxTree, RbxInstanceProperties, RbxValue, RbxId};
 
 use crate::{
     project::{Project, ProjectNode, InstanceProjectNodeMetadata},
@@ -346,7 +346,7 @@ fn snapshot_xml_model<'a>(
     instance_name: Cow<'a, str>,
     file: &ImfsFile,
 ) -> Result<Option<RbxSnapshotInstance<'a>>, SnapshotError> {
-    let mut temp_tree = RbxTree::new(RbxInstance {
+    let mut temp_tree = RbxTree::new(RbxInstanceProperties {
         name: "Temp".to_owned(),
         class_name: "Folder".to_owned(),
         properties: HashMap::new(),
@@ -377,7 +377,7 @@ fn snapshot_binary_model<'a>(
     instance_name: Cow<'a, str>,
     file: &ImfsFile,
 ) -> Result<Option<RbxSnapshotInstance<'a>>, SnapshotError> {
-    let mut temp_tree = RbxTree::new(RbxInstance {
+    let mut temp_tree = RbxTree::new(RbxInstanceProperties {
         name: "Temp".to_owned(),
         class_name: "Folder".to_owned(),
         properties: HashMap::new(),

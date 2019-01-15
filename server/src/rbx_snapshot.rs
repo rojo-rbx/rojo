@@ -6,7 +6,7 @@ use std::{
     path::PathBuf,
 };
 
-use rbx_tree::{RbxTree, RbxId, RbxInstance, RbxValue};
+use rbx_tree::{RbxTree, RbxId, RbxInstanceProperties, RbxValue};
 
 use crate::{
     path_map::PathMap,
@@ -159,14 +159,14 @@ pub fn reconcile_subtree(
     reconcile_instance_children(tree, id, snapshot, path_map, instance_metadata_map, changes);
 }
 
-fn reify_core(snapshot: &RbxSnapshotInstance) -> RbxInstance {
+fn reify_core(snapshot: &RbxSnapshotInstance) -> RbxInstanceProperties {
     let mut properties = HashMap::new();
 
     for (key, value) in &snapshot.properties {
         properties.insert(key.clone(), value.clone());
     }
 
-    let instance = RbxInstance {
+    let instance = RbxInstanceProperties {
         name: snapshot.name.to_string(),
         class_name: snapshot.class_name.to_string(),
         properties,
@@ -175,7 +175,7 @@ fn reify_core(snapshot: &RbxSnapshotInstance) -> RbxInstance {
     instance
 }
 
-fn reconcile_instance_properties(instance: &mut RbxInstance, snapshot: &RbxSnapshotInstance) -> bool {
+fn reconcile_instance_properties(instance: &mut RbxInstanceProperties, snapshot: &RbxSnapshotInstance) -> bool {
     let mut has_diffs = false;
 
     if instance.name != snapshot.name {

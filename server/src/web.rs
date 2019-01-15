@@ -10,7 +10,7 @@ use rouille::{
     Request,
     Response,
 };
-use rbx_tree::{RbxId, RootedRbxInstance};
+use rbx_tree::{RbxId, RbxInstance};
 
 use crate::{
     session::Session,
@@ -28,7 +28,7 @@ use crate::{
 #[derive(Debug, Serialize, Deserialize)]
 pub struct InstanceWithMetadata<'a> {
     #[serde(flatten)]
-    pub instance: Cow<'a, RootedRbxInstance>,
+    pub instance: Cow<'a, RbxInstance>,
 
     #[serde(rename = "Metadata")]
     pub metadata: Option<Cow<'a, InstanceProjectNodeMetadata>>,

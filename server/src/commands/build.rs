@@ -52,6 +52,9 @@ pub enum BuildError {
 
     #[fail(display = "XML model file error")]
     XmlModelEncodeError(rbx_xml::EncodeError),
+
+    #[fail(display = "Binary model file error")]
+    BinaryModelEncodeError(rbx_binary::EncodeError)
 }
 
 impl From<ProjectLoadFuzzyError> for BuildError {
@@ -69,6 +72,12 @@ impl From<io::Error> for BuildError {
 impl From<rbx_xml::EncodeError> for BuildError {
     fn from(error: rbx_xml::EncodeError) -> BuildError {
         BuildError::XmlModelEncodeError(error)
+    }
+}
+
+impl From<rbx_binary::EncodeError> for BuildError {
+    fn from(error: rbx_binary::EncodeError) -> BuildError {
+        BuildError::BinaryModelEncodeError(error)
     }
 }
 
