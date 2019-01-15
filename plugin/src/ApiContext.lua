@@ -26,7 +26,6 @@ function ApiContext.new(baseUrl)
 		baseUrl = baseUrl,
 		serverId = nil,
 		rootInstanceId = nil,
-		instanceMetadataMap = nil,
 		messageCursor = -1,
 		partitionRoutes = nil,
 	}
@@ -96,7 +95,6 @@ function ApiContext:connect()
 			self.serverId = body.serverId
 			self.partitionRoutes = body.partitions
 			self.rootInstanceId = body.rootInstanceId
-			self.instanceMetadataMap = body.instanceMetadataMap
 		end)
 end
 
