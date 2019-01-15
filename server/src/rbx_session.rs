@@ -155,8 +155,8 @@ impl RbxSession {
         &self.tree
     }
 
-    pub fn get_instance_metadata_map(&self) -> &HashMap<RbxId, InstanceProjectNodeMetadata> {
-        &self.instance_metadata_map
+    pub fn get_instance_metadata(&self, id: RbxId) -> Option<&InstanceProjectNodeMetadata> {
+        self.instance_metadata_map.get(&id)
     }
 
     pub fn debug_get_path_map(&self) -> &PathMap<RbxId> {

@@ -5,10 +5,11 @@ use std::{
     process::{Command, Stdio},
 };
 
-use rbx_tree::{RbxTree, RbxId};
+use rbx_tree::RbxId;
 
 use crate::{
     imfs::{Imfs, ImfsItem},
+    rbx_session::RbxSession,
 };
 
 static GRAPHVIZ_HEADER: &str = r#"
@@ -41,13 +42,13 @@ pub fn graphviz_to_svg(source: &str) -> String {
     String::from_utf8(output.stdout).expect("Failed to parse stdout as UTF-8")
 }
 
-pub struct VisualizeRbxTree<'a>(pub &'a RbxTree);
+pub struct VisualizeRbxSession<'a>(pub &'a RbxSession);
 
-impl<'a> fmt::Display for VisualizeRbxTree<'a> {
+impl<'a> fmt::Display for VisualizeRbxSession<'a> {
     fn fmt(&self, output: &mut fmt::Formatter) -> fmt::Result {
         writeln!(output, "{}", GRAPHVIZ_HEADER)?;
 
-        visualize_rbx_node(self.0, self.0.get_root_id(), output)?;
+        visualize_rbx_node(self.0, self.0.get_tree().get_root_id(), output)?;
 
         writeln!(output, "}}")?;
 
@@ -55,14 +56,26 @@ impl<'a> fmt::Display for VisualizeRbxTree<'a> {
     }
 }
 
-fn visualize_rbx_node(tree: &RbxTree, id: RbxId, output: &mut fmt::Formatter) -> fmt::Result {
-    let node = tree.get_instance(id).unwrap();
+fn visualize_rbx_node(session: &RbxSession, id: RbxId, output: &mut fmt::Formatter) -> fmt::Result {
+    let node = session.get_tree().get_instance(id).unwrap();
 
-    writeln!(output, "    \"{}\" [label=\"{} ({})|{}\"]", id, node.name, node.class_name, id)?;
+    let mut node_label = format!("{}|{}|{}", node.name, node.class_name, id);
+
+    if let Some(metadata) = session.get_instance_metadata(id) {
+        node_label.push('|');
+        node_label.push_str(&serde_json::to_string(metadata).unwrap());
+    }
+
+    node_label = node_label
+        .replace("\"", "&quot;")
+        .replace("{", "\\{")
+        .replace("}", "\\}");
+
+    writeln!(output, "    \"{}\" [label=\"{}\"]", id, node_label)?;
 
     for &child_id in node.get_children_ids() {
         writeln!(output, "    \"{}\" -> \"{}\"", id, child_id)?;
-        visualize_rbx_node(tree, child_id, output)?;
+        visualize_rbx_node(session, child_id, output)?;
     }
 
     Ok(())

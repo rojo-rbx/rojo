@@ -17,8 +17,22 @@ use crate::{
     session_id::SessionId,
     project::InstanceProjectNodeMetadata,
     rbx_snapshot::InstanceChanges,
-    visualize::{VisualizeRbxTree, VisualizeImfs, graphviz_to_svg},
+    visualize::{VisualizeRbxSession, VisualizeImfs, graphviz_to_svg},
 };
+
+/// Used to attach metadata specific to Rojo to instances, which come from the
+/// rbx_tree crate.
+///
+/// Both fields are wrapped in Cow in order to make owned-vs-borrowed simpler
+/// for tests.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InstanceWithMetadata<'a> {
+    #[serde(flatten)]
+    pub instance: Cow<'a, RootedRbxInstance>,
+
+    #[serde(rename = "Metadata")]
+    pub metadata: Option<Cow<'a, InstanceProjectNodeMetadata>>,
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -28,7 +42,6 @@ pub struct ServerInfoResponse<'a> {
     pub protocol_version: u64,
     pub expected_place_ids: Option<HashSet<u64>>,
     pub root_instance_id: RbxId,
-    pub instance_metadata_map: Cow<'a, HashMap<RbxId, InstanceProjectNodeMetadata>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -36,7 +49,7 @@ pub struct ServerInfoResponse<'a> {
 pub struct ReadResponse<'a> {
     pub session_id: SessionId,
     pub message_cursor: u32,
-    pub instances: HashMap<RbxId, Cow<'a, RootedRbxInstance>>,
+    pub instances: HashMap<RbxId, InstanceWithMetadata<'a>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -81,7 +94,6 @@ impl Server {
                     session_id: self.session.session_id,
                     expected_place_ids: self.session.project.serve_place_ids.clone(),
                     root_instance_id: tree.get_root_id(),
-                    instance_metadata_map: Cow::Borrowed(rbx_session.get_instance_metadata_map()),
                 })
             },
 
@@ -148,10 +160,22 @@ impl Server {
 
                 for &requested_id in &requested_ids {
                     if let Some(instance) = tree.get_instance(requested_id) {
-                        instances.insert(instance.get_id(), Cow::Borrowed(instance));
+                        let metadata = rbx_session.get_instance_metadata(requested_id)
+                            .map(Cow::Borrowed);
+
+                        instances.insert(instance.get_id(), InstanceWithMetadata {
+                            instance: Cow::Borrowed(instance),
+                            metadata,
+                        });
 
                         for descendant in tree.descendants(requested_id) {
-                            instances.insert(descendant.get_id(), Cow::Borrowed(descendant));
+                            let descendant_meta = rbx_session.get_instance_metadata(descendant.get_id())
+                                .map(Cow::Borrowed);
+
+                            instances.insert(descendant.get_id(), InstanceWithMetadata {
+                                instance: Cow::Borrowed(descendant),
+                                metadata: descendant_meta,
+                            });
                         }
                     }
                 }
@@ -165,9 +189,8 @@ impl Server {
 
             (GET) (/visualize/rbx) => {
                 let rbx_session = self.session.rbx_session.lock().unwrap();
-                let tree = rbx_session.get_tree();
 
-                let dot_source = format!("{}", VisualizeRbxTree(tree));
+                let dot_source = format!("{}", VisualizeRbxSession(&rbx_session));
 
                 Response::svg(graphviz_to_svg(&dot_source))
             },
