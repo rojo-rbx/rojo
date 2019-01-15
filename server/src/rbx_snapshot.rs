@@ -7,6 +7,7 @@ use std::{
 };
 
 use rbx_tree::{RbxTree, RbxId, RbxInstanceProperties, RbxValue};
+use serde_derive::{Serialize, Deserialize};
 
 use crate::{
     path_map::PathMap,

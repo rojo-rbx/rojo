@@ -7,6 +7,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use serde_derive::{Serialize, Deserialize};
 use log::{info, trace};
 use failure::Fail;
 use rbx_tree::{RbxTree, RbxInstanceProperties, RbxValue, RbxId};

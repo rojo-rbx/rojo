@@ -3,6 +3,7 @@ use std::{
     collections::{HashMap, HashSet},
 };
 
+use serde_derive::Serialize;
 use log::warn;
 
 #[derive(Debug, Serialize)]

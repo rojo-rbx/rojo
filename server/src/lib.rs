@@ -1,9 +1,3 @@
-#[macro_use]
-extern crate serde_derive;
-
-#[cfg(test)]
-extern crate tempfile;
-
 pub mod commands;
 pub mod fs_watcher;
 pub mod imfs;

@@ -5,6 +5,8 @@ use std::{
     io,
 };
 
+use serde_derive::{Serialize, Deserialize};
+
 use crate::project::{Project, ProjectNode};
 
 fn add_sync_points(imfs: &mut Imfs, project_node: &ProjectNode) -> io::Result<()> {

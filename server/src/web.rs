@@ -4,6 +4,7 @@ use std::{
     sync::{mpsc, Arc},
 };
 
+use serde_derive::{Serialize, Deserialize};
 use log::trace;
 use rouille::{
     self,

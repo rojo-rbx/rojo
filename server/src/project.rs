@@ -6,9 +6,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use maplit::hashmap;
 use failure::Fail;
+use maplit::hashmap;
 use rbx_tree::RbxValue;
+use serde_derive::{Serialize, Deserialize};
 
 pub static PROJECT_FILENAME: &'static str = "roblox-project.json";
 
