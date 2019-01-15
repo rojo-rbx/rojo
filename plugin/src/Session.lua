@@ -15,7 +15,7 @@ function Session.new(config)
 	local self = {
 		onError = config.onError,
 		disconnected = false,
-		reconciler = nil,
+		reconciler = Reconciler.new(),
 		api = api,
 	}
 
@@ -24,8 +24,6 @@ function Session.new(config)
 			if self.disconnected then
 				return Promise.resolve()
 			end
-
-			self.reconciler = Reconciler.new(api.instanceMetadataMap)
 
 			return api:read({api.rootInstanceId})
 				:andThen(function(response)

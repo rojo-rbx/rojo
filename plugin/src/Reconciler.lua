@@ -100,10 +100,9 @@ end
 local Reconciler = {}
 Reconciler.__index = Reconciler
 
-function Reconciler.new(instanceMetadataMap)
+function Reconciler.new()
 	local self = {
 		instanceMap = makeInstanceMap(),
-		instanceMetadataMap = instanceMetadataMap,
 	}
 
 	return setmetatable(self, Reconciler)
@@ -176,7 +175,7 @@ function Reconciler:reconcile(virtualInstancesById, id, instance)
 		end
 	end
 
-	if self:__shouldClearUnknownInstances(id) then
+	if self:__shouldClearUnknownInstances(virtualInstance) then
 		for existingChildInstance in pairs(unvisitedExistingChildren) do
 			self.instanceMap:removeInstance(existingChildInstance)
 			existingChildInstance:Destroy()
@@ -204,9 +203,9 @@ function Reconciler:reconcile(virtualInstancesById, id, instance)
 	return instance
 end
 
-function Reconciler:__shouldClearUnknownInstances(id)
-	if self.instanceMetadataMap[id] then
-		return not self.instanceMetadataMap[id].ignoreUnknownInstances
+function Reconciler:__shouldClearUnknownInstances(virtualInstance)
+	if virtualInstance.Metadata ~= nil then
+		return not virtualInstance.Metadata.ignoreUnknownInstances
 	else
 		return true
 	end
