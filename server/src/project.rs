@@ -12,7 +12,8 @@ use rbx_tree::RbxValue;
 
 pub static PROJECT_FILENAME: &'static str = "roblox-project.json";
 
-// Serde is silly.
+// Methods used for Serde's default value system, which doesn't support using
+// value literals directly, only functions that return values.
 const fn yeah() -> bool {
     true
 }
@@ -21,6 +22,40 @@ const fn is_true(value: &bool) -> bool {
     *value
 }
 
+/// SourceProject is the format that users author projects on-disk. Since we
+/// want to do things like transforming paths to be absolute before handing them
+/// off to the rest of Rojo, we use this intermediate struct.
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SourceProject {
+    name: String,
+    tree: SourceProjectNode,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    serve_port: Option<u16>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    serve_place_ids: Option<HashSet<u64>>,
+}
+
+impl SourceProject {
+    /// Consumes the SourceProject and yields a Project, ready for prime-time.
+    pub fn into_project(self, project_file_location: &Path) -> Project {
+        let tree = self.tree.into_project_node(project_file_location);
+
+        Project {
+            name: self.name,
+            tree,
+            serve_port: self.serve_port,
+            serve_place_ids: self.serve_place_ids,
+            file_location: PathBuf::from(project_file_location),
+        }
+    }
+}
+
+/// Similar to SourceProject, the structure of nodes in the project tree is
+/// slightly different on-disk than how we want to handle them in the rest of
+/// Rojo.
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 enum SourceProjectNode {
@@ -44,6 +79,7 @@ enum SourceProjectNode {
 }
 
 impl SourceProjectNode {
+    /// Consumes the SourceProjectNode and turns it into a ProjectNode.
     pub fn into_project_node(self, project_file_location: &Path) -> ProjectNode {
         match self {
             SourceProjectNode::Instance { class_name, mut children, properties, ignore_unknown_instances } => {
@@ -78,31 +114,7 @@ impl SourceProjectNode {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct SourceProject {
-    name: String,
-    tree: SourceProjectNode,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    serve_port: Option<u16>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    serve_place_ids: Option<HashSet<u64>>,
-}
-
-impl SourceProject {
-    pub fn into_project(self, project_file_location: &Path) -> Project {
-        let tree = self.tree.into_project_node(project_file_location);
-
-        Project {
-            name: self.name,
-            tree,
-            serve_port: self.serve_port,
-            serve_place_ids: self.serve_place_ids,
-            file_location: PathBuf::from(project_file_location),
-        }
-    }
-}
-
+/// Error returned by Project::load_exact
 #[derive(Debug, Fail)]
 pub enum ProjectLoadExactError {
     #[fail(display = "IO error: {}", _0)]
@@ -112,6 +124,7 @@ pub enum ProjectLoadExactError {
     JsonError(#[fail(cause)] serde_json::Error),
 }
 
+/// Error returned by Project::load_fuzzy
 #[derive(Debug, Fail)]
 pub enum ProjectLoadFuzzyError {
     #[fail(display = "Project not found")]
@@ -133,6 +146,7 @@ impl From<ProjectLoadExactError> for ProjectLoadFuzzyError {
     }
 }
 
+/// Error returned by Project::init_place and Project::init_model
 #[derive(Debug, Fail)]
 pub enum ProjectInitError {
     AlreadyExists(PathBuf),
@@ -150,6 +164,7 @@ impl fmt::Display for ProjectInitError {
     }
 }
 
+/// Error returned by Project::save
 #[derive(Debug, Fail)]
 pub enum ProjectSaveError {
     #[fail(display = "JSON error: {}", _0)]
@@ -340,7 +355,7 @@ impl Project {
         // TODO: Check for specific error kinds, convert 'not found' to Result.
         let location_metadata = fs::metadata(start_location).ok()?;
 
-        // If this is a file, we should assume it's the config we want
+        // If this is a file, assume it's the config the user was looking for.
         if location_metadata.is_file() {
             return Some(start_location.to_path_buf());
         } else if location_metadata.is_dir() {

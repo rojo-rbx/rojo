@@ -25,6 +25,7 @@ digraph RojoTree {
     ];
 "#;
 
+/// Compiles DOT source to SVG by invoking dot on the command line.
 pub fn graphviz_to_svg(source: &str) -> String {
     let mut child = Command::new("dot")
         .arg("-Tsvg")
@@ -42,6 +43,7 @@ pub fn graphviz_to_svg(source: &str) -> String {
     String::from_utf8(output.stdout).expect("Failed to parse stdout as UTF-8")
 }
 
+/// A Display wrapper struct to visualize an RbxSession as SVG.
 pub struct VisualizeRbxSession<'a>(pub &'a RbxSession);
 
 impl<'a> fmt::Display for VisualizeRbxSession<'a> {
@@ -81,6 +83,7 @@ fn visualize_rbx_node(session: &RbxSession, id: RbxId, output: &mut fmt::Formatt
     Ok(())
 }
 
+/// A Display wrapper struct to visualize an Imfs as SVG.
 pub struct VisualizeImfs<'a>(pub &'a Imfs);
 
 impl<'a> fmt::Display for VisualizeImfs<'a> {

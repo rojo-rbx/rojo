@@ -9,8 +9,9 @@ struct PathMapNode<T> {
     children: HashSet<PathBuf>,
 }
 
-/// A map from paths to instance IDs, with a bit of additional data that enables
-/// removing a path and all of its child paths from the tree more quickly.
+/// A map from paths to another type, like instance IDs, with a bit of
+/// additional data that enables removing a path and all of its child paths from
+/// the tree more quickly.
 #[derive(Debug, Serialize)]
 pub struct PathMap<T> {
     nodes: HashMap<PathBuf, PathMapNode<T>>,
@@ -71,6 +72,14 @@ impl<T> PathMap<T> {
         Some(root_value)
     }
 
+    /// Traverses the route between `start_path` and `target_path` and returns
+    /// the path closest to `target_path` in the tree.
+    ///
+    /// This is useful when trying to determine what paths need to be marked as
+    /// altered when a change to a path is registered. Depending on the order of
+    /// FS events, a file remove event could be followed by that file's
+    /// directory being removed, in which case we should process that
+    /// directory's parent.
     pub fn descend(&self, start_path: &Path, target_path: &Path) -> PathBuf {
         let relative_path = target_path.strip_prefix(start_path)
             .expect("target_path did not begin with start_path");

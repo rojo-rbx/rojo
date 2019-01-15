@@ -19,6 +19,10 @@ pub fn get_listener_id() -> ListenerId {
     ListenerId(LAST_ID.fetch_add(1, Ordering::SeqCst))
 }
 
+/// A message queue with persistent history that can be subscribed to.
+///
+/// Definitely non-optimal, but a simple design that works well for the
+/// synchronous web server Rojo uses, Rouille.
 #[derive(Default)]
 pub struct MessageQueue<T> {
    messages: RwLock<Vec<T>>,
