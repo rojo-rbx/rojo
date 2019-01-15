@@ -4,6 +4,7 @@ use std::{
     io,
 };
 
+use log::info;
 use failure::Fail;
 
 use crate::{

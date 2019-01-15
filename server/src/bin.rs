@@ -1,11 +1,10 @@
-#[macro_use] extern crate log;
-
 use std::{
     path::{Path, PathBuf},
     env,
     process,
 };
 
+use log::error;
 use clap::clap_app;
 
 use librojo::commands;

@@ -7,8 +7,8 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use log::{info, trace};
 use failure::Fail;
-
 use rbx_tree::{RbxTree, RbxInstanceProperties, RbxValue, RbxId};
 
 use crate::{

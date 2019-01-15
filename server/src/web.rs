@@ -4,6 +4,7 @@ use std::{
     sync::{mpsc, Arc},
 };
 
+use log::trace;
 use rouille::{
     self,
     router,

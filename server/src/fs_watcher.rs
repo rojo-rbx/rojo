@@ -4,6 +4,7 @@ use std::{
     thread,
 };
 
+use log::info;
 use notify::{
     self,
     DebouncedEvent,

@@ -3,6 +3,7 @@ use std::{
     io,
 };
 
+use log::info;
 use failure::Fail;
 
 use reqwest::header::{ACCEPT, USER_AGENT, CONTENT_TYPE, COOKIE};
