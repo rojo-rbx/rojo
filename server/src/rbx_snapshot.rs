@@ -8,7 +8,7 @@ use std::{
 
 use serde_derive::{Serialize, Deserialize};
 use maplit::hashmap;
-use rbx_tree::RbxValue;
+use rbx_tree::{RbxTree, RbxValue, RbxInstanceProperties};
 use failure::Fail;
 
 use crate::{
@@ -24,7 +24,10 @@ use crate::{
         InstanceProjectNode,
         SyncPointProjectNode,
     },
-    snapshot_reconciler::RbxSnapshotInstance,
+    snapshot_reconciler::{
+        RbxSnapshotInstance,
+        snapshot_from_tree,
+    },
 };
 
 const INIT_MODULE_NAME: &str = "init.lua";
@@ -34,7 +37,7 @@ const INIT_CLIENT_NAME: &str = "init.client.lua";
 pub type SnapshotResult<'a> = Result<Option<RbxSnapshotInstance<'a>>, SnapshotError>;
 
 pub struct SnapshotMetadata<'meta> {
-    sync_point_names: &'meta mut HashMap<PathBuf, String>,
+    pub sync_point_names: &'meta mut HashMap<PathBuf, String>,
 }
 
 #[derive(Debug, Fail)]
@@ -140,7 +143,7 @@ fn snapshot_sync_point_node<'source>(
     Ok(Some(snapshot))
 }
 
-fn snapshot_imfs_path<'source>(
+pub fn snapshot_imfs_path<'source>(
     imfs: &'source Imfs,
     metadata: &mut SnapshotMetadata,
     path: &Path
@@ -159,7 +162,7 @@ fn snapshot_imfs_item<'source>(
     item: &'source ImfsItem,
 ) -> SnapshotResult<'source> {
     match item {
-        ImfsItem::File(file) => snapshot_imfs_file(imfs, metadata, file),
+        ImfsItem::File(file) => snapshot_imfs_file(metadata, file),
         ImfsItem::Directory(directory) => snapshot_imfs_directory(imfs, metadata, directory),
     }
 }
@@ -224,7 +227,6 @@ fn snapshot_imfs_directory<'source>(
 }
 
 fn snapshot_imfs_file<'source>(
-    imfs: &'source Imfs,
     metadata: &mut SnapshotMetadata,
     file: &'source ImfsFile,
 ) -> SnapshotResult<'source> {
@@ -232,11 +234,11 @@ fn snapshot_imfs_file<'source>(
         .map(|v| v.to_str().expect("Could not convert extension to UTF-8"));
 
     let mut maybe_snapshot = match extension {
-        Some("lua") => snapshot_lua_file(metadata, file)?,
-        Some("csv") => snapshot_csv_file(metadata, file)?,
-        Some("txt") => snapshot_txt_file(metadata, file)?,
-        Some("rbxmx") => snapshot_xml_model_file(metadata, file)?,
-        Some("rbxm") => snapshot_binary_model_file(metadata, file)?,
+        Some("lua") => snapshot_lua_file(file)?,
+        Some("csv") => snapshot_csv_file(file)?,
+        Some("txt") => snapshot_txt_file(file)?,
+        Some("rbxmx") => snapshot_xml_model_file(file)?,
+        Some("rbxm") => snapshot_binary_model_file(file)?,
         Some(_) | None => return Ok(None),
     };
 
@@ -251,7 +253,6 @@ fn snapshot_imfs_file<'source>(
 }
 
 fn snapshot_lua_file<'source>(
-    metadata: &mut SnapshotMetadata,
     file: &'source ImfsFile,
 ) -> SnapshotResult<'source> {
     let file_name = file.path
@@ -296,7 +297,6 @@ fn match_trailing<'a>(input: &'a str, trailer: &str) -> Option<&'a str> {
 }
 
 fn snapshot_txt_file<'source>(
-    metadata: &mut SnapshotMetadata,
     file: &'source ImfsFile,
 ) -> SnapshotResult<'source> {
     let instance_name = file.path
@@ -324,7 +324,6 @@ fn snapshot_txt_file<'source>(
 }
 
 fn snapshot_csv_file<'source>(
-    metadata: &mut SnapshotMetadata,
     file: &'source ImfsFile,
 ) -> SnapshotResult<'source> {
     let instance_name = file.path
@@ -389,15 +388,69 @@ struct LocalizationEntryJson {
 }
 
 fn snapshot_xml_model_file<'source>(
-    metadata: &mut SnapshotMetadata,
     file: &'source ImfsFile,
 ) -> SnapshotResult<'source> {
-    unimplemented!()
+    let instance_name = file.path
+        .file_stem().expect("Could not extract file stem")
+        .to_str().expect("Could not convert path to UTF-8");
+
+    let mut temp_tree = RbxTree::new(RbxInstanceProperties {
+        name: "Temp".to_owned(),
+        class_name: "Folder".to_owned(),
+        properties: HashMap::new(),
+    });
+
+    let root_id = temp_tree.get_root_id();
+    rbx_xml::decode(&mut temp_tree, root_id, file.contents.as_slice())
+        .map_err(|inner| SnapshotError::XmlModelDecodeError {
+            inner,
+            path: file.path.clone(),
+        })?;
+
+    let root_instance = temp_tree.get_instance(root_id).unwrap();
+    let children = root_instance.get_children_ids();
+
+    match children.len() {
+        0 => Ok(None),
+        1 => {
+            let mut snapshot = snapshot_from_tree(&temp_tree, children[0]).unwrap();
+            snapshot.name = Cow::Borrowed(instance_name);
+            Ok(Some(snapshot))
+        },
+        _ => panic!("Rojo doesn't have support for model files with multiple roots yet"),
+    }
 }
 
 fn snapshot_binary_model_file<'source>(
-    metadata: &mut SnapshotMetadata,
     file: &'source ImfsFile,
 ) -> SnapshotResult<'source> {
-    unimplemented!()
+    let instance_name = file.path
+        .file_stem().expect("Could not extract file stem")
+        .to_str().expect("Could not convert path to UTF-8");
+
+    let mut temp_tree = RbxTree::new(RbxInstanceProperties {
+        name: "Temp".to_owned(),
+        class_name: "Folder".to_owned(),
+        properties: HashMap::new(),
+    });
+
+    let root_id = temp_tree.get_root_id();
+    rbx_binary::decode(&mut temp_tree, root_id, file.contents.as_slice())
+        .map_err(|inner| SnapshotError::BinaryModelDecodeError {
+            inner,
+            path: file.path.clone(),
+        })?;
+
+    let root_instance = temp_tree.get_instance(root_id).unwrap();
+    let children = root_instance.get_children_ids();
+
+    match children.len() {
+        0 => Ok(None),
+        1 => {
+            let mut snapshot = snapshot_from_tree(&temp_tree, children[0]).unwrap();
+            snapshot.name = Cow::Borrowed(instance_name);
+            Ok(Some(snapshot))
+        },
+        _ => panic!("Rojo doesn't have support for model files with multiple roots yet"),
+    }
 }
