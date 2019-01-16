@@ -71,7 +71,6 @@ function App:init()
 	})
 
 	self.connectButton = nil
-	self.configButton = nil
 	self.currentSession = nil
 
 	self.displayedVersion = DevSettings:isEnabled()
@@ -166,15 +165,6 @@ function App:didMount()
 				sessionStatus = SessionStatus.Disconnected,
 			})
 		end
-	end)
-
-	self.configButton = toolbar:CreateButton(
-		"Configure",
-		"Configure the Rojo plugin",
-		Assets.Configure)
-	self.configButton.ClickableWhenViewportHidden = false
-	self.configButton.Click:Connect(function()
-		self.configButton:SetActive(false)
 	end)
 end
 
