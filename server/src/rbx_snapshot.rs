@@ -255,16 +255,16 @@ fn snapshot_imfs_file<'source>(
 fn snapshot_lua_file<'source>(
     file: &'source ImfsFile,
 ) -> SnapshotResult<'source> {
-    let file_name = file.path
-        .file_name().expect("Could not extract file stem")
+    let file_stem = file.path
+        .file_stem().expect("Could not extract file stem")
         .to_str().expect("Could not convert path to UTF-8");
 
-    let (instance_name, class_name) = if let Some(name) = match_trailing(file_name, ".server.lua") {
+    let (instance_name, class_name) = if let Some(name) = match_trailing(file_stem, ".server") {
         (name, "Script")
-    } else if let Some(name) = match_trailing(file_name, ".client.lua") {
+    } else if let Some(name) = match_trailing(file_stem, ".client") {
         (name, "LocalScript")
     } else {
-        (file_name, "ModuleScript")
+        (file_stem, "ModuleScript")
     };
 
     let contents = str::from_utf8(&file.contents)
