@@ -18,7 +18,7 @@ use crate::{
     session::Session,
     session_id::SessionId,
     project::InstanceProjectNodeMetadata,
-    rbx_snapshot::InstanceChanges,
+    snapshot_reconciler::InstanceChanges,
     visualize::{VisualizeRbxSession, VisualizeImfs, graphviz_to_svg},
 };
 

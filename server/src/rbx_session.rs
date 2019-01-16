@@ -17,7 +17,7 @@ use crate::{
     message_queue::MessageQueue,
     imfs::{Imfs, ImfsItem, ImfsFile},
     path_map::PathMap,
-    rbx_snapshot::{RbxSnapshotInstance, InstanceChanges, snapshot_from_tree, reify_root, reconcile_subtree},
+    snapshot_reconciler::{RbxSnapshotInstance, InstanceChanges, snapshot_from_tree, reify_root, reconcile_subtree},
 };
 
 const INIT_SCRIPT: &str = "init.lua";

@@ -9,7 +9,7 @@ use crate::{
     imfs::Imfs,
     session_id::SessionId,
     rbx_session::RbxSession,
-    rbx_snapshot::InstanceChanges,
+    snapshot_reconciler::InstanceChanges,
     fs_watcher::FsWatcher,
 };
 

@@ -1,308 +1,403 @@
 use std::{
-    str,
     borrow::Cow,
-    collections::{HashMap, HashSet},
+    collections::HashMap,
     fmt,
-    path::PathBuf,
+    path::{Path, PathBuf},
+    str,
 };
 
-use rbx_tree::{RbxTree, RbxId, RbxInstanceProperties, RbxValue};
 use serde_derive::{Serialize, Deserialize};
+use maplit::hashmap;
+use rbx_tree::RbxValue;
+use failure::Fail;
 
 use crate::{
-    path_map::PathMap,
-    project::InstanceProjectNodeMetadata,
+    imfs::{
+        Imfs,
+        ImfsItem,
+        ImfsFile,
+        ImfsDirectory,
+    },
+    project::{
+        Project,
+        ProjectNode,
+        InstanceProjectNode,
+        SyncPointProjectNode,
+    },
+    snapshot_reconciler::RbxSnapshotInstance,
 };
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct InstanceChanges {
-    pub added: HashSet<RbxId>,
-    pub removed: HashSet<RbxId>,
-    pub updated: HashSet<RbxId>,
+const INIT_MODULE_NAME: &str = "init.lua";
+const INIT_SERVER_NAME: &str = "init.server.lua";
+const INIT_CLIENT_NAME: &str = "init.client.lua";
+
+pub type SnapshotResult<'a> = Result<Option<RbxSnapshotInstance<'a>>, SnapshotError>;
+
+pub struct SnapshotMetadata<'meta> {
+    sync_point_names: &'meta mut HashMap<PathBuf, String>,
 }
 
-impl fmt::Display for InstanceChanges {
+#[derive(Debug, Fail)]
+pub enum SnapshotError {
+    DidNotExist(PathBuf),
+
+    Utf8Error {
+        #[fail(cause)]
+        inner: str::Utf8Error,
+        path: PathBuf,
+    },
+
+    XmlModelDecodeError {
+        inner: rbx_xml::DecodeError,
+        path: PathBuf,
+    },
+
+    BinaryModelDecodeError {
+        inner: rbx_binary::DecodeError,
+        path: PathBuf,
+    },
+}
+
+impl fmt::Display for SnapshotError {
     fn fmt(&self, output: &mut fmt::Formatter) -> fmt::Result {
-        writeln!(output, "InstanceChanges {{")?;
-
-        if !self.added.is_empty() {
-            writeln!(output, "    Added:")?;
-            for id in &self.added {
-                writeln!(output, "        {}", id)?;
-            }
+        match self {
+            SnapshotError::DidNotExist(path) => write!(output, "Path did not exist: {}", path.display()),
+            SnapshotError::Utf8Error { inner, path } => {
+                write!(output, "Invalid UTF-8: {} in path {}", inner, path.display())
+            },
+            SnapshotError::XmlModelDecodeError { inner, path } => {
+                write!(output, "Malformed rbxmx model: {:?} in path {}", inner, path.display())
+            },
+            SnapshotError::BinaryModelDecodeError { inner, path } => {
+                write!(output, "Malformed rbxm model: {:?} in path {}", inner, path.display())
+            },
         }
-
-        if !self.removed.is_empty() {
-            writeln!(output, "    Removed:")?;
-            for id in &self.removed {
-                writeln!(output, "        {}", id)?;
-            }
-        }
-
-        if !self.updated.is_empty() {
-            writeln!(output, "    Updated:")?;
-            for id in &self.updated {
-                writeln!(output, "        {}", id)?;
-            }
-        }
-
-        writeln!(output, "}}")
     }
 }
 
-impl InstanceChanges {
-    pub fn is_empty(&self) -> bool {
-        self.added.is_empty() && self.removed.is_empty() && self.updated.is_empty()
+pub fn snapshot_project_tree<'source>(
+    imfs: &'source Imfs,
+    metadata: &mut SnapshotMetadata,
+    project: &'source Project,
+) -> SnapshotResult<'source> {
+    snapshot_project_node(imfs, metadata, &project.tree, &project.name)
+}
+
+fn snapshot_project_node<'source>(
+    imfs: &'source Imfs,
+    metadata: &mut SnapshotMetadata,
+    node: &'source ProjectNode,
+    instance_name: &'source str,
+) -> SnapshotResult<'source> {
+    match node {
+        ProjectNode::Instance(instance_node) => snapshot_instance_node(imfs, metadata, instance_node, instance_name),
+        ProjectNode::SyncPoint(sync_node) => snapshot_sync_point_node(imfs, metadata, sync_node, instance_name),
     }
 }
 
-#[derive(Debug)]
-pub struct RbxSnapshotInstance<'a> {
-    pub name: Cow<'a, str>,
-    pub class_name: Cow<'a, str>,
-    pub properties: HashMap<String, RbxValue>,
-    pub children: Vec<RbxSnapshotInstance<'a>>,
-    pub source_path: Option<PathBuf>,
-    pub metadata: Option<InstanceProjectNodeMetadata>,
-}
-
-pub fn snapshot_from_tree(tree: &RbxTree, id: RbxId) -> Option<RbxSnapshotInstance<'static>> {
-    let instance = tree.get_instance(id)?;
-
+fn snapshot_instance_node<'source>(
+    imfs: &'source Imfs,
+    metadata: &mut SnapshotMetadata,
+    node: &'source InstanceProjectNode,
+    instance_name: &'source str,
+) -> SnapshotResult<'source> {
     let mut children = Vec::new();
-    for &child_id in instance.get_children_ids() {
-        children.push(snapshot_from_tree(tree, child_id)?);
+
+    for (child_name, child_project_node) in &node.children {
+        if let Some(child) = snapshot_project_node(imfs, metadata, child_project_node, child_name)? {
+            children.push(child);
+        }
     }
 
-    Some(RbxSnapshotInstance {
-        name: Cow::Owned(instance.name.to_owned()),
-        class_name: Cow::Owned(instance.class_name.to_owned()),
-        properties: instance.properties.clone(),
+    Ok(Some(RbxSnapshotInstance {
+        class_name: Cow::Borrowed(&node.class_name),
+        name: Cow::Borrowed(instance_name),
+        properties: node.properties.clone(),
         children,
         source_path: None,
-        metadata: None,
-    })
+        metadata: Some(node.metadata.clone()),
+    }))
 }
 
-pub fn reify_root(
-    snapshot: &RbxSnapshotInstance,
-    path_map: &mut PathMap<RbxId>,
-    instance_metadata_map: &mut HashMap<RbxId, InstanceProjectNodeMetadata>,
-    changes: &mut InstanceChanges,
-) -> RbxTree {
-    let instance = reify_core(snapshot);
-    let mut tree = RbxTree::new(instance);
-    let root_id = tree.get_root_id();
-
-    if let Some(source_path) = &snapshot.source_path {
-        path_map.insert(source_path.clone(), root_id);
-    }
-
-    if let Some(metadata) = &snapshot.metadata {
-        instance_metadata_map.insert(root_id, metadata.clone());
-    }
-
-    changes.added.insert(root_id);
-
-    for child in &snapshot.children {
-        reify_subtree(child, &mut tree, root_id, path_map, instance_metadata_map, changes);
-    }
-
-    tree
-}
-
-pub fn reify_subtree(
-    snapshot: &RbxSnapshotInstance,
-    tree: &mut RbxTree,
-    parent_id: RbxId,
-    path_map: &mut PathMap<RbxId>,
-    instance_metadata_map: &mut HashMap<RbxId, InstanceProjectNodeMetadata>,
-    changes: &mut InstanceChanges,
-) {
-    let instance = reify_core(snapshot);
-    let id = tree.insert_instance(instance, parent_id);
-
-    if let Some(source_path) = &snapshot.source_path {
-        path_map.insert(source_path.clone(), id);
-    }
-
-    if let Some(metadata) = &snapshot.metadata {
-        instance_metadata_map.insert(id, metadata.clone());
-    }
-
-    changes.added.insert(id);
-
-    for child in &snapshot.children {
-        reify_subtree(child, tree, id, path_map, instance_metadata_map, changes);
-    }
-}
-
-pub fn reconcile_subtree(
-    tree: &mut RbxTree,
-    id: RbxId,
-    snapshot: &RbxSnapshotInstance,
-    path_map: &mut PathMap<RbxId>,
-    instance_metadata_map: &mut HashMap<RbxId, InstanceProjectNodeMetadata>,
-    changes: &mut InstanceChanges,
-) {
-    if let Some(source_path) = &snapshot.source_path {
-        path_map.insert(source_path.clone(), id);
-    }
-
-    if let Some(metadata) = &snapshot.metadata {
-        instance_metadata_map.insert(id, metadata.clone());
-    }
-
-    if reconcile_instance_properties(tree.get_instance_mut(id).unwrap(), snapshot) {
-        changes.updated.insert(id);
-    }
-
-    reconcile_instance_children(tree, id, snapshot, path_map, instance_metadata_map, changes);
-}
-
-fn reify_core(snapshot: &RbxSnapshotInstance) -> RbxInstanceProperties {
-    let mut properties = HashMap::new();
-
-    for (key, value) in &snapshot.properties {
-        properties.insert(key.clone(), value.clone());
-    }
-
-    let instance = RbxInstanceProperties {
-        name: snapshot.name.to_string(),
-        class_name: snapshot.class_name.to_string(),
-        properties,
+fn snapshot_sync_point_node<'source>(
+    imfs: &'source Imfs,
+    metadata: &mut SnapshotMetadata,
+    node: &'source SyncPointProjectNode,
+    instance_name: &'source str,
+) -> SnapshotResult<'source> {
+    // If the snapshot resulted in no instances, like if it targets an unknown
+    // file or an empty model file, we can early-return.
+    let mut snapshot = match snapshot_imfs_path(imfs, metadata, &node.path)? {
+        Some(snapshot) => snapshot,
+        None => return Ok(None),
     };
 
-    instance
+    // Otherwise, we can mutate the snapshot we got back and track some extra
+    // metadata.
+    snapshot.name = Cow::Borrowed(instance_name);
+    metadata.sync_point_names.insert(node.path.to_owned(), instance_name.to_owned());
+
+    Ok(Some(snapshot))
 }
 
-fn reconcile_instance_properties(instance: &mut RbxInstanceProperties, snapshot: &RbxSnapshotInstance) -> bool {
-    let mut has_diffs = false;
-
-    if instance.name != snapshot.name {
-        instance.name = snapshot.name.to_string();
-        has_diffs = true;
+fn snapshot_imfs_path<'source>(
+    imfs: &'source Imfs,
+    metadata: &mut SnapshotMetadata,
+    path: &Path
+) -> SnapshotResult<'source> {
+    // If the given path doesn't exist in the in-memory filesystem, we consider
+    // that an error.
+    match imfs.get(path) {
+        Some(imfs_item) => snapshot_imfs_item(imfs, metadata, imfs_item),
+        None => return Err(SnapshotError::DidNotExist(path.to_owned())),
     }
-
-    if instance.class_name != snapshot.class_name {
-        instance.class_name = snapshot.class_name.to_string();
-        has_diffs = true;
-    }
-
-    let mut property_updates = HashMap::new();
-
-    for (key, instance_value) in &instance.properties {
-        match snapshot.properties.get(key) {
-            Some(snapshot_value) => {
-                if snapshot_value != instance_value {
-                    property_updates.insert(key.clone(), Some(snapshot_value.clone()));
-                }
-            },
-            None => {
-                property_updates.insert(key.clone(), None);
-            },
-        }
-    }
-
-    for (key, snapshot_value) in &snapshot.properties {
-        if property_updates.contains_key(key) {
-            continue;
-        }
-
-        match instance.properties.get(key) {
-            Some(instance_value) => {
-                if snapshot_value != instance_value {
-                    property_updates.insert(key.clone(), Some(snapshot_value.clone()));
-                }
-            },
-            None => {
-                property_updates.insert(key.clone(), Some(snapshot_value.clone()));
-            },
-        }
-    }
-
-    has_diffs = has_diffs || !property_updates.is_empty();
-
-    for (key, change) in property_updates.drain() {
-        match change {
-            Some(value) => instance.properties.insert(key, value),
-            None => instance.properties.remove(&key),
-        };
-    }
-
-    has_diffs
 }
 
-fn reconcile_instance_children(
-    tree: &mut RbxTree,
-    id: RbxId,
-    snapshot: &RbxSnapshotInstance,
-    path_map: &mut PathMap<RbxId>,
-    instance_metadata_map: &mut HashMap<RbxId, InstanceProjectNodeMetadata>,
-    changes: &mut InstanceChanges,
-) {
-    let mut visited_snapshot_indices = HashSet::new();
+fn snapshot_imfs_item<'source>(
+    imfs: &'source Imfs,
+    metadata: &mut SnapshotMetadata,
+    item: &'source ImfsItem,
+) -> SnapshotResult<'source> {
+    match item {
+        ImfsItem::File(file) => snapshot_imfs_file(imfs, metadata, file),
+        ImfsItem::Directory(directory) => snapshot_imfs_directory(imfs, metadata, directory),
+    }
+}
 
-    let mut children_to_update: Vec<(RbxId, &RbxSnapshotInstance)> = Vec::new();
-    let mut children_to_add: Vec<&RbxSnapshotInstance> = Vec::new();
-    let mut children_to_remove: Vec<RbxId> = Vec::new();
+fn snapshot_imfs_directory<'source>(
+    imfs: &'source Imfs,
+    metadata: &mut SnapshotMetadata,
+    directory: &'source ImfsDirectory,
+) -> SnapshotResult<'source> {
+    let init_path = directory.path.join(INIT_MODULE_NAME);
+    let init_server_path = directory.path.join(INIT_SERVER_NAME);
+    let init_client_path = directory.path.join(INIT_CLIENT_NAME);
 
-    let children_ids = tree.get_instance(id).unwrap().get_children_ids();
-
-    // Find all instances that were removed or updated, which we derive by
-    // trying to pair up existing instances to snapshots.
-    for &child_id in children_ids {
-        let child_instance = tree.get_instance(child_id).unwrap();
-
-        // Locate a matching snapshot for this instance
-        let mut matching_snapshot = None;
-        for (snapshot_index, child_snapshot) in snapshot.children.iter().enumerate() {
-            if visited_snapshot_indices.contains(&snapshot_index) {
-                continue;
-            }
-
-            // We assume that instances with the same name are probably pretty
-            // similar. This heuristic is similar to React's reconciliation
-            // strategy.
-            if child_snapshot.name == child_instance.name {
-                visited_snapshot_indices.insert(snapshot_index);
-                matching_snapshot = Some(child_snapshot);
-                break;
-            }
+    let mut snapshot = if directory.children.contains(&init_path) {
+        snapshot_imfs_path(imfs, metadata, &init_path)?.unwrap()
+    } else if directory.children.contains(&init_server_path) {
+        snapshot_imfs_path(imfs, metadata, &init_server_path)?.unwrap()
+    } else if directory.children.contains(&init_client_path) {
+        snapshot_imfs_path(imfs, metadata, &init_client_path)?.unwrap()
+    } else {
+        RbxSnapshotInstance {
+            class_name: Cow::Borrowed("Folder"),
+            name: Cow::Borrowed(""),
+            properties: HashMap::new(),
+            children: Vec::new(),
+            source_path: Some(directory.path.clone()),
+            metadata: None,
         }
+    };
 
-        match matching_snapshot {
-            Some(child_snapshot) => {
-                children_to_update.push((child_instance.get_id(), child_snapshot));
+    // We have to be careful not to lose instance names that are specified in
+    // the project manifest. We store them in sync_point_names when the original
+    // tree is constructed.
+    snapshot.name = if let Some(actual_name) = metadata.sync_point_names.get(&directory.path) {
+        Cow::Owned(actual_name.clone())
+    } else {
+        Cow::Borrowed(directory.path
+            .file_name().expect("Could not extract file name")
+            .to_str().expect("Could not convert path to UTF-8"))
+    };
+
+    for child_path in &directory.children {
+        let child_name = child_path
+            .file_name().expect("Couldn't extract file name")
+            .to_str().expect("Couldn't convert file name to UTF-8");
+
+        match child_name {
+            INIT_MODULE_NAME | INIT_SERVER_NAME | INIT_CLIENT_NAME => {
+                // The existence of files with these names modifies the
+                // parent instance and is handled above, so we can skip
+                // them here.
             },
-            None => {
-                children_to_remove.push(child_instance.get_id());
+            _ => {
+                if let Some(child) = snapshot_imfs_path(imfs, metadata, child_path)? {
+                    snapshot.children.push(child);
+                }
             },
         }
     }
 
-    // Find all instancs that were added, which is just the snapshots we didn't
-    // match up to existing instances above.
-    for (snapshot_index, child_snapshot) in snapshot.children.iter().enumerate() {
-        if !visited_snapshot_indices.contains(&snapshot_index) {
-            children_to_add.push(child_snapshot);
+    Ok(Some(snapshot))
+}
+
+fn snapshot_imfs_file<'source>(
+    imfs: &'source Imfs,
+    metadata: &mut SnapshotMetadata,
+    file: &'source ImfsFile,
+) -> SnapshotResult<'source> {
+    let extension = file.path.extension()
+        .map(|v| v.to_str().expect("Could not convert extension to UTF-8"));
+
+    let mut maybe_snapshot = match extension {
+        Some("lua") => snapshot_lua_file(metadata, file)?,
+        Some("csv") => snapshot_csv_file(metadata, file)?,
+        Some("txt") => snapshot_txt_file(metadata, file)?,
+        Some("rbxmx") => snapshot_xml_model_file(metadata, file)?,
+        Some("rbxm") => snapshot_binary_model_file(metadata, file)?,
+        Some(_) | None => return Ok(None),
+    };
+
+    if let Some(snapshot) = maybe_snapshot.as_mut() {
+        // Carefully preserve name from project manifest if present.
+        if let Some(actual_name) = metadata.sync_point_names.get(&file.path) {
+            snapshot.name = Cow::Owned(actual_name.clone());
         }
     }
 
-    for child_snapshot in &children_to_add {
-        reify_subtree(child_snapshot, tree, id, path_map, instance_metadata_map, changes);
-    }
+    Ok(maybe_snapshot)
+}
 
-    for child_id in &children_to_remove {
-        if let Some(subtree) = tree.remove_instance(*child_id) {
-            for id in subtree.iter_all_ids() {
-                instance_metadata_map.remove(&id);
-                changes.removed.insert(id);
-            }
+fn snapshot_lua_file<'source>(
+    metadata: &mut SnapshotMetadata,
+    file: &'source ImfsFile,
+) -> SnapshotResult<'source> {
+    let file_name = file.path
+        .file_name().expect("Could not extract file stem")
+        .to_str().expect("Could not convert path to UTF-8");
+
+    let (instance_name, class_name) = if let Some(name) = match_trailing(file_name, ".server.lua") {
+        (name, "Script")
+    } else if let Some(name) = match_trailing(file_name, ".client.lua") {
+        (name, "LocalScript")
+    } else {
+        (file_name, "ModuleScript")
+    };
+
+    let contents = str::from_utf8(&file.contents)
+        .map_err(|inner| SnapshotError::Utf8Error {
+            inner,
+            path: file.path.to_path_buf(),
+        })?;
+
+    Ok(Some(RbxSnapshotInstance {
+        name: Cow::Borrowed(instance_name),
+        class_name: Cow::Borrowed(class_name),
+        properties: hashmap! {
+            "Source".to_owned() => RbxValue::String {
+                value: contents.to_owned(),
+            },
+        },
+        children: Vec::new(),
+        metadata: None,
+        source_path: Some(file.path.to_path_buf()),
+    }))
+}
+
+fn match_trailing<'a>(input: &'a str, trailer: &str) -> Option<&'a str> {
+    if input.ends_with(trailer) {
+        let end = input.len().saturating_sub(trailer.len());
+        Some(&input[..end])
+    } else {
+        None
+    }
+}
+
+fn snapshot_txt_file<'source>(
+    metadata: &mut SnapshotMetadata,
+    file: &'source ImfsFile,
+) -> SnapshotResult<'source> {
+    let instance_name = file.path
+        .file_stem().expect("Could not extract file stem")
+        .to_str().expect("Could not convert path to UTF-8");
+
+    let contents = str::from_utf8(&file.contents)
+        .map_err(|inner| SnapshotError::Utf8Error {
+            inner,
+            path: file.path.to_path_buf(),
+        })?;
+
+    Ok(Some(RbxSnapshotInstance {
+        name: Cow::Borrowed(instance_name),
+        class_name: Cow::Borrowed("StringValue"),
+        properties: hashmap! {
+            "Value".to_owned() => RbxValue::String {
+                value: contents.to_owned(),
+            },
+        },
+        children: Vec::new(),
+        metadata: None,
+        source_path: Some(file.path.to_path_buf()),
+    }))
+}
+
+fn snapshot_csv_file<'source>(
+    metadata: &mut SnapshotMetadata,
+    file: &'source ImfsFile,
+) -> SnapshotResult<'source> {
+    let instance_name = file.path
+        .file_stem().expect("Could not extract file stem")
+        .to_str().expect("Could not convert path to UTF-8");
+
+    let entries: Vec<LocalizationEntryJson> = csv::Reader::from_reader(file.contents.as_slice())
+        .deserialize()
+        // TODO: Propagate error upward instead of panicking
+        .map(|result| result.expect("Malformed localization table found!"))
+        .map(LocalizationEntryCsv::to_json)
+        .collect();
+
+    let table_contents = serde_json::to_string(&entries)
+        .expect("Could not encode JSON for localization table");
+
+    Ok(Some(RbxSnapshotInstance {
+        name: Cow::Borrowed(instance_name),
+        class_name: Cow::Borrowed("LocalizationTable"),
+        properties: hashmap! {
+            "Contents".to_owned() => RbxValue::String {
+                value: table_contents,
+            },
+        },
+        children: Vec::new(),
+        metadata: None,
+        source_path: Some(file.path.to_path_buf()),
+    }))
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+struct LocalizationEntryCsv {
+    key: String,
+    context: String,
+    example: String,
+    source: String,
+    #[serde(flatten)]
+    values: HashMap<String, String>,
+}
+
+impl LocalizationEntryCsv {
+    fn to_json(self) -> LocalizationEntryJson {
+        LocalizationEntryJson {
+            key: self.key,
+            context: self.context,
+            example: self.example,
+            source: self.source,
+            values: self.values,
         }
     }
+}
 
-    for (child_id, child_snapshot) in &children_to_update {
-        reconcile_subtree(tree, *child_id, child_snapshot, path_map, instance_metadata_map, changes);
-    }
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct LocalizationEntryJson {
+    key: String,
+    context: String,
+    example: String,
+    source: String,
+    values: HashMap<String, String>,
+}
+
+fn snapshot_xml_model_file<'source>(
+    metadata: &mut SnapshotMetadata,
+    file: &'source ImfsFile,
+) -> SnapshotResult<'source> {
+    unimplemented!()
+}
+
+fn snapshot_binary_model_file<'source>(
+    metadata: &mut SnapshotMetadata,
+    file: &'source ImfsFile,
+) -> SnapshotResult<'source> {
+    unimplemented!()
 }
