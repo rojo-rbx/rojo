@@ -7,7 +7,7 @@ local FitText = require(script.Parent.FitText)
 
 local e = Roact.createElement
 
-local GrayBox = Assets.Slices.GrayBox
+local RoundBox = Assets.Slices.RoundBox
 
 local ConnectionActivePanel = Roact.Component:extend("ConnectionActivePanel")
 
@@ -15,10 +15,10 @@ function ConnectionActivePanel:render()
 	return e(FitList, {
 		containerKind = "ImageButton",
 		containerProps = {
-			Image = GrayBox.asset,
-			ImageRectOffset = GrayBox.offset,
-			ImageRectSize = GrayBox.size,
-			SliceCenter = GrayBox.center,
+			Image = RoundBox.asset,
+			ImageRectOffset = RoundBox.offset,
+			ImageRectSize = RoundBox.size,
+			SliceCenter = RoundBox.center,
 			ScaleType = Enum.ScaleType.Slice,
 			BackgroundTransparency = 1,
 			Position = UDim2.new(0.5, 0, 0, 0),

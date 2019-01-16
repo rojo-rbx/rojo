@@ -9,23 +9,26 @@ local FitText = require(Plugin.Components.FitText)
 
 local e = Roact.createElement
 
-local GrayButton07 = Assets.Slices.GrayButton07
+local RoundBox = Assets.Slices.RoundBox
 
 local function FormButton(props)
 	local text = props.text
 	local layoutOrder = props.layoutOrder
 	local onClick = props.onClick
 
+	local imageColor = props.secondary and Color3.new(0.95, 0.95, 0.95) or nil
+
 	return e(FitList, {
 		containerKind = "ImageButton",
 		containerProps = {
 			LayoutOrder = layoutOrder,
 			BackgroundTransparency = 1,
-			Image = GrayButton07.asset,
-			ImageRectOffset = GrayButton07.offset,
-			ImageRectSize = GrayButton07.size,
+			Image = RoundBox.asset,
+			ImageRectOffset = RoundBox.offset,
+			ImageRectSize = RoundBox.size,
+			SliceCenter = RoundBox.center,
 			ScaleType = Enum.ScaleType.Slice,
-			SliceCenter = GrayButton07.center,
+			ImageColor3 = imageColor,
 
 			[Roact.Event.Activated] = function()
 				if onClick ~= nil then

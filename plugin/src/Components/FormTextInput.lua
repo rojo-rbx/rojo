@@ -7,7 +7,7 @@ local Assets = require(Plugin.Assets)
 
 local e = Roact.createElement
 
-local GrayBox = Assets.Slices.GrayBox
+local RoundBox = Assets.Slices.RoundBox
 
 local function FormTextInput(props)
 	local value = props.value
@@ -17,17 +17,18 @@ local function FormTextInput(props)
 
 	return e("ImageLabel", {
 		LayoutOrder = layoutOrder,
-		Image = GrayBox.asset,
-		ImageRectOffset = GrayBox.offset,
-		ImageRectSize = GrayBox.size,
+		Image = RoundBox.asset,
+		ImageRectOffset = RoundBox.offset,
+		ImageRectSize = RoundBox.size,
 		ScaleType = Enum.ScaleType.Slice,
-		SliceCenter = GrayBox.center,
+		SliceCenter = RoundBox.center,
+		ImageColor3 = Color3.new(0.95, 0.95, 0.95),
 		Size = size,
 		BackgroundTransparency = 1,
 	}, {
 		InputInner = e("TextBox", {
 			BackgroundTransparency = 1,
-			Size = UDim2.new(1, -8, 1, -8),
+			Size = UDim2.new(1, -12, 1, -12),
 			Position = UDim2.new(0.5, 0, 0.5, 0),
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			Font = Enum.Font.SourceSans,

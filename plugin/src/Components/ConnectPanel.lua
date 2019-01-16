@@ -12,7 +12,7 @@ local FormButton = require(Plugin.Components.FormButton)
 local FormTextInput = require(Plugin.Components.FormTextInput)
 
 local WhiteCross = Assets.Sprites.WhiteCross
-local GrayBox = Assets.Slices.GrayBox
+local RoundBox = Assets.Slices.RoundBox
 
 local e = Roact.createElement
 
@@ -52,11 +52,11 @@ function ConnectPanel:render()
 	return e(FitList, {
 		containerKind = "ImageLabel",
 		containerProps = {
-			Image = GrayBox.asset,
-			ImageRectOffset = GrayBox.offset,
-			ImageRectSize = GrayBox.size,
+			Image = RoundBox.asset,
+			ImageRectOffset = RoundBox.offset,
+			ImageRectSize = RoundBox.size,
+			SliceCenter = RoundBox.center,
 			ScaleType = Enum.ScaleType.Slice,
-			SliceCenter = GrayBox.center,
 			BackgroundTransparency = 1,
 			Position = UDim2.new(0.5, 0, 0.5, 0),
 			AnchorPoint = Vector2.new(0.5, 0.5),
@@ -135,7 +135,7 @@ function ConnectPanel:render()
 				},
 			}, {
 				Label = e(FitText, {
-					MinSize = Vector2.new(0, 24),
+					MinSize = Vector2.new(0, 28),
 					Kind = "TextLabel",
 					LayoutOrder = 1,
 					BackgroundTransparency = 1,
@@ -156,7 +156,7 @@ function ConnectPanel:render()
 
 				Input = e(FormTextInput, {
 					layoutOrder = 2,
-					size = UDim2.new(0, 300, 0, 24),
+					size = UDim2.new(0, 300, 0, 28),
 					value = self.state.address,
 					onValueChange = function(newValue)
 						self:setState({
@@ -177,7 +177,7 @@ function ConnectPanel:render()
 				},
 			}, {
 				Label = e(FitText, {
-					MinSize = Vector2.new(0, 24),
+					MinSize = Vector2.new(0, 28),
 					Kind = "TextLabel",
 					LayoutOrder = 1,
 					BackgroundTransparency = 1,
@@ -198,7 +198,7 @@ function ConnectPanel:render()
 
 				Input = e(FormTextInput, {
 					layoutOrder = 2,
-					size = UDim2.new(0, 300, 0, 24),
+					size = UDim2.new(0, 300, 0, 28),
 					value = self.state.port,
 					onValueChange = function(newValue)
 						self:setState({
@@ -234,6 +234,7 @@ function ConnectPanel:render()
 							cancel()
 						end
 					end,
+					secondary = true,
 				}),
 			})
 		})

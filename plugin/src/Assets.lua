@@ -9,22 +9,10 @@ local Assets = {
 		},
 	},
 	Slices = {
-		GrayBox = {
-			asset = sheetAsset,
-			offset = Vector2.new(147, 433),
-			size = Vector2.new(38, 36),
-			center = Rect.new(8, 8, 9, 9),
-		},
-		GrayButton02 = {
-			asset = sheetAsset,
-			offset = Vector2.new(0, 98),
-			size = Vector2.new(190, 45),
-			center = Rect.new(16, 16, 17, 17),
-		},
-		GrayButton07 = {
-			asset = sheetAsset,
-			offset = Vector2.new(195, 0),
-			size = Vector2.new(49, 49),
+		RoundBox = {
+			asset = "rbxassetid://2754309674",
+			offset = Vector2.new(0, 0),
+			size = Vector2.new(0, 0),
 			center = Rect.new(16, 16, 17, 17),
 		},
 	},
