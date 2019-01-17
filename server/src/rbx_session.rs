@@ -1,7 +1,7 @@
 use std::{
     borrow::Cow,
     collections::HashMap,
-    path::Path,
+    path::{Path, PathBuf},
     str,
     sync::{Arc, Mutex},
 };
@@ -23,17 +23,17 @@ const INIT_SCRIPT: &str = "init.lua";
 const INIT_SERVER_SCRIPT: &str = "init.server.lua";
 const INIT_CLIENT_SCRIPT: &str = "init.client.lua";
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct MetadataPerPath {
     pub instance_id: Option<RbxId>,
     pub instance_name: Option<String>,
 }
 
-// #[derive(Debug, Default, Serialize, Deserialize)]
-// pub struct MetadataPerInstance {
-//     pub source_path: Option<PathBuf>,
-//     pub ignore_unknown_instances: bool,
-// }
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct MetadataPerInstance {
+    pub source_path: Option<PathBuf>,
+    pub ignore_unknown_instances: bool,
+}
 
 pub struct RbxSession {
     tree: RbxTree,
@@ -45,7 +45,7 @@ pub struct RbxSession {
     // TODO: Hold this map, inverted from metadata_per_path
     // metadata_per_instance: PathMap<MetadataPerInstance>,
 
-    instance_metadata_map: HashMap<RbxId, InstanceProjectNodeMetadata>,
+    instance_metadata_map: HashMap<RbxId, MetadataPerInstance>,
     message_queue: Arc<MessageQueue<InstanceChanges>>,
     imfs: Arc<Mutex<Imfs>>,
 }
@@ -182,7 +182,7 @@ impl RbxSession {
         &self.tree
     }
 
-    pub fn get_instance_metadata(&self, id: RbxId) -> Option<&InstanceProjectNodeMetadata> {
+    pub fn get_instance_metadata(&self, id: RbxId) -> Option<&MetadataPerInstance> {
         self.instance_metadata_map.get(&id)
     }
 
@@ -201,7 +201,7 @@ fn reify_initial_tree(
     project: &Project,
     imfs: &Imfs,
     metadata_per_path: &mut PathMap<MetadataPerPath>,
-    instance_metadata_map: &mut HashMap<RbxId, InstanceProjectNodeMetadata>,
+    instance_metadata_map: &mut HashMap<RbxId, MetadataPerInstance>,
 ) -> RbxTree {
     let mut meta = SnapshotMetadata {
         metadata_per_path,

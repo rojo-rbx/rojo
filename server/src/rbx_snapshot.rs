@@ -30,7 +30,7 @@ use crate::{
     },
     path_map::PathMap,
     // TODO: Move MetadataPerPath into this module?
-    rbx_session::MetadataPerPath,
+    rbx_session::{MetadataPerPath, MetadataPerInstance},
 };
 
 const INIT_MODULE_NAME: &str = "init.lua";
@@ -120,8 +120,10 @@ fn snapshot_instance_node<'source>(
         name: instance_name,
         properties: node.properties.clone(),
         children,
-        source_path: None,
-        metadata: Some(node.metadata.clone()),
+        metadata: MetadataPerInstance {
+            source_path: None,
+            ignore_unknown_instances: node.metadata.ignore_unknown_instances,
+        },
     }))
 }
 
@@ -202,8 +204,10 @@ fn snapshot_imfs_directory<'source>(
             name: snapshot_name,
             properties: HashMap::new(),
             children: Vec::new(),
-            source_path: Some(directory.path.to_owned()),
-            metadata: None,
+            metadata: MetadataPerInstance {
+                source_path: Some(directory.path.to_owned()),
+                ignore_unknown_instances: false,
+            },
         }
     };
 
@@ -285,8 +289,10 @@ fn snapshot_lua_file<'source>(
             },
         },
         children: Vec::new(),
-        metadata: None,
-        source_path: Some(file.path.to_path_buf()),
+        metadata: MetadataPerInstance {
+            source_path: Some(file.path.to_path_buf()),
+            ignore_unknown_instances: false,
+        },
     }))
 }
 
@@ -321,8 +327,10 @@ fn snapshot_txt_file<'source>(
             },
         },
         children: Vec::new(),
-        metadata: None,
-        source_path: Some(file.path.to_path_buf()),
+        metadata: MetadataPerInstance {
+            source_path: Some(file.path.to_path_buf()),
+            ignore_unknown_instances: false,
+        },
     }))
 }
 
@@ -352,8 +360,10 @@ fn snapshot_csv_file<'source>(
             },
         },
         children: Vec::new(),
-        metadata: None,
-        source_path: Some(file.path.to_path_buf()),
+        metadata: MetadataPerInstance {
+            source_path: Some(file.path.to_path_buf()),
+            ignore_unknown_instances: false,
+        },
     }))
 }
 
