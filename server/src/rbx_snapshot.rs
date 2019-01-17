@@ -187,15 +187,15 @@ fn snapshot_imfs_directory<'source>(
         });
 
     let mut snapshot = if directory.children.contains(&init_path) {
-        snapshot_imfs_path(imfs, metadata, &init_path, Some(snapshot_name.clone()))?.unwrap()
+        snapshot_imfs_path(imfs, metadata, &init_path, Some(snapshot_name))?.unwrap()
     } else if directory.children.contains(&init_server_path) {
-        snapshot_imfs_path(imfs, metadata, &init_server_path, Some(snapshot_name.clone()))?.unwrap()
+        snapshot_imfs_path(imfs, metadata, &init_server_path, Some(snapshot_name))?.unwrap()
     } else if directory.children.contains(&init_client_path) {
-        snapshot_imfs_path(imfs, metadata, &init_client_path, Some(snapshot_name.clone()))?.unwrap()
+        snapshot_imfs_path(imfs, metadata, &init_client_path, Some(snapshot_name))?.unwrap()
     } else {
         RbxSnapshotInstance {
             class_name: Cow::Borrowed("Folder"),
-            name: Cow::Borrowed(""),
+            name: snapshot_name,
             properties: HashMap::new(),
             children: Vec::new(),
             source_path: Some(directory.path.to_owned()),
