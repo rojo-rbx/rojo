@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     collections::HashMap,
     path::{Path, PathBuf},
     str,
@@ -80,10 +81,12 @@ impl RbxSession {
 
             trace!("Snapshotting path {}", path_to_snapshot.display());
 
+            let instance_name = self.sync_point_names.get(&path_to_snapshot)
+                .map(|value| Cow::Owned(value.to_owned()));
             let mut snapshot_meta = SnapshotMetadata {
                 sync_point_names: &mut self.sync_point_names,
             };
-            let maybe_snapshot = snapshot_imfs_path(&imfs, &mut snapshot_meta, &path_to_snapshot)
+            let maybe_snapshot = snapshot_imfs_path(&imfs, &mut snapshot_meta, &path_to_snapshot, instance_name)
                 .unwrap_or_else(|_| panic!("Could not generate instance snapshot for path {}", path_to_snapshot.display()));
 
             let snapshot = match maybe_snapshot {
