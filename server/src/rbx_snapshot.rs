@@ -39,7 +39,7 @@ const INIT_CLIENT_NAME: &str = "init.client.lua";
 
 pub type SnapshotResult<'a> = Result<Option<RbxSnapshotInstance<'a>>, SnapshotError>;
 
-pub struct SnapshotMetadata<'meta> {
+pub struct SnapshotContext<'meta> {
     pub metadata_per_path: &'meta mut PathMap<MetadataPerPath>,
 }
 
@@ -83,34 +83,34 @@ impl fmt::Display for SnapshotError {
 
 pub fn snapshot_project_tree<'source>(
     imfs: &'source Imfs,
-    metadata: &mut SnapshotMetadata,
+    context: &mut SnapshotContext,
     project: &'source Project,
 ) -> SnapshotResult<'source> {
-    snapshot_project_node(imfs, metadata, &project.tree, Cow::Borrowed(&project.name))
+    snapshot_project_node(imfs, context, &project.tree, Cow::Borrowed(&project.name))
 }
 
 fn snapshot_project_node<'source>(
     imfs: &'source Imfs,
-    metadata: &mut SnapshotMetadata,
+    context: &mut SnapshotContext,
     node: &'source ProjectNode,
     instance_name: Cow<'source, str>,
 ) -> SnapshotResult<'source> {
     match node {
-        ProjectNode::Instance(instance_node) => snapshot_instance_node(imfs, metadata, instance_node, instance_name),
-        ProjectNode::SyncPoint(sync_node) => snapshot_sync_point_node(imfs, metadata, sync_node, instance_name),
+        ProjectNode::Instance(instance_node) => snapshot_instance_node(imfs, context, instance_node, instance_name),
+        ProjectNode::SyncPoint(sync_node) => snapshot_sync_point_node(imfs, context, sync_node, instance_name),
     }
 }
 
 fn snapshot_instance_node<'source>(
     imfs: &'source Imfs,
-    metadata: &mut SnapshotMetadata,
+    context: &mut SnapshotContext,
     node: &'source InstanceProjectNode,
     instance_name: Cow<'source, str>,
 ) -> SnapshotResult<'source> {
     let mut children = Vec::new();
 
     for (child_name, child_project_node) in &node.children {
-        if let Some(child) = snapshot_project_node(imfs, metadata, child_project_node, Cow::Borrowed(child_name))? {
+        if let Some(child) = snapshot_project_node(imfs, context, child_project_node, Cow::Borrowed(child_name))? {
             children.push(child);
         }
     }
@@ -129,11 +129,11 @@ fn snapshot_instance_node<'source>(
 
 fn snapshot_sync_point_node<'source>(
     imfs: &'source Imfs,
-    metadata: &mut SnapshotMetadata,
+    context: &mut SnapshotContext,
     node: &'source SyncPointProjectNode,
     instance_name: Cow<'source, str>,
 ) -> SnapshotResult<'source> {
-    let maybe_snapshot = snapshot_imfs_path(imfs, metadata, &node.path, Some(instance_name))?;
+    let maybe_snapshot = snapshot_imfs_path(imfs, context, &node.path, Some(instance_name))?;
 
     // If the snapshot resulted in no instances, like if it targets an unknown
     // file or an empty model file, we can early-return.
@@ -143,7 +143,7 @@ fn snapshot_sync_point_node<'source>(
     };
 
     // Otherwise, we can log the name of the sync point we just snapshotted.
-    let path_meta = metadata.metadata_per_path.entry(node.path.to_owned()).or_default();
+    let path_meta = context.metadata_per_path.entry(node.path.to_owned()).or_default();
     path_meta.instance_name = Some(snapshot.name.clone().into_owned());
 
     Ok(Some(snapshot))
@@ -151,33 +151,33 @@ fn snapshot_sync_point_node<'source>(
 
 pub fn snapshot_imfs_path<'source>(
     imfs: &'source Imfs,
-    metadata: &mut SnapshotMetadata,
+    context: &mut SnapshotContext,
     path: &Path,
     instance_name: Option<Cow<'source, str>>,
 ) -> SnapshotResult<'source> {
     // If the given path doesn't exist in the in-memory filesystem, we consider
     // that an error.
     match imfs.get(path) {
-        Some(imfs_item) => snapshot_imfs_item(imfs, metadata, imfs_item, instance_name),
+        Some(imfs_item) => snapshot_imfs_item(imfs, context, imfs_item, instance_name),
         None => return Err(SnapshotError::DidNotExist(path.to_owned())),
     }
 }
 
 fn snapshot_imfs_item<'source>(
     imfs: &'source Imfs,
-    metadata: &mut SnapshotMetadata,
+    context: &mut SnapshotContext,
     item: &'source ImfsItem,
     instance_name: Option<Cow<'source, str>>,
 ) -> SnapshotResult<'source> {
     match item {
         ImfsItem::File(file) => snapshot_imfs_file(file, instance_name),
-        ImfsItem::Directory(directory) => snapshot_imfs_directory(imfs, metadata, directory, instance_name),
+        ImfsItem::Directory(directory) => snapshot_imfs_directory(imfs, context, directory, instance_name),
     }
 }
 
 fn snapshot_imfs_directory<'source>(
     imfs: &'source Imfs,
-    metadata: &mut SnapshotMetadata,
+    context: &mut SnapshotContext,
     directory: &'source ImfsDirectory,
     instance_name: Option<Cow<'source, str>>,
 ) -> SnapshotResult<'source> {
@@ -193,11 +193,11 @@ fn snapshot_imfs_directory<'source>(
         });
 
     let mut snapshot = if directory.children.contains(&init_path) {
-        snapshot_imfs_path(imfs, metadata, &init_path, Some(snapshot_name))?.unwrap()
+        snapshot_imfs_path(imfs, context, &init_path, Some(snapshot_name))?.unwrap()
     } else if directory.children.contains(&init_server_path) {
-        snapshot_imfs_path(imfs, metadata, &init_server_path, Some(snapshot_name))?.unwrap()
+        snapshot_imfs_path(imfs, context, &init_server_path, Some(snapshot_name))?.unwrap()
     } else if directory.children.contains(&init_client_path) {
-        snapshot_imfs_path(imfs, metadata, &init_client_path, Some(snapshot_name))?.unwrap()
+        snapshot_imfs_path(imfs, context, &init_client_path, Some(snapshot_name))?.unwrap()
     } else {
         RbxSnapshotInstance {
             class_name: Cow::Borrowed("Folder"),
@@ -223,7 +223,7 @@ fn snapshot_imfs_directory<'source>(
                 // them here.
             },
             _ => {
-                if let Some(child) = snapshot_imfs_path(imfs, metadata, child_path, None)? {
+                if let Some(child) = snapshot_imfs_path(imfs, context, child_path, None)? {
                     snapshot.children.push(child);
                 }
             },
