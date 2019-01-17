@@ -8,7 +8,7 @@ use std::{
 
 use serde_derive::{Serialize, Deserialize};
 use maplit::hashmap;
-use rbx_tree::{RbxTree, RbxValue, RbxInstanceProperties};
+use rbx_tree::{RbxId, RbxTree, RbxValue, RbxInstanceProperties};
 use failure::Fail;
 
 use crate::{
@@ -28,6 +28,9 @@ use crate::{
         RbxSnapshotInstance,
         snapshot_from_tree,
     },
+    path_map::PathMap,
+    // TODO: Move MetadataPerPath into this module?
+    rbx_session::MetadataPerPath,
 };
 
 const INIT_MODULE_NAME: &str = "init.lua";
@@ -37,7 +40,7 @@ const INIT_CLIENT_NAME: &str = "init.client.lua";
 pub type SnapshotResult<'a> = Result<Option<RbxSnapshotInstance<'a>>, SnapshotError>;
 
 pub struct SnapshotMetadata<'meta> {
-    pub sync_point_names: &'meta mut HashMap<PathBuf, String>,
+    pub metadata_per_path: &'meta mut PathMap<MetadataPerPath>,
 }
 
 #[derive(Debug, Fail)]
@@ -138,7 +141,11 @@ fn snapshot_sync_point_node<'source>(
     };
 
     // Otherwise, we can log the name of the sync point we just snapshotted.
-    metadata.sync_point_names.insert(node.path.to_owned(), snapshot.name.clone().into_owned());
+    // TODO: Use entry API
+    metadata.metadata_per_path.insert(node.path.to_owned(), MetadataPerPath {
+        instance_id: RbxId::new(),
+        instance_name: Some(snapshot.name.clone().into_owned()),
+    });
 
     Ok(Some(snapshot))
 }

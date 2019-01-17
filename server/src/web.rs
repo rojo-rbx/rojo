@@ -205,10 +205,10 @@ impl Server {
                 Response::svg(graphviz_to_svg(&dot_source))
             },
 
-            (GET) (/visualize/path_map) => {
+            (GET) (/visualize/path_metadata) => {
                 let rbx_session = self.session.rbx_session.lock().unwrap();
 
-                Response::json(&rbx_session.debug_get_path_map())
+                Response::json(&rbx_session.debug_get_metadata_per_path())
             },
 
             _ => Response::empty_404()
