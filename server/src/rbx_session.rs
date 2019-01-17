@@ -23,9 +23,9 @@ const INIT_SCRIPT: &str = "init.lua";
 const INIT_SERVER_SCRIPT: &str = "init.server.lua";
 const INIT_CLIENT_SCRIPT: &str = "init.client.lua";
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct MetadataPerPath {
-    pub instance_id: RbxId,
+    pub instance_id: Option<RbxId>,
     pub instance_name: Option<String>,
 }
 
@@ -91,7 +91,8 @@ impl RbxSession {
             trace!("Snapshotting path {}", path_to_snapshot.display());
 
             let path_metadata = self.metadata_per_path.get(&path_to_snapshot).unwrap();
-            let instance_id = path_metadata.instance_id;
+            let instance_id = path_metadata.instance_id
+                .expect("Instance did not exist in tree");
 
             // If this instance is a sync point, pull its name out of our
             // per-path metadata store.

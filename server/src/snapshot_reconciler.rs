@@ -99,7 +99,7 @@ pub fn reify_root(
         // TODO: Use entry API instead?
         // metadata_per_path.entry()
         metadata_per_path.insert(source_path.clone(), MetadataPerPath {
-            instance_id: root_id,
+            instance_id: Some(root_id),
             instance_name: None,
         });
     }
@@ -129,8 +129,8 @@ pub fn reify_subtree(
     let id = tree.insert_instance(instance, parent_id);
 
     if let Some(source_path) = &snapshot.source_path {
-        // TODO: use entry API
-        // metadata_per_path.insert(source_path.clone(), id);
+        // TODO: Entry API
+        // let metadata = metadata_per_path.entry(source_path.clone(), id);
     }
 
     if let Some(metadata) = &snapshot.metadata {

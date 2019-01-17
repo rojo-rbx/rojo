@@ -8,7 +8,7 @@ use std::{
 
 use serde_derive::{Serialize, Deserialize};
 use maplit::hashmap;
-use rbx_tree::{RbxId, RbxTree, RbxValue, RbxInstanceProperties};
+use rbx_tree::{RbxTree, RbxValue, RbxInstanceProperties};
 use failure::Fail;
 
 use crate::{
@@ -141,11 +141,8 @@ fn snapshot_sync_point_node<'source>(
     };
 
     // Otherwise, we can log the name of the sync point we just snapshotted.
-    // TODO: Use entry API
-    metadata.metadata_per_path.insert(node.path.to_owned(), MetadataPerPath {
-        instance_id: RbxId::new(),
-        instance_name: Some(snapshot.name.clone().into_owned()),
-    });
+    let path_meta = metadata.metadata_per_path.entry(node.path.to_owned()).or_default();
+    path_meta.instance_name = Some(snapshot.name.clone().into_owned());
 
     Ok(Some(snapshot))
 }

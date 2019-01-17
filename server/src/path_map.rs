@@ -130,3 +130,14 @@ impl<'a, T> Entry<'a, T> {
         }).value
     }
 }
+
+impl<'a, T> Entry<'a, T>
+    where T: Default
+{
+    pub fn or_default(self) -> &'a mut T {
+        &mut self.internal.or_insert(PathMapNode {
+            value: Default::default(),
+            children: HashSet::new(),
+        }).value
+    }
+}
