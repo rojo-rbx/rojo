@@ -17,7 +17,6 @@ use rbx_tree::{RbxId, RbxInstance};
 use crate::{
     session::Session,
     session_id::SessionId,
-    project::InstanceProjectNodeMetadata,
     snapshot_reconciler::InstanceChanges,
     visualize::{VisualizeRbxSession, VisualizeImfs, graphviz_to_svg},
     rbx_session::{MetadataPerInstance},

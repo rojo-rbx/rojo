@@ -11,7 +11,7 @@ use log::{info, trace};
 use rbx_tree::{RbxTree, RbxId};
 
 use crate::{
-    project::{Project, InstanceProjectNodeMetadata},
+    project::Project,
     message_queue::MessageQueue,
     imfs::{Imfs, ImfsItem},
     path_map::PathMap,
@@ -41,11 +41,7 @@ pub struct RbxSession {
     // TODO(#105): Change metadata_per_path to PathMap<Vec<MetadataPerPath>> for
     // path aliasing.
     metadata_per_path: PathMap<MetadataPerPath>,
-
-    // TODO: Hold this map, inverted from metadata_per_path
-    // metadata_per_instance: PathMap<MetadataPerInstance>,
-
-    instance_metadata_map: HashMap<RbxId, MetadataPerInstance>,
+    metadata_per_instance: HashMap<RbxId, MetadataPerInstance>,
     message_queue: Arc<MessageQueue<InstanceChanges>>,
     imfs: Arc<Mutex<Imfs>>,
 }
@@ -57,17 +53,17 @@ impl RbxSession {
         message_queue: Arc<MessageQueue<InstanceChanges>>,
     ) -> RbxSession {
         let mut metadata_per_path = PathMap::new();
-        let mut instance_metadata_map = HashMap::new();
+        let mut metadata_per_instance = HashMap::new();
 
         let tree = {
             let temp_imfs = imfs.lock().unwrap();
-            reify_initial_tree(&project, &temp_imfs, &mut metadata_per_path, &mut instance_metadata_map)
+            reify_initial_tree(&project, &temp_imfs, &mut metadata_per_path, &mut metadata_per_instance)
         };
 
         RbxSession {
             tree,
             metadata_per_path,
-            instance_metadata_map,
+            metadata_per_instance,
             message_queue,
             imfs,
         }
@@ -127,7 +123,7 @@ impl RbxSession {
                 instance_id,
                 &snapshot,
                 &mut self.metadata_per_path,
-                &mut self.instance_metadata_map,
+                &mut self.metadata_per_instance,
                 &mut changes,
             );
         }
@@ -183,7 +179,7 @@ impl RbxSession {
     }
 
     pub fn get_instance_metadata(&self, id: RbxId) -> Option<&MetadataPerInstance> {
-        self.instance_metadata_map.get(&id)
+        self.metadata_per_instance.get(&id)
     }
 
     pub fn debug_get_metadata_per_path(&self) -> &PathMap<MetadataPerPath> {
@@ -193,15 +189,15 @@ impl RbxSession {
 
 pub fn construct_oneoff_tree(project: &Project, imfs: &Imfs) -> RbxTree {
     let mut metadata_per_path = PathMap::new();
-    let mut instance_metadata_map = HashMap::new();
-    reify_initial_tree(project, imfs, &mut metadata_per_path, &mut instance_metadata_map)
+    let mut metadata_per_instance = HashMap::new();
+    reify_initial_tree(project, imfs, &mut metadata_per_path, &mut metadata_per_instance)
 }
 
 fn reify_initial_tree(
     project: &Project,
     imfs: &Imfs,
     metadata_per_path: &mut PathMap<MetadataPerPath>,
-    instance_metadata_map: &mut HashMap<RbxId, MetadataPerInstance>,
+    metadata_per_instance: &mut HashMap<RbxId, MetadataPerInstance>,
 ) -> RbxTree {
     let mut meta = SnapshotMetadata {
         metadata_per_path,
@@ -211,7 +207,7 @@ fn reify_initial_tree(
         .expect("Project did not produce any instances");
 
     let mut changes = InstanceChanges::default();
-    let tree = reify_root(&snapshot, metadata_per_path, instance_metadata_map, &mut changes);
+    let tree = reify_root(&snapshot, metadata_per_path, metadata_per_instance, &mut changes);
 
     tree
 }

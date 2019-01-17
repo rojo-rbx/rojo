@@ -3,7 +3,6 @@ use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
     fmt,
-    path::PathBuf,
 };
 
 use rbx_tree::{RbxTree, RbxId, RbxInstanceProperties, RbxValue};
