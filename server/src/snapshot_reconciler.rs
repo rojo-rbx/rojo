@@ -63,6 +63,8 @@ pub struct RbxSnapshotInstance<'a> {
     pub class_name: Cow<'a, str>,
     pub properties: HashMap<String, RbxValue>,
     pub children: Vec<RbxSnapshotInstance<'a>>,
+
+    // TODO: Replace source_path and metadata with MetadataPerInstance
     pub source_path: Option<PathBuf>,
     pub metadata: Option<InstanceProjectNodeMetadata>,
 }
@@ -96,12 +98,8 @@ pub fn reify_root(
     let root_id = tree.get_root_id();
 
     if let Some(source_path) = &snapshot.source_path {
-        // TODO: Use entry API instead?
-        // metadata_per_path.entry()
-        metadata_per_path.insert(source_path.clone(), MetadataPerPath {
-            instance_id: Some(root_id),
-            instance_name: None,
-        });
+        let path_meta = metadata_per_path.entry(source_path.to_owned()).or_default();
+        path_meta.instance_id = Some(root_id);
     }
 
     if let Some(metadata) = &snapshot.metadata {
@@ -129,8 +127,8 @@ pub fn reify_subtree(
     let id = tree.insert_instance(instance, parent_id);
 
     if let Some(source_path) = &snapshot.source_path {
-        // TODO: Entry API
-        // let metadata = metadata_per_path.entry(source_path.clone(), id);
+        let path_meta = metadata_per_path.entry(source_path.clone()).or_default();
+        path_meta.instance_id = Some(id);
     }
 
     if let Some(metadata) = &snapshot.metadata {
@@ -153,8 +151,8 @@ pub fn reconcile_subtree(
     changes: &mut InstanceChanges,
 ) {
     if let Some(source_path) = &snapshot.source_path {
-        // TODO: use entry API
-        // metadata_per_path.insert(source_path.clone(), id);
+        let path_meta = metadata_per_path.entry(source_path.to_owned()).or_default();
+        path_meta.instance_id = Some(id);
     }
 
     if let Some(metadata) = &snapshot.metadata {

@@ -1,7 +1,7 @@
 use std::{
     borrow::Cow,
     collections::HashMap,
-    path::{Path, PathBuf},
+    path::Path,
     str,
     sync::{Arc, Mutex},
 };
@@ -29,6 +29,12 @@ pub struct MetadataPerPath {
     pub instance_name: Option<String>,
 }
 
+// #[derive(Debug, Default, Serialize, Deserialize)]
+// pub struct MetadataPerInstance {
+//     pub source_path: Option<PathBuf>,
+//     pub ignore_unknown_instances: bool,
+// }
+
 pub struct RbxSession {
     tree: RbxTree,
 
@@ -36,7 +42,8 @@ pub struct RbxSession {
     // path aliasing.
     metadata_per_path: PathMap<MetadataPerPath>,
 
-    // TODO: Track map from RbxId to PathBuf to support two-way sync
+    // TODO: Hold this map, inverted from metadata_per_path
+    // metadata_per_instance: PathMap<MetadataPerInstance>,
 
     instance_metadata_map: HashMap<RbxId, InstanceProjectNodeMetadata>,
     message_queue: Arc<MessageQueue<InstanceChanges>>,
