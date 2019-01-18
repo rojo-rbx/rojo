@@ -13,7 +13,8 @@ use crate::{
     fs_watcher::FsWatcher,
 };
 
-pub struct Session {
+/// Contains all of the state for a Rojo live-sync session.
+pub struct LiveSession {
     pub project: Arc<Project>,
     pub session_id: SessionId,
     pub message_queue: Arc<MessageQueue<InstanceChanges>>,
@@ -22,8 +23,8 @@ pub struct Session {
     _fs_watcher: FsWatcher,
 }
 
-impl Session {
-    pub fn new(project: Arc<Project>) -> io::Result<Session> {
+impl LiveSession {
+    pub fn new(project: Arc<Project>) -> io::Result<LiveSession> {
         let imfs = {
             let mut imfs = Imfs::new();
             imfs.add_roots_from_project(&project)?;
@@ -45,7 +46,7 @@ impl Session {
 
         let session_id = SessionId::new();
 
-        Ok(Session {
+        Ok(LiveSession {
             project,
             session_id,
             message_queue,

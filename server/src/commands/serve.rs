@@ -9,7 +9,7 @@ use failure::Fail;
 use crate::{
     project::{Project, ProjectLoadFuzzyError},
     web::Server,
-    session::Session,
+    live_session::LiveSession,
 };
 
 const DEFAULT_PORT: u16 = 34872;
@@ -38,8 +38,8 @@ pub fn serve(options: &ServeOptions) -> Result<(), ServeError> {
     info!("Found project at {}", project.file_location.display());
     info!("Using project {:#?}", project);
 
-    let session = Arc::new(Session::new(Arc::clone(&project)).unwrap());
-    let server = Server::new(Arc::clone(&session));
+    let live_session = Arc::new(LiveSession::new(Arc::clone(&project)).unwrap());
+    let server = Server::new(Arc::clone(&live_session));
 
     let port = options.port
         .or(project.serve_port)
