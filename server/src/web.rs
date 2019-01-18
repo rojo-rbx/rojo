@@ -29,7 +29,7 @@ pub struct InstanceMetadata {
 }
 
 impl InstanceMetadata {
-    fn from_session_metadata(meta: &MetadataPerInstance) -> InstanceMetadata {
+    pub fn from_session_metadata(meta: &MetadataPerInstance) -> InstanceMetadata {
         InstanceMetadata {
             ignore_unknown_instances: meta.ignore_unknown_instances,
         }
