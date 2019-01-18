@@ -17,10 +17,24 @@ use rbx_tree::{RbxId, RbxInstance};
 use crate::{
     session::Session,
     session_id::SessionId,
-    project::InstanceProjectNodeMetadata,
     snapshot_reconciler::InstanceChanges,
     visualize::{VisualizeRbxSession, VisualizeImfs, graphviz_to_svg},
+    rbx_session::{MetadataPerInstance},
 };
+
+/// Contains the instance metadata relevant to Rojo clients.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InstanceMetadata {
+    ignore_unknown_instances: bool,
+}
+
+impl InstanceMetadata {
+    fn from_session_metadata(meta: &MetadataPerInstance) -> InstanceMetadata {
+        InstanceMetadata {
+            ignore_unknown_instances: meta.ignore_unknown_instances,
+        }
+    }
+}
 
 /// Used to attach metadata specific to Rojo to instances, which come from the
 /// rbx_tree crate.
@@ -33,7 +47,7 @@ pub struct InstanceWithMetadata<'a> {
     pub instance: Cow<'a, RbxInstance>,
 
     #[serde(rename = "Metadata")]
-    pub metadata: Option<Cow<'a, InstanceProjectNodeMetadata>>,
+    pub metadata: Option<InstanceMetadata>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -163,7 +177,7 @@ impl Server {
                 for &requested_id in &requested_ids {
                     if let Some(instance) = tree.get_instance(requested_id) {
                         let metadata = rbx_session.get_instance_metadata(requested_id)
-                            .map(Cow::Borrowed);
+                            .map(InstanceMetadata::from_session_metadata);
 
                         instances.insert(instance.get_id(), InstanceWithMetadata {
                             instance: Cow::Borrowed(instance),
@@ -172,7 +186,7 @@ impl Server {
 
                         for descendant in tree.descendants(requested_id) {
                             let descendant_meta = rbx_session.get_instance_metadata(descendant.get_id())
-                                .map(Cow::Borrowed);
+                                .map(InstanceMetadata::from_session_metadata);
 
                             instances.insert(descendant.get_id(), InstanceWithMetadata {
                                 instance: Cow::Borrowed(descendant),
@@ -205,10 +219,10 @@ impl Server {
                 Response::svg(graphviz_to_svg(&dot_source))
             },
 
-            (GET) (/visualize/path_map) => {
+            (GET) (/visualize/path_metadata) => {
                 let rbx_session = self.session.rbx_session.lock().unwrap();
 
-                Response::json(&rbx_session.debug_get_path_map())
+                Response::json(&rbx_session.debug_get_metadata_per_path())
             },
 
             _ => Response::empty_404()
