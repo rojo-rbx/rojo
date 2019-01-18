@@ -31,15 +31,14 @@ Rojo is designed for **power users** who want to use the **best tools available*
 Rojo lets you:
 
 * Work on scripts from the filesystem, in your favorite editor
-* Version your place, library, or plugin using Git or another VCS
-* Sync JSON-format models from the filesystem into your game
+* Version your place, model, or plugin using Git or another VCS
+* Sync `rbxmx` and `rbxm` models into your game in real time
+* Package and deploy your project to Roblox.com from the command line
 
 Soon, Rojo will be able to:
 
-* Sync scripts from Roblox Studio to the filesystem
-* Compile MoonScript and sync it into Roblox Studio
-* Sync `rbxmx` models between the filesystem and Roblox Studio
-* Package projects into `rbxmx` files from the command line
+* Sync instances from Roblox Studio to the filesystem
+* Compile MoonScript and other custom things for your project
 
 ## [Documentation](https://lpghatguy.github.io/rojo/0.4.x)
 You can also view the documentation by browsing the [docs](https://github.com/LPGhatguy/rojo/tree/master/docs) folder of the repository, but because it uses a number of Markdown extensions, it may not be very readable.
