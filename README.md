@@ -60,11 +60,9 @@ Here are a few, if you're looking for alternatives or supplements to Rojo:
 If you use a plugin that _isn't_ Rojo for syncing code, open an issue and let me know why! I'd like Rojo to be the end-all tool so that people stop reinventing solutions to this problem.
 
 ## Contributing
-The `master` branch is a rewrite known as **Epiphany**. It includes a breaking change to the project configuration format and an infrastructure overhaul.
-
 Pull requests are welcome!
 
 All pull requests are run against a test suite on Travis CI. That test suite should always pass!
 
 ## License
-Rojo is available under the terms of the Mozilla Public License, Version 2.0. See [LICENSE](LICENSE) for details.
+Rojo is available under the terms of the Mozilla Public License, Version 2.0. See [LICENSE.txt](LICENSE.txt) for details.
