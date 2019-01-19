@@ -20,6 +20,7 @@ default = []
 bundle-plugin = []
 
 [dependencies]
+bincode = "1.0"
 clap = "2.27"
 csv = "1.0"
 env_logger = "0.5"

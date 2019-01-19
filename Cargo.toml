@@ -2,4 +2,5 @@
 members = [
 	"server",
 	"rojo-e2e",
+	"rojo-plugin-moonscript",
 ]

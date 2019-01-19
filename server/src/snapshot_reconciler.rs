@@ -55,7 +55,7 @@ impl InstanceChanges {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub struct RbxSnapshotInstance<'a> {
     pub name: Cow<'a, str>,
     pub class_name: Cow<'a, str>,
