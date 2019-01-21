@@ -95,8 +95,7 @@ function App:render()
 						address = address,
 						port = port,
 						onError = function(message)
-							Logging.warn("%s", tostring(message))
-							Logging.trace("Session terminated due to error")
+							Logging.warn("Rojo session terminated because of an error:\n%s", tostring(message))
 							self.currentSession = nil
 
 							self:setState({

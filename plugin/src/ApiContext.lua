@@ -11,6 +11,14 @@ ApiContext.__index = ApiContext
 -- TODO: Audit cases of errors and create enum values for each of them.
 ApiContext.Error = {
 	ServerIdMismatch = "ServerIdMismatch",
+
+	-- The server gave an unexpected 400-category error, which may be the
+	-- client's fault.
+	ClientError = "ClientError",
+
+	-- The server gave an unexpected 500-category error, which may be the
+	-- server's fault.
+	ServerError = "ServerError",
 }
 
 setmetatable(ApiContext.Error, {
@@ -18,6 +26,18 @@ setmetatable(ApiContext.Error, {
 		error("Invalid ApiContext.Error name " .. key, 2)
 	end
 })
+
+local function rejectFailedRequests(response)
+	if response.code >= 400 then
+		if response.code < 500 then
+			return Promise.reject(ApiContext.Error.ClientError)
+		else
+			return Promise.reject(ApiContext.Error.ServerError)
+		end
+	end
+
+	return response
+end
 
 function ApiContext.new(baseUrl)
 	assert(type(baseUrl) == "string")
@@ -43,6 +63,7 @@ function ApiContext:connect()
 	local url = ("%s/api/rojo"):format(self.baseUrl)
 
 	return Http.get(url)
+		:andThen(rejectFailedRequests)
 		:andThen(function(response)
 			local body = response:json()
 
@@ -102,9 +123,7 @@ function ApiContext:read(ids)
 	local url = ("%s/api/read/%s"):format(self.baseUrl, table.concat(ids, ","))
 
 	return Http.get(url)
-		:catch(function(err)
-			return Promise.reject(err)
-		end)
+		:andThen(rejectFailedRequests)
 		:andThen(function(response)
 			local body = response:json()
 
@@ -129,6 +148,7 @@ function ApiContext:retrieveMessages()
 
 			return Promise.reject(err)
 		end)
+		:andThen(rejectFailedRequests)
 		:andThen(function(response)
 			local body = response:json()
 

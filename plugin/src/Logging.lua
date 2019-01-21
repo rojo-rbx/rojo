@@ -1,7 +1,5 @@
 local DevSettings = require(script.Parent.DevSettings)
 
-local testLogLevel = nil
-
 local Level = {
 	Error = 0,
 	Warning = 1,
@@ -9,17 +7,14 @@ local Level = {
 	Trace = 3,
 }
 
+local testLogLevel = nil
+
 local function getLogLevel()
 	if testLogLevel ~= nil then
 		return testLogLevel
 	end
 
-	local devValue = DevSettings:getLogLevel()
-	if devValue ~= nil then
-		return devValue
-	end
-
-	return Level.Info
+	return DevSettings:getLogLevel()
 end
 
 local function addTags(tag, message)

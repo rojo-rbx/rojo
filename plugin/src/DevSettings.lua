@@ -1,12 +1,22 @@
 local Config = require(script.Parent.Config)
 
+local VALUES = {
+	LogLevel = {
+		type = "IntValue",
+		defaultUserValue = 2,
+		defaultDevValue = 3,
+	},
+}
+
+local CONTAINER_NAME = "RojoDevSettings" .. Config.codename
+
 local function getValueContainer()
-	return game:FindFirstChild("RojoDev-" .. Config.codename)
+	return game:FindFirstChild(CONTAINER_NAME)
 end
 
 local valueContainer = getValueContainer()
 
-local function getValue(name)
+local function getStoredValue(name)
 	if valueContainer == nil then
 		return nil
 	end
@@ -20,7 +30,7 @@ local function getValue(name)
 	return valueObject.Value
 end
 
-local function setValue(name, kind, value)
+local function setStoredValue(name, kind, value)
 	local object = valueContainer:FindFirstChild(name)
 
 	if object == nil then
@@ -37,11 +47,13 @@ local function createAllValues()
 
 	if valueContainer == nil then
 		valueContainer = Instance.new("Folder")
-		valueContainer.Name = "RojoDev-" .. Config.codename
+		valueContainer.Name = CONTAINER_NAME
 		valueContainer.Parent = game
 	end
 
-	setValue("LogLevel", "IntValue", getValue("LogLevel") or 2)
+	for name, value in pairs(VALUES) do
+		setStoredValue(name, value.type, value.defaultDevValue)
+	end
 end
 
 _G[("ROJO_%s_DEV_CREATE"):format(Config.codename:upper())] = createAllValues
@@ -53,7 +65,7 @@ function DevSettings:isEnabled()
 end
 
 function DevSettings:getLogLevel()
-	return getValue("LogLevel")
+	return getStoredValue("LogLevel") or VALUES.LogLevel.defaultUserValue
 end
 
 return DevSettings
