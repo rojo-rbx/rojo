@@ -24,6 +24,7 @@ use crate::{
 
 /// Contains the instance metadata relevant to Rojo clients.
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct InstanceMetadata {
     ignore_unknown_instances: bool,
 }
