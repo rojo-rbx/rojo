@@ -12,6 +12,7 @@ end
 
 function FitList:render()
 	local containerKind = self.props.containerKind or "Frame"
+	local fitAxes = self.props.fitAxes or "XY"
 	local containerProps = self.props.containerProps
 	local layoutProps = self.props.layoutProps
 	local paddingProps = self.props.paddingProps
@@ -25,15 +26,31 @@ function FitList:render()
 		["$Layout"] = e("UIListLayout", Dictionary.merge({
 			SortOrder = Enum.SortOrder.LayoutOrder,
 			[Roact.Change.AbsoluteContentSize] = function(instance)
-				local size = instance.AbsoluteContentSize
+				local contentSize = instance.AbsoluteContentSize
 
 				if paddingProps ~= nil then
-					size = size + Vector2.new(
+					contentSize = contentSize + Vector2.new(
 						paddingProps.PaddingLeft.Offset + paddingProps.PaddingRight.Offset,
 						paddingProps.PaddingTop.Offset + paddingProps.PaddingBottom.Offset)
 				end
 
-				self.setSize(UDim2.new(0, size.X, 0, size.Y))
+				local combinedSize
+
+				if fitAxes == "X" then
+					combinedSize = UDim2.new(0, contentSize.X, containerProps.Size.Y.Scale, containerProps.Size.Y.Offset)
+				elseif fitAxes == "Y" then
+					combinedSize = UDim2.new(containerProps.Size.X.Scale, containerProps.Size.X.Offset, 0, contentSize.Y)
+				elseif fitAxes == "XY" then
+					combinedSize = UDim2.new(0, contentSize.X, 0, contentSize.Y)
+				else
+					error("Invalid fitAxes value")
+				end
+
+				if fitAxes ~= "XY" then
+					print("combinedSize", combinedSize)
+				end
+
+				self.setSize(combinedSize)
 			end,
 		}, layoutProps)),
 

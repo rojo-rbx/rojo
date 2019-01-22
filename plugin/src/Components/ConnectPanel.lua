@@ -5,6 +5,7 @@ local Roact = require(Rojo.Roact)
 
 local Config = require(Plugin.Config)
 local Assets = require(Plugin.Assets)
+local Theme = require(Plugin.Theme)
 
 local FitList = require(Plugin.Components.FitList)
 local FitText = require(Plugin.Components.FitText)
@@ -65,7 +66,13 @@ function ConnectPanel:render()
 			HorizontalAlignment = Enum.HorizontalAlignment.Center,
 		},
 	}, {
-		Head = e("Frame", {
+		Head = e("ImageLabel", {
+			Image = RoundBox.asset,
+			ImageRectOffset = RoundBox.offset,
+			ImageRectSize = RoundBox.size * Vector2.new(1, 0.5),
+			SliceCenter = RoundBox.center,
+			ScaleType = Enum.ScaleType.Slice,
+			ImageColor3 = Theme.SecondaryColor,
 			LayoutOrder = 1,
 			Size = UDim2.new(1, 0, 0, 36),
 			BackgroundTransparency = 1,
@@ -102,20 +109,14 @@ function ConnectPanel:render()
 			}),
 		}),
 
-		Border = e("Frame", {
-			BorderSizePixel = 0,
-			BackgroundColor3 = Color3.new(0.7, 0.7, 0.7),
-			Size = UDim2.new(1, -4, 0, 2),
-			LayoutOrder = 2,
-		}),
-
-		Body = e(FitList, {
+		Inputs = e(FitList, {
 			containerProps = {
 				BackgroundTransparency = 1,
-				LayoutOrder = 3,
+				LayoutOrder = 2,
 			},
 			layoutProps = {
-				Padding = UDim.new(0, 8),
+				FillDirection = Enum.FillDirection.Horizontal,
+				Padding = UDim.new(0, 12),
 			},
 			paddingProps = {
 				PaddingTop = UDim.new(0, 8),
@@ -130,12 +131,11 @@ function ConnectPanel:render()
 					BackgroundTransparency = 1,
 				},
 				layoutProps = {
-					FillDirection = Enum.FillDirection.Horizontal,
-					Padding = UDim.new(0, 8),
+					Padding = UDim.new(0, 4),
 				},
 			}, {
 				Label = e(FitText, {
-					MinSize = Vector2.new(0, 28),
+					MinSize = Vector2.new(0, 20),
 					Kind = "TextLabel",
 					LayoutOrder = 1,
 					BackgroundTransparency = 1,
@@ -156,7 +156,7 @@ function ConnectPanel:render()
 
 				Input = e(FormTextInput, {
 					layoutOrder = 2,
-					size = UDim2.new(0, 300, 0, 28),
+					size = UDim2.new(0, 160, 0, 28),
 					value = self.state.address,
 					onValueChange = function(newValue)
 						self:setState({
@@ -172,12 +172,11 @@ function ConnectPanel:render()
 					BackgroundTransparency = 1,
 				},
 				layoutProps = {
-					FillDirection = Enum.FillDirection.Horizontal,
-					Padding = UDim.new(0, 8),
+					Padding = UDim.new(0, 4),
 				},
 			}, {
 				Label = e(FitText, {
-					MinSize = Vector2.new(0, 28),
+					MinSize = Vector2.new(0, 20),
 					Kind = "TextLabel",
 					LayoutOrder = 1,
 					BackgroundTransparency = 1,
@@ -198,7 +197,7 @@ function ConnectPanel:render()
 
 				Input = e(FormTextInput, {
 					layoutOrder = 2,
-					size = UDim2.new(0, 300, 0, 28),
+					size = UDim2.new(0, 70, 0, 28),
 					value = self.state.port,
 					onValueChange = function(newValue)
 						self:setState({
@@ -207,36 +206,47 @@ function ConnectPanel:render()
 					end,
 				}),
 			}),
+		}),
 
-			Buttons = e(FitList, {
-				containerProps = {
-					LayoutOrder = 3,
-					BackgroundTransparency = 1,
-				},
-				layoutProps = {
-					FillDirection = Enum.FillDirection.Horizontal,
-					Padding = UDim.new(0, 8),
-				},
-			}, {
-				e(FormButton, {
-					text = "Start",
-					onClick = function()
-						if startSession ~= nil then
-							startSession(self.state.address, self.state.port)
-						end
-					end,
-				}),
+		Buttons = e(FitList, {
+			fitAxes = "Y",
+			containerProps = {
+				BackgroundTransparency = 1,
+				LayoutOrder = 3,
+				Size = UDim2.new(1, 0, 0, 0),
+			},
+			layoutProps = {
+				FillDirection = Enum.FillDirection.Horizontal,
+				HorizontalAlignment = Enum.HorizontalAlignment.Right,
+				Padding = UDim.new(0, 8),
+			},
+			paddingProps = {
+				PaddingTop = UDim.new(0, 0),
+				PaddingBottom = UDim.new(0, 8),
+				PaddingLeft = UDim.new(0, 8),
+				PaddingRight = UDim.new(0, 8),
+			},
+		}, {
+			e(FormButton, {
+				layoutOrder = 1,
+				text = "Cancel",
+				onClick = function()
+					if cancel ~= nil then
+						cancel()
+					end
+				end,
+				secondary = true,
+			}),
 
-				e(FormButton, {
-					text = "Cancel",
-					onClick = function()
-						if cancel ~= nil then
-							cancel()
-						end
-					end,
-					secondary = true,
-				}),
-			})
+			e(FormButton, {
+				layoutOrder = 2,
+				text = "Connect",
+				onClick = function()
+					if startSession ~= nil then
+						startSession(self.state.address, self.state.port)
+					end
+				end,
+			}),
 		})
 	})
 end

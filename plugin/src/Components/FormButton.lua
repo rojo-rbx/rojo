@@ -4,6 +4,7 @@ local Plugin = Rojo.Plugin
 local Roact = require(Rojo.Roact)
 
 local Assets = require(Plugin.Assets)
+local Theme = require(Plugin.Theme)
 local FitList = require(Plugin.Components.FitList)
 local FitText = require(Plugin.Components.FitText)
 
@@ -16,7 +17,16 @@ local function FormButton(props)
 	local layoutOrder = props.layoutOrder
 	local onClick = props.onClick
 
-	local imageColor = props.secondary and Color3.new(0.95, 0.95, 0.95) or nil
+	local textColor
+	local backgroundColor
+
+	if props.secondary then
+		textColor = Theme.AccentColor
+		backgroundColor = Theme.SecondaryColor
+	else
+		textColor = Theme.SecondaryColor
+		backgroundColor = Theme.AccentColor
+	end
 
 	return e(FitList, {
 		containerKind = "ImageButton",
@@ -28,7 +38,7 @@ local function FormButton(props)
 			ImageRectSize = RoundBox.size,
 			SliceCenter = RoundBox.center,
 			ScaleType = Enum.ScaleType.Slice,
-			ImageColor3 = imageColor,
+			ImageColor3 = backgroundColor,
 
 			[Roact.Event.Activated] = function()
 				if onClick ~= nil then
@@ -41,9 +51,9 @@ local function FormButton(props)
 			Kind = "TextLabel",
 			Text = text,
 			TextSize = 22,
-			Font = Enum.Font.SourceSansBold,
+			TextColor3 = textColor,
+			Font = Theme.ButtonFont,
 			Padding = Vector2.new(14, 6),
-			TextColor3 = Color3.new(0.05, 0.05, 0.05),
 			BackgroundTransparency = 1,
 		}),
 	})

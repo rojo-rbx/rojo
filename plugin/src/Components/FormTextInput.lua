@@ -4,6 +4,7 @@ local Plugin = Rojo.Plugin
 local Roact = require(Rojo.Roact)
 
 local Assets = require(Plugin.Assets)
+local Theme = require(Plugin.Theme)
 
 local e = Roact.createElement
 
@@ -22,7 +23,7 @@ local function FormTextInput(props)
 		ImageRectSize = RoundBox.size,
 		ScaleType = Enum.ScaleType.Slice,
 		SliceCenter = RoundBox.center,
-		ImageColor3 = Color3.new(0.95, 0.95, 0.95),
+		ImageColor3 = Theme.SecondaryColor,
 		Size = size,
 		BackgroundTransparency = 1,
 	}, {
@@ -36,7 +37,7 @@ local function FormTextInput(props)
 			TextXAlignment = Enum.TextXAlignment.Left,
 			TextSize = 20,
 			Text = value,
-			TextColor3 = Color3.new(0.05, 0.05, 0.05),
+			TextColor3 = Theme.PrimaryColor,
 
 			[Roact.Change.Text] = function(rbx)
 				onValueChange(rbx.Text)
