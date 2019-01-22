@@ -46,10 +46,6 @@ function FitList:render()
 					error("Invalid fitAxes value")
 				end
 
-				if fitAxes ~= "XY" then
-					print("combinedSize", combinedSize)
-				end
-
 				self.setSize(combinedSize)
 			end,
 		}, layoutProps)),

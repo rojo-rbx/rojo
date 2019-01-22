@@ -83,7 +83,19 @@ function App:render()
 
 	if self.state.sessionStatus == SessionStatus.Connected then
 		children = {
-			ConnectionActivePanel = e(ConnectionActivePanel),
+			ConnectionActivePanel = e(ConnectionActivePanel, {
+				stopSession = function()
+					Logging.trace("Disconnecting session")
+
+					self.currentSession:disconnect()
+					self.currentSession = nil
+					self:setState({
+						sessionStatus = SessionStatus.Disconnected,
+					})
+
+					Logging.trace("Session terminated by user")
+				end,
+			}),
 		}
 	elseif self.state.sessionStatus == SessionStatus.ConfiguringSession then
 		children = {

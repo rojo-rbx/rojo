@@ -1,7 +1,8 @@
 # Rojo Changelog
 
 ## [Unreleased]
-* Changed plugin UI to be simpler and more flat
+* Changed plugin UI to be way prettier
+    * Thanks to [Reselim](https://github.com/Reselim) for the design!
 * Changed plugin error messages to be a little more useful
 * Removed unused 'Config' button in plugin UI
 * Fixed bug where bad server responses could cause the plugin to be in a bad state

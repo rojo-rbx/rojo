@@ -32,10 +32,10 @@ local function FormTextInput(props)
 			Size = UDim2.new(1, -12, 1, -12),
 			Position = UDim2.new(0.5, 0, 0.5, 0),
 			AnchorPoint = Vector2.new(0.5, 0.5),
-			Font = Enum.Font.SourceSans,
+			Font = Theme.InputFont,
 			ClearTextOnFocus = false,
 			TextXAlignment = Enum.TextXAlignment.Left,
-			TextSize = 20,
+			TextSize = 18,
 			Text = value,
 			TextColor3 = Theme.PrimaryColor,
 

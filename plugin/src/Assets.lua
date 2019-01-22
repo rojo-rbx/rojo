@@ -9,18 +9,15 @@ local Assets = {
 		},
 	},
 	Slices = {
-		RoundBoxWithBorder = {
-			asset = "rbxassetid://2754309674",
-			offset = Vector2.new(0, 0),
-			size = Vector2.new(32, 32),
-			center = Rect.new(15, 15, 16, 16),
-		},
 		RoundBox = {
-			asset = "rbxassetid://2773074100",
+			asset = "rbxassetid://2773204550",
 			offset = Vector2.new(0, 0),
 			size = Vector2.new(32, 32),
-			center = Rect.new(15, 15, 16, 16),
+			center = Rect.new(4, 4, 4, 4),
 		},
+	},
+	Images = {
+		Logo = "rbxassetid://2773210620",
 	},
 	StartSession = "",
 	SessionActive = "",

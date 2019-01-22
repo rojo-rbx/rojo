@@ -50,10 +50,10 @@ local function FormButton(props)
 		Text = e(FitText, {
 			Kind = "TextLabel",
 			Text = text,
-			TextSize = 22,
+			TextSize = 18,
 			TextColor3 = textColor,
 			Font = Theme.ButtonFont,
-			Padding = Vector2.new(14, 6),
+			Padding = Vector2.new(16, 6),
 			BackgroundTransparency = 1,
 		}),
 	})

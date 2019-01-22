@@ -4,46 +4,43 @@ local Plugin = Rojo.Plugin
 local Roact = require(Rojo.Roact)
 
 local Config = require(Plugin.Config)
+local Version = require(Plugin.Version)
 local Assets = require(Plugin.Assets)
 local Theme = require(Plugin.Theme)
+local joinBindings = require(Plugin.joinBindings)
 
 local FitList = require(Plugin.Components.FitList)
 local FitText = require(Plugin.Components.FitText)
 local FormButton = require(Plugin.Components.FormButton)
 local FormTextInput = require(Plugin.Components.FormTextInput)
 
-local WhiteCross = Assets.Sprites.WhiteCross
 local RoundBox = Assets.Slices.RoundBox
 
 local e = Roact.createElement
 
-local TEXT_COLOR = Color3.new(0.05, 0.05, 0.05)
-local FORM_TEXT_SIZE = 20
-
 local ConnectPanel = Roact.Component:extend("ConnectPanel")
 
 function ConnectPanel:init()
-	self.labelSizes = {}
-	self.labelSize, self.setLabelSize = Roact.createBinding(Vector2.new())
+	self.footerSize, self.setFooterSize = Roact.createBinding(Vector2.new())
+	self.footerVersionSize, self.setFooterVersionSize = Roact.createBinding(Vector2.new())
+
+	-- This is constructed in init because 'joinBindings' is a hack and we'd
+	-- leak memory constructing it every render. When this kind of feature lands
+	-- in Roact properly, we can do this inline in render without fear.
+	self.footerRestSize = joinBindings(
+		{
+			self.footerSize,
+			self.footerVersionSize,
+		},
+		function(container, other)
+			return UDim2.new(0, container.X - other.X - 16, 0, 18)
+		end
+	)
 
 	self:setState({
 		address = Config.defaultHost,
 		port = Config.defaultPort,
 	})
-end
-
-function ConnectPanel:updateLabelSize(name, size)
-	self.labelSizes[name] = size
-
-	local x = 0
-	local y = 0
-
-	for _, size in pairs(self.labelSizes) do
-		x = math.max(x, size.X)
-		y = math.max(y, size.Y)
-	end
-
-	self.setLabelSize(Vector2.new(x, y))
 end
 
 function ConnectPanel:render()
@@ -66,57 +63,14 @@ function ConnectPanel:render()
 			HorizontalAlignment = Enum.HorizontalAlignment.Center,
 		},
 	}, {
-		Head = e("ImageLabel", {
-			Image = RoundBox.asset,
-			ImageRectOffset = RoundBox.offset,
-			ImageRectSize = RoundBox.size * Vector2.new(1, 0.5),
-			SliceCenter = RoundBox.center,
-			ScaleType = Enum.ScaleType.Slice,
-			ImageColor3 = Theme.SecondaryColor,
-			LayoutOrder = 1,
-			Size = UDim2.new(1, 0, 0, 36),
-			BackgroundTransparency = 1,
-		}, {
-			Padding = e("UIPadding", {
-				PaddingTop = UDim.new(0, 8),
-				PaddingBottom = UDim.new(0, 8),
-				PaddingLeft = UDim.new(0, 8),
-				PaddingRight = UDim.new(0, 8),
-			}),
-
-			Title = e("TextLabel", {
-				Font = Enum.Font.SourceSansBold,
-				TextSize = 22,
-				Text = "Start New Rojo Session",
-				Size = UDim2.new(1, 0, 1, 0),
-				TextXAlignment = Enum.TextXAlignment.Left,
-				BackgroundTransparency = 1,
-				TextColor3 = TEXT_COLOR,
-			}),
-
-			Close = e("ImageButton", {
-				Image = WhiteCross.asset,
-				ImageRectOffset = WhiteCross.offset,
-				ImageRectSize = WhiteCross.size,
-				Size = UDim2.new(0, 18, 0, 18),
-				Position = UDim2.new(1, 0, 0.5, 0),
-				AnchorPoint = Vector2.new(1, 0.5),
-				ImageColor3 = TEXT_COLOR,
-				BackgroundTransparency = 1,
-				[Roact.Event.Activated] = function()
-					cancel()
-				end,
-			}),
-		}),
-
 		Inputs = e(FitList, {
 			containerProps = {
 				BackgroundTransparency = 1,
-				LayoutOrder = 2,
+				LayoutOrder = 1,
 			},
 			layoutProps = {
 				FillDirection = Enum.FillDirection.Horizontal,
-				Padding = UDim.new(0, 12),
+				Padding = UDim.new(0, 8),
 			},
 			paddingProps = {
 				PaddingTop = UDim.new(0, 8),
@@ -140,23 +94,15 @@ function ConnectPanel:render()
 					LayoutOrder = 1,
 					BackgroundTransparency = 1,
 					TextXAlignment = Enum.TextXAlignment.Left,
-					Font = Enum.Font.SourceSansBold,
-					TextSize = FORM_TEXT_SIZE,
+					Font = Theme.TitleFont,
+					TextSize = 20,
 					Text = "Address",
-					TextColor3 = TEXT_COLOR,
-
-					[Roact.Change.AbsoluteSize] = function(rbx)
-						self:updateLabelSize("address", rbx.AbsoluteSize)
-					end,
-				}, {
-					Sizing = e("UISizeConstraint", {
-						MinSize = self.labelSize,
-					}),
+					TextColor3 = Theme.AccentColor,
 				}),
 
 				Input = e(FormTextInput, {
 					layoutOrder = 2,
-					size = UDim2.new(0, 160, 0, 28),
+					size = UDim2.new(0, 200, 0, 28),
 					value = self.state.address,
 					onValueChange = function(newValue)
 						self:setState({
@@ -181,23 +127,15 @@ function ConnectPanel:render()
 					LayoutOrder = 1,
 					BackgroundTransparency = 1,
 					TextXAlignment = Enum.TextXAlignment.Left,
-					Font = Enum.Font.SourceSansBold,
-					TextSize = FORM_TEXT_SIZE,
+					Font = Theme.TitleFont,
+					TextSize = 20,
 					Text = "Port",
-					TextColor3 = TEXT_COLOR,
-
-					[Roact.Change.AbsoluteSize] = function(rbx)
-						self:updateLabelSize("port", rbx.AbsoluteSize)
-					end,
-				}, {
-					Sizing = e("UISizeConstraint", {
-						MinSize = self.labelSize,
-					}),
+					TextColor3 = Theme.AccentColor,
 				}),
 
 				Input = e(FormTextInput, {
 					layoutOrder = 2,
-					size = UDim2.new(0, 70, 0, 28),
+					size = UDim2.new(0, 65, 0, 28),
 					value = self.state.port,
 					onValueChange = function(newValue)
 						self:setState({
@@ -212,7 +150,7 @@ function ConnectPanel:render()
 			fitAxes = "Y",
 			containerProps = {
 				BackgroundTransparency = 1,
-				LayoutOrder = 3,
+				LayoutOrder = 2,
 				Size = UDim2.new(1, 0, 0, 0),
 			},
 			layoutProps = {
@@ -247,7 +185,65 @@ function ConnectPanel:render()
 					end
 				end,
 			}),
-		})
+		}),
+
+		Footer = e(FitList, {
+			fitAxes = "Y",
+			containerKind = "ImageLabel",
+			containerProps = {
+				Image = RoundBox.asset,
+				ImageRectOffset = RoundBox.offset + Vector2.new(0, RoundBox.size.Y / 2),
+				ImageRectSize = RoundBox.size * Vector2.new(1, 0.5),
+				SliceCenter = RoundBox.center,
+				ScaleType = Enum.ScaleType.Slice,
+				ImageColor3 = Theme.SecondaryColor,
+				Size = UDim2.new(1, 0, 0, 0),
+				LayoutOrder = 3,
+				BackgroundTransparency = 1,
+
+				[Roact.Change.AbsoluteSize] = function(rbx)
+					self.setFooterSize(rbx.AbsoluteSize)
+				end,
+			},
+			layoutProps = {
+				FillDirection = Enum.FillDirection.Horizontal,
+				HorizontalAlignment = Enum.HorizontalAlignment.Center,
+			},
+			paddingProps = {
+				PaddingTop = UDim.new(0, 4),
+				PaddingBottom = UDim.new(0, 4),
+				PaddingLeft = UDim.new(0, 8),
+				PaddingRight = UDim.new(0, 8),
+			},
+		}, {
+			LogoContainer = e("Frame", {
+				BackgroundTransparency = 1,
+
+				Size = self.footerRestSize,
+			}, {
+				Logo = e("ImageLabel", {
+					Image = Assets.Images.Logo,
+					Size = UDim2.new(0, 60, 0, 40),
+					ScaleType = Enum.ScaleType.Fit,
+					BackgroundTransparency = 1,
+					Position = UDim2.new(0, 0, 1, 0),
+					AnchorPoint = Vector2.new(0, 1),
+				}),
+			}),
+
+			Version = e(FitText, {
+				Font = Theme.TitleFont,
+				TextSize = 18,
+				Text = Version.display(Config.version),
+				TextXAlignment = Enum.TextXAlignment.Right,
+				TextColor3 = Theme.LightTextColor,
+				BackgroundTransparency = 1,
+
+				[Roact.Change.AbsoluteSize] = function(rbx)
+					self.setFooterVersionSize(rbx.AbsoluteSize)
+				end,
+			}),
+		}),
 	})
 end
 

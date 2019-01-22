@@ -1,37 +1,65 @@
 local Roact = require(script:FindFirstAncestor("Rojo").Roact)
 
-local Assets = require(script.Parent.Parent.Assets)
+local Plugin = script:FindFirstAncestor("Plugin")
 
-local FitList = require(script.Parent.FitList)
-local FitText = require(script.Parent.FitText)
+local Theme = require(Plugin.Theme)
+local Assets = require(Plugin.Assets)
+
+local FitList = require(Plugin.Components.FitList)
+local FitText = require(Plugin.Components.FitText)
 
 local e = Roact.createElement
 
 local RoundBox = Assets.Slices.RoundBox
+local WhiteCross = Assets.Sprites.WhiteCross
 
-local ConnectionActivePanel = Roact.Component:extend("ConnectionActivePanel")
+local function ConnectionActivePanel(props)
+	local stopSession = props.stopSession
 
-function ConnectionActivePanel:render()
 	return e(FitList, {
-		containerKind = "ImageButton",
+		containerKind = "ImageLabel",
 		containerProps = {
 			Image = RoundBox.asset,
-			ImageRectOffset = RoundBox.offset,
-			ImageRectSize = RoundBox.size,
-			SliceCenter = RoundBox.center,
+			ImageRectOffset = RoundBox.offset + Vector2.new(0, RoundBox.size.Y / 2),
+			ImageRectSize = RoundBox.size * Vector2.new(1, 0.5),
+			SliceCenter = Rect.new(4, 4, 4, 4),
 			ScaleType = Enum.ScaleType.Slice,
 			BackgroundTransparency = 1,
 			Position = UDim2.new(0.5, 0, 0, 0),
 			AnchorPoint = Vector2.new(0.5, 0),
 		},
+		layoutProps = {
+			FillDirection = Enum.FillDirection.Horizontal,
+			VerticalAlignment = Enum.VerticalAlignment.Center,
+		},
 	}, {
 		Text = e(FitText, {
 			Padding = Vector2.new(12, 6),
-			Font = Enum.Font.SourceSans,
+			Font = Theme.ButtonFont,
 			TextSize = 18,
 			Text = "Rojo Connected",
-			TextColor3 = Color3.new(0.05, 0.05, 0.05),
+			TextColor3 = Theme.PrimaryColor,
 			BackgroundTransparency = 1,
+		}),
+
+		CloseContainer = e("ImageButton", {
+			Size = UDim2.new(0, 30, 0, 30),
+			BackgroundTransparency = 1,
+
+			[Roact.Event.Activated] = function()
+				stopSession()
+			end,
+		}, {
+			CloseImage = e("ImageLabel", {
+				Size = UDim2.new(0, 16, 0, 16),
+				Position = UDim2.new(0.5, 0, 0.5, 0),
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				Image = WhiteCross.asset,
+				ImageRectOffset = WhiteCross.offset,
+				ImageRectSize = WhiteCross.size,
+				ImageColor3 = Theme.PrimaryColor,
+				BackgroundTransparency = 1,
+			}),
 		}),
 	})
 end
