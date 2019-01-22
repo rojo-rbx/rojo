@@ -33,13 +33,13 @@ function ConnectPanel:init()
 			self.footerVersionSize,
 		},
 		function(container, other)
-			return UDim2.new(0, container.X - other.X - 16, 0, 18)
+			return UDim2.new(0, container.X - other.X - 16, 0, 32)
 		end
 	)
 
 	self:setState({
-		address = Config.defaultHost,
-		port = Config.defaultPort,
+		address = "",
+		port = "",
 	})
 end
 
@@ -73,10 +73,10 @@ function ConnectPanel:render()
 				Padding = UDim.new(0, 8),
 			},
 			paddingProps = {
-				PaddingTop = UDim.new(0, 8),
-				PaddingBottom = UDim.new(0, 8),
-				PaddingLeft = UDim.new(0, 8),
-				PaddingRight = UDim.new(0, 8),
+				PaddingTop = UDim.new(0, 20),
+				PaddingBottom = UDim.new(0, 10),
+				PaddingLeft = UDim.new(0, 24),
+				PaddingRight = UDim.new(0, 24),
 			},
 		}, {
 			Address = e(FitList, {
@@ -89,7 +89,6 @@ function ConnectPanel:render()
 				},
 			}, {
 				Label = e(FitText, {
-					MinSize = Vector2.new(0, 20),
 					Kind = "TextLabel",
 					LayoutOrder = 1,
 					BackgroundTransparency = 1,
@@ -102,8 +101,9 @@ function ConnectPanel:render()
 
 				Input = e(FormTextInput, {
 					layoutOrder = 2,
-					size = UDim2.new(0, 200, 0, 28),
+					width = UDim.new(0, 220),
 					value = self.state.address,
+					placeholderValue = Config.defaultHost,
 					onValueChange = function(newValue)
 						self:setState({
 							address = newValue,
@@ -122,7 +122,6 @@ function ConnectPanel:render()
 				},
 			}, {
 				Label = e(FitText, {
-					MinSize = Vector2.new(0, 20),
 					Kind = "TextLabel",
 					LayoutOrder = 1,
 					BackgroundTransparency = 1,
@@ -135,8 +134,9 @@ function ConnectPanel:render()
 
 				Input = e(FormTextInput, {
 					layoutOrder = 2,
-					size = UDim2.new(0, 65, 0, 28),
+					width = UDim.new(0, 80),
 					value = self.state.port,
+					placeholderValue = Config.defaultPort,
 					onValueChange = function(newValue)
 						self:setState({
 							port = newValue,
@@ -160,9 +160,9 @@ function ConnectPanel:render()
 			},
 			paddingProps = {
 				PaddingTop = UDim.new(0, 0),
-				PaddingBottom = UDim.new(0, 8),
-				PaddingLeft = UDim.new(0, 8),
-				PaddingRight = UDim.new(0, 8),
+				PaddingBottom = UDim.new(0, 20),
+				PaddingLeft = UDim.new(0, 24),
+				PaddingRight = UDim.new(0, 24),
 			},
 		}, {
 			e(FormButton, {
@@ -181,7 +181,17 @@ function ConnectPanel:render()
 				text = "Connect",
 				onClick = function()
 					if startSession ~= nil then
-						startSession(self.state.address, self.state.port)
+						local address = self.state.address
+						if address:len() == 0 then
+							address = Config.defaultHost
+						end
+
+						local port = self.state.port
+						if port:len() == 0 then
+							port = Config.defaultPort
+						end
+
+						startSession(address, port)
 					end
 				end,
 			}),
@@ -208,6 +218,7 @@ function ConnectPanel:render()
 			layoutProps = {
 				FillDirection = Enum.FillDirection.Horizontal,
 				HorizontalAlignment = Enum.HorizontalAlignment.Center,
+				VerticalAlignment = Enum.VerticalAlignment.Center,
 			},
 			paddingProps = {
 				PaddingTop = UDim.new(0, 4),
@@ -223,10 +234,10 @@ function ConnectPanel:render()
 			}, {
 				Logo = e("ImageLabel", {
 					Image = Assets.Images.Logo,
-					Size = UDim2.new(0, 60, 0, 40),
+					Size = UDim2.new(0, 80, 0, 40),
 					ScaleType = Enum.ScaleType.Fit,
 					BackgroundTransparency = 1,
-					Position = UDim2.new(0, 0, 1, 0),
+					Position = UDim2.new(0, 0, 1, -10),
 					AnchorPoint = Vector2.new(0, 1),
 				}),
 			}),

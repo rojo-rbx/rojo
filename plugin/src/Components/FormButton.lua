@@ -53,7 +53,7 @@ local function FormButton(props)
 			TextSize = 18,
 			TextColor3 = textColor,
 			Font = Theme.ButtonFont,
-			Padding = Vector2.new(16, 6),
+			Padding = Vector2.new(16, 8),
 			BackgroundTransparency = 1,
 		}),
 	})
