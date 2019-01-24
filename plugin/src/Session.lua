@@ -22,18 +22,18 @@ function Session.new(config)
 	api:connect()
 		:andThen(function()
 			if self.disconnected then
-				return Promise.resolve()
+				return
 			end
 
 			return api:read({api.rootInstanceId})
-				:andThen(function(response)
-					if self.disconnected then
-						return Promise.resolve()
-					end
+		end)
+		:andThen(function(response)
+			if self.disconnected then
+				return
+			end
 
-					self.reconciler:reconcile(response.instances, api.rootInstanceId, game)
-					return self:__processMessages()
-				end)
+			self.reconciler:reconcile(response.instances, api.rootInstanceId, game)
+			return self:__processMessages()
 		end)
 		:catch(function(message)
 			self.disconnected = true
