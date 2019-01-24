@@ -8,6 +8,7 @@
 
       "Rojo": {
         "$className": "Folder",
+
         "Plugin": {
           "$path": "src"
         },
@@ -26,6 +27,16 @@
       },
       "TestEZ": {
         "$path": "modules/testez/lib"
+      }
+    },
+
+    "HttpService": {
+      "$className": "HttpService",
+      "$properties": {
+        "HttpEnabled": {
+          "Type": "Bool",
+          "Value": true
+        }
       }
     },
 
