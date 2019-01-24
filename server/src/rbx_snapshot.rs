@@ -205,11 +205,13 @@ fn snapshot_imfs_directory<'source>(
             properties: HashMap::new(),
             children: Vec::new(),
             metadata: MetadataPerInstance {
-                source_path: Some(directory.path.to_owned()),
+                source_path: None,
                 ignore_unknown_instances: false,
             },
         }
     };
+
+    snapshot.metadata.source_path = Some(directory.path.to_owned());
 
     for child_path in &directory.children {
         let child_name = child_path

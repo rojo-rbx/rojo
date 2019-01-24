@@ -94,6 +94,9 @@ impl RbxSession {
             trace!("Snapshotting path {}", path_to_snapshot.display());
 
             let path_metadata = self.metadata_per_path.get(&path_to_snapshot).unwrap();
+
+            trace!("Metadata for path: {:?}", path_metadata);
+
             let instance_id = path_metadata.instance_id
                 .expect("Instance did not exist in tree");
 
