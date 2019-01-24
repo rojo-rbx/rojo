@@ -5,6 +5,7 @@
 
     "ReplicatedStorage": {
       "$className": "ReplicatedStorage",
+
       "Rojo": {
         "$className": "Folder",
         "Plugin": {
@@ -30,6 +31,7 @@
 
     "TestService": {
       "$className": "TestService",
+
       "TestBootstrap": {
         "$path": "testBootstrap.server.lua"
       }
