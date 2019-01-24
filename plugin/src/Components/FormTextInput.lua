@@ -13,12 +13,27 @@ local RoundBox = Assets.Slices.RoundBox
 local TEXT_SIZE = 22
 local PADDING = 8
 
-local function FormTextInput(props)
-	local value = props.value
-	local placeholderValue = props.placeholderValue
-	local onValueChange = props.onValueChange
-	local layoutOrder = props.layoutOrder
-	local width = props.width
+local FormTextInput = Roact.Component:extend("FormTextInput")
+
+function FormTextInput:init()
+	self:setState({
+		focused = false,
+	})
+end
+
+function FormTextInput:render()
+	local value = self.props.value
+	local placeholderValue = self.props.placeholderValue
+	local onValueChange = self.props.onValueChange
+	local layoutOrder = self.props.layoutOrder
+	local width = self.props.width
+
+	local shownPlaceholder
+	if self.state.focused then
+		shownPlaceholder = ""
+	else
+		shownPlaceholder = placeholderValue
+	end
 
 	return e("ImageLabel", {
 		LayoutOrder = layoutOrder,
@@ -41,12 +56,22 @@ local function FormTextInput(props)
 			TextXAlignment = Enum.TextXAlignment.Center,
 			TextSize = TEXT_SIZE,
 			Text = value,
-			PlaceholderText = placeholderValue,
+			PlaceholderText = shownPlaceholder,
 			PlaceholderColor3 = Theme.AccentLightColor,
 			TextColor3 = Theme.AccentColor,
 
 			[Roact.Change.Text] = function(rbx)
 				onValueChange(rbx.Text)
+			end,
+			[Roact.Event.Focused] = function()
+				self:setState({
+					focused = true,
+				})
+			end,
+			[Roact.Event.FocusLost] = function()
+				self:setState({
+					focused = false,
+				})
 			end,
 		}),
 	})
