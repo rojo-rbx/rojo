@@ -1,6 +1,7 @@
 use std::{
-    path::{Path, PathBuf},
     env,
+    panic,
+    path::{Path, PathBuf},
     process,
 };
 
@@ -23,7 +24,7 @@ fn main() {
         .default_format_timestamp(false)
         .init();
 
-    let mut app = clap_app!(Rojo =>
+    let app = clap_app!(Rojo =>
         (version: env!("CARGO_PKG_VERSION"))
         (author: env!("CARGO_PKG_AUTHORS"))
         (about: env!("CARGO_PKG_DESCRIPTION"))
@@ -55,18 +56,37 @@ fn main() {
         )
     );
 
-    // `get_matches` consumes our App, but we might need it in the 'help' case.
-    let matches = app.clone().get_matches();
+    let matches = app.get_matches();
 
-    match matches.subcommand() {
+    let result = panic::catch_unwind(|| match matches.subcommand() {
         ("init", Some(sub_matches)) => start_init(sub_matches),
         ("serve", Some(sub_matches)) => start_serve(sub_matches),
         ("build", Some(sub_matches)) => start_build(sub_matches),
         ("upload", Some(sub_matches)) => start_upload(sub_matches),
-        _ => {
-            app.print_help().expect("Could not print help text to stdout!");
-        },
+        _ => eprintln!("Usage: rojo <SUBCOMMAND>\nUse 'rojo help' for more help."),
+    });
+
+    if let Err(error) = result {
+        let message = match error.downcast_ref::<&str>() {
+            Some(message) => message.to_string(),
+            None => match error.downcast_ref::<String>() {
+                Some(message) => message.clone(),
+                None => "<no message>".to_string(),
+            },
+        };
+
+        show_crash_message(&message);
+        process::exit(1);
     }
+}
+
+fn show_crash_message(message: &str) {
+    error!("Rojo crashed!");
+    error!("This is a bug in Rojo.");
+    error!("");
+    error!("Please consider filing a bug: https://github.com/LPGhatguy/rojo/issues");
+    error!("");
+    error!("Details: {}", message);
 }
 
 fn start_init(sub_matches: &ArgMatches) {
