@@ -6,6 +6,7 @@
 * Changed plugin error messages to be a little more useful
 * Removed unused 'Config' button in plugin UI
 * Fixed bug where bad server responses could cause the plugin to be in a bad state
+* Upgraded to rbx\_tree, rbx\_xml, and rbx\_binary 0.2.0, which dramatically expands the kinds of properties that Rojo can handle, especially in XML.
 
 ## [0.5.0 Alpha 0](https://github.com/LPGhatguy/rojo/releases/tag/v0.5.0-alpha.0) (January 14, 2019)
 * "Epiphany" rewrite, in progress since the beginning of time
