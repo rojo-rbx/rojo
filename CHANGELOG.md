@@ -1,6 +1,8 @@
 # Rojo Changelog
 
 ## [Unreleased]
+
+## [0.5.0 Alpha 1](https://github.com/LPGhatguy/rojo/releases/tag/v0.5.0-alpha.1) (January 14, 2019)
 * Changed plugin UI to be way prettier
     * Thanks to [Reselim](https://github.com/Reselim) for the design!
 * Changed plugin error messages to be a little more useful
