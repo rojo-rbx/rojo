@@ -140,14 +140,18 @@ end
 function ApiContext:retrieveMessages()
 	local url = ("%s/api/subscribe/%s"):format(self.baseUrl, self.messageCursor)
 
-	return Http.get(url)
-		:catch(function(err)
-			if err.type == HttpError.Error.Timeout then
-				return Http.get(url)
-			end
+	local function sendRequest()
+		return Http.get(url)
+			:catch(function(err)
+				if err.type == HttpError.Error.Timeout then
+					return sendRequest()
+				end
 
-			return Promise.reject(err)
-		end)
+				return Promise.reject(err)
+			end)
+	end
+
+	return sendRequest()
 		:andThen(rejectFailedRequests)
 		:andThen(function(response)
 			local body = response:json()
