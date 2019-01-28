@@ -100,11 +100,6 @@ impl Imfs {
     }
 
     pub fn path_moved(&mut self, from_path: &Path, to_path: &Path) -> io::Result<()> {
-        debug_assert!(from_path.is_absolute());
-        debug_assert!(self.is_within_roots(from_path));
-        debug_assert!(to_path.is_absolute());
-        debug_assert!(self.is_within_roots(to_path));
-
         self.path_removed(from_path)?;
         self.path_created(to_path)?;
         Ok(())
