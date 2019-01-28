@@ -143,7 +143,7 @@ function ApiContext:retrieveMessages()
 	return Http.get(url)
 		:catch(function(err)
 			if err.type == HttpError.Error.Timeout then
-				return self:retrieveMessages()
+				return Http.get(url)
 			end
 
 			return Promise.reject(err)
