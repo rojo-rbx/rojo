@@ -2,9 +2,9 @@ This is the documentation home for Rojo.
 
 Available versions of these docs:
 
+* [Latest version (currently 0.5.x)](https://lpghatguy.github.io/rojo)
 * [0.5.x](https://lpghatguy.github.io/rojo/0.5.x)
 * [0.4.x](https://lpghatguy.github.io/rojo/0.4.x)
-* [`master` branch](https://lpghatguy.github.io/rojo/master)
 
 **Rojo** is a flexible multi-tool designed for creating robust Roblox projects.
 
