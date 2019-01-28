@@ -153,8 +153,12 @@ impl RbxSession {
             // If the path doesn't exist or is a directory, we don't care if it
             // updated
             match imfs.get(path) {
-                Some(ImfsItem::Directory(_)) | None => {
+                Some(ImfsItem::Directory(_)) => {
                     trace!("Updated path was a directory, ignoring.");
+                    return;
+                },
+                None => {
+                    trace!("Updated path did not exist in IMFS, ignoring.");
                     return;
                 },
                 Some(ImfsItem::File(_)) => {},
