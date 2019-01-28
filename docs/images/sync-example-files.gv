@@ -1,0 +1,17 @@
+digraph "Sync Files" {
+	graph [
+	    ranksep = "0.7",
+	    nodesep = "0.5",
+	];
+	node [
+	    fontname = "monospace",
+	    shape = "record",
+	];
+
+	my_model [label = "MyModel"]
+	init_server [label = "init.server.lua"]
+	foo [label = "foo.lua"]
+
+	my_model -> init_server
+	my_model -> foo
+}

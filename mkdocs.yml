@@ -17,6 +17,9 @@ nav:
   - Sync Details: sync-details.md
   - Migrating from 0.4.x to 0.5.x: migrating-to-epiphany.md
 
+extra_css:
+  - extra.css
+
 markdown_extensions:
   - attr_list
   - admonition

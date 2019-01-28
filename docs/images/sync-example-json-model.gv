@@ -1,0 +1,17 @@
+digraph "Sync Files" {
+	graph [
+	    ranksep = "0.7",
+	    nodesep = "0.5",
+	];
+	node [
+	    fontname = "monospace",
+	    shape = "record",
+	];
+
+	model [label = "My Cool Model (Folder)"]
+	root_part [label = "RootPart (Part)"]
+	send_money [label = "SendMoney (RemoteEvent)"]
+
+	model -> root_part
+	model -> send_money
+}

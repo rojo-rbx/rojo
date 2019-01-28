@@ -50,9 +50,6 @@ Metadata begins with a dollar sign (`$`), like `$className`. This is so that chi
 
 All other values are considered children, where the key is the instance's name, and the value is an object, repeating the process.
 
-## Migrating `.model.json` Files
-No upgrade path yet, stay tuned.
-
 ## Migrating Unknown Files
 If you used Rojo to sync in files as `StringValue` objects, you'll need to make sure those files end with the `txt` extension to preserve this in Rojo 0.5.x.
 
