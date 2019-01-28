@@ -3,23 +3,23 @@
 # Kludged documentation generator to support multiple versions.
 # Make sure the `site` folder is a checkout of this repository's `gh-pages`
 # branch.
-# To use, copy this file to `generate-docs.run` so that Git will leave it alone,
-# then run `generate-docs.run` in the root of the repository.
 
 set -e
 
-CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+REMOTE=$(git remote get-url origin)
+CHECKOUT="$(mktemp -d)"
+OUTPUT="$(pwd)/site"
 
-echo "Building 0.4.x"
-git checkout v0.4.x
-git pull
-mkdocs build --site-dir site/0.4.x
+git clone "$REMOTE" "$CHECKOUT"
+cd "$CHECKOUT"
 
 echo "Building master"
 git checkout master
-mkdocs build --site-dir site/master
+mkdocs build --site-dir "$OUTPUT/master"
 
 echo "Building 0.5.x"
-mkdocs build --site-dir site/0.5.x
+mkdocs build --site-dir "$OUTPUT/0.5.x"
 
-git checkout "$CURRENT_BRANCH"
+echo "Building 0.4.x"
+git checkout v0.4.x
+mkdocs build --site-dir "$OUTPUT/0.4.x"
