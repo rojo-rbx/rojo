@@ -1,11 +1,13 @@
 # Rojo Changelog
 
 ## [Unreleased]
+
+## [0.5.0 Alpha 2](https://github.com/LPGhatguy/rojo/releases/tag/v0.5.0-alpha.2) (January 28, 2019)
 * Added support for `.model.json` files, compatible with 0.4.x
 * Fixed in-memory filesystem not handling out-of-order filesystem change events
 * Fixed long-polling error caused by a promise mixup ([#110](https://github.com/LPGhatguy/rojo/issues/110))
 
-## [0.5.0 Alpha 1](https://github.com/LPGhatguy/rojo/releases/tag/v0.5.0-alpha.1) (January 14, 2019)
+## [0.5.0 Alpha 1](https://github.com/LPGhatguy/rojo/releases/tag/v0.5.0-alpha.1) (January 25, 2019)
 * Changed plugin UI to be way prettier
     * Thanks to [Reselim](https://github.com/Reselim) for the design!
 * Changed plugin error messages to be a little more useful
