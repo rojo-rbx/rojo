@@ -40,7 +40,7 @@ Soon, Rojo will be able to:
 * Sync instances from Roblox Studio to the filesystem
 * Compile MoonScript and other custom things for your project
 
-## [Documentation](https://lpghatguy.github.io/rojo/0.4.x)
+## [Documentation](https://lpghatguy.github.io/rojo)
 You can also view the documentation by browsing the [docs](https://github.com/LPGhatguy/rojo/tree/master/docs) folder of the repository, but because it uses a number of Markdown extensions, it may not be very readable.
 
 ## Inspiration and Alternatives
