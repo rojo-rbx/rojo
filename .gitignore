@@ -1,5 +1,5 @@
 /site
 /target
-/server/scratch
+/scratch-project
 **/*.rs.bk
 /generate-docs.run

@@ -1,6 +1,6 @@
 use std::{
     collections::{HashMap, HashSet},
-    path::{Path, PathBuf},
+    path::{self, Path, PathBuf},
     fs,
     io,
 };
@@ -24,9 +24,12 @@ fn add_sync_points(imfs: &mut Imfs, project_node: &ProjectNode) -> io::Result<()
     Ok(())
 }
 
-/// The in-memory filesystem keeps a mirror of all files being watcher by Rojo
+/// The in-memory filesystem keeps a mirror of all files being watched by Rojo
 /// in order to deduplicate file changes in the case of bidirectional syncing
 /// from Roblox Studio.
+///
+/// It also enables Rojo to quickly generate React-like snapshots to make
+/// reasoning about instances and how they relate to files easier.
 #[derive(Debug, Clone)]
 pub struct Imfs {
     items: HashMap<PathBuf, ImfsItem>,
@@ -66,21 +69,21 @@ impl Imfs {
 
         self.roots.insert(path.to_path_buf());
 
-        self.read_from_disk(path)
+        self.descend_and_read_from_disk(path)
     }
 
     pub fn path_created(&mut self, path: &Path) -> io::Result<()> {
         debug_assert!(path.is_absolute());
         debug_assert!(self.is_within_roots(path));
 
-        self.read_from_disk(path)
+        self.descend_and_read_from_disk(path)
     }
 
     pub fn path_updated(&mut self, path: &Path) -> io::Result<()> {
         debug_assert!(path.is_absolute());
         debug_assert!(self.is_within_roots(path));
 
-        self.read_from_disk(path)
+        self.descend_and_read_from_disk(path)
     }
 
     pub fn path_removed(&mut self, path: &Path) -> io::Result<()> {
@@ -132,9 +135,7 @@ impl Imfs {
             Some(ImfsItem::Directory(directory)) => {
                 directory.children.remove(child);
             },
-            _ => {
-                panic!("Tried to unlink child of path that wasn't a directory!");
-            },
+            _ => {},
         }
     }
 
@@ -151,6 +152,38 @@ impl Imfs {
                 },
             }
         }
+    }
+
+    fn descend_and_read_from_disk(&mut self, path: &Path) -> io::Result<()> {
+        let root_path = self.get_root_path(path)
+            .expect("Tried to mkdirp for path that wasn't within roots!");
+
+        // If this path is a root, we should read the entire thing.
+        if root_path == path {
+            self.read_from_disk(path)?;
+            return Ok(());
+        }
+
+        let relative_path = path.strip_prefix(root_path).unwrap();
+        let mut current_path = root_path.to_path_buf();
+
+        for component in relative_path.components() {
+            match component {
+                path::Component::Normal(name) => {
+                    let next_path = current_path.join(name);
+
+                    if self.items.contains_key(&next_path) {
+                        current_path = next_path;
+                    } else {
+                        self.read_from_disk(&current_path)?;
+                        break;
+                    }
+                },
+                _ => unreachable!(),
+            }
+        }
+
+        Ok(())
     }
 
     fn read_from_disk(&mut self, path: &Path) -> io::Result<()> {
@@ -193,6 +226,16 @@ impl Imfs {
         } else {
             panic!("Unexpected non-file, non-directory item");
         }
+    }
+
+    fn get_root_path<'a>(&'a self, path: &Path) -> Option<&'a Path> {
+        for root_path in &self.roots {
+            if path.starts_with(root_path) {
+                return Some(root_path)
+            }
+        }
+
+        None
     }
 
     fn is_within_roots(&self, path: &Path) -> bool {

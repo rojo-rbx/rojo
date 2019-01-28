@@ -232,6 +232,16 @@ fn adding_folder() -> io::Result<()> {
             FsEvent::Created(file1_path.clone()),
             FsEvent::Created(file2_path.clone()),
         ],
+        vec![
+            FsEvent::Created(file1_path.clone()),
+            FsEvent::Created(file2_path.clone()),
+            FsEvent::Created(folder_path.clone()),
+        ],
+        vec![
+            FsEvent::Created(file1_path.clone()),
+            FsEvent::Created(folder_path.clone()),
+            FsEvent::Created(file2_path.clone()),
+        ],
     ];
 
     for events in &possible_event_sequences {
@@ -293,6 +303,10 @@ fn removing_folder() -> io::Result<()> {
         vec![
             FsEvent::Removed(resources.baz_path.clone()),
             FsEvent::Removed(resources.foo_path.clone()),
+        ],
+        vec![
+            FsEvent::Removed(resources.foo_path.clone()),
+            FsEvent::Removed(resources.baz_path.clone()),
         ],
     ];
 

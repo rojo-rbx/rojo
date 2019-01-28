@@ -4,7 +4,7 @@ use std::{
     thread,
 };
 
-use log::info;
+use log::trace;
 use notify::{
     self,
     DebouncedEvent,
@@ -23,6 +23,8 @@ const WATCH_TIMEOUT: Duration = Duration::from_millis(100);
 fn handle_event(imfs: &Mutex<Imfs>, rbx_session: &Mutex<RbxSession>, event: DebouncedEvent) {
     match event {
         DebouncedEvent::Create(path) => {
+            trace!("Path created: {}", path.display());
+
             {
                 let mut imfs = imfs.lock().unwrap();
                 imfs.path_created(&path).unwrap();
@@ -34,6 +36,8 @@ fn handle_event(imfs: &Mutex<Imfs>, rbx_session: &Mutex<RbxSession>, event: Debo
             }
         },
         DebouncedEvent::Write(path) => {
+            trace!("Path created: {}", path.display());
+
             {
                 let mut imfs = imfs.lock().unwrap();
                 imfs.path_updated(&path).unwrap();
@@ -45,6 +49,8 @@ fn handle_event(imfs: &Mutex<Imfs>, rbx_session: &Mutex<RbxSession>, event: Debo
             }
         },
         DebouncedEvent::Remove(path) => {
+            trace!("Path removed: {}", path.display());
+
             {
                 let mut imfs = imfs.lock().unwrap();
                 imfs.path_removed(&path).unwrap();
@@ -56,6 +62,8 @@ fn handle_event(imfs: &Mutex<Imfs>, rbx_session: &Mutex<RbxSession>, event: Debo
             }
         },
         DebouncedEvent::Rename(from_path, to_path) => {
+            trace!("Path rename: {} to {}", from_path.display(), to_path.display());
+
             {
                 let mut imfs = imfs.lock().unwrap();
                 imfs.path_moved(&from_path, &to_path).unwrap();
@@ -66,7 +74,9 @@ fn handle_event(imfs: &Mutex<Imfs>, rbx_session: &Mutex<RbxSession>, event: Debo
                 rbx_session.path_renamed(&from_path, &to_path);
             }
         },
-        _ => {},
+        other => {
+            trace!("Unhandled FS event: {:?}", other);
+        },
     }
 }
 
@@ -100,11 +110,11 @@ impl FsWatcher {
                 let root_path = root_path.clone();
 
                 thread::spawn(move || {
-                    info!("Watcher thread ({}) started", root_path.display());
+                    trace!("Watcher thread ({}) started", root_path.display());
                     while let Ok(event) = watch_rx.recv() {
                         handle_event(&imfs, &rbx_session, event);
                     }
-                    info!("Watcher thread ({}) stopped", root_path.display());
+                    trace!("Watcher thread ({}) stopped", root_path.display());
                 });
             }
         }
