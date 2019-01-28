@@ -6,10 +6,11 @@ use std::{
     str,
 };
 
-use serde_derive::{Serialize, Deserialize};
+use failure::Fail;
+use log::info;
 use maplit::hashmap;
 use rbx_tree::{RbxTree, RbxValue, RbxInstanceProperties};
-use failure::Fail;
+use serde_derive::{Serialize, Deserialize};
 
 use crate::{
     imfs::{
@@ -53,6 +54,11 @@ pub enum SnapshotError {
         path: PathBuf,
     },
 
+    JsonModelDecodeError {
+        inner: serde_json::Error,
+        path: PathBuf,
+    },
+
     XmlModelDecodeError {
         inner: rbx_xml::DecodeError,
         path: PathBuf,
@@ -70,6 +76,9 @@ impl fmt::Display for SnapshotError {
             SnapshotError::DidNotExist(path) => write!(output, "Path did not exist: {}", path.display()),
             SnapshotError::Utf8Error { inner, path } => {
                 write!(output, "Invalid UTF-8: {} in path {}", inner, path.display())
+            },
+            SnapshotError::JsonModelDecodeError { inner, path } => {
+                write!(output, "Malformed .model.json model: {:?} in path {}", inner, path.display())
             },
             SnapshotError::XmlModelDecodeError { inner, path } => {
                 write!(output, "Malformed rbxmx model: {:?} in path {}", inner, path.display())
@@ -248,7 +257,18 @@ fn snapshot_imfs_file<'source>(
         Some("txt") => snapshot_txt_file(file)?,
         Some("rbxmx") => snapshot_xml_model_file(file)?,
         Some("rbxm") => snapshot_binary_model_file(file)?,
-        Some(_) | None => return Ok(None),
+        Some("json") => {
+            let file_stem = file.path
+                .file_stem().expect("Could not extract file stem")
+                .to_str().expect("Could not convert path to UTF-8");
+
+            if file_stem.ends_with(".model") {
+                snapshot_json_model_file(file)?
+            } else {
+                None
+            }
+        },
+        Some(_) | None => None,
     };
 
     if let Some(snapshot) = maybe_snapshot.as_mut() {
@@ -256,6 +276,8 @@ fn snapshot_imfs_file<'source>(
         if let Some(snapshot_name) = instance_name {
             snapshot.name = snapshot_name;
         }
+    } else {
+        info!("File generated no snapshot: {}", file.path.display());
     }
 
     Ok(maybe_snapshot)
@@ -400,6 +422,57 @@ struct LocalizationEntryJson {
     example: String,
     source: String,
     values: HashMap<String, String>,
+}
+
+fn snapshot_json_model_file<'source>(
+    file: &'source ImfsFile,
+) -> SnapshotResult<'source> {
+    let contents = str::from_utf8(&file.contents)
+        .map_err(|inner| SnapshotError::Utf8Error {
+            inner,
+            path: file.path.to_owned(),
+        })?;
+
+    let json_instance: JsonModelInstance = serde_json::from_str(contents)
+        .map_err(|inner| SnapshotError::JsonModelDecodeError {
+            inner,
+            path: file.path.to_owned(),
+        })?;
+
+    let mut snapshot = json_instance.into_snapshot();
+    snapshot.metadata.source_path = Some(file.path.to_owned());
+
+    Ok(Some(snapshot))
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+struct JsonModelInstance {
+    name: String,
+    class_name: String,
+
+    #[serde(default = "Vec::new", skip_serializing_if = "Vec::is_empty")]
+    children: Vec<JsonModelInstance>,
+
+    #[serde(default = "HashMap::new", skip_serializing_if = "HashMap::is_empty")]
+    properties: HashMap<String, RbxValue>,
+}
+
+impl JsonModelInstance {
+    fn into_snapshot(mut self) -> RbxSnapshotInstance<'static> {
+        let children = self.children
+            .drain(..)
+            .map(JsonModelInstance::into_snapshot)
+            .collect();
+
+        RbxSnapshotInstance {
+            name: Cow::Owned(self.name),
+            class_name: Cow::Owned(self.class_name),
+            properties: self.properties,
+            children,
+            metadata: Default::default(),
+        }
+    }
 }
 
 fn snapshot_xml_model_file<'source>(

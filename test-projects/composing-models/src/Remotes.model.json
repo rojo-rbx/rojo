@@ -1,0 +1,14 @@
+{
+  "Name": "All my Remote Events",
+  "ClassName": "Folder",
+  "Children": [
+    {
+      "Name": "SendMoney",
+      "ClassName": "RemoteEvent"
+    },
+    {
+      "Name": "SendItems",
+      "ClassName": "RemoteEvent"
+    }
+  ]
+}

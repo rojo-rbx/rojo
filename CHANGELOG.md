@@ -1,6 +1,7 @@
 # Rojo Changelog
 
 ## [Unreleased]
+* Added support for `.model.json` files, compatible with 0.4.x
 * Fixed in-memory filesystem not handling out-of-order filesystem change events
 * Fixed long-polling error caused by a promise mixup ([#110](https://github.com/LPGhatguy/rojo/issues/110))
 
