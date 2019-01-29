@@ -4,13 +4,13 @@ use std::{
 };
 
 use crate::{
+    fs_watcher::FsWatcher,
+    imfs::Imfs,
     message_queue::MessageQueue,
     project::Project,
-    imfs::Imfs,
-    session_id::SessionId,
     rbx_session::RbxSession,
+    session_id::SessionId,
     snapshot_reconciler::InstanceChanges,
-    fs_watcher::FsWatcher,
 };
 
 /// Contains all of the state for a Rojo live-sync session.
