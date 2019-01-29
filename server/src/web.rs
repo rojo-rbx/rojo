@@ -96,136 +96,31 @@ impl Server {
 
         router!(request,
             (GET) (/) => {
-                Response::text("Rojo is up and running!")
+                self.handle_home()
             },
-
             (GET) (/api/rojo) => {
-                // Get a summary of information about the server.
-
-                let rbx_session = self.live_session.rbx_session.lock().unwrap();
-                let tree = rbx_session.get_tree();
-
-                Response::json(&ServerInfoResponse {
-                    server_version: self.server_version,
-                    protocol_version: 2,
-                    session_id: self.live_session.session_id,
-                    expected_place_ids: self.live_session.project.serve_place_ids.clone(),
-                    root_instance_id: tree.get_root_id(),
-                })
+                self.handle_api_rojo()
             },
-
             (GET) (/api/subscribe/{ cursor: u32 }) => {
-                // Retrieve any messages past the given cursor index, and if
-                // there weren't any, subscribe to receive any new messages.
-
-                let message_queue = Arc::clone(&self.live_session.message_queue);
-
-                // Did the client miss any messages since the last subscribe?
-                {
-                    let (new_cursor, new_messages) = message_queue.get_messages_since(cursor);
-
-                    if !new_messages.is_empty() {
-                        return Response::json(&SubscribeResponse {
-                            session_id: self.live_session.session_id,
-                            messages: Cow::Borrowed(&new_messages),
-                            message_cursor: new_cursor,
-                        })
-                    }
-                }
-
-                let (tx, rx) = mpsc::channel();
-
-                let sender_id = message_queue.subscribe(tx);
-
-                match rx.recv() {
-                    Ok(_) => (),
-                    Err(_) => return Response::text("error!").with_status_code(500),
-                }
-
-                message_queue.unsubscribe(sender_id);
-
-                {
-                    let (new_cursor, new_messages) = message_queue.get_messages_since(cursor);
-
-                    return Response::json(&SubscribeResponse {
-                        session_id: self.live_session.session_id,
-                        messages: Cow::Owned(new_messages),
-                        message_cursor: new_cursor,
-                    })
-                }
+                self.handle_api_subscribe(cursor)
             },
-
             (GET) (/api/read/{ id_list: String }) => {
-                let message_queue = Arc::clone(&self.live_session.message_queue);
-
                 let requested_ids: Option<Vec<RbxId>> = id_list
                     .split(',')
                     .map(RbxId::parse_str)
                     .collect();
 
-                let requested_ids = match requested_ids {
-                    Some(id) => id,
-                    None => return rouille::Response::text("Malformed ID list").with_status_code(400),
-                };
-
-                let rbx_session = self.live_session.rbx_session.lock().unwrap();
-                let tree = rbx_session.get_tree();
-
-                let message_cursor = message_queue.get_message_cursor();
-
-                let mut instances = HashMap::new();
-
-                for &requested_id in &requested_ids {
-                    if let Some(instance) = tree.get_instance(requested_id) {
-                        let metadata = rbx_session.get_instance_metadata(requested_id)
-                            .map(InstanceMetadata::from_session_metadata);
-
-                        instances.insert(instance.get_id(), InstanceWithMetadata {
-                            instance: Cow::Borrowed(instance),
-                            metadata,
-                        });
-
-                        for descendant in tree.descendants(requested_id) {
-                            let descendant_meta = rbx_session.get_instance_metadata(descendant.get_id())
-                                .map(InstanceMetadata::from_session_metadata);
-
-                            instances.insert(descendant.get_id(), InstanceWithMetadata {
-                                instance: Cow::Borrowed(descendant),
-                                metadata: descendant_meta,
-                            });
-                        }
-                    }
-                }
-
-                Response::json(&ReadResponse {
-                    session_id: self.live_session.session_id,
-                    message_cursor,
-                    instances,
-                })
+                self.handle_api_read(requested_ids)
             },
-
             (GET) (/visualize/rbx) => {
-                let rbx_session = self.live_session.rbx_session.lock().unwrap();
-
-                let dot_source = format!("{}", VisualizeRbxSession(&rbx_session));
-
-                Response::svg(graphviz_to_svg(&dot_source))
+                self.handle_visualize_rbx()
             },
-
             (GET) (/visualize/imfs) => {
-                let imfs = self.live_session.imfs.lock().unwrap();
-
-                let dot_source = format!("{}", VisualizeImfs(&imfs));
-
-                Response::svg(graphviz_to_svg(&dot_source))
+                self.handle_visualize_imfs()
             },
-
             (GET) (/visualize/path_metadata) => {
-                let rbx_session = self.live_session.rbx_session.lock().unwrap();
-
-                Response::json(&rbx_session.debug_get_metadata_per_path())
+                self.handle_visualize_path_metadata()
             },
-
             _ => Response::empty_404()
         )
     }
@@ -234,5 +129,124 @@ impl Server {
         let address = format!("0.0.0.0:{}", port);
 
         rouille::start_server(address, move |request| self.handle_request(request));
+    }
+
+    fn handle_home(&self) -> Response {
+        Response::text("Rojo is up and running!")
+    }
+
+    /// Get a summary of information about the server
+    fn handle_api_rojo(&self) -> Response {
+        let rbx_session = self.live_session.rbx_session.lock().unwrap();
+        let tree = rbx_session.get_tree();
+
+        Response::json(&ServerInfoResponse {
+            server_version: self.server_version,
+            protocol_version: 2,
+            session_id: self.live_session.session_id,
+            expected_place_ids: self.live_session.project.serve_place_ids.clone(),
+            root_instance_id: tree.get_root_id(),
+        })
+    }
+
+    /// Retrieve any messages past the given cursor index, and if
+    /// there weren't any, subscribe to receive any new messages.
+    fn handle_api_subscribe(&self, cursor: u32) -> Response {
+        let message_queue = Arc::clone(&self.live_session.message_queue);
+
+        // Did the client miss any messages since the last subscribe?
+        {
+            let (new_cursor, new_messages) = message_queue.get_messages_since(cursor);
+
+            if !new_messages.is_empty() {
+                return Response::json(&SubscribeResponse {
+                    session_id: self.live_session.session_id,
+                    messages: Cow::Borrowed(&new_messages),
+                    message_cursor: new_cursor,
+                })
+            }
+        }
+
+        let (tx, rx) = mpsc::channel();
+
+        let sender_id = message_queue.subscribe(tx);
+
+        match rx.recv() {
+            Ok(_) => (),
+            Err(_) => return Response::text("error!").with_status_code(500),
+        }
+
+        message_queue.unsubscribe(sender_id);
+
+        {
+            let (new_cursor, new_messages) = message_queue.get_messages_since(cursor);
+
+            return Response::json(&SubscribeResponse {
+                session_id: self.live_session.session_id,
+                messages: Cow::Owned(new_messages),
+                message_cursor: new_cursor,
+            })
+        }
+    }
+
+    fn handle_api_read(&self, requested_ids: Option<Vec<RbxId>>) -> Response {
+        let message_queue = Arc::clone(&self.live_session.message_queue);
+
+        let requested_ids = match requested_ids {
+            Some(id) => id,
+            None => return rouille::Response::text("Malformed ID list").with_status_code(400),
+        };
+
+        let rbx_session = self.live_session.rbx_session.lock().unwrap();
+        let tree = rbx_session.get_tree();
+
+        let message_cursor = message_queue.get_message_cursor();
+
+        let mut instances = HashMap::new();
+
+        for &requested_id in &requested_ids {
+            if let Some(instance) = tree.get_instance(requested_id) {
+                let metadata = rbx_session.get_instance_metadata(requested_id)
+                    .map(InstanceMetadata::from_session_metadata);
+
+                instances.insert(instance.get_id(), InstanceWithMetadata {
+                    instance: Cow::Borrowed(instance),
+                    metadata,
+                });
+
+                for descendant in tree.descendants(requested_id) {
+                    let descendant_meta = rbx_session.get_instance_metadata(descendant.get_id())
+                        .map(InstanceMetadata::from_session_metadata);
+
+                    instances.insert(descendant.get_id(), InstanceWithMetadata {
+                        instance: Cow::Borrowed(descendant),
+                        metadata: descendant_meta,
+                    });
+                }
+            }
+        }
+
+        Response::json(&ReadResponse {
+            session_id: self.live_session.session_id,
+            message_cursor,
+            instances,
+        })
+    }
+
+    fn handle_visualize_rbx(&self) -> Response {
+        let rbx_session = self.live_session.rbx_session.lock().unwrap();
+        let dot_source = format!("{}", VisualizeRbxSession(&rbx_session));
+        Response::svg(graphviz_to_svg(&dot_source))
+    }
+
+    fn handle_visualize_imfs(&self) -> Response {
+        let imfs = self.live_session.imfs.lock().unwrap();
+        let dot_source = format!("{}", VisualizeImfs(&imfs));
+        Response::svg(graphviz_to_svg(&dot_source))
+    }
+
+    fn handle_visualize_path_metadata(&self) -> Response {
+        let rbx_session = self.live_session.rbx_session.lock().unwrap();
+        Response::json(&rbx_session.debug_get_metadata_per_path())
     }
 }
