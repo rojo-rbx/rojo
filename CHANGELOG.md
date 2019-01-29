@@ -1,6 +1,7 @@
 # Rojo Changelog
 
 ## [Unreleased]
+* Added new (empty) diagnostic page served from the server
 
 ## [0.5.0 Alpha 2](https://github.com/LPGhatguy/rojo/releases/tag/v0.5.0-alpha.2) (January 28, 2019)
 * Added support for `.model.json` files, compatible with 0.4.x

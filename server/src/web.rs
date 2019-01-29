@@ -22,6 +22,8 @@ use crate::{
     rbx_session::{MetadataPerInstance},
 };
 
+static HOME_CONTENT: &str = include_str!("../assets/index.html");
+
 /// Contains the instance metadata relevant to Rojo clients.
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -132,7 +134,7 @@ impl Server {
     }
 
     fn handle_home(&self) -> Response {
-        Response::text("Rojo is up and running!")
+        Response::html(HOME_CONTENT)
     }
 
     /// Get a summary of information about the server
