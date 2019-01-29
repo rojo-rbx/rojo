@@ -72,6 +72,18 @@ impl Imfs {
         self.descend_and_read_from_disk(path)
     }
 
+    pub fn remove_root(&mut self, path: &Path) {
+        debug_assert!(path.is_absolute());
+
+        if self.roots.get(path).is_some() {
+            self.remove_item(path);
+
+            if let Some(parent_path) = path.parent() {
+                self.unlink_child(parent_path, path);
+            }
+        }
+    }
+
     pub fn path_created(&mut self, path: &Path) -> io::Result<()> {
         debug_assert!(path.is_absolute());
         debug_assert!(self.is_within_roots(path));

@@ -41,7 +41,7 @@ impl LiveSession {
 
         let fs_watcher = FsWatcher::start(
             Arc::clone(&imfs),
-            Arc::clone(&rbx_session),
+            Some(Arc::clone(&rbx_session)),
         );
 
         let session_id = SessionId::new();
