@@ -1,10 +1,10 @@
 use std::{
     collections::{HashMap, HashSet},
-    io,
     fs,
     path::PathBuf,
 };
 
+use failure::Error;
 use tempfile::{TempDir, tempdir};
 
 use librojo::{
@@ -19,7 +19,7 @@ enum FsEvent {
     Moved(PathBuf, PathBuf),
 }
 
-fn send_events(imfs: &mut Imfs, events: &[FsEvent]) -> io::Result<()> {
+fn send_events(imfs: &mut Imfs, events: &[FsEvent]) -> Result<(), Error> {
     for event in events {
         match event {
             FsEvent::Created(path) => imfs.path_created(path)?,
@@ -56,7 +56,7 @@ fn check_expected(real: &Imfs, expected: &ExpectedImfs) {
     }
 }
 
-fn base_tree() -> io::Result<(TempDir, Imfs, ExpectedImfs, TestResources)> {
+fn base_tree() -> Result<(TempDir, Imfs, ExpectedImfs, TestResources), Error> {
     let root = tempdir()?;
 
     let foo_path = root.path().join("foo");
@@ -125,7 +125,7 @@ fn base_tree() -> io::Result<(TempDir, Imfs, ExpectedImfs, TestResources)> {
 }
 
 #[test]
-fn initial_read() -> io::Result<()> {
+fn initial_read() -> Result<(), Error> {
     let (_root, imfs, expected_imfs, _resources) = base_tree()?;
 
     check_expected(&imfs, &expected_imfs);
@@ -134,7 +134,7 @@ fn initial_read() -> io::Result<()> {
 }
 
 #[test]
-fn adding_files() -> io::Result<()> {
+fn adding_files() -> Result<(), Error> {
     let (root, mut imfs, mut expected_imfs, resources) = base_tree()?;
 
     check_expected(&imfs, &expected_imfs);
@@ -178,7 +178,7 @@ fn adding_files() -> io::Result<()> {
 }
 
 #[test]
-fn adding_folder() -> io::Result<()> {
+fn adding_folder() -> Result<(), Error> {
     let (root, imfs, mut expected_imfs, _resources) = base_tree()?;
 
     check_expected(&imfs, &expected_imfs);
@@ -255,7 +255,7 @@ fn adding_folder() -> io::Result<()> {
 }
 
 #[test]
-fn removing_file() -> io::Result<()> {
+fn removing_file() -> Result<(), Error> {
     let (root, mut imfs, mut expected_imfs, resources) = base_tree()?;
 
     check_expected(&imfs, &expected_imfs);
@@ -279,7 +279,7 @@ fn removing_file() -> io::Result<()> {
 }
 
 #[test]
-fn removing_folder() -> io::Result<()> {
+fn removing_folder() -> Result<(), Error> {
     let (root, imfs, mut expected_imfs, resources) = base_tree()?;
 
     check_expected(&imfs, &expected_imfs);
