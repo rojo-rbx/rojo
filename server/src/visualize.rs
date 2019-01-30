@@ -5,6 +5,7 @@ use std::{
     process::{Command, Stdio},
 };
 
+use log::warn;
 use rbx_tree::RbxId;
 
 use crate::{
@@ -27,13 +28,21 @@ digraph RojoTree {
 "#;
 
 /// Compiles DOT source to SVG by invoking dot on the command line.
-pub fn graphviz_to_svg(source: &str) -> String {
-    let mut child = Command::new("dot")
+pub fn graphviz_to_svg(source: &str) -> Option<String> {
+    let command = Command::new("dot")
         .arg("-Tsvg")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .spawn()
-        .expect("Failed to spawn GraphViz process -- make sure it's installed in order to use /api/visualize");
+        .spawn();
+
+    let mut child = match command {
+        Ok(child) => child,
+        Err(_) => {
+            warn!("Failed to spawn GraphViz process to visualize current state.");
+            warn!("If you want pretty graphs, install GraphViz and make sure 'dot' is on your PATH!");
+            return None;
+        },
+    };
 
     {
         let stdin = child.stdin.as_mut().expect("Failed to open stdin");
@@ -41,7 +50,7 @@ pub fn graphviz_to_svg(source: &str) -> String {
     }
 
     let output = child.wait_with_output().expect("Failed to read stdout");
-    String::from_utf8(output.stdout).expect("Failed to parse stdout as UTF-8")
+    Some(String::from_utf8(output.stdout).expect("Failed to parse stdout as UTF-8"))
 }
 
 /// A Display wrapper struct to visualize an RbxSession as SVG.

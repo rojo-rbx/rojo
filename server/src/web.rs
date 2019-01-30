@@ -238,13 +238,21 @@ impl Server {
     fn handle_visualize_rbx(&self) -> Response {
         let rbx_session = self.live_session.rbx_session.lock().unwrap();
         let dot_source = format!("{}", VisualizeRbxSession(&rbx_session));
-        Response::svg(graphviz_to_svg(&dot_source))
+
+        match graphviz_to_svg(&dot_source) {
+            Some(svg) => Response::svg(svg),
+            None => Response::text(dot_source),
+        }
     }
 
     fn handle_visualize_imfs(&self) -> Response {
         let imfs = self.live_session.imfs.lock().unwrap();
         let dot_source = format!("{}", VisualizeImfs(&imfs));
-        Response::svg(graphviz_to_svg(&dot_source))
+
+        match graphviz_to_svg(&dot_source) {
+            Some(svg) => Response::svg(svg),
+            None => Response::text(dot_source),
+        }
     }
 
     fn handle_visualize_path_metadata(&self) -> Response {

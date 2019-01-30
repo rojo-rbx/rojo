@@ -20,9 +20,14 @@ fn make_path_absolute(value: &Path) -> PathBuf {
 }
 
 fn main() {
-    env_logger::Builder::from_default_env()
-        .default_format_timestamp(false)
-        .init();
+    {
+        let log_env = env_logger::Env::default()
+            .default_filter_or("warn");
+
+        env_logger::Builder::from_env(log_env)
+            .default_format_timestamp(false)
+            .init();
+    }
 
     let app = clap_app!(Rojo =>
         (version: env!("CARGO_PKG_VERSION"))
