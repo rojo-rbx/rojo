@@ -1,15 +1,41 @@
 use std::{
     collections::{HashMap, HashSet},
     path::{self, Path, PathBuf},
+    fmt,
     fs,
     io,
 };
 
+use failure::Fail;
 use serde_derive::{Serialize, Deserialize};
 
 use crate::project::{Project, ProjectNode};
 
-fn add_sync_points(imfs: &mut Imfs, project_node: &ProjectNode) -> io::Result<()> {
+/// A wrapper around io::Error that also attaches the path associated with the
+/// error.
+#[derive(Debug, Fail)]
+pub struct FsError {
+    #[fail(cause)]
+    inner: io::Error,
+    path: PathBuf,
+}
+
+impl FsError {
+    fn new<P: Into<PathBuf>>(inner: io::Error, path: P) -> FsError {
+        FsError {
+            inner,
+            path: path.into(),
+        }
+    }
+}
+
+impl fmt::Display for FsError {
+    fn fmt(&self, output: &mut fmt::Formatter) -> fmt::Result {
+        write!(output, "{}: {}", self.path.display(), self.inner)
+    }
+}
+
+fn add_sync_points(imfs: &mut Imfs, project_node: &ProjectNode) -> Result<(), FsError> {
     match project_node {
         ProjectNode::Instance(node) => {
             for child in node.children.values() {
@@ -44,7 +70,7 @@ impl Imfs {
         }
     }
 
-    pub fn add_roots_from_project(&mut self, project: &Project) -> io::Result<()> {
+    pub fn add_roots_from_project(&mut self, project: &Project) -> Result<(), FsError> {
         add_sync_points(self, &project.tree)
     }
 
@@ -63,7 +89,7 @@ impl Imfs {
         self.items.get(path)
     }
 
-    pub fn add_root(&mut self, path: &Path) -> io::Result<()> {
+    pub fn add_root(&mut self, path: &Path) -> Result<(), FsError> {
         debug_assert!(path.is_absolute());
         debug_assert!(!self.is_within_roots(path));
 
@@ -84,21 +110,21 @@ impl Imfs {
         }
     }
 
-    pub fn path_created(&mut self, path: &Path) -> io::Result<()> {
+    pub fn path_created(&mut self, path: &Path) -> Result<(), FsError> {
         debug_assert!(path.is_absolute());
         debug_assert!(self.is_within_roots(path));
 
         self.descend_and_read_from_disk(path)
     }
 
-    pub fn path_updated(&mut self, path: &Path) -> io::Result<()> {
+    pub fn path_updated(&mut self, path: &Path) -> Result<(), FsError> {
         debug_assert!(path.is_absolute());
         debug_assert!(self.is_within_roots(path));
 
         self.descend_and_read_from_disk(path)
     }
 
-    pub fn path_removed(&mut self, path: &Path) -> io::Result<()> {
+    pub fn path_removed(&mut self, path: &Path) -> Result<(), FsError> {
         debug_assert!(path.is_absolute());
         debug_assert!(self.is_within_roots(path));
 
@@ -111,7 +137,7 @@ impl Imfs {
         Ok(())
     }
 
-    pub fn path_moved(&mut self, from_path: &Path, to_path: &Path) -> io::Result<()> {
+    pub fn path_moved(&mut self, from_path: &Path, to_path: &Path) -> Result<(), FsError> {
         self.path_removed(from_path)?;
         self.path_created(to_path)?;
         Ok(())
@@ -161,9 +187,9 @@ impl Imfs {
         }
     }
 
-    fn descend_and_read_from_disk(&mut self, path: &Path) -> io::Result<()> {
+    fn descend_and_read_from_disk(&mut self, path: &Path) -> Result<(), FsError> {
         let root_path = self.get_root_path(path)
-            .expect("Tried to mkdirp for path that wasn't within roots!");
+            .expect("Tried to descent and read for path that wasn't within roots!");
 
         // If this path is a root, we should read the entire thing.
         if root_path == path {
@@ -193,11 +219,13 @@ impl Imfs {
         Ok(())
     }
 
-    fn read_from_disk(&mut self, path: &Path) -> io::Result<()> {
-        let metadata = fs::metadata(path)?;
+    fn read_from_disk(&mut self, path: &Path) -> Result<(), FsError> {
+        let metadata = fs::metadata(path)
+            .map_err(|e| FsError::new(e, path))?;
 
         if metadata.is_file() {
-            let contents = fs::read(path)?;
+            let contents = fs::read(path)
+                .map_err(|e| FsError::new(e, path))?;
             let item = ImfsItem::File(ImfsFile {
                 path: path.to_path_buf(),
                 contents,
@@ -218,8 +246,13 @@ impl Imfs {
 
             self.items.insert(path.to_path_buf(), item);
 
-            for entry in fs::read_dir(path)? {
-                let entry = entry?;
+            let dir_children = fs::read_dir(path)
+                .map_err(|e| FsError::new(e, path))?;
+
+            for entry in dir_children {
+                let entry = entry
+                    .map_err(|e| FsError::new(e, path))?;
+
                 let child_path = entry.path();
 
                 self.read_from_disk(&child_path)?;

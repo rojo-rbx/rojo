@@ -11,7 +11,7 @@ use reqwest::header::{ACCEPT, USER_AGENT, CONTENT_TYPE, COOKIE};
 use crate::{
     rbx_session::construct_oneoff_tree,
     project::{Project, ProjectLoadFuzzyError},
-    imfs::Imfs,
+    imfs::{Imfs, FsError},
 };
 
 #[derive(Debug, Fail)]
@@ -33,6 +33,9 @@ pub enum UploadError {
 
     #[fail(display = "XML model file error")]
     XmlModelEncodeError(rbx_xml::EncodeError),
+
+    #[fail(display = "{}", _0)]
+    FsError(#[fail(cause)] FsError),
 }
 
 impl_from!(UploadError {
@@ -40,6 +43,7 @@ impl_from!(UploadError {
     io::Error => IoError,
     reqwest::Error => HttpError,
     rbx_xml::EncodeError => XmlModelEncodeError,
+    FsError => FsError,
 });
 
 #[derive(Debug)]

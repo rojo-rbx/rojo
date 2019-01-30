@@ -1,11 +1,10 @@
 use std::{
     sync::{Arc, Mutex},
-    io,
 };
 
 use crate::{
     fs_watcher::FsWatcher,
-    imfs::Imfs,
+    imfs::{Imfs, FsError},
     message_queue::MessageQueue,
     project::Project,
     rbx_session::RbxSession,
@@ -24,7 +23,7 @@ pub struct LiveSession {
 }
 
 impl LiveSession {
-    pub fn new(project: Arc<Project>) -> io::Result<LiveSession> {
+    pub fn new(project: Arc<Project>) -> Result<LiveSession, FsError> {
         let imfs = {
             let mut imfs = Imfs::new();
             imfs.add_roots_from_project(&project)?;

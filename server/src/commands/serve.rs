@@ -9,6 +9,7 @@ use failure::Fail;
 use crate::{
     project::{Project, ProjectLoadFuzzyError},
     web::Server,
+    imfs::FsError,
     live_session::LiveSession,
 };
 
@@ -24,10 +25,14 @@ pub struct ServeOptions {
 pub enum ServeError {
    #[fail(display = "Project load error: {}", _0)]
    ProjectLoadError(#[fail(cause)] ProjectLoadFuzzyError),
+
+   #[fail(display = "{}", _0)]
+   FsError(#[fail(cause)] FsError),
 }
 
 impl_from!(ServeError {
     ProjectLoadFuzzyError => ProjectLoadError,
+    FsError => FsError,
 });
 
 pub fn serve(options: &ServeOptions) -> Result<(), ServeError> {
@@ -38,7 +43,7 @@ pub fn serve(options: &ServeOptions) -> Result<(), ServeError> {
     info!("Found project at {}", project.file_location.display());
     info!("Using project {:#?}", project);
 
-    let live_session = Arc::new(LiveSession::new(Arc::clone(&project)).unwrap());
+    let live_session = Arc::new(LiveSession::new(Arc::clone(&project))?);
     let server = Server::new(Arc::clone(&live_session));
 
     let port = options.port

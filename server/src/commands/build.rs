@@ -10,7 +10,7 @@ use failure::Fail;
 use crate::{
     rbx_session::construct_oneoff_tree,
     project::{Project, ProjectLoadFuzzyError},
-    imfs::Imfs,
+    imfs::{Imfs, FsError},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -55,14 +55,18 @@ pub enum BuildError {
     XmlModelEncodeError(rbx_xml::EncodeError),
 
     #[fail(display = "Binary model file error")]
-    BinaryModelEncodeError(rbx_binary::EncodeError)
+    BinaryModelEncodeError(rbx_binary::EncodeError),
+
+    #[fail(display = "{}", _0)]
+    FsError(#[fail(cause)] FsError),
 }
 
 impl_from!(BuildError {
     ProjectLoadFuzzyError => ProjectLoadError,
     io::Error => IoError,
     rbx_xml::EncodeError => XmlModelEncodeError,
-    rbx_binary::EncodeError => BinaryModelEncodeError
+    rbx_binary::EncodeError => BinaryModelEncodeError,
+    FsError => FsError,
 });
 
 pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
