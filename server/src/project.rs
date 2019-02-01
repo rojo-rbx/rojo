@@ -427,7 +427,7 @@ impl Project {
             warn!("Rename your project file to {}", PROJECT_FILENAME);
         } else if !file_name.ends_with(".project.json") {
             warn!("Starting in Rojo 0.5.0-alpha3, it's recommended to give all project files the");
-            warn!(".project.json extension. This helps Rojo differentiate project file from");
+            warn!(".project.json extension. This helps Rojo differentiate project files from");
             warn!("other JSON files!");
         }
     }
