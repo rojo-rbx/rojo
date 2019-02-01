@@ -1,6 +1,10 @@
 # Rojo Changelog
 
 ## [Unreleased]
+* Changed default project file name from `roblox-project.json` to `default.project.json` ([#120](https://github.com/LPGhatguy/rojo/pull/120))
+    * The old file name will still be supported until 0.5.0 is fully released.
+* Added warning when loading project files that don't end in `.project.json`
+    * This new extension enables Rojo to distinguish project files from random JSON files, which is necessary to support nested projects.
 * Added new (empty) diagnostic page served from the server
 * Added better error messages for when a file is missing that's referenced by a Rojo project
 * Added support for visualization endpoints returning GraphViz source when Dot is not available
