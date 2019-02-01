@@ -255,6 +255,35 @@ fn adding_folder() -> Result<(), Error> {
 }
 
 #[test]
+fn updating_files() -> Result<(), Error> {
+    let (_root, mut imfs, mut expected_imfs, resources) = base_tree()?;
+
+    check_expected(&imfs, &expected_imfs);
+
+    fs::write(&resources.bar_path, b"bar updated")?;
+    fs::write(&resources.baz_path, b"baz updated")?;
+
+    imfs.path_updated(&resources.bar_path)?;
+    imfs.path_updated(&resources.baz_path)?;
+
+    let bar_updated_item = ImfsItem::File(ImfsFile {
+        path: resources.bar_path.clone(),
+        contents: b"bar updated".to_vec(),
+    });
+    let baz_updated_item = ImfsItem::File(ImfsFile {
+        path: resources.baz_path.clone(),
+        contents: b"baz updated".to_vec(),
+    });
+
+    expected_imfs.items.insert(resources.bar_path.clone(), bar_updated_item);
+    expected_imfs.items.insert(resources.baz_path.clone(), baz_updated_item);
+
+    check_expected(&imfs, &expected_imfs);
+
+    Ok(())
+}
+
+#[test]
 fn removing_file() -> Result<(), Error> {
     let (root, mut imfs, mut expected_imfs, resources) = base_tree()?;
 

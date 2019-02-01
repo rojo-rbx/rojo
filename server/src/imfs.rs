@@ -208,7 +208,6 @@ impl Imfs {
                     if self.items.contains_key(&next_path) {
                         current_path = next_path;
                     } else {
-                        self.read_from_disk(&current_path)?;
                         break;
                     }
                 },
@@ -216,7 +215,7 @@ impl Imfs {
             }
         }
 
-        Ok(())
+        self.read_from_disk(&current_path)
     }
 
     fn read_from_disk(&mut self, path: &Path) -> Result<(), FsError> {
