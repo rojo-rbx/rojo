@@ -9,7 +9,7 @@ cd my-new-project
 rojo init
 ```
 
-Rojo will make a small project file in your directory, named `roblox-project.json`. It'll make sure that any code in the directory `src` will get put into `ReplicatedStorage.Source`.
+Rojo will make a small project file in your directory, named `default.project.json`. It'll make sure that any code in the directory `src` will get put into `ReplicatedStorage.Source`.
 
 Speaking of, let's make sure we create a directory named `src`, and maybe a Lua file inside of it:
 

@@ -1,7 +1,7 @@
 Rojo underwent a large refactor during most of 2018 to enable a bunch of new features and lay groundwork for lots more in 2019. As such, Rojo **0.5.x** projects are not compatible with Rojo **0.4.x** projects.
 
 ## Supporting Both 0.4.x and 0.5.x
-Rojo 0.5.x uses a different name for its project format. While 0.4.x used `rojo.json`, 0.5.x uses `roblox-project.json`, which allows them to coexist.
+Rojo 0.5.x uses a different name for its project format. While 0.4.x used `rojo.json`, 0.5.x uses `default.project.json`, which allows them to coexist.
 
 If you aren't sure about upgrading or want to upgrade gradually, it's possible to keep both files in the same project without causing problems.
 
