@@ -39,6 +39,7 @@ pub fn serve(options: &ServeOptions) -> Result<(), ServeError> {
     info!("Looking for project at {}", options.fuzzy_project_path.display());
 
     let project = Arc::new(Project::load_fuzzy(&options.fuzzy_project_path)?);
+    project.check_compatibility();
 
     info!("Found project at {}", project.file_location.display());
     info!("Using project {:#?}", project);

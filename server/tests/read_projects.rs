@@ -21,7 +21,7 @@ lazy_static! {
 
 #[test]
 fn empty() {
-    let project_file_location = TEST_PROJECTS_ROOT.join("empty/roblox-project.json");
+    let project_file_location = TEST_PROJECTS_ROOT.join("empty/default.project.json");
     let project = Project::load_exact(&project_file_location).unwrap();
 
     assert_eq!(project.name, "empty");
@@ -29,7 +29,7 @@ fn empty() {
 
 #[test]
 fn empty_fuzzy_file() {
-    let project_file_location = TEST_PROJECTS_ROOT.join("empty/roblox-project.json");
+    let project_file_location = TEST_PROJECTS_ROOT.join("empty/default.project.json");
     let project = Project::load_fuzzy(&project_file_location).unwrap();
 
     assert_eq!(project.name, "empty");
@@ -45,7 +45,7 @@ fn empty_fuzzy_folder() {
 
 #[test]
 fn single_sync_point() {
-    let project_file_location = TEST_PROJECTS_ROOT.join("single-sync-point/roblox-project.json");
+    let project_file_location = TEST_PROJECTS_ROOT.join("single-sync-point/default.project.json");
     let project = Project::load_exact(&project_file_location).unwrap();
 
     let expected_project = {
@@ -100,7 +100,7 @@ fn single_sync_point() {
 
 #[test]
 fn test_model() {
-    let project_file_location = TEST_PROJECTS_ROOT.join("test-model/roblox-project.json");
+    let project_file_location = TEST_PROJECTS_ROOT.join("test-model/default.project.json");
     let project = Project::load_exact(&project_file_location).unwrap();
 
     assert_eq!(project.name, "test-model");

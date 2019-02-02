@@ -6,12 +6,14 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use log::warn;
 use failure::Fail;
 use maplit::hashmap;
 use rbx_tree::RbxValue;
 use serde_derive::{Serialize, Deserialize};
 
-pub static PROJECT_FILENAME: &'static str = "roblox-project.json";
+pub static PROJECT_FILENAME: &'static str = "default.project.json";
+pub static COMPAT_PROJECT_FILENAME: &'static str = "roblox-project.json";
 
 // Methods used for Serde's default value system, which doesn't support using
 // value literals directly, only functions that return values.
@@ -362,11 +364,17 @@ impl Project {
         } else if location_metadata.is_dir() {
             let with_file = start_location.join(PROJECT_FILENAME);
 
-            if let Ok(with_file_metadata) = fs::metadata(&with_file) {
-                if with_file_metadata.is_file() {
+            if let Ok(file_metadata) = fs::metadata(&with_file) {
+                if file_metadata.is_file() {
                     return Some(with_file);
-                } else {
-                    return None;
+                }
+            }
+
+            let with_compat_file = start_location.join(COMPAT_PROJECT_FILENAME);
+
+            if let Ok(file_metadata) = fs::metadata(&with_compat_file) {
+                if file_metadata.is_file() {
+                    return Some(with_compat_file);
                 }
             }
         }
@@ -403,6 +411,25 @@ impl Project {
             .map_err(ProjectSaveError::JsonError)?;
 
         Ok(())
+    }
+
+    /// Checks if there are any compatibility issues with this project file and
+    /// warns the user if there are any.
+    pub fn check_compatibility(&self) {
+        let file_name = self.file_location
+            .file_name().unwrap()
+            .to_str().expect("Project file path was not valid Unicode!");
+
+        if file_name == COMPAT_PROJECT_FILENAME {
+            warn!("Rojo's default project file name changed in 0.5.0-alpha3.");
+            warn!("Support for the old project file name will be dropped before 0.5.0 releases.");
+            warn!("Your project file is named {}", COMPAT_PROJECT_FILENAME);
+            warn!("Rename your project file to {}", PROJECT_FILENAME);
+        } else if !file_name.ends_with(".project.json") {
+            warn!("Starting in Rojo 0.5.0-alpha3, it's recommended to give all project files the");
+            warn!(".project.json extension. This helps Rojo differentiate project files from");
+            warn!("other JSON files!");
+        }
     }
 
     fn to_source_project(&self) -> SourceProject {
