@@ -1,6 +1,6 @@
 return {
 	codename = "Epiphany",
-	version = {0, 5, 0, "-alpha.2"},
+	version = {0, 5, 0, "-alpha.3"},
 	expectedServerVersionString = "0.5.0 or newer",
 	protocolVersion = 2,
 	defaultHost = "localhost",

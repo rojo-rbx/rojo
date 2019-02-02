@@ -1,6 +1,8 @@
 # Rojo Changelog
 
 ## [Unreleased]
+
+## [0.5.0 Alpha 3](https://github.com/LPGhatguy/rojo/releases/tag/v0.5.0-alpha.3) (February 1, 2019)
 * Changed default project file name from `roblox-project.json` to `default.project.json` ([#120](https://github.com/LPGhatguy/rojo/pull/120))
     * The old file name will still be supported until 0.5.0 is fully released.
 * Added warning when loading project files that don't end in `.project.json`
