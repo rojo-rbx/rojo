@@ -62,7 +62,7 @@ If you use a plugin that _isn't_ Rojo for syncing code, open an issue and let me
 ## Contributing
 Pull requests are welcome!
 
-All pull requests are run against a test suite on Travis CI. That test suite should always pass!
+Rojo supports Rust 1.31.1 and newer. Any changes to the minimum required compiler version require a _minor_ version bump.
 
 ## License
 Rojo is available under the terms of the Mozilla Public License, Version 2.0. See [LICENSE.txt](LICENSE.txt) for details.
