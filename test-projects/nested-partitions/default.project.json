@@ -1,0 +1,9 @@
+{
+  "name": "nested-partitions",
+  "tree": {
+    "$path": "outer",
+    "inner": {
+      "$path": "inner"
+    }
+  }
+}
