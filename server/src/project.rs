@@ -81,7 +81,6 @@ impl SourceProjectNode {
                 PathBuf::from(source_path)
             } else {
                 let project_folder_location = project_file_location.parent().unwrap();
-                println!("PROJECT FOLDER {}", project_folder_location.display());
                 project_folder_location.join(source_path)
             }
         });

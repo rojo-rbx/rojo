@@ -44,13 +44,14 @@ impl FsWatcher {
             let imfs = imfs.lock().unwrap();
 
             for root_path in imfs.get_roots() {
+                trace!("Watching path {}", root_path.display());
                 watcher.watch(root_path, RecursiveMode::Recursive)
                     .expect("Could not watch directory");
             }
         }
 
         {
-           let imfs = Arc::clone(&imfs);
+            let imfs = Arc::clone(&imfs);
             let rbx_session = rbx_session.as_ref().map(Arc::clone);
 
             thread::spawn(move || {
