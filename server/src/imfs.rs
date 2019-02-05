@@ -35,16 +35,13 @@ impl fmt::Display for FsError {
     }
 }
 
-fn add_sync_points(imfs: &mut Imfs, project_node: &ProjectNode) -> Result<(), FsError> {
-    match project_node {
-        ProjectNode::Instance(node) => {
-            for child in node.children.values() {
-                add_sync_points(imfs, child)?;
-            }
-        },
-        ProjectNode::SyncPoint(node) => {
-            imfs.add_root(&node.path)?;
-        },
+fn add_sync_points(imfs: &mut Imfs, node: &ProjectNode) -> Result<(), FsError> {
+    if let Some(path) = &node.path {
+        imfs.add_root(path)?;
+    }
+
+    for child in node.children.values() {
+        add_sync_points(imfs, child)?;
     }
 
     Ok(())

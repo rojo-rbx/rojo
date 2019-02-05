@@ -1,16 +1,15 @@
 #[macro_use] extern crate lazy_static;
 
-extern crate librojo;
-
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
 };
 
+use pretty_assertions::assert_eq;
 use rbx_tree::RbxValue;
 
 use librojo::{
-    project::{Project, ProjectNode, InstanceProjectNode, SyncPointProjectNode},
+    project::{Project, ProjectNode},
 };
 
 lazy_static! {
@@ -45,53 +44,51 @@ fn empty_fuzzy_folder() {
 
 #[test]
 fn single_sync_point() {
-    let project_file_location = TEST_PROJECTS_ROOT.join("single-sync-point/default.project.json");
-    let project = Project::load_exact(&project_file_location).unwrap();
+    let project_location = TEST_PROJECTS_ROOT.join("single-sync-point");
+    let project = Project::load_fuzzy(&project_location).unwrap();
 
     let expected_project = {
-        let foo = ProjectNode::SyncPoint(SyncPointProjectNode {
-            path: project_file_location.parent().unwrap().join("lib"),
-        });
+        let foo = ProjectNode {
+            path: Some(project_location.join("lib")),
+            ..Default::default()
+        };
 
         let mut replicated_storage_children = HashMap::new();
         replicated_storage_children.insert("Foo".to_string(), foo);
 
-        let replicated_storage = ProjectNode::Instance(InstanceProjectNode {
-            class_name: "ReplicatedStorage".to_string(),
+        let replicated_storage = ProjectNode {
+            class_name: Some(String::from("ReplicatedStorage")),
             children: replicated_storage_children,
-            properties: HashMap::new(),
-            metadata: Default::default(),
-        });
+            ..Default::default()
+        };
 
         let mut http_service_properties = HashMap::new();
         http_service_properties.insert("HttpEnabled".to_string(), RbxValue::Bool {
             value: true,
         });
 
-        let http_service = ProjectNode::Instance(InstanceProjectNode {
-            class_name: "HttpService".to_string(),
-            children: HashMap::new(),
+        let http_service = ProjectNode {
+            class_name: Some(String::from("HttpService")),
             properties: http_service_properties,
-            metadata: Default::default(),
-        });
+            ..Default::default()
+        };
 
         let mut root_children = HashMap::new();
         root_children.insert("ReplicatedStorage".to_string(), replicated_storage);
         root_children.insert("HttpService".to_string(), http_service);
 
-        let root_node = ProjectNode::Instance(InstanceProjectNode {
-            class_name: "DataModel".to_string(),
+        let root_node = ProjectNode {
+            class_name: Some(String::from("DataModel")),
             children: root_children,
-            properties: HashMap::new(),
-            metadata: Default::default(),
-        });
+            ..Default::default()
+        };
 
         Project {
             name: "single-sync-point".to_string(),
             tree: root_node,
             serve_port: None,
             serve_place_ids: None,
-            file_location: project_file_location.clone(),
+            file_location: project_location.join("default.project.json"),
         }
     };
 
@@ -100,8 +97,16 @@ fn single_sync_point() {
 
 #[test]
 fn test_model() {
-    let project_file_location = TEST_PROJECTS_ROOT.join("test-model/default.project.json");
-    let project = Project::load_exact(&project_file_location).unwrap();
+    let project_file_location = TEST_PROJECTS_ROOT.join("test-model");
+    let project = Project::load_fuzzy(&project_file_location).unwrap();
 
     assert_eq!(project.name, "test-model");
+}
+
+#[test]
+fn composing_models() {
+    let project_file_location = TEST_PROJECTS_ROOT.join("composing-models");
+    let project = Project::load_fuzzy(&project_file_location).unwrap();
+
+    assert_eq!(project.name, "composing-models");
 }
