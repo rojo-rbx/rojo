@@ -152,13 +152,6 @@ fn snapshot_project_node<'source>(
         None => return Ok(None),
     };
 
-    // We do this after the first match on node.path so that we only insert into
-    // our metadata if we actually have an instance.
-    if let Some(path) = &node.path {
-        let path_meta = context.metadata_per_path.entry(path.to_owned()).or_default();
-        path_meta.instance_name = Some(snapshot.name.clone().into_owned());
-    }
-
     for (child_name, child_project_node) in &node.children {
         if let Some(child) = snapshot_project_node(imfs, context, child_project_node, Cow::Borrowed(child_name))? {
             snapshot.children.push(child);
