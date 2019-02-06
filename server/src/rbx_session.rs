@@ -15,7 +15,7 @@ use crate::{
     message_queue::MessageQueue,
     imfs::{Imfs, ImfsItem},
     path_map::PathMap,
-    rbx_snapshot::{SnapshotContext, snapshot_project_tree, snapshot_project_node, snapshot_imfs_path},
+    rbx_snapshot::{snapshot_project_tree, snapshot_project_node, snapshot_imfs_path},
     snapshot_reconciler::{InstanceChanges, reify_root, reconcile_subtree},
 };
 
@@ -104,15 +104,13 @@ impl RbxSession {
                 let instance_metadata = self.metadata_per_instance.get(&instance_id)
                     .expect("Metadata for instance ID did not exist");
 
-                let context = SnapshotContext {};
-
                 let maybe_snapshot = match &instance_metadata.project_definition {
                     Some((instance_name, project_node)) => {
-                        snapshot_project_node(&imfs, &context, &project_node, Cow::Owned(instance_name.clone()))
+                        snapshot_project_node(&imfs, &project_node, Cow::Owned(instance_name.clone()))
                             .unwrap_or_else(|_| panic!("Could not generate instance snapshot for path {}", path_to_snapshot.display()))
                     },
                     None => {
-                        snapshot_imfs_path(&imfs, &context, &path_to_snapshot, None)
+                        snapshot_imfs_path(&imfs, &path_to_snapshot, None)
                             .unwrap_or_else(|_| panic!("Could not generate instance snapshot for path {}", path_to_snapshot.display()))
                     },
                 };
@@ -209,9 +207,7 @@ fn reify_initial_tree(
     instances_per_path: &mut PathMap<HashSet<RbxId>>,
     metadata_per_instance: &mut HashMap<RbxId, MetadataPerInstance>,
 ) -> RbxTree {
-    let context = SnapshotContext {
-    };
-    let snapshot = snapshot_project_tree(imfs, &context, project)
+    let snapshot = snapshot_project_tree(imfs, project)
         .expect("Could not snapshot project tree")
         .expect("Project did not produce any instances");
 

@@ -37,9 +37,6 @@ const INIT_CLIENT_NAME: &str = "init.client.lua";
 
 pub type SnapshotResult<'a> = Result<Option<RbxSnapshotInstance<'a>>, SnapshotError>;
 
-pub struct SnapshotContext {
-}
-
 #[derive(Debug, Fail)]
 pub enum SnapshotError {
     DidNotExist(PathBuf),
@@ -105,20 +102,18 @@ impl fmt::Display for SnapshotError {
 
 pub fn snapshot_project_tree<'source>(
     imfs: &'source Imfs,
-    context: &SnapshotContext,
     project: &'source Project,
 ) -> SnapshotResult<'source> {
-    snapshot_project_node(imfs, context, &project.tree, Cow::Borrowed(&project.name))
+    snapshot_project_node(imfs, &project.tree, Cow::Borrowed(&project.name))
 }
 
 pub fn snapshot_project_node<'source>(
     imfs: &'source Imfs,
-    context: &SnapshotContext,
     node: &ProjectNode,
     instance_name: Cow<'source, str>,
 ) -> SnapshotResult<'source> {
     let maybe_snapshot = match &node.path {
-        Some(path) => snapshot_imfs_path(imfs, context, &path, Some(instance_name.clone()))?,
+        Some(path) => snapshot_imfs_path(imfs, &path, Some(instance_name.clone()))?,
         None => match &node.class_name {
             Some(_class_name) => Some(RbxSnapshotInstance {
                 name: instance_name.clone(),
@@ -172,7 +167,7 @@ pub fn snapshot_project_node<'source>(
     }
 
     for (child_name, child_project_node) in &node.children {
-        if let Some(child) = snapshot_project_node(imfs, context, child_project_node, Cow::Owned(child_name.clone()))? {
+        if let Some(child) = snapshot_project_node(imfs, child_project_node, Cow::Owned(child_name.clone()))? {
             snapshot.children.push(child);
         }
     }
@@ -192,33 +187,30 @@ pub fn snapshot_project_node<'source>(
 
 pub fn snapshot_imfs_path<'source>(
     imfs: &'source Imfs,
-    context: &SnapshotContext,
     path: &Path,
     instance_name: Option<Cow<'source, str>>,
 ) -> SnapshotResult<'source> {
     // If the given path doesn't exist in the in-memory filesystem, we consider
     // that an error.
     match imfs.get(path) {
-        Some(imfs_item) => snapshot_imfs_item(imfs, context, imfs_item, instance_name),
+        Some(imfs_item) => snapshot_imfs_item(imfs, imfs_item, instance_name),
         None => return Err(SnapshotError::DidNotExist(path.to_owned())),
     }
 }
 
 fn snapshot_imfs_item<'source>(
     imfs: &'source Imfs,
-    context: &SnapshotContext,
     item: &'source ImfsItem,
     instance_name: Option<Cow<'source, str>>,
 ) -> SnapshotResult<'source> {
     match item {
         ImfsItem::File(file) => snapshot_imfs_file(file, instance_name),
-        ImfsItem::Directory(directory) => snapshot_imfs_directory(imfs, context, directory, instance_name),
+        ImfsItem::Directory(directory) => snapshot_imfs_directory(imfs, directory, instance_name),
     }
 }
 
 fn snapshot_imfs_directory<'source>(
     imfs: &'source Imfs,
-    context: &SnapshotContext,
     directory: &'source ImfsDirectory,
     instance_name: Option<Cow<'source, str>>,
 ) -> SnapshotResult<'source> {
@@ -234,11 +226,11 @@ fn snapshot_imfs_directory<'source>(
         });
 
     let mut snapshot = if directory.children.contains(&init_path) {
-        snapshot_imfs_path(imfs, context, &init_path, Some(snapshot_name))?.unwrap()
+        snapshot_imfs_path(imfs, &init_path, Some(snapshot_name))?.unwrap()
     } else if directory.children.contains(&init_server_path) {
-        snapshot_imfs_path(imfs, context, &init_server_path, Some(snapshot_name))?.unwrap()
+        snapshot_imfs_path(imfs, &init_server_path, Some(snapshot_name))?.unwrap()
     } else if directory.children.contains(&init_client_path) {
-        snapshot_imfs_path(imfs, context, &init_client_path, Some(snapshot_name))?.unwrap()
+        snapshot_imfs_path(imfs, &init_client_path, Some(snapshot_name))?.unwrap()
     } else {
         RbxSnapshotInstance {
             class_name: Cow::Borrowed("Folder"),
@@ -267,7 +259,7 @@ fn snapshot_imfs_directory<'source>(
                 // them here.
             },
             _ => {
-                if let Some(child) = snapshot_imfs_path(imfs, context, child_path, None)? {
+                if let Some(child) = snapshot_imfs_path(imfs, child_path, None)? {
                     snapshot.children.push(child);
                 }
             },
