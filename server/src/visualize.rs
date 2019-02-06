@@ -11,7 +11,7 @@ use rbx_tree::RbxId;
 use crate::{
     imfs::{Imfs, ImfsItem},
     rbx_session::RbxSession,
-    web::InstanceMetadata,
+    web::PublicInstanceMetadata,
 };
 
 static GRAPHVIZ_HEADER: &str = r#"
@@ -74,7 +74,7 @@ fn visualize_rbx_node(session: &RbxSession, id: RbxId, output: &mut fmt::Formatt
     let mut node_label = format!("{}|{}|{}", node.name, node.class_name, id);
 
     if let Some(session_metadata) = session.get_instance_metadata(id) {
-        let metadata = InstanceMetadata::from_session_metadata(session_metadata);
+        let metadata = PublicInstanceMetadata::from_session_metadata(session_metadata);
         node_label.push('|');
         node_label.push_str(&serde_json::to_string(&metadata).unwrap());
     }
