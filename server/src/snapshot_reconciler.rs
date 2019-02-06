@@ -10,7 +10,7 @@ use serde_derive::{Serialize, Deserialize};
 
 use crate::{
     path_map::PathMap,
-    rbx_session::{MetadataPerPath, MetadataPerInstance},
+    rbx_session::MetadataPerInstance,
 };
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -80,14 +80,14 @@ pub fn snapshot_from_tree(tree: &RbxTree, id: RbxId) -> Option<RbxSnapshotInstan
         metadata: MetadataPerInstance {
             source_path: None,
             ignore_unknown_instances: false,
-            instance_name: None,
+            project_definition: None,
         },
     })
 }
 
 pub fn reify_root(
     snapshot: &RbxSnapshotInstance,
-    metadata_per_path: &mut PathMap<MetadataPerPath>,
+    metadata_per_path: &mut PathMap<HashSet<RbxId>>,
     metadata_per_instance: &mut HashMap<RbxId, MetadataPerInstance>,
     changes: &mut InstanceChanges,
 ) -> RbxTree {
@@ -110,7 +110,7 @@ pub fn reify_subtree(
     snapshot: &RbxSnapshotInstance,
     tree: &mut RbxTree,
     parent_id: RbxId,
-    metadata_per_path: &mut PathMap<MetadataPerPath>,
+    metadata_per_path: &mut PathMap<HashSet<RbxId>>,
     metadata_per_instance: &mut HashMap<RbxId, MetadataPerInstance>,
     changes: &mut InstanceChanges,
 ) {
@@ -129,12 +129,12 @@ pub fn reify_subtree(
 pub fn reify_metadata(
     snapshot: &RbxSnapshotInstance,
     instance_id: RbxId,
-    metadata_per_path: &mut PathMap<MetadataPerPath>,
+    metadata_per_path: &mut PathMap<HashSet<RbxId>>,
     metadata_per_instance: &mut HashMap<RbxId, MetadataPerInstance>,
 ) {
     if let Some(source_path) = &snapshot.metadata.source_path {
         let path_metadata = metadata_per_path.entry(source_path.clone()).or_default();
-        path_metadata.instance_id = Some(instance_id);
+        path_metadata.insert(instance_id);
     }
 
     metadata_per_instance.insert(instance_id, snapshot.metadata.clone());
@@ -144,7 +144,7 @@ pub fn reconcile_subtree(
     tree: &mut RbxTree,
     id: RbxId,
     snapshot: &RbxSnapshotInstance,
-    metadata_per_path: &mut PathMap<MetadataPerPath>,
+    metadata_per_path: &mut PathMap<HashSet<RbxId>>,
     metadata_per_instance: &mut HashMap<RbxId, MetadataPerInstance>,
     changes: &mut InstanceChanges,
 ) {
@@ -234,7 +234,7 @@ fn reconcile_instance_children(
     tree: &mut RbxTree,
     id: RbxId,
     snapshot: &RbxSnapshotInstance,
-    metadata_per_path: &mut PathMap<MetadataPerPath>,
+    metadata_per_path: &mut PathMap<HashSet<RbxId>>,
     metadata_per_instance: &mut HashMap<RbxId, MetadataPerInstance>,
     changes: &mut InstanceChanges,
 ) {

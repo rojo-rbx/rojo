@@ -1,6 +1,6 @@
 use std::{
     borrow::Cow,
-    collections::HashMap,
+    collections::{HashSet, HashMap},
     path::{Path, PathBuf},
     str,
     sync::{Arc, Mutex},
@@ -11,11 +11,11 @@ use log::{info, trace};
 use rbx_tree::{RbxTree, RbxId};
 
 use crate::{
-    project::Project,
+    project::{Project, ProjectNode},
     message_queue::MessageQueue,
     imfs::{Imfs, ImfsItem},
     path_map::PathMap,
-    rbx_snapshot::{SnapshotContext, snapshot_project_tree, snapshot_imfs_path},
+    rbx_snapshot::{SnapshotContext, snapshot_project_tree, snapshot_project_node, snapshot_imfs_path},
     snapshot_reconciler::{InstanceChanges, reify_root, reconcile_subtree},
 };
 
@@ -23,24 +23,27 @@ const INIT_SCRIPT: &str = "init.lua";
 const INIT_SERVER_SCRIPT: &str = "init.server.lua";
 const INIT_CLIENT_SCRIPT: &str = "init.client.lua";
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct MetadataPerPath {
-    pub instance_id: Option<RbxId>,
-}
-
+/// `source_path` or `project_definition` or both must both be Some.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct MetadataPerInstance {
-    pub source_path: Option<PathBuf>,
     pub ignore_unknown_instances: bool,
-    pub instance_name: Option<String>,
+
+    /// The path on the filesystem that the instance was read from the
+    /// filesystem if it came from the filesystem.
+    pub source_path: Option<PathBuf>,
+
+    /// Information about the instance that came from the project that defined
+    /// it, if that's where it was defined.
+    ///
+    /// A key-value pair where the key should be the name of the instance and
+    /// the value is the ProjectNode from the instance's project.
+    pub project_definition: Option<(String, ProjectNode)>,
 }
 
 pub struct RbxSession {
     tree: RbxTree,
 
-    // TODO(#105): Change metadata_per_path to PathMap<Vec<MetadataPerPath>> for
-    // path aliasing.
-    metadata_per_path: PathMap<MetadataPerPath>,
+    metadata_per_path: PathMap<HashSet<RbxId>>,
     metadata_per_instance: HashMap<RbxId, MetadataPerInstance>,
     message_queue: Arc<MessageQueue<InstanceChanges>>,
     imfs: Arc<Mutex<Imfs>>,
@@ -93,46 +96,46 @@ impl RbxSession {
 
             trace!("Snapshotting path {}", path_to_snapshot.display());
 
-            let path_metadata = self.metadata_per_path.get(&path_to_snapshot)
-                .expect("Metadata did not exist for path");
+            let instances_at_path = self.metadata_per_path.get(&path_to_snapshot)
+                .expect("Metadata did not exist for path")
+                .clone();
 
-            trace!("Metadata for path: {:?}", path_metadata);
+            for instance_id in &instances_at_path {
+                let instance_metadata = self.metadata_per_instance.get(&instance_id)
+                    .expect("Metadata for instance ID did not exist");
 
-            let instance_id = path_metadata.instance_id
-                .expect("Instance did not exist in tree");
+                let context = SnapshotContext {};
 
-            let instance_metadata = self.metadata_per_instance.get(&instance_id)
-                .expect("Metadata for instance ID did not exist");
+                let maybe_snapshot = match &instance_metadata.project_definition {
+                    Some((instance_name, project_node)) => {
+                        snapshot_project_node(&imfs, &context, &project_node, Cow::Owned(instance_name.clone()))
+                            .unwrap_or_else(|_| panic!("Could not generate instance snapshot for path {}", path_to_snapshot.display()))
+                    },
+                    None => {
+                        snapshot_imfs_path(&imfs, &context, &path_to_snapshot, None)
+                            .unwrap_or_else(|_| panic!("Could not generate instance snapshot for path {}", path_to_snapshot.display()))
+                    },
+                };
 
-            // If this instance is a sync point, pull its name out of our
-            // per-path metadata store.
-            let instance_name = instance_metadata.instance_name.as_ref()
-                .map(|value| Cow::Owned(value.to_owned()));
+                let snapshot = match maybe_snapshot {
+                    Some(snapshot) => snapshot,
+                    None => {
+                        trace!("Path resulted in no snapshot being generated.");
+                        return;
+                    },
+                };
 
-            let context = SnapshotContext {
-            };
+                trace!("Snapshot: {:#?}", snapshot);
 
-            let maybe_snapshot = snapshot_imfs_path(&imfs, &context, &path_to_snapshot, instance_name)
-                .unwrap_or_else(|_| panic!("Could not generate instance snapshot for path {}", path_to_snapshot.display()));
-
-            let snapshot = match maybe_snapshot {
-                Some(snapshot) => snapshot,
-                None => {
-                    trace!("Path resulted in no snapshot being generated.");
-                    return;
-                },
-            };
-
-            trace!("Snapshot: {:#?}", snapshot);
-
-            reconcile_subtree(
-                &mut self.tree,
-                instance_id,
-                &snapshot,
-                &mut self.metadata_per_path,
-                &mut self.metadata_per_instance,
-                &mut changes,
-            );
+                reconcile_subtree(
+                    &mut self.tree,
+                    *instance_id,
+                    &snapshot,
+                    &mut self.metadata_per_path,
+                    &mut self.metadata_per_instance,
+                    &mut changes,
+                );
+            }
         }
 
         if changes.is_empty() {
@@ -193,7 +196,7 @@ impl RbxSession {
         self.metadata_per_instance.get(&id)
     }
 
-    pub fn debug_get_metadata_per_path(&self) -> &PathMap<MetadataPerPath> {
+    pub fn debug_get_metadata_per_path(&self) -> &PathMap<HashSet<RbxId>> {
         &self.metadata_per_path
     }
 }
@@ -207,7 +210,7 @@ pub fn construct_oneoff_tree(project: &Project, imfs: &Imfs) -> RbxTree {
 fn reify_initial_tree(
     project: &Project,
     imfs: &Imfs,
-    metadata_per_path: &mut PathMap<MetadataPerPath>,
+    metadata_per_path: &mut PathMap<HashSet<RbxId>>,
     metadata_per_instance: &mut HashMap<RbxId, MetadataPerInstance>,
 ) -> RbxTree {
     let context = SnapshotContext {
