@@ -43,7 +43,7 @@ pub struct MetadataPerInstance {
 pub struct RbxSession {
     tree: RbxTree,
 
-    metadata_per_path: PathMap<HashSet<RbxId>>,
+    instances_per_path: PathMap<HashSet<RbxId>>,
     metadata_per_instance: HashMap<RbxId, MetadataPerInstance>,
     message_queue: Arc<MessageQueue<InstanceChanges>>,
     imfs: Arc<Mutex<Imfs>>,
@@ -55,17 +55,17 @@ impl RbxSession {
         imfs: Arc<Mutex<Imfs>>,
         message_queue: Arc<MessageQueue<InstanceChanges>>,
     ) -> RbxSession {
-        let mut metadata_per_path = PathMap::new();
+        let mut instances_per_path = PathMap::new();
         let mut metadata_per_instance = HashMap::new();
 
         let tree = {
             let temp_imfs = imfs.lock().unwrap();
-            reify_initial_tree(&project, &temp_imfs, &mut metadata_per_path, &mut metadata_per_instance)
+            reify_initial_tree(&project, &temp_imfs, &mut instances_per_path, &mut metadata_per_instance)
         };
 
         RbxSession {
             tree,
-            metadata_per_path,
+            instances_per_path,
             metadata_per_instance,
             message_queue,
             imfs,
@@ -83,7 +83,7 @@ impl RbxSession {
                 .expect("Path was outside in-memory filesystem roots");
 
             // Find the closest instance in the tree that currently exists
-            let mut path_to_snapshot = self.metadata_per_path.descend(root_path, path);
+            let mut path_to_snapshot = self.instances_per_path.descend(root_path, path);
 
             // If this is a file that might affect its parent if modified, we
             // should snapshot its parent instead.
@@ -96,7 +96,7 @@ impl RbxSession {
 
             trace!("Snapshotting path {}", path_to_snapshot.display());
 
-            let instances_at_path = self.metadata_per_path.get(&path_to_snapshot)
+            let instances_at_path = self.instances_per_path.get(&path_to_snapshot)
                 .expect("Metadata did not exist for path")
                 .clone();
 
@@ -131,7 +131,7 @@ impl RbxSession {
                     &mut self.tree,
                     *instance_id,
                     &snapshot,
-                    &mut self.metadata_per_path,
+                    &mut self.instances_per_path,
                     &mut self.metadata_per_instance,
                     &mut changes,
                 );
@@ -177,13 +177,13 @@ impl RbxSession {
 
     pub fn path_removed(&mut self, path: &Path) {
         info!("Path removed: {}", path.display());
-        self.metadata_per_path.remove(path);
+        self.instances_per_path.remove(path);
         self.path_created_or_updated(path);
     }
 
     pub fn path_renamed(&mut self, from_path: &Path, to_path: &Path) {
         info!("Path renamed from {} to {}", from_path.display(), to_path.display());
-        self.metadata_per_path.remove(from_path);
+        self.instances_per_path.remove(from_path);
         self.path_created_or_updated(from_path);
         self.path_created_or_updated(to_path);
     }
@@ -195,22 +195,18 @@ impl RbxSession {
     pub fn get_instance_metadata(&self, id: RbxId) -> Option<&MetadataPerInstance> {
         self.metadata_per_instance.get(&id)
     }
-
-    pub fn debug_get_metadata_per_path(&self) -> &PathMap<HashSet<RbxId>> {
-        &self.metadata_per_path
-    }
 }
 
 pub fn construct_oneoff_tree(project: &Project, imfs: &Imfs) -> RbxTree {
-    let mut metadata_per_path = PathMap::new();
+    let mut instances_per_path = PathMap::new();
     let mut metadata_per_instance = HashMap::new();
-    reify_initial_tree(project, imfs, &mut metadata_per_path, &mut metadata_per_instance)
+    reify_initial_tree(project, imfs, &mut instances_per_path, &mut metadata_per_instance)
 }
 
 fn reify_initial_tree(
     project: &Project,
     imfs: &Imfs,
-    metadata_per_path: &mut PathMap<HashSet<RbxId>>,
+    instances_per_path: &mut PathMap<HashSet<RbxId>>,
     metadata_per_instance: &mut HashMap<RbxId, MetadataPerInstance>,
 ) -> RbxTree {
     let context = SnapshotContext {
@@ -220,7 +216,7 @@ fn reify_initial_tree(
         .expect("Project did not produce any instances");
 
     let mut changes = InstanceChanges::default();
-    let tree = reify_root(&snapshot, metadata_per_path, metadata_per_instance, &mut changes);
+    let tree = reify_root(&snapshot, instances_per_path, metadata_per_instance, &mut changes);
 
     tree
 }

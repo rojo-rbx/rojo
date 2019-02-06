@@ -120,9 +120,6 @@ impl Server {
             (GET) (/visualize/imfs) => {
                 self.handle_visualize_imfs()
             },
-            (GET) (/visualize/path_metadata) => {
-                self.handle_visualize_path_metadata()
-            },
             _ => Response::empty_404()
         )
     }
@@ -253,10 +250,5 @@ impl Server {
             Some(svg) => Response::svg(svg),
             None => Response::text(dot_source),
         }
-    }
-
-    fn handle_visualize_path_metadata(&self) -> Response {
-        let rbx_session = self.live_session.rbx_session.lock().unwrap();
-        Response::json(&rbx_session.debug_get_metadata_per_path())
     }
 }
