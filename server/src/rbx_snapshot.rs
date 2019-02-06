@@ -118,7 +118,7 @@ pub fn snapshot_project_node<'source>(
     instance_name: Cow<'source, str>,
 ) -> SnapshotResult<'source> {
     let maybe_snapshot = match &node.path {
-        Some(path) => snapshot_imfs_path(imfs, context, &path, Some(instance_name))?,
+        Some(path) => snapshot_imfs_path(imfs, context, &path, Some(instance_name.clone()))?,
         None => match &node.class_name {
             Some(_class_name) => Some(RbxSnapshotInstance {
                 name: instance_name.clone(),
@@ -131,7 +131,7 @@ pub fn snapshot_project_node<'source>(
                 metadata: MetadataPerInstance {
                     source_path: None,
                     ignore_unknown_instances: true,
-                    project_definition: Some((instance_name.clone().into_owned(), node.clone())),
+                    project_definition: None,
                 },
             }),
             None => {
@@ -148,16 +148,20 @@ pub fn snapshot_project_node<'source>(
     // confused as to why nothing showed up in the tree.
     let mut snapshot = match maybe_snapshot {
         Some(snapshot) => snapshot,
-        None => return Ok(None),
+        None => {
+            // TODO: Return some other sort of marker here instead? If a node
+            // transitions from None into Some, it's possible that configuration
+            // from the ProjectNode might be lost since there's nowhere to put
+            // it!
+            return Ok(None);
+        },
     };
 
-    for (child_name, child_project_node) in &node.children {
-        if let Some(child) = snapshot_project_node(imfs, context, child_project_node, Cow::Owned(child_name.clone()))? {
-            snapshot.children.push(child);
-        }
-    }
-
+    // Applies the class name specified in `class_name` from the project, if it's
+    // set.
     if let Some(class_name) = &node.class_name {
+        // This can only happen if `path` was specified in the project node and
+        // that path represented a non-Folder instance.
         if snapshot.class_name != "Folder" {
             return Err(SnapshotError::ProjectNodeInvalidTransmute {
                 partition_path: node.path.as_ref().unwrap().to_owned(),
@@ -167,6 +171,12 @@ pub fn snapshot_project_node<'source>(
         snapshot.class_name = Cow::Owned(class_name.to_owned());
     }
 
+    for (child_name, child_project_node) in &node.children {
+        if let Some(child) = snapshot_project_node(imfs, context, child_project_node, Cow::Owned(child_name.clone()))? {
+            snapshot.children.push(child);
+        }
+    }
+
     for (key, value) in &node.properties {
         snapshot.properties.insert(key.clone(), value.clone());
     }
@@ -174,6 +184,8 @@ pub fn snapshot_project_node<'source>(
     if let Some(ignore_unknown_instances) = node.ignore_unknown_instances {
         snapshot.metadata.ignore_unknown_instances = ignore_unknown_instances;
     }
+
+    snapshot.metadata.project_definition = Some((instance_name.into_owned(), node.clone()));
 
     Ok(Some(snapshot))
 }

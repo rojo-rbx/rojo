@@ -133,7 +133,14 @@ pub fn reify_metadata(
     metadata_per_instance: &mut HashMap<RbxId, MetadataPerInstance>,
 ) {
     if let Some(source_path) = &snapshot.metadata.source_path {
-        let path_metadata = metadata_per_path.entry(source_path.clone()).or_default();
+        let path_metadata = match metadata_per_path.get_mut(&source_path) {
+            Some(v) => v,
+            None => {
+                metadata_per_path.insert(source_path.clone(), Default::default());
+                metadata_per_path.get_mut(&source_path).unwrap()
+            },
+        };
+
         path_metadata.insert(instance_id);
     }
 
