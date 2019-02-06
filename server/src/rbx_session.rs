@@ -105,10 +105,10 @@ impl RbxSession {
             let instance_name = path_metadata.instance_name.as_ref()
                 .map(|value| Cow::Owned(value.to_owned()));
 
-            let mut context = SnapshotContext {
-                metadata_per_path: &mut self.metadata_per_path,
+            let context = SnapshotContext {
             };
-            let maybe_snapshot = snapshot_imfs_path(&imfs, &mut context, &path_to_snapshot, instance_name)
+
+            let maybe_snapshot = snapshot_imfs_path(&imfs, &context, &path_to_snapshot, instance_name)
                 .unwrap_or_else(|_| panic!("Could not generate instance snapshot for path {}", path_to_snapshot.display()));
 
             let snapshot = match maybe_snapshot {
@@ -206,10 +206,9 @@ fn reify_initial_tree(
     metadata_per_path: &mut PathMap<MetadataPerPath>,
     metadata_per_instance: &mut HashMap<RbxId, MetadataPerInstance>,
 ) -> RbxTree {
-    let mut context = SnapshotContext {
-        metadata_per_path,
+    let context = SnapshotContext {
     };
-    let snapshot = snapshot_project_tree(imfs, &mut context, project)
+    let snapshot = snapshot_project_tree(imfs, &context, project)
         .expect("Could not snapshot project tree")
         .expect("Project did not produce any instances");
 

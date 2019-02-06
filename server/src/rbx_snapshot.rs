@@ -27,9 +27,8 @@ use crate::{
         RbxSnapshotInstance,
         snapshot_from_tree,
     },
-    path_map::PathMap,
-    // TODO: Move MetadataPerPath into this module?
-    rbx_session::{MetadataPerPath, MetadataPerInstance},
+    // TODO: Move MetadataPerInstance into this module?
+    rbx_session::MetadataPerInstance,
 };
 
 const INIT_MODULE_NAME: &str = "init.lua";
@@ -38,8 +37,7 @@ const INIT_CLIENT_NAME: &str = "init.client.lua";
 
 pub type SnapshotResult<'a> = Result<Option<RbxSnapshotInstance<'a>>, SnapshotError>;
 
-pub struct SnapshotContext<'meta> {
-    pub metadata_per_path: &'meta mut PathMap<MetadataPerPath>,
+pub struct SnapshotContext {
 }
 
 #[derive(Debug, Fail)]
@@ -107,7 +105,7 @@ impl fmt::Display for SnapshotError {
 
 pub fn snapshot_project_tree<'source>(
     imfs: &'source Imfs,
-    context: &mut SnapshotContext,
+    context: &SnapshotContext,
     project: &'source Project,
 ) -> SnapshotResult<'source> {
     snapshot_project_node(imfs, context, &project.tree, Cow::Borrowed(&project.name))
@@ -115,7 +113,7 @@ pub fn snapshot_project_tree<'source>(
 
 fn snapshot_project_node<'source>(
     imfs: &'source Imfs,
-    context: &mut SnapshotContext,
+    context: &SnapshotContext,
     node: &'source ProjectNode,
     instance_name: Cow<'source, str>,
 ) -> SnapshotResult<'source> {
@@ -181,7 +179,7 @@ fn snapshot_project_node<'source>(
 
 pub fn snapshot_imfs_path<'source>(
     imfs: &'source Imfs,
-    context: &mut SnapshotContext,
+    context: &SnapshotContext,
     path: &Path,
     instance_name: Option<Cow<'source, str>>,
 ) -> SnapshotResult<'source> {
@@ -195,7 +193,7 @@ pub fn snapshot_imfs_path<'source>(
 
 fn snapshot_imfs_item<'source>(
     imfs: &'source Imfs,
-    context: &mut SnapshotContext,
+    context: &SnapshotContext,
     item: &'source ImfsItem,
     instance_name: Option<Cow<'source, str>>,
 ) -> SnapshotResult<'source> {
@@ -207,7 +205,7 @@ fn snapshot_imfs_item<'source>(
 
 fn snapshot_imfs_directory<'source>(
     imfs: &'source Imfs,
-    context: &mut SnapshotContext,
+    context: &SnapshotContext,
     directory: &'source ImfsDirectory,
     instance_name: Option<Cow<'source, str>>,
 ) -> SnapshotResult<'source> {
