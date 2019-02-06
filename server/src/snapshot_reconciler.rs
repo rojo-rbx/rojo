@@ -80,6 +80,7 @@ pub fn snapshot_from_tree(tree: &RbxTree, id: RbxId) -> Option<RbxSnapshotInstan
         metadata: MetadataPerInstance {
             source_path: None,
             ignore_unknown_instances: false,
+            instance_name: None,
         },
     })
 }
@@ -132,9 +133,8 @@ pub fn reify_metadata(
     metadata_per_instance: &mut HashMap<RbxId, MetadataPerInstance>,
 ) {
     if let Some(source_path) = &snapshot.metadata.source_path {
-        let path_meta = metadata_per_path.entry(source_path.clone()).or_default();
-        path_meta.instance_id = Some(instance_id);
-        path_meta.instance_name = Some(snapshot.name.clone().into_owned());
+        let path_metadata = metadata_per_path.entry(source_path.clone()).or_default();
+        path_metadata.instance_id = Some(instance_id);
     }
 
     metadata_per_instance.insert(instance_id, snapshot.metadata.clone());

@@ -26,13 +26,13 @@ const INIT_CLIENT_SCRIPT: &str = "init.client.lua";
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct MetadataPerPath {
     pub instance_id: Option<RbxId>,
-    pub instance_name: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct MetadataPerInstance {
     pub source_path: Option<PathBuf>,
     pub ignore_unknown_instances: bool,
+    pub instance_name: Option<String>,
 }
 
 pub struct RbxSession {
@@ -93,16 +93,20 @@ impl RbxSession {
 
             trace!("Snapshotting path {}", path_to_snapshot.display());
 
-            let path_metadata = self.metadata_per_path.get(&path_to_snapshot).unwrap();
+            let path_metadata = self.metadata_per_path.get(&path_to_snapshot)
+                .expect("Metadata did not exist for path");
 
             trace!("Metadata for path: {:?}", path_metadata);
 
             let instance_id = path_metadata.instance_id
                 .expect("Instance did not exist in tree");
 
+            let instance_metadata = self.metadata_per_instance.get(&instance_id)
+                .expect("Metadata for instance ID did not exist");
+
             // If this instance is a sync point, pull its name out of our
             // per-path metadata store.
-            let instance_name = path_metadata.instance_name.as_ref()
+            let instance_name = instance_metadata.instance_name.as_ref()
                 .map(|value| Cow::Owned(value.to_owned()));
 
             let context = SnapshotContext {

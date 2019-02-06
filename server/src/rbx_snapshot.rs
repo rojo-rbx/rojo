@@ -120,19 +120,24 @@ fn snapshot_project_node<'source>(
     let maybe_snapshot = match &node.path {
         Some(path) => snapshot_imfs_path(imfs, context, &path, Some(instance_name))?,
         None => match &node.class_name {
-            Some(_class_name) => Some(RbxSnapshotInstance {
-                name: instance_name,
+            Some(_class_name) => {
+                let name_from_above = instance_name.clone().into_owned();
 
-                // These properties are replaced later in the function to
-                // reduce code duplication.
-                class_name: Cow::Borrowed("Folder"),
-                properties: HashMap::new(),
-                children: Vec::new(),
-                metadata: MetadataPerInstance {
-                    source_path: None,
-                    ignore_unknown_instances: true,
-                },
-            }),
+                Some(RbxSnapshotInstance {
+                    name: instance_name,
+
+                    // These properties are replaced later in the function to
+                    // reduce code duplication.
+                    class_name: Cow::Borrowed("Folder"),
+                    properties: HashMap::new(),
+                    children: Vec::new(),
+                    metadata: MetadataPerInstance {
+                        source_path: None,
+                        ignore_unknown_instances: true,
+                        instance_name: Some(name_from_above),
+                    },
+                })
+            },
             None => {
                 return Err(SnapshotError::ProjectNodeUnusable);
             },
@@ -213,6 +218,9 @@ fn snapshot_imfs_directory<'source>(
     let init_server_path = directory.path.join(INIT_SERVER_NAME);
     let init_client_path = directory.path.join(INIT_CLIENT_NAME);
 
+    let name_from_above = instance_name.as_ref()
+        .map(|inner| inner.clone().into_owned());
+
     let snapshot_name = instance_name
         .unwrap_or_else(|| {
             Cow::Borrowed(directory.path
@@ -235,6 +243,7 @@ fn snapshot_imfs_directory<'source>(
             metadata: MetadataPerInstance {
                 source_path: None,
                 ignore_unknown_instances: false,
+                instance_name: name_from_above,
             },
         }
     };
@@ -335,6 +344,7 @@ fn snapshot_lua_file<'source>(
         metadata: MetadataPerInstance {
             source_path: Some(file.path.to_path_buf()),
             ignore_unknown_instances: false,
+            instance_name: None,
         },
     }))
 }
@@ -373,6 +383,7 @@ fn snapshot_txt_file<'source>(
         metadata: MetadataPerInstance {
             source_path: Some(file.path.to_path_buf()),
             ignore_unknown_instances: false,
+            instance_name: None,
         },
     }))
 }
@@ -406,6 +417,7 @@ fn snapshot_csv_file<'source>(
         metadata: MetadataPerInstance {
             source_path: Some(file.path.to_path_buf()),
             ignore_unknown_instances: false,
+            instance_name: None,
         },
     }))
 }
