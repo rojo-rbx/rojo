@@ -1,0 +1,66 @@
+{
+  "name": "transmute-partition",
+  "class_name": "DataModel",
+  "properties": {},
+  "children": [
+    {
+      "name": "ReplicatedStorage",
+      "class_name": "ReplicatedStorage",
+      "properties": {},
+      "children": [
+        {
+          "name": "hello",
+          "class_name": "ModuleScript",
+          "properties": {
+            "Source": {
+              "Type": "String",
+              "Value": "-- ReplicatedStorage/hello.lua"
+            }
+          },
+          "children": [],
+          "metadata": {
+            "ignore_unknown_instances": false,
+            "source_path": "ReplicatedStorage\\hello.lua",
+            "project_definition": null
+          }
+        }
+      ],
+      "metadata": {
+        "ignore_unknown_instances": false,
+        "source_path": "ReplicatedStorage",
+        "project_definition": [
+          "ReplicatedStorage",
+          {
+            "class_name": "ReplicatedStorage",
+            "children": {},
+            "properties": {},
+            "ignore_unknown_instances": null,
+            "path": "ReplicatedStorage"
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "ignore_unknown_instances": true,
+    "source_path": null,
+    "project_definition": [
+      "transmute-partition",
+      {
+        "class_name": "DataModel",
+        "children": {
+          "ReplicatedStorage": {
+            "class_name": "ReplicatedStorage",
+            "children": {},
+            "properties": {},
+            "ignore_unknown_instances": null,
+            "path": "ReplicatedStorage"
+          }
+        },
+        "properties": {},
+        "ignore_unknown_instances": null,
+        "path": null
+      }
+    ]
+  }
+}

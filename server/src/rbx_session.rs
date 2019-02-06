@@ -24,7 +24,7 @@ const INIT_SERVER_SCRIPT: &str = "init.server.lua";
 const INIT_CLIENT_SCRIPT: &str = "init.client.lua";
 
 /// `source_path` or `project_definition` or both must both be Some.
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
 pub struct MetadataPerInstance {
     pub ignore_unknown_instances: bool,
 

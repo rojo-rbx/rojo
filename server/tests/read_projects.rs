@@ -43,8 +43,8 @@ fn empty_fuzzy_folder() {
 }
 
 #[test]
-fn single_sync_point() {
-    let project_location = TEST_PROJECTS_ROOT.join("single-sync-point");
+fn single_partition_game() {
+    let project_location = TEST_PROJECTS_ROOT.join("single_partition_game");
     let project = Project::load_fuzzy(&project_location).unwrap();
 
     let expected_project = {
@@ -96,8 +96,8 @@ fn single_sync_point() {
 }
 
 #[test]
-fn test_model() {
-    let project_file_location = TEST_PROJECTS_ROOT.join("test-model");
+fn single_partition_model() {
+    let project_file_location = TEST_PROJECTS_ROOT.join("single_partition_model");
     let project = Project::load_fuzzy(&project_file_location).unwrap();
 
     assert_eq!(project.name, "test-model");
@@ -105,7 +105,7 @@ fn test_model() {
 
 #[test]
 fn composing_models() {
-    let project_file_location = TEST_PROJECTS_ROOT.join("composing-models");
+    let project_file_location = TEST_PROJECTS_ROOT.join("composing_models");
     let project = Project::load_fuzzy(&project_file_location).unwrap();
 
     assert_eq!(project.name, "composing-models");

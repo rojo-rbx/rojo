@@ -1,8 +1,9 @@
 use std::{
-    str,
     borrow::Cow,
+    cmp::Ordering,
     collections::{HashMap, HashSet},
     fmt,
+    str,
 };
 
 use rbx_tree::{RbxTree, RbxId, RbxInstanceProperties, RbxValue};
@@ -55,13 +56,20 @@ impl InstanceChanges {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct RbxSnapshotInstance<'a> {
     pub name: Cow<'a, str>,
     pub class_name: Cow<'a, str>,
     pub properties: HashMap<String, RbxValue>,
     pub children: Vec<RbxSnapshotInstance<'a>>,
     pub metadata: MetadataPerInstance,
+}
+
+impl<'a> PartialOrd for RbxSnapshotInstance<'a> {
+    fn partial_cmp(&self, other: &RbxSnapshotInstance) -> Option<Ordering> {
+        Some(self.name.cmp(&other.name)
+            .then(self.class_name.cmp(&other.class_name)))
+    }
 }
 
 pub fn snapshot_from_tree(tree: &RbxTree, id: RbxId) -> Option<RbxSnapshotInstance<'static>> {
