@@ -1,0 +1,53 @@
+{
+  "name": "test-model",
+  "class_name": "Folder",
+  "properties": {},
+  "children": [
+    {
+      "name": "main",
+      "class_name": "Script",
+      "properties": {
+        "Source": {
+          "Type": "String",
+          "Value": "local other = require(script.Parent.other)\n\nprint(other)"
+        }
+      },
+      "children": [],
+      "metadata": {
+        "ignore_unknown_instances": false,
+        "source_path": "src/main.server.lua",
+        "project_definition": null
+      }
+    },
+    {
+      "name": "other",
+      "class_name": "ModuleScript",
+      "properties": {
+        "Source": {
+          "Type": "String",
+          "Value": "return \"Hello, world!\""
+        }
+      },
+      "children": [],
+      "metadata": {
+        "ignore_unknown_instances": false,
+        "source_path": "src/other.lua",
+        "project_definition": null
+      }
+    }
+  ],
+  "metadata": {
+    "ignore_unknown_instances": false,
+    "source_path": "src",
+    "project_definition": [
+      "test-model",
+      {
+        "class_name": null,
+        "children": {},
+        "properties": {},
+        "ignore_unknown_instances": null,
+        "path": "src"
+      }
+    ]
+  }
+}

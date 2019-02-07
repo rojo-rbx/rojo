@@ -27,13 +27,13 @@ static HOME_CONTENT: &str = include_str!("../assets/index.html");
 /// Contains the instance metadata relevant to Rojo clients.
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct InstanceMetadata {
+pub struct PublicInstanceMetadata {
     ignore_unknown_instances: bool,
 }
 
-impl InstanceMetadata {
-    pub fn from_session_metadata(meta: &MetadataPerInstance) -> InstanceMetadata {
-        InstanceMetadata {
+impl PublicInstanceMetadata {
+    pub fn from_session_metadata(meta: &MetadataPerInstance) -> PublicInstanceMetadata {
+        PublicInstanceMetadata {
             ignore_unknown_instances: meta.ignore_unknown_instances,
         }
     }
@@ -50,7 +50,7 @@ pub struct InstanceWithMetadata<'a> {
     pub instance: Cow<'a, RbxInstance>,
 
     #[serde(rename = "Metadata")]
-    pub metadata: Option<InstanceMetadata>,
+    pub metadata: Option<PublicInstanceMetadata>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -119,9 +119,6 @@ impl Server {
             },
             (GET) (/visualize/imfs) => {
                 self.handle_visualize_imfs()
-            },
-            (GET) (/visualize/path_metadata) => {
-                self.handle_visualize_path_metadata()
             },
             _ => Response::empty_404()
         )
@@ -209,7 +206,7 @@ impl Server {
         for &requested_id in &requested_ids {
             if let Some(instance) = tree.get_instance(requested_id) {
                 let metadata = rbx_session.get_instance_metadata(requested_id)
-                    .map(InstanceMetadata::from_session_metadata);
+                    .map(PublicInstanceMetadata::from_session_metadata);
 
                 instances.insert(instance.get_id(), InstanceWithMetadata {
                     instance: Cow::Borrowed(instance),
@@ -218,7 +215,7 @@ impl Server {
 
                 for descendant in tree.descendants(requested_id) {
                     let descendant_meta = rbx_session.get_instance_metadata(descendant.get_id())
-                        .map(InstanceMetadata::from_session_metadata);
+                        .map(PublicInstanceMetadata::from_session_metadata);
 
                     instances.insert(descendant.get_id(), InstanceWithMetadata {
                         instance: Cow::Borrowed(descendant),
@@ -253,10 +250,5 @@ impl Server {
             Some(svg) => Response::svg(svg),
             None => Response::text(dot_source),
         }
-    }
-
-    fn handle_visualize_path_metadata(&self) -> Response {
-        let rbx_session = self.live_session.rbx_session.lock().unwrap();
-        Response::json(&rbx_session.debug_get_metadata_per_path())
     }
 }

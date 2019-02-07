@@ -22,16 +22,13 @@ use crate::{
     project::{
         Project,
         ProjectNode,
-        InstanceProjectNode,
-        SyncPointProjectNode,
     },
     snapshot_reconciler::{
         RbxSnapshotInstance,
         snapshot_from_tree,
     },
-    path_map::PathMap,
-    // TODO: Move MetadataPerPath into this module?
-    rbx_session::{MetadataPerPath, MetadataPerInstance},
+    // TODO: Move MetadataPerInstance into this module?
+    rbx_session::MetadataPerInstance,
 };
 
 const INIT_MODULE_NAME: &str = "init.lua";
@@ -39,10 +36,6 @@ const INIT_SERVER_NAME: &str = "init.server.lua";
 const INIT_CLIENT_NAME: &str = "init.client.lua";
 
 pub type SnapshotResult<'a> = Result<Option<RbxSnapshotInstance<'a>>, SnapshotError>;
-
-pub struct SnapshotContext<'meta> {
-    pub metadata_per_path: &'meta mut PathMap<MetadataPerPath>,
-}
 
 #[derive(Debug, Fail)]
 pub enum SnapshotError {
@@ -55,6 +48,7 @@ pub enum SnapshotError {
     },
 
     JsonModelDecodeError {
+        #[fail(cause)]
         inner: serde_json::Error,
         path: PathBuf,
     },
@@ -68,6 +62,12 @@ pub enum SnapshotError {
         inner: rbx_binary::DecodeError,
         path: PathBuf,
     },
+
+    ProjectNodeUnusable,
+
+    ProjectNodeInvalidTransmute {
+        partition_path: PathBuf,
+    },
 }
 
 impl fmt::Display for SnapshotError {
@@ -78,7 +78,7 @@ impl fmt::Display for SnapshotError {
                 write!(output, "Invalid UTF-8: {} in path {}", inner, path.display())
             },
             SnapshotError::JsonModelDecodeError { inner, path } => {
-                write!(output, "Malformed .model.json model: {:?} in path {}", inner, path.display())
+                write!(output, "Malformed .model.json model: {} in path {}", inner, path.display())
             },
             SnapshotError::XmlModelDecodeError { inner, path } => {
                 write!(output, "Malformed rbxmx model: {:?} in path {}", inner, path.display())
@@ -86,107 +86,131 @@ impl fmt::Display for SnapshotError {
             SnapshotError::BinaryModelDecodeError { inner, path } => {
                 write!(output, "Malformed rbxm model: {:?} in path {}", inner, path.display())
             },
+            SnapshotError::ProjectNodeUnusable => {
+                write!(output, "Rojo project nodes must specify either $path or $className.")
+            },
+            SnapshotError::ProjectNodeInvalidTransmute { partition_path } => {
+                writeln!(output, "Rojo project nodes that specify both $path and $className require that the")?;
+                writeln!(output, "instance produced by the files pointed to by $path has a ClassName of")?;
+                writeln!(output, "Folder.")?;
+                writeln!(output, "")?;
+                writeln!(output, "Partition target ($path): {}", partition_path.display())
+            },
         }
     }
 }
 
 pub fn snapshot_project_tree<'source>(
     imfs: &'source Imfs,
-    context: &mut SnapshotContext,
     project: &'source Project,
 ) -> SnapshotResult<'source> {
-    snapshot_project_node(imfs, context, &project.tree, Cow::Borrowed(&project.name))
+    snapshot_project_node(imfs, &project.tree, Cow::Borrowed(&project.name))
 }
 
-fn snapshot_project_node<'source>(
+pub fn snapshot_project_node<'source>(
     imfs: &'source Imfs,
-    context: &mut SnapshotContext,
-    node: &'source ProjectNode,
+    node: &ProjectNode,
     instance_name: Cow<'source, str>,
 ) -> SnapshotResult<'source> {
-    match node {
-        ProjectNode::Instance(instance_node) => snapshot_instance_node(imfs, context, instance_node, instance_name),
-        ProjectNode::SyncPoint(sync_node) => snapshot_sync_point_node(imfs, context, sync_node, instance_name),
-    }
-}
+    let maybe_snapshot = match &node.path {
+        Some(path) => snapshot_imfs_path(imfs, &path, Some(instance_name.clone()))?,
+        None => match &node.class_name {
+            Some(_class_name) => Some(RbxSnapshotInstance {
+                name: instance_name.clone(),
 
-fn snapshot_instance_node<'source>(
-    imfs: &'source Imfs,
-    context: &mut SnapshotContext,
-    node: &'source InstanceProjectNode,
-    instance_name: Cow<'source, str>,
-) -> SnapshotResult<'source> {
-    let mut children = Vec::new();
-
-    for (child_name, child_project_node) in &node.children {
-        if let Some(child) = snapshot_project_node(imfs, context, child_project_node, Cow::Borrowed(child_name))? {
-            children.push(child);
-        }
-    }
-
-    Ok(Some(RbxSnapshotInstance {
-        class_name: Cow::Borrowed(&node.class_name),
-        name: instance_name,
-        properties: node.properties.clone(),
-        children,
-        metadata: MetadataPerInstance {
-            source_path: None,
-            ignore_unknown_instances: node.metadata.ignore_unknown_instances,
+                // These properties are replaced later in the function to
+                // reduce code duplication.
+                class_name: Cow::Borrowed("Folder"),
+                properties: HashMap::new(),
+                children: Vec::new(),
+                metadata: MetadataPerInstance {
+                    source_path: None,
+                    ignore_unknown_instances: true,
+                    project_definition: None,
+                },
+            }),
+            None => {
+                return Err(SnapshotError::ProjectNodeUnusable);
+            },
         },
-    }))
-}
-
-fn snapshot_sync_point_node<'source>(
-    imfs: &'source Imfs,
-    context: &mut SnapshotContext,
-    node: &'source SyncPointProjectNode,
-    instance_name: Cow<'source, str>,
-) -> SnapshotResult<'source> {
-    let maybe_snapshot = snapshot_imfs_path(imfs, context, &node.path, Some(instance_name))?;
+    };
 
     // If the snapshot resulted in no instances, like if it targets an unknown
     // file or an empty model file, we can early-return.
-    let snapshot = match maybe_snapshot {
+    //
+    // In the future, we might want to issue a warning if the project also
+    // specified fields like class_name, since the user will probably be
+    // confused as to why nothing showed up in the tree.
+    let mut snapshot = match maybe_snapshot {
         Some(snapshot) => snapshot,
-        None => return Ok(None),
+        None => {
+            // TODO: Return some other sort of marker here instead? If a node
+            // transitions from None into Some, it's possible that configuration
+            // from the ProjectNode might be lost since there's nowhere to put
+            // it!
+            return Ok(None);
+        },
     };
 
-    // Otherwise, we can log the name of the sync point we just snapshotted.
-    let path_meta = context.metadata_per_path.entry(node.path.to_owned()).or_default();
-    path_meta.instance_name = Some(snapshot.name.clone().into_owned());
+    // Applies the class name specified in `class_name` from the project, if it's
+    // set.
+    if let Some(class_name) = &node.class_name {
+        // This can only happen if `path` was specified in the project node and
+        // that path represented a non-Folder instance.
+        if snapshot.class_name != "Folder" {
+            return Err(SnapshotError::ProjectNodeInvalidTransmute {
+                partition_path: node.path.as_ref().unwrap().to_owned(),
+            });
+        }
+
+        snapshot.class_name = Cow::Owned(class_name.to_owned());
+    }
+
+    for (child_name, child_project_node) in &node.children {
+        if let Some(child) = snapshot_project_node(imfs, child_project_node, Cow::Owned(child_name.clone()))? {
+            snapshot.children.push(child);
+        }
+    }
+
+    for (key, value) in &node.properties {
+        snapshot.properties.insert(key.clone(), value.clone());
+    }
+
+    if let Some(ignore_unknown_instances) = node.ignore_unknown_instances {
+        snapshot.metadata.ignore_unknown_instances = ignore_unknown_instances;
+    }
+
+    snapshot.metadata.project_definition = Some((instance_name.into_owned(), node.clone()));
 
     Ok(Some(snapshot))
 }
 
 pub fn snapshot_imfs_path<'source>(
     imfs: &'source Imfs,
-    context: &mut SnapshotContext,
     path: &Path,
     instance_name: Option<Cow<'source, str>>,
 ) -> SnapshotResult<'source> {
     // If the given path doesn't exist in the in-memory filesystem, we consider
     // that an error.
     match imfs.get(path) {
-        Some(imfs_item) => snapshot_imfs_item(imfs, context, imfs_item, instance_name),
+        Some(imfs_item) => snapshot_imfs_item(imfs, imfs_item, instance_name),
         None => return Err(SnapshotError::DidNotExist(path.to_owned())),
     }
 }
 
 fn snapshot_imfs_item<'source>(
     imfs: &'source Imfs,
-    context: &mut SnapshotContext,
     item: &'source ImfsItem,
     instance_name: Option<Cow<'source, str>>,
 ) -> SnapshotResult<'source> {
     match item {
         ImfsItem::File(file) => snapshot_imfs_file(file, instance_name),
-        ImfsItem::Directory(directory) => snapshot_imfs_directory(imfs, context, directory, instance_name),
+        ImfsItem::Directory(directory) => snapshot_imfs_directory(imfs, directory, instance_name),
     }
 }
 
 fn snapshot_imfs_directory<'source>(
     imfs: &'source Imfs,
-    context: &mut SnapshotContext,
     directory: &'source ImfsDirectory,
     instance_name: Option<Cow<'source, str>>,
 ) -> SnapshotResult<'source> {
@@ -202,11 +226,11 @@ fn snapshot_imfs_directory<'source>(
         });
 
     let mut snapshot = if directory.children.contains(&init_path) {
-        snapshot_imfs_path(imfs, context, &init_path, Some(snapshot_name))?.unwrap()
+        snapshot_imfs_path(imfs, &init_path, Some(snapshot_name))?.unwrap()
     } else if directory.children.contains(&init_server_path) {
-        snapshot_imfs_path(imfs, context, &init_server_path, Some(snapshot_name))?.unwrap()
+        snapshot_imfs_path(imfs, &init_server_path, Some(snapshot_name))?.unwrap()
     } else if directory.children.contains(&init_client_path) {
-        snapshot_imfs_path(imfs, context, &init_client_path, Some(snapshot_name))?.unwrap()
+        snapshot_imfs_path(imfs, &init_client_path, Some(snapshot_name))?.unwrap()
     } else {
         RbxSnapshotInstance {
             class_name: Cow::Borrowed("Folder"),
@@ -216,6 +240,7 @@ fn snapshot_imfs_directory<'source>(
             metadata: MetadataPerInstance {
                 source_path: None,
                 ignore_unknown_instances: false,
+                project_definition: None,
             },
         }
     };
@@ -234,7 +259,7 @@ fn snapshot_imfs_directory<'source>(
                 // them here.
             },
             _ => {
-                if let Some(child) = snapshot_imfs_path(imfs, context, child_path, None)? {
+                if let Some(child) = snapshot_imfs_path(imfs, child_path, None)? {
                     snapshot.children.push(child);
                 }
             },
@@ -316,6 +341,7 @@ fn snapshot_lua_file<'source>(
         metadata: MetadataPerInstance {
             source_path: Some(file.path.to_path_buf()),
             ignore_unknown_instances: false,
+            project_definition: None,
         },
     }))
 }
@@ -354,6 +380,7 @@ fn snapshot_txt_file<'source>(
         metadata: MetadataPerInstance {
             source_path: Some(file.path.to_path_buf()),
             ignore_unknown_instances: false,
+            project_definition: None,
         },
     }))
 }
@@ -387,6 +414,7 @@ fn snapshot_csv_file<'source>(
         metadata: MetadataPerInstance {
             source_path: Some(file.path.to_path_buf()),
             ignore_unknown_instances: false,
+            project_definition: None,
         },
     }))
 }

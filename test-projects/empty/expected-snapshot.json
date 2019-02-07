@@ -1,0 +1,20 @@
+{
+  "name": "empty",
+  "class_name": "DataModel",
+  "properties": {},
+  "children": [],
+  "metadata": {
+    "ignore_unknown_instances": true,
+    "source_path": null,
+    "project_definition": [
+      "empty",
+      {
+        "class_name": "DataModel",
+        "children": {},
+        "properties": {},
+        "ignore_unknown_instances": null,
+        "path": null
+      }
+    ]
+  }
+}

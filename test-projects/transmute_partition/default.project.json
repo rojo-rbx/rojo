@@ -1,0 +1,11 @@
+{
+  "name": "transmute-partition",
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "$path": "ReplicatedStorage"
+    }
+  }
+}

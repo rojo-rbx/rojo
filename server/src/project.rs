@@ -15,16 +15,6 @@ use serde_derive::{Serialize, Deserialize};
 pub static PROJECT_FILENAME: &'static str = "default.project.json";
 pub static COMPAT_PROJECT_FILENAME: &'static str = "roblox-project.json";
 
-// Methods used for Serde's default value system, which doesn't support using
-// value literals directly, only functions that return values.
-const fn yeah() -> bool {
-    true
-}
-
-const fn is_true(value: &bool) -> bool {
-    *value
-}
-
 /// SourceProject is the format that users author projects on-disk. Since we
 /// want to do things like transforming paths to be absolute before handing them
 /// off to the rest of Rojo, we use this intermediate struct.
@@ -60,59 +50,47 @@ impl SourceProject {
 /// slightly different on-disk than how we want to handle them in the rest of
 /// Rojo.
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(untagged)]
-enum SourceProjectNode {
-    Instance {
-        #[serde(rename = "$className")]
-        class_name: String,
+struct SourceProjectNode {
+    #[serde(rename = "$className", skip_serializing_if = "Option::is_none")]
+    class_name: Option<String>,
 
-        #[serde(rename = "$properties", default = "HashMap::new", skip_serializing_if = "HashMap::is_empty")]
-        properties: HashMap<String, RbxValue>,
+    #[serde(rename = "$properties", default = "HashMap::new", skip_serializing_if = "HashMap::is_empty")]
+    properties: HashMap<String, RbxValue>,
 
-        #[serde(rename = "$ignoreUnknownInstances", default = "yeah", skip_serializing_if = "is_true")]
-        ignore_unknown_instances: bool,
+    #[serde(rename = "$ignoreUnknownInstances", skip_serializing_if = "Option::is_none")]
+    ignore_unknown_instances: Option<bool>,
 
-        #[serde(flatten)]
-        children: HashMap<String, SourceProjectNode>,
-    },
-    SyncPoint {
-        #[serde(rename = "$path")]
-        path: String,
-    }
+    #[serde(rename = "$path", skip_serializing_if = "Option::is_none")]
+    path: Option<String>,
+
+    #[serde(flatten)]
+    children: HashMap<String, SourceProjectNode>,
 }
 
 impl SourceProjectNode {
     /// Consumes the SourceProjectNode and turns it into a ProjectNode.
-    pub fn into_project_node(self, project_file_location: &Path) -> ProjectNode {
-        match self {
-            SourceProjectNode::Instance { class_name, mut children, properties, ignore_unknown_instances } => {
-                let mut new_children = HashMap::new();
+    pub fn into_project_node(mut self, project_file_location: &Path) -> ProjectNode {
+        let children = self.children.drain()
+            .map(|(key, value)| (key, value.into_project_node(project_file_location)))
+            .collect();
 
-                for (node_name, node) in children.drain() {
-                    new_children.insert(node_name, node.into_project_node(project_file_location));
-                }
+        // Make sure that paths are absolute, transforming them by adding the
+        // project folder if they're not already absolute.
+        let path = self.path.as_ref().map(|source_path| {
+            if Path::new(source_path).is_absolute() {
+                PathBuf::from(source_path)
+            } else {
+                let project_folder_location = project_file_location.parent().unwrap();
+                project_folder_location.join(source_path)
+            }
+        });
 
-                ProjectNode::Instance(InstanceProjectNode {
-                    class_name,
-                    children: new_children,
-                    properties,
-                    metadata: InstanceProjectNodeMetadata {
-                        ignore_unknown_instances,
-                    },
-                })
-            },
-            SourceProjectNode::SyncPoint { path: source_path } => {
-                let path = if Path::new(&source_path).is_absolute() {
-                    PathBuf::from(source_path)
-                } else {
-                    let project_folder_location = project_file_location.parent().unwrap();
-                    project_folder_location.join(source_path)
-                };
-
-                ProjectNode::SyncPoint(SyncPointProjectNode {
-                    path,
-                })
-            },
+        ProjectNode {
+            class_name: self.class_name,
+            properties: self.properties,
+            ignore_unknown_instances: self.ignore_unknown_instances,
+            path,
+            children,
         }
     }
 }
@@ -177,73 +155,47 @@ pub enum ProjectSaveError {
     IoError(#[fail(cause)] io::Error),
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct InstanceProjectNodeMetadata {
-    pub ignore_unknown_instances: bool,
-}
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct ProjectNode {
+    pub class_name: Option<String>,
+    pub children: HashMap<String, ProjectNode>,
+    pub properties: HashMap<String, RbxValue>,
+    pub ignore_unknown_instances: Option<bool>,
 
-impl Default for InstanceProjectNodeMetadata {
-    fn default() -> InstanceProjectNodeMetadata {
-        InstanceProjectNodeMetadata {
-            ignore_unknown_instances: true,
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(tag = "type")]
-pub enum ProjectNode {
-    Instance(InstanceProjectNode),
-    SyncPoint(SyncPointProjectNode),
+    #[serde(serialize_with = "crate::path_serializer::serialize_option")]
+    pub path: Option<PathBuf>,
 }
 
 impl ProjectNode {
     fn to_source_node(&self, project_file_location: &Path) -> SourceProjectNode {
-        match self {
-            ProjectNode::Instance(node) => {
-                let mut children = HashMap::new();
+        let children = self.children.iter()
+            .map(|(key, value)| (key.clone(), value.to_source_node(project_file_location)))
+            .collect();
 
-                for (key, child) in &node.children {
-                    children.insert(key.clone(), child.to_source_node(project_file_location));
-                }
+        // If paths are relative to the project file, transform them to look
+        // Unixy and write relative paths instead.
+        //
+        // This isn't perfect, since it means that paths like .. will stay as
+        // absolute paths and make projects non-portable. Fixing this probably
+        // means keeping the paths relative in the project format and making
+        // everywhere else in Rojo do the resolution locally.
+        let path = self.path.as_ref().map(|path| {
+            let project_folder_location = project_file_location.parent().unwrap();
 
-                SourceProjectNode::Instance {
-                    class_name: node.class_name.clone(),
-                    children,
-                    properties: node.properties.clone(),
-                    ignore_unknown_instances: node.metadata.ignore_unknown_instances,
-                }
-            },
-            ProjectNode::SyncPoint(sync_node) => {
-                let project_folder_location = project_file_location.parent().unwrap();
+            match path.strip_prefix(project_folder_location) {
+                Ok(stripped) => stripped.to_str().unwrap().replace("\\", "/"),
+                Err(_) => format!("{}", path.display()),
+            }
+        });
 
-                let friendly_path = match sync_node.path.strip_prefix(project_folder_location) {
-                    Ok(stripped) => stripped.to_str().unwrap().replace("\\", "/"),
-                    Err(_) => format!("{}", sync_node.path.display()),
-                };
-
-                SourceProjectNode::SyncPoint {
-                    path: friendly_path,
-                }
-            },
+        SourceProjectNode {
+            class_name: self.class_name.clone(),
+            properties: self.properties.clone(),
+            ignore_unknown_instances: self.ignore_unknown_instances,
+            children,
+            path,
         }
     }
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct InstanceProjectNode {
-    pub class_name: String,
-    pub children: HashMap<String, ProjectNode>,
-    pub properties: HashMap<String, RbxValue>,
-    pub metadata: InstanceProjectNodeMetadata,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SyncPointProjectNode {
-    pub path: PathBuf,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -265,33 +217,31 @@ impl Project {
             project_fuzzy_path.file_name().unwrap().to_str().unwrap()
         };
 
-        let tree = ProjectNode::Instance(InstanceProjectNode {
-            class_name: "DataModel".to_string(),
+        let tree = ProjectNode {
+            class_name: Some(String::from("DataModel")),
             children: hashmap! {
-                String::from("ReplicatedStorage") => ProjectNode::Instance(InstanceProjectNode {
-                    class_name: String::from("ReplicatedStorage"),
+                String::from("ReplicatedStorage") => ProjectNode {
+                    class_name: Some(String::from("ReplicatedStorage")),
                     children: hashmap! {
-                        String::from("Source") => ProjectNode::SyncPoint(SyncPointProjectNode {
-                            path: project_folder_path.join("src"),
-                        }),
+                        String::from("Source") => ProjectNode {
+                            path: Some(project_folder_path.join("src")),
+                            ..Default::default()
+                        },
                     },
-                    properties: HashMap::new(),
-                    metadata: Default::default(),
-                }),
-                String::from("HttpService") => ProjectNode::Instance(InstanceProjectNode {
-                    class_name: String::from("HttpService"),
-                    children: HashMap::new(),
+                    ..Default::default()
+                },
+                String::from("HttpService") => ProjectNode {
+                    class_name: Some(String::from("HttpService")),
                     properties: hashmap! {
                         String::from("HttpEnabled") => RbxValue::Bool {
                             value: true,
                         },
                     },
-                    metadata: Default::default(),
-                }),
+                    ..Default::default()
+                },
             },
-            properties: HashMap::new(),
-            metadata: Default::default(),
-        });
+            ..Default::default()
+        };
 
         let project = Project {
             name: project_name.to_string(),
@@ -316,9 +266,10 @@ impl Project {
             project_fuzzy_path.file_name().unwrap().to_str().unwrap()
         };
 
-        let tree = ProjectNode::SyncPoint(SyncPointProjectNode {
-            path: project_folder_path.join("src"),
-        });
+        let tree = ProjectNode {
+            path: Some(project_folder_path.join("src")),
+            ..Default::default()
+        };
 
         let project = Project {
             name: project_name.to_string(),

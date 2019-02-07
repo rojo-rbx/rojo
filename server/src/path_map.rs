@@ -1,5 +1,4 @@
 use std::{
-    collections::hash_map,
     path::{self, Path, PathBuf},
     collections::{HashMap, HashSet},
 };
@@ -34,12 +33,6 @@ impl<T> PathMap<T> {
 
     pub fn get_mut(&mut self, path: &Path) -> Option<&mut T> {
         self.nodes.get_mut(path).map(|v| &mut v.value)
-    }
-
-    pub fn entry<'a>(&'a mut self, path: PathBuf) -> Entry<'a, T> {
-        Entry {
-            internal: self.nodes.entry(path),
-        }
     }
 
     pub fn insert(&mut self, path: PathBuf, value: T) {
@@ -115,29 +108,5 @@ impl<T> PathMap<T> {
         }
 
         current_path
-    }
-}
-
-pub struct Entry<'a, T> {
-    internal: hash_map::Entry<'a, PathBuf, PathMapNode<T>>,
-}
-
-impl<'a, T> Entry<'a, T> {
-    pub fn or_insert(self, value: T) -> &'a mut T {
-        &mut self.internal.or_insert(PathMapNode {
-            value,
-            children: HashSet::new(),
-        }).value
-    }
-}
-
-impl<'a, T> Entry<'a, T>
-    where T: Default
-{
-    pub fn or_default(self) -> &'a mut T {
-        &mut self.internal.or_insert(PathMapNode {
-            value: Default::default(),
-            children: HashSet::new(),
-        }).value
     }
 }
