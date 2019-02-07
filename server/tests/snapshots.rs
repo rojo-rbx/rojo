@@ -3,6 +3,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use pretty_assertions::assert_eq;
+
 use librojo::{
     imfs::Imfs,
     project::{Project, ProjectNode},
