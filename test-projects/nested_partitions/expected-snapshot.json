@@ -20,7 +20,7 @@
           "children": [],
           "metadata": {
             "ignore_unknown_instances": false,
-            "source_path": "inner\\hello.lua",
+            "source_path": "inner/hello.lua",
             "project_definition": null
           }
         }
@@ -52,7 +52,7 @@
       "children": [],
       "metadata": {
         "ignore_unknown_instances": false,
-        "source_path": "outer\\world.lua",
+        "source_path": "outer/world.lua",
         "project_definition": null
       }
     }

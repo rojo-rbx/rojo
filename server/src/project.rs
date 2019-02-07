@@ -161,6 +161,8 @@ pub struct ProjectNode {
     pub children: HashMap<String, ProjectNode>,
     pub properties: HashMap<String, RbxValue>,
     pub ignore_unknown_instances: Option<bool>,
+
+    #[serde(serialize_with = "crate::path_serializer::serialize_option")]
     pub path: Option<PathBuf>,
 }
 

@@ -55,12 +55,8 @@ fn run_snapshot_test(path: &Path) {
     }
 
     match read_expected_snapshot(path) {
-        Some(expected_snapshot) => {
-            assert_eq!(snapshot, expected_snapshot);
-        },
-        None => {
-            write_expected_snapshot(path, &snapshot);
-        },
+        Some(expected_snapshot) => assert_eq!(snapshot, expected_snapshot),
+        None => write_expected_snapshot(path, &snapshot),
     }
 }
 

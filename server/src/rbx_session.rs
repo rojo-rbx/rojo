@@ -30,6 +30,7 @@ pub struct MetadataPerInstance {
 
     /// The path on the filesystem that the instance was read from the
     /// filesystem if it came from the filesystem.
+    #[serde(serialize_with = "crate::path_serializer::serialize_option")]
     pub source_path: Option<PathBuf>,
 
     /// Information about the instance that came from the project that defined

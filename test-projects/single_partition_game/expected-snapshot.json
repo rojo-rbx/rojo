@@ -55,7 +55,7 @@
               "children": [],
               "metadata": {
                 "ignore_unknown_instances": false,
-                "source_path": "lib\\foo.txt",
+                "source_path": "lib/foo.txt",
                 "project_definition": null
               }
             },
@@ -71,7 +71,7 @@
               "children": [],
               "metadata": {
                 "ignore_unknown_instances": false,
-                "source_path": "lib\\main.lua",
+                "source_path": "lib/main.lua",
                 "project_definition": null
               }
             }
@@ -124,6 +124,18 @@
       {
         "class_name": "DataModel",
         "children": {
+          "HttpService": {
+            "class_name": "HttpService",
+            "children": {},
+            "properties": {
+              "HttpEnabled": {
+                "Type": "Bool",
+                "Value": true
+              }
+            },
+            "ignore_unknown_instances": null,
+            "path": null
+          },
           "ReplicatedStorage": {
             "class_name": "ReplicatedStorage",
             "children": {
@@ -136,18 +148,6 @@
               }
             },
             "properties": {},
-            "ignore_unknown_instances": null,
-            "path": null
-          },
-          "HttpService": {
-            "class_name": "HttpService",
-            "children": {},
-            "properties": {
-              "HttpEnabled": {
-                "Type": "Bool",
-                "Value": true
-              }
-            },
             "ignore_unknown_instances": null,
             "path": null
           }

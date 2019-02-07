@@ -15,7 +15,7 @@
       "children": [],
       "metadata": {
         "ignore_unknown_instances": false,
-        "source_path": "src\\main.server.lua",
+        "source_path": "src/main.server.lua",
         "project_definition": null
       }
     },
@@ -31,7 +31,7 @@
       "children": [],
       "metadata": {
         "ignore_unknown_instances": false,
-        "source_path": "src\\other.lua",
+        "source_path": "src/other.lua",
         "project_definition": null
       }
     }

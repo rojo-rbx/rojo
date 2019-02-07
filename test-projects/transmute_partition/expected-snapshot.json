@@ -20,7 +20,7 @@
           "children": [],
           "metadata": {
             "ignore_unknown_instances": false,
-            "source_path": "ReplicatedStorage\\hello.lua",
+            "source_path": "ReplicatedStorage/hello.lua",
             "project_definition": null
           }
         }
