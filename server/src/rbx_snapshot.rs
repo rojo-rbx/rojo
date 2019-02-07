@@ -1,3 +1,6 @@
+//! Defines how Rojo transforms files into instances through the snapshot
+//! system.
+
 use std::{
     borrow::Cow,
     collections::HashMap,

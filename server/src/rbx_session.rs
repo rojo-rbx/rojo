@@ -41,6 +41,9 @@ pub struct MetadataPerInstance {
     pub project_definition: Option<(String, ProjectNode)>,
 }
 
+/// Contains all of the state needed to update an `RbxTree` in real time using
+/// the in-memory filesystem, as well as messaging to Rojo clients what
+/// instances have actually updated at any point.
 pub struct RbxSession {
     tree: RbxTree,
 

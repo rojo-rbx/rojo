@@ -1,3 +1,7 @@
+//! Defines the snapshot subsystem of Rojo, which defines a lightweight instance
+//! representation (`RbxSnapshotInstance`) and a system to incrementally update
+//! an `RbxTree` based on snapshots.
+
 use std::{
     borrow::Cow,
     cmp::Ordering,
@@ -14,6 +18,8 @@ use crate::{
     rbx_session::MetadataPerInstance,
 };
 
+/// Contains all of the IDs that were modified when the snapshot reconciler
+/// applied an update.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct InstanceChanges {
     pub added: HashSet<RbxId>,
@@ -56,6 +62,8 @@ impl InstanceChanges {
     }
 }
 
+/// A lightweight, hierarchical representation of an instance that can be
+/// applied to the tree.
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct RbxSnapshotInstance<'a> {
     pub name: Cow<'a, str>,
@@ -72,6 +80,11 @@ impl<'a> PartialOrd for RbxSnapshotInstance<'a> {
     }
 }
 
+/// Generates an `RbxSnapshotInstance` from an existing `RbxTree` and an ID to
+/// use as the root of the snapshot.
+///
+/// This is used to transform instances created by rbx_xml and rbx_binary into
+/// snapshots that can be applied to the tree to reduce instance churn.
 pub fn snapshot_from_tree(tree: &RbxTree, id: RbxId) -> Option<RbxSnapshotInstance<'static>> {
     let instance = tree.get_instance(id)?;
 
@@ -93,6 +106,7 @@ pub fn snapshot_from_tree(tree: &RbxTree, id: RbxId) -> Option<RbxSnapshotInstan
     })
 }
 
+/// Constructs a new `RbxTree` out of a snapshot and places to attach metadata.
 pub fn reify_root(
     snapshot: &RbxSnapshotInstance,
     instance_per_path: &mut PathMap<HashSet<RbxId>>,
@@ -114,6 +128,8 @@ pub fn reify_root(
     tree
 }
 
+/// Adds instances to a portion of the given `RbxTree`, used for when new
+/// instances are created.
 pub fn reify_subtree(
     snapshot: &RbxSnapshotInstance,
     tree: &mut RbxTree,
@@ -134,7 +150,7 @@ pub fn reify_subtree(
     }
 }
 
-pub fn reify_metadata(
+fn reify_metadata(
     snapshot: &RbxSnapshotInstance,
     instance_id: RbxId,
     instance_per_path: &mut PathMap<HashSet<RbxId>>,
@@ -155,6 +171,8 @@ pub fn reify_metadata(
     metadata_per_instance.insert(instance_id, snapshot.metadata.clone());
 }
 
+/// Updates existing instances in an existing `RbxTree`, potentially adding,
+/// updating, or removing children and properties.
 pub fn reconcile_subtree(
     tree: &mut RbxTree,
     id: RbxId,

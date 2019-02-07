@@ -1,3 +1,6 @@
+//! Defines Rojo's web interface that all clients use to communicate with a
+//! running live-sync session.
+
 use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
