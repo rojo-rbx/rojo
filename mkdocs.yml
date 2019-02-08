@@ -11,11 +11,11 @@ theme:
 nav:
   - Home: index.md
   - Why Rojo?: why-rojo.md
-  - Getting Started:
-    - Installation: getting-started/installation.md
-    - Creating a Place with Rojo: getting-started/creating-a-place.md
-  - Sync Details: sync-details.md
+  - Installation: installation.md
+  - Creating a Place with Rojo: creating-a-place.md
   - Migrating from 0.4.x to 0.5.x: migrating-to-epiphany.md
+  - Project Format: project-format.md
+  - Sync Details: sync-details.md
   - Rojo Internals:
     - Internals Overview: internals/overview.md
 

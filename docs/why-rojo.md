@@ -1,16 +1,19 @@
 There are a number of existing plugins for Roblox that move code from the filesystem into Roblox.
 
-Besides Rojo, there is:
+Besides Rojo, you might consider:
 
-* [Studio Bridge](https://github.com/vocksel/studio-bridge) by [Vocksel](https://github.com/vocksel)
-* [RbxRefresh](https://github.com/osyrisrblx/RbxRefresh) by [Osyris](https://github.com/osyrisrblx)
-* [RbxSync](https://github.com/evaera/RbxSync) by [evaera](https://github.com/evaera)
-* [CodeSync](https://github.com/MemoryPenguin/CodeSync) and [rbx-exteditor](https://github.com/MemoryPenguin/rbx-exteditor) by [MemoryPenguin](https://github.com/MemoryPenguin)
-* [rbxmk](https://github.com/anaminus/rbxmk) by [Anaminus](https://github.com/anaminus)
+* [rbxmk by Anaminus](https://github.com/anaminus/rbxmk)
+* [Rofresh by Osyris](https://github.com/osyrisrblx/rofresh)
+* [RbxRefresh by Osyris](https://github.com/osyrisrblx/RbxRefresh)
+* [Studio Bridge by Vocksel](https://github.com/vocksel/studio-bridge)
+* [Elixir by Vocksel](https://github.com/vocksel/elixir)
+* [RbxSync by evaera](https://github.com/evaera/RbxSync)
+* [CodeSync by MemoryPenguin](https://github.com/MemoryPenguin/CodeSync)
+* [rbx-exteditor by MemoryPenguin](https://github.com/MemoryPenguin/rbx-exteditor)
 
 So why did I build Rojo?
 
-Each of these tools solves what is essentially the same problem from a few different angles. The goal of Rojo is to take all of the lessons and ideas learned from these projects and build a tool that can solve the problem for good.
+Each of these tools solves what is essentially the same problem from a few different angles. The goal of Rojo is to take all of the lessons and ideas learned from these projects and build a tool that can solve this problem for good.
 
 Additionally:
 

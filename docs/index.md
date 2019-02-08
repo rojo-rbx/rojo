@@ -1,4 +1,4 @@
-This is the documentation home for Rojo.
+This is the documentation home for Rojo 0.5.x.
 
 Available versions of these docs:
 
