@@ -1,5 +1,7 @@
 Rojo underwent a large refactor during most of 2018 to enable a bunch of new features and lay groundwork for lots more in 2019. As such, Rojo **0.5.x** projects are not compatible with Rojo **0.4.x** projects.
 
+[TOC]
+
 ## Supporting Both 0.4.x and 0.5.x
 Rojo 0.5.x uses a different name for its project format. While 0.4.x used `rojo.json`, 0.5.x uses `default.project.json`, which allows them to coexist.
 

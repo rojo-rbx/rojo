@@ -16,6 +16,8 @@ nav:
     - Creating a Place with Rojo: getting-started/creating-a-place.md
   - Sync Details: sync-details.md
   - Migrating from 0.4.x to 0.5.x: migrating-to-epiphany.md
+  - Rojo Internals:
+    - Internals Overview: internals/overview.md
 
 extra_css:
   - extra.css

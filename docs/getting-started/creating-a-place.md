@@ -1,3 +1,7 @@
+[TOC]
+
+## Creating the Rojo Project
+
 To use Rojo to build a place, you'll need to create a new project file, which tells Rojo how your project is structured on-disk and in Roblox.
 
 Create a new folder, then run `rojo init` inside that folder to initialize an empty project.
