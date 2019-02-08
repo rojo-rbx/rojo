@@ -23,7 +23,7 @@ For example, this file tree:
 
 Will turn into these instances in Roblox:
 
-![Example of Roblox instances](/images/sync-example.png)
+![Example of Roblox instances](images/sync-example.png)
 
 ## Models
 Rojo supports a JSON model format for representing simple models. It's designed for instance types like `BindableEvent` or `Value` objects, and is not suitable for larger models.

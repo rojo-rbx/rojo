@@ -56,7 +56,7 @@ If your project is in the right place, Rojo will let you know that it was found 
 
 In Roblox Studio, open the plugins tab and find Rojo's buttons.
 
-![Location of Rojo's plugin buttons in Roblox Studio](/images/plugin-buttons.png)
+![Location of Rojo's plugin buttons in Roblox Studio](../images/plugin-buttons.png)
 {: align="center" }
 
 Press **Test Connection** to verify that the plugin can communicate with the dev server. Watch the Output panel for the results.
@@ -64,7 +64,7 @@ Press **Test Connection** to verify that the plugin can communicate with the dev
 !!! info
     If you see an error message, return to the previous steps and make sure that the Rojo dev server is running.
 
-    ![Rojo error in Roblox Studio Output](/images/connection-error.png)
+    ![Rojo error in Roblox Studio Output](../images/connection-error.png)
     {: align="center" }
 
 After your connection was successful, press **Sync In** to move code from the filesystem into Studio, or use **Toggle Polling** to have Rojo automatically sync in changes as they happen.
