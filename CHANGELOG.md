@@ -1,6 +1,10 @@
 # Rojo Changelog
 
 ## [Unreleased]
+* Added support for nested partitions ([#102](https://github.com/LPGhatguy/rojo/issues/102))
+* Added support for 'transmuting' partitions ([#112](https://github.com/LPGhatguy/rojo/issues/112))
+* Added support for aliasing filesystem paths ([#105](https://github.com/LPGhatguy/rojo/issues/105))
+* Changed Windows builds to statically link the CRT ([#89](https://github.com/LPGhatguy/rojo/issues/89))
 
 ## [0.5.0 Alpha 3](https://github.com/LPGhatguy/rojo/releases/tag/v0.5.0-alpha.3) (February 1, 2019)
 * Changed default project file name from `roblox-project.json` to `default.project.json` ([#120](https://github.com/LPGhatguy/rojo/pull/120))
