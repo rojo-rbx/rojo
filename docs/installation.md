@@ -1,25 +1,45 @@
+[TOC]
+
+## Overview
+
 Rojo has two components:
 
-* The server, a binary written in Rust
-* The plugin, a Roblox Studio plugin written in Lua
+* The command line interface (CLI)
+* The Roblox Studio plugin
 
-It's important that the plugin and server are compatible. The plugin will show errors in the Roblox Studio Output window if there is a version mismatch.
+!!! info
+    It's important that your installed version of the plugin and CLI are compatible.
 
-## Installing the Server
-To install the server, either:
+    The plugin will show errors in the Roblox Studio output window if there is a version mismatch.
 
-* If you have Rust installed, use `cargo install rojo`
-* Or, download a pre-built Windows binary from [the GitHub releases page](https://github.com/LPGhatguy/rojo/releases)
+## Installing the CLI
 
-**The Rojo binary must be run from the command line, like Terminal on MacOS or `cmd.exe` on Windows. It's recommended that you put the Rojo binary on your `PATH` to make this easier.**
+### Installing from GitHub
+If you're on Windows, there are pre-built binaries available from Rojo's [GitHub Releases page](https://github.com/LPGhatguy/rojo/releases).
+
+The Rojo CLI must be run from the command line, like Terminal.app on MacOS or `cmd.exe` on Windows. It's recommended that you put the Rojo CLI executable on your `PATH` to make this easier.
+
+### Installing from Cargo
+If you have Rust installed, the easiest way to get Rojo is with Cargo!
+
+To install the latest 0.5.0 alpha, use:
+
+```sh
+cargo install rojo --version 0.5.0-alpha.3
+```
 
 ## Installing the Plugin
-To install the plugin, either:
 
-* Install the plugin from the [Roblox plugin page](https://www.roblox.com/library/1211549683/Rojo).
-  * This gives you less control over what version you install -- you will always have the latest version.
-* Or, download the latest release from [the GitHub releases section](https://github.com/LPGhatguy/rojo/releases) and install it into your Roblox plugins folder
-  * You can open this folder by clicking the "Plugins Folder" button from the Plugins toolbar in Roblox Studio
+### Installing from GitHub
+The Rojo Roblox Studio plugin is available available from Rojo's [GitHub Releases page](https://github.com/LPGhatguy/rojo/releases).
+
+Download the attached `rbxm` file and put it into your Roblox Studio plugins folder. You can find that folder by pressing **Plugins Folder** from your Plugins toolbar in Roblox Studio:
+
+!['Plugins Folder' button in Roblox Studio](images/plugins-folder-in-studio.png)
+{: align="center" }
+
+### Installing from Roblox.com
+Visit [Rojo's Roblox.com Plugin page](https://www.roblox.com/library/1997686364/Rojo-0-5-0-alpha-3) in Roblox Studio and press **Install**.
 
 ## Visual Studio Code Extension
 If you use Visual Studio Code on Windows, you can install [Evaera's unofficial Rojo extension](https://marketplace.visualstudio.com/items?itemName=evaera.vscode-rojo), which will install both halves of Rojo for you. It even has a nifty UI to add partitions and start/stop the Rojo server!
