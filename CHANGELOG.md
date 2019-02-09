@@ -1,6 +1,8 @@
 # Rojo Changelog
 
 ## [Unreleased]
+
+## [0.5.0 Alpha 4](https://github.com/LPGhatguy/rojo/releases/tag/v0.5.0-alpha.4) (February 8, 2019)
 * Added support for nested partitions ([#102](https://github.com/LPGhatguy/rojo/issues/102))
 * Added support for 'transmuting' partitions ([#112](https://github.com/LPGhatguy/rojo/issues/112))
 * Added support for aliasing filesystem paths ([#105](https://github.com/LPGhatguy/rojo/issues/105))
