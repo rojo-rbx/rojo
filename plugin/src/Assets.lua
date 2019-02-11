@@ -1,9 +1,7 @@
-local sheetAsset = "rbxassetid://2738712459"
-
 local Assets = {
 	Sprites = {
 		WhiteCross = {
-			asset = sheetAsset,
+			asset = "rbxassetid://2738712459",
 			offset = Vector2.new(190, 318),
 			size = Vector2.new(18, 18),
 		},

@@ -8,6 +8,7 @@ local Config = require(Plugin.Config)
 local Version = require(Plugin.Version)
 local Logging = require(Plugin.Logging)
 local DevSettings = require(Plugin.DevSettings)
+local preloadAssets = require(Plugin.preloadAssets)
 
 local ConnectPanel = require(Plugin.Components.ConnectPanel)
 local ConnectionActivePanel = require(Plugin.Components.ConnectionActivePanel)
@@ -177,6 +178,8 @@ function App:didMount()
 			})
 		end
 	end)
+
+	preloadAssets()
 end
 
 function App:didUpdate()
