@@ -1,6 +1,8 @@
 # Rojo Changelog
 
 ## [Unreleased]
+* Added support for non-primitive types in the Rojo plugin.
+    * Types like `Color3` and `CFrame` can now be updated live!
 
 ## [0.5.0 Alpha 4](https://github.com/LPGhatguy/rojo/releases/tag/v0.5.0-alpha.4) (February 8, 2019)
 * Added support for nested partitions ([#102](https://github.com/LPGhatguy/rojo/issues/102))
