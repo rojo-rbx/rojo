@@ -13,6 +13,7 @@ stds.roblox = {
 
 		-- Types
 		"Vector2", "Vector3",
+		"Vector2int16", "Vector3int16",
 		"Color3",
 		"UDim", "UDim2",
 		"Rect",

@@ -1,108 +1,14 @@
+local InstanceMap = require(script.Parent.InstanceMap)
 local Logging = require(script.Parent.Logging)
-
-local function makeInstanceMap()
-	local self = {
-		fromIds = {},
-		fromInstances = {},
-	}
-
-	function self:insert(id, instance)
-		self.fromIds[id] = instance
-		self.fromInstances[instance] = id
-	end
-
-	function self:removeId(id)
-		local instance = self.fromIds[id]
-
-		if instance ~= nil then
-			self.fromIds[id] = nil
-			self.fromInstances[instance] = nil
-		else
-			Logging.warn("Attempted to remove nonexistant ID %s", tostring(id))
-		end
-	end
-
-	function self:removeInstance(instance)
-		local id = self.fromInstances[instance]
-
-		if id ~= nil then
-			self.fromInstances[instance] = nil
-			self.fromIds[id] = nil
-		else
-			Logging.warn("Attempted to remove nonexistant instance %s", tostring(instance))
-		end
-	end
-
-	function self:destroyId(id)
-		local instance = self.fromIds[id]
-		self:removeId(id)
-
-		if instance ~= nil then
-			local descendantsToDestroy = {}
-
-			for otherInstance in pairs(self.fromInstances) do
-				if otherInstance:IsDescendantOf(instance) then
-					table.insert(descendantsToDestroy, otherInstance)
-				end
-			end
-
-			for _, otherInstance in ipairs(descendantsToDestroy) do
-				self:removeInstance(otherInstance)
-			end
-
-			instance:Destroy()
-		else
-			Logging.warn("Attempted to destroy nonexistant ID %s", tostring(id))
-		end
-	end
-
-	return self
-end
-
-local function setProperty(instance, key, value)
-	-- The 'Contents' property of LocalizationTable isn't directly exposed, but
-	-- has corresponding (deprecated) getters and setters.
-	if key == "Contents" and instance.ClassName == "LocalizationTable" then
-		instance:SetContents(value)
-		return
-	end
-
-	-- If we don't have permissions to access this value at all, we can skip it.
-	local readSuccess, existingValue = pcall(function()
-		return instance[key]
-	end)
-
-	if not readSuccess then
-		-- An error will be thrown if there was a permission issue or if the
-		-- property doesn't exist. In the latter case, we should tell the user
-		-- because it's probably their fault.
-		if existingValue:find("lacking permission") then
-			Logging.trace("Permission error reading property %s on class %s", tostring(key), instance.ClassName)
-			return
-		else
-			error(("Invalid property %s on class %s: %s"):format(tostring(key), instance.ClassName, existingValue), 2)
-		end
-	end
-
-	local writeSuccess, err = pcall(function()
-		if existingValue ~= value then
-			instance[key] = value
-		end
-	end)
-
-	if not writeSuccess then
-		error(("Cannot set property %s on class %s: %s"):format(tostring(key), instance.ClassName, err), 2)
-	end
-
-	return true
-end
+local setProperty = require(script.Parent.setProperty)
+local rojoValueToRobloxValue = require(script.Parent.rojoValueToRobloxValue)
 
 local Reconciler = {}
 Reconciler.__index = Reconciler
 
 function Reconciler.new()
 	local self = {
-		instanceMap = makeInstanceMap(),
+		instanceMap = InstanceMap.new(),
 	}
 
 	return setmetatable(self, Reconciler)
@@ -140,7 +46,7 @@ function Reconciler:reconcile(virtualInstancesById, id, instance)
 	setProperty(instance, "Name", virtualInstance.Name)
 
 	for key, value in pairs(virtualInstance.Properties) do
-		setProperty(instance, key, value.Value)
+		setProperty(instance, key, rojoValueToRobloxValue(value))
 	end
 
 	local existingChildren = instance:GetChildren()
@@ -195,9 +101,6 @@ function Reconciler:reconcile(virtualInstancesById, id, instance)
 		-- Some instances, like services, don't like having their Parent
 		-- property poked, even if we're setting it to the same value.
 		setProperty(instance, "Parent", parent)
-		if instance.Parent ~= parent then
-			instance.Parent = parent
-		end
 	end
 
 	return instance
@@ -217,8 +120,7 @@ function Reconciler:__reify(virtualInstancesById, id, parent)
 	local instance = Instance.new(virtualInstance.ClassName)
 
 	for key, value in pairs(virtualInstance.Properties) do
-		-- TODO: Branch on value.Type
-		setProperty(instance, key, value.Value)
+		setProperty(instance, key, rojoValueToRobloxValue(value))
 	end
 
 	instance.Name = virtualInstance.Name
