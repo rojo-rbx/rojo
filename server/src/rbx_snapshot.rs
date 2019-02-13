@@ -9,6 +9,7 @@ use std::{
     str,
 };
 
+use rlua::Lua;
 use failure::Fail;
 use log::info;
 use maplit::hashmap;
@@ -37,6 +38,34 @@ use crate::{
 const INIT_MODULE_NAME: &str = "init.lua";
 const INIT_SERVER_NAME: &str = "init.server.lua";
 const INIT_CLIENT_NAME: &str = "init.client.lua";
+
+pub struct SnapshotContext {
+    pub plugin_context: Option<SnapshotPluginContext>,
+}
+
+/// Context that's only relevant to generating snapshots if there are plugins
+/// associated with the project.
+///
+/// It's possible that this needs some sort of extra nesting/filtering to
+/// support nested projects, since their plugins should only apply to
+/// themselves.
+pub struct SnapshotPluginContext {
+    pub lua: Lua,
+    pub plugins: Vec<SnapshotPluginEntry>,
+}
+
+pub struct SnapshotPluginEntry {
+    /// Simple file name suffix filter to avoid running plugins on every file
+    /// change.
+    pub file_name_filter: String,
+
+    /// A key into the Lua registry created by [`create_registry_value`] that
+    /// refers to a function that can be called to transform a file/instance
+    /// pair according to how the plugin needs to operate.
+    ///
+    /// [`create_registry_value`]: https://docs.rs/rlua/0.16.2/rlua/struct.Context.html#method.create_registry_value
+    pub callback: rlua::RegistryKey,
+}
 
 pub type SnapshotResult<'a> = Result<Option<RbxSnapshotInstance<'a>>, SnapshotError>;
 
