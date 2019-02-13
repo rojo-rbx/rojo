@@ -8,7 +8,7 @@ use pretty_assertions::assert_eq;
 use librojo::{
     imfs::Imfs,
     project::{Project, ProjectNode},
-    rbx_snapshot::snapshot_project_tree,
+    rbx_snapshot::{SnapshotContext, snapshot_project_tree},
     snapshot_reconciler::{RbxSnapshotInstance},
 };
 
@@ -47,7 +47,11 @@ fn run_snapshot_test(path: &Path) {
     imfs.add_roots_from_project(&project)
         .expect("Could not add IMFS roots to snapshot project");
 
-    let mut snapshot = snapshot_project_tree(&imfs, &project)
+    let context = SnapshotContext {
+        plugin_context: None,
+    };
+
+    let mut snapshot = snapshot_project_tree(&context, &imfs, &project)
         .expect("Could not generate snapshot for snapshot test");
 
     if let Some(snapshot) = snapshot.as_mut() {

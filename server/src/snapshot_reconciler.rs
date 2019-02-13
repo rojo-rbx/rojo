@@ -64,7 +64,7 @@ impl InstanceChanges {
 
 /// A lightweight, hierarchical representation of an instance that can be
 /// applied to the tree.
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RbxSnapshotInstance<'a> {
     pub name: Cow<'a, str>,
     pub class_name: Cow<'a, str>,
@@ -72,6 +72,40 @@ pub struct RbxSnapshotInstance<'a> {
     pub children: Vec<RbxSnapshotInstance<'a>>,
     pub metadata: MetadataPerInstance,
 }
+
+impl<'a> RbxSnapshotInstance<'a> {
+    pub fn get_owned(&'a self) -> RbxSnapshotInstance<'static> {
+        let children: Vec<RbxSnapshotInstance<'static>> = self.children.iter()
+            .map(RbxSnapshotInstance::get_owned)
+            .collect();
+
+        RbxSnapshotInstance {
+            name: Cow::Owned(self.name.clone().into_owned()),
+            class_name: Cow::Owned(self.class_name.clone().into_owned()),
+            properties: self.properties.clone(),
+            children,
+            metadata: self.metadata.clone(),
+        }
+    }
+}
+
+// impl<'a> ToOwned for RbxSnapshotInstance<'a> {
+//     type Owned = RbxSnapshotInstance<'static>;
+
+//     fn to_owned(&'a self) -> Self::Owned {
+//         let children = self.children.iter()
+//             .map(RbxSnapshotInstance::to_owned)
+//             .collect();
+
+//         RbxSnapshotInstance {
+//             name: Cow::Owned(self.name.into_owned()),
+//             class_name: Cow::Owned(self.class_name.into_owned()),
+//             properties: self.properties.clone(),
+//             children,
+//             metadata: self.metadata.clone,
+//         }
+//     }
+// }
 
 impl<'a> PartialOrd for RbxSnapshotInstance<'a> {
     fn partial_cmp(&self, other: &RbxSnapshotInstance) -> Option<Ordering> {
