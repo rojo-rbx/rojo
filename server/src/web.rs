@@ -15,7 +15,7 @@ use rouille::{
     Request,
     Response,
 };
-use rbx_tree::{RbxId, RbxInstance};
+use rbx_dom_weak::{RbxId, RbxInstance};
 
 use crate::{
     live_session::LiveSession,
@@ -43,7 +43,7 @@ impl PublicInstanceMetadata {
 }
 
 /// Used to attach metadata specific to Rojo to instances, which come from the
-/// rbx_tree crate.
+/// rbx_dom_weak crate.
 ///
 /// Both fields are wrapped in Cow in order to make owned-vs-borrowed simpler
 /// for tests.

@@ -12,7 +12,7 @@ use std::{
 use failure::Fail;
 use log::info;
 use maplit::hashmap;
-use rbx_tree::{RbxTree, RbxValue, RbxInstanceProperties};
+use rbx_dom_weak::{RbxTree, RbxValue, RbxInstanceProperties};
 use serde_derive::{Serialize, Deserialize};
 
 use crate::{
