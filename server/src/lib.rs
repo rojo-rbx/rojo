@@ -1,3 +1,5 @@
+#![recursion_limit="128"]
+
 // Macros
 #[macro_use]
 pub mod impl_from;

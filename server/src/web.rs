@@ -16,6 +16,7 @@ use rouille::{
     Response,
 };
 use rbx_dom_weak::{RbxId, RbxInstance};
+use ritz::{html};
 
 use crate::{
     live_session::LiveSession,
@@ -25,7 +26,7 @@ use crate::{
     rbx_session::{MetadataPerInstance},
 };
 
-static HOME_CONTENT: &str = include_str!("../assets/index.html");
+static HOME_CSS: &str = include_str!("../assets/index.css");
 
 /// Contains the instance metadata relevant to Rojo clients.
 #[derive(Debug, Serialize, Deserialize)]
@@ -134,7 +135,32 @@ impl Server {
     }
 
     fn handle_home(&self) -> Response {
-        Response::html(HOME_CONTENT)
+        let page = html! {
+            <html>
+                <head>
+                    <title>"Rojo"</title>
+                    <style>
+                        { ritz::UnescapedText::new(HOME_CSS) }
+                    </style>
+                </head>
+
+                <body>
+                    <div class="main">
+                        <h1 class="title">
+                            "Rojo Live Sync is up and running!"
+                        </h1>
+                        <h2 class="subtitle">
+                            "Version " { self.server_version }
+                        </h2>
+                        <a class="docs" href="https://lpghatguy.github.io/rojo">
+                            "Rojo Documentation"
+                        </a>
+                    </div>
+                </body>
+            </html>
+        };
+
+        Response::html(format!("<!DOCTYPE html>{}", page))
     }
 
     /// Get a summary of information about the server
