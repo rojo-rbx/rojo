@@ -1,5 +1,5 @@
-//! Defines Rojo's web interface that all clients use to communicate with a
-//! running live-sync session.
+//! Defines Rojo's HTTP API, all under /api. These endpoints generally return
+//! JSON.
 
 use std::{
     borrow::Cow,
@@ -8,7 +8,6 @@ use std::{
 };
 
 use serde_derive::{Serialize, Deserialize};
-use log::trace;
 use rouille::{
     self,
     router,
@@ -16,17 +15,13 @@ use rouille::{
     Response,
 };
 use rbx_dom_weak::{RbxId, RbxInstance};
-use ritz::{html};
 
 use crate::{
     live_session::LiveSession,
     session_id::SessionId,
     snapshot_reconciler::InstanceChanges,
-    visualize::{VisualizeRbxSession, VisualizeImfs, graphviz_to_svg},
     rbx_session::{MetadataPerInstance},
 };
-
-static HOME_CSS: &str = include_str!("../assets/index.css");
 
 /// Contains the instance metadata relevant to Rojo clients.
 #[derive(Debug, Serialize, Deserialize)]
@@ -83,14 +78,14 @@ pub struct SubscribeResponse<'a> {
     pub messages: Cow<'a, [InstanceChanges]>,
 }
 
-pub struct Server {
+pub struct ApiServer {
     live_session: Arc<LiveSession>,
     server_version: &'static str,
 }
 
-impl Server {
-    pub fn new(live_session: Arc<LiveSession>) -> Server {
-        Server {
+impl ApiServer {
+    pub fn new(live_session: Arc<LiveSession>) -> ApiServer {
+        ApiServer {
             live_session,
             server_version: env!("CARGO_PKG_VERSION"),
         }
@@ -98,12 +93,7 @@ impl Server {
 
     #[allow(unreachable_code)]
     pub fn handle_request(&self, request: &Request) -> Response {
-        trace!("Request {} {}", request.method(), request.url());
-
         router!(request,
-            (GET) (/) => {
-                self.handle_home()
-            },
             (GET) (/api/rojo) => {
                 self.handle_api_rojo()
             },
@@ -118,49 +108,8 @@ impl Server {
 
                 self.handle_api_read(requested_ids)
             },
-            (GET) (/visualize/rbx) => {
-                self.handle_visualize_rbx()
-            },
-            (GET) (/visualize/imfs) => {
-                self.handle_visualize_imfs()
-            },
             _ => Response::empty_404()
         )
-    }
-
-    pub fn listen(self, port: u16) {
-        let address = format!("0.0.0.0:{}", port);
-
-        rouille::start_server(address, move |request| self.handle_request(request));
-    }
-
-    fn handle_home(&self) -> Response {
-        let page = html! {
-            <html>
-                <head>
-                    <title>"Rojo"</title>
-                    <style>
-                        { ritz::UnescapedText::new(HOME_CSS) }
-                    </style>
-                </head>
-
-                <body>
-                    <div class="main">
-                        <h1 class="title">
-                            "Rojo Live Sync is up and running!"
-                        </h1>
-                        <h2 class="subtitle">
-                            "Version " { self.server_version }
-                        </h2>
-                        <a class="docs" href="https://lpghatguy.github.io/rojo">
-                            "Rojo Documentation"
-                        </a>
-                    </div>
-                </body>
-            </html>
-        };
-
-        Response::html(format!("<!DOCTYPE html>{}", page))
     }
 
     /// Get a summary of information about the server
@@ -259,25 +208,5 @@ impl Server {
             message_cursor,
             instances,
         })
-    }
-
-    fn handle_visualize_rbx(&self) -> Response {
-        let rbx_session = self.live_session.rbx_session.lock().unwrap();
-        let dot_source = format!("{}", VisualizeRbxSession(&rbx_session));
-
-        match graphviz_to_svg(&dot_source) {
-            Some(svg) => Response::svg(svg),
-            None => Response::text(dot_source),
-        }
-    }
-
-    fn handle_visualize_imfs(&self) -> Response {
-        let imfs = self.live_session.imfs.lock().unwrap();
-        let dot_source = format!("{}", VisualizeImfs(&imfs));
-
-        match graphviz_to_svg(&dot_source) {
-            Some(svg) => Response::svg(svg),
-            None => Response::text(dot_source),
-        }
     }
 }

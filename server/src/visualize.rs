@@ -11,7 +11,7 @@ use rbx_dom_weak::RbxId;
 use crate::{
     imfs::{Imfs, ImfsItem},
     rbx_session::RbxSession,
-    web::PublicInstanceMetadata,
+    web::api::PublicInstanceMetadata,
 };
 
 static GRAPHVIZ_HEADER: &str = r#"
