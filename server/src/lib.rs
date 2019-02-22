@@ -19,4 +19,3 @@ pub mod session_id;
 pub mod snapshot_reconciler;
 pub mod visualize;
 pub mod web;
-pub mod web_util;

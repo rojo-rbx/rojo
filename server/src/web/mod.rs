@@ -22,20 +22,20 @@ use crate::{
 };
 
 use self::{
-    api::ApiServer,
-    interface::InterfaceServer,
+    api::ApiService,
+    interface::InterfaceService,
 };
 
 pub struct RootService {
-    api: api::ApiServer,
-    interface: interface::InterfaceServer,
+    api: api::ApiService,
+    interface: interface::InterfaceService,
 }
 
 impl Service for RootService {
     type ReqBody = Body;
     type ResBody = Body;
     type Error = hyper::Error;
-    type Future = Box<Future<Item = Response<Self::ReqBody>, Error = Self::Error> + Send>;
+    type Future = Box<dyn Future<Item = Response<Self::ReqBody>, Error = Self::Error> + Send>;
 
     fn call(&mut self, request: Request<Self::ReqBody>) -> Self::Future {
         if request.uri().path().starts_with("/api") {
@@ -49,8 +49,8 @@ impl Service for RootService {
 impl RootService {
     pub fn new(live_session: Arc<LiveSession>) -> RootService {
         RootService {
-            api: ApiServer::new(Arc::clone(&live_session)),
-            interface: InterfaceServer::new(Arc::clone(&live_session)),
+            api: ApiService::new(Arc::clone(&live_session)),
+            interface: InterfaceService::new(Arc::clone(&live_session)),
         }
     }
 }
@@ -71,7 +71,7 @@ impl LiveServer {
 
         let server = Server::bind(&address)
             .serve(move || {
-                let service: FutureResult<RootService, hyper::Error> =
+                let service: FutureResult<_, hyper::Error> =
                     future::ok(RootService::new(Arc::clone(&self.live_session)));
                 service
             })

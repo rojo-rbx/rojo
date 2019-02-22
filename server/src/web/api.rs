@@ -10,15 +10,14 @@ use std::{
 use futures::{future, Future};
 use hyper::{
     service::Service,
+    StatusCode,
+    header,
+    Method,
     Body,
-};
-use serde_derive::{Serialize, Deserialize};
-use rouille::{
-    self,
-    router,
     Request,
     Response,
 };
+use serde_derive::{Serialize, Deserialize};
 use rbx_dom_weak::{RbxId, RbxInstance};
 
 use crate::{
@@ -83,57 +82,66 @@ pub struct SubscribeResponse<'a> {
     pub messages: Cow<'a, [InstanceChanges]>,
 }
 
-pub struct ApiServer {
+fn response_json<T: serde::Serialize>(value: T) -> Response<Body> {
+    let serialized = match serde_json::to_string(&value) {
+        Ok(v) => v,
+        Err(err) => {
+            return Response::builder()
+                .status(StatusCode::BAD_REQUEST)
+                .header(header::CONTENT_TYPE, "text/plain")
+                .body(Body::from(err.to_string()))
+                .unwrap();
+        },
+    };
+
+    Response::builder()
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(serialized))
+        .unwrap()
+}
+
+pub struct ApiService {
     live_session: Arc<LiveSession>,
     server_version: &'static str,
 }
 
-impl Service for ApiServer {
+impl Service for ApiService {
     type ReqBody = Body;
     type ResBody = Body;
     type Error = hyper::Error;
-    type Future = Box<Future<Item = hyper::Response<Self::ReqBody>, Error = Self::Error> + Send>;
+    type Future = Box<dyn Future<Item = hyper::Response<Self::ReqBody>, Error = Self::Error> + Send>;
 
     fn call(&mut self, request: hyper::Request<Self::ReqBody>) -> Self::Future {
-        Box::new(future::ok(hyper::Response::new(Body::from("Hello, from API!"))))
+        let response = match (request.method(), request.uri().path()) {
+            (&Method::GET, "/api/rojo") => self.handle_api_rojo(),
+            (&Method::GET, path) if path.starts_with("/api/subscribe/") => self.handle_api_subscribe(request),
+            (&Method::GET, path) if path.starts_with("/api/read/") => self.handle_api_read(request),
+            _ => {
+                Response::builder()
+                    .status(StatusCode::NOT_FOUND)
+                    .body(Body::empty())
+                    .unwrap()
+            },
+        };
+
+        Box::new(future::ok(response))
     }
 }
 
-impl ApiServer {
-    pub fn new(live_session: Arc<LiveSession>) -> ApiServer {
-        ApiServer {
+impl ApiService {
+    pub fn new(live_session: Arc<LiveSession>) -> ApiService {
+        ApiService {
             live_session,
             server_version: env!("CARGO_PKG_VERSION"),
         }
     }
 
-    #[allow(unreachable_code)]
-    pub fn handle_request(&self, request: &Request) -> Response {
-        router!(request,
-            (GET) (/api/rojo) => {
-                self.handle_api_rojo()
-            },
-            (GET) (/api/subscribe/{ cursor: u32 }) => {
-                self.handle_api_subscribe(cursor)
-            },
-            (GET) (/api/read/{ id_list: String }) => {
-                let requested_ids: Option<Vec<RbxId>> = id_list
-                    .split(',')
-                    .map(RbxId::parse_str)
-                    .collect();
-
-                self.handle_api_read(requested_ids)
-            },
-            _ => Response::empty_404()
-        )
-    }
-
     /// Get a summary of information about the server
-    fn handle_api_rojo(&self) -> Response {
+    fn handle_api_rojo(&self) -> Response<Body> {
         let rbx_session = self.live_session.rbx_session.lock().unwrap();
         let tree = rbx_session.get_tree();
 
-        Response::json(&ServerInfoResponse {
+        response_json(&ServerInfoResponse {
             server_version: self.server_version,
             protocol_version: 2,
             session_id: self.live_session.session_id,
@@ -144,7 +152,19 @@ impl ApiServer {
 
     /// Retrieve any messages past the given cursor index, and if
     /// there weren't any, subscribe to receive any new messages.
-    fn handle_api_subscribe(&self, cursor: u32) -> Response {
+    fn handle_api_subscribe(&self, request: Request<Body>) -> Response<Body> {
+        let argument = &request.uri().path()["/api/subscribe".len()..];
+        let cursor: u32 = match argument.parse() {
+            Ok(v) => v,
+            Err(err) => {
+                return Response::builder()
+                    .status(StatusCode::BAD_REQUEST)
+                    .header(header::CONTENT_TYPE, "text/plain")
+                    .body(Body::from(err.to_string()))
+                    .unwrap();
+            },
+        };
+
         let message_queue = Arc::clone(&self.live_session.message_queue);
 
         // Did the client miss any messages since the last subscribe?
@@ -152,7 +172,7 @@ impl ApiServer {
             let (new_cursor, new_messages) = message_queue.get_messages_since(cursor);
 
             if !new_messages.is_empty() {
-                return Response::json(&SubscribeResponse {
+                return response_json(&SubscribeResponse {
                     session_id: self.live_session.session_id,
                     messages: Cow::Borrowed(&new_messages),
                     message_cursor: new_cursor,
@@ -160,13 +180,16 @@ impl ApiServer {
             }
         }
 
+        // TOOD: Switch to futures mpsc instead to not block this task
         let (tx, rx) = mpsc::channel();
-
         let sender_id = message_queue.subscribe(tx);
 
         match rx.recv() {
             Ok(_) => (),
-            Err(_) => return Response::text("error!").with_status_code(500),
+            Err(_) => return Response::builder()
+                .status(500)
+                .body(Body::from("error!"))
+                .unwrap(),
         }
 
         message_queue.unsubscribe(sender_id);
@@ -174,7 +197,7 @@ impl ApiServer {
         {
             let (new_cursor, new_messages) = message_queue.get_messages_since(cursor);
 
-            return Response::json(&SubscribeResponse {
+            return response_json(&SubscribeResponse {
                 session_id: self.live_session.session_id,
                 messages: Cow::Owned(new_messages),
                 message_cursor: new_cursor,
@@ -182,12 +205,24 @@ impl ApiServer {
         }
     }
 
-    fn handle_api_read(&self, requested_ids: Option<Vec<RbxId>>) -> Response {
+    fn handle_api_read(&self, request: Request<Body>) -> Response<Body> {
+        let argument = &request.uri().path()["/api/subscribe".len()..];
+        let requested_ids: Option<Vec<RbxId>> = argument
+            .split(',')
+            .map(RbxId::parse_str)
+            .collect();
+
         let message_queue = Arc::clone(&self.live_session.message_queue);
 
         let requested_ids = match requested_ids {
             Some(id) => id,
-            None => return rouille::Response::text("Malformed ID list").with_status_code(400),
+            None => {
+                return Response::builder()
+                    .status(StatusCode::BAD_REQUEST)
+                    .header(header::CONTENT_TYPE, "text/plain")
+                    .body(Body::from("Malformed ID list"))
+                    .unwrap();
+            },
         };
 
         let rbx_session = self.live_session.rbx_session.lock().unwrap();
@@ -219,7 +254,7 @@ impl ApiServer {
             }
         }
 
-        Response::json(&ReadResponse {
+        response_json(&ReadResponse {
             session_id: self.live_session.session_id,
             message_cursor,
             instances,
