@@ -5,6 +5,7 @@ mod interface;
 
 use std::sync::Arc;
 
+use log::trace;
 use futures::{
     future::{self, FutureResult},
     Future,
@@ -38,6 +39,8 @@ impl Service for RootService {
     type Future = Box<dyn Future<Item = Response<Self::ReqBody>, Error = Self::Error> + Send>;
 
     fn call(&mut self, request: Request<Self::ReqBody>) -> Self::Future {
+        trace!("{} {}", request.method(), request.uri().path());
+
         if request.uri().path().starts_with("/api") {
             self.api.call(request)
         } else {

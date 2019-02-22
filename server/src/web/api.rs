@@ -10,8 +10,8 @@ use std::{
 use futures::{future, Future};
 use hyper::{
     service::Service,
-    StatusCode,
     header,
+    StatusCode,
     Method,
     Body,
     Request,
@@ -153,7 +153,7 @@ impl ApiService {
     /// Retrieve any messages past the given cursor index, and if
     /// there weren't any, subscribe to receive any new messages.
     fn handle_api_subscribe(&self, request: Request<Body>) -> Response<Body> {
-        let argument = &request.uri().path()["/api/subscribe".len()..];
+        let argument = &request.uri().path()["/api/subscribe/".len()..];
         let cursor: u32 = match argument.parse() {
             Ok(v) => v,
             Err(err) => {
@@ -206,7 +206,7 @@ impl ApiService {
     }
 
     fn handle_api_read(&self, request: Request<Body>) -> Response<Body> {
-        let argument = &request.uri().path()["/api/subscribe".len()..];
+        let argument = &request.uri().path()["/api/read/".len()..];
         let requested_ids: Option<Vec<RbxId>> = argument
             .split(',')
             .map(RbxId::parse_str)
