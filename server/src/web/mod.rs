@@ -14,6 +14,7 @@ use hyper::{
     Body,
     Request,
     Response,
+    Server,
 };
 
 use crate::{
@@ -25,38 +26,53 @@ use self::{
     interface::InterfaceServer,
 };
 
-pub struct Server {
+pub struct RootService {
     api: api::ApiServer,
     interface: interface::InterfaceServer,
 }
 
-struct Blah;
-
-impl Service for Blah {
+impl Service for RootService {
     type ReqBody = Body;
     type ResBody = Body;
     type Error = hyper::Error;
     type Future = Box<Future<Item = Response<Self::ReqBody>, Error = Self::Error> + Send>;
 
     fn call(&mut self, request: Request<Self::ReqBody>) -> Self::Future {
-        Box::new(future::ok(Response::new(Body::from("Hello, world!"))))
+        if request.uri().path().starts_with("/api") {
+            self.api.call(request)
+        } else {
+            self.interface.call(request)
+        }
     }
 }
 
-impl Server {
-    pub fn new(live_session: Arc<LiveSession>) -> Server {
-        Server {
+impl RootService {
+    pub fn new(live_session: Arc<LiveSession>) -> RootService {
+        RootService {
             api: ApiServer::new(Arc::clone(&live_session)),
             interface: InterfaceServer::new(Arc::clone(&live_session)),
         }
     }
+}
 
-    pub fn listen(self, port: u16) {
+pub struct LiveServer {
+    live_session: Arc<LiveSession>,
+}
+
+impl LiveServer {
+    pub fn new(live_session: Arc<LiveSession>) -> LiveServer {
+        LiveServer {
+            live_session,
+        }
+    }
+
+    pub fn start(self, port: u16) {
         let address = ([127, 0, 0, 1], port).into();
 
-        let server = hyper::Server::bind(&address)
+        let server = Server::bind(&address)
             .serve(move || {
-                let service: FutureResult<Blah, hyper::Error> = future::ok(Blah);
+                let service: FutureResult<RootService, hyper::Error> =
+                    future::ok(RootService::new(Arc::clone(&self.live_session)));
                 service
             })
             .map_err(|e| eprintln!("Server error: {}", e));

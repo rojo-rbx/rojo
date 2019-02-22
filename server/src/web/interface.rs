@@ -2,6 +2,11 @@
 
 use std::sync::Arc;
 
+use futures::{future, Future};
+use hyper::{
+    service::Service,
+    Body,
+};
 use rouille::{
     self,
     router,
@@ -20,6 +25,17 @@ static HOME_CSS: &str = include_str!("../../assets/index.css");
 pub struct InterfaceServer {
     live_session: Arc<LiveSession>,
     server_version: &'static str,
+}
+
+impl Service for InterfaceServer {
+    type ReqBody = Body;
+    type ResBody = Body;
+    type Error = hyper::Error;
+    type Future = Box<Future<Item = hyper::Response<Self::ReqBody>, Error = Self::Error> + Send>;
+
+    fn call(&mut self, request: hyper::Request<Self::ReqBody>) -> Self::Future {
+        Box::new(future::ok(hyper::Response::new(Body::from("Hello, from interface!"))))
+    }
 }
 
 impl InterfaceServer {

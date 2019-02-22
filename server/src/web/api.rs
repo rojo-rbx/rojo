@@ -7,6 +7,11 @@ use std::{
     sync::{mpsc, Arc},
 };
 
+use futures::{future, Future};
+use hyper::{
+    service::Service,
+    Body,
+};
 use serde_derive::{Serialize, Deserialize};
 use rouille::{
     self,
@@ -81,6 +86,17 @@ pub struct SubscribeResponse<'a> {
 pub struct ApiServer {
     live_session: Arc<LiveSession>,
     server_version: &'static str,
+}
+
+impl Service for ApiServer {
+    type ReqBody = Body;
+    type ResBody = Body;
+    type Error = hyper::Error;
+    type Future = Box<Future<Item = hyper::Response<Self::ReqBody>, Error = Self::Error> + Send>;
+
+    fn call(&mut self, request: hyper::Request<Self::ReqBody>) -> Self::Future {
+        Box::new(future::ok(hyper::Response::new(Body::from("Hello, from API!"))))
+    }
 }
 
 impl ApiServer {
