@@ -5,8 +5,16 @@ mod interface;
 
 use std::sync::Arc;
 
-use log::trace;
-use rouille::{find_route, Request, Response};
+use futures::{
+    future::{self, FutureResult},
+    Future,
+};
+use hyper::{
+    service::Service,
+    Body,
+    Request,
+    Response,
+};
 
 use crate::{
     live_session::LiveSession,
@@ -22,6 +30,19 @@ pub struct Server {
     interface: interface::InterfaceServer,
 }
 
+struct Blah;
+
+impl Service for Blah {
+    type ReqBody = Body;
+    type ResBody = Body;
+    type Error = hyper::Error;
+    type Future = Box<Future<Item = Response<Self::ReqBody>, Error = Self::Error> + Send>;
+
+    fn call(&mut self, request: Request<Self::ReqBody>) -> Self::Future {
+        Box::new(future::ok(Response::new(Body::from("Hello, world!"))))
+    }
+}
+
 impl Server {
     pub fn new(live_session: Arc<LiveSession>) -> Server {
         Server {
@@ -30,18 +51,16 @@ impl Server {
         }
     }
 
-    pub fn handle_request(&self, request: &Request) -> Response {
-        trace!("Request {} {}", request.method(), request.url());
-
-        find_route!(
-            self.api.handle_request(request),
-            self.interface.handle_request(request)
-        )
-    }
-
     pub fn listen(self, port: u16) {
-        let address = format!("0.0.0.0:{}", port);
+        let address = ([127, 0, 0, 1], port).into();
 
-        rouille::start_server(address, move |request| self.handle_request(request));
+        let server = hyper::Server::bind(&address)
+            .serve(move || {
+                let service: FutureResult<Blah, hyper::Error> = future::ok(Blah);
+                service
+            })
+            .map_err(|e| eprintln!("Server error: {}", e));
+
+        hyper::rt::run(server);
     }
 }
