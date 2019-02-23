@@ -70,31 +70,36 @@ impl RbxSession {
         let mut instances_per_path = PathMap::new();
         let mut metadata_per_instance = HashMap::new();
 
-        let lua = Lua::new();
-        let mut callback_key = None;
+        let plugin_context = if cfg!(feature = "server-plugins") {
+            let lua = Lua::new();
+            let mut callback_key = None;
 
-        lua.context(|context| {
-            let callback = context.load(r#"
-                return function(snapshot)
-                    print("got my snapshot:", snapshot)
-                    print("name:", snapshot.name, "class name:", snapshot.className)
-                end"#)
-                .set_name("a cool plugin").unwrap()
-                .call::<(), rlua::Function>(()).unwrap();
+            lua.context(|context| {
+                let callback = context.load(r#"
+                    return function(snapshot)
+                        print("got my snapshot:", snapshot)
+                        print("name:", snapshot.name, "class name:", snapshot.className)
+                    end"#)
+                    .set_name("a cool plugin").unwrap()
+                    .call::<(), rlua::Function>(()).unwrap();
 
-            callback_key = Some(context.create_registry_value(callback).unwrap());
-        });
+                callback_key = Some(context.create_registry_value(callback).unwrap());
+            });
+
+            let plugins = vec![
+                SnapshotPluginEntry {
+                    file_name_filter: String::new(),
+                    callback: callback_key.unwrap(),
+                }
+            ];
+
+            Some(SnapshotPluginContext { lua, plugins })
+        } else {
+            None
+        };
 
         let context = SnapshotContext {
-            plugin_context: Some(SnapshotPluginContext {
-                lua,
-                plugins: vec![
-                    SnapshotPluginEntry {
-                        file_name_filter: String::new(),
-                        callback: callback_key.unwrap(),
-                    },
-                ],
-            }),
+            plugin_context,
         };
 
         let tree = {

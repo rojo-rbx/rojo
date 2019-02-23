@@ -89,24 +89,6 @@ impl<'a> RbxSnapshotInstance<'a> {
     }
 }
 
-// impl<'a> ToOwned for RbxSnapshotInstance<'a> {
-//     type Owned = RbxSnapshotInstance<'static>;
-
-//     fn to_owned(&'a self) -> Self::Owned {
-//         let children = self.children.iter()
-//             .map(RbxSnapshotInstance::to_owned)
-//             .collect();
-
-//         RbxSnapshotInstance {
-//             name: Cow::Owned(self.name.into_owned()),
-//             class_name: Cow::Owned(self.class_name.into_owned()),
-//             properties: self.properties.clone(),
-//             children,
-//             metadata: self.metadata.clone,
-//         }
-//     }
-// }
-
 impl<'a> PartialOrd for RbxSnapshotInstance<'a> {
     fn partial_cmp(&self, other: &RbxSnapshotInstance) -> Option<Ordering> {
         Some(self.name.cmp(&other.name)
