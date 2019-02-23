@@ -24,6 +24,7 @@ struct SourceProject {
     name: String,
     tree: SourceProjectNode,
 
+    #[cfg_attr(not(feature = "plugins-enabled"), serde(skip_deserializing))]
     #[serde(default = "Vec::new", skip_serializing_if = "Vec::is_empty")]
     plugins: Vec<SourcePlugin>,
 
