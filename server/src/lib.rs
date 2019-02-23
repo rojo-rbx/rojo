@@ -1,3 +1,5 @@
+#![recursion_limit="128"]
+
 // Macros
 #[macro_use]
 pub mod impl_from;
@@ -17,4 +19,3 @@ pub mod session_id;
 pub mod snapshot_reconciler;
 pub mod visualize;
 pub mod web;
-pub mod web_util;

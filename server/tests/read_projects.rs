@@ -6,7 +6,7 @@ use std::{
 };
 
 use pretty_assertions::assert_eq;
-use rbx_tree::RbxValue;
+use rbx_dom_weak::RbxValue;
 
 use librojo::{
     project::{Project, ProjectNode},

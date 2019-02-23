@@ -8,7 +8,7 @@ use failure::Fail;
 
 use crate::{
     project::{Project, ProjectLoadFuzzyError},
-    web::Server,
+    web::LiveServer,
     imfs::FsError,
     live_session::LiveSession,
 };
@@ -45,7 +45,7 @@ pub fn serve(options: &ServeOptions) -> Result<(), ServeError> {
     info!("Using project {:#?}", project);
 
     let live_session = Arc::new(LiveSession::new(Arc::clone(&project))?);
-    let server = Server::new(Arc::clone(&live_session));
+    let server = LiveServer::new(live_session);
 
     let port = options.port
         .or(project.serve_port)
@@ -53,7 +53,7 @@ pub fn serve(options: &ServeOptions) -> Result<(), ServeError> {
 
     println!("Rojo server listening on port {}", port);
 
-    server.listen(port);
+    server.start(port);
 
     Ok(())
 }

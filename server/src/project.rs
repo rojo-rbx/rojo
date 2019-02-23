@@ -9,7 +9,7 @@ use std::{
 use log::warn;
 use failure::Fail;
 use maplit::hashmap;
-use rbx_tree::RbxValue;
+use rbx_dom_weak::RbxValue;
 use serde_derive::{Serialize, Deserialize};
 
 pub static PROJECT_FILENAME: &'static str = "default.project.json";

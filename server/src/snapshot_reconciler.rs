@@ -10,7 +10,7 @@ use std::{
     str,
 };
 
-use rbx_tree::{RbxTree, RbxId, RbxInstanceProperties, RbxValue};
+use rbx_dom_weak::{RbxTree, RbxId, RbxInstanceProperties, RbxValue};
 use serde_derive::{Serialize, Deserialize};
 
 use crate::{

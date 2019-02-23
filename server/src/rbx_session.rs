@@ -9,7 +9,7 @@ use std::{
 use rlua::Lua;
 use serde_derive::{Serialize, Deserialize};
 use log::{info, trace};
-use rbx_tree::{RbxTree, RbxId};
+use rbx_dom_weak::{RbxTree, RbxId};
 
 use crate::{
     project::{Project, ProjectNode},
