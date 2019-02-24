@@ -7,6 +7,10 @@ license = "MIT"
 repository = "https://github.com/LPGhatguy/rojo"
 edition = "2018"
 
+[features]
+default = []
+server-plugins = []
+
 [lib]
 name = "librojo"
 path = "src/lib.rs"
@@ -31,6 +35,7 @@ rbx_dom_weak = "0.3.0"
 rbx_xml = "0.3.0"
 regex = "1.0"
 reqwest = "0.9.5"
+rlua = "0.16"
 ritz = "0.1.0"
 serde = "1.0"
 serde_derive = "1.0"

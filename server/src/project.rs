@@ -24,6 +24,10 @@ struct SourceProject {
     name: String,
     tree: SourceProjectNode,
 
+    #[cfg_attr(not(feature = "plugins-enabled"), serde(skip_deserializing))]
+    #[serde(default = "Vec::new", skip_serializing_if = "Vec::is_empty")]
+    plugins: Vec<SourcePlugin>,
+
     #[serde(skip_serializing_if = "Option::is_none")]
     serve_port: Option<u16>,
 
@@ -33,12 +37,17 @@ struct SourceProject {
 
 impl SourceProject {
     /// Consumes the SourceProject and yields a Project, ready for prime-time.
-    pub fn into_project(self, project_file_location: &Path) -> Project {
+    pub fn into_project(mut self, project_file_location: &Path) -> Project {
         let tree = self.tree.into_project_node(project_file_location);
+        let plugins = self.plugins
+            .drain(..)
+            .map(|source_plugin| source_plugin.into_plugin(project_file_location))
+            .collect();
 
         Project {
             name: self.name,
             tree,
+            plugins,
             serve_port: self.serve_port,
             serve_place_ids: self.serve_place_ids,
             file_location: PathBuf::from(project_file_location),
@@ -91,6 +100,26 @@ impl SourceProjectNode {
             ignore_unknown_instances: self.ignore_unknown_instances,
             path,
             children,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct SourcePlugin {
+    path: String,
+}
+
+impl SourcePlugin {
+    pub fn into_plugin(self, project_file_location: &Path) -> Plugin {
+        let path = if Path::new(&self.path).is_absolute() {
+            PathBuf::from(self.path)
+        } else {
+            let project_folder_location = project_file_location.parent().unwrap();
+            project_folder_location.join(self.path)
+        };
+
+        Plugin {
+            path,
         }
     }
 }
@@ -199,9 +228,29 @@ impl ProjectNode {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Plugin {
+    pub path: PathBuf,
+}
+
+impl Plugin {
+    fn to_source_plugin(&self, project_file_location: &Path) -> SourcePlugin {
+        let project_folder_location = project_file_location.parent().unwrap();
+        let path = match self.path.strip_prefix(project_folder_location) {
+            Ok(stripped) => stripped.to_str().unwrap().replace("\\", "/"),
+            Err(_) => format!("{}", self.path.display()),
+        };
+
+        SourcePlugin {
+            path,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Project {
     pub name: String,
     pub tree: ProjectNode,
+    pub plugins: Vec<Plugin>,
     pub serve_port: Option<u16>,
     pub serve_place_ids: Option<HashSet<u64>>,
     pub file_location: PathBuf,
@@ -246,6 +295,7 @@ impl Project {
         let project = Project {
             name: project_name.to_string(),
             tree,
+            plugins: Vec::new(),
             serve_port: None,
             serve_place_ids: None,
             file_location: project_path.clone(),
@@ -274,6 +324,7 @@ impl Project {
         let project = Project {
             name: project_name.to_string(),
             tree,
+            plugins: Vec::new(),
             serve_port: None,
             serve_place_ids: None,
             file_location: project_path.clone(),
@@ -384,9 +435,15 @@ impl Project {
     }
 
     fn to_source_project(&self) -> SourceProject {
+        let plugins = self.plugins
+            .iter()
+            .map(|plugin| plugin.to_source_plugin(&self.file_location))
+            .collect();
+
         SourceProject {
             name: self.name.clone(),
             tree: self.tree.to_source_node(&self.file_location),
+            plugins,
             serve_port: self.serve_port,
             serve_place_ids: self.serve_place_ids.clone(),
         }

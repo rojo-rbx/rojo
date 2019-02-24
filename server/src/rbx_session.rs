@@ -6,6 +6,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use rlua::Lua;
 use serde_derive::{Serialize, Deserialize};
 use log::{info, trace};
 use rbx_dom_weak::{RbxTree, RbxId};
@@ -15,7 +16,14 @@ use crate::{
     message_queue::MessageQueue,
     imfs::{Imfs, ImfsItem},
     path_map::PathMap,
-    rbx_snapshot::{snapshot_project_tree, snapshot_project_node, snapshot_imfs_path},
+    rbx_snapshot::{
+        SnapshotContext,
+        SnapshotPluginContext,
+        SnapshotPluginEntry,
+        snapshot_project_tree,
+        snapshot_project_node,
+        snapshot_imfs_path,
+    },
     snapshot_reconciler::{InstanceChanges, reify_root, reconcile_subtree},
 };
 
@@ -62,9 +70,41 @@ impl RbxSession {
         let mut instances_per_path = PathMap::new();
         let mut metadata_per_instance = HashMap::new();
 
+        let plugin_context = if cfg!(feature = "server-plugins") {
+            let lua = Lua::new();
+            let mut callback_key = None;
+
+            lua.context(|context| {
+                let callback = context.load(r#"
+                    return function(snapshot)
+                        print("got my snapshot:", snapshot)
+                        print("name:", snapshot.name, "class name:", snapshot.className)
+                    end"#)
+                    .set_name("a cool plugin").unwrap()
+                    .call::<(), rlua::Function>(()).unwrap();
+
+                callback_key = Some(context.create_registry_value(callback).unwrap());
+            });
+
+            let plugins = vec![
+                SnapshotPluginEntry {
+                    file_name_filter: String::new(),
+                    callback: callback_key.unwrap(),
+                }
+            ];
+
+            Some(SnapshotPluginContext { lua, plugins })
+        } else {
+            None
+        };
+
+        let context = SnapshotContext {
+            plugin_context,
+        };
+
         let tree = {
             let temp_imfs = imfs.lock().unwrap();
-            reify_initial_tree(&project, &temp_imfs, &mut instances_per_path, &mut metadata_per_instance)
+            reify_initial_tree(&project, &context, &temp_imfs, &mut instances_per_path, &mut metadata_per_instance)
         };
 
         RbxSession {
@@ -104,17 +144,21 @@ impl RbxSession {
                 .expect("Metadata did not exist for path")
                 .clone();
 
+            let context = SnapshotContext {
+                plugin_context: None,
+            };
+
             for instance_id in &instances_at_path {
                 let instance_metadata = self.metadata_per_instance.get(&instance_id)
                     .expect("Metadata for instance ID did not exist");
 
                 let maybe_snapshot = match &instance_metadata.project_definition {
                     Some((instance_name, project_node)) => {
-                        snapshot_project_node(&imfs, &project_node, Cow::Owned(instance_name.clone()))
+                        snapshot_project_node(&context, &imfs, &project_node, Cow::Owned(instance_name.clone()))
                             .unwrap_or_else(|_| panic!("Could not generate instance snapshot for path {}", path_to_snapshot.display()))
                     },
                     None => {
-                        snapshot_imfs_path(&imfs, &path_to_snapshot, None)
+                        snapshot_imfs_path(&context, &imfs, &path_to_snapshot, None)
                             .unwrap_or_else(|_| panic!("Could not generate instance snapshot for path {}", path_to_snapshot.display()))
                     },
                 };
@@ -202,16 +246,20 @@ impl RbxSession {
 pub fn construct_oneoff_tree(project: &Project, imfs: &Imfs) -> RbxTree {
     let mut instances_per_path = PathMap::new();
     let mut metadata_per_instance = HashMap::new();
-    reify_initial_tree(project, imfs, &mut instances_per_path, &mut metadata_per_instance)
+    let context = SnapshotContext {
+        plugin_context: None,
+    };
+    reify_initial_tree(project, &context, imfs, &mut instances_per_path, &mut metadata_per_instance)
 }
 
 fn reify_initial_tree(
     project: &Project,
+    context: &SnapshotContext,
     imfs: &Imfs,
     instances_per_path: &mut PathMap<HashSet<RbxId>>,
     metadata_per_instance: &mut HashMap<RbxId, MetadataPerInstance>,
 ) -> RbxTree {
-    let snapshot = snapshot_project_tree(imfs, project)
+    let snapshot = snapshot_project_tree(&context, imfs, project)
         .expect("Could not snapshot project tree")
         .expect("Project did not produce any instances");
 

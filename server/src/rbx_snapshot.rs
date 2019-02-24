@@ -9,6 +9,7 @@ use std::{
     str,
 };
 
+use rlua::Lua;
 use failure::Fail;
 use log::info;
 use maplit::hashmap;
@@ -37,6 +38,53 @@ use crate::{
 const INIT_MODULE_NAME: &str = "init.lua";
 const INIT_SERVER_NAME: &str = "init.server.lua";
 const INIT_CLIENT_NAME: &str = "init.client.lua";
+
+pub struct SnapshotContext {
+    pub plugin_context: Option<SnapshotPluginContext>,
+}
+
+/// Context that's only relevant to generating snapshots if there are plugins
+/// associated with the project.
+///
+/// It's possible that this needs some sort of extra nesting/filtering to
+/// support nested projects, since their plugins should only apply to
+/// themselves.
+pub struct SnapshotPluginContext {
+    pub lua: Lua,
+    pub plugins: Vec<SnapshotPluginEntry>,
+}
+
+pub struct SnapshotPluginEntry {
+    /// Simple file name suffix filter to avoid running plugins on every file
+    /// change.
+    pub file_name_filter: String,
+
+    /// A key into the Lua registry created by [`create_registry_value`] that
+    /// refers to a function that can be called to transform a file/instance
+    /// pair according to how the plugin needs to operate.
+    ///
+    /// [`create_registry_value`]: https://docs.rs/rlua/0.16.2/rlua/struct.Context.html#method.create_registry_value
+    pub callback: rlua::RegistryKey,
+}
+
+#[derive(Debug, Clone)]
+struct LuaRbxSnapshot(RbxSnapshotInstance<'static>);
+
+impl rlua::UserData for LuaRbxSnapshot {
+    fn add_methods<'lua, M: rlua::UserDataMethods<'lua, Self>>(methods: &mut M) {
+        methods.add_meta_method(rlua::MetaMethod::Index, |_context, this, key: String| {
+            match key.as_str() {
+                "name" => Ok(this.0.name.clone().into_owned()),
+                "className" => Ok(this.0.class_name.clone().into_owned()),
+                _ => Err(rlua::Error::RuntimeError(format!("{} is not a valid member of RbxSnapshotInstance", &key))),
+            }
+        });
+
+        methods.add_meta_method(rlua::MetaMethod::ToString, |_context, this, _args: ()| {
+            Ok("RbxSnapshotInstance")
+        });
+    }
+}
 
 pub type SnapshotResult<'a> = Result<Option<RbxSnapshotInstance<'a>>, SnapshotError>;
 
@@ -104,19 +152,21 @@ impl fmt::Display for SnapshotError {
 }
 
 pub fn snapshot_project_tree<'source>(
+    context: &SnapshotContext,
     imfs: &'source Imfs,
     project: &'source Project,
 ) -> SnapshotResult<'source> {
-    snapshot_project_node(imfs, &project.tree, Cow::Borrowed(&project.name))
+    snapshot_project_node(context, imfs, &project.tree, Cow::Borrowed(&project.name))
 }
 
 pub fn snapshot_project_node<'source>(
+    context: &SnapshotContext,
     imfs: &'source Imfs,
     node: &ProjectNode,
     instance_name: Cow<'source, str>,
 ) -> SnapshotResult<'source> {
     let maybe_snapshot = match &node.path {
-        Some(path) => snapshot_imfs_path(imfs, &path, Some(instance_name.clone()))?,
+        Some(path) => snapshot_imfs_path(context, imfs, &path, Some(instance_name.clone()))?,
         None => match &node.class_name {
             Some(_class_name) => Some(RbxSnapshotInstance {
                 name: instance_name.clone(),
@@ -170,7 +220,7 @@ pub fn snapshot_project_node<'source>(
     }
 
     for (child_name, child_project_node) in &node.children {
-        if let Some(child) = snapshot_project_node(imfs, child_project_node, Cow::Owned(child_name.clone()))? {
+        if let Some(child) = snapshot_project_node(context, imfs, child_project_node, Cow::Owned(child_name.clone()))? {
             snapshot.children.push(child);
         }
     }
@@ -189,6 +239,7 @@ pub fn snapshot_project_node<'source>(
 }
 
 pub fn snapshot_imfs_path<'source>(
+    context: &SnapshotContext,
     imfs: &'source Imfs,
     path: &Path,
     instance_name: Option<Cow<'source, str>>,
@@ -196,23 +247,25 @@ pub fn snapshot_imfs_path<'source>(
     // If the given path doesn't exist in the in-memory filesystem, we consider
     // that an error.
     match imfs.get(path) {
-        Some(imfs_item) => snapshot_imfs_item(imfs, imfs_item, instance_name),
+        Some(imfs_item) => snapshot_imfs_item(context, imfs, imfs_item, instance_name),
         None => return Err(SnapshotError::DidNotExist(path.to_owned())),
     }
 }
 
 fn snapshot_imfs_item<'source>(
+    context: &SnapshotContext,
     imfs: &'source Imfs,
     item: &'source ImfsItem,
     instance_name: Option<Cow<'source, str>>,
 ) -> SnapshotResult<'source> {
     match item {
-        ImfsItem::File(file) => snapshot_imfs_file(file, instance_name),
-        ImfsItem::Directory(directory) => snapshot_imfs_directory(imfs, directory, instance_name),
+        ImfsItem::File(file) => snapshot_imfs_file(context, file, instance_name),
+        ImfsItem::Directory(directory) => snapshot_imfs_directory(context, imfs, directory, instance_name),
     }
 }
 
 fn snapshot_imfs_directory<'source>(
+    context: &SnapshotContext,
     imfs: &'source Imfs,
     directory: &'source ImfsDirectory,
     instance_name: Option<Cow<'source, str>>,
@@ -229,11 +282,11 @@ fn snapshot_imfs_directory<'source>(
         });
 
     let mut snapshot = if directory.children.contains(&init_path) {
-        snapshot_imfs_path(imfs, &init_path, Some(snapshot_name))?.unwrap()
+        snapshot_imfs_path(context, imfs, &init_path, Some(snapshot_name))?.unwrap()
     } else if directory.children.contains(&init_server_path) {
-        snapshot_imfs_path(imfs, &init_server_path, Some(snapshot_name))?.unwrap()
+        snapshot_imfs_path(context, imfs, &init_server_path, Some(snapshot_name))?.unwrap()
     } else if directory.children.contains(&init_client_path) {
-        snapshot_imfs_path(imfs, &init_client_path, Some(snapshot_name))?.unwrap()
+        snapshot_imfs_path(context, imfs, &init_client_path, Some(snapshot_name))?.unwrap()
     } else {
         RbxSnapshotInstance {
             class_name: Cow::Borrowed("Folder"),
@@ -262,7 +315,7 @@ fn snapshot_imfs_directory<'source>(
                 // them here.
             },
             _ => {
-                if let Some(child) = snapshot_imfs_path(imfs, child_path, None)? {
+                if let Some(child) = snapshot_imfs_path(context, imfs, child_path, None)? {
                     snapshot.children.push(child);
                 }
             },
@@ -273,6 +326,7 @@ fn snapshot_imfs_directory<'source>(
 }
 
 fn snapshot_imfs_file<'source>(
+    context: &SnapshotContext,
     file: &'source ImfsFile,
     instance_name: Option<Cow<'source, str>>,
 ) -> SnapshotResult<'source> {
@@ -306,6 +360,20 @@ fn snapshot_imfs_file<'source>(
         }
     } else {
         info!("File generated no snapshot: {}", file.path.display());
+    }
+
+    if let Some(snapshot) = maybe_snapshot.as_ref() {
+        if let Some(plugin_context) = &context.plugin_context {
+            for plugin in &plugin_context.plugins {
+                let owned_snapshot = snapshot.get_owned();
+                let registry_key = &plugin.callback;
+
+                plugin_context.lua.context(move |context| {
+                    let callback: rlua::Function = context.registry_value(registry_key).unwrap();
+                    callback.call::<_, ()>(LuaRbxSnapshot(owned_snapshot)).unwrap();
+                });
+            }
+        }
     }
 
     Ok(maybe_snapshot)
