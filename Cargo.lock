@@ -1029,12 +1029,12 @@ dependencies = [
  "byteorder 1.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "lz4 1.23.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "rbx_dom_weak 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rbx_dom_weak 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "rbx_dom_weak"
-version = "0.3.0"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "serde 1.0.88 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1044,12 +1044,12 @@ dependencies = [
 
 [[package]]
 name = "rbx_reflection"
-version = "0.2.373"
+version = "1.0.373"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "failure 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "rbx_dom_weak 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rbx_dom_weak 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -1062,7 +1062,7 @@ dependencies = [
  "lazy_static 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "maplit 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "rbx_dom_weak 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rbx_dom_weak 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "xml-rs 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -1195,8 +1195,8 @@ dependencies = [
  "pretty_assertions 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "rbx_binary 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "rbx_dom_weak 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "rbx_reflection 0.2.373 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rbx_dom_weak 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rbx_reflection 1.0.373 (registry+https://github.com/rust-lang/crates.io-index)",
  "rbx_xml 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "regex 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "reqwest 0.9.10 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1859,8 +1859,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum rand_pcg 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "086bd09a33c7044e56bb44d5bdde5a60e7f119a9e95b0775f545de759a32fe05"
 "checksum rand_xorshift 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "cbf7e9e623549b0e21f6e97cf8ecf247c1a8fd2e8a992ae265314300b2455d5c"
 "checksum rbx_binary 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "9c4d3bffbec1f20f66684448e46ef45dad2fbf1185c3d8f3e29018f027484ffc"
-"checksum rbx_dom_weak 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "a67bbec623f2f12992dbf2e647deb3fe38613d4f874a8feeae566a931bebe63a"
-"checksum rbx_reflection 0.2.373 (registry+https://github.com/rust-lang/crates.io-index)" = "ca97579a12bbf53c76faf09bc5847ae0f14e372d7c7f4c0b68f1c8a2949af28c"
+"checksum rbx_dom_weak 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "673606053dba942f6c4607661c423424711a60cb40481f1e20c55acc21f53a38"
+"checksum rbx_reflection 1.0.373 (registry+https://github.com/rust-lang/crates.io-index)" = "b37499dc2e097063be0eff716f54fb060ef3beb732e5f699b56feb6d9aa2442b"
 "checksum rbx_xml 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "2b394e64979c52190e6462dd81d5b2258cdfb7e3891cefaff5d3c4af7cdc07b5"
 "checksum rdrand 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "678054eb77286b51581ba43620cc911abf02758c91f93f479767aed0f90458b2"
 "checksum redox_syscall 0.1.51 (registry+https://github.com/rust-lang/crates.io-index)" = "423e376fffca3dfa06c9e9790a9ccd282fafb3cc6e6397d01dbf64f9bacc6b85"

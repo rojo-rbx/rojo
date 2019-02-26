@@ -64,7 +64,7 @@ struct SourceProjectNode {
     class_name: Option<String>,
 
     #[serde(rename = "$properties", default = "HashMap::new", skip_serializing_if = "HashMap::is_empty")]
-    properties: HashMap<String, RbxValue>,
+    properties: HashMap<String, UnresolvedRbxValue>,
 
     #[serde(rename = "$ignoreUnknownInstances", skip_serializing_if = "Option::is_none")]
     ignore_unknown_instances: Option<bool>,
@@ -188,7 +188,7 @@ pub enum ProjectSaveError {
 pub struct ProjectNode {
     pub class_name: Option<String>,
     pub children: HashMap<String, ProjectNode>,
-    pub properties: HashMap<String, RbxValue>,
+    pub properties: HashMap<String, UnresolvedRbxValue>,
     pub ignore_unknown_instances: Option<bool>,
 
     #[serde(serialize_with = "crate::path_serializer::serialize_option")]
@@ -284,7 +284,7 @@ impl Project {
                     properties: hashmap! {
                         String::from("HttpEnabled") => RbxValue::Bool {
                             value: true,
-                        },
+                        }.into(),
                     },
                     ..Default::default()
                 },
