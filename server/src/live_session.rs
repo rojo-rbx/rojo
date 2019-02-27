@@ -1,4 +1,5 @@
 use std::{
+    mem,
     sync::{Arc, Mutex},
 };
 
@@ -63,8 +64,8 @@ impl LiveSession {
         let session_id = SessionId::new();
 
         Ok(LiveSession {
-            project,
             session_id,
+            project,
             message_queue,
             rbx_session,
             imfs,
@@ -72,7 +73,14 @@ impl LiveSession {
         })
     }
 
-    pub fn get_project(&self) -> &Project {
-        &self.project
+    /// Restarts the live session using the given project while preserving the
+    /// internal session ID.
+    pub fn restart_with_new_project(&mut self, project: Arc<Project>) -> Result<(), LiveSessionError> {
+        let mut new_session = LiveSession::new(project)?;
+        new_session.session_id = self.session_id;
+
+        mem::replace(self, new_session);
+
+        Ok(())
     }
 }
