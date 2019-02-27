@@ -145,7 +145,7 @@ impl ApiService {
             server_version: self.server_version,
             protocol_version: 2,
             session_id: self.live_session.session_id,
-            expected_place_ids: self.live_session.project.serve_place_ids.clone(),
+            expected_place_ids: self.live_session.serve_place_ids().clone(),
             root_instance_id: tree.get_root_id(),
         })
     }

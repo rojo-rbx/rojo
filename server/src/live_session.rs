@@ -1,4 +1,5 @@
 use std::{
+    collections::HashSet,
     mem,
     sync::{Arc, Mutex},
 };
@@ -32,7 +33,7 @@ impl_from!(LiveSessionError {
 
 /// Contains all of the state for a Rojo live-sync session.
 pub struct LiveSession {
-    pub project: Arc<Project>,
+    project: Arc<Project>,
     pub session_id: SessionId,
     pub message_queue: Arc<MessageQueue<InstanceChanges>>,
     pub rbx_session: Arc<Mutex<RbxSession>>,
@@ -82,5 +83,9 @@ impl LiveSession {
         mem::replace(self, new_session);
 
         Ok(())
+    }
+
+    pub fn serve_place_ids(&self) -> &Option<HashSet<u64>> {
+        &self.project.serve_place_ids
     }
 }
