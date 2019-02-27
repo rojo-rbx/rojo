@@ -144,7 +144,7 @@ impl ApiService {
         response_json(&ServerInfoResponse {
             server_version: self.server_version,
             protocol_version: 2,
-            session_id: self.live_session.session_id,
+            session_id: self.live_session.session_id(),
             expected_place_ids: self.live_session.serve_place_ids().clone(),
             root_instance_id: tree.get_root_id(),
         })
@@ -173,7 +173,7 @@ impl ApiService {
 
             if !new_messages.is_empty() {
                 return response_json(&SubscribeResponse {
-                    session_id: self.live_session.session_id,
+                    session_id: self.live_session.session_id(),
                     messages: Cow::Borrowed(&new_messages),
                     message_cursor: new_cursor,
                 })
@@ -198,7 +198,7 @@ impl ApiService {
             let (new_cursor, new_messages) = message_queue.get_messages_since(cursor);
 
             return response_json(&SubscribeResponse {
-                session_id: self.live_session.session_id,
+                session_id: self.live_session.session_id(),
                 messages: Cow::Owned(new_messages),
                 message_cursor: new_cursor,
             })
@@ -255,7 +255,7 @@ impl ApiService {
         }
 
         response_json(&ReadResponse {
-            session_id: self.live_session.session_id,
+            session_id: self.live_session.session_id(),
             message_cursor,
             instances,
         })

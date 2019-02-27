@@ -34,7 +34,7 @@ impl_from!(LiveSessionError {
 /// Contains all of the state for a Rojo live-sync session.
 pub struct LiveSession {
     project: Arc<Project>,
-    pub session_id: SessionId,
+    session_id: SessionId,
     pub message_queue: Arc<MessageQueue<InstanceChanges>>,
     pub rbx_session: Arc<Mutex<RbxSession>>,
     pub imfs: Arc<Mutex<Imfs>>,
@@ -83,6 +83,10 @@ impl LiveSession {
         mem::replace(self, new_session);
 
         Ok(())
+    }
+
+    pub fn session_id(&self) -> SessionId {
+        self.session_id
     }
 
     pub fn serve_place_ids(&self) -> &Option<HashSet<u64>> {
