@@ -15,6 +15,7 @@ use log::info;
 use maplit::hashmap;
 use rbx_dom_weak::{RbxTree, RbxValue, RbxInstanceProperties};
 use serde_derive::{Serialize, Deserialize};
+use rbx_reflection::{try_resolve_value, ValueResolveError};
 
 use crate::{
     imfs::{
@@ -119,6 +120,19 @@ pub enum SnapshotError {
     ProjectNodeInvalidTransmute {
         partition_path: PathBuf,
     },
+
+    PropertyResolveError {
+        #[fail(cause)]
+        inner: ValueResolveError,
+    },
+}
+
+impl From<ValueResolveError> for SnapshotError {
+    fn from(inner: ValueResolveError) -> SnapshotError {
+        SnapshotError::PropertyResolveError {
+            inner,
+        }
+    }
 }
 
 impl fmt::Display for SnapshotError {
@@ -147,6 +161,7 @@ impl fmt::Display for SnapshotError {
                 writeln!(output, "")?;
                 writeln!(output, "Partition target ($path): {}", partition_path.display())
             },
+            SnapshotError::PropertyResolveError { inner } => write!(output, "{}", inner),
         }
     }
 }
@@ -226,7 +241,8 @@ pub fn snapshot_project_node<'source>(
     }
 
     for (key, value) in &node.properties {
-        snapshot.properties.insert(key.clone(), value.clone());
+        let resolved_value = try_resolve_value(&snapshot.class_name, key, value)?;
+        snapshot.properties.insert(key.clone(), resolved_value);
     }
 
     if let Some(ignore_unknown_instances) = node.ignore_unknown_instances {

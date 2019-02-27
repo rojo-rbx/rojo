@@ -65,7 +65,7 @@ fn single_partition_game() {
         let mut http_service_properties = HashMap::new();
         http_service_properties.insert("HttpEnabled".to_string(), RbxValue::Bool {
             value: true,
-        });
+        }.into());
 
         let http_service = ProjectNode {
             class_name: Some(String::from("HttpService")),

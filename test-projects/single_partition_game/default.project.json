@@ -11,10 +11,7 @@
     "HttpService": {
       "$className": "HttpService",
       "$properties": {
-        "HttpEnabled": {
-          "Type": "Bool",
-          "Value": true
-        }
+        "HttpEnabled": true
       }
     }
   }

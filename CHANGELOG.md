@@ -5,6 +5,7 @@
     * Types like `Color3` and `CFrame` can now be updated live!
 * Fixed plugin assets flashing in on first load ([#121](https://github.com/LPGhatguy/rojo/issues/121))
 * Changed Rojo's HTTP server from Rouille to Hyper, which reduced the release size by around a megabyte.
+* Added property type inference to projects, which makes specifying services a lot easier ([#130](https://github.com/LPGhatguy/rojo/pull/130))
 
 ## [0.5.0 Alpha 4](https://github.com/LPGhatguy/rojo/releases/tag/v0.5.0-alpha.4) (February 8, 2019)
 * Added support for nested partitions ([#102](https://github.com/LPGhatguy/rojo/issues/102))
