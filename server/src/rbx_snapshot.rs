@@ -81,7 +81,7 @@ impl rlua::UserData for LuaRbxSnapshot {
             }
         });
 
-        methods.add_meta_method(rlua::MetaMethod::ToString, |_context, this, _args: ()| {
+        methods.add_meta_method(rlua::MetaMethod::ToString, |_context, _this, _args: ()| {
             Ok("RbxSnapshotInstance")
         });
     }

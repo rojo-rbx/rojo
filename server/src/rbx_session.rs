@@ -32,12 +32,6 @@ const INIT_SCRIPT: &str = "init.lua";
 const INIT_SERVER_SCRIPT: &str = "init.server.lua";
 const INIT_CLIENT_SCRIPT: &str = "init.client.lua";
 
-fn show_snapshot_error(path: &Path, error: SnapshotError) {
-    error!("Rojo couldn't turn one of the project's files into Roblox instances.");
-    error!("Any changes to the file have been ignored.");
-    error!("{}", error);
-}
-
 /// `source_path` or `project_definition` or both must both be Some.
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
 pub struct MetadataPerInstance {
@@ -183,7 +177,9 @@ impl RbxSession {
                         return;
                     },
                     Err(err) => {
-                        show_snapshot_error(&path_to_snapshot, err);
+                        error!("Rojo couldn't turn one of the project's files into Roblox instances.");
+                        error!("Any changes to the file have been ignored.");
+                        error!("{}", err);
                         return;
                     },
                 };
