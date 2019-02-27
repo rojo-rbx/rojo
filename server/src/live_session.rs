@@ -2,15 +2,32 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use failure::Fail;
+
 use crate::{
     fs_watcher::FsWatcher,
     imfs::{Imfs, FsError},
     message_queue::MessageQueue,
     project::Project,
     rbx_session::RbxSession,
+    rbx_snapshot::SnapshotError,
     session_id::SessionId,
     snapshot_reconciler::InstanceChanges,
 };
+
+#[derive(Debug, Fail)]
+pub enum LiveSessionError {
+    #[fail(display = "{}", _0)]
+    Fs(#[fail(cause)] FsError),
+
+    #[fail(display = "{}", _0)]
+    Snapshot(#[fail(cause)] SnapshotError),
+}
+
+impl_from!(LiveSessionError {
+    FsError => Fs,
+    SnapshotError => Snapshot,
+});
 
 /// Contains all of the state for a Rojo live-sync session.
 pub struct LiveSession {
@@ -23,7 +40,7 @@ pub struct LiveSession {
 }
 
 impl LiveSession {
-    pub fn new(project: Arc<Project>) -> Result<LiveSession, FsError> {
+    pub fn new(project: Arc<Project>) -> Result<LiveSession, LiveSessionError> {
         let imfs = {
             let mut imfs = Imfs::new();
             imfs.add_roots_from_project(&project)?;
@@ -36,7 +53,7 @@ impl LiveSession {
             Arc::clone(&project),
             Arc::clone(&imfs),
             Arc::clone(&message_queue),
-        )));
+        )?));
 
         let fs_watcher = FsWatcher::start(
             Arc::clone(&imfs),

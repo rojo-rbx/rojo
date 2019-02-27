@@ -8,9 +8,10 @@ use log::info;
 use failure::Fail;
 
 use crate::{
-    rbx_session::construct_oneoff_tree,
-    project::{Project, ProjectLoadFuzzyError},
     imfs::{Imfs, FsError},
+    project::{Project, ProjectLoadFuzzyError},
+    rbx_session::construct_oneoff_tree,
+    rbx_snapshot::SnapshotError,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -59,6 +60,9 @@ pub enum BuildError {
 
     #[fail(display = "{}", _0)]
     FsError(#[fail(cause)] FsError),
+
+    #[fail(display = "{}", _0)]
+    SnapshotError(#[fail(cause)] SnapshotError),
 }
 
 impl_from!(BuildError {
@@ -67,6 +71,7 @@ impl_from!(BuildError {
     rbx_xml::EncodeError => XmlModelEncodeError,
     rbx_binary::EncodeError => BinaryModelEncodeError,
     FsError => FsError,
+    SnapshotError => SnapshotError,
 });
 
 pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
@@ -86,7 +91,7 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
 
     let mut imfs = Imfs::new();
     imfs.add_roots_from_project(&project)?;
-    let tree = construct_oneoff_tree(&project, &imfs);
+    let tree = construct_oneoff_tree(&project, &imfs)?;
     let mut file = File::create(&options.output_file)?;
 
     match output_kind {

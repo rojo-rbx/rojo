@@ -8,7 +8,7 @@ use std::{
 
 use rlua::Lua;
 use serde_derive::{Serialize, Deserialize};
-use log::{info, trace};
+use log::{info, trace, error};
 use rbx_dom_weak::{RbxTree, RbxId};
 
 use crate::{
@@ -17,6 +17,7 @@ use crate::{
     imfs::{Imfs, ImfsItem},
     path_map::PathMap,
     rbx_snapshot::{
+        SnapshotError,
         SnapshotContext,
         SnapshotPluginContext,
         SnapshotPluginEntry,
@@ -30,6 +31,12 @@ use crate::{
 const INIT_SCRIPT: &str = "init.lua";
 const INIT_SERVER_SCRIPT: &str = "init.server.lua";
 const INIT_CLIENT_SCRIPT: &str = "init.client.lua";
+
+fn show_snapshot_error(path: &Path, error: SnapshotError) {
+    error!("Rojo couldn't turn one of the project's files into Roblox instances.");
+    error!("Any changes to the file have been ignored.");
+    error!("{}", error);
+}
 
 /// `source_path` or `project_definition` or both must both be Some.
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
@@ -66,7 +73,7 @@ impl RbxSession {
         project: Arc<Project>,
         imfs: Arc<Mutex<Imfs>>,
         message_queue: Arc<MessageQueue<InstanceChanges>>,
-    ) -> RbxSession {
+    ) -> Result<RbxSession, SnapshotError> {
         let mut instances_per_path = PathMap::new();
         let mut metadata_per_instance = HashMap::new();
 
@@ -104,16 +111,22 @@ impl RbxSession {
 
         let tree = {
             let temp_imfs = imfs.lock().unwrap();
-            reify_initial_tree(&project, &context, &temp_imfs, &mut instances_per_path, &mut metadata_per_instance)
+            reify_initial_tree(
+                &project,
+                &context,
+                &temp_imfs,
+                &mut instances_per_path,
+                &mut metadata_per_instance,
+            )?
         };
 
-        RbxSession {
+        Ok(RbxSession {
             tree,
             instances_per_path,
             metadata_per_instance,
             message_queue,
             imfs,
-        }
+        })
     }
 
     fn path_created_or_updated(&mut self, path: &Path) {
@@ -155,18 +168,22 @@ impl RbxSession {
                 let maybe_snapshot = match &instance_metadata.project_definition {
                     Some((instance_name, project_node)) => {
                         snapshot_project_node(&context, &imfs, &project_node, Cow::Owned(instance_name.clone()))
-                            .unwrap_or_else(|_| panic!("Could not generate instance snapshot for path {}", path_to_snapshot.display()))
+                            // .unwrap_or_else(|_| panic!("Could not generate instance snapshot for path {}", path_to_snapshot.display()))
                     },
                     None => {
                         snapshot_imfs_path(&context, &imfs, &path_to_snapshot, None)
-                            .unwrap_or_else(|_| panic!("Could not generate instance snapshot for path {}", path_to_snapshot.display()))
+                            // .unwrap_or_else(|_| panic!("Could not generate instance snapshot for path {}", path_to_snapshot.display()))
                     },
                 };
 
                 let snapshot = match maybe_snapshot {
-                    Some(snapshot) => snapshot,
-                    None => {
+                    Ok(Some(snapshot)) => snapshot,
+                    Ok(None) => {
                         trace!("Path resulted in no snapshot being generated.");
+                        return;
+                    },
+                    Err(err) => {
+                        show_snapshot_error(&path_to_snapshot, err);
                         return;
                     },
                 };
@@ -243,12 +260,13 @@ impl RbxSession {
     }
 }
 
-pub fn construct_oneoff_tree(project: &Project, imfs: &Imfs) -> RbxTree {
+pub fn construct_oneoff_tree(project: &Project, imfs: &Imfs) -> Result<RbxTree, SnapshotError> {
     let mut instances_per_path = PathMap::new();
     let mut metadata_per_instance = HashMap::new();
     let context = SnapshotContext {
         plugin_context: None,
     };
+
     reify_initial_tree(project, &context, imfs, &mut instances_per_path, &mut metadata_per_instance)
 }
 
@@ -258,13 +276,14 @@ fn reify_initial_tree(
     imfs: &Imfs,
     instances_per_path: &mut PathMap<HashSet<RbxId>>,
     metadata_per_instance: &mut HashMap<RbxId, MetadataPerInstance>,
-) -> RbxTree {
-    let snapshot = snapshot_project_tree(&context, imfs, project)
-        .expect("Could not snapshot project tree")
-        .expect("Project did not produce any instances");
+) -> Result<RbxTree, SnapshotError> {
+    let snapshot = match snapshot_project_tree(&context, imfs, project)? {
+        Some(snapshot) => snapshot,
+        None => panic!("Project did not produce any instances"),
+    };
 
     let mut changes = InstanceChanges::default();
     let tree = reify_root(&snapshot, instances_per_path, metadata_per_instance, &mut changes);
 
-    tree
+    Ok(tree)
 }

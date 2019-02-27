@@ -9,9 +9,10 @@ use failure::Fail;
 use reqwest::header::{ACCEPT, USER_AGENT, CONTENT_TYPE, COOKIE};
 
 use crate::{
-    rbx_session::construct_oneoff_tree,
-    project::{Project, ProjectLoadFuzzyError},
     imfs::{Imfs, FsError},
+    project::{Project, ProjectLoadFuzzyError},
+    rbx_session::construct_oneoff_tree,
+    rbx_snapshot::SnapshotError,
 };
 
 #[derive(Debug, Fail)]
@@ -36,6 +37,9 @@ pub enum UploadError {
 
     #[fail(display = "{}", _0)]
     FsError(#[fail(cause)] FsError),
+
+    #[fail(display = "{}", _0)]
+    SnapshotError(#[fail(cause)] SnapshotError),
 }
 
 impl_from!(UploadError {
@@ -44,6 +48,7 @@ impl_from!(UploadError {
     reqwest::Error => HttpError,
     rbx_xml::EncodeError => XmlModelEncodeError,
     FsError => FsError,
+    SnapshotError => SnapshotError,
 });
 
 #[derive(Debug)]
@@ -67,7 +72,7 @@ pub fn upload(options: &UploadOptions) -> Result<(), UploadError> {
 
     let mut imfs = Imfs::new();
     imfs.add_roots_from_project(&project)?;
-    let tree = construct_oneoff_tree(&project, &imfs);
+    let tree = construct_oneoff_tree(&project, &imfs)?;
 
     let root_id = tree.get_root_id();
     let mut contents = Vec::new();

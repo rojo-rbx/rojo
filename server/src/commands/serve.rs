@@ -10,7 +10,7 @@ use crate::{
     project::{Project, ProjectLoadFuzzyError},
     web::LiveServer,
     imfs::FsError,
-    live_session::LiveSession,
+    live_session::{LiveSession, LiveSessionError},
 };
 
 const DEFAULT_PORT: u16 = 34872;
@@ -28,11 +28,15 @@ pub enum ServeError {
 
    #[fail(display = "{}", _0)]
    FsError(#[fail(cause)] FsError),
+
+   #[fail(display = "{}", _0)]
+   LiveSessionError(#[fail(cause)] LiveSessionError),
 }
 
 impl_from!(ServeError {
     ProjectLoadFuzzyError => ProjectLoadError,
     FsError => FsError,
+    LiveSessionError => LiveSessionError,
 });
 
 pub fn serve(options: &ServeOptions) -> Result<(), ServeError> {
