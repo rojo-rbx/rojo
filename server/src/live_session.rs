@@ -1,6 +1,5 @@
 use std::{
     collections::HashSet,
-    mem,
     sync::{Arc, Mutex},
 };
 
@@ -15,6 +14,7 @@ use crate::{
     rbx_snapshot::SnapshotError,
     session_id::SessionId,
     snapshot_reconciler::InstanceChanges,
+    web::{LiveServer, ServiceDependencies},
 };
 
 #[derive(Debug, Fail)]
@@ -33,16 +33,18 @@ impl_from!(LiveSessionError {
 
 /// Contains all of the state for a Rojo live-sync session.
 pub struct LiveSession {
+    port: u16,
     project: Arc<Project>,
     session_id: SessionId,
     pub message_queue: Arc<MessageQueue<InstanceChanges>>,
     pub rbx_session: Arc<Mutex<RbxSession>>,
     pub imfs: Arc<Mutex<Imfs>>,
+    server: LiveServer,
     _fs_watcher: FsWatcher,
 }
 
 impl LiveSession {
-    pub fn new(project: Arc<Project>) -> Result<LiveSession, LiveSessionError> {
+    pub fn new(project: Arc<Project>, port: u16) -> Result<LiveSession, LiveSessionError> {
         let imfs = {
             let mut imfs = Imfs::new();
             imfs.add_roots_from_project(&project)?;
@@ -64,25 +66,37 @@ impl LiveSession {
 
         let session_id = SessionId::new();
 
+        let dependencies = ServiceDependencies {
+            session_id,
+            serve_place_ids: project.serve_place_ids.clone(),
+            message_queue: Arc::clone(&message_queue),
+            rbx_session: Arc::clone(&rbx_session),
+            imfs: Arc::clone(&imfs),
+        };
+
+        let server = LiveServer::start(dependencies, port);
+
         Ok(LiveSession {
+            port,
             session_id,
             project,
             message_queue,
             rbx_session,
             imfs,
+            server,
             _fs_watcher: fs_watcher,
         })
     }
 
     /// Restarts the live session using the given project while preserving the
     /// internal session ID.
-    pub fn restart_with_new_project(&mut self, project: Arc<Project>) -> Result<(), LiveSessionError> {
-        let mut new_session = LiveSession::new(project)?;
+    pub fn restart_with_new_project(mut self, project: Arc<Project>) -> Result<LiveSession, LiveSessionError> {
+        self.server.stop();
+
+        let mut new_session = LiveSession::new(project, self.port)?;
         new_session.session_id = self.session_id;
 
-        mem::replace(self, new_session);
-
-        Ok(())
+        Ok(new_session)
     }
 
     pub fn session_id(&self) -> SessionId {

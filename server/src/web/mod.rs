@@ -3,11 +3,16 @@
 pub mod api;
 mod interface;
 
-use std::sync::Arc;
+use std::{
+    collections::HashSet,
+    thread,
+    sync::{Arc, Mutex},
+};
 
 use log::trace;
 use futures::{
     future::{self, FutureResult},
+    sync::oneshot,
     Future,
 };
 use hyper::{
@@ -19,13 +24,26 @@ use hyper::{
 };
 
 use crate::{
-    live_session::LiveSession,
+    session_id::SessionId,
+    message_queue::MessageQueue,
+    rbx_session::RbxSession,
+    imfs::Imfs,
+    snapshot_reconciler::InstanceChanges,
 };
 
 use self::{
     api::ApiService,
     interface::InterfaceService,
 };
+
+#[derive(Clone)]
+pub struct ServiceDependencies {
+    pub session_id: SessionId,
+    pub serve_place_ids: Option<HashSet<u64>>,
+    pub message_queue: Arc<MessageQueue<InstanceChanges>>,
+    pub rbx_session: Arc<Mutex<RbxSession>>,
+    pub imfs: Arc<Mutex<Imfs>>,
+}
 
 pub struct RootService {
     api: api::ApiService,
@@ -50,36 +68,48 @@ impl Service for RootService {
 }
 
 impl RootService {
-    pub fn new(live_session: Arc<LiveSession>) -> RootService {
+    pub fn new(dependencies: ServiceDependencies) -> RootService {
         RootService {
-            api: ApiService::new(Arc::clone(&live_session)),
-            interface: InterfaceService::new(Arc::clone(&live_session)),
+            api: ApiService::new(dependencies.clone()),
+            interface: InterfaceService::new(dependencies.clone()),
         }
     }
 }
 
 pub struct LiveServer {
-    live_session: Arc<LiveSession>,
+    shutdown_tx: oneshot::Sender<()>,
+    finished_rx: oneshot::Receiver<()>,
 }
 
 impl LiveServer {
-    pub fn new(live_session: Arc<LiveSession>) -> LiveServer {
-        LiveServer {
-            live_session,
-        }
-    }
+    pub fn start(dependencies: ServiceDependencies, port: u16) -> LiveServer {
+        let (shutdown_tx, shutdown_rx) = oneshot::channel();
+        let (finished_tx, finished_rx) = oneshot::channel();
 
-    pub fn start(self, port: u16) {
         let address = ([127, 0, 0, 1], port).into();
 
         let server = Server::bind(&address)
             .serve(move || {
                 let service: FutureResult<_, hyper::Error> =
-                    future::ok(RootService::new(Arc::clone(&self.live_session)));
+                    future::ok(RootService::new(dependencies.clone()));
                 service
             })
+            .with_graceful_shutdown(shutdown_rx)
             .map_err(|e| eprintln!("Server error: {}", e));
 
-        hyper::rt::run(server);
+        thread::spawn(move || {
+            hyper::rt::run(server);
+            let _dont_care = finished_tx.send(());
+        });
+
+        LiveServer {
+            shutdown_tx,
+            finished_rx,
+        }
+    }
+
+    pub fn stop(self) {
+        let _dont_care = self.shutdown_tx.send(());
+        self.finished_rx.wait();
     }
 }

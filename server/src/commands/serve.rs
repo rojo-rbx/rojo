@@ -8,7 +8,6 @@ use failure::Fail;
 
 use crate::{
     project::{Project, ProjectLoadFuzzyError},
-    web::LiveServer,
     imfs::FsError,
     live_session::{LiveSession, LiveSessionError},
 };
@@ -48,16 +47,13 @@ pub fn serve(options: &ServeOptions) -> Result<(), ServeError> {
     info!("Found project at {}", project.file_location.display());
     info!("Using project {:#?}", project);
 
-    let live_session = Arc::new(LiveSession::new(Arc::clone(&project))?);
-    let server = LiveServer::new(live_session);
-
     let port = options.port
         .or(project.serve_port)
         .unwrap_or(DEFAULT_PORT);
 
-    println!("Rojo server listening on port {}", port);
+    println!("Rojo live server started on port {}", port);
 
-    server.start(port);
+    let live_session = LiveSession::new(Arc::clone(&project), port)?;
 
     Ok(())
 }

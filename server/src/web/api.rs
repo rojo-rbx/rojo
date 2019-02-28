@@ -21,10 +21,10 @@ use serde_derive::{Serialize, Deserialize};
 use rbx_dom_weak::{RbxId, RbxInstance};
 
 use crate::{
-    live_session::LiveSession,
     session_id::SessionId,
     snapshot_reconciler::InstanceChanges,
     rbx_session::{MetadataPerInstance},
+    web::ServiceDependencies,
 };
 
 /// Contains the instance metadata relevant to Rojo clients.
@@ -101,7 +101,7 @@ fn response_json<T: serde::Serialize>(value: T) -> Response<Body> {
 }
 
 pub struct ApiService {
-    live_session: Arc<LiveSession>,
+    dependencies: ServiceDependencies,
     server_version: &'static str,
 }
 
@@ -129,23 +129,23 @@ impl Service for ApiService {
 }
 
 impl ApiService {
-    pub fn new(live_session: Arc<LiveSession>) -> ApiService {
+    pub fn new(dependencies: ServiceDependencies) -> ApiService {
         ApiService {
-            live_session,
+            dependencies,
             server_version: env!("CARGO_PKG_VERSION"),
         }
     }
 
     /// Get a summary of information about the server
     fn handle_api_rojo(&self) -> Response<Body> {
-        let rbx_session = self.live_session.rbx_session.lock().unwrap();
+        let rbx_session = self.dependencies.rbx_session.lock().unwrap();
         let tree = rbx_session.get_tree();
 
         response_json(&ServerInfoResponse {
             server_version: self.server_version,
             protocol_version: 2,
-            session_id: self.live_session.session_id(),
-            expected_place_ids: self.live_session.serve_place_ids().clone(),
+            session_id: self.dependencies.session_id,
+            expected_place_ids: self.dependencies.serve_place_ids.clone(),
             root_instance_id: tree.get_root_id(),
         })
     }
@@ -165,7 +165,7 @@ impl ApiService {
             },
         };
 
-        let message_queue = Arc::clone(&self.live_session.message_queue);
+        let message_queue = Arc::clone(&self.dependencies.message_queue);
 
         // Did the client miss any messages since the last subscribe?
         {
@@ -173,7 +173,7 @@ impl ApiService {
 
             if !new_messages.is_empty() {
                 return response_json(&SubscribeResponse {
-                    session_id: self.live_session.session_id(),
+                    session_id: self.dependencies.session_id,
                     messages: Cow::Borrowed(&new_messages),
                     message_cursor: new_cursor,
                 })
@@ -198,7 +198,7 @@ impl ApiService {
             let (new_cursor, new_messages) = message_queue.get_messages_since(cursor);
 
             return response_json(&SubscribeResponse {
-                session_id: self.live_session.session_id(),
+                session_id: self.dependencies.session_id,
                 messages: Cow::Owned(new_messages),
                 message_cursor: new_cursor,
             })
@@ -212,7 +212,7 @@ impl ApiService {
             .map(RbxId::parse_str)
             .collect();
 
-        let message_queue = Arc::clone(&self.live_session.message_queue);
+        let message_queue = Arc::clone(&self.dependencies.message_queue);
 
         let requested_ids = match requested_ids {
             Some(id) => id,
@@ -225,7 +225,7 @@ impl ApiService {
             },
         };
 
-        let rbx_session = self.live_session.rbx_session.lock().unwrap();
+        let rbx_session = self.dependencies.rbx_session.lock().unwrap();
         let tree = rbx_session.get_tree();
 
         let message_cursor = message_queue.get_message_cursor();
@@ -255,7 +255,7 @@ impl ApiService {
         }
 
         response_json(&ReadResponse {
-            session_id: self.live_session.session_id(),
+            session_id: self.dependencies.session_id,
             message_cursor,
             instances,
         })

@@ -1,7 +1,5 @@
 //! Defines the HTTP-based UI. These endpoints generally return HTML and SVG.
 
-use std::sync::Arc;
-
 use futures::{future, Future};
 use hyper::{
     service::Service,
@@ -15,14 +13,14 @@ use hyper::{
 use ritz::html;
 
 use crate::{
-    live_session::LiveSession,
     visualize::{VisualizeRbxSession, VisualizeImfs, graphviz_to_svg},
+    web::ServiceDependencies,
 };
 
 static HOME_CSS: &str = include_str!("../../assets/index.css");
 
 pub struct InterfaceService {
-    live_session: Arc<LiveSession>,
+    dependencies: ServiceDependencies,
     server_version: &'static str,
 }
 
@@ -48,9 +46,9 @@ impl Service for InterfaceService {
 }
 
 impl InterfaceService {
-    pub fn new(live_session: Arc<LiveSession>) -> InterfaceService {
+    pub fn new(dependencies: ServiceDependencies) -> InterfaceService {
         InterfaceService {
-            live_session,
+            dependencies,
             server_version: env!("CARGO_PKG_VERSION"),
         }
     }
@@ -88,7 +86,7 @@ impl InterfaceService {
     }
 
     fn handle_visualize_rbx(&self) -> Response<Body> {
-        let rbx_session = self.live_session.rbx_session.lock().unwrap();
+        let rbx_session = self.dependencies.rbx_session.lock().unwrap();
         let dot_source = format!("{}", VisualizeRbxSession(&rbx_session));
 
         match graphviz_to_svg(&dot_source) {
@@ -104,7 +102,7 @@ impl InterfaceService {
     }
 
     fn handle_visualize_imfs(&self) -> Response<Body> {
-        let imfs = self.live_session.imfs.lock().unwrap();
+        let imfs = self.dependencies.imfs.lock().unwrap();
         let dot_source = format!("{}", VisualizeImfs(&imfs));
 
         match graphviz_to_svg(&dot_source) {
