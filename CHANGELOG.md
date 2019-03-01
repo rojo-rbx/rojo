@@ -1,6 +1,8 @@
 # Rojo Changelog
 
 ## [Unreleased]
+
+## [0.5.0 Alpha 5](https://github.com/LPGhatguy/rojo/releases/tag/v0.5.0-alpha.5) (March 1, 2019)
 * Upgraded core dependencies, which improves compatibility for lots of instance types
     * Upgraded from `rbx_tree` 0.2.0 to `rbx_dom_weak` 1.0.0
     * Upgraded from `rbx_xml` 0.2.0 to `rbx_xml` 0.4.0
