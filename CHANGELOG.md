@@ -1,7 +1,10 @@
 # Rojo Changelog
 
 ## [Unreleased]
-* Upgraded from `rbx_tree` 0.2.0 to `rbx_dom_weak` 0.3.0, which improves compatibility for lots of instance types
+* Upgraded core dependencies, which improves compatibility for lots of instance types
+    * Upgraded from `rbx_tree` 0.2.0 to `rbx_dom_weak` 1.0.0
+    * Upgraded from `rbx_xml` 0.2.0 to `rbx_xml` 0.4.0
+    * Upgraded from `rbx_binary` 0.2.0 to `rbx_binary` 0.4.0
 * Added support for non-primitive types in the Rojo plugin.
     * Types like `Color3` and `CFrame` can now be updated live!
 * Fixed plugin assets flashing in on first load ([#121](https://github.com/LPGhatguy/rojo/issues/121))
