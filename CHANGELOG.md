@@ -5,6 +5,7 @@
 * Updated default place file:
     * Improved default properties to be closer to Studio's built-in 'Baseplate' template
     * Added a baseplate to the project file (Thanks, [@AmaranthineCodices](https://github.com/AmaranthineCodices/)!)
+* Added more type support to Rojo plugin
 
 ## [0.5.0 Alpha 5](https://github.com/LPGhatguy/rojo/releases/tag/v0.5.0-alpha.5) (March 1, 2019)
 * Upgraded core dependencies, which improves compatibility for lots of instance types

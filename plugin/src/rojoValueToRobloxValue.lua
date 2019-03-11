@@ -1,14 +1,20 @@
 local primitiveTypes = {
-	String = true,
 	Bool = true,
-	Int32 = true,
-	Float32 = true,
 	Enum = true,
+	Float32 = true,
+	Float64 = true,
+	Int32 = true,
+	Int64 = true,
+	String = true,
 }
 
 local directConstructors = {
 	CFrame = CFrame.new,
 	Color3 = Color3.new,
+	Color3uint8 = Color3.fromRGB,
+	Rect = Rect.new,
+	UDim = UDim.new,
+	UDim2 = UDim2.new,
 	Vector2 = Vector2.new,
 	Vector2int16 = Vector2int16.new,
 	Vector3 = Vector3.new,
