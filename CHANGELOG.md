@@ -1,6 +1,7 @@
 # Rojo Changelog
 
 ## [Unreleased]
+* Fixed `cargo init` giving unexpected results by upgrading to `rbx_dom_weak` 1.1.0
 
 ## [0.5.0 Alpha 5](https://github.com/LPGhatguy/rojo/releases/tag/v0.5.0-alpha.5) (March 1, 2019)
 * Upgraded core dependencies, which improves compatibility for lots of instance types
