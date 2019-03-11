@@ -77,11 +77,11 @@ impl SourceProject {
 ///
 /// This holds true for other values that might be ambiguous or just have more
 /// complicated representations like enums.
-fn serialize_unresolved_minimal<S>(value: &UnresolvedRbxValue, serializer: S) -> Result<S::Ok, S::Error>
+fn serialize_unresolved_minimal<S>(unresolved: &UnresolvedRbxValue, serializer: S) -> Result<S::Ok, S::Error>
     where S: Serializer
 {
-    match value {
-        UnresolvedRbxValue::Ambiguous(_) => value.serialize(serializer),
+    match unresolved {
+        UnresolvedRbxValue::Ambiguous(_) => unresolved.serialize(serializer),
         UnresolvedRbxValue::Concrete(concrete) => {
             match concrete {
                 RbxValue::Bool { value } => value.serialize(serializer),
