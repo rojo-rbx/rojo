@@ -8,9 +8,11 @@ use std::{
 
 use log::warn;
 use failure::Fail;
-use maplit::hashmap;
 use rbx_dom_weak::{UnresolvedRbxValue, RbxValue};
 use serde_derive::{Serialize, Deserialize};
+use serde::{Serialize, Serializer};
+
+static DEFAULT_PLACE: &'static str = include_str!("../assets/place.project.json");
 
 pub static PROJECT_FILENAME: &'static str = "default.project.json";
 pub static COMPAT_PROJECT_FILENAME: &'static str = "roblox-project.json";
@@ -55,6 +57,74 @@ impl SourceProject {
     }
 }
 
+/// An alternative serializer for `UnresolvedRbxValue` that uses the minimum
+/// representation of the value.
+///
+/// For example, the default Serialize impl might give you:
+///
+/// ```json
+/// {
+///     "Type": "Bool",
+///     "Value": true
+/// }
+/// ```
+///
+/// But in reality, users are expected to write just:
+///
+/// ```json
+/// true
+/// ```
+///
+/// This holds true for other values that might be ambiguous or just have more
+/// complicated representations like enums.
+fn serialize_unresolved_minimal<S>(value: &UnresolvedRbxValue, serializer: S) -> Result<S::Ok, S::Error>
+    where S: Serializer
+{
+    match value {
+        UnresolvedRbxValue::Ambiguous(_) => value.serialize(serializer),
+        UnresolvedRbxValue::Concrete(concrete) => {
+            match concrete {
+                RbxValue::Bool { value } => value.serialize(serializer),
+                RbxValue::CFrame { value } => value.serialize(serializer),
+                RbxValue::Color3 { value } => value.serialize(serializer),
+                RbxValue::Color3uint8 { value } => value.serialize(serializer),
+                RbxValue::Content { value } => value.serialize(serializer),
+                RbxValue::Enum { value } => value.serialize(serializer),
+                RbxValue::Float32 { value } => value.serialize(serializer),
+                RbxValue::Int32 { value } => value.serialize(serializer),
+                RbxValue::String { value } => value.serialize(serializer),
+                RbxValue::UDim { value } => value.serialize(serializer),
+                RbxValue::UDim2 { value } => value.serialize(serializer),
+                RbxValue::Vector2 { value } => value.serialize(serializer),
+                RbxValue::Vector2int16 { value } => value.serialize(serializer),
+                RbxValue::Vector3 { value } => value.serialize(serializer),
+                RbxValue::Vector3int16 { value } => value.serialize(serializer),
+                _ => concrete.serialize(serializer),
+            }
+        },
+    }
+}
+
+/// A wrapper around serialize_unresolved_minimal that handles the HashMap case.
+fn serialize_unresolved_map<S>(value: &HashMap<String, UnresolvedRbxValue>, serializer: S) -> Result<S::Ok, S::Error>
+    where S: Serializer
+{
+    use serde::ser::SerializeMap;
+
+    #[derive(Serialize)]
+    struct Minimal<'a>(
+        #[serde(serialize_with = "serialize_unresolved_minimal")]
+        &'a UnresolvedRbxValue
+    );
+
+    let mut map = serializer.serialize_map(Some(value.len()))?;
+    for (k, v) in value {
+        map.serialize_key(k)?;
+        map.serialize_value(&Minimal(v))?;
+    }
+    map.end()
+}
+
 /// Similar to SourceProject, the structure of nodes in the project tree is
 /// slightly different on-disk than how we want to handle them in the rest of
 /// Rojo.
@@ -63,7 +133,12 @@ struct SourceProjectNode {
     #[serde(rename = "$className", skip_serializing_if = "Option::is_none")]
     class_name: Option<String>,
 
-    #[serde(rename = "$properties", default = "HashMap::new", skip_serializing_if = "HashMap::is_empty")]
+    #[serde(
+        rename = "$properties",
+        default = "HashMap::new",
+        skip_serializing_if = "HashMap::is_empty",
+        serialize_with = "serialize_unresolved_map",
+    )]
     properties: HashMap<String, UnresolvedRbxValue>,
 
     #[serde(rename = "$ignoreUnknownInstances", skip_serializing_if = "Option::is_none")]
@@ -162,6 +237,7 @@ pub enum ProjectInitError {
     AlreadyExists(PathBuf),
     IoError(#[fail(cause)] io::Error),
     SaveError(#[fail(cause)] ProjectSaveError),
+    JsonError(#[fail(cause)] serde_json::Error),
 }
 
 impl fmt::Display for ProjectInitError {
@@ -170,6 +246,7 @@ impl fmt::Display for ProjectInitError {
             ProjectInitError::AlreadyExists(path) => write!(output, "Path {} already exists", path.display()),
             ProjectInitError::IoError(inner) => write!(output, "IO error: {}", inner),
             ProjectInitError::SaveError(inner) => write!(output, "{}", inner),
+            ProjectInitError::JsonError(inner) => write!(output, "{}", inner),
         }
     }
 }
@@ -259,47 +336,16 @@ pub struct Project {
 impl Project {
     pub fn init_place(project_fuzzy_path: &Path) -> Result<PathBuf, ProjectInitError> {
         let project_path = Project::init_pick_path(project_fuzzy_path)?;
-        let project_folder_path = project_path.parent().unwrap();
         let project_name = if project_fuzzy_path == project_path {
             project_fuzzy_path.parent().unwrap().file_name().unwrap().to_str().unwrap()
         } else {
             project_fuzzy_path.file_name().unwrap().to_str().unwrap()
         };
 
-        let tree = ProjectNode {
-            class_name: Some(String::from("DataModel")),
-            children: hashmap! {
-                String::from("ReplicatedStorage") => ProjectNode {
-                    class_name: Some(String::from("ReplicatedStorage")),
-                    children: hashmap! {
-                        String::from("Source") => ProjectNode {
-                            path: Some(project_folder_path.join("src")),
-                            ..Default::default()
-                        },
-                    },
-                    ..Default::default()
-                },
-                String::from("HttpService") => ProjectNode {
-                    class_name: Some(String::from("HttpService")),
-                    properties: hashmap! {
-                        String::from("HttpEnabled") => RbxValue::Bool {
-                            value: true,
-                        }.into(),
-                    },
-                    ..Default::default()
-                },
-            },
-            ..Default::default()
-        };
+        let mut project = Project::load_from_str(DEFAULT_PLACE, &project_path)
+            .map_err(ProjectInitError::JsonError)?;
 
-        let project = Project {
-            name: project_name.to_string(),
-            tree,
-            plugins: Vec::new(),
-            serve_port: None,
-            serve_place_ids: None,
-            file_location: project_path.clone(),
-        };
+        project.name = project_name.to_owned();
 
         project.save()
             .map_err(ProjectInitError::SaveError)?;
@@ -385,6 +431,12 @@ impl Project {
             Some(parent_location) => Self::locate(parent_location),
             None => None,
         }
+    }
+
+    fn load_from_str(contents: &str, project_file_location: &Path) -> Result<Project, serde_json::Error> {
+        let parsed: SourceProject = serde_json::from_str(&contents)?;
+
+        Ok(parsed.into_project(project_file_location))
     }
 
     pub fn load_fuzzy(fuzzy_project_location: &Path) -> Result<Project, ProjectLoadFuzzyError> {
