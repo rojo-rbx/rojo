@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 * Fixed `cargo init` giving unexpected results by upgrading to `rbx_dom_weak` 1.1.0
+* Fixed API not responding when the Rojo plugin is connected ([#133](https://github.com/LPGhatguy/rojo/issues/133))
 * Updated default place file:
     * Improved default properties to be closer to Studio's built-in 'Baseplate' template
     * Added a baseplate to the project file (Thanks, [@AmaranthineCodices](https://github.com/AmaranthineCodices/)!)

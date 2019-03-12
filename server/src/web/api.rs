@@ -4,10 +4,10 @@
 use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
-    sync::{mpsc, Arc},
+    sync::Arc,
 };
 
-use futures::{future, Future};
+use futures::{future, Future, stream::Stream, sync::mpsc};
 use hyper::{
     service::Service,
     header,
@@ -114,14 +114,16 @@ impl Service for ApiService {
     fn call(&mut self, request: hyper::Request<Self::ReqBody>) -> Self::Future {
         let response = match (request.method(), request.uri().path()) {
             (&Method::GET, "/api/rojo") => self.handle_api_rojo(),
-            (&Method::GET, path) if path.starts_with("/api/subscribe/") => self.handle_api_subscribe(request),
             (&Method::GET, path) if path.starts_with("/api/read/") => self.handle_api_read(request),
+            (&Method::GET, path) if path.starts_with("/api/subscribe/") => {
+                return self.handle_api_subscribe(request);
+            }
             _ => {
                 Response::builder()
                     .status(StatusCode::NOT_FOUND)
                     .body(Body::empty())
                     .unwrap()
-            },
+            }
         };
 
         Box::new(future::ok(response))
@@ -152,16 +154,16 @@ impl ApiService {
 
     /// Retrieve any messages past the given cursor index, and if
     /// there weren't any, subscribe to receive any new messages.
-    fn handle_api_subscribe(&self, request: Request<Body>) -> Response<Body> {
+    fn handle_api_subscribe(&self, request: Request<Body>) -> <ApiService as Service>::Future {
         let argument = &request.uri().path()["/api/subscribe/".len()..];
         let cursor: u32 = match argument.parse() {
             Ok(v) => v,
             Err(err) => {
-                return Response::builder()
+                return Box::new(future::ok(Response::builder()
                     .status(StatusCode::BAD_REQUEST)
                     .header(header::CONTENT_TYPE, "text/plain")
                     .body(Body::from(err.to_string()))
-                    .unwrap();
+                    .unwrap()));
             },
         };
 
@@ -172,37 +174,38 @@ impl ApiService {
             let (new_cursor, new_messages) = message_queue.get_messages_since(cursor);
 
             if !new_messages.is_empty() {
-                return response_json(&SubscribeResponse {
+                return Box::new(future::ok(response_json(&SubscribeResponse {
                     session_id: self.live_session.session_id(),
                     messages: Cow::Borrowed(&new_messages),
                     message_cursor: new_cursor,
-                })
+                })));
             }
         }
 
-        // TOOD: Switch to futures mpsc instead to not block this task
-        let (tx, rx) = mpsc::channel();
+        let (tx, rx) = mpsc::channel(1024);
         let sender_id = message_queue.subscribe(tx);
+        let session_id = self.live_session.session_id();
 
-        match rx.recv() {
-            Ok(_) => (),
-            Err(_) => return Response::builder()
-                .status(500)
-                .body(Body::from("error!"))
-                .unwrap(),
-        }
+        let result = rx.into_future()
+            .and_then(move |_| {
+                message_queue.unsubscribe(sender_id);
 
-        message_queue.unsubscribe(sender_id);
+                let (new_cursor, new_messages) = message_queue.get_messages_since(cursor);
 
-        {
-            let (new_cursor, new_messages) = message_queue.get_messages_since(cursor);
-
-            return response_json(&SubscribeResponse {
-                session_id: self.live_session.session_id(),
-                messages: Cow::Owned(new_messages),
-                message_cursor: new_cursor,
+                Box::new(future::ok(response_json(SubscribeResponse {
+                    session_id: session_id,
+                    messages: Cow::Owned(new_messages),
+                    message_cursor: new_cursor,
+                })))
             })
-        }
+            .or_else(|e| {
+                Box::new(future::ok(Response::builder()
+                    .status(500)
+                    .body(Body::from(format!("Internal Error: {:?}", e)))
+                    .unwrap()))
+            });
+
+        Box::new(result)
     }
 
     fn handle_api_read(&self, request: Request<Body>) -> Response<Body> {

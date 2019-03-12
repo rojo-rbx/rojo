@@ -1,12 +1,13 @@
 use std::{
     collections::HashMap,
     sync::{
-        mpsc,
         atomic::{AtomicUsize, Ordering},
         RwLock,
         Mutex,
     },
 };
+
+use futures::sync::mpsc;
 
 /// A unique identifier, not guaranteed to be generated in any order.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -21,8 +22,7 @@ pub fn get_listener_id() -> ListenerId {
 
 /// A message queue with persistent history that can be subscribed to.
 ///
-/// Definitely non-optimal, but a simple design that works well for the
-/// synchronous web server Rojo uses, Rouille.
+/// Definitely non-optimal. This would ideally be a lockless mpmc queue.
 #[derive(Default)]
 pub struct MessageQueue<T> {
    messages: RwLock<Vec<T>>,
@@ -38,15 +38,15 @@ impl<T: Clone> MessageQueue<T> {
     }
 
     pub fn push_messages(&self, new_messages: &[T]) {
-        let message_listeners = self.message_listeners.lock().unwrap();
+        let mut message_listeners = self.message_listeners.lock().unwrap();
 
         {
             let mut messages = self.messages.write().unwrap();
             messages.extend_from_slice(new_messages);
         }
 
-        for listener in message_listeners.values() {
-            listener.send(()).unwrap();
+        for listener in message_listeners.values_mut() {
+            listener.try_send(()).unwrap();
         }
     }
 
