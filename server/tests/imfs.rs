@@ -1,5 +1,5 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{HashMap, HashSet, BTreeSet},
     fs,
     path::PathBuf,
 };
@@ -80,7 +80,7 @@ fn base_tree() -> Result<(TempDir, Imfs, ExpectedImfs, TestResources), Error> {
     expected_roots.insert(root.path().to_path_buf());
 
     let root_item = {
-        let mut children = HashSet::new();
+        let mut children = BTreeSet::new();
         children.insert(foo_path.clone());
         children.insert(bar_path.clone());
 
@@ -91,7 +91,7 @@ fn base_tree() -> Result<(TempDir, Imfs, ExpectedImfs, TestResources), Error> {
     };
 
     let foo_item = {
-        let mut children = HashSet::new();
+        let mut children = BTreeSet::new();
         children.insert(baz_path.clone());
 
         ImfsItem::Directory(ImfsDirectory {
@@ -199,7 +199,7 @@ fn adding_folder() -> Result<(), Error> {
     }
 
     let folder_item = {
-        let mut children = HashSet::new();
+        let mut children = BTreeSet::new();
         children.insert(file1_path.clone());
         children.insert(file2_path.clone());
 
