@@ -74,11 +74,15 @@ fn basic_equal(left_tree: &RbxTree, left_id: RbxId, right_tree: &RbxTree, right_
         .expect("ID did not exist in right tree");
 
     if left_instance.name != right_instance.name {
-        return Err(TreeMismatch::new(&left_instance.name, "Name did not match"));
+        let message = format!("Name did not match ('{}' vs '{}')", left_instance.name, right_instance.name);
+
+        return Err(TreeMismatch::new(&left_instance.name, message));
     }
 
     if left_instance.class_name != right_instance.class_name {
-        return Err(TreeMismatch::new(&left_instance.name, "Class name did not match"));
+        let message = format!("Class name did not match ('{}' vs '{}')", left_instance.class_name, right_instance.class_name);
+
+        return Err(TreeMismatch::new(&left_instance.name, message));
     }
 
     Ok(())
@@ -146,35 +150,15 @@ fn children_equal(left_tree: &RbxTree, left_id: RbxId, right_tree: &RbxTree, rig
         return Err(TreeMismatch::new(&left_instance.name, "Instances had different numbers of children"));
     }
 
-    let mut right_visited = HashSet::new();
+    for (left_child_id, right_child_id) in left_children.iter().zip(right_children) {
+        basic_equal(left_tree, *left_child_id, right_tree, *right_child_id)
+            .map_err(|e| e.add_parent(&left_instance.name))?;
 
-    for left_child_id in left_children {
-        let mut found_match = false;
+        properties_equal(left_tree, *left_child_id, right_tree, *right_child_id)
+            .map_err(|e| e.add_parent(&left_instance.name))?;
 
-        for right_child_id in right_children {
-            if right_visited.contains(right_child_id) {
-                continue;
-            }
-
-            if basic_equal(left_tree, *left_child_id, right_tree, *right_child_id).is_err() {
-                continue;
-            }
-
-            properties_equal(left_tree, *left_child_id, right_tree, *right_child_id)
-                .map_err(|e| e.add_parent(&left_instance.name))?;
-
-            children_equal(left_tree, *left_child_id, right_tree, *right_child_id)
-                .map_err(|e| e.add_parent(&left_instance.name))?;
-
-            found_match = true;
-            right_visited.insert(*right_child_id);
-        }
-
-        if !found_match {
-            let left_child = left_tree.get_instance(*left_child_id).unwrap();
-
-            return Err(TreeMismatch::new(&left_child.name, "Had no equal in right tree"));
-        }
+        children_equal(left_tree, *left_child_id, right_tree, *right_child_id)
+            .map_err(|e| e.add_parent(&left_instance.name))?;
     }
 
     Ok(())

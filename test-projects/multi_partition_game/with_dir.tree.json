@@ -1,63 +1,6 @@
 {
   "instances": {
-    "50e71545-7a19-4457-acc7-1e97ae9ece18": {
-      "Name": "something",
-      "ClassName": "ModuleScript",
-      "Properties": {
-        "Source": {
-          "Type": "String",
-          "Value": "-- b/something.lua"
-        }
-      },
-      "Id": "50e71545-7a19-4457-acc7-1e97ae9ece18",
-      "Children": [],
-      "Parent": "9a7e28d7-135d-4b8f-89dd-85bf88416d98"
-    },
-    "9b0799cc-fc16-49ce-8ee9-6feeb52ed6da": {
-      "Name": "added",
-      "ClassName": "Folder",
-      "Properties": {},
-      "Id": "9b0799cc-fc16-49ce-8ee9-6feeb52ed6da",
-      "Children": [],
-      "Parent": "6d0894f6-0365-4363-839e-66c953b42aa8"
-    },
-    "5bdc78c3-a1a9-47b8-9660-abb01364aa70": {
-      "Name": "ReplicatedStorage",
-      "ClassName": "ReplicatedStorage",
-      "Properties": {},
-      "Id": "5bdc78c3-a1a9-47b8-9660-abb01364aa70",
-      "Children": [
-        "9a7e28d7-135d-4b8f-89dd-85bf88416d98",
-        "6d0894f6-0365-4363-839e-66c953b42aa8"
-      ],
-      "Parent": "57609a96-3c79-4456-9630-4d157a5e1ee7"
-    },
-    "675477f2-d101-4d62-bb12-aacb1d1e05b5": {
-      "Name": "main",
-      "ClassName": "ModuleScript",
-      "Properties": {
-        "Source": {
-          "Type": "String",
-          "Value": "-- hello, from a/main.lua"
-        }
-      },
-      "Id": "675477f2-d101-4d62-bb12-aacb1d1e05b5",
-      "Children": [],
-      "Parent": "6d0894f6-0365-4363-839e-66c953b42aa8"
-    },
-    "6d0894f6-0365-4363-839e-66c953b42aa8": {
-      "Name": "Ack",
-      "ClassName": "Folder",
-      "Properties": {},
-      "Id": "6d0894f6-0365-4363-839e-66c953b42aa8",
-      "Children": [
-        "4ee48ea8-0f0e-4fcf-ade2-196eda2fa05c",
-        "675477f2-d101-4d62-bb12-aacb1d1e05b5",
-        "9b0799cc-fc16-49ce-8ee9-6feeb52ed6da"
-      ],
-      "Parent": "5bdc78c3-a1a9-47b8-9660-abb01364aa70"
-    },
-    "c2c90183-dfaa-4ee5-ac31-9d78ae32d3fb": {
+    "daa80612-5a17-4d07-9e4e-baad4d568676": {
       "Name": "HttpService",
       "ClassName": "HttpService",
       "Properties": {
@@ -66,22 +9,52 @@
           "Value": true
         }
       },
-      "Id": "c2c90183-dfaa-4ee5-ac31-9d78ae32d3fb",
+      "Id": "daa80612-5a17-4d07-9e4e-baad4d568676",
       "Children": [],
-      "Parent": "57609a96-3c79-4456-9630-4d157a5e1ee7"
+      "Parent": "0c31c54f-ad78-4bd1-9a85-20b16a992147"
     },
-    "57609a96-3c79-4456-9630-4d157a5e1ee7": {
-      "Name": "multi_partition_game",
-      "ClassName": "DataModel",
+    "1b9db376-c3b5-406c-8f6d-e2edf7b450ba": {
+      "Name": "Bar",
+      "ClassName": "Folder",
       "Properties": {},
-      "Id": "57609a96-3c79-4456-9630-4d157a5e1ee7",
+      "Id": "1b9db376-c3b5-406c-8f6d-e2edf7b450ba",
       "Children": [
-        "5bdc78c3-a1a9-47b8-9660-abb01364aa70",
-        "c2c90183-dfaa-4ee5-ac31-9d78ae32d3fb"
+        "8fca320f-cf3f-4b9f-b232-171533985e7f"
       ],
-      "Parent": null
+      "Parent": "cc953b08-acb9-4482-9262-be896caaa995"
     },
-    "4ee48ea8-0f0e-4fcf-ade2-196eda2fa05c": {
+    "cc953b08-acb9-4482-9262-be896caaa995": {
+      "Name": "ReplicatedStorage",
+      "ClassName": "ReplicatedStorage",
+      "Properties": {},
+      "Id": "cc953b08-acb9-4482-9262-be896caaa995",
+      "Children": [
+        "a09f9a76-75b0-463c-88cf-23098326fa3a",
+        "1b9db376-c3b5-406c-8f6d-e2edf7b450ba"
+      ],
+      "Parent": "0c31c54f-ad78-4bd1-9a85-20b16a992147"
+    },
+    "257fe82d-8711-4c82-a9f7-7a526ca575a4": {
+      "Name": "added",
+      "ClassName": "Folder",
+      "Properties": {},
+      "Id": "257fe82d-8711-4c82-a9f7-7a526ca575a4",
+      "Children": [],
+      "Parent": "a09f9a76-75b0-463c-88cf-23098326fa3a"
+    },
+    "a09f9a76-75b0-463c-88cf-23098326fa3a": {
+      "Name": "Ack",
+      "ClassName": "Folder",
+      "Properties": {},
+      "Id": "a09f9a76-75b0-463c-88cf-23098326fa3a",
+      "Children": [
+        "005fbb30-ff81-4114-9d0a-9f8344ec9096",
+        "bf13e09c-2405-4537-acdf-5572d58f53bf",
+        "257fe82d-8711-4c82-a9f7-7a526ca575a4"
+      ],
+      "Parent": "cc953b08-acb9-4482-9262-be896caaa995"
+    },
+    "005fbb30-ff81-4114-9d0a-9f8344ec9096": {
       "Name": "foo",
       "ClassName": "StringValue",
       "Properties": {
@@ -90,20 +63,47 @@
           "Value": "Hello world, from a/foo.txt"
         }
       },
-      "Id": "4ee48ea8-0f0e-4fcf-ade2-196eda2fa05c",
+      "Id": "005fbb30-ff81-4114-9d0a-9f8344ec9096",
       "Children": [],
-      "Parent": "6d0894f6-0365-4363-839e-66c953b42aa8"
+      "Parent": "a09f9a76-75b0-463c-88cf-23098326fa3a"
     },
-    "9a7e28d7-135d-4b8f-89dd-85bf88416d98": {
-      "Name": "Bar",
-      "ClassName": "Folder",
+    "0c31c54f-ad78-4bd1-9a85-20b16a992147": {
+      "Name": "multi_partition_game",
+      "ClassName": "DataModel",
       "Properties": {},
-      "Id": "9a7e28d7-135d-4b8f-89dd-85bf88416d98",
+      "Id": "0c31c54f-ad78-4bd1-9a85-20b16a992147",
       "Children": [
-        "50e71545-7a19-4457-acc7-1e97ae9ece18"
+        "cc953b08-acb9-4482-9262-be896caaa995",
+        "daa80612-5a17-4d07-9e4e-baad4d568676"
       ],
-      "Parent": "5bdc78c3-a1a9-47b8-9660-abb01364aa70"
+      "Parent": null
+    },
+    "bf13e09c-2405-4537-acdf-5572d58f53bf": {
+      "Name": "main",
+      "ClassName": "ModuleScript",
+      "Properties": {
+        "Source": {
+          "Type": "String",
+          "Value": "-- hello, from a/main.lua"
+        }
+      },
+      "Id": "bf13e09c-2405-4537-acdf-5572d58f53bf",
+      "Children": [],
+      "Parent": "a09f9a76-75b0-463c-88cf-23098326fa3a"
+    },
+    "8fca320f-cf3f-4b9f-b232-171533985e7f": {
+      "Name": "something",
+      "ClassName": "ModuleScript",
+      "Properties": {
+        "Source": {
+          "Type": "String",
+          "Value": "-- b/something.lua"
+        }
+      },
+      "Id": "8fca320f-cf3f-4b9f-b232-171533985e7f",
+      "Children": [],
+      "Parent": "1b9db376-c3b5-406c-8f6d-e2edf7b450ba"
     }
   },
-  "root_id": "57609a96-3c79-4456-9630-4d157a5e1ee7"
+  "root_id": "0c31c54f-ad78-4bd1-9a85-20b16a992147"
 }
