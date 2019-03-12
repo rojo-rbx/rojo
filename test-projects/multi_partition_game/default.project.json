@@ -1,0 +1,21 @@
+{
+  "name": "multi_partition_game",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "Ack": {
+        "$path": "a"
+      },
+      "Bar": {
+        "$path": "b"
+      }
+    },
+    "HttpService": {
+      "$className": "HttpService",
+      "$properties": {
+        "HttpEnabled": true
+      }
+    }
+  }
+}

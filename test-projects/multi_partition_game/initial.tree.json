@@ -1,0 +1,100 @@
+{
+  "instances": {
+    "a44d135b-d022-4893-8079-d921a7ba7077": {
+      "Name": "foo",
+      "ClassName": "StringValue",
+      "Properties": {
+        "Value": {
+          "Type": "String",
+          "Value": "Hello world, from a/foo.txt"
+        }
+      },
+      "Id": "a44d135b-d022-4893-8079-d921a7ba7077",
+      "Children": [],
+      "Parent": "c3319126-251e-4743-b0b8-3d58c355883e"
+    },
+    "046a1cf5-e720-4647-9161-10998594ca65": {
+      "Name": "HttpService",
+      "ClassName": "HttpService",
+      "Properties": {
+        "HttpEnabled": {
+          "Type": "Bool",
+          "Value": true
+        }
+      },
+      "Id": "046a1cf5-e720-4647-9161-10998594ca65",
+      "Children": [],
+      "Parent": "2d857fa5-51e8-4c97-9974-b7e1ec795bba"
+    },
+    "15f73586-bb1b-49c7-b543-c4d05b9f8a60": {
+      "Name": "ReplicatedStorage",
+      "ClassName": "ReplicatedStorage",
+      "Properties": {},
+      "Id": "15f73586-bb1b-49c7-b543-c4d05b9f8a60",
+      "Children": [
+        "bb3d7bbd-7c90-4838-95e3-693be4daf727",
+        "c3319126-251e-4743-b0b8-3d58c355883e"
+      ],
+      "Parent": "2d857fa5-51e8-4c97-9974-b7e1ec795bba"
+    },
+    "c3319126-251e-4743-b0b8-3d58c355883e": {
+      "Name": "Ack",
+      "ClassName": "Folder",
+      "Properties": {},
+      "Id": "c3319126-251e-4743-b0b8-3d58c355883e",
+      "Children": [
+        "a44d135b-d022-4893-8079-d921a7ba7077",
+        "031507bd-e81e-481f-a7af-401566afab0f"
+      ],
+      "Parent": "15f73586-bb1b-49c7-b543-c4d05b9f8a60"
+    },
+    "4162d6bb-732b-4da4-a917-38d267ff9c42": {
+      "Name": "something",
+      "ClassName": "ModuleScript",
+      "Properties": {
+        "Source": {
+          "Type": "String",
+          "Value": "-- b/something.lua"
+        }
+      },
+      "Id": "4162d6bb-732b-4da4-a917-38d267ff9c42",
+      "Children": [],
+      "Parent": "bb3d7bbd-7c90-4838-95e3-693be4daf727"
+    },
+    "bb3d7bbd-7c90-4838-95e3-693be4daf727": {
+      "Name": "Bar",
+      "ClassName": "Folder",
+      "Properties": {},
+      "Id": "bb3d7bbd-7c90-4838-95e3-693be4daf727",
+      "Children": [
+        "4162d6bb-732b-4da4-a917-38d267ff9c42"
+      ],
+      "Parent": "15f73586-bb1b-49c7-b543-c4d05b9f8a60"
+    },
+    "2d857fa5-51e8-4c97-9974-b7e1ec795bba": {
+      "Name": "multi_partition_game",
+      "ClassName": "DataModel",
+      "Properties": {},
+      "Id": "2d857fa5-51e8-4c97-9974-b7e1ec795bba",
+      "Children": [
+        "046a1cf5-e720-4647-9161-10998594ca65",
+        "15f73586-bb1b-49c7-b543-c4d05b9f8a60"
+      ],
+      "Parent": null
+    },
+    "031507bd-e81e-481f-a7af-401566afab0f": {
+      "Name": "main",
+      "ClassName": "ModuleScript",
+      "Properties": {
+        "Source": {
+          "Type": "String",
+          "Value": "-- hello, from a/main.lua"
+        }
+      },
+      "Id": "031507bd-e81e-481f-a7af-401566afab0f",
+      "Children": [],
+      "Parent": "c3319126-251e-4743-b0b8-3d58c355883e"
+    }
+  },
+  "root_id": "2d857fa5-51e8-4c97-9974-b7e1ec795bba"
+}

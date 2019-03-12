@@ -1,0 +1,98 @@
+use std::{
+    fs::{self, File},
+    path::{Path, PathBuf},
+};
+
+use rbx_dom_weak::RbxTree;
+
+use librojo::{
+    project::ProjectNode,
+    snapshot_reconciler::RbxSnapshotInstance,
+};
+
+const SNAPSHOT_EXPECTED_NAME: &str = "expected-snapshot.json";
+
+/// Snapshots contain absolute paths, which simplifies much of Rojo.
+///
+/// For saving snapshots to the disk, we should strip off the project folder
+/// path to make them machine-independent. This doesn't work for paths that fall
+/// outside of the project folder, but that's okay here.
+///
+/// We also need to sort children, since Rojo tends to enumerate the filesystem
+/// in an unpredictable order.
+pub fn anonymize_snapshot(project_folder_path: &Path, snapshot: &mut RbxSnapshotInstance) {
+    match snapshot.metadata.source_path.as_mut() {
+        Some(path) => *path = anonymize_path(project_folder_path, path),
+        None => {},
+    }
+
+    match snapshot.metadata.project_definition.as_mut() {
+        Some((_, project_node)) => anonymize_project_node(project_folder_path, project_node),
+        None => {},
+    }
+
+    snapshot.children.sort_by(|a, b| a.partial_cmp(b).unwrap());
+
+    for child in snapshot.children.iter_mut() {
+        anonymize_snapshot(project_folder_path, child);
+    }
+}
+
+pub fn anonymize_project_node(project_folder_path: &Path, project_node: &mut ProjectNode) {
+    match project_node.path.as_mut() {
+        Some(path) => *path = anonymize_path(project_folder_path, path),
+        None => {},
+    }
+
+    for child_node in project_node.children.values_mut() {
+        anonymize_project_node(project_folder_path, child_node);
+    }
+}
+
+pub fn anonymize_path(project_folder_path: &Path, path: &Path) -> PathBuf {
+    if path.is_absolute() {
+        path.strip_prefix(project_folder_path)
+            .expect("Could not anonymize absolute path")
+            .to_path_buf()
+    } else {
+        path.to_path_buf()
+    }
+}
+
+pub fn read_tree_by_name(path: &Path, identifier: &str) -> Option<RbxTree> {
+    let mut file_path = path.join(identifier);
+    file_path.set_extension("tree.json");
+
+    let contents = fs::read(&file_path).ok()?;
+    let tree: RbxTree = serde_json::from_slice(&contents)
+        .expect("Could not deserialize tree");
+
+    Some(tree)
+}
+
+pub fn write_tree_by_name(path: &Path, identifier: &str, tree: &RbxTree) {
+    let mut file_path = path.join(identifier);
+    file_path.set_extension("tree.json");
+
+    let mut file = File::create(file_path)
+        .expect("Could not open file to write tree");
+
+    serde_json::to_writer_pretty(&mut file, tree)
+        .expect("Could not serialize tree to file");
+}
+
+pub fn read_expected_snapshot(path: &Path) -> Option<Option<RbxSnapshotInstance<'static>>> {
+    let contents = fs::read(path.join(SNAPSHOT_EXPECTED_NAME)).ok()?;
+    let snapshot: Option<RbxSnapshotInstance<'static>> = serde_json::from_slice(&contents)
+        .expect("Could not deserialize snapshot");
+
+    Some(snapshot)
+}
+
+pub fn write_expected_snapshot(path: &Path, snapshot: &Option<RbxSnapshotInstance>) {
+    let mut file = File::create(path.join(SNAPSHOT_EXPECTED_NAME))
+        .expect("Could not open file to write snapshot");
+
+    serde_json::to_writer_pretty(&mut file, snapshot)
+        .expect("Could not serialize snapshot to file");
+}
