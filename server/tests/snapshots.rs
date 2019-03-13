@@ -24,7 +24,7 @@ use librojo::{
 use crate::test_util::{
     copy_recursive,
     snapshot::*,
-    tree::trees_equal,
+    tree::{read_tree_by_name, write_tree_by_name, trees_equal},
 };
 
 macro_rules! generate_snapshot_tests {

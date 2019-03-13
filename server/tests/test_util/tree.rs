@@ -13,10 +13,34 @@
 use std::{
     borrow::Cow,
     collections::HashSet,
+    path::Path,
+    fs::{self, File},
     fmt,
 };
 
 use rbx_dom_weak::{RbxId, RbxTree};
+
+pub fn read_tree_by_name(path: &Path, identifier: &str) -> Option<RbxTree> {
+    let mut file_path = path.join(identifier);
+    file_path.set_extension("tree.json");
+
+    let contents = fs::read(&file_path).ok()?;
+    let tree: RbxTree = serde_json::from_slice(&contents)
+        .expect("Could not deserialize tree");
+
+    Some(tree)
+}
+
+pub fn write_tree_by_name(path: &Path, identifier: &str, tree: &RbxTree) {
+    let mut file_path = path.join(identifier);
+    file_path.set_extension("tree.json");
+
+    let mut file = File::create(file_path)
+        .expect("Could not open file to write tree");
+
+    serde_json::to_writer_pretty(&mut file, tree)
+        .expect("Could not serialize tree to file");
+}
 
 #[derive(Debug)]
 pub struct TreeMismatch {

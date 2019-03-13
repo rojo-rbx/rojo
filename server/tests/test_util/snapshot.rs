@@ -3,8 +3,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use rbx_dom_weak::RbxTree;
-
 use librojo::{
     project::ProjectNode,
     snapshot_reconciler::RbxSnapshotInstance,
@@ -57,28 +55,6 @@ pub fn anonymize_path(project_folder_path: &Path, path: &Path) -> PathBuf {
     } else {
         path.to_path_buf()
     }
-}
-
-pub fn read_tree_by_name(path: &Path, identifier: &str) -> Option<RbxTree> {
-    let mut file_path = path.join(identifier);
-    file_path.set_extension("tree.json");
-
-    let contents = fs::read(&file_path).ok()?;
-    let tree: RbxTree = serde_json::from_slice(&contents)
-        .expect("Could not deserialize tree");
-
-    Some(tree)
-}
-
-pub fn write_tree_by_name(path: &Path, identifier: &str, tree: &RbxTree) {
-    let mut file_path = path.join(identifier);
-    file_path.set_extension("tree.json");
-
-    let mut file = File::create(file_path)
-        .expect("Could not open file to write tree");
-
-    serde_json::to_writer_pretty(&mut file, tree)
-        .expect("Could not serialize tree to file");
 }
 
 pub fn read_expected_snapshot(path: &Path) -> Option<Option<RbxSnapshotInstance<'static>>> {
