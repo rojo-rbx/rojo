@@ -1,7 +1,7 @@
 #[macro_use] extern crate lazy_static;
 
 use std::{
-    collections::HashMap,
+    collections::{HashMap, BTreeMap},
     path::{Path, PathBuf},
 };
 
@@ -53,7 +53,7 @@ fn single_partition_game() {
             ..Default::default()
         };
 
-        let mut replicated_storage_children = HashMap::new();
+        let mut replicated_storage_children = BTreeMap::new();
         replicated_storage_children.insert("Foo".to_string(), foo);
 
         let replicated_storage = ProjectNode {
@@ -73,7 +73,7 @@ fn single_partition_game() {
             ..Default::default()
         };
 
-        let mut root_children = HashMap::new();
+        let mut root_children = BTreeMap::new();
         root_children.insert("ReplicatedStorage".to_string(), replicated_storage);
         root_children.insert("HttpService".to_string(), http_service);
 

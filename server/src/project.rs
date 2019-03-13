@@ -1,5 +1,5 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{HashMap, HashSet, BTreeMap},
     fmt,
     fs::{self, File},
     io,
@@ -128,7 +128,7 @@ fn serialize_unresolved_map<S>(value: &HashMap<String, UnresolvedRbxValue>, seri
 /// Similar to SourceProject, the structure of nodes in the project tree is
 /// slightly different on-disk than how we want to handle them in the rest of
 /// Rojo.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct SourceProjectNode {
     #[serde(rename = "$className", skip_serializing_if = "Option::is_none")]
     class_name: Option<String>,
@@ -148,14 +148,14 @@ struct SourceProjectNode {
     path: Option<String>,
 
     #[serde(flatten)]
-    children: HashMap<String, SourceProjectNode>,
+    children: BTreeMap<String, SourceProjectNode>,
 }
 
 impl SourceProjectNode {
     /// Consumes the SourceProjectNode and turns it into a ProjectNode.
-    pub fn into_project_node(mut self, project_file_location: &Path) -> ProjectNode {
-        let children = self.children.drain()
-            .map(|(key, value)| (key, value.into_project_node(project_file_location)))
+    pub fn into_project_node(self, project_file_location: &Path) -> ProjectNode {
+        let children = self.children.iter()
+            .map(|(key, value)| (key.clone(), value.clone().into_project_node(project_file_location)))
             .collect();
 
         // Make sure that paths are absolute, transforming them by adding the
@@ -264,7 +264,7 @@ pub enum ProjectSaveError {
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
 pub struct ProjectNode {
     pub class_name: Option<String>,
-    pub children: HashMap<String, ProjectNode>,
+    pub children: BTreeMap<String, ProjectNode>,
     pub properties: HashMap<String, UnresolvedRbxValue>,
     pub ignore_unknown_instances: Option<bool>,
 
