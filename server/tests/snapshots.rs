@@ -1,6 +1,7 @@
 mod test_util;
 
 use std::{
+    collections::HashMap,
     fs,
     path::{Path, PathBuf},
     sync::Arc,
@@ -17,6 +18,7 @@ use librojo::{
     project::Project,
     live_session::LiveSession,
     rbx_snapshot::{SnapshotContext, snapshot_project_tree},
+    visualize::{VisualizeRbxTree, graphviz_to_svg},
 };
 
 use crate::test_util::{
@@ -105,10 +107,56 @@ fn tree_step(step: &str, live_session: &LiveSession, source_path: &Path) {
     let tree = rbx_session.get_tree();
 
     match read_tree_by_name(source_path, step) {
-        Some(existing) => match trees_equal(&existing, tree) {
+        Some(expected) => match trees_equal(&expected, tree) {
             Ok(_) => {}
             Err(e) => {
                 error!("Trees at step '{}' were not equal.\n{}", step, e);
+
+                let expected_gv = format!("{}", VisualizeRbxTree {
+                    tree: &expected,
+                    metadata: &HashMap::new(),
+                });
+
+                let actual_gv = format!("{}", VisualizeRbxTree {
+                    tree: rbx_session.get_tree(),
+                    metadata: &HashMap::new(),
+                });
+
+                let output_dir = PathBuf::from("failed-snapshots");
+                fs::create_dir_all(&output_dir)
+                    .expect("Could not create failed-snapshots directory");
+
+                let expected_basename = format!("{}-{}-expected", live_session.root_project().name, step);
+                let actual_basename = format!("{}-{}-actual", live_session.root_project().name, step);
+
+                let mut expected_out = output_dir.join(expected_basename);
+                let mut actual_out = output_dir.join(actual_basename);
+
+                match (graphviz_to_svg(&expected_gv), graphviz_to_svg(&actual_gv)) {
+                    (Some(expected_svg), Some(actual_svg)) => {
+                        expected_out.set_extension("svg");
+                        actual_out.set_extension("svg");
+
+                        fs::write(&expected_out, expected_svg)
+                            .expect("Couldn't write expected SVG");
+
+                        fs::write(&actual_out, actual_svg)
+                            .expect("Couldn't write actual SVG");
+                    }
+                    _ => {
+                        expected_out.set_extension("gv");
+                        actual_out.set_extension("gv");
+
+                        fs::write(&expected_out, expected_gv)
+                            .expect("Couldn't write expected GV");
+
+                        fs::write(&actual_out, actual_gv)
+                            .expect("Couldn't write actual GV");
+                    }
+                }
+
+                error!("Output at {} and {}", expected_out.display(), actual_out.display());
+
                 panic!("Tree mismatch at step '{}'", step);
             }
         }
