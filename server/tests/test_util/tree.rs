@@ -53,7 +53,7 @@ pub fn tree_step(step: &str, live_session: &LiveSession, source_path: &Path) {
     };
 
     match read_tree_by_name(source_path, step) {
-        Some(expected) => match trees_equal(&expected, &tree_with_metadata) {
+        Some(expected) => match trees_and_metadata_equal(&expected, &tree_with_metadata) {
             Ok(_) => {}
             Err(e) => {
                 error!("Trees at step '{}' were not equal.\n{}", step, e);
@@ -148,7 +148,7 @@ fn write_tree_by_name(path: &Path, identifier: &str, tree: &TreeWithMetadata) {
 }
 
 #[derive(Debug)]
-struct TreeMismatch {
+pub struct TreeMismatch {
     pub path: Cow<'static, str>,
     pub detail: Cow<'static, str>,
 }
@@ -161,7 +161,7 @@ impl TreeMismatch {
         }
     }
 
-    pub fn add_parent(mut self, name: &str) -> TreeMismatch {
+    fn add_parent(mut self, name: &str) -> TreeMismatch {
         self.path.to_mut().insert(0, '.');
         self.path.to_mut().insert_str(0, name);
 
@@ -179,7 +179,24 @@ impl fmt::Display for TreeMismatch {
     }
 }
 
-fn trees_equal(
+pub fn trees_equal(
+    left_tree: &RbxTree,
+    right_tree: &RbxTree,
+) -> Result<(), TreeMismatch> {
+    let left = TreeWithMetadata {
+        tree: Cow::Borrowed(left_tree),
+        metadata: Cow::Owned(HashMap::new()),
+    };
+
+    let right = TreeWithMetadata {
+        tree: Cow::Borrowed(right_tree),
+        metadata: Cow::Owned(HashMap::new()),
+    };
+
+    trees_and_metadata_equal(&left, &right)
+}
+
+fn trees_and_metadata_equal(
     left_tree: &TreeWithMetadata,
     right_tree: &TreeWithMetadata,
 ) -> Result<(), TreeMismatch> {
