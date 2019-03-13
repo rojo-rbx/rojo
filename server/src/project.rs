@@ -486,6 +486,10 @@ impl Project {
         }
     }
 
+    pub fn folder_location(&self) -> &Path {
+        self.file_location.parent().unwrap()
+    }
+
     fn to_source_project(&self) -> SourceProject {
         let plugins = self.plugins
             .iter()
