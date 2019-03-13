@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use std::fs::{create_dir, copy};
 use std::path::Path;
 use std::io;

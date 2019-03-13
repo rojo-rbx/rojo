@@ -1,19 +1,6 @@
 {
   "instances": {
-    "6a7e0c50-e85d-4abc-863b-48db75038c65": {
-      "Name": "foo",
-      "ClassName": "StringValue",
-      "Properties": {
-        "Value": {
-          "Type": "String",
-          "Value": "Hello world, from a/foo.txt"
-        }
-      },
-      "Id": "6a7e0c50-e85d-4abc-863b-48db75038c65",
-      "Children": [],
-      "Parent": "a27d1480-d3d6-424b-86e9-faf9cf387ae8"
-    },
-    "7abdb15d-9899-414a-baf0-7874c56f8b2a": {
+    "8d44bb30-db3c-4366-a6c5-633bd1441885": {
       "Name": "main",
       "ClassName": "ModuleScript",
       "Properties": {
@@ -22,76 +9,43 @@
           "Value": "-- hello, from a/main.lua"
         }
       },
-      "Id": "7abdb15d-9899-414a-baf0-7874c56f8b2a",
+      "Id": "8d44bb30-db3c-4366-a6c5-633bd1441885",
       "Children": [],
-      "Parent": "a27d1480-d3d6-424b-86e9-faf9cf387ae8"
+      "Parent": "1aafa29b-bdca-40a0-a677-7ead327b84ce"
     },
-    "f147da62-b6dc-4833-985a-36941e47de82": {
-      "Name": "multi_partition_game",
-      "ClassName": "DataModel",
-      "Properties": {},
-      "Id": "f147da62-b6dc-4833-985a-36941e47de82",
-      "Children": [
-        "7be3f86d-f8ce-4c6b-88cb-03db03a3fd57",
-        "fe1dd5ab-3255-47e3-a2b4-8c7181ab715e"
-      ],
-      "Parent": null
-    },
-    "b3cc71c5-a558-4fce-a795-cd955ba73c38": {
-      "Name": "added",
-      "ClassName": "Folder",
-      "Properties": {},
-      "Id": "b3cc71c5-a558-4fce-a795-cd955ba73c38",
-      "Children": [],
-      "Parent": "a27d1480-d3d6-424b-86e9-faf9cf387ae8"
-    },
-    "fe1dd5ab-3255-47e3-a2b4-8c7181ab715e": {
-      "Name": "ReplicatedStorage",
-      "ClassName": "ReplicatedStorage",
-      "Properties": {},
-      "Id": "fe1dd5ab-3255-47e3-a2b4-8c7181ab715e",
-      "Children": [
-        "a27d1480-d3d6-424b-86e9-faf9cf387ae8",
-        "6ce9c44a-0e66-4aaf-97e7-086407aed226"
-      ],
-      "Parent": "f147da62-b6dc-4833-985a-36941e47de82"
-    },
-    "7be3f86d-f8ce-4c6b-88cb-03db03a3fd57": {
-      "Name": "HttpService",
-      "ClassName": "HttpService",
-      "Properties": {
-        "HttpEnabled": {
-          "Type": "Bool",
-          "Value": true
-        }
-      },
-      "Id": "7be3f86d-f8ce-4c6b-88cb-03db03a3fd57",
-      "Children": [],
-      "Parent": "f147da62-b6dc-4833-985a-36941e47de82"
-    },
-    "a27d1480-d3d6-424b-86e9-faf9cf387ae8": {
-      "Name": "Ack",
-      "ClassName": "Folder",
-      "Properties": {},
-      "Id": "a27d1480-d3d6-424b-86e9-faf9cf387ae8",
-      "Children": [
-        "6a7e0c50-e85d-4abc-863b-48db75038c65",
-        "7abdb15d-9899-414a-baf0-7874c56f8b2a",
-        "b3cc71c5-a558-4fce-a795-cd955ba73c38"
-      ],
-      "Parent": "fe1dd5ab-3255-47e3-a2b4-8c7181ab715e"
-    },
-    "6ce9c44a-0e66-4aaf-97e7-086407aed226": {
+    "b1c9928c-bf11-427f-90eb-b672c811d859": {
       "Name": "Bar",
       "ClassName": "Folder",
       "Properties": {},
-      "Id": "6ce9c44a-0e66-4aaf-97e7-086407aed226",
+      "Id": "b1c9928c-bf11-427f-90eb-b672c811d859",
       "Children": [
-        "8e0006d3-9f03-4ed4-9cb6-81abe23a4754"
+        "8d690a2a-e987-4c86-b9ac-18e6d3a98503"
       ],
-      "Parent": "fe1dd5ab-3255-47e3-a2b4-8c7181ab715e"
+      "Parent": "9f141826-14c2-492b-b360-2558712f0c08"
     },
-    "8e0006d3-9f03-4ed4-9cb6-81abe23a4754": {
+    "645ba594-4482-441f-9f41-5bb9c444405b": {
+      "Name": "multi_partition_game",
+      "ClassName": "DataModel",
+      "Properties": {},
+      "Id": "645ba594-4482-441f-9f41-5bb9c444405b",
+      "Children": [
+        "b1298bcc-e370-44a6-9ef4-fbefa290124c",
+        "9f141826-14c2-492b-b360-2558712f0c08"
+      ],
+      "Parent": null
+    },
+    "9f141826-14c2-492b-b360-2558712f0c08": {
+      "Name": "ReplicatedStorage",
+      "ClassName": "ReplicatedStorage",
+      "Properties": {},
+      "Id": "9f141826-14c2-492b-b360-2558712f0c08",
+      "Children": [
+        "1aafa29b-bdca-40a0-a677-7ead327b84ce",
+        "b1c9928c-bf11-427f-90eb-b672c811d859"
+      ],
+      "Parent": "645ba594-4482-441f-9f41-5bb9c444405b"
+    },
+    "8d690a2a-e987-4c86-b9ac-18e6d3a98503": {
       "Name": "something",
       "ClassName": "ModuleScript",
       "Properties": {
@@ -100,10 +54,203 @@
           "Value": "-- b/something.lua"
         }
       },
-      "Id": "8e0006d3-9f03-4ed4-9cb6-81abe23a4754",
+      "Id": "8d690a2a-e987-4c86-b9ac-18e6d3a98503",
       "Children": [],
-      "Parent": "6ce9c44a-0e66-4aaf-97e7-086407aed226"
+      "Parent": "b1c9928c-bf11-427f-90eb-b672c811d859"
+    },
+    "b1298bcc-e370-44a6-9ef4-fbefa290124c": {
+      "Name": "HttpService",
+      "ClassName": "HttpService",
+      "Properties": {
+        "HttpEnabled": {
+          "Type": "Bool",
+          "Value": true
+        }
+      },
+      "Id": "b1298bcc-e370-44a6-9ef4-fbefa290124c",
+      "Children": [],
+      "Parent": "645ba594-4482-441f-9f41-5bb9c444405b"
+    },
+    "46353305-8818-48fe-94fd-80cf0c5d974c": {
+      "Name": "added",
+      "ClassName": "Folder",
+      "Properties": {},
+      "Id": "46353305-8818-48fe-94fd-80cf0c5d974c",
+      "Children": [],
+      "Parent": "1aafa29b-bdca-40a0-a677-7ead327b84ce"
+    },
+    "54f2f276-964f-4c60-87d8-5fb2209c97c9": {
+      "Name": "foo",
+      "ClassName": "StringValue",
+      "Properties": {
+        "Value": {
+          "Type": "String",
+          "Value": "Hello world, from a/foo.txt"
+        }
+      },
+      "Id": "54f2f276-964f-4c60-87d8-5fb2209c97c9",
+      "Children": [],
+      "Parent": "1aafa29b-bdca-40a0-a677-7ead327b84ce"
+    },
+    "1aafa29b-bdca-40a0-a677-7ead327b84ce": {
+      "Name": "Ack",
+      "ClassName": "Folder",
+      "Properties": {},
+      "Id": "1aafa29b-bdca-40a0-a677-7ead327b84ce",
+      "Children": [
+        "54f2f276-964f-4c60-87d8-5fb2209c97c9",
+        "8d44bb30-db3c-4366-a6c5-633bd1441885",
+        "46353305-8818-48fe-94fd-80cf0c5d974c"
+      ],
+      "Parent": "9f141826-14c2-492b-b360-2558712f0c08"
     }
   },
-  "root_id": "f147da62-b6dc-4833-985a-36941e47de82"
+  "root_id": "645ba594-4482-441f-9f41-5bb9c444405b",
+  "metadata": {
+    "b1c9928c-bf11-427f-90eb-b672c811d859": {
+      "ignore_unknown_instances": false,
+      "source_path": "b",
+      "project_definition": [
+        "Bar",
+        {
+          "class_name": null,
+          "children": {},
+          "properties": {},
+          "ignore_unknown_instances": null,
+          "path": "b"
+        }
+      ]
+    },
+    "54f2f276-964f-4c60-87d8-5fb2209c97c9": {
+      "ignore_unknown_instances": false,
+      "source_path": "a/foo.txt",
+      "project_definition": null
+    },
+    "8d44bb30-db3c-4366-a6c5-633bd1441885": {
+      "ignore_unknown_instances": false,
+      "source_path": "a/main.lua",
+      "project_definition": null
+    },
+    "9f141826-14c2-492b-b360-2558712f0c08": {
+      "ignore_unknown_instances": true,
+      "source_path": null,
+      "project_definition": [
+        "ReplicatedStorage",
+        {
+          "class_name": "ReplicatedStorage",
+          "children": {
+            "Ack": {
+              "class_name": null,
+              "children": {},
+              "properties": {},
+              "ignore_unknown_instances": null,
+              "path": "a"
+            },
+            "Bar": {
+              "class_name": null,
+              "children": {},
+              "properties": {},
+              "ignore_unknown_instances": null,
+              "path": "b"
+            }
+          },
+          "properties": {},
+          "ignore_unknown_instances": null,
+          "path": null
+        }
+      ]
+    },
+    "b1298bcc-e370-44a6-9ef4-fbefa290124c": {
+      "ignore_unknown_instances": true,
+      "source_path": null,
+      "project_definition": [
+        "HttpService",
+        {
+          "class_name": "HttpService",
+          "children": {},
+          "properties": {
+            "HttpEnabled": {
+              "Type": "Bool",
+              "Value": true
+            }
+          },
+          "ignore_unknown_instances": null,
+          "path": null
+        }
+      ]
+    },
+    "46353305-8818-48fe-94fd-80cf0c5d974c": {
+      "ignore_unknown_instances": false,
+      "source_path": "a/added",
+      "project_definition": null
+    },
+    "1aafa29b-bdca-40a0-a677-7ead327b84ce": {
+      "ignore_unknown_instances": false,
+      "source_path": "a",
+      "project_definition": [
+        "Ack",
+        {
+          "class_name": null,
+          "children": {},
+          "properties": {},
+          "ignore_unknown_instances": null,
+          "path": "a"
+        }
+      ]
+    },
+    "8d690a2a-e987-4c86-b9ac-18e6d3a98503": {
+      "ignore_unknown_instances": false,
+      "source_path": "b/something.lua",
+      "project_definition": null
+    },
+    "645ba594-4482-441f-9f41-5bb9c444405b": {
+      "ignore_unknown_instances": true,
+      "source_path": null,
+      "project_definition": [
+        "multi_partition_game",
+        {
+          "class_name": "DataModel",
+          "children": {
+            "HttpService": {
+              "class_name": "HttpService",
+              "children": {},
+              "properties": {
+                "HttpEnabled": {
+                  "Type": "Bool",
+                  "Value": true
+                }
+              },
+              "ignore_unknown_instances": null,
+              "path": null
+            },
+            "ReplicatedStorage": {
+              "class_name": "ReplicatedStorage",
+              "children": {
+                "Ack": {
+                  "class_name": null,
+                  "children": {},
+                  "properties": {},
+                  "ignore_unknown_instances": null,
+                  "path": "a"
+                },
+                "Bar": {
+                  "class_name": null,
+                  "children": {},
+                  "properties": {},
+                  "ignore_unknown_instances": null,
+                  "path": "b"
+                }
+              },
+              "properties": {},
+              "ignore_unknown_instances": null,
+              "path": null
+            }
+          },
+          "properties": {},
+          "ignore_unknown_instances": null,
+          "path": null
+        }
+      ]
+    }
+  }
 }

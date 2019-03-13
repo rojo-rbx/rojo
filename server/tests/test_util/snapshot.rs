@@ -6,6 +6,7 @@ use std::{
 use librojo::{
     project::ProjectNode,
     snapshot_reconciler::RbxSnapshotInstance,
+    rbx_session::MetadataPerInstance,
 };
 
 const SNAPSHOT_EXPECTED_NAME: &str = "expected-snapshot.json";
@@ -19,20 +20,24 @@ const SNAPSHOT_EXPECTED_NAME: &str = "expected-snapshot.json";
 /// We also need to sort children, since Rojo tends to enumerate the filesystem
 /// in an unpredictable order.
 pub fn anonymize_snapshot(project_folder_path: &Path, snapshot: &mut RbxSnapshotInstance) {
-    match snapshot.metadata.source_path.as_mut() {
-        Some(path) => *path = anonymize_path(project_folder_path, path),
-        None => {},
-    }
-
-    match snapshot.metadata.project_definition.as_mut() {
-        Some((_, project_node)) => anonymize_project_node(project_folder_path, project_node),
-        None => {},
-    }
+    anonymize_metadata(project_folder_path, &mut snapshot.metadata);
 
     snapshot.children.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
     for child in snapshot.children.iter_mut() {
         anonymize_snapshot(project_folder_path, child);
+    }
+}
+
+pub fn anonymize_metadata(project_folder_path: &Path, metadata: &mut MetadataPerInstance) {
+    match metadata.source_path.as_mut() {
+        Some(path) => *path = anonymize_path(project_folder_path, path),
+        None => {},
+    }
+
+    match metadata.project_definition.as_mut() {
+        Some((_, project_node)) => anonymize_project_node(project_folder_path, project_node),
+        None => {},
     }
 }
 
