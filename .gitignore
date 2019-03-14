@@ -3,3 +3,4 @@
 /scratch-project
 **/*.rs.bk
 /generate-docs.run
+/server/failed-snapshots/

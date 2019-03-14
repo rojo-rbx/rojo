@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     fmt,
     io::Write,
     path::Path,
@@ -6,12 +7,13 @@ use std::{
 };
 
 use log::warn;
-use rbx_dom_weak::RbxId;
+use rbx_dom_weak::{RbxTree, RbxId};
 
 use crate::{
     imfs::{Imfs, ImfsItem},
     rbx_session::RbxSession,
     web::api::PublicInstanceMetadata,
+    rbx_session::MetadataPerInstance,
 };
 
 static GRAPHVIZ_HEADER: &str = r#"
@@ -53,42 +55,59 @@ pub fn graphviz_to_svg(source: &str) -> Option<String> {
     Some(String::from_utf8(output.stdout).expect("Failed to parse stdout as UTF-8"))
 }
 
+pub struct VisualizeRbxTree<'a, 'b> {
+    pub tree: &'a RbxTree,
+    pub metadata: &'b HashMap<RbxId, MetadataPerInstance>,
+}
+
+impl<'a, 'b> fmt::Display for VisualizeRbxTree<'a, 'b> {
+    fn fmt(&self, output: &mut fmt::Formatter) -> fmt::Result {
+        writeln!(output, "{}", GRAPHVIZ_HEADER)?;
+
+        visualize_instance(&self.tree, self.tree.get_root_id(), &self.metadata, output)?;
+
+        writeln!(output, "}}")
+    }
+}
+
 /// A Display wrapper struct to visualize an RbxSession as SVG.
 pub struct VisualizeRbxSession<'a>(pub &'a RbxSession);
 
 impl<'a> fmt::Display for VisualizeRbxSession<'a> {
     fn fmt(&self, output: &mut fmt::Formatter) -> fmt::Result {
-        writeln!(output, "{}", GRAPHVIZ_HEADER)?;
-
-        visualize_rbx_node(self.0, self.0.get_tree().get_root_id(), output)?;
-
-        writeln!(output, "}}")?;
-
-        Ok(())
+        writeln!(output, "{}", VisualizeRbxTree {
+            tree: self.0.get_tree(),
+            metadata: self.0.get_all_instance_metadata(),
+        })
     }
 }
 
-fn visualize_rbx_node(session: &RbxSession, id: RbxId, output: &mut fmt::Formatter) -> fmt::Result {
-    let node = session.get_tree().get_instance(id).unwrap();
+fn visualize_instance(
+    tree: &RbxTree,
+    id: RbxId,
+    metadata: &HashMap<RbxId, MetadataPerInstance>,
+    output: &mut fmt::Formatter,
+) -> fmt::Result {
+    let instance = tree.get_instance(id).unwrap();
 
-    let mut node_label = format!("{}|{}|{}", node.name, node.class_name, id);
+    let mut instance_label = format!("{}|{}|{}", instance.name, instance.class_name, id);
 
-    if let Some(session_metadata) = session.get_instance_metadata(id) {
+    if let Some(session_metadata) = metadata.get(&id) {
         let metadata = PublicInstanceMetadata::from_session_metadata(session_metadata);
-        node_label.push('|');
-        node_label.push_str(&serde_json::to_string(&metadata).unwrap());
+        instance_label.push('|');
+        instance_label.push_str(&serde_json::to_string(&metadata).unwrap());
     }
 
-    node_label = node_label
+    instance_label = instance_label
         .replace("\"", "&quot;")
         .replace("{", "\\{")
         .replace("}", "\\}");
 
-    writeln!(output, "    \"{}\" [label=\"{}\"]", id, node_label)?;
+    writeln!(output, "    \"{}\" [label=\"{}\"]", id, instance_label)?;
 
-    for &child_id in node.get_children_ids() {
+    for &child_id in instance.get_children_ids() {
         writeln!(output, "    \"{}\" -> \"{}\"", id, child_id)?;
-        visualize_rbx_node(session, child_id, output)?;
+        visualize_instance(tree, child_id, metadata, output)?;
     }
 
     Ok(())

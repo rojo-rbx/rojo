@@ -251,6 +251,10 @@ impl RbxSession {
         &self.tree
     }
 
+    pub fn get_all_instance_metadata(&self) -> &HashMap<RbxId, MetadataPerInstance> {
+        &self.metadata_per_instance
+    }
+
     pub fn get_instance_metadata(&self, id: RbxId) -> Option<&MetadataPerInstance> {
         self.metadata_per_instance.get(&id)
     }

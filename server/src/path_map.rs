@@ -20,6 +20,12 @@ pub struct PathMap<T> {
     nodes: HashMap<PathBuf, PathMapNode<T>>,
 }
 
+impl<T> Default for PathMap<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<T> PathMap<T> {
     pub fn new() -> PathMap<T> {
         PathMap {

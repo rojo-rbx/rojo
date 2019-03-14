@@ -1,0 +1,212 @@
+{
+  "name": "multi_partition_game",
+  "class_name": "DataModel",
+  "properties": {},
+  "children": [
+    {
+      "name": "HttpService",
+      "class_name": "HttpService",
+      "properties": {
+        "HttpEnabled": {
+          "Type": "Bool",
+          "Value": true
+        }
+      },
+      "children": [],
+      "metadata": {
+        "ignore_unknown_instances": true,
+        "source_path": null,
+        "project_definition": [
+          "HttpService",
+          {
+            "class_name": "HttpService",
+            "children": {},
+            "properties": {
+              "HttpEnabled": {
+                "Type": "Bool",
+                "Value": true
+              }
+            },
+            "ignore_unknown_instances": null,
+            "path": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "ReplicatedStorage",
+      "class_name": "ReplicatedStorage",
+      "properties": {},
+      "children": [
+        {
+          "name": "Ack",
+          "class_name": "Folder",
+          "properties": {},
+          "children": [
+            {
+              "name": "foo",
+              "class_name": "StringValue",
+              "properties": {
+                "Value": {
+                  "Type": "String",
+                  "Value": "Hello world, from a/foo.txt"
+                }
+              },
+              "children": [],
+              "metadata": {
+                "ignore_unknown_instances": false,
+                "source_path": "a/foo.txt",
+                "project_definition": null
+              }
+            },
+            {
+              "name": "main",
+              "class_name": "ModuleScript",
+              "properties": {
+                "Source": {
+                  "Type": "String",
+                  "Value": "-- hello, from a/main.lua"
+                }
+              },
+              "children": [],
+              "metadata": {
+                "ignore_unknown_instances": false,
+                "source_path": "a/main.lua",
+                "project_definition": null
+              }
+            }
+          ],
+          "metadata": {
+            "ignore_unknown_instances": false,
+            "source_path": "a",
+            "project_definition": [
+              "Ack",
+              {
+                "class_name": null,
+                "children": {},
+                "properties": {},
+                "ignore_unknown_instances": null,
+                "path": "a"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Bar",
+          "class_name": "Folder",
+          "properties": {},
+          "children": [
+            {
+              "name": "something",
+              "class_name": "ModuleScript",
+              "properties": {
+                "Source": {
+                  "Type": "String",
+                  "Value": "-- b/something.lua"
+                }
+              },
+              "children": [],
+              "metadata": {
+                "ignore_unknown_instances": false,
+                "source_path": "b/something.lua",
+                "project_definition": null
+              }
+            }
+          ],
+          "metadata": {
+            "ignore_unknown_instances": false,
+            "source_path": "b",
+            "project_definition": [
+              "Bar",
+              {
+                "class_name": null,
+                "children": {},
+                "properties": {},
+                "ignore_unknown_instances": null,
+                "path": "b"
+              }
+            ]
+          }
+        }
+      ],
+      "metadata": {
+        "ignore_unknown_instances": true,
+        "source_path": null,
+        "project_definition": [
+          "ReplicatedStorage",
+          {
+            "class_name": "ReplicatedStorage",
+            "children": {
+              "Bar": {
+                "class_name": null,
+                "children": {},
+                "properties": {},
+                "ignore_unknown_instances": null,
+                "path": "b"
+              },
+              "Ack": {
+                "class_name": null,
+                "children": {},
+                "properties": {},
+                "ignore_unknown_instances": null,
+                "path": "a"
+              }
+            },
+            "properties": {},
+            "ignore_unknown_instances": null,
+            "path": null
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "ignore_unknown_instances": true,
+    "source_path": null,
+    "project_definition": [
+      "multi_partition_game",
+      {
+        "class_name": "DataModel",
+        "children": {
+          "ReplicatedStorage": {
+            "class_name": "ReplicatedStorage",
+            "children": {
+              "Bar": {
+                "class_name": null,
+                "children": {},
+                "properties": {},
+                "ignore_unknown_instances": null,
+                "path": "b"
+              },
+              "Ack": {
+                "class_name": null,
+                "children": {},
+                "properties": {},
+                "ignore_unknown_instances": null,
+                "path": "a"
+              }
+            },
+            "properties": {},
+            "ignore_unknown_instances": null,
+            "path": null
+          },
+          "HttpService": {
+            "class_name": "HttpService",
+            "children": {},
+            "properties": {
+              "HttpEnabled": {
+                "Type": "Bool",
+                "Value": true
+              }
+            },
+            "ignore_unknown_instances": null,
+            "path": null
+          }
+        },
+        "properties": {},
+        "ignore_unknown_instances": null,
+        "path": null
+      }
+    ]
+  }
+}

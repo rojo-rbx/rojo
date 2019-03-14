@@ -64,7 +64,7 @@ impl InstanceChanges {
 
 /// A lightweight, hierarchical representation of an instance that can be
 /// applied to the tree.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct RbxSnapshotInstance<'a> {
     pub name: Cow<'a, str>,
     pub class_name: Cow<'a, str>,

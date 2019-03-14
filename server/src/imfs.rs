@@ -1,9 +1,10 @@
 use std::{
-    collections::{HashMap, HashSet},
-    path::{self, Path, PathBuf},
+    cmp::Ordering,
+    collections::{HashMap, HashSet, BTreeSet},
     fmt,
     fs,
     io,
+    path::{self, Path, PathBuf},
 };
 
 use failure::Fail;
@@ -237,7 +238,7 @@ impl Imfs {
         } else if metadata.is_dir() {
             let item = ImfsItem::Directory(ImfsDirectory {
                 path: path.to_path_buf(),
-                children: HashSet::new(),
+                children: BTreeSet::new(),
             });
 
             self.items.insert(path.to_path_buf(), item);
@@ -285,19 +286,43 @@ impl Imfs {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ImfsFile {
     pub path: PathBuf,
     pub contents: Vec<u8>,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct ImfsDirectory {
-    pub path: PathBuf,
-    pub children: HashSet<PathBuf>,
+impl PartialOrd for ImfsFile {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+impl Ord for ImfsFile {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.path.cmp(&other.path)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ImfsDirectory {
+    pub path: PathBuf,
+    pub children: BTreeSet<PathBuf>,
+}
+
+impl PartialOrd for ImfsDirectory {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for ImfsDirectory {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.path.cmp(&other.path)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum ImfsItem {
     File(ImfsFile),
     Directory(ImfsDirectory),
