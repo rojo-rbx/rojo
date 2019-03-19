@@ -1,6 +1,6 @@
 local InstanceMap = require(script.Parent.InstanceMap)
 local Logging = require(script.Parent.Logging)
-local setProperty = require(script.Parent.setProperty)
+local setCanonicalProperty = require(script.Parent.setCanonicalProperty)
 local rojoValueToRobloxValue = require(script.Parent.rojoValueToRobloxValue)
 
 local Reconciler = {}
@@ -43,10 +43,10 @@ function Reconciler:reconcile(virtualInstancesById, id, instance)
 	self.instanceMap:insert(id, instance)
 
 	-- Some instances don't like being named, even if their name already matches
-	setProperty(instance, "Name", virtualInstance.Name)
+	setCanonicalProperty(instance, "Name", virtualInstance.Name)
 
 	for key, value in pairs(virtualInstance.Properties) do
-		setProperty(instance, key, rojoValueToRobloxValue(value))
+		setCanonicalProperty(instance, key, rojoValueToRobloxValue(value))
 	end
 
 	local existingChildren = instance:GetChildren()
@@ -81,10 +81,17 @@ function Reconciler:reconcile(virtualInstancesById, id, instance)
 		end
 	end
 
-	if self:__shouldClearUnknownInstances(virtualInstance) then
-		for existingChildInstance in pairs(unvisitedExistingChildren) do
-			self.instanceMap:removeInstance(existingChildInstance)
-			existingChildInstance:Destroy()
+	local shouldClearUnknown = self:__shouldClearUnknownChildren(virtualInstance)
+
+	for existingChildInstance in pairs(unvisitedExistingChildren) do
+		local childId = self.instanceMap.fromInstances[existingChildInstance]
+
+		if childId == nil then
+			if shouldClearUnknown then
+				existingChildInstance:Destroy()
+			end
+		else
+			self.instanceMap:destroyInstance(existingChildInstance)
 		end
 	end
 
@@ -100,13 +107,13 @@ function Reconciler:reconcile(virtualInstancesById, id, instance)
 
 		-- Some instances, like services, don't like having their Parent
 		-- property poked, even if we're setting it to the same value.
-		setProperty(instance, "Parent", parent)
+		setCanonicalProperty(instance, "Parent", parent)
 	end
 
 	return instance
 end
 
-function Reconciler:__shouldClearUnknownInstances(virtualInstance)
+function Reconciler:__shouldClearUnknownChildren(virtualInstance)
 	if virtualInstance.Metadata ~= nil then
 		return not virtualInstance.Metadata.ignoreUnknownInstances
 	else
@@ -120,16 +127,16 @@ function Reconciler:__reify(virtualInstancesById, id, parent)
 	local instance = Instance.new(virtualInstance.ClassName)
 
 	for key, value in pairs(virtualInstance.Properties) do
-		setProperty(instance, key, rojoValueToRobloxValue(value))
+		setCanonicalProperty(instance, key, rojoValueToRobloxValue(value))
 	end
 
-	instance.Name = virtualInstance.Name
+	setCanonicalProperty(instance, "Name", virtualInstance.Name)
 
 	for _, childId in ipairs(virtualInstance.Children) do
 		self:__reify(virtualInstancesById, childId, instance)
 	end
 
-	setProperty(instance, "Parent", parent)
+	setCanonicalProperty(instance, "Parent", parent)
 	self.instanceMap:insert(id, instance)
 
 	return instance

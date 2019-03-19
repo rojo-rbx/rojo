@@ -1,10 +1,17 @@
 local Logging = require(script.Parent.Logging)
 
 --[[
-	Attempts to set a property on the given instance, correctly handling
-	'virtual properties', which aren't reflected directly to Lua.
+	Attempts to set a property on the given instance.
+
+	This method deals in terms of what Rojo calls 'canonical properties', which
+	don't necessarily exist either in serialization or in Lua-reflected APIs,
+	but may be present in the API dump.
+
+	Ideally, canonical properties map 1:1 with properties we can assign, but in
+	some cases like LocalizationTable contents and CollectionService tags, we
+	have to read/write properties a little differently.
 ]]
-local function setProperty(instance, key, value)
+local function setCanonicalProperty(instance, key, value)
 	-- The 'Contents' property of LocalizationTable isn't directly exposed, but
 	-- has corresponding (deprecated) getters and setters.
 	if instance.ClassName == "LocalizationTable" and key == "Contents" then
@@ -42,4 +49,4 @@ local function setProperty(instance, key, value)
 	return true
 end
 
-return setProperty
+return setCanonicalProperty
