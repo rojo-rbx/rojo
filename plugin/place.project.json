@@ -40,8 +40,8 @@
       }
     },
 
-    "TestService": {
-      "$className": "TestService",
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
 
       "TestBootstrap": {
         "$path": "testBootstrap.server.lua"
