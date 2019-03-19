@@ -45,6 +45,16 @@ function InstanceMap:removeInstance(instance)
 	end
 end
 
+function InstanceMap:destroyInstance(instance)
+	local id = self.fromInstances[instance]
+
+	if id ~= nil then
+		self:destroyId(id)
+	else
+		Logging.warn("Attempted to destroy untracked instance %s", tostring(instance))
+	end
+end
+
 function InstanceMap:destroyId(id)
 	local instance = self.fromIds[id]
 	self:removeId(id)
