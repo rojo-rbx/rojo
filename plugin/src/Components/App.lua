@@ -182,6 +182,13 @@ function App:didMount()
 	preloadAssets()
 end
 
+function App:willUnmount()
+	if self.currentSession ~= nil then
+		self.currentSession:disconnect()
+		self.currentSession = nil
+	end
+end
+
 function App:didUpdate()
 	local connectActive = self.state.sessionStatus == SessionStatus.ConfiguringSession
 		or self.state.sessionStatus == SessionStatus.Connected
