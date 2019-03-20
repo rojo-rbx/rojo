@@ -153,7 +153,7 @@ pub fn reify_subtree(
     instance_per_path: &mut PathMap<HashSet<RbxId>>,
     metadata_per_instance: &mut HashMap<RbxId, MetadataPerInstance>,
     changes: &mut InstanceChanges,
-) {
+) -> RbxId {
     let instance = reify_core(snapshot);
     let id = tree.insert_instance(instance, parent_id);
 
@@ -164,6 +164,8 @@ pub fn reify_subtree(
     for child in &snapshot.children {
         reify_subtree(child, tree, id, instance_per_path, metadata_per_instance, changes);
     }
+
+    id
 }
 
 fn reify_metadata(
@@ -222,6 +224,9 @@ fn reify_core(snapshot: &RbxSnapshotInstance) -> RbxInstanceProperties {
     instance
 }
 
+/// Updates the given instance to match the properties defined on the snapshot.
+///
+/// Returns whether any changes were applied.
 fn reconcile_instance_properties(instance: &mut RbxInstanceProperties, snapshot: &RbxSnapshotInstance) -> bool {
     let mut has_diffs = false;
 
@@ -279,6 +284,8 @@ fn reconcile_instance_properties(instance: &mut RbxInstanceProperties, snapshot:
     has_diffs
 }
 
+/// Updates the children of the instance in the `RbxTree` to match the children
+/// of the `RbxSnapshotInstance`. Order will be updated to match.
 fn reconcile_instance_children(
     tree: &mut RbxTree,
     id: RbxId,
@@ -287,11 +294,20 @@ fn reconcile_instance_children(
     metadata_per_instance: &mut HashMap<RbxId, MetadataPerInstance>,
     changes: &mut InstanceChanges,
 ) {
-    let mut visited_snapshot_indices = HashSet::new();
-
-    let mut children_to_update: Vec<(RbxId, &RbxSnapshotInstance)> = Vec::new();
-    let mut children_to_add: Vec<&RbxSnapshotInstance> = Vec::new();
+    // These lists are kept so that we can apply all the changes we figure out
+    let mut children_to_maybe_update: Vec<(RbxId, &RbxSnapshotInstance)> = Vec::new();
+    let mut children_to_add: Vec<(usize, &RbxSnapshotInstance)> = Vec::new();
     let mut children_to_remove: Vec<RbxId> = Vec::new();
+
+    // This map is used once we're done mutating children to sort them according
+    // to the order specified in the snapshot. Without it, a snapshot with a new
+    // child prepended will cause the RbxTree instance to have out-of-order
+    // children and would make Rojo non-deterministic.
+    let mut ids_to_snapshot_indices = HashMap::new();
+
+    // Since we have to enumerate the children of both the RbxTree instance and
+    // our snapshot, we keep a set of the snapshot children we've seen.
+    let mut visited_snapshot_indices = vec![false; snapshot.children.len()];
 
     let children_ids = tree.get_instance(id).unwrap().get_children_ids();
 
@@ -303,7 +319,7 @@ fn reconcile_instance_children(
         // Locate a matching snapshot for this instance
         let mut matching_snapshot = None;
         for (snapshot_index, child_snapshot) in snapshot.children.iter().enumerate() {
-            if visited_snapshot_indices.contains(&snapshot_index) {
+            if visited_snapshot_indices[snapshot_index] {
                 continue;
             }
 
@@ -311,7 +327,8 @@ fn reconcile_instance_children(
             // similar. This heuristic is similar to React's reconciliation
             // strategy.
             if child_snapshot.name == child_instance.name {
-                visited_snapshot_indices.insert(snapshot_index);
+                ids_to_snapshot_indices.insert(child_id, snapshot_index);
+                visited_snapshot_indices[snapshot_index] = true;
                 matching_snapshot = Some(child_snapshot);
                 break;
             }
@@ -319,26 +336,23 @@ fn reconcile_instance_children(
 
         match matching_snapshot {
             Some(child_snapshot) => {
-                children_to_update.push((child_instance.get_id(), child_snapshot));
-            },
+                children_to_maybe_update.push((child_instance.get_id(), child_snapshot));
+            }
             None => {
                 children_to_remove.push(child_instance.get_id());
-            },
+            }
         }
     }
 
     // Find all instancs that were added, which is just the snapshots we didn't
     // match up to existing instances above.
     for (snapshot_index, child_snapshot) in snapshot.children.iter().enumerate() {
-        if !visited_snapshot_indices.contains(&snapshot_index) {
-            children_to_add.push(child_snapshot);
+        if !visited_snapshot_indices[snapshot_index] {
+            children_to_add.push((snapshot_index, child_snapshot));
         }
     }
 
-    for child_snapshot in &children_to_add {
-        reify_subtree(child_snapshot, tree, id, instance_per_path, metadata_per_instance, changes);
-    }
-
+    // Apply all of our removals we gathered from our diff
     for child_id in &children_to_remove {
         if let Some(subtree) = tree.remove_instance(*child_id) {
             for id in subtree.iter_all_ids() {
@@ -348,7 +362,18 @@ fn reconcile_instance_children(
         }
     }
 
-    for (child_id, child_snapshot) in &children_to_update {
+    // Apply all of our children additions
+    for (snapshot_index, child_snapshot) in &children_to_add {
+        let id = reify_subtree(child_snapshot, tree, id, instance_per_path, metadata_per_instance, changes);
+        ids_to_snapshot_indices.insert(id, *snapshot_index);
+    }
+
+    // Apply any updates that might have updates
+    for (child_id, child_snapshot) in &children_to_maybe_update {
         reconcile_subtree(tree, *child_id, child_snapshot, instance_per_path, metadata_per_instance, changes);
     }
+
+    // Apply the sort mapping defined by ids_to_snapshot_indices above
+    let instance = tree.get_instance_mut(id).unwrap();
+    instance.sort_children_unstable_by_key(|id| ids_to_snapshot_indices.get(&id).unwrap());
 }
