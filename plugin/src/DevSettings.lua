@@ -1,10 +1,27 @@
 local Config = require(script.Parent.Config)
 
+local Environment = {
+	User = "User",
+	Dev = "Dev",
+	Test = "Test",
+}
+
 local VALUES = {
 	LogLevel = {
 		type = "IntValue",
-		defaultUserValue = 2,
-		defaultDevValue = 3,
+		values = {
+			[Environment.User] = 2,
+			[Environment.Dev] = 3,
+			[Environment.Test] = 3,
+		},
+	},
+	TypecheckingEnabled = {
+		type = "BoolValue",
+		values = {
+			[Environment.User] = false,
+			[Environment.Dev] = true,
+			[Environment.Test] = true,
+		},
 	},
 }
 
@@ -42,7 +59,9 @@ local function setStoredValue(name, kind, value)
 	object.Value = value
 end
 
-local function createAllValues()
+local function createAllValues(environment)
+	assert(Environment[environment] ~= nil, "Invalid environment")
+
 	valueContainer = getValueContainer()
 
 	if valueContainer == nil then
@@ -52,20 +71,57 @@ local function createAllValues()
 	end
 
 	for name, value in pairs(VALUES) do
-		setStoredValue(name, value.type, value.defaultDevValue)
+		setStoredValue(name, value.type, value.values[environment])
 	end
 end
 
-_G[("ROJO_%s_DEV_CREATE"):format(Config.codename:upper())] = createAllValues
+local function getValue(name)
+	assert(VALUES[name] ~= nil, "Invalid DevSettings name")
+
+	local stored = getStoredValue(name)
+
+	if stored ~= nil then
+		return stored
+	end
+
+	return VALUES[name].values[Environment.User]
+end
 
 local DevSettings = {}
+
+function DevSettings:createDevSettings()
+	createAllValues(Environment.Dev)
+end
+
+function DevSettings:createTestSettings()
+	createAllValues(Environment.Test)
+end
+
+function DevSettings:hasChangedValues()
+	return valueContainer ~= nil
+end
+
+function DevSettings:resetValues()
+	if valueContainer then
+		valueContainer:Destroy()
+		valueContainer = nil
+	end
+end
 
 function DevSettings:isEnabled()
 	return valueContainer ~= nil
 end
 
 function DevSettings:getLogLevel()
-	return getStoredValue("LogLevel") or VALUES.LogLevel.defaultUserValue
+	return getValue("LogLevel")
+end
+
+function DevSettings:shouldTypecheck()
+	return getValue("TypecheckingEnabled")
+end
+
+function _G.ROJO_DEV_CREATE()
+	DevSettings:createDevSettings()
 end
 
 return DevSettings

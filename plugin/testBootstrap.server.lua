@@ -1,2 +1,19 @@
-local TestEZ = require(game.ReplicatedStorage.TestEZ)
-TestEZ.TestBootstrap:run({game.ReplicatedStorage.Rojo.Plugin})
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local TestEZ = require(ReplicatedStorage.TestEZ)
+
+local Rojo = ReplicatedStorage.Rojo
+
+local DevSettings = require(Rojo.Plugin.DevSettings)
+
+local setDevSettings = not DevSettings:hasChangedValues()
+
+if setDevSettings then
+	DevSettings:createTestSettings()
+end
+
+TestEZ.TestBootstrap:run({Rojo.Plugin})
+
+if setDevSettings then
+	DevSettings:resetValues()
+end

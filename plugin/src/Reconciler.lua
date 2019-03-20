@@ -1,7 +1,10 @@
+local t = require(script.Parent.Parent.t)
+
 local InstanceMap = require(script.Parent.InstanceMap)
 local Logging = require(script.Parent.Logging)
 local setCanonicalProperty = require(script.Parent.setCanonicalProperty)
 local rojoValueToRobloxValue = require(script.Parent.rojoValueToRobloxValue)
+local Types = require(script.Parent.Types)
 
 local Reconciler = {}
 Reconciler.__index = Reconciler
@@ -24,11 +27,18 @@ function Reconciler:applyUpdate(requestedIds, virtualInstancesById)
 	end
 end
 
+local reconcileSchema = Types.ifEnabled(t.tuple(
+	t.map(t.string, Types.VirtualInstance),
+	t.string,
+	t.Instance
+))
 --[[
 	Update an existing instance, including its properties and children, to match
 	the given information.
 ]]
 function Reconciler:reconcile(virtualInstancesById, id, instance)
+	assert(reconcileSchema(virtualInstancesById, id, instance))
+
 	local virtualInstance = virtualInstancesById[id]
 
 	-- If an instance changes ClassName, we assume it's very different. That's
@@ -121,7 +131,15 @@ function Reconciler:__shouldClearUnknownChildren(virtualInstance)
 	end
 end
 
+local reifySchema = Types.ifEnabled(t.tuple(
+	t.map(t.string, Types.VirtualInstance),
+	t.string,
+	t.Instance
+))
+
 function Reconciler:__reify(virtualInstancesById, id, parent)
+	assert(reifySchema(virtualInstancesById, id, parent))
+
 	local virtualInstance = virtualInstancesById[id]
 
 	local instance = Instance.new(virtualInstance.ClassName)
@@ -142,7 +160,15 @@ function Reconciler:__reify(virtualInstancesById, id, parent)
 	return instance
 end
 
+local applyUpdatePieceSchema = Types.ifEnabled(t.tuple(
+	t.string,
+	t.map(t.string, t.boolean),
+	t.map(t.string, Types.VirtualInstance)
+))
+
 function Reconciler:__applyUpdatePiece(id, visitedIds, virtualInstancesById)
+	assert(applyUpdatePieceSchema(id, visitedIds, virtualInstancesById))
+
 	if visitedIds[id] then
 		return
 	end
