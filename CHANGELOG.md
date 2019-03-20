@@ -1,13 +1,16 @@
 # Rojo Changelog
 
 ## [Unreleased]
-* Fixed `cargo init` giving unexpected results by upgrading to `rbx_dom_weak` 1.1.0
-* Fixed API not responding when the Rojo plugin is connected ([#133](https://github.com/LPGhatguy/rojo/issues/133))
+
+## [0.5.0 Alpha 6](https://github.com/LPGhatguy/rojo/releases/tag/v0.5.0-alpha.6) (March 19, 2019)
+* Fixed `rojo init` giving unexpected results by upgrading to `rbx_dom_weak` 1.1.0
+* Fixed live server not responding when the Rojo plugin is connected ([#133](https://github.com/LPGhatguy/rojo/issues/133))
 * Updated default place file:
     * Improved default properties to be closer to Studio's built-in 'Baseplate' template
     * Added a baseplate to the project file (Thanks, [@AmaranthineCodices](https://github.com/AmaranthineCodices/)!)
 * Added more type support to Rojo plugin
 * Fixed some cases where the Rojo plugin would leave around objects that it knows should be deleted
+* Updated plugin to correctly listen to `Plugin.Unloading` when installing or uninstalling new plugins
 
 ## [0.5.0 Alpha 5](https://github.com/LPGhatguy/rojo/releases/tag/v0.5.0-alpha.5) (March 1, 2019)
 * Upgraded core dependencies, which improves compatibility for lots of instance types
