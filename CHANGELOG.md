@@ -1,6 +1,16 @@
 # Rojo Changelog
 
 ## [Unreleased]
+* Added support for a bunch of new types when dealing with XML model/place files:
+    * `ColorSequence`
+    * `Float64`
+    * `Int64`
+    * `NumberRange`
+    * `NumberSequence`
+    * `PhysicalProperties`
+    * `Ray`
+    * `Rect`
+    * `Ref`
 * Improved server instance ordering behavior when files are added during a live session ([#135](https://github.com/LPGhatguy/rojo/pull/135))
 * Fixed error being thrown when trying to unload the Rojo plugin.
 
