@@ -1,23 +1,28 @@
 use std::{
-    collections::HashMap,
+    mem,
     sync::{
-        atomic::{AtomicUsize, Ordering},
         RwLock,
         Mutex,
     },
 };
 
-use futures::sync::mpsc;
+use futures::sync::oneshot;
 
-/// A unique identifier, not guaranteed to be generated in any order.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct ListenerId(usize);
+struct Listener<T> {
+    sender: oneshot::Sender<(u32, Vec<T>)>,
+    cursor: u32,
+}
 
-/// Generate a new ID, which has no defined ordering.
-pub fn get_listener_id() -> ListenerId {
-    static LAST_ID: AtomicUsize = AtomicUsize::new(0);
+fn fire_listener_if_ready<T: Clone>(messages: &[T], listener: Listener<T>) -> Result<(), Listener<T>> {
+    let current_cursor = messages.len() as u32;
 
-    ListenerId(LAST_ID.fetch_add(1, Ordering::SeqCst))
+    if listener.cursor < current_cursor {
+        let new_messages = messages[(listener.cursor as usize)..].to_vec();
+        let _ = listener.sender.send((current_cursor, new_messages));
+        Ok(())
+    } else {
+        Err(listener)
+    }
 }
 
 /// A message queue with persistent history that can be subscribed to.
@@ -26,42 +31,53 @@ pub fn get_listener_id() -> ListenerId {
 #[derive(Default)]
 pub struct MessageQueue<T> {
    messages: RwLock<Vec<T>>,
-   message_listeners: Mutex<HashMap<ListenerId, mpsc::Sender<()>>>,
+   message_listeners: Mutex<Vec<Listener<T>>>,
 }
 
 impl<T: Clone> MessageQueue<T> {
     pub fn new() -> MessageQueue<T> {
         MessageQueue {
             messages: RwLock::new(Vec::new()),
-            message_listeners: Mutex::new(HashMap::new()),
+            message_listeners: Mutex::new(Vec::new()),
         }
     }
 
     pub fn push_messages(&self, new_messages: &[T]) {
         let mut message_listeners = self.message_listeners.lock().unwrap();
+        let mut messages = self.messages.write().unwrap();
+        messages.extend_from_slice(new_messages);
 
-        {
-            let mut messages = self.messages.write().unwrap();
-            messages.extend_from_slice(new_messages);
+        let mut remaining_listeners = Vec::new();
+
+        for listener in message_listeners.drain(..) {
+            match fire_listener_if_ready(&messages, listener) {
+                Ok(_) => {}
+                Err(listener) => remaining_listeners.push(listener)
+            }
         }
 
-        for listener in message_listeners.values_mut() {
-            listener.try_send(()).unwrap();
-        }
+        // Without this annotation, Rust gets confused since the first argument
+        // is a MutexGuard, but the second is a Vec.
+        mem::replace::<Vec<_>>(&mut message_listeners, remaining_listeners);
     }
 
-    pub fn subscribe(&self, sender: mpsc::Sender<()>) -> ListenerId {
-        let id = get_listener_id();
+    pub fn subscribe(&self, cursor: u32, sender: oneshot::Sender<(u32, Vec<T>)>) {
+        let listener = {
+            let listener = Listener {
+                sender,
+                cursor,
+            };
+
+            let messages = self.messages.read().unwrap();
+
+            match fire_listener_if_ready(&messages, listener) {
+                Ok(_) => return,
+                Err(listener) => listener
+            }
+        };
 
         let mut message_listeners = self.message_listeners.lock().unwrap();
-        message_listeners.insert(id, sender);
-
-        id
-    }
-
-    pub fn unsubscribe(&self, id: ListenerId) {
-        let mut message_listeners = self.message_listeners.lock().unwrap();
-        message_listeners.remove(&id);
+        message_listeners.push(listener);
     }
 
     pub fn get_message_cursor(&self) -> u32 {
