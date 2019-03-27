@@ -7,7 +7,11 @@ use std::{
     sync::Arc,
 };
 
-use futures::{future, Future, stream::Stream, sync::mpsc};
+use futures::{
+    future::{self, IntoFuture},
+    Future,
+    sync::oneshot,
+};
 use hyper::{
     service::Service,
     header,
@@ -168,30 +172,13 @@ impl ApiService {
         };
 
         let message_queue = Arc::clone(&self.live_session.message_queue);
-
-        // Did the client miss any messages since the last subscribe?
-        {
-            let (new_cursor, new_messages) = message_queue.get_messages_since(cursor);
-
-            if !new_messages.is_empty() {
-                return Box::new(future::ok(response_json(&SubscribeResponse {
-                    session_id: self.live_session.session_id(),
-                    messages: Cow::Borrowed(&new_messages),
-                    message_cursor: new_cursor,
-                })));
-            }
-        }
-
-        let (tx, rx) = mpsc::channel(1024);
-        let sender_id = message_queue.subscribe(tx);
         let session_id = self.live_session.session_id();
 
+        let (tx, rx) = oneshot::channel();
+        message_queue.subscribe(cursor, tx);
+
         let result = rx.into_future()
-            .and_then(move |_| {
-                message_queue.unsubscribe(sender_id);
-
-                let (new_cursor, new_messages) = message_queue.get_messages_since(cursor);
-
+            .and_then(move |(new_cursor, new_messages)| {
                 Box::new(future::ok(response_json(SubscribeResponse {
                     session_id: session_id,
                     messages: Cow::Owned(new_messages),
