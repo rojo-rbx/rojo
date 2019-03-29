@@ -184,6 +184,7 @@ pub fn snapshot_project_node<'source>(
         Some(path) => snapshot_imfs_path(context, imfs, &path, Some(instance_name.clone()))?,
         None => match &node.class_name {
             Some(_class_name) => Some(RbxSnapshotInstance {
+                source_id: None,
                 name: instance_name.clone(),
 
                 // These properties are replaced later in the function to
@@ -305,6 +306,7 @@ fn snapshot_imfs_directory<'source>(
         snapshot_imfs_path(context, imfs, &init_client_path, Some(snapshot_name))?.unwrap()
     } else {
         RbxSnapshotInstance {
+            source_id: None,
             class_name: Cow::Borrowed("Folder"),
             name: snapshot_name,
             properties: HashMap::new(),
@@ -417,6 +419,7 @@ fn snapshot_lua_file<'source>(
         })?;
 
     Ok(Some(RbxSnapshotInstance {
+        source_id: None,
         name: Cow::Borrowed(instance_name),
         class_name: Cow::Borrowed(class_name),
         properties: hashmap! {
@@ -456,6 +459,7 @@ fn snapshot_txt_file<'source>(
         })?;
 
     Ok(Some(RbxSnapshotInstance {
+        source_id: None,
         name: Cow::Borrowed(instance_name),
         class_name: Cow::Borrowed("StringValue"),
         properties: hashmap! {
@@ -490,6 +494,7 @@ fn snapshot_csv_file<'source>(
         .expect("Could not encode JSON for localization table");
 
     Ok(Some(RbxSnapshotInstance {
+        source_id: None,
         name: Cow::Borrowed(instance_name),
         class_name: Cow::Borrowed("LocalizationTable"),
         properties: hashmap! {
@@ -581,6 +586,7 @@ impl JsonModelInstance {
             .collect();
 
         RbxSnapshotInstance {
+            source_id: None,
             name: Cow::Owned(self.name),
             class_name: Cow::Owned(self.class_name),
             properties: self.properties,

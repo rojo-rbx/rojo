@@ -18,7 +18,7 @@ use crate::{
     rbx_session::MetadataPerInstance,
 };
 
-pub struct ReconcilerContext<'a> {
+struct ReconcilerContext<'a> {
     instance_per_path: &'a mut PathMap<HashSet<RbxId>>,
     metadata_per_instance: &'a mut HashMap<RbxId, MetadataPerInstance>,
     changes: &'a mut InstanceChanges,
@@ -75,7 +75,7 @@ impl InstanceChanges {
 pub struct RbxSnapshotInstance<'a> {
     /// If this snapshot came from a place that has IDs, this is the ID that
     /// this snapshot should be associated with.
-    // pub source_id: Option<RbxId>,
+    pub source_id: Option<RbxId>,
     pub name: Cow<'a, str>,
     pub class_name: Cow<'a, str>,
     pub properties: HashMap<String, RbxValue>,
@@ -90,7 +90,7 @@ impl<'a> RbxSnapshotInstance<'a> {
             .collect();
 
         RbxSnapshotInstance {
-            // source_id: self.source_id,
+            source_id: self.source_id,
             name: Cow::Owned(self.name.clone().into_owned()),
             class_name: Cow::Owned(self.class_name.clone().into_owned()),
             properties: self.properties.clone(),
@@ -121,7 +121,7 @@ pub fn snapshot_from_tree(tree: &RbxTree, id: RbxId) -> Option<RbxSnapshotInstan
     }
 
     Some(RbxSnapshotInstance {
-        // source_id: Some(id),
+        source_id: Some(id),
         name: Cow::Owned(instance.name.to_owned()),
         class_name: Cow::Owned(instance.class_name.to_owned()),
         properties: instance.properties.clone(),
