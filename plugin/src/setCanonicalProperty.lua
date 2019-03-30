@@ -19,6 +19,11 @@ local function setCanonicalProperty(instance, key, value)
 		return
 	end
 
+	-- Temporary workaround for fixing issue #141 in this specific case.
+	if instance.ClassName == "Lighting" and key == "Technology" then
+		return
+	end
+
 	-- If we don't have permissions to access this value at all, we can skip it.
 	local readSuccess, existingValue = pcall(function()
 		return instance[key]

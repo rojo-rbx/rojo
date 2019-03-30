@@ -13,6 +13,7 @@
     * `Ref`
 * Improved server instance ordering behavior when files are added during a live session ([#135](https://github.com/LPGhatguy/rojo/pull/135))
 * Fixed error being thrown when trying to unload the Rojo plugin.
+* Added partial fix for [issue #141](https://github.com/LPGhatguy/rojo/issues/141) for `Lighting.Technology`, which should restore live sync functionality for the default project file.
 
 ## [0.5.0 Alpha 6](https://github.com/LPGhatguy/rojo/releases/tag/v0.5.0-alpha.6) (March 19, 2019)
 * Fixed `rojo init` giving unexpected results by upgrading to `rbx_dom_weak` 1.1.0
