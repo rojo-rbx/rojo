@@ -1,6 +1,8 @@
 # Rojo Changelog
 
 ## [Unreleased]
+
+## [0.5.0 Alpha 8](https://github.com/LPGhatguy/rojo/releases/tag/v0.5.0-alpha.8) (March 29, 2019)
 * Added support for a bunch of new types when dealing with XML model/place files:
     * `ColorSequence`
     * `Float64`

@@ -25,7 +25,7 @@ If you have Rust installed, the easiest way to get Rojo is with Cargo!
 To install the latest 0.5.0 alpha, use:
 
 ```sh
-cargo install rojo --version 0.5.0-alpha.6
+cargo install rojo --version 0.5.0-alpha.8
 ```
 
 ## Installing the Plugin
