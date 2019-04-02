@@ -1,7 +1,7 @@
 use std::{
     path::PathBuf,
     fs::File,
-    io,
+    io::{self, Write, BufWriter},
 };
 
 use log::info;
@@ -92,7 +92,7 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
     let mut imfs = Imfs::new();
     imfs.add_roots_from_project(&project)?;
     let tree = construct_oneoff_tree(&project, &imfs)?;
-    let mut file = File::create(&options.output_file)?;
+    let mut file = BufWriter::new(File::create(&options.output_file)?);
 
     match output_kind {
         OutputKind::Rbxmx => {
@@ -120,6 +120,8 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
             rbx_binary::encode(&tree, top_level_ids, &mut file)?;
         },
     }
+
+    file.flush()?;
 
     Ok(())
 }
