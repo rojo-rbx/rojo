@@ -483,6 +483,7 @@ fn snapshot_csv_file<'source>(
         .deserialize()
         // TODO: Propagate error upward instead of panicking
         .map(|result| result.expect("Malformed localization table found!"))
+        .filter(|entry: &LocalizationEntryCsv| !(entry.key.is_empty() && entry.source.is_empty()))
         .map(LocalizationEntryCsv::to_json)
         .collect();
 
