@@ -1,0 +1,53 @@
+{
+  "name": "localization",
+  "class_name": "Folder",
+  "properties": {},
+  "children": [
+    {
+      "name": "empty-column-bug-147",
+      "class_name": "LocalizationTable",
+      "properties": {
+        "Contents": {
+          "Type": "String",
+          "Value": "[{\"key\":\"Language.Name\",\"source\":\"English\",\"values\":{}},{\"key\":\"Language.Region\",\"source\":\"United States\",\"values\":{}},{\"key\":\"Label.Thickness\",\"source\":\"Thickness\",\"values\":{}},{\"key\":\"Label.Opacity\",\"source\":\"Opacity\",\"values\":{}},{\"key\":\"Toolbar.Undo\",\"source\":\"Undo\",\"values\":{}},{\"key\":\"Toolbar.Redo\",\"source\":\"Redo\",\"values\":{}},{\"key\":\"Toolbar.Camera\",\"source\":\"Top-down camera\",\"values\":{}},{\"key\":\"Toolbar.Saves\",\"source\":\"Saved drawings\",\"values\":{}},{\"key\":\"Toolbar.Preferences\",\"source\":\"Settings\",\"values\":{}},{\"key\":\"Toolbar.Mode.Vector\",\"source\":\"Vector mode\",\"values\":{}},{\"key\":\"Toolbar.Mode.Pixel\",\"source\":\"Pixel mode\",\"values\":{}}]"
+        }
+      },
+      "children": [],
+      "metadata": {
+        "ignore_unknown_instances": false,
+        "source_path": "src/empty-column-bug-147.csv",
+        "project_definition": null
+      }
+    },
+    {
+      "name": "normal",
+      "class_name": "LocalizationTable",
+      "properties": {
+        "Contents": {
+          "Type": "String",
+          "Value": "[{\"key\":\"Ack\",\"example\":\"An exclamation of despair\",\"source\":\"Ack!\",\"values\":{\"es\":\"¡Ay!\"}}]"
+        }
+      },
+      "children": [],
+      "metadata": {
+        "ignore_unknown_instances": false,
+        "source_path": "src/normal.csv",
+        "project_definition": null
+      }
+    }
+  ],
+  "metadata": {
+    "ignore_unknown_instances": false,
+    "source_path": "src",
+    "project_definition": [
+      "localization",
+      {
+        "class_name": null,
+        "children": {},
+        "properties": {},
+        "ignore_unknown_instances": null,
+        "path": "src"
+      }
+    ]
+  }
+}

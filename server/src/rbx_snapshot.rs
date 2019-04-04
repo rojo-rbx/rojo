@@ -483,6 +483,7 @@ fn snapshot_csv_file<'source>(
         .deserialize()
         // TODO: Propagate error upward instead of panicking
         .map(|result| result.expect("Malformed localization table found!"))
+        .filter(|entry: &LocalizationEntryCsv| !(entry.key.is_empty() && entry.source.is_empty()))
         .map(LocalizationEntryCsv::to_json)
         .collect();
 
@@ -519,12 +520,32 @@ struct LocalizationEntryCsv {
 
 impl LocalizationEntryCsv {
     fn to_json(self) -> LocalizationEntryJson {
+        fn none_if_empty(value: String) -> Option<String> {
+            if value.is_empty() {
+                None
+            } else {
+                Some(value)
+            }
+        }
+
+        let key = none_if_empty(self.key);
+        let context = none_if_empty(self.context);
+        let example = none_if_empty(self.example);
+        let source = none_if_empty(self.source);
+
+        let mut values = HashMap::with_capacity(self.values.len());
+        for (key, value) in self.values.into_iter() {
+            if !key.is_empty() {
+                values.insert(key, value);
+            }
+        }
+
         LocalizationEntryJson {
-            key: self.key,
-            context: self.context,
-            example: self.example,
-            source: self.source,
-            values: self.values,
+            key,
+            context,
+            example,
+            source,
+            values,
         }
     }
 }
@@ -532,10 +553,18 @@ impl LocalizationEntryCsv {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct LocalizationEntryJson {
-    key: String,
-    context: String,
-    example: String,
-    source: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    key: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    context: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    example: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    source: Option<String>,
+
     values: HashMap<String, String>,
 }
 

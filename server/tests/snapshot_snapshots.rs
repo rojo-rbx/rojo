@@ -33,6 +33,7 @@ macro_rules! generate_snapshot_tests {
 
 generate_snapshot_tests!(
     empty,
+    localization,
     multi_partition_game,
     nested_partitions,
     single_partition_game,
