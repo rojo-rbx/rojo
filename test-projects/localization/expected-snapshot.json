@@ -25,7 +25,7 @@
       "properties": {
         "Contents": {
           "Type": "String",
-          "Value": "[]"
+          "Value": "[{\"key\":\"Ack\",\"example\":\"An exclamation of despair\",\"source\":\"Ack!\",\"values\":{\"es\":\"¡Ay!\"}}]"
         }
       },
       "children": [],
