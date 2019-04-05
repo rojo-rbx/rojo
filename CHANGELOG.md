@@ -4,6 +4,8 @@
 * Changed `rojo build` to use buffered I/O, which can make it up to 2x faster in some cases.
     * Building [*Road Not Taken*](https://github.com/LPGhatguy/roads) to an `rbxlx` file dropped from 150ms to 70ms on my machine
 * Fixed `LocalizationTable` instances being made from `csv` files not supporting empty rows or columns. ([#149](https://github.com/LPGhatguy/rojo/pull/149))
+* Fixed CSV files with entries that parse as numbers causing Rojo to panic ([#152](https://github.com/LPGhatguy/rojo/pull/152))
+* Improved error messages when malformed CSV files are found in a Rojo project
 
 ## [0.5.0 Alpha 8](https://github.com/LPGhatguy/rojo/releases/tag/v0.5.0-alpha.8) (March 29, 2019)
 * Added support for a bunch of new types when dealing with XML model/place files:

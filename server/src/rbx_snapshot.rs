@@ -106,12 +106,19 @@ pub enum SnapshotError {
     },
 
     XmlModelDecodeError {
+        #[fail(cause)]
         inner: rbx_xml::DecodeError,
         path: PathBuf,
     },
 
     BinaryModelDecodeError {
         inner: rbx_binary::DecodeError,
+        path: PathBuf,
+    },
+
+    CsvDecodeError {
+        #[fail(cause)]
+        inner: csv::Error,
         path: PathBuf,
     },
 
@@ -150,6 +157,9 @@ impl fmt::Display for SnapshotError {
             },
             SnapshotError::BinaryModelDecodeError { inner, path } => {
                 write!(output, "Malformed rbxm model: {:?} in path {}", inner, path.display())
+            },
+            SnapshotError::CsvDecodeError { inner, path } => {
+                write!(output, "Malformed csv file: {} in path {}", inner, path.display())
             },
             SnapshotError::ProjectNodeUnusable => {
                 write!(output, "Rojo project nodes must specify either $path or $className.")
@@ -475,17 +485,87 @@ fn snapshot_txt_file<'source>(
 fn snapshot_csv_file<'source>(
     file: &'source ImfsFile,
 ) -> SnapshotResult<'source> {
+    /// Struct that holds any valid row from a Roblox CSV translation table.
+    ///
+    /// We manually deserialize into this table from CSV, but let JSON handle
+    /// serializing.
+    #[derive(Debug, Default, Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct LocalizationEntry<'a> {
+        #[serde(skip_serializing_if = "Option::is_none")]
+        key: Option<&'a str>,
+
+        #[serde(skip_serializing_if = "Option::is_none")]
+        context: Option<&'a str>,
+
+        #[serde(skip_serializing_if = "Option::is_none")]
+        example: Option<&'a str>,
+
+        #[serde(skip_serializing_if = "Option::is_none")]
+        source: Option<&'a str>,
+
+        values: HashMap<&'a str, &'a str>,
+    }
+
     let instance_name = file.path
         .file_stem().expect("Could not extract file stem")
         .to_str().expect("Could not convert path to UTF-8");
 
-    let entries: Vec<LocalizationEntryJson> = csv::Reader::from_reader(file.contents.as_slice())
-        .deserialize()
-        // TODO: Propagate error upward instead of panicking
-        .map(|result| result.expect("Malformed localization table found!"))
-        .filter(|entry: &LocalizationEntryCsv| !(entry.key.is_empty() && entry.source.is_empty()))
-        .map(LocalizationEntryCsv::to_json)
-        .collect();
+    // Normally, we'd be able to let the csv crate construct our struct for us.
+    //
+    // However, because of a limitation with Serde's 'flatten' feature, it's not
+    // possible presently to losslessly collect extra string values while using
+    // csv+Serde.
+    //
+    // https://github.com/BurntSushi/rust-csv/issues/151
+    let mut reader = csv::Reader::from_reader(file.contents.as_slice());
+
+    let headers = reader.headers()
+        .map_err(|inner| SnapshotError::CsvDecodeError {
+            inner,
+            path: file.path.to_path_buf(),
+        })?
+        .clone();
+
+    let mut records = Vec::new();
+
+    for record in reader.into_records() {
+        let record = record
+            .map_err(|inner| SnapshotError::CsvDecodeError {
+                inner,
+                path: file.path.to_path_buf(),
+            })?;
+
+        records.push(record);
+    }
+
+    let mut entries = Vec::new();
+
+    for record in &records {
+        let mut entry = LocalizationEntry::default();
+
+        for (header, value) in headers.iter().zip(record.into_iter()) {
+            if header.is_empty() || value.is_empty() {
+                continue;
+            }
+
+            match header {
+                "Key" => entry.key = Some(value),
+                "Source" => entry.source = Some(value),
+                "Context" => entry.context = Some(value),
+                "Example" => entry.example = Some(value),
+                _ => {
+                    entry.values.insert(header, value);
+                }
+            }
+        }
+
+        if entry.key.is_none() && entry.source.is_none() {
+            continue;
+        }
+
+        entries.push(entry);
+    }
 
     let table_contents = serde_json::to_string(&entries)
         .expect("Could not encode JSON for localization table");
@@ -505,67 +585,6 @@ fn snapshot_csv_file<'source>(
             project_definition: None,
         },
     }))
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "PascalCase")]
-struct LocalizationEntryCsv {
-    key: String,
-    context: String,
-    example: String,
-    source: String,
-    #[serde(flatten)]
-    values: HashMap<String, String>,
-}
-
-impl LocalizationEntryCsv {
-    fn to_json(self) -> LocalizationEntryJson {
-        fn none_if_empty(value: String) -> Option<String> {
-            if value.is_empty() {
-                None
-            } else {
-                Some(value)
-            }
-        }
-
-        let key = none_if_empty(self.key);
-        let context = none_if_empty(self.context);
-        let example = none_if_empty(self.example);
-        let source = none_if_empty(self.source);
-
-        let mut values = HashMap::with_capacity(self.values.len());
-        for (key, value) in self.values.into_iter() {
-            if !key.is_empty() {
-                values.insert(key, value);
-            }
-        }
-
-        LocalizationEntryJson {
-            key,
-            context,
-            example,
-            source,
-            values,
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct LocalizationEntryJson {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    key: Option<String>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    context: Option<String>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    example: Option<String>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    source: Option<String>,
-
-    values: HashMap<String, String>,
 }
 
 fn snapshot_json_model_file<'source>(
