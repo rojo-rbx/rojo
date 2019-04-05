@@ -1220,7 +1220,7 @@ dependencies = [
 
 [[package]]
 name = "rojo"
-version = "0.5.0-alpha.8"
+version = "0.5.0-alpha.9"
 dependencies = [
  "clap 2.32.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "csv 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
