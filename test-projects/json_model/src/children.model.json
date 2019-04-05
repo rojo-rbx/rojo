@@ -1,0 +1,10 @@
+{
+  "Name": "children",
+  "ClassName": "Folder",
+  "Children": [
+    {
+      "Name": "The Child",
+      "ClassName": "StringValue"
+    }
+  ]
+}

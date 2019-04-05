@@ -13,7 +13,7 @@ use rlua::Lua;
 use failure::Fail;
 use log::info;
 use maplit::hashmap;
-use rbx_dom_weak::{RbxTree, RbxValue, RbxInstanceProperties};
+use rbx_dom_weak::{RbxTree, RbxValue, RbxInstanceProperties, UnresolvedRbxValue};
 use serde_derive::{Serialize, Deserialize};
 use rbx_reflection::{try_resolve_value, ValueResolveError};
 
@@ -602,7 +602,7 @@ fn snapshot_json_model_file<'source>(
             path: file.path.to_owned(),
         })?;
 
-    let mut snapshot = json_instance.into_snapshot();
+    let mut snapshot = json_instance.into_snapshot()?;
     snapshot.metadata.source_path = Some(file.path.to_owned());
 
     Ok(Some(snapshot))
@@ -618,23 +618,31 @@ struct JsonModelInstance {
     children: Vec<JsonModelInstance>,
 
     #[serde(default = "HashMap::new", skip_serializing_if = "HashMap::is_empty")]
-    properties: HashMap<String, RbxValue>,
+    properties: HashMap<String, UnresolvedRbxValue>,
 }
 
 impl JsonModelInstance {
-    fn into_snapshot(mut self) -> RbxSnapshotInstance<'static> {
-        let children = self.children
-            .drain(..)
-            .map(JsonModelInstance::into_snapshot)
-            .collect();
+    fn into_snapshot(self) -> Result<RbxSnapshotInstance<'static>, SnapshotError> {
+        let mut children = Vec::with_capacity(self.children.len());
 
-        RbxSnapshotInstance {
+        for child in self.children {
+            children.push(child.into_snapshot()?);
+        }
+
+        let mut properties = HashMap::with_capacity(self.properties.len());
+
+        for (key, value) in self.properties {
+            let resolved_value = try_resolve_value(&self.class_name, &key, &value)?;
+            properties.insert(key, resolved_value);
+        }
+
+        Ok(RbxSnapshotInstance {
             name: Cow::Owned(self.name),
             class_name: Cow::Owned(self.class_name),
-            properties: self.properties,
+            properties,
             children,
             metadata: Default::default(),
-        }
+        })
     }
 }
 
