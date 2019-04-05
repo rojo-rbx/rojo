@@ -20,6 +20,22 @@
       }
     },
     {
+      "name": "integers-bug-145",
+      "class_name": "LocalizationTable",
+      "properties": {
+        "Contents": {
+          "Type": "String",
+          "Value": "[{\"key\":\"Count\",\"example\":\"A number demonstrating issue 145\",\"source\":\"3\",\"values\":{\"es\":\"7\"}}]"
+        }
+      },
+      "children": [],
+      "metadata": {
+        "ignore_unknown_instances": false,
+        "source_path": "src/integers-bug-145.csv",
+        "project_definition": null
+      }
+    },
+    {
       "name": "normal",
       "class_name": "LocalizationTable",
       "properties": {
