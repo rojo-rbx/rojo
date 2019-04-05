@@ -1,0 +1,11 @@
+{
+  "Name": "explicit",
+  "ClassName": "StringValue",
+  "Properties": {
+    "Value": {
+      "Type": "String",
+      "Value": "Hello, world!"
+    }
+  },
+  "Children": []
+}
