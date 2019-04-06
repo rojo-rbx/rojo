@@ -42,4 +42,4 @@ Download the attached `rbxm` file and put it into your Roblox Studio plugins fol
 Visit [Rojo's Roblox.com Plugin page](https://www.roblox.com/library/1997686364/Rojo-0-5-0-alpha-3) in Roblox Studio and press **Install**.
 
 ## Visual Studio Code Extension
-If you use Visual Studio Code on Windows, you can install [Evaera's unofficial Rojo extension](https://marketplace.visualstudio.com/items?itemName=evaera.vscode-rojo), which will install both halves of Rojo for you. It even has a nifty UI to add partitions and start/stop the Rojo server!
+If you use Visual Studio Code, you can install [Evaera's unofficial Rojo extension](https://marketplace.visualstudio.com/items?itemName=evaera.vscode-rojo), which will install both halves of Rojo for you. It even has a nifty UI to sync files and start/stop the Rojo server!
