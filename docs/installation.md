@@ -31,7 +31,7 @@ cargo install rojo --version 0.5.0-alpha.9
 ## Installing the Plugin
 
 ### Installing from GitHub
-The Rojo Roblox Studio plugin is available available from Rojo's [GitHub Releases page](https://github.com/LPGhatguy/rojo/releases).
+The Rojo Roblox Studio plugin is available from Rojo's [GitHub Releases page](https://github.com/LPGhatguy/rojo/releases).
 
 Download the attached `rbxm` file and put it into your Roblox Studio plugins folder. You can find that folder by pressing **Plugins Folder** from your Plugins toolbar in Roblox Studio:
 
