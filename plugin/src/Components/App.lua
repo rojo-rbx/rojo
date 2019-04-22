@@ -79,6 +79,40 @@ function App:init()
 		or Version.display(Config.version)
 end
 
+function App:startSession(address, port)
+	Logging.trace("Starting new session")
+
+	local success, session = Session.new({
+		address = address,
+		port = port,
+		onError = function(message)
+			Logging.warn("Rojo session terminated because of an error:\n%s", tostring(message))
+			self.currentSession = nil
+
+			self:setState({
+				sessionStatus = SessionStatus.Disconnected,
+			})
+		end
+	})
+
+	if success then
+		self.currentSession = session
+		self:setState({
+			sessionStatus = SessionStatus.Connected,
+		})
+	end
+end
+
+function App:checkAutostart()
+	-- Rojo supports automatically starting the a session if a special marker
+	-- value is present. It specifies the port to connect to in the case of
+	-- multiple instances running at the same time.
+	local autostartPort = game:FindFirstChild("ROJO_AUTOSTART_PORT")
+	if autostartPort ~= nil then
+		self:startSession("localhost", autostartPort.Value)
+	end
+end
+
 function App:render()
 	local children
 
@@ -102,27 +136,7 @@ function App:render()
 		children = {
 			ConnectPanel = e(ConnectPanel, {
 				startSession = function(address, port)
-					Logging.trace("Starting new session")
-
-					local success, session = Session.new({
-						address = address,
-						port = port,
-						onError = function(message)
-							Logging.warn("Rojo session terminated because of an error:\n%s", tostring(message))
-							self.currentSession = nil
-
-							self:setState({
-								sessionStatus = SessionStatus.Disconnected,
-							})
-						end
-					})
-
-					if success then
-						self.currentSession = session
-						self:setState({
-							sessionStatus = SessionStatus.Connected,
-						})
-					end
+					self:startSession(address, port)
 				end,
 				cancel = function()
 					Logging.trace("Canceling session configuration")
@@ -180,6 +194,7 @@ function App:didMount()
 	end)
 
 	preloadAssets()
+	self:checkAutostart()
 end
 
 function App:willUnmount()
