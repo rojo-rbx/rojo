@@ -13,7 +13,7 @@ use crate::{
     live_session::{LiveSession, LiveSessionError},
 };
 
-const DEFAULT_PORT: u16 = 34872;
+pub const DEFAULT_PORT: u16 = 34872;
 
 #[derive(Debug)]
 pub struct ServeOptions {

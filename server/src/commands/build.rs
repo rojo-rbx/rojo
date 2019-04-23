@@ -14,24 +14,25 @@ use crate::{
     project::{Project, ProjectLoadFuzzyError},
     rbx_session::construct_oneoff_tree,
     rbx_snapshot::SnapshotError,
+    commands::serve::DEFAULT_PORT,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OutputKind {
-    Rbxmx,
-    Rbxlx,
-    Rbxm,
-    Rbxl,
+    XmlModel,
+    XmlPlace,
+    BinaryModel,
+    BinaryPlace,
 }
 
 fn detect_output_kind(options: &BuildOptions) -> Option<OutputKind> {
     let extension = options.output_file.extension()?.to_str()?;
 
     match extension {
-        "rbxlx" => Some(OutputKind::Rbxlx),
-        "rbxmx" => Some(OutputKind::Rbxmx),
-        "rbxl" => Some(OutputKind::Rbxl),
-        "rbxm" => Some(OutputKind::Rbxm),
+        "rbxlx" => Some(OutputKind::XmlPlace),
+        "rbxmx" => Some(OutputKind::XmlModel),
+        "rbxl" => Some(OutputKind::BinaryPlace),
+        "rbxm" => Some(OutputKind::BinaryModel),
         _ => None,
     }
 }
@@ -66,6 +67,9 @@ pub enum BuildError {
 
     #[fail(display = "{}", _0)]
     SnapshotError(#[fail(cause)] SnapshotError),
+
+    #[fail(display = "plugin_autostart cannot be enabled when building models")]
+    PluginAutostartOnModelError,
 }
 
 impl_from!(BuildError {
@@ -83,7 +87,6 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
         .ok_or(BuildError::UnknownOutputKind)?;
 
     info!("Hoping to generate file of type {:?}", output_kind);
-
     info!("Looking for project at {}", options.fuzzy_project_path.display());
 
     let project = Project::load_fuzzy(&options.fuzzy_project_path)?;
@@ -94,42 +97,44 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
 
     let mut imfs = Imfs::new();
     imfs.add_roots_from_project(&project)?;
+
     let mut tree = construct_oneoff_tree(&project, &imfs)?;
+
+    if options.plugin_autostart {
+        match output_kind {
+            OutputKind::BinaryPlace | OutputKind::XmlPlace => {
+                let port = project.serve_port.unwrap_or(DEFAULT_PORT);
+                inject_autostart_marker(&mut tree, port);
+            }
+            _ => return Err(BuildError::PluginAutostartOnModelError)
+        }
+    }
+
+    let ids_to_encode = match output_kind {
+        OutputKind::XmlPlace | OutputKind::BinaryPlace => {
+            // Place files don't include their root instance.
+
+            let root_id = tree.get_root_id();
+            let root = tree.get_instance(root_id).unwrap();
+
+            root.get_children_ids().to_vec()
+        }
+        OutputKind::XmlModel | OutputKind::BinaryModel =>  {
+            // Model files include the root instance and all its descendants.
+
+            vec![tree.get_root_id()]
+        }
+    };
+
     let mut file = BufWriter::new(File::create(&options.output_file)?);
 
     match output_kind {
-        OutputKind::Rbxmx => {
-            // Model files include the root instance of the tree and all its
-            // descendants.
-
-            let root_id = tree.get_root_id();
-            rbx_xml::encode(&tree, &[root_id], &mut file)?;
-        },
-        OutputKind::Rbxlx => {
-            // Place files don't contain an entry for the DataModel, but our
-            // RbxTree representation does.
-
-            if options.plugin_autostart {
-                inject_autostart_marker(&mut tree);
-            }
-
-            let root_id = tree.get_root_id();
-            let top_level_ids = tree.get_instance(root_id).unwrap().get_children_ids();
-            rbx_xml::encode(&tree, top_level_ids, &mut file)?;
-        },
-        OutputKind::Rbxm => {
-            let root_id = tree.get_root_id();
-            rbx_binary::encode(&tree, &[root_id], &mut file)?;
-        },
-        OutputKind::Rbxl => {
-            if options.plugin_autostart {
-                inject_autostart_marker(&mut tree);
-            }
-
-            let root_id = tree.get_root_id();
-            let top_level_ids = tree.get_instance(root_id).unwrap().get_children_ids();
-            rbx_binary::encode(&tree, top_level_ids, &mut file)?;
-        },
+        OutputKind::BinaryPlace | OutputKind::BinaryModel => {
+            rbx_binary::encode(&tree, &ids_to_encode, &mut file)?;
+        }
+        OutputKind::XmlPlace | OutputKind::XmlModel => {
+            rbx_xml::encode(&tree, &ids_to_encode, &mut file)?;
+        }
     }
 
     file.flush()?;
@@ -137,11 +142,11 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
     Ok(())
 }
 
-fn inject_autostart_marker(tree: &mut RbxTree) {
+fn inject_autostart_marker(tree: &mut RbxTree, port: u16) {
     let root_id = tree.get_root_id();
 
     let mut properties = HashMap::new();
-    properties.insert(String::from("Value"), RbxValue::Int64 { value: 34872 });
+    properties.insert(String::from("Value"), RbxValue::Int64 { value: port as i64 });
 
     let marker = RbxInstanceProperties {
         class_name: String::from("IntValue"),
