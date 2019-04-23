@@ -1,9 +1,11 @@
 use std::{
+    collections::HashMap,
     path::PathBuf,
     fs::File,
     io::{self, Write, BufWriter},
 };
 
+use rbx_dom_weak::{RbxTree, RbxInstanceProperties, RbxValue};
 use log::info;
 use failure::Fail;
 
@@ -39,6 +41,7 @@ pub struct BuildOptions {
     pub fuzzy_project_path: PathBuf,
     pub output_file: PathBuf,
     pub output_kind: Option<OutputKind>,
+    pub plugin_autostart: bool,
 }
 
 #[derive(Debug, Fail)]
@@ -91,7 +94,7 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
 
     let mut imfs = Imfs::new();
     imfs.add_roots_from_project(&project)?;
-    let tree = construct_oneoff_tree(&project, &imfs)?;
+    let mut tree = construct_oneoff_tree(&project, &imfs)?;
     let mut file = BufWriter::new(File::create(&options.output_file)?);
 
     match output_kind {
@@ -106,6 +109,10 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
             // Place files don't contain an entry for the DataModel, but our
             // RbxTree representation does.
 
+            if options.plugin_autostart {
+                inject_autostart_marker(&mut tree);
+            }
+
             let root_id = tree.get_root_id();
             let top_level_ids = tree.get_instance(root_id).unwrap().get_children_ids();
             rbx_xml::encode(&tree, top_level_ids, &mut file)?;
@@ -115,6 +122,10 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
             rbx_binary::encode(&tree, &[root_id], &mut file)?;
         },
         OutputKind::Rbxl => {
+            if options.plugin_autostart {
+                inject_autostart_marker(&mut tree);
+            }
+
             let root_id = tree.get_root_id();
             let top_level_ids = tree.get_instance(root_id).unwrap().get_children_ids();
             rbx_binary::encode(&tree, top_level_ids, &mut file)?;
@@ -124,4 +135,19 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
     file.flush()?;
 
     Ok(())
+}
+
+fn inject_autostart_marker(tree: &mut RbxTree) {
+    let root_id = tree.get_root_id();
+
+    let mut properties = HashMap::new();
+    properties.insert(String::from("Value"), RbxValue::Int64 { value: 34872 });
+
+    let marker = RbxInstanceProperties {
+        class_name: String::from("IntValue"),
+        name: String::from("ROJO_AUTOSTART_PORT"),
+        properties,
+    };
+
+    tree.insert_instance(marker, root_id);
 }

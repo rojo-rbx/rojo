@@ -50,6 +50,7 @@ fn main() {
             (about: "Generates an rbxmx model file from the project.")
             (@arg PROJECT: "Path to the project to serve. Defaults to the current directory.")
             (@arg output: --output -o +takes_value +required "Where to output the result.")
+            (@arg plugin_autostart: --plugin_autostart "Makes the output place automatically connect to Rojo on open.")
         )
 
         (@subcommand upload =>
@@ -150,11 +151,13 @@ fn start_build(sub_matches: &ArgMatches) {
     };
 
     let output_file = make_path_absolute(Path::new(sub_matches.value_of("output").unwrap()));
+    let plugin_autostart = sub_matches.is_present("plugin_autostart");
 
     let options = commands::BuildOptions {
         fuzzy_project_path,
         output_file,
         output_kind: None, // TODO: Accept from argument
+        plugin_autostart,
     };
 
     match commands::build(&options) {
