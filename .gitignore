@@ -1,5 +1,5 @@
 /site
-/target
+**/target
 /scratch-project
 **/*.rs.bk
 /server/failed-snapshots/

@@ -1,3 +1,5 @@
+local CollectionService = game:GetService("CollectionService")
+
 local Reconciler = require(script.Parent.Reconciler)
 
 return function()
@@ -53,8 +55,8 @@ return function()
 				Properties = {
 					Value = {
 						Type = "Int32",
-						Value = 9
-					}
+						Value = 9,
+					},
 				},
 			},
 		}
@@ -63,6 +65,73 @@ return function()
 		reconciler:reconcile(virtualInstancesById, instanceId, instance)
 
 		expect(instance.Value).to.equal(9)
+	end)
+
+	it("should assign properties that can't just be easily set", function()
+		local instance = Instance.new("Folder")
+
+		local binaryString = {}
+		for _, character in pairs(("Tag1\0Tag2"):split("")) do
+			table.insert(binaryString, character:byte())
+		end
+
+		local instanceId = "test-id"
+		local virtualInstancesById = {
+			[instanceId] = {
+				Name = "Folder",
+				ClassName = "Folder",
+				Children = {},
+				Properties = {
+					Tags = {
+						Type = "BinaryString",
+						Value = binaryString,
+					},
+				},
+			},
+		}
+
+		local reconciler = Reconciler.new()
+		reconciler:reconcile(virtualInstancesById, instanceId, instance)
+
+		assert(CollectionService:HasTag(instance, "Tag1"))
+		assert(CollectionService:HasTag(instance, "Tag2"))
+	end)
+
+	it("should assign ref properties", function()
+		local model = Instance.new("Model")
+		model.Name = "Parent"
+
+		local child = Instance.new("Part")
+		child.Name = "Child"
+		child.Parent = model
+
+		local childId = "child-id"
+		local modelId = "model-id"
+
+		local virtualInstancesById = {
+			[modelId] = {
+				Name = "Parent",
+				ClassName = "Model",
+				Children = { childId },
+				Properties = {
+					PrimaryPart = {
+						Type = "Ref",
+						Value = childId,
+					},
+				},
+			},
+
+			[childId] = {
+				Name = "Child",
+				ClassName = "Part",
+				Children = {},
+				Properties = {},
+			},
+		}
+
+		local reconciler = Reconciler.new()
+		reconciler:reconcile(virtualInstancesById, modelId, model)
+		expect(model.PrimaryPart).to.equal(child)
 	end)
 
 	it("should wipe unknown children by default", function()

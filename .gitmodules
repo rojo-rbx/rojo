@@ -13,3 +13,6 @@
 [submodule "plugin/modules/t"]
 	path = plugin/modules/t
 	url = https://github.com/osyrisrblx/t.git
+[submodule "plugin/modules/rbx-dom"]
+	path = plugin/modules/rbx-dom
+	url = https://github.com/LPGhatguy/rbx-dom

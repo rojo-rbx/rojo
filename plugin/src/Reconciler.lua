@@ -2,12 +2,13 @@ local t = require(script.Parent.Parent.t)
 
 local InstanceMap = require(script.Parent.InstanceMap)
 local Logging = require(script.Parent.Logging)
-local setCanonicalProperty = require(script.Parent.setCanonicalProperty)
-local rojoValueToRobloxValue = require(script.Parent.rojoValueToRobloxValue)
+local RbxDomLua = require(script.Parent.Parent.RbxDomLua)
 local Types = require(script.Parent.Types)
 
 local Reconciler = {}
 Reconciler.__index = Reconciler
+
+local writeInstance = RbxDomLua.CanonicalInstance.writeInstance
 
 function Reconciler.new()
 	local self = {
@@ -25,6 +26,29 @@ function Reconciler:applyUpdate(requestedIds, virtualInstancesById)
 	for _, id in ipairs(requestedIds) do
 		self:__applyUpdatePiece(id, visitedIds, virtualInstancesById)
 	end
+end
+
+function Reconciler:mapProperties(virtualProperties, virtualInstancesById)
+	-- Maps properties from the Rojo format to one rbx-dom-lua uses
+	local properties = {}
+
+	for propertyName, property in pairs(virtualProperties) do
+		if property.Type == "BinaryString" then
+			local binaryString = ""
+			for _, characterCode in pairs(property.Value) do
+				binaryString = binaryString .. string.char(characterCode)
+			end
+			properties[propertyName] = binaryString
+		elseif property.Type == "Ref" then
+			if property.Value ~= nil then
+				properties[propertyName] = self.instanceMap.fromIds[property.Value]
+			end
+		else
+			properties[propertyName] = property.Value
+		end
+	end
+
+	return properties
 end
 
 local reconcileSchema = Types.ifEnabled(t.tuple(
@@ -53,11 +77,9 @@ function Reconciler:reconcile(virtualInstancesById, id, instance)
 	self.instanceMap:insert(id, instance)
 
 	-- Some instances don't like being named, even if their name already matches
-	setCanonicalProperty(instance, "Name", virtualInstance.Name)
-
-	for key, value in pairs(virtualInstance.Properties) do
-		setCanonicalProperty(instance, key, rojoValueToRobloxValue(value))
-	end
+	writeInstance(instance, {
+		Name = virtualInstance.Name,
+	})
 
 	local existingChildren = instance:GetChildren()
 
@@ -105,6 +127,8 @@ function Reconciler:reconcile(virtualInstancesById, id, instance)
 		end
 	end
 
+	writeInstance(instance, self:mapProperties(virtualInstance.Properties))
+
 	-- The root instance of a project won't have a parent, like the DataModel,
 	-- so we need to be careful here.
 	if virtualInstance.Parent ~= nil then
@@ -117,7 +141,9 @@ function Reconciler:reconcile(virtualInstancesById, id, instance)
 
 		-- Some instances, like services, don't like having their Parent
 		-- property poked, even if we're setting it to the same value.
-		setCanonicalProperty(instance, "Parent", parent)
+		writeInstance(instance, {
+			Parent = parent,
+		})
 	end
 
 	return instance
@@ -143,18 +169,19 @@ function Reconciler:__reify(virtualInstancesById, id, parent)
 	local virtualInstance = virtualInstancesById[id]
 
 	local instance = Instance.new(virtualInstance.ClassName)
-
-	for key, value in pairs(virtualInstance.Properties) do
-		setCanonicalProperty(instance, key, rojoValueToRobloxValue(value))
-	end
-
-	setCanonicalProperty(instance, "Name", virtualInstance.Name)
+	writeInstance(instance, {
+		Name = virtualInstance.Name,
+	})
 
 	for _, childId in ipairs(virtualInstance.Children) do
 		self:__reify(virtualInstancesById, childId, instance)
 	end
 
-	setCanonicalProperty(instance, "Parent", parent)
+	writeInstance(instance, self:mapProperties(virtualInstance.Properties))
+	writeInstance(instance, {
+		Parent = parent,
+	})
+
 	self.instanceMap:insert(id, instance)
 
 	return instance

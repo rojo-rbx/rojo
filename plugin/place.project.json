@@ -15,6 +15,9 @@
         "Roact": {
           "$path": "modules/roact/lib"
         },
+        "RbxDomLua": {
+          "$path": "modules/rbx-dom/rbx_dom_lua/src"
+        },
         "Promise": {
           "$path": "modules/promise/lib"
         },
