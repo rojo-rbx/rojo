@@ -176,6 +176,35 @@ impl fmt::Display for SnapshotError {
     }
 }
 
+fn merge_from_project_node(
+    snapshot: &mut RbxSnapshotInstance,
+    node_name: &str,
+    node: &ProjectNode,
+) -> Result<(), SnapshotError> {
+    snapshot.metadata.project_definition = Some((node_name.to_string(), node.clone()));
+
+    if let Some(ignore_unknown_instances) = node.ignore_unknown_instances {
+        snapshot.metadata.ignore_unknown_instances = ignore_unknown_instances;
+    }
+
+    for (key, value) in &node.properties {
+        let resolved_value = try_resolve_value(&snapshot.class_name, key, value)?;
+        snapshot.properties.insert(key.clone(), resolved_value);
+    }
+
+    for snapshot_child in &mut snapshot.children {
+        for (child_name, child) in &node.children {
+            if snapshot_child.name.as_ref() != child_name {
+                continue;
+            }
+
+            merge_from_project_node(snapshot_child, child_name, child)?;
+        }
+    }
+
+    Ok(())
+}
+
 pub fn snapshot_project_tree<'source>(
     context: &SnapshotContext,
     imfs: &'source Imfs,
@@ -245,8 +274,22 @@ pub fn snapshot_project_node<'source>(
     }
 
     for (child_name, child_project_node) in &node.children {
-        if let Some(child) = snapshot_project_node(context, imfs, child_project_node, Cow::Owned(child_name.clone()))? {
-            snapshot.children.push(child);
+        let mut had_existing_child = false;
+
+        for mut snapshot_child in snapshot.children.iter_mut() {
+            if snapshot_child.name.as_ref() == child_name {
+                merge_from_project_node(&mut snapshot_child, child_name, child_project_node)?;
+                had_existing_child = true;
+            }
+        }
+
+        if !had_existing_child {
+            if let Some(child) = snapshot_project_node(context, imfs, child_project_node, Cow::Owned(child_name.clone()))? {
+                // If any children with this name already exist in this instance, we
+                // assume they came from a file.
+
+                snapshot.children.push(child);
+            }
         }
     }
 

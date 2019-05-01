@@ -1,0 +1,11 @@
+{
+  "name": "fs_project_merging",
+  "tree": {
+    "$path": "outer",
+
+    "inner": {
+      "$path": "outer/inner",
+      "$ignoreUnknownInstances": true
+    }
+  }
+}
