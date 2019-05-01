@@ -33,6 +33,7 @@ macro_rules! generate_snapshot_tests {
 
 generate_snapshot_tests!(
     empty,
+    fs_project_merging,
     json_model,
     localization,
     multi_partition_game,

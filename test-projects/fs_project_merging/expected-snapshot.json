@@ -1,0 +1,66 @@
+{
+  "name": "fs_project_merging",
+  "class_name": "Folder",
+  "properties": {},
+  "children": [
+    {
+      "name": "inner",
+      "class_name": "Folder",
+      "properties": {},
+      "children": [
+        {
+          "name": "foo",
+          "class_name": "StringValue",
+          "properties": {
+            "Value": {
+              "Type": "String",
+              "Value": "This file has to be here for Git."
+            }
+          },
+          "children": [],
+          "metadata": {
+            "ignore_unknown_instances": false,
+            "source_path": "outer/inner/foo.txt",
+            "project_definition": null
+          }
+        }
+      ],
+      "metadata": {
+        "ignore_unknown_instances": true,
+        "source_path": "outer/inner",
+        "project_definition": [
+          "inner",
+          {
+            "class_name": null,
+            "children": {},
+            "properties": {},
+            "ignore_unknown_instances": true,
+            "path": "outer/inner"
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "ignore_unknown_instances": false,
+    "source_path": "outer",
+    "project_definition": [
+      "fs_project_merging",
+      {
+        "class_name": null,
+        "children": {
+          "inner": {
+            "class_name": null,
+            "children": {},
+            "properties": {},
+            "ignore_unknown_instances": true,
+            "path": "outer/inner"
+          }
+        },
+        "properties": {},
+        "ignore_unknown_instances": null,
+        "path": "outer"
+      }
+    ]
+  }
+}
