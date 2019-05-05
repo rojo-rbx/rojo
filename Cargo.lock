@@ -1301,10 +1301,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rojo-e2e"
-version = "0.1.0"
-
-[[package]]
 name = "rustc-demangle"
 version = "0.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
