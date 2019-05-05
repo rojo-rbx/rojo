@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 * Added support for implicit property values in JSON model files ([#154](https://github.com/LPGhatguy/rojo/pull/154))
+* Added a new `rojo build` flag, `--plugin_autostart`, which adds a special marker to the built place file. When the place file is opened, the Rojo plugin will start immediately.
 
 ## [0.5.0 Alpha 9](https://github.com/LPGhatguy/rojo/releases/tag/v0.5.0-alpha.9) (April 4, 2019)
 * Changed `rojo build` to use buffered I/O, which can make it up to 2x faster in some cases.
