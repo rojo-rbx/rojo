@@ -89,11 +89,13 @@ impl Imfs {
 
     pub fn add_root(&mut self, path: &Path) -> Result<(), FsError> {
         debug_assert!(path.is_absolute());
-        debug_assert!(!self.is_within_roots(path));
 
-        self.roots.insert(path.to_path_buf());
+        if !self.is_within_roots(path) {
+            self.roots.insert(path.to_path_buf());
+            self.descend_and_read_from_disk(path)?;
+        }
 
-        self.descend_and_read_from_disk(path)
+        Ok(())
     }
 
     pub fn remove_root(&mut self, path: &Path) {

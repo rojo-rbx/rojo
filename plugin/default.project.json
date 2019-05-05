@@ -6,13 +6,13 @@
       "$path": "src"
     },
     "Roact": {
-      "$path": "modules/roact/lib"
+      "$path": "modules/roact/src"
     },
     "Promise": {
       "$path": "modules/promise/lib"
     },
     "t": {
-      "$path": "modules/t/lib/t.lua"
+      "$path": "modules/t/lib"
     }
   }
 }
