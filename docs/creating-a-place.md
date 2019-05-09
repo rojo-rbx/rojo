@@ -28,13 +28,13 @@ Now that we have a project, one thing we can do is build a Roblox place file for
 All we have to do is call `rojo build`:
 
 ```sh
-rojo build -o MyNewProject.rbxl
+rojo build -o MyNewProject.rbxlx
 ```
 
-If you open `MyNewProject.rbxl` in Roblox Studio now, you should see a `Folder` containing a `ModuleScript` under `ReplicatedStorage`!
+If you open `MyNewProject.rbxlx` in Roblox Studio now, you should see a `Folder` containing a `ModuleScript` under `ReplicatedStorage`!
 
 !!! info
-    To generate an XML place file instead, like if you're checking the place file into version control, just use `rbxlx` as the extension on the output file instead.
+    To generate a binary place file instead, use `rbxl`. Note that support for binary model/place files (`rbxm` and `rbxl`) is very limited in Rojo presently.
 
 ## Live-Syncing into Studio
 Building a place file is great for the initial build, but for actively working on your place, you'll want something quicker.
