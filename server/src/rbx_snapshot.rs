@@ -14,7 +14,7 @@ use failure::Fail;
 use log::info;
 use maplit::hashmap;
 use rbx_dom_weak::{RbxTree, RbxValue, RbxInstanceProperties, UnresolvedRbxValue};
-use serde_derive::{Serialize, Deserialize};
+use serde::{Serialize, Deserialize};
 use rbx_reflection::{try_resolve_value, ValueResolveError};
 
 use crate::{
@@ -653,20 +653,13 @@ fn snapshot_xml_model_file<'source>(
         .file_stem().expect("Could not extract file stem")
         .to_str().expect("Could not convert path to UTF-8");
 
-    let mut temp_tree = RbxTree::new(RbxInstanceProperties {
-        name: "Temp".to_owned(),
-        class_name: "Folder".to_owned(),
-        properties: HashMap::new(),
-    });
-
-    let root_id = temp_tree.get_root_id();
-    rbx_xml::decode(&mut temp_tree, root_id, file.contents.as_slice())
+    let temp_tree = rbx_xml::from_reader_default(file.contents.as_slice())
         .map_err(|inner| SnapshotError::XmlModelDecodeError {
             inner,
             path: file.path.clone(),
         })?;
 
-    let root_instance = temp_tree.get_instance(root_id).unwrap();
+    let root_instance = temp_tree.get_instance(temp_tree.get_root_id()).unwrap();
     let children = root_instance.get_children_ids();
 
     match children.len() {

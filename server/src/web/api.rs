@@ -21,7 +21,7 @@ use hyper::{
     Request,
     Response,
 };
-use serde_derive::{Serialize, Deserialize};
+use serde::{Serialize, Deserialize};
 use rbx_dom_weak::{RbxId, RbxInstance};
 
 use crate::{

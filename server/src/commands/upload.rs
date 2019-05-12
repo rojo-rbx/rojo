@@ -80,10 +80,10 @@ pub fn upload(options: &UploadOptions) -> Result<(), UploadError> {
     match options.kind {
         Some("place") | None => {
             let top_level_ids = tree.get_instance(root_id).unwrap().get_children_ids();
-            rbx_xml::encode(&tree, top_level_ids, &mut contents)?;
+            rbx_xml::to_writer_default(&mut contents, &tree, top_level_ids)?;
         },
         Some("model") => {
-            rbx_xml::encode(&tree, &[root_id], &mut contents)?;
+            rbx_xml::to_writer_default(&mut contents, &tree, &[root_id])?;
         },
         Some(invalid) => return Err(UploadError::InvalidKind(invalid.to_owned())),
     }

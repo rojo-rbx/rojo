@@ -1,4 +1,4 @@
-use serde_derive::{Serialize, Deserialize};
+use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]

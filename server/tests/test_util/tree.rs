@@ -20,7 +20,7 @@ use std::{
 };
 
 use log::error;
-use serde_derive::{Serialize, Deserialize};
+use serde::{Serialize, Deserialize};
 use rbx_dom_weak::{RbxId, RbxTree};
 
 use librojo::{

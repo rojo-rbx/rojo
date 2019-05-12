@@ -9,8 +9,7 @@ use std::{
 use log::warn;
 use failure::Fail;
 use rbx_dom_weak::{UnresolvedRbxValue, RbxValue};
-use serde_derive::{Serialize, Deserialize};
-use serde::{Serialize, Serializer};
+use serde::{Serialize, Serializer, Deserialize};
 
 static DEFAULT_PLACE: &'static str = include_str!("../assets/place.project.json");
 

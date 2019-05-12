@@ -7,7 +7,7 @@ use std::{
 };
 
 use rlua::Lua;
-use serde_derive::{Serialize, Deserialize};
+use serde::{Serialize, Deserialize};
 use log::{info, trace, error};
 use rbx_dom_weak::{RbxTree, RbxId};
 

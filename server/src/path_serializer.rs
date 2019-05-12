@@ -10,7 +10,7 @@
 //!
 //! ```
 //! # use std::path::PathBuf;
-//! # use serde_derive::{Serialize, Deserialize};
+//! # use serde::{Serialize, Deserialize};
 //!
 //! #[derive(Serialize, Deserialize)]
 //! struct Mine {

@@ -11,7 +11,7 @@ use std::{
 };
 
 use rbx_dom_weak::{RbxTree, RbxId, RbxInstanceProperties, RbxValue};
-use serde_derive::{Serialize, Deserialize};
+use serde::{Serialize, Deserialize};
 
 use crate::{
     path_map::PathMap,
