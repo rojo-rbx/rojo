@@ -16,6 +16,7 @@ use maplit::hashmap;
 use rbx_dom_weak::{RbxTree, RbxValue, RbxInstanceProperties, UnresolvedRbxValue};
 use serde::{Serialize, Deserialize};
 use rbx_reflection::{try_resolve_value, ValueResolveError};
+use std::process::Command;
 
 use crate::{
     imfs::{
@@ -376,6 +377,7 @@ fn snapshot_imfs_file<'source>(
                 None
             }
         },
+        Some("moon") => snapshot_moon_file(file)?,
         Some(_) | None => None,
     };
 
@@ -405,13 +407,55 @@ fn snapshot_imfs_file<'source>(
     Ok(maybe_snapshot)
 }
 
+fn snapshot_moon_file<'source>(
+    file: &'source ImfsFile,
+) -> SnapshotResult<'source> {
+    let file_path = file.path.to_string_lossy().to_owned().to_string();
+
+    let output = Command::new("moonc")
+                    .arg("-p")
+                    .arg(format!("{}", &file_path))
+                    .output().expect("");
+    
+    let file_stem = file.path
+        .file_stem().expect("Could not extract file stem")
+        .to_str().expect("Could not convert path to UTF-8");
+    if output.stderr.starts_with(file_path.as_bytes()) {
+        println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
+    };
+    let (instance_name, class_name) = if let Some(name) = match_trailing(file_stem, ".server") {
+        (name, "Script")
+    } else if let Some(name) = match_trailing(file_stem, ".client") {
+        (name, "LocalScript")
+    } else {
+        (file_stem, "ModuleScript")
+    };
+
+    let contents = String::from_utf8_lossy(&output.stdout).to_string();
+
+    Ok(Some(RbxSnapshotInstance {
+        name: Cow::Borrowed(instance_name),
+        class_name: Cow::Borrowed(class_name),
+        properties: hashmap! {
+            "Source".to_owned() => RbxValue::String {
+                value: contents.to_owned(),
+            },
+        },
+        children: Vec::new(),
+        metadata: MetadataPerInstance {
+            source_path: Some(file.path.to_path_buf()),
+            ignore_unknown_instances: false,
+            project_definition: None,
+        },
+    }))
+}
+
 fn snapshot_lua_file<'source>(
     file: &'source ImfsFile,
 ) -> SnapshotResult<'source> {
     let file_stem = file.path
         .file_stem().expect("Could not extract file stem")
         .to_str().expect("Could not convert path to UTF-8");
-
     let (instance_name, class_name) = if let Some(name) = match_trailing(file_stem, ".server") {
         (name, "Script")
     } else if let Some(name) = match_trailing(file_stem, ".client") {
