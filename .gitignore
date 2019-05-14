@@ -3,3 +3,7 @@
 /scratch-project
 **/*.rs.bk
 /server/failed-snapshots/
+/*.rbxm
+/*.rbxmx
+/*.rbxl
+/*.rbxlx
