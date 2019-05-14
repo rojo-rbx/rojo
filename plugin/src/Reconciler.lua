@@ -6,6 +6,12 @@ local setCanonicalProperty = require(script.Parent.setCanonicalProperty)
 local rojoValueToRobloxValue = require(script.Parent.rojoValueToRobloxValue)
 local Types = require(script.Parent.Types)
 
+local function setParent(instance, newParent)
+	pcall(function()
+		instance.Parent = newParent
+	end)
+end
+
 local Reconciler = {}
 Reconciler.__index = Reconciler
 
@@ -117,7 +123,7 @@ function Reconciler:reconcile(virtualInstancesById, id, instance)
 
 		-- Some instances, like services, don't like having their Parent
 		-- property poked, even if we're setting it to the same value.
-		setCanonicalProperty(instance, "Parent", parent)
+		setParent(instance, parent)
 	end
 
 	return instance
@@ -154,7 +160,7 @@ function Reconciler:__reify(virtualInstancesById, id, parent)
 		self:__reify(virtualInstancesById, childId, instance)
 	end
 
-	setCanonicalProperty(instance, "Parent", parent)
+	setParent(instance, parent)
 	self.instanceMap:insert(id, instance)
 
 	return instance
