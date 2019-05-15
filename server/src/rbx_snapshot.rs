@@ -153,7 +153,7 @@ impl fmt::Display for SnapshotError {
                 write!(output, "Malformed .model.json model: {} in path {}", inner, path.display())
             },
             SnapshotError::XmlModelDecodeError { inner, path } => {
-                write!(output, "Malformed rbxmx model: {:?} in path {}", inner, path.display())
+                write!(output, "Malformed rbxmx model: {} in path {}", inner, path.display())
             },
             SnapshotError::BinaryModelDecodeError { inner, path } => {
                 write!(output, "Malformed rbxm model: {:?} in path {}", inner, path.display())
