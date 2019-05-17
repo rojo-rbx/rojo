@@ -2,16 +2,17 @@
 
 ## [Unreleased]
 * Upgraded significant dependencies:
-    * rbx_dom_weak 1.6.0
+    * rbx_dom_weak 1.7.0
         * `Content` properties can now be specified in projects and model files as strings
         * Added support for `BrickColor`, but with no handy conversions yet
     * rbx_reflection 3.0.384
         * Updated reflection database to client release 384
         * Adds support for new enum variants like `Lighting.Technology` as `"ShadowMap"`
-    * rbx_xml 0.7.0
+    * rbx_xml 0.9.0
         * Performance improvements dealing with model/place files due to smaller error type
         * Fixed serializing empty `Content` properties
-        * Improved content compatibility utilizing the reflection database
+        * Fixed serializing infinite and NaN values
+        * Improved content compatibility utilizing reflection database
 * Added support for implicit property values in JSON model files ([#154](https://github.com/LPGhatguy/rojo/pull/154))
 
 ## [0.5.0 Alpha 9](https://github.com/LPGhatguy/rojo/releases/tag/v0.5.0-alpha.9) (April 4, 2019)
