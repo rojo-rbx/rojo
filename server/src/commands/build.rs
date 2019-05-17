@@ -74,6 +74,11 @@ impl_from!(BuildError {
     SnapshotError => SnapshotError,
 });
 
+fn xml_encode_config() -> rbx_xml::EncodeOptions {
+    rbx_xml::EncodeOptions::new()
+        .property_behavior(rbx_xml::EncodePropertyBehavior::WriteUnknown)
+}
+
 pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
     let output_kind = options.output_kind
         .or_else(|| detect_output_kind(options))
@@ -100,7 +105,7 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
             // descendants.
 
             let root_id = tree.get_root_id();
-            rbx_xml::to_writer_default(&mut file, &tree, &[root_id])?;
+            rbx_xml::to_writer(&mut file, &tree, &[root_id], xml_encode_config())?;
         },
         OutputKind::Rbxlx => {
             // Place files don't contain an entry for the DataModel, but our
@@ -108,7 +113,7 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
 
             let root_id = tree.get_root_id();
             let top_level_ids = tree.get_instance(root_id).unwrap().get_children_ids();
-            rbx_xml::to_writer_default(&mut file, &tree, top_level_ids)?;
+            rbx_xml::to_writer(&mut file, &tree, top_level_ids, xml_encode_config())?;
         },
         OutputKind::Rbxm => {
             let root_id = tree.get_root_id();

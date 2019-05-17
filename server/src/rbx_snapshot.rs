@@ -653,7 +653,10 @@ fn snapshot_xml_model_file<'source>(
         .file_stem().expect("Could not extract file stem")
         .to_str().expect("Could not convert path to UTF-8");
 
-    let temp_tree = rbx_xml::from_reader_default(file.contents.as_slice())
+    let options = rbx_xml::DecodeOptions::new()
+        .property_behavior(rbx_xml::DecodePropertyBehavior::ReadUnknown);
+
+    let temp_tree = rbx_xml::from_reader(file.contents.as_slice(), options)
         .map_err(|inner| SnapshotError::XmlModelDecodeError {
             inner,
             path: file.path.clone(),
