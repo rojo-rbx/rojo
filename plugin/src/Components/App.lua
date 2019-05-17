@@ -80,7 +80,8 @@ function App:init()
 end
 
 function App:render()
-	local children
+	-- FIXME: https://github.com/Roblox/roact/issues/209
+	local children = {}
 
 	if self.state.sessionStatus == SessionStatus.Connected then
 		children = {
