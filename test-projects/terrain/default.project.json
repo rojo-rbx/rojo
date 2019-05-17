@@ -1,0 +1,13 @@
+{
+  "name": "terrain",
+  "tree": {
+    "$className": "DataModel",
+    "Workspace": {
+      "$className": "Workspace",
+
+      "Terrain": {
+        "$path": "Terrain.rbxmx"
+      }
+    }
+  }
+}
