@@ -1,8 +1,6 @@
 # Rojo Changelog
 
 ## [Unreleased]
-
-## [0.5.0 Alpha 10](https://github.com/LPGhatguy/rojo/releases/tag/v0.5.0-alpha.10) (May 29, 2019)
 * Added support for implicit property values in JSON model files ([#154](https://github.com/LPGhatguy/rojo/pull/154))
 * `Content` propertyes can now be specified in projects and model files as regular string literals.
 * Added support for `BrickColor` properties.
