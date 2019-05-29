@@ -1,19 +1,17 @@
 # Rojo Changelog
 
 ## [Unreleased]
-* Upgraded significant dependencies:
-    * rbx_dom_weak 1.7.0
-        * `Content` properties can now be specified in projects and model files as strings
-        * Added support for `BrickColor`, but with no handy conversions yet
-    * rbx_reflection 3.0.384
-        * Updated reflection database to client release 384
-        * Adds support for new enum variants like `Lighting.Technology` as `"ShadowMap"`
-    * rbx_xml 0.9.0
-        * Performance improvements dealing with model/place files due to smaller error type
-        * Fixed serializing empty `Content` properties
-        * Fixed serializing infinite and NaN values
-        * Improved content compatibility utilizing reflection database
+
+## [0.5.0 Alpha 10](https://github.com/LPGhatguy/rojo/releases/tag/v0.5.0-alpha.10) (May 29, 2019)
 * Added support for implicit property values in JSON model files ([#154](https://github.com/LPGhatguy/rojo/pull/154))
+* `Content` propertyes can now be specified in projects and model files as regular string literals.
+* Added support for `BrickColor` properties.
+* Added support for properties added in client release 384, like `Lighting.Technology` being set to `"ShadowMap"`.
+* Improved performance when working with XML models and places
+* Fixed serializing empty `Content` properties as XML
+* Fixed serializing infinite and NaN floating point properties in XML
+* Improved compatibility with XML models
+* Plugin should now be able to live-sync more properties, and ignore ones it can't, like `Lighting.Technology`.
 
 ## [0.5.0 Alpha 9](https://github.com/LPGhatguy/rojo/releases/tag/v0.5.0-alpha.9) (April 4, 2019)
 * Changed `rojo build` to use buffered I/O, which can make it up to 2x faster in some cases.
