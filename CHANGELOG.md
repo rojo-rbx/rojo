@@ -1,6 +1,8 @@
 # Rojo Changelog
 
 ## [Unreleased]
+
+## [0.5.0 Alpha 11](https://github.com/LPGhatguy/rojo/releases/tag/v0.5.0-alpha.11) (May 29, 2019)
 * Added support for implicit property values in JSON model files ([#154](https://github.com/LPGhatguy/rojo/pull/154))
 * `Content` propertyes can now be specified in projects and model files as regular string literals.
 * Added support for `BrickColor` properties.
@@ -10,6 +12,9 @@
 * Fixed serializing infinite and NaN floating point properties in XML
 * Improved compatibility with XML models
 * Plugin should now be able to live-sync more properties, and ignore ones it can't, like `Lighting.Technology`.
+
+## 0.5.0 Alpha 10
+* This release was a dud due to [issue #176](https://github.com/LPGhatguy/rojo/issues/176) and was rolled back.
 
 ## [0.5.0 Alpha 9](https://github.com/LPGhatguy/rojo/releases/tag/v0.5.0-alpha.9) (April 4, 2019)
 * Changed `rojo build` to use buffered I/O, which can make it up to 2x faster in some cases.
