@@ -7,20 +7,6 @@ local function rojoValueToRobloxValue(value)
 		return nil
 	end
 
-	-- TODO: Remove this once rbx_dom_weak and rbx_dom_lua agree on encoding
-	if value.Type == "BinaryString" then
-		local actualValue = ""
-
-		for i = 1, #value.Value do
-			actualValue = actualValue .. string.char(i)
-		end
-
-		value = {
-			Type = "BinaryString",
-			Value = actualValue,
-		}
-	end
-
 	local success, decodedValue = RbxDom.EncodedValue.decode(value)
 
 	if not success then
