@@ -1,6 +1,7 @@
 # Rojo Changelog
 
 ## [Unreleased]
+* Added a warning when building binary place files, since they're still experimental.
 
 ## [0.5.0 Alpha 11](https://github.com/LPGhatguy/rojo/releases/tag/v0.5.0-alpha.11) (May 29, 2019)
 * Added support for implicit property values in JSON model files ([#154](https://github.com/LPGhatguy/rojo/pull/154))

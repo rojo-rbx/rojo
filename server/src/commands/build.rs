@@ -120,6 +120,10 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
             rbx_binary::encode(&tree, &[root_id], &mut file)?;
         },
         OutputKind::Rbxl => {
+            log::warn!("Support for building binary places (rbxl) is still experimental.");
+            log::warn!("Using the XML place format (rbxlx) is recommended instead.");
+            log::warn!("For more info, see https://github.com/LPGhatguy/rojo/issues/180");
+
             let root_id = tree.get_root_id();
             let top_level_ids = tree.get_instance(root_id).unwrap().get_children_ids();
             rbx_binary::encode(&tree, top_level_ids, &mut file)?;
