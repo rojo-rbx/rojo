@@ -36,15 +36,9 @@ function ConnectPanel:init()
 			return UDim2.new(0, container.X - other.X - 16, 0, 32)
 		end
 	)
-
-	self:setState({
-		address = "",
-		port = "",
-	})
 end
 
 function ConnectPanel:render()
-	local startSession = self.props.startSession
 	local cancel = self.props.cancel
 
 	return e(FitList, {
@@ -102,13 +96,9 @@ function ConnectPanel:render()
 				Input = e(FormTextInput, {
 					layoutOrder = 2,
 					width = UDim.new(0, 220),
-					value = self.state.address,
+					value = self.props.address,
 					placeholderValue = Config.defaultHost,
-					onValueChange = function(newValue)
-						self:setState({
-							address = newValue,
-						})
-					end,
+					onValueChange = self.props.changeAddress,
 				}),
 			}),
 
@@ -135,13 +125,9 @@ function ConnectPanel:render()
 				Input = e(FormTextInput, {
 					layoutOrder = 2,
 					width = UDim.new(0, 80),
-					value = self.state.port,
+					value = self.props.port,
 					placeholderValue = Config.defaultPort,
-					onValueChange = function(newValue)
-						self:setState({
-							port = newValue,
-						})
-					end,
+					onValueChange = self.props.changePort,
 				}),
 			}),
 		}),
@@ -179,21 +165,7 @@ function ConnectPanel:render()
 			e(FormButton, {
 				layoutOrder = 2,
 				text = "Connect",
-				onClick = function()
-					if startSession ~= nil then
-						local address = self.state.address
-						if address:len() == 0 then
-							address = Config.defaultHost
-						end
-
-						local port = self.state.port
-						if port:len() == 0 then
-							port = Config.defaultPort
-						end
-
-						startSession(address, port)
-					end
-				end,
+				onClick = self.props.connect,
 			}),
 		}),
 

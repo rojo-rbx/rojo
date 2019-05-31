@@ -68,6 +68,8 @@ local App = Roact.Component:extend("App")
 
 function App:init()
 	self:setState({
+		address = "",
+		port = "",
 		sessionStatus = SessionStatus.Disconnected,
 	})
 
@@ -79,6 +81,58 @@ function App:init()
 		or Version.display(Config.version)
 end
 
+function App:getConnectionPair()
+	local address = self.state.address
+	if address:len() == 0 then
+		address = Config.defaultHost
+	end
+
+	local port = self.state.port
+	if port:len() == 0 then
+		port = Config.defaultPort
+	end
+
+	return address, port
+end
+
+function App:startSession()
+	local address, port = self:getConnectionPair()
+
+	Logging.trace("Starting new session")
+
+	local success, session = Session.new({
+		address = address,
+		port = port,
+		onError = function(message)
+			Logging.warn("Rojo session terminated because of an error:\n%s", tostring(message))
+			self.currentSession = nil
+
+			self:setState({
+				sessionStatus = SessionStatus.Disconnected,
+			})
+		end
+	})
+
+	if success then
+		self.currentSession = session
+		self:setState({
+			sessionStatus = SessionStatus.Connected,
+		})
+	end
+end
+
+function App:stopSession()
+	Logging.trace("Disconnecting session")
+
+	self.currentSession:disconnect()
+	self.currentSession = nil
+	self:setState({
+		sessionStatus = SessionStatus.Disconnected,
+	})
+
+	Logging.trace("Session terminated by user")
+end
+
 function App:render()
 	-- FIXME: https://github.com/Roblox/roact/issues/209
 	local children = {}
@@ -87,43 +141,24 @@ function App:render()
 		children = {
 			ConnectionActivePanel = e(ConnectionActivePanel, {
 				stopSession = function()
-					Logging.trace("Disconnecting session")
-
-					self.currentSession:disconnect()
-					self.currentSession = nil
-					self:setState({
-						sessionStatus = SessionStatus.Disconnected,
-					})
-
-					Logging.trace("Session terminated by user")
+					self:stopSession()
 				end,
 			}),
 		}
 	elseif self.state.sessionStatus == SessionStatus.ConfiguringSession then
 		children = {
 			ConnectPanel = e(ConnectPanel, {
-				startSession = function(address, port)
-					Logging.trace("Starting new session")
+				address = self.state.address,
+				port = self.state.port,
 
-					local success, session = Session.new({
-						address = address,
-						port = port,
-						onError = function(message)
-							Logging.warn("Rojo session terminated because of an error:\n%s", tostring(message))
-							self.currentSession = nil
-
-							self:setState({
-								sessionStatus = SessionStatus.Disconnected,
-							})
-						end
-					})
-
-					if success then
-						self.currentSession = session
-						self:setState({
-							sessionStatus = SessionStatus.Connected,
-						})
-					end
+				changeAddress = function(address)
+					self:setState({ address = address })
+				end,
+				changePort = function(port)
+					self:setState({ port = port })
+				end,
+				connect = function()
+					self:startSession()
 				end,
 				cancel = function()
 					Logging.trace("Canceling session configuration")
@@ -147,6 +182,17 @@ function App:didMount()
 
 	local toolbar = self.props.plugin:CreateToolbar("Rojo " .. self.displayedVersion)
 
+	local toggleAction = self.props.plugin:CreatePluginAction("rojo/toggle", "Rojo: Toggle connection",
+		"Toggles connection to a running Rojo session")
+
+	toggleAction.Triggered:Connect(function()
+		if self.state.sessionStatus == SessionStatus.Connected then
+			self:stopSession()
+		else
+			self:startSession()
+		end
+	end)
+
 	self.connectButton = toolbar:CreateButton(
 		"Connect",
 		"Connect to a running Rojo session",
@@ -156,15 +202,7 @@ function App:didMount()
 		checkUpgrade(self.props.plugin)
 
 		if self.state.sessionStatus == SessionStatus.Connected then
-			Logging.trace("Disconnecting session")
-
-			self.currentSession:disconnect()
-			self.currentSession = nil
-			self:setState({
-				sessionStatus = SessionStatus.Disconnected,
-			})
-
-			Logging.trace("Session terminated by user")
+			self:stopSession()
 		elseif self.state.sessionStatus == SessionStatus.Disconnected then
 			Logging.trace("Starting session configuration")
 
