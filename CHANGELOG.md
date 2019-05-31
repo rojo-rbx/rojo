@@ -1,7 +1,9 @@
 # Rojo Changelog
 
 ## [Unreleased]
-* Added a warning when building binary place files, since they're still experimental.
+* Added support for live-syncing `CollectionService` tags.
+* Added a warning when building binary place files, since they're still experimental and have bugs.
+* Fixed plugin live-sync not ignoring unknown properties.
 
 ## [0.5.0 Alpha 11](https://github.com/LPGhatguy/rojo/releases/tag/v0.5.0-alpha.11) (May 29, 2019)
 * Added support for implicit property values in JSON model files ([#154](https://github.com/LPGhatguy/rojo/pull/154))
