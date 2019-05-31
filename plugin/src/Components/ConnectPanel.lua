@@ -7,7 +7,6 @@ local Config = require(Plugin.Config)
 local Version = require(Plugin.Version)
 local Assets = require(Plugin.Assets)
 local Theme = require(Plugin.Theme)
-local joinBindings = require(Plugin.joinBindings)
 
 local FitList = require(Plugin.Components.FitList)
 local FitText = require(Plugin.Components.FitText)
@@ -23,19 +22,6 @@ local ConnectPanel = Roact.Component:extend("ConnectPanel")
 function ConnectPanel:init()
 	self.footerSize, self.setFooterSize = Roact.createBinding(Vector2.new())
 	self.footerVersionSize, self.setFooterVersionSize = Roact.createBinding(Vector2.new())
-
-	-- This is constructed in init because 'joinBindings' is a hack and we'd
-	-- leak memory constructing it every render. When this kind of feature lands
-	-- in Roact properly, we can do this inline in render without fear.
-	self.footerRestSize = joinBindings(
-		{
-			self.footerSize,
-			self.footerVersionSize,
-		},
-		function(container, other)
-			return UDim2.new(0, container.X - other.X - 16, 0, 32)
-		end
-	)
 
 	self:setState({
 		address = "",
@@ -230,7 +216,12 @@ function ConnectPanel:render()
 			LogoContainer = e("Frame", {
 				BackgroundTransparency = 1,
 
-				Size = self.footerRestSize,
+				Size = Roact.joinBindings({
+					container = self.footerSize,
+					other = self.footerVersionSize
+				}):map(function(values)
+					return UDim2.new(0, values.container.X - values.other.X - 16, 0, 32)
+				end),
 			}, {
 				Logo = e("ImageLabel", {
 					Image = Assets.Images.Logo,
