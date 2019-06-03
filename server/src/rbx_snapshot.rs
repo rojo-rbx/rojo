@@ -342,7 +342,7 @@ fn snapshot_imfs_directory<'source>(
             children: Vec::new(),
             metadata: MetadataPerInstance {
                 source_path: None,
-                ignore_unknown_instances: meta.ignore_unknown_children.unwrap_or(false),
+                ignore_unknown_instances: false,
                 project_definition: None,
             },
         }
@@ -369,6 +369,10 @@ fn snapshot_imfs_directory<'source>(
         }
     }
 
+    if let Some(meta_ignore_children) = meta.ignore_unknown_children {
+        snapshot.metadata.ignore_unknown_instances = meta_ignore_children;
+    }
+
     Ok(Some(snapshot))
 }
 
@@ -377,8 +381,10 @@ fn snapshot_imfs_directory<'source>(
 struct InitMetaJson {
     #[serde(skip_serializing_if = "Option::is_none")]
     class_name: Option<String>,
+
     #[serde(skip_serializing_if = "Option::is_none")]
     ignore_unknown_children: Option<bool>,
+
     #[serde(
         default = "HashMap::new",
         skip_serializing_if = "HashMap::is_empty",
