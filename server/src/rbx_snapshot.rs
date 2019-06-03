@@ -39,6 +39,7 @@ use crate::{
 const INIT_MODULE_NAME: &str = "init.lua";
 const INIT_SERVER_NAME: &str = "init.server.lua";
 const INIT_CLIENT_NAME: &str = "init.client.lua";
+const INIT_META_NAME: &str = "init.meta.json";
 
 pub struct SnapshotContext {
     pub plugin_context: Option<SnapshotPluginContext>,
@@ -105,6 +106,12 @@ pub enum SnapshotError {
         path: PathBuf,
     },
 
+    InitMetaError {
+        #[fail(cause)]
+        inner: serde_json::Error,
+        path: PathBuf,
+    },
+
     XmlModelDecodeError {
         #[fail(cause)]
         inner: rbx_xml::DecodeError,
@@ -151,6 +158,9 @@ impl fmt::Display for SnapshotError {
             },
             SnapshotError::JsonModelDecodeError { inner, path } => {
                 write!(output, "Malformed .model.json model: {} in path {}", inner, path.display())
+            },
+            SnapshotError::InitMetaError { inner, path } => {
+                write!(output, "Malformed init.meta.json: {} in path {}", inner, path.display())
             },
             SnapshotError::XmlModelDecodeError { inner, path } => {
                 write!(output, "Malformed rbxmx model: {} in path {}", inner, path.display())
@@ -299,6 +309,18 @@ fn snapshot_imfs_directory<'source>(
     let init_path = directory.path.join(INIT_MODULE_NAME);
     let init_server_path = directory.path.join(INIT_SERVER_NAME);
     let init_client_path = directory.path.join(INIT_CLIENT_NAME);
+    let init_meta_path = directory.path.join(INIT_META_NAME);
+
+    let meta: Option<InitMetaJson> = if let Some(ImfsItem::File(file)) = imfs.get(&init_meta_path) {
+        Some(serde_json::from_slice(&file.contents)
+            .map_err(|inner| SnapshotError::InitMetaError {
+                inner,
+                path: file.path.to_path_buf(),
+            })?
+        )
+    } else {
+        None
+    };
 
     let snapshot_name = instance_name
         .unwrap_or_else(|| {
@@ -315,7 +337,7 @@ fn snapshot_imfs_directory<'source>(
         snapshot_imfs_path(context, imfs, &init_client_path, Some(snapshot_name))?.unwrap()
     } else {
         RbxSnapshotInstance {
-            class_name: Cow::Borrowed("Folder"),
+            class_name: Cow::Owned(meta.and_then(|meta| meta.class_name).unwrap_or("Folder".to_owned())),
             name: snapshot_name,
             properties: HashMap::new(),
             children: Vec::new(),
@@ -349,6 +371,13 @@ fn snapshot_imfs_directory<'source>(
     }
 
     Ok(Some(snapshot))
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct InitMetaJson {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    class_name: Option<String>,
 }
 
 fn snapshot_imfs_file<'source>(

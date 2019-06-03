@@ -1,0 +1,20 @@
+{
+  "name": "test-model",
+  "class_name": "Tool",
+  "properties": {},
+  "children": [],
+  "metadata": {
+    "ignore_unknown_instances": false,
+    "source_path": "src",
+    "project_definition": [
+      "test-model",
+      {
+        "class_name": null,
+        "children": {},
+        "properties": {},
+        "ignore_unknown_instances": null,
+        "path": "src"
+      }
+    ]
+  }
+}
