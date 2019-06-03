@@ -7,7 +7,19 @@
       "Value": true
     }
   },
-  "children": [],
+  "children": [
+    {
+      "name": "A",
+      "class_name": "Folder",
+      "properties": {},
+      "children": [],
+      "metadata": {
+        "ignore_unknown_instances": true,
+        "source_path": "src/A",
+        "project_definition": null
+      }
+    }
+  ],
   "metadata": {
     "ignore_unknown_instances": false,
     "source_path": "src",
