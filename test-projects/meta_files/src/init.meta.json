@@ -1,0 +1,9 @@
+{
+  "className": "Tool",
+  "properties": {
+    "Enabled": {
+      "Type": "Bool",
+      "Value": true
+    }
+  }
+}

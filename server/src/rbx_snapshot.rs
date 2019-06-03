@@ -311,15 +311,14 @@ fn snapshot_imfs_directory<'source>(
     let init_client_path = directory.path.join(INIT_CLIENT_NAME);
     let init_meta_path = directory.path.join(INIT_META_NAME);
 
-    let meta: Option<InitMetaJson> = if let Some(ImfsItem::File(file)) = imfs.get(&init_meta_path) {
-        Some(serde_json::from_slice(&file.contents)
+    let meta: InitMetaJson = if let Some(ImfsItem::File(file)) = imfs.get(&init_meta_path) {
+        serde_json::from_slice(&file.contents)
             .map_err(|inner| SnapshotError::InitMetaError {
                 inner,
                 path: file.path.to_path_buf(),
             })?
-        )
     } else {
-        None
+        InitMetaJson::default()
     };
 
     let snapshot_name = instance_name
@@ -337,9 +336,9 @@ fn snapshot_imfs_directory<'source>(
         snapshot_imfs_path(context, imfs, &init_client_path, Some(snapshot_name))?.unwrap()
     } else {
         RbxSnapshotInstance {
-            class_name: Cow::Owned(meta.and_then(|meta| meta.class_name).unwrap_or("Folder".to_owned())),
+            class_name: Cow::Owned(meta.class_name.unwrap_or_else(|| "Folder".to_owned())),
             name: snapshot_name,
-            properties: HashMap::new(),
+            properties: meta.properties,
             children: Vec::new(),
             metadata: MetadataPerInstance {
                 source_path: None,
@@ -373,11 +372,16 @@ fn snapshot_imfs_directory<'source>(
     Ok(Some(snapshot))
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct InitMetaJson {
     #[serde(skip_serializing_if = "Option::is_none")]
     class_name: Option<String>,
+    #[serde(
+        default = "HashMap::new",
+        skip_serializing_if = "HashMap::is_empty",
+    )]
+    properties: HashMap<String, RbxValue>,
 }
 
 fn snapshot_imfs_file<'source>(

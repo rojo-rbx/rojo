@@ -35,7 +35,7 @@ generate_snapshot_tests!(
     empty,
     json_model,
     localization,
-    meta_class_names,
+    meta_files,
     multi_partition_game,
     nested_partitions,
     single_partition_game,
