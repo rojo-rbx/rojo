@@ -374,8 +374,8 @@ fn snapshot_imfs_directory<'source>(
         }
     }
 
-    if let Some(meta_ignore_children) = meta.ignore_unknown_children {
-        snapshot.metadata.ignore_unknown_instances = meta_ignore_children;
+    if let Some(meta_ignore_instances) = meta.ignore_unknown_instances {
+        snapshot.metadata.ignore_unknown_instances = meta_ignore_instances;
     }
 
     Ok(Some(snapshot))
@@ -388,7 +388,7 @@ struct InitMetaJson {
     class_name: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    ignore_unknown_children: Option<bool>,
+    ignore_unknown_instances: Option<bool>,
 
     #[serde(
         default = "HashMap::new",
