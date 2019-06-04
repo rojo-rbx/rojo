@@ -18,6 +18,26 @@
         "source_path": "src/A",
         "project_definition": null
       }
+    },
+    {
+      "name": "Script",
+      "class_name": "Script",
+      "properties": {
+        "Disabled": {
+          "Type": "Bool",
+          "Value": true
+        },
+        "Source": {
+          "Type": "String",
+          "Value": "print(\"Hello, world\")"
+        }
+      },
+      "children": [],
+      "metadata": {
+        "ignore_unknown_instances": false,
+        "source_path": "src/Script",
+        "project_definition": null
+      }
     }
   ],
   "metadata": {
