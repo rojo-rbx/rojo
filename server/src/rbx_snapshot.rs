@@ -338,7 +338,7 @@ fn snapshot_imfs_directory<'source>(
         RbxSnapshotInstance {
             class_name: Cow::Owned(meta.class_name.unwrap_or_else(|| "Folder".to_owned())),
             name: snapshot_name,
-            properties: meta.properties,
+            properties: HashMap::new(),
             children: Vec::new(),
             metadata: MetadataPerInstance {
                 source_path: None,
@@ -347,6 +347,11 @@ fn snapshot_imfs_directory<'source>(
             },
         }
     };
+
+    for (key, value) in meta.properties {
+        let resolved_value = try_resolve_value(&snapshot.class_name, &key, &value)?;
+        snapshot.properties.insert(key, resolved_value);
+    }
 
     snapshot.metadata.source_path = Some(directory.path.to_owned());
 
@@ -389,7 +394,7 @@ struct InitMetaJson {
         default = "HashMap::new",
         skip_serializing_if = "HashMap::is_empty",
     )]
-    properties: HashMap<String, RbxValue>,
+    properties: HashMap<String, UnresolvedRbxValue>,
 }
 
 fn snapshot_imfs_file<'source>(
