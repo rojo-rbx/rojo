@@ -311,16 +311,6 @@ fn snapshot_imfs_directory<'source>(
     let init_client_path = directory.path.join(INIT_CLIENT_NAME);
     let init_meta_path = directory.path.join(INIT_META_NAME);
 
-    let meta: InitMetaJson = if let Some(ImfsItem::File(file)) = imfs.get(&init_meta_path) {
-        serde_json::from_slice(&file.contents)
-            .map_err(|inner| SnapshotError::InitMetaError {
-                inner,
-                path: file.path.to_path_buf(),
-            })?
-    } else {
-        InitMetaJson::default()
-    };
-
     let snapshot_name = instance_name
         .unwrap_or_else(|| {
             Cow::Borrowed(directory.path
@@ -336,7 +326,7 @@ fn snapshot_imfs_directory<'source>(
         snapshot_imfs_path(context, imfs, &init_client_path, Some(snapshot_name))?.unwrap()
     } else {
         RbxSnapshotInstance {
-            class_name: Cow::Owned(meta.class_name.unwrap_or_else(|| "Folder".to_owned())),
+            class_name: Cow::Borrowed("Folder"),
             name: snapshot_name,
             properties: HashMap::new(),
             children: Vec::new(),
@@ -348,9 +338,25 @@ fn snapshot_imfs_directory<'source>(
         }
     };
 
-    for (key, value) in meta.properties {
-        let resolved_value = try_resolve_value(&snapshot.class_name, &key, &value)?;
-        snapshot.properties.insert(key, resolved_value);
+    if let Some(ImfsItem::File(file)) = imfs.get(&init_meta_path) {
+        let meta: InitMeta = serde_json::from_slice(&file.contents)
+            .map_err(|inner| SnapshotError::InitMetaError {
+                inner,
+                path: file.path.to_path_buf(),
+            })?;
+
+        if let Some(meta_class) = meta.class_name {
+            snapshot.class_name = Cow::Owned(meta_class);
+        }
+
+        if let Some(meta_ignore_instances) = meta.ignore_unknown_instances {
+            snapshot.metadata.ignore_unknown_instances = meta_ignore_instances;
+        }
+
+        for (key, value) in meta.properties {
+            let resolved_value = try_resolve_value(&snapshot.class_name, &key, &value)?;
+            snapshot.properties.insert(key, resolved_value);
+        }
     }
 
     snapshot.metadata.source_path = Some(directory.path.to_owned());
@@ -374,26 +380,16 @@ fn snapshot_imfs_directory<'source>(
         }
     }
 
-    if let Some(meta_ignore_instances) = meta.ignore_unknown_instances {
-        snapshot.metadata.ignore_unknown_instances = meta_ignore_instances;
-    }
-
     Ok(Some(snapshot))
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct InitMetaJson {
-    #[serde(skip_serializing_if = "Option::is_none")]
+struct InitMeta {
     class_name: Option<String>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
     ignore_unknown_instances: Option<bool>,
 
-    #[serde(
-        default = "HashMap::new",
-        skip_serializing_if = "HashMap::is_empty",
-    )]
+    #[serde(default = "HashMap::new")]
     properties: HashMap<String, UnresolvedRbxValue>,
 }
 
