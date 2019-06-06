@@ -39,6 +39,7 @@ use crate::{
 const INIT_MODULE_NAME: &str = "init.lua";
 const INIT_SERVER_NAME: &str = "init.server.lua";
 const INIT_CLIENT_NAME: &str = "init.client.lua";
+const INIT_META_NAME: &str = "init.meta.json";
 
 pub struct SnapshotContext {
     pub plugin_context: Option<SnapshotPluginContext>,
@@ -105,6 +106,12 @@ pub enum SnapshotError {
         path: PathBuf,
     },
 
+    InitMetaError {
+        #[fail(cause)]
+        inner: serde_json::Error,
+        path: PathBuf,
+    },
+
     XmlModelDecodeError {
         #[fail(cause)]
         inner: rbx_xml::DecodeError,
@@ -151,6 +158,9 @@ impl fmt::Display for SnapshotError {
             },
             SnapshotError::JsonModelDecodeError { inner, path } => {
                 write!(output, "Malformed .model.json model: {} in path {}", inner, path.display())
+            },
+            SnapshotError::InitMetaError { inner, path } => {
+                write!(output, "Malformed init.meta.json: {} in path {}", inner, path.display())
             },
             SnapshotError::XmlModelDecodeError { inner, path } => {
                 write!(output, "Malformed rbxmx model: {} in path {}", inner, path.display())
@@ -299,6 +309,7 @@ fn snapshot_imfs_directory<'source>(
     let init_path = directory.path.join(INIT_MODULE_NAME);
     let init_server_path = directory.path.join(INIT_SERVER_NAME);
     let init_client_path = directory.path.join(INIT_CLIENT_NAME);
+    let init_meta_path = directory.path.join(INIT_META_NAME);
 
     let snapshot_name = instance_name
         .unwrap_or_else(|| {
@@ -327,6 +338,27 @@ fn snapshot_imfs_directory<'source>(
         }
     };
 
+    if let Some(ImfsItem::File(file)) = imfs.get(&init_meta_path) {
+        let meta: InitMeta = serde_json::from_slice(&file.contents)
+            .map_err(|inner| SnapshotError::InitMetaError {
+                inner,
+                path: file.path.to_path_buf(),
+            })?;
+
+        if let Some(meta_class) = meta.class_name {
+            snapshot.class_name = Cow::Owned(meta_class);
+        }
+
+        if let Some(meta_ignore_instances) = meta.ignore_unknown_instances {
+            snapshot.metadata.ignore_unknown_instances = meta_ignore_instances;
+        }
+
+        for (key, value) in meta.properties {
+            let resolved_value = try_resolve_value(&snapshot.class_name, &key, &value)?;
+            snapshot.properties.insert(key, resolved_value);
+        }
+    }
+
     snapshot.metadata.source_path = Some(directory.path.to_owned());
 
     for child_path in &directory.children {
@@ -349,6 +381,16 @@ fn snapshot_imfs_directory<'source>(
     }
 
     Ok(Some(snapshot))
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct InitMeta {
+    class_name: Option<String>,
+    ignore_unknown_instances: Option<bool>,
+
+    #[serde(default = "HashMap::new")]
+    properties: HashMap<String, UnresolvedRbxValue>,
 }
 
 fn snapshot_imfs_file<'source>(
