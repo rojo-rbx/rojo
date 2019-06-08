@@ -22,6 +22,13 @@ Hundreds of thousands of companies and individual developers use Git to version 
 
 Using a repository hosting service like GitHub or GitLab brings powerful features to Roblox developers like code reviews and issue tracking that professional engineers can't live without.
 
+## TypeScript
+TypeScript enables static type safety, which helps prevent typos and adds unparalleled autocompletion. It also brings features like arrow functions, object destructuring, functional programming methods, and more!
+
+With Rojo, you can use [roblox-ts](https://roblox-ts.github.io) to compile TypeScript to Lua and take advantage of a huge ecosystem of TypeScript tooling.
+
+It's also possible to use other languages that compile to Lua like [MoonScript](https://moonscript.org) and [Haxe](https://haxe.org).
+
 ## Other Tools
 There are decades of excellent tools available that operate on files. With Rojo, it's possible to take advantage of any of them!
 
