@@ -11,11 +11,15 @@ theme:
 nav:
   - Home: index.md
   - Why Rojo?: why-rojo.md
-  - Installation: installation.md
-  - Creating a Place with Rojo: creating-a-place.md
-  - Migrating from 0.4.x to 0.5.x: migrating-to-epiphany.md
-  - Project Format: project-format.md
-  - Sync Details: sync-details.md
+  - Guide:
+    - Installation: guide/installation.md
+    - Creating a Game with Rojo: guide/new-game.md
+    # - Moving an Existing Game to Rojo: guide/existing-game.md
+    - Migrating from 0.4.x to 0.5.x: guide/migrating-to-epiphany.md
+  - Reference:
+    - Project Format: reference/project-format.md
+    - Sync Details: reference/sync-details.md
+  - Rojo Alternatives: rojo-alternatives.md
   - Rojo Internals:
     - Internals Overview: internals/overview.md
 

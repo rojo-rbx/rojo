@@ -24,19 +24,70 @@ Instance Descriptions correspond one-to-one with the actual Roblox Instances in 
 
 All other fields in an Instance Description are turned into instances whose name is the key. These values should also be Instance Descriptions!
 
-Instance Descriptions are fairly verbose and strict. In the future, it'll be possible for Rojo to infer class names for known services like `Workspace`.
+Instance Descriptions are fairly verbose and strict. In the future, it'll be possible for Rojo to [infer class names for known services like `Workspace`](https://github.com/LPGhatguy/rojo/issues/179).
 
 ## Instance Property Value
-The shape of Instance Property Values is defined by the [rbx_tree](https://github.com/LPGhatguy/rbx-tree) library, so it uses slightly different conventions than the rest of Rojo.
+There are two kinds of property values on instances, **implicit** and **explicit**.
+
+In the vast majority of cases, you should be able to use **implicit** property values. To use them, just use a value that's the same shape as the type that the property has:
+
+```json
+"MyPart": {
+    "$className": "Part",
+    "$properties": {
+        "Size": [3, 5, 3],
+        "Color": [0.5, 0, 0.5],
+        "Anchored": true,
+        "Material": "Granite"
+    }
+}
+```
+
+`Vector3` and `Color3` properties can just be arrays of numbers, as can types like `Vector2`, `CFrame`, and more!
+
+Enums can be set to a string containing the enum variant. Rojo will raise an error if the string isn't a valid variant for the enum.
+
+There are some cases where this syntax for assigning properties _doesn't_ work. In these cases, Rojo requires you to use the **explicit** property syntax.
+
+Some reasons why you might need to use an **explicit** property:
+
+* Using exotic property types like `BinaryString`
+* Using properties added to Roblox recently that Rojo doesn't know about yet
+
+The shape of explicit property values is defined by the [rbx-dom](https://github.com/LPGhatguy/rbx-dom) library, so it uses slightly different conventions than the rest of Rojo.
 
 Each value should be an object with the following required fields:
 
 * `Type`: The type of property to represent.
     * [Supported types can be found here](https://github.com/LPGhatguy/rbx-tree#property-type-coverage).
 * `Value`: The value of the property.
-    * The shape of this field depends on which property type is being used. `Vector3` and `Color3` values are both represented as a list of numbers, for example.
+    * The shape of this field depends on which property type is being used. `Vector3` and `Color3` values are both represented as a list of numbers, while `BinaryString` expects a base64-encoded string, for example.
 
-Instance Property Values are intentionally very strict. Rojo will eventually be able to infer types for you!
+Here's the same object, but with explicit properties:
+
+```json
+"MyPart": {
+    "$className": "Part",
+    "$properties": {
+        "Size": {
+            "Type": "Vector3",
+            "Value": [3, 5, 3]
+        },
+        "Color": {
+            "Type": "Color3",
+            "Value": [0.5, 0, 0.5]
+        },
+        "Anchored": {
+            "Type": "Bool",
+            "Value": true
+        },
+        "Material": {
+            "Type": "Enum",
+            "Value": 832
+        }
+    }
+}
+```
 
 ## Example Projects
 This project bundles up everything in the `src` directory. It'd be suitable for making a plugin or model:
@@ -61,10 +112,7 @@ This project describes the layout you might use if you were making the next hit 
         "HttpService": {
             "$className": "HttpService",
             "$properties": {
-                "HttpEnabled": {
-                    "Type": "Bool",
-                    "Value": true
-                }
+                "HttpEnabled": true
             }
         },
 
@@ -85,10 +133,7 @@ This project describes the layout you might use if you were making the next hit 
         "Workspace": {
             "$className": "Workspace",
             "$properties": {
-                "Gravity": {
-                    "Type": "Float32",
-                    "Value": 67.3
-                }
+                "Gravity": 67.3
             },
 
             "Terrain": {

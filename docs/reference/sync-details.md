@@ -36,12 +36,12 @@ If a directory contains a file named `init.server.lua`, `init.client.lua`, or `i
 
 For example, these files:
 
-![Tree of files on disk](images/sync-example-files.svg)
+![Tree of files on disk](../images/sync-example-files.svg)
 {: align="center" }
 
 Will turn into these instances in Roblox:
 
-![Tree of instances in Roblox](images/sync-example-instances.svg)
+![Tree of instances in Roblox](../images/sync-example-instances.svg)
 {: align="center" }
 
 ## Localization Tables
@@ -80,7 +80,7 @@ A JSON model describing a folder containing a `Part` and a `RemoteEvent` could b
 
 It would turn into instances in this shape:
 
-![Tree of instances in Roblox](images/sync-example-json-model.svg)
+![Tree of instances in Roblox](../images/sync-example-json-model.svg)
 {: align="center" }
 
 ## Binary and XML Models

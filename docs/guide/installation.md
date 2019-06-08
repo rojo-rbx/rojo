@@ -1,7 +1,8 @@
+This is this installation guide for Rojo **0.5.x**.
+
 [TOC]
 
 ## Overview
-
 Rojo has two components:
 
 * The command line interface (CLI)
@@ -35,7 +36,7 @@ The Rojo Roblox Studio plugin is available from Rojo's [GitHub Releases page](ht
 
 Download the attached `rbxm` file and put it into your Roblox Studio plugins folder. You can find that folder by pressing **Plugins Folder** from your Plugins toolbar in Roblox Studio:
 
-!['Plugins Folder' button in Roblox Studio](images/plugins-folder-in-studio.png)
+!['Plugins Folder' button in Roblox Studio](../images/plugins-folder-in-studio.png)
 {: align="center" }
 
 ### Installing from Roblox.com

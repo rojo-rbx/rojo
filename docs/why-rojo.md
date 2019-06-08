@@ -1,23 +1,32 @@
-There are a number of existing plugins for Roblox that move code from the filesystem into Roblox.
+Adding a tool like Rojo to your Roblox workflow can be daunting, but it comes with some key advantages.
 
-Besides Rojo, you might consider:
+[TOC]
 
-* [rbxmk by Anaminus](https://github.com/anaminus/rbxmk)
-* [Rofresh by Osyris](https://github.com/osyrisrblx/rofresh)
-* [RbxRefresh by Osyris](https://github.com/osyrisrblx/RbxRefresh)
-* [Studio Bridge by Vocksel](https://github.com/vocksel/studio-bridge)
-* [Elixir by Vocksel](https://github.com/vocksel/elixir)
-* [RbxSync by evaera](https://github.com/evaera/RbxSync)
-* [CodeSync by MemoryPenguin](https://github.com/MemoryPenguin/CodeSync)
-* [rbx-exteditor by MemoryPenguin](https://github.com/MemoryPenguin/rbx-exteditor)
+## External Text Editors
+Rojo opens the door to use the absolute best text editors in the world and their rich plugin ecosystem.
 
-So why did I build Rojo?
+Some very popular, free editors include [Visual Studio Code](https://code.visualstudio.com) and [Sublime Text](https://www.sublimetext.com).
 
-Each of these tools solves what is essentially the same problem from a few different angles. The goal of Rojo is to take all of the lessons and ideas learned from these projects and build a tool that can solve this problem for good.
+These advanced text editors have features like multi-cursor editing, goto symbol, multi-file regex find and replace, bookmarks and much more.
 
-Additionally:
+Many Rojo VS Code users also use extensions like:
 
-* I think that this tool needs to be built in a compiled language without a runtime, for easy distribution and good performance.
-* I think that the conventions promoted by other sync plugins (`.module.lua` for modules, as well a single sync point) are sub-optimal.
-* I think that I have a good enough understanding of the problem to build something robust.
-* I think that Rojo should be able to do more than just sync code.
+* [vscode-rbxlua](https://marketplace.visualstudio.com/items?itemName=AmaranthineCodices.vscode-rbxlua)
+* [Roblox Lua Autocompletes](https://marketplace.visualstudio.com/items?itemName=Kampfkarren.roblox-lua-autofills)
+* [TabNine](https://tabnine.com)
+
+## Version Control
+By building your game (or just the scripts) as individual files on the filesystem, it becomes easy to start using professional-grade version control tools like [Git](https://git-scm.com) and [GitHub](https://github.com).
+
+Hundreds of thousands of companies and individual developers use Git to version their software projects. With Rojo, Roblox developers can take advantage of the best collaboration tool around.
+
+Using a repository hosting service like GitHub or GitLab brings powerful features to Roblox developers like code reviews and issue tracking that professional engineers can't live without.
+
+## Other Tools
+There are decades of excellent tools available that operate on files. With Rojo, it's possible to take advantage of any of them!
+
+Popular tools include:
+
+* [luacheck](https://github.com/mpeterv/luacheck), a static analysis tool to help you write better Lua
+* [ripgrep](https://github.com/BurntSushi/ripgrep), an extremely fast code search tool
+* [Tokei](https://github.com/XAMPPRocky/tokei), a tool for statistics like lines of code
