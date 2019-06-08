@@ -439,8 +439,13 @@ impl Project {
     }
 
     pub fn load_fuzzy(fuzzy_project_location: &Path) -> Result<Project, ProjectLoadFuzzyError> {
-        let project_path = Self::locate(fuzzy_project_location)
-            .ok_or(ProjectLoadFuzzyError::NotFound)?;
+        let project_path = match Self::locate(fuzzy_project_location) {
+            Some(path) => path,
+            None => {
+                Project::warn_if_4x_project_present(fuzzy_project_location);
+                return Err(ProjectLoadFuzzyError::NotFound);
+            }
+        };
 
         Self::load_exact(&project_path).map_err(From::from)
     }
@@ -482,6 +487,21 @@ impl Project {
             warn!("Starting in Rojo 0.5.0-alpha3, it's recommended to give all project files the");
             warn!(".project.json extension. This helps Rojo differentiate project files from");
             warn!("other JSON files!");
+        }
+    }
+
+    /// Issues a warning if no Rojo 0.5.x project is found, but there's a legacy
+    /// 0.4.x project in the directory.
+    fn warn_if_4x_project_present(folder: &Path) {
+        let file_path = folder.join("rojo.json");
+
+        if fs::metadata(file_path).is_ok() {
+            warn!("No Rojo 0.5 project file was found, but a Rojo 0.4 project was.");
+            warn!("Rojo 0.5.x uses 'default.project.json' files");
+            warn!("Rojo 0.5.x uses 'rojo.json' files");
+            warn!("");
+            warn!("For help upgrading, see:");
+            warn!("https://lpghatguy.github.io/rojo/guide/migrating-to-epiphany/");
         }
     }
 

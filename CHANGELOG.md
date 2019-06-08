@@ -3,6 +3,7 @@
 ## [Unreleased]
 * Added support for live-syncing `CollectionService` tags.
 * Added a warning when building binary place files, since they're still experimental and have bugs.
+* Added a warning when trying to use Rojo 0.5.x with a Rojo 0.4.x-only project.
 * Fixed plugin live-sync not ignoring unknown properties.
 
 ## [0.5.0 Alpha 11](https://github.com/LPGhatguy/rojo/releases/tag/v0.5.0-alpha.11) (May 29, 2019)
