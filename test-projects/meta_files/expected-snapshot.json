@@ -20,16 +20,56 @@
       }
     },
     {
-      "name": "Script",
+      "name": "DisableMe",
       "class_name": "Script",
       "properties": {
+        "Source": {
+          "Type": "String",
+          "Value": ""
+        },
         "Disabled": {
           "Type": "Bool",
           "Value": true
+        }
+      },
+      "children": [],
+      "metadata": {
+        "ignore_unknown_instances": true,
+        "source_path": "src/DisableMe.server.lua",
+        "project_definition": null
+      }
+    },
+    {
+      "name": "LocalizationTable",
+      "class_name": "LocalizationTable",
+      "properties": {
+        "SourceLocaleId": {
+          "Type": "String",
+          "Value": "es"
         },
+        "Contents": {
+          "Type": "String",
+          "Value": "[{\"key\":\"Doge\",\"example\":\"A funny dog\",\"source\":\"Perro!\",\"values\":{\"en\":\"Doge!\"}}]"
+        }
+      },
+      "children": [],
+      "metadata": {
+        "ignore_unknown_instances": false,
+        "source_path": "src/LocalizationTable.csv",
+        "project_definition": null
+      }
+    },
+    {
+      "name": "Script",
+      "class_name": "Script",
+      "properties": {
         "Source": {
           "Type": "String",
           "Value": "print(\"Hello, world\")"
+        },
+        "Disabled": {
+          "Type": "Bool",
+          "Value": true
         }
       },
       "children": [],

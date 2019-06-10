@@ -295,7 +295,7 @@ fn snapshot_imfs_item<'source>(
     instance_name: Option<Cow<'source, str>>,
 ) -> SnapshotResult<'source> {
     match item {
-        ImfsItem::File(file) => snapshot_imfs_file(context, file, instance_name),
+        ImfsItem::File(file) => snapshot_imfs_file(context, imfs, file, instance_name),
         ImfsItem::Directory(directory) => snapshot_imfs_directory(context, imfs, directory, instance_name),
     }
 }
@@ -345,18 +345,7 @@ fn snapshot_imfs_directory<'source>(
                 path: file.path.to_path_buf(),
             })?;
 
-        if let Some(meta_class) = meta.class_name {
-            snapshot.class_name = Cow::Owned(meta_class);
-        }
-
-        if let Some(meta_ignore_instances) = meta.ignore_unknown_instances {
-            snapshot.metadata.ignore_unknown_instances = meta_ignore_instances;
-        }
-
-        for (key, value) in meta.properties {
-            let resolved_value = try_resolve_value(&snapshot.class_name, &key, &value)?;
-            snapshot.properties.insert(key, resolved_value);
-        }
+        meta.apply(&mut snapshot)?;
     }
 
     snapshot.metadata.source_path = Some(directory.path.to_owned());
@@ -393,8 +382,28 @@ struct InitMeta {
     properties: HashMap<String, UnresolvedRbxValue>,
 }
 
+impl InitMeta {
+    fn apply(self, snapshot: &mut RbxSnapshotInstance) -> Result<(), SnapshotError> {
+        if let Some(meta_class) = self.class_name {
+            snapshot.class_name = Cow::Owned(meta_class);
+        }
+
+        if let Some(meta_ignore_instances) = self.ignore_unknown_instances {
+            snapshot.metadata.ignore_unknown_instances = meta_ignore_instances;
+        }
+
+        for (key, value) in self.properties {
+            let resolved_value = try_resolve_value(&snapshot.class_name, &key, &value)?;
+            snapshot.properties.insert(key, resolved_value);
+        }
+
+        Ok(())
+    }
+}
+
 fn snapshot_imfs_file<'source>(
     context: &SnapshotContext,
+    imfs: &'source Imfs,
     file: &'source ImfsFile,
     instance_name: Option<Cow<'source, str>>,
 ) -> SnapshotResult<'source> {
@@ -414,6 +423,11 @@ fn snapshot_imfs_file<'source>(
 
             if file_stem.ends_with(".model") {
                 snapshot_json_model_file(file)?
+            } else if file_stem.ends_with(".meta") {
+                // Meta files are handled on a per-file basis
+                // None is *returned* instead of passed through
+                // so that it isn't treated as a mistake
+                return Ok(None);
             } else {
                 None
             }
@@ -421,10 +435,36 @@ fn snapshot_imfs_file<'source>(
         Some(_) | None => None,
     };
 
-    if let Some(snapshot) = maybe_snapshot.as_mut() {
+    if let Some(mut snapshot) = maybe_snapshot.as_mut() {
         // Carefully preserve name from project manifest if present.
         if let Some(snapshot_name) = instance_name {
             snapshot.name = snapshot_name;
+        }
+
+        let meta_path = match extension {
+            Some("lua") => {
+                // Remove .server and .client
+                let file_path_str = file.path
+                    .to_str().expect("Could not convert path to UTF-8");
+                if let Some(name) = match_trailing(file_path_str, ".server.lua") {
+                    PathBuf::from(name)
+                } else if let Some(name) = match_trailing(file_path_str, ".client.lua") {
+                    PathBuf::from(name)
+                } else {
+                    file.path.to_owned()
+                }
+            },
+
+            _ => file.path.to_owned(),
+        }.with_extension("meta.json");
+
+        if let Some(ImfsItem::File(meta_file)) = imfs.get(&meta_path) {
+            let meta: InitMeta = serde_json::from_slice(&meta_file.contents).map_err(|inner| SnapshotError::InitMetaError {
+                inner,
+                path: file.path.to_path_buf(),
+            })?;
+
+            meta.apply(&mut snapshot)?;
         }
     } else {
         info!("File generated no snapshot: {}", file.path.display());
