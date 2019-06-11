@@ -1,6 +1,7 @@
 # Rojo Changelog
 
 ## [Unreleased]
+* Added `init.meta.json` files, which replace `init.model.json` files from Rojo 0.4.x ([#183](https://github.com/LPGhatguy/rojo/pull/183))
 * Added support for infinite and NaN values in types like `Vector2` when building models and places.
     * These types aren't supported for live-syncing yet due to limitations around JSON encoding.
 * Added support for using `SharedString` values when building XML models and places.
