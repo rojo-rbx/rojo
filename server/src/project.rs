@@ -88,7 +88,6 @@ fn serialize_unresolved_minimal<S>(unresolved: &UnresolvedRbxValue, serializer: 
                 RbxValue::Color3 { value } => value.serialize(serializer),
                 RbxValue::Color3uint8 { value } => value.serialize(serializer),
                 RbxValue::Content { value } => value.serialize(serializer),
-                RbxValue::Enum { value } => value.serialize(serializer),
                 RbxValue::Float32 { value } => value.serialize(serializer),
                 RbxValue::Int32 { value } => value.serialize(serializer),
                 RbxValue::String { value } => value.serialize(serializer),
