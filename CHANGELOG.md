@@ -1,10 +1,15 @@
 # Rojo Changelog
 
 ## [Unreleased]
+* Added support for infinite and NaN values in types like `Vector2` when building models and places.
+    * These types aren't supported for live-syncing yet due to limitations around JSON encoding.
+* Added support for using `SharedString` values when building XML models and places.
 * Added support for live-syncing `CollectionService` tags.
 * Added a warning when building binary place files, since they're still experimental and have bugs.
 * Added a warning when trying to use Rojo 0.5.x with a Rojo 0.4.x-only project.
-* Fixed plugin live-sync not ignoring unknown properties.
+* Changed plugin to ignore unknown properties when live-syncing.
+    * Rojo's approach this problem might change later, like with a strict model mode ([#190](https://github.com/LPGhatguy/rojo/issues/190)) or another approach.
+* Upgraded to reflection database from client release 388.
 
 ## [0.5.0 Alpha 11](https://github.com/LPGhatguy/rojo/releases/tag/v0.5.0-alpha.11) (May 29, 2019)
 * Added support for implicit property values in JSON model files ([#154](https://github.com/LPGhatguy/rojo/pull/154))
