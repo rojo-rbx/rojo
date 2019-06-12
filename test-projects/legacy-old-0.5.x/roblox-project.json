@@ -1,0 +1,6 @@
+{
+  "name": "Foo",
+  "tree": {
+    "$className": "Folder"
+  }
+}

@@ -10,7 +10,7 @@ use reqwest::header::{ACCEPT, USER_AGENT, CONTENT_TYPE, COOKIE};
 
 use crate::{
     imfs::{Imfs, FsError},
-    project::{Project, ProjectLoadFuzzyError},
+    project::{Project, ProjectLoadError},
     rbx_session::construct_oneoff_tree,
     rbx_snapshot::SnapshotError,
 };
@@ -24,7 +24,7 @@ pub enum UploadError {
     InvalidKind(String),
 
     #[fail(display = "Project load error: {}", _0)]
-    ProjectLoadError(#[fail(cause)] ProjectLoadFuzzyError),
+    ProjectLoadError(#[fail(cause)] ProjectLoadError),
 
     #[fail(display = "IO error: {}", _0)]
     IoError(#[fail(cause)] io::Error),
@@ -43,7 +43,7 @@ pub enum UploadError {
 }
 
 impl_from!(UploadError {
-    ProjectLoadFuzzyError => ProjectLoadError,
+    ProjectLoadError => ProjectLoadError,
     io::Error => IoError,
     reqwest::Error => HttpError,
     rbx_xml::EncodeError => XmlModelEncodeError,
@@ -65,7 +65,6 @@ pub fn upload(options: &UploadOptions) -> Result<(), UploadError> {
     info!("Looking for project at {}", options.fuzzy_project_path.display());
 
     let project = Project::load_fuzzy(&options.fuzzy_project_path)?;
-    project.check_compatibility();
 
     info!("Found project at {}", project.file_location.display());
     info!("Using project {:#?}", project);

@@ -9,7 +9,7 @@ use failure::Fail;
 
 use crate::{
     imfs::{Imfs, FsError},
-    project::{Project, ProjectLoadFuzzyError},
+    project::{Project, ProjectLoadError},
     rbx_session::construct_oneoff_tree,
     rbx_snapshot::SnapshotError,
 };
@@ -47,7 +47,7 @@ pub enum BuildError {
     UnknownOutputKind,
 
     #[fail(display = "Project load error: {}", _0)]
-    ProjectLoadError(#[fail(cause)] ProjectLoadFuzzyError),
+    ProjectLoadError(#[fail(cause)] ProjectLoadError),
 
     #[fail(display = "IO error: {}", _0)]
     IoError(#[fail(cause)] io::Error),
@@ -66,7 +66,7 @@ pub enum BuildError {
 }
 
 impl_from!(BuildError {
-    ProjectLoadFuzzyError => ProjectLoadError,
+    ProjectLoadError => ProjectLoadError,
     io::Error => IoError,
     rbx_xml::EncodeError => XmlModelEncodeError,
     rbx_binary::EncodeError => BinaryModelEncodeError,
@@ -89,7 +89,6 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
     info!("Looking for project at {}", options.fuzzy_project_path.display());
 
     let project = Project::load_fuzzy(&options.fuzzy_project_path)?;
-    project.check_compatibility();
 
     info!("Found project at {}", project.file_location.display());
     info!("Using project {:#?}", project);

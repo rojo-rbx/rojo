@@ -197,34 +197,37 @@ impl SourcePlugin {
     }
 }
 
-/// Error returned by Project::load_exact
 #[derive(Debug, Fail)]
-pub enum ProjectLoadExactError {
-    #[fail(display = "IO error: {}", _0)]
-    IoError(#[fail(cause)] io::Error),
-
-    #[fail(display = "JSON error: {}", _0)]
-    JsonError(#[fail(cause)] serde_json::Error),
-}
-
-/// Error returned by Project::load_fuzzy
-#[derive(Debug, Fail)]
-pub enum ProjectLoadFuzzyError {
-    #[fail(display = "Project not found")]
+pub enum ProjectLoadError {
     NotFound,
 
-    #[fail(display = "IO error: {}", _0)]
-    IoError(#[fail(cause)] io::Error),
+    Io {
+        #[fail(cause)]
+        inner: io::Error,
+        path: PathBuf,
+    },
 
-    #[fail(display = "JSON error: {}", _0)]
-    JsonError(#[fail(cause)] serde_json::Error),
+    Json {
+        #[fail(cause)]
+        inner: serde_json::Error,
+        path: PathBuf,
+    },
 }
 
-impl From<ProjectLoadExactError> for ProjectLoadFuzzyError {
-    fn from(error: ProjectLoadExactError) -> ProjectLoadFuzzyError {
-        match error {
-            ProjectLoadExactError::IoError(inner) => ProjectLoadFuzzyError::IoError(inner),
-            ProjectLoadExactError::JsonError(inner) => ProjectLoadFuzzyError::JsonError(inner),
+impl fmt::Display for ProjectLoadError {
+    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        use self::ProjectLoadError::*;
+
+        match self {
+            NotFound => {
+                write!(formatter, "Project file not found")
+            }
+            Io { inner, path } => {
+                write!(formatter, "I/O error: {} in path {}", inner, path.display())
+            }
+            Json { inner, path } => {
+                write!(formatter, "JSON error: {} in path {}", inner, path.display())
+            }
         }
     }
 }
@@ -333,11 +336,17 @@ pub struct Project {
 
 impl Project {
     pub fn init_place(project_fuzzy_path: &Path) -> Result<PathBuf, ProjectInitError> {
-        let project_path = Project::init_pick_path(project_fuzzy_path)?;
+        let project_path = Project::pick_path_for_init(project_fuzzy_path)?;
+
         let project_name = if project_fuzzy_path == project_path {
-            project_fuzzy_path.parent().unwrap().file_name().unwrap().to_str().unwrap()
+            project_fuzzy_path
+                .parent().expect("Path did not have a parent directory")
+                .file_name().expect("Path did not have a file name")
+                .to_str().expect("Path had invalid Unicode")
         } else {
-            project_fuzzy_path.file_name().unwrap().to_str().unwrap()
+            project_fuzzy_path
+                .file_name().expect("Path did not have a file name")
+                .to_str().expect("Path had invalid Unicode")
         };
 
         let mut project = Project::load_from_str(DEFAULT_PLACE, &project_path)
@@ -352,13 +361,21 @@ impl Project {
     }
 
     pub fn init_model(project_fuzzy_path: &Path) -> Result<PathBuf, ProjectInitError> {
-        let project_path = Project::init_pick_path(project_fuzzy_path)?;
-        let project_folder_path = project_path.parent().unwrap();
+        let project_path = Project::pick_path_for_init(project_fuzzy_path)?;
+
         let project_name = if project_fuzzy_path == project_path {
-            project_fuzzy_path.parent().unwrap().file_name().unwrap().to_str().unwrap()
+            project_fuzzy_path
+                .parent().expect("Path did not have a parent directory")
+                .file_name().expect("Path did not have a file name")
+                .to_str().expect("Path had invalid Unicode")
         } else {
-            project_fuzzy_path.file_name().unwrap().to_str().unwrap()
+            project_fuzzy_path
+                .file_name().expect("Path did not have a file name")
+                .to_str().expect("Path had invalid Unicode")
         };
+
+        let project_folder_path = project_path
+            .parent().expect("Path did not have a parent directory");
 
         let tree = ProjectNode {
             path: Some(project_folder_path.join("src")),
@@ -380,7 +397,7 @@ impl Project {
         Ok(project_path)
     }
 
-    fn init_pick_path(project_fuzzy_path: &Path) -> Result<PathBuf, ProjectInitError> {
+    fn pick_path_for_init(project_fuzzy_path: &Path) -> Result<PathBuf, ProjectInitError> {
         let is_exact = project_fuzzy_path.extension().is_some();
 
         let project_path = if is_exact {
@@ -400,7 +417,7 @@ impl Project {
         Ok(project_path)
     }
 
-    pub fn locate(start_location: &Path) -> Option<PathBuf> {
+    fn locate(start_location: &Path) -> Option<PathBuf> {
         // TODO: Check for specific error kinds, convert 'not found' to Result.
         let location_metadata = fs::metadata(start_location).ok()?;
 
@@ -437,26 +454,35 @@ impl Project {
         Ok(parsed.into_project(project_file_location))
     }
 
-    pub fn load_fuzzy(fuzzy_project_location: &Path) -> Result<Project, ProjectLoadFuzzyError> {
-        let project_path = match Self::locate(fuzzy_project_location) {
-            Some(path) => path,
-            None => {
-                Project::warn_if_4x_project_present(fuzzy_project_location);
-                return Err(ProjectLoadFuzzyError::NotFound);
-            }
-        };
-
-        Self::load_exact(&project_path).map_err(From::from)
+    pub fn load_fuzzy(fuzzy_project_location: &Path) -> Result<Project, ProjectLoadError> {
+        if let Some(project_path) = Self::locate(fuzzy_project_location) {
+            Self::load_exact(&project_path)
+        } else {
+            Project::warn_if_4x_project_present(fuzzy_project_location);
+            Err(ProjectLoadError::NotFound)
+        }
     }
 
-    pub fn load_exact(project_file_location: &Path) -> Result<Project, ProjectLoadExactError> {
+    pub fn load_exact(project_file_location: &Path) -> Result<Project, ProjectLoadError> {
         let contents = fs::read_to_string(project_file_location)
-            .map_err(ProjectLoadExactError::IoError)?;
+            .map_err(|error| match error.kind() {
+                io::ErrorKind::NotFound => ProjectLoadError::NotFound,
+                _ => ProjectLoadError::Io {
+                    inner: error,
+                    path: project_file_location.to_path_buf(),
+                }
+            })?;
 
         let parsed: SourceProject = serde_json::from_str(&contents)
-            .map_err(ProjectLoadExactError::JsonError)?;
+            .map_err(|error| ProjectLoadError::Json {
+                inner: error,
+                path: project_file_location.to_path_buf(),
+            })?;
 
-        Ok(parsed.into_project(project_file_location))
+        let project = parsed.into_project(project_file_location);
+        project.check_compatibility();
+
+        Ok(project)
     }
 
     pub fn save(&self) -> Result<(), ProjectSaveError> {
@@ -472,10 +498,10 @@ impl Project {
 
     /// Checks if there are any compatibility issues with this project file and
     /// warns the user if there are any.
-    pub fn check_compatibility(&self) {
+    fn check_compatibility(&self) {
         let file_name = self.file_location
-            .file_name().unwrap()
-            .to_str().expect("Project file path was not valid Unicode!");
+            .file_name().expect("Project file path did not have a file name")
+            .to_str().expect("Project file path was not valid Unicode");
 
         if file_name == COMPAT_PROJECT_FILENAME {
             warn!("Rojo's default project file name changed in 0.5.0-alpha3.");
