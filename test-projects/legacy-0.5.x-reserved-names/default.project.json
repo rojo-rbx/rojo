@@ -1,0 +1,9 @@
+{
+  "name": "legacy-0.5.x-reserved-names",
+  "tree": {
+    "$className": "Folder",
+    "$warn-about-me": {
+      "$className": "Folder"
+    }
+  }
+}

@@ -20,7 +20,7 @@ pub static COMPAT_PROJECT_FILENAME: &'static str = "roblox-project.json";
 /// want to do things like transforming paths to be absolute before handing them
 /// off to the rest of Rojo, we use this intermediate struct.
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
 struct SourceProject {
     name: String,
     tree: SourceProjectNode,
@@ -274,6 +274,17 @@ pub struct ProjectNode {
 }
 
 impl ProjectNode {
+    fn validate_reserved_names(&self) {
+        for (name, child) in &self.children {
+            if name.starts_with('$') {
+                warn!("Keys starting with '$' are reserved by Rojo to ensure forward compatibility.");
+                warn!("This project uses the key '{}', which should be renamed.", name);
+            }
+
+            child.validate_reserved_names();
+        }
+    }
+
     fn to_source_node(&self, project_file_location: &Path) -> SourceProjectNode {
         let children = self.children.iter()
             .map(|(key, value)| (key.clone(), value.to_source_node(project_file_location)))
@@ -513,6 +524,8 @@ impl Project {
             warn!(".project.json extension. This helps Rojo differentiate project files from");
             warn!("other JSON files!");
         }
+
+        self.tree.validate_reserved_names();
     }
 
     /// Issues a warning if no Rojo 0.5.x project is found, but there's a legacy
