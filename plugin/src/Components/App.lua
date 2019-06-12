@@ -1,8 +1,10 @@
-local Roact = require(script:FindFirstAncestor("Rojo").Roact)
+local Studio = settings().Studio
 
-local Plugin = script:FindFirstAncestor("Plugin")
+local Rojo = script:FindFirstAncestor("Rojo")
+local Plugin = Rojo.Plugin
 
-local Assets = require(Plugin.Assets)
+local Roact = require(Rojo.Roact)
+
 local Session = require(Plugin.Session)
 local Config = require(Plugin.Config)
 local Version = require(Plugin.Version)
@@ -51,10 +53,16 @@ local function checkUpgrade(plugin)
 	plugin:SetSetting("LastRojoVersion", Config.version)
 end
 
+-- Since we need to switch our plugin icon based on the theme, we use the
+-- insta-deprecated theme API. There isn't really an alternative here!
+local pluginButtonIcons = {
+	[Enum.UITheme.Dark] = "rbxassetid://3294408143",
+	[Enum.UITheme.Light] = "rbxassetid://3294218933",
+}
+
 local SessionStatus = {
 	Disconnected = "Disconnected",
 	Connected = "Connected",
-	-- TODO: Error?
 }
 
 setmetatable(SessionStatus, {
@@ -70,6 +78,7 @@ function App:init()
 		sessionStatus = SessionStatus.Disconnected,
 	})
 
+	self.signals = {}
 	self.currentSession = nil
 
 	self.displayedVersion = DevSettings:isEnabled()
@@ -87,6 +96,11 @@ function App:init()
 		self.dockWidget.Enabled = not self.dockWidget.Enabled
 	end)
 
+	self:setToolbarButtonIcon()
+	self.signals.theme = Studio.ThemeChanged:Connect(function()
+		self:setToolbarButtonIcon()
+	end)
+
 	local widgetInfo = DockWidgetPluginGuiInfo.new(
 		Enum.InitialDockState.Right,
 		false, -- Initially enabled state
@@ -96,13 +110,17 @@ function App:init()
 	)
 
 	self.dockWidget = self.props.plugin:CreateDockWidgetPluginGui("Rojo-0.5.x", widgetInfo)
-	self.dockWidget.Title = self.displayedVersion
+	self.dockWidget.Title = "Rojo " .. self.displayedVersion
 	self.dockWidget.AutoLocalize = false
 	self.dockWidget.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-	self.dockWidget:GetPropertyChangedSignal("Enabled"):Connect(function()
+	self.signals.dockWidgetEnabled = self.dockWidget:GetPropertyChangedSignal("Enabled"):Connect(function()
 		self.toggleButton:SetActive(self.dockWidget.Enabled)
 	end)
+end
+
+function App:setToolbarButtonIcon()
+	self.toggleButton.Icon = pluginButtonIcons[Studio["UI Theme"]]
 end
 
 function App:render()
@@ -177,6 +195,10 @@ function App:willUnmount()
 	if self.currentSession ~= nil then
 		self.currentSession:disconnect()
 		self.currentSession = nil
+	end
+
+	for _, signal in pairs(self.signals) do
+		signal:Disconnect()
 	end
 end
 
