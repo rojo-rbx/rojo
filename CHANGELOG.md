@@ -9,6 +9,7 @@
 * Added a warning when building binary place files, since they're still experimental and have bugs.
 * Added a warning when trying to use Rojo 0.5.x with a Rojo 0.4.x-only project.
 * Added a warning when a Rojo project contains keys that start with `$`, which are reserved names. ([#191](https://github.com/LPGhatguy/rojo/issues/191))
+* Rojo now throws an error if unknown keys are found in the project file.
 * Added an icon to the plugin's toolbar button
 * Changed the plugin to use a docking widget for all UI.
 * Changed the plugin to ignore unknown properties when live-syncing.
