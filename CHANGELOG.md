@@ -8,7 +8,9 @@
 * Added support for live-syncing `CollectionService` tags.
 * Added a warning when building binary place files, since they're still experimental and have bugs.
 * Added a warning when trying to use Rojo 0.5.x with a Rojo 0.4.x-only project.
-* Changed plugin to ignore unknown properties when live-syncing.
+* Added an icon to the plugin's toolbar button
+* Changed the plugin to use a docking widget for all UI.
+* Changed the plugin to ignore unknown properties when live-syncing.
     * Rojo's approach this problem might change later, like with a strict model mode ([#190](https://github.com/LPGhatguy/rojo/issues/190)) or another approach.
 * Upgraded to reflection database from client release 388.
 
