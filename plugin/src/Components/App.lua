@@ -54,7 +54,6 @@ end
 local SessionStatus = {
 	Disconnected = "Disconnected",
 	Connected = "Connected",
-	ConfiguringSession = "ConfiguringSession",
 	-- TODO: Error?
 }
 
@@ -71,12 +70,39 @@ function App:init()
 		sessionStatus = SessionStatus.Disconnected,
 	})
 
-	self.connectButton = nil
 	self.currentSession = nil
 
 	self.displayedVersion = DevSettings:isEnabled()
 		and Config.codename
 		or Version.display(Config.version)
+
+	local toolbar = self.props.plugin:CreateToolbar("Rojo " .. self.displayedVersion)
+
+	self.toggleButton = toolbar:CreateButton(
+		"Rojo",
+		"Show or hide the Rojo panel",
+		"")
+	self.toggleButton.ClickableWhenViewportHidden = true
+	self.toggleButton.Click:Connect(function()
+		self.dockWidget.Enabled = not self.dockWidget.Enabled
+	end)
+
+	local widgetInfo = DockWidgetPluginGuiInfo.new(
+		Enum.InitialDockState.Right,
+		false, -- Initially enabled state
+		false, -- Whether to override the widget's previous state
+		360, 190, -- Floating size
+		360, 190 -- Minimum size
+	)
+
+	self.dockWidget = self.props.plugin:CreateDockWidgetPluginGui("Rojo-0.5.x", widgetInfo)
+	self.dockWidget.Title = self.displayedVersion
+	self.dockWidget.AutoLocalize = false
+	self.dockWidget.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+	self.dockWidget:GetPropertyChangedSignal("Enabled"):Connect(function()
+		self.toggleButton:SetActive(self.dockWidget.Enabled)
+	end)
 end
 
 function App:render()
@@ -98,7 +124,7 @@ function App:render()
 				end,
 			}),
 		}
-	elseif self.state.sessionStatus == SessionStatus.ConfiguringSession then
+	elseif self.state.sessionStatus == SessionStatus.Disconnected then
 		children = {
 			ConnectPanel = e(ConnectPanel, {
 				startSession = function(address, port)
@@ -135,50 +161,15 @@ function App:render()
 		}
 	end
 
-	return e("ScreenGui", {
-		AutoLocalize = false,
-		ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+	return Roact.createElement(Roact.Portal, {
+		target = self.dockWidget,
 	}, children)
 end
 
 function App:didMount()
 	Logging.trace("Rojo %s initializing", self.displayedVersion)
 
-	local toolbar = self.props.plugin:CreateToolbar("Rojo " .. self.displayedVersion)
-
-	self.connectButton = toolbar:CreateButton(
-		"Connect",
-		"Connect to a running Rojo session",
-		Assets.StartSession)
-	self.connectButton.ClickableWhenViewportHidden = false
-	self.connectButton.Click:Connect(function()
-		checkUpgrade(self.props.plugin)
-
-		if self.state.sessionStatus == SessionStatus.Connected then
-			Logging.trace("Disconnecting session")
-
-			self.currentSession:disconnect()
-			self.currentSession = nil
-			self:setState({
-				sessionStatus = SessionStatus.Disconnected,
-			})
-
-			Logging.trace("Session terminated by user")
-		elseif self.state.sessionStatus == SessionStatus.Disconnected then
-			Logging.trace("Starting session configuration")
-
-			self:setState({
-				sessionStatus = SessionStatus.ConfiguringSession,
-			})
-		elseif self.state.sessionStatus == SessionStatus.ConfiguringSession then
-			Logging.trace("Canceling session configuration")
-
-			self:setState({
-				sessionStatus = SessionStatus.Disconnected,
-			})
-		end
-	end)
-
+	checkUpgrade(self.props.plugin)
 	preloadAssets()
 end
 
@@ -186,19 +177,6 @@ function App:willUnmount()
 	if self.currentSession ~= nil then
 		self.currentSession:disconnect()
 		self.currentSession = nil
-	end
-end
-
-function App:didUpdate()
-	local connectActive = self.state.sessionStatus == SessionStatus.ConfiguringSession
-		or self.state.sessionStatus == SessionStatus.Connected
-
-	self.connectButton:SetActive(connectActive)
-
-	if self.state.sessionStatus == SessionStatus.Connected then
-		self.connectButton.Icon = Assets.SessionActive
-	else
-		self.connectButton.Icon = Assets.StartSession
 	end
 end
 
