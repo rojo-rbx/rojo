@@ -23,13 +23,13 @@
       "name": "DisableMe",
       "class_name": "Script",
       "properties": {
-        "Source": {
-          "Type": "String",
-          "Value": ""
-        },
         "Disabled": {
           "Type": "Bool",
           "Value": true
+        },
+        "Source": {
+          "Type": "String",
+          "Value": ""
         }
       },
       "children": [],
@@ -43,13 +43,13 @@
       "name": "LocalizationTable",
       "class_name": "LocalizationTable",
       "properties": {
-        "SourceLocaleId": {
-          "Type": "String",
-          "Value": "es"
-        },
         "Contents": {
           "Type": "String",
           "Value": "[{\"key\":\"Doge\",\"example\":\"A funny dog\",\"source\":\"Perro!\",\"values\":{\"en\":\"Doge!\"}}]"
+        },
+        "SourceLocaleId": {
+          "Type": "String",
+          "Value": "es"
         }
       },
       "children": [],
@@ -60,22 +60,54 @@
       }
     },
     {
+      "name": "RobloxInstance",
+      "class_name": "Folder",
+      "properties": {
+        "Tags": {
+          "Type": "BinaryString",
+          "Value": ""
+        }
+      },
+      "children": [],
+      "metadata": {
+        "ignore_unknown_instances": true,
+        "source_path": null,
+        "project_definition": null
+      }
+    },
+    {
       "name": "Script",
       "class_name": "Script",
       "properties": {
-        "Source": {
-          "Type": "String",
-          "Value": "print(\"Hello, world\")"
-        },
         "Disabled": {
           "Type": "Bool",
           "Value": true
+        },
+        "Source": {
+          "Type": "String",
+          "Value": "print(\"Hello, world\")"
         }
       },
       "children": [],
       "metadata": {
         "ignore_unknown_instances": false,
         "source_path": "src/Script",
+        "project_definition": null
+      }
+    },
+    {
+      "name": "StringValue",
+      "class_name": "StringValue",
+      "properties": {
+        "Value": {
+          "Type": "String",
+          "Value": "I'm supposed to put funny text here, aren't I? Oh well."
+        }
+      },
+      "children": [],
+      "metadata": {
+        "ignore_unknown_instances": true,
+        "source_path": "src/StringValue.txt",
         "project_definition": null
       }
     }

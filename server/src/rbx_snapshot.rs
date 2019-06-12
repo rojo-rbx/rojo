@@ -39,7 +39,6 @@ use crate::{
 const INIT_MODULE_NAME: &str = "init.lua";
 const INIT_SERVER_NAME: &str = "init.server.lua";
 const INIT_CLIENT_NAME: &str = "init.client.lua";
-const INIT_META_NAME: &str = "init.meta.json";
 
 pub struct SnapshotContext {
     pub plugin_context: Option<SnapshotPluginContext>,
@@ -309,7 +308,6 @@ fn snapshot_imfs_directory<'source>(
     let init_path = directory.path.join(INIT_MODULE_NAME);
     let init_server_path = directory.path.join(INIT_SERVER_NAME);
     let init_client_path = directory.path.join(INIT_CLIENT_NAME);
-    let init_meta_path = directory.path.join(INIT_META_NAME);
 
     let snapshot_name = instance_name
         .unwrap_or_else(|| {
@@ -338,15 +336,7 @@ fn snapshot_imfs_directory<'source>(
         }
     };
 
-    if let Some(ImfsItem::File(file)) = imfs.get(&init_meta_path) {
-        let meta: InitMeta = serde_json::from_slice(&file.contents)
-            .map_err(|inner| SnapshotError::InitMetaError {
-                inner,
-                path: file.path.to_path_buf(),
-            })?;
-
-        meta.apply(&mut snapshot)?;
-    }
+    InitMeta::locate_and_apply(&mut snapshot, &imfs, &directory.path.join("init"))?;
 
     snapshot.metadata.source_path = Some(directory.path.to_owned());
 
@@ -399,6 +389,24 @@ impl InitMeta {
 
         Ok(())
     }
+
+    fn locate_and_apply(
+        snapshot: &mut RbxSnapshotInstance,
+        imfs: &Imfs,
+        path: &Path,
+    ) -> Result<(), SnapshotError> {
+        if let Some(ImfsItem::File(file)) = imfs.get(&path.with_extension("meta.json")) {
+            let meta: InitMeta = serde_json::from_slice(&file.contents)
+                .map_err(|inner| SnapshotError::InitMetaError {
+                    inner,
+                    path: file.path.to_path_buf(),
+                })?;
+
+            meta.apply(snapshot)?;
+        }
+
+        Ok(())
+    }
 }
 
 fn snapshot_imfs_file<'source>(
@@ -411,11 +419,11 @@ fn snapshot_imfs_file<'source>(
         .map(|v| v.to_str().expect("Could not convert extension to UTF-8"));
 
     let mut maybe_snapshot = match extension {
-        Some("lua") => snapshot_lua_file(file)?,
-        Some("csv") => snapshot_csv_file(file)?,
-        Some("txt") => snapshot_txt_file(file)?,
-        Some("rbxmx") => snapshot_xml_model_file(file)?,
-        Some("rbxm") => snapshot_binary_model_file(file)?,
+        Some("lua") => snapshot_lua_file(file, imfs)?,
+        Some("csv") => snapshot_csv_file(file, imfs)?,
+        Some("txt") => snapshot_txt_file(file, imfs)?,
+        Some("rbxmx") => snapshot_xml_model_file(file, imfs)?,
+        Some("rbxm") => snapshot_binary_model_file(file, imfs)?,
         Some("json") => {
             let file_stem = file.path
                 .file_stem().expect("Could not extract file stem")
@@ -440,32 +448,6 @@ fn snapshot_imfs_file<'source>(
         if let Some(snapshot_name) = instance_name {
             snapshot.name = snapshot_name;
         }
-
-        let meta_path = match extension {
-            Some("lua") => {
-                // Remove .server and .client
-                let file_path_str = file.path
-                    .to_str().expect("Could not convert path to UTF-8");
-                if let Some(name) = match_trailing(file_path_str, ".server.lua") {
-                    PathBuf::from(name)
-                } else if let Some(name) = match_trailing(file_path_str, ".client.lua") {
-                    PathBuf::from(name)
-                } else {
-                    file.path.to_owned()
-                }
-            },
-
-            _ => file.path.to_owned(),
-        }.with_extension("meta.json");
-
-        if let Some(ImfsItem::File(meta_file)) = imfs.get(&meta_path) {
-            let meta: InitMeta = serde_json::from_slice(&meta_file.contents).map_err(|inner| SnapshotError::InitMetaError {
-                inner,
-                path: file.path.to_path_buf(),
-            })?;
-
-            meta.apply(&mut snapshot)?;
-        }
     } else {
         info!("File generated no snapshot: {}", file.path.display());
     }
@@ -489,6 +471,7 @@ fn snapshot_imfs_file<'source>(
 
 fn snapshot_lua_file<'source>(
     file: &'source ImfsFile,
+    imfs: &'source Imfs,
 ) -> SnapshotResult<'source> {
     let file_stem = file.path
         .file_stem().expect("Could not extract file stem")
@@ -508,7 +491,7 @@ fn snapshot_lua_file<'source>(
             path: file.path.to_path_buf(),
         })?;
 
-    Ok(Some(RbxSnapshotInstance {
+    let mut snapshot = RbxSnapshotInstance {
         name: Cow::Borrowed(instance_name),
         class_name: Cow::Borrowed(class_name),
         properties: hashmap! {
@@ -522,7 +505,11 @@ fn snapshot_lua_file<'source>(
             ignore_unknown_instances: false,
             project_definition: None,
         },
-    }))
+    };
+
+    InitMeta::locate_and_apply(&mut snapshot, &imfs, &file.path.with_file_name(instance_name))?;
+
+    Ok(Some(snapshot))
 }
 
 fn match_trailing<'a>(input: &'a str, trailer: &str) -> Option<&'a str> {
@@ -536,6 +523,7 @@ fn match_trailing<'a>(input: &'a str, trailer: &str) -> Option<&'a str> {
 
 fn snapshot_txt_file<'source>(
     file: &'source ImfsFile,
+    imfs: &'source Imfs,
 ) -> SnapshotResult<'source> {
     let instance_name = file.path
         .file_stem().expect("Could not extract file stem")
@@ -547,7 +535,7 @@ fn snapshot_txt_file<'source>(
             path: file.path.to_path_buf(),
         })?;
 
-    Ok(Some(RbxSnapshotInstance {
+    let mut snapshot = RbxSnapshotInstance {
         name: Cow::Borrowed(instance_name),
         class_name: Cow::Borrowed("StringValue"),
         properties: hashmap! {
@@ -561,11 +549,16 @@ fn snapshot_txt_file<'source>(
             ignore_unknown_instances: false,
             project_definition: None,
         },
-    }))
+    };
+
+    InitMeta::locate_and_apply(&mut snapshot, &imfs, &file.path)?;
+
+    Ok(Some(snapshot))
 }
 
 fn snapshot_csv_file<'source>(
     file: &'source ImfsFile,
+    imfs: &'source Imfs,
 ) -> SnapshotResult<'source> {
     /// Struct that holds any valid row from a Roblox CSV translation table.
     ///
@@ -652,7 +645,7 @@ fn snapshot_csv_file<'source>(
     let table_contents = serde_json::to_string(&entries)
         .expect("Could not encode JSON for localization table");
 
-    Ok(Some(RbxSnapshotInstance {
+    let mut snapshot = RbxSnapshotInstance {
         name: Cow::Borrowed(instance_name),
         class_name: Cow::Borrowed("LocalizationTable"),
         properties: hashmap! {
@@ -666,7 +659,11 @@ fn snapshot_csv_file<'source>(
             ignore_unknown_instances: false,
             project_definition: None,
         },
-    }))
+    };
+
+    InitMeta::locate_and_apply(&mut snapshot, &imfs, &file.path)?;
+
+    Ok(Some(snapshot))
 }
 
 fn snapshot_json_model_file<'source>(
@@ -730,6 +727,7 @@ impl JsonModelInstance {
 
 fn snapshot_xml_model_file<'source>(
     file: &'source ImfsFile,
+    imfs: &'source Imfs,
 ) -> SnapshotResult<'source> {
     let instance_name = file.path
         .file_stem().expect("Could not extract file stem")
@@ -752,6 +750,7 @@ fn snapshot_xml_model_file<'source>(
         1 => {
             let mut snapshot = snapshot_from_tree(&temp_tree, children[0]).unwrap();
             snapshot.name = Cow::Borrowed(instance_name);
+            InitMeta::locate_and_apply(&mut snapshot, &imfs, &file.path)?;
             Ok(Some(snapshot))
         },
         _ => panic!("Rojo doesn't have support for model files with multiple roots yet"),
@@ -760,6 +759,7 @@ fn snapshot_xml_model_file<'source>(
 
 fn snapshot_binary_model_file<'source>(
     file: &'source ImfsFile,
+    imfs: &'source Imfs,
 ) -> SnapshotResult<'source> {
     let instance_name = file.path
         .file_stem().expect("Could not extract file stem")
@@ -786,6 +786,7 @@ fn snapshot_binary_model_file<'source>(
         1 => {
             let mut snapshot = snapshot_from_tree(&temp_tree, children[0]).unwrap();
             snapshot.name = Cow::Borrowed(instance_name);
+            InitMeta::locate_and_apply(&mut snapshot, &imfs, &file.path)?;
             Ok(Some(snapshot))
         },
         _ => panic!("Rojo doesn't have support for model files with multiple roots yet"),
