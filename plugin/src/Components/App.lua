@@ -110,6 +110,7 @@ function App:init()
 	)
 
 	self.dockWidget = self.props.plugin:CreateDockWidgetPluginGui("Rojo-0.5.x", widgetInfo)
+	self.dockWidget.Name = "Rojo " .. self.displayedVersion
 	self.dockWidget.Title = "Rojo " .. self.displayedVersion
 	self.dockWidget.AutoLocalize = false
 	self.dockWidget.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
