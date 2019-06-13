@@ -345,17 +345,24 @@ fn snapshot_imfs_directory<'source>(
             .file_name().expect("Couldn't extract file name")
             .to_str().expect("Couldn't convert file name to UTF-8");
 
+        if child_name.ends_with(".meta.json") {
+            // meta.json files don't turn into instances themselves, they just
+            // modify other instances.
+            continue;
+        }
+
         match child_name {
             INIT_MODULE_NAME | INIT_SERVER_NAME | INIT_CLIENT_NAME => {
                 // The existence of files with these names modifies the
                 // parent instance and is handled above, so we can skip
                 // them here.
-            },
-            _ => {
-                if let Some(child) = snapshot_imfs_path(context, imfs, child_path, None)? {
-                    snapshot.children.push(child);
-                }
-            },
+                continue;
+            }
+            _ => {}
+        }
+
+        if let Some(child) = snapshot_imfs_path(context, imfs, child_path, None)? {
+            snapshot.children.push(child);
         }
     }
 
@@ -431,11 +438,6 @@ fn snapshot_imfs_file<'source>(
 
             if file_stem.ends_with(".model") {
                 snapshot_json_model_file(file)?
-            } else if file_stem.ends_with(".meta") {
-                // Meta files are handled on a per-file basis
-                // None is *returned* instead of passed through
-                // so that it isn't treated as a mistake
-                return Ok(None);
             } else {
                 None
             }
