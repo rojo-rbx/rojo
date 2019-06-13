@@ -201,25 +201,20 @@ pub fn snapshot_project_node<'source>(
 ) -> SnapshotResult<'source> {
     let maybe_snapshot = match &node.path {
         Some(path) => snapshot_imfs_path(context, imfs, &path, Some(instance_name.clone()))?,
-        None => match &node.class_name {
-            Some(_class_name) => Some(RbxSnapshotInstance {
-                name: instance_name.clone(),
+        None => Some(RbxSnapshotInstance {
+            name: instance_name.clone(),
 
-                // These properties are replaced later in the function to
-                // reduce code duplication.
-                class_name: Cow::Borrowed("Folder"),
-                properties: HashMap::new(),
-                children: Vec::new(),
-                metadata: MetadataPerInstance {
-                    source_path: None,
-                    ignore_unknown_instances: true,
-                    project_definition: None,
-                },
-            }),
-            None => {
-                return Err(SnapshotError::ProjectNodeUnusable);
+            // These properties are replaced later in the function to
+            // reduce code duplication.
+            class_name: Cow::Borrowed("Folder"),
+            properties: HashMap::new(),
+            children: Vec::new(),
+            metadata: MetadataPerInstance {
+                source_path: None,
+                ignore_unknown_instances: true,
+                project_definition: None,
             },
-        },
+        }),
     };
 
     // If the snapshot resulted in no instances, like if it targets an unknown

@@ -1,0 +1,8 @@
+{
+  "name": "infer-data-model-classes",
+  "tree": {
+    "Stuff": {
+      "$path": "src"
+    }
+  }
+}

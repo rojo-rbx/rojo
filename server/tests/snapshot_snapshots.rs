@@ -32,6 +32,7 @@ macro_rules! generate_snapshot_tests {
 }
 
 generate_snapshot_tests!(
+    default_class_names,
     empty,
     json_model,
     localization,

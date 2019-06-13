@@ -1,0 +1,49 @@
+{
+  "name": "infer-data-model-classes",
+  "class_name": "Folder",
+  "properties": {},
+  "children": [
+    {
+      "name": "Stuff",
+      "class_name": "Folder",
+      "properties": {},
+      "children": [],
+      "metadata": {
+        "ignore_unknown_instances": false,
+        "source_path": "src",
+        "project_definition": [
+          "Stuff",
+          {
+            "class_name": null,
+            "children": {},
+            "properties": {},
+            "ignore_unknown_instances": null,
+            "path": "src"
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "ignore_unknown_instances": true,
+    "source_path": null,
+    "project_definition": [
+      "infer-data-model-classes",
+      {
+        "class_name": null,
+        "children": {
+          "Stuff": {
+            "class_name": null,
+            "children": {},
+            "properties": {},
+            "ignore_unknown_instances": null,
+            "path": "src"
+          }
+        },
+        "properties": {},
+        "ignore_unknown_instances": null,
+        "path": null
+      }
+    ]
+  }
+}
