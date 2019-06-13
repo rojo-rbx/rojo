@@ -39,7 +39,6 @@ use crate::{
 const INIT_MODULE_NAME: &str = "init.lua";
 const INIT_SERVER_NAME: &str = "init.server.lua";
 const INIT_CLIENT_NAME: &str = "init.client.lua";
-const INIT_META_NAME: &str = "init.meta.json";
 
 pub struct SnapshotContext {
     pub plugin_context: Option<SnapshotPluginContext>,
@@ -295,7 +294,7 @@ fn snapshot_imfs_item<'source>(
     instance_name: Option<Cow<'source, str>>,
 ) -> SnapshotResult<'source> {
     match item {
-        ImfsItem::File(file) => snapshot_imfs_file(context, file, instance_name),
+        ImfsItem::File(file) => snapshot_imfs_file(context, imfs, file, instance_name),
         ImfsItem::Directory(directory) => snapshot_imfs_directory(context, imfs, directory, instance_name),
     }
 }
@@ -309,7 +308,6 @@ fn snapshot_imfs_directory<'source>(
     let init_path = directory.path.join(INIT_MODULE_NAME);
     let init_server_path = directory.path.join(INIT_SERVER_NAME);
     let init_client_path = directory.path.join(INIT_CLIENT_NAME);
-    let init_meta_path = directory.path.join(INIT_META_NAME);
 
     let snapshot_name = instance_name
         .unwrap_or_else(|| {
@@ -338,26 +336,7 @@ fn snapshot_imfs_directory<'source>(
         }
     };
 
-    if let Some(ImfsItem::File(file)) = imfs.get(&init_meta_path) {
-        let meta: InitMeta = serde_json::from_slice(&file.contents)
-            .map_err(|inner| SnapshotError::InitMetaError {
-                inner,
-                path: file.path.to_path_buf(),
-            })?;
-
-        if let Some(meta_class) = meta.class_name {
-            snapshot.class_name = Cow::Owned(meta_class);
-        }
-
-        if let Some(meta_ignore_instances) = meta.ignore_unknown_instances {
-            snapshot.metadata.ignore_unknown_instances = meta_ignore_instances;
-        }
-
-        for (key, value) in meta.properties {
-            let resolved_value = try_resolve_value(&snapshot.class_name, &key, &value)?;
-            snapshot.properties.insert(key, resolved_value);
-        }
-    }
+    InitMeta::locate_and_apply(&mut snapshot, &imfs, &directory.path.join("init"))?;
 
     snapshot.metadata.source_path = Some(directory.path.to_owned());
 
@@ -393,8 +372,46 @@ struct InitMeta {
     properties: HashMap<String, UnresolvedRbxValue>,
 }
 
+impl InitMeta {
+    fn apply(self, snapshot: &mut RbxSnapshotInstance) -> Result<(), SnapshotError> {
+        if let Some(meta_class) = self.class_name {
+            snapshot.class_name = Cow::Owned(meta_class);
+        }
+
+        if let Some(meta_ignore_instances) = self.ignore_unknown_instances {
+            snapshot.metadata.ignore_unknown_instances = meta_ignore_instances;
+        }
+
+        for (key, value) in self.properties {
+            let resolved_value = try_resolve_value(&snapshot.class_name, &key, &value)?;
+            snapshot.properties.insert(key, resolved_value);
+        }
+
+        Ok(())
+    }
+
+    fn locate_and_apply(
+        snapshot: &mut RbxSnapshotInstance,
+        imfs: &Imfs,
+        path: &Path,
+    ) -> Result<(), SnapshotError> {
+        if let Some(ImfsItem::File(file)) = imfs.get(&path.with_extension("meta.json")) {
+            let meta: InitMeta = serde_json::from_slice(&file.contents)
+                .map_err(|inner| SnapshotError::InitMetaError {
+                    inner,
+                    path: file.path.to_path_buf(),
+                })?;
+
+            meta.apply(snapshot)?;
+        }
+
+        Ok(())
+    }
+}
+
 fn snapshot_imfs_file<'source>(
     context: &SnapshotContext,
+    imfs: &'source Imfs,
     file: &'source ImfsFile,
     instance_name: Option<Cow<'source, str>>,
 ) -> SnapshotResult<'source> {
@@ -402,11 +419,11 @@ fn snapshot_imfs_file<'source>(
         .map(|v| v.to_str().expect("Could not convert extension to UTF-8"));
 
     let mut maybe_snapshot = match extension {
-        Some("lua") => snapshot_lua_file(file)?,
-        Some("csv") => snapshot_csv_file(file)?,
-        Some("txt") => snapshot_txt_file(file)?,
-        Some("rbxmx") => snapshot_xml_model_file(file)?,
-        Some("rbxm") => snapshot_binary_model_file(file)?,
+        Some("lua") => snapshot_lua_file(file, imfs)?,
+        Some("csv") => snapshot_csv_file(file, imfs)?,
+        Some("txt") => snapshot_txt_file(file, imfs)?,
+        Some("rbxmx") => snapshot_xml_model_file(file, imfs)?,
+        Some("rbxm") => snapshot_binary_model_file(file, imfs)?,
         Some("json") => {
             let file_stem = file.path
                 .file_stem().expect("Could not extract file stem")
@@ -414,6 +431,11 @@ fn snapshot_imfs_file<'source>(
 
             if file_stem.ends_with(".model") {
                 snapshot_json_model_file(file)?
+            } else if file_stem.ends_with(".meta") {
+                // Meta files are handled on a per-file basis
+                // None is *returned* instead of passed through
+                // so that it isn't treated as a mistake
+                return Ok(None);
             } else {
                 None
             }
@@ -421,7 +443,7 @@ fn snapshot_imfs_file<'source>(
         Some(_) | None => None,
     };
 
-    if let Some(snapshot) = maybe_snapshot.as_mut() {
+    if let Some(mut snapshot) = maybe_snapshot.as_mut() {
         // Carefully preserve name from project manifest if present.
         if let Some(snapshot_name) = instance_name {
             snapshot.name = snapshot_name;
@@ -449,6 +471,7 @@ fn snapshot_imfs_file<'source>(
 
 fn snapshot_lua_file<'source>(
     file: &'source ImfsFile,
+    imfs: &'source Imfs,
 ) -> SnapshotResult<'source> {
     let file_stem = file.path
         .file_stem().expect("Could not extract file stem")
@@ -468,7 +491,7 @@ fn snapshot_lua_file<'source>(
             path: file.path.to_path_buf(),
         })?;
 
-    Ok(Some(RbxSnapshotInstance {
+    let mut snapshot = RbxSnapshotInstance {
         name: Cow::Borrowed(instance_name),
         class_name: Cow::Borrowed(class_name),
         properties: hashmap! {
@@ -482,7 +505,11 @@ fn snapshot_lua_file<'source>(
             ignore_unknown_instances: false,
             project_definition: None,
         },
-    }))
+    };
+
+    InitMeta::locate_and_apply(&mut snapshot, &imfs, &file.path.with_file_name(instance_name))?;
+
+    Ok(Some(snapshot))
 }
 
 fn match_trailing<'a>(input: &'a str, trailer: &str) -> Option<&'a str> {
@@ -496,6 +523,7 @@ fn match_trailing<'a>(input: &'a str, trailer: &str) -> Option<&'a str> {
 
 fn snapshot_txt_file<'source>(
     file: &'source ImfsFile,
+    imfs: &'source Imfs,
 ) -> SnapshotResult<'source> {
     let instance_name = file.path
         .file_stem().expect("Could not extract file stem")
@@ -507,7 +535,7 @@ fn snapshot_txt_file<'source>(
             path: file.path.to_path_buf(),
         })?;
 
-    Ok(Some(RbxSnapshotInstance {
+    let mut snapshot = RbxSnapshotInstance {
         name: Cow::Borrowed(instance_name),
         class_name: Cow::Borrowed("StringValue"),
         properties: hashmap! {
@@ -521,11 +549,16 @@ fn snapshot_txt_file<'source>(
             ignore_unknown_instances: false,
             project_definition: None,
         },
-    }))
+    };
+
+    InitMeta::locate_and_apply(&mut snapshot, &imfs, &file.path)?;
+
+    Ok(Some(snapshot))
 }
 
 fn snapshot_csv_file<'source>(
     file: &'source ImfsFile,
+    imfs: &'source Imfs,
 ) -> SnapshotResult<'source> {
     /// Struct that holds any valid row from a Roblox CSV translation table.
     ///
@@ -612,7 +645,7 @@ fn snapshot_csv_file<'source>(
     let table_contents = serde_json::to_string(&entries)
         .expect("Could not encode JSON for localization table");
 
-    Ok(Some(RbxSnapshotInstance {
+    let mut snapshot = RbxSnapshotInstance {
         name: Cow::Borrowed(instance_name),
         class_name: Cow::Borrowed("LocalizationTable"),
         properties: hashmap! {
@@ -626,7 +659,11 @@ fn snapshot_csv_file<'source>(
             ignore_unknown_instances: false,
             project_definition: None,
         },
-    }))
+    };
+
+    InitMeta::locate_and_apply(&mut snapshot, &imfs, &file.path)?;
+
+    Ok(Some(snapshot))
 }
 
 fn snapshot_json_model_file<'source>(
@@ -690,6 +727,7 @@ impl JsonModelInstance {
 
 fn snapshot_xml_model_file<'source>(
     file: &'source ImfsFile,
+    imfs: &'source Imfs,
 ) -> SnapshotResult<'source> {
     let instance_name = file.path
         .file_stem().expect("Could not extract file stem")
@@ -712,6 +750,7 @@ fn snapshot_xml_model_file<'source>(
         1 => {
             let mut snapshot = snapshot_from_tree(&temp_tree, children[0]).unwrap();
             snapshot.name = Cow::Borrowed(instance_name);
+            InitMeta::locate_and_apply(&mut snapshot, &imfs, &file.path)?;
             Ok(Some(snapshot))
         },
         _ => panic!("Rojo doesn't have support for model files with multiple roots yet"),
@@ -720,6 +759,7 @@ fn snapshot_xml_model_file<'source>(
 
 fn snapshot_binary_model_file<'source>(
     file: &'source ImfsFile,
+    imfs: &'source Imfs,
 ) -> SnapshotResult<'source> {
     let instance_name = file.path
         .file_stem().expect("Could not extract file stem")
@@ -746,6 +786,7 @@ fn snapshot_binary_model_file<'source>(
         1 => {
             let mut snapshot = snapshot_from_tree(&temp_tree, children[0]).unwrap();
             snapshot.name = Cow::Borrowed(instance_name);
+            InitMeta::locate_and_apply(&mut snapshot, &imfs, &file.path)?;
             Ok(Some(snapshot))
         },
         _ => panic!("Rojo doesn't have support for model files with multiple roots yet"),
