@@ -105,7 +105,7 @@ pub enum SnapshotError {
         path: PathBuf,
     },
 
-    InitMetaError {
+    ExtraMetadataError {
         #[fail(cause)]
         inner: serde_json::Error,
         path: PathBuf,
@@ -158,7 +158,7 @@ impl fmt::Display for SnapshotError {
             SnapshotError::JsonModelDecodeError { inner, path } => {
                 write!(output, "Malformed .model.json model: {} in path {}", inner, path.display())
             },
-            SnapshotError::InitMetaError { inner, path } => {
+            SnapshotError::ExtraMetadataError { inner, path } => {
                 write!(output, "Malformed init.meta.json: {} in path {}", inner, path.display())
             },
             SnapshotError::XmlModelDecodeError { inner, path } => {
@@ -336,7 +336,7 @@ fn snapshot_imfs_directory<'source>(
         }
     };
 
-    InitMeta::locate_and_apply(&mut snapshot, &imfs, &directory.path.join("init"))?;
+    ExtraMetadata::locate_and_apply(&mut snapshot, &imfs, &directory.path.join("init"))?;
 
     snapshot.metadata.source_path = Some(directory.path.to_owned());
 
@@ -371,7 +371,7 @@ fn snapshot_imfs_directory<'source>(
 
 #[derive(Debug, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct InitMeta {
+struct ExtraMetadata {
     class_name: Option<String>,
     ignore_unknown_instances: Option<bool>,
 
@@ -379,7 +379,7 @@ struct InitMeta {
     properties: HashMap<String, UnresolvedRbxValue>,
 }
 
-impl InitMeta {
+impl ExtraMetadata {
     fn apply(self, snapshot: &mut RbxSnapshotInstance) -> Result<(), SnapshotError> {
         if let Some(meta_class) = self.class_name {
             snapshot.class_name = Cow::Owned(meta_class);
@@ -403,8 +403,8 @@ impl InitMeta {
         path: &Path,
     ) -> Result<(), SnapshotError> {
         if let Some(ImfsItem::File(file)) = imfs.get(&path.with_extension("meta.json")) {
-            let meta: InitMeta = serde_json::from_slice(&file.contents)
-                .map_err(|inner| SnapshotError::InitMetaError {
+            let meta: ExtraMetadata = serde_json::from_slice(&file.contents)
+                .map_err(|inner| SnapshotError::ExtraMetadataError {
                     inner,
                     path: file.path.to_path_buf(),
                 })?;
@@ -509,7 +509,7 @@ fn snapshot_lua_file<'source>(
         },
     };
 
-    InitMeta::locate_and_apply(&mut snapshot, &imfs, &file.path.with_file_name(instance_name))?;
+    ExtraMetadata::locate_and_apply(&mut snapshot, &imfs, &file.path.with_file_name(instance_name))?;
 
     Ok(Some(snapshot))
 }
@@ -553,7 +553,7 @@ fn snapshot_txt_file<'source>(
         },
     };
 
-    InitMeta::locate_and_apply(&mut snapshot, &imfs, &file.path)?;
+    ExtraMetadata::locate_and_apply(&mut snapshot, &imfs, &file.path)?;
 
     Ok(Some(snapshot))
 }
@@ -663,7 +663,7 @@ fn snapshot_csv_file<'source>(
         },
     };
 
-    InitMeta::locate_and_apply(&mut snapshot, &imfs, &file.path)?;
+    ExtraMetadata::locate_and_apply(&mut snapshot, &imfs, &file.path)?;
 
     Ok(Some(snapshot))
 }
@@ -752,7 +752,7 @@ fn snapshot_xml_model_file<'source>(
         1 => {
             let mut snapshot = snapshot_from_tree(&temp_tree, children[0]).unwrap();
             snapshot.name = Cow::Borrowed(instance_name);
-            InitMeta::locate_and_apply(&mut snapshot, &imfs, &file.path)?;
+            ExtraMetadata::locate_and_apply(&mut snapshot, &imfs, &file.path)?;
             Ok(Some(snapshot))
         },
         _ => panic!("Rojo doesn't have support for model files with multiple roots yet"),
@@ -788,7 +788,7 @@ fn snapshot_binary_model_file<'source>(
         1 => {
             let mut snapshot = snapshot_from_tree(&temp_tree, children[0]).unwrap();
             snapshot.name = Cow::Borrowed(instance_name);
-            InitMeta::locate_and_apply(&mut snapshot, &imfs, &file.path)?;
+            ExtraMetadata::locate_and_apply(&mut snapshot, &imfs, &file.path)?;
             Ok(Some(snapshot))
         },
         _ => panic!("Rojo doesn't have support for model files with multiple roots yet"),
