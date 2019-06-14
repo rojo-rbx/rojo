@@ -752,6 +752,7 @@ fn snapshot_xml_model_file<'source>(
         1 => {
             let mut snapshot = snapshot_from_tree(&temp_tree, children[0]).unwrap();
             snapshot.name = Cow::Borrowed(instance_name);
+            snapshot.metadata.source_path = Some(file.path.clone());
             ExtraMetadata::locate_and_apply(&mut snapshot, &imfs, &file.path)?;
             Ok(Some(snapshot))
         },
@@ -788,6 +789,7 @@ fn snapshot_binary_model_file<'source>(
         1 => {
             let mut snapshot = snapshot_from_tree(&temp_tree, children[0]).unwrap();
             snapshot.name = Cow::Borrowed(instance_name);
+            snapshot.metadata.source_path = Some(file.path.clone());
             ExtraMetadata::locate_and_apply(&mut snapshot, &imfs, &file.path)?;
             Ok(Some(snapshot))
         },
