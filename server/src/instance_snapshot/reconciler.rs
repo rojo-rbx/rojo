@@ -35,41 +35,46 @@ fn compute_children_patch<'a>(
 
     let instance_children = instance.get_children_ids();
 
-    let mut children = vec![PatchChildrenEntry::Existing(RbxId::new()); snapshot.children.len()];
     let mut has_changes = false;
-
     let mut paired_instances = vec![false; instance_children.len()];
 
-    for (snapshot_index, snapshot_child) in snapshot.children.iter().enumerate() {
-        let mut matching_instance = None;
-        for (instance_index, instance_child_id) in instance_children.iter().enumerate() {
-            if paired_instances[instance_index] {
-                continue;
+    let children: Vec<PatchChildrenEntry> = snapshot.children
+        .iter()
+        .enumerate()
+        .map(|(snapshot_index, snapshot_child)| {
+            let matching_instance = instance_children
+                .iter()
+                .enumerate()
+                .find(|(instance_index, instance_child_id)| {
+                    if paired_instances[*instance_index] {
+                        return false;
+                    }
+
+                    let instance_child = tree.get_instance(**instance_child_id)
+                        .expect("Instance did not exist in tree");
+
+                    if snapshot_child.name == instance_child.name && instance_child.class_name == instance_child.class_name {
+                        paired_instances[*instance_index] = true;
+
+                        return true;
+                    }
+
+                    false
+                });
+
+            match matching_instance {
+                Some((_, instance_child_id)) => {
+                    compute_patch(snapshot_child, tree, *instance_child_id, patch_set);
+
+                    PatchChildrenEntry::Existing(*instance_child_id)
+                }
+                None => {
+                    has_changes = true;
+                    PatchChildrenEntry::Added(snapshot_child.clone())
+                }
             }
-
-            let instance_child = tree.get_instance(*instance_child_id)
-                .expect("Instance did not exist in tree");
-
-            if snapshot_child.name == instance_child.name && instance_child.class_name == instance_child.class_name {
-                matching_instance = Some(instance_child);
-                paired_instances[instance_index] = true;
-
-                break;
-            }
-        }
-
-        match matching_instance {
-            Some(instance_child) => {
-                compute_patch(snapshot_child, tree, instance_child.get_id(), patch_set);
-
-                children[snapshot_index] = PatchChildrenEntry::Existing(instance_child.get_id());
-            }
-            None => {
-                children[snapshot_index] = PatchChildrenEntry::Added(snapshot_child.clone());
-                has_changes = true;
-            }
-        }
-    }
+        })
+        .collect();
 
     for (instance_index, instance_child_id) in instance_children.iter().enumerate() {
         if paired_instances[instance_index] {
