@@ -8,6 +8,7 @@ use super::snapshot::InstanceSnapshot;
 pub struct PatchSet<'a> {
     pub children: Vec<PatchChildren<'a>>,
     pub properties: Vec<PatchProperties>,
+    pub id_map: HashMap<RbxId, RbxId>,
 }
 
 #[derive(Debug, Clone)]
