@@ -7,12 +7,15 @@ pub fn apply_patch(
     patch_set: &PatchSet,
 ) {
     for child_patch in &patch_set.children {
-        // TODO
+        // TODO: Remove removed children
+
+        let instance = tree.get_instance_mut(child_patch.id)
+            .expect("Instance referred to by patch does not exist");
     }
 
     for prop_patch in &patch_set.properties {
         let instance = tree.get_instance_mut(prop_patch.id)
-            .expect("Instance referred to by patch does not exist.");
+            .expect("Instance referred to by patch does not exist");
 
         if let Some(name) = &prop_patch.changed_name {
             instance.name = name.clone();

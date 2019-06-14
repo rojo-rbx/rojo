@@ -76,11 +76,14 @@ fn compute_children_patch<'a>(
         })
         .collect();
 
+    let mut removed_children = Vec::new();
+
     for (instance_index, instance_child_id) in instance_children.iter().enumerate() {
         if paired_instances[instance_index] {
             continue;
         }
 
+        removed_children.push(*instance_child_id);
         has_changes = true;
     }
 
@@ -91,6 +94,7 @@ fn compute_children_patch<'a>(
     patch_set.children.push(PatchChildren {
         id,
         children,
+        removed_children,
     });
 }
 

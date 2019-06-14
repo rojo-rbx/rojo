@@ -15,6 +15,7 @@ pub struct PatchSet<'a> {
 pub struct PatchChildren<'a> {
     pub id: RbxId,
     pub children: Vec<PatchChildrenEntry<'a>>,
+    pub removed_children: Vec<RbxId>,
 }
 
 #[derive(Debug, Clone)]
