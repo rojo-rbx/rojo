@@ -8,6 +8,7 @@ pub mod impl_from;
 pub mod commands;
 pub mod fs_watcher;
 pub mod imfs;
+pub mod instance_snapshot;
 pub mod live_session;
 pub mod message_queue;
 pub mod path_map;
