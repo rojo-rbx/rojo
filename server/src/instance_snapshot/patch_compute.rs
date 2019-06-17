@@ -17,7 +17,7 @@ pub fn compute_patch<'a>(
         .expect("Instance did not exist in tree");
 
     if instance.class_name != snapshot.class_name {
-        panic!("NYI: changing class name of an instance?");
+        unimplemented!("changing the class name of an instance");
     }
 
     compute_property_patch(snapshot, instance, patch_set);
