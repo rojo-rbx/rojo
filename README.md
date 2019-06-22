@@ -21,9 +21,9 @@
 
 <hr />
 
-**Rojo** is a flexible multi-tool designed for creating robust Roblox projects.
+**Rojo** is a tool designed to enable Roblox developers to use professional-grade software engineering tools.
 
-It lets Roblox developers use industry-leading tools like Git and VS Code, and crucial utilities like Luacheck.
+With Rojo, it's possible to use industry-leading tools like **Visual Studio Code** and **Git**.
 
 Rojo is designed for **power users** who want to use the **best tools available** for building games, libraries, and plugins.
 
