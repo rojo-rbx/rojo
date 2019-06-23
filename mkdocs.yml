@@ -1,6 +1,6 @@
 site_name: Rojo Documentation
-repo_name: LPGhatguy/rojo
-repo_url: https://github.com/LPGhatguy/rojo
+repo_name: rojo-rbx/rojo
+repo_url: https://github.com/rojo-rbx/rojo
 
 theme:
   name: material
