@@ -13,7 +13,7 @@
 * Added an icon to the plugin's toolbar button
 * Changed the plugin to use a docking widget for all UI.
 * Changed the plugin to ignore unknown properties when live-syncing.
-    * Rojo's approach this problem might change later, like with a strict model mode ([#190](https://github.com/LPGhatguy/rojo/issues/190)) or another approach.
+    * Rojo's approach to this problem might change later, like with a strict model mode ([#190](https://github.com/LPGhatguy/rojo/issues/190)) or another approach.
 * Upgraded to reflection database from client release 388.
 
 ## [0.5.0 Alpha 11](https://github.com/LPGhatguy/rojo/releases/tag/v0.5.0-alpha.11) (May 29, 2019)
