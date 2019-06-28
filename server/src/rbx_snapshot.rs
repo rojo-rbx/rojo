@@ -111,6 +111,11 @@ pub enum SnapshotError {
         path: PathBuf,
     },
 
+    InvalidMetadataField {
+        field_name: String,
+        path: PathBuf,
+    },
+
     XmlModelDecodeError {
         #[fail(cause)]
         inner: rbx_xml::DecodeError,
@@ -160,6 +165,10 @@ impl fmt::Display for SnapshotError {
             },
             SnapshotError::ExtraMetadataError { inner, path } => {
                 write!(output, "Malformed init.meta.json: {} in path {}", inner, path.display())
+            },
+            SnapshotError::InvalidMetadataField { field_name, path } => {
+                writeln!(output, "The field '{}' cannot be specified on .meta.json files attached to models.", field_name)?;
+                writeln!(output, "Model path: {}", path.display())
             },
             SnapshotError::XmlModelDecodeError { inner, path } => {
                 write!(output, "Malformed rbxmx model: {} in path {}", inner, path.display())
@@ -336,7 +345,9 @@ fn snapshot_imfs_directory<'source>(
         }
     };
 
-    ExtraMetadata::locate_and_apply(&mut snapshot, &imfs, &directory.path.join("init"))?;
+    if let Some(meta) = ExtraMetadata::locate(&imfs, &directory.path.join("init"))? {
+        meta.apply(&mut snapshot)?;
+    }
 
     snapshot.metadata.source_path = Some(directory.path.to_owned());
 
@@ -370,7 +381,7 @@ fn snapshot_imfs_directory<'source>(
 }
 
 #[derive(Debug, Default, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct ExtraMetadata {
     class_name: Option<String>,
     ignore_unknown_instances: Option<bool>,
@@ -397,19 +408,34 @@ impl ExtraMetadata {
         Ok(())
     }
 
-    fn locate_and_apply(
-        snapshot: &mut RbxSnapshotInstance,
-        imfs: &Imfs,
-        path: &Path,
-    ) -> Result<(), SnapshotError> {
-        if let Some(ImfsItem::File(file)) = imfs.get(&path.with_extension("meta.json")) {
-            let meta: ExtraMetadata = serde_json::from_slice(&file.contents)
-                .map_err(|inner| SnapshotError::ExtraMetadataError {
-                    inner,
-                    path: file.path.to_path_buf(),
-                })?;
+    fn locate(imfs: &Imfs, path: &Path) -> Result<Option<ExtraMetadata>, SnapshotError> {
+        match imfs.get(&path.with_extension("meta.json")) {
+            Some(ImfsItem::File(file)) => {
+                let meta: ExtraMetadata = serde_json::from_slice(&file.contents)
+                    .map_err(|inner| SnapshotError::ExtraMetadataError {
+                        inner,
+                        path: file.path.to_path_buf(),
+                    })?;
 
-            meta.apply(snapshot)?;
+                Ok(Some(meta))
+            }
+            _ => Ok(None)
+        }
+    }
+
+    fn validate_for_model(&self, path: &Path) -> Result<(), SnapshotError> {
+        if self.class_name.is_some() {
+            return Err(SnapshotError::InvalidMetadataField {
+                field_name: "className".to_owned(),
+                path: path.to_owned(),
+            });
+        }
+
+        if !self.properties.is_empty() {
+            return Err(SnapshotError::InvalidMetadataField {
+                field_name: "properties".to_owned(),
+                path: path.to_owned(),
+            });
         }
 
         Ok(())
@@ -509,7 +535,9 @@ fn snapshot_lua_file<'source>(
         },
     };
 
-    ExtraMetadata::locate_and_apply(&mut snapshot, &imfs, &file.path.with_file_name(instance_name))?;
+    if let Some(meta) = ExtraMetadata::locate(&imfs, &file.path.with_file_name(instance_name))? {
+        meta.apply(&mut snapshot)?;
+    }
 
     Ok(Some(snapshot))
 }
@@ -553,7 +581,9 @@ fn snapshot_txt_file<'source>(
         },
     };
 
-    ExtraMetadata::locate_and_apply(&mut snapshot, &imfs, &file.path)?;
+    if let Some(meta) = ExtraMetadata::locate(&imfs, &file.path)? {
+        meta.apply(&mut snapshot)?;
+    }
 
     Ok(Some(snapshot))
 }
@@ -663,7 +693,9 @@ fn snapshot_csv_file<'source>(
         },
     };
 
-    ExtraMetadata::locate_and_apply(&mut snapshot, &imfs, &file.path)?;
+    if let Some(meta) = ExtraMetadata::locate(&imfs, &file.path)? {
+        meta.apply(&mut snapshot)?;
+    }
 
     Ok(Some(snapshot))
 }
@@ -753,7 +785,12 @@ fn snapshot_xml_model_file<'source>(
             let mut snapshot = snapshot_from_tree(&temp_tree, children[0]).unwrap();
             snapshot.name = Cow::Borrowed(instance_name);
             snapshot.metadata.source_path = Some(file.path.clone());
-            ExtraMetadata::locate_and_apply(&mut snapshot, &imfs, &file.path)?;
+
+            if let Some(meta) = ExtraMetadata::locate(&imfs, &file.path)? {
+                meta.validate_for_model(&file.path)?;
+                meta.apply(&mut snapshot)?;
+            }
+
             Ok(Some(snapshot))
         },
         _ => panic!("Rojo doesn't have support for model files with multiple roots yet"),
@@ -790,7 +827,12 @@ fn snapshot_binary_model_file<'source>(
             let mut snapshot = snapshot_from_tree(&temp_tree, children[0]).unwrap();
             snapshot.name = Cow::Borrowed(instance_name);
             snapshot.metadata.source_path = Some(file.path.clone());
-            ExtraMetadata::locate_and_apply(&mut snapshot, &imfs, &file.path)?;
+
+            if let Some(meta) = ExtraMetadata::locate(&imfs, &file.path)? {
+                meta.validate_for_model(&file.path)?;
+                meta.apply(&mut snapshot)?;
+            }
+
             Ok(Some(snapshot))
         },
         _ => panic!("Rojo doesn't have support for model files with multiple roots yet"),
