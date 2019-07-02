@@ -4,9 +4,9 @@ local Theme = {
 	TitleFont = Enum.Font.GothamBold,
 	MainFont = Enum.Font.Gotham,
 
-	AccentColor = Color3.fromRGB(136, 0, 27),
-	AccentLightColor = Color3.fromRGB(210, 145, 157),
-	PrimaryColor = Color3.fromRGB(20, 20, 20),
+	AccentColor = Color3.fromRGB(225, 56, 53),
+	AccentLightColor = Color3.fromRGB(255, 146, 145),
+	PrimaryColor = Color3.fromRGB(48, 48, 48),
 	SecondaryColor = Color3.fromRGB(235, 235, 235),
 	LightTextColor = Color3.fromRGB(140, 140, 140),
 }

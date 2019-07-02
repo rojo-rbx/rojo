@@ -66,7 +66,7 @@ function ConnectPanel:render()
 					Font = Theme.TitleFont,
 					TextSize = 20,
 					Text = "Address",
-					TextColor3 = Theme.AccentColor,
+					TextColor3 = Theme.PrimaryColor,
 				}),
 
 				Input = e(FormTextInput, {
@@ -99,7 +99,7 @@ function ConnectPanel:render()
 					Font = Theme.TitleFont,
 					TextSize = 20,
 					Text = "Port",
-					TextColor3 = Theme.AccentColor,
+					TextColor3 = Theme.PrimaryColor,
 				}),
 
 				Input = e(FormTextInput, {
