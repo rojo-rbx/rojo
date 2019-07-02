@@ -111,8 +111,12 @@ pub enum SnapshotError {
         path: PathBuf,
     },
 
-    InvalidMetadataField {
+    InvalidMetadataModelField {
         field_name: String,
+        path: PathBuf,
+    },
+
+    MetadataClassNameNonInit {
         path: PathBuf,
     },
 
@@ -166,8 +170,12 @@ impl fmt::Display for SnapshotError {
             SnapshotError::ExtraMetadataError { inner, path } => {
                 write!(output, "Malformed init.meta.json: {} in path {}", inner, path.display())
             },
-            SnapshotError::InvalidMetadataField { field_name, path } => {
+            SnapshotError::InvalidMetadataModelField { field_name, path } => {
                 writeln!(output, "The field '{}' cannot be specified on .meta.json files attached to models.", field_name)?;
+                writeln!(output, "Model path: {}", path.display())
+            },
+            SnapshotError::MetadataClassNameNonInit { path } => {
+                writeln!(output, "The field 'className' cannot be specified on .meta.json files besides init.meta.json")?;
                 writeln!(output, "Model path: {}", path.display())
             },
             SnapshotError::XmlModelDecodeError { inner, path } => {
@@ -423,16 +431,26 @@ impl ExtraMetadata {
         }
     }
 
+    fn validate_for_non_init(&self, path: &Path) -> Result<(), SnapshotError> {
+        if self.class_name.is_some() {
+            return Err(SnapshotError::MetadataClassNameNonInit {
+                path: path.to_owned(),
+            });
+        }
+
+        Ok(())
+    }
+
     fn validate_for_model(&self, path: &Path) -> Result<(), SnapshotError> {
         if self.class_name.is_some() {
-            return Err(SnapshotError::InvalidMetadataField {
+            return Err(SnapshotError::InvalidMetadataModelField {
                 field_name: "className".to_owned(),
                 path: path.to_owned(),
             });
         }
 
         if !self.properties.is_empty() {
-            return Err(SnapshotError::InvalidMetadataField {
+            return Err(SnapshotError::InvalidMetadataModelField {
                 field_name: "properties".to_owned(),
                 path: path.to_owned(),
             });
@@ -536,6 +554,7 @@ fn snapshot_lua_file<'source>(
     };
 
     if let Some(meta) = ExtraMetadata::locate(&imfs, &file.path.with_file_name(instance_name))? {
+        meta.validate_for_non_init(&file.path)?;
         meta.apply(&mut snapshot)?;
     }
 
@@ -582,6 +601,7 @@ fn snapshot_txt_file<'source>(
     };
 
     if let Some(meta) = ExtraMetadata::locate(&imfs, &file.path)? {
+        meta.validate_for_non_init(&file.path)?;
         meta.apply(&mut snapshot)?;
     }
 
@@ -694,6 +714,7 @@ fn snapshot_csv_file<'source>(
     };
 
     if let Some(meta) = ExtraMetadata::locate(&imfs, &file.path)? {
+        meta.validate_for_non_init(&file.path)?;
         meta.apply(&mut snapshot)?;
     }
 
