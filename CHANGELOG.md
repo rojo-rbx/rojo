@@ -1,7 +1,9 @@
 # Rojo Changelog
 
 ## [Unreleased]
-* Added `init.meta.json` files, which replace `init.model.json` files from Rojo 0.4.x ([#183](https://github.com/rojo-rbx/rojo/pull/183))
+* Added `.meta.json` files
+    * `init.meta.json` files replace `init.model.json` files from Rojo 0.4.x ([#183](https://github.com/rojo-rbx/rojo/pull/183))
+    * Other `.meta.json` files allow attaching extra data to other files ([#189](https://github.com/rojo-rbx/rojo/pull/189))
 * Added support for infinite and NaN values in types like `Vector2` when building models and places.
     * These types aren't supported for live-syncing yet due to limitations around JSON encoding.
 * Added support for using `SharedString` values when building XML models and places.
@@ -9,12 +11,13 @@
 * Added a warning when building binary place files, since they're still experimental and have bugs.
 * Added a warning when trying to use Rojo 0.5.x with a Rojo 0.4.x-only project.
 * Added a warning when a Rojo project contains keys that start with `$`, which are reserved names. ([#191](https://github.com/rojo-rbx/rojo/issues/191))
-* Rojo now throws an error if unknown keys are found in the project file.
+* Rojo now throws an error if unknown keys are found most files.
 * Added an icon to the plugin's toolbar button
 * Changed the plugin to use a docking widget for all UI.
 * Changed the plugin to ignore unknown properties when live-syncing.
     * Rojo's approach to this problem might change later, like with a strict model mode ([#190](https://github.com/rojo-rbx/rojo/issues/190)) or another approach.
 * Upgraded to reflection database from client release 388.
+* Updated Rojo's branding
 
 ## [0.5.0 Alpha 11](https://github.com/rojo-rbx/rojo/releases/tag/v0.5.0-alpha.11) (May 29, 2019)
 * Added support for implicit property values in JSON model files ([#154](https://github.com/rojo-rbx/rojo/pull/154))
