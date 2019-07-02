@@ -45,7 +45,7 @@ Soon, Rojo will be able to:
 * Import custom instances like MoonScript code
 
 ## [Documentation](https://rojo.space/docs/latest)
-If you find any mistakes, feel free to make changes in the [docs](https://github.com/LPGhatguy/rojo/tree/master/docs) folder of this repository and submit a pull request!
+If you find any mistakes, feel free to make changes in the [docs](https://github.com/rojo-rbx/rojo/tree/master/docs) folder of this repository and submit a pull request!
 
 ## Contributing
 Pull requests are welcome!
