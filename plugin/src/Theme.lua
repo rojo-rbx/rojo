@@ -6,9 +6,9 @@ local Theme = {
 
 	AccentColor = Color3.fromRGB(225, 56, 53),
 	AccentLightColor = Color3.fromRGB(255, 146, 145),
-	PrimaryColor = Color3.fromRGB(48, 48, 48),
+	PrimaryColor = Color3.fromRGB(64, 64, 64),
 	SecondaryColor = Color3.fromRGB(235, 235, 235),
-	LightTextColor = Color3.fromRGB(140, 140, 140),
+	LightTextColor = Color3.fromRGB(160, 160, 160),
 }
 
 setmetatable(Theme, {
