@@ -25,6 +25,16 @@ fn bad_json_model() {
 }
 
 #[test]
+fn bad_meta_lua_classname() {
+    let project = Project::load_fuzzy(&TEST_PROJECTS_ROOT.join("bad_meta_lua_classname"))
+        .expect("Project file didn't load");
+
+    if LiveSession::new(Arc::new(project)).is_ok() {
+        panic!("Project should not have succeeded");
+    }
+}
+
+#[test]
 fn bad_meta_rbxmx_properties() {
     let project = Project::load_fuzzy(&TEST_PROJECTS_ROOT.join("bad_meta_rbxmx_properties"))
         .expect("Project file didn't load");
