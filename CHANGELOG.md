@@ -1,6 +1,6 @@
 # Rojo Changelog
 
-## [Unreleased]
+## [0.5.0 Alpha 12](https://github.com/rojo-rbx/rojo/releases/tag/v0.5.0-alpha.12) (July 2, 2019)
 * Added `.meta.json` files
     * `init.meta.json` files replace `init.model.json` files from Rojo 0.4.x ([#183](https://github.com/rojo-rbx/rojo/pull/183))
     * Other `.meta.json` files allow attaching extra data to other files ([#189](https://github.com/rojo-rbx/rojo/pull/189))
@@ -17,7 +17,7 @@
 * Changed the plugin to ignore unknown properties when live-syncing.
     * Rojo's approach to this problem might change later, like with a strict model mode ([#190](https://github.com/rojo-rbx/rojo/issues/190)) or another approach.
 * Upgraded to reflection database from client release 388.
-* Updated Rojo's branding
+* Updated Rojo's branding to shift the color palette to make it work better on dark backgrounds
 
 ## [0.5.0 Alpha 11](https://github.com/rojo-rbx/rojo/releases/tag/v0.5.0-alpha.11) (May 29, 2019)
 * Added support for implicit property values in JSON model files ([#154](https://github.com/rojo-rbx/rojo/pull/154))
