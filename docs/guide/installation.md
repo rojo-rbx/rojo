@@ -13,6 +13,9 @@ Rojo has two components:
 
     The plugin will show errors in the Roblox Studio output window if there is a version mismatch.
 
+## Visual Studio Code Extension
+If you use Visual Studio Code, you can install [the Rojo VS Code extension](https://marketplace.visualstudio.com/items?itemName=evaera.vscode-rojo), which will install both halves of Rojo for you. It even has a nifty UI to sync files and start/stop the Rojo server!
+
 ## Installing the CLI
 
 ### Installing from GitHub
@@ -26,7 +29,7 @@ If you have Rust installed, the easiest way to get Rojo is with Cargo!
 To install the latest 0.5.0 alpha, use:
 
 ```sh
-cargo install rojo --version 0.5.0-alpha.11
+cargo install rojo --version 0.5.0-alpha.12
 ```
 
 ## Installing the Plugin
@@ -41,6 +44,3 @@ Download the attached `rbxm` file and put it into your Roblox Studio plugins fol
 
 ### Installing from Roblox.com
 Visit [Rojo's Roblox.com Plugin page](https://www.roblox.com/library/1997686364/Rojo-0-5-0-alpha-3) in Roblox Studio and press **Install**.
-
-## Visual Studio Code Extension
-If you use Visual Studio Code, you can install [Evaera's unofficial Rojo extension](https://marketplace.visualstudio.com/items?itemName=evaera.vscode-rojo), which will install both halves of Rojo for you. It even has a nifty UI to sync files and start/stop the Rojo server!

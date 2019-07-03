@@ -15,7 +15,8 @@ local Assets = {
 		},
 	},
 	Images = {
-		Logo = "rbxassetid://2773210620",
+		Logo = "rbxassetid://3405346157",
+		Icon = "rbxassetid://3405341609",
 	},
 	StartSession = "",
 	SessionActive = "",

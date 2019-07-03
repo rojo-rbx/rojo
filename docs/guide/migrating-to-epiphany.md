@@ -56,3 +56,8 @@ All other values are considered children, where the key is the instance's name, 
 If you used Rojo to sync in files as `StringValue` objects, you'll need to make sure those files end with the `txt` extension to preserve this in Rojo 0.5.x.
 
 Unknown files are now ignored in Rojo instead of being converted to `StringValue` objects.
+
+## Migrating `init.model.json` files
+In Rojo 0.4.x, it's possible to create a file named `init.model.json` that lets you describe a model that becomes the container for all of the other files in the folder, just like `init.lua`.
+
+In Rojo 0.5.x, this feature has been replaced with `init.meta.json` files. See [Sync Details](../reference/sync-details) for more information about these new files.

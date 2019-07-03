@@ -1,15 +1,14 @@
-local Studio = settings().Studio
-
 local Rojo = script:FindFirstAncestor("Rojo")
 local Plugin = Rojo.Plugin
 
 local Roact = require(Rojo.Roact)
 
-local Session = require(Plugin.Session)
+local Assets = require(Plugin.Assets)
 local Config = require(Plugin.Config)
-local Version = require(Plugin.Version)
-local Logging = require(Plugin.Logging)
 local DevSettings = require(Plugin.DevSettings)
+local Logging = require(Plugin.Logging)
+local Session = require(Plugin.Session)
+local Version = require(Plugin.Version)
 local preloadAssets = require(Plugin.preloadAssets)
 
 local ConnectPanel = require(Plugin.Components.ConnectPanel)
@@ -53,13 +52,6 @@ local function checkUpgrade(plugin)
 	plugin:SetSetting("LastRojoVersion", Config.version)
 end
 
--- Since we need to switch our plugin icon based on the theme, we use the
--- insta-deprecated theme API. There isn't really an alternative here!
-local pluginButtonIcons = {
-	[Enum.UITheme.Dark] = "rbxassetid://3294408143",
-	[Enum.UITheme.Light] = "rbxassetid://3294218933",
-}
-
 local SessionStatus = {
 	Disconnected = "Disconnected",
 	Connected = "Connected",
@@ -90,15 +82,10 @@ function App:init()
 	self.toggleButton = toolbar:CreateButton(
 		"Rojo",
 		"Show or hide the Rojo panel",
-		"")
+		Assets.Images.Icon)
 	self.toggleButton.ClickableWhenViewportHidden = true
 	self.toggleButton.Click:Connect(function()
 		self.dockWidget.Enabled = not self.dockWidget.Enabled
-	end)
-
-	self:setToolbarButtonIcon()
-	self.signals.theme = Studio.ThemeChanged:Connect(function()
-		self:setToolbarButtonIcon()
 	end)
 
 	local widgetInfo = DockWidgetPluginGuiInfo.new(
@@ -118,10 +105,6 @@ function App:init()
 	self.signals.dockWidgetEnabled = self.dockWidget:GetPropertyChangedSignal("Enabled"):Connect(function()
 		self.toggleButton:SetActive(self.dockWidget.Enabled)
 	end)
-end
-
-function App:setToolbarButtonIcon()
-	self.toggleButton.Icon = pluginButtonIcons[Studio["UI Theme"]]
 end
 
 function App:render()

@@ -3,9 +3,9 @@ Adding a tool like Rojo to your Roblox workflow can be daunting, but it comes wi
 [TOC]
 
 ## External Text Editors
-Rojo opens the door to use the absolute best text editors in the world and their rich plugin ecosystem.
+Rojo opens the door to use the absolute best text editors in the world and their rich plugin ecosystems.
 
-Some very popular, free editors include [Visual Studio Code](https://code.visualstudio.com) and [Sublime Text](https://www.sublimetext.com).
+Some very popular editors include [Visual Studio Code](https://code.visualstudio.com) and [Sublime Text](https://www.sublimetext.com).
 
 These advanced text editors have features like multi-cursor editing, goto symbol, multi-file regex find and replace, bookmarks and much more.
 

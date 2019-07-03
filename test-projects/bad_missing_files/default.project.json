@@ -1,5 +1,5 @@
 {
-  "name": "missing-files",
+  "name": "bad_missing_files",
   "tree": {
     "$path": "does-not-exist"
   }

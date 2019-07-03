@@ -1,6 +1,6 @@
 site_name: Rojo Documentation
-repo_name: LPGhatguy/rojo
-repo_url: https://github.com/LPGhatguy/rojo
+repo_name: rojo-rbx/rojo
+repo_url: https://github.com/rojo-rbx/rojo
 
 theme:
   name: material
@@ -14,9 +14,10 @@ nav:
   - Guide:
     - Installation: guide/installation.md
     - Creating a Game with Rojo: guide/new-game.md
-    # - Moving an Existing Game to Rojo: guide/existing-game.md
+    - Porting an Existing Game to Rojo: guide/existing-game.md
     - Migrating from 0.4.x to 0.5.x: guide/migrating-to-epiphany.md
   - Reference:
+    - Fully vs Partially Managed Rojo: reference/full-vs-partial.md
     - Project Format: reference/project-format.md
     - Sync Details: reference/sync-details.md
   - Rojo Alternatives: rojo-alternatives.md

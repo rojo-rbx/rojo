@@ -1,8 +1,7 @@
-/site
 /target
 /scratch-project
-**/*.rs.bk
 /server/failed-snapshots/
+**/*.rs.bk
 /*.rbxm
 /*.rbxmx
 /*.rbxl

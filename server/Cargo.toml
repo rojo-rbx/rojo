@@ -1,10 +1,10 @@
 [package]
 name = "rojo"
-version = "0.5.0-alpha.11"
+version = "0.5.0-alpha.12"
 authors = ["Lucien Greathouse <me@lpghatguy.com>"]
-description = "A tool to create robust Roblox projects"
+description = "Enables professional-grade development tools for Roblox developers"
 license = "MIT"
-repository = "https://github.com/LPGhatguy/rojo"
+repository = "https://github.com/rojo-rbx/rojo"
 edition = "2018"
 
 [features]

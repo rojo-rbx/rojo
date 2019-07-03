@@ -71,7 +71,7 @@
       "children": [],
       "metadata": {
         "ignore_unknown_instances": true,
-        "source_path": null,
+        "source_path": "src/RobloxInstance.rbxmx",
         "project_definition": null
       }
     },
@@ -79,13 +79,13 @@
       "name": "Script",
       "class_name": "Script",
       "properties": {
-        "Disabled": {
-          "Type": "Bool",
-          "Value": true
-        },
         "Source": {
           "Type": "String",
           "Value": "print(\"Hello, world\")"
+        },
+        "Disabled": {
+          "Type": "Bool",
+          "Value": true
         }
       },
       "children": [],

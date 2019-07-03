@@ -57,8 +57,8 @@ function FormTextInput:render()
 			TextSize = TEXT_SIZE,
 			Text = value,
 			PlaceholderText = shownPlaceholder,
-			PlaceholderColor3 = Theme.AccentLightColor,
-			TextColor3 = Theme.AccentColor,
+			PlaceholderColor3 = Theme.LightTextColor,
+			TextColor3 = Theme.PrimaryColor,
 
 			[Roact.Change.Text] = function(rbx)
 				onValueChange(rbx.Text)
