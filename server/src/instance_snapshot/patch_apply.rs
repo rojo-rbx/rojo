@@ -7,7 +7,9 @@ pub fn apply_patch(
     patch_set: &PatchSet,
 ) {
     for child_patch in &patch_set.children {
-        // TODO: Remove removed children
+        for id in &child_patch.removed_children {
+            tree.remove_instance(*id);
+        }
 
         let instance = tree.get_instance_mut(child_patch.id)
             .expect("Instance referred to by patch does not exist");
@@ -31,5 +33,31 @@ pub fn apply_patch(
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use std::collections::HashMap;
+
+    use rbx_dom_weak::{RbxTree, RbxId, RbxInstanceProperties};
+
+    fn new_tree() -> (RbxTree, RbxId) {
+        let tree = RbxTree::new(RbxInstanceProperties {
+            name: "Folder".to_owned(),
+            class_name: "Folder".to_owned(),
+            properties: HashMap::new(),
+        });
+
+        let root_id = tree.get_root_id();
+
+        (tree, root_id)
+    }
+
+    #[test]
+    fn add_from_empty() {
+        let (tree, root_id) = new_tree();
     }
 }
