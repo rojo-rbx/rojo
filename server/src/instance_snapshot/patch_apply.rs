@@ -13,6 +13,8 @@ pub fn apply_patch(
 
         let instance = tree.get_instance_mut(child_patch.id)
             .expect("Instance referred to by patch does not exist");
+
+        // TODO: Add children?
     }
 
     for prop_patch in &patch_set.properties {
