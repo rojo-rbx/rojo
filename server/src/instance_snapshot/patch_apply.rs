@@ -67,9 +67,12 @@ fn apply_update_child(
 mod test {
     use super::*;
 
-    use std::collections::HashMap;
+    use std::{
+        borrow::Cow,
+        collections::HashMap,
+    };
 
-    use rbx_dom_weak::{RbxTree, RbxId, RbxInstanceProperties};
+    use rbx_dom_weak::RbxValue;
 
     fn new_tree() -> (RbxTree, RbxId) {
         let tree = RbxTree::new(RbxInstanceProperties {
@@ -85,6 +88,31 @@ mod test {
 
     #[test]
     fn add_from_empty() {
-        let (tree, root_id) = new_tree();
+        let (mut tree, root_id) = new_tree();
+
+        let snapshot = InstanceSnapshot {
+            snapshot_id: None,
+            name: Cow::Borrowed("Foo"),
+            class_name: Cow::Borrowed("Bar"),
+            properties: {
+                let mut map = HashMap::new();
+                map.insert("Baz".to_owned(), RbxValue::Int32 {
+                    value: 5,
+                });
+                map
+            },
+            children: Vec::new(),
+        };
+
+        apply_add_child(&mut tree, root_id, &snapshot);
+
+        let root_instance = tree.get_instance(root_id).unwrap();
+        let child_id = root_instance.get_children_ids()[0];
+        let child_instance = tree.get_instance(child_id).unwrap();
+
+        assert_eq!(child_instance.name.as_str(), &snapshot.name);
+        assert_eq!(child_instance.class_name.as_str(), &snapshot.class_name);
+        assert_eq!(&child_instance.properties, &snapshot.properties);
+        assert!(child_instance.get_children_ids().is_empty());
     }
 }
