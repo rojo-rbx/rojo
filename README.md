@@ -1,6 +1,6 @@
 <div align="center">
     <a href="https://rojo.space">
-        <img src="assets/rojo-logo.png" alt="Rojo" height="217" />
+        <img src="assets/logo-512.png" alt="Rojo" height="217" />
     </a>
 </div>
 
