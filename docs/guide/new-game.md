@@ -49,7 +49,7 @@ If you open `MyNewProject.rbxlx` in Roblox Studio now, you should see a `Folder`
 ## Live-Syncing into Studio
 Building a place file is great for starting to work on a game, but for active iteration, you'll want something faster.
 
-In Roblox Studio, make sure the Rojo plugin is installed. If you need it, check out [the installation guide](installation) to learn how to install it.
+In Roblox Studio, make sure the Rojo plugin is installed. If you need it, check out [the installation guide](../installation) to learn how to install it.
 
 To expose your project to the plugin, you'll need to start a new **live sync session** from the command line:
 
