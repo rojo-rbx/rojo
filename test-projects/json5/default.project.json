@@ -1,8 +1,8 @@
 // This is a Rojo project file with JSON5!
 {
-  // We're allowed to have comments!
-  "name": "json5",
-  "tree": {
+  // We're allowed to have comments and unquoted keys!
+  name: "json5",
+  tree: {
     "$className": "NumberValue",
   }, // and trailing commas!
 }
