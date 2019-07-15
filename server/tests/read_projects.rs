@@ -111,3 +111,11 @@ fn composing_models() {
 
     assert_eq!(project.name, "composing-models");
 }
+
+#[test]
+fn json5() {
+    let project_file_location = TEST_PROJECTS_ROOT.join("json5");
+    let project = Project::load_fuzzy(&project_file_location).unwrap();
+
+    assert_eq!(project.name, "json5");
+}

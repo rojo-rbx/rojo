@@ -212,6 +212,12 @@ pub enum ProjectLoadError {
         inner: serde_json::Error,
         path: PathBuf,
     },
+
+    Json5 {
+        #[fail(cause)]
+        inner: json5::Error,
+        path: PathBuf,
+    },
 }
 
 impl fmt::Display for ProjectLoadError {
@@ -228,6 +234,9 @@ impl fmt::Display for ProjectLoadError {
             Json { inner, path } => {
                 write!(formatter, "JSON error: {} in path {}", inner, path.display())
             }
+            Json5 { inner, path } => {
+                write!(formatter, "JSON5 error: {} in path {}", inner, path.display())
+            }
         }
     }
 }
@@ -239,6 +248,7 @@ pub enum ProjectInitError {
     IoError(#[fail(cause)] io::Error),
     SaveError(#[fail(cause)] ProjectSaveError),
     JsonError(#[fail(cause)] serde_json::Error),
+    Json5Error(#[fail(cause)] json5::Error),
 }
 
 impl fmt::Display for ProjectInitError {
@@ -248,6 +258,7 @@ impl fmt::Display for ProjectInitError {
             ProjectInitError::IoError(inner) => write!(output, "IO error: {}", inner),
             ProjectInitError::SaveError(inner) => write!(output, "{}", inner),
             ProjectInitError::JsonError(inner) => write!(output, "{}", inner),
+            ProjectInitError::Json5Error(inner) => write!(output, "{}", inner),
         }
     }
 }
@@ -361,7 +372,7 @@ impl Project {
         };
 
         let mut project = Project::load_from_str(DEFAULT_PLACE, &project_path)
-            .map_err(ProjectInitError::JsonError)?;
+            .map_err(ProjectInitError::Json5Error)?;
 
         project.name = project_name.to_owned();
 
@@ -459,8 +470,8 @@ impl Project {
         }
     }
 
-    fn load_from_str(contents: &str, project_file_location: &Path) -> Result<Project, serde_json::Error> {
-        let parsed: SourceProject = serde_json::from_str(&contents)?;
+    fn load_from_str(contents: &str, project_file_location: &Path) -> Result<Project, json5::Error> {
+        let parsed: SourceProject = json5::from_str(&contents)?;
 
         Ok(parsed.into_project(project_file_location))
     }
@@ -484,8 +495,8 @@ impl Project {
                 }
             })?;
 
-        let parsed: SourceProject = serde_json::from_str(&contents)
-            .map_err(|error| ProjectLoadError::Json {
+        let parsed: SourceProject = json5::from_str(&contents)
+            .map_err(|error| ProjectLoadError::Json5 {
                 inner: error,
                 path: project_file_location.to_path_buf(),
             })?;
