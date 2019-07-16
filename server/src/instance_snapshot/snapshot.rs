@@ -9,6 +9,10 @@ use rbx_dom_weak::{RbxId, RbxValue};
 
 /// A lightweight description of what an instance should look like. Attempts to
 /// be somewhat memory efficient.
+///
+/// Possible future improvements:
+/// - Use refcounted/interned strings
+/// - Replace use of RbxValue with a sum of RbxValue + borrowed value
 #[derive(Debug, Clone, PartialEq)]
 pub struct InstanceSnapshot<'a> {
     pub snapshot_id: Option<RbxId>,
