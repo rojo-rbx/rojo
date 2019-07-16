@@ -2,7 +2,6 @@ use std::{
     borrow::Cow,
     collections::HashMap,
     path::Path,
-    ffi::OsStr,
 };
 
 use crate::{
@@ -159,4 +158,14 @@ fn snapshot_imfs_file<'source>(
     }
 
     Ok(maybe_snapshot)
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn smoke_test() {
+        // TODO
+    }
 }

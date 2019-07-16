@@ -43,7 +43,6 @@ uuid = { version = "0.7", features = ["v4", "serde"] }
 
 [dev-dependencies]
 lazy_static = "1.2"
-maplit = "1.0.1"
 paste = "0.1"
 pretty_assertions = "0.6.1"
 tempfile = "3.0"

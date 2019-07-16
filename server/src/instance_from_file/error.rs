@@ -37,6 +37,18 @@ impl SnapshotError {
             path: Some(path.into()),
         }
     }
+
+    pub(crate) fn file_contents_bad_unicode(
+        inner: std::str::Utf8Error,
+        path: impl Into<PathBuf>,
+    ) -> SnapshotError {
+        SnapshotError {
+            detail: SnapshotErrorDetail::FileContentsBadUnicode {
+                inner,
+            },
+            path: Some(path.into()),
+        }
+    }
 }
 
 impl Error for SnapshotError {
@@ -58,11 +70,19 @@ impl fmt::Display for SnapshotError {
 pub enum SnapshotErrorDetail {
     FileDidNotExist,
     FileNameBadUnicode,
+    FileContentsBadUnicode {
+        inner: std::str::Utf8Error,
+    },
 }
 
 impl SnapshotErrorDetail {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
-        None
+        use self::SnapshotErrorDetail::*;
+
+        match self {
+            FileContentsBadUnicode { inner } => Some(inner),
+            _ => None
+        }
     }
 }
 
@@ -73,6 +93,7 @@ impl fmt::Display for SnapshotErrorDetail {
         match self {
             FileDidNotExist => write!(formatter, "file did not exist"),
             FileNameBadUnicode => write!(formatter, "file name had malformed Unicode"),
+            FileContentsBadUnicode { inner } => write!(formatter, "file had malformed unicode: {}", inner),
         }
     }
 }
