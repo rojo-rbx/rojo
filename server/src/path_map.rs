@@ -33,15 +33,21 @@ impl<T> PathMap<T> {
         }
     }
 
-    pub fn get(&self, path: &Path) -> Option<&T> {
-        self.nodes.get(path).map(|v| &v.value)
+    pub fn get(&self, path: impl AsRef<Path>) -> Option<&T> {
+        self.nodes.get(path.as_ref()).map(|v| &v.value)
     }
 
-    pub fn get_mut(&mut self, path: &Path) -> Option<&mut T> {
-        self.nodes.get_mut(path).map(|v| &mut v.value)
+    pub fn get_mut(&mut self, path: impl AsRef<Path>) -> Option<&mut T> {
+        self.nodes.get_mut(path.as_ref()).map(|v| &mut v.value)
     }
 
-    pub fn insert(&mut self, path: PathBuf, value: T) {
+    pub fn children(&self, path: impl AsRef<Path>) -> Option<Vec<&Path>> {
+        self.nodes.get(path.as_ref()).map(|v| v.children.iter().map(AsRef::as_ref).collect())
+    }
+
+    pub fn insert(&mut self, path: impl Into<PathBuf>, value: T) {
+        let path = path.into();
+
         if let Some(parent_path) = path.parent() {
             if let Some(parent) = self.nodes.get_mut(parent_path) {
                 parent.children.insert(path.to_path_buf());
@@ -54,7 +60,9 @@ impl<T> PathMap<T> {
         });
     }
 
-    pub fn remove(&mut self, root_path: &Path) -> Option<T> {
+    pub fn remove(&mut self, root_path: impl AsRef<Path>) -> Option<T> {
+        let root_path = root_path.as_ref();
+
         if let Some(parent_path) = root_path.parent() {
             if let Some(parent) = self.nodes.get_mut(parent_path) {
                 parent.children.remove(root_path);
@@ -93,10 +101,13 @@ impl<T> PathMap<T> {
     /// FS events, a file remove event could be followed by that file's
     /// directory being removed, in which case we should process that
     /// directory's parent.
-    pub fn descend(&self, start_path: &Path, target_path: &Path) -> PathBuf {
-        let relative_path = target_path.strip_prefix(start_path)
+    pub fn descend(&self, start_path: impl Into<PathBuf>, target_path: impl AsRef<Path>) -> PathBuf {
+        let start_path = start_path.into();
+        let target_path = target_path.as_ref();
+
+        let relative_path = target_path.strip_prefix(&start_path)
             .expect("target_path did not begin with start_path");
-        let mut current_path = start_path.to_path_buf();
+        let mut current_path = start_path;
 
         for component in relative_path.components() {
             match component {
