@@ -72,6 +72,7 @@ mod test {
         collections::HashMap,
     };
 
+    use maplit::hashmap;
     use rbx_dom_weak::RbxValue;
 
     fn new_tree() -> (RbxTree, RbxId) {
@@ -88,18 +89,16 @@ mod test {
 
     #[test]
     fn add_from_empty() {
+        let _ = env_logger::try_init();
+
         let (mut tree, root_id) = new_tree();
 
         let snapshot = InstanceSnapshot {
             snapshot_id: None,
             name: Cow::Borrowed("Foo"),
             class_name: Cow::Borrowed("Bar"),
-            properties: {
-                let mut map = HashMap::new();
-                map.insert("Baz".to_owned(), RbxValue::Int32 {
-                    value: 5,
-                });
-                map
+            properties: hashmap! {
+                "Baz".to_owned() => RbxValue::Int32 { value: 5 },
             },
             children: Vec::new(),
         };
@@ -114,5 +113,49 @@ mod test {
         assert_eq!(child_instance.class_name.as_str(), &snapshot.class_name);
         assert_eq!(&child_instance.properties, &snapshot.properties);
         assert!(child_instance.get_children_ids().is_empty());
+    }
+
+    #[test]
+    fn update_existing() {
+        let _ = env_logger::try_init();
+
+        let mut tree = RbxTree::new(RbxInstanceProperties {
+            name: "OldName".to_owned(),
+            class_name: "OldClassName".to_owned(),
+            properties: hashmap! {
+                "Foo".to_owned() => RbxValue::Int32 { value: 7 },
+                "Bar".to_owned() => RbxValue::Int32 { value: 3 },
+                "Unchanged".to_owned() => RbxValue::Int32 { value: -5 },
+            },
+        });
+
+        let root_id = tree.get_root_id();
+
+        let patch = PatchUpdateInstance {
+            id: root_id,
+            changed_name: Some("Foo".to_owned()),
+            changed_properties: hashmap! {
+                // The value of Foo has changed
+                "Foo".to_owned() => Some(RbxValue::Int32 { value: 8 }),
+
+                // Bar has been deleted
+                "Bar".to_owned() => None,
+
+                // Baz has been added
+                "Baz".to_owned() => Some(RbxValue::Int32 { value: 10 }),
+            },
+        };
+
+        apply_update_child(&mut tree, &patch);
+
+        let expected_properties = hashmap! {
+            "Foo".to_owned() => RbxValue::Int32 { value: 8 },
+            "Baz".to_owned() => RbxValue::Int32 { value: 10 },
+            "Unchanged".to_owned() => RbxValue::Int32 { value: -5 },
+        };
+
+        let root_instance = tree.get_instance(root_id).unwrap();
+        assert_eq!(root_instance.name, "Foo");
+        assert_eq!(root_instance.properties, expected_properties);
     }
 }

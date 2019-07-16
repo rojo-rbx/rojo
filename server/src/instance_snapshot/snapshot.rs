@@ -5,7 +5,7 @@ use std::{
 
 use rbx_dom_weak::{RbxId, RbxValue};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct InstanceSnapshot<'a> {
     pub snapshot_id: Option<RbxId>,
 
