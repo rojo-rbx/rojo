@@ -18,6 +18,8 @@ struct PathMapNode<T> {
 #[derive(Debug, Serialize)]
 pub struct PathMap<T> {
     nodes: HashMap<PathBuf, PathMapNode<T>>,
+
+    // TODO: Track orphaned nodes to traverse to merge children together.
 }
 
 impl<T> Default for PathMap<T> {
@@ -53,6 +55,9 @@ impl<T> PathMap<T> {
                 parent.children.insert(path.to_path_buf());
             }
         }
+
+        // TODO: Find any unrooted children that need to become children of this
+        // path.
 
         self.nodes.insert(path, PathMapNode {
             value,
