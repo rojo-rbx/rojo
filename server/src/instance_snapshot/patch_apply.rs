@@ -75,23 +75,17 @@ mod test {
     use maplit::hashmap;
     use rbx_dom_weak::RbxValue;
 
-    fn new_tree() -> (RbxTree, RbxId) {
-        let tree = RbxTree::new(RbxInstanceProperties {
+    #[test]
+    fn add_from_empty() {
+        let _ = env_logger::try_init();
+
+        let mut tree = RbxTree::new(RbxInstanceProperties {
             name: "Folder".to_owned(),
             class_name: "Folder".to_owned(),
             properties: HashMap::new(),
         });
 
         let root_id = tree.get_root_id();
-
-        (tree, root_id)
-    }
-
-    #[test]
-    fn add_from_empty() {
-        let _ = env_logger::try_init();
-
-        let (mut tree, root_id) = new_tree();
 
         let snapshot = InstanceSnapshot {
             snapshot_id: None,
