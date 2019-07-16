@@ -26,5 +26,8 @@ pub struct PatchAddInstance<'a> {
 pub struct PatchUpdateInstance {
     pub id: RbxId,
     pub changed_name: Option<String>,
+
+    /// Contains all changed properties. If a property is assigned to `None`,
+    /// then that property has been removed.
     pub changed_properties: HashMap<String, Option<RbxValue>>,
 }

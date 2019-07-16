@@ -8,23 +8,24 @@ use std::{
 use rbx_dom_weak::{RbxId, RbxValue};
 
 /// A lightweight description of what an instance should look like. Attempts to
-/// be somewhat memory efficient.
+/// be somewhat memory efficient by borrowing from its source data, indicated by
+/// the lifetime parameter, `'source`.
 ///
-/// Possible future improvements:
-/// - Use refcounted/interned strings
-/// - Replace use of RbxValue with a sum of RbxValue + borrowed value
+// Possible future improvements:
+// - Use refcounted/interned strings
+// - Replace use of RbxValue with a sum of RbxValue + borrowed value
 #[derive(Debug, Clone, PartialEq)]
-pub struct InstanceSnapshot<'a> {
+pub struct InstanceSnapshot<'source> {
     pub snapshot_id: Option<RbxId>,
 
-    pub name: Cow<'a, str>,
-    pub class_name: Cow<'a, str>,
+    pub name: Cow<'source, str>,
+    pub class_name: Cow<'source, str>,
     pub properties: HashMap<String, RbxValue>,
-    pub children: Vec<InstanceSnapshot<'a>>,
+    pub children: Vec<InstanceSnapshot<'source>>,
 }
 
-impl<'a> InstanceSnapshot<'a> {
-    pub fn get_owned(&'a self) -> InstanceSnapshot<'static> {
+impl<'source> InstanceSnapshot<'source> {
+    pub fn get_owned(&'source self) -> InstanceSnapshot<'static> {
         let children: Vec<InstanceSnapshot<'static>> = self.children.iter()
             .map(InstanceSnapshot::get_owned)
             .collect();
