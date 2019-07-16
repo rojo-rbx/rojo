@@ -23,9 +23,27 @@ impl SnapshotError {
             path: path.map(Into::into),
         }
     }
+
+    pub(crate) fn file_did_not_exist(path: impl Into<PathBuf>) -> SnapshotError {
+        SnapshotError {
+            detail: SnapshotErrorDetail::FileDidNotExist,
+            path: Some(path.into()),
+        }
+    }
+
+    pub(crate) fn file_name_bad_unicode(path: impl Into<PathBuf>) -> SnapshotError {
+        SnapshotError {
+            detail: SnapshotErrorDetail::FileNameBadUnicode,
+            path: Some(path.into()),
+        }
+    }
 }
 
-impl Error for SnapshotError {}
+impl Error for SnapshotError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        self.detail.source()
+    }
+}
 
 impl fmt::Display for SnapshotError {
     fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
@@ -39,6 +57,13 @@ impl fmt::Display for SnapshotError {
 #[derive(Debug)]
 pub enum SnapshotErrorDetail {
     FileDidNotExist,
+    FileNameBadUnicode,
+}
+
+impl SnapshotErrorDetail {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        None
+    }
 }
 
 impl fmt::Display for SnapshotErrorDetail {
@@ -47,6 +72,7 @@ impl fmt::Display for SnapshotErrorDetail {
 
         match self {
             FileDidNotExist => write!(formatter, "file did not exist"),
+            FileNameBadUnicode => write!(formatter, "file name had malformed Unicode"),
         }
     }
 }

@@ -2,6 +2,7 @@ use std::{
     borrow::Cow,
     collections::HashMap,
     path::Path,
+    ffi::OsStr,
 };
 
 use crate::{
@@ -11,7 +12,7 @@ use crate::{
 
 use super::{
     context::{SnapshotContext},
-    error::{SnapshotResult, SnapshotError, SnapshotErrorDetail},
+    error::{SnapshotResult, SnapshotError},
 };
 
 const INIT_MODULE_NAME: &str = "init.lua";
@@ -28,7 +29,7 @@ pub fn snapshot_imfs_path<'source>(
     // that an error.
     match imfs.get(path) {
         Some(imfs_item) => snapshot_imfs_item(context, imfs, imfs_item, instance_name),
-        None => return Err(SnapshotError::new(SnapshotErrorDetail::FileDidNotExist, Some(path))),
+        None => return Err(SnapshotError::file_did_not_exist(path)),
     }
 }
 
@@ -54,12 +55,16 @@ fn snapshot_imfs_directory<'source>(
     let init_server_path = directory.path.join(INIT_SERVER_NAME);
     let init_client_path = directory.path.join(INIT_CLIENT_NAME);
 
-    let snapshot_name = instance_name
-        .unwrap_or_else(|| {
-            Cow::Borrowed(directory.path
+    let snapshot_name = match instance_name {
+        Some(name) => name,
+        None => {
+            let name = directory.path
                 .file_name().expect("Could not extract file name")
-                .to_str().expect("Could not convert path to UTF-8"))
-        });
+                .to_str().ok_or_else(|| SnapshotError::file_name_bad_unicode(&directory.path))?;
+
+            Cow::Borrowed(name)
+        },
+    };
 
     let mut snapshot = if directory.children.contains(&init_path) {
         snapshot_imfs_path(context, imfs, &init_path, Some(snapshot_name))?.unwrap()
@@ -91,7 +96,7 @@ fn snapshot_imfs_directory<'source>(
     for child_path in &directory.children {
         let child_name = child_path
             .file_name().expect("Couldn't extract file name")
-            .to_str().expect("Couldn't convert file name to UTF-8");
+            .to_str().ok_or_else(|| SnapshotError::file_name_bad_unicode(&directory.path))?;
 
         if child_name.ends_with(".meta.json") {
             // meta.json files don't turn into instances themselves, they just
@@ -124,7 +129,8 @@ fn snapshot_imfs_file<'source>(
     instance_name: Option<Cow<'source, str>>,
 ) -> SnapshotResult<'source> {
     let extension = file.path.extension()
-        .map(|v| v.to_str().expect("Could not convert extension to UTF-8"));
+        .map(|ext| ext.to_str().ok_or_else(|| SnapshotError::file_name_bad_unicode(&file.path)))
+        .transpose()?;
 
     let mut maybe_snapshot: Option<InstanceSnapshot<'source>> = match extension {
         // Some("lua") => snapshot_lua_file(file, imfs)?,
@@ -147,12 +153,9 @@ fn snapshot_imfs_file<'source>(
     };
 
     if let Some(mut snapshot) = maybe_snapshot.as_mut() {
-        // Carefully preserve name from project manifest if present.
         if let Some(snapshot_name) = instance_name {
             snapshot.name = snapshot_name;
         }
-    } else {
-        // info!("File generated no snapshot: {}", file.path.display());
     }
 
     Ok(maybe_snapshot)
