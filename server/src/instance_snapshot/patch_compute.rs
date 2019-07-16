@@ -1,3 +1,6 @@
+//! Defines the algorithm for computing a roughly-minimal patch set given an
+//! existing instance tree and an instance snapshot.
+
 use std::collections::{HashMap, HashSet};
 
 use rbx_dom_weak::{RbxTree, RbxId, RbxInstance};

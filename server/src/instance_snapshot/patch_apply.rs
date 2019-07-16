@@ -1,3 +1,5 @@
+//! Defines the algorithm for applying generated patches.
+
 use rbx_dom_weak::{RbxTree, RbxId, RbxInstanceProperties};
 
 use super::{

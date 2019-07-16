@@ -1,3 +1,5 @@
+//! Defines the structure of an instance snapshot.
+
 use std::{
     borrow::Cow,
     collections::HashMap,
@@ -5,6 +7,8 @@ use std::{
 
 use rbx_dom_weak::{RbxId, RbxValue};
 
+/// A lightweight description of what an instance should look like. Attempts to
+/// be somewhat memory efficient.
 #[derive(Debug, Clone, PartialEq)]
 pub struct InstanceSnapshot<'a> {
     pub snapshot_id: Option<RbxId>,

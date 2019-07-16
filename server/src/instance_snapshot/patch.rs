@@ -1,3 +1,5 @@
+//! Defines the data structures used for describing instance patches.
+
 use std::collections::HashMap;
 
 use rbx_dom_weak::{RbxValue, RbxId};
