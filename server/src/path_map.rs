@@ -47,6 +47,10 @@ impl<T> PathMap<T> {
         self.nodes.get(path.as_ref()).map(|v| v.children.iter().map(AsRef::as_ref).collect())
     }
 
+    pub fn contains_key(&self, path: impl AsRef<Path>) -> bool {
+        self.nodes.contains_key(path.as_ref())
+    }
+
     pub fn insert(&mut self, path: impl Into<PathBuf>, value: T) {
         let path = path.into();
 
