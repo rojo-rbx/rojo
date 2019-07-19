@@ -16,6 +16,8 @@
 //! important, however, when dealing with large opaque model files and
 //! user-defined plugins.
 
+#![allow(dead_code)]
+
 mod patch;
 mod patch_apply;
 mod patch_compute;
