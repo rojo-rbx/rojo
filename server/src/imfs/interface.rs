@@ -45,21 +45,6 @@ impl<F: ImfsFetcher> Imfs<F> {
         }
     }
 
-    fn get_or_read_file<'this>(&'this mut self, path: &Path) -> Option<&'this ImfsFile> {
-        self.read_if_not_exists(path);
-
-        match self.inner.get_mut(path)? {
-            ImfsItem::File(file) => {
-                if file.contents.is_none() {
-                    file.contents = Some(self.fetcher.read_contents(path));
-                }
-
-                Some(file)
-            }
-            ImfsItem::Directory(_) => None
-        }
-    }
-
     pub fn get(&mut self, path: impl AsRef<Path>) -> Option<ImfsEntry> {
         self.read_if_not_exists(path.as_ref());
         let item = self.inner.get(path.as_ref())?;
@@ -69,7 +54,18 @@ impl<F: ImfsFetcher> Imfs<F> {
     }
 
     pub fn get_contents(&mut self, path: impl AsRef<Path>) -> Option<&[u8]> {
-        unimplemented!();
+        self.read_if_not_exists(path.as_ref());
+
+        match self.inner.get_mut(path.as_ref())? {
+            ImfsItem::File(file) => {
+                if file.contents.is_none() {
+                    file.contents = Some(self.fetcher.read_contents(path));
+                }
+
+                Some(file.contents.as_ref().unwrap())
+            }
+            ImfsItem::Directory(_) => None
+        }
     }
 
     pub fn get_children(&mut self, path: impl AsRef<Path>) -> Option<Vec<ImfsEntry>> {
