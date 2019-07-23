@@ -38,35 +38,38 @@ impl<F: ImfsFetcher> Imfs<F> {
         false
     }
 
-    pub fn get(&mut self, path: impl AsRef<Path>) -> Option<ImfsEntry> {
-        let path = path.as_ref();
-
-        if self.inner.contains_key(path) {
-            return Some(ImfsEntry {
-                path: path.to_path_buf(),
-            });
+    fn read_if_not_exists(&mut self, path: &Path) {
+        if !self.inner.contains_key(path) {
+            let item = self.fetcher.read_item(path);
+            self.inner.insert(path.to_path_buf(), item);
         }
+    }
 
-        let item = self.fetcher.read_item(path);
-        self.inner.insert(path.to_path_buf(), item);
+    fn get_or_read_file<'this>(&'this mut self, path: &Path) -> Option<&'this ImfsFile> {
+        self.read_if_not_exists(path);
+
+        match self.inner.get_mut(path)? {
+            ImfsItem::File(file) => {
+                if file.contents.is_none() {
+                    file.contents = Some(self.fetcher.read_contents(path));
+                }
+
+                Some(file)
+            }
+            ImfsItem::Directory(_) => None
+        }
+    }
+
+    pub fn get(&mut self, path: impl AsRef<Path>) -> Option<ImfsEntry> {
+        self.read_if_not_exists(path.as_ref());
+        let item = self.inner.get(path.as_ref())?;
         Some(ImfsEntry {
-            path: path.to_path_buf()
+            path: item.path().to_path_buf(),
         })
     }
 
     pub fn get_contents(&mut self, path: impl AsRef<Path>) -> Option<&[u8]> {
-        match self.inner.get(path) {
-            Some(ImfsItem::File(file)) => {
-                match &file.contents {
-                    Some(contents) => contents.as_slice(),
-                    None => unimplemented!(),
-                }
-            }
-            Some(ImfsItem::Directory(_)) => None,
-            None => {
-                let item = self.get(path)?;
-            }
-        }
+        unimplemented!();
     }
 
     pub fn get_children(&mut self, path: impl AsRef<Path>) -> Option<Vec<ImfsEntry>> {
@@ -102,6 +105,15 @@ impl ImfsEntry {
 pub enum ImfsItem {
     File(ImfsFile),
     Directory(ImfsDirectory),
+}
+
+impl ImfsItem {
+    fn path(&self) -> &Path {
+        match self {
+            ImfsItem::File(file) => &file.path,
+            ImfsItem::Directory(dir) => &dir.path,
+        }
+    }
 }
 
 pub struct ImfsFile {
