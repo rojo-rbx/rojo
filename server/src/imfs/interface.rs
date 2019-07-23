@@ -47,21 +47,35 @@ impl<F: ImfsFetcher> Imfs<F> {
             });
         }
 
-        // TODO: If this path is a child of any of our existing root paths, read
-        // down the path to this path so that this one isn't orphaned.
-
         let item = self.fetcher.read_item(path);
         self.inner.insert(path.to_path_buf(), item);
-
-        unimplemented!("AHH?");
+        Some(ImfsEntry {
+            path: path.to_path_buf()
+        })
     }
 
     pub fn get_contents(&mut self, path: impl AsRef<Path>) -> Option<&[u8]> {
-        let item = self.inner.get(path.as_ref())?;
-        match item {
-            ImfsItem::File(file) => file.contents.as_ref().map(Vec::as_slice),
-            ImfsItem::Directory(_) => None,
+        match self.inner.get(path) {
+            Some(ImfsItem::File(file)) => {
+                match &file.contents {
+                    Some(contents) => contents.as_slice(),
+                    None => unimplemented!(),
+                }
+            }
+            Some(ImfsItem::Directory(_)) => None,
+            None => {
+                let item = self.get(path)?;
+            }
         }
+    }
+
+    pub fn get_children(&mut self, path: impl AsRef<Path>) -> Option<Vec<ImfsEntry>> {
+        Some(self.inner.children(path)?
+            .into_iter()
+            .map(|path| ImfsEntry {
+                path: path.to_path_buf()
+            })
+            .collect())
     }
 }
 
@@ -74,22 +88,14 @@ impl ImfsEntry {
         &self,
         imfs: &'imfs mut Imfs<impl ImfsFetcher>,
     ) -> Option<&'imfs [u8]> {
-        let item = imfs.inner.get(&self.path)?;
-        match item {
-            ImfsItem::File(file) => file.contents.as_ref().map(Vec::as_slice),
-            ImfsItem::Directory(_) => None,
-        }
+        imfs.get_contents(&self.path)
     }
 
-    pub fn children<'imfs>(
+    pub fn children(
         &self,
-        imfs: &'imfs mut Imfs<impl ImfsFetcher>,
-    ) -> Option<&'imfs [u8]> {
-        let item = imfs.inner.get(&self.path)?;
-        match item {
-            ImfsItem::File(file) => file.contents.as_ref().map(Vec::as_slice),
-            ImfsItem::Directory(_) => None,
-        }
+        imfs: &mut Imfs<impl ImfsFetcher>,
+    ) -> Option<Vec<ImfsEntry>> {
+        imfs.get_children(&self.path)
     }
 }
 

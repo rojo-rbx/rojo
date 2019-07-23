@@ -87,7 +87,7 @@ impl<T> PathMap<T> {
 
         self.remove_from_parent(root_path);
 
-        let mut root_node = match self.nodes.remove(root_path) {
+        let root_node = match self.nodes.remove(root_path) {
             Some(node) => node,
             None => return None,
         };
@@ -97,7 +97,7 @@ impl<T> PathMap<T> {
 
         while let Some(path) = to_visit.pop() {
             match self.nodes.remove(&path) {
-                Some(mut node) => {
+                Some(node) => {
                     for child in node.children.into_iter() {
                         to_visit.push(child);
                     }
