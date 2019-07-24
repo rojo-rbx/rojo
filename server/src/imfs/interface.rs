@@ -83,6 +83,10 @@ pub struct ImfsEntry {
 }
 
 impl ImfsEntry {
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+
     pub fn contents<'imfs>(
         &self,
         imfs: &'imfs mut Imfs<impl ImfsFetcher>,
