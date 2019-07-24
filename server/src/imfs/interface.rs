@@ -9,6 +9,9 @@ pub trait ImfsFetcher {
     fn read_item(&self, path: impl AsRef<Path>) -> io::Result<ImfsItem>;
     fn read_children(&self, path: impl AsRef<Path>) -> io::Result<Vec<ImfsItem>>;
     fn read_contents(&self, path: impl AsRef<Path>) -> io::Result<Vec<u8>>;
+    fn create_directory(&self, path: impl AsRef<Path>) -> io::Result<()>;
+    fn write_contents(&self, path: impl AsRef<Path>, contents: &[u8]) -> io::Result<()>;
+    fn remove(&self, path: impl AsRef<Path>) -> io::Result<()>;
 }
 
 pub struct Imfs<F> {
@@ -139,11 +142,11 @@ impl ImfsItem {
 }
 
 pub struct ImfsFile {
-    path: PathBuf,
-    contents: Option<Vec<u8>>,
+    pub(super) path: PathBuf,
+    pub(super) contents: Option<Vec<u8>>,
 }
 
 pub struct ImfsDirectory {
-    path: PathBuf,
-    children_enumerated: bool,
+    pub(super) path: PathBuf,
+    pub(super) children_enumerated: bool,
 }
