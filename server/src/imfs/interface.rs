@@ -6,12 +6,12 @@ use std::{
 use crate::path_map::PathMap;
 
 pub trait ImfsFetcher {
-    fn read_item(&self, path: impl AsRef<Path>) -> io::Result<ImfsItem>;
-    fn read_children(&self, path: impl AsRef<Path>) -> io::Result<Vec<ImfsItem>>;
-    fn read_contents(&self, path: impl AsRef<Path>) -> io::Result<Vec<u8>>;
-    fn create_directory(&self, path: impl AsRef<Path>) -> io::Result<()>;
-    fn write_contents(&self, path: impl AsRef<Path>, contents: &[u8]) -> io::Result<()>;
-    fn remove(&self, path: impl AsRef<Path>) -> io::Result<()>;
+    fn read_item(&mut self, path: impl AsRef<Path>) -> io::Result<ImfsItem>;
+    fn read_children(&mut self, path: impl AsRef<Path>) -> io::Result<Vec<ImfsItem>>;
+    fn read_contents(&mut self, path: impl AsRef<Path>) -> io::Result<Vec<u8>>;
+    fn create_directory(&mut self, path: impl AsRef<Path>) -> io::Result<()>;
+    fn write_contents(&mut self, path: impl AsRef<Path>, contents: &[u8]) -> io::Result<()>;
+    fn remove(&mut self, path: impl AsRef<Path>) -> io::Result<()>;
 }
 
 pub struct Imfs<F> {

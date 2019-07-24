@@ -12,7 +12,7 @@ use super::interface::{ImfsFetcher, ImfsItem, ImfsDirectory, ImfsFile};
 pub struct RealFetcher;
 
 impl ImfsFetcher for RealFetcher {
-    fn read_item(&self, path: impl AsRef<Path>) -> io::Result<ImfsItem> {
+    fn read_item(&mut self, path: impl AsRef<Path>) -> io::Result<ImfsItem> {
         let metadata = fs::metadata(path.as_ref())?;
 
         if metadata.is_file() {
@@ -28,7 +28,7 @@ impl ImfsFetcher for RealFetcher {
         }
     }
 
-    fn read_children(&self, path: impl AsRef<Path>) -> io::Result<Vec<ImfsItem>> {
+    fn read_children(&mut self, path: impl AsRef<Path>) -> io::Result<Vec<ImfsItem>> {
         let mut result = Vec::new();
 
         for entry in fs::read_dir(path)? {
@@ -39,11 +39,11 @@ impl ImfsFetcher for RealFetcher {
         Ok(result)
     }
 
-    fn read_contents(&self, path: impl AsRef<Path>) -> io::Result<Vec<u8>> {
+    fn read_contents(&mut self, path: impl AsRef<Path>) -> io::Result<Vec<u8>> {
         fs::read(path)
     }
 
-    fn create_directory(&self, path: impl AsRef<Path>) -> io::Result<()> {
+    fn create_directory(&mut self, path: impl AsRef<Path>) -> io::Result<()> {
         match fs::create_dir(path) {
             Ok(_) => Ok(()),
             Err(ref err) if err.kind() == io::ErrorKind::AlreadyExists => Ok(()),
@@ -51,11 +51,11 @@ impl ImfsFetcher for RealFetcher {
         }
     }
 
-    fn write_contents(&self, path: impl AsRef<Path>, contents: &[u8]) -> io::Result<()> {
+    fn write_contents(&mut self, path: impl AsRef<Path>, contents: &[u8]) -> io::Result<()> {
         fs::write(path, contents)
     }
 
-    fn remove(&self, path: impl AsRef<Path>) -> io::Result<()> {
+    fn remove(&mut self, path: impl AsRef<Path>) -> io::Result<()> {
         let metadata = fs::metadata(path.as_ref())?;
 
         if metadata.is_file() {
