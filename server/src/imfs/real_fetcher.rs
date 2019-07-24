@@ -1,3 +1,6 @@
+//! Implements the IMFS fetcher interface for the real filesystem using Rust's
+//! std::fs interface.
+
 use std::{
     io,
     fs,
