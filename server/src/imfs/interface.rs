@@ -1,11 +1,14 @@
-use std::path::{Path, PathBuf};
+use std::{
+    io,
+    path::{Path, PathBuf},
+};
 
 use crate::path_map::PathMap;
 
 pub trait ImfsFetcher {
-    fn read_item(&self, path: impl AsRef<Path>) -> ImfsItem;
-    fn read_children(&self, path: impl AsRef<Path>) -> Vec<ImfsItem>;
-    fn read_contents(&self, path: impl AsRef<Path>) -> Vec<u8>;
+    fn read_item(&self, path: impl AsRef<Path>) -> io::Result<ImfsItem>;
+    fn read_children(&self, path: impl AsRef<Path>) -> io::Result<Vec<ImfsItem>>;
+    fn read_contents(&self, path: impl AsRef<Path>) -> io::Result<Vec<u8>>;
 }
 
 pub struct Imfs<F> {
@@ -40,7 +43,8 @@ impl<F: ImfsFetcher> Imfs<F> {
 
     fn read_if_not_exists(&mut self, path: &Path) {
         if !self.inner.contains_key(path) {
-            let item = self.fetcher.read_item(path);
+            let item = self.fetcher.read_item(path)
+                .expect("TODO: Handle this error");
             self.inner.insert(path.to_path_buf(), item);
         }
     }
@@ -48,8 +52,15 @@ impl<F: ImfsFetcher> Imfs<F> {
     pub fn get(&mut self, path: impl AsRef<Path>) -> Option<ImfsEntry> {
         self.read_if_not_exists(path.as_ref());
         let item = self.inner.get(path.as_ref())?;
+
+        let is_file = match item {
+            ImfsItem::File(_) => true,
+            ImfsItem::Directory(_) => false,
+        };
+
         Some(ImfsEntry {
             path: item.path().to_path_buf(),
+            is_file,
         })
     }
 
@@ -59,7 +70,8 @@ impl<F: ImfsFetcher> Imfs<F> {
         match self.inner.get_mut(path.as_ref())? {
             ImfsItem::File(file) => {
                 if file.contents.is_none() {
-                    file.contents = Some(self.fetcher.read_contents(path));
+                    file.contents = Some(self.fetcher.read_contents(path)
+                        .expect("TODO: Handle this error"));
                 }
 
                 Some(file.contents.as_ref().unwrap())
@@ -69,17 +81,19 @@ impl<F: ImfsFetcher> Imfs<F> {
     }
 
     pub fn get_children(&mut self, path: impl AsRef<Path>) -> Option<Vec<ImfsEntry>> {
-        Some(self.inner.children(path)?
+        self.inner.children(path)?
             .into_iter()
-            .map(|path| ImfsEntry {
-                path: path.to_path_buf()
-            })
-            .collect())
+            .map(|path| path.to_path_buf())
+            .collect::<Vec<PathBuf>>()
+            .into_iter()
+            .map(|path| self.get(path))
+            .collect()
     }
 }
 
 pub struct ImfsEntry {
     path: PathBuf,
+    is_file: bool,
 }
 
 impl ImfsEntry {
@@ -99,6 +113,14 @@ impl ImfsEntry {
         imfs: &mut Imfs<impl ImfsFetcher>,
     ) -> Option<Vec<ImfsEntry>> {
         imfs.get_children(&self.path)
+    }
+
+    pub fn is_file(&self) -> bool {
+        self.is_file
+    }
+
+    pub fn is_directory(&self) -> bool {
+        !self.is_file
     }
 }
 

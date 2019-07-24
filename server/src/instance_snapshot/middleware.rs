@@ -117,6 +117,10 @@ impl SnapshotMiddleware for SnapshotTxt {
         imfs: &mut Imfs<F>,
         entry: ImfsEntry,
     ) -> SnapshotInstanceResult {
+        if entry.is_directory() {
+            return None;
+        }
+
         let extension = entry.path().extension()?.to_str().unwrap();
 
         if extension != "txt" {
