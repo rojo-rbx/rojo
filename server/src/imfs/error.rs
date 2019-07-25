@@ -6,6 +6,8 @@ use std::{
 
 use failure::Fail;
 
+pub type FsResult<T> = Result<T, FsError>;
+
 /// A wrapper around io::Error that also attaches the path associated with the
 /// error.
 #[derive(Debug, Fail)]

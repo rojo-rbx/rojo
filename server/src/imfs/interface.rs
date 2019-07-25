@@ -1,20 +1,19 @@
-use std::{
-    io,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use crate::path_map::PathMap;
+
+use super::error::FsResult;
 
 /// The generic interface that `Imfs` uses to lazily read files from the disk.
 /// In tests, it's stubbed out to do different versions of absolutely nothing
 /// depending on the test.
 pub trait ImfsFetcher {
-    fn read_item(&mut self, path: impl AsRef<Path>) -> io::Result<ImfsItem>;
-    fn read_children(&mut self, path: impl AsRef<Path>) -> io::Result<Vec<ImfsItem>>;
-    fn read_contents(&mut self, path: impl AsRef<Path>) -> io::Result<Vec<u8>>;
-    fn create_directory(&mut self, path: impl AsRef<Path>) -> io::Result<()>;
-    fn write_contents(&mut self, path: impl AsRef<Path>, contents: &[u8]) -> io::Result<()>;
-    fn remove(&mut self, path: impl AsRef<Path>) -> io::Result<()>;
+    fn read_item(&mut self, path: impl AsRef<Path>) -> FsResult<ImfsItem>;
+    fn read_children(&mut self, path: impl AsRef<Path>) -> FsResult<Vec<ImfsItem>>;
+    fn read_contents(&mut self, path: impl AsRef<Path>) -> FsResult<Vec<u8>>;
+    fn create_directory(&mut self, path: impl AsRef<Path>) -> FsResult<()>;
+    fn write_contents(&mut self, path: impl AsRef<Path>, contents: &[u8]) -> FsResult<()>;
+    fn remove(&mut self, path: impl AsRef<Path>) -> FsResult<()>;
 }
 
 /// An in-memory filesystem that can be incrementally populated and updated as
@@ -62,7 +61,7 @@ impl<F: ImfsFetcher> Imfs<F> {
     /// This does not necessitate that file contents or directory children will
     /// be read. Depending on the `ImfsFetcher` implementation that the `Imfs`
     /// is using, this call may read exactly only the given path and no more.
-    fn read_if_not_exists(&mut self, path: &Path) -> io::Result<()> {
+    fn read_if_not_exists(&mut self, path: &Path) -> FsResult<()> {
         if !self.inner.contains_key(path) {
             let item = self.fetcher.read_item(path)?;
             self.inner.insert(path.to_path_buf(), item);
@@ -71,7 +70,7 @@ impl<F: ImfsFetcher> Imfs<F> {
         Ok(())
     }
 
-    pub fn raise_file_change(&mut self, path: impl AsRef<Path>) -> io::Result<()> {
+    pub fn raise_file_change(&mut self, path: impl AsRef<Path>) -> FsResult<()> {
         if !self.would_be_resident(path.as_ref()) {
             return Ok(());
         }
@@ -79,7 +78,7 @@ impl<F: ImfsFetcher> Imfs<F> {
         unimplemented!();
     }
 
-    pub fn raise_file_removed(&mut self, path: impl AsRef<Path>) -> io::Result<()> {
+    pub fn raise_file_removed(&mut self, path: impl AsRef<Path>) -> FsResult<()> {
         if !self.would_be_resident(path.as_ref()) {
             return Ok(());
         }

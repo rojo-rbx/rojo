@@ -5,7 +5,6 @@ use std::{
     path::{self, Path, PathBuf},
 };
 
-use failure::Fail;
 use serde::{Serialize, Deserialize};
 
 use crate::project::{Project, ProjectNode};
