@@ -5,10 +5,13 @@ use std::{
     path::{PathBuf, Path},
 };
 
-use rbx_dom_weak::{RbxTree, RbxId, RbxValue };
+use rbx_dom_weak::{RbxTree, RbxId, RbxValue};
 use maplit::hashmap;
 
-use crate::imfs::new::{Imfs, ImfsEntry, ImfsFetcher};
+use crate::imfs::{
+    FsResult,
+    new::{Imfs, ImfsEntry, ImfsFetcher},
+};
 
 use super::snapshot::InstanceSnapshot;
 
@@ -25,7 +28,7 @@ pub struct DirectorySnapshot {
     children: HashMap<String, ImfsSnapshot>,
 }
 
-type SnapshotInstanceResult<'a> = Option<InstanceSnapshot<'a>>;
+type SnapshotInstanceResult<'a> = FsResult<Option<InstanceSnapshot<'a>>>;
 type SnapshotFileResult = Option<(String, ImfsSnapshot)>;
 
 pub trait SnapshotMiddleware {
@@ -54,6 +57,16 @@ fn snapshot_instance(tree: &RbxTree, id: RbxId) -> SnapshotFileResult {
     unimplemented!();
 }
 
+macro_rules! try_resopt {
+    ($x: expr) => {
+        match $x {
+            Ok(Some(v)) => v,
+            Ok(None) => return Ok(None),
+            Err(e) => return Err(e),
+        }
+    };
+}
+
 pub struct SnapshotDir;
 
 impl SnapshotMiddleware for SnapshotDir {
@@ -61,12 +74,12 @@ impl SnapshotMiddleware for SnapshotDir {
         imfs: &mut Imfs<F>,
         entry: ImfsEntry,
     ) -> SnapshotInstanceResult {
-        let children = entry.children(imfs)?;
+        let children: Vec<ImfsEntry> = try_resopt!(entry.children(imfs));
 
         let mut snapshot_children = Vec::new();
 
         for child in children.into_iter() {
-            if let Some(child_snapshot) = snapshot(imfs, &child) {
+            if let Some(child_snapshot) = snapshot(imfs, &child)? {
                 snapshot_children.push(child_snapshot);
             }
         }
@@ -75,13 +88,13 @@ impl SnapshotMiddleware for SnapshotDir {
             .file_name().expect("Could not extract file name")
             .to_str().unwrap().to_string();
 
-        Some(InstanceSnapshot {
+        Ok(Some(InstanceSnapshot {
             snapshot_id: None,
             name: Cow::Owned(instance_name),
             class_name: Cow::Borrowed("Folder"),
             properties: HashMap::new(),
             children: snapshot_children,
-        })
+        }))
     }
 
     fn from_instance(
@@ -118,20 +131,23 @@ impl SnapshotMiddleware for SnapshotTxt {
         entry: ImfsEntry,
     ) -> SnapshotInstanceResult {
         if entry.is_directory() {
-            return None;
+            return Ok(None);
         }
 
-        let extension = entry.path().extension()?.to_str().unwrap();
+        let extension = match entry.path().extension() {
+            Some(x) => x.to_str().unwrap(),
+            None => return Ok(None),
+        };
 
         if extension != "txt" {
-            return None;
+            return Ok(None);
         }
 
         let instance_name = entry.path()
             .file_stem().expect("Could not extract file stem")
             .to_str().unwrap().to_string();
 
-        let contents = entry.contents(imfs)?;
+        let contents = entry.contents(imfs).unwrap().unwrap();
         let contents_str = str::from_utf8(contents).unwrap().to_string();
 
         let properties = hashmap! {
@@ -140,13 +156,13 @@ impl SnapshotMiddleware for SnapshotTxt {
             },
         };
 
-        Some(InstanceSnapshot {
+        Ok(Some(InstanceSnapshot {
             snapshot_id: None,
             name: Cow::Owned(instance_name),
             class_name: Cow::Borrowed("StringValue"),
             properties,
             children: Vec::new(),
-        })
+        }))
     }
 
     fn from_instance(

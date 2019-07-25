@@ -1,8 +1,11 @@
-use std::path::{Path, PathBuf};
+use std::{
+    io,
+    path::{Path, PathBuf},
+};
 
 use crate::path_map::PathMap;
 
-use super::error::{FsResult, FsErrorKind};
+use super::error::{FsResult, FsError, FsErrorKind};
 
 /// The generic interface that `Imfs` uses to lazily read files from the disk.
 /// In tests, it's stubbed out to do different versions of absolutely nothing
@@ -86,12 +89,8 @@ impl<F: ImfsFetcher> Imfs<F> {
         unimplemented!();
     }
 
-    pub fn get(&mut self, path: impl AsRef<Path>) -> FsResult<Option<ImfsEntry>> {
-        match self.read_if_not_exists(path.as_ref()) {
-            Ok(_) => {}
-            Err(ref err) if err.kind() == FsErrorKind::NotFound => return Ok(None),
-            Err(err) => return Err(err),
-        }
+    pub fn get(&mut self, path: impl AsRef<Path>) -> FsResult<ImfsEntry> {
+        self.read_if_not_exists(path.as_ref())?;
 
         let item = self.inner.get(path.as_ref()).unwrap();
 
@@ -100,30 +99,28 @@ impl<F: ImfsFetcher> Imfs<F> {
             ImfsItem::Directory(_) => false,
         };
 
-        Ok(Some(ImfsEntry {
+        Ok(ImfsEntry {
             path: item.path().to_path_buf(),
             is_file,
-        }))
+        })
     }
 
-    pub fn get_contents(&mut self, path: impl AsRef<Path>) -> Option<&[u8]> {
-        self.read_if_not_exists(path.as_ref())
-            .expect("TODO: Handle this error");
+    pub fn get_contents(&mut self, path: impl AsRef<Path>) -> FsResult<&[u8]> {
+        self.read_if_not_exists(path.as_ref())?;
 
-        match self.inner.get_mut(path.as_ref())? {
+        match self.inner.get_mut(path.as_ref()).unwrap() {
             ImfsItem::File(file) => {
                 if file.contents.is_none() {
-                    file.contents = Some(self.fetcher.read_contents(path.as_ref())
-                        .expect("TODO: Handle this error"));
+                    file.contents = Some(self.fetcher.read_contents(path.as_ref())?);
                 }
 
-                Some(file.contents.as_ref().unwrap())
+                Ok(file.contents.as_ref().unwrap())
             }
-            ImfsItem::Directory(_) => None
+            ImfsItem::Directory(_) => Err(FsError::new(io::Error::new(io::ErrorKind::Other, "Can't read a directory"), path.as_ref().to_path_buf()))
         }
     }
 
-    pub fn get_children(&mut self, path: impl AsRef<Path>) -> FsResult<Option<Vec<ImfsEntry>>> {
+    pub fn get_children(&mut self, path: impl AsRef<Path>) -> FsResult<Vec<ImfsEntry>> {
         unimplemented!();
     }
 }
@@ -147,15 +144,15 @@ impl ImfsEntry {
     pub fn contents<'imfs>(
         &self,
         imfs: &'imfs mut Imfs<impl ImfsFetcher>,
-    ) -> Option<&'imfs [u8]> {
-        imfs.get_contents(&self.path)
+    ) -> FsResult<Option<&'imfs [u8]>> {
+        imfs.get_contents(&self.path).map(Some)
     }
 
     pub fn children(
         &self,
         imfs: &mut Imfs<impl ImfsFetcher>,
-    ) -> Option<Vec<ImfsEntry>> {
-        imfs.get_children(&self.path).unwrap()
+    ) -> FsResult<Option<Vec<ImfsEntry>>> {
+        imfs.get_children(&self.path).map(Some)
     }
 
     pub fn is_file(&self) -> bool {
