@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use crate::path_map::PathMap;
 
-use super::error::FsResult;
+use super::error::{FsResult, FsErrorKind};
 
 /// The generic interface that `Imfs` uses to lazily read files from the disk.
 /// In tests, it's stubbed out to do different versions of absolutely nothing
@@ -86,21 +86,24 @@ impl<F: ImfsFetcher> Imfs<F> {
         unimplemented!();
     }
 
-    pub fn get(&mut self, path: impl AsRef<Path>) -> Option<ImfsEntry> {
-        self.read_if_not_exists(path.as_ref())
-            .expect("TODO: Handle this error");
+    pub fn get(&mut self, path: impl AsRef<Path>) -> FsResult<Option<ImfsEntry>> {
+        match self.read_if_not_exists(path.as_ref()) {
+            Ok(_) => {}
+            Err(ref err) if err.kind() == FsErrorKind::NotFound => return Ok(None),
+            Err(err) => return Err(err),
+        }
 
-        let item = self.inner.get(path.as_ref())?;
+        let item = self.inner.get(path.as_ref()).unwrap();
 
         let is_file = match item {
             ImfsItem::File(_) => true,
             ImfsItem::Directory(_) => false,
         };
 
-        Some(ImfsEntry {
+        Ok(Some(ImfsEntry {
             path: item.path().to_path_buf(),
             is_file,
-        })
+        }))
     }
 
     pub fn get_contents(&mut self, path: impl AsRef<Path>) -> Option<&[u8]> {
@@ -120,14 +123,8 @@ impl<F: ImfsFetcher> Imfs<F> {
         }
     }
 
-    pub fn get_children(&mut self, path: impl AsRef<Path>) -> Option<Vec<ImfsEntry>> {
-        self.inner.children(path)?
-            .into_iter()
-            .map(|path| path.to_path_buf())
-            .collect::<Vec<PathBuf>>()
-            .into_iter()
-            .map(|path| self.get(path))
-            .collect()
+    pub fn get_children(&mut self, path: impl AsRef<Path>) -> FsResult<Option<Vec<ImfsEntry>>> {
+        unimplemented!();
     }
 }
 
@@ -158,7 +155,7 @@ impl ImfsEntry {
         &self,
         imfs: &mut Imfs<impl ImfsFetcher>,
     ) -> Option<Vec<ImfsEntry>> {
-        imfs.get_children(&self.path)
+        imfs.get_children(&self.path).unwrap()
     }
 
     pub fn is_file(&self) -> bool {

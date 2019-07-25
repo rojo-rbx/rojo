@@ -7,6 +7,7 @@ use std::{
 use failure::Fail;
 
 pub type FsResult<T> = Result<T, FsError>;
+pub use io::ErrorKind as FsErrorKind;
 
 /// A wrapper around io::Error that also attaches the path associated with the
 /// error.
@@ -23,6 +24,10 @@ impl FsError {
             inner,
             path: path.into(),
         }
+    }
+
+    pub fn kind(&self) -> FsErrorKind {
+        self.inner.kind()
     }
 }
 
