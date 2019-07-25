@@ -8,12 +8,12 @@ use super::error::FsResult;
 /// In tests, it's stubbed out to do different versions of absolutely nothing
 /// depending on the test.
 pub trait ImfsFetcher {
-    fn read_item(&mut self, path: impl AsRef<Path>) -> FsResult<ImfsItem>;
-    fn read_children(&mut self, path: impl AsRef<Path>) -> FsResult<Vec<ImfsItem>>;
-    fn read_contents(&mut self, path: impl AsRef<Path>) -> FsResult<Vec<u8>>;
-    fn create_directory(&mut self, path: impl AsRef<Path>) -> FsResult<()>;
-    fn write_contents(&mut self, path: impl AsRef<Path>, contents: &[u8]) -> FsResult<()>;
-    fn remove(&mut self, path: impl AsRef<Path>) -> FsResult<()>;
+    fn read_item(&mut self, path: &Path) -> FsResult<ImfsItem>;
+    fn read_children(&mut self, path: &Path) -> FsResult<Vec<ImfsItem>>;
+    fn read_contents(&mut self, path: &Path) -> FsResult<Vec<u8>>;
+    fn create_directory(&mut self, path: &Path) -> FsResult<()>;
+    fn write_contents(&mut self, path: &Path, contents: &[u8]) -> FsResult<()>;
+    fn remove(&mut self, path: &Path) -> FsResult<()>;
 }
 
 /// An in-memory filesystem that can be incrementally populated and updated as
@@ -110,7 +110,7 @@ impl<F: ImfsFetcher> Imfs<F> {
         match self.inner.get_mut(path.as_ref())? {
             ImfsItem::File(file) => {
                 if file.contents.is_none() {
-                    file.contents = Some(self.fetcher.read_contents(path)
+                    file.contents = Some(self.fetcher.read_contents(path.as_ref())
                         .expect("TODO: Handle this error"));
                 }
 
