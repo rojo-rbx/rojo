@@ -5,6 +5,9 @@ use std::{
 
 use crate::path_map::PathMap;
 
+/// The generic interface that `Imfs` uses to lazily read files from the disk.
+/// In tests, it's stubbed out to do different versions of absolutely nothing
+/// depending on the test.
 pub trait ImfsFetcher {
     fn read_item(&mut self, path: impl AsRef<Path>) -> io::Result<ImfsItem>;
     fn read_children(&mut self, path: impl AsRef<Path>) -> io::Result<Vec<ImfsItem>>;
@@ -14,6 +17,16 @@ pub trait ImfsFetcher {
     fn remove(&mut self, path: impl AsRef<Path>) -> io::Result<()>;
 }
 
+/// An in-memory filesystem that can be incrementally populated and updated as
+/// filesystem modification events occur.
+///
+/// All operations on the `Imfs` are lazy and do I/O as late as they can to
+/// avoid reading extraneous files or directories from the disk. This means that
+/// they all take `self` mutably, and means that it isn't possible to hold
+/// references to the internal state of the Imfs while traversing it!
+///
+/// Most operations return `ImfsEntry` objects to work around this, which is
+/// effectively a index into the `Imfs`.
 pub struct Imfs<F> {
     inner: PathMap<ImfsItem>,
     fetcher: F,
@@ -44,6 +57,11 @@ impl<F: ImfsFetcher> Imfs<F> {
         false
     }
 
+    /// Attempts to read the path into the `Imfs` if it doesn't exist.
+    ///
+    /// This does not necessitate that file contents or directory children will
+    /// be read. Depending on the `ImfsFetcher` implementation that the `Imfs`
+    /// is using, this call may read exactly only the given path and no more.
     fn read_if_not_exists(&mut self, path: &Path) -> io::Result<()> {
         if !self.inner.contains_key(path) {
             let item = self.fetcher.read_item(path)?;
@@ -51,6 +69,22 @@ impl<F: ImfsFetcher> Imfs<F> {
         }
 
         Ok(())
+    }
+
+    pub fn raise_file_change(&mut self, path: impl AsRef<Path>) -> io::Result<()> {
+        if !self.would_be_resident(path.as_ref()) {
+            return Ok(());
+        }
+
+        unimplemented!();
+    }
+
+    pub fn raise_file_removed(&mut self, path: impl AsRef<Path>) -> io::Result<()> {
+        if !self.would_be_resident(path.as_ref()) {
+            return Ok(());
+        }
+
+        unimplemented!();
     }
 
     pub fn get(&mut self, path: impl AsRef<Path>) -> Option<ImfsEntry> {
@@ -98,6 +132,12 @@ impl<F: ImfsFetcher> Imfs<F> {
     }
 }
 
+/// A reference to file or folder in an `Imfs`. Can only be produced by the
+/// entry existing in the Imfs, but can later point to nothing if something
+/// would invalidate that path.
+///
+/// This struct does not borrow from the Imfs since every operation has the
+/// possibility to mutate the underlying data structure and move memory around.
 pub struct ImfsEntry {
     path: PathBuf,
     is_file: bool,
@@ -131,6 +171,8 @@ impl ImfsEntry {
     }
 }
 
+/// Internal structure describing potentially partially-resident files and
+/// folders in the `Imfs`.
 pub enum ImfsItem {
     File(ImfsFile),
     Directory(ImfsDirectory),
