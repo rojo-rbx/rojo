@@ -1,9 +1,7 @@
 use std::{
     cmp::Ordering,
     collections::{HashMap, HashSet, BTreeSet},
-    fmt,
     fs,
-    io,
     path::{self, Path, PathBuf},
 };
 
@@ -12,29 +10,7 @@ use serde::{Serialize, Deserialize};
 
 use crate::project::{Project, ProjectNode};
 
-/// A wrapper around io::Error that also attaches the path associated with the
-/// error.
-#[derive(Debug, Fail)]
-pub struct FsError {
-    #[fail(cause)]
-    inner: io::Error,
-    path: PathBuf,
-}
-
-impl FsError {
-    fn new<P: Into<PathBuf>>(inner: io::Error, path: P) -> FsError {
-        FsError {
-            inner,
-            path: path.into(),
-        }
-    }
-}
-
-impl fmt::Display for FsError {
-    fn fmt(&self, output: &mut fmt::Formatter) -> fmt::Result {
-        write!(output, "{}: {}", self.path.display(), self.inner)
-    }
-}
+use super::error::FsError;
 
 fn add_sync_points(imfs: &mut Imfs, node: &ProjectNode) -> Result<(), FsError> {
     if let Some(path) = &node.path {
