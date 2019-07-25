@@ -44,16 +44,19 @@ impl<F: ImfsFetcher> Imfs<F> {
         false
     }
 
-    fn read_if_not_exists(&mut self, path: &Path) {
+    fn read_if_not_exists(&mut self, path: &Path) -> io::Result<()> {
         if !self.inner.contains_key(path) {
-            let item = self.fetcher.read_item(path)
-                .expect("TODO: Handle this error");
+            let item = self.fetcher.read_item(path)?;
             self.inner.insert(path.to_path_buf(), item);
         }
+
+        Ok(())
     }
 
     pub fn get(&mut self, path: impl AsRef<Path>) -> Option<ImfsEntry> {
-        self.read_if_not_exists(path.as_ref());
+        self.read_if_not_exists(path.as_ref())
+            .expect("TODO: Handle this error");
+
         let item = self.inner.get(path.as_ref())?;
 
         let is_file = match item {
@@ -68,7 +71,8 @@ impl<F: ImfsFetcher> Imfs<F> {
     }
 
     pub fn get_contents(&mut self, path: impl AsRef<Path>) -> Option<&[u8]> {
-        self.read_if_not_exists(path.as_ref());
+        self.read_if_not_exists(path.as_ref())
+            .expect("TODO: Handle this error");
 
         match self.inner.get_mut(path.as_ref())? {
             ImfsItem::File(file) => {
