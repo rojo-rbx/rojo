@@ -61,7 +61,7 @@ impl ImfsFetcher for RealFetcher {
         }
     }
 
-    fn write_contents(&mut self, path: &Path, contents: &[u8]) -> FsResult<()> {
+    fn write_file(&mut self, path: &Path, contents: &[u8]) -> FsResult<()> {
         fs::write(path, contents)
             .map_err(|err| FsError::new(err, path))
     }

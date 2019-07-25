@@ -12,7 +12,7 @@ pub trait ImfsFetcher {
     fn read_children(&mut self, path: &Path) -> FsResult<Vec<ImfsItem>>;
     fn read_contents(&mut self, path: &Path) -> FsResult<Vec<u8>>;
     fn create_directory(&mut self, path: &Path) -> FsResult<()>;
-    fn write_contents(&mut self, path: &Path, contents: &[u8]) -> FsResult<()>;
+    fn write_file(&mut self, path: &Path, contents: &[u8]) -> FsResult<()>;
     fn remove(&mut self, path: &Path) -> FsResult<()>;
 }
 
