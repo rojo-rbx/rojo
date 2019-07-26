@@ -8,16 +8,14 @@ use std::{
 };
 
 use super::{
-    error::{FsError, FsResult},
     interface::{ImfsFetcher, ImfsItem, ImfsDirectory, ImfsFile},
 };
 
 pub struct RealFetcher;
 
 impl ImfsFetcher for RealFetcher {
-    fn read_item(&mut self, path: &Path) -> FsResult<ImfsItem> {
-        let metadata = fs::metadata(path)
-            .map_err(|err| FsError::new(err, path))?;
+    fn read_item(&mut self, path: &Path) -> io::Result<ImfsItem> {
+        let metadata = fs::metadata(path)?;
 
         if metadata.is_file() {
             Ok(ImfsItem::File(ImfsFile {
@@ -32,15 +30,13 @@ impl ImfsFetcher for RealFetcher {
         }
     }
 
-    fn read_children(&mut self, path: &Path) -> FsResult<Vec<ImfsItem>> {
+    fn read_children(&mut self, path: &Path) -> io::Result<Vec<ImfsItem>> {
         let mut result = Vec::new();
 
-        let iter = fs::read_dir(path)
-            .map_err(|err| FsError::new(err, path))?;
+        let iter = fs::read_dir(path)?;
 
         for entry in iter {
-            let entry = entry
-                .map_err(|err| FsError::new(err, path))?;
+            let entry = entry?;
 
             result.push(self.read_item(&entry.path())?);
         }
@@ -48,34 +44,25 @@ impl ImfsFetcher for RealFetcher {
         Ok(result)
     }
 
-    fn read_contents(&mut self, path: &Path) -> FsResult<Vec<u8>> {
+    fn read_contents(&mut self, path: &Path) -> io::Result<Vec<u8>> {
         fs::read(path)
-            .map_err(|err| FsError::new(err, path))
     }
 
-    fn create_directory(&mut self, path: &Path) -> FsResult<()> {
-        match fs::create_dir(path) {
-            Ok(_) => Ok(()),
-            Err(ref err) if err.kind() == io::ErrorKind::AlreadyExists => Ok(()),
-            Err(err) => Err(FsError::new(err, path))
-        }
+    fn create_directory(&mut self, path: &Path) -> io::Result<()> {
+        fs::create_dir(path)
     }
 
-    fn write_file(&mut self, path: &Path, contents: &[u8]) -> FsResult<()> {
+    fn write_file(&mut self, path: &Path, contents: &[u8]) -> io::Result<()> {
         fs::write(path, contents)
-            .map_err(|err| FsError::new(err, path))
     }
 
-    fn remove(&mut self, path: &Path) -> FsResult<()> {
-        let metadata = fs::metadata(path)
-            .map_err(|err| FsError::new(err, path))?;
+    fn remove(&mut self, path: &Path) -> io::Result<()> {
+        let metadata = fs::metadata(path)?;
 
         if metadata.is_file() {
             fs::remove_file(path)
-                .map_err(|err| FsError::new(err, path))
         } else {
             fs::remove_dir_all(path)
-                .map_err(|err| FsError::new(err, path))
         }
     }
 }

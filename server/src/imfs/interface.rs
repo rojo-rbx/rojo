@@ -5,18 +5,18 @@ use std::{
 
 use crate::path_map::PathMap;
 
-use super::error::{FsResult, FsError, FsErrorKind};
+use super::error::{FsResult, FsError};
 
 /// The generic interface that `Imfs` uses to lazily read files from the disk.
 /// In tests, it's stubbed out to do different versions of absolutely nothing
 /// depending on the test.
 pub trait ImfsFetcher {
-    fn read_item(&mut self, path: &Path) -> FsResult<ImfsItem>;
-    fn read_children(&mut self, path: &Path) -> FsResult<Vec<ImfsItem>>;
-    fn read_contents(&mut self, path: &Path) -> FsResult<Vec<u8>>;
-    fn create_directory(&mut self, path: &Path) -> FsResult<()>;
-    fn write_file(&mut self, path: &Path, contents: &[u8]) -> FsResult<()>;
-    fn remove(&mut self, path: &Path) -> FsResult<()>;
+    fn read_item(&mut self, path: &Path) -> io::Result<ImfsItem>;
+    fn read_children(&mut self, path: &Path) -> io::Result<Vec<ImfsItem>>;
+    fn read_contents(&mut self, path: &Path) -> io::Result<Vec<u8>>;
+    fn create_directory(&mut self, path: &Path) -> io::Result<()>;
+    fn write_file(&mut self, path: &Path, contents: &[u8]) -> io::Result<()>;
+    fn remove(&mut self, path: &Path) -> io::Result<()>;
 }
 
 /// An in-memory filesystem that can be incrementally populated and updated as
@@ -66,7 +66,8 @@ impl<F: ImfsFetcher> Imfs<F> {
     /// is using, this call may read exactly only the given path and no more.
     fn read_if_not_exists(&mut self, path: &Path) -> FsResult<()> {
         if !self.inner.contains_key(path) {
-            let item = self.fetcher.read_item(path)?;
+            let item = self.fetcher.read_item(path)
+                .map_err(|err| FsError::new(err, path.to_path_buf()))?;
             self.inner.insert(path.to_path_buf(), item);
         }
 
@@ -106,17 +107,20 @@ impl<F: ImfsFetcher> Imfs<F> {
     }
 
     pub fn get_contents(&mut self, path: impl AsRef<Path>) -> FsResult<&[u8]> {
-        self.read_if_not_exists(path.as_ref())?;
+        let path = path.as_ref();
 
-        match self.inner.get_mut(path.as_ref()).unwrap() {
+        self.read_if_not_exists(path)?;
+
+        match self.inner.get_mut(path).unwrap() {
             ImfsItem::File(file) => {
                 if file.contents.is_none() {
-                    file.contents = Some(self.fetcher.read_contents(path.as_ref())?);
+                    file.contents = Some(self.fetcher.read_contents(path)
+                        .map_err(|err| FsError::new(err, path.to_path_buf()))?);
                 }
 
                 Ok(file.contents.as_ref().unwrap())
             }
-            ImfsItem::Directory(_) => Err(FsError::new(io::Error::new(io::ErrorKind::Other, "Can't read a directory"), path.as_ref().to_path_buf()))
+            ImfsItem::Directory(_) => Err(FsError::new(io::Error::new(io::ErrorKind::Other, "Can't read a directory"), path.to_path_buf()))
         }
     }
 
