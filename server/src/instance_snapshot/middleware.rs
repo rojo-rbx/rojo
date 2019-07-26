@@ -57,16 +57,6 @@ fn snapshot_instance(tree: &RbxTree, id: RbxId) -> SnapshotFileResult {
     unimplemented!();
 }
 
-macro_rules! try_resopt {
-    ($x: expr) => {
-        match $x {
-            Ok(Some(v)) => v,
-            Ok(None) => return Ok(None),
-            Err(e) => return Err(e),
-        }
-    };
-}
-
 pub struct SnapshotDir;
 
 impl SnapshotMiddleware for SnapshotDir {
@@ -74,7 +64,7 @@ impl SnapshotMiddleware for SnapshotDir {
         imfs: &mut Imfs<F>,
         entry: ImfsEntry,
     ) -> SnapshotInstanceResult {
-        let children: Vec<ImfsEntry> = try_resopt!(entry.children(imfs));
+        let children: Vec<ImfsEntry> = entry.children(imfs)?;
 
         let mut snapshot_children = Vec::new();
 
@@ -147,8 +137,9 @@ impl SnapshotMiddleware for SnapshotTxt {
             .file_stem().expect("Could not extract file stem")
             .to_str().unwrap().to_string();
 
-        let contents = entry.contents(imfs).unwrap().unwrap();
-        let contents_str = str::from_utf8(contents).unwrap().to_string();
+        let contents = entry.contents(imfs)?;
+        let contents_str = str::from_utf8(contents)
+            .expect("File content was not valid UTF-8").to_string();
 
         let properties = hashmap! {
             "Value".to_owned() => RbxValue::String {

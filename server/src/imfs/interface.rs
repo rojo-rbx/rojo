@@ -148,15 +148,15 @@ impl ImfsEntry {
     pub fn contents<'imfs>(
         &self,
         imfs: &'imfs mut Imfs<impl ImfsFetcher>,
-    ) -> FsResult<Option<&'imfs [u8]>> {
-        imfs.get_contents(&self.path).map(Some)
+    ) -> FsResult<&'imfs [u8]> {
+        imfs.get_contents(&self.path)
     }
 
     pub fn children(
         &self,
         imfs: &mut Imfs<impl ImfsFetcher>,
-    ) -> FsResult<Option<Vec<ImfsEntry>>> {
-        imfs.get_children(&self.path).map(Some)
+    ) -> FsResult<Vec<ImfsEntry>> {
+        imfs.get_children(&self.path)
     }
 
     pub fn is_file(&self) -> bool {

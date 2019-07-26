@@ -1,7 +1,7 @@
 use std::{
     io,
     fmt,
-    path::{PathBuf},
+    path::PathBuf,
 };
 
 use failure::Fail;
@@ -19,7 +19,7 @@ pub use io::ErrorKind as FsErrorKind;
 pub enum ImfsError {
     NotFound,
     WrongKind,
-    Fs(FsError),
+    Io(io::Error),
 }
 
 /// A wrapper around io::Error that also attaches the path associated with the
