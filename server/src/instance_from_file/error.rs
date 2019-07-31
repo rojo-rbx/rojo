@@ -5,7 +5,7 @@ use std::{
 };
 
 use crate::{
-    instance_snapshot::InstanceSnapshot,
+    snapshot::InstanceSnapshot,
 };
 
 pub type SnapshotResult<'a> = Result<Option<InstanceSnapshot<'a>>, SnapshotError>;

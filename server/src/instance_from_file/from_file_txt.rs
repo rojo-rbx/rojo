@@ -5,7 +5,7 @@ use rbx_dom_weak::RbxValue;
 
 use crate::{
     imfs::{Imfs, ImfsFile},
-    instance_snapshot::InstanceSnapshot,
+    snapshot::InstanceSnapshot,
 };
 
 use super::{

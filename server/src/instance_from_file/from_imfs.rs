@@ -6,7 +6,7 @@ use std::{
 
 use crate::{
     imfs::{Imfs, ImfsItem, ImfsFile, ImfsDirectory},
-    instance_snapshot::InstanceSnapshot,
+    snapshot::InstanceSnapshot,
 };
 
 use super::{
