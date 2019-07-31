@@ -6,7 +6,7 @@ use std::collections::{HashMap, HashSet};
 use rbx_dom_weak::{RbxTree, RbxId, RbxInstance};
 
 use super::{
-    snapshot::InstanceSnapshot,
+    InstanceSnapshot,
     patch::{PatchSet, PatchAddInstance, PatchUpdateInstance},
 };
 
@@ -56,7 +56,7 @@ fn compute_property_patches(
         }
     }
 
-    for (name, instance_value) in &instance.properties {
+    for name in instance.properties.keys() {
         if visited_properties.contains(name.as_str()) {
             continue;
         }
@@ -88,7 +88,7 @@ fn compute_children_patches<'a>(
 
     let mut paired_instances = vec![false; instance_children.len()];
 
-    for (snapshot_index, snapshot_child) in snapshot.children.iter().enumerate() {
+    for snapshot_child in snapshot.children.iter() {
         let matching_instance = instance_children
             .iter()
             .enumerate()

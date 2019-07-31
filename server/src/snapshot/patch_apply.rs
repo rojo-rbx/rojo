@@ -4,7 +4,7 @@ use rbx_dom_weak::{RbxTree, RbxId, RbxInstanceProperties};
 
 use super::{
     patch::{PatchSet, PatchUpdateInstance},
-    snapshot::InstanceSnapshot,
+    InstanceSnapshot,
 };
 
 pub fn apply_patch(

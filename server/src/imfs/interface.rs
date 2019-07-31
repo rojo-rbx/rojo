@@ -124,7 +124,7 @@ impl<F: ImfsFetcher> Imfs<F> {
         }
     }
 
-    pub fn get_children(&mut self, path: impl AsRef<Path>) -> FsResult<Vec<ImfsEntry>> {
+    pub fn get_children(&mut self, _path: impl AsRef<Path>) -> FsResult<Vec<ImfsEntry>> {
         unimplemented!();
     }
 }

@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use rbx_dom_weak::{RbxValue, RbxId};
 
-use super::snapshot::InstanceSnapshot;
+use super::InstanceSnapshot;
 
 /// A set of different kinds of patches that can be applied to an RbxTree.
 #[derive(Debug, Clone, PartialEq)]
