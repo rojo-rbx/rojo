@@ -1,5 +1,8 @@
 # Rojo Changelog
 
+## Unreleased Changes
+* Fixed default port documentation in `rojo serve --help` ([#219](https://github.com/rojo-rbx/rojo/issues/219))
+
 ## [0.5.0 Alpha 12](https://github.com/rojo-rbx/rojo/releases/tag/v0.5.0-alpha.12) (July 2, 2019)
 * Added `.meta.json` files
     * `init.meta.json` files replace `init.model.json` files from Rojo 0.4.x ([#183](https://github.com/rojo-rbx/rojo/pull/183))

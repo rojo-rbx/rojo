@@ -43,7 +43,7 @@ fn main() {
         (@subcommand serve =>
             (about: "Serves the project's files for use with the Rojo Studio plugin.")
             (@arg PROJECT: "Path to the project to serve. Defaults to the current directory.")
-            (@arg port: --port +takes_value "The port to listen on. Defaults to 8000.")
+            (@arg port: --port +takes_value "The port to listen on. Defaults to 34872.")
         )
 
         (@subcommand build =>
