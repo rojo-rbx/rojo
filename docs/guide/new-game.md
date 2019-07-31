@@ -41,7 +41,7 @@ All we have to do is call `rojo build`:
 rojo build -o MyNewProject.rbxlx
 ```
 
-If you open `MyNewProject.rbxlx` in Roblox Studio now, you should see a `Folder` containing a `ModuleScript` under `ReplicatedStorage`!
+If you open `MyNewProject.rbxlx` in Roblox Studio now, you should see a `Folder` containing a `Source` under `ReplicatedStorage`!
 
 !!! info
     To generate a binary place file instead, use `rbxl`. Note that support for binary model/place files (`rbxm` and `rbxl`) is very limited in Rojo presently.
