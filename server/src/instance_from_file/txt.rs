@@ -93,8 +93,26 @@ impl SnapshotMiddleware for SnapshotTxt {
 mod test {
     use super::*;
 
+    use maplit::hashmap;
+
+    use crate::imfs::new::NoopFetcher;
+
     #[test]
     fn smoke_test() {
-        // TODO
+        let mut imfs = Imfs::new(NoopFetcher);
+        let file = ImfsSnapshot::file("Hello there!");
+
+        imfs.load_from_snapshot("/foo.txt", file);
+
+        let entry = imfs.get("/foo.txt").unwrap();
+        let instance_snapshot = SnapshotTxt::from_imfs(&mut imfs, entry).unwrap().unwrap();
+
+        assert_eq!(instance_snapshot.name, "foo");
+        assert_eq!(instance_snapshot.class_name, "StringValue");
+        assert_eq!(instance_snapshot.properties, hashmap! {
+            "Value".to_owned() => RbxValue::String {
+                value: "Hello there!".to_owned(),
+            },
+        });
     }
 }
