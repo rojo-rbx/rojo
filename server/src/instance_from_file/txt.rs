@@ -94,11 +94,12 @@ mod test {
     use super::*;
 
     use maplit::hashmap;
+    use rbx_dom_weak::{RbxInstanceProperties};
 
     use crate::imfs::new::NoopFetcher;
 
     #[test]
-    fn smoke_test() {
+    fn instance_from_imfs() {
         let mut imfs = Imfs::new(NoopFetcher);
         let file = ImfsSnapshot::file("Hello there!");
 
@@ -114,5 +115,33 @@ mod test {
                 value: "Hello there!".to_owned(),
             },
         });
+    }
+
+    #[test]
+    fn imfs_from_instance() {
+        let mut tree = RbxTree::new(string_value("Root", "Hello, world!"));
+        let root_id = tree.get_root_id();
+
+        let (file_name, file) = SnapshotTxt::from_instance(&tree, root_id).unwrap();
+    }
+
+    fn folder(name: impl Into<String>) -> RbxInstanceProperties {
+        RbxInstanceProperties {
+            name: name.into(),
+            class_name: "Folder".to_owned(),
+            properties: Default::default(),
+        }
+    }
+
+    fn string_value(name: impl Into<String>, value: impl Into<String>) -> RbxInstanceProperties {
+        RbxInstanceProperties {
+            name: name.into(),
+            class_name: "StringValue".to_owned(),
+            properties: hashmap! {
+                "Value".to_owned() => RbxValue::String {
+                    value: value.into(),
+                },
+            },
+        }
     }
 }
