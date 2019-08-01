@@ -82,7 +82,10 @@ impl SnapshotMiddleware for SnapshotTxt {
             contents: value.into_bytes(),
         });
 
-        Some((instance.name.clone(), snapshot))
+        let mut file_name = instance.name.clone();
+        file_name.push_str(".txt");
+
+        Some((file_name, snapshot))
     }
 }
 
