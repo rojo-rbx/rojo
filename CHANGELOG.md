@@ -2,6 +2,7 @@
 
 ## Unreleased Changes
 * Fixed default port documentation in `rojo serve --help` ([#219](https://github.com/rojo-rbx/rojo/issues/219))
+* Fixed BrickColor support by upgrading Roblox-related dependencies
 
 ## [0.5.0 Alpha 12](https://github.com/rojo-rbx/rojo/releases/tag/v0.5.0-alpha.12) (July 2, 2019)
 * Added `.meta.json` files
