@@ -5,7 +5,10 @@ use std::{
 
 use crate::path_map::PathMap;
 
-use super::error::{FsResult, FsError};
+use super::{
+    snapshot::ImfsSnapshot,
+    error::{FsResult, FsError},
+};
 
 /// The generic interface that `Imfs` uses to lazily read files from the disk.
 /// In tests, it's stubbed out to do different versions of absolutely nothing
@@ -35,43 +38,34 @@ pub struct Imfs<F> {
 }
 
 impl<F: ImfsFetcher> Imfs<F> {
-    /// Tells whether the given path, if it were loaded, would be loaded if it
-    /// existed.
-    ///
-    /// Returns true if the path is loaded or if its parent is loaded, is a
-    /// directory, and is marked as having been enumerated before.
-    ///
-    /// This idea corresponds to whether a file change event should result in
-    /// tangible changes to the in-memory filesystem. If a path would be
-    /// resident, we need to read it, and if its contents were known before, we
-    /// need to update them.
-    fn would_be_resident(&self, path: &Path) -> bool {
-        if self.inner.contains_key(path) {
-            return true;
+    pub fn new(fetcher: F) -> Imfs<F> {
+        Imfs {
+            inner: PathMap::new(),
+            fetcher,
         }
-
-        if let Some(parent) = path.parent() {
-            if let Some(ImfsItem::Directory(dir)) = self.inner.get(parent) {
-                return !dir.children_enumerated;
-            }
-        }
-
-        false
     }
 
-    /// Attempts to read the path into the `Imfs` if it doesn't exist.
-    ///
-    /// This does not necessitate that file contents or directory children will
-    /// be read. Depending on the `ImfsFetcher` implementation that the `Imfs`
-    /// is using, this call may read exactly only the given path and no more.
-    fn read_if_not_exists(&mut self, path: &Path) -> FsResult<()> {
-        if !self.inner.contains_key(path) {
-            let item = self.fetcher.read_item(path)
-                .map_err(|err| FsError::new(err, path.to_path_buf()))?;
-            self.inner.insert(path.to_path_buf(), item);
-        }
+    pub fn load_from_snapshot(&mut self, path: impl AsRef<Path>, snapshot: ImfsSnapshot) {
+        let path = path.as_ref();
 
-        Ok(())
+        match snapshot {
+            ImfsSnapshot::File(file) => {
+                self.inner.insert(path.to_path_buf(), ImfsItem::File(ImfsFile {
+                    path: path.to_path_buf(),
+                    contents: Some(file.contents),
+                }));
+            }
+            ImfsSnapshot::Directory(directory) => {
+                self.inner.insert(path.to_path_buf(), ImfsItem::Directory(ImfsDirectory {
+                    path: path.to_path_buf(),
+                    children_enumerated: true,
+                }));
+
+                for (child_name, child) in directory.children.into_iter() {
+                    self.load_from_snapshot(path.join(child_name), child);
+                }
+            }
+        }
     }
 
     pub fn raise_file_change(&mut self, path: impl AsRef<Path>) -> FsResult<()> {
@@ -126,6 +120,45 @@ impl<F: ImfsFetcher> Imfs<F> {
 
     pub fn get_children(&mut self, _path: impl AsRef<Path>) -> FsResult<Vec<ImfsEntry>> {
         unimplemented!();
+    }
+
+    /// Tells whether the given path, if it were loaded, would be loaded if it
+    /// existed.
+    ///
+    /// Returns true if the path is loaded or if its parent is loaded, is a
+    /// directory, and is marked as having been enumerated before.
+    ///
+    /// This idea corresponds to whether a file change event should result in
+    /// tangible changes to the in-memory filesystem. If a path would be
+    /// resident, we need to read it, and if its contents were known before, we
+    /// need to update them.
+    fn would_be_resident(&self, path: &Path) -> bool {
+        if self.inner.contains_key(path) {
+            return true;
+        }
+
+        if let Some(parent) = path.parent() {
+            if let Some(ImfsItem::Directory(dir)) = self.inner.get(parent) {
+                return !dir.children_enumerated;
+            }
+        }
+
+        false
+    }
+
+    /// Attempts to read the path into the `Imfs` if it doesn't exist.
+    ///
+    /// This does not necessitate that file contents or directory children will
+    /// be read. Depending on the `ImfsFetcher` implementation that the `Imfs`
+    /// is using, this call may read exactly only the given path and no more.
+    fn read_if_not_exists(&mut self, path: &Path) -> FsResult<()> {
+        if !self.inner.contains_key(path) {
+            let item = self.fetcher.read_item(path)
+                .map_err(|err| FsError::new(err, path.to_path_buf()))?;
+            self.inner.insert(path.to_path_buf(), item);
+        }
+
+        Ok(())
     }
 }
 
@@ -192,4 +225,43 @@ pub struct ImfsFile {
 pub struct ImfsDirectory {
     pub(super) path: PathBuf,
     pub(super) children_enumerated: bool,
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use maplit::hashmap;
+
+    use super::super::noop_fetcher::NoopFetcher;
+
+    #[test]
+    fn from_snapshot_file() {
+        let mut imfs = Imfs::new(NoopFetcher);
+        let file = ImfsSnapshot::file("hello, world!");
+
+        imfs.load_from_snapshot("/hello.txt", file);
+
+        let entry = imfs.get_contents("/hello.txt").unwrap();
+        assert_eq!(entry, b"hello, world!");
+    }
+
+    #[test]
+    fn from_snapshot_dir() {
+        let mut imfs = Imfs::new(NoopFetcher);
+        let dir = ImfsSnapshot::dir(hashmap! {
+            "a.txt" => ImfsSnapshot::file("contents of a.txt"),
+            "b.lua" => ImfsSnapshot::file("contents of b.lua"),
+        });
+
+        imfs.load_from_snapshot("/dir", dir);
+
+        // TODO: Get children of /dir, enumerate them!
+
+        let a = imfs.get_contents("/dir/a.txt").unwrap();
+        assert_eq!(a, b"contents of a.txt");
+
+        let b = imfs.get_contents("/dir/b.lua").unwrap();
+        assert_eq!(b, b"contents of b.lua");
+    }
 }
