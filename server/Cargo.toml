@@ -1,6 +1,6 @@
 [package]
 name = "rojo"
-version = "0.5.0-alpha.12"
+version = "0.5.0-alpha.13"
 authors = ["Lucien Greathouse <me@lpghatguy.com>"]
 description = "Enables professional-grade development tools for Roblox developers"
 license = "MIT"
