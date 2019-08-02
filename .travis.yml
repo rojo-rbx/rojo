@@ -30,7 +30,7 @@ matrix:
     #     - luacov-coveralls -e $TRAVIS_BUILD_DIR/lua_install
 
     - language: rust
-      rust: 1.32.0
+      rust: 1.34.0
       cache: cargo
 
       script:

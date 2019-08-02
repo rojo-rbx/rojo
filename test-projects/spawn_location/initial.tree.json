@@ -1,0 +1,266 @@
+{
+  "instances": {
+    "21406306-61c7-45f6-9e3e-50cd6b609214": {
+      "Name": "spawn_location",
+      "ClassName": "Folder",
+      "Properties": {},
+      "Id": "21406306-61c7-45f6-9e3e-50cd6b609214",
+      "Children": [
+        "da5dd362-4eb6-488a-984b-c96327927a70"
+      ],
+      "Parent": null
+    },
+    "da5dd362-4eb6-488a-984b-c96327927a70": {
+      "Name": "spawn",
+      "ClassName": "SpawnLocation",
+      "Properties": {
+        "Size": {
+          "Type": "Vector3",
+          "Value": [
+            12.0,
+            1.0,
+            12.0
+          ]
+        },
+        "Massless": {
+          "Type": "Bool",
+          "Value": false
+        },
+        "LeftSurface": {
+          "Type": "Enum",
+          "Value": 0
+        },
+        "Color": {
+          "Type": "Color3",
+          "Value": [
+            0.6392157,
+            0.63529414,
+            0.64705884
+          ]
+        },
+        "RightSurfaceInput": {
+          "Type": "Enum",
+          "Value": 0
+        },
+        "Neutral": {
+          "Type": "Bool",
+          "Value": true
+        },
+        "Locked": {
+          "Type": "Bool",
+          "Value": false
+        },
+        "Anchored": {
+          "Type": "Bool",
+          "Value": true
+        },
+        "CanCollide": {
+          "Type": "Bool",
+          "Value": true
+        },
+        "FrontSurfaceInput": {
+          "Type": "Enum",
+          "Value": 0
+        },
+        "LeftSurfaceInput": {
+          "Type": "Enum",
+          "Value": 0
+        },
+        "RightSurface": {
+          "Type": "Enum",
+          "Value": 0
+        },
+        "FrontSurface": {
+          "Type": "Enum",
+          "Value": 0
+        },
+        "TopSurfaceInput": {
+          "Type": "Enum",
+          "Value": 0
+        },
+        "CastShadow": {
+          "Type": "Bool",
+          "Value": true
+        },
+        "BottomSurface": {
+          "Type": "Enum",
+          "Value": 0
+        },
+        "Duration": {
+          "Type": "Int32",
+          "Value": 10
+        },
+        "Velocity": {
+          "Type": "Vector3",
+          "Value": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "BottomSurfaceInput": {
+          "Type": "Enum",
+          "Value": 0
+        },
+        "TopSurface": {
+          "Type": "Enum",
+          "Value": 0
+        },
+        "CFrame": {
+          "Type": "CFrame",
+          "Value": [
+            -6.0,
+            0.500001,
+            -11.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "TeamColor": {
+          "Type": "BrickColor",
+          "Value": 194
+        },
+        "RotVelocity": {
+          "Type": "Vector3",
+          "Value": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "Reflectance": {
+          "Type": "Float32",
+          "Value": 0.0
+        },
+        "AllowTeamChangeOnTouch": {
+          "Type": "Bool",
+          "Value": false
+        },
+        "RightParamA": {
+          "Type": "Float32",
+          "Value": -0.5
+        },
+        "LeftParamA": {
+          "Type": "Float32",
+          "Value": -0.5
+        },
+        "Tags": {
+          "Type": "BinaryString",
+          "Value": ""
+        },
+        "Transparency": {
+          "Type": "Float32",
+          "Value": 0.0
+        },
+        "Shape": {
+          "Type": "Enum",
+          "Value": 1
+        },
+        "FrontParamA": {
+          "Type": "Float32",
+          "Value": -0.5
+        },
+        "RootPriority": {
+          "Type": "Int32",
+          "Value": 0
+        },
+        "FrontParamB": {
+          "Type": "Float32",
+          "Value": 0.5
+        },
+        "FormFactor": {
+          "Type": "Enum",
+          "Value": 1
+        },
+        "BottomParamB": {
+          "Type": "Float32",
+          "Value": 0.5
+        },
+        "BackSurface": {
+          "Type": "Enum",
+          "Value": 0
+        },
+        "BottomParamA": {
+          "Type": "Float32",
+          "Value": -0.5
+        },
+        "Enabled": {
+          "Type": "Bool",
+          "Value": true
+        },
+        "BackParamB": {
+          "Type": "Float32",
+          "Value": 0.5
+        },
+        "BackParamA": {
+          "Type": "Float32",
+          "Value": -0.5
+        },
+        "LeftParamB": {
+          "Type": "Float32",
+          "Value": 0.5
+        },
+        "TopParamA": {
+          "Type": "Float32",
+          "Value": -0.5
+        },
+        "RightParamB": {
+          "Type": "Float32",
+          "Value": 0.5
+        },
+        "CollisionGroupId": {
+          "Type": "Int32",
+          "Value": 0
+        },
+        "BackSurfaceInput": {
+          "Type": "Enum",
+          "Value": 0
+        },
+        "CustomPhysicalProperties": {
+          "Type": "PhysicalProperties",
+          "Value": null
+        },
+        "TopParamB": {
+          "Type": "Float32",
+          "Value": 0.5
+        },
+        "Material": {
+          "Type": "Enum",
+          "Value": 256
+        }
+      },
+      "Id": "da5dd362-4eb6-488a-984b-c96327927a70",
+      "Children": [],
+      "Parent": "21406306-61c7-45f6-9e3e-50cd6b609214"
+    }
+  },
+  "root_id": "21406306-61c7-45f6-9e3e-50cd6b609214",
+  "metadata": {
+    "da5dd362-4eb6-488a-984b-c96327927a70": {
+      "ignore_unknown_instances": false,
+      "source_path": "src/spawn.rbxmx",
+      "project_definition": null
+    },
+    "21406306-61c7-45f6-9e3e-50cd6b609214": {
+      "ignore_unknown_instances": false,
+      "source_path": "src",
+      "project_definition": [
+        "spawn_location",
+        {
+          "class_name": null,
+          "children": {},
+          "properties": {},
+          "ignore_unknown_instances": null,
+          "path": "src"
+        }
+      ]
+    }
+  }
+}

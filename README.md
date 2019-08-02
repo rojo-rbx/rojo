@@ -50,7 +50,7 @@ If you find any mistakes, feel free to make changes in the [docs](https://github
 ## Contributing
 Pull requests are welcome!
 
-Rojo supports Rust 1.32 and newer.
+Rojo supports Rust 1.34.0 and newer. The minimum supported version of Rust is based on the latest versions of the dependencies that Rojo has.
 
 ## License
 Rojo is available under the terms of the Mozilla Public License, Version 2.0. See [LICENSE.txt](LICENSE.txt) for details.
