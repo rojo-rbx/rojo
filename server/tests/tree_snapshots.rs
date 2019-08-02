@@ -43,6 +43,15 @@ fn multi_partition_game() {
     tree_step("with_moved_dir", &live_session, &source_path);
 }
 
+#[test]
+fn spawn_location() {
+    let _ = env_logger::try_init();
+    let source_path = project_path("spawn_location");
+
+    let (_dir, live_session) = start_session(&source_path);
+    tree_step("initial", &live_session, &source_path);
+}
+
 /// Find the path to the given test project relative to the manifest.
 fn project_path(name: &str) -> PathBuf {
     let mut path = Path::new(env!("CARGO_MANIFEST_DIR")).join("../test-projects");
