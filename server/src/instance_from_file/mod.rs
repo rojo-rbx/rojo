@@ -3,11 +3,12 @@
 
 #![allow(dead_code)]
 
-mod error;
 mod context;
+mod error;
 mod from_imfs;
-mod txt;
 mod middleware;
+mod project;
+mod txt;
 
 use rbx_dom_weak::{RbxTree, RbxId};
 
