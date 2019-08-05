@@ -22,6 +22,8 @@ pub struct InstanceSnapshot<'source> {
     pub class_name: Cow<'source, str>,
     pub properties: HashMap<String, RbxValue>,
     pub children: Vec<InstanceSnapshot<'source>>,
+
+    // TODO: Snapshot source, like a file or a project node?
 }
 
 impl<'source> InstanceSnapshot<'source> {
