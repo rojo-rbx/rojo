@@ -122,7 +122,7 @@ mod test {
         let tree = RbxTree::new(string_value("Root", "Hello, world!"));
         let root_id = tree.get_root_id();
 
-        let (file_name, file) = SnapshotTxt::from_instance(&tree, root_id).unwrap();
+        let (_file_name, _file) = SnapshotTxt::from_instance(&tree, root_id).unwrap();
     }
 
     fn folder(name: impl Into<String>) -> RbxInstanceProperties {
