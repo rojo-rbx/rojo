@@ -119,7 +119,7 @@ mod test {
 
     #[test]
     fn imfs_from_instance() {
-        let mut tree = RbxTree::new(string_value("Root", "Hello, world!"));
+        let tree = RbxTree::new(string_value("Root", "Hello, world!"));
         let root_id = tree.get_root_id();
 
         let (file_name, file) = SnapshotTxt::from_instance(&tree, root_id).unwrap();
