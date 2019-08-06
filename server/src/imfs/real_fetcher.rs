@@ -4,7 +4,7 @@
 use std::{
     io,
     fs,
-    path::Path,
+    path::{Path, PathBuf},
 };
 
 use super::{
@@ -30,15 +30,13 @@ impl ImfsFetcher for RealFetcher {
         }
     }
 
-    fn read_children(&mut self, path: &Path) -> io::Result<Vec<ImfsItem>> {
+    fn read_children(&mut self, path: &Path) -> io::Result<Vec<PathBuf>> {
         let mut result = Vec::new();
 
         let iter = fs::read_dir(path)?;
 
         for entry in iter {
-            let entry = entry?;
-
-            result.push(self.read_item(&entry.path())?);
+            result.push(entry?.path());
         }
 
         Ok(result)

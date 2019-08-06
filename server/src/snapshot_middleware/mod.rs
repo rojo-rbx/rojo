@@ -4,6 +4,7 @@
 #![allow(dead_code)]
 
 mod context;
+mod dir;
 mod error;
 mod middleware;
 mod project;
@@ -16,6 +17,7 @@ use self::{
     middleware::{SnapshotInstanceResult, SnapshotFileResult, SnapshotMiddleware},
     project::SnapshotProject,
     txt::SnapshotTxt,
+    dir::SnapshotDir,
 };
 
 /// Placeholder function for stubbing out snapshot middleware
@@ -23,6 +25,8 @@ pub fn snapshot_from_imfs<F: ImfsFetcher>(imfs: &mut Imfs<F>, entry: &ImfsEntry)
     if let Some(snapshot) = SnapshotProject::from_imfs(imfs, entry)? {
         Ok(Some(snapshot))
     } else if let Some(snapshot) = SnapshotTxt::from_imfs(imfs, entry)? {
+        Ok(Some(snapshot))
+    } else if let Some(snapshot) = SnapshotDir::from_imfs(imfs, entry)? {
         Ok(Some(snapshot))
     } else {
         Ok(None)

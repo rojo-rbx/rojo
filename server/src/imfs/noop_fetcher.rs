@@ -3,7 +3,7 @@
 
 use std::{
     io,
-    path::Path,
+    path::{Path, PathBuf},
 };
 
 use super::{
@@ -17,7 +17,7 @@ impl ImfsFetcher for NoopFetcher {
         Err(io::Error::new(io::ErrorKind::NotFound, "no-op"))
     }
 
-    fn read_children(&mut self, _path: &Path) -> io::Result<Vec<ImfsItem>> {
+    fn read_children(&mut self, _path: &Path) -> io::Result<Vec<PathBuf>> {
         Err(io::Error::new(io::ErrorKind::NotFound, "no-op"))
     }
 

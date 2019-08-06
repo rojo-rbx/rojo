@@ -15,7 +15,7 @@ use super::{
 /// depending on the test.
 pub trait ImfsFetcher {
     fn read_item(&mut self, path: &Path) -> io::Result<ImfsItem>;
-    fn read_children(&mut self, path: &Path) -> io::Result<Vec<ImfsItem>>;
+    fn read_children(&mut self, path: &Path) -> io::Result<Vec<PathBuf>>;
     fn read_contents(&mut self, path: &Path) -> io::Result<Vec<u8>>;
     fn create_directory(&mut self, path: &Path) -> io::Result<()>;
     fn write_file(&mut self, path: &Path, contents: &[u8]) -> io::Result<()>;
@@ -118,8 +118,32 @@ impl<F: ImfsFetcher> Imfs<F> {
         }
     }
 
-    pub fn get_children(&mut self, _path: impl AsRef<Path>) -> FsResult<Vec<ImfsEntry>> {
-        unimplemented!();
+    pub fn get_children(&mut self, path: impl AsRef<Path>) -> FsResult<Vec<ImfsEntry>> {
+        let path = path.as_ref();
+
+        self.read_if_not_exists(path)?;
+
+        match self.inner.get(path).unwrap() {
+            ImfsItem::Directory(dir) => {
+                if dir.children_enumerated {
+                    return self.inner.children(path)
+                        .unwrap() // TODO: Handle None here, which means the PathMap entry did not exist.
+                        .into_iter()
+                        .map(PathBuf::from) // Convert paths from &Path to PathBuf
+                        .collect::<Vec<PathBuf>>() // Collect all PathBufs, since self.get needs to borrow self mutably.
+                        .into_iter()
+                        .map(|path| self.get(path))
+                        .collect::<FsResult<Vec<ImfsEntry>>>();
+                }
+
+                self.fetcher.read_children(path)
+                    .map_err(|err| FsError::new(err, path.to_path_buf()))?
+                    .into_iter()
+                    .map(|path| self.get(path))
+                    .collect::<FsResult<Vec<ImfsEntry>>>()
+            }
+            ImfsItem::File(_) => Err(FsError::new(io::Error::new(io::ErrorKind::Other, "Can't read a directory"), path.to_path_buf()))
+        }
     }
 
     /// Tells whether the given path, if it were loaded, would be loaded if it
