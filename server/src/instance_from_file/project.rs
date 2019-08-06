@@ -42,26 +42,42 @@ impl SnapshotMiddleware for SnapshotProject {
         let project = Project::load_from_slice(entry.contents(imfs)?, entry.path())
             .expect("Invalid project file");
 
-        snapshot_project_node(&project.tree)
+        snapshot_project_node(&project.name, &project.tree)
     }
 
     fn from_instance(
         _tree: &RbxTree,
         _id: RbxId,
     ) -> SnapshotFileResult {
-        unimplemented!("TODO");
+        unimplemented!("TODO: Supporting turning instances into projects");
     }
 }
 
-fn snapshot_project_node(_node: &ProjectNode) -> SnapshotInstanceResult<'static> {
-    // TODO: This function is a stub to satisfy tests.
+fn snapshot_project_node(instance_name: &str, node: &ProjectNode) -> SnapshotInstanceResult<'static> {
+    assert!(node.path.is_none(), "TODO: Support $path");
+    assert!(node.properties.is_empty(), "TODO: Support $properties");
+    assert!(node.children.is_empty(), "TODO: Support children");
+    assert!(node.ignore_unknown_instances.is_none(), "TODO: Support $ignoreUnknownInstances");
+
+    let name = Cow::Owned(instance_name.to_owned());
+    let class_name = node.class_name
+        .as_ref()
+        .map(|name| Cow::Owned(name.clone()));
+    let properties = HashMap::new();
+    let children = Vec::new();
+
+    // TODO: Load instance from $path if it's set.
+    // TODO: Load properties and children from project node
+
+    let class_name = class_name
+        .expect("TODO: Support omitting $className in projects");
 
     Ok(Some(InstanceSnapshot {
         snapshot_id: None,
-        name: Cow::Borrowed("template-project"),
-        class_name: Cow::Borrowed("Folder"),
-        properties: HashMap::new(),
-        children: Vec::new(),
+        name,
+        class_name,
+        properties,
+        children,
     }))
 }
 
@@ -74,14 +90,14 @@ mod test {
     use crate::imfs::new::{ImfsSnapshot, NoopFetcher};
 
     #[test]
-    fn instance_from_imfs() {
+    fn project_from_folder() {
         let _ = env_logger::try_init();
 
         let mut imfs = Imfs::new(NoopFetcher);
         let dir = ImfsSnapshot::dir(hashmap! {
             "default.project.json" => ImfsSnapshot::file(r#"
                 {
-                    "name": "template-project",
+                    "name": "indirect-project",
                     "tree": {
                         "$className": "Folder"
                     }
@@ -96,8 +112,37 @@ mod test {
             .expect("snapshot error")
             .expect("snapshot returned no instances");
 
-        assert_eq!(instance_snapshot.name, "template-project");
+        assert_eq!(instance_snapshot.name, "indirect-project");
         assert_eq!(instance_snapshot.class_name, "Folder");
+        assert_eq!(instance_snapshot.properties, HashMap::new());
+        assert_eq!(instance_snapshot.children, Vec::new());
+    }
+
+    #[test]
+    fn project_from_direct_file() {
+        let _ = env_logger::try_init();
+
+        let mut imfs = Imfs::new(NoopFetcher);
+        let dir = ImfsSnapshot::dir(hashmap! {
+            "hello.project.json" => ImfsSnapshot::file(r#"
+                {
+                    "name": "direct-project",
+                    "tree": {
+                        "$className": "Model"
+                    }
+                }
+            "#),
+        });
+
+        imfs.load_from_snapshot("/foo", dir);
+
+        let entry = imfs.get("/foo/hello.project.json").unwrap();
+        let instance_snapshot = SnapshotProject::from_imfs(&mut imfs, entry)
+            .expect("snapshot error")
+            .expect("snapshot returned no instances");
+
+        assert_eq!(instance_snapshot.name, "direct-project");
+        assert_eq!(instance_snapshot.class_name, "Model");
         assert_eq!(instance_snapshot.properties, HashMap::new());
         assert_eq!(instance_snapshot.children, Vec::new());
     }
