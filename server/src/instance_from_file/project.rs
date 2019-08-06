@@ -4,6 +4,7 @@ use std::{
 };
 
 use rbx_dom_weak::{RbxTree, RbxId};
+use rbx_reflection::try_resolve_value;
 
 use crate::{
     project::{Project, ProjectNode},
@@ -59,8 +60,6 @@ fn snapshot_project_node<F: ImfsFetcher>(
     node: &ProjectNode,
     imfs: &mut Imfs<F>,
 ) -> SnapshotInstanceResult<'static> {
-    assert!(node.properties.is_empty(), "TODO: Support $properties");
-    assert!(node.children.is_empty(), "TODO: Support children");
     assert!(node.ignore_unknown_instances.is_none(), "TODO: Support $ignoreUnknownInstances");
 
     let name = Cow::Owned(instance_name.to_owned());
@@ -113,9 +112,21 @@ fn snapshot_project_node<F: ImfsFetcher>(
     }
 
     let class_name = class_name
-        .expect("TODO: Support omitting $className in projects");
+        // TODO: Turn this into an error object.
+        .expect("$className or $path must be specified");
 
-    // TODO: Load properties and children from project node
+    for (child_name, child_project_node) in &node.children {
+        if let Some(child) = snapshot_project_node(child_name, child_project_node, imfs)? {
+            children.push(child);
+        }
+    }
+
+    for (key, value) in &node.properties {
+        let resolved_value = try_resolve_value(&class_name, key, value)
+            .expect("TODO: Properly handle value resolution errors");
+
+        properties.insert(key.clone(), resolved_value);
+    }
 
     Ok(Some(InstanceSnapshot {
         snapshot_id: None,
@@ -194,6 +205,120 @@ mod test {
     }
 
     #[test]
+    fn project_with_resolved_properties() {
+        let _ = env_logger::try_init();
+
+        let mut imfs = Imfs::new(NoopFetcher);
+        let dir = ImfsSnapshot::dir(hashmap! {
+            "default.project.json" => ImfsSnapshot::file(r#"
+                {
+                    "name": "resolved-properties",
+                    "tree": {
+                        "$className": "StringValue",
+                        "$properties": {
+                            "Value": {
+                                "Type": "String",
+                                "Value": "Hello, world!"
+                            }
+                        }
+                    }
+                }
+            "#),
+        });
+
+        imfs.load_from_snapshot("/foo", dir);
+
+        let entry = imfs.get("/foo").unwrap();
+        let instance_snapshot = SnapshotProject::from_imfs(&mut imfs, &entry)
+            .expect("snapshot error")
+            .expect("snapshot returned no instances");
+
+        assert_eq!(instance_snapshot.name, "resolved-properties");
+        assert_eq!(instance_snapshot.class_name, "StringValue");
+        assert_eq!(instance_snapshot.properties, hashmap! {
+            "Value".to_owned() => RbxValue::String {
+                value: "Hello, world!".to_owned(),
+            },
+        });
+        assert_eq!(instance_snapshot.children, Vec::new());
+    }
+
+    #[test]
+    fn project_with_unresolved_properties() {
+        let _ = env_logger::try_init();
+
+        let mut imfs = Imfs::new(NoopFetcher);
+        let dir = ImfsSnapshot::dir(hashmap! {
+            "default.project.json" => ImfsSnapshot::file(r#"
+                {
+                    "name": "unresolved-properties",
+                    "tree": {
+                        "$className": "StringValue",
+                        "$properties": {
+                            "Value": "Hi!"
+                        }
+                    }
+                }
+            "#),
+        });
+
+        imfs.load_from_snapshot("/foo", dir);
+
+        let entry = imfs.get("/foo").unwrap();
+        let instance_snapshot = SnapshotProject::from_imfs(&mut imfs, &entry)
+            .expect("snapshot error")
+            .expect("snapshot returned no instances");
+
+        assert_eq!(instance_snapshot.name, "unresolved-properties");
+        assert_eq!(instance_snapshot.class_name, "StringValue");
+        assert_eq!(instance_snapshot.properties, hashmap! {
+            "Value".to_owned() => RbxValue::String {
+                value: "Hi!".to_owned(),
+            },
+        });
+        assert_eq!(instance_snapshot.children, Vec::new());
+    }
+
+    #[test]
+    fn project_with_children() {
+        let _ = env_logger::try_init();
+
+        let mut imfs = Imfs::new(NoopFetcher);
+        let dir = ImfsSnapshot::dir(hashmap! {
+            "default.project.json" => ImfsSnapshot::file(r#"
+                {
+                    "name": "children",
+                    "tree": {
+                        "$className": "Folder",
+
+                        "Child": {
+                            "$className": "Model"
+                        }
+                    }
+                }
+            "#),
+        });
+
+        imfs.load_from_snapshot("/foo", dir);
+
+        let entry = imfs.get("/foo").unwrap();
+        let instance_snapshot = SnapshotProject::from_imfs(&mut imfs, &entry)
+            .expect("snapshot error")
+            .expect("snapshot returned no instances");
+
+        assert_eq!(instance_snapshot.name, "children");
+        assert_eq!(instance_snapshot.class_name, "Folder");
+        assert_eq!(instance_snapshot.properties, HashMap::new());
+        assert_eq!(instance_snapshot.children.len(), 1);
+
+        let child = &instance_snapshot.children[0];
+        assert_eq!(child.name, "Child");
+        assert_eq!(child.class_name, "Model");
+        assert_eq!(child.properties, HashMap::new());
+        assert_eq!(child.children, Vec::new());
+    }
+
+    #[test]
     fn project_with_path_to_txt() {
         let _ = env_logger::try_init();
 
@@ -264,5 +389,100 @@ mod test {
         assert_eq!(instance_snapshot.children, Vec::new());
     }
 
-    // TODO: Test that children from $path snapshots are applied
+    #[test]
+    fn project_with_path_to_project_with_children() {
+        let _ = env_logger::try_init();
+
+        let mut imfs = Imfs::new(NoopFetcher);
+        let dir = ImfsSnapshot::dir(hashmap! {
+            "default.project.json" => ImfsSnapshot::file(r#"
+                {
+                    "name": "path-child-project",
+                    "tree": {
+                        "$path": "other.project.json"
+                    }
+                }
+            "#),
+            "other.project.json" => ImfsSnapshot::file(r#"
+                {
+                    "name": "other-project",
+                    "tree": {
+                        "$className": "Folder",
+
+                        "SomeChild": {
+                            "$className": "Model"
+                        }
+                    }
+                }
+            "#),
+        });
+
+        imfs.load_from_snapshot("/foo", dir);
+
+        let entry = imfs.get("/foo").unwrap();
+        let instance_snapshot = SnapshotProject::from_imfs(&mut imfs, &entry)
+            .expect("snapshot error")
+            .expect("snapshot returned no instances");
+
+        assert_eq!(instance_snapshot.name, "path-child-project");
+        assert_eq!(instance_snapshot.class_name, "Folder");
+        assert_eq!(instance_snapshot.properties, HashMap::new());
+        assert_eq!(instance_snapshot.children.len(), 1);
+
+        let child = &instance_snapshot.children[0];
+        assert_eq!(child.name, "SomeChild");
+        assert_eq!(child.class_name, "Model");
+        assert_eq!(child.properties, HashMap::new());
+        assert_eq!(child.children, Vec::new());
+    }
+
+    /// Ensures that if a property is defined both in the resulting instance
+    /// from $path and also in $properties, that the $properties value takes
+    /// precedence.
+    #[test]
+    fn project_path_property_overrides() {
+        let _ = env_logger::try_init();
+
+        let mut imfs = Imfs::new(NoopFetcher);
+        let dir = ImfsSnapshot::dir(hashmap! {
+            "default.project.json" => ImfsSnapshot::file(r#"
+                {
+                    "name": "path-property-override",
+                    "tree": {
+                        "$path": "other.project.json",
+                        "$properties": {
+                            "Value": "Changed"
+                        }
+                    }
+                }
+            "#),
+            "other.project.json" => ImfsSnapshot::file(r#"
+                {
+                    "name": "other-project",
+                    "tree": {
+                        "$className": "StringValue",
+                        "$properties": {
+                            "Value": "Original"
+                        }
+                    }
+                }
+            "#),
+        });
+
+        imfs.load_from_snapshot("/foo", dir);
+
+        let entry = imfs.get("/foo").unwrap();
+        let instance_snapshot = SnapshotProject::from_imfs(&mut imfs, &entry)
+            .expect("snapshot error")
+            .expect("snapshot returned no instances");
+
+        assert_eq!(instance_snapshot.name, "path-property-override");
+        assert_eq!(instance_snapshot.class_name, "StringValue");
+        assert_eq!(instance_snapshot.properties, hashmap! {
+            "Value".to_owned() => RbxValue::String {
+                value: "Changed".to_owned(),
+            },
+        });
+        assert_eq!(instance_snapshot.children, Vec::new());
+    }
 }
