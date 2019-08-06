@@ -28,8 +28,8 @@ pub type SnapshotFileResult = Option<(String, ImfsSnapshot)>;
 pub trait SnapshotMiddleware {
     fn from_imfs<F: ImfsFetcher>(
         imfs: &mut Imfs<F>,
-        entry: ImfsEntry,
-    ) -> SnapshotInstanceResult;
+        entry: &ImfsEntry,
+    ) -> SnapshotInstanceResult<'static>;
 
     fn from_instance(
         tree: &RbxTree,
@@ -48,8 +48,8 @@ pub struct SnapshotDir;
 impl SnapshotMiddleware for SnapshotDir {
     fn from_imfs<F: ImfsFetcher>(
         imfs: &mut Imfs<F>,
-        entry: ImfsEntry,
-    ) -> SnapshotInstanceResult {
+        entry: &ImfsEntry,
+    ) -> SnapshotInstanceResult<'static> {
         let children: Vec<ImfsEntry> = entry.children(imfs)?;
 
         let mut snapshot_children = Vec::new();

@@ -20,8 +20,8 @@ pub struct SnapshotTxt;
 impl SnapshotMiddleware for SnapshotTxt {
     fn from_imfs<F: ImfsFetcher>(
         imfs: &mut Imfs<F>,
-        entry: ImfsEntry,
-    ) -> SnapshotInstanceResult {
+        entry: &ImfsEntry,
+    ) -> SnapshotInstanceResult<'static> {
         if entry.is_directory() {
             return Ok(None);
         }
@@ -106,7 +106,7 @@ mod test {
         imfs.load_from_snapshot("/foo.txt", file);
 
         let entry = imfs.get("/foo.txt").unwrap();
-        let instance_snapshot = SnapshotTxt::from_imfs(&mut imfs, entry).unwrap().unwrap();
+        let instance_snapshot = SnapshotTxt::from_imfs(&mut imfs, &entry).unwrap().unwrap();
 
         assert_eq!(instance_snapshot.name, "foo");
         assert_eq!(instance_snapshot.class_name, "StringValue");

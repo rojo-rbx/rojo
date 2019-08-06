@@ -12,11 +12,21 @@ mod txt;
 use rbx_dom_weak::{RbxTree, RbxId};
 
 use crate::imfs::new::{Imfs, ImfsEntry, ImfsFetcher};
-use self::middleware::{SnapshotInstanceResult, SnapshotFileResult};
+use self::{
+    middleware::{SnapshotInstanceResult, SnapshotFileResult, SnapshotMiddleware},
+    project::SnapshotProject,
+    txt::SnapshotTxt,
+};
 
 /// Placeholder function for stubbing out snapshot middleware
-pub fn snapshot_from_imfs<F: ImfsFetcher>(_imfs: &mut Imfs<F>, _entry: &ImfsEntry) -> SnapshotInstanceResult<'static> {
-    unimplemented!();
+pub fn snapshot_from_imfs<F: ImfsFetcher>(imfs: &mut Imfs<F>, entry: &ImfsEntry) -> SnapshotInstanceResult<'static> {
+    if let Some(snapshot) = SnapshotProject::from_imfs(imfs, entry)? {
+        Ok(Some(snapshot))
+    } else if let Some(snapshot) = SnapshotTxt::from_imfs(imfs, entry)? {
+        Ok(Some(snapshot))
+    } else {
+        Ok(None)
+    }
 }
 
 /// Placeholder function for stubbing out snapshot middleware
