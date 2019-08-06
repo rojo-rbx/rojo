@@ -106,7 +106,8 @@ function Reconciler:reconcile(virtualInstancesById, id, instance)
 			if shouldClearUnknown then
 				existingChildInstance:Destroy()
 			end
-		else
+		-- Prevent PackageLink instances from being destroyed, undoing its parent instance's Package features
+		elseif not existingChildInstance:IsA("PackageLink") then 
 			self.instanceMap:destroyInstance(existingChildInstance)
 		end
 	end
