@@ -20,20 +20,43 @@ use self::{
     dir::SnapshotDir,
 };
 
-/// Placeholder function for stubbing out snapshot middleware
-pub fn snapshot_from_imfs<F: ImfsFetcher>(imfs: &mut Imfs<F>, entry: &ImfsEntry) -> SnapshotInstanceResult<'static> {
-    if let Some(snapshot) = SnapshotProject::from_imfs(imfs, entry)? {
-        Ok(Some(snapshot))
-    } else if let Some(snapshot) = SnapshotTxt::from_imfs(imfs, entry)? {
-        Ok(Some(snapshot))
-    } else if let Some(snapshot) = SnapshotDir::from_imfs(imfs, entry)? {
-        Ok(Some(snapshot))
-    } else {
-        Ok(None)
-    }
+macro_rules! middlewares {
+    ( $($middleware: ident,)* ) => {
+        /// Generates a snapshot of instances from the given ImfsEntry.
+        pub fn snapshot_from_imfs<F: ImfsFetcher>(
+            imfs: &mut Imfs<F>,
+            entry: &ImfsEntry,
+        ) -> SnapshotInstanceResult<'static> {
+            $(
+                if let Some(snapshot) = $middleware::from_imfs(imfs, entry)? {
+                    return Ok(Some(snapshot));
+                }
+            )*
+
+            Ok(None)
+        }
+
+        /// Generates an in-memory filesystem snapshot of the given Roblox
+        /// instance.
+        pub fn snapshot_from_instance(tree: &RbxTree, id: RbxId) -> SnapshotFileResult {
+            $(
+                if let Some(result) = $middleware::from_instance(tree, id) {
+                    return Some(result);
+                }
+            )*
+
+            None
+        }
+    };
 }
 
-/// Placeholder function for stubbing out snapshot middleware
-pub fn snapshot_from_instance(_tree: &RbxTree, _id: RbxId) -> SnapshotFileResult {
-    unimplemented!();
+middlewares! {
+    SnapshotProject,
+    // SnapshotJsonModel,
+    // SnapshotRbxmx,
+    // SnapshotRbxm,
+    // SnapshotScript,
+    // SnapshotCsv,
+    SnapshotTxt,
+    SnapshotDir,
 }
