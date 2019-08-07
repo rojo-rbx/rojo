@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use super::interface::ImfsItem;
+use super::imfs::ImfsItem;
 
 /// The generic interface that `Imfs` uses to lazily read files from the disk.
 /// In tests, it's stubbed out to do different versions of absolutely nothing

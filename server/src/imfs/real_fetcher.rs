@@ -8,7 +8,7 @@ use std::{
 };
 
 use super::{
-    interface::{ImfsItem, ImfsDirectory, ImfsFile},
+    imfs::{ImfsItem, ImfsDirectory, ImfsFile},
     fetcher::ImfsFetcher,
 };
 
