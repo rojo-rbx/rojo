@@ -1,17 +1,18 @@
 use std::{
-    path::PathBuf,
+    collections::HashMap,
     fs::File,
     io::{self, Write, BufWriter},
+    path::PathBuf,
 };
 
+use rbx_dom_weak::{RbxTree, RbxInstanceProperties};
 use log::info;
 use failure::Fail;
 
 use crate::{
-    imfs::{Imfs, FsError},
-    project::{Project, ProjectLoadError},
-    rbx_session::construct_oneoff_tree,
-    rbx_snapshot::SnapshotError,
+    imfs::new::{Imfs, RealFetcher, FsError},
+    snapshot::{PatchSet, apply_patch, compute_patch_set},
+    snapshot_middleware::snapshot_from_imfs,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -46,9 +47,6 @@ pub enum BuildError {
     #[fail(display = "Could not detect what kind of file to create")]
     UnknownOutputKind,
 
-    #[fail(display = "Project load error: {}", _0)]
-    ProjectLoadError(#[fail(cause)] ProjectLoadError),
-
     #[fail(display = "IO error: {}", _0)]
     IoError(#[fail(cause)] io::Error),
 
@@ -60,18 +58,13 @@ pub enum BuildError {
 
     #[fail(display = "{}", _0)]
     FsError(#[fail(cause)] FsError),
-
-    #[fail(display = "{}", _0)]
-    SnapshotError(#[fail(cause)] SnapshotError),
 }
 
 impl_from!(BuildError {
-    ProjectLoadError => ProjectLoadError,
     io::Error => IoError,
     rbx_xml::EncodeError => XmlModelEncodeError,
     rbx_binary::EncodeError => BinaryModelEncodeError,
     FsError => FsError,
-    SnapshotError => SnapshotError,
 });
 
 fn xml_encode_config() -> rbx_xml::EncodeOptions {
@@ -86,16 +79,25 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
 
     info!("Hoping to generate file of type {:?}", output_kind);
 
-    info!("Looking for project at {}", options.fuzzy_project_path.display());
+    let mut tree = RbxTree::new(RbxInstanceProperties {
+        name: "ROOT".to_owned(),
+        class_name: "Folder".to_owned(),
+        properties: HashMap::new(),
+    });
+    let root_id = tree.get_root_id();
 
-    let project = Project::load_fuzzy(&options.fuzzy_project_path)?;
+    let mut imfs = Imfs::new(RealFetcher);
+    let entry = imfs.get(&options.fuzzy_project_path)
+        .expect("could not get project path");
 
-    info!("Found project at {}", project.file_location.display());
-    info!("Using project {:#?}", project);
+    let snapshot = snapshot_from_imfs(&mut imfs, &entry)
+        .expect("snapshot failed")
+        .expect("snapshot did not return an instance");
 
-    let mut imfs = Imfs::new();
-    imfs.add_roots_from_project(&project)?;
-    let tree = construct_oneoff_tree(&project, &imfs)?;
+    let mut patch_set = PatchSet::new();
+    compute_patch_set(&snapshot, &tree, root_id, &mut patch_set);
+    apply_patch(&mut tree, &patch_set);
+
     let mut file = BufWriter::new(File::create(&options.output_file)?);
 
     match output_kind {
@@ -103,19 +105,16 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
             // Model files include the root instance of the tree and all its
             // descendants.
 
-            let root_id = tree.get_root_id();
             rbx_xml::to_writer(&mut file, &tree, &[root_id], xml_encode_config())?;
         },
         OutputKind::Rbxlx => {
             // Place files don't contain an entry for the DataModel, but our
             // RbxTree representation does.
 
-            let root_id = tree.get_root_id();
             let top_level_ids = tree.get_instance(root_id).unwrap().get_children_ids();
             rbx_xml::to_writer(&mut file, &tree, top_level_ids, xml_encode_config())?;
         },
         OutputKind::Rbxm => {
-            let root_id = tree.get_root_id();
             rbx_binary::encode(&tree, &[root_id], &mut file)?;
         },
         OutputKind::Rbxl => {
@@ -123,7 +122,6 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
             log::warn!("Using the XML place format (rbxlx) is recommended instead.");
             log::warn!("For more info, see https://github.com/LPGhatguy/rojo/issues/180");
 
-            let root_id = tree.get_root_id();
             let top_level_ids = tree.get_instance(root_id).unwrap().get_children_ids();
             rbx_binary::encode(&tree, top_level_ids, &mut file)?;
         },

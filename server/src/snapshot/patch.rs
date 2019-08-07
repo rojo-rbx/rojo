@@ -14,6 +14,16 @@ pub struct PatchSet<'a> {
     pub updated_instances: Vec<PatchUpdateInstance>,
 }
 
+impl<'a> PatchSet<'a> {
+    pub fn new() -> PatchSet<'a> {
+        PatchSet {
+            removed_instances: Vec::new(),
+            added_instances: Vec::new(),
+            updated_instances: Vec::new(),
+        }
+    }
+}
+
 /// A patch containing an instance that was added to the tree.
 #[derive(Debug, Clone, PartialEq)]
 pub struct PatchAddInstance<'a> {

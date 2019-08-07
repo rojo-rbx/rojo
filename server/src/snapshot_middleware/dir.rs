@@ -23,6 +23,10 @@ impl SnapshotMiddleware for SnapshotDir {
         imfs: &mut Imfs<F>,
         entry: &ImfsEntry,
     ) -> SnapshotInstanceResult<'static> {
+        if entry.is_file() {
+            return Ok(None);
+        }
+
         let children: Vec<ImfsEntry> = entry.children(imfs)?;
 
         let mut snapshot_children = Vec::new();

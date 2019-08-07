@@ -10,6 +10,7 @@ pub use legacy::*;
 pub use error::*;
 
 pub mod new {
+    pub use super::error::*;
     pub use super::imfs::*;
     pub use super::fetcher::*;
     pub use super::real_fetcher::*;

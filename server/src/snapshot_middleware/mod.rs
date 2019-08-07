@@ -28,11 +28,15 @@ macro_rules! middlewares {
             entry: &ImfsEntry,
         ) -> SnapshotInstanceResult<'static> {
             $(
+                log::trace!("trying middleware {} on {}", stringify!($middleware), entry.path().display());
+
                 if let Some(snapshot) = $middleware::from_imfs(imfs, entry)? {
+                    log::trace!("middleware {} success on {}", stringify!($middleware), entry.path().display());
                     return Ok(Some(snapshot));
                 }
             )*
 
+            log::trace!("no middleware returned Ok(Some)");
             Ok(None)
         }
 
