@@ -8,7 +8,8 @@ use std::{
 };
 
 use super::{
-    interface::{ImfsFetcher, ImfsItem, ImfsDirectory, ImfsFile},
+    interface::{ImfsItem, ImfsDirectory, ImfsFile},
+    fetcher::ImfsFetcher,
 };
 
 pub struct RealFetcher;

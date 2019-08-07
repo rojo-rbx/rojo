@@ -7,7 +7,8 @@ use std::{
 };
 
 use super::{
-    interface::{ImfsFetcher, ImfsItem},
+    interface::ImfsItem,
+    fetcher::ImfsFetcher,
 };
 
 pub struct NoopFetcher;

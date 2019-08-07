@@ -1,4 +1,5 @@
 mod error;
+mod fetcher;
 mod interface;
 mod legacy;
 mod noop_fetcher;
@@ -10,6 +11,7 @@ pub use error::*;
 
 pub mod new {
     pub use super::interface::*;
+    pub use super::fetcher::*;
     pub use super::real_fetcher::*;
     pub use super::noop_fetcher::*;
     pub use super::snapshot::*;
