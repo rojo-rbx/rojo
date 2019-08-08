@@ -1,6 +1,7 @@
 [workspace]
 members = [
 	"server",
+	"rojo-test",
 ]
 
 [profile.dev]
