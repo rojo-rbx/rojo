@@ -1,0 +1,10 @@
+[package]
+name = "rojo-test"
+version = "0.1.0"
+authors = ["Lucien Greathouse <me@lpghatguy.com>"]
+edition = "2018"
+publish = false
+
+[dependencies]
+insta = "0.10.0"
+tempfile = "3.1.0"
