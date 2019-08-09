@@ -1,0 +1,19 @@
+---
+created: "2019-08-09T01:27:22.597759700Z"
+creator: insta@0.10.0
+source: rojo-test/src/build_test.rs
+expression: contents
+---
+<roblox version="4">
+  <Item class="Folder" referent="0">
+    <Properties>
+      <string name="Name">module_in_folder</string>
+    </Properties>
+    <Item class="ModuleScript" referent="1">
+      <Properties>
+        <string name="Name">aModule</string>
+        <string name="Source">-- This is a Lua module</string>
+      </Properties>
+    </Item>
+  </Item>
+</roblox>

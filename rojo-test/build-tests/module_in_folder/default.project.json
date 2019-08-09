@@ -1,0 +1,6 @@
+{
+  "name": "module_in_folder",
+  "tree": {
+    "$path": "folder"
+  }
+}

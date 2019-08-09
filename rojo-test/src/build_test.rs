@@ -21,8 +21,11 @@ macro_rules! gen_build_tests {
 }
 
 gen_build_tests! {
+    client_in_folder,
     gitkeep,
+    module_in_folder,
     plain_gitkeep,
+    server_in_folder,
     txt,
     txt_in_folder,
 }
