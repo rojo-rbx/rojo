@@ -35,7 +35,6 @@ matrix:
 
       script:
         - cargo test --verbose
-        - cargo test --verbose --all-features
 
     - language: rust
       rust: stable
@@ -43,12 +42,3 @@ matrix:
 
       script:
         - cargo test --verbose
-        - cargo test --verbose --all-features
-
-    - language: rust
-      rust: beta
-      cache: cargo
-
-      script:
-        - cargo test --verbose
-        - cargo test --verbose --all-features
