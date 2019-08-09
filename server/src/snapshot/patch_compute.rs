@@ -19,10 +19,6 @@ pub fn compute_patch_set<'a>(
     let instance = tree.get_instance(id)
         .expect("Instance did not exist in tree");
 
-    if instance.class_name != snapshot.class_name {
-        unimplemented!("changing the class name of an instance");
-    }
-
     compute_property_patches(snapshot, instance, patch_set);
     compute_children_patches(snapshot, tree, id, patch_set);
 }
