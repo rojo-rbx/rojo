@@ -1,0 +1,6 @@
+{
+  "name": "txt",
+  "tree": {
+    "$path": "foo.txt"
+  }
+}

@@ -22,7 +22,14 @@ macro_rules! gen_build_tests {
 
 gen_build_tests! {
     gitkeep,
+    plain_gitkeep,
+    txt,
     txt_in_folder,
+}
+
+#[test]
+fn build_plain_txt() {
+    run_build_test("plain.txt");
 }
 
 fn run_build_test(test_name: &str) {
