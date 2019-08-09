@@ -41,6 +41,12 @@ fn compute_property_patches(
         Some(snapshot.name.clone().into_owned())
     };
 
+    let changed_class_name = if snapshot.class_name == instance.class_name {
+        None
+    } else {
+        Some(snapshot.class_name.clone().into_owned())
+    };
+
     for (name, snapshot_value) in &snapshot.properties {
         visited_properties.insert(name.as_str());
 
@@ -71,6 +77,7 @@ fn compute_property_patches(
     patch_set.updated_instances.push(PatchUpdateInstance {
         id: instance.get_id(),
         changed_name,
+        changed_class_name,
         changed_properties,
     });
 }

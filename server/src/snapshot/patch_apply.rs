@@ -53,6 +53,10 @@ fn apply_update_child(
         instance.name = name.clone();
     }
 
+    if let Some(class_name) = &patch.changed_class_name {
+        instance.class_name = class_name.clone();
+    }
+
     for (key, property_entry) in &patch.changed_properties {
         match property_entry {
             Some(value) => {
@@ -130,6 +134,7 @@ mod test {
         let patch = PatchUpdateInstance {
             id: root_id,
             changed_name: Some("Foo".to_owned()),
+            changed_class_name: Some("NewClassName".to_owned()),
             changed_properties: hashmap! {
                 // The value of Foo has changed
                 "Foo".to_owned() => Some(RbxValue::Int32 { value: 8 }),
@@ -152,6 +157,7 @@ mod test {
 
         let root_instance = tree.get_instance(root_id).unwrap();
         assert_eq!(root_instance.name, "Foo");
+        assert_eq!(root_instance.class_name, "NewClassName");
         assert_eq!(root_instance.properties, expected_properties);
     }
 }

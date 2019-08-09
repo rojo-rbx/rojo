@@ -36,6 +36,7 @@ pub struct PatchAddInstance<'a> {
 pub struct PatchUpdateInstance {
     pub id: RbxId,
     pub changed_name: Option<String>,
+    pub changed_class_name: Option<String>,
 
     /// Contains all changed properties. If a property is assigned to `None`,
     /// then that property has been removed.
