@@ -60,10 +60,15 @@ impl SnapshotMiddleware for SnapshotLua {
     }
 
     fn from_instance(
-        _tree: &RbxTree,
-        _id: RbxId,
+        tree: &RbxTree,
+        id: RbxId,
     ) -> SnapshotFileResult {
-        unimplemented!("Snapshotting Script instances");
+        let instance = tree.get_instance(id).unwrap();
+
+        match instance.class_name.as_str() {
+            "ModuleScript" | "LocalScript" | "Script" => unimplemented!("Snapshotting Script instances"),
+            _ => None,
+        }
     }
 }
 

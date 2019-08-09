@@ -51,7 +51,8 @@ impl SnapshotMiddleware for SnapshotProject {
         _tree: &RbxTree,
         _id: RbxId,
     ) -> SnapshotFileResult {
-        unimplemented!("TODO: Supporting turning instances into projects");
+        // TODO: Supporting turning instances into projects
+        None
     }
 }
 
