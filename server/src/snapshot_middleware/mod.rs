@@ -6,6 +6,7 @@
 mod context;
 mod dir;
 mod error;
+mod lua;
 mod middleware;
 mod project;
 mod txt;
@@ -18,6 +19,7 @@ use self::{
     project::SnapshotProject,
     txt::SnapshotTxt,
     dir::SnapshotDir,
+    lua::SnapshotLua,
 };
 
 macro_rules! middlewares {
@@ -59,7 +61,7 @@ middlewares! {
     // SnapshotJsonModel,
     // SnapshotRbxmx,
     // SnapshotRbxm,
-    // SnapshotScript,
+    SnapshotLua,
     // SnapshotCsv,
     SnapshotTxt,
     SnapshotDir,
