@@ -36,6 +36,12 @@ fn build_plain_txt() {
     run_build_test("plain.txt");
 }
 
+// TODO: Depends on InstanceSnapshot::from_tree correctly handling refs.
+// #[test]
+fn build_rbxmx_ref() {
+    run_build_test("rbxmx_ref.rbxmx");
+}
+
 fn run_build_test(test_name: &str) {
     let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
     let build_test_path = manifest_dir.join("build-tests");
