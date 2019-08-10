@@ -5,7 +5,7 @@ use std::{
     collections::HashMap,
 };
 
-use rbx_dom_weak::{RbxId, RbxValue};
+use rbx_dom_weak::{RbxTree, RbxId, RbxValue};
 
 /// A lightweight description of what an instance should look like. Attempts to
 /// be somewhat memory efficient by borrowing from its source data, indicated by
@@ -37,6 +37,25 @@ impl<'source> InstanceSnapshot<'source> {
             name: Cow::Owned(self.name.clone().into_owned()),
             class_name: Cow::Owned(self.class_name.clone().into_owned()),
             properties: self.properties.clone(),
+            children,
+        }
+    }
+
+    pub fn from_tree(tree: &RbxTree, id: RbxId) -> InstanceSnapshot<'static> {
+        let instance = tree.get_instance(id)
+            .expect("instance did not exist in tree");
+
+        let children = instance.get_children_ids()
+            .iter()
+            .cloned()
+            .map(|id| InstanceSnapshot::from_tree(tree, id))
+            .collect();
+
+        InstanceSnapshot {
+            snapshot_id: Some(id),
+            name: Cow::Owned(instance.name.clone()),
+            class_name: Cow::Owned(instance.class_name.clone()),
+            properties: instance.properties.clone(),
             children,
         }
     }

@@ -1,7 +1,4 @@
-use std::{
-    borrow::Cow,
-    collections::HashMap,
-};
+use std::borrow::Cow;
 
 use rbx_dom_weak::{RbxTree, RbxId};
 
@@ -34,7 +31,7 @@ impl SnapshotMiddleware for SnapshotRbxmx {
 
         let instance_name = entry.path()
             .file_stem().expect("Could not extract file stem")
-            .to_string_lossy();
+            .to_string_lossy().to_string();
 
         let options = rbx_xml::DecodeOptions::new()
             .property_behavior(rbx_xml::DecodePropertyBehavior::ReadUnknown);
@@ -48,14 +45,11 @@ impl SnapshotMiddleware for SnapshotRbxmx {
         match children.len() {
             0 => Ok(None),
             1 => {
-                Ok(Some(InstanceSnapshot {
-                    snapshot_id: None,
-                    name: Cow::Owned(instance_name.into_owned()),
-                    class_name: Cow::Borrowed("TODO"),
-                    properties: HashMap::new(),
-                    children: Vec::new(),
-                }))
-            },
+                let mut snapshot = InstanceSnapshot::from_tree(&temp_tree, children[0]);
+                snapshot.name = Cow::Owned(instance_name);
+
+                Ok(Some(snapshot))
+            }
             _ => panic!("Rojo doesn't have support for model files with multiple roots yet"),
         }
     }
