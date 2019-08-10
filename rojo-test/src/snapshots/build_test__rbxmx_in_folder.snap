@@ -1,0 +1,41 @@
+---
+created: "2019-08-10T07:45:07.961823500Z"
+creator: insta@0.10.0
+source: rojo-test/src/build_test.rs
+expression: contents
+---
+<roblox version="4">
+  <Item class="Folder" referent="0">
+    <Properties>
+      <string name="Name">rbxmx_in_folder</string>
+    </Properties>
+    <Item class="Model" referent="1">
+      <Properties>
+        <string name="Name">test-model</string>
+        <CoordinateFrame name="ModelInPrimary">
+          <X>0</X>
+          <Y>0</Y>
+          <Z>0</Z>
+          <R00>1</R00>
+          <R01>0</R01>
+          <R02>0</R02>
+          <R10>0</R10>
+          <R11>1</R11>
+          <R12>0</R12>
+          <R20>0</R20>
+          <R21>0</R21>
+          <R22>1</R22>
+        </CoordinateFrame>
+        <Ref name="PrimaryPart">null</Ref>
+        <BinaryString name="Tags"><![CDATA[]]></BinaryString>
+      </Properties>
+      <Item class="StringValue" referent="2">
+        <Properties>
+          <string name="Name">Cool StringValue</string>
+          <BinaryString name="Tags"><![CDATA[]]></BinaryString>
+          <string name="Value">Did you know that BaseValue.Changed is different than Instance.Changed?</string>
+        </Properties>
+      </Item>
+    </Item>
+  </Item>
+</roblox>
