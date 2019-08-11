@@ -2,7 +2,7 @@
 
 # Using rbxlx-to-rojo
 ## Setup
-Before you can use rbxlx-to-rojo, you need to have Rojo 0.5.0 Alpha 12 to use the tool.
+Before you can use rbxlx-to-rojo, you need at least Rojo 0.5.0 Alpha 12 or higher to use the tool.
 You also need a rbxlx place file that has a script. If there aren't any scripts in the rbxlx file, rbxlx-to-rojo will return an error.
 
 Download the latest release of rbxlx-to-rojo here: https://github.com/rojo-rbx/rbxlx-to-rojo/releases
@@ -15,6 +15,6 @@ Let's assume we have a rbxlx file named "game", with a script in ServerScriptSer
 3. Select the path where you want to place it.
 
 If you followed the steps correctly, you should see something that looks like this:
-https://cdn.discordapp.com/attachments/609230525604954135/610155628786221117/unknown.png
+![](https://cdn.discordapp.com/attachments/609230525604954135/610155628786221117/unknown.png)
 
 Congratulations, you successfully ported an existing game using rbxlx-to-rojo!
