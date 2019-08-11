@@ -42,15 +42,13 @@ impl SnapshotMiddleware for SnapshotRbxmx {
         let root_instance = temp_tree.get_instance(temp_tree.get_root_id()).unwrap();
         let children = root_instance.get_children_ids();
 
-        match children.len() {
-            0 => Ok(None),
-            1 => {
-                let mut snapshot = InstanceSnapshot::from_tree(&temp_tree, children[0]);
-                snapshot.name = Cow::Owned(instance_name);
+        if children.len() == 1 {
+            let mut snapshot = InstanceSnapshot::from_tree(&temp_tree, children[0]);
+            snapshot.name = Cow::Owned(instance_name);
 
-                Ok(Some(snapshot))
-            }
-            _ => panic!("Rojo doesn't have support for model files with multiple roots yet"),
+            Ok(Some(snapshot))
+        } else {
+            panic!("Rojo doesn't have support for model files with zero or more than one top-level instances yet.");
         }
     }
 
