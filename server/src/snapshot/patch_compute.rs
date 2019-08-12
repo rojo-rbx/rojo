@@ -14,8 +14,20 @@ pub fn compute_patch_set<'a>(
     snapshot: &'a InstanceSnapshot,
     tree: &RbxTree,
     id: RbxId,
+) -> PatchSet<'a> {
+    let mut patch_set = PatchSet::new();
+
+    compute_patch_set_internal(snapshot, tree, id, &mut patch_set);
+
+    patch_set
+}
+
+fn compute_patch_set_internal<'a>(
+    snapshot: &'a InstanceSnapshot,
+    tree: &RbxTree,
+    id: RbxId,
     patch_set: &mut PatchSet<'a>,
-) {
+){
     let instance = tree.get_instance(id)
         .expect("Instance did not exist in tree");
 
@@ -115,7 +127,7 @@ fn compute_children_patches<'a>(
 
         match matching_instance {
             Some((_, instance_child_id)) => {
-                compute_patch_set(snapshot_child, tree, *instance_child_id, patch_set);
+                compute_patch_set_internal(snapshot_child, tree, *instance_child_id, patch_set);
             }
             None => {
                 patch_set.added_instances.push(PatchAddInstance {
