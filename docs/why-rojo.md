@@ -2,6 +2,11 @@ Adding a tool like Rojo to your Roblox workflow can be daunting, but it comes wi
 
 [TOC]
 
+## Rojo at RDC 2019
+Nathan Riemer (Kampfkarren) gave a talk at RDC 2019 talking about some of the benefits of using a tool like Rojo.
+
+<iframe style="margin: 0 auto; max-width: 100%" width="560" height="315" src="https://www.youtube-nocookie.com/embed/czlvzEyhaBc" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
 ## External Text Editors
 Rojo opens the door to use the absolute best text editors in the world and their rich plugin ecosystems.
 
