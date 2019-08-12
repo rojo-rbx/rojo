@@ -7,7 +7,7 @@ use super::{
     InstanceSnapshot,
 };
 
-pub fn apply_patch(
+pub fn apply_patch_set(
     tree: &mut RbxTree,
     patch_set: &PatchSet,
 ) {

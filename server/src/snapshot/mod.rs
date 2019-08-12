@@ -24,6 +24,6 @@ mod patch_compute;
 mod instance_snapshot;
 
 pub use instance_snapshot::InstanceSnapshot;
-pub use patch_apply::apply_patch;
+pub use patch_apply::apply_patch_set;
 pub use patch_compute::compute_patch_set;
 pub use patch::*;

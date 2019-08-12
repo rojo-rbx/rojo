@@ -11,7 +11,7 @@ use failure::Fail;
 
 use crate::{
     imfs::new::{Imfs, RealFetcher, FsError},
-    snapshot::{apply_patch, compute_patch_set},
+    snapshot::{apply_patch_set, compute_patch_set},
     snapshot_middleware::snapshot_from_imfs,
 };
 
@@ -95,7 +95,7 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
         .expect("snapshot did not return an instance");
 
     let patch_set = compute_patch_set(&snapshot, &tree, root_id);
-    apply_patch(&mut tree, &patch_set);
+    apply_patch_set(&mut tree, &patch_set);
 
     let mut file = BufWriter::new(File::create(&options.output_file)?);
 
