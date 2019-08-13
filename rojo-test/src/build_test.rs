@@ -36,8 +36,7 @@ fn build_plain_txt() {
     run_build_test("plain.txt");
 }
 
-// TODO: Depends on InstanceSnapshot::from_tree correctly handling refs.
-// #[test]
+#[test]
 fn build_rbxmx_ref() {
     run_build_test("rbxmx_ref.rbxmx");
 }

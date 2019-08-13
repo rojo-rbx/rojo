@@ -7,7 +7,7 @@ use rbx_dom_weak::{RbxValue, RbxId};
 use super::InstanceSnapshot;
 
 /// A set of different kinds of patches that can be applied to an RbxTree.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub struct PatchSet<'a> {
     pub removed_instances: Vec<RbxId>,
     pub added_instances: Vec<PatchAddInstance<'a>>,

@@ -26,11 +26,40 @@ pub fn apply_patch_set(
     for update_patch in &patch_set.updated_instances {
         apply_update_child(&context, tree, update_patch);
     }
+
+    apply_deferred_properties(context, tree);
 }
 
 #[derive(Default)]
 struct PatchApplyContext {
     snapshot_id_to_instance_id: HashMap<RbxId, RbxId>,
+    properties_to_apply: HashMap<RbxId, HashMap<String, RbxValue>>,
+}
+
+/// Apply properties that were deferred in order to get more information.
+///
+/// Ref properties from snapshots refer to eachother via snapshot ID. Some of
+/// these properties are transformed when the patch is computed, notably the
+/// instances that the patch computing method is able to pair up.
+///
+/// The remaining Ref properties need to be handled during patch application,
+/// where we build up a map of snapshot IDs to instance IDs as they're created,
+/// then apply properties all at once at the end.
+fn apply_deferred_properties(context: PatchApplyContext, tree: &mut RbxTree) {
+    for (id, mut properties) in context.properties_to_apply {
+        let instance = tree.get_instance_mut(id)
+            .expect("Invalid instance ID in deferred property map");
+
+        for property_value in properties.values_mut() {
+            if let RbxValue::Ref { value: Some(id) } = property_value {
+                if let Some(&instance_id) = context.snapshot_id_to_instance_id.get(id) {
+                    *property_value = RbxValue::Ref { value: Some(instance_id) };
+                }
+            }
+        }
+
+        instance.properties = properties;
+    }
 }
 
 fn apply_add_child(
@@ -43,11 +72,14 @@ fn apply_add_child(
         name: snapshot.name.clone().into_owned(),
         class_name: snapshot.class_name.clone().into_owned(),
 
-        // TODO: Apply no properties here and defer their application to later.
-        properties: snapshot.properties.clone(),
+        // Property assignment is deferred until after we know about all
+        // instances in this patch.
+        properties: HashMap::new(),
     };
 
     let id = tree.insert_instance(properties, parent_id);
+
+    context.properties_to_apply.insert(id, snapshot.properties.clone());
 
     if let Some(snapshot_id) = snapshot.snapshot_id {
         context.snapshot_id_to_instance_id.insert(snapshot_id, id);
@@ -108,6 +140,8 @@ mod test {
     use maplit::hashmap;
     use rbx_dom_weak::RbxValue;
 
+    use super::super::patch::PatchAddInstance;
+
     #[test]
     fn add_from_empty() {
         let _ = env_logger::try_init();
@@ -130,7 +164,17 @@ mod test {
             children: Vec::new(),
         };
 
-        apply_add_child(&mut PatchApplyContext::default(), &mut tree, root_id, &snapshot);
+        let patch_set = PatchSet {
+            added_instances: vec![
+                PatchAddInstance {
+                    parent_id: root_id,
+                    instance: snapshot.clone(),
+                }
+            ],
+            ..Default::default()
+        };
+
+        apply_patch_set(&mut tree, &patch_set);
 
         let root_instance = tree.get_instance(root_id).unwrap();
         let child_id = root_instance.get_children_ids()[0];
@@ -174,7 +218,12 @@ mod test {
             },
         };
 
-        apply_update_child(&PatchApplyContext::default(), &mut tree, &patch);
+        let patch_set = PatchSet {
+            updated_instances: vec![patch],
+            ..Default::default()
+        };
+
+        apply_patch_set(&mut tree, &patch_set);
 
         let expected_properties = hashmap! {
             "Foo".to_owned() => RbxValue::Int32 { value: 8 },
