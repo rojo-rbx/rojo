@@ -16,26 +16,38 @@ pub fn compute_patch_set<'a>(
     id: RbxId,
 ) -> PatchSet<'a> {
     let mut patch_set = PatchSet::new();
+    let mut context = ComputePatchContext::default();
 
-    compute_patch_set_internal(snapshot, tree, id, &mut patch_set);
+    compute_patch_set_internal(&mut context, snapshot, tree, id, &mut patch_set);
 
     patch_set
 }
 
+#[derive(Default)]
+struct ComputePatchContext {
+    snapshot_id_to_instance_id: HashMap<RbxId, RbxId>,
+}
+
 fn compute_patch_set_internal<'a>(
+    context: &mut ComputePatchContext,
     snapshot: &'a InstanceSnapshot,
     tree: &RbxTree,
     id: RbxId,
     patch_set: &mut PatchSet<'a>,
-){
+) {
+    if let Some(snapshot_id) = snapshot.snapshot_id {
+        context.snapshot_id_to_instance_id.insert(snapshot_id, id);
+    }
+
     let instance = tree.get_instance(id)
         .expect("Instance did not exist in tree");
 
-    compute_property_patches(snapshot, instance, patch_set);
-    compute_children_patches(snapshot, tree, id, patch_set);
+    compute_property_patches(context, snapshot, instance, patch_set);
+    compute_children_patches(context, snapshot, tree, id, patch_set);
 }
 
 fn compute_property_patches(
+    _context: &mut ComputePatchContext,
     snapshot: &InstanceSnapshot,
     instance: &RbxInstance,
     patch_set: &mut PatchSet,
@@ -91,6 +103,7 @@ fn compute_property_patches(
 }
 
 fn compute_children_patches<'a>(
+    context: &mut ComputePatchContext,
     snapshot: &'a InstanceSnapshot,
     tree: &RbxTree,
     id: RbxId,
@@ -127,7 +140,7 @@ fn compute_children_patches<'a>(
 
         match matching_instance {
             Some((_, instance_child_id)) => {
-                compute_patch_set_internal(snapshot_child, tree, *instance_child_id, patch_set);
+                compute_patch_set_internal(context, snapshot_child, tree, *instance_child_id, patch_set);
             }
             None => {
                 patch_set.added_instances.push(PatchAddInstance {
