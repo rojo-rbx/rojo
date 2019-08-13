@@ -2,8 +2,6 @@ mod test_util;
 
 use std::path::Path;
 
-use pretty_assertions::assert_eq;
-
 use librojo::{
     imfs::Imfs,
     project::Project,
