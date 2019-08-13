@@ -19,11 +19,12 @@ digraph Rojo {
 	session -> rbx_tree
 	session -> snapshot_subsystem
 	session -> snapshot_generator
+	session -> file_watcher [dir="both"]
+	file_watcher -> imfs
 	snapshot_generator -> user_middleware
 	snapshot_generator -> builtin_middleware
 	plugin -> api [style="dotted"; dir="both"; minlen=2]
 	api -> session
 	imfs -> fs_impl
 	fs_impl -> fs
-	fs_impl -> file_watcher
 }
