@@ -64,27 +64,31 @@ impl SnapshotMiddleware for SnapshotRbxmx {
 mod test {
     use super::*;
 
-    use rbx_dom_weak::RbxValue;
-    use maplit::hashmap;
+    use std::collections::HashMap;
 
     use crate::imfs::new::{ImfsSnapshot, NoopFetcher};
 
-    // #[test]
+    #[test]
     fn model_from_imfs() {
         let mut imfs = Imfs::new(NoopFetcher);
-        let file = ImfsSnapshot::file("Hello there!");
+        let file = ImfsSnapshot::file(r#"
+            <roblox version="4">
+                <Item class="Folder" referent="0">
+                    <Properties>
+                        <string name="Name">THIS NAME IS IGNORED</string>
+                    </Properties>
+                </Item>
+            </roblox>
+        "#);
 
-        imfs.load_from_snapshot("/foo.lua", file);
+        imfs.load_from_snapshot("/foo.rbxmx", file);
 
-        let entry = imfs.get("/foo.lua").unwrap();
+        let entry = imfs.get("/foo.rbxmx").unwrap();
         let instance_snapshot = SnapshotRbxmx::from_imfs(&mut imfs, &entry).unwrap().unwrap();
 
         assert_eq!(instance_snapshot.name, "foo");
-        assert_eq!(instance_snapshot.class_name, "ModuleScript");
-        assert_eq!(instance_snapshot.properties, hashmap! {
-            "Source".to_owned() => RbxValue::String {
-                value: "Hello there!".to_owned(),
-            },
-        });
+        assert_eq!(instance_snapshot.class_name, "Folder");
+        assert_eq!(instance_snapshot.properties, HashMap::new());
+        assert_eq!(instance_snapshot.children, Vec::new());
     }
 }
