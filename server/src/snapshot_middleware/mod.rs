@@ -4,13 +4,14 @@
 #![allow(dead_code)]
 
 mod context;
+mod csv;
 mod dir;
 mod error;
 mod lua;
 mod middleware;
 mod project;
-mod rbxmx;
 mod rbxm;
+mod rbxmx;
 mod txt;
 
 use rbx_dom_weak::{RbxTree, RbxId};
@@ -18,12 +19,13 @@ use rbx_dom_weak::{RbxTree, RbxId};
 use crate::imfs::new::{Imfs, ImfsEntry, ImfsFetcher};
 use self::{
     middleware::{SnapshotInstanceResult, SnapshotFileResult, SnapshotMiddleware},
-    project::SnapshotProject,
-    txt::SnapshotTxt,
+    csv::SnapshotCsv,
     dir::SnapshotDir,
     lua::SnapshotLua,
-    rbxmx::SnapshotRbxmx,
+    project::SnapshotProject,
     rbxm::SnapshotRbxm,
+    rbxmx::SnapshotRbxmx,
+    txt::SnapshotTxt,
 };
 
 macro_rules! middlewares {
@@ -66,7 +68,7 @@ middlewares! {
     SnapshotRbxmx,
     SnapshotRbxm,
     SnapshotLua,
-    // SnapshotCsv,
+    SnapshotCsv,
     SnapshotTxt,
     SnapshotDir,
 }
