@@ -22,6 +22,7 @@ macro_rules! gen_build_tests {
 
 gen_build_tests! {
     client_in_folder,
+    csv_in_folder,
     gitkeep,
     module_in_folder,
     rbxm_in_folder,
