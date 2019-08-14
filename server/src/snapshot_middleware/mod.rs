@@ -10,6 +10,7 @@ mod lua;
 mod middleware;
 mod project;
 mod rbxmx;
+mod rbxm;
 mod txt;
 
 use rbx_dom_weak::{RbxTree, RbxId};
@@ -22,6 +23,7 @@ use self::{
     dir::SnapshotDir,
     lua::SnapshotLua,
     rbxmx::SnapshotRbxmx,
+    rbxm::SnapshotRbxm,
 };
 
 macro_rules! middlewares {
@@ -62,7 +64,7 @@ middlewares! {
     SnapshotProject,
     // SnapshotJsonModel,
     SnapshotRbxmx,
-    // SnapshotRbxm,
+    SnapshotRbxm,
     SnapshotLua,
     // SnapshotCsv,
     SnapshotTxt,
