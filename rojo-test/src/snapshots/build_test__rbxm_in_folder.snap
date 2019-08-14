@@ -1,0 +1,18 @@
+---
+created: "2019-08-14T22:05:46.597722600Z"
+creator: insta@0.10.0
+source: rojo-test/src/build_test.rs
+expression: contents
+---
+<roblox version="4">
+  <Item class="Folder" referent="0">
+    <Properties>
+      <string name="Name">rbxm_in_folder</string>
+    </Properties>
+    <Item class="Folder" referent="1">
+      <Properties>
+        <string name="Name">foo</string>
+      </Properties>
+    </Item>
+  </Item>
+</roblox>

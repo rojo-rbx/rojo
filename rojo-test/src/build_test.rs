@@ -25,6 +25,7 @@ gen_build_tests! {
     gitkeep,
     module_in_folder,
     plain_gitkeep,
+    rbxm_in_folder,
     rbxmx_in_folder,
     server_in_folder,
     txt,
