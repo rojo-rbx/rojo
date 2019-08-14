@@ -7,6 +7,7 @@ mod context;
 mod csv;
 mod dir;
 mod error;
+mod json_model;
 mod lua;
 mod middleware;
 mod project;
@@ -21,6 +22,7 @@ use self::{
     middleware::{SnapshotInstanceResult, SnapshotFileResult, SnapshotMiddleware},
     csv::SnapshotCsv,
     dir::SnapshotDir,
+    json_model::SnapshotJsonModel,
     lua::SnapshotLua,
     project::SnapshotProject,
     rbxm::SnapshotRbxm,
@@ -64,7 +66,7 @@ macro_rules! middlewares {
 
 middlewares! {
     SnapshotProject,
-    // SnapshotJsonModel,
+    SnapshotJsonModel,
     SnapshotRbxmx,
     SnapshotRbxm,
     SnapshotLua,
