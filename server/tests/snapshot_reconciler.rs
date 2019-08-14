@@ -2,7 +2,6 @@ mod test_util;
 
 use std::collections::HashMap;
 
-use pretty_assertions::assert_eq;
 use rbx_dom_weak::{RbxTree, RbxInstanceProperties};
 
 use librojo::{

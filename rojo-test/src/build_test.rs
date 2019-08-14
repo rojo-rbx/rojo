@@ -22,6 +22,9 @@ macro_rules! gen_build_tests {
 
 gen_build_tests! {
     client_in_folder,
+    csv_bug_145,
+    csv_bug_147,
+    csv_in_folder,
     gitkeep,
     module_in_folder,
     plain_gitkeep,

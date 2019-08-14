@@ -32,7 +32,6 @@ macro_rules! generate_snapshot_tests {
 generate_snapshot_tests!(
     empty,
     json_model,
-    localization,
     meta_files,
     multi_partition_game,
     nested_partitions,
