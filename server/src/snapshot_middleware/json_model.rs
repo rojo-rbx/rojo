@@ -35,11 +35,19 @@ impl SnapshotMiddleware for SnapshotJsonModel {
             None => return Ok(None),
         };
 
-        let instance: JsonModelInstance = serde_json::from_slice(entry.contents(imfs)?)
+        let instance: JsonModel = serde_json::from_slice(entry.contents(imfs)?)
             .expect("TODO: Handle serde_json errors");
 
-        let mut snapshot = instance.into_snapshot();
-        snapshot.name = Cow::Owned(instance_name);
+        if let Some(json_name) = &instance.name {
+            if json_name != &instance_name {
+                log::warn!("Name from JSON model did not match its file name: {}", entry.path().display());
+                log::warn!("In Rojo <  alpha 14, this model is named \"{}\" (from its 'Name' property)", json_name);
+                log::warn!("In Rojo >= alpha 14, this model is named \"{}\" (from its file name)", instance_name);
+                log::warn!("'Name' for the top-level instance in a JSON model is now optional and will be ignored.");
+            }
+        }
+
+        let snapshot = instance.core.into_snapshot(instance_name);
 
         Ok(Some(snapshot))
     }
@@ -63,23 +71,40 @@ fn match_trailing<'a>(input: &'a str, trailer: &str) -> Option<&'a str> {
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
+struct JsonModel {
+    name: Option<String>,
+
+    #[serde(flatten)]
+    core: JsonModelCore,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 struct JsonModelInstance {
     name: String,
+
+    #[serde(flatten)]
+    core: JsonModelCore,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+struct JsonModelCore {
     class_name: String,
 
-    #[serde(default = "Vec::new")]
+    #[serde(default = "Vec::new", skip_serializing_if = "Vec::is_empty")]
     children: Vec<JsonModelInstance>,
 
-    #[serde(default = "HashMap::new")]
+    #[serde(default = "HashMap::new", skip_serializing_if = "HashMap::is_empty")]
     properties: HashMap<String, UnresolvedRbxValue>,
 }
 
-impl JsonModelInstance {
-    fn into_snapshot(self) -> InstanceSnapshot<'static> {
+impl JsonModelCore {
+    fn into_snapshot(self, name: String) -> InstanceSnapshot<'static> {
         let class_name = self.class_name;
 
         let children = self.children.into_iter()
-            .map(JsonModelInstance::into_snapshot)
+            .map(|child| child.core.into_snapshot(child.name))
             .collect();
 
         let properties = self.properties.into_iter()
@@ -92,7 +117,7 @@ impl JsonModelInstance {
 
         InstanceSnapshot {
             snapshot_id: None,
-            name: Cow::Owned(self.name),
+            name: Cow::Owned(name),
             class_name: Cow::Owned(class_name),
             properties,
             children,
