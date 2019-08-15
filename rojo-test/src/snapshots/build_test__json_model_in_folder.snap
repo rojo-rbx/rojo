@@ -1,5 +1,5 @@
 ---
-created: "2019-08-15T01:02:40.318937300Z"
+created: "2019-08-15T20:40:50.467761900Z"
 creator: insta@0.10.0
 source: rojo-test/src/build_test.rs
 expression: contents
@@ -11,7 +11,7 @@ expression: contents
     </Properties>
     <Item class="IntValue" referent="1">
       <Properties>
-        <string name="Name">Top-Level Value</string>
+        <string name="Name">simple-model</string>
         <int name="Value">5</int>
       </Properties>
       <Item class="Folder" referent="2">

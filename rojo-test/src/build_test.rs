@@ -27,6 +27,7 @@ gen_build_tests! {
     csv_in_folder,
     gitkeep,
     json_model_in_folder,
+    json_model_legacy_name,
     module_in_folder,
     plain_gitkeep,
     rbxm_in_folder,
@@ -56,11 +57,16 @@ fn run_build_test(test_name: &str) {
     let input_path = build_test_path.join(test_name);
     let output_path = output_dir.path().join(format!("{}.rbxmx", test_name));
 
-    let status = Command::new("cargo")
+    let mut exe_path = working_dir.join("target/debug/rojo");
+    if cfg!(windows) {
+        exe_path.set_extension("exe");
+    }
+
+    let status = Command::new(exe_path)
         .args(&[
-            "run", "--quiet", "--",
             "build", input_path.to_str().unwrap(), "-o", output_path.to_str().unwrap(),
         ])
+        .env("RUST_LOG", "error")
         .current_dir(working_dir)
         .status()
         .expect("Couldn't start Rojo");
