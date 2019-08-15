@@ -1,0 +1,13 @@
+{
+  "Name": "Top-Level Value",
+  "ClassName": "IntValue",
+  "Properties": {
+    "Value": 5
+  },
+  "Children": [
+    {
+      "Name": "A Child",
+      "ClassName": "Folder"
+    }
+  ]
+}

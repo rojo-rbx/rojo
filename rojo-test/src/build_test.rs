@@ -26,6 +26,7 @@ gen_build_tests! {
     csv_bug_147,
     csv_in_folder,
     gitkeep,
+    json_model_in_folder,
     module_in_folder,
     rbxm_in_folder,
     rbxmx_in_folder,

@@ -1,0 +1,24 @@
+---
+created: "2019-08-15T01:02:40.318937300Z"
+creator: insta@0.10.0
+source: rojo-test/src/build_test.rs
+expression: contents
+---
+<roblox version="4">
+  <Item class="Folder" referent="0">
+    <Properties>
+      <string name="Name">json_model_in_folder</string>
+    </Properties>
+    <Item class="IntValue" referent="1">
+      <Properties>
+        <string name="Name">Top-Level Value</string>
+        <int name="Value">5</int>
+      </Properties>
+      <Item class="Folder" referent="2">
+        <Properties>
+          <string name="Name">A Child</string>
+        </Properties>
+      </Item>
+    </Item>
+  </Item>
+</roblox>
