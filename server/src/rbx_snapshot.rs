@@ -724,19 +724,37 @@ fn snapshot_csv_file<'source>(
 fn snapshot_json_model_file<'source>(
     file: &'source ImfsFile,
 ) -> SnapshotResult<'source> {
+    let file_name = file.path
+        .file_name().expect("Could not extract file stem")
+        .to_str().expect("Could not convert path to UTF-8");
+
+    let instance_name = match_trailing(file_name, ".model.json")
+        .expect("JSON model file did not end in .model.json");
+
     let contents = str::from_utf8(&file.contents)
         .map_err(|inner| SnapshotError::Utf8Error {
             inner,
             path: file.path.to_owned(),
         })?;
 
-    let json_instance: JsonModelInstance = serde_json::from_str(contents)
+    let json_instance: JsonModel = serde_json::from_str(contents)
         .map_err(|inner| SnapshotError::JsonModelDecodeError {
             inner,
             path: file.path.to_owned(),
         })?;
 
-    let mut snapshot = json_instance.into_snapshot()?;
+    if let Some(json_name) = &json_instance.name {
+        if json_name != instance_name {
+            log::warn!("Name from JSON model did not match its file name: {}", file.path.display());
+            log::warn!("In Rojo <  alpha 14, this model is named \"{}\" (from its 'Name' property)", json_name);
+            log::warn!("In Rojo >= alpha 14, this model is named \"{}\" (from its file name)", instance_name);
+            log::warn!("'Name' for the top-level instance in a JSON model is now optional and will be ignored.");
+        }
+    }
+
+    let mut snapshot = json_instance.core.into_snapshot(instance_name.to_owned())?;
+
+    snapshot.name = Cow::Borrowed(instance_name);
     snapshot.metadata.source_path = Some(file.path.to_owned());
 
     Ok(Some(snapshot))
@@ -744,8 +762,25 @@ fn snapshot_json_model_file<'source>(
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
+struct JsonModel {
+    name: Option<String>,
+
+    #[serde(flatten)]
+    core: JsonModelCore,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 struct JsonModelInstance {
     name: String,
+
+    #[serde(flatten)]
+    core: JsonModelCore,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+struct JsonModelCore {
     class_name: String,
 
     #[serde(default = "Vec::new", skip_serializing_if = "Vec::is_empty")]
@@ -755,12 +790,12 @@ struct JsonModelInstance {
     properties: HashMap<String, UnresolvedRbxValue>,
 }
 
-impl JsonModelInstance {
-    fn into_snapshot(self) -> Result<RbxSnapshotInstance<'static>, SnapshotError> {
+impl JsonModelCore {
+    fn into_snapshot(self, name: String) -> Result<RbxSnapshotInstance<'static>, SnapshotError> {
         let mut children = Vec::with_capacity(self.children.len());
 
         for child in self.children {
-            children.push(child.into_snapshot()?);
+            children.push(child.core.into_snapshot(child.name)?);
         }
 
         let mut properties = HashMap::with_capacity(self.properties.len());
@@ -771,7 +806,7 @@ impl JsonModelInstance {
         }
 
         Ok(RbxSnapshotInstance {
-            name: Cow::Owned(self.name),
+            name: Cow::Owned(name),
             class_name: Cow::Owned(self.class_name),
             properties,
             children,
