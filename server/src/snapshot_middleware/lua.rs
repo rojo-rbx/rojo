@@ -7,7 +7,7 @@ use maplit::hashmap;
 use rbx_dom_weak::{RbxTree, RbxValue, RbxId};
 
 use crate::{
-    imfs::new::{Imfs, ImfsFetcher, ImfsEntry},
+    imfs::new::{Imfs, ImfsFetcher, ImfsEntry, FsResultExt},
     snapshot::InstanceSnapshot,
 };
 
@@ -22,12 +22,37 @@ impl SnapshotMiddleware for SnapshotLua {
         imfs: &mut Imfs<F>,
         entry: &ImfsEntry,
     ) -> SnapshotInstanceResult<'static> {
-        if entry.is_directory() {
-            return Ok(None);
-        }
-
         let file_name = entry.path()
             .file_name().unwrap().to_string_lossy();
+
+        if entry.is_directory() {
+            let module_init_path = entry.path().join("init.lua");
+            if let Some(init_entry) = imfs.get(module_init_path).with_not_found()? {
+                if let Some(mut snapshot) = SnapshotLua::from_imfs(imfs, &init_entry)? {
+                    snapshot.name = Cow::Owned(file_name.into_owned());
+
+                    return Ok(Some(snapshot));
+                }
+            }
+
+            let server_init_path = entry.path().join("init.server.lua");
+            if let Some(init_entry) = imfs.get(server_init_path).with_not_found()? {
+                if let Some(mut snapshot) = SnapshotLua::from_imfs(imfs, &init_entry)? {
+                    snapshot.name = Cow::Owned(file_name.into_owned());
+
+                    return Ok(Some(snapshot));
+                }
+            }
+
+            let client_init_path = entry.path().join("init.client.lua");
+            if let Some(init_entry) = imfs.get(client_init_path).with_not_found()? {
+                if let Some(mut snapshot) = SnapshotLua::from_imfs(imfs, &init_entry)? {
+                    snapshot.name = Cow::Owned(file_name.into_owned());
+
+                    return Ok(Some(snapshot));
+                }
+            }
+        }
 
         let (class_name, instance_name) = if let Some(name) = match_trailing(&file_name, ".server.lua") {
             ("Script", name)
