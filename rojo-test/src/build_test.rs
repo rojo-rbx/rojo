@@ -22,6 +22,7 @@ macro_rules! gen_build_tests {
 
 gen_build_tests! {
     client_in_folder,
+    client_init,
     csv_bug_145,
     csv_bug_147,
     csv_in_folder,
@@ -29,9 +30,11 @@ gen_build_tests! {
     json_model_in_folder,
     json_model_legacy_name,
     module_in_folder,
+    module_init,
     rbxm_in_folder,
     rbxmx_in_folder,
     server_in_folder,
+    server_init,
     txt_in_folder,
 }
 
