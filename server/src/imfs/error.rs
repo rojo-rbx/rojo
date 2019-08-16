@@ -9,6 +9,20 @@ use failure::Fail;
 pub type FsResult<T> = Result<T, FsError>;
 pub use io::ErrorKind as FsErrorKind;
 
+pub trait FsResultExt<T> {
+    fn with_not_found(self) -> Result<Option<T>, FsError>;
+}
+
+impl<T> FsResultExt<T> for Result<T, FsError> {
+    fn with_not_found(self) -> Result<Option<T>, FsError> {
+        match self {
+            Ok(value) => Ok(Some(value)),
+            Err(ref err) if err.kind() == FsErrorKind::NotFound => Ok(None),
+            Err(err) => Err(err),
+        }
+    }
+}
+
 // TODO: New error type that contains errors specific to our application,
 // wrapping io::Error either directly or through another error type that has
 // path information.
