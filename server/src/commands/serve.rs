@@ -1,17 +1,8 @@
 use std::{
     path::PathBuf,
-    sync::Arc,
 };
 
-use log::info;
 use failure::Fail;
-
-use crate::{
-    project::{Project, ProjectLoadError},
-    web::LiveServer,
-    imfs::FsError,
-    live_session::{LiveSession, LiveSessionError},
-};
 
 const DEFAULT_PORT: u16 = 34872;
 
@@ -23,40 +14,18 @@ pub struct ServeOptions {
 
 #[derive(Debug, Fail)]
 pub enum ServeError {
-   #[fail(display = "Project load error: {}", _0)]
-   ProjectLoadError(#[fail(cause)] ProjectLoadError),
-
-   #[fail(display = "{}", _0)]
-   FsError(#[fail(cause)] FsError),
-
-   #[fail(display = "{}", _0)]
-   LiveSessionError(#[fail(cause)] LiveSessionError),
+    #[fail(display = "This error cannot happen.")]
+    CannotHappen,
 }
 
-impl_from!(ServeError {
-    ProjectLoadError => ProjectLoadError,
-    FsError => FsError,
-    LiveSessionError => LiveSessionError,
-});
-
 pub fn serve(options: &ServeOptions) -> Result<(), ServeError> {
-    info!("Looking for project at {}", options.fuzzy_project_path.display());
-
-    let project = Arc::new(Project::load_fuzzy(&options.fuzzy_project_path)?);
-
-    info!("Found project at {}", project.file_location.display());
-    info!("Using project {:#?}", project);
-
-    let live_session = Arc::new(LiveSession::new(Arc::clone(&project))?);
-    let server = LiveServer::new(live_session);
+    // TODO: Pull port from project iff it exists.
 
     let port = options.port
-        .or(project.serve_port)
+        // .or(project.serve_port)
         .unwrap_or(DEFAULT_PORT);
 
     println!("Rojo server listening on port {}", port);
-
-    server.start(port);
 
     Ok(())
 }
