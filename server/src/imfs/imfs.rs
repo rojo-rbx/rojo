@@ -58,19 +58,53 @@ impl<F: ImfsFetcher> Imfs<F> {
     }
 
     pub fn raise_file_change(&mut self, path: impl AsRef<Path>) -> FsResult<()> {
-        if !self.would_be_resident(path.as_ref()) {
+        let path = path.as_ref();
+
+        if !self.would_be_resident(path) {
             return Ok(());
         }
 
-        unimplemented!();
+        let new_item = self.fetcher.read_item(path)
+            .map_err(|err| FsError::new(err, path.to_path_buf()))?;
+
+        match self.inner.get_mut(path) {
+            Some(existing_item) => {
+                match (existing_item, &new_item) {
+                    (ImfsItem::File(existing_file), ImfsItem::File(_)) => {
+                        // Invalidate the existing file contents.
+                        // We can probably be smarter about this by reading the changed file.
+                        existing_file.contents = None;
+                    }
+                    (ImfsItem::Directory(_), ImfsItem::Directory(_)) => {
+                        // No changes required, a directory updating doesn't mean anything to us.
+                    }
+                    (ImfsItem::File(_), ImfsItem::Directory(_)) => {
+                        self.inner.remove(path);
+                        self.inner.insert(path.to_path_buf(), new_item);
+                    }
+                    (ImfsItem::Directory(_), ImfsItem::File(_)) => {
+                        self.inner.remove(path);
+                        self.inner.insert(path.to_path_buf(), new_item);
+                    }
+                }
+            }
+            None => {
+                self.inner.insert(path.to_path_buf(), new_item);
+            }
+        }
+
+        Ok(())
     }
 
     pub fn raise_file_removed(&mut self, path: impl AsRef<Path>) -> FsResult<()> {
-        if !self.would_be_resident(path.as_ref()) {
+        let path = path.as_ref();
+
+        if !self.would_be_resident(path) {
             return Ok(());
         }
 
-        unimplemented!();
+        self.inner.remove(path);
+        Ok(())
     }
 
     pub fn get(&mut self, path: impl AsRef<Path>) -> FsResult<ImfsEntry> {
@@ -244,9 +278,17 @@ pub struct ImfsDirectory {
 mod test {
     use super::*;
 
+    use std::{
+        rc::Rc,
+        cell::RefCell,
+    };
+
     use maplit::hashmap;
 
-    use super::super::noop_fetcher::NoopFetcher;
+    use super::super::{
+        noop_fetcher::NoopFetcher,
+        error::FsErrorKind,
+    };
 
     #[test]
     fn from_snapshot_file() {
@@ -276,5 +318,114 @@ mod test {
 
         let b = imfs.get_contents("/dir/b.lua").unwrap();
         assert_eq!(b, b"contents of b.lua");
+    }
+
+    #[test]
+    fn changed_event() {
+        #[derive(Default)]
+        struct MockState {
+            a_contents: &'static str,
+        }
+
+        struct MockFetcher {
+            inner: Rc<RefCell<MockState>>,
+        }
+
+        impl ImfsFetcher for MockFetcher {
+            fn read_item(&mut self, path: &Path) -> io::Result<ImfsItem> {
+                if path == Path::new("/dir/a.txt") {
+                    return Ok(ImfsItem::File(ImfsFile {
+                        path: path.to_path_buf(),
+                        contents: None,
+                    }))
+                }
+
+                unimplemented!();
+            }
+
+            fn read_contents(&mut self, path: &Path) -> io::Result<Vec<u8>> {
+                if path == Path::new("/dir/a.txt") {
+                    let inner = self.inner.borrow();
+
+                    return Ok(Vec::from(inner.a_contents));
+                }
+
+                unimplemented!();
+            }
+
+            fn read_children(&mut self, path: &Path) -> io::Result<Vec<PathBuf>> {
+                unimplemented!();
+            }
+
+            fn create_directory(&mut self, path: &Path) -> io::Result<()> {
+                unimplemented!();
+            }
+
+            fn write_file(&mut self, path: &Path, contents: &[u8]) -> io::Result<()> {
+                unimplemented!();
+            }
+
+            fn remove(&mut self, path: &Path) -> io::Result<()> {
+                unimplemented!();
+            }
+        }
+
+        let mock_state = Rc::new(RefCell::new(MockState {
+            a_contents: "Initial contents",
+        }));
+
+        let mut imfs = Imfs::new(MockFetcher {
+            inner: mock_state.clone(),
+        });
+
+        let a = imfs.get("/dir/a.txt")
+            .expect("mock file did not exist");
+
+        let contents = a.contents(&mut imfs)
+            .expect("mock file contents error");
+
+        assert_eq!(contents, b"Initial contents");
+
+        {
+            let mut mock_state = mock_state.borrow_mut();
+            mock_state.a_contents = "Changed contents";
+        }
+
+        imfs.raise_file_change("/dir/a.txt")
+            .expect("error processing file change");
+
+        let contents = a.contents(&mut imfs)
+            .expect("mock file contents error");
+
+        assert_eq!(contents, b"Changed contents");
+    }
+
+    #[test]
+    fn removed_event_existing() {
+        let mut imfs = Imfs::new(NoopFetcher);
+
+        let file = ImfsSnapshot::file("hello, world!");
+        imfs.load_from_snapshot("/hello.txt", file);
+
+        let hello = imfs.get("/hello.txt")
+            .expect("couldn't get hello.txt");
+
+        let contents = hello.contents(&mut imfs)
+            .expect("couldn't get hello.txt contents");
+
+        assert_eq!(contents, b"hello, world!");
+
+        imfs.raise_file_removed("/hello.txt")
+            .expect("error processing file removal");
+
+        match imfs.get("hello.txt") {
+            Err(ref err) if err.kind() == FsErrorKind::NotFound => {}
+            Ok(_) => {
+                panic!("hello.txt was not removed from Imfs");
+            }
+            Err(err) => {
+                panic!("Unexpected error: {:?}", err);
+            }
+        }
     }
 }
