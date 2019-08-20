@@ -8,7 +8,7 @@ use crate::path_map::PathMap;
 use super::{
     snapshot::ImfsSnapshot,
     error::{FsResult, FsError},
-    fetcher::ImfsFetcher,
+    fetcher::{ImfsFetcher, FileType},
 };
 
 /// An in-memory filesystem that can be incrementally populated and updated as
@@ -64,32 +64,32 @@ impl<F: ImfsFetcher> Imfs<F> {
             return Ok(());
         }
 
-        let new_item = self.fetcher.read_item(path)
+        let new_type = self.fetcher.file_type(path)
             .map_err(|err| FsError::new(err, path.to_path_buf()))?;
 
         match self.inner.get_mut(path) {
             Some(existing_item) => {
-                match (existing_item, &new_item) {
-                    (ImfsItem::File(existing_file), ImfsItem::File(_)) => {
+                match (existing_item, &new_type) {
+                    (ImfsItem::File(existing_file), FileType::File) => {
                         // Invalidate the existing file contents.
                         // We can probably be smarter about this by reading the changed file.
                         existing_file.contents = None;
                     }
-                    (ImfsItem::Directory(_), ImfsItem::Directory(_)) => {
+                    (ImfsItem::Directory(_), FileType::Directory) => {
                         // No changes required, a directory updating doesn't mean anything to us.
                     }
-                    (ImfsItem::File(_), ImfsItem::Directory(_)) => {
+                    (ImfsItem::File(_), FileType::Directory) => {
                         self.inner.remove(path);
-                        self.inner.insert(path.to_path_buf(), new_item);
+                        self.inner.insert(path.to_path_buf(), ImfsItem::new_from_type(FileType::Directory, path));
                     }
-                    (ImfsItem::Directory(_), ImfsItem::File(_)) => {
+                    (ImfsItem::Directory(_), FileType::File) => {
                         self.inner.remove(path);
-                        self.inner.insert(path.to_path_buf(), new_item);
+                        self.inner.insert(path.to_path_buf(), ImfsItem::new_from_type(FileType::File, path));
                     }
                 }
             }
             None => {
-                self.inner.insert(path.to_path_buf(), new_item);
+                self.inner.insert(path.to_path_buf(), ImfsItem::new_from_type(new_type, path));
             }
         }
 
@@ -200,9 +200,10 @@ impl<F: ImfsFetcher> Imfs<F> {
     /// is using, this call may read exactly only the given path and no more.
     fn read_if_not_exists(&mut self, path: &Path) -> FsResult<()> {
         if !self.inner.contains_key(path) {
-            let item = self.fetcher.read_item(path)
+            let kind = self.fetcher.file_type(path)
                 .map_err(|err| FsError::new(err, path.to_path_buf()))?;
-            self.inner.insert(path.to_path_buf(), item);
+
+            self.inner.insert(path.to_path_buf(), ImfsItem::new_from_type(kind, path));
         }
 
         Ok(())
@@ -260,6 +261,19 @@ impl ImfsItem {
         match self {
             ImfsItem::File(file) => &file.path,
             ImfsItem::Directory(dir) => &dir.path,
+        }
+    }
+
+    fn new_from_type(kind: FileType, path: impl Into<PathBuf>) -> ImfsItem {
+        match kind {
+            FileType::Directory => ImfsItem::Directory(ImfsDirectory {
+                path: path.into(),
+                children_enumerated: false,
+            }),
+            FileType::File => ImfsItem::File(ImfsFile {
+                path: path.into(),
+                contents: None,
+            }),
         }
     }
 }
@@ -348,12 +362,9 @@ mod test {
         }
 
         impl ImfsFetcher for MockFetcher {
-            fn read_item(&mut self, path: &Path) -> io::Result<ImfsItem> {
+            fn file_type(&mut self, path: &Path) -> io::Result<FileType> {
                 if path == Path::new("/dir/a.txt") {
-                    return Ok(ImfsItem::File(ImfsFile {
-                        path: path.to_path_buf(),
-                        contents: None,
-                    }))
+                    return Ok(FileType::File);
                 }
 
                 unimplemented!();

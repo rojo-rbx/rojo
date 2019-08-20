@@ -3,13 +3,17 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use super::imfs::ImfsItem;
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FileType {
+    File,
+    Directory,
+}
 
 /// The generic interface that `Imfs` uses to lazily read files from the disk.
 /// In tests, it's stubbed out to do different versions of absolutely nothing
 /// depending on the test.
 pub trait ImfsFetcher {
-    fn read_item(&mut self, path: &Path) -> io::Result<ImfsItem>;
+    fn file_type(&mut self, path: &Path) -> io::Result<FileType>;
     fn read_children(&mut self, path: &Path) -> io::Result<Vec<PathBuf>>;
     fn read_contents(&mut self, path: &Path) -> io::Result<Vec<u8>>;
     fn create_directory(&mut self, path: &Path) -> io::Result<()>;

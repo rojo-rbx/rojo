@@ -7,27 +7,18 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use super::{
-    imfs::{ImfsItem, ImfsDirectory, ImfsFile},
-    fetcher::ImfsFetcher,
-};
+use super::fetcher::{ImfsFetcher, FileType};
 
 pub struct RealFetcher;
 
 impl ImfsFetcher for RealFetcher {
-    fn read_item(&mut self, path: &Path) -> io::Result<ImfsItem> {
+    fn file_type(&mut self, path: &Path) -> io::Result<FileType> {
         let metadata = fs::metadata(path)?;
 
         if metadata.is_file() {
-            Ok(ImfsItem::File(ImfsFile {
-                path: path.to_path_buf(),
-                contents: None,
-            }))
+            Ok(FileType::File)
         } else {
-            Ok(ImfsItem::Directory(ImfsDirectory {
-                path: path.to_path_buf(),
-                children_enumerated: false,
-            }))
+            Ok(FileType::Directory)
         }
     }
 

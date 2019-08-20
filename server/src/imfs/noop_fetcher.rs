@@ -6,24 +6,21 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use super::{
-    imfs::ImfsItem,
-    fetcher::ImfsFetcher,
-};
+use super::fetcher::{ImfsFetcher, FileType};
 
 pub struct NoopFetcher;
 
 impl ImfsFetcher for NoopFetcher {
-    fn read_item(&mut self, _path: &Path) -> io::Result<ImfsItem> {
-        Err(io::Error::new(io::ErrorKind::NotFound, "no-op"))
+    fn file_type(&mut self, _path: &Path) -> io::Result<FileType> {
+        Err(io::Error::new(io::ErrorKind::NotFound, "NoopFetcher always returns NotFound"))
     }
 
     fn read_children(&mut self, _path: &Path) -> io::Result<Vec<PathBuf>> {
-        Err(io::Error::new(io::ErrorKind::NotFound, "no-op"))
+        Err(io::Error::new(io::ErrorKind::NotFound, "NoopFetcher always returns NotFound"))
     }
 
     fn read_contents(&mut self, _path: &Path) -> io::Result<Vec<u8>> {
-        Err(io::Error::new(io::ErrorKind::NotFound, "no-op"))
+        Err(io::Error::new(io::ErrorKind::NotFound, "NoopFetcher always returns NotFound"))
     }
 
     fn create_directory(&mut self, _path: &Path) -> io::Result<()> {
