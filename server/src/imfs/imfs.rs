@@ -311,7 +311,23 @@ mod test {
 
         imfs.load_from_snapshot("/dir", dir);
 
-        // TODO: Get children of /dir, enumerate them!
+        let children = imfs.get_children("/dir").unwrap();
+
+        let mut has_a = false;
+        let mut has_b = false;
+
+        for child in children.into_iter() {
+            if child.path() == Path::new("/dir/a.txt") {
+                has_a = true;
+            } else if child.path() == Path::new("/dir/b.lua") {
+                has_b = true;
+            } else {
+                panic!("Unexpected child in /dir");
+            }
+        }
+
+        assert!(has_a, "/dir/a.txt was missing");
+        assert!(has_b, "/dir/b.lua was missing");
 
         let a = imfs.get_contents("/dir/a.txt").unwrap();
         assert_eq!(a, b"contents of a.txt");
@@ -353,19 +369,19 @@ mod test {
                 unimplemented!();
             }
 
-            fn read_children(&mut self, path: &Path) -> io::Result<Vec<PathBuf>> {
+            fn read_children(&mut self, _path: &Path) -> io::Result<Vec<PathBuf>> {
                 unimplemented!();
             }
 
-            fn create_directory(&mut self, path: &Path) -> io::Result<()> {
+            fn create_directory(&mut self, _path: &Path) -> io::Result<()> {
                 unimplemented!();
             }
 
-            fn write_file(&mut self, path: &Path, contents: &[u8]) -> io::Result<()> {
+            fn write_file(&mut self, _path: &Path, _contents: &[u8]) -> io::Result<()> {
                 unimplemented!();
             }
 
-            fn remove(&mut self, path: &Path) -> io::Result<()> {
+            fn remove(&mut self, _path: &Path) -> io::Result<()> {
                 unimplemented!();
             }
         }
