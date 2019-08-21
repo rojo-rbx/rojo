@@ -82,22 +82,26 @@ impl<T> PathMap<T> {
         });
     }
 
-    pub fn remove(&mut self, root_path: impl AsRef<Path>) -> Option<T> {
+    /// Remove the given path and all of its linked descendants, returning all
+    /// values stored in the map.
+    pub fn remove(&mut self, root_path: impl AsRef<Path>) -> Vec<(PathBuf, T)> {
         let root_path = root_path.as_ref();
 
         self.remove_from_parent(root_path);
 
-        let root_node = match self.nodes.remove(root_path) {
+        let (root_path, root_node) = match self.nodes.remove_entry(root_path) {
             Some(node) => node,
-            None => return None,
+            None => return Vec::new(),
         };
 
-        let root_value = root_node.value;
+        let mut removed_entries = vec![(root_path, root_node.value)];
         let mut to_visit: Vec<PathBuf> = root_node.children.into_iter().collect();
 
         while let Some(path) = to_visit.pop() {
-            match self.nodes.remove(&path) {
-                Some(node) => {
+            match self.nodes.remove_entry(&path) {
+                Some((path, node)) => {
+                    removed_entries.push((path, node.value));
+
                     for child in node.children.into_iter() {
                         to_visit.push(child);
                     }
@@ -108,7 +112,7 @@ impl<T> PathMap<T> {
             }
         }
 
-        Some(root_value)
+        removed_entries
     }
 
     /// Traverses the route between `start_path` and `target_path` and returns
@@ -207,5 +211,68 @@ mod test {
 
         map.insert("/foo", 6);
         assert_eq!(map.orphan_paths, hashset!["/foo".into()]);
+    }
+
+    #[test]
+    fn remove_one() {
+        let mut map = PathMap::new();
+
+        map.insert("/foo", 6);
+
+        assert_eq!(map.remove("/foo"), vec![
+            (PathBuf::from("/foo"), 6),
+        ]);
+
+        assert_eq!(map.get("/foo"), None);
+    }
+
+    #[test]
+    fn remove_child() {
+        let mut map = PathMap::new();
+
+        map.insert("/foo", 6);
+        map.insert("/foo/bar", 12);
+
+        assert_eq!(map.remove("/foo"), vec![
+            (PathBuf::from("/foo"), 6),
+            (PathBuf::from("/foo/bar"), 12),
+        ]);
+
+        assert_eq!(map.get("/foo"), None);
+        assert_eq!(map.get("/foo/bar"), None);
+    }
+
+    #[test]
+    fn remove_descendant() {
+        let mut map = PathMap::new();
+
+        map.insert("/foo", 6);
+        map.insert("/foo/bar", 12);
+        map.insert("/foo/bar/baz", 18);
+
+        assert_eq!(map.remove("/foo"), vec![
+            (PathBuf::from("/foo"), 6),
+            (PathBuf::from("/foo/bar"), 12),
+            (PathBuf::from("/foo/bar/baz"), 18),
+        ]);
+
+        assert_eq!(map.get("/foo"), None);
+        assert_eq!(map.get("/foo/bar"), None);
+        assert_eq!(map.get("/foo/bar/baz"), None);
+    }
+
+    #[test]
+    fn remove_not_orphan_descendants() {
+        let mut map = PathMap::new();
+
+        map.insert("/foo", 6);
+        map.insert("/foo/bar/baz", 12);
+
+        assert_eq!(map.remove("/foo"), vec![
+            (PathBuf::from("/foo"), 6),
+        ]);
+
+        assert_eq!(map.get("/foo"), None);
+        assert_eq!(map.get("/foo/bar/baz"), Some(&12));
     }
 }
