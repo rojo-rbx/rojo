@@ -297,11 +297,13 @@ mod test {
         cell::RefCell,
     };
 
+    use crossbeam_channel::Receiver;
     use maplit::hashmap;
 
     use super::super::{
         noop_fetcher::NoopFetcher,
         error::FsErrorKind,
+        fetcher::ImfsEvent,
     };
 
     #[test]
@@ -394,6 +396,16 @@ mod test {
 
             fn remove(&mut self, _path: &Path) -> io::Result<()> {
                 unimplemented!();
+            }
+
+            fn watch(&mut self, _path: &Path) {
+            }
+
+            fn unwatch(&mut self, _path: &Path) {
+            }
+
+            fn receiver(&mut self) -> Receiver<ImfsEvent> {
+                crossbeam_channel::never()
             }
         }
 
