@@ -86,7 +86,7 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
     });
     let root_id = tree.get_root_id();
 
-    let mut imfs = Imfs::new(RealFetcher);
+    let mut imfs = Imfs::new(RealFetcher::new());
     let entry = imfs.get(&options.fuzzy_project_path)
         .expect("could not get project path");
 
