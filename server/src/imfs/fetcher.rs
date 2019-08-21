@@ -28,5 +28,5 @@ pub trait ImfsFetcher {
 
     fn watch(&mut self, path: &Path);
     fn unwatch(&mut self, path: &Path);
-    fn receiver(&mut self) -> Receiver<ImfsEvent>;
+    fn receiver(&self) -> Receiver<ImfsEvent>;
 }

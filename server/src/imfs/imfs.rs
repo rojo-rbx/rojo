@@ -3,6 +3,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use crossbeam_channel::Receiver;
+
 use crate::path_map::PathMap;
 
 use super::{
@@ -34,33 +36,38 @@ impl<F: ImfsFetcher> Imfs<F> {
         }
     }
 
-    pub fn commit_pending_changes(&mut self) -> Vec<ImfsEvent> {
+    pub fn change_receiver(&self) -> Receiver<ImfsEvent> {
+        self.fetcher.receiver()
+    }
+
+    pub fn commit_pending_changes(&mut self) -> FsResult<Vec<ImfsEvent>> {
         let receiver = self.fetcher.receiver();
         let mut changes = Vec::new();
 
         while let Ok(event) = receiver.try_recv() {
-            self.commit_change(event, &mut changes);
+            self.commit_change(&event)?;
+            changes.push(event);
         }
 
-        changes
+        Ok(changes)
     }
 
-    fn commit_change(&mut self, event: ImfsEvent, changes: &mut Vec<ImfsEvent>) {
+    pub fn commit_change(&mut self, event: &ImfsEvent) -> FsResult<()> {
         use notify::DebouncedEvent::*;
 
         match event {
             Create(path) => {
-                self.raise_file_change(path);
+                self.raise_file_changed(path)?;
             }
             Write(path) => {
-                self.raise_file_change(path);
+                self.raise_file_changed(path)?;
             }
             Remove(path) => {
-                self.raise_file_removed(path);
+                self.raise_file_removed(path)?;
             }
             Rename(from_path, to_path) => {
-                self.raise_file_removed(from_path);
-                self.raise_file_change(to_path);
+                self.raise_file_removed(from_path)?;
+                self.raise_file_changed(to_path)?;
             }
             Error(err, path) => {
                 log::warn!("Filesystem error detected: {:?} on path {:?}", err, path);
@@ -71,6 +78,8 @@ impl<F: ImfsFetcher> Imfs<F> {
             }
             NoticeWrite(_) | NoticeRemove(_) | Chmod(_) => {}
         }
+
+        Ok(())
     }
 
     pub fn load_from_snapshot(&mut self, path: impl AsRef<Path>, snapshot: ImfsSnapshot) {
@@ -96,7 +105,7 @@ impl<F: ImfsFetcher> Imfs<F> {
         }
     }
 
-    pub fn raise_file_change(&mut self, path: impl AsRef<Path>) -> FsResult<()> {
+    fn raise_file_changed(&mut self, path: impl AsRef<Path>) -> FsResult<()> {
         let path = path.as_ref();
 
         if !self.would_be_resident(path) {
@@ -116,14 +125,17 @@ impl<F: ImfsFetcher> Imfs<F> {
                     }
                     (ImfsItem::Directory(_), FileType::Directory) => {
                         // No changes required, a directory updating doesn't mean anything to us.
+                        self.fetcher.watch(path);
                     }
                     (ImfsItem::File(_), FileType::Directory) => {
                         self.inner.remove(path);
                         self.inner.insert(path.to_path_buf(), ImfsItem::new_from_type(FileType::Directory, path));
+                        self.fetcher.watch(path);
                     }
                     (ImfsItem::Directory(_), FileType::File) => {
                         self.inner.remove(path);
                         self.inner.insert(path.to_path_buf(), ImfsItem::new_from_type(FileType::File, path));
+                        self.fetcher.unwatch(path);
                     }
                 }
             }
@@ -135,7 +147,7 @@ impl<F: ImfsFetcher> Imfs<F> {
         Ok(())
     }
 
-    pub fn raise_file_removed(&mut self, path: impl AsRef<Path>) -> FsResult<()> {
+    fn raise_file_removed(&mut self, path: impl AsRef<Path>) -> FsResult<()> {
         let path = path.as_ref();
 
         if !self.would_be_resident(path) {
@@ -143,6 +155,7 @@ impl<F: ImfsFetcher> Imfs<F> {
         }
 
         self.inner.remove(path);
+        self.fetcher.unwatch(path);
         Ok(())
     }
 
@@ -443,7 +456,7 @@ mod test {
             fn unwatch(&mut self, _path: &Path) {
             }
 
-            fn receiver(&mut self) -> Receiver<ImfsEvent> {
+            fn receiver(&self) -> Receiver<ImfsEvent> {
                 crossbeam_channel::never()
             }
         }
@@ -469,7 +482,7 @@ mod test {
             mock_state.a_contents = "Changed contents";
         }
 
-        imfs.raise_file_change("/dir/a.txt")
+        imfs.raise_file_changed("/dir/a.txt")
             .expect("error processing file change");
 
         let contents = a.contents(&mut imfs)

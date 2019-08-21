@@ -43,7 +43,7 @@ impl ImfsFetcher for NoopFetcher {
     fn unwatch(&mut self, _path: &Path) {
     }
 
-    fn receiver(&mut self) -> Receiver<ImfsEvent> {
+    fn receiver(&self) -> Receiver<ImfsEvent> {
         crossbeam_channel::never()
     }
 }

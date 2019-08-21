@@ -105,7 +105,7 @@ impl ImfsFetcher for RealFetcher {
         }
     }
 
-    fn receiver(&mut self) -> Receiver<ImfsEvent> {
+    fn receiver(&self) -> Receiver<ImfsEvent> {
         self.receiver.clone()
     }
 }
