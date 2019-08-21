@@ -8,7 +8,7 @@ use crate::path_map::PathMap;
 use super::{
     snapshot::ImfsSnapshot,
     error::{FsResult, FsError},
-    fetcher::{ImfsFetcher, FileType},
+    fetcher::{ImfsFetcher, FileType, ImfsEvent},
 };
 
 /// An in-memory filesystem that can be incrementally populated and updated as
@@ -31,6 +31,45 @@ impl<F: ImfsFetcher> Imfs<F> {
         Imfs {
             inner: PathMap::new(),
             fetcher,
+        }
+    }
+
+    pub fn commit_pending_changes(&mut self) -> Vec<ImfsEvent> {
+        let receiver = self.fetcher.receiver();
+        let mut changes = Vec::new();
+
+        while let Ok(event) = receiver.try_recv() {
+            self.commit_change(event, &mut changes);
+        }
+
+        changes
+    }
+
+    fn commit_change(&mut self, event: ImfsEvent, changes: &mut Vec<ImfsEvent>) {
+        use notify::DebouncedEvent::*;
+
+        match event {
+            Create(path) => {
+                self.raise_file_change(path);
+            }
+            Write(path) => {
+                self.raise_file_change(path);
+            }
+            Remove(path) => {
+                self.raise_file_removed(path);
+            }
+            Rename(from_path, to_path) => {
+                self.raise_file_removed(from_path);
+                self.raise_file_change(to_path);
+            }
+            Error(err, path) => {
+                log::warn!("Filesystem error detected: {:?} on path {:?}", err, path);
+            }
+            Rescan => {
+                // FIXME: Implement rescanning
+                log::warn!("Unhandled filesystem rescan event");
+            }
+            NoticeWrite(_) | NoticeRemove(_) | Chmod(_) => {}
         }
     }
 
