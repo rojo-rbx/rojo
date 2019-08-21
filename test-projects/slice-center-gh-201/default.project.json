@@ -1,0 +1,12 @@
+{
+  "name": "slice-center-gh-201",
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+
+      "$path": "folder"
+    }
+  }
+}

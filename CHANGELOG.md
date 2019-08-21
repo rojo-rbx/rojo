@@ -1,6 +1,7 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Fixed `Rect` values being set to `0, 0, 0, 0` when synced with the Rojo plugin. ([#201](https://github.com/rojo-rbx/rojo/issues/201))
 
 ## [0.5.0 Alpha 13](https://github.com/rojo-rbx/rojo/releases/tag/v0.5.0-alpha.13) (August 2, 2019)
 * Bumped minimum Rust version to 1.34.0.
