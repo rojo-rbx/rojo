@@ -55,6 +55,8 @@ impl<F: ImfsFetcher> Imfs<F> {
     pub fn commit_change(&mut self, event: &ImfsEvent) -> FsResult<()> {
         use notify::DebouncedEvent::*;
 
+        log::trace!("Committing Imfs change {:?}", event);
+
         match event {
             Create(path) => {
                 self.raise_file_changed(path)?;
@@ -200,6 +202,8 @@ impl<F: ImfsFetcher> Imfs<F> {
 
         match self.inner.get(path).unwrap() {
             ImfsItem::Directory(dir) => {
+                self.fetcher.watch(path);
+
                 if dir.children_enumerated {
                     return self.inner.children(path)
                         .unwrap() // TODO: Handle None here, which means the PathMap entry did not exist.
@@ -254,6 +258,10 @@ impl<F: ImfsFetcher> Imfs<F> {
         if !self.inner.contains_key(path) {
             let kind = self.fetcher.file_type(path)
                 .map_err(|err| FsError::new(err, path.to_path_buf()))?;
+
+            if kind == FileType::Directory {
+                self.fetcher.watch(path);
+            }
 
             self.inner.insert(path.to_path_buf(), ImfsItem::new_from_type(kind, path));
         }

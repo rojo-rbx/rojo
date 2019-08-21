@@ -35,6 +35,8 @@ impl RealFetcher {
         let handle = jod_thread::Builder::new()
             .name("RealFetcher message converter".to_owned())
             .spawn(move || {
+                log::trace!("Starting RealFetcher message converter thread");
+
                 notify_receiver.into_iter()
                     .for_each(|event| { s.send(event).unwrap() });
             })
@@ -60,6 +62,8 @@ impl ImfsFetcher for RealFetcher {
     }
 
     fn read_children(&mut self, path: &Path) -> io::Result<Vec<PathBuf>> {
+        log::trace!("Reading directory {}", path.display());
+
         let mut result = Vec::new();
 
         let iter = fs::read_dir(path)?;
@@ -72,18 +76,26 @@ impl ImfsFetcher for RealFetcher {
     }
 
     fn read_contents(&mut self, path: &Path) -> io::Result<Vec<u8>> {
+        log::trace!("Reading file {}", path.display());
+
         fs::read(path)
     }
 
     fn create_directory(&mut self, path: &Path) -> io::Result<()> {
+        log::trace!("Creating directory {}", path.display());
+
         fs::create_dir(path)
     }
 
     fn write_file(&mut self, path: &Path, contents: &[u8]) -> io::Result<()> {
+        log::trace!("Writing path {}", path.display());
+
         fs::write(path, contents)
     }
 
     fn remove(&mut self, path: &Path) -> io::Result<()> {
+        log::trace!("Removing path {}", path.display());
+
         let metadata = fs::metadata(path)?;
 
         if metadata.is_file() {
@@ -94,12 +106,16 @@ impl ImfsFetcher for RealFetcher {
     }
 
     fn watch(&mut self, path: &Path) {
+        log::trace!("Watching path {}", path.display());
+
         if let Err(err) = self.watcher.watch(path, RecursiveMode::NonRecursive) {
             log::warn!("Couldn't watch path {}: {:?}", path.display(), err);
         }
     }
 
     fn unwatch(&mut self, path: &Path) {
+        log::trace!("Stopped watching path {}", path.display());
+
         if let Err(err) = self.watcher.unwatch(path) {
             log::warn!("Couldn't unwatch path {}: {:?}", path.display(), err);
         }
