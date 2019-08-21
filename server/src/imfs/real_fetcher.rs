@@ -6,10 +6,10 @@ use std::{
     io,
     path::{Path, PathBuf},
     sync::mpsc,
-    thread,
     time::Duration,
 };
 
+use jod_thread::JoinHandle;
 use crossbeam_channel::{Receiver, unbounded};
 use notify::{RecursiveMode, RecommendedWatcher, Watcher};
 
@@ -20,7 +20,7 @@ pub struct RealFetcher {
 
     /// Thread handle to convert notify's mpsc channel messages into
     /// crossbeam_channel messages.
-    _converter_thread: ScopedThread,
+    _converter_thread: JoinHandle<()>,
     receiver: Receiver<ImfsEvent>,
 }
 
@@ -32,10 +32,13 @@ impl RealFetcher {
         let watcher = notify::watcher(notify_sender, Duration::from_millis(300))
             .expect("Couldn't start 'notify' file watcher");
 
-        let handle = ScopedThread::spawn("RealFetcher".to_owned(), move || {
-            notify_receiver.into_iter()
-                .for_each(|event| { s.send(event).unwrap() });
-        });
+        let handle = jod_thread::Builder::new()
+            .name("RealFetcher message converter".to_owned())
+            .spawn(move || {
+                notify_receiver.into_iter()
+                    .for_each(|event| { s.send(event).unwrap() });
+            })
+            .expect("Could not start message converter thread");
 
         RealFetcher {
             watcher,
@@ -104,26 +107,5 @@ impl ImfsFetcher for RealFetcher {
 
     fn receiver(&mut self) -> Receiver<ImfsEvent> {
         self.receiver.clone()
-    }
-}
-
-// Join-on-drop thread implementation from ra_vfs, maybe this should be a crate?
-struct ScopedThread(Option<thread::JoinHandle<()>>);
-
-impl ScopedThread {
-    fn spawn(name: String, f: impl FnOnce() + Send + 'static) -> ScopedThread {
-        let handle = thread::Builder::new().name(name).spawn(f).unwrap();
-
-        ScopedThread(Some(handle))
-    }
-}
-
-impl Drop for ScopedThread {
-    fn drop(&mut self) {
-        let res = self.0.take().unwrap().join();
-
-        if !thread::panicking() {
-            res.unwrap();
-        }
     }
 }
