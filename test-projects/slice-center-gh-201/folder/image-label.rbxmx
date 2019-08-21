@@ -1,0 +1,89 @@
+<roblox xmlns:xmime="http://www.w3.org/2005/05/xmlmime" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.roblox.com/roblox.xsd" version="4">
+	<Meta name="ExplicitAutoJoints">true</Meta>
+	<External>null</External>
+	<External>nil</External>
+	<Item class="ImageLabel" referent="RBXBB7AE810E3EE49438CCAA4DF1409C167">
+		<Properties>
+			<bool name="Active">false</bool>
+			<Vector2 name="AnchorPoint">
+				<X>0</X>
+				<Y>0</Y>
+			</Vector2>
+			<bool name="AutoLocalize">true</bool>
+			<Color3 name="BackgroundColor3">
+				<R>1</R>
+				<G>1</G>
+				<B>1</B>
+			</Color3>
+			<float name="BackgroundTransparency">0</float>
+			<Color3 name="BorderColor3">
+				<R>0.105882362</R>
+				<G>0.164705887</G>
+				<B>0.207843155</B>
+			</Color3>
+			<token name="BorderMode">0</token>
+			<int name="BorderSizePixel">1</int>
+			<bool name="ClipsDescendants">false</bool>
+			<bool name="Draggable">false</bool>
+			<Content name="Image"><url>rbxasset://textures/ui/GuiImagePlaceholder.png</url></Content>
+			<Color3 name="ImageColor3">
+				<R>1</R>
+				<G>1</G>
+				<B>1</B>
+			</Color3>
+			<Vector2 name="ImageRectOffset">
+				<X>0</X>
+				<Y>0</Y>
+			</Vector2>
+			<Vector2 name="ImageRectSize">
+				<X>0</X>
+				<Y>0</Y>
+			</Vector2>
+			<float name="ImageTransparency">0</float>
+			<int name="LayoutOrder">0</int>
+			<string name="Name">ImageLabel</string>
+			<Ref name="NextSelectionDown">null</Ref>
+			<Ref name="NextSelectionLeft">null</Ref>
+			<Ref name="NextSelectionRight">null</Ref>
+			<Ref name="NextSelectionUp">null</Ref>
+			<UDim2 name="Position">
+				<XS>0</XS>
+				<XO>0</XO>
+				<YS>0</YS>
+				<YO>0</YO>
+			</UDim2>
+			<Ref name="RootLocalizationTable">null</Ref>
+			<float name="Rotation">0</float>
+			<token name="ScaleType">1</token>
+			<bool name="Selectable">false</bool>
+			<Ref name="SelectionImageObject">null</Ref>
+			<UDim2 name="Size">
+				<XS>0</XS>
+				<XO>100</XO>
+				<YS>0</YS>
+				<YO>100</YO>
+			</UDim2>
+			<token name="SizeConstraint">0</token>
+			<Rect2D name="SliceCenter">
+				<min>
+					<X>1</X>
+					<Y>2</Y>
+				</min>
+				<max>
+					<X>3</X>
+					<Y>4</Y>
+				</max>
+			</Rect2D>
+			<float name="SliceScale">1</float>
+			<BinaryString name="Tags"></BinaryString>
+			<UDim2 name="TileSize">
+				<XS>1</XS>
+				<XO>0</XO>
+				<YS>1</YS>
+				<YO>0</YO>
+			</UDim2>
+			<bool name="Visible">true</bool>
+			<int name="ZIndex">1</int>
+		</Properties>
+	</Item>
+</roblox>
