@@ -6,7 +6,6 @@ use std::{
 };
 
 use rbx_dom_weak::{RbxTree, RbxInstanceProperties};
-use log::info;
 use failure::Fail;
 
 use crate::{
@@ -77,7 +76,7 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
         .or_else(|| detect_output_kind(options))
         .ok_or(BuildError::UnknownOutputKind)?;
 
-    info!("Hoping to generate file of type {:?}", output_kind);
+    log::info!("Hoping to generate file of type {:?}", output_kind);
 
     let mut tree = RbxTree::new(RbxInstanceProperties {
         name: "ROOT".to_owned(),
@@ -86,17 +85,25 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
     });
     let root_id = tree.get_root_id();
 
+    log::trace!("Constructing in-memory filesystem");
     let mut imfs = Imfs::new(RealFetcher::new());
+
+    log::trace!("Reading project root");
     let entry = imfs.get(&options.fuzzy_project_path)
         .expect("could not get project path");
 
+    log::trace!("Generating snapshot of instances from IMFS");
     let snapshot = snapshot_from_imfs(&mut imfs, &entry)
         .expect("snapshot failed")
         .expect("snapshot did not return an instance");
 
+    log::trace!("Computing patch set");
     let patch_set = compute_patch_set(&snapshot, &tree, root_id);
+
+    log::trace!("Applying patch set");
     apply_patch_set(&mut tree, &patch_set);
 
+    log::trace!("Opening output file for write");
     let mut file = BufWriter::new(File::create(&options.output_file)?);
 
     match output_kind {
@@ -127,6 +134,8 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
     }
 
     file.flush()?;
+
+    log::trace!("Done!");
 
     Ok(())
 }

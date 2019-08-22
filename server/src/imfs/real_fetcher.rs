@@ -26,6 +26,8 @@ pub struct RealFetcher {
 
 impl RealFetcher {
     pub fn new() -> RealFetcher {
+        log::trace!("Starting RealFetcher");
+
         let (notify_sender, notify_receiver) = mpsc::channel();
         let (s, r) = unbounded();
 
