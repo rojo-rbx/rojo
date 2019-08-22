@@ -15,13 +15,23 @@ use notify::{RecursiveMode, RecommendedWatcher, Watcher};
 
 use super::fetcher::{ImfsFetcher, FileType, ImfsEvent};
 
+/// Workaround to disable the file watcher for processes that don't need it,
+/// since notify appears hang on to mpsc Sender objects too long, causing Rojo
+/// to deadlock on drop.
+///
+/// We can make constructing the watcher optional in order to hotfix rojo build.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WatchMode {
+    Enabled,
+    Disabled,
+}
+
 pub struct RealFetcher {
     // Drop order is relevant here!
     //
     // `watcher` must be dropped before `_converter_thread` or else joining the
     // thread will cause a deadlock.
-
-    watcher: RecommendedWatcher,
+    watcher: Option<RecommendedWatcher>,
 
     /// Thread handle to convert notify's mpsc channel messages into
     /// crossbeam_channel messages.
@@ -30,16 +40,11 @@ pub struct RealFetcher {
 }
 
 impl RealFetcher {
-    pub fn new() -> RealFetcher {
-        log::trace!("Starting RealFetcher");
+    pub fn new(watch_mode: WatchMode) -> RealFetcher {
+        log::trace!("Starting RealFetcher with watch mode {:?}", watch_mode);
 
         let (notify_sender, notify_receiver) = mpsc::channel();
         let (sender, receiver) = unbounded();
-
-        // TODO: Investigate why notify hangs onto notify_sender too long,
-        // causing our program to deadlock.
-        let watcher = notify::watcher(notify_sender, Duration::from_millis(300))
-            .expect("Couldn't start 'notify' file watcher");
 
         let handle = jod_thread::Builder::new()
             .name("notify message converter".to_owned())
@@ -50,17 +55,22 @@ impl RealFetcher {
             })
             .expect("Could not start message converter thread");
 
+        // TODO: Investigate why notify hangs onto notify_sender too long,
+        // causing our program to deadlock. Once this is fixed, watcher no
+        // longer needs to be optional, but is still maybe useful?
+        let watcher = match watch_mode {
+            WatchMode::Enabled => {
+                Some(notify::watcher(notify_sender, Duration::from_millis(300))
+                    .expect("Couldn't start 'notify' file watcher"))
+            }
+            WatchMode::Disabled => None,
+        };
+
         RealFetcher {
             watcher,
             _converter_thread: handle,
             receiver,
         }
-    }
-}
-
-impl Drop for RealFetcher {
-    fn drop(&mut self) {
-
     }
 }
 
@@ -122,16 +132,20 @@ impl ImfsFetcher for RealFetcher {
     fn watch(&mut self, path: &Path) {
         log::trace!("Watching path {}", path.display());
 
-        if let Err(err) = self.watcher.watch(path, RecursiveMode::NonRecursive) {
-            log::warn!("Couldn't watch path {}: {:?}", path.display(), err);
+        if let Some(watcher) = self.watcher.as_mut() {
+            if let Err(err) = watcher.watch(path, RecursiveMode::NonRecursive) {
+                log::warn!("Couldn't watch path {}: {:?}", path.display(), err);
+            }
         }
     }
 
     fn unwatch(&mut self, path: &Path) {
         log::trace!("Stopped watching path {}", path.display());
 
-        if let Err(err) = self.watcher.unwatch(path) {
-            log::warn!("Couldn't unwatch path {}: {:?}", path.display(), err);
+        if let Some(watcher) = self.watcher.as_mut() {
+            if let Err(err) = watcher.unwatch(path) {
+                log::warn!("Couldn't unwatch path {}: {:?}", path.display(), err);
+            }
         }
     }
 

@@ -9,7 +9,7 @@ use rbx_dom_weak::{RbxTree, RbxInstanceProperties};
 use failure::Fail;
 
 use crate::{
-    imfs::new::{Imfs, RealFetcher, FsError},
+    imfs::new::{Imfs, RealFetcher, WatchMode, FsError},
     snapshot::{apply_patch_set, compute_patch_set},
     snapshot_middleware::snapshot_from_imfs,
 };
@@ -86,7 +86,7 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
     let root_id = tree.get_root_id();
 
     log::trace!("Constructing in-memory filesystem");
-    let mut imfs = Imfs::new(RealFetcher::new());
+    let mut imfs = Imfs::new(RealFetcher::new(WatchMode::Disabled));
 
     log::trace!("Reading project root");
     let entry = imfs.get(&options.fuzzy_project_path)

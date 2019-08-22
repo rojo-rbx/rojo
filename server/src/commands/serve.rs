@@ -7,7 +7,7 @@ use rbx_dom_weak::{RbxTree, RbxInstanceProperties};
 use failure::Fail;
 
 use crate::{
-    imfs::new::{Imfs, RealFetcher},
+    imfs::new::{Imfs, RealFetcher, WatchMode},
     snapshot::{apply_patch_set, compute_patch_set},
     snapshot_middleware::snapshot_from_imfs,
 };
@@ -42,7 +42,7 @@ pub fn serve(options: &ServeOptions) -> Result<(), ServeError> {
     });
     let root_id = tree.get_root_id();
 
-    let mut imfs = Imfs::new(RealFetcher::new());
+    let mut imfs = Imfs::new(RealFetcher::new(WatchMode::Enabled));
     let entry = imfs.get(&options.fuzzy_project_path)
         .expect("could not get project path");
 
