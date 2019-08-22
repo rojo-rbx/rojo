@@ -16,6 +16,11 @@ use notify::{RecursiveMode, RecommendedWatcher, Watcher};
 use super::fetcher::{ImfsFetcher, FileType, ImfsEvent};
 
 pub struct RealFetcher {
+    // Drop order is relevant here!
+    //
+    // `watcher` must be dropped before `_converter_thread` or else joining the
+    // thread will cause a deadlock.
+
     watcher: RecommendedWatcher,
 
     /// Thread handle to convert notify's mpsc channel messages into
@@ -29,26 +34,33 @@ impl RealFetcher {
         log::trace!("Starting RealFetcher");
 
         let (notify_sender, notify_receiver) = mpsc::channel();
-        let (s, r) = unbounded();
+        let (sender, receiver) = unbounded();
 
+        // TODO: Investigate why notify hangs onto notify_sender too long,
+        // causing our program to deadlock.
         let watcher = notify::watcher(notify_sender, Duration::from_millis(300))
             .expect("Couldn't start 'notify' file watcher");
 
         let handle = jod_thread::Builder::new()
-            .name("RealFetcher message converter".to_owned())
+            .name("notify message converter".to_owned())
             .spawn(move || {
-                log::trace!("Starting RealFetcher message converter thread");
-
-                notify_receiver.into_iter()
-                    .for_each(|event| { s.send(event).unwrap() });
+                notify_receiver
+                    .into_iter()
+                    .for_each(|event| { sender.send(event).unwrap() });
             })
             .expect("Could not start message converter thread");
 
         RealFetcher {
             watcher,
             _converter_thread: handle,
-            receiver: r,
+            receiver,
         }
+    }
+}
+
+impl Drop for RealFetcher {
+    fn drop(&mut self) {
+
     }
 }
 
