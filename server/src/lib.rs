@@ -2,17 +2,18 @@
 
 // Macros
 #[macro_use]
-pub mod impl_from;
+mod impl_from;
 
 // Other modules
 pub mod commands;
-pub mod imfs;
-pub mod serve_session;
-pub mod message_queue;
-pub mod path_map;
-pub mod path_serializer;
 pub mod project;
-pub mod session_id;
-pub mod snapshot;
-pub mod snapshot_middleware;
-pub mod web;
+
+mod imfs;
+mod message_queue;
+mod path_map;
+mod path_serializer;
+mod serve_session;
+mod session_id;
+mod snapshot;
+mod snapshot_middleware;
+mod web;
