@@ -29,6 +29,7 @@ use crate::{
 };
 
 const SERVER_VERSION: &str = env!("CARGO_PKG_VERSION");
+const PROTOCOL_VERSION: u64 = 3;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -114,7 +115,7 @@ impl ApiService {
     fn handle_api_rojo(&self) -> Response<Body> {
         response_json(&ServerInfoResponse {
             server_version: SERVER_VERSION,
-            protocol_version: 2,
+            protocol_version: PROTOCOL_VERSION,
             session_id: self.serve_session.session_id(),
             expected_place_ids: self.serve_session.serve_place_ids().map(Clone::clone),
         })

@@ -1,6 +1,7 @@
 use std::{
     collections::HashMap,
     path::PathBuf,
+    sync::Arc,
 };
 
 use rbx_dom_weak::{RbxTree, RbxInstanceProperties};
@@ -8,8 +9,11 @@ use failure::Fail;
 
 use crate::{
     imfs::new::{Imfs, RealFetcher, WatchMode},
+    project::{Project, ProjectLoadError},
+    serve_session::ServeSession,
     snapshot::{apply_patch_set, compute_patch_set},
     snapshot_middleware::snapshot_from_imfs,
+    web::LiveServer,
 };
 
 const DEFAULT_PORT: u16 = 34872;
@@ -22,15 +26,23 @@ pub struct ServeOptions {
 
 #[derive(Debug, Fail)]
 pub enum ServeError {
-    #[fail(display = "This error cannot happen.")]
-    CannotHappen,
+    #[fail(display = "Couldn't load project: {}", _0)]
+    ProjectLoad(#[fail(cause)] ProjectLoadError),
 }
 
+impl_from!(ServeError {
+    ProjectLoadError => ProjectLoad,
+});
+
 pub fn serve(options: &ServeOptions) -> Result<(), ServeError> {
-    // TODO: Pull port from project iff it exists.
+    let maybe_project = match Project::load_fuzzy(&options.fuzzy_project_path) {
+        Ok(project) => Some(project),
+        Err(ProjectLoadError::NotFound) => None,
+        Err(other) => return Err(other.into()),
+    };
 
     let port = options.port
-        // .or(project.serve_port)
+        .or(maybe_project.as_ref().and_then(|project| project.serve_port))
         .unwrap_or(DEFAULT_PORT);
 
     println!("Rojo server listening on port {}", port);
@@ -53,20 +65,25 @@ pub fn serve(options: &ServeOptions) -> Result<(), ServeError> {
     let patch_set = compute_patch_set(&snapshot, &tree, root_id);
     apply_patch_set(&mut tree, &patch_set);
 
-    let receiver = imfs.change_receiver();
+    let session = Arc::new(ServeSession::new(maybe_project));
+    let server = LiveServer::new(session);
 
-    while let Ok(change) = receiver.recv() {
-        imfs.commit_change(&change)
-            .expect("Failed to commit Imfs change");
+    server.start(port);
 
-        use notify::DebouncedEvent;
-        if let DebouncedEvent::Write(path) = change {
-            let contents = imfs.get_contents(path)
-                .expect("Failed to read changed path");
+    // let receiver = imfs.change_receiver();
 
-            println!("{:?}", std::str::from_utf8(contents));
-        }
-    }
+    // while let Ok(change) = receiver.recv() {
+    //     imfs.commit_change(&change)
+    //         .expect("Failed to commit Imfs change");
+
+    //     use notify::DebouncedEvent;
+    //     if let DebouncedEvent::Write(path) = change {
+    //         let contents = imfs.get_contents(path)
+    //             .expect("Failed to read changed path");
+
+    //         println!("{:?}", std::str::from_utf8(contents));
+    //     }
+    // }
 
     Ok(())
 }
