@@ -1,6 +1,4 @@
-// TODO: This module needs to be public for visualize, we should move
-// PublicInstanceMetadata and switch this private!
-pub mod api;
+mod api;
 mod interface;
 
 use std::sync::Arc;
@@ -18,9 +16,7 @@ use hyper::{
     Server,
 };
 
-use crate::{
-    live_session::LiveSession,
-};
+use crate::serve_session::ServeSession;
 
 use self::{
     api::ApiService,
@@ -50,22 +46,22 @@ impl Service for RootService {
 }
 
 impl RootService {
-    pub fn new(live_session: Arc<LiveSession>) -> RootService {
+    pub fn new(serve_session: Arc<ServeSession>) -> RootService {
         RootService {
-            api: ApiService::new(Arc::clone(&live_session)),
-            interface: InterfaceService::new(Arc::clone(&live_session)),
+            api: ApiService::new(Arc::clone(&serve_session)),
+            interface: InterfaceService::new(Arc::clone(&serve_session)),
         }
     }
 }
 
 pub struct LiveServer {
-    live_session: Arc<LiveSession>,
+    serve_session: Arc<ServeSession>,
 }
 
 impl LiveServer {
-    pub fn new(live_session: Arc<LiveSession>) -> LiveServer {
+    pub fn new(serve_session: Arc<ServeSession>) -> LiveServer {
         LiveServer {
-            live_session,
+            serve_session,
         }
     }
 
@@ -75,7 +71,7 @@ impl LiveServer {
         let server = Server::bind(&address)
             .serve(move || {
                 let service: FutureResult<_, hyper::Error> =
-                    future::ok(RootService::new(Arc::clone(&self.live_session)));
+                    future::ok(RootService::new(Arc::clone(&self.serve_session)));
                 service
             })
             .map_err(|e| eprintln!("Server error: {}", e));

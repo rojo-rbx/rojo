@@ -2,16 +2,15 @@
 //! JSON.
 
 use std::{
-    borrow::Cow,
-    collections::{HashMap, HashSet},
+    collections::HashSet,
     sync::Arc,
 };
 
 use futures::{
-    future::{self, IntoFuture},
+    future,
     Future,
-    sync::oneshot,
 };
+
 use hyper::{
     service::Service,
     header,
@@ -22,43 +21,14 @@ use hyper::{
     Response,
 };
 use serde::{Serialize, Deserialize};
-use rbx_dom_weak::{RbxId, RbxInstance};
+use rbx_dom_weak::RbxId;
 
 use crate::{
-    live_session::LiveSession,
+    serve_session::ServeSession,
     session_id::SessionId,
-    snapshot_reconciler::InstanceChanges,
-    rbx_session::{MetadataPerInstance},
 };
 
-/// Contains the instance metadata relevant to Rojo clients.
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct PublicInstanceMetadata {
-    ignore_unknown_instances: bool,
-}
-
-impl PublicInstanceMetadata {
-    pub fn from_session_metadata(meta: &MetadataPerInstance) -> PublicInstanceMetadata {
-        PublicInstanceMetadata {
-            ignore_unknown_instances: meta.ignore_unknown_instances,
-        }
-    }
-}
-
-/// Used to attach metadata specific to Rojo to instances, which come from the
-/// rbx_dom_weak crate.
-///
-/// Both fields are wrapped in Cow in order to make owned-vs-borrowed simpler
-/// for tests.
-#[derive(Debug, Serialize, Deserialize)]
-pub struct InstanceWithMetadata<'a> {
-    #[serde(flatten)]
-    pub instance: Cow<'a, RbxInstance>,
-
-    #[serde(rename = "Metadata")]
-    pub metadata: Option<PublicInstanceMetadata>,
-}
+const SERVER_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -67,23 +37,23 @@ pub struct ServerInfoResponse<'a> {
     pub server_version: &'a str,
     pub protocol_version: u64,
     pub expected_place_ids: Option<HashSet<u64>>,
-    pub root_instance_id: RbxId,
+    // pub root_instance_id: RbxId,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ReadResponse<'a> {
+pub struct ReadResponse {
     pub session_id: SessionId,
-    pub message_cursor: u32,
-    pub instances: HashMap<RbxId, InstanceWithMetadata<'a>>,
+    // pub message_cursor: u32,
+    // pub instances: HashMap<RbxId, InstanceWithMetadata<'a>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct SubscribeResponse<'a> {
+pub struct SubscribeResponse {
     pub session_id: SessionId,
-    pub message_cursor: u32,
-    pub messages: Cow<'a, [InstanceChanges]>,
+    // pub message_cursor: u32,
+    // pub messages: Cow<'a, [InstanceChanges]>,
 }
 
 fn response_json<T: serde::Serialize>(value: T) -> Response<Body> {
@@ -91,11 +61,11 @@ fn response_json<T: serde::Serialize>(value: T) -> Response<Body> {
         Ok(v) => v,
         Err(err) => {
             return Response::builder()
-                .status(StatusCode::BAD_REQUEST)
+                .status(StatusCode::INTERNAL_SERVER_ERROR)
                 .header(header::CONTENT_TYPE, "text/plain")
                 .body(Body::from(err.to_string()))
                 .unwrap();
-        },
+        }
     };
 
     Response::builder()
@@ -105,8 +75,7 @@ fn response_json<T: serde::Serialize>(value: T) -> Response<Body> {
 }
 
 pub struct ApiService {
-    live_session: Arc<LiveSession>,
-    server_version: &'static str,
+    serve_session: Arc<ServeSession>,
 }
 
 impl Service for ApiService {
@@ -135,24 +104,19 @@ impl Service for ApiService {
 }
 
 impl ApiService {
-    pub fn new(live_session: Arc<LiveSession>) -> ApiService {
+    pub fn new(serve_session: Arc<ServeSession>) -> ApiService {
         ApiService {
-            live_session,
-            server_version: env!("CARGO_PKG_VERSION"),
+            serve_session,
         }
     }
 
     /// Get a summary of information about the server
     fn handle_api_rojo(&self) -> Response<Body> {
-        let rbx_session = self.live_session.rbx_session.lock().unwrap();
-        let tree = rbx_session.get_tree();
-
         response_json(&ServerInfoResponse {
-            server_version: self.server_version,
+            server_version: SERVER_VERSION,
             protocol_version: 2,
-            session_id: self.live_session.session_id(),
-            expected_place_ids: self.live_session.serve_place_ids().clone(),
-            root_instance_id: tree.get_root_id(),
+            session_id: self.serve_session.session_id(),
+            expected_place_ids: self.serve_session.serve_place_ids().map(Clone::clone),
         })
     }
 
@@ -160,7 +124,7 @@ impl ApiService {
     /// there weren't any, subscribe to receive any new messages.
     fn handle_api_subscribe(&self, request: Request<Body>) -> <ApiService as Service>::Future {
         let argument = &request.uri().path()["/api/subscribe/".len()..];
-        let cursor: u32 = match argument.parse() {
+        let _cursor: u32 = match argument.parse() {
             Ok(v) => v,
             Err(err) => {
                 return Box::new(future::ok(Response::builder()
@@ -171,28 +135,9 @@ impl ApiService {
             },
         };
 
-        let message_queue = Arc::clone(&self.live_session.message_queue);
-        let session_id = self.live_session.session_id();
-
-        let (tx, rx) = oneshot::channel();
-        message_queue.subscribe(cursor, tx);
-
-        let result = rx.into_future()
-            .and_then(move |(new_cursor, new_messages)| {
-                Box::new(future::ok(response_json(SubscribeResponse {
-                    session_id: session_id,
-                    messages: Cow::Owned(new_messages),
-                    message_cursor: new_cursor,
-                })))
-            })
-            .or_else(|e| {
-                Box::new(future::ok(Response::builder()
-                    .status(500)
-                    .body(Body::from(format!("Internal Error: {:?}", e)))
-                    .unwrap()))
-            });
-
-        Box::new(result)
+        Box::new(future::ok(response_json(SubscribeResponse {
+            session_id: self.serve_session.session_id(),
+        })))
     }
 
     fn handle_api_read(&self, request: Request<Body>) -> Response<Body> {
@@ -202,9 +147,7 @@ impl ApiService {
             .map(RbxId::parse_str)
             .collect();
 
-        let message_queue = Arc::clone(&self.live_session.message_queue);
-
-        let requested_ids = match requested_ids {
+        let _requested_ids = match requested_ids {
             Some(id) => id,
             None => {
                 return Response::builder()
@@ -215,39 +158,8 @@ impl ApiService {
             },
         };
 
-        let rbx_session = self.live_session.rbx_session.lock().unwrap();
-        let tree = rbx_session.get_tree();
-
-        let message_cursor = message_queue.get_message_cursor();
-
-        let mut instances = HashMap::new();
-
-        for &requested_id in &requested_ids {
-            if let Some(instance) = tree.get_instance(requested_id) {
-                let metadata = rbx_session.get_instance_metadata(requested_id)
-                    .map(PublicInstanceMetadata::from_session_metadata);
-
-                instances.insert(instance.get_id(), InstanceWithMetadata {
-                    instance: Cow::Borrowed(instance),
-                    metadata,
-                });
-
-                for descendant in tree.descendants(requested_id) {
-                    let descendant_meta = rbx_session.get_instance_metadata(descendant.get_id())
-                        .map(PublicInstanceMetadata::from_session_metadata);
-
-                    instances.insert(descendant.get_id(), InstanceWithMetadata {
-                        instance: Cow::Borrowed(descendant),
-                        metadata: descendant_meta,
-                    });
-                }
-            }
-        }
-
-        response_json(&ReadResponse {
-            session_id: self.live_session.session_id(),
-            message_cursor,
-            instances,
+        response_json(ReadResponse {
+            session_id: self.serve_session.session_id(),
         })
     }
 }
