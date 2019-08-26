@@ -1,7 +1,12 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Changed `.model.json` naming, which may require projects to migrate ambiguous cases:
+    * The file name now takes precedence over the `Name` field in the model, like Rojo 0.4.x.
+    * The `Name` field of the top-level instance is now optional. It's recommended that you remove it from your models.
+    * Rojo will emit a warning when `Name` is specified and does not match the name from the file.
 * Fixed `Rect` values being set to `0, 0, 0, 0` when synced with the Rojo plugin. ([#201](https://github.com/rojo-rbx/rojo/issues/201))
+* Fixed live-syncing of `PhysicalProperties`, `NumberSequence`, and `ColorSequence` values
 
 ## [0.5.0 Alpha 13](https://github.com/rojo-rbx/rojo/releases/tag/v0.5.0-alpha.13) (August 2, 2019)
 * Bumped minimum Rust version to 1.34.0.
