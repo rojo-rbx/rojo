@@ -43,4 +43,4 @@ Download the attached `rbxm` file and put it into your Roblox Studio plugins fol
 {: align="center" }
 
 ### Installing from Roblox.com
-Visit [Rojo's Roblox.com Plugin page](https://www.roblox.com/library/1997686364/Rojo-0-5-0-alpha-3) in Roblox Studio and press **Install**.
+Visit [Rojo's roblox.com plugin page](https://www.roblox.com/library/1997686364/Rojo-0-5-0-alpha-3) in Roblox Studio and press **Install**.
