@@ -3,16 +3,21 @@ root = true
 [*]
 end_of_line = lf
 charset = utf-8
-insert_final_newline = false
 trim_trailing_whitespace = true
+insert_final_newline = false
 
 [*.{json,js,css}]
 indent_style = space
 indent_size = 2
 
-[*.{md,rs}]
+[*.md]
 indent_style = space
 indent_size = 4
+
+[*.rs]
+indent_style = space
+indent_size = 4
+insert_final_newline = true
 
 [*.lua]
 indent_style = tab
