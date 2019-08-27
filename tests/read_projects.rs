@@ -13,7 +13,7 @@ use librojo::project::{Project, ProjectNode};
 
 lazy_static! {
     static ref TEST_PROJECTS_ROOT: PathBuf =
-        { Path::new(env!("CARGO_MANIFEST_DIR")).join("../test-projects") };
+        { Path::new(env!("CARGO_MANIFEST_DIR")).join("test-projects") };
 }
 
 #[test]

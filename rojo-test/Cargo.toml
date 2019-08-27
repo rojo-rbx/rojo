@@ -11,4 +11,4 @@ paste = "0.1.5"
 tempfile = "3.1.0"
 
 # We execute Rojo via std::process::Command, so depend on it so it's built!
-rojo = { path = "../server" }
+rojo = { path = ".." }
