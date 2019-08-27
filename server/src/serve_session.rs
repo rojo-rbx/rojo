@@ -1,9 +1,6 @@
 use std::collections::HashSet;
 
-use crate::{
-    project::Project,
-    session_id::SessionId,
-};
+use crate::{project::Project, session_id::SessionId};
 
 /// Contains all of the state for a Rojo serve session.
 pub struct ServeSession {

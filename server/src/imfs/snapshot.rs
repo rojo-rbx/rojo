@@ -16,14 +16,9 @@ impl ImfsSnapshot {
 
     /// Create a new directory ImfsSnapshot with the given children.
     pub fn dir<S: Into<String>>(children: HashMap<S, ImfsSnapshot>) -> ImfsSnapshot {
-        let children = children
-            .into_iter()
-            .map(|(k, v)| (k.into(), v))
-            .collect();
+        let children = children.into_iter().map(|(k, v)| (k.into(), v)).collect();
 
-        ImfsSnapshot::Directory(DirectorySnapshot {
-            children,
-        })
+        ImfsSnapshot::Directory(DirectorySnapshot { children })
     }
 }
 

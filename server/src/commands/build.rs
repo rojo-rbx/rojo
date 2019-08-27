@@ -1,15 +1,15 @@
 use std::{
     collections::HashMap,
     fs::File,
-    io::{self, Write, BufWriter},
+    io::{self, BufWriter, Write},
     path::PathBuf,
 };
 
-use rbx_dom_weak::{RbxTree, RbxInstanceProperties};
 use failure::Fail;
+use rbx_dom_weak::{RbxInstanceProperties, RbxTree};
 
 use crate::{
-    imfs::new::{Imfs, RealFetcher, WatchMode, FsError},
+    imfs::new::{FsError, Imfs, RealFetcher, WatchMode},
     snapshot::{apply_patch_set, compute_patch_set},
     snapshot_middleware::snapshot_from_imfs,
 };
@@ -67,12 +67,12 @@ impl_from!(BuildError {
 });
 
 fn xml_encode_config() -> rbx_xml::EncodeOptions {
-    rbx_xml::EncodeOptions::new()
-        .property_behavior(rbx_xml::EncodePropertyBehavior::WriteUnknown)
+    rbx_xml::EncodeOptions::new().property_behavior(rbx_xml::EncodePropertyBehavior::WriteUnknown)
 }
 
 pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
-    let output_kind = options.output_kind
+    let output_kind = options
+        .output_kind
         .or_else(|| detect_output_kind(options))
         .ok_or(BuildError::UnknownOutputKind)?;
 
@@ -89,7 +89,8 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
     let mut imfs = Imfs::new(RealFetcher::new(WatchMode::Disabled));
 
     log::trace!("Reading project root");
-    let entry = imfs.get(&options.fuzzy_project_path)
+    let entry = imfs
+        .get(&options.fuzzy_project_path)
         .expect("could not get project path");
 
     log::trace!("Generating snapshot of instances from IMFS");
@@ -112,17 +113,17 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
             // descendants.
 
             rbx_xml::to_writer(&mut file, &tree, &[root_id], xml_encode_config())?;
-        },
+        }
         OutputKind::Rbxlx => {
             // Place files don't contain an entry for the DataModel, but our
             // RbxTree representation does.
 
             let top_level_ids = tree.get_instance(root_id).unwrap().get_children_ids();
             rbx_xml::to_writer(&mut file, &tree, top_level_ids, xml_encode_config())?;
-        },
+        }
         OutputKind::Rbxm => {
             rbx_binary::encode(&tree, &[root_id], &mut file)?;
-        },
+        }
         OutputKind::Rbxl => {
             log::warn!("Support for building binary places (rbxl) is still experimental.");
             log::warn!("Using the XML place format (rbxlx) is recommended instead.");
@@ -130,7 +131,7 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
 
             let top_level_ids = tree.get_instance(root_id).unwrap().get_children_ids();
             rbx_binary::encode(&tree, top_level_ids, &mut file)?;
-        },
+        }
     }
 
     file.flush()?;

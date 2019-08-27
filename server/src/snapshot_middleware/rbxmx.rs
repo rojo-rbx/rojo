@@ -1,15 +1,13 @@
 use std::borrow::Cow;
 
-use rbx_dom_weak::{RbxTree, RbxId};
+use rbx_dom_weak::{RbxId, RbxTree};
 
 use crate::{
-    imfs::new::{Imfs, ImfsFetcher, ImfsEntry},
+    imfs::new::{Imfs, ImfsEntry, ImfsFetcher},
     snapshot::InstanceSnapshot,
 };
 
-use super::{
-    middleware::{SnapshotMiddleware, SnapshotInstanceResult, SnapshotFileResult},
-};
+use super::middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware};
 
 pub struct SnapshotRbxmx;
 
@@ -22,16 +20,18 @@ impl SnapshotMiddleware for SnapshotRbxmx {
             return Ok(None);
         }
 
-        let file_name = entry.path()
-            .file_name().unwrap().to_string_lossy();
+        let file_name = entry.path().file_name().unwrap().to_string_lossy();
 
         if !file_name.ends_with(".rbxmx") {
-            return  Ok(None);
+            return Ok(None);
         }
 
-        let instance_name = entry.path()
-            .file_stem().expect("Could not extract file stem")
-            .to_string_lossy().to_string();
+        let instance_name = entry
+            .path()
+            .file_stem()
+            .expect("Could not extract file stem")
+            .to_string_lossy()
+            .to_string();
 
         let options = rbx_xml::DecodeOptions::new()
             .property_behavior(rbx_xml::DecodePropertyBehavior::ReadUnknown);
@@ -52,10 +52,7 @@ impl SnapshotMiddleware for SnapshotRbxmx {
         }
     }
 
-    fn from_instance(
-        _tree: &RbxTree,
-        _id: RbxId,
-    ) -> SnapshotFileResult {
+    fn from_instance(_tree: &RbxTree, _id: RbxId) -> SnapshotFileResult {
         unimplemented!("Snapshotting models");
     }
 }
@@ -71,7 +68,8 @@ mod test {
     #[test]
     fn model_from_imfs() {
         let mut imfs = Imfs::new(NoopFetcher);
-        let file = ImfsSnapshot::file(r#"
+        let file = ImfsSnapshot::file(
+            r#"
             <roblox version="4">
                 <Item class="Folder" referent="0">
                     <Properties>
@@ -79,12 +77,15 @@ mod test {
                     </Properties>
                 </Item>
             </roblox>
-        "#);
+        "#,
+        );
 
         imfs.load_from_snapshot("/foo.rbxmx", file);
 
         let entry = imfs.get("/foo.rbxmx").unwrap();
-        let instance_snapshot = SnapshotRbxmx::from_imfs(&mut imfs, &entry).unwrap().unwrap();
+        let instance_snapshot = SnapshotRbxmx::from_imfs(&mut imfs, &entry)
+            .unwrap()
+            .unwrap();
 
         assert_eq!(instance_snapshot.name, "foo");
         assert_eq!(instance_snapshot.class_name, "Folder");

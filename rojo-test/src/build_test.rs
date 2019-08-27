@@ -1,8 +1,4 @@
-use std::{
-    fs,
-    path::Path,
-    process::Command,
-};
+use std::{fs, path::Path, process::Command};
 
 use insta::assert_snapshot_matches;
 use tempfile::tempdir;
@@ -67,7 +63,10 @@ fn run_build_test(test_name: &str) {
 
     let status = Command::new(exe_path)
         .args(&[
-            "build", input_path.to_str().unwrap(), "-o", output_path.to_str().unwrap(),
+            "build",
+            input_path.to_str().unwrap(),
+            "-o",
+            output_path.to_str().unwrap(),
         ])
         .env("RUST_LOG", "error")
         .current_dir(working_dir)
@@ -76,8 +75,7 @@ fn run_build_test(test_name: &str) {
 
     assert!(status.success(), "Rojo did not exit successfully");
 
-    let contents = fs::read_to_string(&output_path)
-        .expect("Couldn't read output file");
+    let contents = fs::read_to_string(&output_path).expect("Couldn't read output file");
 
     assert_snapshot_matches!(test_name, contents);
 }

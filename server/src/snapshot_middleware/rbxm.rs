@@ -1,18 +1,13 @@
-use std::{
-    borrow::Cow,
-    collections::HashMap,
-};
+use std::{borrow::Cow, collections::HashMap};
 
-use rbx_dom_weak::{RbxTree, RbxInstanceProperties, RbxId};
+use rbx_dom_weak::{RbxId, RbxInstanceProperties, RbxTree};
 
 use crate::{
-    imfs::new::{Imfs, ImfsFetcher, ImfsEntry},
+    imfs::new::{Imfs, ImfsEntry, ImfsFetcher},
     snapshot::InstanceSnapshot,
 };
 
-use super::{
-    middleware::{SnapshotMiddleware, SnapshotInstanceResult, SnapshotFileResult},
-};
+use super::middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware};
 
 pub struct SnapshotRbxm;
 
@@ -25,16 +20,18 @@ impl SnapshotMiddleware for SnapshotRbxm {
             return Ok(None);
         }
 
-        let file_name = entry.path()
-            .file_name().unwrap().to_string_lossy();
+        let file_name = entry.path().file_name().unwrap().to_string_lossy();
 
         if !file_name.ends_with(".rbxm") {
-            return  Ok(None);
+            return Ok(None);
         }
 
-        let instance_name = entry.path()
-            .file_stem().expect("Could not extract file stem")
-            .to_string_lossy().to_string();
+        let instance_name = entry
+            .path()
+            .file_stem()
+            .expect("Could not extract file stem")
+            .to_string_lossy()
+            .to_string();
 
         let mut temp_tree = RbxTree::new(RbxInstanceProperties {
             name: "DataModel".to_owned(),
@@ -59,10 +56,7 @@ impl SnapshotMiddleware for SnapshotRbxm {
         }
     }
 
-    fn from_instance(
-        _tree: &RbxTree,
-        _id: RbxId,
-    ) -> SnapshotFileResult {
+    fn from_instance(_tree: &RbxTree, _id: RbxId) -> SnapshotFileResult {
         unimplemented!("Snapshotting models");
     }
 }

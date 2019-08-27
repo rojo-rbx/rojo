@@ -1,15 +1,15 @@
 use std::{
-    collections::{HashMap, HashSet, BTreeMap},
+    collections::{BTreeMap, HashMap, HashSet},
     fmt,
     fs::{self, File},
     io,
     path::{Path, PathBuf},
 };
 
-use log::warn;
 use failure::Fail;
-use rbx_dom_weak::{UnresolvedRbxValue, RbxValue};
-use serde::{Serialize, Serializer, Deserialize};
+use log::warn;
+use rbx_dom_weak::{RbxValue, UnresolvedRbxValue};
+use serde::{Deserialize, Serialize, Serializer};
 
 static DEFAULT_PLACE: &'static str = include_str!("../assets/place.project.json");
 
@@ -40,7 +40,8 @@ impl SourceProject {
     /// Consumes the SourceProject and yields a Project, ready for prime-time.
     pub fn into_project(mut self, project_file_location: &Path) -> Project {
         let tree = self.tree.into_project_node(project_file_location);
-        let plugins = self.plugins
+        let plugins = self
+            .plugins
             .drain(..)
             .map(|source_plugin| source_plugin.into_plugin(project_file_location))
             .collect();
@@ -76,43 +77,48 @@ impl SourceProject {
 ///
 /// This holds true for other values that might be ambiguous or just have more
 /// complicated representations like enums.
-fn serialize_unresolved_minimal<S>(unresolved: &UnresolvedRbxValue, serializer: S) -> Result<S::Ok, S::Error>
-    where S: Serializer
+fn serialize_unresolved_minimal<S>(
+    unresolved: &UnresolvedRbxValue,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
 {
     match unresolved {
         UnresolvedRbxValue::Ambiguous(_) => unresolved.serialize(serializer),
-        UnresolvedRbxValue::Concrete(concrete) => {
-            match concrete {
-                RbxValue::Bool { value } => value.serialize(serializer),
-                RbxValue::CFrame { value } => value.serialize(serializer),
-                RbxValue::Color3 { value } => value.serialize(serializer),
-                RbxValue::Color3uint8 { value } => value.serialize(serializer),
-                RbxValue::Content { value } => value.serialize(serializer),
-                RbxValue::Float32 { value } => value.serialize(serializer),
-                RbxValue::Int32 { value } => value.serialize(serializer),
-                RbxValue::String { value } => value.serialize(serializer),
-                RbxValue::UDim { value } => value.serialize(serializer),
-                RbxValue::UDim2 { value } => value.serialize(serializer),
-                RbxValue::Vector2 { value } => value.serialize(serializer),
-                RbxValue::Vector2int16 { value } => value.serialize(serializer),
-                RbxValue::Vector3 { value } => value.serialize(serializer),
-                RbxValue::Vector3int16 { value } => value.serialize(serializer),
-                _ => concrete.serialize(serializer),
-            }
+        UnresolvedRbxValue::Concrete(concrete) => match concrete {
+            RbxValue::Bool { value } => value.serialize(serializer),
+            RbxValue::CFrame { value } => value.serialize(serializer),
+            RbxValue::Color3 { value } => value.serialize(serializer),
+            RbxValue::Color3uint8 { value } => value.serialize(serializer),
+            RbxValue::Content { value } => value.serialize(serializer),
+            RbxValue::Float32 { value } => value.serialize(serializer),
+            RbxValue::Int32 { value } => value.serialize(serializer),
+            RbxValue::String { value } => value.serialize(serializer),
+            RbxValue::UDim { value } => value.serialize(serializer),
+            RbxValue::UDim2 { value } => value.serialize(serializer),
+            RbxValue::Vector2 { value } => value.serialize(serializer),
+            RbxValue::Vector2int16 { value } => value.serialize(serializer),
+            RbxValue::Vector3 { value } => value.serialize(serializer),
+            RbxValue::Vector3int16 { value } => value.serialize(serializer),
+            _ => concrete.serialize(serializer),
         },
     }
 }
 
 /// A wrapper around serialize_unresolved_minimal that handles the HashMap case.
-fn serialize_unresolved_map<S>(value: &HashMap<String, UnresolvedRbxValue>, serializer: S) -> Result<S::Ok, S::Error>
-    where S: Serializer
+fn serialize_unresolved_map<S>(
+    value: &HashMap<String, UnresolvedRbxValue>,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
 {
     use serde::ser::SerializeMap;
 
     #[derive(Serialize)]
     struct Minimal<'a>(
-        #[serde(serialize_with = "serialize_unresolved_minimal")]
-        &'a UnresolvedRbxValue
+        #[serde(serialize_with = "serialize_unresolved_minimal")] &'a UnresolvedRbxValue,
     );
 
     let mut map = serializer.serialize_map(Some(value.len()))?;
@@ -135,11 +141,14 @@ struct SourceProjectNode {
         rename = "$properties",
         default = "HashMap::new",
         skip_serializing_if = "HashMap::is_empty",
-        serialize_with = "serialize_unresolved_map",
+        serialize_with = "serialize_unresolved_map"
     )]
     properties: HashMap<String, UnresolvedRbxValue>,
 
-    #[serde(rename = "$ignoreUnknownInstances", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "$ignoreUnknownInstances",
+        skip_serializing_if = "Option::is_none"
+    )]
     ignore_unknown_instances: Option<bool>,
 
     #[serde(rename = "$path", skip_serializing_if = "Option::is_none")]
@@ -152,8 +161,15 @@ struct SourceProjectNode {
 impl SourceProjectNode {
     /// Consumes the SourceProjectNode and turns it into a ProjectNode.
     pub fn into_project_node(self, project_file_location: &Path) -> ProjectNode {
-        let children = self.children.iter()
-            .map(|(key, value)| (key.clone(), value.clone().into_project_node(project_file_location)))
+        let children = self
+            .children
+            .iter()
+            .map(|(key, value)| {
+                (
+                    key.clone(),
+                    value.clone().into_project_node(project_file_location),
+                )
+            })
             .collect();
 
         // Make sure that paths are absolute, transforming them by adding the
@@ -191,9 +207,7 @@ impl SourcePlugin {
             project_folder_location.join(self.path)
         };
 
-        Plugin {
-            path,
-        }
+        Plugin { path }
     }
 }
 
@@ -219,15 +233,16 @@ impl fmt::Display for ProjectLoadError {
         use self::ProjectLoadError::*;
 
         match self {
-            NotFound => {
-                write!(formatter, "Project file not found")
-            }
+            NotFound => write!(formatter, "Project file not found"),
             Io { inner, path } => {
                 write!(formatter, "I/O error: {} in path {}", inner, path.display())
             }
-            Json { inner, path } => {
-                write!(formatter, "JSON error: {} in path {}", inner, path.display())
-            }
+            Json { inner, path } => write!(
+                formatter,
+                "JSON error: {} in path {}",
+                inner,
+                path.display()
+            ),
         }
     }
 }
@@ -244,7 +259,9 @@ pub enum ProjectInitError {
 impl fmt::Display for ProjectInitError {
     fn fmt(&self, output: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            ProjectInitError::AlreadyExists(path) => write!(output, "Path {} already exists", path.display()),
+            ProjectInitError::AlreadyExists(path) => {
+                write!(output, "Path {} already exists", path.display())
+            }
             ProjectInitError::IoError(inner) => write!(output, "IO error: {}", inner),
             ProjectInitError::SaveError(inner) => write!(output, "{}", inner),
             ProjectInitError::JsonError(inner) => write!(output, "{}", inner),
@@ -277,8 +294,13 @@ impl ProjectNode {
     fn validate_reserved_names(&self) {
         for (name, child) in &self.children {
             if name.starts_with('$') {
-                warn!("Keys starting with '$' are reserved by Rojo to ensure forward compatibility.");
-                warn!("This project uses the key '{}', which should be renamed.", name);
+                warn!(
+                    "Keys starting with '$' are reserved by Rojo to ensure forward compatibility."
+                );
+                warn!(
+                    "This project uses the key '{}', which should be renamed.",
+                    name
+                );
             }
 
             child.validate_reserved_names();
@@ -286,7 +308,9 @@ impl ProjectNode {
     }
 
     fn to_source_node(&self, project_file_location: &Path) -> SourceProjectNode {
-        let children = self.children.iter()
+        let children = self
+            .children
+            .iter()
             .map(|(key, value)| (key.clone(), value.to_source_node(project_file_location)))
             .collect();
 
@@ -329,9 +353,7 @@ impl Plugin {
             Err(_) => format!("{}", self.path.display()),
         };
 
-        SourcePlugin {
-            path,
-        }
+        SourcePlugin { path }
     }
 }
 
@@ -351,13 +373,18 @@ impl Project {
 
         let project_name = if project_fuzzy_path == project_path {
             project_fuzzy_path
-                .parent().expect("Path did not have a parent directory")
-                .file_name().expect("Path did not have a file name")
-                .to_str().expect("Path had invalid Unicode")
+                .parent()
+                .expect("Path did not have a parent directory")
+                .file_name()
+                .expect("Path did not have a file name")
+                .to_str()
+                .expect("Path had invalid Unicode")
         } else {
             project_fuzzy_path
-                .file_name().expect("Path did not have a file name")
-                .to_str().expect("Path had invalid Unicode")
+                .file_name()
+                .expect("Path did not have a file name")
+                .to_str()
+                .expect("Path had invalid Unicode")
         };
 
         let mut project = Project::load_from_str(DEFAULT_PLACE, &project_path)
@@ -365,8 +392,7 @@ impl Project {
 
         project.name = project_name.to_owned();
 
-        project.save()
-            .map_err(ProjectInitError::SaveError)?;
+        project.save().map_err(ProjectInitError::SaveError)?;
 
         Ok(project_path)
     }
@@ -376,17 +402,23 @@ impl Project {
 
         let project_name = if project_fuzzy_path == project_path {
             project_fuzzy_path
-                .parent().expect("Path did not have a parent directory")
-                .file_name().expect("Path did not have a file name")
-                .to_str().expect("Path had invalid Unicode")
+                .parent()
+                .expect("Path did not have a parent directory")
+                .file_name()
+                .expect("Path did not have a file name")
+                .to_str()
+                .expect("Path had invalid Unicode")
         } else {
             project_fuzzy_path
-                .file_name().expect("Path did not have a file name")
-                .to_str().expect("Path had invalid Unicode")
+                .file_name()
+                .expect("Path did not have a file name")
+                .to_str()
+                .expect("Path had invalid Unicode")
         };
 
         let project_folder_path = project_path
-            .parent().expect("Path did not have a parent directory");
+            .parent()
+            .expect("Path did not have a parent directory");
 
         let tree = ProjectNode {
             path: Some(project_folder_path.join("src")),
@@ -402,8 +434,7 @@ impl Project {
             file_location: project_path.clone(),
         };
 
-        project.save()
-            .map_err(ProjectInitError::SaveError)?;
+        project.save().map_err(ProjectInitError::SaveError)?;
 
         Ok(project_path)
     }
@@ -419,7 +450,7 @@ impl Project {
 
         match fs::metadata(&project_path) {
             Err(error) => match error.kind() {
-                io::ErrorKind::NotFound => {},
+                io::ErrorKind::NotFound => {}
                 _ => return Err(ProjectInitError::IoError(error)),
             },
             Ok(_) => return Err(ProjectInitError::AlreadyExists(project_path)),
@@ -459,13 +490,19 @@ impl Project {
         }
     }
 
-    fn load_from_str(contents: &str, project_file_location: &Path) -> Result<Project, serde_json::Error> {
+    fn load_from_str(
+        contents: &str,
+        project_file_location: &Path,
+    ) -> Result<Project, serde_json::Error> {
         let parsed: SourceProject = serde_json::from_str(&contents)?;
 
         Ok(parsed.into_project(project_file_location))
     }
 
-    pub fn load_from_slice(contents: &[u8], project_file_location: &Path) -> Result<Project, serde_json::Error> {
+    pub fn load_from_slice(
+        contents: &[u8],
+        project_file_location: &Path,
+    ) -> Result<Project, serde_json::Error> {
         let parsed: SourceProject = serde_json::from_slice(&contents)?;
 
         Ok(parsed.into_project(project_file_location))
@@ -481,17 +518,17 @@ impl Project {
     }
 
     pub fn load_exact(project_file_location: &Path) -> Result<Project, ProjectLoadError> {
-        let contents = fs::read_to_string(project_file_location)
-            .map_err(|error| match error.kind() {
+        let contents =
+            fs::read_to_string(project_file_location).map_err(|error| match error.kind() {
                 io::ErrorKind::NotFound => ProjectLoadError::NotFound,
                 _ => ProjectLoadError::Io {
                     inner: error,
                     path: project_file_location.to_path_buf(),
-                }
+                },
             })?;
 
-        let parsed: SourceProject = serde_json::from_str(&contents)
-            .map_err(|error| ProjectLoadError::Json {
+        let parsed: SourceProject =
+            serde_json::from_str(&contents).map_err(|error| ProjectLoadError::Json {
                 inner: error,
                 path: project_file_location.to_path_buf(),
             })?;
@@ -504,8 +541,7 @@ impl Project {
 
     pub fn save(&self) -> Result<(), ProjectSaveError> {
         let source_project = self.to_source_project();
-        let mut file = File::create(&self.file_location)
-            .map_err(ProjectSaveError::IoError)?;
+        let mut file = File::create(&self.file_location).map_err(ProjectSaveError::IoError)?;
 
         serde_json::to_writer_pretty(&mut file, &source_project)
             .map_err(ProjectSaveError::JsonError)?;
@@ -516,9 +552,12 @@ impl Project {
     /// Checks if there are any compatibility issues with this project file and
     /// warns the user if there are any.
     fn check_compatibility(&self) {
-        let file_name = self.file_location
-            .file_name().expect("Project file path did not have a file name")
-            .to_str().expect("Project file path was not valid Unicode");
+        let file_name = self
+            .file_location
+            .file_name()
+            .expect("Project file path did not have a file name")
+            .to_str()
+            .expect("Project file path was not valid Unicode");
 
         if file_name == COMPAT_PROJECT_FILENAME {
             warn!("Rojo's default project file name changed in 0.5.0-alpha3.");
@@ -554,7 +593,8 @@ impl Project {
     }
 
     fn to_source_project(&self) -> SourceProject {
-        let plugins = self.plugins
+        let plugins = self
+            .plugins
             .iter()
             .map(|plugin| plugin.to_source_plugin(&self.file_location))
             .collect();

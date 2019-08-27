@@ -3,25 +3,16 @@ mod interface;
 
 use std::sync::Arc;
 
-use log::trace;
 use futures::{
     future::{self, FutureResult},
     Future,
 };
-use hyper::{
-    service::Service,
-    Body,
-    Request,
-    Response,
-    Server,
-};
+use hyper::{service::Service, Body, Request, Response, Server};
+use log::trace;
 
 use crate::serve_session::ServeSession;
 
-use self::{
-    api::ApiService,
-    interface::InterfaceService,
-};
+use self::{api::ApiService, interface::InterfaceService};
 
 pub struct RootService {
     api: api::ApiService,
@@ -60,9 +51,7 @@ pub struct LiveServer {
 
 impl LiveServer {
     pub fn new(serve_session: Arc<ServeSession>) -> LiveServer {
-        LiveServer {
-            serve_session,
-        }
+        LiveServer { serve_session }
     }
 
     pub fn start(self, port: u16) {

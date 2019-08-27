@@ -1,12 +1,6 @@
-use std::{
-    fmt,
-    error::Error,
-    path::PathBuf,
-};
+use std::{error::Error, fmt, path::PathBuf};
 
-use crate::{
-    snapshot::InstanceSnapshot,
-};
+use crate::snapshot::InstanceSnapshot;
 
 pub type SnapshotResult<'a> = Result<Option<InstanceSnapshot<'a>>, SnapshotError>;
 
@@ -43,9 +37,7 @@ impl SnapshotError {
         path: impl Into<PathBuf>,
     ) -> SnapshotError {
         SnapshotError {
-            detail: SnapshotErrorDetail::FileContentsBadUnicode {
-                inner,
-            },
+            detail: SnapshotErrorDetail::FileContentsBadUnicode { inner },
             path: Some(path.into()),
         }
     }
@@ -70,9 +62,7 @@ impl fmt::Display for SnapshotError {
 pub enum SnapshotErrorDetail {
     FileDidNotExist,
     FileNameBadUnicode,
-    FileContentsBadUnicode {
-        inner: std::str::Utf8Error,
-    },
+    FileContentsBadUnicode { inner: std::str::Utf8Error },
 }
 
 impl SnapshotErrorDetail {
@@ -81,7 +71,7 @@ impl SnapshotErrorDetail {
 
         match self {
             FileContentsBadUnicode { inner } => Some(inner),
-            _ => None
+            _ => None,
         }
     }
 }
@@ -93,7 +83,9 @@ impl fmt::Display for SnapshotErrorDetail {
         match self {
             FileDidNotExist => write!(formatter, "file did not exist"),
             FileNameBadUnicode => write!(formatter, "file name had malformed Unicode"),
-            FileContentsBadUnicode { inner } => write!(formatter, "file had malformed unicode: {}", inner),
+            FileContentsBadUnicode { inner } => {
+                write!(formatter, "file had malformed unicode: {}", inner)
+            }
         }
     }
 }

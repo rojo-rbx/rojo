@@ -3,11 +3,11 @@
 
 use std::collections::{HashMap, HashSet};
 
-use rbx_dom_weak::{RbxTree, RbxValue, RbxId, RbxInstance};
+use rbx_dom_weak::{RbxId, RbxInstance, RbxTree, RbxValue};
 
 use super::{
+    patch::{PatchAddInstance, PatchSet, PatchUpdateInstance},
     InstanceSnapshot,
-    patch::{PatchSet, PatchAddInstance, PatchUpdateInstance},
 };
 
 pub fn compute_patch_set<'a>(
@@ -38,7 +38,9 @@ fn rewrite_refs_in_updates(context: &ComputePatchContext, updates: &mut [PatchUp
         for property_value in update.changed_properties.values_mut() {
             if let Some(RbxValue::Ref { value: Some(id) }) = property_value {
                 if let Some(&instance_id) = context.snapshot_id_to_instance_id.get(id) {
-                    *property_value = Some(RbxValue::Ref { value: Some(instance_id) });
+                    *property_value = Some(RbxValue::Ref {
+                        value: Some(instance_id),
+                    });
                 }
             }
         }
@@ -55,7 +57,9 @@ fn rewrite_refs_in_snapshot(context: &ComputePatchContext, snapshot: &mut Instan
     for property_value in snapshot.properties.values_mut() {
         if let RbxValue::Ref { value: Some(id) } = property_value {
             if let Some(&instance_id) = context.snapshot_id_to_instance_id.get(id) {
-                *property_value = RbxValue::Ref { value: Some(instance_id) };
+                *property_value = RbxValue::Ref {
+                    value: Some(instance_id),
+                };
             }
         }
     }
@@ -76,7 +80,8 @@ fn compute_patch_set_internal<'a>(
         context.snapshot_id_to_instance_id.insert(snapshot_id, id);
     }
 
-    let instance = tree.get_instance(id)
+    let instance = tree
+        .get_instance(id)
         .expect("Instance did not exist in tree");
 
     compute_property_patches(snapshot, instance, patch_set);
@@ -145,7 +150,8 @@ fn compute_children_patches<'a>(
     id: RbxId,
     patch_set: &mut PatchSet<'a>,
 ) {
-    let instance = tree.get_instance(id)
+    let instance = tree
+        .get_instance(id)
         .expect("Instance did not exist in tree");
 
     let instance_children = instance.get_children_ids();
@@ -153,30 +159,38 @@ fn compute_children_patches<'a>(
     let mut paired_instances = vec![false; instance_children.len()];
 
     for snapshot_child in snapshot.children.iter() {
-        let matching_instance = instance_children
-            .iter()
-            .enumerate()
-            .find(|(instance_index, instance_child_id)| {
-                if paired_instances[*instance_index] {
-                    return false;
-                }
+        let matching_instance =
+            instance_children
+                .iter()
+                .enumerate()
+                .find(|(instance_index, instance_child_id)| {
+                    if paired_instances[*instance_index] {
+                        return false;
+                    }
 
-                let instance_child = tree.get_instance(**instance_child_id)
-                    .expect("Instance did not exist in tree");
+                    let instance_child = tree
+                        .get_instance(**instance_child_id)
+                        .expect("Instance did not exist in tree");
 
-                if snapshot_child.name == instance_child.name &&
-                    instance_child.class_name == instance_child.class_name
-                {
-                    paired_instances[*instance_index] = true;
-                    return true;
-                }
+                    if snapshot_child.name == instance_child.name
+                        && instance_child.class_name == instance_child.class_name
+                    {
+                        paired_instances[*instance_index] = true;
+                        return true;
+                    }
 
-                false
-            });
+                    false
+                });
 
         match matching_instance {
             Some((_, instance_child_id)) => {
-                compute_patch_set_internal(context, snapshot_child, tree, *instance_child_id, patch_set);
+                compute_patch_set_internal(
+                    context,
+                    snapshot_child,
+                    tree,
+                    *instance_child_id,
+                    patch_set,
+                );
             }
             None => {
                 patch_set.added_instances.push(PatchAddInstance {
@@ -238,18 +252,16 @@ mod test {
         let patch_set = compute_patch_set(&snapshot, &tree, root_id);
 
         let expected_patch_set = PatchSet {
-            updated_instances: vec![
-                PatchUpdateInstance {
-                    id: root_id,
-                    changed_name: None,
-                    changed_class_name: None,
-                    changed_properties: hashmap! {
-                        "Self".to_owned() => Some(RbxValue::Ref {
-                            value: Some(root_id),
-                        }),
-                    },
+            updated_instances: vec![PatchUpdateInstance {
+                id: root_id,
+                changed_name: None,
+                changed_class_name: None,
+                changed_properties: hashmap! {
+                    "Self".to_owned() => Some(RbxValue::Ref {
+                        value: Some(root_id),
+                    }),
                 },
-            ],
+            }],
             added_instances: Vec::new(),
             removed_instances: Vec::new(),
         };
@@ -274,20 +286,18 @@ mod test {
         let snapshot_id = RbxId::new();
         let snapshot = InstanceSnapshot {
             snapshot_id: Some(snapshot_id),
-            children: vec![
-                InstanceSnapshot {
-                    properties: hashmap! {
-                        "Self".to_owned() => RbxValue::Ref {
-                            value: Some(snapshot_id),
-                        },
+            children: vec![InstanceSnapshot {
+                properties: hashmap! {
+                    "Self".to_owned() => RbxValue::Ref {
+                        value: Some(snapshot_id),
                     },
+                },
 
-                    snapshot_id: None,
-                    name: Cow::Borrowed("child"),
-                    class_name: Cow::Borrowed("child"),
-                    children: Vec::new(),
-                }
-            ],
+                snapshot_id: None,
+                name: Cow::Borrowed("child"),
+                class_name: Cow::Borrowed("child"),
+                children: Vec::new(),
+            }],
 
             properties: HashMap::new(),
             name: Cow::Borrowed("foo"),
@@ -297,22 +307,20 @@ mod test {
         let patch_set = compute_patch_set(&snapshot, &tree, root_id);
 
         let expected_patch_set = PatchSet {
-            added_instances: vec![
-                PatchAddInstance {
-                    parent_id: root_id,
-                    instance: InstanceSnapshot {
-                        snapshot_id: None,
-                        properties: hashmap! {
-                            "Self".to_owned() => RbxValue::Ref {
-                                value: Some(root_id),
-                            },
+            added_instances: vec![PatchAddInstance {
+                parent_id: root_id,
+                instance: InstanceSnapshot {
+                    snapshot_id: None,
+                    properties: hashmap! {
+                        "Self".to_owned() => RbxValue::Ref {
+                            value: Some(root_id),
                         },
-                        name: Cow::Borrowed("child"),
-                        class_name: Cow::Borrowed("child"),
-                        children: Vec::new(),
                     },
+                    name: Cow::Borrowed("child"),
+                    class_name: Cow::Borrowed("child"),
+                    children: Vec::new(),
                 },
-            ],
+            }],
             updated_instances: Vec::new(),
             removed_instances: Vec::new(),
         };

@@ -1,20 +1,15 @@
-use std::{
-    borrow::Cow,
-    collections::HashMap,
-};
+use std::{borrow::Cow, collections::HashMap};
 
+use rbx_dom_weak::{RbxId, RbxTree, UnresolvedRbxValue};
 use rbx_reflection::try_resolve_value;
-use rbx_dom_weak::{RbxTree, RbxId, UnresolvedRbxValue};
-use serde::{Deserialize};
+use serde::Deserialize;
 
 use crate::{
-    imfs::new::{Imfs, ImfsFetcher, ImfsEntry},
+    imfs::new::{Imfs, ImfsEntry, ImfsFetcher},
     snapshot::InstanceSnapshot,
 };
 
-use super::{
-    middleware::{SnapshotMiddleware, SnapshotInstanceResult, SnapshotFileResult},
-};
+use super::middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware};
 
 pub struct SnapshotJsonModel;
 
@@ -27,22 +22,30 @@ impl SnapshotMiddleware for SnapshotJsonModel {
             return Ok(None);
         }
 
-        let file_name = entry.path()
-            .file_name().unwrap().to_string_lossy();
+        let file_name = entry.path().file_name().unwrap().to_string_lossy();
 
         let instance_name = match match_trailing(&file_name, ".model.json") {
             Some(name) => name.to_owned(),
             None => return Ok(None),
         };
 
-        let instance: JsonModel = serde_json::from_slice(entry.contents(imfs)?)
-            .expect("TODO: Handle serde_json errors");
+        let instance: JsonModel =
+            serde_json::from_slice(entry.contents(imfs)?).expect("TODO: Handle serde_json errors");
 
         if let Some(json_name) = &instance.name {
             if json_name != &instance_name {
-                log::warn!("Name from JSON model did not match its file name: {}", entry.path().display());
-                log::warn!("In Rojo <  alpha 14, this model is named \"{}\" (from its 'Name' property)", json_name);
-                log::warn!("In Rojo >= alpha 14, this model is named \"{}\" (from its file name)", instance_name);
+                log::warn!(
+                    "Name from JSON model did not match its file name: {}",
+                    entry.path().display()
+                );
+                log::warn!(
+                    "In Rojo <  alpha 14, this model is named \"{}\" (from its 'Name' property)",
+                    json_name
+                );
+                log::warn!(
+                    "In Rojo >= alpha 14, this model is named \"{}\" (from its file name)",
+                    instance_name
+                );
                 log::warn!("'Name' for the top-level instance in a JSON model is now optional and will be ignored.");
             }
         }
@@ -52,10 +55,7 @@ impl SnapshotMiddleware for SnapshotJsonModel {
         Ok(Some(snapshot))
     }
 
-    fn from_instance(
-        _tree: &RbxTree,
-        _id: RbxId,
-    ) -> SnapshotFileResult {
+    fn from_instance(_tree: &RbxTree, _id: RbxId) -> SnapshotFileResult {
         unimplemented!("Snapshotting models");
     }
 }
@@ -103,14 +103,17 @@ impl JsonModelCore {
     fn into_snapshot(self, name: String) -> InstanceSnapshot<'static> {
         let class_name = self.class_name;
 
-        let children = self.children.into_iter()
+        let children = self
+            .children
+            .into_iter()
             .map(|child| child.core.into_snapshot(child.name))
             .collect();
 
-        let properties = self.properties.into_iter()
+        let properties = self
+            .properties
+            .into_iter()
             .map(|(key, value)| {
-                try_resolve_value(&class_name, &key, &value)
-                    .map(|resolved| (key, resolved))
+                try_resolve_value(&class_name, &key, &value).map(|resolved| (key, resolved))
             })
             .collect::<Result<HashMap<_, _>, _>>()
             .expect("TODO: Handle rbx_reflection errors");
@@ -137,7 +140,8 @@ mod test {
     #[test]
     fn model_from_imfs() {
         let mut imfs = Imfs::new(NoopFetcher);
-        let file = ImfsSnapshot::file(r#"
+        let file = ImfsSnapshot::file(
+            r#"
             {
               "Name": "children",
               "ClassName": "IntValue",
@@ -151,31 +155,35 @@ mod test {
                 }
               ]
             }
-        "#);
+        "#,
+        );
 
         imfs.load_from_snapshot("/foo.model.json", file);
 
         let entry = imfs.get("/foo.model.json").unwrap();
-        let instance_snapshot = SnapshotJsonModel::from_imfs(&mut imfs, &entry).unwrap().unwrap();
+        let instance_snapshot = SnapshotJsonModel::from_imfs(&mut imfs, &entry)
+            .unwrap()
+            .unwrap();
 
-        assert_eq!(instance_snapshot, InstanceSnapshot {
-            snapshot_id: None,
-            name: Cow::Borrowed("foo"),
-            class_name: Cow::Borrowed("IntValue"),
-            properties: hashmap! {
-                "Value".to_owned() => RbxValue::Int32 {
-                    value: 5,
+        assert_eq!(
+            instance_snapshot,
+            InstanceSnapshot {
+                snapshot_id: None,
+                name: Cow::Borrowed("foo"),
+                class_name: Cow::Borrowed("IntValue"),
+                properties: hashmap! {
+                    "Value".to_owned() => RbxValue::Int32 {
+                        value: 5,
+                    },
                 },
-            },
-            children: vec![
-                InstanceSnapshot {
+                children: vec![InstanceSnapshot {
                     snapshot_id: None,
                     name: Cow::Borrowed("The Child"),
                     class_name: Cow::Borrowed("StringValue"),
                     properties: HashMap::new(),
                     children: Vec::new(),
-                },
-            ],
-        });
+                },],
+            }
+        );
     }
 }

@@ -2,18 +2,17 @@
 //! std::fs interface and notify as the file watcher.
 
 use std::{
-    fs,
-    io,
+    fs, io,
     path::{Path, PathBuf},
     sync::mpsc,
     time::Duration,
 };
 
+use crossbeam_channel::{unbounded, Receiver};
 use jod_thread::JoinHandle;
-use crossbeam_channel::{Receiver, unbounded};
-use notify::{RecursiveMode, RecommendedWatcher, Watcher};
+use notify::{RecommendedWatcher, RecursiveMode, Watcher};
 
-use super::fetcher::{ImfsFetcher, FileType, ImfsEvent};
+use super::fetcher::{FileType, ImfsEvent, ImfsFetcher};
 
 /// Workaround to disable the file watcher for processes that don't need it,
 /// since notify appears hang on to mpsc Sender objects too long, causing Rojo
@@ -51,7 +50,7 @@ impl RealFetcher {
             .spawn(move || {
                 notify_receiver
                     .into_iter()
-                    .for_each(|event| { sender.send(event).unwrap() });
+                    .for_each(|event| sender.send(event).unwrap());
             })
             .expect("Could not start message converter thread");
 
@@ -59,10 +58,10 @@ impl RealFetcher {
         // causing our program to deadlock. Once this is fixed, watcher no
         // longer needs to be optional, but is still maybe useful?
         let watcher = match watch_mode {
-            WatchMode::Enabled => {
-                Some(notify::watcher(notify_sender, Duration::from_millis(300))
-                    .expect("Couldn't start 'notify' file watcher"))
-            }
+            WatchMode::Enabled => Some(
+                notify::watcher(notify_sender, Duration::from_millis(300))
+                    .expect("Couldn't start 'notify' file watcher"),
+            ),
             WatchMode::Disabled => None,
         };
 

@@ -1,18 +1,11 @@
-use std::{
-    path::{PathBuf, Path},
-};
+use std::path::{Path, PathBuf};
 
-use rbx_dom_weak::{RbxTree, RbxId};
+use rbx_dom_weak::{RbxId, RbxTree};
 
 use crate::{
     imfs::{
+        new::{Imfs, ImfsEntry, ImfsFetcher, ImfsSnapshot},
         FsResult,
-        new::{
-            Imfs,
-            ImfsEntry,
-            ImfsFetcher,
-            ImfsSnapshot,
-        },
     },
     snapshot::InstanceSnapshot,
 };
@@ -26,14 +19,9 @@ pub trait SnapshotMiddleware {
         entry: &ImfsEntry,
     ) -> SnapshotInstanceResult<'static>;
 
-    fn from_instance(
-        tree: &RbxTree,
-        id: RbxId,
-    ) -> SnapshotFileResult;
+    fn from_instance(tree: &RbxTree, id: RbxId) -> SnapshotFileResult;
 
-    fn change_affects_paths(
-        path: &Path
-    ) -> Vec<PathBuf> {
+    fn change_affects_paths(path: &Path) -> Vec<PathBuf> {
         vec![path.to_path_buf()]
     }
 }

@@ -1,8 +1,4 @@
-use std::{
-    io,
-    fmt,
-    path::PathBuf,
-};
+use std::{fmt, io, path::PathBuf};
 
 use failure::Fail;
 

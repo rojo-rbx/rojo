@@ -1,23 +1,20 @@
-use std::{
-    borrow::Cow,
-    collections::HashMap,
-};
+use std::{borrow::Cow, collections::HashMap};
 
-use rbx_dom_weak::{RbxTree, RbxId};
+use rbx_dom_weak::{RbxId, RbxTree};
 use rbx_reflection::try_resolve_value;
 
 use crate::{
-    project::{Project, ProjectNode},
     imfs::{
+        new::{Imfs, ImfsEntry, ImfsFetcher},
         FsErrorKind,
-        new::{Imfs, ImfsFetcher, ImfsEntry},
     },
+    project::{Project, ProjectNode},
     snapshot::InstanceSnapshot,
 };
 
 use super::{
+    middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware},
     snapshot_from_imfs,
-    middleware::{SnapshotMiddleware, SnapshotInstanceResult, SnapshotFileResult},
 };
 
 pub struct SnapshotProject;
@@ -38,7 +35,7 @@ impl SnapshotMiddleware for SnapshotProject {
         }
 
         if !entry.path().to_string_lossy().ends_with(".project.json") {
-            return Ok(None)
+            return Ok(None);
         }
 
         let project = Project::load_from_slice(entry.contents(imfs)?, entry.path())
@@ -47,10 +44,7 @@ impl SnapshotMiddleware for SnapshotProject {
         snapshot_project_node(&project.name, &project.tree, imfs)
     }
 
-    fn from_instance(
-        _tree: &RbxTree,
-        _id: RbxId,
-    ) -> SnapshotFileResult {
+    fn from_instance(_tree: &RbxTree, _id: RbxId) -> SnapshotFileResult {
         // TODO: Supporting turning instances into projects
         None
     }
@@ -61,10 +55,14 @@ fn snapshot_project_node<F: ImfsFetcher>(
     node: &ProjectNode,
     imfs: &mut Imfs<F>,
 ) -> SnapshotInstanceResult<'static> {
-    assert!(node.ignore_unknown_instances.is_none(), "TODO: Support $ignoreUnknownInstances");
+    assert!(
+        node.ignore_unknown_instances.is_none(),
+        "TODO: Support $ignoreUnknownInstances"
+    );
 
     let name = Cow::Owned(instance_name.to_owned());
-    let mut class_name = node.class_name
+    let mut class_name = node
+        .class_name
         .as_ref()
         .map(|name| Cow::Owned(name.clone()));
     let mut properties = HashMap::new();
@@ -90,7 +88,7 @@ fn snapshot_project_node<F: ImfsFetcher>(
                         panic!("If $className and $path are specified, $path must yield an instance of class Folder");
                     }
                 }
-                None => Some(snapshot.class_name)
+                None => Some(snapshot.class_name),
             };
 
             // Properties from the snapshot are pulled in unchanged, and
@@ -108,7 +106,9 @@ fn snapshot_project_node<F: ImfsFetcher>(
             }
         } else {
             // TODO: Should this issue an error instead?
-            log::warn!("$path referred to a path that could not be turned into an instance by Rojo");
+            log::warn!(
+                "$path referred to a path that could not be turned into an instance by Rojo"
+            );
         }
     }
 
@@ -142,8 +142,8 @@ fn snapshot_project_node<F: ImfsFetcher>(
 mod test {
     use super::*;
 
-    use rbx_dom_weak::RbxValue;
     use maplit::hashmap;
+    use rbx_dom_weak::RbxValue;
 
     use crate::imfs::new::{ImfsSnapshot, NoopFetcher};
 
@@ -236,11 +236,14 @@ mod test {
 
         assert_eq!(instance_snapshot.name, "resolved-properties");
         assert_eq!(instance_snapshot.class_name, "StringValue");
-        assert_eq!(instance_snapshot.properties, hashmap! {
-            "Value".to_owned() => RbxValue::String {
-                value: "Hello, world!".to_owned(),
-            },
-        });
+        assert_eq!(
+            instance_snapshot.properties,
+            hashmap! {
+                "Value".to_owned() => RbxValue::String {
+                    value: "Hello, world!".to_owned(),
+                },
+            }
+        );
         assert_eq!(instance_snapshot.children, Vec::new());
     }
 
@@ -272,11 +275,14 @@ mod test {
 
         assert_eq!(instance_snapshot.name, "unresolved-properties");
         assert_eq!(instance_snapshot.class_name, "StringValue");
-        assert_eq!(instance_snapshot.properties, hashmap! {
-            "Value".to_owned() => RbxValue::String {
-                value: "Hi!".to_owned(),
-            },
-        });
+        assert_eq!(
+            instance_snapshot.properties,
+            hashmap! {
+                "Value".to_owned() => RbxValue::String {
+                    value: "Hi!".to_owned(),
+                },
+            }
+        );
         assert_eq!(instance_snapshot.children, Vec::new());
     }
 
@@ -345,11 +351,14 @@ mod test {
 
         assert_eq!(instance_snapshot.name, "path-project");
         assert_eq!(instance_snapshot.class_name, "StringValue");
-        assert_eq!(instance_snapshot.properties, hashmap! {
-            "Value".to_owned() => RbxValue::String {
-                value: "Hello, world!".to_owned(),
-            },
-        });
+        assert_eq!(
+            instance_snapshot.properties,
+            hashmap! {
+                "Value".to_owned() => RbxValue::String {
+                    value: "Hello, world!".to_owned(),
+                },
+            }
+        );
         assert_eq!(instance_snapshot.children, Vec::new());
     }
 
@@ -479,11 +488,14 @@ mod test {
 
         assert_eq!(instance_snapshot.name, "path-property-override");
         assert_eq!(instance_snapshot.class_name, "StringValue");
-        assert_eq!(instance_snapshot.properties, hashmap! {
-            "Value".to_owned() => RbxValue::String {
-                value: "Changed".to_owned(),
-            },
-        });
+        assert_eq!(
+            instance_snapshot.properties,
+            hashmap! {
+                "Value".to_owned() => RbxValue::String {
+                    value: "Changed".to_owned(),
+                },
+            }
+        );
         assert_eq!(instance_snapshot.children, Vec::new());
     }
 }

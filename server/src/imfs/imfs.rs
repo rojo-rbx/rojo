@@ -8,9 +8,9 @@ use crossbeam_channel::Receiver;
 use crate::path_map::PathMap;
 
 use super::{
+    error::{FsError, FsResult},
+    fetcher::{FileType, ImfsEvent, ImfsFetcher},
     snapshot::ImfsSnapshot,
-    error::{FsResult, FsError},
-    fetcher::{ImfsFetcher, FileType, ImfsEvent},
 };
 
 /// An in-memory filesystem that can be incrementally populated and updated as
@@ -89,16 +89,22 @@ impl<F: ImfsFetcher> Imfs<F> {
 
         match snapshot {
             ImfsSnapshot::File(file) => {
-                self.inner.insert(path.to_path_buf(), ImfsItem::File(ImfsFile {
-                    path: path.to_path_buf(),
-                    contents: Some(file.contents),
-                }));
+                self.inner.insert(
+                    path.to_path_buf(),
+                    ImfsItem::File(ImfsFile {
+                        path: path.to_path_buf(),
+                        contents: Some(file.contents),
+                    }),
+                );
             }
             ImfsSnapshot::Directory(directory) => {
-                self.inner.insert(path.to_path_buf(), ImfsItem::Directory(ImfsDirectory {
-                    path: path.to_path_buf(),
-                    children_enumerated: true,
-                }));
+                self.inner.insert(
+                    path.to_path_buf(),
+                    ImfsItem::Directory(ImfsDirectory {
+                        path: path.to_path_buf(),
+                        children_enumerated: true,
+                    }),
+                );
 
                 for (child_name, child) in directory.children.into_iter() {
                     self.load_from_snapshot(path.join(child_name), child);
@@ -114,7 +120,9 @@ impl<F: ImfsFetcher> Imfs<F> {
             return Ok(());
         }
 
-        let new_type = self.fetcher.file_type(path)
+        let new_type = self
+            .fetcher
+            .file_type(path)
             .map_err(|err| FsError::new(err, path.to_path_buf()))?;
 
         match self.inner.get_mut(path) {
@@ -131,18 +139,25 @@ impl<F: ImfsFetcher> Imfs<F> {
                     }
                     (ImfsItem::File(_), FileType::Directory) => {
                         self.inner.remove(path);
-                        self.inner.insert(path.to_path_buf(), ImfsItem::new_from_type(FileType::Directory, path));
+                        self.inner.insert(
+                            path.to_path_buf(),
+                            ImfsItem::new_from_type(FileType::Directory, path),
+                        );
                         self.fetcher.watch(path);
                     }
                     (ImfsItem::Directory(_), FileType::File) => {
                         self.inner.remove(path);
-                        self.inner.insert(path.to_path_buf(), ImfsItem::new_from_type(FileType::File, path));
+                        self.inner.insert(
+                            path.to_path_buf(),
+                            ImfsItem::new_from_type(FileType::File, path),
+                        );
                         self.fetcher.unwatch(path);
                     }
                 }
             }
             None => {
-                self.inner.insert(path.to_path_buf(), ImfsItem::new_from_type(new_type, path));
+                self.inner
+                    .insert(path.to_path_buf(), ImfsItem::new_from_type(new_type, path));
             }
         }
 
@@ -185,13 +200,19 @@ impl<F: ImfsFetcher> Imfs<F> {
         match self.inner.get_mut(path).unwrap() {
             ImfsItem::File(file) => {
                 if file.contents.is_none() {
-                    file.contents = Some(self.fetcher.read_contents(path)
-                        .map_err(|err| FsError::new(err, path.to_path_buf()))?);
+                    file.contents = Some(
+                        self.fetcher
+                            .read_contents(path)
+                            .map_err(|err| FsError::new(err, path.to_path_buf()))?,
+                    );
                 }
 
                 Ok(file.contents.as_ref().unwrap())
             }
-            ImfsItem::Directory(_) => Err(FsError::new(io::Error::new(io::ErrorKind::Other, "Can't read a directory"), path.to_path_buf()))
+            ImfsItem::Directory(_) => Err(FsError::new(
+                io::Error::new(io::ErrorKind::Other, "Can't read a directory"),
+                path.to_path_buf(),
+            )),
         }
     }
 
@@ -205,7 +226,9 @@ impl<F: ImfsFetcher> Imfs<F> {
                 self.fetcher.watch(path);
 
                 if dir.children_enumerated {
-                    return self.inner.children(path)
+                    return self
+                        .inner
+                        .children(path)
                         .unwrap() // TODO: Handle None here, which means the PathMap entry did not exist.
                         .into_iter()
                         .map(PathBuf::from) // Convert paths from &Path to PathBuf
@@ -215,13 +238,17 @@ impl<F: ImfsFetcher> Imfs<F> {
                         .collect::<FsResult<Vec<ImfsEntry>>>();
                 }
 
-                self.fetcher.read_children(path)
+                self.fetcher
+                    .read_children(path)
                     .map_err(|err| FsError::new(err, path.to_path_buf()))?
                     .into_iter()
                     .map(|path| self.get(path))
                     .collect::<FsResult<Vec<ImfsEntry>>>()
             }
-            ImfsItem::File(_) => Err(FsError::new(io::Error::new(io::ErrorKind::Other, "Can't read a directory"), path.to_path_buf()))
+            ImfsItem::File(_) => Err(FsError::new(
+                io::Error::new(io::ErrorKind::Other, "Can't read a directory"),
+                path.to_path_buf(),
+            )),
         }
     }
 
@@ -256,14 +283,17 @@ impl<F: ImfsFetcher> Imfs<F> {
     /// is using, this call may read exactly only the given path and no more.
     fn read_if_not_exists(&mut self, path: &Path) -> FsResult<()> {
         if !self.inner.contains_key(path) {
-            let kind = self.fetcher.file_type(path)
+            let kind = self
+                .fetcher
+                .file_type(path)
                 .map_err(|err| FsError::new(err, path.to_path_buf()))?;
 
             if kind == FileType::Directory {
                 self.fetcher.watch(path);
             }
 
-            self.inner.insert(path.to_path_buf(), ImfsItem::new_from_type(kind, path));
+            self.inner
+                .insert(path.to_path_buf(), ImfsItem::new_from_type(kind, path));
         }
 
         Ok(())
@@ -293,10 +323,7 @@ impl ImfsEntry {
         imfs.get_contents(&self.path)
     }
 
-    pub fn children(
-        &self,
-        imfs: &mut Imfs<impl ImfsFetcher>,
-    ) -> FsResult<Vec<ImfsEntry>> {
+    pub fn children(&self, imfs: &mut Imfs<impl ImfsFetcher>) -> FsResult<Vec<ImfsEntry>> {
         imfs.get_children(&self.path)
     }
 
@@ -352,19 +379,12 @@ pub struct ImfsDirectory {
 mod test {
     use super::*;
 
-    use std::{
-        rc::Rc,
-        cell::RefCell,
-    };
+    use std::{cell::RefCell, rc::Rc};
 
     use crossbeam_channel::Receiver;
     use maplit::hashmap;
 
-    use super::super::{
-        noop_fetcher::NoopFetcher,
-        error::FsErrorKind,
-        fetcher::ImfsEvent,
-    };
+    use super::super::{error::FsErrorKind, fetcher::ImfsEvent, noop_fetcher::NoopFetcher};
 
     #[test]
     fn from_snapshot_file() {
@@ -458,11 +478,9 @@ mod test {
                 unimplemented!();
             }
 
-            fn watch(&mut self, _path: &Path) {
-            }
+            fn watch(&mut self, _path: &Path) {}
 
-            fn unwatch(&mut self, _path: &Path) {
-            }
+            fn unwatch(&mut self, _path: &Path) {}
 
             fn receiver(&self) -> Receiver<ImfsEvent> {
                 crossbeam_channel::never()
@@ -477,11 +495,9 @@ mod test {
             inner: mock_state.clone(),
         });
 
-        let a = imfs.get("/dir/a.txt")
-            .expect("mock file did not exist");
+        let a = imfs.get("/dir/a.txt").expect("mock file did not exist");
 
-        let contents = a.contents(&mut imfs)
-            .expect("mock file contents error");
+        let contents = a.contents(&mut imfs).expect("mock file contents error");
 
         assert_eq!(contents, b"Initial contents");
 
@@ -493,8 +509,7 @@ mod test {
         imfs.raise_file_changed("/dir/a.txt")
             .expect("error processing file change");
 
-        let contents = a.contents(&mut imfs)
-            .expect("mock file contents error");
+        let contents = a.contents(&mut imfs).expect("mock file contents error");
 
         assert_eq!(contents, b"Changed contents");
     }
@@ -506,10 +521,10 @@ mod test {
         let file = ImfsSnapshot::file("hello, world!");
         imfs.load_from_snapshot("/hello.txt", file);
 
-        let hello = imfs.get("/hello.txt")
-            .expect("couldn't get hello.txt");
+        let hello = imfs.get("/hello.txt").expect("couldn't get hello.txt");
 
-        let contents = hello.contents(&mut imfs)
+        let contents = hello
+            .contents(&mut imfs)
             .expect("couldn't get hello.txt contents");
 
         assert_eq!(contents, b"hello, world!");

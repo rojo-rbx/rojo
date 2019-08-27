@@ -1,11 +1,8 @@
 //! Defines the structure of an instance snapshot.
 
-use std::{
-    borrow::Cow,
-    collections::HashMap,
-};
+use std::{borrow::Cow, collections::HashMap};
 
-use rbx_dom_weak::{RbxTree, RbxId, RbxValue};
+use rbx_dom_weak::{RbxId, RbxTree, RbxValue};
 
 /// A lightweight description of what an instance should look like. Attempts to
 /// be somewhat memory efficient by borrowing from its source data, indicated by
@@ -22,13 +19,14 @@ pub struct InstanceSnapshot<'source> {
     pub class_name: Cow<'source, str>,
     pub properties: HashMap<String, RbxValue>,
     pub children: Vec<InstanceSnapshot<'source>>,
-
     // TODO: Snapshot source, like a file or a project node?
 }
 
 impl<'source> InstanceSnapshot<'source> {
     pub fn get_owned(&'source self) -> InstanceSnapshot<'static> {
-        let children: Vec<InstanceSnapshot<'static>> = self.children.iter()
+        let children: Vec<InstanceSnapshot<'static>> = self
+            .children
+            .iter()
             .map(InstanceSnapshot::get_owned)
             .collect();
 
@@ -42,10 +40,12 @@ impl<'source> InstanceSnapshot<'source> {
     }
 
     pub fn from_tree(tree: &RbxTree, id: RbxId) -> InstanceSnapshot<'static> {
-        let instance = tree.get_instance(id)
+        let instance = tree
+            .get_instance(id)
             .expect("instance did not exist in tree");
 
-        let children = instance.get_children_ids()
+        let children = instance
+            .get_children_ids()
             .iter()
             .cloned()
             .map(|id| InstanceSnapshot::from_tree(tree, id))

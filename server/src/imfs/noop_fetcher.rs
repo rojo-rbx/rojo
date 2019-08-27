@@ -8,21 +8,30 @@ use std::{
 
 use crossbeam_channel::Receiver;
 
-use super::fetcher::{ImfsFetcher, FileType, ImfsEvent};
+use super::fetcher::{FileType, ImfsEvent, ImfsFetcher};
 
 pub struct NoopFetcher;
 
 impl ImfsFetcher for NoopFetcher {
     fn file_type(&mut self, _path: &Path) -> io::Result<FileType> {
-        Err(io::Error::new(io::ErrorKind::NotFound, "NoopFetcher always returns NotFound"))
+        Err(io::Error::new(
+            io::ErrorKind::NotFound,
+            "NoopFetcher always returns NotFound",
+        ))
     }
 
     fn read_children(&mut self, _path: &Path) -> io::Result<Vec<PathBuf>> {
-        Err(io::Error::new(io::ErrorKind::NotFound, "NoopFetcher always returns NotFound"))
+        Err(io::Error::new(
+            io::ErrorKind::NotFound,
+            "NoopFetcher always returns NotFound",
+        ))
     }
 
     fn read_contents(&mut self, _path: &Path) -> io::Result<Vec<u8>> {
-        Err(io::Error::new(io::ErrorKind::NotFound, "NoopFetcher always returns NotFound"))
+        Err(io::Error::new(
+            io::ErrorKind::NotFound,
+            "NoopFetcher always returns NotFound",
+        ))
     }
 
     fn create_directory(&mut self, _path: &Path) -> io::Result<()> {
@@ -37,11 +46,9 @@ impl ImfsFetcher for NoopFetcher {
         Ok(())
     }
 
-    fn watch(&mut self, _path: &Path) {
-    }
+    fn watch(&mut self, _path: &Path) {}
 
-    fn unwatch(&mut self, _path: &Path) {
-    }
+    fn unwatch(&mut self, _path: &Path) {}
 
     fn receiver(&self) -> Receiver<ImfsEvent> {
         crossbeam_channel::never()

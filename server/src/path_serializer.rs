@@ -33,22 +33,27 @@ use std::path::{Component, Path};
 use serde::Serializer;
 
 pub fn serialize_option<S, T>(maybe_path: &Option<T>, serializer: S) -> Result<S::Ok, S::Error>
-    where S: Serializer,
-          T: AsRef<Path>,
+where
+    S: Serializer,
+    T: AsRef<Path>,
 {
     match maybe_path {
         Some(path) => serialize(path, serializer),
-        None => serializer.serialize_none()
+        None => serializer.serialize_none(),
     }
 }
 
 pub fn serialize<S, T>(path: T, serializer: S) -> Result<S::Ok, S::Error>
-    where S: Serializer,
-          T: AsRef<Path>,
+where
+    S: Serializer,
+    T: AsRef<Path>,
 {
     let path = path.as_ref();
 
-    assert!(path.is_relative(), "path_serializer can only handle relative paths");
+    assert!(
+        path.is_relative(),
+        "path_serializer can only handle relative paths"
+    );
 
     let mut output = String::new();
 

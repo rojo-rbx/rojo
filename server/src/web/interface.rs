@@ -3,15 +3,7 @@
 use std::sync::Arc;
 
 use futures::{future, Future};
-use hyper::{
-    service::Service,
-    header,
-    Body,
-    Method,
-    StatusCode,
-    Request,
-    Response,
-};
+use hyper::{header, service::Service, Body, Method, Request, Response, StatusCode};
 use ritz::html;
 
 use crate::serve_session::ServeSession;
@@ -47,9 +39,7 @@ impl Service for InterfaceService {
 
 impl InterfaceService {
     pub fn new(serve_session: Arc<ServeSession>) -> InterfaceService {
-        InterfaceService {
-            serve_session,
-        }
+        InterfaceService { serve_session }
     }
 
     fn handle_home(&self) -> Response<Body> {

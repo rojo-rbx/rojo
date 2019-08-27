@@ -1,20 +1,15 @@
-use std::{
-    borrow::Cow,
-    collections::BTreeMap,
-};
+use std::{borrow::Cow, collections::BTreeMap};
 
 use maplit::hashmap;
-use rbx_dom_weak::{RbxTree, RbxValue, RbxId};
+use rbx_dom_weak::{RbxId, RbxTree, RbxValue};
 use serde::Serialize;
 
 use crate::{
-    imfs::new::{Imfs, ImfsFetcher, ImfsEntry},
+    imfs::new::{Imfs, ImfsEntry, ImfsFetcher},
     snapshot::InstanceSnapshot,
 };
 
-use super::{
-    middleware::{SnapshotMiddleware, SnapshotInstanceResult, SnapshotFileResult},
-};
+use super::middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware};
 
 pub struct SnapshotCsv;
 
@@ -27,16 +22,18 @@ impl SnapshotMiddleware for SnapshotCsv {
             return Ok(None);
         }
 
-        let file_name = entry.path()
-            .file_name().unwrap().to_string_lossy();
+        let file_name = entry.path().file_name().unwrap().to_string_lossy();
 
         if !file_name.ends_with(".csv") {
-            return  Ok(None);
+            return Ok(None);
         }
 
-        let instance_name = entry.path()
-            .file_stem().expect("Could not extract file stem")
-            .to_string_lossy().to_string();
+        let instance_name = entry
+            .path()
+            .file_stem()
+            .expect("Could not extract file stem")
+            .to_string_lossy()
+            .to_string();
 
         let table_contents = convert_localization_csv(entry.contents(imfs)?);
 
@@ -53,10 +50,7 @@ impl SnapshotMiddleware for SnapshotCsv {
         }))
     }
 
-    fn from_instance(
-        _tree: &RbxTree,
-        _id: RbxId,
-    ) -> SnapshotFileResult {
+    fn from_instance(_tree: &RbxTree, _id: RbxId) -> SnapshotFileResult {
         unimplemented!("Snapshotting CSV localization tables");
     }
 }
@@ -96,15 +90,12 @@ struct LocalizationEntry<'a> {
 fn convert_localization_csv(contents: &[u8]) -> String {
     let mut reader = csv::Reader::from_reader(contents);
 
-    let headers = reader.headers()
-        .expect("TODO: Handle csv errors")
-        .clone();
+    let headers = reader.headers().expect("TODO: Handle csv errors").clone();
 
     let mut records = Vec::new();
 
     for record in reader.into_records() {
-        let record = record
-            .expect("TODO: Handle csv errors");
+        let record = record.expect("TODO: Handle csv errors");
 
         records.push(record);
     }
@@ -137,8 +128,7 @@ fn convert_localization_csv(contents: &[u8]) -> String {
         entries.push(entry);
     }
 
-    serde_json::to_string(&entries)
-        .expect("Could not encode JSON for localization table")
+    serde_json::to_string(&entries).expect("Could not encode JSON for localization table")
 }
 
 #[cfg(test)]
@@ -150,9 +140,11 @@ mod test {
     #[test]
     fn csv_from_imfs() {
         let mut imfs = Imfs::new(NoopFetcher);
-        let file = ImfsSnapshot::file(r#"
+        let file = ImfsSnapshot::file(
+            r#"
 Key,Source,Context,Example,es
-Ack,Ack!,,An exclamation of despair,¡Ay!"#);
+Ack,Ack!,,An exclamation of despair,¡Ay!"#,
+        );
 
         imfs.load_from_snapshot("/foo.csv", file);
 
@@ -165,10 +157,13 @@ Ack,Ack!,,An exclamation of despair,¡Ay!"#);
         assert_eq!(instance_snapshot.name, "foo");
         assert_eq!(instance_snapshot.class_name, "LocalizationTable");
         assert_eq!(instance_snapshot.children, Vec::new());
-        assert_eq!(instance_snapshot.properties, hashmap! {
-            "Contents".to_owned() => RbxValue::String {
-                value: expected_contents.to_owned(),
-            },
-        });
+        assert_eq!(
+            instance_snapshot.properties,
+            hashmap! {
+                "Contents".to_owned() => RbxValue::String {
+                    value: expected_contents.to_owned(),
+                },
+            }
+        );
     }
 }

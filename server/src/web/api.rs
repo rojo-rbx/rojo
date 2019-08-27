@@ -1,32 +1,15 @@
 //! Defines Rojo's HTTP API, all under /api. These endpoints generally return
 //! JSON.
 
-use std::{
-    collections::HashSet,
-    sync::Arc,
-};
+use std::{collections::HashSet, sync::Arc};
 
-use futures::{
-    future,
-    Future,
-};
+use futures::{future, Future};
 
-use hyper::{
-    service::Service,
-    header,
-    StatusCode,
-    Method,
-    Body,
-    Request,
-    Response,
-};
-use serde::{Serialize, Deserialize};
+use hyper::{header, service::Service, Body, Method, Request, Response, StatusCode};
 use rbx_dom_weak::RbxId;
+use serde::{Deserialize, Serialize};
 
-use crate::{
-    serve_session::ServeSession,
-    session_id::SessionId,
-};
+use crate::{serve_session::ServeSession, session_id::SessionId};
 
 const SERVER_VERSION: &str = env!("CARGO_PKG_VERSION");
 const PROTOCOL_VERSION: u64 = 3;
@@ -83,7 +66,8 @@ impl Service for ApiService {
     type ReqBody = Body;
     type ResBody = Body;
     type Error = hyper::Error;
-    type Future = Box<dyn Future<Item = hyper::Response<Self::ReqBody>, Error = Self::Error> + Send>;
+    type Future =
+        Box<dyn Future<Item = hyper::Response<Self::ReqBody>, Error = Self::Error> + Send>;
 
     fn call(&mut self, request: hyper::Request<Self::ReqBody>) -> Self::Future {
         let response = match (request.method(), request.uri().path()) {
@@ -92,12 +76,10 @@ impl Service for ApiService {
             (&Method::GET, path) if path.starts_with("/api/subscribe/") => {
                 return self.handle_api_subscribe(request);
             }
-            _ => {
-                Response::builder()
-                    .status(StatusCode::NOT_FOUND)
-                    .body(Body::empty())
-                    .unwrap()
-            }
+            _ => Response::builder()
+                .status(StatusCode::NOT_FOUND)
+                .body(Body::empty())
+                .unwrap(),
         };
 
         Box::new(future::ok(response))
@@ -106,9 +88,7 @@ impl Service for ApiService {
 
 impl ApiService {
     pub fn new(serve_session: Arc<ServeSession>) -> ApiService {
-        ApiService {
-            serve_session,
-        }
+        ApiService { serve_session }
     }
 
     /// Get a summary of information about the server
@@ -128,12 +108,14 @@ impl ApiService {
         let _cursor: u32 = match argument.parse() {
             Ok(v) => v,
             Err(err) => {
-                return Box::new(future::ok(Response::builder()
-                    .status(StatusCode::BAD_REQUEST)
-                    .header(header::CONTENT_TYPE, "text/plain")
-                    .body(Body::from(err.to_string()))
-                    .unwrap()));
-            },
+                return Box::new(future::ok(
+                    Response::builder()
+                        .status(StatusCode::BAD_REQUEST)
+                        .header(header::CONTENT_TYPE, "text/plain")
+                        .body(Body::from(err.to_string()))
+                        .unwrap(),
+                ));
+            }
         };
 
         Box::new(future::ok(response_json(SubscribeResponse {
@@ -143,10 +125,7 @@ impl ApiService {
 
     fn handle_api_read(&self, request: Request<Body>) -> Response<Body> {
         let argument = &request.uri().path()["/api/read/".len()..];
-        let requested_ids: Option<Vec<RbxId>> = argument
-            .split(',')
-            .map(RbxId::parse_str)
-            .collect();
+        let requested_ids: Option<Vec<RbxId>> = argument.split(',').map(RbxId::parse_str).collect();
 
         let _requested_ids = match requested_ids {
             Some(id) => id,
@@ -156,7 +135,7 @@ impl ApiService {
                     .header(header::CONTENT_TYPE, "text/plain")
                     .body(Body::from("Malformed ID list"))
                     .unwrap();
-            },
+            }
         };
 
         response_json(ReadResponse {

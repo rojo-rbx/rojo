@@ -1,19 +1,14 @@
-use std::{
-    borrow::Cow,
-    str,
-};
+use std::{borrow::Cow, str};
 
 use maplit::hashmap;
-use rbx_dom_weak::{RbxTree, RbxValue, RbxId};
+use rbx_dom_weak::{RbxId, RbxTree, RbxValue};
 
 use crate::{
-    imfs::new::{Imfs, ImfsSnapshot, FileSnapshot, ImfsFetcher, ImfsEntry},
+    imfs::new::{FileSnapshot, Imfs, ImfsEntry, ImfsFetcher, ImfsSnapshot},
     snapshot::InstanceSnapshot,
 };
 
-use super::{
-    middleware::{SnapshotMiddleware, SnapshotInstanceResult, SnapshotFileResult},
-};
+use super::middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware};
 
 pub struct SnapshotTxt;
 
@@ -35,13 +30,18 @@ impl SnapshotMiddleware for SnapshotTxt {
             return Ok(None);
         }
 
-        let instance_name = entry.path()
-            .file_stem().expect("Could not extract file stem")
-            .to_str().unwrap().to_string();
+        let instance_name = entry
+            .path()
+            .file_stem()
+            .expect("Could not extract file stem")
+            .to_str()
+            .unwrap()
+            .to_string();
 
         let contents = entry.contents(imfs)?;
         let contents_str = str::from_utf8(contents)
-            .expect("File content was not valid UTF-8").to_string();
+            .expect("File content was not valid UTF-8")
+            .to_string();
 
         let properties = hashmap! {
             "Value".to_owned() => RbxValue::String {
@@ -58,10 +58,7 @@ impl SnapshotMiddleware for SnapshotTxt {
         }))
     }
 
-    fn from_instance(
-        tree: &RbxTree,
-        id: RbxId,
-    ) -> SnapshotFileResult {
+    fn from_instance(tree: &RbxTree, id: RbxId) -> SnapshotFileResult {
         let instance = tree.get_instance(id).unwrap();
 
         if instance.class_name != "StringValue" {
@@ -94,7 +91,7 @@ mod test {
     use super::*;
 
     use maplit::hashmap;
-    use rbx_dom_weak::{RbxInstanceProperties};
+    use rbx_dom_weak::RbxInstanceProperties;
 
     use crate::imfs::new::NoopFetcher;
 
@@ -110,11 +107,14 @@ mod test {
 
         assert_eq!(instance_snapshot.name, "foo");
         assert_eq!(instance_snapshot.class_name, "StringValue");
-        assert_eq!(instance_snapshot.properties, hashmap! {
-            "Value".to_owned() => RbxValue::String {
-                value: "Hello there!".to_owned(),
-            },
-        });
+        assert_eq!(
+            instance_snapshot.properties,
+            hashmap! {
+                "Value".to_owned() => RbxValue::String {
+                    value: "Hello there!".to_owned(),
+                },
+            }
+        );
     }
 
     #[test]

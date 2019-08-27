@@ -1,9 +1,6 @@
 use std::{
     mem,
-    sync::{
-        RwLock,
-        Mutex,
-    },
+    sync::{Mutex, RwLock},
 };
 
 use futures::sync::oneshot;
@@ -13,7 +10,10 @@ struct Listener<T> {
     cursor: u32,
 }
 
-fn fire_listener_if_ready<T: Clone>(messages: &[T], listener: Listener<T>) -> Result<(), Listener<T>> {
+fn fire_listener_if_ready<T: Clone>(
+    messages: &[T],
+    listener: Listener<T>,
+) -> Result<(), Listener<T>> {
     let current_cursor = messages.len() as u32;
 
     if listener.cursor < current_cursor {
@@ -30,8 +30,8 @@ fn fire_listener_if_ready<T: Clone>(messages: &[T], listener: Listener<T>) -> Re
 /// Definitely non-optimal. This would ideally be a lockless mpmc queue.
 #[derive(Default)]
 pub struct MessageQueue<T> {
-   messages: RwLock<Vec<T>>,
-   message_listeners: Mutex<Vec<Listener<T>>>,
+    messages: RwLock<Vec<T>>,
+    message_listeners: Mutex<Vec<Listener<T>>>,
 }
 
 impl<T: Clone> MessageQueue<T> {
@@ -52,7 +52,7 @@ impl<T: Clone> MessageQueue<T> {
         for listener in message_listeners.drain(..) {
             match fire_listener_if_ready(&messages, listener) {
                 Ok(_) => {}
-                Err(listener) => remaining_listeners.push(listener)
+                Err(listener) => remaining_listeners.push(listener),
             }
         }
 
@@ -63,16 +63,13 @@ impl<T: Clone> MessageQueue<T> {
 
     pub fn subscribe(&self, cursor: u32, sender: oneshot::Sender<(u32, Vec<T>)>) {
         let listener = {
-            let listener = Listener {
-                sender,
-                cursor,
-            };
+            let listener = Listener { sender, cursor };
 
             let messages = self.messages.read().unwrap();
 
             match fire_listener_if_ready(&messages, listener) {
                 Ok(_) => return,
-                Err(listener) => listener
+                Err(listener) => listener,
             }
         };
 

@@ -15,20 +15,20 @@ mod rbxm;
 mod rbxmx;
 mod txt;
 
-use rbx_dom_weak::{RbxTree, RbxId};
+use rbx_dom_weak::{RbxId, RbxTree};
 
-use crate::imfs::new::{Imfs, ImfsEntry, ImfsFetcher};
 use self::{
-    middleware::{SnapshotInstanceResult, SnapshotFileResult, SnapshotMiddleware},
     csv::SnapshotCsv,
     dir::SnapshotDir,
     json_model::SnapshotJsonModel,
     lua::SnapshotLua,
+    middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware},
     project::SnapshotProject,
     rbxm::SnapshotRbxm,
     rbxmx::SnapshotRbxmx,
     txt::SnapshotTxt,
 };
+use crate::imfs::new::{Imfs, ImfsEntry, ImfsFetcher};
 
 macro_rules! middlewares {
     ( $($middleware: ident,)* ) => {

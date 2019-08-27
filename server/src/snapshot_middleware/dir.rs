@@ -1,19 +1,15 @@
-use std::{
-    borrow::Cow,
-    collections::HashMap,
-};
+use std::{borrow::Cow, collections::HashMap};
 
-use rbx_dom_weak::{RbxTree, RbxId};
+use rbx_dom_weak::{RbxId, RbxTree};
 
 use crate::{
-    imfs::new::{Imfs, ImfsSnapshot, DirectorySnapshot, ImfsFetcher, ImfsEntry},
+    imfs::new::{DirectorySnapshot, Imfs, ImfsEntry, ImfsFetcher, ImfsSnapshot},
     snapshot::InstanceSnapshot,
 };
 
 use super::{
-    snapshot_from_imfs,
-    snapshot_from_instance,
-    middleware::{SnapshotMiddleware, SnapshotInstanceResult, SnapshotFileResult},
+    middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware},
+    snapshot_from_imfs, snapshot_from_instance,
 };
 
 pub struct SnapshotDir;
@@ -37,9 +33,13 @@ impl SnapshotMiddleware for SnapshotDir {
             }
         }
 
-        let instance_name = entry.path()
-            .file_name().expect("Could not extract file name")
-            .to_str().unwrap().to_string();
+        let instance_name = entry
+            .path()
+            .file_name()
+            .expect("Could not extract file name")
+            .to_str()
+            .unwrap()
+            .to_string();
 
         Ok(Some(InstanceSnapshot {
             snapshot_id: None,
@@ -50,10 +50,7 @@ impl SnapshotMiddleware for SnapshotDir {
         }))
     }
 
-    fn from_instance(
-        tree: &RbxTree,
-        id: RbxId,
-    ) -> SnapshotFileResult {
+    fn from_instance(tree: &RbxTree, id: RbxId) -> SnapshotFileResult {
         let instance = tree.get_instance(id).unwrap();
 
         if instance.class_name != "Folder" {
@@ -68,9 +65,7 @@ impl SnapshotMiddleware for SnapshotDir {
             }
         }
 
-        let snapshot = ImfsSnapshot::Directory(DirectorySnapshot {
-            children,
-        });
+        let snapshot = ImfsSnapshot::Directory(DirectorySnapshot { children });
 
         Some((instance.name.clone(), snapshot))
     }

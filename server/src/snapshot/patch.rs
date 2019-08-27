@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use rbx_dom_weak::{RbxValue, RbxId};
+use rbx_dom_weak::{RbxId, RbxValue};
 
 use super::InstanceSnapshot;
 

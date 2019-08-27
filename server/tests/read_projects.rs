@@ -1,21 +1,19 @@
-#[macro_use] extern crate lazy_static;
+#[macro_use]
+extern crate lazy_static;
 
 use std::{
-    collections::{HashMap, BTreeMap},
+    collections::{BTreeMap, HashMap},
     path::{Path, PathBuf},
 };
 
 use pretty_assertions::assert_eq;
 use rbx_dom_weak::RbxValue;
 
-use librojo::{
-    project::{Project, ProjectNode},
-};
+use librojo::project::{Project, ProjectNode};
 
 lazy_static! {
-    static ref TEST_PROJECTS_ROOT: PathBuf = {
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("../test-projects")
-    };
+    static ref TEST_PROJECTS_ROOT: PathBuf =
+        { Path::new(env!("CARGO_MANIFEST_DIR")).join("../test-projects") };
 }
 
 #[test]
@@ -63,9 +61,10 @@ fn single_partition_game() {
         };
 
         let mut http_service_properties = HashMap::new();
-        http_service_properties.insert("HttpEnabled".to_string(), RbxValue::Bool {
-            value: true,
-        }.into());
+        http_service_properties.insert(
+            "HttpEnabled".to_string(),
+            RbxValue::Bool { value: true }.into(),
+        );
 
         let http_service = ProjectNode {
             class_name: Some(String::from("HttpService")),

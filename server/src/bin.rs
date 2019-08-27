@@ -1,12 +1,11 @@
 use std::{
-    env,
-    panic,
+    env, panic,
     path::{Path, PathBuf},
     process,
 };
 
-use log::error;
 use clap::{clap_app, ArgMatches};
+use log::error;
 
 use librojo::commands;
 
@@ -21,8 +20,7 @@ fn make_path_absolute(value: &Path) -> PathBuf {
 
 fn main() {
     {
-        let log_env = env_logger::Env::default()
-            .default_filter_or("warn");
+        let log_env = env_logger::Env::default().default_filter_or("warn");
 
         env_logger::Builder::from_env(log_env)
             .default_format_timestamp(false)
@@ -95,7 +93,8 @@ fn show_crash_message(message: &str) {
 }
 
 fn start_init(sub_matches: &ArgMatches) {
-    let fuzzy_project_path = make_path_absolute(Path::new(sub_matches.value_of("PATH").unwrap_or("")));
+    let fuzzy_project_path =
+        make_path_absolute(Path::new(sub_matches.value_of("PATH").unwrap_or("")));
     let kind = sub_matches.value_of("kind");
 
     let options = commands::InitOptions {
@@ -104,11 +103,11 @@ fn start_init(sub_matches: &ArgMatches) {
     };
 
     match commands::init(&options) {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => {
             error!("{}", e);
             process::exit(1);
-        },
+        }
     }
 }
 
@@ -124,7 +123,7 @@ fn start_serve(sub_matches: &ArgMatches) {
             Err(_) => {
                 error!("Invalid port {}", v);
                 process::exit(1);
-            },
+            }
         },
         None => None,
     };
@@ -135,11 +134,11 @@ fn start_serve(sub_matches: &ArgMatches) {
     };
 
     match commands::serve(&options) {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => {
             error!("{}", e);
             process::exit(1);
-        },
+        }
     }
 }
 
@@ -158,11 +157,11 @@ fn start_build(sub_matches: &ArgMatches) {
     };
 
     match commands::build(&options) {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => {
             error!("{}", e);
             process::exit(1);
-        },
+        }
     }
 }
 
@@ -183,7 +182,7 @@ fn start_upload(sub_matches: &ArgMatches) {
             Err(_) => {
                 error!("Invalid place ID {}", arg);
                 process::exit(1);
-            },
+            }
         }
     };
 
@@ -195,10 +194,10 @@ fn start_upload(sub_matches: &ArgMatches) {
     };
 
     match commands::upload(&options) {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => {
             error!("{}", e);
             process::exit(1);
-        },
+        }
     }
 }

@@ -2,17 +2,14 @@
 
 use std::collections::HashMap;
 
-use rbx_dom_weak::{RbxTree, RbxValue, RbxId, RbxInstanceProperties};
+use rbx_dom_weak::{RbxId, RbxInstanceProperties, RbxTree, RbxValue};
 
 use super::{
     patch::{PatchSet, PatchUpdateInstance},
     InstanceSnapshot,
 };
 
-pub fn apply_patch_set(
-    tree: &mut RbxTree,
-    patch_set: &PatchSet,
-) {
+pub fn apply_patch_set(tree: &mut RbxTree, patch_set: &PatchSet) {
     let mut context = PatchApplyContext::default();
 
     for removed_id in &patch_set.removed_instances {
@@ -47,13 +44,16 @@ struct PatchApplyContext {
 /// then apply properties all at once at the end.
 fn apply_deferred_properties(context: PatchApplyContext, tree: &mut RbxTree) {
     for (id, mut properties) in context.properties_to_apply {
-        let instance = tree.get_instance_mut(id)
+        let instance = tree
+            .get_instance_mut(id)
             .expect("Invalid instance ID in deferred property map");
 
         for property_value in properties.values_mut() {
             if let RbxValue::Ref { value: Some(id) } = property_value {
                 if let Some(&instance_id) = context.snapshot_id_to_instance_id.get(id) {
-                    *property_value = RbxValue::Ref { value: Some(instance_id) };
+                    *property_value = RbxValue::Ref {
+                        value: Some(instance_id),
+                    };
                 }
             }
         }
@@ -79,7 +79,9 @@ fn apply_add_child(
 
     let id = tree.insert_instance(properties, parent_id);
 
-    context.properties_to_apply.insert(id, snapshot.properties.clone());
+    context
+        .properties_to_apply
+        .insert(id, snapshot.properties.clone());
 
     if let Some(snapshot_id) = snapshot.snapshot_id {
         context.snapshot_id_to_instance_id.insert(snapshot_id, id);
@@ -95,7 +97,8 @@ fn apply_update_child(
     tree: &mut RbxTree,
     patch: &PatchUpdateInstance,
 ) {
-    let instance = tree.get_instance_mut(patch.id)
+    let instance = tree
+        .get_instance_mut(patch.id)
         .expect("Instance referred to by patch does not exist");
 
     if let Some(name) = &patch.changed_name {
@@ -114,9 +117,12 @@ fn apply_update_child(
             Some(RbxValue::Ref { value: Some(id) }) => {
                 let new_id = context.snapshot_id_to_instance_id.get(id).unwrap_or(id);
 
-                instance.properties.insert(key.clone(), RbxValue::Ref {
-                    value: Some(*new_id),
-                });
+                instance.properties.insert(
+                    key.clone(),
+                    RbxValue::Ref {
+                        value: Some(*new_id),
+                    },
+                );
             }
             Some(value) => {
                 instance.properties.insert(key.clone(), value.clone());
@@ -132,10 +138,7 @@ fn apply_update_child(
 mod test {
     use super::*;
 
-    use std::{
-        borrow::Cow,
-        collections::HashMap,
-    };
+    use std::{borrow::Cow, collections::HashMap};
 
     use maplit::hashmap;
     use rbx_dom_weak::RbxValue;
@@ -165,12 +168,10 @@ mod test {
         };
 
         let patch_set = PatchSet {
-            added_instances: vec![
-                PatchAddInstance {
-                    parent_id: root_id,
-                    instance: snapshot.clone(),
-                }
-            ],
+            added_instances: vec![PatchAddInstance {
+                parent_id: root_id,
+                instance: snapshot.clone(),
+            }],
             ..Default::default()
         };
 

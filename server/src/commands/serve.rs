@@ -1,11 +1,7 @@
-use std::{
-    collections::HashMap,
-    path::PathBuf,
-    sync::Arc,
-};
+use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
-use rbx_dom_weak::{RbxTree, RbxInstanceProperties};
 use failure::Fail;
+use rbx_dom_weak::{RbxInstanceProperties, RbxTree};
 
 use crate::{
     imfs::new::{Imfs, RealFetcher, WatchMode},
@@ -41,8 +37,11 @@ pub fn serve(options: &ServeOptions) -> Result<(), ServeError> {
         Err(other) => return Err(other.into()),
     };
 
-    let port = options.port
-        .or(maybe_project.as_ref().and_then(|project| project.serve_port))
+    let port = options
+        .port
+        .or(maybe_project
+            .as_ref()
+            .and_then(|project| project.serve_port))
         .unwrap_or(DEFAULT_PORT);
 
     println!("Rojo server listening on port {}", port);
@@ -55,7 +54,8 @@ pub fn serve(options: &ServeOptions) -> Result<(), ServeError> {
     let root_id = tree.get_root_id();
 
     let mut imfs = Imfs::new(RealFetcher::new(WatchMode::Enabled));
-    let entry = imfs.get(&options.fuzzy_project_path)
+    let entry = imfs
+        .get(&options.fuzzy_project_path)
         .expect("could not get project path");
 
     let snapshot = snapshot_from_imfs(&mut imfs, &entry)

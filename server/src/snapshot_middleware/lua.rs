@@ -1,19 +1,14 @@
-use std::{
-    borrow::Cow,
-    str,
-};
+use std::{borrow::Cow, str};
 
 use maplit::hashmap;
-use rbx_dom_weak::{RbxTree, RbxValue, RbxId};
+use rbx_dom_weak::{RbxId, RbxTree, RbxValue};
 
 use crate::{
-    imfs::new::{Imfs, ImfsFetcher, ImfsEntry, FsResultExt},
+    imfs::new::{FsResultExt, Imfs, ImfsEntry, ImfsFetcher},
     snapshot::InstanceSnapshot,
 };
 
-use super::{
-    middleware::{SnapshotMiddleware, SnapshotInstanceResult, SnapshotFileResult},
-};
+use super::middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware};
 
 pub struct SnapshotLua;
 
@@ -22,8 +17,7 @@ impl SnapshotMiddleware for SnapshotLua {
         imfs: &mut Imfs<F>,
         entry: &ImfsEntry,
     ) -> SnapshotInstanceResult<'static> {
-        let file_name = entry.path()
-            .file_name().unwrap().to_string_lossy();
+        let file_name = entry.path().file_name().unwrap().to_string_lossy();
 
         if entry.is_directory() {
             let module_init_path = entry.path().join("init.lua");
@@ -54,15 +48,16 @@ impl SnapshotMiddleware for SnapshotLua {
             }
         }
 
-        let (class_name, instance_name) = if let Some(name) = match_trailing(&file_name, ".server.lua") {
-            ("Script", name)
-        } else if let Some(name) = match_trailing(&file_name, ".client.lua") {
-            ("LocalScript", name)
-        } else if let Some(name) = match_trailing(&file_name, ".lua") {
-            ("ModuleScript", name)
-        } else {
-            return Ok(None);
-        };
+        let (class_name, instance_name) =
+            if let Some(name) = match_trailing(&file_name, ".server.lua") {
+                ("Script", name)
+            } else if let Some(name) = match_trailing(&file_name, ".client.lua") {
+                ("LocalScript", name)
+            } else if let Some(name) = match_trailing(&file_name, ".lua") {
+                ("ModuleScript", name)
+            } else {
+                return Ok(None);
+            };
 
         let contents = entry.contents(imfs)?;
         let contents_str = str::from_utf8(contents)
@@ -84,14 +79,13 @@ impl SnapshotMiddleware for SnapshotLua {
         }))
     }
 
-    fn from_instance(
-        tree: &RbxTree,
-        id: RbxId,
-    ) -> SnapshotFileResult {
+    fn from_instance(tree: &RbxTree, id: RbxId) -> SnapshotFileResult {
         let instance = tree.get_instance(id).unwrap();
 
         match instance.class_name.as_str() {
-            "ModuleScript" | "LocalScript" | "Script" => unimplemented!("Snapshotting Script instances"),
+            "ModuleScript" | "LocalScript" | "Script" => {
+                unimplemented!("Snapshotting Script instances")
+            }
             _ => None,
         }
     }
@@ -126,11 +120,14 @@ mod test {
 
         assert_eq!(instance_snapshot.name, "foo");
         assert_eq!(instance_snapshot.class_name, "ModuleScript");
-        assert_eq!(instance_snapshot.properties, hashmap! {
-            "Source".to_owned() => RbxValue::String {
-                value: "Hello there!".to_owned(),
-            },
-        });
+        assert_eq!(
+            instance_snapshot.properties,
+            hashmap! {
+                "Source".to_owned() => RbxValue::String {
+                    value: "Hello there!".to_owned(),
+                },
+            }
+        );
     }
 
     #[test]
@@ -145,11 +142,14 @@ mod test {
 
         assert_eq!(instance_snapshot.name, "foo");
         assert_eq!(instance_snapshot.class_name, "Script");
-        assert_eq!(instance_snapshot.properties, hashmap! {
-            "Source".to_owned() => RbxValue::String {
-                value: "Hello there!".to_owned(),
-            },
-        });
+        assert_eq!(
+            instance_snapshot.properties,
+            hashmap! {
+                "Source".to_owned() => RbxValue::String {
+                    value: "Hello there!".to_owned(),
+                },
+            }
+        );
     }
 
     #[test]
@@ -164,10 +164,13 @@ mod test {
 
         assert_eq!(instance_snapshot.name, "foo");
         assert_eq!(instance_snapshot.class_name, "LocalScript");
-        assert_eq!(instance_snapshot.properties, hashmap! {
-            "Source".to_owned() => RbxValue::String {
-                value: "Hello there!".to_owned(),
-            },
-        });
+        assert_eq!(
+            instance_snapshot.properties,
+            hashmap! {
+                "Source".to_owned() => RbxValue::String {
+                    value: "Hello there!".to_owned(),
+                },
+            }
+        );
     }
 }

@@ -1,10 +1,10 @@
 use std::{
-    path::{self, Path, PathBuf},
     collections::{HashMap, HashSet},
+    path::{self, Path, PathBuf},
 };
 
-use serde::Serialize;
 use log::warn;
+use serde::Serialize;
 
 #[derive(Debug, Serialize)]
 struct PathMapNode<T> {
@@ -51,7 +51,9 @@ impl<T> PathMap<T> {
     }
 
     pub fn children(&self, path: impl AsRef<Path>) -> Option<Vec<&Path>> {
-        self.nodes.get(path.as_ref()).map(|v| v.children.iter().map(AsRef::as_ref).collect())
+        self.nodes
+            .get(path.as_ref())
+            .map(|v| v.children.iter().map(AsRef::as_ref).collect())
     }
 
     pub fn contains_key(&self, path: impl AsRef<Path>) -> bool {
@@ -76,10 +78,7 @@ impl<T> PathMap<T> {
             self.orphan_paths.remove(child);
         }
 
-        self.nodes.insert(path, PathMapNode {
-            value,
-            children,
-        });
+        self.nodes.insert(path, PathMapNode { value, children });
     }
 
     /// Remove the given path and all of its linked descendants, returning all
@@ -105,10 +104,13 @@ impl<T> PathMap<T> {
                     for child in node.children.into_iter() {
                         to_visit.push(child);
                     }
-                },
+                }
                 None => {
-                    warn!("Consistency issue; tried to remove {} but it was already removed", path.display());
-                },
+                    warn!(
+                        "Consistency issue; tried to remove {} but it was already removed",
+                        path.display()
+                    );
+                }
             }
         }
 
@@ -123,11 +125,16 @@ impl<T> PathMap<T> {
     /// FS events, a file remove event could be followed by that file's
     /// directory being removed, in which case we should process that
     /// directory's parent.
-    pub fn descend(&self, start_path: impl Into<PathBuf>, target_path: impl AsRef<Path>) -> PathBuf {
+    pub fn descend(
+        &self,
+        start_path: impl Into<PathBuf>,
+        target_path: impl AsRef<Path>,
+    ) -> PathBuf {
         let start_path = start_path.into();
         let target_path = target_path.as_ref();
 
-        let relative_path = target_path.strip_prefix(&start_path)
+        let relative_path = target_path
+            .strip_prefix(&start_path)
             .expect("target_path did not begin with start_path");
         let mut current_path = start_path;
 
@@ -141,7 +148,7 @@ impl<T> PathMap<T> {
                     } else {
                         return current_path;
                     }
-                },
+                }
                 _ => unreachable!(),
             }
         }
@@ -219,9 +226,7 @@ mod test {
 
         map.insert("/foo", 6);
 
-        assert_eq!(map.remove("/foo"), vec![
-            (PathBuf::from("/foo"), 6),
-        ]);
+        assert_eq!(map.remove("/foo"), vec![(PathBuf::from("/foo"), 6),]);
 
         assert_eq!(map.get("/foo"), None);
     }
@@ -233,10 +238,10 @@ mod test {
         map.insert("/foo", 6);
         map.insert("/foo/bar", 12);
 
-        assert_eq!(map.remove("/foo"), vec![
-            (PathBuf::from("/foo"), 6),
-            (PathBuf::from("/foo/bar"), 12),
-        ]);
+        assert_eq!(
+            map.remove("/foo"),
+            vec![(PathBuf::from("/foo"), 6), (PathBuf::from("/foo/bar"), 12),]
+        );
 
         assert_eq!(map.get("/foo"), None);
         assert_eq!(map.get("/foo/bar"), None);
@@ -250,11 +255,14 @@ mod test {
         map.insert("/foo/bar", 12);
         map.insert("/foo/bar/baz", 18);
 
-        assert_eq!(map.remove("/foo"), vec![
-            (PathBuf::from("/foo"), 6),
-            (PathBuf::from("/foo/bar"), 12),
-            (PathBuf::from("/foo/bar/baz"), 18),
-        ]);
+        assert_eq!(
+            map.remove("/foo"),
+            vec![
+                (PathBuf::from("/foo"), 6),
+                (PathBuf::from("/foo/bar"), 12),
+                (PathBuf::from("/foo/bar/baz"), 18),
+            ]
+        );
 
         assert_eq!(map.get("/foo"), None);
         assert_eq!(map.get("/foo/bar"), None);
@@ -268,9 +276,7 @@ mod test {
         map.insert("/foo", 6);
         map.insert("/foo/bar/baz", 12);
 
-        assert_eq!(map.remove("/foo"), vec![
-            (PathBuf::from("/foo"), 6),
-        ]);
+        assert_eq!(map.remove("/foo"), vec![(PathBuf::from("/foo"), 6),]);
 
         assert_eq!(map.get("/foo"), None);
         assert_eq!(map.get("/foo/bar/baz"), Some(&12));
