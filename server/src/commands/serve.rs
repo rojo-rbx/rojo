@@ -39,9 +39,11 @@ pub fn serve(options: &ServeOptions) -> Result<(), ServeError> {
 
     let port = options
         .port
-        .or(maybe_project
-            .as_ref()
-            .and_then(|project| project.serve_port))
+        .or_else(|| {
+            maybe_project
+                .as_ref()
+                .and_then(|project| project.serve_port)
+        })
         .unwrap_or(DEFAULT_PORT);
 
     println!("Rojo server listening on port {}", port);
