@@ -12,7 +12,7 @@ Rojo opens the door to use the absolute best text editors in the world and their
 
 Some very popular editors include [Visual Studio Code](https://code.visualstudio.com) and [Sublime Text](https://www.sublimetext.com).
 
-These advanced text editors have features like multi-cursor editing, goto symbol, multi-file regex find and replace, bookmarks and much more.
+These advanced text editors have features like multi-cursor editing, go-to symbol, multi-file regex find and replace, bookmarks and much more.
 
 Many Rojo VS Code users also use extensions like:
 
