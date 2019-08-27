@@ -48,6 +48,8 @@ Soon, Rojo will be able to:
 If you find any mistakes, feel free to make changes in the [docs](https://github.com/rojo-rbx/rojo/tree/master/docs) folder of this repository and submit a pull request!
 
 ## Contributing
+Check out our [contribution guide](CONTRIBUTING.md) for detailed instructions for helping work on Rojo!
+
 Pull requests are welcome!
 
 Rojo supports Rust 1.34.0 and newer. The minimum supported version of Rust is based on the latest versions of the dependencies that Rojo has.
