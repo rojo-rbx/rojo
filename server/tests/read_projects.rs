@@ -85,7 +85,6 @@ fn single_partition_game() {
         Project {
             name: "single-sync-point".to_string(),
             tree: root_node,
-            plugins: Vec::new(),
             serve_port: None,
             serve_place_ids: None,
             file_location: project_location.join("default.project.json"),
