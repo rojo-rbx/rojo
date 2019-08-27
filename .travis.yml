@@ -34,11 +34,15 @@ matrix:
       cache: cargo
 
       script:
-        - cargo test --verbose
+        - cargo test --locked --verbose
 
     - language: rust
       rust: stable
       cache: cargo
 
       script:
-        - cargo test --verbose
+        - rustup component add rustfmt
+        - rustup component add clippy
+        - cargo test --locked --verbose
+        - cargo fmt --  --check
+        - cargo clippy
