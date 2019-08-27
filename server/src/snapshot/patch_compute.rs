@@ -173,7 +173,7 @@ fn compute_children_patches<'a>(
                         .expect("Instance did not exist in tree");
 
                     if snapshot_child.name == instance_child.name
-                        && instance_child.class_name == instance_child.class_name
+                        && snapshot_child.class_name == instance_child.class_name
                     {
                         paired_instances[*instance_index] = true;
                         return true;
