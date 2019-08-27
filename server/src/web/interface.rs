@@ -14,16 +14,14 @@ use hyper::{
 };
 use ritz::html;
 
-use crate::{
-    live_session::LiveSession,
-    visualize::{VisualizeRbxSession, VisualizeImfs, graphviz_to_svg},
-};
+use crate::serve_session::ServeSession;
 
+const SERVER_VERSION: &str = env!("CARGO_PKG_VERSION");
 static HOME_CSS: &str = include_str!("../../assets/index.css");
 
 pub struct InterfaceService {
-    live_session: Arc<LiveSession>,
-    server_version: &'static str,
+    #[allow(unused)] // TODO: Fill out interface service
+    serve_session: Arc<ServeSession>,
 }
 
 impl Service for InterfaceService {
@@ -48,10 +46,9 @@ impl Service for InterfaceService {
 }
 
 impl InterfaceService {
-    pub fn new(live_session: Arc<LiveSession>) -> InterfaceService {
+    pub fn new(serve_session: Arc<ServeSession>) -> InterfaceService {
         InterfaceService {
-            live_session,
-            server_version: env!("CARGO_PKG_VERSION"),
+            serve_session,
         }
     }
 
@@ -71,7 +68,7 @@ impl InterfaceService {
                             "Rojo Live Sync is up and running!"
                         </h1>
                         <h2 class="subtitle">
-                            "Version " { self.server_version }
+                            "Version " { SERVER_VERSION }
                         </h2>
                         <a class="docs" href="https://lpghatguy.github.io/rojo">
                             "Rojo Documentation"
@@ -88,34 +85,16 @@ impl InterfaceService {
     }
 
     fn handle_visualize_rbx(&self) -> Response<Body> {
-        let rbx_session = self.live_session.rbx_session.lock().unwrap();
-        let dot_source = format!("{}", VisualizeRbxSession(&rbx_session));
-
-        match graphviz_to_svg(&dot_source) {
-            Some(svg) => Response::builder()
-                .header(header::CONTENT_TYPE, "image/svg+xml")
-                .body(Body::from(svg))
-                .unwrap(),
-            None => Response::builder()
-                .header(header::CONTENT_TYPE, "text/plain")
-                .body(Body::from(dot_source))
-                .unwrap(),
-        }
+        Response::builder()
+            .header(header::CONTENT_TYPE, "text/plain")
+            .body(Body::from("TODO: /visualize/rbx"))
+            .unwrap()
     }
 
     fn handle_visualize_imfs(&self) -> Response<Body> {
-        let imfs = self.live_session.imfs.lock().unwrap();
-        let dot_source = format!("{}", VisualizeImfs(&imfs));
-
-        match graphviz_to_svg(&dot_source) {
-            Some(svg) => Response::builder()
-                .header(header::CONTENT_TYPE, "image/svg+xml")
-                .body(Body::from(svg))
-                .unwrap(),
-            None => Response::builder()
-                .header(header::CONTENT_TYPE, "text/plain")
-                .body(Body::from(dot_source))
-                .unwrap(),
-        }
+        Response::builder()
+            .header(header::CONTENT_TYPE, "text/plain")
+            .body(Body::from("TODO: /visualize/imfs"))
+            .unwrap()
     }
 }

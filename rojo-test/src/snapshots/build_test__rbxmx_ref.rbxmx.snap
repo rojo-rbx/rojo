@@ -1,0 +1,28 @@
+---
+created: "2019-08-10T07:57:42.835269100Z"
+creator: insta@0.10.0
+source: rojo-test/src/build_test.rs
+expression: contents
+---
+<roblox version="4">
+  <Item class="Folder" referent="0">
+    <Properties>
+      <string name="Name">rbxmx_ref</string>
+      <BinaryString name="Tags"><![CDATA[]]></BinaryString>
+    </Properties>
+    <Item class="StringValue" referent="1">
+      <Properties>
+        <string name="Name">Target</string>
+        <BinaryString name="Tags"><![CDATA[]]></BinaryString>
+        <string name="Value">Pointed to by ObjectValue</string>
+      </Properties>
+    </Item>
+    <Item class="ObjectValue" referent="2">
+      <Properties>
+        <string name="Name">Pointer</string>
+        <BinaryString name="Tags"><![CDATA[]]></BinaryString>
+        <Ref name="Value">1</Ref>
+      </Properties>
+    </Item>
+  </Item>
+</roblox>

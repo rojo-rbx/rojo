@@ -8,7 +8,7 @@
 //! To use, annotate your PathBuf or Option<PathBuf> field with the correct
 //! serializer function:
 //!
-//! ```
+//! ```ignore
 //! # use std::path::PathBuf;
 //! # use serde::{Serialize, Deserialize};
 //!

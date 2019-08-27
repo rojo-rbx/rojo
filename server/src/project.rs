@@ -465,6 +465,12 @@ impl Project {
         Ok(parsed.into_project(project_file_location))
     }
 
+    pub fn load_from_slice(contents: &[u8], project_file_location: &Path) -> Result<Project, serde_json::Error> {
+        let parsed: SourceProject = serde_json::from_slice(&contents)?;
+
+        Ok(parsed.into_project(project_file_location))
+    }
+
     pub fn load_fuzzy(fuzzy_project_location: &Path) -> Result<Project, ProjectLoadError> {
         if let Some(project_path) = Self::locate(fuzzy_project_location) {
             Self::load_exact(&project_path)

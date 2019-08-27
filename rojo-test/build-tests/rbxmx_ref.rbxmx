@@ -1,0 +1,25 @@
+<roblox xmlns:xmime="http://www.w3.org/2005/05/xmlmime" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.roblox.com/roblox.xsd" version="4">
+	<Meta name="ExplicitAutoJoints">true</Meta>
+	<External>null</External>
+	<External>nil</External>
+	<Item class="Folder" referent="RBX82C2B70FBD6642A894EFCBA4FF284ADD">
+		<Properties>
+			<string name="Name">Container</string>
+			<BinaryString name="Tags"></BinaryString>
+		</Properties>
+		<Item class="StringValue" referent="RBX42D96C32E905427DBA530A1881C962FD">
+			<Properties>
+				<string name="Name">Target</string>
+				<BinaryString name="Tags"></BinaryString>
+				<string name="Value">Pointed to by ObjectValue</string>
+			</Properties>
+		</Item>
+		<Item class="ObjectValue" referent="RBXB5B6B1FDCC4942FA823B06B7ABA0EEDB">
+			<Properties>
+				<string name="Name">Pointer</string>
+				<BinaryString name="Tags"></BinaryString>
+				<Ref name="Value">RBX42D96C32E905427DBA530A1881C962FD</Ref>
+			</Properties>
+		</Item>
+	</Item>
+</roblox>
