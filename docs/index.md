@@ -1,5 +1,12 @@
 This is the documentation home for **the Rojo `master` branch**.
 
+!!! warning
+    Documentation here may not apply to the latest release of Rojo yet.
+
+    For documentation for the latest stable release series, 0.5.x, go to:
+
+    [https://rojo.space/docs/0.5.x](https://rojo.space/docs/0.5.x)
+
 Available versions of these docs:
 
 * [Latest version from `master` branch](https://rojo.space/docs/latest)
