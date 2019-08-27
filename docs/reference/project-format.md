@@ -1,25 +1,31 @@
 [TOC]
 
 ## Project File
+Rojo projects are JSON files that have the `.project.json` extension. They have the following fields:
 
-Rojo projects are JSON files that have the `.project.json` extension. They have these fields:
-
-* `name`: A string indicating the name of the project.
-    * This is only used for diagnostics.
+* `name`: A string indicating the name of the project. This name is used when building the project into a model or place file.
+    * **Required**
 * `tree`: An [Instance Description](#instance-description) describing the root instance of the project.
+    * **Required**
+* `servePort`: The port that `rojo serve` should listen on. Passing `--port` will override this setting.
+    * **Optional**
+    * Default is `34872`
+* `servePlaceIds`: A list of place IDs that this project may be live-synced to. This feature can help prevent overwriting the wrong game with source from Rojo.
+    * **Optional**
+    * Default is `null`
 
 ## Instance Description
-Instance Descriptions correspond one-to-one with the actual Roblox Instances in the project. They can be specified directly in the project file or be pulled from the filesystem.
+Instance Descriptions correspond one-to-one with the actual Roblox Instances in the project.
 
 * `$className`: The ClassName of the Instance being described.
-    * Optional if `$path` is specified.
+    * **Optional if `$path` is specified.**
 * `$path`: The path on the filesystem to pull files from into the project.
-    * Optional if `$className` is specified.
+    * **Optional if `$className` is specified.**
     * Paths are relative to the folder containing the project file.
 * `$properties`: Properties to apply to the instance. Values should be [Instance Property Values](#instance-property-value).
-    * Optional
+    * **Optional**
 * `$ignoreUnknownInstances`: Whether instances that Rojo doesn't know about should be deleted.
-    * Optional
+    * **Optional**
     * Default is `false` if `$path` is specified, otherwise `true`.
 
 All other fields in an Instance Description are turned into instances whose name is the key. These values should also be Instance Descriptions!
