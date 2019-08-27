@@ -1,11 +1,16 @@
-# Home
-This is the documentation home for **Rojo v0.4.x**.
+This is the documentation home for **Rojo 0.4.x**.
 
-Other versions of these docs:
+!!! warning
+    Rojo 0.4.x has reached end-of-life as of the release of Rojo 0.5.0 on August 27, 2019.
 
-* [Latest version](https://lpghatguy.github.io/rojo)
-* [0.5.x](https://lpghatguy.github.io/rojo/0.5.x)
+    Upgrading to Rojo 0.5.0 is strongly recommended to get new features and continue getting support.
 
-**Rojo** is a flexible multi-tool designed for creating robust Roblox projects.
+Available versions of these docs:
 
-This documentation is a work in progress, and is incomplete.
+* [Latest version from `master` branch](https://rojo.space/docs/latest)
+* [0.5.x](https://rojo.space/docs/0.5.x)
+* [0.4.x](https://rojo.space/docs/0.4.x)
+
+**Rojo** is a tool designed to enable Roblox developers to use professional-grade software engineering tools.
+
+This documentation is a continual work in progress. If you find any issues, please file an issue on [Rojo's issue tracker](https://github.com/rojo-rbx/rojo/issues)!

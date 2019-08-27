@@ -9,7 +9,7 @@ theme:
     primary: 'Red'
     accent: 'Red'
 
-pages:
+nav:
   - Home: index.md
   - Why Rojo?: why-rojo.md
   - Getting Started:
