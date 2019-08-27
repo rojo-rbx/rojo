@@ -40,9 +40,8 @@ matrix:
       rust: stable
       cache: cargo
 
-      script:
+      install:
         - rustup component add rustfmt
         - rustup component add clippy
-        - cargo test --locked --verbose
-        - cargo fmt --  --check
-        - cargo clippy
+
+      script: ./bin/run-tests.sh
