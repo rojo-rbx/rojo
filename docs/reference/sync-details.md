@@ -87,7 +87,7 @@ It would turn into instances in this shape:
 {: align="center" }
 
 !!! warning
-    Starting in Rojo 0.5.0 Beta 1, the `Name` field is no longer required. The name of the top-level instance in a JSON model is now based on its file name, and the `Name` field is now ignored.
+    Starting in Rojo 0.5.0 (stable), the `Name` field is no longer required. The name of the top-level instance in a JSON model is now based on its file name, and the `Name` field is now ignored.
 
     Rojo will emit a warning if the `Name` field is specified and does not match the file's name.
 

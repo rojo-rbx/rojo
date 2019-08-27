@@ -1,6 +1,8 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+
+## [0.5.0](https://github.com/rojo-rbx/rojo/releases/tag/v0.5.0) (August XX, 2019)
 * Changed `.model.json` naming, which may require projects to migrate ambiguous cases:
     * The file name now takes precedence over the `Name` field in the model, like Rojo 0.4.x.
     * The `Name` field of the top-level instance is now optional. It's recommended that you remove it from your models.
