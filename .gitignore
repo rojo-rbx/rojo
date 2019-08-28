@@ -1,9 +1,11 @@
+# Rust output directory
 /target
-/scratch-project
-/server/failed-snapshots/
-**/*.rs.bk
+
+# Roblox model and place files in the root, used for debugging
 /*.rbxm
 /*.rbxmx
 /*.rbxl
 /*.rbxlx
+
+# Snapshot files from the 'insta' Rust crate
 **/*.snap.new
