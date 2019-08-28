@@ -3,7 +3,7 @@ name = "rojo"
 version = "0.5.0"
 authors = ["Lucien Greathouse <me@lpghatguy.com>"]
 description = "Enables professional-grade development tools for Roblox developers"
-license = "MIT"
+license = "MPL-2.0"
 repository = "https://github.com/rojo-rbx/rojo"
 edition = "2018"
 
