@@ -97,7 +97,7 @@ fn show_crash_message(message: &str) {
     error!("Rojo crashed!");
     error!("This is a bug in Rojo.");
     error!("");
-    error!("Please consider filing a bug: https://github.com/LPGhatguy/rojo/issues");
+    error!("Please consider filing a bug: https://github.com/rojo-rbx/rojo/issues");
     error!("");
     error!("Details: {}", message);
 }
