@@ -54,7 +54,7 @@ fn main() {
             (about: "Generates a place or model file out of the project and uploads it to Roblox.")
             (@arg PROJECT: "Path to the project to upload. Defaults to the current directory.")
             (@arg kind: --kind +takes_value "The kind of asset to generate, 'place', or 'model'. Defaults to place.")
-            (@arg cookie: --cookie +takes_value "Security cookie to authenticate with. If not specified, Rojo will attempt to find one from the system automatically.")
+            (@arg cookie: --cookie +takes_value "Authenication cookie to authenticate with. If not specified, Rojo will attempt to find one from the system automatically.")
             (@arg asset_id: --asset_id +takes_value +required "Asset ID to upload to.")
         )
     );
@@ -172,7 +172,7 @@ fn start_upload(sub_matches: &ArgMatches) {
     };
 
     let kind = sub_matches.value_of("kind");
-    let security_cookie = sub_matches.value_of("cookie").map(Into::into);
+    let auth_cookie = sub_matches.value_of("cookie").map(Into::into);
 
     let asset_id: u64 = {
         let arg = sub_matches.value_of("asset_id").unwrap();
@@ -188,12 +188,12 @@ fn start_upload(sub_matches: &ArgMatches) {
 
     let options = commands::UploadOptions {
         fuzzy_project_path,
-        security_cookie: security_cookie,
+        auth_cookie,
         asset_id,
         kind,
     };
 
-    match commands::upload(&options) {
+    match commands::upload(options) {
         Ok(_) => {}
         Err(e) => {
             error!("{}", e);

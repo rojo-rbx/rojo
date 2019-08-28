@@ -12,6 +12,7 @@ pub mod commands;
 #[doc(hidden)]
 pub mod project;
 
+mod auth_cookie;
 mod imfs;
 mod message_queue;
 mod path_map;
