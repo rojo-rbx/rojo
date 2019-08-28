@@ -7,6 +7,11 @@ license = "MIT"
 repository = "https://github.com/rojo-rbx/rojo"
 edition = "2018"
 
+exclude = [
+    "/plugin/**",
+    "/test-projects/**",
+]
+
 [workspace]
 members = [
     "rojo-test",

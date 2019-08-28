@@ -1,11 +1,5 @@
 local Assets = {
-	Sprites = {
-		WhiteCross = {
-			asset = "rbxassetid://2738712459",
-			offset = Vector2.new(190, 318),
-			size = Vector2.new(18, 18),
-		},
-	},
+	Sprites = {},
 	Slices = {
 		RoundBox = {
 			asset = "rbxassetid://2773204550",

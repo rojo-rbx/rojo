@@ -4,9 +4,6 @@
 [submodule "plugin/modules/testez"]
 	path = plugin/modules/testez
 	url = https://github.com/Roblox/testez.git
-[submodule "plugin/modules/lemur"]
-	path = plugin/modules/lemur
-	url = https://github.com/LPGhatguy/lemur.git
 [submodule "plugin/modules/promise"]
 	path = plugin/modules/promise
 	url = https://github.com/LPGhatguy/roblox-lua-promise.git
