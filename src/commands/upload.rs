@@ -11,7 +11,7 @@ pub enum UploadError {
 #[derive(Debug)]
 pub struct UploadOptions<'a> {
     pub fuzzy_project_path: PathBuf,
-    pub security_cookie: String,
+    pub security_cookie: Option<String>,
     pub asset_id: u64,
     pub kind: Option<&'a str>,
 }
