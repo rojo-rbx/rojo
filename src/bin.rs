@@ -19,21 +19,15 @@ fn make_path_absolute(value: &Path) -> PathBuf {
 }
 
 fn main() {
-    {
-        let log_env = env_logger::Env::default().default_filter_or("warn");
-
-        env_logger::Builder::from_env(log_env)
-            .default_format_timestamp(false)
-            .init();
-    }
-
     let app = clap_app!(Rojo =>
         (version: env!("CARGO_PKG_VERSION"))
         (author: env!("CARGO_PKG_AUTHORS"))
         (about: env!("CARGO_PKG_DESCRIPTION"))
 
+        (@arg verbose: --verbose -v +multiple +global "Sets verbosity level. Can be specified multiple times.")
+
         (@subcommand init =>
-            (about: "Creates a new Rojo project")
+            (about: "Creates a new Rojo project.")
             (@arg PATH: "Path to the place to create the project. Defaults to the current directory.")
             (@arg kind: --kind +takes_value "The kind of project to create, 'place' or 'model'. Defaults to place.")
         )
@@ -45,7 +39,7 @@ fn main() {
         )
 
         (@subcommand build =>
-            (about: "Generates an rbxmx model file from the project.")
+            (about: "Generates a model or place file from the project.")
             (@arg PROJECT: "Path to the project to serve. Defaults to the current directory.")
             (@arg output: --output -o +takes_value +required "Where to output the result.")
         )
@@ -54,12 +48,28 @@ fn main() {
             (about: "Generates a place or model file out of the project and uploads it to Roblox.")
             (@arg PROJECT: "Path to the project to upload. Defaults to the current directory.")
             (@arg kind: --kind +takes_value "The kind of asset to generate, 'place', or 'model'. Defaults to place.")
-            (@arg cookie: --cookie +takes_value "Authenication cookie to authenticate with. If not specified, Rojo will attempt to find one from the system automatically.")
+            (@arg cookie: --cookie +takes_value "Authenication cookie to use. If not specified, Rojo will attempt to find one from the system automatically.")
             (@arg asset_id: --asset_id +takes_value +required "Asset ID to upload to.")
         )
     );
 
     let matches = app.get_matches();
+
+    {
+        let verbosity = matches.occurrences_of("verbose");
+        let log_filter = match verbosity {
+            0 => "warn",
+            1 => "warn,librojo=info",
+            2 => "warn,librojo=trace",
+            _ => "trace",
+        };
+
+        let log_env = env_logger::Env::default().default_filter_or(log_filter);
+
+        env_logger::Builder::from_env(log_env)
+            .default_format_timestamp(false)
+            .init();
+    }
 
     let result = panic::catch_unwind(|| match matches.subcommand() {
         ("init", Some(sub_matches)) => start_init(sub_matches),
