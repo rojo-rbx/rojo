@@ -5,7 +5,7 @@ This page aims to describe how Rojo turns files on the filesystem into Roblox ob
 Any directory on the filesystem will turn into a `Folder` instance in Roblox, unless that folder matches the name of a service or other existing instance. In those cases, that instance will be preserved.
 
 ## Scripts
-Rojo can represent `ModuleScript`, `Script`, and `LocalScript` objects. The default script type is `ModuleScript`, since most scripts in well-structued Roblox projects will be modules.
+Rojo can represent `ModuleScript`, `Script`, and `LocalScript` objects. The default script type is `ModuleScript`, since most scripts in well-structured Roblox projects will be modules.
 
 | File Name      | Instance Type  |
 | -------------- | -------------- |
@@ -13,7 +13,7 @@ Rojo can represent `ModuleScript`, `Script`, and `LocalScript` objects. The defa
 | `*.client.lua` | `LocalScript`  |
 | `*.lua`        | `ModuleScript` |
 
-If a directory contains a file named `init.server.lua`, `init.client.lua`, or `init.lua`, that folder will be transformed into a `*Script` instance with the conents of the `init` file. This can be used to create scripts inside of scripts.
+If a directory contains a file named `init.server.lua`, `init.client.lua`, or `init.lua`, that folder will be transformed into a `*Script` instance with the contents of the `init` file. This can be used to create scripts inside of scripts.
 
 For example, this file tree:
 
