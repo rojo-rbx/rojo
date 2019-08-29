@@ -87,4 +87,4 @@ Generating and publishing your game is as simple as:
 rojo upload --asset_id [PLACE ID] --cookie "[SECURITY COOKIE]"
 ```
 
-An example project is available on GitHub that deploys to Roblox.com from GitHub and Travis-CI automatically: [https://github.com/LPGhatguy/roads](https://github.com/LPGhatguy/roads)
+An example project is available on GitHub that deploys to roblox.com from GitHub and Travis-CI automatically: [https://github.com/LPGhatguy/roads](https://github.com/LPGhatguy/roads)
