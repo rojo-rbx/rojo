@@ -17,7 +17,22 @@ pub fn get_auth_cookie() -> Option<String> {
         let mut pieces = kv_pair.split("::");
 
         if let Some("COOK") = pieces.next() {
-            cookie = pieces.next();
+            let value = match pieces.next() {
+                Some(value) => value,
+                None => {
+                    log::warn!("Unrecognized Roblox Studio cookie value: missing COOK value");
+                    return None;
+                }
+            };
+
+            if !value.starts_with('<') || !value.ends_with('>') {
+                log::warn!("Unrecognized Roblox Studio cookie value: was not wrapped in <>");
+                return None;
+            }
+
+            let value = &value[1..value.len() - 1];
+
+            cookie = Some(value);
         }
     }
 
