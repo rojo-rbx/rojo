@@ -1,0 +1,28 @@
+---
+created: "2019-08-29T23:38:13.072820400Z"
+creator: insta@0.10.1
+source: rojo-test/src/build_test.rs
+expression: contents
+---
+<roblox version="4">
+  <Item class="Folder" referent="0">
+    <Properties>
+      <string name="Name">deep_nesting</string>
+    </Properties>
+    <Item class="Folder" referent="1">
+      <Properties>
+        <string name="Name">level-1</string>
+      </Properties>
+      <Item class="Folder" referent="2">
+        <Properties>
+          <string name="Name">level-2</string>
+        </Properties>
+        <Item class="Folder" referent="3">
+          <Properties>
+            <string name="Name">level-3</string>
+          </Properties>
+        </Item>
+      </Item>
+    </Item>
+  </Item>
+</roblox>

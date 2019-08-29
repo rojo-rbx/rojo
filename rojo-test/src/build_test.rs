@@ -22,6 +22,7 @@ gen_build_tests! {
     csv_bug_145,
     csv_bug_147,
     csv_in_folder,
+    deep_nesting,
     gitkeep,
     json_model_in_folder,
     json_model_legacy_name,
