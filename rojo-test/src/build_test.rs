@@ -24,6 +24,7 @@ gen_build_tests! {
     csv_in_folder,
     deep_nesting,
     gitkeep,
+    init_with_children,
     json_model_in_folder,
     json_model_legacy_name,
     module_in_folder,

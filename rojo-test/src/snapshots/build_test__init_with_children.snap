@@ -1,0 +1,20 @@
+---
+created: "2019-08-30T00:12:56.686707700Z"
+creator: insta@0.10.1
+source: rojo-test/src/build_test.rs
+expression: contents
+---
+<roblox version="4">
+  <Item class="ModuleScript" referent="0">
+    <Properties>
+      <string name="Name">init_with_children</string>
+      <string name="Source">-- init.lua</string>
+    </Properties>
+    <Item class="ModuleScript" referent="1">
+      <Properties>
+        <string name="Name">other</string>
+        <string name="Source">-- other.lua</string>
+      </Properties>
+    </Item>
+  </Item>
+</roblox>
