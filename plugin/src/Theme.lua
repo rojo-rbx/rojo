@@ -27,7 +27,7 @@ local DarkTheme = {
 	LightTextColor = Color3.fromRGB(103, 103, 103)
 } 
 
-if Enum.UITheme == Enum.UITheme.Light then
+if settings().Studio.Theme == Enum.UITheme.Light then
 	setmetatable(Theme, {
 	__index = function(_, key)
 		error(("%s is not a valid member of Theme"):format(key), 2)
