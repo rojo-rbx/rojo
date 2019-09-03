@@ -1,62 +1,20 @@
 //! Defines Rojo's HTTP API, all under /api. These endpoints generally return
 //! JSON.
 
-use std::{collections::HashSet, sync::Arc};
+use std::sync::Arc;
 
 use futures::{future, Future};
 
 use hyper::{header, service::Service, Body, Method, Request, Response, StatusCode};
 use rbx_dom_weak::RbxId;
-use serde::{Deserialize, Serialize};
 
-use crate::{serve_session::ServeSession, session_id::SessionId};
-
-const SERVER_VERSION: &str = env!("CARGO_PKG_VERSION");
-const PROTOCOL_VERSION: u64 = 3;
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ServerInfoResponse<'a> {
-    pub session_id: SessionId,
-    pub server_version: &'a str,
-    pub protocol_version: u64,
-    pub expected_place_ids: Option<HashSet<u64>>,
-    // pub root_instance_id: RbxId,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ReadResponse {
-    pub session_id: SessionId,
-    // pub message_cursor: u32,
-    // pub instances: HashMap<RbxId, InstanceWithMetadata<'a>>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SubscribeResponse {
-    pub session_id: SessionId,
-    // pub message_cursor: u32,
-    // pub messages: Cow<'a, [InstanceChanges]>,
-}
-
-fn response_json<T: serde::Serialize>(value: T) -> Response<Body> {
-    let serialized = match serde_json::to_string(&value) {
-        Ok(v) => v,
-        Err(err) => {
-            return Response::builder()
-                .status(StatusCode::INTERNAL_SERVER_ERROR)
-                .header(header::CONTENT_TYPE, "text/plain")
-                .body(Body::from(err.to_string()))
-                .unwrap();
-        }
-    };
-
-    Response::builder()
-        .header(header::CONTENT_TYPE, "application/json")
-        .body(Body::from(serialized))
-        .unwrap()
-}
+use crate::{
+    serve_session::ServeSession,
+    web::util::response_json,
+    web_interface::{
+        ReadResponse, ServerInfoResponse, SubscribeResponse, PROTOCOL_VERSION, SERVER_VERSION,
+    },
+};
 
 pub struct ApiService {
     serve_session: Arc<ServeSession>,

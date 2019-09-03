@@ -6,9 +6,8 @@ use futures::{future, Future};
 use hyper::{header, service::Service, Body, Method, Request, Response, StatusCode};
 use ritz::html;
 
-use crate::serve_session::ServeSession;
+use crate::{serve_session::ServeSession, web_interface::SERVER_VERSION};
 
-const SERVER_VERSION: &str = env!("CARGO_PKG_VERSION");
 static HOME_CSS: &str = include_str!("../../assets/index.css");
 
 pub struct InterfaceService {

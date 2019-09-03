@@ -1,5 +1,6 @@
 mod api;
 mod interface;
+mod util;
 
 use std::sync::Arc;
 
