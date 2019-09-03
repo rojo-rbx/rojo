@@ -17,9 +17,6 @@ members = [
     "rojo-test",
 ]
 
-[profile.dev]
-opt-level = 1
-
 [lib]
 name = "librojo"
 path = "src/lib.rs"

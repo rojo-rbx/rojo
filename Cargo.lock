@@ -850,7 +850,7 @@ name = "mime"
 version = "0.3.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "unicase 2.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "unicase 2.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -859,7 +859,7 @@ version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "mime 0.3.13 (registry+https://github.com/rust-lang/crates.io-index)",
- "unicase 2.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "unicase 2.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -1414,7 +1414,7 @@ dependencies = [
 
 [[package]]
 name = "rbx_reflection"
-version = "3.2.395"
+version = "3.2.399"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "bitflags 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1431,7 +1431,7 @@ dependencies = [
  "base64 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "rbx_dom_weak 1.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "rbx_reflection 3.2.395 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rbx_reflection 3.2.399 (registry+https://github.com/rust-lang/crates.io-index)",
  "xml-rs 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -1555,7 +1555,7 @@ dependencies = [
  "pretty_assertions 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "rbx_binary 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "rbx_dom_weak 1.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "rbx_reflection 3.2.395 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rbx_reflection 3.2.399 (registry+https://github.com/rust-lang/crates.io-index)",
  "rbx_xml 0.11.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "regex 1.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "reqwest 0.9.20 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2034,7 +2034,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "unicase"
-version = "2.4.0"
+version = "2.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "version_check 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2426,7 +2426,7 @@ dependencies = [
 "checksum rand_xorshift 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "cbf7e9e623549b0e21f6e97cf8ecf247c1a8fd2e8a992ae265314300b2455d5c"
 "checksum rbx_binary 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)" = "81428c521a07a3feac9c31180a886e467eecf81b769987f70d51d567a09c321d"
 "checksum rbx_dom_weak 1.9.0 (registry+https://github.com/rust-lang/crates.io-index)" = "bb8079fe850096bd18582a8661f5d7a6afee61bc914691be2f287050f3ac0ec4"
-"checksum rbx_reflection 3.2.395 (registry+https://github.com/rust-lang/crates.io-index)" = "e3b43ccce9c29e9f1774359cb96b6ea0c1b897d416dc00f5b45cf54866ca7997"
+"checksum rbx_reflection 3.2.399 (registry+https://github.com/rust-lang/crates.io-index)" = "13df0adaeaad56d905fecfef8a4c4d6ec31a7e2afaa6e900fef7a5b5ec337813"
 "checksum rbx_xml 0.11.2 (registry+https://github.com/rust-lang/crates.io-index)" = "b0236363b0af0c78f3e972ac7f46a1f355f663518e276253136d0180f3c8742c"
 "checksum rdrand 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "678054eb77286b51581ba43620cc911abf02758c91f93f479767aed0f90458b2"
 "checksum redox_syscall 0.1.56 (registry+https://github.com/rust-lang/crates.io-index)" = "2439c63f3f6139d1b57529d16bc3b8bb855230c8efcc5d3a896c8bea7c3b1e84"
@@ -2487,7 +2487,7 @@ dependencies = [
 "checksum try_from 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)" = "283d3b89e1368717881a9d51dad843cc435380d8109c9e47d38780a324698d8b"
 "checksum typenum 1.11.2 (registry+https://github.com/rust-lang/crates.io-index)" = "6d2783fe2d6b8c1101136184eb41be8b1ad379e4657050b8aaff0c79ee7575f9"
 "checksum ucd-trie 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "8f00ed7be0c1ff1e24f46c3d2af4859f7e863672ba3a6e92e7cff702bf9f06c2"
-"checksum unicase 2.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "a84e5511b2a947f3ae965dcb29b13b7b1691b6e7332cf5dbc1744138d5acb7f6"
+"checksum unicase 2.5.1 (registry+https://github.com/rust-lang/crates.io-index)" = "2e2e6bd1e59e56598518beb94fd6db628ded570326f0a98c679a304bd9f00150"
 "checksum unicode-bidi 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)" = "49f2bd0c6468a8230e1db229cff8029217cf623c767ea5d60bfbd42729ea54d5"
 "checksum unicode-normalization 0.1.8 (registry+https://github.com/rust-lang/crates.io-index)" = "141339a08b982d942be2ca06ff8b076563cbe223d1befd5450716790d44e2426"
 "checksum unicode-width 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)" = "7007dbd421b92cc6e28410fe7362e2e0a2503394908f417b68ec8d1c364c4e20"
