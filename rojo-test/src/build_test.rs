@@ -11,6 +11,7 @@ macro_rules! gen_build_tests {
             paste::item! {
                 #[test]
                 fn [<build_ $test_name>]() {
+                    let _ = env_logger::try_init();
                     run_build_test(stringify!($test_name));
                 }
             }
@@ -54,9 +55,9 @@ fn run_build_test(test_name: &str) {
     let build_test_path = get_build_tests_path();
     let working_dir = get_working_dir_path();
 
-    let output_dir = tempdir().expect("couldn't create temporary directory");
-
     let input_path = build_test_path.join(test_name);
+
+    let output_dir = tempdir().expect("couldn't create temporary directory");
     let output_path = output_dir.path().join(format!("{}.rbxmx", test_name));
 
     let exe_path = get_rojo_path();

@@ -13,7 +13,10 @@ pub fn get_rojo_path() -> PathBuf {
 
 pub fn get_working_dir_path() -> PathBuf {
     let mut manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    assert!(manifest_dir.pop(), "Manifest directory did not have a parent");
+    assert!(
+        manifest_dir.pop(),
+        "Manifest directory did not have a parent"
+    );
     manifest_dir
 }
 

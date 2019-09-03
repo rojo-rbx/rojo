@@ -1,0 +1,9 @@
+{
+  "name": "placeholder",
+  "tree": {
+    "$className": "StringValue",
+    "$properties": {
+      "Value": "Hello, world!"
+    }
+  }
+}

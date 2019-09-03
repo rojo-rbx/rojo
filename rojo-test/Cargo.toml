@@ -10,6 +10,8 @@ insta = "0.10.0"
 paste = "0.1.5"
 tempfile = "3.1.0"
 reqwest = "0.9.20"
+env_logger = "0.6.2"
+log = "0.4.8"
 
 # We execute Rojo via std::process::Command, so depend on it so it's built!
 rojo = { path = ".." }
