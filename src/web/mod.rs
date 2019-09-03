@@ -1,5 +1,5 @@
 mod api;
-mod interface;
+pub mod interface;
 mod ui;
 mod util;
 
