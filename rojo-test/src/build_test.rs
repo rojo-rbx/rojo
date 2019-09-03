@@ -1,7 +1,9 @@
-use std::{fs, path::Path, process::Command};
+use std::{fs, process::Command};
 
 use insta::assert_snapshot_matches;
 use tempfile::tempdir;
+
+use crate::util::{get_build_tests_path, get_rojo_path, get_working_dir_path};
 
 macro_rules! gen_build_tests {
     ( $($test_name: ident,)* ) => {
@@ -49,19 +51,15 @@ fn build_rbxmx_ref() {
 }
 
 fn run_build_test(test_name: &str) {
-    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let build_test_path = manifest_dir.join("build-tests");
-    let working_dir = manifest_dir.parent().unwrap();
+    let build_test_path = get_build_tests_path();
+    let working_dir = get_working_dir_path();
 
     let output_dir = tempdir().expect("couldn't create temporary directory");
 
     let input_path = build_test_path.join(test_name);
     let output_path = output_dir.path().join(format!("{}.rbxmx", test_name));
 
-    let mut exe_path = working_dir.join("target/debug/rojo");
-    if cfg!(windows) {
-        exe_path.set_extension("exe");
-    }
+    let exe_path = get_rojo_path();
 
     let status = Command::new(exe_path)
         .args(&[
