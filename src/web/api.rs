@@ -10,9 +10,11 @@ use rbx_dom_weak::RbxId;
 
 use crate::{
     serve_session::ServeSession,
-    web::util::response_json,
-    web_interface::{
-        ReadResponse, ServerInfoResponse, SubscribeResponse, PROTOCOL_VERSION, SERVER_VERSION,
+    web::{
+        interface::{
+            ReadResponse, ServerInfoResponse, SubscribeResponse, PROTOCOL_VERSION, SERVER_VERSION,
+        },
+        util::response_json,
     },
 };
 

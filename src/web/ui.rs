@@ -6,7 +6,7 @@ use futures::{future, Future};
 use hyper::{header, service::Service, Body, Method, Request, Response, StatusCode};
 use ritz::html;
 
-use crate::{serve_session::ServeSession, web_interface::SERVER_VERSION};
+use crate::{serve_session::ServeSession, web::interface::SERVER_VERSION};
 
 static HOME_CSS: &str = include_str!("../../assets/index.css");
 
