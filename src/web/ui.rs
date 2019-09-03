@@ -10,12 +10,12 @@ use crate::{serve_session::ServeSession, web_interface::SERVER_VERSION};
 
 static HOME_CSS: &str = include_str!("../../assets/index.css");
 
-pub struct InterfaceService {
+pub struct UiService {
     #[allow(unused)] // TODO: Fill out interface service
     serve_session: Arc<ServeSession>,
 }
 
-impl Service for InterfaceService {
+impl Service for UiService {
     type ReqBody = Body;
     type ResBody = Body;
     type Error = hyper::Error;
@@ -36,9 +36,9 @@ impl Service for InterfaceService {
     }
 }
 
-impl InterfaceService {
-    pub fn new(serve_session: Arc<ServeSession>) -> InterfaceService {
-        InterfaceService { serve_session }
+impl UiService {
+    pub fn new(serve_session: Arc<ServeSession>) -> UiService {
+        UiService { serve_session }
     }
 
     fn handle_home(&self) -> Response<Body> {

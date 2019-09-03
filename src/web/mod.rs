@@ -1,5 +1,5 @@
 mod api;
-mod interface;
+mod ui;
 mod util;
 
 use std::sync::Arc;
@@ -13,11 +13,11 @@ use log::trace;
 
 use crate::serve_session::ServeSession;
 
-use self::{api::ApiService, interface::InterfaceService};
+use self::{api::ApiService, ui::UiService};
 
 pub struct RootService {
-    api: api::ApiService,
-    interface: interface::InterfaceService,
+    api: ApiService,
+    ui: UiService,
 }
 
 impl Service for RootService {
@@ -32,7 +32,7 @@ impl Service for RootService {
         if request.uri().path().starts_with("/api") {
             self.api.call(request)
         } else {
-            self.interface.call(request)
+            self.ui.call(request)
         }
     }
 }
@@ -41,7 +41,7 @@ impl RootService {
     pub fn new(serve_session: Arc<ServeSession>) -> RootService {
         RootService {
             api: ApiService::new(Arc::clone(&serve_session)),
-            interface: InterfaceService::new(Arc::clone(&serve_session)),
+            ui: UiService::new(Arc::clone(&serve_session)),
         }
     }
 }
