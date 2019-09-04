@@ -1,6 +1,6 @@
 use std::{
     fs,
-    path::PathBuf,
+    path::{Path, PathBuf},
     process::Command,
     sync::atomic::{AtomicUsize, Ordering},
 };
@@ -18,11 +18,18 @@ use crate::util::{
 fn empty() {
     let _ = env_logger::try_init();
 
-    let mut session = TestServeSession::new("empty");
-    let info = session.wait_to_come_online();
+    let mut settings = insta::Settings::new();
 
-    assert_yaml_snapshot!(info, {
-        ".sessionId" => "[session id]"
+    let snapshot_path = Path::new(env!("CARGO_MANIFEST_DIR")).join("serve-test-snapshots");
+    settings.set_snapshot_path(snapshot_path);
+
+    settings.bind(|| {
+        let mut session = TestServeSession::new("empty");
+        let info = session.wait_to_come_online();
+
+        assert_yaml_snapshot!(info, {
+            ".sessionId" => "[session id]"
+        });
     });
 }
 

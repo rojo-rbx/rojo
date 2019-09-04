@@ -1,4 +1,4 @@
-use std::{fs, process::Command};
+use std::{fs, path::Path, process::Command};
 
 use insta::assert_snapshot;
 use tempfile::tempdir;
@@ -12,6 +12,7 @@ macro_rules! gen_build_tests {
                 #[test]
                 fn [<build_ $test_name>]() {
                     let _ = env_logger::try_init();
+
                     run_build_test(stringify!($test_name));
                 }
             }
@@ -78,5 +79,12 @@ fn run_build_test(test_name: &str) {
 
     let contents = fs::read_to_string(&output_path).expect("Couldn't read output file");
 
-    assert_snapshot!(test_name, contents);
+    let mut settings = insta::Settings::new();
+
+    let snapshot_path = Path::new(env!("CARGO_MANIFEST_DIR")).join("build-test-snapshots");
+    settings.set_snapshot_path(snapshot_path);
+
+    settings.bind(|| {
+        assert_snapshot!(test_name, contents);
+    });
 }
