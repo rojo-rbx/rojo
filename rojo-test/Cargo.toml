@@ -6,12 +6,18 @@ edition = "2018"
 publish = false
 
 [dependencies]
-insta = "0.10.0"
-paste = "0.1.5"
-tempfile = "3.1.0"
-reqwest = "0.9.20"
 env_logger = "0.6.2"
 log = "0.4.8"
+paste = "0.1.5"
+reqwest = "0.9.20"
+serde = "1.0.99"
+serde_json = "1.0.40"
+tempfile = "3.1.0"
+walkdir = "2.2.9"
 
 # We execute Rojo via std::process::Command, so depend on it so it's built!
 rojo = { path = ".." }
+
+[dependencies.insta]
+version = "0.11.0"
+features = ["redactions"]

@@ -1,6 +1,6 @@
 use std::{fs, process::Command};
 
-use insta::assert_snapshot_matches;
+use insta::assert_snapshot;
 use tempfile::tempdir;
 
 use crate::util::{get_build_tests_path, get_rojo_path, get_working_dir_path};
@@ -78,5 +78,5 @@ fn run_build_test(test_name: &str) {
 
     let contents = fs::read_to_string(&output_path).expect("Couldn't read output file");
 
-    assert_snapshot_matches!(test_name, contents);
+    assert_snapshot!(test_name, contents);
 }

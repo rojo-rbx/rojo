@@ -15,9 +15,9 @@ pub const PROTOCOL_VERSION: u64 = 3;
 /// Response body from /api/rojo
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ServerInfoResponse<'a> {
+pub struct ServerInfoResponse {
     pub session_id: SessionId,
-    pub server_version: &'a str,
+    pub server_version: String,
     pub protocol_version: u64,
     pub expected_place_ids: Option<HashSet<u64>>,
     // pub root_instance_id: RbxId,
