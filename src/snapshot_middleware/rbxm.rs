@@ -49,6 +49,7 @@ impl SnapshotMiddleware for SnapshotRbxm {
         if children.len() == 1 {
             let mut snapshot = InstanceSnapshot::from_tree(&temp_tree, children[0]);
             snapshot.name = Cow::Owned(instance_name);
+            // TODO: Assign snapshot.source
 
             Ok(Some(snapshot))
         } else {

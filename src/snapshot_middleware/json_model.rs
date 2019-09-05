@@ -120,6 +120,7 @@ impl JsonModelCore {
 
         InstanceSnapshot {
             snapshot_id: None,
+            source: None, // TODO
             name: Cow::Owned(name),
             class_name: Cow::Owned(class_name),
             properties,
@@ -169,6 +170,7 @@ mod test {
             instance_snapshot,
             InstanceSnapshot {
                 snapshot_id: None,
+                source: None, // TODO
                 name: Cow::Borrowed("foo"),
                 class_name: Cow::Borrowed("IntValue"),
                 properties: hashmap! {
@@ -178,6 +180,7 @@ mod test {
                 },
                 children: vec![InstanceSnapshot {
                     snapshot_id: None,
+                    source: None, // TODO
                     name: Cow::Borrowed("The Child"),
                     class_name: Cow::Borrowed("StringValue"),
                     properties: HashMap::new(),

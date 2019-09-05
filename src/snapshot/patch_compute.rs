@@ -244,6 +244,7 @@ mod test {
                 }
             },
 
+            source: None,
             name: Cow::Borrowed("foo"),
             class_name: Cow::Borrowed("foo"),
             children: Vec::new(),
@@ -294,11 +295,13 @@ mod test {
                 },
 
                 snapshot_id: None,
+                source: None,
                 name: Cow::Borrowed("child"),
                 class_name: Cow::Borrowed("child"),
                 children: Vec::new(),
             }],
 
+            source: None,
             properties: HashMap::new(),
             name: Cow::Borrowed("foo"),
             class_name: Cow::Borrowed("foo"),
@@ -311,6 +314,7 @@ mod test {
                 parent_id: root_id,
                 instance: InstanceSnapshot {
                     snapshot_id: None,
+                    source: None,
                     properties: hashmap! {
                         "Self".to_owned() => RbxValue::Ref {
                             value: Some(root_id),

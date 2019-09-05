@@ -131,6 +131,7 @@ fn snapshot_project_node<F: ImfsFetcher>(
 
     Ok(Some(InstanceSnapshot {
         snapshot_id: None,
+        source: None, // TODO
         name,
         class_name,
         properties,

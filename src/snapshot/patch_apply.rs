@@ -159,6 +159,7 @@ mod test {
 
         let snapshot = InstanceSnapshot {
             snapshot_id: None,
+            source: None,
             name: Cow::Borrowed("Foo"),
             class_name: Cow::Borrowed("Bar"),
             properties: hashmap! {

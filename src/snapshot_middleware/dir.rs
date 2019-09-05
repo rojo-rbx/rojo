@@ -43,6 +43,7 @@ impl SnapshotMiddleware for SnapshotDir {
 
         Ok(Some(InstanceSnapshot {
             snapshot_id: None,
+            source: None, // TODO
             name: Cow::Owned(instance_name),
             class_name: Cow::Borrowed("Folder"),
             properties: HashMap::new(),

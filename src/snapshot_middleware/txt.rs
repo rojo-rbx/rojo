@@ -51,6 +51,7 @@ impl SnapshotMiddleware for SnapshotTxt {
 
         Ok(Some(InstanceSnapshot {
             snapshot_id: None,
+            source: None, // TODO
             name: Cow::Owned(instance_name),
             class_name: Cow::Borrowed("StringValue"),
             properties,
