@@ -90,7 +90,7 @@ fn snapshot_lua_file<F: ImfsFetcher>(
 
     Ok(Some(InstanceSnapshot {
         snapshot_id: None,
-        source: None, // TODO
+        metadata: Default::default(), // TODO
         name: Cow::Owned(instance_name.to_owned()),
         class_name: Cow::Borrowed(class_name),
         properties,

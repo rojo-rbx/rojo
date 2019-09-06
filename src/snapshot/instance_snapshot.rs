@@ -1,10 +1,10 @@
 //! Defines the structure of an instance snapshot.
 
-use std::{borrow::Cow, collections::HashMap, path::PathBuf};
+use std::{borrow::Cow, collections::HashMap};
 
 use rbx_dom_weak::{RbxId, RbxTree, RbxValue};
 
-use crate::project::ProjectNode;
+use super::InstanceMetadata;
 
 /// A lightweight description of what an instance should look like. Attempts to
 /// be somewhat memory efficient by borrowing from its source data, indicated by
@@ -18,14 +18,21 @@ pub struct InstanceSnapshot<'source> {
     /// A temporary ID applied to the snapshot that's used for Ref properties.
     pub snapshot_id: Option<RbxId>,
 
-    /// A complete view of where this snapshot came from. It should contain
-    /// enough information, if not None, to recreate this snapshot
-    /// deterministically assuming the source has not changed state.
-    pub source: Option<SnapshotSource>,
+    /// Rojo-specific metadata associated with the instance.
+    pub metadata: InstanceMetadata,
 
+    /// Correpsonds to the Name property of the instance.
     pub name: Cow<'source, str>,
+
+    /// Corresponds to the ClassName property of the instance.
     pub class_name: Cow<'source, str>,
+
+    /// All other properties of the instance, weakly-typed.
     pub properties: HashMap<String, RbxValue>,
+
+    /// The children of the instance represented as more snapshots.
+    ///
+    /// Order is relevant for Roblox instances!
     pub children: Vec<InstanceSnapshot<'source>>,
 }
 
@@ -39,7 +46,7 @@ impl<'source> InstanceSnapshot<'source> {
 
         InstanceSnapshot {
             snapshot_id: None,
-            source: self.source.clone(),
+            metadata: self.metadata.clone(),
             name: Cow::Owned(self.name.clone().into_owned()),
             class_name: Cow::Owned(self.class_name.clone().into_owned()),
             properties: self.properties.clone(),
@@ -61,7 +68,7 @@ impl<'source> InstanceSnapshot<'source> {
 
         InstanceSnapshot {
             snapshot_id: Some(id),
-            source: None,
+            metadata: InstanceMetadata::default(),
             name: Cow::Owned(instance.name.clone()),
             class_name: Cow::Owned(instance.class_name.clone()),
             properties: instance.properties.clone(),
@@ -70,14 +77,15 @@ impl<'source> InstanceSnapshot<'source> {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum SnapshotSource {
-    File {
-        path: PathBuf,
-    },
-    ProjectFile {
-        path: PathBuf,
-        name: String,
-        node: ProjectNode,
-    },
+impl<'source> Default for InstanceSnapshot<'source> {
+    fn default() -> InstanceSnapshot<'source> {
+        InstanceSnapshot {
+            snapshot_id: None,
+            metadata: InstanceMetadata::default(),
+            name: Cow::Borrowed("DEFAULT"),
+            class_name: Cow::Borrowed("DEFAULT"),
+            properties: HashMap::new(),
+            children: Vec::new(),
+        }
+    }
 }

@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use rbx_dom_weak::{RbxId, RbxValue};
 
-use super::InstanceSnapshot;
+use super::{InstanceMetadata, InstanceSnapshot};
 
 /// A set of different kinds of patches that can be applied to an RbxTree.
 #[derive(Debug, Default, Clone, PartialEq)]
@@ -41,4 +41,7 @@ pub struct PatchUpdateInstance {
     /// Contains all changed properties. If a property is assigned to `None`,
     /// then that property has been removed.
     pub changed_properties: HashMap<String, Option<RbxValue>>,
+
+    /// Changed Rojo-specific metadata, if any of it changed.
+    pub changed_metadata: Option<InstanceMetadata>,
 }

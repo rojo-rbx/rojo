@@ -143,7 +143,7 @@ mod test {
     use maplit::hashmap;
     use rbx_dom_weak::RbxValue;
 
-    use super::super::patch::PatchAddInstance;
+    use super::super::PatchAddInstance;
 
     #[test]
     fn add_from_empty() {
@@ -159,7 +159,7 @@ mod test {
 
         let snapshot = InstanceSnapshot {
             snapshot_id: None,
-            source: None,
+            metadata: Default::default(),
             name: Cow::Borrowed("Foo"),
             class_name: Cow::Borrowed("Bar"),
             properties: hashmap! {
@@ -218,6 +218,7 @@ mod test {
                 // Baz has been added
                 "Baz".to_owned() => Some(RbxValue::Int32 { value: 10 }),
             },
+            changed_metadata: None,
         };
 
         let patch_set = PatchSet {

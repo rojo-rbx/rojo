@@ -140,6 +140,7 @@ fn compute_property_patches(
         changed_name,
         changed_class_name,
         changed_properties,
+        changed_metadata: None,
     });
 }
 
@@ -244,7 +245,7 @@ mod test {
                 }
             },
 
-            source: None,
+            metadata: Default::default(),
             name: Cow::Borrowed("foo"),
             class_name: Cow::Borrowed("foo"),
             children: Vec::new(),
@@ -262,6 +263,7 @@ mod test {
                         value: Some(root_id),
                     }),
                 },
+                changed_metadata: None,
             }],
             added_instances: Vec::new(),
             removed_instances: Vec::new(),
@@ -295,13 +297,13 @@ mod test {
                 },
 
                 snapshot_id: None,
-                source: None,
+                metadata: Default::default(),
                 name: Cow::Borrowed("child"),
                 class_name: Cow::Borrowed("child"),
                 children: Vec::new(),
             }],
 
-            source: None,
+            metadata: Default::default(),
             properties: HashMap::new(),
             name: Cow::Borrowed("foo"),
             class_name: Cow::Borrowed("foo"),
@@ -314,7 +316,7 @@ mod test {
                 parent_id: root_id,
                 instance: InstanceSnapshot {
                     snapshot_id: None,
-                    source: None,
+                    metadata: Default::default(),
                     properties: hashmap! {
                         "Self".to_owned() => RbxValue::Ref {
                             value: Some(root_id),

@@ -19,11 +19,13 @@
 #![allow(dead_code)]
 
 mod instance_snapshot;
+mod metadata;
 mod patch;
 mod patch_apply;
 mod patch_compute;
 
 pub use instance_snapshot::InstanceSnapshot;
+pub use metadata::*;
 pub use patch::*;
 pub use patch_apply::apply_patch_set;
 pub use patch_compute::compute_patch_set;
