@@ -14,6 +14,7 @@ pub mod project;
 
 mod auth_cookie;
 mod imfs;
+mod mapset;
 mod message_queue;
 mod path_map;
 mod path_serializer;
