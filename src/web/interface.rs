@@ -2,6 +2,7 @@
 
 use std::collections::HashSet;
 
+use rbx_dom_weak::RbxId;
 use serde::{Deserialize, Serialize};
 
 use crate::session_id::SessionId;
@@ -20,7 +21,7 @@ pub struct ServerInfoResponse {
     pub server_version: String,
     pub protocol_version: u64,
     pub expected_place_ids: Option<HashSet<u64>>,
-    // pub root_instance_id: RbxId,
+    pub root_instance_id: RbxId,
 }
 
 /// Response body from /api/read/{id}

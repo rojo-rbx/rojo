@@ -28,7 +28,8 @@ fn empty() {
         let info = session.wait_to_come_online();
 
         assert_yaml_snapshot!(info, {
-            ".sessionId" => "[session id]"
+            ".sessionId" => "[session id]",
+            ".rootInstanceId" => "[root id]"
         });
     });
 }

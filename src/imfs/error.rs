@@ -19,19 +19,6 @@ impl<T> FsResultExt<T> for Result<T, FsError> {
     }
 }
 
-// TODO: New error type that contains errors specific to our application,
-// wrapping io::Error either directly or through another error type that has
-// path information.
-//
-// It's possible that we should hoist up the path information one more level, or
-// destructure/restructure information to hoist the path out of FsError and just
-// embed io::Error?
-pub enum ImfsError {
-    NotFound,
-    WrongKind,
-    Io(io::Error),
-}
-
 /// A wrapper around io::Error that also attaches the path associated with the
 /// error.
 #[derive(Debug, Fail)]

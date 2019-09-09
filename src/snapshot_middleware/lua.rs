@@ -111,10 +111,12 @@ fn snapshot_init<F: ImfsFetcher>(
     let init_path = folder_entry.path().join(init_name);
 
     if let Some(init_entry) = imfs.get(init_path).with_not_found()? {
-        if let Some(mut dir_snapshot) = SnapshotDir::from_imfs(imfs, folder_entry)? {
+        if let Some(dir_snapshot) = SnapshotDir::from_imfs(imfs, folder_entry)? {
             if let Some(mut init_snapshot) = snapshot_lua_file(imfs, &init_entry)? {
                 init_snapshot.name = dir_snapshot.name;
                 init_snapshot.children = dir_snapshot.children;
+                // TODO: Metadata
+                // TODO: Validate directory class name is "Folder"
 
                 return Ok(Some(init_snapshot));
             }

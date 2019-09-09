@@ -34,7 +34,7 @@ struct SourceProject {
 
 impl SourceProject {
     /// Consumes the SourceProject and yields a Project, ready for prime-time.
-    pub fn into_project(mut self, project_file_location: &Path) -> Project {
+    pub fn into_project(self, project_file_location: &Path) -> Project {
         let tree = self.tree.into_project_node(project_file_location);
 
         Project {

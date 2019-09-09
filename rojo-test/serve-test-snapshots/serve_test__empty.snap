@@ -6,3 +6,4 @@ sessionId: "[session id]"
 serverVersion: 0.5.0
 protocolVersion: 3
 expectedPlaceIds: ~
+rootInstanceId: "[root id]"

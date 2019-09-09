@@ -70,7 +70,7 @@ pub fn serve(options: &ServeOptions) -> Result<(), ServeError> {
     let patch_set = compute_patch_set(&snapshot, &tree, root_id);
     apply_patch_set(&mut tree, &patch_set);
 
-    let session = Arc::new(ServeSession::new(maybe_project));
+    let session = Arc::new(ServeSession::new(tree, maybe_project));
     let server = LiveServer::new(session);
 
     server.start(port);

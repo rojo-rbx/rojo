@@ -53,11 +53,15 @@ impl ApiService {
 
     /// Get a summary of information about the server
     fn handle_api_rojo(&self) -> Response<Body> {
+        let tree = self.serve_session.tree();
+        let root_instance_id = tree.get_root_id();
+
         response_json(&ServerInfoResponse {
             server_version: SERVER_VERSION.to_owned(),
             protocol_version: PROTOCOL_VERSION,
             session_id: self.serve_session.session_id(),
-            expected_place_ids: self.serve_session.serve_place_ids().map(Clone::clone),
+            expected_place_ids: self.serve_session.serve_place_ids().cloned(),
+            root_instance_id,
         })
     }
 
