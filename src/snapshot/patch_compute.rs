@@ -3,16 +3,16 @@
 
 use std::collections::{HashMap, HashSet};
 
-use rbx_dom_weak::{RbxId, RbxInstance, RbxTree, RbxValue};
+use rbx_dom_weak::{RbxId, RbxInstance, RbxValue};
 
 use super::{
     patch::{PatchAddInstance, PatchSet, PatchUpdateInstance},
-    InstanceSnapshot,
+    InstanceSnapshot, RojoTree,
 };
 
 pub fn compute_patch_set<'a>(
     snapshot: &'a InstanceSnapshot,
-    tree: &RbxTree,
+    tree: &RojoTree,
     id: RbxId,
 ) -> PatchSet<'a> {
     let mut patch_set = PatchSet::new();
@@ -72,7 +72,7 @@ fn rewrite_refs_in_snapshot(context: &ComputePatchContext, snapshot: &mut Instan
 fn compute_patch_set_internal<'a>(
     context: &mut ComputePatchContext,
     snapshot: &'a InstanceSnapshot,
-    tree: &RbxTree,
+    tree: &RojoTree,
     id: RbxId,
     patch_set: &mut PatchSet<'a>,
 ) {
@@ -84,7 +84,7 @@ fn compute_patch_set_internal<'a>(
         .get_instance(id)
         .expect("Instance did not exist in tree");
 
-    compute_property_patches(snapshot, instance, patch_set);
+    compute_property_patches(snapshot, &instance.instance, patch_set);
     compute_children_patches(context, snapshot, tree, id, patch_set);
 }
 
@@ -147,7 +147,7 @@ fn compute_property_patches(
 fn compute_children_patches<'a>(
     context: &mut ComputePatchContext,
     snapshot: &'a InstanceSnapshot,
-    tree: &RbxTree,
+    tree: &RojoTree,
     id: RbxId,
     patch_set: &mut PatchSet<'a>,
 ) {
@@ -155,7 +155,7 @@ fn compute_children_patches<'a>(
         .get_instance(id)
         .expect("Instance did not exist in tree");
 
-    let instance_children = instance.get_children_ids();
+    let instance_children = instance.instance.get_children_ids();
 
     let mut paired_instances = vec![false; instance_children.len()];
 
@@ -173,8 +173,8 @@ fn compute_children_patches<'a>(
                         .get_instance(**instance_child_id)
                         .expect("Instance did not exist in tree");
 
-                    if snapshot_child.name == instance_child.name
-                        && snapshot_child.class_name == instance_child.class_name
+                    if snapshot_child.name == instance_child.instance.name
+                        && snapshot_child.class_name == instance_child.instance.class_name
                     {
                         paired_instances[*instance_index] = true;
                         return true;
@@ -220,16 +220,21 @@ mod test {
     use maplit::hashmap;
     use rbx_dom_weak::RbxInstanceProperties;
 
+    use super::super::InstancePropertiesWithMeta;
+
     /// This test makes sure that rewriting refs in instance update patches to
     /// instances that already exists works. We should be able to correlate the
     /// snapshot ID and instance ID during patch computation and replace the
     /// value before returning from compute_patch_set.
     #[test]
     fn rewrite_ref_existing_instance_update() {
-        let tree = RbxTree::new(RbxInstanceProperties {
-            name: "foo".to_owned(),
-            class_name: "foo".to_owned(),
-            properties: HashMap::new(),
+        let tree = RojoTree::new(InstancePropertiesWithMeta {
+            properties: RbxInstanceProperties {
+                name: "foo".to_owned(),
+                class_name: "foo".to_owned(),
+                properties: HashMap::new(),
+            },
+            metadata: Default::default(),
         });
 
         let root_id = tree.get_root_id();
@@ -277,10 +282,13 @@ mod test {
     /// one.
     #[test]
     fn rewrite_ref_existing_instance_addition() {
-        let tree = RbxTree::new(RbxInstanceProperties {
-            name: "foo".to_owned(),
-            class_name: "foo".to_owned(),
-            properties: HashMap::new(),
+        let tree = RojoTree::new(InstancePropertiesWithMeta {
+            properties: RbxInstanceProperties {
+                name: "foo".to_owned(),
+                class_name: "foo".to_owned(),
+                properties: HashMap::new(),
+            },
+            metadata: Default::default(),
         });
 
         let root_id = tree.get_root_id();

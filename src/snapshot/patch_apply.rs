@@ -2,14 +2,14 @@
 
 use std::collections::HashMap;
 
-use rbx_dom_weak::{RbxId, RbxInstanceProperties, RbxTree, RbxValue};
+use rbx_dom_weak::{RbxId, RbxInstanceProperties, RbxValue};
 
 use super::{
     patch::{PatchSet, PatchUpdateInstance},
-    InstanceSnapshot,
+    InstancePropertiesWithMeta, InstanceSnapshot, RojoTree,
 };
 
-pub fn apply_patch_set(tree: &mut RbxTree, patch_set: &PatchSet) {
+pub fn apply_patch_set(tree: &mut RojoTree, patch_set: &PatchSet) {
     let mut context = PatchApplyContext::default();
 
     for removed_id in &patch_set.removed_instances {
@@ -42,7 +42,7 @@ struct PatchApplyContext {
 /// The remaining Ref properties need to be handled during patch application,
 /// where we build up a map of snapshot IDs to instance IDs as they're created,
 /// then apply properties all at once at the end.
-fn apply_deferred_properties(context: PatchApplyContext, tree: &mut RbxTree) {
+fn apply_deferred_properties(context: PatchApplyContext, tree: &mut RojoTree) {
     for (id, mut properties) in context.properties_to_apply {
         let instance = tree
             .get_instance_mut(id)
@@ -58,23 +58,26 @@ fn apply_deferred_properties(context: PatchApplyContext, tree: &mut RbxTree) {
             }
         }
 
-        instance.properties = properties;
+        instance.instance.properties = properties;
     }
 }
 
 fn apply_add_child(
     context: &mut PatchApplyContext,
-    tree: &mut RbxTree,
+    tree: &mut RojoTree,
     parent_id: RbxId,
     snapshot: &InstanceSnapshot,
 ) {
-    let properties = RbxInstanceProperties {
-        name: snapshot.name.clone().into_owned(),
-        class_name: snapshot.class_name.clone().into_owned(),
+    let properties = InstancePropertiesWithMeta {
+        properties: RbxInstanceProperties {
+            name: snapshot.name.clone().into_owned(),
+            class_name: snapshot.class_name.clone().into_owned(),
 
-        // Property assignment is deferred until after we know about all
-        // instances in this patch.
-        properties: HashMap::new(),
+            // Property assignment is deferred until after we know about all
+            // instances in this patch.
+            properties: HashMap::new(),
+        },
+        metadata: Default::default(), // TODO
     };
 
     let id = tree.insert_instance(properties, parent_id);
@@ -94,7 +97,7 @@ fn apply_add_child(
 
 fn apply_update_child(
     context: &PatchApplyContext,
-    tree: &mut RbxTree,
+    tree: &mut RojoTree,
     patch: &PatchUpdateInstance,
 ) {
     let instance = tree
@@ -102,11 +105,11 @@ fn apply_update_child(
         .expect("Instance referred to by patch does not exist");
 
     if let Some(name) = &patch.changed_name {
-        instance.name = name.clone();
+        instance.instance.name = name.clone();
     }
 
     if let Some(class_name) = &patch.changed_class_name {
-        instance.class_name = class_name.clone();
+        instance.instance.class_name = class_name.clone();
     }
 
     for (key, property_entry) in &patch.changed_properties {
@@ -117,7 +120,7 @@ fn apply_update_child(
             Some(RbxValue::Ref { value: Some(id) }) => {
                 let new_id = context.snapshot_id_to_instance_id.get(id).unwrap_or(id);
 
-                instance.properties.insert(
+                instance.instance.properties.insert(
                     key.clone(),
                     RbxValue::Ref {
                         value: Some(*new_id),
@@ -125,10 +128,13 @@ fn apply_update_child(
                 );
             }
             Some(value) => {
-                instance.properties.insert(key.clone(), value.clone());
+                instance
+                    .instance
+                    .properties
+                    .insert(key.clone(), value.clone());
             }
             None => {
-                instance.properties.remove(key);
+                instance.instance.properties.remove(key);
             }
         }
     }
@@ -149,10 +155,13 @@ mod test {
     fn add_from_empty() {
         let _ = env_logger::try_init();
 
-        let mut tree = RbxTree::new(RbxInstanceProperties {
-            name: "Folder".to_owned(),
-            class_name: "Folder".to_owned(),
-            properties: HashMap::new(),
+        let mut tree = RojoTree::new(InstancePropertiesWithMeta {
+            properties: RbxInstanceProperties {
+                name: "Folder".to_owned(),
+                class_name: "Folder".to_owned(),
+                properties: HashMap::new(),
+            },
+            metadata: Default::default(),
         });
 
         let root_id = tree.get_root_id();
@@ -179,27 +188,33 @@ mod test {
         apply_patch_set(&mut tree, &patch_set);
 
         let root_instance = tree.get_instance(root_id).unwrap();
-        let child_id = root_instance.get_children_ids()[0];
+        let child_id = root_instance.instance.get_children_ids()[0];
         let child_instance = tree.get_instance(child_id).unwrap();
 
-        assert_eq!(child_instance.name.as_str(), &snapshot.name);
-        assert_eq!(child_instance.class_name.as_str(), &snapshot.class_name);
-        assert_eq!(&child_instance.properties, &snapshot.properties);
-        assert!(child_instance.get_children_ids().is_empty());
+        assert_eq!(child_instance.instance.name.as_str(), &snapshot.name);
+        assert_eq!(
+            child_instance.instance.class_name.as_str(),
+            &snapshot.class_name
+        );
+        assert_eq!(&child_instance.instance.properties, &snapshot.properties);
+        assert!(child_instance.instance.get_children_ids().is_empty());
     }
 
     #[test]
     fn update_existing() {
         let _ = env_logger::try_init();
 
-        let mut tree = RbxTree::new(RbxInstanceProperties {
-            name: "OldName".to_owned(),
-            class_name: "OldClassName".to_owned(),
-            properties: hashmap! {
-                "Foo".to_owned() => RbxValue::Int32 { value: 7 },
-                "Bar".to_owned() => RbxValue::Int32 { value: 3 },
-                "Unchanged".to_owned() => RbxValue::Int32 { value: -5 },
+        let mut tree = RojoTree::new(InstancePropertiesWithMeta {
+            properties: RbxInstanceProperties {
+                name: "OldName".to_owned(),
+                class_name: "OldClassName".to_owned(),
+                properties: hashmap! {
+                    "Foo".to_owned() => RbxValue::Int32 { value: 7 },
+                    "Bar".to_owned() => RbxValue::Int32 { value: 3 },
+                    "Unchanged".to_owned() => RbxValue::Int32 { value: -5 },
+                },
             },
+            metadata: Default::default(),
         });
 
         let root_id = tree.get_root_id();
@@ -235,8 +250,8 @@ mod test {
         };
 
         let root_instance = tree.get_instance(root_id).unwrap();
-        assert_eq!(root_instance.name, "Foo");
-        assert_eq!(root_instance.class_name, "NewClassName");
-        assert_eq!(root_instance.properties, expected_properties);
+        assert_eq!(root_instance.instance.name, "Foo");
+        assert_eq!(root_instance.instance.class_name, "NewClassName");
+        assert_eq!(root_instance.instance.properties, expected_properties);
     }
 }

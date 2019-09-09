@@ -32,7 +32,7 @@ pub struct RojoTree {
 impl RojoTree {
     pub fn new(root: InstancePropertiesWithMeta) -> RojoTree {
         let mut tree = RojoTree {
-            inner: RbxTree::new(root.inner),
+            inner: RbxTree::new(root.properties),
             metadata_map: HashMap::new(),
             path_to_ids: MultiMap::new(),
         };
@@ -41,25 +41,29 @@ impl RojoTree {
         tree
     }
 
+    pub fn inner(&self) -> &RbxTree {
+        &self.inner
+    }
+
     pub fn get_root_id(&self) -> RbxId {
         self.inner.get_root_id()
     }
 
     pub fn get_instance(&self, id: RbxId) -> Option<InstanceWithMeta> {
-        if let Some(inner) = self.inner.get_instance(id) {
+        if let Some(instance) = self.inner.get_instance(id) {
             let metadata = self.metadata_map.get(&id).unwrap();
 
-            Some(InstanceWithMeta { inner, metadata })
+            Some(InstanceWithMeta { instance, metadata })
         } else {
             None
         }
     }
 
     pub fn get_instance_mut(&mut self, id: RbxId) -> Option<InstanceWithMetaMut> {
-        if let Some(inner) = self.inner.get_instance_mut(id) {
+        if let Some(instance) = self.inner.get_instance_mut(id) {
             let metadata = self.metadata_map.get_mut(&id).unwrap();
 
-            Some(InstanceWithMetaMut { inner, metadata })
+            Some(InstanceWithMetaMut { instance, metadata })
         } else {
             None
         }
@@ -70,7 +74,7 @@ impl RojoTree {
         properties: InstancePropertiesWithMeta,
         parent_id: RbxId,
     ) -> RbxId {
-        let id = self.inner.insert_instance(properties.inner, parent_id);
+        let id = self.inner.insert_instance(properties.properties, parent_id);
         self.insert_metadata(id, properties.metadata);
         id
     }
@@ -124,18 +128,27 @@ impl RojoTree {
 
 #[derive(Debug, Clone)]
 pub struct InstancePropertiesWithMeta {
-    pub inner: RbxInstanceProperties,
+    pub properties: RbxInstanceProperties,
     pub metadata: InstanceMetadata,
+}
+
+impl InstancePropertiesWithMeta {
+    pub fn new(properties: RbxInstanceProperties, metadata: InstanceMetadata) -> Self {
+        InstancePropertiesWithMeta {
+            properties,
+            metadata,
+        }
+    }
 }
 
 #[derive(Debug)]
 pub struct InstanceWithMeta<'a> {
-    pub inner: &'a RbxInstance,
+    pub instance: &'a RbxInstance,
     pub metadata: &'a InstanceMetadata,
 }
 
 #[derive(Debug)]
 pub struct InstanceWithMetaMut<'a> {
-    pub inner: &'a mut RbxInstance,
+    pub instance: &'a mut RbxInstance,
     pub metadata: &'a mut InstanceMetadata,
 }

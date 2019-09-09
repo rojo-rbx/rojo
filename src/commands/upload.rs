@@ -1,13 +1,13 @@
 use std::{collections::HashMap, path::PathBuf};
 
 use failure::Fail;
-use rbx_dom_weak::{RbxInstanceProperties, RbxTree};
+use rbx_dom_weak::RbxInstanceProperties;
 use reqwest::header::{ACCEPT, CONTENT_TYPE, COOKIE, USER_AGENT};
 
 use crate::{
     auth_cookie::get_auth_cookie,
     imfs::new::{Imfs, RealFetcher, WatchMode},
-    snapshot::{apply_patch_set, compute_patch_set},
+    snapshot::{apply_patch_set, compute_patch_set, InstancePropertiesWithMeta, RojoTree},
     snapshot_middleware::snapshot_from_imfs,
 };
 
@@ -45,10 +45,13 @@ pub fn upload(options: UploadOptions) -> Result<(), UploadError> {
         .or_else(get_auth_cookie)
         .ok_or(UploadError::NeedAuthCookie)?;
 
-    let mut tree = RbxTree::new(RbxInstanceProperties {
-        name: "ROOT".to_owned(),
-        class_name: "Folder".to_owned(),
-        properties: HashMap::new(),
+    let mut tree = RojoTree::new(InstancePropertiesWithMeta {
+        properties: RbxInstanceProperties {
+            name: "ROOT".to_owned(),
+            class_name: "Folder".to_owned(),
+            properties: HashMap::new(),
+        },
+        metadata: Default::default(),
     });
     let root_id = tree.get_root_id();
 
@@ -77,7 +80,7 @@ pub fn upload(options: UploadOptions) -> Result<(), UploadError> {
 
     let config = rbx_xml::EncodeOptions::new()
         .property_behavior(rbx_xml::EncodePropertyBehavior::WriteUnknown);
-    rbx_xml::to_writer(&mut buffer, &tree, &[root_id], config)?;
+    rbx_xml::to_writer(&mut buffer, tree.inner(), &[root_id], config)?;
 
     let url = format!(
         "https://data.roblox.com/Data/Upload.ashx?assetid={}",

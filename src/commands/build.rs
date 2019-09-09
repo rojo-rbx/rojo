@@ -6,11 +6,11 @@ use std::{
 };
 
 use failure::Fail;
-use rbx_dom_weak::{RbxInstanceProperties, RbxTree};
+use rbx_dom_weak::RbxInstanceProperties;
 
 use crate::{
     imfs::new::{FsError, Imfs, RealFetcher, WatchMode},
-    snapshot::{apply_patch_set, compute_patch_set},
+    snapshot::{apply_patch_set, compute_patch_set, InstancePropertiesWithMeta, RojoTree},
     snapshot_middleware::snapshot_from_imfs,
 };
 
@@ -78,10 +78,13 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
 
     log::info!("Hoping to generate file of type {:?}", output_kind);
 
-    let mut tree = RbxTree::new(RbxInstanceProperties {
-        name: "ROOT".to_owned(),
-        class_name: "Folder".to_owned(),
-        properties: HashMap::new(),
+    let mut tree = RojoTree::new(InstancePropertiesWithMeta {
+        properties: RbxInstanceProperties {
+            name: "ROOT".to_owned(),
+            class_name: "Folder".to_owned(),
+            properties: HashMap::new(),
+        },
+        metadata: Default::default(),
     });
     let root_id = tree.get_root_id();
 
@@ -112,25 +115,35 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
             // Model files include the root instance of the tree and all its
             // descendants.
 
-            rbx_xml::to_writer(&mut file, &tree, &[root_id], xml_encode_config())?;
+            rbx_xml::to_writer(&mut file, tree.inner(), &[root_id], xml_encode_config())?;
         }
         OutputKind::Rbxlx => {
             // Place files don't contain an entry for the DataModel, but our
             // RbxTree representation does.
 
-            let top_level_ids = tree.get_instance(root_id).unwrap().get_children_ids();
-            rbx_xml::to_writer(&mut file, &tree, top_level_ids, xml_encode_config())?;
+            let top_level_ids = tree
+                .get_instance(root_id)
+                .unwrap()
+                .instance
+                .get_children_ids();
+
+            rbx_xml::to_writer(&mut file, tree.inner(), top_level_ids, xml_encode_config())?;
         }
         OutputKind::Rbxm => {
-            rbx_binary::encode(&tree, &[root_id], &mut file)?;
+            rbx_binary::encode(tree.inner(), &[root_id], &mut file)?;
         }
         OutputKind::Rbxl => {
             log::warn!("Support for building binary places (rbxl) is still experimental.");
             log::warn!("Using the XML place format (rbxlx) is recommended instead.");
             log::warn!("For more info, see https://github.com/LPGhatguy/rojo/issues/180");
 
-            let top_level_ids = tree.get_instance(root_id).unwrap().get_children_ids();
-            rbx_binary::encode(&tree, top_level_ids, &mut file)?;
+            let top_level_ids = tree
+                .get_instance(root_id)
+                .unwrap()
+                .instance
+                .get_children_ids();
+
+            rbx_binary::encode(tree.inner(), top_level_ids, &mut file)?;
         }
     }
 

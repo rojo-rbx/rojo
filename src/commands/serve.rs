@@ -1,13 +1,13 @@
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
 use failure::Fail;
-use rbx_dom_weak::{RbxInstanceProperties, RbxTree};
+use rbx_dom_weak::RbxInstanceProperties;
 
 use crate::{
     imfs::new::{Imfs, RealFetcher, WatchMode},
     project::{Project, ProjectLoadError},
     serve_session::ServeSession,
-    snapshot::{apply_patch_set, compute_patch_set},
+    snapshot::{apply_patch_set, compute_patch_set, InstancePropertiesWithMeta, RojoTree},
     snapshot_middleware::snapshot_from_imfs,
     web::LiveServer,
 };
@@ -48,10 +48,13 @@ pub fn serve(options: &ServeOptions) -> Result<(), ServeError> {
 
     println!("Rojo server listening on port {}", port);
 
-    let mut tree = RbxTree::new(RbxInstanceProperties {
-        name: "ROOT".to_owned(),
-        class_name: "Folder".to_owned(),
-        properties: HashMap::new(),
+    let mut tree = RojoTree::new(InstancePropertiesWithMeta {
+        properties: RbxInstanceProperties {
+            name: "ROOT".to_owned(),
+            class_name: "Folder".to_owned(),
+            properties: HashMap::new(),
+        },
+        metadata: Default::default(),
     });
     let root_id = tree.get_root_id();
 
