@@ -155,7 +155,7 @@ fn compute_children_patches<'a>(
         .get_instance(id)
         .expect("Instance did not exist in tree");
 
-    let instance_children = instance.instance.get_children_ids();
+    let instance_children = instance.children();
 
     let mut paired_instances = vec![false; instance_children.len()];
 
@@ -173,8 +173,8 @@ fn compute_children_patches<'a>(
                         .get_instance(**instance_child_id)
                         .expect("Instance did not exist in tree");
 
-                    if snapshot_child.name == instance_child.instance.name
-                        && snapshot_child.class_name == instance_child.instance.class_name
+                    if snapshot_child.name == instance_child.name()
+                        && snapshot_child.class_name == instance_child.class_name()
                     {
                         paired_instances[*instance_index] = true;
                         return true;

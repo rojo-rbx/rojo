@@ -44,7 +44,7 @@ struct PatchApplyContext {
 /// then apply properties all at once at the end.
 fn apply_deferred_properties(context: PatchApplyContext, tree: &mut RojoTree) {
     for (id, mut properties) in context.properties_to_apply {
-        let instance = tree
+        let mut instance = tree
             .get_instance_mut(id)
             .expect("Invalid instance ID in deferred property map");
 
@@ -58,7 +58,7 @@ fn apply_deferred_properties(context: PatchApplyContext, tree: &mut RojoTree) {
             }
         }
 
-        instance.instance.properties = properties;
+        *instance.properties_mut() = properties;
     }
 }
 
@@ -100,16 +100,16 @@ fn apply_update_child(
     tree: &mut RojoTree,
     patch: &PatchUpdateInstance,
 ) {
-    let instance = tree
+    let mut instance = tree
         .get_instance_mut(patch.id)
         .expect("Instance referred to by patch does not exist");
 
     if let Some(name) = &patch.changed_name {
-        instance.instance.name = name.clone();
+        *instance.name_mut() = name.clone();
     }
 
     if let Some(class_name) = &patch.changed_class_name {
-        instance.instance.class_name = class_name.clone();
+        *instance.class_name_mut() = class_name.clone();
     }
 
     for (key, property_entry) in &patch.changed_properties {
@@ -120,7 +120,7 @@ fn apply_update_child(
             Some(RbxValue::Ref { value: Some(id) }) => {
                 let new_id = context.snapshot_id_to_instance_id.get(id).unwrap_or(id);
 
-                instance.instance.properties.insert(
+                instance.properties_mut().insert(
                     key.clone(),
                     RbxValue::Ref {
                         value: Some(*new_id),
@@ -134,7 +134,7 @@ fn apply_update_child(
                     .insert(key.clone(), value.clone());
             }
             None => {
-                instance.instance.properties.remove(key);
+                instance.properties_mut().remove(key);
             }
         }
     }
@@ -188,16 +188,13 @@ mod test {
         apply_patch_set(&mut tree, &patch_set);
 
         let root_instance = tree.get_instance(root_id).unwrap();
-        let child_id = root_instance.instance.get_children_ids()[0];
+        let child_id = root_instance.children()[0];
         let child_instance = tree.get_instance(child_id).unwrap();
 
-        assert_eq!(child_instance.instance.name.as_str(), &snapshot.name);
-        assert_eq!(
-            child_instance.instance.class_name.as_str(),
-            &snapshot.class_name
-        );
-        assert_eq!(&child_instance.instance.properties, &snapshot.properties);
-        assert!(child_instance.instance.get_children_ids().is_empty());
+        assert_eq!(child_instance.name(), &snapshot.name);
+        assert_eq!(child_instance.class_name(), &snapshot.class_name);
+        assert_eq!(child_instance.properties(), &snapshot.properties);
+        assert!(child_instance.children().is_empty());
     }
 
     #[test]
@@ -250,8 +247,8 @@ mod test {
         };
 
         let root_instance = tree.get_instance(root_id).unwrap();
-        assert_eq!(root_instance.instance.name, "Foo");
-        assert_eq!(root_instance.instance.class_name, "NewClassName");
-        assert_eq!(root_instance.instance.properties, expected_properties);
+        assert_eq!(root_instance.name(), "Foo");
+        assert_eq!(root_instance.class_name(), "NewClassName");
+        assert_eq!(root_instance.properties(), &expected_properties);
     }
 }

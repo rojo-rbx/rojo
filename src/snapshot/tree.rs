@@ -1,6 +1,6 @@
 use std::{collections::HashMap, path::PathBuf};
 
-use rbx_dom_weak::{RbxId, RbxInstance, RbxInstanceProperties, RbxTree};
+use rbx_dom_weak::{RbxId, RbxInstance, RbxInstanceProperties, RbxTree, RbxValue};
 
 use crate::multimap::MultiMap;
 
@@ -147,8 +147,56 @@ pub struct InstanceWithMeta<'a> {
     pub metadata: &'a InstanceMetadata,
 }
 
+impl InstanceWithMeta<'_> {
+    pub fn name(&self) -> &str {
+        &self.instance.name
+    }
+
+    pub fn class_name(&self) -> &str {
+        &self.instance.class_name
+    }
+
+    pub fn properties(&self) -> &HashMap<String, RbxValue> {
+        &self.instance.properties
+    }
+
+    pub fn children(&self) -> &[RbxId] {
+        self.instance.get_children_ids()
+    }
+}
+
 #[derive(Debug)]
 pub struct InstanceWithMetaMut<'a> {
     pub instance: &'a mut RbxInstance,
     pub metadata: &'a mut InstanceMetadata,
+}
+
+impl InstanceWithMetaMut<'_> {
+    pub fn name(&self) -> &str {
+        &self.instance.name
+    }
+
+    pub fn name_mut(&mut self) -> &mut String {
+        &mut self.instance.name
+    }
+
+    pub fn class_name(&self) -> &str {
+        &self.instance.class_name
+    }
+
+    pub fn class_name_mut(&mut self) -> &mut String {
+        &mut self.instance.class_name
+    }
+
+    pub fn properties(&self) -> &HashMap<String, RbxValue> {
+        &self.instance.properties
+    }
+
+    pub fn properties_mut(&mut self) -> &mut HashMap<String, RbxValue> {
+        &mut self.instance.properties
+    }
+
+    pub fn children(&self) -> &[RbxId] {
+        self.instance.get_children_ids()
+    }
 }
