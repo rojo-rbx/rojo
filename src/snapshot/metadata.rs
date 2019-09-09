@@ -11,23 +11,31 @@ pub struct InstanceMetadata {
     /// manage.
     pub ignore_unknown_instances: bool,
 
-    /// A complete view of where this snapshot came from. It should contain
-    /// enough information, if not None, to recreate this snapshot
-    /// deterministically assuming the source has not changed state.
-    pub source: Option<InstanceSource>,
+    // TODO: Make source_path a SmallVec<PathBuf> in order to support meta
+    // files? Maybe we should use another member of the snapshot middleware to
+    // support damage-painting
+    /// The path that this file came from, if it's the top-level instance from a
+    /// model that came directly from disk.
+    ///
+    /// This path is used to make sure that file changes update all instances
+    /// that may need updates..
+    pub source_path: Option<PathBuf>,
+
+    /// If this instance was defined in a project file, this is the name from
+    /// the project file and the node under it.
+    ///
+    /// This information is used to make sure the instance has the correct name,
+    /// project-added children, and metadata when it's updated in response to a
+    /// file change.
+    pub project_node: Option<(String, ProjectNode)>,
 }
 
 impl Default for InstanceMetadata {
     fn default() -> Self {
         InstanceMetadata {
             ignore_unknown_instances: false,
-            source: None,
+            source_path: None,
+            project_node: None,
         }
     }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct InstanceSource {
-    pub path: PathBuf,
-    pub project_node: Option<(String, ProjectNode)>,
 }

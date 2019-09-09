@@ -121,11 +121,8 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
             // Place files don't contain an entry for the DataModel, but our
             // RbxTree representation does.
 
-            let top_level_ids = tree
-                .get_instance(root_id)
-                .unwrap()
-                .instance
-                .get_children_ids();
+            let root_instance = tree.get_instance(root_id).unwrap();
+            let top_level_ids = root_instance.children();
 
             rbx_xml::to_writer(&mut file, tree.inner(), top_level_ids, xml_encode_config())?;
         }
@@ -137,11 +134,8 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
             log::warn!("Using the XML place format (rbxlx) is recommended instead.");
             log::warn!("For more info, see https://github.com/LPGhatguy/rojo/issues/180");
 
-            let top_level_ids = tree
-                .get_instance(root_id)
-                .unwrap()
-                .instance
-                .get_children_ids();
+            let root_instance = tree.get_instance(root_id).unwrap();
+            let top_level_ids = root_instance.children();
 
             rbx_binary::encode(tree.inner(), top_level_ids, &mut file)?;
         }

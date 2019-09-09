@@ -100,6 +100,10 @@ fn apply_update_child(
     tree: &mut RojoTree,
     patch: &PatchUpdateInstance,
 ) {
+    if let Some(metadata) = &patch.changed_metadata {
+        tree.update_metadata(patch.id, metadata.clone());
+    }
+
     let mut instance = tree
         .get_instance_mut(patch.id)
         .expect("Instance referred to by patch does not exist");
@@ -128,10 +132,7 @@ fn apply_update_child(
                 );
             }
             Some(value) => {
-                instance
-                    .instance
-                    .properties
-                    .insert(key.clone(), value.clone());
+                instance.properties_mut().insert(key.clone(), value.clone());
             }
             None => {
                 instance.properties_mut().remove(key);

@@ -99,9 +99,38 @@ impl RojoTree {
         }
     }
 
+    /// Replaces the metadata associated with the given instance ID.
+    pub fn update_metadata(&mut self, id: RbxId, metadata: InstanceMetadata) {
+        use std::collections::hash_map::Entry;
+
+        match self.metadata_map.entry(id) {
+            Entry::Occupied(mut entry) => {
+                let existing_metadata = entry.get();
+
+                // If this instance's source path changed, we need to update our
+                // path associations so that file changes will trigger updates
+                // to this instance correctly.
+                if existing_metadata.source_path != metadata.source_path {
+                    if let Some(existing_path) = &existing_metadata.source_path {
+                        self.path_to_ids.remove(existing_path, id);
+                    }
+
+                    if let Some(new_path) = &metadata.source_path {
+                        self.path_to_ids.insert(new_path.clone(), id);
+                    }
+                }
+
+                entry.insert(metadata);
+            }
+            Entry::Vacant(entry) => {
+                entry.insert(metadata);
+            }
+        }
+    }
+
     fn insert_metadata(&mut self, id: RbxId, metadata: InstanceMetadata) {
-        if let Some(source) = &metadata.source {
-            self.path_to_ids.insert(source.path.clone(), id);
+        if let Some(source_path) = &metadata.source_path {
+            self.path_to_ids.insert(source_path.clone(), id);
         }
 
         self.metadata_map.insert(id, metadata);
@@ -117,15 +146,16 @@ impl RojoTree {
     ) {
         let metadata = self.metadata_map.remove(&id).unwrap();
 
-        if let Some(source) = &metadata.source {
-            self.path_to_ids.remove(&source.path, id);
-            path_to_ids.insert(source.path.clone(), id);
+        if let Some(source_path) = &metadata.source_path {
+            self.path_to_ids.remove(source_path, id);
+            path_to_ids.insert(source_path.clone(), id);
         }
 
         metadata_map.insert(id, metadata);
     }
 }
 
+/// RojoTree's equivalent of `RbxInstanceProperties`.
 #[derive(Debug, Clone)]
 pub struct InstancePropertiesWithMeta {
     pub properties: RbxInstanceProperties,
@@ -141,13 +171,22 @@ impl InstancePropertiesWithMeta {
     }
 }
 
-#[derive(Debug)]
+/// RojoTree's equivalent of `&'a RbxInstance`.
+///
+/// This has to be a value type for RojoTree because the instance and metadata
+/// are stored in different places. The mutable equivalent is
+/// `InstanceWithMetaMut`.
+#[derive(Debug, Clone, Copy)]
 pub struct InstanceWithMeta<'a> {
-    pub instance: &'a RbxInstance,
-    pub metadata: &'a InstanceMetadata,
+    instance: &'a RbxInstance,
+    metadata: &'a InstanceMetadata,
 }
 
 impl InstanceWithMeta<'_> {
+    pub fn id(&self) -> RbxId {
+        self.instance.get_id()
+    }
+
     pub fn name(&self) -> &str {
         &self.instance.name
     }
@@ -163,15 +202,28 @@ impl InstanceWithMeta<'_> {
     pub fn children(&self) -> &[RbxId] {
         self.instance.get_children_ids()
     }
+
+    pub fn metadata(&self) -> &InstanceMetadata {
+        &self.metadata
+    }
 }
 
+/// RojoTree's equivalent of `&'a mut RbxInstance`.
+///
+/// This has to be a value type for RojoTree because the instance and metadata
+/// are stored in different places. The immutable equivalent is
+/// `InstanceWithMeta`.
 #[derive(Debug)]
 pub struct InstanceWithMetaMut<'a> {
-    pub instance: &'a mut RbxInstance,
-    pub metadata: &'a mut InstanceMetadata,
+    instance: &'a mut RbxInstance,
+    metadata: &'a mut InstanceMetadata,
 }
 
 impl InstanceWithMetaMut<'_> {
+    pub fn id(&self) -> RbxId {
+        self.instance.get_id()
+    }
+
     pub fn name(&self) -> &str {
         &self.instance.name
     }
@@ -198,5 +250,9 @@ impl InstanceWithMetaMut<'_> {
 
     pub fn children(&self) -> &[RbxId] {
         self.instance.get_children_ids()
+    }
+
+    pub fn metadata(&self) -> &InstanceMetadata {
+        &self.metadata
     }
 }

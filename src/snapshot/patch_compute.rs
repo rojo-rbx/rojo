@@ -3,11 +3,11 @@
 
 use std::collections::{HashMap, HashSet};
 
-use rbx_dom_weak::{RbxId, RbxInstance, RbxValue};
+use rbx_dom_weak::{RbxId, RbxValue};
 
 use super::{
     patch::{PatchAddInstance, PatchSet, PatchUpdateInstance},
-    InstanceSnapshot, RojoTree,
+    InstanceSnapshot, InstanceWithMeta, RojoTree,
 };
 
 pub fn compute_patch_set<'a>(
@@ -84,34 +84,40 @@ fn compute_patch_set_internal<'a>(
         .get_instance(id)
         .expect("Instance did not exist in tree");
 
-    compute_property_patches(snapshot, &instance.instance, patch_set);
+    compute_property_patches(snapshot, &instance, patch_set);
     compute_children_patches(context, snapshot, tree, id, patch_set);
 }
 
 fn compute_property_patches(
     snapshot: &InstanceSnapshot,
-    instance: &RbxInstance,
+    instance: &InstanceWithMeta,
     patch_set: &mut PatchSet,
 ) {
     let mut visited_properties = HashSet::new();
     let mut changed_properties = HashMap::new();
 
-    let changed_name = if snapshot.name == instance.name {
+    let changed_name = if snapshot.name == instance.name() {
         None
     } else {
         Some(snapshot.name.clone().into_owned())
     };
 
-    let changed_class_name = if snapshot.class_name == instance.class_name {
+    let changed_class_name = if snapshot.class_name == instance.class_name() {
         None
     } else {
         Some(snapshot.class_name.clone().into_owned())
     };
 
+    let changed_metadata = if &snapshot.metadata == instance.metadata() {
+        None
+    } else {
+        Some(snapshot.metadata.clone())
+    };
+
     for (name, snapshot_value) in &snapshot.properties {
         visited_properties.insert(name.as_str());
 
-        match instance.properties.get(name) {
+        match instance.properties().get(name) {
             Some(instance_value) => {
                 if snapshot_value != instance_value {
                     changed_properties.insert(name.clone(), Some(snapshot_value.clone()));
@@ -123,7 +129,7 @@ fn compute_property_patches(
         }
     }
 
-    for name in instance.properties.keys() {
+    for name in instance.properties().keys() {
         if visited_properties.contains(name.as_str()) {
             continue;
         }
@@ -131,16 +137,20 @@ fn compute_property_patches(
         changed_properties.insert(name.clone(), None);
     }
 
-    if changed_properties.is_empty() && changed_name.is_none() {
+    if changed_properties.is_empty()
+        && changed_name.is_none()
+        && changed_class_name.is_none()
+        && changed_metadata.is_none()
+    {
         return;
     }
 
     patch_set.updated_instances.push(PatchUpdateInstance {
-        id: instance.get_id(),
+        id: instance.id(),
         changed_name,
         changed_class_name,
         changed_properties,
-        changed_metadata: None,
+        changed_metadata,
     });
 }
 
