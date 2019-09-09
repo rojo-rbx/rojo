@@ -17,18 +17,6 @@ pub struct InstanceMetadata {
     pub source: Option<InstanceSource>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum InstanceSource {
-    File {
-        path: PathBuf,
-    },
-    ProjectFile {
-        path: PathBuf,
-        name: String,
-        node: ProjectNode,
-    },
-}
-
 impl Default for InstanceMetadata {
     fn default() -> Self {
         InstanceMetadata {
@@ -36,4 +24,10 @@ impl Default for InstanceMetadata {
             source: None,
         }
     }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct InstanceSource {
+    pub path: PathBuf,
+    pub project_node: Option<(String, ProjectNode)>,
 }

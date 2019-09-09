@@ -7,14 +7,14 @@ use std::{
 
 /// A map whose value contains a set of multiple values.
 #[derive(Clone)]
-pub struct MapSet<K, V> {
+pub struct MultiMap<K, V> {
     inner: HashMap<K, Vec<V>>,
 }
 
 #[allow(dead_code)] // This is a core library-ish struct, unused stuff is ok
-impl<K: Hash + Eq, V: Eq> MapSet<K, V> {
+impl<K: Hash + Eq, V: Eq> MultiMap<K, V> {
     pub fn new() -> Self {
-        MapSet {
+        MultiMap {
             inner: HashMap::new(),
         }
     }
@@ -56,13 +56,13 @@ impl<K: Hash + Eq, V: Eq> MapSet<K, V> {
     }
 }
 
-impl<K: Debug + Hash + Eq, V: Debug + Eq> Debug for MapSet<K, V> {
+impl<K: Debug + Hash + Eq, V: Debug + Eq> Debug for MultiMap<K, V> {
     fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         self.inner.fmt(formatter)
     }
 }
 
-impl<K: Hash + Eq, V: Eq> PartialEq for MapSet<K, V> {
+impl<K: Hash + Eq, V: Eq> PartialEq for MultiMap<K, V> {
     fn eq(&self, other: &Self) -> bool {
         self.inner == other.inner
     }

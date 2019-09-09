@@ -2,7 +2,7 @@ use std::{collections::HashMap, path::PathBuf};
 
 use rbx_dom_weak::{RbxId, RbxInstance, RbxInstanceProperties, RbxTree};
 
-use crate::mapset::MapSet;
+use crate::multimap::MultiMap;
 
 use super::InstanceMetadata;
 
@@ -17,7 +17,7 @@ pub struct RojoTree {
 
     /// Metadata associated with each instance that is kept up-to-date with the
     /// set of actual instances.
-    metadata: HashMap<RbxId, InstanceMetadata>,
+    metadata_map: HashMap<RbxId, InstanceMetadata>,
 
     /// A multimap from source paths to all of the root instances that were
     /// constructed from that path.
@@ -26,20 +26,19 @@ pub struct RojoTree {
     /// value portion of the map is also a set in order to support the same path
     /// appearing multiple times in the same Rojo project. This is sometimes
     /// called "path aliasing" in various Rojo documentation.
-    path_to_id: MapSet<PathBuf, RbxId>,
+    path_to_ids: MultiMap<PathBuf, RbxId>,
 }
 
 impl RojoTree {
     pub fn new(root: InstancePropertiesWithMeta) -> RojoTree {
-        let inner = RbxTree::new(root.inner);
-        let mut metadata = HashMap::new();
-        metadata.insert(inner.get_root_id(), root.metadata);
+        let mut tree = RojoTree {
+            inner: RbxTree::new(root.inner),
+            metadata_map: HashMap::new(),
+            path_to_ids: MultiMap::new(),
+        };
 
-        RojoTree {
-            inner,
-            metadata,
-            path_to_id: MapSet::new(),
-        }
+        tree.insert_metadata(tree.inner.get_root_id(), root.metadata);
+        tree
     }
 
     pub fn get_root_id(&self) -> RbxId {
@@ -48,7 +47,7 @@ impl RojoTree {
 
     pub fn get_instance(&self, id: RbxId) -> Option<InstanceWithMeta> {
         if let Some(inner) = self.inner.get_instance(id) {
-            let metadata = self.metadata.get(&id).unwrap();
+            let metadata = self.metadata_map.get(&id).unwrap();
 
             Some(InstanceWithMeta { inner, metadata })
         } else {
@@ -58,7 +57,7 @@ impl RojoTree {
 
     pub fn get_instance_mut(&mut self, id: RbxId) -> Option<InstanceWithMetaMut> {
         if let Some(inner) = self.inner.get_instance_mut(id) {
-            let metadata = self.metadata.get_mut(&id).unwrap();
+            let metadata = self.metadata_map.get_mut(&id).unwrap();
 
             Some(InstanceWithMetaMut { inner, metadata })
         } else {
@@ -72,32 +71,54 @@ impl RojoTree {
         parent_id: RbxId,
     ) -> RbxId {
         let id = self.inner.insert_instance(properties.inner, parent_id);
-        self.metadata.insert(id, properties.metadata);
+        self.insert_metadata(id, properties.metadata);
         id
     }
 
     pub fn remove_instance(&mut self, id: RbxId) -> Option<RojoTree> {
         if let Some(inner) = self.inner.remove_instance(id) {
-            let mut metadata = HashMap::new();
-            let mut path_to_id = MapSet::new(); // TODO
+            let mut metadata_map = HashMap::new();
+            let mut path_to_ids = MultiMap::new();
 
-            let root_meta = self.metadata.remove(&id).unwrap();
-
-            metadata.insert(id, root_meta);
-
+            self.move_metadata(id, &mut metadata_map, &mut path_to_ids);
             for instance in inner.descendants(id) {
-                let instance_meta = self.metadata.remove(&instance.get_id()).unwrap();
-                metadata.insert(instance.get_id(), instance_meta);
+                self.move_metadata(instance.get_id(), &mut metadata_map, &mut path_to_ids);
             }
 
             Some(RojoTree {
                 inner,
-                metadata,
-                path_to_id,
+                metadata_map,
+                path_to_ids,
             })
         } else {
             None
         }
+    }
+
+    fn insert_metadata(&mut self, id: RbxId, metadata: InstanceMetadata) {
+        if let Some(source) = &metadata.source {
+            self.path_to_ids.insert(source.path.clone(), id);
+        }
+
+        self.metadata_map.insert(id, metadata);
+    }
+
+    /// Moves the Rojo metadata from the instance with the given ID from this
+    /// tree into some loose maps.
+    fn move_metadata(
+        &mut self,
+        id: RbxId,
+        metadata_map: &mut HashMap<RbxId, InstanceMetadata>,
+        path_to_ids: &mut MultiMap<PathBuf, RbxId>,
+    ) {
+        let metadata = self.metadata_map.remove(&id).unwrap();
+
+        if let Some(source) = &metadata.source {
+            self.path_to_ids.remove(&source.path, id);
+            path_to_ids.insert(source.path.clone(), id);
+        }
+
+        metadata_map.insert(id, metadata);
     }
 }
 
