@@ -73,10 +73,10 @@ function ApiContext:connect()
 					"\nMake sure you have matching versions of both the Rojo plugin and server!" ..
 					"\n\nYour client is version %s, with protocol version %s. It expects server version %s." ..
 					"\nYour server is version %s, with protocol version %s." ..
-					"\n\nGo to https://github.com/LPGhatguy/rojo for more details."
+					"\n\nGo to https://github.com/rojo-rbx/rojo for more details."
 				):format(
 					Version.display(Config.version), Config.protocolVersion,
-					Config.expectedApiContextVersionString,
+					Config.expectedServerVersionString,
 					body.serverVersion, body.protocolVersion
 				)
 
