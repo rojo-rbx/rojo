@@ -12,8 +12,8 @@ use crate::{
     serve_session::ServeSession,
     web::{
         interface::{
-            NotFoundError, ReadResponse, ServerInfoResponse, SubscribeResponse, PROTOCOL_VERSION,
-            SERVER_VERSION,
+            Instance, NotFoundError, ReadResponse, ServerInfoResponse, SubscribeResponse,
+            PROTOCOL_VERSION, SERVER_VERSION,
         },
         util::{json, json_ok},
     },
@@ -94,8 +94,8 @@ impl ApiService {
         let argument = &request.uri().path()["/api/read/".len()..];
         let requested_ids: Option<Vec<RbxId>> = argument.split(',').map(RbxId::parse_str).collect();
 
-        let _requested_ids = match requested_ids {
-            Some(id) => id,
+        let requested_ids = match requested_ids {
+            Some(ids) => ids,
             None => {
                 return Box::new(future::ok(
                     Response::builder()
@@ -110,7 +110,20 @@ impl ApiService {
         let message_queue = self.serve_session.message_queue();
         let message_cursor = message_queue.cursor();
 
-        let instances = HashMap::new(); // TODO
+        let tree = self.serve_session.tree();
+        let inner_tree = tree.inner();
+
+        let mut instances = HashMap::new();
+
+        for id in requested_ids {
+            if let Some(instance) = inner_tree.get_instance(id) {
+                instances.insert(id, Instance::from_rbx_instance(instance));
+
+                for descendant in inner_tree.descendants(id) {
+                    instances.insert(descendant.get_id(), Instance::from_rbx_instance(descendant));
+                }
+            }
+        }
 
         json_ok(ReadResponse {
             session_id: self.serve_session.session_id(),

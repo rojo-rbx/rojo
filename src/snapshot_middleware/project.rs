@@ -9,7 +9,7 @@ use crate::{
         FsErrorKind,
     },
     project::{Project, ProjectNode},
-    snapshot::InstanceSnapshot,
+    snapshot::{InstanceMetadata, InstanceSnapshot},
 };
 
 use super::{
@@ -55,10 +55,7 @@ fn snapshot_project_node<F: ImfsFetcher>(
     node: &ProjectNode,
     imfs: &mut Imfs<F>,
 ) -> SnapshotInstanceResult<'static> {
-    assert!(
-        node.ignore_unknown_instances.is_none(),
-        "TODO: Support $ignoreUnknownInstances"
-    );
+    let ignore_unknown_instances = node.ignore_unknown_instances.unwrap_or(node.path.is_none());
 
     let name = Cow::Owned(instance_name.to_owned());
     let mut class_name = node
@@ -131,7 +128,10 @@ fn snapshot_project_node<F: ImfsFetcher>(
 
     Ok(Some(InstanceSnapshot {
         snapshot_id: None,
-        metadata: Default::default(), // TODO
+        metadata: InstanceMetadata {
+            ignore_unknown_instances,
+            ..Default::default() // TODO: Fill out remaining metadata
+        },
         name,
         class_name,
         properties,

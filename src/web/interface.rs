@@ -1,8 +1,11 @@
 //! Defines all the structs needed to interact with the Rojo Serve API.
 
-use std::collections::{HashMap, HashSet};
+use std::{
+    borrow::Cow,
+    collections::{HashMap, HashSet},
+};
 
-use rbx_dom_weak::RbxId;
+use rbx_dom_weak::{RbxId, RbxInstance, RbxValue};
 use serde::{Deserialize, Serialize};
 
 use crate::session_id::SessionId;
@@ -17,9 +20,42 @@ pub const PROTOCOL_VERSION: u64 = 3;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SubscribeMessage;
 
-// TODO
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Instance;
+#[serde(rename_all = "camelCase")]
+pub struct InstanceMetadata {
+    pub ignore_unknown_instances: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct Instance<'a> {
+    pub name: Cow<'a, str>,
+    pub class_name: Cow<'a, str>,
+    pub properties: Cow<'a, HashMap<String, RbxValue>>,
+    pub children: Cow<'a, [RbxId]>,
+    pub metadata: Option<InstanceMetadata>,
+}
+
+impl<'a> Instance<'a> {
+    pub fn from_rbx_instance(source: &RbxInstance) -> Instance<'_> {
+        // TODO: This is a hack!
+        let metadata = if source.class_name == "DataModel" {
+            Some(InstanceMetadata {
+                ignore_unknown_instances: true,
+            })
+        } else {
+            None
+        };
+
+        Instance {
+            name: Cow::Borrowed(&source.name),
+            class_name: Cow::Borrowed(&source.class_name),
+            properties: Cow::Borrowed(&source.properties),
+            children: Cow::Borrowed(source.get_children_ids()),
+            metadata,
+        }
+    }
+}
 
 /// Response body from /api/rojo
 #[derive(Debug, Serialize, Deserialize)]
@@ -35,10 +71,10 @@ pub struct ServerInfoResponse {
 /// Response body from /api/read/{id}
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ReadResponse {
+pub struct ReadResponse<'a> {
     pub session_id: SessionId,
     pub message_cursor: u32,
-    pub instances: HashMap<RbxId, Instance>,
+    pub instances: HashMap<RbxId, Instance<'a>>,
 }
 
 /// Response body from /api/subscribe/{cursor}
