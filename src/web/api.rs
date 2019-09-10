@@ -111,16 +111,15 @@ impl ApiService {
         let message_cursor = message_queue.cursor();
 
         let tree = self.serve_session.tree();
-        let inner_tree = tree.inner();
 
         let mut instances = HashMap::new();
 
         for id in requested_ids {
-            if let Some(instance) = inner_tree.get_instance(id) {
-                instances.insert(id, Instance::from_rbx_instance(instance));
+            if let Some(instance) = tree.get_instance(id) {
+                instances.insert(id, Instance::from_rojo_instance(instance));
 
-                for descendant in inner_tree.descendants(id) {
-                    instances.insert(descendant.get_id(), Instance::from_rbx_instance(descendant));
+                for descendant in tree.descendants(id) {
+                    instances.insert(descendant.id(), Instance::from_rojo_instance(descendant));
                 }
             }
         }

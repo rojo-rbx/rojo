@@ -8,7 +8,7 @@ use std::{
 use rbx_dom_weak::{RbxId, RbxInstance, RbxValue};
 use serde::{Deserialize, Serialize};
 
-use crate::session_id::SessionId;
+use crate::{session_id::SessionId, snapshot::InstanceWithMeta};
 
 /// Server version to report over the API, not exposed outside this crate.
 pub(crate) const SERVER_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -37,22 +37,15 @@ pub struct Instance<'a> {
 }
 
 impl<'a> Instance<'a> {
-    pub fn from_rbx_instance(source: &RbxInstance) -> Instance<'_> {
-        // TODO: This is a hack!
-        let metadata = if source.class_name == "DataModel" {
-            Some(InstanceMetadata {
-                ignore_unknown_instances: true,
-            })
-        } else {
-            None
-        };
-
+    pub fn from_rojo_instance<'b>(source: InstanceWithMeta<'b>) -> Instance<'b> {
         Instance {
-            name: Cow::Borrowed(&source.name),
-            class_name: Cow::Borrowed(&source.class_name),
-            properties: Cow::Borrowed(&source.properties),
-            children: Cow::Borrowed(source.get_children_ids()),
-            metadata,
+            name: Cow::Borrowed(source.name()),
+            class_name: Cow::Borrowed(source.class_name()),
+            properties: Cow::Borrowed(source.properties()),
+            children: Cow::Borrowed(source.children()),
+            metadata: Some(InstanceMetadata {
+                ignore_unknown_instances: source.metadata().ignore_unknown_instances,
+            }),
         }
     }
 }

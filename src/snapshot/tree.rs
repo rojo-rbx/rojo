@@ -1,6 +1,6 @@
 use std::{collections::HashMap, path::PathBuf};
 
-use rbx_dom_weak::{RbxId, RbxInstance, RbxInstanceProperties, RbxTree, RbxValue};
+use rbx_dom_weak::{Descendants, RbxId, RbxInstance, RbxInstanceProperties, RbxTree, RbxValue};
 
 use crate::multimap::MultiMap;
 
@@ -128,6 +128,17 @@ impl RojoTree {
         }
     }
 
+    pub fn descendants(&self, id: RbxId) -> RojoDescendants<'_> {
+        RojoDescendants {
+            inner: self.inner.descendants(id),
+            tree: self,
+        }
+    }
+
+    fn get_metadata(&self, id: RbxId) -> Option<&InstanceMetadata> {
+        self.metadata_map.get(&id)
+    }
+
     fn insert_metadata(&mut self, id: RbxId, metadata: InstanceMetadata) {
         if let Some(source_path) = &metadata.source_path {
             self.path_to_ids.insert(source_path.clone(), id);
@@ -152,6 +163,25 @@ impl RojoTree {
         }
 
         metadata_map.insert(id, metadata);
+    }
+}
+
+pub struct RojoDescendants<'a> {
+    inner: Descendants<'a>,
+    tree: &'a RojoTree,
+}
+
+impl<'a> Iterator for RojoDescendants<'a> {
+    type Item = InstanceWithMeta<'a>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let instance = self.inner.next()?;
+        let metadata = self
+            .tree
+            .get_metadata(instance.get_id())
+            .expect("Metadata did not exist for instance");
+
+        Some(InstanceWithMeta { instance, metadata })
     }
 }
 
@@ -182,28 +212,28 @@ pub struct InstanceWithMeta<'a> {
     metadata: &'a InstanceMetadata,
 }
 
-impl InstanceWithMeta<'_> {
+impl<'a> InstanceWithMeta<'a> {
     pub fn id(&self) -> RbxId {
         self.instance.get_id()
     }
 
-    pub fn name(&self) -> &str {
+    pub fn name(&self) -> &'a str {
         &self.instance.name
     }
 
-    pub fn class_name(&self) -> &str {
+    pub fn class_name(&self) -> &'a str {
         &self.instance.class_name
     }
 
-    pub fn properties(&self) -> &HashMap<String, RbxValue> {
+    pub fn properties(&self) -> &'a HashMap<String, RbxValue> {
         &self.instance.properties
     }
 
-    pub fn children(&self) -> &[RbxId] {
+    pub fn children(&self) -> &'a [RbxId] {
         self.instance.get_children_ids()
     }
 
-    pub fn metadata(&self) -> &InstanceMetadata {
+    pub fn metadata(&self) -> &'a InstanceMetadata {
         &self.metadata
     }
 }
