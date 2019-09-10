@@ -77,7 +77,7 @@ impl<T: Clone> MessageQueue<T> {
         message_listeners.push(listener);
     }
 
-    pub fn get_message_cursor(&self) -> u32 {
+    pub fn cursor(&self) -> u32 {
         self.messages.read().unwrap().len() as u32
     }
 

@@ -1,6 +1,6 @@
 //! Defines all the structs needed to interact with the Rojo Serve API.
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use rbx_dom_weak::RbxId;
 use serde::{Deserialize, Serialize};
@@ -12,6 +12,14 @@ pub(crate) const SERVER_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Current protocol version, which is required to match.
 pub const PROTOCOL_VERSION: u64 = 3;
+
+// TODO
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SubscribeMessage;
+
+// TODO
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Instance;
 
 /// Response body from /api/rojo
 #[derive(Debug, Serialize, Deserialize)]
@@ -29,8 +37,8 @@ pub struct ServerInfoResponse {
 #[serde(rename_all = "camelCase")]
 pub struct ReadResponse {
     pub session_id: SessionId,
-    // pub message_cursor: u32,
-    // pub instances: HashMap<RbxId, InstanceWithMetadata<'a>>,
+    pub message_cursor: u32,
+    pub instances: HashMap<RbxId, Instance>,
 }
 
 /// Response body from /api/subscribe/{cursor}
@@ -38,6 +46,9 @@ pub struct ReadResponse {
 #[serde(rename_all = "camelCase")]
 pub struct SubscribeResponse {
     pub session_id: SessionId,
-    // pub message_cursor: u32,
-    // pub messages: Cow<'a, [InstanceChanges]>,
+    pub message_cursor: u32,
+    pub messages: Vec<SubscribeMessage>,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct NotFoundError;

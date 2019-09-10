@@ -1,7 +1,7 @@
 //! Defines Rojo's HTTP API, all under /api. These endpoints generally return
 //! JSON.
 
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use futures::{future, Future};
 
@@ -12,9 +12,10 @@ use crate::{
     serve_session::ServeSession,
     web::{
         interface::{
-            ReadResponse, ServerInfoResponse, SubscribeResponse, PROTOCOL_VERSION, SERVER_VERSION,
+            NotFoundError, ReadResponse, ServerInfoResponse, SubscribeResponse, PROTOCOL_VERSION,
+            SERVER_VERSION,
         },
-        util::response_json,
+        util::{json, json_ok},
     },
 };
 
@@ -30,19 +31,14 @@ impl Service for ApiService {
         Box<dyn Future<Item = hyper::Response<Self::ReqBody>, Error = Self::Error> + Send>;
 
     fn call(&mut self, request: hyper::Request<Self::ReqBody>) -> Self::Future {
-        let response = match (request.method(), request.uri().path()) {
+        match (request.method(), request.uri().path()) {
             (&Method::GET, "/api/rojo") => self.handle_api_rojo(),
             (&Method::GET, path) if path.starts_with("/api/read/") => self.handle_api_read(request),
             (&Method::GET, path) if path.starts_with("/api/subscribe/") => {
-                return self.handle_api_subscribe(request);
+                self.handle_api_subscribe(request)
             }
-            _ => Response::builder()
-                .status(StatusCode::NOT_FOUND)
-                .body(Body::empty())
-                .unwrap(),
-        };
-
-        Box::new(future::ok(response))
+            _ => json(NotFoundError, StatusCode::NOT_FOUND),
+        }
     }
 }
 
@@ -52,11 +48,11 @@ impl ApiService {
     }
 
     /// Get a summary of information about the server
-    fn handle_api_rojo(&self) -> Response<Body> {
+    fn handle_api_rojo(&self) -> <ApiService as Service>::Future {
         let tree = self.serve_session.tree();
         let root_instance_id = tree.get_root_id();
 
-        response_json(&ServerInfoResponse {
+        json_ok(&ServerInfoResponse {
             server_version: SERVER_VERSION.to_owned(),
             protocol_version: PROTOCOL_VERSION,
             session_id: self.serve_session.session_id(),
@@ -69,7 +65,7 @@ impl ApiService {
     /// there weren't any, subscribe to receive any new messages.
     fn handle_api_subscribe(&self, request: Request<Body>) -> <ApiService as Service>::Future {
         let argument = &request.uri().path()["/api/subscribe/".len()..];
-        let _cursor: u32 = match argument.parse() {
+        let _input_cursor: u32 = match argument.parse() {
             Ok(v) => v,
             Err(err) => {
                 return Box::new(future::ok(
@@ -82,28 +78,44 @@ impl ApiService {
             }
         };
 
-        Box::new(future::ok(response_json(SubscribeResponse {
+        let message_queue = self.serve_session.message_queue();
+        let message_cursor = message_queue.cursor();
+
+        let messages = Vec::new(); // TODO
+
+        json_ok(SubscribeResponse {
             session_id: self.serve_session.session_id(),
-        })))
+            message_cursor,
+            messages,
+        })
     }
 
-    fn handle_api_read(&self, request: Request<Body>) -> Response<Body> {
+    fn handle_api_read(&self, request: Request<Body>) -> <ApiService as Service>::Future {
         let argument = &request.uri().path()["/api/read/".len()..];
         let requested_ids: Option<Vec<RbxId>> = argument.split(',').map(RbxId::parse_str).collect();
 
         let _requested_ids = match requested_ids {
             Some(id) => id,
             None => {
-                return Response::builder()
-                    .status(StatusCode::BAD_REQUEST)
-                    .header(header::CONTENT_TYPE, "text/plain")
-                    .body(Body::from("Malformed ID list"))
-                    .unwrap();
+                return Box::new(future::ok(
+                    Response::builder()
+                        .status(StatusCode::BAD_REQUEST)
+                        .header(header::CONTENT_TYPE, "text/plain")
+                        .body(Body::from("Malformed ID list"))
+                        .unwrap(),
+                ));
             }
         };
 
-        response_json(ReadResponse {
+        let message_queue = self.serve_session.message_queue();
+        let message_cursor = message_queue.cursor();
+
+        let instances = HashMap::new(); // TODO
+
+        json_ok(ReadResponse {
             session_id: self.serve_session.session_id(),
+            message_cursor,
+            instances,
         })
     }
 }

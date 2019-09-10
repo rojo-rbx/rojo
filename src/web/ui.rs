@@ -6,7 +6,13 @@ use futures::{future, Future};
 use hyper::{header, service::Service, Body, Method, Request, Response, StatusCode};
 use ritz::html;
 
-use crate::{serve_session::ServeSession, web::interface::SERVER_VERSION};
+use crate::{
+    serve_session::ServeSession,
+    web::{
+        interface::{NotFoundError, SERVER_VERSION},
+        util::json,
+    },
+};
 
 static HOME_CSS: &str = include_str!("../../assets/index.css");
 
@@ -26,10 +32,7 @@ impl Service for UiService {
             (&Method::GET, "/") => self.handle_home(),
             (&Method::GET, "/visualize/rbx") => self.handle_visualize_rbx(),
             (&Method::GET, "/visualize/imfs") => self.handle_visualize_imfs(),
-            _ => Response::builder()
-                .status(StatusCode::NOT_FOUND)
-                .body(Body::empty())
-                .unwrap(),
+            _ => return json(NotFoundError, StatusCode::NOT_FOUND),
         };
 
         Box::new(future::ok(response))
