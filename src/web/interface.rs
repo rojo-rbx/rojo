@@ -5,7 +5,7 @@ use std::{
     collections::{HashMap, HashSet},
 };
 
-use rbx_dom_weak::{RbxId, RbxInstance, RbxValue};
+use rbx_dom_weak::{RbxId, RbxValue};
 use serde::{Deserialize, Serialize};
 
 use crate::{session_id::SessionId, snapshot::InstanceWithMeta};

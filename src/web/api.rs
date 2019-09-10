@@ -78,16 +78,19 @@ impl ApiService {
             }
         };
 
-        let message_queue = self.serve_session.message_queue();
-        let message_cursor = message_queue.cursor();
+        // Temporary response to prevent Rojo plugin from sending too many
+        // requests, this will hang the request until it times out.
+        Box::new(future::empty())
 
-        let messages = Vec::new(); // TODO
+        // let message_queue = self.serve_session.message_queue();
+        // let message_cursor = message_queue.cursor();
+        // let messages = Vec::new();
 
-        json_ok(SubscribeResponse {
-            session_id: self.serve_session.session_id(),
-            message_cursor,
-            messages,
-        })
+        // json_ok(SubscribeResponse {
+        //     session_id: self.serve_session.session_id(),
+        //     message_cursor,
+        //     messages,
+        // })
     }
 
     fn handle_api_read(&self, request: Request<Body>) -> <ApiService as Service>::Future {
