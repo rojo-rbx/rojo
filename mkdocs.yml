@@ -11,6 +11,7 @@ theme:
 nav:
   - Home: index.md
   - Why Rojo?: why-rojo.md
+  - Get Help with Rojo: help.md
   - Guide:
     - Installation: guide/installation.md
     - Creating a Game with Rojo: guide/new-game.md
