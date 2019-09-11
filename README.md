@@ -13,9 +13,6 @@
     <a href="https://crates.io/crates/rojo">
         <img src="https://img.shields.io/crates/v/rojo.svg?label=version" alt="Latest server version" />
     </a>
-    <a href="https://rojo.space/docs/0.4.x">
-        <img src="https://img.shields.io/badge/docs-0.4.x-brightgreen.svg" alt="Rojo 0.4.x Documentation" />
-    </a>
     <a href="https://rojo.space/docs/0.5.x">
         <img src="https://img.shields.io/badge/docs-0.5.x-brightgreen.svg" alt="Rojo 0.5.x Documentation" />
     </a>
@@ -44,7 +41,7 @@ Soon, Rojo will be able to:
 * Automatically manage your assets on Roblox.com, like images and sounds
 * Import custom instances like MoonScript code
 
-## [Documentation](https://rojo.space/docs/latest)
+## [Documentation](https://rojo.space/docs)
 If you find any mistakes, feel free to make changes in the [docs](https://github.com/rojo-rbx/rojo/tree/master/docs) folder of this repository and submit a pull request!
 
 ## Contributing
