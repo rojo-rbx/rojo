@@ -1,0 +1,14 @@
+---
+source: rojo-test/src/serve_test.rs
+expression: read_result
+---
+sessionId: id-1
+messageCursor: 0
+instances:
+  id-2:
+    Name: empty
+    ClassName: Folder
+    Properties: {}
+    Children: []
+    Metadata:
+      ignoreUnknownInstances: true

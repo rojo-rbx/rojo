@@ -2,8 +2,8 @@
 source: rojo-test/src/serve_test.rs
 expression: info
 ---
-sessionId: "[session id]"
+sessionId: id-1
 serverVersion: 0.5.0
 protocolVersion: 3
 expectedPlaceIds: ~
-rootInstanceId: "[root id]"
+rootInstanceId: id-2

@@ -1,3 +1,5 @@
+use std::fmt;
+
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -11,5 +13,11 @@ pub struct SessionId(Uuid);
 impl SessionId {
     pub fn new() -> SessionId {
         SessionId(Uuid::new_v4())
+    }
+}
+
+impl fmt::Display for SessionId {
+    fn fmt(&self, writer: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(writer, "{}", self.0)
     }
 }
