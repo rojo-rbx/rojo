@@ -13,8 +13,8 @@ use crate::{
     serve_session::ServeSession,
     web::{
         interface::{
-            Instance, NotFoundError, ReadResponse, ServerInfoResponse, SubscribeResponse,
-            PROTOCOL_VERSION, SERVER_VERSION,
+            Instance, NotFoundError, ReadResponse, ServerInfoResponse, PROTOCOL_VERSION,
+            SERVER_VERSION,
         },
         util::{json, json_ok},
     },

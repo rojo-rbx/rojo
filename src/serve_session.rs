@@ -1,4 +1,7 @@
-use std::collections::HashSet;
+use std::{
+    collections::HashSet,
+    sync::{Mutex, MutexGuard},
+};
 
 use crate::{
     imfs::new::{Imfs, ImfsFetcher},
@@ -12,7 +15,7 @@ use crate::{
 pub struct ServeSession<F> {
     root_project: Option<Project>,
     session_id: SessionId,
-    tree: RojoTree,
+    tree: Mutex<RojoTree>,
     message_queue: MessageQueue<()>, // TODO: Real message type
     imfs: Imfs<F>,
 }
@@ -25,14 +28,14 @@ impl<F: ImfsFetcher> ServeSession<F> {
         ServeSession {
             session_id,
             root_project,
-            tree,
+            tree: Mutex::new(tree),
             message_queue,
             imfs,
         }
     }
 
-    pub fn tree(&self) -> &RojoTree {
-        &self.tree
+    pub fn tree(&self) -> MutexGuard<'_, RojoTree> {
+        self.tree.lock().unwrap()
     }
 
     pub fn imfs(&self) -> &Imfs<F> {
