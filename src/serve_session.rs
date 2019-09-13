@@ -35,6 +35,10 @@ impl<F: ImfsFetcher> ServeSession<F> {
         &self.tree
     }
 
+    pub fn imfs(&self) -> &Imfs<F> {
+        &self.imfs
+    }
+
     pub fn message_queue(&self) -> &MessageQueue<()> {
         &self.message_queue
     }
