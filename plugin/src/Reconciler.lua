@@ -50,6 +50,8 @@ function Reconciler:reconcile(virtualInstancesById, id, instance)
 	-- If an instance changes ClassName, we assume it's very different. That's
 	-- not always the case!
 	if virtualInstance.ClassName ~= instance.ClassName then
+		Logging.trace("Switching to reify for %s because ClassName is different", instance:GetFullName())
+
 		-- TODO: Preserve existing children instead?
 		local parent = instance.Parent
 		self.instanceMap:destroyId(id)
@@ -93,6 +95,12 @@ function Reconciler:reconcile(virtualInstancesById, id, instance)
 			unvisitedExistingChildren[existingChildInstance] = nil
 			self:reconcile(virtualInstancesById, childId, existingChildInstance)
 		else
+			Logging.trace(
+				"Switching to reify for %s.%s because it does not exist",
+				instance:GetFullName(),
+				virtualInstancesById[childId].Name
+			)
+
 			self:__reify(virtualInstancesById, childId, instance)
 		end
 	end
@@ -148,7 +156,13 @@ function Reconciler:__reify(virtualInstancesById, id, parent)
 
 	local virtualInstance = virtualInstancesById[id]
 
-	local instance = Instance.new(virtualInstance.ClassName)
+	local ok, instance = pcall(function()
+		return Instance.new(virtualInstance.ClassName)
+	end)
+
+	if not ok then
+		error(("Couldn't create an Instance of type %q, a child of %s"):format(virtualInstance.ClassName, parent:GetFullName()))
+	end
 
 	for key, value in pairs(virtualInstance.Properties) do
 		setCanonicalProperty(instance, key, rojoValueToRobloxValue(value))
