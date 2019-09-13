@@ -7,6 +7,7 @@ use hyper::{header, service::Service, Body, Method, Request, Response, StatusCod
 use ritz::html;
 
 use crate::{
+    imfs::new::ImfsFetcher,
     serve_session::ServeSession,
     web::{
         interface::{NotFoundError, SERVER_VERSION},
@@ -16,12 +17,12 @@ use crate::{
 
 static HOME_CSS: &str = include_str!("../../assets/index.css");
 
-pub struct UiService {
+pub struct UiService<F> {
     #[allow(unused)] // TODO: Fill out interface service
-    serve_session: Arc<ServeSession>,
+    serve_session: Arc<ServeSession<F>>,
 }
 
-impl Service for UiService {
+impl<F: ImfsFetcher> Service for UiService<F> {
     type ReqBody = Body;
     type ResBody = Body;
     type Error = hyper::Error;
@@ -39,8 +40,8 @@ impl Service for UiService {
     }
 }
 
-impl UiService {
-    pub fn new(serve_session: Arc<ServeSession>) -> UiService {
+impl<F: ImfsFetcher> UiService<F> {
+    pub fn new(serve_session: Arc<ServeSession<F>>) -> Self {
         UiService { serve_session }
     }
 

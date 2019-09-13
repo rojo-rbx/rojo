@@ -9,6 +9,7 @@ use hyper::{header, service::Service, Body, Method, Request, Response, StatusCod
 use rbx_dom_weak::RbxId;
 
 use crate::{
+    imfs::new::ImfsFetcher,
     serve_session::ServeSession,
     web::{
         interface::{
@@ -19,11 +20,11 @@ use crate::{
     },
 };
 
-pub struct ApiService {
-    serve_session: Arc<ServeSession>,
+pub struct ApiService<F> {
+    serve_session: Arc<ServeSession<F>>,
 }
 
-impl Service for ApiService {
+impl<F: ImfsFetcher> Service for ApiService<F> {
     type ReqBody = Body;
     type ResBody = Body;
     type Error = hyper::Error;
@@ -42,13 +43,13 @@ impl Service for ApiService {
     }
 }
 
-impl ApiService {
-    pub fn new(serve_session: Arc<ServeSession>) -> ApiService {
+impl<F: ImfsFetcher> ApiService<F> {
+    pub fn new(serve_session: Arc<ServeSession<F>>) -> Self {
         ApiService { serve_session }
     }
 
     /// Get a summary of information about the server
-    fn handle_api_rojo(&self) -> <ApiService as Service>::Future {
+    fn handle_api_rojo(&self) -> <Self as Service>::Future {
         let tree = self.serve_session.tree();
         let root_instance_id = tree.get_root_id();
 
@@ -63,7 +64,7 @@ impl ApiService {
 
     /// Retrieve any messages past the given cursor index, and if
     /// there weren't any, subscribe to receive any new messages.
-    fn handle_api_subscribe(&self, request: Request<Body>) -> <ApiService as Service>::Future {
+    fn handle_api_subscribe(&self, request: Request<Body>) -> <Self as Service>::Future {
         let argument = &request.uri().path()["/api/subscribe/".len()..];
         let _input_cursor: u32 = match argument.parse() {
             Ok(v) => v,
@@ -93,7 +94,7 @@ impl ApiService {
         // })
     }
 
-    fn handle_api_read(&self, request: Request<Body>) -> <ApiService as Service>::Future {
+    fn handle_api_read(&self, request: Request<Body>) -> <Self as Service>::Future {
         let argument = &request.uri().path()["/api/read/".len()..];
         let requested_ids: Option<Vec<RbxId>> = argument.split(',').map(RbxId::parse_str).collect();
 

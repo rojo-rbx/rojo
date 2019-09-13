@@ -1,19 +1,24 @@
 use std::collections::HashSet;
 
 use crate::{
-    message_queue::MessageQueue, project::Project, session_id::SessionId, snapshot::RojoTree,
+    imfs::new::{Imfs, ImfsFetcher},
+    message_queue::MessageQueue,
+    project::Project,
+    session_id::SessionId,
+    snapshot::RojoTree,
 };
 
 /// Contains all of the state for a Rojo serve session.
-pub struct ServeSession {
+pub struct ServeSession<F> {
     root_project: Option<Project>,
     session_id: SessionId,
     tree: RojoTree,
     message_queue: MessageQueue<()>, // TODO: Real message type
+    imfs: Imfs<F>,
 }
 
-impl ServeSession {
-    pub fn new(tree: RojoTree, root_project: Option<Project>) -> ServeSession {
+impl<F: ImfsFetcher> ServeSession<F> {
+    pub fn new(imfs: Imfs<F>, tree: RojoTree, root_project: Option<Project>) -> Self {
         let session_id = SessionId::new();
         let message_queue = MessageQueue::new();
 
@@ -22,6 +27,7 @@ impl ServeSession {
             root_project,
             tree,
             message_queue,
+            imfs,
         }
     }
 
