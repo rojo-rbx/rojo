@@ -1,0 +1,30 @@
+name: Rust
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        rust_version: [stable, "1.34.0"]
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Setup Rust toolchain
+      run: rustup default ${{ matrix.rust_version }}
+
+    - name: Build
+      run: cargo build --all --locked --verbose
+
+    - name: Run tests
+      run: cargo test --all --locked --verbose
+
+    - name: Rustfmt and Clippy
+      run: |
+        cargo fmt -- --check
+        cargo clippy
+      if: matrix.rust_version == "stable"
