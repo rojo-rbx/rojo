@@ -1,0 +1,41 @@
+name: Release
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  windows:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Build release binary
+      run: cargo build --verbose --locked --release
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v1
+      with:
+        name: rojo-win64
+        path: target/release/rojo.exe
+
+  macos:
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Install Rust
+      run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+
+    - name: Build release binary
+      run: |
+        source $HOME/.cargo/env
+        cargo build --verbose --locked --release
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v1
+      with:
+        name: rojo-macos
+        path: target/release/rojo
