@@ -1,3 +1,6 @@
+// This file is non-critical and used for testing, so it's okay if it's unused.
+#![allow(unused)]
+
 use std::collections::HashMap;
 
 #[derive(Debug, Clone)]

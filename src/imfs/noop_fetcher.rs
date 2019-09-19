@@ -1,6 +1,9 @@
 //! Implements the IMFS fetcher interface for a fake filesystem using Rust's
 //! std::fs interface.
 
+// This interface is only used for testing, so it's okay if it isn't used.
+#![allow(unused)]
+
 use std::{
     io,
     path::{Path, PathBuf},
