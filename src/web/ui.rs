@@ -68,7 +68,7 @@ impl<F: ImfsFetcher> UiService<F> {
                         <h2 class="subtitle">
                             "Version " { SERVER_VERSION }
                         </h2>
-                        <a class="docs" href="https://lpghatguy.github.io/rojo">
+                        <a class="docs" href="https://rojo.space/docs">
                             "Rojo Documentation"
                         </a>
                     </div>
