@@ -78,5 +78,24 @@ pub struct SubscribeResponse {
     pub messages: Vec<SubscribeMessage>,
 }
 
+/// General response type returned from all Rojo routes
 #[derive(Debug, Serialize, Deserialize)]
-pub struct NotFoundError;
+#[serde(rename_all = "camelCase")]
+pub struct ErrorResponse {
+    kind: ErrorResponseKind,
+    details: String,
+}
+
+impl ErrorResponse {
+    pub fn not_found<S: Into<String>>(details: S) -> Self {
+        Self {
+            kind: ErrorResponseKind::NotFound,
+            details: details.into(),
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub enum ErrorResponseKind {
+    NotFound,
+}

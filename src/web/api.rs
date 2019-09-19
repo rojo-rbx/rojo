@@ -13,7 +13,7 @@ use crate::{
     serve_session::ServeSession,
     web::{
         interface::{
-            Instance, NotFoundError, ReadResponse, ServerInfoResponse, SubscribeResponse,
+            ErrorResponse, Instance, ReadResponse, ServerInfoResponse, SubscribeResponse,
             PROTOCOL_VERSION, SERVER_VERSION,
         },
         util::{json, json_ok},
@@ -38,7 +38,12 @@ impl<F: ImfsFetcher> Service for ApiService<F> {
             (&Method::GET, path) if path.starts_with("/api/subscribe/") => {
                 self.handle_api_subscribe(request)
             }
-            _ => json(NotFoundError, StatusCode::NOT_FOUND),
+            (_method, path) => {
+                return json(
+                    ErrorResponse::not_found(format!("Route not found: {}", path)),
+                    StatusCode::NOT_FOUND,
+                )
+            }
         }
     }
 }

@@ -10,7 +10,7 @@ use crate::{
     imfs::new::ImfsFetcher,
     serve_session::ServeSession,
     web::{
-        interface::{NotFoundError, SERVER_VERSION},
+        interface::{ErrorResponse, SERVER_VERSION},
         util::json,
     },
 };
@@ -33,7 +33,12 @@ impl<F: ImfsFetcher> Service for UiService<F> {
             (&Method::GET, "/") => self.handle_home(),
             (&Method::GET, "/visualize/rbx") => self.handle_visualize_rbx(),
             (&Method::GET, "/visualize/imfs") => self.handle_visualize_imfs(),
-            _ => return json(NotFoundError, StatusCode::NOT_FOUND),
+            (_method, path) => {
+                return json(
+                    ErrorResponse::not_found(format!("Route not found: {}", path)),
+                    StatusCode::NOT_FOUND,
+                )
+            }
         };
 
         Box::new(future::ok(response))
