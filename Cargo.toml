@@ -17,6 +17,11 @@ members = [
     "rojo-test",
 ]
 
+default-members = [
+    ".",
+    "rojo-test",
+]
+
 [lib]
 name = "librojo"
 path = "src/lib.rs"
