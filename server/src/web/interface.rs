@@ -73,7 +73,7 @@ impl InterfaceService {
                         <h2 class="subtitle">
                             "Version " { self.server_version }
                         </h2>
-                        <a class="docs" href="https://lpghatguy.github.io/rojo">
+                        <a class="docs" href="https://rojo.space/docs">
                             "Rojo Documentation"
                         </a>
                     </div>
