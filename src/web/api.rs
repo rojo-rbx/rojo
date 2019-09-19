@@ -9,7 +9,7 @@ use hyper::{service::Service, Body, Method, Request, StatusCode};
 use rbx_dom_weak::RbxId;
 
 use crate::{
-    imfs::new::ImfsFetcher,
+    imfs::ImfsFetcher,
     serve_session::ServeSession,
     web::{
         interface::{

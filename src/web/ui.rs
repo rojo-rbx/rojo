@@ -7,7 +7,7 @@ use hyper::{header, service::Service, Body, Method, Request, Response, StatusCod
 use ritz::html;
 
 use crate::{
-    imfs::new::ImfsFetcher,
+    imfs::ImfsFetcher,
     serve_session::ServeSession,
     web::{
         interface::{ErrorResponse, SERVER_VERSION},

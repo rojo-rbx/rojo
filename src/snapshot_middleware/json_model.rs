@@ -5,7 +5,7 @@ use rbx_reflection::try_resolve_value;
 use serde::Deserialize;
 
 use crate::{
-    imfs::new::{Imfs, ImfsEntry, ImfsFetcher},
+    imfs::{Imfs, ImfsEntry, ImfsFetcher},
     snapshot::InstanceSnapshot,
 };
 
@@ -136,7 +136,7 @@ mod test {
     use maplit::hashmap;
     use rbx_dom_weak::RbxValue;
 
-    use crate::imfs::new::{ImfsSnapshot, NoopFetcher};
+    use crate::imfs::{ImfsSnapshot, NoopFetcher};
 
     #[test]
     fn model_from_imfs() {

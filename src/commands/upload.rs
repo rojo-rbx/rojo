@@ -6,7 +6,7 @@ use reqwest::header::{ACCEPT, CONTENT_TYPE, COOKIE, USER_AGENT};
 
 use crate::{
     auth_cookie::get_auth_cookie,
-    imfs::new::{Imfs, RealFetcher, WatchMode},
+    imfs::{Imfs, RealFetcher, WatchMode},
     snapshot::{apply_patch_set, compute_patch_set, InstancePropertiesWithMeta, RojoTree},
     snapshot_middleware::snapshot_from_imfs,
 };

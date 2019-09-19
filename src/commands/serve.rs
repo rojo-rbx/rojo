@@ -4,7 +4,7 @@ use failure::Fail;
 use rbx_dom_weak::RbxInstanceProperties;
 
 use crate::{
-    imfs::new::{Imfs, RealFetcher, WatchMode},
+    imfs::{Imfs, RealFetcher, WatchMode},
     project::{Project, ProjectLoadError},
     serve_session::ServeSession,
     snapshot::{apply_patch_set, compute_patch_set, InstancePropertiesWithMeta, RojoTree},

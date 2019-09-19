@@ -4,7 +4,7 @@ use std::{
 };
 
 use crate::{
-    imfs::new::{Imfs, ImfsFetcher},
+    imfs::{Imfs, ImfsFetcher},
     message_queue::MessageQueue,
     project::Project,
     session_id::SessionId,

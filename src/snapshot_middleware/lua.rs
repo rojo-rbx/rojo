@@ -4,7 +4,7 @@ use maplit::hashmap;
 use rbx_dom_weak::{RbxId, RbxTree, RbxValue};
 
 use crate::{
-    imfs::new::{FsResultExt, Imfs, ImfsEntry, ImfsFetcher},
+    imfs::{FsResultExt, Imfs, ImfsEntry, ImfsFetcher},
     snapshot::InstanceSnapshot,
 };
 
@@ -141,7 +141,7 @@ mod test {
 
     use maplit::hashmap;
 
-    use crate::imfs::new::{ImfsSnapshot, NoopFetcher};
+    use crate::imfs::{ImfsSnapshot, NoopFetcher};
 
     #[test]
     fn module_from_imfs() {

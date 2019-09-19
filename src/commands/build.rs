@@ -9,7 +9,7 @@ use failure::Fail;
 use rbx_dom_weak::RbxInstanceProperties;
 
 use crate::{
-    imfs::new::{FsError, Imfs, RealFetcher, WatchMode},
+    imfs::{FsError, Imfs, RealFetcher, WatchMode},
     snapshot::{apply_patch_set, compute_patch_set, InstancePropertiesWithMeta, RojoTree},
     snapshot_middleware::snapshot_from_imfs,
 };

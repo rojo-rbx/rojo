@@ -4,7 +4,7 @@ use maplit::hashmap;
 use rbx_dom_weak::{RbxId, RbxTree, RbxValue};
 
 use crate::{
-    imfs::new::{FileSnapshot, Imfs, ImfsEntry, ImfsFetcher, ImfsSnapshot},
+    imfs::{FileSnapshot, Imfs, ImfsEntry, ImfsFetcher, ImfsSnapshot},
     snapshot::InstanceSnapshot,
 };
 
@@ -94,7 +94,7 @@ mod test {
     use maplit::hashmap;
     use rbx_dom_weak::RbxInstanceProperties;
 
-    use crate::imfs::new::NoopFetcher;
+    use crate::imfs::NoopFetcher;
 
     #[test]
     fn instance_from_imfs() {

@@ -3,7 +3,7 @@ use std::{borrow::Cow, collections::HashMap};
 use rbx_dom_weak::{RbxId, RbxInstanceProperties, RbxTree};
 
 use crate::{
-    imfs::new::{Imfs, ImfsEntry, ImfsFetcher},
+    imfs::{Imfs, ImfsEntry, ImfsFetcher},
     snapshot::InstanceSnapshot,
 };
 
@@ -66,7 +66,7 @@ impl SnapshotMiddleware for SnapshotRbxm {
 mod test {
     use super::*;
 
-    use crate::imfs::new::{ImfsSnapshot, NoopFetcher};
+    use crate::imfs::{ImfsSnapshot, NoopFetcher};
 
     #[test]
     fn model_from_imfs() {

@@ -28,7 +28,7 @@ use self::{
     rbxmx::SnapshotRbxmx,
     txt::SnapshotTxt,
 };
-use crate::imfs::new::{Imfs, ImfsEntry, ImfsFetcher};
+use crate::imfs::{Imfs, ImfsEntry, ImfsFetcher};
 
 macro_rules! middlewares {
     ( $($middleware: ident,)* ) => {

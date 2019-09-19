@@ -12,7 +12,7 @@ use futures::{
 use hyper::{service::Service, Body, Request, Response, Server};
 use log::trace;
 
-use crate::{imfs::new::ImfsFetcher, serve_session::ServeSession};
+use crate::{imfs::ImfsFetcher, serve_session::ServeSession};
 
 use self::{api::ApiService, ui::UiService};
 

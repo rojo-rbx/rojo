@@ -4,10 +4,7 @@ use rbx_dom_weak::{RbxId, RbxTree};
 use rbx_reflection::try_resolve_value;
 
 use crate::{
-    imfs::{
-        new::{Imfs, ImfsEntry, ImfsFetcher},
-        FsErrorKind,
-    },
+    imfs::{FsErrorKind, Imfs, ImfsEntry, ImfsFetcher},
     project::{Project, ProjectNode},
     snapshot::{InstanceMetadata, InstanceSnapshot},
 };
@@ -146,7 +143,7 @@ mod test {
     use maplit::hashmap;
     use rbx_dom_weak::RbxValue;
 
-    use crate::imfs::new::{ImfsSnapshot, NoopFetcher};
+    use crate::imfs::{ImfsSnapshot, NoopFetcher};
 
     #[test]
     fn project_from_folder() {

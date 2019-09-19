@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use rbx_dom_weak::{RbxId, RbxTree};
 
 use crate::{
-    imfs::new::{Imfs, ImfsEntry, ImfsFetcher},
+    imfs::{Imfs, ImfsEntry, ImfsFetcher},
     snapshot::InstanceSnapshot,
 };
 
@@ -64,7 +64,7 @@ mod test {
 
     use std::collections::HashMap;
 
-    use crate::imfs::new::{ImfsSnapshot, NoopFetcher};
+    use crate::imfs::{ImfsSnapshot, NoopFetcher};
 
     #[test]
     fn model_from_imfs() {

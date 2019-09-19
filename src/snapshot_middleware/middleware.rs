@@ -3,10 +3,7 @@ use std::path::{Path, PathBuf};
 use rbx_dom_weak::{RbxId, RbxTree};
 
 use crate::{
-    imfs::{
-        new::{Imfs, ImfsEntry, ImfsFetcher, ImfsSnapshot},
-        FsResult,
-    },
+    imfs::{FsResult, Imfs, ImfsEntry, ImfsFetcher, ImfsSnapshot},
     snapshot::InstanceSnapshot,
 };
 

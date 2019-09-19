@@ -5,7 +5,7 @@ use rbx_dom_weak::{RbxId, RbxTree, RbxValue};
 use serde::Serialize;
 
 use crate::{
-    imfs::new::{Imfs, ImfsEntry, ImfsFetcher},
+    imfs::{Imfs, ImfsEntry, ImfsFetcher},
     snapshot::InstanceSnapshot,
 };
 
@@ -136,7 +136,7 @@ fn convert_localization_csv(contents: &[u8]) -> String {
 mod test {
     use super::*;
 
-    use crate::imfs::new::{ImfsSnapshot, NoopFetcher};
+    use crate::imfs::{ImfsSnapshot, NoopFetcher};
 
     #[test]
     fn csv_from_imfs() {

@@ -3,7 +3,7 @@ use std::{borrow::Cow, collections::HashMap};
 use rbx_dom_weak::{RbxId, RbxTree};
 
 use crate::{
-    imfs::new::{DirectorySnapshot, Imfs, ImfsEntry, ImfsFetcher, ImfsSnapshot},
+    imfs::{DirectorySnapshot, Imfs, ImfsEntry, ImfsFetcher, ImfsSnapshot},
     snapshot::InstanceSnapshot,
 };
 
@@ -78,7 +78,7 @@ mod test {
 
     use maplit::hashmap;
 
-    use crate::imfs::new::NoopFetcher;
+    use crate::imfs::NoopFetcher;
 
     #[test]
     fn empty_folder() {
