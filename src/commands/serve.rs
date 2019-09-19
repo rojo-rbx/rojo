@@ -68,7 +68,7 @@ pub fn serve(options: &ServeOptions) -> Result<(), ServeError> {
         .expect("snapshot did not return an instance");
 
     let patch_set = compute_patch_set(&snapshot, &tree, root_id);
-    apply_patch_set(&mut tree, &patch_set);
+    apply_patch_set(&mut tree, patch_set);
 
     let session = Arc::new(ServeSession::new(imfs, tree, maybe_project));
     let server = LiveServer::new(session);

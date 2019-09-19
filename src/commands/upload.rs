@@ -72,7 +72,7 @@ pub fn upload(options: UploadOptions) -> Result<(), UploadError> {
     let patch_set = compute_patch_set(&snapshot, &tree, root_id);
 
     log::trace!("Applying patch set");
-    apply_patch_set(&mut tree, &patch_set);
+    apply_patch_set(&mut tree, patch_set);
 
     let root_id = tree.get_root_id();
 

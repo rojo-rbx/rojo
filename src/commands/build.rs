@@ -105,7 +105,7 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
     let patch_set = compute_patch_set(&snapshot, &tree, root_id);
 
     log::trace!("Applying patch set");
-    apply_patch_set(&mut tree, &patch_set);
+    apply_patch_set(&mut tree, patch_set);
 
     log::trace!("Opening output file for write");
     let mut file = BufWriter::new(File::create(&options.output_file)?);
