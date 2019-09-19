@@ -3,7 +3,7 @@ source: rojo-test/src/serve_test.rs
 expression: info
 ---
 sessionId: id-1
-serverVersion: 0.5.0
+serverVersion: 0.6.0-dev
 protocolVersion: 3
 expectedPlaceIds: ~
 rootInstanceId: id-2
