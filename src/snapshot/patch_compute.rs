@@ -6,7 +6,7 @@ use std::collections::{HashMap, HashSet};
 use rbx_dom_weak::{RbxId, RbxValue};
 
 use super::{
-    patch::{PatchAddInstance, PatchSet, PatchUpdateInstance},
+    patch::{PatchAdd, PatchSet, PatchUpdate},
     InstanceSnapshot, InstanceWithMeta, RojoTree,
 };
 
@@ -33,7 +33,7 @@ struct ComputePatchContext {
     snapshot_id_to_instance_id: HashMap<RbxId, RbxId>,
 }
 
-fn rewrite_refs_in_updates(context: &ComputePatchContext, updates: &mut [PatchUpdateInstance]) {
+fn rewrite_refs_in_updates(context: &ComputePatchContext, updates: &mut [PatchUpdate]) {
     for update in updates {
         for property_value in update.changed_properties.values_mut() {
             if let Some(RbxValue::Ref { value: Some(id) }) = property_value {
@@ -47,7 +47,7 @@ fn rewrite_refs_in_updates(context: &ComputePatchContext, updates: &mut [PatchUp
     }
 }
 
-fn rewrite_refs_in_additions(context: &ComputePatchContext, additions: &mut [PatchAddInstance]) {
+fn rewrite_refs_in_additions(context: &ComputePatchContext, additions: &mut [PatchAdd]) {
     for addition in additions {
         rewrite_refs_in_snapshot(context, &mut addition.instance);
     }
@@ -145,7 +145,7 @@ fn compute_property_patches(
         return;
     }
 
-    patch_set.updated_instances.push(PatchUpdateInstance {
+    patch_set.updated_instances.push(PatchUpdate {
         id: instance.id(),
         changed_name,
         changed_class_name,
@@ -204,7 +204,7 @@ fn compute_children_patches<'a>(
                 );
             }
             None => {
-                patch_set.added_instances.push(PatchAddInstance {
+                patch_set.added_instances.push(PatchAdd {
                     parent_id: id,
                     instance: snapshot_child.clone(),
                 });
@@ -269,7 +269,7 @@ mod test {
         let patch_set = compute_patch_set(&snapshot, &tree, root_id);
 
         let expected_patch_set = PatchSet {
-            updated_instances: vec![PatchUpdateInstance {
+            updated_instances: vec![PatchUpdate {
                 id: root_id,
                 changed_name: None,
                 changed_class_name: None,
@@ -330,7 +330,7 @@ mod test {
         let patch_set = compute_patch_set(&snapshot, &tree, root_id);
 
         let expected_patch_set = PatchSet {
-            added_instances: vec![PatchAddInstance {
+            added_instances: vec![PatchAdd {
                 parent_id: root_id,
                 instance: InstanceSnapshot {
                     snapshot_id: None,

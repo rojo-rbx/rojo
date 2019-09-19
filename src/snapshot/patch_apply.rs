@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use rbx_dom_weak::{RbxId, RbxInstanceProperties, RbxValue};
 
 use super::{
-    patch::{PatchSet, PatchUpdateInstance},
+    patch::{PatchSet, PatchUpdate},
     InstancePropertiesWithMeta, InstanceSnapshot, RojoTree,
 };
 
@@ -95,11 +95,7 @@ fn apply_add_child(
     }
 }
 
-fn apply_update_child(
-    context: &PatchApplyContext,
-    tree: &mut RojoTree,
-    patch: &PatchUpdateInstance,
-) {
+fn apply_update_child(context: &PatchApplyContext, tree: &mut RojoTree, patch: &PatchUpdate) {
     if let Some(metadata) = &patch.changed_metadata {
         tree.update_metadata(patch.id, metadata.clone());
     }
@@ -150,7 +146,7 @@ mod test {
     use maplit::hashmap;
     use rbx_dom_weak::RbxValue;
 
-    use super::super::PatchAddInstance;
+    use super::super::PatchAdd;
 
     #[test]
     fn add_from_empty() {
@@ -179,7 +175,7 @@ mod test {
         };
 
         let patch_set = PatchSet {
-            added_instances: vec![PatchAddInstance {
+            added_instances: vec![PatchAdd {
                 parent_id: root_id,
                 instance: snapshot.clone(),
             }],
@@ -217,7 +213,7 @@ mod test {
 
         let root_id = tree.get_root_id();
 
-        let patch = PatchUpdateInstance {
+        let patch = PatchUpdate {
             id: root_id,
             changed_name: Some("Foo".to_owned()),
             changed_class_name: Some("NewClassName".to_owned()),
