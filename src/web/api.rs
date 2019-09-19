@@ -3,9 +3,9 @@
 
 use std::{collections::HashMap, sync::Arc};
 
-use futures::{future, sync::oneshot, Future};
+use futures::{sync::oneshot, Future};
 
-use hyper::{header, service::Service, Body, Method, Request, Response, StatusCode};
+use hyper::{service::Service, Body, Method, Request, StatusCode};
 use rbx_dom_weak::RbxId;
 
 use crate::{
@@ -74,13 +74,10 @@ impl<F: ImfsFetcher> ApiService<F> {
         let input_cursor: u32 = match argument.parse() {
             Ok(v) => v,
             Err(err) => {
-                return Box::new(future::ok(
-                    Response::builder()
-                        .status(StatusCode::BAD_REQUEST)
-                        .header(header::CONTENT_TYPE, "text/plain")
-                        .body(Body::from(err.to_string()))
-                        .unwrap(),
-                ));
+                return json(
+                    ErrorResponse::bad_request(format!("Malformed message cursor: {}", err)),
+                    StatusCode::BAD_REQUEST,
+                );
             }
         };
 
@@ -92,21 +89,16 @@ impl<F: ImfsFetcher> ApiService<F> {
             message_queue.subscribe(input_cursor, sender);
         }
 
-        Box::new(receiver.then(move |result| {
-            match result {
-                Ok((message_cursor, messages)) => json_ok(SubscribeResponse {
-                    session_id,
-                    message_cursor,
-                    messages,
-                }),
-                Err(_) => Box::new(future::ok(
-                    Response::builder()
-                        .status(StatusCode::INTERNAL_SERVER_ERROR)
-                        .header(header::CONTENT_TYPE, "text/plain")
-                        .body(Body::from("Message queue disconnected sender!"))
-                        .unwrap(),
-                )),
-            }
+        Box::new(receiver.then(move |result| match result {
+            Ok((message_cursor, messages)) => json_ok(SubscribeResponse {
+                session_id,
+                message_cursor,
+                messages,
+            }),
+            Err(_) => json(
+                ErrorResponse::internal_error("Message queue disconnected sender"),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            ),
         }))
     }
 
@@ -117,13 +109,10 @@ impl<F: ImfsFetcher> ApiService<F> {
         let requested_ids = match requested_ids {
             Some(ids) => ids,
             None => {
-                return Box::new(future::ok(
-                    Response::builder()
-                        .status(StatusCode::BAD_REQUEST)
-                        .header(header::CONTENT_TYPE, "text/plain")
-                        .body(Body::from("Malformed ID list"))
-                        .unwrap(),
-                ));
+                return json(
+                    ErrorResponse::bad_request("Malformed ID list"),
+                    StatusCode::BAD_REQUEST,
+                );
             }
         };
 

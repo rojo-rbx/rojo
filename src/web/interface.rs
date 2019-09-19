@@ -93,9 +93,25 @@ impl ErrorResponse {
             details: details.into(),
         }
     }
+
+    pub fn bad_request<S: Into<String>>(details: S) -> Self {
+        Self {
+            kind: ErrorResponseKind::BadRequest,
+            details: details.into(),
+        }
+    }
+
+    pub fn internal_error<S: Into<String>>(details: S) -> Self {
+        Self {
+            kind: ErrorResponseKind::InternalError,
+            details: details.into(),
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum ErrorResponseKind {
     NotFound,
+    BadRequest,
+    InternalError,
 }
