@@ -17,8 +17,7 @@ pub(crate) const SERVER_VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const PROTOCOL_VERSION: u64 = 3;
 
 // TODO
-#[derive(Debug, Serialize, Deserialize)]
-pub struct SubscribeMessage;
+pub type SubscribeMessage = ();
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

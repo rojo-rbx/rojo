@@ -3,7 +3,7 @@
 
 use std::{collections::HashMap, sync::Arc};
 
-use futures::{future, Future};
+use futures::{future, sync::oneshot, Future};
 
 use hyper::{header, service::Service, Body, Method, Request, Response, StatusCode};
 use rbx_dom_weak::RbxId;
@@ -13,8 +13,8 @@ use crate::{
     serve_session::ServeSession,
     web::{
         interface::{
-            Instance, NotFoundError, ReadResponse, ServerInfoResponse, PROTOCOL_VERSION,
-            SERVER_VERSION,
+            Instance, NotFoundError, ReadResponse, ServerInfoResponse, SubscribeResponse,
+            PROTOCOL_VERSION, SERVER_VERSION,
         },
         util::{json, json_ok},
     },
@@ -66,7 +66,7 @@ impl<F: ImfsFetcher> ApiService<F> {
     /// there weren't any, subscribe to receive any new messages.
     fn handle_api_subscribe(&self, request: Request<Body>) -> <Self as Service>::Future {
         let argument = &request.uri().path()["/api/subscribe/".len()..];
-        let _input_cursor: u32 = match argument.parse() {
+        let input_cursor: u32 = match argument.parse() {
             Ok(v) => v,
             Err(err) => {
                 return Box::new(future::ok(
@@ -79,19 +79,30 @@ impl<F: ImfsFetcher> ApiService<F> {
             }
         };
 
-        // Temporary response to prevent Rojo plugin from sending too many
-        // requests, this will hang the request until it times out.
-        Box::new(future::empty())
+        let session_id = self.serve_session.session_id();
+        let (sender, receiver) = oneshot::channel();
 
-        // let message_queue = self.serve_session.message_queue();
-        // let message_cursor = message_queue.cursor();
-        // let messages = Vec::new();
+        {
+            let message_queue = self.serve_session.message_queue();
+            message_queue.subscribe(input_cursor, sender);
+        }
 
-        // json_ok(SubscribeResponse {
-        //     session_id: self.serve_session.session_id(),
-        //     message_cursor,
-        //     messages,
-        // })
+        Box::new(receiver.then(move |result| {
+            match result {
+                Ok((message_cursor, messages)) => json_ok(SubscribeResponse {
+                    session_id,
+                    message_cursor,
+                    messages,
+                }),
+                Err(_) => Box::new(future::ok(
+                    Response::builder()
+                        .status(StatusCode::INTERNAL_SERVER_ERROR)
+                        .header(header::CONTENT_TYPE, "text/plain")
+                        .body(Body::from("Message queue disconnected sender!"))
+                        .unwrap(),
+                )),
+            }
+        }))
     }
 
     fn handle_api_read(&self, request: Request<Body>) -> <Self as Service>::Future {
