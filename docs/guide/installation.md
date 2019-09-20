@@ -26,11 +26,13 @@ The Rojo CLI must be run from the command line, like Terminal.app on MacOS or `c
 ### Installing from Cargo
 If you have Rust installed, the easiest way to get Rojo is with Cargo!
 
-To install the latest 0.5.0 alpha, use:
+To install the latest 0.5.x release, use:
 
 ```sh
-cargo install rojo --version 0.5.0-alpha.13
+cargo install rojo
 ```
+
+If you're upgrading from a previous version of Rojo, you may need to pass `--force` to tell Cargo to overwrite your existing version.
 
 ## Installing the Plugin
 
@@ -43,4 +45,4 @@ Download the attached `rbxm` file and put it into your Roblox Studio plugins fol
 {: align="center" }
 
 ### Installing from Roblox.com
-Visit [Rojo's roblox.com plugin page](https://www.roblox.com/library/1997686364/Rojo-0-5-0-alpha-3) in Roblox Studio and press **Install**.
+Visit [Rojo's Roblox.com Plugin page](https://www.roblox.com/library/1997686364) in Roblox Studio and press **Install**.
