@@ -5,11 +5,11 @@ use std::collections::HashMap;
 use rbx_dom_weak::{RbxId, RbxInstanceProperties, RbxValue};
 
 use super::{
-    patch::{PatchSet, PatchUpdate},
+    patch::{AppliedPatchSet, PatchSet, PatchUpdate},
     InstancePropertiesWithMeta, InstanceSnapshot, RojoTree,
 };
 
-pub fn apply_patch_set(tree: &mut RojoTree, patch_set: PatchSet) {
+pub fn apply_patch_set(tree: &mut RojoTree, patch_set: PatchSet) -> AppliedPatchSet {
     let mut context = PatchApplyContext::default();
 
     for removed_id in patch_set.removed_instances {
@@ -25,6 +25,9 @@ pub fn apply_patch_set(tree: &mut RojoTree, patch_set: PatchSet) {
     }
 
     apply_deferred_properties(context, tree);
+
+    // TODO: Actually calculate patch set
+    AppliedPatchSet::new()
 }
 
 #[derive(Default)]

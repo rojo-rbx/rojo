@@ -13,8 +13,8 @@ use crate::{
     serve_session::ServeSession,
     web::{
         interface::{
-            ErrorResponse, Instance, ReadResponse, ServerInfoResponse, SubscribeResponse,
-            PROTOCOL_VERSION, SERVER_VERSION,
+            ErrorResponse, Instance, ReadResponse, ServerInfoResponse, SubscribeMessage,
+            SubscribeResponse, PROTOCOL_VERSION, SERVER_VERSION,
         },
         util::{json, json_ok},
     },
@@ -90,11 +90,19 @@ impl<F: ImfsFetcher> ApiService<F> {
         }
 
         Box::new(receiver.then(move |result| match result {
-            Ok((message_cursor, messages)) => json_ok(SubscribeResponse {
-                session_id,
-                message_cursor,
-                messages,
-            }),
+            Ok((message_cursor, messages)) => {
+                // TODO: Transform applied patch sets into subscribe responses
+                let api_messages = messages
+                    .into_iter()
+                    .map(|_message| SubscribeMessage)
+                    .collect();
+
+                json_ok(SubscribeResponse {
+                    session_id,
+                    message_cursor,
+                    messages: api_messages,
+                })
+            }
             Err(_) => json(
                 ErrorResponse::internal_error("Message queue disconnected sender"),
                 StatusCode::INTERNAL_SERVER_ERROR,

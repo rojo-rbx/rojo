@@ -8,6 +8,7 @@ use crate::{
     message_queue::MessageQueue,
     project::Project,
     session_id::SessionId,
+    snapshot::AppliedPatchSet,
     snapshot::RojoTree,
 };
 
@@ -16,7 +17,7 @@ pub struct ServeSession<F> {
     root_project: Option<Project>,
     session_id: SessionId,
     tree: Mutex<RojoTree>,
-    message_queue: MessageQueue<()>, // TODO: Real message type
+    message_queue: MessageQueue<AppliedPatchSet>,
     imfs: Imfs<F>,
 }
 
@@ -42,7 +43,7 @@ impl<F: ImfsFetcher> ServeSession<F> {
         &self.imfs
     }
 
-    pub fn message_queue(&self) -> &MessageQueue<()> {
+    pub fn message_queue(&self) -> &MessageQueue<AppliedPatchSet> {
         &self.message_queue
     }
 
