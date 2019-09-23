@@ -13,6 +13,7 @@ pub mod commands;
 pub mod project;
 
 mod auth_cookie;
+mod change_processor;
 mod imfs;
 mod message_queue;
 mod multimap;
