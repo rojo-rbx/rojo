@@ -322,6 +322,13 @@ pub struct Project {
 }
 
 impl Project {
+    pub fn is_project_file(path: &Path) -> bool {
+        path.file_name()
+            .and_then(|name| name.to_str())
+            .map(|name| name.ends_with(".project.json"))
+            .unwrap_or(false)
+    }
+
     pub fn init_place(project_fuzzy_path: &Path) -> Result<PathBuf, ProjectInitError> {
         let project_path = Project::pick_path_for_init(project_fuzzy_path)?;
 
@@ -418,7 +425,11 @@ impl Project {
 
         // If this is a file, assume it's the config the user was looking for.
         if location_metadata.is_file() {
-            return Some(start_location.to_path_buf());
+            if Project::is_project_file(start_location) {
+                return Some(start_location.to_path_buf());
+            } else {
+                return None;
+            }
         } else if location_metadata.is_dir() {
             let with_file = start_location.join(PROJECT_FILENAME);
 
