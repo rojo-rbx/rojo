@@ -12,6 +12,12 @@ exclude = [
     "/test-projects/**",
 ]
 
+[features]
+default = []
+
+# Enable this feature to live-reload assets from the web UI.
+dev-live-assets = []
+
 [workspace]
 members = [
     "rojo-test",

@@ -10,14 +10,11 @@ use crate::{
     imfs::ImfsFetcher,
     serve_session::ServeSession,
     web::{
+        assets,
         interface::{ErrorResponse, SERVER_VERSION},
         util::json,
     },
 };
-
-static LOGO: &[u8] = include_bytes!("../../assets/logo-512.png");
-static ICON: &[u8] = include_bytes!("../../assets/icon-32.png");
-static HOME_CSS: &str = include_str!("../../assets/index.css");
 
 pub struct UiService<F> {
     serve_session: Arc<ServeSession<F>>,
@@ -56,46 +53,24 @@ impl<F: ImfsFetcher> UiService<F> {
     fn handle_logo(&self) -> Response<Body> {
         Response::builder()
             .header(header::CONTENT_TYPE, "image/png")
-            .body(Body::from(LOGO))
+            .body(Body::from(assets::logo()))
             .unwrap()
     }
 
     fn handle_icon(&self) -> Response<Body> {
         Response::builder()
             .header(header::CONTENT_TYPE, "image/png")
-            .body(Body::from(ICON))
+            .body(Body::from(assets::icon()))
             .unwrap()
     }
 
     fn handle_home(&self) -> Response<Body> {
-        let project_name = self.serve_session.project_name().unwrap_or("<unnamed>");
-        let uptime = {
-            let elapsed = self.serve_session.start_time().elapsed();
-
-            // Round off all of our sub-second precision to make timestamps
-            // nicer.
-            let just_nanos = Duration::from_nanos(elapsed.subsec_nanos() as u64);
-            let elapsed = elapsed - just_nanos;
-
-            humantime::format_duration(elapsed).to_string()
-        };
-
-        let page = Self::page(html! {
-            <main class="main">
-                <header class="header">
-                    <img class="main-logo" src="/logo.png" />
-                    <div class="stats">
-                        { Self::stat_item("Server Version", SERVER_VERSION) }
-                        { Self::stat_item("Project", project_name) }
-                        { Self::stat_item("Server Uptime", uptime) }
-                    </div>
-                </header>
-                <div class="button-list">
-                    { Self::button("Rojo Documentation", "https://rojo.space/docs") }
-                    { Self::button("View in-memory filesystem state", "/show-imfs") }
-                    { Self::button("View instance tree state", "/show-instances") }
-                </div>
-            </main>
+        let page = self.normal_page(html! {
+            <div class="button-list">
+                { Self::button("Rojo Documentation", "https://rojo.space/docs") }
+                { Self::button("View in-memory filesystem state", "/show-imfs") }
+                { Self::button("View instance tree state", "/show-instances") }
+            </div>
         });
 
         Response::builder()
@@ -133,14 +108,45 @@ impl<F: ImfsFetcher> UiService<F> {
         }
     }
 
+    fn normal_page<'a>(&'a self, body: HtmlContent<'a>) -> HtmlContent<'a> {
+        let project_name = self.serve_session.project_name().unwrap_or("<unnamed>");
+        let uptime = {
+            let elapsed = self.serve_session.start_time().elapsed();
+
+            // Round off all of our sub-second precision to make timestamps
+            // nicer.
+            let just_nanos = Duration::from_nanos(elapsed.subsec_nanos() as u64);
+            let elapsed = elapsed - just_nanos;
+
+            humantime::format_duration(elapsed).to_string()
+        };
+
+        Self::page(html! {
+            <div class="root">
+                <header class="header">
+                    <img class="main-logo" src="/logo.png" />
+                    <div class="stats">
+                        { Self::stat_item("Server Version", SERVER_VERSION) }
+                        { Self::stat_item("Project", project_name) }
+                        { Self::stat_item("Server Uptime", uptime) }
+                    </div>
+                </header>
+                <main class="main">
+                    { body }
+                </main>
+            </div>
+        })
+    }
+
     fn page(body: HtmlContent<'_>) -> HtmlContent<'_> {
         html! {
             <html>
                 <head>
                     <title>"Rojo Live Server"</title>
                     <link rel="icon" type="image/png" sizes="32x32" href="/icon.png" />
+                    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1" />
                     <style>
-                        { ritz::UnescapedText::new(HOME_CSS) }
+                        { ritz::UnescapedText::new(assets::css()) }
                     </style>
                 </head>
 

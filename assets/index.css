@@ -22,11 +22,10 @@ body {
   justify-content: center;
 }
 
-.main {
+.root {
   flex: 0 0;
   display: flex;
   flex-direction: column;
-  padding: 1rem;
   margin: 0 auto;
   width: 100%;
   max-width: 50rem;
@@ -38,19 +37,25 @@ body {
 .header {
   flex: 0 0;
   display: flex;
-  justify-content: space-around;
+  flex-wrap: wrap;
+  /*justify-content: space-around;*/
   align-items: center;
-  margin-bottom: 1rem;
+  border-bottom: 1px solid #666;
+}
+
+.main {
+  padding: 1rem;
 }
 
 .main-logo {
   flex: 0 0;
-  width: 20rem;
+  width: 10rem;
+  margin: 1rem;
 }
 
 .stats {
   flex: 0 0 20rem;
-  padding: 0 1rem;
+  margin: 1rem;
 }
 
 .stat {
@@ -65,12 +70,13 @@ body {
 .button-list {
   flex: 0 0;
   display: flex;
-  justify-content: space-around;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .button {
   display: inline-block;
   border: 1px solid #666;
   padding: 0.3em 1em;
-  margin: 0 0.2rem;
+  margin: 1rem;
 }

@@ -1,4 +1,5 @@
 mod api;
+mod assets;
 pub mod interface;
 mod ui;
 mod util;
