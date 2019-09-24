@@ -1,9 +1,15 @@
 # Rojo Changelog
 
-## Unreleased Changes
-* Added `--verbose`/`-v` flag, which can be specified multiple times to increase verbosity
-* Added support for automatically finding Roblox Studio's auth cookie for `rojo upload` on Windows
+## Unreleased Changes (will be 0.6.0)
+* Added support for nested project files. ([#95](https://github.com/rojo-rbx/rojo/issues/95))
+* Added project file hot-reloading. ([#10](https://github.com/rojo-rbx/rojo/issues/10)])
+* Added support for building and serving sources that aren't projects.
+* Added `--verbose`/`-v` flag, which can be specified multiple times to increase verbosity.
+* Added support for automatically finding Roblox Studio's auth cookie for `rojo upload` on Windows.
 * Improved diagnostics for when the Rojo plugin cannot create an instance.
+* Improved feedback from `rojo serve`.
+* Fixed Rojo dropping Ref properties ([#142](https://github.com/rojo-rbx/rojo/issues/142))
+    * This means that properties like `PrimaryPart` now work!
 
 ## [0.5.0](https://github.com/rojo-rbx/rojo/releases/tag/v0.5.0) (August 27, 2019)
 * Changed `.model.json` naming, which may require projects to migrate ambiguous cases:
