@@ -4,11 +4,13 @@ use std::{sync::Arc, time::Duration};
 
 use futures::{future, Future};
 use hyper::{header, service::Service, Body, Method, Request, Response, StatusCode};
-use ritz::{html, HtmlContent};
+use rbx_dom_weak::{RbxId, RbxValue};
+use ritz::{html, Fragment, HtmlContent};
 
 use crate::{
     imfs::ImfsFetcher,
     serve_session::ServeSession,
+    snapshot::RojoTree,
     web::{
         assets,
         interface::{ErrorResponse, SERVER_VERSION},
@@ -80,17 +82,101 @@ impl<F: ImfsFetcher> UiService<F> {
     }
 
     fn handle_show_instances(&self) -> Response<Body> {
+        let tree = self.serve_session.tree();
+        let root_id = tree.get_root_id();
+
+        let page = self.normal_page(html! {
+            { Self::instance(&tree, root_id) }
+        });
+
         Response::builder()
-            .header(header::CONTENT_TYPE, "text/plain")
-            .body(Body::from("TODO: /show-instances"))
+            .header(header::CONTENT_TYPE, "text/html")
+            .body(Body::from(format!("<!DOCTYPE html>{}", page)))
             .unwrap()
     }
 
     fn handle_show_imfs(&self) -> Response<Body> {
+        let page = self.normal_page(html! {
+            "TODO /show/imfs"
+        });
+
         Response::builder()
-            .header(header::CONTENT_TYPE, "text/plain")
-            .body(Body::from("TODO: /show-imfs"))
+            .header(header::CONTENT_TYPE, "text/html")
+            .body(Body::from(format!("<!DOCTYPE html>{}", page)))
             .unwrap()
+    }
+
+    fn instance(tree: &RojoTree, id: RbxId) -> HtmlContent<'_> {
+        let instance = tree.get_instance(id).unwrap();
+        let children_list: Vec<_> = instance
+            .children()
+            .iter()
+            .copied()
+            .map(|id| Self::instance(tree, id))
+            .collect();
+
+        let children_container = if children_list.is_empty() {
+            HtmlContent::None
+        } else {
+            html! {
+                <div class="instance-children">
+                    { Fragment::new(children_list) }
+                </div>
+            }
+        };
+
+        let mut properties: Vec<_> = instance.properties().iter().collect();
+        properties.sort_by_key(|pair| pair.0);
+
+        let property_list: Vec<_> = properties
+            .into_iter()
+            .map(|(key, value)| {
+                html! {
+                    <div class="instance-property" title={ Self::display_value(value) }>
+                        { key.clone() } ": " { format!("{:?}", value.get_type()) }
+                    </div>
+                }
+            })
+            .collect();
+
+        let property_container = if property_list.is_empty() {
+            HtmlContent::None
+        } else {
+            html! {
+                <div class="instance-properties">
+                    { Fragment::new(property_list) }
+                </div>
+            }
+        };
+
+        let class_name_specifier = if instance.name() == instance.class_name() {
+            HtmlContent::None
+        } else {
+            html! {
+                <span>
+                    " (" { instance.class_name().to_owned() } ")"
+                </span>
+            }
+        };
+
+        html! {
+            <div class="instance">
+                <div class="instance-title">
+                    { instance.name().to_owned() }
+                    { class_name_specifier }
+                </div>
+                { property_container }
+                { children_container }
+            </div>
+        }
+    }
+
+    fn display_value(value: &RbxValue) -> String {
+        match value {
+            RbxValue::String { value } => value.clone(),
+            RbxValue::Bool { value } => value.to_string(),
+            _ => format!("{:?}", value),
+        }
     }
 
     fn stat_item<S: Into<String>>(name: &str, value: S) -> HtmlContent<'_> {
@@ -124,7 +210,9 @@ impl<F: ImfsFetcher> UiService<F> {
         Self::page(html! {
             <div class="root">
                 <header class="header">
-                    <img class="main-logo" src="/logo.png" />
+                    <a class="main-logo" href="/">
+                        <img src="/logo.png" />
+                    </a>
                     <div class="stats">
                         { Self::stat_item("Server Version", SERVER_VERSION) }
                         { Self::stat_item("Project", project_name) }
