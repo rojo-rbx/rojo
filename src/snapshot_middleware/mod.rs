@@ -11,6 +11,7 @@ mod json_model;
 mod lua;
 mod middleware;
 mod project;
+mod rbxlx;
 mod rbxm;
 mod rbxmx;
 mod txt;
@@ -24,6 +25,7 @@ use self::{
     lua::SnapshotLua,
     middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware},
     project::SnapshotProject,
+    rbxlx::SnapshotRbxlx,
     rbxm::SnapshotRbxm,
     rbxmx::SnapshotRbxmx,
     txt::SnapshotTxt,
@@ -67,6 +69,7 @@ macro_rules! middlewares {
 middlewares! {
     SnapshotProject,
     SnapshotJsonModel,
+    SnapshotRbxlx,
     SnapshotRbxmx,
     SnapshotRbxm,
     SnapshotLua,
