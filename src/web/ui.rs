@@ -4,7 +4,7 @@ use std::{sync::Arc, time::Duration};
 
 use futures::{future, Future};
 use hyper::{header, service::Service, Body, Method, Request, Response, StatusCode};
-use ritz::html;
+use ritz::{html, HtmlContent};
 
 use crate::{
     imfs::ImfsFetcher,
@@ -34,8 +34,8 @@ impl<F: ImfsFetcher> Service for UiService<F> {
             (&Method::GET, "/") => self.handle_home(),
             (&Method::GET, "/logo.png") => self.handle_logo(),
             (&Method::GET, "/icon.png") => self.handle_icon(),
-            (&Method::GET, "/visualize/rbx") => self.handle_visualize_rbx(),
-            (&Method::GET, "/visualize/imfs") => self.handle_visualize_imfs(),
+            (&Method::GET, "/show-instances") => self.handle_show_instances(),
+            (&Method::GET, "/show-imfs") => self.handle_show_imfs(),
             (_method, path) => {
                 return json(
                     ErrorResponse::not_found(format!("Route not found: {}", path)),
@@ -80,7 +80,61 @@ impl<F: ImfsFetcher> UiService<F> {
             humantime::format_duration(elapsed).to_string()
         };
 
-        let page = html! {
+        let page = Self::page(html! {
+            <main class="main">
+                <header class="header">
+                    <img class="main-logo" src="/logo.png" />
+                    <div class="stats">
+                        { Self::stat_item("Server Version", SERVER_VERSION) }
+                        { Self::stat_item("Project", project_name) }
+                        { Self::stat_item("Server Uptime", uptime) }
+                    </div>
+                </header>
+                <div class="button-list">
+                    { Self::button("Rojo Documentation", "https://rojo.space/docs") }
+                    { Self::button("View in-memory filesystem state", "/show-imfs") }
+                    { Self::button("View instance tree state", "/show-instances") }
+                </div>
+            </main>
+        });
+
+        Response::builder()
+            .header(header::CONTENT_TYPE, "text/html")
+            .body(Body::from(format!("<!DOCTYPE html>{}", page)))
+            .unwrap()
+    }
+
+    fn handle_show_instances(&self) -> Response<Body> {
+        Response::builder()
+            .header(header::CONTENT_TYPE, "text/plain")
+            .body(Body::from("TODO: /show-instances"))
+            .unwrap()
+    }
+
+    fn handle_show_imfs(&self) -> Response<Body> {
+        Response::builder()
+            .header(header::CONTENT_TYPE, "text/plain")
+            .body(Body::from("TODO: /show-imfs"))
+            .unwrap()
+    }
+
+    fn stat_item<S: Into<String>>(name: &str, value: S) -> HtmlContent<'_> {
+        html! {
+            <span class="stat">
+                <span class="stat-name">{ name } ": "</span>
+                <span class="stat-value">{ value.into() }</span>
+            </span>
+        }
+    }
+
+    fn button<'a>(text: &'a str, href: &'a str) -> HtmlContent<'a> {
+        html! {
+            <a class="button" href={ href }>{ text }</a>
+        }
+    }
+
+    fn page(body: HtmlContent<'_>) -> HtmlContent<'_> {
+        html! {
             <html>
                 <head>
                     <title>"Rojo Live Server"</title>
@@ -91,57 +145,9 @@ impl<F: ImfsFetcher> UiService<F> {
                 </head>
 
                 <body>
-                    <main class="main">
-                        <header class="header">
-                            <img class="main-logo" src="/logo.png" />
-                            <div class="stats">
-                                <span class="stat">
-                                    <span class="stat-name">"Server Version: "</span>
-                                    <span class="stat-value">{ SERVER_VERSION }</span>
-                                </span>
-                                <span class="stat">
-                                    <span class="stat-name">"Project: "</span>
-                                    <span class="stat-value">{ project_name }</span>
-                                </span>
-                                <span class="stat">
-                                    <span class="stat-name">"Server Uptime: "</span>
-                                    <span class="stat-value">{ uptime.to_string() }</span>
-                                </span>
-                            </div>
-                        </header>
-                        <div class="button-list">
-                            <a class="button" href="https://rojo.space/docs">
-                                "Rojo Documentation"
-                            </a>
-                            <a class="button" href="/visualize/imfs">
-                                "View in-memory filesystem state"
-                            </a>
-                            <a class="button" href="/visualize/rbx">
-                                "View instance tree state"
-                            </a>
-                        </div>
-                    </main>
+                    { body }
                 </body>
             </html>
-        };
-
-        Response::builder()
-            .header(header::CONTENT_TYPE, "text/html")
-            .body(Body::from(format!("<!DOCTYPE html>{}", page)))
-            .unwrap()
-    }
-
-    fn handle_visualize_rbx(&self) -> Response<Body> {
-        Response::builder()
-            .header(header::CONTENT_TYPE, "text/plain")
-            .body(Body::from("TODO: /visualize/rbx"))
-            .unwrap()
-    }
-
-    fn handle_visualize_imfs(&self) -> Response<Body> {
-        Response::builder()
-            .header(header::CONTENT_TYPE, "text/plain")
-            .body(Body::from("TODO: /visualize/imfs"))
-            .unwrap()
+        }
     }
 }
