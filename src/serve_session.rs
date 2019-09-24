@@ -1,6 +1,7 @@
 use std::{
     collections::HashSet,
     sync::{Arc, Mutex, MutexGuard},
+    time::Instant,
 };
 
 use crate::{
@@ -20,6 +21,10 @@ use crate::{
 /// future. `ServeSession` would be roughly the right interface to expose for
 /// those cases.
 pub struct ServeSession<F> {
+    /// When the serve session was started. Used only for user-facing
+    /// diagnostics.
+    start_time: Instant,
+
     /// The root project for the serve session, if there was one defined.
     ///
     /// This will be defined if a folder with a `default.project.json` file was
@@ -66,6 +71,8 @@ pub struct ServeSession<F> {
 /// that handles ServeSession.
 impl<F: ImfsFetcher + Send + 'static> ServeSession<F> {
     pub fn new(imfs: Imfs<F>, tree: RojoTree, root_project: Option<Project>) -> Self {
+        let start_time = Instant::now();
+
         let session_id = SessionId::new();
         let message_queue = MessageQueue::new();
 
@@ -80,6 +87,7 @@ impl<F: ImfsFetcher + Send + 'static> ServeSession<F> {
         );
 
         Self {
+            start_time,
             session_id,
             root_project,
             tree,
@@ -105,6 +113,16 @@ impl<F: ImfsFetcher> ServeSession<F> {
 
     pub fn session_id(&self) -> SessionId {
         self.session_id
+    }
+
+    pub fn project_name(&self) -> Option<&str> {
+        self.root_project
+            .as_ref()
+            .map(|project| project.name.as_str())
+    }
+
+    pub fn start_time(&self) -> Instant {
+        self.start_time
     }
 
     pub fn serve_place_ids(&self) -> Option<&HashSet<u64>> {

@@ -1,7 +1,13 @@
-use std::{collections::HashMap, path::PathBuf, sync::Arc};
+use std::{
+    collections::HashMap,
+    io::{self, Write},
+    path::PathBuf,
+    sync::Arc,
+};
 
 use failure::Fail;
 use rbx_dom_weak::RbxInstanceProperties;
+use termcolor::{BufferWriter, Color, ColorChoice, ColorSpec, WriteColor};
 
 use crate::{
     imfs::{Imfs, RealFetcher, WatchMode},
@@ -46,7 +52,7 @@ pub fn serve(options: &ServeOptions) -> Result<(), ServeError> {
         })
         .unwrap_or(DEFAULT_PORT);
 
-    println!("Rojo server listening on port {}", port);
+    let _ = show_start_message(port);
 
     let mut tree = RojoTree::new(InstancePropertiesWithMeta {
         properties: RbxInstanceProperties {
@@ -75,20 +81,36 @@ pub fn serve(options: &ServeOptions) -> Result<(), ServeError> {
 
     server.start(port);
 
-    // let receiver = imfs.change_receiver();
+    Ok(())
+}
 
-    // while let Ok(change) = receiver.recv() {
-    //     imfs.commit_change(&change)
-    //         .expect("Failed to commit Imfs change");
+fn show_start_message(port: u16) -> io::Result<()> {
+    let mut writer = BufferWriter::stderr(ColorChoice::Auto);
+    let mut buffer = writer.buffer();
 
-    //     use notify::DebouncedEvent;
-    //     if let DebouncedEvent::Write(path) = change {
-    //         let contents = imfs.get_contents(path)
-    //             .expect("Failed to read changed path");
+    writeln!(&mut buffer, "Rojo server listening:")?;
 
-    //         println!("{:?}", std::str::from_utf8(contents));
-    //     }
-    // }
+    write!(&mut buffer, "  Address: ")?;
+    buffer.set_color(ColorSpec::new().set_fg(Some(Color::Green)).set_bold(true))?;
+    writeln!(&mut buffer, "localhost")?;
+
+    buffer.set_color(&ColorSpec::new())?;
+    write!(&mut buffer, "  Port:    ")?;
+    buffer.set_color(ColorSpec::new().set_fg(Some(Color::Green)).set_bold(true))?;
+    writeln!(&mut buffer, "{}", port)?;
+
+    writeln!(&mut buffer, "")?;
+
+    buffer.set_color(&ColorSpec::new())?;
+    write!(&mut buffer, "Visit ")?;
+
+    buffer.set_color(ColorSpec::new().set_fg(Some(Color::Green)).set_bold(true))?;
+    write!(&mut buffer, "http://localhost:{}/", port)?;
+
+    buffer.set_color(&ColorSpec::new())?;
+    writeln!(&mut buffer, " in your browser for more information.")?;
+
+    writer.print(&buffer)?;
 
     Ok(())
 }

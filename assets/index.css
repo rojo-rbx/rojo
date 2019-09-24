@@ -1,11 +1,17 @@
 * {
   margin: 0;
   padding: 0;
+  border: none;
+  text-decoration: inherit;
+  color: inherit;
   font: inherit;
+  box-sizing: inherit;
 }
 
 html {
+  box-sizing: border-box;
   font-family: sans-serif;
+  text-decoration: none;
   height: 100%;
 }
 
@@ -17,27 +23,54 @@ body {
 }
 
 .main {
+  flex: 0 0;
+  display: flex;
+  flex-direction: column;
   padding: 1rem;
-  text-align: center;
   margin: 0 auto;
   width: 100%;
-  max-width: 60rem;
+  max-width: 50rem;
   background-color: #efefef;
   border: 1px solid #666;
   border-radius: 4px;
 }
 
-.title {
-  font-size: 2rem;
+.header {
+  flex: 0 0;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.main-logo {
+  flex: 0 0;
+  width: 20rem;
+}
+
+.stats {
+  flex: 0 0 20rem;
+  padding: 0 1rem;
+}
+
+.stat {
+  display: block;
+}
+
+.stat-name {
+  display: inline;
   font-weight: bold;
 }
 
-.subtitle {
-  font-size: 1.5rem;
-  font-weight: bold;
+.button-list {
+  flex: 0 0;
+  display: flex;
+  justify-content: space-around;
 }
 
-.docs {
-  font-size: 1.3rem;
-  font-weight: bold;
+.button {
+  display: inline-block;
+  border: 1px solid #666;
+  padding: 0.3em 1em;
+  margin: 0 0.2rem;
 }

@@ -1,6 +1,6 @@
 // Recursion limit bump is to support Ritz, a JSX-like proc macro used for
 // Rojo's web UI currently.
-#![recursion_limit = "128"]
+#![recursion_limit = "1024"]
 
 #[macro_use]
 mod impl_from;
