@@ -221,13 +221,14 @@ impl<F: ImfsFetcher> Imfs<F> {
 
         self.read_if_not_exists(path)?;
 
-        match self.inner.get(path).unwrap() {
+        match self.inner.get_mut(path).unwrap() {
             ImfsItem::Directory(dir) => {
                 self.fetcher.watch(path);
 
-                if dir.children_enumerated {
-                    return self
-                        .inner
+                let enumerated = dir.children_enumerated;
+
+                if enumerated {
+                    self.inner
                         .children(path)
                         .unwrap() // TODO: Handle None here, which means the PathMap entry did not exist.
                         .into_iter()
@@ -235,15 +236,17 @@ impl<F: ImfsFetcher> Imfs<F> {
                         .collect::<Vec<PathBuf>>() // Collect all PathBufs, since self.get needs to borrow self mutably.
                         .into_iter()
                         .map(|path| self.get(path))
-                        .collect::<FsResult<Vec<ImfsEntry>>>();
-                }
+                        .collect::<FsResult<Vec<ImfsEntry>>>()
+                } else {
+                    dir.children_enumerated = true;
 
-                self.fetcher
-                    .read_children(path)
-                    .map_err(|err| FsError::new(err, path.to_path_buf()))?
-                    .into_iter()
-                    .map(|path| self.get(path))
-                    .collect::<FsResult<Vec<ImfsEntry>>>()
+                    self.fetcher
+                        .read_children(path)
+                        .map_err(|err| FsError::new(err, path.to_path_buf()))?
+                        .into_iter()
+                        .map(|path| self.get(path))
+                        .collect::<FsResult<Vec<ImfsEntry>>>()
+                }
             }
             ImfsItem::File(_) => Err(FsError::new(
                 io::Error::new(io::ErrorKind::Other, "Can't read a directory"),
