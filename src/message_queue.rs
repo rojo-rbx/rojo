@@ -80,17 +80,4 @@ impl<T: Clone> MessageQueue<T> {
     pub fn cursor(&self) -> u32 {
         self.messages.read().unwrap().len() as u32
     }
-
-    pub fn get_messages_since(&self, cursor: u32) -> (u32, Vec<T>) {
-        let messages = self.messages.read().unwrap();
-
-        let current_cursor = messages.len() as u32;
-
-        // Cursor is out of bounds or there are no new messages
-        if cursor >= current_cursor {
-            return (current_cursor, Vec::new());
-        }
-
-        (current_cursor, messages[(cursor as usize)..].to_vec())
-    }
 }
