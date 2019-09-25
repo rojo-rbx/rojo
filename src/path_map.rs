@@ -156,6 +156,10 @@ impl<T> PathMap<T> {
         current_path
     }
 
+    pub fn orphans(&self) -> impl Iterator<Item = &Path> {
+        self.orphan_paths.iter().map(|item| item.as_ref())
+    }
+
     /// Adds the path to its parent if it's present in the tree, or the set of
     /// orphaned paths if it is not.
     fn add_to_parent(&mut self, path: PathBuf) {
