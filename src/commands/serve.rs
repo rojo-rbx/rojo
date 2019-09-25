@@ -85,7 +85,7 @@ pub fn serve(options: &ServeOptions) -> Result<(), ServeError> {
 }
 
 fn show_start_message(port: u16) -> io::Result<()> {
-    let mut writer = BufferWriter::stderr(ColorChoice::Auto);
+    let writer = BufferWriter::stdout(ColorChoice::Auto);
     let mut buffer = writer.buffer();
 
     writeln!(&mut buffer, "Rojo server listening:")?;
