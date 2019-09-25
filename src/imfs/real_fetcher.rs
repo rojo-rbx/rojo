@@ -2,6 +2,7 @@
 //! std::fs interface and notify as the file watcher.
 
 use std::{
+    collections::HashSet,
     fs, io,
     path::{Path, PathBuf},
     sync::mpsc,
@@ -35,7 +36,13 @@ pub struct RealFetcher {
     /// Thread handle to convert notify's mpsc channel messages into
     /// crossbeam_channel messages.
     _converter_thread: JoinHandle<()>,
+
+    /// The crossbeam receiver filled with events from the converter thread.
     receiver: Receiver<ImfsEvent>,
+
+    /// All of the paths that the fetcher is watching, tracked here because
+    /// notify does not expose this information.
+    watched_paths: HashSet<PathBuf>,
 }
 
 impl RealFetcher {
@@ -69,6 +76,7 @@ impl RealFetcher {
             watcher,
             _converter_thread: handle,
             receiver,
+            watched_paths: HashSet::new(),
         }
     }
 }
@@ -132,8 +140,13 @@ impl ImfsFetcher for RealFetcher {
         log::trace!("Watching path {}", path.display());
 
         if let Some(watcher) = self.watcher.as_mut() {
-            if let Err(err) = watcher.watch(path, RecursiveMode::NonRecursive) {
-                log::warn!("Couldn't watch path {}: {:?}", path.display(), err);
+            match watcher.watch(path, RecursiveMode::NonRecursive) {
+                Ok(_) => {
+                    self.watched_paths.insert(path.to_path_buf());
+                }
+                Err(err) => {
+                    log::warn!("Couldn't watch path {}: {:?}", path.display(), err);
+                }
             }
         }
     }
@@ -142,6 +155,11 @@ impl ImfsFetcher for RealFetcher {
         log::trace!("Stopped watching path {}", path.display());
 
         if let Some(watcher) = self.watcher.as_mut() {
+            // Remove the path from our watched paths regardless of the outcome
+            // of notify's unwatch to ensure we drop old paths in the event of a
+            // rename.
+            self.watched_paths.remove(path);
+
             if let Err(err) = watcher.unwatch(path) {
                 log::warn!("Couldn't unwatch path {}: {:?}", path.display(), err);
             }
@@ -150,5 +168,9 @@ impl ImfsFetcher for RealFetcher {
 
     fn receiver(&self) -> Receiver<ImfsEvent> {
         self.receiver.clone()
+    }
+
+    fn watched_paths(&self) -> Vec<&Path> {
+        self.watched_paths.iter().map(|v| v.as_path()).collect()
     }
 }

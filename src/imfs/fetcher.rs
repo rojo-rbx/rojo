@@ -29,4 +29,9 @@ pub trait ImfsFetcher {
     fn watch(&mut self, path: &Path);
     fn unwatch(&mut self, path: &Path);
     fn receiver(&self) -> Receiver<ImfsEvent>;
+
+    /// A method intended for debugging what paths the fetcher is watching.
+    fn watched_paths(&self) -> Vec<&Path> {
+        Vec::new()
+    }
 }

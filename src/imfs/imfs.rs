@@ -24,7 +24,13 @@ use super::{
 /// Most operations return `ImfsEntry` objects to work around this, which is
 /// effectively a index into the `Imfs`.
 pub struct Imfs<F> {
+    /// A hierarchical map from paths to items that have been read or partially
+    /// read into memory by the Imfs.
     inner: PathMap<ImfsItem>,
+
+    /// This Imfs's fetcher, which is used for all actual interactions with the
+    /// filesystem. It's referred to by the type parameter `F` all over, and is
+    /// generic in order to make it feasible to mock.
     fetcher: F,
 }
 
@@ -270,9 +276,10 @@ pub trait ImfsDebug {
     fn debug_contents<'a>(&'a self, path: &Path) -> Option<&'a [u8]>;
     fn debug_children<'a>(&'a self, path: &Path) -> Option<(bool, Vec<&'a Path>)>;
     fn debug_orphans(&self) -> Vec<&Path>;
+    fn debug_watched_paths(&self) -> Vec<&Path>;
 }
 
-impl<F> ImfsDebug for Imfs<F> {
+impl<F: ImfsFetcher> ImfsDebug for Imfs<F> {
     fn debug_load_snapshot<P: AsRef<Path>>(&mut self, path: P, snapshot: ImfsSnapshot) {
         let path = path.as_ref();
 
@@ -327,6 +334,10 @@ impl<F> ImfsDebug for Imfs<F> {
 
     fn debug_orphans(&self) -> Vec<&Path> {
         self.inner.orphans().collect()
+    }
+
+    fn debug_watched_paths(&self) -> Vec<&Path> {
+        self.fetcher.watched_paths()
     }
 }
 
