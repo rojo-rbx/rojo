@@ -1,6 +1,6 @@
 //! Defines the HTTP-based UI. These endpoints generally return HTML and SVG.
 
-use std::{sync::Arc, time::Duration};
+use std::{path::Path, sync::Arc, time::Duration};
 
 use futures::{future, Future};
 use hyper::{header, service::Service, Body, Method, Request, Response, StatusCode};
@@ -8,7 +8,7 @@ use rbx_dom_weak::{RbxId, RbxValue};
 use ritz::{html, Fragment, HtmlContent};
 
 use crate::{
-    imfs::ImfsFetcher,
+    imfs::{Imfs, ImfsDebug, ImfsFetcher},
     serve_session::ServeSession,
     snapshot::RojoTree,
     web::{
@@ -96,14 +96,79 @@ impl<F: ImfsFetcher> UiService<F> {
     }
 
     fn handle_show_imfs(&self) -> Response<Body> {
+        let imfs = self.serve_session.imfs();
+
+        let orphans: Vec<_> = imfs
+            .debug_orphans()
+            .into_iter()
+            .map(|path| Self::render_imfs_path(&imfs, path, true))
+            .collect();
+
         let page = self.normal_page(html! {
-            "TODO /show/imfs"
+            <div>
+                { Fragment::new(orphans) }
+            </div>
         });
 
         Response::builder()
             .header(header::CONTENT_TYPE, "text/html")
             .body(Body::from(format!("<!DOCTYPE html>{}", page)))
             .unwrap()
+    }
+
+    fn render_imfs_path(imfs: &Imfs<F>, path: &Path, is_root: bool) -> HtmlContent<'static> {
+        let is_file = imfs.debug_is_file(path);
+
+        let (note, children) = if is_file {
+            (HtmlContent::None, Vec::new())
+        } else {
+            let (is_exhaustive, mut children) = imfs.debug_children(path).unwrap();
+
+            // Sort files above directories, then sort how Path does after that.
+            children.sort_unstable_by(|a, b| {
+                let a_is_file = imfs.debug_is_file(a);
+                let b_is_file = imfs.debug_is_file(b);
+
+                b_is_file.cmp(&a_is_file).then_with(|| a.cmp(b))
+            });
+
+            let children: Vec<_> = children
+                .into_iter()
+                .map(|child| Self::render_imfs_path(imfs, child, false))
+                .collect();
+
+            let note = if is_exhaustive {
+                HtmlContent::None
+            } else {
+                html!({ " (non-exhaustive)" })
+            };
+
+            (note, children)
+        };
+
+        // For root entries, we want the full path to contextualize the path.
+        let mut name = if is_root {
+            path.to_str().unwrap().to_owned()
+        } else {
+            path.file_name().unwrap().to_str().unwrap().to_owned()
+        };
+
+        // Directories should end with `/` in the UI to mark them.
+        if !is_file && !name.ends_with('/') && !name.ends_with('\\') {
+            name.push('/');
+        }
+
+        html! {
+            <div class="imfs-entry">
+                <div>
+                    <span class="imfs-entry-name">{ name }</span>
+                    <span class="imfs-entry-note">{ note }</span>
+                </div>
+                <div class="imfs-entry-children">
+                    { Fragment::new(children) }
+                </div>
+            </div>
+        }
     }
 
     fn instance(tree: &RojoTree, id: RbxId) -> HtmlContent<'_> {

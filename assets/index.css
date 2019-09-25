@@ -108,3 +108,29 @@ img {
 .instance-children {
   padding: 0.5rem 0 0.5rem 1rem;
 }
+
+.imfs-entry {
+}
+
+.imfs-entry-name {
+  position: relative;
+}
+
+.imfs-entry-children .imfs-entry-name::before {
+  content: "";
+  width: 0.8rem;
+  height: 1px;
+  background-color: #999;
+  position: absolute;
+  top: 50%;
+  left: -1rem;
+}
+
+.imfs-entry-note {
+  font-style: italic;
+}
+
+.imfs-entry-children {
+  padding-left: 1rem;
+  border-left: 1px solid #999;
+}

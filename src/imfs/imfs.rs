@@ -303,6 +303,44 @@ impl<F: ImfsFetcher> Imfs<F> {
     }
 }
 
+/// Contains extra methods that should only be used for debugging. They're
+/// broken out into a separate trait to make it more explicit to depend on them.
+pub trait ImfsDebug {
+    fn debug_is_file(&self, path: &Path) -> bool;
+    fn debug_contents<'a>(&'a self, path: &Path) -> Option<&'a [u8]>;
+    fn debug_children<'a>(&'a self, path: &Path) -> Option<(bool, Vec<&'a Path>)>;
+    fn debug_orphans(&self) -> Vec<&Path>;
+}
+
+impl<F> ImfsDebug for Imfs<F> {
+    fn debug_is_file(&self, path: &Path) -> bool {
+        match self.inner.get(path) {
+            Some(ImfsItem::File(_)) => true,
+            _ => false,
+        }
+    }
+
+    fn debug_contents<'a>(&'a self, path: &Path) -> Option<&'a [u8]> {
+        match self.inner.get(path) {
+            Some(ImfsItem::File(file)) => file.contents.as_ref().map(|vec| vec.as_slice()),
+            _ => None,
+        }
+    }
+
+    fn debug_children<'a>(&'a self, path: &Path) -> Option<(bool, Vec<&'a Path>)> {
+        match self.inner.get(path) {
+            Some(ImfsItem::Directory(dir)) => {
+                Some((dir.children_enumerated, self.inner.children(path).unwrap()))
+            }
+            _ => None,
+        }
+    }
+
+    fn debug_orphans(&self) -> Vec<&Path> {
+        self.inner.orphans().collect()
+    }
+}
+
 /// A reference to file or folder in an `Imfs`. Can only be produced by the
 /// entry existing in the Imfs, but can later point to nothing if something
 /// would invalidate that path.
