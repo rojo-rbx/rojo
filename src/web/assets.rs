@@ -1,7 +1,3 @@
-static LOGO: &[u8] = include_bytes!("../../assets/logo-512.png");
-static ICON: &[u8] = include_bytes!("../../assets/icon-32.png");
-static HOME_CSS: &str = include_str!("../../assets/index.css");
-
 macro_rules! declare_asset {
     ($name: ident, $path: expr) => {
         pub fn $name() -> &'static str {
@@ -29,9 +25,13 @@ macro_rules! declare_asset {
 declare_asset!(css, "../../assets/index.css");
 
 pub fn logo() -> &'static [u8] {
+    static LOGO: &[u8] = include_bytes!("../../assets/logo-512.png");
+
     LOGO
 }
 
 pub fn icon() -> &'static [u8] {
+    static ICON: &[u8] = include_bytes!("../../assets/icon-32.png");
+
     ICON
 }
