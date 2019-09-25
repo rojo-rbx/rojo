@@ -14,15 +14,7 @@ html {
   font-family: sans-serif;
   font-size: 18px;
   text-decoration: none;
-  height: 100%;
   line-height: 1.4;
-}
-
-body {
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
 }
 
 img {
@@ -37,7 +29,6 @@ img {
 }
 
 .root {
-  flex: 0 0;
   display: flex;
   flex-direction: column;
   margin: 0.5rem auto;
@@ -112,7 +103,7 @@ img {
 }
 
 .instance-title {
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   padding: 0.5rem;
 }
 
@@ -122,6 +113,38 @@ img {
 
 .instance-children {
   padding: 0.5rem 0 0.5rem 1rem;
+}
+
+.expandable-input {
+  display: none;
+}
+
+.expandable-input ~ .expandable-label .expandable-visualizer {
+  font-family: monospace;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  align-content: center;
+  width: 1rem;
+  height: 1rem;
+  border: 1px solid #666;
+  margin: 0 0.5rem;
+}
+
+.expandable-visualizer::before {
+  content: "";
+}
+
+.expandable-input:checked ~ .expandable-label .expandable-visualizer::before {
+  content: "-";
+}
+
+.expandable-input:not(:checked) ~ .expandable-label .expandable-visualizer::before {
+  content: "+";
+}
+
+.expandable-input:not(:checked) ~ .expandable-items {
+  display: none;
 }
 
 .imfs-entry {

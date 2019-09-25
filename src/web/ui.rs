@@ -202,9 +202,23 @@ impl<F: ImfsFetcher> UiService<F> {
             HtmlContent::None
         } else {
             html! {
-                <div class="instance-children">
-                    { Fragment::new(children_list) }
-                </div>
+                <section class="instance-children-section">
+                    <input
+                        class="expandable-input"
+                        id={ format!("instance-{}-children", id) }
+                        type="checkbox"
+                        checked="checked" />
+
+                    <h1 class="expandable-label">
+                        <label for={ format!("instance-{}-children", id) }>
+                            <span class="expandable-visualizer"></span>
+                            "Children"
+                        </label>
+                    </h1>
+                    <div class="instance-children expandable-items">
+                        { Fragment::new(children_list) }
+                    </div>
+                </section>
             }
         };
 
@@ -226,9 +240,22 @@ impl<F: ImfsFetcher> UiService<F> {
             HtmlContent::None
         } else {
             html! {
-                <div class="instance-properties">
-                    { Fragment::new(property_list) }
-                </div>
+                <section class="instance-properties-section">
+                    <input
+                        class="expandable-input"
+                        id={ format!("instance-{}-properties", id) }
+                        type="checkbox" />
+
+                    <h1 class="expandable-label">
+                        <label for={ format!("instance-{}-properties", id) }>
+                            <span class="expandable-visualizer"></span>
+                            "Properties"
+                        </label>
+                    </h1>
+                    <div class="instance-properties expandable-items">
+                        { Fragment::new(property_list) }
+                    </div>
+                </section>
             }
         };
 
@@ -244,10 +271,10 @@ impl<F: ImfsFetcher> UiService<F> {
 
         html! {
             <div class="instance">
-                <div class="instance-title">
+                <label class="instance-title" for={ format!("instance-{}", id) }>
                     { instance.name().to_owned() }
                     { class_name_specifier }
-                </div>
+                </label>
                 { property_container }
                 { children_container }
             </div>
