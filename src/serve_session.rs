@@ -63,7 +63,7 @@ pub struct ServeSession<F> {
     /// filesystem, applying them, updating the Roblox instance tree, and
     /// routing messages through the session's message queue to any connected
     /// clients.
-    change_processor: ChangeProcessor,
+    _change_processor: ChangeProcessor,
 }
 
 /// Methods that need thread-safety bounds on ImfsFetcher are limited to this
@@ -93,7 +93,7 @@ impl<F: ImfsFetcher + Send + 'static> ServeSession<F> {
             tree,
             message_queue,
             imfs,
-            change_processor,
+            _change_processor: change_processor,
         }
     }
 }

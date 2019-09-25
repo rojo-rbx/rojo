@@ -16,7 +16,7 @@ use crate::{
 
 pub struct ChangeProcessor {
     shutdown_sender: Sender<()>,
-    thread_handle: JoinHandle<()>,
+    _thread_handle: JoinHandle<()>,
 }
 
 impl ChangeProcessor {
@@ -34,7 +34,7 @@ impl ChangeProcessor {
 
         Self {
             shutdown_sender,
-            thread_handle,
+            _thread_handle: thread_handle,
         }
     }
 
