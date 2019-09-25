@@ -94,14 +94,14 @@ mod test {
     use maplit::hashmap;
     use rbx_dom_weak::RbxInstanceProperties;
 
-    use crate::imfs::NoopFetcher;
+    use crate::imfs::{ImfsDebug, NoopFetcher};
 
     #[test]
     fn instance_from_imfs() {
         let mut imfs = Imfs::new(NoopFetcher);
         let file = ImfsSnapshot::file("Hello there!");
 
-        imfs.load_from_snapshot("/foo.txt", file);
+        imfs.debug_load_snapshot("/foo.txt", file);
 
         let entry = imfs.get("/foo.txt").unwrap();
         let instance_snapshot = SnapshotTxt::from_imfs(&mut imfs, &entry).unwrap().unwrap();

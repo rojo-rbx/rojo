@@ -64,7 +64,7 @@ mod test {
 
     use std::collections::HashMap;
 
-    use crate::imfs::{ImfsSnapshot, NoopFetcher};
+    use crate::imfs::{ImfsDebug, ImfsSnapshot, NoopFetcher};
 
     #[test]
     fn model_from_imfs() {
@@ -81,7 +81,7 @@ mod test {
         "#,
         );
 
-        imfs.load_from_snapshot("/foo.rbxmx", file);
+        imfs.debug_load_snapshot("/foo.rbxmx", file);
 
         let entry = imfs.get("/foo.rbxmx").unwrap();
         let instance_snapshot = SnapshotRbxmx::from_imfs(&mut imfs, &entry)

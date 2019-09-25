@@ -136,7 +136,7 @@ mod test {
     use maplit::hashmap;
     use rbx_dom_weak::RbxValue;
 
-    use crate::imfs::{ImfsSnapshot, NoopFetcher};
+    use crate::imfs::{ImfsDebug, ImfsSnapshot, NoopFetcher};
 
     #[test]
     fn model_from_imfs() {
@@ -159,7 +159,7 @@ mod test {
         "#,
         );
 
-        imfs.load_from_snapshot("/foo.model.json", file);
+        imfs.debug_load_snapshot("/foo.model.json", file);
 
         let entry = imfs.get("/foo.model.json").unwrap();
         let instance_snapshot = SnapshotJsonModel::from_imfs(&mut imfs, &entry)

@@ -141,14 +141,14 @@ mod test {
 
     use maplit::hashmap;
 
-    use crate::imfs::{ImfsSnapshot, NoopFetcher};
+    use crate::imfs::{ImfsDebug, ImfsSnapshot, NoopFetcher};
 
     #[test]
     fn module_from_imfs() {
         let mut imfs = Imfs::new(NoopFetcher);
         let file = ImfsSnapshot::file("Hello there!");
 
-        imfs.load_from_snapshot("/foo.lua", file);
+        imfs.debug_load_snapshot("/foo.lua", file);
 
         let entry = imfs.get("/foo.lua").unwrap();
         let instance_snapshot = SnapshotLua::from_imfs(&mut imfs, &entry).unwrap().unwrap();
@@ -170,7 +170,7 @@ mod test {
         let mut imfs = Imfs::new(NoopFetcher);
         let file = ImfsSnapshot::file("Hello there!");
 
-        imfs.load_from_snapshot("/foo.server.lua", file);
+        imfs.debug_load_snapshot("/foo.server.lua", file);
 
         let entry = imfs.get("/foo.server.lua").unwrap();
         let instance_snapshot = SnapshotLua::from_imfs(&mut imfs, &entry).unwrap().unwrap();
@@ -192,7 +192,7 @@ mod test {
         let mut imfs = Imfs::new(NoopFetcher);
         let file = ImfsSnapshot::file("Hello there!");
 
-        imfs.load_from_snapshot("/foo.client.lua", file);
+        imfs.debug_load_snapshot("/foo.client.lua", file);
 
         let entry = imfs.get("/foo.client.lua").unwrap();
         let instance_snapshot = SnapshotLua::from_imfs(&mut imfs, &entry).unwrap().unwrap();

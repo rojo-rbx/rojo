@@ -136,7 +136,7 @@ fn convert_localization_csv(contents: &[u8]) -> String {
 mod test {
     use super::*;
 
-    use crate::imfs::{ImfsSnapshot, NoopFetcher};
+    use crate::imfs::{ImfsDebug, ImfsSnapshot, NoopFetcher};
 
     #[test]
     fn csv_from_imfs() {
@@ -147,7 +147,7 @@ Key,Source,Context,Example,es
 Ack,Ack!,,An exclamation of despair,¡Ay!"#,
         );
 
-        imfs.load_from_snapshot("/foo.csv", file);
+        imfs.debug_load_snapshot("/foo.csv", file);
 
         let entry = imfs.get("/foo.csv").unwrap();
         let instance_snapshot = SnapshotCsv::from_imfs(&mut imfs, &entry).unwrap().unwrap();

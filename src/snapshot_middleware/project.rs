@@ -143,7 +143,7 @@ mod test {
     use maplit::hashmap;
     use rbx_dom_weak::RbxValue;
 
-    use crate::imfs::{ImfsSnapshot, NoopFetcher};
+    use crate::imfs::{ImfsDebug, ImfsSnapshot, NoopFetcher};
 
     #[test]
     fn project_from_folder() {
@@ -161,7 +161,7 @@ mod test {
             "#),
         });
 
-        imfs.load_from_snapshot("/foo", dir);
+        imfs.debug_load_snapshot("/foo", dir);
 
         let entry = imfs.get("/foo").unwrap();
         let instance_snapshot = SnapshotProject::from_imfs(&mut imfs, &entry)
@@ -190,7 +190,7 @@ mod test {
             "#),
         });
 
-        imfs.load_from_snapshot("/foo", dir);
+        imfs.debug_load_snapshot("/foo", dir);
 
         let entry = imfs.get("/foo/hello.project.json").unwrap();
         let instance_snapshot = SnapshotProject::from_imfs(&mut imfs, &entry)
@@ -225,7 +225,7 @@ mod test {
             "#),
         });
 
-        imfs.load_from_snapshot("/foo", dir);
+        imfs.debug_load_snapshot("/foo", dir);
 
         let entry = imfs.get("/foo").unwrap();
         let instance_snapshot = SnapshotProject::from_imfs(&mut imfs, &entry)
@@ -264,7 +264,7 @@ mod test {
             "#),
         });
 
-        imfs.load_from_snapshot("/foo", dir);
+        imfs.debug_load_snapshot("/foo", dir);
 
         let entry = imfs.get("/foo").unwrap();
         let instance_snapshot = SnapshotProject::from_imfs(&mut imfs, &entry)
@@ -304,7 +304,7 @@ mod test {
             "#),
         });
 
-        imfs.load_from_snapshot("/foo", dir);
+        imfs.debug_load_snapshot("/foo", dir);
 
         let entry = imfs.get("/foo").unwrap();
         let instance_snapshot = SnapshotProject::from_imfs(&mut imfs, &entry)
@@ -340,7 +340,7 @@ mod test {
             "other.txt" => ImfsSnapshot::file("Hello, world!"),
         });
 
-        imfs.load_from_snapshot("/foo", dir);
+        imfs.debug_load_snapshot("/foo", dir);
 
         let entry = imfs.get("/foo").unwrap();
         let instance_snapshot = SnapshotProject::from_imfs(&mut imfs, &entry)
@@ -384,7 +384,7 @@ mod test {
             "#),
         });
 
-        imfs.load_from_snapshot("/foo", dir);
+        imfs.debug_load_snapshot("/foo", dir);
 
         let entry = imfs.get("/foo").unwrap();
         let instance_snapshot = SnapshotProject::from_imfs(&mut imfs, &entry)
@@ -425,7 +425,7 @@ mod test {
             "#),
         });
 
-        imfs.load_from_snapshot("/foo", dir);
+        imfs.debug_load_snapshot("/foo", dir);
 
         let entry = imfs.get("/foo").unwrap();
         let instance_snapshot = SnapshotProject::from_imfs(&mut imfs, &entry)
@@ -477,7 +477,7 @@ mod test {
             "#),
         });
 
-        imfs.load_from_snapshot("/foo", dir);
+        imfs.debug_load_snapshot("/foo", dir);
 
         let entry = imfs.get("/foo").unwrap();
         let instance_snapshot = SnapshotProject::from_imfs(&mut imfs, &entry)

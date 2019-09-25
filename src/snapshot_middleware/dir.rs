@@ -78,14 +78,14 @@ mod test {
 
     use maplit::hashmap;
 
-    use crate::imfs::NoopFetcher;
+    use crate::imfs::{ImfsDebug, NoopFetcher};
 
     #[test]
     fn empty_folder() {
         let mut imfs = Imfs::new(NoopFetcher);
         let dir = ImfsSnapshot::dir::<String>(HashMap::new());
 
-        imfs.load_from_snapshot("/foo", dir);
+        imfs.debug_load_snapshot("/foo", dir);
 
         let entry = imfs.get("/foo").unwrap();
         let instance_snapshot = SnapshotDir::from_imfs(&mut imfs, &entry).unwrap().unwrap();
@@ -103,7 +103,7 @@ mod test {
             "Child" => ImfsSnapshot::dir::<String>(HashMap::new()),
         });
 
-        imfs.load_from_snapshot("/foo", dir);
+        imfs.debug_load_snapshot("/foo", dir);
 
         let entry = imfs.get("/foo").unwrap();
         let instance_snapshot = SnapshotDir::from_imfs(&mut imfs, &entry).unwrap().unwrap();

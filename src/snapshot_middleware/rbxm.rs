@@ -66,14 +66,14 @@ impl SnapshotMiddleware for SnapshotRbxm {
 mod test {
     use super::*;
 
-    use crate::imfs::{ImfsSnapshot, NoopFetcher};
+    use crate::imfs::{ImfsDebug, ImfsSnapshot, NoopFetcher};
 
     #[test]
     fn model_from_imfs() {
         let mut imfs = Imfs::new(NoopFetcher);
         let file = ImfsSnapshot::file(include_bytes!("../../assets/test-folder.rbxm").to_vec());
 
-        imfs.load_from_snapshot("/foo.rbxm", file);
+        imfs.debug_load_snapshot("/foo.rbxm", file);
 
         let entry = imfs.get("/foo.rbxm").unwrap();
         let instance_snapshot = SnapshotRbxm::from_imfs(&mut imfs, &entry).unwrap().unwrap();

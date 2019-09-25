@@ -40,18 +40,6 @@ impl<F: ImfsFetcher> Imfs<F> {
         self.fetcher.receiver()
     }
 
-    pub fn commit_pending_changes(&mut self) -> FsResult<Vec<ImfsEvent>> {
-        let receiver = self.fetcher.receiver();
-        let mut changes = Vec::new();
-
-        while let Ok(event) = receiver.try_recv() {
-            self.commit_change(&event)?;
-            changes.push(event);
-        }
-
-        Ok(changes)
-    }
-
     pub fn commit_change(&mut self, event: &ImfsEvent) -> FsResult<()> {
         use notify::DebouncedEvent::*;
 
@@ -82,35 +70,6 @@ impl<F: ImfsFetcher> Imfs<F> {
         }
 
         Ok(())
-    }
-
-    pub fn load_from_snapshot(&mut self, path: impl AsRef<Path>, snapshot: ImfsSnapshot) {
-        let path = path.as_ref();
-
-        match snapshot {
-            ImfsSnapshot::File(file) => {
-                self.inner.insert(
-                    path.to_path_buf(),
-                    ImfsItem::File(ImfsFile {
-                        path: path.to_path_buf(),
-                        contents: Some(file.contents),
-                    }),
-                );
-            }
-            ImfsSnapshot::Directory(directory) => {
-                self.inner.insert(
-                    path.to_path_buf(),
-                    ImfsItem::Directory(ImfsDirectory {
-                        path: path.to_path_buf(),
-                        children_enumerated: true,
-                    }),
-                );
-
-                for (child_name, child) in directory.children.into_iter() {
-                    self.load_from_snapshot(path.join(child_name), child);
-                }
-            }
-        }
     }
 
     fn raise_file_changed(&mut self, path: impl AsRef<Path>) -> FsResult<()> {
@@ -306,6 +265,7 @@ impl<F: ImfsFetcher> Imfs<F> {
 /// Contains extra methods that should only be used for debugging. They're
 /// broken out into a separate trait to make it more explicit to depend on them.
 pub trait ImfsDebug {
+    fn debug_load_snapshot<P: AsRef<Path>>(&mut self, path: P, snapshot: ImfsSnapshot);
     fn debug_is_file(&self, path: &Path) -> bool;
     fn debug_contents<'a>(&'a self, path: &Path) -> Option<&'a [u8]>;
     fn debug_children<'a>(&'a self, path: &Path) -> Option<(bool, Vec<&'a Path>)>;
@@ -313,6 +273,35 @@ pub trait ImfsDebug {
 }
 
 impl<F> ImfsDebug for Imfs<F> {
+    fn debug_load_snapshot<P: AsRef<Path>>(&mut self, path: P, snapshot: ImfsSnapshot) {
+        let path = path.as_ref();
+
+        match snapshot {
+            ImfsSnapshot::File(file) => {
+                self.inner.insert(
+                    path.to_path_buf(),
+                    ImfsItem::File(ImfsFile {
+                        path: path.to_path_buf(),
+                        contents: Some(file.contents),
+                    }),
+                );
+            }
+            ImfsSnapshot::Directory(directory) => {
+                self.inner.insert(
+                    path.to_path_buf(),
+                    ImfsItem::Directory(ImfsDirectory {
+                        path: path.to_path_buf(),
+                        children_enumerated: true,
+                    }),
+                );
+
+                for (child_name, child) in directory.children.into_iter() {
+                    self.debug_load_snapshot(path.join(child_name), child);
+                }
+            }
+        }
+    }
+
     fn debug_is_file(&self, path: &Path) -> bool {
         match self.inner.get(path) {
             Some(ImfsItem::File(_)) => true,
@@ -432,7 +421,7 @@ mod test {
         let mut imfs = Imfs::new(NoopFetcher);
         let file = ImfsSnapshot::file("hello, world!");
 
-        imfs.load_from_snapshot("/hello.txt", file);
+        imfs.debug_load_snapshot("/hello.txt", file);
 
         let entry = imfs.get_contents("/hello.txt").unwrap();
         assert_eq!(entry, b"hello, world!");
@@ -446,7 +435,7 @@ mod test {
             "b.lua" => ImfsSnapshot::file("contents of b.lua"),
         });
 
-        imfs.load_from_snapshot("/dir", dir);
+        imfs.debug_load_snapshot("/dir", dir);
 
         let children = imfs.get_children("/dir").unwrap();
 
@@ -560,7 +549,7 @@ mod test {
         let mut imfs = Imfs::new(NoopFetcher);
 
         let file = ImfsSnapshot::file("hello, world!");
-        imfs.load_from_snapshot("/hello.txt", file);
+        imfs.debug_load_snapshot("/hello.txt", file);
 
         let hello = imfs.get("/hello.txt").expect("couldn't get hello.txt");
 
