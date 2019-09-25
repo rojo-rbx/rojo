@@ -6,6 +6,7 @@
   color: inherit;
   font: inherit;
   box-sizing: inherit;
+  line-height: inherit;
 }
 
 html {
@@ -14,6 +15,7 @@ html {
   font-size: 18px;
   text-decoration: none;
   height: 100%;
+  line-height: 1.4;
 }
 
 body {
@@ -27,6 +29,11 @@ img {
   max-width:100%;
   max-height:100%;
   height: auto;
+}
+
+.path-list > li {
+  margin-left: 1rem;
+  font-family: monospace;
 }
 
 .root {
@@ -73,6 +80,14 @@ img {
   font-weight: bold;
 }
 
+.main-section:not(:last-of-type) {
+  margin-bottom: 1rem;
+}
+
+.section-title {
+  font-size: 1.8rem;
+}
+
 .button-list {
   flex: 0 0;
   display: flex;
@@ -114,16 +129,17 @@ img {
 
 .imfs-entry-name {
   position: relative;
+  font-family: monospace;
 }
 
 .imfs-entry-children .imfs-entry-name::before {
   content: "";
-  width: 0.8rem;
+  width: 0.6em;
   height: 1px;
   background-color: #999;
   position: absolute;
   top: 50%;
-  left: -1rem;
+  left: -0.8em;
 }
 
 .imfs-entry-note {
@@ -131,6 +147,7 @@ img {
 }
 
 .imfs-entry-children {
-  padding-left: 1rem;
+  padding-left: 0.8em;
+  margin-left: 0.2em;
   border-left: 1px solid #999;
 }

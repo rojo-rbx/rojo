@@ -104,10 +104,28 @@ impl<F: ImfsFetcher> UiService<F> {
             .map(|path| Self::render_imfs_path(&imfs, path, true))
             .collect();
 
+        let watched_list: Vec<_> = imfs
+            .debug_watched_paths()
+            .into_iter()
+            .map(|path| {
+                html! {
+                    <li>{ format!("{}", path.display()) }</li>
+                }
+            })
+            .collect();
+
         let page = self.normal_page(html! {
-            <div>
-                { Fragment::new(orphans) }
-            </div>
+            <>
+                <section class="main-section">
+                    <h1 class="section-title">"Known FS Items"</h1>
+                    <div>{ Fragment::new(orphans) }</div>
+                </section>
+
+                <section class="main-section">
+                    <h1 class="section-title">"Watched Paths"</h1>
+                    <ul class="path-list">{ Fragment::new(watched_list) }</ul>
+                </section>
+            </>
         });
 
         Response::builder()
@@ -140,7 +158,7 @@ impl<F: ImfsFetcher> UiService<F> {
             let note = if is_exhaustive {
                 HtmlContent::None
             } else {
-                html!({ " (non-exhaustive)" })
+                html!({ " (not enumerated)" })
             };
 
             (note, children)
