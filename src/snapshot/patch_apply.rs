@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use rbx_dom_weak::{RbxId, RbxInstanceProperties, RbxValue};
 
 use super::{
-    patch::{AppliedPatchSet, PatchSet, PatchUpdate},
+    patch::{AppliedPatchSet, AppliedPatchUpdate, PatchSet, PatchUpdate},
     InstancePropertiesWithMeta, InstanceSnapshot, RojoTree,
 };
 
@@ -17,7 +17,7 @@ pub fn apply_patch_set(tree: &mut RojoTree, patch_set: PatchSet) -> AppliedPatch
     }
 
     for add_patch in patch_set.added_instances {
-        apply_add_child(&mut context, tree, add_patch.parent_id, &add_patch.instance);
+        apply_add_child(&mut context, tree, add_patch.parent_id, add_patch.instance);
     }
 
     for update_patch in patch_set.updated_instances {
@@ -82,7 +82,7 @@ fn apply_add_child(
     context: &mut PatchApplyContext,
     tree: &mut RojoTree,
     parent_id: RbxId,
-    snapshot: &InstanceSnapshot,
+    snapshot: InstanceSnapshot,
 ) {
     let properties = InstancePropertiesWithMeta {
         properties: RbxInstanceProperties {
@@ -93,10 +93,12 @@ fn apply_add_child(
             // instances in this patch.
             properties: HashMap::new(),
         },
-        metadata: Default::default(), // TODO
+        metadata: snapshot.metadata.clone(),
     };
 
     let id = tree.insert_instance(properties, parent_id);
+
+    context.applied_patch_set.added.push(id);
 
     context
         .properties_to_apply
@@ -106,14 +108,17 @@ fn apply_add_child(
         context.snapshot_id_to_instance_id.insert(snapshot_id, id);
     }
 
-    for child_snapshot in &snapshot.children {
+    for child_snapshot in snapshot.children {
         apply_add_child(context, tree, id, child_snapshot);
     }
 }
 
 fn apply_update_child(context: &mut PatchApplyContext, tree: &mut RojoTree, patch: PatchUpdate) {
+    let mut applied_patch = AppliedPatchUpdate::new(patch.id);
+
     if let Some(metadata) = patch.changed_metadata {
-        tree.update_metadata(patch.id, metadata);
+        tree.update_metadata(patch.id, metadata.clone());
+        applied_patch.changed_metadata = Some(metadata);
     }
 
     let mut instance = tree
@@ -121,11 +126,13 @@ fn apply_update_child(context: &mut PatchApplyContext, tree: &mut RojoTree, patc
         .expect("Instance referred to by patch does not exist");
 
     if let Some(name) = patch.changed_name {
-        *instance.name_mut() = name;
+        *instance.name_mut() = name.clone();
+        applied_patch.changed_name = Some(name);
     }
 
     if let Some(class_name) = patch.changed_class_name {
-        *instance.class_name_mut() = class_name;
+        *instance.class_name_mut() = class_name.clone();
+        applied_patch.changed_class_name = Some(class_name);
     }
 
     for (key, property_entry) in patch.changed_properties {
@@ -141,20 +148,24 @@ fn apply_update_child(context: &mut PatchApplyContext, tree: &mut RojoTree, patc
                     .unwrap_or(id);
 
                 instance.properties_mut().insert(
-                    key,
+                    key.clone(),
                     RbxValue::Ref {
                         value: Some(new_id),
                     },
                 );
             }
-            Some(value) => {
-                instance.properties_mut().insert(key, value);
+            Some(ref value) => {
+                instance.properties_mut().insert(key.clone(), value.clone());
             }
             None => {
                 instance.properties_mut().remove(&key);
             }
         }
+
+        applied_patch.changed_properties.insert(key, property_entry);
     }
+
+    context.applied_patch_set.updated.push(applied_patch)
 }
 
 #[cfg(test)]
