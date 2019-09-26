@@ -13,7 +13,7 @@ pub fn apply_patch_set(tree: &mut RojoTree, patch_set: PatchSet) -> AppliedPatch
     let mut context = PatchApplyContext::default();
 
     for removed_id in patch_set.removed_instances {
-        tree.remove_instance(removed_id);
+        apply_remove_instance(&mut context, tree, removed_id);
     }
 
     for add_patch in patch_set.added_instances {
@@ -21,22 +21,21 @@ pub fn apply_patch_set(tree: &mut RojoTree, patch_set: PatchSet) -> AppliedPatch
     }
 
     for update_patch in patch_set.updated_instances {
-        apply_update_child(&context, tree, update_patch);
+        apply_update_child(&mut context, tree, update_patch);
     }
 
-    apply_deferred_properties(context, tree);
-
-    // TODO: Actually calculate patch set
-    AppliedPatchSet::new()
+    finalize_patch_application(context, tree)
 }
 
 #[derive(Default)]
 struct PatchApplyContext {
     snapshot_id_to_instance_id: HashMap<RbxId, RbxId>,
     properties_to_apply: HashMap<RbxId, HashMap<String, RbxValue>>,
+    applied_patch_set: AppliedPatchSet,
 }
 
-/// Apply properties that were deferred in order to get more information.
+/// Finalize this patch application, consuming the context, applying any
+/// deferred property updates, and returning the finally applied patch set.
 ///
 /// Ref properties from snapshots refer to eachother via snapshot ID. Some of
 /// these properties are transformed when the patch is computed, notably the
@@ -45,7 +44,7 @@ struct PatchApplyContext {
 /// The remaining Ref properties need to be handled during patch application,
 /// where we build up a map of snapshot IDs to instance IDs as they're created,
 /// then apply properties all at once at the end.
-fn apply_deferred_properties(context: PatchApplyContext, tree: &mut RojoTree) {
+fn finalize_patch_application(context: PatchApplyContext, tree: &mut RojoTree) -> AppliedPatchSet {
     for (id, mut properties) in context.properties_to_apply {
         let mut instance = tree
             .get_instance_mut(id)
@@ -62,6 +61,20 @@ fn apply_deferred_properties(context: PatchApplyContext, tree: &mut RojoTree) {
         }
 
         *instance.properties_mut() = properties;
+    }
+
+    context.applied_patch_set
+}
+
+fn apply_remove_instance(context: &mut PatchApplyContext, tree: &mut RojoTree, removed_id: RbxId) {
+    match tree.remove_instance(removed_id) {
+        Some(_) => context.applied_patch_set.removed.push(removed_id),
+        None => {
+            log::warn!(
+                "Patch application error: Tried to remove instance {} but it did not exist.",
+                removed_id
+            );
+        }
     }
 }
 
@@ -98,7 +111,7 @@ fn apply_add_child(
     }
 }
 
-fn apply_update_child(context: &PatchApplyContext, tree: &mut RojoTree, patch: PatchUpdate) {
+fn apply_update_child(context: &mut PatchApplyContext, tree: &mut RojoTree, patch: PatchUpdate) {
     if let Some(metadata) = patch.changed_metadata {
         tree.update_metadata(patch.id, metadata);
     }

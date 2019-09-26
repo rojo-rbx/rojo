@@ -60,7 +60,7 @@ pub struct PatchUpdate {
 ///
 // TODO: Introduce machinery to detect conflicts, like keeping previous +
 // current values in all fields.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct AppliedPatchSet {
     pub removed: Vec<RbxId>,
     pub added: Vec<AppliedPatchAdd>,
