@@ -1,11 +1,12 @@
 //! Defines the HTTP-based UI. These endpoints generally return HTML and SVG.
 
-use std::{path::Path, sync::Arc, time::Duration};
+use std::{borrow::Cow, path::Path, sync::Arc, time::Duration};
 
 use futures::{future, Future};
 use hyper::{header, service::Service, Body, Method, Request, Response, StatusCode};
+use maplit::hashmap;
 use rbx_dom_weak::{RbxId, RbxValue};
-use ritz::{html, Fragment, HtmlContent};
+use ritz::{html, Fragment, HtmlContent, HtmlSelfClosingTag};
 
 use crate::{
     imfs::{Imfs, ImfsDebug, ImfsFetcher},
@@ -201,25 +202,17 @@ impl<F: ImfsFetcher> UiService<F> {
         let children_container = if children_list.is_empty() {
             HtmlContent::None
         } else {
-            html! {
-                <section class="instance-children-section">
-                    <input
-                        class="expandable-input"
-                        id={ format!("instance-{}-children", id) }
-                        type="checkbox"
-                        checked="checked" />
+            let section = ExpandableSection {
+                title: "Children",
+                class_name: "instance-children",
+                id,
+                expanded: true,
+                content: html! {
+                    { Fragment::new(children_list) }
+                },
+            };
 
-                    <h1 class="expandable-label">
-                        <label for={ format!("instance-{}-children", id) }>
-                            <span class="expandable-visualizer"></span>
-                            "Children"
-                        </label>
-                    </h1>
-                    <div class="instance-children expandable-items">
-                        { Fragment::new(children_list) }
-                    </div>
-                </section>
-            }
+            section.render()
         };
 
         let mut properties: Vec<_> = instance.properties().iter().collect();
@@ -239,24 +232,17 @@ impl<F: ImfsFetcher> UiService<F> {
         let property_container = if property_list.is_empty() {
             HtmlContent::None
         } else {
-            html! {
-                <section class="instance-properties-section">
-                    <input
-                        class="expandable-input"
-                        id={ format!("instance-{}-properties", id) }
-                        type="checkbox" />
+            let section = ExpandableSection {
+                title: "Properties",
+                class_name: "instance-properties",
+                id,
+                expanded: false,
+                content: html! {
+                    { Fragment::new(property_list) }
+                },
+            };
 
-                    <h1 class="expandable-label">
-                        <label for={ format!("instance-{}-properties", id) }>
-                            <span class="expandable-visualizer"></span>
-                            "Properties"
-                        </label>
-                    </h1>
-                    <div class="instance-properties expandable-items">
-                        { Fragment::new(property_list) }
-                    </div>
-                </section>
-            }
+            section.render()
         };
 
         let class_name_specifier = if instance.name() == instance.class_name() {
@@ -352,6 +338,53 @@ impl<F: ImfsFetcher> UiService<F> {
                     { body }
                 </body>
             </html>
+        }
+    }
+}
+
+struct ExpandableSection<'a> {
+    title: &'a str,
+    class_name: &'a str,
+    id: RbxId,
+    expanded: bool,
+    content: HtmlContent<'a>,
+}
+
+impl<'a> ExpandableSection<'a> {
+    fn render(self) -> HtmlContent<'a> {
+        let input_id = format!("{}-{}", self.class_name, self.id);
+
+        // We need to specify this input manually because Ritz doesn't have
+        // support for conditional attributes like `checked`.
+        let mut input = HtmlSelfClosingTag {
+            name: Cow::Borrowed("input"),
+            attributes: hashmap! {
+                Cow::Borrowed("class") => Cow::Borrowed("expandable-input"),
+                Cow::Borrowed("id") => Cow::Owned(input_id.clone()),
+                Cow::Borrowed("type") => Cow::Borrowed("checkbox"),
+            },
+        };
+
+        if self.expanded {
+            input
+                .attributes
+                .insert(Cow::Borrowed("checked"), Cow::Borrowed("checked"));
+        }
+
+        html! {
+            <section class="instance-properties-section">
+                { input }
+
+                <h1 class="expandable-label">
+                    <label for={ input_id.clone() }>
+                        <span class="expandable-visualizer"></span>
+                        { self.title }
+                    </label>
+                </h1>
+                <div class={ format!("expandable-items {}", self.class_name) }>
+                    { self.content }
+                </div>
+            </section>
         }
     }
 }

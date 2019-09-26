@@ -43,7 +43,6 @@ img {
   flex: 0 0;
   display: flex;
   flex-wrap: wrap;
-  /*justify-content: space-around;*/
   align-items: center;
   border-bottom: 1px solid #666;
 }
@@ -117,6 +116,10 @@ img {
 
 .expandable-input {
   display: none;
+}
+
+.expandable-label > label {
+  cursor: pointer;
 }
 
 .expandable-input ~ .expandable-label .expandable-visualizer {
