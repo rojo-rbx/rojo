@@ -10,8 +10,11 @@
     <a href="https://travis-ci.org/rojo-rbx/rojo">
         <img src="https://api.travis-ci.org/rojo-rbx/rojo.svg?branch=master" alt="Travis-CI Build Status" />
     </a>
+    <a href="https://github.com/rojo-rbx/rojo/actions">
+        <img src="https://github.com/rojo-rbx/rojo/workflows/CI/badge.svg" alt="Actions status" />
+    </a>
     <a href="https://crates.io/crates/rojo">
-        <img src="https://img.shields.io/crates/v/rojo.svg?label=version" alt="Latest server version" />
+        <img src="https://img.shields.io/crates/v/rojo.svg?label=latest%20release" alt="Latest server version" />
     </a>
     <a href="https://rojo.space/docs/0.5.x">
         <img src="https://img.shields.io/badge/docs-0.5.x-brightgreen.svg" alt="Rojo 0.5.x Documentation" />
