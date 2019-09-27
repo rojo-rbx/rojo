@@ -7,9 +7,6 @@
 <div>&nbsp;</div>
 
 <div align="center">
-    <a href="https://travis-ci.org/rojo-rbx/rojo">
-        <img src="https://api.travis-ci.org/rojo-rbx/rojo.svg?branch=master" alt="Travis-CI Build Status" />
-    </a>
     <a href="https://github.com/rojo-rbx/rojo/actions">
         <img src="https://github.com/rojo-rbx/rojo/workflows/CI/badge.svg" alt="Actions status" />
     </a>
