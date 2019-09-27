@@ -51,6 +51,9 @@ impl ChangeProcessor {
             imfs.change_receiver()
         };
 
+        // Crossbeam's select macro generates code that Clippy doesn't like, and
+        // Clippy blames us for it.
+        #[allow(clippy::drop_copy)]
         loop {
             select! {
                 recv(imfs_receiver) -> event => {

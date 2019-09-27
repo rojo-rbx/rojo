@@ -63,7 +63,7 @@ pub struct PatchUpdate {
 #[derive(Debug, Clone, Default)]
 pub struct AppliedPatchSet {
     pub removed: Vec<RbxId>,
-    pub added: Vec<AppliedPatchAdd>,
+    pub added: Vec<RbxId>,
     pub updated: Vec<AppliedPatchUpdate>,
 }
 
@@ -78,11 +78,6 @@ impl AppliedPatchSet {
 }
 
 #[derive(Debug, Clone)]
-pub struct AppliedPatchAdd {
-    pub instance_id: RbxId,
-}
-
-#[derive(Debug, Clone)]
 pub struct AppliedPatchUpdate {
     pub id: RbxId,
 
@@ -91,4 +86,16 @@ pub struct AppliedPatchUpdate {
     pub changed_class_name: Option<String>,
     pub changed_properties: HashMap<String, Option<RbxValue>>,
     pub changed_metadata: Option<InstanceMetadata>,
+}
+
+impl AppliedPatchUpdate {
+    pub fn new(id: RbxId) -> Self {
+        Self {
+            id,
+            changed_name: None,
+            changed_class_name: None,
+            changed_properties: HashMap::new(),
+            changed_metadata: None,
+        }
+    }
 }

@@ -13,6 +13,8 @@
 //!    usually contain data that hasn't actually changed, and how coarsely
 //!    the snapshots happen is defined outside this part of the code.
 //!
+//!    See `src/snapshot_middleware` for implementation.
+//!
 //! 2. Input snapshots are turned into `PatchSet` objects by Rojo's diffing
 //!    algorithm via `compute_patch_set`. This operation doesn't mutate the
 //!    instance tree, so work at this point can be thrown away.
@@ -22,11 +24,15 @@
 //!    changes after the fact, since Rojo needs to assign IDs to created
 //!    instances, which happens during patch application, not generation!
 //!
+//!    See `src/snapshot/patch_compute.rs` for implementation.
+//!
 //! 3. Patch sets are applied to the tree with `apply_patch_set`, which
 //!    mutates the relevant instances. `apply_patch_set` returns a new
 //!    object, `AppliedPatchSet`. Applied patch sets describe the transform
 //!    that was applied, and are suitable for cases where another tree needs
 //!    to be synchronized with Rojo's, like the Rojo Studio plugin.
+//!
+//!    See `src/snapshot/patch_apply.rs` for implementation.
 //!
 //! The aim with this approach is to reduce the number of bugs that arise from
 //! attempting to manually update instances in response to filesystem updates.
@@ -55,3 +61,6 @@ pub use patch::*;
 pub use patch_apply::apply_patch_set;
 pub use patch_compute::compute_patch_set;
 pub use tree::*;
+
+#[cfg(test)]
+mod tests;
