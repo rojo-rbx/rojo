@@ -16,9 +16,24 @@ pub(crate) const SERVER_VERSION: &str = env!("CARGO_PKG_VERSION");
 /// Current protocol version, which is required to match.
 pub const PROTOCOL_VERSION: u64 = 3;
 
-// TODO
+/// Message returned by Rojo API when a change has occurred.
 #[derive(Debug, Serialize, Deserialize)]
-pub struct SubscribeMessage;
+#[serde(rename_all = "camelCase")]
+pub struct SubscribeMessage<'a> {
+    pub removed_instances: Vec<RbxId>,
+    pub added_instances: HashMap<RbxId, Instance<'a>>,
+    pub updated_instances: Vec<InstanceUpdate>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct InstanceUpdate {
+    pub id: RbxId,
+    pub changed_name: Option<String>,
+    pub changed_class_name: Option<String>,
+    pub changed_properties: HashMap<String, RbxValue>,
+    pub changed_metadata: Option<InstanceMetadata>,
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -73,10 +88,10 @@ pub struct ReadResponse<'a> {
 /// Response body from /api/subscribe/{cursor}
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct SubscribeResponse {
+pub struct SubscribeResponse<'a> {
     pub session_id: SessionId,
     pub message_cursor: u32,
-    pub messages: Vec<SubscribeMessage>,
+    pub messages: Vec<SubscribeMessage<'a>>,
 }
 
 /// General response type returned from all Rojo routes

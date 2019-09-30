@@ -94,7 +94,17 @@ impl<F: ImfsFetcher> ApiService<F> {
                 // TODO: Transform applied patch sets into subscribe responses
                 let api_messages = messages
                     .into_iter()
-                    .map(|_message| SubscribeMessage)
+                    .map(|message| {
+                        let removed_instances = message.removed;
+                        let added_instances = HashMap::new(); // TODO
+                        let updated_instances = Vec::new(); // TODO
+
+                        SubscribeMessage {
+                            removed_instances,
+                            added_instances,
+                            updated_instances,
+                        }
+                    })
                     .collect();
 
                 json_ok(SubscribeResponse {
