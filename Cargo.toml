@@ -21,11 +21,13 @@ dev-live-assets = []
 [workspace]
 members = [
     "rojo-test",
+    "rojo-insta-ext",
 ]
 
 default-members = [
     ".",
     "rojo-test",
+    "rojo-insta-ext",
 ]
 
 [lib]
@@ -65,6 +67,7 @@ uuid = { version = "0.7", features = ["v4", "serde"] }
 winreg = "0.6.2"
 
 [dev-dependencies]
+rojo-insta-ext = { path = "rojo-insta-ext" }
 lazy_static = "1.2"
 paste = "0.1"
 pretty_assertions = "0.6.1"

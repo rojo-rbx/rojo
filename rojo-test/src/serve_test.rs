@@ -11,6 +11,7 @@ use rbx_dom_weak::RbxId;
 use tempfile::{tempdir, TempDir};
 
 use librojo::web_interface::{ReadResponse, ServerInfoResponse};
+use rojo_insta_ext::RedactionMap;
 
 use crate::util::{
     copy_recursive, get_rojo_path, get_serve_tests_path, get_working_dir_path, KillOnDrop,
@@ -18,28 +19,26 @@ use crate::util::{
 
 #[test]
 fn empty() {
-    run_serve_test(|session, mut dm| {
+    run_serve_test(|session, mut redactions| {
         let info = session.get_api_rojo().unwrap();
 
         let root_id = info.root_instance_id;
 
-        let mut info = serde_yaml::to_value(info).unwrap();
-        dm.redact(&mut info);
+        let info = redactions.redacted_yaml(info);
 
         assert_yaml_snapshot!(info);
 
         let read_result = session.get_api_read(root_id).unwrap();
 
-        dm.intern_iter(read_result.instances.keys().copied());
+        redactions.intern_iter(read_result.instances.keys().copied());
 
-        let mut read_result = serde_yaml::to_value(read_result).unwrap();
-        dm.redact(&mut read_result);
+        let read_result = redactions.redacted_yaml(read_result);
 
         assert_yaml_snapshot!(read_result);
     });
 }
 
-fn run_serve_test(callback: impl FnOnce(TestServeSession, DeterMap)) {
+fn run_serve_test(callback: impl FnOnce(TestServeSession, RedactionMap)) {
     let _ = env_logger::try_init();
 
     let mut settings = insta::Settings::new();
@@ -47,77 +46,15 @@ fn run_serve_test(callback: impl FnOnce(TestServeSession, DeterMap)) {
     let snapshot_path = Path::new(env!("CARGO_MANIFEST_DIR")).join("serve-test-snapshots");
     settings.set_snapshot_path(snapshot_path);
 
-    let mut dm = DeterMap::new();
+    let mut redactions = RedactionMap::new();
 
     let mut session = TestServeSession::new("empty");
     let info = session.wait_to_come_online();
 
-    dm.intern(info.session_id);
-    dm.intern(info.root_instance_id);
+    redactions.intern(info.session_id);
+    redactions.intern(info.root_instance_id);
 
-    settings.bind(move || callback(session, dm));
-}
-
-struct DeterMap {
-    ids: HashMap<String, usize>,
-    last_id: usize,
-}
-
-impl DeterMap {
-    fn new() -> DeterMap {
-        DeterMap {
-            ids: HashMap::new(),
-            last_id: 0,
-        }
-    }
-
-    fn intern(&mut self, id: impl ToString) {
-        let last_id = &mut self.last_id;
-
-        self.ids.entry(id.to_string()).or_insert_with(|| {
-            *last_id += 1;
-            *last_id
-        });
-    }
-
-    fn intern_iter<S: ToString>(&mut self, ids: impl Iterator<Item = S>) {
-        for id in ids {
-            self.intern(id.to_string());
-        }
-    }
-
-    fn redact(&self, yaml_value: &mut serde_yaml::Value) {
-        use serde_yaml::{Mapping, Value};
-
-        match yaml_value {
-            Value::String(value) => {
-                if let Some(redacted) = self.ids.get(value) {
-                    *yaml_value = Value::String(format!("id-{}", *redacted));
-                }
-            }
-            Value::Sequence(sequence) => {
-                for value in sequence {
-                    self.redact(value);
-                }
-            }
-            Value::Mapping(mapping) => {
-                // We can't mutate the keys of a map in-place, so we take
-                // ownership of the map and rebuild it.
-
-                let owned_map = std::mem::replace(mapping, Mapping::new());
-                let mut new_map = Mapping::with_capacity(owned_map.len());
-
-                for (mut key, mut value) in owned_map {
-                    self.redact(&mut key);
-                    self.redact(&mut value);
-                    new_map.insert(key, value);
-                }
-
-                *mapping = new_map;
-            }
-            _ => {}
-        }
-    }
+    settings.bind(move || callback(session, redactions));
 }
 
 fn get_port_number() -> usize {
