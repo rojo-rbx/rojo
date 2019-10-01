@@ -1,4 +1,7 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 
 use rbx_dom_weak::{Descendants, RbxId, RbxInstance, RbxInstanceProperties, RbxTree, RbxValue};
 
@@ -133,6 +136,10 @@ impl RojoTree {
             inner: self.inner.descendants(id),
             tree: self,
         }
+    }
+
+    pub fn get_ids_at_path(&self, path: &Path) -> &[RbxId] {
+        self.path_to_ids.get(path)
     }
 
     fn get_metadata(&self, id: RbxId) -> Option<&InstanceMetadata> {
