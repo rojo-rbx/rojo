@@ -111,9 +111,6 @@ impl ChangeProcessor {
                                     applied_patches.push(applied_patch_set);
                                 }
                             }
-                            ImfsEvent::Removed(path) => {
-                                log::warn!("TODO: Handle file remove events");
-                            }
                         }
 
                         applied_patches
