@@ -13,7 +13,10 @@ use crossbeam_channel::{unbounded, Receiver};
 use jod_thread::JoinHandle;
 use notify::{RecommendedWatcher, RecursiveMode, Watcher};
 
-use super::fetcher::{FileType, ImfsEvent, ImfsFetcher};
+use super::{
+    event::ImfsEvent,
+    fetcher::{FileType, ImfsFetcher},
+};
 
 /// Workaround to disable the file watcher for processes that don't need it,
 /// since notify appears hang on to mpsc Sender objects too long, causing Rojo

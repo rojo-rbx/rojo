@@ -9,7 +9,8 @@ use crate::path_map::PathMap;
 
 use super::{
     error::{FsError, FsResult},
-    fetcher::{FileType, ImfsEvent, ImfsFetcher},
+    event::ImfsEvent,
+    fetcher::{FileType, ImfsFetcher},
     snapshot::ImfsSnapshot,
 };
 
@@ -425,7 +426,7 @@ mod test {
     use crossbeam_channel::Receiver;
     use maplit::hashmap;
 
-    use super::super::{error::FsErrorKind, fetcher::ImfsEvent, noop_fetcher::NoopFetcher};
+    use super::super::{error::FsErrorKind, event::ImfsEvent, noop_fetcher::NoopFetcher};
 
     #[test]
     fn from_snapshot_file() {

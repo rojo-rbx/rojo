@@ -11,7 +11,10 @@ use std::{
 
 use crossbeam_channel::Receiver;
 
-use super::fetcher::{FileType, ImfsEvent, ImfsFetcher};
+use super::{
+    event::ImfsEvent,
+    fetcher::{FileType, ImfsFetcher},
+};
 
 pub struct NoopFetcher;
 

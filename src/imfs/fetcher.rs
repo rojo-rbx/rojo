@@ -5,14 +5,13 @@ use std::{
 
 use crossbeam_channel::Receiver;
 
+use super::event::ImfsEvent;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FileType {
     File,
     Directory,
 }
-
-// TODO: Use our own event type instead of notify's.
-pub type ImfsEvent = notify::DebouncedEvent;
 
 /// The generic interface that `Imfs` uses to lazily read files from the disk.
 /// In tests, it's stubbed out to do different versions of absolutely nothing
