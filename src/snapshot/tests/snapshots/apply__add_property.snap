@@ -1,0 +1,16 @@
+---
+source: src/snapshot/tests/apply.rs
+expression: tree_value
+---
+id: id-1
+name: ROOT
+class_name: ROOT
+properties:
+  Foo:
+    Type: String
+    Value: Value of Foo
+metadata:
+  ignore_unknown_instances: false
+  source_path: ~
+  project_node: ~
+children: []

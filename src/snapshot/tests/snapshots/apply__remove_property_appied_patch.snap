@@ -1,0 +1,13 @@
+---
+source: src/snapshot/tests/apply.rs
+expression: applied_patch_value
+---
+removed: []
+added: []
+updated:
+  - id: id-1
+    changed_name: ~
+    changed_class_name: ~
+    changed_properties:
+      Foo: ~
+    changed_metadata: ~

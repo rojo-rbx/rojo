@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use insta::assert_yaml_snapshot;
+use maplit::hashmap;
 use rbx_dom_weak::{RbxId, RbxInstanceProperties, RbxValue};
 use serde::Serialize;
 
@@ -38,6 +39,84 @@ fn set_name_and_class_name() {
     assert_yaml_snapshot!(applied_patch_value);
 }
 
+#[test]
+fn add_property() {
+    let mut redactions = RedactionMap::new();
+
+    let mut tree = empty_tree();
+    redactions.intern(tree.get_root_id());
+
+    let patch_set = PatchSet {
+        updated_instances: vec![PatchUpdate {
+            id: tree.get_root_id(),
+            changed_name: None,
+            changed_class_name: None,
+            changed_properties: hashmap! {
+                "Foo".to_owned() => Some(RbxValue::String {
+                    value: "Value of Foo".to_owned(),
+                }),
+            },
+            changed_metadata: None,
+        }],
+        ..Default::default()
+    };
+
+    let applied_patch_set = apply_patch_set(&mut tree, patch_set);
+
+    let tree_view = view_tree(&tree);
+    let tree_value = redactions.redacted_yaml(tree_view);
+    assert_yaml_snapshot!(tree_value);
+
+    let applied_patch_value = redactions.redacted_yaml(applied_patch_set);
+    assert_yaml_snapshot!(applied_patch_value);
+}
+
+#[test]
+fn remove_property() {
+    let mut redactions = RedactionMap::new();
+
+    let mut tree = empty_tree();
+    redactions.intern(tree.get_root_id());
+
+    {
+        let root_id = tree.get_root_id();
+        let mut root_instance = tree.get_instance_mut(root_id).unwrap();
+
+        root_instance.properties_mut().insert(
+            "Foo".to_owned(),
+            RbxValue::String {
+                value: "Should be removed".to_owned(),
+            },
+        );
+    }
+
+    let tree_view = view_tree(&tree);
+    let tree_value = redactions.redacted_yaml(tree_view);
+    assert_yaml_snapshot!("remove_property_initial", tree_value);
+
+    let patch_set = PatchSet {
+        updated_instances: vec![PatchUpdate {
+            id: tree.get_root_id(),
+            changed_name: None,
+            changed_class_name: None,
+            changed_properties: hashmap! {
+                "Foo".to_owned() => None,
+            },
+            changed_metadata: None,
+        }],
+        ..Default::default()
+    };
+
+    let applied_patch_set = apply_patch_set(&mut tree, patch_set);
+
+    let tree_view = view_tree(&tree);
+    let tree_value = redactions.redacted_yaml(tree_view);
+    assert_yaml_snapshot!("remove_property_after_patch", tree_value);
+
+    let applied_patch_value = redactions.redacted_yaml(applied_patch_set);
+    assert_yaml_snapshot!("remove_property_appied_patch", applied_patch_value);
+}
+
 fn empty_tree() -> RojoTree {
     RojoTree::new(InstancePropertiesWithMeta {
         properties: RbxInstanceProperties {
@@ -49,6 +128,7 @@ fn empty_tree() -> RojoTree {
     })
 }
 
+/// Copy of data from RojoTree in the right shape to have useful snapshots.
 #[derive(Debug, Serialize)]
 struct InstanceView {
     id: RbxId,
