@@ -142,7 +142,7 @@ impl RojoTree {
         self.path_to_ids.get(path)
     }
 
-    fn get_metadata(&self, id: RbxId) -> Option<&InstanceMetadata> {
+    pub fn get_metadata(&self, id: RbxId) -> Option<&InstanceMetadata> {
         self.metadata_map.get(&id)
     }
 
