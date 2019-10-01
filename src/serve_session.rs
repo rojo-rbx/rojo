@@ -99,6 +99,10 @@ impl<F: ImfsFetcher + Send + 'static> ServeSession<F> {
 }
 
 impl<F: ImfsFetcher> ServeSession<F> {
+    pub fn tree_handle(&self) -> Arc<Mutex<RojoTree>> {
+        Arc::clone(&self.tree)
+    }
+
     pub fn tree(&self) -> MutexGuard<'_, RojoTree> {
         self.tree.lock().unwrap()
     }

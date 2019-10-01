@@ -13,8 +13,9 @@ use crate::{
     serve_session::ServeSession,
     web::{
         interface::{
-            ErrorResponse, Instance, ReadResponse, ServerInfoResponse, SubscribeMessage,
-            SubscribeResponse, PROTOCOL_VERSION, SERVER_VERSION,
+            ErrorResponse, Instance, InstanceMetadata as WebInstanceMetadata, InstanceUpdate,
+            ReadResponse, ServerInfoResponse, SubscribeMessage, SubscribeResponse,
+            PROTOCOL_VERSION, SERVER_VERSION,
         },
         util::{json, json_ok},
     },
@@ -89,15 +90,46 @@ impl<F: ImfsFetcher> ApiService<F> {
             message_queue.subscribe(input_cursor, sender);
         }
 
+        let tree_handle = self.serve_session.tree_handle();
+
         Box::new(receiver.then(move |result| match result {
             Ok((message_cursor, messages)) => {
-                // TODO: Transform applied patch sets into subscribe responses
+                let tree = tree_handle.lock().unwrap();
+
                 let api_messages = messages
                     .into_iter()
                     .map(|message| {
                         let removed_instances = message.removed;
-                        let added_instances = HashMap::new(); // TODO
-                        let updated_instances = Vec::new(); // TODO
+
+                        let mut added_instances = HashMap::new();
+                        for id in message.added {
+                            let instance = tree.get_instance(id).unwrap();
+                            added_instances.insert(id, Instance::from_rojo_instance(instance));
+
+                            for instance in tree.descendants(id) {
+                                added_instances
+                                    .insert(instance.id(), Instance::from_rojo_instance(instance));
+                            }
+                        }
+
+                        let updated_instances = message
+                            .updated
+                            .into_iter()
+                            .map(|update| {
+                                let changed_metadata = update
+                                    .changed_metadata
+                                    .as_ref()
+                                    .map(WebInstanceMetadata::from_rojo_metadata);
+
+                                InstanceUpdate {
+                                    id: update.id,
+                                    changed_name: update.changed_name,
+                                    changed_class_name: update.changed_class_name,
+                                    changed_properties: update.changed_properties,
+                                    changed_metadata,
+                                }
+                            })
+                            .collect();
 
                         SubscribeMessage {
                             removed_instances,

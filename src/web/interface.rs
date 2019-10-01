@@ -8,7 +8,10 @@ use std::{
 use rbx_dom_weak::{RbxId, RbxValue};
 use serde::{Deserialize, Serialize};
 
-use crate::{session_id::SessionId, snapshot::InstanceWithMeta};
+use crate::{
+    session_id::SessionId,
+    snapshot::{InstanceMetadata as RojoInstanceMetadata, InstanceWithMeta},
+};
 
 /// Server version to report over the API, not exposed outside this crate.
 pub(crate) const SERVER_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -31,7 +34,9 @@ pub struct InstanceUpdate {
     pub id: RbxId,
     pub changed_name: Option<String>,
     pub changed_class_name: Option<String>,
-    pub changed_properties: HashMap<String, RbxValue>,
+    // TODO: Transform from HashMap<String, Option<_>> to something else, since
+    // null will get lost when decoding from JSON in some languages.
+    pub changed_properties: HashMap<String, Option<RbxValue>>,
     pub changed_metadata: Option<InstanceMetadata>,
 }
 
@@ -39,6 +44,14 @@ pub struct InstanceUpdate {
 #[serde(rename_all = "camelCase")]
 pub struct InstanceMetadata {
     pub ignore_unknown_instances: bool,
+}
+
+impl InstanceMetadata {
+    pub(crate) fn from_rojo_metadata(meta: &RojoInstanceMetadata) -> Self {
+        Self {
+            ignore_unknown_instances: meta.ignore_unknown_instances,
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -52,15 +65,13 @@ pub struct Instance<'a> {
 }
 
 impl<'a> Instance<'a> {
-    pub fn from_rojo_instance<'b>(source: InstanceWithMeta<'b>) -> Instance<'b> {
+    pub(crate) fn from_rojo_instance<'b>(source: InstanceWithMeta<'b>) -> Instance<'b> {
         Instance {
             name: Cow::Borrowed(source.name()),
             class_name: Cow::Borrowed(source.class_name()),
             properties: Cow::Borrowed(source.properties()),
             children: Cow::Borrowed(source.children()),
-            metadata: Some(InstanceMetadata {
-                ignore_unknown_instances: source.metadata().ignore_unknown_instances,
-            }),
+            metadata: Some(InstanceMetadata::from_rojo_metadata(source.metadata())),
         }
     }
 }
