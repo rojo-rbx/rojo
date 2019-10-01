@@ -1,0 +1,12 @@
+---
+source: src/snapshot/tests/apply.rs
+expression: applied_patch_value
+---
+removed: []
+added: []
+updated:
+  - id: id-1
+    changed_name: "Hello, world!"
+    changed_class_name: Folder
+    changed_properties: {}
+    changed_metadata: ~
