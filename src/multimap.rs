@@ -19,7 +19,11 @@ impl<K: Hash + Eq, V: Eq> MultiMap<K, V> {
         }
     }
 
-    pub fn get<Q: Borrow<K>>(&mut self, k: Q) -> &[V] {
+    pub fn get<Q: ?Sized>(&self, k: &Q) -> &[V]
+    where
+        K: Borrow<Q>,
+        Q: Hash + Eq,
+    {
         self.inner.get(k.borrow()).map(Vec::as_slice).unwrap_or(&[])
     }
 
