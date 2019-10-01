@@ -9,7 +9,7 @@ added_instances:
       snapshot_id: ~
       metadata:
         ignore_unknown_instances: false
-        source_path: ~
+        contributing_paths: []
         project_node: ~
       name: New
       class_name: Folder

@@ -8,6 +8,6 @@ class_name: ROOT
 properties: {}
 metadata:
   ignore_unknown_instances: false
-  source_path: ~
+  contributing_paths: []
   project_node: ~
 children: []

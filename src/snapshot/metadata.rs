@@ -13,15 +13,27 @@ pub struct InstanceMetadata {
     /// manage.
     pub ignore_unknown_instances: bool,
 
-    // TODO: Make source_path a SmallVec<PathBuf> in order to support meta
-    // files? Maybe we should use another member of the snapshot middleware to
-    // support damage-painting
-    /// The path that this file came from, if it's the top-level instance from a
-    /// model that came directly from disk.
+    /// The paths that, when changed, could cause the function that generated
+    /// this snapshot to generate a different snapshot. Paths should be included
+    /// even if they don't exist, since the presence of a file can change the
+    /// outcome of a snapshot function.
+    ///
+    /// For example, a file named foo.lua might have these contributing paths:
+    /// - foo.lua
+    /// - foo.meta.json (even if this file doesn't exist!)
+    ///
+    /// A directory named bar/ included in the project file might have these:
+    /// - bar/
+    /// - bar/init.meta.json
+    /// - bar/init.lua
+    /// - bar/init.server.lua
+    /// - bar/init.client.lua
+    /// - default.project.json
     ///
     /// This path is used to make sure that file changes update all instances
-    /// that may need updates..
-    pub source_path: Option<PathBuf>,
+    /// that may need updates.
+    // TODO: Change this to be a SmallVec for performance in common cases?
+    pub contributing_paths: Vec<PathBuf>,
 
     /// If this instance was defined in a project file, this is the name from
     /// the project file and the node under it.
@@ -36,7 +48,7 @@ impl Default for InstanceMetadata {
     fn default() -> Self {
         InstanceMetadata {
             ignore_unknown_instances: false,
-            source_path: None,
+            contributing_paths: Vec::new(),
             project_node: None,
         }
     }
