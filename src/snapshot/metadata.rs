@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
-use crate::project::ProjectNode;
+use crate::{path_serializer, project::ProjectNode};
 
 /// Rojo-specific metadata that can be associated with an instance or a snapshot
 /// of an instance.
@@ -33,6 +33,7 @@ pub struct InstanceMetadata {
     /// This path is used to make sure that file changes update all instances
     /// that may need updates.
     // TODO: Change this to be a SmallVec for performance in common cases?
+    #[serde(serialize_with = "path_serializer::serialize_vec_absolute")]
     pub contributing_paths: Vec<PathBuf>,
 
     /// If this instance was defined in a project file, this is the name from

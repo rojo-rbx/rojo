@@ -1,0 +1,24 @@
+---
+source: src/snapshot_middleware/dir.rs
+expression: instance_snapshot
+---
+snapshot_id: ~
+metadata:
+  ignore_unknown_instances: false
+  contributing_paths:
+    - /foo
+  project_node: ~
+name: foo
+class_name: Folder
+properties: {}
+children:
+  - snapshot_id: ~
+    metadata:
+      ignore_unknown_instances: false
+      contributing_paths:
+        - /foo/Child
+      project_node: ~
+    name: Child
+    class_name: Folder
+    properties: {}
+    children: []

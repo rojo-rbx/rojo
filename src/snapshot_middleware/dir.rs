@@ -4,7 +4,7 @@ use rbx_dom_weak::{RbxId, RbxTree};
 
 use crate::{
     imfs::{DirectorySnapshot, Imfs, ImfsEntry, ImfsFetcher, ImfsSnapshot},
-    snapshot::InstanceSnapshot,
+    snapshot::{InstanceMetadata, InstanceSnapshot},
 };
 
 use super::{
@@ -43,7 +43,10 @@ impl SnapshotMiddleware for SnapshotDir {
 
         Ok(Some(InstanceSnapshot {
             snapshot_id: None,
-            metadata: Default::default(), // TODO
+            metadata: InstanceMetadata {
+                contributing_paths: vec![entry.path().to_path_buf()],
+                ..Default::default()
+            },
             name: Cow::Owned(instance_name),
             class_name: Cow::Borrowed("Folder"),
             properties: HashMap::new(),
@@ -76,6 +79,7 @@ impl SnapshotMiddleware for SnapshotDir {
 mod test {
     use super::*;
 
+    use insta::assert_yaml_snapshot;
     use maplit::hashmap;
 
     use crate::imfs::{ImfsDebug, NoopFetcher};
@@ -90,10 +94,7 @@ mod test {
         let entry = imfs.get("/foo").unwrap();
         let instance_snapshot = SnapshotDir::from_imfs(&mut imfs, &entry).unwrap().unwrap();
 
-        assert_eq!(instance_snapshot.name, "foo");
-        assert_eq!(instance_snapshot.class_name, "Folder");
-        assert_eq!(instance_snapshot.properties, HashMap::new());
-        assert_eq!(instance_snapshot.children, Vec::new());
+        assert_yaml_snapshot!(instance_snapshot);
     }
 
     #[test]
@@ -108,15 +109,6 @@ mod test {
         let entry = imfs.get("/foo").unwrap();
         let instance_snapshot = SnapshotDir::from_imfs(&mut imfs, &entry).unwrap().unwrap();
 
-        assert_eq!(instance_snapshot.name, "foo");
-        assert_eq!(instance_snapshot.class_name, "Folder");
-        assert_eq!(instance_snapshot.properties, HashMap::new());
-        assert_eq!(instance_snapshot.children.len(), 1);
-
-        let child = &instance_snapshot.children[0];
-        assert_eq!(child.name, "Child");
-        assert_eq!(child.class_name, "Folder");
-        assert_eq!(child.properties, HashMap::new());
-        assert_eq!(child.children, Vec::new());
+        assert_yaml_snapshot!(instance_snapshot);
     }
 }
