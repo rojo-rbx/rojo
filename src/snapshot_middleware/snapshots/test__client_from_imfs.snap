@@ -1,0 +1,17 @@
+---
+source: src/snapshot_middleware/lua.rs
+expression: instance_snapshot
+---
+snapshot_id: ~
+metadata:
+  ignore_unknown_instances: false
+  contributing_paths:
+    - /foo.client.lua
+  project_node: ~
+name: foo
+class_name: LocalScript
+properties:
+  Source:
+    Type: String
+    Value: Hello there!
+children: []

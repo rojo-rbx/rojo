@@ -5,7 +5,7 @@ use rbx_dom_weak::{RbxId, RbxTree, RbxValue};
 
 use crate::{
     imfs::{FsResultExt, Imfs, ImfsEntry, ImfsFetcher},
-    snapshot::InstanceSnapshot,
+    snapshot::{InstanceMetadata, InstanceSnapshot},
 };
 
 use super::{
@@ -90,7 +90,10 @@ fn snapshot_lua_file<F: ImfsFetcher>(
 
     Ok(Some(InstanceSnapshot {
         snapshot_id: None,
-        metadata: Default::default(), // TODO
+        metadata: InstanceMetadata {
+            contributing_paths: vec![entry.path().to_path_buf()],
+            ..Default::default()
+        },
         name: Cow::Owned(instance_name.to_owned()),
         class_name: Cow::Borrowed(class_name),
         properties,
@@ -139,7 +142,7 @@ fn match_trailing<'a>(input: &'a str, trailer: &str) -> Option<&'a str> {
 mod test {
     use super::*;
 
-    use maplit::hashmap;
+    use insta::assert_yaml_snapshot;
 
     use crate::imfs::{ImfsDebug, ImfsSnapshot, NoopFetcher};
 
@@ -153,16 +156,7 @@ mod test {
         let entry = imfs.get("/foo.lua").unwrap();
         let instance_snapshot = SnapshotLua::from_imfs(&mut imfs, &entry).unwrap().unwrap();
 
-        assert_eq!(instance_snapshot.name, "foo");
-        assert_eq!(instance_snapshot.class_name, "ModuleScript");
-        assert_eq!(
-            instance_snapshot.properties,
-            hashmap! {
-                "Source".to_owned() => RbxValue::String {
-                    value: "Hello there!".to_owned(),
-                },
-            }
-        );
+        assert_yaml_snapshot!(instance_snapshot);
     }
 
     #[test]
@@ -175,16 +169,7 @@ mod test {
         let entry = imfs.get("/foo.server.lua").unwrap();
         let instance_snapshot = SnapshotLua::from_imfs(&mut imfs, &entry).unwrap().unwrap();
 
-        assert_eq!(instance_snapshot.name, "foo");
-        assert_eq!(instance_snapshot.class_name, "Script");
-        assert_eq!(
-            instance_snapshot.properties,
-            hashmap! {
-                "Source".to_owned() => RbxValue::String {
-                    value: "Hello there!".to_owned(),
-                },
-            }
-        );
+        assert_yaml_snapshot!(instance_snapshot);
     }
 
     #[test]
@@ -197,15 +182,6 @@ mod test {
         let entry = imfs.get("/foo.client.lua").unwrap();
         let instance_snapshot = SnapshotLua::from_imfs(&mut imfs, &entry).unwrap().unwrap();
 
-        assert_eq!(instance_snapshot.name, "foo");
-        assert_eq!(instance_snapshot.class_name, "LocalScript");
-        assert_eq!(
-            instance_snapshot.properties,
-            hashmap! {
-                "Source".to_owned() => RbxValue::String {
-                    value: "Hello there!".to_owned(),
-                },
-            }
-        );
+        assert_yaml_snapshot!(instance_snapshot);
     }
 }
