@@ -1,0 +1,18 @@
+---
+source: src/snapshot/tests/compute.rs
+expression: patch_value
+---
+removed_instances: []
+added_instances:
+  - parent_id: id-1
+    instance:
+      snapshot_id: ~
+      metadata:
+        ignore_unknown_instances: false
+        source_path: ~
+        project_node: ~
+      name: New
+      class_name: Folder
+      properties: {}
+      children: []
+updated_instances: []
