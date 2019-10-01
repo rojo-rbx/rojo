@@ -64,22 +64,23 @@ impl ChangeProcessor {
 
                     log::trace!("Imfs event: {:?}", event);
 
-                    let patch_set = {
+                    let applied_patches = {
                         let mut imfs = imfs.lock().unwrap();
                         imfs.commit_change(&event).expect("Error applying IMFS change");
 
-                        let tree = tree.lock().unwrap();
+                        let mut tree = tree.lock().unwrap();
+                        let mut applied_patches = Vec::new();
 
                         match event {
                             ImfsEvent::Created(path) | ImfsEvent::Modified(path) | ImfsEvent::Removed(path) => {
-                                let affected_ids = tree.get_ids_at_path(&path);
+                                let affected_ids = tree.get_ids_at_path(&path).to_vec();
 
                                 if affected_ids.len() == 0 {
                                     log::info!("No instances were affected by this change.");
                                     continue;
                                 }
 
-                                for &id in affected_ids {
+                                for id in affected_ids {
                                     let metadata = tree.get_metadata(id)
                                         .expect("metadata missing for instance present in tree");
 
@@ -100,7 +101,14 @@ impl ChangeProcessor {
                                         .expect("snapshot failed")
                                         .expect("snapshot did not return an instance");
 
-                                    println!("Snapshot: {:?}", snapshot);
+                                    log::trace!("Computed snapshot: {:#?}", snapshot);
+
+                                    let patch_set = compute_patch_set(&snapshot, &tree, id);
+                                    let applied_patch_set = apply_patch_set(&mut tree, patch_set);
+
+                                    log::trace!("Applied patch: {:#?}", applied_patch_set);
+
+                                    applied_patches.push(applied_patch_set);
                                 }
                             }
                             ImfsEvent::Removed(path) => {
@@ -108,13 +116,11 @@ impl ChangeProcessor {
                             }
                         }
 
-                        // TODO: Apply changes to tree based on IMFS and
-                        // calculate applied patch set from it.
-                        AppliedPatchSet::new()
+                        applied_patches
                     };
 
                     {
-                        message_queue.push_messages(&[patch_set]);
+                        message_queue.push_messages(&applied_patches);
                     }
                 },
                 recv(shutdown_receiver) -> _ => {
