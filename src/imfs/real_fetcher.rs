@@ -58,7 +58,9 @@ impl RealFetcher {
         let handle = jod_thread::Builder::new()
             .name("notify message converter".to_owned())
             .spawn(move || {
+                log::trace!("RealFetcher converter thread started");
                 converter_thread(notify_receiver, sender);
+                log::trace!("RealFetcher converter thread stopped");
             })
             .expect("Could not start message converter thread");
 
@@ -83,8 +85,10 @@ impl RealFetcher {
 }
 
 fn converter_thread(notify_receiver: mpsc::Receiver<DebouncedEvent>, sender: Sender<ImfsEvent>) {
-    notify_receiver.into_iter().for_each(|event| {
-        use DebouncedEvent::*;
+    use DebouncedEvent::*;
+
+    for event in notify_receiver {
+        log::trace!("Notify event: {:?}", event);
 
         match event {
             Create(path) => sender.send(ImfsEvent::Created(path)).unwrap(),
@@ -114,7 +118,7 @@ fn converter_thread(notify_receiver: mpsc::Receiver<DebouncedEvent>, sender: Sen
             }
             NoticeWrite(_) | NoticeRemove(_) | Chmod(_) => {}
         }
-    });
+    }
 }
 
 impl ImfsFetcher for RealFetcher {
