@@ -18,12 +18,15 @@ pub struct InstanceMetadata {
     /// even if they don't exist, since the presence of a file can change the
     /// outcome of a snapshot function.
     ///
+    /// The first path in this  list is considered the "instigating path", and
+    /// will be the snapshot target if any of the contributing paths change.
+    ///
     /// For example, a file named foo.lua might have these contributing paths:
-    /// - foo.lua
+    /// - foo.lua (instigating path)
     /// - foo.meta.json (even if this file doesn't exist!)
     ///
     /// A directory named bar/ included in the project file might have these:
-    /// - bar/
+    /// - bar/ (instigating path)
     /// - bar/init.meta.json
     /// - bar/init.lua
     /// - bar/init.server.lua
