@@ -1,10 +1,12 @@
 use std::path::PathBuf;
 
+use serde::{Deserialize, Serialize};
+
 use crate::project::ProjectNode;
 
 /// Rojo-specific metadata that can be associated with an instance or a snapshot
 /// of an instance.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct InstanceMetadata {
     /// Whether instances not present in the source should be ignored when
     /// live-syncing. This is useful when there are instances that Rojo does not

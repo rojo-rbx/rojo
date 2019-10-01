@@ -1,0 +1,12 @@
+---
+source: src/snapshot/tests/compute.rs
+expression: patch_value
+---
+removed_instances: []
+added_instances: []
+updated_instances:
+  - id: id-1
+    changed_name: Some Folder
+    changed_class_name: Folder
+    changed_properties: {}
+    changed_metadata: ~

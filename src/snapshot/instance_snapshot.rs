@@ -3,6 +3,7 @@
 use std::{borrow::Cow, collections::HashMap};
 
 use rbx_dom_weak::{RbxId, RbxTree, RbxValue};
+use serde::{Deserialize, Serialize};
 
 use super::InstanceMetadata;
 
@@ -13,7 +14,7 @@ use super::InstanceMetadata;
 // Possible future improvements:
 // - Use refcounted/interned strings
 // - Replace use of RbxValue with a sum of RbxValue + borrowed value
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct InstanceSnapshot<'source> {
     /// A temporary ID applied to the snapshot that's used for Ref properties.
     pub snapshot_id: Option<RbxId>,

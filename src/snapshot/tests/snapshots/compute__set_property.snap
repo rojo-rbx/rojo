@@ -1,0 +1,15 @@
+---
+source: src/snapshot/tests/compute.rs
+expression: patch_value
+---
+removed_instances: []
+added_instances: []
+updated_instances:
+  - id: id-1
+    changed_name: ~
+    changed_class_name: ~
+    changed_properties:
+      PropertyName:
+        Type: String
+        Value: "Hello, world!"
+    changed_metadata: ~
