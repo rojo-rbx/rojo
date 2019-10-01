@@ -9,9 +9,9 @@ use std::{
     time::Duration,
 };
 
-use crossbeam_channel::{unbounded, Receiver};
+use crossbeam_channel::{unbounded, Receiver, Sender};
 use jod_thread::JoinHandle;
-use notify::{RecommendedWatcher, RecursiveMode, Watcher};
+use notify::{DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher};
 
 use super::{
     event::ImfsEvent,
@@ -58,9 +58,7 @@ impl RealFetcher {
         let handle = jod_thread::Builder::new()
             .name("notify message converter".to_owned())
             .spawn(move || {
-                notify_receiver
-                    .into_iter()
-                    .for_each(|event| sender.send(event).unwrap());
+                converter_thread(notify_receiver, sender);
             })
             .expect("Could not start message converter thread");
 
@@ -82,6 +80,41 @@ impl RealFetcher {
             watched_paths: HashSet::new(),
         }
     }
+}
+
+fn converter_thread(notify_receiver: mpsc::Receiver<DebouncedEvent>, sender: Sender<ImfsEvent>) {
+    notify_receiver.into_iter().for_each(|event| {
+        use DebouncedEvent::*;
+
+        match event {
+            Create(path) => sender.send(ImfsEvent::Created(path)).unwrap(),
+            Write(path) => sender.send(ImfsEvent::Modified(path)).unwrap(),
+            Remove(path) => sender.send(ImfsEvent::Removed(path)).unwrap(),
+            Rename(from_path, to_path) => {
+                sender.send(ImfsEvent::Created(from_path)).unwrap();
+                sender.send(ImfsEvent::Removed(to_path)).unwrap();
+            }
+            Rescan => {
+                log::warn!("Unhandled filesystem rescan event.");
+                log::warn!(
+                    "Please file an issue! Rojo may need to handle this case, but does not yet."
+                );
+            }
+            Error(err, maybe_path) => {
+                log::warn!("Unhandled filesystem error: {}", err);
+
+                match maybe_path {
+                    Some(path) => log::warn!("On path {}", path.display()),
+                    None => log::warn!("No path was associated with this error."),
+                }
+
+                log::warn!(
+                    "Rojo may need to handle this. If this happens again, please file an issue!"
+                );
+            }
+            NoticeWrite(_) | NoticeRemove(_) | Chmod(_) => {}
+        }
+    });
 }
 
 impl ImfsFetcher for RealFetcher {

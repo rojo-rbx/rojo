@@ -48,32 +48,17 @@ impl<F: ImfsFetcher> Imfs<F> {
     }
 
     pub fn commit_change(&mut self, event: &ImfsEvent) -> FsResult<()> {
-        use notify::DebouncedEvent::*;
+        use ImfsEvent::*;
 
         log::trace!("Committing Imfs change {:?}", event);
 
         match event {
-            Create(path) => {
+            Created(path) | Modified(path) => {
                 self.raise_file_changed(path)?;
             }
-            Write(path) => {
-                self.raise_file_changed(path)?;
-            }
-            Remove(path) => {
+            Removed(path) => {
                 self.raise_file_removed(path)?;
             }
-            Rename(from_path, to_path) => {
-                self.raise_file_removed(from_path)?;
-                self.raise_file_changed(to_path)?;
-            }
-            Error(err, path) => {
-                log::warn!("Filesystem error detected: {:?} on path {:?}", err, path);
-            }
-            Rescan => {
-                // FIXME: Implement rescanning
-                log::warn!("Unhandled filesystem rescan event");
-            }
-            NoticeWrite(_) | NoticeRemove(_) | Chmod(_) => {}
         }
 
         Ok(())

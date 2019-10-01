@@ -1,2 +1,8 @@
-// TODO: Use our own event type instead of notify's.
-pub type ImfsEvent = notify::DebouncedEvent;
+use std::path::PathBuf;
+
+#[derive(Debug)]
+pub enum ImfsEvent {
+    Modified(PathBuf),
+    Created(PathBuf),
+    Removed(PathBuf),
+}
