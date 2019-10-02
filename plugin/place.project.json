@@ -6,45 +6,8 @@
     "ReplicatedStorage": {
       "$className": "ReplicatedStorage",
 
-      "Rojo": {
-        "$className": "Folder",
-
-        "Plugin": {
-          "$path": "src"
-        },
-        "Roact": {
-          "$path": "modules/roact/src"
-        },
-        "Promise": {
-          "$path": "modules/promise/lib"
-        },
-        "t": {
-          "$path": "modules/t/lib"
-        },
-        "RbxDom": {
-          "$path": "modules/rbx-dom/rbx_dom_lua/src"
-        }
-      },
       "TestEZ": {
         "$path": "modules/testez/lib"
-      }
-    },
-
-    "HttpService": {
-      "$className": "HttpService",
-      "$properties": {
-        "HttpEnabled": {
-          "Type": "Bool",
-          "Value": true
-        }
-      }
-    },
-
-    "ServerScriptService": {
-      "$className": "ServerScriptService",
-
-      "TestBootstrap": {
-        "$path": "testBootstrap.server.lua"
       }
     }
   }
