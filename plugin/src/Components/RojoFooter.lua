@@ -8,8 +8,6 @@ local Version = require(Plugin.Version)
 local Assets = require(Plugin.Assets)
 local Theme = require(Plugin.Theme)
 
-local FitText = require(Plugin.Components.FitText)
-
 local e = Roact.createElement
 
 local RojoFooter = Roact.Component:extend("RojoFooter")

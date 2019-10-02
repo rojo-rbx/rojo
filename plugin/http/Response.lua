@@ -1,34 +1,34 @@
 local HttpService = game:GetService("HttpService")
 
 local stringTemplate = [[
-HttpResponse {
+Http.Response {
 	code: %d
 	body: %s
 }]]
 
-local HttpResponse = {}
-HttpResponse.__index = HttpResponse
+local Response = {}
+Response.__index = Response
 
-function HttpResponse:__tostring()
+function Response:__tostring()
 	return stringTemplate:format(self.code, self.body)
 end
 
-function HttpResponse.fromRobloxResponse(response)
+function Response.fromRobloxResponse(response)
 	local self = {
 		body = response.Body,
 		code = response.StatusCode,
 		headers = response.Headers,
 	}
 
-	return setmetatable(self, HttpResponse)
+	return setmetatable(self, Response)
 end
 
-function HttpResponse:isSuccess()
+function Response:isSuccess()
 	return self.code >= 200 and self.code < 300
 end
 
-function HttpResponse:json()
+function Response:json()
 	return HttpService:JSONDecode(self.body)
 end
 
-return HttpResponse
+return Response

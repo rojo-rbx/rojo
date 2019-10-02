@@ -5,6 +5,12 @@
     "Plugin": {
       "$path": "src"
     },
+    "Log": {
+      "$path": "log"
+    },
+    "Http": {
+      "$path": "http"
+    },
     "Roact": {
       "$path": "modules/roact/src"
     },

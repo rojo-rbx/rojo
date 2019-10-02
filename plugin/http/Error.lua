@@ -1,9 +1,7 @@
-local Logging = require(script.Parent.Logging)
+local Error = {}
+Error.__index = Error
 
-local HttpError = {}
-HttpError.__index = HttpError
-
-HttpError.Error = {
+Error.Kind = {
 	HttpNotEnabled = {
 		message = "Rojo requires HTTP access, which is not enabled.\n" ..
 			"Check your game settings, located in the 'Home' tab of Studio.",
@@ -20,13 +18,13 @@ HttpError.Error = {
 	},
 }
 
-setmetatable(HttpError.Error, {
+setmetatable(Error.Kind, {
 	__index = function(_, key)
-		error(("%q is not a valid member of HttpError.Error"):format(tostring(key)), 2)
+		error(("%q is not a valid member of Http.Error.Kind"):format(tostring(key)), 2)
 	end,
 })
 
-function HttpError.new(type, extraMessage)
+function Error.new(type, extraMessage)
 	extraMessage = extraMessage or ""
 	local message = type.message:gsub("{{message}}", extraMessage)
 
@@ -35,38 +33,34 @@ function HttpError.new(type, extraMessage)
 		message = message,
 	}
 
-	setmetatable(err, HttpError)
+	setmetatable(err, Error)
 
 	return err
 end
 
-function HttpError:__tostring()
+function Error:__tostring()
 	return self.message
 end
 
 --[[
 	This method shouldn't have to exist. Ugh.
 ]]
-function HttpError.fromErrorString(message)
+function Error.fromErrorString(message)
 	local lower = message:lower()
 
 	if lower:find("^http requests are not enabled") then
-		return HttpError.new(HttpError.Error.HttpNotEnabled)
+		return Error.new(Error.Kind.HttpNotEnabled)
 	end
 
 	if lower:find("^httperror: timedout") then
-		return HttpError.new(HttpError.Error.Timeout)
+		return Error.new(Error.Kind.Timeout)
 	end
 
 	if lower:find("^httperror: connectfail") then
-		return HttpError.new(HttpError.Error.ConnectFailed)
+		return Error.new(Error.Kind.ConnectFailed)
 	end
 
-	return HttpError.new(HttpError.Error.Unknown, message)
+	return Error.new(Error.Kind.Unknown, message)
 end
 
-function HttpError:report()
-	Logging.warn(self.message)
-end
-
-return HttpError
+return Error

@@ -2,6 +2,14 @@ if not plugin then
 	return
 end
 
+local Log = require(script.Parent.Log)
+
+local DevSettings = require(script.DevSettings)
+
+Log.setLogLevelThunk(function()
+	return DevSettings:getLogLevel()
+end)
+
 local Roact = require(script.Parent.Roact)
 
 local Config = require(script.Config)

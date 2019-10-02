@@ -161,7 +161,10 @@ function Reconciler:__reify(virtualInstancesById, id, parent)
 	end)
 
 	if not ok then
-		error(("Couldn't create an Instance of type %q, a child of %s"):format(virtualInstance.ClassName, parent:GetFullName()))
+		error(("Couldn't create an Instance of type %q, a child of %s"):format(
+			virtualInstance.ClassName,
+			parent:GetFullName()
+		))
 	end
 
 	for key, value in pairs(virtualInstance.Properties) do

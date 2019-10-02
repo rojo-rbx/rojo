@@ -20,6 +20,7 @@ stds.roblox = {
 		"CFrame",
 		"Enum",
 		"Instance",
+		"DockWidgetPluginGuiInfo",
 	}
 }
 

@@ -1,9 +1,8 @@
 local Promise = require(script.Parent.Parent.Promise)
+local Http = require(script.Parent.Parent.Http)
 
 local Config = require(script.Parent.Config)
 local Version = require(script.Parent.Version)
-local Http = require(script.Parent.Http)
-local HttpError = require(script.Parent.HttpError)
 
 local ApiContext = {}
 ApiContext.__index = ApiContext
@@ -143,7 +142,7 @@ function ApiContext:retrieveMessages()
 	local function sendRequest()
 		return Http.get(url)
 			:catch(function(err)
-				if err.type == HttpError.Error.Timeout then
+				if err.type == Http.Error.Kind.Timeout then
 					return sendRequest()
 				end
 
