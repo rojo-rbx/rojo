@@ -14,8 +14,9 @@ Code contributions are welcome for features and bugs that have been reported in 
 You'll want these tools to work on Rojo:
 
 * Latest stable Rust compiler
-* Latest stable Rojo
-* Latest stable Remodel
+* Latest stable [Rojo](https://github.com/rojo-rbx/rojo)
+* Latest stable [Remodel](https://github.com/rojo-rbx/remodel)
+* Latest stable [run-in-roblox](https://github.com/rojo-rbx/run-in-roblox)
 
 ## Documentation
 Documentation impacts way more people than the individual lines of code we write.
