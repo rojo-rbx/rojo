@@ -12,7 +12,7 @@ if setDevSettings then
 	DevSettings:createTestSettings()
 end
 
-TestEZ.TestBootstrap:run({ Rojo.Plugin, Rojo.Http, Rojo.Log })
+require(Rojo.Plugin.runTests)(TestEZ)
 
 if setDevSettings then
 	DevSettings:resetValues()

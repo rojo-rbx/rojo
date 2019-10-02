@@ -28,5 +28,5 @@ end)
 if Config.isDevBuild then
 	local TestEZ = require(script.Parent.TestEZ)
 
-	TestEZ.TestBootstrap:run({script})
+	require(script.runTests)(TestEZ)
 end
