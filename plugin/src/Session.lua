@@ -9,30 +9,30 @@ local Session = {}
 Session.__index = Session
 
 function Session.new(config)
-	local remoteUrl = ("http://%s:%s"):format(config.address, config.port)
-	local api = ApiContext.new(remoteUrl)
+	local baseUrl = ("http://%s:%s"):format(config.address, config.port)
+	local apiContext = ApiContext.new(baseUrl)
 
 	local self = {
 		onError = config.onError,
 		disconnected = false,
 		reconciler = Reconciler.new(),
-		api = api,
+		apiContext = apiContext,
 	}
 
-	api:connect()
+	apiContext:connect()
 		:andThen(function()
 			if self.disconnected then
 				return
 			end
 
-			return api:read({api.rootInstanceId})
+			return apiContext:read({apiContext.rootInstanceId})
 		end)
 		:andThen(function(response)
 			if self.disconnected then
 				return
 			end
 
-			self.reconciler:reconcile(response.instances, api.rootInstanceId, game)
+			self.reconciler:reconcile(response.instances, apiContext.rootInstanceId, game)
 			return self:__processMessages()
 		end)
 		:catch(function(message)
@@ -48,7 +48,7 @@ function Session:__processMessages()
 		return Promise.resolve()
 	end
 
-	return self.api:retrieveMessages()
+	return self.apiContext:retrieveMessages()
 		:andThen(function(messages)
 			local promise = Promise.resolve(nil)
 
@@ -84,7 +84,7 @@ function Session:__onMessage(message)
 		table.insert(requestedIds, id)
 	end
 
-	return self.api:read(requestedIds)
+	return self.apiContext:read(requestedIds)
 		:andThen(function(response)
 			return self.reconciler:applyUpdate(requestedIds, response.instances)
 		end)

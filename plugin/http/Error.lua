@@ -11,10 +11,10 @@ Error.Kind = {
 			"Make sure the server is running -- use 'rojo serve' to run it!",
 	},
 	Timeout = {
-		message = "Request timed out.",
+		message = "HTTP request timed out.",
 	},
 	Unknown = {
-		message = "Unknown error: {{message}}",
+		message = "Unknown HTTP error: {{message}}",
 	},
 }
 
@@ -45,7 +45,7 @@ end
 --[[
 	This method shouldn't have to exist. Ugh.
 ]]
-function Error.fromErrorString(message)
+function Error.fromRobloxErrorString(message)
 	local lower = message:lower()
 
 	if lower:find("^http requests are not enabled") then

@@ -13,19 +13,20 @@ local Http = {}
 Http.Error = HttpError
 Http.Response = HttpResponse
 
-function Http.get(url)
+local function performRequest(requestParams)
 	local requestId = lastRequestId + 1
 	lastRequestId = requestId
 
-	Log.trace("GET(%d) %s", requestId, url)
+	Log.trace("%s(%d) %s", requestParams.Method, requestId, requestParams.Url)
+
+	if requestParams.Body ~= nil then
+		Log.trace(requestParams.Body)
+	end
 
 	return Promise.new(function(resolve, reject)
 		coroutine.wrap(function()
 			local success, response = pcall(function()
-				return HttpService:RequestAsync({
-					Url = url,
-					Method = "GET",
-				})
+				return HttpService:RequestAsync(requestParams)
 			end)
 
 			if success then
@@ -33,37 +34,25 @@ function Http.get(url)
 				resolve(HttpResponse.fromRobloxResponse(response))
 			else
 				Log.trace("Request %d failure: %s", requestId, response)
-				reject(HttpError.fromErrorString(response))
+				reject(HttpError.fromRobloxErrorString(response))
 			end
 		end)()
 	end)
 end
 
+function Http.get(url)
+	return performRequest({
+		Url = url,
+		Method = "GET",
+	})
+end
+
 function Http.post(url, body)
-	local requestId = lastRequestId + 1
-	lastRequestId = requestId
-
-	Log.trace("POST(%d) %s\n%s", requestId, url, body)
-
-	return Promise.new(function(resolve, reject)
-		coroutine.wrap(function()
-			local success, response = pcall(function()
-				return HttpService:RequestAsync({
-					Url = url,
-					Method = "POST",
-					Body = body,
-				})
-			end)
-
-			if success then
-				Log.trace("Request %d success: status code %s", requestId, response.StatusCode)
-				resolve(HttpResponse.fromRobloxResponse(response))
-			else
-				Log.trace("Request %d failure: %s", requestId, response)
-				reject(HttpError.fromErrorString(response))
-			end
-		end)()
-	end)
+	return performRequest({
+		Url = url,
+		Method = "POST",
+		Body = body,
+	})
 end
 
 function Http.jsonEncode(object)
