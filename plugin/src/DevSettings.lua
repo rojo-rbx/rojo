@@ -6,6 +6,8 @@ local Environment = {
 	Test = "Test",
 }
 
+local DEFAULT_ENVIRONMENT = Config.isDevBuild and Environment.Dev or Environment.User
+
 local VALUES = {
 	LogLevel = {
 		type = "IntValue",
@@ -84,7 +86,7 @@ local function getValue(name)
 		return stored
 	end
 
-	return VALUES[name].values[Environment.User]
+	return VALUES[name].values[DEFAULT_ENVIRONMENT]
 end
 
 local DevSettings = {}

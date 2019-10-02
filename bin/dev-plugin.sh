@@ -2,4 +2,4 @@
 
 set -e
 
-watchexec -c -w plugin "rojo build plugin -o $LOCALAPPDATA/Roblox/Plugins/Rojo.rbxm"
+watchexec -c -w plugin "sh -c './bin/install-dev-plugin.sh'"
