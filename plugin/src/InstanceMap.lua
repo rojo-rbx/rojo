@@ -1,4 +1,4 @@
-local Logging = require(script.Parent.Logging)
+local Log = require(script.Parent.Parent.Log)
 
 --[[
 	A bidirectional map between instance IDs and Roblox instances. It lets us
@@ -30,7 +30,7 @@ function InstanceMap:removeId(id)
 		self.fromIds[id] = nil
 		self.fromInstances[instance] = nil
 	else
-		Logging.warn("Attempted to remove nonexistant ID %s", tostring(id))
+		Log.warn("Attempted to remove nonexistant ID %s", tostring(id))
 	end
 end
 
@@ -41,7 +41,7 @@ function InstanceMap:removeInstance(instance)
 		self.fromInstances[instance] = nil
 		self.fromIds[id] = nil
 	else
-		Logging.warn("Attempted to remove nonexistant instance %s", tostring(instance))
+		Log.warn("Attempted to remove nonexistant instance %s", tostring(instance))
 	end
 end
 
@@ -51,7 +51,7 @@ function InstanceMap:destroyInstance(instance)
 	if id ~= nil then
 		self:destroyId(id)
 	else
-		Logging.warn("Attempted to destroy untracked instance %s", tostring(instance))
+		Log.warn("Attempted to destroy untracked instance %s", tostring(instance))
 	end
 end
 
@@ -74,7 +74,7 @@ function InstanceMap:destroyId(id)
 
 		instance:Destroy()
 	else
-		Logging.warn("Attempted to destroy nonexistant ID %s", tostring(id))
+		Log.warn("Attempted to destroy nonexistant ID %s", tostring(id))
 	end
 end
 

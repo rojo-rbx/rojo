@@ -1,6 +1,7 @@
 local ContentProvider = game:GetService("ContentProvider")
 
-local Logging = require(script.Parent.Logging)
+local Log = require(script.Parent.Parent.Log)
+
 local Assets = require(script.Parent.Assets)
 
 local function preloadAssets()
@@ -18,7 +19,7 @@ local function preloadAssets()
 		table.insert(contentUrls, url)
 	end
 
-	Logging.trace("Preloading assets: %s", table.concat(contentUrls, ", "))
+	Log.trace("Preloading assets: %s", table.concat(contentUrls, ", "))
 
 	coroutine.wrap(function()
 		ContentProvider:PreloadAsync(contentUrls)

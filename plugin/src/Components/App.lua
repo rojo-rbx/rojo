@@ -2,11 +2,11 @@ local Rojo = script:FindFirstAncestor("Rojo")
 local Plugin = Rojo.Plugin
 
 local Roact = require(Rojo.Roact)
+local Log = require(Rojo.Log)
 
 local Assets = require(Plugin.Assets)
 local Config = require(Plugin.Config)
 local DevSettings = require(Plugin.DevSettings)
-local Logging = require(Plugin.Logging)
 local Session = require(Plugin.Session)
 local Version = require(Plugin.Version)
 local preloadAssets = require(Plugin.preloadAssets)
@@ -26,7 +26,7 @@ local function showUpgradeMessage(lastVersion)
 		Version.display(Config.version), Config.expectedServerVersionString
 	)
 
-	Logging.info(message)
+	Log.info(message)
 end
 
 --[[
@@ -114,7 +114,7 @@ function App:render()
 		children = {
 			ConnectionActivePanel = e(ConnectionActivePanel, {
 				stopSession = function()
-					Logging.trace("Disconnecting session")
+					Log.trace("Disconnecting session")
 
 					self.currentSession:disconnect()
 					self.currentSession = nil
@@ -122,7 +122,7 @@ function App:render()
 						sessionStatus = SessionStatus.Disconnected,
 					})
 
-					Logging.trace("Session terminated by user")
+					Log.trace("Session terminated by user")
 				end,
 			}),
 		}
@@ -130,13 +130,13 @@ function App:render()
 		children = {
 			ConnectPanel = e(ConnectPanel, {
 				startSession = function(address, port)
-					Logging.trace("Starting new session")
+					Log.trace("Starting new session")
 
 					local success, session = Session.new({
 						address = address,
 						port = port,
 						onError = function(message)
-							Logging.warn("Rojo session terminated because of an error:\n%s", tostring(message))
+							Log.warn("Rojo session terminated because of an error:\n%s", tostring(message))
 							self.currentSession = nil
 
 							self:setState({
@@ -153,7 +153,7 @@ function App:render()
 					end
 				end,
 				cancel = function()
-					Logging.trace("Canceling session configuration")
+					Log.trace("Canceling session configuration")
 
 					self:setState({
 						sessionStatus = SessionStatus.Disconnected,
@@ -169,7 +169,7 @@ function App:render()
 end
 
 function App:didMount()
-	Logging.trace("Rojo %s initializing", self.displayedVersion)
+	Log.trace("Rojo %s initializing", self.displayedVersion)
 
 	checkUpgrade(self.props.plugin)
 	preloadAssets()

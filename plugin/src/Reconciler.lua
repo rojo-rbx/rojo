@@ -1,7 +1,7 @@
 local t = require(script.Parent.Parent.t)
+local Log = require(script.Parent.Parent.Log)
 
 local InstanceMap = require(script.Parent.InstanceMap)
-local Logging = require(script.Parent.Logging)
 local setCanonicalProperty = require(script.Parent.setCanonicalProperty)
 local rojoValueToRobloxValue = require(script.Parent.rojoValueToRobloxValue)
 local Types = require(script.Parent.Types)
@@ -50,7 +50,7 @@ function Reconciler:reconcile(virtualInstancesById, id, instance)
 	-- If an instance changes ClassName, we assume it's very different. That's
 	-- not always the case!
 	if virtualInstance.ClassName ~= instance.ClassName then
-		Logging.trace("Switching to reify for %s because ClassName is different", instance:GetFullName())
+		Log.trace("Switching to reify for %s because ClassName is different", instance:GetFullName())
 
 		-- TODO: Preserve existing children instead?
 		local parent = instance.Parent
@@ -95,7 +95,7 @@ function Reconciler:reconcile(virtualInstancesById, id, instance)
 			unvisitedExistingChildren[existingChildInstance] = nil
 			self:reconcile(virtualInstancesById, childId, existingChildInstance)
 		else
-			Logging.trace(
+			Log.trace(
 				"Switching to reify for %s.%s because it does not exist",
 				instance:GetFullName(),
 				virtualInstancesById[childId].Name
@@ -125,7 +125,7 @@ function Reconciler:reconcile(virtualInstancesById, id, instance)
 		local parent = self.instanceMap.fromIds[virtualInstance.Parent]
 
 		if parent == nil then
-			Logging.info("Instance %s wanted parent of %s", tostring(id), tostring(virtualInstance.Parent))
+			Log.info("Instance %s wanted parent of %s", tostring(id), tostring(virtualInstance.Parent))
 			error("Rojo bug: During reconciliation, an instance referred to an instance ID as parent that does not exist.")
 		end
 
@@ -232,7 +232,7 @@ function Reconciler:__applyUpdatePiece(id, visitedIds, virtualInstancesById)
 		return
 	end
 
-	Logging.trace("Instance ID %s, parent ID %s", tostring(id), tostring(virtualInstance.Parent))
+	Log.trace("Instance ID %s, parent ID %s", tostring(id), tostring(virtualInstance.Parent))
 	error("Rojo NYI: Instances with parents that weren't mentioned in an update payload")
 end
 

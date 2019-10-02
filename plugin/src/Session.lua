@@ -1,6 +1,4 @@
-local Rojo = script:FindFirstAncestor("Rojo")
-
-local Promise = require(Rojo.Promise)
+local Promise = require(script.Parent.Parent.Promise)
 
 local ApiContext = require(script.Parent.ApiContext)
 local Reconciler = require(script.Parent.Reconciler)

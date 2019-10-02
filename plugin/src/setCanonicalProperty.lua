@@ -1,4 +1,4 @@
-local RbxDom = require(script:FindFirstAncestor("Rojo").RbxDom)
+local RbxDom = require(script.Parent.Parent.RbxDom)
 
 --[[
 	Attempts to set a property on the given instance.
