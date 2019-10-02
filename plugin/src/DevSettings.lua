@@ -13,8 +13,8 @@ local VALUES = {
 		type = "IntValue",
 		values = {
 			[Environment.User] = 2,
-			[Environment.Dev] = 3,
-			[Environment.Test] = 3,
+			[Environment.Dev] = 4,
+			[Environment.Test] = 4,
 		},
 	},
 	TypecheckingEnabled = {
