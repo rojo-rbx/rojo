@@ -13,6 +13,4 @@ remodel bin/put-plugin-in-test-place.lua "$PLUGIN_FILE" "$PLACE_FILE"
 
 run-in-roblox -s plugin/testBootstrap.server.lua "$PLACE_FILE"
 
-pushd plugin
-luacheck src log http
-popd
+luacheck plugin/src plugin/log plugin/http
