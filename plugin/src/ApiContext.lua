@@ -3,6 +3,11 @@ local Http = require(script.Parent.Parent.Http)
 
 local Config = require(script.Parent.Config)
 local Version = require(script.Parent.Version)
+local Types = require(script.Parent.Types)
+
+local validateApiInfo = Types.ifEnabled(Types.ApiInfoResponse)
+local validateApiRead = Types.ifEnabled(Types.ApiReadResponse)
+local validateApiSubscribe = Types.ifEnabled(Types.ApiSubscribeResponse)
 
 local ApiContext = {}
 ApiContext.__index = ApiContext
@@ -82,6 +87,8 @@ function ApiContext:connect()
 				return Promise.reject(message)
 			end
 
+			assert(validateApiInfo(body))
+
 			if body.expectedPlaceIds ~= nil then
 				local foundId = false
 
@@ -130,6 +137,8 @@ function ApiContext:read(ids)
 				return Promise.reject("Server changed ID")
 			end
 
+			assert(validateApiRead(body))
+
 			self.messageCursor = body.messageCursor
 
 			return body
@@ -158,6 +167,8 @@ function ApiContext:retrieveMessages()
 			if body.serverId ~= self.serverId then
 				return Promise.reject("Server changed ID")
 			end
+
+			assert(validateApiSubscribe(body))
 
 			self.messageCursor = body.messageCursor
 
