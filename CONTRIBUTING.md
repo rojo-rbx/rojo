@@ -11,6 +11,12 @@ Some of the repositories covered are:
 ## Code
 Code contributions are welcome for features and bugs that have been reported in the project's bug tracker. We want to make sure that no one wastes their time, so be sure to talk with maintainers about what changes would be accepted before doing any work!
 
+You'll want these tools to work on Rojo:
+
+* Latest stable Rust compiler
+* Latest stable Rojo
+* Latest stable Remodel
+
 ## Documentation
 Documentation impacts way more people than the individual lines of code we write.
 
