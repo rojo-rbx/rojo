@@ -1,3 +1,5 @@
+local strict = require(script.Parent.strict)
+
 local Assets = {
 	Sprites = {},
 	Slices = {
@@ -18,11 +20,7 @@ local Assets = {
 }
 
 local function guardForTypos(name, map)
-	setmetatable(map, {
-		__index = function(_, key)
-			error(("%q is not a valid member of %s"):format(tostring(key), name), 2)
-		end
-	})
+	strict(name, map)
 
 	for key, child in pairs(map) do
 		if type(child) == "table" then
