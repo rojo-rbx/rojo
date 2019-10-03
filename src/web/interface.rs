@@ -57,6 +57,8 @@ impl InstanceMetadata {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct Instance<'a> {
+    pub id: RbxId,
+    pub parent: Option<RbxId>,
     pub name: Cow<'a, str>,
     pub class_name: Cow<'a, str>,
     pub properties: Cow<'a, HashMap<String, RbxValue>>,
@@ -67,6 +69,8 @@ pub struct Instance<'a> {
 impl<'a> Instance<'a> {
     pub(crate) fn from_rojo_instance<'b>(source: InstanceWithMeta<'b>) -> Instance<'b> {
         Instance {
+            id: source.id(),
+            parent: source.parent(),
             name: Cow::Borrowed(source.name()),
             class_name: Cow::Borrowed(source.class_name()),
             properties: Cow::Borrowed(source.properties()),

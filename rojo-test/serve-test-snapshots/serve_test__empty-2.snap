@@ -6,6 +6,8 @@ sessionId: id-1
 messageCursor: 0
 instances:
   id-2:
+    Id: id-2
+    Parent: ~
     Name: empty
     ClassName: Folder
     Properties: {}
