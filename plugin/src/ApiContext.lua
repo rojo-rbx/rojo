@@ -1,152 +1,133 @@
-local Promise = require(script.Parent.Parent.Promise)
 local Http = require(script.Parent.Parent.Http)
+local Promise = require(script.Parent.Parent.Promise)
 
 local Config = require(script.Parent.Config)
-local Version = require(script.Parent.Version)
 local Types = require(script.Parent.Types)
+local Version = require(script.Parent.Version)
 
 local validateApiInfo = Types.ifEnabled(Types.ApiInfoResponse)
 local validateApiRead = Types.ifEnabled(Types.ApiReadResponse)
 local validateApiSubscribe = Types.ifEnabled(Types.ApiSubscribeResponse)
 
-local ApiContext = {}
-ApiContext.__index = ApiContext
-
--- TODO: Audit cases of errors and create enum values for each of them.
-ApiContext.Error = {
-	ServerIdMismatch = "ServerIdMismatch",
-
-	-- The server gave an unexpected 400-category error, which may be the
-	-- client's fault.
-	ClientError = "ClientError",
-
-	-- The server gave an unexpected 500-category error, which may be the
-	-- server's fault.
-	ServerError = "ServerError",
-}
-
-setmetatable(ApiContext.Error, {
-	__index = function(_, key)
-		error("Invalid ApiContext.Error name " .. key, 2)
-	end
-})
-
 local function rejectFailedRequests(response)
 	if response.code >= 400 then
-		if response.code < 500 then
-			return Promise.reject(ApiContext.Error.ClientError)
-		else
-			return Promise.reject(ApiContext.Error.ServerError)
-		end
+		-- TODO: Nicer error types for responses, using response JSON if valid.
+		return Promise.reject(tostring(response.code))
 	end
 
 	return response
 end
 
+local function rejectWrongProtocolVersion(infoResponseBody)
+	if infoResponseBody.protocolVersion ~= Config.protocolVersion then
+		local message = (
+			"Found a Rojo dev server, but it's using a different protocol version, and is incompatible." ..
+			"\nMake sure you have matching versions of both the Rojo plugin and server!" ..
+			"\n\nYour client is version %s, with protocol version %s. It expects server version %s." ..
+			"\nYour server is version %s, with protocol version %s." ..
+			"\n\nGo to https://github.com/rojo-rbx/rojo for more details."
+		):format(
+			Version.display(Config.version), Config.protocolVersion,
+			Config.expectedServerVersionString,
+			infoResponseBody.serverVersion, infoResponseBody.protocolVersion
+		)
+
+		return Promise.reject(message)
+	end
+
+	return Promise.resolve(infoResponseBody)
+end
+
+local function rejectWrongPlaceId(infoResponseBody)
+	if infoResponseBody.expectedPlaceIds ~= nil then
+		local foundId = false
+
+		for _, id in ipairs(infoResponseBody.expectedPlaceIds) do
+			if id == game.PlaceId then
+				foundId = true
+				break
+			end
+		end
+
+		if not foundId then
+			local idList = {}
+			for _, id in ipairs(infoResponseBody.expectedPlaceIds) do
+				table.insert(idList, "- " .. tostring(id))
+			end
+
+			local message = (
+				"Found a Rojo server, but its project is set to only be used with a specific list of places." ..
+				"\nYour place ID is %s, but needs to be one of these:" ..
+				"\n%s" ..
+				"\n\nTo change this list, edit 'servePlaceIds' in your .project.json file."
+			):format(
+				tostring(game.PlaceId),
+				table.concat(idList, "\n")
+			)
+
+			return Promise.reject(message)
+		end
+	end
+
+	return Promise.resolve(infoResponseBody)
+end
+
+local ApiContext = {}
+ApiContext.__index = ApiContext
+
 function ApiContext.new(baseUrl)
 	assert(type(baseUrl) == "string")
 
 	local self = {
-		baseUrl = baseUrl,
-		serverId = nil,
-		rootInstanceId = nil,
-		messageCursor = -1,
-		partitionRoutes = nil,
+		__baseUrl = baseUrl,
+		__serverId = nil,
+		__messageCursor = -1,
 	}
 
-	setmetatable(self, ApiContext)
-
-	return self
-end
-
-function ApiContext:onMessage(callback)
-	self.onMessageCallback = callback
+	return setmetatable(self, ApiContext)
 end
 
 function ApiContext:connect()
-	local url = ("%s/api/rojo"):format(self.baseUrl)
+	local url = ("%s/api/rojo"):format(self.__baseUrl)
 
 	return Http.get(url)
 		:andThen(rejectFailedRequests)
-		:andThen(function(response)
-			local body = response:json()
-
-			if body.protocolVersion ~= Config.protocolVersion then
-				local message = (
-					"Found a Rojo dev server, but it's using a different protocol version, and is incompatible." ..
-					"\nMake sure you have matching versions of both the Rojo plugin and server!" ..
-					"\n\nYour client is version %s, with protocol version %s. It expects server version %s." ..
-					"\nYour server is version %s, with protocol version %s." ..
-					"\n\nGo to https://github.com/rojo-rbx/rojo for more details."
-				):format(
-					Version.display(Config.version), Config.protocolVersion,
-					Config.expectedServerVersionString,
-					body.serverVersion, body.protocolVersion
-				)
-
-				return Promise.reject(message)
-			end
-
+		:andThen(Http.Response.json)
+		:andThen(rejectWrongProtocolVersion)
+		:andThen(function(body)
 			assert(validateApiInfo(body))
 
-			if body.expectedPlaceIds ~= nil then
-				local foundId = false
+			return body
+		end)
+		:andThen(rejectWrongPlaceId)
+		:andThen(function(body)
+			self.__serverId = body.serverId
 
-				for _, id in ipairs(body.expectedPlaceIds) do
-					if id == game.PlaceId then
-						foundId = true
-						break
-					end
-				end
-
-				if not foundId then
-					local idList = {}
-					for _, id in ipairs(body.expectedPlaceIds) do
-						table.insert(idList, "- " .. tostring(id))
-					end
-
-					local message = (
-						"Found a Rojo server, but its project is set to only be used with a specific list of places." ..
-						"\nYour place ID is %s, but needs to be one of these:" ..
-						"\n%s" ..
-						"\n\nTo change this list, edit 'servePlaceIds' in roblox-project.json"
-					):format(
-						tostring(game.PlaceId),
-						table.concat(idList, "\n")
-					)
-
-					return Promise.reject(message)
-				end
-			end
-
-			self.serverId = body.serverId
-			self.partitionRoutes = body.partitions
-			self.rootInstanceId = body.rootInstanceId
+			return body
 		end)
 end
 
 function ApiContext:read(ids)
-	local url = ("%s/api/read/%s"):format(self.baseUrl, table.concat(ids, ","))
+	local url = ("%s/api/read/%s"):format(self.__baseUrl, table.concat(ids, ","))
 
 	return Http.get(url)
 		:andThen(rejectFailedRequests)
-		:andThen(function(response)
-			local body = response:json()
-
-			if body.serverId ~= self.serverId then
+		:andThen(Http.Response.json)
+		:andThen(function(body)
+			if body.serverId ~= self.__serverId then
 				return Promise.reject("Server changed ID")
 			end
 
 			assert(validateApiRead(body))
 
-			self.messageCursor = body.messageCursor
+			self.__messageCursor = body.messageCursor
 
 			return body
 		end)
 end
 
 function ApiContext:retrieveMessages()
-	local url = ("%s/api/subscribe/%s"):format(self.baseUrl, self.messageCursor)
+	local url = ("%s/api/subscribe/%s"):format(self.__baseUrl, self.__messageCursor)
 
 	local function sendRequest()
 		return Http.get(url)
@@ -161,16 +142,15 @@ function ApiContext:retrieveMessages()
 
 	return sendRequest()
 		:andThen(rejectFailedRequests)
-		:andThen(function(response)
-			local body = response:json()
-
-			if body.serverId ~= self.serverId then
+		:andThen(Http.Response.json)
+		:andThen(function(body)
+			if body.serverId ~= self.__serverId then
 				return Promise.reject("Server changed ID")
 			end
 
 			assert(validateApiSubscribe(body))
 
-			self.messageCursor = body.messageCursor
+			self.__messageCursor = body.messageCursor
 
 			return body.messages
 		end)

@@ -4,15 +4,20 @@ local Plugin = Rojo.Plugin
 local Roact = require(Rojo.Roact)
 local Log = require(Rojo.Log)
 
+local ApiContext = require(Plugin.ApiContext)
 local Assets = require(Plugin.Assets)
 local Config = require(Plugin.Config)
 local DevSettings = require(Plugin.DevSettings)
-local Session = require(Plugin.Session)
+local Reconciler = require(Plugin.Reconciler)
+local ServeSession = require(Plugin.ServeSession)
 local Version = require(Plugin.Version)
 local preloadAssets = require(Plugin.preloadAssets)
+local strict = require(Plugin.strict)
 
 local ConnectPanel = require(Plugin.Components.ConnectPanel)
+local ConnectingPanel = require(Plugin.Components.ConnectingPanel)
 local ConnectionActivePanel = require(Plugin.Components.ConnectionActivePanel)
+local ErrorPanel = require(Plugin.Components.ErrorPanel)
 
 local e = Roact.createElement
 
@@ -52,26 +57,23 @@ local function checkUpgrade(plugin)
 	plugin:SetSetting("LastRojoVersion", Config.version)
 end
 
-local SessionStatus = {
-	Disconnected = "Disconnected",
+local AppStatus = strict("AppStatus", {
+	NotStarted = "NotStarted",
+	Connecting = "Connecting",
 	Connected = "Connected",
-}
-
-setmetatable(SessionStatus, {
-	__index = function(_, key)
-		error(("%q is not a valid member of SessionStatus"):format(tostring(key)), 2)
-	end,
+	Error = "Error",
 })
 
 local App = Roact.Component:extend("App")
 
 function App:init()
 	self:setState({
-		sessionStatus = SessionStatus.Disconnected,
+		appStatus = AppStatus.NotStarted,
+		errorMessage = nil,
 	})
 
 	self.signals = {}
-	self.currentSession = nil
+	self.serveSession = nil
 
 	self.displayedVersion = DevSettings:isEnabled()
 		and Config.codename
@@ -96,7 +98,7 @@ function App:init()
 		360, 190 -- Minimum size
 	)
 
-	self.dockWidget = self.props.plugin:CreateDockWidgetPluginGui("Rojo-0.5.x", widgetInfo)
+	self.dockWidget = self.props.plugin:CreateDockWidgetPluginGui("Rojo-" .. self.displayedVersion, widgetInfo)
 	self.dockWidget.Name = "Rojo " .. self.displayedVersion
 	self.dockWidget.Title = "Rojo " .. self.displayedVersion
 	self.dockWidget.AutoLocalize = false
@@ -107,56 +109,92 @@ function App:init()
 	end)
 end
 
+function App:startSession(address, port)
+	Log.trace("Starting new session")
+
+	local baseUrl = ("http://%s:%s"):format(address, port)
+	self.serveSession = ServeSession.new({
+		apiContext = ApiContext.new(baseUrl),
+		reconciler = Reconciler.new(),
+	})
+
+	self.serveSession:onStatusChanged(function(status, details)
+		if status == ServeSession.Status.Connecting then
+			self:setState({
+				appStatus = AppStatus.Connecting,
+			})
+		elseif status == ServeSession.Status.Connected then
+			self:setState({
+				appStatus = AppStatus.Connected,
+			})
+		elseif status == ServeSession.Status.Disconnected then
+			self.serveSession = nil
+
+			-- Details being present indicates that this
+			-- disconnection was from an error.
+			if details ~= nil then
+				Log.warn(tostring(details))
+
+				self:setState({
+					appStatus = AppStatus.Error,
+					errorMessage = tostring(details),
+				})
+			else
+				self:setState({
+					appStatus = AppStatus.NotStarted,
+				})
+			end
+		end
+	end)
+
+	self.serveSession:start()
+end
+
 function App:render()
 	local children
 
-	if self.state.sessionStatus == SessionStatus.Connected then
+	if self.state.appStatus == AppStatus.NotStarted then
+		children = {
+			ConnectPanel = e(ConnectPanel, {
+				startSession = function(address, port)
+					self:startSession(address, port)
+				end,
+				cancel = function()
+					Log.trace("Canceling session configuration")
+
+					self:setState({
+						appStatus = AppStatus.NotStarted,
+					})
+				end,
+			}),
+		}
+	elseif self.state.appStatus == AppStatus.Connecting then
+		children = {
+			ConnectingPanel = Roact.createElement(ConnectingPanel),
+		}
+	elseif self.state.appStatus == AppStatus.Connected then
 		children = {
 			ConnectionActivePanel = e(ConnectionActivePanel, {
 				stopSession = function()
 					Log.trace("Disconnecting session")
 
-					self.currentSession:disconnect()
-					self.currentSession = nil
+					self.serveSession:stop()
+					self.serveSession = nil
 					self:setState({
-						sessionStatus = SessionStatus.Disconnected,
+						appStatus = AppStatus.NotStarted,
 					})
 
 					Log.trace("Session terminated by user")
 				end,
 			}),
 		}
-	elseif self.state.sessionStatus == SessionStatus.Disconnected then
+	elseif self.state.appStatus == AppStatus.Error then
 		children = {
-			ConnectPanel = e(ConnectPanel, {
-				startSession = function(address, port)
-					Log.trace("Starting new session")
-
-					local success, session = Session.new({
-						address = address,
-						port = port,
-						onError = function(message)
-							Log.warn("Rojo session terminated because of an error:\n%s", tostring(message))
-							self.currentSession = nil
-
-							self:setState({
-								sessionStatus = SessionStatus.Disconnected,
-							})
-						end
-					})
-
-					if success then
-						self.currentSession = session
-						self:setState({
-							sessionStatus = SessionStatus.Connected,
-						})
-					end
-				end,
-				cancel = function()
-					Log.trace("Canceling session configuration")
-
+			ErrorPanel = Roact.createElement(ErrorPanel, {
+				errorMessage = self.state.errorMessage,
+				onDismiss = function()
 					self:setState({
-						sessionStatus = SessionStatus.Disconnected,
+						appStatus = AppStatus.NotStarted,
 					})
 				end,
 			}),
@@ -176,9 +214,9 @@ function App:didMount()
 end
 
 function App:willUnmount()
-	if self.currentSession ~= nil then
-		self.currentSession:disconnect()
-		self.currentSession = nil
+	if self.serveSession ~= nil then
+		self.serveSession:stop()
+		self.serveSession = nil
 	end
 
 	for _, signal in pairs(self.signals) do

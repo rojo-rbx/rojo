@@ -1,14 +1,51 @@
+--[[
+	This module defines the meat of the Rojo plugin and how it manages tracking
+	and mutating the Roblox DOM.
+]]
+
+local RbxDom = require(script.Parent.Parent.RbxDom)
 local t = require(script.Parent.Parent.t)
-local Log = require(script.Parent.Parent.Log)
 
 local InstanceMap = require(script.Parent.InstanceMap)
-local setCanonicalProperty = require(script.Parent.setCanonicalProperty)
-local rojoValueToRobloxValue = require(script.Parent.rojoValueToRobloxValue)
 local Types = require(script.Parent.Types)
+local setCanonicalProperty = require(script.Parent.setCanonicalProperty)
 
-local function setParent(instance, newParent)
+--[[
+	This interface represents either a patch created by the hydrate method, or a
+	patch returned from the API.
+
+	This type should be a subset of Types.ApiInstanceUpdate.
+]]
+local IPatch = t.interface({
+	removed = t.array(t.union(Types.RbxId, t.Instance)),
+	added = t.map(Types.RbxId, Types.ApiInstance),
+	updated = t.array(Types.ApiInstanceUpdate),
+})
+
+--[[
+	Attempt to safely set the parent of an instance.
+
+	This function will always succeed, even if the actual set failed. This is
+	important for some types like services that will throw even if their current
+	parent is already set to the requested parent.
+
+	TODO: See if we can eliminate this by being more nuanced with property
+	assignment?
+]]
+local function safeSetParent(instance, newParent)
 	pcall(function()
 		instance.Parent = newParent
+	end)
+end
+
+--[[
+	Similar to setting Parent, some instances really don't like being renamed.
+
+	TODO: Should we be throwing away these results or can we be more careful?
+]]
+local function safeSetName(instance, name)
+	pcall(function()
+		instance.Name = name
 	end)
 end
 
@@ -17,223 +54,200 @@ Reconciler.__index = Reconciler
 
 function Reconciler.new()
 	local self = {
-		instanceMap = InstanceMap.new(),
+		-- Tracks all of the instances known by the reconciler by ID.
+		__instanceMap = InstanceMap.new(),
 	}
 
 	return setmetatable(self, Reconciler)
 end
 
-function Reconciler:applyUpdate(requestedIds, virtualInstancesById)
-	-- This function may eventually be asynchronous; it will require calls to
-	-- the server to resolve instances that don't exist yet.
-	local visitedIds = {}
+--[[
+	See Reconciler:__hydrateInternal().
+]]
+function Reconciler:hydrate(apiInstances, id, instance)
+	local hydratePatch = {
+		removed = {},
+		added = {},
+		updated = {},
+	}
 
-	for _, id in ipairs(requestedIds) do
-		self:__applyUpdatePiece(id, visitedIds, virtualInstancesById)
-	end
+	self:__hydrateInternal(apiInstances, id, instance, hydratePatch)
+
+	return hydratePatch
 end
 
-local reconcileSchema = Types.ifEnabled(t.tuple(
-	t.map(t.string, Types.VirtualInstance),
-	t.string,
+--[[
+	Transforms a value encoded by rbx_dom_weak on the server side into a value
+	usable by Rojo's reconciler, potentially using RbxDom.
+]]
+function Reconciler:__decodeApiValue(apiValue)
+	assert(Types.ApiValue(apiValue))
+
+	-- Refs are represented as IDs in the same space that Rojo's protocol uses.
+	if apiValue.Type == "Ref" then
+		-- TODO: This ref could be pointing at an instance we haven't created
+		-- yet!
+
+		return self.__instanceMap.fromIds[apiValue.Value]
+	end
+
+	local success, decodedValue = RbxDom.EncodedValue.decode(apiValue)
+
+	if not success then
+		error(decodedValue, 2)
+	end
+
+	return decodedValue
+end
+
+--[[
+	Constructs an instance from an ApiInstance without any of its children.
+]]
+local reifySingleInstanceSchema = Types.ifEnabled(t.tuple(
+	Types.ApiInstance
+))
+function Reconciler:__reifySingleInstance(apiInstance)
+	assert(reifySingleInstanceSchema(apiInstance))
+
+	-- Instance.new can fail if we're passing in something that can't be
+	-- created, like a service, something enabled with a feature flag, or
+	-- something that requires higher security than we have.
+	local ok, instance = pcall(Instance.new, apiInstance.ClassName)
+	if not ok then
+		return false, instance
+	end
+
+	-- TODO: When can setting Name fail here?
+	safeSetName(instance, apiInstance.Name)
+
+	for key, value in pairs(apiInstance.Properties) do
+		setCanonicalProperty(instance, key, self:__decodeApiValue(value))
+	end
+
+	return instance
+end
+
+--[[
+	Construct an instance and all of its descendants, parent it to the given
+	instance, and insert it into the reconciler's internal state.
+]]
+local reifyInstanceSchema = Types.ifEnabled(t.tuple(
+	t.map(Types.RbxId, Types.VirtualInstance),
+	Types.RbxId,
 	t.Instance
 ))
+function Reconciler:__reifyInstance(apiInstances, id, parentInstance)
+	assert(reifyInstanceSchema(apiInstances, id, parentInstance))
+
+	local apiInstance = apiInstances[id]
+	local ok, instance = self:__reifySingleInstance(apiInstance)
+
+	-- TODO: Propagate this error upward to handle it elsewhere?
+	if not ok then
+		error(("Couldn't create an instance of type %q, a child of %s"):format(
+			apiInstance.ClassName,
+			parentInstance:GetFullName()
+		))
+	end
+
+	for _, childId in ipairs(apiInstance.Children) do
+		self:__reify(apiInstances, childId, instance)
+	end
+
+	safeSetParent(instance, parentInstance)
+	self.__instanceMap:insert(id, instance)
+
+	return instance
+end
+
 --[[
-	Update an existing instance, including its properties and children, to match
-	the given information.
+	Populates the reconciler's internal state, maps IDs to instances that the
+	Rojo plugin knows about, and generates a patch that would update the Roblox
+	tree to match Rojo's view of the tree.
 ]]
-function Reconciler:reconcile(virtualInstancesById, id, instance)
-	assert(reconcileSchema(virtualInstancesById, id, instance))
+local hydrateSchema = Types.ifEnabled(t.tuple(
+	t.map(Types.RbxId, Types.VirtualInstance),
+	Types.RbxId,
+	t.Instance,
+	IPatch
+))
+function Reconciler:__hydrateInternal(apiInstances, id, instance, hydratePatch)
+	assert(hydrateSchema(apiInstances, id, instance, hydratePatch))
 
-	local virtualInstance = virtualInstancesById[id]
+	local apiInstance = apiInstances[id]
 
-	-- If an instance changes ClassName, we assume it's very different. That's
-	-- not always the case!
-	if virtualInstance.ClassName ~= instance.ClassName then
-		Log.trace("Switching to reify for %s because ClassName is different", instance:GetFullName())
+	local function markIdAdded(id)
+		local apiInstance = apiInstances[id]
+		hydratePatch.added[id] = apiInstance
 
-		-- TODO: Preserve existing children instead?
-		local parent = instance.Parent
-		self.instanceMap:destroyId(id)
-		return self:__reify(virtualInstancesById, id, parent)
+		for _, childId in ipairs(apiInstance.Children) do
+			markIdAdded(childId)
+		end
 	end
 
-	self.instanceMap:insert(id, instance)
-
-	-- Some instances don't like being named, even if their name already matches
-	setCanonicalProperty(instance, "Name", virtualInstance.Name)
-
-	for key, value in pairs(virtualInstance.Properties) do
-		setCanonicalProperty(instance, key, rojoValueToRobloxValue(value))
-	end
+	-- TODO: Measure differences in properties and add them to
+	-- hydratePatch.updates
 
 	local existingChildren = instance:GetChildren()
 
-	local unvisitedExistingChildren = {}
-	for _, child in ipairs(existingChildren) do
-		unvisitedExistingChildren[child] = true
+	-- For each existing child, we'll track whether it's been paired with an
+	-- instance that the Rojo server knows about.
+	local isExistingChildVisited = {}
+	for i = 1, #existingChildren do
+		isExistingChildVisited[i] = false
 	end
 
-	for _, childId in ipairs(virtualInstance.Children) do
-		local childData = virtualInstancesById[childId]
+	for _, childId in ipairs(apiInstance.Children) do
+		local apiChild = apiInstances[childId]
 
-		local existingChildInstance
-		for instance in pairs(unvisitedExistingChildren) do
-			local ok, name, className = pcall(function()
-				return instance.Name, instance.ClassName
-			end)
+		local childInstance
 
-			if ok then
-				if name == childData.Name and className == childData.ClassName then
-					existingChildInstance = instance
+		for childIndex, instance in ipairs(existingChildren) do
+			if not isExistingChildVisited[childIndex] then
+				-- We guard accessing Name and ClassName in order to avoid
+				-- tripping over children of DataModel that Rojo won't have
+				-- permissions to access at all.
+				local ok, name, className = pcall(function()
+					return instance.Name, instance.ClassName
+				end)
+
+				-- This rule is very conservative and could be loosened in the
+				-- future, or more heuristics could be introduced.
+				if ok and name == apiChild.Name and className == apiChild.ClassName then
+					childInstance = instance
+					isExistingChildVisited[childIndex] = true
 					break
 				end
 			end
 		end
 
-		if existingChildInstance ~= nil then
-			unvisitedExistingChildren[existingChildInstance] = nil
-			self:reconcile(virtualInstancesById, childId, existingChildInstance)
+		if childInstance ~= nil then
+			-- We found an instance that matches the instance from the API, yay!
+			self:__hydrateInternal(apiInstances, childId, childInstance, hydratePatch)
 		else
-			Log.trace(
-				"Switching to reify for %s.%s because it does not exist",
-				instance:GetFullName(),
-				virtualInstancesById[childId].Name
-			)
-
-			self:__reify(virtualInstancesById, childId, instance)
+			markIdAdded(childId)
 		end
 	end
 
-	local shouldClearUnknown = self:__shouldClearUnknownChildren(virtualInstance)
-
-	for existingChildInstance in pairs(unvisitedExistingChildren) do
-		local childId = self.instanceMap.fromInstances[existingChildInstance]
-
-		if childId == nil then
-			if shouldClearUnknown then
-				existingChildInstance:Destroy()
+	-- Any unvisited children at this point aren't known by Rojo and we can
+	-- destroy them unless the user has explicitly asked us to preserve children
+	-- of this instance.
+	local shouldClearUnknown = self:__shouldClearUnknownChildren(apiInstance)
+	if shouldClearUnknown then
+		for childIndex, visited in ipairs(isExistingChildVisited) do
+			if not visited then
+				table.insert(hydratePatch.removedInstances, existingChildren[childIndex])
 			end
-		else
-			self.instanceMap:destroyInstance(existingChildInstance)
 		end
 	end
-
-	-- The root instance of a project won't have a parent, like the DataModel,
-	-- so we need to be careful here.
-	if virtualInstance.Parent ~= nil then
-		local parent = self.instanceMap.fromIds[virtualInstance.Parent]
-
-		if parent == nil then
-			Log.info("Instance %s wanted parent of %s", tostring(id), tostring(virtualInstance.Parent))
-			error("Rojo bug: During reconciliation, an instance referred to an instance ID as parent that does not exist.")
-		end
-
-		-- Some instances, like services, don't like having their Parent
-		-- property poked, even if we're setting it to the same value.
-		setParent(instance, parent)
-	end
-
-	return instance
 end
 
-function Reconciler:__shouldClearUnknownChildren(virtualInstance)
-	if virtualInstance.Metadata ~= nil then
-		return not virtualInstance.Metadata.ignoreUnknownInstances
+function Reconciler:__shouldClearUnknownChildren(apiInstance)
+	if apiInstance.Metadata ~= nil then
+		return not apiInstance.Metadata.ignoreUnknownInstances
 	else
 		return true
 	end
-end
-
-local reifySchema = Types.ifEnabled(t.tuple(
-	t.map(t.string, Types.VirtualInstance),
-	t.string,
-	t.Instance
-))
-
-function Reconciler:__reify(virtualInstancesById, id, parent)
-	assert(reifySchema(virtualInstancesById, id, parent))
-
-	local virtualInstance = virtualInstancesById[id]
-
-	local ok, instance = pcall(function()
-		return Instance.new(virtualInstance.ClassName)
-	end)
-
-	if not ok then
-		error(("Couldn't create an Instance of type %q, a child of %s"):format(
-			virtualInstance.ClassName,
-			parent:GetFullName()
-		))
-	end
-
-	for key, value in pairs(virtualInstance.Properties) do
-		setCanonicalProperty(instance, key, rojoValueToRobloxValue(value))
-	end
-
-	setCanonicalProperty(instance, "Name", virtualInstance.Name)
-
-	for _, childId in ipairs(virtualInstance.Children) do
-		self:__reify(virtualInstancesById, childId, instance)
-	end
-
-	setParent(instance, parent)
-	self.instanceMap:insert(id, instance)
-
-	return instance
-end
-
-local applyUpdatePieceSchema = Types.ifEnabled(t.tuple(
-	t.string,
-	t.map(t.string, t.boolean),
-	t.map(t.string, Types.VirtualInstance)
-))
-
-function Reconciler:__applyUpdatePiece(id, visitedIds, virtualInstancesById)
-	assert(applyUpdatePieceSchema(id, visitedIds, virtualInstancesById))
-
-	if visitedIds[id] then
-		return
-	end
-
-	visitedIds[id] = true
-
-	local virtualInstance = virtualInstancesById[id]
-	local instance = self.instanceMap.fromIds[id]
-
-	-- The instance was deleted in this update
-	if virtualInstance == nil then
-		self.instanceMap:destroyId(id)
-		return
-	end
-
-	-- An instance we know about was updated
-	if instance ~= nil then
-		self:reconcile(virtualInstancesById, id, instance)
-		return instance
-	end
-
-	-- If the instance's parent already exists, we can stick it there
-	local parentInstance = self.instanceMap.fromIds[virtualInstance.Parent]
-	if parentInstance ~= nil then
-		self:__reify(virtualInstancesById, id, parentInstance)
-		return
-	end
-
-	-- Otherwise, we can check if this response payload contained the parent and
-	-- work from there instead.
-	local parentData = virtualInstancesById[virtualInstance.Parent]
-	if parentData ~= nil then
-		if visitedIds[virtualInstance.Parent] then
-			error("Rojo bug: An instance was present and marked as visited but its instance was missing")
-		end
-
-		self:__applyUpdatePiece(virtualInstance.Parent, visitedIds, virtualInstancesById)
-		return
-	end
-
-	Log.trace("Instance ID %s, parent ID %s", tostring(id), tostring(virtualInstance.Parent))
-	error("Rojo NYI: Instances with parents that weren't mentioned in an update payload")
 end
 
 return Reconciler

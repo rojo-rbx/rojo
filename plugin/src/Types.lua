@@ -84,6 +84,7 @@ return strict("Types", {
 	ApiError = ApiError,
 
 	ApiInstance = ApiInstance,
+	ApiInstanceUpdate = ApiInstanceUpdate,
 	ApiInstanceMetadata = ApiInstanceMetadata,
 	ApiSubscribeMessage = ApiSubscribeMessage,
 	ApiValue = ApiValue,
