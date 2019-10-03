@@ -224,6 +224,10 @@ impl<'a> InstanceWithMeta<'a> {
         self.instance.get_id()
     }
 
+    pub fn parent(&self) -> Option<RbxId> {
+        self.instance.get_parent_id()
+    }
+
     pub fn name(&self) -> &'a str {
         &self.instance.name
     }
