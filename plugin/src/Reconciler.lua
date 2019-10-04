@@ -8,6 +8,7 @@ local t = require(script.Parent.Parent.t)
 
 local InstanceMap = require(script.Parent.InstanceMap)
 local Types = require(script.Parent.Types)
+local invariant = require(script.Parent.invariant)
 local setCanonicalProperty = require(script.Parent.setCanonicalProperty)
 
 --[[
@@ -77,6 +78,96 @@ function Reconciler:hydrate(apiInstances, id, instance)
 end
 
 --[[
+	Applies a patch to the Roblox DOM using the reconciler's internal state.
+
+	TODO: This function might only apply some of the patch in the future and
+	require content negotiation with the Rojo server to handle types that aren't
+	editable by scripts.
+]]
+local applyPatchSchema = Types.ifEnabled(t.tuple(
+	IPatch
+))
+function Reconciler:applyPatch(patch)
+	assert(applyPatchSchema(patch))
+
+	for _, removedIdOrInstance in ipairs(patch.removed) do
+		if Types.RbxId(removedIdOrInstance) then
+			-- If this value is an ID, it's assumed to be an instance that the
+			-- Rojo server knows about.
+
+			self.__instanceMap:removeId(removedIdOrInstance)
+		else
+			-- Otherwise, this instance is one that the Rojo server doesn't know
+			-- about, and is located in an area where it should be destroyed to
+			-- keep our trees in sync.
+
+			removedIdOrInstance:Destroy()
+		end
+	end
+
+	-- TODO: This loop assumes that apiInstance.ParentId is never nil. The Rojo
+	-- plugin can't create a new top-level DataModel anyways, so this should
+	-- only be violated in cases that are already erroneous.
+	for id, apiInstance in pairs(patch.added) do
+		if self.__instanceMap.fromIds[id] == nil then
+			-- Find the first ancestor of this instance that is marked for an
+			-- addition.
+			--
+			-- This helps us make sure we only reify each instance once, and we
+			-- start from the top.
+			while patch.added[apiInstance.Parent] ~= nil do
+				id = apiInstance.Parent
+				apiInstance = patch.added[id]
+			end
+
+			local parentInstance = self.__instanceMap.fromIds[apiInstance.Parent]
+
+			if parentInstance == nil then
+				invariant(
+					"Cannot add an instance from a patch that has no parent.\nInstance %s with parent %s.\nInstanceMap state:\n%s",
+					id,
+					tostring(apiInstance.Parent),
+					self.__instanceMap:debugState()
+				)
+			end
+
+			self:__reifyInstance(patch.added, id, parentInstance)
+		end
+	end
+
+	for _, update in ipairs(patch.updated) do
+		local instance = self.__instanceMap.fromIds[update.id]
+
+		if instance == nil then
+			invariant(
+				"Cannot update an instance that does not exist in the reconciler's state.\nInstance ID %s\nInstanceMap state:\n%s",
+				update.id,
+				self.__instanceMap:debugState()
+			)
+		end
+
+		if update.changedClassName ~= nil then
+			error("TODO: Support changing class name by destroying + recreating instance.")
+		end
+
+		if update.changedName ~= nil then
+			instance.Name = update.changedName
+		end
+
+		if update.changedMetadata ~= nil then
+			print("TODO: Support changing metadata, if necessary.")
+		end
+
+		if update.changedProperties ~= nil then
+			for propertyName, propertyValue in pairs(update.changedProperties) do
+				-- TODO: Gracefully handle this error instead?
+				assert(setCanonicalProperty(instance, propertyName, self:__decodeApiValue(propertyValue)))
+			end
+		end
+	end
+end
+
+--[[
 	Transforms a value encoded by rbx_dom_weak on the server side into a value
 	usable by Rojo's reconciler, potentially using RbxDom.
 ]]
@@ -124,7 +215,7 @@ function Reconciler:__reifySingleInstance(apiInstance)
 		setCanonicalProperty(instance, key, self:__decodeApiValue(value))
 	end
 
-	return instance
+	return true, instance
 end
 
 --[[
@@ -150,12 +241,13 @@ function Reconciler:__reifyInstance(apiInstances, id, parentInstance)
 		))
 	end
 
+	self.__instanceMap:insert(id, instance)
+
 	for _, childId in ipairs(apiInstance.Children) do
-		self:__reify(apiInstances, childId, instance)
+		self:__reifyInstance(apiInstances, childId, instance)
 	end
 
 	safeSetParent(instance, parentInstance)
-	self.__instanceMap:insert(id, instance)
 
 	return instance
 end
@@ -173,6 +265,8 @@ local hydrateSchema = Types.ifEnabled(t.tuple(
 ))
 function Reconciler:__hydrateInternal(apiInstances, id, instance, hydratePatch)
 	assert(hydrateSchema(apiInstances, id, instance, hydratePatch))
+
+	self.__instanceMap:insert(id, instance)
 
 	local apiInstance = apiInstances[id]
 
@@ -236,7 +330,7 @@ function Reconciler:__hydrateInternal(apiInstances, id, instance, hydratePatch)
 	if shouldClearUnknown then
 		for childIndex, visited in ipairs(isExistingChildVisited) do
 			if not visited then
-				table.insert(hydratePatch.removedInstances, existingChildren[childIndex])
+				table.insert(hydratePatch.removed, existingChildren[childIndex])
 			end
 		end
 	end
