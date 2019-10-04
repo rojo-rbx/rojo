@@ -131,13 +131,15 @@ function ApiContext:read(ids)
 				return Promise.reject("Server changed ID")
 			end
 
-			self.messageCursor = body.messageCursor
-
 			return body
 		end)
 end
 
-function ApiContext:retrieveMessages()
+function ApiContext:retrieveMessages(initialCursor)
+	if initialCursor ~= nil then
+		self.messageCursor = initialCursor
+	end
+
 	local url = ("%s/api/subscribe/%s"):format(self.baseUrl, self.messageCursor)
 
 	local function sendRequest()

@@ -33,7 +33,7 @@ function Session.new(config)
 			end
 
 			self.reconciler:reconcile(response.instances, api.rootInstanceId, game)
-			return self:__processMessages()
+			return self:__processMessages(response.messageCursor)
 		end)
 		:catch(function(message)
 			self.disconnected = true
@@ -43,12 +43,12 @@ function Session.new(config)
 	return not self.disconnected, setmetatable(self, Session)
 end
 
-function Session:__processMessages()
+function Session:__processMessages(initialCursor)
 	if self.disconnected then
 		return Promise.resolve()
 	end
 
-	return self.api:retrieveMessages()
+	return self.api:retrieveMessages(initialCursor)
 		:andThen(function(messages)
 			local promise = Promise.resolve(nil)
 
