@@ -82,9 +82,14 @@ function ApiContext.new(baseUrl)
 		__baseUrl = baseUrl,
 		__serverId = nil,
 		__messageCursor = -1,
+		__connected = true,
 	}
 
 	return setmetatable(self, ApiContext)
+end
+
+function ApiContext:disconnect()
+	self.__connected = false
 end
 
 function ApiContext:connect()
@@ -132,7 +137,7 @@ function ApiContext:retrieveMessages()
 	local function sendRequest()
 		return Http.get(url)
 			:catch(function(err)
-				if err.type == Http.Error.Kind.Timeout then
+				if err.type == Http.Error.Kind.Timeout and self.__connected then
 					return sendRequest()
 				end
 

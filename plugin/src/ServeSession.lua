@@ -109,12 +109,17 @@ function ServeSession:start()
 				end)
 		end)
 		:catch(function(err)
-			self:__setStatus(Status.Disconnected, err)
+			self:__stopInternal(err)
 		end)
 end
 
 function ServeSession:stop()
-	self:__setStatus(Status.Disconnected)
+	self:__stopInternal()
+end
+
+function ServeSession:__stopInternal(err)
+	self:__setStatus(Status.Disconnected, err)
+	self.__apiContext:disconnect()
 end
 
 function ServeSession:__setStatus(status, detail)
