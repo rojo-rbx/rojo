@@ -16,7 +16,7 @@ local ApiInstanceMetadata = t.interface({
 
 local ApiInstance = t.interface({
 	Id = RbxId,
-	ParentId = t.optional(RbxId),
+	Parent = t.optional(RbxId),
 	Name = t.string,
 	ClassName = t.string,
 	Properties = t.map(t.string, ApiValue),
