@@ -1,0 +1,17 @@
+---
+source: src/snapshot_middleware/project.rs
+expression: instance_snapshot
+---
+snapshot_id: ~
+metadata:
+  ignore_unknown_instances: true
+  contributing_paths:
+    - /foo/default.project.json
+  project_node: ~
+name: resolved-properties
+class_name: StringValue
+properties:
+  Value:
+    Type: String
+    Value: "Hello, world!"
+children: []

@@ -173,8 +173,8 @@ fn snapshot_project_node<F: ImfsFetcher>(
 mod test {
     use super::*;
 
+    use insta::assert_yaml_snapshot;
     use maplit::hashmap;
-    use rbx_dom_weak::RbxValue;
 
     use crate::imfs::{ImfsDebug, ImfsSnapshot, NoopFetcher};
 
@@ -201,10 +201,7 @@ mod test {
             .expect("snapshot error")
             .expect("snapshot returned no instances");
 
-        assert_eq!(instance_snapshot.name, "indirect-project");
-        assert_eq!(instance_snapshot.class_name, "Folder");
-        assert_eq!(instance_snapshot.properties, HashMap::new());
-        assert_eq!(instance_snapshot.children, Vec::new());
+        assert_yaml_snapshot!(instance_snapshot);
     }
 
     #[test]
@@ -230,10 +227,7 @@ mod test {
             .expect("snapshot error")
             .expect("snapshot returned no instances");
 
-        assert_eq!(instance_snapshot.name, "direct-project");
-        assert_eq!(instance_snapshot.class_name, "Model");
-        assert_eq!(instance_snapshot.properties, HashMap::new());
-        assert_eq!(instance_snapshot.children, Vec::new());
+        assert_yaml_snapshot!(instance_snapshot);
     }
 
     #[test]
@@ -265,17 +259,7 @@ mod test {
             .expect("snapshot error")
             .expect("snapshot returned no instances");
 
-        assert_eq!(instance_snapshot.name, "resolved-properties");
-        assert_eq!(instance_snapshot.class_name, "StringValue");
-        assert_eq!(
-            instance_snapshot.properties,
-            hashmap! {
-                "Value".to_owned() => RbxValue::String {
-                    value: "Hello, world!".to_owned(),
-                },
-            }
-        );
-        assert_eq!(instance_snapshot.children, Vec::new());
+        assert_yaml_snapshot!(instance_snapshot);
     }
 
     #[test]
@@ -304,17 +288,7 @@ mod test {
             .expect("snapshot error")
             .expect("snapshot returned no instances");
 
-        assert_eq!(instance_snapshot.name, "unresolved-properties");
-        assert_eq!(instance_snapshot.class_name, "StringValue");
-        assert_eq!(
-            instance_snapshot.properties,
-            hashmap! {
-                "Value".to_owned() => RbxValue::String {
-                    value: "Hi!".to_owned(),
-                },
-            }
-        );
-        assert_eq!(instance_snapshot.children, Vec::new());
+        assert_yaml_snapshot!(instance_snapshot);
     }
 
     #[test]
@@ -344,16 +318,7 @@ mod test {
             .expect("snapshot error")
             .expect("snapshot returned no instances");
 
-        assert_eq!(instance_snapshot.name, "children");
-        assert_eq!(instance_snapshot.class_name, "Folder");
-        assert_eq!(instance_snapshot.properties, HashMap::new());
-        assert_eq!(instance_snapshot.children.len(), 1);
-
-        let child = &instance_snapshot.children[0];
-        assert_eq!(child.name, "Child");
-        assert_eq!(child.class_name, "Model");
-        assert_eq!(child.properties, HashMap::new());
-        assert_eq!(child.children, Vec::new());
+        assert_yaml_snapshot!(instance_snapshot);
     }
 
     #[test]
@@ -380,17 +345,7 @@ mod test {
             .expect("snapshot error")
             .expect("snapshot returned no instances");
 
-        assert_eq!(instance_snapshot.name, "path-project");
-        assert_eq!(instance_snapshot.class_name, "StringValue");
-        assert_eq!(
-            instance_snapshot.properties,
-            hashmap! {
-                "Value".to_owned() => RbxValue::String {
-                    value: "Hello, world!".to_owned(),
-                },
-            }
-        );
-        assert_eq!(instance_snapshot.children, Vec::new());
+        assert_yaml_snapshot!(instance_snapshot);
     }
 
     #[test]
@@ -424,10 +379,7 @@ mod test {
             .expect("snapshot error")
             .expect("snapshot returned no instances");
 
-        assert_eq!(instance_snapshot.name, "path-project");
-        assert_eq!(instance_snapshot.class_name, "Model");
-        assert_eq!(instance_snapshot.properties, HashMap::new());
-        assert_eq!(instance_snapshot.children, Vec::new());
+        assert_yaml_snapshot!(instance_snapshot);
     }
 
     #[test]
@@ -465,16 +417,7 @@ mod test {
             .expect("snapshot error")
             .expect("snapshot returned no instances");
 
-        assert_eq!(instance_snapshot.name, "path-child-project");
-        assert_eq!(instance_snapshot.class_name, "Folder");
-        assert_eq!(instance_snapshot.properties, HashMap::new());
-        assert_eq!(instance_snapshot.children.len(), 1);
-
-        let child = &instance_snapshot.children[0];
-        assert_eq!(child.name, "SomeChild");
-        assert_eq!(child.class_name, "Model");
-        assert_eq!(child.properties, HashMap::new());
-        assert_eq!(child.children, Vec::new());
+        assert_yaml_snapshot!(instance_snapshot);
     }
 
     /// Ensures that if a property is defined both in the resulting instance
@@ -517,16 +460,6 @@ mod test {
             .expect("snapshot error")
             .expect("snapshot returned no instances");
 
-        assert_eq!(instance_snapshot.name, "path-property-override");
-        assert_eq!(instance_snapshot.class_name, "StringValue");
-        assert_eq!(
-            instance_snapshot.properties,
-            hashmap! {
-                "Value".to_owned() => RbxValue::String {
-                    value: "Changed".to_owned(),
-                },
-            }
-        );
-        assert_eq!(instance_snapshot.children, Vec::new());
+        assert_yaml_snapshot!(instance_snapshot);
     }
 }
