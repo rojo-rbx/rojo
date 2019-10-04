@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{fmt, path::PathBuf};
 
 use serde::{Deserialize, Serialize};
 
@@ -36,8 +36,7 @@ pub struct InstanceMetadata {
     /// This path is used to make sure that file changes update all instances
     /// that may need updates.
     // TODO: Change this to be a SmallVec for performance in common cases?
-    #[serde(serialize_with = "path_serializer::serialize_vec_absolute")]
-    pub contributing_paths: Vec<PathBuf>,
+    pub contributing_paths: Vec<ContributingSource>,
 
     /// If this instance was defined in a project file, this is the name from
     /// the project file and the node under it.
@@ -55,5 +54,28 @@ impl Default for InstanceMetadata {
             contributing_paths: Vec::new(),
             project_node: None,
         }
+    }
+}
+
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
+pub enum ContributingSource {
+    Path(#[serde(serialize_with = "path_serializer::serialize_absolute")] PathBuf),
+    ProjectNode(String, ProjectNode),
+}
+
+impl fmt::Debug for ContributingSource {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ContributingSource::Path(path) => write!(formatter, "Path({})", path.display()),
+            ContributingSource::ProjectNode(name, node) => {
+                write!(formatter, "ProjectNode({}: {:?}", name, node)
+            }
+        }
+    }
+}
+
+impl From<PathBuf> for ContributingSource {
+    fn from(path: PathBuf) -> Self {
+        ContributingSource::Path(path)
     }
 }

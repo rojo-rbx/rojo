@@ -44,7 +44,7 @@ impl SnapshotMiddleware for SnapshotDir {
         Ok(Some(InstanceSnapshot {
             snapshot_id: None,
             metadata: InstanceMetadata {
-                contributing_paths: vec![entry.path().to_path_buf()],
+                contributing_paths: vec![entry.path().to_path_buf().into()],
                 ..Default::default()
             },
             name: Cow::Owned(instance_name),
