@@ -14,6 +14,9 @@ use super::{
     snapshot_from_imfs,
 };
 
+/// Handles snapshots for:
+/// * Files ending in `.project.json`
+/// * Folders containing a file named `default.project.json`
 pub struct SnapshotProject;
 
 impl SnapshotMiddleware for SnapshotProject {
@@ -27,11 +30,16 @@ impl SnapshotMiddleware for SnapshotProject {
             match imfs.get(project_path) {
                 Err(ref err) if err.kind() == FsErrorKind::NotFound => {}
                 Err(err) => return Err(err),
+
+                // TODO: Do we need to muck with the contributing paths if we're
+                // a project file within a folder? Should the folder path be the
+                // contributing path instead of the project file path?
                 Ok(entry) => return SnapshotProject::from_imfs(imfs, &entry),
             }
         }
 
         if !entry.path().to_string_lossy().ends_with(".project.json") {
+            // This isn't a project file, so it's not our job.
             return Ok(None);
         }
 
