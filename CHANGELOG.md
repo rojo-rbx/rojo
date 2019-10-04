@@ -2,6 +2,8 @@
 
 ## Unreleased Changes
 * Improved diagnostics for when the Rojo plugin cannot create an instance.
+* Updated dependencies
+    * This brings Rojo's reflection database from client release 395 to client release 404.
 
 ## [0.5.0](https://github.com/rojo-rbx/rojo/releases/tag/v0.5.0) (August 27, 2019)
 * Changed `.model.json` naming, which may require projects to migrate ambiguous cases:
