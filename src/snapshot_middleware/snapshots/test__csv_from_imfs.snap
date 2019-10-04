@@ -1,0 +1,17 @@
+---
+source: src/snapshot_middleware/csv.rs
+expression: instance_snapshot
+---
+snapshot_id: ~
+metadata:
+  ignore_unknown_instances: false
+  contributing_paths:
+    - /foo.csv
+  project_node: ~
+name: foo
+class_name: LocalizationTable
+properties:
+  Contents:
+    Type: String
+    Value: "[{\"key\":\"Ack\",\"example\":\"An exclamation of despair\",\"source\":\"Ack!\",\"values\":{\"es\":\"¡Ay!\"}}]"
+children: []

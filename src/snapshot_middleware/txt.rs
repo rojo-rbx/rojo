@@ -5,7 +5,7 @@ use rbx_dom_weak::{RbxId, RbxTree, RbxValue};
 
 use crate::{
     imfs::{FileSnapshot, Imfs, ImfsEntry, ImfsFetcher, ImfsSnapshot},
-    snapshot::InstanceSnapshot,
+    snapshot::{InstanceMetadata, InstanceSnapshot},
 };
 
 use super::middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware};
@@ -51,7 +51,10 @@ impl SnapshotMiddleware for SnapshotTxt {
 
         Ok(Some(InstanceSnapshot {
             snapshot_id: None,
-            metadata: Default::default(), // TODO
+            metadata: InstanceMetadata {
+                contributing_paths: vec![entry.path().to_path_buf()],
+                ..Default::default()
+            },
             name: Cow::Owned(instance_name),
             class_name: Cow::Borrowed("StringValue"),
             properties,
@@ -91,6 +94,7 @@ impl SnapshotMiddleware for SnapshotTxt {
 mod test {
     use super::*;
 
+    use insta::assert_yaml_snapshot;
     use maplit::hashmap;
     use rbx_dom_weak::RbxInstanceProperties;
 
@@ -106,16 +110,7 @@ mod test {
         let entry = imfs.get("/foo.txt").unwrap();
         let instance_snapshot = SnapshotTxt::from_imfs(&mut imfs, &entry).unwrap().unwrap();
 
-        assert_eq!(instance_snapshot.name, "foo");
-        assert_eq!(instance_snapshot.class_name, "StringValue");
-        assert_eq!(
-            instance_snapshot.properties,
-            hashmap! {
-                "Value".to_owned() => RbxValue::String {
-                    value: "Hello there!".to_owned(),
-                },
-            }
-        );
+        assert_yaml_snapshot!(instance_snapshot);
     }
 
     #[test]

@@ -6,7 +6,7 @@ use serde::Serialize;
 
 use crate::{
     imfs::{Imfs, ImfsEntry, ImfsFetcher},
-    snapshot::InstanceSnapshot,
+    snapshot::{InstanceMetadata, InstanceSnapshot},
 };
 
 use super::middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware};
@@ -39,7 +39,10 @@ impl SnapshotMiddleware for SnapshotCsv {
 
         Ok(Some(InstanceSnapshot {
             snapshot_id: None,
-            metadata: Default::default(), // TODO
+            metadata: InstanceMetadata {
+                contributing_paths: vec![entry.path().to_path_buf()],
+                ..Default::default()
+            },
             name: Cow::Owned(instance_name),
             class_name: Cow::Borrowed("LocalizationTable"),
             properties: hashmap! {
@@ -137,6 +140,7 @@ mod test {
     use super::*;
 
     use crate::imfs::{ImfsDebug, ImfsSnapshot, NoopFetcher};
+    use insta::assert_yaml_snapshot;
 
     #[test]
     fn csv_from_imfs() {
@@ -152,19 +156,6 @@ Ack,Ack!,,An exclamation of despair,¡Ay!"#,
         let entry = imfs.get("/foo.csv").unwrap();
         let instance_snapshot = SnapshotCsv::from_imfs(&mut imfs, &entry).unwrap().unwrap();
 
-        let expected_contents =
-            r#"[{"key":"Ack","example":"An exclamation of despair","source":"Ack!","values":{"es":"¡Ay!"}}]"#;
-
-        assert_eq!(instance_snapshot.name, "foo");
-        assert_eq!(instance_snapshot.class_name, "LocalizationTable");
-        assert_eq!(instance_snapshot.children, Vec::new());
-        assert_eq!(
-            instance_snapshot.properties,
-            hashmap! {
-                "Contents".to_owned() => RbxValue::String {
-                    value: expected_contents.to_owned(),
-                },
-            }
-        );
+        assert_yaml_snapshot!(instance_snapshot);
     }
 }
