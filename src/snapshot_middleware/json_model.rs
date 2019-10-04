@@ -50,7 +50,9 @@ impl SnapshotMiddleware for SnapshotJsonModel {
             }
         }
 
-        let snapshot = instance.core.into_snapshot(instance_name);
+        let mut snapshot = instance.core.into_snapshot(instance_name);
+
+        snapshot.metadata.contributing_paths = vec![entry.path().to_path_buf()];
 
         Ok(Some(snapshot))
     }
@@ -133,6 +135,7 @@ impl JsonModelCore {
 mod test {
     use super::*;
 
+    use insta::assert_yaml_snapshot;
     use maplit::hashmap;
     use rbx_dom_weak::RbxValue;
 
@@ -166,27 +169,6 @@ mod test {
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            instance_snapshot,
-            InstanceSnapshot {
-                snapshot_id: None,
-                metadata: Default::default(), // TODO
-                name: Cow::Borrowed("foo"),
-                class_name: Cow::Borrowed("IntValue"),
-                properties: hashmap! {
-                    "Value".to_owned() => RbxValue::Int32 {
-                        value: 5,
-                    },
-                },
-                children: vec![InstanceSnapshot {
-                    snapshot_id: None,
-                    metadata: Default::default(), // TODO
-                    name: Cow::Borrowed("The Child"),
-                    class_name: Cow::Borrowed("StringValue"),
-                    properties: HashMap::new(),
-                    children: Vec::new(),
-                },],
-            }
-        );
+        assert_yaml_snapshot!(instance_snapshot);
     }
 }

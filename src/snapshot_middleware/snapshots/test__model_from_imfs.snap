@@ -1,0 +1,26 @@
+---
+source: src/snapshot_middleware/json_model.rs
+expression: instance_snapshot
+---
+snapshot_id: ~
+metadata:
+  ignore_unknown_instances: false
+  contributing_paths:
+    - /foo.model.json
+  project_node: ~
+name: foo
+class_name: IntValue
+properties:
+  Value:
+    Type: Int32
+    Value: 5
+children:
+  - snapshot_id: ~
+    metadata:
+      ignore_unknown_instances: false
+      contributing_paths: []
+      project_node: ~
+    name: The Child
+    class_name: StringValue
+    properties: {}
+    children: []
