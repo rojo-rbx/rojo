@@ -91,17 +91,25 @@ function Reconciler:applyPatch(patch)
 	assert(applyPatchSchema(patch))
 
 	for _, removedIdOrInstance in ipairs(patch.removed) do
+		local removedInstance
+
 		if Types.RbxId(removedIdOrInstance) then
 			-- If this value is an ID, it's assumed to be an instance that the
 			-- Rojo server knows about.
-
+			removedInstance = self.__instanceMap.fromIds[removedIdOrInstance]
 			self.__instanceMap:removeId(removedIdOrInstance)
-		else
-			-- Otherwise, this instance is one that the Rojo server doesn't know
-			-- about, and is located in an area where it should be destroyed to
-			-- keep our trees in sync.
+		end
 
-			removedIdOrInstance:Destroy()
+		-- If this entry was an ID that we didn't know about, removedInstance
+		-- will be nil, which we guard against in case of minor tree desync.
+		if removedInstance ~= nil then
+			-- Ensure that if any descendants are tracked by Rojo, that we
+			-- properly un-track them.
+			for _, descendantInstance in ipairs(removedInstance:GetDescendants()) do
+				self.__instanceMap:removeInstance(descendantInstance)
+			end
+
+			removedInstance:Destroy()
 		end
 	end
 
