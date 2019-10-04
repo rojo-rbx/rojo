@@ -9,5 +9,4 @@ properties: {}
 metadata:
   ignore_unknown_instances: false
   contributing_paths: []
-  project_node: ~
 children: []

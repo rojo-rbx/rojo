@@ -8,7 +8,6 @@ metadata:
   contributing_paths:
     - /foo/default.project.json
     - /foo/other.project.json
-  project_node: ~
 name: path-child-project
 class_name: Folder
 properties: {}
@@ -17,7 +16,6 @@ children:
     metadata:
       ignore_unknown_instances: true
       contributing_paths: []
-      project_node: ~
     name: SomeChild
     class_name: Model
     properties: {}

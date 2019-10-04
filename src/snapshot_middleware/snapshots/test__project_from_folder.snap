@@ -7,7 +7,6 @@ metadata:
   ignore_unknown_instances: true
   contributing_paths:
     - /foo/default.project.json
-  project_node: ~
 name: indirect-project
 class_name: Folder
 properties: {}

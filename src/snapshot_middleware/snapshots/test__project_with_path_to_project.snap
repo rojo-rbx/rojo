@@ -8,7 +8,6 @@ metadata:
   contributing_paths:
     - /foo/default.project.json
     - /foo/other.project.json
-  project_node: ~
 name: path-project
 class_name: Model
 properties: {}

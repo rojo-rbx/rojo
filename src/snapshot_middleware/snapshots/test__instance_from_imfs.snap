@@ -7,7 +7,6 @@ metadata:
   ignore_unknown_instances: false
   contributing_paths:
     - /foo.txt
-  project_node: ~
 name: foo
 class_name: StringValue
 properties:

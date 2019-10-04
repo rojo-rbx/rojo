@@ -47,6 +47,7 @@ pub struct InstanceMetadata {
     /// This information is used to make sure the instance has the correct name,
     /// project-added children, and metadata when it's updated in response to a
     /// file change.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub project_node: Option<(String, ProjectNode)>,
 }
 
