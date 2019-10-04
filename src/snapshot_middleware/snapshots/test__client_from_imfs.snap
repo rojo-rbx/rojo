@@ -7,7 +7,6 @@ metadata:
   ignore_unknown_instances: false
   contributing_paths:
     - /foo.client.lua
-  project_node: ~
 name: foo
 class_name: LocalScript
 properties:

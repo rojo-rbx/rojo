@@ -10,7 +10,6 @@ added_instances:
       metadata:
         ignore_unknown_instances: false
         contributing_paths: []
-        project_node: ~
       name: New
       class_name: Folder
       properties: {}

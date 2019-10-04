@@ -7,7 +7,6 @@ metadata:
   ignore_unknown_instances: true
   contributing_paths:
     - /foo/default.project.json
-  project_node: ~
 name: children
 class_name: Folder
 properties: {}
@@ -16,7 +15,6 @@ children:
     metadata:
       ignore_unknown_instances: true
       contributing_paths: []
-      project_node: ~
     name: Child
     class_name: Model
     properties: {}
