@@ -63,7 +63,7 @@ impl SnapshotMiddleware for SnapshotProject {
         snapshot
             .metadata
             .contributing_paths
-            .insert(0, entry.path().to_path_buf().into());
+            .insert(0, entry.path().to_path_buf());
 
         Ok(Some(snapshot))
     }

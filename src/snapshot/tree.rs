@@ -7,7 +7,7 @@ use rbx_dom_weak::{Descendants, RbxId, RbxInstance, RbxInstanceProperties, RbxTr
 
 use crate::multimap::MultiMap;
 
-use super::{ContributingSource, InstanceMetadata};
+use super::InstanceMetadata;
 
 /// An expanded variant of rbx_dom_weak's `RbxTree` that tracks additional
 /// metadata per instance that's Rojo-specific.
@@ -114,16 +114,12 @@ impl RojoTree {
                 // path associations so that file changes will trigger updates
                 // to this instance correctly.
                 if existing_metadata.contributing_paths != metadata.contributing_paths {
-                    for existing_source in &existing_metadata.contributing_paths {
-                        if let ContributingSource::Path(path) = existing_source {
-                            self.path_to_ids.remove(path, id);
-                        }
+                    for existing_path in &existing_metadata.contributing_paths {
+                        self.path_to_ids.remove(existing_path, id);
                     }
 
-                    for new_source in &metadata.contributing_paths {
-                        if let ContributingSource::Path(path) = new_source {
-                            self.path_to_ids.insert(path.clone(), id);
-                        }
+                    for new_path in &metadata.contributing_paths {
+                        self.path_to_ids.insert(new_path.clone(), id);
                     }
                 }
 
@@ -151,10 +147,8 @@ impl RojoTree {
     }
 
     fn insert_metadata(&mut self, id: RbxId, metadata: InstanceMetadata) {
-        for source in &metadata.contributing_paths {
-            if let ContributingSource::Path(path) = source {
-                self.path_to_ids.insert(path.clone(), id);
-            }
+        for path in &metadata.contributing_paths {
+            self.path_to_ids.insert(path.clone(), id);
         }
 
         self.metadata_map.insert(id, metadata);
@@ -170,11 +164,9 @@ impl RojoTree {
     ) {
         let metadata = self.metadata_map.remove(&id).unwrap();
 
-        for source in &metadata.contributing_paths {
-            if let ContributingSource::Path(path) = source {
-                self.path_to_ids.remove(path, id);
-                path_to_ids.insert(path.clone(), id);
-            }
+        for path in &metadata.contributing_paths {
+            self.path_to_ids.remove(path, id);
+            path_to_ids.insert(path.clone(), id);
         }
 
         metadata_map.insert(id, metadata);

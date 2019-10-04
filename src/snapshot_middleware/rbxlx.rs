@@ -43,7 +43,7 @@ impl SnapshotMiddleware for SnapshotRbxlx {
 
         let mut snapshot = InstanceSnapshot::from_tree(&temp_tree, root_id);
         snapshot.name = Cow::Owned(instance_name);
-        snapshot.metadata.contributing_paths = vec![entry.path().to_path_buf().into()];
+        snapshot.metadata.contributing_paths = vec![entry.path().to_path_buf()];
 
         Ok(Some(snapshot))
     }

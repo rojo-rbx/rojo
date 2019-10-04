@@ -11,7 +11,7 @@ use jod_thread::JoinHandle;
 use crate::{
     imfs::{Imfs, ImfsEvent, ImfsFetcher},
     message_queue::MessageQueue,
-    snapshot::{apply_patch_set, compute_patch_set, AppliedPatchSet, ContributingSource, RojoTree},
+    snapshot::{apply_patch_set, compute_patch_set, AppliedPatchSet, InstigatingSource, RojoTree},
     snapshot_middleware::snapshot_from_imfs,
 };
 
@@ -84,7 +84,7 @@ impl ChangeProcessor {
                                     let metadata = tree.get_metadata(id)
                                         .expect("metadata missing for instance present in tree");
 
-                                    let instigating_source = match metadata.contributing_paths.get(0) {
+                                    let instigating_source = match &metadata.instigating_source {
                                         Some(path) => path,
                                         None => {
                                             log::warn!("Instance {} did not have an instigating source, but was considered for an update.", id);
@@ -94,7 +94,7 @@ impl ChangeProcessor {
                                     };
 
                                     let snapshot = match instigating_source {
-                                        ContributingSource::Path(instigating_path) => {
+                                        InstigatingSource::Path(instigating_path) => {
                                             let entry = imfs
                                                 .get(instigating_path)
                                                 .expect("could not get instigating path from filesystem");
@@ -105,7 +105,7 @@ impl ChangeProcessor {
 
                                             snapshot
                                         }
-                                        ContributingSource::ProjectNode(_, _) => {
+                                        InstigatingSource::ProjectNode(_, _) => {
                                             log::warn!("Instance {} had an instigating source that was a project node, which is not yet supported.", id);
                                             continue;
                                         }

@@ -52,7 +52,7 @@ impl SnapshotMiddleware for SnapshotJsonModel {
 
         let mut snapshot = instance.core.into_snapshot(instance_name);
 
-        snapshot.metadata.contributing_paths = vec![entry.path().to_path_buf().into()];
+        snapshot.metadata.contributing_paths = vec![entry.path().to_path_buf()];
 
         Ok(Some(snapshot))
     }
