@@ -18,6 +18,16 @@ function InstanceMap.new()
 	return setmetatable(self, InstanceMap)
 end
 
+function InstanceMap:debugState()
+	local buffer = {}
+
+	for id, instance in pairs(self.fromIds) do
+		table.insert(buffer, string.format("- %s: %s", id, instance:GetFullName()))
+	end
+
+	return table.concat(buffer, "\n")
+end
+
 function InstanceMap:insert(id, instance)
 	self.fromIds[id] = instance
 	self.fromInstances[instance] = id
