@@ -36,9 +36,28 @@ impl SnapshotMiddleware for SnapshotProject {
         }
 
         let project = Project::load_from_slice(entry.contents(imfs)?, entry.path())
+            // TODO: Turn this into an error object
             .expect("Invalid project file");
 
-        snapshot_project_node(&project.name, &project.tree, imfs)
+        // Snapshotting a project should always return an instance, so this
+        // unwrap is safe.
+        let mut snapshot = snapshot_project_node(&project.name, &project.tree, imfs)?.unwrap();
+
+        // If the project file updates, we want to trigger a snapshot of the
+        // entire project tree. We're overwriting the "instigating path" for the
+        // root instance of the project, since we want to snapshot the project
+        // file and not the snapshot's original instigating path, or else we
+        // won't pick up new changes from the project file.
+        //
+        // We SHOULD NOT mark the project file as a contributing path for any
+        // nodes that aren't roots. They'll be updated as part of the project
+        // file being updated.
+        snapshot
+            .metadata
+            .contributing_paths
+            .insert(0, entry.path().to_path_buf());
+
+        Ok(Some(snapshot))
     }
 
     fn from_instance(_tree: &RbxTree, _id: RbxId) -> SnapshotFileResult {
@@ -52,8 +71,6 @@ fn snapshot_project_node<F: ImfsFetcher>(
     node: &ProjectNode,
     imfs: &mut Imfs<F>,
 ) -> SnapshotInstanceResult<'static> {
-    let ignore_unknown_instances = node.ignore_unknown_instances.unwrap_or(node.path.is_none());
-
     let name = Cow::Owned(instance_name.to_owned());
     let mut class_name = node
         .class_name
@@ -61,6 +78,7 @@ fn snapshot_project_node<F: ImfsFetcher>(
         .map(|name| Cow::Owned(name.clone()));
     let mut properties = HashMap::new();
     let mut children = Vec::new();
+    let mut metadata = InstanceMetadata::default();
 
     if let Some(path) = &node.path {
         let entry = imfs.get(path)?;
@@ -98,6 +116,10 @@ fn snapshot_project_node<F: ImfsFetcher>(
             for child in snapshot.children.into_iter() {
                 children.push(child);
             }
+
+            // Take the snapshot's metadata as-is, which will be mutated later
+            // on.
+            metadata = snapshot.metadata;
         } else {
             // TODO: Should this issue an error instead?
             log::warn!(
@@ -123,16 +145,27 @@ fn snapshot_project_node<F: ImfsFetcher>(
         properties.insert(key.clone(), resolved_value);
     }
 
+    // If the user specified $ignoreUnknownInstances, overwrite the existing
+    // value.
+    //
+    // If the user didn't specify it AND $path was not specified (meaning
+    // there's no existing value we'd be stepping on from a project file or meta
+    // file), set it to true.
+    if let Some(ignore) = node.ignore_unknown_instances {
+        metadata.ignore_unknown_instances = ignore;
+    } else if node.path.is_none() {
+        // TODO: Introduce a strict mode where $ignoreUnknownInstances is never
+        // set implicitly.
+        metadata.ignore_unknown_instances = true;
+    }
+
     Ok(Some(InstanceSnapshot {
         snapshot_id: None,
-        metadata: InstanceMetadata {
-            ignore_unknown_instances,
-            ..Default::default() // TODO: Fill out remaining metadata
-        },
         name,
         class_name,
         properties,
         children,
+        metadata,
     }))
 }
 
