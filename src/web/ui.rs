@@ -275,6 +275,7 @@ impl<F: ImfsFetcher> UiService<F> {
                 <>
                     <div>"ignore_unknown_instances: " { metadata.ignore_unknown_instances.to_string() }</div>
                     { contributing_paths }
+                    { project_node }
                 </>
             };
 
