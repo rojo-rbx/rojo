@@ -245,6 +245,50 @@ impl<F: ImfsFetcher> UiService<F> {
             section.render()
         };
 
+        let metadata_container = {
+            let metadata = instance.metadata();
+
+            let contributing_paths = if metadata.contributing_paths.is_empty() {
+                HtmlContent::None
+            } else {
+                let list = metadata
+                    .contributing_paths
+                    .iter()
+                    .map(|path| html! { <li>{ format!("{}", path.display()) }</li> });
+
+                html! {
+                    <div>
+                        "contributing_paths: "
+                        <ul class="path-list">{ Fragment::new(list) }</ul>
+                    </div>
+                }
+            };
+
+            let project_node = match &metadata.project_node {
+                None => HtmlContent::None,
+                Some(node) => html! {
+                    <div>"project node: " { format!("{:?}", node) }</div>
+                },
+            };
+
+            let content = html! {
+                <>
+                    <div>"ignore_unknown_instances: " { metadata.ignore_unknown_instances.to_string() }</div>
+                    { contributing_paths }
+                </>
+            };
+
+            let section = ExpandableSection {
+                title: "Metadata",
+                class_name: "instance-metadata",
+                id,
+                expanded: false,
+                content,
+            };
+
+            section.render()
+        };
+
         let class_name_specifier = if instance.name() == instance.class_name() {
             HtmlContent::None
         } else {
@@ -261,6 +305,7 @@ impl<F: ImfsFetcher> UiService<F> {
                     { instance.name().to_owned() }
                     { class_name_specifier }
                 </label>
+                { metadata_container }
                 { property_container }
                 { children_container }
             </div>

@@ -24,7 +24,7 @@ img {
 }
 
 .path-list > li {
-  margin-left: 1rem;
+  margin-left: 1.2em;
   font-family: monospace;
 }
 
@@ -103,6 +103,10 @@ img {
 
 .instance-title {
   font-size: 1.2rem;
+  padding: 0.5rem;
+}
+
+.instance-metadata {
   padding: 0.5rem;
 }
 
