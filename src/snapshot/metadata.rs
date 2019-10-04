@@ -40,15 +40,6 @@ pub struct InstanceMetadata {
     // TODO: Change this to be a SmallVec for performance in common cases?
     #[serde(serialize_with = "path_serializer::serialize_vec_absolute")]
     pub contributing_paths: Vec<PathBuf>,
-
-    /// If this instance was defined in a project file, this is the name from
-    /// the project file and the node under it.
-    ///
-    /// This information is used to make sure the instance has the correct name,
-    /// project-added children, and metadata when it's updated in response to a
-    /// file change.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub project_node: Option<(String, ProjectNode)>,
 }
 
 impl Default for InstanceMetadata {
@@ -57,7 +48,6 @@ impl Default for InstanceMetadata {
             ignore_unknown_instances: false,
             instigating_source: None,
             contributing_paths: Vec::new(),
-            project_node: None,
         }
     }
 }

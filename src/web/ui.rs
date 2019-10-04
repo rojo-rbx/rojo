@@ -264,18 +264,11 @@ impl<F: ImfsFetcher> UiService<F> {
                 }
             };
 
-            let project_node = match &metadata.project_node {
-                None => HtmlContent::None,
-                Some(node) => html! {
-                    <div>"project node: " { format!("{:?}", node) }</div>
-                },
-            };
-
             let content = html! {
                 <>
                     <div>"ignore_unknown_instances: " { metadata.ignore_unknown_instances.to_string() }</div>
+                    <div>"instigating source: " { format!("{:?}", metadata.instigating_source) }</div>
                     { contributing_paths }
-                    { project_node }
                 </>
             };
 
