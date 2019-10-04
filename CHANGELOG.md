@@ -1,6 +1,9 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+
+## [0.5.1](https://github.com/rojo-rbx/rojo/releases/tag/v0.5.1) (October 4, 2019)
+* Fixed an issue where Rojo would drop changes if they happened too quickly ([#252](https://github.com/rojo-rbx/rojo/issues/252))
 * Improved diagnostics for when the Rojo plugin cannot create an instance.
 * Updated dependencies
     * This brings Rojo's reflection database from client release 395 to client release 404.

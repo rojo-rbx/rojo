@@ -1480,7 +1480,7 @@ dependencies = [
 
 [[package]]
 name = "rojo"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "csv 1.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1515,7 +1515,7 @@ version = "0.1.0"
 dependencies = [
  "insta 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "paste 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
- "rojo 0.5.0",
+ "rojo 0.5.1",
  "tempfile 3.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
