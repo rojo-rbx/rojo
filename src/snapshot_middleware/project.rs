@@ -31,9 +31,9 @@ impl SnapshotMiddleware for SnapshotProject {
                 Err(ref err) if err.kind() == FsErrorKind::NotFound => {}
                 Err(err) => return Err(err),
 
-                // TODO: Do we need to muck with the contributing paths if we're
-                // a project file within a folder? Should the folder path be the
-                // contributing path instead of the project file path?
+                // TODO: Do we need to muck with the relevant paths if we're a
+                // project file within a folder? Should the folder path be the
+                // relevant path instead of the project file path?
                 Ok(entry) => return SnapshotProject::from_imfs(imfs, &entry),
             }
         }
@@ -57,12 +57,12 @@ impl SnapshotMiddleware for SnapshotProject {
         // file and not the snapshot's original instigating path, or else we
         // won't pick up new changes from the project file.
         //
-        // We SHOULD NOT mark the project file as a contributing path for any
+        // We SHOULD NOT mark the project file as a relevant path for any
         // nodes that aren't roots. They'll be updated as part of the project
         // file being updated.
         snapshot
             .metadata
-            .contributing_paths
+            .relevant_paths
             .push(entry.path().to_path_buf());
 
         Ok(Some(snapshot))

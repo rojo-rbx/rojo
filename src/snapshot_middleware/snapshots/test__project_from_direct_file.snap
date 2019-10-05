@@ -5,7 +5,7 @@ expression: instance_snapshot
 snapshot_id: ~
 metadata:
   ignore_unknown_instances: true
-  contributing_paths:
+  relevant_paths:
     - /foo/hello.project.json
 name: direct-project
 class_name: Model

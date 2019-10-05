@@ -113,12 +113,12 @@ impl RojoTree {
                 // If this instance's source path changed, we need to update our
                 // path associations so that file changes will trigger updates
                 // to this instance correctly.
-                if existing_metadata.contributing_paths != metadata.contributing_paths {
-                    for existing_path in &existing_metadata.contributing_paths {
+                if existing_metadata.relevant_paths != metadata.relevant_paths {
+                    for existing_path in &existing_metadata.relevant_paths {
                         self.path_to_ids.remove(existing_path, id);
                     }
 
-                    for new_path in &metadata.contributing_paths {
+                    for new_path in &metadata.relevant_paths {
                         self.path_to_ids.insert(new_path.clone(), id);
                     }
                 }
@@ -147,7 +147,7 @@ impl RojoTree {
     }
 
     fn insert_metadata(&mut self, id: RbxId, metadata: InstanceMetadata) {
-        for path in &metadata.contributing_paths {
+        for path in &metadata.relevant_paths {
             self.path_to_ids.insert(path.clone(), id);
         }
 
@@ -164,7 +164,7 @@ impl RojoTree {
     ) {
         let metadata = self.metadata_map.remove(&id).unwrap();
 
-        for path in &metadata.contributing_paths {
+        for path in &metadata.relevant_paths {
             self.path_to_ids.remove(path, id);
             path_to_ids.insert(path.clone(), id);
         }

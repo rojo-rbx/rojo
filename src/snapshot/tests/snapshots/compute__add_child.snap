@@ -9,7 +9,7 @@ added_instances:
       snapshot_id: ~
       metadata:
         ignore_unknown_instances: false
-        contributing_paths: []
+        relevant_paths: []
       name: New
       class_name: Folder
       properties: {}

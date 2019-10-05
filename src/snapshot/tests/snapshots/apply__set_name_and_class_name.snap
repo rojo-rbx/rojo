@@ -8,5 +8,5 @@ class_name: Folder
 properties: {}
 metadata:
   ignore_unknown_instances: false
-  contributing_paths: []
+  relevant_paths: []
 children: []

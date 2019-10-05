@@ -248,17 +248,17 @@ impl<F: ImfsFetcher> UiService<F> {
         let metadata_container = {
             let metadata = instance.metadata();
 
-            let contributing_paths = if metadata.contributing_paths.is_empty() {
+            let relevant_paths = if metadata.relevant_paths.is_empty() {
                 HtmlContent::None
             } else {
                 let list = metadata
-                    .contributing_paths
+                    .relevant_paths
                     .iter()
                     .map(|path| html! { <li>{ format!("{}", path.display()) }</li> });
 
                 html! {
                     <div>
-                        "contributing_paths: "
+                        "relevant_paths: "
                         <ul class="path-list">{ Fragment::new(list) }</ul>
                     </div>
                 }
@@ -268,7 +268,7 @@ impl<F: ImfsFetcher> UiService<F> {
                 <>
                     <div>"ignore_unknown_instances: " { metadata.ignore_unknown_instances.to_string() }</div>
                     <div>"instigating source: " { format!("{:?}", metadata.instigating_source) }</div>
-                    { contributing_paths }
+                    { relevant_paths }
                 </>
             };
 

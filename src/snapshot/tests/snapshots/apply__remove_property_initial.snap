@@ -11,5 +11,5 @@ properties:
     Value: Should be removed
 metadata:
   ignore_unknown_instances: false
-  contributing_paths: []
+  relevant_paths: []
 children: []

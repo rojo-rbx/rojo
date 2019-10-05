@@ -23,7 +23,7 @@ pub struct InstanceMetadata {
     /// even if they don't exist, since the presence of a file can change the
     /// outcome of a snapshot function.
     ///
-    /// For example, a file named foo.lua might have these contributing paths:
+    /// For example, a file named foo.lua might have these relevant paths:
     /// - foo.lua
     /// - foo.meta.json (even if this file doesn't exist!)
     ///
@@ -39,7 +39,7 @@ pub struct InstanceMetadata {
     /// that may need updates.
     // TODO: Change this to be a SmallVec for performance in common cases?
     #[serde(serialize_with = "path_serializer::serialize_vec_absolute")]
-    pub contributing_paths: Vec<PathBuf>,
+    pub relevant_paths: Vec<PathBuf>,
 }
 
 impl Default for InstanceMetadata {
@@ -47,7 +47,7 @@ impl Default for InstanceMetadata {
         InstanceMetadata {
             ignore_unknown_instances: false,
             instigating_source: None,
-            contributing_paths: Vec::new(),
+            relevant_paths: Vec::new(),
         }
     }
 }

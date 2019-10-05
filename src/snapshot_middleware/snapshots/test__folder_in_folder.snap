@@ -5,7 +5,7 @@ expression: instance_snapshot
 snapshot_id: ~
 metadata:
   ignore_unknown_instances: false
-  contributing_paths:
+  relevant_paths:
     - /foo
 name: foo
 class_name: Folder
@@ -14,7 +14,7 @@ children:
   - snapshot_id: ~
     metadata:
       ignore_unknown_instances: false
-      contributing_paths:
+      relevant_paths:
         - /foo/Child
     name: Child
     class_name: Folder

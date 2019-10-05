@@ -40,7 +40,7 @@ impl SnapshotMiddleware for SnapshotCsv {
         Ok(Some(InstanceSnapshot {
             snapshot_id: None,
             metadata: InstanceMetadata {
-                contributing_paths: vec![entry.path().to_path_buf()],
+                relevant_paths: vec![entry.path().to_path_buf()],
                 ..Default::default()
             },
             name: Cow::Owned(instance_name),
