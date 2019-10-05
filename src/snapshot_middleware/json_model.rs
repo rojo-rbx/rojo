@@ -136,8 +136,6 @@ mod test {
     use super::*;
 
     use insta::assert_yaml_snapshot;
-    use maplit::hashmap;
-    use rbx_dom_weak::RbxValue;
 
     use crate::imfs::{ImfsDebug, ImfsSnapshot, NoopFetcher};
 
