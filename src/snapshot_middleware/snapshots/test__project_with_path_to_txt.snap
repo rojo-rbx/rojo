@@ -6,8 +6,8 @@ snapshot_id: ~
 metadata:
   ignore_unknown_instances: false
   contributing_paths:
-    - /foo/default.project.json
     - /foo/other.txt
+    - /foo/default.project.json
 name: path-project
 class_name: StringValue
 properties:

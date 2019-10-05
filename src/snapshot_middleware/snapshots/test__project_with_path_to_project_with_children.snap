@@ -6,8 +6,8 @@ snapshot_id: ~
 metadata:
   ignore_unknown_instances: true
   contributing_paths:
-    - /foo/default.project.json
     - /foo/other.project.json
+    - /foo/default.project.json
 name: path-child-project
 class_name: Folder
 properties: {}
