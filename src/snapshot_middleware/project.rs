@@ -6,7 +6,7 @@ use rbx_reflection::try_resolve_value;
 use crate::{
     imfs::{FsErrorKind, Imfs, ImfsEntry, ImfsFetcher},
     project::{Project, ProjectNode},
-    snapshot::{InstanceMetadata, InstanceSnapshot},
+    snapshot::{InstanceMetadata, InstanceSnapshot, InstigatingSource},
 };
 
 use super::{
@@ -173,6 +173,11 @@ fn snapshot_project_node<F: ImfsFetcher>(
         // set implicitly.
         metadata.ignore_unknown_instances = true;
     }
+
+    metadata.instigating_source = Some(InstigatingSource::ProjectNode(
+        instance_name.to_string(),
+        node.clone(),
+    ));
 
     Ok(Some(InstanceSnapshot {
         snapshot_id: None,

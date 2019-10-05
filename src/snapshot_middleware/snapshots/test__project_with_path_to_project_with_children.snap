@@ -17,6 +17,14 @@ children:
   - snapshot_id: ~
     metadata:
       ignore_unknown_instances: true
+      instigating_source:
+        ProjectNode:
+          - SomeChild
+          - class_name: Model
+            children: {}
+            properties: {}
+            ignore_unknown_instances: ~
+            path: ~
       relevant_paths: []
     name: SomeChild
     class_name: Model
