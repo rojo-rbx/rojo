@@ -254,7 +254,7 @@ impl<F: ImfsFetcher> UiService<F> {
                 let list = metadata
                     .contributing_paths
                     .iter()
-                    .map(|path| html! { <li>{ format!("{:?}", path) }</li> });
+                    .map(|path| html! { <li>{ format!("{}", path.display()) }</li> });
 
                 html! {
                     <div>
