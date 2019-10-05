@@ -5,6 +5,8 @@ expression: instance_snapshot
 snapshot_id: ~
 metadata:
   ignore_unknown_instances: true
+  instigating_source:
+    Path: /foo/hello.project.json
   relevant_paths:
     - /foo/hello.project.json
 name: direct-project

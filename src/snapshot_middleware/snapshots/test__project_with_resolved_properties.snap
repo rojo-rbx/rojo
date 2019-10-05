@@ -5,6 +5,8 @@ expression: instance_snapshot
 snapshot_id: ~
 metadata:
   ignore_unknown_instances: true
+  instigating_source:
+    Path: /foo/default.project.json
   relevant_paths:
     - /foo/default.project.json
 name: resolved-properties
