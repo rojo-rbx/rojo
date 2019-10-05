@@ -52,6 +52,7 @@ impl SnapshotMiddleware for SnapshotJsonModel {
 
         let mut snapshot = instance.core.into_snapshot(instance_name);
 
+        snapshot.metadata.instigating_source = Some(entry.path().to_path_buf().into());
         snapshot.metadata.relevant_paths = vec![entry.path().to_path_buf()];
 
         Ok(Some(snapshot))

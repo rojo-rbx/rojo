@@ -44,6 +44,7 @@ impl SnapshotMiddleware for SnapshotDir {
         Ok(Some(InstanceSnapshot {
             snapshot_id: None,
             metadata: InstanceMetadata {
+                instigating_source: Some(entry.path().to_path_buf().into()),
                 relevant_paths: vec![entry.path().to_path_buf()],
                 ..Default::default()
             },

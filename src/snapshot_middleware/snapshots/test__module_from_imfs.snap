@@ -5,6 +5,8 @@ expression: instance_snapshot
 snapshot_id: ~
 metadata:
   ignore_unknown_instances: false
+  instigating_source:
+    Path: /foo.lua
   relevant_paths:
     - /foo.lua
 name: foo

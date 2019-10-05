@@ -49,6 +49,7 @@ impl SnapshotMiddleware for SnapshotRbxm {
         if children.len() == 1 {
             let mut snapshot = InstanceSnapshot::from_tree(&temp_tree, children[0]);
             snapshot.name = Cow::Owned(instance_name);
+            snapshot.metadata.instigating_source = Some(entry.path().to_path_buf().into());
             snapshot.metadata.relevant_paths = vec![entry.path().to_path_buf()];
 
             Ok(Some(snapshot))

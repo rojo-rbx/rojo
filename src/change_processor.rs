@@ -94,9 +94,9 @@ impl ChangeProcessor {
                                     };
 
                                     let snapshot = match instigating_source {
-                                        InstigatingSource::Path(instigating_path) => {
+                                        InstigatingSource::Path(path) => {
                                             let entry = imfs
-                                                .get(instigating_path)
+                                                .get(path)
                                                 .expect("could not get instigating path from filesystem");
 
                                             let snapshot = snapshot_from_imfs(&mut imfs, &entry)

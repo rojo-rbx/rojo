@@ -5,6 +5,8 @@ expression: instance_snapshot
 snapshot_id: ~
 metadata:
   ignore_unknown_instances: false
+  instigating_source:
+    Path: /foo
   relevant_paths:
     - /foo
 name: foo
@@ -14,6 +16,8 @@ children:
   - snapshot_id: ~
     metadata:
       ignore_unknown_instances: false
+      instigating_source:
+        Path: /foo/Child
       relevant_paths:
         - /foo/Child
     name: Child
