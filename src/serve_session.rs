@@ -1,8 +1,11 @@
 use std::{
     collections::HashSet,
+    path::Path,
     sync::{Arc, Mutex, MutexGuard},
     time::Instant,
 };
+
+use rbx_dom_weak::RbxInstanceProperties;
 
 use crate::{
     change_processor::ChangeProcessor,
@@ -10,7 +13,10 @@ use crate::{
     message_queue::MessageQueue,
     project::Project,
     session_id::SessionId,
-    snapshot::{AppliedPatchSet, RojoTree},
+    snapshot::{
+        apply_patch_set, compute_patch_set, AppliedPatchSet, InstancePropertiesWithMeta, RojoTree,
+    },
+    snapshot_middleware::snapshot_from_imfs,
 };
 
 /// Contains all of the state for a Rojo serve session.
@@ -70,8 +76,51 @@ pub struct ServeSession<F> {
 /// block to prevent needing to spread Send + Sync + 'static into everything
 /// that handles ServeSession.
 impl<F: ImfsFetcher + Send + 'static> ServeSession<F> {
-    pub fn new(imfs: Imfs<F>, tree: RojoTree, root_project: Option<Project>) -> Self {
+    /// Start a new serve session from the given in-memory filesystem  and start
+    /// path.
+    ///
+    /// The project file is expected to be loaded out-of-band since it's
+    /// currently loaded from the filesystem directly instead of through the
+    /// in-memory filesystem layer.
+    pub fn new<P: AsRef<Path>>(
+        mut imfs: Imfs<F>,
+        start_path: P,
+        root_project: Option<Project>,
+    ) -> Self {
+        let start_path = start_path.as_ref();
+
+        log::trace!(
+            "Starting new ServeSession at path {} with project {:#?}",
+            start_path.display(),
+            root_project
+        );
+
         let start_time = Instant::now();
+
+        log::trace!("Constructing initial tree");
+        let mut tree = RojoTree::new(InstancePropertiesWithMeta {
+            properties: RbxInstanceProperties {
+                name: "ROOT".to_owned(),
+                class_name: "Folder".to_owned(),
+                properties: Default::default(),
+            },
+            metadata: Default::default(),
+        });
+        let root_id = tree.get_root_id();
+
+        log::trace!("Loading start path: {}", start_path.display());
+        let entry = imfs.get(start_path).expect("could not get project path");
+
+        log::trace!("Snapshotting start path");
+        let snapshot = snapshot_from_imfs(&mut imfs, &entry)
+            .expect("snapshot failed")
+            .expect("snapshot did not return an instance");
+
+        log::trace!("Computing initial patch set");
+        let patch_set = compute_patch_set(&snapshot, &tree, root_id);
+
+        log::trace!("Applying initial patch set");
+        apply_patch_set(&mut tree, patch_set);
 
         let session_id = SessionId::new();
         let message_queue = MessageQueue::new();
@@ -80,6 +129,7 @@ impl<F: ImfsFetcher + Send + 'static> ServeSession<F> {
         let message_queue = Arc::new(message_queue);
         let imfs = Arc::new(Mutex::new(imfs));
 
+        log::trace!("Starting ChangeProcessor");
         let change_processor = ChangeProcessor::start(
             Arc::clone(&tree),
             Arc::clone(&message_queue),
@@ -133,5 +183,34 @@ impl<F: ImfsFetcher> ServeSession<F> {
         self.root_project
             .as_ref()
             .and_then(|project| project.serve_place_ids.as_ref())
+    }
+}
+
+/// This module is named to trick Insta into naming the resulting snapshots
+/// correctly.
+///
+/// See https://github.com/mitsuhiko/insta/issues/78
+#[cfg(test)]
+mod serve_session {
+    use super::*;
+
+    use insta::assert_yaml_snapshot;
+    use rojo_insta_ext::RedactionMap;
+
+    use crate::{
+        imfs::{ImfsDebug, ImfsSnapshot, NoopFetcher},
+        tree_view::view_tree,
+    };
+
+    #[test]
+    fn just_folder() {
+        let mut imfs = Imfs::new(NoopFetcher);
+
+        imfs.debug_load_snapshot("/foo", ImfsSnapshot::empty_dir());
+
+        let session = ServeSession::new(imfs, "/foo", None);
+
+        let mut rm = RedactionMap::new();
+        assert_yaml_snapshot!(view_tree(&session.tree(), &mut rm));
     }
 }

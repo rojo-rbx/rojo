@@ -1,20 +1,16 @@
 use std::{
-    collections::HashMap,
     io::{self, Write},
     path::PathBuf,
     sync::Arc,
 };
 
 use failure::Fail;
-use rbx_dom_weak::RbxInstanceProperties;
 use termcolor::{BufferWriter, Color, ColorChoice, ColorSpec, WriteColor};
 
 use crate::{
     imfs::{Imfs, RealFetcher, WatchMode},
     project::{Project, ProjectLoadError},
     serve_session::ServeSession,
-    snapshot::{apply_patch_set, compute_patch_set, InstancePropertiesWithMeta, RojoTree},
-    snapshot_middleware::snapshot_from_imfs,
     web::LiveServer,
 };
 
@@ -54,29 +50,14 @@ pub fn serve(options: &ServeOptions) -> Result<(), ServeError> {
 
     let _ = show_start_message(port);
 
-    let mut tree = RojoTree::new(InstancePropertiesWithMeta {
-        properties: RbxInstanceProperties {
-            name: "ROOT".to_owned(),
-            class_name: "Folder".to_owned(),
-            properties: HashMap::new(),
-        },
-        metadata: Default::default(),
-    });
-    let root_id = tree.get_root_id();
+    let imfs = Imfs::new(RealFetcher::new(WatchMode::Enabled));
 
-    let mut imfs = Imfs::new(RealFetcher::new(WatchMode::Enabled));
-    let entry = imfs
-        .get(&options.fuzzy_project_path)
-        .expect("could not get project path");
+    let session = Arc::new(ServeSession::new(
+        imfs,
+        &options.fuzzy_project_path,
+        maybe_project,
+    ));
 
-    let snapshot = snapshot_from_imfs(&mut imfs, &entry)
-        .expect("snapshot failed")
-        .expect("snapshot did not return an instance");
-
-    let patch_set = compute_patch_set(&snapshot, &tree, root_id);
-    apply_patch_set(&mut tree, patch_set);
-
-    let session = Arc::new(ServeSession::new(imfs, tree, maybe_project));
     let server = LiveServer::new(session);
 
     server.start(port);
