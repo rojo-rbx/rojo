@@ -23,6 +23,12 @@ impl ImfsSnapshot {
 
         ImfsSnapshot::Directory(DirectorySnapshot { children })
     }
+
+    pub fn empty_dir() -> ImfsSnapshot {
+        ImfsSnapshot::Directory(DirectorySnapshot {
+            children: Default::default(),
+        })
+    }
 }
 
 #[derive(Debug, Clone)]
