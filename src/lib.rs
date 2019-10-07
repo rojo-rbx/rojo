@@ -12,6 +12,9 @@ pub mod commands;
 #[doc(hidden)]
 pub mod project;
 
+#[cfg(test)]
+mod tree_view;
+
 mod auth_cookie;
 mod change_processor;
 mod imfs;

@@ -72,6 +72,7 @@ rojo-insta-ext = { path = "rojo-insta-ext" }
 lazy_static = "1.2"
 paste = "0.1"
 pretty_assertions = "0.6.1"
+serde_yaml = "0.8.9"
 tempfile = "3.0"
 walkdir = "2.1"
 
