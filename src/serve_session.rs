@@ -197,6 +197,7 @@ mod serve_session {
     use std::{path::PathBuf, time::Duration};
 
     use insta::assert_yaml_snapshot;
+    use maplit::hashmap;
     use rojo_insta_ext::RedactionMap;
     use tokio::{runtime::Runtime, timer::Timeout};
 
@@ -210,6 +211,33 @@ mod serve_session {
         let mut imfs = Imfs::new(NoopFetcher);
 
         imfs.debug_load_snapshot("/foo", ImfsSnapshot::empty_dir());
+
+        let session = ServeSession::new(imfs, "/foo", None);
+
+        let mut rm = RedactionMap::new();
+        assert_yaml_snapshot!(view_tree(&session.tree(), &mut rm));
+    }
+
+    #[test]
+    fn project_with_folder() {
+        let mut imfs = Imfs::new(NoopFetcher);
+
+        imfs.debug_load_snapshot(
+            "/foo",
+            ImfsSnapshot::dir(hashmap! {
+                "default.project.json" => ImfsSnapshot::file(r#"
+                {
+                    "name": "HelloWorld",
+                    "tree": {
+                        "$path": "src"
+                    }
+                }
+            "#),
+                "src" => ImfsSnapshot::dir(hashmap! {
+                    "hello.txt" => ImfsSnapshot::file("Hello, world!"),
+                }),
+            }),
+        );
 
         let session = ServeSession::new(imfs, "/foo", None);
 
