@@ -62,20 +62,24 @@ impl<T: Clone> MessageQueue<T> {
     }
 
     /// Subscribe to any messages occurring after the given message cursor.
-    pub fn subscribe(&self, cursor: u32, sender: oneshot::Sender<(u32, Vec<T>)>) {
+    pub fn subscribe(&self, cursor: u32) -> oneshot::Receiver<(u32, Vec<T>)> {
+        let (sender, receiver) = oneshot::channel();
+
         let listener = {
             let listener = Listener { sender, cursor };
 
             let messages = self.messages.read().unwrap();
 
             match fire_listener_if_ready(&messages, listener) {
-                Ok(_) => return,
+                Ok(_) => return receiver,
                 Err(listener) => listener,
             }
         };
 
         let mut message_listeners = self.message_listeners.lock().unwrap();
         message_listeners.push(listener);
+
+        receiver
     }
 
     /// Subscribe to any messages being pushed into the queue.
@@ -88,10 +92,8 @@ impl<T: Clone> MessageQueue<T> {
             let messages = self.messages.read().unwrap();
             messages.len() as u32
         };
-        let (sender, receiver) = oneshot::channel();
 
-        self.subscribe(cursor, sender);
-        receiver
+        self.subscribe(cursor)
     }
 
     pub fn cursor(&self) -> u32 {

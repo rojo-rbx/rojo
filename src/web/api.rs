@@ -3,7 +3,7 @@
 
 use std::{collections::HashMap, sync::Arc};
 
-use futures::{sync::oneshot, Future};
+use futures::Future;
 
 use hyper::{service::Service, Body, Method, Request, StatusCode};
 use rbx_dom_weak::RbxId;
@@ -83,12 +83,8 @@ impl<F: ImfsFetcher> ApiService<F> {
         };
 
         let session_id = self.serve_session.session_id();
-        let (sender, receiver) = oneshot::channel();
 
-        {
-            let message_queue = self.serve_session.message_queue();
-            message_queue.subscribe(input_cursor, sender);
-        }
+        let receiver = self.serve_session.message_queue().subscribe(input_cursor);
 
         let tree_handle = self.serve_session.tree_handle();
 
