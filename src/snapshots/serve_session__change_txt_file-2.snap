@@ -1,0 +1,18 @@
+---
+source: src/serve_session.rs
+expression: "view_tree(&session.tree(), &mut redactions)"
+---
+id: id-1
+name: foo
+class_name: StringValue
+properties:
+  Value:
+    Type: String
+    Value: World!
+metadata:
+  ignore_unknown_instances: false
+  instigating_source:
+    Path: /foo.txt
+  relevant_paths:
+    - /foo.txt
+children: []
