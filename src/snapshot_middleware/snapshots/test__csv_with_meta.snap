@@ -4,7 +4,7 @@ expression: instance_snapshot
 ---
 snapshot_id: ~
 metadata:
-  ignore_unknown_instances: false
+  ignore_unknown_instances: true
   instigating_source:
     Path: /foo.csv
   relevant_paths:
