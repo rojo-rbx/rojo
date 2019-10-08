@@ -13,3 +13,9 @@ pub use imfs::*;
 pub use noop_fetcher::*;
 pub use real_fetcher::*;
 pub use snapshot::*;
+
+#[cfg(test)]
+mod test_fetcher;
+
+#[cfg(test)]
+pub use test_fetcher::*;
