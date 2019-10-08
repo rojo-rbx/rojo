@@ -61,6 +61,7 @@ impl<T: Clone> MessageQueue<T> {
         mem::replace::<Vec<_>>(&mut message_listeners, remaining_listeners);
     }
 
+    /// Subscribe to any messages occurring after the given message cursor.
     pub fn subscribe(&self, cursor: u32, sender: oneshot::Sender<(u32, Vec<T>)>) {
         let listener = {
             let listener = Listener { sender, cursor };
@@ -75,6 +76,22 @@ impl<T: Clone> MessageQueue<T> {
 
         let mut message_listeners = self.message_listeners.lock().unwrap();
         message_listeners.push(listener);
+    }
+
+    /// Subscribe to any messages being pushed into the queue.
+    ///
+    /// This method is only useful in tests. Non-test code should use subscribe
+    /// instead.
+    #[cfg(test)]
+    pub fn subscribe_any(&self) -> oneshot::Receiver<(u32, Vec<T>)> {
+        let cursor = {
+            let messages = self.messages.read().unwrap();
+            messages.len() as u32
+        };
+        let (sender, receiver) = oneshot::channel();
+
+        self.subscribe(cursor, sender);
+        receiver
     }
 
     pub fn cursor(&self) -> u32 {
