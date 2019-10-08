@@ -96,7 +96,7 @@ fn snapshot_lua_file<F: ImfsFetcher>(
 
     let mut metadata = InstanceMetadata {
         instigating_source: Some(entry.path().to_path_buf().into()),
-        relevant_paths: vec![entry.path().to_path_buf()],
+        relevant_paths: vec![entry.path().to_path_buf(), meta_path.clone()],
         ..Default::default()
     };
 

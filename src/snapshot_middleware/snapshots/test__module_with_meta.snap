@@ -9,6 +9,7 @@ metadata:
     Path: /foo.lua
   relevant_paths:
     - /foo.lua
+    - /foo.meta.json
 name: foo
 class_name: ModuleScript
 properties:

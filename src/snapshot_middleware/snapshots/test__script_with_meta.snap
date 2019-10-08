@@ -9,6 +9,7 @@ metadata:
     Path: /foo.server.lua
   relevant_paths:
     - /foo.server.lua
+    - /foo.meta.json
 name: foo
 class_name: Script
 properties:

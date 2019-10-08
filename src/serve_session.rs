@@ -246,6 +246,69 @@ mod serve_session {
     }
 
     #[test]
+    fn script_with_meta() {
+        let mut imfs = Imfs::new(NoopFetcher);
+
+        imfs.debug_load_snapshot(
+            "/root",
+            ImfsSnapshot::dir(hashmap! {
+                "test.lua" => ImfsSnapshot::file("This is a test."),
+                "test.meta.json" => ImfsSnapshot::file(r#"{ "ignoreUnknownInstances": true }"#),
+            }),
+        );
+
+        let session = ServeSession::new(imfs, "/root", None);
+
+        let mut rm = RedactionMap::new();
+        assert_yaml_snapshot!(view_tree(&session.tree(), &mut rm));
+    }
+
+    #[test]
+    fn change_script_meta() {
+        let (state, fetcher) = TestFetcher::new();
+
+        state.load_snapshot(
+            "/root",
+            ImfsSnapshot::dir(hashmap! {
+                "test.lua" => ImfsSnapshot::file("This is a test."),
+                "test.meta.json" => ImfsSnapshot::file(r#"{ "ignoreUnknownInstances": true }"#),
+            }),
+        );
+
+        let imfs = Imfs::new(fetcher);
+        let session = ServeSession::new(imfs, "/root", None);
+
+        let mut redactions = RedactionMap::new();
+        assert_yaml_snapshot!(
+            "change_script_meta_before",
+            view_tree(&session.tree(), &mut redactions)
+        );
+
+        state.load_snapshot(
+            "/root/test.meta.json",
+            ImfsSnapshot::file(r#"{ "ignoreUnknownInstances": false }"#),
+        );
+
+        let receiver = Timeout::new(
+            session.message_queue().subscribe_any(),
+            Duration::from_millis(200),
+        );
+        state.raise_event(ImfsEvent::Modified(PathBuf::from("/root/test.meta.json")));
+
+        let mut rt = Runtime::new().unwrap();
+        let changes = rt.block_on(receiver).unwrap();
+
+        assert_yaml_snapshot!(
+            "change_script_meta_patch",
+            redactions.redacted_yaml(changes)
+        );
+        assert_yaml_snapshot!(
+            "change_script_meta_after",
+            view_tree(&session.tree(), &mut redactions)
+        );
+    }
+
+    #[test]
     fn change_txt_file() {
         let (state, fetcher) = TestFetcher::new();
 

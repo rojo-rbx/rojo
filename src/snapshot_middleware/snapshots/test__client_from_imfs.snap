@@ -9,6 +9,7 @@ metadata:
     Path: /foo.client.lua
   relevant_paths:
     - /foo.client.lua
+    - /foo.meta.json
 name: foo
 class_name: LocalScript
 properties:
