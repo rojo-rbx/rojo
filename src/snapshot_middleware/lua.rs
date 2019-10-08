@@ -94,31 +94,28 @@ fn snapshot_lua_file<F: ImfsFetcher>(
         .path()
         .with_file_name(format!("{}.meta.json", instance_name));
 
-    let mut metadata = InstanceMetadata {
+    let metadata = InstanceMetadata {
         instigating_source: Some(entry.path().to_path_buf().into()),
         relevant_paths: vec![entry.path().to_path_buf(), meta_path.clone()],
         ..Default::default()
     };
 
-    if let Some(meta_entry) = imfs.get(meta_path).with_not_found()? {
-        let meta_contents = meta_entry.contents(imfs)?;
-        let parsed: AdjacentMetadata = serde_json::from_slice(meta_contents)
-            // TODO: Turn into error type
-            .expect(".meta.json file was malformed");
-
-        if let Some(ignore) = parsed.ignore_unknown_instances {
-            metadata.ignore_unknown_instances = ignore;
-        }
-    }
-
-    Ok(Some(InstanceSnapshot {
+    let mut snapshot = InstanceSnapshot {
         snapshot_id: None,
         metadata,
         name: Cow::Owned(instance_name.to_owned()),
         class_name: Cow::Borrowed(class_name),
         properties,
         children: Vec::new(),
-    }))
+    };
+
+    if let Some(meta_entry) = imfs.get(meta_path).with_not_found()? {
+        let meta_contents = meta_entry.contents(imfs)?;
+        let mut metadata = AdjacentMetadata::from_slice(meta_contents);
+        metadata.apply_all(&mut snapshot);
+    }
+
+    Ok(Some(snapshot))
 }
 
 /// Attempts to snapshot an 'init' Lua script contained inside of a folder with
