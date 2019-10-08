@@ -33,6 +33,7 @@ gen_build_tests! {
     module_init,
     rbxm_in_folder,
     rbxmx_in_folder,
+    script_meta_disabled,
     server_in_folder,
     server_init,
     txt_in_folder,
