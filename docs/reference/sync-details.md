@@ -116,10 +116,18 @@ Meta files can contain:
 ### Meta Files to set Rojo metadata
 Sometimes it's useful to apply properties like `ignoreUnknownInstances` on instances that are defined on the filesystem instead of within the project itself.
 
+If your project has `hello.txt` and there are instances underneath it that you want Rojo to ignore when live-syncing, you could create `hello.meta.json` with:
+
+```json
+{
+    "ignoreUnknownInstances": true
+}
+```
+
 ### Meta Files for Disabled Scripts
 Meta files can be used to set properties on `Script` instances, like `Disabled`.
 
-If your project had `foo.server.lua` and you wanted to make sure it would be disabled, you could create a `foo.meta.json` next to it with:
+If your project has `foo.server.lua` and you want to make sure it would be disabled, you could create a `foo.meta.json` next to it with:
 
 ```json
 {
@@ -140,7 +148,7 @@ If you wanted to represent a tool containing a script and a model for its handle
             0, 0, 0,
             1, 0, 0,
             0, 1, 0,
-            0, 0, 1,
+            0, 0, 1
         ]
     }
 }
