@@ -1,0 +1,22 @@
+---
+source: src/snapshot_middleware/lua.rs
+expression: instance_snapshot
+---
+snapshot_id: ~
+metadata:
+  ignore_unknown_instances: false
+  instigating_source:
+    Path: /bar.server.lua
+  relevant_paths:
+    - /bar.server.lua
+    - /bar.meta.json
+name: bar
+class_name: Script
+properties:
+  Disabled:
+    Type: Bool
+    Value: true
+  Source:
+    Type: String
+    Value: Hello there!
+children: []

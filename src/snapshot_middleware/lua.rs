@@ -243,4 +243,27 @@ mod test {
 
         assert_yaml_snapshot!(instance_snapshot);
     }
+
+    #[test]
+    fn script_disabled() {
+        let mut imfs = Imfs::new(NoopFetcher);
+        let file = ImfsSnapshot::file("Hello there!");
+        let meta = ImfsSnapshot::file(
+            r#"
+            {
+                "properties": {
+                    "Disabled": true
+                }
+            }
+            "#,
+        );
+
+        imfs.debug_load_snapshot("/bar.server.lua", file);
+        imfs.debug_load_snapshot("/bar.meta.json", meta);
+
+        let entry = imfs.get("/bar.server.lua").unwrap();
+        let instance_snapshot = SnapshotLua::from_imfs(&mut imfs, &entry).unwrap().unwrap();
+
+        assert_yaml_snapshot!(instance_snapshot);
+    }
 }
