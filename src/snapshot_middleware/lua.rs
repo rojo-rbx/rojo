@@ -159,7 +159,7 @@ fn match_trailing<'a>(input: &'a str, trailer: &str) -> Option<&'a str> {
 mod test {
     use super::*;
 
-    use insta::assert_yaml_snapshot;
+    use insta::{assert_yaml_snapshot, with_settings};
 
     use crate::imfs::{ImfsDebug, ImfsSnapshot, NoopFetcher};
 
@@ -264,6 +264,8 @@ mod test {
         let entry = imfs.get("/bar.server.lua").unwrap();
         let instance_snapshot = SnapshotLua::from_imfs(&mut imfs, &entry).unwrap().unwrap();
 
-        assert_yaml_snapshot!(instance_snapshot);
+        with_settings!({ sort_maps => true }, {
+            assert_yaml_snapshot!(instance_snapshot);
+        });
     }
 }
