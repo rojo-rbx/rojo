@@ -194,10 +194,11 @@ impl<F: ImfsFetcher> ServeSession<F> {
 mod serve_session {
     use super::*;
 
-    use std::{path::PathBuf, thread::sleep, time::Duration};
+    use std::{path::PathBuf, time::Duration};
 
     use insta::assert_yaml_snapshot;
     use rojo_insta_ext::RedactionMap;
+    use tokio::{runtime::Runtime, timer::Timeout};
 
     use crate::{
         imfs::{ImfsDebug, ImfsEvent, ImfsSnapshot, NoopFetcher, TestFetcher},
@@ -226,15 +227,26 @@ mod serve_session {
         let session = ServeSession::new(imfs, "/foo.txt", None);
 
         let mut redactions = RedactionMap::new();
-        assert_yaml_snapshot!(view_tree(&session.tree(), &mut redactions));
+        assert_yaml_snapshot!(
+            "change_txt_file_before",
+            view_tree(&session.tree(), &mut redactions)
+        );
 
         state.load_snapshot("/foo.txt", ImfsSnapshot::file("World!"));
+
+        let receiver = session.message_queue().subscribe_any();
+
         state.raise_event(ImfsEvent::Modified(PathBuf::from("/foo.txt")));
 
-        // TODO: Listen for a signal that the tree changed instead, using the
-        // message queue
-        sleep(Duration::from_millis(20));
+        let receiver = Timeout::new(receiver, Duration::from_millis(200));
 
-        assert_yaml_snapshot!(view_tree(&session.tree(), &mut redactions));
+        let mut rt = Runtime::new().unwrap();
+        let result = rt.block_on(receiver).unwrap();
+
+        assert_yaml_snapshot!("change_txt_file_patch", redactions.redacted_yaml(result));
+        assert_yaml_snapshot!(
+            "change_txt_file_after",
+            view_tree(&session.tree(), &mut redactions)
+        );
     }
 }
