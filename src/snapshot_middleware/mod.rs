@@ -9,6 +9,7 @@ mod dir;
 mod error;
 mod json_model;
 mod lua;
+mod meta_file;
 mod middleware;
 mod project;
 mod rbxlx;

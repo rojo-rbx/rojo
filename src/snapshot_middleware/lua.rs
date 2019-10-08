@@ -10,6 +10,7 @@ use crate::{
 
 use super::{
     dir::SnapshotDir,
+    meta_file::AdjacentMetadata,
     middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware},
 };
 
@@ -79,6 +80,7 @@ fn snapshot_lua_file<F: ImfsFetcher>(
 
     let contents = entry.contents(imfs)?;
     let contents_str = str::from_utf8(contents)
+        // TODO: Turn into error type
         .expect("File content was not valid UTF-8")
         .to_string();
 
@@ -88,13 +90,30 @@ fn snapshot_lua_file<F: ImfsFetcher>(
         },
     };
 
+    let meta_path = entry
+        .path()
+        .with_file_name(format!("{}.meta.json", instance_name));
+
+    let mut metadata = InstanceMetadata {
+        instigating_source: Some(entry.path().to_path_buf().into()),
+        relevant_paths: vec![entry.path().to_path_buf()],
+        ..Default::default()
+    };
+
+    if let Some(meta_entry) = imfs.get(meta_path).with_not_found()? {
+        let meta_contents = meta_entry.contents(imfs)?;
+        let parsed: AdjacentMetadata = serde_json::from_slice(meta_contents)
+            // TODO: Turn into error type
+            .expect(".meta.json file was malformed");
+
+        if let Some(ignore) = parsed.ignore_unknown_instances {
+            metadata.ignore_unknown_instances = ignore;
+        }
+    }
+
     Ok(Some(InstanceSnapshot {
         snapshot_id: None,
-        metadata: InstanceMetadata {
-            instigating_source: Some(entry.path().to_path_buf().into()),
-            relevant_paths: vec![entry.path().to_path_buf()],
-            ..Default::default()
-        },
+        metadata,
         name: Cow::Owned(instance_name.to_owned()),
         class_name: Cow::Borrowed(class_name),
         properties,
@@ -181,6 +200,48 @@ mod test {
         imfs.debug_load_snapshot("/foo.client.lua", file);
 
         let entry = imfs.get("/foo.client.lua").unwrap();
+        let instance_snapshot = SnapshotLua::from_imfs(&mut imfs, &entry).unwrap().unwrap();
+
+        assert_yaml_snapshot!(instance_snapshot);
+    }
+
+    #[test]
+    fn module_with_meta() {
+        let mut imfs = Imfs::new(NoopFetcher);
+        let file = ImfsSnapshot::file("Hello there!");
+        let meta = ImfsSnapshot::file(
+            r#"
+            {
+                "ignoreUnknownInstances": true
+            }
+        "#,
+        );
+
+        imfs.debug_load_snapshot("/foo.lua", file);
+        imfs.debug_load_snapshot("/foo.meta.json", meta);
+
+        let entry = imfs.get("/foo.lua").unwrap();
+        let instance_snapshot = SnapshotLua::from_imfs(&mut imfs, &entry).unwrap().unwrap();
+
+        assert_yaml_snapshot!(instance_snapshot);
+    }
+
+    #[test]
+    fn script_with_meta() {
+        let mut imfs = Imfs::new(NoopFetcher);
+        let file = ImfsSnapshot::file("Hello there!");
+        let meta = ImfsSnapshot::file(
+            r#"
+            {
+                "ignoreUnknownInstances": true
+            }
+        "#,
+        );
+
+        imfs.debug_load_snapshot("/foo.server.lua", file);
+        imfs.debug_load_snapshot("/foo.meta.json", meta);
+
+        let entry = imfs.get("/foo.server.lua").unwrap();
         let instance_snapshot = SnapshotLua::from_imfs(&mut imfs, &entry).unwrap().unwrap();
 
         assert_yaml_snapshot!(instance_snapshot);
