@@ -29,7 +29,7 @@ impl SnapshotMiddleware for SnapshotProject {
 
             match imfs.get(project_path) {
                 Err(ref err) if err.kind() == FsErrorKind::NotFound => {}
-                Err(err) => return Err(err),
+                Err(err) => return Err(err.into()),
 
                 // TODO: Do we need to muck with the relevant paths if we're a
                 // project file within a folder? Should the folder path be the

@@ -17,6 +17,8 @@ mod rbxm;
 mod rbxmx;
 mod txt;
 
+pub use self::error::*;
+
 use rbx_dom_weak::{RbxId, RbxTree};
 
 use self::{

@@ -3,11 +3,13 @@ use std::path::{Path, PathBuf};
 use rbx_dom_weak::{RbxId, RbxTree};
 
 use crate::{
-    imfs::{FsResult, Imfs, ImfsEntry, ImfsFetcher, ImfsSnapshot},
+    imfs::{Imfs, ImfsEntry, ImfsFetcher, ImfsSnapshot},
     snapshot::InstanceSnapshot,
 };
 
-pub type SnapshotInstanceResult<'a> = FsResult<Option<InstanceSnapshot<'a>>>;
+use super::error::SnapshotError;
+
+pub type SnapshotInstanceResult<'a> = Result<Option<InstanceSnapshot<'a>>, SnapshotError>;
 pub type SnapshotFileResult = Option<(String, ImfsSnapshot)>;
 
 pub trait SnapshotMiddleware {
