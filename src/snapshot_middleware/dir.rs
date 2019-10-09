@@ -8,6 +8,7 @@ use crate::{
 };
 
 use super::{
+    error::SnapshotError,
     middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware},
     snapshot_from_imfs, snapshot_from_instance,
 };
@@ -38,7 +39,7 @@ impl SnapshotMiddleware for SnapshotDir {
             .file_name()
             .expect("Could not extract file name")
             .to_str()
-            .unwrap()
+            .ok_or_else(|| SnapshotError::file_name_bad_unicode(entry.path()))?
             .to_string();
 
         Ok(Some(InstanceSnapshot {

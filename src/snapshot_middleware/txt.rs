@@ -9,6 +9,7 @@ use crate::{
 };
 
 use super::{
+    error::SnapshotError,
     meta_file::AdjacentMetadata,
     middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware},
 };
@@ -25,7 +26,9 @@ impl SnapshotMiddleware for SnapshotTxt {
         }
 
         let extension = match entry.path().extension() {
-            Some(x) => x.to_str().unwrap(),
+            Some(x) => x
+                .to_str()
+                .ok_or_else(|| SnapshotError::file_name_bad_unicode(entry.path()))?,
             None => return Ok(None),
         };
 
@@ -38,12 +41,12 @@ impl SnapshotMiddleware for SnapshotTxt {
             .file_stem()
             .expect("Could not extract file stem")
             .to_str()
-            .unwrap()
+            .ok_or_else(|| SnapshotError::file_name_bad_unicode(entry.path()))?
             .to_string();
 
         let contents = entry.contents(imfs)?;
         let contents_str = str::from_utf8(contents)
-            .expect("File content was not valid UTF-8")
+            .map_err(|err| SnapshotError::file_contents_bad_unicode(err, entry.path()))?
             .to_string();
 
         let properties = hashmap! {

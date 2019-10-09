@@ -10,6 +10,7 @@ use crate::{
 };
 
 use super::{
+    error::SnapshotError,
     meta_file::AdjacentMetadata,
     middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware},
 };
@@ -25,9 +26,14 @@ impl SnapshotMiddleware for SnapshotCsv {
             return Ok(None);
         }
 
-        let file_name = entry.path().file_name().unwrap().to_string_lossy();
+        let extension = match entry.path().extension() {
+            Some(x) => x
+                .to_str()
+                .ok_or_else(|| SnapshotError::file_name_bad_unicode(entry.path()))?,
+            None => return Ok(None),
+        };
 
-        if !file_name.ends_with(".csv") {
+        if extension != "csv" {
             return Ok(None);
         }
 
@@ -35,7 +41,8 @@ impl SnapshotMiddleware for SnapshotCsv {
             .path()
             .file_stem()
             .expect("Could not extract file stem")
-            .to_string_lossy()
+            .to_str()
+            .ok_or_else(|| SnapshotError::file_name_bad_unicode(entry.path()))?
             .to_string();
 
         let meta_path = entry
