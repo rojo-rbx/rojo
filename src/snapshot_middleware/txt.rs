@@ -4,11 +4,14 @@ use maplit::hashmap;
 use rbx_dom_weak::{RbxId, RbxTree, RbxValue};
 
 use crate::{
-    imfs::{FileSnapshot, Imfs, ImfsEntry, ImfsFetcher, ImfsSnapshot},
+    imfs::{FileSnapshot, FsResultExt, Imfs, ImfsEntry, ImfsFetcher, ImfsSnapshot},
     snapshot::{InstanceMetadata, InstanceSnapshot},
 };
 
-use super::middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware};
+use super::{
+    meta_file::AdjacentMetadata,
+    middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware},
+};
 
 pub struct SnapshotTxt;
 
@@ -49,18 +52,30 @@ impl SnapshotMiddleware for SnapshotTxt {
             },
         };
 
-        Ok(Some(InstanceSnapshot {
+        let meta_path = entry
+            .path()
+            .with_file_name(format!("{}.meta.json", instance_name));
+
+        let mut snapshot = InstanceSnapshot {
             snapshot_id: None,
             metadata: InstanceMetadata {
                 instigating_source: Some(entry.path().to_path_buf().into()),
-                relevant_paths: vec![entry.path().to_path_buf()],
+                relevant_paths: vec![entry.path().to_path_buf(), meta_path.clone()],
                 ..Default::default()
             },
             name: Cow::Owned(instance_name),
             class_name: Cow::Borrowed("StringValue"),
             properties,
             children: Vec::new(),
-        }))
+        };
+
+        if let Some(meta_entry) = imfs.get(meta_path).with_not_found()? {
+            let meta_contents = meta_entry.contents(imfs)?;
+            let mut metadata = AdjacentMetadata::from_slice(meta_contents);
+            metadata.apply_all(&mut snapshot);
+        }
+
+        Ok(Some(snapshot))
     }
 
     fn from_instance(tree: &RbxTree, id: RbxId) -> SnapshotFileResult {

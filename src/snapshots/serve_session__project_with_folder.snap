@@ -27,4 +27,5 @@ children:
         Path: /foo/src/hello.txt
       relevant_paths:
         - /foo/src/hello.txt
+        - /foo/src/hello.meta.json
     children: []

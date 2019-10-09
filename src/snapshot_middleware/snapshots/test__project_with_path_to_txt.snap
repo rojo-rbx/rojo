@@ -9,6 +9,7 @@ metadata:
     Path: /foo/default.project.json
   relevant_paths:
     - /foo/other.txt
+    - /foo/other.meta.json
     - /foo/default.project.json
 name: path-project
 class_name: StringValue

@@ -9,6 +9,7 @@ metadata:
     Path: /foo.txt
   relevant_paths:
     - /foo.txt
+    - /foo.meta.json
 name: foo
 class_name: StringValue
 properties:
