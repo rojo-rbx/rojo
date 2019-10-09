@@ -1,8 +1,6 @@
-use std::{error::Error, fmt, path::PathBuf};
+use std::{error::Error, fmt, io, path::PathBuf};
 
-use crate::snapshot::InstanceSnapshot;
-
-pub type SnapshotResult<'a> = Result<Option<InstanceSnapshot<'a>>, SnapshotError>;
+use crate::{imfs::FsError, snapshot::InstanceSnapshot};
 
 #[derive(Debug)]
 pub struct SnapshotError {
@@ -58,8 +56,19 @@ impl fmt::Display for SnapshotError {
     }
 }
 
+impl From<FsError> for SnapshotError {
+    fn from(error: FsError) -> Self {
+        let (inner, path) = error.into_raw();
+
+        let detail = SnapshotErrorDetail::IoError { inner };
+
+        Self::new(detail, Some(path))
+    }
+}
+
 #[derive(Debug)]
 pub enum SnapshotErrorDetail {
+    IoError { inner: io::Error },
     FileDidNotExist,
     FileNameBadUnicode,
     FileContentsBadUnicode { inner: std::str::Utf8Error },
@@ -70,6 +79,7 @@ impl SnapshotErrorDetail {
         use self::SnapshotErrorDetail::*;
 
         match self {
+            IoError { inner } => Some(inner),
             FileContentsBadUnicode { inner } => Some(inner),
             _ => None,
         }
@@ -81,6 +91,7 @@ impl fmt::Display for SnapshotErrorDetail {
         use self::SnapshotErrorDetail::*;
 
         match self {
+            IoError { inner } => write!(formatter, "I/O error: {}", inner),
             FileDidNotExist => write!(formatter, "file did not exist"),
             FileNameBadUnicode => write!(formatter, "file name had malformed Unicode"),
             FileContentsBadUnicode { inner } => {

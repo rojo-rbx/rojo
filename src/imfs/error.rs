@@ -39,6 +39,10 @@ impl FsError {
     pub fn kind(&self) -> FsErrorKind {
         self.inner.kind()
     }
+
+    pub fn into_raw(self) -> (io::Error, PathBuf) {
+        (self.inner, self.path)
+    }
 }
 
 impl fmt::Display for FsError {
