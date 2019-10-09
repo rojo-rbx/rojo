@@ -4,7 +4,7 @@ use rbx_dom_weak::{RbxId, RbxTree};
 use rbx_reflection::try_resolve_value;
 
 use crate::{
-    imfs::{FsErrorKind, Imfs, ImfsEntry, ImfsFetcher},
+    imfs::{FsResultExt, Imfs, ImfsEntry, ImfsFetcher},
     project::{Project, ProjectNode},
     snapshot::{InstanceMetadata, InstanceSnapshot, InstigatingSource},
 };
@@ -27,14 +27,12 @@ impl SnapshotMiddleware for SnapshotProject {
         if entry.is_directory() {
             let project_path = entry.path().join("default.project.json");
 
-            match imfs.get(project_path) {
-                Err(ref err) if err.kind() == FsErrorKind::NotFound => {}
-                Err(err) => return Err(err.into()),
-
+            match imfs.get(project_path).with_not_found()? {
                 // TODO: Do we need to muck with the relevant paths if we're a
                 // project file within a folder? Should the folder path be the
                 // relevant path instead of the project file path?
-                Ok(entry) => return SnapshotProject::from_imfs(imfs, &entry),
+                Some(entry) => return SnapshotProject::from_imfs(imfs, &entry),
+                None => return Ok(None),
             }
         }
 
