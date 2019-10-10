@@ -6,6 +6,7 @@ use crate::{
 };
 
 use super::{
+    context::InstanceSnapshotContext,
     middleware::{SnapshotInstanceResult, SnapshotMiddleware},
     util::match_file_name,
 };
@@ -14,6 +15,7 @@ pub struct SnapshotRbxlx;
 
 impl SnapshotMiddleware for SnapshotRbxlx {
     fn from_imfs<F: ImfsFetcher>(
+        _context: &InstanceSnapshotContext,
         imfs: &mut Imfs<F>,
         entry: &ImfsEntry,
     ) -> SnapshotInstanceResult<'static> {

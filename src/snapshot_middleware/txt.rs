@@ -9,6 +9,7 @@ use crate::{
 };
 
 use super::{
+    context::InstanceSnapshotContext,
     error::SnapshotError,
     meta_file::AdjacentMetadata,
     middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware},
@@ -19,6 +20,7 @@ pub struct SnapshotTxt;
 
 impl SnapshotMiddleware for SnapshotTxt {
     fn from_imfs<F: ImfsFetcher>(
+        _context: &InstanceSnapshotContext,
         imfs: &mut Imfs<F>,
         entry: &ImfsEntry,
     ) -> SnapshotInstanceResult<'static> {
@@ -114,7 +116,10 @@ mod test {
         imfs.debug_load_snapshot("/foo.txt", file);
 
         let entry = imfs.get("/foo.txt").unwrap();
-        let instance_snapshot = SnapshotTxt::from_imfs(&mut imfs, &entry).unwrap().unwrap();
+        let instance_snapshot =
+            SnapshotTxt::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+                .unwrap()
+                .unwrap();
 
         assert_yaml_snapshot!(instance_snapshot);
     }

@@ -7,13 +7,14 @@ use crate::{
     snapshot::InstanceSnapshot,
 };
 
-use super::error::SnapshotError;
+use super::{context::InstanceSnapshotContext, error::SnapshotError};
 
 pub type SnapshotInstanceResult<'a> = Result<Option<InstanceSnapshot<'a>>, SnapshotError>;
 pub type SnapshotFileResult = Option<(String, ImfsSnapshot)>;
 
 pub trait SnapshotMiddleware {
     fn from_imfs<F: ImfsFetcher>(
+        context: &InstanceSnapshotContext,
         imfs: &mut Imfs<F>,
         entry: &ImfsEntry,
     ) -> SnapshotInstanceResult<'static>;

@@ -6,6 +6,7 @@ use crate::{
 };
 
 use super::{
+    context::InstanceSnapshotContext,
     middleware::{SnapshotInstanceResult, SnapshotMiddleware},
     util::match_file_name,
 };
@@ -14,6 +15,7 @@ pub struct SnapshotRbxmx;
 
 impl SnapshotMiddleware for SnapshotRbxmx {
     fn from_imfs<F: ImfsFetcher>(
+        _context: &InstanceSnapshotContext,
         imfs: &mut Imfs<F>,
         entry: &ImfsEntry,
     ) -> SnapshotInstanceResult<'static> {
@@ -74,9 +76,10 @@ mod test {
         imfs.debug_load_snapshot("/foo.rbxmx", file);
 
         let entry = imfs.get("/foo.rbxmx").unwrap();
-        let instance_snapshot = SnapshotRbxmx::from_imfs(&mut imfs, &entry)
-            .unwrap()
-            .unwrap();
+        let instance_snapshot =
+            SnapshotRbxmx::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+                .unwrap()
+                .unwrap();
 
         assert_eq!(instance_snapshot.name, "foo");
         assert_eq!(instance_snapshot.class_name, "Folder");

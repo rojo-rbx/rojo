@@ -10,6 +10,7 @@ use crate::{
 };
 
 use super::{
+    context::InstanceSnapshotContext,
     meta_file::AdjacentMetadata,
     middleware::{SnapshotInstanceResult, SnapshotMiddleware},
     util::match_file_name,
@@ -19,6 +20,7 @@ pub struct SnapshotCsv;
 
 impl SnapshotMiddleware for SnapshotCsv {
     fn from_imfs<F: ImfsFetcher>(
+        _context: &InstanceSnapshotContext,
         imfs: &mut Imfs<F>,
         entry: &ImfsEntry,
     ) -> SnapshotInstanceResult<'static> {
@@ -159,7 +161,10 @@ Ack,Ack!,,An exclamation of despair,¡Ay!"#,
         imfs.debug_load_snapshot("/foo.csv", file);
 
         let entry = imfs.get("/foo.csv").unwrap();
-        let instance_snapshot = SnapshotCsv::from_imfs(&mut imfs, &entry).unwrap().unwrap();
+        let instance_snapshot =
+            SnapshotCsv::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+                .unwrap()
+                .unwrap();
 
         assert_yaml_snapshot!(instance_snapshot);
     }
@@ -178,7 +183,10 @@ Ack,Ack!,,An exclamation of despair,¡Ay!"#,
         imfs.debug_load_snapshot("/foo.meta.json", meta);
 
         let entry = imfs.get("/foo.csv").unwrap();
-        let instance_snapshot = SnapshotCsv::from_imfs(&mut imfs, &entry).unwrap().unwrap();
+        let instance_snapshot =
+            SnapshotCsv::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+                .unwrap()
+                .unwrap();
 
         assert_yaml_snapshot!(instance_snapshot);
     }

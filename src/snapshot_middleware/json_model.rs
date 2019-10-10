@@ -10,6 +10,7 @@ use crate::{
 };
 
 use super::{
+    context::InstanceSnapshotContext,
     middleware::{SnapshotInstanceResult, SnapshotMiddleware},
     util::match_file_name,
 };
@@ -18,6 +19,7 @@ pub struct SnapshotJsonModel;
 
 impl SnapshotMiddleware for SnapshotJsonModel {
     fn from_imfs<F: ImfsFetcher>(
+        _context: &InstanceSnapshotContext,
         imfs: &mut Imfs<F>,
         entry: &ImfsEntry,
     ) -> SnapshotInstanceResult<'static> {
@@ -161,9 +163,10 @@ mod test {
         imfs.debug_load_snapshot("/foo.model.json", file);
 
         let entry = imfs.get("/foo.model.json").unwrap();
-        let instance_snapshot = SnapshotJsonModel::from_imfs(&mut imfs, &entry)
-            .unwrap()
-            .unwrap();
+        let instance_snapshot =
+            SnapshotJsonModel::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+                .unwrap()
+                .unwrap();
 
         assert_yaml_snapshot!(instance_snapshot);
     }

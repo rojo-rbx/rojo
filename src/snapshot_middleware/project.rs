@@ -9,6 +9,7 @@ use crate::{
 };
 
 use super::{
+    context::InstanceSnapshotContext,
     error::SnapshotError,
     middleware::{SnapshotInstanceResult, SnapshotMiddleware},
     snapshot_from_imfs,
@@ -21,6 +22,7 @@ pub struct SnapshotProject;
 
 impl SnapshotMiddleware for SnapshotProject {
     fn from_imfs<F: ImfsFetcher>(
+        context: &InstanceSnapshotContext,
         imfs: &mut Imfs<F>,
         entry: &ImfsEntry,
     ) -> SnapshotInstanceResult<'static> {
@@ -31,7 +33,7 @@ impl SnapshotMiddleware for SnapshotProject {
                 // TODO: Do we need to muck with the relevant paths if we're a
                 // project file within a folder? Should the folder path be the
                 // relevant path instead of the project file path?
-                Some(entry) => return SnapshotProject::from_imfs(imfs, &entry),
+                Some(entry) => return SnapshotProject::from_imfs(context, imfs, &entry),
                 None => return Ok(None),
             }
         }
@@ -209,9 +211,10 @@ mod test {
         imfs.debug_load_snapshot("/foo", dir);
 
         let entry = imfs.get("/foo").unwrap();
-        let instance_snapshot = SnapshotProject::from_imfs(&mut imfs, &entry)
-            .expect("snapshot error")
-            .expect("snapshot returned no instances");
+        let instance_snapshot =
+            SnapshotProject::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+                .expect("snapshot error")
+                .expect("snapshot returned no instances");
 
         assert_yaml_snapshot!(instance_snapshot);
     }
@@ -235,9 +238,10 @@ mod test {
         imfs.debug_load_snapshot("/foo", dir);
 
         let entry = imfs.get("/foo/hello.project.json").unwrap();
-        let instance_snapshot = SnapshotProject::from_imfs(&mut imfs, &entry)
-            .expect("snapshot error")
-            .expect("snapshot returned no instances");
+        let instance_snapshot =
+            SnapshotProject::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+                .expect("snapshot error")
+                .expect("snapshot returned no instances");
 
         assert_yaml_snapshot!(instance_snapshot);
     }
@@ -267,9 +271,10 @@ mod test {
         imfs.debug_load_snapshot("/foo", dir);
 
         let entry = imfs.get("/foo").unwrap();
-        let instance_snapshot = SnapshotProject::from_imfs(&mut imfs, &entry)
-            .expect("snapshot error")
-            .expect("snapshot returned no instances");
+        let instance_snapshot =
+            SnapshotProject::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+                .expect("snapshot error")
+                .expect("snapshot returned no instances");
 
         assert_yaml_snapshot!(instance_snapshot);
     }
@@ -296,9 +301,10 @@ mod test {
         imfs.debug_load_snapshot("/foo", dir);
 
         let entry = imfs.get("/foo").unwrap();
-        let instance_snapshot = SnapshotProject::from_imfs(&mut imfs, &entry)
-            .expect("snapshot error")
-            .expect("snapshot returned no instances");
+        let instance_snapshot =
+            SnapshotProject::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+                .expect("snapshot error")
+                .expect("snapshot returned no instances");
 
         assert_yaml_snapshot!(instance_snapshot);
     }
@@ -326,9 +332,10 @@ mod test {
         imfs.debug_load_snapshot("/foo", dir);
 
         let entry = imfs.get("/foo").unwrap();
-        let instance_snapshot = SnapshotProject::from_imfs(&mut imfs, &entry)
-            .expect("snapshot error")
-            .expect("snapshot returned no instances");
+        let instance_snapshot =
+            SnapshotProject::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+                .expect("snapshot error")
+                .expect("snapshot returned no instances");
 
         assert_yaml_snapshot!(instance_snapshot);
     }
@@ -353,9 +360,10 @@ mod test {
         imfs.debug_load_snapshot("/foo", dir);
 
         let entry = imfs.get("/foo").unwrap();
-        let instance_snapshot = SnapshotProject::from_imfs(&mut imfs, &entry)
-            .expect("snapshot error")
-            .expect("snapshot returned no instances");
+        let instance_snapshot =
+            SnapshotProject::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+                .expect("snapshot error")
+                .expect("snapshot returned no instances");
 
         assert_yaml_snapshot!(instance_snapshot);
     }
@@ -387,9 +395,10 @@ mod test {
         imfs.debug_load_snapshot("/foo", dir);
 
         let entry = imfs.get("/foo").unwrap();
-        let instance_snapshot = SnapshotProject::from_imfs(&mut imfs, &entry)
-            .expect("snapshot error")
-            .expect("snapshot returned no instances");
+        let instance_snapshot =
+            SnapshotProject::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+                .expect("snapshot error")
+                .expect("snapshot returned no instances");
 
         assert_yaml_snapshot!(instance_snapshot);
     }
@@ -425,9 +434,10 @@ mod test {
         imfs.debug_load_snapshot("/foo", dir);
 
         let entry = imfs.get("/foo").unwrap();
-        let instance_snapshot = SnapshotProject::from_imfs(&mut imfs, &entry)
-            .expect("snapshot error")
-            .expect("snapshot returned no instances");
+        let instance_snapshot =
+            SnapshotProject::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+                .expect("snapshot error")
+                .expect("snapshot returned no instances");
 
         assert_yaml_snapshot!(instance_snapshot);
     }
@@ -468,9 +478,10 @@ mod test {
         imfs.debug_load_snapshot("/foo", dir);
 
         let entry = imfs.get("/foo").unwrap();
-        let instance_snapshot = SnapshotProject::from_imfs(&mut imfs, &entry)
-            .expect("snapshot error")
-            .expect("snapshot returned no instances");
+        let instance_snapshot =
+            SnapshotProject::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+                .expect("snapshot error")
+                .expect("snapshot returned no instances");
 
         assert_yaml_snapshot!(instance_snapshot);
     }

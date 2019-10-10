@@ -8,6 +8,7 @@ use crate::{
 };
 
 use super::{
+    context::InstanceSnapshotContext,
     error::SnapshotError,
     middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware},
     snapshot_from_imfs, snapshot_from_instance,
@@ -17,6 +18,7 @@ pub struct SnapshotDir;
 
 impl SnapshotMiddleware for SnapshotDir {
     fn from_imfs<F: ImfsFetcher>(
+        _context: &InstanceSnapshotContext,
         imfs: &mut Imfs<F>,
         entry: &ImfsEntry,
     ) -> SnapshotInstanceResult<'static> {
@@ -94,7 +96,10 @@ mod test {
         imfs.debug_load_snapshot("/foo", dir);
 
         let entry = imfs.get("/foo").unwrap();
-        let instance_snapshot = SnapshotDir::from_imfs(&mut imfs, &entry).unwrap().unwrap();
+        let instance_snapshot =
+            SnapshotDir::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+                .unwrap()
+                .unwrap();
 
         assert_yaml_snapshot!(instance_snapshot);
     }
@@ -109,7 +114,10 @@ mod test {
         imfs.debug_load_snapshot("/foo", dir);
 
         let entry = imfs.get("/foo").unwrap();
-        let instance_snapshot = SnapshotDir::from_imfs(&mut imfs, &entry).unwrap().unwrap();
+        let instance_snapshot =
+            SnapshotDir::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+                .unwrap()
+                .unwrap();
 
         assert_yaml_snapshot!(instance_snapshot);
     }

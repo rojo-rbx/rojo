@@ -9,6 +9,7 @@ use crate::{
 };
 
 use super::{
+    context::InstanceSnapshotContext,
     dir::SnapshotDir,
     meta_file::AdjacentMetadata,
     middleware::{SnapshotInstanceResult, SnapshotMiddleware},
@@ -19,6 +20,7 @@ pub struct SnapshotLua;
 
 impl SnapshotMiddleware for SnapshotLua {
     fn from_imfs<F: ImfsFetcher>(
+        context: &InstanceSnapshotContext,
         imfs: &mut Imfs<F>,
         entry: &ImfsEntry,
     ) -> SnapshotInstanceResult<'static> {
@@ -34,13 +36,13 @@ impl SnapshotMiddleware for SnapshotLua {
         if entry.is_file() {
             snapshot_lua_file(imfs, entry)
         } else {
-            if let Some(snapshot) = snapshot_init(imfs, entry, "init.lua")? {
+            if let Some(snapshot) = snapshot_init(context, imfs, entry, "init.lua")? {
                 // An `init.lua` file turns its parent into a ModuleScript
                 Ok(Some(snapshot))
-            } else if let Some(snapshot) = snapshot_init(imfs, entry, "init.server.lua")? {
+            } else if let Some(snapshot) = snapshot_init(context, imfs, entry, "init.server.lua")? {
                 // An `init.server.lua` file turns its parent into a Script
                 Ok(Some(snapshot))
-            } else if let Some(snapshot) = snapshot_init(imfs, entry, "init.client.lua")? {
+            } else if let Some(snapshot) = snapshot_init(context, imfs, entry, "init.client.lua")? {
                 // An `init.client.lua` file turns its parent into a LocalScript
                 Ok(Some(snapshot))
             } else {
@@ -114,6 +116,7 @@ fn snapshot_lua_file<F: ImfsFetcher>(
 /// Scripts named `init.lua`, `init.server.lua`, or `init.client.lua` usurp
 /// their parents, which acts similarly to `__init__.py` from the Python world.
 fn snapshot_init<F: ImfsFetcher>(
+    context: &InstanceSnapshotContext,
     imfs: &mut Imfs<F>,
     folder_entry: &ImfsEntry,
     init_name: &str,
@@ -121,7 +124,7 @@ fn snapshot_init<F: ImfsFetcher>(
     let init_path = folder_entry.path().join(init_name);
 
     if let Some(init_entry) = imfs.get(init_path).with_not_found()? {
-        if let Some(dir_snapshot) = SnapshotDir::from_imfs(imfs, folder_entry)? {
+        if let Some(dir_snapshot) = SnapshotDir::from_imfs(context, imfs, folder_entry)? {
             if let Some(mut init_snapshot) = snapshot_lua_file(imfs, &init_entry)? {
                 init_snapshot.name = dir_snapshot.name;
                 init_snapshot.children = dir_snapshot.children;
@@ -152,7 +155,10 @@ mod test {
         imfs.debug_load_snapshot("/foo.lua", file);
 
         let entry = imfs.get("/foo.lua").unwrap();
-        let instance_snapshot = SnapshotLua::from_imfs(&mut imfs, &entry).unwrap().unwrap();
+        let instance_snapshot =
+            SnapshotLua::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+                .unwrap()
+                .unwrap();
 
         assert_yaml_snapshot!(instance_snapshot);
     }
@@ -165,7 +171,10 @@ mod test {
         imfs.debug_load_snapshot("/foo.server.lua", file);
 
         let entry = imfs.get("/foo.server.lua").unwrap();
-        let instance_snapshot = SnapshotLua::from_imfs(&mut imfs, &entry).unwrap().unwrap();
+        let instance_snapshot =
+            SnapshotLua::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+                .unwrap()
+                .unwrap();
 
         assert_yaml_snapshot!(instance_snapshot);
     }
@@ -178,7 +187,10 @@ mod test {
         imfs.debug_load_snapshot("/foo.client.lua", file);
 
         let entry = imfs.get("/foo.client.lua").unwrap();
-        let instance_snapshot = SnapshotLua::from_imfs(&mut imfs, &entry).unwrap().unwrap();
+        let instance_snapshot =
+            SnapshotLua::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+                .unwrap()
+                .unwrap();
 
         assert_yaml_snapshot!(instance_snapshot);
     }
@@ -199,7 +211,10 @@ mod test {
         imfs.debug_load_snapshot("/foo.meta.json", meta);
 
         let entry = imfs.get("/foo.lua").unwrap();
-        let instance_snapshot = SnapshotLua::from_imfs(&mut imfs, &entry).unwrap().unwrap();
+        let instance_snapshot =
+            SnapshotLua::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+                .unwrap()
+                .unwrap();
 
         assert_yaml_snapshot!(instance_snapshot);
     }
@@ -220,7 +235,10 @@ mod test {
         imfs.debug_load_snapshot("/foo.meta.json", meta);
 
         let entry = imfs.get("/foo.server.lua").unwrap();
-        let instance_snapshot = SnapshotLua::from_imfs(&mut imfs, &entry).unwrap().unwrap();
+        let instance_snapshot =
+            SnapshotLua::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+                .unwrap()
+                .unwrap();
 
         assert_yaml_snapshot!(instance_snapshot);
     }
@@ -243,7 +261,10 @@ mod test {
         imfs.debug_load_snapshot("/bar.meta.json", meta);
 
         let entry = imfs.get("/bar.server.lua").unwrap();
-        let instance_snapshot = SnapshotLua::from_imfs(&mut imfs, &entry).unwrap().unwrap();
+        let instance_snapshot =
+            SnapshotLua::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+                .unwrap()
+                .unwrap();
 
         with_settings!({ sort_maps => true }, {
             assert_yaml_snapshot!(instance_snapshot);
