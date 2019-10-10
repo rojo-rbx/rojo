@@ -20,7 +20,7 @@ pub struct SnapshotTxt;
 
 impl SnapshotMiddleware for SnapshotTxt {
     fn from_imfs<F: ImfsFetcher>(
-        _context: &InstanceSnapshotContext,
+        _context: &mut InstanceSnapshotContext,
         imfs: &mut Imfs<F>,
         entry: &ImfsEntry,
     ) -> SnapshotInstanceResult<'static> {
@@ -117,7 +117,7 @@ mod test {
 
         let entry = imfs.get("/foo.txt").unwrap();
         let instance_snapshot =
-            SnapshotTxt::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+            SnapshotTxt::from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
                 .unwrap()
                 .unwrap();
 

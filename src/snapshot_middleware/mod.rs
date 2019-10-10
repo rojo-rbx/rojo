@@ -44,12 +44,12 @@ macro_rules! middlewares {
             imfs: &mut Imfs<F>,
             entry: &ImfsEntry,
         ) -> SnapshotInstanceResult<'static> {
-            let context = InstanceSnapshotContext::default();
+            let mut context = InstanceSnapshotContext::default();
 
             $(
                 log::trace!("trying middleware {} on {}", stringify!($middleware), entry.path().display());
 
-                if let Some(snapshot) = $middleware::from_imfs(&context, imfs, entry)? {
+                if let Some(snapshot) = $middleware::from_imfs(&mut context, imfs, entry)? {
                     log::trace!("middleware {} success on {}", stringify!($middleware), entry.path().display());
                     return Ok(Some(snapshot));
                 }

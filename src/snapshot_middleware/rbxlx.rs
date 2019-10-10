@@ -15,7 +15,7 @@ pub struct SnapshotRbxlx;
 
 impl SnapshotMiddleware for SnapshotRbxlx {
     fn from_imfs<F: ImfsFetcher>(
-        _context: &InstanceSnapshotContext,
+        _context: &mut InstanceSnapshotContext,
         imfs: &mut Imfs<F>,
         entry: &ImfsEntry,
     ) -> SnapshotInstanceResult<'static> {

@@ -14,7 +14,7 @@ pub type SnapshotFileResult = Option<(String, ImfsSnapshot)>;
 
 pub trait SnapshotMiddleware {
     fn from_imfs<F: ImfsFetcher>(
-        context: &InstanceSnapshotContext,
+        context: &mut InstanceSnapshotContext,
         imfs: &mut Imfs<F>,
         entry: &ImfsEntry,
     ) -> SnapshotInstanceResult<'static>;
