@@ -1,14 +1,12 @@
 use std::borrow::Cow;
 
-use rbx_dom_weak::{RbxId, RbxTree};
-
 use crate::{
     imfs::{Imfs, ImfsEntry, ImfsFetcher},
     snapshot::InstanceSnapshot,
 };
 
 use super::{
-    middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware},
+    middleware::{SnapshotInstanceResult, SnapshotMiddleware},
     util::match_file_name,
 };
 
@@ -47,10 +45,6 @@ impl SnapshotMiddleware for SnapshotRbxmx {
         } else {
             panic!("Rojo doesn't have support for model files with zero or more than one top-level instances yet.");
         }
-    }
-
-    fn from_instance(_tree: &RbxTree, _id: RbxId) -> SnapshotFileResult {
-        unimplemented!("Snapshotting models");
     }
 }
 

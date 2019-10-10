@@ -1,6 +1,6 @@
 use std::{borrow::Cow, collections::HashMap};
 
-use rbx_dom_weak::{RbxId, RbxTree, UnresolvedRbxValue};
+use rbx_dom_weak::UnresolvedRbxValue;
 use rbx_reflection::try_resolve_value;
 use serde::Deserialize;
 
@@ -10,7 +10,7 @@ use crate::{
 };
 
 use super::{
-    middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware},
+    middleware::{SnapshotInstanceResult, SnapshotMiddleware},
     util::match_file_name,
 };
 
@@ -57,10 +57,6 @@ impl SnapshotMiddleware for SnapshotJsonModel {
         snapshot.metadata.relevant_paths = vec![entry.path().to_path_buf()];
 
         Ok(Some(snapshot))
-    }
-
-    fn from_instance(_tree: &RbxTree, _id: RbxId) -> SnapshotFileResult {
-        unimplemented!("Snapshotting models");
     }
 }
 

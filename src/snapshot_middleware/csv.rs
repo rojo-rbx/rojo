@@ -1,7 +1,7 @@
 use std::{borrow::Cow, collections::BTreeMap};
 
 use maplit::hashmap;
-use rbx_dom_weak::{RbxId, RbxTree, RbxValue};
+use rbx_dom_weak::RbxValue;
 use serde::Serialize;
 
 use crate::{
@@ -11,7 +11,7 @@ use crate::{
 
 use super::{
     meta_file::AdjacentMetadata,
-    middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware},
+    middleware::{SnapshotInstanceResult, SnapshotMiddleware},
     util::match_file_name,
 };
 
@@ -61,10 +61,6 @@ impl SnapshotMiddleware for SnapshotCsv {
         }
 
         Ok(Some(snapshot))
-    }
-
-    fn from_instance(_tree: &RbxTree, _id: RbxId) -> SnapshotFileResult {
-        unimplemented!("Snapshotting CSV localization tables");
     }
 }
 

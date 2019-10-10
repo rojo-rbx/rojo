@@ -18,7 +18,9 @@ pub trait SnapshotMiddleware {
         entry: &ImfsEntry,
     ) -> SnapshotInstanceResult<'static>;
 
-    fn from_instance(tree: &RbxTree, id: RbxId) -> SnapshotFileResult;
+    fn from_instance(_tree: &RbxTree, _id: RbxId) -> SnapshotFileResult {
+        None
+    }
 
     fn change_affects_paths(path: &Path) -> Vec<PathBuf> {
         vec![path.to_path_buf()]

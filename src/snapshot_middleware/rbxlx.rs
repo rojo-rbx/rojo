@@ -1,14 +1,12 @@
 use std::borrow::Cow;
 
-use rbx_dom_weak::{RbxId, RbxTree};
-
 use crate::{
     imfs::{Imfs, ImfsEntry, ImfsFetcher},
     snapshot::InstanceSnapshot,
 };
 
 use super::{
-    middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware},
+    middleware::{SnapshotInstanceResult, SnapshotMiddleware},
     util::match_file_name,
 };
 
@@ -42,9 +40,5 @@ impl SnapshotMiddleware for SnapshotRbxlx {
         snapshot.metadata.relevant_paths = vec![entry.path().to_path_buf()];
 
         Ok(Some(snapshot))
-    }
-
-    fn from_instance(_tree: &RbxTree, _id: RbxId) -> SnapshotFileResult {
-        None
     }
 }

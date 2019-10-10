@@ -1,7 +1,7 @@
 use std::{borrow::Cow, str};
 
 use maplit::hashmap;
-use rbx_dom_weak::{RbxId, RbxTree, RbxValue};
+use rbx_dom_weak::RbxValue;
 
 use crate::{
     imfs::{FsResultExt, Imfs, ImfsEntry, ImfsFetcher},
@@ -11,7 +11,7 @@ use crate::{
 use super::{
     dir::SnapshotDir,
     meta_file::AdjacentMetadata,
-    middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware},
+    middleware::{SnapshotInstanceResult, SnapshotMiddleware},
     util::match_trailing,
 };
 
@@ -46,17 +46,6 @@ impl SnapshotMiddleware for SnapshotLua {
             } else {
                 Ok(None)
             }
-        }
-    }
-
-    fn from_instance(tree: &RbxTree, id: RbxId) -> SnapshotFileResult {
-        let instance = tree.get_instance(id).unwrap();
-
-        match instance.class_name.as_str() {
-            "ModuleScript" | "LocalScript" | "Script" => {
-                unimplemented!("Snapshotting Script instances")
-            }
-            _ => None,
         }
     }
 }

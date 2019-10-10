@@ -1,6 +1,5 @@
 use std::{borrow::Cow, collections::HashMap};
 
-use rbx_dom_weak::{RbxId, RbxTree};
 use rbx_reflection::try_resolve_value;
 
 use crate::{
@@ -11,7 +10,7 @@ use crate::{
 
 use super::{
     error::SnapshotError,
-    middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware},
+    middleware::{SnapshotInstanceResult, SnapshotMiddleware},
     snapshot_from_imfs,
 };
 
@@ -71,11 +70,6 @@ impl SnapshotMiddleware for SnapshotProject {
             .push(entry.path().to_path_buf());
 
         Ok(Some(snapshot))
-    }
-
-    fn from_instance(_tree: &RbxTree, _id: RbxId) -> SnapshotFileResult {
-        // TODO: Supporting turning instances into projects
-        None
     }
 }
 
