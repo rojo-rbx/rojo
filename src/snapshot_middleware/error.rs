@@ -39,6 +39,16 @@ impl SnapshotError {
             path: Some(path.into()),
         }
     }
+
+    pub(crate) fn malformed_project(
+        inner: serde_json::Error,
+        path: impl Into<PathBuf>,
+    ) -> SnapshotError {
+        SnapshotError {
+            detail: SnapshotErrorDetail::MalformedProject { inner },
+            path: Some(path.into()),
+        }
+    }
 }
 
 impl Error for SnapshotError {
@@ -72,6 +82,7 @@ pub enum SnapshotErrorDetail {
     FileDidNotExist,
     FileNameBadUnicode,
     FileContentsBadUnicode { inner: std::str::Utf8Error },
+    MalformedProject { inner: serde_json::Error },
 }
 
 impl SnapshotErrorDetail {
@@ -81,6 +92,7 @@ impl SnapshotErrorDetail {
         match self {
             IoError { inner } => Some(inner),
             FileContentsBadUnicode { inner } => Some(inner),
+            MalformedProject { inner } => Some(inner),
             _ => None,
         }
     }
@@ -97,6 +109,7 @@ impl fmt::Display for SnapshotErrorDetail {
             FileContentsBadUnicode { inner } => {
                 write!(formatter, "file had malformed unicode: {}", inner)
             }
+            MalformedProject { inner } => write!(formatter, "{}", inner),
         }
     }
 }

@@ -10,6 +10,7 @@ use crate::{
 };
 
 use super::{
+    error::SnapshotError,
     middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware},
     snapshot_from_imfs,
 };
@@ -42,8 +43,7 @@ impl SnapshotMiddleware for SnapshotProject {
         }
 
         let project = Project::load_from_slice(entry.contents(imfs)?, entry.path())
-            // TODO: Turn this into an error object
-            .expect("Invalid project file");
+            .map_err(|err| SnapshotError::malformed_project(err, entry.path()))?;
 
         // Snapshotting a project should always return an instance, so this
         // unwrap is safe.
