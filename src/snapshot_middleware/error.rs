@@ -16,13 +16,10 @@ impl SnapshotError {
         }
     }
 
-    pub(crate) fn wrap(
-        inner: impl Into<SnapshotErrorDetail>,
-        path: Option<impl Into<PathBuf>>,
-    ) -> Self {
+    pub(crate) fn wrap(inner: impl Into<SnapshotErrorDetail>, path: impl Into<PathBuf>) -> Self {
         SnapshotError {
             detail: inner.into(),
-            path: path.map(Into::into),
+            path: Some(path.into()),
         }
     }
 
