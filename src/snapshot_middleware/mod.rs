@@ -16,6 +16,7 @@ mod rbxlx;
 mod rbxm;
 mod rbxmx;
 mod txt;
+mod util;
 
 pub use self::error::*;
 

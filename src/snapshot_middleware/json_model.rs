@@ -10,8 +10,8 @@ use crate::{
 };
 
 use super::{
-    error::SnapshotError,
     middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware},
+    util::match_file_name,
 };
 
 pub struct SnapshotJsonModel;
@@ -25,15 +25,8 @@ impl SnapshotMiddleware for SnapshotJsonModel {
             return Ok(None);
         }
 
-        let file_name = entry
-            .path()
-            .file_name()
-            .unwrap()
-            .to_str()
-            .ok_or_else(|| SnapshotError::file_name_bad_unicode(entry.path()))?;
-
-        let instance_name = match match_trailing(&file_name, ".model.json") {
-            Some(name) => name.to_owned(),
+        let instance_name = match match_file_name(entry.path(), ".model.json") {
+            Some(name) => name,
             None => return Ok(None),
         };
 
@@ -58,7 +51,7 @@ impl SnapshotMiddleware for SnapshotJsonModel {
             }
         }
 
-        let mut snapshot = instance.core.into_snapshot(instance_name);
+        let mut snapshot = instance.core.into_snapshot(instance_name.to_owned());
 
         snapshot.metadata.instigating_source = Some(entry.path().to_path_buf().into());
         snapshot.metadata.relevant_paths = vec![entry.path().to_path_buf()];
