@@ -10,9 +10,9 @@ use crate::{
 };
 
 use super::{
-    error::SnapshotError,
     meta_file::AdjacentMetadata,
     middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware},
+    util::match_file_name,
 };
 
 pub struct SnapshotCsv;
@@ -26,24 +26,10 @@ impl SnapshotMiddleware for SnapshotCsv {
             return Ok(None);
         }
 
-        let extension = match entry.path().extension() {
-            Some(x) => x
-                .to_str()
-                .ok_or_else(|| SnapshotError::file_name_bad_unicode(entry.path()))?,
+        let instance_name = match match_file_name(entry.path(), ".csv") {
+            Some(name) => name,
             None => return Ok(None),
         };
-
-        if extension != "csv" {
-            return Ok(None);
-        }
-
-        let instance_name = entry
-            .path()
-            .file_stem()
-            .expect("Could not extract file stem")
-            .to_str()
-            .ok_or_else(|| SnapshotError::file_name_bad_unicode(entry.path()))?
-            .to_string();
 
         let meta_path = entry
             .path()
@@ -58,7 +44,7 @@ impl SnapshotMiddleware for SnapshotCsv {
                 relevant_paths: vec![entry.path().to_path_buf(), meta_path.clone()],
                 ..Default::default()
             },
-            name: Cow::Owned(instance_name),
+            name: Cow::Owned(instance_name.to_owned()),
             class_name: Cow::Borrowed("LocalizationTable"),
             properties: hashmap! {
                 "Contents".to_owned() => RbxValue::String {

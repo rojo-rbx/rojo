@@ -12,6 +12,7 @@ use super::{
     error::SnapshotError,
     meta_file::AdjacentMetadata,
     middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware},
+    util::match_file_name,
 };
 
 pub struct SnapshotTxt;
@@ -25,24 +26,10 @@ impl SnapshotMiddleware for SnapshotTxt {
             return Ok(None);
         }
 
-        let extension = match entry.path().extension() {
-            Some(x) => x
-                .to_str()
-                .ok_or_else(|| SnapshotError::file_name_bad_unicode(entry.path()))?,
+        let instance_name = match match_file_name(entry.path(), ".txt") {
+            Some(name) => name,
             None => return Ok(None),
         };
-
-        if extension != "txt" {
-            return Ok(None);
-        }
-
-        let instance_name = entry
-            .path()
-            .file_stem()
-            .expect("Could not extract file stem")
-            .to_str()
-            .ok_or_else(|| SnapshotError::file_name_bad_unicode(entry.path()))?
-            .to_string();
 
         let contents = entry.contents(imfs)?;
         let contents_str = str::from_utf8(contents)
@@ -66,7 +53,7 @@ impl SnapshotMiddleware for SnapshotTxt {
                 relevant_paths: vec![entry.path().to_path_buf(), meta_path.clone()],
                 ..Default::default()
             },
-            name: Cow::Owned(instance_name),
+            name: Cow::Owned(instance_name.to_owned()),
             class_name: Cow::Borrowed("StringValue"),
             properties,
             children: Vec::new(),

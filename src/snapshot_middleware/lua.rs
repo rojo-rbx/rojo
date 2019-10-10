@@ -12,6 +12,7 @@ use super::{
     dir::SnapshotDir,
     meta_file::AdjacentMetadata,
     middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware},
+    util::match_trailing,
 };
 
 pub struct SnapshotLua;
@@ -144,15 +145,6 @@ fn snapshot_init<F: ImfsFetcher>(
     }
 
     Ok(None)
-}
-
-fn match_trailing<'a>(input: &'a str, trailer: &str) -> Option<&'a str> {
-    if input.ends_with(trailer) {
-        let end = input.len().saturating_sub(trailer.len());
-        Some(&input[..end])
-    } else {
-        None
-    }
 }
 
 #[cfg(test)]

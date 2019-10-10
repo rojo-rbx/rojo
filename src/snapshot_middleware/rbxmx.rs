@@ -8,8 +8,8 @@ use crate::{
 };
 
 use super::{
-    error::SnapshotError,
     middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware},
+    util::match_file_name,
 };
 
 pub struct SnapshotRbxmx;
@@ -23,24 +23,10 @@ impl SnapshotMiddleware for SnapshotRbxmx {
             return Ok(None);
         }
 
-        let file_name = entry
-            .path()
-            .file_name()
-            .unwrap()
-            .to_str()
-            .ok_or_else(|| SnapshotError::file_name_bad_unicode(entry.path()))?;
-
-        if !file_name.ends_with(".rbxmx") {
-            return Ok(None);
-        }
-
-        let instance_name = entry
-            .path()
-            .file_stem()
-            .expect("Could not extract file stem")
-            .to_str()
-            .ok_or_else(|| SnapshotError::file_name_bad_unicode(entry.path()))?
-            .to_string();
+        let instance_name = match match_file_name(entry.path(), ".rbxmx") {
+            Some(name) => name,
+            None => return Ok(None),
+        };
 
         let options = rbx_xml::DecodeOptions::new()
             .property_behavior(rbx_xml::DecodePropertyBehavior::ReadUnknown);
@@ -53,7 +39,7 @@ impl SnapshotMiddleware for SnapshotRbxmx {
 
         if children.len() == 1 {
             let mut snapshot = InstanceSnapshot::from_tree(&temp_tree, children[0]);
-            snapshot.name = Cow::Owned(instance_name);
+            snapshot.name = Cow::Owned(instance_name.to_owned());
             snapshot.metadata.instigating_source = Some(entry.path().to_path_buf().into());
             snapshot.metadata.relevant_paths = vec![entry.path().to_path_buf()];
 
