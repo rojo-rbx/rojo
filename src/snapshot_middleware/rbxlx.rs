@@ -7,7 +7,10 @@ use crate::{
     snapshot::InstanceSnapshot,
 };
 
-use super::middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware};
+use super::{
+    error::SnapshotError,
+    middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware},
+};
 
 pub struct SnapshotRbxlx;
 
@@ -20,7 +23,12 @@ impl SnapshotMiddleware for SnapshotRbxlx {
             return Ok(None);
         }
 
-        let file_name = entry.path().file_name().unwrap().to_string_lossy();
+        let file_name = entry
+            .path()
+            .file_name()
+            .unwrap()
+            .to_str()
+            .ok_or_else(|| SnapshotError::file_name_bad_unicode(entry.path()))?;
 
         if !file_name.ends_with(".rbxlx") {
             return Ok(None);
@@ -30,7 +38,8 @@ impl SnapshotMiddleware for SnapshotRbxlx {
             .path()
             .file_stem()
             .expect("Could not extract file stem")
-            .to_string_lossy()
+            .to_str()
+            .ok_or_else(|| SnapshotError::file_name_bad_unicode(entry.path()))?
             .to_string();
 
         let options = rbx_xml::DecodeOptions::new()
