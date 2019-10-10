@@ -16,6 +16,16 @@ impl SnapshotError {
         }
     }
 
+    pub(crate) fn wrap(
+        inner: impl Into<SnapshotErrorDetail>,
+        path: Option<impl Into<PathBuf>>,
+    ) -> Self {
+        SnapshotError {
+            detail: inner.into(),
+            path: path.map(Into::into),
+        }
+    }
+
     pub(crate) fn file_did_not_exist(path: impl Into<PathBuf>) -> SnapshotError {
         SnapshotError {
             detail: SnapshotErrorDetail::FileDidNotExist,
@@ -70,19 +80,30 @@ impl From<FsError> for SnapshotError {
     fn from(error: FsError) -> Self {
         let (inner, path) = error.into_raw();
 
-        let detail = SnapshotErrorDetail::IoError { inner };
-
-        Self::new(detail, Some(path))
+        Self::new(inner.into(), Some(path))
     }
 }
 
 #[derive(Debug)]
 pub enum SnapshotErrorDetail {
     IoError { inner: io::Error },
+    Lua { inner: rlua::Error },
     FileDidNotExist,
     FileNameBadUnicode,
     FileContentsBadUnicode { inner: std::str::Utf8Error },
     MalformedProject { inner: serde_json::Error },
+}
+
+impl From<io::Error> for SnapshotErrorDetail {
+    fn from(inner: io::Error) -> Self {
+        Self::IoError { inner }
+    }
+}
+
+impl From<rlua::Error> for SnapshotErrorDetail {
+    fn from(inner: rlua::Error) -> Self {
+        Self::Lua { inner }
+    }
 }
 
 impl SnapshotErrorDetail {
@@ -91,6 +112,7 @@ impl SnapshotErrorDetail {
 
         match self {
             IoError { inner } => Some(inner),
+            Lua { inner } => Some(inner),
             FileContentsBadUnicode { inner } => Some(inner),
             MalformedProject { inner } => Some(inner),
             _ => None,
@@ -104,6 +126,7 @@ impl fmt::Display for SnapshotErrorDetail {
 
         match self {
             IoError { inner } => write!(formatter, "I/O error: {}", inner),
+            Lua { inner } => write!(formatter, "{}", inner),
             FileDidNotExist => write!(formatter, "file did not exist"),
             FileNameBadUnicode => write!(formatter, "file name had malformed Unicode"),
             FileContentsBadUnicode { inner } => {
