@@ -81,6 +81,12 @@ impl From<FsError> for SnapshotError {
     }
 }
 
+impl From<rlua::Error> for SnapshotError {
+    fn from(error: rlua::Error) -> Self {
+        Self::new(error.into(), Option::<PathBuf>::None)
+    }
+}
+
 #[derive(Debug)]
 pub enum SnapshotErrorDetail {
     IoError { inner: io::Error },

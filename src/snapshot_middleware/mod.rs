@@ -16,14 +16,18 @@ mod rbxlx;
 mod rbxm;
 mod rbxmx;
 mod txt;
+mod user_plugins;
 mod util;
 
 pub use self::error::*;
 
+use std::path::PathBuf;
+
 use rbx_dom_weak::{RbxId, RbxTree};
+use rlua::Lua;
 
 use self::{
-    context::InstanceSnapshotContext,
+    context::{InstanceSnapshotContext, SnapshotPluginContext},
     csv::SnapshotCsv,
     dir::SnapshotDir,
     json_model::SnapshotJsonModel,
@@ -34,6 +38,7 @@ use self::{
     rbxm::SnapshotRbxm,
     rbxmx::SnapshotRbxmx,
     txt::SnapshotTxt,
+    user_plugins::SnapshotUserPlugins,
 };
 use crate::imfs::{Imfs, ImfsEntry, ImfsFetcher};
 
@@ -44,7 +49,13 @@ macro_rules! middlewares {
             imfs: &mut Imfs<F>,
             entry: &ImfsEntry,
         ) -> SnapshotInstanceResult<'static> {
-            let context = InstanceSnapshotContext::default();
+            // TODO: Accept this context as an argument instead so that it can
+            // be derived from the current project.
+            let context = InstanceSnapshotContext {
+                plugin_context: Some(SnapshotPluginContext::new(vec![
+                    PathBuf::from("test-projects/plugins/test-plugin.lua"),
+                ])),
+            };
 
             $(
                 log::trace!("trying middleware {} on {}", stringify!($middleware), entry.path().display());
@@ -75,6 +86,7 @@ macro_rules! middlewares {
 
 middlewares! {
     SnapshotProject,
+    SnapshotUserPlugins,
     SnapshotJsonModel,
     SnapshotRbxlx,
     SnapshotRbxmx,
