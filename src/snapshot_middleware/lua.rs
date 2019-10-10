@@ -20,7 +20,7 @@ pub struct SnapshotLua;
 
 impl SnapshotMiddleware for SnapshotLua {
     fn from_imfs<F: ImfsFetcher>(
-        context: &InstanceSnapshotContext,
+        context: &mut InstanceSnapshotContext,
         imfs: &mut Imfs<F>,
         entry: &ImfsEntry,
     ) -> SnapshotInstanceResult<'static> {
@@ -116,7 +116,7 @@ fn snapshot_lua_file<F: ImfsFetcher>(
 /// Scripts named `init.lua`, `init.server.lua`, or `init.client.lua` usurp
 /// their parents, which acts similarly to `__init__.py` from the Python world.
 fn snapshot_init<F: ImfsFetcher>(
-    context: &InstanceSnapshotContext,
+    context: &mut InstanceSnapshotContext,
     imfs: &mut Imfs<F>,
     folder_entry: &ImfsEntry,
     init_name: &str,
@@ -156,7 +156,7 @@ mod test {
 
         let entry = imfs.get("/foo.lua").unwrap();
         let instance_snapshot =
-            SnapshotLua::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+            SnapshotLua::from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
                 .unwrap()
                 .unwrap();
 
@@ -172,7 +172,7 @@ mod test {
 
         let entry = imfs.get("/foo.server.lua").unwrap();
         let instance_snapshot =
-            SnapshotLua::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+            SnapshotLua::from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
                 .unwrap()
                 .unwrap();
 
@@ -188,7 +188,7 @@ mod test {
 
         let entry = imfs.get("/foo.client.lua").unwrap();
         let instance_snapshot =
-            SnapshotLua::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+            SnapshotLua::from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
                 .unwrap()
                 .unwrap();
 
@@ -212,7 +212,7 @@ mod test {
 
         let entry = imfs.get("/foo.lua").unwrap();
         let instance_snapshot =
-            SnapshotLua::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+            SnapshotLua::from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
                 .unwrap()
                 .unwrap();
 
@@ -236,7 +236,7 @@ mod test {
 
         let entry = imfs.get("/foo.server.lua").unwrap();
         let instance_snapshot =
-            SnapshotLua::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+            SnapshotLua::from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
                 .unwrap()
                 .unwrap();
 
@@ -262,7 +262,7 @@ mod test {
 
         let entry = imfs.get("/bar.server.lua").unwrap();
         let instance_snapshot =
-            SnapshotLua::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+            SnapshotLua::from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
                 .unwrap()
                 .unwrap();
 

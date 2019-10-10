@@ -24,7 +24,6 @@ pub use self::error::*;
 use std::path::PathBuf;
 
 use rbx_dom_weak::{RbxId, RbxTree};
-use rlua::Lua;
 
 use self::{
     context::{InstanceSnapshotContext, SnapshotPluginContext},
@@ -51,7 +50,7 @@ macro_rules! middlewares {
         ) -> SnapshotInstanceResult<'static> {
             // TODO: Accept this context as an argument instead so that it can
             // be derived from the current project.
-            let context = InstanceSnapshotContext {
+            let mut context = InstanceSnapshotContext {
                 plugin_context: Some(SnapshotPluginContext::new(vec![
                     PathBuf::from("test-projects/plugins/test-plugin.lua"),
                 ])),
@@ -60,7 +59,7 @@ macro_rules! middlewares {
             $(
                 log::trace!("trying middleware {} on {}", stringify!($middleware), entry.path().display());
 
-                if let Some(snapshot) = $middleware::from_imfs(&context, imfs, entry)? {
+                if let Some(snapshot) = $middleware::from_imfs(&mut context, imfs, entry)? {
                     log::trace!("middleware {} success on {}", stringify!($middleware), entry.path().display());
                     return Ok(Some(snapshot));
                 }

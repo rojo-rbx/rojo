@@ -19,7 +19,7 @@ pub struct SnapshotJsonModel;
 
 impl SnapshotMiddleware for SnapshotJsonModel {
     fn from_imfs<F: ImfsFetcher>(
-        _context: &InstanceSnapshotContext,
+        _context: &mut InstanceSnapshotContext,
         imfs: &mut Imfs<F>,
         entry: &ImfsEntry,
     ) -> SnapshotInstanceResult<'static> {
@@ -163,10 +163,13 @@ mod test {
         imfs.debug_load_snapshot("/foo.model.json", file);
 
         let entry = imfs.get("/foo.model.json").unwrap();
-        let instance_snapshot =
-            SnapshotJsonModel::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = SnapshotJsonModel::from_imfs(
+            &mut InstanceSnapshotContext::default(),
+            &mut imfs,
+            &entry,
+        )
+        .unwrap()
+        .unwrap();
 
         assert_yaml_snapshot!(instance_snapshot);
     }

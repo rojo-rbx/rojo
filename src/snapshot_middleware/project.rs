@@ -22,7 +22,7 @@ pub struct SnapshotProject;
 
 impl SnapshotMiddleware for SnapshotProject {
     fn from_imfs<F: ImfsFetcher>(
-        context: &InstanceSnapshotContext,
+        context: &mut InstanceSnapshotContext,
         imfs: &mut Imfs<F>,
         entry: &ImfsEntry,
     ) -> SnapshotInstanceResult<'static> {
@@ -212,7 +212,7 @@ mod test {
 
         let entry = imfs.get("/foo").unwrap();
         let instance_snapshot =
-            SnapshotProject::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+            SnapshotProject::from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
                 .expect("snapshot error")
                 .expect("snapshot returned no instances");
 
@@ -239,7 +239,7 @@ mod test {
 
         let entry = imfs.get("/foo/hello.project.json").unwrap();
         let instance_snapshot =
-            SnapshotProject::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+            SnapshotProject::from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
                 .expect("snapshot error")
                 .expect("snapshot returned no instances");
 
@@ -272,7 +272,7 @@ mod test {
 
         let entry = imfs.get("/foo").unwrap();
         let instance_snapshot =
-            SnapshotProject::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+            SnapshotProject::from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
                 .expect("snapshot error")
                 .expect("snapshot returned no instances");
 
@@ -302,7 +302,7 @@ mod test {
 
         let entry = imfs.get("/foo").unwrap();
         let instance_snapshot =
-            SnapshotProject::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+            SnapshotProject::from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
                 .expect("snapshot error")
                 .expect("snapshot returned no instances");
 
@@ -333,7 +333,7 @@ mod test {
 
         let entry = imfs.get("/foo").unwrap();
         let instance_snapshot =
-            SnapshotProject::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+            SnapshotProject::from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
                 .expect("snapshot error")
                 .expect("snapshot returned no instances");
 
@@ -361,7 +361,7 @@ mod test {
 
         let entry = imfs.get("/foo").unwrap();
         let instance_snapshot =
-            SnapshotProject::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+            SnapshotProject::from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
                 .expect("snapshot error")
                 .expect("snapshot returned no instances");
 
@@ -396,7 +396,7 @@ mod test {
 
         let entry = imfs.get("/foo").unwrap();
         let instance_snapshot =
-            SnapshotProject::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+            SnapshotProject::from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
                 .expect("snapshot error")
                 .expect("snapshot returned no instances");
 
@@ -435,7 +435,7 @@ mod test {
 
         let entry = imfs.get("/foo").unwrap();
         let instance_snapshot =
-            SnapshotProject::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+            SnapshotProject::from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
                 .expect("snapshot error")
                 .expect("snapshot returned no instances");
 
@@ -479,7 +479,7 @@ mod test {
 
         let entry = imfs.get("/foo").unwrap();
         let instance_snapshot =
-            SnapshotProject::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+            SnapshotProject::from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
                 .expect("snapshot error")
                 .expect("snapshot returned no instances");
 

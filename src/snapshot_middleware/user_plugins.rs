@@ -14,7 +14,7 @@ pub struct SnapshotUserPlugins;
 
 impl SnapshotMiddleware for SnapshotUserPlugins {
     fn from_imfs<F: ImfsFetcher>(
-        context: &InstanceSnapshotContext,
+        context: &mut InstanceSnapshotContext,
         _imfs: &mut Imfs<F>,
         _entry: &ImfsEntry,
     ) -> SnapshotInstanceResult<'static> {

@@ -20,7 +20,7 @@ pub struct SnapshotCsv;
 
 impl SnapshotMiddleware for SnapshotCsv {
     fn from_imfs<F: ImfsFetcher>(
-        _context: &InstanceSnapshotContext,
+        _context: &mut InstanceSnapshotContext,
         imfs: &mut Imfs<F>,
         entry: &ImfsEntry,
     ) -> SnapshotInstanceResult<'static> {
@@ -162,7 +162,7 @@ Ack,Ack!,,An exclamation of despair,¡Ay!"#,
 
         let entry = imfs.get("/foo.csv").unwrap();
         let instance_snapshot =
-            SnapshotCsv::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+            SnapshotCsv::from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
                 .unwrap()
                 .unwrap();
 
@@ -184,7 +184,7 @@ Ack,Ack!,,An exclamation of despair,¡Ay!"#,
 
         let entry = imfs.get("/foo.csv").unwrap();
         let instance_snapshot =
-            SnapshotCsv::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+            SnapshotCsv::from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
                 .unwrap()
                 .unwrap();
 

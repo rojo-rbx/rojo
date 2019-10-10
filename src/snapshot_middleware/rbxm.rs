@@ -17,7 +17,7 @@ pub struct SnapshotRbxm;
 
 impl SnapshotMiddleware for SnapshotRbxm {
     fn from_imfs<F: ImfsFetcher>(
-        _context: &InstanceSnapshotContext,
+        _context: &mut InstanceSnapshotContext,
         imfs: &mut Imfs<F>,
         entry: &ImfsEntry,
     ) -> SnapshotInstanceResult<'static> {
@@ -71,7 +71,7 @@ mod test {
 
         let entry = imfs.get("/foo.rbxm").unwrap();
         let instance_snapshot =
-            SnapshotRbxm::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+            SnapshotRbxm::from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
                 .unwrap()
                 .unwrap();
 

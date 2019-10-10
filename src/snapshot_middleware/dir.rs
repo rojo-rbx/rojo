@@ -18,7 +18,7 @@ pub struct SnapshotDir;
 
 impl SnapshotMiddleware for SnapshotDir {
     fn from_imfs<F: ImfsFetcher>(
-        _context: &InstanceSnapshotContext,
+        _context: &mut InstanceSnapshotContext,
         imfs: &mut Imfs<F>,
         entry: &ImfsEntry,
     ) -> SnapshotInstanceResult<'static> {
@@ -97,7 +97,7 @@ mod test {
 
         let entry = imfs.get("/foo").unwrap();
         let instance_snapshot =
-            SnapshotDir::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+            SnapshotDir::from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
                 .unwrap()
                 .unwrap();
 
@@ -115,7 +115,7 @@ mod test {
 
         let entry = imfs.get("/foo").unwrap();
         let instance_snapshot =
-            SnapshotDir::from_imfs(&InstanceSnapshotContext::default(), &mut imfs, &entry)
+            SnapshotDir::from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
                 .unwrap()
                 .unwrap();
 
