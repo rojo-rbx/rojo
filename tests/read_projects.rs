@@ -87,6 +87,7 @@ fn single_partition_game() {
             tree: root_node,
             serve_port: None,
             serve_place_ids: None,
+            plugins: Vec::new(),
             file_location: project_location.join("default.project.json"),
         }
     };
