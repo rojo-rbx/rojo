@@ -19,14 +19,12 @@ mod txt;
 mod user_plugins;
 mod util;
 
+pub use self::context::*;
 pub use self::error::*;
-
-use std::path::PathBuf;
 
 use rbx_dom_weak::{RbxId, RbxTree};
 
 use self::{
-    context::{InstanceSnapshotContext, SnapshotPluginContext},
     csv::SnapshotCsv,
     dir::SnapshotDir,
     json_model::SnapshotJsonModel,
@@ -45,21 +43,14 @@ macro_rules! middlewares {
     ( $($middleware: ident,)* ) => {
         /// Generates a snapshot of instances from the given ImfsEntry.
         pub fn snapshot_from_imfs<F: ImfsFetcher>(
+            context: &mut InstanceSnapshotContext,
             imfs: &mut Imfs<F>,
             entry: &ImfsEntry,
         ) -> SnapshotInstanceResult<'static> {
-            // TODO: Accept this context as an argument instead so that it can
-            // be derived from the current project.
-            let mut context = InstanceSnapshotContext {
-                plugin_context: Some(SnapshotPluginContext::new(vec![
-                    PathBuf::from("test-projects/plugins/test-plugin.lua"),
-                ])),
-            };
-
             $(
                 log::trace!("trying middleware {} on {}", stringify!($middleware), entry.path().display());
 
-                if let Some(snapshot) = $middleware::from_imfs(&mut context, imfs, entry)? {
+                if let Some(snapshot) = $middleware::from_imfs(context, imfs, entry)? {
                     log::trace!("middleware {} success on {}", stringify!($middleware), entry.path().display());
                     return Ok(Some(snapshot));
                 }

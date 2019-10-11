@@ -11,7 +11,7 @@ use rbx_dom_weak::RbxInstanceProperties;
 use crate::{
     imfs::{FsError, Imfs, RealFetcher, WatchMode},
     snapshot::{apply_patch_set, compute_patch_set, InstancePropertiesWithMeta, RojoTree},
-    snapshot_middleware::snapshot_from_imfs,
+    snapshot_middleware::{snapshot_from_imfs, InstanceSnapshotContext},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -96,8 +96,9 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
         .get(&options.fuzzy_project_path)
         .expect("could not get project path");
 
+    // TODO: Compute snapshot context from project.
     log::trace!("Generating snapshot of instances from IMFS");
-    let snapshot = snapshot_from_imfs(&mut imfs, &entry)
+    let snapshot = snapshot_from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
         .expect("snapshot failed")
         .expect("snapshot did not return an instance");
 

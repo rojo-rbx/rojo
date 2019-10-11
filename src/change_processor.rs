@@ -12,7 +12,7 @@ use crate::{
     imfs::{Imfs, ImfsEvent, ImfsFetcher},
     message_queue::MessageQueue,
     snapshot::{apply_patch_set, compute_patch_set, AppliedPatchSet, InstigatingSource, RojoTree},
-    snapshot_middleware::snapshot_from_imfs,
+    snapshot_middleware::{snapshot_from_imfs, InstanceSnapshotContext},
 };
 
 pub struct ChangeProcessor {
@@ -99,7 +99,10 @@ impl ChangeProcessor {
                                                 .get(path)
                                                 .expect("could not get instigating path from filesystem");
 
-                                            let snapshot = snapshot_from_imfs(&mut imfs, &entry)
+                                            // TODO: Use persisted snapshot
+                                            // context struct instead of
+                                            // recreating it every time.
+                                            let snapshot = snapshot_from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
                                                 .expect("snapshot failed")
                                                 .expect("snapshot did not return an instance");
 
