@@ -16,7 +16,7 @@ use crate::{
     snapshot::{
         apply_patch_set, compute_patch_set, AppliedPatchSet, InstancePropertiesWithMeta, RojoTree,
     },
-    snapshot_middleware::snapshot_from_imfs,
+    snapshot_middleware::{snapshot_from_imfs, InstanceSnapshotContext},
 };
 
 /// Contains all of the state for a Rojo serve session.
@@ -111,10 +111,12 @@ impl<F: ImfsFetcher + Send + 'static> ServeSession<F> {
         log::trace!("Loading start path: {}", start_path.display());
         let entry = imfs.get(start_path).expect("could not get project path");
 
+        // TODO: Compute snapshot context from project.
         log::trace!("Snapshotting start path");
-        let snapshot = snapshot_from_imfs(&mut imfs, &entry)
-            .expect("snapshot failed")
-            .expect("snapshot did not return an instance");
+        let snapshot =
+            snapshot_from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
+                .expect("snapshot failed")
+                .expect("snapshot did not return an instance");
 
         log::trace!("Computing initial patch set");
         let patch_set = compute_patch_set(&snapshot, &tree, root_id);

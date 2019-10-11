@@ -16,14 +16,15 @@ mod rbxlx;
 mod rbxm;
 mod rbxmx;
 mod txt;
+mod user_plugins;
 mod util;
 
+pub use self::context::*;
 pub use self::error::*;
 
 use rbx_dom_weak::{RbxId, RbxTree};
 
 use self::{
-    context::InstanceSnapshotContext,
     csv::SnapshotCsv,
     dir::SnapshotDir,
     json_model::SnapshotJsonModel,
@@ -34,6 +35,7 @@ use self::{
     rbxm::SnapshotRbxm,
     rbxmx::SnapshotRbxmx,
     txt::SnapshotTxt,
+    user_plugins::SnapshotUserPlugins,
 };
 use crate::imfs::{Imfs, ImfsEntry, ImfsFetcher};
 
@@ -41,15 +43,14 @@ macro_rules! middlewares {
     ( $($middleware: ident,)* ) => {
         /// Generates a snapshot of instances from the given ImfsEntry.
         pub fn snapshot_from_imfs<F: ImfsFetcher>(
+            context: &mut InstanceSnapshotContext,
             imfs: &mut Imfs<F>,
             entry: &ImfsEntry,
         ) -> SnapshotInstanceResult<'static> {
-            let mut context = InstanceSnapshotContext::default();
-
             $(
                 log::trace!("trying middleware {} on {}", stringify!($middleware), entry.path().display());
 
-                if let Some(snapshot) = $middleware::from_imfs(&mut context, imfs, entry)? {
+                if let Some(snapshot) = $middleware::from_imfs(context, imfs, entry)? {
                     log::trace!("middleware {} success on {}", stringify!($middleware), entry.path().display());
                     return Ok(Some(snapshot));
                 }
@@ -75,6 +76,7 @@ macro_rules! middlewares {
 
 middlewares! {
     SnapshotProject,
+    SnapshotUserPlugins,
     SnapshotJsonModel,
     SnapshotRbxlx,
     SnapshotRbxmx,

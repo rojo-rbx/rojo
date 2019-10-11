@@ -30,6 +30,10 @@ struct SourceProject {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     serve_place_ids: Option<HashSet<u64>>,
+
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[cfg_attr(not(feature = "user-plugins"), serde(skip_deserializing))]
+    plugins: Vec<String>,
 }
 
 impl SourceProject {
@@ -37,11 +41,19 @@ impl SourceProject {
     pub fn into_project(self, project_file_location: &Path) -> Project {
         let tree = self.tree.into_project_node(project_file_location);
 
+        let project_folder = project_file_location.parent().unwrap();
+        let plugins = self
+            .plugins
+            .into_iter()
+            .map(|path| project_folder.join(path))
+            .collect();
+
         Project {
             name: self.name,
             tree,
             serve_port: self.serve_port,
             serve_place_ids: self.serve_place_ids,
+            plugins,
             file_location: PathBuf::from(project_file_location),
         }
     }
@@ -318,6 +330,7 @@ pub struct Project {
     pub tree: ProjectNode,
     pub serve_port: Option<u16>,
     pub serve_place_ids: Option<HashSet<u64>>,
+    pub plugins: Vec<PathBuf>,
     pub file_location: PathBuf,
 }
 
@@ -391,6 +404,7 @@ impl Project {
             tree,
             serve_port: None,
             serve_place_ids: None,
+            plugins: Vec::new(),
             file_location: project_path.clone(),
         };
 
@@ -557,10 +571,24 @@ impl Project {
     }
 
     fn to_source_project(&self) -> SourceProject {
+        // TODO: Use path_serializer instead of transforming paths between
+        // String and PathBuf?
+        let plugins = self
+            .plugins
+            .iter()
+            .map(|path| {
+                path.strip_prefix(self.folder_location())
+                    .unwrap()
+                    .display()
+                    .to_string()
+            })
+            .collect();
+
         SourceProject {
             name: self.name.clone(),
             tree: self.tree.to_source_node(&self.file_location),
             serve_port: self.serve_port,
+            plugins,
             serve_place_ids: self.serve_place_ids.clone(),
         }
     }

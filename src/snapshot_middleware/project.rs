@@ -48,7 +48,8 @@ impl SnapshotMiddleware for SnapshotProject {
 
         // Snapshotting a project should always return an instance, so this
         // unwrap is safe.
-        let mut snapshot = snapshot_project_node(&project.name, &project.tree, imfs)?.unwrap();
+        let mut snapshot =
+            snapshot_project_node(context, &project.name, &project.tree, imfs)?.unwrap();
 
         // Setting the instigating source to the project file path is a little
         // coarse.
@@ -76,6 +77,7 @@ impl SnapshotMiddleware for SnapshotProject {
 }
 
 fn snapshot_project_node<F: ImfsFetcher>(
+    context: &mut InstanceSnapshotContext,
     instance_name: &str,
     node: &ProjectNode,
     imfs: &mut Imfs<F>,
@@ -92,7 +94,7 @@ fn snapshot_project_node<F: ImfsFetcher>(
     if let Some(path) = &node.path {
         let entry = imfs.get(path)?;
 
-        if let Some(snapshot) = snapshot_from_imfs(imfs, &entry)? {
+        if let Some(snapshot) = snapshot_from_imfs(context, imfs, &entry)? {
             // If a class name was already specified, then it'll override the
             // class name of this snapshot ONLY if it's a Folder.
             //
@@ -142,7 +144,7 @@ fn snapshot_project_node<F: ImfsFetcher>(
         .expect("$className or $path must be specified");
 
     for (child_name, child_project_node) in &node.children {
-        if let Some(child) = snapshot_project_node(child_name, child_project_node, imfs)? {
+        if let Some(child) = snapshot_project_node(context, child_name, child_project_node, imfs)? {
             children.push(child);
         }
     }

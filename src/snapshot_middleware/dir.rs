@@ -18,7 +18,7 @@ pub struct SnapshotDir;
 
 impl SnapshotMiddleware for SnapshotDir {
     fn from_imfs<F: ImfsFetcher>(
-        _context: &mut InstanceSnapshotContext,
+        context: &mut InstanceSnapshotContext,
         imfs: &mut Imfs<F>,
         entry: &ImfsEntry,
     ) -> SnapshotInstanceResult<'static> {
@@ -31,7 +31,7 @@ impl SnapshotMiddleware for SnapshotDir {
         let mut snapshot_children = Vec::new();
 
         for child in children.into_iter() {
-            if let Some(child_snapshot) = snapshot_from_imfs(imfs, &child)? {
+            if let Some(child_snapshot) = snapshot_from_imfs(context, imfs, &child)? {
                 snapshot_children.push(child_snapshot);
             }
         }

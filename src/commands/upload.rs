@@ -8,7 +8,7 @@ use crate::{
     auth_cookie::get_auth_cookie,
     imfs::{Imfs, RealFetcher, WatchMode},
     snapshot::{apply_patch_set, compute_patch_set, InstancePropertiesWithMeta, RojoTree},
-    snapshot_middleware::snapshot_from_imfs,
+    snapshot_middleware::{snapshot_from_imfs, InstanceSnapshotContext},
 };
 
 #[derive(Debug, Fail)]
@@ -63,8 +63,9 @@ pub fn upload(options: UploadOptions) -> Result<(), UploadError> {
         .get(&options.fuzzy_project_path)
         .expect("could not get project path");
 
+    // TODO: Compute snapshot context from project.
     log::trace!("Generating snapshot of instances from IMFS");
-    let snapshot = snapshot_from_imfs(&mut imfs, &entry)
+    let snapshot = snapshot_from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
         .expect("snapshot failed")
         .expect("snapshot did not return an instance");
 
