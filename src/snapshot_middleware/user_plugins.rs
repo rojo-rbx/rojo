@@ -95,8 +95,6 @@ fn initialize_plugins<P: AsRef<Path>>(
         .map(|path| {
             let path = path.as_ref();
 
-            // TODO: This path is currently relative to the working directory,
-            // but should be relative to the folder containing the project file.
             let content = fs::read_to_string(path).map_err(|err| SnapshotError::wrap(err, path))?;
 
             lua_state.context(|lua_context| {
