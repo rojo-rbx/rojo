@@ -32,6 +32,7 @@ struct SourceProject {
     serve_place_ids: Option<HashSet<u64>>,
 
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[cfg_attr(not(feature = "user-plugins"), serde(skip_deserializing))]
     plugins: Vec<String>,
 }
 
