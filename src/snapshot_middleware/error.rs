@@ -99,13 +99,13 @@ pub enum SnapshotErrorDetail {
 
 impl From<io::Error> for SnapshotErrorDetail {
     fn from(inner: io::Error) -> Self {
-        Self::IoError { inner }
+        SnapshotErrorDetail::IoError { inner }
     }
 }
 
 impl From<rlua::Error> for SnapshotErrorDetail {
     fn from(inner: rlua::Error) -> Self {
-        Self::Lua { inner }
+        SnapshotErrorDetail::Lua { inner }
     }
 }
 
