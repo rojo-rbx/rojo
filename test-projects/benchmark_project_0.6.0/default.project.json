@@ -1,0 +1,38 @@
+{
+  "name": "benchmark_project_0.6.0",
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+
+      "Common": {
+        "$path": "src/common"
+      },
+
+      "Models": {
+        "$path": "models"
+      }
+    },
+
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+
+      "Server": {
+        "$path": "src/server"
+      }
+    },
+
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+
+        "Client": {
+          "$path": "src/client"
+        }
+      }
+    }
+  }
+}
