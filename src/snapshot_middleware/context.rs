@@ -62,4 +62,4 @@ impl<T> Deref for IgnoreDebug<T> {
     }
 }
 
-pub struct ImfsSnapshotContext;
+pub struct VfsSnapshotContext;

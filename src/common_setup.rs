@@ -6,15 +6,15 @@ use std::path::Path;
 use rbx_dom_weak::RbxInstanceProperties;
 
 use crate::{
-    imfs::{Imfs, ImfsFetcher},
     project::{Project, ProjectLoadError},
     snapshot::{apply_patch_set, compute_patch_set, InstancePropertiesWithMeta, RojoTree},
-    snapshot_middleware::{snapshot_from_imfs, InstanceSnapshotContext, SnapshotPluginContext},
+    snapshot_middleware::{snapshot_from_vfs, InstanceSnapshotContext, SnapshotPluginContext},
+    vfs::{Vfs, VfsFetcher},
 };
 
-pub fn start<F: ImfsFetcher>(
+pub fn start<F: VfsFetcher>(
     fuzzy_project_path: &Path,
-    imfs: &mut Imfs<F>,
+    vfs: &mut Vfs<F>,
 ) -> (Option<Project>, RojoTree) {
     log::trace!("Loading project file from {}", fuzzy_project_path.display());
     let maybe_project = match Project::load_fuzzy(fuzzy_project_path) {
@@ -47,12 +47,12 @@ pub fn start<F: ImfsFetcher>(
     }
 
     log::trace!("Reading project root");
-    let entry = imfs
+    let entry = vfs
         .get(fuzzy_project_path)
         .expect("could not get project path");
 
-    log::trace!("Generating snapshot of instances from IMFS");
-    let snapshot = snapshot_from_imfs(&mut snapshot_context, imfs, &entry)
+    log::trace!("Generating snapshot of instances from VFS");
+    let snapshot = snapshot_from_vfs(&mut snapshot_context, vfs, &entry)
         .expect("snapshot failed")
         .expect("snapshot did not return an instance");
 

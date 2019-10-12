@@ -3,35 +3,35 @@ use std::{borrow::Cow, collections::HashMap};
 use rbx_dom_weak::{RbxId, RbxTree};
 
 use crate::{
-    imfs::{DirectorySnapshot, Imfs, ImfsEntry, ImfsFetcher, ImfsSnapshot},
     snapshot::{InstanceMetadata, InstanceSnapshot},
+    vfs::{DirectorySnapshot, Vfs, VfsEntry, VfsFetcher, VfsSnapshot},
 };
 
 use super::{
     context::InstanceSnapshotContext,
     error::SnapshotError,
     middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware},
-    snapshot_from_imfs, snapshot_from_instance,
+    snapshot_from_instance, snapshot_from_vfs,
 };
 
 pub struct SnapshotDir;
 
 impl SnapshotMiddleware for SnapshotDir {
-    fn from_imfs<F: ImfsFetcher>(
+    fn from_vfs<F: VfsFetcher>(
         context: &mut InstanceSnapshotContext,
-        imfs: &mut Imfs<F>,
-        entry: &ImfsEntry,
+        vfs: &mut Vfs<F>,
+        entry: &VfsEntry,
     ) -> SnapshotInstanceResult<'static> {
         if entry.is_file() {
             return Ok(None);
         }
 
-        let children: Vec<ImfsEntry> = entry.children(imfs)?;
+        let children: Vec<VfsEntry> = entry.children(vfs)?;
 
         let mut snapshot_children = Vec::new();
 
         for child in children.into_iter() {
-            if let Some(child_snapshot) = snapshot_from_imfs(context, imfs, &child)? {
+            if let Some(child_snapshot) = snapshot_from_vfs(context, vfs, &child)? {
                 snapshot_children.push(child_snapshot);
             }
         }
@@ -73,7 +73,7 @@ impl SnapshotMiddleware for SnapshotDir {
             }
         }
 
-        let snapshot = ImfsSnapshot::Directory(DirectorySnapshot { children });
+        let snapshot = VfsSnapshot::Directory(DirectorySnapshot { children });
 
         Some((instance.name.clone(), snapshot))
     }
@@ -86,18 +86,18 @@ mod test {
     use insta::assert_yaml_snapshot;
     use maplit::hashmap;
 
-    use crate::imfs::{ImfsDebug, NoopFetcher};
+    use crate::vfs::{NoopFetcher, VfsDebug};
 
     #[test]
     fn empty_folder() {
-        let mut imfs = Imfs::new(NoopFetcher);
-        let dir = ImfsSnapshot::dir::<String>(HashMap::new());
+        let mut vfs = Vfs::new(NoopFetcher);
+        let dir = VfsSnapshot::dir::<String>(HashMap::new());
 
-        imfs.debug_load_snapshot("/foo", dir);
+        vfs.debug_load_snapshot("/foo", dir);
 
-        let entry = imfs.get("/foo").unwrap();
+        let entry = vfs.get("/foo").unwrap();
         let instance_snapshot =
-            SnapshotDir::from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
+            SnapshotDir::from_vfs(&mut InstanceSnapshotContext::default(), &mut vfs, &entry)
                 .unwrap()
                 .unwrap();
 
@@ -106,16 +106,16 @@ mod test {
 
     #[test]
     fn folder_in_folder() {
-        let mut imfs = Imfs::new(NoopFetcher);
-        let dir = ImfsSnapshot::dir(hashmap! {
-            "Child" => ImfsSnapshot::dir::<String>(HashMap::new()),
+        let mut vfs = Vfs::new(NoopFetcher);
+        let dir = VfsSnapshot::dir(hashmap! {
+            "Child" => VfsSnapshot::dir::<String>(HashMap::new()),
         });
 
-        imfs.debug_load_snapshot("/foo", dir);
+        vfs.debug_load_snapshot("/foo", dir);
 
-        let entry = imfs.get("/foo").unwrap();
+        let entry = vfs.get("/foo").unwrap();
         let instance_snapshot =
-            SnapshotDir::from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
+            SnapshotDir::from_vfs(&mut InstanceSnapshotContext::default(), &mut vfs, &entry)
                 .unwrap()
                 .unwrap();
 

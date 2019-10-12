@@ -3,20 +3,20 @@ use std::path::{Path, PathBuf};
 use rbx_dom_weak::{RbxId, RbxTree};
 
 use crate::{
-    imfs::{Imfs, ImfsEntry, ImfsFetcher, ImfsSnapshot},
     snapshot::InstanceSnapshot,
+    vfs::{Vfs, VfsEntry, VfsFetcher, VfsSnapshot},
 };
 
 use super::{context::InstanceSnapshotContext, error::SnapshotError};
 
 pub type SnapshotInstanceResult<'a> = Result<Option<InstanceSnapshot<'a>>, SnapshotError>;
-pub type SnapshotFileResult = Option<(String, ImfsSnapshot)>;
+pub type SnapshotFileResult = Option<(String, VfsSnapshot)>;
 
 pub trait SnapshotMiddleware {
-    fn from_imfs<F: ImfsFetcher>(
+    fn from_vfs<F: VfsFetcher>(
         context: &mut InstanceSnapshotContext,
-        imfs: &mut Imfs<F>,
-        entry: &ImfsEntry,
+        vfs: &mut Vfs<F>,
+        entry: &VfsEntry,
     ) -> SnapshotInstanceResult<'static>;
 
     fn from_instance(_tree: &RbxTree, _id: RbxId) -> SnapshotFileResult {

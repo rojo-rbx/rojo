@@ -1,7 +1,7 @@
-//! Implements the IMFS fetcher interface for a fake filesystem that can be
+//! Implements the VFS fetcher interface for a fake filesystem that can be
 //! mutated and have changes signaled through it.
 //!
-//! This is useful for testing how things using Imfs react to changed events
+//! This is useful for testing how things using Vfs react to changed events
 //! without relying on the real filesystem implementation, which is very
 //! platform-specific.
 
@@ -19,9 +19,9 @@ use crossbeam_channel::{unbounded, Receiver, Sender};
 use crate::path_map::PathMap;
 
 use super::{
-    event::ImfsEvent,
-    fetcher::{FileType, ImfsFetcher},
-    snapshot::ImfsSnapshot,
+    event::VfsEvent,
+    fetcher::{FileType, VfsFetcher},
+    snapshot::VfsSnapshot,
 };
 
 #[derive(Clone)]
@@ -30,7 +30,7 @@ pub struct TestFetcherState {
 }
 
 impl TestFetcherState {
-    pub fn load_snapshot<P: AsRef<Path>>(&self, path: P, snapshot: ImfsSnapshot) {
+    pub fn load_snapshot<P: AsRef<Path>>(&self, path: P, snapshot: VfsSnapshot) {
         let mut inner = self.inner.lock().unwrap();
         inner.load_snapshot(path.as_ref().to_path_buf(), snapshot);
     }
@@ -40,7 +40,7 @@ impl TestFetcherState {
         inner.remove(path.as_ref());
     }
 
-    pub fn raise_event(&self, event: ImfsEvent) {
+    pub fn raise_event(&self, event: VfsEvent) {
         let mut inner = self.inner.lock().unwrap();
         inner.raise_event(event);
     }
@@ -53,24 +53,24 @@ pub enum TestFetcherEntry {
 
 struct TestFetcherStateInner {
     entries: PathMap<TestFetcherEntry>,
-    sender: Sender<ImfsEvent>,
+    sender: Sender<VfsEvent>,
 }
 
 impl TestFetcherStateInner {
-    fn new(sender: Sender<ImfsEvent>) -> Self {
+    fn new(sender: Sender<VfsEvent>) -> Self {
         let mut entries = PathMap::new();
         entries.insert(Path::new("/"), TestFetcherEntry::Dir);
 
         Self { sender, entries }
     }
 
-    fn load_snapshot(&mut self, path: PathBuf, snapshot: ImfsSnapshot) {
+    fn load_snapshot(&mut self, path: PathBuf, snapshot: VfsSnapshot) {
         match snapshot {
-            ImfsSnapshot::File(file) => {
+            VfsSnapshot::File(file) => {
                 self.entries
                     .insert(path, TestFetcherEntry::File(file.contents));
             }
-            ImfsSnapshot::Directory(directory) => {
+            VfsSnapshot::Directory(directory) => {
                 self.entries.insert(path.clone(), TestFetcherEntry::Dir);
 
                 for (child_name, child) in directory.children.into_iter() {
@@ -84,14 +84,14 @@ impl TestFetcherStateInner {
         self.entries.remove(path);
     }
 
-    fn raise_event(&mut self, event: ImfsEvent) {
+    fn raise_event(&mut self, event: VfsEvent) {
         self.sender.send(event).unwrap();
     }
 }
 
 pub struct TestFetcher {
     state: TestFetcherState,
-    receiver: Receiver<ImfsEvent>,
+    receiver: Receiver<VfsEvent>,
 }
 
 impl TestFetcher {
@@ -106,7 +106,7 @@ impl TestFetcher {
     }
 }
 
-impl ImfsFetcher for TestFetcher {
+impl VfsFetcher for TestFetcher {
     fn file_type(&mut self, path: &Path) -> io::Result<FileType> {
         let inner = self.state.inner.lock().unwrap();
 
@@ -169,7 +169,7 @@ impl ImfsFetcher for TestFetcher {
 
     fn unwatch(&mut self, _path: &Path) {}
 
-    fn receiver(&self) -> Receiver<ImfsEvent> {
+    fn receiver(&self) -> Receiver<VfsEvent> {
         self.receiver.clone()
     }
 }

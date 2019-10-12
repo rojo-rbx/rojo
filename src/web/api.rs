@@ -9,8 +9,8 @@ use hyper::{service::Service, Body, Method, Request, StatusCode};
 use rbx_dom_weak::RbxId;
 
 use crate::{
-    imfs::ImfsFetcher,
     serve_session::ServeSession,
+    vfs::VfsFetcher,
     web::{
         interface::{
             ErrorResponse, Instance, InstanceMetadata as WebInstanceMetadata, InstanceUpdate,
@@ -25,7 +25,7 @@ pub struct ApiService<F> {
     serve_session: Arc<ServeSession<F>>,
 }
 
-impl<F: ImfsFetcher> Service for ApiService<F> {
+impl<F: VfsFetcher> Service for ApiService<F> {
     type ReqBody = Body;
     type ResBody = Body;
     type Error = hyper::Error;
@@ -49,7 +49,7 @@ impl<F: ImfsFetcher> Service for ApiService<F> {
     }
 }
 
-impl<F: ImfsFetcher> ApiService<F> {
+impl<F: VfsFetcher> ApiService<F> {
     pub fn new(serve_session: Arc<ServeSession<F>>) -> Self {
         ApiService { serve_session }
     }

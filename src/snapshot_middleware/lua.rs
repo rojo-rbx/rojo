@@ -4,8 +4,8 @@ use maplit::hashmap;
 use rbx_dom_weak::RbxValue;
 
 use crate::{
-    imfs::{FsResultExt, Imfs, ImfsEntry, ImfsFetcher},
     snapshot::{InstanceMetadata, InstanceSnapshot},
+    vfs::{FsResultExt, Vfs, VfsEntry, VfsFetcher},
 };
 
 use super::{
@@ -19,10 +19,10 @@ use super::{
 pub struct SnapshotLua;
 
 impl SnapshotMiddleware for SnapshotLua {
-    fn from_imfs<F: ImfsFetcher>(
+    fn from_vfs<F: VfsFetcher>(
         context: &mut InstanceSnapshotContext,
-        imfs: &mut Imfs<F>,
-        entry: &ImfsEntry,
+        vfs: &mut Vfs<F>,
+        entry: &VfsEntry,
     ) -> SnapshotInstanceResult<'static> {
         let file_name = entry.path().file_name().unwrap().to_string_lossy();
 
@@ -34,15 +34,15 @@ impl SnapshotMiddleware for SnapshotLua {
         }
 
         if entry.is_file() {
-            snapshot_lua_file(imfs, entry)
+            snapshot_lua_file(vfs, entry)
         } else {
-            if let Some(snapshot) = snapshot_init(context, imfs, entry, "init.lua")? {
+            if let Some(snapshot) = snapshot_init(context, vfs, entry, "init.lua")? {
                 // An `init.lua` file turns its parent into a ModuleScript
                 Ok(Some(snapshot))
-            } else if let Some(snapshot) = snapshot_init(context, imfs, entry, "init.server.lua")? {
+            } else if let Some(snapshot) = snapshot_init(context, vfs, entry, "init.server.lua")? {
                 // An `init.server.lua` file turns its parent into a Script
                 Ok(Some(snapshot))
-            } else if let Some(snapshot) = snapshot_init(context, imfs, entry, "init.client.lua")? {
+            } else if let Some(snapshot) = snapshot_init(context, vfs, entry, "init.client.lua")? {
                 // An `init.client.lua` file turns its parent into a LocalScript
                 Ok(Some(snapshot))
             } else {
@@ -53,9 +53,9 @@ impl SnapshotMiddleware for SnapshotLua {
 }
 
 /// Core routine for turning Lua files into snapshots.
-fn snapshot_lua_file<F: ImfsFetcher>(
-    imfs: &mut Imfs<F>,
-    entry: &ImfsEntry,
+fn snapshot_lua_file<F: VfsFetcher>(
+    vfs: &mut Vfs<F>,
+    entry: &VfsEntry,
 ) -> SnapshotInstanceResult<'static> {
     let file_name = entry.path().file_name().unwrap().to_string_lossy();
 
@@ -70,7 +70,7 @@ fn snapshot_lua_file<F: ImfsFetcher>(
         return Ok(None);
     };
 
-    let contents = entry.contents(imfs)?;
+    let contents = entry.contents(vfs)?;
     let contents_str = str::from_utf8(contents)
         // TODO: Turn into error type
         .expect("File content was not valid UTF-8")
@@ -101,8 +101,8 @@ fn snapshot_lua_file<F: ImfsFetcher>(
         children: Vec::new(),
     };
 
-    if let Some(meta_entry) = imfs.get(meta_path).with_not_found()? {
-        let meta_contents = meta_entry.contents(imfs)?;
+    if let Some(meta_entry) = vfs.get(meta_path).with_not_found()? {
+        let meta_contents = meta_entry.contents(vfs)?;
         let mut metadata = AdjacentMetadata::from_slice(meta_contents);
         metadata.apply_all(&mut snapshot);
     }
@@ -115,17 +115,17 @@ fn snapshot_lua_file<F: ImfsFetcher>(
 ///
 /// Scripts named `init.lua`, `init.server.lua`, or `init.client.lua` usurp
 /// their parents, which acts similarly to `__init__.py` from the Python world.
-fn snapshot_init<F: ImfsFetcher>(
+fn snapshot_init<F: VfsFetcher>(
     context: &mut InstanceSnapshotContext,
-    imfs: &mut Imfs<F>,
-    folder_entry: &ImfsEntry,
+    vfs: &mut Vfs<F>,
+    folder_entry: &VfsEntry,
     init_name: &str,
 ) -> SnapshotInstanceResult<'static> {
     let init_path = folder_entry.path().join(init_name);
 
-    if let Some(init_entry) = imfs.get(init_path).with_not_found()? {
-        if let Some(dir_snapshot) = SnapshotDir::from_imfs(context, imfs, folder_entry)? {
-            if let Some(mut init_snapshot) = snapshot_lua_file(imfs, &init_entry)? {
+    if let Some(init_entry) = vfs.get(init_path).with_not_found()? {
+        if let Some(dir_snapshot) = SnapshotDir::from_vfs(context, vfs, folder_entry)? {
+            if let Some(mut init_snapshot) = snapshot_lua_file(vfs, &init_entry)? {
                 init_snapshot.name = dir_snapshot.name;
                 init_snapshot.children = dir_snapshot.children;
                 // TODO: Metadata
@@ -145,18 +145,18 @@ mod test {
 
     use insta::{assert_yaml_snapshot, with_settings};
 
-    use crate::imfs::{ImfsDebug, ImfsSnapshot, NoopFetcher};
+    use crate::vfs::{NoopFetcher, VfsDebug, VfsSnapshot};
 
     #[test]
-    fn module_from_imfs() {
-        let mut imfs = Imfs::new(NoopFetcher);
-        let file = ImfsSnapshot::file("Hello there!");
+    fn module_from_vfs() {
+        let mut vfs = Vfs::new(NoopFetcher);
+        let file = VfsSnapshot::file("Hello there!");
 
-        imfs.debug_load_snapshot("/foo.lua", file);
+        vfs.debug_load_snapshot("/foo.lua", file);
 
-        let entry = imfs.get("/foo.lua").unwrap();
+        let entry = vfs.get("/foo.lua").unwrap();
         let instance_snapshot =
-            SnapshotLua::from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
+            SnapshotLua::from_vfs(&mut InstanceSnapshotContext::default(), &mut vfs, &entry)
                 .unwrap()
                 .unwrap();
 
@@ -164,15 +164,15 @@ mod test {
     }
 
     #[test]
-    fn server_from_imfs() {
-        let mut imfs = Imfs::new(NoopFetcher);
-        let file = ImfsSnapshot::file("Hello there!");
+    fn server_from_vfs() {
+        let mut vfs = Vfs::new(NoopFetcher);
+        let file = VfsSnapshot::file("Hello there!");
 
-        imfs.debug_load_snapshot("/foo.server.lua", file);
+        vfs.debug_load_snapshot("/foo.server.lua", file);
 
-        let entry = imfs.get("/foo.server.lua").unwrap();
+        let entry = vfs.get("/foo.server.lua").unwrap();
         let instance_snapshot =
-            SnapshotLua::from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
+            SnapshotLua::from_vfs(&mut InstanceSnapshotContext::default(), &mut vfs, &entry)
                 .unwrap()
                 .unwrap();
 
@@ -180,15 +180,15 @@ mod test {
     }
 
     #[test]
-    fn client_from_imfs() {
-        let mut imfs = Imfs::new(NoopFetcher);
-        let file = ImfsSnapshot::file("Hello there!");
+    fn client_from_vfs() {
+        let mut vfs = Vfs::new(NoopFetcher);
+        let file = VfsSnapshot::file("Hello there!");
 
-        imfs.debug_load_snapshot("/foo.client.lua", file);
+        vfs.debug_load_snapshot("/foo.client.lua", file);
 
-        let entry = imfs.get("/foo.client.lua").unwrap();
+        let entry = vfs.get("/foo.client.lua").unwrap();
         let instance_snapshot =
-            SnapshotLua::from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
+            SnapshotLua::from_vfs(&mut InstanceSnapshotContext::default(), &mut vfs, &entry)
                 .unwrap()
                 .unwrap();
 
@@ -197,9 +197,9 @@ mod test {
 
     #[test]
     fn module_with_meta() {
-        let mut imfs = Imfs::new(NoopFetcher);
-        let file = ImfsSnapshot::file("Hello there!");
-        let meta = ImfsSnapshot::file(
+        let mut vfs = Vfs::new(NoopFetcher);
+        let file = VfsSnapshot::file("Hello there!");
+        let meta = VfsSnapshot::file(
             r#"
             {
                 "ignoreUnknownInstances": true
@@ -207,12 +207,12 @@ mod test {
         "#,
         );
 
-        imfs.debug_load_snapshot("/foo.lua", file);
-        imfs.debug_load_snapshot("/foo.meta.json", meta);
+        vfs.debug_load_snapshot("/foo.lua", file);
+        vfs.debug_load_snapshot("/foo.meta.json", meta);
 
-        let entry = imfs.get("/foo.lua").unwrap();
+        let entry = vfs.get("/foo.lua").unwrap();
         let instance_snapshot =
-            SnapshotLua::from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
+            SnapshotLua::from_vfs(&mut InstanceSnapshotContext::default(), &mut vfs, &entry)
                 .unwrap()
                 .unwrap();
 
@@ -221,9 +221,9 @@ mod test {
 
     #[test]
     fn script_with_meta() {
-        let mut imfs = Imfs::new(NoopFetcher);
-        let file = ImfsSnapshot::file("Hello there!");
-        let meta = ImfsSnapshot::file(
+        let mut vfs = Vfs::new(NoopFetcher);
+        let file = VfsSnapshot::file("Hello there!");
+        let meta = VfsSnapshot::file(
             r#"
             {
                 "ignoreUnknownInstances": true
@@ -231,12 +231,12 @@ mod test {
         "#,
         );
 
-        imfs.debug_load_snapshot("/foo.server.lua", file);
-        imfs.debug_load_snapshot("/foo.meta.json", meta);
+        vfs.debug_load_snapshot("/foo.server.lua", file);
+        vfs.debug_load_snapshot("/foo.meta.json", meta);
 
-        let entry = imfs.get("/foo.server.lua").unwrap();
+        let entry = vfs.get("/foo.server.lua").unwrap();
         let instance_snapshot =
-            SnapshotLua::from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
+            SnapshotLua::from_vfs(&mut InstanceSnapshotContext::default(), &mut vfs, &entry)
                 .unwrap()
                 .unwrap();
 
@@ -245,9 +245,9 @@ mod test {
 
     #[test]
     fn script_disabled() {
-        let mut imfs = Imfs::new(NoopFetcher);
-        let file = ImfsSnapshot::file("Hello there!");
-        let meta = ImfsSnapshot::file(
+        let mut vfs = Vfs::new(NoopFetcher);
+        let file = VfsSnapshot::file("Hello there!");
+        let meta = VfsSnapshot::file(
             r#"
             {
                 "properties": {
@@ -257,12 +257,12 @@ mod test {
             "#,
         );
 
-        imfs.debug_load_snapshot("/bar.server.lua", file);
-        imfs.debug_load_snapshot("/bar.meta.json", meta);
+        vfs.debug_load_snapshot("/bar.server.lua", file);
+        vfs.debug_load_snapshot("/bar.meta.json", meta);
 
-        let entry = imfs.get("/bar.server.lua").unwrap();
+        let entry = vfs.get("/bar.server.lua").unwrap();
         let instance_snapshot =
-            SnapshotLua::from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
+            SnapshotLua::from_vfs(&mut InstanceSnapshotContext::default(), &mut vfs, &entry)
                 .unwrap()
                 .unwrap();
 

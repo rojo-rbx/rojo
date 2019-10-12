@@ -8,8 +8,8 @@ use failure::Fail;
 
 use crate::{
     common_setup,
-    imfs::{FsError, Imfs, RealFetcher, WatchMode},
     project::ProjectLoadError,
+    vfs::{FsError, RealFetcher, Vfs, WatchMode},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -81,9 +81,9 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
     log::debug!("Hoping to generate file of type {:?}", output_kind);
 
     log::trace!("Constructing in-memory filesystem");
-    let mut imfs = Imfs::new(RealFetcher::new(WatchMode::Disabled));
+    let mut vfs = Vfs::new(RealFetcher::new(WatchMode::Disabled));
 
-    let (_maybe_project, tree) = common_setup::start(&options.fuzzy_project_path, &mut imfs);
+    let (_maybe_project, tree) = common_setup::start(&options.fuzzy_project_path, &mut vfs);
     let root_id = tree.get_root_id();
 
     log::trace!("Opening output file for write");

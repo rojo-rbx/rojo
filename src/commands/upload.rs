@@ -6,7 +6,7 @@ use reqwest::header::{ACCEPT, CONTENT_TYPE, COOKIE, USER_AGENT};
 use crate::{
     auth_cookie::get_auth_cookie,
     common_setup,
-    imfs::{Imfs, RealFetcher, WatchMode},
+    vfs::{RealFetcher, Vfs, WatchMode},
 };
 
 #[derive(Debug, Fail)]
@@ -44,9 +44,9 @@ pub fn upload(options: UploadOptions) -> Result<(), UploadError> {
         .ok_or(UploadError::NeedAuthCookie)?;
 
     log::trace!("Constructing in-memory filesystem");
-    let mut imfs = Imfs::new(RealFetcher::new(WatchMode::Disabled));
+    let mut vfs = Vfs::new(RealFetcher::new(WatchMode::Disabled));
 
-    let (_maybe_project, tree) = common_setup::start(&options.fuzzy_project_path, &mut imfs);
+    let (_maybe_project, tree) = common_setup::start(&options.fuzzy_project_path, &mut vfs);
     let root_id = tree.get_root_id();
 
     let mut buffer = Vec::new();

@@ -1,6 +1,6 @@
 use std::{error::Error, fmt, io, path::PathBuf};
 
-use crate::imfs::FsError;
+use crate::vfs::FsError;
 
 #[derive(Debug)]
 pub struct SnapshotError {

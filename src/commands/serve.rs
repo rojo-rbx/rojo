@@ -8,9 +8,9 @@ use failure::Fail;
 use termcolor::{BufferWriter, Color, ColorChoice, ColorSpec, WriteColor};
 
 use crate::{
-    imfs::{Imfs, RealFetcher, WatchMode},
     project::ProjectLoadError,
     serve_session::ServeSession,
+    vfs::{RealFetcher, Vfs, WatchMode},
     web::LiveServer,
 };
 
@@ -33,9 +33,9 @@ impl_from!(ServeError {
 });
 
 pub fn serve(options: &ServeOptions) -> Result<(), ServeError> {
-    let imfs = Imfs::new(RealFetcher::new(WatchMode::Enabled));
+    let vfs = Vfs::new(RealFetcher::new(WatchMode::Enabled));
 
-    let session = Arc::new(ServeSession::new(imfs, &options.fuzzy_project_path));
+    let session = Arc::new(ServeSession::new(vfs, &options.fuzzy_project_path));
 
     let port = options
         .port

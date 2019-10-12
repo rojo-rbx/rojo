@@ -4,8 +4,8 @@ use maplit::hashmap;
 use rbx_dom_weak::{RbxId, RbxTree, RbxValue};
 
 use crate::{
-    imfs::{FileSnapshot, FsResultExt, Imfs, ImfsEntry, ImfsFetcher, ImfsSnapshot},
     snapshot::{InstanceMetadata, InstanceSnapshot},
+    vfs::{FileSnapshot, FsResultExt, Vfs, VfsEntry, VfsFetcher, VfsSnapshot},
 };
 
 use super::{
@@ -19,10 +19,10 @@ use super::{
 pub struct SnapshotTxt;
 
 impl SnapshotMiddleware for SnapshotTxt {
-    fn from_imfs<F: ImfsFetcher>(
+    fn from_vfs<F: VfsFetcher>(
         _context: &mut InstanceSnapshotContext,
-        imfs: &mut Imfs<F>,
-        entry: &ImfsEntry,
+        vfs: &mut Vfs<F>,
+        entry: &VfsEntry,
     ) -> SnapshotInstanceResult<'static> {
         if entry.is_directory() {
             return Ok(None);
@@ -33,7 +33,7 @@ impl SnapshotMiddleware for SnapshotTxt {
             None => return Ok(None),
         };
 
-        let contents = entry.contents(imfs)?;
+        let contents = entry.contents(vfs)?;
         let contents_str = str::from_utf8(contents)
             .map_err(|err| SnapshotError::file_contents_bad_unicode(err, entry.path()))?
             .to_string();
@@ -61,8 +61,8 @@ impl SnapshotMiddleware for SnapshotTxt {
             children: Vec::new(),
         };
 
-        if let Some(meta_entry) = imfs.get(meta_path).with_not_found()? {
-            let meta_contents = meta_entry.contents(imfs)?;
+        if let Some(meta_entry) = vfs.get(meta_path).with_not_found()? {
+            let meta_contents = meta_entry.contents(vfs)?;
             let mut metadata = AdjacentMetadata::from_slice(meta_contents);
             metadata.apply_all(&mut snapshot);
         }
@@ -87,7 +87,7 @@ impl SnapshotMiddleware for SnapshotTxt {
             None => String::new(),
         };
 
-        let snapshot = ImfsSnapshot::File(FileSnapshot {
+        let snapshot = VfsSnapshot::File(FileSnapshot {
             contents: value.into_bytes(),
         });
 
@@ -106,18 +106,18 @@ mod test {
     use maplit::hashmap;
     use rbx_dom_weak::RbxInstanceProperties;
 
-    use crate::imfs::{ImfsDebug, NoopFetcher};
+    use crate::vfs::{NoopFetcher, VfsDebug};
 
     #[test]
-    fn instance_from_imfs() {
-        let mut imfs = Imfs::new(NoopFetcher);
-        let file = ImfsSnapshot::file("Hello there!");
+    fn instance_from_vfs() {
+        let mut vfs = Vfs::new(NoopFetcher);
+        let file = VfsSnapshot::file("Hello there!");
 
-        imfs.debug_load_snapshot("/foo.txt", file);
+        vfs.debug_load_snapshot("/foo.txt", file);
 
-        let entry = imfs.get("/foo.txt").unwrap();
+        let entry = vfs.get("/foo.txt").unwrap();
         let instance_snapshot =
-            SnapshotTxt::from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
+            SnapshotTxt::from_vfs(&mut InstanceSnapshotContext::default(), &mut vfs, &entry)
                 .unwrap()
                 .unwrap();
 
@@ -125,7 +125,7 @@ mod test {
     }
 
     #[test]
-    fn imfs_from_instance() {
+    fn vfs_from_instance() {
         let tree = RbxTree::new(string_value("Root", "Hello, world!"));
         let root_id = tree.get_root_id();
 

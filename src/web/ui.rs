@@ -9,9 +9,9 @@ use rbx_dom_weak::{RbxId, RbxValue};
 use ritz::{html, Fragment, HtmlContent, HtmlSelfClosingTag};
 
 use crate::{
-    imfs::{Imfs, ImfsDebug, ImfsFetcher},
     serve_session::ServeSession,
     snapshot::RojoTree,
+    vfs::{Vfs, VfsDebug, VfsFetcher},
     web::{
         assets,
         interface::{ErrorResponse, SERVER_VERSION},
@@ -23,7 +23,7 @@ pub struct UiService<F> {
     serve_session: Arc<ServeSession<F>>,
 }
 
-impl<F: ImfsFetcher> Service for UiService<F> {
+impl<F: VfsFetcher> Service for UiService<F> {
     type ReqBody = Body;
     type ResBody = Body;
     type Error = hyper::Error;
@@ -35,7 +35,7 @@ impl<F: ImfsFetcher> Service for UiService<F> {
             (&Method::GET, "/logo.png") => self.handle_logo(),
             (&Method::GET, "/icon.png") => self.handle_icon(),
             (&Method::GET, "/show-instances") => self.handle_show_instances(),
-            (&Method::GET, "/show-imfs") => self.handle_show_imfs(),
+            (&Method::GET, "/show-vfs") => self.handle_show_vfs(),
             (_method, path) => {
                 return json(
                     ErrorResponse::not_found(format!("Route not found: {}", path)),
@@ -48,7 +48,7 @@ impl<F: ImfsFetcher> Service for UiService<F> {
     }
 }
 
-impl<F: ImfsFetcher> UiService<F> {
+impl<F: VfsFetcher> UiService<F> {
     pub fn new(serve_session: Arc<ServeSession<F>>) -> Self {
         UiService { serve_session }
     }
@@ -71,7 +71,7 @@ impl<F: ImfsFetcher> UiService<F> {
         let page = self.normal_page(html! {
             <div class="button-list">
                 { Self::button("Rojo Documentation", "https://rojo.space/docs") }
-                { Self::button("View in-memory filesystem state", "/show-imfs") }
+                { Self::button("View in-memory filesystem state", "/show-vfs") }
                 { Self::button("View instance tree state", "/show-instances") }
             </div>
         });
@@ -96,16 +96,16 @@ impl<F: ImfsFetcher> UiService<F> {
             .unwrap()
     }
 
-    fn handle_show_imfs(&self) -> Response<Body> {
-        let imfs = self.serve_session.imfs();
+    fn handle_show_vfs(&self) -> Response<Body> {
+        let vfs = self.serve_session.vfs();
 
-        let orphans: Vec<_> = imfs
+        let orphans: Vec<_> = vfs
             .debug_orphans()
             .into_iter()
-            .map(|path| Self::render_imfs_path(&imfs, path, true))
+            .map(|path| Self::render_vfs_path(&vfs, path, true))
             .collect();
 
-        let watched_list: Vec<_> = imfs
+        let watched_list: Vec<_> = vfs
             .debug_watched_paths()
             .into_iter()
             .map(|path| {
@@ -135,25 +135,25 @@ impl<F: ImfsFetcher> UiService<F> {
             .unwrap()
     }
 
-    fn render_imfs_path(imfs: &Imfs<F>, path: &Path, is_root: bool) -> HtmlContent<'static> {
-        let is_file = imfs.debug_is_file(path);
+    fn render_vfs_path(vfs: &Vfs<F>, path: &Path, is_root: bool) -> HtmlContent<'static> {
+        let is_file = vfs.debug_is_file(path);
 
         let (note, children) = if is_file {
             (HtmlContent::None, Vec::new())
         } else {
-            let (is_exhaustive, mut children) = imfs.debug_children(path).unwrap();
+            let (is_exhaustive, mut children) = vfs.debug_children(path).unwrap();
 
             // Sort files above directories, then sort how Path does after that.
             children.sort_unstable_by(|a, b| {
-                let a_is_file = imfs.debug_is_file(a);
-                let b_is_file = imfs.debug_is_file(b);
+                let a_is_file = vfs.debug_is_file(a);
+                let b_is_file = vfs.debug_is_file(b);
 
                 b_is_file.cmp(&a_is_file).then_with(|| a.cmp(b))
             });
 
             let children: Vec<_> = children
                 .into_iter()
-                .map(|child| Self::render_imfs_path(imfs, child, false))
+                .map(|child| Self::render_vfs_path(vfs, child, false))
                 .collect();
 
             let note = if is_exhaustive {
@@ -178,12 +178,12 @@ impl<F: ImfsFetcher> UiService<F> {
         }
 
         html! {
-            <div class="imfs-entry">
+            <div class="vfs-entry">
                 <div>
-                    <span class="imfs-entry-name">{ name }</span>
-                    <span class="imfs-entry-note">{ note }</span>
+                    <span class="vfs-entry-name">{ name }</span>
+                    <span class="vfs-entry-note">{ note }</span>
                 </div>
-                <div class="imfs-entry-children">
+                <div class="vfs-entry-children">
                     { Fragment::new(children) }
                 </div>
             </div>

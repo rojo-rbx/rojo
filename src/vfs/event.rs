@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 #[derive(Debug)]
-pub enum ImfsEvent {
+pub enum VfsEvent {
     Modified(PathBuf),
     Created(PathBuf),
     Removed(PathBuf),

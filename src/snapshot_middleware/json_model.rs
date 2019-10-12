@@ -5,8 +5,8 @@ use rbx_reflection::try_resolve_value;
 use serde::Deserialize;
 
 use crate::{
-    imfs::{Imfs, ImfsEntry, ImfsFetcher},
     snapshot::InstanceSnapshot,
+    vfs::{Vfs, VfsEntry, VfsFetcher},
 };
 
 use super::{
@@ -18,10 +18,10 @@ use super::{
 pub struct SnapshotJsonModel;
 
 impl SnapshotMiddleware for SnapshotJsonModel {
-    fn from_imfs<F: ImfsFetcher>(
+    fn from_vfs<F: VfsFetcher>(
         _context: &mut InstanceSnapshotContext,
-        imfs: &mut Imfs<F>,
-        entry: &ImfsEntry,
+        vfs: &mut Vfs<F>,
+        entry: &VfsEntry,
     ) -> SnapshotInstanceResult<'static> {
         if entry.is_directory() {
             return Ok(None);
@@ -33,7 +33,7 @@ impl SnapshotMiddleware for SnapshotJsonModel {
         };
 
         let instance: JsonModel =
-            serde_json::from_slice(entry.contents(imfs)?).expect("TODO: Handle serde_json errors");
+            serde_json::from_slice(entry.contents(vfs)?).expect("TODO: Handle serde_json errors");
 
         if let Some(json_name) = &instance.name {
             if json_name != &instance_name {
@@ -137,12 +137,12 @@ mod test {
 
     use insta::assert_yaml_snapshot;
 
-    use crate::imfs::{ImfsDebug, ImfsSnapshot, NoopFetcher};
+    use crate::vfs::{NoopFetcher, VfsDebug, VfsSnapshot};
 
     #[test]
-    fn model_from_imfs() {
-        let mut imfs = Imfs::new(NoopFetcher);
-        let file = ImfsSnapshot::file(
+    fn model_from_vfs() {
+        let mut vfs = Vfs::new(NoopFetcher);
+        let file = VfsSnapshot::file(
             r#"
             {
               "Name": "children",
@@ -160,16 +160,13 @@ mod test {
         "#,
         );
 
-        imfs.debug_load_snapshot("/foo.model.json", file);
+        vfs.debug_load_snapshot("/foo.model.json", file);
 
-        let entry = imfs.get("/foo.model.json").unwrap();
-        let instance_snapshot = SnapshotJsonModel::from_imfs(
-            &mut InstanceSnapshotContext::default(),
-            &mut imfs,
-            &entry,
-        )
-        .unwrap()
-        .unwrap();
+        let entry = vfs.get("/foo.model.json").unwrap();
+        let instance_snapshot =
+            SnapshotJsonModel::from_vfs(&mut InstanceSnapshotContext::default(), &mut vfs, &entry)
+                .unwrap()
+                .unwrap();
 
         assert_yaml_snapshot!(instance_snapshot);
     }

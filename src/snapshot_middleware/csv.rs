@@ -5,8 +5,8 @@ use rbx_dom_weak::RbxValue;
 use serde::Serialize;
 
 use crate::{
-    imfs::{FsResultExt, Imfs, ImfsEntry, ImfsFetcher},
     snapshot::{InstanceMetadata, InstanceSnapshot},
+    vfs::{FsResultExt, Vfs, VfsEntry, VfsFetcher},
 };
 
 use super::{
@@ -19,10 +19,10 @@ use super::{
 pub struct SnapshotCsv;
 
 impl SnapshotMiddleware for SnapshotCsv {
-    fn from_imfs<F: ImfsFetcher>(
+    fn from_vfs<F: VfsFetcher>(
         _context: &mut InstanceSnapshotContext,
-        imfs: &mut Imfs<F>,
-        entry: &ImfsEntry,
+        vfs: &mut Vfs<F>,
+        entry: &VfsEntry,
     ) -> SnapshotInstanceResult<'static> {
         if entry.is_directory() {
             return Ok(None);
@@ -37,7 +37,7 @@ impl SnapshotMiddleware for SnapshotCsv {
             .path()
             .with_file_name(format!("{}.meta.json", instance_name));
 
-        let table_contents = convert_localization_csv(entry.contents(imfs)?);
+        let table_contents = convert_localization_csv(entry.contents(vfs)?);
 
         let mut snapshot = InstanceSnapshot {
             snapshot_id: None,
@@ -56,8 +56,8 @@ impl SnapshotMiddleware for SnapshotCsv {
             children: Vec::new(),
         };
 
-        if let Some(meta_entry) = imfs.get(meta_path).with_not_found()? {
-            let meta_contents = meta_entry.contents(imfs)?;
+        if let Some(meta_entry) = vfs.get(meta_path).with_not_found()? {
+            let meta_contents = meta_entry.contents(vfs)?;
             let mut metadata = AdjacentMetadata::from_slice(meta_contents);
             metadata.apply_all(&mut snapshot);
         }
@@ -146,23 +146,23 @@ fn convert_localization_csv(contents: &[u8]) -> String {
 mod test {
     use super::*;
 
-    use crate::imfs::{ImfsDebug, ImfsSnapshot, NoopFetcher};
+    use crate::vfs::{NoopFetcher, VfsDebug, VfsSnapshot};
     use insta::assert_yaml_snapshot;
 
     #[test]
-    fn csv_from_imfs() {
-        let mut imfs = Imfs::new(NoopFetcher);
-        let file = ImfsSnapshot::file(
+    fn csv_from_vfs() {
+        let mut vfs = Vfs::new(NoopFetcher);
+        let file = VfsSnapshot::file(
             r#"
 Key,Source,Context,Example,es
 Ack,Ack!,,An exclamation of despair,¡Ay!"#,
         );
 
-        imfs.debug_load_snapshot("/foo.csv", file);
+        vfs.debug_load_snapshot("/foo.csv", file);
 
-        let entry = imfs.get("/foo.csv").unwrap();
+        let entry = vfs.get("/foo.csv").unwrap();
         let instance_snapshot =
-            SnapshotCsv::from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
+            SnapshotCsv::from_vfs(&mut InstanceSnapshotContext::default(), &mut vfs, &entry)
                 .unwrap()
                 .unwrap();
 
@@ -171,20 +171,20 @@ Ack,Ack!,,An exclamation of despair,¡Ay!"#,
 
     #[test]
     fn csv_with_meta() {
-        let mut imfs = Imfs::new(NoopFetcher);
-        let file = ImfsSnapshot::file(
+        let mut vfs = Vfs::new(NoopFetcher);
+        let file = VfsSnapshot::file(
             r#"
 Key,Source,Context,Example,es
 Ack,Ack!,,An exclamation of despair,¡Ay!"#,
         );
-        let meta = ImfsSnapshot::file(r#"{ "ignoreUnknownInstances": true }"#);
+        let meta = VfsSnapshot::file(r#"{ "ignoreUnknownInstances": true }"#);
 
-        imfs.debug_load_snapshot("/foo.csv", file);
-        imfs.debug_load_snapshot("/foo.meta.json", meta);
+        vfs.debug_load_snapshot("/foo.csv", file);
+        vfs.debug_load_snapshot("/foo.meta.json", meta);
 
-        let entry = imfs.get("/foo.csv").unwrap();
+        let entry = vfs.get("/foo.csv").unwrap();
         let instance_snapshot =
-            SnapshotCsv::from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
+            SnapshotCsv::from_vfs(&mut InstanceSnapshotContext::default(), &mut vfs, &entry)
                 .unwrap()
                 .unwrap();
 

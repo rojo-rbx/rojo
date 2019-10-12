@@ -3,8 +3,8 @@ use std::{borrow::Cow, collections::HashMap};
 use rbx_dom_weak::{RbxInstanceProperties, RbxTree};
 
 use crate::{
-    imfs::{Imfs, ImfsEntry, ImfsFetcher},
     snapshot::InstanceSnapshot,
+    vfs::{Vfs, VfsEntry, VfsFetcher},
 };
 
 use super::{
@@ -16,10 +16,10 @@ use super::{
 pub struct SnapshotRbxm;
 
 impl SnapshotMiddleware for SnapshotRbxm {
-    fn from_imfs<F: ImfsFetcher>(
+    fn from_vfs<F: VfsFetcher>(
         _context: &mut InstanceSnapshotContext,
-        imfs: &mut Imfs<F>,
-        entry: &ImfsEntry,
+        vfs: &mut Vfs<F>,
+        entry: &VfsEntry,
     ) -> SnapshotInstanceResult<'static> {
         if entry.is_directory() {
             return Ok(None);
@@ -37,7 +37,7 @@ impl SnapshotMiddleware for SnapshotRbxm {
         });
 
         let root_id = temp_tree.get_root_id();
-        rbx_binary::decode(&mut temp_tree, root_id, entry.contents(imfs)?)
+        rbx_binary::decode(&mut temp_tree, root_id, entry.contents(vfs)?)
             .expect("TODO: Handle rbx_binary errors");
 
         let root_instance = temp_tree.get_instance(root_id).unwrap();
@@ -60,18 +60,18 @@ impl SnapshotMiddleware for SnapshotRbxm {
 mod test {
     use super::*;
 
-    use crate::imfs::{ImfsDebug, ImfsSnapshot, NoopFetcher};
+    use crate::vfs::{NoopFetcher, VfsDebug, VfsSnapshot};
 
     #[test]
-    fn model_from_imfs() {
-        let mut imfs = Imfs::new(NoopFetcher);
-        let file = ImfsSnapshot::file(include_bytes!("../../assets/test-folder.rbxm").to_vec());
+    fn model_from_vfs() {
+        let mut vfs = Vfs::new(NoopFetcher);
+        let file = VfsSnapshot::file(include_bytes!("../../assets/test-folder.rbxm").to_vec());
 
-        imfs.debug_load_snapshot("/foo.rbxm", file);
+        vfs.debug_load_snapshot("/foo.rbxm", file);
 
-        let entry = imfs.get("/foo.rbxm").unwrap();
+        let entry = vfs.get("/foo.rbxm").unwrap();
         let instance_snapshot =
-            SnapshotRbxm::from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
+            SnapshotRbxm::from_vfs(&mut InstanceSnapshotContext::default(), &mut vfs, &entry)
                 .unwrap()
                 .unwrap();
 

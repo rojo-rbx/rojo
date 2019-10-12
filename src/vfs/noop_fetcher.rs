@@ -1,4 +1,4 @@
-//! Implements the IMFS fetcher interface for a fake filesystem using Rust's
+//! Implements the VFS fetcher interface for a fake filesystem using Rust's
 //! std::fs interface.
 
 // This interface is only used for testing, so it's okay if it isn't used.
@@ -12,13 +12,13 @@ use std::{
 use crossbeam_channel::Receiver;
 
 use super::{
-    event::ImfsEvent,
-    fetcher::{FileType, ImfsFetcher},
+    event::VfsEvent,
+    fetcher::{FileType, VfsFetcher},
 };
 
 pub struct NoopFetcher;
 
-impl ImfsFetcher for NoopFetcher {
+impl VfsFetcher for NoopFetcher {
     fn file_type(&mut self, _path: &Path) -> io::Result<FileType> {
         Err(io::Error::new(
             io::ErrorKind::NotFound,
@@ -56,7 +56,7 @@ impl ImfsFetcher for NoopFetcher {
 
     fn unwatch(&mut self, _path: &Path) {}
 
-    fn receiver(&self) -> Receiver<ImfsEvent> {
+    fn receiver(&self) -> Receiver<VfsEvent> {
         crossbeam_channel::never()
     }
 }

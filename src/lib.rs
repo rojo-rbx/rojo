@@ -18,7 +18,6 @@ mod tree_view;
 mod auth_cookie;
 mod change_processor;
 mod common_setup;
-mod imfs;
 mod message_queue;
 mod multimap;
 mod path_map;
@@ -27,6 +26,7 @@ mod serve_session;
 mod session_id;
 mod snapshot;
 mod snapshot_middleware;
+mod vfs;
 mod web;
 
 pub use crate::session_id::SessionId;

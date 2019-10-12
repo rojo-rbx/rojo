@@ -1,4 +1,4 @@
-//! Defines the process by which changes are pulled from the Imfs, filtered, and
+//! Defines the process by which changes are pulled from the Vfs, filtered, and
 //! used to mutate Rojo's tree during a live session.
 //!
 //! This object is owned by a ServeSession.
@@ -9,10 +9,10 @@ use crossbeam_channel::{select, Receiver, Sender};
 use jod_thread::JoinHandle;
 
 use crate::{
-    imfs::{Imfs, ImfsEvent, ImfsFetcher},
     message_queue::MessageQueue,
     snapshot::{apply_patch_set, compute_patch_set, AppliedPatchSet, InstigatingSource, RojoTree},
-    snapshot_middleware::{snapshot_from_imfs, InstanceSnapshotContext},
+    snapshot_middleware::{snapshot_from_vfs, InstanceSnapshotContext},
+    vfs::{Vfs, VfsEvent, VfsFetcher},
 };
 
 pub struct ChangeProcessor {
@@ -21,10 +21,10 @@ pub struct ChangeProcessor {
 }
 
 impl ChangeProcessor {
-    pub fn start<F: ImfsFetcher + Send + 'static>(
+    pub fn start<F: VfsFetcher + Send + 'static>(
         tree: Arc<Mutex<RojoTree>>,
         message_queue: Arc<MessageQueue<AppliedPatchSet>>,
-        imfs: Arc<Mutex<Imfs<F>>>,
+        vfs: Arc<Mutex<Vfs<F>>>,
     ) -> Self {
         let (shutdown_sender, shutdown_receiver) = crossbeam_channel::bounded(1);
 
@@ -32,7 +32,7 @@ impl ChangeProcessor {
             .name("ChangeProcessor thread".to_owned())
             .spawn(move || {
                 log::trace!("ChangeProcessor thread started");
-                Self::main_task(shutdown_receiver, tree, message_queue, imfs);
+                Self::main_task(shutdown_receiver, tree, message_queue, vfs);
                 log::trace!("ChangeProcessor thread stopped");
             })
             .expect("Could not start ChangeProcessor thread");
@@ -43,15 +43,15 @@ impl ChangeProcessor {
         }
     }
 
-    fn main_task<F: ImfsFetcher>(
+    fn main_task<F: VfsFetcher>(
         shutdown_receiver: Receiver<()>,
         tree: Arc<Mutex<RojoTree>>,
         message_queue: Arc<MessageQueue<AppliedPatchSet>>,
-        imfs: Arc<Mutex<Imfs<F>>>,
+        vfs: Arc<Mutex<Vfs<F>>>,
     ) {
-        let imfs_receiver = {
-            let imfs = imfs.lock().unwrap();
-            imfs.change_receiver()
+        let vfs_receiver = {
+            let vfs = vfs.lock().unwrap();
+            vfs.change_receiver()
         };
 
         // Crossbeam's select macro generates code that Clippy doesn't like, and
@@ -59,20 +59,20 @@ impl ChangeProcessor {
         #[allow(clippy::drop_copy)]
         loop {
             select! {
-                recv(imfs_receiver) -> event => {
+                recv(vfs_receiver) -> event => {
                     let event = event.unwrap();
 
-                    log::trace!("Imfs event: {:?}", event);
+                    log::trace!("Vfs event: {:?}", event);
 
                     let applied_patches = {
-                        let mut imfs = imfs.lock().unwrap();
-                        imfs.commit_change(&event).expect("Error applying IMFS change");
+                        let mut vfs = vfs.lock().unwrap();
+                        vfs.commit_change(&event).expect("Error applying VFS change");
 
                         let mut tree = tree.lock().unwrap();
                         let mut applied_patches = Vec::new();
 
                         match event {
-                            ImfsEvent::Created(path) | ImfsEvent::Modified(path) | ImfsEvent::Removed(path) => {
+                            VfsEvent::Created(path) | VfsEvent::Modified(path) | VfsEvent::Removed(path) => {
                                 let affected_ids = tree.get_ids_at_path(&path).to_vec();
 
                                 if affected_ids.len() == 0 {
@@ -95,14 +95,14 @@ impl ChangeProcessor {
 
                                     let snapshot = match instigating_source {
                                         InstigatingSource::Path(path) => {
-                                            let entry = imfs
+                                            let entry = vfs
                                                 .get(path)
                                                 .expect("could not get instigating path from filesystem");
 
                                             // TODO: Use persisted snapshot
                                             // context struct instead of
                                             // recreating it every time.
-                                            let snapshot = snapshot_from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
+                                            let snapshot = snapshot_from_vfs(&mut InstanceSnapshotContext::default(), &mut vfs, &entry)
                                                 .expect("snapshot failed")
                                                 .expect("snapshot did not return an instance");
 

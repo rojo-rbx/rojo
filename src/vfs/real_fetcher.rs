@@ -1,4 +1,4 @@
-//! Implements the IMFS fetcher interface for the real filesystem using Rust's
+//! Implements the VFS fetcher interface for the real filesystem using Rust's
 //! std::fs interface and notify as the file watcher.
 
 use std::{
@@ -14,8 +14,8 @@ use jod_thread::JoinHandle;
 use notify::{DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher};
 
 use super::{
-    event::ImfsEvent,
-    fetcher::{FileType, ImfsFetcher},
+    event::VfsEvent,
+    fetcher::{FileType, VfsFetcher},
 };
 
 /// Workaround to disable the file watcher for processes that don't need it,
@@ -41,7 +41,7 @@ pub struct RealFetcher {
     _converter_thread: JoinHandle<()>,
 
     /// The crossbeam receiver filled with events from the converter thread.
-    receiver: Receiver<ImfsEvent>,
+    receiver: Receiver<VfsEvent>,
 
     /// All of the paths that the fetcher is watching, tracked here because
     /// notify does not expose this information.
@@ -84,19 +84,19 @@ impl RealFetcher {
     }
 }
 
-fn converter_thread(notify_receiver: mpsc::Receiver<DebouncedEvent>, sender: Sender<ImfsEvent>) {
+fn converter_thread(notify_receiver: mpsc::Receiver<DebouncedEvent>, sender: Sender<VfsEvent>) {
     use DebouncedEvent::*;
 
     for event in notify_receiver {
         log::trace!("Notify event: {:?}", event);
 
         match event {
-            Create(path) => sender.send(ImfsEvent::Created(path)).unwrap(),
-            Write(path) => sender.send(ImfsEvent::Modified(path)).unwrap(),
-            Remove(path) => sender.send(ImfsEvent::Removed(path)).unwrap(),
+            Create(path) => sender.send(VfsEvent::Created(path)).unwrap(),
+            Write(path) => sender.send(VfsEvent::Modified(path)).unwrap(),
+            Remove(path) => sender.send(VfsEvent::Removed(path)).unwrap(),
             Rename(from_path, to_path) => {
-                sender.send(ImfsEvent::Created(from_path)).unwrap();
-                sender.send(ImfsEvent::Removed(to_path)).unwrap();
+                sender.send(VfsEvent::Created(from_path)).unwrap();
+                sender.send(VfsEvent::Removed(to_path)).unwrap();
             }
             Rescan => {
                 log::warn!("Unhandled filesystem rescan event.");
@@ -121,7 +121,7 @@ fn converter_thread(notify_receiver: mpsc::Receiver<DebouncedEvent>, sender: Sen
     }
 }
 
-impl ImfsFetcher for RealFetcher {
+impl VfsFetcher for RealFetcher {
     fn file_type(&mut self, path: &Path) -> io::Result<FileType> {
         let metadata = fs::metadata(path)?;
 
@@ -206,7 +206,7 @@ impl ImfsFetcher for RealFetcher {
         }
     }
 
-    fn receiver(&self) -> Receiver<ImfsEvent> {
+    fn receiver(&self) -> Receiver<VfsEvent> {
         self.receiver.clone()
     }
 

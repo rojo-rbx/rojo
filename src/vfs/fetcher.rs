@@ -5,7 +5,7 @@ use std::{
 
 use crossbeam_channel::Receiver;
 
-use super::event::ImfsEvent;
+use super::event::VfsEvent;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FileType {
@@ -13,10 +13,10 @@ pub enum FileType {
     Directory,
 }
 
-/// The generic interface that `Imfs` uses to lazily read files from the disk.
+/// The generic interface that `Vfs` uses to lazily read files from the disk.
 /// In tests, it's stubbed out to do different versions of absolutely nothing
 /// depending on the test.
-pub trait ImfsFetcher {
+pub trait VfsFetcher {
     fn file_type(&mut self, path: &Path) -> io::Result<FileType>;
     fn read_children(&mut self, path: &Path) -> io::Result<Vec<PathBuf>>;
     fn read_contents(&mut self, path: &Path) -> io::Result<Vec<u8>>;
@@ -27,7 +27,7 @@ pub trait ImfsFetcher {
 
     fn watch(&mut self, path: &Path);
     fn unwatch(&mut self, path: &Path);
-    fn receiver(&self) -> Receiver<ImfsEvent>;
+    fn receiver(&self) -> Receiver<VfsEvent>;
 
     /// A method intended for debugging what paths the fetcher is watching.
     fn watched_paths(&self) -> Vec<&Path> {

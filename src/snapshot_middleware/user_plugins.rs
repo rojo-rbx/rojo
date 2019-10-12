@@ -2,7 +2,7 @@ use std::{fs, path::Path};
 
 use rlua::{Lua, RegistryKey};
 
-use crate::imfs::{Imfs, ImfsEntry, ImfsFetcher};
+use crate::vfs::{Vfs, VfsEntry, VfsFetcher};
 
 use super::{
     context::InstanceSnapshotContext,
@@ -19,10 +19,10 @@ use super::{
 pub struct SnapshotUserPlugins;
 
 impl SnapshotMiddleware for SnapshotUserPlugins {
-    fn from_imfs<F: ImfsFetcher>(
+    fn from_vfs<F: VfsFetcher>(
         context: &mut InstanceSnapshotContext,
-        _imfs: &mut Imfs<F>,
-        _entry: &ImfsEntry,
+        _vfs: &mut Vfs<F>,
+        _entry: &VfsEntry,
     ) -> SnapshotInstanceResult<'static> {
         // User plugins are only enabled if present on the snapshot context.
         let plugin_context = match &mut context.plugin_context {
@@ -52,7 +52,7 @@ impl SnapshotMiddleware for SnapshotUserPlugins {
                     // The current plan for plugins here is to make them work
                     // like Redux/Rodux middleware. A plugin will be a function
                     // that accepts the next middleware in the chain as a
-                    // function and the snapshot subject (the IMFS entry).
+                    // function and the snapshot subject (the VFS entry).
                     //
                     // Plugins can (but don't have to) invoke the next snapshot
                     // function and may or may not mutate the result. The hope
@@ -69,7 +69,7 @@ impl SnapshotMiddleware for SnapshotUserPlugins {
                     // * Will plugins hurt Rojo's ability to parallelize
                     //   snapshotting in the future?
                     //
-                    // * Do the mutable handles to the Imfs and the snapshot
+                    // * Do the mutable handles to the Vfs and the snapshot
                     //   context prevent plugins from invoking other plugins
                     //   indirectly?
                     //

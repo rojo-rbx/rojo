@@ -9,48 +9,48 @@ use crate::path_map::PathMap;
 
 use super::{
     error::{FsError, FsResult},
-    event::ImfsEvent,
-    fetcher::{FileType, ImfsFetcher},
-    snapshot::ImfsSnapshot,
+    event::VfsEvent,
+    fetcher::{FileType, VfsFetcher},
+    snapshot::VfsSnapshot,
 };
 
 /// An in-memory filesystem that can be incrementally populated and updated as
 /// filesystem modification events occur.
 ///
-/// All operations on the `Imfs` are lazy and do I/O as late as they can to
+/// All operations on the `Vfs` are lazy and do I/O as late as they can to
 /// avoid reading extraneous files or directories from the disk. This means that
 /// they all take `self` mutably, and means that it isn't possible to hold
-/// references to the internal state of the Imfs while traversing it!
+/// references to the internal state of the Vfs while traversing it!
 ///
-/// Most operations return `ImfsEntry` objects to work around this, which is
-/// effectively a index into the `Imfs`.
-pub struct Imfs<F> {
+/// Most operations return `VfsEntry` objects to work around this, which is
+/// effectively a index into the `Vfs`.
+pub struct Vfs<F> {
     /// A hierarchical map from paths to items that have been read or partially
-    /// read into memory by the Imfs.
-    inner: PathMap<ImfsItem>,
+    /// read into memory by the Vfs.
+    inner: PathMap<VfsItem>,
 
-    /// This Imfs's fetcher, which is used for all actual interactions with the
+    /// This Vfs's fetcher, which is used for all actual interactions with the
     /// filesystem. It's referred to by the type parameter `F` all over, and is
     /// generic in order to make it feasible to mock.
     fetcher: F,
 }
 
-impl<F: ImfsFetcher> Imfs<F> {
-    pub fn new(fetcher: F) -> Imfs<F> {
-        Imfs {
+impl<F: VfsFetcher> Vfs<F> {
+    pub fn new(fetcher: F) -> Vfs<F> {
+        Vfs {
             inner: PathMap::new(),
             fetcher,
         }
     }
 
-    pub fn change_receiver(&self) -> Receiver<ImfsEvent> {
+    pub fn change_receiver(&self) -> Receiver<VfsEvent> {
         self.fetcher.receiver()
     }
 
-    pub fn commit_change(&mut self, event: &ImfsEvent) -> FsResult<()> {
-        use ImfsEvent::*;
+    pub fn commit_change(&mut self, event: &VfsEvent) -> FsResult<()> {
+        use VfsEvent::*;
 
-        log::trace!("Committing Imfs change {:?}", event);
+        log::trace!("Committing Vfs change {:?}", event);
 
         match event {
             Created(path) | Modified(path) => {
@@ -79,28 +79,28 @@ impl<F: ImfsFetcher> Imfs<F> {
         match self.inner.get_mut(path) {
             Some(existing_item) => {
                 match (existing_item, &new_type) {
-                    (ImfsItem::File(existing_file), FileType::File) => {
+                    (VfsItem::File(existing_file), FileType::File) => {
                         // Invalidate the existing file contents.
                         // We can probably be smarter about this by reading the changed file.
                         existing_file.contents = None;
                     }
-                    (ImfsItem::Directory(_), FileType::Directory) => {
+                    (VfsItem::Directory(_), FileType::Directory) => {
                         // No changes required, a directory updating doesn't mean anything to us.
                         self.fetcher.watch(path);
                     }
-                    (ImfsItem::File(_), FileType::Directory) => {
+                    (VfsItem::File(_), FileType::Directory) => {
                         self.inner.remove(path);
                         self.inner.insert(
                             path.to_path_buf(),
-                            ImfsItem::new_from_type(FileType::Directory, path),
+                            VfsItem::new_from_type(FileType::Directory, path),
                         );
                         self.fetcher.watch(path);
                     }
-                    (ImfsItem::Directory(_), FileType::File) => {
+                    (VfsItem::Directory(_), FileType::File) => {
                         self.inner.remove(path);
                         self.inner.insert(
                             path.to_path_buf(),
-                            ImfsItem::new_from_type(FileType::File, path),
+                            VfsItem::new_from_type(FileType::File, path),
                         );
                         self.fetcher.unwatch(path);
                     }
@@ -108,7 +108,7 @@ impl<F: ImfsFetcher> Imfs<F> {
             }
             None => {
                 self.inner
-                    .insert(path.to_path_buf(), ImfsItem::new_from_type(new_type, path));
+                    .insert(path.to_path_buf(), VfsItem::new_from_type(new_type, path));
             }
         }
 
@@ -127,17 +127,17 @@ impl<F: ImfsFetcher> Imfs<F> {
         Ok(())
     }
 
-    pub fn get(&mut self, path: impl AsRef<Path>) -> FsResult<ImfsEntry> {
+    pub fn get(&mut self, path: impl AsRef<Path>) -> FsResult<VfsEntry> {
         self.read_if_not_exists(path.as_ref())?;
 
         let item = self.inner.get(path.as_ref()).unwrap();
 
         let is_file = match item {
-            ImfsItem::File(_) => true,
-            ImfsItem::Directory(_) => false,
+            VfsItem::File(_) => true,
+            VfsItem::Directory(_) => false,
         };
 
-        Ok(ImfsEntry {
+        Ok(VfsEntry {
             path: item.path().to_path_buf(),
             is_file,
         })
@@ -149,7 +149,7 @@ impl<F: ImfsFetcher> Imfs<F> {
         self.read_if_not_exists(path)?;
 
         match self.inner.get_mut(path).unwrap() {
-            ImfsItem::File(file) => {
+            VfsItem::File(file) => {
                 if file.contents.is_none() {
                     file.contents = Some(
                         self.fetcher
@@ -160,20 +160,20 @@ impl<F: ImfsFetcher> Imfs<F> {
 
                 Ok(file.contents.as_ref().unwrap())
             }
-            ImfsItem::Directory(_) => Err(FsError::new(
+            VfsItem::Directory(_) => Err(FsError::new(
                 io::Error::new(io::ErrorKind::Other, "Can't read a directory"),
                 path.to_path_buf(),
             )),
         }
     }
 
-    pub fn get_children(&mut self, path: impl AsRef<Path>) -> FsResult<Vec<ImfsEntry>> {
+    pub fn get_children(&mut self, path: impl AsRef<Path>) -> FsResult<Vec<VfsEntry>> {
         let path = path.as_ref();
 
         self.read_if_not_exists(path)?;
 
         match self.inner.get_mut(path).unwrap() {
-            ImfsItem::Directory(dir) => {
+            VfsItem::Directory(dir) => {
                 self.fetcher.watch(path);
 
                 let enumerated = dir.children_enumerated;
@@ -187,7 +187,7 @@ impl<F: ImfsFetcher> Imfs<F> {
                         .collect::<Vec<PathBuf>>() // Collect all PathBufs, since self.get needs to borrow self mutably.
                         .into_iter()
                         .map(|path| self.get(path))
-                        .collect::<FsResult<Vec<ImfsEntry>>>()
+                        .collect::<FsResult<Vec<VfsEntry>>>()
                 } else {
                     dir.children_enumerated = true;
 
@@ -196,10 +196,10 @@ impl<F: ImfsFetcher> Imfs<F> {
                         .map_err(|err| FsError::new(err, path.to_path_buf()))?
                         .into_iter()
                         .map(|path| self.get(path))
-                        .collect::<FsResult<Vec<ImfsEntry>>>()
+                        .collect::<FsResult<Vec<VfsEntry>>>()
                 }
             }
-            ImfsItem::File(_) => Err(FsError::new(
+            VfsItem::File(_) => Err(FsError::new(
                 io::Error::new(io::ErrorKind::Other, "Can't read a directory"),
                 path.to_path_buf(),
             )),
@@ -222,7 +222,7 @@ impl<F: ImfsFetcher> Imfs<F> {
         }
 
         if let Some(parent) = path.parent() {
-            if let Some(ImfsItem::Directory(dir)) = self.inner.get(parent) {
+            if let Some(VfsItem::Directory(dir)) = self.inner.get(parent) {
                 return !dir.children_enumerated;
             }
         }
@@ -230,10 +230,10 @@ impl<F: ImfsFetcher> Imfs<F> {
         false
     }
 
-    /// Attempts to read the path into the `Imfs` if it doesn't exist.
+    /// Attempts to read the path into the `Vfs` if it doesn't exist.
     ///
     /// This does not necessitate that file contents or directory children will
-    /// be read. Depending on the `ImfsFetcher` implementation that the `Imfs`
+    /// be read. Depending on the `VfsFetcher` implementation that the `Vfs`
     /// is using, this call may read exactly only the given path and no more.
     fn read_if_not_exists(&mut self, path: &Path) -> FsResult<()> {
         if !self.inner.contains_key(path) {
@@ -247,7 +247,7 @@ impl<F: ImfsFetcher> Imfs<F> {
             }
 
             self.inner
-                .insert(path.to_path_buf(), ImfsItem::new_from_type(kind, path));
+                .insert(path.to_path_buf(), VfsItem::new_from_type(kind, path));
         }
 
         Ok(())
@@ -256,8 +256,8 @@ impl<F: ImfsFetcher> Imfs<F> {
 
 /// Contains extra methods that should only be used for debugging. They're
 /// broken out into a separate trait to make it more explicit to depend on them.
-pub trait ImfsDebug {
-    fn debug_load_snapshot<P: AsRef<Path>>(&mut self, path: P, snapshot: ImfsSnapshot);
+pub trait VfsDebug {
+    fn debug_load_snapshot<P: AsRef<Path>>(&mut self, path: P, snapshot: VfsSnapshot);
     fn debug_is_file(&self, path: &Path) -> bool;
     fn debug_contents<'a>(&'a self, path: &Path) -> Option<&'a [u8]>;
     fn debug_children<'a>(&'a self, path: &Path) -> Option<(bool, Vec<&'a Path>)>;
@@ -265,24 +265,24 @@ pub trait ImfsDebug {
     fn debug_watched_paths(&self) -> Vec<&Path>;
 }
 
-impl<F: ImfsFetcher> ImfsDebug for Imfs<F> {
-    fn debug_load_snapshot<P: AsRef<Path>>(&mut self, path: P, snapshot: ImfsSnapshot) {
+impl<F: VfsFetcher> VfsDebug for Vfs<F> {
+    fn debug_load_snapshot<P: AsRef<Path>>(&mut self, path: P, snapshot: VfsSnapshot) {
         let path = path.as_ref();
 
         match snapshot {
-            ImfsSnapshot::File(file) => {
+            VfsSnapshot::File(file) => {
                 self.inner.insert(
                     path.to_path_buf(),
-                    ImfsItem::File(ImfsFile {
+                    VfsItem::File(VfsFile {
                         path: path.to_path_buf(),
                         contents: Some(file.contents),
                     }),
                 );
             }
-            ImfsSnapshot::Directory(directory) => {
+            VfsSnapshot::Directory(directory) => {
                 self.inner.insert(
                     path.to_path_buf(),
-                    ImfsItem::Directory(ImfsDirectory {
+                    VfsItem::Directory(VfsDirectory {
                         path: path.to_path_buf(),
                         children_enumerated: true,
                     }),
@@ -297,21 +297,21 @@ impl<F: ImfsFetcher> ImfsDebug for Imfs<F> {
 
     fn debug_is_file(&self, path: &Path) -> bool {
         match self.inner.get(path) {
-            Some(ImfsItem::File(_)) => true,
+            Some(VfsItem::File(_)) => true,
             _ => false,
         }
     }
 
     fn debug_contents<'a>(&'a self, path: &Path) -> Option<&'a [u8]> {
         match self.inner.get(path) {
-            Some(ImfsItem::File(file)) => file.contents.as_ref().map(|vec| vec.as_slice()),
+            Some(VfsItem::File(file)) => file.contents.as_ref().map(|vec| vec.as_slice()),
             _ => None,
         }
     }
 
     fn debug_children<'a>(&'a self, path: &Path) -> Option<(bool, Vec<&'a Path>)> {
         match self.inner.get(path) {
-            Some(ImfsItem::Directory(dir)) => {
+            Some(VfsItem::Directory(dir)) => {
                 Some((dir.children_enumerated, self.inner.children(path).unwrap()))
             }
             _ => None,
@@ -327,31 +327,28 @@ impl<F: ImfsFetcher> ImfsDebug for Imfs<F> {
     }
 }
 
-/// A reference to file or folder in an `Imfs`. Can only be produced by the
-/// entry existing in the Imfs, but can later point to nothing if something
+/// A reference to file or folder in an `Vfs`. Can only be produced by the
+/// entry existing in the Vfs, but can later point to nothing if something
 /// would invalidate that path.
 ///
-/// This struct does not borrow from the Imfs since every operation has the
+/// This struct does not borrow from the Vfs since every operation has the
 /// possibility to mutate the underlying data structure and move memory around.
-pub struct ImfsEntry {
+pub struct VfsEntry {
     path: PathBuf,
     is_file: bool,
 }
 
-impl ImfsEntry {
+impl VfsEntry {
     pub fn path(&self) -> &Path {
         &self.path
     }
 
-    pub fn contents<'imfs>(
-        &self,
-        imfs: &'imfs mut Imfs<impl ImfsFetcher>,
-    ) -> FsResult<&'imfs [u8]> {
-        imfs.get_contents(&self.path)
+    pub fn contents<'vfs>(&self, vfs: &'vfs mut Vfs<impl VfsFetcher>) -> FsResult<&'vfs [u8]> {
+        vfs.get_contents(&self.path)
     }
 
-    pub fn children(&self, imfs: &mut Imfs<impl ImfsFetcher>) -> FsResult<Vec<ImfsEntry>> {
-        imfs.get_children(&self.path)
+    pub fn children(&self, vfs: &mut Vfs<impl VfsFetcher>) -> FsResult<Vec<VfsEntry>> {
+        vfs.get_children(&self.path)
     }
 
     pub fn is_file(&self) -> bool {
@@ -364,27 +361,27 @@ impl ImfsEntry {
 }
 
 /// Internal structure describing potentially partially-resident files and
-/// folders in the `Imfs`.
-pub enum ImfsItem {
-    File(ImfsFile),
-    Directory(ImfsDirectory),
+/// folders in the `Vfs`.
+pub enum VfsItem {
+    File(VfsFile),
+    Directory(VfsDirectory),
 }
 
-impl ImfsItem {
+impl VfsItem {
     fn path(&self) -> &Path {
         match self {
-            ImfsItem::File(file) => &file.path,
-            ImfsItem::Directory(dir) => &dir.path,
+            VfsItem::File(file) => &file.path,
+            VfsItem::Directory(dir) => &dir.path,
         }
     }
 
-    fn new_from_type(kind: FileType, path: impl Into<PathBuf>) -> ImfsItem {
+    fn new_from_type(kind: FileType, path: impl Into<PathBuf>) -> VfsItem {
         match kind {
-            FileType::Directory => ImfsItem::Directory(ImfsDirectory {
+            FileType::Directory => VfsItem::Directory(VfsDirectory {
                 path: path.into(),
                 children_enumerated: false,
             }),
-            FileType::File => ImfsItem::File(ImfsFile {
+            FileType::File => VfsItem::File(VfsFile {
                 path: path.into(),
                 contents: None,
             }),
@@ -392,12 +389,12 @@ impl ImfsItem {
     }
 }
 
-pub struct ImfsFile {
+pub struct VfsFile {
     pub(super) path: PathBuf,
     pub(super) contents: Option<Vec<u8>>,
 }
 
-pub struct ImfsDirectory {
+pub struct VfsDirectory {
     pub(super) path: PathBuf,
     pub(super) children_enumerated: bool,
 }
@@ -411,30 +408,30 @@ mod test {
     use crossbeam_channel::Receiver;
     use maplit::hashmap;
 
-    use super::super::{error::FsErrorKind, event::ImfsEvent, noop_fetcher::NoopFetcher};
+    use super::super::{error::FsErrorKind, event::VfsEvent, noop_fetcher::NoopFetcher};
 
     #[test]
     fn from_snapshot_file() {
-        let mut imfs = Imfs::new(NoopFetcher);
-        let file = ImfsSnapshot::file("hello, world!");
+        let mut vfs = Vfs::new(NoopFetcher);
+        let file = VfsSnapshot::file("hello, world!");
 
-        imfs.debug_load_snapshot("/hello.txt", file);
+        vfs.debug_load_snapshot("/hello.txt", file);
 
-        let entry = imfs.get_contents("/hello.txt").unwrap();
+        let entry = vfs.get_contents("/hello.txt").unwrap();
         assert_eq!(entry, b"hello, world!");
     }
 
     #[test]
     fn from_snapshot_dir() {
-        let mut imfs = Imfs::new(NoopFetcher);
-        let dir = ImfsSnapshot::dir(hashmap! {
-            "a.txt" => ImfsSnapshot::file("contents of a.txt"),
-            "b.lua" => ImfsSnapshot::file("contents of b.lua"),
+        let mut vfs = Vfs::new(NoopFetcher);
+        let dir = VfsSnapshot::dir(hashmap! {
+            "a.txt" => VfsSnapshot::file("contents of a.txt"),
+            "b.lua" => VfsSnapshot::file("contents of b.lua"),
         });
 
-        imfs.debug_load_snapshot("/dir", dir);
+        vfs.debug_load_snapshot("/dir", dir);
 
-        let children = imfs.get_children("/dir").unwrap();
+        let children = vfs.get_children("/dir").unwrap();
 
         let mut has_a = false;
         let mut has_b = false;
@@ -452,10 +449,10 @@ mod test {
         assert!(has_a, "/dir/a.txt was missing");
         assert!(has_b, "/dir/b.lua was missing");
 
-        let a = imfs.get_contents("/dir/a.txt").unwrap();
+        let a = vfs.get_contents("/dir/a.txt").unwrap();
         assert_eq!(a, b"contents of a.txt");
 
-        let b = imfs.get_contents("/dir/b.lua").unwrap();
+        let b = vfs.get_contents("/dir/b.lua").unwrap();
         assert_eq!(b, b"contents of b.lua");
     }
 
@@ -470,7 +467,7 @@ mod test {
             inner: Rc<RefCell<MockState>>,
         }
 
-        impl ImfsFetcher for MockFetcher {
+        impl VfsFetcher for MockFetcher {
             fn file_type(&mut self, path: &Path) -> io::Result<FileType> {
                 if path == Path::new("/dir/a.txt") {
                     return Ok(FileType::File);
@@ -509,7 +506,7 @@ mod test {
 
             fn unwatch(&mut self, _path: &Path) {}
 
-            fn receiver(&self) -> Receiver<ImfsEvent> {
+            fn receiver(&self) -> Receiver<VfsEvent> {
                 crossbeam_channel::never()
             }
         }
@@ -518,13 +515,13 @@ mod test {
             a_contents: "Initial contents",
         }));
 
-        let mut imfs = Imfs::new(MockFetcher {
+        let mut vfs = Vfs::new(MockFetcher {
             inner: mock_state.clone(),
         });
 
-        let a = imfs.get("/dir/a.txt").expect("mock file did not exist");
+        let a = vfs.get("/dir/a.txt").expect("mock file did not exist");
 
-        let contents = a.contents(&mut imfs).expect("mock file contents error");
+        let contents = a.contents(&mut vfs).expect("mock file contents error");
 
         assert_eq!(contents, b"Initial contents");
 
@@ -533,36 +530,36 @@ mod test {
             mock_state.a_contents = "Changed contents";
         }
 
-        imfs.raise_file_changed("/dir/a.txt")
+        vfs.raise_file_changed("/dir/a.txt")
             .expect("error processing file change");
 
-        let contents = a.contents(&mut imfs).expect("mock file contents error");
+        let contents = a.contents(&mut vfs).expect("mock file contents error");
 
         assert_eq!(contents, b"Changed contents");
     }
 
     #[test]
     fn removed_event_existing() {
-        let mut imfs = Imfs::new(NoopFetcher);
+        let mut vfs = Vfs::new(NoopFetcher);
 
-        let file = ImfsSnapshot::file("hello, world!");
-        imfs.debug_load_snapshot("/hello.txt", file);
+        let file = VfsSnapshot::file("hello, world!");
+        vfs.debug_load_snapshot("/hello.txt", file);
 
-        let hello = imfs.get("/hello.txt").expect("couldn't get hello.txt");
+        let hello = vfs.get("/hello.txt").expect("couldn't get hello.txt");
 
         let contents = hello
-            .contents(&mut imfs)
+            .contents(&mut vfs)
             .expect("couldn't get hello.txt contents");
 
         assert_eq!(contents, b"hello, world!");
 
-        imfs.raise_file_removed("/hello.txt")
+        vfs.raise_file_removed("/hello.txt")
             .expect("error processing file removal");
 
-        match imfs.get("hello.txt") {
+        match vfs.get("hello.txt") {
             Err(ref err) if err.kind() == FsErrorKind::NotFound => {}
             Ok(_) => {
-                panic!("hello.txt was not removed from Imfs");
+                panic!("hello.txt was not removed from Vfs");
             }
             Err(err) => {
                 panic!("Unexpected error: {:?}", err);

@@ -13,7 +13,7 @@ use futures::{
 use hyper::{service::Service, Body, Request, Response, Server};
 use log::trace;
 
-use crate::{imfs::ImfsFetcher, serve_session::ServeSession};
+use crate::{serve_session::ServeSession, vfs::VfsFetcher};
 
 use self::{api::ApiService, ui::UiService};
 
@@ -22,7 +22,7 @@ pub struct RootService<F> {
     ui: UiService<F>,
 }
 
-impl<F: ImfsFetcher> Service for RootService<F> {
+impl<F: VfsFetcher> Service for RootService<F> {
     type ReqBody = Body;
     type ResBody = Body;
     type Error = hyper::Error;
@@ -39,7 +39,7 @@ impl<F: ImfsFetcher> Service for RootService<F> {
     }
 }
 
-impl<F: ImfsFetcher> RootService<F> {
+impl<F: VfsFetcher> RootService<F> {
     pub fn new(serve_session: Arc<ServeSession<F>>) -> Self {
         RootService {
             api: ApiService::new(Arc::clone(&serve_session)),
@@ -52,7 +52,7 @@ pub struct LiveServer<F> {
     serve_session: Arc<ServeSession<F>>,
 }
 
-impl<F: ImfsFetcher + Send + Sync + 'static> LiveServer<F> {
+impl<F: VfsFetcher + Send + Sync + 'static> LiveServer<F> {
     pub fn new(serve_session: Arc<ServeSession<F>>) -> Self {
         LiveServer { serve_session }
     }
