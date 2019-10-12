@@ -34,7 +34,7 @@ impl SnapshotMiddleware for SnapshotTxt {
         };
 
         let contents = entry.contents(vfs)?;
-        let contents_str = str::from_utf8(contents)
+        let contents_str = str::from_utf8(&contents)
             .map_err(|err| SnapshotError::file_contents_bad_unicode(err, entry.path()))?
             .to_string();
 
@@ -63,7 +63,7 @@ impl SnapshotMiddleware for SnapshotTxt {
 
         if let Some(meta_entry) = vfs.get(meta_path).with_not_found()? {
             let meta_contents = meta_entry.contents(vfs)?;
-            let mut metadata = AdjacentMetadata::from_slice(meta_contents);
+            let mut metadata = AdjacentMetadata::from_slice(&meta_contents);
             metadata.apply_all(&mut snapshot);
         }
 

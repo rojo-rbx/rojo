@@ -33,7 +33,7 @@ impl SnapshotMiddleware for SnapshotJsonModel {
         };
 
         let instance: JsonModel =
-            serde_json::from_slice(entry.contents(vfs)?).expect("TODO: Handle serde_json errors");
+            serde_json::from_slice(&entry.contents(vfs)?).expect("TODO: Handle serde_json errors");
 
         if let Some(json_name) = &instance.name {
             if json_name != &instance_name {

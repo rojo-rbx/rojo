@@ -37,7 +37,7 @@ impl SnapshotMiddleware for SnapshotCsv {
             .path()
             .with_file_name(format!("{}.meta.json", instance_name));
 
-        let table_contents = convert_localization_csv(entry.contents(vfs)?);
+        let table_contents = convert_localization_csv(&entry.contents(vfs)?);
 
         let mut snapshot = InstanceSnapshot {
             snapshot_id: None,
@@ -58,7 +58,7 @@ impl SnapshotMiddleware for SnapshotCsv {
 
         if let Some(meta_entry) = vfs.get(meta_path).with_not_found()? {
             let meta_contents = meta_entry.contents(vfs)?;
-            let mut metadata = AdjacentMetadata::from_slice(meta_contents);
+            let mut metadata = AdjacentMetadata::from_slice(&meta_contents);
             metadata.apply_all(&mut snapshot);
         }
 
