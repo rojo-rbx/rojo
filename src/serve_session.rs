@@ -5,18 +5,14 @@ use std::{
     time::Instant,
 };
 
-use rbx_dom_weak::RbxInstanceProperties;
-
 use crate::{
     change_processor::ChangeProcessor,
+    common_setup,
     imfs::{Imfs, ImfsFetcher},
     message_queue::MessageQueue,
     project::Project,
     session_id::SessionId,
-    snapshot::{
-        apply_patch_set, compute_patch_set, AppliedPatchSet, InstancePropertiesWithMeta, RojoTree,
-    },
-    snapshot_middleware::{snapshot_from_imfs, InstanceSnapshotContext},
+    snapshot::{AppliedPatchSet, RojoTree},
 };
 
 /// Contains all of the state for a Rojo serve session.
@@ -82,47 +78,14 @@ impl<F: ImfsFetcher + Send + 'static> ServeSession<F> {
     /// The project file is expected to be loaded out-of-band since it's
     /// currently loaded from the filesystem directly instead of through the
     /// in-memory filesystem layer.
-    pub fn new<P: AsRef<Path>>(
-        mut imfs: Imfs<F>,
-        start_path: P,
-        root_project: Option<Project>,
-    ) -> Self {
+    pub fn new<P: AsRef<Path>>(mut imfs: Imfs<F>, start_path: P) -> Self {
         let start_path = start_path.as_ref();
 
-        log::trace!(
-            "Starting new ServeSession at path {} with project {:#?}",
-            start_path.display(),
-            root_project
-        );
+        log::trace!("Starting new ServeSession at path {}", start_path.display(),);
 
         let start_time = Instant::now();
 
-        log::trace!("Constructing initial tree");
-        let mut tree = RojoTree::new(InstancePropertiesWithMeta {
-            properties: RbxInstanceProperties {
-                name: "ROOT".to_owned(),
-                class_name: "Folder".to_owned(),
-                properties: Default::default(),
-            },
-            metadata: Default::default(),
-        });
-        let root_id = tree.get_root_id();
-
-        log::trace!("Loading start path: {}", start_path.display());
-        let entry = imfs.get(start_path).expect("could not get project path");
-
-        // TODO: Compute snapshot context from project.
-        log::trace!("Snapshotting start path");
-        let snapshot =
-            snapshot_from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
-                .expect("snapshot failed")
-                .expect("snapshot did not return an instance");
-
-        log::trace!("Computing initial patch set");
-        let patch_set = compute_patch_set(&snapshot, &tree, root_id);
-
-        log::trace!("Applying initial patch set");
-        apply_patch_set(&mut tree, patch_set);
+        let (root_project, tree) = common_setup::start(start_path, &mut imfs);
 
         let session_id = SessionId::new();
         let message_queue = MessageQueue::new();
@@ -177,6 +140,12 @@ impl<F: ImfsFetcher> ServeSession<F> {
             .map(|project| project.name.as_str())
     }
 
+    pub fn project_port(&self) -> Option<u16> {
+        self.root_project
+            .as_ref()
+            .and_then(|project| project.serve_port)
+    }
+
     pub fn start_time(&self) -> Instant {
         self.start_time
     }
@@ -214,7 +183,7 @@ mod serve_session {
 
         imfs.debug_load_snapshot("/foo", ImfsSnapshot::empty_dir());
 
-        let session = ServeSession::new(imfs, "/foo", None);
+        let session = ServeSession::new(imfs, "/foo");
 
         let mut rm = RedactionMap::new();
         assert_yaml_snapshot!(view_tree(&session.tree(), &mut rm));
@@ -241,7 +210,7 @@ mod serve_session {
             }),
         );
 
-        let session = ServeSession::new(imfs, "/foo", None);
+        let session = ServeSession::new(imfs, "/foo");
 
         let mut rm = RedactionMap::new();
         assert_yaml_snapshot!(view_tree(&session.tree(), &mut rm));
@@ -259,7 +228,7 @@ mod serve_session {
             }),
         );
 
-        let session = ServeSession::new(imfs, "/root", None);
+        let session = ServeSession::new(imfs, "/root");
 
         let mut rm = RedactionMap::new();
         assert_yaml_snapshot!(view_tree(&session.tree(), &mut rm));
@@ -278,7 +247,7 @@ mod serve_session {
         );
 
         let imfs = Imfs::new(fetcher);
-        let session = ServeSession::new(imfs, "/root", None);
+        let session = ServeSession::new(imfs, "/root");
 
         let mut redactions = RedactionMap::new();
         assert_yaml_snapshot!(
@@ -317,7 +286,7 @@ mod serve_session {
         state.load_snapshot("/foo.txt", ImfsSnapshot::file("Hello!"));
 
         let imfs = Imfs::new(fetcher);
-        let session = ServeSession::new(imfs, "/foo.txt", None);
+        let session = ServeSession::new(imfs, "/foo.txt");
 
         let mut redactions = RedactionMap::new();
         assert_yaml_snapshot!(

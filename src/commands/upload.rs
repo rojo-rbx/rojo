@@ -1,14 +1,12 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::path::PathBuf;
 
 use failure::Fail;
-use rbx_dom_weak::RbxInstanceProperties;
 use reqwest::header::{ACCEPT, CONTENT_TYPE, COOKIE, USER_AGENT};
 
 use crate::{
     auth_cookie::get_auth_cookie,
+    common_setup,
     imfs::{Imfs, RealFetcher, WatchMode},
-    snapshot::{apply_patch_set, compute_patch_set, InstancePropertiesWithMeta, RojoTree},
-    snapshot_middleware::{snapshot_from_imfs, InstanceSnapshotContext},
 };
 
 #[derive(Debug, Fail)]
@@ -45,40 +43,15 @@ pub fn upload(options: UploadOptions) -> Result<(), UploadError> {
         .or_else(get_auth_cookie)
         .ok_or(UploadError::NeedAuthCookie)?;
 
-    let mut tree = RojoTree::new(InstancePropertiesWithMeta {
-        properties: RbxInstanceProperties {
-            name: "ROOT".to_owned(),
-            class_name: "Folder".to_owned(),
-            properties: HashMap::new(),
-        },
-        metadata: Default::default(),
-    });
-    let root_id = tree.get_root_id();
-
     log::trace!("Constructing in-memory filesystem");
     let mut imfs = Imfs::new(RealFetcher::new(WatchMode::Disabled));
 
-    log::trace!("Reading project root");
-    let entry = imfs
-        .get(&options.fuzzy_project_path)
-        .expect("could not get project path");
-
-    // TODO: Compute snapshot context from project.
-    log::trace!("Generating snapshot of instances from IMFS");
-    let snapshot = snapshot_from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
-        .expect("snapshot failed")
-        .expect("snapshot did not return an instance");
-
-    log::trace!("Computing patch set");
-    let patch_set = compute_patch_set(&snapshot, &tree, root_id);
-
-    log::trace!("Applying patch set");
-    apply_patch_set(&mut tree, patch_set);
-
+    let (_maybe_project, tree) = common_setup::start(&options.fuzzy_project_path, &mut imfs);
     let root_id = tree.get_root_id();
 
     let mut buffer = Vec::new();
 
+    log::trace!("Encoding XML model");
     let config = rbx_xml::EncodeOptions::new()
         .property_behavior(rbx_xml::EncodePropertyBehavior::WriteUnknown);
     rbx_xml::to_writer(&mut buffer, tree.inner(), &[root_id], config)?;
@@ -88,6 +61,7 @@ pub fn upload(options: UploadOptions) -> Result<(), UploadError> {
         options.asset_id
     );
 
+    log::trace!("POSTing to {}", url);
     let client = reqwest::Client::new();
     let mut response = client
         .post(&url)

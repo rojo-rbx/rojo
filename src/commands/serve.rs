@@ -9,7 +9,7 @@ use termcolor::{BufferWriter, Color, ColorChoice, ColorSpec, WriteColor};
 
 use crate::{
     imfs::{Imfs, RealFetcher, WatchMode},
-    project::{Project, ProjectLoadError},
+    project::ProjectLoadError,
     serve_session::ServeSession,
     web::LiveServer,
 };
@@ -33,33 +33,18 @@ impl_from!(ServeError {
 });
 
 pub fn serve(options: &ServeOptions) -> Result<(), ServeError> {
-    let maybe_project = match Project::load_fuzzy(&options.fuzzy_project_path) {
-        Ok(project) => Some(project),
-        Err(ProjectLoadError::NotFound) => None,
-        Err(other) => return Err(other.into()),
-    };
+    let imfs = Imfs::new(RealFetcher::new(WatchMode::Enabled));
+
+    let session = Arc::new(ServeSession::new(imfs, &options.fuzzy_project_path));
 
     let port = options
         .port
-        .or_else(|| {
-            maybe_project
-                .as_ref()
-                .and_then(|project| project.serve_port)
-        })
+        .or_else(|| session.project_port())
         .unwrap_or(DEFAULT_PORT);
-
-    let _ = show_start_message(port);
-
-    let imfs = Imfs::new(RealFetcher::new(WatchMode::Enabled));
-
-    let session = Arc::new(ServeSession::new(
-        imfs,
-        &options.fuzzy_project_path,
-        maybe_project,
-    ));
 
     let server = LiveServer::new(session);
 
+    let _ = show_start_message(port);
     server.start(port);
 
     Ok(())

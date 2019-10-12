@@ -1,18 +1,15 @@
 use std::{
-    collections::HashMap,
     fs::File,
     io::{self, BufWriter, Write},
     path::PathBuf,
 };
 
 use failure::Fail;
-use rbx_dom_weak::RbxInstanceProperties;
 
 use crate::{
+    common_setup,
     imfs::{FsError, Imfs, RealFetcher, WatchMode},
-    project::{Project, ProjectLoadError},
-    snapshot::{apply_patch_set, compute_patch_set, InstancePropertiesWithMeta, RojoTree},
-    snapshot_middleware::{snapshot_from_imfs, InstanceSnapshotContext, SnapshotPluginContext},
+    project::ProjectLoadError,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -83,52 +80,11 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
 
     log::debug!("Hoping to generate file of type {:?}", output_kind);
 
-    let maybe_project = match Project::load_fuzzy(&options.fuzzy_project_path) {
-        Ok(project) => Some(project),
-        Err(ProjectLoadError::NotFound) => None,
-        Err(other) => return Err(other.into()),
-    };
-    log::trace!("Using project file {:#?}", maybe_project);
-
-    let mut tree = RojoTree::new(InstancePropertiesWithMeta {
-        properties: RbxInstanceProperties {
-            name: "ROOT".to_owned(),
-            class_name: "Folder".to_owned(),
-            properties: HashMap::new(),
-        },
-        metadata: Default::default(),
-    });
-    let root_id = tree.get_root_id();
-
     log::trace!("Constructing in-memory filesystem");
     let mut imfs = Imfs::new(RealFetcher::new(WatchMode::Disabled));
 
-    log::trace!("Reading project root");
-    let entry = imfs
-        .get(&options.fuzzy_project_path)
-        .expect("could not get project path");
-
-    let mut snapshot_context = InstanceSnapshotContext::default();
-
-    if let Some(project) = maybe_project {
-        // If the project file defines no plugins, then there's no need to
-        // initialize the snapshot plugin context.
-        if !project.plugins.is_empty() {
-            snapshot_context.plugin_context =
-                Some(SnapshotPluginContext::new(project.plugins.clone()));
-        }
-    }
-
-    log::trace!("Generating snapshot of instances from IMFS");
-    let snapshot = snapshot_from_imfs(&mut snapshot_context, &mut imfs, &entry)
-        .expect("snapshot failed")
-        .expect("snapshot did not return an instance");
-
-    log::trace!("Computing patch set");
-    let patch_set = compute_patch_set(&snapshot, &tree, root_id);
-
-    log::trace!("Applying patch set");
-    apply_patch_set(&mut tree, patch_set);
+    let (_maybe_project, tree) = common_setup::start(&options.fuzzy_project_path, &mut imfs);
+    let root_id = tree.get_root_id();
 
     log::trace!("Opening output file for write");
     let mut file = BufWriter::new(File::create(&options.output_file)?);

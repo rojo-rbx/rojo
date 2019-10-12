@@ -17,6 +17,7 @@ mod tree_view;
 
 mod auth_cookie;
 mod change_processor;
+mod common_setup;
 mod imfs;
 mod message_queue;
 mod multimap;
