@@ -37,7 +37,7 @@ impl SnapshotMiddleware for SnapshotRbxm {
         });
 
         let root_id = temp_tree.get_root_id();
-        rbx_binary::decode(&mut temp_tree, root_id, entry.contents(vfs)?)
+        rbx_binary::decode(&mut temp_tree, root_id, entry.contents(vfs)?.as_slice())
             .expect("TODO: Handle rbx_binary errors");
 
         let root_instance = temp_tree.get_instance(root_id).unwrap();

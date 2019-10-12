@@ -71,7 +71,7 @@ fn snapshot_lua_file<F: VfsFetcher>(
     };
 
     let contents = entry.contents(vfs)?;
-    let contents_str = str::from_utf8(contents)
+    let contents_str = str::from_utf8(&contents)
         // TODO: Turn into error type
         .expect("File content was not valid UTF-8")
         .to_string();
@@ -103,7 +103,7 @@ fn snapshot_lua_file<F: VfsFetcher>(
 
     if let Some(meta_entry) = vfs.get(meta_path).with_not_found()? {
         let meta_contents = meta_entry.contents(vfs)?;
-        let mut metadata = AdjacentMetadata::from_slice(meta_contents);
+        let mut metadata = AdjacentMetadata::from_slice(&meta_contents);
         metadata.apply_all(&mut snapshot);
     }
 

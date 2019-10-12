@@ -1,6 +1,7 @@
 use std::{
     io,
     path::{Path, PathBuf},
+    sync::Arc,
 };
 
 use crossbeam_channel::Receiver;
@@ -143,7 +144,7 @@ impl<F: VfsFetcher> Vfs<F> {
         })
     }
 
-    pub fn get_contents(&mut self, path: impl AsRef<Path>) -> FsResult<&[u8]> {
+    pub fn get_contents(&mut self, path: impl AsRef<Path>) -> FsResult<Arc<Vec<u8>>> {
         let path = path.as_ref();
 
         self.read_if_not_exists(path)?;
@@ -154,11 +155,12 @@ impl<F: VfsFetcher> Vfs<F> {
                     file.contents = Some(
                         self.fetcher
                             .read_contents(path)
+                            .map(Arc::new)
                             .map_err(|err| FsError::new(err, path.to_path_buf()))?,
                     );
                 }
 
-                Ok(file.contents.as_ref().unwrap())
+                Ok(file.contents.clone().unwrap())
             }
             VfsItem::Directory(_) => Err(FsError::new(
                 io::Error::new(io::ErrorKind::Other, "Can't read a directory"),
@@ -275,7 +277,7 @@ impl<F: VfsFetcher> VfsDebug for Vfs<F> {
                     path.to_path_buf(),
                     VfsItem::File(VfsFile {
                         path: path.to_path_buf(),
-                        contents: Some(file.contents),
+                        contents: Some(Arc::new(file.contents)),
                     }),
                 );
             }
@@ -343,7 +345,7 @@ impl VfsEntry {
         &self.path
     }
 
-    pub fn contents<'vfs>(&self, vfs: &'vfs mut Vfs<impl VfsFetcher>) -> FsResult<&'vfs [u8]> {
+    pub fn contents<'vfs>(&self, vfs: &'vfs mut Vfs<impl VfsFetcher>) -> FsResult<Arc<Vec<u8>>> {
         vfs.get_contents(&self.path)
     }
 
@@ -391,7 +393,7 @@ impl VfsItem {
 
 pub struct VfsFile {
     pub(super) path: PathBuf,
-    pub(super) contents: Option<Vec<u8>>,
+    pub(super) contents: Option<Arc<Vec<u8>>>,
 }
 
 pub struct VfsDirectory {
@@ -417,8 +419,8 @@ mod test {
 
         vfs.debug_load_snapshot("/hello.txt", file);
 
-        let entry = vfs.get_contents("/hello.txt").unwrap();
-        assert_eq!(entry, b"hello, world!");
+        let contents = vfs.get_contents("/hello.txt").unwrap();
+        assert_eq!(contents.as_slice(), b"hello, world!");
     }
 
     #[test]
@@ -449,11 +451,11 @@ mod test {
         assert!(has_a, "/dir/a.txt was missing");
         assert!(has_b, "/dir/b.lua was missing");
 
-        let a = vfs.get_contents("/dir/a.txt").unwrap();
-        assert_eq!(a, b"contents of a.txt");
+        let a_contents = vfs.get_contents("/dir/a.txt").unwrap();
+        assert_eq!(a_contents.as_slice(), b"contents of a.txt");
 
-        let b = vfs.get_contents("/dir/b.lua").unwrap();
-        assert_eq!(b, b"contents of b.lua");
+        let b_contents = vfs.get_contents("/dir/b.lua").unwrap();
+        assert_eq!(b_contents.as_slice(), b"contents of b.lua");
     }
 
     #[test]
@@ -523,7 +525,7 @@ mod test {
 
         let contents = a.contents(&mut vfs).expect("mock file contents error");
 
-        assert_eq!(contents, b"Initial contents");
+        assert_eq!(contents.as_slice(), b"Initial contents");
 
         {
             let mut mock_state = mock_state.borrow_mut();
@@ -535,7 +537,7 @@ mod test {
 
         let contents = a.contents(&mut vfs).expect("mock file contents error");
 
-        assert_eq!(contents, b"Changed contents");
+        assert_eq!(contents.as_slice(), b"Changed contents");
     }
 
     #[test]
@@ -551,7 +553,7 @@ mod test {
             .contents(&mut vfs)
             .expect("couldn't get hello.txt contents");
 
-        assert_eq!(contents, b"hello, world!");
+        assert_eq!(contents.as_slice(), b"hello, world!");
 
         vfs.raise_file_removed("/hello.txt")
             .expect("error processing file removal");

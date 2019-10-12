@@ -43,7 +43,7 @@ impl SnapshotMiddleware for SnapshotProject {
             return Ok(None);
         }
 
-        let project = Project::load_from_slice(entry.contents(vfs)?, entry.path())
+        let project = Project::load_from_slice(&entry.contents(vfs)?, entry.path())
             .map_err(|err| SnapshotError::malformed_project(err, entry.path()))?;
 
         // Snapshotting a project should always return an instance, so this
