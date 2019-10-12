@@ -10,8 +10,9 @@ use rbx_dom_weak::RbxInstanceProperties;
 
 use crate::{
     imfs::{FsError, Imfs, RealFetcher, WatchMode},
+    project::{Project, ProjectLoadError},
     snapshot::{apply_patch_set, compute_patch_set, InstancePropertiesWithMeta, RojoTree},
-    snapshot_middleware::{snapshot_from_imfs, InstanceSnapshotContext},
+    snapshot_middleware::{snapshot_from_imfs, InstanceSnapshotContext, SnapshotPluginContext},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -49,11 +50,14 @@ pub enum BuildError {
     #[fail(display = "IO error: {}", _0)]
     IoError(#[fail(cause)] io::Error),
 
-    #[fail(display = "XML model file error")]
-    XmlModelEncodeError(rbx_xml::EncodeError),
+    #[fail(display = "XML model error: {}", _0)]
+    XmlModelEncodeError(#[fail(cause)] rbx_xml::EncodeError),
 
-    #[fail(display = "Binary model file error")]
+    #[fail(display = "Binary model error: {:?}", _0)]
     BinaryModelEncodeError(rbx_binary::EncodeError),
+
+    #[fail(display = "{}", _0)]
+    ProjectLoadError(#[fail(cause)] ProjectLoadError),
 
     #[fail(display = "{}", _0)]
     FsError(#[fail(cause)] FsError),
@@ -63,6 +67,7 @@ impl_from!(BuildError {
     io::Error => IoError,
     rbx_xml::EncodeError => XmlModelEncodeError,
     rbx_binary::EncodeError => BinaryModelEncodeError,
+    ProjectLoadError => ProjectLoadError,
     FsError => FsError,
 });
 
@@ -76,7 +81,14 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
         .or_else(|| detect_output_kind(options))
         .ok_or(BuildError::UnknownOutputKind)?;
 
-    log::info!("Hoping to generate file of type {:?}", output_kind);
+    log::debug!("Hoping to generate file of type {:?}", output_kind);
+
+    let maybe_project = match Project::load_fuzzy(&options.fuzzy_project_path) {
+        Ok(project) => Some(project),
+        Err(ProjectLoadError::NotFound) => None,
+        Err(other) => return Err(other.into()),
+    };
+    log::trace!("Using project file {:#?}", maybe_project);
 
     let mut tree = RojoTree::new(InstancePropertiesWithMeta {
         properties: RbxInstanceProperties {
@@ -96,9 +108,19 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
         .get(&options.fuzzy_project_path)
         .expect("could not get project path");
 
-    // TODO: Compute snapshot context from project.
+    let mut snapshot_context = InstanceSnapshotContext::default();
+
+    if let Some(project) = maybe_project {
+        // If the project file defines no plugins, then there's no need to
+        // initialize the snapshot plugin context.
+        if !project.plugins.is_empty() {
+            snapshot_context.plugin_context =
+                Some(SnapshotPluginContext::new(project.plugins.clone()));
+        }
+    }
+
     log::trace!("Generating snapshot of instances from IMFS");
-    let snapshot = snapshot_from_imfs(&mut InstanceSnapshotContext::default(), &mut imfs, &entry)
+    let snapshot = snapshot_from_imfs(&mut snapshot_context, &mut imfs, &entry)
         .expect("snapshot failed")
         .expect("snapshot did not return an instance");
 

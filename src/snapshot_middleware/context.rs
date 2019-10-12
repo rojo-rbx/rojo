@@ -4,8 +4,10 @@ use rlua::{Lua, RegistryKey};
 
 #[derive(Debug)]
 pub struct InstanceSnapshotContext {
-    /// Empty struct that will be used later to fill out required Lua state for
-    /// user plugins.
+    /// Holds all the state needed to run user plugins as part of the snapshot
+    /// process.
+    ///
+    /// If this is None, then plugins should not be evaluated at all.
     pub plugin_context: Option<SnapshotPluginContext>,
 }
 
