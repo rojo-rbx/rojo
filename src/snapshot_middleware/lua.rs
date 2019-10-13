@@ -126,10 +126,17 @@ fn snapshot_init<F: VfsFetcher>(
     if let Some(init_entry) = vfs.get(init_path).with_not_found()? {
         if let Some(dir_snapshot) = SnapshotDir::from_vfs(context, vfs, folder_entry)? {
             if let Some(mut init_snapshot) = snapshot_lua_file(vfs, &init_entry)? {
+                if dir_snapshot.class_name != "Folder" {
+                    panic!(
+                        "init.lua, init.server.lua, and init.client.lua can \
+                         only be used if the instance produced by the parent \
+                         directory would be a Folder."
+                    );
+                }
+
                 init_snapshot.name = dir_snapshot.name;
                 init_snapshot.children = dir_snapshot.children;
-                // TODO: Metadata
-                // TODO: Validate directory class name is "Folder"
+                // TODO: Apply metadata from folder
 
                 return Ok(Some(init_snapshot));
             }

@@ -4,12 +4,13 @@ use rbx_dom_weak::{RbxId, RbxTree};
 
 use crate::{
     snapshot::{InstanceMetadata, InstanceSnapshot},
-    vfs::{DirectorySnapshot, Vfs, VfsEntry, VfsFetcher, VfsSnapshot},
+    vfs::{DirectorySnapshot, FsResultExt, Vfs, VfsEntry, VfsFetcher, VfsSnapshot},
 };
 
 use super::{
     context::InstanceSnapshotContext,
     error::SnapshotError,
+    meta_file::DirectoryMetadata,
     middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware},
     snapshot_from_instance, snapshot_from_vfs,
 };
@@ -44,7 +45,9 @@ impl SnapshotMiddleware for SnapshotDir {
             .ok_or_else(|| SnapshotError::file_name_bad_unicode(entry.path()))?
             .to_string();
 
-        Ok(Some(InstanceSnapshot {
+        let meta_path = entry.path().join("init.meta.json");
+
+        let mut snapshot = InstanceSnapshot {
             snapshot_id: None,
             metadata: InstanceMetadata {
                 instigating_source: Some(entry.path().to_path_buf().into()),
@@ -55,7 +58,15 @@ impl SnapshotMiddleware for SnapshotDir {
             class_name: Cow::Borrowed("Folder"),
             properties: HashMap::new(),
             children: snapshot_children,
-        }))
+        };
+
+        if let Some(meta_entry) = vfs.get(meta_path).with_not_found()? {
+            let meta_contents = meta_entry.contents(vfs)?;
+            let mut metadata = DirectoryMetadata::from_slice(&meta_contents);
+            metadata.apply_all(&mut snapshot);
+        }
+
+        Ok(Some(snapshot))
     }
 
     fn from_instance(tree: &RbxTree, id: RbxId) -> SnapshotFileResult {
