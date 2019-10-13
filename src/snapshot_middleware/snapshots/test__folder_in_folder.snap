@@ -9,6 +9,7 @@ metadata:
     Path: /foo
   relevant_paths:
     - /foo
+    - /foo/init.meta.json
 name: foo
 class_name: Folder
 properties: {}
@@ -20,6 +21,7 @@ children:
         Path: /foo/Child
       relevant_paths:
         - /foo/Child
+        - /foo/Child/init.meta.json
     name: Child
     class_name: Folder
     properties: {}

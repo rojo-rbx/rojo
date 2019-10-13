@@ -12,6 +12,7 @@ metadata:
     Path: /root
   relevant_paths:
     - /root
+    - /root/init.meta.json
 children:
   - id: id-2
     name: test

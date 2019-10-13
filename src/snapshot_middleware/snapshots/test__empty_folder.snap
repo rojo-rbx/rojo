@@ -9,6 +9,7 @@ metadata:
     Path: /foo
   relevant_paths:
     - /foo
+    - /foo/init.meta.json
 name: foo
 class_name: Folder
 properties: {}

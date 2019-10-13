@@ -12,6 +12,7 @@ metadata:
     Path: /foo/default.project.json
   relevant_paths:
     - /foo/src
+    - /foo/src/init.meta.json
     - /foo/default.project.json
 children:
   - id: id-2
