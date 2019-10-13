@@ -28,6 +28,8 @@ gen_build_tests! {
     csv_in_folder,
     deep_nesting,
     gitkeep,
+    init_meta_class_name,
+    init_meta_properties,
     init_with_children,
     json_model_in_folder,
     json_model_legacy_name,
