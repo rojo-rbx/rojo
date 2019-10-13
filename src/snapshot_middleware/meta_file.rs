@@ -6,6 +6,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::snapshot::InstanceSnapshot;
 
+/// Represents metadata in a sibling file with the same basename.
+///
+/// As an example, hello.meta.json next to hello.lua would allow assigning
+/// additional metadata to the instance resulting from hello.lua.
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AdjacentMetadata {
@@ -47,4 +51,7 @@ impl AdjacentMetadata {
         self.apply_ignore_unknown_instances(snapshot);
         self.apply_properties(snapshot);
     }
+
+    // TODO: Add method to allow selectively applying parts of metadata and
+    // throwing errors if invalid parts are specified.
 }
