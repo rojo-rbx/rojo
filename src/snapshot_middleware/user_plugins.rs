@@ -1,12 +1,7 @@
-use std::{fs, path::Path};
-
-use rlua::{Lua, RegistryKey};
-
 use crate::vfs::{Vfs, VfsEntry, VfsFetcher};
 
 use super::{
     context::InstanceSnapshotContext,
-    error::SnapshotError,
     middleware::{SnapshotInstanceResult, SnapshotMiddleware},
 };
 
@@ -30,23 +25,9 @@ impl SnapshotMiddleware for SnapshotUserPlugins {
             None => return Ok(None),
         };
 
-        // If the plugins listed for use haven't been loaded yet, read them into
-        // memory, run them, and keep the result they return as a registry key
-        // into our Lua state.
-        let keys = match &plugin_context.plugin_functions {
-            Some(keys) => keys,
-            None => {
-                plugin_context.plugin_functions = Some(initialize_plugins(
-                    &plugin_context.state,
-                    &plugin_context.plugin_paths,
-                )?);
-                plugin_context.plugin_functions.as_ref().unwrap()
-            }
-        };
-
         plugin_context.state.context(|lua_context| {
             lua_context.scope(|_scope| {
-                for _key in keys {
+                for _key in &plugin_context.plugin_functions {
                     // TODO: Invoke plugin here and get result out.
 
                     // The current plan for plugins here is to make them work
@@ -84,31 +65,4 @@ impl SnapshotMiddleware for SnapshotUserPlugins {
 
         Ok(None)
     }
-}
-
-fn initialize_plugins<P: AsRef<Path>>(
-    lua_state: &Lua,
-    plugin_paths: &[P],
-) -> Result<Vec<RegistryKey>, SnapshotError> {
-    plugin_paths
-        .iter()
-        .map(|path| {
-            let path = path.as_ref();
-
-            let content = fs::read_to_string(path).map_err(|err| SnapshotError::wrap(err, path))?;
-
-            lua_state.context(|lua_context| {
-                // Plugins are currently expected to return a function that will
-                // be run when a snapshot needs to be generated.
-                let result = lua_context
-                    .load(&content)
-                    .set_name(&path.display().to_string())?
-                    .call::<_, rlua::Function>(())?;
-
-                let key = lua_context.create_registry_value(result)?;
-
-                Ok(key)
-            })
-        })
-        .collect::<Result<Vec<_>, _>>()
 }

@@ -41,8 +41,7 @@ pub fn start<F: VfsFetcher>(
         // If the project file defines no plugins, then there's no need to
         // initialize the snapshot plugin context.
         if !project.plugins.is_empty() {
-            snapshot_context.plugin_context =
-                Some(SnapshotPluginContext::new(project.plugins.clone()));
+            snapshot_context.plugin_context = Some(SnapshotPluginContext::new(&project.plugins));
         }
     }
 
