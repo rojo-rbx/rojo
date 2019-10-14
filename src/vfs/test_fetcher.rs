@@ -107,7 +107,7 @@ impl TestFetcher {
 }
 
 impl VfsFetcher for TestFetcher {
-    fn file_type(&mut self, path: &Path) -> io::Result<FileType> {
+    fn file_type(&self, path: &Path) -> io::Result<FileType> {
         let inner = self.state.inner.lock().unwrap();
 
         match inner.entries.get(path) {
@@ -117,7 +117,7 @@ impl VfsFetcher for TestFetcher {
         }
     }
 
-    fn read_children(&mut self, path: &Path) -> io::Result<Vec<PathBuf>> {
+    fn read_children(&self, path: &Path) -> io::Result<Vec<PathBuf>> {
         let inner = self.state.inner.lock().unwrap();
 
         Ok(inner
@@ -129,7 +129,7 @@ impl VfsFetcher for TestFetcher {
             .collect())
     }
 
-    fn read_contents(&mut self, path: &Path) -> io::Result<Vec<u8>> {
+    fn read_contents(&self, path: &Path) -> io::Result<Vec<u8>> {
         let inner = self.state.inner.lock().unwrap();
 
         let node = inner.entries.get(path);
@@ -144,30 +144,26 @@ impl VfsFetcher for TestFetcher {
         }
     }
 
-    fn create_directory(&mut self, _path: &Path) -> io::Result<()> {
+    fn create_directory(&self, _path: &Path) -> io::Result<()> {
         Err(io::Error::new(
             io::ErrorKind::Other,
             "TestFetcher is not mutable yet",
         ))
     }
 
-    fn write_file(&mut self, _path: &Path, _contents: &[u8]) -> io::Result<()> {
+    fn write_file(&self, _path: &Path, _contents: &[u8]) -> io::Result<()> {
         Err(io::Error::new(
             io::ErrorKind::Other,
             "TestFetcher is not mutable yet",
         ))
     }
 
-    fn remove(&mut self, _path: &Path) -> io::Result<()> {
+    fn remove(&self, _path: &Path) -> io::Result<()> {
         Err(io::Error::new(
             io::ErrorKind::Other,
             "TestFetcher is not mutable yet",
         ))
     }
-
-    fn watch(&mut self, _path: &Path) {}
-
-    fn unwatch(&mut self, _path: &Path) {}
 
     fn receiver(&self) -> Receiver<VfsEvent> {
         self.receiver.clone()

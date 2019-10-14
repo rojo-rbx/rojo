@@ -264,7 +264,7 @@ pub trait VfsDebug {
     fn debug_contents<'a>(&'a self, path: &Path) -> Option<&'a [u8]>;
     fn debug_children<'a>(&'a self, path: &Path) -> Option<(bool, Vec<&'a Path>)>;
     fn debug_orphans(&self) -> Vec<&Path>;
-    fn debug_watched_paths(&self) -> Vec<&Path>;
+    fn debug_watched_paths(&self) -> Vec<PathBuf>;
 }
 
 impl<F: VfsFetcher> VfsDebug for Vfs<F> {
@@ -324,7 +324,7 @@ impl<F: VfsFetcher> VfsDebug for Vfs<F> {
         self.inner.orphans().collect()
     }
 
-    fn debug_watched_paths(&self) -> Vec<&Path> {
+    fn debug_watched_paths(&self) -> Vec<PathBuf> {
         self.fetcher.watched_paths()
     }
 }
@@ -470,7 +470,7 @@ mod test {
         }
 
         impl VfsFetcher for MockFetcher {
-            fn file_type(&mut self, path: &Path) -> io::Result<FileType> {
+            fn file_type(&self, path: &Path) -> io::Result<FileType> {
                 if path == Path::new("/dir/a.txt") {
                     return Ok(FileType::File);
                 }
@@ -478,7 +478,7 @@ mod test {
                 unimplemented!();
             }
 
-            fn read_contents(&mut self, path: &Path) -> io::Result<Vec<u8>> {
+            fn read_contents(&self, path: &Path) -> io::Result<Vec<u8>> {
                 if path == Path::new("/dir/a.txt") {
                     let inner = self.inner.borrow();
 
@@ -488,25 +488,21 @@ mod test {
                 unimplemented!();
             }
 
-            fn read_children(&mut self, _path: &Path) -> io::Result<Vec<PathBuf>> {
+            fn read_children(&self, _path: &Path) -> io::Result<Vec<PathBuf>> {
                 unimplemented!();
             }
 
-            fn create_directory(&mut self, _path: &Path) -> io::Result<()> {
+            fn create_directory(&self, _path: &Path) -> io::Result<()> {
                 unimplemented!();
             }
 
-            fn write_file(&mut self, _path: &Path, _contents: &[u8]) -> io::Result<()> {
+            fn write_file(&self, _path: &Path, _contents: &[u8]) -> io::Result<()> {
                 unimplemented!();
             }
 
-            fn remove(&mut self, _path: &Path) -> io::Result<()> {
+            fn remove(&self, _path: &Path) -> io::Result<()> {
                 unimplemented!();
             }
-
-            fn watch(&mut self, _path: &Path) {}
-
-            fn unwatch(&mut self, _path: &Path) {}
 
             fn receiver(&self) -> Receiver<VfsEvent> {
                 crossbeam_channel::never()
