@@ -129,7 +129,7 @@ impl<F: VfsFetcher> Vfs<F> {
     }
 
     pub fn get(&mut self, path: impl AsRef<Path>) -> FsResult<VfsEntry> {
-        self.read_if_not_exists(path.as_ref())?;
+        Self::read_if_not_exists(&mut self.data, &self.fetcher, path.as_ref())?;
 
         let item = self.data.get(path.as_ref()).unwrap();
 
@@ -147,7 +147,7 @@ impl<F: VfsFetcher> Vfs<F> {
     pub fn get_contents(&mut self, path: impl AsRef<Path>) -> FsResult<Arc<Vec<u8>>> {
         let path = path.as_ref();
 
-        self.read_if_not_exists(path)?;
+        Self::read_if_not_exists(&mut self.data, &self.fetcher, path)?;
 
         match self.data.get_mut(path).unwrap() {
             VfsItem::File(file) => {
@@ -172,7 +172,7 @@ impl<F: VfsFetcher> Vfs<F> {
     pub fn get_children(&mut self, path: impl AsRef<Path>) -> FsResult<Vec<VfsEntry>> {
         let path = path.as_ref();
 
-        self.read_if_not_exists(path)?;
+        Self::read_if_not_exists(&mut self.data, &self.fetcher, path)?;
 
         match self.data.get_mut(path).unwrap() {
             VfsItem::Directory(dir) => {
@@ -213,19 +213,17 @@ impl<F: VfsFetcher> Vfs<F> {
     /// This does not necessitate that file contents or directory children will
     /// be read. Depending on the `VfsFetcher` implementation that the `Vfs`
     /// is using, this call may read exactly only the given path and no more.
-    fn read_if_not_exists(&mut self, path: &Path) -> FsResult<()> {
-        if !self.data.contains_key(path) {
-            let kind = self
-                .fetcher
+    fn read_if_not_exists(data: &mut PathMap<VfsItem>, fetcher: &F, path: &Path) -> FsResult<()> {
+        if !data.contains_key(path) {
+            let kind = fetcher
                 .file_type(path)
                 .map_err(|err| FsError::new(err, path.to_path_buf()))?;
 
             if kind == FileType::Directory {
-                self.fetcher.watch(path);
+                fetcher.watch(path);
             }
 
-            self.data
-                .insert(path.to_path_buf(), VfsItem::new_from_type(kind, path));
+            data.insert(path.to_path_buf(), VfsItem::new_from_type(kind, path));
         }
 
         Ok(())
