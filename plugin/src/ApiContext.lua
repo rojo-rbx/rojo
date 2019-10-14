@@ -92,6 +92,10 @@ function ApiContext:disconnect()
 	self.__connected = false
 end
 
+function ApiContext:setMessageCursor(index)
+	self.__messageCursor = index
+end
+
 function ApiContext:connect()
 	local url = ("%s/api/rojo"):format(self.__baseUrl)
 
@@ -125,8 +129,6 @@ function ApiContext:read(ids)
 
 			assert(validateApiRead(body))
 
-			self.__messageCursor = body.messageCursor
-
 			return body
 		end)
 end
@@ -155,7 +157,7 @@ function ApiContext:retrieveMessages()
 
 			assert(validateApiSubscribe(body))
 
-			self.__messageCursor = body.messageCursor
+			self:setMessageCursor(body.messageCursor)
 
 			return body.messages
 		end)

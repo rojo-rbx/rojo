@@ -12,7 +12,6 @@ local Status = strict("Session.Status", {
 local function DEBUG_printPatch(patch)
 	local HttpService = game:GetService("HttpService")
 
-
 	for removed in ipairs(patch.removed) do
 		print("Remove:", removed)
 	end
@@ -64,48 +63,9 @@ function ServeSession:start()
 
 			local rootInstanceId = serverInfo.rootInstanceId
 
-			return self.__apiContext:read({ rootInstanceId })
-				:andThen(function(readResponseBody)
-					local hydratePatch = self.__reconciler:hydrate(
-						readResponseBody.instances,
-						rootInstanceId,
-						game
-					)
-
-					-- TODO: Prompt user to notify them of this patch, since
-					-- it's effectively a conflict between the Rojo server and
-					-- the client.
-
-					self.__reconciler:applyPatch(hydratePatch)
-
-					-- TODO: Applying a patch may eventually only apply part of
-					-- the patch and start a content negotiation process with
-					-- the Rojo server. We should handle that!
-
-					local function mainLoop()
-						return self.__apiContext:retrieveMessages()
-							:andThen(function(messages)
-								for _, message in ipairs(messages) do
-									-- TODO: Update server to return patches in
-									-- correct format so that we don't have to
-									-- transform them for the reconciler.
-
-									local asPatch = {
-										removed = message.removedInstances,
-										updated = message.updatedInstances,
-										added = message.addedInstances,
-									}
-
-									self.__reconciler:applyPatch(asPatch)
-								end
-
-								if self.__status ~= Status.Disconnected then
-									return mainLoop()
-								end
-							end)
-					end
-
-					return mainLoop()
+			return self:__initialSync(rootInstanceId)
+				:andThen(function()
+					return self:__mainSyncLoop()
 				end)
 		end)
 		:catch(function(err)
@@ -115,6 +75,49 @@ end
 
 function ServeSession:stop()
 	self:__stopInternal()
+end
+
+function ServeSession:__initialSync(rootInstanceId)
+	return self.__apiContext:read({ rootInstanceId })
+		:andThen(function(readResponseBody)
+			-- Tell the API Context that we're up-to-date with the version of
+			-- the tree defined in this response.
+			self.__apiContext:setMessageCursor(readResponseBody.messageCursor)
+
+			-- Calculate the initial patch to apply to the DataModel to catch us
+			-- up to what Rojo thinks the place should look like.
+			local hydratePatch = self.__reconciler:hydrate(
+				readResponseBody.instances,
+				rootInstanceId,
+				game
+			)
+
+			-- TODO: Prompt user to notify them of this patch, since it's
+			-- effectively a conflict between the Rojo server and the client.
+
+			self.__reconciler:applyPatch(hydratePatch)
+		end)
+end
+
+function ServeSession:__mainSyncLoop()
+	return self.__apiContext:retrieveMessages()
+		:andThen(function(messages)
+			for _, message in ipairs(messages) do
+				-- TODO: Update server to return patches in correct format so
+				-- that we don't have to transform them for the reconciler.
+				local asPatch = {
+					removed = message.removedInstances,
+					updated = message.updatedInstances,
+					added = message.addedInstances,
+				}
+
+				self.__reconciler:applyPatch(asPatch)
+			end
+
+			if self.__status ~= Status.Disconnected then
+				return self:__mainSyncLoop()
+			end
+		end)
 end
 
 function ServeSession:__stopInternal(err)
