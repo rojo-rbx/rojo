@@ -68,7 +68,7 @@ impl<F: VfsFetcher> Vfs<F> {
     fn raise_file_changed(&mut self, path: impl AsRef<Path>) -> FsResult<()> {
         let path = path.as_ref();
 
-        if !self.would_be_resident(path) {
+        if !Self::would_be_resident(&self.data, path) {
             return Ok(());
         }
 
@@ -119,7 +119,7 @@ impl<F: VfsFetcher> Vfs<F> {
     fn raise_file_removed(&mut self, path: impl AsRef<Path>) -> FsResult<()> {
         let path = path.as_ref();
 
-        if !self.would_be_resident(path) {
+        if !Self::would_be_resident(&self.data, path) {
             return Ok(());
         }
 
@@ -208,30 +208,6 @@ impl<F: VfsFetcher> Vfs<F> {
         }
     }
 
-    /// Tells whether the given path, if it were loaded, would be loaded if it
-    /// existed.
-    ///
-    /// Returns true if the path is loaded or if its parent is loaded, is a
-    /// directory, and is marked as having been enumerated before.
-    ///
-    /// This idea corresponds to whether a file change event should result in
-    /// tangible changes to the in-memory filesystem. If a path would be
-    /// resident, we need to read it, and if its contents were known before, we
-    /// need to update them.
-    fn would_be_resident(&self, path: &Path) -> bool {
-        if self.data.contains_key(path) {
-            return true;
-        }
-
-        if let Some(parent) = path.parent() {
-            if let Some(VfsItem::Directory(dir)) = self.data.get(parent) {
-                return !dir.children_enumerated;
-            }
-        }
-
-        false
-    }
-
     /// Attempts to read the path into the `Vfs` if it doesn't exist.
     ///
     /// This does not necessitate that file contents or directory children will
@@ -253,6 +229,30 @@ impl<F: VfsFetcher> Vfs<F> {
         }
 
         Ok(())
+    }
+
+    /// Tells whether the given path, if it were loaded, would be loaded if it
+    /// existed.
+    ///
+    /// Returns true if the path is loaded or if its parent is loaded, is a
+    /// directory, and is marked as having been enumerated before.
+    ///
+    /// This idea corresponds to whether a file change event should result in
+    /// tangible changes to the in-memory filesystem. If a path would be
+    /// resident, we need to read it, and if its contents were known before, we
+    /// need to update them.
+    fn would_be_resident(data: &PathMap<VfsItem>, path: &Path) -> bool {
+        if data.contains_key(path) {
+            return true;
+        }
+
+        if let Some(parent) = path.parent() {
+            if let Some(VfsItem::Directory(dir)) = data.get(parent) {
+                return !dir.children_enumerated;
+            }
+        }
+
+        false
     }
 }
 
