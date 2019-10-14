@@ -58,73 +58,10 @@ impl<F: VfsFetcher> Vfs<F> {
                 self.raise_file_changed(path)?;
             }
             Removed(path) => {
-                self.raise_file_removed(path)?;
+                Self::raise_file_removed(&mut self.data, &self.fetcher, path)?;
             }
         }
 
-        Ok(())
-    }
-
-    fn raise_file_changed(&mut self, path: impl AsRef<Path>) -> FsResult<()> {
-        let path = path.as_ref();
-
-        if !Self::would_be_resident(&self.data, path) {
-            return Ok(());
-        }
-
-        let new_type = self
-            .fetcher
-            .file_type(path)
-            .map_err(|err| FsError::new(err, path.to_path_buf()))?;
-
-        match self.data.get_mut(path) {
-            Some(existing_item) => {
-                match (existing_item, &new_type) {
-                    (VfsItem::File(existing_file), FileType::File) => {
-                        // Invalidate the existing file contents.
-                        // We can probably be smarter about this by reading the changed file.
-                        existing_file.contents = None;
-                    }
-                    (VfsItem::Directory(_), FileType::Directory) => {
-                        // No changes required, a directory updating doesn't mean anything to us.
-                        self.fetcher.watch(path);
-                    }
-                    (VfsItem::File(_), FileType::Directory) => {
-                        self.data.remove(path);
-                        self.data.insert(
-                            path.to_path_buf(),
-                            VfsItem::new_from_type(FileType::Directory, path),
-                        );
-                        self.fetcher.watch(path);
-                    }
-                    (VfsItem::Directory(_), FileType::File) => {
-                        self.data.remove(path);
-                        self.data.insert(
-                            path.to_path_buf(),
-                            VfsItem::new_from_type(FileType::File, path),
-                        );
-                        self.fetcher.unwatch(path);
-                    }
-                }
-            }
-            None => {
-                self.data
-                    .insert(path.to_path_buf(), VfsItem::new_from_type(new_type, path));
-            }
-        }
-
-        Ok(())
-    }
-
-    fn raise_file_removed(&mut self, path: impl AsRef<Path>) -> FsResult<()> {
-        let path = path.as_ref();
-
-        if !Self::would_be_resident(&self.data, path) {
-            return Ok(());
-        }
-
-        self.data.remove(path);
-        self.fetcher.unwatch(path);
         Ok(())
     }
 
@@ -206,6 +143,73 @@ impl<F: VfsFetcher> Vfs<F> {
                 path.to_path_buf(),
             )),
         }
+    }
+
+    fn raise_file_changed(&mut self, path: impl AsRef<Path>) -> FsResult<()> {
+        let path = path.as_ref();
+
+        if !Self::would_be_resident(&self.data, path) {
+            return Ok(());
+        }
+
+        let new_type = self
+            .fetcher
+            .file_type(path)
+            .map_err(|err| FsError::new(err, path.to_path_buf()))?;
+
+        match self.data.get_mut(path) {
+            Some(existing_item) => {
+                match (existing_item, &new_type) {
+                    (VfsItem::File(existing_file), FileType::File) => {
+                        // Invalidate the existing file contents.
+                        // We can probably be smarter about this by reading the changed file.
+                        existing_file.contents = None;
+                    }
+                    (VfsItem::Directory(_), FileType::Directory) => {
+                        // No changes required, a directory updating doesn't mean anything to us.
+                        self.fetcher.watch(path);
+                    }
+                    (VfsItem::File(_), FileType::Directory) => {
+                        self.data.remove(path);
+                        self.data.insert(
+                            path.to_path_buf(),
+                            VfsItem::new_from_type(FileType::Directory, path),
+                        );
+                        self.fetcher.watch(path);
+                    }
+                    (VfsItem::Directory(_), FileType::File) => {
+                        self.data.remove(path);
+                        self.data.insert(
+                            path.to_path_buf(),
+                            VfsItem::new_from_type(FileType::File, path),
+                        );
+                        self.fetcher.unwatch(path);
+                    }
+                }
+            }
+            None => {
+                self.data
+                    .insert(path.to_path_buf(), VfsItem::new_from_type(new_type, path));
+            }
+        }
+
+        Ok(())
+    }
+
+    fn raise_file_removed(
+        data: &mut PathMap<VfsItem>,
+        fetcher: &F,
+        path: impl AsRef<Path>,
+    ) -> FsResult<()> {
+        let path = path.as_ref();
+
+        if !Self::would_be_resident(data, path) {
+            return Ok(());
+        }
+
+        data.remove(path);
+        fetcher.unwatch(path);
+        Ok(())
     }
 
     /// Attempts to read the path into the `Vfs` if it doesn't exist.
@@ -549,7 +553,7 @@ mod test {
 
         assert_eq!(contents.as_slice(), b"hello, world!");
 
-        vfs.raise_file_removed("/hello.txt")
+        vfs.commit_change(&VfsEvent::Removed(PathBuf::from("/hello.txt")))
             .expect("error processing file removal");
 
         match vfs.get("hello.txt") {
