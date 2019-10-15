@@ -55,7 +55,7 @@ impl<F: VfsFetcher> Vfs<F> {
 
         match event {
             Created(path) | Modified(path) => {
-                self.raise_file_changed(path)?;
+                Self::raise_file_changed(&mut self.data, &self.fetcher, path)?;
             }
             Removed(path) => {
                 Self::raise_file_removed(&mut self.data, &self.fetcher, path)?;
@@ -145,19 +145,22 @@ impl<F: VfsFetcher> Vfs<F> {
         }
     }
 
-    fn raise_file_changed(&mut self, path: impl AsRef<Path>) -> FsResult<()> {
+    fn raise_file_changed(
+        data: &mut PathMap<VfsItem>,
+        fetcher: &F,
+        path: impl AsRef<Path>,
+    ) -> FsResult<()> {
         let path = path.as_ref();
 
-        if !Self::would_be_resident(&self.data, path) {
+        if !Self::would_be_resident(&data, path) {
             return Ok(());
         }
 
-        let new_type = self
-            .fetcher
+        let new_type = fetcher
             .file_type(path)
             .map_err(|err| FsError::new(err, path.to_path_buf()))?;
 
-        match self.data.get_mut(path) {
+        match data.get_mut(path) {
             Some(existing_item) => {
                 match (existing_item, &new_type) {
                     (VfsItem::File(existing_file), FileType::File) => {
@@ -167,29 +170,28 @@ impl<F: VfsFetcher> Vfs<F> {
                     }
                     (VfsItem::Directory(_), FileType::Directory) => {
                         // No changes required, a directory updating doesn't mean anything to us.
-                        self.fetcher.watch(path);
+                        fetcher.watch(path);
                     }
                     (VfsItem::File(_), FileType::Directory) => {
-                        self.data.remove(path);
-                        self.data.insert(
+                        data.remove(path);
+                        data.insert(
                             path.to_path_buf(),
                             VfsItem::new_from_type(FileType::Directory, path),
                         );
-                        self.fetcher.watch(path);
+                        fetcher.watch(path);
                     }
                     (VfsItem::Directory(_), FileType::File) => {
-                        self.data.remove(path);
-                        self.data.insert(
+                        data.remove(path);
+                        data.insert(
                             path.to_path_buf(),
                             VfsItem::new_from_type(FileType::File, path),
                         );
-                        self.fetcher.unwatch(path);
+                        fetcher.unwatch(path);
                     }
                 }
             }
             None => {
-                self.data
-                    .insert(path.to_path_buf(), VfsItem::new_from_type(new_type, path));
+                data.insert(path.to_path_buf(), VfsItem::new_from_type(new_type, path));
             }
         }
 
@@ -530,7 +532,7 @@ mod test {
             mock_state.a_contents = "Changed contents";
         }
 
-        vfs.raise_file_changed("/dir/a.txt")
+        vfs.commit_change(&VfsEvent::Modified(PathBuf::from("/dir/a.txt")))
             .expect("error processing file change");
 
         let contents = a.contents(&mut vfs).expect("mock file contents error");
