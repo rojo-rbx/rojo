@@ -66,19 +66,7 @@ impl<F: VfsFetcher> Vfs<F> {
     }
 
     pub fn get(&mut self, path: impl AsRef<Path>) -> FsResult<VfsEntry> {
-        Self::read_if_not_exists(&mut self.data, &self.fetcher, path.as_ref())?;
-
-        let item = self.data.get(path.as_ref()).unwrap();
-
-        let is_file = match item {
-            VfsItem::File(_) => true,
-            VfsItem::Directory(_) => false,
-        };
-
-        Ok(VfsEntry {
-            path: item.path().to_path_buf(),
-            is_file,
-        })
+        Self::get_internal(&mut self.data, &self.fetcher, path)
     }
 
     pub fn get_contents(&mut self, path: impl AsRef<Path>) -> FsResult<Arc<Vec<u8>>> {
@@ -125,7 +113,7 @@ impl<F: VfsFetcher> Vfs<F> {
                         .map(PathBuf::from) // Convert paths from &Path to PathBuf
                         .collect::<Vec<PathBuf>>() // Collect all PathBufs, since self.get needs to borrow self mutably.
                         .into_iter()
-                        .map(|path| self.get(path))
+                        .map(|path| Self::get_internal(&mut self.data, &self.fetcher, path))
                         .collect::<FsResult<Vec<VfsEntry>>>()
                 } else {
                     dir.children_enumerated = true;
@@ -134,7 +122,7 @@ impl<F: VfsFetcher> Vfs<F> {
                         .read_children(path)
                         .map_err(|err| FsError::new(err, path.to_path_buf()))?
                         .into_iter()
-                        .map(|path| self.get(path))
+                        .map(|path| Self::get_internal(&mut self.data, &self.fetcher, path))
                         .collect::<FsResult<Vec<VfsEntry>>>()
                 }
             }
@@ -143,6 +131,28 @@ impl<F: VfsFetcher> Vfs<F> {
                 path.to_path_buf(),
             )),
         }
+    }
+
+    fn get_internal(
+        data: &mut PathMap<VfsItem>,
+        fetcher: &F,
+        path: impl AsRef<Path>,
+    ) -> FsResult<VfsEntry> {
+        let path = path.as_ref();
+
+        Self::read_if_not_exists(data, fetcher, path)?;
+
+        let item = data.get(path).unwrap();
+
+        let is_file = match item {
+            VfsItem::File(_) => true,
+            VfsItem::Directory(_) => false,
+        };
+
+        Ok(VfsEntry {
+            path: item.path().to_path_buf(),
+            is_file,
+        })
     }
 
     fn raise_file_changed(
