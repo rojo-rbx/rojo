@@ -21,10 +21,10 @@ pub struct ChangeProcessor {
 }
 
 impl ChangeProcessor {
-    pub fn start<F: VfsFetcher + Send + 'static>(
+    pub fn start<F: VfsFetcher + Send + Sync + 'static>(
         tree: Arc<Mutex<RojoTree>>,
         message_queue: Arc<MessageQueue<AppliedPatchSet>>,
-        vfs: Arc<Mutex<Vfs<F>>>,
+        vfs: Arc<Vfs<F>>,
     ) -> Self {
         let (shutdown_sender, shutdown_receiver) = crossbeam_channel::bounded(1);
 
@@ -47,12 +47,9 @@ impl ChangeProcessor {
         shutdown_receiver: Receiver<()>,
         tree: Arc<Mutex<RojoTree>>,
         message_queue: Arc<MessageQueue<AppliedPatchSet>>,
-        vfs: Arc<Mutex<Vfs<F>>>,
+        vfs: Arc<Vfs<F>>,
     ) {
-        let vfs_receiver = {
-            let vfs = vfs.lock().unwrap();
-            vfs.change_receiver()
-        };
+        let vfs_receiver = vfs.change_receiver();
 
         // Crossbeam's select macro generates code that Clippy doesn't like, and
         // Clippy blames us for it.
@@ -65,7 +62,6 @@ impl ChangeProcessor {
                     log::trace!("Vfs event: {:?}", event);
 
                     let applied_patches = {
-                        let mut vfs = vfs.lock().unwrap();
                         vfs.commit_change(&event).expect("Error applying VFS change");
 
                         let mut tree = tree.lock().unwrap();
@@ -102,7 +98,7 @@ impl ChangeProcessor {
                                             // TODO: Use persisted snapshot
                                             // context struct instead of
                                             // recreating it every time.
-                                            let snapshot = snapshot_from_vfs(&mut InstanceSnapshotContext::default(), &mut vfs, &entry)
+                                            let snapshot = snapshot_from_vfs(&mut InstanceSnapshotContext::default(), &vfs, &entry)
                                                 .expect("snapshot failed")
                                                 .expect("snapshot did not return an instance");
 
