@@ -1,6 +1,8 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+
+## [0.5.2](https://github.com/rojo-rbx/rojo/releases/tag/v0.5.2) (October 14, 2019)
 * Fixed an issue where `LocalizationTable` instances would have their column order randomized. ([#173](https://github.com/rojo-rbx/rojo/issues/173))
 
 ## [0.5.1](https://github.com/rojo-rbx/rojo/releases/tag/v0.5.1) (October 4, 2019)
