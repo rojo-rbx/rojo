@@ -381,11 +381,11 @@ impl VfsEntry {
         &self.path
     }
 
-    pub fn contents<'vfs>(&self, vfs: &'vfs mut Vfs<impl VfsFetcher>) -> FsResult<Arc<Vec<u8>>> {
+    pub fn contents(&self, vfs: &Vfs<impl VfsFetcher>) -> FsResult<Arc<Vec<u8>>> {
         vfs.get_contents(&self.path)
     }
 
-    pub fn children(&self, vfs: &mut Vfs<impl VfsFetcher>) -> FsResult<Vec<VfsEntry>> {
+    pub fn children(&self, vfs: &Vfs<impl VfsFetcher>) -> FsResult<Vec<VfsEntry>> {
         vfs.get_children(&self.path)
     }
 
