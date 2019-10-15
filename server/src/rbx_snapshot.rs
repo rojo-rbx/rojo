@@ -3,7 +3,7 @@
 
 use std::{
     borrow::Cow,
-    collections::HashMap,
+    collections::{BTreeMap, HashMap},
     fmt,
     path::{Path, PathBuf},
     str,
@@ -631,7 +631,8 @@ fn snapshot_csv_file<'source>(
         #[serde(skip_serializing_if = "Option::is_none")]
         source: Option<&'a str>,
 
-        values: HashMap<&'a str, &'a str>,
+        // We use a BTreeMap here to get deterministic output order.
+        values: BTreeMap<&'a str, &'a str>,
     }
 
     let instance_name = file.path
