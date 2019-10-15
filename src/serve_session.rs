@@ -179,7 +179,7 @@ mod serve_session {
 
     #[test]
     fn just_folder() {
-        let mut vfs = Vfs::new(NoopFetcher);
+        let vfs = Vfs::new(NoopFetcher);
 
         vfs.debug_load_snapshot("/foo", VfsSnapshot::empty_dir());
 
@@ -191,7 +191,7 @@ mod serve_session {
 
     #[test]
     fn project_with_folder() {
-        let mut vfs = Vfs::new(NoopFetcher);
+        let vfs = Vfs::new(NoopFetcher);
 
         vfs.debug_load_snapshot(
             "/foo",
@@ -218,7 +218,7 @@ mod serve_session {
 
     #[test]
     fn script_with_meta() {
-        let mut vfs = Vfs::new(NoopFetcher);
+        let vfs = Vfs::new(NoopFetcher);
 
         vfs.debug_load_snapshot(
             "/root",

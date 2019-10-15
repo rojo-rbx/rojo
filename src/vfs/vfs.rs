@@ -48,7 +48,7 @@ impl<F: VfsFetcher> Vfs<F> {
         self.fetcher.receiver()
     }
 
-    pub fn commit_change(&mut self, event: &VfsEvent) -> FsResult<()> {
+    pub fn commit_change(&self, event: &VfsEvent) -> FsResult<()> {
         use VfsEvent::*;
 
         log::trace!("Committing Vfs change {:?}", event);
@@ -67,12 +67,12 @@ impl<F: VfsFetcher> Vfs<F> {
         Ok(())
     }
 
-    pub fn get(&mut self, path: impl AsRef<Path>) -> FsResult<VfsEntry> {
+    pub fn get(&self, path: impl AsRef<Path>) -> FsResult<VfsEntry> {
         let mut data = self.data.lock().unwrap();
         Self::get_internal(&mut data, &self.fetcher, path)
     }
 
-    pub fn get_contents(&mut self, path: impl AsRef<Path>) -> FsResult<Arc<Vec<u8>>> {
+    pub fn get_contents(&self, path: impl AsRef<Path>) -> FsResult<Arc<Vec<u8>>> {
         let path = path.as_ref();
 
         let mut data = self.data.lock().unwrap();
@@ -98,7 +98,7 @@ impl<F: VfsFetcher> Vfs<F> {
         }
     }
 
-    pub fn get_children(&mut self, path: impl AsRef<Path>) -> FsResult<Vec<VfsEntry>> {
+    pub fn get_children(&self, path: impl AsRef<Path>) -> FsResult<Vec<VfsEntry>> {
         let path = path.as_ref();
 
         let mut data = self.data.lock().unwrap();
@@ -277,7 +277,7 @@ impl<F: VfsFetcher> Vfs<F> {
 /// Contains extra methods that should only be used for debugging. They're
 /// broken out into a separate trait to make it more explicit to depend on them.
 pub trait VfsDebug {
-    fn debug_load_snapshot<P: AsRef<Path>>(&mut self, path: P, snapshot: VfsSnapshot);
+    fn debug_load_snapshot<P: AsRef<Path>>(&self, path: P, snapshot: VfsSnapshot);
     fn debug_is_file(&self, path: &Path) -> bool;
     fn debug_contents(&self, path: &Path) -> Option<Arc<Vec<u8>>>;
     fn debug_children(&self, path: &Path) -> Option<(bool, Vec<PathBuf>)>;
@@ -286,7 +286,7 @@ pub trait VfsDebug {
 }
 
 impl<F: VfsFetcher> VfsDebug for Vfs<F> {
-    fn debug_load_snapshot<P: AsRef<Path>>(&mut self, path: P, snapshot: VfsSnapshot) {
+    fn debug_load_snapshot<P: AsRef<Path>>(&self, path: P, snapshot: VfsSnapshot) {
         fn load_snapshot<P: AsRef<Path>>(
             data: &mut PathMap<VfsItem>,
             path: P,
@@ -450,7 +450,7 @@ mod test {
 
     #[test]
     fn from_snapshot_file() {
-        let mut vfs = Vfs::new(NoopFetcher);
+        let vfs = Vfs::new(NoopFetcher);
         let file = VfsSnapshot::file("hello, world!");
 
         vfs.debug_load_snapshot("/hello.txt", file);
@@ -461,7 +461,7 @@ mod test {
 
     #[test]
     fn from_snapshot_dir() {
-        let mut vfs = Vfs::new(NoopFetcher);
+        let vfs = Vfs::new(NoopFetcher);
         let dir = VfsSnapshot::dir(hashmap! {
             "a.txt" => VfsSnapshot::file("contents of a.txt"),
             "b.lua" => VfsSnapshot::file("contents of b.lua"),
