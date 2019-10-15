@@ -23,7 +23,7 @@ pub struct SnapshotProject;
 impl SnapshotMiddleware for SnapshotProject {
     fn from_vfs<F: VfsFetcher>(
         context: &mut InstanceSnapshotContext,
-        vfs: &mut Vfs<F>,
+        vfs: &Vfs<F>,
         entry: &VfsEntry,
     ) -> SnapshotInstanceResult<'static> {
         if entry.is_directory() {
@@ -80,7 +80,7 @@ fn snapshot_project_node<F: VfsFetcher>(
     context: &mut InstanceSnapshotContext,
     instance_name: &str,
     node: &ProjectNode,
-    vfs: &mut Vfs<F>,
+    vfs: &Vfs<F>,
 ) -> SnapshotInstanceResult<'static> {
     let name = Cow::Owned(instance_name.to_owned());
     let mut class_name = node

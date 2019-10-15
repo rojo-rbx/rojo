@@ -44,7 +44,7 @@ macro_rules! middlewares {
         /// Generates a snapshot of instances from the given VfsEntry.
         pub fn snapshot_from_vfs<F: VfsFetcher>(
             context: &mut InstanceSnapshotContext,
-            vfs: &mut Vfs<F>,
+            vfs: &Vfs<F>,
             entry: &VfsEntry,
         ) -> SnapshotInstanceResult<'static> {
             $(

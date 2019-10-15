@@ -20,7 +20,7 @@ pub struct SnapshotDir;
 impl SnapshotMiddleware for SnapshotDir {
     fn from_vfs<F: VfsFetcher>(
         context: &mut InstanceSnapshotContext,
-        vfs: &mut Vfs<F>,
+        vfs: &Vfs<F>,
         entry: &VfsEntry,
     ) -> SnapshotInstanceResult<'static> {
         if entry.is_file() {
