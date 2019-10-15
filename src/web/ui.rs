@@ -102,7 +102,7 @@ impl<F: VfsFetcher> UiService<F> {
         let orphans: Vec<_> = vfs
             .debug_orphans()
             .into_iter()
-            .map(|path| Self::render_vfs_path(&vfs, path, true))
+            .map(|path| Self::render_vfs_path(&vfs, &path, true))
             .collect();
 
         let watched_list: Vec<_> = vfs
@@ -153,7 +153,7 @@ impl<F: VfsFetcher> UiService<F> {
 
             let children: Vec<_> = children
                 .into_iter()
-                .map(|child| Self::render_vfs_path(vfs, child, false))
+                .map(|child| Self::render_vfs_path(vfs, &child, false))
                 .collect();
 
             let note = if is_exhaustive {
