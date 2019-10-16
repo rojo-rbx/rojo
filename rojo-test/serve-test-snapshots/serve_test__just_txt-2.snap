@@ -1,0 +1,19 @@
+---
+source: rojo-test/src/serve_test.rs
+expression: read_result
+---
+sessionId: id-1
+messageCursor: 0
+instances:
+  id-2:
+    Id: id-2
+    Parent: ~
+    Name: just-txt
+    ClassName: StringValue
+    Properties:
+      Value:
+        Type: String
+        Value: "Hello, world!"
+    Children: []
+    Metadata:
+      ignoreUnknownInstances: false

@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::{Path};
 
 use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
 use tempfile::{tempdir, TempDir};
