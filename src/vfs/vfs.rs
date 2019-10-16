@@ -1,7 +1,7 @@
 use std::{
     io,
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::{Arc, Mutex},
 };
 
 use crossbeam_channel::Receiver;
@@ -28,7 +28,7 @@ use super::{
 pub struct Vfs<F> {
     /// A hierarchical map from paths to items that have been read or partially
     /// read into memory by the Vfs.
-    data: PathMap<VfsItem>,
+    data: Mutex<PathMap<VfsItem>>,
 
     /// This Vfs's fetcher, which is used for all actual interactions with the
     /// filesystem. It's referred to by the type parameter `F` all over, and is
@@ -39,7 +39,7 @@ pub struct Vfs<F> {
 impl<F: VfsFetcher> Vfs<F> {
     pub fn new(fetcher: F) -> Self {
         Self {
-            data: PathMap::new(),
+            data: Mutex::new(PathMap::new()),
             fetcher,
         }
     }
@@ -48,108 +48,37 @@ impl<F: VfsFetcher> Vfs<F> {
         self.fetcher.receiver()
     }
 
-    pub fn commit_change(&mut self, event: &VfsEvent) -> FsResult<()> {
+    pub fn commit_change(&self, event: &VfsEvent) -> FsResult<()> {
         use VfsEvent::*;
 
         log::trace!("Committing Vfs change {:?}", event);
 
+        let mut data = self.data.lock().unwrap();
+
         match event {
             Created(path) | Modified(path) => {
-                self.raise_file_changed(path)?;
+                Self::raise_file_changed(&mut data, &self.fetcher, path)?;
             }
             Removed(path) => {
-                self.raise_file_removed(path)?;
+                Self::raise_file_removed(&mut data, &self.fetcher, path)?;
             }
         }
 
         Ok(())
     }
 
-    fn raise_file_changed(&mut self, path: impl AsRef<Path>) -> FsResult<()> {
-        let path = path.as_ref();
-
-        if !self.would_be_resident(path) {
-            return Ok(());
-        }
-
-        let new_type = self
-            .fetcher
-            .file_type(path)
-            .map_err(|err| FsError::new(err, path.to_path_buf()))?;
-
-        match self.data.get_mut(path) {
-            Some(existing_item) => {
-                match (existing_item, &new_type) {
-                    (VfsItem::File(existing_file), FileType::File) => {
-                        // Invalidate the existing file contents.
-                        // We can probably be smarter about this by reading the changed file.
-                        existing_file.contents = None;
-                    }
-                    (VfsItem::Directory(_), FileType::Directory) => {
-                        // No changes required, a directory updating doesn't mean anything to us.
-                        self.fetcher.watch(path);
-                    }
-                    (VfsItem::File(_), FileType::Directory) => {
-                        self.data.remove(path);
-                        self.data.insert(
-                            path.to_path_buf(),
-                            VfsItem::new_from_type(FileType::Directory, path),
-                        );
-                        self.fetcher.watch(path);
-                    }
-                    (VfsItem::Directory(_), FileType::File) => {
-                        self.data.remove(path);
-                        self.data.insert(
-                            path.to_path_buf(),
-                            VfsItem::new_from_type(FileType::File, path),
-                        );
-                        self.fetcher.unwatch(path);
-                    }
-                }
-            }
-            None => {
-                self.data
-                    .insert(path.to_path_buf(), VfsItem::new_from_type(new_type, path));
-            }
-        }
-
-        Ok(())
+    pub fn get(&self, path: impl AsRef<Path>) -> FsResult<VfsEntry> {
+        let mut data = self.data.lock().unwrap();
+        Self::get_internal(&mut data, &self.fetcher, path)
     }
 
-    fn raise_file_removed(&mut self, path: impl AsRef<Path>) -> FsResult<()> {
+    pub fn get_contents(&self, path: impl AsRef<Path>) -> FsResult<Arc<Vec<u8>>> {
         let path = path.as_ref();
 
-        if !self.would_be_resident(path) {
-            return Ok(());
-        }
+        let mut data = self.data.lock().unwrap();
+        Self::read_if_not_exists(&mut data, &self.fetcher, path)?;
 
-        self.data.remove(path);
-        self.fetcher.unwatch(path);
-        Ok(())
-    }
-
-    pub fn get(&mut self, path: impl AsRef<Path>) -> FsResult<VfsEntry> {
-        self.read_if_not_exists(path.as_ref())?;
-
-        let item = self.data.get(path.as_ref()).unwrap();
-
-        let is_file = match item {
-            VfsItem::File(_) => true,
-            VfsItem::Directory(_) => false,
-        };
-
-        Ok(VfsEntry {
-            path: item.path().to_path_buf(),
-            is_file,
-        })
-    }
-
-    pub fn get_contents(&mut self, path: impl AsRef<Path>) -> FsResult<Arc<Vec<u8>>> {
-        let path = path.as_ref();
-
-        self.read_if_not_exists(path)?;
-
-        match self.data.get_mut(path).unwrap() {
+        match data.get_mut(path).unwrap() {
             VfsItem::File(file) => {
                 if file.contents.is_none() {
                     file.contents = Some(
@@ -169,26 +98,26 @@ impl<F: VfsFetcher> Vfs<F> {
         }
     }
 
-    pub fn get_children(&mut self, path: impl AsRef<Path>) -> FsResult<Vec<VfsEntry>> {
+    pub fn get_children(&self, path: impl AsRef<Path>) -> FsResult<Vec<VfsEntry>> {
         let path = path.as_ref();
 
-        self.read_if_not_exists(path)?;
+        let mut data = self.data.lock().unwrap();
+        Self::read_if_not_exists(&mut data, &self.fetcher, path)?;
 
-        match self.data.get_mut(path).unwrap() {
+        match data.get_mut(path).unwrap() {
             VfsItem::Directory(dir) => {
                 self.fetcher.watch(path);
 
                 let enumerated = dir.children_enumerated;
 
                 if enumerated {
-                    self.data
-                        .children(path)
+                    data.children(path)
                         .unwrap() // TODO: Handle None here, which means the PathMap entry did not exist.
                         .into_iter()
                         .map(PathBuf::from) // Convert paths from &Path to PathBuf
                         .collect::<Vec<PathBuf>>() // Collect all PathBufs, since self.get needs to borrow self mutably.
                         .into_iter()
-                        .map(|path| self.get(path))
+                        .map(|path| Self::get_internal(&mut data, &self.fetcher, path))
                         .collect::<FsResult<Vec<VfsEntry>>>()
                 } else {
                     dir.children_enumerated = true;
@@ -197,7 +126,7 @@ impl<F: VfsFetcher> Vfs<F> {
                         .read_children(path)
                         .map_err(|err| FsError::new(err, path.to_path_buf()))?
                         .into_iter()
-                        .map(|path| self.get(path))
+                        .map(|path| Self::get_internal(&mut data, &self.fetcher, path))
                         .collect::<FsResult<Vec<VfsEntry>>>()
                 }
             }
@@ -206,6 +135,118 @@ impl<F: VfsFetcher> Vfs<F> {
                 path.to_path_buf(),
             )),
         }
+    }
+
+    fn get_internal(
+        data: &mut PathMap<VfsItem>,
+        fetcher: &F,
+        path: impl AsRef<Path>,
+    ) -> FsResult<VfsEntry> {
+        let path = path.as_ref();
+
+        Self::read_if_not_exists(data, fetcher, path)?;
+
+        let item = data.get(path).unwrap();
+
+        let is_file = match item {
+            VfsItem::File(_) => true,
+            VfsItem::Directory(_) => false,
+        };
+
+        Ok(VfsEntry {
+            path: item.path().to_path_buf(),
+            is_file,
+        })
+    }
+
+    fn raise_file_changed(
+        data: &mut PathMap<VfsItem>,
+        fetcher: &F,
+        path: impl AsRef<Path>,
+    ) -> FsResult<()> {
+        let path = path.as_ref();
+
+        if !Self::would_be_resident(&data, path) {
+            return Ok(());
+        }
+
+        let new_type = fetcher
+            .file_type(path)
+            .map_err(|err| FsError::new(err, path.to_path_buf()))?;
+
+        match data.get_mut(path) {
+            Some(existing_item) => {
+                match (existing_item, &new_type) {
+                    (VfsItem::File(existing_file), FileType::File) => {
+                        // Invalidate the existing file contents.
+                        // We can probably be smarter about this by reading the changed file.
+                        existing_file.contents = None;
+                    }
+                    (VfsItem::Directory(_), FileType::Directory) => {
+                        // No changes required, a directory updating doesn't mean anything to us.
+                        fetcher.watch(path);
+                    }
+                    (VfsItem::File(_), FileType::Directory) => {
+                        data.remove(path);
+                        data.insert(
+                            path.to_path_buf(),
+                            VfsItem::new_from_type(FileType::Directory, path),
+                        );
+                        fetcher.watch(path);
+                    }
+                    (VfsItem::Directory(_), FileType::File) => {
+                        data.remove(path);
+                        data.insert(
+                            path.to_path_buf(),
+                            VfsItem::new_from_type(FileType::File, path),
+                        );
+                        fetcher.unwatch(path);
+                    }
+                }
+            }
+            None => {
+                data.insert(path.to_path_buf(), VfsItem::new_from_type(new_type, path));
+            }
+        }
+
+        Ok(())
+    }
+
+    fn raise_file_removed(
+        data: &mut PathMap<VfsItem>,
+        fetcher: &F,
+        path: impl AsRef<Path>,
+    ) -> FsResult<()> {
+        let path = path.as_ref();
+
+        if !Self::would_be_resident(data, path) {
+            return Ok(());
+        }
+
+        data.remove(path);
+        fetcher.unwatch(path);
+        Ok(())
+    }
+
+    /// Attempts to read the path into the `Vfs` if it doesn't exist.
+    ///
+    /// This does not necessitate that file contents or directory children will
+    /// be read. Depending on the `VfsFetcher` implementation that the `Vfs`
+    /// is using, this call may read exactly only the given path and no more.
+    fn read_if_not_exists(data: &mut PathMap<VfsItem>, fetcher: &F, path: &Path) -> FsResult<()> {
+        if !data.contains_key(path) {
+            let kind = fetcher
+                .file_type(path)
+                .map_err(|err| FsError::new(err, path.to_path_buf()))?;
+
+            if kind == FileType::Directory {
+                fetcher.watch(path);
+            }
+
+            data.insert(path.to_path_buf(), VfsItem::new_from_type(kind, path));
+        }
+
+        Ok(())
     }
 
     /// Tells whether the given path, if it were loaded, would be loaded if it
@@ -218,113 +259,108 @@ impl<F: VfsFetcher> Vfs<F> {
     /// tangible changes to the in-memory filesystem. If a path would be
     /// resident, we need to read it, and if its contents were known before, we
     /// need to update them.
-    fn would_be_resident(&self, path: &Path) -> bool {
-        if self.data.contains_key(path) {
+    fn would_be_resident(data: &PathMap<VfsItem>, path: &Path) -> bool {
+        if data.contains_key(path) {
             return true;
         }
 
         if let Some(parent) = path.parent() {
-            if let Some(VfsItem::Directory(dir)) = self.data.get(parent) {
+            if let Some(VfsItem::Directory(dir)) = data.get(parent) {
                 return !dir.children_enumerated;
             }
         }
 
         false
     }
-
-    /// Attempts to read the path into the `Vfs` if it doesn't exist.
-    ///
-    /// This does not necessitate that file contents or directory children will
-    /// be read. Depending on the `VfsFetcher` implementation that the `Vfs`
-    /// is using, this call may read exactly only the given path and no more.
-    fn read_if_not_exists(&mut self, path: &Path) -> FsResult<()> {
-        if !self.data.contains_key(path) {
-            let kind = self
-                .fetcher
-                .file_type(path)
-                .map_err(|err| FsError::new(err, path.to_path_buf()))?;
-
-            if kind == FileType::Directory {
-                self.fetcher.watch(path);
-            }
-
-            self.data
-                .insert(path.to_path_buf(), VfsItem::new_from_type(kind, path));
-        }
-
-        Ok(())
-    }
 }
 
 /// Contains extra methods that should only be used for debugging. They're
 /// broken out into a separate trait to make it more explicit to depend on them.
 pub trait VfsDebug {
-    fn debug_load_snapshot<P: AsRef<Path>>(&mut self, path: P, snapshot: VfsSnapshot);
+    fn debug_load_snapshot<P: AsRef<Path>>(&self, path: P, snapshot: VfsSnapshot);
     fn debug_is_file(&self, path: &Path) -> bool;
-    fn debug_contents<'a>(&'a self, path: &Path) -> Option<&'a [u8]>;
-    fn debug_children<'a>(&'a self, path: &Path) -> Option<(bool, Vec<&'a Path>)>;
-    fn debug_orphans(&self) -> Vec<&Path>;
-    fn debug_watched_paths(&self) -> Vec<&Path>;
+    fn debug_contents(&self, path: &Path) -> Option<Arc<Vec<u8>>>;
+    fn debug_children(&self, path: &Path) -> Option<(bool, Vec<PathBuf>)>;
+    fn debug_orphans(&self) -> Vec<PathBuf>;
+    fn debug_watched_paths(&self) -> Vec<PathBuf>;
 }
 
 impl<F: VfsFetcher> VfsDebug for Vfs<F> {
-    fn debug_load_snapshot<P: AsRef<Path>>(&mut self, path: P, snapshot: VfsSnapshot) {
-        let path = path.as_ref();
+    fn debug_load_snapshot<P: AsRef<Path>>(&self, path: P, snapshot: VfsSnapshot) {
+        fn load_snapshot<P: AsRef<Path>>(
+            data: &mut PathMap<VfsItem>,
+            path: P,
+            snapshot: VfsSnapshot,
+        ) {
+            let path = path.as_ref();
 
-        match snapshot {
-            VfsSnapshot::File(file) => {
-                self.data.insert(
-                    path.to_path_buf(),
-                    VfsItem::File(VfsFile {
-                        path: path.to_path_buf(),
-                        contents: Some(Arc::new(file.contents)),
-                    }),
-                );
-            }
-            VfsSnapshot::Directory(directory) => {
-                self.data.insert(
-                    path.to_path_buf(),
-                    VfsItem::Directory(VfsDirectory {
-                        path: path.to_path_buf(),
-                        children_enumerated: true,
-                    }),
-                );
+            match snapshot {
+                VfsSnapshot::File(file) => {
+                    data.insert(
+                        path.to_path_buf(),
+                        VfsItem::File(VfsFile {
+                            path: path.to_path_buf(),
+                            contents: Some(Arc::new(file.contents)),
+                        }),
+                    );
+                }
+                VfsSnapshot::Directory(directory) => {
+                    data.insert(
+                        path.to_path_buf(),
+                        VfsItem::Directory(VfsDirectory {
+                            path: path.to_path_buf(),
+                            children_enumerated: true,
+                        }),
+                    );
 
-                for (child_name, child) in directory.children.into_iter() {
-                    self.debug_load_snapshot(path.join(child_name), child);
+                    for (child_name, child) in directory.children.into_iter() {
+                        load_snapshot(data, path.join(child_name), child);
+                    }
                 }
             }
         }
+
+        let mut data = self.data.lock().unwrap();
+        load_snapshot(&mut data, path, snapshot)
     }
 
     fn debug_is_file(&self, path: &Path) -> bool {
-        match self.data.get(path) {
+        let data = self.data.lock().unwrap();
+        match data.get(path) {
             Some(VfsItem::File(_)) => true,
             _ => false,
         }
     }
 
-    fn debug_contents<'a>(&'a self, path: &Path) -> Option<&'a [u8]> {
-        match self.data.get(path) {
-            Some(VfsItem::File(file)) => file.contents.as_ref().map(|vec| vec.as_slice()),
+    fn debug_contents(&self, path: &Path) -> Option<Arc<Vec<u8>>> {
+        let data = self.data.lock().unwrap();
+        match data.get(path) {
+            Some(VfsItem::File(file)) => file.contents.clone(),
             _ => None,
         }
     }
 
-    fn debug_children<'a>(&'a self, path: &Path) -> Option<(bool, Vec<&'a Path>)> {
-        match self.data.get(path) {
-            Some(VfsItem::Directory(dir)) => {
-                Some((dir.children_enumerated, self.data.children(path).unwrap()))
-            }
+    fn debug_children(&self, path: &Path) -> Option<(bool, Vec<PathBuf>)> {
+        let data = self.data.lock().unwrap();
+        match data.get(path) {
+            Some(VfsItem::Directory(dir)) => Some((
+                dir.children_enumerated,
+                data.children(path)
+                    .unwrap()
+                    .iter()
+                    .map(|path| path.to_path_buf())
+                    .collect(),
+            )),
             _ => None,
         }
     }
 
-    fn debug_orphans(&self) -> Vec<&Path> {
-        self.data.orphans().collect()
+    fn debug_orphans(&self) -> Vec<PathBuf> {
+        let data = self.data.lock().unwrap();
+        data.orphans().map(|path| path.to_path_buf()).collect()
     }
 
-    fn debug_watched_paths(&self) -> Vec<&Path> {
+    fn debug_watched_paths(&self) -> Vec<PathBuf> {
         self.fetcher.watched_paths()
     }
 }
@@ -345,11 +381,11 @@ impl VfsEntry {
         &self.path
     }
 
-    pub fn contents<'vfs>(&self, vfs: &'vfs mut Vfs<impl VfsFetcher>) -> FsResult<Arc<Vec<u8>>> {
+    pub fn contents(&self, vfs: &Vfs<impl VfsFetcher>) -> FsResult<Arc<Vec<u8>>> {
         vfs.get_contents(&self.path)
     }
 
-    pub fn children(&self, vfs: &mut Vfs<impl VfsFetcher>) -> FsResult<Vec<VfsEntry>> {
+    pub fn children(&self, vfs: &Vfs<impl VfsFetcher>) -> FsResult<Vec<VfsEntry>> {
         vfs.get_children(&self.path)
     }
 
@@ -414,7 +450,7 @@ mod test {
 
     #[test]
     fn from_snapshot_file() {
-        let mut vfs = Vfs::new(NoopFetcher);
+        let vfs = Vfs::new(NoopFetcher);
         let file = VfsSnapshot::file("hello, world!");
 
         vfs.debug_load_snapshot("/hello.txt", file);
@@ -425,7 +461,7 @@ mod test {
 
     #[test]
     fn from_snapshot_dir() {
-        let mut vfs = Vfs::new(NoopFetcher);
+        let vfs = Vfs::new(NoopFetcher);
         let dir = VfsSnapshot::dir(hashmap! {
             "a.txt" => VfsSnapshot::file("contents of a.txt"),
             "b.lua" => VfsSnapshot::file("contents of b.lua"),
@@ -470,7 +506,7 @@ mod test {
         }
 
         impl VfsFetcher for MockFetcher {
-            fn file_type(&mut self, path: &Path) -> io::Result<FileType> {
+            fn file_type(&self, path: &Path) -> io::Result<FileType> {
                 if path == Path::new("/dir/a.txt") {
                     return Ok(FileType::File);
                 }
@@ -478,7 +514,7 @@ mod test {
                 unimplemented!();
             }
 
-            fn read_contents(&mut self, path: &Path) -> io::Result<Vec<u8>> {
+            fn read_contents(&self, path: &Path) -> io::Result<Vec<u8>> {
                 if path == Path::new("/dir/a.txt") {
                     let inner = self.inner.borrow();
 
@@ -488,25 +524,21 @@ mod test {
                 unimplemented!();
             }
 
-            fn read_children(&mut self, _path: &Path) -> io::Result<Vec<PathBuf>> {
+            fn read_children(&self, _path: &Path) -> io::Result<Vec<PathBuf>> {
                 unimplemented!();
             }
 
-            fn create_directory(&mut self, _path: &Path) -> io::Result<()> {
+            fn create_directory(&self, _path: &Path) -> io::Result<()> {
                 unimplemented!();
             }
 
-            fn write_file(&mut self, _path: &Path, _contents: &[u8]) -> io::Result<()> {
+            fn write_file(&self, _path: &Path, _contents: &[u8]) -> io::Result<()> {
                 unimplemented!();
             }
 
-            fn remove(&mut self, _path: &Path) -> io::Result<()> {
+            fn remove(&self, _path: &Path) -> io::Result<()> {
                 unimplemented!();
             }
-
-            fn watch(&mut self, _path: &Path) {}
-
-            fn unwatch(&mut self, _path: &Path) {}
 
             fn receiver(&self) -> Receiver<VfsEvent> {
                 crossbeam_channel::never()
@@ -532,7 +564,7 @@ mod test {
             mock_state.a_contents = "Changed contents";
         }
 
-        vfs.raise_file_changed("/dir/a.txt")
+        vfs.commit_change(&VfsEvent::Modified(PathBuf::from("/dir/a.txt")))
             .expect("error processing file change");
 
         let contents = a.contents(&mut vfs).expect("mock file contents error");
@@ -555,7 +587,7 @@ mod test {
 
         assert_eq!(contents.as_slice(), b"hello, world!");
 
-        vfs.raise_file_removed("/hello.txt")
+        vfs.commit_change(&VfsEvent::Removed(PathBuf::from("/hello.txt")))
             .expect("error processing file removal");
 
         match vfs.get("hello.txt") {

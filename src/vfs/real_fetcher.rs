@@ -5,7 +5,7 @@ use std::{
     collections::HashSet,
     fs, io,
     path::{Path, PathBuf},
-    sync::mpsc,
+    sync::{mpsc, Mutex},
     time::Duration,
 };
 
@@ -34,7 +34,7 @@ pub struct RealFetcher {
     //
     // `watcher` must be dropped before `_converter_thread` or else joining the
     // thread will cause a deadlock.
-    watcher: Option<RecommendedWatcher>,
+    watcher: Option<Mutex<RecommendedWatcher>>,
 
     /// Thread handle to convert notify's mpsc channel messages into
     /// crossbeam_channel messages.
@@ -45,7 +45,7 @@ pub struct RealFetcher {
 
     /// All of the paths that the fetcher is watching, tracked here because
     /// notify does not expose this information.
-    watched_paths: HashSet<PathBuf>,
+    watched_paths: Mutex<HashSet<PathBuf>>,
 }
 
 impl RealFetcher {
@@ -68,10 +68,12 @@ impl RealFetcher {
         // causing our program to deadlock. Once this is fixed, watcher no
         // longer needs to be optional, but is still maybe useful?
         let watcher = match watch_mode {
-            WatchMode::Enabled => Some(
-                notify::watcher(notify_sender, Duration::from_millis(300))
-                    .expect("Couldn't start 'notify' file watcher"),
-            ),
+            WatchMode::Enabled => {
+                let watcher = notify::watcher(notify_sender, Duration::from_millis(300))
+                    .expect("Couldn't start 'notify' file watcher");
+
+                Some(Mutex::new(watcher))
+            }
             WatchMode::Disabled => None,
         };
 
@@ -79,7 +81,7 @@ impl RealFetcher {
             watcher,
             _converter_thread: handle,
             receiver,
-            watched_paths: HashSet::new(),
+            watched_paths: Mutex::new(HashSet::new()),
         }
     }
 }
@@ -122,7 +124,7 @@ fn converter_thread(notify_receiver: mpsc::Receiver<DebouncedEvent>, sender: Sen
 }
 
 impl VfsFetcher for RealFetcher {
-    fn file_type(&mut self, path: &Path) -> io::Result<FileType> {
+    fn file_type(&self, path: &Path) -> io::Result<FileType> {
         let metadata = fs::metadata(path)?;
 
         if metadata.is_file() {
@@ -132,7 +134,7 @@ impl VfsFetcher for RealFetcher {
         }
     }
 
-    fn read_children(&mut self, path: &Path) -> io::Result<Vec<PathBuf>> {
+    fn read_children(&self, path: &Path) -> io::Result<Vec<PathBuf>> {
         log::trace!("Reading directory {}", path.display());
 
         let mut result = Vec::new();
@@ -146,25 +148,25 @@ impl VfsFetcher for RealFetcher {
         Ok(result)
     }
 
-    fn read_contents(&mut self, path: &Path) -> io::Result<Vec<u8>> {
+    fn read_contents(&self, path: &Path) -> io::Result<Vec<u8>> {
         log::trace!("Reading file {}", path.display());
 
         fs::read(path)
     }
 
-    fn create_directory(&mut self, path: &Path) -> io::Result<()> {
+    fn create_directory(&self, path: &Path) -> io::Result<()> {
         log::trace!("Creating directory {}", path.display());
 
         fs::create_dir(path)
     }
 
-    fn write_file(&mut self, path: &Path, contents: &[u8]) -> io::Result<()> {
+    fn write_file(&self, path: &Path, contents: &[u8]) -> io::Result<()> {
         log::trace!("Writing path {}", path.display());
 
         fs::write(path, contents)
     }
 
-    fn remove(&mut self, path: &Path) -> io::Result<()> {
+    fn remove(&self, path: &Path) -> io::Result<()> {
         log::trace!("Removing path {}", path.display());
 
         let metadata = fs::metadata(path)?;
@@ -176,13 +178,16 @@ impl VfsFetcher for RealFetcher {
         }
     }
 
-    fn watch(&mut self, path: &Path) {
+    fn watch(&self, path: &Path) {
         log::trace!("Watching path {}", path.display());
 
-        if let Some(watcher) = self.watcher.as_mut() {
+        if let Some(watcher_handle) = &self.watcher {
+            let mut watcher = watcher_handle.lock().unwrap();
+
             match watcher.watch(path, RecursiveMode::NonRecursive) {
                 Ok(_) => {
-                    self.watched_paths.insert(path.to_path_buf());
+                    let mut watched_paths = self.watched_paths.lock().unwrap();
+                    watched_paths.insert(path.to_path_buf());
                 }
                 Err(err) => {
                     log::warn!("Couldn't watch path {}: {:?}", path.display(), err);
@@ -191,14 +196,17 @@ impl VfsFetcher for RealFetcher {
         }
     }
 
-    fn unwatch(&mut self, path: &Path) {
+    fn unwatch(&self, path: &Path) {
         log::trace!("Stopped watching path {}", path.display());
 
-        if let Some(watcher) = self.watcher.as_mut() {
+        if let Some(watcher_handle) = &self.watcher {
+            let mut watcher = watcher_handle.lock().unwrap();
+
             // Remove the path from our watched paths regardless of the outcome
             // of notify's unwatch to ensure we drop old paths in the event of a
             // rename.
-            self.watched_paths.remove(path);
+            let mut watched_paths = self.watched_paths.lock().unwrap();
+            watched_paths.remove(path);
 
             if let Err(err) = watcher.unwatch(path) {
                 log::warn!("Couldn't unwatch path {}: {:?}", path.display(), err);
@@ -210,7 +218,8 @@ impl VfsFetcher for RealFetcher {
         self.receiver.clone()
     }
 
-    fn watched_paths(&self) -> Vec<&Path> {
-        self.watched_paths.iter().map(|v| v.as_path()).collect()
+    fn watched_paths(&self) -> Vec<PathBuf> {
+        let watched_paths = self.watched_paths.lock().unwrap();
+        watched_paths.iter().map(|v| v.clone()).collect()
     }
 }

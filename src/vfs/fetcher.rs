@@ -17,20 +17,21 @@ pub enum FileType {
 /// In tests, it's stubbed out to do different versions of absolutely nothing
 /// depending on the test.
 pub trait VfsFetcher {
-    fn file_type(&mut self, path: &Path) -> io::Result<FileType>;
-    fn read_children(&mut self, path: &Path) -> io::Result<Vec<PathBuf>>;
-    fn read_contents(&mut self, path: &Path) -> io::Result<Vec<u8>>;
+    fn file_type(&self, path: &Path) -> io::Result<FileType>;
+    fn read_children(&self, path: &Path) -> io::Result<Vec<PathBuf>>;
+    fn read_contents(&self, path: &Path) -> io::Result<Vec<u8>>;
 
-    fn create_directory(&mut self, path: &Path) -> io::Result<()>;
-    fn write_file(&mut self, path: &Path, contents: &[u8]) -> io::Result<()>;
-    fn remove(&mut self, path: &Path) -> io::Result<()>;
+    fn create_directory(&self, path: &Path) -> io::Result<()>;
+    fn write_file(&self, path: &Path, contents: &[u8]) -> io::Result<()>;
+    fn remove(&self, path: &Path) -> io::Result<()>;
 
-    fn watch(&mut self, path: &Path);
-    fn unwatch(&mut self, path: &Path);
     fn receiver(&self) -> Receiver<VfsEvent>;
 
+    fn watch(&self, _path: &Path) {}
+    fn unwatch(&self, _path: &Path) {}
+
     /// A method intended for debugging what paths the fetcher is watching.
-    fn watched_paths(&self) -> Vec<&Path> {
+    fn watched_paths(&self) -> Vec<PathBuf> {
         Vec::new()
     }
 }

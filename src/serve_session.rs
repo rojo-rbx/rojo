@@ -52,7 +52,7 @@ pub struct ServeSession<F> {
     ///
     /// The main use for accessing it from the session is for debugging issues
     /// with Rojo's live-sync protocol.
-    vfs: Arc<Mutex<Vfs<F>>>,
+    vfs: Arc<Vfs<F>>,
 
     /// A queue of changes that have been applied to `tree` that affect clients.
     ///
@@ -71,7 +71,7 @@ pub struct ServeSession<F> {
 /// Methods that need thread-safety bounds on VfsFetcher are limited to this
 /// block to prevent needing to spread Send + Sync + 'static into everything
 /// that handles ServeSession.
-impl<F: VfsFetcher + Send + 'static> ServeSession<F> {
+impl<F: VfsFetcher + Send + Sync + 'static> ServeSession<F> {
     /// Start a new serve session from the given in-memory filesystem  and start
     /// path.
     ///
@@ -92,7 +92,7 @@ impl<F: VfsFetcher + Send + 'static> ServeSession<F> {
 
         let tree = Arc::new(Mutex::new(tree));
         let message_queue = Arc::new(message_queue);
-        let vfs = Arc::new(Mutex::new(vfs));
+        let vfs = Arc::new(vfs);
 
         log::trace!("Starting ChangeProcessor");
         let change_processor = ChangeProcessor::start(
@@ -122,8 +122,8 @@ impl<F: VfsFetcher> ServeSession<F> {
         self.tree.lock().unwrap()
     }
 
-    pub fn vfs(&self) -> MutexGuard<'_, Vfs<F>> {
-        self.vfs.lock().unwrap()
+    pub fn vfs(&self) -> &Vfs<F> {
+        &self.vfs
     }
 
     pub fn message_queue(&self) -> &MessageQueue<AppliedPatchSet> {
@@ -179,7 +179,7 @@ mod serve_session {
 
     #[test]
     fn just_folder() {
-        let mut vfs = Vfs::new(NoopFetcher);
+        let vfs = Vfs::new(NoopFetcher);
 
         vfs.debug_load_snapshot("/foo", VfsSnapshot::empty_dir());
 
@@ -191,7 +191,7 @@ mod serve_session {
 
     #[test]
     fn project_with_folder() {
-        let mut vfs = Vfs::new(NoopFetcher);
+        let vfs = Vfs::new(NoopFetcher);
 
         vfs.debug_load_snapshot(
             "/foo",
@@ -218,7 +218,7 @@ mod serve_session {
 
     #[test]
     fn script_with_meta() {
-        let mut vfs = Vfs::new(NoopFetcher);
+        let vfs = Vfs::new(NoopFetcher);
 
         vfs.debug_load_snapshot(
             "/root",
