@@ -1,6 +1,7 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Fixed an issue where Rojo would throw an error when encountering recently-added instance classes.
 
 ## [0.5.2](https://github.com/rojo-rbx/rojo/releases/tag/v0.5.2) (October 14, 2019)
 * Fixed an issue where `LocalizationTable` instances would have their column order randomized. ([#173](https://github.com/rojo-rbx/rojo/issues/173))
