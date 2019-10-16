@@ -1,6 +1,8 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+
+## [0.5.3](https://github.com/rojo-rbx/rojo/releases/tag/v0.5.3) (October 15, 2019)
 * Fixed an issue where Rojo would throw an error when encountering recently-added instance classes.
 
 ## [0.5.2](https://github.com/rojo-rbx/rojo/releases/tag/v0.5.2) (October 14, 2019)
