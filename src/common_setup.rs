@@ -14,7 +14,7 @@ use crate::{
 
 pub fn start<F: VfsFetcher>(
     fuzzy_project_path: &Path,
-    vfs: &mut Vfs<F>,
+    vfs: &Vfs<F>,
 ) -> (Option<Project>, RojoTree) {
     log::trace!("Loading project file from {}", fuzzy_project_path.display());
     let maybe_project = match Project::load_fuzzy(fuzzy_project_path) {

@@ -20,7 +20,7 @@ pub struct SnapshotJsonModel;
 impl SnapshotMiddleware for SnapshotJsonModel {
     fn from_vfs<F: VfsFetcher>(
         _context: &mut InstanceSnapshotContext,
-        vfs: &mut Vfs<F>,
+        vfs: &Vfs<F>,
         entry: &VfsEntry,
     ) -> SnapshotInstanceResult<'static> {
         if entry.is_directory() {

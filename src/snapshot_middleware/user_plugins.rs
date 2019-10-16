@@ -16,7 +16,7 @@ pub struct SnapshotUserPlugins;
 impl SnapshotMiddleware for SnapshotUserPlugins {
     fn from_vfs<F: VfsFetcher>(
         context: &mut InstanceSnapshotContext,
-        _vfs: &mut Vfs<F>,
+        _vfs: &Vfs<F>,
         _entry: &VfsEntry,
     ) -> SnapshotInstanceResult<'static> {
         // User plugins are only enabled if present on the snapshot context.

@@ -21,7 +21,7 @@ pub struct SnapshotLua;
 impl SnapshotMiddleware for SnapshotLua {
     fn from_vfs<F: VfsFetcher>(
         context: &mut InstanceSnapshotContext,
-        vfs: &mut Vfs<F>,
+        vfs: &Vfs<F>,
         entry: &VfsEntry,
     ) -> SnapshotInstanceResult<'static> {
         let file_name = entry.path().file_name().unwrap().to_string_lossy();
@@ -54,7 +54,7 @@ impl SnapshotMiddleware for SnapshotLua {
 
 /// Core routine for turning Lua files into snapshots.
 fn snapshot_lua_file<F: VfsFetcher>(
-    vfs: &mut Vfs<F>,
+    vfs: &Vfs<F>,
     entry: &VfsEntry,
 ) -> SnapshotInstanceResult<'static> {
     let file_name = entry.path().file_name().unwrap().to_string_lossy();
@@ -117,7 +117,7 @@ fn snapshot_lua_file<F: VfsFetcher>(
 /// their parents, which acts similarly to `__init__.py` from the Python world.
 fn snapshot_init<F: VfsFetcher>(
     context: &mut InstanceSnapshotContext,
-    vfs: &mut Vfs<F>,
+    vfs: &Vfs<F>,
     folder_entry: &VfsEntry,
     init_name: &str,
 ) -> SnapshotInstanceResult<'static> {
