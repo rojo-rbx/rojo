@@ -2,8 +2,6 @@
 source: rojo-test/src/serve_test.rs
 expression: read_result
 ---
-sessionId: id-1
-messageCursor: 0
 instances:
   id-2:
     Id: id-2
@@ -17,3 +15,5 @@ instances:
     Children: []
     Metadata:
       ignoreUnknownInstances: false
+messageCursor: 0
+sessionId: id-1

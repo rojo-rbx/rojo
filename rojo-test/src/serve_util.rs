@@ -22,6 +22,7 @@ pub fn run_serve_test(test_name: &str, callback: impl FnOnce(TestServeSession, R
 
     let snapshot_path = Path::new(env!("CARGO_MANIFEST_DIR")).join("serve-test-snapshots");
     settings.set_snapshot_path(snapshot_path);
+    settings.set_sort_maps(true);
 
     let mut redactions = RedactionMap::new();
 
@@ -32,6 +33,22 @@ pub fn run_serve_test(test_name: &str, callback: impl FnOnce(TestServeSession, R
     redactions.intern(info.root_instance_id);
 
     settings.bind(move || callback(session, redactions));
+}
+
+/// Intern the response to Rojo's read API, doing traversal in a deterministic
+/// order.
+pub fn intern_read_response(
+    redactions: &mut RedactionMap,
+    response: &ReadResponse,
+    root_id: RbxId,
+) {
+    redactions.intern(root_id);
+
+    let root_instance = response.instances.get(&root_id).unwrap();
+
+    for &child_id in root_instance.children.iter() {
+        intern_read_response(redactions, response, child_id);
+    }
 }
 
 fn get_port_number() -> usize {

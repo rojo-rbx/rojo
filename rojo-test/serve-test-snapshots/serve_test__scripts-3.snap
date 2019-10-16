@@ -1,0 +1,18 @@
+---
+source: rojo-test/src/serve_test.rs
+expression: subscribe_result
+---
+messageCursor: 1
+messages:
+  - removedInstances: []
+    addedInstances: {}
+    updatedInstances:
+      - id: id-4
+        changedName: ~
+        changedClassName: ~
+        changedProperties:
+          Source:
+            Type: String
+            Value: Updated foo!
+        changedMetadata: ~
+sessionId: id-1
