@@ -7,6 +7,7 @@ use std::sync::{Arc, Mutex};
 
 use crossbeam_channel::{select, Receiver, Sender};
 use jod_thread::JoinHandle;
+use rbx_dom_weak::RbxId;
 
 use crate::{
     message_queue::MessageQueue,
@@ -69,56 +70,24 @@ impl ChangeProcessor {
 
                         match event {
                             VfsEvent::Created(path) | VfsEvent::Modified(path) | VfsEvent::Removed(path) => {
-                                let affected_ids = tree.get_ids_at_path(&path).to_vec();
+                                let mut current_path = path.as_path();
+                                let affected_ids = loop {
+                                    let ids = tree.get_ids_at_path(&current_path);
 
-                                if affected_ids.len() == 0 {
-                                    log::info!("No instances were affected by this change.");
-                                    continue;
-                                }
+                                    log::trace!("Path {} affects IDs {:?}", current_path.display(), ids);
 
-                                for id in affected_ids {
-                                    let metadata = tree.get_metadata(id)
-                                        .expect("metadata missing for instance present in tree");
+                                    if !ids.is_empty() {
+                                        break ids.to_vec();
+                                    }
 
-                                    let instigating_source = match &metadata.instigating_source {
-                                        Some(path) => path,
-                                        None => {
-                                            log::warn!("Instance {} did not have an instigating source, but was considered for an update.", id);
-                                            log::warn!("This is a Rojo bug. Please file an issue!");
-                                            continue;
-                                        }
-                                    };
+                                    log::trace!("Trying parent path...");
+                                    match current_path.parent() {
+                                        Some(parent) => current_path = parent,
+                                        None => break Vec::new(),
+                                    }
+                                };
 
-                                    let snapshot = match instigating_source {
-                                        InstigatingSource::Path(path) => {
-                                            let entry = vfs
-                                                .get(path)
-                                                .expect("could not get instigating path from filesystem");
-
-                                            // TODO: Use persisted snapshot
-                                            // context struct instead of
-                                            // recreating it every time.
-                                            let snapshot = snapshot_from_vfs(&mut InstanceSnapshotContext::default(), &vfs, &entry)
-                                                .expect("snapshot failed")
-                                                .expect("snapshot did not return an instance");
-
-                                            snapshot
-                                        }
-                                        InstigatingSource::ProjectNode(_, _) => {
-                                            log::warn!("Instance {} had an instigating source that was a project node, which is not yet supported.", id);
-                                            continue;
-                                        }
-                                    };
-
-                                    log::trace!("Computed snapshot: {:#?}", snapshot);
-
-                                    let patch_set = compute_patch_set(&snapshot, &tree, id);
-                                    let applied_patch_set = apply_patch_set(&mut tree, patch_set);
-
-                                    log::trace!("Applied patch: {:#?}", applied_patch_set);
-
-                                    applied_patches.push(applied_patch_set);
-                                }
+                                update_affected_instances(&mut tree, &vfs, &mut applied_patches, &affected_ids)
                             }
                         }
 
@@ -141,5 +110,58 @@ impl ChangeProcessor {
 impl Drop for ChangeProcessor {
     fn drop(&mut self) {
         let _ = self.shutdown_sender.send(());
+    }
+}
+
+fn update_affected_instances<F: VfsFetcher>(
+    tree: &mut RojoTree,
+    vfs: &Vfs<F>,
+    applied_patches: &mut Vec<AppliedPatchSet>,
+    affected_ids: &[RbxId],
+) {
+    for &id in affected_ids {
+        let metadata = tree
+            .get_metadata(id)
+            .expect("metadata missing for instance present in tree");
+
+        let instigating_source = match &metadata.instigating_source {
+            Some(path) => path,
+            None => {
+                log::warn!("Instance {} did not have an instigating source, but was considered for an update.", id);
+                log::warn!("This is a Rojo bug. Please file an issue!");
+                continue;
+            }
+        };
+
+        let snapshot = match instigating_source {
+            InstigatingSource::Path(path) => {
+                let entry = vfs
+                    .get(path)
+                    .expect("could not get instigating path from filesystem");
+
+                // TODO: Use persisted snapshot
+                // context struct instead of
+                // recreating it every time.
+                let snapshot =
+                    snapshot_from_vfs(&mut InstanceSnapshotContext::default(), &vfs, &entry)
+                        .expect("snapshot failed")
+                        .expect("snapshot did not return an instance");
+
+                snapshot
+            }
+            InstigatingSource::ProjectNode(_, _) => {
+                log::warn!("Instance {} had an instigating source that was a project node, which is not yet supported.", id);
+                continue;
+            }
+        };
+
+        log::trace!("Computed snapshot: {:#?}", snapshot);
+
+        let patch_set = compute_patch_set(&snapshot, &tree, id);
+        let applied_patch_set = apply_patch_set(tree, patch_set);
+
+        log::trace!("Applied patch: {:#?}", applied_patch_set);
+
+        applied_patches.push(applied_patch_set);
     }
 }
