@@ -6,6 +6,7 @@ use std::{
 };
 
 use rbx_dom_weak::RbxId;
+use serde::Serialize;
 use tempfile::{tempdir, TempDir};
 
 use librojo::web_interface::{ReadResponse, ServerInfoResponse, SubscribeResponse};
@@ -35,19 +36,33 @@ pub fn run_serve_test(test_name: &str, callback: impl FnOnce(TestServeSession, R
     settings.bind(move || callback(session, redactions));
 }
 
-/// Intern the response to Rojo's read API, doing traversal in a deterministic
-/// order.
-pub fn intern_read_response(
-    redactions: &mut RedactionMap,
-    response: &ReadResponse,
-    root_id: RbxId,
-) {
-    redactions.intern(root_id);
+pub trait Internable<T> {
+    fn intern(&self, redactions: &mut RedactionMap, extra: T);
+}
 
-    let root_instance = response.instances.get(&root_id).unwrap();
+impl Internable<RbxId> for ReadResponse<'_> {
+    fn intern(&self, redactions: &mut RedactionMap, root_id: RbxId) {
+        redactions.intern(root_id);
 
-    for &child_id in root_instance.children.iter() {
-        intern_read_response(redactions, response, child_id);
+        let root_instance = self.instances.get(&root_id).unwrap();
+
+        for &child_id in root_instance.children.iter() {
+            self.intern(redactions, child_id);
+        }
+    }
+}
+
+pub trait InternAndRedact<T> {
+    fn intern_and_redact(&self, redactions: &mut RedactionMap, extra: T) -> serde_yaml::Value;
+}
+
+impl<I, T> InternAndRedact<T> for I
+where
+    I: Serialize + Internable<T>,
+{
+    fn intern_and_redact(&self, redactions: &mut RedactionMap, extra: T) -> serde_yaml::Value {
+        self.intern(redactions, extra);
+        redactions.redacted_yaml(self)
     }
 }
 
