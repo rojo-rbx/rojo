@@ -167,6 +167,11 @@ impl<F: VfsFetcher> Vfs<F> {
         let path = path.as_ref();
 
         if !Self::would_be_resident(&data, path) {
+            log::trace!(
+                "Path would not be resident, skipping change: {}",
+                path.display()
+            );
+
             return Ok(());
         }
 
@@ -205,6 +210,7 @@ impl<F: VfsFetcher> Vfs<F> {
                 }
             }
             None => {
+                log::trace!("Inserting new path {}", path.display());
                 data.insert(path.to_path_buf(), VfsItem::new_from_type(new_type, path));
             }
         }
@@ -266,7 +272,7 @@ impl<F: VfsFetcher> Vfs<F> {
 
         if let Some(parent) = path.parent() {
             if let Some(VfsItem::Directory(dir)) = data.get(parent) {
-                return !dir.children_enumerated;
+                return dir.children_enumerated;
             }
         }
 
@@ -400,6 +406,7 @@ impl VfsEntry {
 
 /// Internal structure describing potentially partially-resident files and
 /// folders in the `Vfs`.
+#[derive(Debug)]
 pub enum VfsItem {
     File(VfsFile),
     Directory(VfsDirectory),
@@ -427,11 +434,13 @@ impl VfsItem {
     }
 }
 
+#[derive(Debug)]
 pub struct VfsFile {
     pub(super) path: PathBuf,
     pub(super) contents: Option<Arc<Vec<u8>>>,
 }
 
+#[derive(Debug)]
 pub struct VfsDirectory {
     pub(super) path: PathBuf,
     pub(super) children_enumerated: bool,
