@@ -1,6 +1,6 @@
 ---
 source: rojo-test/src/serve_test.rs
-expression: read_result
+expression: "read_response.intern_and_redact(&mut redactions, root_id)"
 ---
 instances:
   id-2:
@@ -34,9 +34,9 @@ instances:
     Properties:
       Source:
         Type: String
-        Value: Updated foo!
+        Value: "-- Hello, from foo!"
     Children: []
     Metadata:
       ignoreUnknownInstances: false
-messageCursor: 1
+messageCursor: 0
 sessionId: id-1

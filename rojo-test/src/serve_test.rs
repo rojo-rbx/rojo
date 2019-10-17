@@ -10,10 +10,13 @@ fn empty() {
         let info = session.get_api_rojo().unwrap();
         let root_id = info.root_instance_id;
 
-        assert_yaml_snapshot!(redactions.redacted_yaml(info));
+        assert_yaml_snapshot!("empty_info", redactions.redacted_yaml(info));
 
         let read_response = session.get_api_read(root_id).unwrap();
-        assert_yaml_snapshot!(read_response.intern_and_redact(&mut redactions, root_id));
+        assert_yaml_snapshot!(
+            "empty_all",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
     });
 }
 
@@ -23,31 +26,43 @@ fn scripts() {
         let info = session.get_api_rojo().unwrap();
         let root_id = info.root_instance_id;
 
-        assert_yaml_snapshot!(redactions.redacted_yaml(info));
+        assert_yaml_snapshot!("scripts_info", redactions.redacted_yaml(info));
 
         let read_response = session.get_api_read(root_id).unwrap();
-        assert_yaml_snapshot!(read_response.intern_and_redact(&mut redactions, root_id));
+        assert_yaml_snapshot!(
+            "scripts_all",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
 
         fs::write(session.path().join("foo.lua"), "Updated foo!").unwrap();
 
         let subscribe_response = session.get_api_subscribe(0).unwrap();
-        assert_yaml_snapshot!(redactions.redacted_yaml(subscribe_response));
+        assert_yaml_snapshot!(
+            "scripts_subscribe",
+            redactions.redacted_yaml(subscribe_response)
+        );
 
         let read_response = session.get_api_read(root_id).unwrap();
-        assert_yaml_snapshot!(read_response.intern_and_redact(&mut redactions, root_id));
+        assert_yaml_snapshot!(
+            "scripts_all-2",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
     });
 }
 
 #[test]
 fn just_txt() {
-    run_serve_test("just-txt.txt", |session, mut redactions| {
+    run_serve_test("just_txt.txt", |session, mut redactions| {
         let info = session.get_api_rojo().unwrap();
         let root_id = info.root_instance_id;
 
-        assert_yaml_snapshot!(redactions.redacted_yaml(info));
+        assert_yaml_snapshot!("just_txt_info", redactions.redacted_yaml(info));
 
         let read_response = session.get_api_read(root_id).unwrap();
-        assert_yaml_snapshot!(read_response.intern_and_redact(&mut redactions, root_id));
+        assert_yaml_snapshot!(
+            "just_txt_all",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
 
         fs::write(session.path(), "Changed content!").unwrap();
 

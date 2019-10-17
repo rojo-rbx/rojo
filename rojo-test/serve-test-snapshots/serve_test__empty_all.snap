@@ -1,6 +1,6 @@
 ---
 source: rojo-test/src/serve_test.rs
-expression: read_result
+expression: "read_response.intern_and_redact(&mut redactions, root_id)"
 ---
 instances:
   id-2:

@@ -1,6 +1,6 @@
 ---
 source: rojo-test/src/serve_test.rs
-expression: info
+expression: redactions.redacted_yaml(info)
 ---
 expectedPlaceIds: ~
 protocolVersion: 3

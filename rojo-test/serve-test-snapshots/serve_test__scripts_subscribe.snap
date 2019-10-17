@@ -1,6 +1,6 @@
 ---
 source: rojo-test/src/serve_test.rs
-expression: subscribe_result
+expression: redactions.redacted_yaml(subscribe_response)
 ---
 messageCursor: 1
 messages:
