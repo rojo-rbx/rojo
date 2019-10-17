@@ -1,0 +1,9 @@
+---
+source: rojo-test/src/serve_test.rs
+expression: redactions.redacted_yaml(info)
+---
+expectedPlaceIds: ~
+protocolVersion: 3
+rootInstanceId: id-2
+serverVersion: 0.6.0-dev
+sessionId: id-1

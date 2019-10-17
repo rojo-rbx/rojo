@@ -3,10 +3,12 @@ use std::{
     path::{Path, PathBuf},
     process::Command,
     sync::atomic::{AtomicUsize, Ordering},
+    thread,
+    time::Duration,
 };
 
 use rbx_dom_weak::RbxId;
-use serde::Serialize;
+
 use tempfile::{tempdir, TempDir};
 
 use librojo::web_interface::{ReadResponse, ServerInfoResponse, SubscribeResponse};
@@ -16,6 +18,13 @@ use crate::util::{
     copy_recursive, get_rojo_path, get_serve_tests_path, get_working_dir_path, KillOnDrop,
 };
 
+/// Convenience method to run a `rojo serve` test.
+///
+/// Test projects should be defined in the `serve-tests` folder; their filename
+/// should be given as the first parameter.
+///
+/// The passed in callback is where the actual test body should go. Setup and
+/// cleanup happens automatically.
 pub fn run_serve_test(test_name: &str, callback: impl FnOnce(TestServeSession, RedactionMap)) {
     let _ = env_logger::try_init();
 
@@ -36,42 +45,7 @@ pub fn run_serve_test(test_name: &str, callback: impl FnOnce(TestServeSession, R
     settings.bind(move || callback(session, redactions));
 }
 
-pub trait Internable<T> {
-    fn intern(&self, redactions: &mut RedactionMap, extra: T);
-}
-
-impl Internable<RbxId> for ReadResponse<'_> {
-    fn intern(&self, redactions: &mut RedactionMap, root_id: RbxId) {
-        redactions.intern(root_id);
-
-        let root_instance = self.instances.get(&root_id).unwrap();
-
-        for &child_id in root_instance.children.iter() {
-            self.intern(redactions, child_id);
-        }
-    }
-}
-
-pub trait InternAndRedact<T> {
-    fn intern_and_redact(&self, redactions: &mut RedactionMap, extra: T) -> serde_yaml::Value;
-}
-
-impl<I, T> InternAndRedact<T> for I
-where
-    I: Serialize + Internable<T>,
-{
-    fn intern_and_redact(&self, redactions: &mut RedactionMap, extra: T) -> serde_yaml::Value {
-        self.intern(redactions, extra);
-        redactions.redacted_yaml(self)
-    }
-}
-
-fn get_port_number() -> usize {
-    static NEXT_PORT_NUMBER: AtomicUsize = AtomicUsize::new(35103);
-
-    NEXT_PORT_NUMBER.fetch_add(1, Ordering::SeqCst)
-}
-
+/// Represents a running Rojo serve session running in a temporary directory.
 pub struct TestServeSession {
     // Drop order is important here: we want the process to be killed before the
     // directory it's operating on is destroyed.
@@ -129,19 +103,28 @@ impl TestServeSession {
         &self.project_path
     }
 
+    /// Waits for the `rojo serve` server to come online with expontential
+    /// backoff.
     pub fn wait_to_come_online(&mut self) -> ServerInfoResponse {
-        loop {
+        const BASE_DURATION_MS: f32 = 30.0;
+        const EXP_BACKOFF_FACTOR: f32 = 1.3;
+        const MAX_TRIES: u32 = 5;
+
+        for i in 1..=MAX_TRIES {
             match self.rojo_process.0.try_wait() {
                 Ok(Some(status)) => panic!("Rojo process exited with status {}", status),
-                Ok(None) => { /* process is still running */ }
+                Ok(None) => { /* The process is still running, as expected */ }
                 Err(err) => panic!("Failed to wait on Rojo process: {}", err),
             }
 
             let info = match self.get_api_rojo() {
                 Ok(info) => info,
                 Err(err) => {
-                    log::debug!("Server error, retrying: {}", err);
-                    std::thread::sleep(std::time::Duration::from_millis(30));
+                    let retry_time_ms = BASE_DURATION_MS * (i as f32).powf(EXP_BACKOFF_FACTOR);
+                    let retry_time = Duration::from_millis(retry_time_ms as u64);
+
+                    log::info!("Server error, retrying in {:?}: {}", retry_time, err);
+                    thread::sleep(retry_time);
                     continue;
                 }
             };
@@ -150,6 +133,8 @@ impl TestServeSession {
 
             return info;
         }
+
+        panic!("Rojo server did not respond after {} tries.", MAX_TRIES);
     }
 
     pub fn get_api_rojo(&self) -> Result<ServerInfoResponse, reqwest::Error> {
@@ -174,4 +159,16 @@ impl TestServeSession {
 
         reqwest::get(&url)?.json()
     }
+}
+
+/// Probably-okay way to generate random enough port numbers for running the
+/// Rojo live server.
+///
+/// If this method ends up having problems, we should add an option for Rojo to
+/// use a random port chosen by the operating system and figure out a good way
+/// to get that port back to the test CLI.
+fn get_port_number() -> usize {
+    static NEXT_PORT_NUMBER: AtomicUsize = AtomicUsize::new(35103);
+
+    NEXT_PORT_NUMBER.fetch_add(1, Ordering::SeqCst)
 }

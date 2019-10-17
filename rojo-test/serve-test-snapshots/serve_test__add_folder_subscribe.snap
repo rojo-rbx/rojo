@@ -1,0 +1,19 @@
+---
+source: rojo-test/src/serve_test.rs
+expression: "subscribe_response.intern_and_redact(&mut redactions, ())"
+---
+messageCursor: 1
+messages:
+  - removedInstances: []
+    addedInstances:
+      id-3:
+        Id: id-3
+        Parent: id-2
+        Name: my-new-folder
+        ClassName: Folder
+        Properties: {}
+        Children: []
+        Metadata:
+          ignoreUnknownInstances: false
+    updatedInstances: []
+sessionId: id-1

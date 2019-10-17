@@ -1,0 +1,16 @@
+---
+source: rojo-test/src/serve_test.rs
+expression: "read_response.intern_and_redact(&mut redactions, root_id)"
+---
+instances:
+  id-2:
+    Id: id-2
+    Parent: ~
+    Name: add_folder
+    ClassName: Folder
+    Properties: {}
+    Children: []
+    Metadata:
+      ignoreUnknownInstances: false
+messageCursor: 0
+sessionId: id-1

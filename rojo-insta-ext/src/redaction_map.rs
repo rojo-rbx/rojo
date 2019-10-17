@@ -18,6 +18,16 @@ impl RedactionMap {
         }
     }
 
+    pub fn get_redacted_value(&self, id: impl ToString) -> Option<String> {
+        let id = id.to_string();
+
+        if self.ids.contains_key(&id) {
+            Some(id)
+        } else {
+            None
+        }
+    }
+
     pub fn intern(&mut self, id: impl ToString) {
         let last_id = &mut self.last_id;
 
