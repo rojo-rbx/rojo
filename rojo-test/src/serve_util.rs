@@ -28,12 +28,6 @@ use crate::util::{
 pub fn run_serve_test(test_name: &str, callback: impl FnOnce(TestServeSession, RedactionMap)) {
     let _ = env_logger::try_init();
 
-    let mut settings = insta::Settings::new();
-
-    let snapshot_path = Path::new(env!("CARGO_MANIFEST_DIR")).join("serve-test-snapshots");
-    settings.set_snapshot_path(snapshot_path);
-    settings.set_sort_maps(true);
-
     let mut redactions = RedactionMap::new();
 
     let mut session = TestServeSession::new(test_name);
@@ -42,6 +36,11 @@ pub fn run_serve_test(test_name: &str, callback: impl FnOnce(TestServeSession, R
     redactions.intern(info.session_id);
     redactions.intern(info.root_instance_id);
 
+    let mut settings = insta::Settings::new();
+
+    let snapshot_path = Path::new(env!("CARGO_MANIFEST_DIR")).join("serve-test-snapshots");
+    settings.set_snapshot_path(snapshot_path);
+    settings.set_sort_maps(true);
     settings.bind(move || callback(session, redactions));
 }
 
