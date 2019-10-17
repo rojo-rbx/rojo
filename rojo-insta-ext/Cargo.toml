@@ -8,7 +8,3 @@ publish = false
 [dependencies]
 serde = "1.0.99"
 serde_yaml = "0.8.9"
-
-[dependencies.insta]
-version = "0.11.0"
-features = ["redactions"]

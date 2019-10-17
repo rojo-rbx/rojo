@@ -1599,7 +1599,6 @@ dependencies = [
 name = "rojo-insta-ext"
 version = "0.1.0"
 dependencies = [
- "insta 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.101 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_yaml 0.8.9 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
