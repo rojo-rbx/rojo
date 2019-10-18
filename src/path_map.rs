@@ -1,6 +1,6 @@
 use std::{
     collections::{HashMap, HashSet},
-    path::{self, Path, PathBuf},
+    path::{Path, PathBuf},
 };
 
 use log::warn;
@@ -115,45 +115,6 @@ impl<T> PathMap<T> {
         }
 
         removed_entries
-    }
-
-    /// Traverses the route between `start_path` and `target_path` and returns
-    /// the path closest to `target_path` in the tree.
-    ///
-    /// This is useful when trying to determine what paths need to be marked as
-    /// altered when a change to a path is registered. Depending on the order of
-    /// FS events, a file remove event could be followed by that file's
-    /// directory being removed, in which case we should process that
-    /// directory's parent.
-    pub fn descend(
-        &self,
-        start_path: impl Into<PathBuf>,
-        target_path: impl AsRef<Path>,
-    ) -> PathBuf {
-        let start_path = start_path.into();
-        let target_path = target_path.as_ref();
-
-        let relative_path = target_path
-            .strip_prefix(&start_path)
-            .expect("target_path did not begin with start_path");
-        let mut current_path = start_path;
-
-        for component in relative_path.components() {
-            match component {
-                path::Component::Normal(name) => {
-                    let next_path = current_path.join(name);
-
-                    if self.nodes.contains_key(&next_path) {
-                        current_path = next_path;
-                    } else {
-                        return current_path;
-                    }
-                }
-                _ => unreachable!(),
-            }
-        }
-
-        current_path
     }
 
     pub fn orphans(&self) -> impl Iterator<Item = &Path> {
