@@ -365,6 +365,7 @@ impl<F: VfsFetcher> UiService<F> {
         html! {
             <html>
                 <head>
+                    <meta charset="utf8" />
                     <title>"Rojo Live Server"</title>
                     <link rel="icon" type="image/png" sizes="32x32" href="/icon.png" />
                     <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1" />
@@ -411,7 +412,7 @@ impl<'a> ExpandableSection<'a> {
         }
 
         html! {
-            <section class="instance-properties-section">
+            <section class="expandable-section">
                 { input }
 
                 <h1 class="expandable-label">

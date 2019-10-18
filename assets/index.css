@@ -94,10 +94,6 @@ img {
 }
 
 .instance {
-  border: 1px solid #666;
-  border-right-style: none;
-  border-bottom-style: none;
-  background-color: #fff;
   margin-bottom: 0.5rem;
 }
 
@@ -106,16 +102,12 @@ img {
   padding: 0.5rem;
 }
 
-.instance-metadata {
-  padding: 0.5rem;
+.expandable-section {
+  margin: 0.25rem 0.5rem;
 }
 
-.instance-properties {
-  padding: 0.5rem;
-}
-
-.instance-children {
-  padding: 0.5rem 0 0.5rem 1rem;
+.expandable-items {
+  padding: 0.5rem 1rem;
 }
 
 .expandable-input {
@@ -124,30 +116,36 @@ img {
 
 .expandable-label > label {
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  align-content: center;
 }
 
 .expandable-input ~ .expandable-label .expandable-visualizer {
   font-family: monospace;
   display: inline-flex;
-  justify-content: center;
   align-items: center;
   align-content: center;
+  text-align: center;
   width: 1rem;
   height: 1rem;
-  border: 1px solid #666;
+  font-size: 2rem;
   margin: 0 0.5rem;
+  transition: transform 100ms ease-in-out;
+  transform-origin: 60% 60%;
 }
 
 .expandable-visualizer::before {
-  content: "";
+  content: "›";
+  font-weight: bold;
 }
 
-.expandable-input:checked ~ .expandable-label .expandable-visualizer::before {
-  content: "-";
+.expandable-input:checked ~ .expandable-label {
+  border-bottom: 1px solid #bbb;
 }
 
-.expandable-input:not(:checked) ~ .expandable-label .expandable-visualizer::before {
-  content: "+";
+.expandable-input:checked ~ .expandable-label .expandable-visualizer {
+  transform: rotate(90deg);
 }
 
 .expandable-input:not(:checked) ~ .expandable-items {
