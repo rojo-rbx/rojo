@@ -71,7 +71,7 @@ impl<F: VfsFetcher> UiService<F> {
         let page = self.normal_page(html! {
             <div class="button-list">
                 { Self::button("Rojo Documentation", "https://rojo.space/docs") }
-                { Self::button("View in-memory filesystem state", "/show-vfs") }
+                { Self::button("View virtual filesystem state", "/show-vfs") }
                 { Self::button("View instance tree state", "/show-instances") }
             </div>
         });

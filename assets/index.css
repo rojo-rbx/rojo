@@ -154,15 +154,15 @@ img {
   display: none;
 }
 
-.imfs-entry {
+.vfs-entry {
 }
 
-.imfs-entry-name {
+.vfs-entry-name {
   position: relative;
   font-family: monospace;
 }
 
-.imfs-entry-children .imfs-entry-name::before {
+.vfs-entry-children .vfs-entry-name::before {
   content: "";
   width: 0.6em;
   height: 1px;
@@ -172,11 +172,11 @@ img {
   left: -0.8em;
 }
 
-.imfs-entry-note {
+.vfs-entry-note {
   font-style: italic;
 }
 
-.imfs-entry-children {
+.vfs-entry-children {
   padding-left: 0.8em;
   margin-left: 0.2em;
   border-left: 1px solid #999;
