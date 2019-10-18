@@ -36,7 +36,7 @@ impl SnapshotMiddleware for SnapshotJsonModel {
             serde_json::from_slice(&entry.contents(vfs)?).expect("TODO: Handle serde_json errors");
 
         if let Some(json_name) = &instance.name {
-            if json_name != &instance_name {
+            if json_name != instance_name {
                 log::warn!(
                     "Name from JSON model did not match its file name: {}",
                     entry.path().display()

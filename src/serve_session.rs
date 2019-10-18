@@ -78,14 +78,14 @@ impl<F: VfsFetcher + Send + Sync + 'static> ServeSession<F> {
     /// The project file is expected to be loaded out-of-band since it's
     /// currently loaded from the filesystem directly instead of through the
     /// in-memory filesystem layer.
-    pub fn new<P: AsRef<Path>>(mut vfs: Vfs<F>, start_path: P) -> Self {
+    pub fn new<P: AsRef<Path>>(vfs: Vfs<F>, start_path: P) -> Self {
         let start_path = start_path.as_ref();
 
         log::trace!("Starting new ServeSession at path {}", start_path.display(),);
 
         let start_time = Instant::now();
 
-        let (root_project, tree) = common_setup::start(start_path, &mut vfs);
+        let (root_project, tree) = common_setup::start(start_path, &vfs);
 
         let session_id = SessionId::new();
         let message_queue = MessageQueue::new();

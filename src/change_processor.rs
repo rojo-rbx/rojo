@@ -52,9 +52,15 @@ impl ChangeProcessor {
     ) {
         let vfs_receiver = vfs.change_receiver();
 
-        // Crossbeam's select macro generates code that Clippy doesn't like, and
-        // Clippy blames us for it.
-        #[allow(clippy::drop_copy)]
+        #[allow(
+            // Crossbeam's select macro generates code that Clippy doesn't like,
+            // and Clippy blames us for it.
+            clippy::drop_copy,
+
+            // Crossbeam uses 0 as *const _ and Clippy doesn't like that either,
+            // but this isn't our fault.
+            clippy::zero_ptr,
+        )]
         loop {
             select! {
                 recv(vfs_receiver) -> event => {
@@ -142,12 +148,9 @@ fn update_affected_instances<F: VfsFetcher>(
                 // TODO: Use persisted snapshot
                 // context struct instead of
                 // recreating it every time.
-                let snapshot =
-                    snapshot_from_vfs(&mut InstanceSnapshotContext::default(), &vfs, &entry)
-                        .expect("snapshot failed")
-                        .expect("snapshot did not return an instance");
-
-                snapshot
+                snapshot_from_vfs(&mut InstanceSnapshotContext::default(), &vfs, &entry)
+                    .expect("snapshot failed")
+                    .expect("snapshot did not return an instance")
             }
             InstigatingSource::ProjectNode(_, _) => {
                 log::warn!("Instance {} had an instigating source that was a project node, which is not yet supported.", id);

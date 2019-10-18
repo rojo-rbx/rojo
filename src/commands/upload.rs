@@ -44,9 +44,9 @@ pub fn upload(options: UploadOptions) -> Result<(), UploadError> {
         .ok_or(UploadError::NeedAuthCookie)?;
 
     log::trace!("Constructing in-memory filesystem");
-    let mut vfs = Vfs::new(RealFetcher::new(WatchMode::Disabled));
+    let vfs = Vfs::new(RealFetcher::new(WatchMode::Disabled));
 
-    let (_maybe_project, tree) = common_setup::start(&options.fuzzy_project_path, &mut vfs);
+    let (_maybe_project, tree) = common_setup::start(&options.fuzzy_project_path, &vfs);
     let root_id = tree.get_root_id();
 
     let mut buffer = Vec::new();

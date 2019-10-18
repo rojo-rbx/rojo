@@ -39,12 +39,10 @@ impl<F: VfsFetcher> Service for ApiService<F> {
             (&Method::GET, path) if path.starts_with("/api/subscribe/") => {
                 self.handle_api_subscribe(request)
             }
-            (_method, path) => {
-                return json(
-                    ErrorResponse::not_found(format!("Route not found: {}", path)),
-                    StatusCode::NOT_FOUND,
-                )
-            }
+            (_method, path) => json(
+                ErrorResponse::not_found(format!("Route not found: {}", path)),
+                StatusCode::NOT_FOUND,
+            ),
         }
     }
 }

@@ -67,7 +67,7 @@ pub struct Instance<'a> {
 }
 
 impl<'a> Instance<'a> {
-    pub(crate) fn from_rojo_instance<'b>(source: InstanceWithMeta<'b>) -> Instance<'b> {
+    pub(crate) fn from_rojo_instance(source: InstanceWithMeta<'_>) -> Instance<'_> {
         Instance {
             id: source.id(),
             parent: source.parent(),

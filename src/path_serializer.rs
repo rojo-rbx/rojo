@@ -91,7 +91,7 @@ where
 #[derive(Serialize)]
 struct WithAbsolute<'a>(#[serde(serialize_with = "serialize_absolute")] &'a Path);
 
-pub fn serialize_vec_absolute<S, T>(paths: &Vec<T>, serializer: S) -> Result<S::Ok, S::Error>
+pub fn serialize_vec_absolute<S, T>(paths: &[T], serializer: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
     T: AsRef<Path>,

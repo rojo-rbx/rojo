@@ -36,6 +36,8 @@ impl SnapshotMiddleware for SnapshotLua {
         if entry.is_file() {
             snapshot_lua_file(vfs, entry)
         } else {
+            // At this point, our entry is definitely a directory!
+
             if let Some(snapshot) = snapshot_init(context, vfs, entry, "init.lua")? {
                 // An `init.lua` file turns its parent into a ModuleScript
                 Ok(Some(snapshot))

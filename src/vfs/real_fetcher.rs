@@ -220,6 +220,6 @@ impl VfsFetcher for RealFetcher {
 
     fn watched_paths(&self) -> Vec<PathBuf> {
         let watched_paths = self.watched_paths.lock().unwrap();
-        watched_paths.iter().map(|v| v.clone()).collect()
+        watched_paths.iter().cloned().collect()
     }
 }

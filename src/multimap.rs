@@ -31,7 +31,7 @@ impl<K: Hash + Eq, V: Eq> MultiMap<K, V> {
         let bucket = self.inner.entry(k).or_default();
 
         for value in &*bucket {
-            if &*value == &v {
+            if *value == v {
                 return;
             }
         }
@@ -49,7 +49,7 @@ impl<K: Hash + Eq, V: Eq> MultiMap<K, V> {
                 removed_value = Some(bucket.swap_remove(index));
             }
 
-            if bucket.len() == 0 {
+            if bucket.is_empty() {
                 self.inner.remove(k.borrow());
             }
 

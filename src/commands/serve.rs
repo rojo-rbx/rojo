@@ -65,7 +65,7 @@ fn show_start_message(port: u16) -> io::Result<()> {
     buffer.set_color(ColorSpec::new().set_fg(Some(Color::Green)).set_bold(true))?;
     writeln!(&mut buffer, "{}", port)?;
 
-    writeln!(&mut buffer, "")?;
+    writeln!(&mut buffer)?;
 
     buffer.set_color(&ColorSpec::new())?;
     write!(&mut buffer, "Visit ")?;

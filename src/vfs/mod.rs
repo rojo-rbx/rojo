@@ -4,6 +4,9 @@ mod fetcher;
 mod noop_fetcher;
 mod real_fetcher;
 mod snapshot;
+
+// I don't think module inception is a real problem?
+#[allow(clippy::module_inception)]
 mod vfs;
 
 pub use error::*;

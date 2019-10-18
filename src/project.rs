@@ -11,10 +11,10 @@ use log::warn;
 use rbx_dom_weak::{RbxValue, UnresolvedRbxValue};
 use serde::{Deserialize, Serialize, Serializer};
 
-static DEFAULT_PLACE: &'static str = include_str!("../assets/place.project.json");
+static DEFAULT_PLACE: &str = include_str!("../assets/place.project.json");
 
-pub static PROJECT_FILENAME: &'static str = "default.project.json";
-pub static COMPAT_PROJECT_FILENAME: &'static str = "roblox-project.json";
+pub static PROJECT_FILENAME: &str = "default.project.json";
+pub static COMPAT_PROJECT_FILENAME: &str = "roblox-project.json";
 
 /// SourceProject is the format that users author projects on-disk. Since we
 /// want to do things like transforming paths to be absolute before handing them

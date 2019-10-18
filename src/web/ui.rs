@@ -336,7 +336,7 @@ impl<F: VfsFetcher> UiService<F> {
 
             // Round off all of our sub-second precision to make timestamps
             // nicer.
-            let just_nanos = Duration::from_nanos(elapsed.subsec_nanos() as u64);
+            let just_nanos = Duration::from_nanos(u64::from(elapsed.subsec_nanos()));
             let elapsed = elapsed - just_nanos;
 
             humantime::format_duration(elapsed).to_string()

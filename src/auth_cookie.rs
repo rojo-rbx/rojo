@@ -13,7 +13,7 @@ pub fn get_auth_cookie() -> Option<String> {
     let entry: String = cookies.get_value(".ROBLOSECURITY").ok()?;
     let mut cookie = None;
 
-    for kv_pair in entry.split(",") {
+    for kv_pair in entry.split(',') {
         let mut pieces = kv_pair.split("::");
 
         if let Some("COOK") = pieces.next() {

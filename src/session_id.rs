@@ -1,3 +1,6 @@
+// Default doesn't make sense for a type whose constructor is random.
+#![allow(clippy::new_without_default)]
+
 use std::fmt;
 
 use serde::{Deserialize, Serialize};
