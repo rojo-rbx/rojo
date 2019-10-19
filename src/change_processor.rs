@@ -12,7 +12,7 @@ use rbx_dom_weak::RbxId;
 use crate::{
     message_queue::MessageQueue,
     snapshot::{apply_patch_set, compute_patch_set, AppliedPatchSet, InstigatingSource, RojoTree},
-    snapshot_middleware::{snapshot_from_vfs, InstanceSnapshotContext},
+    snapshot_middleware::{snapshot_from_vfs, snapshot_project_node, InstanceSnapshotContext},
     vfs::{Vfs, VfsEvent, VfsFetcher},
 };
 
@@ -139,22 +139,24 @@ fn update_affected_instances<F: VfsFetcher>(
             }
         };
 
+        // TODO: Use persisted snapshot context struct instead of recreating it
+        // every time.
+        let mut snapshot_context = InstanceSnapshotContext::default();
+
         let snapshot = match instigating_source {
             InstigatingSource::Path(path) => {
                 let entry = vfs
                     .get(path)
                     .expect("could not get instigating path from filesystem");
 
-                // TODO: Use persisted snapshot
-                // context struct instead of
-                // recreating it every time.
-                snapshot_from_vfs(&mut InstanceSnapshotContext::default(), &vfs, &entry)
+                snapshot_from_vfs(&mut snapshot_context, &vfs, &entry)
                     .expect("snapshot failed")
                     .expect("snapshot did not return an instance")
             }
-            InstigatingSource::ProjectNode(_, _) => {
-                log::warn!("Instance {} had an instigating source that was a project node, which is not yet supported.", id);
-                continue;
+            InstigatingSource::ProjectNode(instance_name, project_node) => {
+                snapshot_project_node(&mut snapshot_context, instance_name, project_node, &vfs)
+                    .expect("snapshot failed")
+                    .expect("snapshot did not return an instance")
             }
         };
 

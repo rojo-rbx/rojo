@@ -39,6 +39,8 @@ use self::{
 };
 use crate::vfs::{Vfs, VfsEntry, VfsFetcher};
 
+pub use self::project::snapshot_project_node;
+
 macro_rules! middlewares {
     ( $($middleware: ident,)* ) => {
         /// Generates a snapshot of instances from the given VfsEntry.

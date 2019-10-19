@@ -311,4 +311,57 @@ mod serve_session {
             view_tree(&session.tree(), &mut redactions)
         );
     }
+
+    #[test]
+    fn change_file_in_project() {
+        let (state, fetcher) = TestFetcher::new();
+
+        state.load_snapshot(
+            "/foo",
+            VfsSnapshot::dir(hashmap! {
+                "default.project.json" => VfsSnapshot::file(r#"
+                {
+                    "name": "change_file_in_project",
+                    "tree": {
+                        "$className": "Folder",
+
+                        "Child": {
+                            "$path": "file.txt"
+                        }
+                    }
+                }
+            "#),
+                "file.txt" => VfsSnapshot::file("initial content"),
+            }),
+        );
+
+        let vfs = Vfs::new(fetcher);
+        let session = ServeSession::new(vfs, "/foo");
+
+        let mut redactions = RedactionMap::new();
+        assert_yaml_snapshot!(
+            "change_file_in_project_before",
+            view_tree(&session.tree(), &mut redactions)
+        );
+
+        state.load_snapshot("/foo/file.txt", VfsSnapshot::file("Changed!"));
+
+        let receiver = session.message_queue().subscribe_any();
+
+        state.raise_event(VfsEvent::Modified(PathBuf::from("/foo/file.txt")));
+
+        let receiver = Timeout::new(receiver, Duration::from_millis(200));
+
+        let mut rt = Runtime::new().unwrap();
+        let result = rt.block_on(receiver).unwrap();
+
+        assert_yaml_snapshot!(
+            "change_file_in_project_patch",
+            redactions.redacted_yaml(result)
+        );
+        assert_yaml_snapshot!(
+            "change_file_in_project_after",
+            view_tree(&session.tree(), &mut redactions)
+        );
+    }
 }

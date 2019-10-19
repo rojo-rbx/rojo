@@ -76,7 +76,7 @@ impl SnapshotMiddleware for SnapshotProject {
     }
 }
 
-fn snapshot_project_node<F: VfsFetcher>(
+pub fn snapshot_project_node<F: VfsFetcher>(
     context: &mut InstanceSnapshotContext,
     instance_name: &str,
     node: &ProjectNode,
