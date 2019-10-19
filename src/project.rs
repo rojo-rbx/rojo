@@ -269,6 +269,8 @@ pub struct ProjectNode {
     pub children: BTreeMap<String, ProjectNode>,
     pub properties: HashMap<String, UnresolvedRbxValue>,
     pub ignore_unknown_instances: Option<bool>,
+
+    #[serde(serialize_with = "crate::path_serializer::serialize_option_absolute")]
     pub path: Option<PathBuf>,
 }
 

@@ -36,3 +36,17 @@ where
 
     seq.end()
 }
+
+pub fn serialize_option_absolute<S, T>(
+    maybe_path: &Option<T>,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+    T: AsRef<Path>,
+{
+    match maybe_path {
+        Some(path) => serialize_absolute(path, serializer),
+        None => serializer.serialize_none(),
+    }
+}
