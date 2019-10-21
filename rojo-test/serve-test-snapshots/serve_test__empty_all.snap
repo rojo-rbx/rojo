@@ -4,13 +4,13 @@ expression: "read_response.intern_and_redact(&mut redactions, root_id)"
 ---
 instances:
   id-2:
-    Id: id-2
-    Parent: ~
-    Name: empty
-    ClassName: Folder
-    Properties: {}
     Children: []
+    ClassName: Folder
+    Id: id-2
     Metadata:
       ignoreUnknownInstances: true
+    Name: empty
+    Parent: ~
+    Properties: {}
 messageCursor: 0
 sessionId: id-1

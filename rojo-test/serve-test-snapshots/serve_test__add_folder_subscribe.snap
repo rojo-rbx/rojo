@@ -4,16 +4,16 @@ expression: "subscribe_response.intern_and_redact(&mut redactions, ())"
 ---
 messageCursor: 1
 messages:
-  - removedInstances: []
-    addedInstances:
+  - addedInstances:
       id-3:
-        Id: id-3
-        Parent: id-2
-        Name: my-new-folder
-        ClassName: Folder
-        Properties: {}
         Children: []
+        ClassName: Folder
+        Id: id-3
         Metadata:
           ignoreUnknownInstances: false
+        Name: my-new-folder
+        Parent: id-2
+        Properties: {}
+    removedInstances: []
     updatedInstances: []
 sessionId: id-1

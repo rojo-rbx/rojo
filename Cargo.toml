@@ -88,5 +88,5 @@ walkdir = "2.1"
 criterion = "0.3"
 
 [dev-dependencies.insta]
-version = "0.11.0"
+git = "https://github.com/mitsuhiko/insta"
 features = ["redactions"]

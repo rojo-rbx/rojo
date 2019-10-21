@@ -1,18 +1,18 @@
 ---
 source: rojo-test/src/serve_test.rs
-expression: redactions.redacted_yaml(subscribe_response)
+expression: "subscribe_response.intern_and_redact(&mut redactions, ())"
 ---
 messageCursor: 1
 messages:
-  - removedInstances: []
-    addedInstances: {}
+  - addedInstances: {}
+    removedInstances: []
     updatedInstances:
-      - id: id-4
+      - changedClassName: ~
+        changedMetadata: ~
         changedName: ~
-        changedClassName: ~
         changedProperties:
           Source:
             Type: String
             Value: Updated foo!
-        changedMetadata: ~
+        id: id-4
 sessionId: id-1

@@ -23,5 +23,5 @@ rojo-insta-ext = { path = "../rojo-insta-ext" }
 rojo = { path = ".." }
 
 [dependencies.insta]
-version = "0.11.0"
+git = "https://github.com/mitsuhiko/insta"
 features = ["redactions"]

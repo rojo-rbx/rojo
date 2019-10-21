@@ -4,39 +4,39 @@ expression: "read_response.intern_and_redact(&mut redactions, root_id)"
 ---
 instances:
   id-2:
-    Id: id-2
-    Parent: ~
-    Name: scripts
-    ClassName: Folder
-    Properties: {}
     Children:
       - id-3
       - id-4
+    ClassName: Folder
+    Id: id-2
     Metadata:
       ignoreUnknownInstances: false
+    Name: scripts
+    Parent: ~
+    Properties: {}
   id-3:
-    Id: id-3
-    Parent: id-2
-    Name: bar
+    Children: []
     ClassName: Script
+    Id: id-3
+    Metadata:
+      ignoreUnknownInstances: false
+    Name: bar
+    Parent: id-2
     Properties:
       Source:
         Type: String
         Value: "-- Hello, from bar!"
+  id-4:
     Children: []
+    ClassName: ModuleScript
+    Id: id-4
     Metadata:
       ignoreUnknownInstances: false
-  id-4:
-    Id: id-4
-    Parent: id-2
     Name: foo
-    ClassName: ModuleScript
+    Parent: id-2
     Properties:
       Source:
         Type: String
         Value: "-- Hello, from foo!"
-    Children: []
-    Metadata:
-      ignoreUnknownInstances: false
 messageCursor: 0
 sessionId: id-1

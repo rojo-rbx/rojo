@@ -4,16 +4,16 @@ expression: "read_response.intern_and_redact(&mut redactions, root_id)"
 ---
 instances:
   id-2:
-    Id: id-2
-    Parent: ~
-    Name: just_txt
+    Children: []
     ClassName: StringValue
+    Id: id-2
+    Metadata:
+      ignoreUnknownInstances: false
+    Name: just_txt
+    Parent: ~
     Properties:
       Value:
         Type: String
         Value: "Hello, world!"
-    Children: []
-    Metadata:
-      ignoreUnknownInstances: false
 messageCursor: 0
 sessionId: id-1
