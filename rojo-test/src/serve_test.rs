@@ -102,7 +102,6 @@ fn add_folder() {
 }
 
 #[test]
-#[ignore]
 fn move_folder_of_stuff() {
     run_serve_test("move_folder_of_stuff", |session, mut redactions| {
         let info = session.get_api_rojo().unwrap();
