@@ -1,5 +1,5 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{BTreeSet, HashMap},
     path::{Path, PathBuf},
 };
 
@@ -9,7 +9,7 @@ use serde::Serialize;
 #[derive(Debug, Serialize)]
 struct PathMapNode<T> {
     value: T,
-    children: HashSet<PathBuf>,
+    children: BTreeSet<PathBuf>,
 }
 
 /// A map from paths to another type, like instance IDs, with a bit of
@@ -25,7 +25,7 @@ pub struct PathMap<T> {
     /// Note that these paths may have other _ancestors_ in the tree, but if an
     /// orphan's parent path is ever inserted, it will stop being an orphan. It
     /// will be... adopted!
-    orphan_paths: HashSet<PathBuf>,
+    orphan_paths: BTreeSet<PathBuf>,
 }
 
 impl<T> Default for PathMap<T> {
@@ -38,7 +38,7 @@ impl<T> PathMap<T> {
     pub fn new() -> PathMap<T> {
         PathMap {
             nodes: HashMap::new(),
-            orphan_paths: HashSet::new(),
+            orphan_paths: BTreeSet::new(),
         }
     }
 
@@ -67,7 +67,7 @@ impl<T> PathMap<T> {
 
         // Collect any children that are currently marked as orphaned paths, but
         // are actually children of this new node.
-        let mut children = HashSet::new();
+        let mut children = BTreeSet::new();
         for orphan_path in &self.orphan_paths {
             if orphan_path.parent() == Some(&path) {
                 children.insert(orphan_path.clone());
@@ -158,7 +158,7 @@ impl<T> PathMap<T> {
 mod test {
     use super::*;
 
-    use maplit::hashset;
+    use maplit::btreeset;
 
     #[test]
     fn smoke_test() {
@@ -179,10 +179,10 @@ mod test {
         let mut map = PathMap::new();
 
         map.insert("/foo/bar", 5);
-        assert_eq!(map.orphan_paths, hashset!["/foo/bar".into()]);
+        assert_eq!(map.orphan_paths, btreeset!["/foo/bar".into()]);
 
         map.insert("/foo", 6);
-        assert_eq!(map.orphan_paths, hashset!["/foo".into()]);
+        assert_eq!(map.orphan_paths, btreeset!["/foo".into()]);
     }
 
     #[test]
@@ -245,5 +245,38 @@ mod test {
 
         assert_eq!(map.get("/foo"), None);
         assert_eq!(map.get("/foo/bar/baz"), Some(&12));
+    }
+
+    // Makes sure that regardless of addition order, paths are always sorted
+    // when asking for children.
+    #[test]
+    fn add_order_sorted() {
+        let mut map = PathMap::new();
+
+        map.insert("/foo", 5);
+        map.insert("/foo/b", 2);
+        map.insert("/foo/d", 0);
+        map.insert("/foo/c", 3);
+
+        assert_eq!(
+            map.children("/foo"),
+            Some(vec![
+                Path::new("/foo/b"),
+                Path::new("/foo/c"),
+                Path::new("/foo/d"),
+            ])
+        );
+
+        map.insert("/foo/a", 1);
+
+        assert_eq!(
+            map.children("/foo"),
+            Some(vec![
+                Path::new("/foo/a"),
+                Path::new("/foo/b"),
+                Path::new("/foo/c"),
+                Path::new("/foo/d"),
+            ])
+        );
     }
 }
