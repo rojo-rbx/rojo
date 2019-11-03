@@ -17,14 +17,6 @@ lazy_static! {
 }
 
 #[test]
-fn empty() {
-    let project_file_location = TEST_PROJECTS_ROOT.join("empty/default.project.json");
-    let project = Project::load_exact(&project_file_location).unwrap();
-
-    assert_eq!(project.name, "empty");
-}
-
-#[test]
 fn empty_fuzzy_file() {
     let project_file_location = TEST_PROJECTS_ROOT.join("empty/default.project.json");
     let project = Project::load_fuzzy(&project_file_location).unwrap();

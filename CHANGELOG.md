@@ -14,6 +14,9 @@
 * Added support for automatically finding Roblox Studio's auth cookie for `rojo upload` on Windows.
 * Added support for building, serving and uploading sources that aren't Rojo projects.
 * Improved feedback from `rojo serve`.
+* Removed support for legacy `roblox-project.json` projects, deprecated in an early Rojo 0.5.0 alpha.
+* Rojo no longer traverses directories upwards looking for project files.
+    * Though undocumented, Rojo 0.5.x will search for a project file contained in any ancestor folders. This feature was removed to better support other 0.6.x features.
 
 ### Roblox Studio Plugin
 * Added "connecting" state to improve experience when live syncing.

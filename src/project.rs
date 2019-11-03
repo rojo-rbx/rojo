@@ -432,30 +432,32 @@ impl Project {
         Ok(project_path)
     }
 
-    fn locate(start_location: &Path) -> Option<PathBuf> {
-        // TODO: Check for specific error kinds, convert 'not found' to Result.
-        let location_metadata = fs::metadata(start_location).ok()?;
+    /// Attempt to locate a project represented by the given path.
+    ///
+    /// This will find a project if the path refers to a `.project.json` file,
+    /// or is a folder that contains a `default.project.json` file.
+    fn locate(path: &Path) -> Option<PathBuf> {
+        let meta = fs::metadata(path).ok()?;
 
-        // If this is a file, assume it's the config the user was looking for.
-        if location_metadata.is_file() {
-            if Project::is_project_file(start_location) {
-                return Some(start_location.to_path_buf());
+        if meta.is_file() {
+            if Project::is_project_file(path) {
+                Some(path.to_path_buf())
             } else {
-                return None;
+                None
             }
         } else {
-            let with_file = start_location.join(PROJECT_FILENAME);
+            let child_path = path.join(PROJECT_FILENAME);
+            let child_meta = fs::metadata(&child_path).ok()?;
 
-            if let Ok(file_metadata) = fs::metadata(&with_file) {
-                if file_metadata.is_file() {
-                    return Some(with_file);
-                }
+            if child_meta.is_file() {
+                Some(child_path)
+            } else {
+                // This is a folder with the same name as a Rojo default project
+                // file.
+                //
+                // That's pretty weird, but we can roll with it.
+                None
             }
-        }
-
-        match start_location.parent() {
-            Some(parent_location) => Self::locate(parent_location),
-            None => None,
         }
     }
 
