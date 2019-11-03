@@ -14,7 +14,6 @@ use serde::{Deserialize, Serialize, Serializer};
 static DEFAULT_PLACE: &str = include_str!("../assets/place.project.json");
 
 pub static PROJECT_FILENAME: &str = "default.project.json";
-pub static COMPAT_PROJECT_FILENAME: &str = "roblox-project.json";
 
 /// SourceProject is the format that users author projects on-disk. Since we
 /// want to do things like transforming paths to be absolute before handing them
@@ -444,20 +443,12 @@ impl Project {
             } else {
                 return None;
             }
-        } else if location_metadata.is_dir() {
+        } else {
             let with_file = start_location.join(PROJECT_FILENAME);
 
             if let Ok(file_metadata) = fs::metadata(&with_file) {
                 if file_metadata.is_file() {
                     return Some(with_file);
-                }
-            }
-
-            let with_compat_file = start_location.join(COMPAT_PROJECT_FILENAME);
-
-            if let Ok(file_metadata) = fs::metadata(&with_compat_file) {
-                if file_metadata.is_file() {
-                    return Some(with_compat_file);
                 }
             }
         }
@@ -495,7 +486,7 @@ impl Project {
         }
     }
 
-    pub fn load_exact(project_file_location: &Path) -> Result<Project, ProjectLoadError> {
+    fn load_exact(project_file_location: &Path) -> Result<Project, ProjectLoadError> {
         let contents =
             fs::read_to_string(project_file_location).map_err(|error| match error.kind() {
                 io::ErrorKind::NotFound => ProjectLoadError::NotFound,
@@ -512,6 +503,7 @@ impl Project {
             })?;
 
         let project = parsed.into_project(project_file_location);
+
         project.check_compatibility();
 
         Ok(project)
@@ -530,24 +522,6 @@ impl Project {
     /// Checks if there are any compatibility issues with this project file and
     /// warns the user if there are any.
     fn check_compatibility(&self) {
-        let file_name = self
-            .file_location
-            .file_name()
-            .expect("Project file path did not have a file name")
-            .to_str()
-            .expect("Project file path was not valid Unicode");
-
-        if file_name == COMPAT_PROJECT_FILENAME {
-            warn!("Rojo's default project file name changed in 0.5.0-alpha3.");
-            warn!("Support for the old project file name will be dropped before 0.5.0 releases.");
-            warn!("Your project file is named {}", COMPAT_PROJECT_FILENAME);
-            warn!("Rename your project file to {}", PROJECT_FILENAME);
-        } else if !file_name.ends_with(".project.json") {
-            warn!("Starting in Rojo 0.5.0-alpha3, it's recommended to give all project files the");
-            warn!(".project.json extension. This helps Rojo differentiate project files from");
-            warn!("other JSON files!");
-        }
-
         self.tree.validate_reserved_names();
     }
 
