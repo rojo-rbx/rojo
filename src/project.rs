@@ -360,7 +360,7 @@ impl Project {
                 .expect("Path had invalid Unicode")
         };
 
-        let mut project = Project::load_from_str(DEFAULT_PLACE, &project_path)
+        let mut project = Project::load_from_slice(DEFAULT_PLACE.as_bytes(), &project_path)
             .map_err(ProjectInitError::JsonError)?;
 
         project.name = project_name.to_owned();
@@ -459,15 +459,6 @@ impl Project {
                 None
             }
         }
-    }
-
-    fn load_from_str(
-        contents: &str,
-        project_file_location: &Path,
-    ) -> Result<Project, serde_json::Error> {
-        let parsed: SourceProject = serde_json::from_str(&contents)?;
-
-        Ok(parsed.into_project(project_file_location))
     }
 
     pub fn load_from_slice(
