@@ -108,27 +108,29 @@ impl<F: VfsFetcher> Vfs<F> {
             VfsItem::Directory(dir) => {
                 self.fetcher.watch(path);
 
-                let enumerated = dir.children_enumerated;
-
-                if enumerated {
-                    data.children(path)
-                        .unwrap() // TODO: Handle None here, which means the PathMap entry did not exist.
-                        .into_iter()
-                        .map(PathBuf::from) // Convert paths from &Path to PathBuf
-                        .collect::<Vec<PathBuf>>() // Collect all PathBufs, since self.get needs to borrow self mutably.
-                        .into_iter()
-                        .map(|path| Self::get_internal(&mut data, &self.fetcher, path))
-                        .collect::<FsResult<Vec<VfsEntry>>>()
-                } else {
+                // If the directory hasn't been marked as enumerated yet, find
+                // all of its children and insert them into the VFS.
+                if !dir.children_enumerated {
                     dir.children_enumerated = true;
 
-                    self.fetcher
+                    let children = self
+                        .fetcher
                         .read_children(path)
-                        .map_err(|err| FsError::new(err, path.to_path_buf()))?
-                        .into_iter()
-                        .map(|path| Self::get_internal(&mut data, &self.fetcher, path))
-                        .collect::<FsResult<Vec<VfsEntry>>>()
+                        .map_err(|err| FsError::new(err, path.to_path_buf()))?;
+
+                    for path in children {
+                        Self::get_internal(&mut data, &self.fetcher, path)?;
+                    }
                 }
+
+                data.children(path)
+                    .unwrap() // TODO: Handle None here, which means the PathMap entry did not exist.
+                    .into_iter()
+                    .map(PathBuf::from) // Convert paths from &Path to PathBuf
+                    .collect::<Vec<PathBuf>>() // Collect all PathBufs, since self.get needs to borrow self mutably.
+                    .into_iter()
+                    .map(|path| Self::get_internal(&mut data, &self.fetcher, path))
+                    .collect::<FsResult<Vec<VfsEntry>>>()
             }
             VfsItem::File(_) => Err(FsError::new(
                 io::Error::new(io::ErrorKind::Other, "Can't read a directory"),
