@@ -483,7 +483,6 @@ impl Project {
         if let Some(project_path) = Self::locate(fuzzy_project_location) {
             Self::load_exact(&project_path)
         } else {
-            Project::warn_if_4x_project_present(fuzzy_project_location);
             Err(ProjectLoadError::NotFound)
         }
     }
@@ -525,21 +524,6 @@ impl Project {
     /// warns the user if there are any.
     fn check_compatibility(&self) {
         self.tree.validate_reserved_names();
-    }
-
-    /// Issues a warning if no Rojo 0.5.x project is found, but there's a legacy
-    /// 0.4.x project in the directory.
-    fn warn_if_4x_project_present(folder: &Path) {
-        let file_path = folder.join("rojo.json");
-
-        if fs::metadata(file_path).is_ok() {
-            warn!("No Rojo 0.5 project file was found, but a Rojo 0.4 project was.");
-            warn!("Rojo 0.5.x uses 'default.project.json' files");
-            warn!("Rojo 0.5.x uses 'rojo.json' files");
-            warn!("");
-            warn!("For help upgrading, see:");
-            warn!("https://lpghatguy.github.io/rojo/guide/migrating-to-epiphany/");
-        }
     }
 
     pub fn folder_location(&self) -> &Path {
