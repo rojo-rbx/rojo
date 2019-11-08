@@ -26,12 +26,14 @@ user-plugins = []
 members = [
     "rojo-test",
     "rojo-insta-ext",
+    "clibrojo",
 ]
 
 default-members = [
     ".",
     "rojo-test",
     "rojo-insta-ext",
+    "clibrojo",
 ]
 
 [lib]

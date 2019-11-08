@@ -1,6 +1,9 @@
 # Rust output directory
 /target
 
+# Headers for clibrojo
+/include
+
 # Roblox model and place files in the root, used for debugging
 /*.rbxm
 /*.rbxmx

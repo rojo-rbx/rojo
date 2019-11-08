@@ -182,6 +182,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "clibrojo"
+version = "0.1.0"
+dependencies = [
+ "rojo 0.6.0-dev",
+]
+
+[[package]]
 name = "clicolors-control"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
