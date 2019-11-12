@@ -102,6 +102,37 @@ fn add_folder() {
 }
 
 #[test]
+#[ignore] // TODO: Removing files currently hangs ChangeProcessor
+fn remove_file() {
+    run_serve_test("remove_file", |session, mut redactions| {
+        let info = session.get_api_rojo().unwrap();
+        let root_id = info.root_instance_id;
+
+        assert_yaml_snapshot!("remove_file_info", redactions.redacted_yaml(info));
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "remove_file_all",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+
+        fs::remove_file(session.path().join("hello.txt")).unwrap();
+
+        let subscribe_response = session.get_api_subscribe(0).unwrap();
+        assert_yaml_snapshot!(
+            "remove_file_subscribe",
+            subscribe_response.intern_and_redact(&mut redactions, ())
+        );
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "remove_file_all-2",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+    });
+}
+
+#[test]
 fn move_folder_of_stuff() {
     run_serve_test("move_folder_of_stuff", |session, mut redactions| {
         let info = session.get_api_rojo().unwrap();
