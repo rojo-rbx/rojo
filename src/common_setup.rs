@@ -1,7 +1,7 @@
 //! Initialization routines that are used by more than one Rojo command or
 //! utility.
 
-use std::path::Path;
+use std::{fs, path::Path};
 
 use rbx_dom_weak::RbxInstanceProperties;
 
@@ -19,7 +19,25 @@ pub fn start<F: VfsFetcher>(
     log::trace!("Loading project file from {}", fuzzy_project_path.display());
     let maybe_project = match Project::load_fuzzy(fuzzy_project_path) {
         Ok(project) => Some(project),
-        Err(ProjectLoadError::NotFound) => None,
+        Err(ProjectLoadError::NotFound) => {
+            // Check if any .project.json files exist here
+            if let Ok(files) = fs::read_dir(fuzzy_project_path) {
+                for file in files {
+                    if let Ok(file) = file {
+                        if file
+                            .file_name()
+                            .to_string_lossy()
+                            .ends_with(".project.json")
+                        {
+                            log::warn!("There exist project files in the directory, but you're not serving one of them!");
+                            break;
+                        }
+                    }
+                }
+            }
+
+            None
+        }
         Err(other) => panic!("{}", other), // TODO: return error upward
     };
 
