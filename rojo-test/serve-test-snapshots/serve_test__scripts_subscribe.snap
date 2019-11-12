@@ -4,9 +4,9 @@ expression: "subscribe_response.intern_and_redact(&mut redactions, ())"
 ---
 messageCursor: 1
 messages:
-  - addedInstances: {}
-    removedInstances: []
-    updatedInstances:
+  - added: {}
+    removed: []
+    updated:
       - changedClassName: ~
         changedMetadata: ~
         changedName: ~

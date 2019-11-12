@@ -23,9 +23,9 @@ pub const PROTOCOL_VERSION: u64 = 3;
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SubscribeMessage<'a> {
-    pub removed_instances: Vec<RbxId>,
-    pub added_instances: HashMap<RbxId, Instance<'a>>,
-    pub updated_instances: Vec<InstanceUpdate>,
+    pub removed: Vec<RbxId>,
+    pub added: HashMap<RbxId, Instance<'a>>,
+    pub updated: Vec<InstanceUpdate>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

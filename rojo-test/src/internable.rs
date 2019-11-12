@@ -61,8 +61,8 @@ impl<'a> Internable<&'a HashMap<RbxId, Instance<'_>>> for Instance<'a> {
 impl Internable<()> for SubscribeResponse<'_> {
     fn intern(&self, redactions: &mut RedactionMap, _extra: ()) {
         for message in &self.messages {
-            intern_instance_updates(redactions, &message.updated_instances);
-            intern_instance_additions(redactions, &message.added_instances);
+            intern_instance_updates(redactions, &message.updated);
+            intern_instance_additions(redactions, &message.added);
         }
     }
 }

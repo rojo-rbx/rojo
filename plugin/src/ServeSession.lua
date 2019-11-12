@@ -103,15 +103,7 @@ function ServeSession:__mainSyncLoop()
 	return self.__apiContext:retrieveMessages()
 		:andThen(function(messages)
 			for _, message in ipairs(messages) do
-				-- TODO: Update server to return patches in correct format so
-				-- that we don't have to transform them for the reconciler.
-				local asPatch = {
-					removed = message.removedInstances,
-					updated = message.updatedInstances,
-					added = message.addedInstances,
-				}
-
-				self.__reconciler:applyPatch(asPatch)
+				self.__reconciler:applyPatch(message)
 			end
 
 			if self.__status ~= Status.Disconnected then

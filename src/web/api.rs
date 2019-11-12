@@ -93,20 +93,19 @@ impl<F: VfsFetcher> ApiService<F> {
                 let api_messages = messages
                     .into_iter()
                     .map(|message| {
-                        let removed_instances = message.removed;
+                        let removed = message.removed;
 
-                        let mut added_instances = HashMap::new();
+                        let mut added = HashMap::new();
                         for id in message.added {
                             let instance = tree.get_instance(id).unwrap();
-                            added_instances.insert(id, Instance::from_rojo_instance(instance));
+                            added.insert(id, Instance::from_rojo_instance(instance));
 
                             for instance in tree.descendants(id) {
-                                added_instances
-                                    .insert(instance.id(), Instance::from_rojo_instance(instance));
+                                added.insert(instance.id(), Instance::from_rojo_instance(instance));
                             }
                         }
 
-                        let updated_instances = message
+                        let updated = message
                             .updated
                             .into_iter()
                             .map(|update| {
@@ -126,9 +125,9 @@ impl<F: VfsFetcher> ApiService<F> {
                             .collect();
 
                         SubscribeMessage {
-                            removed_instances,
-                            added_instances,
-                            updated_instances,
+                            removed,
+                            added,
+                            updated,
                         }
                     })
                     .collect();
