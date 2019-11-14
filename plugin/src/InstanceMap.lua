@@ -9,10 +9,12 @@ local Log = require(script.Parent.Parent.Log)
 local InstanceMap = {}
 InstanceMap.__index = InstanceMap
 
-function InstanceMap.new()
+function InstanceMap.new(onInstanceChanged)
 	local self = {
 		fromIds = {},
 		fromInstances = {},
+		instancesToSignal = {},
+		onInstanceChanged = onInstanceChanged,
 	}
 
 	return setmetatable(self, InstanceMap)
@@ -31,12 +33,14 @@ end
 function InstanceMap:insert(id, instance)
 	self.fromIds[id] = instance
 	self.fromInstances[instance] = id
+	self:__connectSignals(instance)
 end
 
 function InstanceMap:removeId(id)
 	local instance = self.fromIds[id]
 
 	if instance ~= nil then
+		self:__disconnectSignals(instance)
 		self.fromIds[id] = nil
 		self.fromInstances[instance] = nil
 	else
@@ -46,6 +50,7 @@ end
 
 function InstanceMap:removeInstance(instance)
 	local id = self.fromInstances[instance]
+	self:__disconnectSignals(instance)
 
 	if id ~= nil then
 		self.fromInstances[instance] = nil
@@ -85,6 +90,25 @@ function InstanceMap:destroyId(id)
 		instance:Destroy()
 	else
 		Log.warn("Attempted to destroy nonexistant ID %s", tostring(id))
+	end
+end
+
+function InstanceMap:__connectSignals(instance)
+	-- TODO: Connect to different event for ValueBase objects?
+
+	self.instancesToSignal[instance] = instance.Changed:Connect(function(propertyName)
+		Log.trace("%s.%s changed", instance:GetFullName(), propertyName)
+
+		if self.onInstanceChanged ~= nil then
+			self.onInstanceChanged(instance, propertyName)
+		end
+	end)
+end
+
+function InstanceMap:__disconnectSignals(instance)
+	if self.instancesToSignal[instance] ~= nil then
+		self.instancesToSignal[instance]:Disconnect()
+		self.instancesToSignal[instance] = nil
 	end
 end
 
