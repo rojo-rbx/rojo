@@ -30,7 +30,7 @@ local function performRequest(requestParams)
 			end)
 
 			if success then
-				Log.trace("Request {} success: status code {:?}", requestId, response.StatusCode)
+				Log.trace("Request {} success, status code {}", requestId, response.StatusCode)
 				resolve(HttpResponse.fromRobloxResponse(response))
 			else
 				Log.trace("Request {} failure: {:?}", requestId, response)
