@@ -9,6 +9,13 @@ local validateApiInfo = Types.ifEnabled(Types.ApiInfoResponse)
 local validateApiRead = Types.ifEnabled(Types.ApiReadResponse)
 local validateApiSubscribe = Types.ifEnabled(Types.ApiSubscribeResponse)
 
+--[[
+	Returns a promise that will never resolve nor reject.
+]]
+local function hangingPromise()
+	return Promise.new(function() end)
+end
+
 local function rejectFailedRequests(response)
 	if response.code >= 400 then
 		-- TODO: Nicer error types for responses, using response JSON if valid.
@@ -139,8 +146,12 @@ function ApiContext:retrieveMessages()
 	local function sendRequest()
 		return Http.get(url)
 			:catch(function(err)
-				if err.type == Http.Error.Kind.Timeout and self.__connected then
-					return sendRequest()
+				if err.type == Http.Error.Kind.Timeout then
+					if self.__connected then
+						return sendRequest()
+					else
+						return hangingPromise()
+					end
 				end
 
 				return Promise.reject(err)
