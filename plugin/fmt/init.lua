@@ -1,34 +1,155 @@
+--[[
+	This library describes a formatting mechanism akin to Rust's std::fmt.
+
+	It has a couple building blocks:
+
+	* A new syntax for formatting strings, taken verbatim from Rust. It'd also
+	  be possible to use printf-style formatting specifiers to integrate with
+	  the existing string.format utility.
+
+	* An equivalent to Rust's `Display` trait. We're mapping the semantics of
+	  tostring and the __tostring metamethod onto this trait. A lot of types
+	  should already have __tostring implementations, too!
+
+	* An equivalent to Rust's `Debug` trait. This library Lua-ifies that idea by
+	  inventing a new metamethod, `__fmtDebug`. We pass along the "extended
+	  form" attribute which is the equivalent of the "alternate mode" in Rust's
+	  Debug trait since it's the author's opinion that treating it as a
+	  verbosity flag is semantically accurate.
+]]
+
+--[[
+	The default implementation of __fmtDebug for tables when the extended option
+	is not set.
+]]
+local function defaultTableDebug(buffer, input)
+	buffer:writeRaw("{")
+
+	for key, value in pairs(input) do
+		buffer:write("[{:?}] = {:?}", key, value)
+
+		if next(input, key) ~= nil then
+			buffer:writeRaw(", ")
+		end
+	end
+
+	buffer:writeRaw("}")
+end
+
+--[[
+	The default implementation of __fmtDebug for tables with the extended option
+	set.
+]]
+local function defaultTableDebugExtended(buffer, input)
+	-- Special case for empty tables.
+	if next(buffer) == nil then
+		buffer:writeRaw("{}")
+		return
+	end
+
+	buffer:writeLineRaw("{")
+	buffer:indent()
+
+	for key, value in pairs(input) do
+		buffer:writeLine("[{:?}] = {:#?},", key, value)
+	end
+
+	buffer:unindent()
+	buffer:writeRaw("}")
+end
+
+--[[
+	The default debug representation for all types.
+]]
+local function debugImpl(buffer, value, extendedForm)
+	local valueType = typeof(value)
+
+	if valueType == "string" then
+		local formatted = string.format("%q", value)
+		buffer:writeRaw(formatted)
+	elseif valueType == "table" then
+		local valueMeta = getmetatable(value)
+
+		if valueMeta ~= nil and  valueMeta.__fmtDebug ~= nil then
+			-- This type implement's the metamethod we made up to line up with
+			-- Rust's 'Debug' trait.
+
+			valueMeta.__fmtDebug(value, buffer, extendedForm)
+		else
+			if extendedForm then
+				defaultTableDebugExtended(buffer, value)
+			else
+				defaultTableDebug(buffer, value)
+			end
+		end
+	else
+		buffer:writeRaw(tostring(value))
+	end
+end
+
+--[[
+	Defines and implements the library's template syntax.
+]]
 local function writeFmt(buffer, template, ...)
 	local currentArg = 0
 	local i = 1
 	local len = #template
 
-	while i < len do
+	while i <= len do
 		local openBrace = template:find("{", i)
 
 		if openBrace == nil then
+			-- There are no remaining open braces in this string, so we can
+			-- write the rest of the string to the buffer.
+
 			buffer:writeRaw(template:sub(i))
 			break
 		else
-			if openBrace - i > 0 then
-				buffer:writeRaw(template:sub(i, openBrace - 1))
-			end
+			-- We found an open brace! This could be:
+			-- - A literal '{', written as '{{'
+			-- - The beginning of an interpolation, like '{}'
+			-- - An error, if there's no matching '}'
 
 			local charAfterBrace = template:sub(openBrace + 1, openBrace + 1)
 			if charAfterBrace == "{" then
+				-- This is a literal brace, so we'll write everything up to this
+				-- point (including the first brace), and then skip over the
+				-- second brace.
+
 				buffer:writeRaw(template:sub(i, openBrace))
 				i = openBrace + 2
 			else
+				-- This SHOULD be an interpolation. We'll find our matching
+				-- brace and treat the contents as the formatting specifier.
+
+				-- If there were any unwritten characters before this
+				-- interpolation, write them to the buffer.
+				if openBrace - i > 0 then
+					buffer:writeRaw(template:sub(i, openBrace - 1))
+				end
+
 				local closeBrace = template:find("}", openBrace + 1)
 				assert(closeBrace ~= nil, "Unclosed formatting specifier. Use '{{' to write an open brace.")
 
 				local formatSpecifier = template:sub(openBrace + 1, closeBrace - 1)
-
 				currentArg = currentArg + 1
+				local arg = select(currentArg, ...)
 
 				if formatSpecifier == "" then
-					local arg = select(currentArg, ...)
+					-- This should use the equivalent of Rust's 'Display', ie
+					-- tostring and the __tostring metamethod.
+
 					buffer:writeRaw(tostring(arg))
+				elseif formatSpecifier == ":?" then
+					-- This should use the equivalent of Rust's 'Debug',
+					-- invented for this library as __fmtDebug.
+
+					debugImpl(buffer, arg, false)
+				elseif formatSpecifier == ":#?" then
+					-- This should use the equivlant of Rust's 'Debug' with the
+					-- 'alternate' (ie expanded) flag set.
+
+					debugImpl(buffer, arg, true)
 				else
 					error("unsupported format specifier " .. formatSpecifier, 2)
 				end
@@ -39,18 +160,20 @@ local function writeFmt(buffer, template, ...)
 	end
 end
 
-local function writeLineFmt(buffer, template, ...)
-	writeFmt(buffer, template, ...)
-	table.insert(buffer, "\n")
-end
-
 local function debugOutputBuffer()
 	local buffer = {}
+	local startOfLine = true
 	local indentLevel = 0
 	local indentation = ""
 
 	function buffer:writeLine(template, ...)
-		return writeLineFmt(self, template, ...)
+		writeFmt(self, template, ...)
+		self:nextLine()
+	end
+
+	function buffer:writeLineRaw(value)
+		self:writeRaw(value)
+		self:nextLine()
 	end
 
 	function buffer:write(template, ...)
@@ -58,26 +181,20 @@ local function debugOutputBuffer()
 	end
 
 	function buffer:writeRaw(value)
-		if #indentation > 0 then
-			value = value:gsub("\n", "\n" .. indentation)
-		end
+		if #value > 0 then
+			if startOfLine and #indentation > 0 then
+				startOfLine = false
+				table.insert(self, indentation)
+			end
 
-		table.insert(self, value)
+			table.insert(self, value)
+			startOfLine = false
+		end
 	end
 
-	function buffer:writeLineRaw(piece)
-		if #indentation > 0 then
-			self:writeRaw(indentation)
-		end
-
-		self:writeRaw(piece)
+	function buffer:nextLine()
 		table.insert(self, "\n")
-	end
-
-	function buffer:push(template, ...)
-		local value = string.format(template, ...)
-
-		self:writeLineRaw(value)
+		startOfLine = true
 	end
 
 	function buffer:indent()
@@ -97,27 +214,13 @@ local function debugOutputBuffer()
 	return buffer
 end
 
-local function debugInner(value)
-	local valueType = typeof(value)
-
-	if valueType == "string" then
-		return string.format("%q", value)
-	elseif valueType == "number" then
-		return tostring(value)
-	elseif valueType == "table" then
-		local debugImpl = getmetatable(value).__fmtDebug
-
-		if debugImpl ~= nil then
-			return debugImpl()
-		else
-			-- TODO: Nicer default debug implementation?
-			return tostring(value)
-		end
-	end
+local function fmt(template, ...)
+	local buffer = debugOutputBuffer()
+	writeFmt(buffer, template, ...)
+	return buffer:finish()
 end
 
 return {
 	debugOutputBuffer = debugOutputBuffer,
-	writeFmt = writeFmt,
-	writeLineFmt = writeLineFmt,
+	fmt = fmt,
 }
