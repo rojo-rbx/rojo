@@ -33,9 +33,9 @@ local ApiInstanceUpdate = t.interface({
 })
 
 local ApiSubscribeMessage = t.interface({
-	removedInstances = t.array(RbxId),
-	addedInstances = t.map(RbxId, ApiInstance),
-	updatedInstances = t.array(ApiInstanceUpdate),
+	removed = t.array(RbxId),
+	added = t.map(RbxId, ApiInstance),
+	updated = t.array(ApiInstanceUpdate),
 })
 
 local ApiInfoResponse = t.interface({
