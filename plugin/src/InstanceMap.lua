@@ -94,20 +94,51 @@ function InstanceMap:destroyId(id)
 end
 
 function InstanceMap:__connectSignals(instance)
-	-- TODO: Connect to different event for ValueBase objects?
+	-- ValueBase instances have an overriden version of the Changed signal that
+	-- only detects changes to their Value property.
+	--
+	-- We can instead connect listener to each individual property that we care
+	-- about on those objects (Name and Value) to emulate the same idea.
+	if instance:IsA("ValueBase") then
+		local signals = {
+			instance:GetPropertyChangedSignal("Name"):Connect(function()
+				self:__maybeFireInstanceChanged(instance, "Name")
+			end),
 
-	self.instancesToSignal[instance] = instance.Changed:Connect(function(propertyName)
-		Log.trace("%s.%s changed", instance:GetFullName(), propertyName)
+			instance:GetPropertyChangedSignal("Value"):Connect(function()
+				self:__maybeFireInstanceChanged(instance, "Value")
+			end),
+		}
 
-		if self.onInstanceChanged ~= nil then
-			self.onInstanceChanged(instance, propertyName)
-		end
-	end)
+		self.instancesToSignal[instance] = signals
+	else
+		self.instancesToSignal[instance] = instance.Changed:Connect(function(propertyName)
+			self:__maybeFireInstanceChanged(instance, propertyName)
+		end)
+	end
+end
+
+function InstanceMap:__maybeFireInstanceChanged(instance, propertyName)
+	Log.trace("%s.%s changed", instance:GetFullName(), propertyName)
+
+	if self.onInstanceChanged ~= nil then
+		self.onInstanceChanged(instance, propertyName)
+	end
 end
 
 function InstanceMap:__disconnectSignals(instance)
-	if self.instancesToSignal[instance] ~= nil then
-		self.instancesToSignal[instance]:Disconnect()
+	local signals = self.instancesToSignal[instance]
+
+	if signals ~= nil then
+		-- In the general case, we avoid
+		if typeof(signals) == "table" then
+			for _, signal in ipairs(signals) do
+				signal:Disconnect()
+			end
+		else
+			signals:Disconnect()
+		end
+
 		self.instancesToSignal[instance] = nil
 	end
 end
