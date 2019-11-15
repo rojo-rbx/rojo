@@ -35,6 +35,16 @@ end
 
 local valueContainer = getValueContainer()
 
+game.ChildAdded:Connect(function(child)
+	local success, name = pcall(function()
+		return child.Name
+	end)
+
+	if success and name == CONTAINER_NAME then
+		valueContainer = child
+	end
+end)
+
 local function getStoredValue(name)
 	if valueContainer == nil then
 		return nil
