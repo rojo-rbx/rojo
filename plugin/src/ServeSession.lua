@@ -20,7 +20,7 @@ local function DEBUG_showPatch(patch)
 	output:indent()
 
 	for removed in ipairs(patch.removed) do
-		output:push("Remove ID %s", removed)
+		output:writeLine("Remove ID {}", removed)
 	end
 
 	for id, added in pairs(patch.added) do
