@@ -1,3 +1,5 @@
+local Log = require(script.Parent.Parent.Log)
+local Fmt = require(script.Parent.Parent.Fmt)
 local t = require(script.Parent.Parent.t)
 
 local strict = require(script.Parent.strict)
@@ -9,20 +11,38 @@ local Status = strict("Session.Status", {
 	Disconnected = "Disconnected",
 })
 
-local function DEBUG_printPatch(patch)
+local function DEBUG_showPatch(patch)
 	local HttpService = game:GetService("HttpService")
 
+	local output = Fmt.debugOutputBuffer()
+
+	output:push("Patch {")
+	output:indent()
+
 	for removed in ipairs(patch.removed) do
-		print("Remove:", removed)
+		output:push("Remove ID %s", removed)
 	end
 
 	for id, added in pairs(patch.added) do
-		print("Add:", id, HttpService:JSONEncode(added))
+		output:push("Add ID %s {", id)
+		output:indent()
+		output:push("%s", HttpService:JSONEncode(added))
+		output:unindent()
+		output:push("}")
 	end
 
-	for updated in ipairs(patch.updated) do
-		print("Update:", HttpService:JSONEncode(updated))
+	for _, updated in ipairs(patch.updated) do
+		output:push("Update ID %s {", updated.id)
+		output:indent()
+		output:push("%s", HttpService:JSONEncode(updated))
+		output:unindent()
+		output:push("}")
 	end
+
+	output:unindent()
+	output:push("}")
+
+	return output:finish()
 end
 
 local ServeSession = {}
@@ -84,6 +104,8 @@ function ServeSession:__initialSync(rootInstanceId)
 			-- the tree defined in this response.
 			self.__apiContext:setMessageCursor(readResponseBody.messageCursor)
 
+			Log.trace("Computing changes that plugin needs to make to catch up to server...")
+
 			-- Calculate the initial patch to apply to the DataModel to catch us
 			-- up to what Rojo thinks the place should look like.
 			local hydratePatch = self.__reconciler:hydrate(
@@ -91,6 +113,8 @@ function ServeSession:__initialSync(rootInstanceId)
 				rootInstanceId,
 				game
 			)
+
+			Log.trace("Computed hydration patch: %s", DEBUG_showPatch(hydratePatch))
 
 			-- TODO: Prompt user to notify them of this patch, since it's
 			-- effectively a conflict between the Rojo server and the client.
