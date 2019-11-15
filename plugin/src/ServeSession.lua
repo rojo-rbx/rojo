@@ -11,28 +11,26 @@ local Status = strict("Session.Status", {
 	Disconnected = "Disconnected",
 })
 
-local function fmtPatch(patch)
-	local output = Fmt.debugOutputBuffer()
+local function debugPatch(patch)
+	return Fmt.debugify(patch, function(patch, output)
+		output:writeLine("Patch {{")
+		output:indent()
 
-	output:writeLine("Patch {{")
-	output:indent()
+		for removed in ipairs(patch.removed) do
+			output:writeLine("Remove ID {}", removed)
+		end
 
-	for removed in ipairs(patch.removed) do
-		output:writeLine("Remove ID {}", removed)
-	end
+		for id, added in pairs(patch.added) do
+			output:writeLine("Add ID {} {:#?}", id, added)
+		end
 
-	for id, added in pairs(patch.added) do
-		output:writeLine("Add ID {} {:#?}", id, added)
-	end
+		for _, updated in ipairs(patch.updated) do
+			output:writeLine("Update ID {} {:#?}", updated.id, updated)
+		end
 
-	for _, updated in ipairs(patch.updated) do
-		output:writeLine("Update ID {} {:#?}", updated.id, updated)
-	end
-
-	output:unindent()
-	output:writeLine("}")
-
-	return output:finish()
+		output:unindent()
+		output:write("}")
+	end)
 end
 
 local ServeSession = {}
@@ -104,7 +102,7 @@ function ServeSession:__initialSync(rootInstanceId)
 				game
 			)
 
-			Log.trace("Computed hydration patch: %s", fmtPatch(hydratePatch))
+			Log.trace("Computed hydration patch: {:#?}", debugPatch(hydratePatch))
 
 			-- TODO: Prompt user to notify them of this patch, since it's
 			-- effectively a conflict between the Rojo server and the client.

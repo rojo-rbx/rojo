@@ -17,7 +17,7 @@ local function performRequest(requestParams)
 	local requestId = lastRequestId + 1
 	lastRequestId = requestId
 
-	Log.trace("%s(%d) %s", requestParams.Method, requestId, requestParams.Url)
+	Log.trace("HTTP {}({}) {}", requestParams.Method, requestId, requestParams.Url)
 
 	if requestParams.Body ~= nil then
 		Log.trace(requestParams.Body)
@@ -30,10 +30,10 @@ local function performRequest(requestParams)
 			end)
 
 			if success then
-				Log.trace("Request %d success: status code %s", requestId, response.StatusCode)
+				Log.trace("Request {} success: status code {:?}", requestId, response.StatusCode)
 				resolve(HttpResponse.fromRobloxResponse(response))
 			else
-				Log.trace("Request %d failure: %s", requestId, response)
+				Log.trace("Request {} failure: {:?}", requestId, response)
 				reject(HttpError.fromRobloxErrorString(response))
 			end
 		end)()

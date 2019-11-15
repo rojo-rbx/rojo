@@ -119,7 +119,7 @@ function InstanceMap:__connectSignals(instance)
 end
 
 function InstanceMap:__maybeFireInstanceChanged(instance, propertyName)
-	Log.trace("%s.%s changed", instance:GetFullName(), propertyName)
+	Log.trace("{}.{} changed", instance:GetFullName(), propertyName)
 
 	if self.onInstanceChanged ~= nil then
 		self.onInstanceChanged(instance, propertyName)

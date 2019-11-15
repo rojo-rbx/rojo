@@ -220,7 +220,24 @@ local function fmt(template, ...)
 	return buffer:finish()
 end
 
+--[[
+	Wrap the given object in a type that implements the given function as its
+	Debug implementation, and forwards __tostring to the type's underlying
+	tostring implementation.
+]]
+local function debugify(object, fmtFunc)
+	return setmetatable({}, {
+		__fmtDebug = function(_, ...)
+			return fmtFunc(object, ...)
+		end,
+		__tostring = function()
+			return tostring(object)
+		end,
+	})
+end
+
 return {
 	debugOutputBuffer = debugOutputBuffer,
 	fmt = fmt,
+	debugify = debugify,
 }

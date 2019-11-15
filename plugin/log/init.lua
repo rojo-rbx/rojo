@@ -1,3 +1,5 @@
+local Fmt = require(script.Parent.Fmt)
+
 local Level = {
 	Error = 0,
 	Warning = 1,
@@ -29,25 +31,25 @@ end
 
 function Log.trace(template, ...)
 	if getLogLevel() >= Level.Trace then
-		print(addTags(TRACE_TAG, string.format(template, ...)))
+		print(addTags(TRACE_TAG, Fmt.fmt(template, ...)))
 	end
 end
 
 function Log.info(template, ...)
 	if getLogLevel() >= Level.Info then
-		print(addTags(INFO_TAG, string.format(template, ...)))
+		print(addTags(INFO_TAG, Fmt.fmt(template, ...)))
 	end
 end
 
 function Log.debug(template, ...)
 	if getLogLevel() >= Level.Debug then
-		print(addTags(DEBUG_TAG, string.format(template, ...)))
+		print(addTags(DEBUG_TAG, Fmt.fmt(template, ...)))
 	end
 end
 
 function Log.warn(template, ...)
 	if getLogLevel() >= Level.Warning then
-		warn(addTags(WARN_TAG, string.format(template, ...)))
+		warn(addTags(WARN_TAG, Fmt.fmt(template, ...)))
 	end
 end
 
