@@ -9,6 +9,7 @@ local t = require(script.Parent.Parent.t)
 local InstanceMap = require(script.Parent.InstanceMap)
 local Types = require(script.Parent.Types)
 local invariant = require(script.Parent.invariant)
+local getCanonicalProperty = require(script.Parent.getCanonicalProperty)
 local setCanonicalProperty = require(script.Parent.setCanonicalProperty)
 
 --[[
@@ -287,8 +288,36 @@ function Reconciler:__hydrateInternal(apiInstances, id, instance, hydratePatch)
 		end
 	end
 
-	-- TODO: Measure differences in properties and add them to
-	-- hydratePatch.updates
+	local changedName = nil
+	local changedProperties = {}
+
+	if apiInstance.Name ~= instance.Name then
+		changedName = apiInstance.Name
+	end
+
+	for propertyName, virtualValue in pairs(apiInstance.Properties) do
+		local success, existingValue = getCanonicalProperty(instance, propertyName)
+
+		if success then
+			local decodedValue = self:__decodeApiValue(virtualValue)
+
+			if existingValue ~= decodedValue then
+				changedProperties[propertyName] = virtualValue
+			end
+		end
+	end
+
+	-- If any properties differed from the virtual instance we read, add it to
+	-- the hydrate patch so that we can catch up.
+	if changedName ~= nil or next(changedProperties) ~= nil then
+		table.insert(hydratePatch.updated, {
+			id = id,
+			changedName = changedName,
+			changedClassName = nil,
+			changedProperties = changedProperties,
+			changedMetadata = nil,
+		})
+	end
 
 	local existingChildren = instance:GetChildren()
 
