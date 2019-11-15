@@ -11,6 +11,9 @@
     "Http": {
       "$path": "http"
     },
+    "Fmt": {
+      "$path": "fmt"
+    },
     "Roact": {
       "$path": "modules/roact/src"
     },
