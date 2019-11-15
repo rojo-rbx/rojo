@@ -5,6 +5,7 @@
 
 local RbxDom = require(script.Parent.Parent.RbxDom)
 local t = require(script.Parent.Parent.t)
+local Log = require(script.Parent.Parent.Log)
 
 local InstanceMap = require(script.Parent.InstanceMap)
 local Types = require(script.Parent.Types)
@@ -302,6 +303,7 @@ function Reconciler:__hydrateInternal(apiInstances, id, instance, hydratePatch)
 			local decodedValue = self:__decodeApiValue(virtualValue)
 
 			if existingValue ~= decodedValue then
+				Log.warn("Diff! {:?} vs {:?}", existingValue, decodedValue)
 				changedProperties[propertyName] = virtualValue
 			end
 		end

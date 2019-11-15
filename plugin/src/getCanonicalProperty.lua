@@ -18,9 +18,11 @@ local function getCanonincalProperty(instance, propertyName)
 		return false, "unreadable property"
 	end
 
-	local success, err = descriptor:read(instance)
+	local success, valueOrErr = descriptor:read(instance)
 
 	if not success then
+		local err = valueOrErr
+
 		-- If we don't have permission to read a property, we can chalk that up
 		-- to our database being out of date and the engine being right.
 		if err.kind == RbxDom.Error.Kind.Roblox and err.extra:find("lacking permission") then
@@ -31,7 +33,7 @@ local function getCanonincalProperty(instance, propertyName)
 		error(message, 2)
 	end
 
-	return true
+	return true, valueOrErr
 end
 
 return getCanonincalProperty
