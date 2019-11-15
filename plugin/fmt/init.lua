@@ -42,7 +42,7 @@ end
 ]]
 local function defaultTableDebugExtended(buffer, input)
 	-- Special case for empty tables.
-	if next(buffer) == nil then
+	if next(input) == nil then
 		buffer:writeRaw("{}")
 		return
 	end
