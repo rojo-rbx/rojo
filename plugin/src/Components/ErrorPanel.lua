@@ -6,9 +6,13 @@ local Theme = require(Plugin.Theme)
 
 local Panel = require(Plugin.Components.Panel)
 local FitText = require(Plugin.Components.FitText)
+local FitScrollingFrame = require(Plugin.Components.FitScrollingFrame)
 local FormButton = require(Plugin.Components.FormButton)
 
 local e = Roact.createElement
+
+local BUTTON_HEIGHT = 60
+local HOR_PADDING = 8
 
 local ErrorPanel = Roact.Component:extend("ErrorPanel")
 
@@ -24,17 +28,31 @@ function ErrorPanel:render()
 			Padding = UDim.new(0, 8),
 		}),
 
-		Text = e(FitText, {
-			LayoutOrder = 1,
-			FitAxis = "Y",
-			Size = UDim2.new(1, 0, 0, 0),
-			Padding = Vector2.new(12, 6),
-			Font = Theme.ButtonFont,
-			TextSize = 18,
-			Text = errorMessage,
-			TextWrap = true,
-			TextColor3 = Theme.PrimaryColor,
-			BackgroundTransparency = 1,
+		ErrorContainer = e(FitScrollingFrame, {
+			containerProps = {
+				BackgroundTransparency = 1,
+				BorderSizePixel = 0,
+				Size = UDim2.new(1, -HOR_PADDING * 2, 1, -BUTTON_HEIGHT),
+				Position = UDim2.new(0, HOR_PADDING, 0, 0),
+				ScrollBarImageColor3 = Theme.PrimaryColor,
+				VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar,
+				ScrollingDirection = Enum.ScrollingDirection.Y,
+			},
+		}, {
+			Text = e(FitText, {
+				Size = UDim2.new(1, 0, 0, 0),
+
+				LayoutOrder = 1,
+				TextXAlignment = Enum.TextXAlignment.Left,
+				TextYAlignment = Enum.TextYAlignment.Top,
+				FitAxis = "Y",
+				Font = Theme.ButtonFont,
+				TextSize = 18,
+				Text = errorMessage,
+				TextWrap = true,
+				TextColor3 = Theme.PrimaryColor,
+				BackgroundTransparency = 1,
+			}),
 		}),
 
 		DismissButton = e(FormButton, {
