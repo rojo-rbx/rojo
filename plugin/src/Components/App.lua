@@ -133,7 +133,7 @@ function App:startSession(address, port)
 			-- Details being present indicates that this
 			-- disconnection was from an error.
 			if details ~= nil then
-				Log.warn(tostring(details))
+				Log.warn("Disconnected from an error: {}", details)
 
 				self:setState({
 					appStatus = AppStatus.Error,
@@ -207,7 +207,7 @@ function App:render()
 end
 
 function App:didMount()
-	Log.trace("Rojo %s initializing", self.displayedVersion)
+	Log.trace("Rojo {} initializing", self.displayedVersion)
 
 	checkUpgrade(self.props.plugin)
 	preloadAssets()

@@ -1,16 +1,18 @@
+local Fmt = require(script.Parent.Parent.Fmt)
+
 local Config = require(script.Parent.Config)
 
 local invariant
 
 if Config.isDevBuild then
 	function invariant(message, ...)
-		message = string.format(message, ...)
+		message = Fmt.fmt(message, ...)
 
 		error("Invariant violation: " .. message, 2)
 	end
 else
 	function invariant(message, ...)
-		message = string.format(message, ...)
+		message = Fmt.fmt(message, ...)
 
 		local fullMessage = string.format(
 			"Rojo detected an invariant violation within itself:\n" ..

@@ -134,10 +134,10 @@ function Reconciler:applyPatch(patch)
 
 			if parentInstance == nil then
 				invariant(
-					"Cannot add an instance from a patch that has no parent.\nInstance %s with parent %s.\nInstanceMap state:\n%s",
+					"Cannot add an instance from a patch that has no parent.\nInstance {} with parent {}.\nState: {:#?}",
 					id,
-					tostring(apiInstance.Parent),
-					self.__instanceMap:debugState()
+					apiInstance.Parent,
+					self.__instanceMap
 				)
 			end
 
@@ -150,9 +150,9 @@ function Reconciler:applyPatch(patch)
 
 		if instance == nil then
 			invariant(
-				"Cannot update an instance that does not exist in the reconciler's state.\nInstance ID %s\nInstanceMap state:\n%s",
+				"Cannot update an instance that does not exist in the reconciler's state.\nInstance {}\nState: {:#?}",
 				update.id,
-				self.__instanceMap:debugState()
+				self.__instanceMap
 			)
 		end
 

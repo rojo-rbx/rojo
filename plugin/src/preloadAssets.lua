@@ -19,7 +19,7 @@ local function preloadAssets()
 		table.insert(contentUrls, url)
 	end
 
-	Log.trace("Preloading assets: %s", table.concat(contentUrls, ", "))
+	Log.trace("Preloading assets: {:?}", contentUrls)
 
 	coroutine.wrap(function()
 		ContentProvider:PreloadAsync(contentUrls)

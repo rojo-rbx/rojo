@@ -20,14 +20,16 @@ function InstanceMap.new(onInstanceChanged)
 	return setmetatable(self, InstanceMap)
 end
 
-function InstanceMap:debugState()
-	local buffer = {}
+function InstanceMap:__fmtDebug(output)
+	output:writeLine("InstanceMap {{")
+	output:indent()
 
 	for id, instance in pairs(self.fromIds) do
-		table.insert(buffer, string.format("- %s: %s", id, instance:GetFullName()))
+		output:writeLine("- {}: {}", id, instance:GetFullName())
 	end
 
-	return table.concat(buffer, "\n")
+	output:unindent()
+	output:writeLine("}")
 end
 
 function InstanceMap:insert(id, instance)
@@ -44,7 +46,7 @@ function InstanceMap:removeId(id)
 		self.fromIds[id] = nil
 		self.fromInstances[instance] = nil
 	else
-		Log.warn("Attempted to remove nonexistant ID %s", tostring(id))
+		Log.warn("Attempted to remove nonexistant ID {}", id)
 	end
 end
 
@@ -56,7 +58,7 @@ function InstanceMap:removeInstance(instance)
 		self.fromInstances[instance] = nil
 		self.fromIds[id] = nil
 	else
-		Log.warn("Attempted to remove nonexistant instance %s", tostring(instance))
+		Log.warn("Attempted to remove nonexistant instance {}", instance)
 	end
 end
 
@@ -66,7 +68,7 @@ function InstanceMap:destroyInstance(instance)
 	if id ~= nil then
 		self:destroyId(id)
 	else
-		Log.warn("Attempted to destroy untracked instance %s", tostring(instance))
+		Log.warn("Attempted to destroy untracked instance {}", instance)
 	end
 end
 
@@ -89,7 +91,7 @@ function InstanceMap:destroyId(id)
 
 		instance:Destroy()
 	else
-		Log.warn("Attempted to destroy nonexistant ID %s", tostring(id))
+		Log.warn("Attempted to destroy nonexistant ID {}", id)
 	end
 end
 
