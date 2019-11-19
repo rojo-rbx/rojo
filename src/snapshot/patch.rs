@@ -13,13 +13,13 @@ use super::{InstanceMetadata, InstanceSnapshot};
 /// sure that another patch wasn't applied before this one that could cause a
 /// conflict!
 #[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PatchSet<'a> {
+pub struct PatchSet {
     pub removed_instances: Vec<RbxId>,
-    pub added_instances: Vec<PatchAdd<'a>>,
+    pub added_instances: Vec<PatchAdd>,
     pub updated_instances: Vec<PatchUpdate>,
 }
 
-impl<'a> PatchSet<'a> {
+impl<'a> PatchSet {
     pub fn new() -> Self {
         PatchSet {
             removed_instances: Vec::new(),
@@ -31,9 +31,9 @@ impl<'a> PatchSet<'a> {
 
 /// A patch containing an instance that was added to the tree.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PatchAdd<'a> {
+pub struct PatchAdd {
     pub parent_id: RbxId,
-    pub instance: InstanceSnapshot<'a>,
+    pub instance: InstanceSnapshot,
 }
 
 /// A patch indicating that properties of an instance changed.

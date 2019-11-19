@@ -102,7 +102,7 @@ struct JsonModelCore {
 }
 
 impl JsonModelCore {
-    fn into_snapshot(self, name: String) -> InstanceSnapshot<'static> {
+    fn into_snapshot(self, name: String) -> InstanceSnapshot {
         let class_name = self.class_name;
 
         let children = self

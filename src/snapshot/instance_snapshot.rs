@@ -7,15 +7,13 @@ use serde::{Deserialize, Serialize};
 
 use super::InstanceMetadata;
 
-/// A lightweight description of what an instance should look like. Attempts to
-/// be somewhat memory efficient by borrowing from its source data, indicated by
-/// the lifetime parameter `'source`.
+/// A lightweight description of what an instance should look like.
 ///
 // Possible future improvements:
 // - Use refcounted/interned strings
 // - Replace use of RbxValue with a sum of RbxValue + borrowed value
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct InstanceSnapshot<'source> {
+pub struct InstanceSnapshot {
     /// A temporary ID applied to the snapshot that's used for Ref properties.
     pub snapshot_id: Option<RbxId>,
 
@@ -23,10 +21,10 @@ pub struct InstanceSnapshot<'source> {
     pub metadata: InstanceMetadata,
 
     /// Correpsonds to the Name property of the instance.
-    pub name: Cow<'source, str>,
+    pub name: Cow<'static, str>,
 
     /// Corresponds to the ClassName property of the instance.
-    pub class_name: Cow<'source, str>,
+    pub class_name: Cow<'static, str>,
 
     /// All other properties of the instance, weakly-typed.
     pub properties: HashMap<String, RbxValue>,
@@ -34,11 +32,11 @@ pub struct InstanceSnapshot<'source> {
     /// The children of the instance represented as more snapshots.
     ///
     /// Order is relevant for Roblox instances!
-    pub children: Vec<InstanceSnapshot<'source>>,
+    pub children: Vec<InstanceSnapshot>,
 }
 
-impl<'source> InstanceSnapshot<'source> {
-    pub fn from_tree(tree: &RbxTree, id: RbxId) -> InstanceSnapshot<'static> {
+impl InstanceSnapshot {
+    pub fn from_tree(tree: &RbxTree, id: RbxId) -> InstanceSnapshot {
         let instance = tree
             .get_instance(id)
             .expect("instance did not exist in tree");
@@ -61,8 +59,8 @@ impl<'source> InstanceSnapshot<'source> {
     }
 }
 
-impl<'source> Default for InstanceSnapshot<'source> {
-    fn default() -> InstanceSnapshot<'source> {
+impl Default for InstanceSnapshot {
+    fn default() -> InstanceSnapshot {
         InstanceSnapshot {
             snapshot_id: None,
             metadata: InstanceMetadata::default(),

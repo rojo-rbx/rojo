@@ -10,11 +10,7 @@ use super::{
     InstanceSnapshot, InstanceWithMeta, RojoTree,
 };
 
-pub fn compute_patch_set<'a>(
-    snapshot: &'a InstanceSnapshot,
-    tree: &RojoTree,
-    id: RbxId,
-) -> PatchSet<'a> {
+pub fn compute_patch_set(snapshot: &InstanceSnapshot, tree: &RojoTree, id: RbxId) -> PatchSet {
     let mut patch_set = PatchSet::new();
     let mut context = ComputePatchContext::default();
 
@@ -69,12 +65,12 @@ fn rewrite_refs_in_snapshot(context: &ComputePatchContext, snapshot: &mut Instan
     }
 }
 
-fn compute_patch_set_internal<'a>(
+fn compute_patch_set_internal(
     context: &mut ComputePatchContext,
-    snapshot: &'a InstanceSnapshot,
+    snapshot: &InstanceSnapshot,
     tree: &RojoTree,
     id: RbxId,
-    patch_set: &mut PatchSet<'a>,
+    patch_set: &mut PatchSet,
 ) {
     if let Some(snapshot_id) = snapshot.snapshot_id {
         context.snapshot_id_to_instance_id.insert(snapshot_id, id);
@@ -154,12 +150,12 @@ fn compute_property_patches(
     });
 }
 
-fn compute_children_patches<'a>(
+fn compute_children_patches(
     context: &mut ComputePatchContext,
-    snapshot: &'a InstanceSnapshot,
+    snapshot: &InstanceSnapshot,
     tree: &RojoTree,
     id: RbxId,
-    patch_set: &mut PatchSet<'a>,
+    patch_set: &mut PatchSet,
 ) {
     let instance = tree
         .get_instance(id)

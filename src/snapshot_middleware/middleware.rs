@@ -7,7 +7,7 @@ use crate::{
 
 use super::{context::InstanceSnapshotContext, error::SnapshotError};
 
-pub type SnapshotInstanceResult<'a> = Result<Option<InstanceSnapshot<'a>>, SnapshotError>;
+pub type SnapshotInstanceResult<'a> = Result<Option<InstanceSnapshot>, SnapshotError>;
 pub type SnapshotFileResult = Option<(String, VfsSnapshot)>;
 
 pub trait SnapshotMiddleware {
