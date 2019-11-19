@@ -102,7 +102,6 @@ fn add_folder() {
 }
 
 #[test]
-// #[ignore] // TODO: Removing files currently hangs ChangeProcessor
 fn remove_file() {
     run_serve_test("remove_file", |session, mut redactions| {
         let info = session.get_api_rojo().unwrap();
@@ -127,6 +126,39 @@ fn remove_file() {
         let read_response = session.get_api_read(root_id).unwrap();
         assert_yaml_snapshot!(
             "remove_file_all-2",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+    });
+}
+
+#[test]
+// Editing an init file currently crashes the ChangeProcessor thread.
+// https://github.com/rojo-rbx/rojo/issues/267
+#[ignore]
+fn edit_init() {
+    run_serve_test("edit_init", |session, mut redactions| {
+        let info = session.get_api_rojo().unwrap();
+        let root_id = info.root_instance_id;
+
+        assert_yaml_snapshot!("edit_init_info", redactions.redacted_yaml(info));
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "edit_init_all",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+
+        fs::write(session.path().join("init.lua"), b"-- Edited contents.").unwrap();
+
+        let subscribe_response = session.get_api_subscribe(0).unwrap();
+        assert_yaml_snapshot!(
+            "edit_init_subscribe",
+            subscribe_response.intern_and_redact(&mut redactions, ())
+        );
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "edit_init_all-2",
             read_response.intern_and_redact(&mut redactions, root_id)
         );
     });
