@@ -38,23 +38,6 @@ pub struct InstanceSnapshot<'source> {
 }
 
 impl<'source> InstanceSnapshot<'source> {
-    pub fn get_owned(&'source self) -> InstanceSnapshot<'static> {
-        let children: Vec<InstanceSnapshot<'static>> = self
-            .children
-            .iter()
-            .map(InstanceSnapshot::get_owned)
-            .collect();
-
-        InstanceSnapshot {
-            snapshot_id: None,
-            metadata: self.metadata.clone(),
-            name: Cow::Owned(self.name.clone().into_owned()),
-            class_name: Cow::Owned(self.class_name.clone().into_owned()),
-            properties: self.properties.clone(),
-            children,
-        }
-    }
-
     pub fn from_tree(tree: &RbxTree, id: RbxId) -> InstanceSnapshot<'static> {
         let instance = tree
             .get_instance(id)
