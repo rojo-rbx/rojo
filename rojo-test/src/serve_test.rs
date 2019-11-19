@@ -102,7 +102,7 @@ fn add_folder() {
 }
 
 #[test]
-#[ignore] // TODO: Removing files currently hangs ChangeProcessor
+// #[ignore] // TODO: Removing files currently hangs ChangeProcessor
 fn remove_file() {
     run_serve_test("remove_file", |session, mut redactions| {
         let info = session.get_api_rojo().unwrap();

@@ -1,0 +1,29 @@
+---
+source: rojo-test/src/serve_test.rs
+expression: "read_response.intern_and_redact(&mut redactions, root_id)"
+---
+instances:
+  id-2:
+    Children:
+      - id-3
+    ClassName: Folder
+    Id: id-2
+    Metadata:
+      ignoreUnknownInstances: false
+    Name: remove_file
+    Parent: ~
+    Properties: {}
+  id-3:
+    Children: []
+    ClassName: StringValue
+    Id: id-3
+    Metadata:
+      ignoreUnknownInstances: false
+    Name: hello
+    Parent: id-2
+    Properties:
+      Value:
+        Type: String
+        Value: This file will be removed!
+messageCursor: 0
+sessionId: id-1
