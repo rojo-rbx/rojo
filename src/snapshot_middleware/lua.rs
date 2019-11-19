@@ -205,6 +205,24 @@ mod test {
     }
 
     #[test]
+    fn init_module_from_vfs() {
+        let mut vfs = Vfs::new(NoopFetcher);
+        let dir = VfsSnapshot::dir(hashmap! {
+            "init.lua" => VfsSnapshot::file("Hello!"),
+        });
+
+        vfs.debug_load_snapshot("/root", dir);
+
+        let entry = vfs.get("/root").unwrap();
+        let instance_snapshot =
+            SnapshotLua::from_vfs(&mut InstanceSnapshotContext::default(), &mut vfs, &entry)
+                .unwrap()
+                .unwrap();
+
+        assert_yaml_snapshot!(instance_snapshot);
+    }
+
+    #[test]
     fn module_with_meta() {
         let mut vfs = Vfs::new(NoopFetcher);
         let file = VfsSnapshot::file("Hello there!");

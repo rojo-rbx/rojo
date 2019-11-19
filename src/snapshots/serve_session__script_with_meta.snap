@@ -13,6 +13,9 @@ metadata:
   relevant_paths:
     - /root
     - /root/init.meta.json
+    - /root/init.lua
+    - /root/init.server.lua
+    - /root/init.client.lua
 children:
   - id: id-2
     name: test

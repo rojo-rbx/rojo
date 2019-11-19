@@ -10,6 +10,9 @@ metadata:
   relevant_paths:
     - /foo
     - /foo/init.meta.json
+    - /foo/init.lua
+    - /foo/init.server.lua
+    - /foo/init.client.lua
 name: foo
 class_name: Folder
 properties: {}

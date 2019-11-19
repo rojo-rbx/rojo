@@ -47,11 +47,22 @@ impl SnapshotMiddleware for SnapshotDir {
 
         let meta_path = entry.path().join("init.meta.json");
 
+        let relevant_paths = vec![
+            entry.path().to_path_buf(),
+            meta_path.clone(),
+            // TODO: We shouldn't need to know about Lua existing in this
+            // middleware. Should we figure out a way for that function to add
+            // relevant paths to this middleware?
+            entry.path().join("init.lua"),
+            entry.path().join("init.server.lua"),
+            entry.path().join("init.client.lua"),
+        ];
+
         let mut snapshot = InstanceSnapshot {
             snapshot_id: None,
             metadata: InstanceMetadata {
                 instigating_source: Some(entry.path().to_path_buf().into()),
-                relevant_paths: vec![entry.path().to_path_buf(), meta_path.clone()],
+                relevant_paths,
                 ..Default::default()
             },
             name: Cow::Owned(instance_name),

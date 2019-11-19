@@ -13,6 +13,9 @@ metadata:
   relevant_paths:
     - /foo/src
     - /foo/src/init.meta.json
+    - /foo/src/init.lua
+    - /foo/src/init.server.lua
+    - /foo/src/init.client.lua
     - /foo/default.project.json
 children:
   - id: id-2
