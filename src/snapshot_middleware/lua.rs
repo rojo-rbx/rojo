@@ -138,7 +138,7 @@ fn snapshot_init<F: VfsFetcher>(
 
                 init_snapshot.name = dir_snapshot.name;
                 init_snapshot.children = dir_snapshot.children;
-                // TODO: Apply metadata from folder
+                init_snapshot.metadata = dir_snapshot.metadata;
 
                 return Ok(Some(init_snapshot));
             }
