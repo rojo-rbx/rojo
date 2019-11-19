@@ -1,4 +1,4 @@
-use std::{borrow::Cow, str};
+use std::str;
 
 use maplit::hashmap;
 use rbx_dom_weak::RbxValue;
@@ -75,30 +75,23 @@ fn snapshot_lua_file<F: VfsFetcher>(vfs: &Vfs<F>, entry: &VfsEntry) -> SnapshotI
         .expect("File content was not valid UTF-8")
         .to_string();
 
-    let properties = hashmap! {
-        "Source".to_owned() => RbxValue::String {
-            value: contents_str,
-        },
-    };
-
     let meta_path = entry
         .path()
         .with_file_name(format!("{}.meta.json", instance_name));
 
-    let metadata = InstanceMetadata {
-        instigating_source: Some(entry.path().to_path_buf().into()),
-        relevant_paths: vec![entry.path().to_path_buf(), meta_path.clone()],
-        ..Default::default()
-    };
-
-    let mut snapshot = InstanceSnapshot {
-        snapshot_id: None,
-        metadata,
-        name: Cow::Owned(instance_name.to_owned()),
-        class_name: Cow::Borrowed(class_name),
-        properties,
-        children: Vec::new(),
-    };
+    let mut snapshot = InstanceSnapshot::new()
+        .name(instance_name)
+        .class_name(class_name)
+        .properties(hashmap! {
+            "Source".to_owned() => RbxValue::String {
+                value: contents_str,
+            },
+        })
+        .metadata(InstanceMetadata {
+            instigating_source: Some(entry.path().to_path_buf().into()),
+            relevant_paths: vec![entry.path().to_path_buf(), meta_path.clone()],
+            ..Default::default()
+        });
 
     if let Some(meta_entry) = vfs.get(meta_path).with_not_found()? {
         let meta_contents = meta_entry.contents(vfs)?;

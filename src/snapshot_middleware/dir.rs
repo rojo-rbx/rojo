@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::HashMap};
+use std::collections::HashMap;
 
 use rbx_dom_weak::{RbxId, RbxTree};
 
@@ -58,18 +58,15 @@ impl SnapshotMiddleware for SnapshotDir {
             entry.path().join("init.client.lua"),
         ];
 
-        let mut snapshot = InstanceSnapshot {
-            snapshot_id: None,
-            metadata: InstanceMetadata {
+        let mut snapshot = InstanceSnapshot::new()
+            .name(instance_name)
+            .class_name("Folder")
+            .children(snapshot_children)
+            .metadata(InstanceMetadata {
                 instigating_source: Some(entry.path().to_path_buf().into()),
                 relevant_paths,
                 ..Default::default()
-            },
-            name: Cow::Owned(instance_name),
-            class_name: Cow::Borrowed("Folder"),
-            properties: HashMap::new(),
-            children: snapshot_children,
-        };
+            });
 
         if let Some(meta_entry) = vfs.get(meta_path).with_not_found()? {
             let meta_contents = meta_entry.contents(vfs)?;

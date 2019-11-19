@@ -36,7 +36,53 @@ pub struct InstanceSnapshot {
 }
 
 impl InstanceSnapshot {
-    pub fn from_tree(tree: &RbxTree, id: RbxId) -> InstanceSnapshot {
+    pub fn new() -> Self {
+        Self {
+            snapshot_id: None,
+            metadata: InstanceMetadata::default(),
+            name: Cow::Borrowed("DEFAULT"),
+            class_name: Cow::Borrowed("DEFAULT"),
+            properties: HashMap::new(),
+            children: Vec::new(),
+        }
+    }
+
+    pub fn name(self, name: impl Into<String>) -> Self {
+        Self {
+            name: Cow::Owned(name.into()),
+            ..self
+        }
+    }
+
+    pub fn class_name(self, class_name: impl Into<String>) -> Self {
+        Self {
+            class_name: Cow::Owned(class_name.into()),
+            ..self
+        }
+    }
+
+    pub fn properties(self, properties: impl Into<HashMap<String, RbxValue>>) -> Self {
+        Self {
+            properties: properties.into(),
+            ..self
+        }
+    }
+
+    pub fn children(self, children: impl Into<Vec<Self>>) -> Self {
+        Self {
+            children: children.into(),
+            ..self
+        }
+    }
+
+    pub fn metadata(self, metadata: impl Into<InstanceMetadata>) -> Self {
+        Self {
+            metadata: metadata.into(),
+            ..self
+        }
+    }
+
+    pub fn from_tree(tree: &RbxTree, id: RbxId) -> Self {
         let instance = tree
             .get_instance(id)
             .expect("instance did not exist in tree");
@@ -45,10 +91,10 @@ impl InstanceSnapshot {
             .get_children_ids()
             .iter()
             .cloned()
-            .map(|id| InstanceSnapshot::from_tree(tree, id))
+            .map(|id| Self::from_tree(tree, id))
             .collect();
 
-        InstanceSnapshot {
+        Self {
             snapshot_id: Some(id),
             metadata: InstanceMetadata::default(),
             name: Cow::Owned(instance.name.clone()),
@@ -60,14 +106,7 @@ impl InstanceSnapshot {
 }
 
 impl Default for InstanceSnapshot {
-    fn default() -> InstanceSnapshot {
-        InstanceSnapshot {
-            snapshot_id: None,
-            metadata: InstanceMetadata::default(),
-            name: Cow::Borrowed("DEFAULT"),
-            class_name: Cow::Borrowed("DEFAULT"),
-            properties: HashMap::new(),
-            children: Vec::new(),
-        }
+    fn default() -> Self {
+        Self::new()
     }
 }

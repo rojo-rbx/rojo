@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::BTreeMap};
+use std::collections::BTreeMap;
 
 use maplit::hashmap;
 use rbx_dom_weak::RbxValue;
@@ -39,22 +39,19 @@ impl SnapshotMiddleware for SnapshotCsv {
 
         let table_contents = convert_localization_csv(&entry.contents(vfs)?);
 
-        let mut snapshot = InstanceSnapshot {
-            snapshot_id: None,
-            metadata: InstanceMetadata {
-                instigating_source: Some(entry.path().to_path_buf().into()),
-                relevant_paths: vec![entry.path().to_path_buf(), meta_path.clone()],
-                ..Default::default()
-            },
-            name: Cow::Owned(instance_name.to_owned()),
-            class_name: Cow::Borrowed("LocalizationTable"),
-            properties: hashmap! {
+        let mut snapshot = InstanceSnapshot::new()
+            .name(instance_name)
+            .class_name("LocalizationTable")
+            .properties(hashmap! {
                 "Contents".to_owned() => RbxValue::String {
                     value: table_contents,
                 },
-            },
-            children: Vec::new(),
-        };
+            })
+            .metadata(InstanceMetadata {
+                instigating_source: Some(entry.path().to_path_buf().into()),
+                relevant_paths: vec![entry.path().to_path_buf(), meta_path.clone()],
+                ..Default::default()
+            });
 
         if let Some(meta_entry) = vfs.get(meta_path).with_not_found()? {
             let meta_contents = meta_entry.contents(vfs)?;
