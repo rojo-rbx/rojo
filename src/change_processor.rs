@@ -11,9 +11,11 @@ use rbx_dom_weak::RbxId;
 
 use crate::{
     message_queue::MessageQueue,
-    snapshot::{apply_patch_set, compute_patch_set, AppliedPatchSet, InstigatingSource, RojoTree},
+    snapshot::{
+        apply_patch_set, compute_patch_set, AppliedPatchSet, InstigatingSource, PatchSet, RojoTree,
+    },
     snapshot_middleware::{snapshot_from_vfs, snapshot_project_node, InstanceSnapshotContext},
-    vfs::{Vfs, VfsEvent, VfsFetcher},
+    vfs::{FsResultExt, Vfs, VfsEvent, VfsFetcher},
 };
 
 pub struct ChangeProcessor {
@@ -143,29 +145,57 @@ fn update_affected_instances<F: VfsFetcher>(
         // every time.
         let mut snapshot_context = InstanceSnapshotContext::default();
 
-        let snapshot = match instigating_source {
+        // How we process a file change event depends on what created this
+        // file/folder in the first place.
+        let applied_patch_set = match instigating_source {
             InstigatingSource::Path(path) => {
-                let entry = vfs
+                let maybe_entry = vfs
                     .get(path)
-                    .expect("could not get instigating path from filesystem");
+                    .with_not_found()
+                    .expect("unexpected VFS error");
 
-                snapshot_from_vfs(&mut snapshot_context, &vfs, &entry)
-                    .expect("snapshot failed")
-                    .expect("snapshot did not return an instance")
+                match maybe_entry {
+                    Some(entry) => {
+                        // Our instance was previously created from a path and
+                        // that path still exists. We can generate a snapshot
+                        // starting at that path and use it as the source for
+                        // our patch.
+
+                        let snapshot = snapshot_from_vfs(&mut snapshot_context, &vfs, &entry)
+                            .expect("snapshot failed")
+                            .expect("snapshot did not return an instance");
+
+                        let patch_set = compute_patch_set(&snapshot, &tree, id);
+                        apply_patch_set(tree, patch_set)
+                    }
+                    None => {
+                        // Our instance was previously created from a path, but
+                        // that path no longer exists.
+                        //
+                        // We associate deleting the instigating file for an
+                        // instance with deleting that instance.
+
+                        let mut patch_set = PatchSet::new();
+                        patch_set.removed_instances.push(id);
+
+                        apply_patch_set(tree, patch_set)
+                    }
+                }
             }
             InstigatingSource::ProjectNode(instance_name, project_node) => {
-                snapshot_project_node(&mut snapshot_context, instance_name, project_node, &vfs)
-                    .expect("snapshot failed")
-                    .expect("snapshot did not return an instance")
+                // This instance is the direct subject of a project node. Since
+                // there might be information associated with our instance from
+                // the project file, we snapshot the entire project node again.
+
+                let snapshot =
+                    snapshot_project_node(&mut snapshot_context, instance_name, project_node, &vfs)
+                        .expect("snapshot failed")
+                        .expect("snapshot did not return an instance");
+
+                let patch_set = compute_patch_set(&snapshot, &tree, id);
+                apply_patch_set(tree, patch_set)
             }
         };
-
-        log::trace!("Computed snapshot: {:#?}", snapshot);
-
-        let patch_set = compute_patch_set(&snapshot, &tree, id);
-        let applied_patch_set = apply_patch_set(tree, patch_set);
-
-        log::trace!("Applied patch: {:#?}", applied_patch_set);
 
         applied_patches.push(applied_patch_set);
     }
