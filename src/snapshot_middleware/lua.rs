@@ -23,7 +23,7 @@ impl SnapshotMiddleware for SnapshotLua {
         context: &mut InstanceSnapshotContext,
         vfs: &Vfs<F>,
         entry: &VfsEntry,
-    ) -> SnapshotInstanceResult<'static> {
+    ) -> SnapshotInstanceResult {
         let file_name = entry.path().file_name().unwrap().to_string_lossy();
 
         // These paths alter their parent instance, so we don't need to turn
@@ -55,10 +55,7 @@ impl SnapshotMiddleware for SnapshotLua {
 }
 
 /// Core routine for turning Lua files into snapshots.
-fn snapshot_lua_file<F: VfsFetcher>(
-    vfs: &Vfs<F>,
-    entry: &VfsEntry,
-) -> SnapshotInstanceResult<'static> {
+fn snapshot_lua_file<F: VfsFetcher>(vfs: &Vfs<F>, entry: &VfsEntry) -> SnapshotInstanceResult {
     let file_name = entry.path().file_name().unwrap().to_string_lossy();
 
     let (class_name, instance_name) = if let Some(name) = match_trailing(&file_name, ".server.lua")
@@ -122,7 +119,7 @@ fn snapshot_init<F: VfsFetcher>(
     vfs: &Vfs<F>,
     folder_entry: &VfsEntry,
     init_name: &str,
-) -> SnapshotInstanceResult<'static> {
+) -> SnapshotInstanceResult {
     let init_path = folder_entry.path().join(init_name);
 
     if let Some(init_entry) = vfs.get(init_path).with_not_found()? {

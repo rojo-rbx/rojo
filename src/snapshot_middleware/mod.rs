@@ -48,7 +48,7 @@ macro_rules! middlewares {
             context: &mut InstanceSnapshotContext,
             vfs: &Vfs<F>,
             entry: &VfsEntry,
-        ) -> SnapshotInstanceResult<'static> {
+        ) -> SnapshotInstanceResult {
             $(
                 log::trace!("trying middleware {} on {}", stringify!($middleware), entry.path().display());
 

@@ -25,7 +25,7 @@ impl SnapshotMiddleware for SnapshotProject {
         context: &mut InstanceSnapshotContext,
         vfs: &Vfs<F>,
         entry: &VfsEntry,
-    ) -> SnapshotInstanceResult<'static> {
+    ) -> SnapshotInstanceResult {
         if entry.is_directory() {
             let project_path = entry.path().join("default.project.json");
 
@@ -81,7 +81,7 @@ pub fn snapshot_project_node<F: VfsFetcher>(
     instance_name: &str,
     node: &ProjectNode,
     vfs: &Vfs<F>,
-) -> SnapshotInstanceResult<'static> {
+) -> SnapshotInstanceResult {
     let name = Cow::Owned(instance_name.to_owned());
     let mut class_name = node
         .class_name

@@ -18,7 +18,7 @@ impl SnapshotMiddleware for SnapshotUserPlugins {
         context: &mut InstanceSnapshotContext,
         _vfs: &Vfs<F>,
         _entry: &VfsEntry,
-    ) -> SnapshotInstanceResult<'static> {
+    ) -> SnapshotInstanceResult {
         // User plugins are only enabled if present on the snapshot context.
         let plugin_context = match &mut context.plugin_context {
             Some(ctx) => ctx,

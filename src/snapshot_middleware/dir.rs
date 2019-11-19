@@ -22,7 +22,7 @@ impl SnapshotMiddleware for SnapshotDir {
         context: &mut InstanceSnapshotContext,
         vfs: &Vfs<F>,
         entry: &VfsEntry,
-    ) -> SnapshotInstanceResult<'static> {
+    ) -> SnapshotInstanceResult {
         if entry.is_file() {
             return Ok(None);
         }

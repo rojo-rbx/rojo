@@ -7,7 +7,7 @@ use crate::{
 
 use super::{context::InstanceSnapshotContext, error::SnapshotError};
 
-pub type SnapshotInstanceResult<'a> = Result<Option<InstanceSnapshot>, SnapshotError>;
+pub type SnapshotInstanceResult = Result<Option<InstanceSnapshot>, SnapshotError>;
 pub type SnapshotFileResult = Option<(String, VfsSnapshot)>;
 
 pub trait SnapshotMiddleware {
@@ -15,7 +15,7 @@ pub trait SnapshotMiddleware {
         context: &mut InstanceSnapshotContext,
         vfs: &Vfs<F>,
         entry: &VfsEntry,
-    ) -> SnapshotInstanceResult<'static>;
+    ) -> SnapshotInstanceResult;
 
     fn from_instance(_tree: &RbxTree, _id: RbxId) -> SnapshotFileResult {
         None
