@@ -122,7 +122,7 @@ impl JsonModelCore {
 
         InstanceSnapshot {
             snapshot_id: None,
-            metadata: Default::default(), // TODO: Allow the user to specify metadata in the JSON model again.
+            metadata: Default::default(),
             name: Cow::Owned(name),
             class_name: Cow::Owned(class_name),
             properties,
