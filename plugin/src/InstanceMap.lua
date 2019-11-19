@@ -24,12 +24,25 @@ function InstanceMap:__fmtDebug(output)
 	output:writeLine("InstanceMap {{")
 	output:indent()
 
+	-- Collect all of the entries in the InstanceMap and sort them by their
+	-- label, which helps make our output deterministic.
+	local entries = {}
 	for id, instance in pairs(self.fromIds) do
-		output:writeLine("- {}: {}", id, instance:GetFullName())
+		local label = string.format("%s (%s)", instance:GetFullName(), instance.ClassName)
+
+		table.insert(entries, {id, label})
+	end
+
+	table.sort(entries, function(a, b)
+		return a[2] < b[2]
+	end)
+
+	for _, entry in ipairs(entries) do
+		output:writeLine("{}: {}", entry[1], entry[2])
 	end
 
 	output:unindent()
-	output:writeLine("}")
+	output:write("}")
 end
 
 function InstanceMap:insert(id, instance)

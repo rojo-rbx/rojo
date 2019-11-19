@@ -87,12 +87,25 @@ function ApiContext.new(baseUrl)
 
 	local self = {
 		__baseUrl = baseUrl,
-		__serverId = nil,
+		__sessionId = nil,
 		__messageCursor = -1,
 		__connected = true,
 	}
 
 	return setmetatable(self, ApiContext)
+end
+
+function ApiContext:__fmtDebug(output)
+	output:writeLine("ApiContext {{")
+	output:indent()
+
+	output:writeLine("Connected: {}", self.__connected)
+	output:writeLine("Base URL: {}", self.__baseUrl)
+	output:writeLine("Session ID: {}", self.__sessionId)
+	output:writeLine("Message Cursor: {}", self.__messageCursor)
+
+	output:unindent()
+	output:write("}")
 end
 
 function ApiContext:disconnect()
@@ -117,7 +130,7 @@ function ApiContext:connect()
 		end)
 		:andThen(rejectWrongPlaceId)
 		:andThen(function(body)
-			self.__serverId = body.serverId
+			self.__sessionId = body.sessionId
 
 			return body
 		end)
@@ -130,7 +143,7 @@ function ApiContext:read(ids)
 		:andThen(rejectFailedRequests)
 		:andThen(Http.Response.json)
 		:andThen(function(body)
-			if body.serverId ~= self.__serverId then
+			if body.sessionId ~= self.__sessionId then
 				return Promise.reject("Server changed ID")
 			end
 
@@ -162,7 +175,7 @@ function ApiContext:retrieveMessages()
 		:andThen(rejectFailedRequests)
 		:andThen(Http.Response.json)
 		:andThen(function(body)
-			if body.serverId ~= self.__serverId then
+			if body.sessionId ~= self.__sessionId then
 				return Promise.reject("Server changed ID")
 			end
 

@@ -7,7 +7,6 @@ local RbxDom = require(script.Parent.Parent.RbxDom)
 local t = require(script.Parent.Parent.t)
 local Log = require(script.Parent.Parent.Log)
 
-local InstanceMap = require(script.Parent.InstanceMap)
 local Types = require(script.Parent.Types)
 local invariant = require(script.Parent.invariant)
 local getCanonicalProperty = require(script.Parent.getCanonicalProperty)
@@ -55,10 +54,10 @@ end
 local Reconciler = {}
 Reconciler.__index = Reconciler
 
-function Reconciler.new()
+function Reconciler.new(instanceMap)
 	local self = {
 		-- Tracks all of the instances known by the reconciler by ID.
-		__instanceMap = InstanceMap.new(),
+		__instanceMap = instanceMap,
 	}
 
 	return setmetatable(self, Reconciler)

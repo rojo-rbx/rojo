@@ -2,6 +2,8 @@ local Log = require(script.Parent.Parent.Log)
 local Fmt = require(script.Parent.Parent.Fmt)
 local t = require(script.Parent.Parent.t)
 
+local InstanceMap = require(script.Parent.InstanceMap)
+local Reconciler = require(script.Parent.Reconciler)
 local strict = require(script.Parent.strict)
 
 local Status = strict("Session.Status", {
@@ -40,22 +42,36 @@ ServeSession.Status = Status
 
 local validateServeOptions = t.strictInterface({
 	apiContext = t.table,
-	reconciler = t.table,
 })
 
 function ServeSession.new(options)
 	assert(validateServeOptions(options))
 
+	local instanceMap = InstanceMap.new()
+	local reconciler = Reconciler.new(instanceMap)
+
 	local self = {
 		__status = Status.NotStarted,
 		__apiContext = options.apiContext,
-		__reconciler = options.reconciler,
+		__reconciler = reconciler,
+		__instanceMap = instanceMap,
 		__statusChangedCallback = nil,
 	}
 
 	setmetatable(self, ServeSession)
 
 	return self
+end
+
+function ServeSession:__fmtDebug(output)
+	output:writeLine("ServeSession {{")
+	output:indent()
+
+	output:writeLine("API Context: {:#?}", self.__apiContext)
+	output:writeLine("Instances: {:#?}", self.__instanceMap)
+
+	output:unindent()
+	output:write("}")
 end
 
 function ServeSession:onStatusChanged(callback)

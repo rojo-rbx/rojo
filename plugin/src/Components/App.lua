@@ -8,7 +8,6 @@ local ApiContext = require(Plugin.ApiContext)
 local Assets = require(Plugin.Assets)
 local Config = require(Plugin.Config)
 local DevSettings = require(Plugin.DevSettings)
-local Reconciler = require(Plugin.Reconciler)
 local ServeSession = require(Plugin.ServeSession)
 local Version = require(Plugin.Version)
 local preloadAssets = require(Plugin.preloadAssets)
@@ -115,7 +114,6 @@ function App:startSession(address, port)
 	local baseUrl = ("http://%s:%s"):format(address, port)
 	self.serveSession = ServeSession.new({
 		apiContext = ApiContext.new(baseUrl),
-		reconciler = Reconciler.new(),
 	})
 
 	self.serveSession:onStatusChanged(function(status, details)
