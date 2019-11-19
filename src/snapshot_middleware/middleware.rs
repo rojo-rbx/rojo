@@ -1,5 +1,3 @@
-use std::path::{Path, PathBuf};
-
 use rbx_dom_weak::{RbxId, RbxTree};
 
 use crate::{
@@ -21,9 +19,5 @@ pub trait SnapshotMiddleware {
 
     fn from_instance(_tree: &RbxTree, _id: RbxId) -> SnapshotFileResult {
         None
-    }
-
-    fn change_affects_paths(path: &Path) -> Vec<PathBuf> {
-        vec![path.to_path_buf()]
     }
 }
