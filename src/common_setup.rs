@@ -1,7 +1,7 @@
 //! Initialization routines that are used by more than one Rojo command or
 //! utility.
 
-use std::path::Path;
+use std::{path::Path, sync::Arc};
 
 use rbx_dom_weak::RbxInstanceProperties;
 
@@ -41,7 +41,8 @@ pub fn start<F: VfsFetcher>(
         // If the project file defines no plugins, then there's no need to
         // initialize the snapshot plugin context.
         if !project.plugins.is_empty() {
-            snapshot_context.plugin_context = Some(SnapshotPluginContext::new(&project.plugins));
+            snapshot_context.plugin_context =
+                Some(Arc::new(SnapshotPluginContext::new(&project.plugins)));
         }
     }
 

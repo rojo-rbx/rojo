@@ -1,16 +1,16 @@
-use std::{fmt, fs, ops::Deref, path::Path};
+use std::{fmt, fs, ops::Deref, path::Path, sync::Arc};
 
 use rlua::{Lua, RegistryKey};
 
 use super::error::SnapshotError;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct InstanceSnapshotContext {
     /// Holds all the state needed to run user plugins as part of the snapshot
     /// process.
     ///
     /// If this is None, then plugins should not be evaluated at all.
-    pub plugin_context: Option<SnapshotPluginContext>,
+    pub plugin_context: Option<Arc<SnapshotPluginContext>>,
 }
 
 impl Default for InstanceSnapshotContext {
