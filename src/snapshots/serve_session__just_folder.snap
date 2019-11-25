@@ -16,4 +16,6 @@ metadata:
     - /foo/init.lua
     - /foo/init.server.lua
     - /foo/init.client.lua
+  context:
+    path_ignore_glob: []
 children: []

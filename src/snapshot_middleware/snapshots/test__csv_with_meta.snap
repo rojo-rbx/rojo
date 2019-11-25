@@ -10,6 +10,8 @@ metadata:
   relevant_paths:
     - /foo.csv
     - /foo.meta.json
+  context:
+    path_ignore_glob: []
 name: foo
 class_name: LocalizationTable
 properties:
