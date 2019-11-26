@@ -45,6 +45,12 @@ pub struct InstanceMetadata {
     #[serde(serialize_with = "path_serializer::serialize_vec_absolute")]
     pub relevant_paths: Vec<PathBuf>,
 
+    /// Contains information about this instance that should persist between
+    /// snapshot invocations and is generally inherited.
+    ///
+    /// If an instance has a piece of context attached to it, then the next time
+    /// that instance's instigating source is snapshotted directly, the same
+    /// context will be passed into it.
     pub context: InstanceContext,
 }
 
