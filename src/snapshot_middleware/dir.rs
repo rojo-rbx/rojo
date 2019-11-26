@@ -32,7 +32,7 @@ impl SnapshotMiddleware for SnapshotDir {
         let mut snapshot_children = Vec::new();
 
         for child in children.into_iter() {
-            if let Some(child_snapshot) = snapshot_from_vfs(context, vfs, &child)? {
+            if let Some(child_snapshot) = snapshot_from_vfs(context.clone(), vfs, &child)? {
                 snapshot_children.push(child_snapshot);
             }
         }

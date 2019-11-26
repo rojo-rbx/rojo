@@ -14,7 +14,7 @@ use crate::{
     snapshot::{
         apply_patch_set, compute_patch_set, AppliedPatchSet, InstigatingSource, PatchSet, RojoTree,
     },
-    snapshot_middleware::{snapshot_from_vfs, snapshot_project_node, InstanceSnapshotContext},
+    snapshot_middleware::{snapshot_from_vfs, snapshot_project_node},
     vfs::{FsResultExt, Vfs, VfsEvent, VfsFetcher},
 };
 
@@ -141,10 +141,6 @@ fn update_affected_instances<F: VfsFetcher>(
             }
         };
 
-        // TODO: Use persisted snapshot context struct instead of recreating it
-        // every time.
-        let mut snapshot_context = InstanceSnapshotContext::default();
-
         // How we process a file change event depends on what created this
         // file/folder in the first place.
         let applied_patch_set = match instigating_source {
@@ -161,7 +157,7 @@ fn update_affected_instances<F: VfsFetcher>(
                         // starting at that path and use it as the source for
                         // our patch.
 
-                        let snapshot = snapshot_from_vfs(&mut snapshot_context, &vfs, &entry)
+                        let snapshot = snapshot_from_vfs(metadata.context.clone(), &vfs, &entry)
                             .expect("snapshot failed")
                             .expect("snapshot did not return an instance");
 
@@ -187,10 +183,14 @@ fn update_affected_instances<F: VfsFetcher>(
                 // there might be information associated with our instance from
                 // the project file, we snapshot the entire project node again.
 
-                let snapshot =
-                    snapshot_project_node(&mut snapshot_context, instance_name, project_node, &vfs)
-                        .expect("snapshot failed")
-                        .expect("snapshot did not return an instance");
+                let snapshot = snapshot_project_node(
+                    &mut metadata.context.clone(),
+                    instance_name,
+                    project_node,
+                    &vfs,
+                )
+                .expect("snapshot failed")
+                .expect("snapshot did not return an instance");
 
                 let patch_set = compute_patch_set(&snapshot, &tree, id);
                 apply_patch_set(tree, patch_set)

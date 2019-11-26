@@ -94,7 +94,7 @@ pub fn snapshot_project_node<F: VfsFetcher>(
     if let Some(path) = &node.path {
         let entry = vfs.get(path)?;
 
-        if let Some(snapshot) = snapshot_from_vfs(context, vfs, &entry)? {
+        if let Some(snapshot) = snapshot_from_vfs(context.clone(), vfs, &entry)? {
             // If a class name was already specified, then it'll override the
             // class name of this snapshot ONLY if it's a Folder.
             //
