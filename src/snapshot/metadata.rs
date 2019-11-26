@@ -44,14 +44,48 @@ pub struct InstanceMetadata {
     pub context: InstanceContext,
 }
 
-impl Default for InstanceMetadata {
-    fn default() -> Self {
-        InstanceMetadata {
+impl InstanceMetadata {
+    pub fn new() -> Self {
+        Self {
             ignore_unknown_instances: false,
             instigating_source: None,
             relevant_paths: Vec::new(),
             context: InstanceContext::default(),
         }
+    }
+
+    pub fn ignore_unknown_instances(self, ignore_unknown_instances: bool) -> Self {
+        Self {
+            ignore_unknown_instances,
+            ..self
+        }
+    }
+
+    pub fn instigating_source(self, instigating_source: impl Into<InstigatingSource>) -> Self {
+        Self {
+            instigating_source: Some(instigating_source.into()),
+            ..self
+        }
+    }
+
+    pub fn relevant_paths(self, relevant_paths: Vec<PathBuf>) -> Self {
+        Self {
+            relevant_paths,
+            ..self
+        }
+    }
+
+    pub fn context(self, context: &InstanceContext) -> Self {
+        Self {
+            context: context.clone(),
+            ..self
+        }
+    }
+}
+
+impl Default for InstanceMetadata {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
