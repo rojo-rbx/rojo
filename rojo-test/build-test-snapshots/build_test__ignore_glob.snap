@@ -1,0 +1,17 @@
+---
+source: rojo-test/src/build_test.rs
+expression: contents
+---
+<roblox version="4">
+  <Item class="Folder" referent="0">
+    <Properties>
+      <string name="Name">ignore_glob</string>
+    </Properties>
+    <Item class="ModuleScript" referent="1">
+      <Properties>
+        <string name="Name">keep</string>
+        <string name="Source">-- This file should be present.</string>
+      </Properties>
+    </Item>
+  </Item>
+</roblox>
