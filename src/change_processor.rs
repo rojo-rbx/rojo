@@ -184,7 +184,7 @@ fn update_affected_instances<F: VfsFetcher>(
                 // the project file, we snapshot the entire project node again.
 
                 let snapshot = snapshot_project_node(
-                    &mut metadata.context.clone(),
+                    metadata.context.clone(),
                     instance_name,
                     project_node,
                     &vfs,
