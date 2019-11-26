@@ -17,7 +17,7 @@ pub struct SnapshotRbxm;
 
 impl SnapshotMiddleware for SnapshotRbxm {
     fn from_vfs<F: VfsFetcher>(
-        _context: &InstanceSnapshotContext,
+        context: &InstanceSnapshotContext,
         vfs: &Vfs<F>,
         entry: &VfsEntry,
     ) -> SnapshotInstanceResult {
@@ -46,11 +46,12 @@ impl SnapshotMiddleware for SnapshotRbxm {
         if children.len() == 1 {
             let snapshot = InstanceSnapshot::from_tree(&temp_tree, children[0])
                 .name(instance_name)
-                .metadata(InstanceMetadata {
-                    instigating_source: Some(entry.path().to_path_buf().into()),
-                    relevant_paths: vec![entry.path().to_path_buf()],
-                    ..Default::default()
-                });
+                .metadata(
+                    InstanceMetadata::new()
+                        .instigating_source(entry.path())
+                        .relevant_paths(&[entry.path()])
+                        .context(context),
+                );
 
             Ok(Some(snapshot))
         } else {

@@ -1,4 +1,8 @@
-use std::{fmt, path::PathBuf, sync::Arc};
+use std::{
+    fmt,
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -68,9 +72,9 @@ impl InstanceMetadata {
         }
     }
 
-    pub fn relevant_paths(self, relevant_paths: Vec<PathBuf>) -> Self {
+    pub fn relevant_paths<I: IntoIterator<Item = P>, P: Into<PathBuf>>(self, input: I) -> Self {
         Self {
-            relevant_paths,
+            relevant_paths: input.into_iter().map(|value| value.into()).collect(),
             ..self
         }
     }
@@ -127,5 +131,11 @@ impl fmt::Debug for InstigatingSource {
 impl From<PathBuf> for InstigatingSource {
     fn from(path: PathBuf) -> Self {
         InstigatingSource::Path(path)
+    }
+}
+
+impl<'a> From<&'a Path> for InstigatingSource {
+    fn from(path: &Path) -> Self {
+        InstigatingSource::Path(path.to_owned())
     }
 }

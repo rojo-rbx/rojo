@@ -34,7 +34,7 @@ impl SnapshotMiddleware for SnapshotLua {
         }
 
         if entry.is_file() {
-            snapshot_lua_file(vfs, entry)
+            snapshot_lua_file(context, vfs, entry)
         } else {
             // At this point, our entry is definitely a directory!
 
@@ -59,7 +59,11 @@ impl SnapshotMiddleware for SnapshotLua {
 }
 
 /// Core routine for turning Lua files into snapshots.
-fn snapshot_lua_file<F: VfsFetcher>(vfs: &Vfs<F>, entry: &VfsEntry) -> SnapshotInstanceResult {
+fn snapshot_lua_file<F: VfsFetcher>(
+    context: &InstanceSnapshotContext,
+    vfs: &Vfs<F>,
+    entry: &VfsEntry,
+) -> SnapshotInstanceResult {
     let file_name = entry.path().file_name().unwrap().to_string_lossy();
 
     let (class_name, instance_name) = if let Some(name) = match_trailing(&file_name, ".server.lua")
@@ -91,11 +95,12 @@ fn snapshot_lua_file<F: VfsFetcher>(vfs: &Vfs<F>, entry: &VfsEntry) -> SnapshotI
                 value: contents_str,
             },
         })
-        .metadata(InstanceMetadata {
-            instigating_source: Some(entry.path().to_path_buf().into()),
-            relevant_paths: vec![entry.path().to_path_buf(), meta_path.clone()],
-            ..Default::default()
-        });
+        .metadata(
+            InstanceMetadata::new()
+                .instigating_source(entry.path())
+                .relevant_paths(&[entry.path(), &meta_path])
+                .context(context),
+        );
 
     if let Some(meta_entry) = vfs.get(meta_path).with_not_found()? {
         let meta_contents = meta_entry.contents(vfs)?;
@@ -121,7 +126,7 @@ fn snapshot_init<F: VfsFetcher>(
 
     if let Some(init_entry) = vfs.get(init_path).with_not_found()? {
         if let Some(dir_snapshot) = SnapshotDir::from_vfs(context, vfs, folder_entry)? {
-            if let Some(mut init_snapshot) = snapshot_lua_file(vfs, &init_entry)? {
+            if let Some(mut init_snapshot) = snapshot_lua_file(context, vfs, &init_entry)? {
                 if dir_snapshot.class_name != "Folder" {
                     panic!(
                         "init.lua, init.server.lua, and init.client.lua can \

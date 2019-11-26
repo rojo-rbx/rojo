@@ -47,26 +47,25 @@ impl SnapshotMiddleware for SnapshotDir {
 
         let meta_path = entry.path().join("init.meta.json");
 
-        let relevant_paths = vec![
-            entry.path().to_path_buf(),
-            meta_path.clone(),
-            // TODO: We shouldn't need to know about Lua existing in this
-            // middleware. Should we figure out a way for that function to add
-            // relevant paths to this middleware?
-            entry.path().join("init.lua"),
-            entry.path().join("init.server.lua"),
-            entry.path().join("init.client.lua"),
-        ];
-
         let mut snapshot = InstanceSnapshot::new()
             .name(instance_name)
             .class_name("Folder")
             .children(snapshot_children)
-            .metadata(InstanceMetadata {
-                instigating_source: Some(entry.path().to_path_buf().into()),
-                relevant_paths,
-                ..Default::default()
-            });
+            .metadata(
+                InstanceMetadata::new()
+                    .instigating_source(entry.path())
+                    .relevant_paths(&[
+                        entry.path().to_path_buf(),
+                        meta_path.clone(),
+                        // TODO: We shouldn't need to know about Lua existing in this
+                        // middleware. Should we figure out a way for that function to add
+                        // relevant paths to this middleware?
+                        entry.path().join("init.lua"),
+                        entry.path().join("init.server.lua"),
+                        entry.path().join("init.client.lua"),
+                    ])
+                    .context(context),
+            );
 
         if let Some(meta_entry) = vfs.get(meta_path).with_not_found()? {
             let meta_contents = meta_entry.contents(vfs)?;

@@ -20,7 +20,7 @@ pub struct SnapshotTxt;
 
 impl SnapshotMiddleware for SnapshotTxt {
     fn from_vfs<F: VfsFetcher>(
-        _context: &InstanceSnapshotContext,
+        context: &InstanceSnapshotContext,
         vfs: &Vfs<F>,
         entry: &VfsEntry,
     ) -> SnapshotInstanceResult {
@@ -52,11 +52,12 @@ impl SnapshotMiddleware for SnapshotTxt {
             .name(instance_name)
             .class_name("StringValue")
             .properties(properties)
-            .metadata(InstanceMetadata {
-                instigating_source: Some(entry.path().to_path_buf().into()),
-                relevant_paths: vec![entry.path().to_path_buf(), meta_path.clone()],
-                ..Default::default()
-            });
+            .metadata(
+                InstanceMetadata::new()
+                    .instigating_source(entry.path())
+                    .relevant_paths(&[entry.path(), &meta_path])
+                    .context(context),
+            );
 
         if let Some(meta_entry) = vfs.get(meta_path).with_not_found()? {
             let meta_contents = meta_entry.contents(vfs)?;
