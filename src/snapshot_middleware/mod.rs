@@ -19,7 +19,6 @@ mod txt;
 mod user_plugins;
 mod util;
 
-pub use self::context::*;
 pub use self::error::*;
 
 use rbx_dom_weak::{RbxId, RbxTree};
@@ -39,6 +38,7 @@ use self::{
 };
 use crate::vfs::{Vfs, VfsEntry, VfsFetcher};
 
+pub use self::context::InstanceSnapshotContext;
 pub use self::project::snapshot_project_node;
 
 macro_rules! middlewares {

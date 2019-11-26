@@ -1,14 +1,14 @@
 //! Initialization routines that are used by more than one Rojo command or
 //! utility.
 
-use std::{path::Path, sync::Arc};
+use std::path::Path;
 
 use rbx_dom_weak::RbxInstanceProperties;
 
 use crate::{
     project::{Project, ProjectLoadError},
     snapshot::{apply_patch_set, compute_patch_set, InstancePropertiesWithMeta, RojoTree},
-    snapshot_middleware::{snapshot_from_vfs, InstanceSnapshotContext, SnapshotPluginContext},
+    snapshot_middleware::{snapshot_from_vfs, InstanceSnapshotContext},
     vfs::{Vfs, VfsFetcher},
 };
 
@@ -41,8 +41,7 @@ pub fn start<F: VfsFetcher>(
         // If the project file defines no plugins, then there's no need to
         // initialize the snapshot plugin context.
         if !project.plugins.is_empty() {
-            snapshot_context.plugin_context =
-                Some(Arc::new(SnapshotPluginContext::new(&project.plugins)));
+            // TODO: Initialize plugin context, wherever that ends up living.
         }
     }
 
