@@ -30,13 +30,13 @@ impl SnapshotMiddleware for SnapshotDir {
         let mut snapshot_children = Vec::new();
         let children: Vec<VfsEntry> = entry.children(vfs)?;
 
-        for child in children.into_iter() {
+        'outer: for child in children.into_iter() {
             for ignore in context.ignore_paths.iter() {
                 if let Ok(suffix_path) = child.path().strip_prefix(&ignore.base_path) {
                     let matcher = ignore.glob.compile_matcher();
 
                     if matcher.is_match(suffix_path) {
-                        continue;
+                        continue 'outer;
                     }
                 }
             }
