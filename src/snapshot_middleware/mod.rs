@@ -45,14 +45,14 @@ macro_rules! middlewares {
     ( $($middleware: ident,)* ) => {
         /// Generates a snapshot of instances from the given VfsEntry.
         pub fn snapshot_from_vfs<F: VfsFetcher>(
-            context: InstanceSnapshotContext,
+            context: &InstanceSnapshotContext,
             vfs: &Vfs<F>,
             entry: &VfsEntry,
         ) -> SnapshotInstanceResult {
             $(
                 log::trace!("trying middleware {} on {}", stringify!($middleware), entry.path().display());
 
-                if let Some(snapshot) = $middleware::from_vfs(context.clone(), vfs, entry)? {
+                if let Some(snapshot) = $middleware::from_vfs(context, vfs, entry)? {
                     log::trace!("middleware {} success on {}", stringify!($middleware), entry.path().display());
                     return Ok(Some(snapshot));
                 }

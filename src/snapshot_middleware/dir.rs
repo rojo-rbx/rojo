@@ -19,7 +19,7 @@ pub struct SnapshotDir;
 
 impl SnapshotMiddleware for SnapshotDir {
     fn from_vfs<F: VfsFetcher>(
-        context: InstanceSnapshotContext,
+        context: &InstanceSnapshotContext,
         vfs: &Vfs<F>,
         entry: &VfsEntry,
     ) -> SnapshotInstanceResult {
@@ -32,7 +32,7 @@ impl SnapshotMiddleware for SnapshotDir {
         let mut snapshot_children = Vec::new();
 
         for child in children.into_iter() {
-            if let Some(child_snapshot) = snapshot_from_vfs(context.clone(), vfs, &child)? {
+            if let Some(child_snapshot) = snapshot_from_vfs(context, vfs, &child)? {
                 snapshot_children.push(child_snapshot);
             }
         }
@@ -116,7 +116,7 @@ mod test {
 
         let entry = vfs.get("/foo").unwrap();
         let instance_snapshot =
-            SnapshotDir::from_vfs(InstanceSnapshotContext::default(), &mut vfs, &entry)
+            SnapshotDir::from_vfs(&InstanceSnapshotContext::default(), &mut vfs, &entry)
                 .unwrap()
                 .unwrap();
 
@@ -134,7 +134,7 @@ mod test {
 
         let entry = vfs.get("/foo").unwrap();
         let instance_snapshot =
-            SnapshotDir::from_vfs(InstanceSnapshotContext::default(), &mut vfs, &entry)
+            SnapshotDir::from_vfs(&InstanceSnapshotContext::default(), &mut vfs, &entry)
                 .unwrap()
                 .unwrap();
 

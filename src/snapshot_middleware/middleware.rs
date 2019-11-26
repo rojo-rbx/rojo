@@ -12,7 +12,7 @@ pub type SnapshotFileResult = Option<(String, VfsSnapshot)>;
 
 pub trait SnapshotMiddleware {
     fn from_vfs<F: VfsFetcher>(
-        context: InstanceSnapshotContext,
+        context: &InstanceSnapshotContext,
         vfs: &Vfs<F>,
         entry: &VfsEntry,
     ) -> SnapshotInstanceResult;

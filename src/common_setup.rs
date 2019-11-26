@@ -52,7 +52,7 @@ pub fn start<F: VfsFetcher>(
         .expect("could not get project path");
 
     log::trace!("Generating snapshot of instances from VFS");
-    let snapshot = snapshot_from_vfs(snapshot_context, vfs, &entry)
+    let snapshot = snapshot_from_vfs(&snapshot_context, vfs, &entry)
         .expect("snapshot failed")
         .expect("snapshot did not return an instance");
 

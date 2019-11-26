@@ -157,7 +157,7 @@ fn update_affected_instances<F: VfsFetcher>(
                         // starting at that path and use it as the source for
                         // our patch.
 
-                        let snapshot = snapshot_from_vfs(metadata.context.clone(), &vfs, &entry)
+                        let snapshot = snapshot_from_vfs(&metadata.context, &vfs, &entry)
                             .expect("snapshot failed")
                             .expect("snapshot did not return an instance");
 
@@ -183,14 +183,10 @@ fn update_affected_instances<F: VfsFetcher>(
                 // there might be information associated with our instance from
                 // the project file, we snapshot the entire project node again.
 
-                let snapshot = snapshot_project_node(
-                    metadata.context.clone(),
-                    instance_name,
-                    project_node,
-                    &vfs,
-                )
-                .expect("snapshot failed")
-                .expect("snapshot did not return an instance");
+                let snapshot =
+                    snapshot_project_node(&metadata.context, instance_name, project_node, &vfs)
+                        .expect("snapshot failed")
+                        .expect("snapshot did not return an instance");
 
                 let patch_set = compute_patch_set(&snapshot, &tree, id);
                 apply_patch_set(tree, patch_set)
