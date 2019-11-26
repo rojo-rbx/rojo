@@ -27,11 +27,20 @@ impl SnapshotMiddleware for SnapshotDir {
             return Ok(None);
         }
 
+        let mut snapshot_children = Vec::new();
         let children: Vec<VfsEntry> = entry.children(vfs)?;
 
-        let mut snapshot_children = Vec::new();
-
         for child in children.into_iter() {
+            for ignore in context.ignore_paths.iter() {
+                if let Ok(suffix_path) = child.path().strip_prefix(&ignore.base_path) {
+                    let matcher = ignore.glob.compile_matcher();
+
+                    if matcher.is_match(suffix_path) {
+                        continue;
+                    }
+                }
+            }
+
             if let Some(child_snapshot) = snapshot_from_vfs(context, vfs, &child)? {
                 snapshot_children.push(child_snapshot);
             }

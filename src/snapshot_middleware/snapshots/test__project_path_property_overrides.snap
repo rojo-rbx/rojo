@@ -11,7 +11,7 @@ metadata:
     - /foo/other.project.json
     - /foo/default.project.json
   context:
-    path_ignore_glob: []
+    ignore_paths: []
 name: path-property-override
 class_name: StringValue
 properties:

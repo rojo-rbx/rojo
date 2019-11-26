@@ -7,6 +7,7 @@ use std::{
 };
 
 use failure::Fail;
+use globset::Glob;
 use log::warn;
 use rbx_dom_weak::{RbxValue, UnresolvedRbxValue};
 use serde::{Deserialize, Serialize, Serializer};
@@ -155,6 +156,13 @@ struct SourceProjectNode {
     #[serde(rename = "$path", skip_serializing_if = "Option::is_none")]
     path: Option<String>,
 
+    #[serde(
+        rename = "$ignorePaths",
+        default,
+        skip_serializing_if = "Vec::is_empty"
+    )]
+    ignore_paths: Vec<SourceGlob>,
+
     #[serde(flatten)]
     children: BTreeMap<String, SourceProjectNode>,
 }
@@ -184,15 +192,25 @@ impl SourceProjectNode {
             }
         });
 
+        let ignore_paths = self
+            .ignore_paths
+            .into_iter()
+            .map(|source| source.0)
+            .collect();
+
         ProjectNode {
             class_name: self.class_name,
             properties: self.properties,
             ignore_unknown_instances: self.ignore_unknown_instances,
+            ignore_paths,
             path,
             children,
         }
     }
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SourceGlob(#[serde(with = "crate::serde_glob")] Glob);
 
 #[derive(Debug, Fail)]
 pub enum ProjectLoadError {
@@ -271,6 +289,9 @@ pub struct ProjectNode {
 
     #[serde(serialize_with = "crate::path_serializer::serialize_option_absolute")]
     pub path: Option<PathBuf>,
+
+    #[serde(skip)]
+    pub ignore_paths: Vec<Glob>,
 }
 
 impl ProjectNode {
@@ -313,10 +334,13 @@ impl ProjectNode {
             }
         });
 
+        let ignore_paths = self.ignore_paths.iter().cloned().map(SourceGlob).collect();
+
         SourceProjectNode {
             class_name: self.class_name.clone(),
             properties: self.properties.clone(),
             ignore_unknown_instances: self.ignore_unknown_instances,
+            ignore_paths,
             children,
             path,
         }

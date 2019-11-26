@@ -11,7 +11,7 @@ added_instances:
         ignore_unknown_instances: false
         relevant_paths: []
         context:
-          path_ignore_glob: []
+          ignore_paths: []
       name: New
       class_name: Folder
       properties: {}

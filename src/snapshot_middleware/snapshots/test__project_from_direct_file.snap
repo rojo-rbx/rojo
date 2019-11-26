@@ -10,7 +10,7 @@ metadata:
   relevant_paths:
     - /foo/hello.project.json
   context:
-    path_ignore_glob: []
+    ignore_paths: []
 name: direct-project
 class_name: Model
 properties: {}

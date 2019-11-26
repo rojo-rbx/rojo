@@ -11,7 +11,7 @@ metadata:
     - /bar.server.lua
     - /bar.meta.json
   context:
-    path_ignore_glob: []
+    ignore_paths: []
 name: bar
 class_name: Script
 properties:

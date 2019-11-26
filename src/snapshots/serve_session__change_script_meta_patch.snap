@@ -18,4 +18,4 @@ expression: redactions.redacted_yaml(changes)
             - /root/test.lua
             - /root/test.meta.json
           context:
-            path_ignore_glob: []
+            ignore_paths: []

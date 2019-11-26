@@ -13,5 +13,5 @@ metadata:
   ignore_unknown_instances: false
   relevant_paths: []
   context:
-    path_ignore_glob: []
+    ignore_paths: []
 children: []

@@ -22,6 +22,7 @@ mod message_queue;
 mod multimap;
 mod path_map;
 mod path_serializer;
+mod serde_glob;
 mod serve_session;
 mod session_id;
 mod snapshot;

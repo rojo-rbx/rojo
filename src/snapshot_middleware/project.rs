@@ -1,10 +1,10 @@
-use std::{borrow::Cow, collections::HashMap};
+use std::{borrow::Cow, collections::HashMap, sync::Arc};
 
 use rbx_reflection::try_resolve_value;
 
 use crate::{
     project::{Project, ProjectNode},
-    snapshot::{InstanceMetadata, InstanceSnapshot, InstigatingSource},
+    snapshot::{IgnoreGlob, InstanceMetadata, InstanceSnapshot, InstigatingSource},
     vfs::{FsResultExt, Vfs, VfsEntry, VfsFetcher},
 };
 
@@ -94,7 +94,21 @@ pub fn snapshot_project_node<F: VfsFetcher>(
     if let Some(path) = &node.path {
         let entry = vfs.get(path)?;
 
-        if let Some(snapshot) = snapshot_from_vfs(context, vfs, &entry)? {
+        let ignore_paths = node
+            .ignore_paths
+            .iter()
+            .map(|glob| IgnoreGlob {
+                base_path: entry.path().parent().unwrap().to_owned(),
+                glob: glob.clone(),
+            })
+            .collect();
+
+        let context = InstanceSnapshotContext {
+            ignore_paths: Arc::new(ignore_paths),
+            ..context.clone()
+        };
+
+        if let Some(snapshot) = snapshot_from_vfs(&context, vfs, &entry)? {
             // If a class name was already specified, then it'll override the
             // class name of this snapshot ONLY if it's a Folder.
             //

@@ -14,7 +14,7 @@ metadata:
     - /foo/init.server.lua
     - /foo/init.client.lua
   context:
-    path_ignore_glob: []
+    ignore_paths: []
 name: foo
 class_name: Folder
 properties: {}
@@ -31,7 +31,7 @@ children:
         - /foo/Child/init.server.lua
         - /foo/Child/init.client.lua
       context:
-        path_ignore_glob: []
+        ignore_paths: []
     name: Child
     class_name: Folder
     properties: {}

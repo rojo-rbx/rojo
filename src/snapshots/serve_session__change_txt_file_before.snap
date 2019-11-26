@@ -17,5 +17,5 @@ metadata:
     - /foo.txt
     - /foo.meta.json
   context:
-    path_ignore_glob: []
+    ignore_paths: []
 children: []
