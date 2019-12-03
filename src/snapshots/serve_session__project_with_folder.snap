@@ -17,6 +17,7 @@ metadata:
     - /foo/src/init.server.lua
     - /foo/src/init.client.lua
     - /foo/default.project.json
+  context: {}
 children:
   - id: id-2
     name: hello
@@ -32,4 +33,5 @@ children:
       relevant_paths:
         - /foo/src/hello.txt
         - /foo/src/hello.meta.json
+      context: {}
     children: []

@@ -9,6 +9,7 @@ metadata:
     Path: /foo/default.project.json
   relevant_paths:
     - /foo/default.project.json
+  context: {}
 name: children
 class_name: Folder
 properties: {}
@@ -25,6 +26,7 @@ children:
             ignore_unknown_instances: ~
             path: ~
       relevant_paths: []
+      context: {}
     name: Child
     class_name: Model
     properties: {}
