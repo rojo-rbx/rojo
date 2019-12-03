@@ -10,8 +10,6 @@ metadata:
   relevant_paths:
     - /foo.client.lua
     - /foo.meta.json
-  context:
-    path_ignore_glob: []
 name: foo
 class_name: LocalScript
 properties:

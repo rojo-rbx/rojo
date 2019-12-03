@@ -13,8 +13,6 @@ metadata:
     - /foo/init.lua
     - /foo/init.server.lua
     - /foo/init.client.lua
-  context:
-    path_ignore_glob: []
 name: foo
 class_name: Folder
 properties: {}

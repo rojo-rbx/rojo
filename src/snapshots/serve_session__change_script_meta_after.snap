@@ -16,8 +16,6 @@ metadata:
     - /root/init.lua
     - /root/init.server.lua
     - /root/init.client.lua
-  context:
-    path_ignore_glob: []
 children:
   - id: id-2
     name: test
@@ -33,6 +31,4 @@ children:
       relevant_paths:
         - /root/test.lua
         - /root/test.meta.json
-      context:
-        path_ignore_glob: []
     children: []

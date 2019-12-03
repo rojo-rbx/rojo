@@ -1,4 +1,4 @@
-use std::{fmt, path::PathBuf, sync::Arc};
+use std::{fmt, path::PathBuf};
 
 use serde::{Deserialize, Serialize};
 
@@ -40,8 +40,6 @@ pub struct InstanceMetadata {
     // TODO: Change this to be a SmallVec for performance in common cases?
     #[serde(serialize_with = "path_serializer::serialize_vec_absolute")]
     pub relevant_paths: Vec<PathBuf>,
-
-    pub context: InstanceContext,
 }
 
 impl InstanceMetadata {
@@ -50,7 +48,6 @@ impl InstanceMetadata {
             ignore_unknown_instances: false,
             instigating_source: None,
             relevant_paths: Vec::new(),
-            context: InstanceContext::default(),
         }
     }
 
@@ -74,31 +71,11 @@ impl InstanceMetadata {
             ..self
         }
     }
-
-    pub fn context(self, context: &InstanceContext) -> Self {
-        Self {
-            context: context.clone(),
-            ..self
-        }
-    }
 }
 
 impl Default for InstanceMetadata {
     fn default() -> Self {
         Self::new()
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct InstanceContext {
-    pub path_ignore_glob: Arc<Vec<IgnoreGlob>>,
-}
-
-impl Default for InstanceContext {
-    fn default() -> Self {
-        InstanceContext {
-            path_ignore_glob: Arc::new(Vec::new()),
-        }
     }
 }
 

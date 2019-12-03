@@ -9,8 +9,6 @@ metadata:
     Path: /foo/default.project.json
   relevant_paths:
     - /foo/default.project.json
-  context:
-    path_ignore_glob: []
 name: resolved-properties
 class_name: StringValue
 properties:
