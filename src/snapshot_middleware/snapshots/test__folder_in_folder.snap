@@ -13,8 +13,7 @@ metadata:
     - /foo/init.lua
     - /foo/init.server.lua
     - /foo/init.client.lua
-  context:
-    ignore_paths: []
+  context: {}
 name: foo
 class_name: Folder
 properties: {}
@@ -30,8 +29,7 @@ children:
         - /foo/Child/init.lua
         - /foo/Child/init.server.lua
         - /foo/Child/init.client.lua
-      context:
-        ignore_paths: []
+      context: {}
     name: Child
     class_name: Folder
     properties: {}

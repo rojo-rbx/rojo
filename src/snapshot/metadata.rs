@@ -1,7 +1,6 @@
 use std::{
     fmt,
     path::{Path, PathBuf},
-    sync::Arc,
 };
 
 use serde::{Deserialize, Serialize};
@@ -100,15 +99,11 @@ impl Default for InstanceMetadata {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct InstanceContext {
-    pub ignore_paths: Arc<Vec<()>>,
-}
+pub struct InstanceContext {}
 
 impl Default for InstanceContext {
     fn default() -> Self {
-        InstanceContext {
-            ignore_paths: Arc::new(Vec::new()),
-        }
+        InstanceContext {}
     }
 }
 

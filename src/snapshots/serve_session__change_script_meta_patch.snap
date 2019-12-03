@@ -17,5 +17,4 @@ expression: redactions.redacted_yaml(changes)
           relevant_paths:
             - /root/test.lua
             - /root/test.meta.json
-          context:
-            ignore_paths: []
+          context: {}

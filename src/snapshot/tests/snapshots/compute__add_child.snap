@@ -10,8 +10,7 @@ added_instances:
       metadata:
         ignore_unknown_instances: false
         relevant_paths: []
-        context:
-          ignore_paths: []
+        context: {}
       name: New
       class_name: Folder
       properties: {}
