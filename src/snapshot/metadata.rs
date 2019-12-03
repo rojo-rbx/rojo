@@ -82,11 +82,6 @@ impl Default for InstanceMetadata {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct IgnoreGlob {
-    pub pattern: String,
-}
-
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub enum InstigatingSource {
     Path(#[serde(serialize_with = "path_serializer::serialize_absolute")] PathBuf),
