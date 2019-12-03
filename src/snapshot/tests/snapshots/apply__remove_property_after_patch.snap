@@ -1,6 +1,6 @@
 ---
 source: src/snapshot/tests/apply.rs
-expression: tree_value
+expression: tree_view
 ---
 id: id-1
 name: ROOT
@@ -9,4 +9,6 @@ properties: {}
 metadata:
   ignore_unknown_instances: false
   relevant_paths: []
+  context:
+    path_ignore_glob: []
 children: []

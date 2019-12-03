@@ -12,6 +12,8 @@ metadata:
     Path: /foo/default.project.json
   relevant_paths:
     - /foo/default.project.json
+  context:
+    path_ignore_glob: []
 children:
   - id: id-2
     name: Child
@@ -33,4 +35,6 @@ children:
       relevant_paths:
         - /foo/file.txt
         - /foo/file.meta.json
+      context:
+        path_ignore_glob: []
     children: []
