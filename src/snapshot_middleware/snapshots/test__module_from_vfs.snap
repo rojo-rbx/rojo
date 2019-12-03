@@ -10,6 +10,8 @@ metadata:
   relevant_paths:
     - /foo.lua
     - /foo.meta.json
+  context:
+    ignore_paths: []
 name: foo
 class_name: ModuleScript
 properties:

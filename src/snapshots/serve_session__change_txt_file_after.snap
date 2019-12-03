@@ -16,4 +16,6 @@ metadata:
   relevant_paths:
     - /foo.txt
     - /foo.meta.json
+  context:
+    ignore_paths: []
 children: []

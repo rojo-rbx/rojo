@@ -10,6 +10,8 @@ metadata:
   relevant_paths:
     - /bar.server.lua
     - /bar.meta.json
+  context:
+    ignore_paths: []
 name: bar
 class_name: Script
 properties:

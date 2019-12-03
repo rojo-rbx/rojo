@@ -10,6 +10,8 @@ metadata:
   relevant_paths:
     - /foo/other.project.json
     - /foo/default.project.json
+  context:
+    ignore_paths: []
 name: path-project
 class_name: Model
 properties: {}

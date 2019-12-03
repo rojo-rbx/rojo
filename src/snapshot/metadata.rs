@@ -1,6 +1,7 @@
 use std::{
     fmt,
     path::{Path, PathBuf},
+    sync::Arc,
 };
 
 use serde::{Deserialize, Serialize};
@@ -43,6 +44,14 @@ pub struct InstanceMetadata {
     // TODO: Change this to be a SmallVec for performance in common cases?
     #[serde(serialize_with = "path_serializer::serialize_vec_absolute")]
     pub relevant_paths: Vec<PathBuf>,
+
+    /// Contains information about this instance that should persist between
+    /// snapshot invocations and is generally inherited.
+    ///
+    /// If an instance has a piece of context attached to it, then the next time
+    /// that instance's instigating source is snapshotted directly, the same
+    /// context will be passed into it.
+    pub context: InstanceContext,
 }
 
 impl InstanceMetadata {
@@ -51,6 +60,7 @@ impl InstanceMetadata {
             ignore_unknown_instances: false,
             instigating_source: None,
             relevant_paths: Vec::new(),
+            context: InstanceContext::default(),
         }
     }
 
@@ -74,11 +84,31 @@ impl InstanceMetadata {
             ..self
         }
     }
+
+    pub fn context(self, context: &InstanceContext) -> Self {
+        Self {
+            context: context.clone(),
+            ..self
+        }
+    }
 }
 
 impl Default for InstanceMetadata {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct InstanceContext {
+    pub ignore_paths: Arc<Vec<()>>,
+}
+
+impl Default for InstanceContext {
+    fn default() -> Self {
+        InstanceContext {
+            ignore_paths: Arc::new(Vec::new()),
+        }
     }
 }
 

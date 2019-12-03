@@ -9,6 +9,8 @@ metadata:
     Path: /foo.model.json
   relevant_paths:
     - /foo.model.json
+  context:
+    ignore_paths: []
 name: foo
 class_name: IntValue
 properties:
@@ -20,6 +22,8 @@ children:
     metadata:
       ignore_unknown_instances: false
       relevant_paths: []
+      context:
+        ignore_paths: []
     name: The Child
     class_name: StringValue
     properties: {}

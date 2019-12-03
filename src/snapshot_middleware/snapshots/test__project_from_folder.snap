@@ -9,6 +9,8 @@ metadata:
     Path: /foo/default.project.json
   relevant_paths:
     - /foo/default.project.json
+  context:
+    ignore_paths: []
 name: indirect-project
 class_name: Folder
 properties: {}

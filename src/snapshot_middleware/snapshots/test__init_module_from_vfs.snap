@@ -13,6 +13,8 @@ metadata:
     - /root/init.lua
     - /root/init.server.lua
     - /root/init.client.lua
+  context:
+    ignore_paths: []
 name: root
 class_name: ModuleScript
 properties:
