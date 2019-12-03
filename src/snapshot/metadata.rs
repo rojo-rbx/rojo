@@ -1,4 +1,7 @@
-use std::{fmt, path::PathBuf};
+use std::{
+    fmt,
+    path::{Path, PathBuf},
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -42,13 +45,40 @@ pub struct InstanceMetadata {
     pub relevant_paths: Vec<PathBuf>,
 }
 
-impl Default for InstanceMetadata {
-    fn default() -> Self {
-        InstanceMetadata {
+impl InstanceMetadata {
+    pub fn new() -> Self {
+        Self {
             ignore_unknown_instances: false,
             instigating_source: None,
             relevant_paths: Vec::new(),
         }
+    }
+
+    pub fn ignore_unknown_instances(self, ignore_unknown_instances: bool) -> Self {
+        Self {
+            ignore_unknown_instances,
+            ..self
+        }
+    }
+
+    pub fn instigating_source(self, instigating_source: impl Into<InstigatingSource>) -> Self {
+        Self {
+            instigating_source: Some(instigating_source.into()),
+            ..self
+        }
+    }
+
+    pub fn relevant_paths(self, relevant_paths: Vec<PathBuf>) -> Self {
+        Self {
+            relevant_paths,
+            ..self
+        }
+    }
+}
+
+impl Default for InstanceMetadata {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -72,5 +102,11 @@ impl fmt::Debug for InstigatingSource {
 impl From<PathBuf> for InstigatingSource {
     fn from(path: PathBuf) -> Self {
         InstigatingSource::Path(path)
+    }
+}
+
+impl From<&Path> for InstigatingSource {
+    fn from(path: &Path) -> Self {
+        InstigatingSource::Path(path.to_path_buf())
     }
 }
