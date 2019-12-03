@@ -105,8 +105,8 @@ impl From<PathBuf> for InstigatingSource {
     }
 }
 
-impl<'a> From<&'a Path> for InstigatingSource {
-    fn from(path: &'a Path) -> Self {
+impl From<&Path> for InstigatingSource {
+    fn from(path: &Path) -> Self {
         InstigatingSource::Path(path.to_path_buf())
     }
 }
