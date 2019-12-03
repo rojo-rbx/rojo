@@ -1,4 +1,7 @@
-use std::{fmt, path::PathBuf};
+use std::{
+    fmt,
+    path::{Path, PathBuf},
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -104,5 +107,11 @@ impl fmt::Debug for InstigatingSource {
 impl From<PathBuf> for InstigatingSource {
     fn from(path: PathBuf) -> Self {
         InstigatingSource::Path(path)
+    }
+}
+
+impl<'a> From<&'a Path> for InstigatingSource {
+    fn from(path: &'a Path) -> Self {
+        InstigatingSource::Path(path.to_path_buf())
     }
 }

@@ -87,11 +87,11 @@ fn snapshot_lua_file<F: VfsFetcher>(vfs: &Vfs<F>, entry: &VfsEntry) -> SnapshotI
                 value: contents_str,
             },
         })
-        .metadata(InstanceMetadata {
-            instigating_source: Some(entry.path().to_path_buf().into()),
-            relevant_paths: vec![entry.path().to_path_buf(), meta_path.clone()],
-            ..Default::default()
-        });
+        .metadata(
+            InstanceMetadata::new()
+                .instigating_source(entry.path())
+                .relevant_paths(vec![entry.path().to_path_buf(), meta_path.clone()]),
+        );
 
     if let Some(meta_entry) = vfs.get(meta_path).with_not_found()? {
         let meta_contents = meta_entry.contents(vfs)?;

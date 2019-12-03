@@ -62,11 +62,11 @@ impl SnapshotMiddleware for SnapshotDir {
             .name(instance_name)
             .class_name("Folder")
             .children(snapshot_children)
-            .metadata(InstanceMetadata {
-                instigating_source: Some(entry.path().to_path_buf().into()),
-                relevant_paths,
-                ..Default::default()
-            });
+            .metadata(
+                InstanceMetadata::new()
+                    .instigating_source(entry.path())
+                    .relevant_paths(relevant_paths),
+            );
 
         if let Some(meta_entry) = vfs.get(meta_path).with_not_found()? {
             let meta_contents = meta_entry.contents(vfs)?;
