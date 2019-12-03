@@ -19,7 +19,7 @@ pub struct SnapshotTxt;
 
 impl SnapshotMiddleware for SnapshotTxt {
     fn from_vfs<F: VfsFetcher>(
-        _context: &mut InstanceContext,
+        _context: &InstanceContext,
         vfs: &Vfs<F>,
         entry: &VfsEntry,
     ) -> SnapshotInstanceResult {
@@ -113,7 +113,7 @@ mod test {
 
         let entry = vfs.get("/foo.txt").unwrap();
         let instance_snapshot =
-            SnapshotTxt::from_vfs(&mut InstanceContext::default(), &mut vfs, &entry)
+            SnapshotTxt::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
                 .unwrap()
                 .unwrap();
 

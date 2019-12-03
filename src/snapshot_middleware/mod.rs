@@ -46,7 +46,7 @@ macro_rules! middlewares {
     ( $($middleware: ident,)* ) => {
         /// Generates a snapshot of instances from the given VfsEntry.
         pub fn snapshot_from_vfs<F: VfsFetcher>(
-            context: &mut InstanceContext,
+            context: &InstanceContext,
             vfs: &Vfs<F>,
             entry: &VfsEntry,
         ) -> SnapshotInstanceResult {

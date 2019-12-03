@@ -144,7 +144,7 @@ fn update_affected_instances<F: VfsFetcher>(
 
         // TODO: Use persisted snapshot context struct instead of recreating it
         // every time.
-        let mut snapshot_context = InstanceContext::default();
+        let snapshot_context = InstanceContext::default();
 
         // How we process a file change event depends on what created this
         // file/folder in the first place.
@@ -162,7 +162,7 @@ fn update_affected_instances<F: VfsFetcher>(
                         // starting at that path and use it as the source for
                         // our patch.
 
-                        let snapshot = snapshot_from_vfs(&mut snapshot_context, &vfs, &entry)
+                        let snapshot = snapshot_from_vfs(&snapshot_context, &vfs, &entry)
                             .expect("snapshot failed")
                             .expect("snapshot did not return an instance");
 
@@ -189,7 +189,7 @@ fn update_affected_instances<F: VfsFetcher>(
                 // the project file, we snapshot the entire project node again.
 
                 let snapshot =
-                    snapshot_project_node(&mut snapshot_context, instance_name, project_node, &vfs)
+                    snapshot_project_node(&snapshot_context, instance_name, project_node, &vfs)
                         .expect("snapshot failed")
                         .expect("snapshot did not return an instance");
 

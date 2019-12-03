@@ -19,7 +19,7 @@ pub struct SnapshotCsv;
 
 impl SnapshotMiddleware for SnapshotCsv {
     fn from_vfs<F: VfsFetcher>(
-        _context: &mut InstanceContext,
+        _context: &InstanceContext,
         vfs: &Vfs<F>,
         entry: &VfsEntry,
     ) -> SnapshotInstanceResult {
@@ -158,7 +158,7 @@ Ack,Ack!,,An exclamation of despair,¡Ay!"#,
 
         let entry = vfs.get("/foo.csv").unwrap();
         let instance_snapshot =
-            SnapshotCsv::from_vfs(&mut InstanceContext::default(), &mut vfs, &entry)
+            SnapshotCsv::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
                 .unwrap()
                 .unwrap();
 
@@ -180,7 +180,7 @@ Ack,Ack!,,An exclamation of despair,¡Ay!"#,
 
         let entry = vfs.get("/foo.csv").unwrap();
         let instance_snapshot =
-            SnapshotCsv::from_vfs(&mut InstanceContext::default(), &mut vfs, &entry)
+            SnapshotCsv::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
                 .unwrap()
                 .unwrap();
 

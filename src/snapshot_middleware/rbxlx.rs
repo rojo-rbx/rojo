@@ -12,7 +12,7 @@ pub struct SnapshotRbxlx;
 
 impl SnapshotMiddleware for SnapshotRbxlx {
     fn from_vfs<F: VfsFetcher>(
-        _context: &mut InstanceContext,
+        _context: &InstanceContext,
         vfs: &Vfs<F>,
         entry: &VfsEntry,
     ) -> SnapshotInstanceResult {

@@ -18,7 +18,7 @@ pub struct SnapshotJsonModel;
 
 impl SnapshotMiddleware for SnapshotJsonModel {
     fn from_vfs<F: VfsFetcher>(
-        _context: &mut InstanceContext,
+        _context: &InstanceContext,
         vfs: &Vfs<F>,
         entry: &VfsEntry,
     ) -> SnapshotInstanceResult {
@@ -163,7 +163,7 @@ mod test {
 
         let entry = vfs.get("/foo.model.json").unwrap();
         let instance_snapshot =
-            SnapshotJsonModel::from_vfs(&mut InstanceContext::default(), &mut vfs, &entry)
+            SnapshotJsonModel::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
                 .unwrap()
                 .unwrap();
 

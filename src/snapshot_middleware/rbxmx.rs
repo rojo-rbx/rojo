@@ -12,7 +12,7 @@ pub struct SnapshotRbxmx;
 
 impl SnapshotMiddleware for SnapshotRbxmx {
     fn from_vfs<F: VfsFetcher>(
-        _context: &mut InstanceContext,
+        _context: &InstanceContext,
         vfs: &Vfs<F>,
         entry: &VfsEntry,
     ) -> SnapshotInstanceResult {
@@ -77,7 +77,7 @@ mod test {
 
         let entry = vfs.get("/foo.rbxmx").unwrap();
         let instance_snapshot =
-            SnapshotRbxmx::from_vfs(&mut InstanceContext::default(), &mut vfs, &entry)
+            SnapshotRbxmx::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
                 .unwrap()
                 .unwrap();
 

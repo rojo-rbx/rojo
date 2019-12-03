@@ -21,7 +21,7 @@ pub struct SnapshotProject;
 
 impl SnapshotMiddleware for SnapshotProject {
     fn from_vfs<F: VfsFetcher>(
-        context: &mut InstanceContext,
+        context: &InstanceContext,
         vfs: &Vfs<F>,
         entry: &VfsEntry,
     ) -> SnapshotInstanceResult {
@@ -76,7 +76,7 @@ impl SnapshotMiddleware for SnapshotProject {
 }
 
 pub fn snapshot_project_node<F: VfsFetcher>(
-    context: &mut InstanceContext,
+    context: &InstanceContext,
     instance_name: &str,
     node: &ProjectNode,
     vfs: &Vfs<F>,
@@ -213,7 +213,7 @@ mod test {
 
         let entry = vfs.get("/foo").unwrap();
         let instance_snapshot =
-            SnapshotProject::from_vfs(&mut InstanceContext::default(), &mut vfs, &entry)
+            SnapshotProject::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
                 .expect("snapshot error")
                 .expect("snapshot returned no instances");
 
@@ -240,7 +240,7 @@ mod test {
 
         let entry = vfs.get("/foo/hello.project.json").unwrap();
         let instance_snapshot =
-            SnapshotProject::from_vfs(&mut InstanceContext::default(), &mut vfs, &entry)
+            SnapshotProject::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
                 .expect("snapshot error")
                 .expect("snapshot returned no instances");
 
@@ -273,7 +273,7 @@ mod test {
 
         let entry = vfs.get("/foo").unwrap();
         let instance_snapshot =
-            SnapshotProject::from_vfs(&mut InstanceContext::default(), &mut vfs, &entry)
+            SnapshotProject::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
                 .expect("snapshot error")
                 .expect("snapshot returned no instances");
 
@@ -303,7 +303,7 @@ mod test {
 
         let entry = vfs.get("/foo").unwrap();
         let instance_snapshot =
-            SnapshotProject::from_vfs(&mut InstanceContext::default(), &mut vfs, &entry)
+            SnapshotProject::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
                 .expect("snapshot error")
                 .expect("snapshot returned no instances");
 
@@ -334,7 +334,7 @@ mod test {
 
         let entry = vfs.get("/foo").unwrap();
         let instance_snapshot =
-            SnapshotProject::from_vfs(&mut InstanceContext::default(), &mut vfs, &entry)
+            SnapshotProject::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
                 .expect("snapshot error")
                 .expect("snapshot returned no instances");
 
@@ -362,7 +362,7 @@ mod test {
 
         let entry = vfs.get("/foo").unwrap();
         let instance_snapshot =
-            SnapshotProject::from_vfs(&mut InstanceContext::default(), &mut vfs, &entry)
+            SnapshotProject::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
                 .expect("snapshot error")
                 .expect("snapshot returned no instances");
 
@@ -397,7 +397,7 @@ mod test {
 
         let entry = vfs.get("/foo").unwrap();
         let instance_snapshot =
-            SnapshotProject::from_vfs(&mut InstanceContext::default(), &mut vfs, &entry)
+            SnapshotProject::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
                 .expect("snapshot error")
                 .expect("snapshot returned no instances");
 
@@ -436,7 +436,7 @@ mod test {
 
         let entry = vfs.get("/foo").unwrap();
         let instance_snapshot =
-            SnapshotProject::from_vfs(&mut InstanceContext::default(), &mut vfs, &entry)
+            SnapshotProject::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
                 .expect("snapshot error")
                 .expect("snapshot returned no instances");
 
@@ -480,7 +480,7 @@ mod test {
 
         let entry = vfs.get("/foo").unwrap();
         let instance_snapshot =
-            SnapshotProject::from_vfs(&mut InstanceContext::default(), &mut vfs, &entry)
+            SnapshotProject::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
                 .expect("snapshot error")
                 .expect("snapshot returned no instances");
 

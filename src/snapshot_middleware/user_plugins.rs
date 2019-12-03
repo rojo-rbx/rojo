@@ -15,7 +15,7 @@ pub struct SnapshotUserPlugins;
 
 impl SnapshotMiddleware for SnapshotUserPlugins {
     fn from_vfs<F: VfsFetcher>(
-        _context: &mut InstanceContext,
+        _context: &InstanceContext,
         _vfs: &Vfs<F>,
         _entry: &VfsEntry,
     ) -> SnapshotInstanceResult {
