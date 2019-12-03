@@ -1,10 +1,9 @@
 use crate::{
-    snapshot::{InstanceMetadata, InstanceSnapshot},
+    snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
     vfs::{Vfs, VfsEntry, VfsFetcher},
 };
 
 use super::{
-    context::InstanceSnapshotContext,
     middleware::{SnapshotInstanceResult, SnapshotMiddleware},
     util::match_file_name,
 };
@@ -13,7 +12,7 @@ pub struct SnapshotRbxlx;
 
 impl SnapshotMiddleware for SnapshotRbxlx {
     fn from_vfs<F: VfsFetcher>(
-        _context: &mut InstanceSnapshotContext,
+        _context: &mut InstanceContext,
         vfs: &Vfs<F>,
         entry: &VfsEntry,
     ) -> SnapshotInstanceResult {

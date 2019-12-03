@@ -3,7 +3,6 @@
 
 #![allow(dead_code)]
 
-mod context;
 mod csv;
 mod dir;
 mod error;
@@ -19,7 +18,6 @@ mod txt;
 mod user_plugins;
 mod util;
 
-pub use self::context::*;
 pub use self::error::*;
 
 use rbx_dom_weak::{RbxId, RbxTree};
@@ -37,7 +35,10 @@ use self::{
     txt::SnapshotTxt,
     user_plugins::SnapshotUserPlugins,
 };
-use crate::vfs::{Vfs, VfsEntry, VfsFetcher};
+use crate::{
+    snapshot::InstanceContext,
+    vfs::{Vfs, VfsEntry, VfsFetcher},
+};
 
 pub use self::project::snapshot_project_node;
 
@@ -45,7 +46,7 @@ macro_rules! middlewares {
     ( $($middleware: ident,)* ) => {
         /// Generates a snapshot of instances from the given VfsEntry.
         pub fn snapshot_from_vfs<F: VfsFetcher>(
-            context: &mut InstanceSnapshotContext,
+            context: &mut InstanceContext,
             vfs: &Vfs<F>,
             entry: &VfsEntry,
         ) -> SnapshotInstanceResult {

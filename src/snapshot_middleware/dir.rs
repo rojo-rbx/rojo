@@ -3,12 +3,11 @@ use std::collections::HashMap;
 use rbx_dom_weak::{RbxId, RbxTree};
 
 use crate::{
-    snapshot::{InstanceMetadata, InstanceSnapshot},
+    snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
     vfs::{DirectorySnapshot, FsResultExt, Vfs, VfsEntry, VfsFetcher, VfsSnapshot},
 };
 
 use super::{
-    context::InstanceSnapshotContext,
     error::SnapshotError,
     meta_file::DirectoryMetadata,
     middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware},
@@ -19,7 +18,7 @@ pub struct SnapshotDir;
 
 impl SnapshotMiddleware for SnapshotDir {
     fn from_vfs<F: VfsFetcher>(
-        context: &mut InstanceSnapshotContext,
+        context: &mut InstanceContext,
         vfs: &Vfs<F>,
         entry: &VfsEntry,
     ) -> SnapshotInstanceResult {
@@ -116,7 +115,7 @@ mod test {
 
         let entry = vfs.get("/foo").unwrap();
         let instance_snapshot =
-            SnapshotDir::from_vfs(&mut InstanceSnapshotContext::default(), &mut vfs, &entry)
+            SnapshotDir::from_vfs(&mut InstanceContext::default(), &mut vfs, &entry)
                 .unwrap()
                 .unwrap();
 
@@ -134,7 +133,7 @@ mod test {
 
         let entry = vfs.get("/foo").unwrap();
         let instance_snapshot =
-            SnapshotDir::from_vfs(&mut InstanceSnapshotContext::default(), &mut vfs, &entry)
+            SnapshotDir::from_vfs(&mut InstanceContext::default(), &mut vfs, &entry)
                 .unwrap()
                 .unwrap();
 

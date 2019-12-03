@@ -3,12 +3,11 @@ use std::collections::HashMap;
 use rbx_dom_weak::{RbxInstanceProperties, RbxTree};
 
 use crate::{
-    snapshot::{InstanceMetadata, InstanceSnapshot},
+    snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
     vfs::{Vfs, VfsEntry, VfsFetcher},
 };
 
 use super::{
-    context::InstanceSnapshotContext,
     middleware::{SnapshotInstanceResult, SnapshotMiddleware},
     util::match_file_name,
 };
@@ -17,7 +16,7 @@ pub struct SnapshotRbxm;
 
 impl SnapshotMiddleware for SnapshotRbxm {
     fn from_vfs<F: VfsFetcher>(
-        _context: &mut InstanceSnapshotContext,
+        _context: &mut InstanceContext,
         vfs: &Vfs<F>,
         entry: &VfsEntry,
     ) -> SnapshotInstanceResult {
@@ -74,7 +73,7 @@ mod test {
 
         let entry = vfs.get("/foo.rbxm").unwrap();
         let instance_snapshot =
-            SnapshotRbxm::from_vfs(&mut InstanceSnapshotContext::default(), &mut vfs, &entry)
+            SnapshotRbxm::from_vfs(&mut InstanceContext::default(), &mut vfs, &entry)
                 .unwrap()
                 .unwrap();
 

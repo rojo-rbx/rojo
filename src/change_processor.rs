@@ -12,9 +12,10 @@ use rbx_dom_weak::RbxId;
 use crate::{
     message_queue::MessageQueue,
     snapshot::{
-        apply_patch_set, compute_patch_set, AppliedPatchSet, InstigatingSource, PatchSet, RojoTree,
+        apply_patch_set, compute_patch_set, AppliedPatchSet, InstanceContext, InstigatingSource,
+        PatchSet, RojoTree,
     },
-    snapshot_middleware::{snapshot_from_vfs, snapshot_project_node, InstanceSnapshotContext},
+    snapshot_middleware::{snapshot_from_vfs, snapshot_project_node},
     vfs::{FsResultExt, Vfs, VfsEvent, VfsFetcher},
 };
 
@@ -143,7 +144,7 @@ fn update_affected_instances<F: VfsFetcher>(
 
         // TODO: Use persisted snapshot context struct instead of recreating it
         // every time.
-        let mut snapshot_context = InstanceSnapshotContext::default();
+        let mut snapshot_context = InstanceContext::default();
 
         // How we process a file change event depends on what created this
         // file/folder in the first place.

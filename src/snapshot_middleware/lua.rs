@@ -4,12 +4,11 @@ use maplit::hashmap;
 use rbx_dom_weak::RbxValue;
 
 use crate::{
-    snapshot::{InstanceMetadata, InstanceSnapshot},
+    snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
     vfs::{FsResultExt, Vfs, VfsEntry, VfsFetcher},
 };
 
 use super::{
-    context::InstanceSnapshotContext,
     dir::SnapshotDir,
     meta_file::AdjacentMetadata,
     middleware::{SnapshotInstanceResult, SnapshotMiddleware},
@@ -20,7 +19,7 @@ pub struct SnapshotLua;
 
 impl SnapshotMiddleware for SnapshotLua {
     fn from_vfs<F: VfsFetcher>(
-        context: &mut InstanceSnapshotContext,
+        context: &mut InstanceContext,
         vfs: &Vfs<F>,
         entry: &VfsEntry,
     ) -> SnapshotInstanceResult {
@@ -108,7 +107,7 @@ fn snapshot_lua_file<F: VfsFetcher>(vfs: &Vfs<F>, entry: &VfsEntry) -> SnapshotI
 /// Scripts named `init.lua`, `init.server.lua`, or `init.client.lua` usurp
 /// their parents, which acts similarly to `__init__.py` from the Python world.
 fn snapshot_init<F: VfsFetcher>(
-    context: &mut InstanceSnapshotContext,
+    context: &mut InstanceContext,
     vfs: &Vfs<F>,
     folder_entry: &VfsEntry,
     init_name: &str,
@@ -155,7 +154,7 @@ mod test {
 
         let entry = vfs.get("/foo.lua").unwrap();
         let instance_snapshot =
-            SnapshotLua::from_vfs(&mut InstanceSnapshotContext::default(), &mut vfs, &entry)
+            SnapshotLua::from_vfs(&mut InstanceContext::default(), &mut vfs, &entry)
                 .unwrap()
                 .unwrap();
 
@@ -171,7 +170,7 @@ mod test {
 
         let entry = vfs.get("/foo.server.lua").unwrap();
         let instance_snapshot =
-            SnapshotLua::from_vfs(&mut InstanceSnapshotContext::default(), &mut vfs, &entry)
+            SnapshotLua::from_vfs(&mut InstanceContext::default(), &mut vfs, &entry)
                 .unwrap()
                 .unwrap();
 
@@ -187,7 +186,7 @@ mod test {
 
         let entry = vfs.get("/foo.client.lua").unwrap();
         let instance_snapshot =
-            SnapshotLua::from_vfs(&mut InstanceSnapshotContext::default(), &mut vfs, &entry)
+            SnapshotLua::from_vfs(&mut InstanceContext::default(), &mut vfs, &entry)
                 .unwrap()
                 .unwrap();
 
@@ -205,7 +204,7 @@ mod test {
 
         let entry = vfs.get("/root").unwrap();
         let instance_snapshot =
-            SnapshotLua::from_vfs(&mut InstanceSnapshotContext::default(), &mut vfs, &entry)
+            SnapshotLua::from_vfs(&mut InstanceContext::default(), &mut vfs, &entry)
                 .unwrap()
                 .unwrap();
 
@@ -229,7 +228,7 @@ mod test {
 
         let entry = vfs.get("/foo.lua").unwrap();
         let instance_snapshot =
-            SnapshotLua::from_vfs(&mut InstanceSnapshotContext::default(), &mut vfs, &entry)
+            SnapshotLua::from_vfs(&mut InstanceContext::default(), &mut vfs, &entry)
                 .unwrap()
                 .unwrap();
 
@@ -253,7 +252,7 @@ mod test {
 
         let entry = vfs.get("/foo.server.lua").unwrap();
         let instance_snapshot =
-            SnapshotLua::from_vfs(&mut InstanceSnapshotContext::default(), &mut vfs, &entry)
+            SnapshotLua::from_vfs(&mut InstanceContext::default(), &mut vfs, &entry)
                 .unwrap()
                 .unwrap();
 
@@ -279,7 +278,7 @@ mod test {
 
         let entry = vfs.get("/bar.server.lua").unwrap();
         let instance_snapshot =
-            SnapshotLua::from_vfs(&mut InstanceSnapshotContext::default(), &mut vfs, &entry)
+            SnapshotLua::from_vfs(&mut InstanceContext::default(), &mut vfs, &entry)
                 .unwrap()
                 .unwrap();
 

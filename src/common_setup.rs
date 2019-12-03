@@ -7,8 +7,10 @@ use rbx_dom_weak::RbxInstanceProperties;
 
 use crate::{
     project::{Project, ProjectLoadError},
-    snapshot::{apply_patch_set, compute_patch_set, InstancePropertiesWithMeta, RojoTree},
-    snapshot_middleware::{snapshot_from_vfs, InstanceSnapshotContext},
+    snapshot::{
+        apply_patch_set, compute_patch_set, InstanceContext, InstancePropertiesWithMeta, RojoTree,
+    },
+    snapshot_middleware::snapshot_from_vfs,
     vfs::{Vfs, VfsFetcher},
 };
 
@@ -36,7 +38,7 @@ pub fn start<F: VfsFetcher>(
     let root_id = tree.get_root_id();
 
     log::trace!("Constructing snapshot context");
-    let mut snapshot_context = InstanceSnapshotContext::default();
+    let mut snapshot_context = InstanceContext::default();
     if let Some(project) = &maybe_project {
         // If the project file defines no plugins, then there's no need to
         // initialize the snapshot plugin context.

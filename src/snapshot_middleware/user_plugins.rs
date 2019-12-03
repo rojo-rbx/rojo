@@ -1,9 +1,9 @@
-use crate::vfs::{Vfs, VfsEntry, VfsFetcher};
-
-use super::{
-    context::InstanceSnapshotContext,
-    middleware::{SnapshotInstanceResult, SnapshotMiddleware},
+use crate::{
+    snapshot::InstanceContext,
+    vfs::{Vfs, VfsEntry, VfsFetcher},
 };
+
+use super::middleware::{SnapshotInstanceResult, SnapshotMiddleware};
 
 /// Handles snapshotting of any file that a user plugin wants to handle.
 ///
@@ -15,7 +15,7 @@ pub struct SnapshotUserPlugins;
 
 impl SnapshotMiddleware for SnapshotUserPlugins {
     fn from_vfs<F: VfsFetcher>(
-        _context: &mut InstanceSnapshotContext,
+        _context: &mut InstanceContext,
         _vfs: &Vfs<F>,
         _entry: &VfsEntry,
     ) -> SnapshotInstanceResult {

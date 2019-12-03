@@ -5,12 +5,11 @@ use rbx_dom_weak::RbxValue;
 use serde::Serialize;
 
 use crate::{
-    snapshot::{InstanceMetadata, InstanceSnapshot},
+    snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
     vfs::{FsResultExt, Vfs, VfsEntry, VfsFetcher},
 };
 
 use super::{
-    context::InstanceSnapshotContext,
     meta_file::AdjacentMetadata,
     middleware::{SnapshotInstanceResult, SnapshotMiddleware},
     util::match_file_name,
@@ -20,7 +19,7 @@ pub struct SnapshotCsv;
 
 impl SnapshotMiddleware for SnapshotCsv {
     fn from_vfs<F: VfsFetcher>(
-        _context: &mut InstanceSnapshotContext,
+        _context: &mut InstanceContext,
         vfs: &Vfs<F>,
         entry: &VfsEntry,
     ) -> SnapshotInstanceResult {
@@ -159,7 +158,7 @@ Ack,Ack!,,An exclamation of despair,¡Ay!"#,
 
         let entry = vfs.get("/foo.csv").unwrap();
         let instance_snapshot =
-            SnapshotCsv::from_vfs(&mut InstanceSnapshotContext::default(), &mut vfs, &entry)
+            SnapshotCsv::from_vfs(&mut InstanceContext::default(), &mut vfs, &entry)
                 .unwrap()
                 .unwrap();
 
@@ -181,7 +180,7 @@ Ack,Ack!,,An exclamation of despair,¡Ay!"#,
 
         let entry = vfs.get("/foo.csv").unwrap();
         let instance_snapshot =
-            SnapshotCsv::from_vfs(&mut InstanceSnapshotContext::default(), &mut vfs, &entry)
+            SnapshotCsv::from_vfs(&mut InstanceContext::default(), &mut vfs, &entry)
                 .unwrap()
                 .unwrap();
 

@@ -4,12 +4,11 @@ use maplit::hashmap;
 use rbx_dom_weak::{RbxId, RbxTree, RbxValue};
 
 use crate::{
-    snapshot::{InstanceMetadata, InstanceSnapshot},
+    snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
     vfs::{FileSnapshot, FsResultExt, Vfs, VfsEntry, VfsFetcher, VfsSnapshot},
 };
 
 use super::{
-    context::InstanceSnapshotContext,
     error::SnapshotError,
     meta_file::AdjacentMetadata,
     middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware},
@@ -20,7 +19,7 @@ pub struct SnapshotTxt;
 
 impl SnapshotMiddleware for SnapshotTxt {
     fn from_vfs<F: VfsFetcher>(
-        _context: &mut InstanceSnapshotContext,
+        _context: &mut InstanceContext,
         vfs: &Vfs<F>,
         entry: &VfsEntry,
     ) -> SnapshotInstanceResult {
@@ -114,7 +113,7 @@ mod test {
 
         let entry = vfs.get("/foo.txt").unwrap();
         let instance_snapshot =
-            SnapshotTxt::from_vfs(&mut InstanceSnapshotContext::default(), &mut vfs, &entry)
+            SnapshotTxt::from_vfs(&mut InstanceContext::default(), &mut vfs, &entry)
                 .unwrap()
                 .unwrap();
 
