@@ -18,7 +18,7 @@ pub struct SnapshotJsonModel;
 
 impl SnapshotMiddleware for SnapshotJsonModel {
     fn from_vfs<F: VfsFetcher>(
-        _context: &InstanceContext,
+        context: &InstanceContext,
         vfs: &Vfs<F>,
         entry: &VfsEntry,
     ) -> SnapshotInstanceResult {
@@ -54,8 +54,11 @@ impl SnapshotMiddleware for SnapshotJsonModel {
 
         let mut snapshot = instance.core.into_snapshot(instance_name.to_owned());
 
-        snapshot.metadata.instigating_source = Some(entry.path().to_path_buf().into());
-        snapshot.metadata.relevant_paths = vec![entry.path().to_path_buf()];
+        snapshot.metadata = snapshot
+            .metadata
+            .instigating_source(entry.path())
+            .relevant_paths(vec![entry.path().to_path_buf()])
+            .context(context);
 
         Ok(Some(snapshot))
     }

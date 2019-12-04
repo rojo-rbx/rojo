@@ -16,7 +16,7 @@ pub struct SnapshotRbxm;
 
 impl SnapshotMiddleware for SnapshotRbxm {
     fn from_vfs<F: VfsFetcher>(
-        _context: &InstanceContext,
+        context: &InstanceContext,
         vfs: &Vfs<F>,
         entry: &VfsEntry,
     ) -> SnapshotInstanceResult {
@@ -48,7 +48,8 @@ impl SnapshotMiddleware for SnapshotRbxm {
                 .metadata(
                     InstanceMetadata::new()
                         .instigating_source(entry.path())
-                        .relevant_paths(vec![entry.path().to_path_buf()]),
+                        .relevant_paths(vec![entry.path().to_path_buf()])
+                        .context(context),
                 );
 
             Ok(Some(snapshot))
