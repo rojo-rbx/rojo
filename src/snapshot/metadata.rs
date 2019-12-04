@@ -5,7 +5,7 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::{path_serializer, project::ProjectNode};
+use crate::{glob::Glob, path_serializer, project::ProjectNode};
 
 /// Rojo-specific metadata that can be associated with an instance or a snapshot
 /// of an instance.
@@ -105,6 +105,18 @@ impl Default for InstanceContext {
     fn default() -> Self {
         InstanceContext {}
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PathIgnoreRule {
+    /// The path that this glob is relative to. Since ignore globs are defined
+    /// in project files, this will generally be the folder containing the
+    /// project file that defined this glob.
+    #[serde(serialize_with = "path_serializer::serialize_absolute")]
+    pub base_path: PathBuf,
+
+    /// The actual glob that can be matched against the input path.
+    pub glob: Glob,
 }
 
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
