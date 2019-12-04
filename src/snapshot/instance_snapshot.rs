@@ -12,7 +12,7 @@ use super::InstanceMetadata;
 // Possible future improvements:
 // - Use refcounted/interned strings
 // - Replace use of RbxValue with a sum of RbxValue + borrowed value
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InstanceSnapshot {
     /// A temporary ID applied to the snapshot that's used for Ref properties.
     pub snapshot_id: Option<RbxId>,
