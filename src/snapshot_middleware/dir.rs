@@ -64,7 +64,8 @@ impl SnapshotMiddleware for SnapshotDir {
             .metadata(
                 InstanceMetadata::new()
                     .instigating_source(entry.path())
-                    .relevant_paths(relevant_paths),
+                    .relevant_paths(relevant_paths)
+                    .context(context),
             );
 
         if let Some(meta_entry) = vfs.get(meta_path).with_not_found()? {
