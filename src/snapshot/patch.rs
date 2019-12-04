@@ -12,7 +12,7 @@ use super::{InstanceMetadata, InstanceSnapshot};
 /// These patches shouldn't be persisted: there's no mechanism in place to make
 /// sure that another patch wasn't applied before this one that could cause a
 /// conflict!
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PatchSet {
     pub removed_instances: Vec<RbxId>,
     pub added_instances: Vec<PatchAdd>,
@@ -30,14 +30,14 @@ impl<'a> PatchSet {
 }
 
 /// A patch containing an instance that was added to the tree.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PatchAdd {
     pub parent_id: RbxId,
     pub instance: InstanceSnapshot,
 }
 
 /// A patch indicating that properties of an instance changed.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PatchUpdate {
     pub id: RbxId,
     pub changed_name: Option<String>,
