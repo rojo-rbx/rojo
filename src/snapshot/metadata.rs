@@ -125,6 +125,17 @@ pub struct PathIgnoreRule {
     pub glob: Glob,
 }
 
+impl PathIgnoreRule {
+    pub fn passes<P: AsRef<Path>>(path: P) -> bool {
+        let path = path.as_ref();
+
+        match path.strip_prefix(&self.base_path) {
+            Ok(suffix) => !self.glob.is_match(suffix),
+            Err(_) => true,
+        }
+    }
+}
+
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub enum InstigatingSource {
     Path(#[serde(serialize_with = "path_serializer::serialize_absolute")] PathBuf),

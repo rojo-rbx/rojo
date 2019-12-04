@@ -26,11 +26,18 @@ impl SnapshotMiddleware for SnapshotDir {
             return Ok(None);
         }
 
-        let children: Vec<VfsEntry> = entry.children(vfs)?;
+        let passes_ignore = |child: &VfsEntry| {
+            context.path_ignore_rules.iter().any(|rule| {
+                match child.path().strip_prefix(&rule.base_path) {
+                    Ok(suffix) => !rule.glob.is_match(suffix),
+                    Err(_) => true,
+                }
+            })
+        };
 
         let mut snapshot_children = Vec::new();
 
-        for child in children.into_iter() {
+        for child in entry.children(vfs)?.into_iter().filter(passes_ignore) {
             if let Some(child_snapshot) = snapshot_from_vfs(context, vfs, &child)? {
                 snapshot_children.push(child_snapshot);
             }
