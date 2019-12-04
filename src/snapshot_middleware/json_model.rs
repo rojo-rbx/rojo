@@ -5,12 +5,11 @@ use rbx_reflection::try_resolve_value;
 use serde::Deserialize;
 
 use crate::{
-    snapshot::InstanceSnapshot,
+    snapshot::{InstanceContext, InstanceSnapshot},
     vfs::{Vfs, VfsEntry, VfsFetcher},
 };
 
 use super::{
-    context::InstanceSnapshotContext,
     middleware::{SnapshotInstanceResult, SnapshotMiddleware},
     util::match_file_name,
 };
@@ -19,7 +18,7 @@ pub struct SnapshotJsonModel;
 
 impl SnapshotMiddleware for SnapshotJsonModel {
     fn from_vfs<F: VfsFetcher>(
-        _context: &mut InstanceSnapshotContext,
+        _context: &InstanceContext,
         vfs: &Vfs<F>,
         entry: &VfsEntry,
     ) -> SnapshotInstanceResult {
@@ -164,7 +163,7 @@ mod test {
 
         let entry = vfs.get("/foo.model.json").unwrap();
         let instance_snapshot =
-            SnapshotJsonModel::from_vfs(&mut InstanceSnapshotContext::default(), &mut vfs, &entry)
+            SnapshotJsonModel::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
                 .unwrap()
                 .unwrap();
 

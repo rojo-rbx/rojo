@@ -1,14 +1,16 @@
 //! Initialization routines that are used by more than one Rojo command or
 //! utility.
 
-use std::{path::Path, sync::Arc};
+use std::path::Path;
 
 use rbx_dom_weak::RbxInstanceProperties;
 
 use crate::{
     project::{Project, ProjectLoadError},
-    snapshot::{apply_patch_set, compute_patch_set, InstancePropertiesWithMeta, RojoTree},
-    snapshot_middleware::{snapshot_from_vfs, InstanceSnapshotContext, SnapshotPluginContext},
+    snapshot::{
+        apply_patch_set, compute_patch_set, InstanceContext, InstancePropertiesWithMeta, RojoTree,
+    },
+    snapshot_middleware::snapshot_from_vfs,
     vfs::{Vfs, VfsFetcher},
 };
 
@@ -36,13 +38,12 @@ pub fn start<F: VfsFetcher>(
     let root_id = tree.get_root_id();
 
     log::trace!("Constructing snapshot context");
-    let mut snapshot_context = InstanceSnapshotContext::default();
+    let snapshot_context = InstanceContext::default();
     if let Some(project) = &maybe_project {
         // If the project file defines no plugins, then there's no need to
         // initialize the snapshot plugin context.
         if !project.plugins.is_empty() {
-            snapshot_context.plugin_context =
-                Some(Arc::new(SnapshotPluginContext::new(&project.plugins)));
+            // TODO: Initialize plugins in instance context
         }
     }
 
@@ -52,7 +53,7 @@ pub fn start<F: VfsFetcher>(
         .expect("could not get project path");
 
     log::trace!("Generating snapshot of instances from VFS");
-    let snapshot = snapshot_from_vfs(&mut snapshot_context, vfs, &entry)
+    let snapshot = snapshot_from_vfs(&snapshot_context, vfs, &entry)
         .expect("snapshot failed")
         .expect("snapshot did not return an instance");
 
