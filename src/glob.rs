@@ -30,6 +30,14 @@ impl Glob {
     }
 }
 
+impl PartialEq for Glob {
+    fn eq(&self, other: &Self) -> bool {
+        self.inner == other.inner
+    }
+}
+
+impl Eq for Glob {}
+
 impl Serialize for Glob {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         serializer.serialize_str(self.inner.glob())
