@@ -1,6 +1,7 @@
 use std::{
     fmt,
     path::{Path, PathBuf},
+    sync::Arc,
 };
 
 use serde::{Deserialize, Serialize};
@@ -99,15 +100,20 @@ impl Default for InstanceMetadata {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct InstanceContext {}
+pub struct InstanceContext {
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub path_ignore_rules: Arc<Vec<PathIgnoreRule>>,
+}
 
 impl Default for InstanceContext {
     fn default() -> Self {
-        InstanceContext {}
+        InstanceContext {
+            path_ignore_rules: Arc::new(Vec::new()),
+        }
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PathIgnoreRule {
     /// The path that this glob is relative to. Since ignore globs are defined
     /// in project files, this will generally be the folder containing the
