@@ -110,16 +110,24 @@ impl Default for InstanceContext {
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub enum InstigatingSource {
     Path(#[serde(serialize_with = "path_serializer::serialize_absolute")] PathBuf),
-    ProjectNode(String, ProjectNode),
+    ProjectNode(
+        #[serde(serialize_with = "path_serializer::serialize_absolute")] PathBuf,
+        String,
+        ProjectNode,
+    ),
 }
 
 impl fmt::Debug for InstigatingSource {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             InstigatingSource::Path(path) => write!(formatter, "Path({})", path.display()),
-            InstigatingSource::ProjectNode(name, node) => {
-                write!(formatter, "ProjectNode({}: {:?}", name, node)
-            }
+            InstigatingSource::ProjectNode(path, name, node) => write!(
+                formatter,
+                "ProjectNode({}: {:?}) from path {}",
+                name,
+                node,
+                path.display()
+            ),
         }
     }
 }

@@ -37,23 +37,13 @@ pub fn start<F: VfsFetcher>(
 
     let root_id = tree.get_root_id();
 
-    log::trace!("Constructing snapshot context");
-    let snapshot_context = InstanceContext::default();
-    if let Some(project) = &maybe_project {
-        // If the project file defines no plugins, then there's no need to
-        // initialize the snapshot plugin context.
-        if !project.plugins.is_empty() {
-            // TODO: Initialize plugins in instance context
-        }
-    }
-
     log::trace!("Reading project root");
     let entry = vfs
         .get(fuzzy_project_path)
         .expect("could not get project path");
 
     log::trace!("Generating snapshot of instances from VFS");
-    let snapshot = snapshot_from_vfs(&snapshot_context, vfs, &entry)
+    let snapshot = snapshot_from_vfs(&InstanceContext::default(), vfs, &entry)
         .expect("snapshot failed")
         .expect("snapshot did not return an instance");
 

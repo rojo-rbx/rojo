@@ -178,15 +178,20 @@ fn update_affected_instances<F: VfsFetcher>(
                     }
                 }
             }
-            InstigatingSource::ProjectNode(instance_name, project_node) => {
+            InstigatingSource::ProjectNode(project_path, instance_name, project_node) => {
                 // This instance is the direct subject of a project node. Since
                 // there might be information associated with our instance from
                 // the project file, we snapshot the entire project node again.
 
-                let snapshot =
-                    snapshot_project_node(&metadata.context, instance_name, project_node, &vfs)
-                        .expect("snapshot failed")
-                        .expect("snapshot did not return an instance");
+                let snapshot = snapshot_project_node(
+                    &metadata.context,
+                    &project_path,
+                    instance_name,
+                    project_node,
+                    &vfs,
+                )
+                .expect("snapshot failed")
+                .expect("snapshot did not return an instance");
 
                 let patch_set = compute_patch_set(&snapshot, &tree, id);
                 apply_patch_set(tree, patch_set)

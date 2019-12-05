@@ -25,12 +25,9 @@ children:
       ignore_unknown_instances: false
       instigating_source:
         ProjectNode:
+          - /foo
           - Child
-          - class_name: ~
-            children: {}
-            properties: {}
-            ignore_unknown_instances: ~
-            path: /foo/file.txt
+          - $path: file.txt
       relevant_paths:
         - /foo/file.txt
         - /foo/file.meta.json

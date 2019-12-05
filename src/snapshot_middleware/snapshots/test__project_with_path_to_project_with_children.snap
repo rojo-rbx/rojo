@@ -20,12 +20,9 @@ children:
       ignore_unknown_instances: true
       instigating_source:
         ProjectNode:
+          - /foo
           - SomeChild
-          - class_name: Model
-            children: {}
-            properties: {}
-            ignore_unknown_instances: ~
-            path: ~
+          - $className: Model
       relevant_paths: []
       context: {}
     name: SomeChild

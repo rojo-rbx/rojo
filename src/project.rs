@@ -1,198 +1,17 @@
 use std::{
     collections::{BTreeMap, HashMap, HashSet},
-    fmt,
-    fs::{self, File},
-    io,
+    fmt, fs, io,
     path::{Path, PathBuf},
 };
 
 use failure::Fail;
 use log::warn;
-use rbx_dom_weak::{RbxValue, UnresolvedRbxValue};
-use serde::{Deserialize, Serialize, Serializer};
+use rbx_dom_weak::UnresolvedRbxValue;
+use serde::{Deserialize, Serialize};
 
 static DEFAULT_PLACE: &str = include_str!("../assets/place.project.json");
 
 pub static PROJECT_FILENAME: &str = "default.project.json";
-
-/// SourceProject is the format that users author projects on-disk. Since we
-/// want to do things like transforming paths to be absolute before handing them
-/// off to the rest of Rojo, we use this intermediate struct.
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(deny_unknown_fields, rename_all = "camelCase")]
-struct SourceProject {
-    name: String,
-    tree: SourceProjectNode,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    serve_port: Option<u16>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    serve_place_ids: Option<HashSet<u64>>,
-
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    #[cfg_attr(not(feature = "user-plugins"), serde(skip_deserializing))]
-    plugins: Vec<String>,
-}
-
-impl SourceProject {
-    /// Consumes the SourceProject and yields a Project, ready for prime-time.
-    pub fn into_project(self, project_file_location: &Path) -> Project {
-        let tree = self.tree.into_project_node(project_file_location);
-
-        let project_folder = project_file_location.parent().unwrap();
-        let plugins = self
-            .plugins
-            .into_iter()
-            .map(|path| project_folder.join(path))
-            .collect();
-
-        Project {
-            name: self.name,
-            tree,
-            serve_port: self.serve_port,
-            serve_place_ids: self.serve_place_ids,
-            plugins,
-            file_location: PathBuf::from(project_file_location),
-        }
-    }
-}
-
-/// An alternative serializer for `UnresolvedRbxValue` that uses the minimum
-/// representation of the value.
-///
-/// For example, the default Serialize impl might give you:
-///
-/// ```json
-/// {
-///     "Type": "Bool",
-///     "Value": true
-/// }
-/// ```
-///
-/// But in reality, users are expected to write just:
-///
-/// ```json
-/// true
-/// ```
-///
-/// This holds true for other values that might be ambiguous or just have more
-/// complicated representations like enums.
-fn serialize_unresolved_minimal<S>(
-    unresolved: &UnresolvedRbxValue,
-    serializer: S,
-) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    match unresolved {
-        UnresolvedRbxValue::Ambiguous(_) => unresolved.serialize(serializer),
-        UnresolvedRbxValue::Concrete(concrete) => match concrete {
-            RbxValue::Bool { value } => value.serialize(serializer),
-            RbxValue::CFrame { value } => value.serialize(serializer),
-            RbxValue::Color3 { value } => value.serialize(serializer),
-            RbxValue::Color3uint8 { value } => value.serialize(serializer),
-            RbxValue::Content { value } => value.serialize(serializer),
-            RbxValue::Float32 { value } => value.serialize(serializer),
-            RbxValue::Int32 { value } => value.serialize(serializer),
-            RbxValue::String { value } => value.serialize(serializer),
-            RbxValue::UDim { value } => value.serialize(serializer),
-            RbxValue::UDim2 { value } => value.serialize(serializer),
-            RbxValue::Vector2 { value } => value.serialize(serializer),
-            RbxValue::Vector2int16 { value } => value.serialize(serializer),
-            RbxValue::Vector3 { value } => value.serialize(serializer),
-            RbxValue::Vector3int16 { value } => value.serialize(serializer),
-            _ => concrete.serialize(serializer),
-        },
-    }
-}
-
-/// A wrapper around serialize_unresolved_minimal that handles the HashMap case.
-fn serialize_unresolved_map<S>(
-    value: &HashMap<String, UnresolvedRbxValue>,
-    serializer: S,
-) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    use serde::ser::SerializeMap;
-
-    #[derive(Serialize)]
-    struct Minimal<'a>(
-        #[serde(serialize_with = "serialize_unresolved_minimal")] &'a UnresolvedRbxValue,
-    );
-
-    let mut map = serializer.serialize_map(Some(value.len()))?;
-    for (k, v) in value {
-        map.serialize_key(k)?;
-        map.serialize_value(&Minimal(v))?;
-    }
-    map.end()
-}
-
-/// Similar to SourceProject, the structure of nodes in the project tree is
-/// slightly different on-disk than how we want to handle them in the rest of
-/// Rojo.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct SourceProjectNode {
-    #[serde(rename = "$className", skip_serializing_if = "Option::is_none")]
-    class_name: Option<String>,
-
-    #[serde(
-        rename = "$properties",
-        default = "HashMap::new",
-        skip_serializing_if = "HashMap::is_empty",
-        serialize_with = "serialize_unresolved_map"
-    )]
-    properties: HashMap<String, UnresolvedRbxValue>,
-
-    #[serde(
-        rename = "$ignoreUnknownInstances",
-        skip_serializing_if = "Option::is_none"
-    )]
-    ignore_unknown_instances: Option<bool>,
-
-    #[serde(rename = "$path", skip_serializing_if = "Option::is_none")]
-    path: Option<String>,
-
-    #[serde(flatten)]
-    children: BTreeMap<String, SourceProjectNode>,
-}
-
-impl SourceProjectNode {
-    /// Consumes the SourceProjectNode and turns it into a ProjectNode.
-    pub fn into_project_node(self, project_file_location: &Path) -> ProjectNode {
-        let children = self
-            .children
-            .iter()
-            .map(|(key, value)| {
-                (
-                    key.clone(),
-                    value.clone().into_project_node(project_file_location),
-                )
-            })
-            .collect();
-
-        // Make sure that paths are absolute, transforming them by adding the
-        // project folder if they're not already absolute.
-        let path = self.path.as_ref().map(|source_path| {
-            if Path::new(source_path).is_absolute() {
-                PathBuf::from(source_path)
-            } else {
-                let project_folder_location = project_file_location.parent().unwrap();
-                project_folder_location.join(source_path)
-            }
-        });
-
-        ProjectNode {
-            class_name: self.class_name,
-            properties: self.properties,
-            ignore_unknown_instances: self.ignore_unknown_instances,
-            path,
-            children,
-        }
-    }
-}
 
 #[derive(Debug, Fail)]
 pub enum ProjectLoadError {
@@ -264,12 +83,30 @@ pub enum ProjectSaveError {
 
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
 pub struct ProjectNode {
+    #[serde(rename = "$className", skip_serializing_if = "Option::is_none")]
     pub class_name: Option<String>,
+
+    #[serde(flatten)]
     pub children: BTreeMap<String, ProjectNode>,
+
+    #[serde(
+        rename = "$properties",
+        default,
+        skip_serializing_if = "HashMap::is_empty"
+    )]
     pub properties: HashMap<String, UnresolvedRbxValue>,
+
+    #[serde(
+        rename = "$ignoreUnknownInstances",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub ignore_unknown_instances: Option<bool>,
 
-    #[serde(serialize_with = "crate::path_serializer::serialize_option_absolute")]
+    #[serde(
+        rename = "$path",
+        serialize_with = "crate::path_serializer::serialize_option_absolute",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub path: Option<PathBuf>,
 }
 
@@ -289,47 +126,21 @@ impl ProjectNode {
             child.validate_reserved_names();
         }
     }
-
-    fn to_source_node(&self, project_file_location: &Path) -> SourceProjectNode {
-        let children = self
-            .children
-            .iter()
-            .map(|(key, value)| (key.clone(), value.to_source_node(project_file_location)))
-            .collect();
-
-        // If paths are relative to the project file, transform them to look
-        // Unixy and write relative paths instead.
-        //
-        // This isn't perfect, since it means that paths like .. will stay as
-        // absolute paths and make projects non-portable. Fixing this probably
-        // means keeping the paths relative in the project format and making
-        // everywhere else in Rojo do the resolution locally.
-        let path = self.path.as_ref().map(|path| {
-            let project_folder_location = project_file_location.parent().unwrap();
-
-            match path.strip_prefix(project_folder_location) {
-                Ok(stripped) => stripped.to_str().unwrap().replace("\\", "/"),
-                Err(_) => format!("{}", path.display()),
-            }
-        });
-
-        SourceProjectNode {
-            class_name: self.class_name.clone(),
-            properties: self.properties.clone(),
-            ignore_unknown_instances: self.ignore_unknown_instances,
-            children,
-            path,
-        }
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Project {
     pub name: String,
     pub tree: ProjectNode,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub serve_port: Option<u16>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub serve_place_ids: Option<HashSet<u64>>,
-    pub plugins: Vec<PathBuf>,
+
+    #[serde(skip)]
     pub file_location: PathBuf,
 }
 
@@ -403,7 +214,6 @@ impl Project {
             tree,
             serve_port: None,
             serve_place_ids: None,
-            plugins: Vec::new(),
             file_location: project_path.clone(),
         };
 
@@ -464,13 +274,14 @@ impl Project {
     pub fn load_from_slice(
         contents: &[u8],
         project_file_location: &Path,
-    ) -> Result<Project, serde_json::Error> {
-        let parsed: SourceProject = serde_json::from_slice(&contents)?;
-
-        Ok(parsed.into_project(project_file_location))
+    ) -> Result<Self, serde_json::Error> {
+        let mut project: Self = serde_json::from_slice(&contents)?;
+        project.file_location = project_file_location.to_path_buf();
+        project.check_compatibility();
+        Ok(project)
     }
 
-    pub fn load_fuzzy(fuzzy_project_location: &Path) -> Result<Project, ProjectLoadError> {
+    pub fn load_fuzzy(fuzzy_project_location: &Path) -> Result<Self, ProjectLoadError> {
         if let Some(project_path) = Self::locate(fuzzy_project_location) {
             Self::load_exact(&project_path)
         } else {
@@ -478,7 +289,7 @@ impl Project {
         }
     }
 
-    fn load_exact(project_file_location: &Path) -> Result<Project, ProjectLoadError> {
+    fn load_exact(project_file_location: &Path) -> Result<Self, ProjectLoadError> {
         let contents =
             fs::read_to_string(project_file_location).map_err(|error| match error.kind() {
                 io::ErrorKind::NotFound => ProjectLoadError::NotFound,
@@ -488,27 +299,20 @@ impl Project {
                 },
             })?;
 
-        let parsed: SourceProject =
-            serde_json::from_str(&contents).map_err(|error| ProjectLoadError::Json {
-                inner: error,
+        let mut project: Project =
+            serde_json::from_str(&contents).map_err(|inner| ProjectLoadError::Json {
+                inner,
                 path: project_file_location.to_path_buf(),
             })?;
 
-        let project = parsed.into_project(project_file_location);
-
+        project.file_location = project_file_location.to_path_buf();
         project.check_compatibility();
 
         Ok(project)
     }
 
     pub fn save(&self) -> Result<(), ProjectSaveError> {
-        let source_project = self.to_source_project();
-        let mut file = File::create(&self.file_location).map_err(ProjectSaveError::IoError)?;
-
-        serde_json::to_writer_pretty(&mut file, &source_project)
-            .map_err(ProjectSaveError::JsonError)?;
-
-        Ok(())
+        unimplemented!()
     }
 
     /// Checks if there are any compatibility issues with this project file and
@@ -519,28 +323,5 @@ impl Project {
 
     pub fn folder_location(&self) -> &Path {
         self.file_location.parent().unwrap()
-    }
-
-    fn to_source_project(&self) -> SourceProject {
-        // TODO: Use path_serializer instead of transforming paths between
-        // String and PathBuf?
-        let plugins = self
-            .plugins
-            .iter()
-            .map(|path| {
-                path.strip_prefix(self.folder_location())
-                    .unwrap()
-                    .display()
-                    .to_string()
-            })
-            .collect();
-
-        SourceProject {
-            name: self.name.clone(),
-            tree: self.tree.to_source_node(&self.file_location),
-            serve_port: self.serve_port,
-            plugins,
-            serve_place_ids: self.serve_place_ids.clone(),
-        }
     }
 }
