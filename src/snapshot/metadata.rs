@@ -126,7 +126,7 @@ pub struct PathIgnoreRule {
 }
 
 impl PathIgnoreRule {
-    pub fn passes<P: AsRef<Path>>(path: P) -> bool {
+    pub fn passes<P: AsRef<Path>>(&self, path: P) -> bool {
         let path = path.as_ref();
 
         match path.strip_prefix(&self.base_path) {
