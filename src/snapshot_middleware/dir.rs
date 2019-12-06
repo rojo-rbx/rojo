@@ -27,13 +27,10 @@ impl SnapshotMiddleware for SnapshotDir {
         }
 
         let passes_filter_rules = |child: &VfsEntry| {
-            for rule in context.path_ignore_rules.iter() {
-                if !rule.passes(child.path()) {
-                    return false;
-                }
-            }
-
-            true
+            context
+                .path_ignore_rules
+                .iter()
+                .all(|rule| rule.passes(child.path()))
         };
 
         let mut snapshot_children = Vec::new();
