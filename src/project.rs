@@ -65,14 +65,6 @@ impl Project {
             .unwrap_or(false)
     }
 
-    pub fn init_place(_project_fuzzy_path: &Path) -> Result<PathBuf, ProjectError> {
-        unimplemented!();
-    }
-
-    pub fn init_model(_project_fuzzy_path: &Path) -> Result<PathBuf, ProjectError> {
-        unimplemented!();
-    }
-
     /// Attempt to locate a project represented by the given path.
     ///
     /// This will find a project if the path refers to a `.project.json` file,
