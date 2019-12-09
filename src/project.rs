@@ -4,7 +4,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use log::warn;
 use rbx_dom_weak::UnresolvedRbxValue;
 use serde::{Deserialize, Serialize};
 use snafu::{ResultExt, Snafu};
@@ -17,10 +16,6 @@ pub struct ProjectError(Error);
 
 #[derive(Debug, Snafu)]
 enum Error {
-    /// In cases where we're trying to create a new project, this happens if the
-    /// project file already exists.
-    AlreadyExists { path: PathBuf },
-
     /// A general IO error occurred.
     Io { source: io::Error, path: PathBuf },
 
@@ -32,22 +27,37 @@ enum Error {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct Project {
+    /// The name of the top-level instance described by the project.
     pub name: String,
+
+    /// The tree of instances described by this project. Projects always
+    /// describe at least one instance.
     pub tree: ProjectNode,
 
+    /// If specified, sets the default port that `rojo serve` should use when
+    /// using this project for live sync.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub serve_port: Option<u16>,
 
+    /// If specified, contains the set of place IDs that this project is
+    /// compatible with when doing live sync.
+    ///
+    /// This setting is intended to help prevent syncing a Rojo project into the
+    /// wrong Roblox place.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub serve_place_ids: Option<HashSet<u64>>,
 
+    /// The path to the file that this project came from. Relative paths in the
+    /// project should be considered relative to the parent of this field, also
+    /// given by `Project::folder_location`.
     #[serde(skip)]
     pub file_location: PathBuf,
 }
 
 impl Project {
+    /// Tells whether the given path describes a Rojo project.
     pub fn is_project_file(path: &Path) -> bool {
         path.file_name()
             .and_then(|name| name.to_str())
@@ -142,14 +152,25 @@ impl Project {
     }
 }
 
+/// Describes an instance and its descendants in a project.
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
 pub struct ProjectNode {
+    /// If set, defines the ClassName of the described instance.
+    ///
+    /// `$className` MUST be set if `$path` is not set.
+    ///
+    /// `$className` CANNOT be set if `$path` is set and the instance described
+    /// by that path has a ClassName other than Folder.
     #[serde(rename = "$className", skip_serializing_if = "Option::is_none")]
     pub class_name: Option<String>,
 
+    /// Contains all of the children of the described instance.
     #[serde(flatten)]
     pub children: BTreeMap<String, ProjectNode>,
 
+    /// The properties that will be assigned to the resulting instance.
+    ///
+    // TODO: Is this legal to set if $path is set?
     #[serde(
         rename = "$properties",
         default,
@@ -157,12 +178,30 @@ pub struct ProjectNode {
     )]
     pub properties: HashMap<String, UnresolvedRbxValue>,
 
+    /// Defines the behavior when Rojo encounters unknown instances in Roblox
+    /// Studio during live sync. `$ignoreUnknownInstances` should be considered
+    /// a large hammer and used with care.
+    ///
+    /// If set to `true`, those instances will be left alone. This may cause
+    /// issues when files that turn into instances are removed while Rojo is not
+    /// running.
+    ///
+    /// If set to `false`, Rojo will destroy any instances it does not
+    /// recognize.
+    ///
+    /// If unset, its default value depends on other settings:
+    /// - If `$path` is not set, defaults to `true`
+    /// - If `$path` is set, defaults to `false`
     #[serde(
         rename = "$ignoreUnknownInstances",
         skip_serializing_if = "Option::is_none"
     )]
     pub ignore_unknown_instances: Option<bool>,
 
+    /// Defines that this instance should come from the given file path. This
+    /// path can point to any file type supported by Rojo, including Lua files
+    /// (`.lua`), Roblox models (`.rbxm`, `.rbxmx`), and localization table
+    /// spreadsheets (`.csv`).
     #[serde(
         rename = "$path",
         serialize_with = "crate::path_serializer::serialize_option_absolute",
@@ -175,10 +214,10 @@ impl ProjectNode {
     fn validate_reserved_names(&self) {
         for (name, child) in &self.children {
             if name.starts_with('$') {
-                warn!(
+                log::warn!(
                     "Keys starting with '$' are reserved by Rojo to ensure forward compatibility."
                 );
-                warn!(
+                log::warn!(
                     "This project uses the key '{}', which should be renamed.",
                     name
                 );
