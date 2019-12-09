@@ -6,7 +6,7 @@ use std::path::Path;
 use rbx_dom_weak::RbxInstanceProperties;
 
 use crate::{
-    project::{Project, ProjectLoadError},
+    project::Project,
     snapshot::{
         apply_patch_set, compute_patch_set, InstanceContext, InstancePropertiesWithMeta, RojoTree,
     },
@@ -19,11 +19,7 @@ pub fn start<F: VfsFetcher>(
     vfs: &Vfs<F>,
 ) -> (Option<Project>, RojoTree) {
     log::trace!("Loading project file from {}", fuzzy_project_path.display());
-    let maybe_project = match Project::load_fuzzy(fuzzy_project_path) {
-        Ok(project) => Some(project),
-        Err(ProjectLoadError::NotFound) => None,
-        Err(other) => panic!("{}", other), // TODO: return error upward
-    };
+    let maybe_project = Project::load_fuzzy(fuzzy_project_path).expect("TODO: Project load failed");
 
     log::trace!("Constructing initial tree");
     let mut tree = RojoTree::new(InstancePropertiesWithMeta {

@@ -8,7 +8,7 @@ use failure::Fail;
 use termcolor::{BufferWriter, Color, ColorChoice, ColorSpec, WriteColor};
 
 use crate::{
-    project::ProjectLoadError,
+    project::ProjectError,
     serve_session::ServeSession,
     vfs::{RealFetcher, Vfs, WatchMode},
     web::LiveServer,
@@ -25,11 +25,11 @@ pub struct ServeOptions {
 #[derive(Debug, Fail)]
 pub enum ServeError {
     #[fail(display = "Couldn't load project: {}", _0)]
-    ProjectLoad(#[fail(cause)] ProjectLoadError),
+    ProjectError(#[fail(cause)] ProjectError),
 }
 
 impl_from!(ServeError {
-    ProjectLoadError => ProjectLoad,
+    ProjectError => ProjectError,
 });
 
 pub fn serve(options: &ServeOptions) -> Result<(), ServeError> {

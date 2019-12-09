@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use failure::Fail;
 
-use crate::project::{Project, ProjectInitError};
+use crate::project::{Project, ProjectError};
 
 #[derive(Debug, Fail)]
 pub enum InitError {
@@ -13,11 +13,11 @@ pub enum InitError {
     InvalidKind(String),
 
     #[fail(display = "Project init error: {}", _0)]
-    ProjectInitError(#[fail(cause)] ProjectInitError),
+    ProjectError(#[fail(cause)] ProjectError),
 }
 
 impl_from!(InitError {
-    ProjectInitError => ProjectInitError,
+    ProjectError => ProjectError,
 });
 
 #[derive(Debug)]
