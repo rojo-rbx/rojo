@@ -5,7 +5,10 @@ use std::{
 };
 
 use log::error;
-use structopt::clap::{clap_app, ArgMatches};
+use structopt::{
+    clap::{clap_app, ArgMatches},
+    StructOpt,
+};
 
 use librojo::{cli::Options, commands};
 
@@ -19,6 +22,8 @@ fn make_path_absolute(value: &Path) -> PathBuf {
 }
 
 fn main() {
+    let _options = Options::from_args();
+
     let app = clap_app!(Rojo =>
         (version: env!("CARGO_PKG_VERSION"))
         (author: env!("CARGO_PKG_AUTHORS"))
