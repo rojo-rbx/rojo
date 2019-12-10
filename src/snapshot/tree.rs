@@ -146,6 +146,12 @@ impl RojoTree {
         self.metadata_map.get(&id)
     }
 
+    pub fn known_paths(&self) -> impl Iterator<Item = (&Path, &[RbxId])> + '_ {
+        self.path_to_ids
+            .iter()
+            .map(|(key, value)| (key.as_path(), value))
+    }
+
     fn insert_metadata(&mut self, id: RbxId, metadata: InstanceMetadata) {
         for path in &metadata.relevant_paths {
             self.path_to_ids.insert(path.clone(), id);

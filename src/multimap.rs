@@ -58,6 +58,12 @@ impl<K: Hash + Eq, V: Eq> MultiMap<K, V> {
             None
         }
     }
+
+    pub fn iter(&self) -> impl Iterator<Item = (&K, &[V])> + '_ {
+        self.inner
+            .iter()
+            .map(|(key, values)| (key, values.as_slice()))
+    }
 }
 
 impl<K: Debug + Hash + Eq, V: Debug + Eq> Debug for MultiMap<K, V> {

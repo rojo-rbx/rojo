@@ -47,6 +47,12 @@ path = "src/bin.rs"
 name = "build"
 harness = false
 
+[patch.crates-io]
+rbx_binary = { git = "https://github.com/rojo-rbx/rbx-dom.git", branch = "xml-encode-output" }
+rbx_dom_weak = { git = "https://github.com/rojo-rbx/rbx-dom.git", branch = "xml-encode-output" }
+rbx_reflection = { git = "https://github.com/rojo-rbx/rbx-dom.git", branch = "xml-encode-output" }
+rbx_xml = { git = "https://github.com/rojo-rbx/rbx-dom.git", branch = "xml-encode-output" }
+
 [dependencies]
 clap = "2.27"
 crossbeam-channel = "0.3.9"

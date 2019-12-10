@@ -1,7 +1,8 @@
 use std::{
+    collections::HashMap,
     fs::File,
     io::{self, BufWriter, Write},
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 
 use failure::Fail;
@@ -37,6 +38,7 @@ pub struct BuildOptions {
     pub fuzzy_project_path: PathBuf,
     pub output_file: PathBuf,
     pub output_kind: Option<OutputKind>,
+    pub output_sourcemap: bool,
 }
 
 #[derive(Debug, Fail)]
@@ -46,6 +48,9 @@ pub enum BuildError {
 
     #[fail(display = "IO error: {}", _0)]
     IoError(#[fail(cause)] io::Error),
+
+    #[fail(display = "{}", _0)]
+    JsonEncodeError(#[fail(cause)] serde_json::Error),
 
     #[fail(display = "XML model error: {}", _0)]
     XmlModelEncodeError(#[fail(cause)] rbx_xml::EncodeError),
@@ -62,6 +67,7 @@ pub enum BuildError {
 
 impl_from!(BuildError {
     io::Error => IoError,
+    serde_json::Error => JsonEncodeError,
     rbx_xml::EncodeError => XmlModelEncodeError,
     rbx_binary::EncodeError => BinaryModelEncodeError,
     ProjectLoadError => ProjectLoadError,
@@ -94,7 +100,25 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
             // Model files include the root instance of the tree and all its
             // descendants.
 
-            rbx_xml::to_writer(&mut file, tree.inner(), &[root_id], xml_encode_config())?;
+            let output =
+                rbx_xml::to_writer(&mut file, tree.inner(), &[root_id], xml_encode_config())?;
+
+            if options.output_sourcemap {
+                let mut map_data: HashMap<u32, &Path> = HashMap::new();
+
+                for (path, ids) in tree.known_paths() {
+                    for id in ids {
+                        if let Some(referent) = output.get_referent(*id) {
+                            map_data.insert(referent, path);
+                        }
+                    }
+                }
+
+                let map_path = options.output_file.with_extension("rbxmx.map");
+                let mut map_file = BufWriter::new(File::create(map_path)?);
+                serde_json::to_writer_pretty(&mut map_file, &map_data)?;
+                map_file.flush()?;
+            }
         }
         OutputKind::Rbxlx => {
             // Place files don't contain an entry for the DataModel, but our

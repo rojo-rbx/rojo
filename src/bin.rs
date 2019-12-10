@@ -42,6 +42,7 @@ fn main() {
             (about: "Generates a model or place file from the project.")
             (@arg PROJECT: "Path to the project to serve. Defaults to the current directory.")
             (@arg output: --output -o +takes_value +required "Where to output the result.")
+            (@arg sourcemap: --sourcemap "Tells Rojo to output a sourcemap file with the model")
         )
 
         (@subcommand upload =>
@@ -159,11 +160,13 @@ fn start_build(sub_matches: &ArgMatches) {
     };
 
     let output_file = make_path_absolute(Path::new(sub_matches.value_of("output").unwrap()));
+    let output_sourcemap = sub_matches.is_present("sourcemap");
 
     let options = commands::BuildOptions {
         fuzzy_project_path,
         output_file,
         output_kind: None, // TODO: Accept from argument
+        output_sourcemap,
     };
 
     match commands::build(&options) {
