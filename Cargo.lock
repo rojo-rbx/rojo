@@ -1429,7 +1429,7 @@ dependencies = [
 
 [[package]]
 name = "rbx_reflection"
-version = "3.2.404"
+version = "3.3.408"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "bitflags 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1446,7 +1446,7 @@ dependencies = [
  "base64 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "rbx_dom_weak 1.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "rbx_reflection 3.2.404 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rbx_reflection 3.3.408 (registry+https://github.com/rust-lang/crates.io-index)",
  "xml-rs 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -1584,7 +1584,7 @@ dependencies = [
  "pretty_assertions 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "rbx_binary 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "rbx_dom_weak 1.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "rbx_reflection 3.2.404 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rbx_reflection 3.3.408 (registry+https://github.com/rust-lang/crates.io-index)",
  "rbx_xml 0.11.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "regex 1.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "reqwest 0.9.21 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2470,7 +2470,7 @@ dependencies = [
 "checksum rayon-core 1.6.0 (registry+https://github.com/rust-lang/crates.io-index)" = "98dcf634205083b17d0861252431eb2acbfb698ab7478a2d20de07954f47ec7b"
 "checksum rbx_binary 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)" = "81428c521a07a3feac9c31180a886e467eecf81b769987f70d51d567a09c321d"
 "checksum rbx_dom_weak 1.10.0 (registry+https://github.com/rust-lang/crates.io-index)" = "c6b7c983d7bfcf0811a164e33e99e2da456f38babb33c75e365b17aa1ee5fd2d"
-"checksum rbx_reflection 3.2.404 (registry+https://github.com/rust-lang/crates.io-index)" = "7712c0a5ae6524ec5f51c29bc031f21e5ba35b38ffc6277f2ee9439febaec88c"
+"checksum rbx_reflection 3.3.408 (registry+https://github.com/rust-lang/crates.io-index)" = "a4c147f9006c1cfd3a1872d36e91d5fca88d4b94fafa5463f774a00f293b1277"
 "checksum rbx_xml 0.11.2 (registry+https://github.com/rust-lang/crates.io-index)" = "b0236363b0af0c78f3e972ac7f46a1f355f663518e276253136d0180f3c8742c"
 "checksum rdrand 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "678054eb77286b51581ba43620cc911abf02758c91f93f479767aed0f90458b2"
 "checksum redox_syscall 0.1.56 (registry+https://github.com/rust-lang/crates.io-index)" = "2439c63f3f6139d1b57529d16bc3b8bb855230c8efcc5d3a896c8bea7c3b1e84"
