@@ -4,10 +4,10 @@ use std::{
     process,
 };
 
-use clap::{clap_app, ArgMatches};
 use log::error;
+use structopt::clap::{clap_app, ArgMatches};
 
-use librojo::commands;
+use librojo::{cli::Options, commands};
 
 fn make_path_absolute(value: &Path) -> PathBuf {
     if value.is_absolute() {
