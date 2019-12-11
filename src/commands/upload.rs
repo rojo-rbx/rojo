@@ -1,10 +1,9 @@
-use std::path::PathBuf;
-
 use failure::Fail;
 use reqwest::header::{ACCEPT, CONTENT_TYPE, COOKIE, USER_AGENT};
 
 use crate::{
     auth_cookie::get_auth_cookie,
+    cli::UploadCommand,
     common_setup,
     vfs::{RealFetcher, Vfs, WatchMode},
 };
@@ -29,24 +28,16 @@ impl_from!(UploadError {
     reqwest::Error => Http,
 });
 
-#[derive(Debug)]
-pub struct UploadOptions<'a> {
-    pub fuzzy_project_path: PathBuf,
-    pub auth_cookie: Option<String>,
-    pub asset_id: u64,
-    pub kind: Option<&'a str>,
-}
-
-pub fn upload(options: UploadOptions) -> Result<(), UploadError> {
+pub fn upload(options: UploadCommand) -> Result<(), UploadError> {
     let cookie = options
-        .auth_cookie
+        .cookie
         .or_else(get_auth_cookie)
         .ok_or(UploadError::NeedAuthCookie)?;
 
     log::trace!("Constructing in-memory filesystem");
     let vfs = Vfs::new(RealFetcher::new(WatchMode::Disabled));
 
-    let (_maybe_project, tree) = common_setup::start(&options.fuzzy_project_path, &vfs);
+    let (_maybe_project, tree) = common_setup::start(&options.project, &vfs);
     let root_id = tree.get_root_id();
 
     let mut buffer = Vec::new();

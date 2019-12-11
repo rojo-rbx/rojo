@@ -2,9 +2,21 @@
 
 #![deny(missing_docs)]
 
-use std::{error::Error, fmt, path::PathBuf, str::FromStr};
+use std::{env, error::Error, fmt, path::PathBuf, str::FromStr};
 
 use structopt::StructOpt;
+
+/// Trick used with structopt to get the initial working directory of the
+/// process and store it for use in default values.
+fn working_dir() -> &'static str {
+    lazy_static::lazy_static! {
+        static ref INITIAL_WORKING_DIR: String = {
+            env::current_dir().unwrap().display().to_string()
+        };
+    }
+
+    &INITIAL_WORKING_DIR
+}
 
 /// Command line options that Rojo accepts, defined using the structopt crate.
 #[derive(Debug, StructOpt)]
@@ -39,11 +51,12 @@ pub enum Subcommand {
 #[derive(Debug, StructOpt)]
 pub struct InitCommand {
     /// Path to the place to create the project. Defaults to the current directory.
-    path: Option<PathBuf>,
+    #[structopt(default_value = &working_dir())]
+    pub path: PathBuf,
 
     /// The kind of project to create, 'place' or 'model'. Defaults to place.
-    #[structopt(long, default_value = "InitKind::Place")]
-    kind: InitKind,
+    #[structopt(long, default_value = "place")]
+    pub kind: InitKind,
 }
 
 /// The templates we support for initializing a Rojo project.
@@ -93,7 +106,8 @@ impl fmt::Display for InitKindParseError {
 #[derive(Debug, StructOpt)]
 pub struct ServeCommand {
     /// Path to the project to serve. Defaults to the current directory.
-    pub project: Option<PathBuf>,
+    #[structopt(default_value = &working_dir())]
+    pub project: PathBuf,
 
     /// The port to listen on. Defaults to the project's preference, or 34872 if
     /// it has none.
@@ -105,7 +119,8 @@ pub struct ServeCommand {
 #[derive(Debug, StructOpt)]
 pub struct BuildCommand {
     /// Path to the project to serve. Defaults to the current directory.
-    pub project: Option<PathBuf>,
+    #[structopt(default_value = &working_dir())]
+    pub project: PathBuf,
 
     /// Where to output the result.
     #[structopt(long, short)]
@@ -115,11 +130,12 @@ pub struct BuildCommand {
 /// Build and upload a Rojo project to Roblox.com.
 #[derive(Debug, StructOpt)]
 pub struct UploadCommand {
-    /// Path to the project to upload. Defaults to the current directory.j
-    pub project: Option<PathBuf>,
+    /// Path to the project to upload. Defaults to the current directory.
+    #[structopt(default_value = &working_dir())]
+    pub project: PathBuf,
 
     /// The kind of asset to generate, 'place', or 'model'. Defaults to place.
-    #[structopt(long, default_value = "UploadKind::Place")]
+    #[structopt(long, default_value = "place")]
     pub kind: UploadKind,
 
     /// Authenication cookie to use. If not specified, Rojo will attempt to find one from the system automatically.
