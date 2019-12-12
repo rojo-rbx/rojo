@@ -1,27 +1,27 @@
 use std::{
     fs::File,
     io::{self, BufWriter, Write},
-    path::PathBuf,
 };
 
 use failure::Fail;
 
 use crate::{
+    cli::BuildCommand,
     common_setup,
     project::ProjectError,
     vfs::{FsError, RealFetcher, Vfs, WatchMode},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum OutputKind {
+enum OutputKind {
     Rbxmx,
     Rbxlx,
     Rbxm,
     Rbxl,
 }
 
-fn detect_output_kind(options: &BuildOptions) -> Option<OutputKind> {
-    let extension = options.output_file.extension()?.to_str()?;
+fn detect_output_kind(options: &BuildCommand) -> Option<OutputKind> {
+    let extension = options.output.extension()?.to_str()?;
 
     match extension {
         "rbxlx" => Some(OutputKind::Rbxlx),
@@ -30,13 +30,6 @@ fn detect_output_kind(options: &BuildOptions) -> Option<OutputKind> {
         "rbxm" => Some(OutputKind::Rbxm),
         _ => None,
     }
-}
-
-#[derive(Debug)]
-pub struct BuildOptions {
-    pub fuzzy_project_path: PathBuf,
-    pub output_file: PathBuf,
-    pub output_kind: Option<OutputKind>,
 }
 
 #[derive(Debug, Fail)]
@@ -72,22 +65,19 @@ fn xml_encode_config() -> rbx_xml::EncodeOptions {
     rbx_xml::EncodeOptions::new().property_behavior(rbx_xml::EncodePropertyBehavior::WriteUnknown)
 }
 
-pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
-    let output_kind = options
-        .output_kind
-        .or_else(|| detect_output_kind(options))
-        .ok_or(BuildError::UnknownOutputKind)?;
+pub fn build(options: BuildCommand) -> Result<(), BuildError> {
+    let output_kind = detect_output_kind(&options).ok_or(BuildError::UnknownOutputKind)?;
 
     log::debug!("Hoping to generate file of type {:?}", output_kind);
 
     log::trace!("Constructing in-memory filesystem");
     let vfs = Vfs::new(RealFetcher::new(WatchMode::Disabled));
 
-    let (_maybe_project, tree) = common_setup::start(&options.fuzzy_project_path, &vfs);
+    let (_maybe_project, tree) = common_setup::start(&options.project, &vfs);
     let root_id = tree.get_root_id();
 
     log::trace!("Opening output file for write");
-    let mut file = BufWriter::new(File::create(&options.output_file)?);
+    let mut file = BufWriter::new(File::create(&options.output)?);
 
     match output_kind {
         OutputKind::Rbxmx => {

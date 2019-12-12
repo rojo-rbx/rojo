@@ -1,6 +1,5 @@
 use std::{
     io::{self, Write},
-    path::PathBuf,
     sync::Arc,
 };
 
@@ -8,6 +7,7 @@ use failure::Fail;
 use termcolor::{BufferWriter, Color, ColorChoice, ColorSpec, WriteColor};
 
 use crate::{
+    cli::ServeCommand,
     project::ProjectError,
     serve_session::ServeSession,
     vfs::{RealFetcher, Vfs, WatchMode},
@@ -15,12 +15,6 @@ use crate::{
 };
 
 const DEFAULT_PORT: u16 = 34872;
-
-#[derive(Debug)]
-pub struct ServeOptions {
-    pub fuzzy_project_path: PathBuf,
-    pub port: Option<u16>,
-}
 
 #[derive(Debug, Fail)]
 pub enum ServeError {
@@ -32,10 +26,10 @@ impl_from!(ServeError {
     ProjectError => ProjectError,
 });
 
-pub fn serve(options: &ServeOptions) -> Result<(), ServeError> {
+pub fn serve(options: ServeCommand) -> Result<(), ServeError> {
     let vfs = Vfs::new(RealFetcher::new(WatchMode::Enabled));
 
-    let session = Arc::new(ServeSession::new(vfs, &options.fuzzy_project_path));
+    let session = Arc::new(ServeSession::new(vfs, &options.project));
 
     let port = options
         .port

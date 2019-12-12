@@ -1,22 +1,17 @@
-use std::path::PathBuf;
-
 use failure::Fail;
+
+use crate::{cli::InitCommand, project::ProjectError};
 
 #[derive(Debug, Fail)]
 pub enum InitError {
-    #[fail(
-        display = "Invalid project kind '{}', valid kinds are 'place' and 'model'",
-        _0
-    )]
-    InvalidKind(String),
+    #[fail(display = "Project init error: {}", _0)]
+    ProjectError(#[fail(cause)] ProjectError),
 }
 
-#[derive(Debug)]
-pub struct InitOptions<'a> {
-    pub fuzzy_project_path: PathBuf,
-    pub kind: Option<&'a str>,
-}
+impl_from!(InitError {
+    ProjectError => ProjectError,
+});
 
-pub fn init(_options: &InitOptions) -> Result<(), InitError> {
+pub fn init(_options: InitCommand) -> Result<(), InitError> {
     unimplemented!("init command");
 }
