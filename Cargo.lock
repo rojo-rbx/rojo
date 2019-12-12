@@ -393,11 +393,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "doc-comment"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
 name = "dtoa"
 version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1410,20 +1405,18 @@ dependencies = [
 [[package]]
 name = "rbx_binary"
 version = "0.4.1"
-source = "git+https://github.com/rojo-rbx/rbx-dom.git?branch=xml-encode-output#1b2291a2723e807c76cb68eae78d31cc6ca5fa95"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "byteorder 1.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "lz4 1.23.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "rbx_dom_weak 1.10.0 (git+https://github.com/rojo-rbx/rbx-dom.git?branch=xml-encode-output)",
- "rbx_reflection 3.3.408 (git+https://github.com/rojo-rbx/rbx-dom.git?branch=xml-encode-output)",
- "snafu 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rbx_dom_weak 1.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "rbx_dom_weak"
 version = "1.10.0"
-source = "git+https://github.com/rojo-rbx/rbx-dom.git?branch=xml-encode-output#1b2291a2723e807c76cb68eae78d31cc6ca5fa95"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "base64 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1437,23 +1430,23 @@ dependencies = [
 [[package]]
 name = "rbx_reflection"
 version = "3.3.408"
-source = "git+https://github.com/rojo-rbx/rbx-dom.git?branch=xml-encode-output#1b2291a2723e807c76cb68eae78d31cc6ca5fa95"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "bitflags 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "rbx_dom_weak 1.10.0 (git+https://github.com/rojo-rbx/rbx-dom.git?branch=xml-encode-output)",
+ "rbx_dom_weak 1.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.101 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "rbx_xml"
-version = "0.11.2"
-source = "git+https://github.com/rojo-rbx/rbx-dom.git?branch=xml-encode-output#1b2291a2723e807c76cb68eae78d31cc6ca5fa95"
+version = "0.11.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "base64 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
- "rbx_dom_weak 1.10.0 (git+https://github.com/rojo-rbx/rbx-dom.git?branch=xml-encode-output)",
- "rbx_reflection 3.3.408 (git+https://github.com/rojo-rbx/rbx-dom.git?branch=xml-encode-output)",
+ "rbx_dom_weak 1.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rbx_reflection 3.3.408 (registry+https://github.com/rust-lang/crates.io-index)",
  "xml-rs 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -1589,10 +1582,10 @@ dependencies = [
  "notify 4.0.13 (registry+https://github.com/rust-lang/crates.io-index)",
  "paste 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "pretty_assertions 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "rbx_binary 0.4.1 (git+https://github.com/rojo-rbx/rbx-dom.git?branch=xml-encode-output)",
- "rbx_dom_weak 1.10.0 (git+https://github.com/rojo-rbx/rbx-dom.git?branch=xml-encode-output)",
- "rbx_reflection 3.3.408 (git+https://github.com/rojo-rbx/rbx-dom.git?branch=xml-encode-output)",
- "rbx_xml 0.11.2 (git+https://github.com/rojo-rbx/rbx-dom.git?branch=xml-encode-output)",
+ "rbx_binary 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rbx_dom_weak 1.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rbx_reflection 3.3.408 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rbx_xml 0.11.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "regex 1.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "reqwest 0.9.21 (registry+https://github.com/rust-lang/crates.io-index)",
  "ritz 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1625,7 +1618,7 @@ dependencies = [
  "insta 0.11.0 (git+https://github.com/mitsuhiko/insta)",
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "paste 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
- "rbx_dom_weak 1.10.0 (git+https://github.com/rojo-rbx/rbx-dom.git?branch=xml-encode-output)",
+ "rbx_dom_weak 1.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "reqwest 0.9.21 (registry+https://github.com/rust-lang/crates.io-index)",
  "rojo 0.6.0-dev",
  "rojo-insta-ext 0.1.0",
@@ -1804,25 +1797,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "smallvec"
 version = "0.6.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
-name = "snafu"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-dependencies = [
- "doc-comment 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "snafu-derive 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "snafu-derive"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-dependencies = [
- "proc-macro2 1.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "quote 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "syn 1.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
-]
 
 [[package]]
 name = "snax"
@@ -2379,7 +2353,6 @@ dependencies = [
 "checksum ctor 0.1.12 (registry+https://github.com/rust-lang/crates.io-index)" = "cd8ce37ad4184ab2ce004c33bf6379185d3b1c95801cab51026bd271bf68eedc"
 "checksum difference 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "524cbf6897b527295dff137cec09ecf3a05f4fddffd7dfcd1585403449e74198"
 "checksum digest 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)" = "f3d0c8c8752312f9713efd397ff63acb9f85585afbf179282e720e7704954dd5"
-"checksum doc-comment 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "923dea538cea0aa3025e8685b20d6ee21ef99c4f77e954a30febbaac5ec73a97"
 "checksum dtoa 0.4.4 (registry+https://github.com/rust-lang/crates.io-index)" = "ea57b42383d091c85abcc2706240b94ab2a8fa1fc81c10ff23c4de06e2a90b5e"
 "checksum either 1.5.3 (registry+https://github.com/rust-lang/crates.io-index)" = "bb1f6b1ce1c140482ea30ddd3335fc0024ac7ee112895426e0a629a6c20adfe3"
 "checksum encode_unicode 0.3.6 (registry+https://github.com/rust-lang/crates.io-index)" = "a357d28ed41a50f9c765dbfe56cbc04a64e53e5fc58ba79fbc34c10ef3df831f"
@@ -2495,10 +2468,10 @@ dependencies = [
 "checksum rand_xoshiro 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "0e18c91676f670f6f0312764c759405f13afb98d5d73819840cf72a518487bff"
 "checksum rayon 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "83a27732a533a1be0a0035a111fe76db89ad312f6f0347004c220c57f209a123"
 "checksum rayon-core 1.6.0 (registry+https://github.com/rust-lang/crates.io-index)" = "98dcf634205083b17d0861252431eb2acbfb698ab7478a2d20de07954f47ec7b"
-"checksum rbx_binary 0.4.1 (git+https://github.com/rojo-rbx/rbx-dom.git?branch=xml-encode-output)" = "<none>"
-"checksum rbx_dom_weak 1.10.0 (git+https://github.com/rojo-rbx/rbx-dom.git?branch=xml-encode-output)" = "<none>"
-"checksum rbx_reflection 3.3.408 (git+https://github.com/rojo-rbx/rbx-dom.git?branch=xml-encode-output)" = "<none>"
-"checksum rbx_xml 0.11.2 (git+https://github.com/rojo-rbx/rbx-dom.git?branch=xml-encode-output)" = "<none>"
+"checksum rbx_binary 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)" = "81428c521a07a3feac9c31180a886e467eecf81b769987f70d51d567a09c321d"
+"checksum rbx_dom_weak 1.10.0 (registry+https://github.com/rust-lang/crates.io-index)" = "c6b7c983d7bfcf0811a164e33e99e2da456f38babb33c75e365b17aa1ee5fd2d"
+"checksum rbx_reflection 3.3.408 (registry+https://github.com/rust-lang/crates.io-index)" = "a4c147f9006c1cfd3a1872d36e91d5fca88d4b94fafa5463f774a00f293b1277"
+"checksum rbx_xml 0.11.3 (registry+https://github.com/rust-lang/crates.io-index)" = "8b58063a6ccf8d27efa772ea816a99d1d411e2fdc47a141e26a493cd1c938ff1"
 "checksum rdrand 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "678054eb77286b51581ba43620cc911abf02758c91f93f479767aed0f90458b2"
 "checksum redox_syscall 0.1.56 (registry+https://github.com/rust-lang/crates.io-index)" = "2439c63f3f6139d1b57529d16bc3b8bb855230c8efcc5d3a896c8bea7c3b1e84"
 "checksum regex 1.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "dc220bd33bdce8f093101afe22a037b8eb0e5af33592e6a9caafff0d4cb81cbd"
@@ -2529,8 +2502,6 @@ dependencies = [
 "checksum skeptic 0.13.4 (registry+https://github.com/rust-lang/crates.io-index)" = "d6fb8ed853fdc19ce09752d63f3a2e5b5158aeb261520cd75eb618bd60305165"
 "checksum slab 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)" = "c111b5bd5695e56cffe5129854aa230b39c93a305372fdbb2668ca2394eea9f8"
 "checksum smallvec 0.6.10 (registry+https://github.com/rust-lang/crates.io-index)" = "ab606a9c5e214920bb66c458cd7be8ef094f813f20fe77a54cc7dbfff220d4b7"
-"checksum snafu 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)" = "41207ca11f96a62cd34e6b7fdf73d322b25ae3848eb9d38302169724bb32cf27"
-"checksum snafu-derive 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)" = "4c5e338c8b0577457c9dda8e794b6ad7231c96e25b1b0dd5842d52249020c1c0"
 "checksum snax 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "7ef82be0baf3ae45701ab992230f1f4889c15984736d87f37558aea3e4e321af"
 "checksum string 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "d24114bfcceb867ca7f71a0d3fe45d45619ec47a6fbfa98cb14e14250bfa5d6d"
 "checksum strsim 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "8ea5119cdb4c55b55d432abb513a0429384878c15dde60cc77b1c99de1a95a6a"

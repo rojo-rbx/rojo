@@ -6,6 +6,7 @@ use std::{
 };
 
 use failure::Fail;
+use rbx_dom_weak::{RbxId, RbxTree};
 
 use crate::{
     common_setup,
@@ -100,25 +101,7 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
             // Model files include the root instance of the tree and all its
             // descendants.
 
-            let output =
-                rbx_xml::to_writer(&mut file, tree.inner(), &[root_id], xml_encode_config())?;
-
-            if options.output_sourcemap {
-                let mut map_data: HashMap<u32, &Path> = HashMap::new();
-
-                for (path, ids) in tree.known_paths() {
-                    for id in ids {
-                        if let Some(referent) = output.get_referent(*id) {
-                            map_data.insert(referent, path);
-                        }
-                    }
-                }
-
-                let map_path = options.output_file.with_extension("rbxmx.map");
-                let mut map_file = BufWriter::new(File::create(map_path)?);
-                serde_json::to_writer_pretty(&mut map_file, &map_data)?;
-                map_file.flush()?;
-            }
+            rbx_xml::to_writer(&mut file, tree.inner(), &[root_id], xml_encode_config())?;
         }
         OutputKind::Rbxlx => {
             // Place files don't contain an entry for the DataModel, but our
@@ -146,7 +129,64 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
 
     file.flush()?;
 
-    log::trace!("Done!");
+    if options.output_sourcemap {
+        log::trace!("Computing sourcemap");
+
+        let mut map_data: HashMap<String, &Path> = HashMap::new();
+
+        for (path, ids) in tree.known_paths() {
+            for &id in ids {
+                let name = get_full_name(tree.inner(), id);
+                map_data.insert(name, path);
+            }
+        }
+
+        let map_path = {
+            // This should not panic because we make assertions about the file
+            // name earlier in this function.
+            //
+            // It may panic if the file name is not valid UTF-8. We need to do a
+            // conversion like this since the representation of OsStr is
+            // platform-dependent.
+            let existing_name = options.output_file.file_name().unwrap().to_str().unwrap();
+
+            let mut new_name = existing_name.to_owned();
+            new_name.push_str(".map");
+
+            options.output_file.with_file_name(new_name)
+        };
+
+        log::trace!("Writing sourcemap to {}", map_path.display());
+
+        let mut map_file = BufWriter::new(File::create(map_path)?);
+        serde_json::to_writer_pretty(&mut map_file, &map_data)?;
+        map_file.flush()?;
+    }
 
     Ok(())
+}
+
+/// Returns a a slash-delimited full name for the given instance by traversing
+/// upwards in the tree.
+///
+/// If the tree contains only uniquely named siblings, this path can be used to
+/// identify the given instance.
+fn get_full_name(tree: &RbxTree, id: RbxId) -> String {
+    let mut components_reversed = Vec::new();
+    let mut current_id = Some(id);
+
+    while let Some(id) = current_id {
+        let instance = tree.get_instance(id).unwrap();
+        components_reversed.push(instance.name.as_str());
+        current_id = instance.get_parent_id();
+    }
+
+    let mut name = String::new();
+    for component in components_reversed.iter().rev() {
+        name.push_str(component);
+        name.push('/');
+    }
+    name.pop();
+
+    name
 }
