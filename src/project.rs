@@ -1,435 +1,68 @@
 use std::{
     collections::{BTreeMap, HashMap, HashSet},
-    fmt,
-    fs::{self, File},
-    io,
+    fs, io,
     path::{Path, PathBuf},
 };
 
-use failure::Fail;
-use log::warn;
-use rbx_dom_weak::{RbxValue, UnresolvedRbxValue};
-use serde::{Deserialize, Serialize, Serializer};
-
-static DEFAULT_PLACE: &str = include_str!("../assets/place.project.json");
+use rbx_dom_weak::UnresolvedRbxValue;
+use serde::{Deserialize, Serialize};
+use snafu::{ResultExt, Snafu};
 
 pub static PROJECT_FILENAME: &str = "default.project.json";
 
-/// SourceProject is the format that users author projects on-disk. Since we
-/// want to do things like transforming paths to be absolute before handing them
-/// off to the rest of Rojo, we use this intermediate struct.
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(deny_unknown_fields, rename_all = "camelCase")]
-struct SourceProject {
-    name: String,
-    tree: SourceProjectNode,
+/// Error type returned by any function that handles projects.
+#[derive(Debug, Snafu)]
+pub struct ProjectError(Error);
 
-    #[serde(skip_serializing_if = "Option::is_none")]
-    serve_port: Option<u16>,
+#[derive(Debug, Snafu)]
+enum Error {
+    /// A general IO error occurred.
+    Io { source: io::Error, path: PathBuf },
 
-    #[serde(skip_serializing_if = "Option::is_none")]
-    serve_place_ids: Option<HashSet<u64>>,
-
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    #[cfg_attr(not(feature = "user-plugins"), serde(skip_deserializing))]
-    plugins: Vec<String>,
-}
-
-impl SourceProject {
-    /// Consumes the SourceProject and yields a Project, ready for prime-time.
-    pub fn into_project(self, project_file_location: &Path) -> Project {
-        let tree = self.tree.into_project_node(project_file_location);
-
-        let project_folder = project_file_location.parent().unwrap();
-        let plugins = self
-            .plugins
-            .into_iter()
-            .map(|path| project_folder.join(path))
-            .collect();
-
-        Project {
-            name: self.name,
-            tree,
-            serve_port: self.serve_port,
-            serve_place_ids: self.serve_place_ids,
-            plugins,
-            file_location: PathBuf::from(project_file_location),
-        }
-    }
-}
-
-/// An alternative serializer for `UnresolvedRbxValue` that uses the minimum
-/// representation of the value.
-///
-/// For example, the default Serialize impl might give you:
-///
-/// ```json
-/// {
-///     "Type": "Bool",
-///     "Value": true
-/// }
-/// ```
-///
-/// But in reality, users are expected to write just:
-///
-/// ```json
-/// true
-/// ```
-///
-/// This holds true for other values that might be ambiguous or just have more
-/// complicated representations like enums.
-fn serialize_unresolved_minimal<S>(
-    unresolved: &UnresolvedRbxValue,
-    serializer: S,
-) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    match unresolved {
-        UnresolvedRbxValue::Ambiguous(_) => unresolved.serialize(serializer),
-        UnresolvedRbxValue::Concrete(concrete) => match concrete {
-            RbxValue::Bool { value } => value.serialize(serializer),
-            RbxValue::CFrame { value } => value.serialize(serializer),
-            RbxValue::Color3 { value } => value.serialize(serializer),
-            RbxValue::Color3uint8 { value } => value.serialize(serializer),
-            RbxValue::Content { value } => value.serialize(serializer),
-            RbxValue::Float32 { value } => value.serialize(serializer),
-            RbxValue::Int32 { value } => value.serialize(serializer),
-            RbxValue::String { value } => value.serialize(serializer),
-            RbxValue::UDim { value } => value.serialize(serializer),
-            RbxValue::UDim2 { value } => value.serialize(serializer),
-            RbxValue::Vector2 { value } => value.serialize(serializer),
-            RbxValue::Vector2int16 { value } => value.serialize(serializer),
-            RbxValue::Vector3 { value } => value.serialize(serializer),
-            RbxValue::Vector3int16 { value } => value.serialize(serializer),
-            _ => concrete.serialize(serializer),
-        },
-    }
-}
-
-/// A wrapper around serialize_unresolved_minimal that handles the HashMap case.
-fn serialize_unresolved_map<S>(
-    value: &HashMap<String, UnresolvedRbxValue>,
-    serializer: S,
-) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    use serde::ser::SerializeMap;
-
-    #[derive(Serialize)]
-    struct Minimal<'a>(
-        #[serde(serialize_with = "serialize_unresolved_minimal")] &'a UnresolvedRbxValue,
-    );
-
-    let mut map = serializer.serialize_map(Some(value.len()))?;
-    for (k, v) in value {
-        map.serialize_key(k)?;
-        map.serialize_value(&Minimal(v))?;
-    }
-    map.end()
-}
-
-/// Similar to SourceProject, the structure of nodes in the project tree is
-/// slightly different on-disk than how we want to handle them in the rest of
-/// Rojo.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct SourceProjectNode {
-    #[serde(rename = "$className", skip_serializing_if = "Option::is_none")]
-    class_name: Option<String>,
-
-    #[serde(
-        rename = "$properties",
-        default = "HashMap::new",
-        skip_serializing_if = "HashMap::is_empty",
-        serialize_with = "serialize_unresolved_map"
-    )]
-    properties: HashMap<String, UnresolvedRbxValue>,
-
-    #[serde(
-        rename = "$ignoreUnknownInstances",
-        skip_serializing_if = "Option::is_none"
-    )]
-    ignore_unknown_instances: Option<bool>,
-
-    #[serde(rename = "$path", skip_serializing_if = "Option::is_none")]
-    path: Option<String>,
-
-    #[serde(flatten)]
-    children: BTreeMap<String, SourceProjectNode>,
-}
-
-impl SourceProjectNode {
-    /// Consumes the SourceProjectNode and turns it into a ProjectNode.
-    pub fn into_project_node(self, project_file_location: &Path) -> ProjectNode {
-        let children = self
-            .children
-            .iter()
-            .map(|(key, value)| {
-                (
-                    key.clone(),
-                    value.clone().into_project_node(project_file_location),
-                )
-            })
-            .collect();
-
-        // Make sure that paths are absolute, transforming them by adding the
-        // project folder if they're not already absolute.
-        let path = self.path.as_ref().map(|source_path| {
-            if Path::new(source_path).is_absolute() {
-                PathBuf::from(source_path)
-            } else {
-                let project_folder_location = project_file_location.parent().unwrap();
-                project_folder_location.join(source_path)
-            }
-        });
-
-        ProjectNode {
-            class_name: self.class_name,
-            properties: self.properties,
-            ignore_unknown_instances: self.ignore_unknown_instances,
-            path,
-            children,
-        }
-    }
-}
-
-#[derive(Debug, Fail)]
-pub enum ProjectLoadError {
-    NotFound,
-
-    Io {
-        #[fail(cause)]
-        inner: io::Error,
-        path: PathBuf,
-    },
-
+    /// An error with JSON parsing occurred.
     Json {
-        #[fail(cause)]
-        inner: serde_json::Error,
+        source: serde_json::Error,
         path: PathBuf,
     },
-}
-
-impl fmt::Display for ProjectLoadError {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        use self::ProjectLoadError::*;
-
-        match self {
-            NotFound => write!(formatter, "Project file not found"),
-            Io { inner, path } => {
-                write!(formatter, "I/O error: {} in path {}", inner, path.display())
-            }
-            Json { inner, path } => write!(
-                formatter,
-                "JSON error: {} in path {}",
-                inner,
-                path.display()
-            ),
-        }
-    }
-}
-
-/// Error returned by Project::init_place and Project::init_model
-#[derive(Debug, Fail)]
-pub enum ProjectInitError {
-    AlreadyExists(PathBuf),
-    IoError(#[fail(cause)] io::Error),
-    SaveError(#[fail(cause)] ProjectSaveError),
-    JsonError(#[fail(cause)] serde_json::Error),
-}
-
-impl fmt::Display for ProjectInitError {
-    fn fmt(&self, output: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            ProjectInitError::AlreadyExists(path) => {
-                write!(output, "Path {} already exists", path.display())
-            }
-            ProjectInitError::IoError(inner) => write!(output, "IO error: {}", inner),
-            ProjectInitError::SaveError(inner) => write!(output, "{}", inner),
-            ProjectInitError::JsonError(inner) => write!(output, "{}", inner),
-        }
-    }
-}
-
-/// Error returned by Project::save
-#[derive(Debug, Fail)]
-pub enum ProjectSaveError {
-    #[fail(display = "JSON error: {}", _0)]
-    JsonError(#[fail(cause)] serde_json::Error),
-
-    #[fail(display = "IO error: {}", _0)]
-    IoError(#[fail(cause)] io::Error),
-}
-
-#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
-pub struct ProjectNode {
-    pub class_name: Option<String>,
-    pub children: BTreeMap<String, ProjectNode>,
-    pub properties: HashMap<String, UnresolvedRbxValue>,
-    pub ignore_unknown_instances: Option<bool>,
-
-    #[serde(serialize_with = "crate::path_serializer::serialize_option_absolute")]
-    pub path: Option<PathBuf>,
-}
-
-impl ProjectNode {
-    fn validate_reserved_names(&self) {
-        for (name, child) in &self.children {
-            if name.starts_with('$') {
-                warn!(
-                    "Keys starting with '$' are reserved by Rojo to ensure forward compatibility."
-                );
-                warn!(
-                    "This project uses the key '{}', which should be renamed.",
-                    name
-                );
-            }
-
-            child.validate_reserved_names();
-        }
-    }
-
-    fn to_source_node(&self, project_file_location: &Path) -> SourceProjectNode {
-        let children = self
-            .children
-            .iter()
-            .map(|(key, value)| (key.clone(), value.to_source_node(project_file_location)))
-            .collect();
-
-        // If paths are relative to the project file, transform them to look
-        // Unixy and write relative paths instead.
-        //
-        // This isn't perfect, since it means that paths like .. will stay as
-        // absolute paths and make projects non-portable. Fixing this probably
-        // means keeping the paths relative in the project format and making
-        // everywhere else in Rojo do the resolution locally.
-        let path = self.path.as_ref().map(|path| {
-            let project_folder_location = project_file_location.parent().unwrap();
-
-            match path.strip_prefix(project_folder_location) {
-                Ok(stripped) => stripped.to_str().unwrap().replace("\\", "/"),
-                Err(_) => format!("{}", path.display()),
-            }
-        });
-
-        SourceProjectNode {
-            class_name: self.class_name.clone(),
-            properties: self.properties.clone(),
-            ignore_unknown_instances: self.ignore_unknown_instances,
-            children,
-            path,
-        }
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct Project {
+    /// The name of the top-level instance described by the project.
     pub name: String,
+
+    /// The tree of instances described by this project. Projects always
+    /// describe at least one instance.
     pub tree: ProjectNode,
+
+    /// If specified, sets the default port that `rojo serve` should use when
+    /// using this project for live sync.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub serve_port: Option<u16>,
+
+    /// If specified, contains the set of place IDs that this project is
+    /// compatible with when doing live sync.
+    ///
+    /// This setting is intended to help prevent syncing a Rojo project into the
+    /// wrong Roblox place.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub serve_place_ids: Option<HashSet<u64>>,
-    pub plugins: Vec<PathBuf>,
+
+    /// The path to the file that this project came from. Relative paths in the
+    /// project should be considered relative to the parent of this field, also
+    /// given by `Project::folder_location`.
+    #[serde(skip)]
     pub file_location: PathBuf,
 }
 
 impl Project {
+    /// Tells whether the given path describes a Rojo project.
     pub fn is_project_file(path: &Path) -> bool {
         path.file_name()
             .and_then(|name| name.to_str())
             .map(|name| name.ends_with(".project.json"))
             .unwrap_or(false)
-    }
-
-    pub fn init_place(project_fuzzy_path: &Path) -> Result<PathBuf, ProjectInitError> {
-        let project_path = Project::pick_path_for_init(project_fuzzy_path)?;
-
-        let project_name = if project_fuzzy_path == project_path {
-            project_fuzzy_path
-                .parent()
-                .expect("Path did not have a parent directory")
-                .file_name()
-                .expect("Path did not have a file name")
-                .to_str()
-                .expect("Path had invalid Unicode")
-        } else {
-            project_fuzzy_path
-                .file_name()
-                .expect("Path did not have a file name")
-                .to_str()
-                .expect("Path had invalid Unicode")
-        };
-
-        let mut project = Project::load_from_slice(DEFAULT_PLACE.as_bytes(), &project_path)
-            .map_err(ProjectInitError::JsonError)?;
-
-        project.name = project_name.to_owned();
-
-        project.save().map_err(ProjectInitError::SaveError)?;
-
-        Ok(project_path)
-    }
-
-    pub fn init_model(project_fuzzy_path: &Path) -> Result<PathBuf, ProjectInitError> {
-        let project_path = Project::pick_path_for_init(project_fuzzy_path)?;
-
-        let project_name = if project_fuzzy_path == project_path {
-            project_fuzzy_path
-                .parent()
-                .expect("Path did not have a parent directory")
-                .file_name()
-                .expect("Path did not have a file name")
-                .to_str()
-                .expect("Path had invalid Unicode")
-        } else {
-            project_fuzzy_path
-                .file_name()
-                .expect("Path did not have a file name")
-                .to_str()
-                .expect("Path had invalid Unicode")
-        };
-
-        let project_folder_path = project_path
-            .parent()
-            .expect("Path did not have a parent directory");
-
-        let tree = ProjectNode {
-            path: Some(project_folder_path.join("src")),
-            ..Default::default()
-        };
-
-        let project = Project {
-            name: project_name.to_string(),
-            tree,
-            serve_port: None,
-            serve_place_ids: None,
-            plugins: Vec::new(),
-            file_location: project_path.clone(),
-        };
-
-        project.save().map_err(ProjectInitError::SaveError)?;
-
-        Ok(project_path)
-    }
-
-    fn pick_path_for_init(project_fuzzy_path: &Path) -> Result<PathBuf, ProjectInitError> {
-        let is_exact = project_fuzzy_path.extension().is_some();
-
-        let project_path = if is_exact {
-            project_fuzzy_path.to_path_buf()
-        } else {
-            project_fuzzy_path.join(PROJECT_FILENAME)
-        };
-
-        match fs::metadata(&project_path) {
-            Err(error) => match error.kind() {
-                io::ErrorKind::NotFound => {}
-                _ => return Err(ProjectInitError::IoError(error)),
-            },
-            Ok(_) => return Err(ProjectInitError::AlreadyExists(project_path)),
-        }
-
-        Ok(project_path)
     }
 
     /// Attempt to locate a project represented by the given path.
@@ -464,51 +97,40 @@ impl Project {
     pub fn load_from_slice(
         contents: &[u8],
         project_file_location: &Path,
-    ) -> Result<Project, serde_json::Error> {
-        let parsed: SourceProject = serde_json::from_slice(&contents)?;
-
-        Ok(parsed.into_project(project_file_location))
+    ) -> Result<Self, serde_json::Error> {
+        let mut project: Self = serde_json::from_slice(&contents)?;
+        project.file_location = project_file_location.to_path_buf();
+        project.check_compatibility();
+        Ok(project)
     }
 
-    pub fn load_fuzzy(fuzzy_project_location: &Path) -> Result<Project, ProjectLoadError> {
+    pub fn load_fuzzy(fuzzy_project_location: &Path) -> Result<Option<Self>, ProjectError> {
         if let Some(project_path) = Self::locate(fuzzy_project_location) {
-            Self::load_exact(&project_path)
+            let project = Self::load_exact(&project_path)?;
+
+            Ok(Some(project))
         } else {
-            Err(ProjectLoadError::NotFound)
+            Ok(None)
         }
     }
 
-    fn load_exact(project_file_location: &Path) -> Result<Project, ProjectLoadError> {
-        let contents =
-            fs::read_to_string(project_file_location).map_err(|error| match error.kind() {
-                io::ErrorKind::NotFound => ProjectLoadError::NotFound,
-                _ => ProjectLoadError::Io {
-                    inner: error,
-                    path: project_file_location.to_path_buf(),
-                },
-            })?;
+    fn load_exact(project_file_location: &Path) -> Result<Self, ProjectError> {
+        let contents = fs::read_to_string(project_file_location).context(Io {
+            path: project_file_location,
+        })?;
 
-        let parsed: SourceProject =
-            serde_json::from_str(&contents).map_err(|error| ProjectLoadError::Json {
-                inner: error,
-                path: project_file_location.to_path_buf(),
-            })?;
+        let mut project: Project = serde_json::from_str(&contents).context(Json {
+            path: project_file_location,
+        })?;
 
-        let project = parsed.into_project(project_file_location);
-
+        project.file_location = project_file_location.to_path_buf();
         project.check_compatibility();
 
         Ok(project)
     }
 
-    pub fn save(&self) -> Result<(), ProjectSaveError> {
-        let source_project = self.to_source_project();
-        let mut file = File::create(&self.file_location).map_err(ProjectSaveError::IoError)?;
-
-        serde_json::to_writer_pretty(&mut file, &source_project)
-            .map_err(ProjectSaveError::JsonError)?;
-
-        Ok(())
+    pub fn save(&self) -> Result<(), ProjectError> {
+        unimplemented!()
     }
 
     /// Checks if there are any compatibility issues with this project file and
@@ -520,27 +142,80 @@ impl Project {
     pub fn folder_location(&self) -> &Path {
         self.file_location.parent().unwrap()
     }
+}
 
-    fn to_source_project(&self) -> SourceProject {
-        // TODO: Use path_serializer instead of transforming paths between
-        // String and PathBuf?
-        let plugins = self
-            .plugins
-            .iter()
-            .map(|path| {
-                path.strip_prefix(self.folder_location())
-                    .unwrap()
-                    .display()
-                    .to_string()
-            })
-            .collect();
+/// Describes an instance and its descendants in a project.
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct ProjectNode {
+    /// If set, defines the ClassName of the described instance.
+    ///
+    /// `$className` MUST be set if `$path` is not set.
+    ///
+    /// `$className` CANNOT be set if `$path` is set and the instance described
+    /// by that path has a ClassName other than Folder.
+    #[serde(rename = "$className", skip_serializing_if = "Option::is_none")]
+    pub class_name: Option<String>,
 
-        SourceProject {
-            name: self.name.clone(),
-            tree: self.tree.to_source_node(&self.file_location),
-            serve_port: self.serve_port,
-            plugins,
-            serve_place_ids: self.serve_place_ids.clone(),
+    /// Contains all of the children of the described instance.
+    #[serde(flatten)]
+    pub children: BTreeMap<String, ProjectNode>,
+
+    /// The properties that will be assigned to the resulting instance.
+    ///
+    // TODO: Is this legal to set if $path is set?
+    #[serde(
+        rename = "$properties",
+        default,
+        skip_serializing_if = "HashMap::is_empty"
+    )]
+    pub properties: HashMap<String, UnresolvedRbxValue>,
+
+    /// Defines the behavior when Rojo encounters unknown instances in Roblox
+    /// Studio during live sync. `$ignoreUnknownInstances` should be considered
+    /// a large hammer and used with care.
+    ///
+    /// If set to `true`, those instances will be left alone. This may cause
+    /// issues when files that turn into instances are removed while Rojo is not
+    /// running.
+    ///
+    /// If set to `false`, Rojo will destroy any instances it does not
+    /// recognize.
+    ///
+    /// If unset, its default value depends on other settings:
+    /// - If `$path` is not set, defaults to `true`
+    /// - If `$path` is set, defaults to `false`
+    #[serde(
+        rename = "$ignoreUnknownInstances",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub ignore_unknown_instances: Option<bool>,
+
+    /// Defines that this instance should come from the given file path. This
+    /// path can point to any file type supported by Rojo, including Lua files
+    /// (`.lua`), Roblox models (`.rbxm`, `.rbxmx`), and localization table
+    /// spreadsheets (`.csv`).
+    #[serde(
+        rename = "$path",
+        serialize_with = "crate::path_serializer::serialize_option_absolute",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub path: Option<PathBuf>,
+}
+
+impl ProjectNode {
+    fn validate_reserved_names(&self) {
+        for (name, child) in &self.children {
+            if name.starts_with('$') {
+                log::warn!(
+                    "Keys starting with '$' are reserved by Rojo to ensure forward compatibility."
+                );
+                log::warn!(
+                    "This project uses the key '{}', which should be renamed.",
+                    name
+                );
+            }
+
+            child.validate_reserved_names();
         }
     }
 }

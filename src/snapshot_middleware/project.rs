@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::HashMap};
+use std::{borrow::Cow, collections::HashMap, path::Path};
 
 use rbx_reflection::try_resolve_value;
 
@@ -47,8 +47,14 @@ impl SnapshotMiddleware for SnapshotProject {
 
         // Snapshotting a project should always return an instance, so this
         // unwrap is safe.
-        let mut snapshot =
-            snapshot_project_node(context, &project.name, &project.tree, vfs)?.unwrap();
+        let mut snapshot = snapshot_project_node(
+            context,
+            project.folder_location(),
+            &project.name,
+            &project.tree,
+            vfs,
+        )?
+        .unwrap();
 
         // Setting the instigating source to the project file path is a little
         // coarse.
@@ -77,6 +83,7 @@ impl SnapshotMiddleware for SnapshotProject {
 
 pub fn snapshot_project_node<F: VfsFetcher>(
     context: &InstanceContext,
+    project_folder: &Path,
     instance_name: &str,
     node: &ProjectNode,
     vfs: &Vfs<F>,
@@ -91,7 +98,15 @@ pub fn snapshot_project_node<F: VfsFetcher>(
     let mut metadata = InstanceMetadata::default();
 
     if let Some(path) = &node.path {
-        let entry = vfs.get(path)?;
+        // If the path specified in the project is relative, we assume it's
+        // relative to the folder that the project is in, project_folder.
+        let path = if path.is_relative() {
+            Cow::Owned(project_folder.join(path))
+        } else {
+            Cow::Borrowed(path)
+        };
+
+        let entry = vfs.get(path.as_path())?;
 
         if let Some(snapshot) = snapshot_from_vfs(context, vfs, &entry)? {
             // If a class name was already specified, then it'll override the
@@ -143,7 +158,9 @@ pub fn snapshot_project_node<F: VfsFetcher>(
         .expect("$className or $path must be specified");
 
     for (child_name, child_project_node) in &node.children {
-        if let Some(child) = snapshot_project_node(context, child_name, child_project_node, vfs)? {
+        if let Some(child) =
+            snapshot_project_node(context, project_folder, child_name, child_project_node, vfs)?
+        {
             children.push(child);
         }
     }
@@ -170,6 +187,7 @@ pub fn snapshot_project_node<F: VfsFetcher>(
     }
 
     metadata.instigating_source = Some(InstigatingSource::ProjectNode(
+        project_folder.to_path_buf(),
         instance_name.to_string(),
         node.clone(),
     ));

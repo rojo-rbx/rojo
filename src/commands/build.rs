@@ -8,7 +8,7 @@ use failure::Fail;
 use crate::{
     cli::BuildCommand,
     common_setup,
-    project::ProjectLoadError,
+    project::ProjectError,
     vfs::{FsError, RealFetcher, Vfs, WatchMode},
 };
 
@@ -47,7 +47,7 @@ pub enum BuildError {
     BinaryModelEncodeError(rbx_binary::EncodeError),
 
     #[fail(display = "{}", _0)]
-    ProjectLoadError(#[fail(cause)] ProjectLoadError),
+    ProjectError(#[fail(cause)] ProjectError),
 
     #[fail(display = "{}", _0)]
     FsError(#[fail(cause)] FsError),
@@ -57,7 +57,7 @@ impl_from!(BuildError {
     io::Error => IoError,
     rbx_xml::EncodeError => XmlModelEncodeError,
     rbx_binary::EncodeError => BinaryModelEncodeError,
-    ProjectLoadError => ProjectLoadError,
+    ProjectError => ProjectError,
     FsError => FsError,
 });
 

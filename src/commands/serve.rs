@@ -8,7 +8,7 @@ use termcolor::{BufferWriter, Color, ColorChoice, ColorSpec, WriteColor};
 
 use crate::{
     cli::ServeCommand,
-    project::ProjectLoadError,
+    project::ProjectError,
     serve_session::ServeSession,
     vfs::{RealFetcher, Vfs, WatchMode},
     web::LiveServer,
@@ -19,11 +19,11 @@ const DEFAULT_PORT: u16 = 34872;
 #[derive(Debug, Fail)]
 pub enum ServeError {
     #[fail(display = "Couldn't load project: {}", _0)]
-    ProjectLoad(#[fail(cause)] ProjectLoadError),
+    ProjectError(#[fail(cause)] ProjectError),
 }
 
 impl_from!(ServeError {
-    ProjectLoadError => ProjectLoad,
+    ProjectError => ProjectError,
 });
 
 pub fn serve(options: ServeCommand) -> Result<(), ServeError> {
