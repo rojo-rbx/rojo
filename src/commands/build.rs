@@ -132,12 +132,13 @@ pub fn build(options: &BuildOptions) -> Result<(), BuildError> {
     if options.output_sourcemap {
         log::trace!("Computing sourcemap");
 
-        let mut map_data: HashMap<String, &Path> = HashMap::new();
+        let mut map_data: HashMap<String, Vec<&Path>> = HashMap::new();
 
         for (path, ids) in tree.known_paths() {
             for &id in ids {
                 let name = get_full_name(tree.inner(), id);
-                map_data.insert(name, path);
+                let relevant_paths = map_data.entry(name).or_insert(Vec::new());
+                relevant_paths.push(path);
             }
         }
 
