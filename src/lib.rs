@@ -5,6 +5,7 @@
 #[macro_use]
 mod impl_from;
 
+pub mod cli;
 pub mod commands;
 
 // This module is only public for testing right now, and won't be
