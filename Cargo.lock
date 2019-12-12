@@ -1463,7 +1463,7 @@ dependencies = [
 
 [[package]]
 name = "rbx_xml"
-version = "0.11.2"
+version = "0.11.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "base64 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1520,7 +1520,7 @@ dependencies = [
 
 [[package]]
 name = "reqwest"
-version = "0.9.22"
+version = "0.9.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "base64 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1608,9 +1608,9 @@ dependencies = [
  "rbx_binary 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "rbx_dom_weak 1.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rbx_reflection 3.3.408 (registry+https://github.com/rust-lang/crates.io-index)",
- "rbx_xml 0.11.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rbx_xml 0.11.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "regex 1.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "reqwest 0.9.22 (registry+https://github.com/rust-lang/crates.io-index)",
+ "reqwest 0.9.24 (registry+https://github.com/rust-lang/crates.io-index)",
  "ritz 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rlua 0.16.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "rojo-insta-ext 0.1.0",
@@ -1642,7 +1642,7 @@ dependencies = [
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "paste 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "rbx_dom_weak 1.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "reqwest 0.9.22 (registry+https://github.com/rust-lang/crates.io-index)",
+ "reqwest 0.9.24 (registry+https://github.com/rust-lang/crates.io-index)",
  "rojo 0.6.0-dev",
  "rojo-insta-ext 0.1.0",
  "serde 1.0.103 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2508,14 +2508,14 @@ dependencies = [
 "checksum rbx_binary 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)" = "81428c521a07a3feac9c31180a886e467eecf81b769987f70d51d567a09c321d"
 "checksum rbx_dom_weak 1.10.0 (registry+https://github.com/rust-lang/crates.io-index)" = "c6b7c983d7bfcf0811a164e33e99e2da456f38babb33c75e365b17aa1ee5fd2d"
 "checksum rbx_reflection 3.3.408 (registry+https://github.com/rust-lang/crates.io-index)" = "a4c147f9006c1cfd3a1872d36e91d5fca88d4b94fafa5463f774a00f293b1277"
-"checksum rbx_xml 0.11.2 (registry+https://github.com/rust-lang/crates.io-index)" = "b0236363b0af0c78f3e972ac7f46a1f355f663518e276253136d0180f3c8742c"
+"checksum rbx_xml 0.11.3 (registry+https://github.com/rust-lang/crates.io-index)" = "8b58063a6ccf8d27efa772ea816a99d1d411e2fdc47a141e26a493cd1c938ff1"
 "checksum rdrand 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "678054eb77286b51581ba43620cc911abf02758c91f93f479767aed0f90458b2"
 "checksum redox_syscall 0.1.56 (registry+https://github.com/rust-lang/crates.io-index)" = "2439c63f3f6139d1b57529d16bc3b8bb855230c8efcc5d3a896c8bea7c3b1e84"
 "checksum regex 1.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "dc220bd33bdce8f093101afe22a037b8eb0e5af33592e6a9caafff0d4cb81cbd"
 "checksum regex-automata 0.1.8 (registry+https://github.com/rust-lang/crates.io-index)" = "92b73c2a1770c255c240eaa4ee600df1704a38dc3feaa6e949e7fcd4f8dc09f9"
 "checksum regex-syntax 0.6.12 (registry+https://github.com/rust-lang/crates.io-index)" = "11a7e20d1cce64ef2fed88b66d347f88bd9babb82845b2b858f3edbf59a4f716"
 "checksum remove_dir_all 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)" = "4a83fa3702a688b9359eccba92d153ac33fd2e8462f9e0e3fdf155239ea7792e"
-"checksum reqwest 0.9.22 (registry+https://github.com/rust-lang/crates.io-index)" = "2c2064233e442ce85c77231ebd67d9eca395207dec2127fe0bbedde4bd29a650"
+"checksum reqwest 0.9.24 (registry+https://github.com/rust-lang/crates.io-index)" = "f88643aea3c1343c804950d7bf983bd2067f5ab59db6d613a08e05572f2714ab"
 "checksum ritz 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "e7b52479a28408dacd24819d32f3562146b5f03eb0a06a8b2d7b11e34fbfe52d"
 "checksum ritz_impl 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "fa7bba143ce94ca7e580094b8c4f6338b960b3bfa5ad7f479700e414b24d5d7b"
 "checksum rlua 0.16.3 (registry+https://github.com/rust-lang/crates.io-index)" = "62fc0e980c94fe9ef795b1bb3874649c8c6e9bb67d3b90d48380ba24c69c23ea"
