@@ -3,12 +3,11 @@ use std::{
     sync::Arc,
 };
 
-use failure::Fail;
+use snafu::Snafu;
 use termcolor::{BufferWriter, Color, ColorChoice, ColorSpec, WriteColor};
 
 use crate::{
     cli::ServeCommand,
-    project::ProjectError,
     serve_session::ServeSession,
     vfs::{RealFetcher, Vfs, WatchMode},
     web::LiveServer,
@@ -16,17 +15,17 @@ use crate::{
 
 const DEFAULT_PORT: u16 = 34872;
 
-#[derive(Debug, Fail)]
-pub enum ServeError {
-    #[fail(display = "Couldn't load project: {}", _0)]
-    ProjectError(#[fail(cause)] ProjectError),
-}
+#[derive(Debug, Snafu)]
+pub struct ServeError(Error);
 
-impl_from!(ServeError {
-    ProjectError => ProjectError,
-});
+#[derive(Debug, Snafu)]
+enum Error {}
 
 pub fn serve(options: ServeCommand) -> Result<(), ServeError> {
+    Ok(serve_inner(options)?)
+}
+
+fn serve_inner(options: ServeCommand) -> Result<(), Error> {
     let vfs = Vfs::new(RealFetcher::new(WatchMode::Enabled));
 
     let session = Arc::new(ServeSession::new(vfs, &options.project));
