@@ -3,13 +3,13 @@ use std::{
     io::{self, BufWriter, Write},
 };
 
-use failure::Fail;
+use snafu::{ResultExt, Snafu};
 
 use crate::{
     cli::BuildCommand,
     common_setup,
     project::ProjectError,
-    vfs::{FsError, RealFetcher, Vfs, WatchMode},
+    vfs::{RealFetcher, Vfs, WatchMode},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -32,41 +32,46 @@ fn detect_output_kind(options: &BuildCommand) -> Option<OutputKind> {
     }
 }
 
-#[derive(Debug, Fail)]
-pub enum BuildError {
-    #[fail(display = "Could not detect what kind of file to create")]
+#[derive(Debug, Snafu)]
+pub struct BuildError(Error);
+
+#[derive(Debug, Snafu)]
+enum Error {
+    #[snafu(display("Could not detect what kind of file to create"))]
     UnknownOutputKind,
 
-    #[fail(display = "IO error: {}", _0)]
-    IoError(#[fail(cause)] io::Error),
+    #[snafu(display("{}", source))]
+    Io { source: io::Error },
 
-    #[fail(display = "XML model error: {}", _0)]
-    XmlModelEncodeError(#[fail(cause)] rbx_xml::EncodeError),
+    #[snafu(display("{}", source))]
+    XmlModelEncode { source: rbx_xml::EncodeError },
 
-    #[fail(display = "Binary model error: {:?}", _0)]
-    BinaryModelEncodeError(rbx_binary::EncodeError),
+    #[snafu(display("Binary model error: {:?}", source))]
+    BinaryModelEncode {
+        #[snafu(source(false))]
+        source: rbx_binary::EncodeError,
+    },
 
-    #[fail(display = "{}", _0)]
-    ProjectError(#[fail(cause)] ProjectError),
-
-    #[fail(display = "{}", _0)]
-    FsError(#[fail(cause)] FsError),
+    #[snafu(display("{}", source))]
+    Project { source: ProjectError },
 }
 
-impl_from!(BuildError {
-    io::Error => IoError,
-    rbx_xml::EncodeError => XmlModelEncodeError,
-    rbx_binary::EncodeError => BinaryModelEncodeError,
-    ProjectError => ProjectError,
-    FsError => FsError,
-});
+impl From<rbx_binary::EncodeError> for Error {
+    fn from(source: rbx_binary::EncodeError) -> Self {
+        Self::BinaryModelEncode { source }
+    }
+}
 
 fn xml_encode_config() -> rbx_xml::EncodeOptions {
     rbx_xml::EncodeOptions::new().property_behavior(rbx_xml::EncodePropertyBehavior::WriteUnknown)
 }
 
 pub fn build(options: BuildCommand) -> Result<(), BuildError> {
-    let output_kind = detect_output_kind(&options).ok_or(BuildError::UnknownOutputKind)?;
+    Ok(build_inner(options)?)
+}
+
+fn build_inner(options: BuildCommand) -> Result<(), Error> {
+    let output_kind = detect_output_kind(&options).ok_or(Error::UnknownOutputKind)?;
 
     log::debug!("Hoping to generate file of type {:?}", output_kind);
 
@@ -77,14 +82,17 @@ pub fn build(options: BuildCommand) -> Result<(), BuildError> {
     let root_id = tree.get_root_id();
 
     log::trace!("Opening output file for write");
-    let mut file = BufWriter::new(File::create(&options.output)?);
+
+    let file = File::create(&options.output).context(Io)?;
+    let mut file = BufWriter::new(file);
 
     match output_kind {
         OutputKind::Rbxmx => {
             // Model files include the root instance of the tree and all its
             // descendants.
 
-            rbx_xml::to_writer(&mut file, tree.inner(), &[root_id], xml_encode_config())?;
+            rbx_xml::to_writer(&mut file, tree.inner(), &[root_id], xml_encode_config())
+                .context(XmlModelEncode)?;
         }
         OutputKind::Rbxlx => {
             // Place files don't contain an entry for the DataModel, but our
@@ -93,7 +101,8 @@ pub fn build(options: BuildCommand) -> Result<(), BuildError> {
             let root_instance = tree.get_instance(root_id).unwrap();
             let top_level_ids = root_instance.children();
 
-            rbx_xml::to_writer(&mut file, tree.inner(), top_level_ids, xml_encode_config())?;
+            rbx_xml::to_writer(&mut file, tree.inner(), top_level_ids, xml_encode_config())
+                .context(XmlModelEncode)?;
         }
         OutputKind::Rbxm => {
             rbx_binary::encode(tree.inner(), &[root_id], &mut file)?;
@@ -110,7 +119,7 @@ pub fn build(options: BuildCommand) -> Result<(), BuildError> {
         }
     }
 
-    file.flush()?;
+    file.flush().context(Io)?;
 
     log::trace!("Done!");
 
