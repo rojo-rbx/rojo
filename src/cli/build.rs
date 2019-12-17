@@ -58,7 +58,7 @@ enum Error {
 
 impl From<rbx_binary::EncodeError> for Error {
     fn from(source: rbx_binary::EncodeError) -> Self {
-        Self::BinaryModelEncode { source }
+        Error::BinaryModelEncode { source }
     }
 }
 
