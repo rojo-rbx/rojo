@@ -1,5 +1,5 @@
-use failure::Fail;
 use reqwest::header::{ACCEPT, CONTENT_TYPE, COOKIE, USER_AGENT};
+use snafu::{ResultExt, Snafu};
 
 use crate::{
     auth_cookie::get_auth_cookie,
@@ -8,31 +8,35 @@ use crate::{
     vfs::{RealFetcher, Vfs, WatchMode},
 };
 
-#[derive(Debug, Fail)]
-pub enum UploadError {
-    #[fail(display = "Rojo could not find your Roblox auth cookie. Please pass one via --cookie.")]
+#[derive(Debug, Snafu)]
+pub struct UploadError(Error);
+
+#[derive(Debug, Snafu)]
+enum Error {
+    #[snafu(display(
+        "Rojo could not find your Roblox auth cookie. Please pass one via --cookie.",
+    ))]
     NeedAuthCookie,
 
-    #[fail(display = "XML model file encode error: {}", _0)]
-    XmlModelEncode(#[fail(cause)] rbx_xml::EncodeError),
+    #[snafu(display("XML model file encode error: {}", source))]
+    XmlModel { source: rbx_xml::EncodeError },
 
-    #[fail(display = "HTTP error: {}", _0)]
-    Http(#[fail(cause)] reqwest::Error),
+    #[snafu(display("HTTP error: {}", source))]
+    Http { source: reqwest::Error },
 
-    #[fail(display = "Roblox API error: {}", _0)]
-    RobloxApi(String),
+    #[snafu(display("Roblox API error: {}", body))]
+    RobloxApi { body: String },
 }
 
-impl_from!(UploadError {
-    rbx_xml::EncodeError => XmlModelEncode,
-    reqwest::Error => Http,
-});
-
 pub fn upload(options: UploadCommand) -> Result<(), UploadError> {
+    Ok(upload_inner(options)?)
+}
+
+fn upload_inner(options: UploadCommand) -> Result<(), Error> {
     let cookie = options
         .cookie
         .or_else(get_auth_cookie)
-        .ok_or(UploadError::NeedAuthCookie)?;
+        .ok_or(Error::NeedAuthCookie)?;
 
     log::trace!("Constructing in-memory filesystem");
     let vfs = Vfs::new(RealFetcher::new(WatchMode::Disabled));
@@ -45,7 +49,7 @@ pub fn upload(options: UploadCommand) -> Result<(), UploadError> {
     log::trace!("Encoding XML model");
     let config = rbx_xml::EncodeOptions::new()
         .property_behavior(rbx_xml::EncodePropertyBehavior::WriteUnknown);
-    rbx_xml::to_writer(&mut buffer, tree.inner(), &[root_id], config)?;
+    rbx_xml::to_writer(&mut buffer, tree.inner(), &[root_id], config).context(XmlModel)?;
 
     let url = format!(
         "https://data.roblox.com/Data/Upload.ashx?assetid={}",
@@ -62,10 +66,13 @@ pub fn upload(options: UploadCommand) -> Result<(), UploadError> {
         .header(CONTENT_TYPE, "application/xml")
         .header(ACCEPT, "application/json")
         .body(buffer)
-        .send()?;
+        .send()
+        .context(Http)?;
 
     if !response.status().is_success() {
-        return Err(UploadError::RobloxApi(response.text()?));
+        return Err(Error::RobloxApi {
+            body: response.text().context(Http)?,
+        });
     }
 
     Ok(())

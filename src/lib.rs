@@ -2,9 +2,6 @@
 // Rojo's web UI currently.
 #![recursion_limit = "1024"]
 
-#[macro_use]
-mod impl_from;
-
 pub mod cli;
 
 #[cfg(test)]
