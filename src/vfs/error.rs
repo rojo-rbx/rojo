@@ -1,6 +1,4 @@
-use std::{fmt, io, path::PathBuf};
-
-use failure::Fail;
+use std::{error::Error, fmt, io, path::PathBuf};
 
 pub type FsResult<T> = Result<T, FsError>;
 pub use io::ErrorKind as FsErrorKind;
@@ -21,32 +19,37 @@ impl<T> FsResultExt<T> for Result<T, FsError> {
 
 /// A wrapper around io::Error that also attaches the path associated with the
 /// error.
-#[derive(Debug, Fail)]
+#[derive(Debug)]
 pub struct FsError {
-    #[fail(cause)]
-    inner: io::Error,
+    source: io::Error,
     path: PathBuf,
 }
 
 impl FsError {
-    pub fn new<P: Into<PathBuf>>(inner: io::Error, path: P) -> FsError {
+    pub fn new<P: Into<PathBuf>>(source: io::Error, path: P) -> FsError {
         FsError {
-            inner,
+            source,
             path: path.into(),
         }
     }
 
     pub fn kind(&self) -> FsErrorKind {
-        self.inner.kind()
+        self.source.kind()
     }
 
     pub fn into_raw(self) -> (io::Error, PathBuf) {
-        (self.inner, self.path)
+        (self.source, self.path)
+    }
+}
+
+impl Error for FsError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        Some(&self.source)
     }
 }
 
 impl fmt::Display for FsError {
     fn fmt(&self, output: &mut fmt::Formatter) -> fmt::Result {
-        write!(output, "{}: {}", self.path.display(), self.inner)
+        write!(output, "{}: {}", self.path.display(), self.source)
     }
 }
