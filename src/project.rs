@@ -8,7 +8,7 @@ use rbx_dom_weak::UnresolvedRbxValue;
 use serde::{Deserialize, Serialize};
 use snafu::{ResultExt, Snafu};
 
-pub static PROJECT_FILENAME: &str = "default.project.json";
+static PROJECT_FILENAME: &str = "default.project.json";
 
 /// Error type returned by any function that handles projects.
 #[derive(Debug, Snafu)]
@@ -26,6 +26,9 @@ enum Error {
     },
 }
 
+/// Contains all of the configuration for a Rojo-managed project.
+///
+/// Project files are stored in `.project.json` files.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct Project {

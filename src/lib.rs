@@ -6,12 +6,6 @@
 mod impl_from;
 
 pub mod cli;
-pub mod commands;
-
-// This module is only public for testing right now, and won't be
-// part of the first version of the Rojo API.
-#[doc(hidden)]
-pub mod project;
 
 #[cfg(test)]
 mod tree_view;
@@ -23,6 +17,7 @@ mod message_queue;
 mod multimap;
 mod path_map;
 mod path_serializer;
+mod project;
 mod serve_session;
 mod session_id;
 mod snapshot;
@@ -30,5 +25,6 @@ mod snapshot_middleware;
 mod vfs;
 mod web;
 
-pub use crate::session_id::SessionId;
-pub use crate::web::interface as web_interface;
+pub use project::*;
+pub use session_id::SessionId;
+pub use web::interface as web_api;

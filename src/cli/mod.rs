@@ -1,10 +1,18 @@
 //! Defines Rojo's CLI through structopt types.
 
-#![deny(missing_docs)]
+mod build;
+mod init;
+mod serve;
+mod upload;
 
 use std::{env, error::Error, fmt, path::PathBuf, str::FromStr};
 
 use structopt::StructOpt;
+
+pub use self::build::*;
+pub use self::init::*;
+pub use self::serve::*;
+pub use self::upload::*;
 
 /// Trick used with structopt to get the initial working directory of the
 /// process and store it for use in default values.

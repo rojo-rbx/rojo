@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use rbx_dom_weak::RbxId;
 use serde::Serialize;
 
-use librojo::web_interface::{Instance, InstanceUpdate, ReadResponse, SubscribeResponse};
+use librojo::web_api::{Instance, InstanceUpdate, ReadResponse, SubscribeResponse};
 use rojo_insta_ext::RedactionMap;
 
 /// A convenience method to store all of the redactable data from a piece of

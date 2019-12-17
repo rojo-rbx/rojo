@@ -4,10 +4,7 @@ use failure::Error;
 use log::error;
 use structopt::StructOpt;
 
-use librojo::{
-    cli::{Options, Subcommand},
-    commands,
-};
+use librojo::cli::{self, Options, Subcommand};
 
 fn main() {
     let options = Options::from_args();
@@ -50,10 +47,10 @@ fn main() {
 
 fn run(subcommand: Subcommand) -> Result<(), Error> {
     match subcommand {
-        Subcommand::Init(init_options) => commands::init(init_options)?,
-        Subcommand::Serve(serve_options) => commands::serve(serve_options)?,
-        Subcommand::Build(build_options) => commands::build(build_options)?,
-        Subcommand::Upload(upload_options) => commands::upload(upload_options)?,
+        Subcommand::Init(init_options) => cli::init(init_options)?,
+        Subcommand::Serve(serve_options) => cli::serve(serve_options)?,
+        Subcommand::Build(build_options) => cli::build(build_options)?,
+        Subcommand::Upload(upload_options) => cli::upload(upload_options)?,
     }
 
     Ok(())
