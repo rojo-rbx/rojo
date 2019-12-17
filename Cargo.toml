@@ -5,6 +5,7 @@ authors = ["Lucien Greathouse <me@lpghatguy.com>"]
 description = "Enables professional-grade development tools for Roblox developers"
 license = "MPL-2.0"
 repository = "https://github.com/rojo-rbx/rojo"
+readme = "README.md"
 edition = "2018"
 
 exclude = [
