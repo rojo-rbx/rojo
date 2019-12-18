@@ -49,31 +49,31 @@ name = "build"
 harness = false
 
 [dependencies]
-crossbeam-channel = "0.3.9"
-csv = "1.0"
-env_logger = "0.6"
-futures = "0.1"
+crossbeam-channel = "0.4.0"
+csv = "1.1.1"
+env_logger = "0.7.1"
+futures = "0.1.29"
 humantime = "1.3.0"
-hyper = "0.12"
+hyper = "0.12.35"
 jod-thread = "0.1.0"
 lazy_static = "1.4.0"
-log = "0.4"
+log = "0.4.8"
 maplit = "1.0.1"
-notify = "4.0"
-rbx_binary = "0.4.1"
-rbx_dom_weak = "1.9.0"
+notify = "4.0.14"
+rbx_binary = "0.5.0"
+rbx_dom_weak = "1.10.1"
 rbx_reflection = "3.3.408"
-rbx_xml = "0.11.2"
-regex = "1.0"
+rbx_xml = "0.11.3"
+regex = "1.3.1"
 reqwest = "0.9.20"
 ritz = "0.1.0"
-rlua = "0.16.3"
+rlua = "0.17.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 snafu = "0.6.0"
-structopt = "0.3"
+structopt = "0.3.5"
 termcolor = "1.0.5"
-uuid = { version = "0.7", features = ["v4", "serde"] }
+uuid = { version = "0.8.1", features = ["v4", "serde"] }
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.6.2"
@@ -81,6 +81,8 @@ winreg = "0.6.2"
 [dev-dependencies]
 rojo-insta-ext = { path = "rojo-insta-ext" }
 
+criterion = "0.3"
+insta = { version = "0.12.0", features = ["redactions"] }
 lazy_static = "1.2"
 paste = "0.1"
 pretty_assertions = "0.6.1"
@@ -88,8 +90,3 @@ serde_yaml = "0.8.9"
 tempfile = "3.0"
 tokio = "0.1.22"
 walkdir = "2.1"
-criterion = "0.3"
-
-[dev-dependencies.insta]
-git = "https://github.com/mitsuhiko/insta"
-features = ["redactions"]
