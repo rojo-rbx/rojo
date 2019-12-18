@@ -3,7 +3,7 @@ use std::path::Path;
 use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
 use tempfile::{tempdir, TempDir};
 
-use librojo::commands::{build, BuildOptions};
+use librojo::cli::{build, BuildCommand};
 
 pub fn benchmark_small_place(c: &mut Criterion) {
     bench_build_place(c, "Small Place", "test-projects/benchmark_small_place")
@@ -20,7 +20,7 @@ fn bench_build_place(c: &mut Criterion, name: &str, path: &str) {
     group.bench_function("build", |b| {
         b.iter_batched(
             || place_setup(path),
-            |(_dir, options)| build(&options).unwrap(),
+            |(_dir, options)| build(options).unwrap(),
             BatchSize::SmallInput,
         )
     });
@@ -28,15 +28,14 @@ fn bench_build_place(c: &mut Criterion, name: &str, path: &str) {
     group.finish();
 }
 
-fn place_setup<P: AsRef<Path>>(input_path: P) -> (TempDir, BuildOptions) {
+fn place_setup<P: AsRef<Path>>(input_path: P) -> (TempDir, BuildCommand) {
     let dir = tempdir().unwrap();
     let input = input_path.as_ref().to_path_buf();
-    let output_file = dir.path().join("output.rbxlx");
+    let output = dir.path().join("output.rbxlx");
 
-    let options = BuildOptions {
-        fuzzy_project_path: input,
-        output_file,
-        output_kind: None,
+    let options = BuildCommand {
+        project: input,
+        output,
     };
 
     (dir, options)
