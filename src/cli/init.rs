@@ -1,17 +1,17 @@
-use failure::Fail;
+use snafu::Snafu;
 
-use crate::{cli::InitCommand, project::ProjectError};
+use crate::cli::InitCommand;
 
-#[derive(Debug, Fail)]
-pub enum InitError {
-    #[fail(display = "Project init error: {}", _0)]
-    ProjectError(#[fail(cause)] ProjectError),
+#[derive(Debug, Snafu)]
+pub struct InitError(Error);
+
+#[derive(Debug, Snafu)]
+enum Error {}
+
+pub fn init(options: InitCommand) -> Result<(), InitError> {
+    Ok(init_inner(options)?)
 }
 
-impl_from!(InitError {
-    ProjectError => ProjectError,
-});
-
-pub fn init(_options: InitCommand) -> Result<(), InitError> {
+fn init_inner(_options: InitCommand) -> Result<(), Error> {
     unimplemented!("init command");
 }

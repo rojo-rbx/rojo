@@ -1,6 +1,5 @@
-use std::{panic, process};
+use std::{error::Error, panic, process};
 
-use failure::Error;
 use log::error;
 use structopt::StructOpt;
 
@@ -45,7 +44,7 @@ fn main() {
     }
 }
 
-fn run(subcommand: Subcommand) -> Result<(), Error> {
+fn run(subcommand: Subcommand) -> Result<(), Box<dyn Error>> {
     match subcommand {
         Subcommand::Init(init_options) => cli::init(init_options)?,
         Subcommand::Serve(serve_options) => cli::serve(serve_options)?,
