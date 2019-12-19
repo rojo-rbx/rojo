@@ -19,8 +19,9 @@ end
 
 local function rejectFailedRequests(response)
 	if response.code >= 400 then
-		-- TODO: Nicer error types for responses, using response JSON if valid.
-		return Promise.reject(tostring(response.code))
+		local message = string.format("HTTP %s:\n%s", tostring(response.code), response.body)
+
+		return Promise.reject(message)
 	end
 
 	return response
