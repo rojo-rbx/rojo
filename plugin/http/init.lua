@@ -20,7 +20,7 @@ local function performRequest(requestParams)
 	Log.trace("HTTP {}({}) {}", requestParams.Method, requestId, requestParams.Url)
 
 	if requestParams.Body ~= nil then
-		Log.trace(requestParams.Body)
+		Log.trace("{}", requestParams.Body)
 	end
 
 	return Promise.new(function(resolve, reject)
