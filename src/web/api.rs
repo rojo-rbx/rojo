@@ -35,6 +35,7 @@ impl<F: VfsFetcher> Service for ApiService<F> {
     fn call(&mut self, request: hyper::Request<Self::ReqBody>) -> Self::Future {
         match (request.method(), request.uri().path()) {
             (&Method::GET, "/api/rojo") => self.handle_api_rojo(),
+            (&Method::POST, "/api/write") => self.handle_api_write(request),
             (&Method::GET, path) if path.starts_with("/api/read/") => self.handle_api_read(request),
             (&Method::GET, path) if path.starts_with("/api/subscribe/") => {
                 self.handle_api_subscribe(request)
@@ -143,6 +144,19 @@ impl<F: VfsFetcher> ApiService<F> {
                 StatusCode::INTERNAL_SERVER_ERROR,
             ),
         }))
+    }
+
+    fn handle_api_write(&self, request: Request<Body>) -> <Self as Service>::Future {
+        let tree = self.serve_session.tree();
+        let root_instance_id = tree.get_root_id();
+
+        json_ok(&ServerInfoResponse {
+            server_version: SERVER_VERSION.to_owned(),
+            protocol_version: PROTOCOL_VERSION,
+            session_id: self.serve_session.session_id(),
+            expected_place_ids: self.serve_session.serve_place_ids().cloned(),
+            root_instance_id,
+        })
     }
 
     fn handle_api_read(&self, request: Request<Body>) -> <Self as Service>::Future {
