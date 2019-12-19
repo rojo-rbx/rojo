@@ -5,7 +5,7 @@ mod init;
 mod serve;
 mod upload;
 
-use std::{env, error::Error, fmt, path::PathBuf, str::FromStr};
+use std::{error::Error, fmt, path::PathBuf, str::FromStr};
 
 use structopt::StructOpt;
 
@@ -14,24 +14,12 @@ pub use self::init::*;
 pub use self::serve::*;
 pub use self::upload::*;
 
-/// Trick used with structopt to get the initial working directory of the
-/// process and store it for use in default values.
-fn working_dir() -> &'static str {
-    lazy_static::lazy_static! {
-        static ref INITIAL_WORKING_DIR: String = {
-            env::current_dir().unwrap().display().to_string()
-        };
-    }
-
-    &INITIAL_WORKING_DIR
-}
-
 /// Command line options that Rojo accepts, defined using the structopt crate.
 #[derive(Debug, StructOpt)]
 #[structopt(name = "Rojo", about, author)]
 pub struct Options {
     /// Sets verbosity level. Can be specified multiple times.
-    #[structopt(long = "verbose", short, parse(from_occurrences))]
+    #[structopt(long = "verbose", short, global(true), parse(from_occurrences))]
     pub verbosity: u8,
 
     /// Subcommand to run in this invocation.
@@ -59,7 +47,7 @@ pub enum Subcommand {
 #[derive(Debug, StructOpt)]
 pub struct InitCommand {
     /// Path to the place to create the project. Defaults to the current directory.
-    #[structopt(default_value = &working_dir())]
+    #[structopt(default_value = "")]
     pub path: PathBuf,
 
     /// The kind of project to create, 'place' or 'model'. Defaults to place.
@@ -114,7 +102,7 @@ impl fmt::Display for InitKindParseError {
 #[derive(Debug, StructOpt)]
 pub struct ServeCommand {
     /// Path to the project to serve. Defaults to the current directory.
-    #[structopt(default_value = &working_dir())]
+    #[structopt(default_value = "")]
     pub project: PathBuf,
 
     /// The port to listen on. Defaults to the project's preference, or 34872 if
@@ -127,7 +115,7 @@ pub struct ServeCommand {
 #[derive(Debug, StructOpt)]
 pub struct BuildCommand {
     /// Path to the project to serve. Defaults to the current directory.
-    #[structopt(default_value = &working_dir())]
+    #[structopt(default_value = "")]
     pub project: PathBuf,
 
     /// Where to output the result.
@@ -139,7 +127,7 @@ pub struct BuildCommand {
 #[derive(Debug, StructOpt)]
 pub struct UploadCommand {
     /// Path to the project to upload. Defaults to the current directory.
-    #[structopt(default_value = &working_dir())]
+    #[structopt(default_value = "")]
     pub project: PathBuf,
 
     /// The kind of asset to generate, 'place', or 'model'. Defaults to place.
