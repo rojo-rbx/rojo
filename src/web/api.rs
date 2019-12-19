@@ -3,19 +3,20 @@
 
 use std::{collections::HashMap, sync::Arc};
 
-use futures::Future;
+use futures::{Future, Stream};
 
 use hyper::{service::Service, Body, Method, Request, StatusCode};
 use rbx_dom_weak::RbxId;
 
 use crate::{
     serve_session::ServeSession,
+    snapshot::{apply_patch_set, PatchSet, PatchUpdate},
     vfs::VfsFetcher,
     web::{
         interface::{
             ErrorResponse, Instance, InstanceMetadata as WebInstanceMetadata, InstanceUpdate,
-            ReadResponse, ServerInfoResponse, SubscribeMessage, SubscribeResponse,
-            PROTOCOL_VERSION, SERVER_VERSION,
+            ReadResponse, ServerInfoResponse, SubscribeMessage, SubscribeResponse, WriteRequest,
+            WriteResponse, PROTOCOL_VERSION, SERVER_VERSION,
         },
         util::{json, json_ok},
     },
@@ -147,16 +148,50 @@ impl<F: VfsFetcher> ApiService<F> {
     }
 
     fn handle_api_write(&self, request: Request<Body>) -> <Self as Service>::Future {
-        let tree = self.serve_session.tree();
-        let root_instance_id = tree.get_root_id();
+        let session_id = self.serve_session.session_id();
+        let tree_handle = self.serve_session.tree_handle();
 
-        json_ok(&ServerInfoResponse {
-            server_version: SERVER_VERSION.to_owned(),
-            protocol_version: PROTOCOL_VERSION,
-            session_id: self.serve_session.session_id(),
-            expected_place_ids: self.serve_session.serve_place_ids().cloned(),
-            root_instance_id,
-        })
+        Box::new(request.into_body().concat2().and_then(move |body| {
+            let request: WriteRequest = match serde_json::from_slice(&body) {
+                Ok(request) => request,
+                Err(err) => {
+                    return json(
+                        ErrorResponse::bad_request(format!("Invalid body: {}", err)),
+                        StatusCode::BAD_REQUEST,
+                    );
+                }
+            };
+
+            if request.session_id != session_id {
+                return json(
+                    ErrorResponse::bad_request("Wrong session ID"),
+                    StatusCode::BAD_REQUEST,
+                );
+            }
+
+            let updated_instances = request
+                .updated
+                .into_iter()
+                .map(|update| PatchUpdate {
+                    id: update.id,
+                    changed_class_name: update.changed_class_name,
+                    changed_name: update.changed_name,
+                    changed_properties: update.changed_properties,
+                    changed_metadata: None,
+                })
+                .collect();
+
+            let patch_set = PatchSet {
+                removed_instances: Vec::new(),
+                added_instances: Vec::new(),
+                updated_instances,
+            };
+
+            let mut tree = tree_handle.lock().unwrap();
+            apply_patch_set(&mut tree, patch_set);
+
+            json_ok(&WriteResponse { session_id })
+        }))
     }
 
     fn handle_api_read(&self, request: Request<Body>) -> <Self as Service>::Future {
