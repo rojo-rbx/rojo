@@ -35,13 +35,14 @@ pub fn upload(options: UploadCommand) -> Result<(), UploadError> {
 fn upload_inner(options: UploadCommand) -> Result<(), Error> {
     let cookie = options
         .cookie
+        .clone()
         .or_else(get_auth_cookie)
         .ok_or(Error::NeedAuthCookie)?;
 
     log::trace!("Constructing in-memory filesystem");
     let vfs = Vfs::new(RealFetcher::new(WatchMode::Disabled));
 
-    let (_maybe_project, tree) = common_setup::start(&options.project, &vfs);
+    let (_maybe_project, tree) = common_setup::start(&options.absolute_project(), &vfs);
     let root_id = tree.get_root_id();
 
     let mut buffer = Vec::new();

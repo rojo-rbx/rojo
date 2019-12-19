@@ -78,7 +78,7 @@ fn build_inner(options: BuildCommand) -> Result<(), Error> {
     log::trace!("Constructing in-memory filesystem");
     let vfs = Vfs::new(RealFetcher::new(WatchMode::Disabled));
 
-    let (_maybe_project, tree) = common_setup::start(&options.project, &vfs);
+    let (_maybe_project, tree) = common_setup::start(&options.absolute_project(), &vfs);
     let root_id = tree.get_root_id();
 
     log::trace!("Opening output file for write");

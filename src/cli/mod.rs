@@ -5,7 +5,14 @@ mod init;
 mod serve;
 mod upload;
 
-use std::{error::Error, fmt, path::PathBuf, str::FromStr};
+use std::{
+    borrow::Cow,
+    env,
+    error::Error,
+    fmt,
+    path::{Path, PathBuf},
+    str::FromStr,
+};
 
 use structopt::StructOpt;
 
@@ -53,6 +60,12 @@ pub struct InitCommand {
     /// The kind of project to create, 'place' or 'model'. Defaults to place.
     #[structopt(long, default_value = "place")]
     pub kind: InitKind,
+}
+
+impl InitCommand {
+    pub fn absolute_path(&self) -> Cow<'_, Path> {
+        resolve_path(&self.path)
+    }
 }
 
 /// The templates we support for initializing a Rojo project.
@@ -111,6 +124,12 @@ pub struct ServeCommand {
     pub port: Option<u16>,
 }
 
+impl ServeCommand {
+    pub fn absolute_project(&self) -> Cow<'_, Path> {
+        resolve_path(&self.project)
+    }
+}
+
 /// Build a Rojo project into a file.
 #[derive(Debug, StructOpt)]
 pub struct BuildCommand {
@@ -121,6 +140,12 @@ pub struct BuildCommand {
     /// Where to output the result.
     #[structopt(long, short)]
     pub output: PathBuf,
+}
+
+impl BuildCommand {
+    pub fn absolute_project(&self) -> Cow<'_, Path> {
+        resolve_path(&self.project)
+    }
 }
 
 /// Build and upload a Rojo project to Roblox.com.
@@ -141,6 +166,12 @@ pub struct UploadCommand {
     /// Asset ID to upload to.
     #[structopt(long = "asset_id")]
     pub asset_id: u64,
+}
+
+impl UploadCommand {
+    pub fn absolute_project(&self) -> Cow<'_, Path> {
+        resolve_path(&self.project)
+    }
 }
 
 /// The kind of asset to upload to the website. Affects what endpoints Rojo uses
@@ -183,5 +214,13 @@ impl fmt::Display for UploadKindParseError {
             "Invalid upload kind '{}'. Valid kinds are: place, model",
             self.attempted
         )
+    }
+}
+
+fn resolve_path(path: &Path) -> Cow<'_, Path> {
+    if path.is_absolute() {
+        Cow::Borrowed(path)
+    } else {
+        Cow::Owned(env::current_dir().unwrap().join(path))
     }
 }

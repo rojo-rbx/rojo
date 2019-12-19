@@ -28,7 +28,7 @@ pub fn serve(options: ServeCommand) -> Result<(), ServeError> {
 fn serve_inner(options: ServeCommand) -> Result<(), Error> {
     let vfs = Vfs::new(RealFetcher::new(WatchMode::Enabled));
 
-    let session = Arc::new(ServeSession::new(vfs, &options.project));
+    let session = Arc::new(ServeSession::new(vfs, &options.absolute_project()));
 
     let port = options
         .port
