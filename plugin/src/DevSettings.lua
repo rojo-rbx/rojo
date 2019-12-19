@@ -25,6 +25,14 @@ local VALUES = {
 			[Environment.Test] = true,
 		},
 	},
+	ExperimentalTwoWaySync = {
+		type = "BoolValue",
+		values = {
+			[Environment.User] = false,
+			[Environment.Dev] = false,
+			[Environment.Test] = false,
+		},
+	},
 }
 
 local CONTAINER_NAME = "RojoDevSettings" .. Config.codename
@@ -130,6 +138,10 @@ end
 
 function DevSettings:shouldTypecheck()
 	return getValue("TypecheckingEnabled")
+end
+
+function DevSettings:twoWaySyncEnabled()
+	return getValue("ExperimentalTwoWaySync")
 end
 
 function _G.ROJO_DEV_CREATE()

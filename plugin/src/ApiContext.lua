@@ -1,4 +1,5 @@
 local Http = require(script.Parent.Parent.Http)
+local Log = require(script.Parent.Parent.Log)
 local Promise = require(script.Parent.Parent.Promise)
 
 local Config = require(script.Parent.Config)
@@ -148,6 +149,23 @@ function ApiContext:read(ids)
 			end
 
 			assert(validateApiRead(body))
+
+			return body
+		end)
+end
+
+function ApiContext:write(patch)
+	local url = ("%s/write"):format(self.__baseUrl)
+	local body = Http.jsonEncode({
+		sessionId = self.__sessionId,
+		patch = patch,
+	})
+
+	return Http.post(url, body)
+		:andThen(rejectFailedRequests)
+		:andThen(Http.Response.json)
+		:andThen(function(body)
+			Log.info("Write response: {:?}", body)
 
 			return body
 		end)
