@@ -10,5 +10,9 @@
 /*.rbxl
 /*.rbxlx
 
+# Roblox Studio holds 'lock' files on places
+*.rbxl.lock
+*.rbxlx.lock
+
 # Snapshot files from the 'insta' Rust crate
 **/*.snap.new
