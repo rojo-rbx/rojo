@@ -25,6 +25,20 @@ use crate::{
 /// future. `ServeSession` would be roughly the right interface to expose for
 /// those cases.
 pub struct ServeSession<F> {
+    /// The object responsible for listening to changes from the in-memory
+    /// filesystem, applying them, updating the Roblox instance tree, and
+    /// routing messages through the session's message queue to any connected
+    /// clients.
+    ///
+    /// SHOULD BE DROPPED FIRST! ServeSession and ChangeProcessor communicate
+    /// with eachother via channels. If ServeSession hangs up those channels
+    /// before dropping the ChangeProcessor, its thread will panic with a
+    /// RecvError, causing the main thread to panic on drop.
+    ///
+    /// Allowed to be unused because it has side effects when dropped.
+    #[allow(unused)]
+    change_processor: ChangeProcessor,
+
     /// When the serve session was started. Used only for user-facing
     /// diagnostics.
     start_time: Instant,
@@ -66,12 +80,6 @@ pub struct ServeSession<F> {
     /// A channel to send mutation requests on. These will be handled by the
     /// ChangeProcessor and trigger changes in the tree.
     tree_mutation_sender: Sender<PatchSet>,
-
-    /// The object responsible for listening to changes from the in-memory
-    /// filesystem, applying them, updating the Roblox instance tree, and
-    /// routing messages through the session's message queue to any connected
-    /// clients.
-    _change_processor: ChangeProcessor,
 }
 
 /// Methods that need thread-safety bounds on VfsFetcher are limited to this
@@ -111,6 +119,7 @@ impl<F: VfsFetcher + Send + Sync + 'static> ServeSession<F> {
         );
 
         Self {
+            change_processor,
             start_time,
             session_id,
             root_project,
@@ -118,7 +127,6 @@ impl<F: VfsFetcher + Send + Sync + 'static> ServeSession<F> {
             message_queue,
             tree_mutation_sender,
             vfs,
-            _change_processor: change_processor,
         }
     }
 }
