@@ -10,7 +10,7 @@ use rbx_dom_weak::RbxId;
 
 use crate::{
     serve_session::ServeSession,
-    snapshot::{apply_patch_set, PatchSet, PatchUpdate},
+    snapshot::{PatchSet, PatchUpdate},
     vfs::VfsFetcher,
     web::{
         interface::{
@@ -149,7 +149,7 @@ impl<F: VfsFetcher> ApiService<F> {
 
     fn handle_api_write(&self, request: Request<Body>) -> <Self as Service>::Future {
         let session_id = self.serve_session.session_id();
-        let tree_handle = self.serve_session.tree_handle();
+        let tree_mutation_sender = self.serve_session.tree_mutation_sender();
 
         Box::new(request.into_body().concat2().and_then(move |body| {
             let request: WriteRequest = match serde_json::from_slice(&body) {
@@ -181,14 +181,13 @@ impl<F: VfsFetcher> ApiService<F> {
                 })
                 .collect();
 
-            let patch_set = PatchSet {
-                removed_instances: Vec::new(),
-                added_instances: Vec::new(),
-                updated_instances,
-            };
-
-            let mut tree = tree_handle.lock().unwrap();
-            apply_patch_set(&mut tree, patch_set);
+            tree_mutation_sender
+                .send(PatchSet {
+                    removed_instances: Vec::new(),
+                    added_instances: Vec::new(),
+                    updated_instances,
+                })
+                .unwrap();
 
             json_ok(&WriteResponse { session_id })
         }))
