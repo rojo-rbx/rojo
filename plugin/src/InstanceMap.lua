@@ -20,6 +20,16 @@ function InstanceMap.new(onInstanceChanged)
 	return setmetatable(self, InstanceMap)
 end
 
+--[[
+	Disconnect all connections and release all instance references.
+]]
+function InstanceMap:stop()
+	-- I think this is safe.
+	for instance in pairs(self.fromInstances) do
+		self:removeInstance(instance)
+	end
+end
+
 function InstanceMap:__fmtDebug(output)
 	output:writeLine("InstanceMap {{")
 	output:indent()
@@ -145,7 +155,9 @@ function InstanceMap:__disconnectSignals(instance)
 	local signals = self.instancesToSignal[instance]
 
 	if signals ~= nil then
-		-- In the general case, we avoid
+		-- In most cases, we only have a single signal, so we avoid keeping
+		-- around the extra table. ValueBase objects force us to use multiple
+		-- signals to emulate the Instance.Changed event, however.
 		if typeof(signals) == "table" then
 			for _, signal in ipairs(signals) do
 				signal:Disconnect()
