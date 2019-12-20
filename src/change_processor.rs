@@ -174,7 +174,17 @@ impl<F: VfsFetcher> JobThreadContext<F> {
     }
 
     fn handle_tree_event(&self, patch_set: PatchSet) {
-        println!("Apply that PatchSet: {:?}", patch_set);
+        log::trace!("Applying PatchSet from client: {:#?}", patch_set);
+
+        // TODO: Calculate a corresponding VFS patch and apply that instead?
+
+        let applied_patch = {
+            let mut tree = self.tree.lock().unwrap();
+
+            apply_patch_set(&mut tree, patch_set)
+        };
+
+        self.message_queue.push_messages(&[applied_patch]);
     }
 }
 
