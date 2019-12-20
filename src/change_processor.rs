@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use crossbeam_channel::{select, Sender};
+use crossbeam_channel::{select, Receiver, Sender};
 use jod_thread::JoinHandle;
 use rbx_dom_weak::RbxId;
 
@@ -42,8 +42,9 @@ impl ChangeProcessor {
     /// outbound message queue.
     pub fn start<F: VfsFetcher + Send + Sync + 'static>(
         tree: Arc<Mutex<RojoTree>>,
-        message_queue: Arc<MessageQueue<AppliedPatchSet>>,
         vfs: Arc<Vfs<F>>,
+        message_queue: Arc<MessageQueue<AppliedPatchSet>>,
+        tree_mutation_receiver: Receiver<PatchSet>,
     ) -> Self {
         let (shutdown_sender, shutdown_receiver) = crossbeam_channel::bounded(1);
         let vfs_receiver = vfs.change_receiver();
@@ -71,6 +72,9 @@ impl ChangeProcessor {
                     select! {
                         recv(vfs_receiver) -> event => {
                             task.handle_vfs_event(event.unwrap());
+                        },
+                        recv(tree_mutation_receiver) -> patch_set => {
+                            task.handle_tree_event(patch_set.unwrap());
                         },
                         recv(shutdown_receiver) -> _ => {
                             log::trace!("ChangeProcessor shutdown signal received...");
@@ -167,6 +171,20 @@ impl<F: VfsFetcher> JobThreadContext<F> {
         // Notify anyone listening to the message queue about the changes we
         // just made.
         self.message_queue.push_messages(&applied_patches);
+    }
+
+    fn handle_tree_event(&self, patch_set: PatchSet) {
+        log::trace!("Applying PatchSet from client: {:#?}", patch_set);
+
+        // TODO: Calculate a corresponding VFS patch and apply that instead?
+
+        let applied_patch = {
+            let mut tree = self.tree.lock().unwrap();
+
+            apply_patch_set(&mut tree, patch_set)
+        };
+
+        self.message_queue.push_messages(&[applied_patch]);
     }
 }
 

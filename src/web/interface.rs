@@ -100,6 +100,23 @@ pub struct ReadResponse<'a> {
     pub instances: HashMap<RbxId, Instance<'a>>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WriteRequest {
+    pub session_id: SessionId,
+    pub removed: Vec<RbxId>,
+
+    #[serde(default)]
+    pub added: HashMap<RbxId, ()>,
+    pub updated: Vec<InstanceUpdate>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WriteResponse {
+    pub session_id: SessionId,
+}
+
 /// Response body from /api/subscribe/{cursor}
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

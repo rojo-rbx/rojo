@@ -156,11 +156,22 @@ function ApiContext:read(ids)
 end
 
 function ApiContext:write(patch)
-	local url = ("%s/write"):format(self.__baseUrl)
-	local body = Http.jsonEncode({
+	local url = ("%s/api/write"):format(self.__baseUrl)
+
+	local body = {
 		sessionId = self.__sessionId,
-		patch = patch,
-	})
+		removed = patch.removed,
+		updated = patch.updated,
+	}
+
+	-- Only add the 'added' field if the table is non-empty, or else Roblox's
+	-- JSON implementation will turn the table into an array instead of an
+	-- object, causing API validation to fail.
+	if next(patch.added) ~= nil then
+		body.added = patch.added
+	end
+
+	body = Http.jsonEncode(body)
 
 	return Http.post(url, body)
 		:andThen(rejectFailedRequests)

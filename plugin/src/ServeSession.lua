@@ -189,6 +189,7 @@ end
 function ServeSession:__stopInternal(err)
 	self:__setStatus(Status.Disconnected, err)
 	self.__apiContext:disconnect()
+	self.__instanceMap:stop()
 end
 
 function ServeSession:__setStatus(status, detail)

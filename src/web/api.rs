@@ -3,19 +3,20 @@
 
 use std::{collections::HashMap, sync::Arc};
 
-use futures::Future;
+use futures::{Future, Stream};
 
 use hyper::{service::Service, Body, Method, Request, StatusCode};
 use rbx_dom_weak::RbxId;
 
 use crate::{
     serve_session::ServeSession,
+    snapshot::{PatchSet, PatchUpdate},
     vfs::VfsFetcher,
     web::{
         interface::{
             ErrorResponse, Instance, InstanceMetadata as WebInstanceMetadata, InstanceUpdate,
-            ReadResponse, ServerInfoResponse, SubscribeMessage, SubscribeResponse,
-            PROTOCOL_VERSION, SERVER_VERSION,
+            ReadResponse, ServerInfoResponse, SubscribeMessage, SubscribeResponse, WriteRequest,
+            WriteResponse, PROTOCOL_VERSION, SERVER_VERSION,
         },
         util::{json, json_ok},
     },
@@ -39,6 +40,11 @@ impl<F: VfsFetcher> Service for ApiService<F> {
             (&Method::GET, path) if path.starts_with("/api/subscribe/") => {
                 self.handle_api_subscribe(request)
             }
+
+            (&Method::POST, "/api/write") if cfg!(feature = "unstable_two_way_sync") => {
+                self.handle_api_write(request)
+            }
+
             (_method, path) => json(
                 ErrorResponse::not_found(format!("Route not found: {}", path)),
                 StatusCode::NOT_FOUND,
@@ -142,6 +148,52 @@ impl<F: VfsFetcher> ApiService<F> {
                 ErrorResponse::internal_error("Message queue disconnected sender"),
                 StatusCode::INTERNAL_SERVER_ERROR,
             ),
+        }))
+    }
+
+    fn handle_api_write(&self, request: Request<Body>) -> <Self as Service>::Future {
+        let session_id = self.serve_session.session_id();
+        let tree_mutation_sender = self.serve_session.tree_mutation_sender();
+
+        Box::new(request.into_body().concat2().and_then(move |body| {
+            let request: WriteRequest = match serde_json::from_slice(&body) {
+                Ok(request) => request,
+                Err(err) => {
+                    return json(
+                        ErrorResponse::bad_request(format!("Invalid body: {}", err)),
+                        StatusCode::BAD_REQUEST,
+                    );
+                }
+            };
+
+            if request.session_id != session_id {
+                return json(
+                    ErrorResponse::bad_request("Wrong session ID"),
+                    StatusCode::BAD_REQUEST,
+                );
+            }
+
+            let updated_instances = request
+                .updated
+                .into_iter()
+                .map(|update| PatchUpdate {
+                    id: update.id,
+                    changed_class_name: update.changed_class_name,
+                    changed_name: update.changed_name,
+                    changed_properties: update.changed_properties,
+                    changed_metadata: None,
+                })
+                .collect();
+
+            tree_mutation_sender
+                .send(PatchSet {
+                    removed_instances: Vec::new(),
+                    added_instances: Vec::new(),
+                    updated_instances,
+                })
+                .unwrap();
+
+            json_ok(&WriteResponse { session_id })
         }))
     }
 

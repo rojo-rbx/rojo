@@ -5,13 +5,15 @@ use std::{
     time::Instant,
 };
 
+use crossbeam_channel::Sender;
+
 use crate::{
     change_processor::ChangeProcessor,
     common_setup,
     message_queue::MessageQueue,
     project::Project,
     session_id::SessionId,
-    snapshot::{AppliedPatchSet, RojoTree},
+    snapshot::{AppliedPatchSet, PatchSet, RojoTree},
     vfs::{Vfs, VfsFetcher},
 };
 
@@ -23,6 +25,20 @@ use crate::{
 /// future. `ServeSession` would be roughly the right interface to expose for
 /// those cases.
 pub struct ServeSession<F> {
+    /// The object responsible for listening to changes from the in-memory
+    /// filesystem, applying them, updating the Roblox instance tree, and
+    /// routing messages through the session's message queue to any connected
+    /// clients.
+    ///
+    /// SHOULD BE DROPPED FIRST! ServeSession and ChangeProcessor communicate
+    /// with eachother via channels. If ServeSession hangs up those channels
+    /// before dropping the ChangeProcessor, its thread will panic with a
+    /// RecvError, causing the main thread to panic on drop.
+    ///
+    /// Allowed to be unused because it has side effects when dropped.
+    #[allow(unused)]
+    change_processor: ChangeProcessor,
+
     /// When the serve session was started. Used only for user-facing
     /// diagnostics.
     start_time: Instant,
@@ -61,11 +77,9 @@ pub struct ServeSession<F> {
     /// to be applied.
     message_queue: Arc<MessageQueue<AppliedPatchSet>>,
 
-    /// The object responsible for listening to changes from the in-memory
-    /// filesystem, applying them, updating the Roblox instance tree, and
-    /// routing messages through the session's message queue to any connected
-    /// clients.
-    _change_processor: ChangeProcessor,
+    /// A channel to send mutation requests on. These will be handled by the
+    /// ChangeProcessor and trigger changes in the tree.
+    tree_mutation_sender: Sender<PatchSet>,
 }
 
 /// Methods that need thread-safety bounds on VfsFetcher are limited to this
@@ -94,21 +108,25 @@ impl<F: VfsFetcher + Send + Sync + 'static> ServeSession<F> {
         let message_queue = Arc::new(message_queue);
         let vfs = Arc::new(vfs);
 
+        let (tree_mutation_sender, tree_mutation_receiver) = crossbeam_channel::unbounded();
+
         log::trace!("Starting ChangeProcessor");
         let change_processor = ChangeProcessor::start(
             Arc::clone(&tree),
-            Arc::clone(&message_queue),
             Arc::clone(&vfs),
+            Arc::clone(&message_queue),
+            tree_mutation_receiver,
         );
 
         Self {
+            change_processor,
             start_time,
             session_id,
             root_project,
             tree,
             message_queue,
+            tree_mutation_sender,
             vfs,
-            _change_processor: change_processor,
         }
     }
 }
@@ -120,6 +138,10 @@ impl<F: VfsFetcher> ServeSession<F> {
 
     pub fn tree(&self) -> MutexGuard<'_, RojoTree> {
         self.tree.lock().unwrap()
+    }
+
+    pub fn tree_mutation_sender(&self) -> Sender<PatchSet> {
+        self.tree_mutation_sender.clone()
     }
 
     pub fn vfs(&self) -> &Vfs<F> {
