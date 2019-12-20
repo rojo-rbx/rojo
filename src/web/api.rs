@@ -36,11 +36,15 @@ impl<F: VfsFetcher> Service for ApiService<F> {
     fn call(&mut self, request: hyper::Request<Self::ReqBody>) -> Self::Future {
         match (request.method(), request.uri().path()) {
             (&Method::GET, "/api/rojo") => self.handle_api_rojo(),
-            (&Method::POST, "/api/write") => self.handle_api_write(request),
             (&Method::GET, path) if path.starts_with("/api/read/") => self.handle_api_read(request),
             (&Method::GET, path) if path.starts_with("/api/subscribe/") => {
                 self.handle_api_subscribe(request)
             }
+
+            (&Method::POST, "/api/write") if cfg!(feature = "unstable_two_way_sync") => {
+                self.handle_api_write(request)
+            }
+
             (_method, path) => json(
                 ErrorResponse::not_found(format!("Route not found: {}", path)),
                 StatusCode::NOT_FOUND,

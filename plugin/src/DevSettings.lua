@@ -25,7 +25,7 @@ local VALUES = {
 			[Environment.Test] = true,
 		},
 	},
-	ExperimentalTwoWaySync = {
+	UnstableTwoWaySync = {
 		type = "BoolValue",
 		values = {
 			[Environment.User] = false,
@@ -141,7 +141,7 @@ function DevSettings:shouldTypecheck()
 end
 
 function DevSettings:twoWaySyncEnabled()
-	return getValue("ExperimentalTwoWaySync")
+	return getValue("UnstableTwoWaySync")
 end
 
 function _G.ROJO_DEV_CREATE()
