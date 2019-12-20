@@ -1,7 +1,7 @@
 macro_rules! declare_asset {
     ($name: ident, $path: expr) => {
         pub fn $name() -> &'static str {
-            if cfg!(feature = "dev-live-assets") {
+            if cfg!(feature = "dev_live_assets") {
                 use std::{fs::read_to_string, path::Path};
 
                 let file_path = Path::new(file!());

@@ -20,11 +20,7 @@ default = []
 unstable_two_way_sync = []
 
 # Enable this feature to live-reload assets from the web UI.
-dev-live-assets = []
-
-# Enables specifying user plugins in the project file. User plugins are Lua
-# files and currently not fully implemented. See issue #55.
-user-plugins = []
+dev_live_assets = []
 
 [workspace]
 members = [
