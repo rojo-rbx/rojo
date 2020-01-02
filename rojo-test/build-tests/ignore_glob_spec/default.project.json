@@ -1,0 +1,9 @@
+{
+  "name": "ignore_glob_spec",
+  "tree": {
+    "$path": "src"
+  },
+  "globIgnorePaths": [
+    "**/*.spec.lua"
+  ]
+}
