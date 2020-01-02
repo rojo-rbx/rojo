@@ -28,6 +28,7 @@ gen_build_tests! {
     csv_in_folder,
     deep_nesting,
     gitkeep,
+    ignore_glob_inner,
     ignore_glob_nested,
     ignore_glob_spec,
     init_meta_class_name,

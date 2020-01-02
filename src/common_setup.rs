@@ -42,11 +42,9 @@ pub fn start<F: VfsFetcher>(
     let mut instance_context = InstanceContext::default();
 
     if let Some(project) = &maybe_project {
-        let project_folder = project.folder_location();
-
         let rules = project.glob_ignore_paths.iter().map(|glob| PathIgnoreRule {
             glob: glob.clone(),
-            base_path: project_folder.to_path_buf(),
+            base_path: project.folder_location().to_path_buf(),
         });
 
         instance_context.add_path_ignore_rules(rules);

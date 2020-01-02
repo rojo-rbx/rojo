@@ -4,7 +4,9 @@ use rbx_reflection::try_resolve_value;
 
 use crate::{
     project::{Project, ProjectNode},
-    snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot, InstigatingSource},
+    snapshot::{
+        InstanceContext, InstanceMetadata, InstanceSnapshot, InstigatingSource, PathIgnoreRule,
+    },
     vfs::{FsResultExt, Vfs, VfsEntry, VfsFetcher},
 };
 
@@ -45,10 +47,19 @@ impl SnapshotMiddleware for SnapshotProject {
         let project = Project::load_from_slice(&entry.contents(vfs)?, entry.path())
             .map_err(|err| SnapshotError::malformed_project(err, entry.path()))?;
 
+        let mut context = context.clone();
+
+        let rules = project.glob_ignore_paths.iter().map(|glob| PathIgnoreRule {
+            glob: glob.clone(),
+            base_path: project.folder_location().to_path_buf(),
+        });
+
+        context.add_path_ignore_rules(rules);
+
         // Snapshotting a project should always return an instance, so this
         // unwrap is safe.
         let mut snapshot = snapshot_project_node(
-            context,
+            &context,
             project.folder_location(),
             &project.name,
             &project.tree,
