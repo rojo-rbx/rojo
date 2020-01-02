@@ -177,6 +177,23 @@ function Reconciler:applyPatch(patch)
 end
 
 --[[
+	Transforms a value into one that can be sent over the network back to the
+	Rojo server.
+
+	This operation can fail, and so it returns bool, value.
+]]
+function Reconciler:encodeApiValue(value)
+	if typeof(value) == "string" then
+		return true, {
+			Type = "String",
+			Value = value,
+		}
+	end
+
+	return false
+end
+
+--[[
 	Transforms a value encoded by rbx_dom_weak on the server side into a value
 	usable by Rojo's reconciler, potentially using RbxDom.
 ]]
@@ -302,7 +319,6 @@ function Reconciler:__hydrateInternal(apiInstances, id, instance, hydratePatch)
 			local decodedValue = self:__decodeApiValue(virtualValue)
 
 			if existingValue ~= decodedValue then
-				Log.warn("Diff! {:?} vs {:?}", existingValue, decodedValue)
 				changedProperties[propertyName] = virtualValue
 			end
 		end

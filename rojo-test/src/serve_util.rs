@@ -11,7 +11,7 @@ use rbx_dom_weak::RbxId;
 
 use tempfile::{tempdir, TempDir};
 
-use librojo::web_interface::{ReadResponse, ServerInfoResponse, SubscribeResponse};
+use librojo::web_api::{ReadResponse, ServerInfoResponse, SubscribeResponse};
 use rojo_insta_ext::RedactionMap;
 
 use crate::util::{

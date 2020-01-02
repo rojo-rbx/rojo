@@ -1,52 +1,48 @@
-use std::path::PathBuf;
-
-use failure::Fail;
 use reqwest::header::{ACCEPT, CONTENT_TYPE, COOKIE, USER_AGENT};
+use snafu::{ResultExt, Snafu};
 
 use crate::{
     auth_cookie::get_auth_cookie,
+    cli::UploadCommand,
     common_setup,
     vfs::{RealFetcher, Vfs, WatchMode},
 };
 
-#[derive(Debug, Fail)]
-pub enum UploadError {
-    #[fail(display = "Rojo could not find your Roblox auth cookie. Please pass one via --cookie.")]
+#[derive(Debug, Snafu)]
+pub struct UploadError(Error);
+
+#[derive(Debug, Snafu)]
+enum Error {
+    #[snafu(display(
+        "Rojo could not find your Roblox auth cookie. Please pass one via --cookie.",
+    ))]
     NeedAuthCookie,
 
-    #[fail(display = "XML model file encode error: {}", _0)]
-    XmlModelEncode(#[fail(cause)] rbx_xml::EncodeError),
+    #[snafu(display("XML model file encode error: {}", source))]
+    XmlModel { source: rbx_xml::EncodeError },
 
-    #[fail(display = "HTTP error: {}", _0)]
-    Http(#[fail(cause)] reqwest::Error),
+    #[snafu(display("HTTP error: {}", source))]
+    Http { source: reqwest::Error },
 
-    #[fail(display = "Roblox API error: {}", _0)]
-    RobloxApi(String),
+    #[snafu(display("Roblox API error: {}", body))]
+    RobloxApi { body: String },
 }
 
-impl_from!(UploadError {
-    rbx_xml::EncodeError => XmlModelEncode,
-    reqwest::Error => Http,
-});
-
-#[derive(Debug)]
-pub struct UploadOptions<'a> {
-    pub fuzzy_project_path: PathBuf,
-    pub auth_cookie: Option<String>,
-    pub asset_id: u64,
-    pub kind: Option<&'a str>,
+pub fn upload(options: UploadCommand) -> Result<(), UploadError> {
+    Ok(upload_inner(options)?)
 }
 
-pub fn upload(options: UploadOptions) -> Result<(), UploadError> {
+fn upload_inner(options: UploadCommand) -> Result<(), Error> {
     let cookie = options
-        .auth_cookie
+        .cookie
+        .clone()
         .or_else(get_auth_cookie)
-        .ok_or(UploadError::NeedAuthCookie)?;
+        .ok_or(Error::NeedAuthCookie)?;
 
     log::trace!("Constructing in-memory filesystem");
     let vfs = Vfs::new(RealFetcher::new(WatchMode::Disabled));
 
-    let (_maybe_project, tree) = common_setup::start(&options.fuzzy_project_path, &vfs);
+    let (_maybe_project, tree) = common_setup::start(&options.absolute_project(), &vfs);
     let root_id = tree.get_root_id();
 
     let mut buffer = Vec::new();
@@ -54,7 +50,7 @@ pub fn upload(options: UploadOptions) -> Result<(), UploadError> {
     log::trace!("Encoding XML model");
     let config = rbx_xml::EncodeOptions::new()
         .property_behavior(rbx_xml::EncodePropertyBehavior::WriteUnknown);
-    rbx_xml::to_writer(&mut buffer, tree.inner(), &[root_id], config)?;
+    rbx_xml::to_writer(&mut buffer, tree.inner(), &[root_id], config).context(XmlModel)?;
 
     let url = format!(
         "https://data.roblox.com/Data/Upload.ashx?assetid={}",
@@ -71,10 +67,13 @@ pub fn upload(options: UploadOptions) -> Result<(), UploadError> {
         .header(CONTENT_TYPE, "application/xml")
         .header(ACCEPT, "application/json")
         .body(buffer)
-        .send()?;
+        .send()
+        .context(Http)?;
 
     if !response.status().is_success() {
-        return Err(UploadError::RobloxApi(response.text()?));
+        return Err(Error::RobloxApi {
+            body: response.text().context(Http)?,
+        });
     }
 
     Ok(())

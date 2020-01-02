@@ -2,6 +2,7 @@ local Log = require(script.Parent.Parent.Log)
 local Fmt = require(script.Parent.Parent.Fmt)
 local t = require(script.Parent.Parent.t)
 
+local DevSettings = require(script.Parent.DevSettings)
 local InstanceMap = require(script.Parent.InstanceMap)
 local Reconciler = require(script.Parent.Reconciler)
 local strict = require(script.Parent.strict)
@@ -47,10 +48,16 @@ local validateServeOptions = t.strictInterface({
 function ServeSession.new(options)
 	assert(validateServeOptions(options))
 
-	local instanceMap = InstanceMap.new()
+	-- Declare self ahead of time to capture it in a closure
+	local self
+	local function onInstanceChanged(instance, propertyName)
+		self:__onInstanceChanged(instance, propertyName)
+	end
+
+	local instanceMap = InstanceMap.new(onInstanceChanged)
 	local reconciler = Reconciler.new(instanceMap)
 
-	local self = {
+	self = {
 		__status = Status.NotStarted,
 		__apiContext = options.apiContext,
 		__reconciler = reconciler,
@@ -101,6 +108,45 @@ function ServeSession:stop()
 	self:__stopInternal()
 end
 
+function ServeSession:__onInstanceChanged(instance, propertyName)
+	if not DevSettings:twoWaySyncEnabled() then
+		return
+	end
+
+	local instanceId = self.__instanceMap.fromInstances[instance]
+
+	if instanceId == nil then
+		Log.warn("Ignoring change for instance {:?} as it is unknown to Rojo", instance)
+		return
+	end
+
+	local update = {
+		id = instanceId,
+		changedProperties = {},
+	}
+
+	if propertyName == "Name" then
+		update.changedName = instance.Name
+	else
+		local success, encoded = self.__reconciler:encodeApiValue(instance[propertyName])
+
+		if not success then
+			Log.warn("Could not sync back property {:?}.{}", instance, propertyName)
+			return
+		end
+
+		update.changedProperties[propertyName] = encoded
+	end
+
+	local patch = {
+		removed = {},
+		added = {},
+		updated = {update},
+	}
+
+	self.__apiContext:write(patch)
+end
+
 function ServeSession:__initialSync(rootInstanceId)
 	return self.__apiContext:read({ rootInstanceId })
 		:andThen(function(readResponseBody)
@@ -143,6 +189,7 @@ end
 function ServeSession:__stopInternal(err)
 	self:__setStatus(Status.Disconnected, err)
 	self.__apiContext:disconnect()
+	self.__instanceMap:stop()
 end
 
 function ServeSession:__setStatus(status, detail)

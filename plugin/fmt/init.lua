@@ -82,6 +82,8 @@ local function debugImpl(buffer, value, extendedForm)
 				defaultTableDebug(buffer, value)
 			end
 		end
+	elseif valueType == "Instance" then
+		buffer:writeRaw(value:GetFullName())
 	else
 		buffer:writeRaw(tostring(value))
 	end

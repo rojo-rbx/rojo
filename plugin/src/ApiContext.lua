@@ -1,4 +1,5 @@
 local Http = require(script.Parent.Parent.Http)
+local Log = require(script.Parent.Parent.Log)
 local Promise = require(script.Parent.Parent.Promise)
 
 local Config = require(script.Parent.Config)
@@ -18,8 +19,9 @@ end
 
 local function rejectFailedRequests(response)
 	if response.code >= 400 then
-		-- TODO: Nicer error types for responses, using response JSON if valid.
-		return Promise.reject(tostring(response.code))
+		local message = string.format("HTTP %s:\n%s", tostring(response.code), response.body)
+
+		return Promise.reject(message)
 	end
 
 	return response
@@ -148,6 +150,34 @@ function ApiContext:read(ids)
 			end
 
 			assert(validateApiRead(body))
+
+			return body
+		end)
+end
+
+function ApiContext:write(patch)
+	local url = ("%s/api/write"):format(self.__baseUrl)
+
+	local body = {
+		sessionId = self.__sessionId,
+		removed = patch.removed,
+		updated = patch.updated,
+	}
+
+	-- Only add the 'added' field if the table is non-empty, or else Roblox's
+	-- JSON implementation will turn the table into an array instead of an
+	-- object, causing API validation to fail.
+	if next(patch.added) ~= nil then
+		body.added = patch.added
+	end
+
+	body = Http.jsonEncode(body)
+
+	return Http.post(url, body)
+		:andThen(rejectFailedRequests)
+		:andThen(Http.Response.json)
+		:andThen(function(body)
+			Log.info("Write response: {:?}", body)
 
 			return body
 		end)
