@@ -105,6 +105,14 @@ pub struct InstanceContext {
     pub path_ignore_rules: Arc<Vec<PathIgnoreRule>>,
 }
 
+impl InstanceContext {
+    /// Extend the list of ignore rules in the context with the given new rules.
+    pub fn add_path_ignore_rules<I: IntoIterator<Item = PathIgnoreRule>>(&mut self, new_rules: I) {
+        let rules = Arc::make_mut(&mut self.path_ignore_rules);
+        rules.extend(new_rules);
+    }
+}
+
 impl Default for InstanceContext {
     fn default() -> Self {
         InstanceContext {
