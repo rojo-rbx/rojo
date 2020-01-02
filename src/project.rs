@@ -8,6 +8,8 @@ use rbx_dom_weak::UnresolvedRbxValue;
 use serde::{Deserialize, Serialize};
 use snafu::{ResultExt, Snafu};
 
+use crate::glob::Glob;
+
 static PROJECT_FILENAME: &str = "default.project.json";
 
 /// Error type returned by any function that handles projects.
@@ -51,6 +53,11 @@ pub struct Project {
     /// wrong Roblox place.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub serve_place_ids: Option<HashSet<u64>>,
+
+    /// A list of globs, relative to the folder the project file is in, that
+    /// match files that should be excluded if Rojo encounters them.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub glob_ignore_paths: Vec<Glob>,
 
     /// The path to the file that this project came from. Relative paths in the
     /// project should be considered relative to the parent of this field, also
