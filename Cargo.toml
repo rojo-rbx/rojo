@@ -18,6 +18,9 @@ exclude = [
 [features]
 default = []
 
+# Turn on support for specifying glob ignore path rules in the project format.
+unstable_glob_ignore_paths = []
+
 # Turn on the server half of Rojo's unstable two-way sync feature.
 unstable_two_way_sync = []
 

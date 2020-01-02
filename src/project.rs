@@ -57,6 +57,7 @@ pub struct Project {
     /// A list of globs, relative to the folder the project file is in, that
     /// match files that should be excluded if Rojo encounters them.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[cfg_attr(not(feature = "unstable_glob_ignore_paths"), serde(skip))]
     pub glob_ignore_paths: Vec<Glob>,
 
     /// The path to the file that this project came from. Relative paths in the
