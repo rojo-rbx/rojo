@@ -107,15 +107,17 @@ pub struct InstanceContext {
 
 impl InstanceContext {
     /// Extend the list of ignore rules in the context with the given new rules.
-    pub fn add_path_ignore_rules<I: IntoIterator<Item = PathIgnoreRule>>(&mut self, new_rules: I) {
+    pub fn add_path_ignore_rules<I>(&mut self, new_rules: I)
+    where
+        I: IntoIterator<Item = PathIgnoreRule>,
+        I::IntoIter: ExactSizeIterator,
+    {
         let new_rules = new_rules.into_iter();
 
         // If the iterator is empty, we can skip cloning our list of ignore
         // rules and appending to it.
-        if let Some(upper_bound) = new_rules.size_hint().1 {
-            if upper_bound == 0 {
-                return;
-            }
+        if new_rules.len() == 0 {
+            return;
         }
 
         let rules = Arc::make_mut(&mut self.path_ignore_rules);
