@@ -1,13 +1,10 @@
 //! Wrapper around globset's Glob type that has better serialization
 //! characteristics by coupling Glob and GlobMatcher into a single type.
 
-use std::{fmt, path::Path};
+use std::path::Path;
 
 use globset::{Glob as InnerGlob, GlobMatcher};
-use serde::{
-    de::{self, Visitor},
-    Deserialize, Deserializer, Serialize, Serializer,
-};
+use serde::{de::Error as _, Deserialize, Deserializer, Serialize, Serializer};
 
 pub use globset::Error;
 
@@ -46,23 +43,8 @@ impl Serialize for Glob {
 
 impl<'de> Deserialize<'de> for Glob {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        deserializer.deserialize_str(GlobVisitor)
-    }
-}
+        let glob = <&str as Deserialize>::deserialize(deserializer)?;
 
-struct GlobVisitor;
-
-impl<'de> Visitor<'de> for GlobVisitor {
-    type Value = Glob;
-
-    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        formatter.write_str("a string containing a glob pattern")
-    }
-
-    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
-    where
-        E: de::Error,
-    {
-        Glob::new(value).map_err(E::custom)
+        Glob::new(glob).map_err(D::Error::custom)
     }
 }
