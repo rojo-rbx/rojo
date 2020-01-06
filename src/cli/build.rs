@@ -4,11 +4,12 @@ use std::{
 };
 
 use snafu::{ResultExt, Snafu};
+use tokio::runtime::Runtime;
 
 use crate::{
     cli::BuildCommand,
-    common_setup,
     project::ProjectError,
+    serve_session::ServeSession,
     snapshot::RojoTree,
     vfs::{RealFetcher, Vfs, WatchMode},
 };
@@ -73,13 +74,35 @@ pub fn build(options: BuildCommand) -> Result<(), BuildError> {
 
 fn build_inner(options: BuildCommand) -> Result<(), Error> {
     log::trace!("Constructing in-memory filesystem");
-    let vfs = Vfs::new(RealFetcher::new(WatchMode::Disabled));
 
-    let (_maybe_project, tree) = common_setup::start(&options.absolute_project(), &vfs);
+    let watch_mode = if options.watch {
+        WatchMode::Enabled
+    } else {
+        WatchMode::Disabled
+    };
 
-    write_model(&tree, &options)?;
+    let vfs = Vfs::new(RealFetcher::new(watch_mode));
 
-    log::trace!("Done!");
+    let session = ServeSession::new(vfs, &options.absolute_project());
+    let mut cursor = session.message_queue().cursor();
+
+    {
+        let tree = session.tree();
+        write_model(&tree, &options)?;
+    }
+
+    if options.watch {
+        let mut rt = Runtime::new().unwrap();
+
+        loop {
+            let receiver = session.message_queue().subscribe(cursor);
+            let (new_cursor, _patch_set) = rt.block_on(receiver).unwrap();
+            cursor = new_cursor;
+
+            let tree = session.tree();
+            write_model(&tree, &options)?;
+        }
+    }
 
     Ok(())
 }

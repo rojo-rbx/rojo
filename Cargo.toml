@@ -74,6 +74,7 @@ serde_json = "1.0"
 snafu = "0.6.0"
 structopt = "0.3.5"
 termcolor = "1.0.5"
+tokio = "0.1.22"
 uuid = { version = "0.8.1", features = ["v4", "serde"] }
 
 [target.'cfg(windows)'.dependencies]
@@ -89,5 +90,4 @@ paste = "0.1"
 pretty_assertions = "0.6.1"
 serde_yaml = "0.8.9"
 tempfile = "3.0"
-tokio = "0.1.22"
 walkdir = "2.1"
