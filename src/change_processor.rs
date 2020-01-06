@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use crossbeam_channel::{select, Receiver, Sender};
+use crossbeam_channel::{select, Receiver, RecvError, Sender};
 use jod_thread::JoinHandle;
 use rbx_dom_weak::RbxId;
 
@@ -34,7 +34,7 @@ pub struct ChangeProcessor {
     ///
     /// Allowed to be unused because dropping this value has side effects.
     #[allow(unused)]
-    job_thread: JoinHandle<()>,
+    job_thread: JoinHandle<Result<(), RecvError>>,
 }
 
 impl ChangeProcessor {
@@ -71,19 +71,17 @@ impl ChangeProcessor {
                 loop {
                     select! {
                         recv(vfs_receiver) -> event => {
-                            task.handle_vfs_event(event.unwrap());
+                            task.handle_vfs_event(event?);
                         },
                         recv(tree_mutation_receiver) -> patch_set => {
-                            task.handle_tree_event(patch_set.unwrap());
+                            task.handle_tree_event(patch_set?);
                         },
                         recv(shutdown_receiver) -> _ => {
                             log::trace!("ChangeProcessor shutdown signal received...");
-                            break;
+                            return Ok(());
                         },
                     }
                 }
-
-                log::trace!("ChangeProcessor thread stopped");
             })
             .expect("Could not start ChangeProcessor thread");
 
