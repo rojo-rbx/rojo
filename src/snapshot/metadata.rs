@@ -1,11 +1,12 @@
 use std::{
     fmt,
     path::{Path, PathBuf},
+    sync::Arc,
 };
 
 use serde::{Deserialize, Serialize};
 
-use crate::{path_serializer, project::ProjectNode};
+use crate::{glob::Glob, path_serializer, project::ProjectNode};
 
 /// Rojo-specific metadata that can be associated with an instance or a snapshot
 /// of an instance.
@@ -99,11 +100,59 @@ impl Default for InstanceMetadata {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct InstanceContext {}
+pub struct InstanceContext {
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub path_ignore_rules: Arc<Vec<PathIgnoreRule>>,
+}
+
+impl InstanceContext {
+    /// Extend the list of ignore rules in the context with the given new rules.
+    pub fn add_path_ignore_rules<I>(&mut self, new_rules: I)
+    where
+        I: IntoIterator<Item = PathIgnoreRule>,
+        I::IntoIter: ExactSizeIterator,
+    {
+        let new_rules = new_rules.into_iter();
+
+        // If the iterator is empty, we can skip cloning our list of ignore
+        // rules and appending to it.
+        if new_rules.len() == 0 {
+            return;
+        }
+
+        let rules = Arc::make_mut(&mut self.path_ignore_rules);
+        rules.extend(new_rules);
+    }
+}
 
 impl Default for InstanceContext {
     fn default() -> Self {
-        InstanceContext {}
+        InstanceContext {
+            path_ignore_rules: Arc::new(Vec::new()),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PathIgnoreRule {
+    /// The path that this glob is relative to. Since ignore globs are defined
+    /// in project files, this will generally be the folder containing the
+    /// project file that defined this glob.
+    #[serde(serialize_with = "path_serializer::serialize_absolute")]
+    pub base_path: PathBuf,
+
+    /// The actual glob that can be matched against the input path.
+    pub glob: Glob,
+}
+
+impl PathIgnoreRule {
+    pub fn passes<P: AsRef<Path>>(&self, path: P) -> bool {
+        let path = path.as_ref();
+
+        match path.strip_prefix(&self.base_path) {
+            Ok(suffix) => !self.glob.is_match(suffix),
+            Err(_) => true,
+        }
     }
 }
 

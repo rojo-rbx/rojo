@@ -5,6 +5,11 @@ authors = ["Lucien Greathouse <me@lpghatguy.com>"]
 edition = "2018"
 publish = false
 
+[features]
+default = []
+
+unstable_glob_ignore_paths = []
+
 [dependencies]
 env_logger = "0.6.2"
 log = "0.4.8"

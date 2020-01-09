@@ -10,6 +10,7 @@ mod tree_view;
 mod auth_cookie;
 mod change_processor;
 mod common_setup;
+mod glob;
 mod message_queue;
 mod multimap;
 mod path_map;

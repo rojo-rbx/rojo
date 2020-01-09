@@ -45,6 +45,13 @@ gen_build_tests! {
     txt_in_folder,
 }
 
+#[cfg(feature = "unstable_glob_ignore_paths")]
+gen_build_tests! {
+    ignore_glob_inner,
+    ignore_glob_nested,
+    ignore_glob_spec,
+}
+
 #[test]
 fn build_plain_txt() {
     run_build_test("plain.txt");

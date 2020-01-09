@@ -8,7 +8,8 @@ use rbx_dom_weak::RbxInstanceProperties;
 use crate::{
     project::Project,
     snapshot::{
-        apply_patch_set, compute_patch_set, InstanceContext, InstancePropertiesWithMeta, RojoTree,
+        apply_patch_set, compute_patch_set, InstanceContext, InstancePropertiesWithMeta,
+        PathIgnoreRule, RojoTree,
     },
     snapshot_middleware::snapshot_from_vfs,
     vfs::{Vfs, VfsFetcher},
@@ -38,8 +39,19 @@ pub fn start<F: VfsFetcher>(
         .get(fuzzy_project_path)
         .expect("could not get project path");
 
+    let mut instance_context = InstanceContext::default();
+
+    if let Some(project) = &maybe_project {
+        let rules = project.glob_ignore_paths.iter().map(|glob| PathIgnoreRule {
+            glob: glob.clone(),
+            base_path: project.folder_location().to_path_buf(),
+        });
+
+        instance_context.add_path_ignore_rules(rules);
+    }
+
     log::trace!("Generating snapshot of instances from VFS");
-    let snapshot = snapshot_from_vfs(&InstanceContext::default(), vfs, &entry)
+    let snapshot = snapshot_from_vfs(&instance_context, vfs, &entry)
         .expect("snapshot failed")
         .expect("snapshot did not return an instance");
 

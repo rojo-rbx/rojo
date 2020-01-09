@@ -1,0 +1,14 @@
+{
+  "name": "ignore_glob_inner",
+  "tree": {
+    "$className": "Folder",
+
+    "src": {
+      "$path": "src"
+    },
+
+    "subproject": {
+      "$path": "subproject"
+    }
+  }
+}
