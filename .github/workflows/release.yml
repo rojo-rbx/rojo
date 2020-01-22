@@ -33,6 +33,8 @@ jobs:
       run: |
         source $HOME/.cargo/env
         cargo build --verbose --locked --release
+      env:
+        OPENSSL_STATIC: 1
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v1
