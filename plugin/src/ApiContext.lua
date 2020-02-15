@@ -158,18 +158,34 @@ end
 function ApiContext:write(patch)
 	local url = ("%s/api/write"):format(self.__baseUrl)
 
-	local body = {
-		sessionId = self.__sessionId,
-		removed = patch.removed,
-		updated = patch.updated,
-	}
+	local updated = {}
+	for _, update in ipairs(patch.updated) do
+		local fixedUpdate = {
+			id = update.id,
+			changedName = update.changedName,
+		}
+
+		if next(update.changedProperties) ~= nil then
+			fixedUpdate.changedProperties = update.changedProperties
+		end
+
+		table.insert(updated, fixedUpdate)
+	end
 
 	-- Only add the 'added' field if the table is non-empty, or else Roblox's
 	-- JSON implementation will turn the table into an array instead of an
 	-- object, causing API validation to fail.
+	local added
 	if next(patch.added) ~= nil then
-		body.added = patch.added
+		added = patch.added
 	end
+
+	local body = {
+		sessionId = self.__sessionId,
+		removed = patch.removed,
+		updated = updated,
+		added = added,
+	}
 
 	body = Http.jsonEncode(body)
 

@@ -34,8 +34,10 @@ pub struct InstanceUpdate {
     pub id: RbxId,
     pub changed_name: Option<String>,
     pub changed_class_name: Option<String>,
+
     // TODO: Transform from HashMap<String, Option<_>> to something else, since
     // null will get lost when decoding from JSON in some languages.
+    #[serde(default)]
     pub changed_properties: HashMap<String, Option<RbxValue>>,
     pub changed_metadata: Option<InstanceMetadata>,
 }
