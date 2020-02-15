@@ -1,4 +1,7 @@
-use std::sync::{Arc, Mutex};
+use std::{
+    fs,
+    sync::{Arc, Mutex},
+};
 
 use crossbeam_channel::{select, Receiver, RecvError, Sender};
 use jod_thread::JoinHandle;
@@ -174,10 +177,32 @@ impl<F: VfsFetcher> JobThreadContext<F> {
     fn handle_tree_event(&self, patch_set: PatchSet) {
         log::trace!("Applying PatchSet from client: {:#?}", patch_set);
 
-        // TODO: Calculate a corresponding VFS patch and apply that instead?
-
         let applied_patch = {
             let mut tree = self.tree.lock().unwrap();
+
+            for &id in &patch_set.removed_instances {
+                if let Some(instance) = tree.get_instance(id) {
+                    if let Some(instigating_source) = &instance.metadata().instigating_source {
+                        match instigating_source {
+                            InstigatingSource::Path(path) => fs::remove_file(path).unwrap(),
+                            InstigatingSource::ProjectNode(_, _, _) => {
+                                log::warn!(
+                                    "Cannot remove instance {}, it's from a project file",
+                                    id
+                                );
+                            }
+                        }
+                    } else {
+                        // TODO
+                        log::warn!(
+                            "Cannot remove instance {}, it is not an instigating source.",
+                            id
+                        );
+                    }
+                } else {
+                    log::warn!("Cannot remove instance {}, it does not exist.", id);
+                }
+            }
 
             apply_patch_set(&mut tree, patch_set)
         };
