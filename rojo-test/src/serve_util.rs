@@ -41,6 +41,7 @@ pub fn run_serve_test(test_name: &str, callback: impl FnOnce(TestServeSession, R
     let snapshot_path = Path::new(env!("CARGO_MANIFEST_DIR")).join("serve-test-snapshots");
     settings.set_snapshot_path(snapshot_path);
     settings.set_sort_maps(true);
+    settings.add_redaction(".serverVersion", "[server-version]");
     settings.bind(move || callback(session, redactions));
 }
 

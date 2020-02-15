@@ -5,5 +5,5 @@ expression: redactions.redacted_yaml(info)
 expectedPlaceIds: ~
 protocolVersion: 3
 rootInstanceId: id-2
-serverVersion: 0.6.0-dev
+serverVersion: "[server-version]"
 sessionId: id-1
