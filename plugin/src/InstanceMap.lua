@@ -133,6 +133,10 @@ function InstanceMap:__connectSignals(instance)
 			instance:GetPropertyChangedSignal("Value"):Connect(function()
 				self:__maybeFireInstanceChanged(instance, "Value")
 			end),
+
+			instance:GetPropertyChangedSignal("Parent"):Connect(function()
+				self:__maybeFireInstanceChanged(instance, "Parent")
+			end),
 		}
 
 		self.instancesToSignal[instance] = signals
