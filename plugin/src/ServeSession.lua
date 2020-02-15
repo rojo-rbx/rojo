@@ -120,6 +120,8 @@ function ServeSession:__onInstanceChanged(instance, propertyName)
 		return
 	end
 
+	local remove = nil
+
 	local update = {
 		id = instanceId,
 		changedProperties = {},
@@ -127,6 +129,14 @@ function ServeSession:__onInstanceChanged(instance, propertyName)
 
 	if propertyName == "Name" then
 		update.changedName = instance.Name
+	elseif propertyName == "Parent" then
+		if instance.Parent == nil then
+			update = nil
+			remove = instanceId
+		else
+			Log.warn("Cannot sync non-nil Parent property changes yet")
+			return
+		end
 	else
 		local success, encoded = self.__reconciler:encodeApiValue(instance[propertyName])
 
@@ -139,7 +149,7 @@ function ServeSession:__onInstanceChanged(instance, propertyName)
 	end
 
 	local patch = {
-		removed = {},
+		removed = {remove},
 		added = {},
 		updated = {update},
 	}
