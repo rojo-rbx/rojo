@@ -1,13 +1,13 @@
 use std::{borrow::Cow, collections::HashMap, path::Path};
 
 use rbx_reflection::try_resolve_value;
+use vfs::{IoResultExt, Vfs};
 
 use crate::{
     project::{Project, ProjectNode},
     snapshot::{
         InstanceContext, InstanceMetadata, InstanceSnapshot, InstigatingSource, PathIgnoreRule,
     },
-    vfs::{FsResultExt, Vfs, VfsEntry, VfsFetcher},
 };
 
 use super::{
@@ -22,30 +22,28 @@ use super::{
 pub struct SnapshotProject;
 
 impl SnapshotMiddleware for SnapshotProject {
-    fn from_vfs<F: VfsFetcher>(
-        context: &InstanceContext,
-        vfs: &Vfs<F>,
-        entry: &VfsEntry,
-    ) -> SnapshotInstanceResult {
-        if entry.is_directory() {
-            let project_path = entry.path().join("default.project.json");
+    fn from_vfs(context: &InstanceContext, vfs: &Vfs, path: &Path) -> SnapshotInstanceResult {
+        let meta = vfs.metadata(path)?;
 
-            match vfs.get(project_path).with_not_found()? {
+        if meta.is_dir() {
+            let project_path = path.join("default.project.json");
+
+            match vfs.metadata(&project_path).with_not_found()? {
                 // TODO: Do we need to muck with the relevant paths if we're a
                 // project file within a folder? Should the folder path be the
                 // relevant path instead of the project file path?
-                Some(entry) => return SnapshotProject::from_vfs(context, vfs, &entry),
+                Some(_meta) => return SnapshotProject::from_vfs(context, vfs, &project_path),
                 None => return Ok(None),
             }
         }
 
-        if !entry.path().to_string_lossy().ends_with(".project.json") {
+        if !path.to_string_lossy().ends_with(".project.json") {
             // This isn't a project file, so it's not our job.
             return Ok(None);
         }
 
-        let project = Project::load_from_slice(&entry.contents(vfs)?, entry.path())
-            .map_err(|err| SnapshotError::malformed_project(err, entry.path()))?;
+        let project = Project::load_from_slice(&vfs.read(path)?, path)
+            .map_err(|err| SnapshotError::malformed_project(err, path))?;
 
         let mut context = context.clone();
 
@@ -75,7 +73,7 @@ impl SnapshotMiddleware for SnapshotProject {
         // relevant path -> snapshot path mapping per instance, we pick the more
         // conservative approach of snapshotting the project file if any
         // relevant paths changed.
-        snapshot.metadata.instigating_source = Some(entry.path().to_path_buf().into());
+        snapshot.metadata.instigating_source = Some(path.to_path_buf().into());
 
         // Mark this snapshot (the root node of the project file) as being
         // related to the project file.
@@ -83,21 +81,18 @@ impl SnapshotMiddleware for SnapshotProject {
         // We SHOULD NOT mark the project file as a relevant path for any
         // nodes that aren't roots. They'll be updated as part of the project
         // file being updated.
-        snapshot
-            .metadata
-            .relevant_paths
-            .push(entry.path().to_path_buf());
+        snapshot.metadata.relevant_paths.push(path.to_path_buf());
 
         Ok(Some(snapshot))
     }
 }
 
-pub fn snapshot_project_node<F: VfsFetcher>(
+pub fn snapshot_project_node(
     context: &InstanceContext,
     project_folder: &Path,
     instance_name: &str,
     node: &ProjectNode,
-    vfs: &Vfs<F>,
+    vfs: &Vfs,
 ) -> SnapshotInstanceResult {
     let name = Cow::Owned(instance_name.to_owned());
     let mut class_name = node
@@ -117,9 +112,7 @@ pub fn snapshot_project_node<F: VfsFetcher>(
             Cow::Borrowed(path)
         };
 
-        let entry = vfs.get(path.as_path())?;
-
-        if let Some(snapshot) = snapshot_from_vfs(context, vfs, &entry)? {
+        if let Some(snapshot) = snapshot_from_vfs(context, vfs, &path)? {
             // If a class name was already specified, then it'll override the
             // class name of this snapshot ONLY if it's a Folder.
             //
