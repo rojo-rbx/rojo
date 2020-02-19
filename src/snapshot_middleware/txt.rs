@@ -1,40 +1,36 @@
-use std::str;
+use std::{path::Path, str};
 
 use maplit::hashmap;
 use rbx_dom_weak::{RbxId, RbxTree, RbxValue};
+use vfs::{IoResultExt, Vfs};
 
-use crate::{
-    snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
-    vfs::{FileSnapshot, FsResultExt, Vfs, VfsEntry, VfsFetcher, VfsSnapshot},
-};
+use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
 use super::{
     error::SnapshotError,
     meta_file::AdjacentMetadata,
-    middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware},
+    middleware::{SnapshotInstanceResult, SnapshotMiddleware},
     util::match_file_name,
 };
 
 pub struct SnapshotTxt;
 
 impl SnapshotMiddleware for SnapshotTxt {
-    fn from_vfs<F: VfsFetcher>(
-        context: &InstanceContext,
-        vfs: &Vfs<F>,
-        entry: &VfsEntry,
-    ) -> SnapshotInstanceResult {
-        if entry.is_directory() {
+    fn from_vfs(context: &InstanceContext, vfs: &Vfs, path: &Path) -> SnapshotInstanceResult {
+        let meta = vfs.metadata(path)?;
+
+        if meta.is_dir() {
             return Ok(None);
         }
 
-        let instance_name = match match_file_name(entry.path(), ".txt") {
+        let instance_name = match match_file_name(path, ".txt") {
             Some(name) => name,
             None => return Ok(None),
         };
 
-        let contents = entry.contents(vfs)?;
+        let contents = vfs.read(path)?;
         let contents_str = str::from_utf8(&contents)
-            .map_err(|err| SnapshotError::file_contents_bad_unicode(err, entry.path()))?
+            .map_err(|err| SnapshotError::file_contents_bad_unicode(err, path))?
             .to_string();
 
         let properties = hashmap! {
@@ -43,9 +39,7 @@ impl SnapshotMiddleware for SnapshotTxt {
             },
         };
 
-        let meta_path = entry
-            .path()
-            .with_file_name(format!("{}.meta.json", instance_name));
+        let meta_path = path.with_file_name(format!("{}.meta.json", instance_name));
 
         let mut snapshot = InstanceSnapshot::new()
             .name(instance_name)
@@ -53,45 +47,17 @@ impl SnapshotMiddleware for SnapshotTxt {
             .properties(properties)
             .metadata(
                 InstanceMetadata::new()
-                    .instigating_source(entry.path())
-                    .relevant_paths(vec![entry.path().to_path_buf(), meta_path.clone()])
+                    .instigating_source(path)
+                    .relevant_paths(vec![path.to_path_buf(), meta_path.clone()])
                     .context(context),
             );
 
-        if let Some(meta_entry) = vfs.get(meta_path).with_not_found()? {
-            let meta_contents = meta_entry.contents(vfs)?;
+        if let Some(meta_contents) = vfs.read(meta_path).with_not_found()? {
             let mut metadata = AdjacentMetadata::from_slice(&meta_contents);
             metadata.apply_all(&mut snapshot);
         }
 
         Ok(Some(snapshot))
-    }
-
-    fn from_instance(tree: &RbxTree, id: RbxId) -> SnapshotFileResult {
-        let instance = tree.get_instance(id).unwrap();
-
-        if instance.class_name != "StringValue" {
-            return None;
-        }
-
-        if !instance.get_children_ids().is_empty() {
-            return None;
-        }
-
-        let value = match instance.properties.get("Value") {
-            Some(RbxValue::String { value }) => value.clone(),
-            Some(_) => panic!("wrong type ahh"),
-            None => String::new(),
-        };
-
-        let snapshot = VfsSnapshot::File(FileSnapshot {
-            contents: value.into_bytes(),
-        });
-
-        let mut file_name = instance.name.clone();
-        file_name.push_str(".txt");
-
-        Some((file_name, snapshot))
     }
 }
 

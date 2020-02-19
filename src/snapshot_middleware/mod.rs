@@ -14,7 +14,7 @@ mod project;
 // mod rbxlx;
 // mod rbxm;
 // mod rbxmx;
-// mod txt;
+mod txt;
 // mod user_plugins;
 mod util;
 
