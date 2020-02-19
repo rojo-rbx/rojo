@@ -1,7 +1,7 @@
 use std::{collections::HashMap, path::Path};
 
 use rbx_dom_weak::{RbxId, RbxTree};
-use vfs::{IoResultExt, Vfs};
+use vfs::{DirEntry, IoResultExt, Vfs};
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
@@ -22,17 +22,21 @@ impl SnapshotMiddleware for SnapshotDir {
             return Ok(None);
         }
 
-        // let passes_filter_rules = |child: &VfsEntry| {
-        //     context
-        //         .path_ignore_rules
-        //         .iter()
-        //         .all(|rule| rule.passes(child.path()))
-        // };
+        let passes_filter_rules = |child: &DirEntry| {
+            context
+                .path_ignore_rules
+                .iter()
+                .all(|rule| rule.passes(child.path()))
+        };
 
         let mut snapshot_children = Vec::new();
 
         for entry in vfs.read_dir(path)? {
             let entry = entry?;
+
+            if !passes_filter_rules(&entry) {
+                continue;
+            }
 
             if let Some(child_snapshot) = snapshot_from_vfs(context, vfs, entry.path())? {
                 snapshot_children.push(child_snapshot);
