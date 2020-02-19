@@ -74,6 +74,14 @@ impl VfsBackend for StdBackend {
         })
     }
 
+    fn remove_file(&mut self, path: &Path) -> io::Result<()> {
+        fs::remove_file(path)
+    }
+
+    fn remove_dir_all(&mut self, path: &Path) -> io::Result<()> {
+        fs::remove_dir_all(path)
+    }
+
     fn metadata(&mut self, path: &Path) -> io::Result<Metadata> {
         let inner = fs::metadata(path)?;
 

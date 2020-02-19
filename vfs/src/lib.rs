@@ -25,6 +25,8 @@ pub trait VfsBackend: sealed::Sealed {
     fn write(&mut self, path: &Path, data: &[u8]) -> io::Result<()>;
     fn read_dir(&mut self, path: &Path) -> io::Result<ReadDir>;
     fn metadata(&mut self, path: &Path) -> io::Result<Metadata>;
+    fn remove_file(&mut self, path: &Path) -> io::Result<()>;
+    fn remove_dir_all(&mut self, path: &Path) -> io::Result<()>;
 
     fn event_receiver(&self) -> crossbeam_channel::Receiver<VfsEvent>;
     fn watch(&mut self, path: &Path) -> io::Result<()>;
@@ -84,6 +86,7 @@ impl VfsLock {
     pub fn read<P: AsRef<Path>>(&mut self, path: P) -> io::Result<Arc<Vec<u8>>> {
         let path = path.as_ref();
         let contents = self.backend.read(path)?;
+        self.backend.watch(path)?;
         Ok(Arc::new(contents))
     }
 
@@ -99,7 +102,9 @@ impl VfsLock {
 
     pub fn read_dir<P: AsRef<Path>>(&mut self, path: P) -> io::Result<ReadDir> {
         let path = path.as_ref();
-        self.backend.read_dir(path)
+        let dir = self.backend.read_dir(path)?;
+        self.backend.watch(path)?;
+        Ok(dir)
     }
 
     pub fn event_receiver(&self) -> crossbeam_channel::Receiver<VfsEvent> {
