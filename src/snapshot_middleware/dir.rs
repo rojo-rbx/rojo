@@ -7,7 +7,7 @@ use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
 use super::{
     error::SnapshotError,
-    // meta_file::DirectoryMetadata,
+    meta_file::DirectoryMetadata,
     middleware::{SnapshotInstanceResult, SnapshotMiddleware},
     snapshot_from_vfs,
 };
@@ -74,10 +74,10 @@ impl SnapshotMiddleware for SnapshotDir {
                     .context(context),
             );
 
-        // if let Some(meta_contents) = vfs.read(meta_path).with_not_found()? {
-        //     let mut metadata = DirectoryMetadata::from_slice(&meta_contents);
-        //     metadata.apply_all(&mut snapshot);
-        // }
+        if let Some(meta_contents) = vfs.read(meta_path).with_not_found()? {
+            let mut metadata = DirectoryMetadata::from_slice(&meta_contents);
+            metadata.apply_all(&mut snapshot);
+        }
 
         Ok(Some(snapshot))
     }
