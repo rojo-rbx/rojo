@@ -1,65 +1,62 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, path::Path};
 
 use rbx_dom_weak::{RbxId, RbxTree};
+use vfs::{IoResultExt, Vfs};
 
-use crate::{
-    snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
-    vfs::{DirectorySnapshot, FsResultExt, Vfs, VfsEntry, VfsFetcher, VfsSnapshot},
-};
+use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
 use super::{
     error::SnapshotError,
-    meta_file::DirectoryMetadata,
-    middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware},
-    snapshot_from_instance, snapshot_from_vfs,
+    // meta_file::DirectoryMetadata,
+    middleware::{SnapshotInstanceResult, SnapshotMiddleware},
+    snapshot_from_vfs,
 };
 
 pub struct SnapshotDir;
 
 impl SnapshotMiddleware for SnapshotDir {
-    fn from_vfs<F: VfsFetcher>(
-        context: &InstanceContext,
-        vfs: &Vfs<F>,
-        entry: &VfsEntry,
-    ) -> SnapshotInstanceResult {
-        if entry.is_file() {
+    fn from_vfs(context: &InstanceContext, vfs: &Vfs, path: &Path) -> SnapshotInstanceResult {
+        let meta = vfs.metadata(path).unwrap();
+
+        if meta.is_file() {
             return Ok(None);
         }
 
-        let passes_filter_rules = |child: &VfsEntry| {
-            context
-                .path_ignore_rules
-                .iter()
-                .all(|rule| rule.passes(child.path()))
-        };
+        // let passes_filter_rules = |child: &VfsEntry| {
+        //     context
+        //         .path_ignore_rules
+        //         .iter()
+        //         .all(|rule| rule.passes(child.path()))
+        // };
 
         let mut snapshot_children = Vec::new();
 
-        for child in entry.children(vfs)?.into_iter().filter(passes_filter_rules) {
-            if let Some(child_snapshot) = snapshot_from_vfs(context, vfs, &child)? {
+        for entry in vfs.read_dir(path)? {
+            let entry = entry?;
+
+            if let Some(child_snapshot) = snapshot_from_vfs(context, vfs, entry.path())? {
                 snapshot_children.push(child_snapshot);
             }
         }
 
-        let instance_name = entry
-            .path()
+        let instance_name = path
             .file_name()
             .expect("Could not extract file name")
             .to_str()
-            .ok_or_else(|| SnapshotError::file_name_bad_unicode(entry.path()))?
+            .ok_or_else(|| SnapshotError::file_name_bad_unicode(path))?
             .to_string();
 
-        let meta_path = entry.path().join("init.meta.json");
+        let meta_path = path.join("init.meta.json");
 
         let relevant_paths = vec![
-            entry.path().to_path_buf(),
+            path.to_path_buf(),
             meta_path.clone(),
             // TODO: We shouldn't need to know about Lua existing in this
             // middleware. Should we figure out a way for that function to add
             // relevant paths to this middleware?
-            entry.path().join("init.lua"),
-            entry.path().join("init.server.lua"),
-            entry.path().join("init.client.lua"),
+            path.join("init.lua"),
+            path.join("init.server.lua"),
+            path.join("init.client.lua"),
         ];
 
         let mut snapshot = InstanceSnapshot::new()
@@ -68,38 +65,17 @@ impl SnapshotMiddleware for SnapshotDir {
             .children(snapshot_children)
             .metadata(
                 InstanceMetadata::new()
-                    .instigating_source(entry.path())
+                    .instigating_source(path)
                     .relevant_paths(relevant_paths)
                     .context(context),
             );
 
-        if let Some(meta_entry) = vfs.get(meta_path).with_not_found()? {
-            let meta_contents = meta_entry.contents(vfs)?;
-            let mut metadata = DirectoryMetadata::from_slice(&meta_contents);
-            metadata.apply_all(&mut snapshot);
-        }
+        // if let Some(meta_contents) = vfs.read(meta_path).with_not_found()? {
+        //     let mut metadata = DirectoryMetadata::from_slice(&meta_contents);
+        //     metadata.apply_all(&mut snapshot);
+        // }
 
         Ok(Some(snapshot))
-    }
-
-    fn from_instance(tree: &RbxTree, id: RbxId) -> SnapshotFileResult {
-        let instance = tree.get_instance(id).unwrap();
-
-        if instance.class_name != "Folder" {
-            return None;
-        }
-
-        let mut children = HashMap::new();
-
-        for child_id in instance.get_children_ids() {
-            if let Some((name, child)) = snapshot_from_instance(tree, *child_id) {
-                children.insert(name, child);
-            }
-        }
-
-        let snapshot = VfsSnapshot::Directory(DirectorySnapshot { children });
-
-        Some((instance.name.clone(), snapshot))
     }
 }
 
