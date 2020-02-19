@@ -5,7 +5,7 @@ use std::{
 
 use crossbeam_channel::{select, Receiver, RecvError, Sender};
 use jod_thread::JoinHandle;
-use rbx_dom_weak::RbxId;
+use rbx_dom_weak::{RbxId, RbxValue};
 
 use crate::{
     message_queue::MessageQueue,
@@ -201,6 +201,57 @@ impl<F: VfsFetcher> JobThreadContext<F> {
                     }
                 } else {
                     log::warn!("Cannot remove instance {}, it does not exist.", id);
+                }
+            }
+
+            for update in &patch_set.updated_instances {
+                let id = update.id;
+
+                if let Some(instance) = tree.get_instance(id) {
+                    if update.changed_name.is_some() {
+                        log::warn!("Cannot rename instances yet.");
+                    }
+
+                    if update.changed_class_name.is_some() {
+                        log::warn!("Cannot change ClassName yet.");
+                    }
+
+                    if update.changed_metadata.is_some() {
+                        log::warn!("Cannot change metadata yet.");
+                    }
+
+                    for (key, changed_value) in &update.changed_properties {
+                        if key == "Source" {
+                            if let Some(instigating_source) =
+                                &instance.metadata().instigating_source
+                            {
+                                match instigating_source {
+                                    InstigatingSource::Path(path) => {
+                                        if let Some(RbxValue::String { value }) = changed_value {
+                                            fs::write(path, value).unwrap();
+                                        } else {
+                                            log::warn!("Cannot change Source to non-string value.");
+                                        }
+                                    }
+                                    InstigatingSource::ProjectNode(_, _, _) => {
+                                        log::warn!(
+                                            "Cannot remove instance {}, it's from a project file",
+                                            id
+                                        );
+                                    }
+                                }
+                            } else {
+                                log::warn!(
+                                    "Cannot update instance {}, it is not an instigating source.",
+                                    id
+                                );
+                            }
+                        } else {
+                            log::warn!("Cannot change properties besides BaseScript.Source.");
+                        }
+                    }
+                } else {
+                    log::warn!("Cannot update instance {}, it does not exist.", id);
                 }
             }
 
