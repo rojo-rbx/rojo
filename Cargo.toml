@@ -32,12 +32,14 @@ members = [
     "rojo-test",
     "rojo-insta-ext",
     "clibrojo",
+    "vfs",
 ]
 
 default-members = [
     ".",
     "rojo-test",
     "rojo-insta-ext",
+    "vfs",
 ]
 
 [lib]
