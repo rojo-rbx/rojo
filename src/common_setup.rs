@@ -4,6 +4,7 @@
 use std::path::Path;
 
 use rbx_dom_weak::RbxInstanceProperties;
+use vfs::Vfs;
 
 use crate::{
     project::Project,
@@ -12,13 +13,9 @@ use crate::{
         PathIgnoreRule, RojoTree,
     },
     snapshot_middleware::snapshot_from_vfs,
-    vfs::{Vfs, VfsFetcher},
 };
 
-pub fn start<F: VfsFetcher>(
-    fuzzy_project_path: &Path,
-    vfs: &Vfs<F>,
-) -> (Option<Project>, RojoTree) {
+pub fn start(fuzzy_project_path: &Path, vfs: &Vfs) -> (Option<Project>, RojoTree) {
     log::trace!("Loading project file from {}", fuzzy_project_path.display());
     let maybe_project = Project::load_fuzzy(fuzzy_project_path).expect("TODO: Project load failed");
 
@@ -34,11 +31,6 @@ pub fn start<F: VfsFetcher>(
 
     let root_id = tree.get_root_id();
 
-    log::trace!("Reading project root");
-    let entry = vfs
-        .get(fuzzy_project_path)
-        .expect("could not get project path");
-
     let mut instance_context = InstanceContext::default();
 
     if let Some(project) = &maybe_project {
@@ -51,7 +43,7 @@ pub fn start<F: VfsFetcher>(
     }
 
     log::trace!("Generating snapshot of instances from VFS");
-    let snapshot = snapshot_from_vfs(&instance_context, vfs, &entry)
+    let snapshot = snapshot_from_vfs(&instance_context, vfs, &fuzzy_project_path)
         .expect("snapshot failed")
         .expect("snapshot did not return an instance");
 

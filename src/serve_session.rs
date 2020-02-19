@@ -6,6 +6,7 @@ use std::{
 };
 
 use crossbeam_channel::Sender;
+use vfs::Vfs;
 
 use crate::{
     change_processor::ChangeProcessor,
@@ -14,7 +15,6 @@ use crate::{
     project::Project,
     session_id::SessionId,
     snapshot::{AppliedPatchSet, PatchSet, RojoTree},
-    vfs::{Vfs, VfsFetcher},
 };
 
 /// Contains all of the state for a Rojo serve session.
@@ -24,7 +24,7 @@ use crate::{
 /// why Rojo couldn't expose an IPC or channels-based API for embedding in the
 /// future. `ServeSession` would be roughly the right interface to expose for
 /// those cases.
-pub struct ServeSession<F> {
+pub struct ServeSession {
     /// The object responsible for listening to changes from the in-memory
     /// filesystem, applying them, updating the Roblox instance tree, and
     /// routing messages through the session's message queue to any connected
@@ -68,7 +68,7 @@ pub struct ServeSession<F> {
     ///
     /// The main use for accessing it from the session is for debugging issues
     /// with Rojo's live-sync protocol.
-    vfs: Arc<Vfs<F>>,
+    vfs: Arc<Vfs>,
 
     /// A queue of changes that have been applied to `tree` that affect clients.
     ///
@@ -85,14 +85,14 @@ pub struct ServeSession<F> {
 /// Methods that need thread-safety bounds on VfsFetcher are limited to this
 /// block to prevent needing to spread Send + Sync + 'static into everything
 /// that handles ServeSession.
-impl<F: VfsFetcher + Send + Sync + 'static> ServeSession<F> {
+impl ServeSession {
     /// Start a new serve session from the given in-memory filesystem  and start
     /// path.
     ///
     /// The project file is expected to be loaded out-of-band since it's
     /// currently loaded from the filesystem directly instead of through the
     /// in-memory filesystem layer.
-    pub fn new<P: AsRef<Path>>(vfs: Vfs<F>, start_path: P) -> Self {
+    pub fn new<P: AsRef<Path>>(vfs: Vfs, start_path: P) -> Self {
         let start_path = start_path.as_ref();
 
         log::trace!("Starting new ServeSession at path {}", start_path.display(),);
@@ -131,7 +131,7 @@ impl<F: VfsFetcher + Send + Sync + 'static> ServeSession<F> {
     }
 }
 
-impl<F: VfsFetcher> ServeSession<F> {
+impl ServeSession {
     pub fn tree_handle(&self) -> Arc<Mutex<RojoTree>> {
         Arc::clone(&self.tree)
     }
@@ -144,7 +144,7 @@ impl<F: VfsFetcher> ServeSession<F> {
         self.tree_mutation_sender.clone()
     }
 
-    pub fn vfs(&self) -> &Vfs<F> {
+    pub fn vfs(&self) -> &Vfs {
         &self.vfs
     }
 

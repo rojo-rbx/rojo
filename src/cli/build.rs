@@ -4,13 +4,9 @@ use std::{
 };
 
 use snafu::{ResultExt, Snafu};
+use vfs::Vfs;
 
-use crate::{
-    cli::BuildCommand,
-    common_setup,
-    project::ProjectError,
-    vfs::{RealFetcher, Vfs, WatchMode},
-};
+use crate::{cli::BuildCommand, common_setup, project::ProjectError};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum OutputKind {
@@ -76,7 +72,7 @@ fn build_inner(options: BuildCommand) -> Result<(), Error> {
     log::debug!("Hoping to generate file of type {:?}", output_kind);
 
     log::trace!("Constructing in-memory filesystem");
-    let vfs = Vfs::new(RealFetcher::new(WatchMode::Disabled));
+    let vfs = Vfs::new_default();
 
     let (_maybe_project, tree) = common_setup::start(&options.absolute_project(), &vfs);
     let root_id = tree.get_root_id();

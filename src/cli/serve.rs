@@ -5,13 +5,9 @@ use std::{
 
 use snafu::Snafu;
 use termcolor::{BufferWriter, Color, ColorChoice, ColorSpec, WriteColor};
+use vfs::Vfs;
 
-use crate::{
-    cli::ServeCommand,
-    serve_session::ServeSession,
-    vfs::{RealFetcher, Vfs, WatchMode},
-    web::LiveServer,
-};
+use crate::{cli::ServeCommand, serve_session::ServeSession, web::LiveServer};
 
 const DEFAULT_PORT: u16 = 34872;
 
@@ -26,7 +22,7 @@ pub fn serve(options: ServeCommand) -> Result<(), ServeError> {
 }
 
 fn serve_inner(options: ServeCommand) -> Result<(), Error> {
-    let vfs = Vfs::new(RealFetcher::new(WatchMode::Enabled));
+    let vfs = Vfs::new_default();
 
     let session = Arc::new(ServeSession::new(vfs, &options.absolute_project()));
 
