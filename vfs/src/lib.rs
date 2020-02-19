@@ -107,6 +107,23 @@ impl VfsLock {
         Ok(dir)
     }
 
+    pub fn remove_file<P: AsRef<Path>>(&mut self, path: P) -> io::Result<()> {
+        let path = path.as_ref();
+        let _ = self.backend.unwatch(path);
+        self.backend.remove_file(path)
+    }
+
+    pub fn remove_dir_all<P: AsRef<Path>>(&mut self, path: P) -> io::Result<()> {
+        let path = path.as_ref();
+        let _ = self.backend.unwatch(path);
+        self.backend.remove_dir_all(path)
+    }
+
+    pub fn metadata<P: AsRef<Path>>(&mut self, path: P) -> io::Result<Metadata> {
+        let path = path.as_ref();
+        self.backend.metadata(path)
+    }
+
     pub fn event_receiver(&self) -> crossbeam_channel::Receiver<VfsEvent> {
         self.backend.event_receiver()
     }
@@ -169,6 +186,36 @@ impl Vfs {
     pub fn read_dir<P: AsRef<Path>>(&self, path: P) -> io::Result<ReadDir> {
         let path = path.as_ref();
         self.inner.lock().unwrap().read_dir(path)
+    }
+
+    /// Remove a file.
+    ///
+    /// Roughly equivalent to [`std::fs::remove_file`][std::fs::remove_file].
+    ///
+    /// [std::fs::remove_file]: https://doc.rust-lang.org/stable/std/fs/fn.remove_file.html
+    pub fn remove_file<P: AsRef<Path>>(&mut self, path: P) -> io::Result<()> {
+        let path = path.as_ref();
+        self.inner.lock().unwrap().remove_file(path)
+    }
+
+    /// Remove a directory and all of its descendants.
+    ///
+    /// Roughly equivalent to [`std::fs::remove_dir_all`][std::fs::remove_dir_all].
+    ///
+    /// [std::fs::remove_dir_all]: https://doc.rust-lang.org/stable/std/fs/fn.remove_dir_all.html
+    pub fn remove_dir_all<P: AsRef<Path>>(&mut self, path: P) -> io::Result<()> {
+        let path = path.as_ref();
+        self.inner.lock().unwrap().remove_dir_all(path)
+    }
+
+    /// Query metadata about the given path.
+    ///
+    /// Roughly equivalent to [`std::fs::metadata`][std::fs::metadata].
+    ///
+    /// [std::fs::metadata]: https://doc.rust-lang.org/stable/std/fs/fn.metadata.html
+    pub fn metadata<P: AsRef<Path>>(&mut self, path: P) -> io::Result<Metadata> {
+        let path = path.as_ref();
+        self.inner.lock().unwrap().metadata(path)
     }
 
     /// Retrieve a handle to the event receiver for this `Vfs`.
