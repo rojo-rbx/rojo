@@ -7,7 +7,7 @@
 mod dir;
 mod error;
 // mod json_model;
-// mod lua;
+mod lua;
 mod meta_file;
 mod middleware;
 mod project;
@@ -16,7 +16,7 @@ mod project;
 // mod rbxmx;
 // mod txt;
 // mod user_plugins;
-// mod util;
+mod util;
 
 pub use self::error::*;
 
@@ -27,14 +27,13 @@ use vfs::Vfs;
 
 // csv::SnapshotCsv,
 // json_model::SnapshotJsonModel,
-// lua::SnapshotLua,
 // rbxlx::SnapshotRbxlx,
 // rbxm::SnapshotRbxm,
 // rbxmx::SnapshotRbxmx,
 // txt::SnapshotTxt,
 // user_plugins::SnapshotUserPlugins,
 use self::middleware::{SnapshotInstanceResult, SnapshotMiddleware};
-use self::{dir::SnapshotDir, project::SnapshotProject};
+use self::{dir::SnapshotDir, lua::SnapshotLua, project::SnapshotProject};
 use crate::snapshot::InstanceContext;
 
 pub use self::project::snapshot_project_node;
@@ -69,7 +68,7 @@ middlewares! {
     // SnapshotRbxlx,
     // SnapshotRbxmx,
     // SnapshotRbxm,
-    // SnapshotLua,
+    SnapshotLua,
     // SnapshotCsv,
     // SnapshotTxt,
     SnapshotDir,

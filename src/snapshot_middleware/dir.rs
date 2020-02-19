@@ -16,7 +16,7 @@ pub struct SnapshotDir;
 
 impl SnapshotMiddleware for SnapshotDir {
     fn from_vfs(context: &InstanceContext, vfs: &Vfs, path: &Path) -> SnapshotInstanceResult {
-        let meta = vfs.metadata(path).unwrap();
+        let meta = vfs.metadata(path)?;
 
         if meta.is_file() {
             return Ok(None);
