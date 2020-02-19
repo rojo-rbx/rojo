@@ -1,6 +1,5 @@
 use std::path::Path;
 
-use rbx_dom_weak::{RbxId, RbxTree};
 use vfs::Vfs;
 
 use crate::snapshot::{InstanceContext, InstanceSnapshot};

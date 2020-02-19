@@ -288,7 +288,7 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: RbxId) -> Optio
             let maybe_meta = vfs.metadata(path).with_not_found().unwrap();
 
             match maybe_meta {
-                Some(meta) => {
+                Some(_meta) => {
                     // Our instance was previously created from a path and
                     // that path still exists. We can generate a snapshot
                     // starting at that path and use it as the source for

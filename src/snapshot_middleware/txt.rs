@@ -1,7 +1,7 @@
 use std::{path::Path, str};
 
 use maplit::hashmap;
-use rbx_dom_weak::{RbxId, RbxTree, RbxValue};
+use rbx_dom_weak::RbxValue;
 use vfs::{IoResultExt, Vfs};
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};

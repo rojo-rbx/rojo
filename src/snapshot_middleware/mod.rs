@@ -15,14 +15,12 @@ mod rbxlx;
 mod rbxm;
 mod rbxmx;
 mod txt;
-// mod user_plugins;
 mod util;
 
 pub use self::error::*;
 
 use std::path::Path;
 
-use rbx_dom_weak::{RbxId, RbxTree};
 use vfs::Vfs;
 
 use self::middleware::{SnapshotInstanceResult, SnapshotMiddleware};
