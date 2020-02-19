@@ -1,13 +1,11 @@
-use std::{borrow::Cow, collections::HashMap};
+use std::{borrow::Cow, collections::HashMap, path::Path};
 
 use rbx_dom_weak::UnresolvedRbxValue;
 use rbx_reflection::try_resolve_value;
 use serde::Deserialize;
+use vfs::Vfs;
 
-use crate::{
-    snapshot::{InstanceContext, InstanceSnapshot},
-    vfs::{Vfs, VfsEntry, VfsFetcher},
-};
+use crate::snapshot::{InstanceContext, InstanceSnapshot};
 
 use super::{
     middleware::{SnapshotInstanceResult, SnapshotMiddleware},
@@ -17,28 +15,26 @@ use super::{
 pub struct SnapshotJsonModel;
 
 impl SnapshotMiddleware for SnapshotJsonModel {
-    fn from_vfs<F: VfsFetcher>(
-        context: &InstanceContext,
-        vfs: &Vfs<F>,
-        entry: &VfsEntry,
-    ) -> SnapshotInstanceResult {
-        if entry.is_directory() {
+    fn from_vfs(context: &InstanceContext, vfs: &Vfs, path: &Path) -> SnapshotInstanceResult {
+        let meta = vfs.metadata(path)?;
+
+        if meta.is_dir() {
             return Ok(None);
         }
 
-        let instance_name = match match_file_name(entry.path(), ".model.json") {
+        let instance_name = match match_file_name(path, ".model.json") {
             Some(name) => name,
             None => return Ok(None),
         };
 
         let instance: JsonModel =
-            serde_json::from_slice(&entry.contents(vfs)?).expect("TODO: Handle serde_json errors");
+            serde_json::from_slice(&vfs.read(path)?).expect("TODO: Handle serde_json errors");
 
         if let Some(json_name) = &instance.name {
             if json_name != instance_name {
                 log::warn!(
                     "Name from JSON model did not match its file name: {}",
-                    entry.path().display()
+                    path.display()
                 );
                 log::warn!(
                     "In Rojo <  alpha 14, this model is named \"{}\" (from its 'Name' property)",
@@ -56,8 +52,8 @@ impl SnapshotMiddleware for SnapshotJsonModel {
 
         snapshot.metadata = snapshot
             .metadata
-            .instigating_source(entry.path())
-            .relevant_paths(vec![entry.path().to_path_buf()])
+            .instigating_source(path)
+            .relevant_paths(vec![path.to_path_buf()])
             .context(context);
 
         Ok(Some(snapshot))
