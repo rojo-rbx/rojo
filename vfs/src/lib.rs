@@ -17,7 +17,7 @@ mod sealed {
     impl Sealed for StdBackend {}
 }
 
-/// Backend that can be used to create a
+/// Backend that can be used to create a `Vfs`.
 ///
 /// This trait is sealed and cannot not be implemented outside this crate.
 pub trait VfsBackend: sealed::Sealed {
