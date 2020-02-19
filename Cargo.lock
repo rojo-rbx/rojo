@@ -2362,6 +2362,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "vfs"
 version = "0.1.0"
 dependencies = [
+ "crossbeam-channel 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "notify 4.0.15 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 

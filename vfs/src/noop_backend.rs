@@ -1,8 +1,9 @@
 use std::io;
 use std::path::Path;
 
-use crate::{Metadata, ReadDir, VfsBackend};
+use crate::{Metadata, ReadDir, VfsBackend, VfsEvent};
 
+/// `VfsBackend` that returns an error on every operation.
 #[non_exhaustive]
 pub struct NoopBackend;
 
@@ -39,6 +40,10 @@ impl VfsBackend for NoopBackend {
             io::ErrorKind::Other,
             "NoopBackend doesn't do anything",
         ))
+    }
+
+    fn event_receiver(&mut self) -> crossbeam_channel::Receiver<VfsEvent> {
+        crossbeam_channel::never()
     }
 
     fn watch(&mut self, _path: &Path) -> io::Result<()> {

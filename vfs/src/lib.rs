@@ -17,12 +17,16 @@ mod sealed {
     impl Sealed for StdBackend {}
 }
 
+/// Backend that can be used to create a
+///
+/// This trait is sealed and cannot not be implemented outside this crate.
 pub trait VfsBackend: sealed::Sealed {
     fn read(&mut self, path: &Path) -> io::Result<Vec<u8>>;
     fn write(&mut self, path: &Path, data: &[u8]) -> io::Result<()>;
     fn read_dir(&mut self, path: &Path) -> io::Result<ReadDir>;
     fn metadata(&mut self, path: &Path) -> io::Result<Metadata>;
 
+    fn event_receiver(&mut self) -> crossbeam_channel::Receiver<VfsEvent>;
     fn watch(&mut self, path: &Path) -> io::Result<()>;
     fn unwatch(&mut self, path: &Path) -> io::Result<()>;
 }
@@ -49,6 +53,7 @@ impl Iterator for ReadDir {
     }
 }
 
+#[derive(Debug)]
 pub struct Metadata {
     is_file: bool,
 }
@@ -61,6 +66,14 @@ impl Metadata {
     pub fn is_dir(&self) -> bool {
         !self.is_file
     }
+}
+
+#[derive(Debug)]
+#[non_exhaustive]
+pub enum VfsEvent {
+    Create(PathBuf),
+    Write(PathBuf),
+    Remove(PathBuf),
 }
 
 struct VfsLock {
@@ -90,11 +103,18 @@ impl VfsLock {
     }
 }
 
+/// A virtual filesystem with a configurable backend.
 pub struct Vfs {
     inner: Mutex<VfsLock>,
 }
 
 impl Vfs {
+    /// Creates a new `Vfs` with the default backend, `StdBackend`.
+    pub fn new_default() -> Self {
+        Self::new(StdBackend::new())
+    }
+
+    /// Creates a new `Vfs` with the given backend.
     pub fn new<B: VfsBackend + 'static>(backend: B) -> Self {
         let lock = VfsLock {
             backend: Box::new(backend),
@@ -105,12 +125,23 @@ impl Vfs {
         }
     }
 
+    /// Read a file from the VFS, or the underlying backend if it isn't
+    /// resident.
+    ///
+    /// Roughly equivalent to [`std::fs::read`][std::fs::read].
+    ///
+    /// [std::fs::read]: https://doc.rust-lang.org/stable/std/fs/fn.read.html
     pub fn read<P: AsRef<Path>>(&self, path: P) -> io::Result<Arc<Vec<u8>>> {
         let path = path.as_ref();
         let mut inner = self.inner.lock().unwrap();
         inner.read(path)
     }
 
+    /// Write a file to the VFS and the underlying backend.
+    ///
+    /// Roughly equivalent to [`std::fs::write`][std::fs::write].
+    ///
+    /// [std::fs::write]: https://doc.rust-lang.org/stable/std/fs/fn.write.html
     pub fn write<P: AsRef<Path>, C: AsRef<[u8]>>(&self, path: P, contents: C) -> io::Result<()> {
         let path = path.as_ref();
         let contents = contents.as_ref();
@@ -118,6 +149,11 @@ impl Vfs {
         inner.write(path, contents)
     }
 
+    /// Read all of the children of a directory.
+    ///
+    /// Roughly equivalent to [`std::fs::read_dir`][std::fs::read_dir].
+    ///
+    /// [std::fs::read_dir]: https://doc.rust-lang.org/stable/std/fs/fn.read_dir.html
     pub fn read_dir<P: AsRef<Path>>(&self, path: P) -> io::Result<ReadDir> {
         let path = path.as_ref();
         let mut inner = self.inner.lock().unwrap();

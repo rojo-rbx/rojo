@@ -2,21 +2,49 @@ use std::fs;
 use std::io;
 use std::path::Path;
 use std::sync::mpsc;
+use std::thread;
 use std::time::Duration;
 
+use crossbeam_channel::Receiver;
 use notify::{watcher, DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher};
 
-use crate::{DirEntry, Metadata, ReadDir, VfsBackend};
+use crate::{DirEntry, Metadata, ReadDir, VfsBackend, VfsEvent};
 
+/// `VfsBackend` that uses `std::fs` and the `notify` crate.
 pub struct StdBackend {
     watcher: RecommendedWatcher,
-    watcher_receiver: mpsc::Receiver<DebouncedEvent>,
+    watcher_receiver: Receiver<VfsEvent>,
 }
 
 impl StdBackend {
     pub fn new() -> StdBackend {
-        let (tx, rx) = mpsc::channel();
-        let watcher = watcher(tx, Duration::from_millis(50)).unwrap();
+        let (notify_tx, notify_rx) = mpsc::channel();
+        let watcher = watcher(notify_tx, Duration::from_millis(50)).unwrap();
+
+        let (tx, rx) = crossbeam_channel::unbounded();
+
+        thread::spawn(move || {
+            for event in notify_rx {
+                match event {
+                    DebouncedEvent::Create(path) => {
+                        tx.send(VfsEvent::Create(path))?;
+                    }
+                    DebouncedEvent::Write(path) => {
+                        tx.send(VfsEvent::Write(path))?;
+                    }
+                    DebouncedEvent::Remove(path) => {
+                        tx.send(VfsEvent::Remove(path))?;
+                    }
+                    DebouncedEvent::Rename(from, to) => {
+                        tx.send(VfsEvent::Remove(from))?;
+                        tx.send(VfsEvent::Create(to))?;
+                    }
+                    _ => {}
+                }
+            }
+
+            Result::<(), crossbeam_channel::SendError<VfsEvent>>::Ok(())
+        });
 
         Self {
             watcher,
@@ -52,6 +80,10 @@ impl VfsBackend for StdBackend {
         Ok(Metadata {
             is_file: inner.is_file(),
         })
+    }
+
+    fn event_receiver(&mut self) -> crossbeam_channel::Receiver<VfsEvent> {
+        self.watcher_receiver.clone()
     }
 
     fn watch(&mut self, path: &Path) -> io::Result<()> {
