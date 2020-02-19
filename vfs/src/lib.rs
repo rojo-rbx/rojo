@@ -133,8 +133,7 @@ impl Vfs {
     /// [std::fs::read]: https://doc.rust-lang.org/stable/std/fs/fn.read.html
     pub fn read<P: AsRef<Path>>(&self, path: P) -> io::Result<Arc<Vec<u8>>> {
         let path = path.as_ref();
-        let mut inner = self.inner.lock().unwrap();
-        inner.read(path)
+        self.inner.lock().unwrap().read(path)
     }
 
     /// Write a file to the VFS and the underlying backend.
@@ -145,8 +144,7 @@ impl Vfs {
     pub fn write<P: AsRef<Path>, C: AsRef<[u8]>>(&self, path: P, contents: C) -> io::Result<()> {
         let path = path.as_ref();
         let contents = contents.as_ref();
-        let mut inner = self.inner.lock().unwrap();
-        inner.write(path, contents)
+        self.inner.lock().unwrap().write(path, contents)
     }
 
     /// Read all of the children of a directory.
@@ -156,7 +154,6 @@ impl Vfs {
     /// [std::fs::read_dir]: https://doc.rust-lang.org/stable/std/fs/fn.read_dir.html
     pub fn read_dir<P: AsRef<Path>>(&self, path: P) -> io::Result<ReadDir> {
         let path = path.as_ref();
-        let mut inner = self.inner.lock().unwrap();
-        inner.read_dir(path)
+        self.inner.lock().unwrap().read_dir(path)
     }
 }
