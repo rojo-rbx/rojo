@@ -11,9 +11,9 @@ mod lua;
 mod meta_file;
 mod middleware;
 mod project;
-// mod rbxlx;
-// mod rbxm;
-// mod rbxmx;
+mod rbxlx;
+mod rbxm;
+mod rbxmx;
 mod txt;
 // mod user_plugins;
 mod util;
@@ -26,14 +26,11 @@ use rbx_dom_weak::{RbxId, RbxTree};
 use vfs::Vfs;
 
 // json_model::SnapshotJsonModel,
-// rbxlx::SnapshotRbxlx,
-// rbxm::SnapshotRbxm,
-// rbxmx::SnapshotRbxmx,
 // user_plugins::SnapshotUserPlugins,
 use self::middleware::{SnapshotInstanceResult, SnapshotMiddleware};
 use self::{
     csv::SnapshotCsv, dir::SnapshotDir, lua::SnapshotLua, project::SnapshotProject,
-    txt::SnapshotTxt,
+    rbxlx::SnapshotRbxlx, rbxm::SnapshotRbxm, rbxmx::SnapshotRbxmx, txt::SnapshotTxt,
 };
 use crate::snapshot::InstanceContext;
 
@@ -66,9 +63,9 @@ middlewares! {
     SnapshotProject,
     // SnapshotUserPlugins,
     // SnapshotJsonModel,
-    // SnapshotRbxlx,
-    // SnapshotRbxmx,
-    // SnapshotRbxm,
+    SnapshotRbxlx,
+    SnapshotRbxmx,
+    SnapshotRbxm,
     SnapshotLua,
     SnapshotCsv,
     SnapshotTxt,
