@@ -3,7 +3,7 @@
 
 #![allow(dead_code)]
 
-// mod csv;
+mod csv;
 mod dir;
 mod error;
 // mod json_model;
@@ -25,15 +25,16 @@ use std::path::Path;
 use rbx_dom_weak::{RbxId, RbxTree};
 use vfs::Vfs;
 
-// csv::SnapshotCsv,
 // json_model::SnapshotJsonModel,
 // rbxlx::SnapshotRbxlx,
 // rbxm::SnapshotRbxm,
 // rbxmx::SnapshotRbxmx,
-// txt::SnapshotTxt,
 // user_plugins::SnapshotUserPlugins,
 use self::middleware::{SnapshotInstanceResult, SnapshotMiddleware};
-use self::{dir::SnapshotDir, lua::SnapshotLua, project::SnapshotProject};
+use self::{
+    csv::SnapshotCsv, dir::SnapshotDir, lua::SnapshotLua, project::SnapshotProject,
+    txt::SnapshotTxt,
+};
 use crate::snapshot::InstanceContext;
 
 pub use self::project::snapshot_project_node;
@@ -69,7 +70,7 @@ middlewares! {
     // SnapshotRbxmx,
     // SnapshotRbxm,
     SnapshotLua,
-    // SnapshotCsv,
-    // SnapshotTxt,
+    SnapshotCsv,
+    SnapshotTxt,
     SnapshotDir,
 }
