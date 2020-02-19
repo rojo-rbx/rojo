@@ -82,7 +82,7 @@ impl VfsBackend for StdBackend {
         })
     }
 
-    fn event_receiver(&mut self) -> crossbeam_channel::Receiver<VfsEvent> {
+    fn event_receiver(&self) -> crossbeam_channel::Receiver<VfsEvent> {
         self.watcher_receiver.clone()
     }
 

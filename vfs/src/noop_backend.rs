@@ -42,7 +42,7 @@ impl VfsBackend for NoopBackend {
         ))
     }
 
-    fn event_receiver(&mut self) -> crossbeam_channel::Receiver<VfsEvent> {
+    fn event_receiver(&self) -> crossbeam_channel::Receiver<VfsEvent> {
         crossbeam_channel::never()
     }
 

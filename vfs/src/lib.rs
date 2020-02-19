@@ -26,7 +26,7 @@ pub trait VfsBackend: sealed::Sealed {
     fn read_dir(&mut self, path: &Path) -> io::Result<ReadDir>;
     fn metadata(&mut self, path: &Path) -> io::Result<Metadata>;
 
-    fn event_receiver(&mut self) -> crossbeam_channel::Receiver<VfsEvent>;
+    fn event_receiver(&self) -> crossbeam_channel::Receiver<VfsEvent>;
     fn watch(&mut self, path: &Path) -> io::Result<()>;
     fn unwatch(&mut self, path: &Path) -> io::Result<()>;
 }
@@ -101,6 +101,15 @@ impl VfsLock {
         let path = path.as_ref();
         self.backend.read_dir(path)
     }
+
+    pub fn event_receiver(&self) -> crossbeam_channel::Receiver<VfsEvent> {
+        self.backend.event_receiver()
+    }
+
+    pub fn commit_event(&mut self, _event: &VfsEvent) -> io::Result<()> {
+        // Because we hold no state, there's no cache to update here.
+        Ok(())
+    }
 }
 
 /// A virtual filesystem with a configurable backend.
@@ -155,5 +164,15 @@ impl Vfs {
     pub fn read_dir<P: AsRef<Path>>(&self, path: P) -> io::Result<ReadDir> {
         let path = path.as_ref();
         self.inner.lock().unwrap().read_dir(path)
+    }
+
+    /// Retrieve a handle to the event receiver for this `Vfs`.
+    pub fn event_receiver(&self) -> crossbeam_channel::Receiver<VfsEvent> {
+        self.inner.lock().unwrap().event_receiver()
+    }
+
+    /// Commit an event to this `Vfs`.
+    pub fn commit_event(&self, event: &VfsEvent) -> io::Result<()> {
+        self.inner.lock().unwrap().commit_event(event)
     }
 }
