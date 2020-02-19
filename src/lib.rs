@@ -13,7 +13,6 @@ mod common_setup;
 mod glob;
 mod message_queue;
 mod multimap;
-mod path_map;
 mod path_serializer;
 mod project;
 mod serve_session;

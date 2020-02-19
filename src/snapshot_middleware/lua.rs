@@ -108,7 +108,7 @@ fn snapshot_init(
 ) -> SnapshotInstanceResult {
     let init_path = folder_path.join(init_name);
 
-    if let Some(init_metadata) = vfs.metadata(&init_path).with_not_found()? {
+    if vfs.metadata(&init_path).with_not_found()?.is_some() {
         if let Some(dir_snapshot) = SnapshotDir::from_vfs(context, vfs, folder_path)? {
             if let Some(mut init_snapshot) = snapshot_lua_file(context, vfs, &init_path)? {
                 if dir_snapshot.class_name != "Folder" {
