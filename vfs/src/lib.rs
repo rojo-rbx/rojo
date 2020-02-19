@@ -17,10 +17,29 @@ mod sealed {
     impl Sealed for StdBackend {}
 }
 
+pub trait IoResultExt<T> {
+    fn with_not_found(self) -> io::Result<Option<T>>;
+}
+
+impl<T> IoResultExt<T> for io::Result<T> {
+    fn with_not_found(self) -> io::Result<Option<T>> {
+        match self {
+            Ok(v) => Ok(Some(v)),
+            Err(err) => {
+                if err.kind() == io::ErrorKind::NotFound {
+                    Ok(None)
+                } else {
+                    Err(err)
+                }
+            }
+        }
+    }
+}
+
 /// Backend that can be used to create a `Vfs`.
 ///
 /// This trait is sealed and cannot not be implemented outside this crate.
-pub trait VfsBackend: sealed::Sealed {
+pub trait VfsBackend: sealed::Sealed + Send + 'static {
     fn read(&mut self, path: &Path) -> io::Result<Vec<u8>>;
     fn write(&mut self, path: &Path, data: &[u8]) -> io::Result<()>;
     fn read_dir(&mut self, path: &Path) -> io::Result<ReadDir>;
@@ -146,7 +165,7 @@ impl Vfs {
     }
 
     /// Creates a new `Vfs` with the given backend.
-    pub fn new<B: VfsBackend + 'static>(backend: B) -> Self {
+    pub fn new<B: VfsBackend>(backend: B) -> Self {
         let lock = VfsLock {
             backend: Box::new(backend),
         };
@@ -193,7 +212,7 @@ impl Vfs {
     /// Roughly equivalent to [`std::fs::remove_file`][std::fs::remove_file].
     ///
     /// [std::fs::remove_file]: https://doc.rust-lang.org/stable/std/fs/fn.remove_file.html
-    pub fn remove_file<P: AsRef<Path>>(&mut self, path: P) -> io::Result<()> {
+    pub fn remove_file<P: AsRef<Path>>(&self, path: P) -> io::Result<()> {
         let path = path.as_ref();
         self.inner.lock().unwrap().remove_file(path)
     }
@@ -203,7 +222,7 @@ impl Vfs {
     /// Roughly equivalent to [`std::fs::remove_dir_all`][std::fs::remove_dir_all].
     ///
     /// [std::fs::remove_dir_all]: https://doc.rust-lang.org/stable/std/fs/fn.remove_dir_all.html
-    pub fn remove_dir_all<P: AsRef<Path>>(&mut self, path: P) -> io::Result<()> {
+    pub fn remove_dir_all<P: AsRef<Path>>(&self, path: P) -> io::Result<()> {
         let path = path.as_ref();
         self.inner.lock().unwrap().remove_dir_all(path)
     }
@@ -213,7 +232,7 @@ impl Vfs {
     /// Roughly equivalent to [`std::fs::metadata`][std::fs::metadata].
     ///
     /// [std::fs::metadata]: https://doc.rust-lang.org/stable/std/fs/fn.metadata.html
-    pub fn metadata<P: AsRef<Path>>(&mut self, path: P) -> io::Result<Metadata> {
+    pub fn metadata<P: AsRef<Path>>(&self, path: P) -> io::Result<Metadata> {
         let path = path.as_ref();
         self.inner.lock().unwrap().metadata(path)
     }
