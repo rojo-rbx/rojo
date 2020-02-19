@@ -8,11 +8,23 @@ use std::sync::{Arc, Mutex};
 pub use noop_backend::NoopBackend;
 pub use std_backend::StdBackend;
 
-pub trait VfsBackend {
-    fn read(&self, path: &Path) -> io::Result<Vec<u8>>;
-    fn write(&self, path: &Path, data: &[u8]) -> io::Result<()>;
-    fn read_dir(&self, path: &Path) -> io::Result<ReadDir>;
-    fn metadata(&self, path: &Path) -> io::Result<Metadata>;
+mod sealed {
+    use super::*;
+
+    pub trait Sealed {}
+
+    impl Sealed for NoopBackend {}
+    impl Sealed for StdBackend {}
+}
+
+pub trait VfsBackend: sealed::Sealed {
+    fn read(&mut self, path: &Path) -> io::Result<Vec<u8>>;
+    fn write(&mut self, path: &Path, data: &[u8]) -> io::Result<()>;
+    fn read_dir(&mut self, path: &Path) -> io::Result<ReadDir>;
+    fn metadata(&mut self, path: &Path) -> io::Result<Metadata>;
+
+    fn watch(&mut self, path: &Path) -> io::Result<()>;
+    fn unwatch(&mut self, path: &Path) -> io::Result<()>;
 }
 
 pub struct DirEntry {
@@ -52,7 +64,6 @@ impl Metadata {
 }
 
 struct VfsLock {
-    data: (),
     backend: Box<dyn VfsBackend>,
 }
 
@@ -86,7 +97,6 @@ pub struct Vfs {
 impl Vfs {
     pub fn new<B: VfsBackend + 'static>(backend: B) -> Self {
         let lock = VfsLock {
-            data: (),
             backend: Box::new(backend),
         };
 
