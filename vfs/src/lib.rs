@@ -1,3 +1,4 @@
+mod memory_backend;
 mod noop_backend;
 mod std_backend;
 
@@ -5,6 +6,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
+pub use memory_backend::MemoryBackend;
 pub use noop_backend::NoopBackend;
 pub use std_backend::StdBackend;
 
@@ -13,6 +15,7 @@ mod sealed {
 
     pub trait Sealed {}
 
+    impl Sealed for MemoryBackend {}
     impl Sealed for NoopBackend {}
     impl Sealed for StdBackend {}
 }
