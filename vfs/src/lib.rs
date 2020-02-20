@@ -147,8 +147,14 @@ impl VfsLock {
         self.backend.event_receiver()
     }
 
-    pub fn commit_event(&mut self, _event: &VfsEvent) -> io::Result<()> {
-        // Because we hold no state, there's no cache to update here.
+    pub fn commit_event(&mut self, event: &VfsEvent) -> io::Result<()> {
+        match event {
+            VfsEvent::Remove(path) => {
+                let _ = self.backend.unwatch(&path);
+            }
+            _ => {}
+        }
+
         Ok(())
     }
 }
