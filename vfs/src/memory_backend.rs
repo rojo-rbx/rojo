@@ -4,9 +4,9 @@ use std::path::{Path, PathBuf};
 
 use crate::{Metadata, ReadDir, VfsBackend, VfsEvent, VfsSnapshot};
 
-/// `VfsBackend` that reads from an in-memory filesystem.
+/// `VfsBackend` that reads from an in-memory filesystem, intended for setting
+/// up testing scenarios quickly.
 #[derive(Debug)]
-#[non_exhaustive]
 pub struct MemoryBackend {
     entries: HashMap<PathBuf, Entry>,
     orphans: BTreeSet<PathBuf>,
