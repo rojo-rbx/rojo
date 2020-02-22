@@ -1,5 +1,6 @@
 mod memory_backend;
 mod noop_backend;
+mod snapshot;
 mod std_backend;
 
 use std::io;
@@ -8,6 +9,7 @@ use std::sync::{Arc, Mutex};
 
 pub use memory_backend::MemoryBackend;
 pub use noop_backend::NoopBackend;
+pub use snapshot::VfsSnapshot;
 pub use std_backend::StdBackend;
 
 mod sealed {
