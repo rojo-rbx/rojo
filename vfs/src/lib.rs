@@ -65,7 +65,7 @@ pub trait VfsBackend: sealed::Sealed + Send + 'static {
 ///
 /// [std::fs::DirEntry]: https://doc.rust-lang.org/stable/std/fs/struct.DirEntry.html
 pub struct DirEntry {
-    path: PathBuf,
+    pub(crate) path: PathBuf,
 }
 
 impl DirEntry {
@@ -78,7 +78,7 @@ impl DirEntry {
 ///
 /// [std::fs::ReadDir]: https://doc.rust-lang.org/stable/std/fs/struct.ReadDir.html
 pub struct ReadDir {
-    inner: Box<dyn Iterator<Item = io::Result<DirEntry>>>,
+    pub(crate) inner: Box<dyn Iterator<Item = io::Result<DirEntry>>>,
 }
 
 impl Iterator for ReadDir {
@@ -94,7 +94,7 @@ impl Iterator for ReadDir {
 /// [std::fs::Metadata]: https://doc.rust-lang.org/stable/std/fs/struct.Metadata.html
 #[derive(Debug)]
 pub struct Metadata {
-    is_file: bool,
+    pub(crate) is_file: bool,
 }
 
 impl Metadata {
