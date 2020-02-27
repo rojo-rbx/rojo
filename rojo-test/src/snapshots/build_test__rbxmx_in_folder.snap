@@ -1,6 +1,6 @@
 ---
-created: "2019-08-10T07:45:07.961823500Z"
-creator: insta@0.10.0
+created: "2020-02-27T02:00:43.519025Z"
+creator: insta@0.10.1
 source: rojo-test/src/build_test.rs
 expression: contents
 ---
@@ -27,12 +27,14 @@ expression: contents
           <R22>1</R22>
         </CoordinateFrame>
         <Ref name="PrimaryPart">null</Ref>
-        <BinaryString name="Tags"><![CDATA[]]></BinaryString>
+        <BinaryString name="Tags">
+        </BinaryString>
       </Properties>
       <Item class="StringValue" referent="2">
         <Properties>
           <string name="Name">Cool StringValue</string>
-          <BinaryString name="Tags"><![CDATA[]]></BinaryString>
+          <BinaryString name="Tags">
+          </BinaryString>
           <string name="Value">Did you know that BaseValue.Changed is different than Instance.Changed?</string>
         </Properties>
       </Item>
