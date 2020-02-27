@@ -1,0 +1,36 @@
+name: CI
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        rust_version: [stable, "1.40.0"]
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Setup Rust toolchain
+      run: rustup default ${{ matrix.rust_version }}
+
+    - name: Build
+      run: cargo build --locked --verbose
+
+    - name: Run tests
+      run: cargo test --locked --verbose
+
+    - name: Rustfmt and Clippy
+      run: |
+        cargo fmt -- --check
+        cargo clippy
+      if: matrix.rust_version == 'stable'
+
+    - name: Build (All Features)
+      run: cargo build --locked --verbose --all-features
+
+    - name: Run tests (All Features)
+      run: cargo test --locked --verbose --all-features
