@@ -23,12 +23,6 @@ jobs:
     - name: Run tests
       run: cargo test --locked --verbose
 
-    - name: Rustfmt and Clippy
-      run: |
-        cargo fmt -- --check
-        cargo clippy
-      if: matrix.rust_version == 'stable'
-
     - name: Build (All Features)
       run: cargo build --locked --verbose --all-features
 
