@@ -2,6 +2,12 @@
 
 ## Unreleased Changes
 
+## [0.5.4](https://github.com/rojo-rbx/rojo/releases/tag/v0.5.4) (February 26, 2020)
+This is a general maintenance release for the Rojo 0.5.x release series.
+
+* Updated reflection database and other dependencies.
+* First stable release with binaries for macOS and Linux.
+
 ## [0.6.0 Alpha 1](https://github.com/rojo-rbx/rojo/releases/tag/v0.6.0-alpha.1) (January 22, 2020)
 
 ### General
