@@ -2,6 +2,30 @@
 
 ## Unreleased Changes
 
+## [0.6.0 Alpha 1](https://github.com/rojo-rbx/rojo/releases/tag/v0.6.0-alpha.1) (January 22, 2020)
+
+### General
+* Added support for nested project files. ([#95](https://github.com/rojo-rbx/rojo/issues/95))
+* Added project file hot-reloading. ([#10](https://github.com/rojo-rbx/rojo/issues/10)])
+* Fixed Rojo dropping Ref properties ([#142](https://github.com/rojo-rbx/rojo/issues/142))
+    * This means that properties like `PrimaryPart` now work!
+* Improved live sync protocol to reduce round-trips and improve syncing consistency.
+* Improved support for binary model files and places.
+
+### Command Line
+* Added `--verbose`/`-v` flag, which can be specified multiple times to increase verbosity.
+* Added support for automatically finding Roblox Studio's auth cookie for `rojo upload` on Windows.
+* Added support for building, serving and uploading sources that aren't Rojo projects.
+* Improved feedback from `rojo serve`.
+* Removed support for legacy `roblox-project.json` projects, deprecated in an early Rojo 0.5.0 alpha.
+* Rojo no longer traverses directories upwards looking for project files.
+    * Though undocumented, Rojo 0.5.x will search for a project file contained in any ancestor folders. This feature was removed to better support other 0.6.x features.
+
+### Roblox Studio Plugin
+* Added "connecting" state to improve experience when live syncing.
+* Added "error" state to show errors in a place that isn't the output panel.
+* Improved diagnostics for when the Rojo plugin cannot create an instance.
+
 ## [0.5.3](https://github.com/rojo-rbx/rojo/releases/tag/v0.5.3) (October 15, 2019)
 * Fixed an issue where Rojo would throw an error when encountering recently-added instance classes.
 
