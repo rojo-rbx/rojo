@@ -1,6 +1,8 @@
 # Rojo Changelog
 
 ## Unreleased Changes for 0.6.x
+
+## [0.6.0 Alpha 2](https://github.com/rojo-rbx/rojo/releases/tag/v0.6.0-alpha.2) (March 6, 2020)
 * Fixed `rojo upload` command always uploading models.
 * Removed `--kind` parameter to `rojo upload`; Rojo now automatically uploads the correct kind of asset based on your project file.
 
