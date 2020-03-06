@@ -90,7 +90,7 @@ winreg = "0.6.2"
 rojo-insta-ext = { path = "rojo-insta-ext" }
 
 criterion = "0.3"
-insta = { version = "0.12.0", features = ["redactions"] }
+insta = { version = "0.13.1", features = ["redactions"] }
 lazy_static = "1.2"
 paste = "0.1"
 pretty_assertions = "0.6.1"
