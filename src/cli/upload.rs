@@ -39,14 +39,23 @@ fn upload_inner(options: UploadCommand) -> Result<(), Error> {
     let vfs = Vfs::new_default();
 
     let (_maybe_project, tree) = common_setup::start(&options.absolute_project(), &vfs);
-    let root_id = tree.get_root_id();
+
+    let inner_tree = tree.inner();
+    let root_id = inner_tree.get_root_id();
+    let root_instance = inner_tree.get_instance(root_id).unwrap();
+
+    let encode_ids = match root_instance.class_name.as_str() {
+        "DataModel" => root_instance.get_children_ids().to_vec(),
+        _ => vec![root_id],
+    };
 
     let mut buffer = Vec::new();
 
     log::trace!("Encoding XML model");
     let config = rbx_xml::EncodeOptions::new()
         .property_behavior(rbx_xml::EncodePropertyBehavior::WriteUnknown);
-    rbx_xml::to_writer(&mut buffer, tree.inner(), &[root_id], config).context(XmlModel)?;
+
+    rbx_xml::to_writer(&mut buffer, tree.inner(), &encode_ids, config).context(XmlModel)?;
 
     let url = format!(
         "https://data.roblox.com/Data/Upload.ashx?assetid={}",
