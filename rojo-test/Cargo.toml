@@ -12,6 +12,7 @@ unstable_glob_ignore_paths = []
 
 [dependencies]
 env_logger = "0.6.2"
+insta = { version = "0.13.1", features = ["redactions"] }
 log = "0.4.8"
 paste = "0.1.5"
 rbx_dom_weak = "1.9.0"
@@ -26,7 +27,3 @@ rojo-insta-ext = { path = "../rojo-insta-ext" }
 
 # We execute Rojo via std::process::Command, so depend on it so it's built!
 rojo = { path = ".." }
-
-[dependencies.insta]
-git = "https://github.com/mitsuhiko/insta"
-features = ["redactions"]
