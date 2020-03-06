@@ -155,10 +155,6 @@ pub struct UploadCommand {
     #[structopt(default_value = "")]
     pub project: PathBuf,
 
-    /// The kind of asset to generate, 'place', or 'model'. Defaults to place.
-    #[structopt(long, default_value = "place")]
-    pub kind: UploadKind,
-
     /// Authenication cookie to use. If not specified, Rojo will attempt to find one from the system automatically.
     #[structopt(long)]
     pub cookie: Option<String>,
