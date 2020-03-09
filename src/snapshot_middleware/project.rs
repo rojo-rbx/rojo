@@ -206,7 +206,7 @@ pub fn snapshot_project_node(
     }))
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "FIXME"))]
 mod test {
     use super::*;
 

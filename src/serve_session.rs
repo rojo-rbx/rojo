@@ -183,7 +183,7 @@ impl ServeSession {
 /// correctly.
 ///
 /// See https://github.com/mitsuhiko/insta/issues/78
-#[cfg(test)]
+#[cfg(all(test, feature = "FIXME"))]
 mod serve_session {
     use super::*;
 

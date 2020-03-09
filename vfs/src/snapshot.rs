@@ -26,4 +26,16 @@ impl VfsSnapshot {
                 .collect(),
         }
     }
+
+    pub fn empty_file() -> Self {
+        Self::File {
+            contents: Vec::new(),
+        }
+    }
+
+    pub fn empty_dir() -> Self {
+        Self::Dir {
+            children: BTreeMap::new(),
+        }
+    }
 }

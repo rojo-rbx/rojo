@@ -82,7 +82,7 @@ impl SnapshotMiddleware for SnapshotDir {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "FIXME"))]
 mod test {
     use super::*;
 

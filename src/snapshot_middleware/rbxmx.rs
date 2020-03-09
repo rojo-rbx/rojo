@@ -50,7 +50,7 @@ impl SnapshotMiddleware for SnapshotRbxmx {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "FIXME"))]
 mod test {
     use super::*;
 

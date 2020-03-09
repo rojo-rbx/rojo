@@ -131,7 +131,7 @@ fn convert_localization_csv(contents: &[u8]) -> String {
     serde_json::to_string(&entries).expect("Could not encode JSON for localization table")
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "FIXME"))]
 mod test {
     use super::*;
 
