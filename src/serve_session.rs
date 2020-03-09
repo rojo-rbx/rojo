@@ -183,207 +183,210 @@ impl ServeSession {
 /// correctly.
 ///
 /// See https://github.com/mitsuhiko/insta/issues/78
-#[cfg(all(test, feature = "FIXME"))]
+#[cfg(test)]
 mod serve_session {
     use super::*;
 
     use std::{path::PathBuf, time::Duration};
 
-    use insta::assert_yaml_snapshot;
     use maplit::hashmap;
     use rojo_insta_ext::RedactionMap;
     use tokio::{runtime::Runtime, timer::Timeout};
+    use vfs::{InMemoryFs, VfsEvent, VfsSnapshot};
 
-    use crate::{
-        tree_view::view_tree,
-        vfs::{NoopFetcher, TestFetcher, VfsDebug, VfsEvent, VfsSnapshot},
-    };
+    use crate::tree_view::view_tree;
 
     #[test]
     fn just_folder() {
-        let vfs = Vfs::new(NoopFetcher);
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot("/foo", VfsSnapshot::empty_dir())
+            .unwrap();
 
-        vfs.debug_load_snapshot("/foo", VfsSnapshot::empty_dir());
+        let vfs = Vfs::new(imfs);
 
         let session = ServeSession::new(vfs, "/foo");
 
         let mut rm = RedactionMap::new();
-        assert_yaml_snapshot!(view_tree(&session.tree(), &mut rm));
+        insta::assert_yaml_snapshot!(view_tree(&session.tree(), &mut rm));
     }
 
     #[test]
     fn project_with_folder() {
-        let vfs = Vfs::new(NoopFetcher);
-
-        vfs.debug_load_snapshot(
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
             "/foo",
             VfsSnapshot::dir(hashmap! {
                 "default.project.json" => VfsSnapshot::file(r#"
-                {
-                    "name": "HelloWorld",
-                    "tree": {
-                        "$path": "src"
+                    {
+                        "name": "HelloWorld",
+                        "tree": {
+                            "$path": "src"
+                        }
                     }
-                }
-            "#),
+                "#),
                 "src" => VfsSnapshot::dir(hashmap! {
                     "hello.txt" => VfsSnapshot::file("Hello, world!"),
                 }),
             }),
-        );
+        )
+        .unwrap();
+
+        let vfs = Vfs::new(imfs);
 
         let session = ServeSession::new(vfs, "/foo");
 
         let mut rm = RedactionMap::new();
-        assert_yaml_snapshot!(view_tree(&session.tree(), &mut rm));
+        insta::assert_yaml_snapshot!(view_tree(&session.tree(), &mut rm));
     }
 
     #[test]
     fn script_with_meta() {
-        let vfs = Vfs::new(NoopFetcher);
-
-        vfs.debug_load_snapshot(
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
             "/root",
             VfsSnapshot::dir(hashmap! {
                 "test.lua" => VfsSnapshot::file("This is a test."),
                 "test.meta.json" => VfsSnapshot::file(r#"{ "ignoreUnknownInstances": true }"#),
             }),
-        );
+        )
+        .unwrap();
+
+        let vfs = Vfs::new(imfs);
 
         let session = ServeSession::new(vfs, "/root");
 
         let mut rm = RedactionMap::new();
-        assert_yaml_snapshot!(view_tree(&session.tree(), &mut rm));
+        insta::assert_yaml_snapshot!(view_tree(&session.tree(), &mut rm));
     }
 
-    #[test]
-    fn change_script_meta() {
-        let (state, fetcher) = TestFetcher::new();
+    // #[test]
+    // fn change_script_meta() {
+    //     let (state, fetcher) = TestFetcher::new();
 
-        state.load_snapshot(
-            "/root",
-            VfsSnapshot::dir(hashmap! {
-                "test.lua" => VfsSnapshot::file("This is a test."),
-                "test.meta.json" => VfsSnapshot::file(r#"{ "ignoreUnknownInstances": true }"#),
-            }),
-        );
+    //     state.load_snapshot(
+    //         "/root",
+    //         VfsSnapshot::dir(hashmap! {
+    //             "test.lua" => VfsSnapshot::file("This is a test."),
+    //             "test.meta.json" => VfsSnapshot::file(r#"{ "ignoreUnknownInstances": true }"#),
+    //         }),
+    //     );
 
-        let vfs = Vfs::new(fetcher);
-        let session = ServeSession::new(vfs, "/root");
+    //     let vfs = Vfs::new(fetcher);
+    //     let session = ServeSession::new(vfs, "/root");
 
-        let mut redactions = RedactionMap::new();
-        assert_yaml_snapshot!(
-            "change_script_meta_before",
-            view_tree(&session.tree(), &mut redactions)
-        );
+    //     let mut redactions = RedactionMap::new();
+    //     insta::assert_yaml_snapshot!(
+    //         "change_script_meta_before",
+    //         view_tree(&session.tree(), &mut redactions)
+    //     );
 
-        state.load_snapshot(
-            "/root/test.meta.json",
-            VfsSnapshot::file(r#"{ "ignoreUnknownInstances": false }"#),
-        );
+    //     state.load_snapshot(
+    //         "/root/test.meta.json",
+    //         VfsSnapshot::file(r#"{ "ignoreUnknownInstances": false }"#),
+    //     );
 
-        let receiver = Timeout::new(
-            session.message_queue().subscribe_any(),
-            Duration::from_millis(200),
-        );
-        state.raise_event(VfsEvent::Modified(PathBuf::from("/root/test.meta.json")));
+    //     let receiver = Timeout::new(
+    //         session.message_queue().subscribe_any(),
+    //         Duration::from_millis(200),
+    //     );
+    //     state.raise_event(VfsEvent::Modified(PathBuf::from("/root/test.meta.json")));
 
-        let mut rt = Runtime::new().unwrap();
-        let changes = rt.block_on(receiver).unwrap();
+    //     let mut rt = Runtime::new().unwrap();
+    //     let changes = rt.block_on(receiver).unwrap();
 
-        assert_yaml_snapshot!(
-            "change_script_meta_patch",
-            redactions.redacted_yaml(changes)
-        );
-        assert_yaml_snapshot!(
-            "change_script_meta_after",
-            view_tree(&session.tree(), &mut redactions)
-        );
-    }
+    //     insta::assert_yaml_snapshot!(
+    //         "change_script_meta_patch",
+    //         redactions.redacted_yaml(changes)
+    //     );
+    //     insta::assert_yaml_snapshot!(
+    //         "change_script_meta_after",
+    //         view_tree(&session.tree(), &mut redactions)
+    //     );
+    // }
 
-    #[test]
-    fn change_txt_file() {
-        let (state, fetcher) = TestFetcher::new();
+    // #[test]
+    // fn change_txt_file() {
+    //     let (state, fetcher) = TestFetcher::new();
 
-        state.load_snapshot("/foo.txt", VfsSnapshot::file("Hello!"));
+    //     state.load_snapshot("/foo.txt", VfsSnapshot::file("Hello!"));
 
-        let vfs = Vfs::new(fetcher);
-        let session = ServeSession::new(vfs, "/foo.txt");
+    //     let vfs = Vfs::new(fetcher);
+    //     let session = ServeSession::new(vfs, "/foo.txt");
 
-        let mut redactions = RedactionMap::new();
-        assert_yaml_snapshot!(
-            "change_txt_file_before",
-            view_tree(&session.tree(), &mut redactions)
-        );
+    //     let mut redactions = RedactionMap::new();
+    //     insta::assert_yaml_snapshot!(
+    //         "change_txt_file_before",
+    //         view_tree(&session.tree(), &mut redactions)
+    //     );
 
-        state.load_snapshot("/foo.txt", VfsSnapshot::file("World!"));
+    //     state.load_snapshot("/foo.txt", VfsSnapshot::file("World!"));
 
-        let receiver = session.message_queue().subscribe_any();
+    //     let receiver = session.message_queue().subscribe_any();
 
-        state.raise_event(VfsEvent::Modified(PathBuf::from("/foo.txt")));
+    //     state.raise_event(VfsEvent::Modified(PathBuf::from("/foo.txt")));
 
-        let receiver = Timeout::new(receiver, Duration::from_millis(200));
+    //     let receiver = Timeout::new(receiver, Duration::from_millis(200));
 
-        let mut rt = Runtime::new().unwrap();
-        let result = rt.block_on(receiver).unwrap();
+    //     let mut rt = Runtime::new().unwrap();
+    //     let result = rt.block_on(receiver).unwrap();
 
-        assert_yaml_snapshot!("change_txt_file_patch", redactions.redacted_yaml(result));
-        assert_yaml_snapshot!(
-            "change_txt_file_after",
-            view_tree(&session.tree(), &mut redactions)
-        );
-    }
+    //     insta::assert_yaml_snapshot!("change_txt_file_patch", redactions.redacted_yaml(result));
+    //     insta::assert_yaml_snapshot!(
+    //         "change_txt_file_after",
+    //         view_tree(&session.tree(), &mut redactions)
+    //     );
+    // }
 
-    #[test]
-    fn change_file_in_project() {
-        let (state, fetcher) = TestFetcher::new();
+    // #[test]
+    // fn change_file_in_project() {
+    //     let (state, fetcher) = TestFetcher::new();
 
-        state.load_snapshot(
-            "/foo",
-            VfsSnapshot::dir(hashmap! {
-                "default.project.json" => VfsSnapshot::file(r#"
-                {
-                    "name": "change_file_in_project",
-                    "tree": {
-                        "$className": "Folder",
+    //     state.load_snapshot(
+    //         "/foo",
+    //         VfsSnapshot::dir(hashmap! {
+    //             "default.project.json" => VfsSnapshot::file(r#"
+    //             {
+    //                 "name": "change_file_in_project",
+    //                 "tree": {
+    //                     "$className": "Folder",
 
-                        "Child": {
-                            "$path": "file.txt"
-                        }
-                    }
-                }
-            "#),
-                "file.txt" => VfsSnapshot::file("initial content"),
-            }),
-        );
+    //                     "Child": {
+    //                         "$path": "file.txt"
+    //                     }
+    //                 }
+    //             }
+    //         "#),
+    //             "file.txt" => VfsSnapshot::file("initial content"),
+    //         }),
+    //     );
 
-        let vfs = Vfs::new(fetcher);
-        let session = ServeSession::new(vfs, "/foo");
+    //     let vfs = Vfs::new(fetcher);
+    //     let session = ServeSession::new(vfs, "/foo");
 
-        let mut redactions = RedactionMap::new();
-        assert_yaml_snapshot!(
-            "change_file_in_project_before",
-            view_tree(&session.tree(), &mut redactions)
-        );
+    //     let mut redactions = RedactionMap::new();
+    //     insta::assert_yaml_snapshot!(
+    //         "change_file_in_project_before",
+    //         view_tree(&session.tree(), &mut redactions)
+    //     );
 
-        state.load_snapshot("/foo/file.txt", VfsSnapshot::file("Changed!"));
+    //     state.load_snapshot("/foo/file.txt", VfsSnapshot::file("Changed!"));
 
-        let receiver = session.message_queue().subscribe_any();
+    //     let receiver = session.message_queue().subscribe_any();
 
-        state.raise_event(VfsEvent::Modified(PathBuf::from("/foo/file.txt")));
+    //     state.raise_event(VfsEvent::Modified(PathBuf::from("/foo/file.txt")));
 
-        let receiver = Timeout::new(receiver, Duration::from_millis(200));
+    //     let receiver = Timeout::new(receiver, Duration::from_millis(200));
 
-        let mut rt = Runtime::new().unwrap();
-        let result = rt.block_on(receiver).unwrap();
+    //     let mut rt = Runtime::new().unwrap();
+    //     let result = rt.block_on(receiver).unwrap();
 
-        assert_yaml_snapshot!(
-            "change_file_in_project_patch",
-            redactions.redacted_yaml(result)
-        );
-        assert_yaml_snapshot!(
-            "change_file_in_project_after",
-            view_tree(&session.tree(), &mut redactions)
-        );
-    }
+    //     insta::assert_yaml_snapshot!(
+    //         "change_file_in_project_patch",
+    //         redactions.redacted_yaml(result)
+    //     );
+    //     insta::assert_yaml_snapshot!(
+    //         "change_file_in_project_after",
+    //         view_tree(&session.tree(), &mut redactions)
+    //     );
+    // }
 }
