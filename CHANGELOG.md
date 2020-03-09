@@ -1,6 +1,7 @@
 # Rojo Changelog
 
 ## Unreleased Changes for 0.6.x
+* Added `--watch` argument to `rojo build` ([#284](https://github.com/rojo-rbx/rojo/pull/284))
 
 ## [0.6.0 Alpha 2](https://github.com/rojo-rbx/rojo/releases/tag/v0.6.0-alpha.2) (March 6, 2020)
 * Fixed `rojo upload` command always uploading models.
