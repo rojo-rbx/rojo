@@ -259,134 +259,131 @@ mod serve_session {
         insta::assert_yaml_snapshot!(view_tree(&session.tree(), &mut rm));
     }
 
-    // #[test]
-    // fn change_script_meta() {
-    //     let (state, fetcher) = TestFetcher::new();
+    #[test]
+    fn change_txt_file() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot("/foo.txt", VfsSnapshot::file("Hello!"))
+            .unwrap();
 
-    //     state.load_snapshot(
-    //         "/root",
-    //         VfsSnapshot::dir(hashmap! {
-    //             "test.lua" => VfsSnapshot::file("This is a test."),
-    //             "test.meta.json" => VfsSnapshot::file(r#"{ "ignoreUnknownInstances": true }"#),
-    //         }),
-    //     );
+        let vfs = Vfs::new(imfs.clone());
 
-    //     let vfs = Vfs::new(fetcher);
-    //     let session = ServeSession::new(vfs, "/root");
+        let session = ServeSession::new(vfs, "/foo.txt");
 
-    //     let mut redactions = RedactionMap::new();
-    //     insta::assert_yaml_snapshot!(
-    //         "change_script_meta_before",
-    //         view_tree(&session.tree(), &mut redactions)
-    //     );
+        let mut rm = RedactionMap::new();
+        insta::assert_yaml_snapshot!(
+            "change_txt_file_before",
+            view_tree(&session.tree(), &mut rm)
+        );
 
-    //     state.load_snapshot(
-    //         "/root/test.meta.json",
-    //         VfsSnapshot::file(r#"{ "ignoreUnknownInstances": false }"#),
-    //     );
+        imfs.load_snapshot("/foo.txt", VfsSnapshot::file("World!"))
+            .unwrap();
 
-    //     let receiver = Timeout::new(
-    //         session.message_queue().subscribe_any(),
-    //         Duration::from_millis(200),
-    //     );
-    //     state.raise_event(VfsEvent::Modified(PathBuf::from("/root/test.meta.json")));
+        let receiver = session.message_queue().subscribe_any();
 
-    //     let mut rt = Runtime::new().unwrap();
-    //     let changes = rt.block_on(receiver).unwrap();
+        imfs.raise_event(VfsEvent::Write(PathBuf::from("/foo.txt")));
 
-    //     insta::assert_yaml_snapshot!(
-    //         "change_script_meta_patch",
-    //         redactions.redacted_yaml(changes)
-    //     );
-    //     insta::assert_yaml_snapshot!(
-    //         "change_script_meta_after",
-    //         view_tree(&session.tree(), &mut redactions)
-    //     );
-    // }
+        let receiver = Timeout::new(receiver, Duration::from_millis(200));
 
-    // #[test]
-    // fn change_txt_file() {
-    //     let (state, fetcher) = TestFetcher::new();
+        let mut rt = Runtime::new().unwrap();
+        let result = rt.block_on(receiver).unwrap();
 
-    //     state.load_snapshot("/foo.txt", VfsSnapshot::file("Hello!"));
+        insta::assert_yaml_snapshot!("change_txt_file_patch", rm.redacted_yaml(result));
+        insta::assert_yaml_snapshot!("change_txt_file_after", view_tree(&session.tree(), &mut rm));
+    }
 
-    //     let vfs = Vfs::new(fetcher);
-    //     let session = ServeSession::new(vfs, "/foo.txt");
+    #[test]
+    fn change_script_meta() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
+            "/root",
+            VfsSnapshot::dir(hashmap! {
+                "test.lua" => VfsSnapshot::file("This is a test."),
+                "test.meta.json" => VfsSnapshot::file(r#"{ "ignoreUnknownInstances": true }"#),
+            }),
+        )
+        .unwrap();
 
-    //     let mut redactions = RedactionMap::new();
-    //     insta::assert_yaml_snapshot!(
-    //         "change_txt_file_before",
-    //         view_tree(&session.tree(), &mut redactions)
-    //     );
+        let vfs = Vfs::new(imfs.clone());
 
-    //     state.load_snapshot("/foo.txt", VfsSnapshot::file("World!"));
+        let session = ServeSession::new(vfs, "/root");
 
-    //     let receiver = session.message_queue().subscribe_any();
+        let mut rm = RedactionMap::new();
+        insta::assert_yaml_snapshot!(
+            "change_script_meta_before",
+            view_tree(&session.tree(), &mut rm)
+        );
 
-    //     state.raise_event(VfsEvent::Modified(PathBuf::from("/foo.txt")));
+        imfs.load_snapshot(
+            "/root/test.meta.json",
+            VfsSnapshot::file(r#"{ "ignoreUnknownInstances": false }"#),
+        )
+        .unwrap();
 
-    //     let receiver = Timeout::new(receiver, Duration::from_millis(200));
+        let receiver = session.message_queue().subscribe_any();
 
-    //     let mut rt = Runtime::new().unwrap();
-    //     let result = rt.block_on(receiver).unwrap();
+        imfs.raise_event(VfsEvent::Write(PathBuf::from("/root/test.meta.json")));
 
-    //     insta::assert_yaml_snapshot!("change_txt_file_patch", redactions.redacted_yaml(result));
-    //     insta::assert_yaml_snapshot!(
-    //         "change_txt_file_after",
-    //         view_tree(&session.tree(), &mut redactions)
-    //     );
-    // }
+        let receiver = Timeout::new(receiver, Duration::from_millis(200));
 
-    // #[test]
-    // fn change_file_in_project() {
-    //     let (state, fetcher) = TestFetcher::new();
+        let mut rt = Runtime::new().unwrap();
+        let result = rt.block_on(receiver).unwrap();
 
-    //     state.load_snapshot(
-    //         "/foo",
-    //         VfsSnapshot::dir(hashmap! {
-    //             "default.project.json" => VfsSnapshot::file(r#"
-    //             {
-    //                 "name": "change_file_in_project",
-    //                 "tree": {
-    //                     "$className": "Folder",
+        insta::assert_yaml_snapshot!("change_script_meta_patch", rm.redacted_yaml(result));
+        insta::assert_yaml_snapshot!(
+            "change_script_meta_after",
+            view_tree(&session.tree(), &mut rm)
+        );
+    }
 
-    //                     "Child": {
-    //                         "$path": "file.txt"
-    //                     }
-    //                 }
-    //             }
-    //         "#),
-    //             "file.txt" => VfsSnapshot::file("initial content"),
-    //         }),
-    //     );
+    #[test]
+    fn change_file_in_project() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
+            "/foo",
+            VfsSnapshot::dir(hashmap! {
+                "default.project.json" => VfsSnapshot::file(r#"
+                    {
+                        "name": "change_file_in_project",
+                        "tree": {
+                            "$className": "Folder",
 
-    //     let vfs = Vfs::new(fetcher);
-    //     let session = ServeSession::new(vfs, "/foo");
+                            "Child": {
+                                "$path": "file.txt"
+                            }
+                        }
+                    }
+                "#),
+                "file.txt" => VfsSnapshot::file("initial content"),
+            }),
+        )
+        .unwrap();
 
-    //     let mut redactions = RedactionMap::new();
-    //     insta::assert_yaml_snapshot!(
-    //         "change_file_in_project_before",
-    //         view_tree(&session.tree(), &mut redactions)
-    //     );
+        let vfs = Vfs::new(imfs.clone());
 
-    //     state.load_snapshot("/foo/file.txt", VfsSnapshot::file("Changed!"));
+        let session = ServeSession::new(vfs, "/foo");
 
-    //     let receiver = session.message_queue().subscribe_any();
+        let mut rm = RedactionMap::new();
+        insta::assert_yaml_snapshot!(
+            "change_file_in_project_before",
+            view_tree(&session.tree(), &mut rm)
+        );
 
-    //     state.raise_event(VfsEvent::Modified(PathBuf::from("/foo/file.txt")));
+        imfs.load_snapshot("/foo/file.txt", VfsSnapshot::file("Changed!"))
+            .unwrap();
 
-    //     let receiver = Timeout::new(receiver, Duration::from_millis(200));
+        let receiver = session.message_queue().subscribe_any();
 
-    //     let mut rt = Runtime::new().unwrap();
-    //     let result = rt.block_on(receiver).unwrap();
+        imfs.raise_event(VfsEvent::Write(PathBuf::from("/foo/file.txt")));
 
-    //     insta::assert_yaml_snapshot!(
-    //         "change_file_in_project_patch",
-    //         redactions.redacted_yaml(result)
-    //     );
-    //     insta::assert_yaml_snapshot!(
-    //         "change_file_in_project_after",
-    //         view_tree(&session.tree(), &mut redactions)
-    //     );
-    // }
+        let receiver = Timeout::new(receiver, Duration::from_millis(200));
+
+        let mut rt = Runtime::new().unwrap();
+        let result = rt.block_on(receiver).unwrap();
+
+        insta::assert_yaml_snapshot!("change_file_in_project_patch", rm.redacted_yaml(result));
+        insta::assert_yaml_snapshot!(
+            "change_file_in_project_after",
+            view_tree(&session.tree(), &mut rm)
+        );
+    }
 }
