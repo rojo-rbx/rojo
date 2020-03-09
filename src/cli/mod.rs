@@ -140,6 +140,10 @@ pub struct BuildCommand {
     /// Where to output the result.
     #[structopt(long, short)]
     pub output: PathBuf,
+
+    /// Whether to automatically rebuild when any input files change.
+    #[structopt(long)]
+    pub watch: bool,
 }
 
 impl BuildCommand {

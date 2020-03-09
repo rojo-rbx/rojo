@@ -4,11 +4,13 @@ use std::{
 };
 
 use snafu::{ResultExt, Snafu};
+use tokio::runtime::Runtime;
 
 use crate::{
     cli::BuildCommand,
-    common_setup,
     project::ProjectError,
+    serve_session::ServeSession,
+    snapshot::RojoTree,
     vfs::{RealFetcher, Vfs, WatchMode},
 };
 
@@ -71,18 +73,47 @@ pub fn build(options: BuildCommand) -> Result<(), BuildError> {
 }
 
 fn build_inner(options: BuildCommand) -> Result<(), Error> {
-    let output_kind = detect_output_kind(&options).ok_or(Error::UnknownOutputKind)?;
+    log::trace!("Constructing in-memory filesystem");
 
+    let watch_mode = if options.watch {
+        WatchMode::Enabled
+    } else {
+        WatchMode::Disabled
+    };
+
+    let vfs = Vfs::new(RealFetcher::new(watch_mode));
+
+    let session = ServeSession::new(vfs, &options.absolute_project());
+    let mut cursor = session.message_queue().cursor();
+
+    {
+        let tree = session.tree();
+        write_model(&tree, &options)?;
+    }
+
+    if options.watch {
+        let mut rt = Runtime::new().unwrap();
+
+        loop {
+            let receiver = session.message_queue().subscribe(cursor);
+            let (new_cursor, _patch_set) = rt.block_on(receiver).unwrap();
+            cursor = new_cursor;
+
+            let tree = session.tree();
+            write_model(&tree, &options)?;
+        }
+    }
+
+    Ok(())
+}
+
+fn write_model(tree: &RojoTree, options: &BuildCommand) -> Result<(), Error> {
+    let output_kind = detect_output_kind(&options).ok_or(Error::UnknownOutputKind)?;
     log::debug!("Hoping to generate file of type {:?}", output_kind);
 
-    log::trace!("Constructing in-memory filesystem");
-    let vfs = Vfs::new(RealFetcher::new(WatchMode::Disabled));
-
-    let (_maybe_project, tree) = common_setup::start(&options.absolute_project(), &vfs);
     let root_id = tree.get_root_id();
 
     log::trace!("Opening output file for write");
-
     let file = File::create(&options.output).context(Io)?;
     let mut file = BufWriter::new(file);
 
@@ -120,8 +151,6 @@ fn build_inner(options: BuildCommand) -> Result<(), Error> {
     }
 
     file.flush().context(Io)?;
-
-    log::trace!("Done!");
 
     Ok(())
 }
