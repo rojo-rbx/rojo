@@ -3,6 +3,7 @@ local Roact = require(script:FindFirstAncestor("Rojo").Roact)
 local Plugin = script:FindFirstAncestor("Plugin")
 
 local RojoFooter = require(Plugin.Components.RojoFooter)
+local Theme = require(Plugin.Components.Theme)
 
 local e = Roact.createElement
 
@@ -13,22 +14,25 @@ function Panel:init()
 end
 
 function Panel:render()
-	return e("Frame", {
-		Size = UDim2.new(1, 0, 1, 0),
-		BackgroundTransparency = 1,
-	}, {
-		Layout = Roact.createElement("UIListLayout", {
-			HorizontalAlignment = Enum.HorizontalAlignment.Center,
-			SortOrder = Enum.SortOrder.LayoutOrder,
-		}),
-
-		Body = e("Frame", {
-			Size = UDim2.new(0, 360, 1, -32),
+	return Theme.with(function(theme)
+		return e("Frame", {
+			Size = UDim2.new(1, 0, 1, 0),
 			BackgroundTransparency = 1,
-		}, self.props[Roact.Children]),
+		}, {
+			Layout = Roact.createElement("UIListLayout", {
+				HorizontalAlignment = Enum.HorizontalAlignment.Center,
+				SortOrder = Enum.SortOrder.LayoutOrder,
+			}),
 
-		Footer = e(RojoFooter),
-	})
+			Body = e("Frame", {
+				Size = UDim2.new(0, 360, 1, -32),
+				BackgroundColor3 = theme.Background1,
+				BorderSizePixel = 0,
+			}, self.props[Roact.Children]),
+
+			Footer = e(RojoFooter),
+		})
+	end)
 end
 
 return Panel

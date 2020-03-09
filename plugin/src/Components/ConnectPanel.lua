@@ -4,8 +4,8 @@ local Plugin = Rojo.Plugin
 local Roact = require(Rojo.Roact)
 
 local Config = require(Plugin.Config)
-local Theme = require(Plugin.Theme)
 
+local Theme = require(Plugin.Components.Theme)
 local Panel = require(Plugin.Components.Panel)
 local FitList = require(Plugin.Components.FitList)
 local FitText = require(Plugin.Components.FitText)
@@ -26,136 +26,138 @@ end
 function ConnectPanel:render()
 	local startSession = self.props.startSession
 
-	return e(Panel, nil, {
-		Layout = e("UIListLayout", {
-			SortOrder = Enum.SortOrder.LayoutOrder,
-			HorizontalAlignment = Enum.HorizontalAlignment.Center,
-			VerticalAlignment = Enum.VerticalAlignment.Center,
-		}),
+	return Theme.with(function(theme)
+		return e(Panel, nil, {
+			Layout = e("UIListLayout", {
+				SortOrder = Enum.SortOrder.LayoutOrder,
+				HorizontalAlignment = Enum.HorizontalAlignment.Center,
+				VerticalAlignment = Enum.VerticalAlignment.Center,
+			}),
 
-		Inputs = e(FitList, {
-			containerProps = {
-				BackgroundTransparency = 1,
-				LayoutOrder = 1,
-			},
-			layoutProps = {
-				FillDirection = Enum.FillDirection.Horizontal,
-				Padding = UDim.new(0, 8),
-			},
-			paddingProps = {
-				PaddingTop = UDim.new(0, 20),
-				PaddingBottom = UDim.new(0, 10),
-				PaddingLeft = UDim.new(0, 24),
-				PaddingRight = UDim.new(0, 24),
-			},
-		}, {
-			Address = e(FitList, {
+			Inputs = e(FitList, {
 				containerProps = {
-					LayoutOrder = 1,
 					BackgroundTransparency = 1,
+					LayoutOrder = 1,
 				},
 				layoutProps = {
-					Padding = UDim.new(0, 4),
+					FillDirection = Enum.FillDirection.Horizontal,
+					Padding = UDim.new(0, 8),
+				},
+				paddingProps = {
+					PaddingTop = UDim.new(0, 20),
+					PaddingBottom = UDim.new(0, 10),
+					PaddingLeft = UDim.new(0, 24),
+					PaddingRight = UDim.new(0, 24),
 				},
 			}, {
-				Label = e(FitText, {
-					Kind = "TextLabel",
-					LayoutOrder = 1,
-					BackgroundTransparency = 1,
-					TextXAlignment = Enum.TextXAlignment.Left,
-					Font = Theme.TitleFont,
-					TextSize = 20,
-					Text = "Address",
-					TextColor3 = Theme.PrimaryColor,
+				Address = e(FitList, {
+					containerProps = {
+						LayoutOrder = 1,
+						BackgroundTransparency = 1,
+					},
+					layoutProps = {
+						Padding = UDim.new(0, 4),
+					},
+				}, {
+					Label = e(FitText, {
+						Kind = "TextLabel",
+						LayoutOrder = 1,
+						BackgroundTransparency = 1,
+						TextXAlignment = Enum.TextXAlignment.Left,
+						Font = theme.TitleFont,
+						TextSize = 20,
+						Text = "Address",
+						TextColor3 = theme.Text1,
+					}),
+
+					Input = e(FormTextInput, {
+						layoutOrder = 2,
+						width = UDim.new(0, 220),
+						value = self.state.address,
+						placeholderValue = Config.defaultHost,
+						onValueChange = function(newValue)
+							self:setState({
+								address = newValue,
+							})
+						end,
+					}),
 				}),
 
-				Input = e(FormTextInput, {
-					layoutOrder = 2,
-					width = UDim.new(0, 220),
-					value = self.state.address,
-					placeholderValue = Config.defaultHost,
-					onValueChange = function(newValue)
-						self:setState({
-							address = newValue,
-						})
-					end,
+				Port = e(FitList, {
+					containerProps = {
+						LayoutOrder = 2,
+						BackgroundTransparency = 1,
+					},
+					layoutProps = {
+						Padding = UDim.new(0, 4),
+					},
+				}, {
+					Label = e(FitText, {
+						Kind = "TextLabel",
+						LayoutOrder = 1,
+						BackgroundTransparency = 1,
+						TextXAlignment = Enum.TextXAlignment.Left,
+						Font = theme.TitleFont,
+						TextSize = 20,
+						Text = "Port",
+						TextColor3 = theme.Text1,
+					}),
+
+					Input = e(FormTextInput, {
+						layoutOrder = 2,
+						width = UDim.new(0, 80),
+						value = self.state.port,
+						placeholderValue = Config.defaultPort,
+						onValueChange = function(newValue)
+							self:setState({
+								port = newValue,
+							})
+						end,
+					}),
 				}),
 			}),
 
-			Port = e(FitList, {
+			Buttons = e(FitList, {
+				fitAxes = "Y",
 				containerProps = {
+					BackgroundTransparency = 1,
 					LayoutOrder = 2,
-					BackgroundTransparency = 1,
+					Size = UDim2.new(1, 0, 0, 0),
 				},
 				layoutProps = {
-					Padding = UDim.new(0, 4),
+					FillDirection = Enum.FillDirection.Horizontal,
+					HorizontalAlignment = Enum.HorizontalAlignment.Right,
+					Padding = UDim.new(0, 8),
+				},
+				paddingProps = {
+					PaddingTop = UDim.new(0, 0),
+					PaddingBottom = UDim.new(0, 20),
+					PaddingLeft = UDim.new(0, 24),
+					PaddingRight = UDim.new(0, 24),
 				},
 			}, {
-				Label = e(FitText, {
-					Kind = "TextLabel",
-					LayoutOrder = 1,
-					BackgroundTransparency = 1,
-					TextXAlignment = Enum.TextXAlignment.Left,
-					Font = Theme.TitleFont,
-					TextSize = 20,
-					Text = "Port",
-					TextColor3 = Theme.PrimaryColor,
-				}),
-
-				Input = e(FormTextInput, {
+				e(FormButton, {
 					layoutOrder = 2,
-					width = UDim.new(0, 80),
-					value = self.state.port,
-					placeholderValue = Config.defaultPort,
-					onValueChange = function(newValue)
-						self:setState({
-							port = newValue,
-						})
+					text = "Connect",
+					onClick = function()
+						if startSession ~= nil then
+							local address = self.state.address
+							if address:len() == 0 then
+								address = Config.defaultHost
+							end
+
+							local port = self.state.port
+							if port:len() == 0 then
+								port = Config.defaultPort
+							end
+
+							startSession(address, port)
+						end
 					end,
 				}),
 			}),
-		}),
-
-		Buttons = e(FitList, {
-			fitAxes = "Y",
-			containerProps = {
-				BackgroundTransparency = 1,
-				LayoutOrder = 2,
-				Size = UDim2.new(1, 0, 0, 0),
-			},
-			layoutProps = {
-				FillDirection = Enum.FillDirection.Horizontal,
-				HorizontalAlignment = Enum.HorizontalAlignment.Right,
-				Padding = UDim.new(0, 8),
-			},
-			paddingProps = {
-				PaddingTop = UDim.new(0, 0),
-				PaddingBottom = UDim.new(0, 20),
-				PaddingLeft = UDim.new(0, 24),
-				PaddingRight = UDim.new(0, 24),
-			},
-		}, {
-			e(FormButton, {
-				layoutOrder = 2,
-				text = "Connect",
-				onClick = function()
-					if startSession ~= nil then
-						local address = self.state.address
-						if address:len() == 0 then
-							address = Config.defaultHost
-						end
-
-						local port = self.state.port
-						if port:len() == 0 then
-							port = Config.defaultPort
-						end
-
-						startSession(address, port)
-					end
-				end,
-			}),
-		}),
-	})
+		})
+	end)
 end
 
 return ConnectPanel

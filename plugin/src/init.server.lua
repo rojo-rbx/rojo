@@ -19,7 +19,7 @@ local app = Roact.createElement(App, {
 	plugin = plugin,
 })
 
-local tree = Roact.mount(app, game:GetService("CoreGui"), "Rojo UI")
+local tree = Roact.mount(app, nil, "Rojo UI")
 
 plugin.Unloading:Connect(function()
 	Roact.unmount(tree)

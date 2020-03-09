@@ -4,7 +4,7 @@ local Plugin = Rojo.Plugin
 local Roact = require(Rojo.Roact)
 
 local Assets = require(Plugin.Assets)
-local Theme = require(Plugin.Theme)
+local Theme = require(Plugin.Components.Theme)
 local FitList = require(Plugin.Components.FitList)
 local FitText = require(Plugin.Components.FitText)
 
@@ -20,43 +20,45 @@ local function FormButton(props)
 	local textColor
 	local backgroundColor
 
-	if props.secondary then
-		textColor = Theme.AccentColor
-		backgroundColor = Theme.SecondaryColor
-	else
-		textColor = Theme.SecondaryColor
-		backgroundColor = Theme.AccentColor
-	end
+	return Theme.with(function(theme)
+		if props.secondary then
+			textColor = theme.Brand1
+			backgroundColor = theme.Background2
+		else
+			textColor = theme.TextOnAccent
+			backgroundColor = theme.Brand1
+		end
 
-	return e(FitList, {
-		containerKind = "ImageButton",
-		containerProps = {
-			LayoutOrder = layoutOrder,
-			BackgroundTransparency = 1,
-			Image = RoundBox.asset,
-			ImageRectOffset = RoundBox.offset,
-			ImageRectSize = RoundBox.size,
-			SliceCenter = RoundBox.center,
-			ScaleType = Enum.ScaleType.Slice,
-			ImageColor3 = backgroundColor,
+		return e(FitList, {
+			containerKind = "ImageButton",
+			containerProps = {
+				LayoutOrder = layoutOrder,
+				BackgroundTransparency = 1,
+				Image = RoundBox.asset,
+				ImageRectOffset = RoundBox.offset,
+				ImageRectSize = RoundBox.size,
+				SliceCenter = RoundBox.center,
+				ScaleType = Enum.ScaleType.Slice,
+				ImageColor3 = backgroundColor,
 
-			[Roact.Event.Activated] = function()
-				if onClick ~= nil then
-					onClick()
-				end
-			end,
-		},
-	}, {
-		Text = e(FitText, {
-			Kind = "TextLabel",
-			Text = text,
-			TextSize = 18,
-			TextColor3 = textColor,
-			Font = Theme.ButtonFont,
-			Padding = Vector2.new(16, 8),
-			BackgroundTransparency = 1,
-		}),
-	})
+				[Roact.Event.Activated] = function()
+					if onClick ~= nil then
+						onClick()
+					end
+				end,
+			},
+		}, {
+			Text = e(FitText, {
+				Kind = "TextLabel",
+				Text = text,
+				TextSize = 18,
+				TextColor3 = textColor,
+				Font = theme.ButtonFont,
+				Padding = Vector2.new(16, 8),
+				BackgroundTransparency = 1,
+			}),
+		})
+	end)
 end
 
 return FormButton

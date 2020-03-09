@@ -4,7 +4,7 @@ local Plugin = Rojo.Plugin
 local Roact = require(Rojo.Roact)
 
 local Assets = require(Plugin.Assets)
-local Theme = require(Plugin.Theme)
+local Theme = require(Plugin.Components.Theme)
 
 local e = Roact.createElement
 
@@ -35,46 +35,48 @@ function FormTextInput:render()
 		shownPlaceholder = placeholderValue
 	end
 
-	return e("ImageLabel", {
-		LayoutOrder = layoutOrder,
-		Image = RoundBox.asset,
-		ImageRectOffset = RoundBox.offset,
-		ImageRectSize = RoundBox.size,
-		ScaleType = Enum.ScaleType.Slice,
-		SliceCenter = RoundBox.center,
-		ImageColor3 = Theme.SecondaryColor,
-		Size = UDim2.new(width.Scale, width.Offset, 0, TEXT_SIZE + PADDING * 2),
-		BackgroundTransparency = 1,
-	}, {
-		InputInner = e("TextBox", {
+	return Theme.with(function(theme)
+		return e("ImageLabel", {
+			LayoutOrder = layoutOrder,
+			Image = RoundBox.asset,
+			ImageRectOffset = RoundBox.offset,
+			ImageRectSize = RoundBox.size,
+			ScaleType = Enum.ScaleType.Slice,
+			SliceCenter = RoundBox.center,
+			ImageColor3 = theme.Background2,
+			Size = UDim2.new(width.Scale, width.Offset, 0, TEXT_SIZE + PADDING * 2),
 			BackgroundTransparency = 1,
-			Size = UDim2.new(1, -PADDING * 2, 1, -PADDING * 2),
-			Position = UDim2.new(0.5, 0, 0.5, 0),
-			AnchorPoint = Vector2.new(0.5, 0.5),
-			Font = Theme.InputFont,
-			ClearTextOnFocus = false,
-			TextXAlignment = Enum.TextXAlignment.Center,
-			TextSize = TEXT_SIZE,
-			Text = value,
-			PlaceholderText = shownPlaceholder,
-			PlaceholderColor3 = Theme.LightTextColor,
-			TextColor3 = Theme.PrimaryColor,
+		}, {
+			InputInner = e("TextBox", {
+				BackgroundTransparency = 1,
+				Size = UDim2.new(1, -PADDING * 2, 1, -PADDING * 2),
+				Position = UDim2.new(0.5, 0, 0.5, 0),
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				Font = theme.InputFont,
+				ClearTextOnFocus = false,
+				TextXAlignment = Enum.TextXAlignment.Center,
+				TextSize = TEXT_SIZE,
+				Text = value,
+				PlaceholderText = shownPlaceholder,
+				PlaceholderColor3 = theme.Text2,
+				TextColor3 = theme.Text1,
 
-			[Roact.Change.Text] = function(rbx)
-				onValueChange(rbx.Text)
-			end,
-			[Roact.Event.Focused] = function()
-				self:setState({
-					focused = true,
-				})
-			end,
-			[Roact.Event.FocusLost] = function()
-				self:setState({
-					focused = false,
-				})
-			end,
-		}),
-	})
+				[Roact.Change.Text] = function(rbx)
+					onValueChange(rbx.Text)
+				end,
+				[Roact.Event.Focused] = function()
+					self:setState({
+						focused = true,
+					})
+				end,
+				[Roact.Event.FocusLost] = function()
+					self:setState({
+						focused = false,
+					})
+				end,
+			}),
+		})
+	end)
 end
 
 return FormTextInput
