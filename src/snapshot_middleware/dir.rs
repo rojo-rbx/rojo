@@ -82,46 +82,47 @@ impl SnapshotMiddleware for SnapshotDir {
     }
 }
 
-#[cfg(all(test, feature = "FIXME"))]
+#[cfg(test)]
 mod test {
     use super::*;
 
-    use insta::assert_yaml_snapshot;
     use maplit::hashmap;
-
-    use crate::vfs::{NoopFetcher, VfsDebug};
+    use vfs::{InMemoryFs, VfsSnapshot};
 
     #[test]
     fn empty_folder() {
-        let mut vfs = Vfs::new(NoopFetcher);
-        let dir = VfsSnapshot::dir::<String>(HashMap::new());
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot("/foo", VfsSnapshot::empty_dir())
+            .unwrap();
 
-        vfs.debug_load_snapshot("/foo", dir);
+        let mut vfs = Vfs::new(imfs);
 
-        let entry = vfs.get("/foo").unwrap();
         let instance_snapshot =
-            SnapshotDir::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
+            SnapshotDir::from_vfs(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
                 .unwrap()
                 .unwrap();
 
-        assert_yaml_snapshot!(instance_snapshot);
+        insta::assert_yaml_snapshot!(instance_snapshot);
     }
 
     #[test]
     fn folder_in_folder() {
-        let mut vfs = Vfs::new(NoopFetcher);
-        let dir = VfsSnapshot::dir(hashmap! {
-            "Child" => VfsSnapshot::dir::<String>(HashMap::new()),
-        });
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
+            "/foo",
+            VfsSnapshot::dir(hashmap! {
+                "Child" => VfsSnapshot::empty_dir(),
+            }),
+        )
+        .unwrap();
 
-        vfs.debug_load_snapshot("/foo", dir);
+        let mut vfs = Vfs::new(imfs);
 
-        let entry = vfs.get("/foo").unwrap();
         let instance_snapshot =
-            SnapshotDir::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
+            SnapshotDir::from_vfs(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
                 .unwrap()
                 .unwrap();
 
-        assert_yaml_snapshot!(instance_snapshot);
+        insta::assert_yaml_snapshot!(instance_snapshot);
     }
 }

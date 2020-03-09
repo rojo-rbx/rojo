@@ -55,24 +55,30 @@ impl SnapshotMiddleware for SnapshotRbxm {
     }
 }
 
-#[cfg(all(test, feature = "FIXME"))]
+#[cfg(test)]
 mod test {
     use super::*;
 
-    use crate::vfs::{NoopFetcher, VfsDebug, VfsSnapshot};
+    use vfs::{InMemoryFs, VfsSnapshot};
 
     #[test]
     fn model_from_vfs() {
-        let mut vfs = Vfs::new(NoopFetcher);
-        let file = VfsSnapshot::file(include_bytes!("../../assets/test-folder.rbxm").to_vec());
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
+            "/foo.rbxm",
+            VfsSnapshot::file(include_bytes!("../../assets/test-folder.rbxm").to_vec()),
+        )
+        .unwrap();
 
-        vfs.debug_load_snapshot("/foo.rbxm", file);
+        let mut vfs = Vfs::new(imfs);
 
-        let entry = vfs.get("/foo.rbxm").unwrap();
-        let instance_snapshot =
-            SnapshotRbxm::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = SnapshotRbxm::from_vfs(
+            &InstanceContext::default(),
+            &mut vfs,
+            Path::new("/foo.rbxm"),
+        )
+        .unwrap()
+        .unwrap();
 
         assert_eq!(instance_snapshot.name, "foo");
         assert_eq!(instance_snapshot.class_name, "Folder");

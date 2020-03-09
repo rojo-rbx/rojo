@@ -70,10 +70,10 @@ mod test {
     #[test]
     fn instance_from_vfs() {
         let mut imfs = InMemoryFs::new();
-        let mut vfs = Vfs::new(imfs.clone());
-        let file = VfsSnapshot::file("Hello there!");
+        imfs.load_snapshot("/foo.txt", VfsSnapshot::file("Hello there!"))
+            .unwrap();
 
-        imfs.load_snapshot("/foo.txt", file).unwrap();
+        let mut vfs = Vfs::new(imfs.clone());
 
         let instance_snapshot =
             SnapshotTxt::from_vfs(&InstanceContext::default(), &mut vfs, Path::new("/foo.txt"))

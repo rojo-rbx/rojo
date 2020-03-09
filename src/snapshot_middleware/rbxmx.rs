@@ -50,40 +50,44 @@ impl SnapshotMiddleware for SnapshotRbxmx {
     }
 }
 
-#[cfg(all(test, feature = "FIXME"))]
+#[cfg(test)]
 mod test {
     use super::*;
 
-    use std::collections::HashMap;
-
-    use crate::vfs::{NoopFetcher, VfsDebug, VfsSnapshot};
+    use vfs::{InMemoryFs, VfsSnapshot};
 
     #[test]
-    fn model_from_vfs() {
-        let mut vfs = Vfs::new(NoopFetcher);
-        let file = VfsSnapshot::file(
-            r#"
-            <roblox version="4">
-                <Item class="Folder" referent="0">
-                    <Properties>
-                        <string name="Name">THIS NAME IS IGNORED</string>
-                    </Properties>
-                </Item>
-            </roblox>
-        "#,
-        );
+    fn plain_folder() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
+            "/foo.rbxmx",
+            VfsSnapshot::file(
+                r#"
+                    <roblox version="4">
+                        <Item class="Folder" referent="0">
+                            <Properties>
+                                <string name="Name">THIS NAME IS IGNORED</string>
+                            </Properties>
+                        </Item>
+                    </roblox>
+                "#,
+            ),
+        )
+        .unwrap();
 
-        vfs.debug_load_snapshot("/foo.rbxmx", file);
+        let mut vfs = Vfs::new(imfs);
 
-        let entry = vfs.get("/foo.rbxmx").unwrap();
-        let instance_snapshot =
-            SnapshotRbxmx::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = SnapshotRbxmx::from_vfs(
+            &InstanceContext::default(),
+            &mut vfs,
+            Path::new("/foo.rbxmx"),
+        )
+        .unwrap()
+        .unwrap();
 
         assert_eq!(instance_snapshot.name, "foo");
         assert_eq!(instance_snapshot.class_name, "Folder");
-        assert_eq!(instance_snapshot.properties, HashMap::new());
+        assert_eq!(instance_snapshot.properties, Default::default());
         assert_eq!(instance_snapshot.children, Vec::new());
     }
 }

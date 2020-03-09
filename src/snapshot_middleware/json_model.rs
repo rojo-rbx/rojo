@@ -129,43 +129,47 @@ impl JsonModelCore {
     }
 }
 
-#[cfg(all(test, feature = "FIXME"))]
+#[cfg(test)]
 mod test {
     use super::*;
 
-    use insta::assert_yaml_snapshot;
-
-    use crate::vfs::{NoopFetcher, VfsDebug, VfsSnapshot};
+    use vfs::{InMemoryFs, VfsSnapshot};
 
     #[test]
     fn model_from_vfs() {
-        let mut vfs = Vfs::new(NoopFetcher);
-        let file = VfsSnapshot::file(
-            r#"
-            {
-              "Name": "children",
-              "ClassName": "IntValue",
-              "Properties": {
-                "Value": 5
-              },
-              "Children": [
-                {
-                  "Name": "The Child",
-                  "ClassName": "StringValue"
-                }
-              ]
-            }
-        "#,
-        );
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
+            "/foo.model.json",
+            VfsSnapshot::file(
+                r#"
+                    {
+                      "Name": "children",
+                      "ClassName": "IntValue",
+                      "Properties": {
+                        "Value": 5
+                      },
+                      "Children": [
+                        {
+                          "Name": "The Child",
+                          "ClassName": "StringValue"
+                        }
+                      ]
+                    }
+                "#,
+            ),
+        )
+        .unwrap();
 
-        vfs.debug_load_snapshot("/foo.model.json", file);
+        let mut vfs = Vfs::new(imfs);
 
-        let entry = vfs.get("/foo.model.json").unwrap();
-        let instance_snapshot =
-            SnapshotJsonModel::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = SnapshotJsonModel::from_vfs(
+            &InstanceContext::default(),
+            &mut vfs,
+            Path::new("/foo.model.json"),
+        )
+        .unwrap()
+        .unwrap();
 
-        assert_yaml_snapshot!(instance_snapshot);
+        insta::assert_yaml_snapshot!(instance_snapshot);
     }
 }
