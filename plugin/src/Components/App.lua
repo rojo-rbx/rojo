@@ -13,6 +13,7 @@ local Version = require(Plugin.Version)
 local preloadAssets = require(Plugin.preloadAssets)
 local strict = require(Plugin.strict)
 
+local Theme = require(Plugin.Components.Theme)
 local ConnectPanel = require(Plugin.Components.ConnectPanel)
 local ConnectingPanel = require(Plugin.Components.ConnectingPanel)
 local ConnectionActivePanel = require(Plugin.Components.ConnectionActivePanel)
@@ -199,9 +200,11 @@ function App:render()
 		}
 	end
 
-	return Roact.createElement(Roact.Portal, {
-		target = self.dockWidget,
-	}, children)
+	return Roact.createElement(Theme.StudioProvider, nil, {
+		UI = Roact.createElement(Roact.Portal, {
+			target = self.dockWidget,
+		}, children),
+	})
 end
 
 function App:didMount()
