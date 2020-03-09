@@ -61,49 +61,25 @@ impl SnapshotMiddleware for SnapshotTxt {
     }
 }
 
-#[cfg(all(test, feature = "FIXME"))]
+#[cfg(test)]
 mod test {
     use super::*;
 
-    use insta::assert_yaml_snapshot;
-    use maplit::hashmap;
-    use rbx_dom_weak::RbxInstanceProperties;
-
-    use crate::vfs::{NoopFetcher, VfsDebug};
+    use vfs::{InMemoryFs, VfsSnapshot};
 
     #[test]
     fn instance_from_vfs() {
-        let mut vfs = Vfs::new(NoopFetcher);
+        let mut imfs = InMemoryFs::new();
+        let mut vfs = Vfs::new(imfs.clone());
         let file = VfsSnapshot::file("Hello there!");
 
-        vfs.debug_load_snapshot("/foo.txt", file);
+        imfs.load_snapshot("/foo.txt", file).unwrap();
 
-        let entry = vfs.get("/foo.txt").unwrap();
         let instance_snapshot =
-            SnapshotTxt::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
+            SnapshotTxt::from_vfs(&InstanceContext::default(), &mut vfs, Path::new("/foo.txt"))
                 .unwrap()
                 .unwrap();
 
-        assert_yaml_snapshot!(instance_snapshot);
-    }
-
-    fn folder(name: impl Into<String>) -> RbxInstanceProperties {
-        RbxInstanceProperties {
-            name: name.into(),
-            class_name: "Folder".to_owned(),
-            properties: Default::default(),
-        }
-    }
-
-    fn string_value(name: impl Into<String>, value: impl Into<String>) -> RbxInstanceProperties {
-        RbxInstanceProperties {
-            name: name.into(),
-            class_name: "StringValue".to_owned(),
-            properties: hashmap! {
-                "Value".to_owned() => RbxValue::String {
-                    value: value.into(),
-                },
-            },
-        }
+        insta::assert_yaml_snapshot!(instance_snapshot);
     }
 }
