@@ -1,22 +1,22 @@
 use std::collections::{BTreeSet, HashMap, VecDeque};
 use std::io;
 use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex};
 
 use crate::{DirEntry, Metadata, ReadDir, VfsBackend, VfsEvent, VfsSnapshot};
 
-/// `VfsBackend` that reads from an in-memory filesystem, intended for setting
-/// up testing scenarios quickly.
-#[derive(Debug)]
-pub struct MemoryBackend {
-    entries: HashMap<PathBuf, Entry>,
-    orphans: BTreeSet<PathBuf>,
+/// In-memory filesystem that can be used as a VFS backend.
+///
+/// Internally reference counted.
+#[derive(Debug, Clone)]
+pub struct InMemoryFs {
+    inner: Arc<Mutex<InMemoryFsInner>>,
 }
 
-impl MemoryBackend {
+impl InMemoryFs {
     pub fn new() -> Self {
         Self {
-            entries: HashMap::new(),
-            orphans: BTreeSet::new(),
+            inner: Arc::new(Mutex::new(InMemoryFsInner::new())),
         }
     }
 
@@ -25,8 +25,26 @@ impl MemoryBackend {
         path: P,
         snapshot: VfsSnapshot,
     ) -> io::Result<()> {
-        let path = path.into();
+        let mut inner = self.inner.lock().unwrap();
+        inner.load_snapshot(path.into(), snapshot)
+    }
+}
 
+#[derive(Debug)]
+struct InMemoryFsInner {
+    entries: HashMap<PathBuf, Entry>,
+    orphans: BTreeSet<PathBuf>,
+}
+
+impl InMemoryFsInner {
+    fn new() -> Self {
+        Self {
+            entries: HashMap::new(),
+            orphans: BTreeSet::new(),
+        }
+    }
+
+    fn load_snapshot(&mut self, path: PathBuf, snapshot: VfsSnapshot) -> io::Result<()> {
         if let Some(parent_path) = path.parent() {
             if let Some(parent_entry) = self.entries.get_mut(parent_path) {
                 if let Entry::Dir { children } = parent_entry {
@@ -84,9 +102,11 @@ enum Entry {
     Dir { children: BTreeSet<PathBuf> },
 }
 
-impl VfsBackend for MemoryBackend {
+impl VfsBackend for InMemoryFs {
     fn read(&mut self, path: &Path) -> io::Result<Vec<u8>> {
-        match self.entries.get(path) {
+        let inner = self.inner.lock().unwrap();
+
+        match inner.entries.get(path) {
             Some(Entry::File { contents }) => Ok(contents.clone()),
             Some(Entry::Dir { .. }) => must_be_file(path),
             None => not_found(path),
@@ -94,8 +114,10 @@ impl VfsBackend for MemoryBackend {
     }
 
     fn write(&mut self, path: &Path, data: &[u8]) -> io::Result<()> {
-        self.load_snapshot(
-            path,
+        let mut inner = self.inner.lock().unwrap();
+
+        inner.load_snapshot(
+            path.to_path_buf(),
             VfsSnapshot::File {
                 contents: data.to_owned(),
             },
@@ -103,7 +125,9 @@ impl VfsBackend for MemoryBackend {
     }
 
     fn read_dir(&mut self, path: &Path) -> io::Result<ReadDir> {
-        match self.entries.get(path) {
+        let inner = self.inner.lock().unwrap();
+
+        match inner.entries.get(path) {
             Some(Entry::Dir { children }) => {
                 let iter = children
                     .clone()
@@ -120,9 +144,11 @@ impl VfsBackend for MemoryBackend {
     }
 
     fn remove_file(&mut self, path: &Path) -> io::Result<()> {
-        match self.entries.get(path) {
+        let mut inner = self.inner.lock().unwrap();
+
+        match inner.entries.get(path) {
             Some(Entry::File { .. }) => {
-                self.remove(path.to_owned());
+                inner.remove(path.to_owned());
                 Ok(())
             }
             Some(Entry::Dir { .. }) => must_be_file(path),
@@ -131,9 +157,11 @@ impl VfsBackend for MemoryBackend {
     }
 
     fn remove_dir_all(&mut self, path: &Path) -> io::Result<()> {
-        match self.entries.get(path) {
+        let mut inner = self.inner.lock().unwrap();
+
+        match inner.entries.get(path) {
             Some(Entry::Dir { .. }) => {
-                self.remove(path.to_owned());
+                inner.remove(path.to_owned());
                 Ok(())
             }
             Some(Entry::File { .. }) => must_be_dir(path),
@@ -142,7 +170,9 @@ impl VfsBackend for MemoryBackend {
     }
 
     fn metadata(&mut self, path: &Path) -> io::Result<Metadata> {
-        match self.entries.get(path) {
+        let inner = self.inner.lock().unwrap();
+
+        match inner.entries.get(path) {
             Some(Entry::File { .. }) => Ok(Metadata { is_file: true }),
             Some(Entry::Dir { .. }) => Ok(Metadata { is_file: false }),
             None => not_found(path),

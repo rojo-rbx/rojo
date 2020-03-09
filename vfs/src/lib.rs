@@ -1,4 +1,4 @@
-mod memory_backend;
+mod in_memory_fs;
 mod noop_backend;
 mod snapshot;
 mod std_backend;
@@ -7,7 +7,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, MutexGuard};
 
-pub use memory_backend::MemoryBackend;
+pub use in_memory_fs::InMemoryFs;
 pub use noop_backend::NoopBackend;
 pub use snapshot::VfsSnapshot;
 pub use std_backend::StdBackend;
@@ -18,9 +18,9 @@ mod sealed {
     /// Sealing trait for VfsBackend.
     pub trait Sealed {}
 
-    impl Sealed for MemoryBackend {}
     impl Sealed for NoopBackend {}
     impl Sealed for StdBackend {}
+    impl Sealed for InMemoryFs {}
 }
 
 /// Trait that transforms `io::Result<T>` into `io::Result<Option<T>>`.
