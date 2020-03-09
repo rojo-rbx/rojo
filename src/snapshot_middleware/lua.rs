@@ -131,153 +131,175 @@ fn snapshot_init(
     Ok(None)
 }
 
-#[cfg(all(test, feature = "FIXME"))]
+#[cfg(test)]
 mod test {
     use super::*;
 
-    use insta::{assert_yaml_snapshot, with_settings};
-
-    use crate::vfs::{NoopFetcher, VfsDebug, VfsSnapshot};
+    use vfs::{InMemoryFs, VfsSnapshot};
 
     #[test]
     fn module_from_vfs() {
-        let mut vfs = Vfs::new(NoopFetcher);
-        let file = VfsSnapshot::file("Hello there!");
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot("/foo.lua", VfsSnapshot::file("Hello there!"))
+            .unwrap();
 
-        vfs.debug_load_snapshot("/foo.lua", file);
+        let mut vfs = Vfs::new(imfs);
 
-        let entry = vfs.get("/foo.lua").unwrap();
         let instance_snapshot =
-            SnapshotLua::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
+            SnapshotLua::from_vfs(&InstanceContext::default(), &mut vfs, Path::new("/foo.lua"))
                 .unwrap()
                 .unwrap();
 
-        assert_yaml_snapshot!(instance_snapshot);
+        insta::assert_yaml_snapshot!(instance_snapshot);
     }
 
     #[test]
     fn server_from_vfs() {
-        let mut vfs = Vfs::new(NoopFetcher);
-        let file = VfsSnapshot::file("Hello there!");
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot("/foo.server.lua", VfsSnapshot::file("Hello there!"))
+            .unwrap();
 
-        vfs.debug_load_snapshot("/foo.server.lua", file);
+        let mut vfs = Vfs::new(imfs);
 
-        let entry = vfs.get("/foo.server.lua").unwrap();
-        let instance_snapshot =
-            SnapshotLua::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = SnapshotLua::from_vfs(
+            &InstanceContext::default(),
+            &mut vfs,
+            Path::new("/foo.server.lua"),
+        )
+        .unwrap()
+        .unwrap();
 
-        assert_yaml_snapshot!(instance_snapshot);
+        insta::assert_yaml_snapshot!(instance_snapshot);
     }
 
     #[test]
     fn client_from_vfs() {
-        let mut vfs = Vfs::new(NoopFetcher);
-        let file = VfsSnapshot::file("Hello there!");
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot("/foo.client.lua", VfsSnapshot::file("Hello there!"))
+            .unwrap();
 
-        vfs.debug_load_snapshot("/foo.client.lua", file);
+        let mut vfs = Vfs::new(imfs);
 
-        let entry = vfs.get("/foo.client.lua").unwrap();
-        let instance_snapshot =
-            SnapshotLua::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = SnapshotLua::from_vfs(
+            &InstanceContext::default(),
+            &mut vfs,
+            Path::new("/foo.client.lua"),
+        )
+        .unwrap()
+        .unwrap();
 
-        assert_yaml_snapshot!(instance_snapshot);
+        insta::assert_yaml_snapshot!(instance_snapshot);
     }
 
     #[test]
     fn init_module_from_vfs() {
-        let mut vfs = Vfs::new(NoopFetcher);
-        let dir = VfsSnapshot::dir(hashmap! {
-            "init.lua" => VfsSnapshot::file("Hello!"),
-        });
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
+            "/root",
+            VfsSnapshot::dir(hashmap! {
+                "init.lua" => VfsSnapshot::file("Hello!"),
+            }),
+        )
+        .unwrap();
 
-        vfs.debug_load_snapshot("/root", dir);
+        let mut vfs = Vfs::new(imfs);
 
-        let entry = vfs.get("/root").unwrap();
         let instance_snapshot =
-            SnapshotLua::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
+            SnapshotLua::from_vfs(&InstanceContext::default(), &mut vfs, Path::new("/root"))
                 .unwrap()
                 .unwrap();
 
-        assert_yaml_snapshot!(instance_snapshot);
+        insta::assert_yaml_snapshot!(instance_snapshot);
     }
 
     #[test]
     fn module_with_meta() {
-        let mut vfs = Vfs::new(NoopFetcher);
-        let file = VfsSnapshot::file("Hello there!");
-        let meta = VfsSnapshot::file(
-            r#"
-            {
-                "ignoreUnknownInstances": true
-            }
-        "#,
-        );
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot("/foo.lua", VfsSnapshot::file("Hello there!"))
+            .unwrap();
+        imfs.load_snapshot(
+            "/foo.meta.json",
+            VfsSnapshot::file(
+                r#"
+                    {
+                        "ignoreUnknownInstances": true
+                    }
+                "#,
+            ),
+        )
+        .unwrap();
 
-        vfs.debug_load_snapshot("/foo.lua", file);
-        vfs.debug_load_snapshot("/foo.meta.json", meta);
+        let mut vfs = Vfs::new(imfs);
 
-        let entry = vfs.get("/foo.lua").unwrap();
         let instance_snapshot =
-            SnapshotLua::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
+            SnapshotLua::from_vfs(&InstanceContext::default(), &mut vfs, Path::new("/foo.lua"))
                 .unwrap()
                 .unwrap();
 
-        assert_yaml_snapshot!(instance_snapshot);
+        insta::assert_yaml_snapshot!(instance_snapshot);
     }
 
     #[test]
     fn script_with_meta() {
-        let mut vfs = Vfs::new(NoopFetcher);
-        let file = VfsSnapshot::file("Hello there!");
-        let meta = VfsSnapshot::file(
-            r#"
-            {
-                "ignoreUnknownInstances": true
-            }
-        "#,
-        );
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot("/foo.server.lua", VfsSnapshot::file("Hello there!"))
+            .unwrap();
+        imfs.load_snapshot(
+            "/foo.meta.json",
+            VfsSnapshot::file(
+                r#"
+                    {
+                        "ignoreUnknownInstances": true
+                    }
+                "#,
+            ),
+        )
+        .unwrap();
 
-        vfs.debug_load_snapshot("/foo.server.lua", file);
-        vfs.debug_load_snapshot("/foo.meta.json", meta);
+        let mut vfs = Vfs::new(imfs);
 
-        let entry = vfs.get("/foo.server.lua").unwrap();
-        let instance_snapshot =
-            SnapshotLua::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = SnapshotLua::from_vfs(
+            &InstanceContext::default(),
+            &mut vfs,
+            Path::new("/foo.server.lua"),
+        )
+        .unwrap()
+        .unwrap();
 
-        assert_yaml_snapshot!(instance_snapshot);
+        insta::assert_yaml_snapshot!(instance_snapshot);
     }
 
     #[test]
     fn script_disabled() {
-        let mut vfs = Vfs::new(NoopFetcher);
-        let file = VfsSnapshot::file("Hello there!");
-        let meta = VfsSnapshot::file(
-            r#"
-            {
-                "properties": {
-                    "Disabled": true
-                }
-            }
-            "#,
-        );
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot("/bar.server.lua", VfsSnapshot::file("Hello there!"))
+            .unwrap();
+        imfs.load_snapshot(
+            "/bar.meta.json",
+            VfsSnapshot::file(
+                r#"
+                    {
+                        "properties": {
+                            "Disabled": true
+                        }
+                    }
+                "#,
+            ),
+        )
+        .unwrap();
 
-        vfs.debug_load_snapshot("/bar.server.lua", file);
-        vfs.debug_load_snapshot("/bar.meta.json", meta);
+        let mut vfs = Vfs::new(imfs);
 
-        let entry = vfs.get("/bar.server.lua").unwrap();
-        let instance_snapshot =
-            SnapshotLua::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = SnapshotLua::from_vfs(
+            &InstanceContext::default(),
+            &mut vfs,
+            Path::new("/bar.server.lua"),
+        )
+        .unwrap()
+        .unwrap();
 
-        with_settings!({ sort_maps => true }, {
-            assert_yaml_snapshot!(instance_snapshot);
+        insta::with_settings!({ sort_maps => true }, {
+            insta::assert_yaml_snapshot!(instance_snapshot);
         });
     }
 }
