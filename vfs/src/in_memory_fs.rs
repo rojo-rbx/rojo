@@ -3,6 +3,8 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
+use crossbeam_channel::{Receiver, Sender};
+
 use crate::{DirEntry, Metadata, ReadDir, VfsBackend, VfsEvent, VfsSnapshot};
 
 /// In-memory filesystem that can be used as a VFS backend.
@@ -28,19 +30,31 @@ impl InMemoryFs {
         let mut inner = self.inner.lock().unwrap();
         inner.load_snapshot(path.into(), snapshot)
     }
+
+    pub fn raise_event(&mut self, event: VfsEvent) {
+        let inner = self.inner.lock().unwrap();
+        inner.event_sender.send(event).unwrap();
+    }
 }
 
 #[derive(Debug)]
 struct InMemoryFsInner {
     entries: HashMap<PathBuf, Entry>,
     orphans: BTreeSet<PathBuf>,
+
+    event_receiver: Receiver<VfsEvent>,
+    event_sender: Sender<VfsEvent>,
 }
 
 impl InMemoryFsInner {
     fn new() -> Self {
+        let (event_sender, event_receiver) = crossbeam_channel::unbounded();
+
         Self {
             entries: HashMap::new(),
             orphans: BTreeSet::new(),
+            event_receiver,
+            event_sender,
         }
     }
 
@@ -180,7 +194,9 @@ impl VfsBackend for InMemoryFs {
     }
 
     fn event_receiver(&self) -> crossbeam_channel::Receiver<VfsEvent> {
-        crossbeam_channel::never()
+        let inner = self.inner.lock().unwrap();
+
+        inner.event_receiver.clone()
     }
 
     fn watch(&mut self, _path: &Path) -> io::Result<()> {
