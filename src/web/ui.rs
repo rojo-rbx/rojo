@@ -1,13 +1,12 @@
 //! Defines the HTTP-based UI. These endpoints generally return HTML and SVG.
 
-use std::{borrow::Cow, path::Path, sync::Arc, time::Duration};
+use std::{borrow::Cow, sync::Arc, time::Duration};
 
 use futures::{future, Future};
 use hyper::{header, service::Service, Body, Method, Request, Response, StatusCode};
 use maplit::hashmap;
 use rbx_dom_weak::{RbxId, RbxValue};
 use ritz::{html, Fragment, HtmlContent, HtmlSelfClosingTag};
-use vfs::Vfs;
 
 use crate::{
     serve_session::ServeSession,
@@ -35,7 +34,6 @@ impl Service for UiService {
             (&Method::GET, "/logo.png") => self.handle_logo(),
             (&Method::GET, "/icon.png") => self.handle_icon(),
             (&Method::GET, "/show-instances") => self.handle_show_instances(),
-            (&Method::GET, "/show-vfs") => self.handle_show_vfs(),
             (_method, path) => {
                 return json(
                     ErrorResponse::not_found(format!("Route not found: {}", path)),
@@ -71,7 +69,6 @@ impl UiService {
         let page = self.normal_page(html! {
             <div class="button-list">
                 { Self::button("Rojo Documentation", "https://rojo.space/docs") }
-                { Self::button("View virtual filesystem state", "/show-vfs") }
                 { Self::button("View instance tree state", "/show-instances") }
             </div>
         });
@@ -94,103 +91,6 @@ impl UiService {
             .header(header::CONTENT_TYPE, "text/html")
             .body(Body::from(format!("<!DOCTYPE html>{}", page)))
             .unwrap()
-    }
-
-    fn handle_show_vfs(&self) -> Response<Body> {
-        // let vfs = self.serve_session.vfs();
-
-        // let orphans: Vec<_> = vfs
-        //     .debug_orphans()
-        //     .into_iter()
-        //     .map(|path| Self::render_vfs_path(&vfs, &path, true))
-        //     .collect();
-
-        // let watched_list: Vec<_> = vfs
-        //     .debug_watched_paths()
-        //     .into_iter()
-        //     .map(|path| {
-        //         html! {
-        //             <li>{ format!("{}", path.display()) }</li>
-        //         }
-        //     })
-        //     .collect();
-
-        // let page = self.normal_page(html! {
-        //     <>
-        //         <section class="main-section">
-        //             <h1 class="section-title">"Known FS Items"</h1>
-        //             <div>{ Fragment::new(orphans) }</div>
-        //         </section>
-
-        //         <section class="main-section">
-        //             <h1 class="section-title">"Watched Paths"</h1>
-        //             <ul class="path-list">{ Fragment::new(watched_list) }</ul>
-        //         </section>
-        //     </>
-        // });
-
-        let page = "";
-
-        Response::builder()
-            .header(header::CONTENT_TYPE, "text/html")
-            .body(Body::from(format!("<!DOCTYPE html>{}", page)))
-            .unwrap()
-    }
-
-    fn render_vfs_path(vfs: &Vfs, path: &Path, is_root: bool) -> HtmlContent<'static> {
-        unimplemented!()
-        // let is_file = vfs.debug_is_file(path);
-
-        // let (note, children) = if is_file {
-        //     (HtmlContent::None, Vec::new())
-        // } else {
-        //     let (is_exhaustive, mut children) = vfs.debug_children(path).unwrap();
-
-        //     // Sort files above directories, then sort how Path does after that.
-        //     children.sort_unstable_by(|a, b| {
-        //         let a_is_file = vfs.debug_is_file(a);
-        //         let b_is_file = vfs.debug_is_file(b);
-
-        //         b_is_file.cmp(&a_is_file).then_with(|| a.cmp(b))
-        //     });
-
-        //     let children: Vec<_> = children
-        //         .into_iter()
-        //         .map(|child| Self::render_vfs_path(vfs, &child, false))
-        //         .collect();
-
-        //     let note = if is_exhaustive {
-        //         HtmlContent::None
-        //     } else {
-        //         html!({ " (not enumerated)" })
-        //     };
-
-        //     (note, children)
-        // };
-
-        // // For root entries, we want the full path to contextualize the path.
-        // let mut name = if is_root {
-        //     path.to_str().unwrap().to_owned()
-        // } else {
-        //     path.file_name().unwrap().to_str().unwrap().to_owned()
-        // };
-
-        // // Directories should end with `/` in the UI to mark them.
-        // if !is_file && !name.ends_with('/') && !name.ends_with('\\') {
-        //     name.push('/');
-        // }
-
-        // html! {
-        //     <div class="vfs-entry">
-        //         <div>
-        //             <span class="vfs-entry-name">{ name }</span>
-        //             <span class="vfs-entry-note">{ note }</span>
-        //         </div>
-        //         <div class="vfs-entry-children">
-        //             { Fragment::new(children) }
-        //         </div>
-        //     </div>
-        // }
     }
 
     fn instance(tree: &RojoTree, id: RbxId) -> HtmlContent<'_> {
