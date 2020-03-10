@@ -1,6 +1,6 @@
 use std::{borrow::Cow, collections::HashMap, path::Path};
 
-use rbx_reflection::try_resolve_value;
+use rbx_reflection::{get_class_descriptor, try_resolve_value};
 
 use crate::{
     project::{Project, ProjectNode},
@@ -64,6 +64,7 @@ impl SnapshotMiddleware for SnapshotProject {
             &project.name,
             &project.tree,
             vfs,
+            None,
         )?
         .unwrap();
 
@@ -98,6 +99,7 @@ pub fn snapshot_project_node<F: VfsFetcher>(
     instance_name: &str,
     node: &ProjectNode,
     vfs: &Vfs<F>,
+    parent_class: Option<Cow<'static, str>>,
 ) -> SnapshotInstanceResult {
     let name = Cow::Owned(instance_name.to_owned());
     let mut class_name = node
@@ -164,14 +166,25 @@ pub fn snapshot_project_node<F: VfsFetcher>(
         }
     }
 
-    let class_name = class_name
-        // TODO: Turn this into an error object.
-        .expect("$className or $path must be specified");
+    let class_name = class_name.unwrap_or_else(|| {
+        parent_class
+            .filter(|class| class == "DataModel")
+            .and_then(|_| get_class_descriptor(&name))
+            .filter(|class_descriptor| class_descriptor.is_service())
+            .map(|_| name.clone())
+            // TODO: Turn this into an error object.
+            .expect("$className or $path must be specified")
+    });
 
     for (child_name, child_project_node) in &node.children {
-        if let Some(child) =
-            snapshot_project_node(context, project_folder, child_name, child_project_node, vfs)?
-        {
+        if let Some(child) = snapshot_project_node(
+            context,
+            project_folder,
+            child_name,
+            child_project_node,
+            vfs,
+            Some(class_name.clone()),
+        )? {
             children.push(child);
         }
     }

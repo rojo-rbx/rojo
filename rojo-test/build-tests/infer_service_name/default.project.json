@@ -1,0 +1,16 @@
+{
+  "name": "infer-service-name",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "Main": {
+        "$path": "main.lua"
+      }
+    },
+    "HttpService": {
+      "$properties": {
+        "HttpEnabled": true
+      }
+    }
+  }
+}

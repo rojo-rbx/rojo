@@ -28,6 +28,7 @@ gen_build_tests! {
     csv_in_folder,
     deep_nesting,
     gitkeep,
+    infer_service_name,
     init_meta_class_name,
     init_meta_properties,
     init_with_children,

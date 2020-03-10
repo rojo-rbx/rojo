@@ -332,6 +332,7 @@ fn compute_and_apply_changes<F: VfsFetcher>(
                 instance_name,
                 project_node,
                 &vfs,
+                None,
             )
             .expect("snapshot failed")
             .expect("snapshot did not return an instance");
