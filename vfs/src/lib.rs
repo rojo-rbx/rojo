@@ -107,6 +107,8 @@ impl Metadata {
     }
 }
 
+/// Represents an event that a filesystem can raise that might need to be
+/// handled.
 #[derive(Debug)]
 #[non_exhaustive]
 pub enum VfsEvent {

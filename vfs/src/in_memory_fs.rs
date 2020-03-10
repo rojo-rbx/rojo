@@ -9,19 +9,28 @@ use crate::{DirEntry, Metadata, ReadDir, VfsBackend, VfsEvent, VfsSnapshot};
 
 /// In-memory filesystem that can be used as a VFS backend.
 ///
-/// Internally reference counted.
+/// Internally reference counted to enable giving a copy to
+/// [`Vfs`](struct.Vfs.html) and keeping the original to mutate the filesystem's
+/// state with.
 #[derive(Debug, Clone)]
 pub struct InMemoryFs {
     inner: Arc<Mutex<InMemoryFsInner>>,
 }
 
 impl InMemoryFs {
+    /// Create a new empty `InMemoryFs`.
     pub fn new() -> Self {
         Self {
             inner: Arc::new(Mutex::new(InMemoryFsInner::new())),
         }
     }
 
+    /// Load a [`VfsSnapshot`](enum.VfsSnapshot.html) into a subtree of the
+    /// in-memory filesystem.
+    ///
+    /// This function will return an error if the operations required to apply
+    /// the snapshot result in errors, like trying to create a file inside a
+    /// file.
     pub fn load_snapshot<P: Into<PathBuf>>(
         &mut self,
         path: P,
@@ -31,6 +40,10 @@ impl InMemoryFs {
         inner.load_snapshot(path.into(), snapshot)
     }
 
+    /// Raises a filesystem change event.
+    ///
+    /// If this `InMemoryFs` is being used as the backend of a
+    /// [`Vfs`](struct.Vfs.html), then any listeners be notified of this event.
     pub fn raise_event(&mut self, event: VfsEvent) {
         let inner = self.inner.lock().unwrap();
         inner.event_sender.send(event).unwrap();
