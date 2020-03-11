@@ -11,7 +11,6 @@ use rbx_dom_weak::RbxId;
 use crate::{
     serve_session::ServeSession,
     snapshot::{PatchSet, PatchUpdate},
-    vfs::VfsFetcher,
     web::{
         interface::{
             ErrorResponse, Instance, InstanceMetadata as WebInstanceMetadata, InstanceUpdate,
@@ -22,11 +21,11 @@ use crate::{
     },
 };
 
-pub struct ApiService<F> {
-    serve_session: Arc<ServeSession<F>>,
+pub struct ApiService {
+    serve_session: Arc<ServeSession>,
 }
 
-impl<F: VfsFetcher> Service for ApiService<F> {
+impl Service for ApiService {
     type ReqBody = Body;
     type ResBody = Body;
     type Error = hyper::Error;
@@ -53,8 +52,8 @@ impl<F: VfsFetcher> Service for ApiService<F> {
     }
 }
 
-impl<F: VfsFetcher> ApiService<F> {
-    pub fn new(serve_session: Arc<ServeSession<F>>) -> Self {
+impl ApiService {
+    pub fn new(serve_session: Arc<ServeSession>) -> Self {
         ApiService { serve_session }
     }
 

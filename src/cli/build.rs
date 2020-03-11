@@ -5,13 +5,10 @@ use std::{
 
 use snafu::{ResultExt, Snafu};
 use tokio::runtime::Runtime;
+use vfs::Vfs;
 
 use crate::{
-    cli::BuildCommand,
-    project::ProjectError,
-    serve_session::ServeSession,
-    snapshot::RojoTree,
-    vfs::{RealFetcher, Vfs, WatchMode},
+    cli::BuildCommand, project::ProjectError, serve_session::ServeSession, snapshot::RojoTree,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -75,13 +72,7 @@ pub fn build(options: BuildCommand) -> Result<(), BuildError> {
 fn build_inner(options: BuildCommand) -> Result<(), Error> {
     log::trace!("Constructing in-memory filesystem");
 
-    let watch_mode = if options.watch {
-        WatchMode::Enabled
-    } else {
-        WatchMode::Disabled
-    };
-
-    let vfs = Vfs::new(RealFetcher::new(watch_mode));
+    let vfs = Vfs::new_default();
 
     let session = ServeSession::new(vfs, &options.absolute_project());
     let mut cursor = session.message_queue().cursor();

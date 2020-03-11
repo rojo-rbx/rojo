@@ -1,12 +1,8 @@
 use reqwest::header::{ACCEPT, CONTENT_TYPE, COOKIE, USER_AGENT};
 use snafu::{ResultExt, Snafu};
+use vfs::Vfs;
 
-use crate::{
-    auth_cookie::get_auth_cookie,
-    cli::UploadCommand,
-    common_setup,
-    vfs::{RealFetcher, Vfs, WatchMode},
-};
+use crate::{auth_cookie::get_auth_cookie, cli::UploadCommand, common_setup};
 
 #[derive(Debug, Snafu)]
 pub struct UploadError(Error);
@@ -40,7 +36,7 @@ fn upload_inner(options: UploadCommand) -> Result<(), Error> {
         .ok_or(Error::NeedAuthCookie)?;
 
     log::trace!("Constructing in-memory filesystem");
-    let vfs = Vfs::new(RealFetcher::new(WatchMode::Disabled));
+    let vfs = Vfs::new_default();
 
     let (_maybe_project, tree) = common_setup::start(&options.absolute_project(), &vfs);
 

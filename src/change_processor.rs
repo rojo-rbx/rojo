@@ -6,6 +6,7 @@ use std::{
 use crossbeam_channel::{select, Receiver, RecvError, Sender};
 use jod_thread::JoinHandle;
 use rbx_dom_weak::{RbxId, RbxValue};
+use vfs::{IoResultExt, Vfs, VfsEvent};
 
 use crate::{
     message_queue::MessageQueue,
@@ -13,7 +14,6 @@ use crate::{
         apply_patch_set, compute_patch_set, AppliedPatchSet, InstigatingSource, PatchSet, RojoTree,
     },
     snapshot_middleware::{snapshot_from_vfs, snapshot_project_node},
-    vfs::{FsResultExt, Vfs, VfsEvent, VfsFetcher},
 };
 
 /// Owns the connection between Rojo's VFS and its DOM by holding onto another
@@ -43,14 +43,14 @@ pub struct ChangeProcessor {
 impl ChangeProcessor {
     /// Spin up the ChangeProcessor, connecting it to the given tree, VFS, and
     /// outbound message queue.
-    pub fn start<F: VfsFetcher + Send + Sync + 'static>(
+    pub fn start(
         tree: Arc<Mutex<RojoTree>>,
-        vfs: Arc<Vfs<F>>,
+        vfs: Arc<Vfs>,
         message_queue: Arc<MessageQueue<AppliedPatchSet>>,
         tree_mutation_receiver: Receiver<PatchSet>,
     ) -> Self {
         let (shutdown_sender, shutdown_receiver) = crossbeam_channel::bounded(1);
-        let vfs_receiver = vfs.change_receiver();
+        let vfs_receiver = vfs.event_receiver();
         let task = JobThreadContext {
             tree,
             vfs,
@@ -107,25 +107,25 @@ impl Drop for ChangeProcessor {
 }
 
 /// Contains all of the state needed to synchronize the DOM and VFS.
-struct JobThreadContext<F> {
+struct JobThreadContext {
     /// A handle to the DOM we're managing.
     tree: Arc<Mutex<RojoTree>>,
 
     /// A handle to the VFS we're managing.
-    vfs: Arc<Vfs<F>>,
+    vfs: Arc<Vfs>,
 
     /// Whenever changes are applied to the DOM, we should push those changes
     /// into this message queue to inform any connected clients.
     message_queue: Arc<MessageQueue<AppliedPatchSet>>,
 }
 
-impl<F: VfsFetcher> JobThreadContext<F> {
+impl JobThreadContext {
     fn handle_vfs_event(&self, event: VfsEvent) {
         log::trace!("Vfs event: {:?}", event);
 
         // Update the VFS immediately with the event.
         self.vfs
-            .commit_change(&event)
+            .commit_event(&event)
             .expect("Error applying VFS change");
 
         // For a given VFS event, we might have many changes to different parts
@@ -135,7 +135,7 @@ impl<F: VfsFetcher> JobThreadContext<F> {
             let mut applied_patches = Vec::new();
 
             match event {
-                VfsEvent::Created(path) | VfsEvent::Modified(path) | VfsEvent::Removed(path) => {
+                VfsEvent::Create(path) | VfsEvent::Write(path) | VfsEvent::Remove(path) => {
                     // Find the nearest ancestor to this path that has
                     // associated instances in the tree. This helps make sure
                     // that we handle additions correctly, especially if we
@@ -164,6 +164,7 @@ impl<F: VfsFetcher> JobThreadContext<F> {
                         }
                     }
                 }
+                _ => log::warn!("Unhandled VFS event: {:?}", event),
             }
 
             applied_patches
@@ -262,11 +263,7 @@ impl<F: VfsFetcher> JobThreadContext<F> {
     }
 }
 
-fn compute_and_apply_changes<F: VfsFetcher>(
-    tree: &mut RojoTree,
-    vfs: &Vfs<F>,
-    id: RbxId,
-) -> Option<AppliedPatchSet> {
+fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: RbxId) -> Option<AppliedPatchSet> {
     let metadata = tree
         .get_metadata(id)
         .expect("metadata missing for instance present in tree");
@@ -288,19 +285,16 @@ fn compute_and_apply_changes<F: VfsFetcher>(
     // file/folder in the first place.
     let applied_patch_set = match instigating_source {
         InstigatingSource::Path(path) => {
-            let maybe_entry = vfs
-                .get(path)
-                .with_not_found()
-                .expect("unexpected VFS error");
+            let maybe_meta = vfs.metadata(path).with_not_found().unwrap();
 
-            match maybe_entry {
-                Some(entry) => {
+            match maybe_meta {
+                Some(_meta) => {
                     // Our instance was previously created from a path and
                     // that path still exists. We can generate a snapshot
                     // starting at that path and use it as the source for
                     // our patch.
 
-                    let snapshot = snapshot_from_vfs(&metadata.context, &vfs, &entry)
+                    let snapshot = snapshot_from_vfs(&metadata.context, &vfs, &path)
                         .expect("snapshot failed")
                         .expect("snapshot did not return an instance");
 

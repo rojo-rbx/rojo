@@ -63,11 +63,14 @@ impl VfsBackend for StdBackend {
     }
 
     fn read_dir(&mut self, path: &Path) -> io::Result<ReadDir> {
-        let inner = fs::read_dir(path)?.map(|entry| {
-            Ok(DirEntry {
-                path: entry?.path(),
-            })
-        });
+        let entries: Result<Vec<_>, _> = fs::read_dir(path)?.collect();
+        let mut entries = entries?;
+
+        entries.sort_by_cached_key(|entry| entry.file_name());
+
+        let inner = entries
+            .into_iter()
+            .map(|entry| Ok(DirEntry { path: entry.path() }));
 
         Ok(ReadDir {
             inner: Box::new(inner),

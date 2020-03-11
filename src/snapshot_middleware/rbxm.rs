@@ -1,11 +1,9 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, path::Path};
 
 use rbx_dom_weak::{RbxInstanceProperties, RbxTree};
+use vfs::Vfs;
 
-use crate::{
-    snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
-    vfs::{Vfs, VfsEntry, VfsFetcher},
-};
+use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
 use super::{
     middleware::{SnapshotInstanceResult, SnapshotMiddleware},
@@ -15,16 +13,14 @@ use super::{
 pub struct SnapshotRbxm;
 
 impl SnapshotMiddleware for SnapshotRbxm {
-    fn from_vfs<F: VfsFetcher>(
-        context: &InstanceContext,
-        vfs: &Vfs<F>,
-        entry: &VfsEntry,
-    ) -> SnapshotInstanceResult {
-        if entry.is_directory() {
+    fn from_vfs(context: &InstanceContext, vfs: &Vfs, path: &Path) -> SnapshotInstanceResult {
+        let meta = vfs.metadata(path)?;
+
+        if meta.is_dir() {
             return Ok(None);
         }
 
-        let instance_name = match match_file_name(entry.path(), ".rbxm") {
+        let instance_name = match match_file_name(path, ".rbxm") {
             Some(name) => name,
             None => return Ok(None),
         };
@@ -36,7 +32,7 @@ impl SnapshotMiddleware for SnapshotRbxm {
         });
 
         let root_id = temp_tree.get_root_id();
-        rbx_binary::decode(&mut temp_tree, root_id, entry.contents(vfs)?.as_slice())
+        rbx_binary::decode(&mut temp_tree, root_id, vfs.read(path)?.as_slice())
             .expect("TODO: Handle rbx_binary errors");
 
         let root_instance = temp_tree.get_instance(root_id).unwrap();
@@ -47,8 +43,8 @@ impl SnapshotMiddleware for SnapshotRbxm {
                 .name(instance_name)
                 .metadata(
                     InstanceMetadata::new()
-                        .instigating_source(entry.path())
-                        .relevant_paths(vec![entry.path().to_path_buf()])
+                        .instigating_source(path)
+                        .relevant_paths(vec![path.to_path_buf()])
                         .context(context),
                 );
 
@@ -63,20 +59,26 @@ impl SnapshotMiddleware for SnapshotRbxm {
 mod test {
     use super::*;
 
-    use crate::vfs::{NoopFetcher, VfsDebug, VfsSnapshot};
+    use vfs::{InMemoryFs, VfsSnapshot};
 
     #[test]
     fn model_from_vfs() {
-        let mut vfs = Vfs::new(NoopFetcher);
-        let file = VfsSnapshot::file(include_bytes!("../../assets/test-folder.rbxm").to_vec());
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
+            "/foo.rbxm",
+            VfsSnapshot::file(include_bytes!("../../assets/test-folder.rbxm").to_vec()),
+        )
+        .unwrap();
 
-        vfs.debug_load_snapshot("/foo.rbxm", file);
+        let mut vfs = Vfs::new(imfs);
 
-        let entry = vfs.get("/foo.rbxm").unwrap();
-        let instance_snapshot =
-            SnapshotRbxm::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = SnapshotRbxm::from_vfs(
+            &InstanceContext::default(),
+            &mut vfs,
+            Path::new("/foo.rbxm"),
+        )
+        .unwrap()
+        .unwrap();
 
         assert_eq!(instance_snapshot.name, "foo");
         assert_eq!(instance_snapshot.class_name, "Folder");

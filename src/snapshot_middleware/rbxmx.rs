@@ -1,7 +1,8 @@
-use crate::{
-    snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
-    vfs::{Vfs, VfsEntry, VfsFetcher},
-};
+use std::path::Path;
+
+use vfs::Vfs;
+
+use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
 use super::{
     middleware::{SnapshotInstanceResult, SnapshotMiddleware},
@@ -11,16 +12,14 @@ use super::{
 pub struct SnapshotRbxmx;
 
 impl SnapshotMiddleware for SnapshotRbxmx {
-    fn from_vfs<F: VfsFetcher>(
-        context: &InstanceContext,
-        vfs: &Vfs<F>,
-        entry: &VfsEntry,
-    ) -> SnapshotInstanceResult {
-        if entry.is_directory() {
+    fn from_vfs(context: &InstanceContext, vfs: &Vfs, path: &Path) -> SnapshotInstanceResult {
+        let meta = vfs.metadata(path)?;
+
+        if meta.is_dir() {
             return Ok(None);
         }
 
-        let instance_name = match match_file_name(entry.path(), ".rbxmx") {
+        let instance_name = match match_file_name(path, ".rbxmx") {
             Some(name) => name,
             None => return Ok(None),
         };
@@ -28,7 +27,7 @@ impl SnapshotMiddleware for SnapshotRbxmx {
         let options = rbx_xml::DecodeOptions::new()
             .property_behavior(rbx_xml::DecodePropertyBehavior::ReadUnknown);
 
-        let temp_tree = rbx_xml::from_reader(entry.contents(vfs)?.as_slice(), options)
+        let temp_tree = rbx_xml::from_reader(vfs.read(path)?.as_slice(), options)
             .expect("TODO: Handle rbx_xml errors");
 
         let root_instance = temp_tree.get_instance(temp_tree.get_root_id()).unwrap();
@@ -39,8 +38,8 @@ impl SnapshotMiddleware for SnapshotRbxmx {
                 .name(instance_name)
                 .metadata(
                     InstanceMetadata::new()
-                        .instigating_source(entry.path())
-                        .relevant_paths(vec![entry.path().to_path_buf()])
+                        .instigating_source(path)
+                        .relevant_paths(vec![path.to_path_buf()])
                         .context(context),
                 );
 
@@ -55,36 +54,40 @@ impl SnapshotMiddleware for SnapshotRbxmx {
 mod test {
     use super::*;
 
-    use std::collections::HashMap;
-
-    use crate::vfs::{NoopFetcher, VfsDebug, VfsSnapshot};
+    use vfs::{InMemoryFs, VfsSnapshot};
 
     #[test]
-    fn model_from_vfs() {
-        let mut vfs = Vfs::new(NoopFetcher);
-        let file = VfsSnapshot::file(
-            r#"
-            <roblox version="4">
-                <Item class="Folder" referent="0">
-                    <Properties>
-                        <string name="Name">THIS NAME IS IGNORED</string>
-                    </Properties>
-                </Item>
-            </roblox>
-        "#,
-        );
+    fn plain_folder() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
+            "/foo.rbxmx",
+            VfsSnapshot::file(
+                r#"
+                    <roblox version="4">
+                        <Item class="Folder" referent="0">
+                            <Properties>
+                                <string name="Name">THIS NAME IS IGNORED</string>
+                            </Properties>
+                        </Item>
+                    </roblox>
+                "#,
+            ),
+        )
+        .unwrap();
 
-        vfs.debug_load_snapshot("/foo.rbxmx", file);
+        let mut vfs = Vfs::new(imfs);
 
-        let entry = vfs.get("/foo.rbxmx").unwrap();
-        let instance_snapshot =
-            SnapshotRbxmx::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = SnapshotRbxmx::from_vfs(
+            &InstanceContext::default(),
+            &mut vfs,
+            Path::new("/foo.rbxmx"),
+        )
+        .unwrap()
+        .unwrap();
 
         assert_eq!(instance_snapshot.name, "foo");
         assert_eq!(instance_snapshot.class_name, "Folder");
-        assert_eq!(instance_snapshot.properties, HashMap::new());
+        assert_eq!(instance_snapshot.properties, Default::default());
         assert_eq!(instance_snapshot.children, Vec::new());
     }
 }

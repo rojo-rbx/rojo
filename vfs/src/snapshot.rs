@@ -1,5 +1,8 @@
 use std::collections::BTreeMap;
 
+/// A slice of a tree of files. Can be loaded into an
+/// [`InMemoryFs`](struct.InMemoryFs.html).
+#[derive(Debug)]
 #[non_exhaustive]
 pub enum VfsSnapshot {
     File {
@@ -24,6 +27,18 @@ impl VfsSnapshot {
                 .into_iter()
                 .map(|(key, value)| (key.into(), value))
                 .collect(),
+        }
+    }
+
+    pub fn empty_file() -> Self {
+        Self::File {
+            contents: Vec::new(),
+        }
+    }
+
+    pub fn empty_dir() -> Self {
+        Self::Dir {
+            children: BTreeMap::new(),
         }
     }
 }

@@ -1,7 +1,5 @@
 use std::{error::Error, fmt, io, path::PathBuf};
 
-use crate::vfs::FsError;
-
 #[derive(Debug)]
 pub struct SnapshotError {
     detail: SnapshotErrorDetail,
@@ -73,11 +71,9 @@ impl fmt::Display for SnapshotError {
     }
 }
 
-impl From<FsError> for SnapshotError {
-    fn from(error: FsError) -> Self {
-        let (inner, path) = error.into_raw();
-
-        Self::new(inner.into(), Some(path))
+impl From<io::Error> for SnapshotError {
+    fn from(inner: io::Error) -> Self {
+        Self::new(inner.into(), Option::<PathBuf>::None)
     }
 }
 

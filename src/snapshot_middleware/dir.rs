@@ -1,32 +1,27 @@
-use std::collections::HashMap;
+use std::path::Path;
 
-use rbx_dom_weak::{RbxId, RbxTree};
+use vfs::{DirEntry, IoResultExt, Vfs};
 
-use crate::{
-    snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
-    vfs::{DirectorySnapshot, FsResultExt, Vfs, VfsEntry, VfsFetcher, VfsSnapshot},
-};
+use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
 use super::{
     error::SnapshotError,
     meta_file::DirectoryMetadata,
-    middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware},
-    snapshot_from_instance, snapshot_from_vfs,
+    middleware::{SnapshotInstanceResult, SnapshotMiddleware},
+    snapshot_from_vfs,
 };
 
 pub struct SnapshotDir;
 
 impl SnapshotMiddleware for SnapshotDir {
-    fn from_vfs<F: VfsFetcher>(
-        context: &InstanceContext,
-        vfs: &Vfs<F>,
-        entry: &VfsEntry,
-    ) -> SnapshotInstanceResult {
-        if entry.is_file() {
+    fn from_vfs(context: &InstanceContext, vfs: &Vfs, path: &Path) -> SnapshotInstanceResult {
+        let meta = vfs.metadata(path)?;
+
+        if meta.is_file() {
             return Ok(None);
         }
 
-        let passes_filter_rules = |child: &VfsEntry| {
+        let passes_filter_rules = |child: &DirEntry| {
             context
                 .path_ignore_rules
                 .iter()
@@ -35,31 +30,36 @@ impl SnapshotMiddleware for SnapshotDir {
 
         let mut snapshot_children = Vec::new();
 
-        for child in entry.children(vfs)?.into_iter().filter(passes_filter_rules) {
-            if let Some(child_snapshot) = snapshot_from_vfs(context, vfs, &child)? {
+        for entry in vfs.read_dir(path)? {
+            let entry = entry?;
+
+            if !passes_filter_rules(&entry) {
+                continue;
+            }
+
+            if let Some(child_snapshot) = snapshot_from_vfs(context, vfs, entry.path())? {
                 snapshot_children.push(child_snapshot);
             }
         }
 
-        let instance_name = entry
-            .path()
+        let instance_name = path
             .file_name()
             .expect("Could not extract file name")
             .to_str()
-            .ok_or_else(|| SnapshotError::file_name_bad_unicode(entry.path()))?
+            .ok_or_else(|| SnapshotError::file_name_bad_unicode(path))?
             .to_string();
 
-        let meta_path = entry.path().join("init.meta.json");
+        let meta_path = path.join("init.meta.json");
 
         let relevant_paths = vec![
-            entry.path().to_path_buf(),
+            path.to_path_buf(),
             meta_path.clone(),
             // TODO: We shouldn't need to know about Lua existing in this
             // middleware. Should we figure out a way for that function to add
             // relevant paths to this middleware?
-            entry.path().join("init.lua"),
-            entry.path().join("init.server.lua"),
-            entry.path().join("init.client.lua"),
+            path.join("init.lua"),
+            path.join("init.server.lua"),
+            path.join("init.client.lua"),
         ];
 
         let mut snapshot = InstanceSnapshot::new()
@@ -68,38 +68,17 @@ impl SnapshotMiddleware for SnapshotDir {
             .children(snapshot_children)
             .metadata(
                 InstanceMetadata::new()
-                    .instigating_source(entry.path())
+                    .instigating_source(path)
                     .relevant_paths(relevant_paths)
                     .context(context),
             );
 
-        if let Some(meta_entry) = vfs.get(meta_path).with_not_found()? {
-            let meta_contents = meta_entry.contents(vfs)?;
+        if let Some(meta_contents) = vfs.read(meta_path).with_not_found()? {
             let mut metadata = DirectoryMetadata::from_slice(&meta_contents);
             metadata.apply_all(&mut snapshot);
         }
 
         Ok(Some(snapshot))
-    }
-
-    fn from_instance(tree: &RbxTree, id: RbxId) -> SnapshotFileResult {
-        let instance = tree.get_instance(id).unwrap();
-
-        if instance.class_name != "Folder" {
-            return None;
-        }
-
-        let mut children = HashMap::new();
-
-        for child_id in instance.get_children_ids() {
-            if let Some((name, child)) = snapshot_from_instance(tree, *child_id) {
-                children.insert(name, child);
-            }
-        }
-
-        let snapshot = VfsSnapshot::Directory(DirectorySnapshot { children });
-
-        Some((instance.name.clone(), snapshot))
     }
 }
 
@@ -107,42 +86,43 @@ impl SnapshotMiddleware for SnapshotDir {
 mod test {
     use super::*;
 
-    use insta::assert_yaml_snapshot;
     use maplit::hashmap;
-
-    use crate::vfs::{NoopFetcher, VfsDebug};
+    use vfs::{InMemoryFs, VfsSnapshot};
 
     #[test]
     fn empty_folder() {
-        let mut vfs = Vfs::new(NoopFetcher);
-        let dir = VfsSnapshot::dir::<String>(HashMap::new());
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot("/foo", VfsSnapshot::empty_dir())
+            .unwrap();
 
-        vfs.debug_load_snapshot("/foo", dir);
+        let mut vfs = Vfs::new(imfs);
 
-        let entry = vfs.get("/foo").unwrap();
         let instance_snapshot =
-            SnapshotDir::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
+            SnapshotDir::from_vfs(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
                 .unwrap()
                 .unwrap();
 
-        assert_yaml_snapshot!(instance_snapshot);
+        insta::assert_yaml_snapshot!(instance_snapshot);
     }
 
     #[test]
     fn folder_in_folder() {
-        let mut vfs = Vfs::new(NoopFetcher);
-        let dir = VfsSnapshot::dir(hashmap! {
-            "Child" => VfsSnapshot::dir::<String>(HashMap::new()),
-        });
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
+            "/foo",
+            VfsSnapshot::dir(hashmap! {
+                "Child" => VfsSnapshot::empty_dir(),
+            }),
+        )
+        .unwrap();
 
-        vfs.debug_load_snapshot("/foo", dir);
+        let mut vfs = Vfs::new(imfs);
 
-        let entry = vfs.get("/foo").unwrap();
         let instance_snapshot =
-            SnapshotDir::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
+            SnapshotDir::from_vfs(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
                 .unwrap()
                 .unwrap();
 
-        assert_yaml_snapshot!(instance_snapshot);
+        insta::assert_yaml_snapshot!(instance_snapshot);
     }
 }

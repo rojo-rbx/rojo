@@ -6,6 +6,7 @@ use std::{
 };
 
 use crossbeam_channel::Sender;
+use vfs::Vfs;
 
 use crate::{
     change_processor::ChangeProcessor,
@@ -14,7 +15,6 @@ use crate::{
     project::Project,
     session_id::SessionId,
     snapshot::{AppliedPatchSet, PatchSet, RojoTree},
-    vfs::{Vfs, VfsFetcher},
 };
 
 /// Contains all of the state for a Rojo serve session.
@@ -24,7 +24,7 @@ use crate::{
 /// why Rojo couldn't expose an IPC or channels-based API for embedding in the
 /// future. `ServeSession` would be roughly the right interface to expose for
 /// those cases.
-pub struct ServeSession<F> {
+pub struct ServeSession {
     /// The object responsible for listening to changes from the in-memory
     /// filesystem, applying them, updating the Roblox instance tree, and
     /// routing messages through the session's message queue to any connected
@@ -68,7 +68,7 @@ pub struct ServeSession<F> {
     ///
     /// The main use for accessing it from the session is for debugging issues
     /// with Rojo's live-sync protocol.
-    vfs: Arc<Vfs<F>>,
+    vfs: Arc<Vfs>,
 
     /// A queue of changes that have been applied to `tree` that affect clients.
     ///
@@ -85,14 +85,14 @@ pub struct ServeSession<F> {
 /// Methods that need thread-safety bounds on VfsFetcher are limited to this
 /// block to prevent needing to spread Send + Sync + 'static into everything
 /// that handles ServeSession.
-impl<F: VfsFetcher + Send + Sync + 'static> ServeSession<F> {
+impl ServeSession {
     /// Start a new serve session from the given in-memory filesystem  and start
     /// path.
     ///
     /// The project file is expected to be loaded out-of-band since it's
     /// currently loaded from the filesystem directly instead of through the
     /// in-memory filesystem layer.
-    pub fn new<P: AsRef<Path>>(vfs: Vfs<F>, start_path: P) -> Self {
+    pub fn new<P: AsRef<Path>>(vfs: Vfs, start_path: P) -> Self {
         let start_path = start_path.as_ref();
 
         log::trace!("Starting new ServeSession at path {}", start_path.display(),);
@@ -131,7 +131,7 @@ impl<F: VfsFetcher + Send + Sync + 'static> ServeSession<F> {
     }
 }
 
-impl<F: VfsFetcher> ServeSession<F> {
+impl ServeSession {
     pub fn tree_handle(&self) -> Arc<Mutex<RojoTree>> {
         Arc::clone(&self.tree)
     }
@@ -144,7 +144,7 @@ impl<F: VfsFetcher> ServeSession<F> {
         self.tree_mutation_sender.clone()
     }
 
-    pub fn vfs(&self) -> &Vfs<F> {
+    pub fn vfs(&self) -> &Vfs {
         &self.vfs
     }
 
@@ -189,201 +189,201 @@ mod serve_session {
 
     use std::{path::PathBuf, time::Duration};
 
-    use insta::assert_yaml_snapshot;
     use maplit::hashmap;
     use rojo_insta_ext::RedactionMap;
     use tokio::{runtime::Runtime, timer::Timeout};
+    use vfs::{InMemoryFs, VfsEvent, VfsSnapshot};
 
-    use crate::{
-        tree_view::view_tree,
-        vfs::{NoopFetcher, TestFetcher, VfsDebug, VfsEvent, VfsSnapshot},
-    };
+    use crate::tree_view::view_tree;
 
     #[test]
     fn just_folder() {
-        let vfs = Vfs::new(NoopFetcher);
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot("/foo", VfsSnapshot::empty_dir())
+            .unwrap();
 
-        vfs.debug_load_snapshot("/foo", VfsSnapshot::empty_dir());
+        let vfs = Vfs::new(imfs);
 
         let session = ServeSession::new(vfs, "/foo");
 
         let mut rm = RedactionMap::new();
-        assert_yaml_snapshot!(view_tree(&session.tree(), &mut rm));
+        insta::assert_yaml_snapshot!(view_tree(&session.tree(), &mut rm));
     }
 
     #[test]
     fn project_with_folder() {
-        let vfs = Vfs::new(NoopFetcher);
-
-        vfs.debug_load_snapshot(
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
             "/foo",
             VfsSnapshot::dir(hashmap! {
                 "default.project.json" => VfsSnapshot::file(r#"
-                {
-                    "name": "HelloWorld",
-                    "tree": {
-                        "$path": "src"
+                    {
+                        "name": "HelloWorld",
+                        "tree": {
+                            "$path": "src"
+                        }
                     }
-                }
-            "#),
+                "#),
                 "src" => VfsSnapshot::dir(hashmap! {
                     "hello.txt" => VfsSnapshot::file("Hello, world!"),
                 }),
             }),
-        );
+        )
+        .unwrap();
+
+        let vfs = Vfs::new(imfs);
 
         let session = ServeSession::new(vfs, "/foo");
 
         let mut rm = RedactionMap::new();
-        assert_yaml_snapshot!(view_tree(&session.tree(), &mut rm));
+        insta::assert_yaml_snapshot!(view_tree(&session.tree(), &mut rm));
     }
 
     #[test]
     fn script_with_meta() {
-        let vfs = Vfs::new(NoopFetcher);
-
-        vfs.debug_load_snapshot(
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
             "/root",
             VfsSnapshot::dir(hashmap! {
                 "test.lua" => VfsSnapshot::file("This is a test."),
                 "test.meta.json" => VfsSnapshot::file(r#"{ "ignoreUnknownInstances": true }"#),
             }),
-        );
+        )
+        .unwrap();
+
+        let vfs = Vfs::new(imfs);
 
         let session = ServeSession::new(vfs, "/root");
 
         let mut rm = RedactionMap::new();
-        assert_yaml_snapshot!(view_tree(&session.tree(), &mut rm));
-    }
-
-    #[test]
-    fn change_script_meta() {
-        let (state, fetcher) = TestFetcher::new();
-
-        state.load_snapshot(
-            "/root",
-            VfsSnapshot::dir(hashmap! {
-                "test.lua" => VfsSnapshot::file("This is a test."),
-                "test.meta.json" => VfsSnapshot::file(r#"{ "ignoreUnknownInstances": true }"#),
-            }),
-        );
-
-        let vfs = Vfs::new(fetcher);
-        let session = ServeSession::new(vfs, "/root");
-
-        let mut redactions = RedactionMap::new();
-        assert_yaml_snapshot!(
-            "change_script_meta_before",
-            view_tree(&session.tree(), &mut redactions)
-        );
-
-        state.load_snapshot(
-            "/root/test.meta.json",
-            VfsSnapshot::file(r#"{ "ignoreUnknownInstances": false }"#),
-        );
-
-        let receiver = Timeout::new(
-            session.message_queue().subscribe_any(),
-            Duration::from_millis(200),
-        );
-        state.raise_event(VfsEvent::Modified(PathBuf::from("/root/test.meta.json")));
-
-        let mut rt = Runtime::new().unwrap();
-        let changes = rt.block_on(receiver).unwrap();
-
-        assert_yaml_snapshot!(
-            "change_script_meta_patch",
-            redactions.redacted_yaml(changes)
-        );
-        assert_yaml_snapshot!(
-            "change_script_meta_after",
-            view_tree(&session.tree(), &mut redactions)
-        );
+        insta::assert_yaml_snapshot!(view_tree(&session.tree(), &mut rm));
     }
 
     #[test]
     fn change_txt_file() {
-        let (state, fetcher) = TestFetcher::new();
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot("/foo.txt", VfsSnapshot::file("Hello!"))
+            .unwrap();
 
-        state.load_snapshot("/foo.txt", VfsSnapshot::file("Hello!"));
+        let vfs = Vfs::new(imfs.clone());
 
-        let vfs = Vfs::new(fetcher);
         let session = ServeSession::new(vfs, "/foo.txt");
 
-        let mut redactions = RedactionMap::new();
-        assert_yaml_snapshot!(
+        let mut rm = RedactionMap::new();
+        insta::assert_yaml_snapshot!(
             "change_txt_file_before",
-            view_tree(&session.tree(), &mut redactions)
+            view_tree(&session.tree(), &mut rm)
         );
 
-        state.load_snapshot("/foo.txt", VfsSnapshot::file("World!"));
+        imfs.load_snapshot("/foo.txt", VfsSnapshot::file("World!"))
+            .unwrap();
 
         let receiver = session.message_queue().subscribe_any();
 
-        state.raise_event(VfsEvent::Modified(PathBuf::from("/foo.txt")));
+        imfs.raise_event(VfsEvent::Write(PathBuf::from("/foo.txt")));
 
         let receiver = Timeout::new(receiver, Duration::from_millis(200));
 
         let mut rt = Runtime::new().unwrap();
         let result = rt.block_on(receiver).unwrap();
 
-        assert_yaml_snapshot!("change_txt_file_patch", redactions.redacted_yaml(result));
-        assert_yaml_snapshot!(
-            "change_txt_file_after",
-            view_tree(&session.tree(), &mut redactions)
+        insta::assert_yaml_snapshot!("change_txt_file_patch", rm.redacted_yaml(result));
+        insta::assert_yaml_snapshot!("change_txt_file_after", view_tree(&session.tree(), &mut rm));
+    }
+
+    #[test]
+    fn change_script_meta() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
+            "/root",
+            VfsSnapshot::dir(hashmap! {
+                "test.lua" => VfsSnapshot::file("This is a test."),
+                "test.meta.json" => VfsSnapshot::file(r#"{ "ignoreUnknownInstances": true }"#),
+            }),
+        )
+        .unwrap();
+
+        let vfs = Vfs::new(imfs.clone());
+
+        let session = ServeSession::new(vfs, "/root");
+
+        let mut rm = RedactionMap::new();
+        insta::assert_yaml_snapshot!(
+            "change_script_meta_before",
+            view_tree(&session.tree(), &mut rm)
+        );
+
+        imfs.load_snapshot(
+            "/root/test.meta.json",
+            VfsSnapshot::file(r#"{ "ignoreUnknownInstances": false }"#),
+        )
+        .unwrap();
+
+        let receiver = session.message_queue().subscribe_any();
+
+        imfs.raise_event(VfsEvent::Write(PathBuf::from("/root/test.meta.json")));
+
+        let receiver = Timeout::new(receiver, Duration::from_millis(200));
+
+        let mut rt = Runtime::new().unwrap();
+        let result = rt.block_on(receiver).unwrap();
+
+        insta::assert_yaml_snapshot!("change_script_meta_patch", rm.redacted_yaml(result));
+        insta::assert_yaml_snapshot!(
+            "change_script_meta_after",
+            view_tree(&session.tree(), &mut rm)
         );
     }
 
     #[test]
     fn change_file_in_project() {
-        let (state, fetcher) = TestFetcher::new();
-
-        state.load_snapshot(
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
             "/foo",
             VfsSnapshot::dir(hashmap! {
                 "default.project.json" => VfsSnapshot::file(r#"
-                {
-                    "name": "change_file_in_project",
-                    "tree": {
-                        "$className": "Folder",
+                    {
+                        "name": "change_file_in_project",
+                        "tree": {
+                            "$className": "Folder",
 
-                        "Child": {
-                            "$path": "file.txt"
+                            "Child": {
+                                "$path": "file.txt"
+                            }
                         }
                     }
-                }
-            "#),
+                "#),
                 "file.txt" => VfsSnapshot::file("initial content"),
             }),
-        );
+        )
+        .unwrap();
 
-        let vfs = Vfs::new(fetcher);
+        let vfs = Vfs::new(imfs.clone());
+
         let session = ServeSession::new(vfs, "/foo");
 
-        let mut redactions = RedactionMap::new();
-        assert_yaml_snapshot!(
+        let mut rm = RedactionMap::new();
+        insta::assert_yaml_snapshot!(
             "change_file_in_project_before",
-            view_tree(&session.tree(), &mut redactions)
+            view_tree(&session.tree(), &mut rm)
         );
 
-        state.load_snapshot("/foo/file.txt", VfsSnapshot::file("Changed!"));
+        imfs.load_snapshot("/foo/file.txt", VfsSnapshot::file("Changed!"))
+            .unwrap();
 
         let receiver = session.message_queue().subscribe_any();
 
-        state.raise_event(VfsEvent::Modified(PathBuf::from("/foo/file.txt")));
+        imfs.raise_event(VfsEvent::Write(PathBuf::from("/foo/file.txt")));
 
         let receiver = Timeout::new(receiver, Duration::from_millis(200));
 
         let mut rt = Runtime::new().unwrap();
         let result = rt.block_on(receiver).unwrap();
 
-        assert_yaml_snapshot!(
-            "change_file_in_project_patch",
-            redactions.redacted_yaml(result)
-        );
-        assert_yaml_snapshot!(
+        insta::assert_yaml_snapshot!("change_file_in_project_patch", rm.redacted_yaml(result));
+        insta::assert_yaml_snapshot!(
             "change_file_in_project_after",
-            view_tree(&session.tree(), &mut redactions)
+            view_tree(&session.tree(), &mut rm)
         );
     }
 }

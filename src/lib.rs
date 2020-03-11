@@ -13,14 +13,12 @@ mod common_setup;
 mod glob;
 mod message_queue;
 mod multimap;
-mod path_map;
 mod path_serializer;
 mod project;
 mod serve_session;
 mod session_id;
 mod snapshot;
 mod snapshot_middleware;
-mod vfs;
 mod web;
 
 pub use project::*;
