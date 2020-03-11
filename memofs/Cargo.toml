@@ -1,5 +1,6 @@
 [package]
 name = "memofs"
+description = "Virtual filesystem with configurable backends."
 version = "0.1.0"
 authors = ["Lucien Greathouse <me@lpghatguy.com>"]
 edition = "2018"
