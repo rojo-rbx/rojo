@@ -3,9 +3,9 @@ use std::{
     sync::Arc,
 };
 
+use memofs::Vfs;
 use snafu::Snafu;
 use termcolor::{BufferWriter, Color, ColorChoice, ColorSpec, WriteColor};
-use vfs::Vfs;
 
 use crate::{cli::ServeCommand, serve_session::ServeSession, web::LiveServer};
 

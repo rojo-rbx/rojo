@@ -3,8 +3,8 @@
 
 use std::path::Path;
 
+use memofs::Vfs;
 use rbx_dom_weak::RbxInstanceProperties;
-use vfs::Vfs;
 
 use crate::{
     project::Project,

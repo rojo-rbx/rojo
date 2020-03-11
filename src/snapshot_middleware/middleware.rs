@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use vfs::Vfs;
+use memofs::Vfs;
 
 use crate::snapshot::{InstanceContext, InstanceSnapshot};
 

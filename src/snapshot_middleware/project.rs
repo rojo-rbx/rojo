@@ -1,7 +1,7 @@
 use std::{borrow::Cow, collections::HashMap, path::Path};
 
+use memofs::{IoResultExt, Vfs};
 use rbx_reflection::try_resolve_value;
-use vfs::{IoResultExt, Vfs};
 
 use crate::{
     project::{Project, ProjectNode},
@@ -211,7 +211,7 @@ mod test {
     use super::*;
 
     use maplit::hashmap;
-    use vfs::{InMemoryFs, VfsSnapshot};
+    use memofs::{InMemoryFs, VfsSnapshot};
 
     #[test]
     fn project_from_folder() {

@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use vfs::{DirEntry, IoResultExt, Vfs};
+use memofs::{DirEntry, IoResultExt, Vfs};
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
@@ -87,7 +87,7 @@ mod test {
     use super::*;
 
     use maplit::hashmap;
-    use vfs::{InMemoryFs, VfsSnapshot};
+    use memofs::{InMemoryFs, VfsSnapshot};
 
     #[test]
     fn empty_folder() {

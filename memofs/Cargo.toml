@@ -1,11 +1,11 @@
 [package]
-name = "vfs"
+name = "memofs"
 version = "0.1.0"
 authors = ["Lucien Greathouse <me@lpghatguy.com>"]
 edition = "2018"
 readme = "README.md"
 license = "MIT"
-homepage = "https://github.com/rojo-rbx/rojo/tree/master/vfs"
+homepage = "https://github.com/rojo-rbx/rojo/tree/master/memofs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

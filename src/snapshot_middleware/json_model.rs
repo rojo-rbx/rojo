@@ -1,9 +1,9 @@
 use std::{borrow::Cow, collections::HashMap, path::Path};
 
+use memofs::Vfs;
 use rbx_dom_weak::UnresolvedRbxValue;
 use rbx_reflection::try_resolve_value;
 use serde::Deserialize;
-use vfs::Vfs;
 
 use crate::snapshot::{InstanceContext, InstanceSnapshot};
 
@@ -133,7 +133,7 @@ impl JsonModelCore {
 mod test {
     use super::*;
 
-    use vfs::{InMemoryFs, VfsSnapshot};
+    use memofs::{InMemoryFs, VfsSnapshot};
 
     #[test]
     fn model_from_vfs() {

@@ -1,8 +1,8 @@
 use std::{path::Path, str};
 
 use maplit::hashmap;
+use memofs::{IoResultExt, Vfs};
 use rbx_dom_weak::RbxValue;
-use vfs::{IoResultExt, Vfs};
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
@@ -135,7 +135,7 @@ fn snapshot_init(
 mod test {
     use super::*;
 
-    use vfs::{InMemoryFs, VfsSnapshot};
+    use memofs::{InMemoryFs, VfsSnapshot};
 
     #[test]
     fn module_from_vfs() {

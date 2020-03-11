@@ -6,7 +6,7 @@ use std::{
 };
 
 use crossbeam_channel::Sender;
-use vfs::Vfs;
+use memofs::Vfs;
 
 use crate::{
     change_processor::ChangeProcessor,
@@ -190,9 +190,9 @@ mod serve_session {
     use std::{path::PathBuf, time::Duration};
 
     use maplit::hashmap;
+    use memofs::{InMemoryFs, VfsEvent, VfsSnapshot};
     use rojo_insta_ext::RedactionMap;
     use tokio::{runtime::Runtime, timer::Timeout};
-    use vfs::{InMemoryFs, VfsEvent, VfsSnapshot};
 
     use crate::tree_view::view_tree;
 

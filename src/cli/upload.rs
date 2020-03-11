@@ -1,6 +1,6 @@
+use memofs::Vfs;
 use reqwest::header::{ACCEPT, CONTENT_TYPE, COOKIE, USER_AGENT};
 use snafu::{ResultExt, Snafu};
-use vfs::Vfs;
 
 use crate::{auth_cookie::get_auth_cookie, cli::UploadCommand, common_setup};
 

@@ -923,6 +923,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "memofs"
+version = "0.1.0"
+dependencies = [
+ "crossbeam-channel 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "notify 4.0.15 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "mime"
 version = "0.3.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1670,6 +1678,7 @@ dependencies = [
  "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "maplit 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "memofs 0.1.0",
  "notify 4.0.15 (registry+https://github.com/rust-lang/crates.io-index)",
  "paste 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "pretty_assertions 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1691,7 +1700,6 @@ dependencies = [
  "termcolor 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio 0.1.22 (registry+https://github.com/rust-lang/crates.io-index)",
  "uuid 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "vfs 0.1.0",
  "walkdir 2.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "winreg 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -2364,14 +2372,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "version_check"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
-name = "vfs"
-version = "0.1.0"
-dependencies = [
- "crossbeam-channel 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "notify 4.0.15 (registry+https://github.com/rust-lang/crates.io-index)",
-]
 
 [[package]]
 name = "walkdir"

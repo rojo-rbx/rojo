@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use vfs::Vfs;
+use memofs::Vfs;
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
@@ -54,7 +54,7 @@ impl SnapshotMiddleware for SnapshotRbxmx {
 mod test {
     use super::*;
 
-    use vfs::{InMemoryFs, VfsSnapshot};
+    use memofs::{InMemoryFs, VfsSnapshot};
 
     #[test]
     fn plain_folder() {

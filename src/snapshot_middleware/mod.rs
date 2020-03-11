@@ -21,7 +21,7 @@ pub use self::error::*;
 
 use std::path::Path;
 
-use vfs::Vfs;
+use memofs::Vfs;
 
 use self::middleware::{SnapshotInstanceResult, SnapshotMiddleware};
 use self::{

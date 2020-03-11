@@ -3,9 +3,9 @@ use std::{
     io::{self, BufWriter, Write},
 };
 
+use memofs::Vfs;
 use snafu::{ResultExt, Snafu};
 use tokio::runtime::Runtime;
-use vfs::Vfs;
 
 use crate::{
     cli::BuildCommand, project::ProjectError, serve_session::ServeSession, snapshot::RojoTree,

@@ -1,9 +1,9 @@
 use std::{collections::BTreeMap, path::Path};
 
 use maplit::hashmap;
+use memofs::{IoResultExt, Vfs};
 use rbx_dom_weak::RbxValue;
 use serde::Serialize;
-use vfs::{IoResultExt, Vfs};
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 

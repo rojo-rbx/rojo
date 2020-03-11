@@ -5,8 +5,8 @@ use std::{
 
 use crossbeam_channel::{select, Receiver, RecvError, Sender};
 use jod_thread::JoinHandle;
+use memofs::{IoResultExt, Vfs, VfsEvent};
 use rbx_dom_weak::{RbxId, RbxValue};
-use vfs::{IoResultExt, Vfs, VfsEvent};
 
 use crate::{
     message_queue::MessageQueue,
