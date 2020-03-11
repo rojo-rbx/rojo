@@ -5,7 +5,7 @@ authors = ["Lucien Greathouse <me@lpghatguy.com>"]
 edition = "2018"
 readme = "README.md"
 license = "MIT"
-homepage = "https://github.com/rojo-rbx/rojo"
+homepage = "https://github.com/rojo-rbx/rojo/tree/master/vfs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

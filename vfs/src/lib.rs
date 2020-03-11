@@ -1,3 +1,20 @@
+/*!
+Implementation of a virtual filesystem with a configurable backend and file watching.
+
+memofs is currently an unstable minimum viable library. Its primary consumer is [Rojo](https://github.com/rojo-rbx/rojo), a build system for Roblox.
+
+## Current Features
+* API similar to `std::fs`
+* Configurable backends
+    * `StdBackend`, which uses `std::fs` and the `notify` crate
+    * `NoopBackend`, which always throws errors
+    * `InMemoryFs`, a simple in-memory filesystem useful for testing
+
+## Future Features
+* Hash-based hierarchical memoization keys (hence the name)
+* Configurable caching (write-through, write-around, write-back)
+*/
+
 mod in_memory_fs;
 mod noop_backend;
 mod snapshot;
@@ -178,6 +195,10 @@ impl VfsInner {
 }
 
 /// A virtual filesystem with a configurable backend.
+///
+/// All operations on the Vfs take a lock on an internal backend. For performing
+/// large batches of operations, it might be more performant to call `lock()`
+/// and use [`VfsLock`](struct.VfsLock.html) instead.
 pub struct Vfs {
     inner: Mutex<VfsInner>,
 }
@@ -199,6 +220,7 @@ impl Vfs {
         }
     }
 
+    /// Manually lock the Vfs, useful for large batches of operations.
     pub fn lock(&self) -> VfsLock<'_> {
         VfsLock {
             inner: self.inner.lock().unwrap(),
@@ -286,7 +308,9 @@ impl Vfs {
     }
 }
 
-/// A locked handle to a `Vfs`, created by `Vfs::lock`.
+/// A locked handle to a [`Vfs`](struct.Vfs.html), created by `Vfs::lock`.
+///
+/// Implements roughly the same API as [`Vfs`](struct.Vfs.html).
 pub struct VfsLock<'a> {
     inner: MutexGuard<'a, VfsInner>,
 }
