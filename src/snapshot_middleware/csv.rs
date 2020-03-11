@@ -131,52 +131,58 @@ fn convert_localization_csv(contents: &[u8]) -> String {
     serde_json::to_string(&entries).expect("Could not encode JSON for localization table")
 }
 
-#[cfg(all(test, feature = "FIXME"))]
+#[cfg(test)]
 mod test {
     use super::*;
 
-    use crate::vfs::{NoopFetcher, VfsDebug, VfsSnapshot};
-    use insta::assert_yaml_snapshot;
+    use memofs::{InMemoryFs, VfsSnapshot};
 
     #[test]
     fn csv_from_vfs() {
-        let mut vfs = Vfs::new(NoopFetcher);
-        let file = VfsSnapshot::file(
-            r#"
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
+            "/foo.csv",
+            VfsSnapshot::file(
+                r#"
 Key,Source,Context,Example,es
 Ack,Ack!,,An exclamation of despair,¡Ay!"#,
-        );
+            ),
+        )
+        .unwrap();
 
-        vfs.debug_load_snapshot("/foo.csv", file);
+        let mut vfs = Vfs::new(imfs);
 
-        let entry = vfs.get("/foo.csv").unwrap();
         let instance_snapshot =
-            SnapshotCsv::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
+            SnapshotCsv::from_vfs(&InstanceContext::default(), &mut vfs, Path::new("/foo.csv"))
                 .unwrap()
                 .unwrap();
 
-        assert_yaml_snapshot!(instance_snapshot);
+        insta::assert_yaml_snapshot!(instance_snapshot);
     }
 
     #[test]
     fn csv_with_meta() {
-        let mut vfs = Vfs::new(NoopFetcher);
-        let file = VfsSnapshot::file(
-            r#"
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
+            "/foo.csv",
+            VfsSnapshot::file(
+                r#"
 Key,Source,Context,Example,es
 Ack,Ack!,,An exclamation of despair,¡Ay!"#,
-        );
-        let meta = VfsSnapshot::file(r#"{ "ignoreUnknownInstances": true }"#);
+            ),
+        )
+        .unwrap();
+        imfs.load_snapshot(
+            "/foo.meta.json",
+            VfsSnapshot::file(r#"{ "ignoreUnknownInstances": true }"#),
+        )
+        .unwrap();
 
-        vfs.debug_load_snapshot("/foo.csv", file);
-        vfs.debug_load_snapshot("/foo.meta.json", meta);
+        let mut vfs = Vfs::new(imfs);
 
-        let entry = vfs.get("/foo.csv").unwrap();
         let instance_snapshot =
-            SnapshotCsv::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
+            SnapshotCsv::from_vfs(&InstanceContext::default(), &mut vfs, Path::new("/foo.csv"))
                 .unwrap()
                 .unwrap();
-
-        assert_yaml_snapshot!(instance_snapshot);
     }
 }
