@@ -55,6 +55,8 @@ name = "build"
 harness = false
 
 [dependencies]
+memofs = { version = "0.1.0", path = "memofs" }
+
 crossbeam-channel = "0.4.0"
 csv = "1.1.1"
 env_logger = "0.7.1"
@@ -82,7 +84,6 @@ structopt = "0.3.5"
 termcolor = "1.0.5"
 tokio = "0.1.22"
 uuid = { version = "0.8.1", features = ["v4", "serde"] }
-memofs = { path = "memofs" }
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.6.2"
