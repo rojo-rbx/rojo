@@ -1,7 +1,11 @@
-# vfs
-Implementation of a virtual filesystem with a configurable backend and file watching.
+# memofs
+[![Crates.io](https://img.shields.io/crates/v/memofs.svg)](https://crates.io/crates/memofs)
 
-memofs is currently an unstable minimum viable library. Its primary consumer is [Rojo](https://github.com/rojo-rbx/rojo), a build system for Roblox.
+Implementation of a virtual filesystem with a configurable backend and file
+watching.
+
+memofs is currently an unstable minimum viable library. Its primary consumer is
+[Rojo](https://github.com/rojo-rbx/rojo), a build system for Roblox.
 
 ### Current Features
 * API similar to `std::fs`
