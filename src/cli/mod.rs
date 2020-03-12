@@ -1,6 +1,7 @@
 //! Defines Rojo's CLI through structopt types.
 
 mod build;
+mod doc;
 mod init;
 mod serve;
 mod upload;
@@ -17,6 +18,7 @@ use std::{
 use structopt::StructOpt;
 
 pub use self::build::*;
+pub use self::doc::*;
 pub use self::init::*;
 pub use self::serve::*;
 pub use self::upload::*;
@@ -48,6 +50,9 @@ pub enum Subcommand {
 
     /// Generates a place or model file out of the project and uploads it to Roblox.
     Upload(UploadCommand),
+
+    /// Open Rojo's documentation in your browser.
+    Doc,
 }
 
 /// Initializes a new Rojo project.

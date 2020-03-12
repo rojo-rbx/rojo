@@ -11,6 +11,7 @@ fn run(subcommand: Subcommand) -> Result<(), Box<dyn Error>> {
         Subcommand::Serve(serve_options) => cli::serve(serve_options)?,
         Subcommand::Build(build_options) => cli::build(build_options)?,
         Subcommand::Upload(upload_options) => cli::upload(upload_options)?,
+        Subcommand::Doc => cli::doc()?,
     }
 
     Ok(())
