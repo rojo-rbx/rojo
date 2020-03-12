@@ -31,7 +31,10 @@ fn main() {
         log::error!("Rojo crashed!");
         log::error!("This is probably a Rojo bug.");
         log::error!("");
-        log::error!("Please consider filing an issue: https://github.com/rojo-rbx/rojo/issues");
+        log::error!(
+            "Please consider filing an issue: {}/issues",
+            env!("CARGO_PKG_REPOSITORY")
+        );
         log::error!("");
         log::error!("Details: {}", message);
 
