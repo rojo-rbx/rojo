@@ -1,39 +1,36 @@
 {
-  "name": "[placeholder]",
+  "name": "{project_name}",
   "tree": {
     "$className": "DataModel",
-    "HttpService": {
-      "$className": "HttpService",
-      "$properties": {
-        "HttpEnabled": true
-      }
-    },
-    "Lighting": {
-      "$className": "Lighting",
-      "$properties": {
-        "Ambient": [
-          0,
-          0,
-          0
-        ],
-        "Brightness": 2,
-        "GlobalShadows": true,
-        "Outlines": false,
-        "Technology": "Voxel"
-      }
-    },
+
     "ReplicatedStorage": {
       "$className": "ReplicatedStorage",
-      "Source": {
-        "$path": "src"
+
+      "Common": {
+        "$path": "src/common"
       }
     },
-    "SoundService": {
-      "$className": "SoundService",
-      "$properties": {
-        "RespectFilteringEnabled": true
+
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+
+      "Server": {
+        "$path": "src/server"
       }
     },
+
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+
+        "Client": {
+          "$path": "src/client"
+        }
+      }
+    },
+
     "Workspace": {
       "$className": "Workspace",
       "$properties": {
@@ -60,6 +57,32 @@
             512
           ]
         }
+      }
+    },
+    "Lighting": {
+      "$className": "Lighting",
+      "$properties": {
+        "Ambient": [
+          0,
+          0,
+          0
+        ],
+        "Brightness": 2,
+        "GlobalShadows": true,
+        "Outlines": false,
+        "Technology": "Voxel"
+      }
+    },
+    "SoundService": {
+      "$className": "SoundService",
+      "$properties": {
+        "RespectFilteringEnabled": true
+      }
+    },
+    "HttpService": {
+      "$className": "HttpService",
+      "$properties": {
+        "HttpEnabled": true
       }
     }
   }
