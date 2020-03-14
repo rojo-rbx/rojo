@@ -84,7 +84,7 @@ fn main() {
 
         let mut current_err: &dyn Error = &*err;
         while let Some(source) = current_err.source() {
-            log::error!("  caused by {}", err);
+            log::error!("  caused by {}", source);
             current_err = &*source;
         }
 
