@@ -63,6 +63,13 @@ impl SnapshotError {
             path: Some(path.into()),
         }
     }
+
+    pub(crate) fn malformed_meta_json(source: serde_json::Error, path: impl Into<PathBuf>) -> Self {
+        Self {
+            detail: SnapshotErrorDetail::MalformedMetaJson { source },
+            path: Some(path.into()),
+        }
+    }
 }
 
 impl Error for SnapshotError {
@@ -114,6 +121,9 @@ pub enum SnapshotErrorDetail {
 
     #[snafu(display("malformed .model.json file"))]
     MalformedModelJson { source: serde_json::Error },
+
+    #[snafu(display("malformed .meta.json file"))]
+    MalformedMetaJson { source: serde_json::Error },
 }
 
 impl From<io::Error> for SnapshotErrorDetail {

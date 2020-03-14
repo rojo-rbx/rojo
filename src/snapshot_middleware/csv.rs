@@ -46,8 +46,8 @@ impl SnapshotMiddleware for SnapshotCsv {
                     .relevant_paths(vec![path.to_path_buf(), meta_path.clone()]),
             );
 
-        if let Some(meta_contents) = vfs.read(meta_path).with_not_found()? {
-            let mut metadata = AdjacentMetadata::from_slice(&meta_contents);
+        if let Some(meta_contents) = vfs.read(&meta_path).with_not_found()? {
+            let mut metadata = AdjacentMetadata::from_slice(&meta_contents, &meta_path)?;
             metadata.apply_all(&mut snapshot);
         }
 

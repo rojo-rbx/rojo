@@ -87,8 +87,8 @@ fn snapshot_lua_file(context: &InstanceContext, vfs: &Vfs, path: &Path) -> Snaps
                 .context(context),
         );
 
-    if let Some(meta_contents) = vfs.read(meta_path).with_not_found()? {
-        let mut metadata = AdjacentMetadata::from_slice(&meta_contents);
+    if let Some(meta_contents) = vfs.read(&meta_path).with_not_found()? {
+        let mut metadata = AdjacentMetadata::from_slice(&meta_contents, &meta_path)?;
         metadata.apply_all(&mut snapshot);
     }
 
