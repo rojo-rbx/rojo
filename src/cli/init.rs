@@ -77,8 +77,8 @@ fn init_place(base_path: &Path, project_params: ProjectParams) -> Result<(), Err
     let src = base_path.join("src");
     fs::create_dir_all(&src)?;
 
-    let src_common = src.join("common");
-    fs::create_dir_all(src.join(&src_common))?;
+    let src_shared = src.join("shared");
+    fs::create_dir_all(src.join(&src_shared))?;
 
     let src_server = src.join("server");
     fs::create_dir_all(src.join(&src_server))?;
@@ -87,7 +87,7 @@ fn init_place(base_path: &Path, project_params: ProjectParams) -> Result<(), Err
     fs::create_dir_all(src.join(&src_client))?;
 
     write_if_not_exists(
-        &src_common.join("Hello.lua"),
+        &src_shared.join("Hello.lua"),
         "return function()\n\tprint(\"Hello, world!\")\nend",
     )?;
 
