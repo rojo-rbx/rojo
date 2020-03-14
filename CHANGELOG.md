@@ -5,6 +5,7 @@
 * Added dark theme support to plugin. ([#241](https://github.com/rojo-rbx/rojo/issues/241))
 * Added a revamped `rojo init` command, which will now create more complete projects.
 * Added the `rojo doc` command, which opens Rojo's documentation in your browser.
+* Fixed many crashes from malformed projects and filesystem edge cases in `rojo serve`.
 * Simplified filesystem access code dramatically.
 * Improved error reporting and logging across the board.
     * Log messages have a less noisy prefix.
