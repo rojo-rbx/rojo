@@ -8,6 +8,7 @@ use serde::Deserialize;
 use crate::snapshot::{InstanceContext, InstanceSnapshot};
 
 use super::{
+    error::SnapshotError,
     middleware::{SnapshotInstanceResult, SnapshotMiddleware},
     util::match_file_name,
 };
@@ -27,8 +28,9 @@ impl SnapshotMiddleware for SnapshotJsonModel {
             None => return Ok(None),
         };
 
-        let instance: JsonModel =
-            serde_json::from_slice(&vfs.read(path)?).expect("TODO: Handle serde_json errors");
+        let contents = vfs.read(path)?;
+        let instance: JsonModel = serde_json::from_slice(&contents)
+            .map_err(|source| SnapshotError::malformed_model_json(source, path))?;
 
         if let Some(json_name) = &instance.name {
             if json_name != instance_name {

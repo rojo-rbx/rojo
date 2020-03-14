@@ -1,5 +1,7 @@
 use std::{error::Error, fmt, io, path::PathBuf};
 
+use snafu::Snafu;
+
 #[derive(Debug)]
 pub struct SnapshotError {
     detail: SnapshotErrorDetail,
@@ -8,49 +10,56 @@ pub struct SnapshotError {
 
 impl SnapshotError {
     pub fn new(detail: SnapshotErrorDetail, path: Option<impl Into<PathBuf>>) -> Self {
-        SnapshotError {
+        Self {
             detail,
             path: path.map(Into::into),
         }
     }
 
-    pub(crate) fn wrap(inner: impl Into<SnapshotErrorDetail>, path: impl Into<PathBuf>) -> Self {
-        SnapshotError {
-            detail: inner.into(),
+    pub(crate) fn wrap(source: impl Into<SnapshotErrorDetail>, path: impl Into<PathBuf>) -> Self {
+        Self {
+            detail: source.into(),
             path: Some(path.into()),
         }
     }
 
-    pub(crate) fn file_did_not_exist(path: impl Into<PathBuf>) -> SnapshotError {
-        SnapshotError {
+    pub(crate) fn file_did_not_exist(path: impl Into<PathBuf>) -> Self {
+        Self {
             detail: SnapshotErrorDetail::FileDidNotExist,
             path: Some(path.into()),
         }
     }
 
-    pub(crate) fn file_name_bad_unicode(path: impl Into<PathBuf>) -> SnapshotError {
-        SnapshotError {
+    pub(crate) fn file_name_bad_unicode(path: impl Into<PathBuf>) -> Self {
+        Self {
             detail: SnapshotErrorDetail::FileNameBadUnicode,
             path: Some(path.into()),
         }
     }
 
     pub(crate) fn file_contents_bad_unicode(
-        inner: std::str::Utf8Error,
+        source: std::str::Utf8Error,
         path: impl Into<PathBuf>,
-    ) -> SnapshotError {
-        SnapshotError {
-            detail: SnapshotErrorDetail::FileContentsBadUnicode { inner },
+    ) -> Self {
+        Self {
+            detail: SnapshotErrorDetail::FileContentsBadUnicode { source },
             path: Some(path.into()),
         }
     }
 
-    pub(crate) fn malformed_project(
-        inner: serde_json::Error,
+    pub(crate) fn malformed_project(source: serde_json::Error, path: impl Into<PathBuf>) -> Self {
+        Self {
+            detail: SnapshotErrorDetail::MalformedProject { source },
+            path: Some(path.into()),
+        }
+    }
+
+    pub(crate) fn malformed_model_json(
+        source: serde_json::Error,
         path: impl Into<PathBuf>,
-    ) -> SnapshotError {
-        SnapshotError {
-            detail: SnapshotErrorDetail::MalformedProject { inner },
+    ) -> Self {
+        Self {
+            detail: SnapshotErrorDetail::MalformedModelJson { source },
             path: Some(path.into()),
         }
     }
@@ -83,55 +92,38 @@ impl From<rlua::Error> for SnapshotError {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Snafu)]
 pub enum SnapshotErrorDetail {
-    IoError { inner: io::Error },
-    Lua { inner: rlua::Error },
+    #[snafu(display("I/O error"))]
+    IoError { source: io::Error },
+
+    #[snafu(display("Lua error"))]
+    Lua { source: rlua::Error },
+
+    #[snafu(display("file did not exist"))]
     FileDidNotExist,
+
+    #[snafu(display("file name had malformed Unicode"))]
     FileNameBadUnicode,
-    FileContentsBadUnicode { inner: std::str::Utf8Error },
-    MalformedProject { inner: serde_json::Error },
+
+    #[snafu(display("file had malformed Unicode contents"))]
+    FileContentsBadUnicode { source: std::str::Utf8Error },
+
+    #[snafu(display("malformed project file"))]
+    MalformedProject { source: serde_json::Error },
+
+    #[snafu(display("malformed .model.json file"))]
+    MalformedModelJson { source: serde_json::Error },
 }
 
 impl From<io::Error> for SnapshotErrorDetail {
-    fn from(inner: io::Error) -> Self {
-        SnapshotErrorDetail::IoError { inner }
+    fn from(source: io::Error) -> Self {
+        SnapshotErrorDetail::IoError { source }
     }
 }
 
 impl From<rlua::Error> for SnapshotErrorDetail {
-    fn from(inner: rlua::Error) -> Self {
-        SnapshotErrorDetail::Lua { inner }
-    }
-}
-
-impl SnapshotErrorDetail {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        use self::SnapshotErrorDetail::*;
-
-        match self {
-            IoError { inner } => Some(inner),
-            Lua { inner } => Some(inner),
-            FileContentsBadUnicode { inner } => Some(inner),
-            MalformedProject { inner } => Some(inner),
-            _ => None,
-        }
-    }
-}
-
-impl fmt::Display for SnapshotErrorDetail {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        use self::SnapshotErrorDetail::*;
-
-        match self {
-            IoError { inner } => write!(formatter, "I/O error: {}", inner),
-            Lua { inner } => write!(formatter, "{}", inner),
-            FileDidNotExist => write!(formatter, "file did not exist"),
-            FileNameBadUnicode => write!(formatter, "file name had malformed Unicode"),
-            FileContentsBadUnicode { inner } => {
-                write!(formatter, "file had malformed unicode: {}", inner)
-            }
-            MalformedProject { inner } => write!(formatter, "{}", inner),
-        }
+    fn from(source: rlua::Error) -> Self {
+        SnapshotErrorDetail::Lua { source }
     }
 }
