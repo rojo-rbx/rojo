@@ -9,6 +9,7 @@ use memofs::{IoResultExt, Vfs, VfsEvent};
 use rbx_dom_weak::{RbxId, RbxValue};
 
 use crate::{
+    error::ErrorDisplay,
     message_queue::MessageQueue,
     snapshot::{
         apply_patch_set, compute_patch_set, AppliedPatchSet, InstigatingSource, PatchSet, RojoTree,
@@ -294,9 +295,15 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: RbxId) -> Optio
                     // starting at that path and use it as the source for
                     // our patch.
 
-                    let snapshot = snapshot_from_vfs(&metadata.context, &vfs, &path)
-                        .expect("snapshot failed")
-                        .expect("snapshot did not return an instance");
+                    let snapshot = match snapshot_from_vfs(&metadata.context, &vfs, &path) {
+                        Ok(maybe_snapshot) => {
+                            maybe_snapshot.expect("snapshot did not return an instance")
+                        }
+                        Err(err) => {
+                            log::error!("Snapshot error: {}", ErrorDisplay(err));
+                            return None;
+                        }
+                    };
 
                     let patch_set = compute_patch_set(&snapshot, &tree, id);
                     apply_patch_set(tree, patch_set)
@@ -320,15 +327,21 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: RbxId) -> Optio
             // there might be information associated with our instance from
             // the project file, we snapshot the entire project node again.
 
-            let snapshot = snapshot_project_node(
+            let snapshot_result = snapshot_project_node(
                 &metadata.context,
                 &project_path,
                 instance_name,
                 project_node,
                 &vfs,
-            )
-            .expect("snapshot failed")
-            .expect("snapshot did not return an instance");
+            );
+
+            let snapshot = match snapshot_result {
+                Ok(maybe_snapshot) => maybe_snapshot.expect("snapshot did not return an instance"),
+                Err(err) => {
+                    log::error!("Snapshot error: {}", ErrorDisplay(err));
+                    return None;
+                }
+            };
 
             let patch_set = compute_patch_set(&snapshot, &tree, id);
             apply_patch_set(tree, patch_set)
