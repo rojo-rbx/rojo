@@ -7,3 +7,5 @@ To build this library or plugin, use:
 ```bash
 rojo build -o "{project_name}.rbxmx"
 ```
+
+For more help, check out [the Rojo documentation](https://rojo.space/docs).
