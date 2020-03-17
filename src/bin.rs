@@ -12,6 +12,7 @@ fn run(subcommand: Subcommand) -> Result<(), Box<dyn Error>> {
         Subcommand::Build(build_options) => cli::build(build_options)?,
         Subcommand::Upload(upload_options) => cli::upload(upload_options)?,
         Subcommand::Doc => cli::doc()?,
+        Subcommand::Plugin(plugin_options) => cli::plugin(plugin_options)?,
     }
 
     Ok(())

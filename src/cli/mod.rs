@@ -3,6 +3,7 @@
 mod build;
 mod doc;
 mod init;
+mod plugin;
 mod serve;
 mod upload;
 
@@ -20,6 +21,7 @@ use structopt::StructOpt;
 pub use self::build::*;
 pub use self::doc::*;
 pub use self::init::*;
+pub use self::plugin::*;
 pub use self::serve::*;
 pub use self::upload::*;
 
@@ -53,6 +55,9 @@ pub enum Subcommand {
 
     /// Open Rojo's documentation in your browser.
     Doc,
+
+    /// Manages rojo's Roblox plugin.
+    Plugin(PluginCommand),
 }
 
 /// Initializes a new Rojo project.
