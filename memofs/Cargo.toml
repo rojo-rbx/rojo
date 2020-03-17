@@ -11,5 +11,6 @@ homepage = "https://github.com/rojo-rbx/rojo/tree/master/memofs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-notify = "4.0.15"
 crossbeam-channel = "0.4.0"
+fs-err = "2.2.0"
+notify = "4.0.15"

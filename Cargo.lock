@@ -521,6 +521,11 @@ version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "fs-err"
+version = "2.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
 name = "fsevent"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -915,6 +920,7 @@ name = "memofs"
 version = "0.1.0"
 dependencies = [
  "crossbeam-channel 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "fs-err 2.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "notify 4.0.15 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -2582,6 +2588,7 @@ dependencies = [
 "checksum fnv 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)" = "2fad85553e09a6f881f739c29f0b00b0f01357c743266d478b68951ce23285f3"
 "checksum foreign-types 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)" = "f6f339eb8adc052cd2ca78910fda869aefa38d22d5cb648e6485e4d3fc06f3b1"
 "checksum foreign-types-shared 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "00b0228411908ca8685dba7fc2cdd70ec9990a6e753e89b6ac91a84c40fbaf4b"
+"checksum fs-err 2.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "9c7c48ddea3998e5c287467a6b2ede62009788e98d0bf124bd94d8e05a38f3be"
 "checksum fsevent 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "5ab7d1bd1bd33cc98b0889831b72da23c0aa4df9cec7e0702f46ecea04b35db6"
 "checksum fsevent-sys 2.0.1 (registry+https://github.com/rust-lang/crates.io-index)" = "f41b048a94555da0f42f1d632e2e19510084fb8e303b0daa2816e733fb3644a0"
 "checksum fuchsia-cprng 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "a06f77d526c1a601b7c4cdd98f54b5eaabffc14d5f2f0296febdc7f357c6d3ba"

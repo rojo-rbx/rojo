@@ -55,15 +55,15 @@ impl StdBackend {
 
 impl VfsBackend for StdBackend {
     fn read(&mut self, path: &Path) -> io::Result<Vec<u8>> {
-        fs::read(path)
+        fs_err::read(path)
     }
 
     fn write(&mut self, path: &Path, data: &[u8]) -> io::Result<()> {
-        fs::write(path, data)
+        fs_err::write(path, data)
     }
 
     fn read_dir(&mut self, path: &Path) -> io::Result<ReadDir> {
-        let entries: Result<Vec<_>, _> = fs::read_dir(path)?.collect();
+        let entries: Result<Vec<_>, _> = fs_err::read_dir(path)?.collect();
         let mut entries = entries?;
 
         entries.sort_by_cached_key(|entry| entry.file_name());
@@ -86,7 +86,7 @@ impl VfsBackend for StdBackend {
     }
 
     fn metadata(&mut self, path: &Path) -> io::Result<Metadata> {
-        let inner = fs::metadata(path)?;
+        let inner = fs_err::metadata(path)?;
 
         Ok(Metadata {
             is_file: inner.is_file(),
