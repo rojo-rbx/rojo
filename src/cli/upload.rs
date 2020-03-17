@@ -1,34 +1,19 @@
 use memofs::Vfs;
 use reqwest::header::{ACCEPT, CONTENT_TYPE, COOKIE, USER_AGENT};
-use snafu::{ResultExt, Snafu};
+use thiserror::Error;
 
 use crate::{auth_cookie::get_auth_cookie, cli::UploadCommand, serve_session::ServeSession};
 
-#[derive(Debug, Snafu)]
-pub struct UploadError(Error);
-
-#[derive(Debug, Snafu)]
+#[derive(Debug, Error)]
 enum Error {
-    #[snafu(display(
-        "Rojo could not find your Roblox auth cookie. Please pass one via --cookie.",
-    ))]
+    #[error("Rojo could not find your Roblox auth cookie. Please pass one via --cookie.")]
     NeedAuthCookie,
 
-    #[snafu(display("XML model file encode error: {}", source))]
-    XmlModel { source: rbx_xml::EncodeError },
-
-    #[snafu(display("HTTP error: {}", source))]
-    Http { source: reqwest::Error },
-
-    #[snafu(display("Roblox API error: {}", body))]
+    #[error("The Roblox API returned an unexpected error: {body}")]
     RobloxApi { body: String },
 }
 
-pub fn upload(options: UploadCommand) -> Result<(), UploadError> {
-    Ok(upload_inner(options)?)
-}
-
-fn upload_inner(options: UploadCommand) -> Result<(), Error> {
+pub fn upload(options: UploadCommand) -> Result<(), anyhow::Error> {
     let cookie = options
         .cookie
         .clone()
@@ -55,7 +40,7 @@ fn upload_inner(options: UploadCommand) -> Result<(), Error> {
     let config = rbx_xml::EncodeOptions::new()
         .property_behavior(rbx_xml::EncodePropertyBehavior::WriteUnknown);
 
-    rbx_xml::to_writer(&mut buffer, tree.inner(), &encode_ids, config).context(XmlModel)?;
+    rbx_xml::to_writer(&mut buffer, tree.inner(), &encode_ids, config)?;
 
     let url = format!(
         "https://data.roblox.com/Data/Upload.ashx?assetid={}",
@@ -72,13 +57,13 @@ fn upload_inner(options: UploadCommand) -> Result<(), Error> {
         .header(CONTENT_TYPE, "application/xml")
         .header(ACCEPT, "application/json")
         .body(buffer)
-        .send()
-        .context(Http)?;
+        .send()?;
 
     if !response.status().is_success() {
         return Err(Error::RobloxApi {
-            body: response.text().context(Http)?,
-        });
+            body: response.text()?,
+        }
+        .into());
     }
 
     Ok(())

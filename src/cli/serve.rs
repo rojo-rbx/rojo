@@ -3,25 +3,15 @@ use std::{
     sync::Arc,
 };
 
+use anyhow::Result;
 use memofs::Vfs;
-use snafu::Snafu;
 use termcolor::{BufferWriter, Color, ColorChoice, ColorSpec, WriteColor};
 
 use crate::{cli::ServeCommand, serve_session::ServeSession, web::LiveServer};
 
 const DEFAULT_PORT: u16 = 34872;
 
-#[derive(Debug, Snafu)]
-pub struct ServeError(Error);
-
-#[derive(Debug, Snafu)]
-enum Error {}
-
-pub fn serve(options: ServeCommand) -> Result<(), ServeError> {
-    Ok(serve_inner(options)?)
-}
-
-fn serve_inner(options: ServeCommand) -> Result<(), Error> {
+pub fn serve(options: ServeCommand) -> Result<()> {
     let vfs = Vfs::new_default();
 
     let session = Arc::new(ServeSession::new(vfs, &options.absolute_project()));
