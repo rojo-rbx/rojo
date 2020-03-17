@@ -23,7 +23,8 @@ fn snapshot_from_fs_path(path: &PathBuf) -> Result<VfsSnapshot, PathBuf> {
                     .and_then(|file_name| file_name.to_str())
                     .ok_or(path.to_owned())
                     .and_then(|file_name| {
-                        snapshot_from_fs_path(&path).map(|snapshot| (file_name.to_owned(), snapshot))
+                        snapshot_from_fs_path(&path)
+                            .map(|snapshot| (file_name.to_owned(), snapshot))
                     })
             })
             .into_iter()

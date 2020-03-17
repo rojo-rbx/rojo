@@ -1,7 +1,7 @@
 use crate::serve_session::ServeSession;
 
-use memofs::{Vfs, VfsSnapshot};
 use memofs::InMemoryFs;
+use memofs::{Vfs, VfsSnapshot};
 use roblox_install::RobloxStudio;
 use snafu::{ResultExt, Snafu};
 use std::{
@@ -52,15 +52,13 @@ pub fn plugin(options: PluginCommand) -> Result<(), PluginError> {
     Ok(())
 }
 
-
 pub fn install_plugin() -> Result<(), PluginError> {
     static PLUGIN_BINCODE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/plugin.bincode"));
 
     let plugin_snapshot: VfsSnapshot = bincode::deserialize(PLUGIN_BINCODE)
         .expect("rojo's plugin was not properly packed into rojo's binary");
 
-    let studio = RobloxStudio::locate()
-        .context(CannotLocateRobloxStudio)?;
+    let studio = RobloxStudio::locate().context(CannotLocateRobloxStudio)?;
 
     let plugins_folder_path = studio.plugins_path();
 
@@ -70,7 +68,9 @@ pub fn install_plugin() -> Result<(), PluginError> {
     }
 
     let mut in_memory_fs = InMemoryFs::new();
-    in_memory_fs.load_snapshot("plugin", plugin_snapshot).context(Io)?;
+    in_memory_fs
+        .load_snapshot("plugin", plugin_snapshot)
+        .context(Io)?;
 
     let vfs = Vfs::new(in_memory_fs);
 
@@ -78,7 +78,11 @@ pub fn install_plugin() -> Result<(), PluginError> {
 
     let tree = session.tree();
 
-    log::trace!("Writing plugin {} in {}", PLUGIN_FILE_NAME, plugins_folder_path.to_string_lossy());
+    log::trace!(
+        "Writing plugin {} in {}",
+        PLUGIN_FILE_NAME,
+        plugins_folder_path.to_string_lossy()
+    );
     let file = File::create(plugins_folder_path.join(PLUGIN_FILE_NAME)).context(Io)?;
 
     let mut file = BufWriter::new(file);
@@ -91,16 +95,21 @@ pub fn install_plugin() -> Result<(), PluginError> {
 }
 
 fn uninstall_plugin() -> Result<(), PluginError> {
-    let studio = RobloxStudio::locate()
-        .context(CannotLocateRobloxStudio)?;
+    let studio = RobloxStudio::locate().context(CannotLocateRobloxStudio)?;
 
     let rojo_plugin_path = studio.plugins_path().join(PLUGIN_FILE_NAME);
 
     if rojo_plugin_path.exists() {
-        log::trace!("Removing existing plugin {}", rojo_plugin_path.to_string_lossy());
+        log::trace!(
+            "Removing existing plugin {}",
+            rojo_plugin_path.to_string_lossy()
+        );
         fs::remove_file(rojo_plugin_path).context(Io)?;
     } else {
-        log::trace!("Plugin not installed {}", rojo_plugin_path.to_string_lossy());
+        log::trace!(
+            "Plugin not installed {}",
+            rojo_plugin_path.to_string_lossy()
+        );
     }
 
     Ok(())
