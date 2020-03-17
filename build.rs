@@ -15,12 +15,16 @@ fn snapshot_from_fs_path(path: &PathBuf) -> Result<VfsSnapshot, PathBuf> {
 
         let vfs_entries: Result<Vec<(String, VfsSnapshot)>, PathBuf> = entries?
             .iter()
-            .filter(|entry| !entry.path().ends_with(".spec.lua"))
+            .filter(|entry| {
+                let file_name = entry.file_name();
+                !file_name.to_string_lossy().ends_with(".spec.lua")
+            })
             .map(|entry| {
                 let path = entry.path();
 
-                path.file_name()
-                    .and_then(|file_name| file_name.to_str())
+                entry
+                    .file_name()
+                    .to_str()
                     .ok_or(path.to_owned())
                     .and_then(|file_name| {
                         snapshot_from_fs_path(&path)
@@ -43,7 +47,8 @@ fn snapshot_from_fs_path(path: &PathBuf) -> Result<VfsSnapshot, PathBuf> {
 fn main() {
     let out_dir = env::var_os("OUT_DIR").unwrap();
 
-    let plugin_root = PathBuf::from("plugin");
+    let root_dir = env::var_os("CARGO_MANIFEST_DIR").unwrap();
+    let plugin_root = PathBuf::from(root_dir).join("plugin");
 
     let plugin_modules = plugin_root.join("modules");
 
