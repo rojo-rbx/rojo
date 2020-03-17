@@ -2,7 +2,7 @@ use memofs::Vfs;
 use reqwest::header::{ACCEPT, CONTENT_TYPE, COOKIE, USER_AGENT};
 use snafu::{ResultExt, Snafu};
 
-use crate::{auth_cookie::get_auth_cookie, cli::UploadCommand, common_setup};
+use crate::{auth_cookie::get_auth_cookie, cli::UploadCommand, serve_session::ServeSession};
 
 #[derive(Debug, Snafu)]
 pub struct UploadError(Error);
@@ -35,11 +35,11 @@ fn upload_inner(options: UploadCommand) -> Result<(), Error> {
         .or_else(get_auth_cookie)
         .ok_or(Error::NeedAuthCookie)?;
 
-    log::trace!("Constructing in-memory filesystem");
     let vfs = Vfs::new_default();
 
-    let (_maybe_project, tree) = common_setup::start(&options.absolute_project(), &vfs);
+    let session = ServeSession::new(vfs, &options.absolute_project());
 
+    let tree = session.tree();
     let inner_tree = tree.inner();
     let root_id = inner_tree.get_root_id();
     let root_instance = inner_tree.get_instance(root_id).unwrap();

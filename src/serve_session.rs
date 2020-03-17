@@ -7,14 +7,18 @@ use std::{
 
 use crossbeam_channel::Sender;
 use memofs::Vfs;
+use rbx_dom_weak::RbxInstanceProperties;
 
 use crate::{
     change_processor::ChangeProcessor,
-    common_setup,
     message_queue::MessageQueue,
     project::Project,
     session_id::SessionId,
-    snapshot::{AppliedPatchSet, PatchSet, RojoTree},
+    snapshot::{
+        apply_patch_set, compute_patch_set, AppliedPatchSet, InstanceContext,
+        InstancePropertiesWithMeta, PatchSet, PathIgnoreRule, RojoTree,
+    },
+    snapshot_middleware::snapshot_from_vfs,
 };
 
 /// Contains all of the state for a Rojo serve session.
@@ -86,7 +90,7 @@ pub struct ServeSession {
 /// block to prevent needing to spread Send + Sync + 'static into everything
 /// that handles ServeSession.
 impl ServeSession {
-    /// Start a new serve session from the given in-memory filesystem  and start
+    /// Start a new serve session from the given in-memory filesystem and start
     /// path.
     ///
     /// The project file is expected to be loaded out-of-band since it's
@@ -94,12 +98,45 @@ impl ServeSession {
     /// in-memory filesystem layer.
     pub fn new<P: AsRef<Path>>(vfs: Vfs, start_path: P) -> Self {
         let start_path = start_path.as_ref();
-
-        log::trace!("Starting new ServeSession at path {}", start_path.display(),);
-
         let start_time = Instant::now();
 
-        let (root_project, tree) = common_setup::start(start_path, &vfs);
+        log::trace!("Starting new ServeSession at path {}", start_path.display());
+
+        log::trace!("Loading project file from {}", start_path.display());
+        let root_project = Project::load_fuzzy(start_path).expect("TODO: Project load failed");
+
+        let mut tree = RojoTree::new(InstancePropertiesWithMeta {
+            properties: RbxInstanceProperties {
+                name: "ROOT".to_owned(),
+                class_name: "Folder".to_owned(),
+                properties: Default::default(),
+            },
+            metadata: Default::default(),
+        });
+
+        let root_id = tree.get_root_id();
+
+        let mut instance_context = InstanceContext::default();
+
+        if let Some(project) = &root_project {
+            let rules = project.glob_ignore_paths.iter().map(|glob| PathIgnoreRule {
+                glob: glob.clone(),
+                base_path: project.folder_location().to_path_buf(),
+            });
+
+            instance_context.add_path_ignore_rules(rules);
+        }
+
+        log::trace!("Generating snapshot of instances from VFS");
+        let snapshot = snapshot_from_vfs(&instance_context, &vfs, &start_path)
+            .expect("snapshot failed")
+            .expect("snapshot did not return an instance");
+
+        log::trace!("Computing initial patch set");
+        let patch_set = compute_patch_set(&snapshot, &tree, root_id);
+
+        log::trace!("Applying initial patch set");
+        apply_patch_set(&mut tree, patch_set);
 
         let session_id = SessionId::new();
         let message_queue = MessageQueue::new();

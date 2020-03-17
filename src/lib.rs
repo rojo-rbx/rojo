@@ -9,7 +9,6 @@ mod tree_view;
 
 mod auth_cookie;
 mod change_processor;
-mod common_setup;
 mod error;
 mod glob;
 mod message_queue;
