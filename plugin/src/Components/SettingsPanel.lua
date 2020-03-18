@@ -2,6 +2,8 @@ local Roact = require(script:FindFirstAncestor("Rojo").Roact)
 
 local Plugin = script:FindFirstAncestor("Plugin")
 
+local Checkbox = require(Plugin.Components.Checkbox)
+local FitList = require(Plugin.Components.FitList)
 local FitText = require(Plugin.Components.FitText)
 local FormButton = require(Plugin.Components.FormButton)
 local Panel = require(Plugin.Components.Panel)
@@ -25,16 +27,45 @@ function SettingsPanel:render()
 					Padding = UDim.new(0, 8),
 				}),
 
-				Text = e(FitText, {
-					Padding = Vector2.new(12, 6),
-					Font = theme.ButtonFont,
-					TextSize = 18,
-					Text = "openScriptsExternally: " .. tostring(settings:get("openScriptsExternally")),
-					TextColor3 = theme.Text1,
-					BackgroundTransparency = 1,
+				Address = e(FitList, {
+					containerProps = {
+						LayoutOrder = 1,
+						BackgroundTransparency = 1,
+					},
+					layoutProps = {
+						Padding = UDim.new(0, 4),
+						FillDirection = Enum.FillDirection.Horizontal,
+						HorizontalAlignment = Enum.HorizontalAlignment.Left,
+						VerticalAlignment = Enum.VerticalAlignment.Center,
+					},
+				}, {
+					Label = e(FitText, {
+						Kind = "TextLabel",
+						LayoutOrder = 1,
+						BackgroundTransparency = 1,
+						TextXAlignment = Enum.TextXAlignment.Left,
+						Font = theme.MainFont,
+						TextSize = 16,
+						Text = "Open Scripts Externally",
+						TextColor3 = theme.Text1,
+					}),
+
+					Padding = e("Frame", {
+						Size = UDim2.new(0, 8, 0, 0),
+						BackgroundTransparency = 1,
+						LayoutOrder = 2,
+					}),
+
+					Input = e(Checkbox, {
+						layoutOrder = 3,
+						checked = settings:get("openScriptsExternally"),
+						onChange = function(newValue)
+							settings:set("openScriptsExternally", not settings:get("openScriptsExternally"))
+						end,
+					}),
 				}),
 
-				DisconnectButton = e(FormButton, {
+				BackButton = e(FormButton, {
 					layoutOrder = 2,
 					text = "Okay",
 					secondary = true,
