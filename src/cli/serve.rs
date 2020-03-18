@@ -7,11 +7,15 @@ use anyhow::Result;
 use memofs::Vfs;
 use termcolor::{BufferWriter, Color, ColorChoice, ColorSpec, WriteColor};
 
-use crate::{cli::ServeCommand, serve_session::ServeSession, web::LiveServer};
+use crate::{
+    cli::{GlobalOptions, ServeCommand},
+    serve_session::ServeSession,
+    web::LiveServer,
+};
 
 const DEFAULT_PORT: u16 = 34872;
 
-pub fn serve(options: ServeCommand) -> Result<()> {
+pub fn serve(global: GlobalOptions, options: ServeCommand) -> Result<()> {
     let vfs = Vfs::new_default();
 
     let session = Arc::new(ServeSession::new(vfs, &options.absolute_project()));
@@ -23,14 +27,14 @@ pub fn serve(options: ServeCommand) -> Result<()> {
 
     let server = LiveServer::new(session);
 
-    let _ = show_start_message(port);
+    let _ = show_start_message(port, global.color.into());
     server.start(port);
 
     Ok(())
 }
 
-fn show_start_message(port: u16) -> io::Result<()> {
-    let writer = BufferWriter::stdout(ColorChoice::Auto);
+fn show_start_message(port: u16, color: ColorChoice) -> io::Result<()> {
+    let writer = BufferWriter::stdout(color);
     let mut buffer = writer.buffer();
 
     writeln!(&mut buffer, "Rojo server listening:")?;
