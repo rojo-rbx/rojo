@@ -18,7 +18,6 @@ local ConnectingPanel = require(Plugin.Components.ConnectingPanel)
 local ConnectionActivePanel = require(Plugin.Components.ConnectionActivePanel)
 local ErrorPanel = require(Plugin.Components.ErrorPanel)
 local SettingsPanel = require(Plugin.Components.SettingsPanel)
-local Theme = require(Plugin.Components.Theme)
 
 local e = Roact.createElement
 
@@ -214,11 +213,9 @@ function App:render()
 		}
 	end
 
-	return e(Theme.StudioProvider, nil, {
-		UI = e(Roact.Portal, {
-			target = self.dockWidget,
-		}, children),
-	})
+	return e(Roact.Portal, {
+		target = self.dockWidget,
+	}, children)
 end
 
 function App:didMount()
