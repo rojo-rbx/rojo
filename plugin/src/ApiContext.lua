@@ -233,4 +233,19 @@ function ApiContext:retrieveMessages()
 		end)
 end
 
+function ApiContext:open(id)
+	local url = ("%s/api/open/%s"):format(self.__baseUrl, id)
+
+	return Http.post(url, "")
+		:andThen(rejectFailedRequests)
+		:andThen(Http.Response.json)
+		:andThen(function(body)
+			if body.sessionId ~= self.__sessionId then
+				return Promise.reject("Server changed ID")
+			end
+
+			return nil
+		end)
+end
+
 return ApiContext

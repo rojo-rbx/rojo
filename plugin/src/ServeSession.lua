@@ -1,3 +1,5 @@
+local StudioService = game:GetService("StudioService")
+
 local Log = require(script.Parent.Parent.Log)
 local Fmt = require(script.Parent.Parent.Fmt)
 local t = require(script.Parent.Parent.t)
@@ -57,12 +59,26 @@ function ServeSession.new(options)
 	local instanceMap = InstanceMap.new(onInstanceChanged)
 	local reconciler = Reconciler.new(instanceMap)
 
+	local connections = {}
+
+	local connection = StudioService
+		:GetPropertyChangedSignal("ActiveScript")
+		:Connect(function()
+			local activeScript = StudioService.ActiveScript
+
+			if activeScript ~= nil then
+				self:__onActiveScriptChanged(activeScript)
+			end
+		end)
+	table.insert(connections, connection)
+
 	self = {
 		__status = Status.NotStarted,
 		__apiContext = options.apiContext,
 		__reconciler = reconciler,
 		__instanceMap = instanceMap,
 		__statusChangedCallback = nil,
+		__connections = connections,
 	}
 
 	setmetatable(self, ServeSession)
@@ -106,6 +122,37 @@ end
 
 function ServeSession:stop()
 	self:__stopInternal()
+end
+
+function ServeSession:__onActiveScriptChanged(activeScript)
+	if not DevSettings:alwaysOpenScriptsExternally() then
+		Log.trace("Not opening script {} because feature not enabled.", activeScript)
+
+		return
+	end
+
+	if self.__status ~= Status.Connected then
+		Log.trace("Not opening script {} because session is not connected.", activeScript)
+
+		return
+	end
+
+	local scriptId = self.__instanceMap.fromInstances[activeScript]
+	if scriptId == nil then
+		Log.trace("Not opening script {} because it is not known by Rojo.", activeScript)
+
+		return
+	end
+
+	Log.debug("Trying to open script {} externally...", activeScript)
+
+	-- Force-close the script inside Studio
+	local existingParent = activeScript.Parent
+	activeScript.Parent = nil
+	activeScript.Parent = existingParent
+
+	-- Notify the Rojo server to open this script
+	self.__apiContext:open(scriptId)
 end
 
 function ServeSession:__onInstanceChanged(instance, propertyName)
@@ -200,6 +247,11 @@ function ServeSession:__stopInternal(err)
 	self:__setStatus(Status.Disconnected, err)
 	self.__apiContext:disconnect()
 	self.__instanceMap:stop()
+
+	for _, connection in ipairs(self.__connections) do
+		connection:Disconnect()
+	end
+	self.__connections = {}
 end
 
 function ServeSession:__setStatus(status, detail)
