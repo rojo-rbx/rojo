@@ -13,8 +13,8 @@
     <a href="https://crates.io/crates/rojo">
         <img src="https://img.shields.io/crates/v/rojo.svg?label=latest%20release" alt="Latest server version" />
     </a>
-    <a href="https://rojo.space/docs/0.5.x">
-        <img src="https://img.shields.io/badge/docs-0.5.x-brightgreen.svg" alt="Rojo 0.5.x Documentation" />
+    <a href="https://rojo.space/docs">
+        <img src="https://img.shields.io/badge/docs-website-brightgreen.svg" alt="Rojo 0.5.x Documentation" />
     </a>
 </div>
 
@@ -34,11 +34,10 @@ Rojo enables:
 * Streaming `rbxmx` and `rbxm` models into your game in real time
 * Packaging and deploying your project to Roblox.com from the command line
 
-Soon, Rojo will be able to:
+In the future, Rojo will be able to:
 
-* Automatically convert your existing game to work with Rojo
 * Sync instances from Roblox Studio to the filesystem
-* Automatically manage your assets on Roblox.com, like images and sounds
+* Automatically convert your existing game to work with Rojo
 * Import custom instances like MoonScript code
 
 ## [Documentation](https://rojo.space/docs)
