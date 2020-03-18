@@ -1,6 +1,7 @@
 # Rojo Changelog
 
 ## Unreleased Changes for 0.6.x
+* Added "Open Scripts Externally" feature. When enabled, opening a script in Studio will instead open it in your default text editor.
 * Increased default logging verbosity in commands like `rojo build`.
 
 ## [0.6.0 Alpha 3](https://github.com/rojo-rbx/rojo/releases/tag/v0.6.0-alpha.3) (March 13, 2020)
