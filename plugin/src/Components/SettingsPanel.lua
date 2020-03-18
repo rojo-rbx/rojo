@@ -24,10 +24,10 @@ function SettingsPanel:render()
 					HorizontalAlignment = Enum.HorizontalAlignment.Center,
 					VerticalAlignment = Enum.VerticalAlignment.Center,
 					SortOrder = Enum.SortOrder.LayoutOrder,
-					Padding = UDim.new(0, 8),
+					Padding = UDim.new(0, 16),
 				}),
 
-				Address = e(FitList, {
+				OpenScriptsExternally = e(FitList, {
 					containerProps = {
 						LayoutOrder = 1,
 						BackgroundTransparency = 1,
@@ -65,8 +65,46 @@ function SettingsPanel:render()
 					}),
 				}),
 
+				TwoWaySync = e(FitList, {
+					containerProps = {
+						LayoutOrder = 2,
+						BackgroundTransparency = 1,
+					},
+					layoutProps = {
+						Padding = UDim.new(0, 4),
+						FillDirection = Enum.FillDirection.Horizontal,
+						HorizontalAlignment = Enum.HorizontalAlignment.Left,
+						VerticalAlignment = Enum.VerticalAlignment.Center,
+					},
+				}, {
+					Label = e(FitText, {
+						Kind = "TextLabel",
+						LayoutOrder = 1,
+						BackgroundTransparency = 1,
+						TextXAlignment = Enum.TextXAlignment.Left,
+						Font = theme.MainFont,
+						TextSize = 16,
+						Text = "Two-Way Sync (Experimental!)",
+						TextColor3 = theme.Text1,
+					}),
+
+					Padding = e("Frame", {
+						Size = UDim2.new(0, 8, 0, 0),
+						BackgroundTransparency = 1,
+						LayoutOrder = 2,
+					}),
+
+					Input = e(Checkbox, {
+						layoutOrder = 3,
+						checked = settings:get("twoWaySync"),
+						onChange = function(newValue)
+							settings:set("twoWaySync", not settings:get("twoWaySync"))
+						end,
+					}),
+				}),
+
 				BackButton = e(FormButton, {
-					layoutOrder = 2,
+					layoutOrder = 4,
 					text = "Okay",
 					secondary = true,
 					onClick = function()

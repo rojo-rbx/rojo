@@ -43,9 +43,7 @@ impl Service for ApiService {
                 self.handle_api_open(request)
             }
 
-            (&Method::POST, "/api/write") if cfg!(feature = "unstable_two_way_sync") => {
-                self.handle_api_write(request)
-            }
+            (&Method::POST, "/api/write") => self.handle_api_write(request),
 
             (_method, path) => json(
                 ErrorResponse::not_found(format!("Route not found: {}", path)),

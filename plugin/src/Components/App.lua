@@ -114,6 +114,7 @@ function App:startSession(address, port, sessionOptions)
 	self.serveSession = ServeSession.new({
 		apiContext = ApiContext.new(baseUrl),
 		openScriptsExternally = sessionOptions.openScriptsExternally,
+		twoWaySync = sessionOptions.twoWaySync,
 	})
 
 	self.serveSession:onStatusChanged(function(status, details)

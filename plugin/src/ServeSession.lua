@@ -46,6 +46,7 @@ ServeSession.Status = Status
 local validateServeOptions = t.strictInterface({
 	apiContext = t.table,
 	openScriptsExternally = t.boolean,
+	twoWaySync = t.boolean,
 })
 
 function ServeSession.new(options)
@@ -77,6 +78,7 @@ function ServeSession.new(options)
 		__status = Status.NotStarted,
 		__apiContext = options.apiContext,
 		__openScriptsExternally = options.openScriptsExternally,
+		__twoWaySync = options.twoWaySync,
 		__reconciler = reconciler,
 		__instanceMap = instanceMap,
 		__statusChangedCallback = nil,
@@ -158,7 +160,7 @@ function ServeSession:__onActiveScriptChanged(activeScript)
 end
 
 function ServeSession:__onInstanceChanged(instance, propertyName)
-	if not DevSettings:twoWaySyncEnabled() then
+	if not self.__twoWaySync then
 		return
 	end
 

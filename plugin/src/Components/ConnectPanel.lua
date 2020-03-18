@@ -167,6 +167,7 @@ function ConnectPanel:render()
 
 								local sessionOptions = {
 									openScriptsExternally = settings:get("openScriptsExternally"),
+									twoWaySync = settings:get("twoWaySync"),
 								}
 
 								startSession(address, port, sessionOptions)
