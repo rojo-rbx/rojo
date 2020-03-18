@@ -74,10 +74,7 @@ function App:init()
 
 	self.signals = {}
 	self.serveSession = nil
-
-	self.displayedVersion = DevSettings:isEnabled()
-		and Config.codename
-		or Version.display(Config.version)
+	self.displayedVersion = Version.display(Config.version)
 
 	local toolbar = self.props.plugin:CreateToolbar("Rojo " .. self.displayedVersion)
 
