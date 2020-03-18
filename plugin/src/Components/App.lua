@@ -13,11 +13,12 @@ local Version = require(Plugin.Version)
 local preloadAssets = require(Plugin.preloadAssets)
 local strict = require(Plugin.strict)
 
-local Theme = require(Plugin.Components.Theme)
 local ConnectPanel = require(Plugin.Components.ConnectPanel)
 local ConnectingPanel = require(Plugin.Components.ConnectingPanel)
 local ConnectionActivePanel = require(Plugin.Components.ConnectionActivePanel)
 local ErrorPanel = require(Plugin.Components.ErrorPanel)
+local SettingsPanel = require(Plugin.Components.SettingsPanel)
+local Theme = require(Plugin.Components.Theme)
 
 local e = Roact.createElement
 
@@ -62,6 +63,7 @@ local AppStatus = strict("AppStatus", {
 	Connecting = "Connecting",
 	Connected = "Connected",
 	Error = "Error",
+	Settings = "Settings",
 })
 
 local App = Roact.Component:extend("App")
@@ -155,6 +157,11 @@ function App:render()
 				startSession = function(address, port)
 					self:startSession(address, port)
 				end,
+				openSettings = function()
+					self:setState({
+						appStatus = AppStatus.Settings,
+					})
+				end,
 				cancel = function()
 					Log.trace("Canceling session configuration")
 
@@ -166,7 +173,7 @@ function App:render()
 		}
 	elseif self.state.appStatus == AppStatus.Connecting then
 		children = {
-			ConnectingPanel = Roact.createElement(ConnectingPanel),
+			ConnectingPanel = e(ConnectingPanel),
 		}
 	elseif self.state.appStatus == AppStatus.Connected then
 		children = {
@@ -184,9 +191,19 @@ function App:render()
 				end,
 			}),
 		}
+	elseif self.state.appStatus == AppStatus.Settings then
+		children = {
+			e(SettingsPanel, {
+				back = function()
+					self:setState({
+						appStatus = AppStatus.NotStarted,
+					})
+				end,
+			}),
+		}
 	elseif self.state.appStatus == AppStatus.Error then
 		children = {
-			ErrorPanel = Roact.createElement(ErrorPanel, {
+			ErrorPanel = e(ErrorPanel, {
 				errorMessage = self.state.errorMessage,
 				onDismiss = function()
 					self:setState({
@@ -197,8 +214,8 @@ function App:render()
 		}
 	end
 
-	return Roact.createElement(Theme.StudioProvider, nil, {
-		UI = Roact.createElement(Roact.Portal, {
+	return e(Theme.StudioProvider, nil, {
+		UI = e(Roact.Portal, {
 			target = self.dockWidget,
 		}, children),
 	})

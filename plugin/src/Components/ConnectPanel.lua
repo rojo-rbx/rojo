@@ -25,6 +25,7 @@ end
 
 function ConnectPanel:render()
 	local startSession = self.props.startSession
+	local openSettings = self.props.openSettings
 
 	return Theme.with(function(theme)
 		return e(Panel, nil, {
@@ -136,6 +137,17 @@ function ConnectPanel:render()
 					PaddingRight = UDim.new(0, 24),
 				},
 			}, {
+				e(FormButton, {
+					layoutOrder = 1,
+					text = "Settings",
+					secondary = true,
+					onClick = function()
+						if openSettings ~= nil then
+							openSettings()
+						end
+					end,
+				}),
+
 				e(FormButton, {
 					layoutOrder = 2,
 					text = "Connect",
