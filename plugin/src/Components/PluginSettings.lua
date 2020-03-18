@@ -20,6 +20,7 @@ function Settings.fromPlugin(plugin)
 		local savedValue = plugin:GetSetting("Rojo_" .. name)
 
 		if savedValue == nil then
+			plugin:SetSetting("Rojo_" .. name, defaultValue)
 			values[name] = defaultValue
 		else
 			values[name] = savedValue
@@ -42,7 +43,7 @@ function Settings:get(name)
 end
 
 function Settings:set(name, value)
-	self.__plugin:SetSetting(name, value)
+	self.__plugin:SetSetting("Rojo_" .. name, value)
 	self.__values[name] = value
 
 	for callback in pairs(self.__updateListeners) do
