@@ -64,9 +64,9 @@ fn main() {
     let options = Options::from_args();
 
     let log_filter = match options.verbosity {
-        0 => "warn",
-        1 => "warn,librojo=info",
-        2 => "warn,librojo=trace",
+        0 => "info",
+        1 => "info,librojo=debug",
+        2 => "info,librojo=trace",
         _ => "trace",
     };
 
