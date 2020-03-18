@@ -1,7 +1,7 @@
 //! Defines Rojo's HTTP API, all under /api. These endpoints generally return
 //! JSON.
 
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, fs, path::PathBuf, sync::Arc};
 
 use futures::{Future, Stream};
 
@@ -10,12 +10,12 @@ use rbx_dom_weak::RbxId;
 
 use crate::{
     serve_session::ServeSession,
-    snapshot::{PatchSet, PatchUpdate},
+    snapshot::{InstanceWithMeta, PatchSet, PatchUpdate},
     web::{
         interface::{
             ErrorResponse, Instance, InstanceMetadata as WebInstanceMetadata, InstanceUpdate,
-            ReadResponse, ServerInfoResponse, SubscribeMessage, SubscribeResponse, WriteRequest,
-            WriteResponse, PROTOCOL_VERSION, SERVER_VERSION,
+            OpenResponse, ReadResponse, ServerInfoResponse, SubscribeMessage, SubscribeResponse,
+            WriteRequest, WriteResponse, PROTOCOL_VERSION, SERVER_VERSION,
         },
         util::{json, json_ok},
     },
@@ -38,6 +38,9 @@ impl Service for ApiService {
             (&Method::GET, path) if path.starts_with("/api/read/") => self.handle_api_read(request),
             (&Method::GET, path) if path.starts_with("/api/subscribe/") => {
                 self.handle_api_subscribe(request)
+            }
+            (&Method::POST, path) if path.starts_with("/api/open/") => {
+                self.handle_api_open(request)
             }
 
             (&Method::POST, "/api/write") if cfg!(feature = "unstable_two_way_sync") => {
@@ -233,4 +236,76 @@ impl ApiService {
             instances,
         })
     }
+
+    /// Open a script with the given ID in the user's default text editor.
+    fn handle_api_open(&self, request: Request<Body>) -> <Self as Service>::Future {
+        let argument = &request.uri().path()["/api/open/".len()..];
+        let requested_id = match RbxId::parse_str(argument) {
+            Some(id) => id,
+            None => {
+                return json(
+                    ErrorResponse::bad_request("Invalid instance ID"),
+                    StatusCode::BAD_REQUEST,
+                );
+            }
+        };
+
+        let tree = self.serve_session.tree();
+
+        let instance = match tree.get_instance(requested_id) {
+            Some(instance) => instance,
+            None => {
+                return json(
+                    ErrorResponse::bad_request("Instance not found"),
+                    StatusCode::NOT_FOUND,
+                );
+            }
+        };
+
+        let script_path = match pick_script_path(instance) {
+            Some(path) => path,
+            None => {
+                return json(
+                    ErrorResponse::bad_request(
+                        "No appropriate file could be found to open this script",
+                    ),
+                    StatusCode::NOT_FOUND,
+                );
+            }
+        };
+
+        let _ = opener::open(script_path);
+
+        json_ok(&OpenResponse {
+            session_id: self.serve_session.session_id(),
+        })
+    }
+}
+
+/// If this instance is represented by a script, try to find the correct .lua
+/// file to open to edit it.
+fn pick_script_path(instance: InstanceWithMeta<'_>) -> Option<PathBuf> {
+    match instance.class_name() {
+        "Script" | "LocalScript" | "ModuleScript" => {}
+        _ => return None,
+    }
+
+    // Pick the first listed relevant path that has an extension of .lua that
+    // exists.
+    instance
+        .metadata()
+        .relevant_paths
+        .iter()
+        .find(|path| {
+            // We should only ever open Lua files to be safe.
+            match path.extension().and_then(|ext| ext.to_str()) {
+                Some("lua") => {}
+                _ => return false,
+            }
+
+            fs::metadata(path)
+                .map(|meta| meta.is_file())
+                .unwrap_or(false)
+        })
+        .map(|path| path.to_owned())
 }
