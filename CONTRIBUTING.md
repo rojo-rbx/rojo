@@ -33,15 +33,13 @@ Please file issues and we'll try to help figure out what the best way forward is
 ## Pushing a Rojo Release
 The Rojo release process is pretty manual right now. If you need to do it, here's how:
 
-1. Bump server version in [`server/Cargo.toml`](server/Cargo.toml)
+1. Bump server version in [`Cargo.toml`](Cargo.toml)
 2. Bump plugin version in [`plugin/src/Config.lua`](plugin/src/Config.lua)
 3. Run `cargo test` to update `Cargo.lock` and double-check tests
 4. Update [`CHANGELOG.md`](CHANGELOG.md)
 5. Commit!
     * `git add . && git commit -m "Release vX.Y.Z"`
 6. Tag the commit with the version from `Cargo.toml` prepended with a v, like `v0.4.13`
-7. Build Windows release build of CLI
-    * `cargo build --release`
 7. Publish the CLI
     * `cargo publish`
 8. Build and upload the plugin
@@ -53,3 +51,4 @@ The Rojo release process is pretty manual right now. If you need to do it, here'
     * Update the leading text with a summary about the release
     * Paste the changelog notes (as-is!) from [`CHANGELOG.md`](CHANGELOG.md)
     * Write a small summary of each major feature
+    * Attach release artifacts from GitHub Actions for each platform
