@@ -111,5 +111,12 @@ fn write_model(tree: &RojoTree, options: &BuildCommand) -> Result<(), anyhow::Er
 
     file.flush()?;
 
+    let filename = options
+        .output
+        .file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or("<invalid utf-8>");
+    log::info!("Built project to {}", filename);
+
     Ok(())
 }
