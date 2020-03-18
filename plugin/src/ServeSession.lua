@@ -45,6 +45,7 @@ ServeSession.Status = Status
 
 local validateServeOptions = t.strictInterface({
 	apiContext = t.table,
+	openScriptsExternally = t.boolean,
 })
 
 function ServeSession.new(options)
@@ -75,6 +76,7 @@ function ServeSession.new(options)
 	self = {
 		__status = Status.NotStarted,
 		__apiContext = options.apiContext,
+		__openScriptsExternally = options.openScriptsExternally,
 		__reconciler = reconciler,
 		__instanceMap = instanceMap,
 		__statusChangedCallback = nil,
@@ -125,7 +127,7 @@ function ServeSession:stop()
 end
 
 function ServeSession:__onActiveScriptChanged(activeScript)
-	if not DevSettings:alwaysOpenScriptsExternally() then
+	if not self.__openScriptsExternally then
 		Log.trace("Not opening script {} because feature not enabled.", activeScript)
 
 		return

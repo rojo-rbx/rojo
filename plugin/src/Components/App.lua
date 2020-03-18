@@ -107,12 +107,13 @@ function App:init()
 	end)
 end
 
-function App:startSession(address, port)
+function App:startSession(address, port, sessionOptions)
 	Log.trace("Starting new session")
 
 	local baseUrl = ("http://%s:%s"):format(address, port)
 	self.serveSession = ServeSession.new({
 		apiContext = ApiContext.new(baseUrl),
+		openScriptsExternally = sessionOptions.openScriptsExternally,
 	})
 
 	self.serveSession:onStatusChanged(function(status, details)
@@ -153,8 +154,8 @@ function App:render()
 	if self.state.appStatus == AppStatus.NotStarted then
 		children = {
 			ConnectPanel = e(ConnectPanel, {
-				startSession = function(address, port)
-					self:startSession(address, port)
+				startSession = function(address, port, settings)
+					self:startSession(address, port, settings)
 				end,
 				openSettings = function()
 					self:setState({

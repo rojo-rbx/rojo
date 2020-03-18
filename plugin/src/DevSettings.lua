@@ -33,14 +33,6 @@ local VALUES = {
 			[Environment.Test] = false,
 		},
 	},
-	UnstableOpenScriptsExternally = {
-		type = "BoolValue",
-		values = {
-			[Environment.User] = false,
-			[Environment.Dev] = false,
-			[Environment.Test] = false,
-		},
-	},
 }
 
 local CONTAINER_NAME = "RojoDevSettings" .. Config.codename
@@ -150,10 +142,6 @@ end
 
 function DevSettings:twoWaySyncEnabled()
 	return getValue("UnstableTwoWaySync")
-end
-
-function DevSettings:alwaysOpenScriptsExternally()
-	return getValue("UnstableOpenScriptsExternally")
 end
 
 function _G.ROJO_DEV_CREATE()
