@@ -5,16 +5,28 @@ local Log = require(script.Parent.Parent.Log)
 	keep track of every instance we know about.
 
 	TODO: Track ancestry to catch when stuff moves?
-	TODO: Ability to pause change tracking for preventing feedback.
 ]]
 local InstanceMap = {}
 InstanceMap.__index = InstanceMap
 
 function InstanceMap.new(onInstanceChanged)
 	local self = {
+		-- A map from IDs to instances.
 		fromIds = {},
+
+		-- A map from instances to IDs.
 		fromInstances = {},
+
+		-- A set of all instances that updates should be paused for. This set
+		-- should generally be empty, and will be filled by pauseInstance
+		-- temporarily.
+		pausedUpdateInstances = {},
+
+		-- A map from instances to a signal or list of signals connected to it.
 		instancesToSignal = {},
+
+		-- Callback that's invoked whenever an instance is changed and it was
+		-- not paused.
 		onInstanceChanged = onInstanceChanged,
 	}
 
@@ -119,6 +131,32 @@ function InstanceMap:destroyId(id)
 	end
 end
 
+--[[
+	Pause updates for an instance momentarily and invoke a callback.
+
+	If the callback throws an error, InstanceMap will still be kept in a
+	consistent state.
+]]
+function InstanceMap:pauseInstance(instance, callback)
+	local id = self.fromInstances[instance]
+
+	-- If we don't know about this instance, ignore it and do not invoke the
+	-- callback.
+	if id == nil then
+		return
+	end
+
+	self.pausedUpdateInstances[instance] = true
+	local success, result = xpcall(callback, debug.traceback)
+	self.pausedUpdateInstances[instance] = false
+
+	if success then
+		return result
+	else
+		error(result, 2)
+	end
+end
+
 function InstanceMap:__connectSignals(instance)
 	-- ValueBase instances have an overriden version of the Changed signal that
 	-- only detects changes to their Value property.
@@ -151,9 +189,15 @@ end
 function InstanceMap:__maybeFireInstanceChanged(instance, propertyName)
 	Log.trace("{}.{} changed", instance:GetFullName(), propertyName)
 
-	if self.onInstanceChanged ~= nil then
-		self.onInstanceChanged(instance, propertyName)
+	if self.pausedUpdateInstances[instance] then
+		return
 	end
+
+	if self.onInstanceChanged == nil then
+		return
+	end
+
+	self.onInstanceChanged(instance, propertyName)
 end
 
 function InstanceMap:__disconnectSignals(instance)
