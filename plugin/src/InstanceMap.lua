@@ -5,6 +5,7 @@ local Log = require(script.Parent.Parent.Log)
 	keep track of every instance we know about.
 
 	TODO: Track ancestry to catch when stuff moves?
+	TODO: Ability to pause change tracking for preventing feedback.
 ]]
 local InstanceMap = {}
 InstanceMap.__index = InstanceMap

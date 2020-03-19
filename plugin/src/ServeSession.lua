@@ -4,7 +4,6 @@ local Log = require(script.Parent.Parent.Log)
 local Fmt = require(script.Parent.Parent.Fmt)
 local t = require(script.Parent.Parent.t)
 
-local DevSettings = require(script.Parent.DevSettings)
 local InstanceMap = require(script.Parent.InstanceMap)
 local Reconciler = require(script.Parent.Reconciler)
 local strict = require(script.Parent.strict)
