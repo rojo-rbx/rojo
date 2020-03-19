@@ -922,7 +922,7 @@ dependencies = [
 
 [[package]]
 name = "memofs"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "crossbeam-channel 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "fs-err 2.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1688,7 +1688,7 @@ dependencies = [
  "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "maplit 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "memofs 0.1.0",
+ "memofs 0.1.1",
  "notify 4.0.15 (registry+https://github.com/rust-lang/crates.io-index)",
  "opener 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "paste 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)",

@@ -58,7 +58,7 @@ name = "build"
 harness = false
 
 [dependencies]
-memofs = { version = "0.1.0", path = "memofs" }
+memofs = { version = "0.1.1", path = "memofs" }
 
 anyhow = "1.0.27"
 backtrace = "0.3"
