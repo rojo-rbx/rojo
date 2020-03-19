@@ -12,5 +12,5 @@ homepage = "https://github.com/rojo-rbx/rojo/tree/master/memofs"
 
 [dependencies]
 crossbeam-channel = "0.4.0"
-fs-err = "2.2.0"
+fs-err = "2.3.0"
 notify = "4.0.15"
