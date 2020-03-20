@@ -1,7 +1,6 @@
 use crate::serve_session::ServeSession;
 
-use memofs::InMemoryFs;
-use memofs::{Vfs, VfsSnapshot};
+use memofs::{InMemoryFs, Vfs, VfsSnapshot};
 use roblox_install::RobloxStudio;
 use snafu::{ResultExt, Snafu};
 use std::{
