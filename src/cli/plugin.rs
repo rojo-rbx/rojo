@@ -20,7 +20,7 @@ enum PluginSubcommand {
     Uninstall,
 }
 
-/// Install rojo's plugin.
+/// Install Rojo's plugin.
 #[derive(Debug, StructOpt)]
 pub struct PluginCommand {
     #[structopt(subcommand)]
