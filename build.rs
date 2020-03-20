@@ -1,46 +1,37 @@
 use std::env;
-use std::fs;
-use std::path::{Path, PathBuf};
+use std::{fs, io, path::{Path, PathBuf}};
 
 use maplit::hashmap;
 use memofs::VfsSnapshot;
 
-fn snapshot_from_fs_path(path: &PathBuf) -> Result<VfsSnapshot, PathBuf> {
+fn snapshot_from_fs_path(path: &PathBuf) -> io::Result<VfsSnapshot> {
     if path.is_dir() {
-        let entries: Result<Vec<fs::DirEntry>, PathBuf> = fs::read_dir(path)
-            .map_err(|_| path.to_owned())?
-            .map(|entry| entry.map_err(|_| path.to_owned()))
-            .collect();
+        let vfs_entries = fs::read_dir(path)?
+            .filter_map(|entry| {
+                let entry = match entry {
+                    Ok(entry) => entry,
+                    Err(error) => return Some(Err(error)),
+                };
 
-        let vfs_entries: Result<Vec<(String, VfsSnapshot)>, PathBuf> = entries?
-            .iter()
-            .filter(|entry| {
-                let file_name = entry.file_name();
-                !file_name.to_str()
-                    .map(|name| name.ends_with(".spec.lua"))
-                    .unwrap_or(false)
-            })
-            .map(|entry| {
-                let path = entry.path();
+                let file_name = entry.file_name().to_str()
+                    .map(str::to_owned)
+                    .expect(&format!("Could not get file name from {}", entry.path().display()));
 
-                entry
-                    .file_name()
-                    .to_str()
-                    .ok_or(path.to_owned())
-                    .and_then(|file_name| {
-                        snapshot_from_fs_path(&path)
-                            .map(|snapshot| (file_name.to_owned(), snapshot))
-                    })
-            })
-            .collect();
+                if file_name.ends_with(".spec.lua") {
+                    None
+                } else {
+                    Some(snapshot_from_fs_path(&entry.path())
+                        .map(|snapshot| (file_name, snapshot)))
+                }
+            });
 
-        Ok(VfsSnapshot::dir(vfs_entries?))
+        let entries: io::Result<Vec<(String, VfsSnapshot)>> = vfs_entries.collect();
+
+        Ok(VfsSnapshot::dir(entries?))
     } else {
         println!("cargo:rerun-if-changed={}", path.display());
         fs::read_to_string(path)
-            .ok()
             .map(|content| VfsSnapshot::file(content))
-            .ok_or(path.to_owned())
     }
 }
 
