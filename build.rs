@@ -10,7 +10,6 @@ fn snapshot_from_fs_path(path: &PathBuf) -> Result<VfsSnapshot, PathBuf> {
         let entries: Result<Vec<fs::DirEntry>, PathBuf> = fs::read_dir(path)
             .map_err(|_| path.to_owned())?
             .map(|entry| entry.map_err(|_| path.to_owned()))
-            .into_iter()
             .collect();
 
         let vfs_entries: Result<Vec<(String, VfsSnapshot)>, PathBuf> = entries?
@@ -33,7 +32,6 @@ fn snapshot_from_fs_path(path: &PathBuf) -> Result<VfsSnapshot, PathBuf> {
                             .map(|snapshot| (file_name.to_owned(), snapshot))
                     })
             })
-            .into_iter()
             .collect();
 
         Ok(VfsSnapshot::dir(vfs_entries?))
@@ -77,8 +75,6 @@ fn main() {
             }),
         }),
     });
-
-    println!("cargo:rerun-if-changed=build.rs");
 
     let out_path = Path::new(&out_dir).join("plugin.bincode");
     let out_file = fs::File::create(&out_path).unwrap();
