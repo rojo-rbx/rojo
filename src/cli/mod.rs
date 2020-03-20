@@ -234,3 +234,19 @@ fn resolve_path(path: &Path) -> Cow<'_, Path> {
         Cow::Owned(env::current_dir().unwrap().join(path))
     }
 }
+
+#[derive(Debug, StructOpt)]
+pub enum PluginSubcommand {
+    /// Install the plugin in Roblox plugins folder. If the plugin is already installed, installing
+    /// it again will overwrite the current plugin file.
+    Install,
+    /// Removes the plugin if installed.
+    Uninstall,
+}
+
+/// Install Rojo's plugin.
+#[derive(Debug, StructOpt)]
+pub struct PluginCommand {
+    #[structopt(subcommand)]
+    subcommand: PluginSubcommand,
+}

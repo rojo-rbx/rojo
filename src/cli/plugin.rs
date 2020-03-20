@@ -1,31 +1,15 @@
-use crate::serve_session::ServeSession;
-
-use memofs::{InMemoryFs, Vfs, VfsSnapshot};
-use roblox_install::RobloxStudio;
-use snafu::{ResultExt, Snafu};
 use std::{
     fs::{self, File},
     io::{self, BufWriter},
 };
-use structopt::StructOpt;
 
-static PLUGIN_FILE_NAME: &str = concat!("rojo-", env!("CARGO_PKG_VERSION"), ".rbxmx");
+use memofs::{InMemoryFs, Vfs, VfsSnapshot};
+use roblox_install::RobloxStudio;
+use snafu::{ResultExt, Snafu};
 
-#[derive(Debug, StructOpt)]
-enum PluginSubcommand {
-    /// Install the plugin in Roblox plugins folder. If the plugin is already installed, installing
-    /// it again will overwrite the current plugin file.
-    Install,
-    /// Removes the plugin if installed.
-    Uninstall,
-}
+use crate::{cli::{PluginCommand, PluginSubcommand}, serve_session::ServeSession};
 
-/// Install Rojo's plugin.
-#[derive(Debug, StructOpt)]
-pub struct PluginCommand {
-    #[structopt(subcommand)]
-    subcommand: PluginSubcommand,
-}
+static PLUGIN_FILE_NAME: &str = "RojoManagedPlugin.rbxmx";
 
 #[derive(Debug, Snafu)]
 pub struct PluginError(Error);
@@ -45,17 +29,16 @@ fn xml_encode_config() -> rbx_xml::EncodeOptions {
 
 pub fn plugin(options: PluginCommand) -> Result<(), PluginError> {
     match options.subcommand {
-        PluginSubcommand::Install => install_plugin()?,
-        PluginSubcommand::Uninstall => uninstall_plugin()?,
+        PluginSubcommand::Install => install_plugin(),
+        PluginSubcommand::Uninstall => uninstall_plugin(),
     }
-    Ok(())
 }
 
 pub fn install_plugin() -> Result<(), PluginError> {
     static PLUGIN_BINCODE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/plugin.bincode"));
 
     let plugin_snapshot: VfsSnapshot = bincode::deserialize(PLUGIN_BINCODE)
-        .expect("rojo's plugin was not properly packed into rojo's binary");
+        .expect("Rojo's plugin was not properly packed into Rojo's binary");
 
     let studio = RobloxStudio::locate().context(CannotLocateRobloxStudio)?;
 
@@ -80,7 +63,7 @@ pub fn install_plugin() -> Result<(), PluginError> {
     log::trace!(
         "Writing plugin {} in {}",
         PLUGIN_FILE_NAME,
-        plugins_folder_path.to_string_lossy()
+        plugins_folder_path.display()
     );
     let file = File::create(plugins_folder_path.join(PLUGIN_FILE_NAME)).context(Io)?;
 
@@ -101,13 +84,13 @@ fn uninstall_plugin() -> Result<(), PluginError> {
     if rojo_plugin_path.exists() {
         log::trace!(
             "Removing existing plugin {}",
-            rojo_plugin_path.to_string_lossy()
+            rojo_plugin_path.display()
         );
         fs::remove_file(rojo_plugin_path).context(Io)?;
     } else {
         log::trace!(
             "Plugin not installed {}",
-            rojo_plugin_path.to_string_lossy()
+            rojo_plugin_path.display()
         );
     }
 

@@ -17,7 +17,9 @@ fn snapshot_from_fs_path(path: &PathBuf) -> Result<VfsSnapshot, PathBuf> {
             .iter()
             .filter(|entry| {
                 let file_name = entry.file_name();
-                !file_name.to_string_lossy().ends_with(".spec.lua")
+                !file_name.to_str()
+                    .map(|name| name.ends_with(".spec.lua"))
+                    .unwrap_or(false)
             })
             .map(|entry| {
                 let path = entry.path();
@@ -36,7 +38,7 @@ fn snapshot_from_fs_path(path: &PathBuf) -> Result<VfsSnapshot, PathBuf> {
 
         Ok(VfsSnapshot::dir(vfs_entries?))
     } else {
-        println!("cargo:rerun-if-changed={}", path.to_string_lossy());
+        println!("cargo:rerun-if-changed={}", path.display());
         fs::read_to_string(path)
             .ok()
             .map(|content| VfsSnapshot::file(content))
