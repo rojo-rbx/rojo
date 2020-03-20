@@ -23,10 +23,6 @@ enum Error {
     Io { source: io::Error },
 }
 
-fn xml_encode_config() -> rbx_xml::EncodeOptions {
-    rbx_xml::EncodeOptions::new().property_behavior(rbx_xml::EncodePropertyBehavior::WriteUnknown)
-}
-
 pub fn plugin(options: PluginCommand) -> Result<(), PluginError> {
     match options.subcommand {
         PluginSubcommand::Install => install_plugin(),
@@ -71,7 +67,8 @@ pub fn install_plugin() -> Result<(), PluginError> {
 
     let root_id = tree.get_root_id();
 
-    rbx_xml::to_writer(&mut file, tree.inner(), &[root_id], xml_encode_config()).unwrap();
+    rbx_binary::encode(tree.inner(), &[root_id], &mut file)
+        .expect("Unable to encode Rojo's plugin");
 
     Ok(())
 }
