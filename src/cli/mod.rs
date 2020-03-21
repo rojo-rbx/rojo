@@ -56,7 +56,7 @@ pub enum Subcommand {
     /// Open Rojo's documentation in your browser.
     Doc,
 
-    /// Manages rojo's Roblox plugin.
+    /// Manages Rojo's Roblox plugin.
     Plugin(PluginCommand),
 }
 
