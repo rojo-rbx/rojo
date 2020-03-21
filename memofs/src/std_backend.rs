@@ -1,4 +1,3 @@
-use std::fs;
 use std::io;
 use std::path::Path;
 use std::sync::mpsc;
@@ -78,11 +77,11 @@ impl VfsBackend for StdBackend {
     }
 
     fn remove_file(&mut self, path: &Path) -> io::Result<()> {
-        fs::remove_file(path)
+        fs_err::remove_file(path)
     }
 
     fn remove_dir_all(&mut self, path: &Path) -> io::Result<()> {
-        fs::remove_dir_all(path)
+        fs_err::remove_dir_all(path)
     }
 
     fn metadata(&mut self, path: &Path) -> io::Result<Metadata> {

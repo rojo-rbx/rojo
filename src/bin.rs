@@ -3,12 +3,12 @@ use std::{env, error::Error, panic, process};
 use backtrace::Backtrace;
 use structopt::StructOpt;
 
-use librojo::cli::{self, Options, Subcommand};
+use librojo::cli::{self, GlobalOptions, Options, Subcommand};
 
-fn run(subcommand: Subcommand) -> Result<(), Box<dyn Error>> {
+fn run(global: GlobalOptions, subcommand: Subcommand) -> Result<(), Box<dyn Error>> {
     match subcommand {
         Subcommand::Init(init_options) => cli::init(init_options)?,
-        Subcommand::Serve(serve_options) => cli::serve(serve_options)?,
+        Subcommand::Serve(serve_options) => cli::serve(global, serve_options)?,
         Subcommand::Build(build_options) => cli::build(build_options)?,
         Subcommand::Upload(upload_options) => cli::upload(upload_options)?,
         Subcommand::Doc => cli::doc()?,
@@ -64,10 +64,10 @@ fn main() {
 
     let options = Options::from_args();
 
-    let log_filter = match options.verbosity {
-        0 => "warn",
-        1 => "warn,librojo=info",
-        2 => "warn,librojo=trace",
+    let log_filter = match options.global.verbosity {
+        0 => "info",
+        1 => "info,librojo=debug",
+        2 => "info,librojo=trace",
         _ => "trace",
     };
 
@@ -78,9 +78,10 @@ fn main() {
         .format_timestamp(None)
         // Indent following lines equal to the log level label, like `[ERROR] `
         .format_indent(Some(8))
+        .write_style(options.global.color.into())
         .init();
 
-    if let Err(err) = run(options.subcommand) {
+    if let Err(err) = run(options.global, options.subcommand) {
         log::error!("{}", err);
 
         let mut current_err: &dyn Error = &*err;

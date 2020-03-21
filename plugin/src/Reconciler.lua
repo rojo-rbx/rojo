@@ -5,24 +5,12 @@
 
 local RbxDom = require(script.Parent.Parent.RbxDom)
 local t = require(script.Parent.Parent.t)
-local Log = require(script.Parent.Parent.Log)
 
 local Types = require(script.Parent.Types)
 local invariant = require(script.Parent.invariant)
 local getCanonicalProperty = require(script.Parent.getCanonicalProperty)
 local setCanonicalProperty = require(script.Parent.setCanonicalProperty)
-
---[[
-	This interface represents either a patch created by the hydrate method, or a
-	patch returned from the API.
-
-	This type should be a subset of Types.ApiInstanceUpdate.
-]]
-local IPatch = t.interface({
-	removed = t.array(t.union(Types.RbxId, t.Instance)),
-	added = t.map(Types.RbxId, Types.ApiInstance),
-	updated = t.array(Types.ApiInstanceUpdate),
-})
+local PatchSet = require(script.Parent.PatchSet)
 
 --[[
 	Attempt to safely set the parent of an instance.
@@ -86,7 +74,7 @@ end
 	editable by scripts.
 ]]
 local applyPatchSchema = Types.ifEnabled(t.tuple(
-	IPatch
+	PatchSet.validate
 ))
 function Reconciler:applyPatch(patch)
 	assert(applyPatchSchema(patch))
@@ -287,7 +275,7 @@ local hydrateSchema = Types.ifEnabled(t.tuple(
 	t.map(Types.RbxId, Types.VirtualInstance),
 	Types.RbxId,
 	t.Instance,
-	IPatch
+	PatchSet.validate
 ))
 function Reconciler:__hydrateInternal(apiInstances, id, instance, hydratePatch)
 	assert(hydrateSchema(apiInstances, id, instance, hydratePatch))

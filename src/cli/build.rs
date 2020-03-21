@@ -1,15 +1,13 @@
 use std::{
     fs::File,
-    io::{self, BufWriter, Write},
+    io::{BufWriter, Write},
 };
 
 use memofs::Vfs;
-use snafu::{ResultExt, Snafu};
+use thiserror::Error;
 use tokio::runtime::Runtime;
 
-use crate::{
-    cli::BuildCommand, project::ProjectError, serve_session::ServeSession, snapshot::RojoTree,
-};
+use crate::{cli::BuildCommand, serve_session::ServeSession, snapshot::RojoTree};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum OutputKind {
@@ -31,45 +29,17 @@ fn detect_output_kind(options: &BuildCommand) -> Option<OutputKind> {
     }
 }
 
-#[derive(Debug, Snafu)]
-pub struct BuildError(Error);
-
-#[derive(Debug, Snafu)]
+#[derive(Debug, Error)]
 enum Error {
-    #[snafu(display("Could not detect what kind of file to create"))]
+    #[error("Could not detect what kind of file to build. Expected output file to end in .rbxl, .rbxlx, .rbxm, or .rbxmx.")]
     UnknownOutputKind,
-
-    #[snafu(display("{}", source))]
-    Io { source: io::Error },
-
-    #[snafu(display("{}", source))]
-    XmlModelEncode { source: rbx_xml::EncodeError },
-
-    #[snafu(display("Binary model error: {:?}", source))]
-    BinaryModelEncode {
-        #[snafu(source(false))]
-        source: rbx_binary::EncodeError,
-    },
-
-    #[snafu(display("{}", source))]
-    Project { source: ProjectError },
-}
-
-impl From<rbx_binary::EncodeError> for Error {
-    fn from(source: rbx_binary::EncodeError) -> Self {
-        Error::BinaryModelEncode { source }
-    }
 }
 
 fn xml_encode_config() -> rbx_xml::EncodeOptions {
     rbx_xml::EncodeOptions::new().property_behavior(rbx_xml::EncodePropertyBehavior::WriteUnknown)
 }
 
-pub fn build(options: BuildCommand) -> Result<(), BuildError> {
-    Ok(build_inner(options)?)
-}
-
-fn build_inner(options: BuildCommand) -> Result<(), Error> {
+pub fn build(options: BuildCommand) -> Result<(), anyhow::Error> {
     log::trace!("Constructing in-memory filesystem");
 
     let vfs = Vfs::new_default();
@@ -98,14 +68,14 @@ fn build_inner(options: BuildCommand) -> Result<(), Error> {
     Ok(())
 }
 
-fn write_model(tree: &RojoTree, options: &BuildCommand) -> Result<(), Error> {
+fn write_model(tree: &RojoTree, options: &BuildCommand) -> Result<(), anyhow::Error> {
     let output_kind = detect_output_kind(&options).ok_or(Error::UnknownOutputKind)?;
     log::debug!("Hoping to generate file of type {:?}", output_kind);
 
     let root_id = tree.get_root_id();
 
     log::trace!("Opening output file for write");
-    let file = File::create(&options.output).context(Io)?;
+    let file = File::create(&options.output)?;
     let mut file = BufWriter::new(file);
 
     match output_kind {
@@ -113,8 +83,7 @@ fn write_model(tree: &RojoTree, options: &BuildCommand) -> Result<(), Error> {
             // Model files include the root instance of the tree and all its
             // descendants.
 
-            rbx_xml::to_writer(&mut file, tree.inner(), &[root_id], xml_encode_config())
-                .context(XmlModelEncode)?;
+            rbx_xml::to_writer(&mut file, tree.inner(), &[root_id], xml_encode_config())?;
         }
         OutputKind::Rbxlx => {
             // Place files don't contain an entry for the DataModel, but our
@@ -123,8 +92,7 @@ fn write_model(tree: &RojoTree, options: &BuildCommand) -> Result<(), Error> {
             let root_instance = tree.get_instance(root_id).unwrap();
             let top_level_ids = root_instance.children();
 
-            rbx_xml::to_writer(&mut file, tree.inner(), top_level_ids, xml_encode_config())
-                .context(XmlModelEncode)?;
+            rbx_xml::to_writer(&mut file, tree.inner(), top_level_ids, xml_encode_config())?;
         }
         OutputKind::Rbxm => {
             rbx_binary::encode(tree.inner(), &[root_id], &mut file)?;
@@ -141,7 +109,14 @@ fn write_model(tree: &RojoTree, options: &BuildCommand) -> Result<(), Error> {
         }
     }
 
-    file.flush().context(Io)?;
+    file.flush()?;
+
+    let filename = options
+        .output
+        .file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or("<invalid utf-8>");
+    log::info!("Built project to {}", filename);
 
     Ok(())
 }

@@ -5,7 +5,7 @@ use std::{
     process::{Command, Stdio},
 };
 
-use snafu::Snafu;
+use thiserror::Error;
 
 use crate::cli::{InitCommand, InitKind};
 
@@ -20,32 +20,16 @@ static PLACE_PROJECT: &str =
 static PLACE_README: &str = include_str!("../../assets/default-place-project/README.md");
 static PLACE_GIT_IGNORE: &str = include_str!("../../assets/default-place-project/gitignore.txt");
 
-#[derive(Debug, Snafu)]
-pub struct InitError(Error);
-
-#[derive(Debug, Snafu)]
+#[derive(Debug, Error)]
 enum Error {
-    #[snafu(display("A project file named default.project.json already exists in this folder"))]
+    #[error("A project file named default.project.json already exists in this folder")]
     AlreadyExists,
 
-    #[snafu(display("git init failed"))]
+    #[error("git init failed")]
     GitInit,
-
-    #[snafu(display("I/O error"))]
-    Io { source: io::Error },
 }
 
-impl From<io::Error> for Error {
-    fn from(source: io::Error) -> Self {
-        Self::Io { source }
-    }
-}
-
-pub fn init(options: InitCommand) -> Result<(), InitError> {
-    Ok(init_inner(options)?)
-}
-
-fn init_inner(options: InitCommand) -> Result<(), Error> {
+pub fn init(options: InitCommand) -> Result<(), anyhow::Error> {
     let base_path = options.absolute_path();
     fs::create_dir_all(&base_path)?;
 
@@ -65,7 +49,7 @@ fn init_inner(options: InitCommand) -> Result<(), Error> {
     }
 }
 
-fn init_place(base_path: &Path, project_params: ProjectParams) -> Result<(), Error> {
+fn init_place(base_path: &Path, project_params: ProjectParams) -> Result<(), anyhow::Error> {
     eprintln!("Creating new place project '{}'", project_params.name);
 
     let project_file = project_params.render_template(PLACE_PROJECT);
@@ -109,7 +93,7 @@ fn init_place(base_path: &Path, project_params: ProjectParams) -> Result<(), Err
     Ok(())
 }
 
-fn init_model(base_path: &Path, project_params: ProjectParams) -> Result<(), Error> {
+fn init_model(base_path: &Path, project_params: ProjectParams) -> Result<(), anyhow::Error> {
     eprintln!("Creating new model project '{}'", project_params.name);
 
     let project_file = project_params.render_template(MODEL_PROJECT);
@@ -147,14 +131,14 @@ impl ProjectParams {
 }
 
 /// Attempt to initialize a Git repository if necessary, and create .gitignore.
-fn try_git_init(path: &Path, git_ignore: &str) -> Result<(), Error> {
+fn try_git_init(path: &Path, git_ignore: &str) -> Result<(), anyhow::Error> {
     if should_git_init(path) {
         log::debug!("Initializing Git repository...");
 
         let status = Command::new("git").arg("init").current_dir(path).status()?;
 
         if !status.success() {
-            return Err(Error::GitInit);
+            return Err(Error::GitInit.into());
         }
     }
 
@@ -186,7 +170,7 @@ fn should_git_init(path: &Path) -> bool {
 }
 
 /// Write a file if it does not exist yet, otherwise, leave it alone.
-fn write_if_not_exists(path: &Path, contents: &str) -> Result<(), Error> {
+fn write_if_not_exists(path: &Path, contents: &str) -> Result<(), anyhow::Error> {
     let file_res = OpenOptions::new().write(true).create_new(true).open(path);
 
     let mut file = match file_res {
@@ -205,7 +189,7 @@ fn write_if_not_exists(path: &Path, contents: &str) -> Result<(), Error> {
 }
 
 /// Try to create a project file and fail if it already exists.
-fn try_create_project(base_path: &Path, contents: &str) -> Result<(), Error> {
+fn try_create_project(base_path: &Path, contents: &str) -> Result<(), anyhow::Error> {
     let project_path = base_path.join("default.project.json");
 
     let file_res = OpenOptions::new()
@@ -217,7 +201,7 @@ fn try_create_project(base_path: &Path, contents: &str) -> Result<(), Error> {
         Ok(file) => file,
         Err(err) => {
             return match err.kind() {
-                io::ErrorKind::AlreadyExists => Err(Error::AlreadyExists),
+                io::ErrorKind::AlreadyExists => Err(Error::AlreadyExists.into()),
                 _ => Err(err.into()),
             }
         }

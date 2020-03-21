@@ -6,22 +6,26 @@ use std::{
 
 use rbx_dom_weak::UnresolvedRbxValue;
 use serde::{Deserialize, Serialize};
-use snafu::{ResultExt, Snafu};
+use thiserror::Error;
 
 use crate::glob::Glob;
 
 static PROJECT_FILENAME: &str = "default.project.json";
 
 /// Error type returned by any function that handles projects.
-#[derive(Debug, Snafu)]
-pub struct ProjectError(Error);
+#[derive(Debug, Error)]
+#[error(transparent)]
+pub struct ProjectError(#[from] Error);
 
-#[derive(Debug, Snafu)]
+#[derive(Debug, Error)]
 enum Error {
-    /// A general IO error occurred.
-    Io { source: io::Error, path: PathBuf },
+    #[error("Rojo project I/O error")]
+    Io {
+        #[from]
+        source: io::Error,
+    },
 
-    /// An error with JSON parsing occurred.
+    #[error("Error parsing Rojo project")]
     Json {
         source: serde_json::Error,
         path: PathBuf,
@@ -125,23 +129,19 @@ impl Project {
         }
     }
 
-    fn load_exact(project_file_location: &Path) -> Result<Self, ProjectError> {
-        let contents = fs::read_to_string(project_file_location).context(Io {
-            path: project_file_location,
-        })?;
+    fn load_exact(project_file_location: &Path) -> Result<Self, Error> {
+        let contents = fs::read_to_string(project_file_location)?;
 
-        let mut project: Project = serde_json::from_str(&contents).context(Json {
-            path: project_file_location,
-        })?;
+        let mut project: Project =
+            serde_json::from_str(&contents).map_err(|source| Error::Json {
+                source,
+                path: project_file_location.to_owned(),
+            })?;
 
         project.file_location = project_file_location.to_path_buf();
         project.check_compatibility();
 
         Ok(project)
-    }
-
-    pub fn save(&self) -> Result<(), ProjectError> {
-        unimplemented!()
     }
 
     /// Checks if there are any compatibility issues with this project file and
