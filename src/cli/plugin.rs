@@ -3,52 +3,52 @@ use std::{
     io::{self, BufWriter},
 };
 
+use anyhow::Result;
 use memofs::{InMemoryFs, Vfs, VfsSnapshot};
 use roblox_install::RobloxStudio;
-use snafu::{ResultExt, Snafu};
+use thiserror::Error;
 
 use crate::{cli::{PluginCommand, PluginSubcommand}, serve_session::ServeSession};
 
 static PLUGIN_FILE_NAME: &str = "RojoManagedPlugin.rbxmx";
 
-#[derive(Debug, Snafu)]
-pub struct PluginError(Error);
-
-#[derive(Debug, Snafu)]
+#[derive(Debug, Error)]
 enum Error {
-    #[snafu(display("Could not locate Roblox Studio: {}", source.to_string()))]
+    #[error("Could not locate Roblox Studio: {source}")]
     CannotLocateRobloxStudio { source: roblox_install::Error },
 
-    #[snafu(display("{}", source))]
+    #[error("{source}")]
     Io { source: io::Error },
 }
 
-pub fn plugin(options: PluginCommand) -> Result<(), PluginError> {
+pub fn plugin(options: PluginCommand) -> Result<()> {
     match options.subcommand {
         PluginSubcommand::Install => install_plugin(),
         PluginSubcommand::Uninstall => uninstall_plugin(),
     }
 }
 
-pub fn install_plugin() -> Result<(), PluginError> {
+pub fn install_plugin() -> Result<()> {
     static PLUGIN_BINCODE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/plugin.bincode"));
 
     let plugin_snapshot: VfsSnapshot = bincode::deserialize(PLUGIN_BINCODE)
         .expect("Rojo's plugin was not properly packed into Rojo's binary");
 
-    let studio = RobloxStudio::locate().context(CannotLocateRobloxStudio)?;
+    let studio = RobloxStudio::locate()
+        .map_err(|source| Error::CannotLocateRobloxStudio { source })?;
 
     let plugins_folder_path = studio.plugins_path();
 
     if !plugins_folder_path.exists() {
-        fs::create_dir(plugins_folder_path).context(Io)?;
+        fs::create_dir(plugins_folder_path)
+            .map_err(|source| Error::Io { source })?;
         log::trace!("Plugins folder did not exist so it was created");
     }
 
     let mut in_memory_fs = InMemoryFs::new();
     in_memory_fs
         .load_snapshot("plugin", plugin_snapshot)
-        .context(Io)?;
+        .map_err(|source| Error::Io { source })?;
 
     let vfs = Vfs::new(in_memory_fs);
 
@@ -61,7 +61,8 @@ pub fn install_plugin() -> Result<(), PluginError> {
         PLUGIN_FILE_NAME,
         plugins_folder_path.display()
     );
-    let file = File::create(plugins_folder_path.join(PLUGIN_FILE_NAME)).context(Io)?;
+    let file = File::create(plugins_folder_path.join(PLUGIN_FILE_NAME))
+        .map_err(|source| Error::Io { source })?;
 
     let mut file = BufWriter::new(file);
 
@@ -73,8 +74,9 @@ pub fn install_plugin() -> Result<(), PluginError> {
     Ok(())
 }
 
-fn uninstall_plugin() -> Result<(), PluginError> {
-    let studio = RobloxStudio::locate().context(CannotLocateRobloxStudio)?;
+fn uninstall_plugin() -> Result<()> {
+    let studio = RobloxStudio::locate()
+        .map_err(|source| Error::CannotLocateRobloxStudio { source })?;
 
     let rojo_plugin_path = studio.plugins_path().join(PLUGIN_FILE_NAME);
 
@@ -83,7 +85,8 @@ fn uninstall_plugin() -> Result<(), PluginError> {
             "Removing existing plugin {}",
             rojo_plugin_path.display()
         );
-        fs::remove_file(rojo_plugin_path).context(Io)?;
+        fs::remove_file(rojo_plugin_path)
+            .map_err(|source| Error::Io { source })?;
     } else {
         log::trace!(
             "Plugin not installed {}",
