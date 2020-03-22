@@ -22,7 +22,7 @@ fn main() {
         // PanicInfo's payload is usually a &'static str or String.
         // See: https://doc.rust-lang.org/beta/std/panic/struct.PanicInfo.html#method.payload
         let message = match panic_info.payload().downcast_ref::<&str>() {
-            Some(message) => message.to_string(),
+            Some(&message) => message.to_string(),
             None => match panic_info.payload().downcast_ref::<String>() {
                 Some(message) => message.clone(),
                 None => "<no message>".to_string(),

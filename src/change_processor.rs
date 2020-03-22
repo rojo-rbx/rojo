@@ -63,15 +63,6 @@ impl ChangeProcessor {
             .spawn(move || {
                 log::trace!("ChangeProcessor thread started");
 
-                #[allow(
-                    // Crossbeam's select macro generates code that Clippy doesn't like,
-                    // and Clippy blames us for it.
-                    clippy::drop_copy,
-
-                    // Crossbeam uses 0 as *const _ and Clippy doesn't like that either,
-                    // but this isn't our fault.
-                    clippy::zero_ptr,
-                )]
                 loop {
                     select! {
                         recv(vfs_receiver) -> event => {

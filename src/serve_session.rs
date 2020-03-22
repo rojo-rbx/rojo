@@ -181,6 +181,7 @@ impl ServeSession {
         self.tree_mutation_sender.clone()
     }
 
+    #[allow(unused)]
     pub fn vfs(&self) -> &Vfs {
         &self.vfs
     }
