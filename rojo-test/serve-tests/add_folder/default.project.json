@@ -1,0 +1,6 @@
+{
+  "name": "add_folder",
+  "tree": {
+    "$path": "src"
+  }
+}

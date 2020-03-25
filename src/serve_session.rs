@@ -47,15 +47,12 @@ pub struct ServeSession {
     /// diagnostics.
     start_time: Instant,
 
-    /// The root project for the serve session, if there was one defined.
+    /// The root project for the serve session.
     ///
     /// This will be defined if a folder with a `default.project.json` file was
     /// used for starting the serve session, or if the user specified a full
     /// path to a `.project.json` file.
-    ///
-    /// If `root_project` is None, values from the project should be treated as
-    /// their defaults.
-    root_project: Option<Project>,
+    root_project: Project,
 
     /// A randomly generated ID for this serve session. It's used to ensure that
     /// a client doesn't begin connecting to a different server part way through
@@ -103,7 +100,9 @@ impl ServeSession {
         log::trace!("Starting new ServeSession at path {}", start_path.display());
 
         log::trace!("Loading project file from {}", start_path.display());
-        let root_project = Project::load_fuzzy(start_path).expect("TODO: Project load failed");
+        let root_project = Project::load_fuzzy(start_path)
+            .expect("TODO: Project load failed")
+            .expect("TODO: No project was found.");
 
         let mut tree = RojoTree::new(InstancePropertiesWithMeta {
             properties: RbxInstanceProperties {
@@ -118,14 +117,15 @@ impl ServeSession {
 
         let mut instance_context = InstanceContext::default();
 
-        if let Some(project) = &root_project {
-            let rules = project.glob_ignore_paths.iter().map(|glob| PathIgnoreRule {
+        let rules = root_project
+            .glob_ignore_paths
+            .iter()
+            .map(|glob| PathIgnoreRule {
                 glob: glob.clone(),
-                base_path: project.folder_location().to_path_buf(),
+                base_path: root_project.folder_location().to_path_buf(),
             });
 
-            instance_context.add_path_ignore_rules(rules);
-        }
+        instance_context.add_path_ignore_rules(rules);
 
         log::trace!("Generating snapshot of instances from VFS");
         let snapshot = snapshot_from_vfs(&instance_context, &vfs, &start_path)
@@ -194,16 +194,12 @@ impl ServeSession {
         self.session_id
     }
 
-    pub fn project_name(&self) -> Option<&str> {
-        self.root_project
-            .as_ref()
-            .map(|project| project.name.as_str())
+    pub fn project_name(&self) -> &str {
+        &self.root_project.name
     }
 
     pub fn project_port(&self) -> Option<u16> {
-        self.root_project
-            .as_ref()
-            .and_then(|project| project.serve_port)
+        self.root_project.serve_port
     }
 
     pub fn start_time(&self) -> Instant {
@@ -211,217 +207,6 @@ impl ServeSession {
     }
 
     pub fn serve_place_ids(&self) -> Option<&HashSet<u64>> {
-        self.root_project
-            .as_ref()
-            .and_then(|project| project.serve_place_ids.as_ref())
-    }
-}
-
-/// This module is named to trick Insta into naming the resulting snapshots
-/// correctly.
-///
-/// See https://github.com/mitsuhiko/insta/issues/78
-#[cfg(test)]
-mod serve_session {
-    use super::*;
-
-    use std::{path::PathBuf, time::Duration};
-
-    use maplit::hashmap;
-    use memofs::{InMemoryFs, VfsEvent, VfsSnapshot};
-    use rojo_insta_ext::RedactionMap;
-    use tokio::{runtime::Runtime, timer::Timeout};
-
-    use crate::tree_view::view_tree;
-
-    #[test]
-    fn just_folder() {
-        let mut imfs = InMemoryFs::new();
-        imfs.load_snapshot("/foo", VfsSnapshot::empty_dir())
-            .unwrap();
-
-        let vfs = Vfs::new(imfs);
-
-        let session = ServeSession::new(vfs, "/foo");
-
-        let mut rm = RedactionMap::new();
-        insta::assert_yaml_snapshot!(view_tree(&session.tree(), &mut rm));
-    }
-
-    #[test]
-    fn project_with_folder() {
-        let mut imfs = InMemoryFs::new();
-        imfs.load_snapshot(
-            "/foo",
-            VfsSnapshot::dir(hashmap! {
-                "default.project.json" => VfsSnapshot::file(r#"
-                    {
-                        "name": "HelloWorld",
-                        "tree": {
-                            "$path": "src"
-                        }
-                    }
-                "#),
-                "src" => VfsSnapshot::dir(hashmap! {
-                    "hello.txt" => VfsSnapshot::file("Hello, world!"),
-                }),
-            }),
-        )
-        .unwrap();
-
-        let vfs = Vfs::new(imfs);
-
-        let session = ServeSession::new(vfs, "/foo");
-
-        let mut rm = RedactionMap::new();
-        insta::assert_yaml_snapshot!(view_tree(&session.tree(), &mut rm));
-    }
-
-    #[test]
-    fn script_with_meta() {
-        let mut imfs = InMemoryFs::new();
-        imfs.load_snapshot(
-            "/root",
-            VfsSnapshot::dir(hashmap! {
-                "test.lua" => VfsSnapshot::file("This is a test."),
-                "test.meta.json" => VfsSnapshot::file(r#"{ "ignoreUnknownInstances": true }"#),
-            }),
-        )
-        .unwrap();
-
-        let vfs = Vfs::new(imfs);
-
-        let session = ServeSession::new(vfs, "/root");
-
-        let mut rm = RedactionMap::new();
-        insta::assert_yaml_snapshot!(view_tree(&session.tree(), &mut rm));
-    }
-
-    #[test]
-    fn change_txt_file() {
-        let mut imfs = InMemoryFs::new();
-        imfs.load_snapshot("/foo.txt", VfsSnapshot::file("Hello!"))
-            .unwrap();
-
-        let vfs = Vfs::new(imfs.clone());
-
-        let session = ServeSession::new(vfs, "/foo.txt");
-
-        let mut rm = RedactionMap::new();
-        insta::assert_yaml_snapshot!(
-            "change_txt_file_before",
-            view_tree(&session.tree(), &mut rm)
-        );
-
-        imfs.load_snapshot("/foo.txt", VfsSnapshot::file("World!"))
-            .unwrap();
-
-        let receiver = session.message_queue().subscribe_any();
-
-        imfs.raise_event(VfsEvent::Write(PathBuf::from("/foo.txt")));
-
-        let receiver = Timeout::new(receiver, Duration::from_millis(200));
-
-        let mut rt = Runtime::new().unwrap();
-        let result = rt.block_on(receiver).unwrap();
-
-        insta::assert_yaml_snapshot!("change_txt_file_patch", rm.redacted_yaml(result));
-        insta::assert_yaml_snapshot!("change_txt_file_after", view_tree(&session.tree(), &mut rm));
-    }
-
-    #[test]
-    fn change_script_meta() {
-        let mut imfs = InMemoryFs::new();
-        imfs.load_snapshot(
-            "/root",
-            VfsSnapshot::dir(hashmap! {
-                "test.lua" => VfsSnapshot::file("This is a test."),
-                "test.meta.json" => VfsSnapshot::file(r#"{ "ignoreUnknownInstances": true }"#),
-            }),
-        )
-        .unwrap();
-
-        let vfs = Vfs::new(imfs.clone());
-
-        let session = ServeSession::new(vfs, "/root");
-
-        let mut rm = RedactionMap::new();
-        insta::assert_yaml_snapshot!(
-            "change_script_meta_before",
-            view_tree(&session.tree(), &mut rm)
-        );
-
-        imfs.load_snapshot(
-            "/root/test.meta.json",
-            VfsSnapshot::file(r#"{ "ignoreUnknownInstances": false }"#),
-        )
-        .unwrap();
-
-        let receiver = session.message_queue().subscribe_any();
-
-        imfs.raise_event(VfsEvent::Write(PathBuf::from("/root/test.meta.json")));
-
-        let receiver = Timeout::new(receiver, Duration::from_millis(200));
-
-        let mut rt = Runtime::new().unwrap();
-        let result = rt.block_on(receiver).unwrap();
-
-        insta::assert_yaml_snapshot!("change_script_meta_patch", rm.redacted_yaml(result));
-        insta::assert_yaml_snapshot!(
-            "change_script_meta_after",
-            view_tree(&session.tree(), &mut rm)
-        );
-    }
-
-    #[test]
-    fn change_file_in_project() {
-        let mut imfs = InMemoryFs::new();
-        imfs.load_snapshot(
-            "/foo",
-            VfsSnapshot::dir(hashmap! {
-                "default.project.json" => VfsSnapshot::file(r#"
-                    {
-                        "name": "change_file_in_project",
-                        "tree": {
-                            "$className": "Folder",
-
-                            "Child": {
-                                "$path": "file.txt"
-                            }
-                        }
-                    }
-                "#),
-                "file.txt" => VfsSnapshot::file("initial content"),
-            }),
-        )
-        .unwrap();
-
-        let vfs = Vfs::new(imfs.clone());
-
-        let session = ServeSession::new(vfs, "/foo");
-
-        let mut rm = RedactionMap::new();
-        insta::assert_yaml_snapshot!(
-            "change_file_in_project_before",
-            view_tree(&session.tree(), &mut rm)
-        );
-
-        imfs.load_snapshot("/foo/file.txt", VfsSnapshot::file("Changed!"))
-            .unwrap();
-
-        let receiver = session.message_queue().subscribe_any();
-
-        imfs.raise_event(VfsEvent::Write(PathBuf::from("/foo/file.txt")));
-
-        let receiver = Timeout::new(receiver, Duration::from_millis(200));
-
-        let mut rt = Runtime::new().unwrap();
-        let result = rt.block_on(receiver).unwrap();
-
-        insta::assert_yaml_snapshot!("change_file_in_project_patch", rm.redacted_yaml(result));
-        insta::assert_yaml_snapshot!(
-            "change_file_in_project_after",
-            view_tree(&session.tree(), &mut rm)
-        );
+        self.root_project.serve_place_ids.as_ref()
     }
 }

@@ -233,7 +233,7 @@ impl UiService {
     }
 
     fn normal_page<'a>(&'a self, body: HtmlContent<'a>) -> HtmlContent<'a> {
-        let project_name = self.serve_session.project_name().unwrap_or("<unnamed>");
+        let project_name = self.serve_session.project_name();
         let uptime = {
             let elapsed = self.serve_session.start_time().elapsed();
 
