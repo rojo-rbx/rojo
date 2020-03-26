@@ -28,6 +28,13 @@ impl SnapshotMiddleware for SnapshotJson {
             return Ok(None);
         }
 
+        // FIXME: This middleware should not need to know about the .meta.json
+        // middleware. Should there be a way to signal "I'm not returning an
+        // instance and no one should"?
+        if match_file_name(path, ".meta.json").is_some() {
+            return Ok(None);
+        }
+
         let instance_name = match match_file_name(path, ".json") {
             Some(name) => name,
             None => return Ok(None),
