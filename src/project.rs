@@ -19,13 +19,13 @@ pub struct ProjectError(#[from] Error);
 
 #[derive(Debug, Error)]
 enum Error {
-    #[error("Rojo project I/O error")]
+    #[error(transparent)]
     Io {
         #[from]
         source: io::Error,
     },
 
-    #[error("Error parsing Rojo project")]
+    #[error("Error parsing Rojo project in path {}", .path.display())]
     Json {
         source: serde_json::Error,
         path: PathBuf,

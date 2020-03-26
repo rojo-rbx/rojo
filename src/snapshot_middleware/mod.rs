@@ -18,20 +18,27 @@ mod rbxmx;
 mod txt;
 mod util;
 
-pub use self::error::*;
-
 use std::path::Path;
 
 use memofs::Vfs;
 
-use self::middleware::{SnapshotInstanceResult, SnapshotMiddleware};
-use self::{
-    csv::SnapshotCsv, dir::SnapshotDir, json::SnapshotJson, json_model::SnapshotJsonModel,
-    lua::SnapshotLua, project::SnapshotProject, rbxlx::SnapshotRbxlx, rbxm::SnapshotRbxm,
-    rbxmx::SnapshotRbxmx, txt::SnapshotTxt,
-};
 use crate::snapshot::InstanceContext;
 
+use self::{
+    csv::SnapshotCsv,
+    dir::SnapshotDir,
+    json::SnapshotJson,
+    json_model::SnapshotJsonModel,
+    lua::SnapshotLua,
+    middleware::{SnapshotInstanceResult, SnapshotMiddleware},
+    project::SnapshotProject,
+    rbxlx::SnapshotRbxlx,
+    rbxm::SnapshotRbxm,
+    rbxmx::SnapshotRbxmx,
+    txt::SnapshotTxt,
+};
+
+pub use self::error::*;
 pub use self::project::snapshot_project_node;
 
 macro_rules! middlewares {

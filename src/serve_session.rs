@@ -1,6 +1,6 @@
 use std::{
     collections::HashSet,
-    path::Path,
+    path::{Path, PathBuf},
     sync::{Arc, Mutex, MutexGuard},
     time::Instant,
 };
@@ -8,17 +8,18 @@ use std::{
 use crossbeam_channel::Sender;
 use memofs::Vfs;
 use rbx_dom_weak::RbxInstanceProperties;
+use thiserror::Error;
 
 use crate::{
     change_processor::ChangeProcessor,
     message_queue::MessageQueue,
-    project::Project,
+    project::{Project, ProjectError},
     session_id::SessionId,
     snapshot::{
         apply_patch_set, compute_patch_set, AppliedPatchSet, InstanceContext,
         InstancePropertiesWithMeta, PatchSet, PathIgnoreRule, RojoTree,
     },
-    snapshot_middleware::snapshot_from_vfs,
+    snapshot_middleware::{snapshot_from_vfs, SnapshotError},
 };
 
 /// Contains all of the state for a Rojo serve session.
@@ -83,9 +84,6 @@ pub struct ServeSession {
     tree_mutation_sender: Sender<PatchSet>,
 }
 
-/// Methods that need thread-safety bounds on VfsFetcher are limited to this
-/// block to prevent needing to spread Send + Sync + 'static into everything
-/// that handles ServeSession.
 impl ServeSession {
     /// Start a new serve session from the given in-memory filesystem and start
     /// path.
@@ -93,16 +91,17 @@ impl ServeSession {
     /// The project file is expected to be loaded out-of-band since it's
     /// currently loaded from the filesystem directly instead of through the
     /// in-memory filesystem layer.
-    pub fn new<P: AsRef<Path>>(vfs: Vfs, start_path: P) -> Self {
+    pub fn new<P: AsRef<Path>>(vfs: Vfs, start_path: P) -> Result<Self, ServeSessionError> {
         let start_path = start_path.as_ref();
         let start_time = Instant::now();
 
         log::trace!("Starting new ServeSession at path {}", start_path.display());
 
-        log::trace!("Loading project file from {}", start_path.display());
-        let root_project = Project::load_fuzzy(start_path)
-            .expect("TODO: Project load failed")
-            .expect("TODO: No project was found.");
+        log::debug!("Loading project file from {}", start_path.display());
+        let root_project =
+            Project::load_fuzzy(start_path)?.ok_or_else(|| ServeSessionError::NoProjectFound {
+                path: start_path.to_owned(),
+            })?;
 
         let mut tree = RojoTree::new(InstancePropertiesWithMeta {
             properties: RbxInstanceProperties {
@@ -128,8 +127,7 @@ impl ServeSession {
         instance_context.add_path_ignore_rules(rules);
 
         log::trace!("Generating snapshot of instances from VFS");
-        let snapshot = snapshot_from_vfs(&instance_context, &vfs, &start_path)
-            .expect("snapshot failed")
+        let snapshot = snapshot_from_vfs(&instance_context, &vfs, &start_path)?
             .expect("snapshot did not return an instance");
 
         log::trace!("Computing initial patch set");
@@ -155,7 +153,7 @@ impl ServeSession {
             tree_mutation_receiver,
         );
 
-        Self {
+        Ok(Self {
             change_processor,
             start_time,
             session_id,
@@ -164,11 +162,9 @@ impl ServeSession {
             message_queue,
             tree_mutation_sender,
             vfs,
-        }
+        })
     }
-}
 
-impl ServeSession {
     pub fn tree_handle(&self) -> Arc<Mutex<RojoTree>> {
         Arc::clone(&self.tree)
     }
@@ -209,4 +205,26 @@ impl ServeSession {
     pub fn serve_place_ids(&self) -> Option<&HashSet<u64>> {
         self.root_project.serve_place_ids.as_ref()
     }
+}
+
+#[derive(Debug, Error)]
+pub enum ServeSessionError {
+    #[error(
+        "Rojo requires a project file, but no project file was found in path {}\n\
+        See https://rojo.space/docs/ for guides and documentation.",
+        .path.display()
+    )]
+    NoProjectFound { path: PathBuf },
+
+    #[error(transparent)]
+    Project {
+        #[from]
+        source: ProjectError,
+    },
+
+    #[error(transparent)]
+    Snapshot {
+        #[from]
+        source: SnapshotError,
+    },
 }
