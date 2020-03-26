@@ -18,7 +18,7 @@ const DEFAULT_PORT: u16 = 34872;
 pub fn serve(global: GlobalOptions, options: ServeCommand) -> Result<()> {
     let vfs = Vfs::new_default();
 
-    let session = Arc::new(ServeSession::new(vfs, &options.absolute_project()));
+    let session = Arc::new(ServeSession::new(vfs, &options.absolute_project())?);
 
     let port = options
         .port

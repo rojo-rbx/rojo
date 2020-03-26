@@ -8,6 +8,7 @@ use std::{
 use crossbeam_channel::Sender;
 use memofs::Vfs;
 use rbx_dom_weak::RbxInstanceProperties;
+use thiserror::Error;
 
 use crate::{
     change_processor::ChangeProcessor,
@@ -90,7 +91,7 @@ impl ServeSession {
     /// The project file is expected to be loaded out-of-band since it's
     /// currently loaded from the filesystem directly instead of through the
     /// in-memory filesystem layer.
-    pub fn new<P: AsRef<Path>>(vfs: Vfs, start_path: P) -> Self {
+    pub fn new<P: AsRef<Path>>(vfs: Vfs, start_path: P) -> Result<Self, ServeSessionError> {
         let start_path = start_path.as_ref();
         let start_time = Instant::now();
 
@@ -152,7 +153,7 @@ impl ServeSession {
             tree_mutation_receiver,
         );
 
-        Self {
+        Ok(Self {
             change_processor,
             start_time,
             session_id,
@@ -161,7 +162,7 @@ impl ServeSession {
             message_queue,
             tree_mutation_sender,
             vfs,
-        }
+        })
     }
 
     pub fn tree_handle(&self) -> Arc<Mutex<RojoTree>> {
@@ -205,3 +206,6 @@ impl ServeSession {
         self.root_project.serve_place_ids.as_ref()
     }
 }
+
+#[derive(Debug, Error)]
+pub enum ServeSessionError {}

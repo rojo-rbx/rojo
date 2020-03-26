@@ -44,7 +44,7 @@ pub fn build(options: BuildCommand) -> Result<(), anyhow::Error> {
 
     let vfs = Vfs::new_default();
 
-    let session = ServeSession::new(vfs, &options.absolute_project());
+    let session = ServeSession::new(vfs, &options.absolute_project())?;
     let mut cursor = session.message_queue().cursor();
 
     {
