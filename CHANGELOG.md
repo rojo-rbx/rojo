@@ -7,6 +7,7 @@
 * Added `--color` option to force-enable or force-disable color in Rojo's output.
 * The server half of **experimental** two-way sync is now enabled by default.
 * Increased default logging verbosity in commands like `rojo build`.
+* Rojo now requires a project file again, just like 0.5.4.
 
 ## [0.6.0 Alpha 3](https://github.com/rojo-rbx/rojo/releases/tag/v0.6.0-alpha.3) (March 13, 2020)
 * Added `--watch` argument to `rojo build`. ([#284](https://github.com/rojo-rbx/rojo/pull/284))
