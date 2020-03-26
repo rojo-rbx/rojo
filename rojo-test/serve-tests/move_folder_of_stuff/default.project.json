@@ -1,0 +1,6 @@
+{
+  "name": "move_folder_of_stuff",
+  "tree": {
+    "$path": "src"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "init_with_children",
+  "tree": {
+    "$path": "src"
+  }
+}

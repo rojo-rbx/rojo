@@ -35,7 +35,7 @@ fn scripts() {
             read_response.intern_and_redact(&mut redactions, root_id)
         );
 
-        fs::write(session.path().join("foo.lua"), "Updated foo!").unwrap();
+        fs::write(session.path().join("src/foo.lua"), "Updated foo!").unwrap();
 
         let subscribe_response = session.get_api_subscribe(0).unwrap();
         assert_yaml_snapshot!(
@@ -48,26 +48,6 @@ fn scripts() {
             "scripts_all-2",
             read_response.intern_and_redact(&mut redactions, root_id)
         );
-    });
-}
-
-#[test]
-fn just_txt() {
-    run_serve_test("just_txt.txt", |session, mut redactions| {
-        let info = session.get_api_rojo().unwrap();
-        let root_id = info.root_instance_id;
-
-        assert_yaml_snapshot!("just_txt_info", redactions.redacted_yaml(info));
-
-        let read_response = session.get_api_read(root_id).unwrap();
-        assert_yaml_snapshot!(
-            "just_txt_all",
-            read_response.intern_and_redact(&mut redactions, root_id)
-        );
-
-        fs::write(session.path(), "Changed content!").unwrap();
-
-        // TODO: Directly served files currently don't trigger changed events!
     });
 }
 
@@ -85,7 +65,7 @@ fn add_folder() {
             read_response.intern_and_redact(&mut redactions, root_id)
         );
 
-        fs::create_dir(session.path().join("my-new-folder")).unwrap();
+        fs::create_dir(session.path().join("src/my-new-folder")).unwrap();
 
         let subscribe_response = session.get_api_subscribe(0).unwrap();
         assert_yaml_snapshot!(
@@ -115,7 +95,7 @@ fn remove_file() {
             read_response.intern_and_redact(&mut redactions, root_id)
         );
 
-        fs::remove_file(session.path().join("hello.txt")).unwrap();
+        fs::remove_file(session.path().join("src/hello.txt")).unwrap();
 
         let subscribe_response = session.get_api_subscribe(0).unwrap();
         assert_yaml_snapshot!(
@@ -145,7 +125,7 @@ fn edit_init() {
             read_response.intern_and_redact(&mut redactions, root_id)
         );
 
-        fs::write(session.path().join("init.lua"), b"-- Edited contents").unwrap();
+        fs::write(session.path().join("src/init.lua"), b"-- Edited contents").unwrap();
 
         let subscribe_response = session.get_api_subscribe(0).unwrap();
         assert_yaml_snapshot!(
@@ -191,7 +171,7 @@ fn move_folder_of_stuff() {
 
         // We're hoping that this rename gets picked up as one event. This test
         // will fail otherwise.
-        fs::rename(stuff_path, session.path().join("new-stuff")).unwrap();
+        fs::rename(stuff_path, session.path().join("src/new-stuff")).unwrap();
 
         let subscribe_response = session.get_api_subscribe(0).unwrap();
         assert_yaml_snapshot!(
