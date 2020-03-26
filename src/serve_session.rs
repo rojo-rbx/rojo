@@ -83,9 +83,6 @@ pub struct ServeSession {
     tree_mutation_sender: Sender<PatchSet>,
 }
 
-/// Methods that need thread-safety bounds on VfsFetcher are limited to this
-/// block to prevent needing to spread Send + Sync + 'static into everything
-/// that handles ServeSession.
 impl ServeSession {
     /// Start a new serve session from the given in-memory filesystem and start
     /// path.
@@ -166,9 +163,7 @@ impl ServeSession {
             vfs,
         }
     }
-}
 
-impl ServeSession {
     pub fn tree_handle(&self) -> Arc<Mutex<RojoTree>> {
         Arc::clone(&self.tree)
     }
