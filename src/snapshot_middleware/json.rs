@@ -5,7 +5,7 @@ use memofs::{IoResultExt, Vfs};
 use rbx_dom_weak::RbxValue;
 
 use crate::{
-    lua_ast::Statement,
+    lua_ast::{Expression, Statement},
     snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
 };
 
@@ -69,7 +69,27 @@ impl SnapshotMiddleware for SnapshotJson {
 }
 
 fn json_to_lua(value: serde_json::Value) -> Statement {
-    unimplemented!()
+    Statement::Return(json_to_lua_value(value))
+}
+
+fn json_to_lua_value(value: serde_json::Value) -> Expression {
+    use serde_json::Value;
+
+    match value {
+        Value::Null => Expression::Nil,
+        Value::Bool(value) => Expression::Bool(value),
+        Value::Number(value) => Expression::Number(value.as_f64().unwrap()),
+        Value::String(value) => Expression::String(value),
+        Value::Array(values) => {
+            Expression::Array(values.into_iter().map(json_to_lua_value).collect())
+        }
+        Value::Object(values) => Expression::table(
+            values
+                .into_iter()
+                .map(|(key, value)| (key.into(), json_to_lua_value(value)))
+                .collect(),
+        ),
+    }
 }
 
 #[cfg(test)]
@@ -83,7 +103,20 @@ mod test {
         let mut imfs = InMemoryFs::new();
         imfs.load_snapshot(
             "/foo.json",
-            VfsSnapshot::file(r#"{ "x": 5, "y": "hello", "z": [1, 2, 3], "w": null }"#),
+            VfsSnapshot::file(
+                r#"{
+                  "array": [1, 2, 3],
+                  "object": {
+                    "hello": "world"
+                  },
+                  "true": true,
+                  "false": false,
+                  "null": null,
+                  "int": 1234,
+                  "float": 1234.5452,
+                  "1invalidident": "nice"
+                }"#,
+            ),
         )
         .unwrap();
 

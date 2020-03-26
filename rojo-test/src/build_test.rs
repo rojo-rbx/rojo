@@ -31,6 +31,7 @@ gen_build_tests! {
     init_meta_class_name,
     init_meta_properties,
     init_with_children,
+    json_as_lua,
     json_model_in_folder,
     json_model_legacy_name,
     module_in_folder,

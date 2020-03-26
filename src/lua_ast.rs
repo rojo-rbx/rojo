@@ -1,6 +1,9 @@
 //! Defines module for defining a small Lua AST for simple codegen.
 
-use std::fmt::{self, Write};
+use std::{
+    fmt::{self, Write},
+    num::FpCategory,
+};
 
 /// Trait that helps turn a type into an equivalent Lua snippet.
 ///
@@ -41,8 +44,15 @@ impl fmt::Display for Statement {
 }
 
 pub(crate) enum Expression {
+    Nil,
+    Bool(bool),
+    Number(f64),
     String(String),
     Table(Table),
+
+    /// Arrays are not technically distinct from other tables in Lua, but this
+    /// representation is more convenient.
+    Array(Vec<Expression>),
 }
 
 impl Expression {
@@ -54,15 +64,23 @@ impl Expression {
 impl FmtLua for Expression {
     fn fmt_lua(&self, output: &mut LuaStream<'_>) -> fmt::Result {
         match self {
-            Self::Table(inner) => inner.fmt_lua(output),
+            Self::Nil => write!(output, "nil"),
+            Self::Bool(inner) => inner.fmt_lua(output),
+            Self::Number(inner) => inner.fmt_lua(output),
             Self::String(inner) => inner.fmt_lua(output),
+            Self::Table(inner) => inner.fmt_lua(output),
+            Self::Array(inner) => inner.fmt_lua(output),
         }
     }
 
     fn fmt_table_key(&self, output: &mut LuaStream<'_>) -> fmt::Result {
         match self {
-            Self::Table(inner) => inner.fmt_table_key(output),
+            Self::Nil => panic!("nil cannot be a table key"),
+            Self::Bool(inner) => inner.fmt_table_key(output),
+            Self::Number(inner) => inner.fmt_table_key(output),
             Self::String(inner) => inner.fmt_table_key(output),
+            Self::Table(inner) => inner.fmt_table_key(output),
+            Self::Array(inner) => inner.fmt_table_key(output),
         }
     }
 }
@@ -85,6 +103,28 @@ impl From<Table> for Expression {
     }
 }
 
+impl FmtLua for bool {
+    fn fmt_lua(&self, output: &mut LuaStream<'_>) -> fmt::Result {
+        write!(output, "{}", self)
+    }
+}
+
+impl FmtLua for f64 {
+    fn fmt_lua(&self, output: &mut LuaStream<'_>) -> fmt::Result {
+        match self.classify() {
+            FpCategory::Nan => write!(output, "0/0"),
+            FpCategory::Infinite => {
+                if self.is_sign_positive() {
+                    write!(output, "math.huge")
+                } else {
+                    write!(output, "-math.huge")
+                }
+            }
+            _ => write!(output, "{}", self),
+        }
+    }
+}
+
 impl FmtLua for String {
     fn fmt_lua(&self, output: &mut LuaStream<'_>) -> fmt::Result {
         write!(output, "\"{}\"", self)
@@ -99,20 +139,24 @@ impl FmtLua for String {
     }
 }
 
-pub(crate) struct Table {
-    pub entries: Vec<(Expression, Expression)>,
+impl FmtLua for Vec<Expression> {
+    fn fmt_lua(&self, output: &mut LuaStream<'_>) -> fmt::Result {
+        write!(output, "{{")?;
+
+        for (index, value) in self.iter().enumerate() {
+            value.fmt_lua(output)?;
+
+            if index < self.len() - 1 {
+                write!(output, ", ")?;
+            }
+        }
+
+        write!(output, "}}")
+    }
 }
 
-impl Table {
-    pub fn new() -> Self {
-        Self {
-            entries: Vec::new(),
-        }
-    }
-
-    pub fn add_entry<K: Into<Expression>, V: Into<Expression>>(&mut self, key: K, value: V) {
-        self.entries.push((key.into(), value.into()));
-    }
+pub(crate) struct Table {
+    pub entries: Vec<(Expression, Expression)>,
 }
 
 impl FmtLua for Table {
@@ -140,8 +184,21 @@ fn is_valid_ident_char(value: char) -> bool {
     value.is_ascii_alphanumeric() || value == '_'
 }
 
+fn is_keyword(value: &str) -> bool {
+    match value {
+        "and" | "break" | "do" | "else" | "elseif" | "end" | "false" | "for" | "function"
+        | "if" | "in" | "local" | "nil" | "not" | "or" | "repeat" | "return" | "then" | "true"
+        | "until" | "while" => true,
+        _ => false,
+    }
+}
+
 /// Tells whether the given string is a valid Lua identifier.
 fn is_valid_ident(value: &str) -> bool {
+    if is_keyword(value) {
+        return false;
+    }
+
     let mut chars = value.chars();
 
     match chars.next() {
