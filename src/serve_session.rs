@@ -1,6 +1,6 @@
 use std::{
     collections::HashSet,
-    path::Path,
+    path::{Path, PathBuf},
     sync::{Arc, Mutex, MutexGuard},
     time::Instant,
 };
@@ -13,13 +13,13 @@ use thiserror::Error;
 use crate::{
     change_processor::ChangeProcessor,
     message_queue::MessageQueue,
-    project::Project,
+    project::{Project, ProjectError},
     session_id::SessionId,
     snapshot::{
         apply_patch_set, compute_patch_set, AppliedPatchSet, InstanceContext,
         InstancePropertiesWithMeta, PatchSet, PathIgnoreRule, RojoTree,
     },
-    snapshot_middleware::snapshot_from_vfs,
+    snapshot_middleware::{snapshot_from_vfs, SnapshotError},
 };
 
 /// Contains all of the state for a Rojo serve session.
@@ -97,10 +97,11 @@ impl ServeSession {
 
         log::trace!("Starting new ServeSession at path {}", start_path.display());
 
-        log::trace!("Loading project file from {}", start_path.display());
-        let root_project = Project::load_fuzzy(start_path)
-            .expect("TODO: Project load failed")
-            .expect("TODO: No project was found.");
+        log::debug!("Loading project file from {}", start_path.display());
+        let root_project =
+            Project::load_fuzzy(start_path)?.ok_or_else(|| ServeSessionError::NoProjectFound {
+                path: start_path.to_owned(),
+            })?;
 
         let mut tree = RojoTree::new(InstancePropertiesWithMeta {
             properties: RbxInstanceProperties {
@@ -126,8 +127,7 @@ impl ServeSession {
         instance_context.add_path_ignore_rules(rules);
 
         log::trace!("Generating snapshot of instances from VFS");
-        let snapshot = snapshot_from_vfs(&instance_context, &vfs, &start_path)
-            .expect("snapshot failed")
+        let snapshot = snapshot_from_vfs(&instance_context, &vfs, &start_path)?
             .expect("snapshot did not return an instance");
 
         log::trace!("Computing initial patch set");
@@ -208,4 +208,23 @@ impl ServeSession {
 }
 
 #[derive(Debug, Error)]
-pub enum ServeSessionError {}
+pub enum ServeSessionError {
+    #[error(
+        "Rojo requires a project file, but no project file was found in path {}\n\
+        See https://rojo.space/docs/ for guides and documentation.",
+        .path.display()
+    )]
+    NoProjectFound { path: PathBuf },
+
+    #[error(transparent)]
+    Project {
+        #[from]
+        source: ProjectError,
+    },
+
+    #[error(transparent)]
+    Snapshot {
+        #[from]
+        source: SnapshotError,
+    },
+}
