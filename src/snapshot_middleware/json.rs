@@ -48,7 +48,7 @@ impl SnapshotMiddleware for SnapshotJson {
         let as_lua = json_to_lua(value).to_string();
 
         let properties = hashmap! {
-            "Value".to_owned() => RbxValue::String {
+            "Source".to_owned() => RbxValue::String {
                 value: as_lua,
             },
         };

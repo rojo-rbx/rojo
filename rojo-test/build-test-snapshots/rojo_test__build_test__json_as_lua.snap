@@ -6,7 +6,7 @@ expression: contents
   <Item class="ModuleScript" referent="0">
     <Properties>
       <string name="Name">json_as_lua</string>
-      <string name="Value">return {
+      <string name="Source">return {
 	["1invalidident"] = "nice",
 	array = {1, 2, 3},
 	["false"] = false,
