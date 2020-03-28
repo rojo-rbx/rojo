@@ -5,6 +5,7 @@
     * "Open Scripts Externally": When enabled, opening a script in Studio will instead open it in your default text editor.
     * "Two-Way Sync": When enabled, Rojo will attempt to save changes to your place back to the filesystem. **Very early feature, very broken, beware!**
 * Added `--color` option to force-enable or force-disable color in Rojo's output.
+* Added support for turning `.json` files into `ModuleScript` instances ([#308](https://github.com/rojo-rbx/rojo/pull/308))
 * The server half of **experimental** two-way sync is now enabled by default.
 * Increased default logging verbosity in commands like `rojo build`.
 * Rojo now requires a project file again, just like 0.5.4.

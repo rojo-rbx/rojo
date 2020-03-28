@@ -7,26 +7,32 @@ pub enum SnapshotError {
     #[error("file name had malformed Unicode")]
     FileNameBadUnicode { path: PathBuf },
 
-    #[error("file had malformed Unicode contents")]
+    #[error("file had malformed Unicode contents at path {}", .path.display())]
     FileContentsBadUnicode {
         source: std::str::Utf8Error,
         path: PathBuf,
     },
 
-    #[error("malformed project file")]
+    #[error("malformed project file at path {}", .path.display())]
     MalformedProject {
         source: serde_json::Error,
         path: PathBuf,
     },
 
-    #[error("malformed .model.json file")]
+    #[error("malformed .model.json file at path {}", .path.display())]
     MalformedModelJson {
         source: serde_json::Error,
         path: PathBuf,
     },
 
-    #[error("malformed .meta.json file")]
+    #[error("malformed .meta.json file at path {}", .path.display())]
     MalformedMetaJson {
+        source: serde_json::Error,
+        path: PathBuf,
+    },
+
+    #[error("malformed JSON at path {}", .path.display())]
+    MalformedJson {
         source: serde_json::Error,
         path: PathBuf,
     },
@@ -72,6 +78,13 @@ impl SnapshotError {
 
     pub(crate) fn malformed_meta_json(source: serde_json::Error, path: impl Into<PathBuf>) -> Self {
         Self::MalformedMetaJson {
+            source,
+            path: path.into(),
+        }
+    }
+
+    pub(crate) fn malformed_json(source: serde_json::Error, path: impl Into<PathBuf>) -> Self {
+        Self::MalformedJson {
             source,
             path: path.into(),
         }

@@ -6,6 +6,7 @@
 mod csv;
 mod dir;
 mod error;
+mod json;
 mod json_model;
 mod lua;
 mod meta_file;
@@ -26,6 +27,7 @@ use crate::snapshot::InstanceContext;
 use self::{
     csv::SnapshotCsv,
     dir::SnapshotDir,
+    json::SnapshotJson,
     json_model::SnapshotJsonModel,
     lua::SnapshotLua,
     middleware::{SnapshotInstanceResult, SnapshotMiddleware},
@@ -71,5 +73,6 @@ middlewares! {
     SnapshotLua,
     SnapshotCsv,
     SnapshotTxt,
+    SnapshotJson,
     SnapshotDir,
 }
