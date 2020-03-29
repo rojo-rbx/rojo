@@ -22,7 +22,7 @@ pub fn upload(options: UploadCommand) -> Result<(), anyhow::Error> {
 
     let vfs = Vfs::new_default();
 
-    let session = ServeSession::new(vfs, &options.absolute_project());
+    let session = ServeSession::new(vfs, &options.absolute_project())?;
 
     let tree = session.tree();
     let inner_tree = tree.inner();

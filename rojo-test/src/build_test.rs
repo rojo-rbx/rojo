@@ -31,16 +31,17 @@ gen_build_tests! {
     init_meta_class_name,
     init_meta_properties,
     init_with_children,
+    json_as_lua,
     json_model_in_folder,
     json_model_legacy_name,
     module_in_folder,
     module_init,
-    plain_gitkeep,
     rbxm_in_folder,
     rbxmx_in_folder,
     script_meta_disabled,
     server_in_folder,
     server_init,
+    rbxmx_ref,
     txt,
     txt_in_folder,
 }
@@ -50,16 +51,6 @@ gen_build_tests! {
     ignore_glob_inner,
     ignore_glob_nested,
     ignore_glob_spec,
-}
-
-#[test]
-fn build_plain_txt() {
-    run_build_test("plain.txt");
-}
-
-#[test]
-fn build_rbxmx_ref() {
-    run_build_test("rbxmx_ref.rbxmx");
 }
 
 fn run_build_test(test_name: &str) {

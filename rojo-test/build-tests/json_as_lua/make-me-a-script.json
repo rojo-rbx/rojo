@@ -1,0 +1,12 @@
+{
+  "array": [1, 2, 3],
+  "object": {
+    "hello": "world"
+  },
+  "true": true,
+  "false": false,
+  "null": null,
+  "int": 1234,
+  "float": 1234.5452,
+  "1invalidident": "nice"
+}

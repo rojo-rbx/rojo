@@ -11,6 +11,7 @@ mod auth_cookie;
 mod change_processor;
 mod error;
 mod glob;
+mod lua_ast;
 mod message_queue;
 mod multimap;
 mod path_serializer;

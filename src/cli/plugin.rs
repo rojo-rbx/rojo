@@ -39,7 +39,7 @@ pub fn install_plugin() -> Result<()> {
     in_memory_fs.load_snapshot("plugin", plugin_snapshot)?;
 
     let vfs = Vfs::new(in_memory_fs);
-    let session = ServeSession::new(vfs, "plugin");
+    let session = ServeSession::new(vfs, "plugin")?;
 
     let plugin_path = plugins_folder_path.join(PLUGIN_FILE_NAME);
     log::debug!("Writing plugin to {}", plugin_path.display());

@@ -7,7 +7,7 @@
       "$className": "ReplicatedStorage",
 
       "Common": {
-        "$path": "src/common"
+        "$path": "src/shared"
       }
     },
 

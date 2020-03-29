@@ -63,15 +63,6 @@ impl ChangeProcessor {
             .spawn(move || {
                 log::trace!("ChangeProcessor thread started");
 
-                #[allow(
-                    // Crossbeam's select macro generates code that Clippy doesn't like,
-                    // and Clippy blames us for it.
-                    clippy::drop_copy,
-
-                    // Crossbeam uses 0 as *const _ and Clippy doesn't like that either,
-                    // but this isn't our fault.
-                    clippy::zero_ptr,
-                )]
                 loop {
                     select! {
                         recv(vfs_receiver) -> event => {
@@ -272,12 +263,11 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: RbxId) -> Optio
     let instigating_source = match &metadata.instigating_source {
         Some(path) => path,
         None => {
-            log::warn!(
+            log::error!(
                 "Instance {} did not have an instigating source, but was considered for an update.",
                 id
             );
-            log::warn!("This is a Rojo bug. Please file an issue!");
-
+            log::error!("This is a bug. Please file an issue!");
             return None;
         }
     };
@@ -285,43 +275,49 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: RbxId) -> Optio
     // How we process a file change event depends on what created this
     // file/folder in the first place.
     let applied_patch_set = match instigating_source {
-        InstigatingSource::Path(path) => {
-            let maybe_meta = vfs.metadata(path).with_not_found().unwrap();
+        InstigatingSource::Path(path) => match vfs.metadata(path).with_not_found() {
+            Ok(Some(_)) => {
+                // Our instance was previously created from a path and that
+                // path still exists. We can generate a snapshot starting at
+                // that path and use it as the source for our patch.
 
-            match maybe_meta {
-                Some(_meta) => {
-                    // Our instance was previously created from a path and
-                    // that path still exists. We can generate a snapshot
-                    // starting at that path and use it as the source for
-                    // our patch.
+                let snapshot = match snapshot_from_vfs(&metadata.context, &vfs, &path) {
+                    Ok(Some(snapshot)) => snapshot,
+                    Ok(None) => {
+                        log::error!(
+                            "Snapshot did not return an instance from path {}",
+                            path.display()
+                        );
+                        log::error!("This may be a bug!");
+                        return None;
+                    }
+                    Err(err) => {
+                        log::error!("Snapshot error: {}", ErrorDisplay(err));
+                        return None;
+                    }
+                };
 
-                    let snapshot = match snapshot_from_vfs(&metadata.context, &vfs, &path) {
-                        Ok(maybe_snapshot) => {
-                            maybe_snapshot.expect("snapshot did not return an instance")
-                        }
-                        Err(err) => {
-                            log::error!("Snapshot error: {}", ErrorDisplay(err));
-                            return None;
-                        }
-                    };
-
-                    let patch_set = compute_patch_set(&snapshot, &tree, id);
-                    apply_patch_set(tree, patch_set)
-                }
-                None => {
-                    // Our instance was previously created from a path, but
-                    // that path no longer exists.
-                    //
-                    // We associate deleting the instigating file for an
-                    // instance with deleting that instance.
-
-                    let mut patch_set = PatchSet::new();
-                    patch_set.removed_instances.push(id);
-
-                    apply_patch_set(tree, patch_set)
-                }
+                let patch_set = compute_patch_set(&snapshot, &tree, id);
+                apply_patch_set(tree, patch_set)
             }
-        }
+            Ok(None) => {
+                // Our instance was previously created from a path, but that
+                // path no longer exists.
+                //
+                // We associate deleting the instigating file for an
+                // instance with deleting that instance.
+
+                let mut patch_set = PatchSet::new();
+                patch_set.removed_instances.push(id);
+
+                apply_patch_set(tree, patch_set)
+            }
+            Err(err) => {
+                log::error!("Error processing filesystem change: {}", ErrorDisplay(err));
+                return None;
+            }
+        },
+
         InstigatingSource::ProjectNode(project_path, instance_name, project_node) => {
             // This instance is the direct subject of a project node. Since
             // there might be information associated with our instance from
@@ -336,9 +332,14 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: RbxId) -> Optio
             );
 
             let snapshot = match snapshot_result {
-                Ok(maybe_snapshot) => maybe_snapshot.expect("snapshot did not return an instance"),
+                Ok(Some(snapshot)) => snapshot,
+                Ok(None) => {
+                    log::error!("Snapshot did not return an instance from a project node.");
+                    log::error!("This is a bug!");
+                    return None;
+                }
                 Err(err) => {
-                    log::error!("Snapshot error: {}", ErrorDisplay(err));
+                    log::error!("{}", ErrorDisplay(err));
                     return None;
                 }
             };
