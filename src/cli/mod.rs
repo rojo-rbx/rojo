@@ -114,7 +114,7 @@ pub enum Subcommand {
     /// Open Rojo's documentation in your browser.
     Doc,
 
-    /// Manages Rojo's Roblox plugin.
+    /// Manages Rojo's Roblox Studio plugin.
     Plugin(PluginCommand),
 }
 
@@ -295,10 +295,12 @@ fn resolve_path(path: &Path) -> Cow<'_, Path> {
 
 #[derive(Debug, StructOpt)]
 pub enum PluginSubcommand {
-    /// Install the plugin in Roblox plugins folder. If the plugin is already installed, installing
-    /// it again will overwrite the current plugin file.
+    /// Install the plugin in Roblox Studio's plugins folder. If the plugin is
+    /// already installed, installing it again will overwrite the current plugin
+    /// file.
     Install,
-    /// Removes the plugin if installed.
+
+    /// Removes the plugin if it is installed.
     Uninstall,
 }
 
