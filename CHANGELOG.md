@@ -7,6 +7,7 @@
 * Added `--color` option to force-enable or force-disable color in Rojo's output.
 * Added support for turning `.json` files into `ModuleScript` instances ([#308](https://github.com/rojo-rbx/rojo/pull/308))
 * Added `rojo plugin install` and `rojo plugin uninstall` to allow Rojo to manage its Roblox Studio plugin. ([#304](https://github.com/rojo-rbx/rojo/pull/304))
+* Class names no longer need to be specified for Roblox services in Rojo projects. ([#210](https://github.com/rojo-rbx/rojo/pull/210))
 * The server half of **experimental** two-way sync is now enabled by default.
 * Increased default logging verbosity in commands like `rojo build`.
 * Rojo now requires a project file again, just like 0.5.4.
