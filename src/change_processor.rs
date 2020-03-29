@@ -178,7 +178,7 @@ impl JobThreadContext {
                     if let Some(instigating_source) = &instance.metadata().instigating_source {
                         match instigating_source {
                             InstigatingSource::Path(path) => fs::remove_file(path).unwrap(),
-                            InstigatingSource::ProjectNode(_, _, _) => {
+                            InstigatingSource::ProjectNode(_, _, _, _) => {
                                 log::warn!(
                                     "Cannot remove instance {}, it's from a project file",
                                     id
@@ -226,7 +226,7 @@ impl JobThreadContext {
                                             log::warn!("Cannot change Source to non-string value.");
                                         }
                                     }
-                                    InstigatingSource::ProjectNode(_, _, _) => {
+                                    InstigatingSource::ProjectNode(_, _, _, _) => {
                                         log::warn!(
                                             "Cannot remove instance {}, it's from a project file",
                                             id
@@ -318,7 +318,7 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: RbxId) -> Optio
             }
         },
 
-        InstigatingSource::ProjectNode(project_path, instance_name, project_node) => {
+        InstigatingSource::ProjectNode(project_path, instance_name, project_node, parent_class) => {
             // This instance is the direct subject of a project node. Since
             // there might be information associated with our instance from
             // the project file, we snapshot the entire project node again.
@@ -329,6 +329,7 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: RbxId) -> Optio
                 instance_name,
                 project_node,
                 &vfs,
+                parent_class.as_ref().map(|name| name.as_str()),
             );
 
             let snapshot = match snapshot_result {

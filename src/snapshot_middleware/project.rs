@@ -1,7 +1,7 @@
 use std::{borrow::Cow, collections::HashMap, path::Path};
 
 use memofs::{IoResultExt, Vfs};
-use rbx_reflection::try_resolve_value;
+use rbx_reflection::{get_class_descriptor, try_resolve_value};
 
 use crate::{
     project::{Project, ProjectNode},
@@ -62,6 +62,7 @@ impl SnapshotMiddleware for SnapshotProject {
             &project.name,
             &project.tree,
             vfs,
+            None,
         )?
         .unwrap();
 
@@ -93,6 +94,7 @@ pub fn snapshot_project_node(
     instance_name: &str,
     node: &ProjectNode,
     vfs: &Vfs,
+    parent_class: Option<&str>,
 ) -> SnapshotInstanceResult {
     let name = Cow::Owned(instance_name.to_owned());
     let mut class_name = node
@@ -158,13 +160,43 @@ pub fn snapshot_project_node(
     }
 
     let class_name = class_name
+        .or_else(|| {
+            // If className wasn't defined from another source, we may be able
+            // to infer one.
+
+            let parent_class = parent_class?;
+
+            if parent_class == "DataModel" {
+                // Members of DataModel with names that match known services are
+                // probably supposed to be those services.
+
+                let descriptor = get_class_descriptor(&name)?;
+
+                if descriptor.is_service() {
+                    return Some(name.clone());
+                }
+            } else if parent_class == "StarterPlayer" {
+                // StarterPlayer has two special members with their own classes.
+
+                if name == "StarterPlayerScripts" || name == "StarterCharacterScripts" {
+                    return Some(name.clone());
+                }
+            }
+
+            None
+        })
         // TODO: Turn this into an error object.
         .expect("$className or $path must be specified");
 
     for (child_name, child_project_node) in &node.children {
-        if let Some(child) =
-            snapshot_project_node(context, project_folder, child_name, child_project_node, vfs)?
-        {
+        if let Some(child) = snapshot_project_node(
+            context,
+            project_folder,
+            child_name,
+            child_project_node,
+            vfs,
+            Some(&class_name),
+        )? {
             children.push(child);
         }
     }
@@ -194,6 +226,7 @@ pub fn snapshot_project_node(
         project_folder.to_path_buf(),
         instance_name.to_string(),
         node.clone(),
+        parent_class.map(|name| name.to_owned()),
     ));
 
     Ok(Some(InstanceSnapshot {

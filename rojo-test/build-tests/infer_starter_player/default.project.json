@@ -1,0 +1,11 @@
+{
+  "name": "infer-service-name",
+  "tree": {
+    "$className": "DataModel",
+
+    "StarterPlayer": {
+      "StarterPlayerScripts": {},
+      "StarterCharacterScripts": {}
+    }
+  }
+}
