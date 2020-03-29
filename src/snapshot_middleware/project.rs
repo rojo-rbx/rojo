@@ -94,7 +94,7 @@ pub fn snapshot_project_node(
     instance_name: &str,
     node: &ProjectNode,
     vfs: &Vfs,
-    parent_class: Option<Cow<'static, str>>,
+    parent_class: Option<&str>,
 ) -> SnapshotInstanceResult {
     let name = Cow::Owned(instance_name.to_owned());
     let mut class_name = node
@@ -195,7 +195,7 @@ pub fn snapshot_project_node(
             child_name,
             child_project_node,
             vfs,
-            Some(class_name.clone()),
+            Some(&class_name),
         )? {
             children.push(child);
         }
@@ -226,6 +226,7 @@ pub fn snapshot_project_node(
         project_folder.to_path_buf(),
         instance_name.to_string(),
         node.clone(),
+        parent_class.map(|name| name.to_owned()),
     ));
 
     Ok(Some(InstanceSnapshot {

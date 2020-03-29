@@ -163,6 +163,7 @@ pub enum InstigatingSource {
         #[serde(serialize_with = "path_serializer::serialize_absolute")] PathBuf,
         String,
         ProjectNode,
+        Option<String>,
     ),
 }
 
@@ -170,12 +171,13 @@ impl fmt::Debug for InstigatingSource {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             InstigatingSource::Path(path) => write!(formatter, "Path({})", path.display()),
-            InstigatingSource::ProjectNode(path, name, node) => write!(
+            InstigatingSource::ProjectNode(path, name, node, parent_class) => write!(
                 formatter,
-                "ProjectNode({}: {:?}) from path {}",
+                "ProjectNode({}: {:?}) from path {} and parent class {:?}",
                 name,
                 node,
-                path.display()
+                path.display(),
+                parent_class,
             ),
         }
     }
