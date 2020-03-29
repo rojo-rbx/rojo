@@ -1083,7 +1083,7 @@ dependencies = [
 
 [[package]]
 name = "memofs"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "crossbeam-channel",
  "fs-err",
@@ -1923,7 +1923,7 @@ dependencies = [
 
 [[package]]
 name = "rojo"
-version = "0.6.0-alpha.3"
+version = "6.0.0-rc.1"
 dependencies = [
  "anyhow",
  "backtrace",

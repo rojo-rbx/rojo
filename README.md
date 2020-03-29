@@ -14,7 +14,7 @@
         <img src="https://img.shields.io/crates/v/rojo.svg?label=latest%20release" alt="Latest server version" />
     </a>
     <a href="https://rojo.space/docs">
-        <img src="https://img.shields.io/badge/docs-website-brightgreen.svg" alt="Rojo 0.5.x Documentation" />
+        <img src="https://img.shields.io/badge/docs-website-brightgreen.svg" alt="Rojo Documentation" />
     </a>
 </div>
 

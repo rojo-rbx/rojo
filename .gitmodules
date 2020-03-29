@@ -10,6 +10,3 @@
 [submodule "plugin/modules/t"]
 	path = plugin/modules/t
 	url = https://github.com/osyrisrblx/t.git
-[submodule "plugin/modules/rbx-dom"]
-	path = plugin/modules/rbx-dom
-	url = http://github.com/rojo-rbx/rbx-dom

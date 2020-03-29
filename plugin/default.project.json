@@ -14,6 +14,9 @@
     "Fmt": {
       "$path": "fmt"
     },
+    "RbxDom": {
+      "$path": "rbx_dom_lua"
+    },
     "Roact": {
       "$path": "modules/roact/src"
     },
@@ -22,9 +25,6 @@
     },
     "t": {
       "$path": "modules/t/lib"
-    },
-    "RbxDom": {
-      "$path": "modules/rbx-dom/rbx_dom_lua/src"
     }
   }
 }

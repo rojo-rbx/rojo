@@ -1,6 +1,10 @@
 # Rojo Changelog
 
-## Unreleased Changes for 0.6.x
+## Unreleased Changes
+
+## [6.0.0 Release Candidate 1](https://github.com/rojo-rbx/rojo/releases/tag/v6.0.0-rc.1) (March 29, 2020)
+This release jumped from 0.6.0 to 6.0.0. Rojo has been in use in production for many users for quite a long times, and so 6.0 is a more accurate reflection of Rojo's version than a pre-1.0 version.
+
 * Added basic settings panel to plugin, with two settings:
     * "Open Scripts Externally": When enabled, opening a script in Studio will instead open it in your default text editor.
     * "Two-Way Sync": When enabled, Rojo will attempt to save changes to your place back to the filesystem. **Very early feature, very broken, beware!**

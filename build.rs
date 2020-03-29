@@ -1,10 +1,10 @@
 use std::{
-    env,
-    fs::{self, File},
-    io,
+    env, io,
     path::{Path, PathBuf},
 };
 
+use fs_err as fs;
+use fs_err::File;
 use maplit::hashmap;
 use memofs::VfsSnapshot;
 
@@ -50,6 +50,7 @@ fn main() -> Result<(), anyhow::Error> {
         "fmt" => snapshot_from_fs_path(&plugin_root.join("fmt"))?,
         "http" => snapshot_from_fs_path(&plugin_root.join("http"))?,
         "log" => snapshot_from_fs_path(&plugin_root.join("log"))?,
+        "rbx_dom_lua" => snapshot_from_fs_path(&plugin_root.join("rbx_dom_lua"))?,
         "src" => snapshot_from_fs_path(&plugin_root.join("src"))?,
         "modules" => VfsSnapshot::dir(hashmap! {
             "roact" => VfsSnapshot::dir(hashmap! {
@@ -60,11 +61,6 @@ fn main() -> Result<(), anyhow::Error> {
             }),
             "t" => VfsSnapshot::dir(hashmap! {
                 "lib" => snapshot_from_fs_path(&plugin_modules.join("t").join("lib"))?
-            }),
-            "rbx-dom" => VfsSnapshot::dir(hashmap! {
-                "rbx_dom_lua" => VfsSnapshot::dir(hashmap! {
-                    "src" => snapshot_from_fs_path(&plugin_modules.join("rbx-dom").join("rbx_dom_lua").join("src"))?
-                })
             }),
         }),
     });
