@@ -16,6 +16,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
+      with:
+        submodules: true
 
     - name: Setup Rust toolchain
       run: rustup default ${{ matrix.rust_version }}

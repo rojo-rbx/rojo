@@ -3,6 +3,7 @@
 mod build;
 mod doc;
 mod init;
+mod plugin;
 mod serve;
 mod upload;
 
@@ -21,6 +22,7 @@ use thiserror::Error;
 pub use self::build::*;
 pub use self::doc::*;
 pub use self::init::*;
+pub use self::plugin::*;
 pub use self::serve::*;
 pub use self::upload::*;
 
@@ -111,6 +113,9 @@ pub enum Subcommand {
 
     /// Open Rojo's documentation in your browser.
     Doc,
+
+    /// Manages Rojo's Roblox Studio plugin.
+    Plugin(PluginCommand),
 }
 
 /// Initializes a new Rojo project.
@@ -286,4 +291,22 @@ fn resolve_path(path: &Path) -> Cow<'_, Path> {
     } else {
         Cow::Owned(env::current_dir().unwrap().join(path))
     }
+}
+
+#[derive(Debug, StructOpt)]
+pub enum PluginSubcommand {
+    /// Install the plugin in Roblox Studio's plugins folder. If the plugin is
+    /// already installed, installing it again will overwrite the current plugin
+    /// file.
+    Install,
+
+    /// Removes the plugin if it is installed.
+    Uninstall,
+}
+
+/// Install Rojo's plugin.
+#[derive(Debug, StructOpt)]
+pub struct PluginCommand {
+    #[structopt(subcommand)]
+    subcommand: PluginSubcommand,
 }

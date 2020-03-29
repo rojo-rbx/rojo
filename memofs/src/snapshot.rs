@@ -1,8 +1,9 @@
+use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
 /// A slice of a tree of files. Can be loaded into an
 /// [`InMemoryFs`](struct.InMemoryFs.html).
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 #[non_exhaustive]
 pub enum VfsSnapshot {
     File {
