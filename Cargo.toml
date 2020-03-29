@@ -98,9 +98,11 @@ uuid = { version = "0.8.1", features = ["v4", "serde"] }
 winreg = "0.6.2"
 
 [build-dependencies]
+memofs = { version = "0.1.0", path = "memofs" }
+
+anyhow = "1.0.27"
 bincode = "1.2.1"
 maplit = "1.0.1"
-memofs = { version = "0.1.0", path = "memofs" }
 
 [dev-dependencies]
 rojo-insta-ext = { path = "rojo-insta-ext" }

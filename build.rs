@@ -1,6 +1,7 @@
-use std::env;
 use std::{
-    fs, io,
+    env,
+    fs::{self, File},
+    io,
     path::{Path, PathBuf},
 };
 
@@ -25,7 +26,6 @@ fn snapshot_from_fs_path(path: &Path) -> io::Result<VfsSnapshot> {
             }
 
             let child_snapshot = snapshot_from_fs_path(&entry.path())?;
-
             children.push((file_name, child_snapshot));
         }
 
@@ -37,7 +37,7 @@ fn snapshot_from_fs_path(path: &Path) -> io::Result<VfsSnapshot> {
     }
 }
 
-fn main() {
+fn main() -> Result<(), anyhow::Error> {
     let out_dir = env::var_os("OUT_DIR").unwrap();
 
     let root_dir = env::var_os("CARGO_MANIFEST_DIR").unwrap();
@@ -46,31 +46,33 @@ fn main() {
     let plugin_modules = plugin_root.join("modules");
 
     let snapshot = VfsSnapshot::dir(hashmap! {
-        "default.project.json" => snapshot_from_fs_path(&plugin_root.join("default.project.json")).unwrap(),
-        "fmt" => snapshot_from_fs_path(&plugin_root.join("fmt")).unwrap(),
-        "http" => snapshot_from_fs_path(&plugin_root.join("http")).unwrap(),
-        "log" => snapshot_from_fs_path(&plugin_root.join("log")).unwrap(),
-        "src" => snapshot_from_fs_path(&plugin_root.join("src")).unwrap(),
+        "default.project.json" => snapshot_from_fs_path(&plugin_root.join("default.project.json"))?,
+        "fmt" => snapshot_from_fs_path(&plugin_root.join("fmt"))?,
+        "http" => snapshot_from_fs_path(&plugin_root.join("http"))?,
+        "log" => snapshot_from_fs_path(&plugin_root.join("log"))?,
+        "src" => snapshot_from_fs_path(&plugin_root.join("src"))?,
         "modules" => VfsSnapshot::dir(hashmap! {
             "roact" => VfsSnapshot::dir(hashmap! {
-                "src" => snapshot_from_fs_path(&plugin_modules.join("roact").join("src")).unwrap()
+                "src" => snapshot_from_fs_path(&plugin_modules.join("roact").join("src"))?
             }),
             "promise" => VfsSnapshot::dir(hashmap! {
-                "lib" => snapshot_from_fs_path(&plugin_modules.join("promise").join("lib")).unwrap()
+                "lib" => snapshot_from_fs_path(&plugin_modules.join("promise").join("lib"))?
             }),
             "t" => VfsSnapshot::dir(hashmap! {
-                "lib" => snapshot_from_fs_path(&plugin_modules.join("t").join("lib")).unwrap()
+                "lib" => snapshot_from_fs_path(&plugin_modules.join("t").join("lib"))?
             }),
             "rbx-dom" => VfsSnapshot::dir(hashmap! {
                 "rbx_dom_lua" => VfsSnapshot::dir(hashmap! {
-                    "src" => snapshot_from_fs_path(&plugin_modules.join("rbx-dom").join("rbx_dom_lua").join("src")).unwrap()
+                    "src" => snapshot_from_fs_path(&plugin_modules.join("rbx-dom").join("rbx_dom_lua").join("src"))?
                 })
             }),
         }),
     });
 
     let out_path = Path::new(&out_dir).join("plugin.bincode");
-    let out_file = fs::File::create(&out_path).unwrap();
+    let out_file = File::create(&out_path)?;
 
-    bincode::serialize_into(out_file, &snapshot).unwrap();
+    bincode::serialize_into(out_file, &snapshot)?;
+
+    Ok(())
 }
