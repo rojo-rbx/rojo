@@ -1,37 +1,39 @@
 use std::env;
-use std::{fs, io, path::{Path, PathBuf}};
+use std::{
+    fs, io,
+    path::{Path, PathBuf},
+};
 
 use maplit::hashmap;
 use memofs::VfsSnapshot;
 
-fn snapshot_from_fs_path(path: &PathBuf) -> io::Result<VfsSnapshot> {
+fn snapshot_from_fs_path(path: &Path) -> io::Result<VfsSnapshot> {
+    println!("cargo:rerun-if-changed={}", path.display());
+
     if path.is_dir() {
-        let vfs_entries = fs::read_dir(path)?
-            .filter_map(|entry| {
-                let entry = match entry {
-                    Ok(entry) => entry,
-                    Err(error) => return Some(Err(error)),
-                };
+        let mut children = Vec::new();
 
-                let file_name = entry.file_name().to_str()
-                    .map(str::to_owned)
-                    .expect(&format!("Could not get file name from {}", entry.path().display()));
+        for entry in fs::read_dir(path)? {
+            let entry = entry?;
 
-                if file_name.ends_with(".spec.lua") {
-                    None
-                } else {
-                    Some(snapshot_from_fs_path(&entry.path())
-                        .map(|snapshot| (file_name, snapshot)))
-                }
-            });
+            let file_name = entry.file_name().to_str().unwrap().to_owned();
 
-        let entries: io::Result<Vec<(String, VfsSnapshot)>> = vfs_entries.collect();
+            // We can skip any TestEZ test files since they aren't necessary for
+            // the plugin to run.
+            if file_name.ends_with(".spec.lua") {
+                continue;
+            }
 
-        Ok(VfsSnapshot::dir(entries?))
+            let child_snapshot = snapshot_from_fs_path(&entry.path())?;
+
+            children.push((file_name, child_snapshot));
+        }
+
+        Ok(VfsSnapshot::dir(children))
     } else {
-        println!("cargo:rerun-if-changed={}", path.display());
-        fs::read_to_string(path)
-            .map(|content| VfsSnapshot::file(content))
+        let content = fs::read_to_string(path)?;
+
+        Ok(VfsSnapshot::file(content))
     }
 }
 
