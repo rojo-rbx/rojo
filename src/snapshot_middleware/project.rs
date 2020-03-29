@@ -159,15 +159,34 @@ pub fn snapshot_project_node(
         }
     }
 
-    let class_name = class_name.unwrap_or_else(|| {
-        parent_class
-            .filter(|class| class == "DataModel")
-            .and_then(|_| get_class_descriptor(&name))
-            .filter(|class_descriptor| class_descriptor.is_service())
-            .map(|_| name.clone())
-            // TODO: Turn this into an error object.
-            .expect("$className or $path must be specified")
-    });
+    let class_name = class_name
+        .or_else(|| {
+            // If className wasn't defined from another source, we may be able
+            // to infer one.
+
+            let parent_class = parent_class?;
+
+            if parent_class == "DataModel" {
+                // Members of DataModel with names that match known services are
+                // probably supposed to be those services.
+
+                let descriptor = get_class_descriptor(&name)?;
+
+                if descriptor.is_service() {
+                    return Some(name.clone());
+                }
+            } else if parent_class == "StarterPlayer" {
+                // StarterPlayer has two special members with their own classes.
+
+                if name == "StarterPlayerScripts" || name == "StarterCharacterScripts" {
+                    return Some(name.clone());
+                }
+            }
+
+            None
+        })
+        // TODO: Turn this into an error object.
+        .expect("$className or $path must be specified");
 
     for (child_name, child_project_node) in &node.children {
         if let Some(child) = snapshot_project_node(
