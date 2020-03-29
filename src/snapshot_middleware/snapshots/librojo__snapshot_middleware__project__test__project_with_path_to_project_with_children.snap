@@ -23,6 +23,7 @@ children:
           - /foo
           - SomeChild
           - $className: Model
+          - Folder
       relevant_paths: []
       context: {}
     name: SomeChild
