@@ -1,6 +1,6 @@
 [package]
 name = "rojo"
-version = "0.6.0-alpha.2"
+version = "0.6.0-alpha.3"
 authors = ["Lucien Greathouse <me@lpghatguy.com>"]
 description = "Enables professional-grade development tools for Roblox developers"
 license = "MPL-2.0"
@@ -15,14 +15,17 @@ exclude = [
     "/test-projects/**",
 ]
 
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
+
 [features]
 default = []
 
 # Turn on support for specifying glob ignore path rules in the project format.
 unstable_glob_ignore_paths = []
-
-# Turn on the server half of Rojo's unstable two-way sync feature.
-unstable_two_way_sync = []
 
 # Enable this feature to live-reload assets from the web UI.
 dev_live_assets = []
@@ -32,14 +35,14 @@ members = [
     "rojo-test",
     "rojo-insta-ext",
     "clibrojo",
-    "vfs",
+    "memofs",
 ]
 
 default-members = [
     ".",
     "rojo-test",
     "rojo-insta-ext",
-    "vfs",
+    "memofs",
 ]
 
 [lib]
@@ -55,9 +58,15 @@ name = "build"
 harness = false
 
 [dependencies]
+memofs = { version = "0.1.1", path = "memofs" }
+
+anyhow = "1.0.27"
+backtrace = "0.3"
+bincode = "1.2.1"
 crossbeam-channel = "0.4.0"
 csv = "1.1.1"
 env_logger = "0.7.1"
+fs-err = "2.2.0"
 futures = "0.1.29"
 globset = "0.4.4"
 humantime = "1.3.0"
@@ -67,6 +76,7 @@ lazy_static = "1.4.0"
 log = "0.4.8"
 maplit = "1.0.1"
 notify = "4.0.14"
+opener = "0.4.1"
 rbx_binary = "0.5.0"
 rbx_dom_weak = "1.10.1"
 rbx_reflection = "3.3.408"
@@ -75,16 +85,24 @@ regex = "1.3.1"
 reqwest = "0.9.20"
 ritz = "0.1.0"
 rlua = "0.17.0"
+roblox_install = "0.2.2"
 serde = { version = "1.0", features = ["derive", "rc"] }
 serde_json = "1.0"
-snafu = "0.6.0"
 structopt = "0.3.5"
 termcolor = "1.0.5"
+thiserror = "1.0.11"
 tokio = "0.1.22"
 uuid = { version = "0.8.1", features = ["v4", "serde"] }
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.6.2"
+
+[build-dependencies]
+memofs = { version = "0.1.0", path = "memofs" }
+
+anyhow = "1.0.27"
+bincode = "1.2.1"
+maplit = "1.0.1"
 
 [dev-dependencies]
 rojo-insta-ext = { path = "rojo-insta-ext" }

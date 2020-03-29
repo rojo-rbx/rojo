@@ -128,6 +128,13 @@ pub struct SubscribeResponse<'a> {
     pub messages: Vec<SubscribeMessage<'a>>,
 }
 
+/// Response body from /api/open/{id}
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OpenResponse {
+    pub session_id: SessionId,
+}
+
 /// General response type returned from all Rojo routes
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

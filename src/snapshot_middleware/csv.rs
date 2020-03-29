@@ -1,13 +1,11 @@
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, path::Path};
 
 use maplit::hashmap;
+use memofs::{IoResultExt, Vfs};
 use rbx_dom_weak::RbxValue;
 use serde::Serialize;
 
-use crate::{
-    snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
-    vfs::{FsResultExt, Vfs, VfsEntry, VfsFetcher},
-};
+use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
 use super::{
     meta_file::AdjacentMetadata,
@@ -18,25 +16,21 @@ use super::{
 pub struct SnapshotCsv;
 
 impl SnapshotMiddleware for SnapshotCsv {
-    fn from_vfs<F: VfsFetcher>(
-        _context: &InstanceContext,
-        vfs: &Vfs<F>,
-        entry: &VfsEntry,
-    ) -> SnapshotInstanceResult {
-        if entry.is_directory() {
+    fn from_vfs(_context: &InstanceContext, vfs: &Vfs, path: &Path) -> SnapshotInstanceResult {
+        let meta = vfs.metadata(path)?;
+
+        if meta.is_dir() {
             return Ok(None);
         }
 
-        let instance_name = match match_file_name(entry.path(), ".csv") {
+        let instance_name = match match_file_name(path, ".csv") {
             Some(name) => name,
             None => return Ok(None),
         };
 
-        let meta_path = entry
-            .path()
-            .with_file_name(format!("{}.meta.json", instance_name));
+        let meta_path = path.with_file_name(format!("{}.meta.json", instance_name));
 
-        let table_contents = convert_localization_csv(&entry.contents(vfs)?);
+        let table_contents = convert_localization_csv(&vfs.read(path)?);
 
         let mut snapshot = InstanceSnapshot::new()
             .name(instance_name)
@@ -48,13 +42,12 @@ impl SnapshotMiddleware for SnapshotCsv {
             })
             .metadata(
                 InstanceMetadata::new()
-                    .instigating_source(entry.path())
-                    .relevant_paths(vec![entry.path().to_path_buf(), meta_path.clone()]),
+                    .instigating_source(path)
+                    .relevant_paths(vec![path.to_path_buf(), meta_path.clone()]),
             );
 
-        if let Some(meta_entry) = vfs.get(meta_path).with_not_found()? {
-            let meta_contents = meta_entry.contents(vfs)?;
-            let mut metadata = AdjacentMetadata::from_slice(&meta_contents);
+        if let Some(meta_contents) = vfs.read(&meta_path).with_not_found()? {
+            let mut metadata = AdjacentMetadata::from_slice(&meta_contents, &meta_path)?;
             metadata.apply_all(&mut snapshot);
         }
 
@@ -142,48 +135,54 @@ fn convert_localization_csv(contents: &[u8]) -> String {
 mod test {
     use super::*;
 
-    use crate::vfs::{NoopFetcher, VfsDebug, VfsSnapshot};
-    use insta::assert_yaml_snapshot;
+    use memofs::{InMemoryFs, VfsSnapshot};
 
     #[test]
     fn csv_from_vfs() {
-        let mut vfs = Vfs::new(NoopFetcher);
-        let file = VfsSnapshot::file(
-            r#"
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
+            "/foo.csv",
+            VfsSnapshot::file(
+                r#"
 Key,Source,Context,Example,es
 Ack,Ack!,,An exclamation of despair,¡Ay!"#,
-        );
+            ),
+        )
+        .unwrap();
 
-        vfs.debug_load_snapshot("/foo.csv", file);
+        let mut vfs = Vfs::new(imfs);
 
-        let entry = vfs.get("/foo.csv").unwrap();
         let instance_snapshot =
-            SnapshotCsv::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
+            SnapshotCsv::from_vfs(&InstanceContext::default(), &mut vfs, Path::new("/foo.csv"))
                 .unwrap()
                 .unwrap();
 
-        assert_yaml_snapshot!(instance_snapshot);
+        insta::assert_yaml_snapshot!(instance_snapshot);
     }
 
     #[test]
     fn csv_with_meta() {
-        let mut vfs = Vfs::new(NoopFetcher);
-        let file = VfsSnapshot::file(
-            r#"
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
+            "/foo.csv",
+            VfsSnapshot::file(
+                r#"
 Key,Source,Context,Example,es
 Ack,Ack!,,An exclamation of despair,¡Ay!"#,
-        );
-        let meta = VfsSnapshot::file(r#"{ "ignoreUnknownInstances": true }"#);
+            ),
+        )
+        .unwrap();
+        imfs.load_snapshot(
+            "/foo.meta.json",
+            VfsSnapshot::file(r#"{ "ignoreUnknownInstances": true }"#),
+        )
+        .unwrap();
 
-        vfs.debug_load_snapshot("/foo.csv", file);
-        vfs.debug_load_snapshot("/foo.meta.json", meta);
+        let mut vfs = Vfs::new(imfs);
 
-        let entry = vfs.get("/foo.csv").unwrap();
         let instance_snapshot =
-            SnapshotCsv::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
+            SnapshotCsv::from_vfs(&InstanceContext::default(), &mut vfs, Path::new("/foo.csv"))
                 .unwrap()
                 .unwrap();
-
-        assert_yaml_snapshot!(instance_snapshot);
     }
 }

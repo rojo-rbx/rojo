@@ -1,15 +1,14 @@
-use std::{borrow::Cow, collections::HashMap};
+use std::{borrow::Cow, collections::HashMap, path::Path};
 
+use memofs::Vfs;
 use rbx_dom_weak::UnresolvedRbxValue;
 use rbx_reflection::try_resolve_value;
 use serde::Deserialize;
 
-use crate::{
-    snapshot::{InstanceContext, InstanceSnapshot},
-    vfs::{Vfs, VfsEntry, VfsFetcher},
-};
+use crate::snapshot::{InstanceContext, InstanceSnapshot};
 
 use super::{
+    error::SnapshotError,
     middleware::{SnapshotInstanceResult, SnapshotMiddleware},
     util::match_file_name,
 };
@@ -17,28 +16,27 @@ use super::{
 pub struct SnapshotJsonModel;
 
 impl SnapshotMiddleware for SnapshotJsonModel {
-    fn from_vfs<F: VfsFetcher>(
-        context: &InstanceContext,
-        vfs: &Vfs<F>,
-        entry: &VfsEntry,
-    ) -> SnapshotInstanceResult {
-        if entry.is_directory() {
+    fn from_vfs(context: &InstanceContext, vfs: &Vfs, path: &Path) -> SnapshotInstanceResult {
+        let meta = vfs.metadata(path)?;
+
+        if meta.is_dir() {
             return Ok(None);
         }
 
-        let instance_name = match match_file_name(entry.path(), ".model.json") {
+        let instance_name = match match_file_name(path, ".model.json") {
             Some(name) => name,
             None => return Ok(None),
         };
 
-        let instance: JsonModel =
-            serde_json::from_slice(&entry.contents(vfs)?).expect("TODO: Handle serde_json errors");
+        let contents = vfs.read(path)?;
+        let instance: JsonModel = serde_json::from_slice(&contents)
+            .map_err(|source| SnapshotError::malformed_model_json(source, path))?;
 
         if let Some(json_name) = &instance.name {
             if json_name != instance_name {
                 log::warn!(
                     "Name from JSON model did not match its file name: {}",
-                    entry.path().display()
+                    path.display()
                 );
                 log::warn!(
                     "In Rojo <  alpha 14, this model is named \"{}\" (from its 'Name' property)",
@@ -56,8 +54,8 @@ impl SnapshotMiddleware for SnapshotJsonModel {
 
         snapshot.metadata = snapshot
             .metadata
-            .instigating_source(entry.path())
-            .relevant_paths(vec![entry.path().to_path_buf()])
+            .instigating_source(path)
+            .relevant_paths(vec![path.to_path_buf()])
             .context(context);
 
         Ok(Some(snapshot))
@@ -137,39 +135,43 @@ impl JsonModelCore {
 mod test {
     use super::*;
 
-    use insta::assert_yaml_snapshot;
-
-    use crate::vfs::{NoopFetcher, VfsDebug, VfsSnapshot};
+    use memofs::{InMemoryFs, VfsSnapshot};
 
     #[test]
     fn model_from_vfs() {
-        let mut vfs = Vfs::new(NoopFetcher);
-        let file = VfsSnapshot::file(
-            r#"
-            {
-              "Name": "children",
-              "ClassName": "IntValue",
-              "Properties": {
-                "Value": 5
-              },
-              "Children": [
-                {
-                  "Name": "The Child",
-                  "ClassName": "StringValue"
-                }
-              ]
-            }
-        "#,
-        );
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
+            "/foo.model.json",
+            VfsSnapshot::file(
+                r#"
+                    {
+                      "Name": "children",
+                      "ClassName": "IntValue",
+                      "Properties": {
+                        "Value": 5
+                      },
+                      "Children": [
+                        {
+                          "Name": "The Child",
+                          "ClassName": "StringValue"
+                        }
+                      ]
+                    }
+                "#,
+            ),
+        )
+        .unwrap();
 
-        vfs.debug_load_snapshot("/foo.model.json", file);
+        let mut vfs = Vfs::new(imfs);
 
-        let entry = vfs.get("/foo.model.json").unwrap();
-        let instance_snapshot =
-            SnapshotJsonModel::from_vfs(&InstanceContext::default(), &mut vfs, &entry)
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = SnapshotJsonModel::from_vfs(
+            &InstanceContext::default(),
+            &mut vfs,
+            Path::new("/foo.model.json"),
+        )
+        .unwrap()
+        .unwrap();
 
-        assert_yaml_snapshot!(instance_snapshot);
+        insta::assert_yaml_snapshot!(instance_snapshot);
     }
 }

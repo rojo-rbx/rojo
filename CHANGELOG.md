@@ -1,8 +1,27 @@
 # Rojo Changelog
 
 ## Unreleased Changes for 0.6.x
+* Added basic settings panel to plugin, with two settings:
+    * "Open Scripts Externally": When enabled, opening a script in Studio will instead open it in your default text editor.
+    * "Two-Way Sync": When enabled, Rojo will attempt to save changes to your place back to the filesystem. **Very early feature, very broken, beware!**
+* Added `--color` option to force-enable or force-disable color in Rojo's output.
+* Added support for turning `.json` files into `ModuleScript` instances ([#308](https://github.com/rojo-rbx/rojo/pull/308))
+* Added `rojo plugin install` and `rojo plugin uninstall` to allow Rojo to manage its Roblox Studio plugin. ([#304](https://github.com/rojo-rbx/rojo/pull/304))
+* The server half of **experimental** two-way sync is now enabled by default.
+* Increased default logging verbosity in commands like `rojo build`.
+* Rojo now requires a project file again, just like 0.5.4.
+
+## [0.6.0 Alpha 3](https://github.com/rojo-rbx/rojo/releases/tag/v0.6.0-alpha.3) (March 13, 2020)
 * Added `--watch` argument to `rojo build`. ([#284](https://github.com/rojo-rbx/rojo/pull/284))
 * Added dark theme support to plugin. ([#241](https://github.com/rojo-rbx/rojo/issues/241))
+* Added a revamped `rojo init` command, which will now create more complete projects.
+* Added the `rojo doc` command, which opens Rojo's documentation in your browser.
+* Fixed many crashes from malformed projects and filesystem edge cases in `rojo serve`.
+* Simplified filesystem access code dramatically.
+* Improved error reporting and logging across the board.
+    * Log messages have a less noisy prefix.
+    * Any thread panicking now causes Rojo to abort instead of existing as a zombie.
+    * Errors now have a list of causes, helping make many errors more clear.
 
 ## [0.6.0 Alpha 2](https://github.com/rojo-rbx/rojo/releases/tag/v0.6.0-alpha.2) (March 6, 2020)
 * Fixed `rojo upload` command always uploading models.

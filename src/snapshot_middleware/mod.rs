@@ -6,6 +6,7 @@
 mod csv;
 mod dir;
 mod error;
+mod json;
 mod json_model;
 mod lua;
 mod meta_file;
@@ -15,46 +16,44 @@ mod rbxlx;
 mod rbxm;
 mod rbxmx;
 mod txt;
-mod user_plugins;
 mod util;
 
-pub use self::error::*;
+use std::path::Path;
 
-use rbx_dom_weak::{RbxId, RbxTree};
+use memofs::Vfs;
+
+use crate::snapshot::InstanceContext;
 
 use self::{
     csv::SnapshotCsv,
     dir::SnapshotDir,
+    json::SnapshotJson,
     json_model::SnapshotJsonModel,
     lua::SnapshotLua,
-    middleware::{SnapshotFileResult, SnapshotInstanceResult, SnapshotMiddleware},
+    middleware::{SnapshotInstanceResult, SnapshotMiddleware},
     project::SnapshotProject,
     rbxlx::SnapshotRbxlx,
     rbxm::SnapshotRbxm,
     rbxmx::SnapshotRbxmx,
     txt::SnapshotTxt,
-    user_plugins::SnapshotUserPlugins,
-};
-use crate::{
-    snapshot::InstanceContext,
-    vfs::{Vfs, VfsEntry, VfsFetcher},
 };
 
+pub use self::error::*;
 pub use self::project::snapshot_project_node;
 
 macro_rules! middlewares {
     ( $($middleware: ident,)* ) => {
-        /// Generates a snapshot of instances from the given VfsEntry.
-        pub fn snapshot_from_vfs<F: VfsFetcher>(
+        /// Generates a snapshot of instances from the given path.
+        pub fn snapshot_from_vfs(
             context: &InstanceContext,
-            vfs: &Vfs<F>,
-            entry: &VfsEntry,
+            vfs: &Vfs,
+            path: &Path,
         ) -> SnapshotInstanceResult {
             $(
-                log::trace!("trying middleware {} on {}", stringify!($middleware), entry.path().display());
+                log::trace!("trying middleware {} on {}", stringify!($middleware), path.display());
 
-                if let Some(snapshot) = $middleware::from_vfs(context, vfs, entry)? {
-                    log::trace!("middleware {} success on {}", stringify!($middleware), entry.path().display());
+                if let Some(snapshot) = $middleware::from_vfs(context, vfs, path)? {
+                    log::trace!("middleware {} success on {}", stringify!($middleware), path.display());
                     return Ok(Some(snapshot));
                 }
             )*
@@ -62,24 +61,11 @@ macro_rules! middlewares {
             log::trace!("no middleware returned Ok(Some)");
             Ok(None)
         }
-
-        /// Generates an in-memory filesystem snapshot of the given Roblox
-        /// instance.
-        pub fn snapshot_from_instance(tree: &RbxTree, id: RbxId) -> SnapshotFileResult {
-            $(
-                if let Some(result) = $middleware::from_instance(tree, id) {
-                    return Some(result);
-                }
-            )*
-
-            None
-        }
     };
 }
 
 middlewares! {
     SnapshotProject,
-    SnapshotUserPlugins,
     SnapshotJsonModel,
     SnapshotRbxlx,
     SnapshotRbxmx,
@@ -87,5 +73,6 @@ middlewares! {
     SnapshotLua,
     SnapshotCsv,
     SnapshotTxt,
+    SnapshotJson,
     SnapshotDir,
 }

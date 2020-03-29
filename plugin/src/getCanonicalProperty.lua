@@ -1,7 +1,7 @@
 local RbxDom = require(script.Parent.Parent.RbxDom)
 
 --[[
-	Attempts to set a property on the given instance.
+	Attempts to read a property from the given instance.
 ]]
 local function getCanonincalProperty(instance, propertyName)
 	local descriptor = RbxDom.findCanonicalPropertyDescriptor(instance.ClassName, propertyName)

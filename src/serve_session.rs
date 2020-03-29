@@ -1,20 +1,25 @@
 use std::{
     collections::HashSet,
-    path::Path,
+    path::{Path, PathBuf},
     sync::{Arc, Mutex, MutexGuard},
     time::Instant,
 };
 
 use crossbeam_channel::Sender;
+use memofs::Vfs;
+use rbx_dom_weak::RbxInstanceProperties;
+use thiserror::Error;
 
 use crate::{
     change_processor::ChangeProcessor,
-    common_setup,
     message_queue::MessageQueue,
-    project::Project,
+    project::{Project, ProjectError},
     session_id::SessionId,
-    snapshot::{AppliedPatchSet, PatchSet, RojoTree},
-    vfs::{Vfs, VfsFetcher},
+    snapshot::{
+        apply_patch_set, compute_patch_set, AppliedPatchSet, InstanceContext,
+        InstancePropertiesWithMeta, PatchSet, PathIgnoreRule, RojoTree,
+    },
+    snapshot_middleware::{snapshot_from_vfs, SnapshotError},
 };
 
 /// Contains all of the state for a Rojo serve session.
@@ -24,7 +29,7 @@ use crate::{
 /// why Rojo couldn't expose an IPC or channels-based API for embedding in the
 /// future. `ServeSession` would be roughly the right interface to expose for
 /// those cases.
-pub struct ServeSession<F> {
+pub struct ServeSession {
     /// The object responsible for listening to changes from the in-memory
     /// filesystem, applying them, updating the Roblox instance tree, and
     /// routing messages through the session's message queue to any connected
@@ -43,15 +48,12 @@ pub struct ServeSession<F> {
     /// diagnostics.
     start_time: Instant,
 
-    /// The root project for the serve session, if there was one defined.
+    /// The root project for the serve session.
     ///
     /// This will be defined if a folder with a `default.project.json` file was
     /// used for starting the serve session, or if the user specified a full
     /// path to a `.project.json` file.
-    ///
-    /// If `root_project` is None, values from the project should be treated as
-    /// their defaults.
-    root_project: Option<Project>,
+    root_project: Project,
 
     /// A randomly generated ID for this serve session. It's used to ensure that
     /// a client doesn't begin connecting to a different server part way through
@@ -68,7 +70,7 @@ pub struct ServeSession<F> {
     ///
     /// The main use for accessing it from the session is for debugging issues
     /// with Rojo's live-sync protocol.
-    vfs: Arc<Vfs<F>>,
+    vfs: Arc<Vfs>,
 
     /// A queue of changes that have been applied to `tree` that affect clients.
     ///
@@ -82,24 +84,57 @@ pub struct ServeSession<F> {
     tree_mutation_sender: Sender<PatchSet>,
 }
 
-/// Methods that need thread-safety bounds on VfsFetcher are limited to this
-/// block to prevent needing to spread Send + Sync + 'static into everything
-/// that handles ServeSession.
-impl<F: VfsFetcher + Send + Sync + 'static> ServeSession<F> {
-    /// Start a new serve session from the given in-memory filesystem  and start
+impl ServeSession {
+    /// Start a new serve session from the given in-memory filesystem and start
     /// path.
     ///
     /// The project file is expected to be loaded out-of-band since it's
     /// currently loaded from the filesystem directly instead of through the
     /// in-memory filesystem layer.
-    pub fn new<P: AsRef<Path>>(vfs: Vfs<F>, start_path: P) -> Self {
+    pub fn new<P: AsRef<Path>>(vfs: Vfs, start_path: P) -> Result<Self, ServeSessionError> {
         let start_path = start_path.as_ref();
-
-        log::trace!("Starting new ServeSession at path {}", start_path.display(),);
-
         let start_time = Instant::now();
 
-        let (root_project, tree) = common_setup::start(start_path, &vfs);
+        log::trace!("Starting new ServeSession at path {}", start_path.display());
+
+        log::debug!("Loading project file from {}", start_path.display());
+        let root_project =
+            Project::load_fuzzy(start_path)?.ok_or_else(|| ServeSessionError::NoProjectFound {
+                path: start_path.to_owned(),
+            })?;
+
+        let mut tree = RojoTree::new(InstancePropertiesWithMeta {
+            properties: RbxInstanceProperties {
+                name: "ROOT".to_owned(),
+                class_name: "Folder".to_owned(),
+                properties: Default::default(),
+            },
+            metadata: Default::default(),
+        });
+
+        let root_id = tree.get_root_id();
+
+        let mut instance_context = InstanceContext::default();
+
+        let rules = root_project
+            .glob_ignore_paths
+            .iter()
+            .map(|glob| PathIgnoreRule {
+                glob: glob.clone(),
+                base_path: root_project.folder_location().to_path_buf(),
+            });
+
+        instance_context.add_path_ignore_rules(rules);
+
+        log::trace!("Generating snapshot of instances from VFS");
+        let snapshot = snapshot_from_vfs(&instance_context, &vfs, &start_path)?
+            .expect("snapshot did not return an instance");
+
+        log::trace!("Computing initial patch set");
+        let patch_set = compute_patch_set(&snapshot, &tree, root_id);
+
+        log::trace!("Applying initial patch set");
+        apply_patch_set(&mut tree, patch_set);
 
         let session_id = SessionId::new();
         let message_queue = MessageQueue::new();
@@ -118,7 +153,7 @@ impl<F: VfsFetcher + Send + Sync + 'static> ServeSession<F> {
             tree_mutation_receiver,
         );
 
-        Self {
+        Ok(Self {
             change_processor,
             start_time,
             session_id,
@@ -127,11 +162,9 @@ impl<F: VfsFetcher + Send + Sync + 'static> ServeSession<F> {
             message_queue,
             tree_mutation_sender,
             vfs,
-        }
+        })
     }
-}
 
-impl<F: VfsFetcher> ServeSession<F> {
     pub fn tree_handle(&self) -> Arc<Mutex<RojoTree>> {
         Arc::clone(&self.tree)
     }
@@ -144,7 +177,8 @@ impl<F: VfsFetcher> ServeSession<F> {
         self.tree_mutation_sender.clone()
     }
 
-    pub fn vfs(&self) -> &Vfs<F> {
+    #[allow(unused)]
+    pub fn vfs(&self) -> &Vfs {
         &self.vfs
     }
 
@@ -156,16 +190,12 @@ impl<F: VfsFetcher> ServeSession<F> {
         self.session_id
     }
 
-    pub fn project_name(&self) -> Option<&str> {
-        self.root_project
-            .as_ref()
-            .map(|project| project.name.as_str())
+    pub fn project_name(&self) -> &str {
+        &self.root_project.name
     }
 
     pub fn project_port(&self) -> Option<u16> {
-        self.root_project
-            .as_ref()
-            .and_then(|project| project.serve_port)
+        self.root_project.serve_port
     }
 
     pub fn start_time(&self) -> Instant {
@@ -173,217 +203,28 @@ impl<F: VfsFetcher> ServeSession<F> {
     }
 
     pub fn serve_place_ids(&self) -> Option<&HashSet<u64>> {
-        self.root_project
-            .as_ref()
-            .and_then(|project| project.serve_place_ids.as_ref())
+        self.root_project.serve_place_ids.as_ref()
     }
 }
 
-/// This module is named to trick Insta into naming the resulting snapshots
-/// correctly.
-///
-/// See https://github.com/mitsuhiko/insta/issues/78
-#[cfg(test)]
-mod serve_session {
-    use super::*;
+#[derive(Debug, Error)]
+pub enum ServeSessionError {
+    #[error(
+        "Rojo requires a project file, but no project file was found in path {}\n\
+        See https://rojo.space/docs/ for guides and documentation.",
+        .path.display()
+    )]
+    NoProjectFound { path: PathBuf },
 
-    use std::{path::PathBuf, time::Duration};
+    #[error(transparent)]
+    Project {
+        #[from]
+        source: ProjectError,
+    },
 
-    use insta::assert_yaml_snapshot;
-    use maplit::hashmap;
-    use rojo_insta_ext::RedactionMap;
-    use tokio::{runtime::Runtime, timer::Timeout};
-
-    use crate::{
-        tree_view::view_tree,
-        vfs::{NoopFetcher, TestFetcher, VfsDebug, VfsEvent, VfsSnapshot},
-    };
-
-    #[test]
-    fn just_folder() {
-        let vfs = Vfs::new(NoopFetcher);
-
-        vfs.debug_load_snapshot("/foo", VfsSnapshot::empty_dir());
-
-        let session = ServeSession::new(vfs, "/foo");
-
-        let mut rm = RedactionMap::new();
-        assert_yaml_snapshot!(view_tree(&session.tree(), &mut rm));
-    }
-
-    #[test]
-    fn project_with_folder() {
-        let vfs = Vfs::new(NoopFetcher);
-
-        vfs.debug_load_snapshot(
-            "/foo",
-            VfsSnapshot::dir(hashmap! {
-                "default.project.json" => VfsSnapshot::file(r#"
-                {
-                    "name": "HelloWorld",
-                    "tree": {
-                        "$path": "src"
-                    }
-                }
-            "#),
-                "src" => VfsSnapshot::dir(hashmap! {
-                    "hello.txt" => VfsSnapshot::file("Hello, world!"),
-                }),
-            }),
-        );
-
-        let session = ServeSession::new(vfs, "/foo");
-
-        let mut rm = RedactionMap::new();
-        assert_yaml_snapshot!(view_tree(&session.tree(), &mut rm));
-    }
-
-    #[test]
-    fn script_with_meta() {
-        let vfs = Vfs::new(NoopFetcher);
-
-        vfs.debug_load_snapshot(
-            "/root",
-            VfsSnapshot::dir(hashmap! {
-                "test.lua" => VfsSnapshot::file("This is a test."),
-                "test.meta.json" => VfsSnapshot::file(r#"{ "ignoreUnknownInstances": true }"#),
-            }),
-        );
-
-        let session = ServeSession::new(vfs, "/root");
-
-        let mut rm = RedactionMap::new();
-        assert_yaml_snapshot!(view_tree(&session.tree(), &mut rm));
-    }
-
-    #[test]
-    fn change_script_meta() {
-        let (state, fetcher) = TestFetcher::new();
-
-        state.load_snapshot(
-            "/root",
-            VfsSnapshot::dir(hashmap! {
-                "test.lua" => VfsSnapshot::file("This is a test."),
-                "test.meta.json" => VfsSnapshot::file(r#"{ "ignoreUnknownInstances": true }"#),
-            }),
-        );
-
-        let vfs = Vfs::new(fetcher);
-        let session = ServeSession::new(vfs, "/root");
-
-        let mut redactions = RedactionMap::new();
-        assert_yaml_snapshot!(
-            "change_script_meta_before",
-            view_tree(&session.tree(), &mut redactions)
-        );
-
-        state.load_snapshot(
-            "/root/test.meta.json",
-            VfsSnapshot::file(r#"{ "ignoreUnknownInstances": false }"#),
-        );
-
-        let receiver = Timeout::new(
-            session.message_queue().subscribe_any(),
-            Duration::from_millis(200),
-        );
-        state.raise_event(VfsEvent::Modified(PathBuf::from("/root/test.meta.json")));
-
-        let mut rt = Runtime::new().unwrap();
-        let changes = rt.block_on(receiver).unwrap();
-
-        assert_yaml_snapshot!(
-            "change_script_meta_patch",
-            redactions.redacted_yaml(changes)
-        );
-        assert_yaml_snapshot!(
-            "change_script_meta_after",
-            view_tree(&session.tree(), &mut redactions)
-        );
-    }
-
-    #[test]
-    fn change_txt_file() {
-        let (state, fetcher) = TestFetcher::new();
-
-        state.load_snapshot("/foo.txt", VfsSnapshot::file("Hello!"));
-
-        let vfs = Vfs::new(fetcher);
-        let session = ServeSession::new(vfs, "/foo.txt");
-
-        let mut redactions = RedactionMap::new();
-        assert_yaml_snapshot!(
-            "change_txt_file_before",
-            view_tree(&session.tree(), &mut redactions)
-        );
-
-        state.load_snapshot("/foo.txt", VfsSnapshot::file("World!"));
-
-        let receiver = session.message_queue().subscribe_any();
-
-        state.raise_event(VfsEvent::Modified(PathBuf::from("/foo.txt")));
-
-        let receiver = Timeout::new(receiver, Duration::from_millis(200));
-
-        let mut rt = Runtime::new().unwrap();
-        let result = rt.block_on(receiver).unwrap();
-
-        assert_yaml_snapshot!("change_txt_file_patch", redactions.redacted_yaml(result));
-        assert_yaml_snapshot!(
-            "change_txt_file_after",
-            view_tree(&session.tree(), &mut redactions)
-        );
-    }
-
-    #[test]
-    fn change_file_in_project() {
-        let (state, fetcher) = TestFetcher::new();
-
-        state.load_snapshot(
-            "/foo",
-            VfsSnapshot::dir(hashmap! {
-                "default.project.json" => VfsSnapshot::file(r#"
-                {
-                    "name": "change_file_in_project",
-                    "tree": {
-                        "$className": "Folder",
-
-                        "Child": {
-                            "$path": "file.txt"
-                        }
-                    }
-                }
-            "#),
-                "file.txt" => VfsSnapshot::file("initial content"),
-            }),
-        );
-
-        let vfs = Vfs::new(fetcher);
-        let session = ServeSession::new(vfs, "/foo");
-
-        let mut redactions = RedactionMap::new();
-        assert_yaml_snapshot!(
-            "change_file_in_project_before",
-            view_tree(&session.tree(), &mut redactions)
-        );
-
-        state.load_snapshot("/foo/file.txt", VfsSnapshot::file("Changed!"));
-
-        let receiver = session.message_queue().subscribe_any();
-
-        state.raise_event(VfsEvent::Modified(PathBuf::from("/foo/file.txt")));
-
-        let receiver = Timeout::new(receiver, Duration::from_millis(200));
-
-        let mut rt = Runtime::new().unwrap();
-        let result = rt.block_on(receiver).unwrap();
-
-        assert_yaml_snapshot!(
-            "change_file_in_project_patch",
-            redactions.redacted_yaml(result)
-        );
-        assert_yaml_snapshot!(
-            "change_file_in_project_after",
-            view_tree(&session.tree(), &mut redactions)
-        );
-    }
+    #[error(transparent)]
+    Snapshot {
+        #[from]
+        source: SnapshotError,
+    },
 }

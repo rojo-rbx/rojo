@@ -11,7 +11,7 @@ default = []
 unstable_glob_ignore_paths = []
 
 [dependencies]
-env_logger = "0.6.2"
+env_logger = "0.7.1"
 insta = { version = "0.13.1", features = ["redactions"] }
 log = "0.4.8"
 paste = "0.1.5"

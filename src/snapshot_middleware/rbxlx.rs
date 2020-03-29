@@ -1,7 +1,8 @@
-use crate::{
-    snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
-    vfs::{Vfs, VfsEntry, VfsFetcher},
-};
+use std::path::Path;
+
+use memofs::Vfs;
+
+use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
 use super::{
     middleware::{SnapshotInstanceResult, SnapshotMiddleware},
@@ -11,16 +12,14 @@ use super::{
 pub struct SnapshotRbxlx;
 
 impl SnapshotMiddleware for SnapshotRbxlx {
-    fn from_vfs<F: VfsFetcher>(
-        context: &InstanceContext,
-        vfs: &Vfs<F>,
-        entry: &VfsEntry,
-    ) -> SnapshotInstanceResult {
-        if entry.is_directory() {
+    fn from_vfs(context: &InstanceContext, vfs: &Vfs, path: &Path) -> SnapshotInstanceResult {
+        let meta = vfs.metadata(path)?;
+
+        if meta.is_dir() {
             return Ok(None);
         }
 
-        let instance_name = match match_file_name(entry.path(), ".rbxlx") {
+        let instance_name = match match_file_name(path, ".rbxlx") {
             Some(name) => name,
             None => return Ok(None),
         };
@@ -28,7 +27,7 @@ impl SnapshotMiddleware for SnapshotRbxlx {
         let options = rbx_xml::DecodeOptions::new()
             .property_behavior(rbx_xml::DecodePropertyBehavior::ReadUnknown);
 
-        let temp_tree = rbx_xml::from_reader(entry.contents(vfs)?.as_slice(), options)
+        let temp_tree = rbx_xml::from_reader(vfs.read(path)?.as_slice(), options)
             .expect("TODO: Handle rbx_xml errors");
 
         let root_id = temp_tree.get_root_id();
@@ -37,8 +36,8 @@ impl SnapshotMiddleware for SnapshotRbxlx {
             .name(instance_name)
             .metadata(
                 InstanceMetadata::new()
-                    .instigating_source(entry.path())
-                    .relevant_paths(vec![entry.path().to_path_buf()])
+                    .instigating_source(path)
+                    .relevant_paths(vec![path.to_path_buf()])
                     .context(context),
             );
 

@@ -5,15 +5,16 @@ use std::{
 
 use crossbeam_channel::{select, Receiver, RecvError, Sender};
 use jod_thread::JoinHandle;
+use memofs::{IoResultExt, Vfs, VfsEvent};
 use rbx_dom_weak::{RbxId, RbxValue};
 
 use crate::{
+    error::ErrorDisplay,
     message_queue::MessageQueue,
     snapshot::{
         apply_patch_set, compute_patch_set, AppliedPatchSet, InstigatingSource, PatchSet, RojoTree,
     },
     snapshot_middleware::{snapshot_from_vfs, snapshot_project_node},
-    vfs::{FsResultExt, Vfs, VfsEvent, VfsFetcher},
 };
 
 /// Owns the connection between Rojo's VFS and its DOM by holding onto another
@@ -43,14 +44,14 @@ pub struct ChangeProcessor {
 impl ChangeProcessor {
     /// Spin up the ChangeProcessor, connecting it to the given tree, VFS, and
     /// outbound message queue.
-    pub fn start<F: VfsFetcher + Send + Sync + 'static>(
+    pub fn start(
         tree: Arc<Mutex<RojoTree>>,
-        vfs: Arc<Vfs<F>>,
+        vfs: Arc<Vfs>,
         message_queue: Arc<MessageQueue<AppliedPatchSet>>,
         tree_mutation_receiver: Receiver<PatchSet>,
     ) -> Self {
         let (shutdown_sender, shutdown_receiver) = crossbeam_channel::bounded(1);
-        let vfs_receiver = vfs.change_receiver();
+        let vfs_receiver = vfs.event_receiver();
         let task = JobThreadContext {
             tree,
             vfs,
@@ -62,15 +63,6 @@ impl ChangeProcessor {
             .spawn(move || {
                 log::trace!("ChangeProcessor thread started");
 
-                #[allow(
-                    // Crossbeam's select macro generates code that Clippy doesn't like,
-                    // and Clippy blames us for it.
-                    clippy::drop_copy,
-
-                    // Crossbeam uses 0 as *const _ and Clippy doesn't like that either,
-                    // but this isn't our fault.
-                    clippy::zero_ptr,
-                )]
                 loop {
                     select! {
                         recv(vfs_receiver) -> event => {
@@ -107,25 +99,25 @@ impl Drop for ChangeProcessor {
 }
 
 /// Contains all of the state needed to synchronize the DOM and VFS.
-struct JobThreadContext<F> {
+struct JobThreadContext {
     /// A handle to the DOM we're managing.
     tree: Arc<Mutex<RojoTree>>,
 
     /// A handle to the VFS we're managing.
-    vfs: Arc<Vfs<F>>,
+    vfs: Arc<Vfs>,
 
     /// Whenever changes are applied to the DOM, we should push those changes
     /// into this message queue to inform any connected clients.
     message_queue: Arc<MessageQueue<AppliedPatchSet>>,
 }
 
-impl<F: VfsFetcher> JobThreadContext<F> {
+impl JobThreadContext {
     fn handle_vfs_event(&self, event: VfsEvent) {
         log::trace!("Vfs event: {:?}", event);
 
         // Update the VFS immediately with the event.
         self.vfs
-            .commit_change(&event)
+            .commit_event(&event)
             .expect("Error applying VFS change");
 
         // For a given VFS event, we might have many changes to different parts
@@ -135,7 +127,7 @@ impl<F: VfsFetcher> JobThreadContext<F> {
             let mut applied_patches = Vec::new();
 
             match event {
-                VfsEvent::Created(path) | VfsEvent::Modified(path) | VfsEvent::Removed(path) => {
+                VfsEvent::Create(path) | VfsEvent::Write(path) | VfsEvent::Remove(path) => {
                     // Find the nearest ancestor to this path that has
                     // associated instances in the tree. This helps make sure
                     // that we handle additions correctly, especially if we
@@ -164,6 +156,7 @@ impl<F: VfsFetcher> JobThreadContext<F> {
                         }
                     }
                 }
+                _ => log::warn!("Unhandled VFS event: {:?}", event),
             }
 
             applied_patches
@@ -262,11 +255,7 @@ impl<F: VfsFetcher> JobThreadContext<F> {
     }
 }
 
-fn compute_and_apply_changes<F: VfsFetcher>(
-    tree: &mut RojoTree,
-    vfs: &Vfs<F>,
-    id: RbxId,
-) -> Option<AppliedPatchSet> {
+fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: RbxId) -> Option<AppliedPatchSet> {
     let metadata = tree
         .get_metadata(id)
         .expect("metadata missing for instance present in tree");
@@ -274,12 +263,11 @@ fn compute_and_apply_changes<F: VfsFetcher>(
     let instigating_source = match &metadata.instigating_source {
         Some(path) => path,
         None => {
-            log::warn!(
+            log::error!(
                 "Instance {} did not have an instigating source, but was considered for an update.",
                 id
             );
-            log::warn!("This is a Rojo bug. Please file an issue!");
-
+            log::error!("This is a bug. Please file an issue!");
             return None;
         }
     };
@@ -287,55 +275,75 @@ fn compute_and_apply_changes<F: VfsFetcher>(
     // How we process a file change event depends on what created this
     // file/folder in the first place.
     let applied_patch_set = match instigating_source {
-        InstigatingSource::Path(path) => {
-            let maybe_entry = vfs
-                .get(path)
-                .with_not_found()
-                .expect("unexpected VFS error");
+        InstigatingSource::Path(path) => match vfs.metadata(path).with_not_found() {
+            Ok(Some(_)) => {
+                // Our instance was previously created from a path and that
+                // path still exists. We can generate a snapshot starting at
+                // that path and use it as the source for our patch.
 
-            match maybe_entry {
-                Some(entry) => {
-                    // Our instance was previously created from a path and
-                    // that path still exists. We can generate a snapshot
-                    // starting at that path and use it as the source for
-                    // our patch.
+                let snapshot = match snapshot_from_vfs(&metadata.context, &vfs, &path) {
+                    Ok(Some(snapshot)) => snapshot,
+                    Ok(None) => {
+                        log::error!(
+                            "Snapshot did not return an instance from path {}",
+                            path.display()
+                        );
+                        log::error!("This may be a bug!");
+                        return None;
+                    }
+                    Err(err) => {
+                        log::error!("Snapshot error: {}", ErrorDisplay(err));
+                        return None;
+                    }
+                };
 
-                    let snapshot = snapshot_from_vfs(&metadata.context, &vfs, &entry)
-                        .expect("snapshot failed")
-                        .expect("snapshot did not return an instance");
-
-                    let patch_set = compute_patch_set(&snapshot, &tree, id);
-                    apply_patch_set(tree, patch_set)
-                }
-                None => {
-                    // Our instance was previously created from a path, but
-                    // that path no longer exists.
-                    //
-                    // We associate deleting the instigating file for an
-                    // instance with deleting that instance.
-
-                    let mut patch_set = PatchSet::new();
-                    patch_set.removed_instances.push(id);
-
-                    apply_patch_set(tree, patch_set)
-                }
+                let patch_set = compute_patch_set(&snapshot, &tree, id);
+                apply_patch_set(tree, patch_set)
             }
-        }
+            Ok(None) => {
+                // Our instance was previously created from a path, but that
+                // path no longer exists.
+                //
+                // We associate deleting the instigating file for an
+                // instance with deleting that instance.
+
+                let mut patch_set = PatchSet::new();
+                patch_set.removed_instances.push(id);
+
+                apply_patch_set(tree, patch_set)
+            }
+            Err(err) => {
+                log::error!("Error processing filesystem change: {}", ErrorDisplay(err));
+                return None;
+            }
+        },
+
         InstigatingSource::ProjectNode(project_path, instance_name, project_node) => {
             // This instance is the direct subject of a project node. Since
             // there might be information associated with our instance from
             // the project file, we snapshot the entire project node again.
 
-            let snapshot = snapshot_project_node(
+            let snapshot_result = snapshot_project_node(
                 &metadata.context,
                 &project_path,
                 instance_name,
                 project_node,
                 &vfs,
                 None,
-            )
-            .expect("snapshot failed")
-            .expect("snapshot did not return an instance");
+            );
+
+            let snapshot = match snapshot_result {
+                Ok(Some(snapshot)) => snapshot,
+                Ok(None) => {
+                    log::error!("Snapshot did not return an instance from a project node.");
+                    log::error!("This is a bug!");
+                    return None;
+                }
+                Err(err) => {
+                    log::error!("{}", ErrorDisplay(err));
+                    return None;
+                }
+            };
 
             let patch_set = compute_patch_set(&snapshot, &tree, id);
             apply_patch_set(tree, patch_set)

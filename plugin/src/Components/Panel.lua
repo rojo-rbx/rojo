@@ -17,7 +17,8 @@ function Panel:render()
 	return Theme.with(function(theme)
 		return e("Frame", {
 			Size = UDim2.new(1, 0, 1, 0),
-			BackgroundTransparency = 1,
+			BackgroundColor3 = theme.Background1,
+			BorderSizePixel = 1,
 		}, {
 			Layout = Roact.createElement("UIListLayout", {
 				HorizontalAlignment = Enum.HorizontalAlignment.Center,
@@ -26,8 +27,7 @@ function Panel:render()
 
 			Body = e("Frame", {
 				Size = UDim2.new(0, 360, 1, -32),
-				BackgroundColor3 = theme.Background1,
-				BorderSizePixel = 0,
+				BackgroundTransparency = 1,
 			}, self.props[Roact.Children]),
 
 			Footer = e(RojoFooter),

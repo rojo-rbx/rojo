@@ -13,11 +13,11 @@ local Version = require(Plugin.Version)
 local preloadAssets = require(Plugin.preloadAssets)
 local strict = require(Plugin.strict)
 
-local Theme = require(Plugin.Components.Theme)
 local ConnectPanel = require(Plugin.Components.ConnectPanel)
 local ConnectingPanel = require(Plugin.Components.ConnectingPanel)
 local ConnectionActivePanel = require(Plugin.Components.ConnectionActivePanel)
 local ErrorPanel = require(Plugin.Components.ErrorPanel)
+local SettingsPanel = require(Plugin.Components.SettingsPanel)
 
 local e = Roact.createElement
 
@@ -62,6 +62,7 @@ local AppStatus = strict("AppStatus", {
 	Connecting = "Connecting",
 	Connected = "Connected",
 	Error = "Error",
+	Settings = "Settings",
 })
 
 local App = Roact.Component:extend("App")
@@ -74,10 +75,7 @@ function App:init()
 
 	self.signals = {}
 	self.serveSession = nil
-
-	self.displayedVersion = DevSettings:isEnabled()
-		and Config.codename
-		or Version.display(Config.version)
+	self.displayedVersion = Version.display(Config.version)
 
 	local toolbar = self.props.plugin:CreateToolbar("Rojo " .. self.displayedVersion)
 
@@ -109,12 +107,14 @@ function App:init()
 	end)
 end
 
-function App:startSession(address, port)
+function App:startSession(address, port, sessionOptions)
 	Log.trace("Starting new session")
 
 	local baseUrl = ("http://%s:%s"):format(address, port)
 	self.serveSession = ServeSession.new({
 		apiContext = ApiContext.new(baseUrl),
+		openScriptsExternally = sessionOptions.openScriptsExternally,
+		twoWaySync = sessionOptions.twoWaySync,
 	})
 
 	self.serveSession:onStatusChanged(function(status, details)
@@ -155,8 +155,13 @@ function App:render()
 	if self.state.appStatus == AppStatus.NotStarted then
 		children = {
 			ConnectPanel = e(ConnectPanel, {
-				startSession = function(address, port)
-					self:startSession(address, port)
+				startSession = function(address, port, settings)
+					self:startSession(address, port, settings)
+				end,
+				openSettings = function()
+					self:setState({
+						appStatus = AppStatus.Settings,
+					})
 				end,
 				cancel = function()
 					Log.trace("Canceling session configuration")
@@ -169,7 +174,7 @@ function App:render()
 		}
 	elseif self.state.appStatus == AppStatus.Connecting then
 		children = {
-			ConnectingPanel = Roact.createElement(ConnectingPanel),
+			ConnectingPanel = e(ConnectingPanel),
 		}
 	elseif self.state.appStatus == AppStatus.Connected then
 		children = {
@@ -187,9 +192,19 @@ function App:render()
 				end,
 			}),
 		}
+	elseif self.state.appStatus == AppStatus.Settings then
+		children = {
+			e(SettingsPanel, {
+				back = function()
+					self:setState({
+						appStatus = AppStatus.NotStarted,
+					})
+				end,
+			}),
+		}
 	elseif self.state.appStatus == AppStatus.Error then
 		children = {
-			ErrorPanel = Roact.createElement(ErrorPanel, {
+			ErrorPanel = e(ErrorPanel, {
 				errorMessage = self.state.errorMessage,
 				onDismiss = function()
 					self:setState({
@@ -200,11 +215,9 @@ function App:render()
 		}
 	end
 
-	return Roact.createElement(Theme.StudioProvider, nil, {
-		UI = Roact.createElement(Roact.Portal, {
-			target = self.dockWidget,
-		}, children),
-	})
+	return e(Roact.Portal, {
+		target = self.dockWidget,
+	}, children)
 end
 
 function App:didMount()

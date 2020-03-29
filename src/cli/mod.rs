@@ -1,7 +1,9 @@
 //! Defines Rojo's CLI through structopt types.
 
 mod build;
+mod doc;
 mod init;
+mod plugin;
 mod serve;
 mod upload;
 
@@ -15,9 +17,12 @@ use std::{
 };
 
 use structopt::StructOpt;
+use thiserror::Error;
 
 pub use self::build::*;
+pub use self::doc::*;
 pub use self::init::*;
+pub use self::plugin::*;
 pub use self::serve::*;
 pub use self::upload::*;
 
@@ -25,16 +30,73 @@ pub use self::upload::*;
 #[derive(Debug, StructOpt)]
 #[structopt(name = "Rojo", about, author)]
 pub struct Options {
-    /// Sets verbosity level. Can be specified multiple times.
-    #[structopt(long = "verbose", short, global(true), parse(from_occurrences))]
-    pub verbosity: u8,
+    #[structopt(flatten)]
+    pub global: GlobalOptions,
 
     /// Subcommand to run in this invocation.
     #[structopt(subcommand)]
     pub subcommand: Subcommand,
 }
 
-/// All of Rojo's subcommands.
+#[derive(Debug, StructOpt)]
+pub struct GlobalOptions {
+    /// Sets verbosity level. Can be specified multiple times.
+    #[structopt(long("verbose"), short, global(true), parse(from_occurrences))]
+    pub verbosity: u8,
+
+    /// Set color behavior. Valid values are auto, always, and never.
+    #[structopt(long("color"), global(true), default_value("auto"))]
+    pub color: ColorChoice,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum ColorChoice {
+    Auto,
+    Always,
+    Never,
+}
+
+impl FromStr for ColorChoice {
+    type Err = ColorChoiceParseError;
+
+    fn from_str(source: &str) -> Result<Self, Self::Err> {
+        match source {
+            "auto" => Ok(ColorChoice::Auto),
+            "always" => Ok(ColorChoice::Always),
+            "never" => Ok(ColorChoice::Never),
+            _ => Err(ColorChoiceParseError {
+                attempted: source.to_owned(),
+            }),
+        }
+    }
+}
+
+impl From<ColorChoice> for termcolor::ColorChoice {
+    fn from(value: ColorChoice) -> Self {
+        match value {
+            ColorChoice::Auto => termcolor::ColorChoice::Auto,
+            ColorChoice::Always => termcolor::ColorChoice::Always,
+            ColorChoice::Never => termcolor::ColorChoice::Never,
+        }
+    }
+}
+
+impl From<ColorChoice> for env_logger::WriteStyle {
+    fn from(value: ColorChoice) -> Self {
+        match value {
+            ColorChoice::Auto => env_logger::WriteStyle::Auto,
+            ColorChoice::Always => env_logger::WriteStyle::Always,
+            ColorChoice::Never => env_logger::WriteStyle::Never,
+        }
+    }
+}
+
+#[derive(Debug, Error)]
+#[error("Invalid color choice '{attempted}'. Valid values are: auto, always, never")]
+pub struct ColorChoiceParseError {
+    attempted: String,
+}
+
 #[derive(Debug, StructOpt)]
 pub enum Subcommand {
     /// Creates a new Rojo project.
@@ -48,6 +110,12 @@ pub enum Subcommand {
 
     /// Generates a place or model file out of the project and uploads it to Roblox.
     Upload(UploadCommand),
+
+    /// Open Rojo's documentation in your browser.
+    Doc,
+
+    /// Manages Rojo's Roblox Studio plugin.
+    Plugin(PluginCommand),
 }
 
 /// Initializes a new Rojo project.
@@ -223,4 +291,22 @@ fn resolve_path(path: &Path) -> Cow<'_, Path> {
     } else {
         Cow::Owned(env::current_dir().unwrap().join(path))
     }
+}
+
+#[derive(Debug, StructOpt)]
+pub enum PluginSubcommand {
+    /// Install the plugin in Roblox Studio's plugins folder. If the plugin is
+    /// already installed, installing it again will overwrite the current plugin
+    /// file.
+    Install,
+
+    /// Removes the plugin if it is installed.
+    Uninstall,
+}
+
+/// Install Rojo's plugin.
+#[derive(Debug, StructOpt)]
+pub struct PluginCommand {
+    #[structopt(subcommand)]
+    subcommand: PluginSubcommand,
 }
