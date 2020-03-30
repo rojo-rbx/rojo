@@ -8,6 +8,7 @@ use serde::Serialize;
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
 use super::{
+    error::SnapshotError,
     meta_file::AdjacentMetadata,
     middleware::{SnapshotInstanceResult, SnapshotMiddleware},
     util::match_file_name,
@@ -29,8 +30,10 @@ impl SnapshotMiddleware for SnapshotCsv {
         };
 
         let meta_path = path.with_file_name(format!("{}.meta.json", instance_name));
+        let contents = vfs.read(path)?;
 
-        let table_contents = convert_localization_csv(&vfs.read(path)?);
+        let table_contents = convert_localization_csv(&contents)
+            .map_err(|source| SnapshotError::malformed_l10n_csv(source, path))?;
 
         let mut snapshot = InstanceSnapshot::new()
             .name(instance_name)
@@ -87,17 +90,15 @@ struct LocalizationEntry<'a> {
 /// https://github.com/BurntSushi/rust-csv/issues/151
 ///
 /// This function operates in one step in order to minimize data-copying.
-fn convert_localization_csv(contents: &[u8]) -> String {
+fn convert_localization_csv(contents: &[u8]) -> Result<String, csv::Error> {
     let mut reader = csv::Reader::from_reader(contents);
 
-    let headers = reader.headers().expect("TODO: Handle csv errors").clone();
+    let headers = reader.headers()?.clone();
 
     let mut records = Vec::new();
 
     for record in reader.into_records() {
-        let record = record.expect("TODO: Handle csv errors");
-
-        records.push(record);
+        records.push(record?);
     }
 
     let mut entries = Vec::new();
@@ -128,7 +129,10 @@ fn convert_localization_csv(contents: &[u8]) -> String {
         entries.push(entry);
     }
 
-    serde_json::to_string(&entries).expect("Could not encode JSON for localization table")
+    let encoded =
+        serde_json::to_string(&entries).expect("Could not encode JSON for localization table");
+
+    Ok(encoded)
 }
 
 #[cfg(test)]

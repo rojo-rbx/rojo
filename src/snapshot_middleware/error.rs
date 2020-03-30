@@ -37,6 +37,9 @@ pub enum SnapshotError {
         path: PathBuf,
     },
 
+    #[error("malformed CSV localization data at path {}", .path.display())]
+    MalformedLocalizationCsv { source: csv::Error, path: PathBuf },
+
     #[error(transparent)]
     Io {
         #[from]
@@ -85,6 +88,13 @@ impl SnapshotError {
 
     pub(crate) fn malformed_json(source: serde_json::Error, path: impl Into<PathBuf>) -> Self {
         Self::MalformedJson {
+            source,
+            path: path.into(),
+        }
+    }
+
+    pub(crate) fn malformed_l10n_csv(source: csv::Error, path: impl Into<PathBuf>) -> Self {
+        Self::MalformedLocalizationCsv {
             source,
             path: path.into(),
         }

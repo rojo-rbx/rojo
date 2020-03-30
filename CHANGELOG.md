@@ -1,6 +1,7 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Fixed crash when malformed CSV files are put into a project. ([#310](https://github.com/rojo-rbx/rojo/issues/310))
 
 ## [6.0.0 Release Candidate 1](https://github.com/rojo-rbx/rojo/releases/tag/v6.0.0-rc.1) (March 29, 2020)
 This release jumped from 0.6.0 to 6.0.0. Rojo has been in use in production for many users for quite a long times, and so 6.0 is a more accurate reflection of Rojo's version than a pre-1.0 version.
