@@ -21,6 +21,18 @@ trait FmtLua {
     }
 }
 
+struct DisplayLua<T>(T);
+
+impl<T> fmt::Display for DisplayLua<T>
+where
+    T: FmtLua,
+{
+    fn fmt(&self, output: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut stream = LuaStream::new(output);
+        self.0.fmt_lua(&mut stream)
+    }
+}
+
 pub(crate) enum Statement {
     Return(Expression),
 }
@@ -125,16 +137,37 @@ impl FmtLua for f64 {
     }
 }
 
+/// Wrapper struct to display the wrapped string using Lua's string escaping
+/// rules.
+struct LuaEscape<'a>(&'a str);
+
+impl fmt::Display for LuaEscape<'_> {
+    fn fmt(&self, output: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for c in self.0.chars() {
+            match c {
+                '"' => output.write_str("\\\"")?,
+                '\r' => output.write_str("\\r")?,
+                '\n' => output.write_str("\\n")?,
+                '\t' => output.write_str("\\t")?,
+                '\\' => output.write_str("\\\\")?,
+                _ => output.write_char(c)?,
+            }
+        }
+
+        Ok(())
+    }
+}
+
 impl FmtLua for String {
     fn fmt_lua(&self, output: &mut LuaStream<'_>) -> fmt::Result {
-        write!(output, "\"{}\"", self)
+        write!(output, "\"{}\"", LuaEscape(self))
     }
 
     fn fmt_table_key(&self, output: &mut LuaStream<'_>) -> fmt::Result {
         if is_valid_ident(self) {
             write!(output, "{}", self)
         } else {
-            write!(output, "[\"{}\"]", self)
+            write!(output, "[\"{}\"]", LuaEscape(self))
         }
     }
 }
@@ -275,5 +308,19 @@ impl<'a> LuaStream<'a> {
     fn line(&mut self) -> fmt::Result {
         self.is_start_of_line = true;
         self.inner.write_str("\n")
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    /// Regression test for https://github.com/rojo-rbx/rojo/issues/314
+    #[test]
+    fn bug_314() {
+        let my_value = "\"\r\n\t\\".to_owned();
+        let displayed = format!("{}", DisplayLua(my_value));
+
+        assert_eq!(displayed, "\"\\\"\\r\\n\\t\\\\\"");
     }
 }

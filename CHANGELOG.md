@@ -2,6 +2,7 @@
 
 ## Unreleased Changes
 * Fixed crash when malformed CSV files are put into a project. ([#310](https://github.com/rojo-rbx/rojo/issues/310))
+* Fixed incorrect string escaping when producing Lua code from JSON files. ([#314](https://github.com/rojo-rbx/rojo/issues/314))
 * Updated default place template to take advantage of [#210](https://github.com/rojo-rbx/rojo/pull/210).
 
 ## [6.0.0 Release Candidate 1](https://github.com/rojo-rbx/rojo/releases/tag/v6.0.0-rc.1) (March 29, 2020)
