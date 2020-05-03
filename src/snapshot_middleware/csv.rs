@@ -8,54 +8,41 @@ use serde::Serialize;
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
 use super::{
-    error::SnapshotError,
-    meta_file::AdjacentMetadata,
-    middleware::{SnapshotInstanceResult, SnapshotMiddleware},
-    util::match_file_name,
+    error::SnapshotError, meta_file::AdjacentMetadata, middleware::SnapshotInstanceResult,
 };
 
-pub struct SnapshotCsv;
+pub fn snapshot_csv(
+    _context: &InstanceContext,
+    vfs: &Vfs,
+    path: &Path,
+    instance_name: &str,
+) -> SnapshotInstanceResult {
+    let meta_path = path.with_file_name(format!("{}.meta.json", instance_name));
+    let contents = vfs.read(path)?;
 
-impl SnapshotMiddleware for SnapshotCsv {
-    fn from_vfs(_context: &InstanceContext, vfs: &Vfs, path: &Path) -> SnapshotInstanceResult {
-        let meta = vfs.metadata(path)?;
+    let table_contents = convert_localization_csv(&contents)
+        .map_err(|source| SnapshotError::malformed_l10n_csv(source, path))?;
 
-        if meta.is_dir() {
-            return Ok(None);
-        }
+    let mut snapshot = InstanceSnapshot::new()
+        .name(instance_name)
+        .class_name("LocalizationTable")
+        .properties(hashmap! {
+            "Contents".to_owned() => RbxValue::String {
+                value: table_contents,
+            },
+        })
+        .metadata(
+            InstanceMetadata::new()
+                .instigating_source(path)
+                .relevant_paths(vec![path.to_path_buf(), meta_path.clone()]),
+        );
 
-        let instance_name = match match_file_name(path, ".csv") {
-            Some(name) => name,
-            None => return Ok(None),
-        };
-
-        let meta_path = path.with_file_name(format!("{}.meta.json", instance_name));
-        let contents = vfs.read(path)?;
-
-        let table_contents = convert_localization_csv(&contents)
-            .map_err(|source| SnapshotError::malformed_l10n_csv(source, path))?;
-
-        let mut snapshot = InstanceSnapshot::new()
-            .name(instance_name)
-            .class_name("LocalizationTable")
-            .properties(hashmap! {
-                "Contents".to_owned() => RbxValue::String {
-                    value: table_contents,
-                },
-            })
-            .metadata(
-                InstanceMetadata::new()
-                    .instigating_source(path)
-                    .relevant_paths(vec![path.to_path_buf(), meta_path.clone()]),
-            );
-
-        if let Some(meta_contents) = vfs.read(&meta_path).with_not_found()? {
-            let mut metadata = AdjacentMetadata::from_slice(&meta_contents, &meta_path)?;
-            metadata.apply_all(&mut snapshot);
-        }
-
-        Ok(Some(snapshot))
+    if let Some(meta_contents) = vfs.read(&meta_path).with_not_found()? {
+        let mut metadata = AdjacentMetadata::from_slice(&meta_contents, &meta_path)?;
+        metadata.apply_all(&mut snapshot);
     }
+
+    Ok(Some(snapshot))
 }
 
 /// Struct that holds any valid row from a Roblox CSV translation table.

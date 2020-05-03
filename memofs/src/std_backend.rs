@@ -85,6 +85,7 @@ impl VfsBackend for StdBackend {
     }
 
     fn metadata(&mut self, path: &Path) -> io::Result<Metadata> {
+        println!("metadata on {}", path.display());
         let inner = fs_err::metadata(path)?;
 
         Ok(Metadata {

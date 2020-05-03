@@ -7,50 +7,12 @@ use rbx_dom_weak::RbxValue;
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
 use super::{
-    dir::SnapshotDir,
-    meta_file::AdjacentMetadata,
-    middleware::{SnapshotInstanceResult, SnapshotMiddleware},
+    dir::snapshot_dir, meta_file::AdjacentMetadata, middleware::SnapshotInstanceResult,
     util::match_trailing,
 };
 
-pub struct SnapshotLua;
-
-impl SnapshotMiddleware for SnapshotLua {
-    fn from_vfs(context: &InstanceContext, vfs: &Vfs, path: &Path) -> SnapshotInstanceResult {
-        let file_name = path.file_name().unwrap().to_string_lossy();
-
-        // These paths alter their parent instance, so we don't need to turn
-        // them into a script instance here.
-        match &*file_name {
-            "init.lua" | "init.server.lua" | "init.client.lua" => return Ok(None),
-            _ => {}
-        }
-
-        let meta = vfs.metadata(path)?;
-
-        if meta.is_file() {
-            snapshot_lua_file(context, vfs, path)
-        } else {
-            // At this point, our entry is definitely a directory!
-
-            if let Some(snapshot) = snapshot_init(context, vfs, path, "init.lua")? {
-                // An `init.lua` file turns its parent into a ModuleScript
-                Ok(Some(snapshot))
-            } else if let Some(snapshot) = snapshot_init(context, vfs, path, "init.server.lua")? {
-                // An `init.server.lua` file turns its parent into a Script
-                Ok(Some(snapshot))
-            } else if let Some(snapshot) = snapshot_init(context, vfs, path, "init.client.lua")? {
-                // An `init.client.lua` file turns its parent into a LocalScript
-                Ok(Some(snapshot))
-            } else {
-                Ok(None)
-            }
-        }
-    }
-}
-
 /// Core routine for turning Lua files into snapshots.
-fn snapshot_lua_file(context: &InstanceContext, vfs: &Vfs, path: &Path) -> SnapshotInstanceResult {
+pub fn snapshot_lua(context: &InstanceContext, vfs: &Vfs, path: &Path) -> SnapshotInstanceResult {
     let file_name = path.file_name().unwrap().to_string_lossy();
 
     let (class_name, instance_name) = if let Some(name) = match_trailing(&file_name, ".server.lua")
@@ -100,35 +62,29 @@ fn snapshot_lua_file(context: &InstanceContext, vfs: &Vfs, path: &Path) -> Snaps
 ///
 /// Scripts named `init.lua`, `init.server.lua`, or `init.client.lua` usurp
 /// their parents, which acts similarly to `__init__.py` from the Python world.
-fn snapshot_init(
+pub fn snapshot_lua_init(
     context: &InstanceContext,
     vfs: &Vfs,
-    folder_path: &Path,
-    init_name: &str,
+    init_path: &Path,
 ) -> SnapshotInstanceResult {
-    let init_path = folder_path.join(init_name);
+    let folder_path = init_path.parent().unwrap();
+    let dir_snapshot = snapshot_dir(context, vfs, folder_path)?.unwrap();
 
-    if vfs.metadata(&init_path).with_not_found()?.is_some() {
-        if let Some(dir_snapshot) = SnapshotDir::from_vfs(context, vfs, folder_path)? {
-            if let Some(mut init_snapshot) = snapshot_lua_file(context, vfs, &init_path)? {
-                if dir_snapshot.class_name != "Folder" {
-                    panic!(
-                        "init.lua, init.server.lua, and init.client.lua can \
-                         only be used if the instance produced by the parent \
-                         directory would be a Folder."
-                    );
-                }
-
-                init_snapshot.name = dir_snapshot.name;
-                init_snapshot.children = dir_snapshot.children;
-                init_snapshot.metadata = dir_snapshot.metadata;
-
-                return Ok(Some(init_snapshot));
-            }
-        }
+    if dir_snapshot.class_name != "Folder" {
+        panic!(
+            "init.lua, init.server.lua, and init.client.lua can \
+             only be used if the instance produced by the parent \
+             directory would be a Folder."
+        );
     }
 
-    Ok(None)
+    let mut init_snapshot = snapshot_lua(context, vfs, init_path)?.unwrap();
+
+    init_snapshot.name = dir_snapshot.name;
+    init_snapshot.children = dir_snapshot.children;
+    init_snapshot.metadata = dir_snapshot.metadata;
+
+    Ok(Some(init_snapshot))
 }
 
 #[cfg(test)]

@@ -7,68 +7,45 @@ use serde::Deserialize;
 
 use crate::snapshot::{InstanceContext, InstanceSnapshot};
 
-use super::{
-    error::SnapshotError,
-    middleware::{SnapshotInstanceResult, SnapshotMiddleware},
-    util::match_file_name,
-};
+use super::{error::SnapshotError, middleware::SnapshotInstanceResult};
 
-pub struct SnapshotJsonModel;
+pub fn snapshot_json_model(
+    context: &InstanceContext,
+    vfs: &Vfs,
+    path: &Path,
+    instance_name: &str,
+) -> SnapshotInstanceResult {
+    let contents = vfs.read(path)?;
+    let instance: JsonModel = serde_json::from_slice(&contents)
+        .map_err(|source| SnapshotError::malformed_model_json(source, path))?;
 
-impl SnapshotMiddleware for SnapshotJsonModel {
-    fn from_vfs(context: &InstanceContext, vfs: &Vfs, path: &Path) -> SnapshotInstanceResult {
-        let meta = vfs.metadata(path)?;
-
-        if meta.is_dir() {
-            return Ok(None);
+    if let Some(json_name) = &instance.name {
+        if json_name != instance_name {
+            log::warn!(
+                "Name from JSON model did not match its file name: {}",
+                path.display()
+            );
+            log::warn!(
+                "In Rojo <  alpha 14, this model is named \"{}\" (from its 'Name' property)",
+                json_name
+            );
+            log::warn!(
+                "In Rojo >= alpha 14, this model is named \"{}\" (from its file name)",
+                instance_name
+            );
+            log::warn!("'Name' for the top-level instance in a JSON model is now optional and will be ignored.");
         }
-
-        let instance_name = match match_file_name(path, ".model.json") {
-            Some(name) => name,
-            None => return Ok(None),
-        };
-
-        let contents = vfs.read(path)?;
-        let instance: JsonModel = serde_json::from_slice(&contents)
-            .map_err(|source| SnapshotError::malformed_model_json(source, path))?;
-
-        if let Some(json_name) = &instance.name {
-            if json_name != instance_name {
-                log::warn!(
-                    "Name from JSON model did not match its file name: {}",
-                    path.display()
-                );
-                log::warn!(
-                    "In Rojo <  alpha 14, this model is named \"{}\" (from its 'Name' property)",
-                    json_name
-                );
-                log::warn!(
-                    "In Rojo >= alpha 14, this model is named \"{}\" (from its file name)",
-                    instance_name
-                );
-                log::warn!("'Name' for the top-level instance in a JSON model is now optional and will be ignored.");
-            }
-        }
-
-        let mut snapshot = instance.core.into_snapshot(instance_name.to_owned());
-
-        snapshot.metadata = snapshot
-            .metadata
-            .instigating_source(path)
-            .relevant_paths(vec![path.to_path_buf()])
-            .context(context);
-
-        Ok(Some(snapshot))
     }
-}
 
-fn match_trailing<'a>(input: &'a str, trailer: &str) -> Option<&'a str> {
-    if input.ends_with(trailer) {
-        let end = input.len().saturating_sub(trailer.len());
-        Some(&input[..end])
-    } else {
-        None
-    }
+    let mut snapshot = instance.core.into_snapshot(instance_name.to_owned());
+
+    snapshot.metadata = snapshot
+        .metadata
+        .instigating_source(path)
+        .relevant_paths(vec![path.to_path_buf()])
+        .context(context);
+
+    Ok(Some(snapshot))
 }
 
 #[derive(Debug, Deserialize)]

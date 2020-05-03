@@ -1,6 +1,6 @@
 use std::{borrow::Cow, collections::HashMap, path::Path};
 
-use memofs::{IoResultExt, Vfs};
+use memofs::Vfs;
 use rbx_reflection::{get_class_descriptor, try_resolve_value};
 
 use crate::{
@@ -10,82 +10,56 @@ use crate::{
     },
 };
 
-use super::{
-    error::SnapshotError,
-    middleware::{SnapshotInstanceResult, SnapshotMiddleware},
-    snapshot_from_vfs,
-};
+use super::{error::SnapshotError, middleware::SnapshotInstanceResult, snapshot_from_vfs};
 
-/// Handles snapshots for:
-/// * Files ending in `.project.json`
-/// * Folders containing a file named `default.project.json`
-pub struct SnapshotProject;
+pub fn snapshot_project(
+    context: &InstanceContext,
+    vfs: &Vfs,
+    path: &Path,
+) -> SnapshotInstanceResult {
+    let project = Project::load_from_slice(&vfs.read(path)?, path)
+        .map_err(|err| SnapshotError::malformed_project(err, path))?;
 
-impl SnapshotMiddleware for SnapshotProject {
-    fn from_vfs(context: &InstanceContext, vfs: &Vfs, path: &Path) -> SnapshotInstanceResult {
-        let meta = vfs.metadata(path)?;
+    let mut context = context.clone();
 
-        if meta.is_dir() {
-            let project_path = path.join("default.project.json");
+    let rules = project.glob_ignore_paths.iter().map(|glob| PathIgnoreRule {
+        glob: glob.clone(),
+        base_path: project.folder_location().to_path_buf(),
+    });
 
-            match vfs.metadata(&project_path).with_not_found()? {
-                // TODO: Do we need to muck with the relevant paths if we're a
-                // project file within a folder? Should the folder path be the
-                // relevant path instead of the project file path?
-                Some(_meta) => return SnapshotProject::from_vfs(context, vfs, &project_path),
-                None => return Ok(None),
-            }
-        }
+    context.add_path_ignore_rules(rules);
 
-        if !path.to_string_lossy().ends_with(".project.json") {
-            // This isn't a project file, so it's not our job.
-            return Ok(None);
-        }
+    // TODO: If this project node is a path to an instance that Rojo doesn't
+    // understand, this may panic!
+    let mut snapshot = snapshot_project_node(
+        &context,
+        project.folder_location(),
+        &project.name,
+        &project.tree,
+        vfs,
+        None,
+    )?
+    .unwrap();
 
-        let project = Project::load_from_slice(&vfs.read(path)?, path)
-            .map_err(|err| SnapshotError::malformed_project(err, path))?;
+    // Setting the instigating source to the project file path is a little
+    // coarse.
+    //
+    // Ideally, we'd only snapshot the project file if the project file
+    // actually changed. Because Rojo only has the concept of one
+    // relevant path -> snapshot path mapping per instance, we pick the more
+    // conservative approach of snapshotting the project file if any
+    // relevant paths changed.
+    snapshot.metadata.instigating_source = Some(path.to_path_buf().into());
 
-        let mut context = context.clone();
+    // Mark this snapshot (the root node of the project file) as being
+    // related to the project file.
+    //
+    // We SHOULD NOT mark the project file as a relevant path for any
+    // nodes that aren't roots. They'll be updated as part of the project
+    // file being updated.
+    snapshot.metadata.relevant_paths.push(path.to_path_buf());
 
-        let rules = project.glob_ignore_paths.iter().map(|glob| PathIgnoreRule {
-            glob: glob.clone(),
-            base_path: project.folder_location().to_path_buf(),
-        });
-
-        context.add_path_ignore_rules(rules);
-
-        // Snapshotting a project should always return an instance, so this
-        // unwrap is safe.
-        let mut snapshot = snapshot_project_node(
-            &context,
-            project.folder_location(),
-            &project.name,
-            &project.tree,
-            vfs,
-            None,
-        )?
-        .unwrap();
-
-        // Setting the instigating source to the project file path is a little
-        // coarse.
-        //
-        // Ideally, we'd only snapshot the project file if the project file
-        // actually changed. Because Rojo only has the concept of one
-        // relevant path -> snapshot path mapping per instance, we pick the more
-        // conservative approach of snapshotting the project file if any
-        // relevant paths changed.
-        snapshot.metadata.instigating_source = Some(path.to_path_buf().into());
-
-        // Mark this snapshot (the root node of the project file) as being
-        // related to the project file.
-        //
-        // We SHOULD NOT mark the project file as a relevant path for any
-        // nodes that aren't roots. They'll be updated as part of the project
-        // file being updated.
-        snapshot.metadata.relevant_paths.push(path.to_path_buf());
-
-        Ok(Some(snapshot))
-    }
+    Ok(Some(snapshot))
 }
 
 pub fn snapshot_project_node(
