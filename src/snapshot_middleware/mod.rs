@@ -52,11 +52,6 @@ pub fn snapshot_from_vfs(
 
     if meta.is_dir() {
         let default_project_path = path.join("default.project.json");
-        println!(
-            "{}: {:#?}",
-            default_project_path.display(),
-            vfs.metadata(path).with_not_found()
-        );
         if vfs.metadata(path).with_not_found()?.is_some() {
             return snapshot_project(context, vfs, &default_project_path);
         }
