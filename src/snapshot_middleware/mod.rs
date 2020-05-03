@@ -51,23 +51,23 @@ pub fn snapshot_from_vfs(
     };
 
     if meta.is_dir() {
-        let default_project_path = path.join("default.project.json");
-        if vfs.metadata(path).with_not_found()?.is_some() {
-            return snapshot_project(context, vfs, &default_project_path);
+        let project_path = path.join("default.project.json");
+        if vfs.metadata(&project_path).with_not_found()?.is_some() {
+            return snapshot_project(context, vfs, &project_path);
         }
 
         let init_path = path.join("init.lua");
-        if vfs.metadata(path).with_not_found()?.is_some() {
+        if vfs.metadata(&init_path).with_not_found()?.is_some() {
             return snapshot_lua_init(context, vfs, &init_path);
         }
 
         let init_path = path.join("init.server.lua");
-        if vfs.metadata(path).with_not_found()?.is_some() {
+        if vfs.metadata(&init_path).with_not_found()?.is_some() {
             return snapshot_lua_init(context, vfs, &init_path);
         }
 
         let init_path = path.join("init.client.lua");
-        if vfs.metadata(path).with_not_found()?.is_some() {
+        if vfs.metadata(&init_path).with_not_found()?.is_some() {
             return snapshot_lua_init(context, vfs, &init_path);
         }
 
