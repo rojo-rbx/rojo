@@ -1,0 +1,26 @@
+---
+source: tests/tests/build.rs
+expression: contents
+---
+<roblox version="4">
+  <Item class="DataModel" referent="0">
+    <Properties>
+      <string name="Name">infer-service-name</string>
+    </Properties>
+    <Item class="StarterPlayer" referent="1">
+      <Properties>
+        <string name="Name">StarterPlayer</string>
+      </Properties>
+      <Item class="StarterCharacterScripts" referent="2">
+        <Properties>
+          <string name="Name">StarterCharacterScripts</string>
+        </Properties>
+      </Item>
+      <Item class="StarterPlayerScripts" referent="3">
+        <Properties>
+          <string name="Name">StarterPlayerScripts</string>
+        </Properties>
+      </Item>
+    </Item>
+  </Item>
+</roblox>

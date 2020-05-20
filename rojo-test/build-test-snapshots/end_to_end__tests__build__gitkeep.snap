@@ -1,0 +1,11 @@
+---
+source: tests/tests/build.rs
+expression: contents
+---
+<roblox version="4">
+  <Item class="Folder" referent="0">
+    <Properties>
+      <string name="Name">gitkeep</string>
+    </Properties>
+  </Item>
+</roblox>

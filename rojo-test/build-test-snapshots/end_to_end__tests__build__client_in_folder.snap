@@ -1,0 +1,17 @@
+---
+source: tests/tests/build.rs
+expression: contents
+---
+<roblox version="4">
+  <Item class="Folder" referent="0">
+    <Properties>
+      <string name="Name">client_in_folder</string>
+    </Properties>
+    <Item class="LocalScript" referent="1">
+      <Properties>
+        <string name="Name">localScript</string>
+        <string name="Source">-- This is a Lua client script</string>
+      </Properties>
+    </Item>
+  </Item>
+</roblox>

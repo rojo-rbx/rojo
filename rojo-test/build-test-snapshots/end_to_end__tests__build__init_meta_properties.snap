@@ -1,0 +1,12 @@
+---
+source: tests/tests/build.rs
+expression: contents
+---
+<roblox version="4">
+  <Item class="Lighting" referent="0">
+    <Properties>
+      <string name="Name">init_meta_properties</string>
+      <token name="Technology">1</token>
+    </Properties>
+  </Item>
+</roblox>

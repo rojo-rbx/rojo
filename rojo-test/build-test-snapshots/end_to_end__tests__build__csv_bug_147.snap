@@ -1,0 +1,17 @@
+---
+source: tests/tests/build.rs
+expression: contents
+---
+<roblox version="4">
+  <Item class="Folder" referent="0">
+    <Properties>
+      <string name="Name">csv_bug_147</string>
+    </Properties>
+    <Item class="LocalizationTable" referent="1">
+      <Properties>
+        <string name="Name">normal</string>
+        <string name="Contents">[{"key":"Language.Name","source":"English","values":{}},{"key":"Language.Region","source":"United States","values":{}},{"key":"Label.Thickness","source":"Thickness","values":{}},{"key":"Label.Opacity","source":"Opacity","values":{}},{"key":"Toolbar.Undo","source":"Undo","values":{}},{"key":"Toolbar.Redo","source":"Redo","values":{}},{"key":"Toolbar.Camera","source":"Top-down camera","values":{}},{"key":"Toolbar.Saves","source":"Saved drawings","values":{}},{"key":"Toolbar.Preferences","source":"Settings","values":{}},{"key":"Toolbar.Mode.Vector","source":"Vector mode","values":{}},{"key":"Toolbar.Mode.Pixel","source":"Pixel mode","values":{}}]</string>
+      </Properties>
+    </Item>
+  </Item>
+</roblox>

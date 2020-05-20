@@ -1,0 +1,11 @@
+---
+source: tests/tests/build.rs
+expression: contents
+---
+<roblox version="4">
+  <Item class="Model" referent="0">
+    <Properties>
+      <string name="Name">init_meta_class_name</string>
+    </Properties>
+  </Item>
+</roblox>

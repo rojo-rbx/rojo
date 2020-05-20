@@ -1,0 +1,19 @@
+---
+source: tests/tests/serve.rs
+expression: "subscribe_response.intern_and_redact(&mut redactions, ())"
+---
+messageCursor: 1
+messages:
+  - added:
+      id-3:
+        Children: []
+        ClassName: Folder
+        Id: id-3
+        Metadata:
+          ignoreUnknownInstances: false
+        Name: my-new-folder
+        Parent: id-2
+        Properties: {}
+    removed: []
+    updated: []
+sessionId: id-1

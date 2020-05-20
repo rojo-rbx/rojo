@@ -1,0 +1,17 @@
+---
+source: tests/tests/build.rs
+expression: contents
+---
+<roblox version="4">
+  <Item class="Folder" referent="0">
+    <Properties>
+      <string name="Name">txt_in_folder</string>
+    </Properties>
+    <Item class="StringValue" referent="1">
+      <Properties>
+        <string name="Name">foo</string>
+        <string name="Value"></string>
+      </Properties>
+    </Item>
+  </Item>
+</roblox>
