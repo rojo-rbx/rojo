@@ -1979,25 +1979,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rojo-test"
-version = "0.1.0"
-dependencies = [
- "env_logger",
- "insta",
- "log",
- "paste",
- "rbx_dom_weak",
- "reqwest",
- "rojo",
- "rojo-insta-ext",
- "serde",
- "serde_json",
- "serde_yaml",
- "tempfile",
- "walkdir",
-]
-
-[[package]]
 name = "rust-argon2"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

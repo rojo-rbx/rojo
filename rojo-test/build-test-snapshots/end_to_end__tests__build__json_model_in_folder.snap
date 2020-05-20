@@ -1,0 +1,22 @@
+---
+source: tests/tests/build.rs
+expression: contents
+---
+<roblox version="4">
+  <Item class="Folder" referent="0">
+    <Properties>
+      <string name="Name">json_model_in_folder</string>
+    </Properties>
+    <Item class="IntValue" referent="1">
+      <Properties>
+        <string name="Name">simple-model</string>
+        <int name="Value">5</int>
+      </Properties>
+      <Item class="Folder" referent="2">
+        <Properties>
+          <string name="Name">A Child</string>
+        </Properties>
+      </Item>
+    </Item>
+  </Item>
+</roblox>

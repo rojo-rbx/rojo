@@ -1,0 +1,17 @@
+---
+source: tests/tests/build.rs
+expression: contents
+---
+<roblox version="4">
+  <Item class="Folder" referent="0">
+    <Properties>
+      <string name="Name">csv_in_folder</string>
+    </Properties>
+    <Item class="LocalizationTable" referent="1">
+      <Properties>
+        <string name="Name">normal</string>
+        <string name="Contents">[{"key":"Ack","example":"An exclamation of despair","source":"Ack!","values":{"es":"¡Ay!"}}]</string>
+      </Properties>
+    </Item>
+  </Item>
+</roblox>

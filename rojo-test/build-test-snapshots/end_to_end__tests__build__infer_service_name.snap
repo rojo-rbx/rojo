@@ -1,0 +1,28 @@
+---
+source: tests/tests/build.rs
+expression: contents
+---
+<roblox version="4">
+  <Item class="DataModel" referent="0">
+    <Properties>
+      <string name="Name">infer-service-name</string>
+    </Properties>
+    <Item class="HttpService" referent="1">
+      <Properties>
+        <string name="Name">HttpService</string>
+        <bool name="HttpEnabled">true</bool>
+      </Properties>
+    </Item>
+    <Item class="ReplicatedStorage" referent="2">
+      <Properties>
+        <string name="Name">ReplicatedStorage</string>
+      </Properties>
+      <Item class="ModuleScript" referent="3">
+        <Properties>
+          <string name="Name">Main</string>
+          <string name="Source">-- hello, from main</string>
+        </Properties>
+      </Item>
+    </Item>
+  </Item>
+</roblox>

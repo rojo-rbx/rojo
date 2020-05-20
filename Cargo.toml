@@ -31,7 +31,6 @@ dev_live_assets = []
 
 [workspace]
 members = [
-    "rojo-test",
     "rojo-insta-ext",
     "clibrojo",
     "memofs",
@@ -39,7 +38,6 @@ members = [
 
 default-members = [
     ".",
-    "rojo-test",
     "rojo-insta-ext",
     "memofs",
 ]

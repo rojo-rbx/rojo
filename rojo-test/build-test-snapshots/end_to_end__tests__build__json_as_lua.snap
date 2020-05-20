@@ -1,0 +1,23 @@
+---
+source: tests/tests/build.rs
+expression: contents
+---
+<roblox version="4">
+  <Item class="ModuleScript" referent="0">
+    <Properties>
+      <string name="Name">json_as_lua</string>
+      <string name="Source">return {
+	["1invalidident"] = "nice",
+	array = {1, 2, 3},
+	["false"] = false,
+	float = 1234.5452,
+	int = 1234,
+	null = nil,
+	object = {
+		hello = "world",
+	},
+	["true"] = true,
+}</string>
+    </Properties>
+  </Item>
+</roblox>
