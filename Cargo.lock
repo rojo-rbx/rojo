@@ -1988,6 +1988,7 @@ dependencies = [
  "paste",
  "rbx_dom_weak",
  "reqwest",
+ "rojo",
  "rojo-insta-ext",
  "serde",
  "serde_json",
