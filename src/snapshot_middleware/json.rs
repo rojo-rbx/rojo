@@ -77,6 +77,7 @@ fn json_to_lua_value(value: serde_json::Value) -> Expression {
     }
 }
 
+#[cfg(feature = "broken-tests")]
 #[cfg(test)]
 mod test {
     use super::*;

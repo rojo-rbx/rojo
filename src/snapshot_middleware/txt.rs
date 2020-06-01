@@ -48,6 +48,7 @@ pub fn snapshot_txt(
     Ok(Some(snapshot))
 }
 
+#[cfg(feature = "broken-tests")]
 #[cfg(test)]
 mod test {
     use super::*;

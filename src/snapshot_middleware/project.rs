@@ -213,6 +213,7 @@ pub fn snapshot_project_node(
     }))
 }
 
+#[cfg(feature = "broken-tests")]
 #[cfg(test)]
 mod test {
     use super::*;

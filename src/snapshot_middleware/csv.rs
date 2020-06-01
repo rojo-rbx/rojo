@@ -143,10 +143,14 @@ Ack,Ack!,,An exclamation of despair,¡Ay!"#,
 
         let mut vfs = Vfs::new(imfs);
 
-        let instance_snapshot =
-            SnapshotCsv::from_vfs(&InstanceContext::default(), &mut vfs, Path::new("/foo.csv"))
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = snapshot_csv(
+            &InstanceContext::default(),
+            &mut vfs,
+            Path::new("/foo.csv"),
+            "foo",
+        )
+        .unwrap()
+        .unwrap();
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }
@@ -171,9 +175,13 @@ Ack,Ack!,,An exclamation of despair,¡Ay!"#,
 
         let mut vfs = Vfs::new(imfs);
 
-        let instance_snapshot =
-            SnapshotCsv::from_vfs(&InstanceContext::default(), &mut vfs, Path::new("/foo.csv"))
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = snapshot_csv(
+            &InstanceContext::default(),
+            &mut vfs,
+            Path::new("/foo.csv"),
+            "foo",
+        )
+        .unwrap()
+        .unwrap();
     }
 }

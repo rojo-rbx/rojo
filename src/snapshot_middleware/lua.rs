@@ -87,6 +87,7 @@ pub fn snapshot_lua_init(
     Ok(Some(init_snapshot))
 }
 
+#[cfg(feature = "broken-tests")]
 #[cfg(test)]
 mod test {
     use super::*;

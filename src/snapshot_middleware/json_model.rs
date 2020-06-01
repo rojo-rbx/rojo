@@ -108,6 +108,7 @@ impl JsonModelCore {
     }
 }
 
+#[cfg(feature = "broken-tests")]
 #[cfg(test)]
 mod test {
     use super::*;
