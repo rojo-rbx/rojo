@@ -183,5 +183,7 @@ Ack,Ack!,,An exclamation of despair,¡Ay!"#,
         )
         .unwrap()
         .unwrap();
+
+        insta::assert_yaml_snapshot!(instance_snapshot);
     }
 }
