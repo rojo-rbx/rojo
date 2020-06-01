@@ -1,0 +1,16 @@
+---
+source: tests/tests/build.rs
+expression: contents
+---
+<roblox version="4">
+  <Item class="Folder" referent="0">
+    <Properties>
+      <string name="Name">json_model_legacy_name</string>
+    </Properties>
+    <Item class="Folder" referent="1">
+      <Properties>
+        <string name="Name">Expected Name</string>
+      </Properties>
+    </Item>
+  </Item>
+</roblox>

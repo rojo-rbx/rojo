@@ -1,0 +1,12 @@
+---
+source: tests/tests/build.rs
+expression: contents
+---
+<roblox version="4">
+  <Item class="StringValue" referent="0">
+    <Properties>
+      <string name="Name">txt</string>
+      <string name="Value">This is a txt file in a project.</string>
+    </Properties>
+  </Item>
+</roblox>

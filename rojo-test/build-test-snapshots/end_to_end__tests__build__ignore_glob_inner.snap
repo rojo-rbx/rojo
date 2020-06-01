@@ -1,0 +1,33 @@
+---
+source: tests/tests/build.rs
+expression: contents
+---
+<roblox version="4">
+  <Item class="Folder" referent="0">
+    <Properties>
+      <string name="Name">ignore_glob_inner</string>
+    </Properties>
+    <Item class="Folder" referent="1">
+      <Properties>
+        <string name="Name">src</string>
+      </Properties>
+      <Item class="ModuleScript" referent="2">
+        <Properties>
+          <string name="Name">outer.spec</string>
+          <string name="Source">-- This file should be included.</string>
+        </Properties>
+      </Item>
+    </Item>
+    <Item class="Folder" referent="3">
+      <Properties>
+        <string name="Name">subproject</string>
+      </Properties>
+      <Item class="ModuleScript" referent="4">
+        <Properties>
+          <string name="Name">inner</string>
+          <string name="Source">-- This file should be included.</string>
+        </Properties>
+      </Item>
+    </Item>
+  </Item>
+</roblox>

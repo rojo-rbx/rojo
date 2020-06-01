@@ -1,0 +1,12 @@
+---
+source: tests/tests/build.rs
+expression: contents
+---
+<roblox version="4">
+  <Item class="LocalScript" referent="0">
+    <Properties>
+      <string name="Name">client_init</string>
+      <string name="Source">return "From folder/init.client.lua"</string>
+    </Properties>
+  </Item>
+</roblox>

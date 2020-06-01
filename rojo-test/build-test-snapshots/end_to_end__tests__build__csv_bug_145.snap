@@ -1,0 +1,17 @@
+---
+source: tests/tests/build.rs
+expression: contents
+---
+<roblox version="4">
+  <Item class="Folder" referent="0">
+    <Properties>
+      <string name="Name">csv_bug_145</string>
+    </Properties>
+    <Item class="LocalizationTable" referent="1">
+      <Properties>
+        <string name="Name">normal</string>
+        <string name="Contents">[{"key":"Count","example":"A number demonstrating issue 145","source":"3","values":{"es":"7"}}]</string>
+      </Properties>
+    </Item>
+  </Item>
+</roblox>
