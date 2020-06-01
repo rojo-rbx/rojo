@@ -87,7 +87,6 @@ pub fn snapshot_lua_init(
     Ok(Some(init_snapshot))
 }
 
-#[cfg(feature = "broken-tests")]
 #[cfg(test)]
 mod test {
     use super::*;
@@ -103,7 +102,7 @@ mod test {
         let mut vfs = Vfs::new(imfs);
 
         let instance_snapshot =
-            SnapshotLua::from_vfs(&InstanceContext::default(), &mut vfs, Path::new("/foo.lua"))
+            snapshot_lua(&InstanceContext::default(), &mut vfs, Path::new("/foo.lua"))
                 .unwrap()
                 .unwrap();
 
@@ -118,7 +117,7 @@ mod test {
 
         let mut vfs = Vfs::new(imfs);
 
-        let instance_snapshot = SnapshotLua::from_vfs(
+        let instance_snapshot = snapshot_lua(
             &InstanceContext::default(),
             &mut vfs,
             Path::new("/foo.server.lua"),
@@ -137,7 +136,7 @@ mod test {
 
         let mut vfs = Vfs::new(imfs);
 
-        let instance_snapshot = SnapshotLua::from_vfs(
+        let instance_snapshot = snapshot_lua(
             &InstanceContext::default(),
             &mut vfs,
             Path::new("/foo.client.lua"),
@@ -148,6 +147,7 @@ mod test {
         insta::assert_yaml_snapshot!(instance_snapshot);
     }
 
+    #[ignore = "init.lua functionality has moved to the root snapshot function"]
     #[test]
     fn init_module_from_vfs() {
         let mut imfs = InMemoryFs::new();
@@ -162,7 +162,7 @@ mod test {
         let mut vfs = Vfs::new(imfs);
 
         let instance_snapshot =
-            SnapshotLua::from_vfs(&InstanceContext::default(), &mut vfs, Path::new("/root"))
+            snapshot_lua(&InstanceContext::default(), &mut vfs, Path::new("/root"))
                 .unwrap()
                 .unwrap();
 
@@ -189,7 +189,7 @@ mod test {
         let mut vfs = Vfs::new(imfs);
 
         let instance_snapshot =
-            SnapshotLua::from_vfs(&InstanceContext::default(), &mut vfs, Path::new("/foo.lua"))
+            snapshot_lua(&InstanceContext::default(), &mut vfs, Path::new("/foo.lua"))
                 .unwrap()
                 .unwrap();
 
@@ -215,7 +215,7 @@ mod test {
 
         let mut vfs = Vfs::new(imfs);
 
-        let instance_snapshot = SnapshotLua::from_vfs(
+        let instance_snapshot = snapshot_lua(
             &InstanceContext::default(),
             &mut vfs,
             Path::new("/foo.server.lua"),
@@ -247,7 +247,7 @@ mod test {
 
         let mut vfs = Vfs::new(imfs);
 
-        let instance_snapshot = SnapshotLua::from_vfs(
+        let instance_snapshot = snapshot_lua(
             &InstanceContext::default(),
             &mut vfs,
             Path::new("/bar.server.lua"),

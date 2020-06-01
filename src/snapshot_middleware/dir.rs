@@ -70,7 +70,6 @@ pub fn snapshot_dir(context: &InstanceContext, vfs: &Vfs, path: &Path) -> Snapsh
     Ok(Some(snapshot))
 }
 
-#[cfg(feature = "broken-tests")]
 #[cfg(test)]
 mod test {
     use super::*;
@@ -87,7 +86,7 @@ mod test {
         let mut vfs = Vfs::new(imfs);
 
         let instance_snapshot =
-            SnapshotDir::from_vfs(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
+            snapshot_dir(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
                 .unwrap()
                 .unwrap();
 
@@ -108,7 +107,7 @@ mod test {
         let mut vfs = Vfs::new(imfs);
 
         let instance_snapshot =
-            SnapshotDir::from_vfs(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
+            snapshot_dir(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
                 .unwrap()
                 .unwrap();
 

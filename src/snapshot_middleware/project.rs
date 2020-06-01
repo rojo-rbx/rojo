@@ -244,7 +244,7 @@ mod test {
         let mut vfs = Vfs::new(imfs);
 
         let instance_snapshot =
-            SnapshotProject::from_vfs(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
+            snapshot_project(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
                 .expect("snapshot error")
                 .expect("snapshot returned no instances");
 
@@ -273,7 +273,7 @@ mod test {
 
         let mut vfs = Vfs::new(imfs);
 
-        let instance_snapshot = SnapshotProject::from_vfs(
+        let instance_snapshot = snapshot_project(
             &InstanceContext::default(),
             &mut vfs,
             Path::new("/foo/hello.project.json"),
@@ -313,7 +313,7 @@ mod test {
         let mut vfs = Vfs::new(imfs);
 
         let instance_snapshot =
-            SnapshotProject::from_vfs(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
+            snapshot_project(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
                 .expect("snapshot error")
                 .expect("snapshot returned no instances");
 
@@ -346,7 +346,7 @@ mod test {
         let mut vfs = Vfs::new(imfs);
 
         let instance_snapshot =
-            SnapshotProject::from_vfs(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
+            snapshot_project(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
                 .expect("snapshot error")
                 .expect("snapshot returned no instances");
 
@@ -380,7 +380,7 @@ mod test {
         let mut vfs = Vfs::new(imfs);
 
         let instance_snapshot =
-            SnapshotProject::from_vfs(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
+            snapshot_project(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
                 .expect("snapshot error")
                 .expect("snapshot returned no instances");
 
@@ -411,7 +411,7 @@ mod test {
         let mut vfs = Vfs::new(imfs);
 
         let instance_snapshot =
-            SnapshotProject::from_vfs(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
+            snapshot_project(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
                 .expect("snapshot error")
                 .expect("snapshot returned no instances");
 
@@ -449,7 +449,7 @@ mod test {
         let mut vfs = Vfs::new(imfs);
 
         let instance_snapshot =
-            SnapshotProject::from_vfs(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
+            snapshot_project(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
                 .expect("snapshot error")
                 .expect("snapshot returned no instances");
 
@@ -491,7 +491,7 @@ mod test {
         let mut vfs = Vfs::new(imfs);
 
         let instance_snapshot =
-            SnapshotProject::from_vfs(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
+            snapshot_project(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
                 .expect("snapshot error")
                 .expect("snapshot returned no instances");
 
@@ -538,7 +538,7 @@ mod test {
         let mut vfs = Vfs::new(imfs);
 
         let instance_snapshot =
-            SnapshotProject::from_vfs(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
+            snapshot_project(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
                 .expect("snapshot error")
                 .expect("snapshot returned no instances");
 

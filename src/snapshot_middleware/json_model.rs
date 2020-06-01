@@ -108,7 +108,6 @@ impl JsonModelCore {
     }
 }
 
-#[cfg(feature = "broken-tests")]
 #[cfg(test)]
 mod test {
     use super::*;
@@ -142,10 +141,11 @@ mod test {
 
         let mut vfs = Vfs::new(imfs);
 
-        let instance_snapshot = SnapshotJsonModel::from_vfs(
+        let instance_snapshot = snapshot_json_model(
             &InstanceContext::default(),
             &mut vfs,
             Path::new("/foo.model.json"),
+            "foo",
         )
         .unwrap()
         .unwrap();

@@ -48,7 +48,6 @@ pub fn snapshot_txt(
     Ok(Some(snapshot))
 }
 
-#[cfg(feature = "broken-tests")]
 #[cfg(test)]
 mod test {
     use super::*;
@@ -63,10 +62,14 @@ mod test {
 
         let mut vfs = Vfs::new(imfs.clone());
 
-        let instance_snapshot =
-            SnapshotTxt::from_vfs(&InstanceContext::default(), &mut vfs, Path::new("/foo.txt"))
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = snapshot_txt(
+            &InstanceContext::default(),
+            &mut vfs,
+            Path::new("/foo.txt"),
+            "foo",
+        )
+        .unwrap()
+        .unwrap();
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }

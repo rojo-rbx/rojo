@@ -37,7 +37,6 @@ pub fn snapshot_rbxmx(
     }
 }
 
-#[cfg(feature = "broken-tests")]
 #[cfg(test)]
 mod test {
     use super::*;
@@ -65,10 +64,11 @@ mod test {
 
         let mut vfs = Vfs::new(imfs);
 
-        let instance_snapshot = SnapshotRbxmx::from_vfs(
+        let instance_snapshot = snapshot_rbxmx(
             &InstanceContext::default(),
             &mut vfs,
             Path::new("/foo.rbxmx"),
+            "foo",
         )
         .unwrap()
         .unwrap();

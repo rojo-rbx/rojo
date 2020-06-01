@@ -77,7 +77,6 @@ fn json_to_lua_value(value: serde_json::Value) -> Expression {
     }
 }
 
-#[cfg(feature = "broken-tests")]
 #[cfg(test)]
 mod test {
     use super::*;
@@ -108,10 +107,11 @@ mod test {
 
         let mut vfs = Vfs::new(imfs.clone());
 
-        let instance_snapshot = SnapshotJson::from_vfs(
+        let instance_snapshot = snapshot_json(
             &InstanceContext::default(),
             &mut vfs,
             Path::new("/foo.json"),
+            "foo",
         )
         .unwrap()
         .unwrap();
