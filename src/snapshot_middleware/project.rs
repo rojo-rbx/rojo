@@ -31,15 +31,8 @@ pub fn snapshot_project(
 
     // TODO: If this project node is a path to an instance that Rojo doesn't
     // understand, this may panic!
-    let mut snapshot = snapshot_project_node(
-        &context,
-        project.folder_location(),
-        &project.name,
-        &project.tree,
-        vfs,
-        None,
-    )?
-    .unwrap();
+    let mut snapshot =
+        snapshot_project_node(&context, path, &project.name, &project.tree, vfs, None)?.unwrap();
 
     // Setting the instigating source to the project file path is a little
     // coarse.
@@ -64,12 +57,14 @@ pub fn snapshot_project(
 
 pub fn snapshot_project_node(
     context: &InstanceContext,
-    project_folder: &Path,
+    project_path: &Path,
     instance_name: &str,
     node: &ProjectNode,
     vfs: &Vfs,
     parent_class: Option<&str>,
 ) -> SnapshotInstanceResult {
+    let project_folder = project_path.parent().unwrap();
+
     let name = Cow::Owned(instance_name.to_owned());
     let mut class_name = node
         .class_name
@@ -165,7 +160,7 @@ pub fn snapshot_project_node(
     for (child_name, child_project_node) in &node.children {
         if let Some(child) = snapshot_project_node(
             context,
-            project_folder,
+            project_path,
             child_name,
             child_project_node,
             vfs,
@@ -197,7 +192,7 @@ pub fn snapshot_project_node(
     }
 
     metadata.instigating_source = Some(InstigatingSource::ProjectNode(
-        project_folder.to_path_buf(),
+        project_path.to_path_buf(),
         instance_name.to_string(),
         node.clone(),
         parent_class.map(|name| name.to_owned()),
@@ -213,7 +208,7 @@ pub fn snapshot_project_node(
     }))
 }
 
-#[cfg(feature = "broken-tests")]
+// #[cfg(feature = "broken-tests")]
 #[cfg(test)]
 mod test {
     use super::*;
@@ -221,6 +216,7 @@ mod test {
     use maplit::hashmap;
     use memofs::{InMemoryFs, VfsSnapshot};
 
+    #[ignore = "Functionality moved to root snapshot middleware"]
     #[test]
     fn project_from_folder() {
         let _ = env_logger::try_init();
@@ -290,9 +286,9 @@ mod test {
 
         let mut imfs = InMemoryFs::new();
         imfs.load_snapshot(
-            "/foo",
-            VfsSnapshot::dir(hashmap! {
-                "default.project.json" => VfsSnapshot::file(r#"
+            "/foo.project.json",
+            VfsSnapshot::file(
+                r#"
                     {
                         "name": "resolved-properties",
                         "tree": {
@@ -305,17 +301,20 @@ mod test {
                             }
                         }
                     }
-                "#),
-            }),
+                "#,
+            ),
         )
         .unwrap();
 
         let mut vfs = Vfs::new(imfs);
 
-        let instance_snapshot =
-            snapshot_project(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
-                .expect("snapshot error")
-                .expect("snapshot returned no instances");
+        let instance_snapshot = snapshot_project(
+            &InstanceContext::default(),
+            &mut vfs,
+            Path::new("/foo.project.json"),
+        )
+        .expect("snapshot error")
+        .expect("snapshot returned no instances");
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }
@@ -326,9 +325,9 @@ mod test {
 
         let mut imfs = InMemoryFs::new();
         imfs.load_snapshot(
-            "/foo",
-            VfsSnapshot::dir(hashmap! {
-                "default.project.json" => VfsSnapshot::file(r#"
+            "/foo.project.json",
+            VfsSnapshot::file(
+                r#"
                     {
                         "name": "unresolved-properties",
                         "tree": {
@@ -338,17 +337,20 @@ mod test {
                             }
                         }
                     }
-                "#),
-            }),
+                "#,
+            ),
         )
         .unwrap();
 
         let mut vfs = Vfs::new(imfs);
 
-        let instance_snapshot =
-            snapshot_project(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
-                .expect("snapshot error")
-                .expect("snapshot returned no instances");
+        let instance_snapshot = snapshot_project(
+            &InstanceContext::default(),
+            &mut vfs,
+            Path::new("/foo.project.json"),
+        )
+        .expect("snapshot error")
+        .expect("snapshot returned no instances");
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }
@@ -359,9 +361,9 @@ mod test {
 
         let mut imfs = InMemoryFs::new();
         imfs.load_snapshot(
-            "/foo",
-            VfsSnapshot::dir(hashmap! {
-                "default.project.json" => VfsSnapshot::file(r#"
+            "/foo.project.json",
+            VfsSnapshot::file(
+                r#"
                     {
                         "name": "children",
                         "tree": {
@@ -372,17 +374,20 @@ mod test {
                             }
                         }
                     }
-                "#),
-            }),
+                "#,
+            ),
         )
         .unwrap();
 
         let mut vfs = Vfs::new(imfs);
 
-        let instance_snapshot =
-            snapshot_project(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
-                .expect("snapshot error")
-                .expect("snapshot returned no instances");
+        let instance_snapshot = snapshot_project(
+            &InstanceContext::default(),
+            &mut vfs,
+            Path::new("/foo.project.json"),
+        )
+        .expect("snapshot error")
+        .expect("snapshot returned no instances");
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }
@@ -410,10 +415,13 @@ mod test {
 
         let mut vfs = Vfs::new(imfs);
 
-        let instance_snapshot =
-            snapshot_project(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
-                .expect("snapshot error")
-                .expect("snapshot returned no instances");
+        let instance_snapshot = snapshot_project(
+            &InstanceContext::default(),
+            &mut vfs,
+            Path::new("/foo/default.project.json"),
+        )
+        .expect("snapshot error")
+        .expect("snapshot returned no instances");
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }
@@ -448,10 +456,13 @@ mod test {
 
         let mut vfs = Vfs::new(imfs);
 
-        let instance_snapshot =
-            snapshot_project(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
-                .expect("snapshot error")
-                .expect("snapshot returned no instances");
+        let instance_snapshot = snapshot_project(
+            &InstanceContext::default(),
+            &mut vfs,
+            Path::new("/foo/default.project.json"),
+        )
+        .expect("snapshot error")
+        .expect("snapshot returned no instances");
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }
@@ -490,10 +501,13 @@ mod test {
 
         let mut vfs = Vfs::new(imfs);
 
-        let instance_snapshot =
-            snapshot_project(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
-                .expect("snapshot error")
-                .expect("snapshot returned no instances");
+        let instance_snapshot = snapshot_project(
+            &InstanceContext::default(),
+            &mut vfs,
+            Path::new("/foo/default.project.json"),
+        )
+        .expect("snapshot error")
+        .expect("snapshot returned no instances");
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }
@@ -537,10 +551,13 @@ mod test {
 
         let mut vfs = Vfs::new(imfs);
 
-        let instance_snapshot =
-            snapshot_project(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
-                .expect("snapshot error")
-                .expect("snapshot returned no instances");
+        let instance_snapshot = snapshot_project(
+            &InstanceContext::default(),
+            &mut vfs,
+            Path::new("/foo/default.project.json"),
+        )
+        .expect("snapshot error")
+        .expect("snapshot returned no instances");
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }

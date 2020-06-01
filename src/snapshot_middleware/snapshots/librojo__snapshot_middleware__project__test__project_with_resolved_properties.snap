@@ -6,9 +6,9 @@ snapshot_id: ~
 metadata:
   ignore_unknown_instances: true
   instigating_source:
-    Path: /foo/default.project.json
+    Path: /foo.project.json
   relevant_paths:
-    - /foo/default.project.json
+    - /foo.project.json
   context: {}
 name: resolved-properties
 class_name: StringValue
