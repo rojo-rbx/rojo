@@ -10,69 +10,47 @@ use crate::{
 };
 
 use super::{
-    error::SnapshotError,
-    meta_file::AdjacentMetadata,
-    middleware::{SnapshotInstanceResult, SnapshotMiddleware},
-    util::match_file_name,
+    error::SnapshotError, meta_file::AdjacentMetadata, middleware::SnapshotInstanceResult,
 };
 
-/// Catch-all middleware for snapshots on JSON files that aren't used for other
-/// features, like Rojo projects, JSON models, or meta files.
-pub struct SnapshotJson;
+pub fn snapshot_json(
+    context: &InstanceContext,
+    vfs: &Vfs,
+    path: &Path,
+    instance_name: &str,
+) -> SnapshotInstanceResult {
+    let contents = vfs.read(path)?;
 
-impl SnapshotMiddleware for SnapshotJson {
-    fn from_vfs(context: &InstanceContext, vfs: &Vfs, path: &Path) -> SnapshotInstanceResult {
-        let meta = vfs.metadata(path)?;
+    let value: serde_json::Value = serde_json::from_slice(&contents)
+        .map_err(|err| SnapshotError::malformed_json(err, path))?;
 
-        if meta.is_dir() {
-            return Ok(None);
-        }
+    let as_lua = json_to_lua(value).to_string();
 
-        // FIXME: This middleware should not need to know about the .meta.json
-        // middleware. Should there be a way to signal "I'm not returning an
-        // instance and no one should"?
-        if match_file_name(path, ".meta.json").is_some() {
-            return Ok(None);
-        }
+    let properties = hashmap! {
+        "Source".to_owned() => RbxValue::String {
+            value: as_lua,
+        },
+    };
 
-        let instance_name = match match_file_name(path, ".json") {
-            Some(name) => name,
-            None => return Ok(None),
-        };
+    let meta_path = path.with_file_name(format!("{}.meta.json", instance_name));
 
-        let contents = vfs.read(path)?;
+    let mut snapshot = InstanceSnapshot::new()
+        .name(instance_name)
+        .class_name("ModuleScript")
+        .properties(properties)
+        .metadata(
+            InstanceMetadata::new()
+                .instigating_source(path)
+                .relevant_paths(vec![path.to_path_buf(), meta_path.clone()])
+                .context(context),
+        );
 
-        let value: serde_json::Value = serde_json::from_slice(&contents)
-            .map_err(|err| SnapshotError::malformed_json(err, path))?;
-
-        let as_lua = json_to_lua(value).to_string();
-
-        let properties = hashmap! {
-            "Source".to_owned() => RbxValue::String {
-                value: as_lua,
-            },
-        };
-
-        let meta_path = path.with_file_name(format!("{}.meta.json", instance_name));
-
-        let mut snapshot = InstanceSnapshot::new()
-            .name(instance_name)
-            .class_name("ModuleScript")
-            .properties(properties)
-            .metadata(
-                InstanceMetadata::new()
-                    .instigating_source(path)
-                    .relevant_paths(vec![path.to_path_buf(), meta_path.clone()])
-                    .context(context),
-            );
-
-        if let Some(meta_contents) = vfs.read(&meta_path).with_not_found()? {
-            let mut metadata = AdjacentMetadata::from_slice(&meta_contents, &meta_path)?;
-            metadata.apply_all(&mut snapshot);
-        }
-
-        Ok(Some(snapshot))
+    if let Some(meta_contents) = vfs.read(&meta_path).with_not_found()? {
+        let mut metadata = AdjacentMetadata::from_slice(&meta_contents, &meta_path)?;
+        metadata.apply_all(&mut snapshot);
     }
+
+    Ok(Some(snapshot))
 }
 
 fn json_to_lua(value: serde_json::Value) -> Statement {
@@ -129,10 +107,11 @@ mod test {
 
         let mut vfs = Vfs::new(imfs.clone());
 
-        let instance_snapshot = SnapshotJson::from_vfs(
+        let instance_snapshot = snapshot_json(
             &InstanceContext::default(),
             &mut vfs,
             Path::new("/foo.json"),
+            "foo",
         )
         .unwrap()
         .unwrap();

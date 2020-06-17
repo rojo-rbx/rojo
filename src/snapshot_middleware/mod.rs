@@ -12,7 +12,6 @@ mod lua;
 mod meta_file;
 mod middleware;
 mod project;
-mod rbxlx;
 mod rbxm;
 mod rbxmx;
 mod txt;
@@ -20,59 +19,87 @@ mod util;
 
 use std::path::Path;
 
-use memofs::Vfs;
+use memofs::{IoResultExt, Vfs};
 
 use crate::snapshot::InstanceContext;
 
 use self::{
-    csv::SnapshotCsv,
-    dir::SnapshotDir,
-    json::SnapshotJson,
-    json_model::SnapshotJsonModel,
-    lua::SnapshotLua,
-    middleware::{SnapshotInstanceResult, SnapshotMiddleware},
-    project::SnapshotProject,
-    rbxlx::SnapshotRbxlx,
-    rbxm::SnapshotRbxm,
-    rbxmx::SnapshotRbxmx,
-    txt::SnapshotTxt,
+    csv::snapshot_csv,
+    dir::snapshot_dir,
+    json::snapshot_json,
+    json_model::snapshot_json_model,
+    lua::{snapshot_lua, snapshot_lua_init},
+    middleware::SnapshotInstanceResult,
+    project::snapshot_project,
+    rbxm::snapshot_rbxm,
+    rbxmx::snapshot_rbxmx,
+    txt::snapshot_txt,
+    util::match_file_name,
 };
 
 pub use self::error::*;
 pub use self::project::snapshot_project_node;
 
-macro_rules! middlewares {
-    ( $($middleware: ident,)* ) => {
-        /// Generates a snapshot of instances from the given path.
-        pub fn snapshot_from_vfs(
-            context: &InstanceContext,
-            vfs: &Vfs,
-            path: &Path,
-        ) -> SnapshotInstanceResult {
-            $(
-                log::trace!("trying middleware {} on {}", stringify!($middleware), path.display());
-
-                if let Some(snapshot) = $middleware::from_vfs(context, vfs, path)? {
-                    log::trace!("middleware {} success on {}", stringify!($middleware), path.display());
-                    return Ok(Some(snapshot));
-                }
-            )*
-
-            log::trace!("no middleware returned Ok(Some)");
-            Ok(None)
-        }
+pub fn snapshot_from_vfs(
+    context: &InstanceContext,
+    vfs: &Vfs,
+    path: &Path,
+) -> SnapshotInstanceResult {
+    let meta = match vfs.metadata(path).with_not_found()? {
+        Some(meta) => meta,
+        None => return Ok(None),
     };
-}
 
-middlewares! {
-    SnapshotProject,
-    SnapshotJsonModel,
-    SnapshotRbxlx,
-    SnapshotRbxmx,
-    SnapshotRbxm,
-    SnapshotLua,
-    SnapshotCsv,
-    SnapshotTxt,
-    SnapshotJson,
-    SnapshotDir,
+    if meta.is_dir() {
+        let project_path = path.join("default.project.json");
+        if vfs.metadata(&project_path).with_not_found()?.is_some() {
+            return snapshot_project(context, vfs, &project_path);
+        }
+
+        let init_path = path.join("init.lua");
+        if vfs.metadata(&init_path).with_not_found()?.is_some() {
+            return snapshot_lua_init(context, vfs, &init_path);
+        }
+
+        let init_path = path.join("init.server.lua");
+        if vfs.metadata(&init_path).with_not_found()?.is_some() {
+            return snapshot_lua_init(context, vfs, &init_path);
+        }
+
+        let init_path = path.join("init.client.lua");
+        if vfs.metadata(&init_path).with_not_found()?.is_some() {
+            return snapshot_lua_init(context, vfs, &init_path);
+        }
+
+        snapshot_dir(context, vfs, path)
+    } else {
+        if let Some(name) = match_file_name(path, ".lua") {
+            match name {
+                // init scripts are handled elsewhere and should not turn into
+                // their own children.
+                "init" | "init.client" | "init.server" => return Ok(None),
+
+                _ => return snapshot_lua(context, vfs, path),
+            }
+        } else if let Some(_name) = match_file_name(path, ".project.json") {
+            return snapshot_project(context, vfs, path);
+        } else if let Some(name) = match_file_name(path, ".model.json") {
+            return snapshot_json_model(context, vfs, path, name);
+        } else if let Some(_name) = match_file_name(path, ".meta.json") {
+            // .meta.json files do not turn into their own instances.
+            return Ok(None);
+        } else if let Some(name) = match_file_name(path, ".json") {
+            return snapshot_json(context, vfs, path, name);
+        } else if let Some(name) = match_file_name(path, ".csv") {
+            return snapshot_csv(context, vfs, path, name);
+        } else if let Some(name) = match_file_name(path, ".txt") {
+            return snapshot_txt(context, vfs, path, name);
+        } else if let Some(name) = match_file_name(path, ".rbxmx") {
+            return snapshot_rbxmx(context, vfs, path, name);
+        } else if let Some(name) = match_file_name(path, ".rbxm") {
+            return snapshot_rbxm(context, vfs, path, name);
+        }
+
+        Ok(None)
+    }
 }

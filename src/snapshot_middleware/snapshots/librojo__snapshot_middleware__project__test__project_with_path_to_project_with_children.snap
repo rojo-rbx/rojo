@@ -20,7 +20,7 @@ children:
       ignore_unknown_instances: true
       instigating_source:
         ProjectNode:
-          - /foo
+          - /foo/other.project.json
           - SomeChild
           - $className: Model
           - Folder
