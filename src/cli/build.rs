@@ -43,6 +43,7 @@ pub fn build(options: BuildCommand) -> Result<(), anyhow::Error> {
     log::trace!("Constructing in-memory filesystem");
 
     let vfs = Vfs::new_default();
+    vfs.set_watch_enabled(options.watch);
 
     let session = ServeSession::new(vfs, &options.absolute_project())?;
     let mut cursor = session.message_queue().cursor();
