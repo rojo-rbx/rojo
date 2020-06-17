@@ -23,9 +23,6 @@ panic = "abort"
 [features]
 default = []
 
-# Turn on support for specifying glob ignore path rules in the project format.
-unstable_glob_ignore_paths = []
-
 # Enable this feature to live-reload assets from the web UI.
 dev_live_assets = []
 

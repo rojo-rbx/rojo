@@ -37,9 +37,3 @@ jobs:
         cargo fmt -- --check
         cargo clippy
       if: matrix.rust_version == 'stable'
-
-    - name: Build (All Features)
-      run: cargo build --locked --verbose --all-features
-
-    - name: Run tests (All Features)
-      run: cargo test --locked --verbose --all-features

@@ -28,6 +28,9 @@ gen_build_tests! {
     csv_in_folder,
     deep_nesting,
     gitkeep,
+    ignore_glob_inner,
+    ignore_glob_nested,
+    ignore_glob_spec,
     infer_service_name,
     infer_starter_player,
     init_meta_class_name,
@@ -46,13 +49,6 @@ gen_build_tests! {
     server_init,
     txt,
     txt_in_folder,
-}
-
-#[cfg(feature = "unstable_glob_ignore_paths")]
-gen_build_tests! {
-    ignore_glob_inner,
-    ignore_glob_nested,
-    ignore_glob_spec,
 }
 
 fn run_build_test(test_name: &str) {

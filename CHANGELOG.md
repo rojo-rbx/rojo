@@ -5,6 +5,8 @@
 * Fixed incorrect string escaping when producing Lua code from JSON files. ([#314](https://github.com/rojo-rbx/rojo/issues/314))
 * Fixed performance issues introduced in Rojo 6.0.0-rc.1. ([#317](https://github.com/rojo-rbx/rojo/issues/317))
 * Updated default place template to take advantage of [#210](https://github.com/rojo-rbx/rojo/pull/210).
+* Enabled glob ignore patterns by default and removed the `unstable_glob_ignore` feature.
+    * `globIgnorePaths` can be set on a project to a list of globs to ignore.
 
 ## [6.0.0 Release Candidate 1](https://github.com/rojo-rbx/rojo/releases/tag/v6.0.0-rc.1) (March 29, 2020)
 This release jumped from 0.6.0 to 6.0.0. Rojo has been in use in production for many users for quite a long times, and so 6.0 is a more accurate reflection of Rojo's version than a pre-1.0 version.
