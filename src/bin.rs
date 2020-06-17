@@ -1,11 +1,11 @@
-use std::{env, error::Error, panic, process};
+use std::{env, panic, process};
 
 use backtrace::Backtrace;
 use structopt::StructOpt;
 
 use librojo::cli::{self, GlobalOptions, Options, Subcommand};
 
-fn run(global: GlobalOptions, subcommand: Subcommand) -> Result<(), Box<dyn Error>> {
+fn run(global: GlobalOptions, subcommand: Subcommand) -> anyhow::Result<()> {
     match subcommand {
         Subcommand::Init(init_options) => cli::init(init_options)?,
         Subcommand::Serve(serve_options) => cli::serve(global, serve_options)?,
@@ -82,14 +82,7 @@ fn main() {
         .init();
 
     if let Err(err) = run(options.global, options.subcommand) {
-        log::error!("{}", err);
-
-        let mut current_err: &dyn Error = &*err;
-        while let Some(source) = current_err.source() {
-            log::error!("  caused by {}", source);
-            current_err = &*source;
-        }
-
+        log::error!("{:?}", err);
         process::exit(1);
     }
 }
