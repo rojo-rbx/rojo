@@ -140,13 +140,18 @@ pub enum VfsEvent {
 /// the public interfaces to this type.
 struct VfsInner {
     backend: Box<dyn VfsBackend>,
+    watch_enabled: bool,
 }
 
 impl VfsInner {
     fn read<P: AsRef<Path>>(&mut self, path: P) -> io::Result<Arc<Vec<u8>>> {
         let path = path.as_ref();
         let contents = self.backend.read(path)?;
-        self.backend.watch(path)?;
+
+        if self.watch_enabled {
+            self.backend.watch(path)?;
+        }
+
         Ok(Arc::new(contents))
     }
 
@@ -159,7 +164,11 @@ impl VfsInner {
     fn read_dir<P: AsRef<Path>>(&mut self, path: P) -> io::Result<ReadDir> {
         let path = path.as_ref();
         let dir = self.backend.read_dir(path)?;
-        self.backend.watch(path)?;
+
+        if self.watch_enabled {
+            self.backend.watch(path)?;
+        }
+
         Ok(dir)
     }
 
@@ -215,6 +224,7 @@ impl Vfs {
     pub fn new<B: VfsBackend>(backend: B) -> Self {
         let lock = VfsInner {
             backend: Box::new(backend),
+            watch_enabled: true,
         };
 
         Self {
@@ -227,6 +237,16 @@ impl Vfs {
         VfsLock {
             inner: self.inner.lock().unwrap(),
         }
+    }
+
+    /// Turns automatic file watching on or off. Enabled by default.
+    ///
+    /// Turning off file watching may be useful for single-use cases, especially
+    /// on platforms like macOS where registering file watches has significant
+    /// performance cost.
+    pub fn set_watch_enabled(&self, enabled: bool) {
+        let mut inner = self.inner.lock().unwrap();
+        inner.watch_enabled = enabled;
     }
 
     /// Read a file from the VFS, or the underlying backend if it isn't
@@ -318,6 +338,15 @@ pub struct VfsLock<'a> {
 }
 
 impl VfsLock<'_> {
+    /// Turns automatic file watching on or off. Enabled by default.
+    ///
+    /// Turning off file watching may be useful for single-use cases, especially
+    /// on platforms like macOS where registering file watches has significant
+    /// performance cost.
+    pub fn set_watch_enabled(&mut self, enabled: bool) {
+        self.inner.watch_enabled = enabled;
+    }
+
     /// Read a file from the VFS, or the underlying backend if it isn't
     /// resident.
     ///
