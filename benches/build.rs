@@ -35,6 +35,7 @@ fn place_setup<P: AsRef<Path>>(input_path: P) -> (TempDir, BuildCommand) {
 
     let options = BuildCommand {
         project: input,
+        watch: false,
         output,
     };
 
