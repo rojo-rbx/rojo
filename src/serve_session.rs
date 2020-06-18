@@ -17,7 +17,7 @@ use crate::{
     session_id::SessionId,
     snapshot::{
         apply_patch_set, compute_patch_set, AppliedPatchSet, InstanceContext,
-        InstancePropertiesWithMeta, PatchSet, PathIgnoreRule, RojoTree,
+        InstancePropertiesWithMeta, PatchSet, RojoTree,
     },
     snapshot_middleware::{snapshot_from_vfs, SnapshotError},
 };
@@ -114,17 +114,7 @@ impl ServeSession {
 
         let root_id = tree.get_root_id();
 
-        let mut instance_context = InstanceContext::default();
-
-        let rules = root_project
-            .glob_ignore_paths
-            .iter()
-            .map(|glob| PathIgnoreRule {
-                glob: glob.clone(),
-                base_path: root_project.folder_location().to_path_buf(),
-            });
-
-        instance_context.add_path_ignore_rules(rules);
+        let instance_context = InstanceContext::default();
 
         log::trace!("Generating snapshot of instances from VFS");
         let snapshot = snapshot_from_vfs(&instance_context, &vfs, &start_path)?
