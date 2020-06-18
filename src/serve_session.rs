@@ -1,11 +1,14 @@
 use std::{
+    borrow::Cow,
     collections::HashSet,
+    io,
     path::{Path, PathBuf},
     sync::{Arc, Mutex, MutexGuard},
     time::Instant,
 };
 
 use crossbeam_channel::Sender;
+use memofs::IoResultExt;
 use memofs::Vfs;
 use rbx_dom_weak::RbxInstanceProperties;
 use thiserror::Error;
@@ -97,11 +100,23 @@ impl ServeSession {
 
         log::trace!("Starting new ServeSession at path {}", start_path.display());
 
-        log::debug!("Loading project file from {}", start_path.display());
-        let root_project =
-            Project::load_fuzzy(start_path)?.ok_or_else(|| ServeSessionError::NoProjectFound {
-                path: start_path.to_owned(),
-            })?;
+        let project_path;
+        if Project::is_project_file(start_path) {
+            project_path = Cow::Borrowed(start_path);
+        } else {
+            project_path = Cow::Owned(start_path.join("default.project.json"));
+        }
+
+        log::debug!("Loading project file from {}", project_path.display());
+
+        let root_project = match vfs.read(&project_path).with_not_found()? {
+            Some(contents) => Project::load_from_slice(&contents, &project_path)?,
+            None => {
+                return Err(ServeSessionError::NoProjectFound {
+                    path: project_path.to_path_buf(),
+                });
+            }
+        };
 
         let mut tree = RojoTree::new(InstancePropertiesWithMeta {
             properties: RbxInstanceProperties {
@@ -205,6 +220,12 @@ pub enum ServeSessionError {
         .path.display()
     )]
     NoProjectFound { path: PathBuf },
+
+    #[error(transparent)]
+    Io {
+        #[from]
+        source: io::Error,
+    },
 
     #[error(transparent)]
     Project {

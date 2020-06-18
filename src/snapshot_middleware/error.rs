@@ -2,6 +2,8 @@ use std::{io, path::PathBuf};
 
 use thiserror::Error;
 
+use crate::project::ProjectError;
+
 #[derive(Debug, Error)]
 pub enum SnapshotError {
     #[error("file name had malformed Unicode")]
@@ -14,10 +16,7 @@ pub enum SnapshotError {
     },
 
     #[error("malformed project file at path {}", .path.display())]
-    MalformedProject {
-        source: serde_json::Error,
-        path: PathBuf,
-    },
+    MalformedProject { source: ProjectError, path: PathBuf },
 
     #[error("malformed .model.json file at path {}", .path.display())]
     MalformedModelJson {
@@ -62,7 +61,7 @@ impl SnapshotError {
         }
     }
 
-    pub(crate) fn malformed_project(source: serde_json::Error, path: impl Into<PathBuf>) -> Self {
+    pub(crate) fn malformed_project(source: ProjectError, path: impl Into<PathBuf>) -> Self {
         Self::MalformedProject {
             source,
             path: path.into(),

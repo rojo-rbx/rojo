@@ -111,8 +111,13 @@ impl Project {
     pub fn load_from_slice(
         contents: &[u8],
         project_file_location: &Path,
-    ) -> Result<Self, serde_json::Error> {
-        let mut project: Self = serde_json::from_slice(&contents)?;
+    ) -> Result<Self, ProjectError> {
+        let mut project: Self =
+            serde_json::from_slice(&contents).map_err(|source| Error::Json {
+                source,
+                path: project_file_location.to_owned(),
+            })?;
+
         project.file_location = project_file_location.to_path_buf();
         project.check_compatibility();
         Ok(project)
