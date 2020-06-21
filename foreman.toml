@@ -1,0 +1,2 @@
+[tools]
+rojo = { source = "rojo-rbx/rojo", version = "6.0.0-rc.1" }
