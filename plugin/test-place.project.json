@@ -19,7 +19,7 @@
       }
     },
 
-    "StarterPlayer": {
+    "Players": {
       "$properties": {
         "CharacterAutoLoads": false
       }
