@@ -5,8 +5,6 @@
 	name. This isn't exactly best practice.
 ]]
 
-local Studio = settings():GetService("Studio")
-
 local Rojo = script:FindFirstAncestor("Rojo")
 
 local Roact = require(Rojo.Roact)
@@ -82,6 +80,8 @@ function StudioProvider:render()
 end
 
 function StudioProvider:didMount()
+	local Studio = settings():GetService("Studio")
+
 	self.connection = Studio.ThemeChanged:Connect(function()
 		self:updateTheme()
 	end)
