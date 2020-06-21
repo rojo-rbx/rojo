@@ -1,0 +1,28 @@
+{
+  "name": "Rojo Test Place",
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedStorage": {
+      "Rojo": {
+        "$path": "default.project.json"
+      },
+
+      "TestEZ": {
+        "$path": "modules/testez/lib"
+      }
+    },
+
+    "ServerScriptService": {
+      "RunTests": {
+        "$path": "testBootstrap.server.lua"
+      }
+    },
+
+    "StarterPlayer": {
+      "$properties": {
+        "CharacterAutoLoads": false
+      }
+    }
+  }
+}
