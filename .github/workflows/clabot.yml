@@ -1,0 +1,21 @@
+name: "CLA Signature Bot"
+on:
+  issue_comment:
+    types: [created]
+  pull_request:
+    types: [opened,closed,synchronize]
+
+jobs:
+  clabot:
+    runs-on: ubuntu-latest
+    steps:
+    - name: "CLA Signature Bot"
+      uses: roblox/cla-signature-bot@v2.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        whitelist: "LPGhatguy,ZoteTheMighty,cliffchapmanrbx,MagiMaster,MisterUncloaked,amatosov-rbx"
+        use-remote-repo: true
+        remote-repo-name: "roblox/cla-bot-store"
+        remote-repo-pat: ${{ secrets.CLA_REMOTE_REPO_PAT }}
+        url-to-cladocument: "https://roblox.github.io/cla-bot-store/"
