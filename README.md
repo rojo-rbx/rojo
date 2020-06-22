@@ -7,8 +7,8 @@
 <div>&nbsp;</div>
 
 <div align="center">
-    <a href="https://github.com/rojo-rbx/rojo/actions">
-        <img src="https://github.com/rojo-rbx/rojo/workflows/CI/badge.svg" alt="Actions status" />
+    <a href="https://github.com/Roblox/rojo/actions">
+        <img src="https://github.com/Roblox/rojo/workflows/CI/badge.svg" alt="Actions status" />
     </a>
     <a href="https://crates.io/crates/rojo">
         <img src="https://img.shields.io/crates/v/rojo.svg?label=latest%20release" alt="Latest server version" />
@@ -19,6 +19,8 @@
 </div>
 
 <hr />
+
+**Heads up! This repository was recently migrated from [the rojo-rbx org](https://github.com/rojo-rbx) to [the Roblox org](https://github.com/Roblox). Not much else has changed.**
 
 **Rojo** is a tool designed to enable Roblox developers to use professional-grade software engineering tools.
 
@@ -41,7 +43,7 @@ In the future, Rojo will be able to:
 * Import custom instances like MoonScript code
 
 ## [Documentation](https://rojo.space/docs)
-Documentation is hosted in the [rojo.space repository](https://github.com/rojo-rbx/rojo.space).
+Documentation is hosted in the [rojo.space repository](https://github.com/Roblox/rojo.space).
 
 ## Contributing
 Check out our [contribution guide](CONTRIBUTING.md) for detailed instructions for helping work on Rojo!
