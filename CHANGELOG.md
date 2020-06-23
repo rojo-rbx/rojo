@@ -129,7 +129,7 @@ This is a general maintenance release for the Rojo 0.5.x release series.
 
 ## [0.5.0 Alpha 9](https://github.com/Roblox/rojo/releases/tag/v0.5.0-alpha.9) (April 4, 2019)
 * Changed `rojo build` to use buffered I/O, which can make it up to 2x faster in some cases.
-    * Building [*Road Not Taken*](https://github.com/rojo-rbx/roads) to an `rbxlx` file dropped from 150ms to 70ms on my machine
+    * Building [*Road Not Taken*](https://github.com/LPGhatguy/roads) to an `rbxlx` file dropped from 150ms to 70ms on my machine
 * Fixed `LocalizationTable` instances being made from `csv` files incorrectly interpreting empty rows and columns. ([#149](https://github.com/Roblox/rojo/pull/149))
 * Fixed CSV files with entries that parse as numbers causing Rojo to panic. ([#152](https://github.com/Roblox/rojo/pull/152))
 * Improved error messages when malformed CSV files are found in a Rojo project.
@@ -326,4 +326,4 @@ This is a general maintenance release for the Rojo 0.5.x release series.
 * More robust syncing with a new reconciler
 
 ## [0.1.0](https://github.com/Roblox/rojo/releases/tag/v0.1.0) (November 29, 2017)
-* Initial release, functionally very similar to [rbxfs](https://github.com/rojo-rbx/rbxfs)
+* Initial release, functionally very similar to [rbxfs](https://github.com/LPGhatguy/rbxfs)
