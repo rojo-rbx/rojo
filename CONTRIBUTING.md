@@ -3,7 +3,7 @@ Rojo is a big project and can always use more help! This guide covers all reposi
 
 Some of the repositories covered are:
 
-* https://github.com/rojo-rbx/rojo
+* https://github.com/Roblox/rojo
 * https://github.com/rojo-rbx/rbx-dom
 * https://github.com/rojo-rbx/vscode-rojo
 * https://github.com/rojo-rbx/rbxlx-to-rojo
@@ -14,7 +14,7 @@ Code contributions are welcome for features and bugs that have been reported in 
 You'll want these tools to work on Rojo:
 
 * Latest stable Rust compiler
-* Latest stable [Rojo](https://github.com/rojo-rbx/rojo)
+* Latest stable [Rojo](https://github.com/Roblox/rojo)
 * Latest stable [Remodel](https://github.com/rojo-rbx/remodel)
 * Latest stable [run-in-roblox](https://github.com/rojo-rbx/run-in-roblox)
 

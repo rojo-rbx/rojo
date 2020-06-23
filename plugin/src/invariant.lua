@@ -18,7 +18,7 @@ else
 			"Rojo detected an invariant violation within itself:\n" ..
 			"%s\n\n" ..
 			"This is a bug in Rojo. Please file an issue:\n" ..
-			"https://github.com/rojo-rbx/rojo/issues",
+			"https://github.com/Roblox/rojo/issues",
 			message
 		)
 

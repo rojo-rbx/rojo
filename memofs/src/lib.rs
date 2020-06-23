@@ -3,7 +3,7 @@ Implementation of a virtual filesystem with a configurable backend and file
 watching.
 
 memofs is currently an unstable minimum viable library. Its primary consumer is
-[Rojo](https://github.com/rojo-rbx/rojo), a build system for Roblox.
+[Rojo](https://github.com/Roblox/rojo), a build system for Roblox.
 
 ## Current Features
 * API similar to `std::fs`

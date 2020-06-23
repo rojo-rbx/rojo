@@ -315,7 +315,7 @@ impl<'a> LuaStream<'a> {
 mod test {
     use super::*;
 
-    /// Regression test for https://github.com/rojo-rbx/rojo/issues/314
+    /// Regression test for https://github.com/Roblox/rojo/issues/314
     #[test]
     fn bug_314() {
         let my_value = "\"\r\n\t\\".to_owned();
