@@ -46,6 +46,14 @@ local function reify(virtualInstanceMap, rootId, parentInstance)
 		end
 	end
 
+	for _, childId in ipairs(virtualInstance.Children) do
+		local ok, err = reify(virtualInstanceMap, childId, instance)
+
+		if not ok then
+			return false, err
+		end
+	end
+
 	instance.Parent = parentInstance
 
 	return true, instance
