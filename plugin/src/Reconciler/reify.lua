@@ -7,11 +7,11 @@ local Error = require(script.Parent.Error)
 local setProperty = require(script.Parent.setProperty)
 local decodeValue = require(script.Parent.decodeValue)
 
-local function reify(virtualInstanceMap, rootId, parentInstance)
-	local virtualInstance = virtualInstanceMap[rootId]
+local function reify(virtualInstances, rootId, parentInstance)
+	local virtualInstance = virtualInstances[rootId]
 
 	if virtualInstance == nil then
-		invariant("Cannot reify an instance not present in virtualInstanceMap\nID: {}", rootId)
+		invariant("Cannot reify an instance not present in virtualInstances\nID: {}", rootId)
 	end
 
 	-- Instance.new can fail if we're passing in something that can't be
@@ -47,7 +47,7 @@ local function reify(virtualInstanceMap, rootId, parentInstance)
 	end
 
 	for _, childId in ipairs(virtualInstance.Children) do
-		local ok, err = reify(virtualInstanceMap, childId, instance)
+		local ok, err = reify(virtualInstances, childId, instance)
 
 		if not ok then
 			return false, err

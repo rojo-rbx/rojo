@@ -33,6 +33,16 @@ function InstanceMap.new(onInstanceChanged)
 	return setmetatable(self, InstanceMap)
 end
 
+function InstanceMap:size()
+	local size = 0
+
+	for _ in pairs(self.fromIds) do
+		size = size + 1
+	end
+
+	return size
+end
+
 --[[
 	Disconnect all connections and release all instance references.
 ]]
