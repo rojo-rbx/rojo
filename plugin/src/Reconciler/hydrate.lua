@@ -6,8 +6,6 @@
 local invariant = require(script.Parent.Parent.invariant)
 
 local function hydrate(instanceMap, virtualInstances, rootId, rootInstance)
-	print("hydrate", rootId, rootInstance)
-
 	local virtualInstance = virtualInstances[rootId]
 
 	if virtualInstance == nil then
