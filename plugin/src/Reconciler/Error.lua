@@ -15,7 +15,9 @@ local function makeVariant(name)
 end
 
 makeVariant("CannotCreateInstance")
+makeVariant("UnknownProperty")
 makeVariant("UnwritableProperty")
+makeVariant("UnreadableProperty")
 makeVariant("LackingPropertyPermissions")
 makeVariant("OtherPropertyError")
 makeVariant("CannotDecodeValue")

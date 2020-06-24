@@ -3,7 +3,11 @@
 	patch that can be later applied.
 ]]
 
+local Log = require(script.Parent.Parent.Parent.Log)
 local invariant = require(script.Parent.Parent.invariant)
+local getProperty = require(script.Parent.getProperty)
+local Error = require(script.Parent.Error)
+local decodeValue = require(script.Parent.decodeValue)
 
 local function isEmpty(table)
 	return next(table) == nil
@@ -24,6 +28,18 @@ local function diff(instanceMap, virtualInstances, rootId)
 		updated = {},
 	}
 
+	-- Add a virtual instance and all of its descendants to the patch, marked as
+	-- being added.
+	local function markIdAdded(id)
+		local virtualInstance = virtualInstances[id]
+		patch.added[id] = virtualInstance
+
+		for _, childId in ipairs(virtualInstance.Children) do
+			markIdAdded(childId)
+		end
+	end
+
+	-- Internal recursive kernel for diffing an instance with the given ID.
 	local function diffInternal(id)
 		local virtualInstance = virtualInstances[id]
 		local instance = instanceMap.fromIds[id]
@@ -46,7 +62,28 @@ local function diff(instanceMap, virtualInstances, rootId)
 		end
 
 		local changedProperties = {}
-		-- TODO: Enumerate properties and calculate changed
+		for propertyName, virtualValue in pairs(virtualInstance.Properties) do
+			local ok, existingValueOrErr = getProperty(instance, propertyName)
+
+			if ok then
+				local existingValue = existingValueOrErr
+				local decodedValue = decodeValue(virtualValue)
+
+				if existingValue ~= decodedValue then
+					changedProperties[propertyName] = virtualValue
+				end
+			else
+				local err = existingValueOrErr
+
+				if err.kind == Error.UnknownProperty then
+					Log.trace("Skipping unknown property {}.{}", err.details.className, err.details.propertyName)
+				elseif err.kind == Error.UnreadableProperty then
+					Log.trace("Skipping unreadable property {}.{}", err.details.className, err.details.propertyName)
+				else
+					return false, err
+				end
+			end
+		end
 
 		if changedName ~= nil or not isEmpty(changedProperties) then
 			table.insert(patch.updated, {
@@ -62,18 +99,39 @@ local function diff(instanceMap, virtualInstances, rootId)
 			local childId = instanceMap.fromInstances[childInstance]
 
 			if childId == nil then
+				-- This is an existing instance not present in the virtual DOM.
+				-- We can mark it for deletion unless the user has asked us not
+				-- to delete unknown stuff.
 				if shouldDeleteUnknownInstances(virtualInstance) then
 					table.insert(patch.removed, childInstance)
 				end
 			else
-				diffInternal(childId)
+				local ok, err = diffInternal(childId)
+
+				if not ok then
+					return false, err
+				end
 			end
 		end
+
+		for _, childId in ipairs(virtualInstance.Children) do
+			local childInstance = instanceMap.fromIds[childId]
+
+			if childInstance == nil then
+				markIdAdded(childId)
+			end
+		end
+
+		return true
 	end
 
-	diffInternal(rootId)
+	local ok, err = diffInternal(rootId)
 
-	return patch
+	if not ok then
+		return false, err
+	end
+
+	return true, patch
 end
 
 return diff
