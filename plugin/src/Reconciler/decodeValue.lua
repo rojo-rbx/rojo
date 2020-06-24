@@ -4,7 +4,6 @@
 ]]
 
 local RbxDom = require(script.Parent.Parent.Parent.RbxDom)
-local invariant = require(script.Parent.Parent.invariant)
 local Error = require(script.Parent.Error)
 
 local function decodeValue(virtualValue)
@@ -12,7 +11,7 @@ local function decodeValue(virtualValue)
 	if virtualValue.Type == "Ref" then
 		-- TODO: Look up value in virtual instance map, potentially referring to
 		-- an instance that doesn't exist yet!
-		invariant("Rojo cannot deal with ref values right now")
+		error("Rojo cannot deal with ref values right now")
 	end
 
 	local ok, decodedValue = RbxDom.EncodedValue.decode(virtualValue)
