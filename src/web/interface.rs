@@ -47,7 +47,7 @@ pub struct InstanceUpdate {
 #[serde(rename_all = "camelCase")]
 pub struct InstanceMetadata {
     pub ignore_unknown_instances: bool,
-    
+
     #[serde(skip_serializing_if = "Option::is_none")]
     pub relevant_paths: Option<Vec<PathBuf>>,
 }
@@ -79,7 +79,7 @@ impl<'a> Instance<'a> {
         include_relevant_paths: bool,
     ) -> Instance<'_> {
         let source_meta = source.metadata();
-        
+
         Instance {
             id: source.id(),
             parent: source.parent(),
@@ -93,8 +93,8 @@ impl<'a> Instance<'a> {
                     Some(source_meta.relevant_paths.clone())
                 } else {
                     None
-                }
-            })
+                },
+            }),
         }
     }
 }

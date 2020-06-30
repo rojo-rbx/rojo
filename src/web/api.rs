@@ -107,7 +107,10 @@ impl ApiService {
                             added.insert(id, Instance::from_rojo_instance(instance, false));
 
                             for instance in tree.descendants(id) {
-                                added.insert(instance.id(), Instance::from_rojo_instance(instance, false));
+                                added.insert(
+                                    instance.id(),
+                                    Instance::from_rojo_instance(instance, false),
+                                );
                             }
                         }
 
@@ -200,7 +203,11 @@ impl ApiService {
     fn handle_api_read(&self, request: Request<Body>) -> <Self as Service>::Future {
         let argument = &request.uri().path()["/api/read/".len()..];
         let requested_ids: Option<Vec<RbxId>> = argument.split(',').map(RbxId::parse_str).collect();
-        let include_relevant_paths = request.uri().query().iter().any(|query| query == &"includeRelevantPaths");
+        let include_relevant_paths = request
+            .uri()
+            .query()
+            .iter()
+            .any(|query| query == &"includeRelevantPaths");
 
         let requested_ids = match requested_ids {
             Some(ids) => ids,
@@ -221,10 +228,16 @@ impl ApiService {
 
         for id in requested_ids {
             if let Some(instance) = tree.get_instance(id) {
-                instances.insert(id, Instance::from_rojo_instance(instance, include_relevant_paths));
+                instances.insert(
+                    id,
+                    Instance::from_rojo_instance(instance, include_relevant_paths),
+                );
 
                 for descendant in tree.descendants(id) {
-                    instances.insert(descendant.id(), Instance::from_rojo_instance(descendant, include_relevant_paths));
+                    instances.insert(
+                        descendant.id(),
+                        Instance::from_rojo_instance(descendant, include_relevant_paths),
+                    );
                 }
             }
         }
