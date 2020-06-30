@@ -3,6 +3,7 @@
 use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
+    path::PathBuf,
 };
 
 use rbx_dom_weak::{RbxId, RbxValue};
@@ -46,12 +47,16 @@ pub struct InstanceUpdate {
 #[serde(rename_all = "camelCase")]
 pub struct InstanceMetadata {
     pub ignore_unknown_instances: bool,
+    
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub relevant_paths: Option<Vec<PathBuf>>,
 }
 
 impl InstanceMetadata {
     pub(crate) fn from_rojo_metadata(meta: &RojoInstanceMetadata) -> Self {
         Self {
             ignore_unknown_instances: meta.ignore_unknown_instances,
+            relevant_paths: None,
         }
     }
 }
@@ -69,7 +74,12 @@ pub struct Instance<'a> {
 }
 
 impl<'a> Instance<'a> {
-    pub(crate) fn from_rojo_instance(source: InstanceWithMeta<'_>) -> Instance<'_> {
+    pub(crate) fn from_rojo_instance(
+        source: InstanceWithMeta<'_>,
+        include_relevant_paths: bool,
+    ) -> Instance<'_> {
+        let source_meta = source.metadata();
+        
         Instance {
             id: source.id(),
             parent: source.parent(),
@@ -77,7 +87,14 @@ impl<'a> Instance<'a> {
             class_name: Cow::Borrowed(source.class_name()),
             properties: Cow::Borrowed(source.properties()),
             children: Cow::Borrowed(source.children()),
-            metadata: Some(InstanceMetadata::from_rojo_metadata(source.metadata())),
+            metadata: Some(InstanceMetadata {
+                ignore_unknown_instances: source_meta.ignore_unknown_instances,
+                relevant_paths: if include_relevant_paths {
+                    Some(source_meta.relevant_paths.clone())
+                } else {
+                    None
+                }
+            })
         }
     }
 }
