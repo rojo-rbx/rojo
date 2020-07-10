@@ -1,0 +1,21 @@
+---
+source: src/snapshot_middleware/project.rs
+expression: instance_snapshot
+---
+snapshot_id: ~
+metadata:
+  ignore_unknown_instances: false
+  instigating_source:
+    Path: /foo/bar/default.project.json
+  relevant_paths:
+    - /baz/other.txt
+    - /baz/other.meta.json
+    - /foo/bar/default.project.json
+  context: {}
+name: path-project
+class_name: StringValue
+properties:
+  Value:
+    Type: String
+    Value: "Hello, world!"
+children: []

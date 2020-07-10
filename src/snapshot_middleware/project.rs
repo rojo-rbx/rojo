@@ -1,4 +1,6 @@
-use std::{borrow::Cow, collections::HashMap, path::Path};
+use path_slash::PathExt;
+use relative_path::RelativePath;
+use std::{borrow::Cow, collections::HashMap, path::Path, path::PathBuf};
 
 use memofs::Vfs;
 use rbx_reflection::{get_class_descriptor, try_resolve_value};
@@ -78,7 +80,42 @@ pub fn snapshot_project_node(
         // If the path specified in the project is relative, we assume it's
         // relative to the folder that the project is in, project_folder.
         let path = if path.is_relative() {
-            Cow::Owned(project_folder.join(path))
+            // Convert paths to use forward slashes for compatibility with the relative-path crate
+            let project_folder_with_slash_separator = match project_folder.to_slash() {
+                Some(p) => p,
+                None => return Ok(None),
+            };
+            let path_with_slash_separator = match path.to_slash() {
+                Some(p) => p,
+                None => return Ok(None),
+            };
+
+            // Join and resolve relative paths
+            let normalized_path = RelativePath::new(&project_folder_with_slash_separator)
+                .join_normalized(&path_with_slash_separator);
+
+            let resolved_path = if PathBuf::from(normalized_path.as_str()).is_relative() {
+                // Resolve path relative to original root if project_folder was absolute
+                normalized_path.to_path(
+                    project_folder
+                        .components()
+                        .next()
+                        .expect("Could not get root of project folder"),
+                )
+            } else {
+                PathBuf::from(normalized_path.as_str())
+            };
+
+            log::trace!(
+                "original {}, project_folder {}, path {}, normalized {}, resolved {}",
+                project_folder.join(path).display(),
+                project_folder_with_slash_separator,
+                path_with_slash_separator,
+                normalized_path,
+                resolved_path.display()
+            );
+
+            Cow::Owned(resolved_path)
         } else {
             Cow::Borrowed(path)
         };
@@ -505,6 +542,46 @@ mod test {
             &InstanceContext::default(),
             &mut vfs,
             Path::new("/foo/default.project.json"),
+        )
+        .expect("snapshot error")
+        .expect("snapshot returned no instances");
+
+        insta::assert_yaml_snapshot!(instance_snapshot);
+    }
+
+    #[test]
+    fn project_with_relative_path() {
+        let _ = env_logger::try_init();
+
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
+            "/baz",
+            VfsSnapshot::dir(hashmap! {
+                "other.txt" => VfsSnapshot::file("Hello, world!"),
+            }),
+        )
+        .unwrap();
+        imfs.load_snapshot(
+            "/foo/bar",
+            VfsSnapshot::dir(hashmap! {
+                "default.project.json" => VfsSnapshot::file(r#"
+                    {
+                        "name": "path-project",
+                        "tree": {
+                            "$path": "../../baz/other.txt"
+                        }
+                    }
+                "#),
+            }),
+        )
+        .unwrap();
+
+        let mut vfs = Vfs::new(imfs);
+
+        let instance_snapshot = snapshot_project(
+            &InstanceContext::default(),
+            &mut vfs,
+            Path::new("/foo/bar/default.project.json"),
         )
         .expect("snapshot error")
         .expect("snapshot returned no instances");
