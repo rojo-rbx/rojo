@@ -51,7 +51,11 @@ pub fn init(options: InitCommand) -> Result<(), anyhow::Error> {
     }
 }
 
-fn init_place(base_path: &Path, project_params: ProjectParams, no_git: bool) -> Result<(), anyhow::Error> {
+fn init_place(
+    base_path: &Path,
+    project_params: ProjectParams,
+    no_git: bool,
+) -> Result<(), anyhow::Error> {
     eprintln!("Creating new place project '{}'", project_params.name);
 
     let project_file = project_params.render_template(PLACE_PROJECT);
@@ -92,13 +96,17 @@ fn init_place(base_path: &Path, project_params: ProjectParams, no_git: bool) -> 
     if !no_git {
         try_git_init(base_path, &git_ignore)?
     }
-    
+
     eprintln!("Created project successfully.");
 
     Ok(())
 }
 
-fn init_model(base_path: &Path, project_params: ProjectParams, no_git: bool) -> Result<(), anyhow::Error> {
+fn init_model(
+    base_path: &Path,
+    project_params: ProjectParams,
+    no_git: bool,
+) -> Result<(), anyhow::Error> {
     eprintln!("Creating new model project '{}'", project_params.name);
 
     let project_file = project_params.render_template(MODEL_PROJECT);
