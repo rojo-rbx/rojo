@@ -43,13 +43,15 @@ pub fn init(options: InitCommand) -> Result<(), anyhow::Error> {
         name: project_name.to_owned(),
     };
 
+    let no_git = options.no_git;
+
     match options.kind {
-        InitKind::Place => init_place(&base_path, project_params),
-        InitKind::Model => init_model(&base_path, project_params),
+        InitKind::Place => init_place(&base_path, project_params, no_git),
+        InitKind::Model => init_model(&base_path, project_params, no_git),
     }
 }
 
-fn init_place(base_path: &Path, project_params: ProjectParams) -> Result<(), anyhow::Error> {
+fn init_place(base_path: &Path, project_params: ProjectParams, no_git: bool) -> Result<(), anyhow::Error> {
     eprintln!("Creating new place project '{}'", project_params.name);
 
     let project_file = project_params.render_template(PLACE_PROJECT);
@@ -86,14 +88,17 @@ fn init_place(base_path: &Path, project_params: ProjectParams) -> Result<(), any
     )?;
 
     let git_ignore = project_params.render_template(PLACE_GIT_IGNORE);
-    try_git_init(base_path, &git_ignore)?;
 
+    if !no_git {
+        try_git_init(base_path, &git_ignore)?
+    }
+    
     eprintln!("Created project successfully.");
 
     Ok(())
 }
 
-fn init_model(base_path: &Path, project_params: ProjectParams) -> Result<(), anyhow::Error> {
+fn init_model(base_path: &Path, project_params: ProjectParams, no_git: bool) -> Result<(), anyhow::Error> {
     eprintln!("Creating new model project '{}'", project_params.name);
 
     let project_file = project_params.render_template(MODEL_PROJECT);
@@ -109,7 +114,10 @@ fn init_model(base_path: &Path, project_params: ProjectParams) -> Result<(), any
     write_if_not_exists(&src.join("init.lua"), &init)?;
 
     let git_ignore = project_params.render_template(MODEL_GIT_IGNORE);
-    try_git_init(base_path, &git_ignore)?;
+
+    if !no_git {
+        try_git_init(base_path, &git_ignore)?
+    }
 
     eprintln!("Created project successfully.");
 

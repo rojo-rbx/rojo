@@ -128,6 +128,10 @@ pub struct InitCommand {
     /// The kind of project to create, 'place' or 'model'. Defaults to place.
     #[structopt(long, default_value = "place")]
     pub kind: InitKind,
+
+    /// Option to not initialize a Git repository in the newly created Rojo project. Defaults to false.
+    #[structopt(long)]
+    pub no_git: bool,
 }
 
 impl InitCommand {
