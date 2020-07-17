@@ -12,12 +12,14 @@ use crate::cli::{InitCommand, InitKind};
 static MODEL_PROJECT: &str =
     include_str!("../../assets/default-model-project/default.project.json");
 static MODEL_README: &str = include_str!("../../assets/default-model-project/README.md");
+static MODEL_SELENE: &str = include_str!("../../assets/default-model-project/selene.toml");
 static MODEL_INIT: &str = include_str!("../../assets/default-model-project/src-init.lua");
 static MODEL_GIT_IGNORE: &str = include_str!("../../assets/default-model-project/gitignore.txt");
 
 static PLACE_PROJECT: &str =
     include_str!("../../assets/default-place-project/default.project.json");
 static PLACE_README: &str = include_str!("../../assets/default-place-project/README.md");
+static PLACE_SELENE: &str = include_str!("../../assets/default-place-project/selene.toml");
 static PLACE_GIT_IGNORE: &str = include_str!("../../assets/default-place-project/gitignore.txt");
 
 #[derive(Debug, Error)]
@@ -57,6 +59,9 @@ fn init_place(base_path: &Path, project_params: ProjectParams) -> Result<(), any
 
     let readme = project_params.render_template(PLACE_README);
     write_if_not_exists(&base_path.join("README.md"), &readme)?;
+
+    let selene_toml = project_params.render_template(PLACE_SELENE);
+    write_if_not_exists(&base_path.join("selene.toml"), &selene_toml)?;
 
     let src = base_path.join("src");
     fs::create_dir_all(&src)?;
@@ -101,6 +106,9 @@ fn init_model(base_path: &Path, project_params: ProjectParams) -> Result<(), any
 
     let readme = project_params.render_template(MODEL_README);
     write_if_not_exists(&base_path.join("README.md"), &readme)?;
+
+    let selene_toml = project_params.render_template(MODEL_SELENE);
+    write_if_not_exists(&base_path.join("selene.toml"), &selene_toml)?;
 
     let src = base_path.join("src");
     fs::create_dir_all(&src)?;

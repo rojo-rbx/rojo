@@ -1,0 +1,3 @@
+# Selene is a linter for Lua that has support for Roblox Lua, when this file is present
+# Find out more at https://github.com/Kampfkarren/selene
+std = "roblox"
