@@ -1,4 +1,41 @@
 local CollectionService = game:GetService("CollectionService")
+local HttpService = game:GetService("HttpService")
+
+local function getContents(localizationTable)
+	local array = {}
+	for index, entry in ipairs(localizationTable:GetEntries()) do
+		local newEntry = {}
+		for key, value in next, entry do
+			if key == "Context" or key == "Example" then
+				continue
+			end
+
+			newEntry[string.lower(key)] = value
+		end
+
+		array[index] = newEntry
+	end
+
+	return HttpService:JSONEncode(array)
+end
+
+local function setContents(localizationTable, contents)
+	local newContents = {}
+	for index, entry in ipairs(HttpService:JSONDecode(contents)) do
+		local newEntry = {
+			Context = "";
+			Example = "";
+		}
+
+		for key, value in next, entry do
+			newEntry[string.gsub(key, "^%a", string.upper)] = value
+		end
+
+		newContents[index] = newEntry
+	end
+
+	localizationTable:SetEntries(newContents)
+end
 
 -- Defines how to read and write properties that aren't directly scriptable.
 --
@@ -36,10 +73,10 @@ return {
 	LocalizationTable = {
 		Contents = {
 			read = function(instance, key)
-				return true, instance:GetContents()
+				return true, getContents(instance)
 			end,
 			write = function(instance, key, value)
-				instance:SetContents(value)
+				setContents(instance, value)
 				return true
 			end,
 		},
