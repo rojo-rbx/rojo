@@ -43,12 +43,12 @@ end
 return {
 	Instance = {
 		Tags = {
-			read = function(instance, key)
+			read = function(instance)
 				local tagList = CollectionService:GetTags(instance)
 
 				return true, table.concat(tagList, "\0")
 			end,
-			write = function(instance, key, value)
+			write = function(instance, _, value)
 				local existingTags = CollectionService:GetTags(instance)
 
 				local unseenTags = {}
@@ -72,10 +72,10 @@ return {
 	},
 	LocalizationTable = {
 		Contents = {
-			read = function(instance, key)
+			read = function(instance)
 				return true, getContents(instance)
 			end,
-			write = function(instance, key, value)
+			write = function(instance, _, value)
 				setContents(instance, value)
 				return true
 			end,
