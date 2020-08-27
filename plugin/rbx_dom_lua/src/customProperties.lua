@@ -5,7 +5,7 @@ local function getContents(localizationTable)
 	local array = {}
 	for index, entry in ipairs(localizationTable:GetEntries()) do
 		local newEntry = {}
-		for key, value in next, entry do
+		for key, value in pairs(entry) do
 			if key == "Context" or key == "Example" then
 				continue
 			end
@@ -23,11 +23,11 @@ local function setContents(localizationTable, contents)
 	local newContents = {}
 	for index, entry in ipairs(HttpService:JSONDecode(contents)) do
 		local newEntry = {
-			Context = "";
-			Example = "";
+			Context = "",
+			Example = "",
 		}
 
-		for key, value in next, entry do
+		for key, value in pairs(entry) do
 			newEntry[string.gsub(key, "^%a", string.upper)] = value
 		end
 
