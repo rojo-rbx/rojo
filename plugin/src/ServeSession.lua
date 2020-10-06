@@ -214,22 +214,27 @@ function ServeSession:__initialSync(rootInstanceId)
 			-- the tree defined in this response.
 			self.__apiContext:setMessageCursor(readResponseBody.messageCursor)
 
-			Log.trace("Computing changes that plugin needs to make to catch up to server...")
+			-- For any instances that line up with the Rojo server's view, start
+			-- tracking them in the reconciler.
+			Log.trace("Matching existing Roblox instances to Rojo IDs")
+			self.__reconciler:hydrate(readResponseBody.instances, rootInstanceId, game)
 
 			-- Calculate the initial patch to apply to the DataModel to catch us
 			-- up to what Rojo thinks the place should look like.
-			local hydratePatch = self.__reconciler:hydrate(
+			Log.trace("Computing changes that plugin needs to make to catch up to server...")
+			local catchUpPatch = self.__reconciler:diff(
 				readResponseBody.instances,
 				rootInstanceId,
 				game
 			)
 
-			Log.trace("Computed hydration patch: {:#?}", debugPatch(hydratePatch))
+			Log.trace("Computed hydration patch: {:#?}", debugPatch(catchUpPatch))
 
 			-- TODO: Prompt user to notify them of this patch, since it's
-			-- effectively a conflict between the Rojo server and the client.
+			-- effectively a conflict between the Rojo server and the client. In
+			-- the future, we'll ask which changes the user wants to keep.
 
-			self.__reconciler:applyPatch(hydratePatch)
+			self.__reconciler:applyPatch(catchUpPatch)
 		end)
 end
 
