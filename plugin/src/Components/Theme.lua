@@ -5,6 +5,17 @@
 	name. This isn't exactly best practice.
 ]]
 
+-- Studio does not exist outside Roblox Studio, so we'll lazily initialize it
+-- when possible.
+local _Studio
+local function getStudio()
+	if _Studio == nil then
+		_Studio = settings():GetService("Studio")
+	end
+
+	return _Studio
+end
+
 local Rojo = script:FindFirstAncestor("Rojo")
 
 local Roact = require(Rojo.Roact)
@@ -50,7 +61,7 @@ local StudioProvider = Roact.Component:extend("StudioProvider")
 
 -- Pull the current theme from Roblox Studio and update state with it.
 function StudioProvider:updateTheme()
-	local studioTheme = Studio.Theme
+	local studioTheme = getStudio().Theme
 
 	if studioTheme.Name == "Light" then
 		self:setState({
@@ -80,9 +91,7 @@ function StudioProvider:render()
 end
 
 function StudioProvider:didMount()
-	local Studio = settings():GetService("Studio")
-
-	self.connection = Studio.ThemeChanged:Connect(function()
+	self.connection = getStudio().ThemeChanged:Connect(function()
 		self:updateTheme()
 	end)
 end

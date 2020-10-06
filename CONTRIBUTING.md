@@ -1,9 +1,9 @@
 # Contributing to the Rojo Project
-Rojo is a big project and can always use more help! This guide covers all repositories underneath the [rojo-rbx organization on GitHub](https://github.com/rojo-rbx).
+Rojo is a big project and can always use more help!
 
 Some of the repositories covered are:
 
-* https://github.com/Roblox/rojo
+* https://github.com/rojo-rbx/rojo
 * https://github.com/rojo-rbx/rbx-dom
 * https://github.com/rojo-rbx/vscode-rojo
 * https://github.com/rojo-rbx/rbxlx-to-rojo
@@ -14,9 +14,8 @@ Code contributions are welcome for features and bugs that have been reported in 
 You'll want these tools to work on Rojo:
 
 * Latest stable Rust compiler
-* Latest stable [Rojo](https://github.com/Roblox/rojo)
-* Latest stable [Remodel](https://github.com/rojo-rbx/remodel)
-* Latest stable [run-in-roblox](https://github.com/rojo-rbx/run-in-roblox)
+* Latest stable [Rojo](https://github.com/rojo-rbx/rojo)
+* [Foreman](https://github.com/Roblox/foreman)
 
 ## Documentation
 Documentation impacts way more people than the individual lines of code we write.

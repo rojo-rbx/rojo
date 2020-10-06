@@ -6,7 +6,7 @@ description = "Enables professional-grade development tools for Roblox developer
 license = "MPL-2.0"
 homepage = "https://rojo.space"
 documentation = "https://rojo.space/docs"
-repository = "https://github.com/Roblox/rojo"
+repository = "https://github.com/rojo-rbx/rojo"
 readme = "README.md"
 edition = "2018"
 

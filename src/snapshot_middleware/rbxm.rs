@@ -76,6 +76,6 @@ mod test {
         // distinguish between String and BinaryString. The sample model was
         // created by Roblox Studio and has an empty BinaryString "Tags"
         // property that currently deserializes incorrectly.
-        // See: https://github.com/rojo-rbx/rbx-dom/issues/49
+        // See: https://github.com/Roblox/rbx-dom/issues/49
     }
 }
