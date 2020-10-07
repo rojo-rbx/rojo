@@ -24,7 +24,7 @@ function Reconciler:applyPatch(patch)
 end
 
 function Reconciler:hydrate(virtualInstances, rootId, rootInstance)
-	return hydrate(self.__instanceMap)
+	return hydrate(self.__instanceMap, virtualInstances, rootId, rootInstance)
 end
 
 function Reconciler:diff(virtualInstances, rootId)

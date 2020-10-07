@@ -24,7 +24,7 @@ local function hydrate(instanceMap, virtualInstances, rootId, rootInstance)
 	end
 
 	for _, childId in ipairs(virtualInstance.Children) do
-		local apiChild = virtualInstances[childId]
+		local virtualChild = virtualInstances[childId]
 
 		for childIndex, childInstance in ipairs(existingChildren) do
 			if not isExistingChildVisited[childIndex] then
@@ -37,7 +37,7 @@ local function hydrate(instanceMap, virtualInstances, rootId, rootInstance)
 
 				-- This rule is very conservative and could be loosened in the
 				-- future, or more heuristics could be introduced.
-				if ok and name == apiChild.Name and className == apiChild.ClassName then
+				if ok and name == virtualChild.Name and className == virtualChild.ClassName then
 					isExistingChildVisited[childIndex] = true
 					hydrate(instanceMap, virtualInstances, childId, childInstance)
 					break

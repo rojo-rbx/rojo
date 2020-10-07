@@ -95,6 +95,9 @@ local function diff(instanceMap, virtualInstances, rootId)
 			})
 		end
 
+		-- Traverse the list of children in the DOM. Any instance that has no
+		-- corresponding virtual instance should be removed. Any instance that
+		-- does have a corresponding virtual instance is recursively diffed.
 		for _, childInstance in ipairs(instance:GetChildren()) do
 			local childId = instanceMap.fromInstances[childInstance]
 
@@ -114,10 +117,14 @@ local function diff(instanceMap, virtualInstances, rootId)
 			end
 		end
 
+		-- Traverse the list of children in the virtual DOM. Any virtual
+		-- instance that has no corresponding real instance should be created.
 		for _, childId in ipairs(virtualInstance.Children) do
 			local childInstance = instanceMap.fromIds[childId]
 
 			if childInstance == nil then
+				-- This instance is present in the virtual DOM, but doesn't
+				-- exist in the real DOM.
 				markIdAdded(childId)
 			end
 		end
