@@ -64,8 +64,6 @@ local function applyPatch(instanceMap, patch)
 			)
 		end
 
-		-- FIXME: reify needs to accept instanceMap and only insert
-		-- instances once the entire process completes successfully.
 		local ok = reify(instanceMap, patch.added, id, parentInstance)
 
 		if not ok then

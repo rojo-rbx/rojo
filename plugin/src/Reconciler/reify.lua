@@ -7,7 +7,27 @@ local Error = require(script.Parent.Error)
 local setProperty = require(script.Parent.setProperty)
 local decodeValue = require(script.Parent.decodeValue)
 
-local function reify(virtualInstances, rootId, parentInstance)
+local reifyInner
+
+local function reify(instanceMap, virtualInstances, rootId, parentInstance)
+	-- Tracks a map from ID to added instance that should be inserted into
+	-- instanceMap if this operation is successful.
+	local idsToAdd = {}
+
+	local ok, instanceOrErr = reifyInner(virtualInstances, rootId, parentInstance, idsToAdd)
+
+	if not ok then
+		return false, instanceOrErr
+	end
+
+	for id, instance in pairs(idsToAdd) do
+		instanceMap:insert(id, instance)
+	end
+
+	return true, instanceOrErr
+end
+
+function reifyInner(virtualInstances, rootId, parentInstance, idsToAdd)
 	local virtualInstance = virtualInstances[rootId]
 
 	if virtualInstance == nil then
@@ -48,7 +68,7 @@ local function reify(virtualInstances, rootId, parentInstance)
 	end
 
 	for _, childId in ipairs(virtualInstance.Children) do
-		local ok, err = reify(virtualInstances, childId, instance)
+		local ok, err = reifyInner(virtualInstances, childId, instance, idsToAdd)
 
 		if not ok then
 			return false, err
@@ -56,6 +76,7 @@ local function reify(virtualInstances, rootId, parentInstance)
 	end
 
 	instance.Parent = parentInstance
+	idsToAdd[rootId] = instance
 
 	return true, instance
 end

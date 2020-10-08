@@ -1,16 +1,17 @@
 return function()
 	local reify = require(script.Parent.reify)
 
+	local InstanceMap = require(script.Parent.Parent.InstanceMap)
 	local Error = require(script.Parent.Error)
 
 	it("should throw when given a bogus ID", function()
 		expect(function()
-			reify({}, "Hi, mom!", game)
+			reify(InstanceMap.new(), {}, "Hi, mom!", game)
 		end).to.throw()
 	end)
 
 	it("should return an error when given bogus class names", function()
-		local virtualInstanceMap = {
+		local virtualInstances = {
 			ROOT = {
 				ClassName = "Balogna",
 				Name = "Food",
@@ -19,14 +20,17 @@ return function()
 			},
 		}
 
-		local ok, err = reify(virtualInstanceMap, "ROOT", nil)
+		local instanceMap = InstanceMap.new()
+		local ok, err = reify(instanceMap, virtualInstances, "ROOT", nil)
 
 		expect(ok).to.equal(false)
 		expect(err.kind).to.equal(Error.CannotCreateInstance)
+
+		assert(instanceMap:size() == 0, "expected instanceMap to be empty")
 	end)
 
 	it("should assign name and properties", function()
-		local virtualInstanceMap = {
+		local virtualInstances = {
 			ROOT = {
 				ClassName = "StringValue",
 				Name = "Spaghetti",
@@ -40,7 +44,8 @@ return function()
 			},
 		}
 
-		local ok, instance = reify(virtualInstanceMap, "ROOT")
+		local instanceMap = InstanceMap.new()
+		local ok, instance = reify(instanceMap, virtualInstances, "ROOT")
 
 		if not ok then
 			error(tostring(instance))
@@ -49,10 +54,13 @@ return function()
 		expect(instance.ClassName).to.equal("StringValue")
 		expect(instance.Name).to.equal("Spaghetti")
 		expect(instance.Value).to.equal("Hello, world!")
+
+		expect(instanceMap:size()).to.equal(1)
+		expect(instanceMap.fromIds["ROOT"]).to.equal(instance)
 	end)
 
 	it("should construct children", function()
-		local virtualInstanceMap = {
+		local virtualInstances = {
 			ROOT = {
 				ClassName = "Folder",
 				Name = "Parent",
@@ -68,7 +76,8 @@ return function()
 			},
 		}
 
-		local ok, instance = reify(virtualInstanceMap, "ROOT")
+		local instanceMap = InstanceMap.new()
+		local ok, instance = reify(instanceMap, virtualInstances, "ROOT")
 
 		if not ok then
 			error(tostring(instance))
@@ -79,5 +88,9 @@ return function()
 
 		local child = instance.Child
 		expect(child.ClassName).to.equal("Folder")
+
+		expect(instanceMap:size()).to.equal(2)
+		expect(instanceMap.fromIds["ROOT"]).to.equal(instance)
+		expect(instanceMap.fromIds["CHILD"]).to.equal(child)
 	end)
 end
