@@ -21,6 +21,7 @@ local function reify(virtualInstances, rootId, parentInstance)
 
 	if not ok then
 		return false, Error.new(Error.CannotCreateInstance, {
+			instanceId = rootId,
 			className = virtualInstance.ClassName,
 		})
 	end
