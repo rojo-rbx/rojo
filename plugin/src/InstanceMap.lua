@@ -112,10 +112,16 @@ function InstanceMap:destroyInstance(instance)
 	local id = self.fromInstances[instance]
 
 	if id ~= nil then
-		self:destroyId(id)
+		self:removeId(id)
 	else
-		Log.warn("Attempted to destroy untracked instance {}", instance)
+		Log.warn("Destroying untracked instance {}", instance)
 	end
+
+	for descendantInstance in ipairs(instance:GetDescendants()) do
+		self:removeInstance(descendantInstance)
+	end
+
+	instance:Destroy()
 end
 
 function InstanceMap:destroyId(id)
@@ -123,16 +129,8 @@ function InstanceMap:destroyId(id)
 	self:removeId(id)
 
 	if instance ~= nil then
-		local descendantsToDestroy = {}
-
-		for otherInstance in pairs(self.fromInstances) do
-			if otherInstance:IsDescendantOf(instance) then
-				table.insert(descendantsToDestroy, otherInstance)
-			end
-		end
-
-		for _, otherInstance in ipairs(descendantsToDestroy) do
-			self:removeInstance(otherInstance)
+		for descendantInstance in ipairs(instance:GetDescendants()) do
+			self:removeInstance(descendantInstance)
 		end
 
 		instance:Destroy()
