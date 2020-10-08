@@ -16,10 +16,23 @@ PatchSet.validate = t.interface({
 })
 
 --[[
-	Invert the given PatchSet using the given instance map.
+	Create a new, empty PatchSet.
 ]]
-function PatchSet.invert(patchSet, instanceMap)
-	error("not yet implemented", 2)
+function PatchSet.newEmpty()
+	return {
+		removed = {},
+		added = {},
+		updated = {},
+	}
+end
+
+--[[
+	Tells whether the given PatchSet is empty.
+]]
+function PatchSet.isEmpty(patchSet)
+	return next(patchSet.removed) == nil and
+		next(patchSet.added) == nil and
+		next(patchSet.updated) == nil
 end
 
 return PatchSet
