@@ -30,8 +30,8 @@ local function applyPatch(instanceMap, patch)
 
 	for id, virtualInstance in pairs(patch.added) do
 		if addedIdsVisited[id] ~= nil then
-			-- We already tried to add this instance from a previous iteration of
-			-- this loop.
+			-- We already tried to add this instance from a previous iteration
+			-- of this loop.
 			continue
 		end
 
@@ -64,6 +64,8 @@ local function applyPatch(instanceMap, patch)
 			)
 		end
 
+		-- TODO: reify should instead return the IDs of the instances it could
+		-- not create, so that we can more precisely report errors.
 		local ok = reify(instanceMap, patch.added, id, parentInstance)
 
 		if not ok then
@@ -72,8 +74,8 @@ local function applyPatch(instanceMap, patch)
 			local instancesToAdd = {id}
 
 			while #instancesToAdd > 0 do
-				local addId = instancesToAdd[#instancesToAdd]
-				unappliedPatch[id] = patch.added[addId]
+				local addId = table.remove(instancesToAdd)
+				unappliedPatch.added[addId] = patch.added[addId]
 
 				for _, childId in ipairs(patch.added[addId].Children) do
 					table.insert(instancesToAdd, childId)
