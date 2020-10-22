@@ -243,7 +243,7 @@ function ServeSession:__initialSync(rootInstanceId)
 
 			if not PatchSet.isEmpty(unappliedPatch) then
 				Log.warn("Could not apply all changes requested by the Rojo server!")
-				-- Log.debug("Unapplied patch: {:#?}", unappliedPatch)
+				Log.debug("Unapplied patch: {:#?}", unappliedPatch)
 			end
 		end)
 end
