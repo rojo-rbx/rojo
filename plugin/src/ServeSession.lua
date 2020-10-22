@@ -5,6 +5,7 @@ local Fmt = require(script.Parent.Parent.Fmt)
 local t = require(script.Parent.Parent.t)
 
 local InstanceMap = require(script.Parent.InstanceMap)
+local PatchSet = require(script.Parent.PatchSet)
 local Reconciler = require(script.Parent.Reconciler)
 local strict = require(script.Parent.strict)
 
@@ -222,11 +223,15 @@ function ServeSession:__initialSync(rootInstanceId)
 			-- Calculate the initial patch to apply to the DataModel to catch us
 			-- up to what Rojo thinks the place should look like.
 			Log.trace("Computing changes that plugin needs to make to catch up to server...")
-			local catchUpPatch = self.__reconciler:diff(
+			local success, catchUpPatch = self.__reconciler:diff(
 				readResponseBody.instances,
 				rootInstanceId,
 				game
 			)
+
+			if not success then
+				Log.error("Could not compute a diff to catch up to the Rojo server: {:#?}", catchUpPatch)
+			end
 
 			Log.trace("Computed hydration patch: {:#?}", debugPatch(catchUpPatch))
 
@@ -234,7 +239,12 @@ function ServeSession:__initialSync(rootInstanceId)
 			-- effectively a conflict between the Rojo server and the client. In
 			-- the future, we'll ask which changes the user wants to keep.
 
-			self.__reconciler:applyPatch(catchUpPatch)
+			local unappliedPatch = self.__reconciler:applyPatch(catchUpPatch)
+
+			if not PatchSet.isEmpty(unappliedPatch) then
+				Log.warn("Could not apply all changes requested by the Rojo server!")
+				-- Log.debug("Unapplied patch: {:#?}", unappliedPatch)
+			end
 		end)
 end
 
