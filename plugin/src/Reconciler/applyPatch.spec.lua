@@ -133,4 +133,6 @@ return function()
 		expect(instanceMap:size()).to.equal(1)
 		expect(#root:GetChildren()).to.equal(0)
 	end)
+
+	itFIXME("should apply property changes to instances", function() end)
 end
