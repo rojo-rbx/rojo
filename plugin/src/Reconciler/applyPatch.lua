@@ -12,8 +12,9 @@ local Types = require(script.Parent.Parent.Types)
 local invariant = require(script.Parent.Parent.invariant)
 
 local decodeValue = require(script.Parent.decodeValue)
-local setProperty = require(script.Parent.setProperty)
+local getProperty = require(script.Parent.getProperty)
 local reify = require(script.Parent.reify)
+local setProperty = require(script.Parent.setProperty)
 
 local function applyPatch(instanceMap, patch)
 	-- Tracks any portions of the patch that could not be applied to the DOM.
@@ -130,6 +131,21 @@ local function applyPatch(instanceMap, patch)
 				if not ok then
 					unappliedUpdate.changedProperties[propertyName] = propertyValue
 					partiallyApplied = true
+					continue
+				end
+
+				local ok, existingValue = getProperty(instance, propertyName)
+				if not ok then
+					unappliedUpdate.changedProperties[propertyName] = propertyValue
+					partiallyApplied = true
+				end
+
+				-- If the existing value is the same, we can skip trying to
+				-- apply it. This check is important specifically for very long
+				-- string properties. Even if the value we're trying to set is
+				-- the same as the existing value, if it is too long, Roblox
+				-- will throw an error.
+				if decodedValue == existingValue then
 					continue
 				end
 
