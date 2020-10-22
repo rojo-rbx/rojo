@@ -27,6 +27,25 @@ local function reify(instanceMap, virtualInstances, rootId, parentInstance)
 	return true, instanceOrErr
 end
 
+local function debugInstancePath(virtualInstances, id)
+	local virtualInstance = virtualInstances[id]
+	local name = virtualInstance.Name
+	id = virtualInstance.Parent
+
+	while id ~= nil do
+		local virtualInstance = virtualInstances[id]
+
+		if virtualInstance == nil then
+			break
+		end
+
+		name = virtualInstance.Name .. "." .. name
+		id = virtualInstance.Parent
+	end
+
+	return name
+end
+
 function reifyInner(virtualInstances, rootId, parentInstance, idsToAdd)
 	local virtualInstance = virtualInstances[rootId]
 
@@ -42,6 +61,7 @@ function reifyInner(virtualInstances, rootId, parentInstance, idsToAdd)
 	if not ok then
 		return false, Error.new(Error.CannotCreateInstance, {
 			instanceId = rootId,
+			instancePath = debugInstancePath(virtualInstances, rootId),
 			className = virtualInstance.ClassName,
 		})
 	end
@@ -56,6 +76,7 @@ function reifyInner(virtualInstances, rootId, parentInstance, idsToAdd)
 		if not ok then
 			value.details.propertyName = propertyName
 			value.details.instanceId = rootId
+			value.details.instancePath = debugInstancePath(virtualInstances, rootId)
 			return false, value
 		end
 
@@ -63,6 +84,7 @@ function reifyInner(virtualInstances, rootId, parentInstance, idsToAdd)
 
 		if not ok then
 			err.details.instanceId = rootId
+			err.details.instancePath = debugInstancePath(virtualInstances, rootId)
 			return false, err
 		end
 	end
