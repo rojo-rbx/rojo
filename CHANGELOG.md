@@ -1,6 +1,7 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Updated reflection database and other dependencies.
 
 ## [0.5.4](https://github.com/rojo-rbx/rojo/releases/tag/v0.5.4) (February 26, 2020)
 This is a general maintenance release for the Rojo 0.5.x release series.
