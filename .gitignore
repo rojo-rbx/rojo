@@ -10,6 +10,9 @@
 /*.rbxl
 /*.rbxlx
 
+# Test places for the Roblox Studio Plugin
+/plugin/*.rbxlx
+
 # Roblox Studio holds 'lock' files on places
 *.rbxl.lock
 *.rbxlx.lock

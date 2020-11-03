@@ -134,5 +134,26 @@ return function()
 		expect(#root:GetChildren()).to.equal(0)
 	end)
 
-	itFIXME("should apply property changes to instances", function() end)
+	it("should apply property changes to instances", function()
+		local value = Instance.new("StringValue")
+		value.Value = "HELLO"
+
+		local instanceMap = InstanceMap.new()
+		instanceMap:insert("VALUE", value)
+
+		local patch = PatchSet.newEmpty()
+		table.insert(patch.updated, {
+			id = "VALUE",
+			changedProperties = {
+				Value = {
+					Type = "String",
+					Value = "WORLD",
+				},
+			},
+		})
+
+		local unapplied = applyPatch(instanceMap, patch)
+		assert(PatchSet.isEmpty(unapplied), "expected remaining patch to be empty")
+		expect(value.Value).to.equal("WORLD")
+	end)
 end
