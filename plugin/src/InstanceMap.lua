@@ -117,7 +117,7 @@ function InstanceMap:destroyInstance(instance)
 		Log.warn("Destroying untracked instance {}", instance)
 	end
 
-	for descendantInstance in ipairs(instance:GetDescendants()) do
+	for _, descendantInstance in ipairs(instance:GetDescendants()) do
 		self:removeInstance(descendantInstance)
 	end
 
@@ -129,7 +129,7 @@ function InstanceMap:destroyId(id)
 	self:removeId(id)
 
 	if instance ~= nil then
-		for descendantInstance in ipairs(instance:GetDescendants()) do
+		for _, descendantInstance in ipairs(instance:GetDescendants()) do
 			self:removeInstance(descendantInstance)
 		end
 
