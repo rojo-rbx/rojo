@@ -3,28 +3,17 @@
 ]]
 
 local invariant = require(script.Parent.Parent.invariant)
-local Error = require(script.Parent.Error)
+local PatchSet = require(script.Parent.Parent.PatchSet)
 local setProperty = require(script.Parent.setProperty)
 local decodeValue = require(script.Parent.decodeValue)
 
 local reifyInner
 
 local function reify(instanceMap, virtualInstances, rootId, parentInstance)
-	-- Tracks a map from ID to added instance that should be inserted into
-	-- instanceMap if this operation is successful.
-	local idsToAdd = {}
+	local unappliedPatch = PatchSet.newEmpty()
+	reifyInner(instanceMap, virtualInstances, rootId, parentInstance, unappliedPatch)
 
-	local ok, instanceOrErr = reifyInner(virtualInstances, rootId, parentInstance, idsToAdd)
-
-	if not ok then
-		return false, instanceOrErr
-	end
-
-	for id, instance in pairs(idsToAdd) do
-		instanceMap:insert(id, instance)
-	end
-
-	return true, instanceOrErr
+	return unappliedPatch
 end
 
 local function debugInstancePath(virtualInstances, id)
@@ -46,11 +35,27 @@ local function debugInstancePath(virtualInstances, id)
 	return name
 end
 
-function reifyInner(virtualInstances, rootId, parentInstance, idsToAdd)
-	local virtualInstance = virtualInstances[rootId]
+--[[
+	Add the given ID and all of its descendants in virtualInstances to the given
+	PatchSet, marked for addition.
+]]
+local function addAllToPatch(patchSet, virtualInstances, id)
+	local virtualInstance = virtualInstances[id]
+	patchSet.added[id] = virtualInstance
+
+	for _, childId in ipairs(virtualInstance.Children) do
+		addAllToPatch(patchSet, virtualInstances, childId)
+	end
+end
+
+--[[
+	Inner function that defines the core routine.
+]]
+function reifyInner(instanceMap, virtualInstances, id, parentInstance, unappliedPatch)
+	local virtualInstance = virtualInstances[id]
 
 	if virtualInstance == nil then
-		invariant("Cannot reify an instance not present in virtualInstances\nID: {}", rootId)
+		invariant("Cannot reify an instance not present in virtualInstances\nID: {}", id)
 	end
 
 	-- Instance.new can fail if we're passing in something that can't be
@@ -59,48 +64,45 @@ function reifyInner(virtualInstances, rootId, parentInstance, idsToAdd)
 	local ok, instance = pcall(Instance.new, virtualInstance.ClassName)
 
 	if not ok then
-		return false, Error.new(Error.CannotCreateInstance, {
-			instanceId = rootId,
-			instancePath = debugInstancePath(virtualInstances, rootId),
-			className = virtualInstance.ClassName,
-		})
+		addAllToPatch(unappliedPatch, virtualInstances, id)
+		return
 	end
 
 	-- TODO: Can this fail? Previous versions of Rojo guarded against this, but
 	-- the reason why was uncertain.
 	instance.Name = virtualInstance.Name
 
+	-- Track all of the properties that we've failed to assign to this instance.
+	local unappliedProperties = {}
+
 	for propertyName, virtualValue in pairs(virtualInstance.Properties) do
 		local ok, value = decodeValue(virtualValue)
-
 		if not ok then
-			value.details.propertyName = propertyName
-			value.details.instanceId = rootId
-			value.details.instancePath = debugInstancePath(virtualInstances, rootId)
-			return false, value
+			unappliedProperties[propertyName] = virtualValue
+			continue
 		end
 
-		local ok, err = setProperty(instance, propertyName, value)
-
+		local ok = setProperty(instance, propertyName, value)
 		if not ok then
-			err.details.instanceId = rootId
-			err.details.instancePath = debugInstancePath(virtualInstances, rootId)
-			return false, err
+			unappliedProperties[propertyName] = virtualValue
 		end
+	end
+
+	-- If there were any properties that we failed to assign, push this into our
+	-- unapplied patch as an update that would need to be applied.
+	if next(unappliedProperties) ~= nil then
+		table.insert(unappliedPatch.updated, {
+			id = id,
+			changedProperties = unappliedProperties,
+		})
 	end
 
 	for _, childId in ipairs(virtualInstance.Children) do
-		local ok, err = reifyInner(virtualInstances, childId, instance, idsToAdd)
-
-		if not ok then
-			return false, err
-		end
+		reifyInner(instanceMap, virtualInstances, childId, instance, unappliedPatch)
 	end
 
 	instance.Parent = parentInstance
-	idsToAdd[rootId] = instance
-
-	return true, instance
+	instanceMap:insert(id, instance)
 end
 
 return reify

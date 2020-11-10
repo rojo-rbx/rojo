@@ -67,27 +67,11 @@ local function applyPatch(instanceMap, patch)
 			)
 		end
 
-		-- TODO: reify should instead return the IDs of the instances it could
-		-- not create, so that we can more precisely report errors.
-		local ok, err = reify(instanceMap, patch.added, id, parentInstance)
+		local failedToReify = reify(instanceMap, patch.added, id, parentInstance)
 
-		if not ok then
-			-- TODO: Once we can appropriately handle this error, we should
-			-- downgrade this verbosity to debug.
-			Log.warn("Failed to reify as part of applying a patch: {}", err)
-
-			-- If creating this instance failed, add it and all of its
-			-- descendants to unappliedPatch.
-			local instancesToAdd = {id}
-
-			while #instancesToAdd > 0 do
-				local addId = table.remove(instancesToAdd)
-				unappliedPatch.added[addId] = patch.added[addId]
-
-				for _, childId in ipairs(patch.added[addId].Children) do
-					table.insert(instancesToAdd, childId)
-				end
-			end
+		if not PatchSet.isEmpty(failedToReify) then
+			Log.debug("Failed to reify as part of applying a patch: {}", failedToReify)
+			PatchSet.assign(unappliedPatch, failedToReify)
 		end
 	end
 

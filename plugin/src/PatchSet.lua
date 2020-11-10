@@ -35,4 +35,27 @@ function PatchSet.isEmpty(patchSet)
 		next(patchSet.updated) == nil
 end
 
+--[[
+	Merge multiple PatchSet objects into the given PatchSet.
+]]
+function PatchSet.assign(target, ...)
+	for i = 1, select("#", ...) do
+		local sourcePatch = select(i, ...)
+
+		for _, removed in ipairs(sourcePatch.removed) do
+			table.insert(target.removed, removed)
+		end
+
+		for id, added in pairs(sourcePatch.added) do
+			target.added[id] = added
+		end
+
+		for _, update in ipairs(sourcePatch.updated) do
+			table.insert(target.updated, update)
+		end
+	end
+
+	return target
+end
+
 return PatchSet
