@@ -15,12 +15,13 @@ local function makeVariant(name)
 end
 
 makeVariant("CannotCreateInstance")
-makeVariant("UnknownProperty")
-makeVariant("UnwritableProperty")
-makeVariant("UnreadableProperty")
+makeVariant("CannotDecodeValue")
 makeVariant("LackingPropertyPermissions")
 makeVariant("OtherPropertyError")
-makeVariant("CannotDecodeValue")
+makeVariant("RefDidNotExist")
+makeVariant("UnknownProperty")
+makeVariant("UnreadableProperty")
+makeVariant("UnwritableProperty")
 
 function Error.new(kind, details)
 	return setmetatable({

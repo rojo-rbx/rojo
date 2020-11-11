@@ -20,9 +20,6 @@ local function applyPatch(instanceMap, patch)
 	-- Tracks any portions of the patch that could not be applied to the DOM.
 	local unappliedPatch = PatchSet.newEmpty()
 
-	-- Tracks the set of IDs that we've tried to add to the DOM from this patch.
-	local addedIdsVisited = {}
-
 	for _, removedIdOrInstance in ipairs(patch.removed) do
 		if Types.RbxId(removedIdOrInstance) then
 			instanceMap:destroyId(removedIdOrInstance)
@@ -32,15 +29,12 @@ local function applyPatch(instanceMap, patch)
 	end
 
 	for id, virtualInstance in pairs(patch.added) do
-		if addedIdsVisited[id] ~= nil then
-			-- We already tried to add this instance from a previous iteration
-			-- of this loop.
-			continue
-		end
-
 		if instanceMap.fromIds[id] ~= nil then
-			-- This instance already exists.
-			-- TODO: Should we use an invariant here? A warning?
+			-- This instance already exists. We might've already added it in a
+			-- previous iteration of this loop, or maybe this patch was not
+			-- supposed to list this instance.
+			--
+			-- It's probably fine, right?
 			continue
 		end
 
@@ -111,7 +105,7 @@ local function applyPatch(instanceMap, patch)
 
 		if update.changedProperties ~= nil then
 			for propertyName, propertyValue in pairs(update.changedProperties) do
-				local ok, decodedValue = decodeValue(propertyValue)
+				local ok, decodedValue = decodeValue(propertyValue, instanceMap)
 				if not ok then
 					unappliedUpdate.changedProperties[propertyName] = propertyValue
 					partiallyApplied = true

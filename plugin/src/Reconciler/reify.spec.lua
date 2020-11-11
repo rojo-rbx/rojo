@@ -173,4 +173,7 @@ return function()
 		local property = update.changedProperties["Value"]
 		expect(property).to.equal(virtualInstances["ROOT"].Properties.Value)
 	end)
+
+	itFIXME("should apply ref properties correctly", function() end)
+	itFIXME("should return errors when applying invalid refs", function() end)
 end

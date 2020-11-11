@@ -7,32 +7,28 @@ local PatchSet = require(script.Parent.Parent.PatchSet)
 local setProperty = require(script.Parent.setProperty)
 local decodeValue = require(script.Parent.decodeValue)
 
-local reifyInner
+local reifyInner, applyDeferredRefs
 
 local function reify(instanceMap, virtualInstances, rootId, parentInstance)
+	-- Create an empty patch that will be populated with any parts of this reify
+	-- that could not happen, like instances that couldn't be created and
+	-- properties that could not be assigned.
 	local unappliedPatch = PatchSet.newEmpty()
-	reifyInner(instanceMap, virtualInstances, rootId, parentInstance, unappliedPatch)
+
+	-- Contains a list of all of the ref properties that we'll need to assign
+	-- after all instances are created. We apply refs in a second pass, after
+	-- we create as many instances as we can, so that we ensure that referents
+	-- can be mapped to instances correctly.
+	local deferredRefs = {}
+
+	reifyInner(instanceMap, virtualInstances, rootId, parentInstance, unappliedPatch, deferredRefs)
+	applyDeferredRefs(instanceMap, deferredRefs)
 
 	return unappliedPatch
 end
 
-local function debugInstancePath(virtualInstances, id)
-	local virtualInstance = virtualInstances[id]
-	local name = virtualInstance.Name
-	id = virtualInstance.Parent
-
-	while id ~= nil do
-		local virtualInstance = virtualInstances[id]
-
-		if virtualInstance == nil then
-			break
-		end
-
-		name = virtualInstance.Name .. "." .. name
-		id = virtualInstance.Parent
-	end
-
-	return name
+function applyDeferredRefs(instanceMap, deferredRefs)
+	-- FIXME: Implement this function.
 end
 
 --[[
@@ -51,7 +47,7 @@ end
 --[[
 	Inner function that defines the core routine.
 ]]
-function reifyInner(instanceMap, virtualInstances, id, parentInstance, unappliedPatch)
+function reifyInner(instanceMap, virtualInstances, id, parentInstance, unappliedPatch, deferredRefs)
 	local virtualInstance = virtualInstances[id]
 
 	if virtualInstance == nil then
@@ -76,7 +72,10 @@ function reifyInner(instanceMap, virtualInstances, id, parentInstance, unapplied
 	local unappliedProperties = {}
 
 	for propertyName, virtualValue in pairs(virtualInstance.Properties) do
-		local ok, value = decodeValue(virtualValue)
+		-- FIXME: Check for Ref properties and add them to deferredRefs instead
+		-- of trying to resolve them here.
+
+		local ok, value = decodeValue(virtualValue, instanceMap)
 		if not ok then
 			unappliedProperties[propertyName] = virtualValue
 			continue
@@ -98,7 +97,7 @@ function reifyInner(instanceMap, virtualInstances, id, parentInstance, unapplied
 	end
 
 	for _, childId in ipairs(virtualInstance.Children) do
-		reifyInner(instanceMap, virtualInstances, childId, instance, unappliedPatch)
+		reifyInner(instanceMap, virtualInstances, childId, instance, unappliedPatch, deferredRefs)
 	end
 
 	instance.Parent = parentInstance
