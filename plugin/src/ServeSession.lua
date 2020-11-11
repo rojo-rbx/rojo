@@ -242,8 +242,8 @@ function ServeSession:__initialSync(rootInstanceId)
 			local unappliedPatch = self.__reconciler:applyPatch(catchUpPatch)
 
 			if not PatchSet.isEmpty(unappliedPatch) then
-				Log.warn("Could not apply all changes requested by the Rojo server!")
-				Log.debug("Unapplied patch: {:#?}", unappliedPatch)
+				Log.warn("Could not apply all changes requested by the Rojo server:\n{}",
+					PatchSet.humanSummary(self.__instanceMap, unappliedPatch))
 			end
 		end)
 end
@@ -252,7 +252,12 @@ function ServeSession:__mainSyncLoop()
 	return self.__apiContext:retrieveMessages()
 		:andThen(function(messages)
 			for _, message in ipairs(messages) do
-				self.__reconciler:applyPatch(message)
+				local unappliedPatch = self.__reconciler:applyPatch(message)
+
+				if not PatchSet.isEmpty(unappliedPatch) then
+					Log.warn("Could not apply all changes requested by the Rojo server:\n{}",
+						PatchSet.humanSummary(self.__instanceMap, unappliedPatch))
+				end
 			end
 
 			if self.__status ~= Status.Disconnected then

@@ -79,4 +79,106 @@ function PatchSet.assign(target, ...)
 	return target
 end
 
+--[[
+	Create a list of human-readable statements summarizing the contents of this
+	patch, intended to be displayed to users.
+]]
+function PatchSet.humanSummary(instanceMap, patchSet)
+	local statements = {}
+
+	for _, idOrInstance in ipairs(patchSet.removed) do
+		local instance, id
+
+		if type(idOrInstance) == "string" then
+			id = idOrInstance
+			instance = instanceMap.fromIds[id]
+		else
+			instance = idOrInstance
+			id = instanceMap.fromInstances[instance]
+		end
+
+		if instance ~= nil then
+			table.insert(statements, string.format("- Delete instance %s", instance:GetFullName()))
+		else
+			table.insert(statements, string.format("- Delete instance with ID %s", id))
+		end
+	end
+
+	local additionsMentioned = {}
+
+	local function addAllDescendents(virtualInstance)
+		additionsMentioned[virtualInstance.Id] = true
+
+		for _, childId in ipairs(virtualInstance.Children) do
+			addAllDescendents(patchSet.added[childId])
+		end
+	end
+
+	for id, addition in pairs(patchSet.added) do
+		if additionsMentioned[id] then
+			continue
+		end
+
+		local virtualInstance = addition
+		while true do
+			if virtualInstance.Parent == nil then
+				break
+			end
+
+			local virtualParent = patchSet.added[virtualInstance.Parent]
+			if virtualParent == nil then
+				break
+			end
+
+			virtualInstance = virtualParent
+		end
+
+		local parentDisplayName = "nil (how strange!)"
+		if virtualInstance.Parent ~= nil then
+			local parent = instanceMap.fromIds[virtualInstance.Parent]
+			if parent ~= nil then
+				parentDisplayName = parent:GetFullName()
+			end
+		end
+
+		table.insert(statements, string.format(
+			"- Add instance %q (ClassName %q) to %s",
+			virtualInstance.Name, virtualInstance.ClassName, parentDisplayName))
+	end
+
+	for _, update in ipairs(patchSet.updated) do
+		local updatedProperties = {}
+
+		if update.changedMetadata ~= nil then
+			table.insert(updatedProperties, "Rojo's Metadata")
+		end
+
+		if update.changedName ~= nil then
+			table.insert(updatedProperties, "Name")
+		end
+
+		if update.changedClassName ~= nil then
+			table.insert(updatedProperties, "ClassName")
+		end
+
+		for name in pairs(update.changedProperties) do
+			table.insert(updatedProperties, name)
+		end
+
+		local instance = instanceMap.fromIds[update.id]
+		local displayName
+		if instance ~= nil then
+			displayName = instance:GetFullName()
+		else
+			displayName = "[unknown instance]"
+		end
+
+		table.insert(statements, string.format(
+			"- Update properties on %s: %s",
+			displayName, table.concat(updatedProperties, ",")))
+	end
+
+	return table.concat(statements, "\n")
+end
+
 return PatchSet
