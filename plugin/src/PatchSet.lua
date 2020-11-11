@@ -36,6 +36,27 @@ function PatchSet.isEmpty(patchSet)
 end
 
 --[[
+	Tells whether the given PatchSet has any remove operations.
+]]
+function PatchSet.hasRemoves(patchSet)
+	return next(patchSet.removed) ~= nil
+end
+
+--[[
+	Tells whether the given PatchSet has any add operations.
+]]
+function PatchSet.hasAdditions(patchSet)
+	return next(patchSet.added) ~= nil
+end
+
+--[[
+	Tells whether the given PatchSet has any update operations.
+]]
+function PatchSet.hasUpdates(patchSet)
+	return next(patchSet.updated) ~= nil
+end
+
+--[[
 	Merge multiple PatchSet objects into the given PatchSet.
 ]]
 function PatchSet.assign(target, ...)
