@@ -91,8 +91,6 @@ function InstanceMap:removeId(id)
 		self:__disconnectSignals(instance)
 		self.fromIds[id] = nil
 		self.fromInstances[instance] = nil
-	else
-		Log.warn("Attempted to remove nonexistant ID {}", id)
 	end
 end
 
@@ -103,8 +101,6 @@ function InstanceMap:removeInstance(instance)
 	if id ~= nil then
 		self.fromInstances[instance] = nil
 		self.fromIds[id] = nil
-	else
-		Log.warn("Attempted to remove nonexistant instance {}", instance)
 	end
 end
 
@@ -113,8 +109,6 @@ function InstanceMap:destroyInstance(instance)
 
 	if id ~= nil then
 		self:removeId(id)
-	else
-		Log.warn("Destroying untracked instance {}", instance)
 	end
 
 	for _, descendantInstance in ipairs(instance:GetDescendants()) do
@@ -134,8 +128,6 @@ function InstanceMap:destroyId(id)
 		end
 
 		instance:Destroy()
-	else
-		Log.warn("Attempted to destroy nonexistant ID {}", id)
 	end
 end
 
