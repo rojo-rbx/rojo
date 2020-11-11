@@ -22,13 +22,9 @@ local function reify(instanceMap, virtualInstances, rootId, parentInstance)
 	local deferredRefs = {}
 
 	reifyInner(instanceMap, virtualInstances, rootId, parentInstance, unappliedPatch, deferredRefs)
-	applyDeferredRefs(instanceMap, deferredRefs)
+	applyDeferredRefs(instanceMap, deferredRefs, unappliedPatch)
 
 	return unappliedPatch
-end
-
-function applyDeferredRefs(instanceMap, deferredRefs)
-	-- FIXME: Implement this function.
 end
 
 --[[
@@ -72,8 +68,17 @@ function reifyInner(instanceMap, virtualInstances, id, parentInstance, unapplied
 	local unappliedProperties = {}
 
 	for propertyName, virtualValue in pairs(virtualInstance.Properties) do
-		-- FIXME: Check for Ref properties and add them to deferredRefs instead
-		-- of trying to resolve them here.
+		-- Because refs may refer to instances that we haven't constructed yet,
+		-- we defer applying any ref properties until all instances are created.
+		if virtualValue.Type == "Ref" then
+			table.insert(deferredRefs, {
+				id = id,
+				instance = instance,
+				propertyName = propertyName,
+				virtualValue = virtualValue,
+			})
+			continue
+		end
 
 		local ok, value = decodeValue(virtualValue, instanceMap)
 		if not ok then
@@ -102,6 +107,46 @@ function reifyInner(instanceMap, virtualInstances, id, parentInstance, unapplied
 
 	instance.Parent = parentInstance
 	instanceMap:insert(id, instance)
+end
+
+function applyDeferredRefs(instanceMap, deferredRefs, unappliedPatch)
+	local function markFailed(id, propertyName, virtualValue)
+		-- If there is already an updated entry in the unapplied patch for this
+		-- ref, use the existing one. This could match other parts of the
+		-- instance that failed to be created, or even just other refs that
+		-- failed to apply.
+		--
+		-- This is important for instances like selectable GUI objects, which
+		-- have many similar referent properties.
+		for _, existingUpdate in ipairs(unappliedPatch.updated) do
+			if existingUpdate.id == id then
+				existingUpdate.changedProperties[propertyName] = virtualValue
+				return
+			end
+		end
+
+		-- We didn't find an existing entry that matched, so push a new entry
+		-- into our unapplied patch.
+		table.insert(unappliedPatch.updated, {
+			id = id,
+			changedProperties = {
+				[propertyName] = virtualValue,
+			},
+		})
+	end
+
+	for _, entry in ipairs(deferredRefs) do
+		local targetInstance = instanceMap.fromIds[entry.virtualValue.Value]
+		if targetInstance == nil then
+			markFailed(entry.id, entry.propertyName, entry.virtualValue)
+			continue
+		end
+
+		local ok = setProperty(entry.instance, entry.propertyName, targetInstance)
+		if not ok then
+			markFailed(entry.id, entry.propertyName, entry.virtualValue)
+		end
+	end
 end
 
 return reify

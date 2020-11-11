@@ -174,6 +174,179 @@ return function()
 		expect(property).to.equal(virtualInstances["ROOT"].Properties.Value)
 	end)
 
-	itFIXME("should apply ref properties correctly", function() end)
-	itFIXME("should return errors when applying invalid refs", function() end)
+	-- This is the simplest ref case: ensure that setting a ref property that
+	-- points to an instance that was previously created as part of the same
+	-- reify operation works.
+	it("should apply properties containing refs to ancestors", function()
+		local virtualInstances = {
+			ROOT = {
+				ClassName = "Folder",
+				Name = "Root",
+				Properties = {},
+				Children = {"CHILD"},
+			},
+
+			CHILD = {
+				ClassName = "ObjectValue",
+				Name = "Child",
+				Properties = {
+					Value = {
+						Type = "Ref",
+						Value = "ROOT",
+					},
+				},
+				Children = {},
+			},
+		}
+
+		local instanceMap = InstanceMap.new()
+		local unappliedPatch = reify(instanceMap, virtualInstances, "ROOT")
+
+		assert(PatchSet.isEmpty(unappliedPatch), "expected remaining patch to be empty")
+
+		local root = instanceMap.fromIds["ROOT"]
+		local child = instanceMap.fromIds["CHILD"]
+		expect(child.Value).to.equal(root)
+	end)
+
+	-- This is another simple case: apply a ref property that points to an
+	-- existing instance. In this test, that instance was created before the
+	-- reify operation started and is present in instanceMap.
+	it("should apply properties containing refs to previously-existing instances", function()
+		local virtualInstances = {
+			ROOT = {
+				ClassName = "ObjectValue",
+				Name = "Root",
+				Properties = {
+					Value = {
+						Type = "Ref",
+						Value = "EXISTING",
+					},
+				},
+				Children = {},
+			},
+		}
+
+		local instanceMap = InstanceMap.new()
+
+		local existing = Instance.new("Folder")
+		existing.Name = "Existing"
+		instanceMap:insert("EXISTING", existing)
+
+		local unappliedPatch = reify(instanceMap, virtualInstances, "ROOT")
+
+		assert(PatchSet.isEmpty(unappliedPatch), "expected remaining patch to be empty")
+
+		local root = instanceMap.fromIds["ROOT"]
+		expect(root.Value).to.equal(existing)
+	end)
+
+	-- This is a tricky ref case: CHILD_A points to CHILD_B, but is constructed
+	-- first. Deferred ref application is required to implement this case
+	-- correctly.
+	it("should apply properties containing refs to later siblings correctly", function()
+		local virtualInstances = {
+			ROOT = {
+				ClassName = "Folder",
+				Name = "Root",
+				Properties = {},
+				Children = {"CHILD_A", "CHILD_B"},
+			},
+
+			CHILD_A = {
+				ClassName = "ObjectValue",
+				Name = "Child A",
+				Properties = {
+					Value = {
+						Type = "Ref",
+						Value = "Child B",
+					},
+				},
+				Children = {},
+			},
+
+			CHILD_B = {
+				ClassName = "Folder",
+				Name = "Child B",
+				Properties = {},
+				Children = {},
+			},
+		}
+
+		local instanceMap = InstanceMap.new()
+		local unappliedPatch = reify(instanceMap, virtualInstances, "ROOT")
+
+		assert(PatchSet.isEmpty(unappliedPatch), "expected remaining patch to be empty")
+
+		local childA = instanceMap.fromIds["CHILD_A"]
+		local childB = instanceMap.fromIds["CHILD_B"]
+		expect(childA.Value).to.equal(childB)
+	end)
+
+	-- This is the classic case that calls for deferred ref application. In this
+	-- test, the root instance has a ref property that refers to its child. The
+	-- root is definitely constructed first.
+	--
+	-- This is distinct from the sibling case in that the child will be
+	-- constructed as part of a recursive call before the parent has totally
+	-- finished. Given deferred refs, this should not fail, but it is a good
+	-- case to test.
+	it("should apply properties containing refs to later siblings correctly", function()
+		local virtualInstances = {
+			ROOT = {
+				ClassName = "ObjectValue",
+				Name = "Root",
+				Properties = {
+					Value = {
+						Type = "Ref",
+						Value = "CHILD",
+					},
+				},
+				Children = {"CHILD"},
+			},
+
+			CHILD = {
+				ClassName = "Folder",
+				Name = "Child",
+				Properties = {},
+				Children = {},
+			},
+		}
+
+		local instanceMap = InstanceMap.new()
+		local unappliedPatch = reify(instanceMap, virtualInstances, "ROOT")
+
+		assert(PatchSet.isEmpty(unappliedPatch), "expected remaining patch to be empty")
+
+		local root = instanceMap.fromIds["ROOT"]
+		local child = instanceMap.fromIds["CHILD"]
+		expect(root.Value).to.equal(child)
+	end)
+
+	it("should return a partial patch when applying invalid refs", function()
+		local virtualInstances = {
+			ROOT = {
+				ClassName = "ObjectValue",
+				Name = "Root",
+				Properties = {
+					Value = {
+						Type = "Ref",
+						Value = "SORRY",
+					},
+				},
+				Children = {},
+			},
+		}
+
+		local instanceMap = InstanceMap.new()
+		local unappliedPatch = reify(instanceMap, virtualInstances, "ROOT")
+
+		assert(not PatchSet.hasRemoves(unappliedPatch), "expected no removes")
+		assert(not PatchSet.hasAdditions(unappliedPatch), "expected no additions")
+		expect(#unappliedPatch.updated).to.equal(1)
+
+		local update = unappliedPatch.updated[1]
+		expect(update.id).to.equal("ROOT")
+		expect(update.changedProperties.Value).to.equal(virtualInstances["ROOT"].Properties.Value)
+	end)
 end
