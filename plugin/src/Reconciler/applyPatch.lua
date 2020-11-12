@@ -112,21 +112,6 @@ local function applyPatch(instanceMap, patch)
 					continue
 				end
 
-				local ok, existingValue = getProperty(instance, propertyName)
-				if not ok then
-					unappliedUpdate.changedProperties[propertyName] = propertyValue
-					partiallyApplied = true
-				end
-
-				-- If the existing value is the same, we can skip trying to
-				-- apply it. This check is important specifically for very long
-				-- string properties. Even if the value we're trying to set is
-				-- the same as the existing value, if it is too long, Roblox
-				-- will throw an error.
-				if decodedValue == existingValue then
-					continue
-				end
-
 				local ok = setProperty(instance, propertyName, decodedValue)
 				if not ok then
 					unappliedUpdate.changedProperties[propertyName] = propertyValue
