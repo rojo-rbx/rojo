@@ -12,7 +12,6 @@ local Types = require(script.Parent.Parent.Types)
 local invariant = require(script.Parent.Parent.invariant)
 
 local decodeValue = require(script.Parent.decodeValue)
-local getProperty = require(script.Parent.getProperty)
 local reify = require(script.Parent.reify)
 local setProperty = require(script.Parent.setProperty)
 
