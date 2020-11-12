@@ -33,6 +33,16 @@ function InstanceMap.new(onInstanceChanged)
 	return setmetatable(self, InstanceMap)
 end
 
+function InstanceMap:size()
+	local size = 0
+
+	for _ in pairs(self.fromIds) do
+		size = size + 1
+	end
+
+	return size
+end
+
 --[[
 	Disconnect all connections and release all instance references.
 ]]
@@ -81,8 +91,6 @@ function InstanceMap:removeId(id)
 		self:__disconnectSignals(instance)
 		self.fromIds[id] = nil
 		self.fromInstances[instance] = nil
-	else
-		Log.warn("Attempted to remove nonexistant ID {}", id)
 	end
 end
 
@@ -93,8 +101,6 @@ function InstanceMap:removeInstance(instance)
 	if id ~= nil then
 		self.fromInstances[instance] = nil
 		self.fromIds[id] = nil
-	else
-		Log.warn("Attempted to remove nonexistant instance {}", instance)
 	end
 end
 
@@ -102,10 +108,14 @@ function InstanceMap:destroyInstance(instance)
 	local id = self.fromInstances[instance]
 
 	if id ~= nil then
-		self:destroyId(id)
-	else
-		Log.warn("Attempted to destroy untracked instance {}", instance)
+		self:removeId(id)
 	end
+
+	for _, descendantInstance in ipairs(instance:GetDescendants()) do
+		self:removeInstance(descendantInstance)
+	end
+
+	instance:Destroy()
 end
 
 function InstanceMap:destroyId(id)
@@ -113,21 +123,11 @@ function InstanceMap:destroyId(id)
 	self:removeId(id)
 
 	if instance ~= nil then
-		local descendantsToDestroy = {}
-
-		for otherInstance in pairs(self.fromInstances) do
-			if otherInstance:IsDescendantOf(instance) then
-				table.insert(descendantsToDestroy, otherInstance)
-			end
-		end
-
-		for _, otherInstance in ipairs(descendantsToDestroy) do
-			self:removeInstance(otherInstance)
+		for _, descendantInstance in ipairs(instance:GetDescendants()) do
+			self:removeInstance(descendantInstance)
 		end
 
 		instance:Destroy()
-	else
-		Log.warn("Attempted to destroy nonexistant ID {}", id)
 	end
 end
 

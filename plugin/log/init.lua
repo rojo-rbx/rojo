@@ -53,4 +53,8 @@ function Log.warn(template, ...)
 	end
 end
 
+function Log.error(template, ...)
+	error(Fmt.fmt(template, ...))
+end
+
 return Log

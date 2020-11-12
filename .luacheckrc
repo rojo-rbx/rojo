@@ -33,7 +33,7 @@ stds.plugin = {
 stds.testez = {
 	read_globals = {
 		"describe",
-		"it", "itFOCUS", "itSKIP",
+		"it", "itFOCUS", "itSKIP", "itFIXME",
 		"FOCUS", "SKIP", "HACK_NO_XPCALL",
 		"expect",
 	}
