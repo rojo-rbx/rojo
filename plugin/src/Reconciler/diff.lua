@@ -67,10 +67,14 @@ local function diff(instanceMap, virtualInstances, rootId)
 
 			if ok then
 				local existingValue = existingValueOrErr
-				local decodedValue = decodeValue(virtualValue)
+				local ok, decodedValue = decodeValue(virtualValue, instanceMap)
 
-				if existingValue ~= decodedValue then
-					changedProperties[propertyName] = virtualValue
+				if ok then
+					if existingValue ~= decodedValue then
+						changedProperties[propertyName] = virtualValue
+					end
+				else
+					Log.warn("Failed to decode property of type {}", virtualValue.Type)
 				end
 			else
 				local err = existingValueOrErr

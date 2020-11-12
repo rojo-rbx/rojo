@@ -1,9 +1,10 @@
 return function()
 	local Log = require(script.Parent.Parent.Parent.Log)
 
-	local diff = require(script.Parent.diff)
-
 	local InstanceMap = require(script.Parent.Parent.InstanceMap)
+	local PatchSet = require(script.Parent.Parent.PatchSet)
+
+	local diff = require(script.Parent.diff)
 
 	local function isEmpty(table)
 		return next(table) == nil, "Table was not empty"
@@ -108,6 +109,32 @@ return function()
 		expect(patchProperty).to.be.a("table")
 		expect(patchProperty.Type).to.equal("String")
 		expect(patchProperty.Value).to.equal("Hello, world!")
+	end)
+
+	it("should generate an empty patch if no properties changed", function()
+		local knownInstances = InstanceMap.new()
+		local virtualInstances = {
+			ROOT = {
+				ClassName = "StringValue",
+				Name = "Value",
+				Properties = {
+					Value = {
+						Type = "String",
+						Value = "Hello, world!",
+					},
+				},
+				Children = {},
+			},
+		}
+
+		local rootInstance = Instance.new("StringValue")
+		rootInstance.Value = "Hello, world!"
+		knownInstances:insert("ROOT", rootInstance)
+
+		local ok, patch = diff(knownInstances, virtualInstances, "ROOT")
+
+		assert(ok, tostring(patch))
+		assert(PatchSet.isEmpty(patch), "expected empty patch")
 	end)
 
 	it("should ignore unknown properties", function()
