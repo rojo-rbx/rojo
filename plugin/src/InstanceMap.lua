@@ -79,6 +79,9 @@ function InstanceMap:__fmtDebug(output)
 end
 
 function InstanceMap:insert(id, instance)
+	self:removeId(id)
+	self:removeInstance(instance)
+
 	self.fromIds[id] = instance
 	self.fromInstances[instance] = id
 	self:__connectSignals(instance)
