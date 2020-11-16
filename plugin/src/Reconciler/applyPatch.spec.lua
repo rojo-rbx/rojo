@@ -156,4 +156,43 @@ return function()
 		assert(PatchSet.isEmpty(unapplied), "expected remaining patch to be empty")
 		expect(value.Value).to.equal("WORLD")
 	end)
+
+	it("should recreate instances when changedClassName is set, preserving children", function()
+		local root = Instance.new("Folder")
+		root.Name = "Initial Root Name"
+
+		local child = Instance.new("Folder")
+		child.Name = "Child"
+		child.Parent = root
+
+		local instanceMap = InstanceMap.new()
+		instanceMap:insert("ROOT", root)
+		instanceMap:insert("CHILD", child)
+
+		local patch = PatchSet.newEmpty()
+		table.insert(patch.updated, {
+			id = "ROOT",
+			changedName = "Updated Root Name",
+			changedClassName = "StringValue",
+			changedProperties = {
+				Value = {
+					Type = "String",
+					Value = "I am Root",
+				},
+			},
+		})
+
+		local unapplied = applyPatch(instanceMap, patch)
+		assert(PatchSet.isEmpty(unapplied), "expected remaining patch to be empty")
+
+		local newRoot = instanceMap.fromIds["ROOT"]
+		assert(newRoot ~= root, "expected instance to be recreated")
+		expect(newRoot.ClassName).to.equal("StringValue")
+		expect(newRoot.Name).to.equal("Updated Root Name")
+		expect(newRoot.Value).to.equal("I am Root")
+
+		local newChild = newRoot:FindFirstChild("Child")
+		assert(newChild ~= nil, "expected child to be present")
+		assert(newChild == child, "expected child to be preserved")
+	end)
 end

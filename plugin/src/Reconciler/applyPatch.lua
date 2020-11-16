@@ -73,7 +73,7 @@ local function applyPatch(instanceMap, patch)
 
 		if instance == nil then
 			-- We can't update an instance that doesn't exist.
-			-- TODO: Should this be an invariant?
+			table.insert(unappliedPatch.updated, update)
 			continue
 		end
 
@@ -84,10 +84,80 @@ local function applyPatch(instanceMap, patch)
 		}
 		local partiallyApplied = false
 
+		-- If the instance's className changed, we have a bumpy ride ahead while
+		-- we recreate this instance and move all of its children into the new
+		-- copy atomically...ish.
 		if update.changedClassName ~= nil then
-			-- TODO: Support changing class name by destroying + recreating.
-			unappliedUpdate.changedClassName = update.changedClassName
-			partiallyApplied = true
+			-- If the instance's name also changed, we'll do it here, since this
+			-- branch will skip the rest of the loop iteration.
+			local newName = update.changedName or instance.Name
+
+			-- TODO: When changing between instances that have similar sets of
+			-- properties, like between an ImageLabel and an ImageButton, we
+			-- should preserve all of the properties that are shared between the
+			-- two classes unless they're changed as part of this patch. This is
+			-- similar to how "class changer" Studio plugins work.
+			--
+			-- For now, we'll only apply properties that are mentioned in this
+			-- update. Patches with changedClassName set only occur in specific
+			-- circumstances, usually between Folder and ModuleScript instances.
+			-- While this may result in some issues, like not preserving the
+			-- "Archived" property, a robust solution is sufficiently
+			-- complicated that we're pushing it off for now.
+			local newProperties = update.changedProperties
+
+			-- If the instance's ClassName changed, we'll kick into reify to
+			-- create this instance. We'll handle moving all of children between
+			-- the instances after the new one is created.
+			local mockVirtualInstance = {
+				Id = update.id,
+				Name = newName,
+				ClassName = update.changedClassName,
+				Properties = newProperties,
+				Children = {},
+			}
+
+			local mockAdded = {
+				[update.id] = mockVirtualInstance,
+			}
+
+			local failedToReify = reify(instanceMap, mockAdded, update.id, instance.Parent)
+
+			local newInstance = instanceMap.fromIds[update.id]
+
+			-- Some parts of reify may have failed, but this is not necessarily
+			-- critical. If the instance wasn't recreated or has the wrong Name,
+			-- we'll consider our attempt a failure.
+			if instance == newInstance or newInstance.Name ~= newName then
+				table.insert(unappliedPatch.updated, update)
+				continue
+			end
+
+			-- Here are the non-critical failures. We know that the instance
+			-- succeeded in creating and that assigning Name did not fail, but
+			-- other property assignments might've.
+			if not PatchSet.isEmpty(failedToReify) then
+				PatchSet.assign(unappliedPatch, failedToReify)
+			end
+
+			-- Watch out, this is the scary part! Move all of the children of
+			-- instance into newInstance.
+			--
+			-- TODO: If this fails part way through, should we move everything
+			-- back? For now, we assume that moving things will not fail.
+			for _, child in ipairs(instance:GetChildren()) do
+				child.Parent = newInstance
+			end
+
+			-- See you later, original instance.
+			--
+			-- TODO: Can this fail? Some kinds of instance may not appreciate
+			-- being destroyed, like services.
+			instance:Destroy()
+
+			-- This completes your rebuilding a plane mid-flight safety
+			-- instruction. Please sit back, relax, and enjoy your flight.
+			continue
 		end
 
 		if update.changedName ~= nil then
