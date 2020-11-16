@@ -86,7 +86,7 @@ local function applyPatch(instanceMap, patch)
 
 		-- If the instance's className changed, we have a bumpy ride ahead while
 		-- we recreate this instance and move all of its children into the new
-		-- copy atomically...ish.
+		-- version atomically...ish.
 		if update.changedClassName ~= nil then
 			-- If the instance's name also changed, we'll do it here, since this
 			-- branch will skip the rest of the loop iteration.
@@ -135,7 +135,7 @@ local function applyPatch(instanceMap, patch)
 
 			-- Here are the non-critical failures. We know that the instance
 			-- succeeded in creating and that assigning Name did not fail, but
-			-- other property assignments might've.
+			-- other property assignments might've failed.
 			if not PatchSet.isEmpty(failedToReify) then
 				PatchSet.assign(unappliedPatch, failedToReify)
 			end
