@@ -6283,7 +6283,7 @@ return {
 				isCanonical = true,
 				canonicalName = nil,
 				serializedName = nil,
-				scriptability = "ReadWrite",
+				scriptability = "None",
 				serializes = true,
 			},
 		},
