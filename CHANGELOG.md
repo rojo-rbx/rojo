@@ -2,6 +2,7 @@
 
 ## Unreleased Changes
 * Fixed the Rojo plugin attempted to write the non-scriptable properties `Instance.SourceAssetId` and `HttpServer.HttpEnabled`.
+* Fixed the Rojo plugin's handling of null referents.
 
 ## [6.0.0 Release Candidate 2](https://github.com/rojo-rbx/rojo/releases/tag/v6.0.0-rc.2) (November 19, 2020)
 * Fixed crash when malformed CSV files are put into a project. ([#310](https://github.com/rojo-rbx/rojo/issues/310))
