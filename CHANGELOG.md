@@ -1,6 +1,8 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+
+## [6.0.0 Release Candidate 3](https://github.com/rojo-rbx/rojo/releases/tag/v6.0.0-rc.3) (November 19, 2020)
 * Fixed the Rojo plugin attempted to write the non-scriptable properties `Instance.SourceAssetId` and `HttpServer.HttpEnabled`.
 * Fixed the Rojo plugin's handling of null referents.
 
