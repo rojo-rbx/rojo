@@ -9,6 +9,10 @@ local Error = require(script.Parent.Error)
 local function decodeValue(virtualValue, instanceMap)
 	-- Refs are represented as IDs in the same space that Rojo's protocol uses.
 	if virtualValue.Type == "Ref" then
+		if virtualValue.Value == nil then
+			return true, nil
+		end
+
 		local instance = instanceMap.fromIds[virtualValue.Value]
 
 		if instance ~= nil then

@@ -136,15 +136,21 @@ function applyDeferredRefs(instanceMap, deferredRefs, unappliedPatch)
 	end
 
 	for _, entry in ipairs(deferredRefs) do
-		local targetInstance = instanceMap.fromIds[entry.virtualValue.Value]
+		local virtualValue = entry.virtualValue
+
+		if virtualValue.Value == nil then
+			continue
+		end
+
+		local targetInstance = instanceMap.fromIds[virtualValue.Value]
 		if targetInstance == nil then
-			markFailed(entry.id, entry.propertyName, entry.virtualValue)
+			markFailed(entry.id, entry.propertyName, virtualValue)
 			continue
 		end
 
 		local ok = setProperty(entry.instance, entry.propertyName, targetInstance)
 		if not ok then
-			markFailed(entry.id, entry.propertyName, entry.virtualValue)
+			markFailed(entry.id, entry.propertyName, virtualValue)
 		end
 	end
 end
