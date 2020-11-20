@@ -25,6 +25,9 @@
     },
     "t": {
       "$path": "modules/t/lib"
+    },
+    "Flipper": {
+      "$path": "modules/flipper/src"
     }
   }
 }
