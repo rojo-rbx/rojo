@@ -93,6 +93,7 @@ function App:render()
 					name = "Rojo",
 					tooltip = "Show or hide the Rojo panel",
 					icon = Assets.Images.Icon,
+					active = self.state.guiEnabled,
 					enabled = true,
 					onClick = function()
 						self:setState(function(state)
