@@ -19,6 +19,13 @@ local Assets = {
 		Logo = "rbxassetid://3405346157",
 		Icon = "rbxassetid://3405341609",
 	},
+	Circles = {
+		[16] = "rbxassetid://3056541177",
+		[32] = "rbxassetid://3088713341",
+		[64] = "rbxassetid://4918677124",
+		[128] = "rbxassetid://2600845734",
+		[500] = "rbxassetid://2609138523"
+	},
 	StartSession = "",
 	SessionActive = "",
 	Configure = "",

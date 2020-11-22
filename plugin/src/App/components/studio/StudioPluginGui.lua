@@ -14,6 +14,7 @@ StudioPluginGui.defaultProps = {
 	overridePreviousState = false,
 	floatingSize = Vector2.new(0, 0),
 	minimumSize = Vector2.new(0, 0),
+	zIndexBehavior = Enum.ZIndexBehavior.Sibling,
 }
 
 function StudioPluginGui:render()
@@ -43,6 +44,7 @@ function StudioPluginGui:render()
 
 			self.pluginGui.Name = self.props.id
 			self.pluginGui.Title = self.props.title
+			self.pluginGui.ZIndexBehavior = self.props.zIndexBehavior
 
 			return e(Roact.Portal, {
 				target = self.pluginGui,

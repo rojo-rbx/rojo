@@ -71,6 +71,8 @@ function App:render()
 				floatingSize = Vector2.new(300, 200),
 				minimumSize = Vector2.new(300, 200),
 
+				zIndexBehavior = Enum.ZIndexBehavior.Sibling,
+
 				onInitialState = function(initialState)
 					self:setState({
 						guiEnabled = initialState,

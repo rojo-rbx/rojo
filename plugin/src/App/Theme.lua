@@ -38,7 +38,7 @@ local lightTheme = strict("LightTheme", {
 
 	Button = {
 		Solid = {
-			HoverOverlay = hexColor(0xFFFFFF),
+			ActionFill = hexColor(0xFFFFFF),
 
 			Enabled = {
 				Text = hexColor(0xFFFFFF),
@@ -52,7 +52,7 @@ local lightTheme = strict("LightTheme", {
 		},
 
 		Bordered = {
-			HoverOverlay = hexColor(0x000000),
+			ActionFill = hexColor(0x000000),
 
 			Enabled = {
 				Text = hexColor(0x393939),
@@ -87,7 +87,7 @@ local darkTheme = strict("DarkTheme", {
 
 	Button = {
 		Solid = {
-			HoverOverlay = hexColor(0xFFFFFF),
+			ActionFill = hexColor(0xFFFFFF),
 
 			Enabled = {
 				Text = hexColor(0xFFFFFF),
@@ -101,7 +101,7 @@ local darkTheme = strict("DarkTheme", {
 		},
 
 		Bordered = {
-			HoverOverlay = hexColor(0xFFFFFF),
+			ActionFill = hexColor(0xFFFFFF),
 
 			Enabled = {
 				Text = hexColor(0xDBDBDB),

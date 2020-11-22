@@ -3,6 +3,8 @@ local Rojo = script:FindFirstAncestor("Rojo")
 local Roact = require(Rojo.Roact)
 local Flipper = require(Rojo.Flipper)
 
+local bindingUtil = require(script.Parent.bindingUtil)
+
 local e = Roact.createElement
 
 local Page = Roact.Component:extend("Page")
@@ -12,13 +14,10 @@ function Page:init()
 		rendered = self.props.active
 	})
 
-	local motor = Flipper.SingleMotor.new(self.props.active and 1 or 0)
-	local motorBinding, setMotorBinding = Roact.createBinding(motor:getValue())
-	motor:onStep(setMotorBinding)
-	self.motor = motor
-	self.binding = motorBinding
+	self.motor = Flipper.SingleMotor.new(self.props.active and 1 or 0)
+	self.binding = bindingUtil.fromMotor(self.motor)
 
-	motor:onStep(function(value)
+	self.motor:onStep(function(value)
 		local rendered = value > 0
 
 		self:setState(function(state)

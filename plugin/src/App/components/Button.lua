@@ -8,8 +8,10 @@ local Flipper = require(Rojo.Flipper)
 
 local Theme = require(Plugin.App.Theme)
 local Assets = require(Plugin.Assets)
+local bindingUtil = require(Plugin.App.bindingUtil)
 
 local SlicedImage = require(script.Parent.SlicedImage)
+local TouchRipple = require(script.Parent.TouchRipple)
 
 local SPRING_PROPS = {
 	frequency = 5,
@@ -18,39 +20,14 @@ local SPRING_PROPS = {
 
 local e = Roact.createElement
 
-local function mapLerpColor(binding, color1, color2)
-	return binding:map(function(value)
-		return color1:Lerp(color2, value)
-	end)
-end
-
-local function bindingDeriveProperty(binding, propertyName)
-	return binding:map(function(values)
-		return values[propertyName]
-	end)
-end
-
-local function blendAlpha(alphaValues)
-	local alpha
-
-	for _, value in pairs(alphaValues) do
-		alpha = alpha and alpha + (1 - alpha) * value or value
-	end
-
-	return alpha
-end
-
 local Button = Roact.Component:extend("Button")
 
 function Button:init()
-	local motor = Flipper.GroupMotor.new({
+	self.motor = Flipper.GroupMotor.new({
 		hover = 0,
 		enabled = self.props.enabled and 1 or 0,
 	})
-	local motorBinding, setMotorBinding = Roact.createBinding(motor:getValue())
-	motor:onStep(setMotorBinding)
-	self.motor = motor
-	self.binding = motorBinding
+	self.binding = bindingUtil.fromMotor(self.motor)
 end
 
 function Button:render()
@@ -64,8 +41,8 @@ function Button:render()
 
 		theme = theme.Button[style]
 
-		local bindingHover = bindingDeriveProperty(self.binding, "hover")
-		local bindingEnabled = bindingDeriveProperty(self.binding, "enabled")
+		local bindingHover = bindingUtil.deriveProperty(self.binding, "hover")
+		local bindingEnabled = bindingUtil.deriveProperty(self.binding, "enabled")
 
 		return e("ImageButton", {
 			Size = UDim2.new(0, 15 + textSize.X + 15, 0, 34),
@@ -89,11 +66,17 @@ function Button:render()
 				})
 			end,
 		}, {
+			TouchRipple = e(TouchRipple, {
+				color = theme.ActionFill,
+				transparency = self.props.transparency,
+				zIndex = 2,
+			}),
+
 			Text = e("TextLabel", {
 				Text = self.props.text,
 				Font = Enum.Font.GothamSemibold,
 				TextSize = 18,
-				TextColor3 = mapLerpColor(bindingEnabled, theme.Enabled.Text, theme.Disabled.Text),
+				TextColor3 = bindingUtil.mapLerpColor(bindingEnabled, theme.Enabled.Text, theme.Disabled.Text),
 				TextTransparency = self.props.transparency,
 
 				Size = UDim2.new(1, 0, 1, 0),
@@ -103,39 +86,39 @@ function Button:render()
 
 			Border = style == "Bordered" and e(SlicedImage, {
 				slice = Assets.Slices.RoundedBorder,
-				color = mapLerpColor(bindingEnabled, theme.Enabled.Border, theme.Disabled.Border),
+				color = bindingUtil.mapLerpColor(bindingEnabled, theme.Enabled.Border, theme.Disabled.Border),
 				transparency = self.props.transparency,
 
 				size = UDim2.new(1, 0, 1, 0),
 
-				zindex = 0,
+				zIndex = 0,
 			}),
 
 			HoverOverlay = e(SlicedImage, {
 				slice = Assets.Slices.RoundedBackground,
-				color = theme.HoverOverlay,
+				color = theme.ActionFill,
 				transparency = Roact.joinBindings({
 					hover = bindingHover:map(function(value)
 						return 1 - value
 					end),
 					transparency = self.props.transparency,
 				}):map(function(values)
-					return blendAlpha({ 0.9, values.hover, values.transparency })
+					return bindingUtil.blendAlpha({ 0.9, values.hover, values.transparency })
 				end),
 
 				size = UDim2.new(1, 0, 1, 0),
 
-				zindex = -1,
+				zIndex = -1,
 			}),
 
 			Background = style == "Solid" and e(SlicedImage, {
 				slice = Assets.Slices.RoundedBackground,
-				color = mapLerpColor(bindingEnabled, theme.Enabled.Background, theme.Disabled.Background),
+				color = bindingUtil.mapLerpColor(bindingEnabled, theme.Enabled.Background, theme.Disabled.Background),
 				transparency = self.props.transparency,
 
 				size = UDim2.new(1, 0, 1, 0),
 
-				zindex = -2,
+				zIndex = -2,
 			}),
 		})
 	end)
