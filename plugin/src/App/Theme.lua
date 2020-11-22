@@ -31,16 +31,104 @@ local function hexColor(decimal)
 	return Color3.fromRGB(red, green, blue)
 end
 
-local baseTheme = strict("BaseTheme", {
-	Brand = hexColor(0xE13835),
-})
+local BRAND_COLOR = hexColor(0xE13835)
 
 local lightTheme = strict("LightTheme", {
+	Background = hexColor(0xF0F0F0),
 
+	Button = {
+		Solid = {
+			HoverOverlay = hexColor(0xFFFFFF),
+
+			Enabled = {
+				Text = hexColor(0xFFFFFF),
+				Background = BRAND_COLOR,
+			},
+
+			Disabled = {
+				Text = hexColor(0xFFFFFF),
+				Background = BRAND_COLOR,
+			},
+		},
+
+		Bordered = {
+			HoverOverlay = hexColor(0x000000),
+
+			Enabled = {
+				Text = hexColor(0x393939),
+				Border = hexColor(0xACACAC),
+			},
+
+			Disabled = {
+				Text = hexColor(0x393939),
+				Border = hexColor(0xACACAC),
+			},
+		},
+	},
+
+	AddressEntry = {
+		Text = hexColor(0x000000),
+		Placeholder = hexColor(0x8C8C8C)
+	},
+
+	BorderedContainer = {
+		Border = hexColor(0xCBCBCB),
+		Background = hexColor(0xE0E0E0),
+	},
+
+	Throbber = {
+		Foreground = BRAND_COLOR,
+		Background = hexColor(0xE0E0E0),
+	},
 })
 
 local darkTheme = strict("DarkTheme", {
+	Background = hexColor(0x272727),
 
+	Button = {
+		Solid = {
+			HoverOverlay = hexColor(0xFFFFFF),
+
+			Enabled = {
+				Text = hexColor(0xFFFFFF),
+				Background = BRAND_COLOR,
+			},
+
+			Disabled = {
+				Text = hexColor(0xFFFFFF),
+				Background = BRAND_COLOR,
+			},
+		},
+
+		Bordered = {
+			HoverOverlay = hexColor(0xFFFFFF),
+
+			Enabled = {
+				Text = hexColor(0xDBDBDB),
+				Border = hexColor(0x535353),
+			},
+
+			Disabled = {
+				Text = hexColor(0xDBDBDB),
+				Border = hexColor(0x535353),
+			},
+		},
+	},
+
+	AddressEntry = {
+		Text = hexColor(0xFFFFFF),
+		Placeholder = hexColor(0x717171)
+	},
+
+	BorderedContainer = {
+		Border = hexColor(0x535353),
+		Background = hexColor(0x323232),
+	},
+
+	Throbber = {
+		Foreground = BRAND_COLOR,
+		Background = hexColor(0x323232),
+	},
 })
 
 local Context = Roact.createContext(lightTheme)

@@ -3,11 +3,16 @@ local strict = require(script.Parent.strict)
 local Assets = {
 	Sprites = {},
 	Slices = {
-		RoundBox = {
-			asset = "rbxassetid://2773204550",
-			offset = Vector2.new(0, 0),
-			size = Vector2.new(32, 32),
-			center = Rect.new(4, 4, 4, 4),
+		RoundedBackground = {
+			Image = "rbxassetid://5981360418",
+			Center = Rect.new(10, 10, 10, 10),
+			Scale = 0.5,
+		},
+
+		RoundedBorder = {
+			Image = "rbxassetid://5981360137",
+			Center = Rect.new(10, 10, 10, 10),
+			Scale = 0.5,
 		},
 	},
 	Images = {

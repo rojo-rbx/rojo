@@ -34,26 +34,26 @@ function App:init()
 		appStatus = AppStatus.NotConnected,
 		guiEnabled = false,
 	})
-
-	spawn(function()
-		while true do
-			wait(1)
-			self:setState({ appStatus = AppStatus.Connected })
-			wait(1)
-			self:setState({ appStatus = AppStatus.NotConnected })
-		end
-	end)
 end
 
 function App:render()
-	local pages = {}
+	local children = {}
 
 	for _, appStatus in pairs(AppStatus) do
-		pages[appStatus] = e(Page, {
+		children[appStatus] = e(Page, {
 			component = statusPages[appStatus],
 			active = self.state.appStatus == appStatus,
 		})
 	end
+
+	children.Background = Theme.with(function(theme)
+		return e("Frame", {
+			Size = UDim2.new(1, 0, 1, 0),
+			BackgroundColor3 = theme.Background,
+			ZIndex = 0,
+			BorderSizePixel = 0,
+		})
+	end)
 
 	local name = "Rojo " .. Version.display(Config.version)
 	return e(StudioPluginContext.Provider, {
@@ -68,15 +68,19 @@ function App:render()
 				initDockState = Enum.InitialDockState.Right,
 				initEnabled = false,
 				overridePreviousState = false,
-				floatingSize = Vector2.new(360, 190),
-				minimumSize = Vector2.new(360, 190),
+				floatingSize = Vector2.new(300, 200),
+				minimumSize = Vector2.new(300, 200),
 
 				onInitialState = function(initialState)
 					self:setState({
 						guiEnabled = initialState,
 					})
 				end,
-			}, pages),
+
+				onClose = function()
+
+				end,
+			}, children),
 
 			toolbar = e(StudioToolbar, {
 				name = name,
