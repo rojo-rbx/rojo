@@ -37,6 +37,14 @@ function StudioPluginGui:render()
 				if self.props.onInitialState then
 					self.props.onInitialState(self.pluginGui.Enabled)
 				end
+
+				self.pluginGui:BindToClose(function()
+					if self.props.onClose then
+						self.props.onClose()
+					else
+						self.pluginGui.Enabled = false
+					end
+				end)
 			else
 				-- Make sure the initial state is preserved until something changes
 				self.pluginGui.Enabled = self.props.active

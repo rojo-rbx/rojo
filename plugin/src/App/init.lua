@@ -80,7 +80,9 @@ function App:render()
 				end,
 
 				onClose = function()
-
+					self:setState({
+						guiEnabled = false,
+					})
 				end,
 			}, children),
 
