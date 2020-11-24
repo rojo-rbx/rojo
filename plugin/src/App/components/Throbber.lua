@@ -23,19 +23,24 @@ function Throbber:render()
 			Image = "rbxassetid://3222730627",
 			ImageColor3 = theme.Throbber.Background,
 			ImageTransparency = self.props.transparency,
+
 			Size = UDim2.new(0, 24, 0, 24),
-			Position = self.props.Position,
-			AnchorPoint = self.props.AnchorPoint,
+			Position = self.props.position,
+			AnchorPoint = self.props.anchorPoint,
+
+			LayoutOrder = self.props.layoutOrder,
 			BackgroundTransparency = 1,
 		}, {
 			Foreground = e("ImageLabel", {
 				Image = "rbxassetid://3222731032",
 				ImageColor3 = theme.Throbber.Foreground,
 				ImageTransparency = self.props.transparency,
+
 				Size = UDim2.new(1, 0, 1, 0),
 				Rotation = self.rotation:map(function(value)
 					return value * 360
 				end),
+
 				BackgroundTransparency = 1,
 			}),
 		})

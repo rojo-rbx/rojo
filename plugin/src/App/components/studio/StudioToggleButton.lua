@@ -31,8 +31,6 @@ function StudioToggleButton:render()
 				end)
 
 				self.button.ClickableWhenViewportHidden = true
-			else
-				self.button.Icon = self.props.icon
 			end
 
 			self.button.Enabled = self.props.enabled

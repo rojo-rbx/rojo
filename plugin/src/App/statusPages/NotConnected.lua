@@ -8,6 +8,7 @@ local Config = require(Plugin.Config)
 local Theme = require(Plugin.App.Theme)
 local BorderedContainer = require(Plugin.App.components.BorderedContainer)
 local Button = require(Plugin.App.components.Button)
+local Header = require(Plugin.App.components.Header)
 
 local e = Roact.createElement
 
@@ -75,6 +76,11 @@ local NotConnectedPage = Roact.Component:extend("NotConnectedPage")
 
 function NotConnectedPage:render()
 	return Roact.createFragment({
+		Header = e(Header, {
+			transparency = self.props.transparency,
+			layoutOrder = 1,
+		}),
+
 		AddressEntry = e(AddressEntry, {
 			transparency = self.props.transparency,
 			layoutOrder = 2,

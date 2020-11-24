@@ -80,6 +80,16 @@ local lightTheme = strict("LightTheme", {
 		Foreground = BRAND_COLOR,
 		Background = hexColor(0xE0E0E0),
 	},
+
+	ConnectionDetails = {
+		ProjectName = hexColor(0x00000),
+		Address = hexColor(0x00000),
+	},
+
+	Header = {
+		Logo = BRAND_COLOR,
+		Version = hexColor(0x727272)
+	},
 })
 
 local darkTheme = strict("DarkTheme", {
@@ -128,6 +138,16 @@ local darkTheme = strict("DarkTheme", {
 	Throbber = {
 		Foreground = BRAND_COLOR,
 		Background = hexColor(0x323232),
+	},
+
+	ConnectionDetails = {
+		ProjectName = hexColor(0xFFFFFF),
+		Address = hexColor(0xFFFFFF),
+	},
+
+	Header = {
+		Logo = hexColor(0xFFFFFF),
+		Version = hexColor(0xD3D3D3)
 	},
 })
 

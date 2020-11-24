@@ -16,7 +16,7 @@ local Assets = {
 		},
 	},
 	Images = {
-		Logo = "rbxassetid://3405346157",
+		Logo = "rbxassetid://5990772764",
 		Icon = "rbxassetid://3405341609",
 	},
 	Circles = {
