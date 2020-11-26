@@ -41,10 +41,10 @@ local function deriveProperty(binding, propertyName)
 end
 
 local function blendAlpha(alphaValues)
-	local alpha
+	local alpha = 0
 
 	for _, value in pairs(alphaValues) do
-		alpha = alpha and alpha + (1 - alpha) * value or value
+		alpha = alpha + (1 - alpha) * value
 	end
 
 	return alpha
