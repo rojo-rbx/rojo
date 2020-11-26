@@ -14,7 +14,7 @@ local function BorderedContainer(props)
 	return Theme.with(function(theme)
 		return e(SlicedImage, {
 			slice = Assets.Slices.RoundedBackground,
-			color = theme.BorderedContainer.Background,
+			color = theme.BorderedContainer.BackgroundColor,
 			transparency = props.transparency,
 
 			size = props.size,
@@ -29,7 +29,7 @@ local function BorderedContainer(props)
 
 			Border = e(SlicedImage, {
 				slice = Assets.Slices.RoundedBorder,
-				color = theme.BorderedContainer.Border,
+				color = theme.BorderedContainer.BorderColor,
 				transparency = props.transparency,
 
 				size = UDim2.new(1, 0, 1, 0),

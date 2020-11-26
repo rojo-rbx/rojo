@@ -21,7 +21,7 @@ function Throbber:render()
 	return Theme.with(function(theme)
 		return e("ImageLabel", {
 			Image = "rbxassetid://3222730627",
-			ImageColor3 = theme.Throbber.Background,
+			ImageColor3 = theme.Throbber.BackgroundColor,
 			ImageTransparency = self.props.transparency,
 
 			Size = UDim2.new(0, 24, 0, 24),
@@ -33,7 +33,7 @@ function Throbber:render()
 		}, {
 			Foreground = e("ImageLabel", {
 				Image = "rbxassetid://3222731032",
-				ImageColor3 = theme.Throbber.Foreground,
+				ImageColor3 = theme.Throbber.ForegroundColor,
 				ImageTransparency = self.props.transparency,
 
 				Size = UDim2.new(1, 0, 1, 0),

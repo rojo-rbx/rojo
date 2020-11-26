@@ -25,7 +25,7 @@ local function ConnectionDetails(props)
 					Text = props.projectName,
 					Font = Enum.Font.GothamBold,
 					TextSize = 20,
-					TextColor3 = theme.ConnectionDetails.ProjectName,
+					TextColor3 = theme.ConnectionDetails.ProjectNameColor,
 					TextXAlignment = Enum.TextXAlignment.Left,
 
 					Size = UDim2.new(1, 0, 0, 20),
@@ -38,7 +38,7 @@ local function ConnectionDetails(props)
 					Text = props.address,
 					Font = Enum.Font.Code,
 					TextSize = 15,
-					TextColor3 = theme.ConnectionDetails.Address,
+					TextColor3 = theme.ConnectionDetails.AddressColor,
 					TextXAlignment = Enum.TextXAlignment.Left,
 
 					Size = UDim2.new(1, 0, 0, 15),

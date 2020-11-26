@@ -1,5 +1,3 @@
-local UserInputService = game:GetService("UserInputService")
-
 local Rojo = script:FindFirstAncestor("Rojo")
 local Plugin = Rojo.Plugin
 

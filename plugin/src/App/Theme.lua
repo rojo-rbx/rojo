@@ -34,124 +34,124 @@ end
 local BRAND_COLOR = hexColor(0xE13835)
 
 local lightTheme = strict("LightTheme", {
-	Background = hexColor(0xF0F0F0),
+	BackgroundColor = hexColor(0xF0F0F0),
 
 	Button = {
 		Solid = {
-			ActionFill = hexColor(0xFFFFFF),
+			ActionFillColor = hexColor(0xFFFFFF),
 			ActionFillTransparency = 0.8,
 
 			Enabled = {
-				Text = hexColor(0xFFFFFF),
-				Background = BRAND_COLOR,
+				TextColor = hexColor(0xFFFFFF),
+				BackgroundColor = BRAND_COLOR,
 			},
 
 			Disabled = {
-				Text = hexColor(0xFFFFFF),
-				Background = BRAND_COLOR,
+				TextColor = hexColor(0xFFFFFF),
+				BackgroundColor = BRAND_COLOR,
 			},
 		},
 
 		Bordered = {
-			ActionFill = hexColor(0x000000),
+			ActionFillColor = hexColor(0x000000),
 			ActionFillTransparency = 0.9,
 
 			Enabled = {
-				Text = hexColor(0x393939),
-				Border = hexColor(0xACACAC),
+				TextColor = hexColor(0x393939),
+				BorderColor = hexColor(0xACACAC),
 			},
 
 			Disabled = {
-				Text = hexColor(0x393939),
-				Border = hexColor(0xACACAC),
+				TextColor = hexColor(0x393939),
+				BorderColor = hexColor(0xACACAC),
 			},
 		},
 	},
 
 	AddressEntry = {
-		Text = hexColor(0x000000),
-		Placeholder = hexColor(0x8C8C8C)
+		TextColor = hexColor(0x000000),
+		PlaceholderColor = hexColor(0x8C8C8C)
 	},
 
 	BorderedContainer = {
-		Border = hexColor(0xCBCBCB),
-		Background = hexColor(0xE0E0E0),
+		BorderColor = hexColor(0xCBCBCB),
+		BackgroundColor = hexColor(0xE0E0E0),
 	},
 
 	Throbber = {
-		Foreground = BRAND_COLOR,
-		Background = hexColor(0xE0E0E0),
+		ForegroundColor = BRAND_COLOR,
+		BackgroundColor = hexColor(0xE0E0E0),
 	},
 
 	ConnectionDetails = {
-		ProjectName = hexColor(0x00000),
-		Address = hexColor(0x00000),
+		ProjectNameColor = hexColor(0x00000),
+		AddressColor = hexColor(0x00000),
 	},
 
 	Header = {
-		Logo = BRAND_COLOR,
-		Version = hexColor(0x727272)
+		LogoColor = BRAND_COLOR,
+		VersionColor = hexColor(0x727272)
 	},
 })
 
 local darkTheme = strict("DarkTheme", {
-	Background = hexColor(0x272727),
+	BackgroundColor = hexColor(0x272727),
 
 	Button = {
 		Solid = {
-			ActionFill = hexColor(0xFFFFFF),
+			ActionFillColor = hexColor(0xFFFFFF),
 			ActionFillTransparency = 0.8,
 
 			Enabled = {
-				Text = hexColor(0xFFFFFF),
-				Background = BRAND_COLOR,
+				TextColor = hexColor(0xFFFFFF),
+				BackgroundColor = BRAND_COLOR,
 			},
 
 			Disabled = {
-				Text = hexColor(0xFFFFFF),
-				Background = BRAND_COLOR,
+				TextColor = hexColor(0xFFFFFF),
+				BackgroundColor = BRAND_COLOR,
 			},
 		},
 
 		Bordered = {
-			ActionFill = hexColor(0xFFFFFF),
+			ActionFillColor = hexColor(0xFFFFFF),
 			ActionFillTransparency = 0.9,
 
 			Enabled = {
-				Text = hexColor(0xDBDBDB),
-				Border = hexColor(0x535353),
+				TextColor = hexColor(0xDBDBDB),
+				BorderColor = hexColor(0x535353),
 			},
 
 			Disabled = {
-				Text = hexColor(0xDBDBDB),
-				Border = hexColor(0x535353),
+				TextColor = hexColor(0xDBDBDB),
+				BorderColor = hexColor(0x535353),
 			},
 		},
 	},
 
 	AddressEntry = {
-		Text = hexColor(0xFFFFFF),
-		Placeholder = hexColor(0x717171)
+		TextColor = hexColor(0xFFFFFF),
+		PlaceholderColor = hexColor(0x717171)
 	},
 
 	BorderedContainer = {
-		Border = hexColor(0x535353),
-		Background = hexColor(0x323232),
+		BorderColor = hexColor(0x535353),
+		BackgroundColor = hexColor(0x323232),
 	},
 
 	Throbber = {
-		Foreground = BRAND_COLOR,
-		Background = hexColor(0x323232),
+		ForegroundColor = BRAND_COLOR,
+		BackgroundColor = hexColor(0x323232),
 	},
 
 	ConnectionDetails = {
-		ProjectName = hexColor(0xFFFFFF),
-		Address = hexColor(0xFFFFFF),
+		ProjectNameColor = hexColor(0xFFFFFF),
+		AddressColor = hexColor(0xFFFFFF),
 	},
 
 	Header = {
-		Logo = hexColor(0xFFFFFF),
-		Version = hexColor(0xD3D3D3)
+		LogoColor = hexColor(0xFFFFFF),
+		VersionColor = hexColor(0xD3D3D3)
 	},
 })
 

@@ -67,7 +67,7 @@ function Button:render()
 			end,
 		}, {
 			TouchRipple = e(TouchRipple, {
-				color = theme.ActionFill,
+				color = theme.ActionFillColor,
 				transparency = self.props.transparency:map(function(value)
 					return bindingUtil.blendAlpha({ theme.ActionFillTransparency, value })
 				end),
@@ -78,7 +78,7 @@ function Button:render()
 				Text = self.props.text,
 				Font = Enum.Font.GothamSemibold,
 				TextSize = 18,
-				TextColor3 = bindingUtil.mapLerp(bindingEnabled, theme.Enabled.Text, theme.Disabled.Text),
+				TextColor3 = bindingUtil.mapLerp(bindingEnabled, theme.Enabled.TextColor, theme.Disabled.TextColor),
 				TextTransparency = self.props.transparency,
 
 				Size = UDim2.new(1, 0, 1, 0),
@@ -88,7 +88,7 @@ function Button:render()
 
 			Border = style == "Bordered" and e(SlicedImage, {
 				slice = Assets.Slices.RoundedBorder,
-				color = bindingUtil.mapLerp(bindingEnabled, theme.Enabled.Border, theme.Disabled.Border),
+				color = bindingUtil.mapLerp(bindingEnabled, theme.Enabled.BorderColor, theme.Disabled.BorderColor),
 				transparency = self.props.transparency,
 
 				size = UDim2.new(1, 0, 1, 0),
@@ -98,7 +98,7 @@ function Button:render()
 
 			HoverOverlay = e(SlicedImage, {
 				slice = Assets.Slices.RoundedBackground,
-				color = theme.ActionFill,
+				color = theme.ActionFillColor,
 				transparency = Roact.joinBindings({
 					hover = bindingHover:map(function(value)
 						return 1 - value
@@ -115,7 +115,7 @@ function Button:render()
 
 			Background = style == "Solid" and e(SlicedImage, {
 				slice = Assets.Slices.RoundedBackground,
-				color = bindingUtil.mapLerp(bindingEnabled, theme.Enabled.Background, theme.Disabled.Background),
+				color = bindingUtil.mapLerp(bindingEnabled, theme.Enabled.BackgroundColor, theme.Disabled.BackgroundColor),
 				transparency = self.props.transparency,
 
 				size = UDim2.new(1, 0, 1, 0),

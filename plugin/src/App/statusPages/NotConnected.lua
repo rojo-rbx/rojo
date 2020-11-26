@@ -23,11 +23,11 @@ local function AddressEntry(props)
 				Text = "",
 				Font = Enum.Font.Code,
 				TextSize = 18,
-				TextColor3 = theme.AddressEntry.Text,
+				TextColor3 = theme.AddressEntry.TextColor,
 				TextXAlignment = Enum.TextXAlignment.Left,
 				TextTransparency = props.transparency,
 				PlaceholderText = Config.defaultHost,
-				PlaceholderColor3 = theme.AddressEntry.Placeholder,
+				PlaceholderColor3 = theme.AddressEntry.PlaceholderColor,
 
 				Size = UDim2.new(1, -(74 + 1), 1, 0),
 				Position = UDim2.new(0, 12, 0, 0),
@@ -40,10 +40,10 @@ local function AddressEntry(props)
 				Text = "",
 				Font = Enum.Font.Code,
 				TextSize = 18,
-				TextColor3 = theme.AddressEntry.Text,
+				TextColor3 = theme.AddressEntry.TextColor,
 				TextTransparency = props.transparency,
 				PlaceholderText = Config.defaultPort,
-				PlaceholderColor3 = theme.AddressEntry.Placeholder,
+				PlaceholderColor3 = theme.AddressEntry.PlaceholderColor,
 
 				Size = UDim2.new(0, 74, 1, 0),
 				Position = UDim2.new(1, 0, 0, 0),
@@ -61,7 +61,7 @@ local function AddressEntry(props)
 				end,
 			}, {
 				Divider = e("Frame", {
-					BackgroundColor3 = theme.BorderedContainer.Border,
+					BackgroundColor3 = theme.BorderedContainer.BorderColor,
 					BackgroundTransparency = props.transparency,
 					Size = UDim2.new(0, 1, 1, 0),
 					AnchorPoint = Vector2.new(1, 0),
