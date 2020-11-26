@@ -1,6 +1,15 @@
 local Rojo = script:FindFirstAncestor("Rojo")
 
 local Roact = require(Rojo.Roact)
+local Log = require(Rojo.Log)
+
+local LERP_DATA_TYPES = {
+	Color3 = true,
+	UDim = true,
+	UDim2 = true,
+	Vector2 = true,
+	Vector3 = true,
+}
 
 local function fromMotor(motor)
 	local motorBinding, setMotorBinding = Roact.createBinding(motor:getValue())
@@ -8,9 +17,20 @@ local function fromMotor(motor)
 	return motorBinding
 end
 
-local function mapLerpColor(binding, color1, color2)
-	return binding:map(function(value)
-		return color1:Lerp(color2, value)
+local function mapLerp(binding, value1, value2)
+	local valueType = typeof(value1)
+	if valueType ~= typeof(value2) then
+		Log.error("Type mismatch between values ({}, {}})", valueType, typeof(value2))
+	end
+
+	return binding:map(function(position)
+		if valueType == "number" then
+			return value1 - (value2 - value1) * position
+		elseif LERP_DATA_TYPES[valueType] then
+			return value1:lerp(value2, position)
+		else
+			Log.error("Unable to interpolate type {}", valueType)
+		end
 	end)
 end
 
@@ -32,7 +52,7 @@ end
 
 return {
 	fromMotor = fromMotor,
-	mapLerpColor = mapLerpColor,
+	mapLerp = mapLerp,
 	deriveProperty = deriveProperty,
 	blendAlpha = blendAlpha,
 }

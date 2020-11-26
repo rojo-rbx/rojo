@@ -76,7 +76,7 @@ function Button:render()
 				Text = self.props.text,
 				Font = Enum.Font.GothamSemibold,
 				TextSize = 18,
-				TextColor3 = bindingUtil.mapLerpColor(bindingEnabled, theme.Enabled.Text, theme.Disabled.Text),
+				TextColor3 = bindingUtil.mapLerp(bindingEnabled, theme.Enabled.Text, theme.Disabled.Text),
 				TextTransparency = self.props.transparency,
 
 				Size = UDim2.new(1, 0, 1, 0),
@@ -86,7 +86,7 @@ function Button:render()
 
 			Border = style == "Bordered" and e(SlicedImage, {
 				slice = Assets.Slices.RoundedBorder,
-				color = bindingUtil.mapLerpColor(bindingEnabled, theme.Enabled.Border, theme.Disabled.Border),
+				color = bindingUtil.mapLerp(bindingEnabled, theme.Enabled.Border, theme.Disabled.Border),
 				transparency = self.props.transparency,
 
 				size = UDim2.new(1, 0, 1, 0),
@@ -113,7 +113,7 @@ function Button:render()
 
 			Background = style == "Solid" and e(SlicedImage, {
 				slice = Assets.Slices.RoundedBackground,
-				color = bindingUtil.mapLerpColor(bindingEnabled, theme.Enabled.Background, theme.Disabled.Background),
+				color = bindingUtil.mapLerp(bindingEnabled, theme.Enabled.Background, theme.Disabled.Background),
 				transparency = self.props.transparency,
 
 				size = UDim2.new(1, 0, 1, 0),
