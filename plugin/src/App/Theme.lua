@@ -39,6 +39,7 @@ local lightTheme = strict("LightTheme", {
 	Button = {
 		Solid = {
 			ActionFill = hexColor(0xFFFFFF),
+			ActionFillTransparency = 0.8,
 
 			Enabled = {
 				Text = hexColor(0xFFFFFF),
@@ -53,6 +54,7 @@ local lightTheme = strict("LightTheme", {
 
 		Bordered = {
 			ActionFill = hexColor(0x000000),
+			ActionFillTransparency = 0.9,
 
 			Enabled = {
 				Text = hexColor(0x393939),
@@ -98,6 +100,7 @@ local darkTheme = strict("DarkTheme", {
 	Button = {
 		Solid = {
 			ActionFill = hexColor(0xFFFFFF),
+			ActionFillTransparency = 0.8,
 
 			Enabled = {
 				Text = hexColor(0xFFFFFF),
@@ -112,6 +115,7 @@ local darkTheme = strict("DarkTheme", {
 
 		Bordered = {
 			ActionFill = hexColor(0xFFFFFF),
+			ActionFillTransparency = 0.9,
 
 			Enabled = {
 				Text = hexColor(0xDBDBDB),

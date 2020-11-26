@@ -68,7 +68,9 @@ function Button:render()
 		}, {
 			TouchRipple = e(TouchRipple, {
 				color = theme.ActionFill,
-				transparency = self.props.transparency,
+				transparency = self.props.transparency:map(function(value)
+					return bindingUtil.blendAlpha({ theme.ActionFillTransparency, value })
+				end),
 				zIndex = 2,
 			}),
 
@@ -103,7 +105,7 @@ function Button:render()
 					end),
 					transparency = self.props.transparency,
 				}):map(function(values)
-					return bindingUtil.blendAlpha({ 0.9, values.hover, values.transparency })
+					return bindingUtil.blendAlpha({ theme.ActionFillTransparency, values.hover, values.transparency })
 				end),
 
 				size = UDim2.new(1, 0, 1, 0),

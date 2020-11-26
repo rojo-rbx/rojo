@@ -61,7 +61,7 @@ end
 function TouchRipple:render()
 	local scale = bindingUtil.deriveProperty(self.binding, "scale")
 	local transparency = bindingUtil.deriveProperty(self.binding, "opacity"):map(function(value)
-		return 1 - value * 0.1
+		return 1 - value
 	end)
 
 	transparency = Roact.joinBindings({
