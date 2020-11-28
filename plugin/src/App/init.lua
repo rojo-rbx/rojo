@@ -90,6 +90,8 @@ function App:render()
 	local pluginName = "Rojo " .. Version.display(Config.version)
 
 	local function createPageElement(appStatus, additionalProps)
+		additionalProps = additionalProps or {}
+
 		local props = merge(additionalProps, {
 			component = statusPages[appStatus],
 			active = self.state.appStatus == appStatus,
@@ -143,11 +145,7 @@ function App:render()
 					end,
 				}),
 
-				Connecting = createPageElement(AppStatus.Connecting, {
-					onCancel = function()
-
-					end,
-				}),
+				Connecting = createPageElement(AppStatus.Connecting),
 
 				Connected = createPageElement(AppStatus.Connected, {
 					projectName = self.state.projectName,

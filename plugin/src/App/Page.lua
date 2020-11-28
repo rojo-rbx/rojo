@@ -50,7 +50,7 @@ function Page:render()
 		Size = UDim2.new(1, 0, 1, 0),
 		BackgroundTransparency = 1,
 	}, {
-		e(self.props.component, merge(self.props, {
+		Component = e(self.props.component, merge(self.props, {
 			transparency = transparency,
 		}))
 	})
