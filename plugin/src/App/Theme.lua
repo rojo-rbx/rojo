@@ -86,6 +86,7 @@ local lightTheme = strict("LightTheme", {
 	ConnectionDetails = {
 		ProjectNameColor = hexColor(0x00000),
 		AddressColor = hexColor(0x00000),
+		DisconnectColor = BRAND_COLOR,
 	},
 
 	Header = {
@@ -147,6 +148,7 @@ local darkTheme = strict("DarkTheme", {
 	ConnectionDetails = {
 		ProjectNameColor = hexColor(0xFFFFFF),
 		AddressColor = hexColor(0xFFFFFF),
+		DisconnectColor = hexColor(0xFFFFFF),
 	},
 
 	Header = {

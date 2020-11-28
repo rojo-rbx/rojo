@@ -4,8 +4,10 @@ local Plugin = Rojo.Plugin
 local Roact = require(Rojo.Roact)
 
 local Theme = require(Plugin.App.Theme)
+local Assets = require(Plugin.Assets)
 
 local Header = require(Plugin.App.components.Header)
+local IconButton = require(Plugin.App.components.IconButton)
 local BorderedContainer = require(Plugin.App.components.BorderedContainer)
 
 local e = Roact.createElement
@@ -26,6 +28,7 @@ local function ConnectionDetails(props)
 					Font = Enum.Font.GothamBold,
 					TextSize = 20,
 					TextColor3 = theme.ConnectionDetails.ProjectNameColor,
+					TextTransparency = props.transparency,
 					TextXAlignment = Enum.TextXAlignment.Left,
 
 					Size = UDim2.new(1, 0, 0, 20),
@@ -39,6 +42,7 @@ local function ConnectionDetails(props)
 					Font = Enum.Font.Code,
 					TextSize = 15,
 					TextColor3 = theme.ConnectionDetails.AddressColor,
+					TextTransparency = props.transparency,
 					TextXAlignment = Enum.TextXAlignment.Left,
 
 					Size = UDim2.new(1, 0, 0, 15),
@@ -53,6 +57,18 @@ local function ConnectionDetails(props)
 					SortOrder = Enum.SortOrder.LayoutOrder,
 					Padding = UDim.new(0, 6),
 				}),
+			}),
+
+			Disconnect = e(IconButton, {
+				icon = Assets.Images.Icons.Close,
+				iconSize = 24,
+				color = theme.ConnectionDetails.DisconnectColor,
+				transparency = props.transparency,
+
+				position = UDim2.new(1, 0, 0.5, 0),
+				anchorPoint = Vector2.new(1, 0.5),
+
+				onClick = props.onDisconnect,
 			}),
 
 			Padding = e("UIPadding", {
@@ -73,10 +89,12 @@ function ConnectedPage:render()
 		}),
 
 		ConnectionDetails = e(ConnectionDetails, {
-			projectName = "Test Project",
-			address = "127.0.0.1:34872",
+			projectName = self.state.projectName,
+			address = self.state.address,
 			transparency = self.props.transparency,
 			layoutOrder = 2,
+
+			onDisconnect = self.props.onDisconnect,
 		}),
 
 		Layout = e("UIListLayout", {
@@ -91,6 +109,15 @@ function ConnectedPage:render()
 			PaddingRight = UDim.new(0, 20),
 		}),
 	})
+end
+
+function ConnectedPage.getDerivedStateFromProps(props)
+	-- These are stored in state so they can properly be animated out on disconnect
+
+	return {
+		projectName = props.projectName,
+		address = props.address,
+	}
 end
 
 return ConnectedPage

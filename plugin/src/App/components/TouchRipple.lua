@@ -108,7 +108,7 @@ function TouchRipple:render()
 		end,
 	}, {
 		Circle = Roact.createElement("ImageLabel", {
-			Image = Assets.Circles[500],
+			Image = Assets.Images.Circles[500],
 			ImageColor3 = self.props.color,
 			ImageTransparency = transparency,
 

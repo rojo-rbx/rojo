@@ -4,7 +4,7 @@ local Plugin = Rojo.Plugin
 local Roact = require(Rojo.Roact)
 
 local Throbber = require(Plugin.App.components.Throbber)
-local Button = require(Plugin.App.components.Button)
+local TextButton = require(Plugin.App.components.TextButton)
 
 local e = Roact.createElement
 
@@ -17,7 +17,7 @@ function ConnectingPage:render()
 			layoutOrder = 1,
 		}),
 
-		Cancel = e(Button, {
+		Cancel = e(TextButton, {
 			text = "Cancel",
 			style = "Bordered",
 			transparency = self.props.transparency,

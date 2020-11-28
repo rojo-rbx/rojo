@@ -20,9 +20,9 @@ local SPRING_PROPS = {
 
 local e = Roact.createElement
 
-local Button = Roact.Component:extend("Button")
+local TextButton = Roact.Component:extend("TextButton")
 
-function Button:init()
+function TextButton:init()
 	self.motor = Flipper.GroupMotor.new({
 		hover = 0,
 		enabled = self.props.enabled and 1 or 0,
@@ -30,7 +30,7 @@ function Button:init()
 	self.binding = bindingUtil.fromMotor(self.motor)
 end
 
-function Button:render()
+function TextButton:render()
 	return Theme.with(function(theme)
 		local textSize = TextService:GetTextSize(
 			self.props.text, 18, Enum.Font.GothamSemibold,
@@ -126,4 +126,4 @@ function Button:render()
 	end)
 end
 
-return Button
+return TextButton

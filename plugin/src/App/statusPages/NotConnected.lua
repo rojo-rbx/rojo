@@ -7,7 +7,7 @@ local Config = require(Plugin.Config)
 
 local Theme = require(Plugin.App.Theme)
 local BorderedContainer = require(Plugin.App.components.BorderedContainer)
-local Button = require(Plugin.App.components.Button)
+local TextButton = require(Plugin.App.components.TextButton)
 local Header = require(Plugin.App.components.Header)
 
 local e = Roact.createElement
@@ -19,7 +19,7 @@ local function AddressEntry(props)
 			size = UDim2.new(1, 0, 0, 36),
 			layoutOrder = props.layoutOrder,
 		}, {
-			Address = e("TextBox", {
+			Host = e("TextBox", {
 				Text = "",
 				Font = Enum.Font.Code,
 				TextSize = 18,
@@ -34,6 +34,8 @@ local function AddressEntry(props)
 
 				ClipsDescendants = true,
 				BackgroundTransparency = 1,
+
+				[Roact.Ref] = props.hostRef,
 			}),
 
 			Port = e("TextBox", {
@@ -50,6 +52,8 @@ local function AddressEntry(props)
 				AnchorPoint = Vector2.new(1, 0),
 
 				BackgroundTransparency = 1,
+
+				[Roact.Ref] = props.portRef,
 
 				[Roact.Change.Text] = function(object)
 					local text = object.Text
@@ -74,6 +78,11 @@ end
 
 local NotConnectedPage = Roact.Component:extend("NotConnectedPage")
 
+function NotConnectedPage:init()
+	self.hostRef = Roact.createRef()
+	self.portRef = Roact.createRef()
+end
+
 function NotConnectedPage:render()
 	return Roact.createFragment({
 		Header = e(Header, {
@@ -82,6 +91,8 @@ function NotConnectedPage:render()
 		}),
 
 		AddressEntry = e(AddressEntry, {
+			hostRef = self.hostRef,
+			portRef = self.portRef,
 			transparency = self.props.transparency,
 			layoutOrder = 2,
 		}),
@@ -91,23 +102,27 @@ function NotConnectedPage:render()
 			LayoutOrder = 3,
 			BackgroundTransparency = 1,
 		}, {
-			Settings = e(Button, {
+			Settings = e(TextButton, {
 				text = "Settings",
 				style = "Bordered",
 				transparency = self.props.transparency,
 				layoutOrder = 1,
-				onClick = function()
-
-				end,
+				onClick = self.props.onNavigateSettings,
 			}),
 
-			Connect = e(Button, {
+			Connect = e(TextButton, {
 				text = "Connect",
 				style = "Solid",
 				transparency = self.props.transparency,
 				layoutOrder = 2,
 				onClick = function()
+					local hostText = self.hostRef.current.Text
+					local portText = self.portRef.current.Text
 
+					self.props.onConnect(
+						#hostText > 0 and hostText or Config.defaultHost,
+						#portText > 0 and portText or Config.defaultPort
+					)
 				end,
 			}),
 

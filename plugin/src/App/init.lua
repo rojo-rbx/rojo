@@ -8,6 +8,9 @@ local Assets = require(Plugin.Assets)
 local Version = require(Plugin.Version)
 local Config = require(Plugin.Config)
 local strict = require(Plugin.strict)
+local merge = require(Plugin.merge)
+local ServeSession = require(Plugin.ServeSession)
+local ApiContext = require(Plugin.ApiContext)
 
 local Theme = require(script.Theme)
 local Page = require(script.Page)
@@ -36,33 +39,72 @@ function App:init()
 	})
 end
 
-function App:render()
-	local children = {}
+function App:startSession(host, port, sessionOptions)
+	local baseUrl = ("http://%s:%s"):format(host, port)
+	local apiContext = ApiContext.new(baseUrl)
 
-	for _, appStatus in pairs(AppStatus) do
-		children[appStatus] = e(Page, {
+	local serveSession = ServeSession.new({
+		apiContext = apiContext,
+		openScriptsExternally = sessionOptions.openScriptsExternally,
+		twoWaySync = sessionOptions.twoWaySync,
+	})
+
+	serveSession:onStatusChanged(function(status, details)
+		if status == ServeSession.Status.Connecting then
+			self:setState({
+				appStatus = AppStatus.Connecting,
+			})
+		elseif status == ServeSession.Status.Connected then
+			local address = ("%s:%s"):format(host, port)
+			self:setState({
+				appStatus = AppStatus.Connected,
+				projectName = details,
+				address = address,
+			})
+		elseif status == ServeSession.Status.Disconnected then
+			self.serveSession = nil
+
+			-- Details being present indicates that this
+			-- disconnection was from an error.
+			if details ~= nil then
+				Log.warn("Disconnected from an error: {}", details)
+
+				self:setState({
+					appStatus = AppStatus.Error,
+					errorMessage = tostring(details),
+				})
+			else
+				self:setState({
+					appStatus = AppStatus.NotConnected,
+				})
+			end
+		end
+	end)
+
+	serveSession:start()
+
+	self.serveSession = serveSession
+end
+
+function App:render()
+	local pluginName = "Rojo " .. Version.display(Config.version)
+
+	local function createPageElement(appStatus, additionalProps)
+		local props = merge(additionalProps, {
 			component = statusPages[appStatus],
 			active = self.state.appStatus == appStatus,
 		})
+
+		return e(Page, props)
 	end
 
-	children.Background = Theme.with(function(theme)
-		return e("Frame", {
-			Size = UDim2.new(1, 0, 1, 0),
-			BackgroundColor3 = theme.BackgroundColor,
-			ZIndex = 0,
-			BorderSizePixel = 0,
-		})
-	end)
-
-	local name = "Rojo " .. Version.display(Config.version)
 	return e(StudioPluginContext.Provider, {
 		value = self.props.plugin,
 	}, {
 		e(Theme.StudioProvider, nil, {
 			gui = e(StudioPluginGui, {
-				id = name,
-				title = name,
+				id = pluginName,
+				title = pluginName,
 				active = self.state.guiEnabled,
 
 				initDockState = Enum.InitialDockState.Right,
@@ -84,10 +126,58 @@ function App:render()
 						guiEnabled = false,
 					})
 				end,
-			}, children),
+			}, {
+				NotConnectedPage = createPageElement(AppStatus.NotConnected, {
+					onConnect = function(address, port)
+						-- TODO: Settings
+						self:startSession(address, port, {
+							openScriptsExternally = false,
+							twoWaySync = false,
+						})
+					end,
+
+					onNavigateSettings = function()
+						self:setState({
+							appStatus = AppStatus.Settings,
+						})
+					end,
+				}),
+
+				Connecting = createPageElement(AppStatus.Connecting, {
+					onCancel = function()
+
+					end,
+				}),
+
+				Connected = createPageElement(AppStatus.Connected, {
+					projectName = self.state.projectName,
+					address = self.state.address,
+
+					onDisconnect = function()
+						Log.trace("Disconnecting session")
+
+						self.serveSession:stop()
+						self.serveSession = nil
+						self:setState({
+							appStatus = AppStatus.NotConnected,
+						})
+
+						Log.trace("Session terminated by user")
+					end,
+				}),
+
+				Background = Theme.with(function(theme)
+					return e("Frame", {
+						Size = UDim2.new(1, 0, 1, 0),
+						BackgroundColor3 = theme.BackgroundColor,
+						ZIndex = 0,
+						BorderSizePixel = 0,
+					})
+				end),
+			}),
 
 			toolbar = e(StudioToolbar, {
-				name = name,
+				name = pluginName,
 			}, {
 				button = e(StudioToggleButton, {
 					name = "Rojo",

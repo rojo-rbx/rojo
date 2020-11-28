@@ -1,7 +1,10 @@
 local Rojo = script:FindFirstAncestor("Rojo")
+local Plugin = Rojo.Plugin
 
 local Roact = require(Rojo.Roact)
 local Flipper = require(Rojo.Flipper)
+
+local merge = require(Plugin.merge)
 
 local bindingUtil = require(script.Parent.bindingUtil)
 
@@ -41,16 +44,15 @@ function Page:render()
 
 	return e("Frame", {
 		Position = transparency:map(function(value)
-			value = self.props.active and -value or value
+			value = self.props.active and value or -value
 			return UDim2.new(0, value * 30, 0, 0)
 		end),
 		Size = UDim2.new(1, 0, 1, 0),
 		BackgroundTransparency = 1,
 	}, {
-		e(self.props.component, {
-			active = self.props.active,
+		e(self.props.component, merge(self.props, {
 			transparency = transparency,
-		})
+		}))
 	})
 end
 
