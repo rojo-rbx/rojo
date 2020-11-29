@@ -17,9 +17,14 @@ local Assets = {
 	},
 	Images = {
 		Logo = "rbxassetid://5990772764",
-		Icon = "rbxassetid://3405341609",
+		PluginButton = "rbxassetid://3405341609",
 		Icons = {
 			Close = "rbxassetid://6012985953",
+			Back = "rbxassetid://6017213752",
+		},
+		Checkbox = {
+			Active = "rbxassetid://6016251644",
+			Inactive = "rbxassetid://6016251963",
 		},
 		Circles = {
 			[16] = "rbxassetid://3056541177",

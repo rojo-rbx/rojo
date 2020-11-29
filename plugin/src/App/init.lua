@@ -11,8 +11,9 @@ local strict = require(Plugin.strict)
 local merge = require(Plugin.merge)
 local ServeSession = require(Plugin.ServeSession)
 local ApiContext = require(Plugin.ApiContext)
-
 local Theme = require(script.Theme)
+local PluginSettings = require(script.PluginSettings)
+
 local Page = require(script.Page)
 local StudioToolbar = require(script.components.studio.StudioToolbar)
 local StudioToggleButton = require(script.components.studio.StudioToggleButton)
@@ -104,95 +105,107 @@ function App:render()
 		value = self.props.plugin,
 	}, {
 		e(Theme.StudioProvider, nil, {
-			gui = e(StudioPluginGui, {
-				id = pluginName,
-				title = pluginName,
-				active = self.state.guiEnabled,
-
-				initDockState = Enum.InitialDockState.Right,
-				initEnabled = false,
-				overridePreviousState = false,
-				floatingSize = Vector2.new(300, 200),
-				minimumSize = Vector2.new(300, 200),
-
-				zIndexBehavior = Enum.ZIndexBehavior.Sibling,
-
-				onInitialState = function(initialState)
-					self:setState({
-						guiEnabled = initialState,
-					})
-				end,
-
-				onClose = function()
-					self:setState({
-						guiEnabled = false,
-					})
-				end,
+			e(PluginSettings.StudioProvider, {
+				plugin = self.props.plugin,
 			}, {
-				NotConnectedPage = createPageElement(AppStatus.NotConnected, {
-					onConnect = function(address, port)
-						-- TODO: Settings
-						self:startSession(address, port, {
-							openScriptsExternally = false,
-							twoWaySync = false,
-						})
-					end,
-
-					onNavigateSettings = function()
-						self:setState({
-							appStatus = AppStatus.Settings,
-						})
-					end,
-				}),
-
-				Connecting = createPageElement(AppStatus.Connecting),
-
-				Connected = createPageElement(AppStatus.Connected, {
-					projectName = self.state.projectName,
-					address = self.state.address,
-
-					onDisconnect = function()
-						Log.trace("Disconnecting session")
-
-						self.serveSession:stop()
-						self.serveSession = nil
-						self:setState({
-							appStatus = AppStatus.NotConnected,
-						})
-
-						Log.trace("Session terminated by user")
-					end,
-				}),
-
-				Background = Theme.with(function(theme)
-					return e("Frame", {
-						Size = UDim2.new(1, 0, 1, 0),
-						BackgroundColor3 = theme.BackgroundColor,
-						ZIndex = 0,
-						BorderSizePixel = 0,
-					})
-				end),
-			}),
-
-			toolbar = e(StudioToolbar, {
-				name = pluginName,
-			}, {
-				button = e(StudioToggleButton, {
-					name = "Rojo",
-					tooltip = "Show or hide the Rojo panel",
-					icon = Assets.Images.Icon,
+				gui = e(StudioPluginGui, {
+					id = pluginName,
+					title = pluginName,
 					active = self.state.guiEnabled,
-					enabled = true,
-					onClick = function()
-						self:setState(function(state)
-							return {
-								guiEnabled = not state.guiEnabled,
-							}
-						end)
+
+					initDockState = Enum.InitialDockState.Right,
+					initEnabled = false,
+					overridePreviousState = false,
+					floatingSize = Vector2.new(300, 200),
+					minimumSize = Vector2.new(300, 200),
+
+					zIndexBehavior = Enum.ZIndexBehavior.Sibling,
+
+					onInitialState = function(initialState)
+						self:setState({
+							guiEnabled = initialState,
+						})
 					end,
-				})
+
+					onClose = function()
+						self:setState({
+							guiEnabled = false,
+						})
+					end,
+				}, {
+					NotConnectedPage = createPageElement(AppStatus.NotConnected, {
+						onConnect = function(address, port)
+							-- TODO: Settings
+							self:startSession(address, port, {
+								openScriptsExternally = false,
+								twoWaySync = false,
+							})
+						end,
+
+						onNavigateSettings = function()
+							self:setState({
+								appStatus = AppStatus.Settings,
+							})
+						end,
+					}),
+
+					Connecting = createPageElement(AppStatus.Connecting),
+
+					Connected = createPageElement(AppStatus.Connected, {
+						projectName = self.state.projectName,
+						address = self.state.address,
+
+						onDisconnect = function()
+							Log.trace("Disconnecting session")
+
+							self.serveSession:stop()
+							self.serveSession = nil
+							self:setState({
+								appStatus = AppStatus.NotConnected,
+							})
+
+							Log.trace("Session terminated by user")
+						end,
+					}),
+
+					Settings = createPageElement(AppStatus.Settings, {
+						onBack = function()
+							self:setState({
+								appStatus = AppStatus.NotConnected,
+							})
+						end,
+					}),
+
+					Background = Theme.with(function(theme)
+						return e("Frame", {
+							Size = UDim2.new(1, 0, 1, 0),
+							BackgroundColor3 = theme.BackgroundColor,
+							ZIndex = 0,
+							BorderSizePixel = 0,
+						})
+					end),
+				}),
+
+				toolbar = e(StudioToolbar, {
+					name = pluginName,
+				}, {
+					button = e(StudioToggleButton, {
+						name = "Rojo",
+						tooltip = "Show or hide the Rojo panel",
+						icon = Assets.Images.PluginButton,
+						active = self.state.guiEnabled,
+						enabled = true,
+						onClick = function()
+							self:setState(function(state)
+								return {
+									guiEnabled = not state.guiEnabled,
+								}
+							end)
+						end,
+					})
+				}),
 			}),
-		})
+		}),
 	})
 end
 

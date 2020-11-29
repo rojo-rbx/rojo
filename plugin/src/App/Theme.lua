@@ -35,60 +35,71 @@ local BRAND_COLOR = hexColor(0xE13835)
 
 local lightTheme = strict("LightTheme", {
 	BackgroundColor = hexColor(0xF0F0F0),
-
 	Button = {
 		Solid = {
 			ActionFillColor = hexColor(0xFFFFFF),
 			ActionFillTransparency = 0.8,
-
 			Enabled = {
 				TextColor = hexColor(0xFFFFFF),
 				BackgroundColor = BRAND_COLOR,
 			},
-
 			Disabled = {
 				TextColor = hexColor(0xFFFFFF),
 				BackgroundColor = BRAND_COLOR,
 			},
 		},
-
 		Bordered = {
 			ActionFillColor = hexColor(0x000000),
 			ActionFillTransparency = 0.9,
-
 			Enabled = {
 				TextColor = hexColor(0x393939),
 				BorderColor = hexColor(0xACACAC),
 			},
-
 			Disabled = {
 				TextColor = hexColor(0x393939),
 				BorderColor = hexColor(0xACACAC),
 			},
 		},
 	},
-
+	Checkbox = {
+		Active = {
+			IconColor = hexColor(0xFFFFFF),
+			BackgroundColor = BRAND_COLOR,
+		},
+		Inactive = {
+			IconColor = hexColor(0xD6D6D6),
+			BorderColor = hexColor(0xCBCBCB),
+		},
+	},
 	AddressEntry = {
 		TextColor = hexColor(0x000000),
 		PlaceholderColor = hexColor(0x8C8C8C)
 	},
-
 	BorderedContainer = {
 		BorderColor = hexColor(0xCBCBCB),
 		BackgroundColor = hexColor(0xE0E0E0),
 	},
-
 	Throbber = {
 		ForegroundColor = BRAND_COLOR,
 		BackgroundColor = hexColor(0xE0E0E0),
 	},
-
 	ConnectionDetails = {
 		ProjectNameColor = hexColor(0x00000),
 		AddressColor = hexColor(0x00000),
 		DisconnectColor = BRAND_COLOR,
 	},
-
+	Settings = {
+		ScrollBarColor = hexColor(0x000000),
+		DividerColor = hexColor(0xCBCBCB),
+		Navbar = {
+			BackButtonColor = hexColor(0x000000),
+			TextColor = hexColor(0x000000),
+		},
+		Setting = {
+			NameColor = hexColor(0x000000),
+			DescriptionColor = hexColor(0x5F5F5F),
+		},
+	},
 	Header = {
 		LogoColor = BRAND_COLOR,
 		VersionColor = hexColor(0x727272)
@@ -97,60 +108,59 @@ local lightTheme = strict("LightTheme", {
 
 local darkTheme = strict("DarkTheme", {
 	BackgroundColor = hexColor(0x272727),
-
 	Button = {
 		Solid = {
 			ActionFillColor = hexColor(0xFFFFFF),
 			ActionFillTransparency = 0.8,
-
 			Enabled = {
 				TextColor = hexColor(0xFFFFFF),
 				BackgroundColor = BRAND_COLOR,
 			},
-
 			Disabled = {
 				TextColor = hexColor(0xFFFFFF),
 				BackgroundColor = BRAND_COLOR,
 			},
 		},
-
 		Bordered = {
 			ActionFillColor = hexColor(0xFFFFFF),
 			ActionFillTransparency = 0.9,
-
 			Enabled = {
 				TextColor = hexColor(0xDBDBDB),
 				BorderColor = hexColor(0x535353),
 			},
-
 			Disabled = {
 				TextColor = hexColor(0xDBDBDB),
 				BorderColor = hexColor(0x535353),
 			},
 		},
 	},
-
+	Checkbox = {
+		Active = {
+			IconColor = hexColor(0xFFFFFF),
+			BackgroundColor = BRAND_COLOR,
+		},
+		Inactive = {
+			IconColor = hexColor(0x424242),
+			BorderColor = hexColor(0x535353),
+		},
+	},
 	AddressEntry = {
 		TextColor = hexColor(0xFFFFFF),
 		PlaceholderColor = hexColor(0x717171)
 	},
-
 	BorderedContainer = {
 		BorderColor = hexColor(0x535353),
 		BackgroundColor = hexColor(0x323232),
 	},
-
 	Throbber = {
 		ForegroundColor = BRAND_COLOR,
 		BackgroundColor = hexColor(0x323232),
 	},
-
 	ConnectionDetails = {
 		ProjectNameColor = hexColor(0xFFFFFF),
 		AddressColor = hexColor(0xFFFFFF),
 		DisconnectColor = hexColor(0xFFFFFF),
 	},
-
 	Header = {
 		LogoColor = hexColor(0xFFFFFF),
 		VersionColor = hexColor(0xD3D3D3)

@@ -30,6 +30,14 @@ function TextButton:init()
 	self.binding = bindingUtil.fromMotor(self.motor)
 end
 
+function TextButton:didUpdate(lastProps)
+	if lastProps.enabled ~= self.props.enabled then
+		self.motor:setGoal({
+			enabled = Flipper.Spring.new(self.props.enabled and 1 or 0),
+		})
+	end
+end
+
 function TextButton:render()
 	return Theme.with(function(theme)
 		local textSize = TextService:GetTextSize(

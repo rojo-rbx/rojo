@@ -17,10 +17,7 @@ local e = Roact.createElement
 local IconButton = Roact.Component:extend("IconButton")
 
 function IconButton:init()
-	self.motor = Flipper.GroupMotor.new({
-		hover = 0,
-		click = 0,
-	})
+	self.motor = Flipper.SingleMotor.new(0)
 	self.binding = bindingUtil.fromMotor(self.motor)
 end
 
@@ -39,15 +36,15 @@ function IconButton:render()
 		[Roact.Event.Activated] = self.props.onClick,
 
 		[Roact.Event.MouseEnter] = function()
-			self.motor:setGoal({
-				hover = Flipper.Spring.new(1, HOVER_SPRING_PROPS),
-			})
+			self.motor:setGoal(
+				Flipper.Spring.new(1, HOVER_SPRING_PROPS)
+			)
 		end,
 
 		[Roact.Event.MouseLeave] = function()
-			self.motor:setGoal({
-				hover = Flipper.Spring.new(0, HOVER_SPRING_PROPS),
-			})
+			self.motor:setGoal(
+				Flipper.Spring.new(0, HOVER_SPRING_PROPS)
+			)
 		end,
 	}, {
 		Icon = e("ImageLabel", {
@@ -66,7 +63,7 @@ function IconButton:render()
 			Image = Assets.Images.Circles[128],
 			ImageColor3 = self.props.color,
 			ImageTransparency = Roact.joinBindings({
-				hover = bindingUtil.deriveProperty(self.binding, "hover"),
+				hover = self.binding,
 				transparency = self.props.transparency,
 			}):map(function(values)
 				return bindingUtil.blendAlpha({ 0.85, 1 - values.hover, values.transparency })
