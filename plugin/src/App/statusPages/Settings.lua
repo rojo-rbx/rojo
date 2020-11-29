@@ -184,14 +184,14 @@ function SettingsPage:render()
 		theme = theme.Settings
 
 		return e("ScrollingFrame", {
-			ScrollBarThickness = 4,
+			ScrollBarThickness = 9,
 			ScrollBarImageColor3 = theme.ScrollBarColor,
 			ScrollBarImageTransparency = self.props.transparency:map(function(value)
 				return bindingUtil.blendAlpha({ 0.65, value })
 			end),
-			TopImage = "rbxassetid://",
-			MidImage = "rbxassetid://",
-			BottomImage = "rbxassetid://",
+			TopImage = Assets.Images.ScrollBar.Top,
+			MidImage = Assets.Images.ScrollBar.Middle,
+			BottomImage = Assets.Images.ScrollBar.Bottom,
 
 			ElasticBehavior = Enum.ElasticBehavior.Always,
 			ScrollingDirection = Enum.ScrollingDirection.Y,

@@ -161,6 +161,18 @@ local darkTheme = strict("DarkTheme", {
 		AddressColor = hexColor(0xFFFFFF),
 		DisconnectColor = hexColor(0xFFFFFF),
 	},
+	Settings = {
+		ScrollBarColor = hexColor(0xFFFFFF),
+		DividerColor = hexColor(0x535353),
+		Navbar = {
+			BackButtonColor = hexColor(0xFFFFFF),
+			TextColor = hexColor(0xFFFFFF),
+		},
+		Setting = {
+			NameColor = hexColor(0xFFFFFF),
+			DescriptionColor = hexColor(0xD3D3D3),
+		},
+	},
 	Header = {
 		LogoColor = hexColor(0xFFFFFF),
 		VersionColor = hexColor(0xD3D3D3)

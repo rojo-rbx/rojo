@@ -26,6 +26,11 @@ local Assets = {
 			Active = "rbxassetid://6016251644",
 			Inactive = "rbxassetid://6016251963",
 		},
+		ScrollBar = {
+			Top = "rbxassetid://6017290134",
+			Middle = "rbxassetid://6017289904",
+			Bottom = "rbxassetid://6017289712",
+		},
 		Circles = {
 			[16] = "rbxassetid://3056541177",
 			[32] = "rbxassetid://3088713341",
