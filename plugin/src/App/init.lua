@@ -11,7 +11,7 @@ local strict = require(Plugin.strict)
 local merge = require(Plugin.merge)
 local ServeSession = require(Plugin.ServeSession)
 local ApiContext = require(Plugin.ApiContext)
-local preloadAssets = require(Plugin.PreloadAssets)
+local preloadAssets = require(Plugin.preloadAssets)
 local Theme = require(script.Theme)
 local PluginSettings = require(script.PluginSettings)
 
