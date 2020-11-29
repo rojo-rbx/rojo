@@ -67,8 +67,8 @@ local lightTheme = strict("LightTheme", {
 			BackgroundColor = BRAND_COLOR,
 		},
 		Inactive = {
-			IconColor = hexColor(0xD6D6D6),
-			BorderColor = hexColor(0xCBCBCB),
+			IconColor = hexColor(0xCACACA),
+			BorderColor = hexColor(0xAFAFAF),
 		},
 	},
 	AddressEntry = {
@@ -141,8 +141,8 @@ local darkTheme = strict("DarkTheme", {
 			BackgroundColor = BRAND_COLOR,
 		},
 		Inactive = {
-			IconColor = hexColor(0x424242),
-			BorderColor = hexColor(0x535353),
+			IconColor = hexColor(0x484848),
+			BorderColor = hexColor(0x5A5A5A),
 		},
 	},
 	AddressEntry = {
