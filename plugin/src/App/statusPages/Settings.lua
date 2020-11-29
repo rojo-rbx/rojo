@@ -117,7 +117,7 @@ function Setting:render()
 					Description = e("TextLabel", {
 						Text = self.props.description,
 						Font = Enum.Font.Gotham,
-						LineHeight = 1.15,
+						LineHeight = 1.2,
 						TextSize = 14,
 						TextColor3 = theme.Setting.DescriptionColor,
 						TextXAlignment = Enum.TextXAlignment.Left,
@@ -126,7 +126,7 @@ function Setting:render()
 
 						Size = self.containerSize:map(function(value)
 							local textBounds = getTextBounds(
-								self.props.description, 14, Enum.Font.Gotham, 1.15,
+								self.props.description, 14, Enum.Font.Gotham, 1.2,
 								Vector2.new(value.X - 50, math.huge)
 							)
 							return UDim2.new(1, -50, 0, textBounds.Y)
@@ -199,7 +199,7 @@ function SettingsPage:render()
 			OpenScriptsExternally = e(Setting, {
 				id = "openScriptsExternally",
 				name = "Open Scripts Externally",
-				description = "Example",
+				description = "Attempt to open scripts in an external editor",
 				transparency = self.props.transparency,
 				layoutOrder = 1,
 			}),
@@ -207,7 +207,7 @@ function SettingsPage:render()
 			TwoWaySync = e(Setting, {
 				id = "twoWaySync",
 				name = "Two-Way Sync",
-				description = "Example",
+				description = "Editing files in Studio will sync them into the filesystem",
 				transparency = self.props.transparency,
 				layoutOrder = 2,
 			}),
