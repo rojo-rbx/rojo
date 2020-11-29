@@ -11,6 +11,7 @@ local strict = require(Plugin.strict)
 local merge = require(Plugin.merge)
 local ServeSession = require(Plugin.ServeSession)
 local ApiContext = require(Plugin.ApiContext)
+local preloadAssets = require(Plugin.PreloadAssets)
 local Theme = require(script.Theme)
 local PluginSettings = require(script.PluginSettings)
 
@@ -34,6 +35,8 @@ local e = Roact.createElement
 local App = Roact.Component:extend("App")
 
 function App:init()
+	preloadAssets()
+
 	self:setState({
 		appStatus = AppStatus.NotConnected,
 		guiEnabled = false,
