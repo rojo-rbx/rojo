@@ -133,21 +133,22 @@ function App:render()
 						})
 					end,
 				}, {
-					NotConnectedPage = createPageElement(AppStatus.NotConnected, {
-						onConnect = function(address, port)
-							-- TODO: Settings
-							self:startSession(address, port, {
-								openScriptsExternally = false,
-								twoWaySync = false,
-							})
-						end,
+					NotConnectedPage = PluginSettings.with(function(settings)
+						return createPageElement(AppStatus.NotConnected, {
+							onConnect = function(host, port)
+								self:startSession(host, port, {
+									openScriptsExternally = settings:get("openScriptsExternally"),
+									twoWaySync = settings:get("twoWaySync"),
+								})
+							end,
 
-						onNavigateSettings = function()
-							self:setState({
-								appStatus = AppStatus.Settings,
-							})
-						end,
-					}),
+							onNavigateSettings = function()
+								self:setState({
+									appStatus = AppStatus.Settings,
+								})
+							end,
+						})
+					end),
 
 					Connecting = createPageElement(AppStatus.Connecting),
 
