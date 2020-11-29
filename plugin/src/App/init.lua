@@ -177,6 +177,16 @@ function App:render()
 						end,
 					}),
 
+					Error = createPageElement(AppStatus.Error, {
+						errorMessage = self.state.errorMessage,
+
+						onClose = function()
+							self:setState({
+								appStatus = AppStatus.NotConnected,
+							})
+						end,
+					}),
+
 					Background = Theme.with(function(theme)
 						return e("Frame", {
 							Size = UDim2.new(1, 0, 1, 0),

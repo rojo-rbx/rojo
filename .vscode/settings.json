@@ -1,0 +1,6 @@
+{
+	"Lua.diagnostics.disable": [
+		"undefined-global",
+		"incorrect-call-arguments"
+	]
+}

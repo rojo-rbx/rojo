@@ -89,7 +89,6 @@ local lightTheme = strict("LightTheme", {
 		DisconnectColor = BRAND_COLOR,
 	},
 	Settings = {
-		ScrollBarColor = hexColor(0x000000),
 		DividerColor = hexColor(0xCBCBCB),
 		Navbar = {
 			BackButtonColor = hexColor(0x000000),
@@ -102,8 +101,10 @@ local lightTheme = strict("LightTheme", {
 	},
 	Header = {
 		LogoColor = BRAND_COLOR,
-		VersionColor = hexColor(0x727272)
+		VersionColor = hexColor(0x727272),
 	},
+	ErrorColor = hexColor(0x000000),
+	ScrollBarColor = hexColor(0x000000),
 })
 
 local darkTheme = strict("DarkTheme", {
@@ -162,7 +163,6 @@ local darkTheme = strict("DarkTheme", {
 		DisconnectColor = hexColor(0xFFFFFF),
 	},
 	Settings = {
-		ScrollBarColor = hexColor(0xFFFFFF),
 		DividerColor = hexColor(0x535353),
 		Navbar = {
 			BackButtonColor = hexColor(0xFFFFFF),
@@ -177,6 +177,8 @@ local darkTheme = strict("DarkTheme", {
 		LogoColor = hexColor(0xFFFFFF),
 		VersionColor = hexColor(0xD3D3D3)
 	},
+	ErrorColor = hexColor(0xFFFFFF),
+	ScrollBarColor = hexColor(0xFFFFFF),
 })
 
 local Context = Roact.createContext(lightTheme)

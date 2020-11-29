@@ -112,8 +112,6 @@ function ConnectedPage:render()
 end
 
 function ConnectedPage.getDerivedStateFromProps(props)
-	-- These are stored in state so they can properly be animated out on disconnect
-
 	return {
 		projectName = props.projectName,
 		address = props.address,

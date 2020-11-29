@@ -8,10 +8,10 @@ local Roact = require(Rojo.Roact)
 local Assets = require(Plugin.Assets)
 local Theme = require(Plugin.App.Theme)
 local PluginSettings = require(Plugin.App.PluginSettings)
-local bindingUtil = require(Plugin.App.bindingUtil)
 
 local Checkbox = require(Plugin.App.components.Checkbox)
 local IconButton = require(Plugin.App.components.IconButton)
+local ScrollingFrame = require(Plugin.App.components.ScrollingFrame)
 
 local e = Roact.createElement
 
@@ -183,26 +183,12 @@ function SettingsPage:render()
 	return Theme.with(function(theme)
 		theme = theme.Settings
 
-		return e("ScrollingFrame", {
-			ScrollBarThickness = 9,
-			ScrollBarImageColor3 = theme.ScrollBarColor,
-			ScrollBarImageTransparency = self.props.transparency:map(function(value)
-				return bindingUtil.blendAlpha({ 0.65, value })
-			end),
-			TopImage = Assets.Images.ScrollBar.Top,
-			MidImage = Assets.Images.ScrollBar.Middle,
-			BottomImage = Assets.Images.ScrollBar.Bottom,
-
-			ElasticBehavior = Enum.ElasticBehavior.Always,
-			ScrollingDirection = Enum.ScrollingDirection.Y,
-
-			Size = UDim2.new(1, 0, 1, 0),
-			CanvasSize = self.contentSize:map(function(value)
+		return e(ScrollingFrame, {
+			size = UDim2.new(1, 0, 1, 0),
+			contentSize = self.contentSize:map(function(value)
 				return UDim2.new(0, 0, 0, value.Y)
 			end),
-
-			BorderSizePixel = 0,
-			BackgroundTransparency = 1,
+			transparency = self.props.transparency,
 		}, {
 			Navbar = e(Navbar, {
 				onBack = self.props.onBack,
