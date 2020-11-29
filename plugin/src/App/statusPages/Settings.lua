@@ -185,9 +185,7 @@ function SettingsPage:render()
 
 		return e(ScrollingFrame, {
 			size = UDim2.new(1, 0, 1, 0),
-			contentSize = self.contentSize:map(function(value)
-				return UDim2.new(0, 0, 0, value.Y)
-			end),
+			contentSize = self.contentSize,
 			transparency = self.props.transparency,
 		}, {
 			Navbar = e(Navbar, {
