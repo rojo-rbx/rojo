@@ -26,6 +26,10 @@ local Assets = {
 			Active = "rbxassetid://6016251644",
 			Inactive = "rbxassetid://6016251963",
 		},
+		Spinner = {
+			Foreground = "rbxassetid://3222731032",
+			Background = "rbxassetid://3222730627",
+		},
 		ScrollBar = {
 			Top = "rbxassetid://6017290134",
 			Middle = "rbxassetid://6017289904",

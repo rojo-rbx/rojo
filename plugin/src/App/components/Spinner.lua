@@ -6,6 +6,7 @@ local Plugin = Rojo.Plugin
 local Roact = require(Rojo.Roact)
 
 local Theme = require(Plugin.App.Theme)
+local Assets = require(Plugin.Assets)
 
 local ROTATIONS_PER_SECOND = 1.75
 
@@ -20,7 +21,7 @@ end
 function Spinner:render()
 	return Theme.with(function(theme)
 		return e("ImageLabel", {
-			Image = "rbxassetid://3222730627",
+			Image = Assets.Images.Spinner.Background,
 			ImageColor3 = theme.Spinner.BackgroundColor,
 			ImageTransparency = self.props.transparency,
 
@@ -32,7 +33,7 @@ function Spinner:render()
 			BackgroundTransparency = 1,
 		}, {
 			Foreground = e("ImageLabel", {
-				Image = "rbxassetid://3222731032",
+				Image = Assets.Images.Spinner.Foreground,
 				ImageColor3 = theme.Spinner.ForegroundColor,
 				ImageTransparency = self.props.transparency,
 
