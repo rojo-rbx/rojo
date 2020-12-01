@@ -11,17 +11,17 @@ local ROTATIONS_PER_SECOND = 1.75
 
 local e = Roact.createElement
 
-local Throbber = Roact.PureComponent:extend("Throbber")
+local Spinner = Roact.PureComponent:extend("Spinner")
 
-function Throbber:init()
+function Spinner:init()
 	self.rotation, self.setRotation = Roact.createBinding(0)
 end
 
-function Throbber:render()
+function Spinner:render()
 	return Theme.with(function(theme)
 		return e("ImageLabel", {
 			Image = "rbxassetid://3222730627",
-			ImageColor3 = theme.Throbber.BackgroundColor,
+			ImageColor3 = theme.Spinner.BackgroundColor,
 			ImageTransparency = self.props.transparency,
 
 			Size = UDim2.new(0, 24, 0, 24),
@@ -33,7 +33,7 @@ function Throbber:render()
 		}, {
 			Foreground = e("ImageLabel", {
 				Image = "rbxassetid://3222731032",
-				ImageColor3 = theme.Throbber.ForegroundColor,
+				ImageColor3 = theme.Spinner.ForegroundColor,
 				ImageTransparency = self.props.transparency,
 
 				Size = UDim2.new(1, 0, 1, 0),
@@ -47,7 +47,7 @@ function Throbber:render()
 	end)
 end
 
-function Throbber:didMount()
+function Spinner:didMount()
 	self.stepper = RunService.RenderStepped:Connect(function(deltaTime)
 		local rotation = self.rotation:getValue()
 
@@ -58,8 +58,8 @@ function Throbber:didMount()
 	end)
 end
 
-function Throbber:willUnmount()
+function Spinner:willUnmount()
 	self.stepper:Disconnect()
 end
 
-return Throbber
+return Spinner

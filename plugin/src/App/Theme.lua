@@ -79,7 +79,7 @@ local lightTheme = strict("LightTheme", {
 		BorderColor = hexColor(0xCBCBCB),
 		BackgroundColor = hexColor(0xE0E0E0),
 	},
-	Throbber = {
+	Spinner = {
 		ForegroundColor = BRAND_COLOR,
 		BackgroundColor = hexColor(0xE0E0E0),
 	},
@@ -153,7 +153,7 @@ local darkTheme = strict("DarkTheme", {
 		BorderColor = hexColor(0x535353),
 		BackgroundColor = hexColor(0x323232),
 	},
-	Throbber = {
+	Spinner = {
 		ForegroundColor = BRAND_COLOR,
 		BackgroundColor = hexColor(0x323232),
 	},
