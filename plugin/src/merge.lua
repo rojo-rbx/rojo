@@ -1,7 +1,8 @@
 local function merge(...)
 	local newTable = {}
 
-	for _, mergeTable in ipairs({ ... }) do
+	for i = 1, select("#", ...) do
+		local mergeTable = select(i, ...)
 		for key, value in pairs(mergeTable) do
 			newTable[key] = value
 		end
