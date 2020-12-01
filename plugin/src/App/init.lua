@@ -16,11 +16,11 @@ local Theme = require(script.Theme)
 local PluginSettings = require(script.PluginSettings)
 
 local Page = require(script.Page)
-local StudioToolbar = require(script.components.studio.StudioToolbar)
-local StudioToggleButton = require(script.components.studio.StudioToggleButton)
-local StudioPluginGui = require(script.components.studio.StudioPluginGui)
-local StudioPluginContext = require(script.components.studio.StudioPluginContext)
-local statusPages = require(script.statusPages)
+local StudioToolbar = require(script.Components.Studio.StudioToolbar)
+local StudioToggleButton = require(script.Components.Studio.StudioToggleButton)
+local StudioPluginGui = require(script.Components.Studio.StudioPluginGui)
+local StudioPluginContext = require(script.Components.Studio.StudioPluginContext)
+local StatusPages = require(script.StatusPages)
 
 local AppStatus = strict("AppStatus", {
 	NotConnected = "NotConnected",
@@ -97,7 +97,7 @@ function App:render()
 		additionalProps = additionalProps or {}
 
 		local props = merge(additionalProps, {
-			component = statusPages[appStatus],
+			component = StatusPages[appStatus],
 			active = self.state.appStatus == appStatus,
 		})
 
