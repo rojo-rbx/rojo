@@ -10,6 +10,10 @@ local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
 local TextButton = require(Plugin.App.Components.TextButton)
 local Header = require(Plugin.App.Components.Header)
 
+local PORT_WIDTH = 74
+local DIVIDER_WIDTH = 1
+local HOST_OFFSET = 12
+
 local e = Roact.createElement
 
 local function AddressEntry(props)
@@ -29,8 +33,8 @@ local function AddressEntry(props)
 				PlaceholderText = Config.defaultHost,
 				PlaceholderColor3 = theme.AddressEntry.PlaceholderColor,
 
-				Size = UDim2.new(1, -(74 + 12 + 1), 1, 0),
-				Position = UDim2.new(0, 12, 0, 0),
+				Size = UDim2.new(1, -(HOST_OFFSET + DIVIDER_WIDTH + PORT_WIDTH), 1, 0),
+				Position = UDim2.new(0, HOST_OFFSET, 0, 0),
 
 				ClipsDescendants = true,
 				BackgroundTransparency = 1,
@@ -47,7 +51,7 @@ local function AddressEntry(props)
 				PlaceholderText = Config.defaultPort,
 				PlaceholderColor3 = theme.AddressEntry.PlaceholderColor,
 
-				Size = UDim2.new(0, 74, 1, 0),
+				Size = UDim2.new(0, PORT_WIDTH, 1, 0),
 				Position = UDim2.new(1, 0, 0, 0),
 				AnchorPoint = Vector2.new(1, 0),
 
@@ -67,7 +71,7 @@ local function AddressEntry(props)
 				Divider = e("Frame", {
 					BackgroundColor3 = theme.BorderedContainer.BorderColor,
 					BackgroundTransparency = props.transparency,
-					Size = UDim2.new(0, 1, 1, 0),
+					Size = UDim2.new(0, DIVIDER_WIDTH, 1, 0),
 					AnchorPoint = Vector2.new(1, 0),
 					BorderSizePixel = 0,
 				}),
