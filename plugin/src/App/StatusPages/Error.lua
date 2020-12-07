@@ -37,10 +37,12 @@ function Error:render()
 		end),
 		transparency = self.props.transparency,
 	}, {
-		-- It's difficult to pass down PropMarkers to custom components
-		Dummy = e("Frame", {
-			Size = UDim2.new(1, 0, 1, 0),
-			BackgroundTransparency = 1,
+		ScrollingFrame = e(ScrollingFrame, {
+			size = UDim2.new(1, 0, 1, 0),
+			contentSize = self.contentSize:map(function(value)
+				return value + ERROR_PADDING * 2
+			end),
+			transparency = self.props.transparency,
 
 			[Roact.Change.AbsoluteSize] = function(object)
 				local containerSize = object.AbsoluteSize - ERROR_PADDING * 2
@@ -52,14 +54,6 @@ function Error:render()
 
 				self.setContentSize(Vector2.new(containerSize.X, textBounds.Y))
 			end,
-		}),
-
-		ScrollingFrame = e(ScrollingFrame, {
-			size = UDim2.new(1, 0, 1, 0),
-			contentSize = self.contentSize:map(function(value)
-				return value + ERROR_PADDING * 2
-			end),
-			transparency = self.props.transparency,
 		}, {
 			ErrorMessage = Theme.with(function(theme)
 				return e("TextLabel", {
