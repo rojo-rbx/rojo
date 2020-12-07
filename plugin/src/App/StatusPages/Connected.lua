@@ -112,8 +112,9 @@ function ConnectedPage:render()
 end
 
 function ConnectedPage.getDerivedStateFromProps(props)
-	-- If projectName or address ever get removed from props, make sure we still have the property!
-	-- This is because the component needs to be rendered for it to accurately render out.
+	-- If projectName or address ever get removed from props, make sure we still have
+	-- the properties! The component still needs to have its data for it to be properly
+	-- animated out without the labels changing.
 
 	return {
 		projectName = props.projectName,

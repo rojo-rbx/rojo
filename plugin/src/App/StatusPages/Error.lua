@@ -147,8 +147,9 @@ function ErrorPage:render()
 end
 
 function ErrorPage.getDerivedStateFromProps(props)
-	-- If errorMessage ever gets removed from props, make sure we still have the property!
-	-- This is because the component needs to be rendered for it to accurately render out.
+	-- If errorMessage ever gets removed from props, make sure we still have the
+	-- property! The component still needs to have its data for it to be properly
+	-- animated out without the labels changing.
 
 	return {
 		errorMessage = props.errorMessage,
