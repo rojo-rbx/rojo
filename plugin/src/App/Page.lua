@@ -4,7 +4,7 @@ local Plugin = Rojo.Plugin
 local Roact = require(Rojo.Roact)
 local Flipper = require(Rojo.Flipper)
 
-local merge = require(Plugin.merge)
+local Dictionary = require(Plugin.Dictionary)
 
 local bindingUtil = require(script.Parent.bindingUtil)
 
@@ -50,7 +50,7 @@ function Page:render()
 		Size = UDim2.new(1, 0, 1, 0),
 		BackgroundTransparency = 1,
 	}, {
-		Component = e(self.props.component, merge(self.props, {
+		Component = e(self.props.component, Dictionary.merge(self.props, {
 			transparency = transparency,
 		}))
 	})

@@ -3,7 +3,7 @@ local Plugin = Rojo.Plugin
 
 local Roact = require(Rojo.Roact)
 
-local merge = require(Plugin.merge)
+local Dictionary = require(Plugin.Dictionary)
 
 local StudioToolbarContext = require(script.Parent.StudioToolbarContext)
 
@@ -56,7 +56,7 @@ end
 local function StudioToggleButtonWrapper(props)
 	return e(StudioToolbarContext.Consumer, {
 		render = function(toolbar)
-			return e(StudioToggleButton, merge(props, {
+			return e(StudioToggleButton, Dictionary.merge(props, {
 				toolbar = toolbar,
 			}))
 		end,

@@ -3,7 +3,7 @@ local Plugin = Rojo.Plugin
 
 local Roact = require(Rojo.Roact)
 
-local merge = require(Plugin.merge)
+local Dictionary = require(Plugin.Dictionary)
 
 local StudioToolbarContext = require(script.Parent.StudioToolbarContext)
 local StudioPluginContext = require(script.Parent.StudioPluginContext)
@@ -35,7 +35,7 @@ end
 local function StudioToolbarWrapper(props)
 	return e(StudioPluginContext.Consumer, {
 		render = function(plugin)
-			return e(StudioToolbar, merge(props, {
+			return e(StudioToolbar, Dictionary.merge(props, {
 				plugin = plugin,
 			}))
 		end,

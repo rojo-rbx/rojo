@@ -8,7 +8,7 @@ local Assets = require(Plugin.Assets)
 local Version = require(Plugin.Version)
 local Config = require(Plugin.Config)
 local strict = require(Plugin.strict)
-local merge = require(Plugin.merge)
+local Dictionary = require(Plugin.Dictionary)
 local ServeSession = require(Plugin.ServeSession)
 local ApiContext = require(Plugin.ApiContext)
 local preloadAssets = require(Plugin.preloadAssets)
@@ -96,7 +96,7 @@ function App:render()
 	local function createPageElement(appStatus, additionalProps)
 		additionalProps = additionalProps or {}
 
-		local props = merge(additionalProps, {
+		local props = Dictionary.merge(additionalProps, {
 			component = StatusPages[appStatus],
 			active = self.state.appStatus == appStatus,
 		})

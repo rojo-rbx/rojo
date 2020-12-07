@@ -3,7 +3,7 @@ local Plugin = Rojo.Plugin
 
 local Roact = require(Rojo.Roact)
 
-local merge = require(Plugin.merge)
+local Dictionary = require(Plugin.Dictionary)
 
 local StudioPluginContext = require(script.Parent.StudioPluginContext)
 
@@ -74,7 +74,7 @@ end
 local function StudioPluginGuiWrapper(props)
 	return e(StudioPluginContext.Consumer, {
 		render = function(plugin)
-			return e(StudioPluginGui, merge(props, {
+			return e(StudioPluginGui, Dictionary.merge(props, {
 				plugin = plugin,
 			}))
 		end,
