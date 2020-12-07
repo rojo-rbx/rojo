@@ -108,7 +108,7 @@ function Setting:render()
 						TextXAlignment = Enum.TextXAlignment.Left,
 						TextTransparency = self.props.transparency,
 
-						Size = UDim2.new(1, 0,  0, 17),
+						Size = UDim2.new(1, 0, 0, 17),
 
 						LayoutOrder = 1,
 						BackgroundTransparency = 1,
