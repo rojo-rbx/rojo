@@ -1,6 +1,9 @@
 local Rojo = script:FindFirstAncestor("Rojo")
+local Plugin = Rojo.Plugin
 
 local Roact = require(Rojo.Roact)
+
+local merge = require(Plugin.merge)
 
 local StudioPluginContext = require(script.Parent.StudioPluginContext)
 
@@ -17,52 +20,65 @@ StudioPluginGui.defaultProps = {
 	zIndexBehavior = Enum.ZIndexBehavior.Sibling,
 }
 
-function StudioPluginGui:render()
-	return e(StudioPluginContext.Consumer, {
-		render = function(plugin)
-			if not self.pluginGui then
-				local floatingSize = self.props.floatingSize
-				local minimumSize = self.props.minimumSize
+function StudioPluginGui:init()
+	local floatingSize = self.props.floatingSize
+	local minimumSize = self.props.minimumSize
 
-				local dockWidgetPluginGuiInfo = DockWidgetPluginGuiInfo.new(
-					self.props.initDockState,
-					self.props.active,
-					self.props.overridePreviousState,
-					floatingSize.X, floatingSize.Y,
-					minimumSize.X, minimumSize.Y
-				)
+	local dockWidgetPluginGuiInfo = DockWidgetPluginGuiInfo.new(
+		self.props.initDockState,
+		self.props.active,
+		self.props.overridePreviousState,
+		floatingSize.X, floatingSize.Y,
+		minimumSize.X, minimumSize.Y
+	)
 
-				self.pluginGui = plugin:CreateDockWidgetPluginGui(self.props.id, dockWidgetPluginGuiInfo)
+	local pluginGui = self.props.plugin:CreateDockWidgetPluginGui(self.props.id, dockWidgetPluginGuiInfo)
 
-				if self.props.onInitialState then
-					self.props.onInitialState(self.pluginGui.Enabled)
-				end
+	pluginGui.Name = self.props.id
+	pluginGui.Title = self.props.title
+	pluginGui.ZIndexBehavior = self.props.zIndexBehavior
 
-				self.pluginGui:BindToClose(function()
-					if self.props.onClose then
-						self.props.onClose()
-					else
-						self.pluginGui.Enabled = false
-					end
-				end)
-			else
-				-- Make sure the initial state is preserved until something changes
-				self.pluginGui.Enabled = self.props.active
-			end
+	if self.props.onInitialState then
+		self.props.onInitialState(pluginGui.Enabled)
+	end
 
-			self.pluginGui.Name = self.props.id
-			self.pluginGui.Title = self.props.title
-			self.pluginGui.ZIndexBehavior = self.props.zIndexBehavior
-
-			return e(Roact.Portal, {
-				target = self.pluginGui,
-			}, self.props[Roact.Children])
+	pluginGui:BindToClose(function()
+		if self.props.onClose then
+			self.props.onClose()
+		else
+			pluginGui.Enabled = false
 		end
-	})
+	end)
+
+	self.pluginGui = pluginGui
+end
+
+function StudioPluginGui:render()
+	return e(Roact.Portal, {
+		target = self.pluginGui,
+	}, self.props[Roact.Children])
+end
+
+function StudioPluginGui:didUpdate(lastProps)
+	if self.props.active ~= lastProps.active then
+		-- This is intentionally in didUpdate to make sure the initial active state
+		-- (if the PluginGui is open initially) is preserved.
+		self.pluginGui.Enabled = self.props.active
+	end
 end
 
 function StudioPluginGui:willUnmount()
 	self.pluginGui:Destroy()
 end
 
-return StudioPluginGui
+local function StudioPluginGuiWrapper(props)
+	return e(StudioPluginContext.Consumer, {
+		render = function(plugin)
+			return e(StudioPluginGui, merge(props, {
+				plugin = plugin,
+			}))
+		end,
+	})
+end
+
+return StudioPluginGuiWrapper

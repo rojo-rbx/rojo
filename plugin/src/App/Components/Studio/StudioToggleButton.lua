@@ -1,6 +1,9 @@
 local Rojo = script:FindFirstAncestor("Rojo")
+local Plugin = Rojo.Plugin
 
 local Roact = require(Rojo.Roact)
+
+local merge = require(Plugin.merge)
 
 local StudioToolbarContext = require(script.Parent.StudioToolbarContext)
 
@@ -13,36 +16,51 @@ StudioToggleButton.defaultProps = {
 	active = false,
 }
 
-function StudioToggleButton:render()
-	return e(StudioToolbarContext.Consumer, {
-		render = function(toolbar)
-			if not self.button then
-				self.button = toolbar:CreateButton(
-					self.props.name,
-					self.props.tooltip,
-					self.props.icon,
-					self.props.text
-				)
+function StudioToggleButton:init()
+	local button = self.props.toolbar:CreateButton(
+		self.props.name,
+		self.props.tooltip,
+		self.props.icon,
+		self.props.text
+	)
 
-				self.button.Click:Connect(function()
-					if self.props.onClick then
-						self.props.onClick()
-					end
-				end)
-
-				self.button.ClickableWhenViewportHidden = true
-			end
-
-			self.button.Enabled = self.props.enabled
-			self.button:SetActive(self.props.active)
-
-			return nil
+	button.Click:Connect(function()
+		if self.props.onClick then
+			self.props.onClick()
 		end
-	})
+	end)
+
+	button.ClickableWhenViewportHidden = true
+
+	self.button = button
+end
+
+function StudioToggleButton:render()
+	return nil
+end
+
+function StudioToggleButton:didUpdate(lastProps)
+	if self.props.enabled ~= lastProps.enabled then
+		self.button.Enabled = self.props.enabled
+	end
+
+	if self.props.active ~= lastProps.active then
+		self.button:SetActive(self.props.active)
+	end
 end
 
 function StudioToggleButton:willUnmount()
 	self.button:Destroy()
 end
 
-return StudioToggleButton
+local function StudioToggleButtonWrapper(props)
+	return e(StudioToolbarContext.Consumer, {
+		render = function(toolbar)
+			return e(StudioToggleButton, merge(props, {
+				toolbar = toolbar,
+			}))
+		end,
+	})
+end
+
+return StudioToggleButtonWrapper
