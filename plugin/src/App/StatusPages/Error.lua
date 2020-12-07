@@ -110,7 +110,7 @@ function ErrorPage:render()
 			BackgroundTransparency = 1,
 		}, {
 			Close = e(TextButton, {
-				text = "Got it!",
+				text = "Okay",
 				style = "Bordered",
 				transparency = self.props.transparency,
 				layoutOrder = 1,
