@@ -55,16 +55,14 @@ local function AddressEntry(props)
 				Position = UDim2.new(1, 0, 0, 0),
 				AnchorPoint = Vector2.new(1, 0),
 
+				ClipsDescendants = true,
 				BackgroundTransparency = 1,
 
 				[Roact.Ref] = props.portRef,
 
 				[Roact.Change.Text] = function(object)
 					local text = object.Text
-
 					text = text:gsub("%D", "")
-					text = text:sub(1, 5)
-
 					object.Text = text
 				end,
 			}, {
