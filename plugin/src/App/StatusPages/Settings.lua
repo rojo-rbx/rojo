@@ -221,7 +221,7 @@ function SettingsPage:render()
 
 			Padding = e("UIPadding", {
 				PaddingLeft = UDim.new(0, 20),
-				PaddingRight = UDim.new(0, 20)
+				PaddingRight = UDim.new(0, 20),
 			}),
 		})
 	end)
