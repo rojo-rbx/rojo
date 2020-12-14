@@ -174,7 +174,7 @@ local darkTheme = strict("DarkTheme", {
 		},
 	},
 	Header = {
-		LogoColor = hexColor(0xFFFFFF),
+		LogoColor = BRAND_COLOR,
 		VersionColor = hexColor(0xD3D3D3)
 	},
 	ErrorColor = hexColor(0xFFFFFF),
