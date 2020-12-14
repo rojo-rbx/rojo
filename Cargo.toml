@@ -103,7 +103,7 @@ maplit = "1.0.1"
 rojo-insta-ext = { path = "rojo-insta-ext" }
 
 criterion = "0.3"
-insta = { version = "0.13.1", features = ["redactions"] }
+insta = { version = "1.3.0", features = ["redactions"] }
 lazy_static = "1.2"
 paste = "0.1"
 pretty_assertions = "0.6.1"
