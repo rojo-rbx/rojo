@@ -89,6 +89,7 @@ pub struct ServerInfoResponse {
     pub session_id: SessionId,
     pub server_version: String,
     pub protocol_version: u64,
+    pub project_name: String,
     pub expected_place_ids: Option<HashSet<u64>>,
     pub root_instance_id: RbxId,
 }
