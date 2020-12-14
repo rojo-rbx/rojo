@@ -1,7 +1,4 @@
-use std::{
-    mem,
-    sync::{Mutex, RwLock},
-};
+use std::sync::{Mutex, RwLock};
 
 use futures::sync::oneshot;
 
@@ -58,7 +55,7 @@ impl<T: Clone> MessageQueue<T> {
 
         // Without this annotation, Rust gets confused since the first argument
         // is a MutexGuard, but the second is a Vec.
-        mem::replace::<Vec<_>>(&mut message_listeners, remaining_listeners);
+        *message_listeners = remaining_listeners;
     }
 
     /// Subscribe to any messages occurring after the given message cursor.
