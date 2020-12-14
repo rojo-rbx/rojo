@@ -101,7 +101,7 @@ fn write_model(tree: &RojoTree, options: &BuildCommand) -> Result<(), anyhow::Er
         OutputKind::Rbxl => {
             log::warn!("Support for building binary places (rbxl) is still experimental.");
             log::warn!("Using the XML place format (rbxlx) is recommended instead.");
-            log::warn!("For more info, see https://github.com/LPGhatguy/rojo/issues/180");
+            log::warn!("For more info, see https://github.com/rojo-rbx/rojo/issues/180");
 
             let root_instance = tree.get_instance(root_id).unwrap();
             let top_level_ids = root_instance.children();
