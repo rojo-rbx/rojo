@@ -19,24 +19,6 @@ pub fn snapshot_json_model(
     let instance: JsonModel = serde_json::from_slice(&contents)
         .map_err(|source| SnapshotError::malformed_model_json(source, path))?;
 
-    if let Some(json_name) = &instance.name {
-        if json_name != instance_name {
-            log::warn!(
-                "Name from JSON model did not match its file name: {}",
-                path.display()
-            );
-            log::warn!(
-                "In Rojo <  alpha 14, this model is named \"{}\" (from its 'Name' property)",
-                json_name
-            );
-            log::warn!(
-                "In Rojo >= alpha 14, this model is named \"{}\" (from its file name)",
-                instance_name
-            );
-            log::warn!("'Name' for the top-level instance in a JSON model is now optional and will be ignored.");
-        }
-    }
-
     let mut snapshot = instance.core.into_snapshot(instance_name.to_owned());
 
     snapshot.metadata = snapshot
