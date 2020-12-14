@@ -110,7 +110,7 @@ function ServeSession:start()
 
 	self.__apiContext:connect()
 		:andThen(function(serverInfo)
-			self:__setStatus(Status.Connected)
+			self:__setStatus(Status.Connected, serverInfo.projectName)
 
 			local rootInstanceId = serverInfo.rootInstanceId
 
