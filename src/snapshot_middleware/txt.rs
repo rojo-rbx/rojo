@@ -2,7 +2,7 @@ use std::{path::Path, str};
 
 use maplit::hashmap;
 use memofs::{IoResultExt, Vfs};
-use rbx_dom_weak::RbxValue;
+use rbx_dom_weak::Variant;
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
@@ -22,7 +22,7 @@ pub fn snapshot_txt(
         .to_string();
 
     let properties = hashmap! {
-        "Value".to_owned() => RbxValue::String {
+        "Value".to_owned() => Variant::String {
             value: contents_str,
         },
     };

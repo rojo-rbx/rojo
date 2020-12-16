@@ -2,7 +2,7 @@ use std::{collections::BTreeMap, path::Path};
 
 use maplit::hashmap;
 use memofs::{IoResultExt, Vfs};
-use rbx_dom_weak::RbxValue;
+use rbx_dom_weak::Variant;
 use serde::Serialize;
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
@@ -27,7 +27,7 @@ pub fn snapshot_csv(
         .name(instance_name)
         .class_name("LocalizationTable")
         .properties(hashmap! {
-            "Contents".to_owned() => RbxValue::String {
+            "Contents".to_owned() => Variant::String {
                 value: table_contents,
             },
         })

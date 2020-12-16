@@ -3,14 +3,14 @@
 
 use std::collections::{HashMap, HashSet};
 
-use rbx_dom_weak::{RbxId, RbxValue};
+use rbx_dom_weak::types::{Ref, Variant};
 
 use super::{
     patch::{PatchAdd, PatchSet, PatchUpdate},
     InstanceSnapshot, InstanceWithMeta, RojoTree,
 };
 
-pub fn compute_patch_set(snapshot: &InstanceSnapshot, tree: &RojoTree, id: RbxId) -> PatchSet {
+pub fn compute_patch_set(snapshot: &InstanceSnapshot, tree: &RojoTree, id: Ref) -> PatchSet {
     let mut patch_set = PatchSet::new();
     let mut context = ComputePatchContext::default();
 
@@ -26,15 +26,15 @@ pub fn compute_patch_set(snapshot: &InstanceSnapshot, tree: &RojoTree, id: RbxId
 
 #[derive(Default)]
 struct ComputePatchContext {
-    snapshot_id_to_instance_id: HashMap<RbxId, RbxId>,
+    snapshot_id_to_instance_id: HashMap<Ref, Ref>,
 }
 
 fn rewrite_refs_in_updates(context: &ComputePatchContext, updates: &mut [PatchUpdate]) {
     for update in updates {
         for property_value in update.changed_properties.values_mut() {
-            if let Some(RbxValue::Ref { value: Some(id) }) = property_value {
+            if let Some(Variant::Ref { value: Some(id) }) = property_value {
                 if let Some(&instance_id) = context.snapshot_id_to_instance_id.get(id) {
-                    *property_value = Some(RbxValue::Ref {
+                    *property_value = Some(Variant::Ref {
                         value: Some(instance_id),
                     });
                 }
@@ -51,9 +51,9 @@ fn rewrite_refs_in_additions(context: &ComputePatchContext, additions: &mut [Pat
 
 fn rewrite_refs_in_snapshot(context: &ComputePatchContext, snapshot: &mut InstanceSnapshot) {
     for property_value in snapshot.properties.values_mut() {
-        if let RbxValue::Ref { value: Some(id) } = property_value {
+        if let Variant::Ref { value: Some(id) } = property_value {
             if let Some(&instance_id) = context.snapshot_id_to_instance_id.get(id) {
-                *property_value = RbxValue::Ref {
+                *property_value = Variant::Ref {
                     value: Some(instance_id),
                 };
             }
@@ -69,7 +69,7 @@ fn compute_patch_set_internal(
     context: &mut ComputePatchContext,
     snapshot: &InstanceSnapshot,
     tree: &RojoTree,
-    id: RbxId,
+    id: Ref,
     patch_set: &mut PatchSet,
 ) {
     if let Some(snapshot_id) = snapshot.snapshot_id {
@@ -154,7 +154,7 @@ fn compute_children_patches(
     context: &mut ComputePatchContext,
     snapshot: &InstanceSnapshot,
     tree: &RojoTree,
-    id: RbxId,
+    id: Ref,
     patch_set: &mut PatchSet,
 ) {
     let instance = tree
@@ -224,7 +224,7 @@ mod test {
     use std::borrow::Cow;
 
     use maplit::hashmap;
-    use rbx_dom_weak::RbxInstanceProperties;
+    use rbx_dom_weak::InstanceProperties;
 
     use super::super::InstancePropertiesWithMeta;
 
@@ -235,7 +235,7 @@ mod test {
     #[test]
     fn rewrite_ref_existing_instance_update() {
         let tree = RojoTree::new(InstancePropertiesWithMeta {
-            properties: RbxInstanceProperties {
+            properties: InstanceProperties {
                 name: "foo".to_owned(),
                 class_name: "foo".to_owned(),
                 properties: HashMap::new(),
@@ -247,11 +247,11 @@ mod test {
 
         // This snapshot should be identical to the existing tree except for the
         // addition of a prop named Self, which is a self-referential Ref.
-        let snapshot_id = RbxId::new();
+        let snapshot_id = Ref::new();
         let snapshot = InstanceSnapshot {
             snapshot_id: Some(snapshot_id),
             properties: hashmap! {
-                "Self".to_owned() => RbxValue::Ref {
+                "Self".to_owned() => Variant::Ref {
                     value: Some(snapshot_id),
                 }
             },
@@ -270,7 +270,7 @@ mod test {
                 changed_name: None,
                 changed_class_name: None,
                 changed_properties: hashmap! {
-                    "Self".to_owned() => Some(RbxValue::Ref {
+                    "Self".to_owned() => Some(Variant::Ref {
                         value: Some(root_id),
                     }),
                 },
@@ -289,7 +289,7 @@ mod test {
     #[test]
     fn rewrite_ref_existing_instance_addition() {
         let tree = RojoTree::new(InstancePropertiesWithMeta {
-            properties: RbxInstanceProperties {
+            properties: InstanceProperties {
                 name: "foo".to_owned(),
                 class_name: "foo".to_owned(),
                 properties: HashMap::new(),
@@ -300,12 +300,12 @@ mod test {
         let root_id = tree.get_root_id();
 
         // This patch describes the existing instance with a new child added.
-        let snapshot_id = RbxId::new();
+        let snapshot_id = Ref::new();
         let snapshot = InstanceSnapshot {
             snapshot_id: Some(snapshot_id),
             children: vec![InstanceSnapshot {
                 properties: hashmap! {
-                    "Self".to_owned() => RbxValue::Ref {
+                    "Self".to_owned() => Variant::Ref {
                         value: Some(snapshot_id),
                     },
                 },
@@ -332,7 +332,7 @@ mod test {
                     snapshot_id: None,
                     metadata: Default::default(),
                     properties: hashmap! {
-                        "Self".to_owned() => RbxValue::Ref {
+                        "Self".to_owned() => Variant::Ref {
                             value: Some(root_id),
                         },
                     },

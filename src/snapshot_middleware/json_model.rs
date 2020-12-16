@@ -1,7 +1,7 @@
 use std::{borrow::Cow, collections::HashMap, path::Path};
 
 use memofs::Vfs;
-use rbx_dom_weak::UnresolvedRbxValue;
+use rbx_dom_weak::UnresolvedVariant;
 use rbx_reflection::try_resolve_value;
 use serde::Deserialize;
 
@@ -57,7 +57,7 @@ struct JsonModelCore {
     children: Vec<JsonModelInstance>,
 
     #[serde(default = "HashMap::new", skip_serializing_if = "HashMap::is_empty")]
-    properties: HashMap<String, UnresolvedRbxValue>,
+    properties: HashMap<String, UnresolvedVariant>,
 }
 
 impl JsonModelCore {

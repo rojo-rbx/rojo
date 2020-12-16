@@ -1,6 +1,6 @@
 use std::{borrow::Cow, collections::HashMap, path::Path};
 
-use rbx_dom_weak::UnresolvedRbxValue;
+use rbx_dom_weak::UnresolvedVariant;
 use rbx_reflection::try_resolve_value;
 use serde::{Deserialize, Serialize};
 
@@ -19,7 +19,7 @@ pub struct AdjacentMetadata {
     pub ignore_unknown_instances: Option<bool>,
 
     #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-    pub properties: HashMap<String, UnresolvedRbxValue>,
+    pub properties: HashMap<String, UnresolvedVariant>,
 }
 
 impl AdjacentMetadata {
@@ -68,7 +68,7 @@ pub struct DirectoryMetadata {
     pub ignore_unknown_instances: Option<bool>,
 
     #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-    pub properties: HashMap<String, UnresolvedRbxValue>,
+    pub properties: HashMap<String, UnresolvedVariant>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub class_name: Option<String>,

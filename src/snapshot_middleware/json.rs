@@ -2,7 +2,7 @@ use std::path::Path;
 
 use maplit::hashmap;
 use memofs::{IoResultExt, Vfs};
-use rbx_dom_weak::RbxValue;
+use rbx_dom_weak::Variant;
 
 use crate::{
     lua_ast::{Expression, Statement},
@@ -27,7 +27,7 @@ pub fn snapshot_json(
     let as_lua = json_to_lua(value).to_string();
 
     let properties = hashmap! {
-        "Source".to_owned() => RbxValue::String {
+        "Source".to_owned() => Variant::String {
             value: as_lua,
         },
     };

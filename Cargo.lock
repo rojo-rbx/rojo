@@ -137,6 +137,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "blake3"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "46080006c1505f12f64dd2a09264b343381ed3190fa02c8005d5d662ac571c63"
+dependencies = [
+ "arrayref",
+ "arrayvec",
+ "cc",
+ "cfg-if 0.1.10",
+ "constant_time_eq",
+ "crypto-mac",
+ "digest",
+]
+
+[[package]]
 name = "block-buffer"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -469,6 +484,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "crypto-mac"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4434400df11d95d556bac068ddfedd482915eb18fe8bea89bc80b6e4b1c179e5"
+dependencies = [
+ "generic-array",
+ "subtle",
+]
+
+[[package]]
 name = "csv"
 version = "1.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -535,12 +560,6 @@ dependencies = [
  "redox_users",
  "winapi 0.3.9",
 ]
-
-[[package]]
-name = "doc-comment"
-version = "0.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fea41bba32d969b513997752735605054bc0dfa92b4c56bf1189f2e174be7a10"
 
 [[package]]
 name = "dtoa"
@@ -1107,12 +1126,6 @@ name = "maybe-uninit"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "60302e4db3a61da70c0cb7991976248362f30319e88850c487b9b95bbf059e00"
-
-[[package]]
-name = "md5"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "490cc448043f947bae3cbee9c203358d62dbee0db12107a74be5c30ccfd09771"
 
 [[package]]
 name = "memchr"
@@ -1764,55 +1777,69 @@ dependencies = [
 
 [[package]]
 name = "rbx_binary"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5b1c0c2b715bb763be1e27e5118e1f1ce0381f6c396a9cc8dd2c4b818cfa247d"
+version = "0.6.0-dev"
+source = "git+https://github.com/rojo-rbx/rbx-dom?branch=master#af7045e07dc644190398f5449a75db84d8546586"
 dependencies = [
- "byteorder",
  "log",
  "lz4",
  "rbx_dom_weak",
  "rbx_reflection",
- "snafu",
+ "rbx_reflection_database",
+ "thiserror",
 ]
 
 [[package]]
 name = "rbx_dom_weak"
-version = "1.10.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "978b65ce742f3cb38c0b64ca48601a5590e6be9a14d12025b9cba2fe553b78c4"
+version = "2.0.0-dev"
+source = "git+https://github.com/rojo-rbx/rbx-dom?branch=master#af7045e07dc644190398f5449a75db84d8546586"
 dependencies = [
- "base64 0.11.0",
- "lazy_static",
- "md5",
+ "rbx_types",
  "serde",
- "serde_derive",
- "serde_repr",
- "uuid 0.8.1",
 ]
 
 [[package]]
 name = "rbx_reflection"
-version = "3.3.454"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e9ccdde2a675eb13a8ecfe1f60879bf11ab29e9a671459d833929298873eedc4"
+version = "4.0.0-dev"
+source = "git+https://github.com/rojo-rbx/rbx-dom?branch=master#af7045e07dc644190398f5449a75db84d8546586"
 dependencies = [
- "bitflags",
+ "rbx_types",
+ "serde",
+]
+
+[[package]]
+name = "rbx_reflection_database"
+version = "0.1.0"
+source = "git+https://github.com/rojo-rbx/rbx-dom?branch=master#af7045e07dc644190398f5449a75db84d8546586"
+dependencies = [
  "lazy_static",
- "rbx_dom_weak",
+ "rbx_reflection",
+ "rmp-serde",
+ "serde",
+]
+
+[[package]]
+name = "rbx_types"
+version = "0.2.0"
+source = "git+https://github.com/rojo-rbx/rbx-dom?branch=master#af7045e07dc644190398f5449a75db84d8546586"
+dependencies = [
+ "base64 0.11.0",
+ "bitflags",
+ "blake3",
+ "lazy_static",
+ "rand 0.7.3",
  "serde",
 ]
 
 [[package]]
 name = "rbx_xml"
-version = "0.11.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6431f38b84582ec4e4f40b525cdcc713d4a984dcc2e3eecd1a67ae4da1172fbd"
+version = "0.12.0-dev"
+source = "git+https://github.com/rojo-rbx/rbx-dom?branch=master#af7045e07dc644190398f5449a75db84d8546586"
 dependencies = [
  "base64 0.11.0",
  "log",
  "rbx_dom_weak",
  "rbx_reflection",
+ "rbx_reflection_database",
  "xml-rs",
 ]
 
@@ -1947,6 +1974,27 @@ dependencies = [
  "cc",
  "libc",
  "num-traits",
+]
+
+[[package]]
+name = "rmp"
+version = "0.8.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0f10b46df14cf1ee1ac7baa4d2fbc2c52c0622a4b82fa8740e37bc452ac0184f"
+dependencies = [
+ "byteorder",
+ "num-traits",
+]
+
+[[package]]
+name = "rmp-serde"
+version = "0.14.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4ce7d70c926fe472aed493b902010bccc17fa9f7284145cb8772fd22fdb052d8"
+dependencies = [
+ "byteorder",
+ "rmp",
+ "serde",
 ]
 
 [[package]]
@@ -2154,17 +2202,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "serde_repr"
-version = "0.1.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2dc6b7951b17b051f3210b063f12cc17320e2fe30ae05b0fe2a3abb068551c76"
-dependencies = [
- "proc-macro2 1.0.24",
- "quote 1.0.7",
- "syn",
-]
-
-[[package]]
 name = "serde_urlencoded"
 version = "0.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2216,27 +2253,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "snafu"
-version = "0.6.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eab12d3c261b2308b0d80c26fffb58d17eba81a4be97890101f416b478c79ca7"
-dependencies = [
- "doc-comment",
- "snafu-derive",
-]
-
-[[package]]
-name = "snafu-derive"
-version = "0.6.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1508efa03c362e23817f96cde18abed596a25219a8b2c66e8db33c03543d315b"
-dependencies = [
- "proc-macro2 1.0.24",
- "quote 1.0.7",
- "syn",
-]
-
-[[package]]
 name = "snax"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2283,6 +2299,12 @@ dependencies = [
  "quote 1.0.7",
  "syn",
 ]
+
+[[package]]
+name = "subtle"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2d67a5a62ba6e01cb2192ff309324cb4875d0c451d55fe2319433abe7a05a8ee"
 
 [[package]]
 name = "syn"

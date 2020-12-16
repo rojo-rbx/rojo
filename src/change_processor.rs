@@ -6,7 +6,7 @@ use std::{
 use crossbeam_channel::{select, Receiver, RecvError, Sender};
 use jod_thread::JoinHandle;
 use memofs::{IoResultExt, Vfs, VfsEvent};
-use rbx_dom_weak::{RbxId, RbxValue};
+use rbx_dom_weak::types::{Ref, Variant};
 
 use crate::{
     error::ErrorDisplay,
@@ -220,7 +220,7 @@ impl JobThreadContext {
                             {
                                 match instigating_source {
                                     InstigatingSource::Path(path) => {
-                                        if let Some(RbxValue::String { value }) = changed_value {
+                                        if let Some(Variant::String(value)) = changed_value {
                                             fs::write(path, value).unwrap();
                                         } else {
                                             log::warn!("Cannot change Source to non-string value.");
@@ -255,7 +255,7 @@ impl JobThreadContext {
     }
 }
 
-fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: RbxId) -> Option<AppliedPatchSet> {
+fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref) -> Option<AppliedPatchSet> {
     let metadata = tree
         .get_metadata(id)
         .expect("metadata missing for instance present in tree");
@@ -264,7 +264,7 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: RbxId) -> Optio
         Some(path) => path,
         None => {
             log::error!(
-                "Instance {} did not have an instigating source, but was considered for an update.",
+                "Instance {:?} did not have an instigating source, but was considered for an update.",
                 id
             );
             log::error!("This is a bug. Please file an issue!");

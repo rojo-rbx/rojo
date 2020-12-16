@@ -6,7 +6,7 @@ use std::{collections::HashMap, fs, path::PathBuf, sync::Arc};
 use futures::{Future, Stream};
 
 use hyper::{service::Service, Body, Method, Request, StatusCode};
-use rbx_dom_weak::RbxId;
+use rbx_dom_weak::Ref;
 
 use crate::{
     serve_session::ServeSession,
@@ -200,7 +200,7 @@ impl ApiService {
 
     fn handle_api_read(&self, request: Request<Body>) -> <Self as Service>::Future {
         let argument = &request.uri().path()["/api/read/".len()..];
-        let requested_ids: Option<Vec<RbxId>> = argument.split(',').map(RbxId::parse_str).collect();
+        let requested_ids: Option<Vec<Ref>> = argument.split(',').map(Ref::parse_str).collect();
 
         let requested_ids = match requested_ids {
             Some(ids) => ids,
@@ -239,7 +239,7 @@ impl ApiService {
     /// Open a script with the given ID in the user's default text editor.
     fn handle_api_open(&self, request: Request<Body>) -> <Self as Service>::Future {
         let argument = &request.uri().path()["/api/open/".len()..];
-        let requested_id = match RbxId::parse_str(argument) {
+        let requested_id = match Ref::parse_str(argument) {
             Some(id) => id,
             None => {
                 return json(

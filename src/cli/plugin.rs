@@ -49,7 +49,7 @@ pub fn install_plugin() -> Result<()> {
     let tree = session.tree();
     let root_id = tree.get_root_id();
 
-    rbx_binary::encode(tree.inner(), &[root_id], &mut file)?;
+    rbx_binary::to_writer_default(&mut file, tree.inner(), &[root_id])?;
 
     Ok(())
 }

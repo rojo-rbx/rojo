@@ -47,6 +47,11 @@ harness = false
 [dependencies]
 memofs = { version = "0.1.2", path = "memofs" }
 
+rbx_binary = { git = "https://github.com/rojo-rbx/rbx-dom", branch = "master" }
+rbx_dom_weak = { git = "https://github.com/rojo-rbx/rbx-dom", branch = "master" }
+rbx_reflection = { git = "https://github.com/rojo-rbx/rbx-dom", branch = "master" }
+rbx_xml = { git = "https://github.com/rojo-rbx/rbx-dom", branch = "master" }
+
 anyhow = "1.0.27"
 backtrace = "0.3"
 bincode = "1.2.1"
@@ -64,10 +69,6 @@ log = "0.4.8"
 maplit = "1.0.1"
 notify = "4.0.14"
 opener = "0.4.1"
-rbx_binary = "0.5.0"
-rbx_dom_weak = "1.10.1"
-rbx_reflection = "3.3.408"
-rbx_xml = "0.11.3"
 regex = "1.3.1"
 reqwest = "0.9.20"
 ritz = "0.1.0"

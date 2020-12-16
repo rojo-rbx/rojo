@@ -10,7 +10,7 @@ use std::{
 use crossbeam_channel::Sender;
 use memofs::IoResultExt;
 use memofs::Vfs;
-use rbx_dom_weak::RbxInstanceProperties;
+use rbx_dom_weak::InstanceBuilder;
 use thiserror::Error;
 
 use crate::{
@@ -118,14 +118,7 @@ impl ServeSession {
             }
         };
 
-        let mut tree = RojoTree::new(InstancePropertiesWithMeta {
-            properties: RbxInstanceProperties {
-                name: "ROOT".to_owned(),
-                class_name: "Folder".to_owned(),
-                properties: Default::default(),
-            },
-            metadata: Default::default(),
-        });
+        let mut tree = RojoTree::new(InstanceBuilder::new("ROOT"), Default::default());
 
         let root_id = tree.get_root_id();
 

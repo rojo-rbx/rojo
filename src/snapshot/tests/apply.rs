@@ -1,6 +1,6 @@
 use insta::assert_yaml_snapshot;
 use maplit::hashmap;
-use rbx_dom_weak::{RbxInstanceProperties, RbxValue};
+use rbx_dom_weak::{InstanceProperties, Variant};
 
 use rojo_insta_ext::RedactionMap;
 
@@ -49,7 +49,7 @@ fn add_property() {
             changed_name: None,
             changed_class_name: None,
             changed_properties: hashmap! {
-                "Foo".to_owned() => Some(RbxValue::String {
+                "Foo".to_owned() => Some(Variant::String {
                     value: "Value of Foo".to_owned(),
                 }),
             },
@@ -80,7 +80,7 @@ fn remove_property() {
 
         root_instance.properties_mut().insert(
             "Foo".to_owned(),
-            RbxValue::String {
+            Variant::String {
                 value: "Should be removed".to_owned(),
             },
         );
@@ -113,7 +113,7 @@ fn remove_property() {
 
 fn empty_tree() -> RojoTree {
     RojoTree::new(InstancePropertiesWithMeta {
-        properties: RbxInstanceProperties {
+        properties: InstanceProperties {
             name: "ROOT".to_owned(),
             class_name: "ROOT".to_owned(),
             properties: Default::default(),

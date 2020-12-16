@@ -2,7 +2,7 @@ use std::{path::Path, str};
 
 use maplit::hashmap;
 use memofs::{IoResultExt, Vfs};
-use rbx_dom_weak::RbxValue;
+use rbx_dom_weak::Variant;
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
@@ -38,7 +38,7 @@ pub fn snapshot_lua(context: &InstanceContext, vfs: &Vfs, path: &Path) -> Snapsh
         .name(instance_name)
         .class_name(class_name)
         .properties(hashmap! {
-            "Source".to_owned() => RbxValue::String {
+            "Source".to_owned() => Variant::String {
                 value: contents_str,
             },
         })

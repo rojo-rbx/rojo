@@ -5,7 +5,7 @@ use std::{
     collections::{HashMap, HashSet},
 };
 
-use rbx_dom_weak::{RbxId, RbxValue};
+use rbx_dom_weak::{Ref, Variant};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -23,22 +23,22 @@ pub const PROTOCOL_VERSION: u64 = 3;
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SubscribeMessage<'a> {
-    pub removed: Vec<RbxId>,
-    pub added: HashMap<RbxId, Instance<'a>>,
+    pub removed: Vec<Ref>,
+    pub added: HashMap<Ref, Instance<'a>>,
     pub updated: Vec<InstanceUpdate>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct InstanceUpdate {
-    pub id: RbxId,
+    pub id: Ref,
     pub changed_name: Option<String>,
     pub changed_class_name: Option<String>,
 
     // TODO: Transform from HashMap<String, Option<_>> to something else, since
     // null will get lost when decoding from JSON in some languages.
     #[serde(default)]
-    pub changed_properties: HashMap<String, Option<RbxValue>>,
+    pub changed_properties: HashMap<String, Option<Variant>>,
     pub changed_metadata: Option<InstanceMetadata>,
 }
 
@@ -59,12 +59,12 @@ impl InstanceMetadata {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct Instance<'a> {
-    pub id: RbxId,
-    pub parent: Option<RbxId>,
+    pub id: Ref,
+    pub parent: Option<Ref>,
     pub name: Cow<'a, str>,
     pub class_name: Cow<'a, str>,
-    pub properties: Cow<'a, HashMap<String, RbxValue>>,
-    pub children: Cow<'a, [RbxId]>,
+    pub properties: Cow<'a, HashMap<String, Variant>>,
+    pub children: Cow<'a, [Ref]>,
     pub metadata: Option<InstanceMetadata>,
 }
 
@@ -91,7 +91,7 @@ pub struct ServerInfoResponse {
     pub protocol_version: u64,
     pub project_name: String,
     pub expected_place_ids: Option<HashSet<u64>>,
-    pub root_instance_id: RbxId,
+    pub root_instance_id: Ref,
 }
 
 /// Response body from /api/read/{id}
@@ -100,17 +100,17 @@ pub struct ServerInfoResponse {
 pub struct ReadResponse<'a> {
     pub session_id: SessionId,
     pub message_cursor: u32,
-    pub instances: HashMap<RbxId, Instance<'a>>,
+    pub instances: HashMap<Ref, Instance<'a>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WriteRequest {
     pub session_id: SessionId,
-    pub removed: Vec<RbxId>,
+    pub removed: Vec<Ref>,
 
     #[serde(default)]
-    pub added: HashMap<RbxId, ()>,
+    pub added: HashMap<Ref, ()>,
     pub updated: Vec<InstanceUpdate>,
 }
 

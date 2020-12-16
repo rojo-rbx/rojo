@@ -1,7 +1,7 @@
 use std::{collections::HashMap, path::Path};
 
 use memofs::Vfs;
-use rbx_dom_weak::{RbxInstanceProperties, RbxTree};
+use rbx_dom_weak::{InstanceProperties, WeakDom};
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
@@ -13,7 +13,7 @@ pub fn snapshot_rbxm(
     path: &Path,
     instance_name: &str,
 ) -> SnapshotInstanceResult {
-    let mut temp_tree = RbxTree::new(RbxInstanceProperties {
+    let mut temp_tree = WeakDom::new(InstanceProperties {
         name: "DataModel".to_owned(),
         class_name: "DataModel".to_owned(),
         properties: HashMap::new(),

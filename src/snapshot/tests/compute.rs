@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use insta::assert_yaml_snapshot;
 use maplit::hashmap;
-use rbx_dom_weak::{RbxInstanceProperties, RbxValue};
+use rbx_dom_weak::{InstanceProperties, Variant};
 
 use rojo_insta_ext::RedactionMap;
 
@@ -43,7 +43,7 @@ fn set_property() {
         name: Cow::Borrowed("ROOT"),
         class_name: Cow::Borrowed("ROOT"),
         properties: hashmap! {
-            "PropertyName".to_owned() => RbxValue::String {
+            "PropertyName".to_owned() => Variant::String {
                 value: "Hello, world!".to_owned(),
             },
         },
@@ -68,7 +68,7 @@ fn remove_property() {
         let mut root_instance = tree.get_instance_mut(root_id).unwrap();
         root_instance.properties_mut().insert(
             "Foo".to_owned(),
-            RbxValue::String {
+            Variant::String {
                 value: "This should be removed by the patch.".to_owned(),
             },
         );
@@ -129,7 +129,7 @@ fn remove_child() {
         let root_id = tree.get_root_id();
         let new_id = tree.insert_instance(
             InstancePropertiesWithMeta {
-                properties: RbxInstanceProperties {
+                properties: InstanceProperties {
                     name: "Should not appear in snapshot".to_owned(),
                     class_name: "Folder".to_owned(),
                     properties: Default::default(),
@@ -159,7 +159,7 @@ fn remove_child() {
 
 fn empty_tree() -> RojoTree {
     RojoTree::new(InstancePropertiesWithMeta {
-        properties: RbxInstanceProperties {
+        properties: InstanceProperties {
             name: "ROOT".to_owned(),
             class_name: "ROOT".to_owned(),
             properties: Default::default(),
