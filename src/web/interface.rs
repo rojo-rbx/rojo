@@ -5,7 +5,7 @@ use std::{
     collections::{HashMap, HashSet},
 };
 
-use rbx_dom_weak::{Ref, Variant};
+use rbx_dom_weak::types::{Ref, Variant};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -60,7 +60,7 @@ impl InstanceMetadata {
 #[serde(rename_all = "PascalCase")]
 pub struct Instance<'a> {
     pub id: Ref,
-    pub parent: Option<Ref>,
+    pub parent: Ref,
     pub name: Cow<'a, str>,
     pub class_name: Cow<'a, str>,
     pub properties: Cow<'a, HashMap<String, Variant>>,

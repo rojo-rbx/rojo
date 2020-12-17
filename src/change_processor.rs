@@ -180,7 +180,7 @@ impl JobThreadContext {
                             InstigatingSource::Path(path) => fs::remove_file(path).unwrap(),
                             InstigatingSource::ProjectNode(_, _, _, _) => {
                                 log::warn!(
-                                    "Cannot remove instance {}, it's from a project file",
+                                    "Cannot remove instance {:?}, it's from a project file",
                                     id
                                 );
                             }
@@ -188,12 +188,12 @@ impl JobThreadContext {
                     } else {
                         // TODO
                         log::warn!(
-                            "Cannot remove instance {}, it is not an instigating source.",
+                            "Cannot remove instance {:?}, it is not an instigating source.",
                             id
                         );
                     }
                 } else {
-                    log::warn!("Cannot remove instance {}, it does not exist.", id);
+                    log::warn!("Cannot remove instance {:?}, it does not exist.", id);
                 }
             }
 
@@ -228,14 +228,14 @@ impl JobThreadContext {
                                     }
                                     InstigatingSource::ProjectNode(_, _, _, _) => {
                                         log::warn!(
-                                            "Cannot remove instance {}, it's from a project file",
+                                            "Cannot remove instance {:?}, it's from a project file",
                                             id
                                         );
                                     }
                                 }
                             } else {
                                 log::warn!(
-                                    "Cannot update instance {}, it is not an instigating source.",
+                                    "Cannot update instance {:?}, it is not an instigating source.",
                                     id
                                 );
                             }
@@ -244,7 +244,7 @@ impl JobThreadContext {
                         }
                     }
                 } else {
-                    log::warn!("Cannot update instance {}, it does not exist.", id);
+                    log::warn!("Cannot update instance {:?}, it does not exist.", id);
                 }
             }
 

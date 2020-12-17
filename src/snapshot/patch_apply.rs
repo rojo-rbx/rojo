@@ -96,11 +96,10 @@ fn finalize_patch_application(context: PatchApplyContext, tree: &mut RojoTree) -
             .expect("Invalid instance ID in deferred property map");
 
         for (key, mut property_value) in properties {
-            if let Variant::Ref { value: Some(id) } = property_value {
-                if let Some(&instance_id) = context.snapshot_id_to_instance_id.get(&id) {
-                    property_value = Variant::Ref {
-                        value: Some(instance_id),
-                    };
+            if let Variant::Ref(referent) = property_value {
+                if let Some(&instance_referent) = context.snapshot_id_to_instance_id.get(&referent)
+                {
+                    property_value = Variant::Ref(instance_referent);
                 }
             }
 
@@ -122,19 +121,9 @@ fn apply_add_child(
     parent_id: Ref,
     snapshot: InstanceSnapshot,
 ) {
-    let properties = InstancePropertiesWithMeta {
-        properties: InstanceProperties {
-            name: snapshot.name.into_owned(),
-            class_name: snapshot.class_name.into_owned(),
+    let builder = InstanceBuilder::new(snapshot.class_name).with_name(snapshot.name);
 
-            // Property assignment is deferred until after we know about all
-            // instances in this patch. See `PatchApplyContext` for details.
-            properties: HashMap::new(),
-        },
-        metadata: snapshot.metadata,
-    };
-
-    let id = tree.insert_instance(properties, parent_id);
+    let id = tree.insert_instance(parent_id, builder, snapshot.metadata);
 
     context.applied_patch_set.added.push(id);
 
@@ -163,7 +152,7 @@ fn apply_update_child(context: &mut PatchApplyContext, tree: &mut RojoTree, patc
         Some(instance) => instance,
         None => {
             log::warn!(
-                "Patch misapplication: Instance {}, referred to by update patch, did not exist.",
+                "Patch misapplication: Instance {:?}, referred to by update patch, did not exist.",
                 patch.id
             );
             return;
@@ -185,23 +174,24 @@ fn apply_update_child(context: &mut PatchApplyContext, tree: &mut RojoTree, patc
             // Ref values need to be potentially rewritten from snapshot IDs to
             // instance IDs if they referred to an instance that was created as
             // part of this patch.
-            Some(Variant::Ref { value: Some(id) }) => {
+            Some(Variant::Ref(referent)) => {
+                if referent.is_none() {
+                    continue;
+                }
+
                 // If our ID is not found in this map, then it either refers to
                 // an existing instance NOT added by this patch, or there was an
                 // error. See `PatchApplyContext::snapshot_id_to_instance_id`
                 // for more info.
-                let new_id = context
+                let new_referent = context
                     .snapshot_id_to_instance_id
-                    .get(&id)
+                    .get(&referent)
                     .copied()
-                    .unwrap_or(id);
+                    .unwrap_or(referent);
 
-                instance.properties_mut().insert(
-                    key.clone(),
-                    Variant::Ref {
-                        value: Some(new_id),
-                    },
-                );
+                instance
+                    .properties_mut()
+                    .insert(key.clone(), Variant::Ref(new_referent));
             }
             Some(ref value) => {
                 instance.properties_mut().insert(key.clone(), value.clone());

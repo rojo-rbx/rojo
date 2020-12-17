@@ -2036,6 +2036,7 @@ dependencies = [
  "rbx_binary",
  "rbx_dom_weak",
  "rbx_reflection",
+ "rbx_reflection_database",
  "rbx_xml",
  "regex",
  "reqwest",

@@ -50,6 +50,7 @@ memofs = { version = "0.1.2", path = "memofs" }
 rbx_binary = { git = "https://github.com/rojo-rbx/rbx-dom", branch = "master" }
 rbx_dom_weak = { git = "https://github.com/rojo-rbx/rbx-dom", branch = "master" }
 rbx_reflection = { git = "https://github.com/rojo-rbx/rbx-dom", branch = "master" }
+rbx_reflection_database = { git = "https://github.com/rojo-rbx/rbx-dom", branch = "master" }
 rbx_xml = { git = "https://github.com/rojo-rbx/rbx-dom", branch = "master" }
 
 anyhow = "1.0.27"

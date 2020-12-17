@@ -26,12 +26,11 @@ pub fn upload(options: UploadCommand) -> Result<(), anyhow::Error> {
 
     let tree = session.tree();
     let inner_tree = tree.inner();
-    let root_id = inner_tree.get_root_id();
-    let root_instance = inner_tree.get_instance(root_id).unwrap();
+    let root = inner_tree.root();
 
-    let encode_ids = match root_instance.class_name.as_str() {
-        "DataModel" => root_instance.get_children_ids().to_vec(),
-        _ => vec![root_id],
+    let encode_ids = match root.class.as_str() {
+        "DataModel" => root.children().to_vec(),
+        _ => vec![root.referent()],
     };
 
     let mut buffer = Vec::new();

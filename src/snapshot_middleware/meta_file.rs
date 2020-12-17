@@ -1,7 +1,6 @@
 use std::{borrow::Cow, collections::HashMap, path::Path};
 
-use rbx_dom_weak::UnresolvedVariant;
-use rbx_reflection::try_resolve_value;
+use rbx_dom_weak::types::Variant;
 use serde::{Deserialize, Serialize};
 
 use crate::snapshot::InstanceSnapshot;
@@ -18,8 +17,9 @@ pub struct AdjacentMetadata {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ignore_unknown_instances: Option<bool>,
 
+    // FIXME: Unresolved value type here
     #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-    pub properties: HashMap<String, UnresolvedVariant>,
+    pub properties: HashMap<String, Variant>,
 }
 
 impl AdjacentMetadata {
@@ -37,13 +37,7 @@ impl AdjacentMetadata {
     pub fn apply_properties(&mut self, snapshot: &mut InstanceSnapshot) {
         let class_name = &snapshot.class_name;
 
-        let source_properties = self.properties.drain().map(|(key, value)| {
-            try_resolve_value(class_name, &key, &value)
-                .map(|resolved| (key, resolved))
-                .expect("TODO: Handle rbx_reflection errors")
-        });
-
-        for (key, value) in source_properties {
+        for (key, value) in self.properties {
             snapshot.properties.insert(key, value);
         }
     }
@@ -68,7 +62,7 @@ pub struct DirectoryMetadata {
     pub ignore_unknown_instances: Option<bool>,
 
     #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-    pub properties: HashMap<String, UnresolvedVariant>,
+    pub properties: HashMap<String, Variant>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub class_name: Option<String>,
@@ -106,13 +100,7 @@ impl DirectoryMetadata {
     fn apply_properties(&mut self, snapshot: &mut InstanceSnapshot) {
         let class_name = &snapshot.class_name;
 
-        let source_properties = self.properties.drain().map(|(key, value)| {
-            try_resolve_value(class_name, &key, &value)
-                .map(|resolved| (key, resolved))
-                .expect("TODO: Handle rbx_reflection errors")
-        });
-
-        for (key, value) in source_properties {
+        for (key, value) in self.properties {
             snapshot.properties.insert(key, value);
         }
     }

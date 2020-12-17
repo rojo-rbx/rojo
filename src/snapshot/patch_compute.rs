@@ -32,11 +32,9 @@ struct ComputePatchContext {
 fn rewrite_refs_in_updates(context: &ComputePatchContext, updates: &mut [PatchUpdate]) {
     for update in updates {
         for property_value in update.changed_properties.values_mut() {
-            if let Some(Variant::Ref { value: Some(id) }) = property_value {
-                if let Some(&instance_id) = context.snapshot_id_to_instance_id.get(id) {
-                    *property_value = Some(Variant::Ref {
-                        value: Some(instance_id),
-                    });
+            if let Some(Variant::Ref(referent)) = property_value {
+                if let Some(&instance_ref) = context.snapshot_id_to_instance_id.get(referent) {
+                    *property_value = Some(Variant::Ref(instance_ref));
                 }
             }
         }
@@ -51,11 +49,9 @@ fn rewrite_refs_in_additions(context: &ComputePatchContext, additions: &mut [Pat
 
 fn rewrite_refs_in_snapshot(context: &ComputePatchContext, snapshot: &mut InstanceSnapshot) {
     for property_value in snapshot.properties.values_mut() {
-        if let Variant::Ref { value: Some(id) } = property_value {
-            if let Some(&instance_id) = context.snapshot_id_to_instance_id.get(id) {
-                *property_value = Variant::Ref {
-                    value: Some(instance_id),
-                };
+        if let Variant::Ref(referent) = property_value {
+            if let Some(&instance_referent) = context.snapshot_id_to_instance_id.get(referent) {
+                *property_value = Variant::Ref(instance_referent);
             }
         }
     }

@@ -5,7 +5,7 @@ use std::{borrow::Cow, sync::Arc, time::Duration};
 use futures::{future, Future};
 use hyper::{header, service::Service, Body, Method, Request, Response, StatusCode};
 use maplit::hashmap;
-use rbx_dom_weak::{Ref, Variant};
+use rbx_dom_weak::types::{Ref, Variant};
 use ritz::{html, Fragment, HtmlContent, HtmlSelfClosingTag};
 
 use crate::{
@@ -126,7 +126,7 @@ impl UiService {
             .map(|(key, value)| {
                 html! {
                     <div class="instance-property" title={ Self::display_value(value) }>
-                        { key.clone() } ": " { format!("{:?}", value.get_type()) }
+                        { key.clone() } ": " { format!("{:?}", value.ty()) }
                     </div>
                 }
             })
@@ -198,7 +198,7 @@ impl UiService {
 
         html! {
             <div class="instance">
-                <label class="instance-title" for={ format!("instance-{}", id) }>
+                <label class="instance-title" for={ format!("instance-{:?}", id) }>
                     { instance.name().to_owned() }
                     { class_name_specifier }
                 </label>
@@ -211,8 +211,8 @@ impl UiService {
 
     fn display_value(value: &Variant) -> String {
         match value {
-            Variant::String { value } => value.clone(),
-            Variant::Bool { value } => value.to_string(),
+            Variant::String(value) => value.clone(),
+            Variant::Bool(value) => value.to_string(),
             _ => format!("{:?}", value),
         }
     }
@@ -295,7 +295,7 @@ struct ExpandableSection<'a> {
 
 impl<'a> ExpandableSection<'a> {
     fn render(self) -> HtmlContent<'a> {
-        let input_id = format!("{}-{}", self.class_name, self.id);
+        let input_id = format!("{}-{:?}", self.class_name, self.id);
 
         // We need to specify this input manually because Ritz doesn't have
         // support for conditional attributes like `checked`.

@@ -19,8 +19,7 @@ use crate::{
     project::{Project, ProjectError},
     session_id::SessionId,
     snapshot::{
-        apply_patch_set, compute_patch_set, AppliedPatchSet, InstanceContext,
-        InstancePropertiesWithMeta, PatchSet, RojoTree,
+        apply_patch_set, compute_patch_set, AppliedPatchSet, InstanceContext, PatchSet, RojoTree,
     },
     snapshot_middleware::{snapshot_from_vfs, SnapshotError},
 };

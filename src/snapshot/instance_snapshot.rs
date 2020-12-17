@@ -86,14 +86,12 @@ impl InstanceSnapshot {
     }
 
     pub fn from_tree(tree: &WeakDom, id: Ref) -> Self {
-        let instance = tree
-            .get_instance(id)
-            .expect("instance did not exist in tree");
+        let instance = tree.get_by_ref(id).expect("instance did not exist in tree");
 
         let children = instance
-            .get_children_ids()
+            .children()
             .iter()
-            .cloned()
+            .copied()
             .map(|id| Self::from_tree(tree, id))
             .collect();
 
@@ -101,7 +99,7 @@ impl InstanceSnapshot {
             snapshot_id: Some(id),
             metadata: InstanceMetadata::default(),
             name: Cow::Owned(instance.name.clone()),
-            class_name: Cow::Owned(instance.class_name.clone()),
+            class_name: Cow::Owned(instance.class.clone()),
             properties: instance.properties.clone(),
             children,
         }

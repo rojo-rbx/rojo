@@ -6,7 +6,7 @@ use std::{collections::HashMap, fs, path::PathBuf, sync::Arc};
 use futures::{Future, Stream};
 
 use hyper::{service::Service, Body, Method, Request, StatusCode};
-use rbx_dom_weak::Ref;
+use rbx_dom_weak::types::Ref;
 
 use crate::{
     serve_session::ServeSession,
