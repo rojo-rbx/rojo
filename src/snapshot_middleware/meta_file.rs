@@ -35,9 +35,7 @@ impl AdjacentMetadata {
     }
 
     pub fn apply_properties(&mut self, snapshot: &mut InstanceSnapshot) {
-        let class_name = &snapshot.class_name;
-
-        for (key, value) in self.properties {
+        for (key, value) in self.properties.drain() {
             snapshot.properties.insert(key, value);
         }
     }
@@ -98,9 +96,7 @@ impl DirectoryMetadata {
     }
 
     fn apply_properties(&mut self, snapshot: &mut InstanceSnapshot) {
-        let class_name = &snapshot.class_name;
-
-        for (key, value) in self.properties {
+        for (key, value) in self.properties.drain() {
             snapshot.properties.insert(key, value);
         }
     }
