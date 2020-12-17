@@ -2,7 +2,6 @@ use std::{path::Path, str};
 
 use maplit::hashmap;
 use memofs::{IoResultExt, Vfs};
-use rbx_dom_weak::Variant;
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
@@ -22,9 +21,7 @@ pub fn snapshot_txt(
         .to_string();
 
     let properties = hashmap! {
-        "Value".to_owned() => Variant::String {
-            value: contents_str,
-        },
+        "Value".to_owned() => contents_str.into(),
     };
 
     let meta_path = path.with_file_name(format!("{}.meta.json", instance_name));

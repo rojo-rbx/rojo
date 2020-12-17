@@ -1,7 +1,6 @@
-use std::{collections::HashMap, path::Path};
+use std::path::Path;
 
 use memofs::Vfs;
-use rbx_dom_weak::{InstanceProperties, WeakDom};
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
@@ -13,18 +12,11 @@ pub fn snapshot_rbxm(
     path: &Path,
     instance_name: &str,
 ) -> SnapshotInstanceResult {
-    let mut temp_tree = WeakDom::new(InstanceProperties {
-        name: "DataModel".to_owned(),
-        class_name: "DataModel".to_owned(),
-        properties: HashMap::new(),
-    });
-
-    let root_id = temp_tree.get_root_id();
-    rbx_binary::decode(&mut temp_tree, root_id, vfs.read(path)?.as_slice())
+    let temp_tree = rbx_binary::from_reader_default(vfs.read(path)?.as_slice())
         .expect("TODO: Handle rbx_binary errors");
 
-    let root_instance = temp_tree.get_instance(root_id).unwrap();
-    let children = root_instance.get_children_ids();
+    let root_instance = temp_tree.root();
+    let children = root_instance.children();
 
     if children.len() == 1 {
         let snapshot = InstanceSnapshot::from_tree(&temp_tree, children[0])

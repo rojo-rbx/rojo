@@ -1,8 +1,7 @@
 use std::{borrow::Cow, collections::HashMap, path::Path};
 
 use memofs::Vfs;
-use rbx_dom_weak::UnresolvedVariant;
-use rbx_reflection::try_resolve_value;
+use rbx_dom_weak::types::Variant;
 use serde::Deserialize;
 
 use crate::snapshot::{InstanceContext, InstanceSnapshot};
@@ -56,8 +55,9 @@ struct JsonModelCore {
     #[serde(default = "Vec::new", skip_serializing_if = "Vec::is_empty")]
     children: Vec<JsonModelInstance>,
 
+    // FIXME: Use unresolved value type here
     #[serde(default = "HashMap::new", skip_serializing_if = "HashMap::is_empty")]
-    properties: HashMap<String, UnresolvedVariant>,
+    properties: HashMap<String, Variant>,
 }
 
 impl JsonModelCore {
@@ -70,21 +70,12 @@ impl JsonModelCore {
             .map(|child| child.core.into_snapshot(child.name))
             .collect();
 
-        let properties = self
-            .properties
-            .into_iter()
-            .map(|(key, value)| {
-                try_resolve_value(&class_name, &key, &value).map(|resolved| (key, resolved))
-            })
-            .collect::<Result<HashMap<_, _>, _>>()
-            .expect("TODO: Handle rbx_reflection errors");
-
         InstanceSnapshot {
             snapshot_id: None,
             metadata: Default::default(),
             name: Cow::Owned(name),
             class_name: Cow::Owned(class_name),
-            properties,
+            properties: self.properties,
             children,
         }
     }
