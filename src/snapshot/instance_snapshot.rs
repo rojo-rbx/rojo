@@ -17,6 +17,7 @@ use super::InstanceMetadata;
 // - Replace use of Variant with a sum of Variant + borrowed value
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct InstanceSnapshot {
+    // FIXME: Don't use Option<Ref> anymore!
     /// A temporary ID applied to the snapshot that's used for Ref properties.
     pub snapshot_id: Option<Ref>,
 

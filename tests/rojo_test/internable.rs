@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use rbx_dom_weak::RbxId;
+use rbx_dom_weak::types::Ref;
 use serde::Serialize;
 
 use librojo::web_api::{Instance, InstanceUpdate, ReadResponse, SubscribeResponse};
@@ -31,8 +31,8 @@ pub trait Internable<T> {
     fn intern(&self, redactions: &mut RedactionMap, extra: T);
 }
 
-impl Internable<RbxId> for ReadResponse<'_> {
-    fn intern(&self, redactions: &mut RedactionMap, root_id: RbxId) {
+impl Internable<Ref> for ReadResponse<'_> {
+    fn intern(&self, redactions: &mut RedactionMap, root_id: Ref) {
         redactions.intern(root_id);
 
         let root_instance = self.instances.get(&root_id).unwrap();
@@ -43,12 +43,8 @@ impl Internable<RbxId> for ReadResponse<'_> {
     }
 }
 
-impl<'a> Internable<&'a HashMap<RbxId, Instance<'_>>> for Instance<'a> {
-    fn intern(
-        &self,
-        redactions: &mut RedactionMap,
-        other_instances: &HashMap<RbxId, Instance<'_>>,
-    ) {
+impl<'a> Internable<&'a HashMap<Ref, Instance<'_>>> for Instance<'a> {
+    fn intern(&self, redactions: &mut RedactionMap, other_instances: &HashMap<Ref, Instance<'_>>) {
         redactions.intern(self.id);
 
         for child_id in self.children.iter() {
@@ -75,7 +71,7 @@ fn intern_instance_updates(redactions: &mut RedactionMap, updates: &[InstanceUpd
 
 fn intern_instance_additions(
     redactions: &mut RedactionMap,
-    additions: &HashMap<RbxId, Instance<'_>>,
+    additions: &HashMap<Ref, Instance<'_>>,
 ) {
     // This method redacts in a deterministic order from a HashMap by collecting
     // all of the instances that are direct children of instances we've already
@@ -83,7 +79,7 @@ fn intern_instance_additions(
     let mut added_roots = Vec::new();
 
     for (id, added) in additions {
-        let parent_id = added.parent.unwrap();
+        let parent_id = added.parent;
         let parent_redacted = redactions.get_redacted_value(parent_id);
 
         // Here, we assume that instances are only added to other instances that

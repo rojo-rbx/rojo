@@ -211,10 +211,10 @@ fn apply_update_child(context: &mut PatchApplyContext, tree: &mut RojoTree, patc
 mod test {
     use super::*;
 
-    use std::{borrow::Cow, collections::HashMap};
+    use std::borrow::Cow;
 
     use maplit::hashmap;
-    use rbx_dom_weak::Variant;
+    use rbx_dom_weak::types::Variant;
 
     use super::super::PatchAdd;
 
@@ -222,14 +222,7 @@ mod test {
     fn add_from_empty() {
         let _ = env_logger::try_init();
 
-        let mut tree = RojoTree::new(InstancePropertiesWithMeta {
-            properties: InstanceProperties {
-                name: "Folder".to_owned(),
-                class_name: "Folder".to_owned(),
-                properties: HashMap::new(),
-            },
-            metadata: Default::default(),
-        });
+        let mut tree = RojoTree::new(InstanceBuilder::new("Folder"), Default::default());
 
         let root_id = tree.get_root_id();
 
@@ -239,7 +232,7 @@ mod test {
             name: Cow::Borrowed("Foo"),
             class_name: Cow::Borrowed("Bar"),
             properties: hashmap! {
-                "Baz".to_owned() => Variant::Int32 { value: 5 },
+                "Baz".to_owned() => Variant::Int32(5),
             },
             children: Vec::new(),
         };
@@ -268,18 +261,14 @@ mod test {
     fn update_existing() {
         let _ = env_logger::try_init();
 
-        let mut tree = RojoTree::new(InstancePropertiesWithMeta {
-            properties: InstanceProperties {
-                name: "OldName".to_owned(),
-                class_name: "OldClassName".to_owned(),
-                properties: hashmap! {
-                    "Foo".to_owned() => Variant::Int32 { value: 7 },
-                    "Bar".to_owned() => Variant::Int32 { value: 3 },
-                    "Unchanged".to_owned() => Variant::Int32 { value: -5 },
-                },
-            },
-            metadata: Default::default(),
-        });
+        let mut tree = RojoTree::new(
+            InstanceBuilder::new("OldClassName")
+                .with_name("OldName")
+                .with_property("Foo", 7i32)
+                .with_property("Bar", 3i32)
+                .with_property("Unchanged", -5i32),
+            Default::default(),
+        );
 
         let root_id = tree.get_root_id();
 
@@ -289,13 +278,13 @@ mod test {
             changed_class_name: Some("NewClassName".to_owned()),
             changed_properties: hashmap! {
                 // The value of Foo has changed
-                "Foo".to_owned() => Some(Variant::Int32 { value: 8 }),
+                "Foo".to_owned() => Some(Variant::Int32(8)),
 
                 // Bar has been deleted
                 "Bar".to_owned() => None,
 
                 // Baz has been added
-                "Baz".to_owned() => Some(Variant::Int32 { value: 10 }),
+                "Baz".to_owned() => Some(Variant::Int32(10)),
             },
             changed_metadata: None,
         };
@@ -308,9 +297,9 @@ mod test {
         apply_patch_set(&mut tree, patch_set);
 
         let expected_properties = hashmap! {
-            "Foo".to_owned() => Variant::Int32 { value: 8 },
-            "Baz".to_owned() => Variant::Int32 { value: 10 },
-            "Unchanged".to_owned() => Variant::Int32 { value: -5 },
+            "Foo".to_owned() => Variant::Int32(8),
+            "Baz".to_owned() => Variant::Int32(10),
+            "Unchanged".to_owned() => Variant::Int32(-5),
         };
 
         let root_instance = tree.get_instance(root_id).unwrap();

@@ -220,9 +220,7 @@ mod test {
     use std::borrow::Cow;
 
     use maplit::hashmap;
-    use rbx_dom_weak::InstanceProperties;
-
-    use super::super::InstancePropertiesWithMeta;
+    use rbx_dom_weak::InstanceBuilder;
 
     /// This test makes sure that rewriting refs in instance update patches to
     /// instances that already exists works. We should be able to correlate the
@@ -230,14 +228,7 @@ mod test {
     /// value before returning from compute_patch_set.
     #[test]
     fn rewrite_ref_existing_instance_update() {
-        let tree = RojoTree::new(InstancePropertiesWithMeta {
-            properties: InstanceProperties {
-                name: "foo".to_owned(),
-                class_name: "foo".to_owned(),
-                properties: HashMap::new(),
-            },
-            metadata: Default::default(),
-        });
+        let tree = RojoTree::new(InstanceBuilder::new("foo"), Default::default());
 
         let root_id = tree.get_root_id();
 
@@ -247,9 +238,7 @@ mod test {
         let snapshot = InstanceSnapshot {
             snapshot_id: Some(snapshot_id),
             properties: hashmap! {
-                "Self".to_owned() => Variant::Ref {
-                    value: Some(snapshot_id),
-                }
+                "Self".to_owned() => Variant::Ref(snapshot_id),
             },
 
             metadata: Default::default(),
@@ -266,9 +255,7 @@ mod test {
                 changed_name: None,
                 changed_class_name: None,
                 changed_properties: hashmap! {
-                    "Self".to_owned() => Some(Variant::Ref {
-                        value: Some(root_id),
-                    }),
+                    "Self".to_owned() => Some(Variant::Ref(root_id)),
                 },
                 changed_metadata: None,
             }],
@@ -284,14 +271,7 @@ mod test {
     /// one.
     #[test]
     fn rewrite_ref_existing_instance_addition() {
-        let tree = RojoTree::new(InstancePropertiesWithMeta {
-            properties: InstanceProperties {
-                name: "foo".to_owned(),
-                class_name: "foo".to_owned(),
-                properties: HashMap::new(),
-            },
-            metadata: Default::default(),
-        });
+        let tree = RojoTree::new(InstanceBuilder::new("foo"), Default::default());
 
         let root_id = tree.get_root_id();
 
@@ -301,9 +281,7 @@ mod test {
             snapshot_id: Some(snapshot_id),
             children: vec![InstanceSnapshot {
                 properties: hashmap! {
-                    "Self".to_owned() => Variant::Ref {
-                        value: Some(snapshot_id),
-                    },
+                    "Self".to_owned() => Variant::Ref(snapshot_id),
                 },
 
                 snapshot_id: None,
@@ -328,9 +306,7 @@ mod test {
                     snapshot_id: None,
                     metadata: Default::default(),
                     properties: hashmap! {
-                        "Self".to_owned() => Variant::Ref {
-                            value: Some(root_id),
-                        },
+                        "Self".to_owned() => Variant::Ref(root_id),
                     },
                     name: Cow::Borrowed("child"),
                     class_name: Cow::Borrowed("child"),
