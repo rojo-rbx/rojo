@@ -5,7 +5,6 @@
 
 mod csv;
 mod dir;
-mod error;
 mod json;
 mod json_model;
 mod lua;
@@ -37,7 +36,6 @@ use self::{
     util::match_file_name,
 };
 
-pub use self::error::*;
 pub use self::project::snapshot_project_node;
 
 pub fn snapshot_from_vfs(

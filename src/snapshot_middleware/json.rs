@@ -1,5 +1,6 @@
 use std::path::Path;
 
+use anyhow::Context;
 use maplit::hashmap;
 use memofs::{IoResultExt, Vfs};
 use rbx_dom_weak::RbxValue;
@@ -9,9 +10,7 @@ use crate::{
     snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
 };
 
-use super::{
-    error::SnapshotError, meta_file::AdjacentMetadata, middleware::SnapshotInstanceResult,
-};
+use super::{meta_file::AdjacentMetadata, middleware::SnapshotInstanceResult};
 
 pub fn snapshot_json(
     context: &InstanceContext,
@@ -22,7 +21,7 @@ pub fn snapshot_json(
     let contents = vfs.read(path)?;
 
     let value: serde_json::Value = serde_json::from_slice(&contents)
-        .map_err(|err| SnapshotError::malformed_json(err, path))?;
+        .with_context(|| format!("File contains malformed JSON: {}", path.display()))?;
 
     let as_lua = json_to_lua(value).to_string();
 

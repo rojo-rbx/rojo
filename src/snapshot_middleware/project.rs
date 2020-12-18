@@ -1,5 +1,6 @@
 use std::{borrow::Cow, collections::HashMap, path::Path};
 
+use anyhow::Context;
 use memofs::Vfs;
 use rbx_reflection::{get_class_descriptor, try_resolve_value};
 
@@ -10,7 +11,7 @@ use crate::{
     },
 };
 
-use super::{error::SnapshotError, middleware::SnapshotInstanceResult, snapshot_from_vfs};
+use super::{middleware::SnapshotInstanceResult, snapshot_from_vfs};
 
 pub fn snapshot_project(
     context: &InstanceContext,
@@ -18,7 +19,7 @@ pub fn snapshot_project(
     path: &Path,
 ) -> SnapshotInstanceResult {
     let project = Project::load_from_slice(&vfs.read(path)?, path)
-        .map_err(|err| SnapshotError::malformed_project(err, path))?;
+        .with_context(|| format!("File was not a valid Rojo project: {}", path.display()))?;
 
     let mut context = context.clone();
 

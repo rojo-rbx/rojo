@@ -1,10 +1,11 @@
 use std::path::Path;
 
+use anyhow::Context;
 use memofs::Vfs;
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
-use super::{middleware::SnapshotInstanceResult, SnapshotError};
+use super::middleware::SnapshotInstanceResult;
 
 pub fn snapshot_rbxmx(
     context: &InstanceContext,
@@ -16,7 +17,7 @@ pub fn snapshot_rbxmx(
         .property_behavior(rbx_xml::DecodePropertyBehavior::ReadUnknown);
 
     let temp_tree = rbx_xml::from_reader(vfs.read(path)?.as_slice(), options)
-        .map_err(|err| SnapshotError::malformed_rbxmx(err, path))?;
+        .with_context(|| format!("Malformed rbxm file: {}", path.display()))?;
 
     let root_instance = temp_tree.get_instance(temp_tree.get_root_id()).unwrap();
     let children = root_instance.get_children_ids();
@@ -33,7 +34,11 @@ pub fn snapshot_rbxmx(
 
         Ok(Some(snapshot))
     } else {
-        panic!("Rojo doesn't have support for model files with zero or more than one top-level instances yet.");
+        anyhow::bail!(
+            "Rojo doesn't have support for model files with zero or more than one top-level instances yet.\n\n \
+             Check the model file at path {}",
+            path.display()
+        );
     }
 }
 

@@ -1,14 +1,13 @@
 use std::{path::Path, str};
 
+use anyhow::Context;
 use maplit::hashmap;
 use memofs::{IoResultExt, Vfs};
 use rbx_dom_weak::RbxValue;
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
-use super::{
-    error::SnapshotError, meta_file::AdjacentMetadata, middleware::SnapshotInstanceResult,
-};
+use super::{meta_file::AdjacentMetadata, middleware::SnapshotInstanceResult};
 
 pub fn snapshot_txt(
     context: &InstanceContext,
@@ -18,8 +17,8 @@ pub fn snapshot_txt(
 ) -> SnapshotInstanceResult {
     let contents = vfs.read(path)?;
     let contents_str = str::from_utf8(&contents)
-        .map_err(|err| SnapshotError::file_contents_bad_unicode(err, path))?
-        .to_string();
+        .with_context(|| format!("File was not valid UTF-8: {}", path.display()))?
+        .to_owned();
 
     let properties = hashmap! {
         "Value".to_owned() => RbxValue::String {

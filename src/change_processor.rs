@@ -292,7 +292,7 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: RbxId) -> Optio
                         return None;
                     }
                     Err(err) => {
-                        log::error!("Snapshot error: {}", ErrorDisplay(err));
+                        log::error!("Snapshot error: {:?}", err);
                         return None;
                     }
                 };
@@ -340,7 +340,7 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: RbxId) -> Optio
                     return None;
                 }
                 Err(err) => {
-                    log::error!("{}", ErrorDisplay(err));
+                    log::error!("{:?}", err);
                     return None;
                 }
             };

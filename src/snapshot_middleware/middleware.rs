@@ -1,5 +1,3 @@
 use crate::snapshot::InstanceSnapshot;
 
-use super::error::SnapshotError;
-
-pub type SnapshotInstanceResult = Result<Option<InstanceSnapshot>, SnapshotError>;
+pub type SnapshotInstanceResult = anyhow::Result<Option<InstanceSnapshot>>;
