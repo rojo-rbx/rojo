@@ -4,7 +4,7 @@ use memofs::Vfs;
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
-use super::middleware::SnapshotInstanceResult;
+use super::{middleware::SnapshotInstanceResult, SnapshotError};
 
 pub fn snapshot_rbxmx(
     context: &InstanceContext,
@@ -16,7 +16,7 @@ pub fn snapshot_rbxmx(
         .property_behavior(rbx_xml::DecodePropertyBehavior::ReadUnknown);
 
     let temp_tree = rbx_xml::from_reader(vfs.read(path)?.as_slice(), options)
-        .expect("TODO: Handle rbx_xml errors");
+        .map_err(|err| SnapshotError::malformed_rbxmx(err, path))?;
 
     let root_instance = temp_tree.get_instance(temp_tree.get_root_id()).unwrap();
     let children = root_instance.get_children_ids();

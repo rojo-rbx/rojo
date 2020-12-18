@@ -5,7 +5,7 @@ use rbx_dom_weak::{RbxInstanceProperties, RbxTree};
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
-use super::middleware::SnapshotInstanceResult;
+use super::{middleware::SnapshotInstanceResult, SnapshotError};
 
 pub fn snapshot_rbxm(
     context: &InstanceContext,
@@ -21,7 +21,7 @@ pub fn snapshot_rbxm(
 
     let root_id = temp_tree.get_root_id();
     rbx_binary::decode(&mut temp_tree, root_id, vfs.read(path)?.as_slice())
-        .expect("TODO: Handle rbx_binary errors");
+        .map_err(|err| SnapshotError::malformed_rbxm(err, path))?;
 
     let root_instance = temp_tree.get_instance(root_id).unwrap();
     let children = root_instance.get_children_ids();

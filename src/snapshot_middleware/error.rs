@@ -18,6 +18,18 @@ pub enum SnapshotError {
     #[error("malformed project file at path {}", .path.display())]
     MalformedProject { source: ProjectError, path: PathBuf },
 
+    #[error("malformed .rbxm file at path {}", .path.display())]
+    MalformedRbxm {
+        source: rbx_binary::DecodeError,
+        path: PathBuf,
+    },
+
+    #[error("malformed .rbxmx file at path {}", .path.display())]
+    MalformedRbxmx {
+        source: rbx_xml::DecodeError,
+        path: PathBuf,
+    },
+
     #[error("malformed .model.json file at path {}", .path.display())]
     MalformedModelJson {
         source: serde_json::Error,
@@ -63,6 +75,23 @@ impl SnapshotError {
 
     pub(crate) fn malformed_project(source: ProjectError, path: impl Into<PathBuf>) -> Self {
         Self::MalformedProject {
+            source,
+            path: path.into(),
+        }
+    }
+
+    pub(crate) fn malformed_rbxm(
+        source: rbx_binary::DecodeError,
+        path: impl Into<PathBuf>,
+    ) -> Self {
+        Self::MalformedRbxm {
+            source,
+            path: path.into(),
+        }
+    }
+
+    pub(crate) fn malformed_rbxmx(source: rbx_xml::DecodeError, path: impl Into<PathBuf>) -> Self {
+        Self::MalformedRbxmx {
             source,
             path: path.into(),
         }
