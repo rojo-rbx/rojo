@@ -52,8 +52,9 @@ local function diff(instanceMap, virtualInstances, rootId)
 			invariant("Cannot diff an instance not present in InstanceMap\nID: {}", id)
 		end
 
+		local changedClassName = nil
 		if virtualInstance.ClassName ~= instance.ClassName then
-			error("unimplemented: support changing ClassName")
+			changedClassName = virtualInstance.ClassName
 		end
 
 		local changedName = nil
@@ -89,11 +90,11 @@ local function diff(instanceMap, virtualInstances, rootId)
 			end
 		end
 
-		if changedName ~= nil or not isEmpty(changedProperties) then
+		if changedName ~= nil or changedClassName ~= nil or not isEmpty(changedProperties) then
 			table.insert(patch.updated, {
 				id = id,
 				changedName = changedName,
-				changedClassName = nil,
+				changedClassName = changedClassName,
 				changedProperties = changedProperties,
 				changedMetadata = nil,
 			})
