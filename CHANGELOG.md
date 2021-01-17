@@ -2,6 +2,11 @@
 
 ## Unreleased Changes
 
+## [6.0.0](https://github.com/rojo-rbx/rojo/releases/tag/v6.0.0) (January 16, 2021)
+* Improved server error messages
+    * The server will now keep running in more error cases
+* Fixed Rojo being unable to diff ClassName changes
+
 ## [6.0.0 Release Candidate 4](https://github.com/rojo-rbx/rojo/releases/tag/v6.0.0-rc.4) (December 14, 2020)
 * Added brand new Rojo UI ([#367](https://github.com/rojo-rbx/rojo/pull/367))
 * Added `projectName` to `/api/rojo` output.
