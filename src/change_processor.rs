@@ -9,7 +9,6 @@ use memofs::{IoResultExt, Vfs, VfsEvent};
 use rbx_dom_weak::{RbxId, RbxValue};
 
 use crate::{
-    error::ErrorDisplay,
     message_queue::MessageQueue,
     snapshot::{
         apply_patch_set, compute_patch_set, AppliedPatchSet, InstigatingSource, PatchSet, RojoTree,
@@ -313,7 +312,7 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: RbxId) -> Optio
                 apply_patch_set(tree, patch_set)
             }
             Err(err) => {
-                log::error!("Error processing filesystem change: {}", ErrorDisplay(err));
+                log::error!("Error processing filesystem change: {:?}", err);
                 return None;
             }
         },
