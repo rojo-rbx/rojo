@@ -53,13 +53,16 @@ pub fn upload(options: UploadCommand) -> Result<(), anyhow::Error> {
         .post(&url)
         .header(COOKIE, format!(".ROBLOSECURITY={}", &cookie))
         .header(USER_AGENT, "Roblox/WinInet")
-        .header("Requester", "Client")
         .header(CONTENT_TYPE, "application/xml")
         .header(ACCEPT, "application/json")
         .body(buffer)
         .send()?;
 
-    if !response.status().is_success() {
+    let status = response.status();
+
+    if !status.is_success() {
+        log::error!("Error uploading, status: {}", status);
+
         return Err(Error::RobloxApi {
             body: response.text()?,
         }

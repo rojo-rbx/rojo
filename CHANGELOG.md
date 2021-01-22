@@ -1,6 +1,7 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Fixed `rojo upload` requests being rejected by Roblox
 
 ## [6.0.0](https://github.com/rojo-rbx/rojo/releases/tag/v6.0.0) (January 16, 2021)
 * Improved server error messages
