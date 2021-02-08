@@ -16,6 +16,7 @@ mod message_queue;
 mod multimap;
 mod path_serializer;
 mod project;
+mod resolution;
 mod serve_session;
 mod session_id;
 mod snapshot;
