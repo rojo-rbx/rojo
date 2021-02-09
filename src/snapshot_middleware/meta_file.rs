@@ -1,10 +1,14 @@
-use std::{borrow::Cow, collections::HashMap, path::Path};
+use std::{
+    borrow::Cow,
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 
 use anyhow::Context;
 use rbx_dom_weak::types::Variant;
 use serde::{Deserialize, Serialize};
 
-use crate::snapshot::InstanceSnapshot;
+use crate::{resolution::UnresolvedValue, snapshot::InstanceSnapshot};
 
 /// Represents metadata in a sibling file with the same basename.
 ///
@@ -16,19 +20,24 @@ pub struct AdjacentMetadata {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ignore_unknown_instances: Option<bool>,
 
-    // FIXME: Unresolved value type here
     #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-    pub properties: HashMap<String, Variant>,
+    pub properties: HashMap<String, UnresolvedValue>,
+
+    #[serde(skip)]
+    pub path: PathBuf,
 }
 
 impl AdjacentMetadata {
-    pub fn from_slice(slice: &[u8], path: &Path) -> anyhow::Result<Self> {
-        serde_json::from_slice(slice).with_context(|| {
+    pub fn from_slice(slice: &[u8], path: PathBuf) -> anyhow::Result<Self> {
+        let mut meta: Self = serde_json::from_slice(slice).with_context(|| {
             format!(
                 "File contained malformed .meta.json data: {}",
                 path.display()
             )
-        })
+        })?;
+
+        meta.path = path;
+        Ok(meta)
     }
 
     pub fn apply_ignore_unknown_instances(&mut self, snapshot: &mut InstanceSnapshot) {
@@ -37,15 +46,24 @@ impl AdjacentMetadata {
         }
     }
 
-    pub fn apply_properties(&mut self, snapshot: &mut InstanceSnapshot) {
-        for (key, value) in self.properties.drain() {
+    pub fn apply_properties(&mut self, snapshot: &mut InstanceSnapshot) -> anyhow::Result<()> {
+        let path = &self.path;
+
+        for (key, unresolved) in self.properties.drain() {
+            let value = unresolved
+                .resolve(&snapshot.class_name, &key)
+                .with_context(|| format!("error applying meta file {}", path.display()))?;
+
             snapshot.properties.insert(key, value);
         }
+
+        Ok(())
     }
 
-    pub fn apply_all(&mut self, snapshot: &mut InstanceSnapshot) {
+    pub fn apply_all(&mut self, snapshot: &mut InstanceSnapshot) -> anyhow::Result<()> {
         self.apply_ignore_unknown_instances(snapshot);
-        self.apply_properties(snapshot);
+        self.apply_properties(snapshot)?;
+        Ok(())
     }
 
     // TODO: Add method to allow selectively applying parts of metadata and

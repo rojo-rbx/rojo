@@ -4,11 +4,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use rbx_dom_weak::types::Variant;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use crate::glob::Glob;
+use crate::{glob::Glob, resolution::UnresolvedValue};
 
 static PROJECT_FILENAME: &str = "default.project.json";
 
@@ -183,8 +182,7 @@ pub struct ProjectNode {
         default,
         skip_serializing_if = "HashMap::is_empty"
     )]
-    // FIXME: Need equivalent to UnresolvedRbxValue
-    pub properties: HashMap<String, Variant>,
+    pub properties: HashMap<String, UnresolvedValue>,
 
     /// Defines the behavior when Rojo encounters unknown instances in Roblox
     /// Studio during live sync. `$ignoreUnknownInstances` should be considered

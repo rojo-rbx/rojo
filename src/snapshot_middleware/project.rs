@@ -171,10 +171,18 @@ pub fn snapshot_project_node(
         }
     }
 
-    for (key, value) in &node.properties {
-        // FIXME: Reintroduce property resolution here.
+    for (key, unresolved) in &node.properties {
+        let value = unresolved
+            .clone()
+            .resolve(&class_name, key)
+            .with_context(|| {
+                format!(
+                    "Unresolvable property in project at path {}",
+                    project_path.display()
+                )
+            })?;
 
-        properties.insert(key.clone(), value.clone());
+        properties.insert(key.clone(), value);
     }
 
     // If the user specified $ignoreUnknownInstances, overwrite the existing
