@@ -1,6 +1,7 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Fixed `rojo upload` to handle CSRF challenges.
 
 ## [6.0.1](https://github.com/rojo-rbx/rojo/releases/tag/v6.0.1) (January 22, 2021)
 * Fixed `rojo upload` requests being rejected by Roblox

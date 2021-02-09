@@ -1,5 +1,8 @@
 use memofs::Vfs;
-use reqwest::header::{ACCEPT, CONTENT_TYPE, COOKIE, USER_AGENT};
+use reqwest::{
+    header::{ACCEPT, CONTENT_TYPE, COOKIE, USER_AGENT},
+    StatusCode,
+};
 use thiserror::Error;
 
 use crate::{auth_cookie::get_auth_cookie, cli::UploadCommand, serve_session::ServeSession};
@@ -41,28 +44,42 @@ pub fn upload(options: UploadCommand) -> Result<(), anyhow::Error> {
         .property_behavior(rbx_xml::EncodePropertyBehavior::WriteUnknown);
 
     rbx_xml::to_writer(&mut buffer, tree.inner(), &encode_ids, config)?;
+    do_upload(buffer, options.asset_id, &cookie)
+}
 
+fn do_upload(buffer: Vec<u8>, asset_id: u64, cookie: &str) -> anyhow::Result<()> {
     let url = format!(
         "https://data.roblox.com/Data/Upload.ashx?assetid={}",
-        options.asset_id
+        asset_id
     );
 
-    log::trace!("POSTing to {}", url);
     let client = reqwest::Client::new();
-    let mut response = client
-        .post(&url)
-        .header(COOKIE, format!(".ROBLOSECURITY={}", &cookie))
-        .header(USER_AGENT, "Roblox/WinInet")
-        .header(CONTENT_TYPE, "application/xml")
-        .header(ACCEPT, "application/json")
-        .body(buffer)
-        .send()?;
+
+    let build_request = move || {
+        client
+            .post(&url)
+            .header(COOKIE, format!(".ROBLOSECURITY={}", cookie))
+            .header(USER_AGENT, "Roblox/WinInet")
+            .header(CONTENT_TYPE, "application/xml")
+            .header(ACCEPT, "application/json")
+            .body(buffer.clone())
+    };
+
+    log::debug!("Uploading to Roblox...");
+    let mut response = build_request().send()?;
+
+    // Starting in Feburary, 2021, the upload endpoint performs CSRF challenges.
+    // If we receive an HTTP 403 with a X-CSRF-Token reply, we should retry the
+    // request, echoing the value of that header.
+    if response.status() == StatusCode::FORBIDDEN {
+        if let Some(csrf_token) = response.headers().get("X-CSRF-Token") {
+            log::debug!("Received CSRF challenge, retrying with token...");
+            response = build_request().header("X-CSRF-Token", csrf_token).send()?;
+        }
+    }
 
     let status = response.status();
-
     if !status.is_success() {
-        log::error!("Error uploading, status: {}", status);
-
         return Err(Error::RobloxApi {
             body: response.text()?,
         }
