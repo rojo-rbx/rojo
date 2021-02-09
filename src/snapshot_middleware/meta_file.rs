@@ -1,11 +1,10 @@
 use std::{borrow::Cow, collections::HashMap, path::Path};
 
+use anyhow::Context;
 use rbx_dom_weak::types::Variant;
 use serde::{Deserialize, Serialize};
 
 use crate::snapshot::InstanceSnapshot;
-
-use super::error::SnapshotError;
 
 /// Represents metadata in a sibling file with the same basename.
 ///
@@ -23,9 +22,13 @@ pub struct AdjacentMetadata {
 }
 
 impl AdjacentMetadata {
-    pub fn from_slice(slice: &[u8], path: &Path) -> Result<Self, SnapshotError> {
-        serde_json::from_slice(slice)
-            .map_err(|source| SnapshotError::malformed_meta_json(source, path))
+    pub fn from_slice(slice: &[u8], path: &Path) -> anyhow::Result<Self> {
+        serde_json::from_slice(slice).with_context(|| {
+            format!(
+                "File contained malformed .meta.json data: {}",
+                path.display()
+            )
+        })
     }
 
     pub fn apply_ignore_unknown_instances(&mut self, snapshot: &mut InstanceSnapshot) {
@@ -67,9 +70,13 @@ pub struct DirectoryMetadata {
 }
 
 impl DirectoryMetadata {
-    pub fn from_slice(slice: &[u8], path: &Path) -> Result<Self, SnapshotError> {
-        serde_json::from_slice(slice)
-            .map_err(|source| SnapshotError::malformed_meta_json(source, path))
+    pub fn from_slice(slice: &[u8], path: &Path) -> anyhow::Result<Self> {
+        serde_json::from_slice(slice).with_context(|| {
+            format!(
+                "File contained malformed init.meta.json data: {}",
+                path.display()
+            )
+        })
     }
 
     pub fn apply_all(&mut self, snapshot: &mut InstanceSnapshot) {

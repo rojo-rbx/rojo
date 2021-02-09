@@ -2,6 +2,17 @@
 
 ## Unreleased Changes
 
+## [6.0.2](https://github.com/rojo-rbx/rojo/releases/tag/v6.0.2) (February 9, 2021)
+* Fixed `rojo upload` to handle CSRF challenges.
+
+## [6.0.1](https://github.com/rojo-rbx/rojo/releases/tag/v6.0.1) (January 22, 2021)
+* Fixed `rojo upload` requests being rejected by Roblox
+
+## [6.0.0](https://github.com/rojo-rbx/rojo/releases/tag/v6.0.0) (January 16, 2021)
+* Improved server error messages
+    * The server will now keep running in more error cases
+* Fixed Rojo being unable to diff ClassName changes
+
 ## [6.0.0 Release Candidate 4](https://github.com/rojo-rbx/rojo/releases/tag/v6.0.0-rc.4) (December 14, 2020)
 * Added brand new Rojo UI ([#367](https://github.com/rojo-rbx/rojo/pull/367))
 * Added `projectName` to `/api/rojo` output.

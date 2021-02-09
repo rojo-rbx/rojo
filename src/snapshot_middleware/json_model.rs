@@ -1,12 +1,13 @@
 use std::{borrow::Cow, collections::HashMap, path::Path};
 
+use anyhow::Context;
 use memofs::Vfs;
 use rbx_dom_weak::types::Variant;
 use serde::Deserialize;
 
 use crate::snapshot::{InstanceContext, InstanceSnapshot};
 
-use super::{error::SnapshotError, middleware::SnapshotInstanceResult};
+use super::middleware::SnapshotInstanceResult;
 
 pub fn snapshot_json_model(
     context: &InstanceContext,
@@ -16,7 +17,7 @@ pub fn snapshot_json_model(
 ) -> SnapshotInstanceResult {
     let contents = vfs.read(path)?;
     let instance: JsonModel = serde_json::from_slice(&contents)
-        .map_err(|source| SnapshotError::malformed_model_json(source, path))?;
+        .with_context(|| format!("File is not a valid JSON model: {}", path.display()))?;
 
     let mut snapshot = instance.core.into_snapshot(instance_name.to_owned());
 

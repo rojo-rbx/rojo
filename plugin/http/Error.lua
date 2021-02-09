@@ -8,7 +8,7 @@ Error.Kind = {
 	},
 	ConnectFailed = {
 		message = "Couldn't connect to the Rojo server.\n" ..
-			"Make sure the server is running -- use 'rojo serve' to run it!",
+			"Make sure the server is running — use 'rojo serve' to run it!",
 	},
 	Timeout = {
 		message = "HTTP request timed out.",

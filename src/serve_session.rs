@@ -21,7 +21,7 @@ use crate::{
     snapshot::{
         apply_patch_set, compute_patch_set, AppliedPatchSet, InstanceContext, PatchSet, RojoTree,
     },
-    snapshot_middleware::{snapshot_from_vfs, SnapshotError},
+    snapshot_middleware::snapshot_from_vfs,
 };
 
 /// Contains all of the state for a Rojo serve session.
@@ -226,8 +226,8 @@ pub enum ServeSessionError {
     },
 
     #[error(transparent)]
-    Snapshot {
+    Other {
         #[from]
-        source: SnapshotError,
+        source: anyhow::Error,
     },
 }
