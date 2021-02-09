@@ -14,7 +14,7 @@ name: foo
 class_name: IntValue
 properties:
   Value:
-    Type: Int32
+    Type: Int64
     Value: 5
 children:
   - snapshot_id: ~

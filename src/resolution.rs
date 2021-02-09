@@ -1,6 +1,6 @@
 use anyhow::format_err;
 use rbx_dom_weak::types::{Variant, VariantType, Vector2, Vector3};
-use rbx_reflection::DataType;
+use rbx_reflection::{DataType, PropertyDescriptor};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -33,15 +33,7 @@ pub enum AmbiguousValue {
 
 impl AmbiguousValue {
     pub fn resolve(self, class_name: &str, prop_name: &str) -> anyhow::Result<Variant> {
-        let database = rbx_reflection_database::get();
-        let class = database
-            .classes
-            .get(class_name)
-            .ok_or_else(|| format_err!("Unknown class {}", class_name))?;
-
-        let property = class
-            .properties
-            .get(prop_name)
+        let property = find_descriptor(class_name, prop_name)
             .ok_or_else(|| format_err!("Unknown property {}.{}", class_name, prop_name))?;
 
         match &property.data_type {
@@ -90,5 +82,22 @@ impl AmbiguousValue {
             AmbiguousValue::Array4(_) => "an array of four numbers",
             AmbiguousValue::Array16(_) => "an array of 16 numbers",
         }
+    }
+}
+
+fn find_descriptor(
+    class_name: &str,
+    prop_name: &str,
+) -> Option<&'static PropertyDescriptor<'static>> {
+    let database = rbx_reflection_database::get();
+    let mut current_class_name = class_name;
+
+    loop {
+        let class = database.classes.get(current_class_name)?;
+        if let Some(descriptor) = class.properties.get(prop_name) {
+            return Some(descriptor);
+        }
+
+        current_class_name = class.superclass.as_deref()?;
     }
 }
