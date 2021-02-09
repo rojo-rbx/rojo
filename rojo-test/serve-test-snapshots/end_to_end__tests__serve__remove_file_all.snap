@@ -11,7 +11,7 @@ instances:
     Metadata:
       ignoreUnknownInstances: false
     Name: remove_file
-    Parent: ~
+    Parent: "00000000000000000000000000000000"
     Properties: {}
   id-3:
     Children: []

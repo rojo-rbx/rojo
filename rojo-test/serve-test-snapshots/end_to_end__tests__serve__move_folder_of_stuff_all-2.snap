@@ -59,7 +59,7 @@ instances:
     Metadata:
       ignoreUnknownInstances: false
     Name: move_folder_of_stuff
-    Parent: ~
+    Parent: "00000000000000000000000000000000"
     Properties: {}
   id-3:
     Children:
