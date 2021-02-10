@@ -1778,7 +1778,7 @@ dependencies = [
 [[package]]
 name = "rbx_binary"
 version = "0.6.0-dev"
-source = "git+https://github.com/rojo-rbx/rbx-dom?branch=master#fbd87ea219759ccf6399f31803a5b3580f3e6de7"
+source = "git+https://github.com/rojo-rbx/rbx-dom?branch=master#5b34ac5873a94e533532b9dea30ad7a876574172"
 dependencies = [
  "log",
  "lz4",
@@ -1791,7 +1791,7 @@ dependencies = [
 [[package]]
 name = "rbx_dom_weak"
 version = "2.0.0-dev"
-source = "git+https://github.com/rojo-rbx/rbx-dom?branch=master#fbd87ea219759ccf6399f31803a5b3580f3e6de7"
+source = "git+https://github.com/rojo-rbx/rbx-dom?branch=master#5b34ac5873a94e533532b9dea30ad7a876574172"
 dependencies = [
  "rbx_types",
  "serde",
@@ -1800,7 +1800,7 @@ dependencies = [
 [[package]]
 name = "rbx_reflection"
 version = "4.0.0-dev"
-source = "git+https://github.com/rojo-rbx/rbx-dom?branch=master#fbd87ea219759ccf6399f31803a5b3580f3e6de7"
+source = "git+https://github.com/rojo-rbx/rbx-dom?branch=master#5b34ac5873a94e533532b9dea30ad7a876574172"
 dependencies = [
  "rbx_types",
  "serde",
@@ -1809,7 +1809,7 @@ dependencies = [
 [[package]]
 name = "rbx_reflection_database"
 version = "0.1.0"
-source = "git+https://github.com/rojo-rbx/rbx-dom?branch=master#fbd87ea219759ccf6399f31803a5b3580f3e6de7"
+source = "git+https://github.com/rojo-rbx/rbx-dom?branch=master#5b34ac5873a94e533532b9dea30ad7a876574172"
 dependencies = [
  "lazy_static",
  "rbx_reflection",
@@ -1820,7 +1820,7 @@ dependencies = [
 [[package]]
 name = "rbx_types"
 version = "0.2.0"
-source = "git+https://github.com/rojo-rbx/rbx-dom?branch=master#fbd87ea219759ccf6399f31803a5b3580f3e6de7"
+source = "git+https://github.com/rojo-rbx/rbx-dom?branch=master#5b34ac5873a94e533532b9dea30ad7a876574172"
 dependencies = [
  "base64 0.11.0",
  "bitflags",
@@ -1833,7 +1833,7 @@ dependencies = [
 [[package]]
 name = "rbx_xml"
 version = "0.12.0-dev"
-source = "git+https://github.com/rojo-rbx/rbx-dom?branch=master#fbd87ea219759ccf6399f31803a5b3580f3e6de7"
+source = "git+https://github.com/rojo-rbx/rbx-dom?branch=master#5b34ac5873a94e533532b9dea30ad7a876574172"
 dependencies = [
  "base64 0.11.0",
  "log",

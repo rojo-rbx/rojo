@@ -1,5 +1,5 @@
 use anyhow::format_err;
-use rbx_dom_weak::types::{Variant, VariantType, Vector2, Vector3};
+use rbx_dom_weak::types::{EnumValue, Variant, VariantType, Vector2, Vector3};
 use rbx_reflection::{DataType, PropertyDescriptor};
 use serde::{Deserialize, Serialize};
 
@@ -37,7 +37,45 @@ impl AmbiguousValue {
             .ok_or_else(|| format_err!("Unknown property {}.{}", class_name, prop_name))?;
 
         match &property.data_type {
-            DataType::Enum(_enum_value) => todo!(),
+            DataType::Enum(enum_name) => {
+                let database = rbx_reflection_database::get();
+
+                let enum_descriptor = database.enums.get(enum_name).ok_or_else(|| {
+                    format_err!("Unknown enum {}. This is a Rojo bug!", enum_name)
+                })?;
+
+                let error = |what: &str| {
+                    let sample_values = enum_descriptor
+                        .items
+                        .keys()
+                        .take(3)
+                        .map(|name| format!(r#""{}""#, name))
+                        .collect::<Vec<_>>()
+                        .join(", ");
+
+                    format_err!(
+                        "Invalid value for property {}.{}. Got {} but \
+                         expected a member of the {} enum such as {}",
+                        class_name,
+                        prop_name,
+                        what,
+                        enum_name,
+                        sample_values
+                    )
+                };
+
+                let value = match self {
+                    AmbiguousValue::String(value) => value,
+                    unresolved => return Err(error(unresolved.describe())),
+                };
+
+                let resolved = enum_descriptor
+                    .items
+                    .get(value.as_str())
+                    .ok_or_else(|| error(value.as_str()))?;
+
+                Ok(EnumValue::from_u32(*resolved).into())
+            }
             DataType::Value(variant_ty) => match (variant_ty, self) {
                 (VariantType::Bool, AmbiguousValue::Bool(value)) => Ok(value.into()),
 
