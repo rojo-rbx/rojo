@@ -1,11 +1,6 @@
-use std::{
-    borrow::Cow,
-    collections::HashMap,
-    path::{Path, PathBuf},
-};
+use std::{borrow::Cow, collections::HashMap, path::PathBuf};
 
-use anyhow::Context;
-use rbx_dom_weak::types::Variant;
+use anyhow::{format_err, Context};
 use serde::{Deserialize, Serialize};
 
 use crate::{resolution::UnresolvedValue, snapshot::InstanceSnapshot};
@@ -81,37 +76,50 @@ pub struct DirectoryMetadata {
     pub ignore_unknown_instances: Option<bool>,
 
     #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-    pub properties: HashMap<String, Variant>,
+    pub properties: HashMap<String, UnresolvedValue>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub class_name: Option<String>,
+
+    #[serde(skip)]
+    pub path: PathBuf,
 }
 
 impl DirectoryMetadata {
-    pub fn from_slice(slice: &[u8], path: &Path) -> anyhow::Result<Self> {
-        serde_json::from_slice(slice).with_context(|| {
+    pub fn from_slice(slice: &[u8], path: PathBuf) -> anyhow::Result<Self> {
+        let mut meta: Self = serde_json::from_slice(slice).with_context(|| {
             format!(
                 "File contained malformed init.meta.json data: {}",
                 path.display()
             )
-        })
+        })?;
+
+        meta.path = path;
+        Ok(meta)
     }
 
-    pub fn apply_all(&mut self, snapshot: &mut InstanceSnapshot) {
+    pub fn apply_all(&mut self, snapshot: &mut InstanceSnapshot) -> anyhow::Result<()> {
         self.apply_ignore_unknown_instances(snapshot);
-        self.apply_class_name(snapshot);
-        self.apply_properties(snapshot);
+        self.apply_class_name(snapshot)?;
+        self.apply_properties(snapshot)?;
+
+        Ok(())
     }
 
-    fn apply_class_name(&mut self, snapshot: &mut InstanceSnapshot) {
+    fn apply_class_name(&mut self, snapshot: &mut InstanceSnapshot) -> anyhow::Result<()> {
         if let Some(class_name) = self.class_name.take() {
             if snapshot.class_name != "Folder" {
                 // TODO: Turn into error type
-                panic!("className in init.meta.json can only be specified if the affected directory would turn into a Folder instance.");
+                return Err(format_err!(
+                    "className in init.meta.json can only be specified if the \
+                     affected directory would turn into a Folder instance."
+                ));
             }
 
             snapshot.class_name = Cow::Owned(class_name);
         }
+
+        Ok(())
     }
 
     fn apply_ignore_unknown_instances(&mut self, snapshot: &mut InstanceSnapshot) {
@@ -120,9 +128,17 @@ impl DirectoryMetadata {
         }
     }
 
-    fn apply_properties(&mut self, snapshot: &mut InstanceSnapshot) {
-        for (key, value) in self.properties.drain() {
+    fn apply_properties(&mut self, snapshot: &mut InstanceSnapshot) -> anyhow::Result<()> {
+        let path = &self.path;
+
+        for (key, unresolved) in self.properties.drain() {
+            let value = unresolved
+                .resolve(&snapshot.class_name, &key)
+                .with_context(|| format!("error applying meta file {}", path.display()))?;
+
             snapshot.properties.insert(key, value);
         }
+
+        Ok(())
     }
 }
