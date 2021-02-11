@@ -1,5 +1,7 @@
 use anyhow::format_err;
-use rbx_dom_weak::types::{EnumValue, Variant, VariantType, Vector2, Vector3};
+use rbx_dom_weak::types::{
+    Color3, Color3uint8, Content, EnumValue, Variant, VariantType, Vector2, Vector3,
+};
 use rbx_reflection::{DataType, PropertyDescriptor};
 use serde::{Deserialize, Serialize};
 
@@ -85,6 +87,9 @@ impl AmbiguousValue {
                 (VariantType::Int64, AmbiguousValue::Number(value)) => Ok((value as i64).into()),
 
                 (VariantType::String, AmbiguousValue::String(value)) => Ok(value.into()),
+                (VariantType::Content, AmbiguousValue::String(value)) => {
+                    Ok(Content::from(value).into())
+                }
 
                 (VariantType::Vector2, AmbiguousValue::Array2(value)) => {
                     Ok(Vector2::new(value[0] as f32, value[1] as f32).into())
@@ -92,6 +97,19 @@ impl AmbiguousValue {
 
                 (VariantType::Vector3, AmbiguousValue::Array3(value)) => {
                     Ok(Vector3::new(value[0] as f32, value[1] as f32, value[2] as f32).into())
+                }
+
+                (VariantType::Color3, AmbiguousValue::Array3(value)) => {
+                    Ok(Color3::new(value[0] as f32, value[1] as f32, value[2] as f32).into())
+                }
+                (VariantType::Color3uint8, AmbiguousValue::Array3(value)) => {
+                    let value = Color3uint8::new(
+                        (value[0] / 255.0) as u8,
+                        (value[1] / 255.0) as u8,
+                        (value[2] / 255.0) as u8,
+                    );
+
+                    Ok(value.into())
                 }
 
                 (_, unresolved) => Err(format_err!(
