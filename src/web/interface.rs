@@ -63,19 +63,32 @@ pub struct Instance<'a> {
     pub parent: Ref,
     pub name: Cow<'a, str>,
     pub class_name: Cow<'a, str>,
-    pub properties: Cow<'a, HashMap<String, Variant>>,
+    pub properties: HashMap<String, Cow<'a, Variant>>,
     pub children: Cow<'a, [Ref]>,
     pub metadata: Option<InstanceMetadata>,
 }
 
 impl<'a> Instance<'a> {
     pub(crate) fn from_rojo_instance(source: InstanceWithMeta<'_>) -> Instance<'_> {
+        let properties= source
+            .properties()
+            .iter()
+            .filter_map(|(key, value)| {
+                // SharedString values can't be serialized via Serde
+                if matches!(value, Variant::SharedString(_)) {
+                    return None;
+                }
+
+                Some((key.clone(), Cow::Borrowed(value)))
+            })
+            .collect();
+
         Instance {
             id: source.id(),
             parent: source.parent(),
             name: Cow::Borrowed(source.name()),
             class_name: Cow::Borrowed(source.class_name()),
-            properties: Cow::Borrowed(source.properties()),
+            properties,
             children: Cow::Borrowed(source.children()),
             metadata: Some(InstanceMetadata::from_rojo_metadata(source.metadata())),
         }
