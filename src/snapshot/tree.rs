@@ -112,6 +112,8 @@ impl RojoTree {
                 to_move.extend(instance.children().iter().copied());
             }
         }
+
+        self.inner.destroy(id);
     }
 
     /// Replaces the metadata associated with the given instance ID.
