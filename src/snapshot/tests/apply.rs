@@ -5,7 +5,7 @@ use rbx_dom_weak::InstanceBuilder;
 use rojo_insta_ext::RedactionMap;
 
 use crate::{
-    snapshot::{apply_patch_set, PatchSet, PatchUpdate, RojoTree},
+    snapshot::{apply_patch_set, InstanceSnapshot, PatchSet, PatchUpdate, RojoTree},
     tree_view::{intern_tree, view_tree},
 };
 
@@ -107,5 +107,5 @@ fn remove_property() {
 }
 
 fn empty_tree() -> RojoTree {
-    RojoTree::new(InstanceBuilder::new("ROOT"), Default::default())
+    RojoTree::new(InstanceSnapshot::new().name("ROOT").class_name("ROOT"))
 }

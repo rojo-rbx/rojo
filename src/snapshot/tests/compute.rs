@@ -125,8 +125,7 @@ fn remove_child() {
         let root_id = tree.get_root_id();
         let new_id = tree.insert_instance(
             root_id,
-            InstanceBuilder::new("Folder").with_name("Should not appear in snapshot"),
-            Default::default(),
+            InstanceSnapshot::new().name("Should not appear in snapshot"),
         );
 
         redactions.intern(new_id);
@@ -148,5 +147,5 @@ fn remove_child() {
 }
 
 fn empty_tree() -> RojoTree {
-    RojoTree::new(InstanceBuilder::new("ROOT"), Default::default())
+    RojoTree::new(InstanceSnapshot::new().name("ROOT").class_name("ROOT"))
 }

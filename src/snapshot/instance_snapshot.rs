@@ -88,6 +88,13 @@ impl InstanceSnapshot {
         }
     }
 
+    pub fn snapshot_id(self, snapshot_id: Option<Ref>) -> Self {
+        Self {
+            snapshot_id,
+            ..self
+        }
+    }
+
     pub fn metadata(self, metadata: impl Into<InstanceMetadata>) -> Self {
         Self {
             metadata: metadata.into(),

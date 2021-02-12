@@ -228,7 +228,7 @@ mod test {
     /// value before returning from compute_patch_set.
     #[test]
     fn rewrite_ref_existing_instance_update() {
-        let tree = RojoTree::new(InstanceBuilder::new("foo"), Default::default());
+        let tree = RojoTree::new(InstanceSnapshot::new().name("foo").class_name("foo"));
 
         let root_id = tree.get_root_id();
 
@@ -271,7 +271,7 @@ mod test {
     /// one.
     #[test]
     fn rewrite_ref_existing_instance_addition() {
-        let tree = RojoTree::new(InstanceBuilder::new("foo"), Default::default());
+        let tree = RojoTree::new(InstanceSnapshot::new().name("foo").class_name("foo"));
 
         let root_id = tree.get_root_id();
 

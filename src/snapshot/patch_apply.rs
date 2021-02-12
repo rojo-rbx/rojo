@@ -2,10 +2,7 @@
 
 use std::collections::HashMap;
 
-use rbx_dom_weak::{
-    types::{Ref, Variant},
-    InstanceBuilder,
-};
+use rbx_dom_weak::types::{Ref, Variant};
 
 use super::{
     patch::{AppliedPatchSet, AppliedPatchUpdate, PatchSet, PatchUpdate},
@@ -121,22 +118,29 @@ fn apply_add_child(
     parent_id: Ref,
     snapshot: InstanceSnapshot,
 ) {
-    let builder = InstanceBuilder::new(snapshot.class_name).with_name(snapshot.name);
+    let snapshot_id = snapshot.snapshot_id;
+    let properties = snapshot.properties;
+    let children = snapshot.children;
 
-    let id = tree.insert_instance(parent_id, builder, snapshot.metadata);
+    // Property application is deferred until after all children
+    // are constructed. This helps apply referents correctly.
+    let remaining_snapshot = InstanceSnapshot::new()
+        .name(snapshot.name)
+        .class_name(snapshot.class_name)
+        .metadata(snapshot.metadata)
+        .snapshot_id(snapshot.snapshot_id);
 
+    let id = tree.insert_instance(parent_id, remaining_snapshot);
     context.applied_patch_set.added.push(id);
 
-    context
-        .added_instance_properties
-        .insert(id, snapshot.properties);
+    context.added_instance_properties.insert(id, properties);
 
-    if let Some(snapshot_id) = snapshot.snapshot_id {
+    if let Some(snapshot_id) = snapshot_id {
         context.snapshot_id_to_instance_id.insert(snapshot_id, id);
     }
 
-    for child_snapshot in snapshot.children {
-        apply_add_child(context, tree, id, child_snapshot);
+    for child in children {
+        apply_add_child(context, tree, id, child);
     }
 }
 
@@ -222,7 +226,7 @@ mod test {
     fn add_from_empty() {
         let _ = env_logger::try_init();
 
-        let mut tree = RojoTree::new(InstanceBuilder::new("Folder"), Default::default());
+        let mut tree = RojoTree::new(InstanceSnapshot::new());
 
         let root_id = tree.get_root_id();
 
@@ -262,12 +266,12 @@ mod test {
         let _ = env_logger::try_init();
 
         let mut tree = RojoTree::new(
-            InstanceBuilder::new("OldClassName")
-                .with_name("OldName")
-                .with_property("Foo", 7i32)
-                .with_property("Bar", 3i32)
-                .with_property("Unchanged", -5i32),
-            Default::default(),
+            InstanceSnapshot::new()
+                .class_name("OldClassName")
+                .name("OldName")
+                .property("Foo", 7i32)
+                .property("Bar", 3i32)
+                .property("Unchanged", -5i32),
         );
 
         let root_id = tree.get_root_id();

@@ -10,7 +10,7 @@ use rbx_dom_weak::{
 
 use crate::multimap::MultiMap;
 
-use super::InstanceMetadata;
+use super::{InstanceMetadata, InstanceSnapshot};
 
 /// An expanded variant of rbx_dom_weak's `WeakDom` that tracks additional
 /// metadata per instance that's Rojo-specific.
@@ -36,14 +36,25 @@ pub struct RojoTree {
 }
 
 impl RojoTree {
-    pub fn new(builder: InstanceBuilder, metadata: InstanceMetadata) -> RojoTree {
+    pub fn new(snapshot: InstanceSnapshot) -> RojoTree {
+        let root_builder = InstanceBuilder::new(snapshot.class_name.to_owned())
+            .with_name(snapshot.name.to_owned())
+            .with_properties(snapshot.properties);
+
         let mut tree = RojoTree {
-            inner: WeakDom::new(builder),
+            inner: WeakDom::new(root_builder),
             metadata_map: HashMap::new(),
             path_to_ids: MultiMap::new(),
         };
 
-        tree.insert_metadata(tree.inner.root_ref(), metadata);
+        let root_ref = tree.inner.root_ref();
+
+        tree.insert_metadata(root_ref, snapshot.metadata);
+
+        for child in snapshot.children {
+            tree.insert_instance(root_ref, child);
+        }
+
         tree
     }
 
@@ -75,15 +86,19 @@ impl RojoTree {
         }
     }
 
-    pub fn insert_instance(
-        &mut self,
-        parent_ref: Ref,
-        builder: InstanceBuilder,
-        metadata: InstanceMetadata,
-    ) -> Ref {
-        let id = self.inner.insert(parent_ref, builder);
-        self.insert_metadata(id, metadata);
-        id
+    pub fn insert_instance(&mut self, parent_ref: Ref, snapshot: InstanceSnapshot) -> Ref {
+        let builder = InstanceBuilder::new(snapshot.class_name.to_owned())
+            .with_name(snapshot.name.to_owned())
+            .with_properties(snapshot.properties);
+
+        let referent = self.inner.insert(parent_ref, builder);
+        self.insert_metadata(referent, snapshot.metadata);
+
+        for child in snapshot.children {
+            self.insert_instance(referent, child);
+        }
+
+        referent
     }
 
     pub fn remove(&mut self, id: Ref) {
