@@ -16,7 +16,7 @@
       "$className": "ServerScriptService",
 
       "Run Tests": {
-        "$path": "test.server.lua"
+        "$path": "run-tests.lua"
       }
     },
     "Players": {
