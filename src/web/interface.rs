@@ -70,7 +70,7 @@ pub struct Instance<'a> {
 
 impl<'a> Instance<'a> {
     pub(crate) fn from_rojo_instance(source: InstanceWithMeta<'_>) -> Instance<'_> {
-        let properties= source
+        let properties = source
             .properties()
             .iter()
             .filter_map(|(key, value)| {
