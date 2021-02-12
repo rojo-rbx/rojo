@@ -65,6 +65,15 @@ impl InstanceSnapshot {
         }
     }
 
+    pub fn property<K, V>(mut self, key: K, value: V) -> Self
+    where
+        K: Into<String>,
+        V: Into<Variant>,
+    {
+        self.properties.insert(key.into(), value.into());
+        self
+    }
+
     pub fn properties(self, properties: impl Into<HashMap<String, Variant>>) -> Self {
         Self {
             properties: properties.into(),
