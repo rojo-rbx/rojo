@@ -1,6 +1,6 @@
 use anyhow::format_err;
 use rbx_dom_weak::types::{
-    Color3, Color3uint8, Content, EnumValue, Variant, VariantType, Vector2, Vector3,
+    Color3, Color3uint8, Content, Enum, Variant, VariantType, Vector2, Vector3,
 };
 use rbx_reflection::{DataType, PropertyDescriptor};
 use serde::{Deserialize, Serialize};
@@ -76,7 +76,7 @@ impl AmbiguousValue {
                     .get(value.as_str())
                     .ok_or_else(|| error(value.as_str()))?;
 
-                Ok(EnumValue::from_u32(*resolved).into())
+                Ok(Enum::from_u32(*resolved).into())
             }
             DataType::Value(variant_ty) => match (variant_ty, self) {
                 (VariantType::Bool, AmbiguousValue::Bool(value)) => Ok(value.into()),
