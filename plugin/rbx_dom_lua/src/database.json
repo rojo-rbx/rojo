@@ -1,9 +1,9 @@
 {
   "Version": [
     0,
-    464,
+    465,
     0,
-    417415
+    417678
   ],
   "Classes": {
     "ABTestService": {
@@ -196,7 +196,7 @@
           "Value": ""
         },
         "LevelOfDetail": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "SourceAssetId": {
@@ -325,7 +325,7 @@
       },
       "DefaultProperties": {
         "AlignType": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "AttributesSerialize": {
@@ -652,7 +652,7 @@
           "Value": false
         },
         "RelativeTo": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 2
         },
         "SourceAssetId": {
@@ -2976,7 +2976,7 @@
           "Value": 1.0
         },
         "TextureMode": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "TextureSpeed": {
@@ -3365,7 +3365,7 @@
           "Value": ""
         },
         "ZIndexBehavior": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         }
       }
@@ -4638,7 +4638,7 @@
       },
       "DefaultProperties": {
         "AdornCullingMode": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "AlwaysOnTop": {
@@ -5116,7 +5116,7 @@
           }
         },
         "CameraType": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "FieldOfView": {
@@ -5124,7 +5124,7 @@
           "Value": 70.0
         },
         "FieldOfViewMode": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Focus": {
@@ -5269,7 +5269,7 @@
           "Value": 0
         },
         "BodyPart": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "MeshId": {
@@ -5906,7 +5906,7 @@
       },
       "DefaultProperties": {
         "AdornCullingMode": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "AlwaysOnTop": {
@@ -6307,11 +6307,11 @@
           "Value": 0.5
         },
         "BackSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BackSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BottomParamA": {
@@ -6323,11 +6323,11 @@
           "Value": 0.5
         },
         "BottomSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BottomSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "CFrame": {
@@ -6394,11 +6394,11 @@
           "Value": 0.5
         },
         "FrontSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "FrontSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "LeftParamA": {
@@ -6410,11 +6410,11 @@
           "Value": 0.5
         },
         "LeftSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "LeftSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Locked": {
@@ -6426,7 +6426,7 @@
           "Value": false
         },
         "Material": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 256
         },
         "Reflectance": {
@@ -6442,11 +6442,11 @@
           "Value": 0.5
         },
         "RightSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "RightSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "RootPriority": {
@@ -6486,11 +6486,11 @@
           "Value": 0.5
         },
         "TopSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "TopSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Transparency": {
@@ -6625,7 +6625,7 @@
       },
       "DefaultProperties": {
         "AdornCullingMode": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "AlwaysOnTop": {
@@ -6972,11 +6972,11 @@
       },
       "DefaultProperties": {
         "ActuatorType": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "AngularActuatorType": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "AngularLimitsEnabled": {
@@ -8132,7 +8132,7 @@
           ]
         },
         "Face": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 5
         },
         "SourceAssetId": {
@@ -8388,7 +8388,7 @@
           "Value": ""
         },
         "BehaviorType": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "ConversationDistance": {
@@ -8408,7 +8408,7 @@
           "Value": ""
         },
         "Purpose": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         },
         "SourceAssetId": {
@@ -8420,7 +8420,7 @@
           "Value": ""
         },
         "Tone": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "TriggerDistance": {
@@ -9027,7 +9027,7 @@
           "Value": 1.0
         },
         "ExplosionType": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         },
         "Position": {
@@ -9575,11 +9575,11 @@
           "Value": 0.5
         },
         "BackSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BackSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BottomParamA": {
@@ -9591,11 +9591,11 @@
           "Value": 0.5
         },
         "BottomSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 4
         },
         "BottomSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "CFrame": {
@@ -9654,7 +9654,7 @@
           "Value": "Default"
         },
         "FormFactor": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         },
         "FrontParamA": {
@@ -9666,11 +9666,11 @@
           "Value": 0.5
         },
         "FrontSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "FrontSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "LeftParamA": {
@@ -9682,11 +9682,11 @@
           "Value": 0.5
         },
         "LeftSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "LeftSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Locked": {
@@ -9698,7 +9698,7 @@
           "Value": false
         },
         "Material": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 256
         },
         "Reflectance": {
@@ -9714,11 +9714,11 @@
           "Value": 0.5
         },
         "RightSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "RightSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "RootPriority": {
@@ -9734,7 +9734,7 @@
           ]
         },
         "Shape": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         },
         "Size": {
@@ -9766,11 +9766,11 @@
           "Value": 0.5
         },
         "TopSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 3
         },
         "TopSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Transparency": {
@@ -10225,7 +10225,7 @@
           "Value": true
         },
         "AutomaticSize": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BackgroundColor3": {
@@ -10249,7 +10249,7 @@
           ]
         },
         "BorderMode": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BorderSizePixel": {
@@ -10303,7 +10303,7 @@
           ]
         },
         "SizeConstraint": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "SourceAssetId": {
@@ -10311,7 +10311,7 @@
           "Value": -1
         },
         "Style": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Tags": {
@@ -11123,7 +11123,7 @@
           "Value": ""
         },
         "ZIndexBehavior": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         }
       }
@@ -11797,7 +11797,7 @@
           "Value": -1
         },
         "Style": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Tags": {
@@ -12073,7 +12073,7 @@
       },
       "DefaultProperties": {
         "ActuatorType": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "AngularSpeed": {
@@ -12185,15 +12185,15 @@
           "Value": ""
         },
         "FaceId": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "InOut": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 2
         },
         "LeftRight": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         },
         "SourceAssetId": {
@@ -12205,7 +12205,7 @@
           "Value": ""
         },
         "TopBottom": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         }
       }
@@ -12265,7 +12265,7 @@
           "Value": ""
         },
         "BinType": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "SourceAssetId": {
@@ -12869,11 +12869,11 @@
           "Value": true
         },
         "CollisionType": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "DisplayDistanceType": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "DisplayName": {
@@ -12885,7 +12885,7 @@
           "Value": 100.0
         },
         "HealthDisplayType": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "HipHeight": {
@@ -12913,7 +12913,7 @@
           "Value": 100.0
         },
         "NameOcclusion": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 2
         },
         "RequiresNeck": {
@@ -12921,7 +12921,7 @@
           "Value": true
         },
         "RigType": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "SourceAssetId": {
@@ -13862,7 +13862,7 @@
           "Value": true
         },
         "AutomaticSize": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BackgroundColor3": {
@@ -13886,7 +13886,7 @@
           ]
         },
         "BorderMode": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BorderSizePixel": {
@@ -13965,7 +13965,7 @@
           "Value": 0.0
         },
         "ScaleType": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Selectable": {
@@ -13990,7 +13990,7 @@
           ]
         },
         "SizeConstraint": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "SliceCenter": {
@@ -14015,7 +14015,7 @@
           "Value": -1
         },
         "Style": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Tags": {
@@ -14079,7 +14079,7 @@
       },
       "DefaultProperties": {
         "AdornCullingMode": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "AlwaysOnTop": {
@@ -14326,7 +14326,7 @@
           "Value": true
         },
         "AutomaticSize": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BackgroundColor3": {
@@ -14350,7 +14350,7 @@
           ]
         },
         "BorderMode": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BorderSizePixel": {
@@ -14417,7 +14417,7 @@
           "Value": 0.0
         },
         "ScaleType": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Selectable": {
@@ -14438,7 +14438,7 @@
           ]
         },
         "SizeConstraint": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "SliceCenter": {
@@ -14755,7 +14755,7 @@
         },
         "SourceAssetId": {
           "Name": "SourceAssetId",
-          "Scriptability": "ReadWrite",
+          "Scriptability": "None",
           "DataType": {
             "Value": "Int64"
           },
@@ -15253,7 +15253,7 @@
           "Value": true
         },
         "Priority": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 2
         },
         "SourceAssetId": {
@@ -15783,7 +15783,7 @@
           "Value": ""
         },
         "Technology": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 2
         },
         "TimeOfDay": {
@@ -15944,7 +15944,7 @@
       },
       "DefaultProperties": {
         "AdornCullingMode": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "AlwaysOnTop": {
@@ -16749,11 +16749,11 @@
           "Value": 0.5
         },
         "BackSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BackSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BottomParamA": {
@@ -16765,11 +16765,11 @@
           "Value": 0.5
         },
         "BottomSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BottomSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "CFrame": {
@@ -16840,11 +16840,11 @@
           "Value": 0.5
         },
         "FrontSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "FrontSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "HasJointOffset": {
@@ -16872,11 +16872,11 @@
           "Value": 0.5
         },
         "LeftSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "LeftSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Locked": {
@@ -16888,7 +16888,7 @@
           "Value": false
         },
         "Material": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 256
         },
         "MeshID": {
@@ -16904,7 +16904,7 @@
           "Value": 0.0
         },
         "RenderFidelity": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         },
         "RightParamA": {
@@ -16916,11 +16916,11 @@
           "Value": 0.5
         },
         "RightSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "RightSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "RootPriority": {
@@ -16964,11 +16964,11 @@
           "Value": 0.5
         },
         "TopSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "TopSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Transparency": {
@@ -17074,7 +17074,7 @@
           "Value": ""
         },
         "LevelOfDetail": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "SourceAssetId": {
@@ -17420,15 +17420,15 @@
           "Value": ""
         },
         "FaceId": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "InOut": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 2
         },
         "LeftRight": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         },
         "SourceAssetId": {
@@ -17440,7 +17440,7 @@
           "Value": ""
         },
         "TopBottom": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         }
       }
@@ -17721,11 +17721,11 @@
           "Value": 0.5
         },
         "BackSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BackSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BottomParamA": {
@@ -17737,11 +17737,11 @@
           "Value": 0.5
         },
         "BottomSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BottomSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "CFrame": {
@@ -17808,11 +17808,11 @@
           "Value": 0.5
         },
         "FrontSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "FrontSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "LeftParamA": {
@@ -17824,11 +17824,11 @@
           "Value": 0.5
         },
         "LeftSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "LeftSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Locked": {
@@ -17840,7 +17840,7 @@
           "Value": false
         },
         "Material": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 256
         },
         "Reflectance": {
@@ -17848,7 +17848,7 @@
           "Value": 0.0
         },
         "RenderFidelity": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         },
         "RightParamA": {
@@ -17860,11 +17860,11 @@
           "Value": 0.5
         },
         "RightSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "RightSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "RootPriority": {
@@ -17908,11 +17908,11 @@
           "Value": 0.5
         },
         "TopSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "TopSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Transparency": {
@@ -18342,11 +18342,11 @@
           "Value": ""
         },
         "EasingDirection": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "EasingStyle": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "SourceAssetId": {
@@ -18864,11 +18864,11 @@
           "Value": 0.5
         },
         "BackSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BackSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BottomParamA": {
@@ -18880,11 +18880,11 @@
           "Value": 0.5
         },
         "BottomSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 4
         },
         "BottomSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "CFrame": {
@@ -18943,7 +18943,7 @@
           "Value": "Default"
         },
         "FormFactor": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         },
         "FrontParamA": {
@@ -18955,11 +18955,11 @@
           "Value": 0.5
         },
         "FrontSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "FrontSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "LeftParamA": {
@@ -18971,11 +18971,11 @@
           "Value": 0.5
         },
         "LeftSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "LeftSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Locked": {
@@ -18987,7 +18987,7 @@
           "Value": false
         },
         "Material": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 256
         },
         "Reflectance": {
@@ -19003,11 +19003,11 @@
           "Value": 0.5
         },
         "RightSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "RightSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "RootPriority": {
@@ -19023,7 +19023,7 @@
           ]
         },
         "Shape": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         },
         "Size": {
@@ -19051,11 +19051,11 @@
           "Value": 0.5
         },
         "TopSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 3
         },
         "TopSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Transparency": {
@@ -19174,11 +19174,11 @@
           "Value": 0.5
         },
         "BackSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BackSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BottomParamA": {
@@ -19190,11 +19190,11 @@
           "Value": 0.5
         },
         "BottomSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BottomSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "CFrame": {
@@ -19261,11 +19261,11 @@
           "Value": 0.5
         },
         "FrontSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "FrontSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "LeftParamA": {
@@ -19277,11 +19277,11 @@
           "Value": 0.5
         },
         "LeftSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "LeftSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Locked": {
@@ -19293,7 +19293,7 @@
           "Value": false
         },
         "Material": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 256
         },
         "Reflectance": {
@@ -19301,7 +19301,7 @@
           "Value": 0.0
         },
         "RenderFidelity": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         },
         "RightParamA": {
@@ -19313,11 +19313,11 @@
           "Value": 0.5
         },
         "RightSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "RightSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "RootPriority": {
@@ -19361,11 +19361,11 @@
           "Value": 0.5
         },
         "TopSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "TopSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Transparency": {
@@ -19742,7 +19742,7 @@
           "Value": 0.0
         },
         "EmissionDirection": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         },
         "Enabled": {
@@ -19769,7 +19769,7 @@
           "Value": false
         },
         "Orientation": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Rate": {
@@ -22065,11 +22065,11 @@
           }
         },
         "EasingDirection": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "EasingStyle": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "SourceAssetId": {
@@ -22165,7 +22165,7 @@
       "Properties": {},
       "DefaultProperties": {
         "ActuatorType": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "AttributesSerialize": {
@@ -22448,11 +22448,11 @@
           "Value": true
         },
         "Exclusivity": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "GamepadKeyCode": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1000
         },
         "HoldDuration": {
@@ -22460,7 +22460,7 @@
           "Value": 0.0
         },
         "KeyboardKeyCode": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 101
         },
         "MaxActivationDistance": {
@@ -22480,7 +22480,7 @@
           "Value": -1
         },
         "Style": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Tags": {
@@ -23762,7 +23762,7 @@
           "Value": 10
         },
         "ComparisonMethod": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "ComparisonPsnrThreshold": {
@@ -24771,7 +24771,7 @@
           "Value": ""
         },
         "ZIndexBehavior": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         }
       }
@@ -25252,11 +25252,11 @@
           "Value": true
         },
         "AutomaticCanvasSize": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "AutomaticSize": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BackgroundColor3": {
@@ -25280,7 +25280,7 @@
           ]
         },
         "BorderMode": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BorderSizePixel": {
@@ -25320,11 +25320,11 @@
           "Value": false
         },
         "ElasticBehavior": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "HorizontalScrollBarInset": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "LayoutOrder": {
@@ -25369,7 +25369,7 @@
           "Value": 12
         },
         "ScrollingDirection": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 4
         },
         "ScrollingEnabled": {
@@ -25394,7 +25394,7 @@
           ]
         },
         "SizeConstraint": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "SourceAssetId": {
@@ -25410,11 +25410,11 @@
           "Value": "rbxasset://textures/ui/Scroll/scroll-top.png"
         },
         "VerticalScrollBarInset": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "VerticalScrollBarPosition": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Visible": {
@@ -25480,11 +25480,11 @@
           "Value": 0.5
         },
         "BackSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BackSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BottomParamA": {
@@ -25496,11 +25496,11 @@
           "Value": 0.5
         },
         "BottomSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 4
         },
         "BottomSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "CFrame": {
@@ -25563,7 +25563,7 @@
           "Value": false
         },
         "FormFactor": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         },
         "FrontParamA": {
@@ -25575,11 +25575,11 @@
           "Value": 0.5
         },
         "FrontSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "FrontSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "LeftParamA": {
@@ -25591,11 +25591,11 @@
           "Value": 0.5
         },
         "LeftSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "LeftSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Locked": {
@@ -25607,7 +25607,7 @@
           "Value": false
         },
         "Material": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 256
         },
         "Reflectance": {
@@ -25623,11 +25623,11 @@
           "Value": 0.5
         },
         "RightSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "RightSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "RootPriority": {
@@ -25643,7 +25643,7 @@
           ]
         },
         "Shape": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         },
         "Size": {
@@ -25671,11 +25671,11 @@
           "Value": 0.5
         },
         "TopSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 3
         },
         "TopSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Transparency": {
@@ -26422,11 +26422,11 @@
           "Value": 0.5
         },
         "BackSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BackSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BottomParamA": {
@@ -26438,11 +26438,11 @@
           "Value": 0.5
         },
         "BottomSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 4
         },
         "BottomSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "CFrame": {
@@ -26501,7 +26501,7 @@
           "Value": "Default"
         },
         "FormFactor": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         },
         "FrontParamA": {
@@ -26513,11 +26513,11 @@
           "Value": 0.5
         },
         "FrontSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "FrontSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "LeftParamA": {
@@ -26529,11 +26529,11 @@
           "Value": 0.5
         },
         "LeftSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "LeftSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Locked": {
@@ -26545,7 +26545,7 @@
           "Value": false
         },
         "Material": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 256
         },
         "Reflectance": {
@@ -26561,11 +26561,11 @@
           "Value": 0.5
         },
         "RightSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "RightSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "RootPriority": {
@@ -26581,7 +26581,7 @@
           ]
         },
         "Shape": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         },
         "Size": {
@@ -26621,11 +26621,11 @@
           "Value": 0.5
         },
         "TopSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 3
         },
         "TopSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Transparency": {
@@ -27711,7 +27711,7 @@
           "Value": false
         },
         "RollOffMode": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "SoundId": {
@@ -27886,7 +27886,7 @@
       },
       "DefaultProperties": {
         "AmbientReverb": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "AttributesSerialize": {
@@ -28087,11 +28087,11 @@
           "Value": 0.5
         },
         "BackSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BackSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BottomParamA": {
@@ -28103,11 +28103,11 @@
           "Value": 0.5
         },
         "BottomSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 4
         },
         "BottomSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "CFrame": {
@@ -28174,7 +28174,7 @@
           "Value": true
         },
         "FormFactor": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         },
         "FrontParamA": {
@@ -28186,11 +28186,11 @@
           "Value": 0.5
         },
         "FrontSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "FrontSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "LeftParamA": {
@@ -28202,11 +28202,11 @@
           "Value": 0.5
         },
         "LeftSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "LeftSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Locked": {
@@ -28218,7 +28218,7 @@
           "Value": false
         },
         "Material": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 256
         },
         "Neutral": {
@@ -28238,11 +28238,11 @@
           "Value": 0.5
         },
         "RightSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "RightSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "RootPriority": {
@@ -28258,7 +28258,7 @@
           ]
         },
         "Shape": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         },
         "Size": {
@@ -28290,11 +28290,11 @@
           "Value": 0.5
         },
         "TopSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 3
         },
         "TopSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Transparency": {
@@ -28350,7 +28350,7 @@
           "Value": ""
         },
         "MeshType": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Offset": {
@@ -28412,7 +28412,7 @@
       },
       "DefaultProperties": {
         "AdornCullingMode": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "AlwaysOnTop": {
@@ -28563,7 +28563,7 @@
           "Value": true
         },
         "Face": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 5
         },
         "Range": {
@@ -28951,7 +28951,7 @@
           "Value": true
         },
         "ScreenOrientation": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 2
         },
         "ShowDevelopmentGui": {
@@ -29556,7 +29556,7 @@
           "Value": 0.5
         },
         "CameraMode": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "CharacterJumpHeight": {
@@ -29580,23 +29580,23 @@
           "Value": 16.0
         },
         "DevCameraOcclusionMode": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "DevComputerCameraMovementMode": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "DevComputerMovementMode": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "DevTouchCameraMovementMode": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "DevTouchMovementMode": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "EnableMouseLockOption": {
@@ -29644,11 +29644,11 @@
           "Value": 0
         },
         "GameSettingsAvatar": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         },
         "GameSettingsR15Collision": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "GameSettingsScaleRangeBodyType": {
@@ -31842,7 +31842,7 @@
       },
       "DefaultProperties": {
         "AlphaMode": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "AttributesSerialize": {
@@ -32061,7 +32061,7 @@
           "Value": true
         },
         "Face": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 5
         },
         "LightInfluence": {
@@ -32077,7 +32077,7 @@
           "Value": true
         },
         "SizingMode": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "SourceAssetId": {
@@ -32093,7 +32093,7 @@
           "Value": 0.0
         },
         "ZIndexBehavior": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "ZOffset": {
@@ -32173,7 +32173,7 @@
           "Value": true
         },
         "Face": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 5
         },
         "Range": {
@@ -32235,7 +32235,7 @@
           "Value": ""
         },
         "TargetSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Transparency": {
@@ -32753,11 +32753,11 @@
           "Value": 0.5
         },
         "BackSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BackSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BottomParamA": {
@@ -32769,11 +32769,11 @@
           "Value": 0.5
         },
         "BottomSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 4
         },
         "BottomSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "CFrame": {
@@ -32844,11 +32844,11 @@
           "Value": 0.5
         },
         "FrontSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "FrontSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "LeftParamA": {
@@ -32860,11 +32860,11 @@
           "Value": 0.5
         },
         "LeftSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "LeftSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Locked": {
@@ -32876,7 +32876,7 @@
           "Value": false
         },
         "Material": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 256
         },
         "MaterialColors": {
@@ -32896,11 +32896,11 @@
           "Value": 0.5
         },
         "RightSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "RightSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "RootPriority": {
@@ -32940,11 +32940,11 @@
           "Value": 0.5
         },
         "TopSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 3
         },
         "TopSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Transparency": {
@@ -33278,6 +33278,22 @@
           "Kind": {
             "Canonical": {
               "Serialization": "Serializes"
+            }
+          }
+        },
+        "Content": {
+          "Name": "Content",
+          "Scriptability": "Read",
+          "DataType": {
+            "Value": "String"
+          },
+          "Tags": [
+            "NotReplicated",
+            "ReadOnly"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
             }
           }
         },
@@ -33732,7 +33748,7 @@
           "Value": true
         },
         "AutomaticSize": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BackgroundColor3": {
@@ -33756,7 +33772,7 @@
           ]
         },
         "BorderMode": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BorderSizePixel": {
@@ -33776,7 +33792,7 @@
           "Value": false
         },
         "Font": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "LayoutOrder": {
@@ -33846,7 +33862,7 @@
           ]
         },
         "SizeConstraint": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "SourceAssetId": {
@@ -33898,7 +33914,7 @@
           "Value": 0.0
         },
         "TextTruncate": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "TextWrapped": {
@@ -33906,11 +33922,11 @@
           "Value": false
         },
         "TextXAlignment": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 2
         },
         "TextYAlignment": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         },
         "Visible": {
@@ -33928,6 +33944,22 @@
       "Tags": [],
       "Superclass": "GuiButton",
       "Properties": {
+        "Content": {
+          "Name": "Content",
+          "Scriptability": "Read",
+          "DataType": {
+            "Value": "String"
+          },
+          "Tags": [
+            "NotReplicated",
+            "ReadOnly"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
+            }
+          }
+        },
         "Font": {
           "Name": "Font",
           "Scriptability": "ReadWrite",
@@ -34234,7 +34266,7 @@
           "Value": true
         },
         "AutomaticSize": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BackgroundColor3": {
@@ -34258,7 +34290,7 @@
           ]
         },
         "BorderMode": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BorderSizePixel": {
@@ -34274,7 +34306,7 @@
           "Value": false
         },
         "Font": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "LayoutOrder": {
@@ -34332,7 +34364,7 @@
           ]
         },
         "SizeConstraint": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "SourceAssetId": {
@@ -34340,7 +34372,7 @@
           "Value": -1
         },
         "Style": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Tags": {
@@ -34384,7 +34416,7 @@
           "Value": 0.0
         },
         "TextTruncate": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "TextWrapped": {
@@ -34392,11 +34424,11 @@
           "Value": false
         },
         "TextXAlignment": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 2
         },
         "TextYAlignment": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         },
         "Visible": {
@@ -34424,6 +34456,22 @@
       "Tags": [],
       "Superclass": "GuiLabel",
       "Properties": {
+        "Content": {
+          "Name": "Content",
+          "Scriptability": "Read",
+          "DataType": {
+            "Value": "String"
+          },
+          "Tags": [
+            "NotReplicated",
+            "ReadOnly"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
+            }
+          }
+        },
         "Font": {
           "Name": "Font",
           "Scriptability": "ReadWrite",
@@ -34726,7 +34774,7 @@
           "Value": true
         },
         "AutomaticSize": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BackgroundColor3": {
@@ -34750,7 +34798,7 @@
           ]
         },
         "BorderMode": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BorderSizePixel": {
@@ -34766,7 +34814,7 @@
           "Value": false
         },
         "Font": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "LayoutOrder": {
@@ -34816,7 +34864,7 @@
           ]
         },
         "SizeConstraint": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "SourceAssetId": {
@@ -34864,7 +34912,7 @@
           "Value": 0.0
         },
         "TextTruncate": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "TextWrapped": {
@@ -34872,11 +34920,11 @@
           "Value": false
         },
         "TextXAlignment": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 2
         },
         "TextYAlignment": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         },
         "Visible": {
@@ -34972,7 +35020,7 @@
           ]
         },
         "Face": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 5
         },
         "OffsetStudsU": {
@@ -35299,7 +35347,7 @@
           "Value": true
         },
         "RelativeTo": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "SourceAssetId": {
@@ -35651,7 +35699,7 @@
           "Value": 1.0
         },
         "TextureMode": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Transparency": {
@@ -35861,11 +35909,11 @@
           "Value": 0.5
         },
         "BackSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 5
         },
         "BackSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BottomParamA": {
@@ -35877,11 +35925,11 @@
           "Value": 0.5
         },
         "BottomSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 5
         },
         "BottomSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "CFrame": {
@@ -35948,11 +35996,11 @@
           "Value": 0.5
         },
         "FrontSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 5
         },
         "FrontSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "LeftParamA": {
@@ -35964,11 +36012,11 @@
           "Value": 0.5
         },
         "LeftSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 5
         },
         "LeftSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Locked": {
@@ -35980,7 +36028,7 @@
           "Value": false
         },
         "Material": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 256
         },
         "Reflectance": {
@@ -35996,11 +36044,11 @@
           "Value": 0.5
         },
         "RightSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 5
         },
         "RightSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "RootPriority": {
@@ -36040,11 +36088,11 @@
           "Value": 0.5
         },
         "TopSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 5
         },
         "TopSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Transparency": {
@@ -36210,7 +36258,7 @@
           "Value": 1.0
         },
         "AspectType": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "AttributesSerialize": {
@@ -36218,7 +36266,7 @@
           "Value": ""
         },
         "DominantAxis": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "SourceAssetId": {
@@ -36562,7 +36610,7 @@
           ]
         },
         "FillDirection": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "FillDirectionMaxCells": {
@@ -36570,11 +36618,11 @@
           "Value": 0
         },
         "HorizontalAlignment": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         },
         "SortOrder": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "SourceAssetId": {
@@ -36582,7 +36630,7 @@
           "Value": -1
         },
         "StartCorner": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Tags": {
@@ -36590,7 +36638,7 @@
           "Value": ""
         },
         "VerticalAlignment": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         }
       }
@@ -36708,11 +36756,11 @@
           "Value": ""
         },
         "FillDirection": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         },
         "HorizontalAlignment": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         },
         "Padding": {
@@ -36723,7 +36771,7 @@
           ]
         },
         "SortOrder": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "SourceAssetId": {
@@ -36735,7 +36783,7 @@
           "Value": ""
         },
         "VerticalAlignment": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         }
       }
@@ -36994,15 +37042,15 @@
           "Value": false
         },
         "EasingDirection": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         },
         "EasingStyle": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 2
         },
         "FillDirection": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "GamepadInputEnabled": {
@@ -37010,7 +37058,7 @@
           "Value": true
         },
         "HorizontalAlignment": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         },
         "Padding": {
@@ -37025,7 +37073,7 @@
           "Value": true
         },
         "SortOrder": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "SourceAssetId": {
@@ -37045,7 +37093,7 @@
           "Value": 1.0
         },
         "VerticalAlignment": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         }
       }
@@ -37213,7 +37261,7 @@
           "Value": ""
         },
         "FillDirection": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         },
         "FillEmptySpaceColumns": {
@@ -37225,11 +37273,11 @@
           "Value": false
         },
         "HorizontalAlignment": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         },
         "MajorAxis": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Padding": {
@@ -37246,7 +37294,7 @@
           ]
         },
         "SortOrder": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "SourceAssetId": {
@@ -37258,7 +37306,7 @@
           "Value": ""
         },
         "VerticalAlignment": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         }
       }
@@ -37341,11 +37389,11 @@
           "Value": 0.5
         },
         "BackSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BackSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BottomParamA": {
@@ -37357,11 +37405,11 @@
           "Value": 0.5
         },
         "BottomSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BottomSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "CFrame": {
@@ -37428,11 +37476,11 @@
           "Value": 0.5
         },
         "FrontSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "FrontSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "LeftParamA": {
@@ -37444,11 +37492,11 @@
           "Value": 0.5
         },
         "LeftSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "LeftSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Locked": {
@@ -37460,7 +37508,7 @@
           "Value": false
         },
         "Material": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 256
         },
         "Reflectance": {
@@ -37468,7 +37516,7 @@
           "Value": 0.0
         },
         "RenderFidelity": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         },
         "RightParamA": {
@@ -37480,11 +37528,11 @@
           "Value": 0.5
         },
         "RightSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "RightSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "RootPriority": {
@@ -37528,11 +37576,11 @@
           "Value": 0.5
         },
         "TopSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "TopSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Transparency": {
@@ -38795,7 +38843,7 @@
           ]
         },
         "RelativeTo": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "SourceAssetId": {
@@ -39005,11 +39053,11 @@
           "Value": 0.5
         },
         "BackSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BackSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BottomParamA": {
@@ -39021,11 +39069,11 @@
           "Value": 0.5
         },
         "BottomSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 4
         },
         "BottomSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "CFrame": {
@@ -39096,11 +39144,11 @@
           "Value": 0.5
         },
         "FrontSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "FrontSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "HeadsUpDisplay": {
@@ -39116,11 +39164,11 @@
           "Value": 0.5
         },
         "LeftSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "LeftSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Locked": {
@@ -39132,7 +39180,7 @@
           "Value": false
         },
         "Material": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 256
         },
         "MaxSpeed": {
@@ -39152,11 +39200,11 @@
           "Value": 0.5
         },
         "RightSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "RightSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "RootPriority": {
@@ -39212,11 +39260,11 @@
           "Value": 0.5
         },
         "TopSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 3
         },
         "TopSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Torque": {
@@ -39538,7 +39586,7 @@
           "Value": true
         },
         "AutomaticSize": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BackgroundColor3": {
@@ -39562,7 +39610,7 @@
           ]
         },
         "BorderMode": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BorderSizePixel": {
@@ -39624,7 +39672,7 @@
           ]
         },
         "SizeConstraint": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "SourceAssetId": {
@@ -39772,7 +39820,7 @@
           "Value": true
         },
         "AutomaticSize": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BackgroundColor3": {
@@ -39796,7 +39844,7 @@
           ]
         },
         "BorderMode": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BorderSizePixel": {
@@ -39878,7 +39926,7 @@
           ]
         },
         "SizeConstraint": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "SourceAssetId": {
@@ -39982,11 +40030,11 @@
           "Value": 0.5
         },
         "BackSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BackSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "BottomParamA": {
@@ -39998,11 +40046,11 @@
           "Value": 0.5
         },
         "BottomSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 4
         },
         "BottomSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "CFrame": {
@@ -40061,7 +40109,7 @@
           "Value": "Default"
         },
         "FormFactor": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 1
         },
         "FrontParamA": {
@@ -40073,11 +40121,11 @@
           "Value": 0.5
         },
         "FrontSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "FrontSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "LeftParamA": {
@@ -40089,11 +40137,11 @@
           "Value": 0.5
         },
         "LeftSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "LeftSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Locked": {
@@ -40105,7 +40153,7 @@
           "Value": false
         },
         "Material": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 256
         },
         "Reflectance": {
@@ -40121,11 +40169,11 @@
           "Value": 0.5
         },
         "RightSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "RightSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "RootPriority": {
@@ -40165,11 +40213,11 @@
           "Value": 0.5
         },
         "TopSurface": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "TopSurfaceInput": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "Transparency": {
@@ -40632,19 +40680,19 @@
           "Value": 196.2
         },
         "InterpolationThrottling": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "LevelOfDetail": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "MeshPartHeads": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "PhysicsSteppingMethod": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "SourceAssetId": {
@@ -40660,7 +40708,7 @@
           "Value": 64
         },
         "StreamingPauseMode": {
-          "Type": "EnumValue",
+          "Type": "Enum",
           "Value": 0
         },
         "StreamingTargetRadius": {
