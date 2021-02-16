@@ -220,7 +220,6 @@ mod test {
     use std::borrow::Cow;
 
     use maplit::hashmap;
-    use rbx_dom_weak::InstanceBuilder;
 
     /// This test makes sure that rewriting refs in instance update patches to
     /// instances that already exists works. We should be able to correlate the

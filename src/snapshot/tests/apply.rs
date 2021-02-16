@@ -1,6 +1,5 @@
 use insta::assert_yaml_snapshot;
 use maplit::hashmap;
-use rbx_dom_weak::InstanceBuilder;
 
 use rojo_insta_ext::RedactionMap;
 
