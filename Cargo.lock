@@ -1859,8 +1859,9 @@ dependencies = [
 
 [[package]]
 name = "rbx_binary"
-version = "0.6.0-dev"
-source = "git+https://github.com/rojo-rbx/rbx-dom?branch=master#e75caa3cb0d283add38457ec2a20ed3fa3fef711"
+version = "0.6.0-alpha.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a373d7c1a7fc55234871452cbc7c3b584171d8eac5e5d1e541231167fdd55955"
 dependencies = [
  "log",
  "lz4",
@@ -1872,8 +1873,9 @@ dependencies = [
 
 [[package]]
 name = "rbx_dom_weak"
-version = "2.0.0-dev"
-source = "git+https://github.com/rojo-rbx/rbx-dom?branch=master#e75caa3cb0d283add38457ec2a20ed3fa3fef711"
+version = "2.0.0-alpha.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5ffa16d4ae69867cbe305d740790900193147ce5a904fc583f88dbfc7de43a95"
 dependencies = [
  "rbx_types",
  "serde",
@@ -1881,8 +1883,9 @@ dependencies = [
 
 [[package]]
 name = "rbx_reflection"
-version = "4.0.0-dev"
-source = "git+https://github.com/rojo-rbx/rbx-dom?branch=master#e75caa3cb0d283add38457ec2a20ed3fa3fef711"
+version = "4.0.0-alpha.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7c43632d239190aad5b9406a6f0df2233ae3b46489957dd6d11c4d6daa9046c5"
 dependencies = [
  "rbx_types",
  "serde",
@@ -1890,8 +1893,9 @@ dependencies = [
 
 [[package]]
 name = "rbx_reflection_database"
-version = "0.1.0"
-source = "git+https://github.com/rojo-rbx/rbx-dom?branch=master#e75caa3cb0d283add38457ec2a20ed3fa3fef711"
+version = "0.1.0+roblox-465"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bcc9eca1c8c2016cb7237c290a298799fdef45f30782e088d3c625945b0f273c"
 dependencies = [
  "lazy_static",
  "rbx_reflection",
@@ -1901,8 +1905,9 @@ dependencies = [
 
 [[package]]
 name = "rbx_types"
-version = "0.2.0"
-source = "git+https://github.com/rojo-rbx/rbx-dom?branch=master#e75caa3cb0d283add38457ec2a20ed3fa3fef711"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4094f41f16e2a79cb7760bd64ac6f9d7bfe704accb6261dbff4c8fc58dd10c8c"
 dependencies = [
  "base64 0.11.0",
  "bitflags",
@@ -1914,8 +1919,9 @@ dependencies = [
 
 [[package]]
 name = "rbx_xml"
-version = "0.12.0-dev"
-source = "git+https://github.com/rojo-rbx/rbx-dom?branch=master#e75caa3cb0d283add38457ec2a20ed3fa3fef711"
+version = "0.12.0-alpha.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "37056d7a92f127dca0856ef850bf2627e440d37f4d1564b67ce1e0400925c89c"
 dependencies = [
  "base64 0.11.0",
  "log",
@@ -2100,7 +2106,7 @@ dependencies = [
 
 [[package]]
 name = "rojo"
-version = "6.0.2"
+version = "7.0.0-alpha.1"
 dependencies = [
  "anyhow",
  "backtrace",

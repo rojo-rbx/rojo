@@ -2,6 +2,21 @@
 
 ## Unreleased Changes
 
+## [7.0.0-alpha.1][7.0.0-alpha.1] (February 18, 2021)
+This release includes a brand new implementation of the Roblox DOM. It brings performance improvements, much better support for `rbxl` and `rbxm` files, and a better internal API.
+
+* Added support for all remaining property types.
+* Added support for the entire Roblox binary model format.
+* Changed `rojo upload` to upload binary places and models instead of XML.
+    * This should make using `rojo upload` much more feasible for large places.
+* **Breaking**: Changed format of some types of values in `project.json`, `model.json`, and `meta.json` files.
+    * This should impact few projects. See [this file][allValues.json] for new examples of each property type.
+
+Formatting of types will change more before the stable release of Rojo 7. We're hoping to use this opportunity to normalize some of the case inconsistency introduced in Rojo 0.5.
+
+[7.0.0-alpha.1]: https://github.com/rojo-rbx/rojo/releases/tag/v7.0.0-alpha.1
+[allValues.json]: https://github.com/rojo-rbx/rojo/blob/f4a790eb50b74e482000bad1dcfe22533992fb20/plugin/rbx_dom_lua/src/allValues.json
+
 ## [6.0.2](https://github.com/rojo-rbx/rojo/releases/tag/v6.0.2) (February 9, 2021)
 * Fixed `rojo upload` to handle CSRF challenges.
 

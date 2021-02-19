@@ -41,9 +41,9 @@ The Rojo release process is pretty manual right now. If you need to do it, here'
 6. Tag the commit with the version from `Cargo.toml` prepended with a v, like `v0.4.13`
 7. Publish the CLI
     * `cargo publish`
-8. Build and upload the plugin
+8. Publish the Plugin
+    * `rojo publish plugin --asset_id 6415005344`
     * `rojo build plugin -o Rojo.rbxm`
-    * Upload `Rojo.rbxm` to Roblox.com, keep it for later
 9. Push commits and tags
     * `git push && git push --tags`
 10. Copy GitHub release content from previous release
