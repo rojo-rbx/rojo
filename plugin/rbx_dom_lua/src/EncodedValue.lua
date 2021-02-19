@@ -20,6 +20,9 @@ local function serializeFloat(value)
 	return value
 end
 
+local ALL_AXES = {"X", "Y", "Z"}
+local ALL_FACES = {"Right", "Top", "Back", "Left", "Bottom", "Front"}
+
 local encoders
 encoders = {
 	Bool = identity,
@@ -33,12 +36,56 @@ encoders = {
 	BinaryString = base64.encode,
 	SharedString = base64.encode,
 
+	Axes = function(value)
+		local output = {}
+
+		for _, axis in ipairs(ALL_AXES) do
+			if value[axis] then
+				table.insert(output, axis)
+			end
+		end
+
+		return output
+	end,
+
+	Faces = function(value)
+		local output = {}
+
+		for _, face in ipairs(ALL_FACES) do
+			if value[face] then
+				table.insert(output, face)
+			end
+		end
+
+		return output
+	end,
+
+	Enum = function(value)
+		if typeof(value) == "number" then
+			return value
+		else
+			return value.Value
+		end
+	end,
+
 	BrickColor = function(value)
 		return value.Number
 	end,
 
 	CFrame = function(value)
-		return {value:GetComponents()}
+		local x, y, z,
+			r00, r01, r02,
+			r10, r11, r12,
+			r20, r21, r22 = value:GetComponents()
+
+		return {
+			Position = {x, y, z},
+			Orientation = {
+				{r00, r10, r20},
+				{r01, r11, r21},
+				{r02, r12, r22},
+			},
+		}
 	end,
 	Color3 = function(value)
 		return {value.r, value.g, value.b}
@@ -77,15 +124,18 @@ encoders = {
 	end,
 	Rect = function(value)
 		return {
-			Min = {value.Min.X, value.Min.Y},
-			Max = {value.Max.X, value.Max.Y},
+			encoders.Vector2(value.Min),
+			encoders.Vector2(value.Max),
 		}
 	end,
 	UDim = function(value)
 		return {value.Scale, value.Offset}
 	end,
 	UDim2 = function(value)
-		return {value.X.Scale, value.X.Offset, value.Y.Scale, value.Y.Offset}
+		return {
+			encoders.UDim(value.X),
+			encoders.UDim(value.Y),
+		}
 	end,
 	Vector2 = function(value)
 		return {
@@ -121,12 +171,35 @@ encoders = {
 		end
 	end,
 
+	Ray = function(value)
+		return {
+			Origin = encoders.Vector3(value.Origin),
+			Direction = encoders.Vector3(value.Direction),
+		}
+	end,
+
 	Ref = function(value)
 		return nil
 	end,
+
+	Region3int16 = function(value)
+		return {
+			encoders.Vector3int16(value.Min),
+			encoders.Vector3int16(value.Max),
+		}
+	end,
+
+	Color3uint8 = function(value)
+		return {
+			math.round(value.R * 255),
+			math.round(value.G * 255),
+			math.round(value.B * 255),
+		}
+	end,
 }
 
-local decoders = {
+local decoders
+decoders = {
 	Bool = identity,
 	Content = identity,
 	Enum = identity,
@@ -141,19 +214,63 @@ local decoders = {
 
 	BrickColor = BrickColor.new,
 
-	CFrame = unpackDecoder(CFrame.new),
 	Color3 = unpackDecoder(Color3.new),
 	Color3uint8 = unpackDecoder(Color3.fromRGB),
 	NumberRange = unpackDecoder(NumberRange.new),
 	UDim = unpackDecoder(UDim.new),
-	UDim2 = unpackDecoder(UDim2.new),
 	Vector2 = unpackDecoder(Vector2.new),
 	Vector2int16 = unpackDecoder(Vector2int16.new),
 	Vector3 = unpackDecoder(Vector3.new),
 	Vector3int16 = unpackDecoder(Vector3int16.new),
 
+	UDim2 = function(value)
+		return UDim2.new(
+			value[1][1],
+			value[1][2],
+			value[2][1],
+			value[2][2]
+		)
+	end,
+
+	Axes = function(value)
+		local axes = {}
+		for index, axisName in ipairs(value) do
+			axes[index] = Enum.Axis[axisName]
+		end
+
+		return Axes.new(unpack(axes))
+	end,
+
+	Faces = function(value)
+		local normalIds = {}
+		for index, faceName in ipairs(value) do
+			normalIds[index] = Enum.NormalId[faceName]
+		end
+
+		return Faces.new(unpack(normalIds))
+	end,
+
+	CFrame = function(value)
+		return CFrame.fromMatrix(
+			decoders.Vector3(value.Position),
+			decoders.Vector3(value.Orientation[1]),
+			decoders.Vector3(value.Orientation[2]),
+			decoders.Vector3(value.Orientation[3])
+		)
+	end,
+
 	Rect = function(value)
-		return Rect.new(value.Min[1], value.Min[2], value.Max[1], value.Max[2])
+		return Rect.new(
+			decoders.Vector2(value[1]),
+			decoders.Vector2(value[2])
+		)
+	end,
+
+	Ray = function(value)
+		return Ray.new(
+			decoders.Vector3(value.Origin),
+			decoders.Vector3(value.Direction)
+		)
 	end,
 
 	NumberSequence = function(value)
@@ -200,6 +317,13 @@ local decoders = {
 	Ref = function()
 		return nil
 	end,
+
+	Region3int16 = function(value)
+		return Region3int16.new(
+			decoders.Vector3int16(value[1]),
+			decoders.Vector3int16(value[2])
+		)
+	end,
 }
 
 local EncodedValue = {}
@@ -216,27 +340,16 @@ end
 function EncodedValue.encode(rbxValue, propertyType)
 	assert(propertyType ~= nil, "Property type descriptor is required")
 
-	if propertyType.type == "Data" then
-		local encoder = encoders[propertyType.name]
+	local encoder = encoders[propertyType]
 
-		if encoder == nil then
-			return false, ("Missing encoder for property type %q"):format(propertyType.name)
-		end
-
-		if encoder ~= nil then
-			return true, {
-				Type = propertyType.name,
-				Value = encoder(rbxValue),
-			}
-		end
-	elseif propertyType.type == "Enum" then
-		return true, {
-			Type = "Enum",
-			Value = rbxValue.Value,
-		}
+	if encoder == nil then
+		return false, ("Missing encoder for property type %q"):format(propertyType)
 	end
 
-	return false, ("Unknown property descriptor type %q"):format(tostring(propertyType.type))
+	return true, {
+		Type = propertyType,
+		Value = encoder(rbxValue),
+	}
 end
 
 return EncodedValue

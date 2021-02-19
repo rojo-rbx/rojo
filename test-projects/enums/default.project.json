@@ -1,0 +1,12 @@
+{
+  "name": "enums",
+  "tree": {
+    "$className": "DataModel",
+
+    "Lighting": {
+      "$properties": {
+        "Technology": "Voxel"
+      }
+    }
+  }
+}

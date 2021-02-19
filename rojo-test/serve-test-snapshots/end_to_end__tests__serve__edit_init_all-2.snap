@@ -10,7 +10,7 @@ instances:
     Metadata:
       ignoreUnknownInstances: false
     Name: edit_init
-    Parent: ~
+    Parent: "00000000000000000000000000000000"
     Properties:
       Source:
         Type: String

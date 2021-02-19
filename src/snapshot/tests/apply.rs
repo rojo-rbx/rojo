@@ -1,11 +1,10 @@
 use insta::assert_yaml_snapshot;
 use maplit::hashmap;
-use rbx_dom_weak::{RbxInstanceProperties, RbxValue};
 
 use rojo_insta_ext::RedactionMap;
 
 use crate::{
-    snapshot::{apply_patch_set, InstancePropertiesWithMeta, PatchSet, PatchUpdate, RojoTree},
+    snapshot::{apply_patch_set, InstanceSnapshot, PatchSet, PatchUpdate, RojoTree},
     tree_view::{intern_tree, view_tree},
 };
 
@@ -49,9 +48,7 @@ fn add_property() {
             changed_name: None,
             changed_class_name: None,
             changed_properties: hashmap! {
-                "Foo".to_owned() => Some(RbxValue::String {
-                    value: "Value of Foo".to_owned(),
-                }),
+                "Foo".to_owned() => Some("Value of Foo".into()),
             },
             changed_metadata: None,
         }],
@@ -78,12 +75,9 @@ fn remove_property() {
         let root_id = tree.get_root_id();
         let mut root_instance = tree.get_instance_mut(root_id).unwrap();
 
-        root_instance.properties_mut().insert(
-            "Foo".to_owned(),
-            RbxValue::String {
-                value: "Should be removed".to_owned(),
-            },
-        );
+        root_instance
+            .properties_mut()
+            .insert("Foo".to_owned(), "Should be removed".into());
     }
 
     let tree_view = view_tree(&tree, &mut redactions);
@@ -112,12 +106,5 @@ fn remove_property() {
 }
 
 fn empty_tree() -> RojoTree {
-    RojoTree::new(InstancePropertiesWithMeta {
-        properties: RbxInstanceProperties {
-            name: "ROOT".to_owned(),
-            class_name: "ROOT".to_owned(),
-            properties: Default::default(),
-        },
-        metadata: Default::default(),
-    })
+    RojoTree::new(InstanceSnapshot::new().name("ROOT").class_name("ROOT"))
 }

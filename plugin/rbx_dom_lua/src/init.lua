@@ -1,4 +1,4 @@
-local ReflectionDatabase = require(script.ReflectionDatabase)
+local database = require(script.database)
 local Error = require(script.Error)
 local PropertyDescriptor = require(script.PropertyDescriptor)
 
@@ -6,29 +6,31 @@ local function findCanonicalPropertyDescriptor(className, propertyName)
 	local currentClassName = className
 
 	repeat
-		local currentClass = ReflectionDatabase.classes[currentClassName]
+		local currentClass = database.Classes[currentClassName]
 
 		if currentClass == nil then
 			return currentClass
 		end
 
-		local propertyData = currentClass.properties[propertyName]
+		local propertyData = currentClass.Properties[propertyName]
 		if propertyData ~= nil then
-			if propertyData.isCanonical then
+			local canonicalData = propertyData.Kind.Canonical
+			if canonicalData ~= nil then
 				return PropertyDescriptor.fromRaw(propertyData, currentClassName, propertyName)
 			end
 
-			if propertyData.canonicalName ~= nil then
+			local aliasData = propertyData.Kind.Alias
+			if aliasData ~= nil then
 				return PropertyDescriptor.fromRaw(
-					currentClass.properties[propertyData.canonicalName],
+					currentClass.properties[aliasData.AliasFor],
 					currentClassName,
-					propertyData.canonicalName)
+					aliasData.AliasFor)
 			end
 
 			return nil
 		end
 
-		currentClassName = currentClass.superclass
+		currentClassName = currentClass.Superclass
 	until currentClassName == nil
 
 	return nil

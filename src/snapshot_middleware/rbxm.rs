@@ -1,8 +1,7 @@
-use std::{collections::HashMap, path::Path};
+use std::path::Path;
 
 use anyhow::Context;
 use memofs::Vfs;
-use rbx_dom_weak::{RbxInstanceProperties, RbxTree};
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
@@ -14,18 +13,11 @@ pub fn snapshot_rbxm(
     path: &Path,
     instance_name: &str,
 ) -> SnapshotInstanceResult {
-    let mut temp_tree = RbxTree::new(RbxInstanceProperties {
-        name: "DataModel".to_owned(),
-        class_name: "DataModel".to_owned(),
-        properties: HashMap::new(),
-    });
-
-    let root_id = temp_tree.get_root_id();
-    rbx_binary::decode(&mut temp_tree, root_id, vfs.read(path)?.as_slice())
+    let temp_tree = rbx_binary::from_reader_default(vfs.read(path)?.as_slice())
         .with_context(|| format!("Malformed rbxm file: {}", path.display()))?;
 
-    let root_instance = temp_tree.get_instance(root_id).unwrap();
-    let children = root_instance.get_children_ids();
+    let root_instance = temp_tree.root();
+    let children = root_instance.children();
 
     if children.len() == 1 {
         let snapshot = InstanceSnapshot::from_tree(&temp_tree, children[0])

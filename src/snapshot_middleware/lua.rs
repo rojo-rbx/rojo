@@ -3,7 +3,6 @@ use std::{path::Path, str};
 use anyhow::Context;
 use maplit::hashmap;
 use memofs::{IoResultExt, Vfs};
-use rbx_dom_weak::RbxValue;
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
@@ -38,9 +37,7 @@ pub fn snapshot_lua(context: &InstanceContext, vfs: &Vfs, path: &Path) -> Snapsh
         .name(instance_name)
         .class_name(class_name)
         .properties(hashmap! {
-            "Source".to_owned() => RbxValue::String {
-                value: contents_str,
-            },
+            "Source".to_owned() => contents_str.into(),
         })
         .metadata(
             InstanceMetadata::new()
@@ -50,8 +47,8 @@ pub fn snapshot_lua(context: &InstanceContext, vfs: &Vfs, path: &Path) -> Snapsh
         );
 
     if let Some(meta_contents) = vfs.read(&meta_path).with_not_found()? {
-        let mut metadata = AdjacentMetadata::from_slice(&meta_contents, &meta_path)?;
-        metadata.apply_all(&mut snapshot);
+        let mut metadata = AdjacentMetadata::from_slice(&meta_contents, meta_path)?;
+        metadata.apply_all(&mut snapshot)?;
     }
 
     Ok(Some(snapshot))

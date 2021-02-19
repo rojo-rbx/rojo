@@ -19,8 +19,8 @@ pub fn snapshot_rbxmx(
     let temp_tree = rbx_xml::from_reader(vfs.read(path)?.as_slice(), options)
         .with_context(|| format!("Malformed rbxm file: {}", path.display()))?;
 
-    let root_instance = temp_tree.get_instance(temp_tree.get_root_id()).unwrap();
-    let children = root_instance.get_children_ids();
+    let root_instance = temp_tree.root();
+    let children = root_instance.children();
 
     if children.len() == 1 {
         let snapshot = InstanceSnapshot::from_tree(&temp_tree, children[0])

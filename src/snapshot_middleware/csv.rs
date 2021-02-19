@@ -3,7 +3,6 @@ use std::{collections::BTreeMap, path::Path};
 use anyhow::Context;
 use maplit::hashmap;
 use memofs::{IoResultExt, Vfs};
-use rbx_dom_weak::RbxValue;
 use serde::Serialize;
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
@@ -30,9 +29,7 @@ pub fn snapshot_csv(
         .name(instance_name)
         .class_name("LocalizationTable")
         .properties(hashmap! {
-            "Contents".to_owned() => RbxValue::String {
-                value: table_contents,
-            },
+            "Contents".to_owned() => table_contents.into(),
         })
         .metadata(
             InstanceMetadata::new()
@@ -41,8 +38,8 @@ pub fn snapshot_csv(
         );
 
     if let Some(meta_contents) = vfs.read(&meta_path).with_not_found()? {
-        let mut metadata = AdjacentMetadata::from_slice(&meta_contents, &meta_path)?;
-        metadata.apply_all(&mut snapshot);
+        let mut metadata = AdjacentMetadata::from_slice(&meta_contents, meta_path)?;
+        metadata.apply_all(&mut snapshot)?;
     }
 
     Ok(Some(snapshot))

@@ -49,6 +49,7 @@ gen_build_tests! {
     server_init,
     txt,
     txt_in_folder,
+    unresolved_values,
 }
 
 fn run_build_test(test_name: &str) {

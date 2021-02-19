@@ -10,7 +10,6 @@ use std::{
 use crossbeam_channel::Sender;
 use memofs::IoResultExt;
 use memofs::Vfs;
-use rbx_dom_weak::RbxInstanceProperties;
 use thiserror::Error;
 
 use crate::{
@@ -19,8 +18,8 @@ use crate::{
     project::{Project, ProjectError},
     session_id::SessionId,
     snapshot::{
-        apply_patch_set, compute_patch_set, AppliedPatchSet, InstanceContext,
-        InstancePropertiesWithMeta, PatchSet, RojoTree,
+        apply_patch_set, compute_patch_set, AppliedPatchSet, InstanceContext, InstanceSnapshot,
+        PatchSet, RojoTree,
     },
     snapshot_middleware::snapshot_from_vfs,
 };
@@ -118,14 +117,7 @@ impl ServeSession {
             }
         };
 
-        let mut tree = RojoTree::new(InstancePropertiesWithMeta {
-            properties: RbxInstanceProperties {
-                name: "ROOT".to_owned(),
-                class_name: "Folder".to_owned(),
-                properties: Default::default(),
-            },
-            metadata: Default::default(),
-        });
+        let mut tree = RojoTree::new(InstanceSnapshot::new());
 
         let root_id = tree.get_root_id();
 

@@ -2,7 +2,7 @@ use std::{borrow::Cow, collections::HashMap, path::Path};
 
 use anyhow::Context;
 use memofs::Vfs;
-use rbx_reflection::{get_class_descriptor, try_resolve_value};
+use rbx_reflection::ClassTag;
 
 use crate::{
     project::{Project, ProjectNode},
@@ -140,9 +140,9 @@ pub fn snapshot_project_node(
                 // Members of DataModel with names that match known services are
                 // probably supposed to be those services.
 
-                let descriptor = get_class_descriptor(&name)?;
+                let descriptor = rbx_reflection_database::get().classes.get(&name)?;
 
-                if descriptor.is_service() {
+                if descriptor.tags.contains(&ClassTag::Service) {
                     return Some(name.clone());
                 }
             } else if parent_class == "StarterPlayer" {
@@ -171,11 +171,18 @@ pub fn snapshot_project_node(
         }
     }
 
-    for (key, value) in &node.properties {
-        let resolved_value = try_resolve_value(&class_name, key, value)
-            .expect("TODO: Properly handle value resolution errors");
+    for (key, unresolved) in &node.properties {
+        let value = unresolved
+            .clone()
+            .resolve(&class_name, key)
+            .with_context(|| {
+                format!(
+                    "Unresolvable property in project at path {}",
+                    project_path.display()
+                )
+            })?;
 
-        properties.insert(key.clone(), resolved_value);
+        properties.insert(key.clone(), value);
     }
 
     // If the user specified $ignoreUnknownInstances, overwrite the existing

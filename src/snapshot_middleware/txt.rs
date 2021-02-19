@@ -3,7 +3,6 @@ use std::{path::Path, str};
 use anyhow::Context;
 use maplit::hashmap;
 use memofs::{IoResultExt, Vfs};
-use rbx_dom_weak::RbxValue;
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
@@ -21,9 +20,7 @@ pub fn snapshot_txt(
         .to_owned();
 
     let properties = hashmap! {
-        "Value".to_owned() => RbxValue::String {
-            value: contents_str,
-        },
+        "Value".to_owned() => contents_str.into(),
     };
 
     let meta_path = path.with_file_name(format!("{}.meta.json", instance_name));
@@ -40,8 +37,8 @@ pub fn snapshot_txt(
         );
 
     if let Some(meta_contents) = vfs.read(&meta_path).with_not_found()? {
-        let mut metadata = AdjacentMetadata::from_slice(&meta_contents, &meta_path)?;
-        metadata.apply_all(&mut snapshot);
+        let mut metadata = AdjacentMetadata::from_slice(&meta_contents, meta_path)?;
+        metadata.apply_all(&mut snapshot)?;
     }
 
     Ok(Some(snapshot))

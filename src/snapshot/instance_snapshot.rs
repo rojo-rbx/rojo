@@ -2,7 +2,10 @@
 
 use std::{borrow::Cow, collections::HashMap};
 
-use rbx_dom_weak::{RbxId, RbxTree, RbxValue};
+use rbx_dom_weak::{
+    types::{Ref, Variant},
+    WeakDom,
+};
 use serde::{Deserialize, Serialize};
 
 use super::InstanceMetadata;
@@ -11,11 +14,12 @@ use super::InstanceMetadata;
 ///
 // Possible future improvements:
 // - Use refcounted/interned strings
-// - Replace use of RbxValue with a sum of RbxValue + borrowed value
+// - Replace use of Variant with a sum of Variant + borrowed value
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct InstanceSnapshot {
+    // FIXME: Don't use Option<Ref> anymore!
     /// A temporary ID applied to the snapshot that's used for Ref properties.
-    pub snapshot_id: Option<RbxId>,
+    pub snapshot_id: Option<Ref>,
 
     /// Rojo-specific metadata associated with the instance.
     pub metadata: InstanceMetadata,
@@ -27,7 +31,7 @@ pub struct InstanceSnapshot {
     pub class_name: Cow<'static, str>,
 
     /// All other properties of the instance, weakly-typed.
-    pub properties: HashMap<String, RbxValue>,
+    pub properties: HashMap<String, Variant>,
 
     /// The children of the instance represented as more snapshots.
     ///
@@ -61,7 +65,16 @@ impl InstanceSnapshot {
         }
     }
 
-    pub fn properties(self, properties: impl Into<HashMap<String, RbxValue>>) -> Self {
+    pub fn property<K, V>(mut self, key: K, value: V) -> Self
+    where
+        K: Into<String>,
+        V: Into<Variant>,
+    {
+        self.properties.insert(key.into(), value.into());
+        self
+    }
+
+    pub fn properties(self, properties: impl Into<HashMap<String, Variant>>) -> Self {
         Self {
             properties: properties.into(),
             ..self
@@ -75,6 +88,13 @@ impl InstanceSnapshot {
         }
     }
 
+    pub fn snapshot_id(self, snapshot_id: Option<Ref>) -> Self {
+        Self {
+            snapshot_id,
+            ..self
+        }
+    }
+
     pub fn metadata(self, metadata: impl Into<InstanceMetadata>) -> Self {
         Self {
             metadata: metadata.into(),
@@ -82,15 +102,13 @@ impl InstanceSnapshot {
         }
     }
 
-    pub fn from_tree(tree: &RbxTree, id: RbxId) -> Self {
-        let instance = tree
-            .get_instance(id)
-            .expect("instance did not exist in tree");
+    pub fn from_tree(tree: &WeakDom, id: Ref) -> Self {
+        let instance = tree.get_by_ref(id).expect("instance did not exist in tree");
 
         let children = instance
-            .get_children_ids()
+            .children()
             .iter()
-            .cloned()
+            .copied()
             .map(|id| Self::from_tree(tree, id))
             .collect();
 
@@ -98,7 +116,7 @@ impl InstanceSnapshot {
             snapshot_id: Some(id),
             metadata: InstanceMetadata::default(),
             name: Cow::Owned(instance.name.clone()),
-            class_name: Cow::Owned(instance.class_name.clone()),
+            class_name: Cow::Owned(instance.class.clone()),
             properties: instance.properties.clone(),
             children,
         }

@@ -2,11 +2,10 @@ use std::borrow::Cow;
 
 use insta::assert_yaml_snapshot;
 use maplit::hashmap;
-use rbx_dom_weak::{RbxInstanceProperties, RbxValue};
 
 use rojo_insta_ext::RedactionMap;
 
-use crate::snapshot::{compute_patch_set, InstancePropertiesWithMeta, InstanceSnapshot, RojoTree};
+use crate::snapshot::{compute_patch_set, InstanceSnapshot, RojoTree};
 
 #[test]
 fn set_name_and_class_name() {
@@ -43,9 +42,7 @@ fn set_property() {
         name: Cow::Borrowed("ROOT"),
         class_name: Cow::Borrowed("ROOT"),
         properties: hashmap! {
-            "PropertyName".to_owned() => RbxValue::String {
-                value: "Hello, world!".to_owned(),
-            },
+            "PropertyName".to_owned() => "Hello, world!".into(),
         },
         children: Vec::new(),
     };
@@ -68,9 +65,7 @@ fn remove_property() {
         let mut root_instance = tree.get_instance_mut(root_id).unwrap();
         root_instance.properties_mut().insert(
             "Foo".to_owned(),
-            RbxValue::String {
-                value: "This should be removed by the patch.".to_owned(),
-            },
+            "This should be removed by the patch.".into(),
         );
     }
 
@@ -128,15 +123,8 @@ fn remove_child() {
     {
         let root_id = tree.get_root_id();
         let new_id = tree.insert_instance(
-            InstancePropertiesWithMeta {
-                properties: RbxInstanceProperties {
-                    name: "Should not appear in snapshot".to_owned(),
-                    class_name: "Folder".to_owned(),
-                    properties: Default::default(),
-                },
-                metadata: Default::default(),
-            },
             root_id,
+            InstanceSnapshot::new().name("Should not appear in snapshot"),
         );
 
         redactions.intern(new_id);
@@ -158,12 +146,5 @@ fn remove_child() {
 }
 
 fn empty_tree() -> RojoTree {
-    RojoTree::new(InstancePropertiesWithMeta {
-        properties: RbxInstanceProperties {
-            name: "ROOT".to_owned(),
-            class_name: "ROOT".to_owned(),
-            properties: Default::default(),
-        },
-        metadata: Default::default(),
-    })
+    RojoTree::new(InstanceSnapshot::new().name("ROOT").class_name("ROOT"))
 }

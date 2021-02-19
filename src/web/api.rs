@@ -1,12 +1,12 @@
 //! Defines Rojo's HTTP API, all under /api. These endpoints generally return
 //! JSON.
 
-use std::{collections::HashMap, fs, path::PathBuf, sync::Arc};
+use std::{collections::HashMap, fs, path::PathBuf, str::FromStr, sync::Arc};
 
 use futures::{Future, Stream};
 
 use hyper::{service::Service, Body, Method, Request, StatusCode};
-use rbx_dom_weak::RbxId;
+use rbx_dom_weak::types::Ref;
 
 use crate::{
     serve_session::ServeSession,
@@ -200,11 +200,11 @@ impl ApiService {
 
     fn handle_api_read(&self, request: Request<Body>) -> <Self as Service>::Future {
         let argument = &request.uri().path()["/api/read/".len()..];
-        let requested_ids: Option<Vec<RbxId>> = argument.split(',').map(RbxId::parse_str).collect();
+        let requested_ids: Result<Vec<Ref>, _> = argument.split(',').map(Ref::from_str).collect();
 
         let requested_ids = match requested_ids {
-            Some(ids) => ids,
-            None => {
+            Ok(ids) => ids,
+            Err(_) => {
                 return json(
                     ErrorResponse::bad_request("Malformed ID list"),
                     StatusCode::BAD_REQUEST,
@@ -239,9 +239,9 @@ impl ApiService {
     /// Open a script with the given ID in the user's default text editor.
     fn handle_api_open(&self, request: Request<Body>) -> <Self as Service>::Future {
         let argument = &request.uri().path()["/api/open/".len()..];
-        let requested_id = match RbxId::parse_str(argument) {
-            Some(id) => id,
-            None => {
+        let requested_id = match Ref::from_str(argument) {
+            Ok(id) => id,
+            Err(_) => {
                 return json(
                     ErrorResponse::bad_request("Invalid instance ID"),
                     StatusCode::BAD_REQUEST,

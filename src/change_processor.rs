@@ -6,7 +6,7 @@ use std::{
 use crossbeam_channel::{select, Receiver, RecvError, Sender};
 use jod_thread::JoinHandle;
 use memofs::{IoResultExt, Vfs, VfsEvent};
-use rbx_dom_weak::{RbxId, RbxValue};
+use rbx_dom_weak::types::{Ref, Variant};
 
 use crate::{
     message_queue::MessageQueue,
@@ -179,7 +179,7 @@ impl JobThreadContext {
                             InstigatingSource::Path(path) => fs::remove_file(path).unwrap(),
                             InstigatingSource::ProjectNode(_, _, _, _) => {
                                 log::warn!(
-                                    "Cannot remove instance {}, it's from a project file",
+                                    "Cannot remove instance {:?}, it's from a project file",
                                     id
                                 );
                             }
@@ -187,12 +187,12 @@ impl JobThreadContext {
                     } else {
                         // TODO
                         log::warn!(
-                            "Cannot remove instance {}, it is not an instigating source.",
+                            "Cannot remove instance {:?}, it is not an instigating source.",
                             id
                         );
                     }
                 } else {
-                    log::warn!("Cannot remove instance {}, it does not exist.", id);
+                    log::warn!("Cannot remove instance {:?}, it does not exist.", id);
                 }
             }
 
@@ -219,7 +219,7 @@ impl JobThreadContext {
                             {
                                 match instigating_source {
                                     InstigatingSource::Path(path) => {
-                                        if let Some(RbxValue::String { value }) = changed_value {
+                                        if let Some(Variant::String(value)) = changed_value {
                                             fs::write(path, value).unwrap();
                                         } else {
                                             log::warn!("Cannot change Source to non-string value.");
@@ -227,14 +227,14 @@ impl JobThreadContext {
                                     }
                                     InstigatingSource::ProjectNode(_, _, _, _) => {
                                         log::warn!(
-                                            "Cannot remove instance {}, it's from a project file",
+                                            "Cannot remove instance {:?}, it's from a project file",
                                             id
                                         );
                                     }
                                 }
                             } else {
                                 log::warn!(
-                                    "Cannot update instance {}, it is not an instigating source.",
+                                    "Cannot update instance {:?}, it is not an instigating source.",
                                     id
                                 );
                             }
@@ -243,7 +243,7 @@ impl JobThreadContext {
                         }
                     }
                 } else {
-                    log::warn!("Cannot update instance {}, it does not exist.", id);
+                    log::warn!("Cannot update instance {:?}, it does not exist.", id);
                 }
             }
 
@@ -254,7 +254,7 @@ impl JobThreadContext {
     }
 }
 
-fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: RbxId) -> Option<AppliedPatchSet> {
+fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref) -> Option<AppliedPatchSet> {
     let metadata = tree
         .get_metadata(id)
         .expect("metadata missing for instance present in tree");
@@ -263,7 +263,7 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: RbxId) -> Optio
         Some(path) => path,
         None => {
             log::error!(
-                "Instance {} did not have an instigating source, but was considered for an update.",
+                "Instance {:?} did not have an instigating source, but was considered for an update.",
                 id
             );
             log::error!("This is a bug. Please file an issue!");

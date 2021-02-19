@@ -21,7 +21,7 @@ end
 
 function PropertyDescriptor.fromRaw(data, className, propertyName)
 	return setmetatable({
-		scriptability = data.scriptability,
+		scriptability = data.Scriptability,
 		className = className,
 		name = propertyName,
 	}, PropertyDescriptor)

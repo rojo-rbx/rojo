@@ -5,7 +5,7 @@ use std::{borrow::Cow, sync::Arc, time::Duration};
 use futures::{future, Future};
 use hyper::{header, service::Service, Body, Method, Request, Response, StatusCode};
 use maplit::hashmap;
-use rbx_dom_weak::{RbxId, RbxValue};
+use rbx_dom_weak::types::{Ref, Variant};
 use ritz::{html, Fragment, HtmlContent, HtmlSelfClosingTag};
 
 use crate::{
@@ -93,7 +93,7 @@ impl UiService {
             .unwrap()
     }
 
-    fn instance(tree: &RojoTree, id: RbxId) -> HtmlContent<'_> {
+    fn instance(tree: &RojoTree, id: Ref) -> HtmlContent<'_> {
         let instance = tree.get_instance(id).unwrap();
         let children_list: Vec<_> = instance
             .children()
@@ -126,7 +126,7 @@ impl UiService {
             .map(|(key, value)| {
                 html! {
                     <div class="instance-property" title={ Self::display_value(value) }>
-                        { key.clone() } ": " { format!("{:?}", value.get_type()) }
+                        { key.clone() } ": " { format!("{:?}", value.ty()) }
                     </div>
                 }
             })
@@ -198,7 +198,7 @@ impl UiService {
 
         html! {
             <div class="instance">
-                <label class="instance-title" for={ format!("instance-{}", id) }>
+                <label class="instance-title" for={ format!("instance-{:?}", id) }>
                     { instance.name().to_owned() }
                     { class_name_specifier }
                 </label>
@@ -209,10 +209,10 @@ impl UiService {
         }
     }
 
-    fn display_value(value: &RbxValue) -> String {
+    fn display_value(value: &Variant) -> String {
         match value {
-            RbxValue::String { value } => value.clone(),
-            RbxValue::Bool { value } => value.to_string(),
+            Variant::String(value) => value.clone(),
+            Variant::Bool(value) => value.to_string(),
             _ => format!("{:?}", value),
         }
     }
@@ -288,14 +288,14 @@ impl UiService {
 struct ExpandableSection<'a> {
     title: &'a str,
     class_name: &'a str,
-    id: RbxId,
+    id: Ref,
     expanded: bool,
     content: HtmlContent<'a>,
 }
 
 impl<'a> ExpandableSection<'a> {
     fn render(self) -> HtmlContent<'a> {
-        let input_id = format!("{}-{}", self.class_name, self.id);
+        let input_id = format!("{}-{:?}", self.class_name, self.id);
 
         // We need to specify this input manually because Ritz doesn't have
         // support for conditional attributes like `checked`.

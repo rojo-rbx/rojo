@@ -1,26 +1,29 @@
 use std::{
-    collections::HashMap,
+    collections::{HashMap, VecDeque},
     path::{Path, PathBuf},
 };
 
-use rbx_dom_weak::{Descendants, RbxId, RbxInstance, RbxInstanceProperties, RbxTree, RbxValue};
+use rbx_dom_weak::{
+    types::{Ref, Variant},
+    Instance, InstanceBuilder, WeakDom,
+};
 
 use crate::multimap::MultiMap;
 
-use super::InstanceMetadata;
+use super::{InstanceMetadata, InstanceSnapshot};
 
-/// An expanded variant of rbx_dom_weak's `RbxTree` that tracks additional
+/// An expanded variant of rbx_dom_weak's `WeakDom` that tracks additional
 /// metadata per instance that's Rojo-specific.
 ///
 /// This tree is also optimized for doing fast incremental updates and patches.
 #[derive(Debug)]
 pub struct RojoTree {
     /// Contains the instances without their Rojo-specific metadata.
-    inner: RbxTree,
+    inner: WeakDom,
 
     /// Metadata associated with each instance that is kept up-to-date with the
     /// set of actual instances.
-    metadata_map: HashMap<RbxId, InstanceMetadata>,
+    metadata_map: HashMap<Ref, InstanceMetadata>,
 
     /// A multimap from source paths to all of the root instances that were
     /// constructed from that path.
@@ -29,31 +32,42 @@ pub struct RojoTree {
     /// value portion of the map is also a set in order to support the same path
     /// appearing multiple times in the same Rojo project. This is sometimes
     /// called "path aliasing" in various Rojo documentation.
-    path_to_ids: MultiMap<PathBuf, RbxId>,
+    path_to_ids: MultiMap<PathBuf, Ref>,
 }
 
 impl RojoTree {
-    pub fn new(root: InstancePropertiesWithMeta) -> RojoTree {
+    pub fn new(snapshot: InstanceSnapshot) -> RojoTree {
+        let root_builder = InstanceBuilder::new(snapshot.class_name.to_owned())
+            .with_name(snapshot.name.to_owned())
+            .with_properties(snapshot.properties);
+
         let mut tree = RojoTree {
-            inner: RbxTree::new(root.properties),
+            inner: WeakDom::new(root_builder),
             metadata_map: HashMap::new(),
             path_to_ids: MultiMap::new(),
         };
 
-        tree.insert_metadata(tree.inner.get_root_id(), root.metadata);
+        let root_ref = tree.inner.root_ref();
+
+        tree.insert_metadata(root_ref, snapshot.metadata);
+
+        for child in snapshot.children {
+            tree.insert_instance(root_ref, child);
+        }
+
         tree
     }
 
-    pub fn inner(&self) -> &RbxTree {
+    pub fn inner(&self) -> &WeakDom {
         &self.inner
     }
 
-    pub fn get_root_id(&self) -> RbxId {
-        self.inner.get_root_id()
+    pub fn get_root_id(&self) -> Ref {
+        self.inner.root_ref()
     }
 
-    pub fn get_instance(&self, id: RbxId) -> Option<InstanceWithMeta> {
-        if let Some(instance) = self.inner.get_instance(id) {
+    pub fn get_instance(&self, id: Ref) -> Option<InstanceWithMeta> {
+        if let Some(instance) = self.inner.get_by_ref(id) {
             let metadata = self.metadata_map.get(&id).unwrap();
 
             Some(InstanceWithMeta { instance, metadata })
@@ -62,8 +76,8 @@ impl RojoTree {
         }
     }
 
-    pub fn get_instance_mut(&mut self, id: RbxId) -> Option<InstanceWithMetaMut> {
-        if let Some(instance) = self.inner.get_instance_mut(id) {
+    pub fn get_instance_mut(&mut self, id: Ref) -> Option<InstanceWithMetaMut> {
+        if let Some(instance) = self.inner.get_by_ref_mut(id) {
             let metadata = self.metadata_map.get_mut(&id).unwrap();
 
             Some(InstanceWithMetaMut { instance, metadata })
@@ -72,38 +86,38 @@ impl RojoTree {
         }
     }
 
-    pub fn insert_instance(
-        &mut self,
-        properties: InstancePropertiesWithMeta,
-        parent_id: RbxId,
-    ) -> RbxId {
-        let id = self.inner.insert_instance(properties.properties, parent_id);
-        self.insert_metadata(id, properties.metadata);
-        id
+    pub fn insert_instance(&mut self, parent_ref: Ref, snapshot: InstanceSnapshot) -> Ref {
+        let builder = InstanceBuilder::new(snapshot.class_name.to_owned())
+            .with_name(snapshot.name.to_owned())
+            .with_properties(snapshot.properties);
+
+        let referent = self.inner.insert(parent_ref, builder);
+        self.insert_metadata(referent, snapshot.metadata);
+
+        for child in snapshot.children {
+            self.insert_instance(referent, child);
+        }
+
+        referent
     }
 
-    pub fn remove_instance(&mut self, id: RbxId) -> Option<RojoTree> {
-        if let Some(inner) = self.inner.remove_instance(id) {
-            let mut metadata_map = HashMap::new();
-            let mut path_to_ids = MultiMap::new();
+    pub fn remove(&mut self, id: Ref) {
+        let mut to_move = VecDeque::new();
+        to_move.push_back(id);
 
-            self.move_metadata(id, &mut metadata_map, &mut path_to_ids);
-            for instance in inner.descendants(id) {
-                self.move_metadata(instance.get_id(), &mut metadata_map, &mut path_to_ids);
+        while let Some(id) = to_move.pop_front() {
+            self.remove_metadata(id);
+
+            if let Some(instance) = self.inner.get_by_ref(id) {
+                to_move.extend(instance.children().iter().copied());
             }
-
-            Some(RojoTree {
-                inner,
-                metadata_map,
-                path_to_ids,
-            })
-        } else {
-            None
         }
+
+        self.inner.destroy(id);
     }
 
     /// Replaces the metadata associated with the given instance ID.
-    pub fn update_metadata(&mut self, id: RbxId, metadata: InstanceMetadata) {
+    pub fn update_metadata(&mut self, id: Ref, metadata: InstanceMetadata) {
         use std::collections::hash_map::Entry;
 
         match self.metadata_map.entry(id) {
@@ -131,22 +145,22 @@ impl RojoTree {
         }
     }
 
-    pub fn descendants(&self, id: RbxId) -> RojoDescendants<'_> {
-        RojoDescendants {
-            inner: self.inner.descendants(id),
-            tree: self,
-        }
+    pub fn descendants(&self, id: Ref) -> RojoDescendants<'_> {
+        let mut queue = VecDeque::new();
+        queue.push_back(id);
+
+        RojoDescendants { queue, tree: self }
     }
 
-    pub fn get_ids_at_path(&self, path: &Path) -> &[RbxId] {
+    pub fn get_ids_at_path(&self, path: &Path) -> &[Ref] {
         self.path_to_ids.get(path)
     }
 
-    pub fn get_metadata(&self, id: RbxId) -> Option<&InstanceMetadata> {
+    pub fn get_metadata(&self, id: Ref) -> Option<&InstanceMetadata> {
         self.metadata_map.get(&id)
     }
 
-    fn insert_metadata(&mut self, id: RbxId, metadata: InstanceMetadata) {
+    fn insert_metadata(&mut self, id: Ref, metadata: InstanceMetadata) {
         for path in &metadata.relevant_paths {
             self.path_to_ids.insert(path.clone(), id);
         }
@@ -156,25 +170,17 @@ impl RojoTree {
 
     /// Moves the Rojo metadata from the instance with the given ID from this
     /// tree into some loose maps.
-    fn move_metadata(
-        &mut self,
-        id: RbxId,
-        metadata_map: &mut HashMap<RbxId, InstanceMetadata>,
-        path_to_ids: &mut MultiMap<PathBuf, RbxId>,
-    ) {
+    fn remove_metadata(&mut self, id: Ref) {
         let metadata = self.metadata_map.remove(&id).unwrap();
 
         for path in &metadata.relevant_paths {
             self.path_to_ids.remove(path, id);
-            path_to_ids.insert(path.clone(), id);
         }
-
-        metadata_map.insert(id, metadata);
     }
 }
 
 pub struct RojoDescendants<'a> {
-    inner: Descendants<'a>,
+    queue: VecDeque<Ref>,
     tree: &'a RojoTree,
 }
 
@@ -182,50 +188,43 @@ impl<'a> Iterator for RojoDescendants<'a> {
     type Item = InstanceWithMeta<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let instance = self.inner.next()?;
+        let id = self.queue.pop_front()?;
+
+        let instance = self
+            .tree
+            .inner
+            .get_by_ref(id)
+            .expect("Instance did not exist");
+
         let metadata = self
             .tree
-            .get_metadata(instance.get_id())
+            .get_metadata(instance.referent())
             .expect("Metadata did not exist for instance");
+
+        self.queue.extend(instance.children().iter().copied());
 
         Some(InstanceWithMeta { instance, metadata })
     }
 }
 
-/// RojoTree's equivalent of `RbxInstanceProperties`.
-#[derive(Debug, Clone)]
-pub struct InstancePropertiesWithMeta {
-    pub properties: RbxInstanceProperties,
-    pub metadata: InstanceMetadata,
-}
-
-impl InstancePropertiesWithMeta {
-    pub fn new(properties: RbxInstanceProperties, metadata: InstanceMetadata) -> Self {
-        InstancePropertiesWithMeta {
-            properties,
-            metadata,
-        }
-    }
-}
-
-/// RojoTree's equivalent of `&'a RbxInstance`.
+/// RojoTree's equivalent of `&'a Instance`.
 ///
 /// This has to be a value type for RojoTree because the instance and metadata
 /// are stored in different places. The mutable equivalent is
 /// `InstanceWithMetaMut`.
 #[derive(Debug, Clone, Copy)]
 pub struct InstanceWithMeta<'a> {
-    instance: &'a RbxInstance,
+    instance: &'a Instance,
     metadata: &'a InstanceMetadata,
 }
 
 impl<'a> InstanceWithMeta<'a> {
-    pub fn id(&self) -> RbxId {
-        self.instance.get_id()
+    pub fn id(&self) -> Ref {
+        self.instance.referent()
     }
 
-    pub fn parent(&self) -> Option<RbxId> {
-        self.instance.get_parent_id()
+    pub fn parent(&self) -> Ref {
+        self.instance.parent()
     }
 
     pub fn name(&self) -> &'a str {
@@ -233,15 +232,15 @@ impl<'a> InstanceWithMeta<'a> {
     }
 
     pub fn class_name(&self) -> &'a str {
-        &self.instance.class_name
+        &self.instance.class
     }
 
-    pub fn properties(&self) -> &'a HashMap<String, RbxValue> {
+    pub fn properties(&self) -> &'a HashMap<String, Variant> {
         &self.instance.properties
     }
 
-    pub fn children(&self) -> &'a [RbxId] {
-        self.instance.get_children_ids()
+    pub fn children(&self) -> &'a [Ref] {
+        self.instance.children()
     }
 
     pub fn metadata(&self) -> &'a InstanceMetadata {
@@ -249,20 +248,20 @@ impl<'a> InstanceWithMeta<'a> {
     }
 }
 
-/// RojoTree's equivalent of `&'a mut RbxInstance`.
+/// RojoTree's equivalent of `&'a mut Instance`.
 ///
 /// This has to be a value type for RojoTree because the instance and metadata
 /// are stored in different places. The immutable equivalent is
 /// `InstanceWithMeta`.
 #[derive(Debug)]
 pub struct InstanceWithMetaMut<'a> {
-    instance: &'a mut RbxInstance,
+    instance: &'a mut Instance,
     metadata: &'a mut InstanceMetadata,
 }
 
 impl InstanceWithMetaMut<'_> {
-    pub fn id(&self) -> RbxId {
-        self.instance.get_id()
+    pub fn id(&self) -> Ref {
+        self.instance.referent()
     }
 
     pub fn name(&self) -> &str {
@@ -274,23 +273,23 @@ impl InstanceWithMetaMut<'_> {
     }
 
     pub fn class_name(&self) -> &str {
-        &self.instance.class_name
+        &self.instance.class
     }
 
     pub fn class_name_mut(&mut self) -> &mut String {
-        &mut self.instance.class_name
+        &mut self.instance.class
     }
 
-    pub fn properties(&self) -> &HashMap<String, RbxValue> {
+    pub fn properties(&self) -> &HashMap<String, Variant> {
         &self.instance.properties
     }
 
-    pub fn properties_mut(&mut self) -> &mut HashMap<String, RbxValue> {
+    pub fn properties_mut(&mut self) -> &mut HashMap<String, Variant> {
         &mut self.instance.properties
     }
 
-    pub fn children(&self) -> &[RbxId] {
-        self.instance.get_children_ids()
+    pub fn children(&self) -> &[Ref] {
+        self.instance.children()
     }
 
     pub fn metadata(&self) -> &InstanceMetadata {
