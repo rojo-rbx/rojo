@@ -30,7 +30,6 @@ pub enum AmbiguousValue {
     Array2([f64; 2]),
     Array3([f64; 3]),
     Array4([f64; 4]),
-    Array16([f64; 16]),
 }
 
 impl AmbiguousValue {
@@ -136,7 +135,6 @@ impl AmbiguousValue {
             AmbiguousValue::Array2(_) => "an array of two numbers",
             AmbiguousValue::Array3(_) => "an array of three numbers",
             AmbiguousValue::Array4(_) => "an array of four numbers",
-            AmbiguousValue::Array16(_) => "an array of 16 numbers",
         }
     }
 }
