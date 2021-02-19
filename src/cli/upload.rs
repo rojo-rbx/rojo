@@ -38,11 +38,8 @@ pub fn upload(options: UploadCommand) -> Result<(), anyhow::Error> {
 
     let mut buffer = Vec::new();
 
-    log::trace!("Encoding XML model");
-    let config = rbx_xml::EncodeOptions::new()
-        .property_behavior(rbx_xml::EncodePropertyBehavior::WriteUnknown);
-
-    rbx_xml::to_writer(&mut buffer, tree.inner(), &encode_ids, config)?;
+    log::trace!("Encoding binary model");
+    rbx_binary::to_writer_default(&mut buffer, tree.inner(), &encode_ids)?;
     do_upload(buffer, options.asset_id, &cookie)
 }
 
