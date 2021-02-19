@@ -1,160 +1,4 @@
 {
-  "Color3uint8": {
-    "value": {
-      "Type": "Color3uint8",
-      "Value": [
-        0,
-        128,
-        255
-      ]
-    },
-    "ty": "Color3uint8"
-  },
-  "Bool": {
-    "value": {
-      "Type": "Bool",
-      "Value": true
-    },
-    "ty": "Bool"
-  },
-  "BinaryString": {
-    "value": {
-      "Type": "BinaryString",
-      "Value": "SGVsbG8h"
-    },
-    "ty": "BinaryString"
-  },
-  "BrickColor": {
-    "value": {
-      "Type": "BrickColor",
-      "Value": 1004
-    },
-    "ty": "BrickColor"
-  },
-  "Vector3": {
-    "value": {
-      "Type": "Vector3",
-      "Value": [
-        -300.0,
-        0.0,
-        1500.0
-      ]
-    },
-    "ty": "Vector3"
-  },
-  "String": {
-    "value": {
-      "Type": "String",
-      "Value": "Hello, world!"
-    },
-    "ty": "String"
-  },
-  "NumberRange": {
-    "value": {
-      "Type": "NumberRange",
-      "Value": [
-        -36.0,
-        94.0
-      ]
-    },
-    "ty": "NumberRange"
-  },
-  "Int64": {
-    "value": {
-      "Type": "Int64",
-      "Value": 23491023
-    },
-    "ty": "Int64"
-  },
-  "Vector3int16": {
-    "value": {
-      "Type": "Vector3int16",
-      "Value": [
-        60,
-        37,
-        -450
-      ]
-    },
-    "ty": "Vector3int16"
-  },
-  "Float32": {
-    "value": {
-      "Type": "Float32",
-      "Value": 15.0
-    },
-    "ty": "Float32"
-  },
-  "NumberSequence": {
-    "value": {
-      "Type": "NumberSequence",
-      "Value": {
-        "Keypoints": [
-          {
-            "Time": 0.0,
-            "Value": 5.0,
-            "Envelope": 2.0
-          },
-          {
-            "Time": 1.0,
-            "Value": 22.0,
-            "Envelope": 0.0
-          }
-        ]
-      }
-    },
-    "ty": "NumberSequence"
-  },
-  "ColorSequence": {
-    "value": {
-      "Type": "ColorSequence",
-      "Value": {
-        "Keypoints": [
-          {
-            "Time": 0.0,
-            "Color": [
-              1.0,
-              1.0,
-              0.5
-            ]
-          },
-          {
-            "Time": 1.0,
-            "Color": [
-              0.0,
-              0.0,
-              0.0
-            ]
-          }
-        ]
-      }
-    },
-    "ty": "ColorSequence"
-  },
-  "Ray": {
-    "value": {
-      "Type": "Ray",
-      "Value": {
-        "Origin": [
-          1.0,
-          2.0,
-          3.0
-        ],
-        "Direction": [
-          4.0,
-          5.0,
-          6.0
-        ]
-      }
-    },
-    "ty": "Ray"
-  },
-  "Int32": {
-    "value": {
-      "Type": "Int32",
-      "Value": 6014
-    },
-    "ty": "Int32"
-  },
   "Axes": {
     "value": {
       "Type": "Axes",
@@ -166,98 +10,26 @@
     },
     "ty": "Axes"
   },
-  "Enum": {
+  "BinaryString": {
     "value": {
-      "Type": "Enum",
-      "Value": 1234
+      "Type": "BinaryString",
+      "Value": "SGVsbG8h"
     },
-    "ty": "Enum"
+    "ty": "BinaryString"
   },
-  "Faces": {
+  "Bool": {
     "value": {
-      "Type": "Faces",
-      "Value": [
-        "Right",
-        "Top",
-        "Back",
-        "Left",
-        "Bottom",
-        "Front"
-      ]
+      "Type": "Bool",
+      "Value": true
     },
-    "ty": "Faces"
+    "ty": "Bool"
   },
-  "UDim": {
+  "BrickColor": {
     "value": {
-      "Type": "UDim",
-      "Value": [
-        1.0,
-        32
-      ]
+      "Type": "BrickColor",
+      "Value": 1004
     },
-    "ty": "UDim"
-  },
-  "Vector2": {
-    "value": {
-      "Type": "Vector2",
-      "Value": [
-        -50.0,
-        50.0
-      ]
-    },
-    "ty": "Vector2"
-  },
-  "Color3": {
-    "value": {
-      "Type": "Color3",
-      "Value": [
-        1.0,
-        2.0,
-        3.0
-      ]
-    },
-    "ty": "Color3"
-  },
-  "Float64": {
-    "value": {
-      "Type": "Float64",
-      "Value": 15123.0
-    },
-    "ty": "Float64"
-  },
-  "UDim2": {
-    "value": {
-      "Type": "UDim2",
-      "Value": [
-        [
-          -1.0,
-          100
-        ],
-        [
-          1.0,
-          -100
-        ]
-      ]
-    },
-    "ty": "UDim2"
-  },
-  "Region3int16": {
-    "value": {
-      "Type": "Region3int16",
-      "Value": [
-        [
-          -10,
-          -5,
-          0
-        ],
-        [
-          5,
-          10,
-          15
-        ]
-      ]
-    },
-    "ty": "Region3int16"
+    "ty": "BrickColor"
   },
   "CFrame": {
     "value": {
@@ -289,6 +61,54 @@
     },
     "ty": "CFrame"
   },
+  "Color3": {
+    "value": {
+      "Type": "Color3",
+      "Value": [
+        1.0,
+        2.0,
+        3.0
+      ]
+    },
+    "ty": "Color3"
+  },
+  "Color3uint8": {
+    "value": {
+      "Type": "Color3uint8",
+      "Value": [
+        0,
+        128,
+        255
+      ]
+    },
+    "ty": "Color3uint8"
+  },
+  "ColorSequence": {
+    "value": {
+      "Type": "ColorSequence",
+      "Value": {
+        "Keypoints": [
+          {
+            "Time": 0.0,
+            "Color": [
+              1.0,
+              1.0,
+              0.5
+            ]
+          },
+          {
+            "Time": 1.0,
+            "Color": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ]
+      }
+    },
+    "ty": "ColorSequence"
+  },
   "Content": {
     "value": {
       "Type": "Content",
@@ -296,7 +116,86 @@
     },
     "ty": "Content"
   },
-  "PhysicalProperties": {
+  "Enum": {
+    "value": {
+      "Type": "Enum",
+      "Value": 1234
+    },
+    "ty": "Enum"
+  },
+  "Faces": {
+    "value": {
+      "Type": "Faces",
+      "Value": [
+        "Right",
+        "Top",
+        "Back",
+        "Left",
+        "Bottom",
+        "Front"
+      ]
+    },
+    "ty": "Faces"
+  },
+  "Float32": {
+    "value": {
+      "Type": "Float32",
+      "Value": 15.0
+    },
+    "ty": "Float32"
+  },
+  "Float64": {
+    "value": {
+      "Type": "Float64",
+      "Value": 15123.0
+    },
+    "ty": "Float64"
+  },
+  "Int32": {
+    "value": {
+      "Type": "Int32",
+      "Value": 6014
+    },
+    "ty": "Int32"
+  },
+  "Int64": {
+    "value": {
+      "Type": "Int64",
+      "Value": 23491023
+    },
+    "ty": "Int64"
+  },
+  "NumberRange": {
+    "value": {
+      "Type": "NumberRange",
+      "Value": [
+        -36.0,
+        94.0
+      ]
+    },
+    "ty": "NumberRange"
+  },
+  "NumberSequence": {
+    "value": {
+      "Type": "NumberSequence",
+      "Value": {
+        "Keypoints": [
+          {
+            "Time": 0.0,
+            "Value": 5.0,
+            "Envelope": 2.0
+          },
+          {
+            "Time": 1.0,
+            "Value": 22.0,
+            "Envelope": 0.0
+          }
+        ]
+      }
+    },
+    "ty": "NumberSequence"
+  },
+  "PhysicalProperties-Custom": {
     "value": {
       "Type": "PhysicalProperties",
       "Value": {
@@ -308,6 +207,31 @@
       }
     },
     "ty": "PhysicalProperties"
+  },
+  "PhysicalProperties-Default": {
+    "value": {
+      "Type": "PhysicalProperties",
+      "Value": "Default"
+    },
+    "ty": "PhysicalProperties"
+  },
+  "Ray": {
+    "value": {
+      "Type": "Ray",
+      "Value": {
+        "Origin": [
+          1.0,
+          2.0,
+          3.0
+        ],
+        "Direction": [
+          4.0,
+          5.0,
+          6.0
+        ]
+      }
+    },
+    "ty": "Ray"
   },
   "Rect": {
     "value": {
@@ -325,6 +249,67 @@
     },
     "ty": "Rect"
   },
+  "Region3int16": {
+    "value": {
+      "Type": "Region3int16",
+      "Value": [
+        [
+          -10,
+          -5,
+          0
+        ],
+        [
+          5,
+          10,
+          15
+        ]
+      ]
+    },
+    "ty": "Region3int16"
+  },
+  "String": {
+    "value": {
+      "Type": "String",
+      "Value": "Hello, world!"
+    },
+    "ty": "String"
+  },
+  "UDim": {
+    "value": {
+      "Type": "UDim",
+      "Value": [
+        1.0,
+        32
+      ]
+    },
+    "ty": "UDim"
+  },
+  "UDim2": {
+    "value": {
+      "Type": "UDim2",
+      "Value": [
+        [
+          -1.0,
+          100
+        ],
+        [
+          1.0,
+          -100
+        ]
+      ]
+    },
+    "ty": "UDim2"
+  },
+  "Vector2": {
+    "value": {
+      "Type": "Vector2",
+      "Value": [
+        -50.0,
+        50.0
+      ]
+    },
+    "ty": "Vector2"
+  },
   "Vector2int16": {
     "value": {
       "Type": "Vector2int16",
@@ -334,5 +319,27 @@
       ]
     },
     "ty": "Vector2int16"
+  },
+  "Vector3": {
+    "value": {
+      "Type": "Vector3",
+      "Value": [
+        -300.0,
+        0.0,
+        1500.0
+      ]
+    },
+    "ty": "Vector3"
+  },
+  "Vector3int16": {
+    "value": {
+      "Type": "Vector3int16",
+      "Value": [
+        60,
+        37,
+        -450
+      ]
+    },
+    "ty": "Vector3int16"
   }
 }

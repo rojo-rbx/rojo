@@ -17708,6 +17708,10 @@
           "Type": "Bool",
           "Value": true
         },
+        "AssetId": {
+          "Type": "Content",
+          "Value": ""
+        },
         "AttributesSerialize": {
           "Type": "BinaryString",
           "Value": ""
@@ -19100,6 +19104,19 @@
       "Tags": [],
       "Superclass": "TriangleMeshPart",
       "Properties": {
+        "AssetId": {
+          "Name": "AssetId",
+          "Scriptability": "None",
+          "DataType": {
+            "Value": "Content"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
         "RenderFidelity": {
           "Name": "RenderFidelity",
           "Scriptability": "ReadWrite",
@@ -19160,6 +19177,10 @@
         "Anchored": {
           "Type": "Bool",
           "Value": false
+        },
+        "AssetId": {
+          "Type": "Content",
+          "Value": ""
         },
         "AttributesSerialize": {
           "Type": "BinaryString",
@@ -37375,6 +37396,10 @@
         "Anchored": {
           "Type": "Bool",
           "Value": false
+        },
+        "AssetId": {
+          "Type": "Content",
+          "Value": ""
         },
         "AttributesSerialize": {
           "Type": "BinaryString",

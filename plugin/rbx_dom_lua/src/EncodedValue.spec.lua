@@ -1,7 +1,6 @@
 return function()
 	local HttpService = game:GetService("HttpService")
 	
-	local RbxDom = require(script.Parent)
 	local EncodedValue = require(script.Parent.EncodedValue)
 	local allValues = require(script.Parent.allValues)
 
@@ -39,10 +38,20 @@ return function()
 		end
 	end
 
+	local extraAssertions = {
+		CFrame = function(value)
+			expect(value).to.equal(CFrame.new(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12))
+		end,
+	}
+
 	for testName, testEntry in pairs(allValues) do
 		it("round trip " .. testName, function()
 			local ok, decoded = EncodedValue.decode(testEntry.value)
 			assert(ok, decoded)
+
+			if extraAssertions[testName] ~= nil then
+				extraAssertions[testName](decoded)
+			end
 
 			local ok, encoded = EncodedValue.encode(decoded, testEntry.ty)
 			assert(ok, encoded)
