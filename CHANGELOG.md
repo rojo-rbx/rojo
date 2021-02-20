@@ -2,6 +2,11 @@
 
 ## Unreleased Changes
 
+## [7.0.0-alpha.2][7.0.0-alpha.2] (February 19, 2021)
+* Fixed incorrect protocol version between the client and server.
+
+[7.0.0-alpha.2]: https://github.com/rojo-rbx/rojo/releases/tag/v7.0.0-alpha.2
+
 ## [7.0.0-alpha.1][7.0.0-alpha.1] (February 18, 2021)
 This release includes a brand new implementation of the Roblox DOM. It brings performance improvements, much better support for `rbxl` and `rbxm` files, and a better internal API.
 
