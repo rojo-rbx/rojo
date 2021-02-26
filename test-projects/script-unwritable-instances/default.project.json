@@ -1,0 +1,11 @@
+{
+	"name": "script-unwritable-instances",
+	"tree": {
+		"$className": "DataModel",
+
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "$path": "src"
+    }
+	}
+}
