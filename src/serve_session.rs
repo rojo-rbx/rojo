@@ -179,10 +179,6 @@ impl ServeSession {
         &self.vfs
     }
 
-    pub fn vfs_handle(&self) -> Arc<Vfs> {
-        Arc::clone(&self.vfs)
-    }
-
     pub fn message_queue(&self) -> &MessageQueue<AppliedPatchSet> {
         &self.message_queue
     }

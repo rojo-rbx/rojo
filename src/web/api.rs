@@ -1,10 +1,11 @@
 //! Defines Rojo's HTTP API, all under /api. These endpoints generally return
 //! JSON.
 
-use std::{collections::HashMap, fs, path::PathBuf, str::FromStr, sync::Arc};
+use std::{collections::HashMap, path::PathBuf, str::FromStr, sync::Arc};
 
 use futures::{Future, Stream};
 
+use fs_err as fs;
 use hyper::{service::Service, Body, Method, Request, StatusCode};
 use rbx_dom_weak::{types::Ref, InstanceBuilder, WeakDom};
 use roblox_install::RobloxStudio;
@@ -290,7 +291,6 @@ impl ApiService {
         let session_id = self.serve_session.session_id();
 
         let serve_tree = self.serve_session.tree_handle();
-        let vfs = self.serve_session.vfs_handle();
 
         Box::new(request.into_body().concat2().and_then(move |body| {
             let serve_tree = serve_tree.lock().expect("Couldn't lock RojoTree mutex");
@@ -329,13 +329,39 @@ impl ApiService {
                 }
             };
 
-            // TODO: memofs does not have create_dir_all, but it is necessary here.
             let packed_path = studio
                 .content_path()
                 .join(CREATE_ASSETS_DIR)
                 .join(&model_path);
 
-            let mut writer: Vec<u8> = Vec::new();
+            if let Err(error) =
+                fs::create_dir_all(&packed_path.parent().expect("no parent for packed_path"))
+            {
+                return json(
+                    ErrorResponse::bad_request(format!(
+                        "Couldn't create assets directory: {}",
+                        error
+                    )),
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                );
+            }
+
+            let mut writer = match fs::OpenOptions::new()
+                .write(true)
+                .create(true)
+                .open(&packed_path)
+            {
+                Ok(file) => file,
+                Err(error) => {
+                    return json(
+                        ErrorResponse::bad_request(format!(
+                            "Couldn't create assets file: {}",
+                            error
+                        )),
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                    );
+                }
+            };
 
             let export_tree = WeakDom::new(
                 InstanceBuilder::new("Folder")
@@ -373,14 +399,7 @@ impl ApiService {
                 &vec![export_tree.root_ref()],
             ) {
                 return json(
-                    ErrorResponse::bad_request(format!("Couldn't write DOM to buffer: {}", error)),
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                );
-            }
-
-            if let Err(error) = vfs.write(packed_path, writer) {
-                return json(
-                    ErrorResponse::bad_request(format!("Couldn't write buffer to file: {}", error)),
+                    ErrorResponse::bad_request(format!("Couldn't write DOM to file: {}", error)),
                     StatusCode::INTERNAL_SERVER_ERROR,
                 );
             }
