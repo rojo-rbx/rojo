@@ -314,8 +314,7 @@ impl ApiService {
 
             let serve_dom = serve_tree.inner();
 
-            let packed_uuid = Uuid::new_v4().to_simple().to_string();
-            let model_path = format!("{}.rbxm", packed_uuid);
+            let model_path = format!("{}.rbxm", Uuid::new_v4().to_simple());
 
             let studio = match RobloxStudio::locate() {
                 Ok(studio) => studio,
