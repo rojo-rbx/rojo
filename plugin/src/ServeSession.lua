@@ -258,7 +258,6 @@ end
 function ServeSession:__mainSyncLoop()
 	return self.__apiContext:retrieveMessages()
 		:andThen(function(messages)
-			-- TODO: Maybe merge all the patches together?
 			local getObjectsPromises = {}
 
 			for _, message in ipairs(messages) do
