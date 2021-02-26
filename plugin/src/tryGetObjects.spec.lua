@@ -7,7 +7,7 @@ return function()
 
 	local MESH_DOGE = "rbxassetid://4574885352"
 
-	itFOCUS("should apply updates to existing instances", function()
+	it("should apply updates to existing instances", function()
 		local mockApiContext = {}
 		function mockApiContext:createAssets()
 			return Promise.resolve("rbxasset://rojo-tests/DogeUpdate.rbxm")
