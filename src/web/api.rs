@@ -393,11 +393,9 @@ impl ApiService {
                     })),
             );
 
-            if let Err(error) = rbx_binary::to_writer_default(
-                &mut writer,
-                &export_tree,
-                &vec![export_tree.root_ref()],
-            ) {
+            if let Err(error) =
+                rbx_binary::to_writer_default(&mut writer, &export_tree, &[export_tree.root_ref()])
+            {
                 return json(
                     ErrorResponse::bad_request(format!("Couldn't write DOM to file: {}", error)),
                     StatusCode::INTERNAL_SERVER_ERROR,
