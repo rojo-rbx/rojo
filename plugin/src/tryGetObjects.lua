@@ -23,6 +23,11 @@ local function tryGetObjects(instanceMap, apiContext, patch)
 	-- GetObjects only create instances, we can't update the properties of existing ones.
 	-- Instead, just create them again, move their children, and replace the instance.
 	for _, update in ipairs(patch.updated) do
+		-- If no properties were changed during an update, GetObjects isn't going to do anything that hasn't already been tried
+		if next(update.changedProperties) == nil then
+			continue
+		end
+
 		table.insert(assetsToRequest, update.id)
 		table.insert(unappliedPatch.updated, update)
 
