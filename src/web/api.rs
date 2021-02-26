@@ -379,7 +379,7 @@ impl ApiService {
                             }
                         };
 
-                        // TODO: Children of instance are not used here, as Rojo might already have
+                        // Children of instance are not used here, as Rojo might already have
                         // created them, and can place them inside instead.
                         Some(
                             InstanceBuilder::new("Folder")
