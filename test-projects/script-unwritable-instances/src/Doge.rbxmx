@@ -2,7 +2,7 @@
 	<Meta name="ExplicitAutoJoints">true</Meta>
 	<External>null</External>
 	<External>nil</External>
-	<Item class="MeshPart" referent="RBX1A67A850B1A84DDF9F1E3C8FFE1DEFAE">
+	<Item class="MeshPart" referent="RBXA124F4B5F05846D7B20B7DFB16B7E438">
 		<Properties>
 			<bool name="Anchored">false</bool>
 			<BinaryString name="AttributesSerialize"></BinaryString>
@@ -97,6 +97,15 @@
 				<Z>1.71002197</Z>
 			</Vector3>
 		</Properties>
+		<Item class="NumberValue" referent="RBXB86462CCD65743298E46257125A3485B">
+			<Properties>
+				<BinaryString name="AttributesSerialize"></BinaryString>
+				<string name="Name">SomethingInside</string>
+				<int64 name="SourceAssetId">-1</int64>
+				<BinaryString name="Tags"></BinaryString>
+				<double name="Value">100</double>
+			</Properties>
+		</Item>
 	</Item>
 	<SharedStrings>
 		<SharedString md5="ZHrUFTkEqGc1UELrwqgdog==">Q1NHUEhTBgAAAFmGi0Bd8ni+nknMPXTyDzrdnGxAkQzPv68WTD995cxAIPmdPhxIC0EQAAAA

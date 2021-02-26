@@ -10,13 +10,15 @@ local function tryGetObjects(instanceMap, apiContext, patch)
 
 	-- GetObjects won't help with anything that failed to remove
 	unappliedPatch.removed = patch.removed
-	-- TODO: Implement this
+	-- TODO: Implement this? Do we have to?
 	unappliedPatch.added = patch.added
 
 	local assetsToRequest = {}
 	local receiveCallbacks = {}
 
-	-- TODO: added
+	Log.trace("tryGetObjects({:#?})", patch)
+
+	-- TODO: added?
 
 	-- GetObjects only create instances, we can't update the properties of existing ones.
 	-- Instead, just create them again, move their children, and replace the instance.
@@ -30,6 +32,7 @@ local function tryGetObjects(instanceMap, apiContext, patch)
 			local oldInstance = instanceMap.fromIds[update.id]
 
 			-- TODO: What if oldInstance is nil?
+			-- TODO: This will dupe children if the rbxm is not empty.
 			for _, oldChild in ipairs(oldInstance:GetChildren()) do
 				oldChild.Parent = newInstance
 			end

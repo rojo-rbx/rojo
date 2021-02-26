@@ -149,6 +149,20 @@ pub struct OpenResponse {
     pub session_id: SessionId,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateAssetsRequest {
+    pub session_id: SessionId,
+    pub assets: Vec<Ref>,
+}
+
+/// Response body from /api/create-assets
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateAssetsResponse {
+    pub url: String,
+}
+
 /// General response type returned from all Rojo routes
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

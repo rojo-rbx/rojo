@@ -6,7 +6,9 @@ use std::{collections::HashMap, fs, path::PathBuf, str::FromStr, sync::Arc};
 use futures::{Future, Stream};
 
 use hyper::{service::Service, Body, Method, Request, StatusCode};
-use rbx_dom_weak::types::Ref;
+use rbx_dom_weak::{types::Ref, InstanceBuilder, WeakDom};
+use roblox_install::RobloxStudio;
+use uuid::Uuid;
 
 use crate::{
     serve_session::ServeSession,
@@ -19,7 +21,10 @@ use crate::{
         },
         util::{json, json_ok},
     },
+    web_api::{CreateAssetsRequest, CreateAssetsResponse},
 };
+
+const CREATE_ASSETS_DIR: &str = "rojo-exports";
 
 pub struct ApiService {
     serve_session: Arc<ServeSession>,
@@ -44,6 +49,7 @@ impl Service for ApiService {
             }
 
             (&Method::POST, "/api/write") => self.handle_api_write(request),
+            (&Method::POST, "/api/create-assets") => self.handle_api_create_assets(request),
 
             (_method, path) => json(
                 ErrorResponse::not_found(format!("Route not found: {}", path)),
@@ -278,6 +284,112 @@ impl ApiService {
         json_ok(&OpenResponse {
             session_id: self.serve_session.session_id(),
         })
+    }
+
+    fn handle_api_create_assets(&self, request: Request<Body>) -> <Self as Service>::Future {
+        let session_id = self.serve_session.session_id();
+
+        let serve_tree = self.serve_session.tree_handle();
+        let vfs = self.serve_session.vfs_handle();
+
+        Box::new(request.into_body().concat2().and_then(move |body| {
+            let serve_tree = serve_tree.lock().expect("Couldn't lock RojoTree mutex");
+
+            let request: CreateAssetsRequest = match serde_json::from_slice(&body) {
+                Ok(request) => request,
+                Err(err) => {
+                    return json(
+                        ErrorResponse::bad_request(format!("Invalid body: {}", err)),
+                        StatusCode::BAD_REQUEST,
+                    );
+                }
+            };
+
+            if request.session_id != session_id {
+                return json(
+                    ErrorResponse::bad_request("Wrong session ID"),
+                    StatusCode::BAD_REQUEST,
+                );
+            }
+
+            let serve_dom = serve_tree.inner();
+
+            let packed_uuid = Uuid::new_v4().to_simple().to_string();
+            let model_path = format!("{}.rbxm", packed_uuid);
+
+            let studio = match RobloxStudio::locate() {
+                Ok(studio) => studio,
+                Err(error) => {
+                    return json(
+                        ErrorResponse::bad_request(format!(
+                            "Couldn't find Roblox Studio: {}",
+                            error
+                        )),
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                    );
+                }
+            };
+
+            // TODO: memofs does not have create_dir_all, but it is necessary here.
+            let packed_path = studio
+                .content_path()
+                .join(CREATE_ASSETS_DIR)
+                .join(&model_path);
+
+            let mut writer: Vec<u8> = Vec::new();
+
+            let export_tree = WeakDom::new(
+                InstanceBuilder::new("Folder")
+                    .with_name("Assets")
+                    .with_children(request.assets.iter().copied().filter_map(|asset_ref| {
+                        let exporting = match serve_dom.get_by_ref(asset_ref) {
+                            Some(instance) => instance,
+                            None => {
+                                log::warn!(
+                                    "Received asset ID for an instance not in our tree ({})",
+                                    asset_ref
+                                );
+
+                                return None;
+                            }
+                        };
+
+                        // TODO: Children of instance are not used here, as Rojo might already have
+                        // created them, and can place them inside instead.
+                        Some(
+                            InstanceBuilder::new("Folder")
+                                .with_name(asset_ref.to_string())
+                                .with_child(
+                                    InstanceBuilder::new(&exporting.class)
+                                        .with_name(&exporting.name)
+                                        .with_properties(exporting.properties.to_owned()),
+                                ),
+                        )
+                    })),
+            );
+
+            if let Err(error) = rbx_binary::to_writer_default(
+                &mut writer,
+                &export_tree,
+                &vec![export_tree.root_ref()],
+            ) {
+                return json(
+                    ErrorResponse::bad_request(format!("Couldn't write DOM to buffer: {}", error)),
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                );
+            }
+
+            if let Err(error) = vfs.write(packed_path, writer) {
+                return json(
+                    ErrorResponse::bad_request(format!("Couldn't write buffer to file: {}", error)),
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                );
+            }
+
+            json_ok(&CreateAssetsResponse {
+                url: format!("rbxasset://{}/{}", CREATE_ASSETS_DIR, model_path),
+            })
+        }))
     }
 }
 

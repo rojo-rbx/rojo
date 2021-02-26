@@ -2096,9 +2096,9 @@ dependencies = [
 
 [[package]]
 name = "roblox_install"
-version = "0.2.2"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f80edbbbcd67bce7ddaf754d94276b30ae0a72eedfdf034c0c987f4a535e4a54"
+checksum = "96d8c86f81b83db9b127bf66b51b9a24c844fe755f43310e56c09e2303148527"
 dependencies = [
  "dirs",
  "winreg",

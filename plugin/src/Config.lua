@@ -1,6 +1,7 @@
 local strict = require(script.Parent.strict)
 
-local isDevBuild = script.Parent.Parent:FindFirstChild("ROJO_DEV_BUILD") ~= nil
+-- local isDevBuild = script.Parent.Parent:FindFirstChild("ROJO_DEV_BUILD") ~= nil
+local isDevBuild = true
 
 return strict("Config", {
 	isDevBuild = isDevBuild,

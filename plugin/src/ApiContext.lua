@@ -248,4 +248,20 @@ function ApiContext:open(id)
 		end)
 end
 
+function ApiContext:createAssets(assets)
+	local url = ("%s/api/create-assets"):format(self.__baseUrl)
+	local body = Http.jsonEncode({
+		sessionId = self.__sessionId,
+		assets = assets,
+	})
+
+	return Http.post(url, body)
+		:andThen(rejectFailedRequests)
+		:andThen(Http.Response.json)
+		:andThen(function(responseBody)
+			Log.trace("createAssets response: {:#?}", responseBody)
+			return responseBody.url
+		end)
+end
+
 return ApiContext
