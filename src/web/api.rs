@@ -314,7 +314,7 @@ impl ApiService {
 
             let serve_dom = serve_tree.inner();
 
-            let model_path = format!("{}.rbxm", Uuid::new_v4().to_simple());
+            let model_path = format!("{}.rbxmx", Uuid::new_v4().to_simple());
 
             let studio = match RobloxStudio::locate() {
                 Ok(studio) => studio,
@@ -393,8 +393,10 @@ impl ApiService {
                     })),
             );
 
+            // XML is used instead of binary, as invalid XML files error,
+            // while invalid binary files completely crash Studio.
             if let Err(error) =
-                rbx_binary::to_writer_default(&mut writer, &export_tree, &[export_tree.root_ref()])
+                rbx_xml::to_writer_default(&mut writer, &export_tree, &[export_tree.root_ref()])
             {
                 return json(
                     ErrorResponse::bad_request(format!("Couldn't write DOM to file: {}", error)),
