@@ -37,7 +37,6 @@ local function tryGetObjects(instanceMap, apiContext, patch)
 			local oldInstance = instanceMap.fromIds[update.id]
 
 			-- TODO: What if oldInstance is nil?
-			-- TODO: This will dupe children if the rbxm is not empty.
 			for _, oldChild in ipairs(oldInstance:GetChildren()) do
 				oldChild.Parent = newInstance
 			end
