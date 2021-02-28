@@ -32,8 +32,6 @@ local function tryGetObjects(instanceMap, apiContext, patch)
 		table.insert(unappliedPatch.updated, update)
 
 		table.insert(receiveCallbacks, function(newInstance)
-			table.remove(unappliedPatch.updated, table.find(unappliedPatch.updated, update))
-
 			local oldInstance = instanceMap.fromIds[update.id]
 
 			-- TODO: What if oldInstance is nil?
@@ -43,9 +41,15 @@ local function tryGetObjects(instanceMap, apiContext, patch)
 
 			local oldParent = oldInstance.Parent
 			instanceMap:destroyInstance(oldInstance)
-			newInstance.Parent = oldParent
 
-			instanceMap:insert(update.id, newInstance)
+			local ok = pcall(function()
+				newInstance.Parent = oldParent
+			end)
+
+			if ok then
+				table.remove(unappliedPatch.updated, table.find(unappliedPatch.updated, update))
+				instanceMap:insert(update.id, newInstance)
+			end
 		end)
 	end
 
