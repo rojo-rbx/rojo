@@ -9,15 +9,48 @@ local function tryGetObjects(instanceMap, apiContext, patch)
 
 	-- GetObjects won't help with anything that failed to remove
 	unappliedPatch.removed = patch.removed
-	-- TODO: Implement this? Do we have to?
-	unappliedPatch.added = patch.added
 
 	local assetsToRequest = {}
 	local receiveCallbacks = {}
 
 	Log.trace("tryGetObjects({:#?})", patch)
 
-	-- TODO: added?
+	for id, addition in pairs(patch.added) do
+		unappliedPatch.added[id] = addition
+
+		table.insert(assetsToRequest, id)
+		table.insert(receiveCallbacks, function(newInstance)
+			for _, childId in ipairs(addition.Children) do
+				local child = instanceMap.fromIds[childId]
+				if child == nil then
+					Log.warn("Got child ID that wasn't in the instance map: {}", childId)
+					continue
+				end
+
+				child.Parent = newInstance
+			end
+
+			if addition.Parent ~= nil then
+				local parent = instanceMap.fromIds[addition.Parent]
+				if parent == nil then
+					Log.warn("Instance tried to be parented to non-existent parent: {}", addition.Parent)
+					return
+				end
+
+				local ok, problem = pcall(function()
+					newInstance.Parent = parent
+				end)
+
+				if not ok then
+					Log.warn("GetObjects couldn't parent {} to {}: {}", newInstance, parent, problem)
+					return
+				end
+			end
+
+			unappliedPatch.added[id] = nil
+			instanceMap:insert(id, newInstance)
+		end)
+	end
 
 	-- GetObjects only create instances, we can't update the properties of existing ones.
 	-- Instead, just create them again, move their children, and replace the instance.
@@ -51,6 +84,8 @@ local function tryGetObjects(instanceMap, apiContext, patch)
 			end
 		end)
 	end
+
+	Log.trace("assetsToRequest = {:?}", assetsToRequest)
 
 	if #assetsToRequest == 0 then
 		return Promise.resolve(unappliedPatch)
