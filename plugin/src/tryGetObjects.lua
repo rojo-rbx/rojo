@@ -31,7 +31,7 @@ local function tryGetObjects(instanceMap, apiContext, patch)
 		table.insert(assetsToRequest, update.id)
 		table.insert(unappliedPatch.updated, update)
 
-		receiveCallbacks[update.id] = function(newInstance)
+		table.insert(receiveCallbacks, function(newInstance)
 			table.remove(unappliedPatch.updated, table.find(unappliedPatch.updated, update))
 
 			local oldInstance = instanceMap.fromIds[update.id]
@@ -44,7 +44,9 @@ local function tryGetObjects(instanceMap, apiContext, patch)
 			local oldParent = oldInstance.Parent
 			instanceMap:destroyInstance(oldInstance)
 			newInstance.Parent = oldParent
-		end
+
+			instanceMap:insert(update.id, newInstance)
+		end)
 	end
 
 	if #assetsToRequest == 0 then
@@ -52,37 +54,12 @@ local function tryGetObjects(instanceMap, apiContext, patch)
 	end
 
 	return apiContext:createAssets(assetsToRequest):andThen(function(assetId)
-		--[[
-			The assets Rojo creates that we will be loading is in the following structure:
-
-			Assuming we requested the following IDs:
-			- DOGE: A doge mesh named Doge
-			- ROCK: A rock mesh named MyPet
-
-			Root: Folder
-			* DOGE: Folder
-				* Doge: MeshPart
-			* ROCK: Folder
-				* MyPet: MeshPart
-		]]
-
 		-- GetObjects doesn't yield, it blocks.
 		-- There is no way to promisify this unless GetObjectsAsync is opened up.
-		local createdAssets = game:GetObjects(assetId)[1]
+		local createdAssets = game:GetObjects(assetId)
 
-		if createdAssets == nil then
-			Log.warn("Request to create assets returned an asset that was empty.")
-			return unappliedPatch
-		end
-
-		for _, assetFolder in ipairs(createdAssets:GetChildren()) do
-			local requestedId = assetFolder.Name
-
-			-- TODO: Does this need to support multi-rooted instances? Probably not?
-			local assetInstance = assetFolder:GetChildren()[1]
-
-			receiveCallbacks[requestedId](assetInstance)
-			instanceMap:insert(requestedId, assetInstance)
+		for index, assetInstance in ipairs(createdAssets) do
+			receiveCallbacks[index](assetInstance)
 		end
 
 		return unappliedPatch

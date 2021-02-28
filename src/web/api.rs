@@ -366,37 +366,26 @@ impl ApiService {
             let export_tree = WeakDom::new(
                 InstanceBuilder::new("Folder")
                     .with_name("Assets")
-                    .with_children(request.assets.iter().copied().filter_map(|asset_ref| {
-                        let exporting = match serve_dom.get_by_ref(asset_ref) {
-                            Some(instance) => instance,
-                            None => {
-                                log::warn!(
-                                    "Received asset ID for an instance not in our tree ({})",
-                                    asset_ref
-                                );
+                    .with_children(request.assets.iter().copied().map(|asset_ref| {
+                        let exporting = serve_dom.get_by_ref(asset_ref).unwrap_or_else(|| {
+                            unreachable!(
+                                "Received asset ID for an instance not in our tree ({})",
+                                asset_ref
+                            )
+                        });
 
-                                return None;
-                            }
-                        };
-
-                        // Children of instance are not used here, as Rojo might already have
+                        // Children of instance are not used here, as Rojo has already
                         // created them, and can place them inside instead.
-                        Some(
-                            InstanceBuilder::new("Folder")
-                                .with_name(asset_ref.to_string())
-                                .with_child(
-                                    InstanceBuilder::new(&exporting.class)
-                                        .with_name(&exporting.name)
-                                        .with_properties(exporting.properties.to_owned()),
-                                ),
-                        )
+                        InstanceBuilder::new(&exporting.class)
+                            .with_name(&exporting.name)
+                            .with_properties(exporting.properties.to_owned())
                     })),
             );
 
             // XML is used instead of binary, as invalid XML files error,
             // while invalid binary files completely crash Studio.
             if let Err(error) =
-                rbx_xml::to_writer_default(&mut writer, &export_tree, &[export_tree.root_ref()])
+                rbx_xml::to_writer_default(&mut writer, &export_tree, export_tree.root().children())
             {
                 return json(
                     ErrorResponse::bad_request(format!("Couldn't write DOM to file: {}", error)),
