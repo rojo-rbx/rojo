@@ -48,7 +48,7 @@ return function()
 		expect(newDoge.MeshId).to.equal(MESH_DOGE)
 	end)
 
-	itFOCUS("should be able to create new instances", function()
+	it("should be able to create new instances", function()
 		local instanceMap = InstanceMap.new()
 
 		local folder = Instance.new("Folder")
