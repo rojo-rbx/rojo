@@ -1,4 +1,3 @@
-local Fmt = require(script.Parent.Parent.Fmt)
 local Log = require(script.Parent.Parent.Log)
 local PatchSet = require(script.Parent.PatchSet)
 local Promise = require(script.Parent.Parent.Promise)
