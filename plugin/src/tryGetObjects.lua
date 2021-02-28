@@ -66,7 +66,6 @@ local function tryGetObjects(instanceMap, apiContext, patch)
 		table.insert(receiveCallbacks, function(newInstance)
 			local oldInstance = instanceMap.fromIds[update.id]
 
-			-- TODO: What if oldInstance is nil?
 			for _, oldChild in ipairs(oldInstance:GetChildren()) do
 				oldChild.Parent = newInstance
 			end
