@@ -24,8 +24,8 @@ plugin.Unloading:Connect(function()
 	Roact.unmount(tree)
 end)
 
--- if Config.isDevBuild then
--- 	local TestEZ = require(script.Parent.TestEZ)
+if Config.isDevBuild then
+	local TestEZ = require(script.Parent.TestEZ)
 
--- 	require(script.runTests)(TestEZ)
--- end
+	require(script.runTests)(TestEZ)
+end
