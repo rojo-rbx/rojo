@@ -1,16 +1,19 @@
--- TODO: Have some documentation/script in order to force the rbxassets to be there
 return function()
 	local InstanceMap = require(script.Parent.InstanceMap)
 	local PatchSet = require(script.Parent.PatchSet)
 	local Promise = require(script.Parent.Parent.Promise)
 	local tryGetObjects = require(script.Parent.tryGetObjects)
 
+	-- game:GetObjects(ASSET_DOGE) == { Doge mesh }
+	local ASSET_DOGE = "rbxassetid://4574885387"
+
+	-- This is the actual Mesh ID for Doge
 	local MESH_DOGE = "rbxassetid://4574885352"
 
 	it("should apply updates to existing instances", function()
 		local mockApiContext = {}
 		function mockApiContext:createAssets()
-			return Promise.resolve("rbxasset://rojo-tests/DogeUpdate.rbxm")
+			return Promise.resolve(ASSET_DOGE)
 		end
 
 		local instanceMap = InstanceMap.new()
