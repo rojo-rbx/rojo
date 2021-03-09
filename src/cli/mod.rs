@@ -14,7 +14,7 @@ use std::{
     fmt,
     net::IpAddr,
     path::{Path, PathBuf},
-    str::FromStr
+    str::FromStr,
 };
 
 use structopt::StructOpt;

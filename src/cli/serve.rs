@@ -1,4 +1,9 @@
-use std::{io::{self, Write}, net::IpAddr, net::Ipv4Addr, sync::Arc};
+use std::{
+    io::{self, Write},
+    net::IpAddr,
+    net::Ipv4Addr,
+    sync::Arc,
+};
 
 use anyhow::Result;
 use memofs::Vfs;
@@ -10,7 +15,7 @@ use crate::{
     web::LiveServer,
 };
 
-const DEFAULT_BIND_ADDRESS: [u8;4] = [127, 0, 0, 1];
+const DEFAULT_BIND_ADDRESS: [u8; 4] = [127, 0, 0, 1];
 const DEFAULT_PORT: u16 = 34872;
 
 pub fn serve(global: GlobalOptions, options: ServeCommand) -> Result<()> {
