@@ -7,7 +7,15 @@ mod plugin;
 mod serve;
 mod upload;
 
-use std::{borrow::Cow, env, error::Error, fmt, net::IpAddr, path::{Path, PathBuf}, str::FromStr};
+use std::{
+    borrow::Cow,
+    env,
+    error::Error,
+    fmt,
+    net::IpAddr,
+    path::{Path, PathBuf},
+    str::FromStr
+};
 
 use structopt::StructOpt;
 use thiserror::Error;
