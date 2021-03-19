@@ -1,5 +1,7 @@
 use std::{
     io::{self, Write},
+    net::IpAddr,
+    net::Ipv4Addr,
     sync::Arc,
 };
 
@@ -13,12 +15,15 @@ use crate::{
     web::LiveServer,
 };
 
+const DEFAULT_BIND_ADDRESS: Ipv4Addr = Ipv4Addr::new(127, 0, 0, 1);
 const DEFAULT_PORT: u16 = 34872;
 
 pub fn serve(global: GlobalOptions, options: ServeCommand) -> Result<()> {
     let vfs = Vfs::new_default();
 
     let session = Arc::new(ServeSession::new(vfs, &options.absolute_project())?);
+
+    let ip = options.address.unwrap_or(DEFAULT_BIND_ADDRESS.into());
 
     let port = options
         .port
@@ -27,13 +32,13 @@ pub fn serve(global: GlobalOptions, options: ServeCommand) -> Result<()> {
 
     let server = LiveServer::new(session);
 
-    let _ = show_start_message(port, global.color.into());
-    server.start(port);
+    let _ = show_start_message(ip, port, global.color.into());
+    server.start((ip, port).into());
 
     Ok(())
 }
 
-fn show_start_message(port: u16, color: ColorChoice) -> io::Result<()> {
+fn show_start_message(bind_address: IpAddr, port: u16, color: ColorChoice) -> io::Result<()> {
     let writer = BufferWriter::stdout(color);
     let mut buffer = writer.buffer();
 
@@ -41,7 +46,12 @@ fn show_start_message(port: u16, color: ColorChoice) -> io::Result<()> {
 
     write!(&mut buffer, "  Address: ")?;
     buffer.set_color(ColorSpec::new().set_fg(Some(Color::Green)).set_bold(true))?;
-    writeln!(&mut buffer, "localhost")?;
+
+    if bind_address.is_loopback() {
+        writeln!(&mut buffer, "localhost")?;
+    } else {
+        writeln!(&mut buffer, "{}", bind_address)?;
+    }
 
     buffer.set_color(&ColorSpec::new())?;
     write!(&mut buffer, "  Port:    ")?;

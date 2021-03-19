@@ -1,6 +1,9 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Added `--address` flag to `rojo serve` to allow for external connections. ([#403][pr-403])
+
+[pr-403]: https://github.com/rojo-rbx/rojo/pull/403
 
 ## [6.0.2](https://github.com/rojo-rbx/rojo/releases/tag/v6.0.2) (February 9, 2021)
 * Fixed `rojo upload` to handle CSRF challenges.
