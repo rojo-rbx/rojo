@@ -187,7 +187,7 @@ pub struct ServeCommand {
     #[structopt(default_value = "")]
     pub project: PathBuf,
 
-    /// The IPv4 address to listen on. Defaults to `127.0.0.1`
+    /// The IP address to listen on. Defaults to `127.0.0.1`.
     #[structopt(long)]
     pub address: Option<IpAddr>,
 
