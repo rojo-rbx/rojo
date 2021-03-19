@@ -15,7 +15,7 @@ use crate::{
     web::LiveServer,
 };
 
-const DEFAULT_BIND_ADDRESS: [u8; 4] = [127, 0, 0, 1];
+const DEFAULT_BIND_ADDRESS: Ipv4Addr = Ipv4Addr::new(127, 0, 0, 1);
 const DEFAULT_PORT: u16 = 34872;
 
 pub fn serve(global: GlobalOptions, options: ServeCommand) -> Result<()> {
@@ -23,9 +23,7 @@ pub fn serve(global: GlobalOptions, options: ServeCommand) -> Result<()> {
 
     let session = Arc::new(ServeSession::new(vfs, &options.absolute_project())?);
 
-    let bind_address = options
-        .address
-        .unwrap_or(IpAddr::V4(Ipv4Addr::from(DEFAULT_BIND_ADDRESS)));
+    let ip = options.address.unwrap_or(DEFAULT_BIND_ADDRESS.into());
 
     let port = options
         .port
@@ -34,8 +32,8 @@ pub fn serve(global: GlobalOptions, options: ServeCommand) -> Result<()> {
 
     let server = LiveServer::new(session);
 
-    let _ = show_start_message(bind_address, port, global.color.into());
-    server.start(bind_address, port);
+    let _ = show_start_message(ip, port, global.color.into());
+    server.start((ip, port).into());
 
     Ok(())
 }

@@ -4,7 +4,7 @@ pub mod interface;
 mod ui;
 mod util;
 
-use std::{net::IpAddr, sync::Arc};
+use std::{net::SocketAddr, sync::Arc};
 
 use futures::{
     future::{self, FutureResult},
@@ -57,9 +57,7 @@ impl LiveServer {
         LiveServer { serve_session }
     }
 
-    pub fn start(self, bind_address: IpAddr, port: u16) {
-        let address = (bind_address, port).into();
-
+    pub fn start(self, address: SocketAddr) {
         let server = Server::bind(&address)
             .serve(move || {
                 let service: FutureResult<_, hyper::Error> =
