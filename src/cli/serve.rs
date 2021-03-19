@@ -46,7 +46,12 @@ fn show_start_message(bind_address: IpAddr, port: u16, color: ColorChoice) -> io
 
     write!(&mut buffer, "  Address: ")?;
     buffer.set_color(ColorSpec::new().set_fg(Some(Color::Green)).set_bold(true))?;
-    writeln!(&mut buffer, "{}", bind_address)?;
+
+    if bind_address.is_loopback() {
+        writeln!(&mut buffer, "localhost")?;
+    } else {
+        writeln!(&mut buffer, "{}", bind_address)?;
+    }
 
     buffer.set_color(&ColorSpec::new())?;
     write!(&mut buffer, "  Port:    ")?;
