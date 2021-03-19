@@ -12,6 +12,7 @@ use std::{
     env,
     error::Error,
     fmt,
+    net::IpAddr,
     path::{Path, PathBuf},
     str::FromStr,
 };
@@ -186,7 +187,11 @@ pub struct ServeCommand {
     #[structopt(default_value = "")]
     pub project: PathBuf,
 
-    /// The port to listen on. Defaults to the project's preference, or 34872 if
+    /// The IP address to listen on. Defaults to `127.0.0.1`.
+    #[structopt(long)]
+    pub address: Option<IpAddr>,
+
+    /// The port to listen on. Defaults to the project's preference, or `34872` if
     /// it has none.
     #[structopt(long)]
     pub port: Option<u16>,
