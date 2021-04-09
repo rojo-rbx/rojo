@@ -1,6 +1,7 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Updated dependencies, fixing OptionalCoordinateFrame-related issues.
 * Added `--address` flag to `rojo serve` to allow for external connections. ([#403][pr-403])
 
 [pr-403]: https://github.com/rojo-rbx/rojo/pull/403
