@@ -1,9 +1,13 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+
+## [7.0.0-alpha.3][7.0.0-alpha.3] (February 19, 2021)
+* Updated dependencies, fixing `OptionalCoordinateFrame`-related issues.
 * Added `--address` flag to `rojo serve` to allow for external connections. ([#403][pr-403])
 
 [pr-403]: https://github.com/rojo-rbx/rojo/pull/403
+[7.0.0-alpha.3]: https://github.com/rojo-rbx/rojo/releases/tag/v7.0.0-alpha.3
 
 ## [7.0.0-alpha.2][7.0.0-alpha.2] (February 19, 2021)
 * Fixed incorrect protocol version between the client and server.
