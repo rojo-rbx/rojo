@@ -1,10 +1,13 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+
+## [6.1.0][6.1.0] (April 12, 2021)
 * Updated dependencies, fixing OptionalCoordinateFrame-related issues.
 * Added `--address` flag to `rojo serve` to allow for external connections. ([#403][pr-403])
 
 [pr-403]: https://github.com/rojo-rbx/rojo/pull/403
+[6.1.0]: https://github.com/rojo-rbx/rojo/releases/tag/v6.1.0
 
 ## [6.0.2](https://github.com/rojo-rbx/rojo/releases/tag/v6.0.2) (February 9, 2021)
 * Fixed `rojo upload` to handle CSRF challenges.
