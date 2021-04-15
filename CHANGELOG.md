@@ -1,6 +1,9 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Added the `gameId` and `placeId` optional properties to project files.
+    * When connecting from the Rojo Roblox Studio plugin, Rojo will set the game and place ID of the current place to these values, if set.
+    * This is equivalent to running `game:SetUniverseId(...)` and `game:SetPlaceId(...)` from the command bar in Studio. 
 
 ## [7.0.0-alpha.3][7.0.0-alpha.3] (February 19, 2021)
 * Updated dependencies, fixing `OptionalCoordinateFrame`-related issues.

@@ -57,6 +57,14 @@ pub struct Project {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub serve_place_ids: Option<HashSet<u64>>,
 
+    /// If specified, sets the current place's place ID when connecting to the
+    /// Rojo server from Roblox Studio.
+    pub place_id: Option<u64>,
+
+    /// If specified, sets the current place's game ID when connecting to the
+    /// Rojo server from Roblox Studio.
+    pub game_id: Option<u64>,
+
     /// A list of globs, relative to the folder the project file is in, that
     /// match files that should be excluded if Rojo encounters them.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]

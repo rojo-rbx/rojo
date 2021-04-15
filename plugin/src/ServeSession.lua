@@ -111,6 +111,7 @@ function ServeSession:start()
 	self.__apiContext:connect()
 		:andThen(function(serverInfo)
 			self:__setStatus(Status.Connected, serverInfo.projectName)
+			self:__applyGameAndPlaceId(serverInfo)
 
 			local rootInstanceId = serverInfo.rootInstanceId
 
@@ -126,6 +127,16 @@ end
 
 function ServeSession:stop()
 	self:__stopInternal()
+end
+
+function ServeSession:__applyGameAndPlaceId(serverInfo)
+	if serverInfo.gameId ~= nil then
+		game:SetUniverseId(serverInfo.gameId)
+	end
+
+	if serverInfo.placeId ~= nil then
+		game:SetPlaceId(serverInfo.placeId)
+	end
 end
 
 function ServeSession:__onActiveScriptChanged(activeScript)

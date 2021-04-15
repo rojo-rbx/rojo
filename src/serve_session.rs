@@ -195,6 +195,14 @@ impl ServeSession {
         self.root_project.serve_port
     }
 
+    pub fn place_id(&self) -> Option<u64> {
+        self.root_project.place_id
+    }
+
+    pub fn game_id(&self) -> Option<u64> {
+        self.root_project.game_id
+    }
+
     pub fn start_time(&self) -> Instant {
         self.start_time
     }

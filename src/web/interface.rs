@@ -104,6 +104,8 @@ pub struct ServerInfoResponse {
     pub protocol_version: u64,
     pub project_name: String,
     pub expected_place_ids: Option<HashSet<u64>>,
+    pub game_id: Option<u64>,
+    pub place_id: Option<u64>,
     pub root_instance_id: Ref,
 }
 
