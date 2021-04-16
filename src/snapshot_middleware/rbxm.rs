@@ -32,7 +32,7 @@ pub fn snapshot_rbxm(
         Ok(Some(snapshot))
     } else {
         anyhow::bail!(
-            "Rojo doesn't have support for model files with zero or more than one top-level instances yet.\n\n \
+            "Rojo currently only supports model files with one top-level instance.\n\n \
              Check the model file at path {}",
             path.display()
         );
