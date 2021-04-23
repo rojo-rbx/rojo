@@ -1,4 +1,5 @@
 local StudioService = game:GetService("StudioService")
+local RunService = game:GetService("RunService")
 
 local Log = require(script.Parent.Parent.Log)
 local Fmt = require(script.Parent.Parent.Fmt)
@@ -161,10 +162,18 @@ function ServeSession:__onActiveScriptChanged(activeScript)
 
 	Log.debug("Trying to open script {} externally...", activeScript)
 
-	-- Force-close the script inside Studio
-	local existingParent = activeScript.Parent
-	activeScript.Parent = nil
-	activeScript.Parent = existingParent
+	-- Force-close the script inside Studio... with a small delay in the middle
+	-- to prevent Studio from crashing.
+	spawn(function()
+		local existingParent = activeScript.Parent
+		activeScript.Parent = nil
+
+		for i = 1, 3 do
+			RunService.Heartbeat:Wait()
+		end
+
+		activeScript.Parent = existingParent
+	end)
 
 	-- Notify the Rojo server to open this script
 	self.__apiContext:open(scriptId)
