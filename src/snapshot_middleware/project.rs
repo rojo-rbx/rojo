@@ -13,8 +13,6 @@ use crate::{
 
 use super::{middleware::SnapshotInstanceResult, snapshot_from_vfs};
 
-const BANNED_PROPERTIES: [&str; 2] = ["Parent", "Name"];
-
 pub fn snapshot_project(
     context: &InstanceContext,
     vfs: &Vfs,
@@ -184,15 +182,20 @@ pub fn snapshot_project_node(
                 )
             })?;
 
-        if BANNED_PROPERTIES.contains(&key.as_str()) {
-            log::warn!(
-                "Property '{}' cannot be set manually, ignoring. Attempted to set in '{}' at {}",
-                key,
-                instance_name,
-                project_path.display()
-            );
-            continue;
+        match key.as_str() {
+            "Name" | "Parent" => {
+                log::warn!(
+                    "Property '{}' cannot be set manually, ignoring. Attempted to set in '{}' at {}",
+                    key,
+                    instance_name,
+                    project_path.display()
+                );
+                continue;
+            }
+
+            _ => {}
         }
+
         properties.insert(key.clone(), value);
     }
 
