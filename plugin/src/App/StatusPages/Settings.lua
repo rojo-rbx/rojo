@@ -205,7 +205,7 @@ function SettingsPage:render()
 			TwoWaySync = e(Setting, {
 				id = "twoWaySync",
 				name = "Two-Way Sync",
-				description = "Editing files in Studio will sync them into the filesystem",
+				description = "EXPERIMENTAL! Editing files in Studio will sync them into the filesystem",
 				transparency = self.props.transparency,
 				layoutOrder = 2,
 			}),
