@@ -2,9 +2,13 @@
 
 ## Unreleased Changes
 * Added "EXPERIMENTAL!" label to two-way sync toggle in Rojo's Roblox Studio plugin.
+* Fixed "Open Scripts Externally" feature crashing Studio ([#369][issue-369])
+
+[issue-369]: https://github.com/rojo-rbx/rojo/issues/369
 
 ## [6.1.0][6.1.0] (April 12, 2021)
 * Updated dependencies, fixing OptionalCoordinateFrame-related issues.
+
 * Added `--address` flag to `rojo serve` to allow for external connections. ([#403][pr-403])
 
 [pr-403]: https://github.com/rojo-rbx/rojo/pull/403
