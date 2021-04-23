@@ -182,6 +182,20 @@ pub fn snapshot_project_node(
                 )
             })?;
 
+        match key.as_str() {
+            "Name" | "Parent" => {
+                log::warn!(
+                    "Property '{}' cannot be set manually, ignoring. Attempted to set in '{}' at {}",
+                    key,
+                    instance_name,
+                    project_path.display()
+                );
+                continue;
+            }
+
+            _ => {}
+        }
+
         properties.insert(key.clone(), value);
     }
 
