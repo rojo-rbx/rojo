@@ -4,6 +4,8 @@ expression: redactions.redacted_yaml(info)
 
 ---
 expectedPlaceIds: ~
+gameId: ~
+placeId: ~
 projectName: move_folder_of_stuff
 protocolVersion: 4
 rootInstanceId: id-2
