@@ -18,6 +18,17 @@ pub fn snapshot_json_model(
     instance_name: &str,
 ) -> SnapshotInstanceResult {
     let contents = vfs.read(path)?;
+    if contents.is_empty() {
+        return Ok(None);
+    }
+
+    if match String::from_utf8((*contents).to_owned()) {
+        Ok(v) => v.is_empty() || v.trim().is_empty(),
+        _ => false,
+    } {
+        return Ok(None);
+    }
+
     let instance: JsonModel = serde_json::from_slice(&contents)
         .with_context(|| format!("File is not a valid JSON model: {}", path.display()))?;
 
