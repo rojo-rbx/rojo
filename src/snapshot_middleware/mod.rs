@@ -14,7 +14,7 @@ mod project;
 mod rbxm;
 mod rbxmx;
 mod txt;
-pub mod util;
+mod util;
 
 use std::path::Path;
 
