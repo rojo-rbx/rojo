@@ -13,7 +13,7 @@ use crate::{
     snapshot::{
         apply_patch_set, compute_patch_set, AppliedPatchSet, InstigatingSource, PatchSet, RojoTree,
     },
-    snapshot_middleware::{snapshot_from_vfs, snapshot_project_node},
+    snapshot_middleware::{snapshot_from_vfs, snapshot_project_node, util::match_file_name},
 };
 
 /// Owns the connection between Rojo's VFS and its DOM by holding onto another
@@ -283,6 +283,11 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref) -> Option<
                 let snapshot = match snapshot_from_vfs(&metadata.context, &vfs, &path) {
                     Ok(Some(snapshot)) => snapshot,
                     Ok(None) => {
+                        // If the file that didn't return an instance is a model.json file
+                        // no return is expected as empty/whitespace mode.json files are ignored
+                        if let Some(_) = match_file_name(path, ".model.json") {
+                            return None;
+                        }
                         log::error!(
                             "Snapshot did not return an instance from path {}",
                             path.display()
