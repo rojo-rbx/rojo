@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::HashMap, path::Path};
+use std::{borrow::Cow, collections::HashMap, path::Path, str};
 
 use anyhow::Context;
 use memofs::Vfs;
@@ -22,7 +22,7 @@ pub fn snapshot_json_model(
         return Ok(None);
     }
 
-    if match String::from_utf8((*contents).to_owned()) {
+    if match str::from_utf8(&contents) {
         Ok(v) => v.is_empty() || v.trim().is_empty(),
         _ => false,
     } {
