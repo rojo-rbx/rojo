@@ -201,11 +201,15 @@ fn empty_json_model() {
             read_response.intern_and_redact(&mut redactions, root_id)
         );
 
-        fs::write(session.path().join("src/test.model.json"), "
+        fs::write(
+            session.path().join("src/test.model.json"),
+            "
         {
             \"ClassName\": \"Model\"
         }
-        ").unwrap();
+        ",
+        )
+        .unwrap();
 
         let subscribe_response = session.get_api_subscribe(0).unwrap();
         assert_yaml_snapshot!(
