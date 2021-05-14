@@ -7,9 +7,11 @@
 * Added "EXPERIMENTAL!" label to two-way sync toggle in Rojo's Roblox Studio plugin.
 * Fixed `Name` and `Parent` properties being allowed in Rojo projects. ([#413][pr-413])
 * Fixed "Open Scripts Externally" feature crashing Studio ([#369][issue-369])
-* Empty `.model.json` files will no longer cause errors [#420][pr-420]
+* Empty `.model.json` files will no longer cause errors ([#420][pr-420])
+* When specifying `$path` on a service, Rojo now keeps the correct class name. ([#331][issue-331])
 * Improved error messages for misconfigured projects.
 
+[issue-331]: https://github.com/rojo-rbx/rojo/issues/331
 [issue-369]: https://github.com/rojo-rbx/rojo/issues/369
 [pr-420]: https://github.com/rojo-rbx/rojo/pull/420
 [pr-413]: https://github.com/rojo-rbx/rojo/pull/413
