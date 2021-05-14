@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::HashMap, path::Path};
+use std::{borrow::Cow, collections::HashMap, path::Path, str};
 
 use anyhow::Context;
 use memofs::Vfs;
@@ -18,7 +18,14 @@ pub fn snapshot_json_model(
     instance_name: &str,
 ) -> SnapshotInstanceResult {
     let contents = vfs.read(path)?;
-    let instance: JsonModel = serde_json::from_slice(&contents)
+    let contents_str = str::from_utf8(&contents)
+        .with_context(|| format!("File was not valid UTF-8: {}", path.display()))?;
+
+    if contents_str.trim().is_empty() {
+        return Ok(None);
+    }
+
+    let instance: JsonModel = serde_json::from_str(contents_str)
         .with_context(|| format!("File is not a valid JSON model: {}", path.display()))?;
 
     let mut snapshot = instance
