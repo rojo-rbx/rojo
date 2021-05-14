@@ -1,0 +1,7 @@
+{
+  "name": "bad_classname_path_conflict",
+  "tree": {
+    "$className": "DataModel",
+    "$path": "foo.txt"
+  }
+}

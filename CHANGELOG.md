@@ -7,6 +7,7 @@
 * Added "EXPERIMENTAL!" label to two-way sync toggle in Rojo's Roblox Studio plugin.
 * Fixed `Name` and `Parent` properties being allowed in Rojo projects. ([#413][pr-413])
 * Fixed "Open Scripts Externally" feature crashing Studio ([#369][issue-369])
+* Improved error messages for misconfigured projects.
 
 [issue-369]: https://github.com/rojo-rbx/rojo/issues/369
 [pr-413]: https://github.com/rojo-rbx/rojo/pull/413
