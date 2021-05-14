@@ -203,11 +203,7 @@ fn empty_json_model() {
 
         fs::write(
             session.path().join("src/test.model.json"),
-            "
-        {
-            \"ClassName\": \"Model\"
-        }
-        ",
+            r#"{"ClassName": "Model"}"#,
         )
         .unwrap();
 
