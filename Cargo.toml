@@ -1,6 +1,6 @@
 [package]
 name = "rojo"
-version = "7.0.0-alpha.3"
+version = "7.0.0-alpha.4"
 authors = ["Lucien Greathouse <me@lpghatguy.com>"]
 description = "Enables professional-grade development tools for Roblox developers"
 license = "MPL-2.0"
