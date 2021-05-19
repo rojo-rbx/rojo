@@ -17,6 +17,14 @@ You'll want these tools to work on Rojo:
 * Latest stable [Rojo](https://github.com/rojo-rbx/rojo)
 * [Foreman](https://github.com/Roblox/foreman)
 
+To see the current way to build and run tests, read the [GitHub workflow files](.github/workflows/ci.yml) for the rojo Continuous Integration process.
+
+If you receive an error during the build process similar to
+```
+Error: failed to open file `/Users/alice/src/rojo/plugin/modules/xyz`
+```
+, then you haven't initialized the git submodules correct. This can be fixed by running `git submodule update --init` within your existing rojo git clone.
+
 ## Documentation
 Documentation impacts way more people than the individual lines of code we write.
 
