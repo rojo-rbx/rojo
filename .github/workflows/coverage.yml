@@ -26,8 +26,17 @@ jobs:
         override: true
 
     - name: Run cargo-tarpaulin
-        uses: actions-rs/tarpaulin@v0.1
-        with:
-          version: "0.16.0"
-          args: "--exclude-files rojo-test/* -- --test-threads 1"
-          out-type: "Lcov"
+      uses: actions-rs/tarpaulin@v0.1
+      with:
+        version: "0.16.0"
+        args: "--exclude-files rojo-test/* -- --test-threads 1"
+        out-type: "Lcov"
+
+
+    - name: Report code coverage
+      uses: zgosalvez/github-actions-report-lcov@v1.3.0
+      with:
+        artifact-name: code-coverage-report
+        coverage-files: lcov.info
+        minimum-coverage: 40
+        github-token: ${{ secrets.GITHUB_TOKEN }}
