@@ -11,6 +11,7 @@ fn run(global: GlobalOptions, subcommand: Subcommand) -> anyhow::Result<()> {
         Subcommand::Serve(serve_options) => cli::serve(global, serve_options)?,
         Subcommand::Build(build_options) => cli::build(build_options)?,
         Subcommand::Upload(upload_options) => cli::upload(upload_options)?,
+        Subcommand::FmtProject(fmt_options) => fmt_options.run()?,
         Subcommand::Doc => cli::doc()?,
         Subcommand::Plugin(plugin_options) => cli::plugin(plugin_options)?,
     }

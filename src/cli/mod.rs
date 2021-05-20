@@ -2,6 +2,7 @@
 
 mod build;
 mod doc;
+mod fmt_project;
 mod init;
 mod plugin;
 mod serve;
@@ -22,6 +23,7 @@ use thiserror::Error;
 
 pub use self::build::*;
 pub use self::doc::*;
+pub use self::fmt_project::FmtProjectCommand;
 pub use self::init::*;
 pub use self::plugin::*;
 pub use self::serve::*;
@@ -111,6 +113,8 @@ pub enum Subcommand {
 
     /// Generates a place or model file out of the project and uploads it to Roblox.
     Upload(UploadCommand),
+
+    FmtProject(FmtProjectCommand),
 
     /// Open Rojo's documentation in your browser.
     Doc,
