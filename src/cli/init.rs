@@ -1,13 +1,14 @@
-use std::{
-    fs::{self, OpenOptions},
-    io::{self, Write},
-    path::Path,
-    process::{Command, Stdio},
-};
+use std::io::{self, Write};
+use std::path::{Path, PathBuf};
+use std::process::{Command, Stdio};
+use std::str::FromStr;
 
-use thiserror::Error;
+use anyhow::{bail, format_err};
+use fs_err as fs;
+use fs_err::OpenOptions;
+use structopt::StructOpt;
 
-use crate::cli::{InitCommand, InitKind};
+use super::resolve_path;
 
 static MODEL_PROJECT: &str =
     include_str!("../../assets/default-model-project/default.project.json");
@@ -20,37 +21,71 @@ static PLACE_PROJECT: &str =
 static PLACE_README: &str = include_str!("../../assets/default-place-project/README.md");
 static PLACE_GIT_IGNORE: &str = include_str!("../../assets/default-place-project/gitignore.txt");
 
-#[derive(Debug, Error)]
-enum Error {
-    #[error("A project file named default.project.json already exists in this folder")]
-    AlreadyExists,
+/// Initializes a new Rojo project.
+#[derive(Debug, StructOpt)]
+pub struct InitCommand {
+    /// Path to the place to create the project. Defaults to the current directory.
+    #[structopt(default_value = "")]
+    pub path: PathBuf,
 
-    #[error("git init failed")]
-    GitInit,
+    /// The kind of project to create, 'place' or 'model'. Defaults to place.
+    #[structopt(long, default_value = "place")]
+    pub kind: InitKind,
 }
 
-pub fn init(options: InitCommand) -> Result<(), anyhow::Error> {
-    let base_path = options.absolute_path();
-    fs::create_dir_all(&base_path)?;
+impl InitCommand {
+    pub fn run(self) -> anyhow::Result<()> {
+        let base_path = resolve_path(&self.path);
+        fs::create_dir_all(&base_path)?;
 
-    let canonical = fs::canonicalize(&base_path)?;
-    let project_name = canonical
-        .file_name()
-        .and_then(|name| name.to_str())
-        .unwrap_or("new-project");
+        let canonical = fs::canonicalize(&base_path)?;
+        let project_name = canonical
+            .file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or("new-project");
 
-    let project_params = ProjectParams {
-        name: project_name.to_owned(),
-    };
+        let project_params = ProjectParams {
+            name: project_name.to_owned(),
+        };
 
-    match options.kind {
-        InitKind::Place => init_place(&base_path, project_params),
-        InitKind::Model => init_model(&base_path, project_params),
+        match self.kind {
+            InitKind::Place => init_place(&base_path, project_params)?,
+            InitKind::Model => init_model(&base_path, project_params)?,
+        }
+
+        println!("Created project successfully.");
+
+        Ok(())
     }
 }
 
-fn init_place(base_path: &Path, project_params: ProjectParams) -> Result<(), anyhow::Error> {
-    eprintln!("Creating new place project '{}'", project_params.name);
+/// The templates we support for initializing a Rojo project.
+#[derive(Debug, Clone, Copy)]
+pub enum InitKind {
+    /// A place that contains a baseplate.
+    Place,
+
+    /// An empty model, suitable for a library or plugin.
+    Model,
+}
+
+impl FromStr for InitKind {
+    type Err = anyhow::Error;
+
+    fn from_str(source: &str) -> Result<Self, Self::Err> {
+        match source {
+            "place" => Ok(InitKind::Place),
+            "model" => Ok(InitKind::Model),
+            _ => Err(format_err!(
+                "Invalid init kind '{}'. Valid kinds are: place, model",
+                source
+            )),
+        }
+    }
+}
+
+fn init_place(base_path: &Path, project_params: ProjectParams) -> anyhow::Result<()> {
+    println!("Creating new place project '{}'", project_params.name);
 
     let project_file = project_params.render_template(PLACE_PROJECT);
     try_create_project(base_path, &project_file)?;
@@ -88,13 +123,11 @@ fn init_place(base_path: &Path, project_params: ProjectParams) -> Result<(), any
     let git_ignore = project_params.render_template(PLACE_GIT_IGNORE);
     try_git_init(base_path, &git_ignore)?;
 
-    eprintln!("Created project successfully.");
-
     Ok(())
 }
 
-fn init_model(base_path: &Path, project_params: ProjectParams) -> Result<(), anyhow::Error> {
-    eprintln!("Creating new model project '{}'", project_params.name);
+fn init_model(base_path: &Path, project_params: ProjectParams) -> anyhow::Result<()> {
+    println!("Creating new model project '{}'", project_params.name);
 
     let project_file = project_params.render_template(MODEL_PROJECT);
     try_create_project(base_path, &project_file)?;
@@ -110,8 +143,6 @@ fn init_model(base_path: &Path, project_params: ProjectParams) -> Result<(), any
 
     let git_ignore = project_params.render_template(MODEL_GIT_IGNORE);
     try_git_init(base_path, &git_ignore)?;
-
-    eprintln!("Created project successfully.");
 
     Ok(())
 }
@@ -138,7 +169,7 @@ fn try_git_init(path: &Path, git_ignore: &str) -> Result<(), anyhow::Error> {
         let status = Command::new("git").arg("init").current_dir(path).status()?;
 
         if !status.success() {
-            return Err(Error::GitInit.into());
+            bail!("git init failed: status code {:?}", status.code());
         }
     }
 
@@ -195,13 +226,15 @@ fn try_create_project(base_path: &Path, contents: &str) -> Result<(), anyhow::Er
     let file_res = OpenOptions::new()
         .write(true)
         .create_new(true)
-        .open(project_path);
+        .open(&project_path);
 
     let mut file = match file_res {
         Ok(file) => file,
         Err(err) => {
             return match err.kind() {
-                io::ErrorKind::AlreadyExists => Err(Error::AlreadyExists.into()),
+                io::ErrorKind::AlreadyExists => {
+                    bail!("Project file already exists: {}", project_path.display())
+                }
                 _ => Err(err.into()),
             }
         }

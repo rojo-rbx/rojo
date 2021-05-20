@@ -7,11 +7,11 @@ use librojo::cli::{self, GlobalOptions, Options, Subcommand};
 
 fn run(global: GlobalOptions, subcommand: Subcommand) -> anyhow::Result<()> {
     match subcommand {
-        Subcommand::Init(init_options) => cli::init(init_options)?,
+        Subcommand::Init(subcommand) => subcommand.run()?,
         Subcommand::Serve(serve_options) => cli::serve(global, serve_options)?,
         Subcommand::Build(build_options) => cli::build(build_options)?,
         Subcommand::Upload(upload_options) => cli::upload(upload_options)?,
-        Subcommand::FmtProject(fmt_options) => fmt_options.run()?,
+        Subcommand::FmtProject(subcommand) => subcommand.run()?,
         Subcommand::Doc => cli::doc()?,
         Subcommand::Plugin(plugin_options) => cli::plugin(plugin_options)?,
     }

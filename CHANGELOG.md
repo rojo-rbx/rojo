@@ -13,6 +13,7 @@
 * Empty `.model.json` files will no longer cause errors. ([#420][pr-420])
 * When specifying `$path` on a service, Rojo now keeps the correct class name. ([#331][issue-331])
 * Improved error messages for misconfigured projects.
+* Improved error output for many subcommands.
 
 [issue-331]: https://github.com/rojo-rbx/rojo/issues/331
 [issue-369]: https://github.com/rojo-rbx/rojo/issues/369
