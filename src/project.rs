@@ -59,10 +59,12 @@ pub struct Project {
 
     /// If specified, sets the current place's place ID when connecting to the
     /// Rojo server from Roblox Studio.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub place_id: Option<u64>,
 
     /// If specified, sets the current place's game ID when connecting to the
     /// Rojo server from Roblox Studio.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub game_id: Option<u64>,
 
     /// A list of globs, relative to the folder the project file is in, that
