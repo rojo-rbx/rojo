@@ -23,7 +23,7 @@ If you receive an error during the build process similar to
 ```
 Error: failed to open file `/Users/alice/src/rojo/plugin/modules/xyz`
 ```
-, then you haven't initialized the git submodules correct. This can be fixed by running `git submodule update --init` within your existing rojo git clone.
+, then the git submodules aren't initialized correctly. This can be fixed by running `git submodule update --init` within your existing rojo git clone.
 
 ## Documentation
 Documentation impacts way more people than the individual lines of code we write.
