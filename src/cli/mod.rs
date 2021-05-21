@@ -25,7 +25,7 @@ pub use self::build::*;
 pub use self::doc::DocCommand;
 pub use self::fmt_project::FmtProjectCommand;
 pub use self::init::{InitCommand, InitKind};
-pub use self::plugin::*;
+pub use self::plugin::{PluginCommand, PluginSubcommand};
 pub use self::serve::*;
 pub use self::upload::*;
 
@@ -115,8 +115,6 @@ pub enum Subcommand {
 
     FmtProject(FmtProjectCommand),
     Doc(DocCommand),
-
-    /// Manages Rojo's Roblox Studio plugin.
     Plugin(PluginCommand),
 }
 
@@ -237,22 +235,4 @@ fn resolve_path(path: &Path) -> Cow<'_, Path> {
     } else {
         Cow::Owned(env::current_dir().unwrap().join(path))
     }
-}
-
-#[derive(Debug, StructOpt)]
-pub enum PluginSubcommand {
-    /// Install the plugin in Roblox Studio's plugins folder. If the plugin is
-    /// already installed, installing it again will overwrite the current plugin
-    /// file.
-    Install,
-
-    /// Removes the plugin if it is installed.
-    Uninstall,
-}
-
-/// Install Rojo's plugin.
-#[derive(Debug, StructOpt)]
-pub struct PluginCommand {
-    #[structopt(subcommand)]
-    subcommand: PluginSubcommand,
 }

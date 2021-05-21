@@ -13,7 +13,7 @@ fn run(global: GlobalOptions, subcommand: Subcommand) -> anyhow::Result<()> {
         Subcommand::Upload(upload_options) => cli::upload(upload_options)?,
         Subcommand::FmtProject(subcommand) => subcommand.run()?,
         Subcommand::Doc(subcommand) => subcommand.run()?,
-        Subcommand::Plugin(plugin_options) => cli::plugin(plugin_options)?,
+        Subcommand::Plugin(subcommand) => subcommand.run()?,
     }
 
     Ok(())
