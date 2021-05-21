@@ -36,7 +36,7 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: tarpaulin
-        args: "-p capsule -l --count --exclude-files examples/* ffi/* macros/* rojo-test/* --out Lcov -Zpackage-features --features full"
+        args: "-p capsule -l --count --exclude-files examples/* ffi/* macros/* rojo-test/* --out Lcov --features full"
 
     - name: Report code coverage
       uses: zgosalvez/github-actions-report-lcov@v1.3.0
