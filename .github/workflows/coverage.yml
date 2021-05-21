@@ -26,13 +26,17 @@ jobs:
         toolchain: stable
         override: true
 
-    - name: Run cargo-tarpaulin
-      uses: actions-rs/tarpaulin@v0.1
+    - name: install-tarpaulin
+      uses: actions-rs/cargo@v1
       with:
-        version: "0.16.0"
-        args: "--exclude-files rojo-test/* -- --test-threads 1"
-        out-type: "Lcov"
+        command: install
+        args: --force cargo-tarpaulin
 
+    - name: Run cargo-tarpaulin
+      uses: actions-rs/cargo@v1
+      with:
+        command: tarpaulin
+        args: "-p capsule -l --count --exclude-files examples/* ffi/* macros/* rojo-test/* --out Lcov -Zpackage-features --features full"
 
     - name: Report code coverage
       uses: zgosalvez/github-actions-report-lcov@v1.3.0
