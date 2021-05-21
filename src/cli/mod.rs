@@ -22,7 +22,7 @@ use structopt::StructOpt;
 use thiserror::Error;
 
 pub use self::build::*;
-pub use self::doc::*;
+pub use self::doc::DocCommand;
 pub use self::fmt_project::FmtProjectCommand;
 pub use self::init::{InitCommand, InitKind};
 pub use self::plugin::*;
@@ -114,9 +114,7 @@ pub enum Subcommand {
     Upload(UploadCommand),
 
     FmtProject(FmtProjectCommand),
-
-    /// Open Rojo's documentation in your browser.
-    Doc,
+    Doc(DocCommand),
 
     /// Manages Rojo's Roblox Studio plugin.
     Plugin(PluginCommand),
