@@ -13,7 +13,6 @@ use std::{
     env,
     error::Error,
     fmt,
-    net::IpAddr,
     path::{Path, PathBuf},
     str::FromStr,
 };
@@ -26,7 +25,7 @@ pub use self::doc::DocCommand;
 pub use self::fmt_project::FmtProjectCommand;
 pub use self::init::{InitCommand, InitKind};
 pub use self::plugin::{PluginCommand, PluginSubcommand};
-pub use self::serve::*;
+pub use self::serve::ServeCommand;
 pub use self::upload::*;
 
 /// Command line options that Rojo accepts, defined using the structopt crate.
@@ -45,7 +44,7 @@ impl Options {
     pub fn run(self) -> anyhow::Result<()> {
         match self.subcommand {
             Subcommand::Init(subcommand) => subcommand.run(),
-            Subcommand::Serve(serve_options) => serve(self.global, serve_options),
+            Subcommand::Serve(subcommand) => subcommand.run(self.global),
             Subcommand::Build(subcommand) => subcommand.run(),
             Subcommand::Upload(upload_options) => upload(upload_options),
             Subcommand::FmtProject(subcommand) => subcommand.run(),
@@ -123,29 +122,6 @@ pub enum Subcommand {
     FmtProject(FmtProjectCommand),
     Doc(DocCommand),
     Plugin(PluginCommand),
-}
-
-/// Expose a Rojo project to the Rojo Studio plugin.
-#[derive(Debug, StructOpt)]
-pub struct ServeCommand {
-    /// Path to the project to serve. Defaults to the current directory.
-    #[structopt(default_value = "")]
-    pub project: PathBuf,
-
-    /// The IP address to listen on. Defaults to `127.0.0.1`.
-    #[structopt(long)]
-    pub address: Option<IpAddr>,
-
-    /// The port to listen on. Defaults to the project's preference, or `34872` if
-    /// it has none.
-    #[structopt(long)]
-    pub port: Option<u16>,
-}
-
-impl ServeCommand {
-    pub fn absolute_project(&self) -> Cow<'_, Path> {
-        resolve_path(&self.project)
-    }
 }
 
 /// Builds the project and uploads it to Roblox.
