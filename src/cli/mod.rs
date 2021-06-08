@@ -41,6 +41,20 @@ pub struct Options {
     pub subcommand: Subcommand,
 }
 
+impl Options {
+    pub fn run(self) -> anyhow::Result<()> {
+        match self.subcommand {
+            Subcommand::Init(subcommand) => subcommand.run(),
+            Subcommand::Serve(serve_options) => serve(self.global, serve_options),
+            Subcommand::Build(subcommand) => subcommand.run(),
+            Subcommand::Upload(upload_options) => upload(upload_options),
+            Subcommand::FmtProject(subcommand) => subcommand.run(),
+            Subcommand::Doc(subcommand) => subcommand.run(),
+            Subcommand::Plugin(subcommand) => subcommand.run(),
+        }
+    }
+}
+
 #[derive(Debug, StructOpt)]
 pub struct GlobalOptions {
     /// Sets verbosity level. Can be specified multiple times.

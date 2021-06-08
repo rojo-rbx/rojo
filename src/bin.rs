@@ -3,21 +3,7 @@ use std::{env, panic, process};
 use backtrace::Backtrace;
 use structopt::StructOpt;
 
-use librojo::cli::{self, GlobalOptions, Options, Subcommand};
-
-fn run(global: GlobalOptions, subcommand: Subcommand) -> anyhow::Result<()> {
-    match subcommand {
-        Subcommand::Init(subcommand) => subcommand.run()?,
-        Subcommand::Serve(serve_options) => cli::serve(global, serve_options)?,
-        Subcommand::Build(subcommand) => subcommand.run()?,
-        Subcommand::Upload(upload_options) => cli::upload(upload_options)?,
-        Subcommand::FmtProject(subcommand) => subcommand.run()?,
-        Subcommand::Doc(subcommand) => subcommand.run()?,
-        Subcommand::Plugin(subcommand) => subcommand.run()?,
-    }
-
-    Ok(())
-}
+use librojo::cli::Options;
 
 fn main() {
     panic::set_hook(Box::new(|panic_info| {
@@ -82,7 +68,7 @@ fn main() {
         .write_style(options.global.color.into())
         .init();
 
-    if let Err(err) = run(options.global, options.subcommand) {
+    if let Err(err) = options.run() {
         log::error!("{:?}", err);
         process::exit(1);
     }
