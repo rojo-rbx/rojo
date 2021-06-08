@@ -1,24 +1,92 @@
 use std::{
-    fs::File,
     io::{BufWriter, Write},
+    path::{Path, PathBuf},
 };
 
+use anyhow::Context;
+use fs_err::File;
 use memofs::Vfs;
-use thiserror::Error;
+use structopt::StructOpt;
 use tokio::runtime::Runtime;
 
-use crate::{cli::BuildCommand, serve_session::ServeSession, snapshot::RojoTree};
+use crate::{serve_session::ServeSession, snapshot::RojoTree};
 
+use super::resolve_path;
+
+const UNKNOWN_OUTPUT_KIND_ERR: &str = "Could not detect what kind of file to build. \
+                                       Expected output file to end in .rbxl, .rbxlx, .rbxm, or .rbxmx.";
+
+/// Generates a model or place file from the Rojo project.
+#[derive(Debug, StructOpt)]
+pub struct BuildCommand {
+    /// Path to the project to serve. Defaults to the current directory.
+    #[structopt(default_value = "")]
+    pub project: PathBuf,
+
+    /// Where to output the result.
+    ///
+    /// Should end in .rbxm, .rbxl, .rbxmx, or .rbxlx.
+    #[structopt(long, short)]
+    pub output: PathBuf,
+
+    /// Whether to automatically rebuild when any input files change.
+    #[structopt(long)]
+    pub watch: bool,
+}
+
+impl BuildCommand {
+    pub fn run(self) -> anyhow::Result<()> {
+        let project_path = resolve_path(&self.project);
+
+        let output_kind = detect_output_kind(&self.output).context(UNKNOWN_OUTPUT_KIND_ERR)?;
+
+        log::trace!("Constructing in-memory filesystem");
+        let vfs = Vfs::new_default();
+        vfs.set_watch_enabled(self.watch);
+
+        let session = ServeSession::new(vfs, &project_path)?;
+        let mut cursor = session.message_queue().cursor();
+
+        {
+            let tree = session.tree();
+            write_model(&tree, &self.output, output_kind)?;
+        }
+
+        if self.watch {
+            let mut rt = Runtime::new().unwrap();
+
+            loop {
+                let receiver = session.message_queue().subscribe(cursor);
+                let (new_cursor, _patch_set) = rt.block_on(receiver).unwrap();
+                cursor = new_cursor;
+
+                let tree = session.tree();
+                write_model(&tree, &self.output, output_kind)?;
+            }
+        }
+
+        Ok(())
+    }
+}
+
+/// The different kinds of output that Rojo can build to.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum OutputKind {
+    /// An XML model file.
     Rbxmx,
+
+    /// An XML place file.
     Rbxlx,
+
+    /// A binary model file.
     Rbxm,
+
+    /// A binary place file.
     Rbxl,
 }
 
-fn detect_output_kind(options: &BuildCommand) -> Option<OutputKind> {
-    let extension = options.output.extension()?.to_str()?;
+fn detect_output_kind(output: &Path) -> Option<OutputKind> {
+    let extension = output.extension()?.to_str()?;
 
     match extension {
         "rbxlx" => Some(OutputKind::Rbxlx),
@@ -29,57 +97,28 @@ fn detect_output_kind(options: &BuildCommand) -> Option<OutputKind> {
     }
 }
 
-#[derive(Debug, Error)]
-enum Error {
-    #[error("Could not detect what kind of file to build. Expected output file to end in .rbxl, .rbxlx, .rbxm, or .rbxmx.")]
-    UnknownOutputKind,
-}
-
 fn xml_encode_config() -> rbx_xml::EncodeOptions {
     rbx_xml::EncodeOptions::new().property_behavior(rbx_xml::EncodePropertyBehavior::WriteUnknown)
 }
 
-pub fn build(options: BuildCommand) -> Result<(), anyhow::Error> {
-    log::trace!("Constructing in-memory filesystem");
-
-    let vfs = Vfs::new_default();
-    vfs.set_watch_enabled(options.watch);
-
-    let session = ServeSession::new(vfs, &options.absolute_project())?;
-    let mut cursor = session.message_queue().cursor();
-
-    {
-        let tree = session.tree();
-        write_model(&tree, &options)?;
-    }
-
-    if options.watch {
-        let mut rt = Runtime::new().unwrap();
-
-        loop {
-            let receiver = session.message_queue().subscribe(cursor);
-            let (new_cursor, _patch_set) = rt.block_on(receiver).unwrap();
-            cursor = new_cursor;
-
-            let tree = session.tree();
-            write_model(&tree, &options)?;
-        }
-    }
-
-    Ok(())
-}
-
-fn write_model(tree: &RojoTree, options: &BuildCommand) -> Result<(), anyhow::Error> {
-    let output_kind = detect_output_kind(&options).ok_or(Error::UnknownOutputKind)?;
-    log::debug!("Hoping to generate file of type {:?}", output_kind);
+fn write_model(tree: &RojoTree, output: &Path, output_kind: OutputKind) -> anyhow::Result<()> {
+    println!("Building project...");
 
     let root_id = tree.get_root_id();
 
     log::trace!("Opening output file for write");
-    let file = File::create(&options.output)?;
-    let mut file = BufWriter::new(file);
+    let mut file = BufWriter::new(File::create(output)?);
 
     match output_kind {
+        OutputKind::Rbxm => {
+            rbx_binary::to_writer_default(&mut file, tree.inner(), &[root_id])?;
+        }
+        OutputKind::Rbxl => {
+            let root_instance = tree.get_instance(root_id).unwrap();
+            let top_level_ids = root_instance.children();
+
+            rbx_binary::to_writer_default(&mut file, tree.inner(), top_level_ids)?;
+        }
         OutputKind::Rbxmx => {
             // Model files include the root instance of the tree and all its
             // descendants.
@@ -95,25 +134,15 @@ fn write_model(tree: &RojoTree, options: &BuildCommand) -> Result<(), anyhow::Er
 
             rbx_xml::to_writer(&mut file, tree.inner(), top_level_ids, xml_encode_config())?;
         }
-        OutputKind::Rbxm => {
-            rbx_binary::to_writer_default(&mut file, tree.inner(), &[root_id])?;
-        }
-        OutputKind::Rbxl => {
-            let root_instance = tree.get_instance(root_id).unwrap();
-            let top_level_ids = root_instance.children();
-
-            rbx_binary::to_writer_default(&mut file, tree.inner(), top_level_ids)?;
-        }
     }
 
     file.flush()?;
 
-    let filename = options
-        .output
+    let filename = output
         .file_name()
         .and_then(|name| name.to_str())
         .unwrap_or("<invalid utf-8>");
-    log::info!("Built project to {}", filename);
+    println!("Built project to {}", filename);
 
     Ok(())
 }

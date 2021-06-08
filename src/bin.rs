@@ -9,7 +9,7 @@ fn run(global: GlobalOptions, subcommand: Subcommand) -> anyhow::Result<()> {
     match subcommand {
         Subcommand::Init(subcommand) => subcommand.run()?,
         Subcommand::Serve(serve_options) => cli::serve(global, serve_options)?,
-        Subcommand::Build(build_options) => cli::build(build_options)?,
+        Subcommand::Build(subcommand) => subcommand.run()?,
         Subcommand::Upload(upload_options) => cli::upload(upload_options)?,
         Subcommand::FmtProject(subcommand) => subcommand.run()?,
         Subcommand::Doc(subcommand) => subcommand.run()?,

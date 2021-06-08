@@ -21,7 +21,7 @@ use std::{
 use structopt::StructOpt;
 use thiserror::Error;
 
-pub use self::build::*;
+pub use self::build::BuildCommand;
 pub use self::doc::DocCommand;
 pub use self::fmt_project::FmtProjectCommand;
 pub use self::init::{InitCommand, InitKind};
@@ -134,28 +134,6 @@ impl ServeCommand {
     }
 }
 
-/// Generates a model or place file from the Rojo project.
-#[derive(Debug, StructOpt)]
-pub struct BuildCommand {
-    /// Path to the project to serve. Defaults to the current directory.
-    #[structopt(default_value = "")]
-    pub project: PathBuf,
-
-    /// Where to output the result.
-    #[structopt(long, short)]
-    pub output: PathBuf,
-
-    /// Whether to automatically rebuild when any input files change.
-    #[structopt(long)]
-    pub watch: bool,
-}
-
-impl BuildCommand {
-    pub fn absolute_project(&self) -> Cow<'_, Path> {
-        resolve_path(&self.project)
-    }
-}
-
 /// Builds the project and uploads it to Roblox.
 #[derive(Debug, StructOpt)]
 pub struct UploadCommand {
@@ -221,7 +199,7 @@ impl fmt::Display for UploadKindParseError {
     }
 }
 
-fn resolve_path(path: &Path) -> Cow<'_, Path> {
+pub(super) fn resolve_path(path: &Path) -> Cow<'_, Path> {
     if path.is_absolute() {
         Cow::Borrowed(path)
     } else {
