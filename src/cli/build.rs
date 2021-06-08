@@ -9,7 +9,7 @@ use memofs::Vfs;
 use structopt::StructOpt;
 use tokio::runtime::Runtime;
 
-use crate::{serve_session::ServeSession, snapshot::RojoTree};
+use crate::serve_session::ServeSession;
 
 use super::resolve_path;
 
@@ -47,10 +47,7 @@ impl BuildCommand {
         let session = ServeSession::new(vfs, &project_path)?;
         let mut cursor = session.message_queue().cursor();
 
-        {
-            let tree = session.tree();
-            write_model(&tree, &self.output, output_kind)?;
-        }
+        write_model(&session, &self.output, output_kind)?;
 
         if self.watch {
             let mut rt = Runtime::new().unwrap();
@@ -60,8 +57,7 @@ impl BuildCommand {
                 let (new_cursor, _patch_set) = rt.block_on(receiver).unwrap();
                 cursor = new_cursor;
 
-                let tree = session.tree();
-                write_model(&tree, &self.output, output_kind)?;
+                write_model(&session, &self.output, output_kind)?;
             }
         }
 
@@ -101,9 +97,14 @@ fn xml_encode_config() -> rbx_xml::EncodeOptions {
     rbx_xml::EncodeOptions::new().property_behavior(rbx_xml::EncodePropertyBehavior::WriteUnknown)
 }
 
-fn write_model(tree: &RojoTree, output: &Path, output_kind: OutputKind) -> anyhow::Result<()> {
-    println!("Building project...");
+fn write_model(
+    session: &ServeSession,
+    output: &Path,
+    output_kind: OutputKind,
+) -> anyhow::Result<()> {
+    println!("Building project '{}'", session.project_name());
 
+    let tree = session.tree();
     let root_id = tree.get_root_id();
 
     log::trace!("Opening output file for write");
