@@ -103,23 +103,15 @@ pub struct ColorChoiceParseError {
 #[derive(Debug, StructOpt)]
 pub enum Subcommand {
     Init(InitCommand),
-
-    /// Serves the project's files for use with the Rojo Studio plugin.
     Serve(ServeCommand),
-
-    /// Generates a model or place file from the project.
     Build(BuildCommand),
-
-    /// Generates a place or model file out of the project and uploads it to Roblox.
     Upload(UploadCommand),
-
     FmtProject(FmtProjectCommand),
     Doc(DocCommand),
     Plugin(PluginCommand),
 }
 
-/// Expose a Rojo project through a web server that can communicate with the
-/// Rojo Roblox Studio plugin, or be visited by the user in the browser.
+/// Expose a Rojo project to the Rojo Studio plugin.
 #[derive(Debug, StructOpt)]
 pub struct ServeCommand {
     /// Path to the project to serve. Defaults to the current directory.
@@ -142,7 +134,7 @@ impl ServeCommand {
     }
 }
 
-/// Build a Rojo project into a file.
+/// Generates a model or place file from the Rojo project.
 #[derive(Debug, StructOpt)]
 pub struct BuildCommand {
     /// Path to the project to serve. Defaults to the current directory.
@@ -164,7 +156,7 @@ impl BuildCommand {
     }
 }
 
-/// Build and upload a Rojo project to Roblox.com.
+/// Builds the project and uploads it to Roblox.
 #[derive(Debug, StructOpt)]
 pub struct UploadCommand {
     /// Path to the project to upload. Defaults to the current directory.
