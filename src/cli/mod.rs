@@ -8,14 +8,7 @@ mod plugin;
 mod serve;
 mod upload;
 
-use std::{
-    borrow::Cow,
-    env,
-    error::Error,
-    fmt,
-    path::{Path, PathBuf},
-    str::FromStr,
-};
+use std::{borrow::Cow, env, path::Path, str::FromStr};
 
 use structopt::StructOpt;
 use thiserror::Error;
@@ -26,7 +19,7 @@ pub use self::fmt_project::FmtProjectCommand;
 pub use self::init::{InitCommand, InitKind};
 pub use self::plugin::{PluginCommand, PluginSubcommand};
 pub use self::serve::ServeCommand;
-pub use self::upload::*;
+pub use self::upload::UploadCommand;
 
 /// Command line options that Rojo accepts, defined using the structopt crate.
 #[derive(Debug, StructOpt)]
@@ -46,7 +39,7 @@ impl Options {
             Subcommand::Init(subcommand) => subcommand.run(),
             Subcommand::Serve(subcommand) => subcommand.run(self.global),
             Subcommand::Build(subcommand) => subcommand.run(),
-            Subcommand::Upload(upload_options) => upload(upload_options),
+            Subcommand::Upload(subcommand) => subcommand.run(),
             Subcommand::FmtProject(subcommand) => subcommand.run(),
             Subcommand::Doc(subcommand) => subcommand.run(),
             Subcommand::Plugin(subcommand) => subcommand.run(),
@@ -122,71 +115,6 @@ pub enum Subcommand {
     FmtProject(FmtProjectCommand),
     Doc(DocCommand),
     Plugin(PluginCommand),
-}
-
-/// Builds the project and uploads it to Roblox.
-#[derive(Debug, StructOpt)]
-pub struct UploadCommand {
-    /// Path to the project to upload. Defaults to the current directory.
-    #[structopt(default_value = "")]
-    pub project: PathBuf,
-
-    /// Authenication cookie to use. If not specified, Rojo will attempt to find one from the system automatically.
-    #[structopt(long)]
-    pub cookie: Option<String>,
-
-    /// Asset ID to upload to.
-    #[structopt(long = "asset_id")]
-    pub asset_id: u64,
-}
-
-impl UploadCommand {
-    pub fn absolute_project(&self) -> Cow<'_, Path> {
-        resolve_path(&self.project)
-    }
-}
-
-/// The kind of asset to upload to the website. Affects what endpoints Rojo uses
-/// and changes how the asset is built.
-#[derive(Debug, Clone, Copy)]
-pub enum UploadKind {
-    /// Upload to a place.
-    Place,
-
-    /// Upload to a model-like asset, like a Model, Plugin, or Package.
-    Model,
-}
-
-impl FromStr for UploadKind {
-    type Err = UploadKindParseError;
-
-    fn from_str(source: &str) -> Result<Self, Self::Err> {
-        match source {
-            "place" => Ok(UploadKind::Place),
-            "model" => Ok(UploadKind::Model),
-            _ => Err(UploadKindParseError {
-                attempted: source.to_owned(),
-            }),
-        }
-    }
-}
-
-/// Error type for failing to parse an `UploadKind`.
-#[derive(Debug)]
-pub struct UploadKindParseError {
-    attempted: String,
-}
-
-impl Error for UploadKindParseError {}
-
-impl fmt::Display for UploadKindParseError {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            formatter,
-            "Invalid upload kind '{}'. Valid kinds are: place, model",
-            self.attempted
-        )
-    }
 }
 
 pub(super) fn resolve_path(path: &Path) -> Cow<'_, Path> {
