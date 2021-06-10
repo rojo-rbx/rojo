@@ -3,6 +3,7 @@
 ## Unreleased Changes
 * Added "EXPERIMENTAL!" label to two-way sync toggle in Rojo's Roblox Studio plugin.
 * Fixed "Open Scripts Externally" feature crashing Studio ([#369][issue-369])
+* Updated dependencies, fixing `HumanoidDescription` ID issues.
 
 [issue-369]: https://github.com/rojo-rbx/rojo/issues/369
 
