@@ -1,11 +1,14 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+
+## [6.2.0][6.2.0] (June 10, 2021)
 * Added "EXPERIMENTAL!" label to two-way sync toggle in Rojo's Roblox Studio plugin.
 * Fixed "Open Scripts Externally" feature crashing Studio ([#369][issue-369])
 * Updated dependencies, fixing `HumanoidDescription` ID issues.
 
 [issue-369]: https://github.com/rojo-rbx/rojo/issues/369
+[6.2.0]: https://github.com/rojo-rbx/rojo/releases/tag/v6.2.0
 
 ## [6.1.0][6.1.0] (April 12, 2021)
 * Updated dependencies, fixing OptionalCoordinateFrame-related issues.
