@@ -1,7 +1,7 @@
+use std::borrow::Borrow;
+
 use anyhow::format_err;
-use rbx_dom_weak::types::{
-    Color3, Color3uint8, Content, Enum, Variant, VariantType, Vector2, Vector3,
-};
+use rbx_dom_weak::types::{Color3, Content, Enum, Variant, VariantType, Vector2, Vector3};
 use rbx_reflection::{DataType, PropertyDescriptor};
 use serde::{Deserialize, Serialize};
 
@@ -46,13 +46,14 @@ impl AmbiguousValue {
                 })?;
 
                 let error = |what: &str| {
-                    let sample_values = enum_descriptor
+                    let mut all_values = enum_descriptor
                         .items
                         .keys()
-                        .take(3)
-                        .map(|name| format!(r#""{}""#, name))
-                        .collect::<Vec<_>>()
-                        .join(", ");
+                        .map(|value| value.borrow())
+                        .collect::<Vec<_>>();
+                    all_values.sort();
+
+                    let examples = nonexhaustive_list(&all_values);
 
                     format_err!(
                         "Invalid value for property {}.{}. Got {} but \
@@ -61,7 +62,7 @@ impl AmbiguousValue {
                         prop_name,
                         what,
                         enum_name,
-                        sample_values
+                        examples,
                     )
                 };
 
@@ -100,15 +101,6 @@ impl AmbiguousValue {
 
                 (VariantType::Color3, AmbiguousValue::Array3(value)) => {
                     Ok(Color3::new(value[0] as f32, value[1] as f32, value[2] as f32).into())
-                }
-                (VariantType::Color3uint8, AmbiguousValue::Array3(value)) => {
-                    let value = Color3uint8::new(
-                        (value[0] / 255.0) as u8,
-                        (value[1] / 255.0) as u8,
-                        (value[2] / 255.0) as u8,
-                    );
-
-                    Ok(value.into())
                 }
 
                 (_, unresolved) => Err(format_err!(
@@ -153,5 +145,123 @@ fn find_descriptor(
         }
 
         current_class_name = class.superclass.as_deref()?;
+    }
+}
+
+/// Outputs a string containing up to MAX_ITEMS entries from the given list. If
+/// there are more than MAX_ITEMS items, the number of remaining items will be
+/// listed.
+fn nonexhaustive_list(values: &[&str]) -> String {
+    use std::fmt::Write;
+
+    const MAX_ITEMS: usize = 8;
+
+    let mut output = String::new();
+
+    let last_index = values.len() - 1;
+    let main_length = last_index.min(9);
+
+    let main_list = &values[..main_length];
+    for value in main_list {
+        output.push_str(value);
+        output.push_str(", ");
+    }
+
+    if values.len() > MAX_ITEMS {
+        write!(output, "or {} more", values.len() - main_length).unwrap();
+    } else {
+        output.push_str("or ");
+        output.push_str(values[values.len() - 1]);
+    }
+
+    output
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    fn resolve(class: &str, prop: &str, json_value: &str) -> Variant {
+        let unresolved: UnresolvedValue = serde_json::from_str(json_value).unwrap();
+        unresolved.resolve(class, prop).unwrap()
+    }
+
+    #[test]
+    fn bools() {
+        assert_eq!(resolve("BoolValue", "Value", "false"), Variant::Bool(false));
+
+        // Script.Disabled is inherited from BaseScript
+        assert_eq!(resolve("Script", "Disabled", "true"), Variant::Bool(true));
+    }
+
+    #[test]
+    fn strings() {
+        // String literals can stay as strings
+        assert_eq!(
+            resolve("StringValue", "Value", "\"Hello!\""),
+            Variant::String("Hello!".into()),
+        );
+
+        // String literals can also turn into Content
+        assert_eq!(
+            resolve("Sky", "MoonTextureId", "\"rbxassetid://12345\""),
+            Variant::Content("rbxassetid://12345".into()),
+        );
+
+        // What about BinaryString values? For forward-compatibility reasons, we
+        // don't support any shorthands for BinaryString.
+        //
+        // assert_eq!(
+        //     resolve("Folder", "Tags", "\"a\\u0000b\\u0000c\""),
+        //     Variant::BinaryString(b"a\0b\0c".to_vec().into()),
+        // );
+    }
+
+    #[test]
+    fn numbers() {
+        assert_eq!(
+            resolve("Part", "CollisionGroupId", "123"),
+            Variant::Int32(123),
+        );
+
+        assert_eq!(
+            resolve("Folder", "SourceAssetId", "532413"),
+            Variant::Int64(532413),
+        );
+
+        assert_eq!(resolve("Part", "Transparency", "1"), Variant::Float32(1.0));
+        assert_eq!(resolve("NumberValue", "Value", "1"), Variant::Float64(1.0));
+    }
+
+    #[test]
+    fn vectors() {
+        assert_eq!(
+            resolve("ParticleEmitter", "SpreadAngle", "[1, 2]"),
+            Variant::Vector2(Vector2::new(1.0, 2.0)),
+        );
+
+        assert_eq!(
+            resolve("Part", "Position", "[4, 5, 6]"),
+            Variant::Vector3(Vector3::new(4.0, 5.0, 6.0)),
+        );
+    }
+
+    #[test]
+    fn colors() {
+        assert_eq!(
+            resolve("Part", "Color", "[1, 1, 1]"),
+            Variant::Color3(Color3::new(1.0, 1.0, 1.0)),
+        );
+
+        // There aren't any user-facing Color3uint8 properties. If there are
+        // some, we should treat them the same in the future.
+    }
+
+    #[test]
+    fn enums() {
+        assert_eq!(
+            resolve("Lighting", "Technology", "\"Voxel\""),
+            Variant::Enum(Enum::from_u32(1)),
+        );
     }
 }
