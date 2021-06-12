@@ -1,5 +1,7 @@
 //! Defines the semantics that Rojo uses to turn entries on the filesystem into
 //! Roblox instances using the instance snapshot subsystem.
+//!
+//! These modules define how files turn into instances.
 
 #![allow(dead_code)]
 
@@ -38,6 +40,8 @@ use self::{
 
 pub use self::project::snapshot_project_node;
 
+/// The main entrypoint to the snapshot function. This function can be pointed
+/// at any path and will return something if Rojo knows how to deal with it.
 pub fn snapshot_from_vfs(
     context: &InstanceContext,
     vfs: &Vfs,

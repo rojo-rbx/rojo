@@ -1,4 +1,8 @@
-//! Defines the HTTP-based UI. These endpoints generally return HTML and SVG.
+//! Defines the HTTP-based Rojo UI. It uses ritz for templating, which is like
+//! JSX for Rust. Eventually we should probably replace this with a new
+//! framework, maybe using JS and client side rendering.
+//!
+//! These endpoints generally return HTML and SVG.
 
 use std::{borrow::Cow, sync::Arc, time::Duration};
 

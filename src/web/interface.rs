@@ -1,4 +1,6 @@
-//! Defines all the structs needed to interact with the Rojo Serve API.
+//! Defines all the structs needed to interact with the Rojo Serve API. This is
+//! useful for tests to be able to use the same data structures as the
+//! implementation.
 
 use std::{
     borrow::Cow,

@@ -1,3 +1,6 @@
+//! Utiilty that helps redact nondeterministic information from trees so that
+//! they can be part of snapshot tests.
+
 use std::collections::HashMap;
 
 use rbx_dom_weak::types::{Ref, Variant};

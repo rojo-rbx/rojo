@@ -16,6 +16,9 @@ use crate::{
     snapshot_middleware::{snapshot_from_vfs, snapshot_project_node},
 };
 
+/// Processes file change events, updates the DOM, and sends those updates
+/// through a channel for other stuff to consume.
+///
 /// Owns the connection between Rojo's VFS and its DOM by holding onto another
 /// thread that processes messages.
 ///

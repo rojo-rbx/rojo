@@ -1,3 +1,7 @@
+//! A simple asset reloading system intended for iterating on CSS. When in the
+//! `dev_live_assets` feature is enabled, files are read from disk and watched
+//! for changes. Otherwise, they're baked into the executable.
+
 macro_rules! declare_asset {
     ($name: ident, $path: expr) => {
         pub fn $name() -> &'static str {

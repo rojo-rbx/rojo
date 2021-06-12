@@ -1,3 +1,7 @@
+//! Defines the Rojo web interface. This is what the Roblox Studio plugin
+//! communicates with. Eventually, we'll make this API stable, produce better
+//! documentation for it, and open it up for other consumers.
+
 mod api;
 mod assets;
 pub mod interface;

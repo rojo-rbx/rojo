@@ -5,6 +5,12 @@ use rbx_dom_weak::types::{Color3, Content, Enum, Variant, VariantType, Vector2, 
 use rbx_reflection::{DataType, PropertyDescriptor};
 use serde::{Deserialize, Serialize};
 
+/// A user-friendly version of `Variant` that supports specifying ambiguous
+/// values. Ambiguous values need a reflection database to be resolved to a
+/// usable value.
+///
+/// This type is used in Rojo projects and JSON models to make specifying the
+/// most common types of properties, like strings or vectors, much easier.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum UnresolvedValue {

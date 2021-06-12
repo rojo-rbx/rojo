@@ -2,26 +2,6 @@ use std::sync::{Mutex, RwLock};
 
 use futures::sync::oneshot;
 
-struct Listener<T> {
-    sender: oneshot::Sender<(u32, Vec<T>)>,
-    cursor: u32,
-}
-
-fn fire_listener_if_ready<T: Clone>(
-    messages: &[T],
-    listener: Listener<T>,
-) -> Result<(), Listener<T>> {
-    let current_cursor = messages.len() as u32;
-
-    if listener.cursor < current_cursor {
-        let new_messages = messages[(listener.cursor as usize)..].to_vec();
-        let _ = listener.sender.send((current_cursor, new_messages));
-        Ok(())
-    } else {
-        Err(listener)
-    }
-}
-
 /// A message queue with persistent history that can be subscribed to.
 ///
 /// Definitely non-optimal. This would ideally be a lockless mpmc queue.
@@ -95,5 +75,25 @@ impl<T: Clone> MessageQueue<T> {
 
     pub fn cursor(&self) -> u32 {
         self.messages.read().unwrap().len() as u32
+    }
+}
+
+struct Listener<T> {
+    sender: oneshot::Sender<(u32, Vec<T>)>,
+    cursor: u32,
+}
+
+fn fire_listener_if_ready<T: Clone>(
+    messages: &[T],
+    listener: Listener<T>,
+) -> Result<(), Listener<T>> {
+    let current_cursor = messages.len() as u32;
+
+    if listener.cursor < current_cursor {
+        let new_messages = messages[(listener.cursor as usize)..].to_vec();
+        let _ = listener.sender.send((current_cursor, new_messages));
+        Ok(())
+    } else {
+        Err(listener)
     }
 }

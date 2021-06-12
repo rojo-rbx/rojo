@@ -1,4 +1,5 @@
-//! Defines module for defining a small Lua AST for simple codegen.
+//! Defines module for defining a small Lua AST for simple codegen. Rojo uses
+//! this module to convert JSON into generated Lua code.
 
 use std::{
     fmt::{self, Write},

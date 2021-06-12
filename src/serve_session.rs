@@ -24,7 +24,9 @@ use crate::{
     snapshot_middleware::snapshot_from_vfs,
 };
 
-/// Contains all of the state for a Rojo serve session.
+/// Contains all of the state for a Rojo serve session. A serve session is used
+/// when we need to build a Rojo tree and possibly rebuild it when input files
+/// change.
 ///
 /// Nothing here is specific to any Rojo interface. Though the primary way to
 /// interact with a serve session is Rojo's HTTP right now, there's no reason
