@@ -37,6 +37,9 @@ impl UploadCommand {
             "Rojo could not find your Roblox auth cookie. Please pass one via --cookie.",
         )?;
 
+	let pathi = project_path.display();
+	log::trace!("project-path: {path} cookie: {cook}",path=pathi,cook=cookie);
+
         let vfs = Vfs::new_default();
 
         let session = ServeSession::new(vfs, project_path)?;
@@ -89,6 +92,7 @@ fn do_upload(buffer: Vec<u8>, asset_id: u64, cookie: &str) -> anyhow::Result<()>
         "https://data.roblox.com/Data/Upload.ashx?assetid={}",
         asset_id
     );
+	let urli = url.clone();
 
     let client = reqwest::Client::new();
 
@@ -101,6 +105,8 @@ fn do_upload(buffer: Vec<u8>, asset_id: u64, cookie: &str) -> anyhow::Result<()>
             .header(ACCEPT, "application/json")
             .body(buffer.clone())
     };
+
+	log::trace!("prepping upload, cookie: {} url: {}",cookie,urli);
 
     log::debug!("Uploading to Roblox...");
     let mut response = build_request().send()?;
@@ -118,8 +124,10 @@ fn do_upload(buffer: Vec<u8>, asset_id: u64, cookie: &str) -> anyhow::Result<()>
     let status = response.status();
     if !status.is_success() {
         bail!(
-            "The Roblox API returned an unexpected error: {}",
-            response.text()?
+            "The Roblox API returned an unexpected error: {status}\nPlease see: https://www.roblox.com/request-error?code={code} for more info.",
+//            response.text()?
+		status=status,
+		code=status.as_u16()
         );
     }
 
