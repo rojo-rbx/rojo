@@ -34,7 +34,7 @@ pub fn copy_recursive(from: &Path, to: &Path) -> io::Result<()> {
                 Ok(_) => {}
                 Err(err) => match err.kind() {
                     io::ErrorKind::AlreadyExists => {}
-                    _ => panic!(err),
+                    _ => return Err(err),
                 },
             }
         } else {
