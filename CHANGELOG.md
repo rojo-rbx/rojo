@@ -1,19 +1,19 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Added the `fmt-project` subcommand for formatting Rojo project files.
+* Improved error output for many subcommands.
 
 ## [7.0.0-alpha.4][7.0.0-alpha.4] (May 5, 2021)
 * Added the `gameId` and `placeId` optional properties to project files.
     * When connecting from the Rojo Roblox Studio plugin, Rojo will set the game and place ID of the current place to these values, if set.
     * This is equivalent to running `game:SetUniverseId(...)` and `game:SetPlaceId(...)` from the command bar in Studio. 
-* Added the `fmt-project` subcommand for formatting Rojo project files.
 * Added "EXPERIMENTAL!" label to two-way sync toggle in Rojo's Roblox Studio plugin.
 * Fixed `Name` and `Parent` properties being allowed in Rojo projects. ([#413][pr-413])
 * Fixed "Open Scripts Externally" feature crashing Studio. ([#369][issue-369])
 * Empty `.model.json` files will no longer cause errors. ([#420][pr-420])
 * When specifying `$path` on a service, Rojo now keeps the correct class name. ([#331][issue-331])
 * Improved error messages for misconfigured projects.
-* Improved error output for many subcommands.
 
 [issue-331]: https://github.com/rojo-rbx/rojo/issues/331
 [issue-369]: https://github.com/rojo-rbx/rojo/issues/369
