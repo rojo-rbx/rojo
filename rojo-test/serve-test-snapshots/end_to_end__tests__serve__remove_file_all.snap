@@ -1,6 +1,7 @@
 ---
 source: tests/tests/serve.rs
 expression: "read_response.intern_and_redact(&mut redactions, root_id)"
+
 ---
 instances:
   id-2:
@@ -23,7 +24,7 @@ instances:
     Parent: id-2
     Properties:
       Value:
-        Type: String
-        Value: This file will be removed!
+        String: This file will be removed!
 messageCursor: 0
 sessionId: id-1
+

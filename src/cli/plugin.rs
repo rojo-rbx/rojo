@@ -73,7 +73,7 @@ fn install_plugin() -> anyhow::Result<()> {
     let tree = session.tree();
     let root_id = tree.get_root_id();
 
-    rbx_binary::to_writer_default(&mut file, tree.inner(), &[root_id])?;
+    rbx_binary::to_writer(&mut file, tree.inner(), &[root_id])?;
 
     Ok(())
 }

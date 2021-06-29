@@ -1,6 +1,7 @@
 ---
 source: src/snapshot/tests/compute.rs
 expression: patch_value
+
 ---
 removed_instances: []
 added_instances: []
@@ -10,6 +11,6 @@ updated_instances:
     changed_class_name: ~
     changed_properties:
       PropertyName:
-        Type: String
-        Value: "Hello, world!"
+        String: "Hello, world!"
     changed_metadata: ~
+

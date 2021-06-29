@@ -1,6 +1,7 @@
 ---
 source: src/snapshot_middleware/lua.rs
 expression: instance_snapshot
+
 ---
 snapshot_id: ~
 metadata:
@@ -15,9 +16,8 @@ name: bar
 class_name: Script
 properties:
   Disabled:
-    Type: Bool
-    Value: true
+    Bool: true
   Source:
-    Type: String
-    Value: Hello there!
+    String: Hello there!
 children: []
+

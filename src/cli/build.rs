@@ -112,13 +112,13 @@ fn write_model(
 
     match output_kind {
         OutputKind::Rbxm => {
-            rbx_binary::to_writer_default(&mut file, tree.inner(), &[root_id])?;
+            rbx_binary::to_writer(&mut file, tree.inner(), &[root_id])?;
         }
         OutputKind::Rbxl => {
             let root_instance = tree.get_instance(root_id).unwrap();
             let top_level_ids = root_instance.children();
 
-            rbx_binary::to_writer_default(&mut file, tree.inner(), top_level_ids)?;
+            rbx_binary::to_writer(&mut file, tree.inner(), top_level_ids)?;
         }
         OutputKind::Rbxmx => {
             // Model files include the root instance of the tree and all its

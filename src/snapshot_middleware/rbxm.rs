@@ -13,7 +13,7 @@ pub fn snapshot_rbxm(
     path: &Path,
     instance_name: &str,
 ) -> SnapshotInstanceResult {
-    let temp_tree = rbx_binary::from_reader_default(vfs.read(path)?.as_slice())
+    let temp_tree = rbx_binary::from_reader(vfs.read(path)?.as_slice())
         .with_context(|| format!("Malformed rbxm file: {}", path.display()))?;
 
     let root_instance = temp_tree.root();

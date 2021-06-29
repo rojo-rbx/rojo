@@ -1,6 +1,7 @@
 ---
 source: tests/tests/serve.rs
 expression: "read_response.intern_and_redact(&mut redactions, root_id)"
+
 ---
 instances:
   id-2:
@@ -24,8 +25,7 @@ instances:
     Parent: id-2
     Properties:
       Source:
-        Type: String
-        Value: "-- Hello, from bar!"
+        String: "-- Hello, from bar!"
   id-4:
     Children: []
     ClassName: ModuleScript
@@ -36,7 +36,7 @@ instances:
     Parent: id-2
     Properties:
       Source:
-        Type: String
-        Value: "-- Hello, from foo!"
+        String: "-- Hello, from foo!"
 messageCursor: 0
 sessionId: id-1
+

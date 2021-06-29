@@ -53,7 +53,7 @@ impl UploadCommand {
         let mut buffer = Vec::new();
 
         log::trace!("Encoding binary model");
-        rbx_binary::to_writer_default(&mut buffer, tree.inner(), &encode_ids)?;
+        rbx_binary::to_writer(&mut buffer, tree.inner(), &encode_ids)?;
         do_upload(buffer, self.asset_id, &cookie)
     }
 }

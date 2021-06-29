@@ -1,6 +1,7 @@
 ---
 source: src/snapshot_middleware/project.rs
 expression: instance_snapshot
+
 ---
 snapshot_id: ~
 metadata:
@@ -15,6 +16,6 @@ name: path-property-override
 class_name: StringValue
 properties:
   Value:
-    Type: String
-    Value: Changed
+    String: Changed
 children: []
+

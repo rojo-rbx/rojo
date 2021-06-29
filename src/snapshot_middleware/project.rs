@@ -360,8 +360,7 @@ mod test {
                             "$className": "StringValue",
                             "$properties": {
                                 "Value": {
-                                    "Type": "String",
-                                    "Value": "Hello, world!"
+                                    "String": "Hello, world!"
                                 }
                             }
                         }

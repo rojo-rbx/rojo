@@ -1,6 +1,7 @@
 ---
 source: tests/tests/serve.rs
 expression: "read_response.intern_and_redact(&mut redactions, root_id)"
+
 ---
 instances:
   id-10:
@@ -13,8 +14,7 @@ instances:
     Parent: id-3
     Properties:
       Value:
-        Type: String
-        Value: "File #6"
+        String: "File #6"
   id-11:
     Children: []
     ClassName: StringValue
@@ -25,8 +25,7 @@ instances:
     Parent: id-3
     Properties:
       Value:
-        Type: String
-        Value: "File #7"
+        String: "File #7"
   id-12:
     Children: []
     ClassName: StringValue
@@ -37,8 +36,7 @@ instances:
     Parent: id-3
     Properties:
       Value:
-        Type: String
-        Value: "File #8"
+        String: "File #8"
   id-13:
     Children: []
     ClassName: StringValue
@@ -49,8 +47,7 @@ instances:
     Parent: id-3
     Properties:
       Value:
-        Type: String
-        Value: "File #9"
+        String: "File #9"
   id-2:
     Children:
       - id-3
@@ -90,8 +87,7 @@ instances:
     Parent: id-3
     Properties:
       Value:
-        Type: String
-        Value: "File #0"
+        String: "File #0"
   id-5:
     Children: []
     ClassName: StringValue
@@ -102,8 +98,7 @@ instances:
     Parent: id-3
     Properties:
       Value:
-        Type: String
-        Value: "File #1"
+        String: "File #1"
   id-6:
     Children: []
     ClassName: StringValue
@@ -114,8 +109,7 @@ instances:
     Parent: id-3
     Properties:
       Value:
-        Type: String
-        Value: "File #2"
+        String: "File #2"
   id-7:
     Children: []
     ClassName: StringValue
@@ -126,8 +120,7 @@ instances:
     Parent: id-3
     Properties:
       Value:
-        Type: String
-        Value: "File #3"
+        String: "File #3"
   id-8:
     Children: []
     ClassName: StringValue
@@ -138,8 +131,7 @@ instances:
     Parent: id-3
     Properties:
       Value:
-        Type: String
-        Value: "File #4"
+        String: "File #4"
   id-9:
     Children: []
     ClassName: StringValue
@@ -150,7 +142,7 @@ instances:
     Parent: id-3
     Properties:
       Value:
-        Type: String
-        Value: "File #5"
+        String: "File #5"
 messageCursor: 1
 sessionId: id-1
+

@@ -1,6 +1,7 @@
 ---
 source: src/snapshot/tests/apply.rs
 expression: applied_patch_value
+
 ---
 removed: []
 added: []
@@ -10,6 +11,6 @@ updated:
     changed_class_name: ~
     changed_properties:
       Foo:
-        Type: String
-        Value: Value of Foo
+        String: Value of Foo
     changed_metadata: ~
+

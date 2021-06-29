@@ -3,6 +3,7 @@
 ## Unreleased Changes
 * Added the `fmt-project` subcommand for formatting Rojo project files.
 * Improved error output for many subcommands.
+* Updated to stable versions of rbx-dom libraries.
 
 ## [7.0.0-alpha.4][7.0.0-alpha.4] (May 5, 2021)
 * Added the `gameId` and `placeId` optional properties to project files.

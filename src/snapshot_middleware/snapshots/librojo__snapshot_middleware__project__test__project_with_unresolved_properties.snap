@@ -1,6 +1,7 @@
 ---
 source: src/snapshot_middleware/project.rs
 expression: instance_snapshot
+
 ---
 snapshot_id: ~
 metadata:
@@ -14,6 +15,6 @@ name: unresolved-properties
 class_name: StringValue
 properties:
   Value:
-    Type: String
-    Value: Hi!
+    String: Hi!
 children: []
+
