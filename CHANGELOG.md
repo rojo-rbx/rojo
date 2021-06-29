@@ -1,6 +1,45 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+In Rojo 6 and previous Rojo 7 alphas, an explicit Vector3 property would be written like this:
+
+```json
+{
+    "className": "Part",
+    "properties": {
+        "Position": {
+            "Type": "Vector3",
+            "Value": [1, 2, 3]
+        }
+    }
+}
+```
+
+For Rojo 7, this will need to be changed to:
+
+```json
+{
+    "className": "Part",
+    "properties": {
+        "Position": {
+            "Vector3": [1, 2, 3]
+        }
+    }
+}
+```
+
+The shorthand property format that most users use is not impacted. For reference, it looks like this:
+
+```json
+{
+    "className": "Part",
+    "properties": {
+        "Position": [1, 2, 3]
+    }
+}
+```
+
+* Major breaking change: changed explicit property syntax; shorthand syntax is unchanged.
 * Added the `fmt-project` subcommand for formatting Rojo project files.
 * Improved error output for many subcommands.
 * Updated to stable versions of rbx-dom libraries.
