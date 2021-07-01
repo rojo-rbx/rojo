@@ -210,6 +210,14 @@ function SettingsPage:render()
 				layoutOrder = 2,
 			}),
 
+			PlaySoloAutoConnect = e(Setting, {
+				id = "playSoloAutoConnect",
+				name = "Play Solo Auto Connect",
+				description = "Attempt to automatically connect to the rojo server in Play Solo if connected in edit mode",
+				transparency = self.props.transparency,
+				layoutOrder = 2,
+			}),
+
 			Layout = e("UIListLayout", {
 				FillDirection = Enum.FillDirection.Vertical,
 				SortOrder = Enum.SortOrder.LayoutOrder,

@@ -9,6 +9,7 @@ local Roact = require(Rojo.Roact)
 local defaultSettings = {
 	openScriptsExternally = false,
 	twoWaySync = false,
+	playSoloAutoConnect = false,
 }
 
 local Settings = {}

@@ -51,6 +51,7 @@ function App:startSession(host, port, sessionOptions)
 		apiContext = apiContext,
 		openScriptsExternally = sessionOptions.openScriptsExternally,
 		twoWaySync = sessionOptions.twoWaySync,
+		playSoloAutoConnect = sessionOptions.playSoloAutoConnect,
 	})
 
 	serveSession:onStatusChanged(function(status, details)
@@ -142,6 +143,7 @@ function App:render()
 								self:startSession(host, port, {
 									openScriptsExternally = settings:get("openScriptsExternally"),
 									twoWaySync = settings:get("twoWaySync"),
+									playSoloAutoConnect = settings:get("playSoloAutoConnect"),
 								})
 							end,
 
