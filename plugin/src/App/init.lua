@@ -1,3 +1,5 @@
+local HttpService = game:GetService("HttpService")
+
 local Rojo = script:FindFirstAncestor("Rojo")
 local Plugin = Rojo.Plugin
 
@@ -43,15 +45,15 @@ function App:init()
 	})
 end
 
-function App:startSession(host, port, sessionOptions)
+function App:startSession(host, port, settings)
 	local baseUrl = ("http://%s:%s"):format(host, port)
 	local apiContext = ApiContext.new(baseUrl)
 
 	local serveSession = ServeSession.new({
 		apiContext = apiContext,
-		openScriptsExternally = sessionOptions.openScriptsExternally,
-		twoWaySync = sessionOptions.twoWaySync,
-		playSoloAutoConnect = sessionOptions.playSoloAutoConnect,
+		openScriptsExternally = settings:get("openScriptsExternally"),
+		twoWaySync = settings:get("twoWaySync"),
+		playSoloAutoConnect = settings:get("playSoloAutoConnect"),
 	})
 
 	serveSession:onStatusChanged(function(status, details)
@@ -61,13 +63,46 @@ function App:startSession(host, port, sessionOptions)
 			})
 		elseif status == ServeSession.Status.Connected then
 			local address = ("%s:%s"):format(host, port)
+
+			local connectionId = HttpService:GenerateGUID()
+			local activeConnections = settings:get("activeConnections", true)
+			table.insert(activeConnections, {
+				connectionId = connectionId,
+				sessionId = details.sessionId,
+				projectName = details.projectName,
+				host = host,
+				port = port
+			})
+
+			if #activeConnections > 15 then
+				table.remove(activeConnections, 1)
+			end
+
+			settings:set("activeConnections", activeConnections)
+
 			self:setState({
 				appStatus = AppStatus.Connected,
-				projectName = details,
+				projectName = details.projectName,
 				address = address,
+				removeActiveConnection = function()
+					local activeConnections = settings:get("activeConnections", true)
+					for i = #activeConnections, 1, -1 do
+						local activeConnection = activeConnections[i]
+						if activeConnection.connectionId == connectionId then
+							table.remove(activeConnections, i)
+							break
+						end
+					end
+
+					settings:set("activeConnections", activeConnections)
+				end
 			})
 		elseif status == ServeSession.Status.Disconnected then
 			self.serveSession = nil
+
+			if self.state.removeActiveConnection then
+				self.state.removeActiveConnection()
+			end
 
 			-- Details being present indicates that this
 			-- disconnection was from an error.
@@ -140,11 +175,7 @@ function App:render()
 					NotConnectedPage = PluginSettings.with(function(settings)
 						return createPageElement(AppStatus.NotConnected, {
 							onConnect = function(host, port)
-								self:startSession(host, port, {
-									openScriptsExternally = settings:get("openScriptsExternally"),
-									twoWaySync = settings:get("twoWaySync"),
-									playSoloAutoConnect = settings:get("playSoloAutoConnect"),
-								})
+								self:startSession(host, port, settings)
 							end,
 
 							onNavigateSettings = function()
@@ -223,6 +254,12 @@ function App:render()
 			}),
 		}),
 	})
+end
+
+function App:willUnmount()
+	if self.state.removeActiveConnection then
+		self.state.removeActiveConnection()
+	end
 end
 
 return App

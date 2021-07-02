@@ -10,6 +10,7 @@ local defaultSettings = {
 	openScriptsExternally = false,
 	twoWaySync = false,
 	playSoloAutoConnect = false,
+	activeConnections = {},
 }
 
 local Settings = {}
@@ -36,7 +37,11 @@ function Settings.fromPlugin(plugin)
 	}, Settings)
 end
 
-function Settings:get(name)
+function Settings:get(name, dontUseCache)
+	if dontUseCache then
+		return self.__plugin:GetSetting("Rojo_" .. name)
+	end
+
 	if defaultSettings[name] == nil then
 		error("Invalid setings name " .. tostring(name), 2)
 	end

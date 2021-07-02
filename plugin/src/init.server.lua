@@ -20,6 +20,11 @@ local app = Roact.createElement(App, {
 })
 local tree = Roact.mount(app, nil, "Rojo UI")
 
+game.Close:Connect(function()
+	-- Unmount on game close to cleanup active connection if it exists
+	Roact.unmount(tree)
+end)
+
 plugin.Unloading:Connect(function()
 	Roact.unmount(tree)
 end)

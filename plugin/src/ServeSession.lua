@@ -113,7 +113,10 @@ function ServeSession:start()
 
 	self.__apiContext:connect()
 		:andThen(function(serverInfo)
-			self:__setStatus(Status.Connected, serverInfo.projectName)
+			self:__setStatus(Status.Connected, {
+				projectName = serverInfo.projectName,
+				sessionId = serverInfo.sessionId,
+			})
 			self:__applyGameAndPlaceId(serverInfo)
 
 			local rootInstanceId = serverInfo.rootInstanceId
