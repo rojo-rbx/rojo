@@ -431,12 +431,14 @@ types = {
 local EncodedValue = {}
 
 function EncodedValue.decode(encodedValue)
-	local typeImpl = types[encodedValue.Type]
+	local ty, value = next(encodedValue)
+
+	local typeImpl = types[ty]
 	if typeImpl == nil then
-		return false, "Couldn't decode value " .. tostring(encodedValue.Type)
+		return false, "Couldn't decode value " .. tostring(ty)
 	end
 
-	return true, typeImpl.fromPod(encodedValue.Value)
+	return true, typeImpl.fromPod(value)
 end
 
 function EncodedValue.encode(rbxValue, propertyType)
@@ -448,8 +450,7 @@ function EncodedValue.encode(rbxValue, propertyType)
 	end
 
 	return true, {
-		Type = propertyType,
-		Value = typeImpl.toPod(rbxValue),
+		[propertyType] = typeImpl.toPod(rbxValue),
 	}
 end
 
