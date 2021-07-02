@@ -54,8 +54,7 @@ return function()
 				Name = "Spaghetti",
 				Properties = {
 					Value = {
-						Type = "String",
-						Value = "Hello, world!",
+						String = "Hello, world!",
 					},
 				},
 				Children = {},
