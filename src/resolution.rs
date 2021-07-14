@@ -112,9 +112,9 @@ impl AmbiguousValue {
                 }
 
                 (VariantType::Color3uint8, AmbiguousValue::Array3(value)) => Ok(Color3uint8::new(
-                    ((value[0].max(0.0).min(1.0)) * 255.0) as u8,
-                    ((value[1].max(0.0).min(1.0)) * 255.0) as u8,
-                    ((value[2].max(0.0).min(1.0)) * 255.0) as u8,
+                    ((value[0].max(0.0).min(1.0)) * 255.0).round() as u8,
+                    ((value[1].max(0.0).min(1.0)) * 255.0).round() as u8,
+                    ((value[2].max(0.0).min(1.0)) * 255.0).round() as u8,
                 )
                 .into()),
 
