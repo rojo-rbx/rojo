@@ -1,7 +1,9 @@
 use std::borrow::Borrow;
 
 use anyhow::format_err;
-use rbx_dom_weak::types::{Color3, Content, Enum, Variant, VariantType, Vector2, Vector3};
+use rbx_dom_weak::types::{
+    Color3, Color3uint8, Content, Enum, Variant, VariantType, Vector2, Vector3,
+};
 use rbx_reflection::{DataType, PropertyDescriptor};
 use serde::{Deserialize, Serialize};
 
@@ -108,6 +110,13 @@ impl AmbiguousValue {
                 (VariantType::Color3, AmbiguousValue::Array3(value)) => {
                     Ok(Color3::new(value[0] as f32, value[1] as f32, value[2] as f32).into())
                 }
+
+                (VariantType::Color3uint8, AmbiguousValue::Array3(value)) => Ok(Color3uint8::new(
+                    ((value[0].max(0.0).min(1.0)) * 255.0) as u8,
+                    ((value[1].max(0.0).min(1.0)) * 255.0) as u8,
+                    ((value[2].max(0.0).min(1.0)) * 255.0) as u8,
+                )
+                .into()),
 
                 (_, unresolved) => Err(format_err!(
                     "Wrong type of value for property {}.{}. Expected {:?}, got {}",
