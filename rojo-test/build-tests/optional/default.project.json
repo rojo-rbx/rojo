@@ -1,0 +1,14 @@
+{
+  "name": "optional",
+  "tree": {
+    "$className": "Folder",
+    "foo":{
+      "$path": "src/foo.txt",
+      "$optional": false
+    },
+    "bar":{
+      "$path": "src/bar.txt",
+      "$optional": true
+    }
+  }
+}

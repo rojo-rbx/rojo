@@ -77,6 +77,11 @@ pub fn snapshot_project_node(
     let mut children = Vec::new();
     let mut metadata = InstanceMetadata::default();
 
+    let optional = match node.optional {
+        Some(is_optional) => is_optional,
+        None => false,
+    };
+
     if let Some(path) = &node.path {
         // If the path specified in the project is relative, we assume it's
         // relative to the folder that the project is in, project_folder.
@@ -108,42 +113,44 @@ pub fn snapshot_project_node(
             metadata = snapshot.metadata;
         } else {
             // TODO: Should this issue an error instead?
-            log::warn!(
-                "$path referred to a path that could not be turned into an instance by Rojo"
-            );
+            if !optional {
+                log::warn!(
+                    "$path referred to a path that could not be turned into an instance by Rojo"
+                );
+            }
         }
     }
 
     let class_name_from_inference = infer_class_name(&name, parent_class);
 
-    let class_name = match (
+    let class_name_option = match (
         class_name_from_project,
         class_name_from_path,
         class_name_from_inference,
     ) {
         // These are the easy, happy paths!
-        (Some(project), None, None) => project,
-        (None, Some(path), None) => path,
-        (None, None, Some(inference)) => inference,
+        (Some(project), None, None) => Some(project),
+        (None, Some(path), None) => Some(path),
+        (None, None, Some(inference)) => Some(inference),
 
         // If the user specifies a class name, but there's an inferred class
         // name, we prefer the name listed explicitly by the user.
-        (Some(project), None, Some(_)) => project,
+        (Some(project), None, Some(_)) => Some(project),
 
         // If the user has a $path pointing to a folder and we're able to infer
         // a class name, let's use the inferred name. If the path we're pointing
         // to isn't a folder, though, that's a user error.
         (None, Some(path), Some(inference)) => {
             if path == "Folder" {
-                inference
+                Some(inference)
             } else {
-                path
+                Some(path)
             }
         }
 
         (Some(project), Some(path), _) => {
             if path == "Folder" {
-                project
+                Some(project)
             } else {
                 bail!(
                     "ClassName for Instance \"{}\" was specified in both the project file (as \"{}\") and from the filesystem (as \"{}\").\n\
@@ -161,90 +168,99 @@ pub fn snapshot_project_node(
         }
 
         (None, None, None) => {
-            bail!(
-                "Instance \"{}\" is missing some required information.\n\
-                 One of the following must be true:\n\
-                 - $className must be set to the name of a Roblox class\n\
-                 - $path must be set to a path of an instance\n\
-                 - The instance must be a known service, like ReplicatedStorage\n\
-                 \n\
-                 Project path: {}",
-                instance_name,
-                project_path.display(),
-            );
+            if optional {
+                None
+            } else {
+                bail!(
+                    "Instance \"{}\" is missing some required information.\n\
+                     One of the following must be true:\n\
+                     - $className must be set to the name of a Roblox class\n\
+                     - $path must be set to a path of an instance\n\
+                     - The instance must be a known service, like ReplicatedStorage\n\
+                     \n\
+                     Project path: {}",
+                    instance_name,
+                    project_path.display(),
+                );
+            }
         }
     };
 
-    for (child_name, child_project_node) in &node.children {
-        if let Some(child) = snapshot_project_node(
-            context,
-            project_path,
-            child_name,
-            child_project_node,
-            vfs,
-            Some(&class_name),
-        )? {
-            children.push(child);
-        }
-    }
-
-    for (key, unresolved) in &node.properties {
-        let value = unresolved
-            .clone()
-            .resolve(&class_name, key)
-            .with_context(|| {
-                format!(
-                    "Unresolvable property in project at path {}",
-                    project_path.display()
-                )
-            })?;
-
-        match key.as_str() {
-            "Name" | "Parent" => {
-                log::warn!(
-                    "Property '{}' cannot be set manually, ignoring. Attempted to set in '{}' at {}",
-                    key,
-                    instance_name,
-                    project_path.display()
-                );
-                continue;
+    match class_name_option {
+        Some(class_name) => {
+            for (child_name, child_project_node) in &node.children {
+                if let Some(child) = snapshot_project_node(
+                    context,
+                    project_path,
+                    child_name,
+                    child_project_node,
+                    vfs,
+                    Some(&class_name),
+                )? {
+                    children.push(child);
+                }
             }
 
-            _ => {}
+            for (key, unresolved) in &node.properties {
+                let value = unresolved
+                    .clone()
+                    .resolve(&class_name, key)
+                    .with_context(|| {
+                        format!(
+                            "Unresolvable property in project at path {}",
+                            project_path.display()
+                        )
+                    })?;
+
+                match key.as_str() {
+                    "Name" | "Parent" => {
+                        log::warn!(
+                            "Property '{}' cannot be set manually, ignoring. Attempted to set in '{}' at {}",
+                            key,
+                            instance_name,
+                            project_path.display()
+                        );
+                        continue;
+                    }
+
+                    _ => {}
+                }
+
+                properties.insert(key.clone(), value);
+            }
+
+            // If the user specified $ignoreUnknownInstances, overwrite the existing
+            // value.
+            //
+            // If the user didn't specify it AND $path was not specified (meaning
+            // there's no existing value we'd be stepping on from a project file or meta
+            // file), set it to true.
+            if let Some(ignore) = node.ignore_unknown_instances {
+                metadata.ignore_unknown_instances = ignore;
+            } else if node.path.is_none() {
+                // TODO: Introduce a strict mode where $ignoreUnknownInstances is never
+                // set implicitly.
+                metadata.ignore_unknown_instances = true;
+            }
+
+            metadata.instigating_source = Some(InstigatingSource::ProjectNode(
+                project_path.to_path_buf(),
+                instance_name.to_string(),
+                node.clone(),
+                parent_class.map(|name| name.to_owned()),
+            ));
+
+            Ok(Some(InstanceSnapshot {
+                snapshot_id: None,
+                name,
+                class_name,
+                properties,
+                children,
+                metadata,
+            }))
         }
-
-        properties.insert(key.clone(), value);
+        None => Ok(None),
     }
-
-    // If the user specified $ignoreUnknownInstances, overwrite the existing
-    // value.
-    //
-    // If the user didn't specify it AND $path was not specified (meaning
-    // there's no existing value we'd be stepping on from a project file or meta
-    // file), set it to true.
-    if let Some(ignore) = node.ignore_unknown_instances {
-        metadata.ignore_unknown_instances = ignore;
-    } else if node.path.is_none() {
-        // TODO: Introduce a strict mode where $ignoreUnknownInstances is never
-        // set implicitly.
-        metadata.ignore_unknown_instances = true;
-    }
-
-    metadata.instigating_source = Some(InstigatingSource::ProjectNode(
-        project_path.to_path_buf(),
-        instance_name.to_string(),
-        node.clone(),
-        parent_class.map(|name| name.to_owned()),
-    ));
-
-    Ok(Some(InstanceSnapshot {
-        snapshot_id: None,
-        name,
-        class_name,
-        properties,
-        children,
-        metadata,
-    }))
 }
 
 fn infer_class_name(name: &str, parent_class: Option<&str>) -> Option<Cow<'static, str>> {

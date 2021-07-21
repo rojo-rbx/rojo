@@ -224,6 +224,9 @@ pub struct ProjectNode {
         skip_serializing_if = "Option::is_none"
     )]
     pub path: Option<PathBuf>,
+
+    #[serde(rename = "$optional", skip_serializing_if = "Option::is_none")]
+    pub optional: Option<bool>,
 }
 
 impl ProjectNode {
