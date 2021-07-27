@@ -22,6 +22,8 @@ use crate::{
     },
 };
 
+pub async fn call(serve_session: Arc<ServeSession>, request: Request<Body>) {}
+
 pub struct UiService {
     serve_session: Arc<ServeSession>,
 }

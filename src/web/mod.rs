@@ -2,30 +2,25 @@
 //! communicates with. Eventually, we'll make this API stable, produce better
 //! documentation for it, and open it up for other consumers.
 
-mod api;
+// mod api;
 mod assets;
 pub mod interface;
-mod ui;
-mod util;
+// mod ui;
+// mod util;
 
 use std::convert::Infallible;
 use std::net::SocketAddr;
 use std::sync::Arc;
 
+use futures::future;
 use hyper::{
     server::Server,
-    service::{make_service_fn, service_fn, Service},
-    Body, Request,
+    service::{make_service_fn, service_fn},
+    Body, Request, Response,
 };
 use tokio::runtime::Runtime;
 
 use crate::serve_session::ServeSession;
-
-use self::{api::ApiService, ui::UiService};
-
-fn mock_service() -> impl Service {
-    todo!()
-}
 
 pub struct LiveServer {
     serve_session: Arc<ServeSession>,
@@ -37,26 +32,28 @@ impl LiveServer {
     }
 
     pub fn start(self, address: SocketAddr) {
-        let api = mock_service();
-        let ui = mock_service();
-
         let serve_session = Arc::clone(&self.serve_session);
-        let service = |req: Request<Body>| async move {
-            if req.uri().path().starts_with("api") {
-                api.call(req).await
-            } else {
-                ui.call(req).await
-            }
-        };
 
-        let make_service =
-            make_service_fn(|_conn| async { Ok::<_, Infallible>(service_fn(service)) });
+        let make_service = make_service_fn(move |_conn| {
+            let serve_session = Arc::clone(&serve_session);
 
-        let server = Server::bind(&address)
-            .serve(make_service)
-            .map_err(|e| log::error!("Server error: {}", e));
+            let service = move |_req: Request<Body>| {
+                let content = serve_session.project_name().to_owned();
+
+                future::ready(Ok::<_, Infallible>(Response::new(Body::from(content))))
+                // if req.uri().path().starts_with("api") {
+                //     api.call(req).await
+                // } else {
+                //     ui.call(req).await
+                // }
+            };
+
+            future::ready(Ok::<_, Infallible>(service_fn(service)))
+        });
 
         let rt = Runtime::new().unwrap();
-        rt.block_on(server);
+        let _guard = rt.enter();
+        let server = Server::bind(&address).serve(make_service);
+        rt.block_on(server).unwrap();
     }
 }
