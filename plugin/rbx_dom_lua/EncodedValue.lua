@@ -71,8 +71,8 @@ types = {
 
 	CFrame = {
 		fromPod = function(pod)
-			local pos = pod.Position
-			local orient = pod.Orientation
+			local pos = pod.position
+			local orient = pod.orientation
 
 			return CFrame.new(
 				pos[1], pos[2], pos[3],
@@ -89,8 +89,8 @@ types = {
 				r20, r21, r22 = roblox:GetComponents()
 
 			return {
-				Position = {x, y, z},
-				Orientation = {
+				position = {x, y, z},
+				orientation = {
 					{r00, r01, r02},
 					{r10, r11, r12},
 					{r20, r21, r22},
@@ -123,10 +123,10 @@ types = {
 		fromPod = function(pod)
 			local keypoints = {}
 
-			for index, keypoint in ipairs(pod.Keypoints) do
+			for index, keypoint in ipairs(pod.keypoints) do
 				keypoints[index] = ColorSequenceKeypoint.new(
-					keypoint.Time,
-					types.Color3.fromPod(keypoint.Color)
+					keypoint.time,
+					types.Color3.fromPod(keypoint.color)
 				)
 			end
 
@@ -138,13 +138,13 @@ types = {
 
 			for index, keypoint in ipairs(roblox.Keypoints) do
 				keypoints[index] = {
-					Time = keypoint.Time,
-					Color = types.Color3.toPod(keypoint.Value),
+					time = keypoint.Time,
+					color = types.Color3.toPod(keypoint.Value),
 				}
 			end
 
 			return {
-				Keypoints = keypoints,
+				keypoints = keypoints,
 			}
 		end,
 	},
@@ -223,11 +223,11 @@ types = {
 		fromPod = function(pod)
 			local keypoints = {}
 
-			for index, keypoint in ipairs(pod.Keypoints) do
+			for index, keypoint in ipairs(pod.keypoints) do
 				keypoints[index] = NumberSequenceKeypoint.new(
-					keypoint.Time,
-					keypoint.Value,
-					keypoint.Envelope
+					keypoint.time,
+					keypoint.value,
+					keypoint.envelope
 				)
 			end
 
@@ -239,14 +239,14 @@ types = {
 
 			for index, keypoint in ipairs(roblox.Keypoints) do
 				keypoints[index] = {
-					Time = keypoint.Time,
-					Value = keypoint.Value,
-					Envelope = keypoint.Envelope,
+					time = keypoint.Time,
+					value = keypoint.Value,
+					envelope = keypoint.Envelope,
 				}
 			end
 
 			return {
-				Keypoints = keypoints,
+				keypoints = keypoints,
 			}
 		end,
 	},
@@ -257,11 +257,11 @@ types = {
 				return nil
 			else
 				return PhysicalProperties.new(
-					pod.Density,
-					pod.Friction,
-					pod.Elasticity,
-					pod.FrictionWeight,
-					pod.ElasticityWeight
+					pod.density,
+					pod.friction,
+					pod.elasticity,
+					pod.frictionWeight,
+					pod.elasticityWeight
 				)
 			end
 		end,
@@ -271,11 +271,11 @@ types = {
 				return "Default"
 			else
 				return {
-					Density = roblox.Density,
-					Friction = roblox.Friction,
-					Elasticity = roblox.Elasticity,
-					FrictionWeight = roblox.FrictionWeight,
-					ElasticityWeight = roblox.ElasticityWeight,
+					density = roblox.Density,
+					friction = roblox.Friction,
+					elasticity = roblox.Elasticity,
+					frictionWeight = roblox.FrictionWeight,
+					elasticityWeight = roblox.ElasticityWeight,
 				}
 			end
 		end,
@@ -284,15 +284,15 @@ types = {
 	Ray = {
 		fromPod = function(pod)
 			return Ray.new(
-				types.Vector3.fromPod(pod.Origin),
-				types.Vector3.fromPod(pod.Direction)
+				types.Vector3.fromPod(pod.origin),
+				types.Vector3.fromPod(pod.direction)
 			)
 		end,
 
 		toPod = function(roblox)
 			return {
-				Origin = types.Vector3.toPod(roblox.Origin),
-				Direction = types.Vector3.toPod(roblox.Direction),
+				origin = types.Vector3.toPod(roblox.Origin),
+				direction = types.Vector3.toPod(roblox.Direction),
 			}
 		end,
 	},

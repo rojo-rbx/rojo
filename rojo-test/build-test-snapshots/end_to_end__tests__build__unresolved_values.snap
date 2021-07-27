@@ -1,6 +1,7 @@
 ---
 source: tests/tests/build.rs
 expression: contents
+
 ---
 <roblox version="4">
   <Item class="DataModel" referent="0">
@@ -31,11 +32,7 @@ expression: contents
       <Item class="Part" referent="4">
         <Properties>
           <string name="Name">Color</string>
-          <Color3 name="Color3uint8">
-            <R>0.5</R>
-            <G>0.25</G>
-            <B>0</B>
-          </Color3>
+          <Color3uint8 name="Color3uint8">8404992</Color3uint8>
         </Properties>
       </Item>
       <Item class="NumberValue" referent="5">
