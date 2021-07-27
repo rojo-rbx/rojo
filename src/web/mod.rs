@@ -5,18 +5,17 @@
 // mod api;
 mod assets;
 pub mod interface;
-// mod ui;
-// mod util;
+mod ui;
+mod util;
 
 use std::convert::Infallible;
 use std::net::SocketAddr;
 use std::sync::Arc;
 
-use futures::future;
 use hyper::{
     server::Server,
     service::{make_service_fn, service_fn},
-    Body, Request, Response,
+    Body, Request,
 };
 use tokio::runtime::Runtime;
 
@@ -38,25 +37,22 @@ impl LiveServer {
             let serve_session = Arc::clone(&serve_session);
 
             async {
-                let service = move |_req: Request<Body>| {
+                let service = move |req: Request<Body>| {
                     let serve_session = Arc::clone(&serve_session);
 
                     async move {
-                        let content = serve_session.project_name().to_owned();
+                        Ok::<_, Infallible>(ui::call(serve_session, req).await)
 
-                        Ok::<_, Infallible>(Response::new(Body::from(content)))
+                        // if req.uri().path().starts_with("api") {
+                        //     api.call(req).await
+                        // } else {
+                        // }
                     }
                 };
 
                 Ok::<_, Infallible>(service_fn(service))
             }
         });
-
-        // if req.uri().path().starts_with("api") {
-        //     api.call(req).await
-        // } else {
-        //     ui.call(req).await
-        // }
 
         let rt = Runtime::new().unwrap();
         let _guard = rt.enter();
