@@ -2,7 +2,7 @@
 //! communicates with. Eventually, we'll make this API stable, produce better
 //! documentation for it, and open it up for other consumers.
 
-// mod api;
+mod api;
 mod assets;
 pub mod interface;
 mod ui;
@@ -41,12 +41,11 @@ impl LiveServer {
                     let serve_session = Arc::clone(&serve_session);
 
                     async move {
-                        Ok::<_, Infallible>(ui::call(serve_session, req).await)
-
-                        // if req.uri().path().starts_with("api") {
-                        //     api.call(req).await
-                        // } else {
-                        // }
+                        if req.uri().path().starts_with("/api") {
+                            Ok::<_, Infallible>(api::call(serve_session, req).await)
+                        } else {
+                            Ok::<_, Infallible>(ui::call(serve_session, req).await)
+                        }
                     }
                 };
 
