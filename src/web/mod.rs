@@ -37,19 +37,26 @@ impl LiveServer {
         let make_service = make_service_fn(move |_conn| {
             let serve_session = Arc::clone(&serve_session);
 
-            let service = move |_req: Request<Body>| {
-                let content = serve_session.project_name().to_owned();
+            async {
+                let service = move |_req: Request<Body>| {
+                    let serve_session = Arc::clone(&serve_session);
 
-                future::ready(Ok::<_, Infallible>(Response::new(Body::from(content))))
-                // if req.uri().path().starts_with("api") {
-                //     api.call(req).await
-                // } else {
-                //     ui.call(req).await
-                // }
-            };
+                    async move {
+                        let content = serve_session.project_name().to_owned();
 
-            future::ready(Ok::<_, Infallible>(service_fn(service)))
+                        Ok::<_, Infallible>(Response::new(Body::from(content)))
+                    }
+                };
+
+                Ok::<_, Infallible>(service_fn(service))
+            }
         });
+
+        // if req.uri().path().starts_with("api") {
+        //     api.call(req).await
+        // } else {
+        //     ui.call(req).await
+        // }
 
         let rt = Runtime::new().unwrap();
         let _guard = rt.enter();
