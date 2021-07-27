@@ -1,0 +1,12 @@
+{
+  "name": "weldconstraint",
+  "tree": {
+    "$className": "DataModel",
+
+    "Workspace": {
+      "Parts": {
+        "$path": "two-parts-welded.rbxmx"
+      }
+    }
+  }
+}
