@@ -70,7 +70,7 @@ fs-err = "2.2.0"
 futures = "0.3.16"
 globset = "0.4.4"
 humantime = "2.1.0"
-hyper = "0.14.11"
+hyper = { version = "0.14.11", features = ["server", "http1"] }
 jod-thread = "0.1.0"
 lazy_static = "1.4.0"
 log = "0.4.8"
