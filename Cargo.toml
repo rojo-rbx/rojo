@@ -67,10 +67,10 @@ crossbeam-channel = "0.5.1"
 csv = "1.1.1"
 env_logger = "0.9.0"
 fs-err = "2.2.0"
-futures = "0.1.29"
+futures = "0.3.16"
 globset = "0.4.4"
 humantime = "2.1.0"
-hyper = "0.12.35"
+hyper = { version = "0.14.11", features = ["server", "tcp", "http1"] }
 jod-thread = "0.1.0"
 lazy_static = "1.4.0"
 log = "0.4.8"
@@ -87,7 +87,7 @@ serde_json = "1.0"
 structopt = "0.3.5"
 termcolor = "1.0.5"
 thiserror = "1.0.11"
-tokio = "0.1.22"
+tokio = { version = "1.9.0", features = ["rt", "rt-multi-thread"] }
 uuid = { version = "0.8.1", features = ["v4", "serde"] }
 
 [target.'cfg(windows)'.dependencies]

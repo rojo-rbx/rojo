@@ -8,49 +8,18 @@ pub mod interface;
 mod ui;
 mod util;
 
-use std::{net::SocketAddr, sync::Arc};
+use std::convert::Infallible;
+use std::net::SocketAddr;
+use std::sync::Arc;
 
-use futures::{
-    future::{self, FutureResult},
-    Future,
+use hyper::{
+    server::Server,
+    service::{make_service_fn, service_fn},
+    Body, Request,
 };
-use hyper::{service::Service, Body, Request, Response, Server};
-use log::trace;
+use tokio::runtime::Runtime;
 
 use crate::serve_session::ServeSession;
-
-use self::{api::ApiService, ui::UiService};
-
-pub struct RootService {
-    api: ApiService,
-    ui: UiService,
-}
-
-impl Service for RootService {
-    type ReqBody = Body;
-    type ResBody = Body;
-    type Error = hyper::Error;
-    type Future = Box<dyn Future<Item = Response<Self::ReqBody>, Error = Self::Error> + Send>;
-
-    fn call(&mut self, request: Request<Self::ReqBody>) -> Self::Future {
-        trace!("{} {}", request.method(), request.uri().path());
-
-        if request.uri().path().starts_with("/api") {
-            self.api.call(request)
-        } else {
-            self.ui.call(request)
-        }
-    }
-}
-
-impl RootService {
-    pub fn new(serve_session: Arc<ServeSession>) -> Self {
-        RootService {
-            api: ApiService::new(Arc::clone(&serve_session)),
-            ui: UiService::new(Arc::clone(&serve_session)),
-        }
-    }
-}
 
 pub struct LiveServer {
     serve_session: Arc<ServeSession>,
@@ -62,14 +31,31 @@ impl LiveServer {
     }
 
     pub fn start(self, address: SocketAddr) {
-        let server = Server::bind(&address)
-            .serve(move || {
-                let service: FutureResult<_, hyper::Error> =
-                    future::ok(RootService::new(Arc::clone(&self.serve_session)));
-                service
-            })
-            .map_err(|e| eprintln!("Server error: {}", e));
+        let serve_session = Arc::clone(&self.serve_session);
 
-        hyper::rt::run(server);
+        let make_service = make_service_fn(move |_conn| {
+            let serve_session = Arc::clone(&serve_session);
+
+            async {
+                let service = move |req: Request<Body>| {
+                    let serve_session = Arc::clone(&serve_session);
+
+                    async move {
+                        if req.uri().path().starts_with("/api") {
+                            Ok::<_, Infallible>(api::call(serve_session, req).await)
+                        } else {
+                            Ok::<_, Infallible>(ui::call(serve_session, req).await)
+                        }
+                    }
+                };
+
+                Ok::<_, Infallible>(service_fn(service))
+            }
+        });
+
+        let rt = Runtime::new().unwrap();
+        let _guard = rt.enter();
+        let server = Server::bind(&address).serve(make_service);
+        rt.block_on(server).unwrap();
     }
 }

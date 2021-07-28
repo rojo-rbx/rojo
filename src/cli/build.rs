@@ -50,7 +50,7 @@ impl BuildCommand {
         write_model(&session, &self.output, output_kind)?;
 
         if self.watch {
-            let mut rt = Runtime::new().unwrap();
+            let rt = Runtime::new().unwrap();
 
             loop {
                 let receiver = session.message_queue().subscribe(cursor);
