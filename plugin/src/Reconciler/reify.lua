@@ -70,7 +70,7 @@ function reifyInner(instanceMap, virtualInstances, id, parentInstance, unapplied
 	for propertyName, virtualValue in pairs(virtualInstance.Properties) do
 		-- Because refs may refer to instances that we haven't constructed yet,
 		-- we defer applying any ref properties until all instances are created.
-		if virtualValue.Type == "Ref" then
+		if next(virtualValue) == "Ref" then
 			table.insert(deferredRefs, {
 				id = id,
 				instance = instance,
@@ -136,21 +136,21 @@ function applyDeferredRefs(instanceMap, deferredRefs, unappliedPatch)
 	end
 
 	for _, entry in ipairs(deferredRefs) do
-		local virtualValue = entry.virtualValue
+		local _, refId = next(entry.virtualValue)
 
-		if virtualValue.Value == nil then
+		if refId == nil then
 			continue
 		end
 
-		local targetInstance = instanceMap.fromIds[virtualValue.Value]
+		local targetInstance = instanceMap.fromIds[refId]
 		if targetInstance == nil then
-			markFailed(entry.id, entry.propertyName, virtualValue)
+			markFailed(entry.id, entry.propertyName, entry.virtualValue)
 			continue
 		end
 
 		local ok = setProperty(entry.instance, entry.propertyName, targetInstance)
 		if not ok then
-			markFailed(entry.id, entry.propertyName, virtualValue)
+			markFailed(entry.id, entry.propertyName, entry.virtualValue)
 		end
 	end
 end
