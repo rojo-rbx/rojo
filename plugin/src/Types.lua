@@ -5,10 +5,7 @@ local strict = require(script.Parent.strict)
 
 local RbxId = t.string
 
-local ApiValue = t.interface({
-	Type = t.string,
-	Value = t.optional(t.any),
-})
+local ApiValue = t.keys(t.string)
 
 local ApiInstanceMetadata = t.interface({
 	ignoreUnknownInstances = t.optional(t.boolean),
