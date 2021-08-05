@@ -2,19 +2,19 @@
 
 use std::collections::HashMap;
 
-use rbx_dom_weak::{RbxId, RbxValue};
+use rbx_dom_weak::types::{Ref, Variant};
 use serde::{Deserialize, Serialize};
 
 use super::{InstanceMetadata, InstanceSnapshot};
 
-/// A set of different kinds of patches that can be applied to an RbxTree.
+/// A set of different kinds of patches that can be applied to an WeakDom.
 ///
 /// These patches shouldn't be persisted: there's no mechanism in place to make
 /// sure that another patch wasn't applied before this one that could cause a
 /// conflict!
 #[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PatchSet {
-    pub removed_instances: Vec<RbxId>,
+    pub removed_instances: Vec<Ref>,
     pub added_instances: Vec<PatchAdd>,
     pub updated_instances: Vec<PatchUpdate>,
 }
@@ -32,20 +32,20 @@ impl<'a> PatchSet {
 /// A patch containing an instance that was added to the tree.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PatchAdd {
-    pub parent_id: RbxId,
+    pub parent_id: Ref,
     pub instance: InstanceSnapshot,
 }
 
 /// A patch indicating that properties of an instance changed.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PatchUpdate {
-    pub id: RbxId,
+    pub id: Ref,
     pub changed_name: Option<String>,
     pub changed_class_name: Option<String>,
 
     /// Contains all changed properties. If a property is assigned to `None`,
     /// then that property has been removed.
-    pub changed_properties: HashMap<String, Option<RbxValue>>,
+    pub changed_properties: HashMap<String, Option<Variant>>,
 
     /// Changed Rojo-specific metadata, if any of it changed.
     pub changed_metadata: Option<InstanceMetadata>,
@@ -63,8 +63,8 @@ pub struct PatchUpdate {
 // current values in all fields.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct AppliedPatchSet {
-    pub removed: Vec<RbxId>,
-    pub added: Vec<RbxId>,
+    pub removed: Vec<Ref>,
+    pub added: Vec<Ref>,
     pub updated: Vec<AppliedPatchUpdate>,
 }
 
@@ -80,17 +80,17 @@ impl AppliedPatchSet {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppliedPatchUpdate {
-    pub id: RbxId,
+    pub id: Ref,
 
     // TODO: Store previous values in order to detect application conflicts
     pub changed_name: Option<String>,
     pub changed_class_name: Option<String>,
-    pub changed_properties: HashMap<String, Option<RbxValue>>,
+    pub changed_properties: HashMap<String, Option<Variant>>,
     pub changed_metadata: Option<InstanceMetadata>,
 }
 
 impl AppliedPatchUpdate {
-    pub fn new(id: RbxId) -> Self {
+    pub fn new(id: Ref) -> Self {
         Self {
             id,
             changed_name: None,

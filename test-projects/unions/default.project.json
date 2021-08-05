@@ -1,6 +1,12 @@
 {
   "name": "unions",
   "tree": {
-    "$path": "src"
+    "$className": "DataModel",
+
+    "Workspace": {
+      "TwoParts": {
+        "$path": "src"
+      }
+    }
   }
 }

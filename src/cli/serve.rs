@@ -1,51 +1,82 @@
 use std::{
     io::{self, Write},
+    net::{IpAddr, Ipv4Addr},
+    path::PathBuf,
     sync::Arc,
 };
 
-use anyhow::Result;
 use memofs::Vfs;
+use structopt::StructOpt;
 use termcolor::{BufferWriter, Color, ColorChoice, ColorSpec, WriteColor};
 
-use crate::{
-    cli::{GlobalOptions, ServeCommand},
-    serve_session::ServeSession,
-    web::LiveServer,
-};
+use crate::{serve_session::ServeSession, web::LiveServer};
 
+use super::{resolve_path, GlobalOptions};
+
+const DEFAULT_BIND_ADDRESS: Ipv4Addr = Ipv4Addr::new(127, 0, 0, 1);
 const DEFAULT_PORT: u16 = 34872;
 
-pub fn serve(global: GlobalOptions, options: ServeCommand) -> Result<()> {
-    let vfs = Vfs::new_default();
+/// Expose a Rojo project to the Rojo Studio plugin.
+#[derive(Debug, StructOpt)]
+pub struct ServeCommand {
+    /// Path to the project to serve. Defaults to the current directory.
+    #[structopt(default_value = "")]
+    pub project: PathBuf,
 
-    let session = Arc::new(ServeSession::new(vfs, &options.absolute_project())?);
+    /// The IP address to listen on. Defaults to `127.0.0.1`.
+    #[structopt(long)]
+    pub address: Option<IpAddr>,
 
-    let port = options
-        .port
-        .or_else(|| session.project_port())
-        .unwrap_or(DEFAULT_PORT);
-
-    let server = LiveServer::new(session);
-
-    let _ = show_start_message(port, global.color.into());
-    server.start(port);
-
-    Ok(())
+    /// The port to listen on. Defaults to the project's preference, or `34872` if
+    /// it has none.
+    #[structopt(long)]
+    pub port: Option<u16>,
 }
 
-fn show_start_message(port: u16, color: ColorChoice) -> io::Result<()> {
+impl ServeCommand {
+    pub fn run(self, global: GlobalOptions) -> anyhow::Result<()> {
+        let project_path = resolve_path(&self.project);
+
+        let vfs = Vfs::new_default();
+
+        let session = Arc::new(ServeSession::new(vfs, &project_path)?);
+
+        let ip = self.address.unwrap_or(DEFAULT_BIND_ADDRESS.into());
+
+        let port = self
+            .port
+            .or_else(|| session.project_port())
+            .unwrap_or(DEFAULT_PORT);
+
+        let server = LiveServer::new(session);
+
+        let _ = show_start_message(ip, port, global.color.into());
+        server.start((ip, port).into());
+
+        Ok(())
+    }
+}
+
+fn show_start_message(bind_address: IpAddr, port: u16, color: ColorChoice) -> io::Result<()> {
+    let mut green = ColorSpec::new();
+    green.set_fg(Some(Color::Green)).set_bold(true);
+
     let writer = BufferWriter::stdout(color);
     let mut buffer = writer.buffer();
 
     writeln!(&mut buffer, "Rojo server listening:")?;
 
     write!(&mut buffer, "  Address: ")?;
-    buffer.set_color(ColorSpec::new().set_fg(Some(Color::Green)).set_bold(true))?;
-    writeln!(&mut buffer, "localhost")?;
+    buffer.set_color(&green)?;
+    if bind_address.is_loopback() {
+        writeln!(&mut buffer, "localhost")?;
+    } else {
+        writeln!(&mut buffer, "{}", bind_address)?;
+    }
 
     buffer.set_color(&ColorSpec::new())?;
     write!(&mut buffer, "  Port:    ")?;
-    buffer.set_color(ColorSpec::new().set_fg(Some(Color::Green)).set_bold(true))?;
+    buffer.set_color(&green)?;
     writeln!(&mut buffer, "{}", port)?;
 
     writeln!(&mut buffer)?;
@@ -53,7 +84,7 @@ fn show_start_message(port: u16, color: ColorChoice) -> io::Result<()> {
     buffer.set_color(&ColorSpec::new())?;
     write!(&mut buffer, "Visit ")?;
 
-    buffer.set_color(ColorSpec::new().set_fg(Some(Color::Green)).set_bold(true))?;
+    buffer.set_color(&green)?;
     write!(&mut buffer, "http://localhost:{}/", port)?;
 
     buffer.set_color(&ColorSpec::new())?;

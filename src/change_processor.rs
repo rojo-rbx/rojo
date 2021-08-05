@@ -6,10 +6,9 @@ use std::{
 use crossbeam_channel::{select, Receiver, RecvError, Sender};
 use jod_thread::JoinHandle;
 use memofs::{IoResultExt, Vfs, VfsEvent};
-use rbx_dom_weak::{RbxId, RbxValue};
+use rbx_dom_weak::types::{Ref, Variant};
 
 use crate::{
-    error::ErrorDisplay,
     message_queue::MessageQueue,
     snapshot::{
         apply_patch_set, compute_patch_set, AppliedPatchSet, InstigatingSource, PatchSet, RojoTree,
@@ -17,6 +16,9 @@ use crate::{
     snapshot_middleware::{snapshot_from_vfs, snapshot_project_node},
 };
 
+/// Processes file change events, updates the DOM, and sends those updates
+/// through a channel for other stuff to consume.
+///
 /// Owns the connection between Rojo's VFS and its DOM by holding onto another
 /// thread that processes messages.
 ///
@@ -180,7 +182,7 @@ impl JobThreadContext {
                             InstigatingSource::Path(path) => fs::remove_file(path).unwrap(),
                             InstigatingSource::ProjectNode(_, _, _, _) => {
                                 log::warn!(
-                                    "Cannot remove instance {}, it's from a project file",
+                                    "Cannot remove instance {:?}, it's from a project file",
                                     id
                                 );
                             }
@@ -188,12 +190,12 @@ impl JobThreadContext {
                     } else {
                         // TODO
                         log::warn!(
-                            "Cannot remove instance {}, it is not an instigating source.",
+                            "Cannot remove instance {:?}, it is not an instigating source.",
                             id
                         );
                     }
                 } else {
-                    log::warn!("Cannot remove instance {}, it does not exist.", id);
+                    log::warn!("Cannot remove instance {:?}, it does not exist.", id);
                 }
             }
 
@@ -220,7 +222,7 @@ impl JobThreadContext {
                             {
                                 match instigating_source {
                                     InstigatingSource::Path(path) => {
-                                        if let Some(RbxValue::String { value }) = changed_value {
+                                        if let Some(Variant::String(value)) = changed_value {
                                             fs::write(path, value).unwrap();
                                         } else {
                                             log::warn!("Cannot change Source to non-string value.");
@@ -228,14 +230,14 @@ impl JobThreadContext {
                                     }
                                     InstigatingSource::ProjectNode(_, _, _, _) => {
                                         log::warn!(
-                                            "Cannot remove instance {}, it's from a project file",
+                                            "Cannot remove instance {:?}, it's from a project file",
                                             id
                                         );
                                     }
                                 }
                             } else {
                                 log::warn!(
-                                    "Cannot update instance {}, it is not an instigating source.",
+                                    "Cannot update instance {:?}, it is not an instigating source.",
                                     id
                                 );
                             }
@@ -244,7 +246,7 @@ impl JobThreadContext {
                         }
                     }
                 } else {
-                    log::warn!("Cannot update instance {}, it does not exist.", id);
+                    log::warn!("Cannot update instance {:?}, it does not exist.", id);
                 }
             }
 
@@ -255,7 +257,7 @@ impl JobThreadContext {
     }
 }
 
-fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: RbxId) -> Option<AppliedPatchSet> {
+fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref) -> Option<AppliedPatchSet> {
     let metadata = tree
         .get_metadata(id)
         .expect("metadata missing for instance present in tree");
@@ -264,7 +266,7 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: RbxId) -> Optio
         Some(path) => path,
         None => {
             log::error!(
-                "Instance {} did not have an instigating source, but was considered for an update.",
+                "Instance {:?} did not have an instigating source, but was considered for an update.",
                 id
             );
             log::error!("This is a bug. Please file an issue!");
@@ -292,7 +294,7 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: RbxId) -> Optio
                         return None;
                     }
                     Err(err) => {
-                        log::error!("Snapshot error: {}", ErrorDisplay(err));
+                        log::error!("Snapshot error: {:?}", err);
                         return None;
                     }
                 };
@@ -313,7 +315,7 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: RbxId) -> Optio
                 apply_patch_set(tree, patch_set)
             }
             Err(err) => {
-                log::error!("Error processing filesystem change: {}", ErrorDisplay(err));
+                log::error!("Error processing filesystem change: {:?}", err);
                 return None;
             }
         },
@@ -340,7 +342,7 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: RbxId) -> Optio
                     return None;
                 }
                 Err(err) => {
-                    log::error!("{}", ErrorDisplay(err));
+                    log::error!("{:?}", err);
                     return None;
                 }
             };

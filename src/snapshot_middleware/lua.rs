@@ -1,8 +1,8 @@
 use std::{path::Path, str};
 
+use anyhow::Context;
 use maplit::hashmap;
 use memofs::{IoResultExt, Vfs};
-use rbx_dom_weak::RbxValue;
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
@@ -28,9 +28,8 @@ pub fn snapshot_lua(context: &InstanceContext, vfs: &Vfs, path: &Path) -> Snapsh
 
     let contents = vfs.read(path)?;
     let contents_str = str::from_utf8(&contents)
-        // TODO: Turn into error type
-        .expect("File content was not valid UTF-8")
-        .to_string();
+        .with_context(|| format!("File was not valid UTF-8: {}", path.display()))?
+        .to_owned();
 
     let meta_path = path.with_file_name(format!("{}.meta.json", instance_name));
 
@@ -38,9 +37,7 @@ pub fn snapshot_lua(context: &InstanceContext, vfs: &Vfs, path: &Path) -> Snapsh
         .name(instance_name)
         .class_name(class_name)
         .properties(hashmap! {
-            "Source".to_owned() => RbxValue::String {
-                value: contents_str,
-            },
+            "Source".to_owned() => contents_str.into(),
         })
         .metadata(
             InstanceMetadata::new()
@@ -50,8 +47,8 @@ pub fn snapshot_lua(context: &InstanceContext, vfs: &Vfs, path: &Path) -> Snapsh
         );
 
     if let Some(meta_contents) = vfs.read(&meta_path).with_not_found()? {
-        let mut metadata = AdjacentMetadata::from_slice(&meta_contents, &meta_path)?;
-        metadata.apply_all(&mut snapshot);
+        let mut metadata = AdjacentMetadata::from_slice(&meta_contents, meta_path)?;
+        metadata.apply_all(&mut snapshot)?;
     }
 
     Ok(Some(snapshot))
@@ -71,10 +68,14 @@ pub fn snapshot_lua_init(
     let dir_snapshot = snapshot_dir(context, vfs, folder_path)?.unwrap();
 
     if dir_snapshot.class_name != "Folder" {
-        panic!(
+        anyhow::bail!(
             "init.lua, init.server.lua, and init.client.lua can \
-             only be used if the instance produced by the parent \
-             directory would be a Folder."
+             only be used if the instance produced by the containing \
+             directory would be a Folder.\n\n\
+
+             The directory {} turned into an instance of class {}.",
+            folder_path.display(),
+            dir_snapshot.class_name
         );
     }
 

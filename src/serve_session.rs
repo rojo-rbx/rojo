@@ -10,7 +10,6 @@ use std::{
 use crossbeam_channel::Sender;
 use memofs::IoResultExt;
 use memofs::Vfs;
-use rbx_dom_weak::RbxInstanceProperties;
 use thiserror::Error;
 
 use crate::{
@@ -19,13 +18,15 @@ use crate::{
     project::{Project, ProjectError},
     session_id::SessionId,
     snapshot::{
-        apply_patch_set, compute_patch_set, AppliedPatchSet, InstanceContext,
-        InstancePropertiesWithMeta, PatchSet, RojoTree,
+        apply_patch_set, compute_patch_set, AppliedPatchSet, InstanceContext, InstanceSnapshot,
+        PatchSet, RojoTree,
     },
-    snapshot_middleware::{snapshot_from_vfs, SnapshotError},
+    snapshot_middleware::snapshot_from_vfs,
 };
 
-/// Contains all of the state for a Rojo serve session.
+/// Contains all of the state for a Rojo serve session. A serve session is used
+/// when we need to build a Rojo tree and possibly rebuild it when input files
+/// change.
 ///
 /// Nothing here is specific to any Rojo interface. Though the primary way to
 /// interact with a serve session is Rojo's HTTP right now, there's no reason
@@ -118,14 +119,7 @@ impl ServeSession {
             }
         };
 
-        let mut tree = RojoTree::new(InstancePropertiesWithMeta {
-            properties: RbxInstanceProperties {
-                name: "ROOT".to_owned(),
-                class_name: "Folder".to_owned(),
-                properties: Default::default(),
-            },
-            metadata: Default::default(),
-        });
+        let mut tree = RojoTree::new(InstanceSnapshot::new());
 
         let root_id = tree.get_root_id();
 
@@ -203,6 +197,14 @@ impl ServeSession {
         self.root_project.serve_port
     }
 
+    pub fn place_id(&self) -> Option<u64> {
+        self.root_project.place_id
+    }
+
+    pub fn game_id(&self) -> Option<u64> {
+        self.root_project.game_id
+    }
+
     pub fn start_time(&self) -> Instant {
         self.start_time
     }
@@ -234,8 +236,8 @@ pub enum ServeSessionError {
     },
 
     #[error(transparent)]
-    Snapshot {
+    Other {
         #[from]
-        source: SnapshotError,
+        source: anyhow::Error,
     },
 }

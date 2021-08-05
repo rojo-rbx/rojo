@@ -1,7 +1,8 @@
 use std::{borrow::Cow, collections::HashMap, path::Path};
 
+use anyhow::{bail, Context};
 use memofs::Vfs;
-use rbx_reflection::{get_class_descriptor, try_resolve_value};
+use rbx_reflection::ClassTag;
 
 use crate::{
     project::{Project, ProjectNode},
@@ -10,7 +11,7 @@ use crate::{
     },
 };
 
-use super::{error::SnapshotError, middleware::SnapshotInstanceResult, snapshot_from_vfs};
+use super::{middleware::SnapshotInstanceResult, snapshot_from_vfs};
 
 pub fn snapshot_project(
     context: &InstanceContext,
@@ -18,7 +19,7 @@ pub fn snapshot_project(
     path: &Path,
 ) -> SnapshotInstanceResult {
     let project = Project::load_from_slice(&vfs.read(path)?, path)
-        .map_err(|err| SnapshotError::malformed_project(err, path))?;
+        .with_context(|| format!("File was not a valid Rojo project: {}", path.display()))?;
 
     let mut context = context.clone();
 
@@ -65,11 +66,13 @@ pub fn snapshot_project_node(
 ) -> SnapshotInstanceResult {
     let project_folder = project_path.parent().unwrap();
 
-    let name = Cow::Owned(instance_name.to_owned());
-    let mut class_name = node
+    let class_name_from_project = node
         .class_name
         .as_ref()
         .map(|name| Cow::Owned(name.clone()));
+    let mut class_name_from_path = None;
+
+    let name = Cow::Owned(instance_name.to_owned());
     let mut properties = HashMap::new();
     let mut children = Vec::new();
     let mut metadata = InstanceMetadata::default();
@@ -84,24 +87,7 @@ pub fn snapshot_project_node(
         };
 
         if let Some(snapshot) = snapshot_from_vfs(context, vfs, &path)? {
-            // If a class name was already specified, then it'll override the
-            // class name of this snapshot ONLY if it's a Folder.
-            //
-            // This restriction is in place to prevent applying properties to
-            // instances that don't make sense. The primary use-case for using
-            // $className and $path at the same time is to use a directory as a
-            // service in a place file.
-            class_name = match class_name {
-                Some(class_name) => {
-                    if snapshot.class_name == "Folder" {
-                        Some(class_name)
-                    } else {
-                        // TODO: Turn this into an error object.
-                        panic!("If $className and $path are specified, $path must yield an instance of class Folder");
-                    }
-                }
-                None => Some(snapshot.class_name),
-            };
+            class_name_from_path = Some(snapshot.class_name);
 
             // Properties from the snapshot are pulled in unchanged, and
             // overridden by properties set on the project node.
@@ -128,34 +114,66 @@ pub fn snapshot_project_node(
         }
     }
 
-    let class_name = class_name
-        .or_else(|| {
-            // If className wasn't defined from another source, we may be able
-            // to infer one.
+    let class_name_from_inference = infer_class_name(&name, parent_class);
 
-            let parent_class = parent_class?;
+    let class_name = match (
+        class_name_from_project,
+        class_name_from_path,
+        class_name_from_inference,
+    ) {
+        // These are the easy, happy paths!
+        (Some(project), None, None) => project,
+        (None, Some(path), None) => path,
+        (None, None, Some(inference)) => inference,
 
-            if parent_class == "DataModel" {
-                // Members of DataModel with names that match known services are
-                // probably supposed to be those services.
+        // If the user specifies a class name, but there's an inferred class
+        // name, we prefer the name listed explicitly by the user.
+        (Some(project), None, Some(_)) => project,
 
-                let descriptor = get_class_descriptor(&name)?;
-
-                if descriptor.is_service() {
-                    return Some(name.clone());
-                }
-            } else if parent_class == "StarterPlayer" {
-                // StarterPlayer has two special members with their own classes.
-
-                if name == "StarterPlayerScripts" || name == "StarterCharacterScripts" {
-                    return Some(name.clone());
-                }
+        // If the user has a $path pointing to a folder and we're able to infer
+        // a class name, let's use the inferred name. If the path we're pointing
+        // to isn't a folder, though, that's a user error.
+        (None, Some(path), Some(inference)) => {
+            if path == "Folder" {
+                inference
+            } else {
+                path
             }
+        }
 
-            None
-        })
-        // TODO: Turn this into an error object.
-        .expect("$className or $path must be specified");
+        (Some(project), Some(path), _) => {
+            if path == "Folder" {
+                project
+            } else {
+                bail!(
+                    "ClassName for Instance \"{}\" was specified in both the project file (as \"{}\") and from the filesystem (as \"{}\").\n\
+                     If $className and $path are both set, $path must refer to a Folder.
+                     \n\
+                     Project path: {}\n\
+                     Filesystem path: {}\n",
+                    instance_name,
+                    project,
+                    path,
+                    project_path.display(),
+                    node.path.as_ref().unwrap().display()
+                );
+            }
+        }
+
+        (None, None, None) => {
+            bail!(
+                "Instance \"{}\" is missing some required information.\n\
+                 One of the following must be true:\n\
+                 - $className must be set to the name of a Roblox class\n\
+                 - $path must be set to a path of an instance\n\
+                 - The instance must be a known service, like ReplicatedStorage\n\
+                 \n\
+                 Project path: {}",
+                instance_name,
+                project_path.display(),
+            );
+        }
+    };
 
     for (child_name, child_project_node) in &node.children {
         if let Some(child) = snapshot_project_node(
@@ -170,11 +188,32 @@ pub fn snapshot_project_node(
         }
     }
 
-    for (key, value) in &node.properties {
-        let resolved_value = try_resolve_value(&class_name, key, value)
-            .expect("TODO: Properly handle value resolution errors");
+    for (key, unresolved) in &node.properties {
+        let value = unresolved
+            .clone()
+            .resolve(&class_name, key)
+            .with_context(|| {
+                format!(
+                    "Unresolvable property in project at path {}",
+                    project_path.display()
+                )
+            })?;
 
-        properties.insert(key.clone(), resolved_value);
+        match key.as_str() {
+            "Name" | "Parent" => {
+                log::warn!(
+                    "Property '{}' cannot be set manually, ignoring. Attempted to set in '{}' at {}",
+                    key,
+                    instance_name,
+                    project_path.display()
+                );
+                continue;
+            }
+
+            _ => {}
+        }
+
+        properties.insert(key.clone(), value);
     }
 
     // If the user specified $ignoreUnknownInstances, overwrite the existing
@@ -206,6 +245,32 @@ pub fn snapshot_project_node(
         children,
         metadata,
     }))
+}
+
+fn infer_class_name(name: &str, parent_class: Option<&str>) -> Option<Cow<'static, str>> {
+    // If className wasn't defined from another source, we may be able
+    // to infer one.
+
+    let parent_class = parent_class?;
+
+    if parent_class == "DataModel" {
+        // Members of DataModel with names that match known services are
+        // probably supposed to be those services.
+
+        let descriptor = rbx_reflection_database::get().classes.get(name)?;
+
+        if descriptor.tags.contains(&ClassTag::Service) {
+            return Some(Cow::Owned(name.to_owned()));
+        }
+    } else if parent_class == "StarterPlayer" {
+        // StarterPlayer has two special members with their own classes.
+
+        if name == "StarterPlayerScripts" || name == "StarterCharacterScripts" {
+            return Some(Cow::Owned(name.to_owned()));
+        }
+    }
+
+    None
 }
 
 // #[cfg(feature = "broken-tests")]
@@ -295,8 +360,7 @@ mod test {
                             "$className": "StringValue",
                             "$properties": {
                                 "Value": {
-                                    "Type": "String",
-                                    "Value": "Hello, world!"
+                                    "String": "Hello, world!"
                                 }
                             }
                         }

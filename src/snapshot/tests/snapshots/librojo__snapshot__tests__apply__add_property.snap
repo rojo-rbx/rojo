@@ -1,16 +1,17 @@
 ---
 source: src/snapshot/tests/apply.rs
 expression: tree_view
+
 ---
 id: id-1
 name: ROOT
 class_name: ROOT
 properties:
   Foo:
-    Type: String
-    Value: Value of Foo
+    String: Value of Foo
 metadata:
   ignore_unknown_instances: false
   relevant_paths: []
   context: {}
 children: []
+

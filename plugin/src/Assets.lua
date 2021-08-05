@@ -3,16 +3,45 @@ local strict = require(script.Parent.strict)
 local Assets = {
 	Sprites = {},
 	Slices = {
-		RoundBox = {
-			asset = "rbxassetid://2773204550",
-			offset = Vector2.new(0, 0),
-			size = Vector2.new(32, 32),
-			center = Rect.new(4, 4, 4, 4),
+		RoundedBackground = {
+			Image = "rbxassetid://5981360418",
+			Center = Rect.new(10, 10, 10, 10),
+			Scale = 0.5,
+		},
+
+		RoundedBorder = {
+			Image = "rbxassetid://5981360137",
+			Center = Rect.new(10, 10, 10, 10),
+			Scale = 0.5,
 		},
 	},
 	Images = {
-		Logo = "rbxassetid://3405346157",
-		Icon = "rbxassetid://3405341609",
+		Logo = "rbxassetid://5990772764",
+		PluginButton = "rbxassetid://3405341609",
+		Icons = {
+			Close = "rbxassetid://6012985953",
+			Back = "rbxassetid://6017213752",
+		},
+		Checkbox = {
+			Active = "rbxassetid://6016251644",
+			Inactive = "rbxassetid://6016251963",
+		},
+		Spinner = {
+			Foreground = "rbxassetid://3222731032",
+			Background = "rbxassetid://3222730627",
+		},
+		ScrollBar = {
+			Top = "rbxassetid://6017290134",
+			Middle = "rbxassetid://6017289904",
+			Bottom = "rbxassetid://6017289712",
+		},
+		Circles = {
+			[16] = "rbxassetid://3056541177",
+			[32] = "rbxassetid://3088713341",
+			[64] = "rbxassetid://4918677124",
+			[128] = "rbxassetid://2600845734",
+			[500] = "rbxassetid://2609138523"
+		},
 	},
 	StartSession = "",
 	SessionActive = "",

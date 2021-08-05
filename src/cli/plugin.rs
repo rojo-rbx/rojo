@@ -3,26 +3,50 @@ use std::{
     io::BufWriter,
 };
 
-use anyhow::Result;
 use memofs::{InMemoryFs, Vfs, VfsSnapshot};
 use roblox_install::RobloxStudio;
+use structopt::StructOpt;
 
-use crate::{
-    cli::{PluginCommand, PluginSubcommand},
-    serve_session::ServeSession,
-};
+use crate::serve_session::ServeSession;
 
 static PLUGIN_BINCODE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/plugin.bincode"));
 static PLUGIN_FILE_NAME: &str = "RojoManagedPlugin.rbxm";
 
-pub fn plugin(options: PluginCommand) -> Result<()> {
-    match options.subcommand {
-        PluginSubcommand::Install => install_plugin(),
-        PluginSubcommand::Uninstall => uninstall_plugin(),
+/// Install Rojo's plugin.
+#[derive(Debug, StructOpt)]
+pub struct PluginCommand {
+    #[structopt(subcommand)]
+    subcommand: PluginSubcommand,
+}
+
+/// Manages Rojo's Roblox Studio plugin.
+#[derive(Debug, StructOpt)]
+pub enum PluginSubcommand {
+    /// Install the plugin in Roblox Studio's plugins folder. If the plugin is
+    /// already installed, installing it again will overwrite the current plugin
+    /// file.
+    Install,
+
+    /// Removes the plugin if it is installed.
+    Uninstall,
+}
+
+impl PluginCommand {
+    pub fn run(self) -> anyhow::Result<()> {
+        self.subcommand.run()
     }
 }
 
-pub fn install_plugin() -> Result<()> {
+impl PluginSubcommand {
+    pub fn run(self) -> anyhow::Result<()> {
+        match self {
+            PluginSubcommand::Install => install_plugin(),
+            PluginSubcommand::Uninstall => uninstall_plugin(),
+        }
+    }
+}
+
+fn install_plugin() -> anyhow::Result<()> {
     let plugin_snapshot: VfsSnapshot = bincode::deserialize(PLUGIN_BINCODE)
         .expect("Rojo's plugin was not properly packed into Rojo's binary");
 
@@ -49,12 +73,12 @@ pub fn install_plugin() -> Result<()> {
     let tree = session.tree();
     let root_id = tree.get_root_id();
 
-    rbx_binary::encode(tree.inner(), &[root_id], &mut file)?;
+    rbx_binary::to_writer(&mut file, tree.inner(), &[root_id])?;
 
     Ok(())
 }
 
-fn uninstall_plugin() -> Result<()> {
+fn uninstall_plugin() -> anyhow::Result<()> {
     let studio = RobloxStudio::locate()?;
 
     let plugin_path = studio.plugins_path().join(PLUGIN_FILE_NAME);

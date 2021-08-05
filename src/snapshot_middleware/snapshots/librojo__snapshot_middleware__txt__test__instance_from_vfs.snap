@@ -1,6 +1,7 @@
 ---
 source: src/snapshot_middleware/txt.rs
 expression: instance_snapshot
+
 ---
 snapshot_id: ~
 metadata:
@@ -15,6 +16,6 @@ name: foo
 class_name: StringValue
 properties:
   Value:
-    Type: String
-    Value: Hello there!
+    String: Hello there!
 children: []
+

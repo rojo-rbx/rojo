@@ -10,9 +10,15 @@
 /*.rbxl
 /*.rbxlx
 
+# Test places for the Roblox Studio Plugin
+/plugin/*.rbxlx
+
 # Roblox Studio holds 'lock' files on places
 *.rbxl.lock
 *.rbxlx.lock
 
 # Snapshot files from the 'insta' Rust crate
 **/*.snap.new
+
+# Selene generates a roblox.toml file that should not be checked in.
+/roblox.toml

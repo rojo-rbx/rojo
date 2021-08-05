@@ -62,6 +62,9 @@ fn main() -> Result<(), anyhow::Error> {
             "t" => VfsSnapshot::dir(hashmap! {
                 "lib" => snapshot_from_fs_path(&plugin_modules.join("t").join("lib"))?
             }),
+            "flipper" => VfsSnapshot::dir(hashmap! {
+                "src" => snapshot_from_fs_path(&plugin_modules.join("flipper").join("src"))?
+            }),
         }),
     });
 

@@ -1,0 +1,43 @@
+{
+  "name": "unresolved-values",
+  "tree": {
+    "$className": "DataModel",
+
+    "Lighting": {
+      "$properties": {
+        "Technology": "Voxel",
+        "Ambient": [1, 0, 0]
+      }
+    },
+
+    "Workspace": {
+      "Color": {
+        "$className": "Part",
+        "$properties": {
+          "Color": [0.5, 0.25, 0]
+        }
+      },
+
+      "Bool": {
+        "$className": "BoolValue",
+        "$properties": {
+          "Value": true
+        }
+      },
+
+      "Int": {
+        "$className": "IntValue",
+        "$properties": {
+          "Value": 65
+        }
+      },
+
+      "Float": {
+        "$className": "NumberValue",
+        "$properties": {
+          "Value": 123.5
+        }
+      }
+    }
+  }
+}

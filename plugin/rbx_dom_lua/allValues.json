@@ -1,0 +1,316 @@
+{
+  "Axes": {
+    "value": {
+      "Axes": [
+        "X",
+        "Y",
+        "Z"
+      ]
+    },
+    "ty": "Axes"
+  },
+  "BinaryString": {
+    "value": {
+      "BinaryString": "SGVsbG8h"
+    },
+    "ty": "BinaryString"
+  },
+  "Bool": {
+    "value": {
+      "Bool": true
+    },
+    "ty": "Bool"
+  },
+  "BrickColor": {
+    "value": {
+      "BrickColor": 1004
+    },
+    "ty": "BrickColor"
+  },
+  "CFrame": {
+    "value": {
+      "CFrame": {
+        "position": [
+          1.0,
+          2.0,
+          3.0
+        ],
+        "orientation": [
+          [
+            4.0,
+            5.0,
+            6.0
+          ],
+          [
+            7.0,
+            8.0,
+            9.0
+          ],
+          [
+            10.0,
+            11.0,
+            12.0
+          ]
+        ]
+      }
+    },
+    "ty": "CFrame"
+  },
+  "Color3": {
+    "value": {
+      "Color3": [
+        1.0,
+        2.0,
+        3.0
+      ]
+    },
+    "ty": "Color3"
+  },
+  "Color3uint8": {
+    "value": {
+      "Color3uint8": [
+        0,
+        128,
+        255
+      ]
+    },
+    "ty": "Color3uint8"
+  },
+  "ColorSequence": {
+    "value": {
+      "ColorSequence": {
+        "keypoints": [
+          {
+            "time": 0.0,
+            "color": [
+              1.0,
+              1.0,
+              0.5
+            ]
+          },
+          {
+            "time": 1.0,
+            "color": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ]
+      }
+    },
+    "ty": "ColorSequence"
+  },
+  "Content": {
+    "value": {
+      "Content": "rbxassetid://12345"
+    },
+    "ty": "Content"
+  },
+  "Enum": {
+    "value": {
+      "Enum": 1234
+    },
+    "ty": "Enum"
+  },
+  "Faces": {
+    "value": {
+      "Faces": [
+        "Right",
+        "Top",
+        "Back",
+        "Left",
+        "Bottom",
+        "Front"
+      ]
+    },
+    "ty": "Faces"
+  },
+  "Float32": {
+    "value": {
+      "Float32": 15.0
+    },
+    "ty": "Float32"
+  },
+  "Float64": {
+    "value": {
+      "Float64": 15123.0
+    },
+    "ty": "Float64"
+  },
+  "Int32": {
+    "value": {
+      "Int32": 6014
+    },
+    "ty": "Int32"
+  },
+  "Int64": {
+    "value": {
+      "Int64": 23491023
+    },
+    "ty": "Int64"
+  },
+  "NumberRange": {
+    "value": {
+      "NumberRange": [
+        -36.0,
+        94.0
+      ]
+    },
+    "ty": "NumberRange"
+  },
+  "NumberSequence": {
+    "value": {
+      "NumberSequence": {
+        "keypoints": [
+          {
+            "time": 0.0,
+            "value": 5.0,
+            "envelope": 2.0
+          },
+          {
+            "time": 1.0,
+            "value": 22.0,
+            "envelope": 0.0
+          }
+        ]
+      }
+    },
+    "ty": "NumberSequence"
+  },
+  "PhysicalProperties-Custom": {
+    "value": {
+      "PhysicalProperties": {
+        "density": 0.5,
+        "friction": 1.0,
+        "elasticity": 0.0,
+        "frictionWeight": 50.0,
+        "elasticityWeight": 25.0
+      }
+    },
+    "ty": "PhysicalProperties"
+  },
+  "PhysicalProperties-Default": {
+    "value": {
+      "PhysicalProperties": "Default"
+    },
+    "ty": "PhysicalProperties"
+  },
+  "Ray": {
+    "value": {
+      "Ray": {
+        "origin": [
+          1.0,
+          2.0,
+          3.0
+        ],
+        "direction": [
+          4.0,
+          5.0,
+          6.0
+        ]
+      }
+    },
+    "ty": "Ray"
+  },
+  "Rect": {
+    "value": {
+      "Rect": [
+        [
+          0.0,
+          5.0
+        ],
+        [
+          10.0,
+          15.0
+        ]
+      ]
+    },
+    "ty": "Rect"
+  },
+  "Region3int16": {
+    "value": {
+      "Region3int16": [
+        [
+          -10,
+          -5,
+          0
+        ],
+        [
+          5,
+          10,
+          15
+        ]
+      ]
+    },
+    "ty": "Region3int16"
+  },
+  "String": {
+    "value": {
+      "String": "Hello, world!"
+    },
+    "ty": "String"
+  },
+  "UDim": {
+    "value": {
+      "UDim": [
+        1.0,
+        32
+      ]
+    },
+    "ty": "UDim"
+  },
+  "UDim2": {
+    "value": {
+      "UDim2": [
+        [
+          -1.0,
+          100
+        ],
+        [
+          1.0,
+          -100
+        ]
+      ]
+    },
+    "ty": "UDim2"
+  },
+  "Vector2": {
+    "value": {
+      "Vector2": [
+        -50.0,
+        50.0
+      ]
+    },
+    "ty": "Vector2"
+  },
+  "Vector2int16": {
+    "value": {
+      "Vector2int16": [
+        -300,
+        300
+      ]
+    },
+    "ty": "Vector2int16"
+  },
+  "Vector3": {
+    "value": {
+      "Vector3": [
+        -300.0,
+        0.0,
+        1500.0
+      ]
+    },
+    "ty": "Vector3"
+  },
+  "Vector3int16": {
+    "value": {
+      "Vector3int16": [
+        60,
+        37,
+        -450
+      ]
+    },
+    "ty": "Vector3int16"
+  }
+}

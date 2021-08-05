@@ -1,4 +1,5 @@
-//! Defines module for defining a small Lua AST for simple codegen.
+//! Defines module for defining a small Lua AST for simple codegen. Rojo uses
+//! this module to convert JSON into generated Lua code.
 
 use std::{
     fmt::{self, Write},
@@ -315,7 +316,7 @@ impl<'a> LuaStream<'a> {
 mod test {
     use super::*;
 
-    /// Regression test for https://github.com/Roblox/rojo/issues/314
+    /// Regression test for https://github.com/rojo-rbx/rojo/issues/314
     #[test]
     fn bug_314() {
         let my_value = "\"\r\n\t\\".to_owned();

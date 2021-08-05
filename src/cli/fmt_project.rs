@@ -1,0 +1,29 @@
+use std::path::PathBuf;
+
+use anyhow::Context;
+use structopt::StructOpt;
+
+use crate::project::Project;
+
+/// Reformat a Rojo project using the standard JSON formatting rules.
+#[derive(Debug, StructOpt)]
+pub struct FmtProjectCommand {
+    /// Path to the project to format. Defaults to the current directory.
+    #[structopt(default_value = "")]
+    pub project: PathBuf,
+}
+
+impl FmtProjectCommand {
+    pub fn run(self) -> anyhow::Result<()> {
+        let project = Project::load_fuzzy(&self.project)?
+            .context("A project file is required to run 'rojo fmt-project'")?;
+
+        let serialized = serde_json::to_string_pretty(&project)
+            .context("could not re-encode project file as JSON")?;
+
+        fs_err::write(&project.file_location, &serialized)
+            .context("could not write back to project file")?;
+
+        Ok(())
+    }
+}

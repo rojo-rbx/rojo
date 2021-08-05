@@ -1,6 +1,9 @@
+//! Utiilty that helps redact nondeterministic information from trees so that
+//! they can be part of snapshot tests.
+
 use std::collections::HashMap;
 
-use rbx_dom_weak::{RbxId, RbxValue};
+use rbx_dom_weak::types::{Ref, Variant};
 use rojo_insta_ext::RedactionMap;
 use serde::Serialize;
 
@@ -29,15 +32,15 @@ pub fn intern_tree(tree: &RojoTree, redactions: &mut RedactionMap) {
 /// Copy of data from RojoTree in the right shape to have useful snapshots.
 #[derive(Debug, Serialize)]
 struct InstanceView {
-    id: RbxId,
+    id: Ref,
     name: String,
     class_name: String,
-    properties: HashMap<String, RbxValue>,
+    properties: HashMap<String, Variant>,
     metadata: InstanceMetadata,
     children: Vec<InstanceView>,
 }
 
-fn extract_instance_view(tree: &RojoTree, id: RbxId) -> InstanceView {
+fn extract_instance_view(tree: &RojoTree, id: Ref) -> InstanceView {
     let instance = tree.get_instance(id).unwrap();
 
     InstanceView {

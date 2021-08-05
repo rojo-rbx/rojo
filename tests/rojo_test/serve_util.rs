@@ -7,7 +7,7 @@ use std::{
     time::Duration,
 };
 
-use rbx_dom_weak::RbxId;
+use rbx_dom_weak::types::Ref;
 
 use tempfile::{tempdir, TempDir};
 
@@ -146,7 +146,7 @@ impl TestServeSession {
         Ok(serde_json::from_str(&body).expect("Server returned malformed response"))
     }
 
-    pub fn get_api_read(&self, id: RbxId) -> Result<ReadResponse, reqwest::Error> {
+    pub fn get_api_read(&self, id: Ref) -> Result<ReadResponse, reqwest::Error> {
         let url = format!("http://localhost:{}/api/read/{}", self.port, id);
         let body = reqwest::get(&url)?.text()?;
 

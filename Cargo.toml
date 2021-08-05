@@ -1,12 +1,12 @@
 [package]
 name = "rojo"
-version = "6.0.0-rc.1"
+version = "7.0.0-alpha.4"
 authors = ["Lucien Greathouse <me@lpghatguy.com>"]
 description = "Enables professional-grade development tools for Roblox developers"
 license = "MPL-2.0"
 homepage = "https://rojo.space"
 documentation = "https://rojo.space/docs"
-repository = "https://github.com/Roblox/rojo"
+repository = "https://github.com/rojo-rbx/rojo"
 readme = "README.md"
 edition = "2018"
 
@@ -29,13 +29,6 @@ dev_live_assets = []
 [workspace]
 members = [
     "rojo-insta-ext",
-    "clibrojo",
-    "memofs",
-]
-
-default-members = [
-    ".",
-    "rojo-insta-ext",
     "memofs",
 ]
 
@@ -54,42 +47,51 @@ harness = false
 [dependencies]
 memofs = { version = "0.1.2", path = "memofs" }
 
+# These dependencies can be uncommented when working on rbx-dom simultaneously
+# rbx_binary = { path = "../rbx-dom/rbx_binary" }
+# rbx_dom_weak = { path = "../rbx-dom/rbx_dom_weak" }
+# rbx_reflection = { path = "../rbx-dom/rbx_reflection" }
+# rbx_reflection_database = { path = "../rbx-dom/rbx_reflection_database" }
+# rbx_xml = { path = "../rbx-dom/rbx_xml" }
+
+rbx_binary = "0.6.1"
+rbx_dom_weak = "2.1.0"
+rbx_reflection = "4.1.0"
+rbx_reflection_database = "0.2.1"
+rbx_xml = "0.12.1"
+
 anyhow = "1.0.27"
 backtrace = "0.3"
 bincode = "1.2.1"
-crossbeam-channel = "0.4.0"
+crossbeam-channel = "0.5.1"
 csv = "1.1.1"
-env_logger = "0.7.1"
+env_logger = "0.9.0"
 fs-err = "2.2.0"
-futures = "0.1.29"
+futures = "0.3.16"
 globset = "0.4.4"
-humantime = "1.3.0"
-hyper = "0.12.35"
+humantime = "2.1.0"
+hyper = { version = "0.14.11", features = ["server", "tcp", "http1"] }
 jod-thread = "0.1.0"
 lazy_static = "1.4.0"
 log = "0.4.8"
 maplit = "1.0.1"
 notify = "4.0.14"
-opener = "0.4.1"
-rbx_binary = "0.5.0"
-rbx_dom_weak = "1.10.1"
-rbx_reflection = "3.3.408"
-rbx_xml = "0.11.3"
+opener = "0.5.0"
 regex = "1.3.1"
 reqwest = "0.9.20"
 ritz = "0.1.0"
 rlua = "0.17.0"
-roblox_install = "0.2.2"
+roblox_install = "1.0.0"
 serde = { version = "1.0", features = ["derive", "rc"] }
 serde_json = "1.0"
 structopt = "0.3.5"
 termcolor = "1.0.5"
 thiserror = "1.0.11"
-tokio = "0.1.22"
+tokio = { version = "1.9.0", features = ["rt", "rt-multi-thread"] }
 uuid = { version = "0.8.1", features = ["v4", "serde"] }
 
 [target.'cfg(windows)'.dependencies]
-winreg = "0.6.2"
+winreg = "0.9.0"
 
 [build-dependencies]
 memofs = { version = "0.1.3", path = "memofs" }
@@ -103,10 +105,10 @@ maplit = "1.0.1"
 rojo-insta-ext = { path = "rojo-insta-ext" }
 
 criterion = "0.3"
-insta = { version = "0.13.1", features = ["redactions"] }
+insta = { version = "1.3.0", features = ["redactions"] }
 lazy_static = "1.2"
-paste = "0.1"
-pretty_assertions = "0.6.1"
+paste = "1.0.5"
+pretty_assertions = "0.7.2"
 serde_yaml = "0.8.9"
 tempfile = "3.0"
 walkdir = "2.1"

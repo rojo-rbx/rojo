@@ -4,11 +4,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use rbx_dom_weak::UnresolvedRbxValue;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use crate::glob::Glob;
+use crate::{glob::Glob, resolution::UnresolvedValue};
 
 static PROJECT_FILENAME: &str = "default.project.json";
 
@@ -57,6 +56,16 @@ pub struct Project {
     /// wrong Roblox place.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub serve_place_ids: Option<HashSet<u64>>,
+
+    /// If specified, sets the current place's place ID when connecting to the
+    /// Rojo server from Roblox Studio.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub place_id: Option<u64>,
+
+    /// If specified, sets the current place's game ID when connecting to the
+    /// Rojo server from Roblox Studio.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub game_id: Option<u64>,
 
     /// A list of globs, relative to the folder the project file is in, that
     /// match files that should be excluded if Rojo encounters them.
@@ -183,7 +192,7 @@ pub struct ProjectNode {
         default,
         skip_serializing_if = "HashMap::is_empty"
     )]
-    pub properties: HashMap<String, UnresolvedRbxValue>,
+    pub properties: HashMap<String, UnresolvedValue>,
 
     /// Defines the behavior when Rojo encounters unknown instances in Roblox
     /// Studio during live sync. `$ignoreUnknownInstances` should be considered

@@ -3,10 +3,10 @@ Rojo is a big project and can always use more help!
 
 Some of the repositories covered are:
 
-* https://github.com/Roblox/rojo
-* https://github.com/Roblox/rbx-dom
-* https://github.com/Roblox/vscode-rojo
-* https://github.com/Roblox/rbxlx-to-rojo
+* https://github.com/rojo-rbx/rojo
+* https://github.com/rojo-rbx/rbx-dom
+* https://github.com/rojo-rbx/vscode-rojo
+* https://github.com/rojo-rbx/rbxlx-to-rojo
 
 ## Code
 Code contributions are welcome for features and bugs that have been reported in the project's bug tracker. We want to make sure that no one wastes their time, so be sure to talk with maintainers about what changes would be accepted before doing any work!
@@ -14,7 +14,7 @@ Code contributions are welcome for features and bugs that have been reported in 
 You'll want these tools to work on Rojo:
 
 * Latest stable Rust compiler
-* Latest stable [Rojo](https://github.com/Roblox/rojo)
+* Latest stable [Rojo](https://github.com/rojo-rbx/rojo)
 * [Foreman](https://github.com/Roblox/foreman)
 
 ## Documentation
@@ -41,9 +41,9 @@ The Rojo release process is pretty manual right now. If you need to do it, here'
 6. Tag the commit with the version from `Cargo.toml` prepended with a v, like `v0.4.13`
 7. Publish the CLI
     * `cargo publish`
-8. Build and upload the plugin
+8. Publish the Plugin
+    * `rojo publish plugin --asset_id 6415005344`
     * `rojo build plugin -o Rojo.rbxm`
-    * Upload `Rojo.rbxm` to Roblox.com, keep it for later
 9. Push commits and tags
     * `git push && git push --tags`
 10. Copy GitHub release content from previous release

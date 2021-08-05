@@ -1,6 +1,7 @@
 ---
 source: src/snapshot_middleware/lua.rs
 expression: instance_snapshot
+
 ---
 snapshot_id: ~
 metadata:
@@ -15,6 +16,6 @@ name: foo
 class_name: LocalScript
 properties:
   Source:
-    Type: String
-    Value: Hello there!
+    String: Hello there!
 children: []
+

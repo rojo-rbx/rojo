@@ -1,6 +1,8 @@
 # memofs Changelog
 
 ## Unreleased Changes
+
+## 0.1.3 (2020-11-19)
 * Added `set_watch_enabled` to `Vfs` and `VfsLock` to allow turning off file watching.
 
 ## 0.1.2 (2020-03-29)

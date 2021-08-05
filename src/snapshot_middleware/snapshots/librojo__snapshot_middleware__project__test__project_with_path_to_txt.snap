@@ -1,6 +1,7 @@
 ---
 source: src/snapshot_middleware/project.rs
 expression: instance_snapshot
+
 ---
 snapshot_id: ~
 metadata:
@@ -16,6 +17,6 @@ name: path-project
 class_name: StringValue
 properties:
   Value:
-    Type: String
-    Value: "Hello, world!"
+    String: "Hello, world!"
 children: []
+

@@ -1,13 +1,15 @@
-use std::{borrow::Cow, collections::HashMap, path::Path};
+use std::{borrow::Cow, collections::HashMap, path::Path, str};
 
+use anyhow::Context;
 use memofs::Vfs;
-use rbx_dom_weak::UnresolvedRbxValue;
-use rbx_reflection::try_resolve_value;
 use serde::Deserialize;
 
-use crate::snapshot::{InstanceContext, InstanceSnapshot};
+use crate::{
+    resolution::UnresolvedValue,
+    snapshot::{InstanceContext, InstanceSnapshot},
+};
 
-use super::{error::SnapshotError, middleware::SnapshotInstanceResult};
+use super::middleware::SnapshotInstanceResult;
 
 pub fn snapshot_json_model(
     context: &InstanceContext,
@@ -16,28 +18,20 @@ pub fn snapshot_json_model(
     instance_name: &str,
 ) -> SnapshotInstanceResult {
     let contents = vfs.read(path)?;
-    let instance: JsonModel = serde_json::from_slice(&contents)
-        .map_err(|source| SnapshotError::malformed_model_json(source, path))?;
+    let contents_str = str::from_utf8(&contents)
+        .with_context(|| format!("File was not valid UTF-8: {}", path.display()))?;
 
-    if let Some(json_name) = &instance.name {
-        if json_name != instance_name {
-            log::warn!(
-                "Name from JSON model did not match its file name: {}",
-                path.display()
-            );
-            log::warn!(
-                "In Rojo <  alpha 14, this model is named \"{}\" (from its 'Name' property)",
-                json_name
-            );
-            log::warn!(
-                "In Rojo >= alpha 14, this model is named \"{}\" (from its file name)",
-                instance_name
-            );
-            log::warn!("'Name' for the top-level instance in a JSON model is now optional and will be ignored.");
-        }
+    if contents_str.trim().is_empty() {
+        return Ok(None);
     }
 
-    let mut snapshot = instance.core.into_snapshot(instance_name.to_owned());
+    let instance: JsonModel = serde_json::from_str(contents_str)
+        .with_context(|| format!("File is not a valid JSON model: {}", path.display()))?;
+
+    let mut snapshot = instance
+        .core
+        .into_snapshot(instance_name.to_owned())
+        .with_context(|| format!("Could not load JSON model: {}", path.display()))?;
 
     snapshot.metadata = snapshot
         .metadata
@@ -75,36 +69,32 @@ struct JsonModelCore {
     children: Vec<JsonModelInstance>,
 
     #[serde(default = "HashMap::new", skip_serializing_if = "HashMap::is_empty")]
-    properties: HashMap<String, UnresolvedRbxValue>,
+    properties: HashMap<String, UnresolvedValue>,
 }
 
 impl JsonModelCore {
-    fn into_snapshot(self, name: String) -> InstanceSnapshot {
+    fn into_snapshot(self, name: String) -> anyhow::Result<InstanceSnapshot> {
         let class_name = self.class_name;
 
-        let children = self
-            .children
-            .into_iter()
-            .map(|child| child.core.into_snapshot(child.name))
-            .collect();
+        let mut children = Vec::with_capacity(self.children.len());
+        for child in self.children {
+            children.push(child.core.into_snapshot(child.name)?);
+        }
 
-        let properties = self
-            .properties
-            .into_iter()
-            .map(|(key, value)| {
-                try_resolve_value(&class_name, &key, &value).map(|resolved| (key, resolved))
-            })
-            .collect::<Result<HashMap<_, _>, _>>()
-            .expect("TODO: Handle rbx_reflection errors");
+        let mut properties = HashMap::with_capacity(self.properties.len());
+        for (key, unresolved) in self.properties {
+            let value = unresolved.resolve(&class_name, &key)?;
+            properties.insert(key, value);
+        }
 
-        InstanceSnapshot {
+        Ok(InstanceSnapshot {
             snapshot_id: None,
             metadata: Default::default(),
             name: Cow::Owned(name),
             class_name: Cow::Owned(class_name),
             properties,
             children,
-        }
+        })
     }
 }
 

@@ -1,15 +1,13 @@
 use std::{collections::BTreeMap, path::Path};
 
+use anyhow::Context;
 use maplit::hashmap;
 use memofs::{IoResultExt, Vfs};
-use rbx_dom_weak::RbxValue;
 use serde::Serialize;
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
-use super::{
-    error::SnapshotError, meta_file::AdjacentMetadata, middleware::SnapshotInstanceResult,
-};
+use super::{meta_file::AdjacentMetadata, middleware::SnapshotInstanceResult};
 
 pub fn snapshot_csv(
     _context: &InstanceContext,
@@ -20,16 +18,18 @@ pub fn snapshot_csv(
     let meta_path = path.with_file_name(format!("{}.meta.json", instance_name));
     let contents = vfs.read(path)?;
 
-    let table_contents = convert_localization_csv(&contents)
-        .map_err(|source| SnapshotError::malformed_l10n_csv(source, path))?;
+    let table_contents = convert_localization_csv(&contents).with_context(|| {
+        format!(
+            "File was not a valid LocalizationTable CSV file: {}",
+            path.display()
+        )
+    })?;
 
     let mut snapshot = InstanceSnapshot::new()
         .name(instance_name)
         .class_name("LocalizationTable")
         .properties(hashmap! {
-            "Contents".to_owned() => RbxValue::String {
-                value: table_contents,
-            },
+            "Contents".to_owned() => table_contents.into(),
         })
         .metadata(
             InstanceMetadata::new()
@@ -38,8 +38,8 @@ pub fn snapshot_csv(
         );
 
     if let Some(meta_contents) = vfs.read(&meta_path).with_not_found()? {
-        let mut metadata = AdjacentMetadata::from_slice(&meta_contents, &meta_path)?;
-        metadata.apply_all(&mut snapshot);
+        let mut metadata = AdjacentMetadata::from_slice(&meta_contents, meta_path)?;
+        metadata.apply_all(&mut snapshot)?;
     }
 
     Ok(Some(snapshot))
