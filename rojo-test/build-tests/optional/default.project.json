@@ -6,6 +6,9 @@
       "$path": "src/foo.txt",
       "$optional": false
     },
+    "foo2": {
+      "$path": "src/foo.txt"
+    },
     "bar":{
       "$path": "src/bar.txt",
       "$optional": true
