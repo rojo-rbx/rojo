@@ -11,7 +11,7 @@ local function decodeValue(encodedValue, instanceMap)
 
 	-- Refs are represented as IDs in the same space that Rojo's protocol uses.
 	if ty == "Ref" then
-		if value == nil then
+		if value == "00000000000000000000000000000000" then
 			return true, nil
 		end
 
