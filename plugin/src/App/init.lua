@@ -1,4 +1,5 @@
 local HttpService = game:GetService("HttpService")
+local RunService = game:GetService("RunService")
 
 local Rojo = script:FindFirstAncestor("Rojo")
 local Plugin = Rojo.Plugin
@@ -45,7 +46,7 @@ function App:init()
 	})
 end
 
-function App:startSession(host, port, settings)
+function App:startSession(host, port, settings, expectedSessionId)
 	local baseUrl = ("http://%s:%s"):format(host, port)
 	local apiContext = ApiContext.new(baseUrl)
 
@@ -62,29 +63,34 @@ function App:startSession(host, port, settings)
 				appStatus = AppStatus.Connecting,
 			})
 		elseif status == ServeSession.Status.Connected then
-			local address = ("%s:%s"):format(host, port)
-
-			local connectionId = HttpService:GenerateGUID()
-			local activeConnections = settings:get("activeConnections", true)
-			table.insert(activeConnections, {
-				connectionId = connectionId,
-				sessionId = details.sessionId,
-				projectName = details.projectName,
-				host = host,
-				port = port
-			})
-
-			if #activeConnections > 15 then
-				table.remove(activeConnections, 1)
+			if expectedSessionId and details.sessionId ~= expectedSessionId then
+				ServeSession:stop()
 			end
 
-			settings:set("activeConnections", activeConnections)
+			local address = ("%s:%s"):format(host, port)
 
-			self:setState({
-				appStatus = AppStatus.Connected,
-				projectName = details.projectName,
-				address = address,
+			local removeActiveConnection
+			if RunService:IsClient() and RunService:IsServer() and not RunService:IsRunning() then
+				local connectionId = HttpService:GenerateGUID()
+				local activeConnections = settings:get("activeConnections", true)
+				table.insert(activeConnections, {
+					connectionId = connectionId,
+					sessionId = details.sessionId,
+					projectName = details.projectName,
+					host = host,
+					port = port
+				})
+
+				if #activeConnections > 15 then
+					table.remove(activeConnections, 1)
+				end
+
+				settings:set("activeConnections", activeConnections)
+
+				workspace:SetAttribute("__RojoConnectionId", connectionId)
+
 				removeActiveConnection = function()
+					workspace:SetAttribute("__RojoConnectionId", nil)
 					local activeConnections = settings:get("activeConnections", true)
 					for i = #activeConnections, 1, -1 do
 						local activeConnection = activeConnections[i]
@@ -96,6 +102,13 @@ function App:startSession(host, port, settings)
 
 					settings:set("activeConnections", activeConnections)
 				end
+			end
+
+			self:setState({
+				appStatus = AppStatus.Connected,
+				projectName = details.projectName,
+				address = address,
+				removeActiveConnection = removeActiveConnection
 			})
 		elseif status == ServeSession.Status.Disconnected then
 			self.serveSession = nil
@@ -174,8 +187,10 @@ function App:render()
 				}, {
 					NotConnectedPage = PluginSettings.with(function(settings)
 						return createPageElement(AppStatus.NotConnected, {
-							onConnect = function(host, port)
-								self:startSession(host, port, settings)
+							settings = settings,
+
+							onConnect = function(host, port, expectedSessionId)
+								self:startSession(host, port, settings, expectedSessionId)
 							end,
 
 							onNavigateSettings = function()
