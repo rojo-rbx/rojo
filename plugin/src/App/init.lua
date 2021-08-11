@@ -19,6 +19,7 @@ local Theme = require(script.Theme)
 local PluginSettings = require(script.PluginSettings)
 
 local Page = require(script.Page)
+local PlaySoloAutoConnector = require(script.Components.PlaySoloAutoConnector)
 local StudioToolbar = require(script.Components.Studio.StudioToolbar)
 local StudioToggleButton = require(script.Components.Studio.StudioToggleButton)
 local StudioPluginGui = require(script.Components.Studio.StudioPluginGui)
@@ -160,6 +161,15 @@ function App:render()
 			e(PluginSettings.StudioProvider, {
 				plugin = self.props.plugin,
 			}, {
+				autoConnector = PluginSettings.with(function(settings)
+					return e(PlaySoloAutoConnector, {
+						settings = settings,
+
+						onConnect = function(host, port, expectedSessionId)
+							self:startSession(host, port, settings, expectedSessionId)
+						end,
+					})
+				end),
 				gui = e(StudioPluginGui, {
 					id = pluginName,
 					title = pluginName,
@@ -189,8 +199,8 @@ function App:render()
 						return createPageElement(AppStatus.NotConnected, {
 							settings = settings,
 
-							onConnect = function(host, port, expectedSessionId)
-								self:startSession(host, port, settings, expectedSessionId)
+							onConnect = function(host, port)
+								self:startSession(host, port, settings)
 							end,
 
 							onNavigateSettings = function()

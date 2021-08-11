@@ -1,5 +1,3 @@
-local RunService = game:GetService("RunService")
-
 local Rojo = script:FindFirstAncestor("Rojo")
 local Plugin = Rojo.Plugin
 
@@ -151,32 +149,6 @@ function NotConnectedPage:render()
 			PaddingRight = UDim.new(0, 20),
 		}),
 	})
-end
-
-function NotConnectedPage:didMount()
-	local settings = self.props.settings
-
-	if not self.hasAttemptedAutoConnection then
-		if RunService:IsServer() and RunService:IsRunning() and settings:get("playSoloAutoConnect") then
-			local connectionId = workspace:GetAttribute("__RojoConnectionId")
-
-			if connectionId then
-				local activeConnections = settings:get("activeConnections", true)
-				local activeConnection
-				for _, connection in ipairs(activeConnections) do
-					if connection.connectionId == connectionId then
-						activeConnection = connection
-						break
-					end
-				end
-
-				if activeConnection then
-					self.props.onConnect(activeConnection.host, activeConnection.port, activeConnection.sessionId)
-				end
-			end
-		end
-	end
-	self.hasAttemptedAutoConnection = true
 end
 
 return NotConnectedPage
