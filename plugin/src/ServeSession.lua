@@ -48,7 +48,6 @@ local validateServeOptions = t.strictInterface({
 	apiContext = t.table,
 	openScriptsExternally = t.boolean,
 	twoWaySync = t.boolean,
-	playSoloAutoConnect = t.boolean,
 })
 
 function ServeSession.new(options)
@@ -81,7 +80,6 @@ function ServeSession.new(options)
 		__apiContext = options.apiContext,
 		__openScriptsExternally = options.openScriptsExternally,
 		__twoWaySync = options.twoWaySync,
-		__playSoloAutoConnect = options.playSoloAutoConnect,
 		__reconciler = reconciler,
 		__instanceMap = instanceMap,
 		__statusChangedCallback = nil,

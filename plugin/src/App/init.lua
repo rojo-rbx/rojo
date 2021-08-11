@@ -55,7 +55,6 @@ function App:startSession(host, port, settings, expectedSessionId)
 		apiContext = apiContext,
 		openScriptsExternally = settings:get("openScriptsExternally"),
 		twoWaySync = settings:get("twoWaySync"),
-		playSoloAutoConnect = settings:get("playSoloAutoConnect"),
 	})
 
 	serveSession:onStatusChanged(function(status, details)
