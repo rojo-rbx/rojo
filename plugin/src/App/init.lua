@@ -75,7 +75,6 @@ function App:startSession(host, port, settings, expectedSessionId)
 				table.insert(activeConnections, {
 					connectionId = connectionId,
 					sessionId = details.sessionId,
-					projectName = details.projectName,
 					host = host,
 					port = port
 				})
