@@ -69,7 +69,6 @@ function App:startSession(host, port, settings, expectedSessionId)
 
 			local address = ("%s:%s"):format(host, port)
 
-			local removeActiveConnection
 			if RunService:IsClient() and RunService:IsServer() and not RunService:IsRunning() then
 				local connectionId = HttpService:GenerateGUID()
 				local activeConnections = settings:get("activeConnections", true)
@@ -89,7 +88,7 @@ function App:startSession(host, port, settings, expectedSessionId)
 
 				workspace:SetAttribute("__RojoConnectionId", connectionId)
 
-				removeActiveConnection = function()
+				self.removeActiveConnection = function()
 					workspace:SetAttribute("__RojoConnectionId", nil)
 					local activeConnections = settings:get("activeConnections", true)
 					for i = #activeConnections, 1, -1 do
@@ -108,7 +107,6 @@ function App:startSession(host, port, settings, expectedSessionId)
 				appStatus = AppStatus.Connected,
 				projectName = details.projectName,
 				address = address,
-				removeActiveConnection = removeActiveConnection
 			})
 		elseif status == ServeSession.Status.Disconnected then
 			self.serveSession = nil
@@ -279,8 +277,8 @@ function App:render()
 end
 
 function App:willUnmount()
-	if self.state.removeActiveConnection then
-		self.state.removeActiveConnection()
+	if self.removeActiveConnection then
+		self.removeActiveConnection()
 	end
 end
 
