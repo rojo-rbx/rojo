@@ -111,8 +111,8 @@ function App:startSession(host, port, settings, expectedSessionId)
 		elseif status == ServeSession.Status.Disconnected then
 			self.serveSession = nil
 
-			if self.state.removeActiveConnection then
-				self.state.removeActiveConnection()
+			if self.removeActiveConnection then
+				self.removeActiveConnection()
 			end
 
 			-- Details being present indicates that this
