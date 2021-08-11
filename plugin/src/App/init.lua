@@ -196,8 +196,6 @@ function App:render()
 				}, {
 					NotConnectedPage = PluginSettings.with(function(settings)
 						return createPageElement(AppStatus.NotConnected, {
-							settings = settings,
-
 							onConnect = function(host, port)
 								self:startSession(host, port, settings)
 							end,
