@@ -7,10 +7,10 @@ local Rojo = script:FindFirstAncestor("Rojo")
 local Roact = require(Rojo.Roact)
 
 local defaultSettings = {
-	openScriptsExternally = false,
-	twoWaySync = false,
-	playSoloAutoConnect = false,
 	activeConnections = {},
+	openScriptsExternally = false,
+	playSoloAutoConnect = false,
+	twoWaySync = false,
 }
 
 local Settings = {}
