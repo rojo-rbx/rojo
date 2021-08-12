@@ -20,14 +20,18 @@ local app = Roact.createElement(App, {
 })
 local tree = Roact.mount(app, nil, "Rojo UI")
 
-game.Close:Connect(function()
-	-- Unmount on game close to cleanup active connection if it exists
-	Roact.unmount(tree)
-end)
+local unmounted = false
+function unmount()
+	if not unmounted then
+		Roact.unmount(tree)
+		unmounted = true
+	end
+end
 
-plugin.Unloading:Connect(function()
-	Roact.unmount(tree)
-end)
+-- Unmount on game close to cleanup active connection if it exists
+game.Close:Connect(unmount)
+
+plugin.Unloading:Connect(unmount)
 
 if Config.isDevBuild then
 	local TestEZ = require(script.Parent.TestEZ)
