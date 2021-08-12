@@ -9,6 +9,7 @@ local e = Roact.createElement
 local PlaySoloAutoConnector = Roact.Component:extend("PlaySoloAutoConnector")
 
 function PlaySoloAutoConnector:render()
+	return nil
 end
 
 function PlaySoloAutoConnector:didMount()
