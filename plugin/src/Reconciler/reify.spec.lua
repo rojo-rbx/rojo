@@ -190,8 +190,7 @@ return function()
 				Name = "Child",
 				Properties = {
 					Value = {
-						Type = "Ref",
-						Value = "ROOT",
+						Ref = "ROOT",
 					},
 				},
 				Children = {},
@@ -218,8 +217,7 @@ return function()
 				Name = "Root",
 				Properties = {
 					Value = {
-						Type = "Ref",
-						Value = "EXISTING",
+						Ref = "EXISTING",
 					},
 				},
 				Children = {},
@@ -257,8 +255,7 @@ return function()
 				Name = "Child A",
 				Properties = {
 					Value = {
-						Type = "Ref",
-						Value = "Child B",
+						Ref = "Child B",
 					},
 				},
 				Children = {},
@@ -297,8 +294,7 @@ return function()
 				Name = "Root",
 				Properties = {
 					Value = {
-						Type = "Ref",
-						Value = "CHILD",
+						Ref = "CHILD",
 					},
 				},
 				Children = {"CHILD"},

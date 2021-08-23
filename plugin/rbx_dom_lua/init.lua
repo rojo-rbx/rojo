@@ -22,7 +22,7 @@ local function findCanonicalPropertyDescriptor(className, propertyName)
 			local aliasData = propertyData.Kind.Alias
 			if aliasData ~= nil then
 				return PropertyDescriptor.fromRaw(
-					currentClass.properties[aliasData.AliasFor],
+					currentClass.Properties[aliasData.AliasFor],
 					currentClassName,
 					aliasData.AliasFor)
 			end
