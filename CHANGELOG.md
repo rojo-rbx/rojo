@@ -43,6 +43,9 @@ The shorthand property format that most users use is not impacted. For reference
 * Added the `fmt-project` subcommand for formatting Rojo project files.
 * Improved error output for many subcommands.
 * Updated to stable versions of rbx-dom libraries.
+* Fixed long path issues on Windows. ([#464][#464])
+
+[#464]: https://github.com/rojo-rbx/rojo/pull/464
 
 ## [7.0.0-alpha.4][7.0.0-alpha.4] (May 5, 2021)
 * Added the `gameId` and `placeId` optional properties to project files.
