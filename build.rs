@@ -8,8 +8,6 @@ use fs_err::File;
 use maplit::hashmap;
 use memofs::VfsSnapshot;
 
-extern crate embed_resource;
-
 fn snapshot_from_fs_path(path: &Path) -> io::Result<VfsSnapshot> {
     println!("cargo:rerun-if-changed={}", path.display());
 
@@ -74,7 +72,10 @@ fn main() -> Result<(), anyhow::Error> {
     let out_file = File::create(&out_path)?;
 
     bincode::serialize_into(out_file, &snapshot)?;
-    embed_resource::compile("rojo-manifest.rc");
+
+    println!("cargo:rerun-if-changed=build/windows/rojo-manifest.rc");
+    println!("cargo:rerun-if-changed=build/windows/rojo.manifest");
+    embed_resource::compile("build/windows/rojo-manifest.rc");
 
     Ok(())
 }
