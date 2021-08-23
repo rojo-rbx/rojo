@@ -1,6 +1,8 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+
+## [7.0.0-rc.1][7.0.0-rc.1] (August 23, 2021)
 In Rojo 6 and previous Rojo 7 alphas, an explicit Vector3 property would be written like this:
 
 ```json
@@ -39,13 +41,19 @@ The shorthand property format that most users use is not impacted. For reference
 }
 ```
 
-* Major breaking change: changed explicit property syntax; shorthand syntax is unchanged.
+* Major breaking change: changed property syntax for project files; shorthand syntax is unchanged.
 * Added the `fmt-project` subcommand for formatting Rojo project files.
 * Improved error output for many subcommands.
 * Updated to stable versions of rbx-dom libraries.
-* Fixed long path issues on Windows. ([#464][#464])
+* Updated async infrastructure, which should fix a handful of bugs. ([#459][#459])
+* Fixed syncing refs in the Roblox Studio plugin ([#462][#462], [#466][#466])
+* Added support for long paths on Windows. ([#464][#464])
 
+[#459]: https://github.com/rojo-rbx/rojo/pull/459
+[#462]: https://github.com/rojo-rbx/rojo/pull/462
 [#464]: https://github.com/rojo-rbx/rojo/pull/464
+[#466]: https://github.com/rojo-rbx/rojo/pull/466
+[7.0.0-rc.1]: https://github.com/rojo-rbx/rojo/releases/tag/v7.0.0-rc.1
 
 ## [7.0.0-alpha.4][7.0.0-alpha.4] (May 5, 2021)
 * Added the `gameId` and `placeId` optional properties to project files.
