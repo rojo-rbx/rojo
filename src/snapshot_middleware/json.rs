@@ -9,14 +9,14 @@ use crate::{
     snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
 };
 
-use super::{meta_file::AdjacentMetadata, middleware::SnapshotInstanceResult};
+use super::meta_file::AdjacentMetadata;
 
 pub fn snapshot_json(
     context: &InstanceContext,
     vfs: &Vfs,
     path: &Path,
     instance_name: &str,
-) -> SnapshotInstanceResult {
+) -> anyhow::Result<Option<InstanceSnapshot>> {
     let contents = vfs.read(path)?;
 
     let value: serde_json::Value = serde_json::from_slice(&contents)

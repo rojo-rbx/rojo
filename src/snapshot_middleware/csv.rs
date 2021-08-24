@@ -7,14 +7,14 @@ use serde::Serialize;
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
-use super::{meta_file::AdjacentMetadata, middleware::SnapshotInstanceResult};
+use super::meta_file::AdjacentMetadata;
 
 pub fn snapshot_csv(
     _context: &InstanceContext,
     vfs: &Vfs,
     path: &Path,
     instance_name: &str,
-) -> SnapshotInstanceResult {
+) -> anyhow::Result<Option<InstanceSnapshot>> {
     let meta_path = path.with_file_name(format!("{}.meta.json", instance_name));
     let contents = vfs.read(path)?;
 

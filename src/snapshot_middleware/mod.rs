@@ -11,7 +11,6 @@ mod json;
 mod json_model;
 mod lua;
 mod meta_file;
-mod middleware;
 mod project;
 mod rbxm;
 mod rbxmx;
@@ -22,7 +21,7 @@ use std::path::Path;
 
 use memofs::{IoResultExt, Vfs};
 
-use crate::snapshot::InstanceContext;
+use crate::snapshot::{InstanceContext, InstanceSnapshot};
 
 use self::{
     csv::snapshot_csv,
@@ -30,7 +29,6 @@ use self::{
     json::snapshot_json,
     json_model::snapshot_json_model,
     lua::{snapshot_lua, snapshot_lua_init},
-    middleware::SnapshotInstanceResult,
     project::snapshot_project,
     rbxm::snapshot_rbxm,
     rbxmx::snapshot_rbxmx,
@@ -46,7 +44,7 @@ pub fn snapshot_from_vfs(
     context: &InstanceContext,
     vfs: &Vfs,
     path: &Path,
-) -> SnapshotInstanceResult {
+) -> anyhow::Result<Option<InstanceSnapshot>> {
     let meta = match vfs.metadata(path).with_not_found()? {
         Some(meta) => meta,
         None => return Ok(None),

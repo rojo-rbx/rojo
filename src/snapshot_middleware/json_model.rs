@@ -9,14 +9,12 @@ use crate::{
     snapshot::{InstanceContext, InstanceSnapshot},
 };
 
-use super::middleware::SnapshotInstanceResult;
-
 pub fn snapshot_json_model(
     context: &InstanceContext,
     vfs: &Vfs,
     path: &Path,
     instance_name: &str,
-) -> SnapshotInstanceResult {
+) -> anyhow::Result<Option<InstanceSnapshot>> {
     let contents = vfs.read(path)?;
     let contents_str = str::from_utf8(&contents)
         .with_context(|| format!("File was not valid UTF-8: {}", path.display()))?;

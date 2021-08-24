@@ -5,14 +5,12 @@ use memofs::Vfs;
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
-use super::middleware::SnapshotInstanceResult;
-
 pub fn snapshot_rbxmx(
     context: &InstanceContext,
     vfs: &Vfs,
     path: &Path,
     instance_name: &str,
-) -> SnapshotInstanceResult {
+) -> anyhow::Result<Option<InstanceSnapshot>> {
     let options = rbx_xml::DecodeOptions::new()
         .property_behavior(rbx_xml::DecodePropertyBehavior::ReadUnknown);
 

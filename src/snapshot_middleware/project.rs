@@ -11,13 +11,13 @@ use crate::{
     },
 };
 
-use super::{middleware::SnapshotInstanceResult, snapshot_from_vfs};
+use super::snapshot_from_vfs;
 
 pub fn snapshot_project(
     context: &InstanceContext,
     vfs: &Vfs,
     path: &Path,
-) -> SnapshotInstanceResult {
+) -> anyhow::Result<Option<InstanceSnapshot>> {
     let project = Project::load_from_slice(&vfs.read(path)?, path)
         .with_context(|| format!("File was not a valid Rojo project: {}", path.display()))?;
 
@@ -63,7 +63,7 @@ pub fn snapshot_project_node(
     node: &ProjectNode,
     vfs: &Vfs,
     parent_class: Option<&str>,
-) -> SnapshotInstanceResult {
+) -> anyhow::Result<Option<InstanceSnapshot>> {
     let project_folder = project_path.parent().unwrap();
 
     let class_name_from_project = node
