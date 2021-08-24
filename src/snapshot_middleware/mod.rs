@@ -33,7 +33,7 @@ use self::{
     rbxm::snapshot_rbxm,
     rbxmx::snapshot_rbxmx,
     txt::snapshot_txt,
-    util::match_file_name,
+    util::PathExt,
 };
 
 pub use self::project::snapshot_project_node;
@@ -73,7 +73,7 @@ pub fn snapshot_from_vfs(
 
         snapshot_dir(context, vfs, path)
     } else {
-        if let Some(name) = match_file_name(path, ".lua") {
+        if let Ok(name) = path.file_name_trim_end(".lua") {
             match name {
                 // init scripts are handled elsewhere and should not turn into
                 // their own children.
@@ -81,23 +81,23 @@ pub fn snapshot_from_vfs(
 
                 _ => return snapshot_lua(context, vfs, path),
             }
-        } else if let Some(_name) = match_file_name(path, ".project.json") {
+        } else if path.file_name_ends_with(".project.json") {
             return snapshot_project(context, vfs, path);
-        } else if let Some(name) = match_file_name(path, ".model.json") {
-            return snapshot_json_model(context, vfs, path, name);
-        } else if let Some(_name) = match_file_name(path, ".meta.json") {
+        } else if path.file_name_ends_with(".model.json") {
+            return snapshot_json_model(context, vfs, path);
+        } else if path.file_name_ends_with(".meta.json") {
             // .meta.json files do not turn into their own instances.
             return Ok(None);
-        } else if let Some(name) = match_file_name(path, ".json") {
-            return snapshot_json(context, vfs, path, name);
-        } else if let Some(name) = match_file_name(path, ".csv") {
-            return snapshot_csv(context, vfs, path, name);
-        } else if let Some(name) = match_file_name(path, ".txt") {
-            return snapshot_txt(context, vfs, path, name);
-        } else if let Some(name) = match_file_name(path, ".rbxmx") {
-            return snapshot_rbxmx(context, vfs, path, name);
-        } else if let Some(name) = match_file_name(path, ".rbxm") {
-            return snapshot_rbxm(context, vfs, path, name);
+        } else if path.file_name_ends_with(".json") {
+            return snapshot_json(context, vfs, path);
+        } else if path.file_name_ends_with(".csv") {
+            return snapshot_csv(context, vfs, path);
+        } else if path.file_name_ends_with(".txt") {
+            return snapshot_txt(context, vfs, path);
+        } else if path.file_name_ends_with(".rbxmx") {
+            return snapshot_rbxmx(context, vfs, path);
+        } else if path.file_name_ends_with(".rbxm") {
+            return snapshot_rbxm(context, vfs, path);
         }
 
         Ok(None)
