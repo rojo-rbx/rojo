@@ -77,7 +77,9 @@ pub fn snapshot_project_node(
     let mut children = Vec::new();
     let mut metadata = InstanceMetadata::default();
 
-    if let Some(PathNode::Required(path)) = &node.path {
+    if let Some(path_node) = &node.path {
+        let path = path_node.path();
+
         // If the path specified in the project is relative, we assume it's
         // relative to the folder that the project is in, project_folder.
         let path = if path.is_relative() {
@@ -106,11 +108,6 @@ pub fn snapshot_project_node(
             // Take the snapshot's metadata as-is, which will be mutated later
             // on.
             metadata = snapshot.metadata;
-        } else {
-            // TODO: Should this issue an error instead?
-            log::warn!(
-                "$path referred to a path that could not be turned into an instance by Rojo"
-            );
         }
     }
 
@@ -120,20 +117,21 @@ pub fn snapshot_project_node(
         class_name_from_project,
         class_name_from_path,
         class_name_from_inference,
+        &node.path,
     ) {
         // These are the easy, happy paths!
-        (Some(project), None, None) => project,
-        (None, Some(path), None) => path,
-        (None, None, Some(inference)) => inference,
+        (Some(project), None, None, _) => project,
+        (None, Some(path), None, _) => path,
+        (None, None, Some(inference), _) => inference,
 
         // If the user specifies a class name, but there's an inferred class
         // name, we prefer the name listed explicitly by the user.
-        (Some(project), None, Some(_)) => project,
+        (Some(project), None, Some(_), _) => project,
 
         // If the user has a $path pointing to a folder and we're able to infer
         // a class name, let's use the inferred name. If the path we're pointing
         // to isn't a folder, though, that's a user error.
-        (None, Some(path), Some(inference)) => {
+        (None, Some(path), Some(inference), _) => {
             if path == "Folder" {
                 inference
             } else {
@@ -141,7 +139,7 @@ pub fn snapshot_project_node(
             }
         }
 
-        (Some(project), Some(path), _) => {
+        (Some(project), Some(path), _, _) => {
             if path == "Folder" {
                 project
             } else {
@@ -160,7 +158,32 @@ pub fn snapshot_project_node(
             }
         }
 
-        (None, None, None) => {
+        (None, None, None, Some(PathNode::Optional(_))) => {
+            return Ok(None);
+        }
+
+        (_, None, _, Some(PathNode::Required(path_buf))) => {
+            let path = path_buf.as_path();
+
+            // If the path specified in the project is relative, we assume it's
+            // relative to the folder that the project is in, project_folder.
+            let path = if path.is_relative() {
+                Cow::Owned(project_folder.join(path))
+            } else {
+                Cow::Borrowed(path)
+            };
+
+            bail!(
+                "$path referred to a path that could not be turned into an instance by Rojo\n\
+                \n\
+                $path: \"{}\"\n\
+                Project path: \"{}\"\n",
+                path.display(),
+                project_path.display()
+            )
+        }
+
+        (None, None, None, None) => {
             bail!(
                 "Instance \"{}\" is missing some required information.\n\
                  One of the following must be true:\n\
