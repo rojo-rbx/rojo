@@ -1,0 +1,52 @@
+---
+source: tests/tests/serve.rs
+expression: "read_response.intern_and_redact(&mut redactions, root_id)"
+
+---
+instances:
+  id-2:
+    Children:
+      - id-3
+      - id-4
+    ClassName: Folder
+    Id: id-2
+    Metadata:
+      ignoreUnknownInstances: false
+    Name: optional
+    Parent: "00000000000000000000000000000000"
+    Properties: {}
+  id-3:
+    Children: []
+    ClassName: StringValue
+    Id: id-3
+    Metadata:
+      ignoreUnknownInstances: false
+    Name: foo
+    Parent: id-2
+    Properties:
+      Value:
+        String: "Hello, from foo.txt!"
+  id-4:
+    Children:
+      - id-5
+    ClassName: Folder
+    Id: id-4
+    Metadata:
+      ignoreUnknownInstances: false
+    Name: node_modules
+    Parent: id-2
+    Properties: {}
+  id-5:
+    Children: []
+    ClassName: StringValue
+    Id: id-5
+    Metadata:
+      ignoreUnknownInstances: false
+    Name: bar
+    Parent: id-4
+    Properties:
+      Value:
+        String: Hello from bar.txt
+messageCursor: 2
+sessionId: id-1
+
