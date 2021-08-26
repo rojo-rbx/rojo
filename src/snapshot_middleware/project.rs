@@ -32,9 +32,14 @@ pub fn snapshot_project(
 
     // TODO: If this project node is a path to an instance that Rojo doesn't
     // understand, this may panic!
-    let mut snapshot =
-        snapshot_project_node(&context, path, &project.name, &project.tree, vfs, None)?.unwrap();
+    let snapshot_option =
+        snapshot_project_node(&context, path, &project.name, &project.tree, vfs, None)?;
 
+    if snapshot_option.is_none() {
+        return Ok(None);
+    }
+
+    let mut snapshot = snapshot_option.unwrap();
     // Setting the instigating source to the project file path is a little
     // coarse.
     //
