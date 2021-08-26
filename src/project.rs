@@ -168,6 +168,35 @@ impl Project {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct OptionalPathNode {
+    #[serde(serialize_with = "crate::path_serializer::serialize_absolute")]
+    pub optional: PathBuf,
+}
+
+impl OptionalPathNode {
+    pub fn new(optional: PathBuf) -> Self {
+        OptionalPathNode { optional }
+    }
+}
+
+/// Describes a path that is either optional or required
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PathNode {
+    Required(#[serde(serialize_with = "crate::path_serializer::serialize_absolute")] PathBuf),
+    Optional(OptionalPathNode),
+}
+
+impl PathNode {
+    pub fn path(&self) -> &Path {
+        match self {
+            PathNode::Required(pathbuf) => &pathbuf,
+            PathNode::Optional(OptionalPathNode { optional }) => &optional,
+        }
+    }
+}
+
 /// Describes an instance and its descendants in a project.
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
 pub struct ProjectNode {
@@ -218,12 +247,8 @@ pub struct ProjectNode {
     /// path can point to any file type supported by Rojo, including Lua files
     /// (`.lua`), Roblox models (`.rbxm`, `.rbxmx`), and localization table
     /// spreadsheets (`.csv`).
-    #[serde(
-        rename = "$path",
-        serialize_with = "crate::path_serializer::serialize_option_absolute",
-        skip_serializing_if = "Option::is_none"
-    )]
-    pub path: Option<PathBuf>,
+    #[serde(rename = "$path", skip_serializing_if = "Option::is_none")]
+    pub path: Option<PathNode>,
 }
 
 impl ProjectNode {
@@ -241,5 +266,108 @@ impl ProjectNode {
 
             child.validate_reserved_names();
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn path_node_required() {
+        let path_node: PathNode = serde_json::from_str(r#""src""#).unwrap();
+        assert_eq!(path_node, PathNode::Required(PathBuf::from("src")));
+    }
+
+    #[test]
+    fn path_node_optional() {
+        let path_node: PathNode = serde_json::from_str(r#"{ "optional": "src" }"#).unwrap();
+        assert_eq!(
+            path_node,
+            PathNode::Optional(OptionalPathNode::new(PathBuf::from("src")))
+        );
+    }
+
+    #[test]
+    fn project_node_required() {
+        let project_node: ProjectNode = serde_json::from_str(
+            r#"{
+                "$path": "src"
+            }"#,
+        )
+        .unwrap();
+
+        assert_eq!(
+            project_node.path,
+            Some(PathNode::Required(PathBuf::from("src")))
+        );
+    }
+
+    #[test]
+    fn project_node_optional() {
+        let project_node: ProjectNode = serde_json::from_str(
+            r#"{
+                "$path": { "optional": "src" }
+            }"#,
+        )
+        .unwrap();
+
+        assert_eq!(
+            project_node.path,
+            Some(PathNode::Optional(OptionalPathNode::new(PathBuf::from(
+                "src"
+            ))))
+        );
+    }
+
+    #[test]
+    fn project_node_none() {
+        let project_node: ProjectNode = serde_json::from_str(
+            r#"{
+                "$className": "Folder"
+            }"#,
+        )
+        .unwrap();
+
+        assert_eq!(project_node.path, None);
+    }
+
+    #[test]
+    fn project_node_optional_serialize_absolute() {
+        let project_node: ProjectNode = serde_json::from_str(
+            r#"{
+                "$path": { "optional": "..\\src" }
+            }"#,
+        )
+        .unwrap();
+
+        let serialized = serde_json::to_string(&project_node).unwrap();
+        assert_eq!(serialized, r#"{"$path":{"optional":"../src"}}"#);
+    }
+
+    #[test]
+    fn project_node_optional_serialize_absolute_no_change() {
+        let project_node: ProjectNode = serde_json::from_str(
+            r#"{
+                "$path": { "optional": "../src" }
+            }"#,
+        )
+        .unwrap();
+
+        let serialized = serde_json::to_string(&project_node).unwrap();
+        assert_eq!(serialized, r#"{"$path":{"optional":"../src"}}"#);
+    }
+
+    #[test]
+    fn project_node_optional_serialize_optional() {
+        let project_node: ProjectNode = serde_json::from_str(
+            r#"{
+                "$path": "..\\src"
+            }"#,
+        )
+        .unwrap();
+
+        let serialized = serde_json::to_string(&project_node).unwrap();
+        assert_eq!(serialized, r#"{"$path":"../src"}"#);
     }
 }

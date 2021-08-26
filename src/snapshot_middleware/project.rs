@@ -5,7 +5,7 @@ use memofs::Vfs;
 use rbx_reflection::ClassTag;
 
 use crate::{
-    project::{Project, ProjectNode},
+    project::{PathNode, Project, ProjectNode},
     snapshot::{
         InstanceContext, InstanceMetadata, InstanceSnapshot, InstigatingSource, PathIgnoreRule,
     },
@@ -77,7 +77,7 @@ pub fn snapshot_project_node(
     let mut children = Vec::new();
     let mut metadata = InstanceMetadata::default();
 
-    if let Some(path) = &node.path {
+    if let Some(PathNode::Required(path)) = &node.path {
         // If the path specified in the project is relative, we assume it's
         // relative to the folder that the project is in, project_folder.
         let path = if path.is_relative() {
@@ -155,7 +155,7 @@ pub fn snapshot_project_node(
                     project,
                     path,
                     project_path.display(),
-                    node.path.as_ref().unwrap().display()
+                    node.path.as_ref().unwrap().path().display()
                 );
             }
         }
