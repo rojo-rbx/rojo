@@ -30,35 +30,31 @@ pub fn snapshot_project(
 
     context.add_path_ignore_rules(rules);
 
-    // TODO: If this project node is a path to an instance that Rojo doesn't
-    // understand, this may panic!
-    let snapshot_option =
-        snapshot_project_node(&context, path, &project.name, &project.tree, vfs, None)?;
+    match snapshot_project_node(&context, path, &project.name, &project.tree, vfs, None)? {
+        Some(found_snapshot) => {
+            let mut snapshot = found_snapshot;
+            // Setting the instigating source to the project file path is a little
+            // coarse.
+            //
+            // Ideally, we'd only snapshot the project file if the project file
+            // actually changed. Because Rojo only has the concept of one
+            // relevant path -> snapshot path mapping per instance, we pick the more
+            // conservative approach of snapshotting the project file if any
+            // relevant paths changed.
+            snapshot.metadata.instigating_source = Some(path.to_path_buf().into());
 
-    if snapshot_option.is_none() {
-        return Ok(None);
+            // Mark this snapshot (the root node of the project file) as being
+            // related to the project file.
+            //
+            // We SHOULD NOT mark the project file as a relevant path for any
+            // nodes that aren't roots. They'll be updated as part of the project
+            // file being updated.
+            snapshot.metadata.relevant_paths.push(path.to_path_buf());
+
+            Ok(Some(snapshot))
+        }
+        None => Ok(None),
     }
-
-    let mut snapshot = snapshot_option.unwrap();
-    // Setting the instigating source to the project file path is a little
-    // coarse.
-    //
-    // Ideally, we'd only snapshot the project file if the project file
-    // actually changed. Because Rojo only has the concept of one
-    // relevant path -> snapshot path mapping per instance, we pick the more
-    // conservative approach of snapshotting the project file if any
-    // relevant paths changed.
-    snapshot.metadata.instigating_source = Some(path.to_path_buf().into());
-
-    // Mark this snapshot (the root node of the project file) as being
-    // related to the project file.
-    //
-    // We SHOULD NOT mark the project file as a relevant path for any
-    // nodes that aren't roots. They'll be updated as part of the project
-    // file being updated.
-    snapshot.metadata.relevant_paths.push(path.to_path_buf());
-
-    Ok(Some(snapshot))
 }
 
 pub fn snapshot_project_node(
