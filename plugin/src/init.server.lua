@@ -28,10 +28,8 @@ function unmount()
 	end
 end
 
--- Unmount on game close to cleanup active connection if it exists
-game.Close:Connect(unmount)
-
 plugin.Unloading:Connect(unmount)
+game:BindToClose(unmount)
 
 if Config.isDevBuild then
 	local TestEZ = require(script.Parent.TestEZ)
