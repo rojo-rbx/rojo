@@ -11,7 +11,7 @@ use super::{
 };
 
 pub fn compute_patch_set(
-    snapshot: &Option<InstanceSnapshot>,
+    snapshot: Option<&InstanceSnapshot>,
     tree: &RojoTree,
     id: Ref,
 ) -> PatchSet {
@@ -257,7 +257,7 @@ mod test {
             children: Vec::new(),
         };
 
-        let patch_set = compute_patch_set(&Some(snapshot), &tree, root_id);
+        let patch_set = compute_patch_set(Some(&snapshot), &tree, root_id);
 
         let expected_patch_set = PatchSet {
             updated_instances: vec![PatchUpdate {
@@ -307,7 +307,7 @@ mod test {
             class_name: Cow::Borrowed("foo"),
         };
 
-        let patch_set = compute_patch_set(&Some(snapshot), &tree, root_id);
+        let patch_set = compute_patch_set(Some(&snapshot), &tree, root_id);
 
         let expected_patch_set = PatchSet {
             added_instances: vec![PatchAdd {
