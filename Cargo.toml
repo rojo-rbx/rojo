@@ -37,10 +37,6 @@ members = [
 name = "librojo"
 path = "src/lib.rs"
 
-[[bin]]
-name = "rojo"
-path = "src/bin.rs"
-
 [[bench]]
 name = "build"
 harness = false
