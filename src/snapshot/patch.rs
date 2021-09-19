@@ -5,6 +5,8 @@ use std::collections::HashMap;
 use rbx_dom_weak::types::{Ref, Variant};
 use serde::{Deserialize, Serialize};
 
+use crate::peer_id::PeerId;
+
 use super::{InstanceMetadata, InstanceSnapshot};
 
 /// A set of different kinds of patches that can be applied to an WeakDom.
@@ -14,14 +16,16 @@ use super::{InstanceMetadata, InstanceSnapshot};
 /// conflict!
 #[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PatchSet {
+    pub source: PeerId,
     pub removed_instances: Vec<Ref>,
     pub added_instances: Vec<PatchAdd>,
     pub updated_instances: Vec<PatchUpdate>,
 }
 
 impl<'a> PatchSet {
-    pub fn new() -> Self {
+    pub fn new(source: PeerId) -> Self {
         PatchSet {
+            source,
             removed_instances: Vec::new(),
             added_instances: Vec::new(),
             updated_instances: Vec::new(),
@@ -63,14 +67,16 @@ pub struct PatchUpdate {
 // current values in all fields.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct AppliedPatchSet {
+    pub source: PeerId,
     pub removed: Vec<Ref>,
     pub added: Vec<Ref>,
     pub updated: Vec<AppliedPatchUpdate>,
 }
 
 impl AppliedPatchSet {
-    pub fn new() -> Self {
+    pub fn new(source: PeerId) -> Self {
         AppliedPatchSet {
+            source,
             removed: Vec::new(),
             added: Vec::new(),
             updated: Vec::new(),

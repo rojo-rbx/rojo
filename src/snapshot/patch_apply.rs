@@ -4,6 +4,8 @@ use std::collections::HashMap;
 
 use rbx_dom_weak::types::{Ref, Variant};
 
+use crate::peer_id::PeerId;
+
 use super::{
     patch::{AppliedPatchSet, AppliedPatchUpdate, PatchSet, PatchUpdate},
     InstanceSnapshot, RojoTree,
@@ -13,7 +15,7 @@ use super::{
 /// tree and returns an `AppliedPatchSet`, which can be used to keep another
 /// tree in sync with Rojo's.
 pub fn apply_patch_set(tree: &mut RojoTree, patch_set: PatchSet) -> AppliedPatchSet {
-    let mut context = PatchApplyContext::default();
+    let mut context = PatchApplyContext::new(patch_set.source);
 
     for removed_id in patch_set.removed_instances {
         apply_remove_instance(&mut context, tree, removed_id);
@@ -72,6 +74,16 @@ struct PatchApplyContext {
 
     /// The current applied patch result, describing changes made to the tree.
     applied_patch_set: AppliedPatchSet,
+}
+
+impl PatchApplyContext {
+    fn new(source: PeerId) -> PatchApplyContext {
+        Self {
+            snapshot_id_to_instance_id: HashMap::default(),
+            added_instance_properties: HashMap::default(),
+            applied_patch_set: AppliedPatchSet::new(source),
+        }
+    }
 }
 
 /// Finalize this patch application, consuming the context, applying any

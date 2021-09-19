@@ -132,6 +132,7 @@ impl ApiService {
                             .collect();
 
                         SubscribeMessage {
+                            source: message.source,
                             removed,
                             added,
                             updated,
@@ -189,6 +190,7 @@ impl ApiService {
 
         tree_mutation_sender
             .send(PatchSet {
+                source: request.source,
                 removed_instances: Vec::new(),
                 added_instances: Vec::new(),
                 updated_instances,

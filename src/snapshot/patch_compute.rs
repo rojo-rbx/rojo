@@ -5,13 +5,20 @@ use std::collections::{HashMap, HashSet};
 
 use rbx_dom_weak::types::{Ref, Variant};
 
+use crate::peer_id::PeerId;
+
 use super::{
     patch::{PatchAdd, PatchSet, PatchUpdate},
     InstanceSnapshot, InstanceWithMeta, RojoTree,
 };
 
-pub fn compute_patch_set(snapshot: &InstanceSnapshot, tree: &RojoTree, id: Ref) -> PatchSet {
-    let mut patch_set = PatchSet::new();
+pub fn compute_patch_set(
+    snapshot: &InstanceSnapshot,
+    tree: &RojoTree,
+    id: Ref,
+    source: PeerId,
+) -> PatchSet {
+    let mut patch_set = PatchSet::new(source);
     let mut context = ComputePatchContext::default();
 
     compute_patch_set_internal(&mut context, snapshot, tree, id, &mut patch_set);
@@ -246,9 +253,11 @@ mod test {
             children: Vec::new(),
         };
 
-        let patch_set = compute_patch_set(&snapshot, &tree, root_id);
+        let source = PeerId::new();
+        let patch_set = compute_patch_set(&snapshot, &tree, root_id, source);
 
         let expected_patch_set = PatchSet {
+            source,
             updated_instances: vec![PatchUpdate {
                 id: root_id,
                 changed_name: None,
@@ -296,9 +305,11 @@ mod test {
             class_name: Cow::Borrowed("foo"),
         };
 
-        let patch_set = compute_patch_set(&snapshot, &tree, root_id);
+        let source = PeerId::new();
+        let patch_set = compute_patch_set(&snapshot, &tree, root_id, source);
 
         let expected_patch_set = PatchSet {
+            source,
             added_instances: vec![PatchAdd {
                 parent_id: root_id,
                 instance: InstanceSnapshot {

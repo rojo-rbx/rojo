@@ -11,6 +11,7 @@ use rbx_dom_weak::types::{Ref, Variant};
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    peer_id::PeerId,
     session_id::SessionId,
     snapshot::{InstanceMetadata as RojoInstanceMetadata, InstanceWithMeta},
 };
@@ -25,6 +26,7 @@ pub const PROTOCOL_VERSION: u64 = 4;
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SubscribeMessage<'a> {
+    pub source: PeerId,
     pub removed: Vec<Ref>,
     pub added: HashMap<Ref, Instance<'a>>,
     pub updated: Vec<InstanceUpdate>,
@@ -124,6 +126,7 @@ pub struct ReadResponse<'a> {
 #[serde(rename_all = "camelCase")]
 pub struct WriteRequest {
     pub session_id: SessionId,
+    pub source: PeerId,
     pub removed: Vec<Ref>,
 
     #[serde(default)]

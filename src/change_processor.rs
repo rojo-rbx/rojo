@@ -10,6 +10,7 @@ use rbx_dom_weak::types::{Ref, Variant};
 
 use crate::{
     message_queue::MessageQueue,
+    peer_id::PeerId,
     snapshot::{
         apply_patch_set, compute_patch_set, AppliedPatchSet, InstigatingSource, PatchSet, RojoTree,
     },
@@ -51,6 +52,7 @@ impl ChangeProcessor {
         vfs: Arc<Vfs>,
         message_queue: Arc<MessageQueue<AppliedPatchSet>>,
         tree_mutation_receiver: Receiver<PatchSet>,
+        source: PeerId,
     ) -> Self {
         let (shutdown_sender, shutdown_receiver) = crossbeam_channel::bounded(1);
         let vfs_receiver = vfs.event_receiver();
@@ -68,7 +70,7 @@ impl ChangeProcessor {
                 loop {
                     select! {
                         recv(vfs_receiver) -> event => {
-                            task.handle_vfs_event(event?);
+                            task.handle_vfs_event(event?, source);
                         },
                         recv(tree_mutation_receiver) -> patch_set => {
                             task.handle_tree_event(patch_set?);
@@ -114,7 +116,7 @@ struct JobThreadContext {
 }
 
 impl JobThreadContext {
-    fn handle_vfs_event(&self, event: VfsEvent) {
+    fn handle_vfs_event(&self, event: VfsEvent, source: PeerId) {
         log::trace!("Vfs event: {:?}", event);
 
         // Update the VFS immediately with the event.
@@ -153,7 +155,9 @@ impl JobThreadContext {
                     };
 
                     for id in affected_ids {
-                        if let Some(patch) = compute_and_apply_changes(&mut tree, &self.vfs, id) {
+                        if let Some(patch) =
+                            compute_and_apply_changes(&mut tree, &self.vfs, id, source)
+                        {
                             applied_patches.push(patch);
                         }
                     }
@@ -257,7 +261,12 @@ impl JobThreadContext {
     }
 }
 
-fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref) -> Option<AppliedPatchSet> {
+fn compute_and_apply_changes(
+    tree: &mut RojoTree,
+    vfs: &Vfs,
+    id: Ref,
+    source: PeerId,
+) -> Option<AppliedPatchSet> {
     let metadata = tree
         .get_metadata(id)
         .expect("metadata missing for instance present in tree");
@@ -299,7 +308,7 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref) -> Option<
                     }
                 };
 
-                let patch_set = compute_patch_set(&snapshot, &tree, id);
+                let patch_set = compute_patch_set(&snapshot, &tree, id, source);
                 apply_patch_set(tree, patch_set)
             }
             Ok(None) => {
@@ -309,7 +318,7 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref) -> Option<
                 // We associate deleting the instigating file for an
                 // instance with deleting that instance.
 
-                let mut patch_set = PatchSet::new();
+                let mut patch_set = PatchSet::new(source);
                 patch_set.removed_instances.push(id);
 
                 apply_patch_set(tree, patch_set)
@@ -347,7 +356,7 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref) -> Option<
                 }
             };
 
-            let patch_set = compute_patch_set(&snapshot, &tree, id);
+            let patch_set = compute_patch_set(&snapshot, &tree, id, source);
             apply_patch_set(tree, patch_set)
         }
     };

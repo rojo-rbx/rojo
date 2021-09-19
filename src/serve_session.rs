@@ -15,6 +15,7 @@ use thiserror::Error;
 use crate::{
     change_processor::ChangeProcessor,
     message_queue::MessageQueue,
+    peer_id::PeerId,
     project::{Project, ProjectError},
     session_id::SessionId,
     snapshot::{
@@ -122,6 +123,7 @@ impl ServeSession {
         let mut tree = RojoTree::new(InstanceSnapshot::new());
 
         let root_id = tree.get_root_id();
+        let server_id = PeerId::new();
 
         let instance_context = InstanceContext::default();
 
@@ -130,7 +132,7 @@ impl ServeSession {
             .expect("snapshot did not return an instance");
 
         log::trace!("Computing initial patch set");
-        let patch_set = compute_patch_set(&snapshot, &tree, root_id);
+        let patch_set = compute_patch_set(&snapshot, &tree, root_id, server_id);
 
         log::trace!("Applying initial patch set");
         apply_patch_set(&mut tree, patch_set);
@@ -150,6 +152,7 @@ impl ServeSession {
             Arc::clone(&vfs),
             Arc::clone(&message_queue),
             tree_mutation_receiver,
+            server_id,
         );
 
         Ok(Self {
