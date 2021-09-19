@@ -88,6 +88,8 @@ function ApiContext.new(baseUrl)
 	assert(type(baseUrl) == "string")
 
 	local self = {
+		clientId = Http.generateGuid(),
+
 		__baseUrl = baseUrl,
 		__sessionId = nil,
 		__messageCursor = -1,
@@ -182,6 +184,7 @@ function ApiContext:write(patch)
 
 	local body = {
 		sessionId = self.__sessionId,
+		source = self.clientId,
 		removed = patch.removed,
 		updated = updated,
 		added = added,

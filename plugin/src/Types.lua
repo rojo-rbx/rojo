@@ -30,6 +30,7 @@ local ApiInstanceUpdate = t.interface({
 })
 
 local ApiSubscribeMessage = t.interface({
+	source = t.string,
 	removed = t.array(RbxId),
 	added = t.map(RbxId, ApiInstance),
 	updated = t.array(ApiInstanceUpdate),

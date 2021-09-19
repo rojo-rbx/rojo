@@ -272,6 +272,10 @@ function ServeSession:__mainSyncLoop()
 	return self.__apiContext:retrieveMessages()
 		:andThen(function(messages)
 			for _, message in ipairs(messages) do
+				if message.source == self.__apiContext.clientId then
+					continue
+				end
+
 				local unappliedPatch = self.__reconciler:applyPatch(message)
 
 				if not PatchSet.isEmpty(unappliedPatch) then

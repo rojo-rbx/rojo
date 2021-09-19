@@ -63,4 +63,8 @@ function Http.jsonDecode(source)
 	return HttpService:JSONDecode(source)
 end
 
+function Http.generateGuid()
+	return HttpService:GenerateGUID(false):lower()
+end
+
 return Http
