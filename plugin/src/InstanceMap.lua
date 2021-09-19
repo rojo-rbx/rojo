@@ -22,6 +22,9 @@ function InstanceMap.new(onInstanceChanged)
 		-- temporarily.
 		pausedUpdateInstances = {},
 
+		-- Paused instances that the ChangeBatcher is responsible for unpausing.
+		pausedBatchInstances = {},
+
 		-- A map from instances to a signal or list of signals connected to it.
 		instancesToSignal = {},
 
@@ -135,29 +138,38 @@ function InstanceMap:destroyId(id)
 end
 
 --[[
-	Pause updates for an instance momentarily and invoke a callback.
-
-	If the callback throws an error, InstanceMap will still be kept in a
-	consistent state.
+	Pause updates for an instance.
 ]]
-function InstanceMap:pauseInstance(instance, callback)
+function InstanceMap:pauseInstance(instance)
 	local id = self.fromInstances[instance]
 
-	-- If we don't know about this instance, ignore it and do not invoke the
-	-- callback.
+	-- If we don't know about this instance, ignore it.
 	if id == nil then
 		return
 	end
 
 	self.pausedUpdateInstances[instance] = true
-	local success, result = xpcall(callback, debug.traceback)
-	self.pausedUpdateInstances[instance] = false
+end
 
-	if success then
-		return result
-	else
-		error(result, 2)
+--[[
+	Unpause updates for an instance.
+]]
+function InstanceMap:unpauseInstance(instance)
+	self.pausedUpdateInstances[instance] = nil
+end
+
+--[[
+	Temporarily pause updates for an instance. The ChangeBatcher is responsible
+	for unpausing it at some later point.
+]]
+function InstanceMap:pauseInstanceForBatch(instance)
+	local id = self.fromInstances[instance]
+
+	if id == nil then
+		return
 	end
+
+	self.pausedBatchInstances[instance] = true
 end
 
 function InstanceMap:__connectSignals(instance)
@@ -192,7 +204,7 @@ end
 function InstanceMap:__maybeFireInstanceChanged(instance, propertyName)
 	Log.trace("{}.{} changed", instance:GetFullName(), propertyName)
 
-	if self.pausedUpdateInstances[instance] then
+	if self.pausedUpdateInstances[instance] or self.pausedBatchInstances[instance] then
 		return
 	end
 

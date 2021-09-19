@@ -77,6 +77,10 @@ local function applyPatch(instanceMap, patch)
 			continue
 		end
 
+		-- Pause updates on this instance to avoid picking up our changes when
+		-- two-way sync is enabled.
+		instanceMap:pauseInstance(instance)
+
 		-- Track any part of this update that could not be applied.
 		local unappliedUpdate = {
 			id = update.id,
@@ -174,6 +178,18 @@ local function applyPatch(instanceMap, patch)
 
 		if update.changedProperties ~= nil then
 			for propertyName, propertyValue in pairs(update.changedProperties) do
+				if instance:IsA("LuaSourceContainer") and propertyName == "Source" then
+					-- When a script is open in the Roblox Studio editor and the Source
+					-- property is changed from a script or the command bar, .Changed
+					-- fires for Source three separate times: once for the initial
+					-- property set, then two additional times after the current heartbeat
+					-- cycle (!?). When two-way sync is enabled, this causes the change
+					-- batcher to detect a spurious update. To avoid this, updates on
+					-- scripts should be paused after a Source set until the next
+					-- heartbeat cycle ends.
+					instanceMap:pauseInstanceForBatch(instance)
+				end
+
 				local ok, decodedValue = decodeValue(propertyValue, instanceMap)
 				if not ok then
 					unappliedUpdate.changedProperties[propertyName] = propertyValue
@@ -188,6 +204,8 @@ local function applyPatch(instanceMap, patch)
 				end
 			end
 		end
+
+		instanceMap:unpauseInstance(instance)
 
 		if partiallyApplied then
 			table.insert(unappliedPatch.updated, unappliedUpdate)
