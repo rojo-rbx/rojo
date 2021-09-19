@@ -1,6 +1,7 @@
 local StudioService = game:GetService("StudioService")
 local RunService = game:GetService("RunService")
 
+local ChangeBatcher = require(script.Parent.ChangeBatcher)
 local Log = require(script.Parent.Parent.Log)
 local Fmt = require(script.Parent.Parent.Fmt)
 local t = require(script.Parent.Parent.t)
@@ -56,10 +57,19 @@ function ServeSession.new(options)
 	-- Declare self ahead of time to capture it in a closure
 	local self
 	local function onInstanceChanged(instance, propertyName)
-		self:__onInstanceChanged(instance, propertyName)
+		if not self.__twoWaySync then
+			return
+		end
+
+		self.__changeBatcher:add(instance, propertyName)
+	end
+
+	local function onChangesFlushed(patch)
+		self.__apiContext:write(patch)
 	end
 
 	local instanceMap = InstanceMap.new(onInstanceChanged)
+	local changeBatcher = ChangeBatcher.new(instanceMap, onChangesFlushed)
 	local reconciler = Reconciler.new(instanceMap)
 
 	local connections = {}
@@ -82,6 +92,7 @@ function ServeSession.new(options)
 		__twoWaySync = options.twoWaySync,
 		__reconciler = reconciler,
 		__instanceMap = instanceMap,
+		__changeBatcher = changeBatcher,
 		__statusChangedCallback = nil,
 		__connections = connections,
 	}
@@ -179,55 +190,6 @@ function ServeSession:__onActiveScriptChanged(activeScript)
 	self.__apiContext:open(scriptId)
 end
 
-function ServeSession:__onInstanceChanged(instance, propertyName)
-	if not self.__twoWaySync then
-		return
-	end
-
-	local instanceId = self.__instanceMap.fromInstances[instance]
-
-	if instanceId == nil then
-		Log.warn("Ignoring change for instance {:?} as it is unknown to Rojo", instance)
-		return
-	end
-
-	local remove = nil
-
-	local update = {
-		id = instanceId,
-		changedProperties = {},
-	}
-
-	if propertyName == "Name" then
-		update.changedName = instance.Name
-	elseif propertyName == "Parent" then
-		if instance.Parent == nil then
-			update = nil
-			remove = instanceId
-		else
-			Log.warn("Cannot sync non-nil Parent property changes yet")
-			return
-		end
-	else
-		local success, encoded = self.__reconciler:encodeApiValue(instance[propertyName])
-
-		if not success then
-			Log.warn("Could not sync back property {:?}.{}", instance, propertyName)
-			return
-		end
-
-		update.changedProperties[propertyName] = encoded
-	end
-
-	local patch = {
-		removed = {remove},
-		added = {},
-		updated = {update},
-	}
-
-	self.__apiContext:write(patch)
-end
-
 function ServeSession:__initialSync(rootInstanceId)
 	return self.__apiContext:read({ rootInstanceId })
 		:andThen(function(readResponseBody)
@@ -290,6 +252,7 @@ function ServeSession:__stopInternal(err)
 	self:__setStatus(Status.Disconnected, err)
 	self.__apiContext:disconnect()
 	self.__instanceMap:stop()
+	self.__changeBatcher:stop()
 
 	for _, connection in ipairs(self.__connections) do
 		connection:Disconnect()
