@@ -220,19 +220,31 @@ impl JobThreadContext {
                             if let Some(instigating_source) =
                                 &instance.metadata().instigating_source
                             {
+                                let value = if let Some(Variant::String(value)) = changed_value {
+                                    value
+                                } else {
+                                    log::warn!("Cannot change Source to non-string value.");
+                                    continue;
+                                };
+
                                 match instigating_source {
                                     InstigatingSource::Path(path) => {
-                                        if let Some(Variant::String(value)) = changed_value {
-                                            fs::write(path, value).unwrap();
-                                        } else {
-                                            log::warn!("Cannot change Source to non-string value.");
-                                        }
+                                        fs::write(path, value).unwrap();
                                     }
                                     InstigatingSource::ProjectNode(_, _, _, _) => {
-                                        log::warn!(
-                                            "Cannot remove instance {:?}, it's from a project file",
-                                            id
-                                        );
+                                        for path in instance.metadata().relevant_paths.iter() {
+                                            if !path.is_file() {
+                                                continue;
+                                            }
+
+                                            if let Some(name) =
+                                                path.file_name().and_then(|name| name.to_str())
+                                            {
+                                                if name.ends_with(".lua") {
+                                                    fs::write(path, value).unwrap();
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             } else {
