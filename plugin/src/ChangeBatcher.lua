@@ -103,6 +103,7 @@ function ChangeBatcher:__flush()
 				if instance.Parent == nil then
 					update = nil
 					remove = instanceId
+					break
 				else
 					Log.warn("Cannot sync non-nil Parent property changes yet")
 					continue
