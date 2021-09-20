@@ -32,15 +32,15 @@ function ChangeBatcher.new(instanceMap, onChangesFlushed)
 			end
 		end
 
-		-- Instances updates that were paused during the previous cycle should
-		-- be unpaused.
+		-- Instance updates that were paused during the previous cycle should be
+		-- unpaused.
 		for instance in pairs(instancesToUnpause) do
 			instanceMap.pausedBatchInstances[instance] = nil
 			instancesToUnpause[instance] = nil
 		end
 
-		-- Instances updates that were paused during this cycle should be
-		-- unpaused in the next cycle.
+		-- Instance updates that were paused during this cycle should be unpaused
+		-- in the next cycle.
 		for instance in pairs(instanceMap.pausedBatchInstances) do
 			instancesToUnpause[instance] = true
 		end
