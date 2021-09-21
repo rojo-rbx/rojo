@@ -5,7 +5,10 @@ use maplit::hashmap;
 
 use rojo_insta_ext::RedactionMap;
 
-use crate::snapshot::{compute_patch_set, InstanceSnapshot, RojoTree};
+use crate::{
+    peer_id::PeerId,
+    snapshot::{compute_patch_set, InstanceSnapshot, RojoTree},
+};
 
 #[test]
 fn set_name_and_class_name() {
@@ -13,6 +16,9 @@ fn set_name_and_class_name() {
 
     let tree = empty_tree();
     redactions.intern(tree.get_root_id());
+
+    let source = PeerId::new();
+    redactions.intern(source);
 
     let snapshot = InstanceSnapshot {
         snapshot_id: None,
@@ -23,7 +29,7 @@ fn set_name_and_class_name() {
         children: Vec::new(),
     };
 
-    let patch_set = compute_patch_set(&snapshot, &tree, tree.get_root_id());
+    let patch_set = compute_patch_set(&snapshot, &tree, tree.get_root_id(), source);
     let patch_value = redactions.redacted_yaml(patch_set);
 
     assert_yaml_snapshot!(patch_value);
@@ -36,6 +42,9 @@ fn set_property() {
     let tree = empty_tree();
     redactions.intern(tree.get_root_id());
 
+    let source = PeerId::new();
+    redactions.intern(source);
+
     let snapshot = InstanceSnapshot {
         snapshot_id: None,
         metadata: Default::default(),
@@ -47,7 +56,7 @@ fn set_property() {
         children: Vec::new(),
     };
 
-    let patch_set = compute_patch_set(&snapshot, &tree, tree.get_root_id());
+    let patch_set = compute_patch_set(&snapshot, &tree, tree.get_root_id(), source);
     let patch_value = redactions.redacted_yaml(patch_set);
 
     assert_yaml_snapshot!(patch_value);
@@ -59,6 +68,9 @@ fn remove_property() {
 
     let mut tree = empty_tree();
     redactions.intern(tree.get_root_id());
+
+    let source = PeerId::new();
+    redactions.intern(source);
 
     {
         let root_id = tree.get_root_id();
@@ -78,7 +90,7 @@ fn remove_property() {
         children: Vec::new(),
     };
 
-    let patch_set = compute_patch_set(&snapshot, &tree, tree.get_root_id());
+    let patch_set = compute_patch_set(&snapshot, &tree, tree.get_root_id(), source);
     let patch_value = redactions.redacted_yaml(patch_set);
 
     assert_yaml_snapshot!(patch_value);
@@ -90,6 +102,9 @@ fn add_child() {
 
     let tree = empty_tree();
     redactions.intern(tree.get_root_id());
+
+    let source = PeerId::new();
+    redactions.intern(source);
 
     let snapshot = InstanceSnapshot {
         snapshot_id: None,
@@ -107,7 +122,7 @@ fn add_child() {
         }],
     };
 
-    let patch_set = compute_patch_set(&snapshot, &tree, tree.get_root_id());
+    let patch_set = compute_patch_set(&snapshot, &tree, tree.get_root_id(), source);
     let patch_value = redactions.redacted_yaml(patch_set);
 
     assert_yaml_snapshot!(patch_value);
@@ -119,6 +134,9 @@ fn remove_child() {
 
     let mut tree = empty_tree();
     redactions.intern(tree.get_root_id());
+
+    let source = PeerId::new();
+    redactions.intern(source);
 
     {
         let root_id = tree.get_root_id();
@@ -139,7 +157,7 @@ fn remove_child() {
         children: Vec::new(),
     };
 
-    let patch_set = compute_patch_set(&snapshot, &tree, tree.get_root_id());
+    let patch_set = compute_patch_set(&snapshot, &tree, tree.get_root_id(), source);
     let patch_value = redactions.redacted_yaml(patch_set);
 
     assert_yaml_snapshot!(patch_value);

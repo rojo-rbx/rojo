@@ -6,16 +6,17 @@ expression: "subscribe_response.intern_and_redact(&mut redactions, ())"
 messageCursor: 1
 messages:
   - added:
-      id-3:
+      id-4:
         Children: []
         ClassName: Model
-        Id: id-3
+        Id: id-4
         Metadata:
           ignoreUnknownInstances: false
         Name: test
-        Parent: id-2
+        Parent: id-3
         Properties: {}
     removed: []
+    source: id-2
     updated: []
 sessionId: id-1
 

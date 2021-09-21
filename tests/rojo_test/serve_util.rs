@@ -34,6 +34,7 @@ pub fn run_serve_test(test_name: &str, callback: impl FnOnce(TestServeSession, R
     let info = session.wait_to_come_online();
 
     redactions.intern(info.session_id);
+    redactions.intern(info.server_id);
     redactions.intern(info.root_instance_id);
 
     let mut settings = insta::Settings::new();

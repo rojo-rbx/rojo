@@ -10,57 +10,67 @@ instances:
     Id: id-10
     Metadata:
       ignoreUnknownInstances: false
-    Name: "6"
-    Parent: id-3
+    Name: "5"
+    Parent: id-4
     Properties:
       Value:
-        String: "File #6"
+        String: "File #5"
   id-11:
     Children: []
     ClassName: StringValue
     Id: id-11
     Metadata:
       ignoreUnknownInstances: false
-    Name: "7"
-    Parent: id-3
+    Name: "6"
+    Parent: id-4
     Properties:
       Value:
-        String: "File #7"
+        String: "File #6"
   id-12:
     Children: []
     ClassName: StringValue
     Id: id-12
     Metadata:
       ignoreUnknownInstances: false
-    Name: "8"
-    Parent: id-3
+    Name: "7"
+    Parent: id-4
     Properties:
       Value:
-        String: "File #8"
+        String: "File #7"
   id-13:
     Children: []
     ClassName: StringValue
     Id: id-13
     Metadata:
       ignoreUnknownInstances: false
+    Name: "8"
+    Parent: id-4
+    Properties:
+      Value:
+        String: "File #8"
+  id-14:
+    Children: []
+    ClassName: StringValue
+    Id: id-14
+    Metadata:
+      ignoreUnknownInstances: false
     Name: "9"
-    Parent: id-3
+    Parent: id-4
     Properties:
       Value:
         String: "File #9"
-  id-2:
+  id-3:
     Children:
-      - id-3
+      - id-4
     ClassName: Folder
-    Id: id-2
+    Id: id-3
     Metadata:
       ignoreUnknownInstances: false
     Name: move_folder_of_stuff
     Parent: "00000000000000000000000000000000"
     Properties: {}
-  id-3:
+  id-4:
     Children:
-      - id-4
       - id-5
       - id-6
       - id-7
@@ -70,79 +80,69 @@ instances:
       - id-11
       - id-12
       - id-13
+      - id-14
     ClassName: Folder
-    Id: id-3
-    Metadata:
-      ignoreUnknownInstances: false
-    Name: new-stuff
-    Parent: id-2
-    Properties: {}
-  id-4:
-    Children: []
-    ClassName: StringValue
     Id: id-4
     Metadata:
       ignoreUnknownInstances: false
-    Name: "0"
+    Name: new-stuff
     Parent: id-3
-    Properties:
-      Value:
-        String: "File #0"
+    Properties: {}
   id-5:
     Children: []
     ClassName: StringValue
     Id: id-5
     Metadata:
       ignoreUnknownInstances: false
-    Name: "1"
-    Parent: id-3
+    Name: "0"
+    Parent: id-4
     Properties:
       Value:
-        String: "File #1"
+        String: "File #0"
   id-6:
     Children: []
     ClassName: StringValue
     Id: id-6
     Metadata:
       ignoreUnknownInstances: false
-    Name: "2"
-    Parent: id-3
+    Name: "1"
+    Parent: id-4
     Properties:
       Value:
-        String: "File #2"
+        String: "File #1"
   id-7:
     Children: []
     ClassName: StringValue
     Id: id-7
     Metadata:
       ignoreUnknownInstances: false
-    Name: "3"
-    Parent: id-3
+    Name: "2"
+    Parent: id-4
     Properties:
       Value:
-        String: "File #3"
+        String: "File #2"
   id-8:
     Children: []
     ClassName: StringValue
     Id: id-8
     Metadata:
       ignoreUnknownInstances: false
-    Name: "4"
-    Parent: id-3
+    Name: "3"
+    Parent: id-4
     Properties:
       Value:
-        String: "File #4"
+        String: "File #3"
   id-9:
     Children: []
     ClassName: StringValue
     Id: id-9
     Metadata:
       ignoreUnknownInstances: false
-    Name: "5"
-    Parent: id-3
+    Name: "4"
+    Parent: id-4
     Properties:
       Value:
-        String: "File #5"
+        String: "File #4"
 messageCursor: 1
 sessionId: id-1
 

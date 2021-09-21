@@ -1,12 +1,13 @@
 ---
 source: tests/tests/serve.rs
 expression: "read_response.intern_and_redact(&mut redactions, root_id)"
+
 ---
 instances:
-  id-2:
+  id-3:
     Children: []
     ClassName: Folder
-    Id: id-2
+    Id: id-3
     Metadata:
       ignoreUnknownInstances: true
     Name: empty
@@ -14,3 +15,4 @@ instances:
     Properties: {}
 messageCursor: 0
 sessionId: id-1
+

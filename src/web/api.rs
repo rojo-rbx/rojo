@@ -61,6 +61,7 @@ impl ApiService {
             server_version: SERVER_VERSION.to_owned(),
             protocol_version: PROTOCOL_VERSION,
             session_id: self.serve_session.session_id(),
+            server_id: self.serve_session.server_id(),
             project_name: self.serve_session.project_name().to_owned(),
             expected_place_ids: self.serve_session.serve_place_ids().cloned(),
             place_id: self.serve_session.place_id(),

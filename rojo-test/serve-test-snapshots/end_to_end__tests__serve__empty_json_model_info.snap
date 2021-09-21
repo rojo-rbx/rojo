@@ -8,7 +8,8 @@ gameId: ~
 placeId: ~
 projectName: empty_folder
 protocolVersion: 4
-rootInstanceId: id-2
+rootInstanceId: id-3
+serverId: id-2
 serverVersion: "[server-version]"
 sessionId: id-1
 

@@ -65,6 +65,9 @@ pub struct ServeSession {
     /// an operation that needs to be atomic.
     session_id: SessionId,
 
+    /// An ID uniquely identifying the server.
+    server_id: PeerId,
+
     /// The tree of Roblox instances associated with this session that will be
     /// updated in real-time. This is derived from the session's VFS and will
     /// eventually be mutable to connected clients.
@@ -159,6 +162,7 @@ impl ServeSession {
             change_processor,
             start_time,
             session_id,
+            server_id,
             root_project,
             tree,
             message_queue,
@@ -190,6 +194,10 @@ impl ServeSession {
 
     pub fn session_id(&self) -> SessionId {
         self.session_id
+    }
+
+    pub fn server_id(&self) -> PeerId {
+        self.server_id
     }
 
     pub fn project_name(&self) -> &str {

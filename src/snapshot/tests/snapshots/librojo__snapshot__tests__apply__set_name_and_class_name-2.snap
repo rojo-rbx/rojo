@@ -1,7 +1,9 @@
 ---
 source: src/snapshot/tests/apply.rs
 expression: applied_patch_value
+
 ---
+source: 00000000-0000-0000-0000-000000000000
 removed: []
 added: []
 updated:
@@ -10,3 +12,4 @@ updated:
     changed_class_name: Folder
     changed_properties: {}
     changed_metadata: ~
+

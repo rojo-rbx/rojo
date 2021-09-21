@@ -7,6 +7,7 @@ messageCursor: 1
 messages:
   - added: {}
     removed: []
+    source: id-2
     updated:
       - changedClassName: ~
         changedMetadata: ~
@@ -14,6 +15,6 @@ messages:
         changedProperties:
           Source:
             String: "-- Edited contents"
-        id: id-2
+        id: id-3
 sessionId: id-1
 
