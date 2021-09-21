@@ -38,6 +38,7 @@ local ApiSubscribeMessage = t.interface({
 
 local ApiInfoResponse = t.interface({
 	sessionId = t.string,
+	serverId = t.string,
 	serverVersion = t.string,
 	protocolVersion = t.number,
 	expectedPlaceIds = t.optional(t.array(t.number)),
