@@ -51,6 +51,21 @@ return function()
 		end)
 	end)
 
+	describe("__cycle", function()
+		it("should unpause instances that were paused for the current cycle in the next cycle", function(context)
+			local changeBatcher = context.changeBatcher
+			local bindableEvent = Instance.new("BindableEvent")
+			local part = Instance.new("Part")
+
+			changeBatcher.__instanceMap.pausedBatchInstances[part] = true
+
+			changeBatcher:__cycle(0)
+			changeBatcher:__cycle(0)
+
+			expect(changeBatcher.__instanceMap.pausedBatchInstances[part]).to.equal(nil)
+		end)
+	end)
+
 	describe("__flush", function()
 		it("should return nil when there are no change to process", function(context)
 			local changeBatcher = context.changeBatcher

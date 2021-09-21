@@ -15,41 +15,19 @@ ChangeBatcher.__index = ChangeBatcher
 local BATCH_INTERVAL = 0.2
 
 function ChangeBatcher.new(instanceMap, onChangesFlushed)
-	local instancesToUnpause = {}
-	local accumulator = 0
 	local self
 
 	local heartbeatConnection = RunService.Heartbeat:Connect(function(dt)
-		accumulator += dt
-
-		if accumulator >= BATCH_INTERVAL then
-			accumulator -= BATCH_INTERVAL
-
-			local patch = self:__flush()
-
-			if patch then
-				onChangesFlushed(patch)
-			end
-		end
-
-		-- Instance updates that were paused during the previous cycle should be
-		-- unpaused.
-		for instance in pairs(instancesToUnpause) do
-			instanceMap.pausedBatchInstances[instance] = nil
-			instancesToUnpause[instance] = nil
-		end
-
-		-- Instance updates that were paused during this cycle should be unpaused
-		-- in the next cycle.
-		for instance in pairs(instanceMap.pausedBatchInstances) do
-			instancesToUnpause[instance] = true
-		end
+		self:__cycle(dt)
 	end)
 
 	self = setmetatable({
-		__pendingChanges = {},
-		__instanceMap = instanceMap,
+		__accumulator = 0,
 		__heartbeatConnection = heartbeatConnection,
+		__instanceMap = instanceMap,
+		__instancesToUnpause = {},
+		__onChangesFlushed = onChangesFlushed,
+		__pendingChanges = {},
 	}, ChangeBatcher)
 
 	return self
@@ -69,6 +47,33 @@ function ChangeBatcher:add(instance, propertyName)
 	end
 
 	properties[propertyName] = true
+end
+
+function ChangeBatcher:__cycle(dt)
+	self.__accumulator += dt
+
+	if self.__accumulator >= BATCH_INTERVAL then
+		self.__accumulator -= BATCH_INTERVAL
+
+		local patch = self:__flush()
+
+		if patch then
+			self.__onChangesFlushed(patch)
+		end
+	end
+
+	-- Instance updates that were paused during the previous cycle should be
+	-- unpaused.
+	for instance in pairs(self.__instancesToUnpause) do
+		self.__instanceMap.pausedBatchInstances[instance] = nil
+		self.__instancesToUnpause[instance] = nil
+	end
+
+	-- Instance updates that were paused during this cycle should be unpaused
+	-- in the next cycle.
+	for instance in pairs(self.__instanceMap.pausedBatchInstances) do
+		self.__instancesToUnpause[instance] = true
+	end
 end
 
 function ChangeBatcher:__flush()
