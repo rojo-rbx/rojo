@@ -24,9 +24,6 @@ function InstanceMap.new(onInstanceChanged)
 		-- temporarily.
 		pausedUpdateInstances = {},
 
-		-- Paused instances that the ChangeBatcher is responsible for unpausing.
-		pausedBatchInstances = {},
-
 		-- A map from instances to a signal or list of signals connected to it.
 		instancesToSignal = {},
 
@@ -158,20 +155,6 @@ end
 ]]
 function InstanceMap:unpauseInstance(instance)
 	self.pausedUpdateInstances[instance] = nil
-end
-
---[[
-	Temporarily pause updates for an instance. The ChangeBatcher is responsible
-	for unpausing it at some later point.
-]]
-function InstanceMap:pauseInstanceForBatch(instance)
-	local id = self.fromInstances[instance]
-
-	if id == nil then
-		return
-	end
-
-	self.pausedBatchInstances[instance] = true
 end
 
 function InstanceMap:__connectSignals(instance)

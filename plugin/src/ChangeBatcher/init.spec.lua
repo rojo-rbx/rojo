@@ -48,18 +48,34 @@ return function()
 	end)
 
 	describe("__cycle", function()
-		it("should unpause instances that were paused for the current cycle in the next cycle", function()
+		it("should immediately unpause an instance that is not a script", function()
 			local instanceMap = InstanceMap.new()
 			local changeBatcher = ChangeBatcher.new(instanceMap, noop)
-			local bindableEvent = Instance.new("BindableEvent")
 			local part = Instance.new("Part")
 
-			instanceMap.pausedBatchInstances[part] = true
+			instanceMap.pausedUpdateInstances[part] = true
 
 			changeBatcher:__cycle(0)
+
+			expect(instanceMap.pausedUpdateInstances[part]).to.equal(nil)
+		end)
+
+		it("should unpause a script after two cycles", function()
+			local instanceMap = InstanceMap.new()
+			local changeBatcher = ChangeBatcher.new(instanceMap, noop)
+			local part = Instance.new("Script")
+
+			instanceMap.pausedUpdateInstances[part] = true
+
 			changeBatcher:__cycle(0)
 
-			expect(instanceMap.pausedBatchInstances[part]).to.equal(nil)
+			expect(changeBatcher.__remainingPauseCycles[part]).to.equal(1)
+			expect(instanceMap.pausedUpdateInstances[part]).to.equal(true)
+
+			changeBatcher:__cycle(0)
+
+			expect(changeBatcher.__remainingPauseCycles[part]).to.equal(nil)
+			expect(instanceMap.pausedUpdateInstances[part]).to.equal(nil)
 		end)
 	end)
 
