@@ -1,11 +1,15 @@
+--[[
+	Take an InstanceMap and a dictionary mapping instances to sets of property
+	names. Populate a patch with the encoded values of all the given properties
+	on all the given instances (or, if any changes set Parent to nil, removals
+	of instances) and return the patch.
+]]
+
 local Log = require(script.Parent.Parent.Parent.Log)
-local PatchSet = require(script.Parent.Parent.PatchSet)
 local RbxDom = require(script.Parent.Parent.Parent.RbxDom)
 
--- Take an InstanceMap and a dictionary mapping instances to sets of property
--- names. Populate the patch with updates to all the given properties (or, if
--- any of changes set Parent to nil, removals of the instances) and return the
--- patch.
+local PatchSet = require(script.Parent.Parent.PatchSet)
+
 return function(instanceMap, propertyChanges)
 	local patch = PatchSet.newEmpty()
 
