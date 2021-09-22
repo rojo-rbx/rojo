@@ -7,7 +7,7 @@ local RunService = game:GetService("RunService")
 
 local PatchSet = require(script.Parent.PatchSet)
 
-local createChangePatch = require(script.createChangePatch)
+local createPatchSet = require(script.createPatchSet)
 
 local ChangeBatcher = {}
 ChangeBatcher.__index = ChangeBatcher
@@ -81,7 +81,7 @@ function ChangeBatcher:__flush()
 		return nil
 	end
 
-	local patch = createChangePatch(self.__instanceMap, self.__pendingPropertyChanges)
+	local patch = createPatchSet(self.__instanceMap, self.__pendingPropertyChanges)
 
 	if PatchSet.isEmpty(patch) then
 		return nil
