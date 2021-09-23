@@ -12,9 +12,9 @@
 
 <hr />
 
-**Rojo** is a tool designed to enable Roblox developers to use professional-grade software engineering tools.
+Rojo is a tool that syncs externally-edited* project files to Roblox Studio, enabling Roblox developers to use professional-grade software engineering tools like Visual Studio Code and Git.
 
-With Rojo, it's possible to use industry-leading tools like **Visual Studio Code** and **Git**.
+*Edited using external tools like Visual Studio Code rather than Roblox Studio's built-in tools
 
 Rojo is designed for power users who want to use the best tools available for building games, libraries, and plugins.
 
