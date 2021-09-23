@@ -34,7 +34,7 @@ end
 local BRAND_COLOR = hexColor(0xE13835)
 
 local lightTheme = strict("LightTheme", {
-	BackgroundColor = hexColor(0xF0F0F0),
+	BackgroundColor = hexColor(0xFFFFFF),
 	Button = {
 		Solid = {
 			ActionFillColor = hexColor(0xFFFFFF),
@@ -67,7 +67,7 @@ local lightTheme = strict("LightTheme", {
 			BackgroundColor = BRAND_COLOR,
 		},
 		Inactive = {
-			IconColor = hexColor(0xCACACA),
+			IconColor = hexColor(0xeeeeee),
 			BorderColor = hexColor(0xAFAFAF),
 		},
 	},
@@ -77,11 +77,11 @@ local lightTheme = strict("LightTheme", {
 	},
 	BorderedContainer = {
 		BorderColor = hexColor(0xCBCBCB),
-		BackgroundColor = hexColor(0xE0E0E0),
+		BackgroundColor = hexColor(0xeeeeee),
 	},
 	Spinner = {
 		ForegroundColor = BRAND_COLOR,
-		BackgroundColor = hexColor(0xE0E0E0),
+		BackgroundColor = hexColor(0xeeeeee),
 	},
 	ConnectionDetails = {
 		ProjectNameColor = hexColor(0x00000),
@@ -108,7 +108,7 @@ local lightTheme = strict("LightTheme", {
 })
 
 local darkTheme = strict("DarkTheme", {
-	BackgroundColor = hexColor(0x272727),
+	BackgroundColor = hexColor(0x2e2e2e),
 	Button = {
 		Solid = {
 			ActionFillColor = hexColor(0xFFFFFF),
@@ -147,15 +147,15 @@ local darkTheme = strict("DarkTheme", {
 	},
 	AddressEntry = {
 		TextColor = hexColor(0xFFFFFF),
-		PlaceholderColor = hexColor(0x717171)
+		PlaceholderColor = hexColor(0x8b8b8b)
 	},
 	BorderedContainer = {
 		BorderColor = hexColor(0x535353),
-		BackgroundColor = hexColor(0x323232),
+		BackgroundColor = hexColor(0x2b2b2b),
 	},
 	Spinner = {
 		ForegroundColor = BRAND_COLOR,
-		BackgroundColor = hexColor(0x323232),
+		BackgroundColor = hexColor(0x2b2b2b),
 	},
 	ConnectionDetails = {
 		ProjectNameColor = hexColor(0xFFFFFF),
