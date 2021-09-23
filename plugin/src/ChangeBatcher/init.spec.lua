@@ -14,17 +14,17 @@ return function()
 			expect(next(changeBatcher.__pendingPropertyChanges)).to.equal(nil)
 			expect(changeBatcher.__onChangesFlushed).to.equal(noop)
 			expect(changeBatcher.__instanceMap).to.equal(instanceMap)
-			expect(typeof(changeBatcher.__heartbeatConnection)).to.equal("RBXScriptConnection")
+			expect(typeof(changeBatcher.__renderSteppedConnection)).to.equal("RBXScriptConnection")
 		end)
 	end)
 
 	describe("stop", function()
-		it("should disconnect the Heartbeat connection", function()
+		it("should disconnect the RenderStepped connection", function()
 			local changeBatcher = ChangeBatcher.new(InstanceMap.new(), noop)
 
 			changeBatcher:stop()
 
-			expect(changeBatcher.__heartbeatConnection.Connected).to.equal(false)
+			expect(changeBatcher.__renderSteppedConnection.Connected).to.equal(false)
 		end)
 	end)
 
@@ -48,7 +48,7 @@ return function()
 	end)
 
 	describe("__cycle", function()
-		it("should immediately unpause an instance that is not a script", function()
+		it("should immediately unpause any paused instances after each cycle", function()
 			local instanceMap = InstanceMap.new()
 			local changeBatcher = ChangeBatcher.new(instanceMap, noop)
 			local part = Instance.new("Part")
@@ -57,24 +57,6 @@ return function()
 
 			changeBatcher:__cycle(0)
 
-			expect(instanceMap.pausedUpdateInstances[part]).to.equal(nil)
-		end)
-
-		it("should unpause a script after two cycles", function()
-			local instanceMap = InstanceMap.new()
-			local changeBatcher = ChangeBatcher.new(instanceMap, noop)
-			local part = Instance.new("Script")
-
-			instanceMap.pausedUpdateInstances[part] = true
-
-			changeBatcher:__cycle(0)
-
-			expect(changeBatcher.__remainingPauseCycles[part]).to.equal(1)
-			expect(instanceMap.pausedUpdateInstances[part]).to.equal(true)
-
-			changeBatcher:__cycle(0)
-
-			expect(changeBatcher.__remainingPauseCycles[part]).to.equal(nil)
 			expect(instanceMap.pausedUpdateInstances[part]).to.equal(nil)
 		end)
 	end)
