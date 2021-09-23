@@ -195,7 +195,7 @@ end
 function InstanceMap:__maybeFireInstanceChanged(instance, propertyName)
 	Log.trace("{}.{} changed", instance:GetFullName(), propertyName)
 
-	if self.pausedUpdateInstances[instance] or self.pausedBatchInstances[instance] then
+	if self.pausedUpdateInstances[instance] then
 		return
 	end
 
