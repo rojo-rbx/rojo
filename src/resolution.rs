@@ -133,7 +133,7 @@ impl AmbiguousValue {
         match self {
             AmbiguousValue::Bool(_) => "a bool",
             AmbiguousValue::String(_) => "a string",
-            &AmbiguousValue::StringArray(_) => "an array of strings",
+            AmbiguousValue::StringArray(_) => "an array of strings",
             AmbiguousValue::Number(_) => "a number",
             AmbiguousValue::Array2(_) => "an array of two numbers",
             AmbiguousValue::Array3(_) => "an array of three numbers",
