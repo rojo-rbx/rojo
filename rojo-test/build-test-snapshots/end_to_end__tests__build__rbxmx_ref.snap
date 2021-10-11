@@ -1,27 +1,25 @@
 ---
 source: tests/tests/build.rs
 expression: contents
+
 ---
 <roblox version="4">
   <Item class="Folder" referent="0">
     <Properties>
       <string name="Name">rbxmx_ref</string>
-      <BinaryString name="Tags">
-      </BinaryString>
+      <BinaryString name="Tags"></BinaryString>
     </Properties>
     <Item class="StringValue" referent="1">
       <Properties>
         <string name="Name">Target</string>
-        <BinaryString name="Tags">
-        </BinaryString>
+        <BinaryString name="Tags"></BinaryString>
         <string name="Value">Pointed to by ObjectValue</string>
       </Properties>
     </Item>
     <Item class="ObjectValue" referent="2">
       <Properties>
         <string name="Name">Pointer</string>
-        <BinaryString name="Tags">
-        </BinaryString>
+        <BinaryString name="Tags"></BinaryString>
         <Ref name="Value">1</Ref>
       </Properties>
     </Item>
