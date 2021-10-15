@@ -157,6 +157,13 @@ function InstanceMap:unpauseInstance(instance)
 	self.pausedUpdateInstances[instance] = nil
 end
 
+--[[
+	Unpause updates for all instances.
+]]
+function InstanceMap:unpauseAllInstances()
+	table.clear(self.pausedUpdateInstances)
+end
+
 function InstanceMap:__connectSignals(instance)
 	if RunService:IsRunning() then
 		-- We probably don't want to pick up property changes to save to the

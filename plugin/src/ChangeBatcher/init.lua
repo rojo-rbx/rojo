@@ -61,9 +61,7 @@ function ChangeBatcher:__cycle(dt)
 		end
 	end
 
-	for instance in pairs(self.__instanceMap.pausedUpdateInstances) do
-		self.__instanceMap.pausedUpdateInstances[instance] = nil
-	end
+	self.__instanceMap:unpauseAllInstances()
 end
 
 function ChangeBatcher:__flush()
