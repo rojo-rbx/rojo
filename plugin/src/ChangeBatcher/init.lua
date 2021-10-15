@@ -67,7 +67,7 @@ function ChangeBatcher:__cycle(dt)
 end
 
 function ChangeBatcher:__flush()
-	if not next(self.__pendingPropertyChanges) then
+	if next(self.__pendingPropertyChanges) == nil then
 		return nil
 	end
 

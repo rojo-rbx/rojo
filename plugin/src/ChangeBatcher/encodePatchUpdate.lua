@@ -31,7 +31,7 @@ return function(instance, instanceId, properties)
 		end
 	end
 
-	if not next(update.changedProperties) and not update.changedName then
+	if next(update.changedProperties) == nil and update.changedName == nil then
 		return nil
 	end
 
