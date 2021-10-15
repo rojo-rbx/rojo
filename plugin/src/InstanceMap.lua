@@ -165,12 +165,6 @@ function InstanceMap:unpauseAllInstances()
 end
 
 function InstanceMap:__connectSignals(instance)
-	if RunService:IsRunning() then
-		-- We probably don't want to pick up property changes to save to the
-		-- filesystem in a running game.
-		return
-	end
-
 	-- ValueBase instances have an overriden version of the Changed signal that
 	-- only detects changes to their Value property.
 	--
@@ -207,6 +201,12 @@ function InstanceMap:__maybeFireInstanceChanged(instance, propertyName)
 	end
 
 	if self.onInstanceChanged == nil then
+		return
+	end
+
+	if RunService:IsRunning() then
+		-- We probably don't want to pick up property changes to save to the
+		-- filesystem in a running game.
 		return
 	end
 
