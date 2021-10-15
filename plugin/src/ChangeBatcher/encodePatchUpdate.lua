@@ -27,9 +27,7 @@ return function(instance, instanceId, properties)
 				continue
 			end
 
-			if encodeSuccess then
-				update.changedProperties[propertyName] = encodeResult
-			end
+			update.changedProperties[propertyName] = encodeResult
 		end
 	end
 
