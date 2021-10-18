@@ -1,3 +1,5 @@
+local RunService = game:GetService("RunService")
+
 local Log = require(script.Parent.Parent.Log)
 
 --[[
@@ -135,29 +137,31 @@ function InstanceMap:destroyId(id)
 end
 
 --[[
-	Pause updates for an instance momentarily and invoke a callback.
-
-	If the callback throws an error, InstanceMap will still be kept in a
-	consistent state.
+	Pause updates for an instance.
 ]]
-function InstanceMap:pauseInstance(instance, callback)
+function InstanceMap:pauseInstance(instance)
 	local id = self.fromInstances[instance]
 
-	-- If we don't know about this instance, ignore it and do not invoke the
-	-- callback.
+	-- If we don't know about this instance, ignore it.
 	if id == nil then
 		return
 	end
 
 	self.pausedUpdateInstances[instance] = true
-	local success, result = xpcall(callback, debug.traceback)
-	self.pausedUpdateInstances[instance] = false
+end
 
-	if success then
-		return result
-	else
-		error(result, 2)
-	end
+--[[
+	Unpause updates for an instance.
+]]
+function InstanceMap:unpauseInstance(instance)
+	self.pausedUpdateInstances[instance] = nil
+end
+
+--[[
+	Unpause updates for all instances.
+]]
+function InstanceMap:unpauseAllInstances()
+	table.clear(self.pausedUpdateInstances)
 end
 
 function InstanceMap:__connectSignals(instance)
@@ -197,6 +201,12 @@ function InstanceMap:__maybeFireInstanceChanged(instance, propertyName)
 	end
 
 	if self.onInstanceChanged == nil then
+		return
+	end
+
+	if RunService:IsRunning() then
+		-- We probably don't want to pick up property changes to save to the
+		-- filesystem in a running game.
 		return
 	end
 

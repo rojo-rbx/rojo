@@ -77,6 +77,10 @@ local function applyPatch(instanceMap, patch)
 			continue
 		end
 
+		-- Pause updates on this instance to avoid picking up our changes when
+		-- two-way sync is enabled.
+		instanceMap:pauseInstance(instance)
+
 		-- Track any part of this update that could not be applied.
 		local unappliedUpdate = {
 			id = update.id,
