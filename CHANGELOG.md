@@ -2,7 +2,7 @@
 
 ## Unreleased Changes
 
-## [7.0.0-rc.2] - October 19, 2021
+## [7.0.0-rc.3] - October 19, 2021
 This is the last release candidate for Rojo 7. In an effort to get Rojo 7 out the door, we'll be freezing features from here on out, something we should've done a couple months ago.
 
 Expect to see Rojo 7 stable soon!
@@ -14,7 +14,10 @@ Expect to see Rojo 7 stable soon!
 [#482]: https://github.com/rojo-rbx/rojo/pull/482
 [#484]: https://github.com/rojo-rbx/rojo/pull/484
 [#478]: https://github.com/rojo-rbx/rojo/pull/478
-[7.0.0-rc.2]: https://github.com/rojo-rbx/rojo/releases/tag/v7.0.0-rc.2
+[7.0.0-rc.3]: https://github.com/rojo-rbx/rojo/releases/tag/v7.0.0-rc.3
+
+## 7.0.0-rc.2 - October 19, 2021
+(Botched release due to Git mishap, oops!)
 
 ## [7.0.0-rc.1] - August 23, 2021
 In Rojo 6 and previous Rojo 7 alphas, an explicit Vector3 property would be written like this:

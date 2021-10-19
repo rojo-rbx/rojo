@@ -6,12 +6,10 @@ local CollectionService = game:GetService("CollectionService")
 return {
 	Instance = {
 		Tags = {
-			read = function(instance, key)
-				local tagList = CollectionService:GetTags(instance)
-
-				return true, table.concat(tagList, "\0")
+			read = function(instance)
+				return true, CollectionService:GetTags(instance)
 			end,
-			write = function(instance, key, value)
+			write = function(instance, _, value)
 				local existingTags = CollectionService:GetTags(instance)
 
 				local unseenTags = {}
@@ -19,8 +17,7 @@ return {
 					unseenTags[tag] = true
 				end
 
-				local tagList = string.split(value, "\0")
-				for _, tag in ipairs(tagList) do
+				for _, tag in ipairs(value) do
 					unseenTags[tag] = nil
 					CollectionService:AddTag(instance, tag)
 				end
