@@ -1,7 +1,7 @@
 use std::borrow::Borrow;
 
 use anyhow::format_err;
-use rbx_dom_weak::types::{Color3, Content, Enum, Variant, VariantType, Vector2, Vector3};
+use rbx_dom_weak::types::{Color3, Content, Enum, Tags, Variant, VariantType, Vector2, Vector3};
 use rbx_reflection::{DataType, PropertyDescriptor};
 use serde::{Deserialize, Serialize};
 
@@ -32,6 +32,7 @@ impl UnresolvedValue {
 pub enum AmbiguousValue {
     Bool(bool),
     String(String),
+    StringArray(Vec<String>),
     Number(f64),
     Array2([f64; 2]),
     Array3([f64; 3]),
@@ -93,6 +94,9 @@ impl AmbiguousValue {
                 (VariantType::Int64, AmbiguousValue::Number(value)) => Ok((value as i64).into()),
 
                 (VariantType::String, AmbiguousValue::String(value)) => Ok(value.into()),
+                (VariantType::Tags, AmbiguousValue::StringArray(value)) => {
+                    Ok(Tags::from(value).into())
+                }
                 (VariantType::Content, AmbiguousValue::String(value)) => {
                     Ok(Content::from(value).into())
                 }
@@ -129,6 +133,7 @@ impl AmbiguousValue {
         match self {
             AmbiguousValue::Bool(_) => "a bool",
             AmbiguousValue::String(_) => "a string",
+            AmbiguousValue::StringArray(_) => "an array of strings",
             AmbiguousValue::Number(_) => "a number",
             AmbiguousValue::Array2(_) => "an array of two numbers",
             AmbiguousValue::Array3(_) => "an array of three numbers",
