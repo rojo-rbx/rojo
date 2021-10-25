@@ -41,4 +41,15 @@ return {
 			end,
 		},
 	},
+	Workspace = {
+		-- Placeholder to avoid errors with collision groups
+		CollisionGroups = {
+			read = function(instance, key)
+				return true, nil
+			end,
+			write = function(instance, key, value)
+				return true
+			end,
+		}
+	},
 }
