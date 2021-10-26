@@ -3,11 +3,11 @@ name: CI
 on:
   push:
     branches:
-    - master
+      - master
 
   pull_request:
     branches:
-    - master
+      - master
 
 jobs:
   build:
@@ -19,21 +19,31 @@ jobs:
         rust_version: [stable, "1.46.0"]
 
     steps:
-    - uses: actions/checkout@v1
-      with:
-        submodules: true
+      - uses: actions/checkout@v1
+        with:
+          submodules: true
 
-    - name: Setup Rust toolchain
-      run: rustup default ${{ matrix.rust_version }}
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-rust-${{ matrix.rust_version }}-ci-${{ hashFiles('**/Cargo.lock') }}
 
-    - name: Build
-      run: cargo build --locked --verbose
+      - name: Setup Rust toolchain
+        run: rustup default ${{ matrix.rust_version }}
 
-    - name: Run tests
-      run: cargo test --locked --verbose
+      - name: Build
+        run: cargo build --locked --verbose
 
-    - name: Rustfmt and Clippy
-      run: |
-        cargo fmt -- --check
-        cargo clippy
-      if: matrix.rust_version == 'stable'
+      - name: Run tests
+        run: cargo test --locked --verbose
+
+      - name: Rustfmt and Clippy
+        run: |
+          cargo fmt -- --check
+          cargo clippy
+        if: matrix.rust_version == 'stable'
