@@ -29,6 +29,11 @@ Sometimes there's something that Rojo doesn't do that it probably should.
 
 Please file issues and we'll try to help figure out what the best way forward is.
 
+## Local Development Gotchas
+
+If your build fails with "Error: failed to open file `D:\code\rojo\plugin\modules\roact\src`" you need to update your Git submodules.
+Run the command and try building again: `git submodule update --init --recursive`.
+
 ## Pushing a Rojo Release
 The Rojo release process is pretty manual right now. If you need to do it, here's how:
 
