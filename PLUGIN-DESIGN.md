@@ -42,19 +42,19 @@ field set to its value, and `options` set to its default.
 ```json
 {
     "name": "ProjectWithPlugins",
+    "plugins": [
+        "local-plugin.lua",
+        "github.com/owner/remote-plugin-from-tag@v1.0.0",
+        "github.com/owner/remote-plugin-from-head",
+        { "source": "plugin-with-options.lua", "options": { "some": "option" } }
+    ],
     "tree": {
         "$className": "DataModel",
         "ServerScriptService": {
             "$className": "ServerScriptService",
             "$path": "src"
         }
-    },
-    "plugins": [
-        "local-plugin.lua",
-        "github.com/owner/remote-plugin-from-tag@v1.0.0",
-        "github.com/owner/remote-plugin-from-head",
-        { "source": "plugin-with-options.lua", "options": { "some": "option" } }
-    ]
+    }
 }
 ```
 
