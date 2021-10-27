@@ -28,7 +28,8 @@ Add a new top-level field to the project file format:
 
 Either a `String` value or an object with the fields:
 
--   `source`: A filepath or URL to the Lua source file of the plugin.
+-   `source`: A filepath to the Lua source file of the plugin or a URL to a GitHub repo, optionally
+    followed by an `@` character and a Git tag.
     -   **Required**
 -   `options`: Any JSON dictionary. The options that will be passed to the plugin.
     -   **Optional**
