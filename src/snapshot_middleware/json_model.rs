@@ -26,7 +26,6 @@ pub fn snapshot_json_model(
     // let contents = vfs.read(path)?;
     let contents_str = str::from_utf8(&contents)
         .with_context(|| format!("File was not valid UTF-8: {}", path.display()))?;
-    println!("{}", contents_str);
 
     if contents_str.trim().is_empty() {
         return Ok(None);

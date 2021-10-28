@@ -51,17 +51,54 @@ impl PluginEnv {
         self.lua.context(|lua_ctx| {
             let globals = lua_ctx.globals();
 
-            let create_plugin: Function = lua_ctx.load(plugin_lua).eval()?;
+            let create_plugin_fn: Option<Function> =
+                lua_ctx.load(plugin_lua).set_name(plugin_source)?.eval()?;
+            let create_plugin_fn = match create_plugin_fn {
+                Some(v) => v,
+                None => {
+                    return Err(rlua::Error::RuntimeError(
+                        format!(
+                            "plugin from source '{}' did not return a creation function.",
+                            plugin_source
+                        )
+                        .to_string(),
+                    ))
+                }
+            };
 
-            let plugin_options_table: Table = lua_ctx.load(&plugin_options).eval()?;
-            let plugin_instance: Table = create_plugin.call(plugin_options_table)?;
+            let plugin_options_table: Table = lua_ctx
+                .load(&plugin_options)
+                .set_name("plugin options")?
+                .eval()?;
 
-            let plugin_name: String = plugin_instance.get("name")?;
-            // if plugin_name.trim().is_empty() {
-            //     return Err(rlua::Error::ExternalError(Arc::new(std::error::Error(
-            //         "".to_string(),
-            //     ))));
-            // }
+            let plugin_instance: Option<Table> = create_plugin_fn.call(plugin_options_table)?;
+            let plugin_instance = match plugin_instance {
+                Some(v) => v,
+                None => {
+                    return Err(rlua::Error::RuntimeError(
+                        format!(
+                            "creation function for plugin from source '{}' did not return a plugin instance.",
+                            plugin_source
+                        )
+                        .to_string(),
+                    ))
+                }
+            };
+
+            let plugin_name: Option<String> = plugin_instance.get("name")?;
+            let plugin_name = match plugin_name.unwrap_or("".to_owned()) {
+                v if v.trim().is_empty() => {
+                    return Err(rlua::Error::RuntimeError(
+                        format!(
+                            "plugin instance for plugin from source '{}' did not have a name.",
+                            plugin_source
+                        )
+                        .to_string(),
+                    ))
+                },
+                v => v
+            };
+
             log::trace!(
                 "Loaded plugin '{}' from source: {}",
                 plugin_name,
