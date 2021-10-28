@@ -4,18 +4,22 @@ use anyhow::Context;
 use maplit::hashmap;
 use memofs::{IoResultExt, Vfs};
 
-use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
+use crate::{
+    load_file::load_file,
+    plugin_env::PluginEnv,
+    snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
+};
 
-use super::{meta_file::AdjacentMetadata, util::PathExt};
+use super::meta_file::AdjacentMetadata;
 
 pub fn snapshot_txt(
     context: &InstanceContext,
     vfs: &Vfs,
+    plugin_env: &PluginEnv,
     path: &Path,
+    name: &str,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let name = path.file_name_trim_end(".txt")?;
-
-    let contents = vfs.read(path)?;
+    let contents = load_file(vfs, plugin_env, path)?;
     let contents_str = str::from_utf8(&contents)
         .with_context(|| format!("File was not valid UTF-8: {}", path.display()))?
         .to_owned();
@@ -47,6 +51,8 @@ pub fn snapshot_txt(
 
 #[cfg(test)]
 mod test {
+    use std::sync::Arc;
+
     use super::*;
 
     use memofs::{InMemoryFs, VfsSnapshot};
@@ -57,12 +63,20 @@ mod test {
         imfs.load_snapshot("/foo.txt", VfsSnapshot::file("Hello there!"))
             .unwrap();
 
-        let mut vfs = Vfs::new(imfs.clone());
+        let mut vfs = Arc::new(Vfs::new(imfs));
 
-        let instance_snapshot =
-            snapshot_txt(&InstanceContext::default(), &mut vfs, Path::new("/foo.txt"))
-                .unwrap()
-                .unwrap();
+        let plugin_env = PluginEnv::new(Arc::clone(&vfs));
+        plugin_env.init().unwrap();
+
+        let instance_snapshot = snapshot_txt(
+            &InstanceContext::default(),
+            &mut vfs,
+            &plugin_env,
+            Path::new("/foo.txt"),
+            "foo",
+        )
+        .unwrap()
+        .unwrap();
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }

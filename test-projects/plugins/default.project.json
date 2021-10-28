@@ -1,9 +1,17 @@
 {
   "name": "plugins",
-  "tree": {
-    "$path": "src"
-  },
   "plugins": [
-    "test-plugin.lua"
-  ]
+    "fake-moonscript.lua",
+    {
+      "source": "load-as-stringvalue.lua",
+      "options": { "extensions": ["md"] }
+    }
+  ],
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "$path": "src"
+    }
+  }
 }

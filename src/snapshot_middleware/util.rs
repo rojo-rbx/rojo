@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{ops::Index, path::Path};
 
 use anyhow::Context;
 
@@ -16,6 +16,7 @@ pub fn match_trailing<'a>(input: &'a str, suffix: &str) -> Option<&'a str> {
 pub trait PathExt {
     fn file_name_ends_with(&self, suffix: &str) -> bool;
     fn file_name_trim_end<'a>(&'a self, suffix: &str) -> anyhow::Result<&'a str>;
+    fn file_name_no_extension<'a>(&'a self) -> anyhow::Result<&'a str>;
 }
 
 impl<P> PathExt for P
@@ -39,5 +40,16 @@ where
 
         match_trailing(&file_name, suffix)
             .with_context(|| format!("Path did not end in {}: {}", suffix, path.display()))
+    }
+
+    fn file_name_no_extension<'a>(&'a self) -> anyhow::Result<&'a str> {
+        let path = self.as_ref();
+        let file_name = path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .with_context(|| format!("Path did not have a file name: {}", path.display()))?;
+
+        let index = file_name.chars().position(|c| c == '.').unwrap_or(0);
+        Ok(&file_name[0..index])
     }
 }

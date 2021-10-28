@@ -5,19 +5,22 @@ use maplit::hashmap;
 use memofs::{IoResultExt, Vfs};
 
 use crate::{
+    load_file::load_file,
     lua_ast::{Expression, Statement},
+    plugin_env::PluginEnv,
     snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
 };
 
-use super::{meta_file::AdjacentMetadata, util::PathExt};
+use super::meta_file::AdjacentMetadata;
 
 pub fn snapshot_json(
     context: &InstanceContext,
     vfs: &Vfs,
+    plugin_env: &PluginEnv,
     path: &Path,
+    name: &str,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let name = path.file_name_trim_end(".json")?;
-    let contents = vfs.read(path)?;
+    let contents = load_file(vfs, plugin_env, path)?;
 
     let value: serde_json::Value = serde_json::from_slice(&contents)
         .with_context(|| format!("File contains malformed JSON: {}", path.display()))?;
@@ -75,6 +78,8 @@ fn json_to_lua_value(value: serde_json::Value) -> Expression {
 
 #[cfg(test)]
 mod test {
+    use std::sync::Arc;
+
     use super::*;
 
     use memofs::{InMemoryFs, VfsSnapshot};
@@ -101,12 +106,17 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs.clone());
+        let mut vfs = Arc::new(Vfs::new(imfs.clone()));
+
+        let plugin_env = PluginEnv::new(Arc::clone(&vfs));
+        plugin_env.init().unwrap();
 
         let instance_snapshot = snapshot_json(
             &InstanceContext::default(),
             &mut vfs,
+            &plugin_env,
             Path::new("/foo.json"),
+            "foo",
         )
         .unwrap()
         .unwrap();

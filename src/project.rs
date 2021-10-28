@@ -31,6 +31,16 @@ enum Error {
     },
 }
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PluginDescription {
+    Source(String),
+    SourceWithOptions {
+        source: String,
+        options: serde_json::Value,
+    },
+}
+
 /// Contains all of the configuration for a Rojo-managed project.
 ///
 /// Project files are stored in `.project.json` files.
@@ -39,6 +49,9 @@ enum Error {
 pub struct Project {
     /// The name of the top-level instance described by the project.
     pub name: String,
+
+    #[serde(default = "Vec::new", skip_serializing_if = "Vec::is_empty")]
+    pub plugins: Vec<PluginDescription>,
 
     /// The tree of instances described by this project. Projects always
     /// describe at least one instance.

@@ -14,8 +14,10 @@ use thiserror::Error;
 
 use crate::{
     change_processor::ChangeProcessor,
+    lua_ast::Expression,
     message_queue::MessageQueue,
-    project::{Project, ProjectError},
+    plugin_env::PluginEnv,
+    project::{PluginDescription, Project, ProjectError},
     session_id::SessionId,
     snapshot::{
         apply_patch_set, compute_patch_set, AppliedPatchSet, InstanceContext, InstanceSnapshot,
@@ -23,6 +25,27 @@ use crate::{
     },
     snapshot_middleware::snapshot_from_vfs,
 };
+
+// TODO: Centralize this (copied from json middleware)
+fn json_to_lua_value(value: serde_json::Value) -> Expression {
+    use serde_json::Value;
+
+    match value {
+        Value::Null => Expression::Nil,
+        Value::Bool(value) => Expression::Bool(value),
+        Value::Number(value) => Expression::Number(value.as_f64().unwrap()),
+        Value::String(value) => Expression::String(value),
+        Value::Array(values) => {
+            Expression::Array(values.into_iter().map(json_to_lua_value).collect())
+        }
+        Value::Object(values) => Expression::table(
+            values
+                .into_iter()
+                .map(|(key, value)| (key.into(), json_to_lua_value(value)))
+                .collect(),
+        ),
+    }
+}
 
 /// Contains all of the state for a Rojo serve session. A serve session is used
 /// when we need to build a Rojo tree and possibly rebuild it when input files
@@ -119,6 +142,32 @@ impl ServeSession {
             }
         };
 
+        let vfs = Arc::new(vfs);
+
+        let plugin_env = PluginEnv::new(Arc::clone(&vfs));
+        match plugin_env.init() {
+            Ok(_) => (),
+            Err(e) => return Err(ServeSessionError::Plugin { source: e }),
+        };
+
+        for plugin_description in root_project.plugins.iter() {
+            let default_options = "{}".to_string();
+            let (plugin_source, plugin_options) = match plugin_description {
+                PluginDescription::Source(source) => (source, default_options),
+                PluginDescription::SourceWithOptions { source, options } => {
+                    (source, json_to_lua_value(options.to_owned()).to_string())
+                }
+            };
+
+            let temp = project_path.with_file_name(plugin_source);
+            let plugin_source_path = temp.to_str().unwrap();
+
+            match plugin_env.load_plugin(plugin_source_path, plugin_options) {
+                Ok(_) => (),
+                Err(e) => return Err(ServeSessionError::Plugin { source: e }),
+            };
+        }
+
         let mut tree = RojoTree::new(InstanceSnapshot::new());
 
         let root_id = tree.get_root_id();
@@ -126,7 +175,7 @@ impl ServeSession {
         let instance_context = InstanceContext::default();
 
         log::trace!("Generating snapshot of instances from VFS");
-        let snapshot = snapshot_from_vfs(&instance_context, &vfs, &start_path)?
+        let snapshot = snapshot_from_vfs(&instance_context, &vfs, &plugin_env, &start_path)?
             .expect("snapshot did not return an instance");
 
         log::trace!("Computing initial patch set");
@@ -140,7 +189,7 @@ impl ServeSession {
 
         let tree = Arc::new(Mutex::new(tree));
         let message_queue = Arc::new(message_queue);
-        let vfs = Arc::new(vfs);
+        let plugin_env = Arc::new(Mutex::new(plugin_env));
 
         let (tree_mutation_sender, tree_mutation_receiver) = crossbeam_channel::unbounded();
 
@@ -148,6 +197,7 @@ impl ServeSession {
         let change_processor = ChangeProcessor::start(
             Arc::clone(&tree),
             Arc::clone(&vfs),
+            Arc::clone(&plugin_env),
             Arc::clone(&message_queue),
             tree_mutation_receiver,
         );
@@ -239,5 +289,11 @@ pub enum ServeSessionError {
     Other {
         #[from]
         source: anyhow::Error,
+    },
+
+    #[error(transparent)]
+    Plugin {
+        #[from]
+        source: rlua::Error,
     },
 }

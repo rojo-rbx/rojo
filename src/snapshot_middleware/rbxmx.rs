@@ -3,21 +3,24 @@ use std::path::Path;
 use anyhow::Context;
 use memofs::Vfs;
 
-use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
-
-use super::util::PathExt;
+use crate::{
+    load_file::load_file,
+    plugin_env::PluginEnv,
+    snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
+};
 
 pub fn snapshot_rbxmx(
     context: &InstanceContext,
     vfs: &Vfs,
+    plugin_env: &PluginEnv,
     path: &Path,
+    name: &str,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let name = path.file_name_trim_end(".rbxmx")?;
-
     let options = rbx_xml::DecodeOptions::new()
         .property_behavior(rbx_xml::DecodePropertyBehavior::ReadUnknown);
 
-    let temp_tree = rbx_xml::from_reader(vfs.read(path)?.as_slice(), options)
+    let contents = load_file(vfs, plugin_env, path)?;
+    let temp_tree = rbx_xml::from_reader(contents.as_slice(), options)
         .with_context(|| format!("Malformed rbxm file: {}", path.display()))?;
 
     let root_instance = temp_tree.root();
@@ -45,6 +48,8 @@ pub fn snapshot_rbxmx(
 
 #[cfg(test)]
 mod test {
+    use std::sync::Arc;
+
     use super::*;
 
     use memofs::{InMemoryFs, VfsSnapshot};
@@ -68,12 +73,17 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let mut vfs = Arc::new(Vfs::new(imfs));
+
+        let plugin_env = PluginEnv::new(Arc::clone(&vfs));
+        plugin_env.init().unwrap();
 
         let instance_snapshot = snapshot_rbxmx(
             &InstanceContext::default(),
             &mut vfs,
+            &plugin_env,
             Path::new("/foo.rbxmx"),
+            "foo",
         )
         .unwrap()
         .unwrap();

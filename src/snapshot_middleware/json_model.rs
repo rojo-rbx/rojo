@@ -5,20 +5,20 @@ use memofs::Vfs;
 use serde::Deserialize;
 
 use crate::{
+    load_file::load_file,
+    plugin_env::PluginEnv,
     resolution::UnresolvedValue,
     snapshot::{InstanceContext, InstanceSnapshot},
 };
 
-use super::util::PathExt;
-
 pub fn snapshot_json_model(
     context: &InstanceContext,
     vfs: &Vfs,
+    plugin_env: &PluginEnv,
     path: &Path,
+    name: &str,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let name = path.file_name_trim_end(".model.json")?;
-
-    let contents = vfs.read(path)?;
+    let contents = load_file(vfs, plugin_env, path)?;
     let contents_str = str::from_utf8(&contents)
         .with_context(|| format!("File was not valid UTF-8: {}", path.display()))?;
 
@@ -101,6 +101,8 @@ impl JsonModelCore {
 
 #[cfg(test)]
 mod test {
+    use std::sync::Arc;
+
     use super::*;
 
     use memofs::{InMemoryFs, VfsSnapshot};
@@ -130,12 +132,17 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let mut vfs = Arc::new(Vfs::new(imfs));
+
+        let plugin_env = PluginEnv::new(Arc::clone(&vfs));
+        plugin_env.init().unwrap();
 
         let instance_snapshot = snapshot_json_model(
             &InstanceContext::default(),
             &mut vfs,
+            &plugin_env,
             Path::new("/foo.model.json"),
+            "foo",
         )
         .unwrap()
         .unwrap();

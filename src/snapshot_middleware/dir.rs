@@ -2,13 +2,17 @@ use std::path::Path;
 
 use memofs::{DirEntry, IoResultExt, Vfs};
 
-use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
+use crate::{
+    plugin_env::PluginEnv,
+    snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
+};
 
 use super::{meta_file::DirectoryMetadata, snapshot_from_vfs};
 
 pub fn snapshot_dir(
     context: &InstanceContext,
     vfs: &Vfs,
+    plugin_env: &PluginEnv,
     path: &Path,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let passes_filter_rules = |child: &DirEntry| {
@@ -27,7 +31,7 @@ pub fn snapshot_dir(
             continue;
         }
 
-        if let Some(child_snapshot) = snapshot_from_vfs(context, vfs, entry.path())? {
+        if let Some(child_snapshot) = snapshot_from_vfs(context, vfs, plugin_env, entry.path())? {
             snapshot_children.push(child_snapshot);
         }
     }
@@ -73,6 +77,8 @@ pub fn snapshot_dir(
 
 #[cfg(test)]
 mod test {
+    use std::sync::Arc;
+
     use super::*;
 
     use maplit::hashmap;
@@ -84,12 +90,19 @@ mod test {
         imfs.load_snapshot("/foo", VfsSnapshot::empty_dir())
             .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let mut vfs = Arc::new(Vfs::new(imfs));
 
-        let instance_snapshot =
-            snapshot_dir(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
-                .unwrap()
-                .unwrap();
+        let plugin_env = PluginEnv::new(Arc::clone(&vfs));
+        plugin_env.init().unwrap();
+
+        let instance_snapshot = snapshot_dir(
+            &InstanceContext::default(),
+            &mut vfs,
+            &plugin_env,
+            Path::new("/foo"),
+        )
+        .unwrap()
+        .unwrap();
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }
@@ -105,12 +118,19 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let mut vfs = Arc::new(Vfs::new(imfs));
 
-        let instance_snapshot =
-            snapshot_dir(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
-                .unwrap()
-                .unwrap();
+        let plugin_env = PluginEnv::new(Arc::clone(&vfs));
+        plugin_env.init().unwrap();
+
+        let instance_snapshot = snapshot_dir(
+            &InstanceContext::default(),
+            &mut vfs,
+            &plugin_env,
+            Path::new("/foo"),
+        )
+        .unwrap()
+        .unwrap();
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }

@@ -10,6 +10,7 @@ use rbx_dom_weak::types::{Ref, Variant};
 
 use crate::{
     message_queue::MessageQueue,
+    plugin_env::PluginEnv,
     snapshot::{
         apply_patch_set, compute_patch_set, AppliedPatchSet, InstigatingSource, PatchSet, RojoTree,
     },
@@ -49,6 +50,7 @@ impl ChangeProcessor {
     pub fn start(
         tree: Arc<Mutex<RojoTree>>,
         vfs: Arc<Vfs>,
+        plugin_env: Arc<Mutex<PluginEnv>>,
         message_queue: Arc<MessageQueue<AppliedPatchSet>>,
         tree_mutation_receiver: Receiver<PatchSet>,
     ) -> Self {
@@ -57,6 +59,7 @@ impl ChangeProcessor {
         let task = JobThreadContext {
             tree,
             vfs,
+            plugin_env,
             message_queue,
         };
 
@@ -108,6 +111,8 @@ struct JobThreadContext {
     /// A handle to the VFS we're managing.
     vfs: Arc<Vfs>,
 
+    plugin_env: Arc<Mutex<PluginEnv>>,
+
     /// Whenever changes are applied to the DOM, we should push those changes
     /// into this message queue to inform any connected clients.
     message_queue: Arc<MessageQueue<AppliedPatchSet>>,
@@ -125,6 +130,7 @@ impl JobThreadContext {
         // For a given VFS event, we might have many changes to different parts
         // of the tree. Calculate and apply all of these changes.
         let applied_patches = {
+            let plugin_env = self.plugin_env.lock().unwrap();
             let mut tree = self.tree.lock().unwrap();
             let mut applied_patches = Vec::new();
 
@@ -153,7 +159,9 @@ impl JobThreadContext {
                     };
 
                     for id in affected_ids {
-                        if let Some(patch) = compute_and_apply_changes(&mut tree, &self.vfs, id) {
+                        if let Some(patch) =
+                            compute_and_apply_changes(&mut tree, &self.vfs, &plugin_env, id)
+                        {
                             applied_patches.push(patch);
                         }
                     }
@@ -257,7 +265,12 @@ impl JobThreadContext {
     }
 }
 
-fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref) -> Option<AppliedPatchSet> {
+fn compute_and_apply_changes(
+    tree: &mut RojoTree,
+    vfs: &Vfs,
+    plugin_env: &PluginEnv,
+    id: Ref,
+) -> Option<AppliedPatchSet> {
     let metadata = tree
         .get_metadata(id)
         .expect("metadata missing for instance present in tree");
@@ -283,7 +296,7 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref) -> Option<
                 // path still exists. We can generate a snapshot starting at
                 // that path and use it as the source for our patch.
 
-                let snapshot = match snapshot_from_vfs(&metadata.context, &vfs, &path) {
+                let snapshot = match snapshot_from_vfs(&metadata.context, &vfs, plugin_env, &path) {
                     Ok(Some(snapshot)) => snapshot,
                     Ok(None) => {
                         log::error!(
@@ -331,6 +344,7 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref) -> Option<
                 instance_name,
                 project_node,
                 &vfs,
+                plugin_env,
                 parent_class.as_ref().map(|name| name.as_str()),
             );
 
