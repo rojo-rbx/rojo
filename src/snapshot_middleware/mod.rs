@@ -90,6 +90,7 @@ pub fn snapshot_from_vfs(
         None => return Ok(None),
     };
 
+    // TODO: Think about how to handle this stuff for plugins.
     if meta.is_dir() {
         let project_path = path.join("default.project.json");
         if vfs.metadata(&project_path).with_not_found()?.is_some() {
