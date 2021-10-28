@@ -8,13 +8,13 @@ transformation.
 
 As discussed in [#55](https://github.com/rojo-rbx/rojo/issues/55) and as initially explored in
 [#257](https://github.com/rojo-rbx/rojo/pull/257), plugins as Lua scripts seem to be a good starting
-point. This is quite similar to the way Rollup.js plugins work, although they are implemented with
-JS. Rollup.js is a bundler which actually performs a similar job to Rojo in the JS world by taking a
-number of source files and converting them into a single output bundle.
-
-This proposal takes strong influence from the [Rollup.js plugins
-API](https://rollupjs.org/guide/en/#plugins-overview) which is a joy to use for both plugin
-developers and end-users.
+point. This concept reminded me of Rollup.js plugins. [Rollup](https://rollupjs.org/guide/en/) is a
+JS bundler which performs a similar job to Rojo in the JS world by taking a number of source files
+and producing a single output bundle. [Rollup
+plugins](https://rollupjs.org/guide/en/#plugins-overview) are written as JS files, and passed to the
+primary Rollup config file. Rollup then calls in to plugin "hooks" at special times during the
+bundling process. I have found Rollup plugins to be an excellent interface for both plugin
+developers and end-users and therefore I have based this proposal on their API.
 
 ## Project file changes
 
@@ -49,13 +49,7 @@ field set to its value, and `options` set to its default.
         "github.com/owner/remote-plugin-from-head",
         { "source": "plugin-with-options.lua", "options": { "some": "option" } }
     ],
-    "tree": {
-        "$className": "DataModel",
-        "ServerScriptService": {
-            "$className": "ServerScriptService",
-            "$path": "src"
-        }
-    }
+    ...
 }
 ```
 
@@ -76,7 +70,7 @@ type PluginInstance = {
   load?: (id: string) -> string,
 }
 
--- TODO: Define properly. For now, this is basically just the JSON converted to Lua
+-- TODO: Define properly. This is basically just the JSON converted to Lua
 type ProjectDescription = { ... }
 
 type CreatePluginFunction = (options: {[string]: any}) -> PluginInstance
@@ -84,28 +78,6 @@ type CreatePluginFunction = (options: {[string]: any}) -> PluginInstance
 
 In this way, plugins have the opportunity to customize their hooks based on the options provided by
 the user in the project file.
-
-## Plugin environment
-
-The plugin environment is created in the following way:
-
-1. Create a new Lua context.
-1. Add a global `rojo` table which is the entry point to the [Plugin library](#plugin-library)
-1. Initialize an empty `_G.plugins` table.
-1. For each plugin description in the project file:
-    1. Convert the plugin options from the project file from JSON to a Lua table.
-    1. If the `source` field is a GitHub URL, download the plugin directory from the repo with the
-       specified version tag (if no tag, from the head of the default branch) into a local
-       `.rojo-plugins` directory with the repo identifier as its name. It is recommended that users
-       add `.rojo-plugins` to their `.gitignore` file. The root of the plugin will be called
-       `main.lua`.
-    1. Load and evaluate the file contents into the Lua context to get a handle to the
-       `CreatePluginFunction`
-    1. Call the `CreatePluginFunction` with the converted options to get a handle of the result.
-    1. Push the result at the end of the `_G.plugins` table
-
-If at any point there is an error in the above steps, Rojo should quit with an appropriate error
-message.
 
 ## Plugin instance
 
@@ -129,13 +101,35 @@ message.
     -   **Optional**: Takes a file path and returns the file contents that should be interpreted by
         Rojo. The first plugin to return a non-nil value per id wins.
 
+## Plugin environment
+
+The plugin environment is created in the following way:
+
+1. Create a new Lua context.
+1. Add a global `rojo` table which is the entry point to the [Plugin library](#plugin-library)
+1. Initialize an empty `_G.plugins` table.
+1. For each plugin description in the project file:
+    1. Convert the plugin options from the project file from JSON to a Lua table.
+    1. If the `source` field is a GitHub URL, download the plugin directory from the repo with the
+       specified version tag (if no tag, from the head of the default branch) into a local
+       `.rojo-plugins` directory with the repo identifier as its name. It is recommended that users
+       add `.rojo-plugins` to their `.gitignore` file. The root of the plugin will be called
+       `main.lua`.
+    1. Load and evaluate the file contents into the Lua context to get a handle to the
+       `CreatePluginFunction`
+    1. Call the `CreatePluginFunction` with the converted options to get a handle of the result.
+    1. Push the result at the end of the `_G.plugins` table
+
+If at any point there is an error in the above steps, Rojo should quit with an appropriate error
+message.
+
 ## Plugin library
 
 Accessible via the `rojo` global, the plugin library offers helper methods for plugins:
 
 -   `toJson(value: any) -> string`
     -   Converts a Lua value to a JSON string.
--   `readFile(id: string) -> string`
+-   `readFileAsUtf8(id: string) -> string`
     -   Reads the contents of a file from a file path using the VFS. Plugins should always read
         files via this method rather than directly from the file system.
 -   `getExtension(id: string) -> boolean`
@@ -164,7 +158,7 @@ return function(options)
     name = "moonscript",
     load = function(id)
       if rojo.hasExtension(id, 'lua') then
-        local contents = rojo.readFile(id)
+        local contents = rojo.readFileAsUtf8(id)
 
         local tree, err = parse.string(contents)
         assert(tree, err)
@@ -194,7 +188,7 @@ return function(options)
     name = "minifier",
     load = function(id)
       if rojo.hasExtension(id, 'lua') then
-        local contents = rojo.readFile(id)
+        local contents = rojo.readFileAsUtf8(id)
         return minifier(contents)
       end
     end
@@ -217,7 +211,7 @@ return function(options)
         end,
         load = function(id)
             if rojo.hasExtension(id, 'md') then
-              local contents = rojo.readFile(id)
+              local contents = rojo.readFileAsUtf8(id)
 
               local frontmatter = parseFrontmatter(contents)
               local className = frontmatter.className or 'StringValue'
@@ -262,7 +256,7 @@ return function(options)
             local idExt = rojo.getExtension(id)
             for _, ext in next, options.extensions do
                 if ext == idExt then
-                    local contents = rojo.readFile(id)
+                    local contents = rojo.readFileAsUtf8(id)
                     local jsonEncoded = contents:gsub('\r', '\\r'):gsub('\n', '\\n')
 
                     return rojo.toJson({
@@ -306,7 +300,7 @@ return function(options)
     end,
     load = function(id)
       if rojo.hasExtension(id, 'lua') then
-        local contents = rojo.readFile(id)
+        local contents = rojo.readFileAsUtf8(id)
 
         -- This function will look for require 'file/path' statements in the source and replace
         -- them with Roblox require(instance.path) statements based on the project's configuration
@@ -356,7 +350,7 @@ This proposal could be split up into milestones without all the features being p
 to simplify development. Here is a proposal for the order to implement each milestone:
 
 1. Loading plugins from local paths
-1. Minimum Rojo plugin library (`readFile`)
+1. Minimum Rojo plugin library (`readFileAsUtf8`)
 1. Calling hooks at the appropriate time
     1. Start with `middleware`, `load`
     1. Add `syncStart`, `syncEnd`, `resolve`

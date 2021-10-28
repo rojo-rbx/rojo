@@ -1,16 +1,18 @@
+use memofs::Vfs;
 use rlua::{Function, Lua, Table};
-use std::{fs, str::FromStr};
+use std::{fs, path::Path, str, str::FromStr, sync::Arc};
 
 use crate::snapshot_middleware::SnapshotMiddleware;
 
 pub struct PluginEnv {
     lua: Lua,
+    vfs: Arc<Vfs>,
 }
 
 impl PluginEnv {
-    pub fn new() -> Self {
+    pub fn new(vfs: Arc<Vfs>) -> Self {
         let lua = Lua::new();
-        PluginEnv { lua }
+        PluginEnv { lua, vfs }
     }
 
     pub fn init(&self) -> Result<(), rlua::Error> {
@@ -20,17 +22,8 @@ impl PluginEnv {
             let plugins_table = lua_ctx.create_table()?;
             globals.set("plugins", plugins_table)?;
 
-            let run_plugins_fn = lua_ctx.create_function(|lua_ctx, id: String| {
-                let plugins: Table = lua_ctx.globals().get("plugins")?;
-                let id_ref: &str = &id;
-                for plugin in plugins.sequence_values::<Table>() {
-                    let load: Function = plugin?.get("load")?;
-                    load.call(id_ref)?;
-                }
-
-                Ok(())
-            })?;
-            globals.set("runPlugins", run_plugins_fn)?;
+            let plugin_library_table = lua_ctx.create_table()?;
+            globals.set("rojo", plugin_library_table)?;
 
             Ok::<(), rlua::Error>(())
         })
@@ -112,8 +105,31 @@ impl PluginEnv {
         })
     }
 
-    pub fn middleware(&self, id: &str) -> Result<Option<SnapshotMiddleware>, rlua::Error> {
+    pub fn context_with_vfs<F, T>(&self, f: F) -> Result<T, rlua::Error>
+    where
+        F: FnOnce(rlua::Context) -> Result<T, rlua::Error>,
+    {
+        let vfs = Arc::clone(&self.vfs);
+
         self.lua.context(|lua_ctx| {
+            lua_ctx.scope(|scope| {
+                let globals = lua_ctx.globals();
+                let plugin_library_table: Table = globals.get("rojo")?;
+                let read_file_fn = scope.create_function_mut(|_, id: String| {
+                    let path = Path::new(&id);
+                    let contents = vfs.read(path).unwrap();
+                    let contents_str = str::from_utf8(&contents).unwrap();
+                    Ok::<String, rlua::Error>(contents_str.to_owned())
+                })?;
+                plugin_library_table.set("readFileAsUtf8", read_file_fn)?;
+
+                f(lua_ctx)
+            })
+        })
+    }
+
+    pub fn middleware(&self, id: &str) -> Result<Option<SnapshotMiddleware>, rlua::Error> {
+        self.context_with_vfs(|lua_ctx| {
             let globals = lua_ctx.globals();
 
             let plugins: Table = globals.get("plugins")?;
@@ -133,14 +149,14 @@ impl PluginEnv {
         })
     }
 
-    pub fn load(&self, id: &str, contents: &str) -> Result<Option<String>, rlua::Error> {
-        self.lua.context(|lua_ctx| {
+    pub fn load(&self, id: &str) -> Result<Option<String>, rlua::Error> {
+        self.context_with_vfs(|lua_ctx| {
             let globals = lua_ctx.globals();
 
             let plugins: Table = globals.get("plugins")?;
             for plugin in plugins.sequence_values::<Table>() {
                 let load_fn: Function = plugin?.get("load")?;
-                let load_str: Option<String> = load_fn.call((id, contents))?;
+                let load_str: Option<String> = load_fn.call(id)?;
                 if load_str.is_some() {
                     return Ok(load_str);
                 }

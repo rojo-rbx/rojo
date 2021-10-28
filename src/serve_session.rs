@@ -144,7 +144,9 @@ impl ServeSession {
             }
         };
 
-        let plugin_env = PluginEnv::new();
+        let vfs = Arc::new(vfs);
+
+        let plugin_env = PluginEnv::new(Arc::clone(&vfs));
         match plugin_env.init() {
             Ok(_) => (),
             Err(e) => return Err(ServeSessionError::Plugin { source: e }),
@@ -186,7 +188,6 @@ impl ServeSession {
 
         let tree = Arc::new(Mutex::new(tree));
         let message_queue = Arc::new(message_queue);
-        let vfs = Arc::new(vfs);
         let plugin_env = Arc::new(Mutex::new(plugin_env));
 
         let (tree_mutation_sender, tree_mutation_receiver) = crossbeam_channel::unbounded();
