@@ -98,6 +98,13 @@ impl FmtLua for Expression {
     }
 }
 
+impl fmt::Display for Expression {
+    fn fmt(&self, output: &mut fmt::Formatter) -> fmt::Result {
+        let mut stream = LuaStream::new(output);
+        FmtLua::fmt_lua(self, &mut stream)
+    }
+}
+
 impl From<String> for Expression {
     fn from(value: String) -> Self {
         Self::String(value)

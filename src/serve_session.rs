@@ -14,9 +14,10 @@ use thiserror::Error;
 
 use crate::{
     change_processor::ChangeProcessor,
+    lua_ast::Expression,
     message_queue::MessageQueue,
     plugin_env::PluginEnv,
-    project::{Project, ProjectError},
+    project::{PluginDescription, Project, ProjectError},
     session_id::SessionId,
     snapshot::{
         apply_patch_set, compute_patch_set, AppliedPatchSet, InstanceContext, InstanceSnapshot,
@@ -24,6 +25,27 @@ use crate::{
     },
     snapshot_middleware::snapshot_from_vfs,
 };
+
+// TODO: Centralize this (copied from json middleware)
+fn json_to_lua_value(value: serde_json::Value) -> Expression {
+    use serde_json::Value;
+
+    match value {
+        Value::Null => Expression::Nil,
+        Value::Bool(value) => Expression::Bool(value),
+        Value::Number(value) => Expression::Number(value.as_f64().unwrap()),
+        Value::String(value) => Expression::String(value),
+        Value::Array(values) => {
+            Expression::Array(values.into_iter().map(json_to_lua_value).collect())
+        }
+        Value::Object(values) => Expression::table(
+            values
+                .into_iter()
+                .map(|(key, value)| (key.into(), json_to_lua_value(value)))
+                .collect(),
+        ),
+    }
+}
 
 /// Contains all of the state for a Rojo serve session. A serve session is used
 /// when we need to build a Rojo tree and possibly rebuild it when input files
@@ -121,12 +143,24 @@ impl ServeSession {
         };
 
         let plugin_env = PluginEnv::new();
-        plugin_env.init().unwrap();
+        match plugin_env.init() {
+            Ok(_) => (),
+            Err(e) => return Err(ServeSessionError::Plugin { source: e }),
+        };
 
-        for plugin in root_project.plugins.iter() {
-            plugin_env
-                .load_plugin(plugin, "{extensions = {'.md'}}".to_string())
-                .unwrap();
+        for plugin_description in root_project.plugins.iter() {
+            let default_options = "{}".to_string();
+            let (plugin_source, plugin_options) = match plugin_description {
+                PluginDescription::Source(source) => (source, default_options),
+                PluginDescription::SourceWithOptions { source, options } => {
+                    (source, json_to_lua_value(options.to_owned()).to_string())
+                }
+            };
+
+            match plugin_env.load_plugin(&plugin_source, plugin_options) {
+                Ok(_) => (),
+                Err(e) => return Err(ServeSessionError::Plugin { source: e }),
+            };
         }
 
         let mut tree = RojoTree::new(InstanceSnapshot::new());
@@ -249,5 +283,11 @@ pub enum ServeSessionError {
     Other {
         #[from]
         source: anyhow::Error,
+    },
+
+    #[error(transparent)]
+    Plugin {
+        #[from]
+        source: rlua::Error,
     },
 }
