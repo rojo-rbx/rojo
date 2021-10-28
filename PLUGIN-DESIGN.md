@@ -164,7 +164,13 @@ return function(options)
     name = "moonscript",
     middleware = function(id)
       if rojo.hasExtension(id, 'moon') then
-        return 'lua'
+        if rojo.hasExtension(id, 'server.moon') then
+          return 'lua_server'
+        elseif rojo.hasExtension(id, 'client.moon') then
+          return 'lua_client'
+        else
+          return 'lua_module'
+        end
       end
     end,
     load = function(id)
