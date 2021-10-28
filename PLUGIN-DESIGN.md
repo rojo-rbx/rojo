@@ -90,6 +90,7 @@ the user in the project file.
 The plugin environment is created in the following way:
 
 1. Create a new Lua context.
+1. Add a global `rojo` table which is the entry point to the [Plugin library](#plugin-library)
 1. Initialize an empty `_G.plugins` table.
 1. For each plugin description in the project file:
     1. Convert the plugin options from the project file from JSON to a Lua table.
@@ -128,6 +129,20 @@ message.
     -   **Optional**: Takes a file path and returns the file contents that should be interpreted by
         Rojo. The first plugin to return a non-nil value per id wins.
 
+## Plugin library
+
+Accessible via the `rojo` global, the plugin library offers helper methods for plugins:
+
+-   `toJson(value: any) -> string`
+    -   Converts a Lua value to a JSON string.
+-   `readFile(id: string) -> string`
+    -   Reads the contents of a file from a file path using the VFS. Plugins should always read
+        files via this method rather than directly from the file system.
+-   `getExtension(id: string) -> boolean`
+    -   Returns the file extension of the file path.
+-   `hasExtension(id: string, ext: string) -> boolean`
+    -   Checks if a file path has the provided extension.
+
 ## Use case analyses
 
 To demonstrate the effectiveness of this API, pseudo-implementations for a variety of use-cases are
@@ -148,16 +163,14 @@ return function(options)
   return {
     name = "moonscript",
     load = function(id)
-      if id:match('%.lua$') then
-        local file = io.open(id, 'r')
-        local source = file:read('a')
-        file:close()
+      if rojo.hasExtension(id, 'lua') then
+        local contents = rojo.readFile(id)
 
-        local tree, err = parse.string(source)
+        local tree, err = parse.string(contents)
         assert(tree, err)
 
         local lua, err, pos = compile.tree(tree)
-        if not lua then error(compile.format_error(err, pos, source)) end
+        if not lua then error(compile.format_error(err, pos, contents)) end
 
         return lua
       end
@@ -180,11 +193,9 @@ return function(options)
   return {
     name = "minifier",
     load = function(id)
-      if id:match('%.lua$') then
-        local file = io.open(id, 'r')
-        local source = file:read('a')
-        file:close()
-        return minifier(source)
+      if rojo.hasExtension(id, 'lua') then
+        local contents = rojo.readFile(id)
+        return minifier(contents)
       end
     end
   }
@@ -200,29 +211,26 @@ return function(options)
     return {
         name = 'markdown-to-richtext',
         middleware = function(id)
-            if id:match('%.md$') then
+            if rojo.hasExtension(id, 'md') then
               return 'json_model'
             end
         end,
-        load = function(id, contents)
-            if id:match('%.md$') then
+        load = function(id)
+            if rojo.hasExtension(id, 'md') then
+              local contents = rojo.readFile(id)
+
               local frontmatter = parseFrontmatter(contents)
-              local richText = markdownToRichText(contents)
               local className = frontmatter.className or 'StringValue'
               local property = frontmatter.property or 'Value'
-              return ('{"ClassName": "%s", "Properties": { "%s": "%s" }}')
-                :format(className, property, richText)
 
-              --[[
-                With rojo plugin library:
+              local richText = markdownToRichText(contents)
 
-                return rojo.toJson({
-                  ClassName = className,
-                  Properties = {
-                    [property] = richText
-                  }
-                })
-              ]]
+              return rojo.toJson({
+                ClassName = className,
+                Properties = {
+                  [property] = richText
+                }
+              })
             end
         end
     }
@@ -243,30 +251,26 @@ return function(options)
     return {
         name = 'load-as-stringvalue',
         middleware = function(id)
-            local idExt = id:match('%.(%w+)$')
+            local idExt = rojo.getExtension(id)
             for _, ext in next, options.extensions do
                 if ext == idExt then
                     return 'json_model'
                 end
             end
         end,
-        load = function(id, contents)
-            local idExt = id:match('%.(%w+)$')
+        load = function(id)
+            local idExt = rojo.getExtension(id)
             for _, ext in next, options.extensions do
                 if ext == idExt then
-                    local encoded = contents:gsub('\n', '\\n')
-                    return ('{"ClassName": "StringValue", "Properties": { "Value": "%s" }}'):format(encoded)
+                    local contents = rojo.readFile(id)
+                    local jsonEncoded = contents:gsub('\r', '\\r'):gsub('\n', '\\n')
 
-                    --[[
-                      With rojo plugin library:
-
-                      return rojo.toJson({
-                        ClassName = 'StringValue',
-                        Properties = {
-                          Value = encoded
-                        }
-                      })
-                    ]]
+                    return rojo.toJson({
+                      ClassName = 'StringValue',
+                      Properties = {
+                        Value = jsonEncoded
+                      }
+                    })
                 end
             end
         end
@@ -283,11 +287,46 @@ end
 }
 ```
 
-### Remote file requires
+### File system requires
+
+Requested by:
+
+-   @blake-mealey in [#382](https://github.com/rojo-rbx/rojo/issues/382)
 
 ```lua
+-- lua parsing/writing implementation here
+
+return function(options)
+  local project = nil
+
+  return {
+    name = "require-files",
+    projectDescription = function(newProject)
+      project = newProject
+    end,
+    load = function(id)
+      if rojo.hasExtension(id, 'lua') then
+        local contents = rojo.readFile(id)
+
+        -- This function will look for require 'file/path' statements in the source and replace
+        -- them with Roblox require(instance.path) statements based on the project's configuration
+        -- (where certain file paths are mounted)
+        return replaceRequires(contents, project)
+      end
+    end
+  }
+end
+```
+
+<!-- ### Remote file requires
+
+This might be a terrible idea tbh (but still cool).
+
+```lua
+-- this pseudo-implementation doesn't really make sense atm as resolve would never be called with a
+-- URL like this
+
 -- download/caching implementation inline here
--- this one is not really working even from a pseudo-implementation perspective
 
 return function(options)
   return {
@@ -309,53 +348,18 @@ return function(options)
     end
   }
 end
-```
-
-### File system requires
-
-Requested by:
-
--   @blake-mealey in [#382](https://github.com/rojo-rbx/rojo/issues/382)
-
-```lua
--- lua parsing/writing implementation here
-
-return function(options)
-  local project = nil
-
-  return {
-    name = "require-files",
-    projectDescription = function(newProject)
-      project = newProject
-    end,
-    load = function(id)
-      if id:match('%.lua$') then
-        local file = io.open(id, 'r')
-        local source = file:read('a')
-        file:close()
-
-        -- This function will look for require 'file/path' statements in the source and replace
-        -- them with Roblox require(instance.path) statements based on the project's configuration
-        -- (where certain file paths are mounted)
-        return replaceRequires(source, project)
-      end
-    end
-  }
-end
-```
+``` -->
 
 ## Implementation priority
 
+This proposal could be split up into milestones without all the features being present till the end
+to simplify development. Here is a proposal for the order to implement each milestone:
+
 1. Loading plugins from local paths
-2. Calling hooks at the appropriate time
-3. Loading plugins from remote repos
-4. Rojo plugin library
-
-## Concerns
-
-TODO: Implement a proposal for a rojo plugin library
-
--   Some operations will be common in plugins and a set of standardized functions may be helpful,
-    for example reading files and checking file extensions. This could be provided as a global
-    library injected in the initialization stage of the Lua context (e.g.
-    `rojo.fileExtensionMatches(id, ext)`, `rojo.loadFile(id)`, `rojo.toJson(value)`).
+1. Minimum Rojo plugin library (`readFile`)
+1. Calling hooks at the appropriate time
+    1. Start with `middleware`, `load`
+    1. Add `syncStart`, `syncEnd`, `resolve`
+    1. Add `projectDescription`
+1. Full Rojo plugin library
+1. Loading plugins from remote repos
