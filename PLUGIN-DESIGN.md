@@ -135,6 +135,11 @@ shown using the API.
 
 ### MoonScript transformation
 
+Requested by:
+
+-   @Airwarfare in [#170](https://github.com/rojo-rbx/rojo/issues/170)
+-   @dimitriye98 in [#55](https://github.com/rojo-rbx/rojo/issues/55#issuecomment-402616429) (comment)
+
 ```lua
 local parse = require 'moonscript.parse'
 local compile = require 'moonscript.compile'
@@ -163,6 +168,11 @@ end
 
 ### Obfuscation/minifier transformation
 
+Requested by:
+
+-   @cmumme in [#55](https://github.com/rojo-rbx/rojo/issues/55#issuecomment-794801625) (comment)
+-   @blake-mealey in [#382](https://github.com/rojo-rbx/rojo/issues/382)
+
 ```lua
 local minifier = require 'minifier.lua'
 
@@ -181,10 +191,10 @@ return function(options)
 end
 ```
 
-### Markdown parser
+### Markdown to Roblox rich text
 
 ```lua
--- Convert markdown to roblox rich text format implementation here
+-- Convert markdown to Roblox rich text format implementation here
 
 return function(options)
     return {
@@ -220,6 +230,11 @@ end
 ```
 
 ### Load custom files as StringValue instances
+
+Requested by:
+
+-   @rfrey-rbx in [#406](https://github.com/rojo-rbx/rojo/issues/406)
+-   @Quenty in [#148](https://github.com/rojo-rbx/rojo/issues/148)
 
 ```lua
 return function(options)
@@ -297,6 +312,10 @@ end
 ```
 
 ### File system requires
+
+Requested by:
+
+-   @blake-mealey in [#382](https://github.com/rojo-rbx/rojo/issues/382)
 
 ```lua
 -- lua parsing/writing implementation here
