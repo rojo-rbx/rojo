@@ -156,8 +156,13 @@ local compile = require 'moonscript.compile'
 return function(options)
   return {
     name = "moonscript",
+    middleware = function(id)
+      if rojo.hasExtension(id, 'moon') then
+        return 'lua'
+      end
+    end,
     load = function(id)
-      if rojo.hasExtension(id, 'lua') then
+      if rojo.hasExtension(id, 'moon') then
         local contents = rojo.readFileAsUtf8(id)
 
         local tree, err = parse.string(contents)

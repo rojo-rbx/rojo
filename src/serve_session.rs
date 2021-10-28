@@ -109,8 +109,6 @@ pub struct ServeSession {
     /// A channel to send mutation requests on. These will be handled by the
     /// ChangeProcessor and trigger changes in the tree.
     tree_mutation_sender: Sender<PatchSet>,
-
-    plugin_env: Arc<Mutex<PluginEnv>>,
 }
 
 impl ServeSession {
@@ -210,7 +208,6 @@ impl ServeSession {
             message_queue,
             tree_mutation_sender,
             vfs,
-            plugin_env,
         })
     }
 

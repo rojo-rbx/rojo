@@ -139,24 +139,28 @@ impl PluginEnv {
         })
     }
 
-    pub fn middleware(&self, id: &str) -> Result<Option<SnapshotMiddleware>, rlua::Error> {
+    pub fn middleware(
+        &self,
+        id: &str,
+    ) -> Result<(Option<SnapshotMiddleware>, Option<String>), rlua::Error> {
         self.context_with_vfs(|lua_ctx| {
             let globals = lua_ctx.globals();
 
             let plugins: Table = globals.get("plugins")?;
             for plugin in plugins.sequence_values::<Table>() {
                 let middleware_fn: Function = plugin?.get("middleware")?;
-                let middleware_str: Option<String> = middleware_fn.call(id)?;
+                let (middleware_str, name): (Option<String>, Option<String>) =
+                    middleware_fn.call(id)?;
                 let middleware_enum = match middleware_str {
                     Some(str) => SnapshotMiddleware::from_str(&str).ok(),
                     None => None,
                 };
                 if middleware_enum.is_some() {
-                    return Ok(middleware_enum);
+                    return Ok((middleware_enum, name));
                 }
             }
 
-            Ok(None)
+            Ok((None, None))
         })
     }
 

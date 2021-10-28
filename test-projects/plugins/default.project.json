@@ -1,6 +1,7 @@
 {
   "name": "plugins",
   "plugins": [
+    "fake-moonscript.lua",
     {
       "source": "load-as-stringvalue.lua",
       "options": { "extensions": ["md"] }

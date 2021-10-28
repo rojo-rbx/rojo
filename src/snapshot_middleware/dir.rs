@@ -77,6 +77,8 @@ pub fn snapshot_dir(
 
 #[cfg(test)]
 mod test {
+    use std::sync::Arc;
+
     use super::*;
 
     use maplit::hashmap;
@@ -88,9 +90,9 @@ mod test {
         imfs.load_snapshot("/foo", VfsSnapshot::empty_dir())
             .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let mut vfs = Arc::new(Vfs::new(imfs));
 
-        let plugin_env = PluginEnv::new();
+        let plugin_env = PluginEnv::new(Arc::clone(&vfs));
         plugin_env.init().unwrap();
 
         let instance_snapshot = snapshot_dir(
@@ -116,9 +118,9 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let mut vfs = Arc::new(Vfs::new(imfs));
 
-        let plugin_env = PluginEnv::new();
+        let plugin_env = PluginEnv::new(Arc::clone(&vfs));
         plugin_env.init().unwrap();
 
         let instance_snapshot = snapshot_dir(

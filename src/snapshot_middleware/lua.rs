@@ -5,40 +5,32 @@ use maplit::hashmap;
 use memofs::{IoResultExt, Vfs};
 
 use crate::{
+    load_file::load_file,
     plugin_env::PluginEnv,
     snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
 };
 
-use super::{dir::snapshot_dir, meta_file::AdjacentMetadata, util::match_trailing};
+use super::{dir::snapshot_dir, meta_file::AdjacentMetadata};
 
 /// Core routine for turning Lua files into snapshots.
 pub fn snapshot_lua(
     context: &InstanceContext,
     vfs: &Vfs,
+    plugin_env: &PluginEnv,
     path: &Path,
+    name: &str,
+    class_name: &str,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let file_name = path.file_name().unwrap().to_string_lossy();
-
-    let (class_name, instance_name) = if let Some(name) = match_trailing(&file_name, ".server.lua")
-    {
-        ("Script", name)
-    } else if let Some(name) = match_trailing(&file_name, ".client.lua") {
-        ("LocalScript", name)
-    } else if let Some(name) = match_trailing(&file_name, ".lua") {
-        ("ModuleScript", name)
-    } else {
-        return Ok(None);
-    };
-
-    let contents = vfs.read(path)?;
+    let contents = load_file(vfs, plugin_env, path)?;
     let contents_str = str::from_utf8(&contents)
         .with_context(|| format!("File was not valid UTF-8: {}", path.display()))?
         .to_owned();
 
-    let meta_path = path.with_file_name(format!("{}.meta.json", instance_name));
+    // TODO: I think this is broken
+    let meta_path = path.with_file_name(format!("{}.meta.json", name));
 
     let mut snapshot = InstanceSnapshot::new()
-        .name(instance_name)
+        .name(name)
         .class_name(class_name)
         .properties(hashmap! {
             "Source".to_owned() => contents_str.into(),
@@ -68,6 +60,8 @@ pub fn snapshot_lua_init(
     vfs: &Vfs,
     plugin_env: &PluginEnv,
     init_path: &Path,
+    name: &str,
+    class_name: &str,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let folder_path = init_path.parent().unwrap();
     let dir_snapshot = snapshot_dir(context, vfs, plugin_env, folder_path)?.unwrap();
@@ -84,9 +78,10 @@ pub fn snapshot_lua_init(
         );
     }
 
-    let mut init_snapshot = snapshot_lua(context, vfs, init_path)?.unwrap();
+    let mut init_snapshot =
+        snapshot_lua(context, vfs, plugin_env, init_path, name, class_name)?.unwrap();
 
-    init_snapshot.name = dir_snapshot.name;
+    // init_snapshot.name = dir_snapshot.name;
     init_snapshot.children = dir_snapshot.children;
     init_snapshot.metadata = dir_snapshot.metadata;
 
@@ -95,6 +90,8 @@ pub fn snapshot_lua_init(
 
 #[cfg(test)]
 mod test {
+    use std::sync::Arc;
+
     use super::*;
 
     use memofs::{InMemoryFs, VfsSnapshot};
@@ -105,12 +102,21 @@ mod test {
         imfs.load_snapshot("/foo.lua", VfsSnapshot::file("Hello there!"))
             .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let mut vfs = Arc::new(Vfs::new(imfs));
 
-        let instance_snapshot =
-            snapshot_lua(&InstanceContext::default(), &mut vfs, Path::new("/foo.lua"))
-                .unwrap()
-                .unwrap();
+        let plugin_env = PluginEnv::new(Arc::clone(&vfs));
+        plugin_env.init().unwrap();
+
+        let instance_snapshot = snapshot_lua(
+            &InstanceContext::default(),
+            &mut vfs,
+            &plugin_env,
+            Path::new("/foo.lua"),
+            "foo",
+            "ModuleScript",
+        )
+        .unwrap()
+        .unwrap();
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }
@@ -121,12 +127,18 @@ mod test {
         imfs.load_snapshot("/foo.server.lua", VfsSnapshot::file("Hello there!"))
             .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let mut vfs = Arc::new(Vfs::new(imfs));
+
+        let plugin_env = PluginEnv::new(Arc::clone(&vfs));
+        plugin_env.init().unwrap();
 
         let instance_snapshot = snapshot_lua(
             &InstanceContext::default(),
             &mut vfs,
+            &plugin_env,
             Path::new("/foo.server.lua"),
+            "foo",
+            "Script",
         )
         .unwrap()
         .unwrap();
@@ -140,12 +152,18 @@ mod test {
         imfs.load_snapshot("/foo.client.lua", VfsSnapshot::file("Hello there!"))
             .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let mut vfs = Arc::new(Vfs::new(imfs));
+
+        let plugin_env = PluginEnv::new(Arc::clone(&vfs));
+        plugin_env.init().unwrap();
 
         let instance_snapshot = snapshot_lua(
             &InstanceContext::default(),
             &mut vfs,
+            &plugin_env,
             Path::new("/foo.client.lua"),
+            "foo",
+            "LocalScript",
         )
         .unwrap()
         .unwrap();
@@ -165,12 +183,21 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let mut vfs = Arc::new(Vfs::new(imfs));
 
-        let instance_snapshot =
-            snapshot_lua(&InstanceContext::default(), &mut vfs, Path::new("/root"))
-                .unwrap()
-                .unwrap();
+        let plugin_env = PluginEnv::new(Arc::clone(&vfs));
+        plugin_env.init().unwrap();
+
+        let instance_snapshot = snapshot_lua(
+            &InstanceContext::default(),
+            &mut vfs,
+            &plugin_env,
+            Path::new("/root"),
+            "root",
+            "ModuleScript",
+        )
+        .unwrap()
+        .unwrap();
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }
@@ -192,12 +219,21 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let mut vfs = Arc::new(Vfs::new(imfs));
 
-        let instance_snapshot =
-            snapshot_lua(&InstanceContext::default(), &mut vfs, Path::new("/foo.lua"))
-                .unwrap()
-                .unwrap();
+        let plugin_env = PluginEnv::new(Arc::clone(&vfs));
+        plugin_env.init().unwrap();
+
+        let instance_snapshot = snapshot_lua(
+            &InstanceContext::default(),
+            &mut vfs,
+            &plugin_env,
+            Path::new("/foo.lua"),
+            "foo",
+            "ModuleScript",
+        )
+        .unwrap()
+        .unwrap();
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }
@@ -219,12 +255,18 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let mut vfs = Arc::new(Vfs::new(imfs));
+
+        let plugin_env = PluginEnv::new(Arc::clone(&vfs));
+        plugin_env.init().unwrap();
 
         let instance_snapshot = snapshot_lua(
             &InstanceContext::default(),
             &mut vfs,
+            &plugin_env,
             Path::new("/foo.server.lua"),
+            "foo",
+            "Script",
         )
         .unwrap()
         .unwrap();
@@ -251,12 +293,18 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let mut vfs = Arc::new(Vfs::new(imfs));
+
+        let plugin_env = PluginEnv::new(Arc::clone(&vfs));
+        plugin_env.init().unwrap();
 
         let instance_snapshot = snapshot_lua(
             &InstanceContext::default(),
             &mut vfs,
+            &plugin_env,
             Path::new("/bar.server.lua"),
+            "bar",
+            "Script",
         )
         .unwrap()
         .unwrap();

@@ -5,6 +5,7 @@ use memofs::Vfs;
 use rbx_reflection::ClassTag;
 
 use crate::{
+    load_file::load_file,
     plugin_env::PluginEnv,
     project::{Project, ProjectNode},
     snapshot::{
@@ -20,7 +21,8 @@ pub fn snapshot_project(
     plugin_env: &PluginEnv,
     path: &Path,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let project = Project::load_from_slice(&vfs.read(path)?, path)
+    let contents = load_file(vfs, plugin_env, path)?;
+    let project = Project::load_from_slice(&contents, path)
         .with_context(|| format!("File was not a valid Rojo project: {}", path.display()))?;
 
     let mut context = context.clone();
@@ -288,6 +290,8 @@ fn infer_class_name(name: &str, parent_class: Option<&str>) -> Option<Cow<'stati
 // #[cfg(feature = "broken-tests")]
 #[cfg(test)]
 mod test {
+    use std::sync::Arc;
+
     use super::*;
 
     use maplit::hashmap;
@@ -314,9 +318,9 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let mut vfs = Arc::new(Vfs::new(imfs));
 
-        let plugin_env = PluginEnv::new();
+        let plugin_env = PluginEnv::new(Arc::clone(&vfs));
         plugin_env.init().unwrap();
 
         let instance_snapshot = snapshot_project(
@@ -351,9 +355,9 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let mut vfs = Arc::new(Vfs::new(imfs));
 
-        let plugin_env = PluginEnv::new();
+        let plugin_env = PluginEnv::new(Arc::clone(&vfs));
         plugin_env.init().unwrap();
 
         let instance_snapshot = snapshot_project(
@@ -393,9 +397,9 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let mut vfs = Arc::new(Vfs::new(imfs));
 
-        let plugin_env = PluginEnv::new();
+        let plugin_env = PluginEnv::new(Arc::clone(&vfs));
         plugin_env.init().unwrap();
 
         let instance_snapshot = snapshot_project(
@@ -433,9 +437,9 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let mut vfs = Arc::new(Vfs::new(imfs));
 
-        let plugin_env = PluginEnv::new();
+        let plugin_env = PluginEnv::new(Arc::clone(&vfs));
         plugin_env.init().unwrap();
 
         let instance_snapshot = snapshot_project(
@@ -474,9 +478,9 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let mut vfs = Arc::new(Vfs::new(imfs));
 
-        let plugin_env = PluginEnv::new();
+        let plugin_env = PluginEnv::new(Arc::clone(&vfs));
         plugin_env.init().unwrap();
 
         let instance_snapshot = snapshot_project(
@@ -512,9 +516,9 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let mut vfs = Arc::new(Vfs::new(imfs));
 
-        let plugin_env = PluginEnv::new();
+        let plugin_env = PluginEnv::new(Arc::clone(&vfs));
         plugin_env.init().unwrap();
 
         let instance_snapshot = snapshot_project(
@@ -557,9 +561,9 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let mut vfs = Arc::new(Vfs::new(imfs));
 
-        let plugin_env = PluginEnv::new();
+        let plugin_env = PluginEnv::new(Arc::clone(&vfs));
         plugin_env.init().unwrap();
 
         let instance_snapshot = snapshot_project(
@@ -606,9 +610,9 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let mut vfs = Arc::new(Vfs::new(imfs));
 
-        let plugin_env = PluginEnv::new();
+        let plugin_env = PluginEnv::new(Arc::clone(&vfs));
         plugin_env.init().unwrap();
 
         let instance_snapshot = snapshot_project(
@@ -660,9 +664,9 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let mut vfs = Arc::new(Vfs::new(imfs));
 
-        let plugin_env = PluginEnv::new();
+        let plugin_env = PluginEnv::new(Arc::clone(&vfs));
         plugin_env.init().unwrap();
 
         let instance_snapshot = snapshot_project(
