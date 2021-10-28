@@ -57,18 +57,6 @@ impl PluginEnv {
             let plugins_table: Table = globals.get("plugins")?;
             plugins_table.set(plugins_table.len()? + 1, plugin_instance)?;
 
-            let run_plugins = lua_ctx.create_function(|lua_ctx, id: String| {
-                let plugins: Table = lua_ctx.globals().get("plugins")?;
-                let id_ref: &str = &id;
-                for plugin in plugins.sequence_values::<Table>() {
-                    let load: Function = plugin?.get("load")?;
-                    load.call(id_ref)?;
-                }
-
-                Ok(())
-            })?;
-            globals.set("runPlugins", run_plugins)?;
-
             Ok::<(), rlua::Error>(())
         })
     }
