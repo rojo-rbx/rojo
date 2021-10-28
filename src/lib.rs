@@ -14,6 +14,7 @@ mod lua_ast;
 mod message_queue;
 mod multimap;
 mod path_serializer;
+mod plugin_env;
 mod project;
 mod resolution;
 mod serve_session;

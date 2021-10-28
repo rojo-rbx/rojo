@@ -1,9 +1,11 @@
 {
   "name": "plugins",
+  "plugins": ["load-as-stringvalue.lua"],
   "tree": {
-    "$path": "src"
-  },
-  "plugins": [
-    "test-plugin.lua"
-  ]
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "$path": "src"
+    }
+  }
 }

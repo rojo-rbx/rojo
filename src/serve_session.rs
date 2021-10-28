@@ -15,6 +15,7 @@ use thiserror::Error;
 use crate::{
     change_processor::ChangeProcessor,
     message_queue::MessageQueue,
+    plugin_env::PluginEnv,
     project::{Project, ProjectError},
     session_id::SessionId,
     snapshot::{
@@ -118,6 +119,15 @@ impl ServeSession {
                 });
             }
         };
+
+        let plugin_env = PluginEnv::new();
+        plugin_env.init().unwrap();
+
+        for plugin in root_project.plugins.iter() {
+            plugin_env
+                .load_plugin(plugin, "{extensions = {'.md'}}".to_string())
+                .unwrap();
+        }
 
         let mut tree = RojoTree::new(InstanceSnapshot::new());
 

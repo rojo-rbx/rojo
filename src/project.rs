@@ -40,6 +40,10 @@ pub struct Project {
     /// The name of the top-level instance described by the project.
     pub name: String,
 
+    // TODO: Support objects as well as strings for plugins (containing 'source' and 'options' properties)
+    #[serde(default = "Vec::new", skip_serializing_if = "Vec::is_empty")]
+    pub plugins: Vec<String>,
+
     /// The tree of instances described by this project. Projects always
     /// describe at least one instance.
     pub tree: ProjectNode,
