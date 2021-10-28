@@ -1,5 +1,5 @@
 use memofs::Vfs;
-use rlua::{Function, Lua, Table};
+use rlua::{Function, Lua, StdLib, Table};
 use std::{fs, path::Path, str, str::FromStr, sync::Arc};
 
 use crate::snapshot_middleware::SnapshotMiddleware;
@@ -11,7 +11,14 @@ pub struct PluginEnv {
 
 impl PluginEnv {
     pub fn new(vfs: Arc<Vfs>) -> Self {
-        let lua = Lua::new();
+        let lua = Lua::new_with(
+            StdLib::BASE
+                | StdLib::TABLE
+                | StdLib::STRING
+                | StdLib::UTF8
+                | StdLib::MATH
+                | StdLib::PACKAGE,
+        );
         PluginEnv { lua, vfs }
     }
 
@@ -29,6 +36,33 @@ impl PluginEnv {
         })
     }
 
+    pub fn context_with_vfs<F, T>(&self, f: F) -> Result<T, rlua::Error>
+    where
+        F: FnOnce(rlua::Context) -> Result<T, rlua::Error>,
+    {
+        // We cannot just create a global function that has access to the vfs and call it whenever
+        // we want because that would be unsafe as Lua is unaware of the lifetime of vfs. Therefore
+        // we have to create a limited lifetime scope that has access to the vfs and define the
+        // function each time plugin code is executed.
+        let vfs = Arc::clone(&self.vfs);
+
+        self.lua.context(|lua_ctx| {
+            lua_ctx.scope(|scope| {
+                let globals = lua_ctx.globals();
+                let plugin_library_table: Table = globals.get("rojo")?;
+                let read_file_fn = scope.create_function_mut(|_, id: String| {
+                    let path = Path::new(&id);
+                    let contents = vfs.read(path).unwrap();
+                    let contents_str = str::from_utf8(&contents).unwrap();
+                    Ok::<String, rlua::Error>(contents_str.to_owned())
+                })?;
+                plugin_library_table.set("readFileAsUtf8", read_file_fn)?;
+
+                f(lua_ctx)
+            })
+        })
+    }
+
     fn load_plugin_source(&self, plugin_source: &str) -> String {
         // TODO: Support downloading and caching plugins
         fs::read_to_string(plugin_source).unwrap()
@@ -41,7 +75,7 @@ impl PluginEnv {
     ) -> Result<(), rlua::Error> {
         let plugin_lua = &(self.load_plugin_source(plugin_source));
 
-        self.lua.context(|lua_ctx| {
+        self.context_with_vfs(|lua_ctx| {
             let globals = lua_ctx.globals();
 
             let create_plugin_fn: Option<Function> =
@@ -88,8 +122,8 @@ impl PluginEnv {
                         )
                         .to_string(),
                     ))
-                },
-                v => v
+                }
+                v => v,
             };
 
             log::trace!(
@@ -102,29 +136,6 @@ impl PluginEnv {
             plugins_table.set(plugins_table.len()? + 1, plugin_instance)?;
 
             Ok::<(), rlua::Error>(())
-        })
-    }
-
-    pub fn context_with_vfs<F, T>(&self, f: F) -> Result<T, rlua::Error>
-    where
-        F: FnOnce(rlua::Context) -> Result<T, rlua::Error>,
-    {
-        let vfs = Arc::clone(&self.vfs);
-
-        self.lua.context(|lua_ctx| {
-            lua_ctx.scope(|scope| {
-                let globals = lua_ctx.globals();
-                let plugin_library_table: Table = globals.get("rojo")?;
-                let read_file_fn = scope.create_function_mut(|_, id: String| {
-                    let path = Path::new(&id);
-                    let contents = vfs.read(path).unwrap();
-                    let contents_str = str::from_utf8(&contents).unwrap();
-                    Ok::<String, rlua::Error>(contents_str.to_owned())
-                })?;
-                plugin_library_table.set("readFileAsUtf8", read_file_fn)?;
-
-                f(lua_ctx)
-            })
         })
     }
 
