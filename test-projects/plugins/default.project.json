@@ -3,7 +3,7 @@
   "plugins": [
     {
       "source": "load-as-stringvalue.lua",
-      "options": { "extensions": [".md"] }
+      "options": { "extensions": ["md"] }
     }
   ],
   "tree": {

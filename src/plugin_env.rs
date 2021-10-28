@@ -1,5 +1,7 @@
 use rlua::{Function, Lua, Table};
-use std::fs;
+use std::{fs, str::FromStr};
+
+use crate::snapshot_middleware::SnapshotMiddleware;
 
 pub struct PluginEnv {
     lua: Lua,
@@ -54,6 +56,18 @@ impl PluginEnv {
             let plugin_options_table: Table = lua_ctx.load(&plugin_options).eval()?;
             let plugin_instance: Table = create_plugin.call(plugin_options_table)?;
 
+            let plugin_name: String = plugin_instance.get("name")?;
+            // if plugin_name.trim().is_empty() {
+            //     return Err(rlua::Error::ExternalError(Arc::new(std::error::Error(
+            //         "".to_string(),
+            //     ))));
+            // }
+            log::trace!(
+                "Loaded plugin '{}' from source: {}",
+                plugin_name,
+                plugin_source
+            );
+
             let plugins_table: Table = globals.get("plugins")?;
             plugins_table.set(plugins_table.len()? + 1, plugin_instance)?;
 
@@ -61,14 +75,26 @@ impl PluginEnv {
         })
     }
 
-    pub fn run_plugins(&self, id: String) -> Result<(), rlua::Error> {
+    pub fn get_middlware(&self, id: String) -> Result<Option<SnapshotMiddleware>, rlua::Error> {
         self.lua.context(|lua_ctx| {
             let globals = lua_ctx.globals();
 
-            let run_plugins: Function = globals.get("runPlugins")?;
-            run_plugins.call(id)?;
+            let plugins: Table = globals.get("plugins")?;
+            let id_ref: &str = &id;
+            for plugin in plugins.sequence_values::<Table>() {
+                let middleware_fn: Function = plugin?.get("middleware")?;
+                let middleware_str: Option<String> = middleware_fn.call(id_ref)?;
+                let middleware_enum = match middleware_str {
+                    Some(str) => SnapshotMiddleware::from_str(&str).ok(),
+                    None => None,
+                };
+                if middleware_enum.is_some() {
+                    println!("{:?}", middleware_enum);
+                    return Ok(middleware_enum);
+                }
+            }
 
-            Ok::<(), rlua::Error>(())
+            Ok(None)
         })
     }
 }

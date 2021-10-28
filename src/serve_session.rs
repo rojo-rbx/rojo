@@ -109,6 +109,8 @@ pub struct ServeSession {
     /// A channel to send mutation requests on. These will be handled by the
     /// ChangeProcessor and trigger changes in the tree.
     tree_mutation_sender: Sender<PatchSet>,
+
+    plugin_env: Arc<Mutex<PluginEnv>>,
 }
 
 impl ServeSession {
@@ -142,7 +144,7 @@ impl ServeSession {
             }
         };
 
-        let plugin_env = PluginEnv::new();
+        let mut plugin_env = PluginEnv::new();
         match plugin_env.init() {
             Ok(_) => (),
             Err(e) => return Err(ServeSessionError::Plugin { source: e }),
@@ -170,7 +172,7 @@ impl ServeSession {
         let instance_context = InstanceContext::default();
 
         log::trace!("Generating snapshot of instances from VFS");
-        let snapshot = snapshot_from_vfs(&instance_context, &vfs, &start_path)?
+        let snapshot = snapshot_from_vfs(&instance_context, &vfs, &plugin_env, &start_path)?
             .expect("snapshot did not return an instance");
 
         log::trace!("Computing initial patch set");
@@ -185,6 +187,7 @@ impl ServeSession {
         let tree = Arc::new(Mutex::new(tree));
         let message_queue = Arc::new(message_queue);
         let vfs = Arc::new(vfs);
+        let plugin_env = Arc::new(Mutex::new(plugin_env));
 
         let (tree_mutation_sender, tree_mutation_receiver) = crossbeam_channel::unbounded();
 
@@ -192,6 +195,7 @@ impl ServeSession {
         let change_processor = ChangeProcessor::start(
             Arc::clone(&tree),
             Arc::clone(&vfs),
+            Arc::clone(&plugin_env),
             Arc::clone(&message_queue),
             tree_mutation_receiver,
         );
@@ -205,6 +209,7 @@ impl ServeSession {
             message_queue,
             tree_mutation_sender,
             vfs,
+            plugin_env,
         })
     }
 

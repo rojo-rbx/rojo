@@ -5,6 +5,7 @@ use memofs::Vfs;
 use rbx_reflection::ClassTag;
 
 use crate::{
+    plugin_env::PluginEnv,
     project::{Project, ProjectNode},
     snapshot::{
         InstanceContext, InstanceMetadata, InstanceSnapshot, InstigatingSource, PathIgnoreRule,
@@ -16,6 +17,7 @@ use super::snapshot_from_vfs;
 pub fn snapshot_project(
     context: &InstanceContext,
     vfs: &Vfs,
+    plugin_env: &PluginEnv,
     path: &Path,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let project = Project::load_from_slice(&vfs.read(path)?, path)
@@ -32,8 +34,16 @@ pub fn snapshot_project(
 
     // TODO: If this project node is a path to an instance that Rojo doesn't
     // understand, this may panic!
-    let mut snapshot =
-        snapshot_project_node(&context, path, &project.name, &project.tree, vfs, None)?.unwrap();
+    let mut snapshot = snapshot_project_node(
+        &context,
+        path,
+        &project.name,
+        &project.tree,
+        vfs,
+        plugin_env,
+        None,
+    )?
+    .unwrap();
 
     // Setting the instigating source to the project file path is a little
     // coarse.
@@ -62,6 +72,7 @@ pub fn snapshot_project_node(
     instance_name: &str,
     node: &ProjectNode,
     vfs: &Vfs,
+    plugin_env: &PluginEnv,
     parent_class: Option<&str>,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let project_folder = project_path.parent().unwrap();
@@ -86,7 +97,7 @@ pub fn snapshot_project_node(
             Cow::Borrowed(path)
         };
 
-        if let Some(snapshot) = snapshot_from_vfs(context, vfs, &path)? {
+        if let Some(snapshot) = snapshot_from_vfs(context, vfs, plugin_env, &path)? {
             class_name_from_path = Some(snapshot.class_name);
 
             // Properties from the snapshot are pulled in unchanged, and
@@ -182,6 +193,7 @@ pub fn snapshot_project_node(
             child_name,
             child_project_node,
             vfs,
+            plugin_env,
             Some(&class_name),
         )? {
             children.push(child);
@@ -304,10 +316,17 @@ mod test {
 
         let mut vfs = Vfs::new(imfs);
 
-        let instance_snapshot =
-            snapshot_project(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
-                .expect("snapshot error")
-                .expect("snapshot returned no instances");
+        let plugin_env = PluginEnv::new();
+        plugin_env.init().unwrap();
+
+        let instance_snapshot = snapshot_project(
+            &InstanceContext::default(),
+            &mut vfs,
+            &plugin_env,
+            Path::new("/foo"),
+        )
+        .expect("snapshot error")
+        .expect("snapshot returned no instances");
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }
@@ -334,9 +353,13 @@ mod test {
 
         let mut vfs = Vfs::new(imfs);
 
+        let plugin_env = PluginEnv::new();
+        plugin_env.init().unwrap();
+
         let instance_snapshot = snapshot_project(
             &InstanceContext::default(),
             &mut vfs,
+            &plugin_env,
             Path::new("/foo/hello.project.json"),
         )
         .expect("snapshot error")
@@ -372,9 +395,13 @@ mod test {
 
         let mut vfs = Vfs::new(imfs);
 
+        let plugin_env = PluginEnv::new();
+        plugin_env.init().unwrap();
+
         let instance_snapshot = snapshot_project(
             &InstanceContext::default(),
             &mut vfs,
+            &plugin_env,
             Path::new("/foo.project.json"),
         )
         .expect("snapshot error")
@@ -408,9 +435,13 @@ mod test {
 
         let mut vfs = Vfs::new(imfs);
 
+        let plugin_env = PluginEnv::new();
+        plugin_env.init().unwrap();
+
         let instance_snapshot = snapshot_project(
             &InstanceContext::default(),
             &mut vfs,
+            &plugin_env,
             Path::new("/foo.project.json"),
         )
         .expect("snapshot error")
@@ -445,9 +476,13 @@ mod test {
 
         let mut vfs = Vfs::new(imfs);
 
+        let plugin_env = PluginEnv::new();
+        plugin_env.init().unwrap();
+
         let instance_snapshot = snapshot_project(
             &InstanceContext::default(),
             &mut vfs,
+            &plugin_env,
             Path::new("/foo.project.json"),
         )
         .expect("snapshot error")
@@ -479,9 +514,13 @@ mod test {
 
         let mut vfs = Vfs::new(imfs);
 
+        let plugin_env = PluginEnv::new();
+        plugin_env.init().unwrap();
+
         let instance_snapshot = snapshot_project(
             &InstanceContext::default(),
             &mut vfs,
+            &plugin_env,
             Path::new("/foo/default.project.json"),
         )
         .expect("snapshot error")
@@ -520,9 +559,13 @@ mod test {
 
         let mut vfs = Vfs::new(imfs);
 
+        let plugin_env = PluginEnv::new();
+        plugin_env.init().unwrap();
+
         let instance_snapshot = snapshot_project(
             &InstanceContext::default(),
             &mut vfs,
+            &plugin_env,
             Path::new("/foo/default.project.json"),
         )
         .expect("snapshot error")
@@ -565,9 +608,13 @@ mod test {
 
         let mut vfs = Vfs::new(imfs);
 
+        let plugin_env = PluginEnv::new();
+        plugin_env.init().unwrap();
+
         let instance_snapshot = snapshot_project(
             &InstanceContext::default(),
             &mut vfs,
+            &plugin_env,
             Path::new("/foo/default.project.json"),
         )
         .expect("snapshot error")
@@ -615,9 +662,13 @@ mod test {
 
         let mut vfs = Vfs::new(imfs);
 
+        let plugin_env = PluginEnv::new();
+        plugin_env.init().unwrap();
+
         let instance_snapshot = snapshot_project(
             &InstanceContext::default(),
             &mut vfs,
+            &plugin_env,
             Path::new("/foo/default.project.json"),
         )
         .expect("snapshot error")

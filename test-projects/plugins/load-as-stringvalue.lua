@@ -290,22 +290,22 @@ return function(options)
     return {
         name = 'load-as-stringvalue',
         middleware = function(id)
-            print('[plugin] get middleware for ', id)
+            print(('[plugin] middleware: %s'):format(id))
             local idExt = id:match('%.(%w+)$')
             for _, ext in next, options.extensions do
                 if ext == idExt then
-                    print('[plugin] matched')
+                    print(('[plugin] matched: %s'):format(ext))
                     return 'json_model'
                 end
             end
             print('[plugin] skipping')
         end,
         load = function(id)
-            print('[plugin] get middleware for ', id)
+            print(('[plugin] load: %s'):format(id))
             local idExt = id:match('%.(%w+)$')
             for _, ext in next, options.extensions do
                 if ext == idExt then
-                    print('[plugin] matched')
+                    print('[plugin] matched: %s')
                     local file = io.open(id, 'r')
                     local source = file:read('a')
                     file:close()

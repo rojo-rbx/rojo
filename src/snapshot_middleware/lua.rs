@@ -4,7 +4,10 @@ use anyhow::Context;
 use maplit::hashmap;
 use memofs::{IoResultExt, Vfs};
 
-use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
+use crate::{
+    plugin_env::PluginEnv,
+    snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
+};
 
 use super::{dir::snapshot_dir, meta_file::AdjacentMetadata, util::match_trailing};
 
@@ -63,10 +66,11 @@ pub fn snapshot_lua(
 pub fn snapshot_lua_init(
     context: &InstanceContext,
     vfs: &Vfs,
+    plugin_env: &PluginEnv,
     init_path: &Path,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let folder_path = init_path.parent().unwrap();
-    let dir_snapshot = snapshot_dir(context, vfs, folder_path)?.unwrap();
+    let dir_snapshot = snapshot_dir(context, vfs, plugin_env, folder_path)?.unwrap();
 
     if dir_snapshot.class_name != "Folder" {
         anyhow::bail!(
