@@ -109,7 +109,7 @@ pub fn snapshot_from_vfs(
 
         snapshot_dir(context, vfs, plugin_env, path)
     } else {
-        let mut middleware = plugin_env.get_middlware(path.to_str().unwrap().to_owned())?;
+        let mut middleware = plugin_env.middleware(path.to_str().unwrap())?;
 
         if middleware.is_none() {
             middleware = if let Ok(name) = path.file_name_trim_end(".lua") {
@@ -143,7 +143,9 @@ pub fn snapshot_from_vfs(
             Some(x) => match x {
                 SnapshotMiddleware::Lua => snapshot_lua(context, vfs, path),
                 SnapshotMiddleware::Project => snapshot_project(context, vfs, plugin_env, path),
-                SnapshotMiddleware::JsonModel => snapshot_json_model(context, vfs, path),
+                SnapshotMiddleware::JsonModel => {
+                    snapshot_json_model(context, vfs, plugin_env, path)
+                }
                 SnapshotMiddleware::Json => snapshot_json(context, vfs, path),
                 SnapshotMiddleware::Csv => snapshot_csv(context, vfs, path),
                 SnapshotMiddleware::Txt => snapshot_txt(context, vfs, path),

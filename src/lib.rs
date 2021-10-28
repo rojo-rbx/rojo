@@ -10,6 +10,7 @@ mod tree_view;
 mod auth_cookie;
 mod change_processor;
 mod glob;
+mod load_file;
 mod lua_ast;
 mod message_queue;
 mod multimap;

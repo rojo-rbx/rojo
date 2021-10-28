@@ -144,7 +144,7 @@ impl ServeSession {
             }
         };
 
-        let mut plugin_env = PluginEnv::new();
+        let plugin_env = PluginEnv::new();
         match plugin_env.init() {
             Ok(_) => (),
             Err(e) => return Err(ServeSessionError::Plugin { source: e }),

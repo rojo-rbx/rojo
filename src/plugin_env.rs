@@ -75,22 +75,37 @@ impl PluginEnv {
         })
     }
 
-    pub fn get_middlware(&self, id: String) -> Result<Option<SnapshotMiddleware>, rlua::Error> {
+    pub fn middleware(&self, id: &str) -> Result<Option<SnapshotMiddleware>, rlua::Error> {
         self.lua.context(|lua_ctx| {
             let globals = lua_ctx.globals();
 
             let plugins: Table = globals.get("plugins")?;
-            let id_ref: &str = &id;
             for plugin in plugins.sequence_values::<Table>() {
                 let middleware_fn: Function = plugin?.get("middleware")?;
-                let middleware_str: Option<String> = middleware_fn.call(id_ref)?;
+                let middleware_str: Option<String> = middleware_fn.call(id)?;
                 let middleware_enum = match middleware_str {
                     Some(str) => SnapshotMiddleware::from_str(&str).ok(),
                     None => None,
                 };
                 if middleware_enum.is_some() {
-                    println!("{:?}", middleware_enum);
                     return Ok(middleware_enum);
+                }
+            }
+
+            Ok(None)
+        })
+    }
+
+    pub fn load(&self, id: &str, data: &str) -> Result<Option<String>, rlua::Error> {
+        self.lua.context(|lua_ctx| {
+            let globals = lua_ctx.globals();
+
+            let plugins: Table = globals.get("plugins")?;
+            for plugin in plugins.sequence_values::<Table>() {
+                let load_fn: Function = plugin?.get("load")?;
+                let load_str: Option<String> = load_fn.call((id, data))?;
+                if load_str.is_some() {
+                    return Ok(load_str);
                 }
             }
 
