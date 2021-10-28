@@ -96,14 +96,14 @@ impl PluginEnv {
         })
     }
 
-    pub fn load(&self, id: &str, data: &str) -> Result<Option<String>, rlua::Error> {
+    pub fn load(&self, id: &str, contents: &str) -> Result<Option<String>, rlua::Error> {
         self.lua.context(|lua_ctx| {
             let globals = lua_ctx.globals();
 
             let plugins: Table = globals.get("plugins")?;
             for plugin in plugins.sequence_values::<Table>() {
                 let load_fn: Function = plugin?.get("load")?;
-                let load_str: Option<String> = load_fn.call((id, data))?;
+                let load_str: Option<String> = load_fn.call((id, contents))?;
                 if load_str.is_some() {
                     return Ok(load_str);
                 }

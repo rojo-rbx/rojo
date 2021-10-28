@@ -300,13 +300,13 @@ return function(options)
             end
             print('[plugin] skipping')
         end,
-        load = function(id, data)
+        load = function(id, contents)
             print(('[plugin] load: %s'):format(id))
             local idExt = id:match('%.(%w+)$')
             for _, ext in next, options.extensions do
                 if ext == idExt then
                     print(('[plugin] matched: %s'):format(ext))
-                    local encoded = data:gsub('\n', '\\n')
+                    local encoded = contents:gsub('\n', '\\n')
                     return ('{"ClassName": "StringValue", "Properties": { "Value": "%s" }}'):format(encoded)
                 end
             end

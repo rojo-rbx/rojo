@@ -181,35 +181,91 @@ return function(options)
 end
 ```
 
-### Custom file types
+### Markdown parser
+
+```lua
+-- Convert markdown to roblox rich text format implementation here
+
+return function(options)
+    return {
+        name = 'markdown-to-richtext',
+        middleware = function(id)
+            if id:match('%.md$') then
+              return 'json_model'
+            end
+        end,
+        load = function(id, contents)
+            if id:match('%.md$') then
+              local frontmatter = parseFrontmatter(contents)
+              local richText = markdownToRichText(contents)
+              local className = frontmatter.className or 'StringValue'
+              local property = frontmatter.property or 'Value'
+              return ('{"ClassName": "%s", "Properties": { "%s": "%s" }}')
+                :format(className, property, richText)
+
+              --[[
+                With rojo plugin library:
+
+                return rojo.toJson({
+                  ClassName = className,
+                  Properties = {
+                    [property] = richText
+                  }
+                })
+              ]]
+            end
+        end
+    }
+end
+```
+
+### Load custom files as StringValue instances
 
 ```lua
 return function(options)
-  return {
-    name = "markdown-to-stringvalue",
-    middleware = function(id)
-      if id:match('%.md$') then
-        return 'json_model'
-      end
-    end,
-    load = function(id)
-      if id:match('%.md$') then
-        local file = io.open(id, 'r')
-        local source = file:read('a')
-        file:close()
-        return ('{"ClassName": "StringValue", "Properties": { "Value": "%s" }}'):format(source)
+    options.extensions = options.extensions or {}
 
-        -- If we had a library of common functions we could use this nicer syntax:
-        --[[return rojo.toJson({
-          ClassName = 'StringValue',
-          Properties = {
-            Value = source
-          }
-        })]]
-      end
-    end
-  }
+    return {
+        name = 'load-as-stringvalue',
+        middleware = function(id)
+            local idExt = id:match('%.(%w+)$')
+            for _, ext in next, options.extensions do
+                if ext == idExt then
+                    return 'json_model'
+                end
+            end
+        end,
+        load = function(id, contents)
+            local idExt = id:match('%.(%w+)$')
+            for _, ext in next, options.extensions do
+                if ext == idExt then
+                    local encoded = contents:gsub('\n', '\\n')
+                    return ('{"ClassName": "StringValue", "Properties": { "Value": "%s" }}'):format(encoded)
+
+                    --[[
+                      With rojo plugin library:
+
+                      return rojo.toJson({
+                        ClassName = 'StringValue',
+                        Properties = {
+                          Value = encoded
+                        }
+                      })
+                    ]]
+                end
+            end
+        end
+    }
 end
+```
+
+```json
+// default.project.json
+{
+  "plugins": [
+    { "source": "load-as-stringvalue.lua", "options": { "extensions": {"md", "data.json"} }}
+  ]
+}
 ```
 
 ### Remote file requires
