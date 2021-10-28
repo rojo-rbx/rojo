@@ -67,6 +67,7 @@ Plugin scripts should return a `CreatePluginFunction`:
 -- Types provided in luau format
 
 type PluginInstance = {
+  name: string,
   projectDescription?: (project: ProjectDescription) -> (),
   syncStart?: () -> (),
   syncEnd?: () -> (),
@@ -105,23 +106,27 @@ The plugin environment is created in the following way:
 If at any point there is an error in the above steps, Rojo should quit with an appropriate error
 message.
 
-## Plugin hooks
+## Plugin instance
 
+-   `name`
+    -   **Required**: The name of the plugin that will be used in error messages, etc.
 -   `projectDescription(project: ProjectDescription) -> ()`
-    -   Called with a Lua representation of the current project description whenever it has changed.
+    -   **Optional**: Called with a Lua representation of the current project description whenever
+        it has changed.
 -   `syncStart() -> ()`
-    -   A sync has started.
+    -   **Optional**: A sync has started.
 -   `syncEnd() -> ()`
-    -   A sync has finished.
+    -   **Optional**: A sync has finished.
 -   `resolve(id: string) -> string`
-    -   Takes a file path and returns a new file path that the file should be loaded from instead.
-        The first plugin to return a non-nil value per id wins.
+    -   **Optional**: Takes a file path and returns a new file path that the file should be loaded
+        from instead. The first plugin to return a non-nil value per id wins.
 -   `middleware(id: string) -> string`
-    -   Takes a file path and returns a snapshot middleware enum to determine how Rojo should build
-        the instance tree for the file. The first plugin to return a non-nil value per id wins.
+    -   **Optional**: Takes a file path and returns a snapshot middleware enum to determine how Rojo
+        should build the instance tree for the file. The first plugin to return a non-nil value per
+        id wins.
 -   `load(id: string) -> string`
-    -   Takes a file path and returns the file contents that should be interpreted by Rojo. The
-        first plugin to return a non-nil value per id wins.
+    -   **Optional**: Takes a file path and returns the file contents that should be interpreted by
+        Rojo. The first plugin to return a non-nil value per id wins.
 
 ## Use case analyses
 
@@ -136,6 +141,7 @@ local compile = require 'moonscript.compile'
 
 return function(options)
   return {
+    name = "moonscript",
     load = function(id)
       if id:match('%.lua$') then
         local file = io.open(id, 'r')
@@ -162,6 +168,7 @@ local minifier = require 'minifier.lua'
 
 return function(options)
   return {
+    name = "minifier",
     load = function(id)
       if id:match('%.lua$') then
         local file = io.open(id, 'r')
@@ -179,6 +186,7 @@ end
 ```lua
 return function(options)
   return {
+    name = "markdown-to-stringvalue",
     middleware = function(id)
       if id:match('%.md$') then
         return 'json_model'
@@ -204,13 +212,15 @@ return function(options)
 end
 ```
 
-### Go-style dependency management
+### Remote file requires
 
 ```lua
 -- download/caching implementation inline here
+-- this one is not really working even from a pseudo-implementation perspective
 
 return function(options)
   return {
+    name = "remote-require",
     resolve = function(id)
       if id:match('^https?://.*%.lua$') then
         local cachedId = fromCache(id)
@@ -239,6 +249,7 @@ return function(options)
   local project = nil
 
   return {
+    name = "require-files",
     projectDescription = function(newProject)
       project = newProject
     end,
