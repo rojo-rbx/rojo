@@ -161,7 +161,6 @@ impl ServeSession {
 
             let temp = project_path.with_file_name(plugin_source);
             let plugin_source_path = temp.to_str().unwrap();
-            println!("{}", plugin_source_path);
 
             match plugin_env.load_plugin(plugin_source_path, plugin_options) {
                 Ok(_) => (),
