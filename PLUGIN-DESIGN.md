@@ -16,6 +16,12 @@ primary Rollup config file. Rollup then calls in to plugin "hooks" at special ti
 bundling process. I have found Rollup plugins to be an excellent interface for both plugin
 developers and end-users and therefore I have based this proposal on their API.
 
+This proposal attempts to take advantage of the existing "middleware" system in Rojo, and give
+plugins the opportunity to:
+
+-   Override the default choice for which internal middleware should be used for a given file path
+-   Transform the contents of a file before consuming it
+
 ## Project file changes
 
 Add a new top-level field to the project file format:
