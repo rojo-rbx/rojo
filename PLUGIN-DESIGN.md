@@ -191,13 +191,13 @@ return function(options)
         file:close()
         return ('{"ClassName": "StringValue", "Properties": { "Value": "%s" }}'):format(source)
 
-        -- If we converted Lua tables to JSON we could use this nicer syntax:
-        --[[return {
+        -- If we had a library of common functions we could use this nicer syntax:
+        --[[return rojo.toJson({
           ClassName = 'StringValue',
           Properties = {
             Value = source
           }
-        }]]
+        })]]
       end
     end
   }
@@ -258,7 +258,16 @@ return function(options)
 end
 ```
 
+## Implementation priority
+
+1. Loading plugins from local paths
+2. Calling hooks at the appropriate time
+3. Loading plugins from remote repos
+4. Rojo plugin library
+
 ## Concerns
+
+TODO: Implement a proposal for a rojo plugin library
 
 -   Some operations will be common in plugins and a set of standardized functions may be helpful,
     for example reading files and checking file extensions. This could be provided as a global
