@@ -105,10 +105,13 @@ impl ApiService {
                         let mut added = HashMap::new();
                         for id in message.added {
                             let instance = tree.get_instance(id).unwrap();
-                            added.insert(id, Instance::from_rojo_instance(instance));
+                            added.insert(id, Instance::from_rojo_instance(instance, false));
 
                             for instance in tree.descendants(id) {
-                                added.insert(instance.id(), Instance::from_rojo_instance(instance));
+                                added.insert(
+                                    instance.id(),
+                                    Instance::from_rojo_instance(instance, false),
+                                );
                             }
                         }
 
@@ -212,6 +215,12 @@ impl ApiService {
             }
         };
 
+        let include_relevant_paths = request
+            .uri()
+            .query()
+            .iter()
+            .any(|query| query == &"includeRelevantPaths");
+
         let message_queue = self.serve_session.message_queue();
         let message_cursor = message_queue.cursor();
 
@@ -221,10 +230,16 @@ impl ApiService {
 
         for id in requested_ids {
             if let Some(instance) = tree.get_instance(id) {
-                instances.insert(id, Instance::from_rojo_instance(instance));
+                instances.insert(
+                    id,
+                    Instance::from_rojo_instance(instance, include_relevant_paths),
+                );
 
                 for descendant in tree.descendants(id) {
-                    instances.insert(descendant.id(), Instance::from_rojo_instance(descendant));
+                    instances.insert(
+                        descendant.id(),
+                        Instance::from_rojo_instance(descendant, include_relevant_paths),
+                    );
                 }
             }
         }
