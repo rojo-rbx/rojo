@@ -83,13 +83,13 @@ pub fn snapshot_project_node(
 
         // If the path specified in the project is relative, we assume it's
         // relative to the folder that the project is in, project_folder.
-        let path = if path.is_relative() {
+        let full_path = if path.is_relative() {
             Cow::Owned(project_folder.join(path))
         } else {
             Cow::Borrowed(path)
         };
 
-        if let Some(snapshot) = snapshot_from_vfs(context, vfs, &path)? {
+        if let Some(snapshot) = snapshot_from_vfs(context, vfs, &full_path)? {
             class_name_from_path = Some(snapshot.class_name);
 
             // Properties from the snapshot are pulled in unchanged, and
@@ -163,25 +163,16 @@ pub fn snapshot_project_node(
             return Ok(None);
         }
 
-        (_, None, _, Some(PathNode::Required(path_buf))) => {
-            let path = path_buf.as_path();
-
-            // If the path specified in the project is relative, we assume it's
-            // relative to the folder that the project is in, project_folder.
-            let path = if path.is_relative() {
-                Cow::Owned(project_folder.join(path))
-            } else {
-                Cow::Borrowed(path)
-            };
-
-            bail!(
-                "$path referred to a path that could not be turned into an instance by Rojo\n\
+        (_, None, _, Some(PathNode::Required(path))) => {
+            anyhow::bail!(
+                "Rojo project referred to a file using $path that could not be turned into a Roblox Instance by Rojo.\n\
+                Check that the file exists and is a file type known by Rojo.\n\
                 \n\
-                $path: \"{}\"\n\
-                Project path: \"{}\"\n",
+                Project path: {}\n\
+                File $path: {}",
+                project_path.display(),
                 path.display(),
-                project_path.display()
-            )
+            );
         }
 
         (None, None, None, None) => {

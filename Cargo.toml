@@ -1,6 +1,6 @@
 [package]
 name = "rojo"
-version = "7.0.0-rc.1"
+version = "7.0.0-rc.3"
 authors = ["Lucien Greathouse <me@lpghatguy.com>"]
 description = "Enables professional-grade development tools for Roblox developers"
 license = "MPL-2.0"
@@ -37,10 +37,6 @@ members = [
 name = "librojo"
 path = "src/lib.rs"
 
-[[bin]]
-name = "rojo"
-path = "src/bin.rs"
-
 [[bench]]
 name = "build"
 harness = false
@@ -55,41 +51,41 @@ memofs = { version = "0.2.0", path = "memofs" }
 # rbx_reflection_database = { path = "../rbx-dom/rbx_reflection_database" }
 # rbx_xml = { path = "../rbx-dom/rbx_xml" }
 
-rbx_binary = "0.6.1"
-rbx_dom_weak = "2.1.0"
-rbx_reflection = "4.1.0"
-rbx_reflection_database = "0.2.1"
-rbx_xml = "0.12.1"
+rbx_binary = "0.6.4"
+rbx_dom_weak = "2.3.0"
+rbx_reflection = "4.2.0"
+rbx_reflection_database = "0.2.2"
+rbx_xml = "0.12.3"
 
-anyhow = "1.0.27"
-backtrace = "0.3"
-bincode = "1.2.1"
+anyhow = "1.0.44"
+backtrace = "0.3.61"
+bincode = "1.3.3"
 crossbeam-channel = "0.5.1"
-csv = "1.1.1"
+csv = "1.1.6"
 env_logger = "0.9.0"
-fs-err = "2.2.0"
-futures = "0.3.16"
-globset = "0.4.4"
+fs-err = "2.6.0"
+futures = "0.3.17"
+globset = "0.4.8"
 humantime = "2.1.0"
-hyper = { version = "0.14.11", features = ["server", "tcp", "http1"] }
-jod-thread = "0.1.0"
+hyper = { version = "0.14.13", features = ["server", "tcp", "http1"] }
+jod-thread = "0.1.2"
 lazy_static = "1.4.0"
-log = "0.4.8"
-maplit = "1.0.1"
-notify = "4.0.14"
+log = "0.4.14"
+maplit = "1.0.2"
+notify = "4.0.17"
 opener = "0.5.0"
-regex = "1.3.1"
-reqwest = "0.9.20"
+regex = "1.5.4"
+reqwest = "0.9.24"
 ritz = "0.1.0"
-rlua = "0.17.0"
+rlua = "0.17.1"
 roblox_install = "1.0.0"
-serde = { version = "1.0", features = ["derive", "rc"] }
-serde_json = "1.0"
-structopt = "0.3.5"
-termcolor = "1.0.5"
-thiserror = "1.0.11"
-tokio = { version = "1.9.0", features = ["rt", "rt-multi-thread"] }
-uuid = { version = "0.8.1", features = ["v4", "serde"] }
+serde = { version = "1.0.130", features = ["derive", "rc"] }
+serde_json = "1.0.68"
+structopt = "0.3.23"
+termcolor = "1.1.2"
+thiserror = "1.0.30"
+tokio = { version = "1.12.0", features = ["rt", "rt-multi-thread"] }
+uuid = { version = "0.8.2", features = ["v4", "serde"] }
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.9.0"
@@ -97,20 +93,20 @@ winreg = "0.9.0"
 [build-dependencies]
 memofs = { version = "0.2.0", path = "memofs" }
 
-embed-resource = "1.6"
-anyhow = "1.0.27"
-bincode = "1.2.1"
-fs-err = "2.3.0"
-maplit = "1.0.1"
+embed-resource = "1.6.4"
+anyhow = "1.0.44"
+bincode = "1.3.3"
+fs-err = "2.6.0"
+maplit = "1.0.2"
 
 [dev-dependencies]
 rojo-insta-ext = { path = "rojo-insta-ext" }
 
-criterion = "0.3"
-insta = { version = "1.3.0", features = ["redactions"] }
-lazy_static = "1.2"
+criterion = "0.3.5"
+insta = { version = "1.8.0", features = ["redactions"] }
+lazy_static = "1.4.0"
 paste = "1.0.5"
 pretty_assertions = "0.7.2"
-serde_yaml = "0.8.9"
-tempfile = "3.0"
-walkdir = "2.1"
+serde_yaml = "0.8.21"
+tempfile = "3.2.0"
+walkdir = "2.3.2"

@@ -1,7 +1,9 @@
 use std::borrow::Borrow;
 
 use anyhow::format_err;
-use rbx_dom_weak::types::{Color3, Content, Enum, Variant, VariantType, Vector2, Vector3};
+use rbx_dom_weak::types::{
+    CFrame, Color3, Content, Enum, Matrix3, Tags, Variant, VariantType, Vector2, Vector3,
+};
 use rbx_reflection::{DataType, PropertyDescriptor};
 use serde::{Deserialize, Serialize};
 
@@ -32,10 +34,12 @@ impl UnresolvedValue {
 pub enum AmbiguousValue {
     Bool(bool),
     String(String),
+    StringArray(Vec<String>),
     Number(f64),
     Array2([f64; 2]),
     Array3([f64; 3]),
     Array4([f64; 4]),
+    Array12([f64; 12]),
 }
 
 impl AmbiguousValue {
@@ -93,6 +97,9 @@ impl AmbiguousValue {
                 (VariantType::Int64, AmbiguousValue::Number(value)) => Ok((value as i64).into()),
 
                 (VariantType::String, AmbiguousValue::String(value)) => Ok(value.into()),
+                (VariantType::Tags, AmbiguousValue::StringArray(value)) => {
+                    Ok(Tags::from(value).into())
+                }
                 (VariantType::Content, AmbiguousValue::String(value)) => {
                     Ok(Content::from(value).into())
                 }
@@ -107,6 +114,18 @@ impl AmbiguousValue {
 
                 (VariantType::Color3, AmbiguousValue::Array3(value)) => {
                     Ok(Color3::new(value[0] as f32, value[1] as f32, value[2] as f32).into())
+                }
+
+                (VariantType::CFrame, AmbiguousValue::Array12(value)) => {
+                    let value = value.map(|v| v as f32);
+                    let pos = Vector3::new(value[0], value[1], value[2]);
+                    let orientation = Matrix3::new(
+                        Vector3::new(value[3], value[4], value[5]),
+                        Vector3::new(value[6], value[7], value[8]),
+                        Vector3::new(value[9], value[10], value[11]),
+                    );
+
+                    Ok(CFrame::new(pos, orientation).into())
                 }
 
                 (_, unresolved) => Err(format_err!(
@@ -129,10 +148,12 @@ impl AmbiguousValue {
         match self {
             AmbiguousValue::Bool(_) => "a bool",
             AmbiguousValue::String(_) => "a string",
+            AmbiguousValue::StringArray(_) => "an array of strings",
             AmbiguousValue::Number(_) => "a number",
             AmbiguousValue::Array2(_) => "an array of two numbers",
             AmbiguousValue::Array3(_) => "an array of three numbers",
             AmbiguousValue::Array4(_) => "an array of four numbers",
+            AmbiguousValue::Array12(_) => "an array of twelve numbers",
         }
     }
 }

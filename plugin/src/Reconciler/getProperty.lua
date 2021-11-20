@@ -40,6 +40,13 @@ local function getProperty(instance, propertyName)
 			})
 		end
 
+		if err.kind == RbxDom.Error.Kind.Roblox and err.extra:find("is not a valid member of") then
+			return false, Error.new(Error.UnknownProperty, {
+				className = instance.ClassName,
+				propertyName = propertyName,
+			})
+		end
+
 		return false, Error.new(Error.OtherPropertyError, {
 			className = instance.ClassName,
 			propertyName = propertyName,

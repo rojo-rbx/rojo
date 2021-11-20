@@ -72,8 +72,8 @@ pub fn snapshot_lua_init(
         anyhow::bail!(
             "init.lua, init.server.lua, and init.client.lua can \
              only be used if the instance produced by the containing \
-             directory would be a Folder.\n\n\
-
+             directory would be a Folder.\n\
+             \n\
              The directory {} turned into an instance of class {}.",
             folder_path.display(),
             dir_snapshot.class_name

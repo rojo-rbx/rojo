@@ -2,7 +2,24 @@
 
 ## Unreleased Changes
 
-## [7.0.0-rc.1][7.0.0-rc.1] (August 23, 2021)
+## [7.0.0-rc.3] - October 19, 2021
+This is the last release candidate for Rojo 7. In an effort to get Rojo 7 out the door, we'll be freezing features from here on out, something we should've done a couple months ago.
+
+Expect to see Rojo 7 stable soon!
+
+* Added support for writing `Tags` in project files, model files, and meta files. ([#484])
+* Adjusted Studio plugin colors to match Roblox Studio palette. ([#482])
+* Improved experimental two-way sync feature by batching changes. ([#478])
+
+[#482]: https://github.com/rojo-rbx/rojo/pull/482
+[#484]: https://github.com/rojo-rbx/rojo/pull/484
+[#478]: https://github.com/rojo-rbx/rojo/pull/478
+[7.0.0-rc.3]: https://github.com/rojo-rbx/rojo/releases/tag/v7.0.0-rc.3
+
+## 7.0.0-rc.2 - October 19, 2021
+(Botched release due to Git mishap, oops!)
+
+## [7.0.0-rc.1] - August 23, 2021
 In Rojo 6 and previous Rojo 7 alphas, an explicit Vector3 property would be written like this:
 
 ```json
@@ -45,9 +62,9 @@ The shorthand property format that most users use is not impacted. For reference
 * Added the `fmt-project` subcommand for formatting Rojo project files.
 * Improved error output for many subcommands.
 * Updated to stable versions of rbx-dom libraries.
-* Updated async infrastructure, which should fix a handful of bugs. ([#459][#459])
-* Fixed syncing refs in the Roblox Studio plugin ([#462][#462], [#466][#466])
-* Added support for long paths on Windows. ([#464][#464])
+* Updated async infrastructure, which should fix a handful of bugs. ([#459])
+* Fixed syncing refs in the Roblox Studio plugin ([#462], [#466])
+* Added support for long paths on Windows. ([#464])
 
 [#459]: https://github.com/rojo-rbx/rojo/pull/459
 [#462]: https://github.com/rojo-rbx/rojo/pull/462

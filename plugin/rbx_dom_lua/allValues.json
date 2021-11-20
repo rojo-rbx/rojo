@@ -251,6 +251,16 @@
     },
     "ty": "String"
   },
+  "Tags": {
+    "value": {
+      "Tags": [
+        "foo",
+        "con'fusion?!",
+        "bar"
+      ]
+    },
+    "ty": "Tags"
+  },
   "UDim": {
     "value": {
       "UDim": [
