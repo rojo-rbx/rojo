@@ -14,6 +14,8 @@ local PORT_WIDTH = 74
 local DIVIDER_WIDTH = 1
 local HOST_OFFSET = 12
 
+local lastHost, lastPort
+
 local e = Roact.createElement
 
 local function AddressEntry(props)
@@ -24,7 +26,7 @@ local function AddressEntry(props)
 			layoutOrder = props.layoutOrder,
 		}, {
 			Host = e("TextBox", {
-				Text = "",
+				Text = lastHost or "",
 				Font = Enum.Font.Code,
 				TextSize = 18,
 				TextColor3 = theme.AddressEntry.TextColor,
@@ -43,7 +45,7 @@ local function AddressEntry(props)
 			}),
 
 			Port = e("TextBox", {
-				Text = "",
+				Text = lastPort or "",
 				Font = Enum.Font.Code,
 				TextSize = 18,
 				TextColor3 = theme.AddressEntry.TextColor,
@@ -120,6 +122,9 @@ function NotConnectedPage:render()
 				onClick = function()
 					local hostText = self.hostRef.current.Text
 					local portText = self.portRef.current.Text
+
+					lastHost = hostText
+					lastPort = portText
 
 					self.props.onConnect(
 						#hostText > 0 and hostText or Config.defaultHost,
