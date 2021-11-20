@@ -75,9 +75,13 @@ local function diff(instanceMap, virtualInstances, rootId)
 						changedProperties[propertyName] = virtualValue
 					end
 				else
-					-- virtualValue can be empty in certain cases, and this may print out nil to the user.
 					local propertyType = next(virtualValue)
-					Log.warn("Failed to decode property of type {}", propertyType)
+					Log.warn(
+						"Failed to decode property {}.{}. Encoded property was: {:#?}",
+						virtualInstance.ClassName,
+						propertyName,
+						virtualValue
+					)
 				end
 			else
 				local err = existingValueOrErr

@@ -63,7 +63,7 @@ local function applyPatch(instanceMap, patch)
 		local failedToReify = reify(instanceMap, patch.added, id, parentInstance)
 
 		if not PatchSet.isEmpty(failedToReify) then
-			Log.debug("Failed to reify as part of applying a patch: {}", failedToReify)
+			Log.debug("Failed to reify as part of applying a patch: {:#?}", failedToReify)
 			PatchSet.assign(unappliedPatch, failedToReify)
 		end
 	end
