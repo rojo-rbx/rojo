@@ -11,9 +11,9 @@ use crate::{
     snapshot::{InstanceWithMeta, PatchSet, PatchUpdate},
     web::{
         interface::{
-            ErrorResponse, Instance, InstanceMetadata as WebInstanceMetadata, InstanceUpdate,
-            OpenResponse, ReadResponse, ServerInfoResponse, SubscribeMessage, SubscribeResponse,
-            WriteRequest, WriteResponse, PROTOCOL_VERSION, SERVER_VERSION,
+            ErrorResponse, Instance, OpenResponse, ReadResponse, ServerInfoResponse,
+            SubscribeMessage, SubscribeResponse, WriteRequest, WriteResponse, PROTOCOL_VERSION,
+            SERVER_VERSION,
         },
         util::{json, json_ok},
     },
@@ -99,44 +99,7 @@ impl ApiService {
 
                 let api_messages = messages
                     .into_iter()
-                    .map(|message| {
-                        let removed = message.removed;
-
-                        let mut added = HashMap::new();
-                        for id in message.added {
-                            let instance = tree.get_instance(id).unwrap();
-                            added.insert(id, Instance::from_rojo_instance(instance));
-
-                            for instance in tree.descendants(id) {
-                                added.insert(instance.id(), Instance::from_rojo_instance(instance));
-                            }
-                        }
-
-                        let updated = message
-                            .updated
-                            .into_iter()
-                            .map(|update| {
-                                let changed_metadata = update
-                                    .changed_metadata
-                                    .as_ref()
-                                    .map(WebInstanceMetadata::from_rojo_metadata);
-
-                                InstanceUpdate {
-                                    id: update.id,
-                                    changed_name: update.changed_name,
-                                    changed_class_name: update.changed_class_name,
-                                    changed_properties: update.changed_properties,
-                                    changed_metadata,
-                                }
-                            })
-                            .collect();
-
-                        SubscribeMessage {
-                            removed,
-                            added,
-                            updated,
-                        }
-                    })
+                    .map(|patch| SubscribeMessage::from_patch_update(&tree, patch))
                     .collect();
 
                 json_ok(SubscribeResponse {

@@ -7,12 +7,14 @@ use std::{
     collections::{HashMap, HashSet},
 };
 
-use rbx_dom_weak::types::{Ref, Variant};
+use rbx_dom_weak::types::{Ref, Variant, VariantType};
 use serde::{Deserialize, Serialize};
 
 use crate::{
     session_id::SessionId,
-    snapshot::{InstanceMetadata as RojoInstanceMetadata, InstanceWithMeta},
+    snapshot::{
+        AppliedPatchSet, InstanceMetadata as RojoInstanceMetadata, InstanceWithMeta, RojoTree,
+    },
 };
 
 /// Server version to report over the API, not exposed outside this crate.
@@ -28,6 +30,53 @@ pub struct SubscribeMessage<'a> {
     pub removed: Vec<Ref>,
     pub added: HashMap<Ref, Instance<'a>>,
     pub updated: Vec<InstanceUpdate>,
+}
+
+impl<'a> SubscribeMessage<'a> {
+    pub(crate) fn from_patch_update(tree: &'a RojoTree, patch: AppliedPatchSet) -> Self {
+        let removed = patch.removed;
+
+        let mut added = HashMap::new();
+        for id in patch.added {
+            let instance = tree.get_instance(id).unwrap();
+            added.insert(id, Instance::from_rojo_instance(instance));
+
+            for instance in tree.descendants(id) {
+                added.insert(instance.id(), Instance::from_rojo_instance(instance));
+            }
+        }
+
+        let updated = patch
+            .updated
+            .into_iter()
+            .map(|update| {
+                let changed_metadata = update
+                    .changed_metadata
+                    .as_ref()
+                    .map(InstanceMetadata::from_rojo_metadata);
+
+                let changed_properties = update
+                    .changed_properties
+                    .into_iter()
+                    .filter(|(_key, value)| property_filter(value.as_ref()))
+                    .collect();
+
+                InstanceUpdate {
+                    id: update.id,
+                    changed_name: update.changed_name,
+                    changed_class_name: update.changed_class_name,
+                    changed_properties,
+                    changed_metadata,
+                }
+            })
+            .collect();
+
+        Self {
+            removed,
+            added,
+            updated,
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -75,14 +124,8 @@ impl<'a> Instance<'a> {
         let properties = source
             .properties()
             .iter()
-            .filter_map(|(key, value)| {
-                // SharedString values can't be serialized via Serde
-                if matches!(value, Variant::SharedString(_)) {
-                    return None;
-                }
-
-                Some((key.clone(), Cow::Borrowed(value)))
-            })
+            .filter(|(_key, value)| property_filter(Some(value)))
+            .map(|(key, value)| (key.clone(), Cow::Borrowed(value)))
             .collect();
 
         Instance {
@@ -95,6 +138,18 @@ impl<'a> Instance<'a> {
             metadata: Some(InstanceMetadata::from_rojo_metadata(source.metadata())),
         }
     }
+}
+
+fn property_filter(value: Option<&Variant>) -> bool {
+    let ty = value.map(|value| value.ty());
+
+    // Lua can't do anything with SharedString values. They also can't be
+    // serialized directly by Serde!
+    if ty == Some(VariantType::SharedString) {
+        return false;
+    }
+
+    return true;
 }
 
 /// Response body from /api/rojo
