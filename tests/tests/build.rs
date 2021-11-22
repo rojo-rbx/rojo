@@ -63,7 +63,7 @@ fn run_build_test(test_name: &str) {
     let output_dir = tempdir().expect("couldn't create temporary directory");
     let output_path = output_dir.path().join(format!("{}.rbxmx", test_name));
 
-    let status = Command::new(ROJO_PATH)
+    let output = Command::new(ROJO_PATH)
         .args(&[
             "build",
             input_path.to_str().unwrap(),
@@ -72,10 +72,13 @@ fn run_build_test(test_name: &str) {
         ])
         .env("RUST_LOG", "error")
         .current_dir(working_dir)
-        .status()
+        .output()
         .expect("Couldn't start Rojo");
 
-    assert!(status.success(), "Rojo did not exit successfully");
+    print!("{}", String::from_utf8_lossy(&output.stdout));
+    eprint!("{}", String::from_utf8_lossy(&output.stderr));
+
+    assert!(output.status.success(), "Rojo did not exit successfully");
 
     let contents = fs::read_to_string(&output_path).expect("Couldn't read output file");
 
