@@ -9,14 +9,14 @@ use crate::{
     snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
 };
 
-use super::{meta_file::AdjacentMetadata, middleware::SnapshotInstanceResult};
+use super::{meta_file::AdjacentMetadata, util::PathExt};
 
 pub fn snapshot_json(
     context: &InstanceContext,
     vfs: &Vfs,
     path: &Path,
-    instance_name: &str,
-) -> SnapshotInstanceResult {
+) -> anyhow::Result<Option<InstanceSnapshot>> {
+    let name = path.file_name_trim_end(".json")?;
     let contents = vfs.read(path)?;
 
     let value: serde_json::Value = serde_json::from_slice(&contents)
@@ -28,10 +28,10 @@ pub fn snapshot_json(
         "Source".to_owned() => as_lua.into(),
     };
 
-    let meta_path = path.with_file_name(format!("{}.meta.json", instance_name));
+    let meta_path = path.with_file_name(format!("{}.meta.json", name));
 
     let mut snapshot = InstanceSnapshot::new()
-        .name(instance_name)
+        .name(name)
         .class_name("ModuleScript")
         .properties(properties)
         .metadata(
@@ -107,7 +107,6 @@ mod test {
             &InstanceContext::default(),
             &mut vfs,
             Path::new("/foo.json"),
-            "foo",
         )
         .unwrap()
         .unwrap();

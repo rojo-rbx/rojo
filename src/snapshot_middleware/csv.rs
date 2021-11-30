@@ -7,15 +7,16 @@ use serde::Serialize;
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
-use super::{meta_file::AdjacentMetadata, middleware::SnapshotInstanceResult};
+use super::{meta_file::AdjacentMetadata, util::PathExt};
 
 pub fn snapshot_csv(
     _context: &InstanceContext,
     vfs: &Vfs,
     path: &Path,
-    instance_name: &str,
-) -> SnapshotInstanceResult {
-    let meta_path = path.with_file_name(format!("{}.meta.json", instance_name));
+) -> anyhow::Result<Option<InstanceSnapshot>> {
+    let name = path.file_name_trim_end(".csv")?;
+
+    let meta_path = path.with_file_name(format!("{}.meta.json", name));
     let contents = vfs.read(path)?;
 
     let table_contents = convert_localization_csv(&contents).with_context(|| {
@@ -26,7 +27,7 @@ pub fn snapshot_csv(
     })?;
 
     let mut snapshot = InstanceSnapshot::new()
-        .name(instance_name)
+        .name(name)
         .class_name("LocalizationTable")
         .properties(hashmap! {
             "Contents".to_owned() => table_contents.into(),
@@ -143,14 +144,10 @@ Ack,Ack!,,An exclamation of despair,¡Ay!"#,
 
         let mut vfs = Vfs::new(imfs);
 
-        let instance_snapshot = snapshot_csv(
-            &InstanceContext::default(),
-            &mut vfs,
-            Path::new("/foo.csv"),
-            "foo",
-        )
-        .unwrap()
-        .unwrap();
+        let instance_snapshot =
+            snapshot_csv(&InstanceContext::default(), &mut vfs, Path::new("/foo.csv"))
+                .unwrap()
+                .unwrap();
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }
@@ -175,14 +172,10 @@ Ack,Ack!,,An exclamation of despair,¡Ay!"#,
 
         let mut vfs = Vfs::new(imfs);
 
-        let instance_snapshot = snapshot_csv(
-            &InstanceContext::default(),
-            &mut vfs,
-            Path::new("/foo.csv"),
-            "foo",
-        )
-        .unwrap()
-        .unwrap();
+        let instance_snapshot =
+            snapshot_csv(&InstanceContext::default(), &mut vfs, Path::new("/foo.csv"))
+                .unwrap()
+                .unwrap();
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }

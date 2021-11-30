@@ -1,6 +1,7 @@
 ---
 source: tests/tests/build.rs
 expression: contents
+
 ---
 <roblox version="4">
   <Item class="Folder" referent="0">
@@ -25,14 +26,12 @@ expression: contents
           <R22>1</R22>
         </CoordinateFrame>
         <Ref name="PrimaryPart">null</Ref>
-        <BinaryString name="Tags">
-        </BinaryString>
+        <BinaryString name="Tags"></BinaryString>
       </Properties>
       <Item class="StringValue" referent="2">
         <Properties>
           <string name="Name">Cool StringValue</string>
-          <BinaryString name="Tags">
-          </BinaryString>
+          <BinaryString name="Tags"></BinaryString>
           <string name="Value">Did you know that BaseValue.Changed is different than Instance.Changed?</string>
         </Properties>
       </Item>

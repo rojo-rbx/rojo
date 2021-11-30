@@ -29,21 +29,27 @@ Sometimes there's something that Rojo doesn't do that it probably should.
 
 Please file issues and we'll try to help figure out what the best way forward is.
 
+## Local Development Gotchas
+
+If your build fails with "Error: failed to open file `D:\code\rojo\plugin\modules\roact\src`" you need to update your Git submodules.
+Run the command and try building again: `git submodule update --init --recursive`.
+
 ## Pushing a Rojo Release
 The Rojo release process is pretty manual right now. If you need to do it, here's how:
 
 1. Bump server version in [`Cargo.toml`](Cargo.toml)
 2. Bump plugin version in [`plugin/src/Config.lua`](plugin/src/Config.lua)
-3. Run `cargo test` to update `Cargo.lock` and double-check tests
+3. Run `cargo test` to update `Cargo.lock` and run tests
 4. Update [`CHANGELOG.md`](CHANGELOG.md)
 5. Commit!
     * `git add . && git commit -m "Release vX.Y.Z"`
-6. Tag the commit with the version from `Cargo.toml` prepended with a v, like `v0.4.13`
+6. Tag the commit
+    * `git tag vX.Y.Z`
 7. Publish the CLI
     * `cargo publish`
 8. Publish the Plugin
-    * `rojo publish plugin --asset_id 6415005344`
-    * `rojo build plugin -o Rojo.rbxm`
+    * `cargo run -- upload plugin --asset_id 6415005344`
+    * `cargo run -- build plugin --output Rojo.rbxm`
 9. Push commits and tags
     * `git push && git push --tags`
 10. Copy GitHub release content from previous release

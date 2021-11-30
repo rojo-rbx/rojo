@@ -54,8 +54,7 @@ return function()
 				Name = "Spaghetti",
 				Properties = {
 					Value = {
-						Type = "String",
-						Value = "Hello, world!",
+						String = "Hello, world!",
 					},
 				},
 				Children = {},
@@ -191,8 +190,7 @@ return function()
 				Name = "Child",
 				Properties = {
 					Value = {
-						Type = "Ref",
-						Value = "ROOT",
+						Ref = "ROOT",
 					},
 				},
 				Children = {},
@@ -219,8 +217,7 @@ return function()
 				Name = "Root",
 				Properties = {
 					Value = {
-						Type = "Ref",
-						Value = "EXISTING",
+						Ref = "EXISTING",
 					},
 				},
 				Children = {},
@@ -258,8 +255,7 @@ return function()
 				Name = "Child A",
 				Properties = {
 					Value = {
-						Type = "Ref",
-						Value = "Child B",
+						Ref = "CHILD_B",
 					},
 				},
 				Children = {},
@@ -291,15 +287,14 @@ return function()
 	-- constructed as part of a recursive call before the parent has totally
 	-- finished. Given deferred refs, this should not fail, but it is a good
 	-- case to test.
-	it("should apply properties containing refs to later siblings correctly", function()
+	it("should apply properties containing refs to later children correctly", function()
 		local virtualInstances = {
 			ROOT = {
 				ClassName = "ObjectValue",
 				Name = "Root",
 				Properties = {
 					Value = {
-						Type = "Ref",
-						Value = "CHILD",
+						Ref = "CHILD",
 					},
 				},
 				Children = {"CHILD"},

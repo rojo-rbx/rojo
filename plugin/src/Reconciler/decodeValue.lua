@@ -6,29 +6,31 @@
 local RbxDom = require(script.Parent.Parent.Parent.RbxDom)
 local Error = require(script.Parent.Error)
 
-local function decodeValue(virtualValue, instanceMap)
+local function decodeValue(encodedValue, instanceMap)
+	local ty, value = next(encodedValue)
+
 	-- Refs are represented as IDs in the same space that Rojo's protocol uses.
-	if virtualValue.Type == "Ref" then
-		if virtualValue.Value == nil then
+	if ty == "Ref" then
+		if value == "00000000000000000000000000000000" then
 			return true, nil
 		end
 
-		local instance = instanceMap.fromIds[virtualValue.Value]
+		local instance = instanceMap.fromIds[value]
 
 		if instance ~= nil then
 			return true, instance
 		else
 			return false, Error.new(Error.RefDidNotExist, {
-				virtualValue = virtualValue,
+				encodedValue = encodedValue,
 			})
 		end
 	end
 
-	local ok, decodedValue = RbxDom.EncodedValue.decode(virtualValue)
+	local ok, decodedValue = RbxDom.EncodedValue.decode(encodedValue)
 
 	if not ok then
 		return false, Error.new(Error.CannotDecodeValue, {
-			virtualValue = virtualValue,
+			encodedValue = encodedValue,
 			innerError = decodedValue,
 		})
 	end

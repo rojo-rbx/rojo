@@ -1,6 +1,6 @@
 use std::sync::{Mutex, RwLock};
 
-use futures::sync::oneshot;
+use futures::channel::oneshot;
 
 /// A message queue with persistent history that can be subscribed to.
 ///

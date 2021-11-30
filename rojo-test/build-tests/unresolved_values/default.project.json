@@ -14,7 +14,13 @@
       "Color": {
         "$className": "Part",
         "$properties": {
-          "Color": [0.5, 0.25, 0]
+          "Color": [0.5, 0.25, 0],
+          "CFrame": [
+            1, 2, 3,
+            0, 1, 0,
+            0, 0, 1,
+            1, 0, 0
+          ]
         }
       },
 

@@ -6,14 +6,15 @@ use memofs::{IoResultExt, Vfs};
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
-use super::{meta_file::AdjacentMetadata, middleware::SnapshotInstanceResult};
+use super::{meta_file::AdjacentMetadata, util::PathExt};
 
 pub fn snapshot_txt(
     context: &InstanceContext,
     vfs: &Vfs,
     path: &Path,
-    instance_name: &str,
-) -> SnapshotInstanceResult {
+) -> anyhow::Result<Option<InstanceSnapshot>> {
+    let name = path.file_name_trim_end(".txt")?;
+
     let contents = vfs.read(path)?;
     let contents_str = str::from_utf8(&contents)
         .with_context(|| format!("File was not valid UTF-8: {}", path.display()))?
@@ -23,10 +24,10 @@ pub fn snapshot_txt(
         "Value".to_owned() => contents_str.into(),
     };
 
-    let meta_path = path.with_file_name(format!("{}.meta.json", instance_name));
+    let meta_path = path.with_file_name(format!("{}.meta.json", name));
 
     let mut snapshot = InstanceSnapshot::new()
-        .name(instance_name)
+        .name(name)
         .class_name("StringValue")
         .properties(properties)
         .metadata(
@@ -58,14 +59,10 @@ mod test {
 
         let mut vfs = Vfs::new(imfs.clone());
 
-        let instance_snapshot = snapshot_txt(
-            &InstanceContext::default(),
-            &mut vfs,
-            Path::new("/foo.txt"),
-            "foo",
-        )
-        .unwrap()
-        .unwrap();
+        let instance_snapshot =
+            snapshot_txt(&InstanceContext::default(), &mut vfs, Path::new("/foo.txt"))
+                .unwrap()
+                .unwrap();
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }

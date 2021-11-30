@@ -63,7 +63,7 @@ local function applyPatch(instanceMap, patch)
 		local failedToReify = reify(instanceMap, patch.added, id, parentInstance)
 
 		if not PatchSet.isEmpty(failedToReify) then
-			Log.debug("Failed to reify as part of applying a patch: {}", failedToReify)
+			Log.debug("Failed to reify as part of applying a patch: {:#?}", failedToReify)
 			PatchSet.assign(unappliedPatch, failedToReify)
 		end
 	end
@@ -76,6 +76,10 @@ local function applyPatch(instanceMap, patch)
 			table.insert(unappliedPatch.updated, update)
 			continue
 		end
+
+		-- Pause updates on this instance to avoid picking up our changes when
+		-- two-way sync is enabled.
+		instanceMap:pauseInstance(instance)
 
 		-- Track any part of this update that could not be applied.
 		local unappliedUpdate = {

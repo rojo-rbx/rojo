@@ -1,8 +1,7 @@
 {
   "Axes": {
     "value": {
-      "Type": "Axes",
-      "Value": [
+      "Axes": [
         "X",
         "Y",
         "Z"
@@ -12,35 +11,31 @@
   },
   "BinaryString": {
     "value": {
-      "Type": "BinaryString",
-      "Value": "SGVsbG8h"
+      "BinaryString": "SGVsbG8h"
     },
     "ty": "BinaryString"
   },
   "Bool": {
     "value": {
-      "Type": "Bool",
-      "Value": true
+      "Bool": true
     },
     "ty": "Bool"
   },
   "BrickColor": {
     "value": {
-      "Type": "BrickColor",
-      "Value": 1004
+      "BrickColor": 1004
     },
     "ty": "BrickColor"
   },
   "CFrame": {
     "value": {
-      "Type": "CFrame",
-      "Value": {
-        "Position": [
+      "CFrame": {
+        "position": [
           1.0,
           2.0,
           3.0
         ],
-        "Orientation": [
+        "orientation": [
           [
             4.0,
             5.0,
@@ -63,8 +58,7 @@
   },
   "Color3": {
     "value": {
-      "Type": "Color3",
-      "Value": [
+      "Color3": [
         1.0,
         2.0,
         3.0
@@ -74,8 +68,7 @@
   },
   "Color3uint8": {
     "value": {
-      "Type": "Color3uint8",
-      "Value": [
+      "Color3uint8": [
         0,
         128,
         255
@@ -85,20 +78,19 @@
   },
   "ColorSequence": {
     "value": {
-      "Type": "ColorSequence",
-      "Value": {
-        "Keypoints": [
+      "ColorSequence": {
+        "keypoints": [
           {
-            "Time": 0.0,
-            "Color": [
+            "time": 0.0,
+            "color": [
               1.0,
               1.0,
               0.5
             ]
           },
           {
-            "Time": 1.0,
-            "Color": [
+            "time": 1.0,
+            "color": [
               0.0,
               0.0,
               0.0
@@ -111,22 +103,19 @@
   },
   "Content": {
     "value": {
-      "Type": "Content",
-      "Value": "rbxassetid://12345"
+      "Content": "rbxassetid://12345"
     },
     "ty": "Content"
   },
   "Enum": {
     "value": {
-      "Type": "Enum",
-      "Value": 1234
+      "Enum": 1234
     },
     "ty": "Enum"
   },
   "Faces": {
     "value": {
-      "Type": "Faces",
-      "Value": [
+      "Faces": [
         "Right",
         "Top",
         "Back",
@@ -139,36 +128,31 @@
   },
   "Float32": {
     "value": {
-      "Type": "Float32",
-      "Value": 15.0
+      "Float32": 15.0
     },
     "ty": "Float32"
   },
   "Float64": {
     "value": {
-      "Type": "Float64",
-      "Value": 15123.0
+      "Float64": 15123.0
     },
     "ty": "Float64"
   },
   "Int32": {
     "value": {
-      "Type": "Int32",
-      "Value": 6014
+      "Int32": 6014
     },
     "ty": "Int32"
   },
   "Int64": {
     "value": {
-      "Type": "Int64",
-      "Value": 23491023
+      "Int64": 23491023
     },
     "ty": "Int64"
   },
   "NumberRange": {
     "value": {
-      "Type": "NumberRange",
-      "Value": [
+      "NumberRange": [
         -36.0,
         94.0
       ]
@@ -177,18 +161,17 @@
   },
   "NumberSequence": {
     "value": {
-      "Type": "NumberSequence",
-      "Value": {
-        "Keypoints": [
+      "NumberSequence": {
+        "keypoints": [
           {
-            "Time": 0.0,
-            "Value": 5.0,
-            "Envelope": 2.0
+            "time": 0.0,
+            "value": 5.0,
+            "envelope": 2.0
           },
           {
-            "Time": 1.0,
-            "Value": 22.0,
-            "Envelope": 0.0
+            "time": 1.0,
+            "value": 22.0,
+            "envelope": 0.0
           }
         ]
       }
@@ -197,34 +180,31 @@
   },
   "PhysicalProperties-Custom": {
     "value": {
-      "Type": "PhysicalProperties",
-      "Value": {
-        "Density": 0.5,
-        "Friction": 1.0,
-        "Elasticity": 0.0,
-        "FrictionWeight": 50.0,
-        "ElasticityWeight": 25.0
+      "PhysicalProperties": {
+        "density": 0.5,
+        "friction": 1.0,
+        "elasticity": 0.0,
+        "frictionWeight": 50.0,
+        "elasticityWeight": 25.0
       }
     },
     "ty": "PhysicalProperties"
   },
   "PhysicalProperties-Default": {
     "value": {
-      "Type": "PhysicalProperties",
-      "Value": "Default"
+      "PhysicalProperties": "Default"
     },
     "ty": "PhysicalProperties"
   },
   "Ray": {
     "value": {
-      "Type": "Ray",
-      "Value": {
-        "Origin": [
+      "Ray": {
+        "origin": [
           1.0,
           2.0,
           3.0
         ],
-        "Direction": [
+        "direction": [
           4.0,
           5.0,
           6.0
@@ -235,8 +215,7 @@
   },
   "Rect": {
     "value": {
-      "Type": "Rect",
-      "Value": [
+      "Rect": [
         [
           0.0,
           5.0
@@ -251,8 +230,7 @@
   },
   "Region3int16": {
     "value": {
-      "Type": "Region3int16",
-      "Value": [
+      "Region3int16": [
         [
           -10,
           -5,
@@ -269,15 +247,23 @@
   },
   "String": {
     "value": {
-      "Type": "String",
-      "Value": "Hello, world!"
+      "String": "Hello, world!"
     },
     "ty": "String"
   },
+  "Tags": {
+    "value": {
+      "Tags": [
+        "foo",
+        "con'fusion?!",
+        "bar"
+      ]
+    },
+    "ty": "Tags"
+  },
   "UDim": {
     "value": {
-      "Type": "UDim",
-      "Value": [
+      "UDim": [
         1.0,
         32
       ]
@@ -286,8 +272,7 @@
   },
   "UDim2": {
     "value": {
-      "Type": "UDim2",
-      "Value": [
+      "UDim2": [
         [
           -1.0,
           100
@@ -302,8 +287,7 @@
   },
   "Vector2": {
     "value": {
-      "Type": "Vector2",
-      "Value": [
+      "Vector2": [
         -50.0,
         50.0
       ]
@@ -312,8 +296,7 @@
   },
   "Vector2int16": {
     "value": {
-      "Type": "Vector2int16",
-      "Value": [
+      "Vector2int16": [
         -300,
         300
       ]
@@ -322,8 +305,7 @@
   },
   "Vector3": {
     "value": {
-      "Type": "Vector3",
-      "Value": [
+      "Vector3": [
         -300.0,
         0.0,
         1500.0
@@ -333,8 +315,7 @@
   },
   "Vector3int16": {
     "value": {
-      "Type": "Vector3int16",
-      "Value": [
+      "Vector3int16": [
         60,
         37,
         -450

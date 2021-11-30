@@ -146,8 +146,7 @@ return function()
 			id = "VALUE",
 			changedProperties = {
 				Value = {
-					Type = "String",
-					Value = "WORLD",
+					String = "WORLD",
 				},
 			},
 		})
@@ -176,8 +175,7 @@ return function()
 			changedClassName = "StringValue",
 			changedProperties = {
 				Value = {
-					Type = "String",
-					Value = "I am Root",
+					String = "I am Root",
 				},
 			},
 		})

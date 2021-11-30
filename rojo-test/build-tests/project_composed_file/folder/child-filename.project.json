@@ -1,0 +1,6 @@
+{
+	"name": "child-projectname",
+	"tree": {
+		"$className": "Folder"
+	}
+}

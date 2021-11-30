@@ -80,8 +80,7 @@ return function()
 				Name = "Value",
 				Properties = {
 					Value = {
-						Type = "String",
-						Value = "Hello, world!",
+						String = "Hello, world!",
 					},
 				},
 				Children = {},
@@ -107,8 +106,9 @@ return function()
 
 		local patchProperty = update.changedProperties["Value"]
 		expect(patchProperty).to.be.a("table")
-		expect(patchProperty.Type).to.equal("String")
-		expect(patchProperty.Value).to.equal("Hello, world!")
+		local ty, value = next(patchProperty)
+		expect(ty).to.equal("String")
+		expect(value).to.equal("Hello, world!")
 	end)
 
 	it("should generate an empty patch if no properties changed", function()
@@ -119,8 +119,7 @@ return function()
 				Name = "Value",
 				Properties = {
 					Value = {
-						Type = "String",
-						Value = "Hello, world!",
+						String = "Hello, world!",
 					},
 				},
 				Children = {},
@@ -145,8 +144,7 @@ return function()
 				Name = "Folder",
 				Properties = {
 					FAKE_PROPERTY = {
-						Type = "String",
-						Value = "Hello, world!",
+						String = "Hello, world!",
 					},
 				},
 				Children = {},
@@ -183,8 +181,7 @@ return function()
 					-- heat_xml is a serialization-only property that is not
 					-- exposed to Lua.
 					heat_xml = {
-						Type = "Float32",
-						Value = 5,
+						Float32 = 5,
 					},
 				},
 				Children = {},

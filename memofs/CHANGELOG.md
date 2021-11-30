@@ -2,6 +2,9 @@
 
 ## Unreleased Changes
 
+## 0.2.0 (2021-08-23)
+* Updated to `crossbeam-channel` 0.5.1.
+
 ## 0.1.3 (2020-11-19)
 * Added `set_watch_enabled` to `Vfs` and `VfsLock` to allow turning off file watching.
 

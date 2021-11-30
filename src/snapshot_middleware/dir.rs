@@ -4,9 +4,13 @@ use memofs::{DirEntry, IoResultExt, Vfs};
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
-use super::{meta_file::DirectoryMetadata, middleware::SnapshotInstanceResult, snapshot_from_vfs};
+use super::{meta_file::DirectoryMetadata, snapshot_from_vfs};
 
-pub fn snapshot_dir(context: &InstanceContext, vfs: &Vfs, path: &Path) -> SnapshotInstanceResult {
+pub fn snapshot_dir(
+    context: &InstanceContext,
+    vfs: &Vfs,
+    path: &Path,
+) -> anyhow::Result<Option<InstanceSnapshot>> {
     let passes_filter_rules = |child: &DirEntry| {
         context
             .path_ignore_rules

@@ -1,23 +1,11 @@
-use futures::{future, Future};
 use hyper::{header::CONTENT_TYPE, Body, Response, StatusCode};
 use serde::Serialize;
 
-/// Respond to a request with JSON and the given status code.
-pub fn json<T: Serialize>(
-    value: T,
-    code: StatusCode,
-) -> Box<dyn Future<Item = hyper::Response<hyper::Body>, Error = hyper::Error> + Send> {
-    Box::new(future::ok(response_json(value, code)))
-}
-
-/// Respond to a request with a 200 OK response containing JSON.
-pub fn json_ok<T: Serialize>(
-    value: T,
-) -> Box<dyn Future<Item = hyper::Response<hyper::Body>, Error = hyper::Error> + Send> {
+pub fn json_ok<T: Serialize>(value: T) -> Response<Body> {
     json(value, StatusCode::OK)
 }
 
-fn response_json<T: Serialize>(value: T, code: StatusCode) -> Response<Body> {
+pub fn json<T: Serialize>(value: T, code: StatusCode) -> Response<Body> {
     let serialized = match serde_json::to_string(&value) {
         Ok(v) => v,
         Err(err) => {
