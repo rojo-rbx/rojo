@@ -1,3 +1,5 @@
+local RunService = game:GetService("RunService")
+
 if not plugin then
 	return
 end
@@ -16,7 +18,7 @@ local Config = require(script.Config)
 local App = require(script.App)
 
 local app = Roact.createElement(App, {
-	plugin = plugin
+	plugin = plugin,
 })
 local tree = Roact.mount(app, nil, "Rojo UI")
 
@@ -29,7 +31,9 @@ function unmount()
 end
 
 plugin.Unloading:Connect(unmount)
-game:BindToClose(unmount)
+if RunService:IsServer() then
+	game:BindToClose(unmount)
+end
 
 if Config.isDevBuild then
 	local TestEZ = require(script.Parent.TestEZ)
