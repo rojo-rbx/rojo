@@ -45,15 +45,27 @@ impl UploadCommand {
         
 		// Validate differently depending on if we're trying to use open cloud or not.
 		// If there's a better way of doing this, please do so.
-		let api_key = if use_open_cloud { self.api_key.context(
-			"Rojo could not find your api key. Please pass one via --api_key"
-		)? } else { "undefined".to_string() };
-		let universe_id = if use_open_cloud { self.universe_id.context(
-			"A Universe id is required when using the Open Cloud API. Please pass one via --universe_id"
-		)? } else { 0 };
-		let cookie = if use_open_cloud { "undefined".to_string() } else { self.cookie.or_else(get_auth_cookie).context(
-			"Rojo could not find your Roblox auth cookie. Please pass one via --cookie."
-		)? };
+		let api_key = if use_open_cloud { 
+			self.api_key.context(
+				"Rojo could not find your api key. Please pass one via --api_key"
+			)?
+		} else { 
+			"undefined".to_string()
+		};
+		let universe_id = if use_open_cloud { 
+			self.universe_id.context(
+				"A Universe id is required when using the Open Cloud API. Please pass one via --universe_id"
+			)?
+		} else { 
+			0
+		};
+		let cookie = if use_open_cloud { 
+			"undefined".to_string() 
+		} else { 
+			self.cookie.or_else(get_auth_cookie).context(
+				"Rojo could not find your Roblox auth cookie. Please pass one via --cookie."
+			)? 
+		};
 
         let vfs = Vfs::new_default();
 
