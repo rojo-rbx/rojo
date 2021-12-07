@@ -178,7 +178,7 @@ fn do_upload_open_cloud(buffer: Vec<u8>, universe_id: u64, asset_id: u64, api_ke
             .header("x-api-key", api_key)
             .header(CONTENT_TYPE, "application/xml")
             .header(ACCEPT, "application/json")
-            .body(buffer.clone())
+            .body(buffer)
     };
 
     log::debug!("Uploading to Roblox...");
