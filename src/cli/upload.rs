@@ -46,9 +46,8 @@ impl UploadCommand {
 		// Validate differently depending on if we're trying to use open cloud or not.
 		// If there's a better way of doing this, please do so.
 		let api_key = if use_open_cloud { 
-			self.api_key.context(
-				"Rojo could not find your api key. Please pass one via --api_key"
-			)?
+            self.api_key
+                .context("Rojo could not find your api key. Please pass one via --api_key")?
 		} else { 
 			"undefined".to_string()
 		};
@@ -63,7 +62,7 @@ impl UploadCommand {
 			"undefined".to_string() 
 		} else { 
 			self.cookie.or_else(get_auth_cookie).context(
-				"Rojo could not find your Roblox auth cookie. Please pass one via --cookie."
+                "Rojo could not find your Roblox auth cookie. Please pass one via --cookie.",
 			)? 
 		};
 
@@ -163,11 +162,15 @@ fn do_upload(buffer: Vec<u8>, asset_id: u64, cookie: &str) -> anyhow::Result<()>
 /// Implementation of do_upload that supports the new open cloud api.
 /// I'm sure there's a better of doing this. Please correct it if so.
 /// see https://developer.roblox.com/en-us/articles/open-cloud
-fn do_upload_open_cloud(buffer: Vec<u8>, universe_id: u64, asset_id: u64, api_key: &str) -> anyhow::Result<()> {
+fn do_upload_open_cloud(
+    buffer: Vec<u8>,
+    universe_id: u64,
+    asset_id: u64,
+    api_key: &str,
+) -> anyhow::Result<()> {
     let url = format!(
         "https://apis.roblox.com/universes/v1/{}/places/{}/versions?versionType=Published",
-		universe_id,
-        asset_id
+        universe_id, asset_id
     );
 
     let client = reqwest::Client::new();
