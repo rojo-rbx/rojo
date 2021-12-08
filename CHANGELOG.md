@@ -1,6 +1,7 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Added support for the new Open Cloud API when uploading. ([#486])
 * Fixed Rojo's interactions with properties enabled by FFlags that are not yet enabled. ([#493])
 * Improved output in Roblox Studio plugin when bad property data is encountered.
 * Reintroduced support for CFrame shorthand syntax in Rojo project and `.meta.json` files, matching Rojo 6. ([#430])
