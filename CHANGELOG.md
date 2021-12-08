@@ -8,6 +8,7 @@
 * Connection settings are now remembered when reconnecting in Roblox Studio. ([#500])
 * Updated reflection database to Roblox v503.
 
+[#486]: https://github.com/rojo-rbx/rojo/issues/486
 [#430]: https://github.com/rojo-rbx/rojo/issues/430
 [#493]: https://github.com/rojo-rbx/rojo/pull/493
 [#500]: https://github.com/rojo-rbx/rojo/pull/500
