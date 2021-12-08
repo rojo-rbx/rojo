@@ -1,6 +1,7 @@
 use std::{
     collections::{BTreeMap, HashMap, HashSet},
     fs, io,
+	net::IpAddr,
     path::{Path, PathBuf},
 };
 
@@ -66,6 +67,11 @@ pub struct Project {
     /// Rojo server from Roblox Studio.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub game_id: Option<u64>,
+
+	/// If specified, this address will be used in place of the default address
+	/// As long as --address is unprovided.
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub serve_address: Option<IpAddr>,
 
     /// A list of globs, relative to the folder the project file is in, that
     /// match files that should be excluded if Rojo encounters them.
