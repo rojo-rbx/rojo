@@ -24,13 +24,13 @@ pub struct UploadCommand {
     #[structopt(long)]
     pub cookie: Option<String>,
 
-	/// Used for the new Open Cloud API. Still experimental.
-	#[structopt(long = "api_key")]
-	pub api_key: Option<String>,
+    /// Used for the new Open Cloud API. Still experimental.
+    #[structopt(long = "api_key")]
+    pub api_key: Option<String>,
 
-	/// Required when using the Open Cloud API.
-	#[structopt(long = "universe_id")]
-	pub universe_id: Option<u64>,
+    /// Required when using the Open Cloud API.
+    #[structopt(long = "universe_id")]
+    pub universe_id: Option<u64>,
 
     /// Asset ID to upload to.
     #[structopt(long = "asset_id")]
@@ -41,30 +41,30 @@ impl UploadCommand {
     pub fn run(self) -> Result<(), anyhow::Error> {
         let project_path = resolve_path(&self.project);
 
-		let use_open_cloud = self.api_key.is_some();
-        
-		// Validate differently depending on if we're trying to use open cloud or not.
-		// If there's a better way of doing this, please do so.
-		let api_key = if use_open_cloud { 
+        let use_open_cloud = self.api_key.is_some();
+
+        // Validate differently depending on if we're trying to use open cloud or not.
+        // If there's a better way of doing this, please do so.
+        let api_key = if use_open_cloud {
             self.api_key
                 .context("Rojo could not find your api key. Please pass one via --api_key")?
-		} else { 
-			"undefined".to_string()
-		};
-		let universe_id = if use_open_cloud { 
-			self.universe_id.context(
+        } else {
+            "undefined".to_string()
+        };
+        let universe_id = if use_open_cloud {
+            self.universe_id.context(
 				"A Universe id is required when using the Open Cloud API. Please pass one via --universe_id"
 			)?
-		} else { 
-			0
-		};
-		let cookie = if use_open_cloud { 
-			"undefined".to_string() 
-		} else { 
-			self.cookie.or_else(get_auth_cookie).context(
+        } else {
+            0
+        };
+        let cookie = if use_open_cloud {
+            "undefined".to_string()
+        } else {
+            self.cookie.or_else(get_auth_cookie).context(
                 "Rojo could not find your Roblox auth cookie. Please pass one via --cookie.",
-			)? 
-		};
+            )?
+        };
 
         let vfs = Vfs::new_default();
 
@@ -79,15 +79,15 @@ impl UploadCommand {
             _ => vec![root.referent()],
         };
 
-		let mut buffer = Vec::new();
+        let mut buffer = Vec::new();
 
         log::trace!("Encoding binary model");
         rbx_binary::to_writer(&mut buffer, tree.inner(), &encode_ids)?;
-		if use_open_cloud {
-			return do_upload_open_cloud(buffer, universe_id, self.asset_id, &api_key);
-		} else {
-			return do_upload(buffer, self.asset_id, &cookie);
-		}
+        if use_open_cloud {
+            return do_upload_open_cloud(buffer, universe_id, self.asset_id, &api_key);
+        } else {
+            return do_upload(buffer, self.asset_id, &cookie);
+        }
     }
 }
 
@@ -187,8 +187,8 @@ fn do_upload_open_cloud(
     log::debug!("Uploading to Roblox...");
     let mut response = build_request().send()?;
 
-	// Previously would've attempted to complete a CSRF challenge.
-	// That should not be required using this API.(hopefully)
+    // Previously would've attempted to complete a CSRF challenge.
+    // That should not be required using this API.(hopefully)
 
     let status = response.status();
     if !status.is_success() {
