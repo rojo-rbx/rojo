@@ -24,11 +24,11 @@ pub struct UploadCommand {
     #[structopt(long)]
     pub cookie: Option<String>,
 
-    /// Used for the new Open Cloud API. Still experimental.
+    /// API key obtained from create.roblox.com/credentials. Rojo will use the Open Cloud API when this is provided. Only supports uploading to a place.
     #[structopt(long = "api_key")]
     pub api_key: Option<String>,
 
-    /// Required when using the Open Cloud API.
+    /// The Universe ID of the given place. Required when using the Open Cloud API.
     #[structopt(long = "universe_id")]
     pub universe_id: Option<u64>,
 
@@ -40,31 +40,6 @@ pub struct UploadCommand {
 impl UploadCommand {
     pub fn run(self) -> Result<(), anyhow::Error> {
         let project_path = resolve_path(&self.project);
-
-        let use_open_cloud = self.api_key.is_some();
-
-        // Validate differently depending on if we're trying to use open cloud or not.
-        // If there's a better way of doing this, please do so.
-        let api_key = if use_open_cloud {
-            self.api_key
-                .context("Rojo could not find your api key. Please pass one via --api_key")?
-        } else {
-            "undefined".to_string()
-        };
-        let universe_id = if use_open_cloud {
-            self.universe_id.context(
-				"A Universe id is required when using the Open Cloud API. Please pass one via --universe_id"
-			)?
-        } else {
-            0
-        };
-        let cookie = if use_open_cloud {
-            "undefined".to_string()
-        } else {
-            self.cookie.or_else(get_auth_cookie).context(
-                "Rojo could not find your Roblox auth cookie. Please pass one via --cookie.",
-            )?
-        };
 
         let vfs = Vfs::new_default();
 
@@ -83,10 +58,35 @@ impl UploadCommand {
 
         log::trace!("Encoding binary model");
         rbx_binary::to_writer(&mut buffer, tree.inner(), &encode_ids)?;
-        if use_open_cloud {
-            return do_upload_open_cloud(buffer, universe_id, self.asset_id, &api_key);
-        } else {
-            return do_upload(buffer, self.asset_id, &cookie);
+
+        match (self.cookie, self.api_key, self.universe_id) {
+            (cookie, None, universe) => {
+                // using legacy. notify if universe is provided.
+                if universe.is_some() {
+                    log::warn!(
+                        "--universe_id was provided but is ignored when using legacy upload"
+                    );
+                }
+
+                let cookie = cookie.or_else(get_auth_cookie).context(
+                    "Rojo could not find your Roblox auth cookie. Please pass one via --cookie.",
+                )?;
+                do_upload(buffer, self.asset_id, &cookie)
+            }
+
+            (cookie, Some(api_key), Some(universe_id)) => {
+                // using open cloud. notify if cookie is provided.
+                if cookie.is_some() {
+                    log::warn!("--cookie was provided but is ignored when using Open Cloud API");
+                }
+
+                do_upload_open_cloud(buffer, universe_id, self.asset_id, &api_key)
+            }
+
+            (_, Some(_), None) => {
+                // API key is provided, universe id is not.
+                bail!("--universe_id must be provided to use the Open Cloud API");
+            }
         }
     }
 }
@@ -160,7 +160,6 @@ fn do_upload(buffer: Vec<u8>, asset_id: u64, cookie: &str) -> anyhow::Result<()>
 }
 
 /// Implementation of do_upload that supports the new open cloud api.
-/// I'm sure there's a better of doing this. Please correct it if so.
 /// see https://developer.roblox.com/en-us/articles/open-cloud
 fn do_upload_open_cloud(
     buffer: Vec<u8>,
@@ -175,20 +174,14 @@ fn do_upload_open_cloud(
 
     let client = reqwest::Client::new();
 
-    let build_request = move || {
-        client
-            .post(&url)
-            .header("x-api-key", api_key)
-            .header(CONTENT_TYPE, "application/xml")
-            .header(ACCEPT, "application/json")
-            .body(buffer)
-    };
-
     log::debug!("Uploading to Roblox...");
-    let mut response = build_request().send()?;
-
-    // Previously would've attempted to complete a CSRF challenge.
-    // That should not be required using this API.(hopefully)
+    let mut response = client
+        .post(&url)
+        .header("x-api-key", api_key)
+        .header(CONTENT_TYPE, "application/xml")
+        .header(ACCEPT, "application/json")
+        .body(buffer)
+        .send()?;
 
     let status = response.status();
     if !status.is_success() {
