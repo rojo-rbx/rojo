@@ -1,6 +1,8 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+
+## [7.0.0] - December 10, 2021
 * Fixed Rojo's interactions with properties enabled by FFlags that are not yet enabled. ([#493])
 * Improved output in Roblox Studio plugin when bad property data is encountered.
 * Reintroduced support for CFrame shorthand syntax in Rojo project and `.meta.json` files, matching Rojo 6. ([#430])
@@ -10,6 +12,7 @@
 [#430]: https://github.com/rojo-rbx/rojo/issues/430
 [#493]: https://github.com/rojo-rbx/rojo/pull/493
 [#500]: https://github.com/rojo-rbx/rojo/pull/500
+[7.0.0]: https://github.com/rojo-rbx/rojo/releases/tag/v7.0.0
 
 ## [7.0.0-rc.3] - October 19, 2021
 This is the last release candidate for Rojo 7. In an effort to get Rojo 7 out the door, we'll be freezing features from here on out, something we should've done a couple months ago.
