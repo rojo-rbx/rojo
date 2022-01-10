@@ -1,5 +1,6 @@
 use std::{
-    fs, io,
+    fs,
+    io::{self, Read},
     path::{Path, PathBuf},
     process::Child,
 };
@@ -50,5 +51,17 @@ pub struct KillOnDrop(pub Child);
 impl Drop for KillOnDrop {
     fn drop(&mut self) {
         let _ = self.0.kill();
+
+        if let Some(mut stdout) = self.0.stdout.take() {
+            let mut output = Vec::new();
+            let _ = stdout.read_to_end(&mut output);
+            print!("{}", String::from_utf8_lossy(&output));
+        }
+
+        if let Some(mut stderr) = self.0.stderr.take() {
+            let mut output = Vec::new();
+            let _ = stderr.read_to_end(&mut output);
+            eprint!("{}", String::from_utf8_lossy(&output));
+        }
     }
 }

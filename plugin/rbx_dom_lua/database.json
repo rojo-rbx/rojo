@@ -1,9 +1,9 @@
 {
   "Version": [
     0,
-    503,
+    504,
     0,
-    5030338
+    5040410
   ],
   "Classes": {
     "ABTestService": {
@@ -12405,6 +12405,7 @@
       "Name": "GamepadService",
       "Tags": [
         "NotCreatable",
+        "NotReplicated",
         "Service"
       ],
       "Superclass": "Instance",
@@ -18991,6 +18992,40 @@
         }
       }
     },
+    "MarkerCurve": {
+      "Name": "MarkerCurve",
+      "Tags": [],
+      "Superclass": "Instance",
+      "Properties": {
+        "Length": {
+          "Name": "Length",
+          "Scriptability": "Read",
+          "DataType": {
+            "Value": "Int32"
+          },
+          "Tags": [
+            "NotReplicated",
+            "ReadOnly"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
+            }
+          }
+        }
+      },
+      "DefaultProperties": {
+        "AttributesSerialize": {
+          "BinaryString": ""
+        },
+        "SourceAssetId": {
+          "Int64": -1
+        },
+        "Tags": {
+          "BinaryString": ""
+        }
+      }
+    },
     "MarketplaceService": {
       "Name": "MarketplaceService",
       "Tags": [
@@ -19012,11 +19047,13 @@
       "Properties": {
         "Brick": {
           "Name": "Brick",
-          "Scriptability": "ReadWrite",
+          "Scriptability": "None",
           "DataType": {
             "Value": "Ref"
           },
-          "Tags": [],
+          "Tags": [
+            "NotScriptable"
+          ],
           "Kind": {
             "Canonical": {
               "Serialization": "Serializes"
@@ -19025,11 +19062,13 @@
         },
         "Cobblestone": {
           "Name": "Cobblestone",
-          "Scriptability": "ReadWrite",
+          "Scriptability": "None",
           "DataType": {
             "Value": "Ref"
           },
-          "Tags": [],
+          "Tags": [
+            "NotScriptable"
+          ],
           "Kind": {
             "Canonical": {
               "Serialization": "Serializes"
@@ -19038,11 +19077,13 @@
         },
         "Concrete": {
           "Name": "Concrete",
-          "Scriptability": "ReadWrite",
+          "Scriptability": "None",
           "DataType": {
             "Value": "Ref"
           },
-          "Tags": [],
+          "Tags": [
+            "NotScriptable"
+          ],
           "Kind": {
             "Canonical": {
               "Serialization": "Serializes"
@@ -19051,11 +19092,13 @@
         },
         "CorrodedMetal": {
           "Name": "CorrodedMetal",
-          "Scriptability": "ReadWrite",
+          "Scriptability": "None",
           "DataType": {
             "Value": "Ref"
           },
-          "Tags": [],
+          "Tags": [
+            "NotScriptable"
+          ],
           "Kind": {
             "Canonical": {
               "Serialization": "Serializes"
@@ -19064,11 +19107,13 @@
         },
         "DiamondPlate": {
           "Name": "DiamondPlate",
-          "Scriptability": "ReadWrite",
+          "Scriptability": "None",
           "DataType": {
             "Value": "Ref"
           },
-          "Tags": [],
+          "Tags": [
+            "NotScriptable"
+          ],
           "Kind": {
             "Canonical": {
               "Serialization": "Serializes"
@@ -19077,11 +19122,13 @@
         },
         "Fabric": {
           "Name": "Fabric",
-          "Scriptability": "ReadWrite",
+          "Scriptability": "None",
           "DataType": {
             "Value": "Ref"
           },
-          "Tags": [],
+          "Tags": [
+            "NotScriptable"
+          ],
           "Kind": {
             "Canonical": {
               "Serialization": "Serializes"
@@ -19090,11 +19137,13 @@
         },
         "Foil": {
           "Name": "Foil",
-          "Scriptability": "ReadWrite",
+          "Scriptability": "None",
           "DataType": {
             "Value": "Ref"
           },
-          "Tags": [],
+          "Tags": [
+            "NotScriptable"
+          ],
           "Kind": {
             "Canonical": {
               "Serialization": "Serializes"
@@ -19103,11 +19152,13 @@
         },
         "Granite": {
           "Name": "Granite",
-          "Scriptability": "ReadWrite",
+          "Scriptability": "None",
           "DataType": {
             "Value": "Ref"
           },
-          "Tags": [],
+          "Tags": [
+            "NotScriptable"
+          ],
           "Kind": {
             "Canonical": {
               "Serialization": "Serializes"
@@ -19116,11 +19167,13 @@
         },
         "Grass": {
           "Name": "Grass",
-          "Scriptability": "ReadWrite",
+          "Scriptability": "None",
           "DataType": {
             "Value": "Ref"
           },
-          "Tags": [],
+          "Tags": [
+            "NotScriptable"
+          ],
           "Kind": {
             "Canonical": {
               "Serialization": "Serializes"
@@ -19129,11 +19182,13 @@
         },
         "Ice": {
           "Name": "Ice",
-          "Scriptability": "ReadWrite",
+          "Scriptability": "None",
           "DataType": {
             "Value": "Ref"
           },
-          "Tags": [],
+          "Tags": [
+            "NotScriptable"
+          ],
           "Kind": {
             "Canonical": {
               "Serialization": "Serializes"
@@ -19142,11 +19197,13 @@
         },
         "Marble": {
           "Name": "Marble",
-          "Scriptability": "ReadWrite",
+          "Scriptability": "None",
           "DataType": {
             "Value": "Ref"
           },
-          "Tags": [],
+          "Tags": [
+            "NotScriptable"
+          ],
           "Kind": {
             "Canonical": {
               "Serialization": "Serializes"
@@ -19155,11 +19212,13 @@
         },
         "Metal": {
           "Name": "Metal",
-          "Scriptability": "ReadWrite",
+          "Scriptability": "None",
           "DataType": {
             "Value": "Ref"
           },
-          "Tags": [],
+          "Tags": [
+            "NotScriptable"
+          ],
           "Kind": {
             "Canonical": {
               "Serialization": "Serializes"
@@ -19168,11 +19227,13 @@
         },
         "Pebble": {
           "Name": "Pebble",
-          "Scriptability": "ReadWrite",
+          "Scriptability": "None",
           "DataType": {
             "Value": "Ref"
           },
-          "Tags": [],
+          "Tags": [
+            "NotScriptable"
+          ],
           "Kind": {
             "Canonical": {
               "Serialization": "Serializes"
@@ -19181,11 +19242,13 @@
         },
         "Plastic": {
           "Name": "Plastic",
-          "Scriptability": "ReadWrite",
+          "Scriptability": "None",
           "DataType": {
             "Value": "Ref"
           },
-          "Tags": [],
+          "Tags": [
+            "NotScriptable"
+          ],
           "Kind": {
             "Canonical": {
               "Serialization": "Serializes"
@@ -19194,11 +19257,13 @@
         },
         "Sand": {
           "Name": "Sand",
-          "Scriptability": "ReadWrite",
+          "Scriptability": "None",
           "DataType": {
             "Value": "Ref"
           },
-          "Tags": [],
+          "Tags": [
+            "NotScriptable"
+          ],
           "Kind": {
             "Canonical": {
               "Serialization": "Serializes"
@@ -19207,11 +19272,13 @@
         },
         "Slate": {
           "Name": "Slate",
-          "Scriptability": "ReadWrite",
+          "Scriptability": "None",
           "DataType": {
             "Value": "Ref"
           },
-          "Tags": [],
+          "Tags": [
+            "NotScriptable"
+          ],
           "Kind": {
             "Canonical": {
               "Serialization": "Serializes"
@@ -19220,11 +19287,13 @@
         },
         "SmoothPlastic": {
           "Name": "SmoothPlastic",
-          "Scriptability": "ReadWrite",
+          "Scriptability": "None",
           "DataType": {
             "Value": "Ref"
           },
-          "Tags": [],
+          "Tags": [
+            "NotScriptable"
+          ],
           "Kind": {
             "Canonical": {
               "Serialization": "Serializes"
@@ -19233,11 +19302,13 @@
         },
         "Wood": {
           "Name": "Wood",
-          "Scriptability": "ReadWrite",
+          "Scriptability": "None",
           "DataType": {
             "Value": "Ref"
           },
-          "Tags": [],
+          "Tags": [
+            "NotScriptable"
+          ],
           "Kind": {
             "Canonical": {
               "Serialization": "Serializes"
@@ -19246,11 +19317,13 @@
         },
         "WoodPlanks": {
           "Name": "WoodPlanks",
-          "Scriptability": "ReadWrite",
+          "Scriptability": "None",
           "DataType": {
             "Value": "Ref"
           },
-          "Tags": [],
+          "Tags": [
+            "NotScriptable"
+          ],
           "Kind": {
             "Canonical": {
               "Serialization": "Serializes"
@@ -20025,23 +20098,6 @@
           "Scriptability": "None",
           "DataType": {
             "Value": "String"
-          },
-          "Tags": [
-            "Hidden",
-            "NotReplicated",
-            "ReadOnly"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "DoesNotSerialize"
-            }
-          }
-        },
-        "Valid": {
-          "Name": "Valid",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Bool"
           },
           "Tags": [
             "Hidden",
@@ -23091,6 +23147,19 @@
               "Serialization": "Serializes"
             }
           }
+        },
+        "ModifierId": {
+          "Name": "ModifierId",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "String"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
         }
       },
       "DefaultProperties": {
@@ -23099,6 +23168,9 @@
         },
         "IsBidirectional": {
           "Bool": true
+        },
+        "ModifierId": {
+          "String": ""
         },
         "SourceAssetId": {
           "Int64": -1
@@ -27272,6 +27344,107 @@
         }
       }
     },
+    "RigidConstraint": {
+      "Name": "RigidConstraint",
+      "Tags": [
+        "NotBrowsable"
+      ],
+      "Superclass": "Constraint",
+      "Properties": {
+        "Broken": {
+          "Name": "Broken",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [
+            "NotBrowsable"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "DestructionEnabled": {
+          "Name": "DestructionEnabled",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [
+            "NotBrowsable"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "DestructionForce": {
+          "Name": "DestructionForce",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Float32"
+          },
+          "Tags": [
+            "NotBrowsable"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "DestructionTorque": {
+          "Name": "DestructionTorque",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Float32"
+          },
+          "Tags": [
+            "NotBrowsable"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        }
+      },
+      "DefaultProperties": {
+        "AttributesSerialize": {
+          "BinaryString": ""
+        },
+        "Broken": {
+          "Bool": false
+        },
+        "Color": {
+          "Int32": 194
+        },
+        "DestructionEnabled": {
+          "Bool": false
+        },
+        "DestructionForce": {
+          "Float32": null
+        },
+        "DestructionTorque": {
+          "Float32": null
+        },
+        "Enabled": {
+          "Bool": true
+        },
+        "SourceAssetId": {
+          "Int64": -1
+        },
+        "Tags": {
+          "BinaryString": ""
+        },
+        "Visible": {
+          "Bool": false
+        }
+      }
+    },
     "RobloxPluginGuiService": {
       "Name": "RobloxPluginGuiService",
       "Tags": [
@@ -28336,6 +28509,17 @@
           }
         }
       },
+      "DefaultProperties": {}
+    },
+    "ScriptRegistrationService": {
+      "Name": "ScriptRegistrationService",
+      "Tags": [
+        "NotCreatable",
+        "NotReplicated",
+        "Service"
+      ],
+      "Superclass": "Instance",
+      "Properties": {},
       "DefaultProperties": {}
     },
     "ScriptService": {
@@ -33930,6 +34114,22 @@
             }
           }
         },
+        "Doc View Code Background Color": {
+          "Name": "Doc View Code Background Color",
+          "Scriptability": "None",
+          "DataType": {
+            "Value": "Color3"
+          },
+          "Tags": [
+            "Hidden",
+            "NotReplicated"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
+            }
+          }
+        },
         "Drag Multiple Parts As Single Part": {
           "Name": "Drag Multiple Parts As Single Part",
           "Scriptability": "ReadWrite",
@@ -33946,6 +34146,19 @@
         "Enable Autocomplete": {
           "Name": "Enable Autocomplete",
           "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "Enable Autocomplete Doc View": {
+          "Name": "Enable Autocomplete Doc View",
+          "Scriptability": "None",
           "DataType": {
             "Value": "Bool"
           },
@@ -34036,6 +34249,19 @@
         },
         "Enable Signature Help": {
           "Name": "Enable Signature Help",
+          "Scriptability": "None",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "Enable Signature Help Doc View": {
+          "Name": "Enable Signature Help Doc View",
           "Scriptability": "None",
           "DataType": {
             "Value": "Bool"
@@ -43465,7 +43691,23 @@
         "Service"
       ],
       "Superclass": "Instance",
-      "Properties": {},
+      "Properties": {
+        "ScriptCollabEnabled": {
+          "Name": "ScriptCollabEnabled",
+          "Scriptability": "None",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [
+            "Hidden"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
+            }
+          }
+        }
+      },
       "DefaultProperties": {}
     },
     "VideoFrame": {
@@ -44036,6 +44278,7 @@
     "VoiceChatService": {
       "Name": "VoiceChatService",
       "Tags": [
+        "Deprecated",
         "NotCreatable",
         "Service"
       ],
@@ -44410,7 +44653,9 @@
           ],
           "Kind": {
             "Canonical": {
-              "Serialization": "DoesNotSerialize"
+              "Serialization": {
+                "SerializesAs": "Part0Internal"
+              }
             }
           }
         },
@@ -44438,7 +44683,9 @@
           ],
           "Kind": {
             "Canonical": {
-              "Serialization": "DoesNotSerialize"
+              "Serialization": {
+                "SerializesAs": "Part1Internal"
+              }
             }
           }
         },
@@ -44521,7 +44768,7 @@
         },
         "CollisionGroups": {
           "Name": "CollisionGroups",
-          "Scriptability": "Custom",
+          "Scriptability": "None",
           "DataType": {
             "Value": "String"
           },
@@ -47889,6 +48136,7 @@
         "DebuggerCurrentLine": 26,
         "DebuggerErrorLine": 27,
         "Default": 0,
+        "DocViewCodeBackground": 38,
         "Error": 23,
         "FindSelectionBackground": 20,
         "Function": 11,
@@ -47932,48 +48180,49 @@
     "StudioStyleGuideColor": {
       "name": "StudioStyleGuideColor",
       "items": {
-        "AttributeCog": 115,
+        "AttributeCog": 116,
         "Border": 31,
         "BrightText": 39,
         "Button": 17,
-        "ButtonBorder": 87,
-        "ButtonText": 88,
+        "ButtonBorder": 88,
+        "ButtonText": 89,
         "CategoryItem": 24,
-        "ChatIncomingBgColor": 81,
-        "ChatIncomingTextColor": 82,
-        "ChatModeratedMessageColor": 85,
-        "ChatOutgoingBgColor": 83,
-        "ChatOutgoingTextColor": 84,
-        "CheckedFieldBackground": 90,
-        "CheckedFieldBorder": 91,
-        "CheckedFieldIndicator": 92,
+        "ChatIncomingBgColor": 82,
+        "ChatIncomingTextColor": 83,
+        "ChatModeratedMessageColor": 86,
+        "ChatOutgoingBgColor": 84,
+        "ChatOutgoingTextColor": 85,
+        "CheckedFieldBackground": 91,
+        "CheckedFieldBorder": 92,
+        "CheckedFieldIndicator": 93,
         "ColorPickerFrame": 29,
         "CurrentMarker": 30,
         "Dark": 34,
-        "DebuggerCurrentLine": 63,
-        "DebuggerErrorLine": 64,
-        "DialogButton": 96,
-        "DialogButtonBorder": 98,
-        "DialogButtonText": 97,
-        "DialogMainButton": 99,
-        "DialogMainButtonText": 100,
-        "DiffFilePathBackground": 79,
-        "DiffFilePathBorder": 80,
-        "DiffFilePathText": 65,
-        "DiffLineNum": 74,
-        "DiffLineNumAdditionBackground": 77,
-        "DiffLineNumDeletionBackground": 78,
-        "DiffLineNumNoChangeBackground": 76,
-        "DiffLineNumSeparatorBackground": 75,
-        "DiffTextAddition": 68,
-        "DiffTextAdditionBackground": 72,
-        "DiffTextDeletion": 69,
-        "DiffTextDeletionBackground": 73,
-        "DiffTextHunkInfo": 66,
-        "DiffTextNoChange": 67,
-        "DiffTextNoChangeBackground": 71,
-        "DiffTextSeparatorBackground": 70,
+        "DebuggerCurrentLine": 64,
+        "DebuggerErrorLine": 65,
+        "DialogButton": 97,
+        "DialogButtonBorder": 99,
+        "DialogButtonText": 98,
+        "DialogMainButton": 100,
+        "DialogMainButtonText": 101,
+        "DiffFilePathBackground": 80,
+        "DiffFilePathBorder": 81,
+        "DiffFilePathText": 66,
+        "DiffLineNum": 75,
+        "DiffLineNumAdditionBackground": 78,
+        "DiffLineNumDeletionBackground": 79,
+        "DiffLineNumNoChangeBackground": 77,
+        "DiffLineNumSeparatorBackground": 76,
+        "DiffTextAddition": 69,
+        "DiffTextAdditionBackground": 73,
+        "DiffTextDeletion": 70,
+        "DiffTextDeletionBackground": 74,
+        "DiffTextHunkInfo": 67,
+        "DiffTextNoChange": 68,
+        "DiffTextNoChangeBackground": 72,
+        "DiffTextSeparatorBackground": 71,
         "DimmedText": 40,
+        "DocViewCodeBackground": 63,
         "Dropdown": 2,
         "EmulatorBar": 27,
         "EmulatorDropDown": 28,
@@ -47986,12 +48235,12 @@
         "FilterButtonHover": 10,
         "GameSettingsTableItem": 25,
         "GameSettingsTooltip": 26,
-        "HeaderSection": 93,
-        "InfoBarWarningBackground": 101,
-        "InfoBarWarningText": 102,
+        "HeaderSection": 94,
+        "InfoBarWarningBackground": 102,
+        "InfoBarWarningText": 103,
         "InfoText": 44,
         "InputFieldBackground": 21,
-        "InputFieldBorder": 89,
+        "InputFieldBorder": 90,
         "Item": 22,
         "Light": 33,
         "LinkText": 41,
@@ -47999,46 +48248,46 @@
         "MainButton": 18,
         "MainText": 36,
         "Mid": 35,
-        "Midlight": 94,
+        "Midlight": 95,
         "Notification": 4,
         "RibbonButton": 19,
         "RibbonTab": 15,
         "RibbonTabTopBar": 16,
         "ScriptBackground": 47,
-        "ScriptBool": 107,
-        "ScriptBracket": 114,
+        "ScriptBool": 108,
+        "ScriptBracket": 115,
         "ScriptBuiltInFunction": 58,
         "ScriptComment": 56,
-        "ScriptEditorCurrentLine": 103,
+        "ScriptEditorCurrentLine": 104,
         "ScriptError": 60,
         "ScriptFindSelectionBackground": 51,
-        "ScriptFunction": 108,
-        "ScriptFunctionName": 112,
+        "ScriptFunction": 109,
+        "ScriptFunctionName": 113,
         "ScriptKeyword": 57,
-        "ScriptLocal": 109,
-        "ScriptLuauKeyword": 111,
+        "ScriptLocal": 110,
+        "ScriptLuauKeyword": 112,
         "ScriptMatchingWordSelectionBackground": 52,
-        "ScriptMethod": 104,
-        "ScriptNil": 106,
+        "ScriptMethod": 105,
+        "ScriptNil": 107,
         "ScriptNumber": 54,
         "ScriptOperator": 53,
-        "ScriptProperty": 105,
+        "ScriptProperty": 106,
         "ScriptRuler": 62,
         "ScriptSelectionBackground": 50,
         "ScriptSelectionText": 49,
-        "ScriptSelf": 110,
+        "ScriptSelf": 111,
         "ScriptSideWidget": 46,
         "ScriptString": 55,
         "ScriptText": 48,
-        "ScriptTodo": 113,
+        "ScriptTodo": 114,
         "ScriptWarning": 59,
         "ScriptWhitespace": 61,
         "ScrollBar": 5,
         "ScrollBarBackground": 6,
         "SensitiveText": 45,
-        "Separator": 86,
+        "Separator": 87,
         "Shadow": 32,
-        "StatusBar": 95,
+        "StatusBar": 96,
         "SubText": 37,
         "Tab": 8,
         "TabBar": 7,
