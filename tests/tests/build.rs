@@ -54,6 +54,8 @@ gen_build_tests! {
     txt_in_folder,
     unresolved_values,
     weldconstraint,
+    ieee_754_json_model,
+    ieee_754_project,
 }
 
 fn run_build_test(test_name: &str) {

@@ -1,0 +1,22 @@
+{
+  "name": "ieee_754",
+  "tree": {
+    "$className": "DataModel",
+    "Workspace": {
+      "$className": "Workspace",
+      "Test": {
+        "$className": "Part",
+        "$properties": {
+          "Size": {
+            "Type": "Vector3",
+            "Value": [
+              "-Infinity",
+              "+Infinity",
+              "NaN"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

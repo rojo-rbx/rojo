@@ -1,0 +1,13 @@
+{
+  "ClassName": "Part",
+  "Properties": {
+    "Size": {
+      "Type": "Vector3",
+      "Value": [
+        "-Infinity",
+        "+Infinity",
+        "NaN"
+      ]
+    }
+  }
+}

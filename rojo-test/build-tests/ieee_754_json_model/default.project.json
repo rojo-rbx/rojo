@@ -1,0 +1,12 @@
+{
+  "name": "ieee_754",
+  "tree": {
+    "$className": "DataModel",
+    "Workspace": {
+      "$className": "Workspace",
+      "Test": {
+        "$path": "test.model.json"
+      }
+    }
+  }
+}

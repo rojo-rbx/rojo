@@ -25,13 +25,13 @@ enum Error {
         source: io::Error,
     },
 
-    #[error("Error parsing Rojo project in path {}", .path.display())]
+    #[error("Json - Error parsing Rojo project in path {}", .path.display())]
     Json {
         source: json5::Error,
         path: PathBuf,
     },
 
-    #[error("Error parsing Rojo project in path {}", .path.display())]
+    #[error("Utf8 - Error parsing Rojo project in path {}", .path.display())]
     Utf8 {
         source: Utf8Error,
         path: PathBuf,
