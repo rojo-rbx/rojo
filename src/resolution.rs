@@ -209,7 +209,7 @@ mod test {
     use super::*;
 
     fn resolve(class: &str, prop: &str, json_value: &str) -> Variant {
-        let unresolved: UnresolvedValue = serde_json::from_str(json_value).unwrap();
+        let unresolved: UnresolvedValue = json5::from_str(json_value).unwrap();
         unresolved.resolve(class, prop).unwrap()
     }
 

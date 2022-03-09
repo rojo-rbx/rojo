@@ -1,4 +1,5 @@
 use std::path::Path;
+use std::str::from_utf8;
 
 use anyhow::Context;
 use maplit::hashmap;
@@ -19,7 +20,9 @@ pub fn snapshot_json(
     let name = path.file_name_trim_end(".json")?;
     let contents = vfs.read(path)?;
 
-    let value: serde_json::Value = serde_json::from_slice(&contents)
+    let string = from_utf8(&contents)?;
+
+    let value: serde_json::Value = json5::from_str(&string)
         .with_context(|| format!("File contains malformed JSON: {}", path.display()))?;
 
     let as_lua = json_to_lua(value).to_string();

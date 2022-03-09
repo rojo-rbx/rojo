@@ -2,6 +2,7 @@ use std::{
     collections::{BTreeMap, HashMap, HashSet},
     fs, io,
     path::{Path, PathBuf},
+    str::{from_utf8, Utf8Error}
 };
 
 use serde::{Deserialize, Serialize};
@@ -26,7 +27,13 @@ enum Error {
 
     #[error("Error parsing Rojo project in path {}", .path.display())]
     Json {
-        source: serde_json::Error,
+        source: json5::Error,
+        path: PathBuf,
+    },
+
+    #[error("Error parsing Rojo project in path {}", .path.display())]
+    Utf8 {
+        source: Utf8Error,
         path: PathBuf,
     },
 }
@@ -121,8 +128,12 @@ impl Project {
         contents: &[u8],
         project_file_location: &Path,
     ) -> Result<Self, ProjectError> {
+        let string = from_utf8(&contents).map_err(|source| Error::Utf8 {
+            source,
+            path: project_file_location.to_owned(),
+        })?;
         let mut project: Self =
-            serde_json::from_slice(&contents).map_err(|source| Error::Json {
+            json5::from_str(&string).map_err(|source| Error::Json {
                 source,
                 path: project_file_location.to_owned(),
             })?;
@@ -146,7 +157,7 @@ impl Project {
         let contents = fs::read_to_string(project_file_location)?;
 
         let mut project: Project =
-            serde_json::from_str(&contents).map_err(|source| Error::Json {
+            json5::from_str(&contents).map_err(|source| Error::Json {
                 source,
                 path: project_file_location.to_owned(),
             })?;

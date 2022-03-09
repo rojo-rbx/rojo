@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::HashMap, path::PathBuf};
+use std::{borrow::Cow, collections::HashMap, path::PathBuf, str::from_utf8};
 
 use anyhow::{format_err, Context};
 use serde::{Deserialize, Serialize};
@@ -24,7 +24,14 @@ pub struct AdjacentMetadata {
 
 impl AdjacentMetadata {
     pub fn from_slice(slice: &[u8], path: PathBuf) -> anyhow::Result<Self> {
-        let mut meta: Self = serde_json::from_slice(slice).with_context(|| {
+        let string = from_utf8(&slice).with_context(|| {
+            format!(
+                "File contained malformed .meta.json data: {}",
+                path.display()
+            )
+        })?;
+
+        let mut meta: Self = json5::from_str(&string).with_context(|| {
             format!(
                 "File contained malformed .meta.json data: {}",
                 path.display()
@@ -87,7 +94,14 @@ pub struct DirectoryMetadata {
 
 impl DirectoryMetadata {
     pub fn from_slice(slice: &[u8], path: PathBuf) -> anyhow::Result<Self> {
-        let mut meta: Self = serde_json::from_slice(slice).with_context(|| {
+        let string = from_utf8(&slice).with_context(|| {
+            format!(
+                "File contained malformed .meta.json data: {}",
+                path.display()
+            )
+        })?;
+
+        let mut meta: Self = json5::from_str(&string).with_context(|| {
             format!(
                 "File contained malformed init.meta.json data: {}",
                 path.display()

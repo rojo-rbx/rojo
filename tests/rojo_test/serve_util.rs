@@ -143,14 +143,14 @@ impl TestServeSession {
         let url = format!("http://localhost:{}/api/rojo", self.port);
         let body = reqwest::get(&url)?.text()?;
 
-        Ok(serde_json::from_str(&body).expect("Server returned malformed response"))
+        Ok(json5::from_str(&body).expect("Server returned malformed response"))
     }
 
     pub fn get_api_read(&self, id: Ref) -> Result<ReadResponse, reqwest::Error> {
         let url = format!("http://localhost:{}/api/read/{}", self.port, id);
         let body = reqwest::get(&url)?.text()?;
 
-        Ok(serde_json::from_str(&body).expect("Server returned malformed response"))
+        Ok(json5::from_str(&body).expect("Server returned malformed response"))
     }
 
     pub fn get_api_subscribe(

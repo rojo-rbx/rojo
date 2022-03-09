@@ -26,7 +26,7 @@ pub fn snapshot_json_model(
         return Ok(None);
     }
 
-    let instance: JsonModel = serde_json::from_str(contents_str)
+    let instance: JsonModel = json5::from_str(contents_str)
         .with_context(|| format!("File is not a valid JSON model: {}", path.display()))?;
 
     let mut snapshot = instance

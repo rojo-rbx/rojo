@@ -1,7 +1,16 @@
 //! Defines Rojo's HTTP API, all under /api. These endpoints generally return
 //! JSON.
 
-use std::{collections::HashMap, fs, path::PathBuf, str::FromStr, sync::Arc};
+use std::{
+    collections::HashMap,
+    fs,
+    path::PathBuf,
+    str::{
+        from_utf8,
+        FromStr
+    },
+    sync::Arc,
+};
 
 use hyper::{body, Body, Method, Request, Response, StatusCode};
 use rbx_dom_weak::types::Ref;
@@ -121,7 +130,17 @@ impl ApiService {
 
         let body = body::to_bytes(request.into_body()).await.unwrap();
 
-        let request: WriteRequest = match serde_json::from_slice(&body) {
+        let string = match from_utf8(&body) {
+            Ok(string) => string,
+            Err(err) => {
+                return json(
+                    ErrorResponse::bad_request(format!("Invalid body: {}", err)),
+                    StatusCode::BAD_REQUEST,
+                );
+            }
+        };
+
+        let request: WriteRequest = match json5::from_str(&string) {
             Ok(request) => request,
             Err(err) => {
                 return json(

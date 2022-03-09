@@ -48,7 +48,7 @@ pub fn snapshot_csv(
 
 /// Struct that holds any valid row from a Roblox CSV translation table.
 ///
-/// We manually deserialize into this table from CSV, but let serde_json handle
+/// We manually deserialize into this table from CSV, but let json5 handle
 /// serialization.
 #[derive(Debug, Default, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -118,7 +118,7 @@ fn convert_localization_csv(contents: &[u8]) -> Result<String, csv::Error> {
     }
 
     let encoded =
-        serde_json::to_string(&entries).expect("Could not encode JSON for localization table");
+        json5::to_string(&entries).expect("Could not encode JSON for localization table");
 
     Ok(encoded)
 }
