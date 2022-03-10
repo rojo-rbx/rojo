@@ -230,6 +230,6 @@ fn ieee_754() {
 
         let read_response = session.get_api_read(root_id).unwrap();
 
-        assert_yaml_snapshot!("ieee_754", redactions.redacted_yaml(read_response));
+        assert_yaml_snapshot!("ieee_754", read_response.intern_and_redact(&mut redactions, root_id));
     });
 }
