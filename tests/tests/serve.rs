@@ -228,6 +228,8 @@ fn ieee_754() {
         let info = session.get_api_rojo().unwrap();
         let root_id = info.root_instance_id;
 
-        assert_yaml_snapshot!("ieee_754", redactions.redacted_yaml(info));
+        let read_response = session.get_api_read(root_id).unwrap();
+
+        assert_yaml_snapshot!("ieee_754", redactions.redacted_yaml(read_response));
     });
 }

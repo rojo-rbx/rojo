@@ -1,0 +1,43 @@
+---
+source: tests/tests/serve.rs
+expression: redactions.redacted_yaml(read_response)
+
+---
+instances:
+  45332ade18f59965b8e74d5ddaa7c3bb:
+    Children: []
+    ClassName: Vector3Value
+    Id: 45332ade18f59965b8e74d5ddaa7c3bb
+    Metadata:
+      ignoreUnknownInstances: true
+    Name: Test
+    Parent: 99270e56992a363464c593e7ab553433
+    Properties:
+      Value:
+        Vector3:
+          - -.inf
+          - .inf
+          - .nan
+  99270e56992a363464c593e7ab553433:
+    Children:
+      - 45332ade18f59965b8e74d5ddaa7c3bb
+    ClassName: Workspace
+    Id: 99270e56992a363464c593e7ab553433
+    Metadata:
+      ignoreUnknownInstances: true
+    Name: Workspace
+    Parent: id-2
+    Properties: {}
+  id-2:
+    Children:
+      - 99270e56992a363464c593e7ab553433
+    ClassName: DataModel
+    Id: id-2
+    Metadata:
+      ignoreUnknownInstances: true
+    Name: ieee_754
+    Parent: "00000000000000000000000000000000"
+    Properties: {}
+messageCursor: 0
+sessionId: id-1
+
