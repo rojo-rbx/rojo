@@ -117,8 +117,7 @@ fn convert_localization_csv(contents: &[u8]) -> Result<String, csv::Error> {
         entries.push(entry);
     }
 
-    let encoded =
-        json5::to_string(&entries).expect("Could not encode JSON for localization table");
+    let encoded = json5::to_string(&entries).expect("Could not encode JSON for localization table");
 
     Ok(encoded)
 }

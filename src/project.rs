@@ -2,7 +2,7 @@ use std::{
     collections::{BTreeMap, HashMap, HashSet},
     fs, io,
     path::{Path, PathBuf},
-    str::{from_utf8, Utf8Error}
+    str::{from_utf8, Utf8Error},
 };
 
 use serde::{Deserialize, Serialize};
@@ -26,16 +26,10 @@ enum Error {
     },
 
     #[error("Json - Error parsing Rojo project in path {}", .path.display())]
-    Json {
-        source: json5::Error,
-        path: PathBuf,
-    },
+    Json { source: json5::Error, path: PathBuf },
 
     #[error("Utf8 - Error parsing Rojo project in path {}", .path.display())]
-    Utf8 {
-        source: Utf8Error,
-        path: PathBuf,
-    },
+    Utf8 { source: Utf8Error, path: PathBuf },
 }
 
 /// Contains all of the configuration for a Rojo-managed project.
@@ -132,11 +126,10 @@ impl Project {
             source,
             path: project_file_location.to_owned(),
         })?;
-        let mut project: Self =
-            json5::from_str(&string).map_err(|source| Error::Json {
-                source,
-                path: project_file_location.to_owned(),
-            })?;
+        let mut project: Self = json5::from_str(&string).map_err(|source| Error::Json {
+            source,
+            path: project_file_location.to_owned(),
+        })?;
 
         project.file_location = project_file_location.to_path_buf();
         project.check_compatibility();
@@ -156,11 +149,10 @@ impl Project {
     fn load_exact(project_file_location: &Path) -> Result<Self, Error> {
         let contents = fs::read_to_string(project_file_location)?;
 
-        let mut project: Project =
-            json5::from_str(&contents).map_err(|source| Error::Json {
-                source,
-                path: project_file_location.to_owned(),
-            })?;
+        let mut project: Project = json5::from_str(&contents).map_err(|source| Error::Json {
+            source,
+            path: project_file_location.to_owned(),
+        })?;
 
         project.file_location = project_file_location.to_path_buf();
         project.check_compatibility();

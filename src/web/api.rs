@@ -5,10 +5,7 @@ use std::{
     collections::HashMap,
     fs,
     path::PathBuf,
-    str::{
-        from_utf8,
-        FromStr
-    },
+    str::{from_utf8, FromStr},
     sync::Arc,
 };
 

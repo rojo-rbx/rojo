@@ -18,8 +18,8 @@ impl FmtProjectCommand {
         let project = Project::load_fuzzy(&self.project)?
             .context("A project file is required to run 'rojo fmt-project'")?;
 
-        let serialized = json5::to_string(&project)
-            .context("could not re-encode project file as JSON")?;
+        let serialized =
+            json5::to_string(&project).context("could not re-encode project file as JSON")?;
 
         fs_err::write(&project.file_location, &serialized)
             .context("could not write back to project file")?;
