@@ -5,6 +5,7 @@ local Log = require(script.Parent.Log)
 
 local HttpError = require(script.Error)
 local HttpResponse = require(script.Response)
+local Encode = require(script.Encode)
 
 local lastRequestId = 0
 
@@ -12,6 +13,9 @@ local Http = {}
 
 Http.Error = HttpError
 Http.Response = HttpResponse
+Http.jsonEncode = Encode.jsonEncode
+Http.jsonDecode = Encode.jsonDecode
+HttpResponse.setEncode(Encode)
 
 local function performRequest(requestParams)
 	local requestId = lastRequestId + 1
@@ -53,14 +57,6 @@ function Http.post(url, body)
 		Method = "POST",
 		Body = body,
 	})
-end
-
-function Http.jsonEncode(object)
-	return HttpService:JSONEncode(object)
-end
-
-function Http.jsonDecode(source)
-	return HttpService:JSONDecode(source)
 end
 
 return Http
