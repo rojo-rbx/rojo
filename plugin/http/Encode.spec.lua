@@ -1,24 +1,22 @@
 return function()
 	local Log = require(script.Parent.Parent.Log)
 	local Http = require(script.Parent)
-	local ieee754body = "{\"Infinity\":Infinity,\"NaN\":NaN,\"NegativeInfinity\":-Infinity}"
+	local ieee754body = "{\"NaN\":NaN,\"Infinity\":Infinity,\"NegativeInfinity\":-Infinity,\"Boolean\":true}"
 
-	it("should decode JSON 5 IEEE 754 tokens", function()
+	it("should decode and encode JSON 5 IEEE 754 tokens", function()
 		local json = Http.jsonDecode(ieee754body)
 
 		expect(json.Infinity).to.equal("Infinity")
 		expect(json.NegativeInfinity).to.equal("-Infinity")
 		expect(json.NaN).to.equal("NaN")
-	end)
+		expect(json.Boolean).to.equal(true)
 
-	it("should encode JSON 5 IEEE 754 tokens", function()
-		local data = {
-			Infinity = "Infinity",
-			NegativeInfinity = "-Infinity",
-			NaN = "NaN",
-		}
+		local encoded = Http.jsonEncode(json);
+		local decoded = Http.jsonDecode(encoded);
 
-		local body = Http.jsonEncode(data)
-		expect(body).to.equal(ieee754body)
+		expect(decoded.Infinity).to.equal("Infinity")
+		expect(decoded.NegativeInfinity).to.equal("-Infinity")
+		expect(decoded.NaN).to.equal("NaN")
+		expect(decoded.Boolean).to.equal(true)
 	end)
 end
