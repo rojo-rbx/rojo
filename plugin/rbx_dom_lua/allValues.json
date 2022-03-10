@@ -322,5 +322,15 @@
       ]
     },
     "ty": "Vector3int16"
-  }
+  },
+  "Vector3IEEE754": {
+    "value": {
+      "Vector3": [
+        -Infinity,
+        Infinity,
+        NaN
+      ]
+    },
+    "ty": "Vector3"
+  },
 }
