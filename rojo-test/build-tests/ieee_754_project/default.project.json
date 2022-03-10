@@ -5,16 +5,13 @@
     "Workspace": {
       "$className": "Workspace",
       "Test": {
-        "$className": "Part",
+        "$className": "Vector3Value",
         "$properties": {
-          "Size": {
-            "Type": "Vector3",
-            "Value": [
-              "-Infinity",
-              "+Infinity",
-              "NaN"
-            ]
-          }
+          "Value": [
+            -Infinity,
+            Infinity,
+            NaN
+          ]
         }
       }
     }

@@ -1,0 +1,27 @@
+---
+source: tests/tests/build.rs
+expression: contents
+
+---
+<roblox version="4">
+  <Item class="DataModel" referent="0">
+    <Properties>
+      <string name="Name">ieee_754</string>
+    </Properties>
+    <Item class="Workspace" referent="1">
+      <Properties>
+        <string name="Name">Workspace</string>
+      </Properties>
+      <Item class="Vector3Value" referent="2">
+        <Properties>
+          <string name="Name">Test</string>
+          <Vector3 name="Value">
+            <X>-INF</X>
+            <Y>INF</Y>
+            <Z>NAN</Z>
+          </Vector3>
+        </Properties>
+      </Item>
+    </Item>
+  </Item>
+</roblox>

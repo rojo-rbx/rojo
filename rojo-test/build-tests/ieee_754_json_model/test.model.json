@@ -1,13 +1,16 @@
 {
-  "ClassName": "Part",
-  "Properties": {
-    "Size": {
-      "Type": "Vector3",
-      "Value": [
-        "-Infinity",
-        "+Infinity",
-        "NaN"
-      ]
+  "ClassName": "Folder",
+  "Children": [
+    {
+      "Name": "Test",
+      "ClassName": "Vector3Value",
+      "Properties": {
+        "Value": [
+          -Infinity,
+          Infinity,
+          NaN
+        ]
+      }
     }
-  }
+  ]
 }
