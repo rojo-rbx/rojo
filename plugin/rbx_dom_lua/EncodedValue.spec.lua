@@ -1,6 +1,6 @@
 return function()
 	local HttpService = game:GetService("HttpService")
-	
+
 	local EncodedValue = require(script.Parent.EncodedValue)
 	local allValues = require(script.Parent.allValues)
 
@@ -13,10 +13,10 @@ return function()
 
 		if ty == "table" then
 			local visited = {}
-			
+
 			for key, valueA in pairs(a) do
 				visited[key] = true
-				
+
 				if not deepEq(valueA, b[key]) then
 					return false
 				end
@@ -41,6 +41,9 @@ return function()
 	local extraAssertions = {
 		CFrame = function(value)
 			expect(value).to.equal(CFrame.new(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12))
+		end,
+		Vector3IEEE742 = function(value)
+			expect(value).to.equal(Vector3.new(-math.huge, math.huge, 0/0))
 		end,
 	}
 

@@ -20,6 +20,35 @@ local function serializeFloat(value)
 	return value
 end
 
+local function decodeFloat(value)
+	if (value) == "Infinity" then
+		return math.huge
+	elseif (value) == "-Infinity" then
+		return -math.huge
+	elseif	(value) == "NaN" then
+		return 0/0
+	else
+		return value
+	end
+end
+
+local function decodeFloats(encodedValues)
+
+	local decodedValues = {}
+
+	for _, encodedValue in pairs(encodedValues) do
+		table.insert(decodedValues, decodeFloat(encodedValue))
+	end
+
+	return decodedValues
+end
+
+local function unpackFloatDecoder(f)
+	return function(value)
+		return f(unpack(decodeFloats(value)))
+	end
+end
+
 local ALL_AXES = {"X", "Y", "Z"}
 local ALL_FACES = {"Right", "Top", "Back", "Left", "Bottom", "Front"}
 
@@ -192,12 +221,12 @@ types = {
 	},
 
 	Float32 = {
-		fromPod = identity,
+		fromPod = decodeFloat,
 		toPod = serializeFloat,
 	},
 
 	Float64 = {
-		fromPod = identity,
+		fromPod = decodeFloat,
 		toPod = serializeFloat,
 	},
 
@@ -212,7 +241,7 @@ types = {
 	},
 
 	NumberRange = {
-		fromPod = unpackDecoder(NumberRange.new),
+		fromPod = unpackFloatDecoder(NumberRange.new),
 
 		toPod = function(roblox)
 			return {roblox.Min, roblox.Max}
@@ -365,7 +394,7 @@ types = {
 	},
 
 	UDim = {
-		fromPod = unpackDecoder(UDim.new),
+		fromPod = unpackFloatDecoder(UDim.new),
 
 		toPod = function(roblox)
 			return {roblox.Scale, roblox.Offset}
@@ -394,7 +423,7 @@ types = {
 	},
 
 	Vector2 = {
-		fromPod = unpackDecoder(Vector2.new),
+		fromPod = unpackFloatDecoder(Vector2.new),
 
 		toPod = function(roblox)
 			return {
@@ -413,7 +442,7 @@ types = {
 	},
 
 	Vector3 = {
-		fromPod = unpackDecoder(Vector3.new),
+		fromPod = unpackFloatDecoder(Vector3.new),
 
 		toPod = function(roblox)
 			return {
