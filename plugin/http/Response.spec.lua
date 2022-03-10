@@ -5,7 +5,7 @@ return function()
 	it("should decode JSON 5 IEEE 754 tokens", function()
 
 		local response = {
-			Body = "{\"infinity\": Infinity, \"NegativeInfinity\": -Infinity, \"NaN\": NaN}",
+			Body = "{\"Infinity\": Infinity, \"NegativeInfinity\": -Infinity, \"NaN\": NaN}",
 			StatusCode = 200,
 			Headers = {},
 		}
@@ -14,10 +14,10 @@ return function()
 
 		expect(decoded.body).to.be.ok()
 
-		local json = decoded.json()
+		local json = decoded:json()
 
-		expect(json.Infinity).to.equal(math.huge)
-		expect(json.NegativeInfinity).to.equal(-math.huge)
-		expect(json.NaN).to.equal(0/0)
+		expect(json.Infinity).to.equal("Infinity")
+		expect(json.NegativeInfinity).to.equal("-Infinity")
+		expect(json.NaN).to.equal("NaN")
 	end)
 end

@@ -32,7 +32,6 @@ function Response:json()
 	local json4body = self.body:gsub(":[%c ]*Infinity", ":\"Infinity\"")
 	json4body = json4body:gsub(":[%c ]*-Infinity", ":\"-Infinity\"")
 	json4body = json4body:gsub(":[%c ]*NaN", ":\"NaN\"")
-
 	return HttpService:JSONDecode(json4body)
 end
 

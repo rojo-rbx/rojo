@@ -43,7 +43,9 @@ return function()
 			expect(value).to.equal(CFrame.new(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12))
 		end,
 		Vector3IEEE742 = function(value)
-			expect(value).to.equal(Vector3.new(-math.huge, math.huge, 0/0))
+			expect(value.X).to.equal(-math.huge)
+			expect(value.Y).to.equal(math.huge)
+			expect(value.Z).never.to.equal(value.Z)
 		end,
 	}
 
