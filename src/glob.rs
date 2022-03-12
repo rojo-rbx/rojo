@@ -43,8 +43,8 @@ impl Serialize for Glob {
 
 impl<'de> Deserialize<'de> for Glob {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        let glob = <&str as Deserialize>::deserialize(deserializer)?;
+        let glob = <String as Deserialize>::deserialize(deserializer)?;
 
-        Glob::new(glob).map_err(D::Error::custom)
+        Glob::new(&glob).map_err(D::Error::custom)
     }
 }
