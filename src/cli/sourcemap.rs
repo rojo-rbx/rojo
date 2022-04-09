@@ -36,7 +36,7 @@ struct SourcemapNode {
 /// Generates a sourcemap file from the Rojo project.
 #[derive(Debug, StructOpt)]
 pub struct SourcemapCommand {
-    /// Path to the project to serve. Defaults to the current directory.
+    /// Path to the project to use for the sourcemap. Defaults to the current directory.
     #[structopt(default_value = "")]
     pub project: PathBuf,
 
