@@ -33,7 +33,7 @@ struct SourcemapNode {
     children: Option<Vec<SourcemapNode>>,
 }
 
-/// Generates a model or place file from the Rojo project.
+/// Generates a sourcemap file from the Rojo project.
 #[derive(Debug, StructOpt)]
 pub struct SourcemapCommand {
     /// Path to the project to serve. Defaults to the current directory.
