@@ -1,0 +1,12 @@
+{
+  "name": "mesh_parts",
+  "tree": {
+    "$className": "DataModel",
+
+    "Workspace": {
+      "TwoParts": {
+        "$path": "src"
+      }
+    }
+  }
+}
