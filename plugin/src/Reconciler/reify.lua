@@ -2,6 +2,8 @@
 	"Reifies" a virtual DOM, constructing a real DOM with the same shape.
 ]]
 
+local InsertService = game:GetService('InsertService')
+
 local invariant = require(script.Parent.Parent.invariant)
 local PatchSet = require(script.Parent.Parent.PatchSet)
 local setProperty = require(script.Parent.setProperty)
@@ -40,6 +42,20 @@ local function addAllToPatch(patchSet, virtualInstances, id)
 	end
 end
 
+local function createInstance(instanceMap, className, properties)
+	-- Custom logic for MeshParts
+	-- see: https://github.com/rojo-rbx/rojo/issues/402
+	if className == "MeshPart" then
+		local okMeshId, meshId = decodeValue(properties.MeshId, instanceMap)
+
+		-- It is okay to provide default properties here, because 
+		-- they will be overriden on the update cycle
+		return InsertService:CreateMeshPartAsync(meshId, Enum.CollisionFidelity.Default, Enum.RenderFidelity.Automatic)
+	else
+		return Instance.new(className)
+	end
+end
+
 --[[
 	Inner function that defines the core routine.
 ]]
@@ -53,7 +69,7 @@ function reifyInner(instanceMap, virtualInstances, id, parentInstance, unapplied
 	-- Instance.new can fail if we're passing in something that can't be
 	-- created, like a service, something enabled with a feature flag, or
 	-- something that requires higher security than we have.
-	local ok, instance = pcall(Instance.new, virtualInstance.ClassName)
+	local ok, instance = pcall(createInstance, instanceMap, virtualInstance.ClassName, virtualInstance.Properties)
 
 	if not ok then
 		addAllToPatch(unappliedPatch, virtualInstances, id)
