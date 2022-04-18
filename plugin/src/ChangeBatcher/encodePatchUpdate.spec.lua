@@ -37,6 +37,18 @@ return function()
 		expect(update.changedName).to.equal("We'reGettingToTheCoolPart")
 	end)
 
+	it("should recreate instance in the update when the instance's ClassName changes", function()
+		local part = Instance.new("Part")
+		local properties = {
+			ClassName = true
+		}
+
+		local update = encodePatchUpdate(part, "PART", properties)
+
+		expect(update.changedProperties.ClassName).to.be.ok()
+		expect(update.requiresRecreate).to.equal(true)
+	end)
+
 	it("should correctly encode property values", function()
 		local part = Instance.new("Part")
 		local properties = {
