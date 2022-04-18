@@ -156,7 +156,7 @@ return function()
 		expect(value.Value).to.equal("WORLD")
 	end)
 
-	it("should recreate instances when changedClassName is set, preserving children", function()
+	it("should recreate instances when requiresRecreate is set, preserving children", function()
 		local root = Instance.new("Folder")
 		root.Name = "Initial Root Name"
 
@@ -173,6 +173,7 @@ return function()
 			id = "ROOT",
 			changedName = "Updated Root Name",
 			changedClassName = "StringValue",
+			requiresRecreate = true,
 			changedProperties = {
 				Value = {
 					String = "I am Root",

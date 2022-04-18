@@ -93,10 +93,10 @@ local function applyPatch(instanceMap, patch)
 		}
 		local partiallyApplied = false
 
-		-- If the instance's className changed, we have a bumpy ride ahead while
-		-- we recreate this instance and move all of its children into the new
-		-- version atomically...ish.
-		if update.changedClassName ~= nil then
+		-- If the instance's className changed, or there is custom recreate logic,
+		-- we have a bumpy ride ahead while we recreate this instance and move all 
+		-- of its children into the new version atomically...ish.
+		if update.requiresRecreate then
 			-- If the instance's name also changed, we'll do it here, since this
 			-- branch will skip the rest of the loop iteration.
 			local newName = update.changedName or instance.Name
@@ -121,7 +121,7 @@ local function applyPatch(instanceMap, patch)
 			local mockVirtualInstance = {
 				Id = update.id,
 				Name = newName,
-				ClassName = update.changedClassName,
+				ClassName = update.changedClassName or instance.ClassName,
 				Properties = newProperties,
 				Children = {},
 			}
