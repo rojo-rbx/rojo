@@ -1,6 +1,7 @@
 ---
 source: tests/tests/build.rs
 expression: contents
+
 ---
 <roblox version="4">
   <Item class="Folder" referent="0">
@@ -9,16 +10,15 @@ expression: contents
     </Properties>
     <Item class="StringValue" referent="1">
       <Properties>
-        <string name="Name">foo</string>
+        <string name="Name">foo-optional</string>
         <string name="Value">Hello, from foo.txt!</string>
       </Properties>
     </Item>
     <Item class="StringValue" referent="2">
       <Properties>
-        <string name="Name">foo2</string>
+        <string name="Name">foo-required</string>
         <string name="Value">Hello, from foo.txt!</string>
       </Properties>
     </Item>
   </Item>
 </roblox>
-

@@ -2,14 +2,14 @@
   "name": "optional",
   "tree": {
     "$className": "Folder",
-    "foo":{
-      "$path": { "optional": "src/foo.txt" }
+    "foo-required": {
+      "$path": "foo.txt"
     },
-    "foo2": {
-      "$path": "src/foo.txt"
+    "foo-optional":{
+      "$path": { "optional": "foo.txt" }
     },
-    "bar":{
-      "$path": { "optional": "src/bar.txt" }
+    "bar-optional":{
+      "$path": { "optional": "bar.txt" }
     }
   }
 }
