@@ -2,7 +2,7 @@ use std::{
     borrow::Cow,
     collections::HashSet,
     io,
-	net::IpAddr,
+    net::IpAddr,
     path::{Path, PathBuf},
     sync::{Arc, Mutex, MutexGuard},
     time::Instant,
@@ -214,9 +214,9 @@ impl ServeSession {
         self.root_project.serve_place_ids.as_ref()
     }
 
-	pub fn serve_address(&self) -> Option<IpAddr> {
-		self.root_project.serve_address
-	}
+    pub fn serve_address(&self) -> Option<IpAddr> {
+        self.root_project.serve_address
+    }
 }
 
 #[derive(Debug, Error)]

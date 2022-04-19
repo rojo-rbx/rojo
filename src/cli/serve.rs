@@ -42,9 +42,9 @@ impl ServeCommand {
         let session = Arc::new(ServeSession::new(vfs, &project_path)?);
 
         let ip = self
-			.address
-			.or_else(|| session.serve_address())
-			.unwrap_or(DEFAULT_BIND_ADDRESS.into());
+            .address
+            .or_else(|| session.serve_address())
+            .unwrap_or(DEFAULT_BIND_ADDRESS.into());
 
         let port = self
             .port
