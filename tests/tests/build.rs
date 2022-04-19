@@ -53,6 +53,7 @@ gen_build_tests! {
     txt,
     txt_in_folder,
     unresolved_values,
+    optional,
     weldconstraint,
 }
 

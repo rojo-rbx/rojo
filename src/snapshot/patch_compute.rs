@@ -10,16 +10,27 @@ use super::{
     InstanceSnapshot, InstanceWithMeta, RojoTree,
 };
 
-pub fn compute_patch_set(snapshot: &InstanceSnapshot, tree: &RojoTree, id: Ref) -> PatchSet {
+pub fn compute_patch_set(
+    snapshot: Option<&InstanceSnapshot>,
+    tree: &RojoTree,
+    id: Ref,
+) -> PatchSet {
     let mut patch_set = PatchSet::new();
-    let mut context = ComputePatchContext::default();
 
-    compute_patch_set_internal(&mut context, snapshot, tree, id, &mut patch_set);
+    if let Some(snapshot) = snapshot {
+        let mut context = ComputePatchContext::default();
 
-    // Rewrite Ref properties to refer to instance IDs instead of snapshot IDs
-    // for all of the IDs that we know about so far.
-    rewrite_refs_in_updates(&context, &mut patch_set.updated_instances);
-    rewrite_refs_in_additions(&context, &mut patch_set.added_instances);
+        compute_patch_set_internal(&mut context, snapshot, tree, id, &mut patch_set);
+
+        // Rewrite Ref properties to refer to instance IDs instead of snapshot IDs
+        // for all of the IDs that we know about so far.
+        rewrite_refs_in_updates(&context, &mut patch_set.updated_instances);
+        rewrite_refs_in_additions(&context, &mut patch_set.added_instances);
+    } else {
+        if id != tree.get_root_id() {
+            patch_set.removed_instances.push(id);
+        }
+    }
 
     patch_set
 }
@@ -246,7 +257,7 @@ mod test {
             children: Vec::new(),
         };
 
-        let patch_set = compute_patch_set(&snapshot, &tree, root_id);
+        let patch_set = compute_patch_set(Some(&snapshot), &tree, root_id);
 
         let expected_patch_set = PatchSet {
             updated_instances: vec![PatchUpdate {
@@ -296,7 +307,7 @@ mod test {
             class_name: Cow::Borrowed("foo"),
         };
 
-        let patch_set = compute_patch_set(&snapshot, &tree, root_id);
+        let patch_set = compute_patch_set(Some(&snapshot), &tree, root_id);
 
         let expected_patch_set = PatchSet {
             added_instances: vec![PatchAdd {

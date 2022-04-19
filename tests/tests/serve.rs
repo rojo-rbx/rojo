@@ -220,3 +220,34 @@ fn empty_json_model() {
         );
     });
 }
+
+#[test]
+#[ignore = "Rojo does not watch missing, optional files for changes."]
+fn add_optional_folder() {
+    run_serve_test("add_optional_folder", |session, mut redactions| {
+        let info = session.get_api_rojo().unwrap();
+        let root_id = info.root_instance_id;
+
+        assert_yaml_snapshot!("add_optional_folder", redactions.redacted_yaml(info));
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "add_optional_folder_all",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+
+        fs::create_dir(session.path().join("create-later")).unwrap();
+
+        let subscribe_response = session.get_api_subscribe(0).unwrap();
+        assert_yaml_snapshot!(
+            "add_optional_folder_subscribe",
+            subscribe_response.intern_and_redact(&mut redactions, ())
+        );
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "add_optional_folder_all-2",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+    });
+}

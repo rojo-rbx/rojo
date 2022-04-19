@@ -1,0 +1,36 @@
+---
+source: tests/tests/serve.rs
+expression: "subscribe_response.intern_and_redact(&mut redactions, ())"
+
+---
+messageCursor: 2
+messages:
+  - added:
+      id-5:
+        Children:
+          - id-6
+        ClassName: Folder
+        Id: id-5
+        Metadata:
+          ignoreUnknownInstances: false
+        Name: node_modules
+        Parent: id-3
+        Properties: {}
+      id-6:
+        Children: []
+        ClassName: StringValue
+        Id: id-6
+        Metadata:
+          ignoreUnknownInstances: false
+        Name: bar
+        Parent: id-5
+        Properties:
+          Value:
+            String: Hello from bar.txt
+    removed: []
+    updated: []
+  - added: {}
+    removed: []
+    updated: []
+sessionId: id-1
+

@@ -5,7 +5,7 @@ use memofs::Vfs;
 use rbx_reflection::ClassTag;
 
 use crate::{
-    project::{Project, ProjectNode},
+    project::{PathNode, Project, ProjectNode},
     snapshot::{
         InstanceContext, InstanceMetadata, InstanceSnapshot, InstigatingSource, PathIgnoreRule,
     },
@@ -30,30 +30,31 @@ pub fn snapshot_project(
 
     context.add_path_ignore_rules(rules);
 
-    // TODO: If this project node is a path to an instance that Rojo doesn't
-    // understand, this may panic!
-    let mut snapshot =
-        snapshot_project_node(&context, path, &project.name, &project.tree, vfs, None)?.unwrap();
+    match snapshot_project_node(&context, path, &project.name, &project.tree, vfs, None)? {
+        Some(found_snapshot) => {
+            let mut snapshot = found_snapshot;
+            // Setting the instigating source to the project file path is a little
+            // coarse.
+            //
+            // Ideally, we'd only snapshot the project file if the project file
+            // actually changed. Because Rojo only has the concept of one
+            // relevant path -> snapshot path mapping per instance, we pick the more
+            // conservative approach of snapshotting the project file if any
+            // relevant paths changed.
+            snapshot.metadata.instigating_source = Some(path.to_path_buf().into());
 
-    // Setting the instigating source to the project file path is a little
-    // coarse.
-    //
-    // Ideally, we'd only snapshot the project file if the project file
-    // actually changed. Because Rojo only has the concept of one
-    // relevant path -> snapshot path mapping per instance, we pick the more
-    // conservative approach of snapshotting the project file if any
-    // relevant paths changed.
-    snapshot.metadata.instigating_source = Some(path.to_path_buf().into());
+            // Mark this snapshot (the root node of the project file) as being
+            // related to the project file.
+            //
+            // We SHOULD NOT mark the project file as a relevant path for any
+            // nodes that aren't roots. They'll be updated as part of the project
+            // file being updated.
+            snapshot.metadata.relevant_paths.push(path.to_path_buf());
 
-    // Mark this snapshot (the root node of the project file) as being
-    // related to the project file.
-    //
-    // We SHOULD NOT mark the project file as a relevant path for any
-    // nodes that aren't roots. They'll be updated as part of the project
-    // file being updated.
-    snapshot.metadata.relevant_paths.push(path.to_path_buf());
-
-    Ok(Some(snapshot))
+            Ok(Some(snapshot))
+        }
+        None => Ok(None),
+    }
 }
 
 pub fn snapshot_project_node(
@@ -77,7 +78,9 @@ pub fn snapshot_project_node(
     let mut children = Vec::new();
     let mut metadata = InstanceMetadata::default();
 
-    if let Some(path) = &node.path {
+    if let Some(path_node) = &node.path {
+        let path = path_node.path();
+
         // If the path specified in the project is relative, we assume it's
         // relative to the folder that the project is in, project_folder.
         let full_path = if path.is_relative() {
@@ -106,16 +109,6 @@ pub fn snapshot_project_node(
             // Take the snapshot's metadata as-is, which will be mutated later
             // on.
             metadata = snapshot.metadata;
-        } else {
-            anyhow::bail!(
-                "Rojo project referred to a file using $path that could not be turned into a Roblox Instance by Rojo.\n\
-                Check that the file exists and is a file type known by Rojo.\n\
-                \n\
-                Project path: {}\n\
-                File $path: {}",
-                project_path.display(),
-                path.display(),
-            );
         }
     }
 
@@ -125,20 +118,21 @@ pub fn snapshot_project_node(
         class_name_from_project,
         class_name_from_path,
         class_name_from_inference,
+        &node.path,
     ) {
         // These are the easy, happy paths!
-        (Some(project), None, None) => project,
-        (None, Some(path), None) => path,
-        (None, None, Some(inference)) => inference,
+        (Some(project), None, None, _) => project,
+        (None, Some(path), None, _) => path,
+        (None, None, Some(inference), _) => inference,
 
         // If the user specifies a class name, but there's an inferred class
         // name, we prefer the name listed explicitly by the user.
-        (Some(project), None, Some(_)) => project,
+        (Some(project), None, Some(_), _) => project,
 
         // If the user has a $path pointing to a folder and we're able to infer
         // a class name, let's use the inferred name. If the path we're pointing
         // to isn't a folder, though, that's a user error.
-        (None, Some(path), Some(inference)) => {
+        (None, Some(path), Some(inference), _) => {
             if path == "Folder" {
                 inference
             } else {
@@ -146,7 +140,7 @@ pub fn snapshot_project_node(
             }
         }
 
-        (Some(project), Some(path), _) => {
+        (Some(project), Some(path), _, _) => {
             if path == "Folder" {
                 project
             } else {
@@ -160,12 +154,28 @@ pub fn snapshot_project_node(
                     project,
                     path,
                     project_path.display(),
-                    node.path.as_ref().unwrap().display()
+                    node.path.as_ref().unwrap().path().display()
                 );
             }
         }
 
-        (None, None, None) => {
+        (None, None, None, Some(PathNode::Optional(_))) => {
+            return Ok(None);
+        }
+
+        (_, None, _, Some(PathNode::Required(path))) => {
+            anyhow::bail!(
+                "Rojo project referred to a file using $path that could not be turned into a Roblox Instance by Rojo.\n\
+                Check that the file exists and is a file type known by Rojo.\n\
+                \n\
+                Project path: {}\n\
+                File $path: {}",
+                project_path.display(),
+                path.display(),
+            );
+        }
+
+        (None, None, None, None) => {
             bail!(
                 "Instance \"{}\" is missing some required information.\n\
                  One of the following must be true:\n\

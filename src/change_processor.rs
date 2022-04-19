@@ -284,22 +284,14 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref) -> Option<
                 // that path and use it as the source for our patch.
 
                 let snapshot = match snapshot_from_vfs(&metadata.context, &vfs, &path) {
-                    Ok(Some(snapshot)) => snapshot,
-                    Ok(None) => {
-                        log::error!(
-                            "Snapshot did not return an instance from path {}",
-                            path.display()
-                        );
-                        log::error!("This may be a bug!");
-                        return None;
-                    }
+                    Ok(snapshot) => snapshot,
                     Err(err) => {
                         log::error!("Snapshot error: {:?}", err);
                         return None;
                     }
                 };
 
-                let patch_set = compute_patch_set(&snapshot, &tree, id);
+                let patch_set = compute_patch_set(snapshot.as_ref(), &tree, id);
                 apply_patch_set(tree, patch_set)
             }
             Ok(None) => {
@@ -335,19 +327,14 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref) -> Option<
             );
 
             let snapshot = match snapshot_result {
-                Ok(Some(snapshot)) => snapshot,
-                Ok(None) => {
-                    log::error!("Snapshot did not return an instance from a project node.");
-                    log::error!("This is a bug!");
-                    return None;
-                }
+                Ok(snapshot) => snapshot,
                 Err(err) => {
                     log::error!("{:?}", err);
                     return None;
                 }
             };
 
-            let patch_set = compute_patch_set(&snapshot, &tree, id);
+            let patch_set = compute_patch_set(snapshot.as_ref(), &tree, id);
             apply_patch_set(tree, patch_set)
         }
     };

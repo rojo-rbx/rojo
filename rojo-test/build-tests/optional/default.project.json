@@ -1,0 +1,15 @@
+{
+  "name": "optional",
+  "tree": {
+    "$className": "Folder",
+    "foo-required": {
+      "$path": "foo.txt"
+    },
+    "foo-optional":{
+      "$path": { "optional": "foo.txt" }
+    },
+    "bar-optional":{
+      "$path": { "optional": "bar.txt" }
+    }
+  }
+}

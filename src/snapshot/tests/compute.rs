@@ -23,7 +23,7 @@ fn set_name_and_class_name() {
         children: Vec::new(),
     };
 
-    let patch_set = compute_patch_set(&snapshot, &tree, tree.get_root_id());
+    let patch_set = compute_patch_set(Some(&snapshot), &tree, tree.get_root_id());
     let patch_value = redactions.redacted_yaml(patch_set);
 
     assert_yaml_snapshot!(patch_value);
@@ -47,7 +47,7 @@ fn set_property() {
         children: Vec::new(),
     };
 
-    let patch_set = compute_patch_set(&snapshot, &tree, tree.get_root_id());
+    let patch_set = compute_patch_set(Some(&snapshot), &tree, tree.get_root_id());
     let patch_value = redactions.redacted_yaml(patch_set);
 
     assert_yaml_snapshot!(patch_value);
@@ -78,7 +78,7 @@ fn remove_property() {
         children: Vec::new(),
     };
 
-    let patch_set = compute_patch_set(&snapshot, &tree, tree.get_root_id());
+    let patch_set = compute_patch_set(Some(&snapshot), &tree, tree.get_root_id());
     let patch_value = redactions.redacted_yaml(patch_set);
 
     assert_yaml_snapshot!(patch_value);
@@ -107,7 +107,7 @@ fn add_child() {
         }],
     };
 
-    let patch_set = compute_patch_set(&snapshot, &tree, tree.get_root_id());
+    let patch_set = compute_patch_set(Some(&snapshot), &tree, tree.get_root_id());
     let patch_value = redactions.redacted_yaml(patch_set);
 
     assert_yaml_snapshot!(patch_value);
@@ -139,7 +139,7 @@ fn remove_child() {
         children: Vec::new(),
     };
 
-    let patch_set = compute_patch_set(&snapshot, &tree, tree.get_root_id());
+    let patch_set = compute_patch_set(Some(&snapshot), &tree, tree.get_root_id());
     let patch_value = redactions.redacted_yaml(patch_set);
 
     assert_yaml_snapshot!(patch_value);
