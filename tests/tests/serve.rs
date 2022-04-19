@@ -235,12 +235,7 @@ fn add_optional_folder() {
             read_response.intern_and_redact(&mut redactions, root_id)
         );
 
-        fs::create_dir(session.path().join("src/node_modules")).unwrap();
-        fs::write(
-            session.path().join("src/node_modules/bar.txt"),
-            r#"Hello from bar.txt"#,
-        )
-        .unwrap();
+        fs::create_dir(session.path().join("create-later")).unwrap();
 
         let subscribe_response = session.get_api_subscribe(0).unwrap();
         assert_yaml_snapshot!(

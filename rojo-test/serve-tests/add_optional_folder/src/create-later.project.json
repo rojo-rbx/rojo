@@ -1,6 +1,0 @@
-{
-    "name": "create-later",
-    "tree": {
-      "$path": { "optional": "..\\create-later" }
-    }
-  }

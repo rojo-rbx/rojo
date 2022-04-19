@@ -7,43 +7,53 @@ instances:
   id-2:
     Children:
       - id-3
-      - id-4
     ClassName: Folder
     Id: id-2
     Metadata:
-      ignoreUnknownInstances: false
+      ignoreUnknownInstances: true
     Name: optional
     Parent: "00000000000000000000000000000000"
     Properties: {}
   id-3:
-    Children: []
-    ClassName: StringValue
+    Children:
+      - id-4
+      - id-5
+    ClassName: Folder
     Id: id-3
     Metadata:
       ignoreUnknownInstances: false
-    Name: foo
+    Name: src
     Parent: id-2
-    Properties:
-      Value:
-        String: "Hello, from foo.txt!"
+    Properties: {}
   id-4:
-    Children:
-      - id-5
-    ClassName: Folder
+    Children: []
+    ClassName: StringValue
     Id: id-4
     Metadata:
       ignoreUnknownInstances: false
-    Name: node_modules
-    Parent: id-2
-    Properties: {}
+    Name: foo
+    Parent: id-3
+    Properties:
+      Value:
+        String: "Hello, from foo.txt!"
   id-5:
-    Children: []
-    ClassName: StringValue
+    Children:
+      - id-6
+    ClassName: Folder
     Id: id-5
     Metadata:
       ignoreUnknownInstances: false
+    Name: node_modules
+    Parent: id-3
+    Properties: {}
+  id-6:
+    Children: []
+    ClassName: StringValue
+    Id: id-6
+    Metadata:
+      ignoreUnknownInstances: false
     Name: bar
-    Parent: id-4
+    Parent: id-5
     Properties:
       Value:
         String: Hello from bar.txt

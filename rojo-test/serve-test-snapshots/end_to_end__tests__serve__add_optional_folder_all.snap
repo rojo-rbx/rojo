@@ -10,18 +10,28 @@ instances:
     ClassName: Folder
     Id: id-2
     Metadata:
-      ignoreUnknownInstances: false
+      ignoreUnknownInstances: true
     Name: optional
     Parent: "00000000000000000000000000000000"
     Properties: {}
   id-3:
-    Children: []
-    ClassName: StringValue
+    Children:
+      - id-4
+    ClassName: Folder
     Id: id-3
     Metadata:
       ignoreUnknownInstances: false
-    Name: foo
+    Name: src
     Parent: id-2
+    Properties: {}
+  id-4:
+    Children: []
+    ClassName: StringValue
+    Id: id-4
+    Metadata:
+      ignoreUnknownInstances: false
+    Name: foo
+    Parent: id-3
     Properties:
       Value:
         String: "Hello, from foo.txt!"

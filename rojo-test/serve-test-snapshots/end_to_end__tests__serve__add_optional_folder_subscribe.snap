@@ -6,24 +6,24 @@ expression: "subscribe_response.intern_and_redact(&mut redactions, ())"
 messageCursor: 2
 messages:
   - added:
-      id-4:
-        Children:
-          - id-5
-        ClassName: Folder
-        Id: id-4
-        Metadata:
-          ignoreUnknownInstances: false
-        Name: node_modules
-        Parent: id-2
-        Properties: {}
       id-5:
-        Children: []
-        ClassName: StringValue
+        Children:
+          - id-6
+        ClassName: Folder
         Id: id-5
         Metadata:
           ignoreUnknownInstances: false
+        Name: node_modules
+        Parent: id-3
+        Properties: {}
+      id-6:
+        Children: []
+        ClassName: StringValue
+        Id: id-6
+        Metadata:
+          ignoreUnknownInstances: false
         Name: bar
-        Parent: id-4
+        Parent: id-5
         Properties:
           Value:
             String: Hello from bar.txt
