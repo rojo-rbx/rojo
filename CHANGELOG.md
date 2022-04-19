@@ -3,9 +3,11 @@
 ## Unreleased Changes
 * Added support for specifying an address to be used by default in the .project.json file ([#447])
 * Added support for the new Open Cloud API when uploading. ([#486])
+* Added `sourcemap` command for generating sourcemaps to feed into other tools. ([#530])
 
 [#447]: https://github.com/rojo-rbx/rojo/issues/447
 [#486]: https://github.com/rojo-rbx/rojo/issues/486
+[#530]: https://github.com/rojo-rbx/rojo/pull/530
 
 ## [7.0.0] - December 10, 2021
 * Fixed Rojo's interactions with properties enabled by FFlags that are not yet enabled. ([#493])
