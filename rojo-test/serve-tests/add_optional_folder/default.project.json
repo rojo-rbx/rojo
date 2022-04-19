@@ -2,9 +2,6 @@
   "name": "optional",
   "tree": {
     "$className": "Folder",
-    "src": {
-      "$path": "src"
-    },
     "create-later": {
       "$path": { "optional": "create-later" }
     }
