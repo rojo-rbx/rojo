@@ -16,6 +16,7 @@ local Theme = require(script.Theme)
 local PluginSettings = require(script.PluginSettings)
 
 local Page = require(script.Page)
+local StudioPluginAction = require(script.Components.Studio.StudioPluginAction)
 local StudioToolbar = require(script.Components.Studio.StudioToolbar)
 local StudioToggleButton = require(script.Components.Studio.StudioToggleButton)
 local StudioPluginGui = require(script.Components.Studio.StudioPluginGui)
@@ -90,6 +91,22 @@ function App:startSession(host, port, sessionOptions)
 	self.serveSession = serveSession
 end
 
+function App:endSession()
+	if self.serveSession == nil then
+		return
+	end
+
+	Log.trace("Disconnecting session")
+
+	self.serveSession:stop()
+	self.serveSession = nil
+	self:setState({
+		appStatus = AppStatus.NotConnected,
+	})
+
+	Log.trace("Session terminated by user")
+end
+
 function App:render()
 	local pluginName = "Rojo " .. Version.display(Config.version)
 
@@ -160,15 +177,7 @@ function App:render()
 						address = self.state.address,
 
 						onDisconnect = function()
-							Log.trace("Disconnecting session")
-
-							self.serveSession:stop()
-							self.serveSession = nil
-							self:setState({
-								appStatus = AppStatus.NotConnected,
-							})
-
-							Log.trace("Session terminated by user")
+							self:endSession()
 						end,
 					}),
 
@@ -199,6 +208,27 @@ function App:render()
 						})
 					end),
 				}),
+
+				pluginAction = PluginSettings.with(function(settings)
+					return e(StudioPluginAction, {
+						name = "RojoConnection",
+						title = "Rojo Connection",
+						description = "Connects/Disconnects the Rojo server",
+						icon = Assets.Images.PluginButton,
+						bindable = true,
+						onTriggered = function()
+							if self.serveSession then
+								self:endSession()
+								return
+							end
+
+							self:startSession(Config.defaultHost, Config.defaultPort, {
+								openScriptsExternally = settings:get("openScriptsExternally"),
+								twoWaySync = settings:get("twoWaySync"),
+							})
+						end,
+					})
+				end),
 
 				toolbar = e(StudioToolbar, {
 					name = pluginName,
