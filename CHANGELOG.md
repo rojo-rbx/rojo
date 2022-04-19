@@ -1,12 +1,14 @@
 # Rojo Changelog
 
 ## Unreleased Changes
-* Added support for specifying an address to be used by default in the .project.json file ([#447])
-* Added support for the new Open Cloud API when uploading. ([#486])
+* Added support for specifying an address to be used by default in project files. ([#507])
+* Added support for optional paths in project files. ([#472])
+* Added support for the new Open Cloud API when uploading. ([#504])
 * Added `sourcemap` command for generating sourcemaps to feed into other tools. ([#530])
 
-[#447]: https://github.com/rojo-rbx/rojo/issues/447
-[#486]: https://github.com/rojo-rbx/rojo/issues/486
+[#472]: https://github.com/rojo-rbx/rojo/pull/472
+[#504]: https://github.com/rojo-rbx/rojo/pull/504
+[#507]: https://github.com/rojo-rbx/rojo/pull/507
 [#530]: https://github.com/rojo-rbx/rojo/pull/530
 
 ## [7.0.0] - December 10, 2021
