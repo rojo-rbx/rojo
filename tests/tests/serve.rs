@@ -222,6 +222,7 @@ fn empty_json_model() {
 }
 
 #[test]
+#[ignore = "Rojo does not watch missing, optional files for changes."]
 fn add_optional_folder() {
     run_serve_test("add_optional_folder", |session, mut redactions| {
         let info = session.get_api_rojo().unwrap();
