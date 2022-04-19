@@ -1,7 +1,11 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Added support for specifying an address to be used by default in the .project.json file ([#447])
 * Added support for the new Open Cloud API when uploading. ([#486])
+
+[#447]: https://github.com/rojo-rbx/rojo/issues/447
+[#486]: https://github.com/rojo-rbx/rojo/issues/486
 
 ## [7.0.0] - December 10, 2021
 * Fixed Rojo's interactions with properties enabled by FFlags that are not yet enabled. ([#493])
@@ -10,7 +14,6 @@
 * Connection settings are now remembered when reconnecting in Roblox Studio. ([#500])
 * Updated reflection database to Roblox v503.
 
-[#486]: https://github.com/rojo-rbx/rojo/issues/486
 [#430]: https://github.com/rojo-rbx/rojo/issues/430
 [#493]: https://github.com/rojo-rbx/rojo/pull/493
 [#500]: https://github.com/rojo-rbx/rojo/pull/500
