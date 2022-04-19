@@ -66,6 +66,8 @@ function App:startSession(host, port, sessionOptions)
 				projectName = details,
 				address = address,
 			})
+
+			Log.warn(string.format("Connected to session '%s' at %s", details, address))
 		elseif status == ServeSession.Status.Disconnected then
 			self.serveSession = nil
 
@@ -82,6 +84,8 @@ function App:startSession(host, port, sessionOptions)
 				self:setState({
 					appStatus = AppStatus.NotConnected,
 				})
+
+				Log.warn("Disconnected session")
 			end
 		end
 	end)
