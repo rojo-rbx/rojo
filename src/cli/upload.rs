@@ -24,6 +24,14 @@ pub struct UploadCommand {
     #[structopt(long)]
     pub cookie: Option<String>,
 
+    /// API key obtained from create.roblox.com/credentials. Rojo will use the Open Cloud API when this is provided. Only supports uploading to a place.
+    #[structopt(long = "api_key")]
+    pub api_key: Option<String>,
+
+    /// The Universe ID of the given place. Required when using the Open Cloud API.
+    #[structopt(long = "universe_id")]
+    pub universe_id: Option<u64>,
+
     /// Asset ID to upload to.
     #[structopt(long = "asset_id")]
     pub asset_id: u64,
@@ -32,10 +40,6 @@ pub struct UploadCommand {
 impl UploadCommand {
     pub fn run(self) -> Result<(), anyhow::Error> {
         let project_path = resolve_path(&self.project);
-
-        let cookie = self.cookie.or_else(get_auth_cookie).context(
-            "Rojo could not find your Roblox auth cookie. Please pass one via --cookie.",
-        )?;
 
         let vfs = Vfs::new_default();
 
@@ -54,7 +58,36 @@ impl UploadCommand {
 
         log::trace!("Encoding binary model");
         rbx_binary::to_writer(&mut buffer, tree.inner(), &encode_ids)?;
-        do_upload(buffer, self.asset_id, &cookie)
+
+        match (self.cookie, self.api_key, self.universe_id) {
+            (cookie, None, universe) => {
+                // using legacy. notify if universe is provided.
+                if universe.is_some() {
+                    log::warn!(
+                        "--universe_id was provided but is ignored when using legacy upload"
+                    );
+                }
+
+                let cookie = cookie.or_else(get_auth_cookie).context(
+                    "Rojo could not find your Roblox auth cookie. Please pass one via --cookie.",
+                )?;
+                do_upload(buffer, self.asset_id, &cookie)
+            }
+
+            (cookie, Some(api_key), Some(universe_id)) => {
+                // using open cloud. notify if cookie is provided.
+                if cookie.is_some() {
+                    log::warn!("--cookie was provided but is ignored when using Open Cloud API");
+                }
+
+                do_upload_open_cloud(buffer, universe_id, self.asset_id, &api_key)
+            }
+
+            (_, Some(_), None) => {
+                // API key is provided, universe id is not.
+                bail!("--universe_id must be provided to use the Open Cloud API");
+            }
+        }
     }
 }
 
@@ -114,6 +147,41 @@ fn do_upload(buffer: Vec<u8>, asset_id: u64, cookie: &str) -> anyhow::Result<()>
             response = build_request().header("X-CSRF-Token", csrf_token).send()?;
         }
     }
+
+    let status = response.status();
+    if !status.is_success() {
+        bail!(
+            "The Roblox API returned an unexpected error: {}",
+            response.text()?
+        );
+    }
+
+    Ok(())
+}
+
+/// Implementation of do_upload that supports the new open cloud api.
+/// see https://developer.roblox.com/en-us/articles/open-cloud
+fn do_upload_open_cloud(
+    buffer: Vec<u8>,
+    universe_id: u64,
+    asset_id: u64,
+    api_key: &str,
+) -> anyhow::Result<()> {
+    let url = format!(
+        "https://apis.roblox.com/universes/v1/{}/places/{}/versions?versionType=Published",
+        universe_id, asset_id
+    );
+
+    let client = reqwest::Client::new();
+
+    log::debug!("Uploading to Roblox...");
+    let mut response = client
+        .post(&url)
+        .header("x-api-key", api_key)
+        .header(CONTENT_TYPE, "application/xml")
+        .header(ACCEPT, "application/json")
+        .body(buffer)
+        .send()?;
 
     let status = response.status();
     if !status.is_success() {
