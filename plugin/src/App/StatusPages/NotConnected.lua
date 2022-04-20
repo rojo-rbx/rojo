@@ -114,9 +114,7 @@ function NotConnectedPage:render()
 				style = "Solid",
 				transparency = self.props.transparency,
 				layoutOrder = 2,
-				onClick = function()
-					self.props.onConnect()
-				end,
+				onClick = self.props.onConnect,
 			}),
 
 			Layout = e("UIListLayout", {
