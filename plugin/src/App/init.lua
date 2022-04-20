@@ -229,8 +229,8 @@ function App:render()
 				pluginAction = PluginSettings.with(function(settings)
 					return e(StudioPluginAction, {
 						name = "RojoConnection",
-						title = "Rojo Connection",
-						description = "Connects/Disconnects the Rojo server",
+						title = "Rojo: Connect/Disconnect the server",
+						description = "Connects/Disconnects the server for a Rojo sync session",
 						icon = Assets.Images.PluginButton,
 						bindable = true,
 						onTriggered = function()
