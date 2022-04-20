@@ -5,11 +5,13 @@
 * Added support for optional paths in project files. ([#472])
 * Added support for the new Open Cloud API when uploading. ([#504])
 * Added `sourcemap` command for generating sourcemaps to feed into other tools. ([#530])
+* Added changing toolbar icon to indicate state ([#538])
 
 [#472]: https://github.com/rojo-rbx/rojo/pull/472
 [#504]: https://github.com/rojo-rbx/rojo/pull/504
 [#507]: https://github.com/rojo-rbx/rojo/pull/507
 [#530]: https://github.com/rojo-rbx/rojo/pull/530
+[#538]: https://github.com/rojo-rbx/rojo/pull/538
 
 ## [7.0.0] - December 10, 2021
 * Fixed Rojo's interactions with properties enabled by FFlags that are not yet enabled. ([#493])
@@ -96,7 +98,7 @@ The shorthand property format that most users use is not impacted. For reference
 ## [7.0.0-alpha.4][7.0.0-alpha.4] (May 5, 2021)
 * Added the `gameId` and `placeId` optional properties to project files.
     * When connecting from the Rojo Roblox Studio plugin, Rojo will set the game and place ID of the current place to these values, if set.
-    * This is equivalent to running `game:SetUniverseId(...)` and `game:SetPlaceId(...)` from the command bar in Studio. 
+    * This is equivalent to running `game:SetUniverseId(...)` and `game:SetPlaceId(...)` from the command bar in Studio.
 * Added "EXPERIMENTAL!" label to two-way sync toggle in Rojo's Roblox Studio plugin.
 * Fixed `Name` and `Parent` properties being allowed in Rojo projects. ([#413][pr-413])
 * Fixed "Open Scripts Externally" feature crashing Studio. ([#369][issue-369])
