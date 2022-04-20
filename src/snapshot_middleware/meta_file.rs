@@ -1,8 +1,14 @@
-use std::{borrow::Cow, collections::HashMap, path::PathBuf};
+use std::{
+    borrow::Cow, 
+    collections::HashMap,
+    iter::FromIterator,
+    path::PathBuf
+};
 
 use anyhow::{format_err, Context};
 use serde::{Deserialize, Serialize};
 
+use rbx_dom_weak::types::{Attributes, Tags, Variant};
 use crate::{resolution::UnresolvedValue, snapshot::InstanceSnapshot};
 
 /// Represents metadata in a sibling file with the same basename.
@@ -17,6 +23,12 @@ pub struct AdjacentMetadata {
 
     #[serde(default, skip_serializing_if = "HashMap::is_empty")]
     pub properties: HashMap<String, UnresolvedValue>,
+
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub tags: Vec<String>,
+
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    pub attributes: HashMap<String, Variant>,
 
     #[serde(skip)]
     pub path: PathBuf,
@@ -55,9 +67,29 @@ impl AdjacentMetadata {
         Ok(())
     }
 
+    fn apply_tags(&mut self, snapshot: &mut InstanceSnapshot) -> anyhow::Result<()> {
+        if !self.tags.is_empty() {
+            let tags = Tags::from(self.tags.clone());
+            snapshot.properties.insert("Tags".into(), tags.into());
+        }
+
+        Ok(())
+    }
+
+    fn apply_attributes(&mut self, snapshot: &mut InstanceSnapshot) -> anyhow::Result<()> {
+        if !self.attributes.is_empty() {
+            let attributes = Attributes::from_iter(self.attributes.clone().into_iter());
+            snapshot.properties.insert("Attributes".into(), attributes.into());
+        }
+
+        Ok(())
+    }
+
     pub fn apply_all(&mut self, snapshot: &mut InstanceSnapshot) -> anyhow::Result<()> {
         self.apply_ignore_unknown_instances(snapshot);
         self.apply_properties(snapshot)?;
+        self.apply_attributes(snapshot)?;
+        self.apply_tags(snapshot)?;
         Ok(())
     }
 
@@ -81,6 +113,12 @@ pub struct DirectoryMetadata {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub class_name: Option<String>,
 
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub tags: Vec<String>,
+
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    pub attributes: HashMap<String, Variant>,
+
     #[serde(skip)]
     pub path: PathBuf,
 }
@@ -102,6 +140,8 @@ impl DirectoryMetadata {
         self.apply_ignore_unknown_instances(snapshot);
         self.apply_class_name(snapshot)?;
         self.apply_properties(snapshot)?;
+        self.apply_attributes(snapshot)?;
+        self.apply_tags(snapshot)?;
 
         Ok(())
     }
@@ -137,6 +177,24 @@ impl DirectoryMetadata {
                 .with_context(|| format!("error applying meta file {}", path.display()))?;
 
             snapshot.properties.insert(key, value);
+        }
+
+        Ok(())
+    }
+
+    fn apply_tags(&mut self, snapshot: &mut InstanceSnapshot) -> anyhow::Result<()> {
+        if !self.tags.is_empty() {
+            let tags = Tags::from(self.tags.clone());
+            snapshot.properties.insert("Tags".into(), tags.into());
+        }
+
+        Ok(())
+    }
+
+    fn apply_attributes(&mut self, snapshot: &mut InstanceSnapshot) -> anyhow::Result<()> {
+        if !self.attributes.is_empty() {
+            let attributes = Attributes::from_iter(self.attributes.clone().into_iter());
+            snapshot.properties.insert("Attributes".into(), attributes.into());
         }
 
         Ok(())

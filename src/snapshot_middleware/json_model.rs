@@ -1,15 +1,23 @@
-use std::{borrow::Cow, collections::HashMap, path::Path, str};
+use std::{
+    borrow::Cow,
+    collections::HashMap,
+    iter::FromIterator,
+    path::Path,
+    str
+};
 
 use anyhow::Context;
 use memofs::Vfs;
+use rbx_dom_weak::types::{Attributes, Tags, Variant};
 use serde::Deserialize;
+use super::util::PathExt;
 
 use crate::{
     resolution::UnresolvedValue,
     snapshot::{InstanceContext, InstanceSnapshot},
 };
 
-use super::util::PathExt;
+
 
 pub fn snapshot_json_model(
     context: &InstanceContext,
@@ -71,6 +79,12 @@ struct JsonModelCore {
 
     #[serde(default = "HashMap::new", skip_serializing_if = "HashMap::is_empty")]
     properties: HashMap<String, UnresolvedValue>,
+
+    #[serde(default = "Vec::new", skip_serializing_if = "Vec::is_empty")]
+    tags: Vec<String>,
+
+    #[serde(default = "HashMap::new", skip_serializing_if = "HashMap::is_empty")]
+    attributes: HashMap<String, Variant>,
 }
 
 impl JsonModelCore {
@@ -86,6 +100,16 @@ impl JsonModelCore {
         for (key, unresolved) in self.properties {
             let value = unresolved.resolve(&class_name, &key)?;
             properties.insert(key, value);
+        }
+
+        if !self.tags.is_empty() {
+            let tags = Tags::from(self.tags);
+            properties.insert("Tags".into(), tags.into());
+        }
+
+        if !self.attributes.is_empty() {
+            let attributes = Attributes::from_iter(self.attributes.into_iter());
+            properties.insert("Attributes".into(), attributes.into());
         }
 
         Ok(InstanceSnapshot {
@@ -123,6 +147,10 @@ mod test {
                           "Name": "The Child",
                           "ClassName": "StringValue"
                         }
+                      ],
+                      "Tags": [
+                        "TheTag",
+                        "AnotherTag"
                       ]
                     }
                 "#,

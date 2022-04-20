@@ -1,4 +1,16 @@
+local EncodedValue = {}
+
+local ALL_AXES = {"X", "Y", "Z"}
+local ALL_FACES = {"Right", "Top", "Back", "Left", "Bottom", "Front"}
+
+local PRIMITIVE_TO_VARIANT = {
+	boolean = "Bool",
+	string = "String",
+	number = "Float64",
+}
+
 local base64 = require(script.Parent.base64)
+local types
 
 local function identity(...)
 	return ...
@@ -11,20 +23,83 @@ local function unpackDecoder(f)
 end
 
 local function serializeFloat(value)
-	-- TODO: Figure out a better way to serialize infinity and NaN, neither of
-	-- which fit into JSON.
-	if value == math.huge or value == -math.huge then
-		return 999999999 * math.sign(value)
+	if value == value and math.abs(value) ~= 1/0 then
+		return value
+	else
+		return tostring(value)
 	end
-
-	return value
 end
 
-local ALL_AXES = {"X", "Y", "Z"}
-local ALL_FACES = {"Right", "Top", "Back", "Left", "Bottom", "Front"}
+function EncodedValue.decode(encodedValue: any): (boolean, any)
+	local ty, value = next(encodedValue)
+	local typeImpl = types[ty]
+	
+	if typeImpl == nil then
+		return false, "Couldn't decode value " .. tostring(ty)
+	end
 
-local types
+	return pcall(typeImpl.fromPod, value)
+end
+
+function EncodedValue.encode(rbxValue: any, propertyType: string): (boolean, any)
+	assert(propertyType ~= nil, "Property type descriptor is required")
+	local typeImpl = types[propertyType]
+
+	if typeImpl == nil then
+		return false, ("Missing encoder for property type %q"):format(propertyType)
+	end
+
+	return pcall(function ()
+		return {
+			[propertyType] = typeImpl.toPod(rbxValue),
+		}
+	end)
+end
+
 types = {
+	Attributes = {
+		fromPod = function(pod)
+			local attributes = {}
+
+			for name, encoded in pairs(pod) do
+				local ok, result = EncodedValue.decode(encoded)
+
+				if ok then
+					attributes[name] = result
+					continue
+				end
+
+				local typeName = next(encoded)
+				warn(("Unable to decode attribute %q (Type: %s, Error: %s)"):format(name, typeName, result))
+			end
+
+			return attributes
+		end,
+
+		toPod = function(roblox)
+			local attributes = {}
+
+			for name, value in pairs(roblox) do
+				local typeName = typeof(value)
+
+				if PRIMITIVE_TO_VARIANT[typeName] then
+					typeName = PRIMITIVE_TO_VARIANT[typeName]
+				end
+
+				local ok, result = EncodedValue.encode(value, typeName)
+
+				if ok then
+					attributes[name] = result
+					continue
+				end
+
+				warn(("Unable to encode attribute %q (Type: %s, Error: %s)"):format(name, typeName, result))
+			end
+
+			return attributes
+		end,
+	},
+	
 	Axes = {
 		fromPod = function(pod)
 			local axes = {}
@@ -192,12 +267,12 @@ types = {
 	},
 
 	Float32 = {
-		fromPod = identity,
+		fromPod = tonumber,
 		toPod = serializeFloat,
 	},
 
 	Float64 = {
-		fromPod = identity,
+		fromPod = tonumber,
 		toPod = serializeFloat,
 	},
 
@@ -432,31 +507,5 @@ types = {
 		end,
 	},
 }
-
-local EncodedValue = {}
-
-function EncodedValue.decode(encodedValue)
-	local ty, value = next(encodedValue)
-
-	local typeImpl = types[ty]
-	if typeImpl == nil then
-		return false, "Couldn't decode value " .. tostring(ty)
-	end
-
-	return true, typeImpl.fromPod(value)
-end
-
-function EncodedValue.encode(rbxValue, propertyType)
-	assert(propertyType ~= nil, "Property type descriptor is required")
-
-	local typeImpl = types[propertyType]
-	if typeImpl == nil then
-		return false, ("Missing encoder for property type %q"):format(propertyType)
-	end
-
-	return true, {
-		[propertyType] = typeImpl.toPod(rbxValue),
-	}
-end
 
 return EncodedValue

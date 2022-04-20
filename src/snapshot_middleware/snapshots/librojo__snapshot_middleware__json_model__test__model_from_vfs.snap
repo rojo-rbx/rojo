@@ -1,7 +1,6 @@
 ---
 source: src/snapshot_middleware/json_model.rs
 expression: instance_snapshot
-
 ---
 snapshot_id: ~
 metadata:
@@ -16,6 +15,10 @@ class_name: IntValue
 properties:
   Value:
     Int64: 5
+  Tags:
+    Tags:
+      - TheTag
+      - AnotherTag
 children:
   - snapshot_id: ~
     metadata:
