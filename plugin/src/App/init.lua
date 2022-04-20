@@ -226,11 +226,11 @@ function App:render()
 					end),
 				}),
 
-				pluginAction = PluginSettings.with(function(settings)
+				toggleAction = PluginSettings.with(function(settings)
 					return e(StudioPluginAction, {
 						name = "RojoConnection",
-						title = "Rojo: Connect/Disconnect the server",
-						description = "Connects/Disconnects the server for a Rojo sync session",
+						title = "Rojo: Connect/Disconnect",
+						description = "Toggles the server for a Rojo sync session",
 						icon = Assets.Images.PluginButton,
 						bindable = true,
 						onTriggered = function()
@@ -253,6 +253,48 @@ function App:render()
 						end,
 					})
 				end),
+
+				connectAction = PluginSettings.with(function(settings)
+					return e(StudioPluginAction, {
+						name = "RojoConnect",
+						title = "Rojo: Connect",
+						description = "Connects the server for a Rojo sync session",
+						icon = Assets.Images.PluginButton,
+						bindable = true,
+						onTriggered = function()
+							if self.serveSession then
+								return
+							end
+
+							local hostText = self.hostRef.current.Text
+							local portText = self.portRef.current.Text
+
+							self:startSession(
+								if #hostText > 0 then hostText else Config.defaultHost,
+								if #portText > 0 then portText else Config.defaultPort,
+								{
+									openScriptsExternally = settings:get("openScriptsExternally"),
+									twoWaySync = settings:get("twoWaySync"),
+								}
+							)
+						end,
+					})
+				end),
+
+				disconnectAction = e(StudioPluginAction, {
+					name = "RojoDisconnect",
+					title = "Rojo: Disconnect",
+					description = "Disconnects the server for a Rojo sync session",
+					icon = Assets.Images.PluginButton,
+					bindable = true,
+					onTriggered = function()
+						if not self.serveSession then
+							return
+						end
+
+						self:endSession()
+					end,
+				}),
 
 				toolbar = e(StudioToolbar, {
 					name = pluginName,
