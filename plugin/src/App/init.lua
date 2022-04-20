@@ -38,6 +38,9 @@ local App = Roact.Component:extend("App")
 function App:init()
 	preloadAssets()
 
+	self.hostRef = Roact.createRef()
+	self.portRef = Roact.createRef()
+
 	self:setState({
 		appStatus = AppStatus.NotConnected,
 		guiEnabled = false,
@@ -159,11 +162,21 @@ function App:render()
 				}, {
 					NotConnectedPage = PluginSettings.with(function(settings)
 						return createPageElement(AppStatus.NotConnected, {
-							onConnect = function(host, port)
-								self:startSession(host, port, {
-									openScriptsExternally = settings:get("openScriptsExternally"),
-									twoWaySync = settings:get("twoWaySync"),
-								})
+							hostRef = self.hostRef,
+							portRef = self.portRef,
+
+							onConnect = function()
+								local hostText = self.hostRef.current.Text
+								local portText = self.portRef.current.Text
+
+								self:startSession(
+									if #hostText > 0 then hostText else Config.defaultHost,
+									if #portText > 0 then portText else Config.defaultPort,
+									{
+										openScriptsExternally = settings:get("openScriptsExternally"),
+										twoWaySync = settings:get("twoWaySync"),
+									}
+								)
 							end,
 
 							onNavigateSettings = function()
@@ -226,10 +239,17 @@ function App:render()
 								return
 							end
 
-							self:startSession(Config.defaultHost, Config.defaultPort, {
-								openScriptsExternally = settings:get("openScriptsExternally"),
-								twoWaySync = settings:get("twoWaySync"),
-							})
+							local hostText = self.hostRef.current.Text
+							local portText = self.portRef.current.Text
+
+							self:startSession(
+								if #hostText > 0 then hostText else Config.defaultHost,
+								if #portText > 0 then portText else Config.defaultPort,
+								{
+									openScriptsExternally = settings:get("openScriptsExternally"),
+									twoWaySync = settings:get("twoWaySync"),
+								}
+							)
 						end,
 					})
 				end),

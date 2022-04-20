@@ -82,11 +82,6 @@ end
 
 local NotConnectedPage = Roact.Component:extend("NotConnectedPage")
 
-function NotConnectedPage:init()
-	self.hostRef = Roact.createRef()
-	self.portRef = Roact.createRef()
-end
-
 function NotConnectedPage:render()
 	return Roact.createFragment({
 		Header = e(Header, {
@@ -95,8 +90,8 @@ function NotConnectedPage:render()
 		}),
 
 		AddressEntry = e(AddressEntry, {
-			hostRef = self.hostRef,
-			portRef = self.portRef,
+			hostRef = self.props.hostRef,
+			portRef = self.props.portRef,
 			transparency = self.props.transparency,
 			layoutOrder = 2,
 		}),
@@ -120,16 +115,7 @@ function NotConnectedPage:render()
 				transparency = self.props.transparency,
 				layoutOrder = 2,
 				onClick = function()
-					local hostText = self.hostRef.current.Text
-					local portText = self.portRef.current.Text
-
-					lastHost = hostText
-					lastPort = portText
-
-					self.props.onConnect(
-						#hostText > 0 and hostText or Config.defaultHost,
-						#portText > 0 and portText or Config.defaultPort
-					)
+					self.props.onConnect()
 				end,
 			}),
 
