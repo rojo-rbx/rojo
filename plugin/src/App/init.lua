@@ -191,6 +191,7 @@ function App:render()
 						onClose = function()
 							self:setState({
 								appStatus = AppStatus.NotConnected,
+								toolbarIcon = Assets.Images.PluginButton,
 							})
 						end,
 					}),
