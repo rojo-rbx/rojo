@@ -44,6 +44,10 @@ function StudioToggleButton:didUpdate(lastProps)
 		self.button.Enabled = self.props.enabled
 	end
 
+	if self.props.icon ~= lastProps.icon then
+		self.button.Icon = self.props.icon
+	end
+
 	if self.props.active ~= lastProps.active then
 		self.button:SetActive(self.props.active)
 	end
