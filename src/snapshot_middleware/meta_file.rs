@@ -1,15 +1,10 @@
-use std::{
-    borrow::Cow, 
-    collections::HashMap,
-    iter::FromIterator,
-    path::PathBuf
-};
+use std::{borrow::Cow, collections::HashMap, iter::FromIterator, path::PathBuf};
 
 use anyhow::{format_err, Context};
 use serde::{Deserialize, Serialize};
 
-use rbx_dom_weak::types::{Attributes, Tags, Variant};
 use crate::{resolution::UnresolvedValue, snapshot::InstanceSnapshot};
+use rbx_dom_weak::types::{Attributes, Tags, Variant};
 
 /// Represents metadata in a sibling file with the same basename.
 ///
@@ -79,7 +74,9 @@ impl AdjacentMetadata {
     fn apply_attributes(&mut self, snapshot: &mut InstanceSnapshot) -> anyhow::Result<()> {
         if !self.attributes.is_empty() {
             let attributes = Attributes::from_iter(self.attributes.clone().into_iter());
-            snapshot.properties.insert("Attributes".into(), attributes.into());
+            snapshot
+                .properties
+                .insert("Attributes".into(), attributes.into());
         }
 
         Ok(())
@@ -194,7 +191,9 @@ impl DirectoryMetadata {
     fn apply_attributes(&mut self, snapshot: &mut InstanceSnapshot) -> anyhow::Result<()> {
         if !self.attributes.is_empty() {
             let attributes = Attributes::from_iter(self.attributes.clone().into_iter());
-            snapshot.properties.insert("Attributes".into(), attributes.into());
+            snapshot
+                .properties
+                .insert("Attributes".into(), attributes.into());
         }
 
         Ok(())

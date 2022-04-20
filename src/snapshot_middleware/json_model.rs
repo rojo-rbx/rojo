@@ -1,23 +1,15 @@
-use std::{
-    borrow::Cow,
-    collections::HashMap,
-    iter::FromIterator,
-    path::Path,
-    str
-};
+use std::{borrow::Cow, collections::HashMap, iter::FromIterator, path::Path, str};
 
+use super::util::PathExt;
 use anyhow::Context;
 use memofs::Vfs;
 use rbx_dom_weak::types::{Attributes, Tags, Variant};
 use serde::Deserialize;
-use super::util::PathExt;
 
 use crate::{
     resolution::UnresolvedValue,
     snapshot::{InstanceContext, InstanceSnapshot},
 };
-
-
 
 pub fn snapshot_json_model(
     context: &InstanceContext,
