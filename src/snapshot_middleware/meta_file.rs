@@ -13,16 +13,27 @@ use rbx_dom_weak::types::{Attributes, Tags, Variant};
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AdjacentMetadata {
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(
+        alias = "IgnoreUnknownProperties",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub ignore_unknown_instances: Option<bool>,
 
-    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    #[serde(
+        default,
+        alias = "Properties",
+        skip_serializing_if = "HashMap::is_empty"
+    )]
     pub properties: HashMap<String, UnresolvedValue>,
 
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, alias = "Tags", skip_serializing_if = "Vec::is_empty")]
     pub tags: Vec<String>,
 
-    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    #[serde(
+        default,
+        alias = "Attributes",
+        skip_serializing_if = "HashMap::is_empty"
+    )]
     pub attributes: HashMap<String, Variant>,
 
     #[serde(skip)]
@@ -101,19 +112,30 @@ impl AdjacentMetadata {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DirectoryMetadata {
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(
+        alias = "IgnoreUnknownInstances",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub ignore_unknown_instances: Option<bool>,
 
-    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    #[serde(
+        default,
+        alias = "Properties",
+        skip_serializing_if = "HashMap::is_empty"
+    )]
     pub properties: HashMap<String, UnresolvedValue>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(alias = "ClassName", skip_serializing_if = "Option::is_none")]
     pub class_name: Option<String>,
 
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, alias = "Tags", skip_serializing_if = "Vec::is_empty")]
     pub tags: Vec<String>,
 
-    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    #[serde(
+        default,
+        alias = "Attributes",
+        skip_serializing_if = "HashMap::is_empty"
+    )]
     pub attributes: HashMap<String, Variant>,
 
     #[serde(skip)]

@@ -44,8 +44,8 @@ pub fn snapshot_json_model(
 }
 
 #[derive(Debug, Deserialize)]
-#[serde(rename_all = "PascalCase")]
 struct JsonModel {
+    #[serde(alias = "Name")]
     name: Option<String>,
 
     #[serde(flatten)]
@@ -53,8 +53,8 @@ struct JsonModel {
 }
 
 #[derive(Debug, Deserialize)]
-#[serde(rename_all = "PascalCase")]
 struct JsonModelInstance {
+    #[serde(alias = "Name")]
     name: String,
 
     #[serde(flatten)]
@@ -62,20 +62,37 @@ struct JsonModelInstance {
 }
 
 #[derive(Debug, Deserialize)]
-#[serde(rename_all = "PascalCase")]
+#[serde(rename_all = "camelCase")]
 struct JsonModelCore {
+    #[serde(alias = "ClassName")]
     class_name: String,
 
-    #[serde(default = "Vec::new", skip_serializing_if = "Vec::is_empty")]
+    #[serde(
+        alias = "Children",
+        default = "Vec::new",
+        skip_serializing_if = "Vec::is_empty"
+    )]
     children: Vec<JsonModelInstance>,
 
-    #[serde(default = "HashMap::new", skip_serializing_if = "HashMap::is_empty")]
+    #[serde(
+        alias = "Properties",
+        default = "HashMap::new",
+        skip_serializing_if = "HashMap::is_empty"
+    )]
     properties: HashMap<String, UnresolvedValue>,
 
-    #[serde(default = "Vec::new", skip_serializing_if = "Vec::is_empty")]
+    #[serde(
+        alias = "Tags",
+        default = "Vec::new",
+        skip_serializing_if = "Vec::is_empty"
+    )]
     tags: Vec<String>,
 
-    #[serde(default = "HashMap::new", skip_serializing_if = "HashMap::is_empty")]
+    #[serde(
+        alias = "Attributes",
+        default = "HashMap::new",
+        skip_serializing_if = "HashMap::is_empty"
+    )]
     attributes: HashMap<String, Variant>,
 }
 
