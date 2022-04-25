@@ -47,7 +47,17 @@ function App:init()
 	})
 end
 
-function App:startSession(host, port, sessionOptions)
+function App:startSession()
+	local hostText = self.hostRef.current.Text
+	local portText = self.portRef.current.Text
+
+	local host = if #hostText > 0 then hostText else Config.defaultHost
+	local port = if #portText > 0 then portText else Config.defaultPort
+	local sessionOptions ={
+		openScriptsExternally = self.props.settings:get("openScriptsExternally"),
+		twoWaySync = self.props.settings:get("twoWaySync"),
+	}
+
 	local baseUrl = ("http://%s:%s"):format(host, port)
 	local apiContext = ApiContext.new(baseUrl)
 
@@ -160,32 +170,20 @@ function App:render()
 						})
 					end,
 				}, {
-					NotConnectedPage = PluginSettings.with(function(settings)
-						return createPageElement(AppStatus.NotConnected, {
-							hostRef = self.hostRef,
-							portRef = self.portRef,
+					NotConnectedPage = createPageElement(AppStatus.NotConnected, {
+						hostRef = self.hostRef,
+						portRef = self.portRef,
 
-							onConnect = function()
-								local hostText = self.hostRef.current.Text
-								local portText = self.portRef.current.Text
+						onConnect = function()
+							self:startSession()
+						end,
 
-								self:startSession(
-									if #hostText > 0 then hostText else Config.defaultHost,
-									if #portText > 0 then portText else Config.defaultPort,
-									{
-										openScriptsExternally = settings:get("openScriptsExternally"),
-										twoWaySync = settings:get("twoWaySync"),
-									}
-								)
-							end,
-
-							onNavigateSettings = function()
-								self:setState({
-									appStatus = AppStatus.Settings,
-								})
-							end,
-						})
-					end),
+						onNavigateSettings = function()
+							self:setState({
+								appStatus = AppStatus.Settings,
+							})
+						end,
+					}),
 
 					Connecting = createPageElement(AppStatus.Connecting),
 
@@ -226,60 +224,35 @@ function App:render()
 					end),
 				}),
 
-				toggleAction = PluginSettings.with(function(settings)
-					return e(StudioPluginAction, {
-						name = "RojoConnection",
-						title = "Rojo: Connect/Disconnect",
-						description = "Toggles the server for a Rojo sync session",
-						icon = Assets.Images.PluginButton,
-						bindable = true,
-						onTriggered = function()
-							if self.serveSession then
-								self:endSession()
-								return
-							end
+				toggleAction = e(StudioPluginAction, {
+					name = "RojoConnection",
+					title = "Rojo: Connect/Disconnect",
+					description = "Toggles the server for a Rojo sync session",
+					icon = Assets.Images.PluginButton,
+					bindable = true,
+					onTriggered = function()
+						if self.serveSession then
+							self:endSession()
+						else
+							self:startSession()
+						end
+					end,
+				}),
 
-							local hostText = self.hostRef.current.Text
-							local portText = self.portRef.current.Text
+				connectAction = e(StudioPluginAction, {
+					name = "RojoConnect",
+					title = "Rojo: Connect",
+					description = "Connects the server for a Rojo sync session",
+					icon = Assets.Images.PluginButton,
+					bindable = true,
+					onTriggered = function()
+						if self.serveSession then
+							return
+						end
 
-							self:startSession(
-								if #hostText > 0 then hostText else Config.defaultHost,
-								if #portText > 0 then portText else Config.defaultPort,
-								{
-									openScriptsExternally = settings:get("openScriptsExternally"),
-									twoWaySync = settings:get("twoWaySync"),
-								}
-							)
-						end,
-					})
-				end),
-
-				connectAction = PluginSettings.with(function(settings)
-					return e(StudioPluginAction, {
-						name = "RojoConnect",
-						title = "Rojo: Connect",
-						description = "Connects the server for a Rojo sync session",
-						icon = Assets.Images.PluginButton,
-						bindable = true,
-						onTriggered = function()
-							if self.serveSession then
-								return
-							end
-
-							local hostText = self.hostRef.current.Text
-							local portText = self.portRef.current.Text
-
-							self:startSession(
-								if #hostText > 0 then hostText else Config.defaultHost,
-								if #portText > 0 then portText else Config.defaultPort,
-								{
-									openScriptsExternally = settings:get("openScriptsExternally"),
-									twoWaySync = settings:get("twoWaySync"),
-								}
-							)
-						end,
-					})
-				end),
+						self:startSession()
+					end,
+				}),
 
 				disconnectAction = e(StudioPluginAction, {
 					name = "RojoDisconnect",
@@ -319,4 +292,15 @@ function App:render()
 	})
 end
 
-return App
+return function(props)
+	return e(PluginSettings.StudioProvider, {
+		plugin = props.plugin,
+	}, {
+		App = PluginSettings.with(function(settings)
+			local settingsProps = Dictionary.merge(props, {
+				settings = settings,
+			})
+			return e(App, settingsProps)
+		end),
+	})
+end
