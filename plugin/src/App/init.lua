@@ -80,7 +80,7 @@ function App:startSession()
 				address = address,
 			})
 
-			Log.warn(string.format("Connected to session '%s' at %s", details, address))
+			Log.info(string.format("Connected to session '%s' at %s", details, address))
 		elseif status == ServeSession.Status.Disconnected then
 			self.serveSession = nil
 
@@ -98,7 +98,7 @@ function App:startSession()
 					appStatus = AppStatus.NotConnected,
 				})
 
-				Log.warn("Disconnected session")
+				Log.info("Disconnected session")
 			end
 		end
 	end)

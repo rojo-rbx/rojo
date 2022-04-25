@@ -20,7 +20,7 @@ function StudioPluginAction:init()
 end
 
 function StudioPluginAction:render()
-	return
+	return nil
 end
 
 function StudioPluginAction:willUnmount()
