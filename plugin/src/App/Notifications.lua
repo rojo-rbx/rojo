@@ -31,10 +31,10 @@ function Notification:init()
 		end
 	end)
 
-	self.timeout = task.delay(self.props.timeout, self.exit, self)
+	self.timeout = task.delay(self.props.timeout, self.dismiss, self)
 end
 
-function Notification:exit()
+function Notification:dismiss()
 	self.motor:setGoal(
 		Flipper.Spring.new(0, {
 			frequency = 5,
@@ -137,7 +137,7 @@ function Notification:render()
 				anchorPoint = Vector2.new(1, 0.5),
 
 				onClick = function()
-					self:exit()
+					self:dismiss()
 				end,
 			}),
 
