@@ -46,6 +46,11 @@ function App:init()
 end
 
 function App:addNotification(text: string, timeout: number?)
+	if self.state.guiEnabled then
+		-- Skip because the widget is already informing the user
+		return
+	end
+
 	local notifications = table.clone(self.state.notifications)
 	table.insert(notifications, {
 		text = text,
