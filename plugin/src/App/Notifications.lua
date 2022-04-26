@@ -54,13 +54,18 @@ function Notification:didMount()
 
 	self.timeout = task.spawn(function()
 		local clock = os.clock()
+		local seen = false
 		while task.wait(1/10) do
 			local now = os.clock()
 			local dt = now - clock
 			clock = now
 
-			if StudioService.ActiveScript then
-				-- Don't run down timer when notifications aren't visible
+			if not seen then
+				seen = StudioService.ActiveScript == nil
+			end
+
+			if not seen then
+				-- Don't run down timer before being viewed
 				continue
 			end
 
