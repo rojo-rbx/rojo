@@ -50,7 +50,7 @@ function App:addNotification(text: string, timeout: number?)
 	table.insert(notifications, {
 		text = text,
 		timestamp = DateTime.now().UnixTimestampMillis,
-		timeout = timeout or 15,
+		timeout = timeout or 3,
 	})
 
 	self:setState({
@@ -90,7 +90,7 @@ function App:startSession(host, port, sessionOptions)
 				projectName = details,
 				address = address,
 			})
-			self:addNotification(string.format("Connected to session '%s' at %s.", details, address), 30)
+			self:addNotification(string.format("Connected to session '%s' at %s.", details, address), 5)
 		elseif status == ServeSession.Status.Disconnected then
 			self.serveSession = nil
 
@@ -103,7 +103,7 @@ function App:startSession(host, port, sessionOptions)
 					appStatus = AppStatus.Error,
 					errorMessage = tostring(details),
 				})
-				self:addNotification(tostring(details), 60)
+				self:addNotification(tostring(details), 10)
 			else
 				self:setState({
 					appStatus = AppStatus.NotConnected,

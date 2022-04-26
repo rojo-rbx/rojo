@@ -78,73 +78,70 @@ function Notification:render()
 	end)
 
 	return Theme.with(function(theme)
-		return e(BorderedContainer, {
-			transparency = transparency,
-			size = size,
-			layoutOrder = self.props.layoutOrder,
+		return e("TextButton", {
+			BackgroundTransparency = 1,
+			Size = size,
+			LayoutOrder = self.props.layoutOrder,
+			Text = "",
+			ClipsDescendants = true,
+
+			[Roact.Event.Activated] = function()
+				self:dismiss()
+			end,
 		}, {
-			TextContainer = e("Frame", {
-				Size = UDim2.new(0, 35+textBounds.X, 1, -20),
-				Position = UDim2.new(0, 0, 0, 10),
-				BackgroundTransparency = 1
-			}, {
-				Logo = e("ImageLabel", {
-					ImageTransparency = transparency,
-					Image = Assets.Images.PluginButton,
-					BackgroundTransparency = 1,
-					Size = UDim2.new(0, 32, 0, 32),
-					Position = UDim2.new(0, 0, 0.5, 0),
-					AnchorPoint = Vector2.new(0, 0.5),
-				}),
-				Info = e("TextLabel", {
-					Text = self.props.text,
-					Font = Enum.Font.GothamSemibold,
-					TextSize = 15,
-					TextColor3 = theme.Notification.InfoColor,
-					TextTransparency = transparency,
-					TextXAlignment = Enum.TextXAlignment.Left,
-					TextWrapped = true,
-
-					Size = UDim2.new(0, textBounds.X, 0, textBounds.Y),
-					Position = UDim2.fromOffset(35, 0),
-
-					LayoutOrder = 1,
-					BackgroundTransparency = 1,
-				}),
-				Time = e("TextLabel", {
-					Text = time:FormatLocalTime("LTS", "en-us"),
-					Font = Enum.Font.Code,
-					TextSize = 12,
-					TextColor3 = theme.Notification.InfoColor,
-					TextTransparency = transparency,
-					TextXAlignment = Enum.TextXAlignment.Left,
-
-					Size = UDim2.new(1, -35, 0, 14),
-					Position = UDim2.new(0, 35, 1, -14),
-
-					LayoutOrder = 1,
-					BackgroundTransparency = 1,
-				}),
-			}),
-
-			Close = e(IconButton, {
-				icon = Assets.Images.Icons.Close,
-				iconSize = 24,
-				color = theme.Notification.CloseColor,
+			e(BorderedContainer, {
 				transparency = transparency,
+				size = UDim2.new(1, 0, 1, 0),
+			}, {
+				TextContainer = e("Frame", {
+					Size = UDim2.new(0, 35+textBounds.X, 1, -20),
+					Position = UDim2.new(0, 0, 0, 10),
+					BackgroundTransparency = 1
+				}, {
+					Logo = e("ImageLabel", {
+						ImageTransparency = transparency,
+						Image = Assets.Images.PluginButton,
+						BackgroundTransparency = 1,
+						Size = UDim2.new(0, 32, 0, 32),
+						Position = UDim2.new(0, 0, 0.5, 0),
+						AnchorPoint = Vector2.new(0, 0.5),
+					}),
+					Info = e("TextLabel", {
+						Text = self.props.text,
+						Font = Enum.Font.GothamSemibold,
+						TextSize = 15,
+						TextColor3 = theme.Notification.InfoColor,
+						TextTransparency = transparency,
+						TextXAlignment = Enum.TextXAlignment.Left,
+						TextWrapped = true,
 
-				position = UDim2.new(1, 0, 0.5, 0),
-				anchorPoint = Vector2.new(1, 0.5),
+						Size = UDim2.new(0, textBounds.X, 0, textBounds.Y),
+						Position = UDim2.fromOffset(35, 0),
 
-				onClick = function()
-					self:dismiss()
-				end,
-			}),
+						LayoutOrder = 1,
+						BackgroundTransparency = 1,
+					}),
+					Time = e("TextLabel", {
+						Text = time:FormatLocalTime("LTS", "en-us"),
+						Font = Enum.Font.Code,
+						TextSize = 12,
+						TextColor3 = theme.Notification.InfoColor,
+						TextTransparency = transparency,
+						TextXAlignment = Enum.TextXAlignment.Left,
 
-			Padding = e("UIPadding", {
-				PaddingLeft = UDim.new(0, 17),
-				PaddingRight = UDim.new(0, 15),
-			}),
+						Size = UDim2.new(1, -35, 0, 14),
+						Position = UDim2.new(0, 35, 1, -14),
+
+						LayoutOrder = 1,
+						BackgroundTransparency = 1,
+					}),
+				}),
+
+				Padding = e("UIPadding", {
+					PaddingLeft = UDim.new(0, 17),
+					PaddingRight = UDim.new(0, 15),
+				}),
+			})
 		})
 	end)
 end
