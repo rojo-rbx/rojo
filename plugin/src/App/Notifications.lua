@@ -10,7 +10,6 @@ local bindingUtil = require(script.Parent.bindingUtil)
 local Theme = require(Plugin.App.Theme)
 local Assets = require(Plugin.Assets)
 
-local IconButton = require(Plugin.App.Components.IconButton)
 local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
 
 local baseClock = DateTime.now().UnixTimestampMillis
@@ -72,7 +71,7 @@ function Notification:render()
 
 	local size = self.binding:map(function(value)
 		return UDim2.fromOffset(
-			(35+75+textBounds.X)*value,
+			(35+40+textBounds.X)*value,
 			math.max(14+20+textBounds.Y, 32+20)
 		)
 	end)
