@@ -30,6 +30,21 @@ function Notification:init()
 			end
 		end
 	end)
+
+	self.timeout = task.delay(self.props.timeout, self.exit, self)
+end
+
+function Notification:exit()
+	self.motor:setGoal(
+		Flipper.Spring.new(0, {
+			frequency = 5,
+			dampingRatio = 1,
+		})
+	)
+end
+
+function Notification:willUnmount()
+	task.cancel(self.timeout)
 end
 
 function Notification:didMount()
@@ -122,12 +137,7 @@ function Notification:render()
 				anchorPoint = Vector2.new(1, 0.5),
 
 				onClick = function()
-					self.motor:setGoal(
-						Flipper.Spring.new(0, {
-							frequency = 5,
-							dampingRatio = 1,
-						})
-					)
+					self:exit()
 				end,
 			}),
 
@@ -148,6 +158,7 @@ function Notifications:render()
 		notifs[notif] = e(Notification, {
 			text = notif.text,
 			timestamp = notif.timestamp,
+			timeout = notif.timeout,
 			layoutOrder = (notif.timestamp - baseClock),
 			onClose = function()
 				self.props.onClose(index)
