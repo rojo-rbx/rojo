@@ -1,4 +1,6 @@
 local TextService = game:GetService("TextService")
+local StudioService = game:GetService("StudioService")
+
 local Rojo = script:FindFirstAncestor("Rojo")
 local Plugin = Rojo.Plugin
 
@@ -22,6 +24,8 @@ function Notification:init()
 	self.motor = Flipper.SingleMotor.new(0)
 	self.binding = bindingUtil.fromMotor(self.motor)
 
+	self.lifetime = self.props.timeout
+
 	self.motor:onStep(function(value)
 		if value <= 0 then
 			if self.props.onClose then
@@ -29,8 +33,6 @@ function Notification:init()
 			end
 		end
 	end)
-
-	self.timeout = task.delay(self.props.timeout, self.dismiss, self)
 end
 
 function Notification:dismiss()
@@ -42,10 +44,6 @@ function Notification:dismiss()
 	)
 end
 
-function Notification:willUnmount()
-	task.cancel(self.timeout)
-end
-
 function Notification:didMount()
 	self.motor:setGoal(
 		Flipper.Spring.new(1, {
@@ -53,6 +51,30 @@ function Notification:didMount()
 			dampingRatio = 1,
 		})
 	)
+
+	self.timeout = task.spawn(function()
+		local clock = os.clock()
+		while task.wait(1/10) do
+			local now = os.clock()
+			local dt = now - clock
+			clock = now
+
+			if StudioService.ActiveScript then
+				-- Don't run down timer when notifications aren't visible
+				continue
+			end
+
+			self.lifetime -= dt
+			if self.lifetime <= 0 then
+				self:dismiss()
+				break
+			end
+		end
+	end)
+end
+
+function Notification:willUnmount()
+	task.cancel(self.timeout)
 end
 
 function Notification:render()
