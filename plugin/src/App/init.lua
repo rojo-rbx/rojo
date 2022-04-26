@@ -16,6 +16,7 @@ local Theme = require(script.Theme)
 local PluginSettings = require(script.PluginSettings)
 
 local Page = require(script.Page)
+local Notifications = require(script.Notifications)
 local StudioToolbar = require(script.Components.Studio.StudioToolbar)
 local StudioToggleButton = require(script.Components.Studio.StudioToggleButton)
 local StudioPluginGui = require(script.Components.Studio.StudioPluginGui)
@@ -40,6 +41,28 @@ function App:init()
 	self:setState({
 		appStatus = AppStatus.NotConnected,
 		guiEnabled = false,
+		notifications = {},
+	})
+end
+
+function App:addNotification(text)
+	local notifications = table.clone(self.state.notifications)
+	table.insert(notifications, {
+		text = text,
+		timestamp = DateTime.now().UnixTimestampMillis,
+	})
+
+	self:setState({
+		notifications = notifications,
+	})
+end
+
+function App:closeNotification(index)
+	local notifications = table.clone(self.state.notifications)
+	table.remove(notifications, index)
+
+	self:setState({
+		notifications = notifications,
 	})
 end
 
@@ -58,6 +81,7 @@ function App:startSession(host, port, sessionOptions)
 			self:setState({
 				appStatus = AppStatus.Connecting,
 			})
+			self:addNotification("Connecting to session...")
 		elseif status == ServeSession.Status.Connected then
 			local address = ("%s:%s"):format(host, port)
 			self:setState({
@@ -65,6 +89,7 @@ function App:startSession(host, port, sessionOptions)
 				projectName = details,
 				address = address,
 			})
+			self:addNotification(string.format("Connected to session '%s' at %s.", details, address))
 		elseif status == ServeSession.Status.Disconnected then
 			self.serveSession = nil
 
@@ -77,10 +102,12 @@ function App:startSession(host, port, sessionOptions)
 					appStatus = AppStatus.Error,
 					errorMessage = tostring(details),
 				})
+				self:addNotification(tostring(details))
 			else
 				self:setState({
 					appStatus = AppStatus.NotConnected,
 				})
+				self:addNotification("Disconnected from session.")
 			end
 		end
 	end)
@@ -198,6 +225,21 @@ function App:render()
 							BorderSizePixel = 0,
 						})
 					end),
+				}),
+
+				RojoNotifications = e("ScreenGui", {}, {
+					layout = Roact.createElement("UIListLayout", {
+						SortOrder = Enum.SortOrder.LayoutOrder,
+						HorizontalAlignment = Enum.HorizontalAlignment.Right,
+						VerticalAlignment = Enum.VerticalAlignment.Bottom,
+						Padding = UDim.new(0, 5),
+					}),
+					e(Notifications, {
+						notifications = self.state.notifications,
+						onClose = function(index)
+							self:closeNotification(index)
+						end,
+					}),
 				}),
 
 				toolbar = e(StudioToolbar, {

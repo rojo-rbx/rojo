@@ -103,6 +103,10 @@ local lightTheme = strict("LightTheme", {
 		LogoColor = BRAND_COLOR,
 		VersionColor = hexColor(0x727272),
 	},
+	Notification = {
+		InfoColor = hexColor(0x00000),
+		CloseColor = BRAND_COLOR,
+	},
 	ErrorColor = hexColor(0x000000),
 	ScrollBarColor = hexColor(0x000000),
 })
@@ -176,6 +180,10 @@ local darkTheme = strict("DarkTheme", {
 	Header = {
 		LogoColor = BRAND_COLOR,
 		VersionColor = hexColor(0xD3D3D3)
+	},
+	Notification = {
+		InfoColor = hexColor(0xFFFFFF),
+		CloseColor = hexColor(0xFFFFFF),
 	},
 	ErrorColor = hexColor(0xFFFFFF),
 	ScrollBarColor = hexColor(0xFFFFFF),
