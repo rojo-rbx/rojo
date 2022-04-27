@@ -11,6 +11,7 @@ local bindingUtil = require(script.Parent.bindingUtil)
 
 local Theme = require(Plugin.App.Theme)
 local Assets = require(Plugin.Assets)
+local playSound = require(Plugin.playSound)
 
 local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
 
@@ -51,6 +52,8 @@ function Notification:didMount()
 			dampingRatio = 1,
 		})
 	)
+
+	playSound(Assets.Sounds.Notification)
 
 	self.timeout = task.spawn(function()
 		local clock = os.clock()
