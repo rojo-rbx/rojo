@@ -17,6 +17,7 @@ local PluginSettings = require(script.PluginSettings)
 
 local Page = require(script.Page)
 local Notifications = require(script.Notifications)
+local StudioPluginAction = require(script.Components.Studio.StudioPluginAction)
 local StudioToolbar = require(script.Components.Studio.StudioToolbar)
 local StudioToggleButton = require(script.Components.Studio.StudioToggleButton)
 local StudioPluginGui = require(script.Components.Studio.StudioPluginGui)
@@ -37,6 +38,9 @@ local App = Roact.Component:extend("App")
 
 function App:init()
 	preloadAssets()
+
+	self.hostRef = Roact.createRef()
+	self.portRef = Roact.createRef()
 
 	self:setState({
 		appStatus = AppStatus.NotConnected,
@@ -73,7 +77,17 @@ function App:closeNotification(index: number)
 	})
 end
 
-function App:startSession(host, port, sessionOptions)
+function App:startSession()
+	local hostText = self.hostRef.current.Text
+	local portText = self.portRef.current.Text
+
+	local host = if #hostText > 0 then hostText else Config.defaultHost
+	local port = if #portText > 0 then portText else Config.defaultPort
+	local sessionOptions = {
+		openScriptsExternally = self.props.settings:get("openScriptsExternally"),
+		twoWaySync = self.props.settings:get("twoWaySync"),
+	}
+
 	local baseUrl = ("http://%s:%s"):format(host, port)
 	local apiContext = ApiContext.new(baseUrl)
 
@@ -128,6 +142,22 @@ function App:startSession(host, port, sessionOptions)
 	self.serveSession = serveSession
 end
 
+function App:endSession()
+	if self.serveSession == nil then
+		return
+	end
+
+	Log.trace("Disconnecting session")
+
+	self.serveSession:stop()
+	self.serveSession = nil
+	self:setState({
+		appStatus = AppStatus.NotConnected,
+	})
+
+	Log.trace("Session terminated by user")
+end
+
 function App:render()
 	local pluginName = "Rojo " .. Version.display(Config.version)
 
@@ -174,22 +204,20 @@ function App:render()
 						})
 					end,
 				}, {
-					NotConnectedPage = PluginSettings.with(function(settings)
-						return createPageElement(AppStatus.NotConnected, {
-							onConnect = function(host, port)
-								self:startSession(host, port, {
-									openScriptsExternally = settings:get("openScriptsExternally"),
-									twoWaySync = settings:get("twoWaySync"),
-								})
-							end,
+					NotConnectedPage = createPageElement(AppStatus.NotConnected, {
+						hostRef = self.hostRef,
+						portRef = self.portRef,
 
-							onNavigateSettings = function()
-								self:setState({
-									appStatus = AppStatus.Settings,
-								})
-							end,
-						})
-					end),
+						onConnect = function()
+							self:startSession()
+						end,
+
+						onNavigateSettings = function()
+							self:setState({
+								appStatus = AppStatus.Settings,
+							})
+						end,
+					}),
 
 					Connecting = createPageElement(AppStatus.Connecting),
 
@@ -198,15 +226,7 @@ function App:render()
 						address = self.state.address,
 
 						onDisconnect = function()
-							Log.trace("Disconnecting session")
-
-							self.serveSession:stop()
-							self.serveSession = nil
-							self:setState({
-								appStatus = AppStatus.NotConnected,
-							})
-
-							Log.trace("Session terminated by user")
+							self:endSession()
 						end,
 					}),
 
@@ -254,6 +274,51 @@ function App:render()
 					}),
 				}),
 
+				toggleAction = e(StudioPluginAction, {
+					name = "RojoConnection",
+					title = "Rojo: Connect/Disconnect",
+					description = "Toggles the server for a Rojo sync session",
+					icon = Assets.Images.PluginButton,
+					bindable = true,
+					onTriggered = function()
+						if self.serveSession then
+							self:endSession()
+						else
+							self:startSession()
+						end
+					end,
+				}),
+
+				connectAction = e(StudioPluginAction, {
+					name = "RojoConnect",
+					title = "Rojo: Connect",
+					description = "Connects the server for a Rojo sync session",
+					icon = Assets.Images.PluginButton,
+					bindable = true,
+					onTriggered = function()
+						if self.serveSession then
+							return
+						end
+
+						self:startSession()
+					end,
+				}),
+
+				disconnectAction = e(StudioPluginAction, {
+					name = "RojoDisconnect",
+					title = "Rojo: Disconnect",
+					description = "Disconnects the server for a Rojo sync session",
+					icon = Assets.Images.PluginButton,
+					bindable = true,
+					onTriggered = function()
+						if not self.serveSession then
+							return
+						end
+
+						self:endSession()
+					end,
+				}),
+
 				toolbar = e(StudioToolbar, {
 					name = pluginName,
 				}, {
@@ -277,4 +342,15 @@ function App:render()
 	})
 end
 
-return App
+return function(props)
+	return e(PluginSettings.StudioProvider, {
+		plugin = props.plugin,
+	}, {
+		App = PluginSettings.with(function(settings)
+			local settingsProps = Dictionary.merge(props, {
+				settings = settings,
+			})
+			return e(App, settingsProps)
+		end),
+	})
+end
