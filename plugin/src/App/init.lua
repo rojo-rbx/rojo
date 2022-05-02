@@ -53,7 +53,7 @@ function App:startSession()
 
 	local host = if #hostText > 0 then hostText else Config.defaultHost
 	local port = if #portText > 0 then portText else Config.defaultPort
-	local sessionOptions ={
+	local sessionOptions = {
 		openScriptsExternally = self.props.settings:get("openScriptsExternally"),
 		twoWaySync = self.props.settings:get("twoWaySync"),
 	}
@@ -80,7 +80,7 @@ function App:startSession()
 				address = address,
 			})
 
-			Log.info(string.format("Connected to session '%s' at %s", details, address))
+			Log.info("Connected to session '{}' at {}", details, address)
 		elseif status == ServeSession.Status.Disconnected then
 			self.serveSession = nil
 
