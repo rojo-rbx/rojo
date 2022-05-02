@@ -6,12 +6,14 @@
 * Added support for the new Open Cloud API when uploading. ([#504])
 * Added `sourcemap` command for generating sourcemaps to feed into other tools. ([#530])
 * Added PluginActions for connecting/disconnecting a session ([#537])
+* Added changing toolbar icon to indicate state ([#538])
 
 [#472]: https://github.com/rojo-rbx/rojo/pull/472
 [#504]: https://github.com/rojo-rbx/rojo/pull/504
 [#507]: https://github.com/rojo-rbx/rojo/pull/507
 [#530]: https://github.com/rojo-rbx/rojo/pull/530
 [#537]: https://github.com/rojo-rbx/rojo/pull/537
+[#538]: https://github.com/rojo-rbx/rojo/pull/538
 
 ## [7.0.0] - December 10, 2021
 * Fixed Rojo's interactions with properties enabled by FFlags that are not yet enabled. ([#493])

@@ -44,6 +44,7 @@ function App:init()
 	self:setState({
 		appStatus = AppStatus.NotConnected,
 		guiEnabled = false,
+		toolbarIcon = Assets.Images.PluginButton,
 	})
 end
 
@@ -71,6 +72,7 @@ function App:startSession()
 		if status == ServeSession.Status.Connecting then
 			self:setState({
 				appStatus = AppStatus.Connecting,
+				toolbarIcon = Assets.Images.PluginButton,
 			})
 		elseif status == ServeSession.Status.Connected then
 			local address = ("%s:%s"):format(host, port)
@@ -78,6 +80,7 @@ function App:startSession()
 				appStatus = AppStatus.Connected,
 				projectName = details,
 				address = address,
+				toolbarIcon = Assets.Images.PluginButtonConnected,
 			})
 
 			Log.info("Connected to session '{}' at {}", details, address)
@@ -92,10 +95,12 @@ function App:startSession()
 				self:setState({
 					appStatus = AppStatus.Error,
 					errorMessage = tostring(details),
+					toolbarIcon = Assets.Images.PluginButtonWarning,
 				})
 			else
 				self:setState({
 					appStatus = AppStatus.NotConnected,
+					toolbarIcon = Assets.Images.PluginButton,
 				})
 
 				Log.info("Disconnected session")
@@ -210,6 +215,7 @@ function App:render()
 						onClose = function()
 							self:setState({
 								appStatus = AppStatus.NotConnected,
+								toolbarIcon = Assets.Images.PluginButton,
 							})
 						end,
 					}),
@@ -275,7 +281,7 @@ function App:render()
 					button = e(StudioToggleButton, {
 						name = "Rojo",
 						tooltip = "Show or hide the Rojo panel",
-						icon = Assets.Images.PluginButton,
+						icon = self.state.toolbarIcon,
 						active = self.state.guiEnabled,
 						enabled = true,
 						onClick = function()
