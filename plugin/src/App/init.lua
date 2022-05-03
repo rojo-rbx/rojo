@@ -38,6 +38,9 @@ local App = Roact.Component:extend("App")
 function App:init()
 	preloadAssets()
 
+	self.hostText = ""
+	self.portText = ""
+
 	self.hostRef = Roact.createRef()
 	self.portRef = Roact.createRef()
 
@@ -49,11 +52,16 @@ function App:init()
 end
 
 function App:startSession()
-	local hostText = self.hostRef.current.Text
-	local portText = self.portRef.current.Text
+	if self.hostRef.current then
+		self.hostText = self.hostRef.current.Text
+	end
+	if self.portRef.current then
+		self.portText = self.portRef.current.Text
+	end
 
-	local host = if #hostText > 0 then hostText else Config.defaultHost
-	local port = if #portText > 0 then portText else Config.defaultPort
+	local host = if #self.hostText > 0 then self.hostText else Config.defaultHost
+	local port = if #self.portText > 0 then self.portText else Config.defaultPort
+
 	local sessionOptions = {
 		openScriptsExternally = self.props.settings:get("openScriptsExternally"),
 		twoWaySync = self.props.settings:get("twoWaySync"),
@@ -176,6 +184,8 @@ function App:render()
 					end,
 				}, {
 					NotConnectedPage = createPageElement(AppStatus.NotConnected, {
+						hostText = self.hostText,
+						portText = self.portText,
 						hostRef = self.hostRef,
 						portRef = self.portRef,
 
