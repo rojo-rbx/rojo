@@ -237,10 +237,10 @@ function App:render()
 					icon = Assets.Images.PluginButton,
 					bindable = true,
 					onTriggered = function()
-						if self.serveSession then
-							self:endSession()
-						else
+						if self.serveSession == nil or self.serveSession:getStatus() == ServeSession.Status.NotStarted then
 							self:startSession()
+						elseif self.serveSession ~= nil and self.serveSession:getStatus() == ServeSession.Status.Connected then
+							self:endSession()
 						end
 					end,
 				}),
@@ -252,11 +252,9 @@ function App:render()
 					icon = Assets.Images.PluginButton,
 					bindable = true,
 					onTriggered = function()
-						if self.serveSession then
-							return
+						if self.serveSession == nil or self.serveSession:getStatus() == ServeSession.Status.NotStarted then
+							self:startSession()
 						end
-
-						self:startSession()
 					end,
 				}),
 
@@ -267,11 +265,9 @@ function App:render()
 					icon = Assets.Images.PluginButton,
 					bindable = true,
 					onTriggered = function()
-						if not self.serveSession then
-							return
+						if self.serveSession ~= nil and self.serveSession:getStatus() == ServeSession.Status.Connected then
+							self:endSession()
 						end
-
-						self:endSession()
 					end,
 				}),
 
