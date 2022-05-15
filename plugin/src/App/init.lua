@@ -51,8 +51,7 @@ function App:init()
 end
 
 function App:addNotification(text: string, timeout: number?)
-	if self.state.guiEnabled then
-		-- Skip because the widget is already informing the user
+	if not self.props.settings:get("showNotifications") then
 		return
 	end
 
