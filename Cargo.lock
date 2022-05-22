@@ -1725,19 +1725,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rlua"
-version = "0.17.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93397b9792dc237cab7554ab4c4128b8aa5fc9ec25892cfd82c92286055313d0"
-dependencies = [
- "bitflags",
- "bstr",
- "cc",
- "libc",
- "num-traits",
-]
-
-[[package]]
 name = "rmp"
 version = "0.8.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1802,10 +1789,8 @@ dependencies = [
  "rbx_reflection",
  "rbx_reflection_database",
  "rbx_xml",
- "regex",
  "reqwest",
  "ritz",
- "rlua",
  "roblox_install",
  "rojo-insta-ext",
  "serde",

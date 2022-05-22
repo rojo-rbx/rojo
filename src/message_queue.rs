@@ -64,6 +64,7 @@ impl<T: Clone> MessageQueue<T> {
     /// This method is only useful in tests. Non-test code should use subscribe
     /// instead.
     #[cfg(test)]
+    #[allow(unused)]
     pub fn subscribe_any(&self) -> oneshot::Receiver<(u32, Vec<T>)> {
         let cursor = {
             let messages = self.messages.read().unwrap();
