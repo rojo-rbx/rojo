@@ -24,7 +24,7 @@ local function AddressEntry(props)
 			layoutOrder = props.layoutOrder,
 		}, {
 			Host = e("TextBox", {
-				Text = props.hostText or "",
+				Text = props.host or "",
 				Font = Enum.Font.Code,
 				TextSize = 18,
 				TextColor3 = theme.AddressEntry.TextColor,
@@ -32,6 +32,7 @@ local function AddressEntry(props)
 				TextTransparency = props.transparency,
 				PlaceholderText = Config.defaultHost,
 				PlaceholderColor3 = theme.AddressEntry.PlaceholderColor,
+				ClearTextOnFocus = false,
 
 				Size = UDim2.new(1, -(HOST_OFFSET + DIVIDER_WIDTH + PORT_WIDTH), 1, 0),
 				Position = UDim2.new(0, HOST_OFFSET, 0, 0),
@@ -39,17 +40,22 @@ local function AddressEntry(props)
 				ClipsDescendants = true,
 				BackgroundTransparency = 1,
 
-				[Roact.Ref] = props.hostRef,
+				[Roact.Change.Text] = function(object)
+					if props.onHostChange ~= nil then
+						props.onHostChange(object.Text)
+					end
+				end
 			}),
 
 			Port = e("TextBox", {
-				Text = props.portText or "",
+				Text = props.port or "",
 				Font = Enum.Font.Code,
 				TextSize = 18,
 				TextColor3 = theme.AddressEntry.TextColor,
 				TextTransparency = props.transparency,
 				PlaceholderText = Config.defaultPort,
 				PlaceholderColor3 = theme.AddressEntry.PlaceholderColor,
+				ClearTextOnFocus = false,
 
 				Size = UDim2.new(0, PORT_WIDTH, 1, 0),
 				Position = UDim2.new(1, 0, 0, 0),
@@ -58,12 +64,14 @@ local function AddressEntry(props)
 				ClipsDescendants = true,
 				BackgroundTransparency = 1,
 
-				[Roact.Ref] = props.portRef,
-
 				[Roact.Change.Text] = function(object)
 					local text = object.Text
 					text = text:gsub("%D", "")
 					object.Text = text
+
+					if props.onPortChange ~= nil then
+						props.onPortChange(text)
+					end
 				end,
 			}, {
 				Divider = e("Frame", {
@@ -88,10 +96,10 @@ function NotConnectedPage:render()
 		}),
 
 		AddressEntry = e(AddressEntry, {
-			hostText = self.props.hostText,
-			portText = self.props.portText,
-			hostRef = self.props.hostRef,
-			portRef = self.props.portRef,
+			host = self.props.host,
+			port = self.props.port,
+			onHostChange = self.props.onHostChange,
+			onPortChange = self.props.onPortChange,
 			transparency = self.props.transparency,
 			layoutOrder = 2,
 		}),
