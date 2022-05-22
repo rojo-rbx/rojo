@@ -123,7 +123,7 @@ fn do_upload(buffer: Vec<u8>, asset_id: u64, cookie: &str) -> anyhow::Result<()>
         asset_id
     );
 
-    let client = reqwest::Client::new();
+    let client = reqwest::blocking::Client::new();
 
     let build_request = move || {
         client
@@ -172,10 +172,10 @@ fn do_upload_open_cloud(
         universe_id, asset_id
     );
 
-    let client = reqwest::Client::new();
+    let client = reqwest::blocking::Client::new();
 
     log::debug!("Uploading to Roblox...");
-    let mut response = client
+    let response = client
         .post(&url)
         .header("x-api-key", api_key)
         .header(CONTENT_TYPE, "application/xml")
