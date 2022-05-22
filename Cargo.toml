@@ -85,10 +85,10 @@ structopt = "0.3.23"
 termcolor = "1.1.2"
 thiserror = "1.0.30"
 tokio = { version = "1.12.0", features = ["rt", "rt-multi-thread"] }
-uuid = { version = "0.8.2", features = ["v4", "serde"] }
+uuid = { version = "1.0.0", features = ["v4", "serde"] }
 
 [target.'cfg(windows)'.dependencies]
-winreg = "0.9.0"
+winreg = "0.10.1"
 
 [build-dependencies]
 memofs = { version = "0.2.0", path = "memofs" }
