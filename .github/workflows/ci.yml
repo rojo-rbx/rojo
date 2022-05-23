@@ -23,6 +23,16 @@ jobs:
       with:
         submodules: true
 
+    - uses: actions/cache@v2
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-rust-${{ matrix.rust_version }}-ci-${{ hashFiles('**/Cargo.lock') }}
+
     - name: Setup Rust toolchain
       run: rustup default ${{ matrix.rust_version }}
 
