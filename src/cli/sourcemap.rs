@@ -57,7 +57,9 @@ impl SourcemapCommand {
         let project_path = resolve_path(&self.project);
 
         let mut project_dir = project_path.to_path_buf();
-        project_dir.pop();
+        if project_dir.is_file() {
+            project_dir.pop();
+        }
 
         log::trace!("Constructing in-memory filesystem");
         let vfs = Vfs::new_default();
