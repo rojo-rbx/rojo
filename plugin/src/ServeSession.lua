@@ -113,6 +113,10 @@ function ServeSession:__fmtDebug(output)
 	output:write("}")
 end
 
+function ServeSession:getStatus()
+	return self.__status
+end
+
 function ServeSession:onStatusChanged(callback)
 	self.__statusChangedCallback = callback
 end

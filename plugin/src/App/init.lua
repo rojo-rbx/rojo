@@ -39,8 +39,8 @@ local App = Roact.Component:extend("App")
 function App:init()
 	preloadAssets()
 
-	self.hostRef = Roact.createRef()
-	self.portRef = Roact.createRef()
+	self.host, self.setHost = Roact.createBinding("")
+	self.port, self.setPort = Roact.createBinding("")
 
 	self:setState({
 		appStatus = AppStatus.NotConnected,
@@ -76,12 +76,19 @@ function App:closeNotification(index: number)
 	})
 end
 
-function App:startSession()
-	local hostText = self.hostRef.current.Text
-	local portText = self.portRef.current.Text
+function App:getHostAndPort()
+	local host = self.host:getValue()
+	local port = self.port:getValue()
 
-	local host = if #hostText > 0 then hostText else Config.defaultHost
-	local port = if #portText > 0 then portText else Config.defaultPort
+	local host = if #host > 0 then host else Config.defaultHost
+	local port = if #port > 0 then port else Config.defaultPort
+
+	return host, port
+end
+
+function App:startSession()
+	local host, port = self:getHostAndPort()
+
 	local sessionOptions = {
 		openScriptsExternally = self.props.settings:get("openScriptsExternally"),
 		twoWaySync = self.props.settings:get("twoWaySync"),
@@ -204,8 +211,10 @@ function App:render()
 					end,
 				}, {
 					NotConnectedPage = createPageElement(AppStatus.NotConnected, {
-						hostRef = self.hostRef,
-						portRef = self.portRef,
+						host = self.host,
+						onHostChange = self.setHost,
+						port = self.port,
+						onPortChange = self.setPort,
 
 						onConnect = function()
 							self:startSession()
@@ -280,10 +289,10 @@ function App:render()
 					icon = Assets.Images.PluginButton,
 					bindable = true,
 					onTriggered = function()
-						if self.serveSession then
-							self:endSession()
-						else
+						if self.serveSession == nil or self.serveSession:getStatus() == ServeSession.Status.NotStarted then
 							self:startSession()
+						elseif self.serveSession ~= nil and self.serveSession:getStatus() == ServeSession.Status.Connected then
+							self:endSession()
 						end
 					end,
 				}),
@@ -295,11 +304,9 @@ function App:render()
 					icon = Assets.Images.PluginButton,
 					bindable = true,
 					onTriggered = function()
-						if self.serveSession then
-							return
+						if self.serveSession == nil or self.serveSession:getStatus() == ServeSession.Status.NotStarted then
+							self:startSession()
 						end
-
-						self:startSession()
 					end,
 				}),
 
@@ -310,11 +317,9 @@ function App:render()
 					icon = Assets.Images.PluginButton,
 					bindable = true,
 					onTriggered = function()
-						if not self.serveSession then
-							return
+						if self.serveSession ~= nil and self.serveSession:getStatus() == ServeSession.Status.Connected then
+							self:endSession()
 						end
-
-						self:endSession()
 					end,
 				}),
 
