@@ -56,9 +56,6 @@ impl SourcemapCommand {
     pub fn run(self) -> anyhow::Result<()> {
         let project_path = resolve_path(&self.project);
 
-        let mut project_dir = project_path.to_path_buf();
-        project_dir.pop();
-
         log::trace!("Constructing in-memory filesystem");
         let vfs = Vfs::new_default();
 
@@ -71,7 +68,7 @@ impl SourcemapCommand {
             filter_non_scripts
         };
 
-        let root_node = recurse_create_node(&tree, tree.get_root_id(), &project_dir, filter);
+        let root_node = recurse_create_node(&tree, tree.get_root_id(), session.root_dir(), filter);
 
         if let Some(output_path) = self.output {
             let mut file = BufWriter::new(File::create(&output_path)?);
