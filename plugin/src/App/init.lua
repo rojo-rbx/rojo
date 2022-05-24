@@ -182,165 +182,161 @@ function App:render()
 		value = self.props.plugin,
 	}, {
 		e(Theme.StudioProvider, nil, {
-			e(PluginSettings.StudioProvider, {
-				plugin = self.props.plugin,
+			gui = e(StudioPluginGui, {
+				id = pluginName,
+				title = pluginName,
+				active = self.state.guiEnabled,
+
+				initDockState = Enum.InitialDockState.Right,
+				initEnabled = false,
+				overridePreviousState = false,
+				floatingSize = Vector2.new(300, 200),
+				minimumSize = Vector2.new(300, 200),
+
+				zIndexBehavior = Enum.ZIndexBehavior.Sibling,
+
+				onInitialState = function(initialState)
+					self:setState({
+						guiEnabled = initialState,
+					})
+				end,
+
+				onClose = function()
+					self:setState({
+						guiEnabled = false,
+					})
+				end,
 			}, {
-				gui = e(StudioPluginGui, {
-					id = pluginName,
-					title = pluginName,
-					active = self.state.guiEnabled,
+				NotConnectedPage = createPageElement(AppStatus.NotConnected, {
+					host = self.host,
+					onHostChange = self.setHost,
+					port = self.port,
+					onPortChange = self.setPort,
 
-					initDockState = Enum.InitialDockState.Right,
-					initEnabled = false,
-					overridePreviousState = false,
-					floatingSize = Vector2.new(300, 200),
-					minimumSize = Vector2.new(300, 200),
+					onConnect = function()
+						self:startSession()
+					end,
 
-					zIndexBehavior = Enum.ZIndexBehavior.Sibling,
-
-					onInitialState = function(initialState)
+					onNavigateSettings = function()
 						self:setState({
-							guiEnabled = initialState,
+							appStatus = AppStatus.Settings,
 						})
 					end,
+				}),
+
+				Connecting = createPageElement(AppStatus.Connecting),
+
+				Connected = createPageElement(AppStatus.Connected, {
+					projectName = self.state.projectName,
+					address = self.state.address,
+
+					onDisconnect = function()
+						self:endSession()
+					end,
+				}),
+
+				Settings = createPageElement(AppStatus.Settings, {
+					onBack = function()
+						self:setState({
+							appStatus = AppStatus.NotConnected,
+						})
+					end,
+				}),
+
+				Error = createPageElement(AppStatus.Error, {
+					errorMessage = self.state.errorMessage,
 
 					onClose = function()
 						self:setState({
-							guiEnabled = false,
+							appStatus = AppStatus.NotConnected,
+							toolbarIcon = Assets.Images.PluginButton,
 						})
 					end,
-				}, {
-					NotConnectedPage = createPageElement(AppStatus.NotConnected, {
-						host = self.host,
-						onHostChange = self.setHost,
-						port = self.port,
-						onPortChange = self.setPort,
-
-						onConnect = function()
-							self:startSession()
-						end,
-
-						onNavigateSettings = function()
-							self:setState({
-								appStatus = AppStatus.Settings,
-							})
-						end,
-					}),
-
-					Connecting = createPageElement(AppStatus.Connecting),
-
-					Connected = createPageElement(AppStatus.Connected, {
-						projectName = self.state.projectName,
-						address = self.state.address,
-
-						onDisconnect = function()
-							self:endSession()
-						end,
-					}),
-
-					Settings = createPageElement(AppStatus.Settings, {
-						onBack = function()
-							self:setState({
-								appStatus = AppStatus.NotConnected,
-							})
-						end,
-					}),
-
-					Error = createPageElement(AppStatus.Error, {
-						errorMessage = self.state.errorMessage,
-
-						onClose = function()
-							self:setState({
-								appStatus = AppStatus.NotConnected,
-								toolbarIcon = Assets.Images.PluginButton,
-							})
-						end,
-					}),
-
-					Background = Theme.with(function(theme)
-						return e("Frame", {
-							Size = UDim2.new(1, 0, 1, 0),
-							BackgroundColor3 = theme.BackgroundColor,
-							ZIndex = 0,
-							BorderSizePixel = 0,
-						})
-					end),
 				}),
 
-				RojoNotifications = e("ScreenGui", {}, {
-					layout = Roact.createElement("UIListLayout", {
-						SortOrder = Enum.SortOrder.LayoutOrder,
-						HorizontalAlignment = Enum.HorizontalAlignment.Right,
-						VerticalAlignment = Enum.VerticalAlignment.Bottom,
-						Padding = UDim.new(0, 5),
-					}),
-					e(Notifications, {
-						notifications = self.state.notifications,
-						onClose = function(index)
-							self:closeNotification(index)
-						end,
-					}),
-				}),
-
-				toggleAction = e(StudioPluginAction, {
-					name = "RojoConnection",
-					title = "Rojo: Connect/Disconnect",
-					description = "Toggles the server for a Rojo sync session",
-					icon = Assets.Images.PluginButton,
-					bindable = true,
-					onTriggered = function()
-						if self.serveSession == nil or self.serveSession:getStatus() == ServeSession.Status.NotStarted then
-							self:startSession()
-						elseif self.serveSession ~= nil and self.serveSession:getStatus() == ServeSession.Status.Connected then
-							self:endSession()
-						end
-					end,
-				}),
-
-				connectAction = e(StudioPluginAction, {
-					name = "RojoConnect",
-					title = "Rojo: Connect",
-					description = "Connects the server for a Rojo sync session",
-					icon = Assets.Images.PluginButton,
-					bindable = true,
-					onTriggered = function()
-						if self.serveSession == nil or self.serveSession:getStatus() == ServeSession.Status.NotStarted then
-							self:startSession()
-						end
-					end,
-				}),
-
-				disconnectAction = e(StudioPluginAction, {
-					name = "RojoDisconnect",
-					title = "Rojo: Disconnect",
-					description = "Disconnects the server for a Rojo sync session",
-					icon = Assets.Images.PluginButton,
-					bindable = true,
-					onTriggered = function()
-						if self.serveSession ~= nil and self.serveSession:getStatus() == ServeSession.Status.Connected then
-							self:endSession()
-						end
-					end,
-				}),
-
-				toolbar = e(StudioToolbar, {
-					name = pluginName,
-				}, {
-					button = e(StudioToggleButton, {
-						name = "Rojo",
-						tooltip = "Show or hide the Rojo panel",
-						icon = self.state.toolbarIcon,
-						active = self.state.guiEnabled,
-						enabled = true,
-						onClick = function()
-							self:setState(function(state)
-								return {
-									guiEnabled = not state.guiEnabled,
-								}
-							end)
-						end,
+				Background = Theme.with(function(theme)
+					return e("Frame", {
+						Size = UDim2.new(1, 0, 1, 0),
+						BackgroundColor3 = theme.BackgroundColor,
+						ZIndex = 0,
+						BorderSizePixel = 0,
 					})
+				end),
+			}),
+
+			RojoNotifications = e("ScreenGui", {}, {
+				layout = Roact.createElement("UIListLayout", {
+					SortOrder = Enum.SortOrder.LayoutOrder,
+					HorizontalAlignment = Enum.HorizontalAlignment.Right,
+					VerticalAlignment = Enum.VerticalAlignment.Bottom,
+					Padding = UDim.new(0, 5),
 				}),
+				e(Notifications, {
+					notifications = self.state.notifications,
+					onClose = function(index)
+						self:closeNotification(index)
+					end,
+				}),
+			}),
+
+			toggleAction = e(StudioPluginAction, {
+				name = "RojoConnection",
+				title = "Rojo: Connect/Disconnect",
+				description = "Toggles the server for a Rojo sync session",
+				icon = Assets.Images.PluginButton,
+				bindable = true,
+				onTriggered = function()
+					if self.serveSession == nil or self.serveSession:getStatus() == ServeSession.Status.NotStarted then
+						self:startSession()
+					elseif self.serveSession ~= nil and self.serveSession:getStatus() == ServeSession.Status.Connected then
+						self:endSession()
+					end
+				end,
+			}),
+
+			connectAction = e(StudioPluginAction, {
+				name = "RojoConnect",
+				title = "Rojo: Connect",
+				description = "Connects the server for a Rojo sync session",
+				icon = Assets.Images.PluginButton,
+				bindable = true,
+				onTriggered = function()
+					if self.serveSession == nil or self.serveSession:getStatus() == ServeSession.Status.NotStarted then
+						self:startSession()
+					end
+				end,
+			}),
+
+			disconnectAction = e(StudioPluginAction, {
+				name = "RojoDisconnect",
+				title = "Rojo: Disconnect",
+				description = "Disconnects the server for a Rojo sync session",
+				icon = Assets.Images.PluginButton,
+				bindable = true,
+				onTriggered = function()
+					if self.serveSession ~= nil and self.serveSession:getStatus() == ServeSession.Status.Connected then
+						self:endSession()
+					end
+				end,
+			}),
+
+			toolbar = e(StudioToolbar, {
+				name = pluginName,
+			}, {
+				button = e(StudioToggleButton, {
+					name = "Rojo",
+					tooltip = "Show or hide the Rojo panel",
+					icon = self.state.toolbarIcon,
+					active = self.state.guiEnabled,
+					enabled = true,
+					onClick = function()
+						self:setState(function(state)
+							return {
+								guiEnabled = not state.guiEnabled,
+							}
+						end)
+					end,
+				})
 			}),
 		}),
 	})
