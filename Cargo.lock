@@ -1776,7 +1776,6 @@ dependencies = [
  "hyper",
  "insta",
  "jod-thread",
- "lazy_static",
  "log",
  "maplit",
  "memofs",
