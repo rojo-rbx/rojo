@@ -216,6 +216,10 @@ impl ServeSession {
     pub fn serve_address(&self) -> Option<IpAddr> {
         self.root_project.serve_address
     }
+
+    pub fn root_dir(&self) -> &Path {
+        self.root_project.folder_location()
+    }
 }
 
 #[derive(Debug, Error)]

@@ -1,6 +1,15 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Switched from structopt to clap for command line argument parsing.
+
+## [7.1.1] - May 26, 2022
+* Fixed sourcemap command not stripping paths correctly ([#544])
+* Fixed Studio plugin settings not saving correctly.
+
+[#544]: https://github.com/rojo-rbx/rojo/pull/544
+[#545]: https://github.com/rojo-rbx/rojo/pull/545
+[7.1.1]: https://github.com/rojo-rbx/rojo/releases/tag/v7.1.1
 
 ## [7.1.0] - May 22, 2022
 * Added support for specifying an address to be used by default in project files. ([#507])
