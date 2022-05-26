@@ -1,7 +1,7 @@
 use std::{env, panic, process};
 
 use backtrace::Backtrace;
-use structopt::StructOpt;
+use clap::Parser;
 
 use librojo::cli::Options;
 
@@ -49,7 +49,7 @@ fn main() {
         process::exit(1);
     }));
 
-    let options = Options::from_args();
+    let options = Options::parse();
 
     let log_filter = match options.global.verbosity {
         0 => "info",

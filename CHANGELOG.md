@@ -1,6 +1,7 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Switched from structopt to clap for command line argument parsing.
 
 ## [7.1.1] - May 26, 2022
 * Fixed sourcemap command not stripping paths correctly ([#544])

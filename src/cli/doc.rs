@@ -1,7 +1,7 @@
-use structopt::StructOpt;
+use clap::Parser;
 
 /// Open Rojo's documentation in your browser.
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub struct DocCommand {}
 
 impl DocCommand {
