@@ -265,13 +265,13 @@ function App:render()
 			}),
 
 			RojoNotifications = e("ScreenGui", {}, {
-				layout = Roact.createElement("UIListLayout", {
+				layout = e("UIListLayout", {
 					SortOrder = Enum.SortOrder.LayoutOrder,
 					HorizontalAlignment = Enum.HorizontalAlignment.Right,
 					VerticalAlignment = Enum.VerticalAlignment.Bottom,
 					Padding = UDim.new(0, 5),
 				}),
-				e(Notifications, {
+				notifs = e(Notifications, {
 					notifications = self.state.notifications,
 					onClose = function(index)
 						self:closeNotification(index)
