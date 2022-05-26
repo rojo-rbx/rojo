@@ -28,10 +28,7 @@ default = []
 dev_live_assets = []
 
 [workspace]
-members = [
-    "rojo-insta-ext",
-    "memofs",
-]
+members = ["crates/*"]
 
 [lib]
 name = "librojo"
@@ -42,7 +39,7 @@ name = "build"
 harness = false
 
 [dependencies]
-memofs = { version = "0.2.0", path = "memofs" }
+memofs = { version = "0.2.0", path = "crates/memofs" }
 
 # These dependencies can be uncommented when working on rbx-dom simultaneously
 # rbx_binary = { path = "../rbx-dom/rbx_binary" }
@@ -88,7 +85,7 @@ clap = { version = "3.1.18", features = ["derive"] }
 winreg = "0.10.1"
 
 [build-dependencies]
-memofs = { version = "0.2.0", path = "memofs" }
+memofs = { version = "0.2.0", path = "crates/memofs" }
 
 embed-resource = "1.6.4"
 anyhow = "1.0.44"
@@ -97,7 +94,7 @@ fs-err = "2.6.0"
 maplit = "1.0.2"
 
 [dev-dependencies]
-rojo-insta-ext = { path = "rojo-insta-ext" }
+rojo-insta-ext = { path = "crates/rojo-insta-ext" }
 
 criterion = "0.3.5"
 insta = { version = "1.8.0", features = ["redactions"] }
