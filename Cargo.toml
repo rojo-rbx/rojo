@@ -39,6 +39,7 @@ name = "build"
 harness = false
 
 [dependencies]
+rojo-project = { path = "crates/rojo-project" }
 memofs = { version = "0.2.0", path = "crates/memofs" }
 
 # These dependencies can be uncommented when working on rbx-dom simultaneously

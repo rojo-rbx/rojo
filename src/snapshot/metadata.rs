@@ -4,9 +4,10 @@ use std::{
     sync::Arc,
 };
 
+use rojo_project::glob::Glob;
 use serde::{Deserialize, Serialize};
 
-use crate::{glob::Glob, path_serializer, project::ProjectNode};
+use crate::{path_serializer, project::ProjectNode};
 
 /// Rojo-specific metadata that can be associated with an instance or a snapshot
 /// of an instance.

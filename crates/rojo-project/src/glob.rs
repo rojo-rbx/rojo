@@ -1,6 +1,3 @@
-//! Wrapper around globset's Glob type that has better serialization
-//! characteristics by coupling Glob and GlobMatcher into a single type.
-
 use std::path::Path;
 
 use globset::{Glob as InnerGlob, GlobMatcher};
@@ -8,6 +5,8 @@ use serde::{de::Error as _, Deserialize, Deserializer, Serialize, Serializer};
 
 pub use globset::Error;
 
+/// Wrapper around globset's Glob type that has better serialization
+/// characteristics by coupling Glob and GlobMatcher into a single type.
 #[derive(Debug, Clone)]
 pub struct Glob {
     inner: InnerGlob,

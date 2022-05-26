@@ -16,7 +16,7 @@ use thiserror::Error;
 use crate::{
     change_processor::ChangeProcessor,
     message_queue::MessageQueue,
-    project::{Project, ProjectError},
+    project::Project,
     session_id::SessionId,
     snapshot::{
         apply_patch_set, compute_patch_set, AppliedPatchSet, InstanceContext, InstanceSnapshot,
@@ -235,12 +235,6 @@ pub enum ServeSessionError {
     Io {
         #[from]
         source: io::Error,
-    },
-
-    #[error(transparent)]
-    Project {
-        #[from]
-        source: ProjectError,
     },
 
     #[error(transparent)]

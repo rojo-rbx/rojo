@@ -738,6 +738,7 @@ dependencies = [
  "fnv",
  "log",
  "regex",
+ "serde",
 ]
 
 [[package]]
@@ -1831,6 +1832,7 @@ dependencies = [
  "ritz",
  "roblox_install",
  "rojo-insta-ext",
+ "rojo-project",
  "serde",
  "serde_json",
  "serde_yaml",
@@ -1849,6 +1851,20 @@ version = "0.1.0"
 dependencies = [
  "serde",
  "serde_yaml",
+]
+
+[[package]]
+name = "rojo-project"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "globset",
+ "log",
+ "rbx_dom_weak",
+ "rbx_reflection",
+ "rbx_reflection_database",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
