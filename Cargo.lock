@@ -1633,6 +1633,7 @@ dependencies = [
 [[package]]
 name = "rbx_binary"
 version = "0.6.4"
+source = "git+https://github.com/rojo-rbx/rbx-dom#4fa99b4190009f417ce63c86b2c6725e32c0090e"
 dependencies = [
  "log",
  "lz4",
@@ -1646,6 +1647,7 @@ dependencies = [
 [[package]]
 name = "rbx_dom_weak"
 version = "2.3.0"
+source = "git+https://github.com/rojo-rbx/rbx-dom#4fa99b4190009f417ce63c86b2c6725e32c0090e"
 dependencies = [
  "rbx_types",
  "serde",
@@ -1654,6 +1656,7 @@ dependencies = [
 [[package]]
 name = "rbx_reflection"
 version = "4.2.0"
+source = "git+https://github.com/rojo-rbx/rbx-dom#4fa99b4190009f417ce63c86b2c6725e32c0090e"
 dependencies = [
  "rbx_types",
  "serde",
@@ -1662,6 +1665,7 @@ dependencies = [
 [[package]]
 name = "rbx_reflection_database"
 version = "0.2.4+roblox-504"
+source = "git+https://github.com/rojo-rbx/rbx-dom#4fa99b4190009f417ce63c86b2c6725e32c0090e"
 dependencies = [
  "lazy_static",
  "rbx_reflection",
@@ -1672,6 +1676,7 @@ dependencies = [
 [[package]]
 name = "rbx_types"
 version = "1.3.0"
+source = "git+https://github.com/rojo-rbx/rbx-dom#4fa99b4190009f417ce63c86b2c6725e32c0090e"
 dependencies = [
  "base64 0.11.0",
  "bitflags",
@@ -1685,6 +1690,7 @@ dependencies = [
 [[package]]
 name = "rbx_xml"
 version = "0.12.3"
+source = "git+https://github.com/rojo-rbx/rbx-dom#4fa99b4190009f417ce63c86b2c6725e32c0090e"
 dependencies = [
  "base64 0.11.0",
  "log",
