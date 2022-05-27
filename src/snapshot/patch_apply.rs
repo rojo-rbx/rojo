@@ -12,6 +12,7 @@ use super::{
 /// Consumes the input `PatchSet`, applying all of its prescribed changes to the
 /// tree and returns an `AppliedPatchSet`, which can be used to keep another
 /// tree in sync with Rojo's.
+#[profiling::function]
 pub fn apply_patch_set(tree: &mut RojoTree, patch_set: PatchSet) -> AppliedPatchSet {
     let mut context = PatchApplyContext::default();
 

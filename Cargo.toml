@@ -27,6 +27,8 @@ default = []
 # Enable this feature to live-reload assets from the web UI.
 dev_live_assets = []
 
+profile-with-tracy = ["profiling/profile-with-tracy", "tracy-client"]
+
 [workspace]
 members = ["crates/*"]
 
@@ -80,6 +82,8 @@ thiserror = "1.0.30"
 tokio = { version = "1.12.0", features = ["rt", "rt-multi-thread"] }
 uuid = { version = "1.0.0", features = ["v4", "serde"] }
 clap = { version = "3.1.18", features = ["derive"] }
+profiling = "1.0.6"
+tracy-client = { version = "0.13.2", optional = true }
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.10.1"
