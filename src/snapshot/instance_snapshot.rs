@@ -102,6 +102,7 @@ impl InstanceSnapshot {
         }
     }
 
+    #[profiling::function]
     pub fn from_tree(tree: &WeakDom, id: Ref) -> Self {
         let instance = tree.get_by_ref(id).expect("instance did not exist in tree");
 
