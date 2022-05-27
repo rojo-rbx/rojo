@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::HashMap, path::PathBuf};
+use std::{collections::HashMap, path::PathBuf};
 
 use anyhow::{format_err, Context};
 use serde::{Deserialize, Serialize};
@@ -49,7 +49,7 @@ impl AdjacentMetadata {
                 .resolve(&snapshot.class_name, &key)
                 .with_context(|| format!("error applying meta file {}", path.display()))?;
 
-            snapshot.properties.insert(key, value);
+            snapshot.properties.insert(key.into(), value);
         }
 
         Ok(())
@@ -116,7 +116,7 @@ impl DirectoryMetadata {
                 ));
             }
 
-            snapshot.class_name = Cow::Owned(class_name);
+            snapshot.class_name = class_name.into();
         }
 
         Ok(())
@@ -136,7 +136,7 @@ impl DirectoryMetadata {
                 .resolve(&snapshot.class_name, &key)
                 .with_context(|| format!("error applying meta file {}", path.display()))?;
 
-            snapshot.properties.insert(key, value);
+            snapshot.properties.insert(key.into(), value);
         }
 
         Ok(())

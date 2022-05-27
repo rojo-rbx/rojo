@@ -1493,6 +1493,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "profiling"
+version = "1.0.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2f61dcf0b917cd75d4521d7343d1ffff3d1583054133c9b5cbea3375c703c40d"
+dependencies = [
+ "profiling-procmacros",
+ "superluminal-perf",
+]
+
+[[package]]
+name = "profiling-procmacros"
+version = "1.0.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "98eee3c112f2a6f784b6713fe1d7fb7d6506e066121c0a49371fdb976f72bae5"
+dependencies = [
+ "quote 1.0.18",
+ "syn",
+]
+
+[[package]]
 name = "quote"
 version = "0.6.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1796,7 +1816,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "rojo"
+name = "rojo-insta-ext"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_yaml",
+]
+
+[[package]]
+name = "rojo-smallstring"
 version = "7.1.1"
 dependencies = [
  "anyhow",
@@ -1822,6 +1850,7 @@ dependencies = [
  "opener",
  "paste",
  "pretty_assertions",
+ "profiling",
  "rbx_binary",
  "rbx_dom_weak",
  "rbx_reflection",
@@ -1834,6 +1863,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_yaml",
+ "smol_str",
  "tempfile",
  "termcolor",
  "thiserror",
@@ -1841,14 +1871,6 @@ dependencies = [
  "uuid",
  "walkdir",
  "winreg 0.10.1",
-]
-
-[[package]]
-name = "rojo-insta-ext"
-version = "0.1.0"
-dependencies = [
- "serde",
- "serde_yaml",
 ]
 
 [[package]]
@@ -2016,6 +2038,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "eb703cfe953bccee95685111adeedb76fabe4e97549a58d16f03ea7b9367bb32"
 
 [[package]]
+name = "smol_str"
+version = "0.1.23"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7475118a28b7e3a2e157ce0131ba8c5526ea96e90ee601d9f6bb2e286a35ab44"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "snax"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2045,6 +2076,21 @@ name = "subtle"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2d67a5a62ba6e01cb2192ff309324cb4875d0c451d55fe2319433abe7a05a8ee"
+
+[[package]]
+name = "superluminal-perf"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "80ed8ddf5d2a4a849fa7dc75b3e0be740adb882fe7fee87e79584402ac9b1e60"
+dependencies = [
+ "superluminal-perf-sys",
+]
+
+[[package]]
+name = "superluminal-perf-sys"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0342a02bcc62538822a46f54294130677f026666c2e19d078fc213b7bc07ff16"
 
 [[package]]
 name = "syn"

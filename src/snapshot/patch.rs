@@ -5,6 +5,8 @@ use std::collections::HashMap;
 use rbx_dom_weak::types::{Ref, Variant};
 use serde::{Deserialize, Serialize};
 
+use crate::small_string::SmallString;
+
 use super::{InstanceMetadata, InstanceSnapshot};
 
 /// A set of different kinds of patches that can be applied to an WeakDom.
@@ -40,12 +42,12 @@ pub struct PatchAdd {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PatchUpdate {
     pub id: Ref,
-    pub changed_name: Option<String>,
-    pub changed_class_name: Option<String>,
+    pub changed_name: Option<SmallString>,
+    pub changed_class_name: Option<SmallString>,
 
     /// Contains all changed properties. If a property is assigned to `None`,
     /// then that property has been removed.
-    pub changed_properties: HashMap<String, Option<Variant>>,
+    pub changed_properties: HashMap<SmallString, Option<Variant>>,
 
     /// Changed Rojo-specific metadata, if any of it changed.
     pub changed_metadata: Option<InstanceMetadata>,
@@ -83,9 +85,9 @@ pub struct AppliedPatchUpdate {
     pub id: Ref,
 
     // TODO: Store previous values in order to detect application conflicts
-    pub changed_name: Option<String>,
-    pub changed_class_name: Option<String>,
-    pub changed_properties: HashMap<String, Option<Variant>>,
+    pub changed_name: Option<SmallString>,
+    pub changed_class_name: Option<SmallString>,
+    pub changed_properties: HashMap<SmallString, Option<Variant>>,
     pub changed_metadata: Option<InstanceMetadata>,
 }
 

@@ -18,6 +18,7 @@ mod project;
 mod resolution;
 mod serve_session;
 mod session_id;
+mod small_string;
 mod snapshot;
 mod snapshot_middleware;
 mod web;

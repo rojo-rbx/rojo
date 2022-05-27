@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     session_id::SessionId,
+    small_string::SmallString,
     snapshot::{
         AppliedPatchSet, InstanceMetadata as RojoInstanceMetadata, InstanceWithMeta, RojoTree,
     },
@@ -83,13 +84,13 @@ impl<'a> SubscribeMessage<'a> {
 #[serde(rename_all = "camelCase")]
 pub struct InstanceUpdate {
     pub id: Ref,
-    pub changed_name: Option<String>,
-    pub changed_class_name: Option<String>,
+    pub changed_name: Option<SmallString>,
+    pub changed_class_name: Option<SmallString>,
 
-    // TODO: Transform from HashMap<String, Option<_>> to something else, since
+    // TODO: Transform from HashMap<_, Option<_>> to something else, since
     // null will get lost when decoding from JSON in some languages.
     #[serde(default)]
-    pub changed_properties: HashMap<String, Option<Variant>>,
+    pub changed_properties: HashMap<SmallString, Option<Variant>>,
     pub changed_metadata: Option<InstanceMetadata>,
 }
 

@@ -1,5 +1,5 @@
 [package]
-name = "rojo"
+name = "rojo-smallstring"
 version = "7.1.1"
 authors = ["Lucien Greathouse <me@lpghatguy.com>"]
 description = "Enables professional-grade development tools for Roblox developers"
@@ -80,6 +80,8 @@ thiserror = "1.0.30"
 tokio = { version = "1.12.0", features = ["rt", "rt-multi-thread"] }
 uuid = { version = "1.0.0", features = ["v4", "serde"] }
 clap = { version = "3.1.18", features = ["derive"] }
+smol_str = "0.1.23"
+profiling = { version = "1.0.6", features = ["profile-with-superluminal"] }
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.10.1"

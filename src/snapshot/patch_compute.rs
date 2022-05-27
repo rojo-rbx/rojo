@@ -10,6 +10,7 @@ use super::{
     InstanceSnapshot, InstanceWithMeta, RojoTree,
 };
 
+#[profiling::function]
 pub fn compute_patch_set(
     snapshot: Option<&InstanceSnapshot>,
     tree: &RojoTree,
@@ -102,13 +103,13 @@ fn compute_property_patches(
     let changed_name = if snapshot.name == instance.name() {
         None
     } else {
-        Some(snapshot.name.clone().into_owned())
+        Some(snapshot.name.clone())
     };
 
     let changed_class_name = if snapshot.class_name == instance.class_name() {
         None
     } else {
-        Some(snapshot.class_name.clone().into_owned())
+        Some(snapshot.class_name.clone())
     };
 
     let changed_metadata = if &snapshot.metadata == instance.metadata() {
@@ -120,7 +121,7 @@ fn compute_property_patches(
     for (name, snapshot_value) in &snapshot.properties {
         visited_properties.insert(name.as_str());
 
-        match instance.properties().get(name) {
+        match instance.properties().get(name.as_str()) {
             Some(instance_value) => {
                 if snapshot_value != instance_value {
                     changed_properties.insert(name.clone(), Some(snapshot_value.clone()));
@@ -137,7 +138,7 @@ fn compute_property_patches(
             continue;
         }
 
-        changed_properties.insert(name.clone(), None);
+        changed_properties.insert(name.into(), None);
     }
 
     if changed_properties.is_empty()

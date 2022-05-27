@@ -1,12 +1,14 @@
 //! Defines the structure of an instance snapshot.
 
-use std::{borrow::Cow, collections::HashMap};
+use std::collections::HashMap;
 
 use rbx_dom_weak::{
     types::{Ref, Variant},
     WeakDom,
 };
 use serde::{Deserialize, Serialize};
+
+use crate::small_string::SmallString;
 
 use super::InstanceMetadata;
 
@@ -25,13 +27,13 @@ pub struct InstanceSnapshot {
     pub metadata: InstanceMetadata,
 
     /// Correpsonds to the Name property of the instance.
-    pub name: Cow<'static, str>,
+    pub name: SmallString,
 
     /// Corresponds to the ClassName property of the instance.
-    pub class_name: Cow<'static, str>,
+    pub class_name: SmallString,
 
     /// All other properties of the instance, weakly-typed.
-    pub properties: HashMap<String, Variant>,
+    pub properties: HashMap<SmallString, Variant>,
 
     /// The children of the instance represented as more snapshots.
     ///
@@ -44,37 +46,37 @@ impl InstanceSnapshot {
         Self {
             snapshot_id: None,
             metadata: InstanceMetadata::default(),
-            name: Cow::Borrowed("DEFAULT"),
-            class_name: Cow::Borrowed("DEFAULT"),
+            name: "DEFAULT".into(),
+            class_name: "DEFAULT".into(),
             properties: HashMap::new(),
             children: Vec::new(),
         }
     }
 
-    pub fn name(self, name: impl Into<String>) -> Self {
+    pub fn name(self, name: impl Into<SmallString>) -> Self {
         Self {
-            name: Cow::Owned(name.into()),
+            name: name.into(),
             ..self
         }
     }
 
-    pub fn class_name(self, class_name: impl Into<String>) -> Self {
+    pub fn class_name(self, class_name: impl Into<SmallString>) -> Self {
         Self {
-            class_name: Cow::Owned(class_name.into()),
+            class_name: class_name.into(),
             ..self
         }
     }
 
     pub fn property<K, V>(mut self, key: K, value: V) -> Self
     where
-        K: Into<String>,
+        K: Into<SmallString>,
         V: Into<Variant>,
     {
         self.properties.insert(key.into(), value.into());
         self
     }
 
-    pub fn properties(self, properties: impl Into<HashMap<String, Variant>>) -> Self {
+    pub fn properties(self, properties: impl Into<HashMap<SmallString, Variant>>) -> Self {
         Self {
             properties: properties.into(),
             ..self
@@ -112,12 +114,18 @@ impl InstanceSnapshot {
             .map(|id| Self::from_tree(tree, id))
             .collect();
 
+        let properties = instance
+            .properties
+            .iter()
+            .map(|(key, value)| (key.into(), value.clone()))
+            .collect();
+
         Self {
             snapshot_id: Some(id),
             metadata: InstanceMetadata::default(),
-            name: Cow::Owned(instance.name.clone()),
-            class_name: Cow::Owned(instance.class.clone()),
-            properties: instance.properties.clone(),
+            name: SmallString::from(&instance.name),
+            class_name: SmallString::from(&instance.class),
+            properties,
             children,
         }
     }

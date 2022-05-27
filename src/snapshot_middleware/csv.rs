@@ -30,7 +30,7 @@ pub fn snapshot_csv(
         .name(name)
         .class_name("LocalizationTable")
         .properties(hashmap! {
-            "Contents".to_owned() => table_contents.into(),
+            "Contents".into() => table_contents.into(),
         })
         .metadata(
             InstanceMetadata::new()

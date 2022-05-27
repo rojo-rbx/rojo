@@ -6,6 +6,7 @@ use rbx_reflection::ClassTag;
 
 use crate::{
     project::{PathNode, Project, ProjectNode},
+    small_string::SmallString,
     snapshot::{
         InstanceContext, InstanceMetadata, InstanceSnapshot, InstigatingSource, PathIgnoreRule,
     },
@@ -67,13 +68,10 @@ pub fn snapshot_project_node(
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let project_folder = project_path.parent().unwrap();
 
-    let class_name_from_project = node
-        .class_name
-        .as_ref()
-        .map(|name| Cow::Owned(name.clone()));
+    let class_name_from_project = node.class_name.as_ref().map(|name| SmallString::from(name));
     let mut class_name_from_path = None;
 
-    let name = Cow::Owned(instance_name.to_owned());
+    let name = SmallString::from(instance_name);
     let mut properties = HashMap::new();
     let mut children = Vec::new();
     let mut metadata = InstanceMetadata::default();
@@ -228,7 +226,7 @@ pub fn snapshot_project_node(
             _ => {}
         }
 
-        properties.insert(key.clone(), value);
+        properties.insert(key.into(), value);
     }
 
     // If the user specified $ignoreUnknownInstances, overwrite the existing
@@ -262,7 +260,7 @@ pub fn snapshot_project_node(
     }))
 }
 
-fn infer_class_name(name: &str, parent_class: Option<&str>) -> Option<Cow<'static, str>> {
+fn infer_class_name(name: &str, parent_class: Option<&str>) -> Option<SmallString> {
     // If className wasn't defined from another source, we may be able
     // to infer one.
 
@@ -275,13 +273,13 @@ fn infer_class_name(name: &str, parent_class: Option<&str>) -> Option<Cow<'stati
         let descriptor = rbx_reflection_database::get().classes.get(name)?;
 
         if descriptor.tags.contains(&ClassTag::Service) {
-            return Some(Cow::Owned(name.to_owned()));
+            return Some(name.into());
         }
     } else if parent_class == "StarterPlayer" {
         // StarterPlayer has two special members with their own classes.
 
         if name == "StarterPlayerScripts" || name == "StarterCharacterScripts" {
-            return Some(Cow::Owned(name.to_owned()));
+            return Some(name.into());
         }
     }
 

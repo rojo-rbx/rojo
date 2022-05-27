@@ -25,7 +25,7 @@ pub fn snapshot_json(
     let as_lua = json_to_lua(value).to_string();
 
     let properties = hashmap! {
-        "Source".to_owned() => as_lua.into(),
+        "Source".into() => as_lua.into(),
     };
 
     let meta_path = path.with_file_name(format!("{}.meta.json", name));

@@ -4,6 +4,8 @@ use std::collections::HashMap;
 
 use rbx_dom_weak::types::{Ref, Variant};
 
+use crate::small_string::SmallString;
+
 use super::{
     patch::{AppliedPatchSet, AppliedPatchUpdate, PatchSet, PatchUpdate},
     InstanceSnapshot, RojoTree,
@@ -12,6 +14,7 @@ use super::{
 /// Consumes the input `PatchSet`, applying all of its prescribed changes to the
 /// tree and returns an `AppliedPatchSet`, which can be used to keep another
 /// tree in sync with Rojo's.
+#[profiling::function]
 pub fn apply_patch_set(tree: &mut RojoTree, patch_set: PatchSet) -> AppliedPatchSet {
     let mut context = PatchApplyContext::default();
 
@@ -68,7 +71,7 @@ struct PatchApplyContext {
     ///
     /// This doesn't affect updated instances, since they're always applied
     /// after we've added all the instances from the patch.
-    added_instance_properties: HashMap<Ref, HashMap<String, Variant>>,
+    added_instance_properties: HashMap<Ref, HashMap<SmallString, Variant>>,
 
     /// The current applied patch result, describing changes made to the tree.
     applied_patch_set: AppliedPatchSet,
@@ -100,7 +103,9 @@ fn finalize_patch_application(context: PatchApplyContext, tree: &mut RojoTree) -
                 }
             }
 
-            instance.properties_mut().insert(key, property_value);
+            instance
+                .properties_mut()
+                .insert(key.to_string(), property_value);
         }
     }
 
@@ -164,13 +169,13 @@ fn apply_update_child(context: &mut PatchApplyContext, tree: &mut RojoTree, patc
     };
 
     if let Some(name) = patch.changed_name {
-        *instance.name_mut() = name.clone();
-        applied_patch.changed_name = Some(name);
+        *instance.name_mut() = name.to_string();
+        applied_patch.changed_name = Some(name.into());
     }
 
     if let Some(class_name) = patch.changed_class_name {
-        *instance.class_name_mut() = class_name.clone();
-        applied_patch.changed_class_name = Some(class_name);
+        *instance.class_name_mut() = class_name.to_string();
+        applied_patch.changed_class_name = Some(class_name.into());
     }
 
     for (key, property_entry) in patch.changed_properties {
@@ -195,13 +200,15 @@ fn apply_update_child(context: &mut PatchApplyContext, tree: &mut RojoTree, patc
 
                 instance
                     .properties_mut()
-                    .insert(key.clone(), Variant::Ref(new_referent));
+                    .insert(key.to_string(), Variant::Ref(new_referent));
             }
             Some(ref value) => {
-                instance.properties_mut().insert(key.clone(), value.clone());
+                instance
+                    .properties_mut()
+                    .insert(key.to_string(), value.clone());
             }
             None => {
-                instance.properties_mut().remove(&key);
+                instance.properties_mut().remove(key.as_str());
             }
         }
 

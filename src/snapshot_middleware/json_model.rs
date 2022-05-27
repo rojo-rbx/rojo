@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::HashMap, path::Path, str};
+use std::{collections::HashMap, path::Path, str};
 
 use anyhow::Context;
 use memofs::Vfs;
@@ -85,14 +85,14 @@ impl JsonModelCore {
         let mut properties = HashMap::with_capacity(self.properties.len());
         for (key, unresolved) in self.properties {
             let value = unresolved.resolve(&class_name, &key)?;
-            properties.insert(key, value);
+            properties.insert(key.into(), value);
         }
 
         Ok(InstanceSnapshot {
             snapshot_id: None,
             metadata: Default::default(),
-            name: Cow::Owned(name),
-            class_name: Cow::Owned(class_name),
+            name: name.into(),
+            class_name: class_name.into(),
             properties,
             children,
         })

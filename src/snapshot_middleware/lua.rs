@@ -38,7 +38,7 @@ pub fn snapshot_lua(
         .name(instance_name)
         .class_name(class_name)
         .properties(hashmap! {
-            "Source".to_owned() => contents_str.into(),
+            "Source".into() => contents_str.into(),
         })
         .metadata(
             InstanceMetadata::new()

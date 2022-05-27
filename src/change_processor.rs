@@ -46,6 +46,7 @@ pub struct ChangeProcessor {
 impl ChangeProcessor {
     /// Spin up the ChangeProcessor, connecting it to the given tree, VFS, and
     /// outbound message queue.
+    #[profiling::function]
     pub fn start(
         tree: Arc<Mutex<RojoTree>>,
         vfs: Arc<Vfs>,

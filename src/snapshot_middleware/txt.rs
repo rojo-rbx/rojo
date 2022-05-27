@@ -21,7 +21,7 @@ pub fn snapshot_txt(
         .to_owned();
 
     let properties = hashmap! {
-        "Value".to_owned() => contents_str.into(),
+        "Value".into() => contents_str.into(),
     };
 
     let meta_path = path.with_file_name(format!("{}.meta.json", name));
