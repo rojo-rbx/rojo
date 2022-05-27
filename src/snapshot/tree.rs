@@ -87,8 +87,9 @@ impl RojoTree {
     }
 
     pub fn insert_instance(&mut self, parent_ref: Ref, snapshot: InstanceSnapshot) -> Ref {
-        let builder = InstanceBuilder::new(snapshot.class_name.to_owned())
-            .with_name(snapshot.name.to_owned())
+        let builder = InstanceBuilder::empty()
+            .with_class(snapshot.class_name.into_owned())
+            .with_name(snapshot.name.into_owned())
             .with_properties(snapshot.properties);
 
         let referent = self.inner.insert(parent_ref, builder);
