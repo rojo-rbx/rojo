@@ -6,6 +6,9 @@ use clap::Parser;
 use librojo::cli::Options;
 
 fn main() {
+    #[cfg(feature = "profile-with-tracy")]
+    tracy_client::Client::start();
+
     panic::set_hook(Box::new(|panic_info| {
         // PanicInfo's payload is usually a &'static str or String.
         // See: https://doc.rust-lang.org/beta/std/panic/struct.PanicInfo.html#method.payload

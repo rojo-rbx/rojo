@@ -10,6 +10,7 @@ use super::{
     InstanceSnapshot, InstanceWithMeta, RojoTree,
 };
 
+#[profiling::function]
 pub fn compute_patch_set(
     snapshot: Option<&InstanceSnapshot>,
     tree: &RojoTree,

@@ -97,6 +97,7 @@ fn xml_encode_config() -> rbx_xml::EncodeOptions {
     rbx_xml::EncodeOptions::new().property_behavior(rbx_xml::EncodePropertyBehavior::WriteUnknown)
 }
 
+#[profiling::function]
 fn write_model(
     session: &ServeSession,
     output: &Path,

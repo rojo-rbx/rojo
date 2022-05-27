@@ -40,6 +40,7 @@ pub use self::project::snapshot_project_node;
 
 /// The main entrypoint to the snapshot function. This function can be pointed
 /// at any path and will return something if Rojo knows how to deal with it.
+#[profiling::function]
 pub fn snapshot_from_vfs(
     context: &InstanceContext,
     vfs: &Vfs,
