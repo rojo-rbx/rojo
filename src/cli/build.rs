@@ -1,6 +1,6 @@
 use std::{
     io::{BufWriter, Write},
-    mem::ManuallyDrop,
+    mem::forget,
     path::{Path, PathBuf},
 };
 
@@ -62,13 +62,9 @@ impl BuildCommand {
             }
         }
 
-        // Never drop ServeSession, because it's VERY expensive to drop and
-        // we're about to exit anyways.
-        //
-        // This is kind of evil; if this function is ever called outside of the
-        // context of a CLI, this will leak a large object forever. However, the
-        // performance benefits of leaking it outweigh the cost at this time.
-        let _session = ManuallyDrop::new(session);
+        // Avoid dropping ServeSession: it's potentially VERY expensive to drop
+        // and we're about to exit anyways.
+        forget(session);
 
         Ok(())
     }
