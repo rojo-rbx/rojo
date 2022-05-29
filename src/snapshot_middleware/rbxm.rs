@@ -7,6 +7,7 @@ use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
 use super::util::PathExt;
 
+#[profiling::function]
 pub fn snapshot_rbxm(
     context: &InstanceContext,
     vfs: &Vfs,
