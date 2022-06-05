@@ -2,6 +2,9 @@
 
 ## Unreleased Changes
 * Switched from structopt to clap for command line argument parsing.
+* Significantly improved performance of building and serving. ([#548])
+
+[#548]: https://github.com/rojo-rbx/rojo/pull/548
 
 ## [7.1.1] - May 26, 2022
 * Fixed sourcemap command not stripping paths correctly ([#544])
