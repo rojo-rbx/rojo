@@ -50,17 +50,11 @@ memofs = { version = "0.2.0", path = "crates/memofs" }
 # rbx_reflection_database = { path = "../rbx-dom/rbx_reflection_database" }
 # rbx_xml = { path = "../rbx-dom/rbx_xml" }
 
-rbx_binary = { git = "https://github.com/rojo-rbx/rbx-dom" }
-rbx_dom_weak = { git = "https://github.com/rojo-rbx/rbx-dom" }
-rbx_reflection = { git = "https://github.com/rojo-rbx/rbx-dom" }
-rbx_reflection_database = { git = "https://github.com/rojo-rbx/rbx-dom" }
-rbx_xml = { git = "https://github.com/rojo-rbx/rbx-dom" }
-
-# rbx_binary = "0.6.4"
-# rbx_dom_weak = "2.3.0"
-# rbx_reflection = "4.2.0"
-# rbx_reflection_database = "0.2.2"
-# rbx_xml = "0.12.3"
+rbx_binary = "0.6.4"
+rbx_dom_weak = "2.4.0"
+rbx_reflection = "4.2.0"
+rbx_reflection_database = "0.2.2"
+rbx_xml = "0.12.3"
 
 anyhow = "1.0.44"
 backtrace = "0.3.61"
