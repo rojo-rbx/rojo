@@ -1,5 +1,6 @@
 use std::{
     io::{BufWriter, Write},
+    mem::forget,
     path::{Path, PathBuf},
 };
 
@@ -60,6 +61,10 @@ impl BuildCommand {
                 write_model(&session, &self.output, output_kind)?;
             }
         }
+
+        // Avoid dropping ServeSession: it's potentially VERY expensive to drop
+        // and we're about to exit anyways.
+        forget(session);
 
         Ok(())
     }
