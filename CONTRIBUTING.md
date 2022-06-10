@@ -49,11 +49,9 @@ The Rojo release process is pretty manual right now. If you need to do it, here'
     * `cargo publish`
 8. Publish the Plugin
     * `cargo run -- upload plugin --asset_id 6415005344`
-    * `cargo run -- build plugin --output Rojo.rbxm`
 9. Push commits and tags
     * `git push && git push --tags`
 10. Copy GitHub release content from previous release
     * Update the leading text with a summary about the release
     * Paste the changelog notes (as-is!) from [`CHANGELOG.md`](CHANGELOG.md)
     * Write a small summary of each major feature
-    * Attach release artifacts from GitHub Actions for each platform

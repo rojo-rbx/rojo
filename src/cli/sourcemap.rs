@@ -3,11 +3,11 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use clap::Parser;
 use fs_err::File;
 use memofs::Vfs;
 use rbx_dom_weak::types::Ref;
 use serde::Serialize;
-use structopt::StructOpt;
 
 use crate::{
     serve_session::ServeSession,
@@ -33,31 +33,28 @@ struct SourcemapNode {
 }
 
 /// Generates a sourcemap file from the Rojo project.
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub struct SourcemapCommand {
     /// Path to the project to use for the sourcemap. Defaults to the current
     /// directory.
-    #[structopt(default_value = "")]
+    #[clap(default_value = "")]
     pub project: PathBuf,
 
     /// Where to output the sourcemap. Omit this to use stdout instead of
     /// writing to a file.
     ///
     /// Should end in .json.
-    #[structopt(long, short)]
+    #[clap(long, short)]
     pub output: Option<PathBuf>,
 
     /// If non-script files should be included or not. Defaults to false.
-    #[structopt(long)]
+    #[clap(long)]
     pub include_non_scripts: bool,
 }
 
 impl SourcemapCommand {
     pub fn run(self) -> anyhow::Result<()> {
         let project_path = resolve_path(&self.project);
-
-        let mut project_dir = project_path.to_path_buf();
-        project_dir.pop();
 
         log::trace!("Constructing in-memory filesystem");
         let vfs = Vfs::new_default();
@@ -71,7 +68,7 @@ impl SourcemapCommand {
             filter_non_scripts
         };
 
-        let root_node = recurse_create_node(&tree, tree.get_root_id(), &project_dir, filter);
+        let root_node = recurse_create_node(&tree, tree.get_root_id(), session.root_dir(), filter);
 
         if let Some(output_path) = self.output {
             let mut file = BufWriter::new(File::create(&output_path)?);

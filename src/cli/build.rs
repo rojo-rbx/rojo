@@ -1,12 +1,13 @@
 use std::{
     io::{BufWriter, Write},
+    mem::forget,
     path::{Path, PathBuf},
 };
 
 use anyhow::Context;
+use clap::Parser;
 use fs_err::File;
 use memofs::Vfs;
-use structopt::StructOpt;
 use tokio::runtime::Runtime;
 
 use crate::serve_session::ServeSession;
@@ -17,20 +18,20 @@ const UNKNOWN_OUTPUT_KIND_ERR: &str = "Could not detect what kind of file to bui
                                        Expected output file to end in .rbxl, .rbxlx, .rbxm, or .rbxmx.";
 
 /// Generates a model or place file from the Rojo project.
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub struct BuildCommand {
     /// Path to the project to serve. Defaults to the current directory.
-    #[structopt(default_value = "")]
+    #[clap(default_value = "")]
     pub project: PathBuf,
 
     /// Where to output the result.
     ///
     /// Should end in .rbxm, .rbxl, .rbxmx, or .rbxlx.
-    #[structopt(long, short)]
+    #[clap(long, short)]
     pub output: PathBuf,
 
     /// Whether to automatically rebuild when any input files change.
-    #[structopt(long)]
+    #[clap(long)]
     pub watch: bool,
 }
 
@@ -60,6 +61,10 @@ impl BuildCommand {
                 write_model(&session, &self.output, output_kind)?;
             }
         }
+
+        // Avoid dropping ServeSession: it's potentially VERY expensive to drop
+        // and we're about to exit anyways.
+        forget(session);
 
         Ok(())
     }
@@ -97,6 +102,7 @@ fn xml_encode_config() -> rbx_xml::EncodeOptions {
     rbx_xml::EncodeOptions::new().property_behavior(rbx_xml::EncodePropertyBehavior::WriteUnknown)
 }
 
+#[profiling::function]
 fn write_model(
     session: &ServeSession,
     output: &Path,

@@ -130,7 +130,7 @@ impl ServeSession {
         let snapshot = snapshot_from_vfs(&instance_context, &vfs, &start_path)?;
 
         log::trace!("Computing initial patch set");
-        let patch_set = compute_patch_set(snapshot.as_ref(), &tree, root_id);
+        let patch_set = compute_patch_set(snapshot, &tree, root_id);
 
         log::trace!("Applying initial patch set");
         apply_patch_set(&mut tree, patch_set);
@@ -215,6 +215,10 @@ impl ServeSession {
 
     pub fn serve_address(&self) -> Option<IpAddr> {
         self.root_project.serve_address
+    }
+
+    pub fn root_dir(&self) -> &Path {
+        self.root_project.folder_location()
     }
 }
 

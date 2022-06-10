@@ -2,38 +2,38 @@ use std::path::PathBuf;
 use std::str::FromStr;
 
 use anyhow::{bail, format_err, Context};
+use clap::Parser;
 use memofs::Vfs;
 use reqwest::{
     header::{ACCEPT, CONTENT_TYPE, COOKIE, USER_AGENT},
     StatusCode,
 };
-use structopt::StructOpt;
 
 use crate::{auth_cookie::get_auth_cookie, serve_session::ServeSession};
 
 use super::resolve_path;
 
 /// Builds the project and uploads it to Roblox.
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub struct UploadCommand {
     /// Path to the project to upload. Defaults to the current directory.
-    #[structopt(default_value = "")]
+    #[clap(default_value = "")]
     pub project: PathBuf,
 
     /// Authenication cookie to use. If not specified, Rojo will attempt to find one from the system automatically.
-    #[structopt(long)]
+    #[clap(long)]
     pub cookie: Option<String>,
 
     /// API key obtained from create.roblox.com/credentials. Rojo will use the Open Cloud API when this is provided. Only supports uploading to a place.
-    #[structopt(long = "api_key")]
+    #[clap(long = "api_key")]
     pub api_key: Option<String>,
 
     /// The Universe ID of the given place. Required when using the Open Cloud API.
-    #[structopt(long = "universe_id")]
+    #[clap(long = "universe_id")]
     pub universe_id: Option<u64>,
 
     /// Asset ID to upload to.
-    #[structopt(long = "asset_id")]
+    #[clap(long = "asset_id")]
     pub asset_id: u64,
 }
 
@@ -123,7 +123,7 @@ fn do_upload(buffer: Vec<u8>, asset_id: u64, cookie: &str) -> anyhow::Result<()>
         asset_id
     );
 
-    let client = reqwest::Client::new();
+    let client = reqwest::blocking::Client::new();
 
     let build_request = move || {
         client
@@ -172,10 +172,10 @@ fn do_upload_open_cloud(
         universe_id, asset_id
     );
 
-    let client = reqwest::Client::new();
+    let client = reqwest::blocking::Client::new();
 
     log::debug!("Uploading to Roblox...");
-    let mut response = client
+    let response = client
         .post(&url)
         .header("x-api-key", api_key)
         .header(CONTENT_TYPE, "application/xml")

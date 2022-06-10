@@ -14,8 +14,6 @@ local PORT_WIDTH = 74
 local DIVIDER_WIDTH = 1
 local HOST_OFFSET = 12
 
-local lastHost, lastPort
-
 local e = Roact.createElement
 
 local function AddressEntry(props)
@@ -26,7 +24,7 @@ local function AddressEntry(props)
 			layoutOrder = props.layoutOrder,
 		}, {
 			Host = e("TextBox", {
-				Text = lastHost or "",
+				Text = props.host or "",
 				Font = Enum.Font.Code,
 				TextSize = 18,
 				TextColor3 = theme.AddressEntry.TextColor,
@@ -34,6 +32,7 @@ local function AddressEntry(props)
 				TextTransparency = props.transparency,
 				PlaceholderText = Config.defaultHost,
 				PlaceholderColor3 = theme.AddressEntry.PlaceholderColor,
+				ClearTextOnFocus = false,
 
 				Size = UDim2.new(1, -(HOST_OFFSET + DIVIDER_WIDTH + PORT_WIDTH), 1, 0),
 				Position = UDim2.new(0, HOST_OFFSET, 0, 0),
@@ -41,17 +40,22 @@ local function AddressEntry(props)
 				ClipsDescendants = true,
 				BackgroundTransparency = 1,
 
-				[Roact.Ref] = props.hostRef,
+				[Roact.Change.Text] = function(object)
+					if props.onHostChange ~= nil then
+						props.onHostChange(object.Text)
+					end
+				end
 			}),
 
 			Port = e("TextBox", {
-				Text = lastPort or "",
+				Text = props.port or "",
 				Font = Enum.Font.Code,
 				TextSize = 18,
 				TextColor3 = theme.AddressEntry.TextColor,
 				TextTransparency = props.transparency,
 				PlaceholderText = Config.defaultPort,
 				PlaceholderColor3 = theme.AddressEntry.PlaceholderColor,
+				ClearTextOnFocus = false,
 
 				Size = UDim2.new(0, PORT_WIDTH, 1, 0),
 				Position = UDim2.new(1, 0, 0, 0),
@@ -60,12 +64,14 @@ local function AddressEntry(props)
 				ClipsDescendants = true,
 				BackgroundTransparency = 1,
 
-				[Roact.Ref] = props.portRef,
-
 				[Roact.Change.Text] = function(object)
 					local text = object.Text
 					text = text:gsub("%D", "")
 					object.Text = text
+
+					if props.onPortChange ~= nil then
+						props.onPortChange(text)
+					end
 				end,
 			}, {
 				Divider = e("Frame", {
@@ -82,11 +88,6 @@ end
 
 local NotConnectedPage = Roact.Component:extend("NotConnectedPage")
 
-function NotConnectedPage:init()
-	self.hostRef = Roact.createRef()
-	self.portRef = Roact.createRef()
-end
-
 function NotConnectedPage:render()
 	return Roact.createFragment({
 		Header = e(Header, {
@@ -95,8 +96,10 @@ function NotConnectedPage:render()
 		}),
 
 		AddressEntry = e(AddressEntry, {
-			hostRef = self.hostRef,
-			portRef = self.portRef,
+			host = self.props.host,
+			port = self.props.port,
+			onHostChange = self.props.onHostChange,
+			onPortChange = self.props.onPortChange,
 			transparency = self.props.transparency,
 			layoutOrder = 2,
 		}),
@@ -119,18 +122,7 @@ function NotConnectedPage:render()
 				style = "Solid",
 				transparency = self.props.transparency,
 				layoutOrder = 2,
-				onClick = function()
-					local hostText = self.hostRef.current.Text
-					local portText = self.portRef.current.Text
-
-					lastHost = hostText
-					lastPort = portText
-
-					self.props.onConnect(
-						#hostText > 0 and hostText or Config.defaultHost,
-						#portText > 0 and portText or Config.defaultPort
-					)
-				end,
+				onClick = self.props.onConnect,
 			}),
 
 			Layout = e("UIListLayout", {
