@@ -1,0 +1,14 @@
+---
+source: tests/tests/build.rs
+assertion_line: 98
+expression: contents
+---
+<roblox version="4">
+  <Item class="LocalScript" referent="0">
+    <Properties>
+      <string name="Name">issue_546</string>
+      <bool name="Disabled">true</bool>
+      <string name="Source">print("Hello, world!")</string>
+    </Properties>
+  </Item>
+</roblox>
