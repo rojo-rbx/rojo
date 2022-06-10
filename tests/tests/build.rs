@@ -36,11 +36,13 @@ gen_build_tests! {
     init_meta_class_name,
     init_meta_properties,
     init_with_children,
+    issue_546,
     json_as_lua,
     json_model_in_folder,
     json_model_legacy_name,
     module_in_folder,
     module_init,
+    optional,
     project_composed_default,
     project_composed_file,
     project_root_name,
@@ -53,7 +55,6 @@ gen_build_tests! {
     txt,
     txt_in_folder,
     unresolved_values,
-    optional,
     weldconstraint,
 }
 

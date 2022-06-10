@@ -6,7 +6,11 @@ use memofs::{IoResultExt, Vfs};
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
-use super::{dir::snapshot_dir, meta_file::AdjacentMetadata, util::match_trailing};
+use super::{
+    dir::{dir_meta, snapshot_dir_no_meta},
+    meta_file::AdjacentMetadata,
+    util::match_trailing,
+};
 
 /// Core routine for turning Lua files into snapshots.
 pub fn snapshot_lua(
@@ -66,7 +70,7 @@ pub fn snapshot_lua_init(
     init_path: &Path,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let folder_path = init_path.parent().unwrap();
-    let dir_snapshot = snapshot_dir(context, vfs, folder_path)?.unwrap();
+    let dir_snapshot = snapshot_dir_no_meta(context, vfs, folder_path)?.unwrap();
 
     if dir_snapshot.class_name != "Folder" {
         anyhow::bail!(
@@ -85,6 +89,10 @@ pub fn snapshot_lua_init(
     init_snapshot.name = dir_snapshot.name;
     init_snapshot.children = dir_snapshot.children;
     init_snapshot.metadata = dir_snapshot.metadata;
+
+    if let Some(mut meta) = dir_meta(vfs, folder_path)? {
+        meta.apply_all(&mut init_snapshot)?;
+    }
 
     Ok(Some(init_snapshot))
 }
