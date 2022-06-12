@@ -24,6 +24,10 @@ fn snapshot_from_fs_path(path: &Path) -> io::Result<VfsSnapshot> {
             if file_name.ends_with(".spec.lua") {
                 continue;
             }
+            // .luau TestEZ files are also skipped.
+            if file_name.ends_with(".spec.luau") {
+                continue;
+            }
 
             let child_snapshot = snapshot_from_fs_path(&entry.path())?;
             children.push((file_name, child_snapshot));

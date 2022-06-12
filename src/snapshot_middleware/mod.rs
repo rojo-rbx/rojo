@@ -62,12 +62,27 @@ pub fn snapshot_from_vfs(
             return snapshot_lua_init(context, vfs, &init_path);
         }
 
+        let init_path = path.join("init.luau");
+        if vfs.metadata(&init_path).with_not_found()?.is_some() {
+            return snapshot_lua_init(context, vfs, &init_path);
+        }
+
         let init_path = path.join("init.server.lua");
         if vfs.metadata(&init_path).with_not_found()?.is_some() {
             return snapshot_lua_init(context, vfs, &init_path);
         }
 
+        let init_path = path.join("init.server.luau");
+        if vfs.metadata(&init_path).with_not_found()?.is_some() {
+            return snapshot_lua_init(context, vfs, &init_path);
+        }
+
         let init_path = path.join("init.client.lua");
+        if vfs.metadata(&init_path).with_not_found()?.is_some() {
+            return snapshot_lua_init(context, vfs, &init_path);
+        }
+
+        let init_path = path.join("init.client.luau");
         if vfs.metadata(&init_path).with_not_found()?.is_some() {
             return snapshot_lua_init(context, vfs, &init_path);
         }
@@ -78,6 +93,12 @@ pub fn snapshot_from_vfs(
             match name {
                 // init scripts are handled elsewhere and should not turn into
                 // their own children.
+                "init" | "init.client" | "init.server" => return Ok(None),
+
+                _ => return snapshot_lua(context, vfs, path),
+            }
+        } else if let Ok(name) = path.file_name_trim_end(".luau") {
+            match name {
                 "init" | "init.client" | "init.server" => return Ok(None),
 
                 _ => return snapshot_lua(context, vfs, path),
