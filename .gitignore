@@ -19,6 +19,3 @@
 
 # Snapshot files from the 'insta' Rust crate
 **/*.snap.new
-
-# Selene generates a roblox.toml file that should not be checked in.
-/roblox.toml
