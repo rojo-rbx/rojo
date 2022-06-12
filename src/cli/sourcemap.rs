@@ -3,11 +3,11 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use clap::Parser;
 use fs_err::File;
 use memofs::Vfs;
 use rbx_dom_weak::types::Ref;
 use serde::Serialize;
-use structopt::StructOpt;
 
 use crate::{
     serve_session::ServeSession,
@@ -33,22 +33,22 @@ struct SourcemapNode {
 }
 
 /// Generates a sourcemap file from the Rojo project.
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub struct SourcemapCommand {
     /// Path to the project to use for the sourcemap. Defaults to the current
     /// directory.
-    #[structopt(default_value = "")]
+    #[clap(default_value = "")]
     pub project: PathBuf,
 
     /// Where to output the sourcemap. Omit this to use stdout instead of
     /// writing to a file.
     ///
     /// Should end in .json.
-    #[structopt(long, short)]
+    #[clap(long, short)]
     pub output: Option<PathBuf>,
 
     /// If non-script files should be included or not. Defaults to false.
-    #[structopt(long)]
+    #[clap(long)]
     pub include_non_scripts: bool,
 }
 

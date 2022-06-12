@@ -11,29 +11,49 @@ on:
 
 jobs:
   build:
-
+    name: Build and Test
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        rust_version: [stable, "1.55.0"]
+        rust_version: [stable, 1.55.0]
 
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v3
       with:
         submodules: true
 
-    - name: Setup Rust toolchain
-      run: rustup default ${{ matrix.rust_version }}
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: ${{ matrix.rust_version }}
+        override: true
+        profile: minimal
 
     - name: Build
       run: cargo build --locked --verbose
 
-    - name: Run tests
+    - name: Test
       run: cargo test --locked --verbose
 
-    - name: Rustfmt and Clippy
-      run: |
-        cargo fmt -- --check
-        cargo clippy
-      if: matrix.rust_version == 'stable'
+  lint:
+    name: Rustfmt and Clippy
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+        components: rustfmt, clippy
+
+    - name: Rustfmt
+      run: cargo fmt -- --check
+
+    - name: Clippy
+      run: cargo clippy

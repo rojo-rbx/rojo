@@ -7,6 +7,7 @@ use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
 use super::util::PathExt;
 
+#[profiling::function]
 pub fn snapshot_rbxm(
     context: &InstanceContext,
     vfs: &Vfs,
@@ -21,7 +22,8 @@ pub fn snapshot_rbxm(
     let children = root_instance.children();
 
     if children.len() == 1 {
-        let snapshot = InstanceSnapshot::from_tree(&temp_tree, children[0])
+        let child = children[0];
+        let snapshot = InstanceSnapshot::from_tree(temp_tree, child)
             .name(name)
             .metadata(
                 InstanceMetadata::new()

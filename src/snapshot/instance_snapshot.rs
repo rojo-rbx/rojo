@@ -4,7 +4,7 @@ use std::{borrow::Cow, collections::HashMap};
 
 use rbx_dom_weak::{
     types::{Ref, Variant},
-    WeakDom,
+    Instance, WeakDom,
 };
 use serde::{Deserialize, Serialize};
 
@@ -102,22 +102,29 @@ impl InstanceSnapshot {
         }
     }
 
-    pub fn from_tree(tree: &WeakDom, id: Ref) -> Self {
-        let instance = tree.get_by_ref(id).expect("instance did not exist in tree");
+    #[profiling::function]
+    pub fn from_tree(tree: WeakDom, id: Ref) -> Self {
+        let (_, mut raw_tree) = tree.into_raw();
+        Self::from_raw_tree(&mut raw_tree, id)
+    }
+
+    fn from_raw_tree(raw_tree: &mut HashMap<Ref, Instance>, id: Ref) -> Self {
+        let instance = raw_tree
+            .remove(&id)
+            .expect("instance did not exist in tree");
 
         let children = instance
             .children()
             .iter()
-            .copied()
-            .map(|id| Self::from_tree(tree, id))
+            .map(|&id| Self::from_raw_tree(raw_tree, id))
             .collect();
 
         Self {
             snapshot_id: Some(id),
             metadata: InstanceMetadata::default(),
-            name: Cow::Owned(instance.name.clone()),
-            class_name: Cow::Owned(instance.class.clone()),
-            properties: instance.properties.clone(),
+            name: Cow::Owned(instance.name),
+            class_name: Cow::Owned(instance.class),
+            properties: instance.properties,
             children,
         }
     }

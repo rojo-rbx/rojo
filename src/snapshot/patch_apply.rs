@@ -1,6 +1,9 @@
 //! Defines the algorithm for applying generated patches.
 
-use std::collections::HashMap;
+use std::{
+    collections::{HashMap, HashSet},
+    mem::take,
+};
 
 use rbx_dom_weak::types::{Ref, Variant};
 
@@ -12,21 +15,31 @@ use super::{
 /// Consumes the input `PatchSet`, applying all of its prescribed changes to the
 /// tree and returns an `AppliedPatchSet`, which can be used to keep another
 /// tree in sync with Rojo's.
+#[profiling::function]
 pub fn apply_patch_set(tree: &mut RojoTree, patch_set: PatchSet) -> AppliedPatchSet {
     let mut context = PatchApplyContext::default();
 
-    for removed_id in patch_set.removed_instances {
-        apply_remove_instance(&mut context, tree, removed_id);
+    {
+        profiling::scope!("removals");
+        for removed_id in patch_set.removed_instances {
+            apply_remove_instance(&mut context, tree, removed_id);
+        }
     }
 
-    for add_patch in patch_set.added_instances {
-        apply_add_child(&mut context, tree, add_patch.parent_id, add_patch.instance);
+    {
+        profiling::scope!("additions");
+        for add_patch in patch_set.added_instances {
+            apply_add_child(&mut context, tree, add_patch.parent_id, add_patch.instance);
+        }
     }
 
-    // Updates need to be applied after additions, which reduces the complexity
-    // of updates significantly.
-    for update_patch in patch_set.updated_instances {
-        apply_update_child(&mut context, tree, update_patch);
+    {
+        profiling::scope!("updates");
+        // Updates need to be applied after additions, which reduces the complexity
+        // of updates significantly.
+        for update_patch in patch_set.updated_instances {
+            apply_update_child(&mut context, tree, update_patch);
+        }
     }
 
     finalize_patch_application(context, tree)
@@ -55,20 +68,9 @@ struct PatchApplyContext {
     /// eachother.
     snapshot_id_to_instance_id: HashMap<Ref, Ref>,
 
-    /// The properties of instances added by the current `PatchSet`.
-    ///
-    /// Instances added to the tree can refer to eachother via Ref properties,
-    /// but we need to make sure they're correctly transformed from snapshot
-    /// space into tree space (via `snapshot_id_to_instance_id`).
-    ///
-    /// It's not possible to do that transformation for refs that refer to added
-    /// instances until all the instances have actually been inserted into the
-    /// tree. For simplicity, we defer application of _all_ properties on added
-    /// instances instead of just Refs.
-    ///
-    /// This doesn't affect updated instances, since they're always applied
-    /// after we've added all the instances from the patch.
-    added_instance_properties: HashMap<Ref, HashMap<String, Variant>>,
+    /// Tracks all of the instances added by this patch that have refs that need
+    /// to be rewritten.
+    has_refs_to_rewrite: HashSet<Ref>,
 
     /// The current applied patch result, describing changes made to the tree.
     applied_patch_set: AppliedPatchSet,
@@ -84,23 +86,22 @@ struct PatchApplyContext {
 /// The remaining Ref properties need to be handled during patch application,
 /// where we build up a map of snapshot IDs to instance IDs as they're created,
 /// then apply properties all at once at the end.
+#[profiling::function]
 fn finalize_patch_application(context: PatchApplyContext, tree: &mut RojoTree) -> AppliedPatchSet {
-    for (id, properties) in context.added_instance_properties {
+    for id in context.has_refs_to_rewrite {
         // This should always succeed since instances marked as added in our
         // patch should be added without fail.
         let mut instance = tree
             .get_instance_mut(id)
             .expect("Invalid instance ID in deferred property map");
 
-        for (key, mut property_value) in properties {
-            if let Variant::Ref(referent) = property_value {
+        for value in instance.properties_mut().values_mut() {
+            if let Variant::Ref(referent) = value {
                 if let Some(&instance_referent) = context.snapshot_id_to_instance_id.get(&referent)
                 {
-                    property_value = Variant::Ref(instance_referent);
+                    *value = Variant::Ref(instance_referent);
                 }
             }
-
-            instance.properties_mut().insert(key, property_value);
         }
     }
 
@@ -116,24 +117,24 @@ fn apply_add_child(
     context: &mut PatchApplyContext,
     tree: &mut RojoTree,
     parent_id: Ref,
-    snapshot: InstanceSnapshot,
+    mut snapshot: InstanceSnapshot,
 ) {
     let snapshot_id = snapshot.snapshot_id;
-    let properties = snapshot.properties;
-    let children = snapshot.children;
+    let children = take(&mut snapshot.children);
 
-    // Property application is deferred until after all children
-    // are constructed. This helps apply referents correctly.
-    let remaining_snapshot = InstanceSnapshot::new()
-        .name(snapshot.name)
-        .class_name(snapshot.class_name)
-        .metadata(snapshot.metadata)
-        .snapshot_id(snapshot.snapshot_id);
+    // If an object we're adding has a non-null referent, we'll note this
+    // instance down as needing to be revisited later.
+    let has_refs = snapshot.properties.values().any(|value| match value {
+        Variant::Ref(value) => value.is_some(),
+        _ => false,
+    });
 
-    let id = tree.insert_instance(parent_id, remaining_snapshot);
+    let id = tree.insert_instance(parent_id, snapshot);
     context.applied_patch_set.added.push(id);
 
-    context.added_instance_properties.insert(id, properties);
+    if has_refs {
+        context.has_refs_to_rewrite.insert(id);
+    }
 
     if let Some(snapshot_id) = snapshot_id {
         context.snapshot_id_to_instance_id.insert(snapshot_id, id);
