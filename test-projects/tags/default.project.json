@@ -1,0 +1,14 @@
+{
+  "name": "tags",
+  "tree": {
+    "$className": "DataModel",
+    "Workspace": {
+      "Folder": {
+        "$className": "Folder",
+        "$properties": {
+          "Tags": ["Hello", "World"]
+        }
+      }
+    }
+  }
+}
