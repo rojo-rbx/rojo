@@ -244,7 +244,7 @@ impl ApiService {
     }
 }
 
-/// If this instance is represented by a script, try to find the correct .lua
+/// If this instance is represented by a script, try to find the correct .lua or .luau
 /// file to open to edit it.
 fn pick_script_path(instance: InstanceWithMeta<'_>) -> Option<PathBuf> {
     match instance.class_name() {
@@ -252,16 +252,17 @@ fn pick_script_path(instance: InstanceWithMeta<'_>) -> Option<PathBuf> {
         _ => return None,
     }
 
-    // Pick the first listed relevant path that has an extension of .lua that
+    // Pick the first listed relevant path that has an extension of .lua or .luau that
     // exists.
     instance
         .metadata()
         .relevant_paths
         .iter()
         .find(|path| {
-            // We should only ever open Lua files to be safe.
+            // We should only ever open Lua or Luau files to be safe.
             match path.extension().and_then(|ext| ext.to_str()) {
                 Some("lua") => {}
+                Some("luau") => {}
                 _ => return false,
             }
 
