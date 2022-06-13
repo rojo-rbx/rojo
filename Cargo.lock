@@ -1680,9 +1680,9 @@ dependencies = [
 
 [[package]]
 name = "rbx_types"
-version = "1.4.1"
+version = "1.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fc17f0fa06b653817353cf7f7602cd9427e4e97fab0e51209df3c83eb8abf925"
+checksum = "a773e53402f2ae7537bbec77badb7e3ff3e6ddac5ee9c2df7edf0a60edf5c9d8"
 dependencies = [
  "base64",
  "bitflags",

@@ -1,0 +1,24 @@
+---
+source: tests/tests/build.rs
+assertion_line: 99
+expression: contents
+---
+<roblox version="4">
+  <Item class="Folder" referent="0">
+    <Properties>
+      <string name="Name">attributes</string>
+    </Properties>
+    <Item class="Folder" referent="1">
+      <Properties>
+        <string name="Name">Explicit</string>
+        <BinaryString name="AttributesSerialize">AgAAAAUAAABIZWxsbwIFAAAAV29ybGQGAAAAVmVjdG9yEQAAgD8AAABAAABAQA==</BinaryString>
+      </Properties>
+    </Item>
+    <Item class="Folder" referent="2">
+      <Properties>
+        <string name="Name">ImplicitAttributes</string>
+        <BinaryString name="AttributesSerialize">AgAAAAMAAABIZXkCBwAAAEdyYW5kbWEGAAAAVmVjdG9yEQAAgEAAAKBAAADAQA==</BinaryString>
+      </Properties>
+    </Item>
+  </Item>
+</roblox>
