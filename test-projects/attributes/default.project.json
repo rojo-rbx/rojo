@@ -7,9 +7,7 @@
         "$className": "Folder",
         "$properties": {
           "Attributes": {
-            "Attributes": {
-              "Hello": { "Vector3": [1, 2, 3] }
-            }
+            "Hello": { "Vector3": [1, 2, 3] }
           }
         }
       }
