@@ -88,7 +88,14 @@ fn show_start_message(bind_address: IpAddr, port: u16, color: ColorChoice) -> io
     write!(&mut buffer, "Visit ")?;
 
     buffer.set_color(&green)?;
-    write!(&mut buffer, "http://localhost:{}/", port)?;
+    if bind_address.is_loopback() {
+        write!(&mut buffer, "http://localhost:")?;
+    } else {
+        write!(&mut buffer, "http://{}:", bind_address)?;
+    }
+
+    buffer.set_color(&green)?;
+    write!(&mut buffer, "{}/", port)?;
 
     buffer.set_color(&ColorSpec::new())?;
     writeln!(&mut buffer, " in your browser for more information.")?;
