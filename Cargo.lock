@@ -1639,12 +1639,13 @@ dependencies = [
 
 [[package]]
 name = "rbx_binary"
-version = "0.6.4"
+version = "0.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "68f424adb7a0a24ab4bd153be141035f1404ae40affed902fd2721b42cca7f86"
+checksum = "28fe644ede286801c9bd59527b332d69449c6e9eaefa2277a0e776252097bc90"
 dependencies = [
  "log",
  "lz4",
+ "profiling",
  "rbx_dom_weak",
  "rbx_reflection",
  "rbx_reflection_database",
