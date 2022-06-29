@@ -83,10 +83,8 @@ pub fn snapshot_dir_no_meta(
         // relevant paths to this middleware?
         path.join("init.lua"),
         path.join("init.luau"),
-
         path.join("init.server.lua"),
         path.join("init.server.luau"),
-        
         path.join("init.client.lua"),
         path.join("init.client.luau"),
     ];
