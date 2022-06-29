@@ -21,11 +21,7 @@ fn snapshot_from_fs_path(path: &Path) -> io::Result<VfsSnapshot> {
 
             // We can skip any TestEZ test files since they aren't necessary for
             // the plugin to run.
-            if file_name.ends_with(".spec.lua") {
-                continue;
-            }
-            // .luau TestEZ files are also skipped.
-            if file_name.ends_with(".spec.luau") {
+            if file_name.ends_with(".spec.lua") || file_name.ends_with(".spec.luau") {
                 continue;
             }
 
