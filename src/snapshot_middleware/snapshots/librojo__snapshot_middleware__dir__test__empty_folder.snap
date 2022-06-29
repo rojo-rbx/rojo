@@ -11,10 +11,14 @@ metadata:
     - /foo
     - /foo/init.meta.json
     - /foo/init.lua
+    - /foo/init.luau
     - /foo/init.server.lua
+    - /foo/init.server.luau
     - /foo/init.client.lua
+    - /foo/init.client.luau
   context: {}
 name: foo
 class_name: Folder
 properties: {}
 children: []
+
