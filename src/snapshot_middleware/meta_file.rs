@@ -12,10 +12,10 @@ use crate::{resolution::UnresolvedValue, snapshot::InstanceSnapshot};
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AdjacentMetadata {
-    #[serde(alias = "IgnoreUnknownInstances", skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub ignore_unknown_instances: Option<bool>,
 
-    #[serde(alias = "Properties", default, skip_serializing_if = "HashMap::is_empty")]
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
     pub properties: HashMap<String, UnresolvedValue>,
 
     #[serde(skip)]
@@ -72,13 +72,13 @@ impl AdjacentMetadata {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DirectoryMetadata {
-    #[serde(alias = "IgnoreUnknownInstances", skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub ignore_unknown_instances: Option<bool>,
 
-    #[serde(alias = "Properties", default, skip_serializing_if = "HashMap::is_empty")]
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
     pub properties: HashMap<String, UnresolvedValue>,
 
-    #[serde(alias = "ClassName", skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub class_name: Option<String>,
 
     #[serde(skip)]

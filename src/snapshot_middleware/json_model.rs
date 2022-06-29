@@ -44,6 +44,7 @@ pub fn snapshot_json_model(
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct JsonModel {
     #[serde(alias = "Name")]
     name: Option<String>,
@@ -53,6 +54,7 @@ struct JsonModel {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct JsonModelInstance {
     #[serde(alias = "Name")]
     name: String,
