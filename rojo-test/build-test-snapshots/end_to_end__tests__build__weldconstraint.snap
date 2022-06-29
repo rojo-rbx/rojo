@@ -1,6 +1,6 @@
 ---
 source: tests/tests/build.rs
-assertion_line: 98
+assertion_line: 99
 expression: contents
 ---
 <roblox version="4">

@@ -2,7 +2,8 @@ use std::borrow::Borrow;
 
 use anyhow::format_err;
 use rbx_dom_weak::types::{
-    CFrame, Color3, Content, Enum, Matrix3, Tags, Variant, VariantType, Vector2, Vector3,
+    Attributes, CFrame, Color3, Content, Enum, Matrix3, Tags, Variant, VariantType, Vector2,
+    Vector3,
 };
 use rbx_reflection::{DataType, PropertyDescriptor};
 use serde::{Deserialize, Serialize};
@@ -40,6 +41,7 @@ pub enum AmbiguousValue {
     Array3([f64; 3]),
     Array4([f64; 4]),
     Array12([f64; 12]),
+    Attributes(Attributes),
 }
 
 impl AmbiguousValue {
@@ -128,6 +130,8 @@ impl AmbiguousValue {
                     Ok(CFrame::new(pos, orientation).into())
                 }
 
+                (VariantType::Attributes, AmbiguousValue::Attributes(value)) => Ok(value.into()),
+
                 (_, unresolved) => Err(format_err!(
                     "Wrong type of value for property {}.{}. Expected {:?}, got {}",
                     class_name,
@@ -154,6 +158,7 @@ impl AmbiguousValue {
             AmbiguousValue::Array3(_) => "an array of three numbers",
             AmbiguousValue::Array4(_) => "an array of four numbers",
             AmbiguousValue::Array12(_) => "an array of twelve numbers",
+            AmbiguousValue::Attributes(_) => "an object containing attributes",
         }
     }
 }

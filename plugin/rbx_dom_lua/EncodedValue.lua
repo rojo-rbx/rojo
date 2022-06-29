@@ -23,8 +23,45 @@ end
 local ALL_AXES = {"X", "Y", "Z"}
 local ALL_FACES = {"Right", "Top", "Back", "Left", "Bottom", "Front"}
 
+local EncodedValue = {}
+
 local types
 types = {
+	Attributes = {
+		fromPod = function(pod)
+			local output = {}
+
+			for key, value in pairs(pod) do
+				local ok, result = EncodedValue.decode(value)
+
+				if ok then
+					output[key] = result
+				else
+					local warning = ("Could not decode attribute value of type %q: %s"):format(typeof(value), tostring(result))
+					warn(warning)
+				end
+			end
+
+			return output
+		end,
+		toPod = function(roblox)
+			local output = {}
+
+			for key, value in pairs(roblox) do
+				local ok, result = EncodedValue.encodeNaive(value)
+
+				if ok then
+					output[key] = result
+				else
+					local warning = ("Could not encode attribute value of type %q: %s"):format(typeof(value), tostring(result))
+					warn(warning)
+				end
+			end
+
+			return output
+		end,
+	},
+
 	Axes = {
 		fromPod = function(pod)
 			local axes = {}
@@ -433,8 +470,6 @@ types = {
 	},
 }
 
-local EncodedValue = {}
-
 function EncodedValue.decode(encodedValue)
 	local ty, value = next(encodedValue)
 
@@ -457,6 +492,21 @@ function EncodedValue.encode(rbxValue, propertyType)
 	return true, {
 		[propertyType] = typeImpl.toPod(rbxValue),
 	}
+end
+
+local propertyTypeRenames = {
+	number = "Float64",
+	boolean = "Bool",
+	string = "String",
+}
+
+function EncodedValue.encodeNaive(rbxValue)
+	local propertyType = typeof(rbxValue)
+	if propertyTypeRenames[propertyType] ~= nil then
+		propertyType = propertyTypeRenames[propertyType]
+	end
+
+	return EncodedValue.encode(rbxValue, propertyType)
 end
 
 return EncodedValue
