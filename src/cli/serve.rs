@@ -67,15 +67,17 @@ fn show_start_message(bind_address: IpAddr, port: u16, color: ColorChoice) -> io
     let writer = BufferWriter::stdout(color);
     let mut buffer = writer.buffer();
 
+    let address_string = if bind_address.is_loopback() {
+        "localhost".to_owned()
+    } else {
+        bind_address.to_string()
+    };
+
     writeln!(&mut buffer, "Rojo server listening:")?;
 
     write!(&mut buffer, "  Address: ")?;
     buffer.set_color(&green)?;
-    if bind_address.is_loopback() {
-        writeln!(&mut buffer, "localhost")?;
-    } else {
-        writeln!(&mut buffer, "{}", bind_address)?;
-    }
+    writeln!(&mut buffer, "{}", address_string)?;
 
     buffer.set_color(&ColorSpec::new())?;
     write!(&mut buffer, "  Port:    ")?;
@@ -88,7 +90,7 @@ fn show_start_message(bind_address: IpAddr, port: u16, color: ColorChoice) -> io
     write!(&mut buffer, "Visit ")?;
 
     buffer.set_color(&green)?;
-    write!(&mut buffer, "http://localhost:{}/", port)?;
+    write!(&mut buffer, "http://{}:{}/", address_string, port)?;
 
     buffer.set_color(&ColorSpec::new())?;
     writeln!(&mut buffer, " in your browser for more information.")?;
