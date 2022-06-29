@@ -202,12 +202,20 @@ function SettingsPage:render()
 				layoutOrder = 1,
 			}),
 
+			ShowNotifications = e(Setting, {
+				id = "showNotifications",
+				name = "Show Notifications",
+				description = "Popup notifications in viewport",
+				transparency = self.props.transparency,
+				layoutOrder = 2,
+			}),
+
 			TwoWaySync = e(Setting, {
 				id = "twoWaySync",
 				name = "Two-Way Sync",
 				description = "EXPERIMENTAL! Editing files in Studio will sync them into the filesystem",
 				transparency = self.props.transparency,
-				layoutOrder = 2,
+				layoutOrder = 3,
 			}),
 
 			Layout = e("UIListLayout", {

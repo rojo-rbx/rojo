@@ -16,6 +16,7 @@ local Theme = require(script.Theme)
 local PluginSettings = require(script.PluginSettings)
 
 local Page = require(script.Page)
+local Notifications = require(script.Notifications)
 local StudioPluginAction = require(script.Components.Studio.StudioPluginAction)
 local StudioToolbar = require(script.Components.Studio.StudioToolbar)
 local StudioToggleButton = require(script.Components.Studio.StudioToggleButton)
@@ -44,7 +45,34 @@ function App:init()
 	self:setState({
 		appStatus = AppStatus.NotConnected,
 		guiEnabled = false,
+		notifications = {},
 		toolbarIcon = Assets.Images.PluginButton,
+	})
+end
+
+function App:addNotification(text: string, timeout: number?)
+	if not self.props.settings:get("showNotifications") then
+		return
+	end
+
+	local notifications = table.clone(self.state.notifications)
+	table.insert(notifications, {
+		text = text,
+		timestamp = DateTime.now().UnixTimestampMillis,
+		timeout = timeout or 3,
+	})
+
+	self:setState({
+		notifications = notifications,
+	})
+end
+
+function App:closeNotification(index: number)
+	local notifications = table.clone(self.state.notifications)
+	table.remove(notifications, index)
+
+	self:setState({
+		notifications = notifications,
 	})
 end
 
@@ -81,6 +109,7 @@ function App:startSession()
 				appStatus = AppStatus.Connecting,
 				toolbarIcon = Assets.Images.PluginButton,
 			})
+			self:addNotification("Connecting to session...")
 		elseif status == ServeSession.Status.Connected then
 			local address = ("%s:%s"):format(host, port)
 			self:setState({
@@ -89,8 +118,7 @@ function App:startSession()
 				address = address,
 				toolbarIcon = Assets.Images.PluginButtonConnected,
 			})
-
-			Log.info("Connected to session '{}' at {}", details, address)
+			self:addNotification(string.format("Connected to session '%s' at %s.", details, address), 5)
 		elseif status == ServeSession.Status.Disconnected then
 			self.serveSession = nil
 
@@ -104,13 +132,13 @@ function App:startSession()
 					errorMessage = tostring(details),
 					toolbarIcon = Assets.Images.PluginButtonWarning,
 				})
+				self:addNotification(tostring(details), 10)
 			else
 				self:setState({
 					appStatus = AppStatus.NotConnected,
 					toolbarIcon = Assets.Images.PluginButton,
 				})
-
-				Log.info("Disconnected session")
+				self:addNotification("Disconnected from session.")
 			end
 		end
 	end)
@@ -234,6 +262,21 @@ function App:render()
 						BorderSizePixel = 0,
 					})
 				end),
+			}),
+
+			RojoNotifications = e("ScreenGui", {}, {
+				layout = e("UIListLayout", {
+					SortOrder = Enum.SortOrder.LayoutOrder,
+					HorizontalAlignment = Enum.HorizontalAlignment.Right,
+					VerticalAlignment = Enum.VerticalAlignment.Bottom,
+					Padding = UDim.new(0, 5),
+				}),
+				notifs = e(Notifications, {
+					notifications = self.state.notifications,
+					onClose = function(index)
+						self:closeNotification(index)
+					end,
+				}),
 			}),
 
 			toggleAction = e(StudioPluginAction, {

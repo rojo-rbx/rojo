@@ -45,6 +45,9 @@ local Assets = {
 			[500] = "rbxassetid://2609138523"
 		},
 	},
+	Sounds = {
+		Notification = "rbxassetid://9716079936",
+	},
 	StartSession = "",
 	SessionActive = "",
 	Configure = "",
