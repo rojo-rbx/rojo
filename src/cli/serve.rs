@@ -90,10 +90,7 @@ fn show_start_message(bind_address: IpAddr, port: u16, color: ColorChoice) -> io
     write!(&mut buffer, "Visit ")?;
 
     buffer.set_color(&green)?;
-    write!(&mut buffer, "http://{}:", address_string)?;
-
-    buffer.set_color(&green)?;
-    write!(&mut buffer, "{}/", port)?;
+    write!(&mut buffer, "http://{}:{}/", address_string, port)?;
 
     buffer.set_color(&ColorSpec::new())?;
     writeln!(&mut buffer, " in your browser for more information.")?;
