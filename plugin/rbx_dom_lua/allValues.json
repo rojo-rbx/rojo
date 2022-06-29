@@ -1,4 +1,73 @@
 {
+  "Attributes": {
+    "value": {
+      "Attributes": {
+        "TestBool": {
+          "Bool": true
+        },
+        "TestBrickColor": {
+          "BrickColor": 24
+        },
+        "TestColor3": {
+          "Color3": [
+            1.0,
+            0.5,
+            0.0
+          ]
+        },
+        "TestNumber": {
+          "Float64": 1337.0
+        },
+        "TestRect": {
+          "Rect": [
+            [
+              1.0,
+              2.0
+            ],
+            [
+              3.0,
+              4.0
+            ]
+          ]
+        },
+        "TestString": {
+          "String": "Test"
+        },
+        "TestUDim": {
+          "UDim": [
+            1.0,
+            2
+          ]
+        },
+        "TestUDim2": {
+          "UDim2": [
+            [
+              1.0,
+              2
+            ],
+            [
+              3.0,
+              4
+            ]
+          ]
+        },
+        "TestVector2": {
+          "Vector2": [
+            1.0,
+            2.0
+          ]
+        },
+        "TestVector3": {
+          "Vector3": [
+            1.0,
+            2.0,
+            3.0
+          ]
+        }
+      }
+    },
+    "ty": "Attributes"
+  },
   "Axes": {
     "value": {
       "Axes": [

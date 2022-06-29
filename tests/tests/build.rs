@@ -21,6 +21,7 @@ macro_rules! gen_build_tests {
 }
 
 gen_build_tests! {
+    attributes,
     client_in_folder,
     client_init,
     csv_bug_145,

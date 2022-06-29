@@ -82,8 +82,11 @@ pub fn snapshot_dir_no_meta(
         // middleware. Should we figure out a way for that function to add
         // relevant paths to this middleware?
         path.join("init.lua"),
+        path.join("init.luau"),
         path.join("init.server.lua"),
+        path.join("init.server.luau"),
         path.join("init.client.lua"),
+        path.join("init.client.luau"),
     ];
 
     let snapshot = InstanceSnapshot::new()

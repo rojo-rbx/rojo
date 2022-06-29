@@ -1,0 +1,36 @@
+{
+  "name": "attributes",
+  "tree": {
+    "$className": "Folder",
+
+    "Explicit": {
+      "$className": "Folder",
+      "$properties": {
+        "Attributes": {
+          "Attributes": {
+            "Hello": {
+              "String": "World"
+            },
+            "Vector": {
+              "Vector3": [1, 2, 3]
+            }
+          }
+        }
+      }
+    },
+
+    "ImplicitAttributes": {
+      "$className": "Folder",
+      "$properties": {
+        "Attributes": {
+          "Hey": {
+            "String": "Grandma"
+          },
+          "Vector": {
+            "Vector3": [4, 5, 6]
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,14 +1,13 @@
 ---
 source: tests/tests/build.rs
+assertion_line: 99
 expression: contents
-
 ---
 <roblox version="4">
   <Item class="Folder" referent="0">
     <Properties>
       <string name="Name">weldconstraint</string>
-      <BinaryString name="AttributesSerialize">
-      </BinaryString>
+      <BinaryString name="AttributesSerialize"></BinaryString>
       <int64 name="SourceAssetId">-1</int64>
       <BinaryString name="Tags"></BinaryString>
     </Properties>
@@ -16,8 +15,7 @@ expression: contents
       <Properties>
         <string name="Name">A</string>
         <bool name="Anchored">false</bool>
-        <BinaryString name="AttributesSerialize">
-        </BinaryString>
+        <BinaryString name="AttributesSerialize"></BinaryString>
         <float name="BackParamA">-0.5</float>
         <float name="BackParamB">0.5</float>
         <token name="BackSurface">0</token>
@@ -108,8 +106,7 @@ expression: contents
       <Item class="WeldConstraint" referent="2">
         <Properties>
           <string name="Name">WeldConstraint</string>
-          <BinaryString name="AttributesSerialize">
-          </BinaryString>
+          <BinaryString name="AttributesSerialize"></BinaryString>
           <CoordinateFrame name="CFrame0">
             <X>7</X>
             <Y>0.000001013279</Y>
@@ -136,8 +133,7 @@ expression: contents
       <Properties>
         <string name="Name">B</string>
         <bool name="Anchored">false</bool>
-        <BinaryString name="AttributesSerialize">
-        </BinaryString>
+        <BinaryString name="AttributesSerialize"></BinaryString>
         <float name="BackParamA">-0.5</float>
         <float name="BackParamB">0.5</float>
         <token name="BackSurface">0</token>

@@ -1,12 +1,24 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Added support for `.luau` files. ([#552])
+* Added support for live syncing Attributes and Tags. ([#553])
+* Added notification popups in the Roblox Studio plugin. ([#540])
+* Fixed `init.meta.json` when used with `init.lua` and related files. ([#549])
+* Fixed incorrect output when serving from a non-default address or port ([#556])
+* Fixed Linux binaries not running on systems with older glibc. ([#561])
 * Switched from structopt to clap for command line argument parsing.
 * Significantly improved performance of building and serving. ([#548])
-* Fixed `init.meta.json` when used with `init.lua` and related files. ([#549])
+* Increased minimum supported Rust version to 1.57.0. ([#564])
 
+[#540]: https://github.com/rojo-rbx/rojo/pull/540
 [#548]: https://github.com/rojo-rbx/rojo/pull/548
 [#549]: https://github.com/rojo-rbx/rojo/pull/549
+[#552]: https://github.com/rojo-rbx/rojo/pull/552
+[#553]: https://github.com/rojo-rbx/rojo/pull/553
+[#556]: https://github.com/rojo-rbx/rojo/pull/556
+[#561]: https://github.com/rojo-rbx/rojo/pull/561
+[#564]: https://github.com/rojo-rbx/rojo/pull/564
 
 ## [7.1.1] - May 26, 2022
 * Fixed sourcemap command not stripping paths correctly ([#544])

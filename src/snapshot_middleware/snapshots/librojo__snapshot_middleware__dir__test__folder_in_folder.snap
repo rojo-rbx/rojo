@@ -11,8 +11,11 @@ metadata:
     - /foo
     - /foo/init.meta.json
     - /foo/init.lua
+    - /foo/init.luau
     - /foo/init.server.lua
+    - /foo/init.server.luau
     - /foo/init.client.lua
+    - /foo/init.client.luau
   context: {}
 name: foo
 class_name: Folder
@@ -27,10 +30,14 @@ children:
         - /foo/Child
         - /foo/Child/init.meta.json
         - /foo/Child/init.lua
+        - /foo/Child/init.luau
         - /foo/Child/init.server.lua
+        - /foo/Child/init.server.luau
         - /foo/Child/init.client.lua
+        - /foo/Child/init.client.luau
       context: {}
     name: Child
     class_name: Folder
     properties: {}
     children: []
+

@@ -1,0 +1,16 @@
+{
+  "name": "attributes",
+  "tree": {
+    "$className": "DataModel",
+    "Workspace": {
+      "Folder": {
+        "$className": "Folder",
+        "$properties": {
+          "Attributes": {
+            "Hello": { "Vector3": [1, 2, 3] }
+          }
+        }
+      }
+    }
+  }
+}
