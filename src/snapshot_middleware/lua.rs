@@ -27,6 +27,12 @@ pub fn snapshot_lua(
         ("LocalScript", name)
     } else if let Some(name) = match_trailing(&file_name, ".lua") {
         ("ModuleScript", name)
+    } else if let Some(name) = match_trailing(&file_name, ".server.luau") {
+        ("Script", name)
+    } else if let Some(name) = match_trailing(&file_name, ".client.luau") {
+        ("LocalScript", name)
+    } else if let Some(name) = match_trailing(&file_name, ".luau") {
+        ("ModuleScript", name)
     } else {
         return Ok(None);
     };
