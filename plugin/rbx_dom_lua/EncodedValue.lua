@@ -1,16 +1,4 @@
-local EncodedValue = {}
-
-local ALL_AXES = {"X", "Y", "Z"}
-local ALL_FACES = {"Right", "Top", "Back", "Left", "Bottom", "Front"}
-
-local PRIMITIVE_TO_VARIANT = {
-	boolean = "Bool",
-	string = "String",
-	number = "Float64",
-}
-
 local base64 = require(script.Parent.base64)
-local types
 
 local function identity(...)
 	return ...
@@ -23,83 +11,57 @@ local function unpackDecoder(f)
 end
 
 local function serializeFloat(value)
-	if value == value and math.abs(value) ~= 1/0 then
-		return value
-	else
-		return tostring(value)
-	end
-end
-
-function EncodedValue.decode(encodedValue: any): (boolean, any)
-	local ty, value = next(encodedValue)
-	local typeImpl = types[ty]
-	
-	if typeImpl == nil then
-		return false, "Couldn't decode value " .. tostring(ty)
+	-- TODO: Figure out a better way to serialize infinity and NaN, neither of
+	-- which fit into JSON.
+	if value == math.huge or value == -math.huge then
+		return 999999999 * math.sign(value)
 	end
 
-	return pcall(typeImpl.fromPod, value)
+	return value
 end
 
-function EncodedValue.encode(rbxValue: any, propertyType: string): (boolean, any)
-	assert(propertyType ~= nil, "Property type descriptor is required")
-	local typeImpl = types[propertyType]
+local ALL_AXES = {"X", "Y", "Z"}
+local ALL_FACES = {"Right", "Top", "Back", "Left", "Bottom", "Front"}
 
-	if typeImpl == nil then
-		return false, ("Missing encoder for property type %q"):format(propertyType)
-	end
+local EncodedValue = {}
 
-	return pcall(function ()
-		return {
-			[propertyType] = typeImpl.toPod(rbxValue),
-		}
-	end)
-end
-
+local types
 types = {
 	Attributes = {
 		fromPod = function(pod)
-			local attributes = {}
+			local output = {}
 
-			for name, encoded in pairs(pod) do
-				local ok, result = EncodedValue.decode(encoded)
+			for key, value in pairs(pod) do
+				local ok, result = EncodedValue.decode(value)
 
 				if ok then
-					attributes[name] = result
-					continue
+					output[key] = result
+				else
+					local warning = ("Could not decode attribute value of type %q: %s"):format(typeof(value), tostring(result))
+					warn(warning)
 				end
-
-				local typeName = next(encoded)
-				warn(("Unable to decode attribute %q (Type: %s, Error: %s)"):format(name, typeName, result))
 			end
 
-			return attributes
+			return output
 		end,
-
 		toPod = function(roblox)
-			local attributes = {}
+			local output = {}
 
-			for name, value in pairs(roblox) do
-				local typeName = typeof(value)
-
-				if PRIMITIVE_TO_VARIANT[typeName] then
-					typeName = PRIMITIVE_TO_VARIANT[typeName]
-				end
-
-				local ok, result = EncodedValue.encode(value, typeName)
+			for key, value in pairs(roblox) do
+				local ok, result = EncodedValue.encodeNaive(value)
 
 				if ok then
-					attributes[name] = result
-					continue
+					output[key] = result
+				else
+					local warning = ("Could not encode attribute value of type %q: %s"):format(typeof(value), tostring(result))
+					warn(warning)
 				end
-
-				warn(("Unable to encode attribute %q (Type: %s, Error: %s)"):format(name, typeName, result))
 			end
 
-			return attributes
+			return output
 		end,
 	},
-	
+
 	Axes = {
 		fromPod = function(pod)
 			local axes = {}
@@ -267,12 +229,12 @@ types = {
 	},
 
 	Float32 = {
-		fromPod = tonumber,
+		fromPod = identity,
 		toPod = serializeFloat,
 	},
 
 	Float64 = {
-		fromPod = tonumber,
+		fromPod = identity,
 		toPod = serializeFloat,
 	},
 
@@ -507,5 +469,44 @@ types = {
 		end,
 	},
 }
+
+function EncodedValue.decode(encodedValue)
+	local ty, value = next(encodedValue)
+
+	local typeImpl = types[ty]
+	if typeImpl == nil then
+		return false, "Couldn't decode value " .. tostring(ty)
+	end
+
+	return true, typeImpl.fromPod(value)
+end
+
+function EncodedValue.encode(rbxValue, propertyType)
+	assert(propertyType ~= nil, "Property type descriptor is required")
+
+	local typeImpl = types[propertyType]
+	if typeImpl == nil then
+		return false, ("Missing encoder for property type %q"):format(propertyType)
+	end
+
+	return true, {
+		[propertyType] = typeImpl.toPod(rbxValue),
+	}
+end
+
+local propertyTypeRenames = {
+	number = "Float64",
+	boolean = "Bool",
+	string = "String",
+}
+
+function EncodedValue.encodeNaive(rbxValue)
+	local propertyType = typeof(rbxValue)
+	if propertyTypeRenames[propertyType] ~= nil then
+		propertyType = propertyTypeRenames[propertyType]
+	end
+
+	return EncodedValue.encode(rbxValue, propertyType)
+end
 
 return EncodedValue

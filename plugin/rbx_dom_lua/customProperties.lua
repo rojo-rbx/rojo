@@ -1,20 +1,38 @@
 local CollectionService = game:GetService("CollectionService")
-local setAttribute = require(script.Parent.setAttribute)
 
 -- Defines how to read and write properties that aren't directly scriptable.
+--
 -- The reflection database refers to these as having scriptability = "Custom"
-
 return {
 	Instance = {
+		Attributes = {
+			read = function(instance)
+				return true, instance:GetAttributes()
+			end,
+			write = function(instance, _, value)
+				local existing = instance:GetAttributes()
+
+				for key, attr in pairs(value) do
+					instance:SetAttribute(key, attr)
+				end
+
+				for key in pairs(existing) do
+					if value[key] == nil then
+						instance:SetAttribute(key, nil)
+					end
+				end
+
+				return true
+			end,
+		},
 		Tags = {
 			read = function(instance)
 				return true, CollectionService:GetTags(instance)
 			end,
-
 			write = function(instance, _, value)
 				local existingTags = CollectionService:GetTags(instance)
-				local unseenTags = {}
 
+				local unseenTags = {}
 				for _, tag in ipairs(existingTags) do
 					unseenTags[tag] = true
 				end
@@ -31,46 +49,13 @@ return {
 				return true
 			end,
 		},
-
-		Attributes = {
-			read = function(instance)
-				return true, instance:GetAttributes()
-			end,
-
-			write = function (instance, _, attributes)
-				local existingAttributes = instance:GetAttributes()
-				local unseenAttributes = {}
-
-				for name in pairs(existingAttributes) do
-					unseenAttributes[name] = true
-				end
-
-				for name, value in pairs(attributes) do
-					local ok, err = setAttribute(instance, name, value)
-
-					if ok then
-						unseenAttributes[name] = nil
-					else
-						return false, err
-					end
-				end
-
-				for name in pairs(unseenAttributes) do
-					instance:SetAttribute(name, nil)
-				end
-
-				return true
-			end,
-		}
 	},
-	
 	LocalizationTable = {
 		Contents = {
-			read = function(instance)
+			read = function(instance, key)
 				return true, instance:GetContents()
 			end,
-
-			write = function(instance, _, value)
+			write = function(instance, key, value)
 				instance:SetContents(value)
 				return true
 			end,

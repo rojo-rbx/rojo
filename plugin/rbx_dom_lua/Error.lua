@@ -2,12 +2,10 @@ local Error = {}
 Error.__index = Error
 
 Error.Kind = {
-	Roblox = "Roblox",
 	UnknownProperty = "UnknownProperty",
 	PropertyNotReadable = "PropertyNotReadable",
 	PropertyNotWritable = "PropertyNotWritable",
-	InvalidAttributeName = "InvalidAttributeName",
-	UnsupportedAttributeValue = "UnsupportedAttributeValue",
+	Roblox = "Roblox",
 }
 
 setmetatable(Error.Kind, {

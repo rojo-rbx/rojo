@@ -10,13 +10,13 @@
         },
         "TestColor3": {
           "Color3": [
-            0.1,
-            0.2,
-            0.3
+            1.0,
+            0.5,
+            0.0
           ]
         },
         "TestNumber": {
-          "Float32": 1337.9001
+          "Float64": 1337.0
         },
         "TestRect": {
           "Rect": [

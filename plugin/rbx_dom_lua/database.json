@@ -1,9 +1,9 @@
 {
   "Version": [
     0,
-    523,
+    530,
     0,
-    5230387
+    5300290
   ],
   "Classes": {
     "ABTestService": {
@@ -66,7 +66,7 @@
             ]
           }
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -183,7 +183,7 @@
             ]
           }
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -200,7 +200,7 @@
       "Superclass": "Model",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "LevelOfDetail": {
@@ -384,7 +384,7 @@
         "AlignType": {
           "Enum": 0
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "CFrame": {
@@ -579,7 +579,7 @@
         "ApplyAtCenterOfMass": {
           "Bool": false
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Color": {
@@ -660,7 +660,7 @@
         "ApiKey": {
           "String": ""
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -737,7 +737,7 @@
             0.0
           ]
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Color": {
@@ -789,7 +789,7 @@
         "AnimationId": {
           "Content": ""
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -853,7 +853,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -873,7 +873,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -901,7 +901,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -911,6 +911,84 @@
           "BinaryString": ""
         }
       }
+    },
+    "AnimationStreamTrack": {
+      "Name": "AnimationStreamTrack",
+      "Tags": [
+        "NotCreatable",
+        "NotReplicated"
+      ],
+      "Superclass": "Instance",
+      "Properties": {
+        "IsPlaying": {
+          "Name": "IsPlaying",
+          "Scriptability": "Read",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [
+            "Hidden",
+            "NotReplicated",
+            "ReadOnly"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
+            }
+          }
+        },
+        "Priority": {
+          "Name": "Priority",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Enum": "AnimationPriority"
+          },
+          "Tags": [
+            "Hidden",
+            "NotReplicated"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
+            }
+          }
+        },
+        "WeightCurrent": {
+          "Name": "WeightCurrent",
+          "Scriptability": "Read",
+          "DataType": {
+            "Value": "Float32"
+          },
+          "Tags": [
+            "Hidden",
+            "NotReplicated",
+            "ReadOnly"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
+            }
+          }
+        },
+        "WeightTarget": {
+          "Name": "WeightTarget",
+          "Scriptability": "Read",
+          "DataType": {
+            "Value": "Float32"
+          },
+          "Tags": [
+            "Hidden",
+            "NotReplicated",
+            "ReadOnly"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
+            }
+          }
+        }
+      },
+      "DefaultProperties": {}
     },
     "AnimationTrack": {
       "Name": "AnimationTrack",
@@ -1065,7 +1143,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -1118,7 +1196,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Axes": {
@@ -1202,7 +1280,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -1298,7 +1376,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Color": {
@@ -1538,7 +1616,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "CFrame": {
@@ -1606,7 +1684,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -1761,7 +1839,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Color": {
@@ -1805,6 +1883,7 @@
     "BasePart": {
       "Name": "BasePart",
       "Tags": [
+        "NotBrowsable",
         "NotCreatable"
       ],
       "Superclass": "PVInstance",
@@ -3190,7 +3269,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Brightness": {
@@ -3288,6 +3367,7 @@
       "Name": "BevelMesh",
       "Tags": [
         "Deprecated",
+        "NotBrowsable",
         "NotCreatable"
       ],
       "Superclass": "DataModelMesh",
@@ -3544,7 +3624,7 @@
         "AlwaysOnTop": {
           "Bool": false
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "AutoLocalize": {
@@ -3655,7 +3735,7 @@
       "Superclass": "ValueBase",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -3672,7 +3752,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -3689,7 +3769,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -3702,13 +3782,11 @@
     },
     "BlockMesh": {
       "Name": "BlockMesh",
-      "Tags": [
-        "Deprecated"
-      ],
+      "Tags": [],
       "Superclass": "BevelMesh",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Offset": {
@@ -3786,7 +3864,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Enabled": {
@@ -3829,7 +3907,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Enabled": {
@@ -3933,7 +4011,7 @@
             0.0
           ]
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "MaxTorque": {
@@ -4117,7 +4195,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "HeadColor3": {
@@ -4208,7 +4286,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Force": {
@@ -4319,7 +4397,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "CFrame": {
@@ -4472,7 +4550,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "D": {
@@ -4570,7 +4648,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Force": {
@@ -4675,7 +4753,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "MaxForce": {
@@ -4774,7 +4852,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "CFrame": {
@@ -4834,7 +4912,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -4874,7 +4952,7 @@
         "AlwaysOnTop": {
           "Bool": false
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "CFrame": {
@@ -5131,7 +5209,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -5187,7 +5265,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -5232,7 +5310,7 @@
       "Superclass": "FlyweightService",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -5473,7 +5551,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "CFrame": {
@@ -5553,11 +5631,13 @@
     },
     "CanvasGroup": {
       "Name": "CanvasGroup",
-      "Tags": [],
+      "Tags": [
+        "NotBrowsable"
+      ],
       "Superclass": "GuiObject",
       "Properties": {
-        "GroupColor": {
-          "Name": "GroupColor",
+        "GroupColor3": {
+          "Name": "GroupColor3",
           "Scriptability": "ReadWrite",
           "DataType": {
             "Value": "Color3"
@@ -5593,7 +5673,7 @@
             0.0
           ]
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "AutoLocalize": {
@@ -5631,7 +5711,7 @@
         "Draggable": {
           "Bool": false
         },
-        "GroupColor": {
+        "GroupColor3": {
           "Color3": [
             1.0,
             1.0,
@@ -5676,6 +5756,9 @@
         },
         "SelectionGroup": {
           "Bool": false
+        },
+        "SelectionOrder": {
+          "Int32": 0
         },
         "Size": {
           "UDim2": [
@@ -5748,7 +5831,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Channel": {
@@ -5836,7 +5919,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "BaseTextureId": {
@@ -5896,7 +5979,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "BubbleChatEnabled": {
@@ -5916,6 +5999,7 @@
     "ChatInputBarConfiguration": {
       "Name": "ChatInputBarConfiguration",
       "Tags": [
+        "NotBrowsable",
         "NotCreatable"
       ],
       "Superclass": "TextChatConfigurations",
@@ -5948,7 +6032,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Enabled": {
@@ -5965,6 +6049,7 @@
     "ChatWindowConfiguration": {
       "Name": "ChatWindowConfiguration",
       "Tags": [
+        "NotBrowsable",
         "NotCreatable"
       ],
       "Superclass": "TextChatConfigurations",
@@ -5984,7 +6069,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Enabled": {
@@ -6044,7 +6129,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Depth": {
@@ -6103,7 +6188,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "CursorIcon": {
@@ -6212,7 +6297,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Color": {
@@ -6259,7 +6344,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -6290,7 +6375,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -6367,7 +6452,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Brightness": {
@@ -6646,7 +6731,7 @@
         "Attack": {
           "Float32": 0.1
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Enabled": {
@@ -6714,7 +6799,7 @@
         "AlwaysOnTop": {
           "Bool": false
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "CFrame": {
@@ -6786,7 +6871,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -6951,7 +7036,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -6991,7 +7076,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -7084,7 +7169,7 @@
         "Anchored": {
           "Bool": false
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "BackParamA": {
@@ -7300,7 +7385,7 @@
       "Superclass": "AnimationClip",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Loop": {
@@ -7334,7 +7419,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -7367,7 +7452,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -7446,7 +7531,7 @@
         "Angle": {
           "Float32": 360.0
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "CFrame": {
@@ -7523,7 +7608,7 @@
       "Superclass": "BevelMesh",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Offset": {
@@ -7797,7 +7882,7 @@
         "AngularVelocity": {
           "Float32": 0.0
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Color": {
@@ -8154,6 +8239,7 @@
     "DataModelMesh": {
       "Name": "DataModelMesh",
       "Tags": [
+        "NotBrowsable",
         "NotCreatable"
       ],
       "Superclass": "Instance",
@@ -8573,7 +8659,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "AutomaticRetry": {
@@ -8634,7 +8720,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "MaxItems": {
@@ -8651,6 +8737,7 @@
     "DebugSettings": {
       "Name": "DebugSettings",
       "Tags": [
+        "NotBrowsable",
         "NotCreatable",
         "Settings"
       ],
@@ -9363,7 +9450,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Color3": {
@@ -9452,7 +9539,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Enabled": {
@@ -9615,7 +9702,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "BehaviorType": {
@@ -9716,7 +9803,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "GoodbyeChoiceActive": {
@@ -9759,7 +9846,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Enabled": {
@@ -9872,7 +9959,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "MaxValue": {
@@ -10256,7 +10343,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Delay": {
@@ -10341,7 +10428,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Enabled": {
@@ -10387,7 +10474,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "RotationOrder": {
@@ -10509,7 +10596,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "BlastPressure": {
@@ -10545,9 +10632,71 @@
         }
       }
     },
+    "FaceAnimatorService": {
+      "Name": "FaceAnimatorService",
+      "Tags": [
+        "NotCreatable",
+        "NotReplicated",
+        "Service"
+      ],
+      "Superclass": "Instance",
+      "Properties": {
+        "AudioAnimationEnabled": {
+          "Name": "AudioAnimationEnabled",
+          "Scriptability": "None",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [
+            "Hidden",
+            "NotReplicated"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
+            }
+          }
+        },
+        "FlipHeadOrientation": {
+          "Name": "FlipHeadOrientation",
+          "Scriptability": "None",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [
+            "Hidden",
+            "NotReplicated"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
+            }
+          }
+        },
+        "VideoAnimationEnabled": {
+          "Name": "VideoAnimationEnabled",
+          "Scriptability": "None",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [
+            "Hidden",
+            "NotReplicated"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
+            }
+          }
+        }
+      },
+      "DefaultProperties": {}
+    },
     "FaceControls": {
       "Name": "FaceControls",
-      "Tags": [],
+      "Tags": [
+        "NotBrowsable"
+      ],
       "Superclass": "Instance",
       "Properties": {
         "ChinRaiser": {
@@ -11302,7 +11451,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -11316,6 +11465,7 @@
     "FaceInstance": {
       "Name": "FaceInstance",
       "Tags": [
+        "NotBrowsable",
         "NotCreatable"
       ],
       "Superclass": "Instance",
@@ -11335,6 +11485,42 @@
         }
       },
       "DefaultProperties": {}
+    },
+    "FacialAnimationStreamingService": {
+      "Name": "FacialAnimationStreamingService",
+      "Tags": [
+        "NotCreatable",
+        "Service"
+      ],
+      "Superclass": "Instance",
+      "Properties": {
+        "Enabled": {
+          "Name": "Enabled",
+          "Scriptability": "None",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [
+            "Hidden"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
+            }
+          }
+        }
+      },
+      "DefaultProperties": {
+        "Attributes": {
+          "BinaryString": ""
+        },
+        "SourceAssetId": {
+          "Int64": -1
+        },
+        "Tags": {
+          "BinaryString": ""
+        }
+      }
     },
     "Feature": {
       "Name": "Feature",
@@ -11459,7 +11645,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "MeshId": {
@@ -11632,7 +11818,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Color": {
@@ -11691,7 +11877,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "CanBeDropped": {
@@ -11774,7 +11960,7 @@
         "Anchored": {
           "Bool": false
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "BackParamA": {
@@ -11985,7 +12171,6 @@
     "FlagStandService": {
       "Name": "FlagStandService",
       "Tags": [
-        "Deprecated",
         "NotCreatable",
         "Service"
       ],
@@ -12039,7 +12224,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Depth": {
@@ -12088,7 +12273,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -12212,7 +12397,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Color3": {
@@ -12265,7 +12450,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -12282,7 +12467,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -12313,7 +12498,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -12414,7 +12599,7 @@
             0.0
           ]
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "AutoLocalize": {
@@ -12488,6 +12673,9 @@
         "SelectionGroup": {
           "Bool": false
         },
+        "SelectionOrder": {
+          "Int32": 0
+        },
         "Size": {
           "UDim2": [
             [
@@ -12542,7 +12730,9 @@
     },
     "FunctionalTest": {
       "Name": "FunctionalTest",
-      "Tags": [],
+      "Tags": [
+        "Deprecated"
+      ],
       "Superclass": "Instance",
       "Properties": {
         "Description": {
@@ -12560,7 +12750,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Description": {
@@ -12583,7 +12773,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -12597,37 +12787,12 @@
     "GameSettings": {
       "Name": "GameSettings",
       "Tags": [
+        "NotBrowsable",
         "NotCreatable",
         "Settings"
       ],
       "Superclass": "Instance",
       "Properties": {
-        "AdditionalCoreIncludeDirs": {
-          "Name": "AdditionalCoreIncludeDirs",
-          "Scriptability": "Read",
-          "DataType": {
-            "Value": "String"
-          },
-          "Tags": [],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
-        "OverrideStarterScript": {
-          "Name": "OverrideStarterScript",
-          "Scriptability": "Read",
-          "DataType": {
-            "Value": "String"
-          },
-          "Tags": [],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
         "VideoCaptureEnabled": {
           "Name": "VideoCaptureEnabled",
           "Scriptability": "ReadWrite",
@@ -12702,7 +12867,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -12712,6 +12877,55 @@
           "BinaryString": ""
         }
       }
+    },
+    "GetTextBoundsParams": {
+      "Name": "GetTextBoundsParams",
+      "Tags": [
+        "NotReplicated"
+      ],
+      "Superclass": "Instance",
+      "Properties": {
+        "Size": {
+          "Name": "Size",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Float32"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "Text": {
+          "Name": "Text",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "String"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "Width": {
+          "Name": "Width",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Float32"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        }
+      },
+      "DefaultProperties": {}
     },
     "GlobalDataStore": {
       "Name": "GlobalDataStore",
@@ -12726,6 +12940,7 @@
     "GlobalSettings": {
       "Name": "GlobalSettings",
       "Tags": [
+        "NotBrowsable",
         "NotCreatable"
       ],
       "Superclass": "GenericSettings",
@@ -12793,7 +13008,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "C0": {
@@ -12920,6 +13135,7 @@
     "GuiBase2d": {
       "Name": "GuiBase2d",
       "Tags": [
+        "NotBrowsable",
         "NotCreatable"
       ],
       "Superclass": "GuiBase",
@@ -13220,6 +13436,7 @@
     "GuiButton": {
       "Name": "GuiButton",
       "Tags": [
+        "NotBrowsable",
         "NotCreatable"
       ],
       "Superclass": "GuiObject",
@@ -13296,7 +13513,7 @@
       "Superclass": "ScreenGui",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "AutoLocalize": {
@@ -13343,6 +13560,7 @@
     "GuiObject": {
       "Name": "GuiObject",
       "Tags": [
+        "NotBrowsable",
         "NotCreatable"
       ],
       "Superclass": "GuiBase2d",
@@ -13622,6 +13840,19 @@
           "Scriptability": "ReadWrite",
           "DataType": {
             "Value": "Ref"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "SelectionOrder": {
+          "Name": "SelectionOrder",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Int32"
           },
           "Tags": [],
           "Kind": {
@@ -14005,7 +14236,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Color3": {
@@ -14096,7 +14327,7 @@
             ]
           }
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -14123,7 +14354,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -14232,7 +14463,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "DepthMode": {
@@ -14473,7 +14704,7 @@
         "AngularVelocity": {
           "Float32": 0.0
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Color": {
@@ -14522,11 +14753,13 @@
     },
     "Hint": {
       "Name": "Hint",
-      "Tags": [],
+      "Tags": [
+        "Deprecated"
+      ],
       "Superclass": "Message",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -14542,11 +14775,13 @@
     },
     "Hole": {
       "Name": "Hole",
-      "Tags": [],
+      "Tags": [
+        "Deprecated"
+      ],
       "Superclass": "Feature",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "FaceId": {
@@ -14572,6 +14807,7 @@
     "Hopper": {
       "Name": "Hopper",
       "Tags": [
+        "Deprecated",
         "NotCreatable",
         "Service"
       ],
@@ -14617,7 +14853,7 @@
         "Active": {
           "Bool": false
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "BinType": {
@@ -14676,7 +14912,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "HttpEnabled": {
@@ -15198,7 +15434,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "AutoJumpEnabled": {
@@ -15275,7 +15511,7 @@
       "Superclass": "Controller",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -15807,7 +16043,7 @@
         "AccessoryBlob": {
           "String": "[]"
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "BackAccessory": {
@@ -16179,7 +16415,7 @@
             0.0
           ]
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "AutoButtonColor": {
@@ -16299,6 +16535,9 @@
         "SelectionGroup": {
           "Bool": false
         },
+        "SelectionOrder": {
+          "Int32": 0
+        },
         "Size": {
           "UDim2": [
             [
@@ -16397,7 +16636,7 @@
         "AlwaysOnTop": {
           "Bool": false
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "CFrame": {
@@ -16645,7 +16884,7 @@
             0.0
           ]
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "AutoLocalize": {
@@ -16749,6 +16988,9 @@
         },
         "SelectionGroup": {
           "Bool": false
+        },
+        "SelectionOrder": {
+          "Int32": 0
         },
         "Size": {
           "UDim2": [
@@ -17041,6 +17283,64 @@
             }
           }
         },
+        "CageManifold": {
+          "Name": "CageManifold",
+          "Scriptability": "Read",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [
+            "NotReplicated",
+            "ReadOnly"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
+            }
+          }
+        },
+        "CageManifoldPreview": {
+          "Name": "CageManifoldPreview",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "CageNoOverlappingVertices": {
+          "Name": "CageNoOverlappingVertices",
+          "Scriptability": "Read",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [
+            "NotReplicated",
+            "ReadOnly"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
+            }
+          }
+        },
+        "CageNoOverlappingVerticesPreview": {
+          "Name": "CageNoOverlappingVerticesPreview",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
         "Dimensions": {
           "Name": "Dimensions",
           "Scriptability": "Read",
@@ -17165,6 +17465,19 @@
             }
           }
         },
+        "InsertWithScenePosition": {
+          "Name": "InsertWithScenePosition",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
         "InvertNegativeFaces": {
           "Name": "InvertNegativeFaces",
           "Scriptability": "ReadWrite",
@@ -17233,6 +17546,19 @@
             }
           }
         },
+        "UseSceneOriginAsPivot": {
+          "Name": "UseSceneOriginAsPivot",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
         "WorldForward": {
           "Name": "WorldForward",
           "Scriptability": "ReadWrite",
@@ -17256,33 +17582,6 @@
           "Kind": {
             "Canonical": {
               "Serialization": "Serializes"
-            }
-          }
-        }
-      },
-      "DefaultProperties": {}
-    },
-    "ImporterTextureSettings": {
-      "Name": "ImporterTextureSettings",
-      "Tags": [
-        "NotCreatable",
-        "NotReplicated"
-      ],
-      "Superclass": "ImporterBaseSettings",
-      "Properties": {
-        "FilePath": {
-          "Name": "FilePath",
-          "Scriptability": "Read",
-          "DataType": {
-            "Value": "String"
-          },
-          "Tags": [
-            "NotReplicated",
-            "ReadOnly"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "DoesNotSerialize"
             }
           }
         }
@@ -17406,6 +17705,7 @@
           },
           "Tags": [
             "Deprecated",
+            "NotBrowsable",
             "NotReplicated"
           ],
           "Kind": {
@@ -17422,7 +17722,7 @@
         "AllowInsertFreeModels": {
           "Bool": false
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -17436,6 +17736,7 @@
     "Instance": {
       "Name": "Instance",
       "Tags": [
+        "NotBrowsable",
         "NotCreatable"
       ],
       "Superclass": null,
@@ -17459,7 +17760,7 @@
           "Name": "Attributes",
           "Scriptability": "Custom",
           "DataType": {
-            "Value": "BinaryString"
+            "Value": "Attributes"
           },
           "Tags": [],
           "Kind": {
@@ -17478,8 +17779,8 @@
           },
           "Tags": [],
           "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
+            "Alias": {
+              "AliasFor": "Attributes"
             }
           }
         },
@@ -17538,23 +17839,6 @@
           },
           "Tags": [
             "NotReplicated"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "DoesNotSerialize"
-            }
-          }
-        },
-        "PropertyStatusStudio": {
-          "Name": "PropertyStatusStudio",
-          "Scriptability": "None",
-          "DataType": {
-            "Enum": "PropertyStatus"
-          },
-          "Tags": [
-            "NotReplicated",
-            "NotScriptable",
-            "ReadOnly"
           ],
           "Kind": {
             "Canonical": {
@@ -17732,7 +18016,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "MaxValue": {
@@ -17769,7 +18053,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -17942,7 +18226,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -17976,7 +18260,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -18012,7 +18296,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "AuthoredHipHeight": {
@@ -18043,9 +18327,10 @@
       "Properties": {},
       "DefaultProperties": {}
     },
-    "LSPService": {
-      "Name": "LSPService",
+    "LSPFileSyncService": {
+      "Name": "LSPFileSyncService",
       "Tags": [
+        "NotCreatable",
         "NotReplicated",
         "Service"
       ],
@@ -18063,7 +18348,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -18486,7 +18771,7 @@
             0.5
           ]
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Brightness": {
@@ -18636,7 +18921,7 @@
         "ApplyAtCenterOfMass": {
           "Bool": false
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Color": {
@@ -18707,7 +18992,7 @@
         "AlwaysOnTop": {
           "Bool": false
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "CFrame": {
@@ -18897,7 +19182,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Color": {
@@ -18979,7 +19264,7 @@
       "Superclass": "Script",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Disabled": {
@@ -19132,7 +19417,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -19210,7 +19495,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Contents": {
@@ -19263,7 +19548,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -19307,6 +19592,7 @@
     "LuaSourceContainer": {
       "Name": "LuaSourceContainer",
       "Tags": [
+        "NotBrowsable",
         "NotCreatable"
       ],
       "Superclass": "Instance",
@@ -19338,7 +19624,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -19368,7 +19654,7 @@
       "Superclass": "ManualSurfaceJointInstance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "C0": {
@@ -19452,7 +19738,7 @@
       "Superclass": "ManualSurfaceJointInstance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "C0": {
@@ -19541,7 +19827,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -19565,6 +19851,7 @@
     "MaterialService": {
       "Name": "MaterialService",
       "Tags": [
+        "NotBrowsable",
         "NotCreatable",
         "Service"
       ],
@@ -19600,41 +19887,11 @@
             }
           }
         },
-        "Brick": {
-          "Name": "Brick",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
         "BrickName": {
           "Name": "BrickName",
           "Scriptability": "None",
           "DataType": {
             "Value": "String"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
-        "Cobblestone": {
-          "Name": "Cobblestone",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
           },
           "Tags": [
             "NotScriptable"
@@ -19660,41 +19917,11 @@
             }
           }
         },
-        "Concrete": {
-          "Name": "Concrete",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
         "ConcreteName": {
           "Name": "ConcreteName",
           "Scriptability": "None",
           "DataType": {
             "Value": "String"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
-        "CorrodedMetal": {
-          "Name": "CorrodedMetal",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
           },
           "Tags": [
             "NotScriptable"
@@ -19735,21 +19962,6 @@
             }
           }
         },
-        "DiamondPlate": {
-          "Name": "DiamondPlate",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
         "DiamondPlateName": {
           "Name": "DiamondPlateName",
           "Scriptability": "None",
@@ -19765,41 +19977,11 @@
             }
           }
         },
-        "Fabric": {
-          "Name": "Fabric",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
         "FabricName": {
           "Name": "FabricName",
           "Scriptability": "None",
           "DataType": {
             "Value": "String"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
-        "Foil": {
-          "Name": "Foil",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
           },
           "Tags": [
             "NotScriptable"
@@ -19840,41 +20022,11 @@
             }
           }
         },
-        "Granite": {
-          "Name": "Granite",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
         "GraniteName": {
           "Name": "GraniteName",
           "Scriptability": "None",
           "DataType": {
             "Value": "String"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
-        "Grass": {
-          "Name": "Grass",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
           },
           "Tags": [
             "NotScriptable"
@@ -19905,21 +20057,6 @@
           "Scriptability": "None",
           "DataType": {
             "Value": "String"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
-        "Ice": {
-          "Name": "Ice",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
           },
           "Tags": [
             "NotScriptable"
@@ -19975,41 +20112,11 @@
             }
           }
         },
-        "Marble": {
-          "Name": "Marble",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
         "MarbleName": {
           "Name": "MarbleName",
           "Scriptability": "None",
           "DataType": {
             "Value": "String"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
-        "Metal": {
-          "Name": "Metal",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
           },
           "Tags": [
             "NotScriptable"
@@ -20065,41 +20172,11 @@
             }
           }
         },
-        "Pebble": {
-          "Name": "Pebble",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
         "PebbleName": {
           "Name": "PebbleName",
           "Scriptability": "None",
           "DataType": {
             "Value": "String"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
-        "Plastic": {
-          "Name": "Plastic",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
           },
           "Tags": [
             "NotScriptable"
@@ -20155,21 +20232,6 @@
             }
           }
         },
-        "Sand": {
-          "Name": "Sand",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
         "SandName": {
           "Name": "SandName",
           "Scriptability": "None",
@@ -20200,41 +20262,11 @@
             }
           }
         },
-        "Slate": {
-          "Name": "Slate",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
         "SlateName": {
           "Name": "SlateName",
           "Scriptability": "None",
           "DataType": {
             "Value": "String"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
-        "SmoothPlastic": {
-          "Name": "SmoothPlastic",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
           },
           "Tags": [
             "NotScriptable"
@@ -20275,346 +20307,18 @@
             }
           }
         },
-        "TerrainAsphalt": {
-          "Name": "TerrainAsphalt",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
-        "TerrainBasalt": {
-          "Name": "TerrainBasalt",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
-        "TerrainBrick": {
-          "Name": "TerrainBrick",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
-        "TerrainCobblestone": {
-          "Name": "TerrainCobblestone",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
-        "TerrainConcrete": {
-          "Name": "TerrainConcrete",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
-        "TerrainCrackedLava": {
-          "Name": "TerrainCrackedLava",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
-        "TerrainGlacier": {
-          "Name": "TerrainGlacier",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
-        "TerrainGrass": {
-          "Name": "TerrainGrass",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
-        "TerrainGround": {
-          "Name": "TerrainGround",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
-        "TerrainIce": {
-          "Name": "TerrainIce",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
-        "TerrainLeafyGrass": {
-          "Name": "TerrainLeafyGrass",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
-        "TerrainLimestone": {
-          "Name": "TerrainLimestone",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
-        "TerrainMud": {
-          "Name": "TerrainMud",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
-        "TerrainPavement": {
-          "Name": "TerrainPavement",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
-        "TerrainRock": {
-          "Name": "TerrainRock",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
-        "TerrainSalt": {
-          "Name": "TerrainSalt",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
-        "TerrainSand": {
-          "Name": "TerrainSand",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
-        "TerrainSandstone": {
-          "Name": "TerrainSandstone",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
-        "TerrainSlate": {
-          "Name": "TerrainSlate",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
-        "TerrainSnow": {
-          "Name": "TerrainSnow",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
-        "TerrainWoodPlanks": {
-          "Name": "TerrainWoodPlanks",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
         "Use2022Materials": {
           "Name": "Use2022Materials",
           "Scriptability": "None",
           "DataType": {
             "Value": "Bool"
           },
-          "Tags": [],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
-        "Wood": {
-          "Name": "Wood",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
-          },
           "Tags": [
-            "NotScriptable"
+            "NotReplicated"
           ],
           "Kind": {
             "Canonical": {
-              "Serialization": "Serializes"
+              "Serialization": "DoesNotSerialize"
             }
           }
         },
@@ -20623,21 +20327,6 @@
           "Scriptability": "None",
           "DataType": {
             "Value": "String"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
-        "WoodPlanks": {
-          "Name": "WoodPlanks",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "Ref"
           },
           "Tags": [
             "NotScriptable"
@@ -20683,97 +20372,97 @@
       },
       "DefaultProperties": {
         "AsphaltName": {
-          "String": "Asphalt"
+          "String": ""
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "BasaltName": {
-          "String": "Basalt"
+          "String": ""
         },
         "BrickName": {
-          "String": "Brick"
+          "String": ""
         },
         "CobblestoneName": {
-          "String": "Cobblestone"
+          "String": ""
         },
         "ConcreteName": {
-          "String": "Concrete"
+          "String": ""
         },
         "CorrodedMetalName": {
-          "String": "CorrodedMetal"
+          "String": ""
         },
         "CrackedLavaName": {
-          "String": "CrackedLava"
+          "String": ""
         },
         "DiamondPlateName": {
-          "String": "DiamondPlate"
+          "String": ""
         },
         "FabricName": {
-          "String": "Fabric"
+          "String": ""
         },
         "FoilName": {
-          "String": "Foil"
+          "String": ""
         },
         "GlacierName": {
-          "String": "Glacier"
+          "String": ""
         },
         "GraniteName": {
-          "String": "Granite"
+          "String": ""
         },
         "GrassName": {
-          "String": "Grass"
+          "String": ""
         },
         "GroundName": {
-          "String": "Ground"
+          "String": ""
         },
         "IceName": {
-          "String": "Ice"
+          "String": ""
         },
         "LeafyGrassName": {
-          "String": "LeafyGrass"
+          "String": ""
         },
         "LimestoneName": {
-          "String": "Limestone"
+          "String": ""
         },
         "MarbleName": {
-          "String": "Marble"
+          "String": ""
         },
         "MetalName": {
-          "String": "Metal"
+          "String": ""
         },
         "MudName": {
-          "String": "Mud"
+          "String": ""
         },
         "PavementName": {
-          "String": "Pavement"
+          "String": ""
         },
         "PebbleName": {
-          "String": "Pebble"
+          "String": ""
         },
         "PlasticName": {
-          "String": "Plastic"
+          "String": ""
         },
         "RockName": {
-          "String": "Rock"
+          "String": ""
         },
         "SaltName": {
-          "String": "Salt"
+          "String": ""
         },
         "SandName": {
-          "String": "Sand"
+          "String": ""
         },
         "SandstoneName": {
-          "String": "Sandstone"
+          "String": ""
         },
         "SlateName": {
-          "String": "Slate"
+          "String": ""
         },
         "SmoothPlasticName": {
-          "String": "SmoothPlastic"
+          "String": ""
         },
         "SnowName": {
-          "String": "Snow"
+          "String": ""
         },
         "SourceAssetId": {
           "Int64": -1
@@ -20781,20 +20470,19 @@
         "Tags": {
           "BinaryString": ""
         },
-        "Use2022Materials": {
-          "Bool": false
-        },
         "WoodName": {
-          "String": "Wood"
+          "String": ""
         },
         "WoodPlanksName": {
-          "String": "WoodPlanks"
+          "String": ""
         }
       }
     },
     "MaterialVariant": {
       "Name": "MaterialVariant",
-      "Tags": [],
+      "Tags": [
+        "NotBrowsable"
+      ],
       "Superclass": "Instance",
       "Properties": {
         "BaseMaterial": {
@@ -20890,7 +20578,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "BaseMaterial": {
@@ -20961,7 +20649,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -21134,7 +20822,7 @@
         "Anchored": {
           "Bool": false
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "BackParamA": {
@@ -21363,7 +21051,9 @@
     },
     "Message": {
       "Name": "Message",
-      "Tags": [],
+      "Tags": [
+        "Deprecated"
+      ],
       "Superclass": "Instance",
       "Properties": {
         "Text": {
@@ -21381,7 +21071,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -21567,7 +21257,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Condition": {
@@ -21605,7 +21295,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -21696,7 +21386,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "LevelOfDetail": {
@@ -21743,7 +21433,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "LinkedSource": {
@@ -21808,7 +21498,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "C0": {
@@ -21937,7 +21627,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "C0": {
@@ -22017,7 +21707,7 @@
       "Superclass": "Feature",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "FaceId": {
@@ -22306,7 +21996,7 @@
         "AssetId": {
           "Content": ""
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "BackParamA": {
@@ -22528,6 +22218,7 @@
     "NetworkMarker": {
       "Name": "NetworkMarker",
       "Tags": [
+        "NotBrowsable",
         "NotCreatable"
       ],
       "Superclass": "Instance",
@@ -22537,6 +22228,7 @@
     "NetworkPeer": {
       "Name": "NetworkPeer",
       "Tags": [
+        "NotBrowsable",
         "NotCreatable"
       ],
       "Superclass": "Instance",
@@ -22567,6 +22259,7 @@
     "NetworkSettings": {
       "Name": "NetworkSettings",
       "Tags": [
+        "NotBrowsable",
         "NotCreatable",
         "Service"
       ],
@@ -22771,7 +22464,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Enabled": {
@@ -22793,7 +22486,7 @@
       "Superclass": "FlyweightService",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -22883,7 +22576,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "EasingDirection": {
@@ -22926,7 +22619,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -22960,7 +22653,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -23017,6 +22710,7 @@
     "PVInstance": {
       "Name": "PVInstance",
       "Tags": [
+        "NotBrowsable",
         "NotCreatable"
       ],
       "Superclass": "Instance",
@@ -23091,6 +22785,7 @@
     "PackageLink": {
       "Name": "PackageLink",
       "Tags": [
+        "NotBrowsable",
         "NotCreatable"
       ],
       "Superclass": "Instance",
@@ -23295,7 +22990,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Color3": {
@@ -23318,9 +23013,7 @@
     },
     "ParabolaAdornment": {
       "Name": "ParabolaAdornment",
-      "Tags": [
-        "Deprecated"
-      ],
+      "Tags": [],
       "Superclass": "PVAdornment",
       "Properties": {
         "A": {
@@ -23400,7 +23093,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Color3": {
@@ -23464,7 +23157,7 @@
         "Anchored": {
           "Bool": false
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "BackParamA": {
@@ -23773,7 +23466,7 @@
         "AssetId": {
           "Content": ""
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "BackParamA": {
@@ -23987,7 +23680,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -24444,7 +24137,7 @@
             0.0
           ]
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Brightness": {
@@ -24653,7 +24346,9 @@
     },
     "PathfindingLink": {
       "Name": "PathfindingLink",
-      "Tags": [],
+      "Tags": [
+        "NotBrowsable"
+      ],
       "Superclass": "Instance",
       "Properties": {
         "Attachment0": {
@@ -24710,7 +24405,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "IsBidirectional": {
@@ -24760,7 +24455,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Label": {
@@ -24932,7 +24627,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -24952,7 +24647,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -25335,7 +25030,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Enabled": {
@@ -25357,11 +25052,39 @@
     },
     "Plane": {
       "Name": "Plane",
+      "Tags": [
+        "Deprecated"
+      ],
+      "Superclass": "PlaneConstraint",
+      "Properties": {},
+      "DefaultProperties": {
+        "Attributes": {
+          "BinaryString": ""
+        },
+        "Color": {
+          "Int32": 194
+        },
+        "Enabled": {
+          "Bool": true
+        },
+        "SourceAssetId": {
+          "Int64": -1
+        },
+        "Tags": {
+          "BinaryString": ""
+        },
+        "Visible": {
+          "Bool": false
+        }
+      }
+    },
+    "PlaneConstraint": {
+      "Name": "PlaneConstraint",
       "Tags": [],
       "Superclass": "Constraint",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Color": {
@@ -25514,7 +25237,8 @@
             "Value": "String"
           },
           "Tags": [
-            "Deprecated"
+            "Deprecated",
+            "NotBrowsable"
           ],
           "Kind": {
             "Canonical": {
@@ -26093,7 +25817,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "CustomPoliciesEnabled": {
@@ -26396,7 +26120,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "CharacterAutoLoads": {
@@ -26935,7 +26659,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Brightness": {
@@ -27054,7 +26778,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "CFrame": {
@@ -27181,7 +26905,7 @@
         "ActuatorType": {
           "Enum": 0
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Color": {
@@ -27246,7 +26970,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -27449,7 +27173,7 @@
         "ActionText": {
           "String": "Interact"
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "AutoLocalize": {
@@ -27502,6 +27226,7 @@
     "ProximityPromptService": {
       "Name": "ProximityPromptService",
       "Tags": [
+        "NotBrowsable",
         "Service"
       ],
       "Superclass": "Instance",
@@ -27534,7 +27259,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Enabled": {
@@ -27592,7 +27317,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -27633,7 +27358,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -27650,7 +27375,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -27720,7 +27445,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Browsable": {
@@ -27771,6 +27496,9 @@
         "ServerOnly": {
           "Bool": false
         },
+        "SliderScaling": {
+          "String": ""
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -27794,7 +27522,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -27811,7 +27539,7 @@
       "Superclass": "ReflectionMetadataItem",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Browsable": {
@@ -27849,6 +27577,9 @@
         },
         "ServerOnly": {
           "Bool": false
+        },
+        "SliderScaling": {
+          "String": ""
         },
         "SourceAssetId": {
           "Int64": -1
@@ -27873,7 +27604,7 @@
       "Superclass": "ReflectionMetadataItem",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Browsable": {
@@ -27912,6 +27643,9 @@
         "ServerOnly": {
           "Bool": false
         },
+        "SliderScaling": {
+          "String": ""
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -27935,7 +27669,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -27952,7 +27686,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -27969,7 +27703,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -28143,6 +27877,19 @@
             }
           }
         },
+        "SliderScaling": {
+          "Name": "SliderScaling",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "String"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
         "UIMaximum": {
           "Name": "UIMaximum",
           "Scriptability": "ReadWrite",
@@ -28191,7 +27938,7 @@
       "Superclass": "ReflectionMetadataItem",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Browsable": {
@@ -28230,6 +27977,9 @@
         "ServerOnly": {
           "Bool": false
         },
+        "SliderScaling": {
+          "String": ""
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -28253,7 +28003,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -28270,7 +28020,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -28298,7 +28048,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -28315,7 +28065,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -28329,6 +28079,7 @@
     "RenderSettings": {
       "Name": "RenderSettings",
       "Tags": [
+        "NotBrowsable",
         "NotCreatable",
         "Service"
       ],
@@ -28663,7 +28414,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "CFrame": {
@@ -28733,27 +28484,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
-          "BinaryString": ""
-        },
-        "SourceAssetId": {
-          "Int64": -1
-        },
-        "Tags": {
-          "BinaryString": ""
-        }
-      }
-    },
-    "ReplicatedScriptService": {
-      "Name": "ReplicatedScriptService",
-      "Tags": [
-        "NotCreatable",
-        "Service"
-      ],
-      "Superclass": "Instance",
-      "Properties": {},
-      "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -28773,7 +28504,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -28856,7 +28587,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "DecayTime": {
@@ -28957,7 +28688,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Color": {
@@ -29000,6 +28731,7 @@
     "RobloxReplicatedStorage": {
       "Name": "RobloxReplicatedStorage",
       "Tags": [
+        "NotBrowsable",
         "NotCreatable",
         "Service"
       ],
@@ -29159,7 +28891,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "CartoonFactor": {
@@ -29296,7 +29028,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Color": {
@@ -29458,7 +29190,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Color": {
@@ -29510,7 +29242,7 @@
       "Superclass": "JointInstance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "C0": {
@@ -29584,7 +29316,7 @@
       "Superclass": "DynamicRotate",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "BaseAngle": {
@@ -29661,7 +29393,7 @@
       "Superclass": "DynamicRotate",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "BaseAngle": {
@@ -29753,7 +29485,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -29763,6 +29495,17 @@
           "BinaryString": ""
         }
       }
+    },
+    "RtMessagingService": {
+      "Name": "RtMessagingService",
+      "Tags": [
+        "NotCreatable",
+        "NotReplicated",
+        "Service"
+      ],
+      "Superclass": "Instance",
+      "Properties": {},
+      "DefaultProperties": {}
     },
     "RunService": {
       "Name": "RunService",
@@ -29878,7 +29621,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "AutoLocalize": {
@@ -29942,7 +29685,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Disabled": {
@@ -30096,6 +29839,27 @@
       },
       "DefaultProperties": {}
     },
+    "ScriptDocument": {
+      "Name": "ScriptDocument",
+      "Tags": [
+        "NotCreatable",
+        "NotReplicated"
+      ],
+      "Superclass": "Instance",
+      "Properties": {},
+      "DefaultProperties": {}
+    },
+    "ScriptEditorService": {
+      "Name": "ScriptEditorService",
+      "Tags": [
+        "NotCreatable",
+        "NotReplicated",
+        "Service"
+      ],
+      "Superclass": "Instance",
+      "Properties": {},
+      "DefaultProperties": {}
+    },
     "ScriptRegistrationService": {
       "Name": "ScriptRegistrationService",
       "Tags": [
@@ -30116,7 +29880,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -30437,7 +30201,7 @@
             0.0
           ]
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "AutoLocalize": {
@@ -30563,6 +30327,9 @@
         "SelectionGroup": {
           "Bool": true
         },
+        "SelectionOrder": {
+          "Int32": 0
+        },
         "Size": {
           "UDim2": [
             [
@@ -30640,7 +30407,7 @@
         "Anchored": {
           "Bool": false
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "BackParamA": {
@@ -30891,7 +30658,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -30965,7 +30732,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Color3": {
@@ -31047,7 +30814,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Color3": {
@@ -31093,7 +30860,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Color3": {
@@ -31174,7 +30941,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Color3": {
@@ -31245,7 +31012,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "LoadStringEnabled": {
@@ -31269,7 +31036,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -31283,6 +31050,7 @@
     "ServiceProvider": {
       "Name": "ServiceProvider",
       "Tags": [
+        "NotBrowsable",
         "NotCreatable"
       ],
       "Superclass": "Instance",
@@ -31319,7 +31087,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Color3": {
@@ -31373,7 +31141,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Color3": {
@@ -31433,7 +31201,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -31527,7 +31295,7 @@
         "Anchored": {
           "Bool": false
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "BackParamA": {
@@ -31763,7 +31531,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SkinColor": {
@@ -31940,7 +31708,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "CelestialBodiesShown": {
@@ -32318,7 +32086,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Color": {
@@ -32359,7 +32127,7 @@
       "Superclass": "JointInstance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "C0": {
@@ -32425,6 +32193,17 @@
         }
       }
     },
+    "SnippetService": {
+      "Name": "SnippetService",
+      "Tags": [
+        "NotCreatable",
+        "NotReplicated",
+        "Service"
+      ],
+      "Superclass": "Instance",
+      "Properties": {},
+      "DefaultProperties": {}
+    },
     "SocialService": {
       "Name": "SocialService",
       "Tags": [
@@ -32459,6 +32238,7 @@
             "Value": "Int32"
           },
           "Tags": [
+            "NotBrowsable",
             "NotReplicated",
             "ReadOnly"
           ],
@@ -32811,7 +32591,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "EmitterSize": {
@@ -32908,7 +32688,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -33000,7 +32780,7 @@
         "AmbientReverb": {
           "Enum": 0
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "DistanceFactor": {
@@ -33085,7 +32865,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Enabled": {
@@ -33187,7 +32967,7 @@
         "Anchored": {
           "Bool": false
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "BackParamA": {
@@ -33428,6 +33208,7 @@
             "Value": "Int32"
           },
           "Tags": [
+            "NotBrowsable",
             "NotReplicated",
             "ReadOnly"
           ],
@@ -33537,7 +33318,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "RollOffMode": {
@@ -33574,7 +33355,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "MeshId": {
@@ -33641,7 +33422,7 @@
         "AlwaysOnTop": {
           "Bool": false
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "CFrame": {
@@ -33753,7 +33534,7 @@
         "Angle": {
           "Float32": 90.0
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Brightness": {
@@ -33939,7 +33720,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Coils": {
@@ -34159,7 +33940,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -34188,7 +33969,7 @@
       "Superclass": "StarterPlayerScripts",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -34205,7 +33986,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -34298,7 +34079,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "ResetPlayerGuiOnSpawn": {
@@ -34330,7 +34111,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -34904,7 +34685,7 @@
         "AllowCustomAnimations": {
           "Bool": true
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "AutoJumpEnabled": {
@@ -35046,7 +34827,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -35296,7 +35077,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -36197,6 +35978,19 @@
             }
           }
         },
+        "Main Volume": {
+          "Name": "Main Volume",
+          "Scriptability": "None",
+          "DataType": {
+            "Value": "Float32"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
         "Matching Word Background Color": {
           "Name": "Matching Word Background Color",
           "Scriptability": "ReadWrite",
@@ -36303,19 +36097,6 @@
           "Scriptability": "ReadWrite",
           "DataType": {
             "Enum": "OutputLayoutMode"
-          },
-          "Tags": [],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
-        "OverrideCoreScripts": {
-          "Name": "OverrideCoreScripts",
-          "Scriptability": "Read",
-          "DataType": {
-            "Value": "Bool"
           },
           "Tags": [],
           "Kind": {
@@ -36818,8 +36599,8 @@
             }
           }
         },
-        "Show Navigation Areas": {
-          "Name": "Show Navigation Areas",
+        "Show Navigation Labels": {
+          "Name": "Show Navigation Labels",
           "Scriptability": "None",
           "DataType": {
             "Value": "Bool"
@@ -37136,7 +36917,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "EnableScriptCollabByDefaultOnLoad": {
@@ -37465,7 +37246,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Enabled": {
@@ -37561,9 +37342,7 @@
           "DataType": {
             "Value": "Content"
           },
-          "Tags": [
-            "Hidden"
-          ],
+          "Tags": [],
           "Kind": {
             "Canonical": {
               "Serialization": "Serializes"
@@ -37575,7 +37354,7 @@
         "AlphaMode": {
           "Enum": 0
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "ColorMap": {
@@ -37770,7 +37549,7 @@
         "AlwaysOnTop": {
           "Bool": false
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "AutoLocalize": {
@@ -37887,7 +37666,7 @@
         "Angle": {
           "Float32": 90.0
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Brightness": {
@@ -37940,7 +37719,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Color3": {
@@ -38119,7 +37898,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "AutoAssignable": {
@@ -38145,7 +37924,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -38244,7 +38023,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "ReservedServerAccessCode": {
@@ -38290,7 +38069,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -38479,7 +38258,7 @@
         "Anchored": {
           "Bool": true
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "BackParamA": {
@@ -38803,7 +38582,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "ColorMap": {
@@ -38875,7 +38654,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -39060,7 +38839,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "AutoRuns": {
@@ -39590,7 +39369,7 @@
             0.0
           ]
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "AutoLocalize": {
@@ -39691,6 +39470,9 @@
         },
         "SelectionGroup": {
           "Bool": false
+        },
+        "SelectionOrder": {
+          "Int32": 0
         },
         "ShowNativeInput": {
           "Bool": true
@@ -40103,7 +39885,7 @@
             0.0
           ]
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "AutoButtonColor": {
@@ -40198,6 +39980,9 @@
         "SelectionGroup": {
           "Bool": false
         },
+        "SelectionOrder": {
+          "Int32": 0
+        },
         "Size": {
           "UDim2": [
             [
@@ -40273,11 +40058,13 @@
     },
     "TextChannel": {
       "Name": "TextChannel",
-      "Tags": [],
+      "Tags": [
+        "NotBrowsable"
+      ],
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -40290,7 +40077,9 @@
     },
     "TextChatCommand": {
       "Name": "TextChatCommand",
-      "Tags": [],
+      "Tags": [
+        "NotBrowsable"
+      ],
       "Superclass": "Instance",
       "Properties": {
         "Enabled": {
@@ -40334,7 +40123,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Enabled": {
@@ -40498,7 +40287,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -40512,6 +40301,7 @@
     "TextChatService": {
       "Name": "TextChatService",
       "Tags": [
+        "NotBrowsable",
         "NotCreatable",
         "Service"
       ],
@@ -40558,7 +40348,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "ChatVersion": {
@@ -40913,7 +40703,7 @@
             0.0
           ]
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "AutoLocalize": {
@@ -40999,6 +40789,9 @@
         "SelectionGroup": {
           "Bool": false
         },
+        "SelectionOrder": {
+          "Int32": 0
+        },
         "Size": {
           "UDim2": [
             [
@@ -41083,6 +40876,7 @@
     "TextSource": {
       "Name": "TextSource",
       "Tags": [
+        "NotBrowsable",
         "NotCreatable"
       ],
       "Superclass": "Instance",
@@ -41178,7 +40972,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Color3": {
@@ -41319,7 +41113,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -41486,7 +41280,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "CanBeDropped": {
@@ -41585,7 +41379,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Color": {
@@ -41758,7 +41552,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Coils": {
@@ -41823,7 +41617,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -41837,6 +41631,7 @@
     "TouchTransmitter": {
       "Name": "TouchTransmitter",
       "Tags": [
+        "NotBrowsable",
         "NotCreatable"
       ],
       "Superclass": "Instance",
@@ -41849,6 +41644,15 @@
         "NotCreatable",
         "NotReplicated",
         "Service"
+      ],
+      "Superclass": "Instance",
+      "Properties": {},
+      "DefaultProperties": {}
+    },
+    "TrackerStreamAnimation": {
+      "Name": "TrackerStreamAnimation",
+      "Tags": [
+        "NotReplicated"
       ],
       "Superclass": "Instance",
       "Properties": {},
@@ -42069,7 +41873,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Brightness": {
@@ -42240,7 +42044,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Depth": {
@@ -42316,7 +42120,7 @@
         "Anchored": {
           "Bool": false
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "BackParamA": {
@@ -42538,7 +42342,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -42552,6 +42356,7 @@
     "TweenBase": {
       "Name": "TweenBase",
       "Tags": [
+        "NotBrowsable",
         "NotCreatable"
       ],
       "Superclass": "Instance",
@@ -42584,7 +42389,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -42658,7 +42463,7 @@
         "AspectType": {
           "Enum": 0
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "DominantAxis": {
@@ -42719,7 +42524,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "CornerRadius": {
@@ -42808,7 +42613,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Color": {
@@ -42960,7 +42765,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "CellPadding": {
@@ -43121,7 +42926,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "FillDirection": {
@@ -43209,7 +43014,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "PaddingBottom": {
@@ -43387,7 +43192,7 @@
         "Animated": {
           "Bool": true
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Circular": {
@@ -43457,7 +43262,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Scale": {
@@ -43504,7 +43309,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "MaxSize": {
@@ -43615,7 +43420,7 @@
         "ApplyStrokeMode": {
           "Enum": 0
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Color": {
@@ -43704,7 +43509,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "FillDirection": {
@@ -43781,7 +43586,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "MaxTextSize": {
@@ -43810,7 +43615,7 @@
         "AssetId": {
           "Content": ""
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "BackParamA": {
@@ -44077,7 +43882,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Color": {
@@ -44118,7 +43923,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -44238,7 +44043,8 @@
             "Value": "String"
           },
           "Tags": [
-            "Hidden"
+            "Hidden",
+            "NotReplicated"
           ],
           "Kind": {
             "Canonical": {
@@ -44334,7 +44140,7 @@
         },
         "MasterVolume": {
           "Name": "MasterVolume",
-          "Scriptability": "ReadWrite",
+          "Scriptability": "None",
           "DataType": {
             "Value": "Float32"
           },
@@ -45202,7 +45008,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -45228,7 +45034,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -45259,7 +45065,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -45326,7 +45132,7 @@
         "ApplyAtCenterOfMass": {
           "Bool": false
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "Color": {
@@ -45362,7 +45168,7 @@
       "Superclass": "Controller",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -45532,7 +45338,7 @@
         "Anchored": {
           "Bool": false
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "BackParamA": {
@@ -45760,9 +45566,7 @@
     },
     "VelocityMotor": {
       "Name": "VelocityMotor",
-      "Tags": [
-        "Deprecated"
-      ],
+      "Tags": [],
       "Superclass": "JointInstance",
       "Properties": {
         "CurrentAngle": {
@@ -45819,7 +45623,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "C0": {
@@ -45940,7 +45744,7 @@
           ],
           "Kind": {
             "Canonical": {
-              "Serialization": "Serializes"
+              "Serialization": "DoesNotSerialize"
             }
           }
         },
@@ -45956,20 +45760,14 @@
           ],
           "Kind": {
             "Canonical": {
-              "Serialization": "Serializes"
+              "Serialization": "DoesNotSerialize"
             }
           }
         }
       },
       "DefaultProperties": {
-        "Active": {
-          "Bool": false
-        },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
-        },
-        "CameraID": {
-          "String": ""
         },
         "SourceAssetId": {
           "Int64": -1
@@ -46112,7 +45910,7 @@
             0.0
           ]
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "AutoLocalize": {
@@ -46191,6 +45989,9 @@
         },
         "SelectionGroup": {
           "Bool": false
+        },
+        "SelectionOrder": {
+          "Int32": 0
         },
         "Size": {
           "UDim2": [
@@ -46333,7 +46134,7 @@
             0.0
           ]
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "AutoLocalize": {
@@ -46431,6 +46232,9 @@
         "SelectionGroup": {
           "Bool": false
         },
+        "SelectionOrder": {
+          "Int32": 0
+        },
         "Size": {
           "UDim2": [
             [
@@ -46485,7 +46289,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -46534,7 +46338,7 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -46548,6 +46352,7 @@
     "VoiceChatInternal": {
       "Name": "VoiceChatInternal",
       "Tags": [
+        "NotBrowsable",
         "NotCreatable",
         "Service"
       ],
@@ -46573,7 +46378,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -46637,7 +46442,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "EnableDefaultVoice": {
@@ -46677,7 +46482,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -46697,7 +46502,7 @@
         "Anchored": {
           "Bool": false
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "BackParamA": {
@@ -46905,7 +46710,7 @@
       "Superclass": "JointInstance",
       "Properties": {},
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "C0": {
@@ -47069,7 +46874,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "SourceAssetId": {
@@ -47286,6 +47091,21 @@
             }
           }
         },
+        "PhysicsInertiaAndVolumeFix": {
+          "Name": "PhysicsInertiaAndVolumeFix",
+          "Scriptability": "None",
+          "DataType": {
+            "Enum": "PhysicsInertiaAndVolumeFix"
+          },
+          "Tags": [
+            "NotScriptable"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
         "PhysicsSimulationRate": {
           "Name": "PhysicsSimulationRate",
           "Scriptability": "ReadWrite",
@@ -47472,7 +47292,7 @@
         "AnimationWeightedBlendFix": {
           "Enum": 0
         },
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "ClientAnimatorThrottling": {
@@ -47510,6 +47330,9 @@
           "Enum": 0
         },
         "MeshPartHeadsAndAccessories": {
+          "Enum": 0
+        },
+        "PhysicsInertiaAndVolumeFix": {
           "Enum": 0
         },
         "PhysicsSteppingMethod": {
@@ -47571,6 +47394,19 @@
       "Tags": [],
       "Superclass": "BaseWrap",
       "Properties": {
+        "AutoSkin": {
+          "Name": "AutoSkin",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Enum": "WrapLayerAutoSkin"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
         "BindOffset": {
           "Name": "BindOffset",
           "Scriptability": "ReadWrite",
@@ -47712,8 +47548,11 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
+        },
+        "AutoSkin": {
+          "Enum": 0
         },
         "BindOffset": {
           "CFrame": {
@@ -47900,7 +47739,7 @@
         }
       },
       "DefaultProperties": {
-        "AttributesSerialize": {
+        "Attributes": {
           "BinaryString": ""
         },
         "CageMeshId": {
@@ -47990,6 +47829,8 @@
       "items": {
         "Back": 7,
         "DressSkirt": 17,
+        "Eyebrow": 18,
+        "Eyelash": 19,
         "Face": 3,
         "Front": 6,
         "Hair": 2,
@@ -48177,6 +48018,8 @@
         "EarAccessory": 57,
         "EmoteAnimation": 61,
         "EyeAccessory": 58,
+        "EyebrowAccessory": 76,
+        "EyelashAccessory": 77,
         "Face": 18,
         "FaceAccessory": 42,
         "FallAnimation": 50,
@@ -48254,6 +48097,8 @@
         "ClimbAnimation": 48,
         "DressSkirtAccessory": 72,
         "EmoteAnimation": 61,
+        "EyebrowAccessory": 76,
+        "EyelashAccessory": 77,
         "Face": 18,
         "FaceAccessory": 42,
         "FallAnimation": 50,
@@ -48399,7 +48244,8 @@
       "name": "BundleType",
       "items": {
         "Animations": 2,
-        "BodyParts": 1
+        "BodyParts": 1,
+        "Shoes": 3
       }
     },
     "Button": {
@@ -48639,6 +48485,7 @@
         "DisconnectNewSecurityKeyMismatch": 272,
         "DisconnectOnRemoteSysStats": 268,
         "DisconnectOutOfMemory": 286,
+        "DisconnectOutOfMemoryExitContinue": 288,
         "DisconnectPlayerless": 271,
         "DisconnectProtocolMismatch": 259,
         "DisconnectRaknetErrors": 279,
@@ -48863,6 +48710,7 @@
       "name": "DeveloperMemoryTag",
       "items": {
         "Animation": 22,
+        "GeometryCSG": 24,
         "GraphicsMeshParts": 10,
         "GraphicsParticles": 11,
         "GraphicsParts": 12,
@@ -49042,7 +48890,7 @@
         "Gotham": 17,
         "GothamBlack": 20,
         "GothamBold": 19,
-        "GothamSemibold": 18,
+        "GothamMedium": 18,
         "GrenzeGotisch": 27,
         "Highway": 11,
         "IndieFlower": 28,
@@ -49727,12 +49575,13 @@
         "DocumentSymbols": 17,
         "Initialize": 1,
         "Initialized": 2,
-        "Roblox_findColor3": 26,
-        "Roblox_findExecutablePosition": 25,
-        "Roblox_registerSyntaxCategories": 21,
-        "Roblox_signalQuiescence": 22,
-        "Roblox_suggestExtraSelections": 24,
-        "Roblox_syntaxHighlight": 23,
+        "Roblox_findColor3": 27,
+        "Roblox_findExecutablePosition": 26,
+        "Roblox_patchSnippetData": 28,
+        "Roblox_registerSyntaxCategories": 22,
+        "Roblox_signalQuiescence": 23,
+        "Roblox_suggestExtraSelections": 25,
+        "Roblox_syntaxHighlight": 24,
         "ShutdownRequest": 14,
         "TextDocument_didChange": 5,
         "TextDocument_didClose": 6,
@@ -49741,11 +49590,11 @@
         "TextDocument_formatting": 9,
         "TextDocument_hover": 11,
         "TextDocument_onTypeFormatting": 8,
-        "TextDocument_publishDiagnostics": 18,
+        "TextDocument_publishDiagnostics": 19,
         "TextDocument_rangeFormatting": 10,
         "TextDocument_signatureHelp": 12,
-        "Window_showMessage": 19,
-        "Window_showMessageRequest": 20,
+        "Window_showMessage": 20,
+        "Window_showMessageRequest": 21,
         "Workspace_DidChangeConfiguration": 13
       }
     },
@@ -50126,6 +49975,14 @@
         "RobloxGame": 1,
         "RobloxScript": 2,
         "Studio": 3
+      }
+    },
+    "PhysicsInertiaAndVolumeFix": {
+      "name": "PhysicsInertiaAndVolumeFix",
+      "items": {
+        "Default": 0,
+        "Disabled": 1,
+        "Enabled": 2
       }
     },
     "PhysicsSimulationRate": {
@@ -51276,6 +51133,14 @@
         "None": 0,
         "Small": 1,
         "Strong": 3
+      }
+    },
+    "WrapLayerAutoSkin": {
+      "name": "WrapLayerAutoSkin",
+      "items": {
+        "Disabled": 0,
+        "EnabledOverride": 2,
+        "EnabledPreserve": 1
       }
     },
     "WrapLayerDebugMode": {
