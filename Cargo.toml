@@ -8,7 +8,7 @@ homepage = "https://rojo.space"
 documentation = "https://rojo.space/docs"
 repository = "https://github.com/rojo-rbx/rojo"
 readme = "README.md"
-edition = "2018"
+edition = "2021"
 build = "build.rs"
 
 exclude = [
