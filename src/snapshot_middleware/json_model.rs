@@ -30,12 +30,13 @@ pub fn snapshot_json_model(
         .with_context(|| format!("File is not a valid JSON model: {}", path.display()))?;
 
     if let Some(top_level_name) = &instance.name {
-        let new_name = format!("{top_level_name}.model.json");
+        let new_name = format!("{}.model.json", top_level_name);
 
         log::warn!(
             "Model at path {} had a top-level Name field. \
             This field has been ignored since Rojo 6.0.\n\
-            Consider removing this field and renaming the file to {new_name}.",
+            Consider removing this field and renaming the file to {}.",
+            new_name,
             path.display()
         );
     }
