@@ -7,6 +7,7 @@
 * Fixed `init.meta.json` when used with `init.lua` and related files. ([#549])
 * Fixed incorrect output when serving from a non-default address or port ([#556])
 * Fixed Linux binaries not running on systems with older glibc. ([#561])
+* Added `camelCase` casing for JSON models, deprecating `PascalCase` names. ([#563])
 * Switched from structopt to clap for command line argument parsing.
 * Significantly improved performance of building and serving. ([#548])
 * Increased minimum supported Rust version to 1.57.0. ([#564])
@@ -18,6 +19,7 @@
 [#553]: https://github.com/rojo-rbx/rojo/pull/553
 [#556]: https://github.com/rojo-rbx/rojo/pull/556
 [#561]: https://github.com/rojo-rbx/rojo/pull/561
+[#563]: https://github.com/rojo-rbx/rojo/pull/563
 [#564]: https://github.com/rojo-rbx/rojo/pull/564
 
 ## [7.1.1] - May 26, 2022
