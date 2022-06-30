@@ -26,12 +26,25 @@ pub fn snapshot_json_model(
         return Ok(None);
     }
 
-    let instance: JsonModel = serde_json::from_str(contents_str)
+    let mut instance: JsonModel = serde_json::from_str(contents_str)
         .with_context(|| format!("File is not a valid JSON model: {}", path.display()))?;
 
+    if let Some(top_level_name) = &instance.name {
+        let new_name = format!("{}.model.json", top_level_name);
+
+        log::warn!(
+            "Model at path {} had a top-level Name field. \
+            This field has been ignored since Rojo 6.0.\n\
+            Consider removing this field and renaming the file to {}.",
+            new_name,
+            path.display()
+        );
+    }
+
+    instance.name = Some(name.to_owned());
+
     let mut snapshot = instance
-        .core
-        .into_snapshot(name.to_owned())
+        .into_snapshot()
         .with_context(|| format!("Could not load JSON model: {}", path.display()))?;
 
     snapshot.metadata = snapshot
@@ -44,42 +57,37 @@ pub fn snapshot_json_model(
 }
 
 #[derive(Debug, Deserialize)]
-#[serde(rename_all = "PascalCase")]
+#[serde(rename_all = "camelCase")]
 struct JsonModel {
+    #[serde(alias = "Name")]
     name: Option<String>,
 
-    #[serde(flatten)]
-    core: JsonModelCore,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "PascalCase")]
-struct JsonModelInstance {
-    name: String,
-
-    #[serde(flatten)]
-    core: JsonModelCore,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "PascalCase")]
-struct JsonModelCore {
+    #[serde(alias = "ClassName")]
     class_name: String,
 
-    #[serde(default = "Vec::new", skip_serializing_if = "Vec::is_empty")]
-    children: Vec<JsonModelInstance>,
+    #[serde(
+        alias = "Children",
+        default = "Vec::new",
+        skip_serializing_if = "Vec::is_empty"
+    )]
+    children: Vec<JsonModel>,
 
-    #[serde(default = "HashMap::new", skip_serializing_if = "HashMap::is_empty")]
+    #[serde(
+        alias = "Properties",
+        default = "HashMap::new",
+        skip_serializing_if = "HashMap::is_empty"
+    )]
     properties: HashMap<String, UnresolvedValue>,
 }
 
-impl JsonModelCore {
-    fn into_snapshot(self, name: String) -> anyhow::Result<InstanceSnapshot> {
+impl JsonModel {
+    fn into_snapshot(self) -> anyhow::Result<InstanceSnapshot> {
+        let name = self.name.unwrap_or_else(|| self.class_name.clone());
         let class_name = self.class_name;
 
         let mut children = Vec::with_capacity(self.children.len());
         for child in self.children {
-            children.push(child.core.into_snapshot(child.name)?);
+            children.push(child.into_snapshot()?);
         }
 
         let mut properties = HashMap::with_capacity(self.properties.len());
@@ -113,7 +121,43 @@ mod test {
             VfsSnapshot::file(
                 r#"
                     {
-                      "Name": "children",
+                      "className": "IntValue",
+                      "properties": {
+                        "Value": 5
+                      },
+                      "children": [
+                        {
+                          "name": "The Child",
+                          "className": "StringValue"
+                        }
+                      ]
+                    }
+                "#,
+            ),
+        )
+        .unwrap();
+
+        let vfs = Vfs::new(imfs);
+
+        let instance_snapshot = snapshot_json_model(
+            &InstanceContext::default(),
+            &vfs,
+            Path::new("/foo.model.json"),
+        )
+        .unwrap()
+        .unwrap();
+
+        insta::assert_yaml_snapshot!(instance_snapshot);
+    }
+
+    #[test]
+    fn model_from_vfs_legacy() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
+            "/foo.model.json",
+            VfsSnapshot::file(
+                r#"
+                    {
                       "ClassName": "IntValue",
                       "Properties": {
                         "Value": 5
@@ -130,11 +174,11 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_json_model(
             &InstanceContext::default(),
-            &mut vfs,
+            &vfs,
             Path::new("/foo.model.json"),
         )
         .unwrap()

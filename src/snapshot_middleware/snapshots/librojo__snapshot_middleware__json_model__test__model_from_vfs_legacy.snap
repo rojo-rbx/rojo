@@ -1,0 +1,29 @@
+---
+source: src/snapshot_middleware/json_model.rs
+assertion_line: 186
+expression: instance_snapshot
+---
+snapshot_id: ~
+metadata:
+  ignore_unknown_instances: false
+  instigating_source:
+    Path: /foo.model.json
+  relevant_paths:
+    - /foo.model.json
+  context: {}
+name: foo
+class_name: IntValue
+properties:
+  Value:
+    Int64: 5
+children:
+  - snapshot_id: ~
+    metadata:
+      ignore_unknown_instances: false
+      relevant_paths: []
+      context: {}
+    name: The Child
+    class_name: StringValue
+    properties: {}
+    children: []
+
