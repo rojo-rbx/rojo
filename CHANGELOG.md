@@ -1,6 +1,8 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+
+## [7.2.0] - June 29, 2022
 * Added support for `.luau` files. ([#552])
 * Added support for live syncing Attributes and Tags. ([#553])
 * Added notification popups in the Roblox Studio plugin. ([#540])
@@ -21,6 +23,7 @@
 [#561]: https://github.com/rojo-rbx/rojo/pull/561
 [#563]: https://github.com/rojo-rbx/rojo/pull/563
 [#564]: https://github.com/rojo-rbx/rojo/pull/564
+[7.2.0]: https://github.com/rojo-rbx/rojo/releases/tag/v7.2.0
 
 ## [7.1.1] - May 26, 2022
 * Fixed sourcemap command not stripping paths correctly ([#544])
