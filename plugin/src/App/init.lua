@@ -12,6 +12,7 @@ local Dictionary = require(Plugin.Dictionary)
 local ServeSession = require(Plugin.ServeSession)
 local ApiContext = require(Plugin.ApiContext)
 local preloadAssets = require(Plugin.preloadAssets)
+local soundPlayer = require(Plugin.soundPlayer)
 local Theme = require(script.Theme)
 local PluginSettings = require(script.PluginSettings)
 
@@ -272,6 +273,7 @@ function App:render()
 					Padding = UDim.new(0, 5),
 				}),
 				notifs = e(Notifications, {
+					soundPlayer = self.props.soundPlayer,
 					notifications = self.state.notifications,
 					onClose = function(index)
 						self:closeNotification(index)
@@ -347,10 +349,11 @@ return function(props)
 		plugin = props.plugin,
 	}, {
 		App = PluginSettings.with(function(settings)
-			local settingsProps = Dictionary.merge(props, {
+			local mergedProps = Dictionary.merge(props, {
 				settings = settings,
+				soundPlayer = soundPlayer.withSettings(settings),
 			})
-			return e(App, settingsProps)
+			return e(App, mergedProps)
 		end),
 	})
 end

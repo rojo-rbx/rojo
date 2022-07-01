@@ -11,7 +11,6 @@ local bindingUtil = require(script.Parent.bindingUtil)
 
 local Theme = require(Plugin.App.Theme)
 local Assets = require(Plugin.Assets)
-local playSound = require(Plugin.playSound)
 
 local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
 
@@ -53,7 +52,7 @@ function Notification:didMount()
 		})
 	)
 
-	playSound(Assets.Sounds.Notification)
+	self.props.soundPlayer:Play(Assets.Sounds.Notification)
 
 	self.timeout = task.spawn(function()
 		local clock = os.clock()
@@ -182,6 +181,7 @@ function Notifications:render()
 
 	for index, notif in ipairs(self.props.notifications) do
 		notifs[notif] = e(Notification, {
+			soundPlayer = self.props.soundPlayer,
 			text = notif.text,
 			timestamp = notif.timestamp,
 			timeout = notif.timeout,
