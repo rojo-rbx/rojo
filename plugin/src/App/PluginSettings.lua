@@ -10,6 +10,7 @@ local defaultSettings = {
 	openScriptsExternally = false,
 	twoWaySync = false,
 	showNotifications = true,
+	playSounds = true,
 }
 
 local Settings = {}
