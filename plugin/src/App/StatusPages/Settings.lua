@@ -210,12 +210,20 @@ function SettingsPage:render()
 				layoutOrder = 2,
 			}),
 
+			PlaySounds = e(Setting, {
+				id = "playSounds",
+				name = "Play Sounds",
+				description = "Toggle sound effects",
+				transparency = self.props.transparency,
+				layoutOrder = 3,
+			}),
+
 			TwoWaySync = e(Setting, {
 				id = "twoWaySync",
 				name = "Two-Way Sync",
 				description = "EXPERIMENTAL! Editing files in Studio will sync them into the filesystem",
 				transparency = self.props.transparency,
-				layoutOrder = 3,
+				layoutOrder = 4,
 			}),
 
 			Layout = e("UIListLayout", {
