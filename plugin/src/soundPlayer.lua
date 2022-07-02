@@ -12,17 +12,13 @@ widget.Title = "Rojo Sound Player"
 local SoundPlayer = {}
 SoundPlayer.__index = SoundPlayer
 
-function SoundPlayer.new(settngs)
-	return setmetatable({}, SoundPlayer)
-end
-
-function SoundPlayer.withSettings(settings)
+function SoundPlayer.new(settings)
 	return setmetatable({
 		settings = settings,
 	}, SoundPlayer)
 end
 
-function SoundPlayer:Play(soundId)
+function SoundPlayer:play(soundId)
 	if self.settings and self.settings:get("playSounds") == false then return end
 
 	local sound = Instance.new("Sound")

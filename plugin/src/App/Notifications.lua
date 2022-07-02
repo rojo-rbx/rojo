@@ -52,7 +52,7 @@ function Notification:didMount()
 		})
 	)
 
-	self.props.soundPlayer:Play(Assets.Sounds.Notification)
+	self.props.soundPlayer:play(Assets.Sounds.Notification)
 
 	self.timeout = task.spawn(function()
 		local clock = os.clock()

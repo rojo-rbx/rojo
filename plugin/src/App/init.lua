@@ -351,7 +351,7 @@ return function(props)
 		App = PluginSettings.with(function(settings)
 			local mergedProps = Dictionary.merge(props, {
 				settings = settings,
-				soundPlayer = soundPlayer.withSettings(settings),
+				soundPlayer = soundPlayer.new(settings),
 			})
 			return e(App, mergedProps)
 		end),
