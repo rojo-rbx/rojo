@@ -48,6 +48,10 @@ function App:init()
 		guiEnabled = false,
 		notifications = {},
 		toolbarIcon = Assets.Images.PluginButton,
+		patchInfo = {
+			updates = 0,
+			timestamp = os.time(),
+		},
 	})
 end
 
@@ -104,6 +108,30 @@ function App:startSession()
 		twoWaySync = sessionOptions.twoWaySync,
 	})
 
+	serveSession:onPatchApplied(function(patch, unapplied)
+		local count = 0
+
+		for _, set in patch do
+			for _ in set do
+				count += 1
+			end
+		end
+		for _, set in unapplied do
+			for _ in set do
+				count -= 1
+			end
+		end
+
+		if count == 0 then return end
+
+		self:setState({
+			patchInfo = {
+				updates = count,
+				timestamp = os.time(),
+			},
+		})
+	end)
+
 	serveSession:onStatusChanged(function(status, details)
 		if status == ServeSession.Status.Connecting then
 			self:setState({
@@ -147,6 +175,16 @@ function App:startSession()
 	serveSession:start()
 
 	self.serveSession = serveSession
+
+	task.defer(function()
+		while self.serveSession == serveSession do
+			-- Trigger rerender to update timestamp text
+			self:setState({
+				patchInfo = table.clone(self.state.patchInfo),
+			})
+			task.wait(3)
+		end
+	end)
 end
 
 function App:endSession()
@@ -230,6 +268,7 @@ function App:render()
 				Connected = createPageElement(AppStatus.Connected, {
 					projectName = self.state.projectName,
 					address = self.state.address,
+					patchInfo = self.state.patchInfo,
 
 					onDisconnect = function()
 						self:endSession()

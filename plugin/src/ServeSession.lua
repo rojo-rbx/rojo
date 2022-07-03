@@ -94,6 +94,7 @@ function ServeSession.new(options)
 		__instanceMap = instanceMap,
 		__changeBatcher = changeBatcher,
 		__statusChangedCallback = nil,
+		__patchAppliedCallback = nil,
 		__connections = connections,
 	}
 
@@ -119,6 +120,10 @@ end
 
 function ServeSession:onStatusChanged(callback)
 	self.__statusChangedCallback = callback
+end
+
+function ServeSession:onPatchApplied(callback)
+	self.__patchAppliedCallback = callback
 end
 
 function ServeSession:start()
@@ -231,6 +236,10 @@ function ServeSession:__initialSync(rootInstanceId)
 				Log.warn("Could not apply all changes requested by the Rojo server:\n{}",
 					PatchSet.humanSummary(self.__instanceMap, unappliedPatch))
 			end
+
+			if self.__patchAppliedCallback then
+				pcall(self.__patchAppliedCallback, catchUpPatch, unappliedPatch)
+			end
 		end)
 end
 
@@ -243,6 +252,10 @@ function ServeSession:__mainSyncLoop()
 				if not PatchSet.isEmpty(unappliedPatch) then
 					Log.warn("Could not apply all changes requested by the Rojo server:\n{}",
 						PatchSet.humanSummary(self.__instanceMap, unappliedPatch))
+				end
+
+				if self.__patchAppliedCallback then
+					pcall(self.__patchAppliedCallback, message, unappliedPatch)
 				end
 			end
 
