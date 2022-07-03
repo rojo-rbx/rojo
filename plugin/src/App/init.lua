@@ -109,6 +109,7 @@ function App:startSession()
 	})
 
 	serveSession:onPatchApplied(function(patch, unapplied)
+		local now = os.time()
 		local count = 0
 
 		for _, set in patch do
@@ -123,9 +124,15 @@ function App:startSession()
 		end
 
 		if count == 0 then return end
+
+		local old = self.patchInfo:getValue()
+		if now - old.timestamp < 2 then
+            count += old.updates
+        end
+
 		self.setPatchInfo({
 			updates = count,
-			timestamp = os.time(),
+			timestamp = now,
 		})
 	end)
 
