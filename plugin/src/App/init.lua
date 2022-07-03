@@ -176,8 +176,9 @@ function App:startSession()
 	task.defer(function()
 		while self.serveSession == serveSession do
 			-- Trigger rerender to update timestamp text
-			self.setPatchInfo(table.clone(self.patchInfo:getValue()))
-			task.wait(3)
+			local patchInfo = table.clone(self.patchInfo:getValue())
+			self.setPatchInfo(patchInfo)
+			task.wait((os.time() - patchInfo.timestamp) / 10)
 		end
 	end)
 end
