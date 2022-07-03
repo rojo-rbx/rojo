@@ -42,16 +42,16 @@ function App:init()
 
 	self.host, self.setHost = Roact.createBinding("")
 	self.port, self.setPort = Roact.createBinding("")
+	self.patchInfo, self.setPatchInfo = Roact.createBinding({
+		updates = 0,
+		timestamp = os.time(),
+	})
 
 	self:setState({
 		appStatus = AppStatus.NotConnected,
 		guiEnabled = false,
 		notifications = {},
 		toolbarIcon = Assets.Images.PluginButton,
-		patchInfo = {
-			updates = 0,
-			timestamp = os.time(),
-		},
 	})
 end
 
@@ -123,12 +123,9 @@ function App:startSession()
 		end
 
 		if count == 0 then return end
-
-		self:setState({
-			patchInfo = {
-				updates = count,
-				timestamp = os.time(),
-			},
+		self.setPatchInfo({
+			updates = count,
+			timestamp = os.time(),
 		})
 	end)
 
@@ -179,9 +176,7 @@ function App:startSession()
 	task.defer(function()
 		while self.serveSession == serveSession do
 			-- Trigger rerender to update timestamp text
-			self:setState({
-				patchInfo = table.clone(self.state.patchInfo),
-			})
+			self.setPatchInfo(table.clone(self.patchInfo:getValue()))
 			task.wait(3)
 		end
 	end)
@@ -268,7 +263,7 @@ function App:render()
 				Connected = createPageElement(AppStatus.Connected, {
 					projectName = self.state.projectName,
 					address = self.state.address,
-					patchInfo = self.state.patchInfo,
+					patchInfo = self.patchInfo,
 
 					onDisconnect = function()
 						self:endSession()

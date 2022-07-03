@@ -103,8 +103,6 @@ local ConnectedPage = Roact.Component:extend("ConnectedPage")
 
 function ConnectedPage:render()
 	return Theme.with(function(theme)
-		local patchInfo = self.props.patchInfo
-
 		return Roact.createFragment({
 			Header = e(Header, {
 				transparency = self.props.transparency,
@@ -121,12 +119,14 @@ function ConnectedPage:render()
 			}),
 
 			Info = e("TextLabel", {
-				Text = string.format(
-					"<i>Synced %d change%s %s</i>",
-					patchInfo.updates,
-					patchInfo.updates == 1 and "" or "s",
-					timeSinceText(os.time() - patchInfo.timestamp)
-				),
+				Text = self.props.patchInfo:map(function(info)
+					return string.format(
+						"<i>Synced %d change%s %s</i>",
+						info.updates,
+						info.updates == 1 and "" or "s",
+						timeSinceText(os.time() - info.timestamp)
+					)
+				end),
 				Font = Enum.Font.Gotham,
 				TextSize = 14,
 				TextWrapped = true,
