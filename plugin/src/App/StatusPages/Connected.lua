@@ -120,7 +120,6 @@ function ConnectedPage:render()
 				onDisconnect = self.props.onDisconnect,
 			}),
 
-
 			Info = e("TextLabel", {
 				Text = string.format(
 					"<i>Synced %d change%s %s</i>",
