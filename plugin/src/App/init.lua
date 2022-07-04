@@ -185,7 +185,8 @@ function App:startSession()
 			-- Trigger rerender to update timestamp text
 			local patchInfo = table.clone(self.patchInfo:getValue())
 			self.setPatchInfo(patchInfo)
-			task.wait((os.time() - patchInfo.timestamp) / 10)
+			local elapsed = os.time() - patchInfo.timestamp
+			task.wait(elapsed < 60 and 1 or elapsed/5)
 		end
 	end)
 end
