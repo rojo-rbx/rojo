@@ -127,8 +127,8 @@ function App:startSession()
 
 		local old = self.patchInfo:getValue()
 		if now - old.timestamp < 2 then
-            count += old.updates
-        end
+			count += old.updates
+		end
 
 		self.setPatchInfo({
 			updates = count,
