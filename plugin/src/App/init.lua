@@ -43,7 +43,7 @@ function App:init()
 	self.host, self.setHost = Roact.createBinding("")
 	self.port, self.setPort = Roact.createBinding("")
 	self.patchInfo, self.setPatchInfo = Roact.createBinding({
-		updates = 0,
+		changes = 0,
 		timestamp = os.time(),
 	})
 
@@ -110,28 +110,28 @@ function App:startSession()
 
 	serveSession:onPatchApplied(function(patch, unapplied)
 		local now = os.time()
-		local count = 0
+		local changes = 0
 
 		for _, set in patch do
 			for _ in set do
-				count += 1
+				changes += 1
 			end
 		end
 		for _, set in unapplied do
 			for _ in set do
-				count -= 1
+				changes -= 1
 			end
 		end
 
-		if count == 0 then return end
+		if changes == 0 then return end
 
 		local old = self.patchInfo:getValue()
 		if now - old.timestamp < 2 then
-			count += old.updates
+			changes += old.changes
 		end
 
 		self.setPatchInfo({
-			updates = count,
+			changes = changes,
 			timestamp = now,
 		})
 	end)

@@ -122,8 +122,8 @@ function ConnectedPage:render()
 				Text = self.props.patchInfo:map(function(info)
 					return string.format(
 						"<i>Synced %d change%s %s</i>",
-						info.updates,
-						info.updates == 1 and "" or "s",
+						info.changes,
+						info.changes == 1 and "" or "s",
 						timeSinceText(os.time() - info.timestamp)
 					)
 				end),
