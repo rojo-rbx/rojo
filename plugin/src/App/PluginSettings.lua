@@ -5,12 +5,15 @@
 local Rojo = script:FindFirstAncestor("Rojo")
 
 local Roact = require(Rojo.Roact)
+local Log = require(Rojo.Log)
 
 local defaultSettings = {
 	openScriptsExternally = false,
 	twoWaySync = false,
 	showNotifications = true,
 	playSounds = true,
+	typecheckingEnabled = false,
+	logLevel = Log.Level.Info,
 }
 
 local Settings = {}
