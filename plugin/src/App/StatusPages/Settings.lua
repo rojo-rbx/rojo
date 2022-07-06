@@ -4,18 +4,30 @@ local Rojo = script:FindFirstAncestor("Rojo")
 local Plugin = Rojo.Plugin
 
 local Roact = require(Rojo.Roact)
+local Log = require(Rojo.Log)
 
 local Assets = require(Plugin.Assets)
 local Theme = require(Plugin.App.Theme)
 local PluginSettings = require(Plugin.App.PluginSettings)
 
 local Checkbox = require(Plugin.App.Components.Checkbox)
+local Dropdown = require(Plugin.App.Components.Dropdown)
 local IconButton = require(Plugin.App.Components.IconButton)
 local ScrollingFrame = require(Plugin.App.Components.ScrollingFrame)
 
 local e = Roact.createElement
 
 local DIVIDER_FADE_SIZE = 0.1
+
+local function invertArray(tbl)
+	local new = {}
+	for key, value in tbl do
+		new[value] = key
+	end
+	return new
+end
+
+local invertedLevels = invertArray(Log.Level)
 
 local function getTextBounds(text, textSize, font, lineHeight, bounds)
 	local textBounds = TextService:GetTextSize(text, textSize, font, bounds)
@@ -62,6 +74,21 @@ local function Navbar(props)
 	end)
 end
 
+local function settingCheckbox(props)
+	return PluginSettings.with(function(settings)
+		return e(Checkbox, {
+			active = settings:get(props.id),
+			transparency = props.transparency,
+			position = UDim2.new(1, 0, 0.5, 0),
+			anchorPoint = Vector2.new(1, 0.5),
+			onClick = function()
+				local currentValue = settings:get(props.id)
+				settings:set(props.id, not currentValue)
+			end,
+		})
+	end)
+end
+
 local Setting = Roact.Component:extend("Setting")
 
 function Setting:init()
@@ -73,103 +100,93 @@ function Setting:render()
 	return Theme.with(function(theme)
 		theme = theme.Settings
 
-		return PluginSettings.with(function(settings)
-			return e("Frame", {
-				Size = self.contentSize:map(function(value)
-					return UDim2.new(1, 0, 0, 20 + value.Y + 20)
-				end),
-				LayoutOrder = self.props.layoutOrder,
-				BackgroundTransparency = 1,
+		return e("Frame", {
+			Size = self.contentSize:map(function(value)
+				return UDim2.new(1, 0, 0, 20 + value.Y + 20)
+			end),
+			ZIndex = -self.props.layoutOrder,
+			LayoutOrder = self.props.layoutOrder,
+			BackgroundTransparency = 1,
 
-				[Roact.Change.AbsoluteSize] = function(object)
-					self.setContainerSize(object.AbsoluteSize)
-				end,
+			[Roact.Change.AbsoluteSize] = function(object)
+				self.setContainerSize(object.AbsoluteSize)
+			end,
+		}, {
+			Input = self.props.input,
+
+			Text = e("Frame", {
+				Size = UDim2.new(1, 0, 1, 0),
+				BackgroundTransparency = 1,
 			}, {
-				Checkbox = e(Checkbox, {
-					active = settings:get(self.props.id),
-					transparency = self.props.transparency,
-					position = UDim2.new(1, 0, 0.5, 0),
-					anchorPoint = Vector2.new(1, 0.5),
-					onClick = function()
-						local currentValue = settings:get(self.props.id)
-						settings:set(self.props.id, not currentValue)
+				Name = e("TextLabel", {
+					Text = self.props.name,
+					Font = Enum.Font.GothamBold,
+					TextSize = 17,
+					TextColor3 = theme.Setting.NameColor,
+					TextXAlignment = Enum.TextXAlignment.Left,
+					TextTransparency = self.props.transparency,
+
+					Size = UDim2.new(1, 0, 0, 17),
+
+					LayoutOrder = 1,
+					BackgroundTransparency = 1,
+				}),
+
+				Description = e("TextLabel", {
+					Text = self.props.description,
+					Font = Enum.Font.Gotham,
+					LineHeight = 1.2,
+					TextSize = 14,
+					TextColor3 = theme.Setting.DescriptionColor,
+					TextXAlignment = Enum.TextXAlignment.Left,
+					TextTransparency = self.props.transparency,
+					TextWrapped = true,
+
+					Size = self.containerSize:map(function(value)
+						local textBounds = getTextBounds(
+							self.props.description, 14, Enum.Font.Gotham, 1.2,
+							Vector2.new(value.X - self.props.inputSpace, math.huge)
+						)
+						return UDim2.new(1, -self.props.inputSpace, 0, textBounds.Y)
+					end),
+
+					LayoutOrder = 2,
+					BackgroundTransparency = 1,
+				}),
+
+				Layout = e("UIListLayout", {
+					VerticalAlignment = Enum.VerticalAlignment.Center,
+					FillDirection = Enum.FillDirection.Vertical,
+					SortOrder = Enum.SortOrder.LayoutOrder,
+					Padding = UDim.new(0, 6),
+
+					[Roact.Change.AbsoluteContentSize] = function(object)
+						self.setContentSize(object.AbsoluteContentSize)
 					end,
 				}),
 
-				Text = e("Frame", {
-					Size = UDim2.new(1, 0, 1, 0),
-					BackgroundTransparency = 1,
-				}, {
-					Name = e("TextLabel", {
-						Text = self.props.name,
-						Font = Enum.Font.GothamBold,
-						TextSize = 17,
-						TextColor3 = theme.Setting.NameColor,
-						TextXAlignment = Enum.TextXAlignment.Left,
-						TextTransparency = self.props.transparency,
+				Padding = e("UIPadding", {
+					PaddingTop = UDim.new(0, 20),
+					PaddingBottom = UDim.new(0, 20),
+				}),
+			}),
 
-						Size = UDim2.new(1, 0, 0, 17),
-
-						LayoutOrder = 1,
-						BackgroundTransparency = 1,
-					}),
-
-					Description = e("TextLabel", {
-						Text = self.props.description,
-						Font = Enum.Font.Gotham,
-						LineHeight = 1.2,
-						TextSize = 14,
-						TextColor3 = theme.Setting.DescriptionColor,
-						TextXAlignment = Enum.TextXAlignment.Left,
-						TextTransparency = self.props.transparency,
-						TextWrapped = true,
-
-						Size = self.containerSize:map(function(value)
-							local textBounds = getTextBounds(
-								self.props.description, 14, Enum.Font.Gotham, 1.2,
-								Vector2.new(value.X - 50, math.huge)
-							)
-							return UDim2.new(1, -50, 0, textBounds.Y)
-						end),
-
-						LayoutOrder = 2,
-						BackgroundTransparency = 1,
-					}),
-
-					Layout = e("UIListLayout", {
-						VerticalAlignment = Enum.VerticalAlignment.Center,
-						FillDirection = Enum.FillDirection.Vertical,
-						SortOrder = Enum.SortOrder.LayoutOrder,
-						Padding = UDim.new(0, 6),
-
-						[Roact.Change.AbsoluteContentSize] = function(object)
-							self.setContentSize(object.AbsoluteContentSize)
-						end,
-					}),
-
-					Padding = e("UIPadding", {
-						PaddingTop = UDim.new(0, 20),
-						PaddingBottom = UDim.new(0, 20),
+			Divider = e("Frame", {
+				BackgroundColor3 = theme.DividerColor,
+				BackgroundTransparency = self.props.transparency,
+				Size = UDim2.new(1, 0, 0, 1),
+				BorderSizePixel = 0,
+			}, {
+				Gradient = e("UIGradient", {
+					Transparency = NumberSequence.new({
+						NumberSequenceKeypoint.new(0, 1),
+						NumberSequenceKeypoint.new(DIVIDER_FADE_SIZE, 0),
+						NumberSequenceKeypoint.new(1 - DIVIDER_FADE_SIZE, 0),
+						NumberSequenceKeypoint.new(1, 1),
 					}),
 				}),
-
-				Divider = e("Frame", {
-					BackgroundColor3 = theme.DividerColor,
-					BackgroundTransparency = self.props.transparency,
-					Size = UDim2.new(1, 0, 0, 1),
-					BorderSizePixel = 0,
-				}, {
-					Gradient = e("UIGradient", {
-						Transparency = NumberSequence.new({
-							NumberSequenceKeypoint.new(0, 1),
-							NumberSequenceKeypoint.new(DIVIDER_FADE_SIZE, 0),
-							NumberSequenceKeypoint.new(1 - DIVIDER_FADE_SIZE, 0),
-							NumberSequenceKeypoint.new(1, 1),
-						}),
-					}),
-				}),
-			})
-		end)
+			}),
+		})
 	end)
 end
 
@@ -183,63 +200,120 @@ function SettingsPage:render()
 	return Theme.with(function(theme)
 		theme = theme.Settings
 
-		return e(ScrollingFrame, {
-			size = UDim2.new(1, 0, 1, 0),
-			contentSize = self.contentSize,
-			transparency = self.props.transparency,
-		}, {
-			Navbar = e(Navbar, {
-				onBack = self.props.onBack,
+		return PluginSettings.with(function(settings)
+			return e(ScrollingFrame, {
+				size = UDim2.new(1, 0, 1, 0),
+				contentSize = self.contentSize,
 				transparency = self.props.transparency,
-				layoutOrder = 0,
-			}),
+			}, {
+				Navbar = e(Navbar, {
+					onBack = self.props.onBack,
+					transparency = self.props.transparency,
+					layoutOrder = 0,
+				}),
 
-			OpenScriptsExternally = e(Setting, {
-				id = "openScriptsExternally",
-				name = "Open Scripts Externally",
-				description = "Attempt to open scripts in an external editor",
-				transparency = self.props.transparency,
-				layoutOrder = 1,
-			}),
+				OpenScriptsExternally = e(Setting, {
+					name = "Open Scripts Externally",
+					description = "Attempt to open scripts in an external editor",
+					transparency = self.props.transparency,
+					layoutOrder = 1,
 
-			ShowNotifications = e(Setting, {
-				id = "showNotifications",
-				name = "Show Notifications",
-				description = "Popup notifications in viewport",
-				transparency = self.props.transparency,
-				layoutOrder = 2,
-			}),
+					inputSpace = 40,
+					input = e(settingCheckbox, {
+						id = "openScriptsExternally",
+						transparency = self.props.transparency,
+					}),
+				}),
 
-			PlaySounds = e(Setting, {
-				id = "playSounds",
-				name = "Play Sounds",
-				description = "Toggle sound effects",
-				transparency = self.props.transparency,
-				layoutOrder = 3,
-			}),
+				ShowNotifications = e(Setting, {
+					name = "Show Notifications",
+					description = "Popup notifications in viewport",
+					transparency = self.props.transparency,
+					layoutOrder = 2,
 
-			TwoWaySync = e(Setting, {
-				id = "twoWaySync",
-				name = "Two-Way Sync",
-				description = "EXPERIMENTAL! Editing files in Studio will sync them into the filesystem",
-				transparency = self.props.transparency,
-				layoutOrder = 4,
-			}),
+					inputSpace = 40,
+					input = e(settingCheckbox, {
+						id = "showNotifications",
+						transparency = self.props.transparency,
+					}),
+				}),
 
-			Layout = e("UIListLayout", {
-				FillDirection = Enum.FillDirection.Vertical,
-				SortOrder = Enum.SortOrder.LayoutOrder,
+				PlaySounds = e(Setting, {
+					name = "Play Sounds",
+					description = "Toggle sound effects",
+					transparency = self.props.transparency,
+					layoutOrder = 3,
 
-				[Roact.Change.AbsoluteContentSize] = function(object)
-					self.setContentSize(object.AbsoluteContentSize)
-				end,
-			}),
+					inputSpace = 40,
+					input = e(settingCheckbox, {
+						id = "playSounds",
+						transparency = self.props.transparency,
+					}),
+				}),
 
-			Padding = e("UIPadding", {
-				PaddingLeft = UDim.new(0, 20),
-				PaddingRight = UDim.new(0, 20),
-			}),
-		})
+				TwoWaySync = e(Setting, {
+					name = "Two-Way Sync",
+					description = "EXPERIMENTAL! Editing files in Studio will sync them into the filesystem",
+					transparency = self.props.transparency,
+					layoutOrder = 4,
+
+					inputSpace = 40,
+					input = e(settingCheckbox, {
+						id = "twoWaySync",
+						transparency = self.props.transparency,
+					}),
+				}),
+
+				LogLevel = e(Setting, {
+					name = "Log Level",
+					description = "Plugin output verbosity level",
+					transparency = self.props.transparency,
+					layoutOrder = 5,
+
+					inputSpace = TextService:GetTextSize(
+						invertedLevels[settings:get("logLevel")] or "", 15, Enum.Font.Gotham,
+						Vector2.new(math.huge, 28)
+					).X + 45,
+					input = e(Dropdown, {
+						options = invertedLevels,
+						active = invertedLevels[settings:get("logLevel")],
+						transparency = self.props.transparency,
+						position = UDim2.new(1, 0, 0.5, 0),
+						anchorPoint = Vector2.new(1, 0.5),
+						onClick = function(option)
+							settings:set("logLevel", Log.Level[option] or Log.Level.Info)
+						end,
+					}),
+				}),
+
+				Typecheck = e(Setting, {
+					name = "Typechecking",
+					description = "Toggle typechecking on the API surface",
+					transparency = self.props.transparency,
+					layoutOrder = 6,
+
+					inputSpace = 40,
+					input = e(settingCheckbox, {
+						id = "typecheckingEnabled",
+						transparency = self.props.transparency,
+					}),
+				}),
+
+				Layout = e("UIListLayout", {
+					FillDirection = Enum.FillDirection.Vertical,
+					SortOrder = Enum.SortOrder.LayoutOrder,
+
+					[Roact.Change.AbsoluteContentSize] = function(object)
+						self.setContentSize(object.AbsoluteContentSize)
+					end,
+				}),
+
+				Padding = e("UIPadding", {
+					PaddingLeft = UDim.new(0, 20),
+					PaddingRight = UDim.new(0, 20),
+				}),
+			})
+		end)
 	end)
 end
 
