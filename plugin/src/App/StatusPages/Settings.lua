@@ -270,10 +270,7 @@ function SettingsPage:render()
 					transparency = self.props.transparency,
 					layoutOrder = 5,
 
-					inputSpace = TextService:GetTextSize(
-						invertedLevels[settings:get("logLevel")] or "", 15, Enum.Font.Gotham,
-						Vector2.new(math.huge, 28)
-					).X + 45,
+					inputSpace = 115,
 					input = e(Dropdown, {
 						options = invertedLevels,
 						active = invertedLevels[settings:get("logLevel")],
