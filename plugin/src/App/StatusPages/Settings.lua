@@ -114,6 +114,18 @@ function Setting:render()
 		}, {
 			Input = self.props.input,
 
+			Reset = self.props.onReset and e(IconButton, {
+				icon = Assets.Images.Icons.Reset,
+				iconSize = 24,
+				color = theme.BackButtonColor,
+				transparency = self.props.transparency,
+
+				position = UDim2.new(1, -32 - self.props.inputSpace, 0.5, 0),
+				anchorPoint = Vector2.new(0, 0.5),
+
+				onClick = self.props.onReset,
+			}) or nil,
+
 			Text = e("Frame", {
 				Size = UDim2.new(1, 0, 1, 0),
 				BackgroundTransparency = 1,
@@ -143,11 +155,12 @@ function Setting:render()
 					TextWrapped = true,
 
 					Size = self.containerSize:map(function(value)
+						local offset = (self.props.onReset and 34 or 0) + (self.props.inputSpace or 5)
 						local textBounds = getTextBounds(
 							self.props.description, 14, Enum.Font.Gotham, 1.2,
-							Vector2.new(value.X - self.props.inputSpace, math.huge)
+							Vector2.new(value.X - offset, math.huge)
 						)
-						return UDim2.new(1, -self.props.inputSpace, 0, textBounds.Y)
+						return UDim2.new(1, -offset, 0, textBounds.Y)
 					end),
 
 					LayoutOrder = 2,
@@ -281,6 +294,10 @@ function SettingsPage:render()
 							settings:set("logLevel", Log.Level[option] or Log.Level.Info)
 						end,
 					}),
+
+					onReset = function()
+						settings:set("logLevel", Log.Level.Info)
+					end,
 				}),
 
 				Typecheck = e(Setting, {
