@@ -18,14 +18,6 @@ local e = Roact.createElement
 local Dropdown = Roact.Component:extend("Dropdown")
 
 function Dropdown:init()
-	local textSize = TextService:GetTextSize(
-		self.props.active, 15, Enum.Font.Gotham,
-		Vector2.new(math.huge, 28)
-	)
-
-	self.activeMotor = Flipper.SingleMotor.new(textSize.X + 35)
-	self.activeBinding = bindingUtil.fromMotor(self.activeMotor)
-
 	self.openMotor = Flipper.SingleMotor.new(0)
 	self.openBinding = bindingUtil.fromMotor(self.openMotor)
 
@@ -36,21 +28,7 @@ function Dropdown:init()
 	})
 end
 
-function Dropdown:didUpdate(lastProps)
-	if lastProps.active ~= self.props.active then
-		local textSize = TextService:GetTextSize(
-			self.props.active or "", 15, Enum.Font.Gotham,
-			Vector2.new(math.huge, 28)
-		)
-
-		self.activeMotor:setGoal(
-			Flipper.Spring.new(textSize.X + 40, {
-				frequency = 6,
-				dampingRatio = 1.1,
-			})
-		)
-	end
-
+function Dropdown:didUpdate()
 	self.openMotor:setGoal(
 		Flipper.Spring.new(self.state.open and 1 or 0, {
 			frequency = 6,
@@ -65,48 +43,43 @@ function Dropdown:render()
 
 		local optionButtons = {}
 		local width = -1
-
-		if self.state.open then
-			for i, option in self.props.options do
-				local textSize = TextService:GetTextSize(
-					tostring(option or ""), 15, Enum.Font.GothamMedium,
-					Vector2.new(math.huge, 20)
-				)
-				if textSize.X > width then
-					width = textSize.X
-				end
-
-				table.insert(optionButtons, e("TextButton", {
-					Text = tostring(option),
-					LayoutOrder = i,
-					Size = UDim2.new(1, 0, 0, 20),
-					BackgroundColor3 = theme.BackgroundColor,
-					TextTransparency = self.props.transparency,
-					BackgroundTransparency = self.props.transparency,
-					BorderSizePixel = 0,
-					TextColor3 = theme.TextColor,
-					TextXAlignment = Enum.TextXAlignment.Left,
-					TextSize = 15,
-					Font = Enum.Font.GothamMedium,
-
-					[Roact.Event.Activated] = function()
-						self:setState({
-							open = false,
-						})
-						self.props.onClick(option)
-					end,
-				}, {
-					Padding = e("UIPadding", {
-						PaddingLeft = UDim.new(0, 6),
-					}),
-				}))
+		for i, option in self.props.options do
+			local textSize = TextService:GetTextSize(
+				tostring(option or ""), 15, Enum.Font.GothamMedium,
+				Vector2.new(math.huge, 20)
+			)
+			if textSize.X > width then
+				width = textSize.X
 			end
+
+			table.insert(optionButtons, e("TextButton", {
+				Text = tostring(option),
+				LayoutOrder = i,
+				Size = UDim2.new(1, 0, 0, 20),
+				BackgroundColor3 = theme.BackgroundColor,
+				TextTransparency = self.props.transparency,
+				BackgroundTransparency = self.props.transparency,
+				BorderSizePixel = 0,
+				TextColor3 = theme.TextColor,
+				TextXAlignment = Enum.TextXAlignment.Left,
+				TextSize = 15,
+				Font = Enum.Font.GothamMedium,
+
+				[Roact.Event.Activated] = function()
+					self:setState({
+						open = false,
+					})
+					self.props.onClick(option)
+				end,
+			}, {
+				Padding = e("UIPadding", {
+					PaddingLeft = UDim.new(0, 6),
+				}),
+			}))
 		end
 
 		return e("ImageButton", {
-			Size = self.activeBinding:map(function(x)
-				return UDim2.new(0, x, 0, 28)
-			end),
+			Size = UDim2.new(0, width+50, 0, 28),
 			Position = self.props.position,
 			AnchorPoint = self.props.anchorPoint,
 			LayoutOrder = self.props.layoutOrder,
@@ -135,6 +108,9 @@ function Dropdown:render()
 					Size = UDim2.new(0, 20, 0, 20),
 					Position = UDim2.new(1, -6, 0.5, 0),
 					AnchorPoint = Vector2.new(1, 0.5),
+					Rotation = self.openBinding:map(function(a)
+						return a * 180
+					end),
 
 					BackgroundTransparency = 1,
 				}),
@@ -152,7 +128,7 @@ function Dropdown:render()
 			}),
 			Options = self.state.open and e(ScrollingFrame, {
 				position = UDim2.new(1, 0, 1, 0),
-				size = UDim2.new(0, width + 20, 3, 0),
+				size = UDim2.new(1, 0, 3, 0),
 				anchorPoint = Vector2.new(1, 0),
 				transparency = self.props.transparency,
 				contentSize = self.contentSize,
