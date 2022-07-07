@@ -119,6 +119,7 @@ function Setting:render()
 				iconSize = 24,
 				color = theme.BackButtonColor,
 				transparency = self.props.transparency,
+				visible = self.props.showReset,
 
 				position = UDim2.new(1, -32 - self.props.inputSpace, 0.5, 0),
 				anchorPoint = Vector2.new(0, 0.5),
@@ -295,6 +296,7 @@ function SettingsPage:render()
 						end,
 					}),
 
+					showReset = settings:get("logLevel") ~= Log.Level.Info,
 					onReset = function()
 						settings:set("logLevel", Log.Level.Info)
 					end,

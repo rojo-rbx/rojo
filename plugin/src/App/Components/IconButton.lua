@@ -29,6 +29,7 @@ function IconButton:render()
 		Position = self.props.position,
 		AnchorPoint = self.props.anchorPoint,
 
+		Visible = self.props.visible,
 		LayoutOrder = self.props.layoutOrder,
 		ZIndex = self.props.zIndex,
 		BackgroundTransparency = 1,
