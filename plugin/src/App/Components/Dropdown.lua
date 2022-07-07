@@ -55,7 +55,7 @@ function Dropdown:render()
 			table.insert(optionButtons, e("TextButton", {
 				Text = tostring(option),
 				LayoutOrder = i,
-				Size = UDim2.new(1, 0, 0, 20),
+				Size = UDim2.new(1, 0, 0, 24),
 				BackgroundColor3 = theme.BackgroundColor,
 				TextTransparency = self.props.transparency,
 				BackgroundTransparency = self.props.transparency,
