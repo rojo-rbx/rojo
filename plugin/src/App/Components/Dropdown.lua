@@ -126,27 +126,40 @@ function Dropdown:render()
 					TextTransparency = self.props.transparency,
 				}),
 			}),
-			Options = self.state.open and e(ScrollingFrame, {
-				position = UDim2.new(1, 0, 1, 0),
-				size = UDim2.new(1, 0, 3, 0),
+			Options = e(SlicedImage, {
+				visible = self.state.open,
+				slice = Assets.Slices.RoundedBackground,
+				color = theme.BackgroundColor,
+				position = UDim2.new(1, 0, 1, 3),
+				size = self.openBinding:map(function(a)
+					return UDim2.new(1, 0, a*math.min(3, #self.props.options), 0)
+				end),
 				anchorPoint = Vector2.new(1, 0),
-				transparency = self.props.transparency,
-				contentSize = self.contentSize,
 			}, {
-				Corner = e("UICorner", {
-					CornerRadius = UDim.new(0, 3),
+				Border = e(SlicedImage, {
+					slice = Assets.Slices.RoundedBorder,
+					color = theme.BorderColor,
+					transparency = self.props.transparency,
+					size = UDim2.new(1, 0, 1, 0),
 				}),
-				Layout = e("UIListLayout", {
-					VerticalAlignment = Enum.VerticalAlignment.Top,
-					FillDirection = Enum.FillDirection.Vertical,
-					SortOrder = Enum.SortOrder.LayoutOrder,
-					Padding = UDim.new(0, 0),
+				ScrollingFrame = e(ScrollingFrame, {
+					size = UDim2.new(1, -4, 1, -4),
+					position = UDim2.new(0, 2, 0, 2),
+					transparency = self.props.transparency,
+					contentSize = self.contentSize,
+				}, {
+					Layout = e("UIListLayout", {
+						VerticalAlignment = Enum.VerticalAlignment.Top,
+						FillDirection = Enum.FillDirection.Vertical,
+						SortOrder = Enum.SortOrder.LayoutOrder,
+						Padding = UDim.new(0, 0),
 
-					[Roact.Change.AbsoluteContentSize] = function(object)
-						self.setContentSize(object.AbsoluteContentSize)
-					end,
+						[Roact.Change.AbsoluteContentSize] = function(object)
+							self.setContentSize(object.AbsoluteContentSize)
+						end,
+					}),
+					table.unpack(optionButtons),
 				}),
-				table.unpack(optionButtons),
 			}) or nil,
 		})
 	end)

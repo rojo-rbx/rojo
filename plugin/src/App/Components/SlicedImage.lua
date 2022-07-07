@@ -8,6 +8,8 @@ local function SlicedImage(props)
 	local slice = props.slice
 
 	return e("ImageLabel", {
+		Visible = props.visible,
+
 		Image = slice.Image,
 		ImageColor3 = props.color,
 		ImageTransparency = props.transparency,
