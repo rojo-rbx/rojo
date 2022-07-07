@@ -105,7 +105,7 @@ function Dropdown:render()
 					end),
 					ImageTransparency = self.props.transparency,
 
-					Size = UDim2.new(0, 20, 0, 20),
+					Size = UDim2.new(0, 18, 0, 18),
 					Position = UDim2.new(1, -6, 0.5, 0),
 					AnchorPoint = Vector2.new(1, 0.5),
 					Rotation = self.openBinding:map(function(a)
