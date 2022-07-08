@@ -349,6 +349,10 @@ return function(props)
 		plugin = props.plugin,
 	}, {
 		App = PluginSettings.with(function(settings)
+			Log.setLogLevelThunk(function()
+				return settings:get("logLevel")
+			end)
+
 			local mergedProps = Dictionary.merge(props, {
 				settings = settings,
 				soundPlayer = soundPlayer.new(settings),
