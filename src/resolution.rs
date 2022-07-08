@@ -138,7 +138,7 @@ impl AmbiguousValue {
 
                     Ok(CFrame::new(pos, orientation).into())
                 }
-                
+
                 (VariantType::Attributes, AmbiguousValue::UnresolvedValueMap(value)) => {
                     let mut resolved = Attributes::new();
 
@@ -166,7 +166,7 @@ impl AmbiguousValue {
         }
     }
 
-    pub fn resolve_implicit(self, attribute_name: &str) -> anyhow::Result<Variant>  {
+    pub fn resolve_implicit(self, attribute_name: &str) -> anyhow::Result<Variant> {
         match self {
             AmbiguousValue::Bool(value) => Ok(value.into()),
             AmbiguousValue::Number(value) => Ok(value.into()),
@@ -175,7 +175,7 @@ impl AmbiguousValue {
             _ => Err(format_err!(
                 "Cannot disambiguate implicit value of attribute {}",
                 attribute_name,
-            ))
+            )),
         }
     }
 
@@ -257,10 +257,16 @@ mod test {
 
     #[test]
     fn bools() {
-        assert_eq!(resolve_explicit("BoolValue", "Value", "false"), Variant::Bool(false));
+        assert_eq!(
+            resolve_explicit("BoolValue", "Value", "false"),
+            Variant::Bool(false)
+        );
 
         // Script.Disabled is inherited from BaseScript
-        assert_eq!(resolve_explicit("Script", "Disabled", "true"), Variant::Bool(true));
+        assert_eq!(
+            resolve_explicit("Script", "Disabled", "true"),
+            Variant::Bool(true)
+        );
 
         // Check implicit attribute values
         assert_eq!(resolve_implicit("TestBool", "false"), Variant::Bool(false));
@@ -308,8 +314,14 @@ mod test {
             Variant::Int64(532413),
         );
 
-        assert_eq!(resolve_explicit("Part", "Transparency", "1"), Variant::Float32(1.0));
-        assert_eq!(resolve_explicit("NumberValue", "Value", "1"), Variant::Float64(1.0));
+        assert_eq!(
+            resolve_explicit("Part", "Transparency", "1"),
+            Variant::Float32(1.0)
+        );
+        assert_eq!(
+            resolve_explicit("NumberValue", "Value", "1"),
+            Variant::Float64(1.0)
+        );
         assert_eq!(resolve_implicit("TestNumber", "1"), Variant::Float64(1.0));
     }
 
