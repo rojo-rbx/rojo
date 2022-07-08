@@ -92,7 +92,7 @@ impl JsonModel {
 
         let mut properties = HashMap::with_capacity(self.properties.len());
         for (key, unresolved) in self.properties {
-            let value = unresolved.resolve(&class_name, &key)?;
+            let value = unresolved.resolve_explicit(&class_name, &key)?;
             properties.insert(key, value);
         }
 

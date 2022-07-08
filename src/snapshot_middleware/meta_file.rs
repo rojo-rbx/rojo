@@ -46,7 +46,7 @@ impl AdjacentMetadata {
 
         for (key, unresolved) in self.properties.drain() {
             let value = unresolved
-                .resolve(&snapshot.class_name, &key)
+                .resolve_explicit(&snapshot.class_name, &key)
                 .with_context(|| format!("error applying meta file {}", path.display()))?;
 
             snapshot.properties.insert(key, value);
@@ -133,7 +133,7 @@ impl DirectoryMetadata {
 
         for (key, unresolved) in self.properties.drain() {
             let value = unresolved
-                .resolve(&snapshot.class_name, &key)
+                .resolve_explicit(&snapshot.class_name, &key)
                 .with_context(|| format!("error applying meta file {}", path.display()))?;
 
             snapshot.properties.insert(key, value);

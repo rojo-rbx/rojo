@@ -1,6 +1,5 @@
 ---
 source: tests/tests/build.rs
-assertion_line: 99
 expression: contents
 ---
 <roblox version="4">
@@ -17,7 +16,7 @@ expression: contents
     <Item class="Folder" referent="2">
       <Properties>
         <string name="Name">ImplicitAttributes</string>
-        <BinaryString name="AttributesSerialize">AgAAAAMAAABIZXkCBwAAAEdyYW5kbWEGAAAAVmVjdG9yEQAAgEAAAKBAAADAQA==</BinaryString>
+        <BinaryString name="AttributesSerialize">BAAAAAQAAABCb29sAwEDAAAASGV5AgcAAABHcmFuZG1hBAAAAFRlc3QGAAAAAAAA4D8GAAAAVmVjdG9yEQAAgEAAAKBAAADAQA==</BinaryString>
       </Properties>
     </Item>
   </Item>

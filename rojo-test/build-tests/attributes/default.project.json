@@ -23,9 +23,9 @@
       "$className": "Folder",
       "$properties": {
         "Attributes": {
-          "Hey": {
-            "String": "Grandma"
-          },
+          "Hey": "Grandma",
+          "Test": 0.5,
+          "Bool": true,
           "Vector": {
             "Vector3": [4, 5, 6]
           }
