@@ -144,7 +144,7 @@ impl AmbiguousValue {
 
                     for (name, unresolved) in value {
                         let value = unresolved.resolve_unambiguous().with_context(|| {
-                            format!("Could not resolve value type of attribute '{name}'!")
+                            format!("Could not resolve value type of attribute '{}'!", name)
                         })?;
 
                         resolved.insert(name.into(), value);
