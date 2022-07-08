@@ -1,7 +1,7 @@
 use std::borrow::Borrow;
 use std::collections::HashMap;
 
-use anyhow::format_err;
+use anyhow::{bail, format_err, Context};
 use rbx_dom_weak::types::{
     Attributes, CFrame, Color3, Content, Enum, Matrix3, Tags, Variant, VariantType, Vector2,
     Vector3,
@@ -23,17 +23,17 @@ pub enum UnresolvedValue {
 }
 
 impl UnresolvedValue {
-    pub fn resolve_explicit(self, class_name: &str, prop_name: &str) -> anyhow::Result<Variant> {
+    pub fn resolve(self, class_name: &str, prop_name: &str) -> anyhow::Result<Variant> {
         match self {
             UnresolvedValue::FullyQualified(full) => Ok(full),
-            UnresolvedValue::Ambiguous(partial) => partial.resolve_explicit(class_name, prop_name),
+            UnresolvedValue::Ambiguous(partial) => partial.resolve(class_name, prop_name),
         }
     }
 
-    pub fn resolve_implicit(self, attribute_name: &str) -> anyhow::Result<Variant> {
+    pub fn resolve_unambiguous(self) -> anyhow::Result<Variant> {
         match self {
             UnresolvedValue::FullyQualified(full) => Ok(full),
-            UnresolvedValue::Ambiguous(partial) => partial.resolve_implicit(attribute_name),
+            UnresolvedValue::Ambiguous(partial) => partial.resolve_unambiguous(),
         }
     }
 }
@@ -54,7 +54,7 @@ pub enum AmbiguousValue {
 }
 
 impl AmbiguousValue {
-    pub fn resolve_explicit(self, class_name: &str, prop_name: &str) -> anyhow::Result<Variant> {
+    pub fn resolve(self, class_name: &str, prop_name: &str) -> anyhow::Result<Variant> {
         let property = find_descriptor(class_name, prop_name)
             .ok_or_else(|| format_err!("Unknown property {}.{}", class_name, prop_name))?;
 
@@ -143,8 +143,11 @@ impl AmbiguousValue {
                     let mut resolved = Attributes::new();
 
                     for (name, unresolved) in value {
-                        let value = unresolved.resolve_implicit(&name);
-                        resolved.insert(name.into(), value.unwrap());
+                        let value = unresolved.resolve_unambiguous().with_context(|| {
+                            format!("Could not resolve value type of attribute '{name}'!")
+                        })?;
+
+                        resolved.insert(name.into(), value);
                     }
 
                     Ok(resolved.into())
@@ -166,16 +169,13 @@ impl AmbiguousValue {
         }
     }
 
-    pub fn resolve_implicit(self, attribute_name: &str) -> anyhow::Result<Variant> {
+    pub fn resolve_unambiguous(self) -> anyhow::Result<Variant> {
         match self {
             AmbiguousValue::Bool(value) => Ok(value.into()),
             AmbiguousValue::Number(value) => Ok(value.into()),
             AmbiguousValue::String(value) => Ok(value.into()),
 
-            _ => Err(format_err!(
-                "Cannot disambiguate implicit value of attribute {}",
-                attribute_name,
-            )),
+            _ => bail!("Cannot unambiguously resolve type!"),
         }
     }
 
@@ -245,45 +245,39 @@ fn nonexhaustive_list(values: &[&str]) -> String {
 mod test {
     use super::*;
 
-    fn resolve_explicit(class: &str, prop: &str, json_value: &str) -> Variant {
+    fn resolve(class: &str, prop: &str, json_value: &str) -> Variant {
         let unresolved: UnresolvedValue = serde_json::from_str(json_value).unwrap();
-        unresolved.resolve_explicit(class, prop).unwrap()
+        unresolved.resolve(class, prop).unwrap()
     }
 
-    fn resolve_implicit(name: &str, json_value: &str) -> Variant {
+    fn resolve_unambiguous(json_value: &str) -> Variant {
         let unresolved: UnresolvedValue = serde_json::from_str(json_value).unwrap();
-        unresolved.resolve_implicit(name).unwrap()
+        unresolved.resolve_unambiguous().unwrap()
     }
 
     #[test]
     fn bools() {
-        assert_eq!(
-            resolve_explicit("BoolValue", "Value", "false"),
-            Variant::Bool(false)
-        );
+        assert_eq!(resolve("BoolValue", "Value", "false"), Variant::Bool(false));
 
         // Script.Disabled is inherited from BaseScript
-        assert_eq!(
-            resolve_explicit("Script", "Disabled", "true"),
-            Variant::Bool(true)
-        );
+        assert_eq!(resolve("Script", "Disabled", "true"), Variant::Bool(true));
 
-        // Check implicit attribute values
-        assert_eq!(resolve_implicit("TestBool", "false"), Variant::Bool(false));
-        assert_eq!(resolve_implicit("TestBool", "true"), Variant::Bool(true));
+        // Check unambiguous boolean values
+        assert_eq!(resolve_unambiguous("false"), Variant::Bool(false));
+        assert_eq!(resolve_unambiguous("true"), Variant::Bool(true));
     }
 
     #[test]
     fn strings() {
         // String literals can stay as strings
         assert_eq!(
-            resolve_explicit("StringValue", "Value", "\"Hello!\""),
+            resolve("StringValue", "Value", "\"Hello!\""),
             Variant::String("Hello!".into()),
         );
 
         // String literals can also turn into Content
         assert_eq!(
-            resolve_explicit("Sky", "MoonTextureId", "\"rbxassetid://12345\""),
+            resolve("Sky", "MoonTextureId", "\"rbxassetid://12345\""),
             Variant::Content("rbxassetid://12345".into()),
         );
 
@@ -291,13 +285,13 @@ mod test {
         // don't support any shorthands for BinaryString.
         //
         // assert_eq!(
-        //     resolve_explicit("Folder", "Tags", "\"a\\u0000b\\u0000c\""),
+        //     resolve("Folder", "Tags", "\"a\\u0000b\\u0000c\""),
         //     Variant::BinaryString(b"a\0b\0c".to_vec().into()),
         // );
 
-        // Check implicit attribute value
+        // Check unambiguous string value
         assert_eq!(
-            resolve_implicit("TestString", "\"Hello world!\""),
+            resolve_unambiguous("\"Hello world!\""),
             Variant::String("Hello world!".into()),
         );
     }
@@ -305,35 +299,30 @@ mod test {
     #[test]
     fn numbers() {
         assert_eq!(
-            resolve_explicit("Part", "CollisionGroupId", "123"),
+            resolve("Part", "CollisionGroupId", "123"),
             Variant::Int32(123),
         );
 
         assert_eq!(
-            resolve_explicit("IntValue", "Value", "532413"),
+            resolve("IntValue", "Value", "532413"),
             Variant::Int64(532413),
         );
 
-        assert_eq!(
-            resolve_explicit("Part", "Transparency", "1"),
-            Variant::Float32(1.0)
-        );
-        assert_eq!(
-            resolve_explicit("NumberValue", "Value", "1"),
-            Variant::Float64(1.0)
-        );
-        assert_eq!(resolve_implicit("TestNumber", "1"), Variant::Float64(1.0));
+        assert_eq!(resolve("Part", "Transparency", "1"), Variant::Float32(1.0));
+        assert_eq!(resolve("NumberValue", "Value", "1"), Variant::Float64(1.0));
+
+        assert_eq!(resolve_unambiguous("1.337"), Variant::Float64(1.337));
     }
 
     #[test]
     fn vectors() {
         assert_eq!(
-            resolve_explicit("ParticleEmitter", "SpreadAngle", "[1, 2]"),
+            resolve("ParticleEmitter", "SpreadAngle", "[1, 2]"),
             Variant::Vector2(Vector2::new(1.0, 2.0)),
         );
 
         assert_eq!(
-            resolve_explicit("Part", "Position", "[4, 5, 6]"),
+            resolve("Part", "Position", "[4, 5, 6]"),
             Variant::Vector3(Vector3::new(4.0, 5.0, 6.0)),
         );
     }
@@ -341,7 +330,7 @@ mod test {
     #[test]
     fn colors() {
         assert_eq!(
-            resolve_explicit("Part", "Color", "[1, 1, 1]"),
+            resolve("Part", "Color", "[1, 1, 1]"),
             Variant::Color3(Color3::new(1.0, 1.0, 1.0)),
         );
 
@@ -352,7 +341,7 @@ mod test {
     #[test]
     fn enums() {
         assert_eq!(
-            resolve_explicit("Lighting", "Technology", "\"Voxel\""),
+            resolve("Lighting", "Technology", "\"Voxel\""),
             Variant::Enum(Enum::from_u32(1)),
         );
     }

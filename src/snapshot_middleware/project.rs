@@ -206,7 +206,7 @@ pub fn snapshot_project_node(
     for (key, unresolved) in &node.properties {
         let value = unresolved
             .clone()
-            .resolve_explicit(&class_name, key)
+            .resolve(&class_name, key)
             .with_context(|| {
                 format!(
                     "Unresolvable property in project at path {}",
