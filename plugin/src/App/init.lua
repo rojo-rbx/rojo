@@ -8,6 +8,7 @@ local Assets = require(Plugin.Assets)
 local Version = require(Plugin.Version)
 local Config = require(Plugin.Config)
 local strict = require(Plugin.strict)
+local settingsPortal = require(Plugin.settingsPortal)
 local Dictionary = require(Plugin.Dictionary)
 local ServeSession = require(Plugin.ServeSession)
 local ApiContext = require(Plugin.ApiContext)
@@ -358,6 +359,10 @@ return function(props)
 				soundPlayer = soundPlayer.new(settings),
 			})
 			return e(App, mergedProps)
+		end),
+
+		exposeSettings = PluginSettings.with(function(settings)
+			return e(settingsPortal.consumer, {settings = settings})
 		end),
 	})
 end
