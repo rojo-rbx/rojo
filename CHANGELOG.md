@@ -2,6 +2,14 @@
 
 ## Unreleased Changes
 
+## [7.2.1] - July 8, 2022
+* Fixed notification sound by changing it to a generic sound. ([#566])
+* Added setting to turn off sound effects. ([#568])
+
+[#566]: https://github.com/rojo-rbx/rojo/pull/566
+[#568]: https://github.com/rojo-rbx/rojo/pull/568
+[7.2.0]: https://github.com/rojo-rbx/rojo/releases/tag/v7.2.0
+
 ## [7.2.0] - June 29, 2022
 * Added support for `.luau` files. ([#552])
 * Added support for live syncing Attributes and Tags. ([#553])
