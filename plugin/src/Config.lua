@@ -5,8 +5,8 @@ local isDevBuild = script.Parent.Parent:FindFirstChild("ROJO_DEV_BUILD") ~= nil
 return strict("Config", {
 	isDevBuild = isDevBuild,
 	codename = "Epiphany",
-	version = {7, 2, 0},
-	expectedServerVersionString = "7.0 or newer",
+	version = {7, 2, 1},
+	expectedServerVersionString = "7.2 or newer",
 	protocolVersion = 4,
 	defaultHost = "localhost",
 	defaultPort = 34872,
