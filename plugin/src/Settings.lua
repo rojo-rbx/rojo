@@ -1,0 +1,100 @@
+--[[
+	Persistent plugin settings that can be accessed via Roact bindings.
+]]
+
+local plugin = plugin or script:FindFirstAncestorWhichIsA("Plugin")
+local Rojo = script:FindFirstAncestor("Rojo")
+
+local Roact = require(Rojo.Roact)
+local Log = require(Rojo.Log)
+
+local defaultSettings = {
+	openScriptsExternally = false,
+	twoWaySync = false,
+	showNotifications = true,
+	playSounds = true,
+}
+
+local Settings = {}
+
+Settings._values = table.clone(defaultSettings)
+Settings._updateListeners = {}
+Settings._bindings = {}
+
+if plugin then
+	for name, defaultValue in pairs(Settings._values) do
+		local savedValue = plugin:GetSetting("Rojo_" .. name)
+
+		if savedValue == nil then
+			-- plugin:SetSetting hits disc instead of memory, so it can be slow. Spawn so we don't hang.
+			task.spawn(plugin.SetSetting, plugin, "Rojo_" .. name, defaultValue)
+			Settings._values[name] = defaultValue
+		else
+			Settings._values[name] = savedValue
+		end
+	end
+	Log.trace("Loaded settings from plugin store")
+end
+
+function Settings:get(name)
+	if defaultSettings[name] == nil then
+		error("Invalid setings name " .. tostring(name), 2)
+	end
+
+	return self._values[name]
+end
+
+function Settings:set(name, value)
+	self._values[name] = value
+	if self._bindings[name] then
+		self._bindings[name].set(value)
+	end
+
+	if plugin then
+		-- plugin:SetSetting hits disc instead of memory, so it can be slow. Spawn so we don't hang.
+		task.spawn(plugin.SetSetting, plugin, "Rojo_" .. name, value)
+	end
+
+	Log.trace(string.format("Set setting '%s' to '%s'", name, tostring(value)))
+
+	if self._updateListeners[name] then
+		for callback in pairs(self._updateListeners[name]) do
+			callback(value)
+		end
+	end
+end
+
+function Settings:onChanged(name, callback)
+	local listeners = self._updateListeners[name]
+	if listeners == nil then
+		listeners = {}
+		self._updateListeners[name] = listeners
+	end
+	listeners[callback] = true
+
+	Log.trace(string.format("Added listener for setting '%s' changes", name))
+
+	return function()
+		listeners[callback] = nil
+		Log.trace(string.format("Removed listener for setting '%s' changes", name))
+	end
+end
+
+function Settings:getBinding(name)
+	local cached = self._bindings[name]
+	if cached then
+		return cached.bind
+	end
+
+	local bind, set = Roact.createBinding(self._values[name])
+	self._bindings[name] = {
+		bind = bind,
+		set = set,
+	}
+
+	Log.trace(string.format("Created binding for setting '%s'", name))
+
+	return bind
+end
+
+return Settings
