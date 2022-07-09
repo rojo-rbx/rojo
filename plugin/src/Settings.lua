@@ -55,13 +55,13 @@ function Settings:set(name, value)
 		task.spawn(plugin.SetSetting, plugin, "Rojo_" .. name, value)
 	end
 
-	Log.trace(string.format("Set setting '%s' to '%s'", name, tostring(value)))
-
 	if self._updateListeners[name] then
 		for callback in pairs(self._updateListeners[name]) do
-			callback(value)
+			task.spawn(callback, value)
 		end
 	end
+
+	Log.trace(string.format("Set setting '%s' to '%s'", name, tostring(value)))
 end
 
 function Settings:onChanged(name, callback)

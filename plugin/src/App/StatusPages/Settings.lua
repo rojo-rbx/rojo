@@ -72,11 +72,15 @@ function Setting:init()
 		setting = Settings:get(self.props.id),
 	})
 
-	Settings:onChanged(self.props.id, function(value)
+	self.changedCleanup = Settings:onChanged(self.props.id, function(value)
 		self:setState({
 			setting = value,
 		})
 	end)
+end
+
+function Settings:willUnmount()
+	self.changedCleanup()
 end
 
 function Setting:render()
