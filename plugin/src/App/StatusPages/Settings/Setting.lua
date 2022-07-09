@@ -40,7 +40,7 @@ function Setting:init()
 	end)
 end
 
-function Settings:willUnmount()
+function Setting:willUnmount()
 	self.changedCleanup()
 end
 
