@@ -2,29 +2,107 @@
   "name": "attributes",
   "tree": {
     "$className": "Folder",
-
-    "Explicit": {
+    "ImplicitAttributes": {
+      "$className": "Folder",
+      "$attributes": {
+        "Bool": true,
+        "Number": 0.5,
+        "String": "Test"
+      }
+    },
+    "ExplicitAttributes": {
+      "$className": "Folder",
+      "$attributes": {
+        "Bool": {
+          "Bool": true 
+        },
+        "Float32": {
+          "Float32": 0
+        },
+        "Float64": {
+          "Float64": 0
+        },
+        "UDim": {
+          "UDim": [0, 0]
+        },
+        "UDim2": {
+          "UDim2": [[0, 0], [0, 0]]
+        },
+        "BrickColor": {
+          "BrickColor": 1
+        },
+        "Color3": {
+          "Color3": [0, 0, 0]
+        },
+        "Vector2": {
+          "Vector2": [0, 0] 
+        },
+        "Vector3": {
+          "Vector3": [0, 0, 0]
+        },
+        "NumberSequence": {
+          "NumberSequence": {
+            "keypoints": [
+              {
+                "time": 0,
+                "value": 0,
+                "envelope": 0
+              },
+              {
+                "time": 1,
+                "value": 0,
+                "envelope": 0
+              }
+            ]
+          }
+        },
+        "ColorSequence": {
+          "ColorSequence": {
+            "keypoints": [
+              {
+                "time": 0,
+                "color": [1, 1, 1]
+              },
+              {
+                "time": 1,
+                "color": [1, 1, 1]
+              }
+            ]
+          }
+        },
+        "NumberRange": {
+          "NumberRange": [0, 0]
+        },
+        "Rect": {
+          "Rect": [[0, 0], [0, 0]]
+        }
+      }
+    },
+    "LegacyExplicit": {
       "$className": "Folder",
       "$properties": {
         "Attributes": {
-          "Hello": {
-            "String": "World"
-          },
-          "Vector": {
-            "Vector3": [1, 2, 3]
+          "Attributes": {
+            "Hello": {
+              "String": "World"
+            },
+            "Vector": {
+              "Vector3": [1, 2, 3]
+            }
           }
         }
       }
     },
-
-    "ImplicitAttributes": {
+    "LegacyImplicit": {
       "$className": "Folder",
-      "$attributes": {
-        "Hey": "Grandma",
-        "Test": 0.5,
-        "Bool": true,
-        "Vector": {
-          "Vector3": [4, 5, 6]
+      "$properties": {
+        "Attributes": {
+          "Hey": {
+            "String": "Grandma"
+          },
+          "Vector": {
+            "Vector3": [4, 5, 6]
+          }
         }
       }
     }
