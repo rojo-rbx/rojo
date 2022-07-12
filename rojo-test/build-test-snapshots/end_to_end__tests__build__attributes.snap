@@ -9,13 +9,13 @@ expression: contents
     </Properties>
     <Item class="Folder" referent="1">
       <Properties>
-        <string name="Name">ExplicitAttributes</string>
+        <string name="Name">Explicit</string>
         <BinaryString name="AttributesSerialize">DQAAAAQAAABCb29sAwEKAAAAQnJpY2tDb2xvcg4BAAAABgAAAENvbG9yMw8AAAAAAAAAAAAAAAANAAAAQ29sb3JTZXF1ZW5jZRkCAAAAAAAAAAAAAAAAAIA/AACAPwAAgD8AAAAAAACAPwAAgD8AAIA/AACAPwcAAABGbG9hdDMyBQAAAAAHAAAARmxvYXQ2NAYAAAAAAAAAAAsAAABOdW1iZXJSYW5nZRsAAAAAAAAAAA4AAABOdW1iZXJTZXF1ZW5jZRcCAAAAAAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAABAAAAFJlY3QcAAAAAAAAAAAAAAAAAAAAAAQAAABVRGltCQAAAAAAAAAABQAAAFVEaW0yCgAAAAAAAAAAAAAAAAAAAAAHAAAAVmVjdG9yMhAAAAAAAAAAAAcAAABWZWN0b3IzEQAAAAAAAAAAAAAAAA==</BinaryString>
       </Properties>
     </Item>
     <Item class="Folder" referent="2">
       <Properties>
-        <string name="Name">ImplicitAttributes</string>
+        <string name="Name">Implicit</string>
         <BinaryString name="AttributesSerialize">AwAAAAQAAABCb29sAwEGAAAATnVtYmVyBgAAAAAAAOA/BgAAAFN0cmluZwIEAAAAVGVzdA==</BinaryString>
       </Properties>
     </Item>

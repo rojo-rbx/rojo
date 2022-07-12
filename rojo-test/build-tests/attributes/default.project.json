@@ -2,7 +2,8 @@
   "name": "attributes",
   "tree": {
     "$className": "Folder",
-    "ImplicitAttributes": {
+
+    "Implicit": {
       "$className": "Folder",
       "$attributes": {
         "Bool": true,
@@ -10,7 +11,8 @@
         "String": "Test"
       }
     },
-    "ExplicitAttributes": {
+
+    "Explicit": {
       "$className": "Folder",
       "$attributes": {
         "Bool": {
@@ -78,6 +80,7 @@
         }
       }
     },
+
     "LegacyExplicit": {
       "$className": "Folder",
       "$properties": {
@@ -93,6 +96,7 @@
         }
       }
     },
+
     "LegacyImplicit": {
       "$className": "Folder",
       "$properties": {
