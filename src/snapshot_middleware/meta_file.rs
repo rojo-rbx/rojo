@@ -153,7 +153,7 @@ impl DirectoryMetadata {
 
             snapshot
                 .properties
-                .insert("Attributes".to_string(), attributes.into());
+                .insert("Attributes".into(), attributes.into());
         }
 
         Ok(())

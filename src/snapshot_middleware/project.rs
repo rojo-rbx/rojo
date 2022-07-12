@@ -246,7 +246,7 @@ pub fn snapshot_project_node(
             attributes.insert(key.clone(), value);
         }
 
-        properties.insert("Attributes".to_string(), attributes.into());
+        properties.insert("Attributes".into(), attributes.into());
     }
 
     // If the user specified $ignoreUnknownInstances, overwrite the existing

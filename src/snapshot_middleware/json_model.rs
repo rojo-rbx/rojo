@@ -108,7 +108,7 @@ impl JsonModel {
                 attributes.insert(key, value);
             }
 
-            properties.insert("Attributes".to_string(), attributes.into());
+            properties.insert("Attributes".into(), attributes.into());
         }
 
         Ok(InstanceSnapshot {
