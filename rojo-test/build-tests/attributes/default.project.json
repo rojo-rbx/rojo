@@ -7,13 +7,11 @@
       "$className": "Folder",
       "$properties": {
         "Attributes": {
-          "Attributes": {
-            "Hello": {
-              "String": "World"
-            },
-            "Vector": {
-              "Vector3": [1, 2, 3]
-            }
+          "Hello": {
+            "String": "World"
+          },
+          "Vector": {
+            "Vector3": [1, 2, 3]
           }
         }
       }
@@ -21,14 +19,12 @@
 
     "ImplicitAttributes": {
       "$className": "Folder",
-      "$properties": {
-        "Attributes": {
-          "Hey": "Grandma",
-          "Test": 0.5,
-          "Bool": true,
-          "Vector": {
-            "Vector3": [4, 5, 6]
-          }
+      "$attributes": {
+        "Hey": "Grandma",
+        "Test": 0.5,
+        "Bool": true,
+        "Vector": {
+          "Vector3": [4, 5, 6]
         }
       }
     }
