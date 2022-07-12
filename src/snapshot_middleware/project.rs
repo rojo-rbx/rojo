@@ -2,6 +2,7 @@ use std::{borrow::Cow, collections::HashMap, path::Path};
 
 use anyhow::{bail, Context};
 use memofs::Vfs;
+use rbx_dom_weak::types::Attributes;
 use rbx_reflection::ClassTag;
 
 use crate::{
@@ -229,6 +230,23 @@ pub fn snapshot_project_node(
         }
 
         properties.insert(key.clone(), value);
+    }
+
+    if !node.attributes.is_empty() {
+        let mut attributes = Attributes::new();
+
+        for (key, unresolved) in &node.attributes {
+            let value = unresolved.clone().resolve_unambiguous().with_context(|| {
+                format!(
+                    "Unresolvable attribute in project at path {}",
+                    project_path.display()
+                )
+            })?;
+
+            attributes.insert(key.clone(), value);
+        }
+
+        properties.insert("Attributes".to_string(), attributes.into());
     }
 
     // If the user specified $ignoreUnknownInstances, overwrite the existing

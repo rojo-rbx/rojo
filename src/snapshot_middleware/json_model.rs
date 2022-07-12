@@ -2,6 +2,7 @@ use std::{borrow::Cow, collections::HashMap, path::Path, str};
 
 use anyhow::Context;
 use memofs::Vfs;
+use rbx_dom_weak::types::Attributes;
 use serde::Deserialize;
 
 use crate::{
@@ -78,6 +79,9 @@ struct JsonModel {
         skip_serializing_if = "HashMap::is_empty"
     )]
     properties: HashMap<String, UnresolvedValue>,
+
+    #[serde(default = "HashMap::new", skip_serializing_if = "HashMap::is_empty")]
+    attributes: HashMap<String, UnresolvedValue>,
 }
 
 impl JsonModel {
@@ -94,6 +98,17 @@ impl JsonModel {
         for (key, unresolved) in self.properties {
             let value = unresolved.resolve(&class_name, &key)?;
             properties.insert(key, value);
+        }
+
+        if !self.attributes.is_empty() {
+            let mut attributes = Attributes::new();
+
+            for (key, unresolved) in self.attributes {
+                let value = unresolved.resolve_unambiguous()?;
+                attributes.insert(key, value);
+            }
+
+            properties.insert("Attributes".to_string(), attributes.into());
         }
 
         Ok(InstanceSnapshot {

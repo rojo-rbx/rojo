@@ -1,6 +1,7 @@
 use std::{borrow::Cow, collections::HashMap, path::PathBuf};
 
 use anyhow::{format_err, Context};
+use rbx_dom_weak::types::Attributes;
 use serde::{Deserialize, Serialize};
 
 use crate::{resolution::UnresolvedValue, snapshot::InstanceSnapshot};
@@ -78,6 +79,9 @@ pub struct DirectoryMetadata {
     #[serde(default, skip_serializing_if = "HashMap::is_empty")]
     pub properties: HashMap<String, UnresolvedValue>,
 
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    pub attributes: HashMap<String, UnresolvedValue>,
+
     #[serde(skip_serializing_if = "Option::is_none")]
     pub class_name: Option<String>,
 
@@ -137,6 +141,19 @@ impl DirectoryMetadata {
                 .with_context(|| format!("error applying meta file {}", path.display()))?;
 
             snapshot.properties.insert(key, value);
+        }
+
+        if !self.attributes.is_empty() {
+            let mut attributes = Attributes::new();
+
+            for (key, unresolved) in self.attributes.drain() {
+                let value = unresolved.resolve_unambiguous()?;
+                attributes.insert(key, value);
+            }
+
+            snapshot
+                .properties
+                .insert("Attributes".to_string(), attributes.into());
         }
 
         Ok(())

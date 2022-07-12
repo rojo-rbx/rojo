@@ -1,7 +1,6 @@
 use std::borrow::Borrow;
-use std::collections::HashMap;
 
-use anyhow::{bail, format_err, Context};
+use anyhow::{bail, format_err};
 use rbx_dom_weak::types::{
     Attributes, CFrame, Color3, Content, Enum, Matrix3, Tags, Variant, VariantType, Vector2,
     Vector3,
@@ -50,7 +49,6 @@ pub enum AmbiguousValue {
     Array4([f64; 4]),
     Array12([f64; 12]),
     Attributes(Attributes),
-    UnresolvedValueMap(HashMap<String, UnresolvedValue>),
 }
 
 impl AmbiguousValue {
@@ -139,19 +137,7 @@ impl AmbiguousValue {
                     Ok(CFrame::new(pos, orientation).into())
                 }
 
-                (VariantType::Attributes, AmbiguousValue::UnresolvedValueMap(value)) => {
-                    let mut resolved = Attributes::new();
-
-                    for (name, unresolved) in value {
-                        let value = unresolved.resolve_unambiguous().with_context(|| {
-                            format!("Could not resolve value type of attribute '{}'!", name)
-                        })?;
-
-                        resolved.insert(name.into(), value);
-                    }
-
-                    Ok(resolved.into())
-                }
+                (VariantType::Attributes, AmbiguousValue::Attributes(value)) => Ok(value.into()),
 
                 (_, unresolved) => Err(format_err!(
                     "Wrong type of value for property {}.{}. Expected {:?}, got {}",
@@ -190,7 +176,6 @@ impl AmbiguousValue {
             AmbiguousValue::Array4(_) => "an array of four numbers",
             AmbiguousValue::Array12(_) => "an array of twelve numbers",
             AmbiguousValue::Attributes(_) => "an object containing attributes",
-            AmbiguousValue::UnresolvedValueMap(_) => "a map of strings to unresolved values",
         }
     }
 }
