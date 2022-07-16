@@ -3,6 +3,7 @@ use std::{borrow::Cow, collections::HashMap, path::Path, str};
 use anyhow::Context;
 use memofs::Vfs;
 use serde::Deserialize;
+use rbx_dom_weak::types::Ref;
 
 use crate::{
     resolution::UnresolvedValue,
@@ -65,6 +66,9 @@ struct JsonModel {
     #[serde(alias = "ClassName")]
     class_name: String,
 
+    #[serde(alias = "Reference")]
+    reference: Option<String>,
+
     #[serde(
         alias = "Children",
         default = "Vec::new",
@@ -84,6 +88,7 @@ impl JsonModel {
     fn into_snapshot(self) -> anyhow::Result<InstanceSnapshot> {
         let name = self.name.unwrap_or_else(|| self.class_name.clone());
         let class_name = self.class_name;
+        let reference = self.reference;
 
         let mut children = Vec::with_capacity(self.children.len());
         for child in self.children {
