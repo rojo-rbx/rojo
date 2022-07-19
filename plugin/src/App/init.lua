@@ -7,15 +7,14 @@ local Log = require(Rojo.Log)
 local Assets = require(Plugin.Assets)
 local Version = require(Plugin.Version)
 local Config = require(Plugin.Config)
+local Settings = require(Plugin.Settings)
 local strict = require(Plugin.strict)
-local settingsPortal = require(Plugin.settingsPortal)
 local Dictionary = require(Plugin.Dictionary)
 local ServeSession = require(Plugin.ServeSession)
 local ApiContext = require(Plugin.ApiContext)
 local preloadAssets = require(Plugin.preloadAssets)
 local soundPlayer = require(Plugin.soundPlayer)
 local Theme = require(script.Theme)
-local PluginSettings = require(script.PluginSettings)
 
 local Page = require(script.Page)
 local Notifications = require(script.Notifications)
@@ -53,7 +52,7 @@ function App:init()
 end
 
 function App:addNotification(text: string, timeout: number?)
-	if not self.props.settings:get("showNotifications") then
+	if not Settings:get("showNotifications") then
 		return
 	end
 
@@ -92,8 +91,8 @@ function App:startSession()
 	local host, port = self:getHostAndPort()
 
 	local sessionOptions = {
-		openScriptsExternally = self.props.settings:get("openScriptsExternally"),
-		twoWaySync = self.props.settings:get("twoWaySync"),
+		openScriptsExternally = Settings:get("openScriptsExternally"),
+		twoWaySync = Settings:get("twoWaySync"),
 	}
 
 	local baseUrl = ("http://%s:%s"):format(host, port)
@@ -346,23 +345,9 @@ function App:render()
 end
 
 return function(props)
-	return e(PluginSettings.StudioProvider, {
-		plugin = props.plugin,
-	}, {
-		App = PluginSettings.with(function(settings)
-			Log.setLogLevelThunk(function()
-				return settings:get("logLevel")
-			end)
-
-			local mergedProps = Dictionary.merge(props, {
-				settings = settings,
-				soundPlayer = soundPlayer.new(settings),
-			})
-			return e(App, mergedProps)
-		end),
-
-		exposeSettings = PluginSettings.with(function(settings)
-			return e(settingsPortal.consumer, {settings = settings})
-		end),
+	local mergedProps = Dictionary.merge(props, {
+		soundPlayer = soundPlayer.new(Settings),
 	})
+
+	return e(App, mergedProps)
 end
