@@ -2,8 +2,10 @@ local Rojo = script:FindFirstAncestor("Rojo")
 local Plugin = Rojo.Plugin
 
 local Roact = require(Rojo.Roact)
+local Log = require(Rojo.Log)
 
 local Assets = require(Plugin.Assets)
+local Settings = require(Plugin.Settings)
 local Theme = require(Plugin.App.Theme)
 
 local IconButton = require(Plugin.App.Components.IconButton)
@@ -11,6 +13,16 @@ local ScrollingFrame = require(Plugin.App.Components.ScrollingFrame)
 local Setting = require(script.Setting)
 
 local e = Roact.createElement
+
+local function invertTbl(tbl)
+	local new = {}
+	for key, value in tbl do
+		new[value] = key
+	end
+	return new
+end
+
+local invertedLevels = invertTbl(Log.Level)
 
 local function Navbar(props)
 	return Theme.with(function(theme)
@@ -99,6 +111,30 @@ function SettingsPage:render()
 				description = "EXPERIMENTAL! Editing files in Studio will sync them into the filesystem",
 				transparency = self.props.transparency,
 				layoutOrder = 4,
+			}),
+
+			LogLevel = e(Setting, {
+				id = "logLevel",
+				name = "Log Level",
+				description = "Plugin output verbosity level",
+				transparency = self.props.transparency,
+				layoutOrder = 5,
+
+				options = invertedLevels,
+				showReset = Settings:getBinding("logLevel"):map(function(value)
+					return value ~= "Info"
+				end),
+				onReset = function()
+					Settings:set("logLevel", "Info")
+				end,
+			}),
+
+			TypecheckingEnabled = e(Setting, {
+				id = "typecheckingEnabled",
+				name = "Typechecking",
+				description = "Toggle typechecking on the API surface",
+				transparency = self.props.transparency,
+				layoutOrder = 6,
 			}),
 
 			Layout = e("UIListLayout", {

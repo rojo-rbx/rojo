@@ -6,6 +6,7 @@ local plugin = plugin or script:FindFirstAncestorWhichIsA("Plugin")
 local Rojo = script:FindFirstAncestor("Rojo")
 
 local Log = require(Rojo.Log)
+local Roact = require(Rojo.Roact)
 
 local defaultSettings = {
 	openScriptsExternally = false,
@@ -13,13 +14,14 @@ local defaultSettings = {
 	showNotifications = true,
 	playSounds = true,
 	typecheckingEnabled = false,
-	logLevel = Log.Level.Info,
+	logLevel = "Info",
 }
 
 local Settings = {}
 
 Settings._values = table.clone(defaultSettings)
 Settings._updateListeners = {}
+Settings._bindings = {}
 
 if plugin then
 	for name, defaultValue in pairs(Settings._values) do
@@ -46,6 +48,9 @@ end
 
 function Settings:set(name, value)
 	self._values[name] = value
+	if self._bindings[name] then
+		self._bindings[name].set(value)
+	end
 
 	if plugin then
 		-- plugin:SetSetting hits disc instead of memory, so it can be slow. Spawn so we don't hang.
@@ -75,6 +80,23 @@ function Settings:onChanged(name, callback)
 		listeners[callback] = nil
 		Log.trace(string.format("Removed listener for setting '%s' changes", name))
 	end
+end
+
+function Settings:getBinding(name)
+	local cached = self._bindings[name]
+	if cached then
+		return cached.bind
+	end
+
+	local bind, set = Roact.createBinding(self._values[name])
+	self._bindings[name] = {
+		bind = bind,
+		set = set,
+	}
+
+	Log.trace(string.format("Created binding for setting '%s'", name))
+
+	return bind
 end
 
 return Settings

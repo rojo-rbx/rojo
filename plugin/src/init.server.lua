@@ -3,9 +3,15 @@ if not plugin then
 end
 
 local Roact = require(script.Parent.Roact)
+local Log = require(script.Parent.Log)
 
+local Settings = require(script.Settings)
 local Config = require(script.Config)
 local App = require(script.App)
+
+Log.setLogLevelThunk(function()
+	return Log.Level[Settings:get("logLevel")] or Log.Level.Info
+end)
 
 local app = Roact.createElement(App, {
 	plugin = plugin
