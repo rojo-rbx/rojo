@@ -5,6 +5,8 @@ use clap::Parser;
 
 use crate::project::Project;
 
+use super::resolve_path;
+
 /// Reformat a Rojo project using the standard JSON formatting rules.
 #[derive(Debug, Parser)]
 pub struct FmtProjectCommand {
@@ -15,7 +17,8 @@ pub struct FmtProjectCommand {
 
 impl FmtProjectCommand {
     pub fn run(self) -> anyhow::Result<()> {
-        let project = Project::load_fuzzy(&self.project)?
+        let base_path = resolve_path(&self.project);
+        let project = Project::load_fuzzy(&base_path)?
             .context("A project file is required to run 'rojo fmt-project'")?;
 
         let serialized = serde_json::to_string_pretty(&project)
