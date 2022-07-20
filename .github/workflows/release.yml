@@ -36,6 +36,9 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Install packages
+        run: wally install
+
       - name: Build Plugin
         run: rojo build plugin --output Rojo.rbxm
 
