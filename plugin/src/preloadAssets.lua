@@ -1,6 +1,7 @@
 local ContentProvider = game:GetService("ContentProvider")
 
-local Log = require(script.Parent.Parent.Log)
+local Packages = script.Parent.Parent.Packages
+local Log = require(Packages.Log)
 
 local Assets = require(script.Parent.Assets)
 

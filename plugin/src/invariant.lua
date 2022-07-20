@@ -1,4 +1,6 @@
-local Fmt = require(script.Parent.Parent.Fmt)
+
+local Packages = script.Parent.Parent.Packages
+local Fmt = require(Packages.Fmt)
 
 local Config = require(script.Parent.Config)
 
