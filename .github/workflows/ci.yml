@@ -36,7 +36,10 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Install packages
-      run: wally install
+      run: |
+        cd plugin
+        wally install
+        cd ..
 
     - name: Build
       run: cargo build --locked --verbose
@@ -66,7 +69,10 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Install packages
-      run: wally install
+      run: |
+        cd plugin
+        wally install
+        cd ..
 
     - name: Rustfmt
       run: cargo fmt -- --check
