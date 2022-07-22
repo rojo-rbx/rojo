@@ -31,9 +31,9 @@ jobs:
         profile: minimal
 
     - name: Setup Foreman
-        uses: Roblox/setup-foreman@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+      uses: Roblox/setup-foreman@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Install packages
       run: wally install
@@ -61,9 +61,9 @@ jobs:
         components: rustfmt, clippy
 
     - name: Setup Foreman
-        uses: Roblox/setup-foreman@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+      uses: Roblox/setup-foreman@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Install packages
       run: wally install
