@@ -77,12 +77,20 @@ function SettingsPage:render()
 				layoutOrder = 1,
 			}),
 
+			FindServeSessions = e(Setting, {
+				id = "findServeSessions",
+				name = "Find Serve Sessions",
+				description = "Periodically scan for served projects when not yet connected",
+				transparency = self.props.transparency,
+				layoutOrder = 2,
+			}),
+
 			ShowNotifications = e(Setting, {
 				id = "showNotifications",
 				name = "Show Notifications",
 				description = "Popup notifications in viewport",
 				transparency = self.props.transparency,
-				layoutOrder = 2,
+				layoutOrder = 3,
 			}),
 
 			PlaySounds = e(Setting, {
@@ -90,7 +98,7 @@ function SettingsPage:render()
 				name = "Play Sounds",
 				description = "Toggle sound effects",
 				transparency = self.props.transparency,
-				layoutOrder = 3,
+				layoutOrder = 4,
 			}),
 
 			TwoWaySync = e(Setting, {
@@ -98,7 +106,7 @@ function SettingsPage:render()
 				name = "Two-Way Sync",
 				description = "EXPERIMENTAL! Editing files in Studio will sync them into the filesystem",
 				transparency = self.props.transparency,
-				layoutOrder = 4,
+				layoutOrder = 5,
 			}),
 
 			Layout = e("UIListLayout", {

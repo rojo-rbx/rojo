@@ -40,6 +40,8 @@ local App = Roact.Component:extend("App")
 function App:init()
 	preloadAssets()
 
+	self.ignoredScans = {}
+
 	self.host, self.setHost = Roact.createBinding("")
 	self.port, self.setPort = Roact.createBinding("")
 
@@ -49,9 +51,19 @@ function App:init()
 		notifications = {},
 		toolbarIcon = Assets.Images.PluginButton,
 	})
+
+	task.defer(function()
+		while true do
+			if self.serveSession then continue end
+			if Settings:get("findServeSessions") == false then continue end
+
+			self:checkUnconnected()
+			task.wait(30)
+		end
+	end)
 end
 
-function App:addNotification(text: string, timeout: number?)
+function App:addNotification(text: string, timeout: number?, actions: {[string]: () -> any}?)
 	if not Settings:get("showNotifications") then
 		return
 	end
@@ -61,6 +73,7 @@ function App:addNotification(text: string, timeout: number?)
 		text = text,
 		timestamp = DateTime.now().UnixTimestampMillis,
 		timeout = timeout or 3,
+		actions = actions,
 	})
 
 	self:setState({
@@ -84,6 +97,51 @@ function App:getHostAndPort()
 	return
 		if #host > 0 then host else Config.defaultHost,
 		if #port > 0 then port else Config.defaultPort
+end
+
+function App:findServe()
+	local host, port = self:getHostAndPort()
+
+	local baseUrl = ("http://%s:%s"):format(host, port)
+	local apiContext = ApiContext.new(baseUrl)
+
+	local _, found, value = apiContext:connect()
+		:andThen(function(serverInfo)
+			apiContext:disconnect()
+			return true, serverInfo.projectName
+		end)
+		:catch(function(err)
+			return false, err
+		end):await()
+
+	return found, value
+end
+
+function App:checkUnconnected()
+	local found, projectName = self:findServe()
+	if found and not self.ignoredScans[projectName] then
+		local msg = string.format(
+			"Found served project '%s', but you are not connected. Did you mean to connect?",
+			projectName
+		)
+		Log.warn(msg)
+		self:addNotification(msg, 10, {
+			Connect = {
+				onClick = function()
+					self:startSession()
+				end,
+				style = "Solid",
+				layoutOrder = 1,
+			},
+			Ignore = {
+				onClick = function()
+					self.ignoredScans[projectName] = true
+				end,
+				style = "Bordered",
+				layoutOrder = 2,
+			},
+		})
+	end
 end
 
 function App:startSession()
@@ -264,7 +322,11 @@ function App:render()
 				end),
 			}),
 
-			RojoNotifications = e("ScreenGui", {}, {
+			RojoNotifications = e("ScreenGui", {
+				ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+				ResetOnSpawn = false,
+				DisplayOrder = 100,
+			}, {
 				layout = e("UIListLayout", {
 					SortOrder = Enum.SortOrder.LayoutOrder,
 					HorizontalAlignment = Enum.HorizontalAlignment.Right,

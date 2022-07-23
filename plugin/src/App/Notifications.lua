@@ -13,6 +13,7 @@ local Theme = require(Plugin.App.Theme)
 local Assets = require(Plugin.Assets)
 
 local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
+local TextButton = require(Plugin.App.Components.TextButton)
 
 local baseClock = DateTime.now().UnixTimestampMillis
 
@@ -85,12 +86,10 @@ function Notification:willUnmount()
 end
 
 function Notification:render()
-	local time = DateTime.fromUnixTimestampMillis(self.props.timestamp)
-
 	local textBounds = TextService:GetTextSize(
 		self.props.text,
 		15,
-		Enum.Font.GothamSemibold,
+		Enum.Font.GothamMedium,
 		Vector2.new(350, 700)
 	)
 
@@ -100,76 +99,90 @@ function Notification:render()
 
 	local size = self.binding:map(function(value)
 		return UDim2.fromOffset(
-			(35+40+textBounds.X)*value,
-			math.max(14+20+textBounds.Y, 32+20)
+			(40+textBounds.X)*value,
+			textBounds.Y + 34 + 20 + 10
 		)
 	end)
 
-	return Theme.with(function(theme)
-		return e("TextButton", {
-			BackgroundTransparency = 1,
-			Size = size,
-			LayoutOrder = self.props.layoutOrder,
-			Text = "",
-			ClipsDescendants = true,
+	local actionButtons = {}
+	actionButtons.Layout = e("UIListLayout", {
+		FillDirection = Enum.FillDirection.Horizontal,
+		SortOrder = Enum.SortOrder.LayoutOrder,
+		HorizontalAlignment = Enum.HorizontalAlignment.Right,
+		Padding = UDim.new(0, 5),
+	})
 
-			[Roact.Event.Activated] = function()
+	if self.props.actions and next(self.props.actions) then
+		for text, action in self.props.actions do
+			actionButtons[text] = e(TextButton, {
+				layoutOrder = -(action.layoutOrder or 1),
+				text = action.text or text,
+				style = action.style or "Bordered",
+				transparency = transparency,
+				onClick = function()
+					task.spawn(pcall, action.onClick)
+					self:dismiss()
+				end,
+			})
+		end
+	else
+		actionButtons["Dismiss"] = e(TextButton, {
+			text = "Dismiss",
+			style = "Bordered",
+			transparency = transparency,
+			onClick = function()
 				self:dismiss()
 			end,
+		})
+	end
+
+	return Theme.with(function(theme)
+		return e(BorderedContainer, {
+			size = size,
+			layoutOrder = self.props.layoutOrder,
+			clipsDescendants = true,
+			transparency = transparency,
 		}, {
-			e(BorderedContainer, {
-				transparency = transparency,
-				size = UDim2.new(1, 0, 1, 0),
-			}, {
-				TextContainer = e("Frame", {
-					Size = UDim2.new(0, 35+textBounds.X, 1, -20),
-					Position = UDim2.new(0, 0, 0, 10),
-					BackgroundTransparency = 1
-				}, {
-					Logo = e("ImageLabel", {
-						ImageTransparency = transparency,
-						Image = Assets.Images.PluginButton,
-						BackgroundTransparency = 1,
-						Size = UDim2.new(0, 32, 0, 32),
-						Position = UDim2.new(0, 0, 0.5, 0),
-						AnchorPoint = Vector2.new(0, 0.5),
-					}),
-					Info = e("TextLabel", {
-						Text = self.props.text,
-						Font = Enum.Font.GothamSemibold,
-						TextSize = 15,
-						TextColor3 = theme.Notification.InfoColor,
-						TextTransparency = transparency,
-						TextXAlignment = Enum.TextXAlignment.Left,
-						TextWrapped = true,
+			Info = e("TextLabel", {
+				Text = self.props.text,
+				Font = Enum.Font.GothamMedium,
+				TextSize = 15,
+				TextColor3 = theme.Notification.InfoColor,
+				TextTransparency = transparency,
+				TextXAlignment = Enum.TextXAlignment.Left,
+				TextWrapped = true,
 
-						Size = UDim2.new(0, textBounds.X, 0, textBounds.Y),
-						Position = UDim2.fromOffset(35, 0),
+				Size = UDim2.new(1, 0, 0, textBounds.Y),
 
-						LayoutOrder = 1,
-						BackgroundTransparency = 1,
-					}),
-					Time = e("TextLabel", {
-						Text = time:FormatLocalTime("LTS", "en-us"),
-						Font = Enum.Font.Code,
-						TextSize = 12,
-						TextColor3 = theme.Notification.InfoColor,
-						TextTransparency = transparency,
-						TextXAlignment = Enum.TextXAlignment.Left,
+				LayoutOrder = 1,
+				BackgroundTransparency = 1,
+			}),
 
-						Size = UDim2.new(1, -35, 0, 14),
-						Position = UDim2.new(0, 35, 1, -14),
+			Logo = e("ImageLabel", {
+				Image = Assets.Images.Logo,
+				ImageColor3 = theme.Header.LogoColor,
+				ImageTransparency = transparency,
+				ScaleType = Enum.ScaleType.Fit,
+				BackgroundTransparency = 1,
 
-						LayoutOrder = 1,
-						BackgroundTransparency = 1,
-					}),
-				}),
+				Size = UDim2.new(0, 60, 0, 34),
+				Position = UDim2.new(0, 0, 1, 0),
+				AnchorPoint = Vector2.new(0, 1),
+			}),
 
-				Padding = e("UIPadding", {
-					PaddingLeft = UDim.new(0, 17),
-					PaddingRight = UDim.new(0, 15),
-				}),
-			})
+			Actions = e("Frame", {
+				Size = UDim2.new(1, -70, 0, 34),
+				Position = UDim2.new(1, 0, 1, 0),
+				AnchorPoint = Vector2.new(1, 1),
+				BackgroundTransparency = 1,
+			}, actionButtons),
+
+			Padding = e("UIPadding", {
+				PaddingLeft = UDim.new(0, 17),
+				PaddingRight = UDim.new(0, 10),
+				PaddingTop = UDim.new(0, 10),
+				PaddingBottom = UDim.new(0, 10),
+			}),
 		})
 	end)
 end
@@ -185,6 +198,7 @@ function Notifications:render()
 			text = notif.text,
 			timestamp = notif.timestamp,
 			timeout = notif.timeout,
+			actions = notif.actions,
 			layoutOrder = (notif.timestamp - baseClock),
 			onClose = function()
 				self.props.onClose(index)

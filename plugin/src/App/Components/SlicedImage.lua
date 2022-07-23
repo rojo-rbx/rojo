@@ -23,6 +23,7 @@ local function SlicedImage(props)
 		ZIndex = props.zIndex,
 		LayoutOrder = props.layoutOrder,
 		BackgroundTransparency = 1,
+		ClipsDescendants = props.clipsDescendants,
 	}, props[Roact.Children])
 end
 

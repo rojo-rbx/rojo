@@ -16,6 +16,7 @@ local function BorderedContainer(props)
 			slice = Assets.Slices.RoundedBackground,
 			color = theme.BorderedContainer.BackgroundColor,
 			transparency = props.transparency,
+			clipsDescendants = props.clipsDescendants,
 
 			size = props.size,
 			position = props.position,
