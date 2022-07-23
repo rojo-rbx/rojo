@@ -81,10 +81,9 @@ function App:getHostAndPort()
 	local host = self.host:getValue()
 	local port = self.port:getValue()
 
-	local host = if #host > 0 then host else Config.defaultHost
-	local port = if #port > 0 then port else Config.defaultPort
-
-	return host, port
+	return
+		if #host > 0 then host else Config.defaultHost,
+		if #port > 0 then port else Config.defaultPort
 end
 
 function App:startSession()
