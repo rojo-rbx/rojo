@@ -40,8 +40,6 @@ local App = Roact.Component:extend("App")
 function App:init()
 	preloadAssets()
 
-	self.ignoredScans = {}
-
 	self.host, self.setHost = Roact.createBinding("")
 	self.port, self.setPort = Roact.createBinding("")
 
@@ -52,15 +50,18 @@ function App:init()
 		toolbarIcon = Assets.Images.PluginButton,
 	})
 
+	self.ignoredScans = {}
+	self.scanLoop = true
 	task.defer(function()
-		while true do
-			if self.serveSession == nil and Settings:get("findServedProjects") then
-				self:checkUnconnected()
-			end
-
+		while self.scanLoop do
+			self:scanForNonconnectedProject()
 			task.wait(30)
 		end
 	end)
+end
+
+function App:willUnmount()
+	self.scanLoop = false
 end
 
 function App:addNotification(text: string, timeout: number?, actions: {[string]: () -> any}?)
@@ -117,31 +118,37 @@ function App:findServedProject()
 	return found, value
 end
 
-function App:checkUnconnected()
-	local found, projectName = self:findServedProject()
-	if found and not self.ignoredScans[projectName] then
-		local msg = string.format(
-			"Found served project '%s', but you are not connected. Did you mean to connect?",
-			projectName
-		)
-		Log.warn(msg)
-		self:addNotification(msg, 10, {
-			Connect = {
-				onClick = function()
-					self:startSession()
-				end,
-				style = "Solid",
-				layoutOrder = 1,
-			},
-			Ignore = {
-				onClick = function()
-					self.ignoredScans[projectName] = true
-				end,
-				style = "Bordered",
-				layoutOrder = 2,
-			},
-		})
+function App:scanForNonconnectedProject()
+	if self.serveSession ~= nil or not Settings:get("findServedProjects") then
+		return
 	end
+
+	local found, projectName = self:findServedProject()
+	if found == false or self.ignoredScans[projectName] then
+		return
+	end
+
+	local msg = string.format(
+		"Found served project '%s', but you are not connected. Did you mean to connect?",
+		projectName
+	)
+	Log.warn(msg)
+	self:addNotification(msg, 10, {
+		Connect = {
+			onClick = function()
+				self:startSession()
+			end,
+			style = "Solid",
+			layoutOrder = 1,
+		},
+		Ignore = {
+			onClick = function()
+				self.ignoredScans[projectName] = true
+			end,
+			style = "Bordered",
+			layoutOrder = 2,
+		},
+	})
 end
 
 function App:startSession()
