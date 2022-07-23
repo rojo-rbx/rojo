@@ -272,6 +272,12 @@ function App:render()
 					VerticalAlignment = Enum.VerticalAlignment.Bottom,
 					Padding = UDim.new(0, 5),
 				}),
+				padding = e("UIPadding", {
+					PaddingTop = UDim.new(0, 5);
+					PaddingBottom = UDim.new(0, 5);
+					PaddingLeft = UDim.new(0, 5);
+					PaddingRight = UDim.new(0, 5);
+				}),
 				notifs = e(Notifications, {
 					soundPlayer = self.props.soundPlayer,
 					notifications = self.state.notifications,
