@@ -54,10 +54,10 @@ function App:init()
 
 	task.defer(function()
 		while true do
-			if self.serveSession then continue end
-			if Settings:get("findServedProjects") == false then continue end
+			if self.serveSession == nil and Settings:get("findServedProjects") then
+				self:checkUnconnected()
+			end
 
-			self:checkUnconnected()
 			task.wait(30)
 		end
 	end)
