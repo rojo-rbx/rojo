@@ -55,7 +55,7 @@ function App:init()
 	task.defer(function()
 		while true do
 			if self.serveSession then continue end
-			if Settings:get("findServeSessions") == false then continue end
+			if Settings:get("findServedProjects") == false then continue end
 
 			self:checkUnconnected()
 			task.wait(30)
@@ -99,7 +99,7 @@ function App:getHostAndPort()
 		if #port > 0 then port else Config.defaultPort
 end
 
-function App:findServe()
+function App:findServedProject()
 	local host, port = self:getHostAndPort()
 
 	local baseUrl = ("http://%s:%s"):format(host, port)
@@ -118,7 +118,7 @@ function App:findServe()
 end
 
 function App:checkUnconnected()
-	local found, projectName = self:findServe()
+	local found, projectName = self:findServedProject()
 	if found and not self.ignoredScans[projectName] then
 		local msg = string.format(
 			"Found served project '%s', but you are not connected. Did you mean to connect?",

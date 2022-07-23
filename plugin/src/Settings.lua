@@ -11,7 +11,7 @@ local defaultSettings = {
 	openScriptsExternally = false,
 	twoWaySync = false,
 	showNotifications = true,
-	findServeSessions = true,
+	findServedProjects = true,
 	playSounds = true,
 }
 

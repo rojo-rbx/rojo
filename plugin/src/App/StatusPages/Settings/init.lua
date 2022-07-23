@@ -77,9 +77,9 @@ function SettingsPage:render()
 				layoutOrder = 1,
 			}),
 
-			FindServeSessions = e(Setting, {
-				id = "findServeSessions",
-				name = "Find Serve Sessions",
+			FindServedProjects = e(Setting, {
+				id = "findServedProjects",
+				name = "Find Served Projects",
 				description = "Periodically scan for served projects when not yet connected",
 				transparency = self.props.transparency,
 				layoutOrder = 2,
