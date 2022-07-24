@@ -107,7 +107,7 @@ function App:claimSyncLock()
 		return true
 	end
 
-	if lock.Value and lock.Value ~= Players.LocalPlayer then
+	if lock.Value and lock.Value ~= Players.LocalPlayer and lock.Value.Parent then
 		Log.trace("Found existing sync lock owned by {}", lock.Value)
 		return false, lock.Value
 	end
