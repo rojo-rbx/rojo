@@ -137,7 +137,9 @@ function ServeSession:start()
 				end)
 		end)
 		:catch(function(err)
-			self:__stopInternal(err)
+			if self.__status ~= Status.Disconnected then
+				self:__stopInternal(err)
+			end
 		end)
 end
 
