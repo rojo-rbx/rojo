@@ -96,10 +96,10 @@ function App:claimSyncLock()
 		return true
 	end
 
-	local lock = ServerStorage:FindFirstChild("Rojo_SessionLock")
+	local lock = ServerStorage:FindFirstChild("__Rojo_SessionLock")
 	if not lock then
 		lock = Instance.new("ObjectValue")
-		lock.Name = "Rojo_SessionLock"
+		lock.Name = "__Rojo_SessionLock"
 		lock.Archivable = false
 		lock.Value = Players.LocalPlayer
 		lock.Parent = ServerStorage
@@ -118,7 +118,7 @@ function App:claimSyncLock()
 end
 
 function App:releaseSyncLock()
-	local lock = ServerStorage:FindFirstChild("Rojo_SessionLock")
+	local lock = ServerStorage:FindFirstChild("__Rojo_SessionLock")
 	if not lock then
 		Log.trace("No sync lock found, assumed released")
 		return

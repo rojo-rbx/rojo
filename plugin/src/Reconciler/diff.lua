@@ -113,6 +113,13 @@ local function diff(instanceMap, virtualInstances, rootId)
 			local childId = instanceMap.fromInstances[childInstance]
 
 			if childId == nil then
+				if childInstance.Name == "__Rojo_SessionLock" then
+					-- This is our session lock value. It won't be present in the DOM
+					-- because it is an artifact of syncing rather than of the project.
+					-- However, we don't want to remove it since we use it to prevent conflicts.
+					continue
+				end
+
 				-- This is an existing instance not present in the virtual DOM.
 				-- We can mark it for deletion unless the user has asked us not
 				-- to delete unknown stuff.
