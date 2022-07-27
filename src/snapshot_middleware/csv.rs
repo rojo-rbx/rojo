@@ -87,9 +87,6 @@ pub fn snapshot_csv_init(
     Ok(Some(init_snapshot))
 }
 
-
-
-
 /// Struct that holds any valid row from a Roblox CSV translation table.
 ///
 /// We manually deserialize into this table from CSV, but let serde_json handle

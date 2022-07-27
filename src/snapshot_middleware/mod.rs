@@ -98,8 +98,7 @@ pub fn snapshot_from_vfs(
             .file_name_trim_end(".lua")
             .or_else(|_| path.file_name_trim_end(".luau"));
 
-        let csv_name = path
-            .file_name_trim_end(".csv");
+        let csv_name = path.file_name_trim_end(".csv");
 
         if let Ok(name) = script_name {
             match name {
@@ -119,13 +118,13 @@ pub fn snapshot_from_vfs(
         } else if path.file_name_ends_with(".json") {
             return snapshot_json(context, vfs, path);
         } else if let Ok(name) = csv_name {
-                match name {
-                    // init csv are handled elsewhere and should not turn into
-                    // their own children.
-                    "init" => return Ok(None),
-    
-                    _ => return snapshot_csv(context, vfs, path),
-                }
+            match name {
+                // init csv are handled elsewhere and should not turn into
+                // their own children.
+                "init" => return Ok(None),
+
+                _ => return snapshot_csv(context, vfs, path),
+            }
         } else if path.file_name_ends_with(".txt") {
             return snapshot_txt(context, vfs, path);
         } else if path.file_name_ends_with(".rbxmx") {
