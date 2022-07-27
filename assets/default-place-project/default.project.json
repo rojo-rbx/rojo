@@ -4,23 +4,19 @@
     "$className": "DataModel",
 
     "ReplicatedStorage": {
-      "$className": "ReplicatedStorage",
       "Common": {
         "$path": "src/shared"
       }
     },
 
     "ServerScriptService": {
-      "$className": "ServerScriptService",
       "Server": {
         "$path": "src/server"
       }
     },
 
     "StarterPlayer": {
-      "$className": "StarterPlayer",
       "StarterPlayerScripts": {
-        "$className": "StarterPlayerScripts",
         "Client": {
           "$path": "src/client"
         }
@@ -28,7 +24,6 @@
     },
 
     "Workspace": {
-      "$className": "Workspace",
       "$properties": {
         "FilteringEnabled": true
       },
@@ -70,7 +65,6 @@
       }
     },
     "Lighting": {
-      "$className": "Lighting",
       "$properties": {
         "Ambient": [
           0,
@@ -84,7 +78,6 @@
       }
     },
     "SoundService": {
-      "$className": "SoundService",
       "$properties": {
         "RespectFilteringEnabled": true
       }
