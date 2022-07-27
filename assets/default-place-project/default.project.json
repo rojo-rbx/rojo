@@ -4,19 +4,23 @@
     "$className": "DataModel",
 
     "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
       "Common": {
         "$path": "src/shared"
       }
     },
 
     "ServerScriptService": {
+      "$className": "ServerScriptService",
       "Server": {
         "$path": "src/server"
       }
     },
 
     "StarterPlayer": {
+      "$className": "StarterPlayer",
       "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
         "Client": {
           "$path": "src/client"
         }
@@ -24,6 +28,7 @@
     },
 
     "Workspace": {
+      "$className": "Workspace",
       "$properties": {
         "FilteringEnabled": true
       },
@@ -32,25 +37,40 @@
         "$properties": {
           "Anchored": true,
           "Color": [
-            0.38823,
-            0.37254,
-            0.38823
+            0.35686,
+            0.35686,
+            0.35686
           ],
           "Locked": true,
           "Position": [
             0,
-            -10,
+            -8,
             0
           ],
           "Size": [
-            512,
-            20,
-            512
+            2048,
+            16,
+            2048
           ]
+        },
+        "Texture": {
+          "$className": "Texture",
+          "$properties": {
+            "Color3": [
+              0,
+              0,
+              0
+            ],
+            "StudsPerTileU": 8,
+            "StudsPerTileV": 8,
+            "Texture": "rbxassetid://6372755229",
+            "Transparency": 0.8
+          }
         }
       }
     },
     "Lighting": {
+      "$className": "Lighting",
       "$properties": {
         "Ambient": [
           0,
@@ -64,6 +84,7 @@
       }
     },
     "SoundService": {
+      "$className": "SoundService",
       "$properties": {
         "RespectFilteringEnabled": true
       }
