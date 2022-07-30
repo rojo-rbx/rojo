@@ -7,7 +7,11 @@ use serde::Serialize;
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
-use super::{meta_file::AdjacentMetadata, util::PathExt};
+use super::{
+    dir::{dir_meta, snapshot_dir_no_meta},
+    meta_file::AdjacentMetadata,
+    util::PathExt,
+};
 
 pub fn snapshot_csv(
     _context: &InstanceContext,
@@ -44,6 +48,43 @@ pub fn snapshot_csv(
     }
 
     Ok(Some(snapshot))
+}
+
+/// Attempts to snapshot an 'init' csv contained inside of a folder with
+/// the given name.
+///
+/// csv named `init.csv`
+/// their parents, which acts similarly to `__init__.py` from the Python world.
+pub fn snapshot_csv_init(
+    context: &InstanceContext,
+    vfs: &Vfs,
+    init_path: &Path,
+) -> anyhow::Result<Option<InstanceSnapshot>> {
+    let folder_path = init_path.parent().unwrap();
+    let dir_snapshot = snapshot_dir_no_meta(context, vfs, folder_path)?.unwrap();
+
+    if dir_snapshot.class_name != "Folder" {
+        anyhow::bail!(
+            "init.csv can only be used if the instance produced by \
+             the containing directory would be a Folder.\n\
+             \n\
+             The directory {} turned into an instance of class {}.",
+            folder_path.display(),
+            dir_snapshot.class_name
+        );
+    }
+
+    let mut init_snapshot = snapshot_csv(context, vfs, init_path)?.unwrap();
+
+    init_snapshot.name = dir_snapshot.name;
+    init_snapshot.children = dir_snapshot.children;
+    init_snapshot.metadata = dir_snapshot.metadata;
+
+    if let Some(mut meta) = dir_meta(vfs, folder_path)? {
+        meta.apply_all(&mut init_snapshot)?;
+    }
+
+    Ok(Some(init_snapshot))
 }
 
 /// Struct that holds any valid row from a Roblox CSV translation table.
