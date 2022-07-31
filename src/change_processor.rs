@@ -124,7 +124,7 @@ impl JobThreadContext {
 
         // For a given VFS event, we might have many changes to different parts
         // of the tree. Calculate and apply all of these changes.
-        let applied_patches = {
+        let mut applied_patches = {
             let mut tree = self.tree.lock().unwrap();
             let mut applied_patches = Vec::new();
 
@@ -164,9 +164,19 @@ impl JobThreadContext {
             applied_patches
         };
 
-        // Notify anyone listening to the message queue about the changes we
-        // just made.
-        self.message_queue.push_messages(&applied_patches);
+        // Check if applied_patches fields are empty
+        applied_patches.retain(|applied_patch| {
+            applied_patch.added.is_empty() == false
+                || applied_patch.removed.is_empty() == false
+                || applied_patch.updated.is_empty() == false
+        });
+
+        
+        if applied_patches.is_empty() == false {
+            // Notify anyone listening to the message queue about the changes we
+            // just made.
+            self.message_queue.push_messages(&applied_patches);
+        }
     }
 
     fn handle_tree_event(&self, patch_set: PatchSet) {
@@ -253,7 +263,12 @@ impl JobThreadContext {
             apply_patch_set(&mut tree, patch_set)
         };
 
-        self.message_queue.push_messages(&[applied_patch]);
+        if applied_patch.added.is_empty() == false
+            || applied_patch.removed.is_empty() == false
+            || applied_patch.updated.is_empty() == false
+        {
+            self.message_queue.push_messages(&[applied_patch]);
+        }
     }
 }
 
