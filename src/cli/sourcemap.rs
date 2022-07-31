@@ -102,10 +102,10 @@ fn filter_nothing(_instance: &InstanceWithMeta) -> bool {
 }
 
 fn filter_non_scripts(instance: &InstanceWithMeta) -> bool {
-    match instance.class_name() {
-        "Script" | "LocalScript" | "ModuleScript" => true,
-        _ => false,
-    }
+    matches!(
+        instance.class_name(),
+        "Script" | "LocalScript" | "ModuleScript"
+    )
 }
 
 fn recurse_create_node(
@@ -118,7 +118,7 @@ fn recurse_create_node(
 
     let mut children = Vec::new();
     for &child_id in instance.children() {
-        if let Some(child_node) = recurse_create_node(tree, child_id, &project_dir, filter) {
+        if let Some(child_node) = recurse_create_node(tree, child_id, project_dir, filter) {
             children.push(child_node);
         }
     }
