@@ -1,5 +1,6 @@
 use std::{
     io::{BufWriter, Write},
+    mem::forget,
     path::{Path, PathBuf},
 };
 
@@ -87,6 +88,10 @@ impl SourcemapCommand {
                 write_sourcemap(&session, self.output.as_deref(), filter)?;
             }
         }
+
+        // Avoid dropping ServeSession: it's potentially VERY expensive to drop
+        // and we're about to exit anyways.
+        forget(session);
 
         Ok(())
     }
