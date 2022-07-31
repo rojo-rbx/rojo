@@ -171,7 +171,6 @@ impl JobThreadContext {
                 || applied_patch.updated.is_empty() == false
         });
 
-        
         if applied_patches.is_empty() == false {
             // Notify anyone listening to the message queue about the changes we
             // just made.
