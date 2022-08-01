@@ -24,6 +24,11 @@ local Assets = {
 			Close = "rbxassetid://6012985953",
 			Back = "rbxassetid://6017213752",
 		},
+		Diff = {
+			Add = "rbxassetid://10434145835",
+			Remove = "rbxassetid://10434408368",
+			Edit = "rbxassetid://10434144680",
+		},
 		Checkbox = {
 			Active = "rbxassetid://6016251644",
 			Inactive = "rbxassetid://6016251963",

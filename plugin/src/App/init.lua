@@ -29,6 +29,7 @@ local AppStatus = strict("AppStatus", {
 	NotConnected = "NotConnected",
 	Settings = "Settings",
 	Connecting = "Connecting",
+	Confirming = "Confirming",
 	Connected = "Connected",
 	Error = "Error",
 })
@@ -42,10 +43,13 @@ function App:init()
 
 	self.host, self.setHost = Roact.createBinding("")
 	self.port, self.setPort = Roact.createBinding("")
+	self.confirmationBindable = Instance.new("BindableEvent")
+	self.confirmationEvent = self.confirmationBindable.Event
 
 	self:setState({
 		appStatus = AppStatus.NotConnected,
 		guiEnabled = false,
+		confirmData = {},
 		notifications = {},
 		toolbarIcon = Assets.Images.PluginButton,
 	})
@@ -144,6 +148,19 @@ function App:startSession()
 		end
 	end)
 
+	serveSession:setConfirmCallback(function(instanceMap, patch, serverInfo)
+		self:setState({
+			appStatus = AppStatus.Confirming,
+			confirmData = {
+				instanceMap = instanceMap,
+				patch = patch,
+				serverInfo = serverInfo,
+			},
+			toolbarIcon = Assets.Images.PluginButton,
+		})
+		return self.confirmationEvent:Wait()
+	end)
+
 	serveSession:start()
 
 	self.serveSession = serveSession
@@ -222,6 +239,19 @@ function App:render()
 						self:setState({
 							appStatus = AppStatus.Settings,
 						})
+					end,
+				}),
+
+				ConfirmingPage = createPageElement(AppStatus.Confirming, {
+					confirmData = self.state.confirmData,
+					onAbort = function()
+						self.confirmationBindable:Fire("Abort")
+					end,
+					onConfirm = function()
+						self.confirmationBindable:Fire("Confirm")
+					end,
+					onReject = function()
+						self.confirmationBindable:Fire("Reject")
 					end,
 				}),
 
