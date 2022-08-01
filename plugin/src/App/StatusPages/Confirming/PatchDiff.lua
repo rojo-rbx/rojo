@@ -1,14 +1,13 @@
 local HttpService = game:GetService("HttpService")
-local StudioService = game:GetService("StudioService")
 
 local Rojo = script:FindFirstAncestor("Rojo")
 local Plugin = Rojo.Plugin
 
 local Log = require(Rojo.Log)
 local Roact = require(Rojo.Roact)
-local Assets = require(Plugin.Assets)
 
-local Theme = require(Plugin.App.Theme)
+local decodeValue = require(Plugin.Reconciler.decodeValue)
+
 local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
 local ScrollingFrame = require(Plugin.App.Components.ScrollingFrame)
 
@@ -58,70 +57,7 @@ local function alphabeticalPairs(t)
     return alphabeticalNext, t, nil
 end
 
-local function domLabel(props)
-	return Theme.with(function(theme)
-		local iconProps = StudioService:GetClassIcon(props.className)
-		local lineGuides = {}
-		for i=1, props.depth or 0 do
-			table.insert(lineGuides, e("Frame", {
-				Name = "Line_"..i,
-				Size = UDim2.new(0, 2, 1, 2),
-				Position = UDim2.new(0, (20*i) + 15, 0, -1),
-				BorderSizePixel = 0,
-				BackgroundTransparency = props.transparency,
-				BackgroundColor3 = theme.BorderedContainer.BorderColor,
-			}))
-		end
-
-		local indent = (props.depth or 0) * 20 + 25
-
-		return e("Frame", {
-			Name = "Change",
-			BackgroundColor3 = if props.patchType then theme.Diff[props.patchType] else nil,
-			BorderSizePixel = 0,
-			BackgroundTransparency = props.patchType and props.transparency or 1,
-			Size = UDim2.new(1, 0, 0, 30),
-		}, {
-			Padding = e("UIPadding", {
-				PaddingLeft = UDim.new(0, 10),
-				PaddingRight = UDim.new(0, 10),
-			}),
-			DiffIcon = if props.patchType then e("ImageLabel", {
-				Image = Assets.Images.Diff[props.patchType],
-				ImageColor3 = theme.AddressEntry.PlaceholderColor,
-				ImageTransparency = props.transparency,
-				BackgroundTransparency = 1,
-				Size = UDim2.new(0, 20, 0, 20),
-				Position = UDim2.new(0, 0, 0.5, 0),
-				AnchorPoint = Vector2.new(0, 0.5),
-			}) else nil,
-			ClassIcon = e("ImageLabel", {
-				Image = iconProps.Image,
-				ImageTransparency = props.transparency,
-				ImageRectOffset = iconProps.ImageRectOffset,
-				ImageRectSize = iconProps.ImageRectSize,
-				BackgroundTransparency = 1,
-				Size = UDim2.new(0, 20, 0, 20),
-				Position = UDim2.new(0, indent, 0.5, 0),
-				AnchorPoint = Vector2.new(0, 0.5),
-			}),
-			InstanceName = e("TextLabel", {
-				Text = props.name .. (props.details and string.format('  <font color="#%s">%s</font>', theme.AddressEntry.PlaceholderColor:ToHex(), props.details) or ""),
-				RichText = true,
-				BackgroundTransparency = 1,
-				Font = Enum.Font.GothamMedium,
-				TextSize = 14,
-				TextColor3 = theme.Settings.Setting.DescriptionColor,
-				TextXAlignment = Enum.TextXAlignment.Left,
-				TextTransparency = props.transparency,
-				TextTruncate = Enum.TextTruncate.AtEnd,
-				Size = UDim2.new(1, -indent-50, 1, 0),
-				Position = UDim2.new(0, indent + 30, 0, 0),
-			}),
-			table.unpack(lineGuides),
-		})
-	end)
-end
+local DomLabel = require(script.Parent.DomLabel)
 
 local PatchDiff = Roact.Component:extend("PatchDiff")
 
@@ -208,14 +144,25 @@ function PatchDiff:render()
 		buildAncestryNodes(ancestry)
 
 		-- Gather detail text
-		local propNames, i = {}, 0
-		for prop in change.changedProperties do
+		local diffTable = {
+			{"Property", "Current", "Incoming"},
+		}
+
+		local hint, i = {}, 0
+		for prop, incoming in change.changedProperties do
 			i += 1
-			if i > 5 then
-				propNames[i] = "..."
-				break
+			if i < 5 then
+				hint[i] = prop
+			elseif i == 5 then
+				hint[i] = "..."
 			end
-			propNames[i] = prop
+
+			local success, incomingValue = decodeValue(incoming)
+			if success then
+				table.insert(diffTable, {prop, instance[prop], incomingValue})
+			else
+				table.insert(diffTable, {prop, instance[prop], next(incoming)})
+			end
 		end
 
 		-- Add this node to tree
@@ -224,7 +171,8 @@ function PatchDiff:render()
 			patchType = "Edit",
 			className = instance.ClassName,
 			name = instance.Name,
-			details = table.concat(propNames, ", "),
+			hint = table.concat(hint, ", "),
+			diffTable = #diffTable > 1 and diffTable or nil,
 		})
 	end
 
@@ -277,14 +225,14 @@ function PatchDiff:render()
 		buildAncestryNodes(ancestry)
 
 		-- Gather detail text
-		local propNames, i = {}, 0
+		local hint, i = {}, 0
 		for prop in change.Properties do
 			i += 1
-			if i > 5 then
-				propNames[i] = "..."
+			if i >= 5 then
+				hint[i] = "..."
 				break
 			end
-			propNames[i] = prop
+			hint[i] = prop
 		end
 
 		-- Add this node to tree
@@ -293,17 +241,18 @@ function PatchDiff:render()
 			patchType = "Add",
 			className = change.ClassName,
 			name = change.Name,
-			details = table.concat(propNames, ", "),
+			hint = table.concat(hint, ", "),
 		})
 	end
 
 	-- Recusively draw tree
 	local function drawNode(node, depth)
-		table.insert(domLabels, e(domLabel, {
+		table.insert(domLabels, e(DomLabel, {
 			patchType = node.patchType,
 			className = node.className,
 			name = node.name,
-			details = node.details,
+			hint = node.hint,
+			diffTable = node.diffTable,
 			depth = depth,
 			transparency = self.props.transparency,
 		}))
