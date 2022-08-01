@@ -247,8 +247,8 @@ function App:render()
 					onAbort = function()
 						self.confirmationBindable:Fire("Abort")
 					end,
-					onConfirm = function()
-						self.confirmationBindable:Fire("Confirm")
+					onAccept = function()
+						self.confirmationBindable:Fire("Accept")
 					end,
 					onReject = function()
 						self.confirmationBindable:Fire("Reject")

@@ -64,12 +64,12 @@ function ConfirmingPage:render()
 					onClick = self.props.onReject,
 				}),
 
-				Confirm = e(TextButton, {
-					text = "Confirm",
+				Accept = e(TextButton, {
+					text = "Accept",
 					style = "Solid",
 					transparency = self.props.transparency,
 					layoutOrder = 3,
-					onClick = self.props.onConfirm,
+					onClick = self.props.onAccept,
 				}),
 
 				Layout = e("UIListLayout", {

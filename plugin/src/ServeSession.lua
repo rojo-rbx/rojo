@@ -238,7 +238,7 @@ function ServeSession:__initialSync(serverInfo)
 			if userDecision == "Reject" then
 				-- TODO: Two way sync back to filesystem?
 			end
-			if userDecision == "Confirm" then
+			if userDecision == "Accept" then
 				local unappliedPatch = self.__reconciler:applyPatch(catchUpPatch)
 
 				if not PatchSet.isEmpty(unappliedPatch) then
