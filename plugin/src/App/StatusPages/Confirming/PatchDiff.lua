@@ -225,14 +225,24 @@ function PatchDiff:render()
 		buildAncestryNodes(ancestry)
 
 		-- Gather detail text
+		local diffTable = {
+			{"Property", "Current", "Incoming"},
+		}
 		local hint, i = {}, 0
-		for prop in change.Properties do
+		for prop, incoming in change.Properties do
 			i += 1
-			if i >= 5 then
+			if i < 5 then
+				hint[i] = prop
+			elseif i == 5 then
 				hint[i] = "..."
-				break
 			end
-			hint[i] = prop
+
+			local success, incomingValue = decodeValue(incoming)
+			if success then
+				table.insert(diffTable, {prop, "N/A", incomingValue})
+			else
+				table.insert(diffTable, {prop, "N/A", next(incoming)})
+			end
 		end
 
 		-- Add this node to tree
@@ -242,6 +252,7 @@ function PatchDiff:render()
 			className = change.ClassName,
 			name = change.Name,
 			hint = table.concat(hint, ", "),
+			diffTable = #diffTable > 1 and diffTable or nil,
 		})
 	end
 
