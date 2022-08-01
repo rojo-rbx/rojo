@@ -14,6 +14,50 @@ local ScrollingFrame = require(Plugin.App.Components.ScrollingFrame)
 
 local e = Roact.createElement
 
+local function alphabeticalNext(t, state)
+    -- Equivalent of the next function, but returns the keys in the alphabetic
+    -- order of node names. We use a temporary ordered key table that is stored in the
+    -- table being iterated.
+
+    local key = nil
+    if state == nil then
+        -- First iteration, generate the index
+		local orderedIndex, i = {}, 0
+		for k in t do
+			i += 1
+			orderedIndex[i] = k
+		end
+		table.sort(orderedIndex, function(a, b)
+			local nodeA, nodeB = t[a], t[b]
+			return (nodeA.name or "") < (nodeB.name or "")
+		end)
+
+        t.__orderedIndex = orderedIndex
+        key = orderedIndex[1]
+    else
+        -- Fetch the next value
+		for i, orderedState in t.__orderedIndex do
+            if orderedState == state then
+                key = t.__orderedIndex[i+1]
+				break
+            end
+        end
+    end
+
+    if key then
+        return key, t[key]
+    end
+
+    -- No more value to return, cleanup
+    t.__orderedIndex = nil
+    return
+end
+
+local function alphabeticalPairs(t)
+    -- Equivalent of the pairs() iterator, but sorted
+    return alphabeticalNext, t, nil
+end
+
 local function domLabel(props)
 	return Theme.with(function(theme)
 		local iconProps = StudioService:GetClassIcon(props.className)
@@ -264,11 +308,11 @@ function PatchDiff:render()
 			transparency = self.props.transparency,
 		}))
 
-		for _, childNode in node.children do
+		for _, childNode in alphabeticalPairs(node.children) do
 			drawNode(childNode, depth + 1)
 		end
 	end
-	for _, node in tree.root.children do
+	for _, node in alphabeticalPairs(tree.root.children) do
 		drawNode(node, 0)
 	end
 
