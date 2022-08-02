@@ -233,18 +233,44 @@ function ServeSession:__initialSync(serverInfo)
 
 			if userDecision == "Abort" then
 				error("Aborted Rojo sync operation", 2)
-			end
-			-- selene: allow(empty_if)
-			if userDecision == "Reject" then
-				-- TODO: Two way sync back to filesystem?
-			end
-			if userDecision == "Accept" then
+
+			elseif userDecision == "Reject" and self.__twoWaySync then
+				-- The user wants their studio DOM to write back to their Rojo DOM
+				-- so we will reverse the patch and send it back
+
+				-- Send back the current properties
+				for _, change in catchUpPatch.updated do
+					local instance = self.__instanceMap.fromIds[change.id]
+					if not instance then continue end
+
+					for propertyName in change.changedProperties do
+						self.__changeBatcher:add(instance, propertyName)
+					end
+				end
+				-- Add the removed instances back to Rojo
+				for _, instance in catchUpPatch.removed do
+					self.__changeBatcher:add(instance, "Parent")
+					self.__changeBatcher:add(instance, "Name")
+					if instance:IsA("BaseScript") then
+						self.__changeBatcher:add(instance, "Source")
+					end
+				end
+				-- Remove the additions we've rejected
+				-- selene:allow(empty_if, unused_variable)
+				for id, change in catchUpPatch.added do
+					-- TODO: This instance doesn't yet exist, but changeBatcher operates with instances.
+					-- We need to make it possible to add it to the removed patch without having it exist
+					-- Unless perhaps removing it isn't how we want to handle this?
+				end
+
+			elseif userDecision == "Accept" then
 				local unappliedPatch = self.__reconciler:applyPatch(catchUpPatch)
 
 				if not PatchSet.isEmpty(unappliedPatch) then
 					Log.warn("Could not apply all changes requested by the Rojo server:\n{}",
 						PatchSet.humanSummary(self.__instanceMap, unappliedPatch))
 				end
+
 			end
 		end)
 end
