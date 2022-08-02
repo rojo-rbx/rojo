@@ -3,6 +3,7 @@ local Plugin = Rojo.Plugin
 
 local Roact = require(Rojo.Roact)
 
+local Settings = require(Plugin.Settings)
 local Theme = require(Plugin.App.Theme)
 local TextButton = require(Plugin.App.Components.TextButton)
 local Header = require(Plugin.App.Components.Header)
@@ -56,13 +57,13 @@ function ConfirmingPage:render()
 					onClick = self.props.onAbort,
 				}),
 
-				Reject = e(TextButton, {
+				Reject = if Settings:get("twoWaySync") then e(TextButton, {
 					text = "Reject",
 					style = "Bordered",
 					transparency = self.props.transparency,
 					layoutOrder = 2,
 					onClick = self.props.onReject,
-				}),
+				}) else nil,
 
 				Accept = e(TextButton, {
 					text = "Accept",
