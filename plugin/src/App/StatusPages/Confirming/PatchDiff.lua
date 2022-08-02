@@ -21,7 +21,7 @@ local function alphabeticalNext(t, state)
     local key = nil
     if state == nil then
         -- First iteration, generate the index
-		local orderedIndex, i = {}, 0
+		local orderedIndex, i = table.create(5), 0
 		for k in t do
 			i += 1
 			orderedIndex[i] = k
@@ -69,6 +69,7 @@ function PatchDiff:render()
 	local patch = self.props.confirmData.patch
 	local instanceMap = self.props.confirmData.instanceMap
 
+	local idToNode = {}
 	local tree = {
 		root = {
 			className = "DataModel",
@@ -76,11 +77,15 @@ function PatchDiff:render()
 			children = {},
 		}
 	}
-	local domLabels = {}
 
 	local function getNode(id, target)
+		if idToNode[id] then
+			return idToNode[id]
+		end
+
 		for nodeId, node in target or tree do
 			if nodeId == id then
+				idToNode[id] = node
 				return node
 			end
 			local descendant = getNode(id, node.children)
@@ -109,6 +114,7 @@ function PatchDiff:render()
 		end
 
 		parentNode.children[node.id] = node
+		idToNode[node.id] = node
 
 		return node
 	end
@@ -118,6 +124,10 @@ function PatchDiff:render()
 		local previousId = "root"
 		for _, ancestorId in ancestry do
 			local value = instanceMap.fromIds[ancestorId] or patch.added[ancestorId]
+			if not value then
+				Log.warn("Failed to find ancestor object for " .. ancestorId)
+				continue
+			end
 			addNode(previousId, {
 				id = ancestorId,
 				className = value.ClassName,
@@ -257,8 +267,9 @@ function PatchDiff:render()
 	end
 
 	-- Recusively draw tree
+	local scrollElements = {}
 	local function drawNode(node, depth)
-		table.insert(domLabels, e(DomLabel, {
+		table.insert(scrollElements, e(DomLabel, {
 			patchType = node.patchType,
 			className = node.className,
 			name = node.name,
@@ -276,6 +287,17 @@ function PatchDiff:render()
 		drawNode(node, 0)
 	end
 
+	table.insert(scrollElements, e("UIListLayout", {
+		FillDirection = Enum.FillDirection.Vertical,
+		SortOrder = Enum.SortOrder.LayoutOrder,
+		HorizontalAlignment = Enum.HorizontalAlignment.Right,
+		VerticalAlignment = Enum.VerticalAlignment.Top,
+
+		[Roact.Change.AbsoluteContentSize] = function(object)
+			self.setContentSize(object.AbsoluteContentSize)
+		end,
+	}))
+
 	return e(BorderedContainer, {
 		transparency = self.props.transparency,
 		size = UDim2.new(1, 0, 1, -150),
@@ -285,19 +307,7 @@ function PatchDiff:render()
 			size = UDim2.new(1, 0, 1, 0),
 			contentSize = self.contentSize,
 			transparency = self.props.transparency,
-		}, {
-			Layout = e("UIListLayout", {
-				FillDirection = Enum.FillDirection.Vertical,
-				SortOrder = Enum.SortOrder.LayoutOrder,
-				HorizontalAlignment = Enum.HorizontalAlignment.Right,
-				VerticalAlignment = Enum.VerticalAlignment.Top,
-
-				[Roact.Change.AbsoluteContentSize] = function(object)
-					self.setContentSize(object.AbsoluteContentSize)
-				end,
-			}),
-			table.unpack(domLabels),
-		})
+		}, scrollElements)
 	})
 end
 
