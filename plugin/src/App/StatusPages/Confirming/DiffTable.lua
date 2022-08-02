@@ -46,12 +46,17 @@ function DiffTable:render()
 		local csv = props.csv
 
 		local rows = {}
+		local pad = {
+			PaddingLeft = UDim.new(0, 5),
+			PaddingRight = UDim.new(0, 5),
+		}
 
 		local headers = e("Frame", {
 			Size = UDim2.new(1,0,0,30),
 			BackgroundTransparency = 1,
 			LayoutOrder = 0,
 		}, {
+			Padding = e("UIPadding", pad),
 			A = e("TextLabel", {
 				Text = tostring(csv[1][1]),
 				BackgroundTransparency = 1,
@@ -99,6 +104,7 @@ function DiffTable:render()
 				BorderSizePixel = 0,
 				LayoutOrder = row,
 			}, {
+				Padding = e("UIPadding", pad),
 				A = e("TextLabel", {
 					Text = displayValue(values[1]),
 					BackgroundTransparency = 1,
