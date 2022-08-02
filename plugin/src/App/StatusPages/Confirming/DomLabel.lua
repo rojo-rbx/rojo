@@ -77,7 +77,7 @@ function DomLabel:render()
 				Size = UDim2.new(1, -indent, 1, -30),
 				Position = UDim2.new(0, indent, 0, 30),
 			}, {
-				e(DiffTable, {
+				DiffTable = e(DiffTable, {
 					csv = props.diffTable,
 					transparency = self.props.transparency,
 				})
@@ -114,7 +114,7 @@ function DomLabel:render()
 				Size = UDim2.new(1, -indent-50, 0, 30),
 				Position = UDim2.new(0, indent + 30, 0, 0),
 			}),
-			table.unpack(lineGuides),
+			LineGuides = e("Folder", nil, lineGuides),
 		})
 	end)
 end

@@ -159,8 +159,8 @@ function DiffTable:render()
 			Size = UDim2.new(1, 0, 1, 0),
 			BackgroundTransparency = 1,
 		}, {
-			headers,
-			e(ScrollingFrame, {
+			Headers = headers,
+			Values = e(ScrollingFrame, {
 				size = UDim2.new(1, 0, 1, -30),
 				position = UDim2.new(0, 0, 0, 30),
 				contentSize = self.contentSize,
