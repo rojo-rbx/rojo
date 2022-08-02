@@ -9,7 +9,7 @@ local Roact = require(Rojo.Roact)
 local decodeValue = require(Plugin.Reconciler.decodeValue)
 
 local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
-local ScrollingFrame = require(Plugin.App.Components.ScrollingFrame)
+local VirtualScroller = require(Plugin.App.Components.VirtualScroller)
 
 local e = Roact.createElement
 
@@ -63,6 +63,12 @@ local PatchDiff = Roact.Component:extend("PatchDiff")
 
 function PatchDiff:init()
 	self.contentSize, self.setContentSize = Roact.createBinding(Vector2.new(0, 0))
+
+	self.updateEvent = Instance.new("BindableEvent")
+end
+
+function PatchDiff:willUnmount()
+	self.updateEvent:Destroy()
 end
 
 function PatchDiff:render()
@@ -267,9 +273,14 @@ function PatchDiff:render()
 	end
 
 	-- Recusively draw tree
-	local scrollElements = {}
+	local scrollElements, expandedState = {}, {}
 	local function drawNode(node, depth)
+		local expandHeight, setExpandHeight = Roact.createBinding(0)
+		table.insert(expandedState, expandHeight)
 		table.insert(scrollElements, e(DomLabel, {
+			updateEvent = self.updateEvent,
+			expandHeight = expandHeight,
+			setExpandHeight = setExpandHeight,
 			patchType = node.patchType,
 			className = node.className,
 			name = node.name,
@@ -287,27 +298,20 @@ function PatchDiff:render()
 		drawNode(node, 0)
 	end
 
-	table.insert(scrollElements, e("UIListLayout", {
-		FillDirection = Enum.FillDirection.Vertical,
-		SortOrder = Enum.SortOrder.LayoutOrder,
-		HorizontalAlignment = Enum.HorizontalAlignment.Right,
-		VerticalAlignment = Enum.VerticalAlignment.Top,
-
-		[Roact.Change.AbsoluteContentSize] = function(object)
-			self.setContentSize(object.AbsoluteContentSize)
-		end,
-	}))
-
 	return e(BorderedContainer, {
 		transparency = self.props.transparency,
 		size = UDim2.new(1, 0, 1, -150),
 		layoutOrder = self.props.layoutOrder,
 	}, {
-		e(ScrollingFrame, {
+		VirtualScroller = e(VirtualScroller, {
 			size = UDim2.new(1, 0, 1, 0),
-			contentSize = self.contentSize,
 			transparency = self.props.transparency,
-		}, scrollElements)
+			count = #scrollElements,
+			baseHeight = 30,
+			updateEvent = self.updateEvent.Event,
+			render = function(i) return scrollElements[i] end,
+			getHeightBinding = function(i) return expandedState[i] end,
+		})
 	})
 end
 

@@ -13,12 +13,61 @@ local bindingUtil = require(Plugin.App.bindingUtil)
 local e = Roact.createElement
 
 local DiffTable = require(script.Parent.DiffTable)
+
+local Expansion = Roact.Component:extend("Expansion")
+
+function Expansion:render()
+	local props = self.props
+
+	if not props.rendered then
+		return nil
+	end
+
+	return e("Frame", {
+		BackgroundTransparency = 1,
+		Size = UDim2.new(1, -props.indent, 1, -30),
+		Position = UDim2.new(0, props.indent, 0, 30),
+	}, {
+		DiffTable = e(DiffTable, {
+			csv = props.diffTable,
+			transparency = props.transparency,
+		})
+	})
+end
+
+
 local DomLabel = Roact.Component:extend("DomLabel")
 
 function DomLabel:init()
-	self.expanded = false
-	self.motor = Flipper.SingleMotor.new(self.props.active and 1 or 0)
+	self.maxExpandHeight = 0
+	if self.props.diffTable then
+		self.maxExpandHeight = math.clamp(#self.props.diffTable * 30, 30, 30*5)
+	end
+
+	self.expanded = self.props.expandHeight:getValue() > 0
+
+	self.motor = Flipper.SingleMotor.new(self.props.expandHeight:getValue())
 	self.binding = bindingUtil.fromMotor(self.motor)
+
+	self:setState({
+		renderExpansion = self.props.expandHeight:getValue() > 0,
+	})
+	self.motor:onStep(function(value)
+		local renderExpansion = value > 0
+
+		self.props.setExpandHeight(value)
+		if self.props.updateEvent then
+			self.props.updateEvent:Fire()
+		end
+
+		self:setState(function(state)
+			if state.renderExpansion ~= renderExpansion then
+				return {
+					renderExpansion = renderExpansion,
+				}
+			end
+		end)
+	end)
 end
 
 function DomLabel:render()
@@ -39,10 +88,6 @@ function DomLabel:render()
 		end
 
 		local indent = (props.depth or 0) * 20 + 25
-		local expandHeight = 0
-		if props.diffTable then
-			expandHeight = math.clamp(#props.diffTable * 30, 30, 30*5)
-		end
 
 		return e("Frame", {
 			Name = "Change",
@@ -51,7 +96,7 @@ function DomLabel:render()
 			BorderSizePixel = 0,
 			BackgroundTransparency = props.patchType and props.transparency or 1,
 			Size = self.binding:map(function(expand)
-				return UDim2.new(1, 0, 0, 30 + (expand * expandHeight))
+				return UDim2.new(1, 0, 0, 30 + expand)
 			end),
 		}, {
 			Padding = e("UIPadding", {
@@ -65,22 +110,18 @@ function DomLabel:render()
 				[Roact.Event.Activated] = function()
 					self.expanded = not self.expanded
 					self.motor:setGoal(
-						Flipper.Spring.new(self.expanded and 1 or 0, {
+						Flipper.Spring.new(self.expanded and self.maxExpandHeight or 0, {
 							frequency = 5,
 							dampingRatio = 1,
 						})
 					)
 				end,
 			}) else nil,
-			Expansion = if props.diffTable then e("Frame", {
-				BackgroundTransparency = 1,
-				Size = UDim2.new(1, -indent, 1, -30),
-				Position = UDim2.new(0, indent, 0, 30),
-			}, {
-				DiffTable = e(DiffTable, {
-					csv = props.diffTable,
-					transparency = self.props.transparency,
-				})
+			Expansion = if props.diffTable then e(Expansion, {
+				rendered = self.state.renderExpansion,
+				indent = indent,
+				transparency = props.transparency,
+				diffTable = props.diffTable,
 			}) else nil,
 			DiffIcon = if props.patchType then e("ImageLabel", {
 				Image = Assets.Images.Diff[props.patchType],
