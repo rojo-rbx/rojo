@@ -12,6 +12,7 @@ local strict = require(Plugin.strict)
 local Dictionary = require(Plugin.Dictionary)
 local ServeSession = require(Plugin.ServeSession)
 local ApiContext = require(Plugin.ApiContext)
+local PatchSet = require(Plugin.PatchSet)
 local preloadAssets = require(Plugin.preloadAssets)
 local soundPlayer = require(Plugin.soundPlayer)
 local Theme = require(script.Theme)
@@ -150,6 +151,8 @@ function App:startSession(skipConfirm: boolean?)
 
 	if not skipConfirm then
 		serveSession:setConfirmCallback(function(instanceMap, patch, serverInfo)
+			if PatchSet.isEmpty(patch) then return "Accept" end
+
 			self:setState({
 				appStatus = AppStatus.Confirming,
 				confirmData = {
