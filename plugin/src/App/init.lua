@@ -91,7 +91,7 @@ function App:getHostAndPort()
 	return host, port
 end
 
-function App:startSession()
+function App:startSession(skipConfirm: boolean?)
 	local host, port = self:getHostAndPort()
 
 	local sessionOptions = {
@@ -148,18 +148,20 @@ function App:startSession()
 		end
 	end)
 
-	serveSession:setConfirmCallback(function(instanceMap, patch, serverInfo)
-		self:setState({
-			appStatus = AppStatus.Confirming,
-			confirmData = {
-				instanceMap = instanceMap,
-				patch = patch,
-				serverInfo = serverInfo,
-			},
-			toolbarIcon = Assets.Images.PluginButton,
-		})
-		return self.confirmationEvent:Wait()
-	end)
+	if not skipConfirm then
+		serveSession:setConfirmCallback(function(instanceMap, patch, serverInfo)
+			self:setState({
+				appStatus = AppStatus.Confirming,
+				confirmData = {
+					instanceMap = instanceMap,
+					patch = patch,
+					serverInfo = serverInfo,
+				},
+				toolbarIcon = Assets.Images.PluginButton,
+			})
+			return self.confirmationEvent:Wait()
+		end)
+	end
 
 	serveSession:start()
 
@@ -319,7 +321,7 @@ function App:render()
 				bindable = true,
 				onTriggered = function()
 					if self.serveSession == nil or self.serveSession:getStatus() == ServeSession.Status.NotStarted then
-						self:startSession()
+						self:startSession(true)
 					elseif self.serveSession ~= nil and self.serveSession:getStatus() == ServeSession.Status.Connected then
 						self:endSession()
 					end
@@ -334,7 +336,7 @@ function App:render()
 				bindable = true,
 				onTriggered = function()
 					if self.serveSession == nil or self.serveSession:getStatus() == ServeSession.Status.NotStarted then
-						self:startSession()
+						self:startSession(true)
 					end
 				end,
 			}),

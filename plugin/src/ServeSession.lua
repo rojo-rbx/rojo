@@ -226,7 +226,7 @@ function ServeSession:__initialSync(serverInfo)
 
 			Log.trace("Computed hydration patch: {:#?}", debugPatch(catchUpPatch))
 
-			local userDecision = "Confirm"
+			local userDecision = "Accept"
 			if self.__userConfirmCallback ~= nil then
 				userDecision = self.__userConfirmCallback(self.__instanceMap, catchUpPatch, serverInfo)
 			end
