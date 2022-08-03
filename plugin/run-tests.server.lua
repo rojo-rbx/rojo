@@ -1,6 +1,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local TestEZ = require(ReplicatedStorage.TestEZ)
+local TestEZ = require(ReplicatedStorage.Packages.TestEZ)
 
 local Rojo = ReplicatedStorage.Rojo
 

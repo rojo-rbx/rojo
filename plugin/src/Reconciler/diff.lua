@@ -3,7 +3,9 @@
 	patch that can be later applied.
 ]]
 
-local Log = require(script.Parent.Parent.Parent.Log)
+local Packages = script.Parent.Parent.Parent.Packages
+local Log = require(Packages.Log)
+
 local invariant = require(script.Parent.Parent.invariant)
 local getProperty = require(script.Parent.getProperty)
 local Error = require(script.Parent.Error)

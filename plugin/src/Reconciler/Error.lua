@@ -2,7 +2,8 @@
 	Defines the errors that can be returned by the reconciler.
 ]]
 
-local Fmt = require(script.Parent.Parent.Parent.Fmt)
+local Packages = script.Parent.Parent.Parent.Packages
+local Fmt = require(Packages.Fmt)
 
 local Error = {}
 

@@ -43,8 +43,6 @@ fn main() -> Result<(), anyhow::Error> {
     let root_dir = env::var_os("CARGO_MANIFEST_DIR").unwrap();
     let plugin_root = PathBuf::from(root_dir).join("plugin");
 
-    let plugin_modules = plugin_root.join("modules");
-
     let snapshot = VfsSnapshot::dir(hashmap! {
         "default.project.json" => snapshot_from_fs_path(&plugin_root.join("default.project.json"))?,
         "fmt" => snapshot_from_fs_path(&plugin_root.join("fmt"))?,
@@ -52,20 +50,7 @@ fn main() -> Result<(), anyhow::Error> {
         "log" => snapshot_from_fs_path(&plugin_root.join("log"))?,
         "rbx_dom_lua" => snapshot_from_fs_path(&plugin_root.join("rbx_dom_lua"))?,
         "src" => snapshot_from_fs_path(&plugin_root.join("src"))?,
-        "modules" => VfsSnapshot::dir(hashmap! {
-            "roact" => VfsSnapshot::dir(hashmap! {
-                "src" => snapshot_from_fs_path(&plugin_modules.join("roact").join("src"))?
-            }),
-            "promise" => VfsSnapshot::dir(hashmap! {
-                "lib" => snapshot_from_fs_path(&plugin_modules.join("promise").join("lib"))?
-            }),
-            "t" => VfsSnapshot::dir(hashmap! {
-                "lib" => snapshot_from_fs_path(&plugin_modules.join("t").join("lib"))?
-            }),
-            "flipper" => VfsSnapshot::dir(hashmap! {
-                "src" => snapshot_from_fs_path(&plugin_modules.join("flipper").join("src"))?
-            }),
-        }),
+        "Packages" => snapshot_from_fs_path(&plugin_root.join("Packages"))?,
     });
 
     let out_path = Path::new(&out_dir).join("plugin.bincode");

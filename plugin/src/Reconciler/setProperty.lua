@@ -2,8 +2,9 @@
 	Attempts to set a property on the given instance.
 ]]
 
-local RbxDom = require(script.Parent.Parent.Parent.RbxDom)
-local Log = require(script.Parent.Parent.Parent.Log)
+local Packages = script.Parent.Parent.Parent.Packages
+local Log = require(Packages.Log)
+local RbxDom = require(Packages.RbxDom)
 local Error = require(script.Parent.Error)
 
 local function setProperty(instance, propertyName, value)
