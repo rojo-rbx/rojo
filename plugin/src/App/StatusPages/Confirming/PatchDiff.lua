@@ -350,8 +350,8 @@ function PatchDiff:render()
 		table.insert(elementHeights, elementHeight)
 		table.insert(scrollElements, e(DomLabel, {
 			updateEvent = self.updateEvent,
-			expandHeight = elementHeight,
-			setExpandHeight = setElementHeight,
+			elementHeight = elementHeight,
+			setElementHeight = setElementHeight,
 			patchType = node.patchType,
 			className = node.className,
 			name = node.name,

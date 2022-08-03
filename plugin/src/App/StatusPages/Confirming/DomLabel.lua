@@ -39,23 +39,24 @@ end
 local DomLabel = Roact.Component:extend("DomLabel")
 
 function DomLabel:init()
-	self.maxExpandHeight = 0
+	self.maxElementHeight = 0
 	if self.props.diffTable then
-		self.maxExpandHeight = math.clamp(#self.props.diffTable * 30, 30, 30*5)
+		self.maxElementHeight = math.clamp(#self.props.diffTable * 30, 30, 30*5)
 	end
 
-	self.expanded = self.props.expandHeight:getValue() > 30
+	local initHeight = self.props.elementHeight:getValue()
+	self.expanded =  initHeight > 30
 
-	self.motor = Flipper.SingleMotor.new(self.props.expandHeight:getValue())
+	self.motor = Flipper.SingleMotor.new(initHeight)
 	self.binding = bindingUtil.fromMotor(self.motor)
 
 	self:setState({
-		renderExpansion = self.props.expandHeight:getValue() > 30,
+		renderExpansion = self.expanded,
 	})
 	self.motor:onStep(function(value)
 		local renderExpansion = value > 30
 
-		self.props.setExpandHeight(value)
+		self.props.setElementHeight(value)
 		if self.props.updateEvent then
 			self.props.updateEvent:Fire()
 		end
@@ -110,7 +111,7 @@ function DomLabel:render()
 				[Roact.Event.Activated] = function()
 					self.expanded = not self.expanded
 					self.motor:setGoal(
-						Flipper.Spring.new((self.expanded and self.maxExpandHeight or 0) + 30, {
+						Flipper.Spring.new((self.expanded and self.maxElementHeight or 0) + 30, {
 							frequency = 5,
 							dampingRatio = 1,
 						})
