@@ -247,7 +247,6 @@ mod test {
         // Script.Disabled is inherited from BaseScript
         assert_eq!(resolve("Script", "Disabled", "true"), Variant::Bool(true));
 
-        // Check unambiguous boolean values
         assert_eq!(resolve_unambiguous("false"), Variant::Bool(false));
         assert_eq!(resolve_unambiguous("true"), Variant::Bool(true));
     }
