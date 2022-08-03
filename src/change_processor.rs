@@ -154,7 +154,9 @@ impl JobThreadContext {
 
                     for id in affected_ids {
                         if let Some(patch) = compute_and_apply_changes(&mut tree, &self.vfs, id) {
-                            applied_patches.push(patch);
+                            if !patch.is_empty() {
+                                applied_patches.push(patch);
+                            }
                         }
                     }
                 }
@@ -253,7 +255,9 @@ impl JobThreadContext {
             apply_patch_set(&mut tree, patch_set)
         };
 
-        self.message_queue.push_messages(&[applied_patch]);
+        if !applied_patch.is_empty() {
+            self.message_queue.push_messages(&[applied_patch]);
+        }
     }
 }
 
