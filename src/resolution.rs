@@ -294,7 +294,7 @@ mod test {
         assert_eq!(resolve("Part", "Transparency", "1"), Variant::Float32(1.0));
         assert_eq!(resolve("NumberValue", "Value", "1"), Variant::Float64(1.0));
 
-        assert_eq!(resolve_unambiguous("1.337"), Variant::Float64(1.337));
+        assert_eq!(resolve_unambiguous("12.5"), Variant::Float64(12.5));
     }
 
     #[test]
