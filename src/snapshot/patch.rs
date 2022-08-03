@@ -19,7 +19,7 @@ pub struct PatchSet {
     pub updated_instances: Vec<PatchUpdate>,
 }
 
-impl<'a> PatchSet {
+impl PatchSet {
     pub fn new() -> Self {
         PatchSet {
             removed_instances: Vec::new(),
@@ -75,6 +75,10 @@ impl AppliedPatchSet {
             added: Vec::new(),
             updated: Vec::new(),
         }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.removed.is_empty() && self.added.is_empty() && self.updated.is_empty()
     }
 }
 
