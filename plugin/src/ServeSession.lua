@@ -1,9 +1,10 @@
 local StudioService = game:GetService("StudioService")
 local RunService = game:GetService("RunService")
 
-local Log = require(script.Parent.Parent.Log)
-local Fmt = require(script.Parent.Parent.Fmt)
-local t = require(script.Parent.Parent.t)
+local Packages = script.Parent.Parent.Packages
+local Log = require(Packages.Log)
+local Fmt = require(Packages.Fmt)
+local t = require(Packages.t)
 
 local ChangeBatcher = require(script.Parent.ChangeBatcher)
 local InstanceMap = require(script.Parent.InstanceMap)

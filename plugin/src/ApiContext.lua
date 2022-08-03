@@ -1,6 +1,7 @@
-local Http = require(script.Parent.Parent.Http)
-local Log = require(script.Parent.Parent.Log)
-local Promise = require(script.Parent.Parent.Promise)
+local Packages = script.Parent.Parent.Packages
+local Http = require(Packages.Http)
+local Log = require(Packages.Log)
+local Promise = require(Packages.Promise)
 
 local Config = require(script.Parent.Config)
 local Types = require(script.Parent.Types)
@@ -85,7 +86,7 @@ local ApiContext = {}
 ApiContext.__index = ApiContext
 
 function ApiContext.new(baseUrl)
-	assert(type(baseUrl) == "string")
+	assert(type(baseUrl) == "string", "baseUrl must be a string")
 
 	local self = {
 		__baseUrl = baseUrl,

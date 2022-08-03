@@ -1,7 +1,8 @@
 local Rojo = script:FindFirstAncestor("Rojo")
+local Packages = Rojo.Packages
 
-local Roact = require(Rojo.Roact)
-local Log = require(Rojo.Log)
+local Roact = require(Packages.Roact)
+local Log = require(Packages.Log)
 
 local LERP_DATA_TYPES = {
 	Color3 = true,
