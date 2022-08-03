@@ -8,8 +8,8 @@
         "$path": "default.project.json"
       },
 
-      "TestEZ": {
-        "$path": "modules/testez"
+      "Packages": {
+        "$path": "DevPackages"
       }
     },
 

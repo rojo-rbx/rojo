@@ -3,7 +3,8 @@
 	patch returned from the API.
 ]]
 
-local t = require(script.Parent.Parent.t)
+local Packages = script.Parent.Parent.Packages
+local t = require(Packages.t)
 
 local Types = require(script.Parent.Types)
 

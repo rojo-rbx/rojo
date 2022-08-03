@@ -20,8 +20,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-      with:
-        submodules: true
 
     - name: Install Rust
       uses: actions-rs/toolchain@v1
@@ -29,6 +27,17 @@ jobs:
         toolchain: ${{ matrix.rust_version }}
         override: true
         profile: minimal
+
+    - name: Setup Foreman
+      uses: Roblox/setup-foreman@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Install packages
+      run: |
+        cd plugin
+        wally install
+        cd ..
 
     - name: Build
       run: cargo build --locked --verbose
@@ -42,8 +51,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-      with:
-        submodules: true
 
     - name: Install Rust
       uses: actions-rs/toolchain@v1
@@ -51,6 +58,17 @@ jobs:
         toolchain: stable
         override: true
         components: rustfmt, clippy
+
+    - name: Setup Foreman
+      uses: Roblox/setup-foreman@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Install packages
+      run: |
+        cd plugin
+        wally install
+        cd ..
 
     - name: Rustfmt
       run: cargo fmt -- --check

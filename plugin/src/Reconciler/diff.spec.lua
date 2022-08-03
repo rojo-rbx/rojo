@@ -1,5 +1,6 @@
 return function()
-	local Log = require(script.Parent.Parent.Parent.Log)
+	local Packages = script.Parent.Parent.Parent.Packages
+	local Log = require(Packages.Log)
 
 	local InstanceMap = require(script.Parent.Parent.InstanceMap)
 	local PatchSet = require(script.Parent.Parent.PatchSet)

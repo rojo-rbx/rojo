@@ -2,18 +2,19 @@ if not plugin then
 	return
 end
 
-local Log = require(script.Parent.Log)
+local Rojo = script:FindFirstAncestor("Rojo")
+local Packages = Rojo.Packages
+
+local Log = require(Packages.Log)
+local Roact = require(Packages.Roact)
 
 local DevSettings = require(script.DevSettings)
+local Config = require(script.Config)
+local App = require(script.App)
 
 Log.setLogLevelThunk(function()
 	return DevSettings:getLogLevel()
 end)
-
-local Roact = require(script.Parent.Roact)
-
-local Config = require(script.Config)
-local App = require(script.App)
 
 local app = Roact.createElement(App, {
 	plugin = plugin
