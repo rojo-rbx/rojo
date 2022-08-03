@@ -161,7 +161,7 @@ impl AmbiguousValue {
             AmbiguousValue::Number(value) => Ok(value.into()),
             AmbiguousValue::String(value) => Ok(value.into()),
 
-            _ => bail!("Cannot unambiguously resolve type!"),
+            other => bail!("Cannot unambiguously resolve the value {other:?}"),
         }
     }
 
