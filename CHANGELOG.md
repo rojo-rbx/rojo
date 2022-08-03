@@ -1,6 +1,9 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Added `--watch` flag to `rojo sourcemap` ([#602])
+
+[#602]: https://github.com/rojo-rbx/rojo/pull/602
 
 ## [7.2.1] - July 8, 2022
 * Fixed notification sound by changing it to a generic sound. ([#566])

@@ -1,0 +1,6 @@
+{
+  "name": "init_csv_with_children",
+  "tree": {
+    "$path": "src"
+  }
+}

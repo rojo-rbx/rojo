@@ -1,12 +1,14 @@
 local Rojo = script:FindFirstAncestor("Rojo")
 local Plugin = Rojo.Plugin
+local Packages = Rojo.Packages
 
-local Roact = require(Rojo.Roact)
-local Log = require(Rojo.Log)
+local Roact = require(Packages.Roact)
+local Log = require(Packages.Log)
 
 local Assets = require(Plugin.Assets)
 local Version = require(Plugin.Version)
 local Config = require(Plugin.Config)
+local Settings = require(Plugin.Settings)
 local strict = require(Plugin.strict)
 local Dictionary = require(Plugin.Dictionary)
 local ServeSession = require(Plugin.ServeSession)
@@ -14,7 +16,6 @@ local ApiContext = require(Plugin.ApiContext)
 local preloadAssets = require(Plugin.preloadAssets)
 local soundPlayer = require(Plugin.soundPlayer)
 local Theme = require(script.Theme)
-local PluginSettings = require(script.PluginSettings)
 
 local Page = require(script.Page)
 local Notifications = require(script.Notifications)
@@ -42,6 +43,10 @@ function App:init()
 
 	self.host, self.setHost = Roact.createBinding("")
 	self.port, self.setPort = Roact.createBinding("")
+	self.patchInfo, self.setPatchInfo = Roact.createBinding({
+		changes = 0,
+		timestamp = os.time(),
+	})
 
 	self:setState({
 		appStatus = AppStatus.NotConnected,
@@ -52,7 +57,7 @@ function App:init()
 end
 
 function App:addNotification(text: string, timeout: number?)
-	if not self.props.settings:get("showNotifications") then
+	if not Settings:get("showNotifications") then
 		return
 	end
 
@@ -91,8 +96,8 @@ function App:startSession()
 	local host, port = self:getHostAndPort()
 
 	local sessionOptions = {
-		openScriptsExternally = self.props.settings:get("openScriptsExternally"),
-		twoWaySync = self.props.settings:get("twoWaySync"),
+		openScriptsExternally = Settings:get("openScriptsExternally"),
+		twoWaySync = Settings:get("twoWaySync"),
 	}
 
 	local baseUrl = ("http://%s:%s"):format(host, port)
@@ -103,6 +108,34 @@ function App:startSession()
 		openScriptsExternally = sessionOptions.openScriptsExternally,
 		twoWaySync = sessionOptions.twoWaySync,
 	})
+
+	serveSession:onPatchApplied(function(patch, unapplied)
+		local now = os.time()
+		local changes = 0
+
+		for _, set in patch do
+			for _ in set do
+				changes += 1
+			end
+		end
+		for _, set in unapplied do
+			for _ in set do
+				changes -= 1
+			end
+		end
+
+		if changes == 0 then return end
+
+		local old = self.patchInfo:getValue()
+		if now - old.timestamp < 2 then
+			changes += old.changes
+		end
+
+		self.setPatchInfo({
+			changes = changes,
+			timestamp = now,
+		})
+	end)
 
 	serveSession:onStatusChanged(function(status, details)
 		if status == ServeSession.Status.Connecting then
@@ -147,6 +180,16 @@ function App:startSession()
 	serveSession:start()
 
 	self.serveSession = serveSession
+
+	task.defer(function()
+		while self.serveSession == serveSession do
+			-- Trigger rerender to update timestamp text
+			local patchInfo = table.clone(self.patchInfo:getValue())
+			self.setPatchInfo(patchInfo)
+			local elapsed = os.time() - patchInfo.timestamp
+			task.wait(elapsed < 60 and 1 or elapsed/5)
+		end
+	end)
 end
 
 function App:endSession()
@@ -230,6 +273,7 @@ function App:render()
 				Connected = createPageElement(AppStatus.Connected, {
 					projectName = self.state.projectName,
 					address = self.state.address,
+					patchInfo = self.patchInfo,
 
 					onDisconnect = function()
 						self:endSession()
@@ -271,6 +315,12 @@ function App:render()
 					HorizontalAlignment = Enum.HorizontalAlignment.Right,
 					VerticalAlignment = Enum.VerticalAlignment.Bottom,
 					Padding = UDim.new(0, 5),
+				}),
+				padding = e("UIPadding", {
+					PaddingTop = UDim.new(0, 5);
+					PaddingBottom = UDim.new(0, 5);
+					PaddingLeft = UDim.new(0, 5);
+					PaddingRight = UDim.new(0, 5);
 				}),
 				notifs = e(Notifications, {
 					soundPlayer = self.props.soundPlayer,
@@ -345,15 +395,9 @@ function App:render()
 end
 
 return function(props)
-	return e(PluginSettings.StudioProvider, {
-		plugin = props.plugin,
-	}, {
-		App = PluginSettings.with(function(settings)
-			local mergedProps = Dictionary.merge(props, {
-				settings = settings,
-				soundPlayer = soundPlayer.new(settings),
-			})
-			return e(App, mergedProps)
-		end),
+	local mergedProps = Dictionary.merge(props, {
+		soundPlayer = soundPlayer.new(Settings),
 	})
+
+	return e(App, mergedProps)
 end

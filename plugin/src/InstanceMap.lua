@@ -1,6 +1,7 @@
 local RunService = game:GetService("RunService")
 
-local Log = require(script.Parent.Parent.Log)
+local Packages = script.Parent.Parent.Packages
+local Log = require(Packages.Log)
 
 --[[
 	A bidirectional map between instance IDs and Roblox instances. It lets us

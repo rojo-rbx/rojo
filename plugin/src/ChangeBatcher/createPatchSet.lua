@@ -5,7 +5,8 @@
 	of instances) and return the patch.
 ]]
 
-local Log = require(script.Parent.Parent.Parent.Log)
+local Packages = script.Parent.Parent.Parent.Packages
+local Log = require(Packages.Log)
 
 local PatchSet = require(script.Parent.Parent.PatchSet)
 

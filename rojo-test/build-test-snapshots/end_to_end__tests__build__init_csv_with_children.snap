@@ -1,0 +1,19 @@
+---
+source: tests/tests/build.rs
+assertion_line: 100
+expression: contents
+---
+<roblox version="4">
+  <Item class="LocalizationTable" referent="0">
+    <Properties>
+      <string name="Name">init_csv_with_children</string>
+      <string name="Contents">[{"key":"init.csv","values":{}}]</string>
+    </Properties>
+    <Item class="LocalizationTable" referent="1">
+      <Properties>
+        <string name="Name">other</string>
+        <string name="Contents">[{"key":"other.csv","values":{}}]</string>
+      </Properties>
+    </Item>
+  </Item>
+</roblox>

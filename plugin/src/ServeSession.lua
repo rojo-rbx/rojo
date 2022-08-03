@@ -1,9 +1,10 @@
 local StudioService = game:GetService("StudioService")
 local RunService = game:GetService("RunService")
 
-local Log = require(script.Parent.Parent.Log)
-local Fmt = require(script.Parent.Parent.Fmt)
-local t = require(script.Parent.Parent.t)
+local Packages = script.Parent.Parent.Packages
+local Log = require(Packages.Log)
+local Fmt = require(Packages.Fmt)
+local t = require(Packages.t)
 
 local ChangeBatcher = require(script.Parent.ChangeBatcher)
 local InstanceMap = require(script.Parent.InstanceMap)
@@ -94,6 +95,7 @@ function ServeSession.new(options)
 		__instanceMap = instanceMap,
 		__changeBatcher = changeBatcher,
 		__statusChangedCallback = nil,
+		__patchAppliedCallback = nil,
 		__connections = connections,
 	}
 
@@ -121,6 +123,10 @@ function ServeSession:onStatusChanged(callback)
 	self.__statusChangedCallback = callback
 end
 
+function ServeSession:onPatchApplied(callback)
+	self.__patchAppliedCallback = callback
+end
+
 function ServeSession:start()
 	self:__setStatus(Status.Connecting)
 
@@ -137,7 +143,9 @@ function ServeSession:start()
 				end)
 		end)
 		:catch(function(err)
-			self:__stopInternal(err)
+			if self.__status ~= Status.Disconnected then
+				self:__stopInternal(err)
+			end
 		end)
 end
 
@@ -231,6 +239,10 @@ function ServeSession:__initialSync(rootInstanceId)
 				Log.warn("Could not apply all changes requested by the Rojo server:\n{}",
 					PatchSet.humanSummary(self.__instanceMap, unappliedPatch))
 			end
+
+			if self.__patchAppliedCallback then
+				pcall(self.__patchAppliedCallback, catchUpPatch, unappliedPatch)
+			end
 		end)
 end
 
@@ -243,6 +255,10 @@ function ServeSession:__mainSyncLoop()
 				if not PatchSet.isEmpty(unappliedPatch) then
 					Log.warn("Could not apply all changes requested by the Rojo server:\n{}",
 						PatchSet.humanSummary(self.__instanceMap, unappliedPatch))
+				end
+
+				if self.__patchAppliedCallback then
+					pcall(self.__patchAppliedCallback, message, unappliedPatch)
 				end
 			end
 
