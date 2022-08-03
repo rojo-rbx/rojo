@@ -273,7 +273,6 @@ mod test {
         //     Variant::BinaryString(b"a\0b\0c".to_vec().into()),
         // );
 
-        // Check unambiguous string value
         assert_eq!(
             resolve_unambiguous("\"Hello world!\""),
             Variant::String("Hello world!".into()),
