@@ -41,7 +41,7 @@ function VirtualScroller:didMount()
 
 	local canvasPositionSignal = rbx:GetPropertyChangedSignal("CanvasPosition")
 	self.canvasPositionChanged = canvasPositionSignal:Connect(function()
-		if math.abs(rbx.CanvasPosition.Y-self.state.CanvasPosition.Y) >= self.props.baseHeight then
+		if math.abs(rbx.CanvasPosition.Y-self.state.CanvasPosition.Y) > 5 then
 			self:setState({	CanvasPosition = rbx.CanvasPosition })
 			self:refresh()
 		end
@@ -59,78 +59,55 @@ function VirtualScroller:willUnmount()
 	end
 end
 
-function VirtualScroller:updateRange()
+function VirtualScroller:refresh()
 	local props = self.props
 	local state = self.state
 
-	local count, baseHeight = props.count, props.baseHeight
+	local count = props.count
 	local windowSize, canvasPosition = state.WindowSize.Y, state.CanvasPosition.Y
-
-	local minIndex = 1
-	local maxIndex = count
-
 	local bottom = canvasPosition + windowSize
+
+	local minIndex, maxIndex = 1, count
+	local padding, canvasSize = 0, 0
 
 	local pos = 0
 	for i=1, count do
+		local height = props.getHeightBinding(i):getValue()
+		canvasSize += height
+
 		if pos > bottom then
-			maxIndex = i
-			break
+			-- Below window
+			if maxIndex > i then
+				maxIndex = i
+			end
 		end
 
-		local height = props.getHeightBinding(i):getValue()
-		pos += height + baseHeight
+		pos += height
 
 		if pos < canvasPosition then
+			-- Above window
 			minIndex = i
+			padding = pos - height
 		end
 	end
 
+	self.setPadding(padding)
+	self.setTotalCanvas(canvasSize)
 	self:setState({
 		Start = minIndex,
 		End = maxIndex,
 	})
-
-	return minIndex, maxIndex
-end
-
-function VirtualScroller:refresh()
-	local props = self.props
-	local baseHeight = props.baseHeight
-	local count = props.count
-
-	local minIndex = self:updateRange()
-
-	local padding = 0
-	for i=1, minIndex-1 do
-		padding += props.getHeightBinding(i):getValue() + baseHeight
-	end
-
-	local canvasHeight = padding
-	for i=minIndex, count do
-		canvasHeight += props.getHeightBinding(i):getValue() + baseHeight
-	end
-
-	self.setPadding(padding)
-	self.setTotalCanvas(canvasHeight)
-
-	return padding, canvasHeight
 end
 
 function VirtualScroller:render()
 	local props, state = self.props, self.state
-	local baseHeight = props.baseHeight
-
-	if math.floor(baseHeight) ~= baseHeight then
-		Log.debug("VirtualScroller.baseHeight should be an integer or there will be minor accumulated error. " .. debug.traceback())
-	end
 
 	local items = {}
 	for i = state.Start, state.End do
 		items["Item"..i] = e("Frame", {
 			LayoutOrder = i,
 			Size = props.getHeightBinding(i):map(function(height)
-				return UDim2.new(1, 0, 0, height + baseHeight)
+				return UDim2.new(1, 0, 0, height)
 			end),
 			BackgroundTransparency = 1,
 		}, {
@@ -168,13 +145,10 @@ function VirtualScroller:render()
 				SortOrder = Enum.SortOrder.LayoutOrder,
 				FillDirection = Enum.FillDirection.Vertical,
 			}),
-			Padding = e("Frame", {
-				LayoutOrder = -math.huge,
-				Size = self.padding:map(function(p)
-					return UDim2.new(1, 0, 0, p)
+			Padding = e("UIPadding", {
+				PaddingTop = self.padding:map(function(p)
+					return UDim.new(0, p)
 				end),
-				BackgroundTransparency = 0,
-				BackgroundColor3 = Color3.new(1, 0, 0),
 			}),
 			Content = Roact.createFragment(items),
 		})

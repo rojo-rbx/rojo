@@ -57,6 +57,71 @@ local function alphabeticalPairs(t)
     return alphabeticalNext, t, nil
 end
 
+local function deepEquals(a: {[any]: any}, b: {[any]: any})
+	local checkedKeys = {}
+
+	for key, aValue in a do
+		checkedKeys[key] = true
+
+		local bValue = b[key]
+		local aT = typeof(aValue)
+
+		if aT ~= typeof(bValue) then
+			-- Different types are obviously not equal so we can exit early
+			return false
+		end
+
+		if aT == "function" then
+			-- For function deep equality, check for identical definitions
+			if debug.info(aValue, "snl") ~= debug.info(bValue, "snl") then
+				return false
+			end
+		elseif aT == "table" and aValue ~= a and bValue ~= a and aValue ~= b and bValue ~= b then
+			-- Recursively compare nested tables, avoiding cyclic inf recursion
+			if not deepEquals(aValue, bValue) then
+				return false
+			end
+		else
+			-- Basic equality on primitive types
+			if aValue ~= bValue then
+				return false
+			end
+		end
+	end
+
+	for key, bValue in b do
+		-- Avoid wastefully checking keys in both directions
+		if checkedKeys[key] then continue end
+
+		local aValue = a[key]
+		local bT = typeof(bValue)
+
+		if bT ~= typeof(aValue) then
+			-- Different types are obviously not equal so we can exit early
+			return false
+		end
+
+		if bT == "function" then
+			-- For function deep equality, check for identical definitions
+			if debug.info(aValue, "snl") ~= debug.info(bValue, "snl") then
+				return false
+			end
+		elseif bT == "table" and aValue ~= a and bValue ~= a and aValue ~= b and bValue ~= b then
+			-- Recursively compare nested tables, avoiding cyclic inf recursion
+			if not deepEquals(aValue, bValue) then
+				return false
+			end
+		else
+			-- Basic equality on primitive types
+			if aValue ~= bValue then
+				return false
+			end
+		end
+	end
+
+	return true
+end
+
 local DomLabel = require(script.Parent.DomLabel)
 
 local PatchDiff = Roact.Component:extend("PatchDiff")
@@ -71,7 +136,14 @@ function PatchDiff:willUnmount()
 	self.updateEvent:Destroy()
 end
 
+function PatchDiff:shouldUpdate(nextProps)
+	local currentPatch, nextPatch = self.props.confirmData.patch, nextProps.confirmData.patch
+
+	return not deepEquals(currentPatch, nextPatch)
+end
+
 function PatchDiff:render()
+	print("rendering patch diff")
 	local patch = self.props.confirmData.patch
 	local instanceMap = self.props.confirmData.instanceMap
 
@@ -273,14 +345,14 @@ function PatchDiff:render()
 	end
 
 	-- Recusively draw tree
-	local scrollElements, expandedState = {}, {}
+	local scrollElements, elementHeights = {}, {}
 	local function drawNode(node, depth)
-		local expandHeight, setExpandHeight = Roact.createBinding(0)
-		table.insert(expandedState, expandHeight)
+		local elementHeight, setElementHeight = Roact.createBinding(30)
+		table.insert(elementHeights, elementHeight)
 		table.insert(scrollElements, e(DomLabel, {
 			updateEvent = self.updateEvent,
-			expandHeight = expandHeight,
-			setExpandHeight = setExpandHeight,
+			expandHeight = elementHeight,
+			setExpandHeight = setElementHeight,
 			patchType = node.patchType,
 			className = node.className,
 			name = node.name,
@@ -307,10 +379,9 @@ function PatchDiff:render()
 			size = UDim2.new(1, 0, 1, 0),
 			transparency = self.props.transparency,
 			count = #scrollElements,
-			baseHeight = 30,
 			updateEvent = self.updateEvent.Event,
 			render = function(i) return scrollElements[i] end,
-			getHeightBinding = function(i) return expandedState[i] end,
+			getHeightBinding = function(i) return elementHeights[i] end,
 		})
 	})
 end

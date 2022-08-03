@@ -44,16 +44,16 @@ function DomLabel:init()
 		self.maxExpandHeight = math.clamp(#self.props.diffTable * 30, 30, 30*5)
 	end
 
-	self.expanded = self.props.expandHeight:getValue() > 0
+	self.expanded = self.props.expandHeight:getValue() > 30
 
 	self.motor = Flipper.SingleMotor.new(self.props.expandHeight:getValue())
 	self.binding = bindingUtil.fromMotor(self.motor)
 
 	self:setState({
-		renderExpansion = self.props.expandHeight:getValue() > 0,
+		renderExpansion = self.props.expandHeight:getValue() > 30,
 	})
 	self.motor:onStep(function(value)
-		local renderExpansion = value > 0
+		local renderExpansion = value > 30
 
 		self.props.setExpandHeight(value)
 		if self.props.updateEvent then
@@ -96,7 +96,7 @@ function DomLabel:render()
 			BorderSizePixel = 0,
 			BackgroundTransparency = props.patchType and props.transparency or 1,
 			Size = self.binding:map(function(expand)
-				return UDim2.new(1, 0, 0, 30 + expand)
+				return UDim2.new(1, 0, 0, expand)
 			end),
 		}, {
 			Padding = e("UIPadding", {
@@ -110,7 +110,7 @@ function DomLabel:render()
 				[Roact.Event.Activated] = function()
 					self.expanded = not self.expanded
 					self.motor:setGoal(
-						Flipper.Spring.new(self.expanded and self.maxExpandHeight or 0, {
+						Flipper.Spring.new((self.expanded and self.maxExpandHeight or 0) + 30, {
 							frequency = 5,
 							dampingRatio = 1,
 						})
