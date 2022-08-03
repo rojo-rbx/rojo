@@ -143,7 +143,6 @@ function PatchDiff:shouldUpdate(nextProps)
 end
 
 function PatchDiff:render()
-	print("rendering patch diff")
 	local patch = self.props.confirmData.patch
 	local instanceMap = self.props.confirmData.instanceMap
 
