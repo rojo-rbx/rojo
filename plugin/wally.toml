@@ -1,0 +1,17 @@
+[package]
+name = "rojo-rbx/rojo"
+description = "Rojo enables Roblox developers to use professional-grade software engineering tools"
+version = "7.2.1"
+license = "MPL-2.0"
+authors = ["LPGhatguy (https://lpg.space/)"]
+registry = "https://github.com/upliftgames/wally-index"
+realm = "shared"
+
+[dependencies]
+Flipper = "reselim/flipper@2.0.0"
+Promise = "evaera/promise@4.0.0"
+Roact = "roblox/roact@1.4.4"
+t = "osyrisrblx/t@3.0.0"
+
+[dev-dependencies]
+TestEZ = "roblox/testez@0.4.1"

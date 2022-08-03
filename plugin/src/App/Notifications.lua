@@ -3,9 +3,10 @@ local StudioService = game:GetService("StudioService")
 
 local Rojo = script:FindFirstAncestor("Rojo")
 local Plugin = Rojo.Plugin
+local Packages = Rojo.Packages
 
-local Roact = require(Rojo.Roact)
-local Flipper = require(Rojo.Flipper)
+local Roact = require(Packages.Roact)
+local Flipper = require(Packages.Flipper)
 
 local bindingUtil = require(script.Parent.bindingUtil)
 

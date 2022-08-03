@@ -1,5 +1,6 @@
 ---
 source: src/snapshot_middleware/dir.rs
+assertion_line: 127
 expression: instance_snapshot
 ---
 snapshot_id: ~
@@ -16,6 +17,7 @@ metadata:
     - /foo/init.server.luau
     - /foo/init.client.lua
     - /foo/init.client.luau
+    - /foo/init.csv
   context: {}
 name: foo
 class_name: Folder
