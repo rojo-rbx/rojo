@@ -1,6 +1,5 @@
 ---
 source: tests/tests/build.rs
-assertion_line: 99
 expression: contents
 ---
 <roblox version="4">
@@ -11,12 +10,24 @@ expression: contents
     <Item class="Folder" referent="1">
       <Properties>
         <string name="Name">Explicit</string>
-        <BinaryString name="AttributesSerialize">AgAAAAUAAABIZWxsbwIFAAAAV29ybGQGAAAAVmVjdG9yEQAAgD8AAABAAABAQA==</BinaryString>
+        <BinaryString name="AttributesSerialize">DQAAAAQAAABCb29sAwEKAAAAQnJpY2tDb2xvcg4BAAAABgAAAENvbG9yMw8AAAAAAAAAAAAAAAANAAAAQ29sb3JTZXF1ZW5jZRkCAAAAAAAAAAAAAAAAAIA/AACAPwAAgD8AAAAAAACAPwAAgD8AAIA/AACAPwcAAABGbG9hdDMyBQAAAAAHAAAARmxvYXQ2NAYAAAAAAAAAAAsAAABOdW1iZXJSYW5nZRsAAAAAAAAAAA4AAABOdW1iZXJTZXF1ZW5jZRcCAAAAAAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAABAAAAFJlY3QcAAAAAAAAAAAAAAAAAAAAAAQAAABVRGltCQAAAAAAAAAABQAAAFVEaW0yCgAAAAAAAAAAAAAAAAAAAAAHAAAAVmVjdG9yMhAAAAAAAAAAAAcAAABWZWN0b3IzEQAAAAAAAAAAAAAAAA==</BinaryString>
       </Properties>
     </Item>
     <Item class="Folder" referent="2">
       <Properties>
-        <string name="Name">ImplicitAttributes</string>
+        <string name="Name">Implicit</string>
+        <BinaryString name="AttributesSerialize">AwAAAAQAAABCb29sAwEGAAAATnVtYmVyBgAAAAAAAOA/BgAAAFN0cmluZwIEAAAAVGVzdA==</BinaryString>
+      </Properties>
+    </Item>
+    <Item class="Folder" referent="3">
+      <Properties>
+        <string name="Name">LegacyExplicit</string>
+        <BinaryString name="AttributesSerialize">AgAAAAUAAABIZWxsbwIFAAAAV29ybGQGAAAAVmVjdG9yEQAAgD8AAABAAABAQA==</BinaryString>
+      </Properties>
+    </Item>
+    <Item class="Folder" referent="4">
+      <Properties>
+        <string name="Name">LegacyImplicit</string>
         <BinaryString name="AttributesSerialize">AgAAAAMAAABIZXkCBwAAAEdyYW5kbWEGAAAAVmVjdG9yEQAAgEAAAKBAAADAQA==</BinaryString>
       </Properties>
     </Item>

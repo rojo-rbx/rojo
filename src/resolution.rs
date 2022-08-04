@@ -1,6 +1,6 @@
 use std::borrow::Borrow;
 
-use anyhow::format_err;
+use anyhow::{bail, format_err};
 use rbx_dom_weak::types::{
     Attributes, CFrame, Color3, Content, Enum, Matrix3, Tags, Variant, VariantType, Vector2,
     Vector3,
@@ -26,6 +26,13 @@ impl UnresolvedValue {
         match self {
             UnresolvedValue::FullyQualified(full) => Ok(full),
             UnresolvedValue::Ambiguous(partial) => partial.resolve(class_name, prop_name),
+        }
+    }
+
+    pub fn resolve_unambiguous(self) -> anyhow::Result<Variant> {
+        match self {
+            UnresolvedValue::FullyQualified(full) => Ok(full),
+            UnresolvedValue::Ambiguous(partial) => partial.resolve_unambiguous(),
         }
     }
 }
@@ -148,6 +155,16 @@ impl AmbiguousValue {
         }
     }
 
+    pub fn resolve_unambiguous(self) -> anyhow::Result<Variant> {
+        match self {
+            AmbiguousValue::Bool(value) => Ok(value.into()),
+            AmbiguousValue::Number(value) => Ok(value.into()),
+            AmbiguousValue::String(value) => Ok(value.into()),
+
+            other => bail!("Cannot unambiguously resolve the value {other:?}"),
+        }
+    }
+
     fn describe(&self) -> &'static str {
         match self {
             AmbiguousValue::Bool(_) => "a bool",
@@ -218,12 +235,20 @@ mod test {
         unresolved.resolve(class, prop).unwrap()
     }
 
+    fn resolve_unambiguous(json_value: &str) -> Variant {
+        let unresolved: UnresolvedValue = serde_json::from_str(json_value).unwrap();
+        unresolved.resolve_unambiguous().unwrap()
+    }
+
     #[test]
     fn bools() {
         assert_eq!(resolve("BoolValue", "Value", "false"), Variant::Bool(false));
 
         // Script.Disabled is inherited from BaseScript
         assert_eq!(resolve("Script", "Disabled", "true"), Variant::Bool(true));
+
+        assert_eq!(resolve_unambiguous("false"), Variant::Bool(false));
+        assert_eq!(resolve_unambiguous("true"), Variant::Bool(true));
     }
 
     #[test]
@@ -247,6 +272,11 @@ mod test {
         //     resolve("Folder", "Tags", "\"a\\u0000b\\u0000c\""),
         //     Variant::BinaryString(b"a\0b\0c".to_vec().into()),
         // );
+
+        assert_eq!(
+            resolve_unambiguous("\"Hello world!\""),
+            Variant::String("Hello world!".into()),
+        );
     }
 
     #[test]
@@ -257,12 +287,14 @@ mod test {
         );
 
         assert_eq!(
-            resolve("Folder", "SourceAssetId", "532413"),
+            resolve("IntValue", "Value", "532413"),
             Variant::Int64(532413),
         );
 
         assert_eq!(resolve("Part", "Transparency", "1"), Variant::Float32(1.0));
         assert_eq!(resolve("NumberValue", "Value", "1"), Variant::Float64(1.0));
+
+        assert_eq!(resolve_unambiguous("12.5"), Variant::Float64(12.5));
     }
 
     #[test]
