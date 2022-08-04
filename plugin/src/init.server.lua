@@ -2,8 +2,11 @@ if not plugin then
 	return
 end
 
-local Roact = require(script.Parent.Roact)
-local Log = require(script.Parent.Log)
+local Rojo = script:FindFirstAncestor("Rojo")
+local Packages = Rojo.Packages
+
+local Log = require(Packages.Log)
+local Roact = require(Packages.Roact)
 
 local Settings = require(script.Settings)
 local Config = require(script.Config)

@@ -2,7 +2,8 @@
 	Attempts to read a property from the given instance.
 ]]
 
-local RbxDom = require(script.Parent.Parent.Parent.RbxDom)
+local Packages = script.Parent.Parent.Parent.Packages
+local RbxDom = require(Packages.RbxDom)
 local Error = require(script.Parent.Error)
 
 local function getProperty(instance, propertyName)

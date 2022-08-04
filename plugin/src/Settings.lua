@@ -4,9 +4,10 @@
 
 local plugin = plugin or script:FindFirstAncestorWhichIsA("Plugin")
 local Rojo = script:FindFirstAncestor("Rojo")
+local Packages = Rojo.Packages
 
-local Log = require(Rojo.Log)
-local Roact = require(Rojo.Roact)
+local Log = require(Packages.Log)
+local Roact = require(Packages.Roact)
 
 local defaultSettings = {
 	openScriptsExternally = false,

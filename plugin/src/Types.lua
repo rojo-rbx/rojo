@@ -1,5 +1,5 @@
-local t = require(script.Parent.Parent.t)
-
+local Packages = script.Parent.Parent.Packages
+local t = require(Packages.t)
 local Settings = require(script.Parent.Settings)
 local strict = require(script.Parent.strict)
 
