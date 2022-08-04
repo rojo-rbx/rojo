@@ -28,42 +28,10 @@
         "FilteringEnabled": true
       },
       "Baseplate": {
-        "$className": "Part",
-        "$properties": {
-          "Anchored": true,
-          "Color": [
-            0.35686,
-            0.35686,
-            0.35686
-          ],
-          "Locked": true,
-          "Position": [
-            0,
-            -8,
-            0
-          ],
-          "Size": [
-            2048,
-            16,
-            2048
-          ]
-        },
-        "Texture": {
-          "$className": "Texture",
-          "$properties": {
-            "Color3": [
-              0,
-              0,
-              0
-            ],
-            "StudsPerTileU": 8,
-            "StudsPerTileV": 8,
-            "Texture": "rbxassetid://6372755229",
-            "Transparency": 0.8
-          }
-        }
+        "$path": "baseplate.rbxm"
       }
     },
+
     "Lighting": {
       "$properties": {
         "Ambient": [
@@ -77,6 +45,7 @@
         "Technology": "Voxel"
       }
     },
+
     "SoundService": {
       "$properties": {
         "RespectFilteringEnabled": true
