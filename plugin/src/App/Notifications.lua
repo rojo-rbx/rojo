@@ -37,28 +37,24 @@ function Notification:init()
 end
 
 function Notification:dismiss()
-	self.motor:setGoal(
-		Flipper.Spring.new(0, {
-			frequency = 5,
-			dampingRatio = 1,
-		})
-	)
+	self.motor:setGoal(Flipper.Spring.new(0, {
+		frequency = 5,
+		dampingRatio = 1,
+	}))
 end
 
 function Notification:didMount()
-	self.motor:setGoal(
-		Flipper.Spring.new(1, {
-			frequency = 3,
-			dampingRatio = 1,
-		})
-	)
+	self.motor:setGoal(Flipper.Spring.new(1, {
+		frequency = 3,
+		dampingRatio = 1,
+	}))
 
 	self.props.soundPlayer:play(Assets.Sounds.Notification)
 
 	self.timeout = task.spawn(function()
 		local clock = os.clock()
 		local seen = false
-		while task.wait(1/10) do
+		while task.wait(1 / 10) do
 			local now = os.clock()
 			local dt = now - clock
 			clock = now
@@ -88,22 +84,14 @@ end
 function Notification:render()
 	local time = DateTime.fromUnixTimestampMillis(self.props.timestamp)
 
-	local textBounds = TextService:GetTextSize(
-		self.props.text,
-		15,
-		Enum.Font.GothamSemibold,
-		Vector2.new(350, 700)
-	)
+	local textBounds = TextService:GetTextSize(self.props.text, 15, Enum.Font.GothamSemibold, Vector2.new(350, 700))
 
 	local transparency = self.binding:map(function(value)
 		return 1 - value
 	end)
 
 	local size = self.binding:map(function(value)
-		return UDim2.fromOffset(
-			(35+40+textBounds.X)*value,
-			math.max(14+20+textBounds.Y, 32+20)
-		)
+		return UDim2.fromOffset((35 + 40 + textBounds.X) * value, math.max(14 + 20 + textBounds.Y, 32 + 20))
 	end)
 
 	return Theme.with(function(theme)
@@ -123,9 +111,9 @@ function Notification:render()
 				size = UDim2.new(1, 0, 1, 0),
 			}, {
 				TextContainer = e("Frame", {
-					Size = UDim2.new(0, 35+textBounds.X, 1, -20),
+					Size = UDim2.new(0, 35 + textBounds.X, 1, -20),
 					Position = UDim2.new(0, 0, 0, 10),
-					BackgroundTransparency = 1
+					BackgroundTransparency = 1,
 				}, {
 					Logo = e("ImageLabel", {
 						ImageTransparency = transparency,
@@ -170,7 +158,7 @@ function Notification:render()
 					PaddingLeft = UDim.new(0, 17),
 					PaddingRight = UDim.new(0, 15),
 				}),
-			})
+			}),
 		})
 	end)
 end

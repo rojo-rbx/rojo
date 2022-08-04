@@ -1,6 +1,6 @@
 return function()
 	local HttpService = game:GetService("HttpService")
-	
+
 	local EncodedValue = require(script.Parent.EncodedValue)
 	local allValues = require(script.Parent.allValues)
 
@@ -13,10 +13,10 @@ return function()
 
 		if ty == "table" then
 			local visited = {}
-			
+
 			for key, valueA in pairs(a) do
 				visited[key] = true
-				
+
 				if not deepEq(valueA, b[key]) then
 					return false
 				end
@@ -60,10 +60,8 @@ return function()
 				local expected = HttpService:JSONEncode(testEntry.value)
 				local actual = HttpService:JSONEncode(encoded)
 
-				local message = string.format(
-					"Round-trip results did not match.\nExpected:\n%s\nActual:\n%s",
-					expected, actual
-				)
+				local message =
+					string.format("Round-trip results did not match.\nExpected:\n%s\nActual:\n%s", expected, actual)
 
 				error(message)
 			end

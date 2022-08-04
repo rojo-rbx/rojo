@@ -49,7 +49,9 @@ function Error:render()
 				local containerSize = object.AbsoluteSize - ERROR_PADDING * 2
 
 				local textBounds = TextService:GetTextSize(
-					self.props.errorMessage, 16, Enum.Font.Code,
+					self.props.errorMessage,
+					16,
+					Enum.Font.Code,
 					Vector2.new(containerSize.X, math.huge)
 				)
 

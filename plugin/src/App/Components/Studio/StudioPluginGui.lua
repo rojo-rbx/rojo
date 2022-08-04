@@ -29,8 +29,10 @@ function StudioPluginGui:init()
 		self.props.initDockState,
 		self.props.active,
 		self.props.overridePreviousState,
-		floatingSize.X, floatingSize.Y,
-		minimumSize.X, minimumSize.Y
+		floatingSize.X,
+		floatingSize.Y,
+		minimumSize.X,
+		minimumSize.Y
 	)
 
 	local pluginGui = self.props.plugin:CreateDockWidgetPluginGui(self.props.id, dockWidgetPluginGuiInfo)
@@ -75,9 +77,12 @@ end
 local function StudioPluginGuiWrapper(props)
 	return e(StudioPluginContext.Consumer, {
 		render = function(plugin)
-			return e(StudioPluginGui, Dictionary.merge(props, {
-				plugin = plugin,
-			}))
+			return e(
+				StudioPluginGui,
+				Dictionary.merge(props, {
+					plugin = plugin,
+				})
+			)
 		end,
 	})
 end

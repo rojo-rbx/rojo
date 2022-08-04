@@ -41,10 +41,8 @@ end
 
 function TextButton:render()
 	return Theme.with(function(theme)
-		local textSize = TextService:GetTextSize(
-			self.props.text, 18, Enum.Font.GothamSemibold,
-			Vector2.new(math.huge, math.huge)
-		)
+		local textSize =
+			TextService:GetTextSize(self.props.text, 18, Enum.Font.GothamSemibold, Vector2.new(math.huge, math.huge))
 
 		local style = self.props.style
 
@@ -124,7 +122,11 @@ function TextButton:render()
 
 			Background = style == "Solid" and e(SlicedImage, {
 				slice = Assets.Slices.RoundedBackground,
-				color = bindingUtil.mapLerp(bindingEnabled, theme.Enabled.BackgroundColor, theme.Disabled.BackgroundColor),
+				color = bindingUtil.mapLerp(
+					bindingEnabled,
+					theme.Enabled.BackgroundColor,
+					theme.Disabled.BackgroundColor
+				),
 				transparency = self.props.transparency,
 
 				size = UDim2.new(1, 0, 1, 0),

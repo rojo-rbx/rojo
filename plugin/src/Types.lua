@@ -56,11 +56,7 @@ local ApiSubscribeResponse = t.interface({
 })
 
 local ApiError = t.interface({
-	kind = t.union(
-		t.literal("NotFound"),
-		t.literal("BadRequest"),
-		t.literal("InternalError")
-	),
+	kind = t.union(t.literal("NotFound"), t.literal("BadRequest"), t.literal("InternalError")),
 	details = t.string,
 })
 

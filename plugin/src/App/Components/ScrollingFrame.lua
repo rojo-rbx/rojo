@@ -35,7 +35,7 @@ local function ScrollingFrame(props)
 			BorderSizePixel = 0,
 			BackgroundTransparency = 1,
 
-			[Roact.Change.AbsoluteSize] = props[Roact.Change.AbsoluteSize]
+			[Roact.Change.AbsoluteSize] = props[Roact.Change.AbsoluteSize],
 		}, props[Roact.Children])
 	end)
 end

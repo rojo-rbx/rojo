@@ -124,7 +124,9 @@ function App:startSession()
 			end
 		end
 
-		if changes == 0 then return end
+		if changes == 0 then
+			return
+		end
 
 		local old = self.patchInfo:getValue()
 		if now - old.timestamp < 2 then
@@ -187,7 +189,7 @@ function App:startSession()
 			local patchInfo = table.clone(self.patchInfo:getValue())
 			self.setPatchInfo(patchInfo)
 			local elapsed = os.time() - patchInfo.timestamp
-			task.wait(elapsed < 60 and 1 or elapsed/5)
+			task.wait(elapsed < 60 and 1 or elapsed / 5)
 		end
 	end)
 end
@@ -317,10 +319,10 @@ function App:render()
 					Padding = UDim.new(0, 5),
 				}),
 				padding = e("UIPadding", {
-					PaddingTop = UDim.new(0, 5);
-					PaddingBottom = UDim.new(0, 5);
-					PaddingLeft = UDim.new(0, 5);
-					PaddingRight = UDim.new(0, 5);
+					PaddingTop = UDim.new(0, 5),
+					PaddingBottom = UDim.new(0, 5),
+					PaddingLeft = UDim.new(0, 5),
+					PaddingRight = UDim.new(0, 5),
 				}),
 				notifs = e(Notifications, {
 					soundPlayer = self.props.soundPlayer,
@@ -340,7 +342,9 @@ function App:render()
 				onTriggered = function()
 					if self.serveSession == nil or self.serveSession:getStatus() == ServeSession.Status.NotStarted then
 						self:startSession()
-					elseif self.serveSession ~= nil and self.serveSession:getStatus() == ServeSession.Status.Connected then
+					elseif
+						self.serveSession ~= nil and self.serveSession:getStatus() == ServeSession.Status.Connected
+					then
 						self:endSession()
 					end
 				end,
@@ -388,7 +392,7 @@ function App:render()
 							}
 						end)
 					end,
-				})
+				}),
 			}),
 		}),
 	})

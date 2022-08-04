@@ -45,7 +45,7 @@ local function AddressEntry(props)
 					if props.onHostChange ~= nil then
 						props.onHostChange(object.Text)
 					end
-				end
+				end,
 			}),
 
 			Port = e("TextBox", {

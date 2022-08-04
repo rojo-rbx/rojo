@@ -13,7 +13,14 @@ local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
 
 local e = Roact.createElement
 
-local AGE_UNITS = { {31556909, "year"}, {2629743, "month"}, {604800, "week"}, {86400, "day"}, {3600, "hour"}, {60, "minute"}, }
+local AGE_UNITS = {
+	{ 31556909, "year" },
+	{ 2629743, "month" },
+	{ 604800, "week" },
+	{ 86400, "day" },
+	{ 3600, "hour" },
+	{ 60, "minute" },
+}
 function timeSinceText(elapsed: number): string
 	if elapsed < 3 then
 		return "just now"
@@ -21,11 +28,11 @@ function timeSinceText(elapsed: number): string
 
 	local ageText = string.format("%d seconds ago", elapsed)
 
-	for _,UnitData in ipairs(AGE_UNITS) do
+	for _, UnitData in ipairs(AGE_UNITS) do
 		local UnitSeconds, UnitName = UnitData[1], UnitData[2]
 		if elapsed > UnitSeconds then
-			local c = math.floor(elapsed/UnitSeconds)
-			ageText = string.format("%d %s%s ago", c, UnitName, c>1 and "s" or "")
+			local c = math.floor(elapsed / UnitSeconds)
+			ageText = string.format("%d %s%s ago", c, UnitName, c > 1 and "s" or "")
 			break
 		end
 	end
@@ -42,7 +49,7 @@ local function ConnectionDetails(props)
 		}, {
 			TextContainer = e("Frame", {
 				Size = UDim2.new(1, 0, 1, 0),
-				BackgroundTransparency = 1
+				BackgroundTransparency = 1,
 			}, {
 				ProjectName = e("TextLabel", {
 					Text = props.projectName,

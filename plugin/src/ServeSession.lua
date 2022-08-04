@@ -75,15 +75,13 @@ function ServeSession.new(options)
 
 	local connections = {}
 
-	local connection = StudioService
-		:GetPropertyChangedSignal("ActiveScript")
-		:Connect(function()
-			local activeScript = StudioService.ActiveScript
+	local connection = StudioService:GetPropertyChangedSignal("ActiveScript"):Connect(function()
+		local activeScript = StudioService.ActiveScript
 
-			if activeScript ~= nil then
-				self:__onActiveScriptChanged(activeScript)
-			end
-		end)
+		if activeScript ~= nil then
+			self:__onActiveScriptChanged(activeScript)
+		end
+	end)
 	table.insert(connections, connection)
 
 	self = {
@@ -130,17 +128,17 @@ end
 function ServeSession:start()
 	self:__setStatus(Status.Connecting)
 
-	self.__apiContext:connect()
+	self.__apiContext
+		:connect()
 		:andThen(function(serverInfo)
 			self:__setStatus(Status.Connected, serverInfo.projectName)
 			self:__applyGameAndPlaceId(serverInfo)
 
 			local rootInstanceId = serverInfo.rootInstanceId
 
-			return self:__initialSync(rootInstanceId)
-				:andThen(function()
-					return self:__mainSyncLoop()
-				end)
+			return self:__initialSync(rootInstanceId):andThen(function()
+				return self:__mainSyncLoop()
+			end)
 		end)
 		:catch(function(err)
 			if self.__status ~= Status.Disconnected then
@@ -203,69 +201,67 @@ function ServeSession:__onActiveScriptChanged(activeScript)
 end
 
 function ServeSession:__initialSync(rootInstanceId)
-	return self.__apiContext:read({ rootInstanceId })
-		:andThen(function(readResponseBody)
-			-- Tell the API Context that we're up-to-date with the version of
-			-- the tree defined in this response.
-			self.__apiContext:setMessageCursor(readResponseBody.messageCursor)
+	return self.__apiContext:read({ rootInstanceId }):andThen(function(readResponseBody)
+		-- Tell the API Context that we're up-to-date with the version of
+		-- the tree defined in this response.
+		self.__apiContext:setMessageCursor(readResponseBody.messageCursor)
 
-			-- For any instances that line up with the Rojo server's view, start
-			-- tracking them in the reconciler.
-			Log.trace("Matching existing Roblox instances to Rojo IDs")
-			self.__reconciler:hydrate(readResponseBody.instances, rootInstanceId, game)
+		-- For any instances that line up with the Rojo server's view, start
+		-- tracking them in the reconciler.
+		Log.trace("Matching existing Roblox instances to Rojo IDs")
+		self.__reconciler:hydrate(readResponseBody.instances, rootInstanceId, game)
 
-			-- Calculate the initial patch to apply to the DataModel to catch us
-			-- up to what Rojo thinks the place should look like.
-			Log.trace("Computing changes that plugin needs to make to catch up to server...")
-			local success, catchUpPatch = self.__reconciler:diff(
-				readResponseBody.instances,
-				rootInstanceId,
-				game
+		-- Calculate the initial patch to apply to the DataModel to catch us
+		-- up to what Rojo thinks the place should look like.
+		Log.trace("Computing changes that plugin needs to make to catch up to server...")
+		local success, catchUpPatch = self.__reconciler:diff(readResponseBody.instances, rootInstanceId, game)
+
+		if not success then
+			Log.error("Could not compute a diff to catch up to the Rojo server: {:#?}", catchUpPatch)
+		end
+
+		Log.trace("Computed hydration patch: {:#?}", debugPatch(catchUpPatch))
+
+		-- TODO: Prompt user to notify them of this patch, since it's
+		-- effectively a conflict between the Rojo server and the client. In
+		-- the future, we'll ask which changes the user wants to keep.
+
+		local unappliedPatch = self.__reconciler:applyPatch(catchUpPatch)
+
+		if not PatchSet.isEmpty(unappliedPatch) then
+			Log.warn(
+				"Could not apply all changes requested by the Rojo server:\n{}",
+				PatchSet.humanSummary(self.__instanceMap, unappliedPatch)
 			)
+		end
 
-			if not success then
-				Log.error("Could not compute a diff to catch up to the Rojo server: {:#?}", catchUpPatch)
-			end
-
-			Log.trace("Computed hydration patch: {:#?}", debugPatch(catchUpPatch))
-
-			-- TODO: Prompt user to notify them of this patch, since it's
-			-- effectively a conflict between the Rojo server and the client. In
-			-- the future, we'll ask which changes the user wants to keep.
-
-			local unappliedPatch = self.__reconciler:applyPatch(catchUpPatch)
-
-			if not PatchSet.isEmpty(unappliedPatch) then
-				Log.warn("Could not apply all changes requested by the Rojo server:\n{}",
-					PatchSet.humanSummary(self.__instanceMap, unappliedPatch))
-			end
-
-			if self.__patchAppliedCallback then
-				pcall(self.__patchAppliedCallback, catchUpPatch, unappliedPatch)
-			end
-		end)
+		if self.__patchAppliedCallback then
+			pcall(self.__patchAppliedCallback, catchUpPatch, unappliedPatch)
+		end
+	end)
 end
 
 function ServeSession:__mainSyncLoop()
-	return self.__apiContext:retrieveMessages()
-		:andThen(function(messages)
-			for _, message in ipairs(messages) do
-				local unappliedPatch = self.__reconciler:applyPatch(message)
+	return self.__apiContext:retrieveMessages():andThen(function(messages)
+		for _, message in ipairs(messages) do
+			local unappliedPatch = self.__reconciler:applyPatch(message)
 
-				if not PatchSet.isEmpty(unappliedPatch) then
-					Log.warn("Could not apply all changes requested by the Rojo server:\n{}",
-						PatchSet.humanSummary(self.__instanceMap, unappliedPatch))
-				end
-
-				if self.__patchAppliedCallback then
-					pcall(self.__patchAppliedCallback, message, unappliedPatch)
-				end
+			if not PatchSet.isEmpty(unappliedPatch) then
+				Log.warn(
+					"Could not apply all changes requested by the Rojo server:\n{}",
+					PatchSet.humanSummary(self.__instanceMap, unappliedPatch)
+				)
 			end
 
-			if self.__status ~= Status.Disconnected then
-				return self:__mainSyncLoop()
+			if self.__patchAppliedCallback then
+				pcall(self.__patchAppliedCallback, message, unappliedPatch)
 			end
-		end)
+		end
+
+		if self.__status ~= Status.Disconnected then
+			return self:__mainSyncLoop()
+		end
+	end)
 end
 
 function ServeSession:__stopInternal(err)

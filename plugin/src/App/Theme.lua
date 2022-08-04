@@ -25,9 +25,9 @@ local strict = require(script.Parent.Parent.strict)
 
 -- Copying hex colors back and forth from design programs is faster
 local function hexColor(decimal)
-	local red = bit32.band(bit32.rshift(decimal, 16), 2^8 - 1)
-	local green = bit32.band(bit32.rshift(decimal, 8), 2^8 - 1)
-	local blue = bit32.band(decimal, 2^8 - 1)
+	local red = bit32.band(bit32.rshift(decimal, 16), 2 ^ 8 - 1)
+	local green = bit32.band(bit32.rshift(decimal, 8), 2 ^ 8 - 1)
+	local blue = bit32.band(decimal, 2 ^ 8 - 1)
 
 	return Color3.fromRGB(red, green, blue)
 end
@@ -74,7 +74,7 @@ local lightTheme = strict("LightTheme", {
 	},
 	AddressEntry = {
 		TextColor = hexColor(0x000000),
-		PlaceholderColor = hexColor(0x8C8C8C)
+		PlaceholderColor = hexColor(0x8C8C8C),
 	},
 	BorderedContainer = {
 		BorderColor = hexColor(0xCBCBCB),
@@ -152,7 +152,7 @@ local darkTheme = strict("DarkTheme", {
 	},
 	AddressEntry = {
 		TextColor = hexColor(0xFFFFFF),
-		PlaceholderColor = hexColor(0x8B8B8B)
+		PlaceholderColor = hexColor(0x8B8B8B),
 	},
 	BorderedContainer = {
 		BorderColor = hexColor(0x535353),
@@ -180,7 +180,7 @@ local darkTheme = strict("DarkTheme", {
 	},
 	Header = {
 		LogoColor = BRAND_COLOR,
-		VersionColor = hexColor(0xD3D3D3)
+		VersionColor = hexColor(0xD3D3D3),
 	},
 	Notification = {
 		InfoColor = hexColor(0xFFFFFF),
