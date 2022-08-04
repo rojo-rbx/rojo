@@ -52,6 +52,11 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
+    - uses: JohnnyMorganz/stylua-action@1.0.0
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        args: --check plugin
+
     - name: Install Rust
       uses: actions-rs/toolchain@v1
       with:
