@@ -1,33 +1,25 @@
 {
-  "name": "Rojo",
-  "tree": {
-    "$className": "Folder",
-    "Plugin": {
-      "$path": "src"
-    },
-    "Log": {
-      "$path": "log"
-    },
-    "Http": {
-      "$path": "http"
-    },
-    "Fmt": {
-      "$path": "fmt"
-    },
-    "RbxDom": {
-      "$path": "rbx_dom_lua"
-    },
-    "Roact": {
-      "$path": "modules/roact/src"
-    },
-    "Promise": {
-      "$path": "modules/promise/lib"
-    },
-    "t": {
-      "$path": "modules/t/lib"
-    },
-    "Flipper": {
-      "$path": "modules/flipper/src"
-    }
-  }
+	"name": "Rojo",
+	"tree": {
+		"$className": "Folder",
+		"Plugin": {
+			"$path": "src"
+		},
+		"Packages": {
+			"$path": "Packages",
+
+			"Log": {
+				"$path": "log"
+			},
+			"Http": {
+				"$path": "http"
+			},
+			"Fmt": {
+				"$path": "fmt"
+			},
+			"RbxDom": {
+				"$path": "rbx_dom_lua"
+			}
+		}
+	}
 }

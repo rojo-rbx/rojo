@@ -1,6 +1,7 @@
 local Rojo = script:FindFirstAncestor("Rojo")
+local Packages = Rojo.Packages
 
-local Roact = require(Rojo.Roact)
+local Roact = require(Packages.Roact)
 
 local StudioToolbarContext = Roact.createContext(nil)
 

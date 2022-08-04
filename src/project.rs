@@ -229,6 +229,13 @@ pub struct ProjectNode {
     )]
     pub properties: HashMap<String, UnresolvedValue>,
 
+    #[serde(
+        rename = "$attributes",
+        default,
+        skip_serializing_if = "HashMap::is_empty"
+    )]
+    pub attributes: HashMap<String, UnresolvedValue>,
+
     /// Defines the behavior when Rojo encounters unknown instances in Roblox
     /// Studio during live sync. `$ignoreUnknownInstances` should be considered
     /// a large hammer and used with care.
