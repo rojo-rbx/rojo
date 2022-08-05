@@ -2,7 +2,6 @@ use std::{
     io::{self, Write},
     net::{IpAddr, Ipv4Addr},
     path::PathBuf,
-    sync::Arc,
 };
 
 use clap::Parser;
@@ -39,7 +38,7 @@ impl ServeCommand {
 
         let vfs = Vfs::new_default();
 
-        let session = Arc::new(ServeSession::new(vfs, &project_path)?);
+        let session = ServeSession::new(vfs, &project_path)?;
 
         let ip = self
             .address

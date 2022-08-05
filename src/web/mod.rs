@@ -26,8 +26,10 @@ pub struct LiveServer {
 }
 
 impl LiveServer {
-    pub fn new(serve_session: Arc<ServeSession>) -> Self {
-        LiveServer { serve_session }
+    pub fn new(serve_session: ServeSession) -> Self {
+        LiveServer {
+            serve_session: Arc::new(serve_session)
+        }
     }
 
     pub fn start(self, address: SocketAddr) {
