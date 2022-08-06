@@ -13,6 +13,7 @@ local defaultSettings = {
 	twoWaySync = false,
 	showNotifications = true,
 	playSounds = true,
+	priorEndpoints = {},
 }
 
 local Settings = {}

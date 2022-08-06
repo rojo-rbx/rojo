@@ -9,5 +9,5 @@ return strict("Config", {
 	expectedServerVersionString = "7.2 or newer",
 	protocolVersion = 4,
 	defaultHost = "localhost",
-	defaultPort = 34872,
+	defaultPort = "34872",
 })
