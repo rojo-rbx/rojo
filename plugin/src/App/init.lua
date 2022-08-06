@@ -102,7 +102,7 @@ function App:setPriorEndpoint(host: string, port: string)
 
 	-- Clear any stale saves to avoid disc bloat
 	for placeId, endpoint in priorEndpoints do
-		if os.time() - endpoint.timestamp > 2_628_000 then
+		if os.time() - endpoint.timestamp > 12_960_000 then
 			priorEndpoints[placeId] = nil
 			Log.trace("Cleared stale saved endpoint for {}", placeId)
 		end
