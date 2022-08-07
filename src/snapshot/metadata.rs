@@ -45,7 +45,6 @@ pub struct InstanceMetadata {
     #[serde(serialize_with = "path_serializer::serialize_vec_absolute")]
     pub relevant_paths: Vec<PathBuf>,
 
-    pub child_file_names: Option<Vec<String>>,
     /// Contains information about this instance that should persist between
     /// snapshot invocations and is generally inherited.
     ///
@@ -62,7 +61,6 @@ impl InstanceMetadata {
             instigating_source: None,
             relevant_paths: Vec::new(),
             context: InstanceContext::default(),
-            child_file_names: None,
         }
     }
 
@@ -83,13 +81,6 @@ impl InstanceMetadata {
     pub fn relevant_paths(self, relevant_paths: Vec<PathBuf>) -> Self {
         Self {
             relevant_paths,
-            ..self
-        }
-    }
-
-    pub fn child_file_names(self, child_file_names: Vec<String>) -> Self {
-        Self {
-            child_file_names: Some(child_file_names),
             ..self
         }
     }

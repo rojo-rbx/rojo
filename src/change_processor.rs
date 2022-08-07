@@ -1,7 +1,7 @@
 use std::{
     fs,
+    path::{Path, PathBuf},
     sync::{Arc, Mutex},
-    path::Path,
 };
 
 use crossbeam_channel::{select, Receiver, RecvError, Sender};
@@ -126,104 +126,64 @@ impl JobThreadContext {
         // For a given VFS event, we might have many changes to different parts
         // of the tree. Calculate and apply all of these changes.
         let applied_patches = {
-            let mut tree = self.tree.lock().unwrap();
-            let mut applied_patches = Vec::new();
             match event {
                 VfsEvent::Write(path) => {
-                                        
                     // Find the nearest ancestor to this path that has
                     // associated instances in the tree. This helps make sure
                     // that we handle additions correctly, especially if we
                     // receive events for descendants of a large tree being
                     // created all at once.
-                    if path.is_dir(){
-                        return
+                    if path.is_dir() {
+                        return;
                     }
-                    let mut child_path = path.as_path();
-                    let mut current_path = path.as_path();
-                    println!("current event path: {:?}", path);
-                    let affected_ids = loop {
-                        let ids = tree.get_ids_at_path(&current_path);
-
-                        log::trace!("Path {} affects IDs {:?}", current_path.display(), ids);
-                        println!("Path {} affects IDs {:?}", current_path.display(), ids);
-                        if !ids.is_empty() {
-                            break ids.to_vec();
-                        }
-
-                        log::trace!("Trying parent path...");
-                        println!("Trying parent path...");
-                        match current_path.parent() {
-                            Some(parent) => {
-                                println!("child_path: {:?}", current_path);
-                                println!("current_path: {:?}", parent);
-                                child_path = current_path;
-                                current_path = parent;
-                            }
-                            None => break Vec::new(),
-                        }
-                    };
-                    println!("Path {} affects IDs {:?}", current_path.display(), affected_ids);
-                    for id in affected_ids {
-                        if let Some(patch) = compute_and_apply_changes(&mut tree, &self.vfs, id,Some(child_path)) {
-                            if !patch.is_empty() {
-                                applied_patches.push(patch);
-                            }
-                        }
-                    }
-                },
-                
-                
-                VfsEvent::Remove(path) | VfsEvent::Create(path) => {
-                    
-                    // Find the nearest ancestor to this path that has
-                    // associated instances in the tree. This helps make sure
-                    // that we handle additions correctly, especially if we
-                    // receive events for descendants of a large tree being
-                    // created all at once.
-
-                    let mut child_path = path.as_path();
-                    let mut current_path = path.as_path();
-                    println!("current event path: {:?}", path);
-                    let affected_ids = loop {
-                        let ids = tree.get_ids_at_path(&current_path);
-
-                        log::trace!("Path {} affects IDs {:?}", current_path.display(), ids);
-                        println!("Path {} affects IDs {:?}", current_path.display(), ids);
-                        if !ids.is_empty() {
-                            break ids.to_vec();
-                        }
-
-                        log::trace!("Trying parent path...");
-                        println!("Trying parent path...");
-                        match current_path.parent() {
-                            Some(parent) => {
-                                println!("child_path: {:?}", current_path);
-                                println!("current_path: {:?}", parent);
-                                child_path = current_path;
-                                current_path = parent;
-                            }
-                            None => break Vec::new(),
-                        }
-                    };
-                    println!("Path {} affects IDs {:?}", current_path.display(), affected_ids);
-                    for id in affected_ids {
-                        if let Some(patch) = compute_and_apply_changes(&mut tree, &self.vfs, id,Some(child_path)) {
-                            if !patch.is_empty() {
-                                applied_patches.push(patch);
-                            }
-                        }
-                    }
+                    self.on_vfs_event(path)
                 }
-                _ => log::warn!("Unhandled VFS event: {:?}", event),
-            }
 
-            applied_patches
+                VfsEvent::Remove(path) | VfsEvent::Create(path) => self.on_vfs_event(path),
+                _ => {
+                    log::warn!("Unhandled VFS event: {:?}", event);
+                    vec![]
+                }
+            }
         };
 
         // Notify anyone listening to the message queue about the changes we
         // just made.
         self.message_queue.push_messages(&applied_patches);
+    }
+    fn on_vfs_event(&self, path: PathBuf) -> Vec<AppliedPatchSet> {
+        let mut tree = self.tree.lock().unwrap();
+        let mut applied_patches = Vec::new();
+        let mut child_path = path.as_path();
+        let mut current_path = path.as_path();
+
+        let affected_ids = loop {
+            let ids = tree.get_ids_at_path(&current_path);
+
+            log::trace!("Path {} affects IDs {:?}", current_path.display(), ids);
+            if !ids.is_empty() {
+                break ids.to_vec();
+            }
+
+            log::trace!("Trying parent path...");
+            match current_path.parent() {
+                Some(parent) => {
+                    child_path = current_path;
+                    current_path = parent;
+                }
+                None => break Vec::new(),
+            }
+        };
+        for id in affected_ids {
+            if let Some(patch) =
+                compute_and_apply_changes(&mut tree, &self.vfs, id, Some(child_path))
+            {
+                if !patch.is_empty() {
+                    applied_patches.push(patch);
+                }
+            }
+        }
+        applied_patches
     }
 
     fn handle_tree_event(&self, patch_set: PatchSet) {
@@ -315,7 +275,12 @@ impl JobThreadContext {
     }
 }
 
-fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref, child_path: Option<&Path>) -> Option<AppliedPatchSet> {
+fn compute_and_apply_changes(
+    tree: &mut RojoTree,
+    vfs: &Vfs,
+    id: Ref,
+    child_path: Option<&Path>,
+) -> Option<AppliedPatchSet> {
     let metadata = tree
         .get_metadata(id)
         .expect("metadata missing for instance present in tree");
@@ -345,7 +310,13 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref, child_path
                 for child in children_ref {
                     children.push(tree.to_instance_snapshot(*child).unwrap());
                 }
-                let snapshot = match snapshot_from_vfs(&metadata.context, &vfs, &path, child_path, Some(children)) {
+                let snapshot = match snapshot_from_vfs(
+                    &metadata.context,
+                    &vfs,
+                    &path,
+                    child_path,
+                    Some(children),
+                ) {
                     Ok(snapshot) => snapshot,
                     Err(err) => {
                         log::error!("Snapshot error: {:?}", err);

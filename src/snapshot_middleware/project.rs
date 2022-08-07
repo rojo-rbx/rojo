@@ -88,7 +88,6 @@ pub fn snapshot_project_node(
         } else {
             Cow::Borrowed(path)
         };
-        println!("snapshot_project_node");
         if let Some(snapshot) = snapshot_from_vfs(context, vfs, &full_path, None, None)? {
             class_name_from_path = Some(snapshot.class_name);
 

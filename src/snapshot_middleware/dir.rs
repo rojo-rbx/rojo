@@ -58,7 +58,6 @@ pub fn snapshot_dir_no_meta(
     let mut snapshot_children = Vec::new();
     match child_path {
         Some(child_path) => {
-            println!("childpath {:?}", child_path);
             if let Some(child_snapshot) = snapshot_from_vfs(context, vfs, child_path, None, None)? {
                 snapshot_children.push(child_snapshot);
             }
@@ -89,8 +88,6 @@ pub fn snapshot_dir_no_meta(
             }
         }
         None => {
-            println!("childpath None");
-            println!("path {:?}", path);
             for entry in vfs.read_dir(path)? {
                 let entry = entry?;
 
@@ -150,8 +147,7 @@ pub fn snapshot_dir_no_meta(
             InstanceMetadata::new()
                 .instigating_source(path)
                 .relevant_paths(relevant_paths)
-                .context(context)
-                .child_file_names(child_file_names),
+                .context(context),
         );
 
     Ok(Some(snapshot))
@@ -172,10 +168,15 @@ mod test {
 
         let mut vfs = Vfs::new(imfs);
 
-        let instance_snapshot =
-            snapshot_dir(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = snapshot_dir(
+            &InstanceContext::default(),
+            &mut vfs,
+            Path::new("/foo"),
+            None,
+            None,
+        )
+        .unwrap()
+        .unwrap();
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }
@@ -193,10 +194,15 @@ mod test {
 
         let mut vfs = Vfs::new(imfs);
 
-        let instance_snapshot =
-            snapshot_dir(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = snapshot_dir(
+            &InstanceContext::default(),
+            &mut vfs,
+            Path::new("/foo"),
+            None,
+            None,
+        )
+        .unwrap()
+        .unwrap();
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }
