@@ -1,0 +1,25 @@
+---
+source: tests/tests/serve.rs
+assertion_line: 102
+expression: "subscribe_response.intern_and_redact(&mut redactions, ())"
+---
+messageCursor: 1
+messages:
+  - added:
+      id-3:
+        Children: []
+        ClassName: Script
+        Id: id-3
+        Metadata:
+          ignoreUnknownInstances: false
+        Name: foo
+        Parent: id-2
+        Properties:
+          Disabled:
+            Bool: true
+          Source:
+            String: Updated foo!
+    removed: []
+    updated: []
+sessionId: id-1
+

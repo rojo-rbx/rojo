@@ -81,6 +81,67 @@ fn add_folder() {
     });
 }
 
+
+#[test]
+fn added_instance_with_meta_present() {
+    run_serve_test("added_instance_with_meta_present", |session, mut redactions| {
+        let info = session.get_api_rojo().unwrap();
+        let root_id = info.root_instance_id;
+
+        assert_yaml_snapshot!("added_instance_with_meta_present_info", redactions.redacted_yaml(info));
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "added_instance_with_meta_present_all",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+
+        fs::write(session.path().join("src/foo.server.lua"), "Updated foo!").unwrap();
+
+        let subscribe_response = session.get_api_subscribe(0).unwrap();
+        assert_yaml_snapshot!(
+            "added_instance_with_meta_present_subscribe",
+            subscribe_response.intern_and_redact(&mut redactions, ())
+        );
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "added_instance_with_meta_present_all-2",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+    });
+}
+
+#[test]
+fn added_meta_with_instance_present() {
+    run_serve_test("added_meta_with_instance_present", |session, mut redactions| {
+        let info = session.get_api_rojo().unwrap();
+        let root_id = info.root_instance_id;
+
+        assert_yaml_snapshot!("added_meta_with_instance_present_info", redactions.redacted_yaml(info));
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "added_meta_with_instance_present_all",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+
+        fs::write(session.path().join("src/foo.meta.json"), "{\"properties\": { \"Disabled\": true}}").unwrap();
+
+        let subscribe_response = session.get_api_subscribe(0).unwrap();
+        assert_yaml_snapshot!(
+            "added_meta_with_instance_present_subscribe",
+            subscribe_response.intern_and_redact(&mut redactions, ())
+        );
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "added_meta_with_instance_present_all-2",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+    });
+}
+
 #[test]
 fn remove_file() {
     run_serve_test("remove_file", |session, mut redactions| {
@@ -106,6 +167,96 @@ fn remove_file() {
         let read_response = session.get_api_read(root_id).unwrap();
         assert_yaml_snapshot!(
             "remove_file_all-2",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+    });
+}
+
+#[test]
+fn remove_meta_file() {
+    run_serve_test("remove_meta_file", |session, mut redactions| {
+        let info = session.get_api_rojo().unwrap();
+        let root_id = info.root_instance_id;
+
+        assert_yaml_snapshot!("remove_meta_file_info", redactions.redacted_yaml(info));
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "remove_meta_file_all",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+
+        fs::remove_file(session.path().join("src/foo.meta.json")).unwrap();
+
+        let subscribe_response = session.get_api_subscribe(0).unwrap();
+        assert_yaml_snapshot!(
+            "remove_meta_file_subscribe",
+            subscribe_response.intern_and_redact(&mut redactions, ())
+        );
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "remove_meta_file_all-2",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+    });
+}
+
+#[test]
+fn remove_init_meta_file() {
+    run_serve_test("remove_init_meta_file", |session, mut redactions| {
+        let info = session.get_api_rojo().unwrap();
+        let root_id = info.root_instance_id;
+
+        assert_yaml_snapshot!("remove_init_meta_file_info", redactions.redacted_yaml(info));
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "remove_init_meta_file_all",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+
+        fs::remove_file(session.path().join("src/folder/init.meta.json")).unwrap();
+
+        let subscribe_response = session.get_api_subscribe(0).unwrap();
+        assert_yaml_snapshot!(
+            "remove_init_meta_file_subscribe",
+            subscribe_response.intern_and_redact(&mut redactions, ())
+        );
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "remove_init_meta_file_all-2",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+    });
+}
+
+#[test]
+fn remove_init_lua_file() {
+    run_serve_test("remove_init_lua_file", |session, mut redactions| {
+        let info = session.get_api_rojo().unwrap();
+        let root_id = info.root_instance_id;
+
+        assert_yaml_snapshot!("remove_init_lua_file_info", redactions.redacted_yaml(info));
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "remove_init_lua_file_all",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+
+        fs::remove_file(session.path().join("src/folder/init.server.lua")).unwrap();
+
+        let subscribe_response = session.get_api_subscribe(0).unwrap();
+        assert_yaml_snapshot!(
+            "remove_init_lua_file_subscribe",
+            subscribe_response.intern_and_redact(&mut redactions, ())
+        );
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "remove_init_lua_file_all-2",
             read_response.intern_and_redact(&mut redactions, root_id)
         );
     });

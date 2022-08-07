@@ -1,0 +1,14 @@
+---
+source: tests/tests/serve.rs
+assertion_line: 150
+expression: redactions.redacted_yaml(info)
+---
+expectedPlaceIds: ~
+gameId: ~
+placeId: ~
+projectName: remove_meta_file
+protocolVersion: 4
+rootInstanceId: id-2
+serverVersion: "[server-version]"
+sessionId: id-1
+

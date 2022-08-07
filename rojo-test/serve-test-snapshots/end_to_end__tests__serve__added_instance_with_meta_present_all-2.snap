@@ -1,0 +1,32 @@
+---
+source: tests/tests/serve.rs
+assertion_line: 108
+expression: "read_response.intern_and_redact(&mut redactions, root_id)"
+---
+instances:
+  id-2:
+    Children:
+      - id-3
+    ClassName: Folder
+    Id: id-2
+    Metadata:
+      ignoreUnknownInstances: false
+    Name: remove_meta_file
+    Parent: "00000000000000000000000000000000"
+    Properties: {}
+  id-3:
+    Children: []
+    ClassName: Script
+    Id: id-3
+    Metadata:
+      ignoreUnknownInstances: false
+    Name: foo
+    Parent: id-2
+    Properties:
+      Disabled:
+        Bool: true
+      Source:
+        String: Updated foo!
+messageCursor: 1
+sessionId: id-1
+

@@ -1,0 +1,6 @@
+{
+  "name": "remove_meta_file",
+  "tree": {
+    "$path": "src"
+  }
+}
