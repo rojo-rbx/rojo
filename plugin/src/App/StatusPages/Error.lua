@@ -58,6 +58,13 @@ function Error:render()
 		}, {
 			ErrorMessage = Theme.with(function(theme)
 				return e("TextBox", {
+					[Roact.Event.InputBegan] = function(rbx, input)
+						if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
+						rbx.SelectionStart = 0
+						rbx.CursorPosition = #rbx.Text+1
+					end,
+
+
 					Text = self.props.errorMessage,
 					TextEditable = false,
 					Font = Enum.Font.Code,
@@ -70,11 +77,6 @@ function Error:render()
 					ClearTextOnFocus = false,
 					BackgroundTransparency = 1,
 					Size = UDim2.new(1, 0, 1, 0),
-					[Roact.Change.CursorPosition] = function(rbx)
-						if rbx.CursorPosition == -1 then return end
-						rbx.SelectionStart = 0
-						rbx.CursorPosition = #rbx.Text+1
-					end,
 				})
 			end),
 
