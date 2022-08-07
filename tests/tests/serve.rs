@@ -81,65 +81,80 @@ fn add_folder() {
     });
 }
 
-
 #[test]
 fn added_instance_with_meta_present() {
-    run_serve_test("added_instance_with_meta_present", |session, mut redactions| {
-        let info = session.get_api_rojo().unwrap();
-        let root_id = info.root_instance_id;
+    run_serve_test(
+        "added_instance_with_meta_present",
+        |session, mut redactions| {
+            let info = session.get_api_rojo().unwrap();
+            let root_id = info.root_instance_id;
 
-        assert_yaml_snapshot!("added_instance_with_meta_present_info", redactions.redacted_yaml(info));
+            assert_yaml_snapshot!(
+                "added_instance_with_meta_present_info",
+                redactions.redacted_yaml(info)
+            );
 
-        let read_response = session.get_api_read(root_id).unwrap();
-        assert_yaml_snapshot!(
-            "added_instance_with_meta_present_all",
-            read_response.intern_and_redact(&mut redactions, root_id)
-        );
+            let read_response = session.get_api_read(root_id).unwrap();
+            assert_yaml_snapshot!(
+                "added_instance_with_meta_present_all",
+                read_response.intern_and_redact(&mut redactions, root_id)
+            );
 
-        fs::write(session.path().join("src/foo.server.lua"), "Updated foo!").unwrap();
+            fs::write(session.path().join("src/foo.server.lua"), "Updated foo!").unwrap();
 
-        let subscribe_response = session.get_api_subscribe(0).unwrap();
-        assert_yaml_snapshot!(
-            "added_instance_with_meta_present_subscribe",
-            subscribe_response.intern_and_redact(&mut redactions, ())
-        );
+            let subscribe_response = session.get_api_subscribe(0).unwrap();
+            assert_yaml_snapshot!(
+                "added_instance_with_meta_present_subscribe",
+                subscribe_response.intern_and_redact(&mut redactions, ())
+            );
 
-        let read_response = session.get_api_read(root_id).unwrap();
-        assert_yaml_snapshot!(
-            "added_instance_with_meta_present_all-2",
-            read_response.intern_and_redact(&mut redactions, root_id)
-        );
-    });
+            let read_response = session.get_api_read(root_id).unwrap();
+            assert_yaml_snapshot!(
+                "added_instance_with_meta_present_all-2",
+                read_response.intern_and_redact(&mut redactions, root_id)
+            );
+        },
+    );
 }
 
 #[test]
 fn added_meta_with_instance_present() {
-    run_serve_test("added_meta_with_instance_present", |session, mut redactions| {
-        let info = session.get_api_rojo().unwrap();
-        let root_id = info.root_instance_id;
+    run_serve_test(
+        "added_meta_with_instance_present",
+        |session, mut redactions| {
+            let info = session.get_api_rojo().unwrap();
+            let root_id = info.root_instance_id;
 
-        assert_yaml_snapshot!("added_meta_with_instance_present_info", redactions.redacted_yaml(info));
+            assert_yaml_snapshot!(
+                "added_meta_with_instance_present_info",
+                redactions.redacted_yaml(info)
+            );
 
-        let read_response = session.get_api_read(root_id).unwrap();
-        assert_yaml_snapshot!(
-            "added_meta_with_instance_present_all",
-            read_response.intern_and_redact(&mut redactions, root_id)
-        );
+            let read_response = session.get_api_read(root_id).unwrap();
+            assert_yaml_snapshot!(
+                "added_meta_with_instance_present_all",
+                read_response.intern_and_redact(&mut redactions, root_id)
+            );
 
-        fs::write(session.path().join("src/foo.meta.json"), "{\"properties\": { \"Disabled\": true}}").unwrap();
+            fs::write(
+                session.path().join("src/foo.meta.json"),
+                "{\"properties\": { \"Disabled\": true}}",
+            )
+            .unwrap();
 
-        let subscribe_response = session.get_api_subscribe(0).unwrap();
-        assert_yaml_snapshot!(
-            "added_meta_with_instance_present_subscribe",
-            subscribe_response.intern_and_redact(&mut redactions, ())
-        );
+            let subscribe_response = session.get_api_subscribe(0).unwrap();
+            assert_yaml_snapshot!(
+                "added_meta_with_instance_present_subscribe",
+                subscribe_response.intern_and_redact(&mut redactions, ())
+            );
 
-        let read_response = session.get_api_read(root_id).unwrap();
-        assert_yaml_snapshot!(
-            "added_meta_with_instance_present_all-2",
-            read_response.intern_and_redact(&mut redactions, root_id)
-        );
-    });
+            let read_response = session.get_api_read(root_id).unwrap();
+            assert_yaml_snapshot!(
+                "added_meta_with_instance_present_all-2",
+                read_response.intern_and_redact(&mut redactions, root_id)
+            );
+        },
+    );
 }
 
 #[test]
