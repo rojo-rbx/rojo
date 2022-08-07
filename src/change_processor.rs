@@ -1,6 +1,7 @@
 use std::{
     fs,
     sync::{Arc, Mutex},
+    path::Path,
 };
 
 use crossbeam_channel::{select, Receiver, RecvError, Sender};
@@ -129,31 +130,38 @@ impl JobThreadContext {
             let mut applied_patches = Vec::new();
 
             match event {
-                VfsEvent::Create(path) | VfsEvent::Write(path) | VfsEvent::Remove(path) => {
+                VfsEvent::Write(path) | VfsEvent::Remove(path) | VfsEvent::Create(path) => {
                     // Find the nearest ancestor to this path that has
                     // associated instances in the tree. This helps make sure
                     // that we handle additions correctly, especially if we
                     // receive events for descendants of a large tree being
                     // created all at once.
+                    let mut child_path = path.as_path();
                     let mut current_path = path.as_path();
                     let affected_ids = loop {
                         let ids = tree.get_ids_at_path(&current_path);
 
                         log::trace!("Path {} affects IDs {:?}", current_path.display(), ids);
-
+                        println!("Path {} affects IDs {:?}", current_path.display(), ids);
                         if !ids.is_empty() {
                             break ids.to_vec();
                         }
 
                         log::trace!("Trying parent path...");
+                        println!("Trying parent path...");
                         match current_path.parent() {
-                            Some(parent) => current_path = parent,
+                            Some(parent) => {
+                                println!("child_path: {:?}", current_path);
+                                println!("current_path: {:?}", parent);
+                                child_path = current_path;
+                                current_path = parent;
+                            }
                             None => break Vec::new(),
                         }
                     };
-
+                    println!("Path {} affects IDs {:?}", current_path.display(), affected_ids);
                     for id in affected_ids {
-                        if let Some(patch) = compute_and_apply_changes(&mut tree, &self.vfs, id) {
+                        if let Some(patch) = compute_and_apply_changes(&mut tree, &self.vfs, id,Some(child_path)) {
                             if !patch.is_empty() {
                                 applied_patches.push(patch);
                             }
@@ -251,7 +259,6 @@ impl JobThreadContext {
                     log::warn!("Cannot update instance {:?}, it does not exist.", id);
                 }
             }
-
             apply_patch_set(&mut tree, patch_set)
         };
 
@@ -261,7 +268,7 @@ impl JobThreadContext {
     }
 }
 
-fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref) -> Option<AppliedPatchSet> {
+fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref, child_path: Option<&Path>) -> Option<AppliedPatchSet> {
     let metadata = tree
         .get_metadata(id)
         .expect("metadata missing for instance present in tree");
@@ -286,8 +293,12 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref) -> Option<
                 // Our instance was previously created from a path and that
                 // path still exists. We can generate a snapshot starting at
                 // that path and use it as the source for our patch.
-
-                let snapshot = match snapshot_from_vfs(&metadata.context, &vfs, &path) {
+                let children_ref = tree.get_instance(id).unwrap().children();
+                let mut children = Vec::new();
+                for child in children_ref {
+                    children.push(tree.to_instance_snapshot(*child).unwrap());
+                }
+                let snapshot = match snapshot_from_vfs(&metadata.context, &vfs, &path, child_path, Some(children)) {
                     Ok(snapshot) => snapshot,
                     Err(err) => {
                         log::error!("Snapshot error: {:?}", err);
@@ -299,12 +310,6 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref) -> Option<
                 apply_patch_set(tree, patch_set)
             }
             Ok(None) => {
-                // Our instance was previously created from a path, but that
-                // path no longer exists.
-                //
-                // We associate deleting the instigating file for an
-                // instance with deleting that instance.
-
                 let mut patch_set = PatchSet::new();
                 patch_set.removed_instances.push(id);
 

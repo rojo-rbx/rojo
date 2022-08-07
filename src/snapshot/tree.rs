@@ -101,7 +101,20 @@ impl RojoTree {
 
         referent
     }
-
+    pub fn to_instance_snapshot(&self, id: Ref) -> Option<InstanceSnapshot> {
+        if let Some(instance) = self.inner.get_by_ref(id) {
+            let metadata = self.metadata_map.get(&id).unwrap();
+            
+            let snapshot = InstanceSnapshot::new()
+            .name(instance.name.to_owned())
+            .class_name(instance.class.to_owned())
+            .properties(instance.properties.to_owned())
+            .metadata(metadata.to_owned());
+            Some(snapshot)
+        }else{
+            None
+        }
+    }
     pub fn remove(&mut self, id: Ref) {
         let mut to_move = VecDeque::new();
         to_move.push_back(id);

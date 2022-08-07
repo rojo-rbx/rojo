@@ -4,7 +4,6 @@ use anyhow::{bail, Context};
 use memofs::Vfs;
 use rbx_dom_weak::types::Attributes;
 use rbx_reflection::ClassTag;
-
 use crate::{
     project::{PathNode, Project, ProjectNode},
     snapshot::{
@@ -89,8 +88,8 @@ pub fn snapshot_project_node(
         } else {
             Cow::Borrowed(path)
         };
-
-        if let Some(snapshot) = snapshot_from_vfs(context, vfs, &full_path)? {
+        println!("snapshot_project_node");
+        if let Some(snapshot) = snapshot_from_vfs(context, vfs, &full_path, None, None)? {
             class_name_from_path = Some(snapshot.class_name);
 
             // Properties from the snapshot are pulled in unchanged, and

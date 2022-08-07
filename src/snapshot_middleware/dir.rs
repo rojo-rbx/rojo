@@ -3,15 +3,16 @@ use std::path::Path;
 use memofs::{DirEntry, IoResultExt, Vfs};
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
-
 use super::{meta_file::DirectoryMetadata, snapshot_from_vfs};
 
 pub fn snapshot_dir(
     context: &InstanceContext,
     vfs: &Vfs,
     path: &Path,
+    child_path: Option<&Path>,
+    children: Option<Vec<InstanceSnapshot>>
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let mut snapshot = match snapshot_dir_no_meta(context, vfs, path)? {
+    let mut snapshot = match snapshot_dir_no_meta(context, vfs, path, child_path,children)? {
         Some(snapshot) => snapshot,
         None => return Ok(None),
     };
@@ -44,6 +45,8 @@ pub fn snapshot_dir_no_meta(
     context: &InstanceContext,
     vfs: &Vfs,
     path: &Path,
+    child_path: Option<&Path>,
+    children: Option<Vec<InstanceSnapshot>>
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let passes_filter_rules = |child: &DirEntry| {
         context
@@ -53,19 +56,48 @@ pub fn snapshot_dir_no_meta(
     };
 
     let mut snapshot_children = Vec::new();
-
-    for entry in vfs.read_dir(path)? {
-        let entry = entry?;
-
-        if !passes_filter_rules(&entry) {
-            continue;
+    match child_path {
+        Some(child_path) => {
+            println!("childpath {:?}",child_path);
+            if let Some(child_snapshot) = snapshot_from_vfs(context, vfs, child_path, None, None)? {
+                snapshot_children.push(child_snapshot);
+            }
+            if let Some(vec_children) = children {
+                for child in vec_children {
+                    if child_path.ends_with("meta.json") {
+                        let meta_file_name = child_path.file_name();
+                        let mut child_name = child.name.to_string();
+                        child_name.push_str("meta.json");
+                        
+                        if child.name.to_string() == meta_file_name.unwrap().to_str().unwrap() {
+                            if let Some(child_snapshot) = snapshot_from_vfs(context, vfs, child.metadata.relevant_paths.first().unwrap(), None, None)? {
+                                snapshot_children.push(child_snapshot);
+                            }
+                        }else{
+                            snapshot_children.push(child.clone())
+                        }
+                    }else{
+                        snapshot_children.push(child.clone())
+                    }
+                }
+            }
         }
+        None => {
+            println!("childpath None");
+            println!("path {:?}", path);
+            for entry in vfs.read_dir(path)? {
+                let entry = entry?;
 
-        if let Some(child_snapshot) = snapshot_from_vfs(context, vfs, entry.path())? {
-            snapshot_children.push(child_snapshot);
+                if !passes_filter_rules(&entry) {
+                    continue;
+                }
+
+                if let Some(child_snapshot) = snapshot_from_vfs(context, vfs, entry.path(), None, None)? {
+                    snapshot_children.push(child_snapshot);
+                }
+            }
         }
     }
-
     let instance_name = path
         .file_name()
         .expect("Could not extract file name")

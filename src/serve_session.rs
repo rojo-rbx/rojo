@@ -12,7 +12,6 @@ use crossbeam_channel::Sender;
 use memofs::IoResultExt;
 use memofs::Vfs;
 use thiserror::Error;
-
 use crate::{
     change_processor::ChangeProcessor,
     message_queue::MessageQueue,
@@ -127,7 +126,7 @@ impl ServeSession {
         let instance_context = InstanceContext::default();
 
         log::trace!("Generating snapshot of instances from VFS");
-        let snapshot = snapshot_from_vfs(&instance_context, &vfs, &start_path)?;
+        let snapshot = snapshot_from_vfs(&instance_context, &vfs, &start_path, None, None)?;
 
         log::trace!("Computing initial patch set");
         let patch_set = compute_patch_set(snapshot, &tree, root_id);
