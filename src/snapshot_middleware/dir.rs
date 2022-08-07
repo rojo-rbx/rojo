@@ -2,17 +2,17 @@ use std::path::Path;
 
 use memofs::{DirEntry, IoResultExt, Vfs};
 
-use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 use super::{meta_file::DirectoryMetadata, snapshot_from_vfs};
+use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
 pub fn snapshot_dir(
     context: &InstanceContext,
     vfs: &Vfs,
     path: &Path,
     child_path: Option<&Path>,
-    children: Option<Vec<InstanceSnapshot>>
+    children: Option<Vec<InstanceSnapshot>>,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let mut snapshot = match snapshot_dir_no_meta(context, vfs, path, child_path,children)? {
+    let mut snapshot = match snapshot_dir_no_meta(context, vfs, path, child_path, children)? {
         Some(snapshot) => snapshot,
         None => return Ok(None),
     };
@@ -46,7 +46,7 @@ pub fn snapshot_dir_no_meta(
     vfs: &Vfs,
     path: &Path,
     child_path: Option<&Path>,
-    children: Option<Vec<InstanceSnapshot>>
+    children: Option<Vec<InstanceSnapshot>>,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let passes_filter_rules = |child: &DirEntry| {
         context
@@ -58,7 +58,7 @@ pub fn snapshot_dir_no_meta(
     let mut snapshot_children = Vec::new();
     match child_path {
         Some(child_path) => {
-            println!("childpath {:?}",child_path);
+            println!("childpath {:?}", child_path);
             if let Some(child_snapshot) = snapshot_from_vfs(context, vfs, child_path, None, None)? {
                 snapshot_children.push(child_snapshot);
             }
@@ -68,15 +68,21 @@ pub fn snapshot_dir_no_meta(
                         let meta_file_name = child_path.file_name();
                         let mut child_name = child.name.to_string();
                         child_name.push_str("meta.json");
-                        
+
                         if child.name.to_string() == meta_file_name.unwrap().to_str().unwrap() {
-                            if let Some(child_snapshot) = snapshot_from_vfs(context, vfs, child.metadata.relevant_paths.first().unwrap(), None, None)? {
+                            if let Some(child_snapshot) = snapshot_from_vfs(
+                                context,
+                                vfs,
+                                child.metadata.relevant_paths.first().unwrap(),
+                                None,
+                                None,
+                            )? {
                                 snapshot_children.push(child_snapshot);
                             }
-                        }else{
+                        } else {
                             snapshot_children.push(child.clone())
                         }
-                    }else{
+                    } else {
                         snapshot_children.push(child.clone())
                     }
                 }
@@ -92,7 +98,9 @@ pub fn snapshot_dir_no_meta(
                     continue;
                 }
 
-                if let Some(child_snapshot) = snapshot_from_vfs(context, vfs, entry.path(), None, None)? {
+                if let Some(child_snapshot) =
+                    snapshot_from_vfs(context, vfs, entry.path(), None, None)?
+                {
                     snapshot_children.push(child_snapshot);
                 }
             }
@@ -121,7 +129,19 @@ pub fn snapshot_dir_no_meta(
         path.join("init.client.luau"),
         path.join("init.csv"),
     ];
-
+    let mut child_file_names = Vec::new();
+    for entry in vfs.read_dir(path)? {
+        let entry = entry?;
+        child_file_names.push(
+            entry
+                .path()
+                .file_name()
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .to_owned(),
+        );
+    }
     let snapshot = InstanceSnapshot::new()
         .name(instance_name)
         .class_name("Folder")
@@ -130,7 +150,8 @@ pub fn snapshot_dir_no_meta(
             InstanceMetadata::new()
                 .instigating_source(path)
                 .relevant_paths(relevant_paths)
-                .context(context),
+                .context(context)
+                .child_file_names(child_file_names),
         );
 
     Ok(Some(snapshot))

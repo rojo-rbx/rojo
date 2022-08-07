@@ -46,7 +46,7 @@ pub fn snapshot_from_vfs(
     vfs: &Vfs,
     path: &Path,
     child_path: Option<&Path>,
-    children: Option<Vec<InstanceSnapshot>>
+    children: Option<Vec<InstanceSnapshot>>,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let meta = match vfs.metadata(path).with_not_found()? {
         Some(meta) => meta,
@@ -94,7 +94,7 @@ pub fn snapshot_from_vfs(
             return snapshot_csv_init(context, vfs, &init_path);
         }
 
-        snapshot_dir(context, vfs, path,child_path,children)
+        snapshot_dir(context, vfs, path, child_path, children)
     } else {
         let script_name = path
             .file_name_trim_end(".lua")

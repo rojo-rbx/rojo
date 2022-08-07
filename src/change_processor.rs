@@ -128,16 +128,63 @@ impl JobThreadContext {
         let applied_patches = {
             let mut tree = self.tree.lock().unwrap();
             let mut applied_patches = Vec::new();
-
             match event {
-                VfsEvent::Write(path) | VfsEvent::Remove(path) | VfsEvent::Create(path) => {
+                VfsEvent::Write(path) => {
+                                        
                     // Find the nearest ancestor to this path that has
                     // associated instances in the tree. This helps make sure
                     // that we handle additions correctly, especially if we
                     // receive events for descendants of a large tree being
                     // created all at once.
+                    if path.is_dir(){
+                        return
+                    }
                     let mut child_path = path.as_path();
                     let mut current_path = path.as_path();
+                    println!("current event path: {:?}", path);
+                    let affected_ids = loop {
+                        let ids = tree.get_ids_at_path(&current_path);
+
+                        log::trace!("Path {} affects IDs {:?}", current_path.display(), ids);
+                        println!("Path {} affects IDs {:?}", current_path.display(), ids);
+                        if !ids.is_empty() {
+                            break ids.to_vec();
+                        }
+
+                        log::trace!("Trying parent path...");
+                        println!("Trying parent path...");
+                        match current_path.parent() {
+                            Some(parent) => {
+                                println!("child_path: {:?}", current_path);
+                                println!("current_path: {:?}", parent);
+                                child_path = current_path;
+                                current_path = parent;
+                            }
+                            None => break Vec::new(),
+                        }
+                    };
+                    println!("Path {} affects IDs {:?}", current_path.display(), affected_ids);
+                    for id in affected_ids {
+                        if let Some(patch) = compute_and_apply_changes(&mut tree, &self.vfs, id,Some(child_path)) {
+                            if !patch.is_empty() {
+                                applied_patches.push(patch);
+                            }
+                        }
+                    }
+                },
+                
+                
+                VfsEvent::Remove(path) | VfsEvent::Create(path) => {
+                    
+                    // Find the nearest ancestor to this path that has
+                    // associated instances in the tree. This helps make sure
+                    // that we handle additions correctly, especially if we
+                    // receive events for descendants of a large tree being
+                    // created all at once.
+
+                    let mut child_path = path.as_path();
+                    let mut current_path = path.as_path();
+                    println!("current event path: {:?}", path);
                     let affected_ids = loop {
                         let ids = tree.get_ids_at_path(&current_path);
 

@@ -76,7 +76,7 @@ pub fn snapshot_lua_init(
     init_path: &Path,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let folder_path = init_path.parent().unwrap();
-    let dir_snapshot = snapshot_dir_no_meta(context, vfs, folder_path, None,None)?.unwrap();
+    let dir_snapshot = snapshot_dir_no_meta(context, vfs, folder_path, None, None)?.unwrap();
 
     if dir_snapshot.class_name != "Folder" {
         anyhow::bail!(

@@ -104,14 +104,14 @@ impl RojoTree {
     pub fn to_instance_snapshot(&self, id: Ref) -> Option<InstanceSnapshot> {
         if let Some(instance) = self.inner.get_by_ref(id) {
             let metadata = self.metadata_map.get(&id).unwrap();
-            
+
             let snapshot = InstanceSnapshot::new()
-            .name(instance.name.to_owned())
-            .class_name(instance.class.to_owned())
-            .properties(instance.properties.to_owned())
-            .metadata(metadata.to_owned());
+                .name(instance.name.to_owned())
+                .class_name(instance.class.to_owned())
+                .properties(instance.properties.to_owned())
+                .metadata(metadata.to_owned());
             Some(snapshot)
-        }else{
+        } else {
             None
         }
     }
@@ -165,7 +165,6 @@ impl RojoTree {
 
         RojoDescendants { queue, tree: self }
     }
-
     pub fn get_ids_at_path(&self, path: &Path) -> &[Ref] {
         self.path_to_ids.get(path)
     }

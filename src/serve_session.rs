@@ -8,10 +8,6 @@ use std::{
     time::Instant,
 };
 
-use crossbeam_channel::Sender;
-use memofs::IoResultExt;
-use memofs::Vfs;
-use thiserror::Error;
 use crate::{
     change_processor::ChangeProcessor,
     message_queue::MessageQueue,
@@ -23,6 +19,10 @@ use crate::{
     },
     snapshot_middleware::snapshot_from_vfs,
 };
+use crossbeam_channel::Sender;
+use memofs::IoResultExt;
+use memofs::Vfs;
+use thiserror::Error;
 
 /// Contains all of the state for a Rojo serve session. A serve session is used
 /// when we need to build a Rojo tree and possibly rebuild it when input files

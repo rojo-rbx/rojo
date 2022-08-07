@@ -1,15 +1,15 @@
 use std::{borrow::Cow, collections::HashMap, path::Path};
 
-use anyhow::{bail, Context};
-use memofs::Vfs;
-use rbx_dom_weak::types::Attributes;
-use rbx_reflection::ClassTag;
 use crate::{
     project::{PathNode, Project, ProjectNode},
     snapshot::{
         InstanceContext, InstanceMetadata, InstanceSnapshot, InstigatingSource, PathIgnoreRule,
     },
 };
+use anyhow::{bail, Context};
+use memofs::Vfs;
+use rbx_dom_weak::types::Attributes;
+use rbx_reflection::ClassTag;
 
 use super::snapshot_from_vfs;
 
