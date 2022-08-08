@@ -2,7 +2,7 @@ use std::path::Path;
 
 use memofs::{DirEntry, IoResultExt, Vfs};
 
-use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
+use crate::snapshot::{GenerationMap, InstanceContext, InstanceMetadata, InstanceSnapshot};
 
 use super::{meta_file::DirectoryMetadata, snapshot_from_vfs};
 
@@ -10,8 +10,9 @@ pub fn snapshot_dir(
     context: &InstanceContext,
     vfs: &Vfs,
     path: &Path,
+    generation_map: &mut GenerationMap,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let mut snapshot = match snapshot_dir_no_meta(context, vfs, path)? {
+    let mut snapshot = match snapshot_dir_no_meta(context, vfs, path, generation_map)? {
         Some(snapshot) => snapshot,
         None => return Ok(None),
     };
@@ -44,6 +45,7 @@ pub fn snapshot_dir_no_meta(
     context: &InstanceContext,
     vfs: &Vfs,
     path: &Path,
+    generation_map: &mut GenerationMap,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let passes_filter_rules = |child: &DirEntry| {
         context
@@ -51,18 +53,21 @@ pub fn snapshot_dir_no_meta(
             .iter()
             .all(|rule| rule.passes(child.path()))
     };
-
     let mut snapshot_children = Vec::new();
 
+    let ignore_children = generation_map.should_ignore_chilren(path.to_path_buf());
     for entry in vfs.read_dir(path)? {
         let entry = entry?;
 
         if !passes_filter_rules(&entry) {
             continue;
         }
-
-        if let Some(child_snapshot) = snapshot_from_vfs(context, vfs, entry.path())? {
-            snapshot_children.push(child_snapshot);
+        if !ignore_children {
+            if let Some(child_snapshot) =
+                snapshot_from_vfs(context, vfs, entry.path(), generation_map)?
+            {
+                snapshot_children.push(child_snapshot);
+            }
         }
     }
 
@@ -94,6 +99,7 @@ pub fn snapshot_dir_no_meta(
         .name(instance_name)
         .class_name("Folder")
         .children(snapshot_children)
+        .ignore_children(ignore_children)
         .metadata(
             InstanceMetadata::new()
                 .instigating_source(path)

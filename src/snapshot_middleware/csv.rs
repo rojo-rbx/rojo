@@ -5,7 +5,7 @@ use maplit::hashmap;
 use memofs::{IoResultExt, Vfs};
 use serde::Serialize;
 
-use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
+use crate::snapshot::{GenerationMap, InstanceContext, InstanceMetadata, InstanceSnapshot};
 
 use super::{
     dir::{dir_meta, snapshot_dir_no_meta},
@@ -59,9 +59,10 @@ pub fn snapshot_csv_init(
     context: &InstanceContext,
     vfs: &Vfs,
     init_path: &Path,
+    generation_map: &mut GenerationMap,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let folder_path = init_path.parent().unwrap();
-    let dir_snapshot = snapshot_dir_no_meta(context, vfs, folder_path)?.unwrap();
+    let dir_snapshot = snapshot_dir_no_meta(context, vfs, folder_path, generation_map)?.unwrap();
 
     if dir_snapshot.class_name != "Folder" {
         anyhow::bail!(

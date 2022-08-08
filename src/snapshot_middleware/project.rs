@@ -8,7 +8,8 @@ use rbx_reflection::ClassTag;
 use crate::{
     project::{PathNode, Project, ProjectNode},
     snapshot::{
-        InstanceContext, InstanceMetadata, InstanceSnapshot, InstigatingSource, PathIgnoreRule,
+        GenerationMap, InstanceContext, InstanceMetadata, InstanceSnapshot, InstigatingSource,
+        PathIgnoreRule,
     },
 };
 
@@ -18,6 +19,7 @@ pub fn snapshot_project(
     context: &InstanceContext,
     vfs: &Vfs,
     path: &Path,
+    generation_map: &mut GenerationMap,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let project = Project::load_from_slice(&vfs.read(path)?, path)
         .with_context(|| format!("File was not a valid Rojo project: {}", path.display()))?;
@@ -31,7 +33,15 @@ pub fn snapshot_project(
 
     context.add_path_ignore_rules(rules);
 
-    match snapshot_project_node(&context, path, &project.name, &project.tree, vfs, None)? {
+    match snapshot_project_node(
+        &context,
+        path,
+        &project.name,
+        &project.tree,
+        vfs,
+        None,
+        generation_map,
+    )? {
         Some(found_snapshot) => {
             let mut snapshot = found_snapshot;
             // Setting the instigating source to the project file path is a little
@@ -65,6 +75,7 @@ pub fn snapshot_project_node(
     node: &ProjectNode,
     vfs: &Vfs,
     parent_class: Option<&str>,
+    generation_map: &mut GenerationMap,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let project_folder = project_path.parent().unwrap();
 
@@ -89,8 +100,8 @@ pub fn snapshot_project_node(
         } else {
             Cow::Borrowed(path)
         };
-
-        if let Some(snapshot) = snapshot_from_vfs(context, vfs, &full_path)? {
+        generation_map.bypass();
+        if let Some(snapshot) = snapshot_from_vfs(context, vfs, &full_path, generation_map)? {
             class_name_from_path = Some(snapshot.class_name);
 
             // Properties from the snapshot are pulled in unchanged, and
@@ -199,6 +210,7 @@ pub fn snapshot_project_node(
             child_project_node,
             vfs,
             Some(&class_name),
+            generation_map,
         )? {
             children.push(child);
         }
@@ -277,6 +289,7 @@ pub fn snapshot_project_node(
         properties,
         children,
         metadata,
+        ignore_children: false,
     }))
 }
 

@@ -118,6 +118,7 @@ impl JsonModel {
             class_name: Cow::Owned(class_name),
             properties,
             children,
+            ignore_children: false,
         })
     }
 }

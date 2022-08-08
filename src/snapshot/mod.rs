@@ -48,6 +48,7 @@
 
 #![allow(dead_code)]
 
+mod generation_map;
 mod instance_snapshot;
 mod metadata;
 mod patch;
@@ -55,6 +56,7 @@ mod patch_apply;
 mod patch_compute;
 mod tree;
 
+pub use generation_map::*;
 pub use instance_snapshot::InstanceSnapshot;
 pub use metadata::*;
 pub use patch::*;

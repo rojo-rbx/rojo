@@ -88,7 +88,9 @@ fn compute_patch_set_internal(
         .expect("Instance did not exist in tree");
 
     compute_property_patches(&mut snapshot, &instance, patch_set);
-    compute_children_patches(context, &mut snapshot, tree, id, patch_set);
+    if !snapshot.ignore_children {
+        compute_children_patches(context, &mut snapshot, tree, id, patch_set);
+    }
 }
 
 fn compute_property_patches(

@@ -19,8 +19,8 @@ use crate::{
     project::{Project, ProjectError},
     session_id::SessionId,
     snapshot::{
-        apply_patch_set, compute_patch_set, AppliedPatchSet, InstanceContext, InstanceSnapshot,
-        PatchSet, RojoTree,
+        apply_patch_set, compute_patch_set, AppliedPatchSet, GenerationMap, InstanceContext,
+        InstanceSnapshot, PatchSet, RojoTree,
     },
     snapshot_middleware::snapshot_from_vfs,
 };
@@ -121,13 +121,14 @@ impl ServeSession {
         };
 
         let mut tree = RojoTree::new(InstanceSnapshot::new());
-
+        let mut generation_map = GenerationMap::new();
         let root_id = tree.get_root_id();
 
         let instance_context = InstanceContext::default();
 
         log::trace!("Generating snapshot of instances from VFS");
-        let snapshot = snapshot_from_vfs(&instance_context, &vfs, &start_path)?;
+        let snapshot =
+            snapshot_from_vfs(&instance_context, &vfs, &start_path, &mut generation_map)?;
 
         log::trace!("Computing initial patch set");
         let patch_set = compute_patch_set(snapshot, &tree, root_id);
@@ -139,6 +140,7 @@ impl ServeSession {
         let message_queue = MessageQueue::new();
 
         let tree = Arc::new(Mutex::new(tree));
+        let generation_map = Arc::new(Mutex::new(generation_map));
         let message_queue = Arc::new(message_queue);
         let vfs = Arc::new(vfs);
 
@@ -149,6 +151,7 @@ impl ServeSession {
             Arc::clone(&tree),
             Arc::clone(&vfs),
             Arc::clone(&message_queue),
+            Arc::clone(&generation_map),
             tree_mutation_receiver,
         );
 

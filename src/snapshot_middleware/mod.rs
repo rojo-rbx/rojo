@@ -21,7 +21,7 @@ use std::path::Path;
 
 use memofs::{IoResultExt, Vfs};
 
-use crate::snapshot::{InstanceContext, InstanceSnapshot};
+use crate::snapshot::{GenerationMap, InstanceContext, InstanceSnapshot};
 
 use self::{
     csv::{snapshot_csv, snapshot_csv_init},
@@ -45,6 +45,7 @@ pub fn snapshot_from_vfs(
     context: &InstanceContext,
     vfs: &Vfs,
     path: &Path,
+    generation_map: &mut GenerationMap,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let meta = match vfs.metadata(path).with_not_found()? {
         Some(meta) => meta,
@@ -54,45 +55,45 @@ pub fn snapshot_from_vfs(
     if meta.is_dir() {
         let project_path = path.join("default.project.json");
         if vfs.metadata(&project_path).with_not_found()?.is_some() {
-            return snapshot_project(context, vfs, &project_path);
+            return snapshot_project(context, vfs, &project_path, generation_map);
         }
 
         let init_path = path.join("init.luau");
         if vfs.metadata(&init_path).with_not_found()?.is_some() {
-            return snapshot_lua_init(context, vfs, &init_path);
+            return snapshot_lua_init(context, vfs, &init_path, generation_map);
         }
 
         let init_path = path.join("init.lua");
         if vfs.metadata(&init_path).with_not_found()?.is_some() {
-            return snapshot_lua_init(context, vfs, &init_path);
+            return snapshot_lua_init(context, vfs, &init_path, generation_map);
         }
 
         let init_path = path.join("init.server.luau");
         if vfs.metadata(&init_path).with_not_found()?.is_some() {
-            return snapshot_lua_init(context, vfs, &init_path);
+            return snapshot_lua_init(context, vfs, &init_path, generation_map);
         }
 
         let init_path = path.join("init.server.lua");
         if vfs.metadata(&init_path).with_not_found()?.is_some() {
-            return snapshot_lua_init(context, vfs, &init_path);
+            return snapshot_lua_init(context, vfs, &init_path, generation_map);
         }
 
         let init_path = path.join("init.client.luau");
         if vfs.metadata(&init_path).with_not_found()?.is_some() {
-            return snapshot_lua_init(context, vfs, &init_path);
+            return snapshot_lua_init(context, vfs, &init_path, generation_map);
         }
 
         let init_path = path.join("init.client.lua");
         if vfs.metadata(&init_path).with_not_found()?.is_some() {
-            return snapshot_lua_init(context, vfs, &init_path);
+            return snapshot_lua_init(context, vfs, &init_path, generation_map);
         }
 
         let init_path = path.join("init.csv");
         if vfs.metadata(&init_path).with_not_found()?.is_some() {
-            return snapshot_csv_init(context, vfs, &init_path);
+            return snapshot_csv_init(context, vfs, &init_path, generation_map);
         }
 
-        snapshot_dir(context, vfs, path)
+        snapshot_dir(context, vfs, path, generation_map)
     } else {
         let script_name = path
             .file_name_trim_end(".lua")
@@ -109,7 +110,7 @@ pub fn snapshot_from_vfs(
                 _ => return snapshot_lua(context, vfs, path),
             }
         } else if path.file_name_ends_with(".project.json") {
-            return snapshot_project(context, vfs, path);
+            return snapshot_project(context, vfs, path, generation_map);
         } else if path.file_name_ends_with(".model.json") {
             return snapshot_json_model(context, vfs, path);
         } else if path.file_name_ends_with(".meta.json") {

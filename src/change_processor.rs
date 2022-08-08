@@ -11,7 +11,8 @@ use rbx_dom_weak::types::{Ref, Variant};
 use crate::{
     message_queue::MessageQueue,
     snapshot::{
-        apply_patch_set, compute_patch_set, AppliedPatchSet, InstigatingSource, PatchSet, RojoTree,
+        apply_patch_set, compute_patch_set, AppliedPatchSet, GenerationMap, InstigatingSource,
+        PatchSet, RojoTree,
     },
     snapshot_middleware::{snapshot_from_vfs, snapshot_project_node},
 };
@@ -50,12 +51,14 @@ impl ChangeProcessor {
         tree: Arc<Mutex<RojoTree>>,
         vfs: Arc<Vfs>,
         message_queue: Arc<MessageQueue<AppliedPatchSet>>,
+        generation_map: Arc<Mutex<GenerationMap>>,
         tree_mutation_receiver: Receiver<PatchSet>,
     ) -> Self {
         let (shutdown_sender, shutdown_receiver) = crossbeam_channel::bounded(1);
         let vfs_receiver = vfs.event_receiver();
         let task = JobThreadContext {
             tree,
+            generation_map,
             vfs,
             message_queue,
         };
@@ -105,6 +108,8 @@ struct JobThreadContext {
     /// A handle to the DOM we're managing.
     tree: Arc<Mutex<RojoTree>>,
 
+    generation_map: Arc<Mutex<GenerationMap>>,
+
     /// A handle to the VFS we're managing.
     vfs: Arc<Vfs>,
 
@@ -126,6 +131,7 @@ impl JobThreadContext {
         // of the tree. Calculate and apply all of these changes.
         let applied_patches = {
             let mut tree = self.tree.lock().unwrap();
+            let mut generation_map = self.generation_map.lock().unwrap();
             let mut applied_patches = Vec::new();
 
             match event {
@@ -153,7 +159,9 @@ impl JobThreadContext {
                     };
 
                     for id in affected_ids {
-                        if let Some(patch) = compute_and_apply_changes(&mut tree, &self.vfs, id) {
+                        if let Some(patch) =
+                            compute_and_apply_changes(&mut tree, &self.vfs, &mut generation_map, id)
+                        {
                             if !patch.is_empty() {
                                 applied_patches.push(patch);
                             }
@@ -176,7 +184,6 @@ impl JobThreadContext {
 
         let applied_patch = {
             let mut tree = self.tree.lock().unwrap();
-
             for &id in &patch_set.removed_instances {
                 if let Some(instance) = tree.get_instance(id) {
                     if let Some(instigating_source) = &instance.metadata().instigating_source {
@@ -261,7 +268,12 @@ impl JobThreadContext {
     }
 }
 
-fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref) -> Option<AppliedPatchSet> {
+fn compute_and_apply_changes(
+    tree: &mut RojoTree,
+    vfs: &Vfs,
+    generation_map: &mut GenerationMap,
+    id: Ref,
+) -> Option<AppliedPatchSet> {
     let metadata = tree
         .get_metadata(id)
         .expect("metadata missing for instance present in tree");
@@ -277,23 +289,27 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref) -> Option<
             return None;
         }
     };
-
     // How we process a file change event depends on what created this
     // file/folder in the first place.
     let applied_patch_set = match instigating_source {
         InstigatingSource::Path(path) => match vfs.metadata(path).with_not_found() {
             Ok(Some(_)) => {
+                if path.is_dir() {
+                    generation_map.next_generation(path.clone());
+                } else {
+                    generation_map.next_generation(path.parent().unwrap().to_path_buf());
+                }
                 // Our instance was previously created from a path and that
                 // path still exists. We can generate a snapshot starting at
                 // that path and use it as the source for our patch.
-
-                let snapshot = match snapshot_from_vfs(&metadata.context, &vfs, &path) {
-                    Ok(snapshot) => snapshot,
-                    Err(err) => {
-                        log::error!("Snapshot error: {:?}", err);
-                        return None;
-                    }
-                };
+                let snapshot =
+                    match snapshot_from_vfs(&metadata.context, &vfs, &path, generation_map) {
+                        Ok(snapshot) => snapshot,
+                        Err(err) => {
+                            log::error!("Snapshot error: {:?}", err);
+                            return None;
+                        }
+                    };
 
                 let patch_set = compute_patch_set(snapshot, &tree, id);
                 apply_patch_set(tree, patch_set)
@@ -328,6 +344,7 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref) -> Option<
                 project_node,
                 &vfs,
                 parent_class.as_ref().map(|name| name.as_str()),
+                generation_map,
             );
 
             let snapshot = match snapshot_result {

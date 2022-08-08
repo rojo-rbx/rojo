@@ -37,6 +37,8 @@ pub struct InstanceSnapshot {
     ///
     /// Order is relevant for Roblox instances!
     pub children: Vec<InstanceSnapshot>,
+
+    pub ignore_children: bool,
 }
 
 impl InstanceSnapshot {
@@ -48,6 +50,7 @@ impl InstanceSnapshot {
             class_name: Cow::Borrowed("DEFAULT"),
             properties: HashMap::new(),
             children: Vec::new(),
+            ignore_children: false,
         }
     }
 
@@ -84,6 +87,12 @@ impl InstanceSnapshot {
     pub fn children(self, children: impl Into<Vec<Self>>) -> Self {
         Self {
             children: children.into(),
+            ..self
+        }
+    }
+    pub fn ignore_children(self, ignore_children: bool) -> Self {
+        Self {
+            ignore_children,
             ..self
         }
     }
@@ -126,6 +135,7 @@ impl InstanceSnapshot {
             class_name: Cow::Owned(instance.class),
             properties: instance.properties,
             children,
+            ignore_children: false,
         }
     }
 }
