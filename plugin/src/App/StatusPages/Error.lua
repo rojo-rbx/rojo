@@ -57,8 +57,16 @@ function Error:render()
 			end,
 		}, {
 			ErrorMessage = Theme.with(function(theme)
-				return e("TextLabel", {
+				return e("TextBox", {
+					[Roact.Event.InputBegan] = function(rbx, input)
+						if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
+						rbx.SelectionStart = 0
+						rbx.CursorPosition = #rbx.Text+1
+					end,
+
+
 					Text = self.props.errorMessage,
+					TextEditable = false,
 					Font = Enum.Font.Code,
 					TextSize = 16,
 					TextColor3 = theme.ErrorColor,
@@ -66,10 +74,9 @@ function Error:render()
 					TextYAlignment = Enum.TextYAlignment.Top,
 					TextTransparency = self.props.transparency,
 					TextWrapped = true,
-
-					Size = UDim2.new(1, 0, 1, 0),
-
+					ClearTextOnFocus = false,
 					BackgroundTransparency = 1,
+					Size = UDim2.new(1, 0, 1, 0),
 				})
 			end),
 
