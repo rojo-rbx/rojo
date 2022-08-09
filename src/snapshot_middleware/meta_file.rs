@@ -22,8 +22,14 @@ pub struct AdjacentMetadata {
     #[serde(skip)]
     pub path: PathBuf,
 }
-
 impl AdjacentMetadata {
+    pub fn new(path: PathBuf) -> AdjacentMetadata {
+        AdjacentMetadata {
+            ignore_unknown_instances: None,
+            properties: HashMap::new(),
+            path: path,
+        }
+    }
     pub fn from_slice(slice: &[u8], path: PathBuf) -> anyhow::Result<Self> {
         let mut meta: Self = serde_json::from_slice(slice).with_context(|| {
             format!(
