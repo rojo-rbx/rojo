@@ -1,7 +1,6 @@
 ---
 source: src/snapshot_middleware/lua.rs
 expression: instance_snapshot
-
 ---
 snapshot_id: ~
 metadata:
@@ -20,4 +19,5 @@ properties:
   Source:
     String: Hello there!
 children: []
+ignore_children: false
 

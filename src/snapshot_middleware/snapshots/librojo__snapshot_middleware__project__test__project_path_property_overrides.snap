@@ -1,7 +1,6 @@
 ---
 source: src/snapshot_middleware/project.rs
 expression: instance_snapshot
-
 ---
 snapshot_id: ~
 metadata:
@@ -18,4 +17,5 @@ properties:
   Value:
     String: Changed
 children: []
+ignore_children: false
 

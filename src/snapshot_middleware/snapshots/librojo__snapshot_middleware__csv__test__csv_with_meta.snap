@@ -1,7 +1,6 @@
 ---
 source: src/snapshot_middleware/csv.rs
 expression: instance_snapshot
-
 ---
 snapshot_id: ~
 metadata:
@@ -18,4 +17,5 @@ properties:
   Contents:
     String: "[{\"key\":\"Ack\",\"example\":\"An exclamation of despair\",\"source\":\"Ack!\",\"values\":{\"es\":\"¡Ay!\"}}]"
 children: []
+ignore_children: false
 

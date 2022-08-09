@@ -1,6 +1,5 @@
 ---
 source: src/snapshot_middleware/dir.rs
-assertion_line: 127
 expression: instance_snapshot
 ---
 snapshot_id: ~
@@ -23,4 +22,5 @@ name: foo
 class_name: Folder
 properties: {}
 children: []
+ignore_children: false
 

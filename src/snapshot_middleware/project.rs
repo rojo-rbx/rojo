@@ -287,9 +287,9 @@ pub fn snapshot_project_node(
         name,
         class_name,
         properties,
+        ignore_children: false,
         children,
         metadata,
-        ignore_children: false,
     }))
 }
 
@@ -351,7 +351,7 @@ mod test {
         let mut vfs = Vfs::new(imfs);
 
         let instance_snapshot =
-            snapshot_project(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
+            snapshot_project(&InstanceContext::default(), &mut vfs, Path::new("/foo"),&mut GenerationMap::new())
                 .expect("snapshot error")
                 .expect("snapshot returned no instances");
 
@@ -384,6 +384,7 @@ mod test {
             &InstanceContext::default(),
             &mut vfs,
             Path::new("/foo/hello.project.json"),
+            &mut GenerationMap::new(),
         )
         .expect("snapshot error")
         .expect("snapshot returned no instances");
@@ -422,6 +423,7 @@ mod test {
             &InstanceContext::default(),
             &mut vfs,
             Path::new("/foo.project.json"),
+            &mut GenerationMap::new(),
         )
         .expect("snapshot error")
         .expect("snapshot returned no instances");
@@ -458,6 +460,7 @@ mod test {
             &InstanceContext::default(),
             &mut vfs,
             Path::new("/foo.project.json"),
+            &mut GenerationMap::new()
         )
         .expect("snapshot error")
         .expect("snapshot returned no instances");
@@ -495,6 +498,7 @@ mod test {
             &InstanceContext::default(),
             &mut vfs,
             Path::new("/foo.project.json"),
+            &mut GenerationMap::new(),
         )
         .expect("snapshot error")
         .expect("snapshot returned no instances");
@@ -529,6 +533,7 @@ mod test {
             &InstanceContext::default(),
             &mut vfs,
             Path::new("/foo/default.project.json"),
+            &mut GenerationMap::new(),
         )
         .expect("snapshot error")
         .expect("snapshot returned no instances");
@@ -570,6 +575,7 @@ mod test {
             &InstanceContext::default(),
             &mut vfs,
             Path::new("/foo/default.project.json"),
+            &mut GenerationMap::new(),
         )
         .expect("snapshot error")
         .expect("snapshot returned no instances");
@@ -615,6 +621,7 @@ mod test {
             &InstanceContext::default(),
             &mut vfs,
             Path::new("/foo/default.project.json"),
+            &mut GenerationMap::new(),
         )
         .expect("snapshot error")
         .expect("snapshot returned no instances");
@@ -665,6 +672,7 @@ mod test {
             &InstanceContext::default(),
             &mut vfs,
             Path::new("/foo/default.project.json"),
+            &mut GenerationMap::new(),
         )
         .expect("snapshot error")
         .expect("snapshot returned no instances");

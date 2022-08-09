@@ -15,4 +15,6 @@ added_instances:
       class_name: Folder
       properties: {}
       children: []
+      ignore_children: false
 updated_instances: []
+

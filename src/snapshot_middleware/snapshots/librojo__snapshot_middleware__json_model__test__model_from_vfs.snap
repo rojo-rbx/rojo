@@ -1,7 +1,6 @@
 ---
 source: src/snapshot_middleware/json_model.rs
 expression: instance_snapshot
-
 ---
 snapshot_id: ~
 metadata:
@@ -26,4 +25,6 @@ children:
     class_name: StringValue
     properties: {}
     children: []
+    ignore_children: false
+ignore_children: false
 

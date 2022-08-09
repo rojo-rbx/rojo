@@ -30,3 +30,6 @@ children:
     class_name: Model
     properties: {}
     children: []
+    ignore_children: false
+ignore_children: false
+

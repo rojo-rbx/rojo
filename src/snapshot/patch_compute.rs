@@ -256,6 +256,7 @@ mod test {
             metadata: Default::default(),
             name: Cow::Borrowed("foo"),
             class_name: Cow::Borrowed("foo"),
+            ignore_children: false,
             children: Vec::new(),
         };
 
@@ -300,6 +301,7 @@ mod test {
                 metadata: Default::default(),
                 name: Cow::Borrowed("child"),
                 class_name: Cow::Borrowed("child"),
+                ignore_children: false,
                 children: Vec::new(),
             }],
 
@@ -307,6 +309,7 @@ mod test {
             properties: HashMap::new(),
             name: Cow::Borrowed("foo"),
             class_name: Cow::Borrowed("foo"),
+            ignore_children: false,
         };
 
         let patch_set = compute_patch_set(Some(snapshot), &tree, root_id);
@@ -322,6 +325,7 @@ mod test {
                     },
                     name: Cow::Borrowed("child"),
                     class_name: Cow::Borrowed("child"),
+                    ignore_children: false,
                     children: Vec::new(),
                 },
             }],

@@ -239,6 +239,7 @@ mod test {
             properties: hashmap! {
                 "Baz".to_owned() => Variant::Int32(5),
             },
+            ignore_children: false,
             children: Vec::new(),
         };
 

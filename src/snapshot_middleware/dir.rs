@@ -126,7 +126,7 @@ mod test {
         let mut vfs = Vfs::new(imfs);
 
         let instance_snapshot =
-            snapshot_dir(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
+            snapshot_dir(&InstanceContext::default(), &mut vfs, Path::new("/foo"), &mut GenerationMap::new())
                 .unwrap()
                 .unwrap();
 
@@ -147,7 +147,7 @@ mod test {
         let mut vfs = Vfs::new(imfs);
 
         let instance_snapshot =
-            snapshot_dir(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
+            snapshot_dir(&InstanceContext::default(), &mut vfs, Path::new("/foo"), &mut GenerationMap::new())
                 .unwrap()
                 .unwrap();
 

@@ -1,7 +1,6 @@
 ---
 source: src/snapshot_middleware/txt.rs
 expression: instance_snapshot
-
 ---
 snapshot_id: ~
 metadata:
@@ -18,4 +17,5 @@ properties:
   Value:
     String: Hello there!
 children: []
+ignore_children: false
 
