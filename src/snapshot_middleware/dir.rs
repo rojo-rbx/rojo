@@ -125,10 +125,14 @@ mod test {
 
         let mut vfs = Vfs::new(imfs);
 
-        let instance_snapshot =
-            snapshot_dir(&InstanceContext::default(), &mut vfs, Path::new("/foo"), &mut GenerationMap::new())
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = snapshot_dir(
+            &InstanceContext::default(),
+            &mut vfs,
+            Path::new("/foo"),
+            &mut GenerationMap::new(),
+        )
+        .unwrap()
+        .unwrap();
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }
@@ -146,10 +150,14 @@ mod test {
 
         let mut vfs = Vfs::new(imfs);
 
-        let instance_snapshot =
-            snapshot_dir(&InstanceContext::default(), &mut vfs, Path::new("/foo"), &mut GenerationMap::new())
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = snapshot_dir(
+            &InstanceContext::default(),
+            &mut vfs,
+            Path::new("/foo"),
+            &mut GenerationMap::new(),
+        )
+        .unwrap()
+        .unwrap();
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }

@@ -99,7 +99,7 @@ fn add_child() {
         metadata: Default::default(),
         name: Cow::Borrowed("ROOT"),
         class_name: Cow::Borrowed("ROOT"),
-        ignore_children:  false,
+        ignore_children: false,
         properties: Default::default(),
         children: vec![InstanceSnapshot {
             snapshot_id: None,

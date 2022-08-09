@@ -350,10 +350,14 @@ mod test {
 
         let mut vfs = Vfs::new(imfs);
 
-        let instance_snapshot =
-            snapshot_project(&InstanceContext::default(), &mut vfs, Path::new("/foo"),&mut GenerationMap::new())
-                .expect("snapshot error")
-                .expect("snapshot returned no instances");
+        let instance_snapshot = snapshot_project(
+            &InstanceContext::default(),
+            &mut vfs,
+            Path::new("/foo"),
+            &mut GenerationMap::new(),
+        )
+        .expect("snapshot error")
+        .expect("snapshot returned no instances");
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }
@@ -460,7 +464,7 @@ mod test {
             &InstanceContext::default(),
             &mut vfs,
             Path::new("/foo.project.json"),
-            &mut GenerationMap::new()
+            &mut GenerationMap::new(),
         )
         .expect("snapshot error")
         .expect("snapshot returned no instances");
