@@ -1,6 +1,5 @@
 use std::{
-    fs::{self, File},
-    io::Write,
+    fs,
     sync::{Arc, Mutex},
 };
 
@@ -240,51 +239,51 @@ impl JobThreadContext {
                                     }
                                 }
                             } else {
-                                if instance.metadata().relevant_paths.len() >= 2 {
-                                    let meta_path = instance.metadata().relevant_paths[2].clone();
-                                    if let Some(meta_contents) =
-                                        self.vfs.read(&meta_path).with_not_found().unwrap()
-                                    {
-                                        let mut metadata = AdjacentMetadata::from_slice(
-                                            &meta_contents,
-                                            meta_path.clone(),
-                                        )
-                                        .unwrap();
-                                        metadata.properties.insert(
-                                            key.clone(),
-                                            UnresolvedValue::FullyQualified(
-                                                changed_value.as_ref().unwrap().clone(),
-                                            ),
-                                        );
-                                        let data = serde_json::to_string(&metadata).unwrap();
-                                        fs::write(meta_path, data).unwrap();
-                                    } else {
-                                        let mut metadata = AdjacentMetadata::new(meta_path.clone());
-                                        metadata.properties.insert(
-                                            key.clone(),
-                                            UnresolvedValue::FullyQualified(
-                                                changed_value.as_ref().unwrap().clone(),
-                                            ),
-                                        );
-                                        let data = serde_json::to_string(&metadata).unwrap();
-                                        let file_name =
-                                            meta_path.file_name().unwrap().to_str().unwrap();
-                                        let mut file = File::create(file_name).unwrap();
-                                        write!(file, "{}", data).unwrap();
-                                    }
-                                } else {
-                                    log::warn!(
-                                        "Cannot update instance {:?}, has no meta support.",
-                                        id
-                                    );
-                                }
                                 log::warn!(
                                     "Cannot update instance {:?}, it is not an instigating source.",
                                     id
                                 );
                             }
                         } else {
-                            log::warn!("Cannot change properties besides BaseScript.Source.");
+                            if instance.metadata().relevant_paths.len() >= 2 {
+                                let meta_path = instance.metadata().relevant_paths[1].clone();
+                                println!("{:?}", meta_path);
+                                if let Some(meta_contents) =
+                                    self.vfs.read(&meta_path).with_not_found().unwrap()
+                                {
+                                    println!("File exists");
+                                    let mut metadata = AdjacentMetadata::from_slice(
+                                        &meta_contents,
+                                        meta_path.clone(),
+                                    )
+                                    .unwrap();
+                                    metadata.properties.insert(
+                                        key.clone(),
+                                        UnresolvedValue::FullyQualified(
+                                            changed_value.as_ref().unwrap().clone(),
+                                        ),
+                                    );
+                                    let data = serde_json::to_string_pretty(&metadata).unwrap();
+                                    fs::write(meta_path, data).unwrap();
+                                    println!("File writen");
+                                } else {
+                                    println!("File did not exists");
+                                    let mut metadata = AdjacentMetadata::new(meta_path.clone());
+                                    metadata.properties.insert(
+                                        key.clone(),
+                                        UnresolvedValue::FullyQualified(
+                                            changed_value.as_ref().unwrap().clone(),
+                                        ),
+                                    );
+                                    let data = serde_json::to_string_pretty(&metadata).unwrap();
+                                    fs::write(meta_path, data).unwrap();
+                                    println!("File created and written to");
+                                }
+                            } else {
+                                log::warn!(
+                                    "Cannot change properties of instances with no meta support"
+                                );
+                            }
                         }
                     }
                 } else {
