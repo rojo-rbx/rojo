@@ -251,7 +251,6 @@ impl JobThreadContext {
                                 if let Some(meta_contents) =
                                     self.vfs.read(&meta_path).with_not_found().unwrap()
                                 {
-                                    println!("File exists");
                                     let mut metadata = AdjacentMetadata::from_slice(
                                         &meta_contents,
                                         meta_path.clone(),
@@ -265,9 +264,7 @@ impl JobThreadContext {
                                     );
                                     let data = serde_json::to_string_pretty(&metadata).unwrap();
                                     fs::write(meta_path, data).unwrap();
-                                    println!("File writen");
                                 } else {
-                                    println!("File did not exists");
                                     let mut metadata = AdjacentMetadata::new(meta_path.clone());
                                     metadata.properties.insert(
                                         key.clone(),
@@ -277,7 +274,6 @@ impl JobThreadContext {
                                     );
                                     let data = serde_json::to_string_pretty(&metadata).unwrap();
                                     fs::write(meta_path, data).unwrap();
-                                    println!("File created and written to");
                                 }
                             } else {
                                 log::warn!(
