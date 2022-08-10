@@ -276,11 +276,9 @@ function ServeSession:__initialSync(serverInfo)
 					Log.warn("Could not apply all changes requested by the Rojo server:\n{}",
 						PatchSet.humanSummary(self.__instanceMap, unappliedPatch))
 				end
-
-			end
-
-			if self.__patchAppliedCallback then
-				pcall(self.__patchAppliedCallback, catchUpPatch, unappliedPatch)
+				if self.__patchAppliedCallback then
+					pcall(self.__patchAppliedCallback, catchUpPatch, unappliedPatch)
+				end
 			end
 		end)
 end
