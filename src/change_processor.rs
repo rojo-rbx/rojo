@@ -247,7 +247,6 @@ impl JobThreadContext {
                         } else {
                             if instance.metadata().relevant_paths.len() >= 2 {
                                 let meta_path = instance.metadata().relevant_paths[1].clone();
-                                println!("{:?}", meta_path);
                                 if let Some(meta_contents) =
                                     self.vfs.read(&meta_path).with_not_found().unwrap()
                                 {
