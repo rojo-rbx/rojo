@@ -2,9 +2,10 @@ local HttpService = game:GetService("HttpService")
 
 local Rojo = script:FindFirstAncestor("Rojo")
 local Plugin = Rojo.Plugin
+local Packages = Rojo.Packages
 
-local Log = require(Rojo.Log)
-local Roact = require(Rojo.Roact)
+local Roact = require(Packages.Roact)
+local Log = require(Packages.Log)
 
 local decodeValue = require(Plugin.Reconciler.decodeValue)
 

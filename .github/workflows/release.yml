@@ -112,6 +112,17 @@ jobs:
           override: true
           profile: minimal
 
+      - name: Setup Foreman
+        uses: Roblox/setup-foreman@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install packages
+        run: |
+          cd plugin
+          wally install
+          cd ..
+
       - name: Build Release
         run: cargo build --release --locked --verbose
         env:
