@@ -54,6 +54,7 @@ function reifyInner(instanceMap, virtualInstances, id, parentInstance, unapplied
 	
 	if virtualInstance.Metadata and virtualInstance.Metadata.debugId and instanceMap.createdInstances[virtualInstance.Metadata.debugId] then
 		instance = instanceMap.createdInstances[virtualInstance.Metadata.debugId] 
+		instanceMap.createdInstances[virtualInstance.Metadata.debugId] = nil
 	else
 		-- Instance.new can fail if we're passing in something that can't be
 		-- created, like a service, something enabled with a feature flag, or
