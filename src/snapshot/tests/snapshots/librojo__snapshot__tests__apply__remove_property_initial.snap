@@ -1,7 +1,6 @@
 ---
 source: src/snapshot/tests/apply.rs
 expression: tree_view
-
 ---
 id: id-1
 name: ROOT
@@ -13,5 +12,6 @@ metadata:
   ignore_unknown_instances: false
   relevant_paths: []
   context: {}
+  debug_id: ~
 children: []
 

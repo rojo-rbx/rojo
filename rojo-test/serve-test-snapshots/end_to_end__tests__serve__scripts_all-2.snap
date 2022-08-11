@@ -1,7 +1,6 @@
 ---
 source: tests/tests/serve.rs
 expression: "read_response.intern_and_redact(&mut redactions, root_id)"
-
 ---
 instances:
   id-2:
@@ -11,6 +10,7 @@ instances:
     ClassName: Folder
     Id: id-2
     Metadata:
+      debugId: ~
       ignoreUnknownInstances: false
     Name: scripts
     Parent: "00000000000000000000000000000000"
@@ -20,6 +20,7 @@ instances:
     ClassName: Script
     Id: id-3
     Metadata:
+      debugId: ~
       ignoreUnknownInstances: false
     Name: bar
     Parent: id-2
@@ -31,6 +32,7 @@ instances:
     ClassName: ModuleScript
     Id: id-4
     Metadata:
+      debugId: ~
       ignoreUnknownInstances: false
     Name: foo
     Parent: id-2

@@ -10,6 +10,7 @@ metadata:
   relevant_paths:
     - /foo.project.json
   context: {}
+  debug_id: ~
 name: children
 class_name: Folder
 properties: {}
@@ -25,7 +26,9 @@ children:
           - Folder
       relevant_paths: []
       context: {}
+      debug_id: ~
     name: Child
     class_name: Model
     properties: {}
     children: []
+

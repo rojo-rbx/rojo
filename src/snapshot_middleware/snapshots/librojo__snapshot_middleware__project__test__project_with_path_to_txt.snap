@@ -1,7 +1,6 @@
 ---
 source: src/snapshot_middleware/project.rs
 expression: instance_snapshot
-
 ---
 snapshot_id: ~
 metadata:
@@ -13,6 +12,7 @@ metadata:
     - /foo/other.meta.json
     - /foo/default.project.json
   context: {}
+  debug_id: ~
 name: path-project
 class_name: StringValue
 properties:

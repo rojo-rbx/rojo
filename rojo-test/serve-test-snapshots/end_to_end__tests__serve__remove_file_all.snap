@@ -1,7 +1,6 @@
 ---
 source: tests/tests/serve.rs
 expression: "read_response.intern_and_redact(&mut redactions, root_id)"
-
 ---
 instances:
   id-2:
@@ -10,6 +9,7 @@ instances:
     ClassName: Folder
     Id: id-2
     Metadata:
+      debugId: ~
       ignoreUnknownInstances: false
     Name: remove_file
     Parent: "00000000000000000000000000000000"
@@ -19,6 +19,7 @@ instances:
     ClassName: StringValue
     Id: id-3
     Metadata:
+      debugId: ~
       ignoreUnknownInstances: false
     Name: hello
     Parent: id-2

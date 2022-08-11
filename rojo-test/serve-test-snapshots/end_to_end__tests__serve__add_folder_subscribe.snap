@@ -10,6 +10,7 @@ messages:
         ClassName: Folder
         Id: id-3
         Metadata:
+          debugId: ~
           ignoreUnknownInstances: false
         Name: my-new-folder
         Parent: id-2
@@ -17,3 +18,4 @@ messages:
     removed: []
     updated: []
 sessionId: id-1
+

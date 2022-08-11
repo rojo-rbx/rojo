@@ -11,6 +11,7 @@ metadata:
     - /foo/other.project.json
     - /foo/default.project.json
   context: {}
+  debug_id: ~
 name: path-child-project
 class_name: Folder
 properties: {}
@@ -26,7 +27,9 @@ children:
           - Folder
       relevant_paths: []
       context: {}
+      debug_id: ~
     name: SomeChild
     class_name: Model
     properties: {}
     children: []
+

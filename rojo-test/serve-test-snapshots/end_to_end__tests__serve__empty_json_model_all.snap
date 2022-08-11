@@ -1,7 +1,6 @@
 ---
 source: tests/tests/serve.rs
 expression: "read_response.intern_and_redact(&mut redactions, root_id)"
-
 ---
 instances:
   id-2:
@@ -9,6 +8,7 @@ instances:
     ClassName: Folder
     Id: id-2
     Metadata:
+      debugId: ~
       ignoreUnknownInstances: false
     Name: empty_folder
     Parent: "00000000000000000000000000000000"

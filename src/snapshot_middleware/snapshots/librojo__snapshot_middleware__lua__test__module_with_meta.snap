@@ -1,7 +1,6 @@
 ---
 source: src/snapshot_middleware/lua.rs
 expression: instance_snapshot
-
 ---
 snapshot_id: ~
 metadata:
@@ -12,6 +11,7 @@ metadata:
     - /foo.lua
     - /foo.meta.json
   context: {}
+  debug_id: ~
 name: foo
 class_name: ModuleScript
 properties:

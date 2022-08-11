@@ -11,8 +11,10 @@ added_instances:
         ignore_unknown_instances: false
         relevant_paths: []
         context: {}
+        debug_id: ~
       name: New
       class_name: Folder
       properties: {}
       children: []
 updated_instances: []
+

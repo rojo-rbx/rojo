@@ -8,9 +8,11 @@ instances:
     ClassName: Folder
     Id: id-2
     Metadata:
+      debugId: ~
       ignoreUnknownInstances: false
     Name: add_folder
     Parent: "00000000000000000000000000000000"
     Properties: {}
 messageCursor: 0
 sessionId: id-1
+

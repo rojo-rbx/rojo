@@ -1,7 +1,6 @@
 ---
 source: src/snapshot_middleware/project.rs
 expression: instance_snapshot
-
 ---
 snapshot_id: ~
 metadata:
@@ -11,6 +10,7 @@ metadata:
   relevant_paths:
     - /foo.project.json
   context: {}
+  debug_id: ~
 name: resolved-properties
 class_name: StringValue
 properties:

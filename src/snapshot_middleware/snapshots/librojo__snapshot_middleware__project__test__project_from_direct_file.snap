@@ -10,7 +10,9 @@ metadata:
   relevant_paths:
     - /foo/hello.project.json
   context: {}
+  debug_id: ~
 name: direct-project
 class_name: Model
 properties: {}
 children: []
+

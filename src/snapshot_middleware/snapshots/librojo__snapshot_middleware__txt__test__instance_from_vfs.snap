@@ -1,7 +1,6 @@
 ---
 source: src/snapshot_middleware/txt.rs
 expression: instance_snapshot
-
 ---
 snapshot_id: ~
 metadata:
@@ -12,6 +11,7 @@ metadata:
     - /foo.txt
     - /foo.meta.json
   context: {}
+  debug_id: ~
 name: foo
 class_name: StringValue
 properties:

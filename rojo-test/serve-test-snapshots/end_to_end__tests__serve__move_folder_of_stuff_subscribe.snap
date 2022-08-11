@@ -1,7 +1,6 @@
 ---
 source: tests/tests/serve.rs
 expression: "subscribe_response.intern_and_redact(&mut redactions, ())"
-
 ---
 messageCursor: 1
 messages:
@@ -11,6 +10,7 @@ messages:
         ClassName: StringValue
         Id: id-10
         Metadata:
+          debugId: ~
           ignoreUnknownInstances: false
         Name: "6"
         Parent: id-3
@@ -22,6 +22,7 @@ messages:
         ClassName: StringValue
         Id: id-11
         Metadata:
+          debugId: ~
           ignoreUnknownInstances: false
         Name: "7"
         Parent: id-3
@@ -33,6 +34,7 @@ messages:
         ClassName: StringValue
         Id: id-12
         Metadata:
+          debugId: ~
           ignoreUnknownInstances: false
         Name: "8"
         Parent: id-3
@@ -44,6 +46,7 @@ messages:
         ClassName: StringValue
         Id: id-13
         Metadata:
+          debugId: ~
           ignoreUnknownInstances: false
         Name: "9"
         Parent: id-3
@@ -65,6 +68,7 @@ messages:
         ClassName: Folder
         Id: id-3
         Metadata:
+          debugId: ~
           ignoreUnknownInstances: false
         Name: new-stuff
         Parent: id-2
@@ -74,6 +78,7 @@ messages:
         ClassName: StringValue
         Id: id-4
         Metadata:
+          debugId: ~
           ignoreUnknownInstances: false
         Name: "0"
         Parent: id-3
@@ -85,6 +90,7 @@ messages:
         ClassName: StringValue
         Id: id-5
         Metadata:
+          debugId: ~
           ignoreUnknownInstances: false
         Name: "1"
         Parent: id-3
@@ -96,6 +102,7 @@ messages:
         ClassName: StringValue
         Id: id-6
         Metadata:
+          debugId: ~
           ignoreUnknownInstances: false
         Name: "2"
         Parent: id-3
@@ -107,6 +114,7 @@ messages:
         ClassName: StringValue
         Id: id-7
         Metadata:
+          debugId: ~
           ignoreUnknownInstances: false
         Name: "3"
         Parent: id-3
@@ -118,6 +126,7 @@ messages:
         ClassName: StringValue
         Id: id-8
         Metadata:
+          debugId: ~
           ignoreUnknownInstances: false
         Name: "4"
         Parent: id-3
@@ -129,6 +138,7 @@ messages:
         ClassName: StringValue
         Id: id-9
         Metadata:
+          debugId: ~
           ignoreUnknownInstances: false
         Name: "5"
         Parent: id-3

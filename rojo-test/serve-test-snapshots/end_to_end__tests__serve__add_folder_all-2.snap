@@ -9,6 +9,7 @@ instances:
     ClassName: Folder
     Id: id-2
     Metadata:
+      debugId: ~
       ignoreUnknownInstances: false
     Name: add_folder
     Parent: "00000000000000000000000000000000"
@@ -18,9 +19,11 @@ instances:
     ClassName: Folder
     Id: id-3
     Metadata:
+      debugId: ~
       ignoreUnknownInstances: false
     Name: my-new-folder
     Parent: id-2
     Properties: {}
 messageCursor: 1
 sessionId: id-1
+

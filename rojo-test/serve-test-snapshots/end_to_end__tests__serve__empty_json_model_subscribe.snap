@@ -1,7 +1,6 @@
 ---
 source: tests/tests/serve.rs
 expression: "subscribe_response.intern_and_redact(&mut redactions, ())"
-
 ---
 messageCursor: 1
 messages:
@@ -11,6 +10,7 @@ messages:
         ClassName: Model
         Id: id-3
         Metadata:
+          debugId: ~
           ignoreUnknownInstances: false
         Name: test
         Parent: id-2

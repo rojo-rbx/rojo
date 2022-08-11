@@ -1,6 +1,5 @@
 ---
 source: src/snapshot_middleware/dir.rs
-assertion_line: 148
 expression: instance_snapshot
 ---
 snapshot_id: ~
@@ -19,6 +18,7 @@ metadata:
     - /foo/init.client.luau
     - /foo/init.csv
   context: {}
+  debug_id: ~
 name: foo
 class_name: Folder
 properties: {}
@@ -39,6 +39,7 @@ children:
         - /foo/Child/init.client.luau
         - /foo/Child/init.csv
       context: {}
+      debug_id: ~
     name: Child
     class_name: Folder
     properties: {}

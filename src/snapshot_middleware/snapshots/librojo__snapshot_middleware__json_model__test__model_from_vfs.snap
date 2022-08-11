@@ -1,7 +1,6 @@
 ---
 source: src/snapshot_middleware/json_model.rs
 expression: instance_snapshot
-
 ---
 snapshot_id: ~
 metadata:
@@ -11,6 +10,7 @@ metadata:
   relevant_paths:
     - /foo.model.json
   context: {}
+  debug_id: ~
 name: foo
 class_name: IntValue
 properties:
@@ -22,6 +22,7 @@ children:
       ignore_unknown_instances: false
       relevant_paths: []
       context: {}
+      debug_id: ~
     name: The Child
     class_name: StringValue
     properties: {}
