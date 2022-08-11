@@ -28,6 +28,10 @@ function InstanceMap.new(onInstanceChanged)
 		-- A map from instances to a signal or list of signals connected to it.
 		instancesToSignal = {},
 
+
+		-- A map from instances to a signal or list of signals connected to it.
+		createdInstances = {},
+
 		-- Callback that's invoked whenever an instance is changed and it was
 		-- not paused.
 		onInstanceChanged = onInstanceChanged,
@@ -171,27 +175,36 @@ function InstanceMap:__connectSignals(instance)
 	--
 	-- We can instead connect listener to each individual property that we care
 	-- about on those objects (Name and Value) to emulate the same idea.
+	local signals = {}
 	if instance:IsA("ValueBase") then
-		local signals = {
+		table.insert(signals,
 			instance:GetPropertyChangedSignal("Name"):Connect(function()
 				self:__maybeFireInstanceChanged(instance, "Name")
-			end),
+			end)
+		)
 
+		table.insert(signals,
 			instance:GetPropertyChangedSignal("Value"):Connect(function()
 				self:__maybeFireInstanceChanged(instance, "Value")
-			end),
+			end)
+		)
 
+		table.insert(signals,
 			instance:GetPropertyChangedSignal("Parent"):Connect(function()
 				self:__maybeFireInstanceChanged(instance, "Parent")
-			end),
-		}
-
-		self.instancesToSignal[instance] = signals
+			end)
+		)
 	else
-		self.instancesToSignal[instance] = instance.Changed:Connect(function(propertyName)
+		table.insert(signals,instance.Changed:Connect(function(propertyName)
 			self:__maybeFireInstanceChanged(instance, propertyName)
-		end)
+		end))
 	end
+
+	table.insert(signals,instance.ChildAdded:Connect(function(addedInstance)
+		self:__maybeFireInstanceChanged(addedInstance, "Create")
+	end))
+	
+	self.instancesToSignal[instance] = signals
 end
 
 function InstanceMap:__maybeFireInstanceChanged(instance, propertyName)

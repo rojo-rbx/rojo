@@ -50,14 +50,20 @@ function reifyInner(instanceMap, virtualInstances, id, parentInstance, unapplied
 		invariant("Cannot reify an instance not present in virtualInstances\nID: {}", id)
 	end
 
-	-- Instance.new can fail if we're passing in something that can't be
-	-- created, like a service, something enabled with a feature flag, or
-	-- something that requires higher security than we have.
-	local ok, instance = pcall(Instance.new, virtualInstance.ClassName)
+	local ok, instance
+	
+	if virtualInstance.Metadata and virtualInstance.Metadata.debugId and instanceMap.createdInstances[virtualInstance.Metadata.debugId] then
+		instance = instanceMap.createdInstances[virtualInstance.Metadata.debugId] 
+	else
+		-- Instance.new can fail if we're passing in something that can't be
+		-- created, like a service, something enabled with a feature flag, or
+		-- something that requires higher security than we have.
+		ok, instance = pcall(Instance.new, virtualInstance.ClassName)
 
-	if not ok then
-		addAllToPatch(unappliedPatch, virtualInstances, id)
-		return
+		if not ok then
+			addAllToPatch(unappliedPatch, virtualInstances, id)
+			return
+		end
 	end
 
 	-- TODO: Can this fail? Previous versions of Rojo guarded against this, but

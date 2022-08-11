@@ -8,7 +8,7 @@
 mod csv;
 mod dir;
 mod json;
-mod json_model;
+pub mod json_model;
 mod lua;
 mod meta_file;
 mod project;

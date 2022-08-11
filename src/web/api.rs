@@ -8,7 +8,7 @@ use rbx_dom_weak::types::Ref;
 
 use crate::{
     serve_session::ServeSession,
-    snapshot::{InstanceWithMeta, PatchSet, PatchUpdate},
+    snapshot::{InstanceWithMeta, PatchAdd, PatchSet, PatchUpdate},
     web::{
         interface::{
             ErrorResponse, Instance, OpenResponse, ReadResponse, ServerInfoResponse,
@@ -150,10 +150,19 @@ impl ApiService {
             })
             .collect();
 
+        let added_instances = request
+            .added
+            .into_iter()
+            .map(|update| PatchAdd {
+                parent_id: update.id,
+                instance: update.instance.into_snapshot().unwrap(),
+            })
+            .collect();
+
         tree_mutation_sender
             .send(PatchSet {
-                removed_instances: Vec::new(),
-                added_instances: Vec::new(),
+                removed_instances: request.removed,
+                added_instances,
                 updated_instances,
             })
             .unwrap();

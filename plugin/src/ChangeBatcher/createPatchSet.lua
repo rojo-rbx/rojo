@@ -11,14 +11,14 @@ local Log = require(Packages.Log)
 local PatchSet = require(script.Parent.Parent.PatchSet)
 
 local encodePatchUpdate = require(script.Parent.encodePatchUpdate)
-
+local encodePatchCreate = require(script.Parent.encodePatchCreate)
 return function(instanceMap, propertyChanges)
 	local patch = PatchSet.newEmpty()
 
 	for instance, properties in pairs(propertyChanges) do
 		local instanceId = instanceMap.fromInstances[instance]
 
-		if instanceId == nil then
+		if instanceId == nil and properties.Create == nil  then
 			Log.warn("Ignoring change for instance {:?} as it is unknown to Rojo", instance)
 			continue
 		end
@@ -29,6 +29,11 @@ return function(instanceMap, propertyChanges)
 			else
 				Log.warn("Cannot sync non-nil Parent property changes yet")
 			end
+		elseif properties.Create then
+			local parentId = instanceMap.fromInstances[instance.Parent]
+			local update = encodePatchCreate(instanceMap,instance, parentId)
+
+			table.insert(patch.added, update)
 		else
 			local update = encodePatchUpdate(instance, instanceId, properties)
 			table.insert(patch.updated, update)

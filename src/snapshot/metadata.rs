@@ -52,6 +52,9 @@ pub struct InstanceMetadata {
     /// that instance's instigating source is snapshotted directly, the same
     /// context will be passed into it.
     pub context: InstanceContext,
+
+    ///Should only be used by the game generating instances
+    pub debug_id: Option<String>,
 }
 
 impl InstanceMetadata {
@@ -61,6 +64,7 @@ impl InstanceMetadata {
             instigating_source: None,
             relevant_paths: Vec::new(),
             context: InstanceContext::default(),
+            debug_id: None,
         }
     }
 
@@ -88,6 +92,12 @@ impl InstanceMetadata {
     pub fn context(self, context: &InstanceContext) -> Self {
         Self {
             context: context.clone(),
+            ..self
+        }
+    }
+    pub fn debug_id(self, debug_id: Option<String>) -> Self {
+        Self {
+            debug_id: debug_id,
             ..self
         }
     }

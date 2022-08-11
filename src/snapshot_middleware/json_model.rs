@@ -3,11 +3,11 @@ use std::{borrow::Cow, collections::HashMap, path::Path, str};
 use anyhow::Context;
 use memofs::Vfs;
 use rbx_dom_weak::types::Attributes;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     resolution::UnresolvedValue,
-    snapshot::{InstanceContext, InstanceSnapshot},
+    snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
 };
 
 use super::util::PathExt;
@@ -57,9 +57,9 @@ pub fn snapshot_json_model(
     Ok(Some(snapshot))
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-struct JsonModel {
+pub struct JsonModel {
     #[serde(alias = "Name")]
     name: Option<String>,
 
@@ -82,13 +82,16 @@ struct JsonModel {
 
     #[serde(default = "HashMap::new", skip_serializing_if = "HashMap::is_empty")]
     attributes: HashMap<String, UnresolvedValue>,
+
+    /// Should only be used for the game to generate IDs when doing an update
+    #[serde(alias = "DebugId", skip_serializing_if = "Option::is_none")]
+    debug_id: Option<String>,
 }
 
 impl JsonModel {
-    fn into_snapshot(self) -> anyhow::Result<InstanceSnapshot> {
+    pub fn into_snapshot(self) -> anyhow::Result<InstanceSnapshot> {
         let name = self.name.unwrap_or_else(|| self.class_name.clone());
         let class_name = self.class_name;
-
         let mut children = Vec::with_capacity(self.children.len());
         for child in self.children {
             children.push(child.into_snapshot()?);
@@ -110,10 +113,9 @@ impl JsonModel {
 
             properties.insert("Attributes".into(), attributes.into());
         }
-
         Ok(InstanceSnapshot {
             snapshot_id: None,
-            metadata: Default::default(),
+            metadata: InstanceMetadata::new().debug_id(self.debug_id),
             name: Cow::Owned(name),
             class_name: Cow::Owned(class_name),
             properties,

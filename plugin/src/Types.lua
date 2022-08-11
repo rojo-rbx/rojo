@@ -9,6 +9,7 @@ local ApiValue = t.keys(t.string)
 
 local ApiInstanceMetadata = t.interface({
 	ignoreUnknownInstances = t.optional(t.boolean),
+	debugId =  t.optional(t.string)
 })
 
 local ApiInstance = t.interface({

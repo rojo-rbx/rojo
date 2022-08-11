@@ -15,6 +15,7 @@ use crate::{
     snapshot::{
         AppliedPatchSet, InstanceMetadata as RojoInstanceMetadata, InstanceWithMeta, RojoTree,
     },
+    snapshot_middleware::json_model::JsonModel,
 };
 
 /// Server version to report over the API, not exposed outside this crate.
@@ -97,12 +98,14 @@ pub struct InstanceUpdate {
 #[serde(rename_all = "camelCase")]
 pub struct InstanceMetadata {
     pub ignore_unknown_instances: bool,
+    pub debug_id: Option<String>,
 }
 
 impl InstanceMetadata {
     pub(crate) fn from_rojo_metadata(meta: &RojoInstanceMetadata) -> Self {
         Self {
             ignore_unknown_instances: meta.ignore_unknown_instances,
+            debug_id: meta.debug_id.clone(),
         }
     }
 }
@@ -182,10 +185,17 @@ pub struct WriteRequest {
     pub removed: Vec<Ref>,
 
     #[serde(default)]
-    pub added: HashMap<Ref, ()>,
+    pub added: Vec<WritePatchAdded>,
+
     pub updated: Vec<InstanceUpdate>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WritePatchAdded {
+    pub id: Ref,
+    pub instance: JsonModel,
+}
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WriteResponse {

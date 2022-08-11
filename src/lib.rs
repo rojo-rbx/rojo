@@ -5,7 +5,7 @@
 pub mod cli;
 
 #[cfg(test)]
-mod tree_view;
+pub mod tree_view;
 
 mod auth_cookie;
 mod change_processor;
