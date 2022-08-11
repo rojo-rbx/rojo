@@ -115,7 +115,7 @@ local function diff(instanceMap, virtualInstances, rootId)
 			local childId = instanceMap.fromInstances[childInstance]
 
 			if childId == nil then
-				-- pcall because reading Archivable on some Instances is high security
+				-- pcall to avoid security permission errors
 				local success, skip = pcall(function()
 					-- We don't remove instances that aren't going to be saved anyway,
 					-- such as the Rojo session lock value.
