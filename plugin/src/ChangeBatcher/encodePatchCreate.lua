@@ -15,28 +15,30 @@ local  function createInstanceSnapshot(instanceMap,instance)
 		table.insert(children,createInstanceSnapshot(instanceMap,child))
 	end
 
-	local properties = RbxDom.findAllNoneDefaultPropertiesEncoded(instance)
-	properties.Name = nil
-	properties.ClassName = nil
+	local success, properties = RbxDom.findAllNoneDefaultPropertiesEncoded(instance)
+	if success
+		properties.Name = nil
+		properties.ClassName = nil
 
-	local attributes = nil
-	if #properties.Attributes ~= 0 then
-		attributes = properties.Attributes
-	end
+		local attributes = nil
+		if #properties.Attributes ~= 0 then
+			attributes = properties.Attributes
+		end
 
-	properties.Attributes = nil
-	if #properties == 0 then
-		properties = nil
+		properties.Attributes = nil
+		if #properties == 0 then
+			properties = nil
+		end
+		
+		return {
+			Name = instance.Name,
+			ClassName = instance.ClassName,
+			Children = children,
+			Properties = properties,
+			attributes = attributes,
+			DebugId = id
+		}
 	end
-	
-	return {
-		Name = instance.Name,
-		ClassName = instance.ClassName,
-		Children = children,
-		Properties = properties,
-		attributes = attributes,
-		DebugId = id
-	}
 end
 
 return function(instanceMap,instance,parentId)
