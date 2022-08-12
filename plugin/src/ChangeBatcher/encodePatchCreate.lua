@@ -16,10 +16,10 @@ local  function createInstanceSnapshot(instanceMap,instance)
 	end
 
 	local success, properties = RbxDom.findAllNoneDefaultPropertiesEncoded(instance)
-	if success
+	if success then
 		properties.Name = nil
 		properties.ClassName = nil
-
+		
 		local attributes = nil
 		if #properties.Attributes ~= 0 then
 			attributes = properties.Attributes
@@ -39,6 +39,7 @@ local  function createInstanceSnapshot(instanceMap,instance)
 			DebugId = id
 		}
 	end
+	return nil
 end
 
 return function(instanceMap,instance,parentId)
