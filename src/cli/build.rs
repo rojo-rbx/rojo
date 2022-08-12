@@ -14,7 +14,7 @@ use crate::serve_session::ServeSession;
 
 use super::resolve_path;
 
-const UNKNOWN_OUTPUT_KIND_ERR: &str = "Could not detect what kind of file to build. \
+pub(in crate::cli) const UNKNOWN_OUTPUT_KIND_ERR: &str = "Could not detect what kind of file to build. \
                                        Expected output file to end in .rbxl, .rbxlx, .rbxm, or .rbxmx.";
 
 /// Generates a model or place file from the Rojo project.
@@ -72,7 +72,7 @@ impl BuildCommand {
 
 /// The different kinds of output that Rojo can build to.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum OutputKind {
+pub(in crate::cli) enum OutputKind {
     /// An XML model file.
     Rbxmx,
 
@@ -86,7 +86,7 @@ enum OutputKind {
     Rbxl,
 }
 
-fn detect_output_kind(output: &Path) -> Option<OutputKind> {
+pub(in crate::cli) fn detect_output_kind(output: &Path) -> Option<OutputKind> {
     let extension = output.extension()?.to_str()?;
 
     match extension {
@@ -103,7 +103,7 @@ fn xml_encode_config() -> rbx_xml::EncodeOptions {
 }
 
 #[profiling::function]
-fn write_model(
+pub(in crate::cli) fn write_model(
     session: &ServeSession,
     output: &Path,
     output_kind: OutputKind,
