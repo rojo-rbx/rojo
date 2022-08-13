@@ -26,7 +26,7 @@ use super::GlobalOptions;
 #[derive(Debug, Parser)]
 pub struct OpenCommand {
     /// Path to the project file to serve from. Defaults to default.project.json.
-    #[clap(long)]
+    #[clap(value_parser)]
     pub project: Option<PathBuf>,
 
     // Path to an output place to build and serve to. Will be created automatically
