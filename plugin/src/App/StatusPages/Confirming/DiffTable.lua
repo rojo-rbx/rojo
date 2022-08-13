@@ -44,7 +44,7 @@ function DiffTable:render()
 		local csv = props.csv
 
 		local rowTransparency = props.transparency:map(function(t)
-			return 0.9 + (0.1 * t)
+			return 0.93 + (0.07 * t)
 		end)
 
 		local rows = {}
@@ -55,7 +55,8 @@ function DiffTable:render()
 
 		local headers = e("Frame", {
 			Size = UDim2.new(1, 0, 0, 30),
-			BackgroundTransparency = 1,
+			BackgroundTransparency = rowTransparency,
+			BackgroundColor3 = theme.Diff.Row,
 			LayoutOrder = 0,
 		}, {
 			Padding = e("UIPadding", pad),
@@ -104,7 +105,8 @@ function DiffTable:render()
 
 			rows[row] = e("Frame", {
 				Size = UDim2.new(1, 0, 0, 30),
-				BackgroundTransparency = row % 2 == 0 and rowTransparency or 1,
+				BackgroundTransparency = row % 2 ~= 0 and rowTransparency or 1,
+				BackgroundColor3 = theme.Diff.Row,
 				BorderSizePixel = 0,
 				LayoutOrder = row,
 			}, {
