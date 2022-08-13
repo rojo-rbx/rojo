@@ -8,6 +8,7 @@ local t = require(Packages.t)
 local Promise = require(Packages.Promise)
 
 local ChangeBatcher = require(script.Parent.ChangeBatcher)
+local encodePatchUpdate = require(script.Parent.ChangeBatcher.encodePatchUpdate)
 local InstanceMap = require(script.Parent.InstanceMap)
 local PatchSet = require(script.Parent.PatchSet)
 local Reconciler = require(script.Parent.Reconciler)
@@ -245,30 +246,27 @@ function ServeSession:__initialSync(serverInfo)
 				-- The user wants their studio DOM to write back to their Rojo DOM
 				-- so we will reverse the patch and send it back
 
+				local inversePatch = PatchSet.newEmpty()
+
 				-- Send back the current properties
 				for _, change in catchUpPatch.updated do
 					local instance = self.__instanceMap.fromIds[change.id]
 					if not instance then continue end
 
-					for propertyName in change.changedProperties do
-						self.__changeBatcher:add(instance, propertyName)
-					end
+					local update = encodePatchUpdate(instance, change.id, change.changedProperties)
+					table.insert(inversePatch.updated, update)
 				end
 				-- Add the removed instances back to Rojo
+				-- selene:allow(empty_if, unused_variable)
 				for _, instance in catchUpPatch.removed do
-					self.__changeBatcher:add(instance, "Parent")
-					self.__changeBatcher:add(instance, "Name")
-					if instance:IsA("BaseScript") then
-						self.__changeBatcher:add(instance, "Source")
-					end
+					-- TODO: Generate ID for our instance and add it to inversePatch.added
 				end
 				-- Remove the additions we've rejected
-				-- selene:allow(empty_if, unused_variable)
-				for id, change in catchUpPatch.added do
-					-- TODO: This instance doesn't yet exist, but changeBatcher operates with instances.
-					-- We need to make it possible to add it to the removed patch without having it exist
-					-- Unless perhaps removing it isn't how we want to handle this?
+				for id, _change in catchUpPatch.added do
+					table.insert(inversePatch.removed, id)
 				end
+
+				self.__apiContext:write(inversePatch)
 
 			elseif userDecision == "Accept" then
 				local unappliedPatch = self.__reconciler:applyPatch(catchUpPatch)
