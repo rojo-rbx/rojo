@@ -15,6 +15,7 @@ local function DisplayValue(props)
 			-- Colors get a blot that shows the color
 			return Roact.createFragment({
 				Blot = e("Frame", {
+					BackgroundTransparency = props.transparency,
 					BackgroundColor3 = props.value,
 					Size = UDim2.new(0, 20, 0, 20),
 					Position = UDim2.new(0, 0, 0.5, 0),
@@ -25,6 +26,7 @@ local function DisplayValue(props)
 					}),
 					Stroke = e("UIStroke", {
 						Color = theme.BorderedContainer.BorderColor,
+						Transparency = props.transparency,
 					}),
 				}),
 				Label = e("TextLabel", {
