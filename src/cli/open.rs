@@ -48,16 +48,12 @@ impl OpenCommand {
         log::trace!("Constructing in-memory filesystem");
         let vfs = Vfs::new_default();
         vfs.set_watch_enabled(false);
-
         let session = ServeSession::new(vfs, &project)?;
-        let studio = RobloxStudio::locate()?;
 
         if !self.output.exists() {
             write_model(&session, &self.output, output_kind)?;
         }
-        if !plugin_exists(&studio) {
-            install_plugin().unwrap();
-        }
+        install_plugin().unwrap();
 
         opener::open(&self.output).expect("Could not open place in Roblox Studio");
 
@@ -71,13 +67,9 @@ impl OpenCommand {
             .unwrap_or(DEFAULT_PORT);
         let server = LiveServer::new(Arc::new(session));
 
-        let _ = show_start_message(ip, port, global.color.into());
+        show_start_message(ip, port, global.color.into())?;
         server.start((ip, port).into());
 
         Ok(())
     }
-}
-
-fn plugin_exists(studio: &RobloxStudio) -> bool {
-    studio.plugins_path().join("rojo.rbxm").exists()
 }
