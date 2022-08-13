@@ -47,7 +47,6 @@ impl OpenCommand {
 
         log::trace!("Constructing in-memory filesystem");
         let vfs = Vfs::new_default();
-        vfs.set_watch_enabled(false);
         let session = ServeSession::new(vfs, &project)?;
 
         if !self.output.exists() {
