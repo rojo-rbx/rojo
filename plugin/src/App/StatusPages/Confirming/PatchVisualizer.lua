@@ -127,27 +127,27 @@ end
 
 local DomLabel = require(script.Parent.DomLabel)
 
-local PatchDiff = Roact.Component:extend("PatchDiff")
+local PatchVisualizer = Roact.Component:extend("PatchVisualizer")
 
-function PatchDiff:init()
+function PatchVisualizer:init()
 	self.contentSize, self.setContentSize = Roact.createBinding(Vector2.new(0, 0))
 
 	self.updateEvent = Instance.new("BindableEvent")
 end
 
-function PatchDiff:willUnmount()
+function PatchVisualizer:willUnmount()
 	self.updateEvent:Destroy()
 end
 
-function PatchDiff:shouldUpdate(nextProps)
-	local currentPatch, nextPatch = self.props.confirmData.patch, nextProps.confirmData.patch
+function PatchVisualizer:shouldUpdate(nextProps)
+	local currentPatch, nextPatch = self.props.patch, nextProps.patch
 
 	return not deepEquals(currentPatch, nextPatch)
 end
 
-function PatchDiff:render()
-	local patch = self.props.confirmData.patch
-	local instanceMap = self.props.confirmData.instanceMap
+function PatchVisualizer:render()
+	local patch = self.props.patch
+	local instanceMap = self.props.instanceMap
 
 	local idToNode = {}
 	local tree = {
@@ -270,7 +270,7 @@ function PatchDiff:render()
 		})
 	end
 
-	for _, instance in self.props.confirmData.patch.removed do
+	for _, instance in patch.removed do
 		-- Gather ancestors from existing DOM, note that they may have no ID
 		local ancestry = {}
 		local parentObject = instance.Parent
@@ -381,7 +381,8 @@ function PatchDiff:render()
 
 	return e(BorderedContainer, {
 		transparency = self.props.transparency,
-		size = UDim2.new(1, 0, 1, -150),
+		size = self.props.size,
+		position = self.props.position,
 		layoutOrder = self.props.layoutOrder,
 	}, {
 		VirtualScroller = e(VirtualScroller, {
@@ -399,4 +400,4 @@ function PatchDiff:render()
 	})
 end
 
-return PatchDiff
+return PatchVisualizer

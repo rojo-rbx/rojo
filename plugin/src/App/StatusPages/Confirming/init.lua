@@ -11,7 +11,7 @@ local Theme = require(Plugin.App.Theme)
 local TextButton = require(Plugin.App.Components.TextButton)
 local Header = require(Plugin.App.Components.Header)
 local StudioPluginGui = require(Plugin.App.Components.Studio.StudioPluginGui)
-local PatchDiff = require(script.PatchDiff)
+local PatchVisualizer = require(script.PatchVisualizer)
 
 local e = Roact.createElement
 
@@ -46,8 +46,10 @@ function ConfirmingPage:render()
 				BackgroundTransparency = 1,
 			}),
 
-			PatchDiff = e(PatchDiff, {
-				confirmData = self.props.confirmData,
+			PatchVisualizer = e(PatchVisualizer, {
+				size = UDim2.new(1, 0, 1, -150),
+				patch = self.props.confirmData.patch,
+				instanceMap = self.props.confirmData.instanceMap,
 				transparency = self.props.transparency,
 				layoutOrder = 3,
 			}),
