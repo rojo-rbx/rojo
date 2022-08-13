@@ -12,6 +12,7 @@ local function DisplayValue(props)
 	return Theme.with(function(theme)
 		local t = typeof(props.value)
 		if t == "Color3" then
+			-- Colors get a blot that shows the color
 			return Roact.createFragment({
 				Blot = e("Frame", {
 					BackgroundColor3 = props.value,
@@ -38,6 +39,10 @@ local function DisplayValue(props)
 				}),
 			})
 		end
+
+		-- TODO: Maybe add visualizations to other datatypes?
+		-- Or special text handling tostring for some?
+		-- Will add as needed, let's see what cases arise.
 
 		return e("TextLabel", {
 			Text = string.gsub(tostring(props.value), "%s", " "),

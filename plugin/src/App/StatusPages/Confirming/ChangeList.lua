@@ -10,17 +10,18 @@ local DisplayValue = require(script.Parent.DisplayValue)
 
 local e = Roact.createElement
 
-local DiffTable = Roact.Component:extend("DiffTable")
+local ChangeList = Roact.Component:extend("ChangeList")
 
-function DiffTable:init()
+function ChangeList:init()
 	self.contentSize, self.setContentSize = Roact.createBinding(Vector2.new(0, 0))
 end
 
-function DiffTable:render()
+function ChangeList:render()
 	return Theme.with(function(theme)
 		local props = self.props
-		local csv = props.csv
+		local changes = props.changes
 
+		-- Color alternating rows for readability
 		local rowTransparency = props.transparency:map(function(t)
 			return 0.93 + (0.07 * t)
 		end)
@@ -39,7 +40,7 @@ function DiffTable:render()
 		}, {
 			Padding = e("UIPadding", pad),
 			A = e("TextLabel", {
-				Text = tostring(csv[1][1]),
+				Text = tostring(changes[1][1]),
 				BackgroundTransparency = 1,
 				Font = Enum.Font.GothamBold,
 				TextSize = 14,
@@ -51,7 +52,7 @@ function DiffTable:render()
 				Position = UDim2.new(0, 0, 0, 0),
 			}),
 			B = e("TextLabel", {
-				Text = tostring(csv[1][2]),
+				Text = tostring(changes[1][2]),
 				BackgroundTransparency = 1,
 				Font = Enum.Font.GothamBold,
 				TextSize = 14,
@@ -63,7 +64,7 @@ function DiffTable:render()
 				Position = UDim2.new(0.3, 0, 0, 0),
 			}),
 			C = e("TextLabel", {
-				Text = tostring(csv[1][3]),
+				Text = tostring(changes[1][3]),
 				BackgroundTransparency = 1,
 				Font = Enum.Font.GothamBold,
 				TextSize = 14,
@@ -76,10 +77,10 @@ function DiffTable:render()
 			}),
 		})
 
-		for row, values in csv do
+		for row, values in changes do
 			if row == 1 then
-				continue
-			end -- Skip headers
+				continue -- Skip headers, already handled above
+			end
 
 			rows[row] = e("Frame", {
 				Size = UDim2.new(1, 0, 0, 30),
@@ -149,4 +150,4 @@ function DiffTable:render()
 	end)
 end
 
-return DiffTable
+return ChangeList

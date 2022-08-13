@@ -125,6 +125,80 @@ local function deepEquals(a: { [any]: any }, b: { [any]: any })
 	return true
 end
 
+local function Tree()
+	local tree = {
+		idToNode = {},
+		ROOT = {
+			className = "DataModel",
+			name = "ROOT",
+			children = {},
+		},
+	}
+	-- Add ROOT to idToNode or it won't be found by getNode since that searches *within* ROOT
+	tree.idToNode["ROOT"] = tree.ROOT
+
+	function tree:getNode(id, target)
+		if self.idToNode[id] then return self.idToNode[id] end
+
+		for nodeId, node in target or tree.ROOT.children do
+			if nodeId == id then
+				self.idToNode[id] = node
+				return node
+			end
+			local descendant = self:getNode(id, node.children)
+			if descendant then
+				return descendant
+			end
+		end
+	end
+
+	function tree:addNode(parent, props)
+		parent = parent or "ROOT"
+
+		local node = self:getNode(props.id)
+		if node then
+			for k, v in props do
+				node[k] = v
+			end
+			return node
+		end
+
+		node = table.clone(props)
+		node.children = {}
+
+		local parentNode = self:getNode(parent)
+		if not parentNode then
+			Log.warn("Failed to create node since parent doesnt exist: {}, {}", parent, props)
+			return
+		end
+
+		parentNode.children[node.id] = node
+		self.idToNode[node.id] = node
+
+		return node
+	end
+
+	function tree:buildAncestryNodes(ancestry, patch, instanceMap)
+		-- Build nodes for ancestry by going up the tree
+		local previousId = "ROOT"
+		for _, ancestorId in ancestry do
+			local value = instanceMap.fromIds[ancestorId] or patch.added[ancestorId]
+			if not value then
+				Log.warn("Failed to find ancestor object for " .. ancestorId)
+				continue
+			end
+			self:addNode(previousId, {
+				id = ancestorId,
+				className = value.ClassName,
+				name = value.Name,
+			})
+			previousId = ancestorId
+		end
+	end
+
+	return tree
+end
+
 local DomLabel = require(script.Parent.DomLabel)
 
 local PatchVisualizer = Roact.Component:extend("PatchVisualizer")
@@ -145,79 +219,8 @@ function PatchVisualizer:shouldUpdate(nextProps)
 	return not deepEquals(currentPatch, nextPatch)
 end
 
-function PatchVisualizer:render()
-	local patch = self.props.patch
-	local instanceMap = self.props.instanceMap
-
-	local idToNode = {}
-	local tree = {
-		root = {
-			className = "DataModel",
-			name = "root",
-			children = {},
-		},
-	}
-
-	local function getNode(id, target)
-		if idToNode[id] then
-			return idToNode[id]
-		end
-
-		for nodeId, node in target or tree do
-			if nodeId == id then
-				idToNode[id] = node
-				return node
-			end
-			local descendant = getNode(id, node.children)
-			if descendant then
-				return descendant
-			end
-		end
-	end
-
-	local function addNode(parent, props)
-		parent = parent or "root"
-
-		local node = getNode(props.id)
-		if node then
-			for k, v in props do
-				node[k] = v
-			end
-			return node
-		end
-
-		node = table.clone(props)
-		node.children = {}
-
-		local parentNode = getNode(parent)
-		if not parentNode then
-			Log.warn("Failed to create node since parent doesnt exist", parent, props)
-			return
-		end
-
-		parentNode.children[node.id] = node
-		idToNode[node.id] = node
-
-		return node
-	end
-
-	local function buildAncestryNodes(ancestry)
-		-- Build nodes for ancestry
-		local previousId = "root"
-		for _, ancestorId in ancestry do
-			local value = instanceMap.fromIds[ancestorId] or patch.added[ancestorId]
-			if not value then
-				Log.warn("Failed to find ancestor object for " .. ancestorId)
-				continue
-			end
-			addNode(previousId, {
-				id = ancestorId,
-				className = value.ClassName,
-				name = value.Name,
-			})
-			previousId = ancestorId
-		end
-	end
+function PatchVisualizer:buildTree(patch, instanceMap)
+	local tree = Tree()
 
 	for _, change in patch.updated do
 		local instance = instanceMap.fromIds[change.id]
@@ -235,43 +238,59 @@ function PatchVisualizer:render()
 			parentId = instanceMap.fromInstances[parentObject]
 		end
 
-		buildAncestryNodes(ancestry)
+		tree:buildAncestryNodes(ancestry, patch, instanceMap)
 
 		-- Gather detail text
-		local diffTable = {
-			{ "Property", "Current", "Incoming" },
-		}
+		local changeList, hint = nil, nil
+		if next(change.changedProperties) then
+			changeList = {}
 
-		local hint, i = {}, 0
-		for prop, incoming in change.changedProperties do
-			i += 1
-			if i < 5 then
-				hint[i] = prop
-			elseif i == 5 then
-				hint[i] = "..."
+			local hintBuffer, i = {}, 0
+			for prop, incoming in change.changedProperties do
+				i += 1
+				hintBuffer[i] = prop
+
+				local success, incomingValue = decodeValue(incoming)
+				if success then
+					table.insert(changeList, { prop, instance[prop], incomingValue })
+				else
+					table.insert(changeList, { prop, instance[prop], next(incoming) })
+				end
 			end
 
-			local success, incomingValue = decodeValue(incoming)
-			if success then
-				table.insert(diffTable, { prop, instance[prop], incomingValue })
-			else
-				table.insert(diffTable, { prop, instance[prop], next(incoming) })
+			-- Finalize detail values
+
+			-- Trim hint to top 3
+			table.sort(hintBuffer)
+			if #hintBuffer > 3 then
+				hintBuffer = {
+					hintBuffer[1], hintBuffer[2], hintBuffer[3],
+					i - 3 .. " more"
+				}
 			end
+			hint = table.concat(hintBuffer, ", ")
+
+			-- Sort changes and add header
+			table.sort(changeList, function(a, b)
+				return a[1] < b[1]
+			end)
+			table.insert(changeList, 1, { "Property", "Current", "Incoming" })
 		end
 
 		-- Add this node to tree
-		addNode(instanceMap.fromInstances[instance.Parent], {
+		tree:addNode(instanceMap.fromInstances[instance.Parent], {
 			id = change.id,
 			patchType = "Edit",
 			className = instance.ClassName,
 			name = instance.Name,
-			hint = table.concat(hint, ", "),
-			diffTable = #diffTable > 1 and diffTable or nil,
+			hint = hint,
+			changeList = changeList,
 		})
 	end
 
 	for _, instance in patch.removed do
-		-- Gather ancestors from existing DOM, note that they may have no ID
+		-- Gather ancestors from existing DOM
+		-- (note that they may have no ID if they're being removed as unknown)
 		local ancestry = {}
 		local parentObject = instance.Parent
 		local parentId = instanceMap.fromInstances[parentObject] or HttpService:GenerateGUID(false)
@@ -282,12 +301,12 @@ function PatchVisualizer:render()
 			parentId = instanceMap.fromInstances[parentObject] or HttpService:GenerateGUID(false)
 		end
 
-		buildAncestryNodes(ancestry)
+		tree:buildAncestryNodes(ancestry, patch, instanceMap)
 
 		-- Add this node to tree
 		local nodeId = instanceMap.fromInstances[instance] or HttpService:GenerateGUID(false)
 		instanceMap:insert(nodeId, instance)
-		addNode(instanceMap.fromInstances[instance.Parent], {
+		tree:addNode(instanceMap.fromInstances[instance.Parent], {
 			id = nodeId,
 			patchType = "Remove",
 			className = instance.ClassName,
@@ -316,39 +335,64 @@ function PatchVisualizer:render()
 			end
 		end
 
-		buildAncestryNodes(ancestry)
+		tree:buildAncestryNodes(ancestry, patch, instanceMap)
 
 		-- Gather detail text
-		local diffTable = {
-			{ "Property", "Current", "Incoming" },
-		}
-		local hint, i = {}, 0
-		for prop, incoming in change.Properties do
-			i += 1
-			if i < 5 then
-				hint[i] = prop
-			elseif i == 5 then
-				hint[i] = "..."
+		local changeList, hint = nil, nil
+		if next(change.Properties) then
+			changeList = {}
+
+			local hintBuffer, i = {}, 0
+			for prop, incoming in change.Properties do
+				i += 1
+				hintBuffer[i] = prop
+
+				local success, incomingValue = decodeValue(incoming)
+				if success then
+					table.insert(changeList, { prop, "N/A", incomingValue })
+				else
+					table.insert(changeList, { prop, "N/A", next(incoming) })
+				end
 			end
 
-			local success, incomingValue = decodeValue(incoming)
-			if success then
-				table.insert(diffTable, { prop, "N/A", incomingValue })
-			else
-				table.insert(diffTable, { prop, "N/A", next(incoming) })
+			-- Finalize detail values
+
+			-- Trim hint to top 3
+			table.sort(hintBuffer)
+			if #hintBuffer > 3 then
+				hintBuffer = {
+					hintBuffer[1], hintBuffer[2], hintBuffer[3],
+					i - 3 .. " more"
+				}
 			end
+			hint = table.concat(hintBuffer, ", ")
+
+			-- Sort changes and add header
+			table.sort(changeList, function(a, b)
+				return a[1] < b[1]
+			end)
+			table.insert(changeList, 1, { "Property", "Current", "Incoming" })
 		end
 
 		-- Add this node to tree
-		addNode(change.Parent, {
+		tree:addNode(change.Parent, {
 			id = change.Id,
 			patchType = "Add",
 			className = change.ClassName,
 			name = change.Name,
-			hint = table.concat(hint, ", "),
-			diffTable = #diffTable > 1 and diffTable or nil,
+			hint = hint,
+			changeList = changeList,
 		})
 	end
+
+	return tree
+end
+
+function PatchVisualizer:render()
+	local patch = self.props.patch
+	local instanceMap = self.props.instanceMap
+
+	local tree = self:buildTree(patch, instanceMap)
 
 	-- Recusively draw tree
 	local scrollElements, elementHeights = {}, {}
@@ -365,7 +409,7 @@ function PatchVisualizer:render()
 				className = node.className,
 				name = node.name,
 				hint = node.hint,
-				diffTable = node.diffTable,
+				changeList = node.changeList,
 				depth = depth,
 				transparency = self.props.transparency,
 			})
@@ -375,7 +419,7 @@ function PatchVisualizer:render()
 			drawNode(childNode, depth + 1)
 		end
 	end
-	for _, node in alphabeticalPairs(tree.root.children) do
+	for _, node in alphabeticalPairs(tree.ROOT.children) do
 		drawNode(node, 0)
 	end
 

@@ -13,7 +13,7 @@ local bindingUtil = require(Plugin.App.bindingUtil)
 
 local e = Roact.createElement
 
-local DiffTable = require(script.Parent.DiffTable)
+local ChangeList = require(script.Parent.ChangeList)
 
 local Expansion = Roact.Component:extend("Expansion")
 
@@ -29,8 +29,8 @@ function Expansion:render()
 		Size = UDim2.new(1, -props.indent, 1, -30),
 		Position = UDim2.new(0, props.indent, 0, 30),
 	}, {
-		DiffTable = e(DiffTable, {
-			csv = props.diffTable,
+		ChangeList = e(ChangeList, {
+			changes = props.changeList,
 			transparency = props.transparency,
 		}),
 	})
@@ -40,8 +40,8 @@ local DomLabel = Roact.Component:extend("DomLabel")
 
 function DomLabel:init()
 	self.maxElementHeight = 0
-	if self.props.diffTable then
-		self.maxElementHeight = math.clamp(#self.props.diffTable * 30, 30, 30 * 5)
+	if self.props.changeList then
+		self.maxElementHeight = math.clamp(#self.props.changeList * 30, 30, 30 * 6)
 	end
 
 	local initHeight = self.props.elementHeight:getValue()
@@ -76,6 +76,9 @@ function DomLabel:render()
 
 	return Theme.with(function(theme)
 		local iconProps = StudioService:GetClassIcon(props.className)
+		local indent = (props.depth or 0) * 20 + 25
+
+		-- Line guides help indent depth remain readable
 		local lineGuides = {}
 		for i = 1, props.depth or 0 do
 			table.insert(
@@ -91,8 +94,6 @@ function DomLabel:render()
 			)
 		end
 
-		local indent = (props.depth or 0) * 20 + 25
-
 		return e("Frame", {
 			Name = "Change",
 			ClipsDescendants = true,
@@ -107,7 +108,7 @@ function DomLabel:render()
 				PaddingLeft = UDim.new(0, 10),
 				PaddingRight = UDim.new(0, 10),
 			}),
-			ExpandButton = if props.diffTable
+			ExpandButton = if props.changeList
 				then e("TextButton", {
 					BackgroundTransparency = 1,
 					Text = "",
@@ -121,12 +122,12 @@ function DomLabel:render()
 					end,
 				})
 				else nil,
-			Expansion = if props.diffTable
+			Expansion = if props.changeList
 				then e(Expansion, {
 					rendered = self.state.renderExpansion,
 					indent = indent,
 					transparency = props.transparency,
-					diffTable = props.diffTable,
+					changeList = props.changeList,
 				})
 				else nil,
 			DiffIcon = if props.patchType
