@@ -24,7 +24,7 @@ end
 
 function ConfirmingPage:render()
 	return Theme.with(function(theme)
-		local diffChildren = {
+		local pageContent = Roact.createFragment({
 			Header = e(Header, {
 				transparency = self.props.transparency,
 				layoutOrder = 1,
@@ -105,32 +105,28 @@ function ConfirmingPage:render()
 				PaddingLeft = UDim.new(0, 20),
 				PaddingRight = UDim.new(0, 20),
 			}),
-		}
-
-		return Roact.createFragment({
-			Popup = if self.props.createPopup
-				then e(StudioPluginGui, {
-					id = "Rojo_DiffSync",
-					title = string.format(
-						"Confirm sync for project '%s':",
-						self.props.confirmData.serverInfo.projectName or "UNKNOWN"
-					),
-					active = true,
-
-					initDockState = Enum.InitialDockState.Float,
-					initEnabled = true,
-					overridePreviousState = true,
-					floatingSize = Vector2.new(500, 350),
-					minimumSize = Vector2.new(400, 250),
-
-					zIndexBehavior = Enum.ZIndexBehavior.Sibling,
-
-					onClose = self.props.onAbort,
-				}, diffChildren)
-				else nil,
-
-			InWindow = if not self.props.createPopup then Roact.createFragment(diffChildren) else nil,
 		})
+
+		return if self.props.createPopup
+			then e(StudioPluginGui, {
+				id = "Rojo_DiffSync",
+				title = string.format(
+					"Confirm sync for project '%s':",
+					self.props.confirmData.serverInfo.projectName or "UNKNOWN"
+				),
+				active = true,
+
+				initDockState = Enum.InitialDockState.Float,
+				initEnabled = true,
+				overridePreviousState = true,
+				floatingSize = Vector2.new(500, 350),
+				minimumSize = Vector2.new(400, 250),
+
+				zIndexBehavior = Enum.ZIndexBehavior.Sibling,
+
+				onClose = self.props.onAbort,
+			}, pageContent)
+			else pageContent
 	end)
 end
 
