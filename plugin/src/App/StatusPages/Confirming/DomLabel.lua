@@ -32,21 +32,20 @@ function Expansion:render()
 		DiffTable = e(DiffTable, {
 			csv = props.diffTable,
 			transparency = props.transparency,
-		})
+		}),
 	})
 end
-
 
 local DomLabel = Roact.Component:extend("DomLabel")
 
 function DomLabel:init()
 	self.maxElementHeight = 0
 	if self.props.diffTable then
-		self.maxElementHeight = math.clamp(#self.props.diffTable * 30, 30, 30*5)
+		self.maxElementHeight = math.clamp(#self.props.diffTable * 30, 30, 30 * 5)
 	end
 
 	local initHeight = self.props.elementHeight:getValue()
-	self.expanded =  initHeight > 30
+	self.expanded = initHeight > 30
 
 	self.motor = Flipper.SingleMotor.new(initHeight)
 	self.binding = bindingUtil.fromMotor(self.motor)
@@ -78,15 +77,18 @@ function DomLabel:render()
 	return Theme.with(function(theme)
 		local iconProps = StudioService:GetClassIcon(props.className)
 		local lineGuides = {}
-		for i=1, props.depth or 0 do
-			table.insert(lineGuides, e("Frame", {
-				Name = "Line_"..i,
-				Size = UDim2.new(0, 2, 1, 2),
-				Position = UDim2.new(0, (20*i) + 15, 0, -1),
-				BorderSizePixel = 0,
-				BackgroundTransparency = props.transparency,
-				BackgroundColor3 = theme.BorderedContainer.BorderColor,
-			}))
+		for i = 1, props.depth or 0 do
+			table.insert(
+				lineGuides,
+				e("Frame", {
+					Name = "Line_" .. i,
+					Size = UDim2.new(0, 2, 1, 2),
+					Position = UDim2.new(0, (20 * i) + 15, 0, -1),
+					BorderSizePixel = 0,
+					BackgroundTransparency = props.transparency,
+					BackgroundColor3 = theme.BorderedContainer.BorderColor,
+				})
+			)
 		end
 
 		local indent = (props.depth or 0) * 20 + 25
@@ -105,35 +107,39 @@ function DomLabel:render()
 				PaddingLeft = UDim.new(0, 10),
 				PaddingRight = UDim.new(0, 10),
 			}),
-			ExpandButton = if props.diffTable then e("TextButton", {
-				BackgroundTransparency = 1,
-				Text = "",
-				Size = UDim2.new(1, 0, 1, 0),
-				[Roact.Event.Activated] = function()
-					self.expanded = not self.expanded
-					self.motor:setGoal(
-						Flipper.Spring.new((self.expanded and self.maxElementHeight or 0) + 30, {
+			ExpandButton = if props.diffTable
+				then e("TextButton", {
+					BackgroundTransparency = 1,
+					Text = "",
+					Size = UDim2.new(1, 0, 1, 0),
+					[Roact.Event.Activated] = function()
+						self.expanded = not self.expanded
+						self.motor:setGoal(Flipper.Spring.new((self.expanded and self.maxElementHeight or 0) + 30, {
 							frequency = 5,
 							dampingRatio = 1,
-						})
-					)
-				end,
-			}) else nil,
-			Expansion = if props.diffTable then e(Expansion, {
-				rendered = self.state.renderExpansion,
-				indent = indent,
-				transparency = props.transparency,
-				diffTable = props.diffTable,
-			}) else nil,
-			DiffIcon = if props.patchType then e("ImageLabel", {
-				Image = Assets.Images.Diff[props.patchType],
-				ImageColor3 = theme.AddressEntry.PlaceholderColor,
-				ImageTransparency = props.transparency,
-				BackgroundTransparency = 1,
-				Size = UDim2.new(0, 20, 0, 20),
-				Position = UDim2.new(0, 0, 0, 15),
-				AnchorPoint = Vector2.new(0, 0.5),
-			}) else nil,
+						}))
+					end,
+				})
+				else nil,
+			Expansion = if props.diffTable
+				then e(Expansion, {
+					rendered = self.state.renderExpansion,
+					indent = indent,
+					transparency = props.transparency,
+					diffTable = props.diffTable,
+				})
+				else nil,
+			DiffIcon = if props.patchType
+				then e("ImageLabel", {
+					Image = Assets.Images.Diff[props.patchType],
+					ImageColor3 = theme.AddressEntry.PlaceholderColor,
+					ImageTransparency = props.transparency,
+					BackgroundTransparency = 1,
+					Size = UDim2.new(0, 20, 0, 20),
+					Position = UDim2.new(0, 0, 0, 15),
+					AnchorPoint = Vector2.new(0, 0.5),
+				})
+				else nil,
 			ClassIcon = e("ImageLabel", {
 				Image = iconProps.Image,
 				ImageTransparency = props.transparency,
@@ -145,7 +151,11 @@ function DomLabel:render()
 				AnchorPoint = Vector2.new(0, 0.5),
 			}),
 			InstanceName = e("TextLabel", {
-				Text = props.name .. (props.hint and string.format('  <font color="#%s">%s</font>', theme.AddressEntry.PlaceholderColor:ToHex(), props.hint) or ""),
+				Text = props.name .. (props.hint and string.format(
+					'  <font color="#%s">%s</font>',
+					theme.AddressEntry.PlaceholderColor:ToHex(),
+					props.hint
+				) or ""),
 				RichText = true,
 				BackgroundTransparency = 1,
 				Font = Enum.Font.GothamMedium,
@@ -154,7 +164,7 @@ function DomLabel:render()
 				TextXAlignment = Enum.TextXAlignment.Left,
 				TextTransparency = props.transparency,
 				TextTruncate = Enum.TextTruncate.AtEnd,
-				Size = UDim2.new(1, -indent-50, 0, 30),
+				Size = UDim2.new(1, -indent - 50, 0, 30),
 				Position = UDim2.new(0, indent + 30, 0, 0),
 			}),
 			LineGuides = e("Folder", nil, lineGuides),

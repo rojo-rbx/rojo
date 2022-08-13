@@ -15,13 +15,13 @@ local VirtualScroller = require(Plugin.App.Components.VirtualScroller)
 local e = Roact.createElement
 
 local function alphabeticalNext(t, state)
-    -- Equivalent of the next function, but returns the keys in the alphabetic
-    -- order of node names. We use a temporary ordered key table that is stored in the
-    -- table being iterated.
+	-- Equivalent of the next function, but returns the keys in the alphabetic
+	-- order of node names. We use a temporary ordered key table that is stored in the
+	-- table being iterated.
 
-    local key = nil
-    if state == nil then
-        -- First iteration, generate the index
+	local key = nil
+	if state == nil then
+		-- First iteration, generate the index
 		local orderedIndex, i = table.create(5), 0
 		for k in t do
 			i += 1
@@ -32,33 +32,33 @@ local function alphabeticalNext(t, state)
 			return (nodeA.name or "") < (nodeB.name or "")
 		end)
 
-        t.__orderedIndex = orderedIndex
-        key = orderedIndex[1]
-    else
-        -- Fetch the next value
+		t.__orderedIndex = orderedIndex
+		key = orderedIndex[1]
+	else
+		-- Fetch the next value
 		for i, orderedState in t.__orderedIndex do
-            if orderedState == state then
-                key = t.__orderedIndex[i+1]
+			if orderedState == state then
+				key = t.__orderedIndex[i + 1]
 				break
-            end
-        end
-    end
+			end
+		end
+	end
 
-    if key then
-        return key, t[key]
-    end
+	if key then
+		return key, t[key]
+	end
 
-    -- No more value to return, cleanup
-    t.__orderedIndex = nil
-    return
+	-- No more value to return, cleanup
+	t.__orderedIndex = nil
+	return
 end
 
 local function alphabeticalPairs(t)
-    -- Equivalent of the pairs() iterator, but sorted
-    return alphabeticalNext, t, nil
+	-- Equivalent of the pairs() iterator, but sorted
+	return alphabeticalNext, t, nil
 end
 
-local function deepEquals(a: {[any]: any}, b: {[any]: any})
+local function deepEquals(a: { [any]: any }, b: { [any]: any })
 	local checkedKeys = {}
 
 	for key, aValue in a do
@@ -92,7 +92,9 @@ local function deepEquals(a: {[any]: any}, b: {[any]: any})
 
 	for key, bValue in b do
 		-- Avoid wastefully checking keys in both directions
-		if checkedKeys[key] then continue end
+		if checkedKeys[key] then
+			continue
+		end
 
 		local aValue = a[key]
 		local bT = typeof(bValue)
@@ -153,7 +155,7 @@ function PatchDiff:render()
 			className = "DataModel",
 			name = "root",
 			children = {},
-		}
+		},
 	}
 
 	local function getNode(id, target)
@@ -167,7 +169,9 @@ function PatchDiff:render()
 				return node
 			end
 			local descendant = getNode(id, node.children)
-			if descendant then return descendant end
+			if descendant then
+				return descendant
+			end
 		end
 	end
 
@@ -217,7 +221,9 @@ function PatchDiff:render()
 
 	for _, change in patch.updated do
 		local instance = instanceMap.fromIds[change.id]
-		if not instance then continue end
+		if not instance then
+			continue
+		end
 
 		-- Gather ancestors from existing DOM
 		local ancestry = {}
@@ -233,7 +239,7 @@ function PatchDiff:render()
 
 		-- Gather detail text
 		local diffTable = {
-			{"Property", "Current", "Incoming"},
+			{ "Property", "Current", "Incoming" },
 		}
 
 		local hint, i = {}, 0
@@ -247,9 +253,9 @@ function PatchDiff:render()
 
 			local success, incomingValue = decodeValue(incoming)
 			if success then
-				table.insert(diffTable, {prop, instance[prop], incomingValue})
+				table.insert(diffTable, { prop, instance[prop], incomingValue })
 			else
-				table.insert(diffTable, {prop, instance[prop], next(incoming)})
+				table.insert(diffTable, { prop, instance[prop], next(incoming) })
 			end
 		end
 
@@ -314,7 +320,7 @@ function PatchDiff:render()
 
 		-- Gather detail text
 		local diffTable = {
-			{"Property", "Current", "Incoming"},
+			{ "Property", "Current", "Incoming" },
 		}
 		local hint, i = {}, 0
 		for prop, incoming in change.Properties do
@@ -327,9 +333,9 @@ function PatchDiff:render()
 
 			local success, incomingValue = decodeValue(incoming)
 			if success then
-				table.insert(diffTable, {prop, "N/A", incomingValue})
+				table.insert(diffTable, { prop, "N/A", incomingValue })
 			else
-				table.insert(diffTable, {prop, "N/A", next(incoming)})
+				table.insert(diffTable, { prop, "N/A", next(incoming) })
 			end
 		end
 
@@ -349,18 +355,21 @@ function PatchDiff:render()
 	local function drawNode(node, depth)
 		local elementHeight, setElementHeight = Roact.createBinding(30)
 		table.insert(elementHeights, elementHeight)
-		table.insert(scrollElements, e(DomLabel, {
-			updateEvent = self.updateEvent,
-			elementHeight = elementHeight,
-			setElementHeight = setElementHeight,
-			patchType = node.patchType,
-			className = node.className,
-			name = node.name,
-			hint = node.hint,
-			diffTable = node.diffTable,
-			depth = depth,
-			transparency = self.props.transparency,
-		}))
+		table.insert(
+			scrollElements,
+			e(DomLabel, {
+				updateEvent = self.updateEvent,
+				elementHeight = elementHeight,
+				setElementHeight = setElementHeight,
+				patchType = node.patchType,
+				className = node.className,
+				name = node.name,
+				hint = node.hint,
+				diffTable = node.diffTable,
+				depth = depth,
+				transparency = self.props.transparency,
+			})
+		)
 
 		for _, childNode in alphabeticalPairs(node.children) do
 			drawNode(childNode, depth + 1)
@@ -380,9 +389,13 @@ function PatchDiff:render()
 			transparency = self.props.transparency,
 			count = #scrollElements,
 			updateEvent = self.updateEvent.Event,
-			render = function(i) return scrollElements[i] end,
-			getHeightBinding = function(i) return elementHeights[i] end,
-		})
+			render = function(i)
+				return scrollElements[i]
+			end,
+			getHeightBinding = function(i)
+				return elementHeights[i]
+			end,
+		}),
 	})
 end
 

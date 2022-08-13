@@ -14,19 +14,16 @@ local function displayValue(value)
 	if t == "string" then
 		return string.gsub(value, "%s", " ")
 	elseif t == "table" then
-		local out = {"{"}
-		for k,v in value do
-			table.insert(out, string.format(
-				"[%s] = %s",
-				tostring(k), tostring(v)
-			))
+		local out = { "{" }
+		for k, v in value do
+			table.insert(out, string.format("[%s] = %s", tostring(k), tostring(v)))
 		end
 		table.insert(out, "}")
 		return table.concat(out, " ")
 	elseif t == "userdata" then
 		t = typeof(value)
 		if t == "Color3" then
-			return string.format("%d, %d, %d", 255*value.R, 255*value.G, 255*value.B)
+			return string.format("%d, %d, %d", 255 * value.R, 255 * value.G, 255 * value.B)
 		else
 			return tostring(value)
 		end
@@ -47,7 +44,7 @@ function DiffTable:render()
 		local csv = props.csv
 
 		local rowTransparency = props.transparency:map(function(t)
-			return 0.9 + (0.1*t)
+			return 0.9 + (0.1 * t)
 		end)
 
 		local rows = {}
@@ -57,7 +54,7 @@ function DiffTable:render()
 		}
 
 		local headers = e("Frame", {
-			Size = UDim2.new(1,0,0,30),
+			Size = UDim2.new(1, 0, 0, 30),
 			BackgroundTransparency = 1,
 			LayoutOrder = 0,
 		}, {
@@ -101,10 +98,12 @@ function DiffTable:render()
 		})
 
 		for row, values in csv do
-			if row == 1 then continue end -- Skip headers
+			if row == 1 then
+				continue
+			end -- Skip headers
 
 			rows[row] = e("Frame", {
-				Size = UDim2.new(1,0,0,30),
+				Size = UDim2.new(1, 0, 0, 30),
 				BackgroundTransparency = row % 2 == 0 and rowTransparency or 1,
 				BorderSizePixel = 0,
 				LayoutOrder = row,
@@ -149,16 +148,19 @@ function DiffTable:render()
 			})
 		end
 
-		table.insert(rows, e("UIListLayout", {
-			FillDirection = Enum.FillDirection.Vertical,
-			SortOrder = Enum.SortOrder.LayoutOrder,
-			HorizontalAlignment = Enum.HorizontalAlignment.Right,
-			VerticalAlignment = Enum.VerticalAlignment.Top,
+		table.insert(
+			rows,
+			e("UIListLayout", {
+				FillDirection = Enum.FillDirection.Vertical,
+				SortOrder = Enum.SortOrder.LayoutOrder,
+				HorizontalAlignment = Enum.HorizontalAlignment.Right,
+				VerticalAlignment = Enum.VerticalAlignment.Top,
 
-			[Roact.Change.AbsoluteContentSize] = function(object)
-				self.setContentSize(object.AbsoluteContentSize)
-			end,
-		}))
+				[Roact.Change.AbsoluteContentSize] = function(object)
+					self.setContentSize(object.AbsoluteContentSize)
+				end,
+			})
+		)
 
 		return e("Frame", {
 			Size = UDim2.new(1, 0, 1, 0),

@@ -1,3 +1,5 @@
+local TextService = game:GetService("TextService")
+
 local Rojo = script:FindFirstAncestor("Rojo")
 local Plugin = Rojo.Plugin
 local Packages = Rojo.Packages
@@ -8,16 +10,21 @@ local Settings = require(Plugin.Settings)
 local Theme = require(Plugin.App.Theme)
 local TextButton = require(Plugin.App.Components.TextButton)
 local Header = require(Plugin.App.Components.Header)
+local StudioPluginGui = require(Plugin.App.Components.Studio.StudioPluginGui)
+local PatchDiff = require(script.PatchDiff)
 
 local e = Roact.createElement
 
-local PatchDiff = require(script.PatchDiff)
-
 local ConfirmingPage = Roact.Component:extend("ConfirmingPage")
+
+function ConfirmingPage:init()
+	self.contentSize, self.setContentSize = Roact.createBinding(0)
+	self.containerSize, self.setContainerSize = Roact.createBinding(Vector2.new(0, 0))
+end
 
 function ConfirmingPage:render()
 	return Theme.with(function(theme)
-		return Roact.createFragment({
+		local diffChildren = {
 			Header = e(Header, {
 				transparency = self.props.transparency,
 				layoutOrder = 1,
@@ -58,13 +65,15 @@ function ConfirmingPage:render()
 					onClick = self.props.onAbort,
 				}),
 
-				Reject = if Settings:get("twoWaySync") then e(TextButton, {
-					text = "Reject",
-					style = "Bordered",
-					transparency = self.props.transparency,
-					layoutOrder = 2,
-					onClick = self.props.onReject,
-				}) else nil,
+				Reject = if Settings:get("twoWaySync")
+					then e(TextButton, {
+						text = "Reject",
+						style = "Bordered",
+						transparency = self.props.transparency,
+						layoutOrder = 2,
+						onClick = self.props.onReject,
+					})
+					else nil,
 
 				Accept = e(TextButton, {
 					text = "Accept",
@@ -94,6 +103,31 @@ function ConfirmingPage:render()
 				PaddingLeft = UDim.new(0, 20),
 				PaddingRight = UDim.new(0, 20),
 			}),
+		}
+
+		return Roact.createFragment({
+			Popup = if self.props.createPopup
+				then e(StudioPluginGui, {
+					id = "Rojo_DiffSync",
+					title = string.format(
+						"Confirm sync for project '%s':",
+						self.props.confirmData.serverInfo.projectName or "UNKNOWN"
+					),
+					active = true,
+
+					initDockState = Enum.InitialDockState.Float,
+					initEnabled = true,
+					overridePreviousState = true,
+					floatingSize = Vector2.new(500, 350),
+					minimumSize = Vector2.new(400, 250),
+
+					zIndexBehavior = Enum.ZIndexBehavior.Sibling,
+
+					onClose = self.props.onAbort,
+				}, diffChildren)
+				else nil,
+
+			InWindow = if not self.props.createPopup then Roact.createFragment(diffChildren) else nil,
 		})
 	end)
 end

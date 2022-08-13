@@ -5,6 +5,7 @@ local Packages = script.Parent.Parent.Packages
 local Log = require(Packages.Log)
 local Fmt = require(Packages.Fmt)
 local t = require(Packages.t)
+local Promise = require(Packages.Promise)
 
 local ChangeBatcher = require(script.Parent.ChangeBatcher)
 local InstanceMap = require(script.Parent.InstanceMap)
@@ -238,7 +239,7 @@ function ServeSession:__initialSync(serverInfo)
 			end
 
 			if userDecision == "Abort" then
-				error("Aborted Rojo sync operation", 2)
+				return Promise.reject("Aborted Rojo sync operation")
 
 			elseif userDecision == "Reject" and self.__twoWaySync then
 				-- The user wants their studio DOM to write back to their Rojo DOM
