@@ -440,7 +440,7 @@ function App:render()
 				bindable = true,
 				onTriggered = function()
 					if self.serveSession == nil or self.serveSession:getStatus() == ServeSession.Status.NotStarted then
-						self:startSession(true)
+						self:startSession()
 					elseif
 						self.serveSession ~= nil and self.serveSession:getStatus() == ServeSession.Status.Connected
 					then
@@ -457,7 +457,7 @@ function App:render()
 				bindable = true,
 				onTriggered = function()
 					if self.serveSession == nil or self.serveSession:getStatus() == ServeSession.Status.NotStarted then
-						self:startSession(true)
+						self:startSession()
 					end
 				end,
 			}),
