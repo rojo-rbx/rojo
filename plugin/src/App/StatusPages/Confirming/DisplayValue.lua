@@ -16,13 +16,15 @@ local function DisplayValue(props)
 			return Roact.createFragment({
 				Blot = e("Frame", {
 					BackgroundColor3 = props.value,
-					BorderColor3 = theme.BorderedContainer.BorderColor,
 					Size = UDim2.new(0, 20, 0, 20),
 					Position = UDim2.new(0, 0, 0.5, 0),
 					AnchorPoint = Vector2.new(0, 0.5),
 				}, {
 					Corner = e("UICorner", {
 						CornerRadius = UDim.new(0, 4),
+					}),
+					Stroke = e("UIStroke", {
+						Color = theme.BorderedContainer.BorderColor,
 					}),
 				}),
 				Label = e("TextLabel", {
