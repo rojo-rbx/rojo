@@ -13,13 +13,7 @@ use crate::{
     web::LiveServer,
     PROJECT_FILENAME,
 };
-use std::{
-    env,
-    net::IpAddr,
-    path::{Path, PathBuf},
-    process::{Command, Stdio},
-    sync::Arc,
-};
+use std::{env, net::IpAddr, path::PathBuf, sync::Arc};
 
 use super::GlobalOptions;
 
@@ -56,29 +50,25 @@ impl OpenCommand {
         vfs.set_watch_enabled(false);
 
         let session = ServeSession::new(vfs, &project)?;
-
         let studio = RobloxStudio::locate()?;
 
         if !self.output.exists() {
             write_model(&session, &self.output, output_kind)?;
         }
-
         if !plugin_exists(&studio) {
             install_plugin().unwrap();
         }
 
-        open_place(&studio, &self.output).expect("Could not open place in Roblox Studio");
+        opener::open(&self.output).expect("Could not open place in Roblox Studio");
 
         let ip = self
             .address
             .or_else(|| session.serve_address())
             .unwrap_or_else(|| DEFAULT_BIND_ADDRESS.into());
-
         let port = self
             .port
             .or_else(|| session.project_port())
             .unwrap_or(DEFAULT_PORT);
-
         let server = LiveServer::new(Arc::new(session));
 
         let _ = show_start_message(ip, port, global.color.into());
@@ -90,14 +80,4 @@ impl OpenCommand {
 
 fn plugin_exists(studio: &RobloxStudio) -> bool {
     studio.plugins_path().join("rojo.rbxm").exists()
-}
-
-fn open_place(studio: &RobloxStudio, place: &Path) -> anyhow::Result<()> {
-    Command::new(studio.application_path())
-        .arg(format!("{}", place.display()))
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .spawn()?;
-
-    Ok(())
 }
