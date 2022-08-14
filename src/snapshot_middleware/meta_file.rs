@@ -21,7 +21,7 @@ pub struct AdjacentMetadata {
 
     #[serde(default, skip_serializing_if = "HashMap::is_empty")]
     pub attributes: HashMap<String, UnresolvedValue>,
-    
+
     #[serde(skip)]
     pub path: PathBuf,
 }
