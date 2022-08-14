@@ -14,7 +14,7 @@
 /plugin/*.rbxlx
 
 # Packages for the Roblox Studio Plugin
-/plugin/*Packages
+/plugin/Packages/*
 
 # Roblox Studio holds 'lock' files on places
 *.rbxl.lock
@@ -22,3 +22,6 @@
 
 # Snapshot files from the 'insta' Rust crate
 **/*.snap.new
+
+# Placeholders for empty directories
+!*.placeholder
