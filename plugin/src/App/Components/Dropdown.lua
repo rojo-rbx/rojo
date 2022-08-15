@@ -45,16 +45,17 @@ function Dropdown:render()
 		local optionButtons = {}
 		local width = -1
 		for i, option in self.props.options do
+			local text = tostring(option or "")
 			local textSize = TextService:GetTextSize(
-				tostring(option or ""), 15, Enum.Font.GothamMedium,
+				text, 15, Enum.Font.GothamMedium,
 				Vector2.new(math.huge, 20)
 			)
 			if textSize.X > width then
 				width = textSize.X
 			end
 
-			table.insert(optionButtons, e("TextButton", {
-				Text = tostring(option),
+			optionButtons[text] = e("TextButton", {
+				Text = text,
 				LayoutOrder = i,
 				Size = UDim2.new(1, 0, 0, 24),
 				BackgroundColor3 = theme.BackgroundColor,
@@ -76,7 +77,7 @@ function Dropdown:render()
 				Padding = e("UIPadding", {
 					PaddingLeft = UDim.new(0, 6),
 				}),
-			}))
+			})
 		end
 
 		return e("ImageButton", {
@@ -127,8 +128,7 @@ function Dropdown:render()
 					TextTransparency = self.props.transparency,
 				}),
 			}),
-			Options = e(SlicedImage, {
-				visible = self.state.open,
+			Options = if self.state.open then e(SlicedImage, {
 				slice = Assets.Slices.RoundedBackground,
 				color = theme.BackgroundColor,
 				position = UDim2.new(1, 0, 1, 3),
@@ -159,9 +159,9 @@ function Dropdown:render()
 							self.setContentSize(object.AbsoluteContentSize)
 						end,
 					}),
-					table.unpack(optionButtons),
+					Roact.createFragment(optionButtons),
 				}),
-			}) or nil,
+			}) else nil,
 		})
 	end)
 end

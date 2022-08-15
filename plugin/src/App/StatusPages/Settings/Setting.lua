@@ -87,7 +87,7 @@ function Setting:render()
 					end,
 				}),
 
-			Reset = self.props.onReset and e(IconButton, {
+			Reset = if self.props.onReset then e(IconButton, {
 				icon = Assets.Images.Icons.Reset,
 				iconSize = 24,
 				color = theme.BackButtonColor,
@@ -98,7 +98,7 @@ function Setting:render()
 				anchorPoint = Vector2.new(0, 0.5),
 
 				onClick = self.props.onReset,
-			}) or nil,
+			}) else nil,
 
 			Text = e("Frame", {
 				Size = UDim2.new(1, 0, 1, 0),
