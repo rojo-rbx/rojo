@@ -113,7 +113,6 @@ jobs:
           profile: minimal
 
       - name: Setup Aftman
-        # when https://github.com/ok-nick/setup-aftman/pull/1 is accepted switch back to ok-nick version
         uses: Bok-nick/setup-aftman@v0.1.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
