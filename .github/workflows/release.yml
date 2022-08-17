@@ -114,7 +114,7 @@ jobs:
 
       - name: Setup Aftman
         # when https://github.com/ok-nick/setup-aftman/pull/1 is accepted switch back to ok-nick version
-        uses: Boegie19/setup-aftman@v1.1.0-windows-fix.2
+        uses: Bok-nick/setup-aftman@v0.1.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           trust-check: false
@@ -125,6 +125,7 @@ jobs:
           cd plugin
           wally install
           cd ..
+        shell: bash
 
       - name: Build Release
         run: cargo build --release --locked --verbose
