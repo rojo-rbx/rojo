@@ -29,10 +29,12 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Setup Foreman
-        uses: Roblox/setup-foreman@v1
+      - name: Setup Aftman
+        uses: Bok-nick/setup-aftman@v0.1.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          trust-check: false
+          version: 'v0.2.6'
 
       - name: Install packages
         run: |
