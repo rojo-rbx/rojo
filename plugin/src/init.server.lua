@@ -8,12 +8,12 @@ local Packages = Rojo.Packages
 local Log = require(Packages.Log)
 local Roact = require(Packages.Roact)
 
-local DevSettings = require(script.DevSettings)
+local Settings = require(script.Settings)
 local Config = require(script.Config)
 local App = require(script.App)
 
 Log.setLogLevelThunk(function()
-	return DevSettings:getLogLevel()
+	return Log.Level[Settings:get("logLevel")] or Log.Level.Info
 end)
 
 local app = Roact.createElement(App, {

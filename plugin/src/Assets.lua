@@ -23,10 +23,14 @@ local Assets = {
 		Icons = {
 			Close = "rbxassetid://6012985953",
 			Back = "rbxassetid://6017213752",
+			Reset = "rbxassetid://10142422327",
 		},
 		Checkbox = {
 			Active = "rbxassetid://6016251644",
 			Inactive = "rbxassetid://6016251963",
+		},
+		Dropdown = {
+			Arrow = "rbxassetid://10131770538",
 		},
 		Spinner = {
 			Foreground = "rbxassetid://3222731032",

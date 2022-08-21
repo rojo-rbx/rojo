@@ -1,3 +1,6 @@
+local Players = game:GetService("Players")
+local ServerStorage = game:GetService("ServerStorage")
+
 local Rojo = script:FindFirstAncestor("Rojo")
 local Plugin = Rojo.Plugin
 local Packages = Rojo.Packages
@@ -133,7 +136,65 @@ function App:getHostAndPort()
 	return host, port
 end
 
+function App:claimSyncLock()
+	if #Players:GetPlayers() == 0 then
+		Log.trace("Skipping sync lock because this isn't in Team Create")
+		return true
+	end
+
+	local lock = ServerStorage:FindFirstChild("__Rojo_SessionLock")
+	if not lock then
+		lock = Instance.new("ObjectValue")
+		lock.Name = "__Rojo_SessionLock"
+		lock.Archivable = false
+		lock.Value = Players.LocalPlayer
+		lock.Parent = ServerStorage
+		Log.trace("Created and claimed sync lock")
+		return true
+	end
+
+	if lock.Value and lock.Value ~= Players.LocalPlayer and lock.Value.Parent then
+		Log.trace("Found existing sync lock owned by {}", lock.Value)
+		return false, lock.Value
+	end
+
+	lock.Value = Players.LocalPlayer
+	Log.trace("Claimed existing sync lock")
+	return true
+end
+
+function App:releaseSyncLock()
+	local lock = ServerStorage:FindFirstChild("__Rojo_SessionLock")
+	if not lock then
+		Log.trace("No sync lock found, assumed released")
+		return
+	end
+
+	if lock.Value == Players.LocalPlayer then
+		lock.Value = nil
+		Log.trace("Released sync lock")
+		return
+	end
+
+	Log.trace("Could not relase sync lock because it is owned by {}", lock.Value)
+end
+
 function App:startSession()
+	local claimedLock, priorOwner = self:claimSyncLock()
+	if not claimedLock then
+		local msg = string.format("Could not sync because user '%s' is already syncing", tostring(priorOwner))
+
+		Log.warn(msg)
+		self:addNotification(msg, 10)
+		self:setState({
+			appStatus = AppStatus.Error,
+			errorMessage = msg,
+			toolbarIcon = Assets.Images.PluginButtonWarning,
+		})
+
+		return
+	end
+
 	local host, port = self:getHostAndPort()
 
 	local sessionOptions = {
@@ -198,6 +259,7 @@ function App:startSession()
 			self:addNotification(string.format("Connected to session '%s' at %s.", details, address), 5)
 		elseif status == ServeSession.Status.Disconnected then
 			self.serveSession = nil
+			self:releaseSyncLock()
 
 			-- Details being present indicates that this
 			-- disconnection was from an error.
@@ -278,7 +340,7 @@ function App:render()
 				initEnabled = false,
 				overridePreviousState = false,
 				floatingSize = Vector2.new(300, 200),
-				minimumSize = Vector2.new(300, 200),
+				minimumSize = Vector2.new(300, 120),
 
 				zIndexBehavior = Enum.ZIndexBehavior.Sibling,
 
