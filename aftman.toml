@@ -1,0 +1,5 @@
+[tools]
+wally = "UpliftGames/wally@0.3.1"
+rojo = "rojo-rbx/rojo@7.2.1"
+selene = "Kampfkarren/selene@0.20.0"
+run-in-roblox = "rojo-rbx/run-in-roblox@0.3.0"

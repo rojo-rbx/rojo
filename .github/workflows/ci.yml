@@ -28,10 +28,12 @@ jobs:
         override: true
         profile: minimal
 
-    - name: Setup Foreman
-      uses: Roblox/setup-foreman@v1
+    - name: Setup Aftman
+      uses: ok-nick/setup-aftman@v0.1.0
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
+        trust-check: false
+        version: 'v0.2.6'
 
     - name: Install packages
       run: |
@@ -59,10 +61,12 @@ jobs:
         override: true
         components: rustfmt, clippy
 
-    - name: Setup Foreman
-      uses: Roblox/setup-foreman@v1
+    - name: Setup Aftman
+      uses: ok-nick/setup-aftman@v0.1.0
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
+        trust-check: false
+        version: 'v0.2.6'
 
     - name: Install packages
       run: |
