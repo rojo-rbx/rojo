@@ -102,22 +102,30 @@ function ChangeList:render()
 					Size = UDim2.new(0.3, 0, 1, 0),
 					Position = UDim2.new(0, 0, 0, 0),
 				}),
-				B = e("Frame", {
-					BackgroundTransparency = 1,
-					Size = UDim2.new(0.35, 0, 1, 0),
-					Position = UDim2.new(0.3, 0, 0, 0),
-				}, e(DisplayValue, {
-					value = values[2],
-					transparency = props.transparency,
-				})),
-				C = e("Frame", {
-					BackgroundTransparency = 1,
-					Size = UDim2.new(0.35, 0, 1, 0),
-					Position = UDim2.new(0.65, 0, 0, 0),
-				}, e(DisplayValue, {
-					value = values[3],
-					transparency = props.transparency,
-				})),
+				B = e(
+					"Frame",
+					{
+						BackgroundTransparency = 1,
+						Size = UDim2.new(0.35, 0, 1, 0),
+						Position = UDim2.new(0.3, 0, 0, 0),
+					},
+					e(DisplayValue, {
+						value = values[2],
+						transparency = props.transparency,
+					})
+				),
+				C = e(
+					"Frame",
+					{
+						BackgroundTransparency = 1,
+						Size = UDim2.new(0.35, 0, 1, 0),
+						Position = UDim2.new(0.65, 0, 0, 0),
+					},
+					e(DisplayValue, {
+						value = values[3],
+						transparency = props.transparency,
+					})
+				),
 			})
 		end
 

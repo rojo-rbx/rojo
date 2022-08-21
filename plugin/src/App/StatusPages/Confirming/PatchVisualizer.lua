@@ -138,7 +138,9 @@ local function Tree()
 	tree.idToNode["ROOT"] = tree.ROOT
 
 	function tree:getNode(id, target)
-		if self.idToNode[id] then return self.idToNode[id] end
+		if self.idToNode[id] then
+			return self.idToNode[id]
+		end
 
 		for nodeId, node in target or tree.ROOT.children do
 			if nodeId == id then
@@ -264,8 +266,10 @@ function PatchVisualizer:buildTree(patch, instanceMap)
 			table.sort(hintBuffer)
 			if #hintBuffer > 3 then
 				hintBuffer = {
-					hintBuffer[1], hintBuffer[2], hintBuffer[3],
-					i - 3 .. " more"
+					hintBuffer[1],
+					hintBuffer[2],
+					hintBuffer[3],
+					i - 3 .. " more",
 				}
 			end
 			hint = table.concat(hintBuffer, ", ")
@@ -361,8 +365,10 @@ function PatchVisualizer:buildTree(patch, instanceMap)
 			table.sort(hintBuffer)
 			if #hintBuffer > 3 then
 				hintBuffer = {
-					hintBuffer[1], hintBuffer[2], hintBuffer[3],
-					i - 3 .. " more"
+					hintBuffer[1],
+					hintBuffer[2],
+					hintBuffer[3],
+					i - 3 .. " more",
 				}
 			end
 			hint = table.concat(hintBuffer, ", ")

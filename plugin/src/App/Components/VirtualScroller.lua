@@ -35,14 +35,14 @@ function VirtualScroller:didMount()
 
 	local windowSizeSignal = rbx:GetPropertyChangedSignal("AbsoluteWindowSize")
 	self.windowSizeChanged = windowSizeSignal:Connect(function()
-		self:setState({	WindowSize = rbx.AbsoluteWindowSize })
+		self:setState({ WindowSize = rbx.AbsoluteWindowSize })
 		self:refresh()
 	end)
 
 	local canvasPositionSignal = rbx:GetPropertyChangedSignal("CanvasPosition")
 	self.canvasPositionChanged = canvasPositionSignal:Connect(function()
-		if math.abs(rbx.CanvasPosition.Y-self.state.CanvasPosition.Y) > 5 then
-			self:setState({	CanvasPosition = rbx.CanvasPosition })
+		if math.abs(rbx.CanvasPosition.Y - self.state.CanvasPosition.Y) > 5 then
+			self:setState({ CanvasPosition = rbx.CanvasPosition })
 			self:refresh()
 		end
 	end)
@@ -71,7 +71,7 @@ function VirtualScroller:refresh()
 	local padding, canvasSize = 0, 0
 
 	local pos = 0
-	for i=1, count do
+	for i = 1, count do
 		local height = props.getHeightBinding(i):getValue()
 		canvasSize += height
 
@@ -104,14 +104,14 @@ function VirtualScroller:render()
 
 	local items = {}
 	for i = state.Start, state.End do
-		items["Item"..i] = e("Frame", {
+		items["Item" .. i] = e("Frame", {
 			LayoutOrder = i,
 			Size = props.getHeightBinding(i):map(function(height)
 				return UDim2.new(1, 0, 0, height)
 			end),
 			BackgroundTransparency = 1,
 		}, {
-			props.render(i)
+			props.render(i),
 		})
 	end
 
