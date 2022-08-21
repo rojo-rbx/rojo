@@ -297,7 +297,7 @@ function App:render()
 				initEnabled = false,
 				overridePreviousState = false,
 				floatingSize = Vector2.new(300, 200),
-				minimumSize = Vector2.new(300, 200),
+				minimumSize = Vector2.new(300, 120),
 
 				zIndexBehavior = Enum.ZIndexBehavior.Sibling,
 
