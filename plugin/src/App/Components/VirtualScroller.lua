@@ -110,9 +110,7 @@ function VirtualScroller:render()
 				return UDim2.new(1, 0, 0, height)
 			end),
 			BackgroundTransparency = 1,
-		}, {
-			props.render(i),
-		})
+		}, props.render(i))
 	end
 
 	return Theme.with(function(theme)
