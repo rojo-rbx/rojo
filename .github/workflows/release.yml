@@ -65,25 +65,21 @@ jobs:
       fail-fast: false
       matrix:
         # https://doc.rust-lang.org/rustc/platform-support.html
-        #
-        # FIXME: After the Rojo VS Code extension updates, add architecture
-        # names to each of these releases. We'll rename win64 to windows and add
-        # -x86_64 to each release.
         include:
           - host: linux
-            os: ubuntu-18.04
+            os: ubuntu-20.04
             target: x86_64-unknown-linux-gnu
-            label: linux
+            label: linux-x86_64
 
           - host: windows
             os: windows-latest
             target: x86_64-pc-windows-msvc
-            label: win64
+            label: windows-x86_64
 
           - host: macos
             os: macos-latest
             target: x86_64-apple-darwin
-            label: macos
+            label: macos-x86_64
 
           - host: macos
             os: macos-latest
