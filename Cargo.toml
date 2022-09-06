@@ -78,6 +78,7 @@ ritz = "0.1.0"
 roblox_install = "1.0.0"
 serde = { version = "1.0.130", features = ["derive", "rc"] }
 serde_json = "1.0.68"
+toml = "0.5.9"
 termcolor = "1.1.2"
 thiserror = "1.0.30"
 tokio = { version = "1.12.0", features = ["rt", "rt-multi-thread"] }

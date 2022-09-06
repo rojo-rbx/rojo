@@ -14,6 +14,7 @@ mod meta_file;
 mod project;
 mod rbxm;
 mod rbxmx;
+mod toml;
 mod txt;
 mod util;
 
@@ -32,6 +33,7 @@ use self::{
     project::snapshot_project,
     rbxm::snapshot_rbxm,
     rbxmx::snapshot_rbxmx,
+    toml::snapshot_toml,
     txt::snapshot_txt,
     util::PathExt,
 };
@@ -117,6 +119,8 @@ pub fn snapshot_from_vfs(
             return Ok(None);
         } else if path.file_name_ends_with(".json") {
             return snapshot_json(context, vfs, path);
+        } else if path.file_name_ends_with(".toml") {
+            return snapshot_toml(context, vfs, path);
         } else if let Ok(name) = csv_name {
             match name {
                 // init csv are handled elsewhere and should not turn into

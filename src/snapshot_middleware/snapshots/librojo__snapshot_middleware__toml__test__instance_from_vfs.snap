@@ -1,0 +1,21 @@
+---
+source: src/snapshot_middleware/toml.rs
+assertion_line: 121
+expression: instance_snapshot
+---
+snapshot_id: ~
+metadata:
+  ignore_unknown_instances: false
+  instigating_source:
+    Path: /foo.toml
+  relevant_paths:
+    - /foo.toml
+    - /foo.meta.json
+  context: {}
+name: foo
+class_name: ModuleScript
+properties:
+  Source:
+    String: "return {\n\t[\"1invalidident\"] = \"nice\",\n\tarray = {1, 2, 3},\n\tdates = {\n\t\tlocaldate = \"1979-05-27\",\n\t\tlocaldatetime = \"1979-05-27T07:32:00\",\n\t\tlocaltime = \"00:32:00.999999\",\n\t\toffset1 = \"1979-05-27T00:32:00.999999-07:00\",\n\t\toffset2 = \"1979-05-27T07:32:00Z\",\n\t},\n\t[\"false\"] = false,\n\tfloat = 1234.5452,\n\tint = 1234,\n\tobject = {\n\t\thello = \"world\",\n\t},\n\t[\"true\"] = true,\n}"
+children: []
+
