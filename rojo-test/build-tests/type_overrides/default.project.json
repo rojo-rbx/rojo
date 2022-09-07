@@ -1,0 +1,16 @@
+{
+  "name": "server_init",
+  "tree": {
+    "$path": "folder"
+  },
+  "typeOverrideRules": [
+    {
+      "pattern": "folder/wally.lock",
+      "use": "rojo/plaintext"
+    },
+    {
+      "pattern": "**/server_*.lua",
+      "use": "rojo/luauserver"
+    }
+  ]
+}

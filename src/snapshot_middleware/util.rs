@@ -16,6 +16,7 @@ pub fn match_trailing<'a>(input: &'a str, suffix: &str) -> Option<&'a str> {
 pub trait PathExt {
     fn file_name_ends_with(&self, suffix: &str) -> bool;
     fn file_name_trim_end<'a>(&'a self, suffix: &str) -> anyhow::Result<&'a str>;
+    fn file_name_trim_extension<'a>(&'a self) -> anyhow::Result<String>;
 }
 
 impl<P> PathExt for P
@@ -39,5 +40,13 @@ where
 
         match_trailing(&file_name, suffix)
             .with_context(|| format!("Path did not end in {}: {}", suffix, path.display()))
+    }
+
+    fn file_name_trim_extension(&self) -> anyhow::Result<String> {
+        self.as_ref()
+            .file_stem()
+            .and_then(|stem| stem.to_str())
+            .map(|string| string.to_owned())
+            .with_context(|| format!("Path did not have a file name: {}", self.as_ref().display()))
     }
 }

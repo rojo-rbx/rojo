@@ -13,7 +13,7 @@ pub fn snapshot_rbxm(
     vfs: &Vfs,
     path: &Path,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let name = path.file_name_trim_end(".rbxm")?;
+    let name = path.file_name_trim_extension()?;
 
     let temp_tree = rbx_binary::from_reader(vfs.read(path)?.as_slice())
         .with_context(|| format!("Malformed rbxm file: {}", path.display()))?;

@@ -12,29 +12,48 @@ use super::{
     util::match_trailing,
 };
 
+pub enum ScriptType {
+    Client,
+    Server,
+    Module,
+}
+
+fn get_script_type_and_name(path: &Path) -> (Option<ScriptType>, String) {
+    let file_name = path.file_name().unwrap().to_string_lossy();
+
+    if let Some(name) = match_trailing(&file_name, ".server.lua") {
+        (Some(ScriptType::Server), name.to_owned())
+    } else if let Some(name) = match_trailing(&file_name, ".client.lua") {
+        (Some(ScriptType::Client), name.to_owned())
+    } else if let Some(name) = match_trailing(&file_name, ".lua") {
+        (Some(ScriptType::Module), name.to_owned())
+    } else if let Some(name) = match_trailing(&file_name, ".server.luau") {
+        (Some(ScriptType::Server), name.to_owned())
+    } else if let Some(name) = match_trailing(&file_name, ".client.luau") {
+        (Some(ScriptType::Client), name.to_owned())
+    } else if let Some(name) = match_trailing(&file_name, ".luau") {
+        (Some(ScriptType::Module), name.to_owned())
+    } else {
+        let stem = path.file_stem().unwrap().to_string_lossy().into_owned();
+
+        (None, stem)
+    }
+}
+
 /// Core routine for turning Lua files into snapshots.
 pub fn snapshot_lua(
     context: &InstanceContext,
     vfs: &Vfs,
     path: &Path,
+    override_script_type: Option<ScriptType>,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let file_name = path.file_name().unwrap().to_string_lossy();
+    let (default_script_type, instance_name) = get_script_type_and_name(path);
 
-    let (class_name, instance_name) = if let Some(name) = match_trailing(&file_name, ".server.lua")
-    {
-        ("Script", name)
-    } else if let Some(name) = match_trailing(&file_name, ".client.lua") {
-        ("LocalScript", name)
-    } else if let Some(name) = match_trailing(&file_name, ".lua") {
-        ("ModuleScript", name)
-    } else if let Some(name) = match_trailing(&file_name, ".server.luau") {
-        ("Script", name)
-    } else if let Some(name) = match_trailing(&file_name, ".client.luau") {
-        ("LocalScript", name)
-    } else if let Some(name) = match_trailing(&file_name, ".luau") {
-        ("ModuleScript", name)
-    } else {
-        return Ok(None);
+    let class_name = match override_script_type.or(default_script_type) {
+        Some(ScriptType::Client) => "LocalScript",
+        Some(ScriptType::Server) => "Script",
+        Some(ScriptType::Module) => "ModuleScript",
+        None => return Ok(None),
     };
 
     let contents = vfs.read(path)?;
@@ -74,6 +93,7 @@ pub fn snapshot_lua_init(
     context: &InstanceContext,
     vfs: &Vfs,
     init_path: &Path,
+    script_type: Option<ScriptType>,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let folder_path = init_path.parent().unwrap();
     let dir_snapshot = snapshot_dir_no_meta(context, vfs, folder_path)?.unwrap();
@@ -90,7 +110,7 @@ pub fn snapshot_lua_init(
         );
     }
 
-    let mut init_snapshot = snapshot_lua(context, vfs, init_path)?.unwrap();
+    let mut init_snapshot = snapshot_lua(context, vfs, init_path, script_type)?.unwrap();
 
     init_snapshot.name = dir_snapshot.name;
     init_snapshot.children = dir_snapshot.children;
@@ -117,10 +137,14 @@ mod test {
 
         let mut vfs = Vfs::new(imfs);
 
-        let instance_snapshot =
-            snapshot_lua(&InstanceContext::default(), &mut vfs, Path::new("/foo.lua"))
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = snapshot_lua(
+            &InstanceContext::default(),
+            &mut vfs,
+            Path::new("/foo.lua"),
+            None,
+        )
+        .unwrap()
+        .unwrap();
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }
@@ -137,6 +161,7 @@ mod test {
             &InstanceContext::default(),
             &mut vfs,
             Path::new("/foo.server.lua"),
+            None,
         )
         .unwrap()
         .unwrap();
@@ -156,6 +181,7 @@ mod test {
             &InstanceContext::default(),
             &mut vfs,
             Path::new("/foo.client.lua"),
+            None,
         )
         .unwrap()
         .unwrap();
@@ -177,10 +203,14 @@ mod test {
 
         let mut vfs = Vfs::new(imfs);
 
-        let instance_snapshot =
-            snapshot_lua(&InstanceContext::default(), &mut vfs, Path::new("/root"))
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = snapshot_lua(
+            &InstanceContext::default(),
+            &mut vfs,
+            Path::new("/root"),
+            None,
+        )
+        .unwrap()
+        .unwrap();
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }
@@ -204,10 +234,14 @@ mod test {
 
         let mut vfs = Vfs::new(imfs);
 
-        let instance_snapshot =
-            snapshot_lua(&InstanceContext::default(), &mut vfs, Path::new("/foo.lua"))
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = snapshot_lua(
+            &InstanceContext::default(),
+            &mut vfs,
+            Path::new("/foo.lua"),
+            None,
+        )
+        .unwrap()
+        .unwrap();
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }
@@ -235,6 +269,7 @@ mod test {
             &InstanceContext::default(),
             &mut vfs,
             Path::new("/foo.server.lua"),
+            None,
         )
         .unwrap()
         .unwrap();
@@ -267,6 +302,7 @@ mod test {
             &InstanceContext::default(),
             &mut vfs,
             Path::new("/bar.server.lua"),
+            None,
         )
         .unwrap()
         .unwrap();

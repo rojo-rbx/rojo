@@ -78,6 +78,10 @@ pub struct Project {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub glob_ignore_paths: Vec<Glob>,
 
+    /// A list of globs and the file types they should be treated as.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub type_override_rules: Vec<ProjectTypeOverrideRule>,
+
     /// The path to the file that this project came from. Relative paths in the
     /// project should be considered relative to the parent of this field, also
     /// given by `Project::folder_location`.
@@ -172,6 +176,17 @@ impl Project {
     pub fn folder_location(&self) -> &Path {
         self.file_location.parent().unwrap()
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct ProjectTypeOverrideRule {
+    /// The glob pattern to match files against for this type override
+    pub pattern: Glob,
+
+    /// The type of file this match should be treated as
+    #[serde(rename = "use")]
+    pub type_name: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]

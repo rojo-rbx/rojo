@@ -103,6 +103,9 @@ impl Default for InstanceMetadata {
 pub struct InstanceContext {
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub path_ignore_rules: Arc<Vec<PathIgnoreRule>>,
+
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub type_override_rules: Arc<Vec<TypeOverrideRule>>,
 }
 
 impl InstanceContext {
@@ -123,12 +126,41 @@ impl InstanceContext {
         let rules = Arc::make_mut(&mut self.path_ignore_rules);
         rules.extend(new_rules);
     }
+
+    /// Extend the list of type override rules in the context with the given new rules.
+    pub fn add_type_override_rules<I>(&mut self, new_rules: I)
+    where
+        I: IntoIterator<Item = TypeOverrideRule>,
+        I::IntoIter: ExactSizeIterator,
+    {
+        let new_rules = new_rules.into_iter();
+
+        // If the iterator is empty, we can skip cloning our list of ignore
+        // rules and appending to it.
+        if new_rules.len() == 0 {
+            return;
+        }
+
+        let rules = Arc::make_mut(&mut self.type_override_rules);
+        rules.extend(new_rules);
+    }
+
+    pub fn get_type_override(&self, path: &Path) -> Option<RojoType> {
+        for rule in self.type_override_rules.iter() {
+            if rule.applies_to(path) {
+                return Some(RojoType::from_str(&rule.type_name));
+            }
+        }
+
+        None
+    }
 }
 
 impl Default for InstanceContext {
     fn default() -> Self {
         InstanceContext {
             path_ignore_rules: Arc::new(Vec::new()),
+            type_override_rules: Arc::new(Vec::new()),
         }
     }
 }
@@ -152,6 +184,69 @@ impl PathIgnoreRule {
         match path.strip_prefix(&self.base_path) {
             Ok(suffix) => !self.glob.is_match(suffix),
             Err(_) => true,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum RojoType {
+    Plain,
+    LuauModule,
+    LuauServer,
+    LuauClient,
+    Json,
+    Csv,
+
+    Project,
+    Rbxm,
+    Rbxmx,
+    JsonModel,
+
+    Other(String),
+}
+
+impl RojoType {
+    pub fn from_str(s: &str) -> Self {
+        match s {
+            "rojo/plaintext" => Self::Plain,
+            "rojo/luau" => Self::LuauModule,
+            "rojo/luauserver" => Self::LuauServer,
+            "rojo/luauclient" => Self::LuauClient,
+            "rojo/json" => Self::Json,
+            "rojo/csv" => Self::Csv,
+
+            "rojo/project" => Self::Project,
+            "rojo/rbxm" => Self::Rbxm,
+            "rojo/rbxmx" => Self::Rbxmx,
+            "rojo/jsonmodel" => Self::JsonModel,
+
+            _ => Self::Other(s.to_owned()),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct TypeOverrideRule {
+    /// The glob to match files against for this type override
+    pub pattern: Glob,
+
+    /// The type of file this match should be treated as
+    pub type_name: String,
+
+    /// The path that this glob is relative to. Since ignore globs are defined
+    /// in project files, this will generally be the folder containing the
+    /// project file that defined this glob.
+    #[serde(serialize_with = "path_serializer::serialize_absolute")]
+    pub base_path: PathBuf,
+}
+
+impl TypeOverrideRule {
+    pub fn applies_to<P: AsRef<Path>>(&self, path: P) -> bool {
+        let path = path.as_ref();
+
+        match path.strip_prefix(&self.base_path) {
+            Ok(suffix) => self.pattern.is_match(suffix),
+            Err(_) => false,
         }
     }
 }
