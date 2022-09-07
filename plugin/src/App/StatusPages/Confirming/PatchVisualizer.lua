@@ -8,6 +8,7 @@ local Roact = require(Packages.Roact)
 local Log = require(Packages.Log)
 
 local decodeValue = require(Plugin.Reconciler.decodeValue)
+local getProperty = require(Plugin.Reconciler.getProperty)
 
 local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
 local VirtualScroller = require(Plugin.App.Components.VirtualScroller)
@@ -152,6 +153,8 @@ local function Tree()
 				return descendant
 			end
 		end
+
+		return nil
 	end
 
 	function tree:addNode(parent, props)
@@ -252,11 +255,17 @@ function PatchVisualizer:buildTree(patch, instanceMap)
 				i += 1
 				hintBuffer[i] = prop
 
-				local success, incomingValue = decodeValue(incoming)
-				if success then
-					table.insert(changeList, { prop, instance[prop], incomingValue })
+				local incomingSuccess, incomingValue = decodeValue(incoming)
+				local currentSuccess, currentValue = getProperty(instance, prop)
+
+				if not currentSuccess then
+					currentValue = "[Error]"
+				end
+
+				if incomingSuccess then
+					table.insert(changeList, { prop, currentValue, incomingValue })
 				else
-					table.insert(changeList, { prop, instance[prop], next(incoming) })
+					table.insert(changeList, { prop, currentValue, next(incoming) })
 				end
 			end
 
