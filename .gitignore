@@ -22,3 +22,6 @@
 
 # Snapshot files from the 'insta' Rust crate
 **/*.snap.new
+
+# VS Code workspace settings
+/.vscode/settings.json
