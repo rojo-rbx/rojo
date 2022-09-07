@@ -202,6 +202,7 @@ pub enum RojoType {
     Rbxmx,
     JsonModel,
 
+    Ignore,
     Other(String),
 }
 
@@ -219,6 +220,8 @@ impl RojoType {
             "rojo/rbxm" => Self::Rbxm,
             "rojo/rbxmx" => Self::Rbxmx,
             "rojo/jsonmodel" => Self::JsonModel,
+
+            "rojo/ignore" => Self::Ignore,
 
             _ => Self::Other(s.to_owned()),
         }

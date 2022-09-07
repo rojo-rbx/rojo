@@ -189,7 +189,7 @@ pub fn snapshot_from_vfs(
             Some(RojoType::Other(rojo_type_string)) => {
                 anyhow::bail!("Unknown rojo type: {}", rojo_type_string)
             }
-            None => Ok(None),
+            None | Some(RojoType::Ignore) => Ok(None),
         }
     }
 }
