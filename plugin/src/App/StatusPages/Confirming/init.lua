@@ -11,6 +11,7 @@ local Theme = require(Plugin.App.Theme)
 local TextButton = require(Plugin.App.Components.TextButton)
 local Header = require(Plugin.App.Components.Header)
 local StudioPluginGui = require(Plugin.App.Components.Studio.StudioPluginGui)
+local Tooltip = require(Plugin.App.Components.Tooltip)
 local PatchVisualizer = require(script.PatchVisualizer)
 
 local e = Roact.createElement
@@ -65,6 +66,10 @@ function ConfirmingPage:render()
 					transparency = self.props.transparency,
 					layoutOrder = 1,
 					onClick = self.props.onAbort,
+				}, {
+					Tip = e(Tooltip, {
+						text = "Stop the connection process"
+					}),
 				}),
 
 				Reject = if Settings:get("twoWaySync")
@@ -74,6 +79,10 @@ function ConfirmingPage:render()
 						transparency = self.props.transparency,
 						layoutOrder = 2,
 						onClick = self.props.onReject,
+					}, {
+						Tip = e(Tooltip, {
+							text = "Push Studio changes to the Rojo server"
+						}),
 					})
 					else nil,
 
@@ -83,6 +92,10 @@ function ConfirmingPage:render()
 					transparency = self.props.transparency,
 					layoutOrder = 3,
 					onClick = self.props.onAccept,
+				}, {
+					Tip = e(Tooltip, {
+						text = "Pull Rojo server changes to Studio"
+					}),
 				}),
 
 				Layout = e("UIListLayout", {
