@@ -23,6 +23,7 @@ local Theme = require(script.Theme)
 
 local Page = require(script.Page)
 local Notifications = require(script.Notifications)
+local Tooltip = require(script.Components.Tooltip)
 local StudioPluginAction = require(script.Components.Studio.StudioPluginAction)
 local StudioToolbar = require(script.Components.Studio.StudioToolbar)
 local StudioToggleButton = require(script.Components.Studio.StudioToggleButton)
@@ -346,67 +347,69 @@ function App:render()
 					})
 				end,
 			}, {
-				NotConnectedPage = createPageElement(AppStatus.NotConnected, {
-					host = self.host,
-					onHostChange = self.setHost,
-					port = self.port,
-					onPortChange = self.setPort,
+				Tooltips = e(Tooltip.Provider, nil, {
+					NotConnectedPage = createPageElement(AppStatus.NotConnected, {
+						host = self.host,
+						onHostChange = self.setHost,
+						port = self.port,
+						onPortChange = self.setPort,
 
-					onConnect = function()
-						self:startSession()
-					end,
+						onConnect = function()
+							self:startSession()
+						end,
 
-					onNavigateSettings = function()
-						self:setState({
-							appStatus = AppStatus.Settings,
-						})
-					end,
-				}),
+						onNavigateSettings = function()
+							self:setState({
+								appStatus = AppStatus.Settings,
+							})
+						end,
+					}),
 
-				ConfirmingPage = createPageElement(AppStatus.Confirming, {
-					confirmData = self.state.confirmData,
-					createPopup = not self.state.guiEnabled,
+					ConfirmingPage = createPageElement(AppStatus.Confirming, {
+						confirmData = self.state.confirmData,
+						createPopup = not self.state.guiEnabled,
 
-					onAbort = function()
-						self.confirmationBindable:Fire("Abort")
-					end,
-					onAccept = function()
-						self.confirmationBindable:Fire("Accept")
-					end,
-					onReject = function()
-						self.confirmationBindable:Fire("Reject")
-					end,
-				}),
+						onAbort = function()
+							self.confirmationBindable:Fire("Abort")
+						end,
+						onAccept = function()
+							self.confirmationBindable:Fire("Accept")
+						end,
+						onReject = function()
+							self.confirmationBindable:Fire("Reject")
+						end,
+					}),
 
-				Connecting = createPageElement(AppStatus.Connecting),
+					Connecting = createPageElement(AppStatus.Connecting),
 
-				Connected = createPageElement(AppStatus.Connected, {
-					projectName = self.state.projectName,
-					address = self.state.address,
-					patchInfo = self.patchInfo,
+					Connected = createPageElement(AppStatus.Connected, {
+						projectName = self.state.projectName,
+						address = self.state.address,
+						patchInfo = self.patchInfo,
 
-					onDisconnect = function()
-						self:endSession()
-					end,
-				}),
+						onDisconnect = function()
+							self:endSession()
+						end,
+					}),
 
-				Settings = createPageElement(AppStatus.Settings, {
-					onBack = function()
-						self:setState({
-							appStatus = AppStatus.NotConnected,
-						})
-					end,
-				}),
+					Settings = createPageElement(AppStatus.Settings, {
+						onBack = function()
+							self:setState({
+								appStatus = AppStatus.NotConnected,
+							})
+						end,
+					}),
 
-				Error = createPageElement(AppStatus.Error, {
-					errorMessage = self.state.errorMessage,
+					Error = createPageElement(AppStatus.Error, {
+						errorMessage = self.state.errorMessage,
 
-					onClose = function()
-						self:setState({
-							appStatus = AppStatus.NotConnected,
-							toolbarIcon = Assets.Images.PluginButton,
-						})
-					end,
+						onClose = function()
+							self:setState({
+								appStatus = AppStatus.NotConnected,
+								toolbarIcon = Assets.Images.PluginButton,
+							})
+						end,
+					}),
 				}),
 			}),
 

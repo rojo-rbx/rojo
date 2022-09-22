@@ -67,7 +67,7 @@ function ConfirmingPage:render()
 					layoutOrder = 1,
 					onClick = self.props.onAbort,
 				}, {
-					Tip = e(Tooltip, {
+					Tip = e(Tooltip.Trigger, {
 						text = "Stop the connection process"
 					}),
 				}),
@@ -80,7 +80,7 @@ function ConfirmingPage:render()
 						layoutOrder = 2,
 						onClick = self.props.onReject,
 					}, {
-						Tip = e(Tooltip, {
+						Tip = e(Tooltip.Trigger, {
 							text = "Push Studio changes to the Rojo server"
 						}),
 					})
@@ -93,7 +93,7 @@ function ConfirmingPage:render()
 					layoutOrder = 3,
 					onClick = self.props.onAccept,
 				}, {
-					Tip = e(Tooltip, {
+					Tip = e(Tooltip.Trigger, {
 						text = "Pull Rojo server changes to Studio"
 					}),
 				}),

@@ -92,7 +92,7 @@ local function ConnectionDetails(props)
 
 				onClick = props.onDisconnect,
 			}, {
-				Tip = e(Tooltip, {
+				Tip = e(Tooltip.Trigger, {
 					text = "Disconnect from the Rojo sync server"
 				}),
 			}),

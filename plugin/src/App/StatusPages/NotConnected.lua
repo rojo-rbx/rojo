@@ -119,7 +119,7 @@ function NotConnectedPage:render()
 				layoutOrder = 1,
 				onClick = self.props.onNavigateSettings,
 			}, {
-				Tip = e(Tooltip, {
+				Tip = e(Tooltip.Trigger, {
 					text = "View and modify plugin settings"
 				}),
 			}),
@@ -131,7 +131,7 @@ function NotConnectedPage:render()
 				layoutOrder = 2,
 				onClick = self.props.onConnect,
 			}, {
-				Tip = e(Tooltip, {
+				Tip = e(Tooltip.Trigger, {
 					text = "Connect to a Rojo sync server"
 				}),
 			}),
