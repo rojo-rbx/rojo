@@ -322,32 +322,34 @@ function App:render()
 		value = self.props.plugin,
 	}, {
 		e(Theme.StudioProvider, nil, {
-			gui = e(StudioPluginGui, {
-				id = pluginName,
-				title = pluginName,
-				active = self.state.guiEnabled,
+			e(Tooltip.Provider, nil, {
+				gui = e(StudioPluginGui, {
+					id = pluginName,
+					title = pluginName,
+					active = self.state.guiEnabled,
 
-				initDockState = Enum.InitialDockState.Right,
-				initEnabled = false,
-				overridePreviousState = false,
-				floatingSize = Vector2.new(300, 200),
-				minimumSize = Vector2.new(300, 120),
+					initDockState = Enum.InitialDockState.Right,
+					initEnabled = false,
+					overridePreviousState = false,
+					floatingSize = Vector2.new(300, 200),
+					minimumSize = Vector2.new(300, 120),
 
-				zIndexBehavior = Enum.ZIndexBehavior.Sibling,
+					zIndexBehavior = Enum.ZIndexBehavior.Sibling,
 
-				onInitialState = function(initialState)
-					self:setState({
-						guiEnabled = initialState,
-					})
-				end,
+					onInitialState = function(initialState)
+						self:setState({
+							guiEnabled = initialState,
+						})
+					end,
 
-				onClose = function()
-					self:setState({
-						guiEnabled = false,
-					})
-				end,
-			}, {
-				Tooltips = e(Tooltip.Provider, nil, {
+					onClose = function()
+						self:setState({
+							guiEnabled = false,
+						})
+					end,
+				}, {
+					Tooltips = e(Tooltip.Canvas, nil),
+
 					NotConnectedPage = createPageElement(AppStatus.NotConnected, {
 						host = self.host,
 						onHostChange = self.setHost,
@@ -411,27 +413,27 @@ function App:render()
 						end,
 					}),
 				}),
-			}),
 
-			RojoNotifications = e("ScreenGui", {}, {
-				layout = e("UIListLayout", {
-					SortOrder = Enum.SortOrder.LayoutOrder,
-					HorizontalAlignment = Enum.HorizontalAlignment.Right,
-					VerticalAlignment = Enum.VerticalAlignment.Bottom,
-					Padding = UDim.new(0, 5),
-				}),
-				padding = e("UIPadding", {
-					PaddingTop = UDim.new(0, 5),
-					PaddingBottom = UDim.new(0, 5),
-					PaddingLeft = UDim.new(0, 5),
-					PaddingRight = UDim.new(0, 5),
-				}),
-				notifs = e(Notifications, {
-					soundPlayer = self.props.soundPlayer,
-					notifications = self.state.notifications,
-					onClose = function(index)
-						self:closeNotification(index)
-					end,
+				RojoNotifications = e("ScreenGui", {}, {
+					layout = e("UIListLayout", {
+						SortOrder = Enum.SortOrder.LayoutOrder,
+						HorizontalAlignment = Enum.HorizontalAlignment.Right,
+						VerticalAlignment = Enum.VerticalAlignment.Bottom,
+						Padding = UDim.new(0, 5),
+					}),
+					padding = e("UIPadding", {
+						PaddingTop = UDim.new(0, 5),
+						PaddingBottom = UDim.new(0, 5),
+						PaddingLeft = UDim.new(0, 5),
+						PaddingRight = UDim.new(0, 5),
+					}),
+					notifs = e(Notifications, {
+						soundPlayer = self.props.soundPlayer,
+						notifications = self.state.notifications,
+						onClose = function(index)
+							self:closeNotification(index)
+						end,
+					}),
 				}),
 			}),
 

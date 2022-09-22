@@ -120,8 +120,8 @@ function ConfirmingPage:render()
 			}),
 		})
 
-		return if self.props.createPopup
-			then e(StudioPluginGui, {
+		if self.props.createPopup then
+			return e(StudioPluginGui, {
 				id = "Rojo_DiffSync",
 				title = string.format(
 					"Confirm sync for project '%s':",
@@ -138,8 +138,16 @@ function ConfirmingPage:render()
 				zIndexBehavior = Enum.ZIndexBehavior.Sibling,
 
 				onClose = self.props.onAbort,
-			}, pageContent)
-			else pageContent
+			}, {
+				Tooltips = e(Tooltip.Canvas, nil),
+				Content = e("Frame", {
+					Size = UDim2.fromScale(1, 1),
+					BackgroundTransparency = 1,
+				}, pageContent),
+			})
+		end
+
+		return pageContent
 	end)
 end
 

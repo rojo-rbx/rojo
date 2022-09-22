@@ -73,10 +73,8 @@ end
 local Provider = Roact.Component:extend("TooltipManager")
 
 function Provider:init()
-	self.canvas = Roact.createRef()
 	self:setState({
 		tips = {},
-		canvasSize = Vector2.new(200, 100),
 		addTip = function(id: string, data: { Text: string, Position: Vector2 })
 			self:setState(function(state)
 				state.tips[id] = data
@@ -93,36 +91,45 @@ function Provider:init()
 end
 
 function Provider:render()
-	local tips = self.state.tips
-	local popups = {}
-
-	for key, value in tips do
-		popups[key] = e(Popup, {
-			Text = value.Text or "",
-			Position = value.Position or Vector2.zero,
-
-			canvasSize = self.state.canvasSize,
-		})
-	end
-
 	return Roact.createElement(TooltipContext.Provider, {
         value = self.state,
-    }, {
-		TooltipCanvas = e("Frame", {
-			[Roact.Change.AbsoluteSize] = function(rbx)
-				self:setState({
-					canvasSize = rbx.AbsoluteSize,
+    }, self.props[Roact.Children])
+end
+
+local Canvas = Roact.Component:extend("TooltipCanvas")
+
+function Canvas:init()
+	self:setState({
+		canvasSize = Vector2.new(200, 100),
+	})
+end
+
+function Canvas:render()
+	return Roact.createElement(TooltipContext.Consumer, {
+        render = function(context)
+			local tips = context.tips
+			local popups = {}
+
+			for key, value in tips do
+				popups[key] = e(Popup, {
+					Text = value.Text or "",
+					Position = value.Position or Vector2.zero,
+
+					canvasSize = self.state.canvasSize,
 				})
-			end,
-			ZIndex = 2,
-			BackgroundTransparency = 1,
-			Size = UDim2.fromScale(1, 1),
-		}, popups),
-		Container = e("Frame", {
-			ZIndex = 1,
-			BackgroundTransparency = 1,
-			Size = UDim2.fromScale(1, 1),
-		}, self.props[Roact.Children]),
+			end
+
+			return e("Frame", {
+				[Roact.Change.AbsoluteSize] = function(rbx)
+					self:setState({
+						canvasSize = rbx.AbsoluteSize,
+					})
+				end,
+				ZIndex = 100,
+				BackgroundTransparency = 1,
+				Size = UDim2.fromScale(1, 1),
+			}, popups)
+		end,
 	})
 end
 
@@ -183,5 +190,6 @@ end
 
 return {
 	Provider = Provider,
+	Canvas = Canvas,
 	Trigger = Trigger,
 }
