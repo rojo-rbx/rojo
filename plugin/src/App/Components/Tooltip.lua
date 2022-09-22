@@ -153,8 +153,11 @@ function Trigger:render()
 				BackgroundTransparency = 1,
 				ZIndex = self.props.zIndex or 100,
 
-				[Roact.Event.MouseMoved] = function(_rbx, x, y)
-					self.mousePos = Vector2.new(x, y)
+				[Roact.Event.MouseMoved] = function(rbx, x, _y)
+					self.mousePos = Vector2.new(
+						x,
+						rbx.AbsolutePosition.Y + rbx.AbsoluteSize.Y - 5
+					)
 				end,
 				[Roact.Event.MouseEnter] = function()
 					self.showDelayThread = task.delay(DELAY, function()
