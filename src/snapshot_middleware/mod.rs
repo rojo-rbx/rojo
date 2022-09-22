@@ -84,7 +84,7 @@ fn get_init_path(vfs: &Vfs, path: &Path) -> anyhow::Result<Option<PathBuf>> {
     Ok(None)
 }
 
-/// Returns the rojo type for the object. Any override rules in the `context`
+/// Returns the transformer for the object. Any override rules in the `context`
 /// take precedence.
 fn get_transformer(context: &InstanceContext, path: &Path) -> Option<Transformer> {
     if let Some(rojo_type) = context.get_transformer_override(path) {
