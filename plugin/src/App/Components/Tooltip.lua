@@ -136,6 +136,9 @@ function Trigger:init()
 end
 
 function Trigger:willUnmount()
+	if self.showDelayThread then
+		task.cancel(self.showDelayThread)
+	end
 	if self.destroy then
 		self.destroy()
 	end
