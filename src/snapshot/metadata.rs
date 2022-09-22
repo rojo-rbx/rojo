@@ -105,7 +105,7 @@ pub struct InstanceContext {
     pub path_ignore_rules: Arc<Vec<PathIgnoreRule>>,
 
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub type_override_rules: Arc<Vec<TypeOverrideRule>>,
+    pub transformer_rules: Arc<Vec<TransformerRule>>,
 }
 
 impl InstanceContext {
@@ -128,9 +128,9 @@ impl InstanceContext {
     }
 
     /// Extend the list of type override rules in the context with the given new rules.
-    pub fn add_type_override_rules<I>(&mut self, new_rules: I)
+    pub fn add_transformer_rules<I>(&mut self, new_rules: I)
     where
-        I: IntoIterator<Item = TypeOverrideRule>,
+        I: IntoIterator<Item = TransformerRule>,
         I::IntoIter: ExactSizeIterator,
     {
         let new_rules = new_rules.into_iter();
@@ -141,14 +141,14 @@ impl InstanceContext {
             return;
         }
 
-        let rules = Arc::make_mut(&mut self.type_override_rules);
+        let rules = Arc::make_mut(&mut self.transformer_rules);
         rules.extend(new_rules);
     }
 
-    pub fn get_type_override(&self, path: &Path) -> Option<RojoType> {
-        for rule in self.type_override_rules.iter() {
+    pub fn get_transformer_override(&self, path: &Path) -> Option<Transformer> {
+        for rule in self.transformer_rules.iter() {
             if rule.applies_to(path) {
-                return Some(RojoType::from_str(&rule.type_name));
+                return Some(Transformer::from_str(&rule.transformer_name));
             }
         }
 
@@ -160,7 +160,7 @@ impl Default for InstanceContext {
     fn default() -> Self {
         InstanceContext {
             path_ignore_rules: Arc::new(Vec::new()),
-            type_override_rules: Arc::new(Vec::new()),
+            transformer_rules: Arc::new(Vec::new()),
         }
     }
 }
@@ -189,7 +189,7 @@ impl PathIgnoreRule {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub enum RojoType {
+pub enum Transformer {
     Plain,
     LuauModule,
     LuauServer,
@@ -206,7 +206,7 @@ pub enum RojoType {
     Other(String),
 }
 
-impl RojoType {
+impl Transformer {
     pub fn from_str(s: &str) -> Self {
         match s {
             "rojo/plaintext" => Self::Plain,
@@ -229,12 +229,12 @@ impl RojoType {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct TypeOverrideRule {
+pub struct TransformerRule {
     /// The glob to match files against for this type override
     pub pattern: Glob,
 
     /// The type of file this match should be treated as
-    pub type_name: String,
+    pub transformer_name: String,
 
     /// The path that this glob is relative to. Since ignore globs are defined
     /// in project files, this will generally be the folder containing the
@@ -243,7 +243,7 @@ pub struct TypeOverrideRule {
     pub base_path: PathBuf,
 }
 
-impl TypeOverrideRule {
+impl TransformerRule {
     pub fn applies_to<P: AsRef<Path>>(&self, path: P) -> bool {
         let path = path.as_ref();
 

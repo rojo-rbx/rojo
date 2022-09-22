@@ -9,7 +9,7 @@ use crate::{
     project::{PathNode, Project, ProjectNode},
     snapshot::{
         InstanceContext, InstanceMetadata, InstanceSnapshot, InstigatingSource, PathIgnoreRule,
-        TypeOverrideRule,
+        TransformerRule,
     },
 };
 
@@ -32,16 +32,16 @@ pub fn snapshot_project(
 
     context.add_path_ignore_rules(path_ignore_rules);
 
-    let type_override_rules = project
-        .type_override_rules
+    let transformer_rules = project
+        .transformer_rules
         .iter()
-        .map(|rule| TypeOverrideRule {
+        .map(|rule| TransformerRule {
             pattern: rule.pattern.clone(),
-            type_name: rule.type_name.clone(),
+            transformer_name: rule.transformer_name.clone(),
             base_path: project.folder_location().to_path_buf(),
         });
 
-    context.add_type_override_rules(type_override_rules);
+    context.add_transformer_rules(transformer_rules);
 
     match snapshot_project_node(&context, path, &project.name, &project.tree, vfs, None)? {
         Some(found_snapshot) => {

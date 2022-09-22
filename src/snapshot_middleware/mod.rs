@@ -22,7 +22,7 @@ use std::path::{Path, PathBuf};
 use anyhow::Context;
 use memofs::{IoResultExt, Vfs};
 
-use crate::snapshot::{InstanceContext, InstanceSnapshot, RojoType};
+use crate::snapshot::{InstanceContext, InstanceSnapshot, Transformer};
 
 use self::{
     csv::{snapshot_csv, snapshot_csv_init},
@@ -86,34 +86,34 @@ fn get_init_path(vfs: &Vfs, path: &Path) -> anyhow::Result<Option<PathBuf>> {
 
 /// Returns the rojo type for the object. Any override rules in the `context`
 /// take precedence.
-fn get_rojo_type(context: &InstanceContext, path: &Path) -> Option<RojoType> {
-    if let Some(rojo_type) = context.get_type_override(path) {
+fn get_transformer(context: &InstanceContext, path: &Path) -> Option<Transformer> {
+    if let Some(rojo_type) = context.get_transformer_override(path) {
         return Some(rojo_type);
     }
 
     if path.file_name_ends_with(".server.lua") || path.file_name_ends_with(".server.luau") {
-        Some(RojoType::LuauServer)
+        Some(Transformer::LuauServer)
     } else if path.file_name_ends_with(".client.lua") || path.file_name_ends_with(".client.luau") {
-        Some(RojoType::LuauClient)
+        Some(Transformer::LuauClient)
     } else if path.file_name_ends_with(".lua") || path.file_name_ends_with(".luau") {
-        Some(RojoType::LuauModule)
+        Some(Transformer::LuauModule)
     } else if path.file_name_ends_with(".project.json") {
-        Some(RojoType::Project)
+        Some(Transformer::Project)
     } else if path.file_name_ends_with(".model.json") {
-        Some(RojoType::JsonModel)
+        Some(Transformer::JsonModel)
     } else if path.file_name_ends_with(".meta.json") {
         // .meta.json files do not turn into their own instances.
         None
     } else if path.file_name_ends_with(".json") {
-        Some(RojoType::Json)
+        Some(Transformer::Json)
     } else if path.file_name_ends_with(".csv") {
-        Some(RojoType::Csv)
+        Some(Transformer::Csv)
     } else if path.file_name_ends_with(".txt") {
-        Some(RojoType::Plain)
+        Some(Transformer::Plain)
     } else if path.file_name_ends_with(".rbxmx") {
-        Some(RojoType::Rbxmx)
+        Some(Transformer::Rbxmx)
     } else if path.file_name_ends_with(".rbxm") {
-        Some(RojoType::Rbxm)
+        Some(Transformer::Rbxm)
     } else {
         None
     }
@@ -134,20 +134,20 @@ pub fn snapshot_from_vfs(
 
     if meta.is_dir() {
         if let Some(init_path) = get_init_path(vfs, path)? {
-            match get_rojo_type(context, &init_path) {
-                Some(RojoType::Project) => return snapshot_project(context, vfs, &init_path),
-                Some(RojoType::LuauModule) => {
+            match get_transformer(context, &init_path) {
+                Some(Transformer::Project) => return snapshot_project(context, vfs, &init_path),
+                Some(Transformer::LuauModule) => {
                     return snapshot_lua_init(context, vfs, &init_path, Some(ScriptType::Module))
                 }
-                Some(RojoType::LuauServer) => {
+                Some(Transformer::LuauServer) => {
                     return snapshot_lua_init(context, vfs, &init_path, Some(ScriptType::Server))
                 }
-                Some(RojoType::LuauClient) => {
+                Some(Transformer::LuauClient) => {
                     return snapshot_lua_init(context, vfs, &init_path, Some(ScriptType::Client))
                 }
-                Some(RojoType::Csv) => return snapshot_csv_init(context, vfs, &init_path),
+                Some(Transformer::Csv) => return snapshot_csv_init(context, vfs, &init_path),
 
-                Some(RojoType::Other(rojo_type_string)) => {
+                Some(Transformer::Other(rojo_type_string)) => {
                     anyhow::bail!("Unknown rojo type: {}", rojo_type_string)
                 }
 
@@ -169,27 +169,27 @@ pub fn snapshot_from_vfs(
             _ => (),
         }
 
-        match get_rojo_type(context, path) {
-            Some(RojoType::Project) => snapshot_project(context, vfs, path),
-            Some(RojoType::JsonModel) => snapshot_json_model(context, vfs, path),
-            Some(RojoType::Json) => snapshot_json(context, vfs, path),
-            Some(RojoType::Csv) => snapshot_csv(context, vfs, path),
-            Some(RojoType::Plain) => snapshot_txt(context, vfs, path),
-            Some(RojoType::LuauModule) => {
+        match get_transformer(context, path) {
+            Some(Transformer::Project) => snapshot_project(context, vfs, path),
+            Some(Transformer::JsonModel) => snapshot_json_model(context, vfs, path),
+            Some(Transformer::Json) => snapshot_json(context, vfs, path),
+            Some(Transformer::Csv) => snapshot_csv(context, vfs, path),
+            Some(Transformer::Plain) => snapshot_txt(context, vfs, path),
+            Some(Transformer::LuauModule) => {
                 snapshot_lua(context, vfs, path, Some(ScriptType::Module))
             }
-            Some(RojoType::LuauServer) => {
+            Some(Transformer::LuauServer) => {
                 snapshot_lua(context, vfs, path, Some(ScriptType::Server))
             }
-            Some(RojoType::LuauClient) => {
+            Some(Transformer::LuauClient) => {
                 snapshot_lua(context, vfs, path, Some(ScriptType::Client))
             }
-            Some(RojoType::Rbxmx) => snapshot_rbxmx(context, vfs, path),
-            Some(RojoType::Rbxm) => snapshot_rbxm(context, vfs, path),
-            Some(RojoType::Other(rojo_type_string)) => {
+            Some(Transformer::Rbxmx) => snapshot_rbxmx(context, vfs, path),
+            Some(Transformer::Rbxm) => snapshot_rbxm(context, vfs, path),
+            Some(Transformer::Other(rojo_type_string)) => {
                 anyhow::bail!("Unknown rojo type: {}", rojo_type_string)
             }
-            None | Some(RojoType::Ignore) => Ok(None),
+            None | Some(Transformer::Ignore) => Ok(None),
         }
     }
 }

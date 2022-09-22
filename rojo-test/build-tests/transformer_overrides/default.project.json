@@ -3,7 +3,7 @@
   "tree": {
     "$path": "folder"
   },
-  "typeOverrideRules": [
+  "transformerRules": [
     {
       "pattern": "folder/wally.lock",
       "use": "rojo/plaintext"

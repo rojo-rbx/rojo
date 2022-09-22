@@ -58,7 +58,7 @@ gen_build_tests! {
     txt_in_folder,
     unresolved_values,
     weldconstraint,
-    type_overrides,
+    transformer_overrides,
 }
 
 fn run_build_test(test_name: &str) {
