@@ -22,9 +22,22 @@ local function Popup(props)
 		props.Text, 16, Enum.Font.GothamMedium, Vector2.new(math.min(props.canvasSize.X, 160), math.huge)
 	) + PADDING
 
-	-- Don't go out of bounds
-	local X = math.min(props.Position.X - OFFSET.X, props.canvasSize.X - textSize.X)
-	local Y = math.min(props.Position.Y + OFFSET.Y, props.canvasSize.Y - textSize.Y)
+	local trigger = props.Trigger:getValue()
+
+	local spaceBelow = props.canvasSize.Y - (trigger.AbsolutePosition.Y + trigger.AbsoluteSize.Y - 5 + OFFSET.Y)
+	local spaceAbove = trigger.AbsolutePosition.Y + 5 - OFFSET.Y
+
+	-- If there's not enough space below, and there's more space above, then show the tooltip above the trigger
+	local displayAbove = spaceBelow < textSize.Y and spaceAbove > spaceBelow
+
+	local X = math.clamp(props.Position.X - OFFSET.X, 0, props.canvasSize.X - textSize.X)
+	local Y = 0
+
+	if displayAbove then
+		Y = math.max(trigger.AbsolutePosition.Y - OFFSET.Y - textSize.Y + 5, 0)
+	else
+		Y = math.min(trigger.AbsolutePosition.Y + trigger.AbsoluteSize.Y + OFFSET.Y - 5, props.canvasSize.Y - textSize.Y)
+	end
 
 	return Theme.with(function(theme)
 		return e(BorderedContainer, {
@@ -48,11 +61,19 @@ local function Popup(props)
 
 			Triangle = e("ImageLabel", {
 				ZIndex = 100,
-				Position = UDim2.fromOffset(
-					math.clamp(props.Position.X - X, 6, textSize.X-6),
-					-12
-				),
+				Position =
+					if displayAbove then
+						UDim2.new(
+							0, math.clamp(props.Position.X - X, 6, textSize.X-6),
+							1, -4
+						)
+					else
+						UDim2.new(
+							0, math.clamp(props.Position.X - X, 6, textSize.X-6),
+							0, -12
+						),
 				Size = UDim2.fromOffset(16, 16),
+				Rotation = if displayAbove then 180 else 0,
 				BackgroundTransparency = 1,
 				Image = "rbxassetid://10981445863",
 				ImageColor3 = theme.BorderedContainer.BackgroundColor,
@@ -75,7 +96,7 @@ local Provider = Roact.Component:extend("TooltipManager")
 function Provider:init()
 	self:setState({
 		tips = {},
-		addTip = function(id: string, data: { Text: string, Position: Vector2 })
+		addTip = function(id: string, data: { Text: string, Position: Vector2, Trigger: any })
 			self:setState(function(state)
 				state.tips[id] = data
 				return state
@@ -114,6 +135,7 @@ function Canvas:render()
 				popups[key] = e(Popup, {
 					Text = value.Text or "",
 					Position = value.Position or Vector2.zero,
+					Trigger = value.Trigger,
 
 					canvasSize = self.state.canvasSize,
 				})
@@ -137,6 +159,7 @@ local Trigger = Roact.Component:extend("TooltipTrigger")
 
 function Trigger:init()
 	self.id = HttpService:GenerateGUID(false)
+	self.ref = Roact.createRef()
 	self.mousePos = Vector2.zero
 
 	self.destroy = nil
@@ -162,18 +185,17 @@ function Trigger:render()
 				Size = UDim2.fromScale(1, 1),
 				BackgroundTransparency = 1,
 				ZIndex = self.props.zIndex or 100,
+				[Roact.Ref] = self.ref,
 
-				[Roact.Event.MouseMoved] = function(rbx, x, _y)
-					self.mousePos = Vector2.new(
-						x,
-						rbx.AbsolutePosition.Y + rbx.AbsoluteSize.Y - 5
-					)
+				[Roact.Event.MouseMoved] = function(_rbx, x, y)
+					self.mousePos = Vector2.new(x, y)
 				end,
 				[Roact.Event.MouseEnter] = function()
 					self.showDelayThread = task.delay(DELAY, function()
 						context.addTip(self.id, {
 							Text = self.props.text,
 							Position = self.mousePos,
+							Trigger = self.ref,
 						})
 					end)
 				end,
