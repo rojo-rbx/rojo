@@ -10,6 +10,7 @@ local Theme = require(Plugin.App.Theme)
 local bindingUtil = require(Plugin.App.bindingUtil)
 
 local SlicedImage = require(script.Parent.SlicedImage)
+local Tooltip = require(script.Parent.Tooltip)
 
 local e = Roact.createElement
 
@@ -52,6 +53,10 @@ function Checkbox:render()
 
 			[Roact.Event.Activated] = self.props.onClick,
 		}, {
+			StateTip = e(Tooltip.Trigger, {
+				text = if self.props.active then "Enabled" else "Disabled",
+			}),
+
 			Active = e(SlicedImage, {
 				slice = Assets.Slices.RoundedBackground,
 				color = theme.Active.BackgroundColor,

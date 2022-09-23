@@ -22,6 +22,7 @@ local Theme = require(script.Theme)
 
 local Page = require(script.Page)
 local Notifications = require(script.Notifications)
+local Tooltip = require(script.Components.Tooltip)
 local StudioPluginAction = require(script.Components.Studio.StudioPluginAction)
 local StudioToolbar = require(script.Components.Studio.StudioToolbar)
 local StudioToggleButton = require(script.Components.Studio.StudioToggleButton)
@@ -288,108 +289,112 @@ function App:render()
 		value = self.props.plugin,
 	}, {
 		e(Theme.StudioProvider, nil, {
-			gui = e(StudioPluginGui, {
-				id = pluginName,
-				title = pluginName,
-				active = self.state.guiEnabled,
+			e(Tooltip.Provider, nil, {
+				gui = e(StudioPluginGui, {
+					id = pluginName,
+					title = pluginName,
+					active = self.state.guiEnabled,
 
-				initDockState = Enum.InitialDockState.Right,
-				initEnabled = false,
-				overridePreviousState = false,
-				floatingSize = Vector2.new(300, 200),
-				minimumSize = Vector2.new(300, 120),
+					initDockState = Enum.InitialDockState.Right,
+					initEnabled = false,
+					overridePreviousState = false,
+					floatingSize = Vector2.new(300, 200),
+					minimumSize = Vector2.new(300, 120),
 
-				zIndexBehavior = Enum.ZIndexBehavior.Sibling,
+					zIndexBehavior = Enum.ZIndexBehavior.Sibling,
 
-				onInitialState = function(initialState)
-					self:setState({
-						guiEnabled = initialState,
-					})
-				end,
-
-				onClose = function()
-					self:setState({
-						guiEnabled = false,
-					})
-				end,
-			}, {
-				NotConnectedPage = createPageElement(AppStatus.NotConnected, {
-					host = self.host,
-					onHostChange = self.setHost,
-					port = self.port,
-					onPortChange = self.setPort,
-
-					onConnect = function()
-						self:startSession()
-					end,
-
-					onNavigateSettings = function()
+					onInitialState = function(initialState)
 						self:setState({
-							appStatus = AppStatus.Settings,
+							guiEnabled = initialState,
 						})
 					end,
-				}),
-
-				Connecting = createPageElement(AppStatus.Connecting),
-
-				Connected = createPageElement(AppStatus.Connected, {
-					projectName = self.state.projectName,
-					address = self.state.address,
-					patchInfo = self.patchInfo,
-
-					onDisconnect = function()
-						self:endSession()
-					end,
-				}),
-
-				Settings = createPageElement(AppStatus.Settings, {
-					onBack = function()
-						self:setState({
-							appStatus = AppStatus.NotConnected,
-						})
-					end,
-				}),
-
-				Error = createPageElement(AppStatus.Error, {
-					errorMessage = self.state.errorMessage,
 
 					onClose = function()
 						self:setState({
-							appStatus = AppStatus.NotConnected,
-							toolbarIcon = Assets.Images.PluginButton,
+							guiEnabled = false,
 						})
 					end,
+				}, {
+					Tooltips = e(Tooltip.Canvas, nil),
+
+					NotConnectedPage = createPageElement(AppStatus.NotConnected, {
+						host = self.host,
+						onHostChange = self.setHost,
+						port = self.port,
+						onPortChange = self.setPort,
+
+						onConnect = function()
+							self:startSession()
+						end,
+
+						onNavigateSettings = function()
+							self:setState({
+								appStatus = AppStatus.Settings,
+							})
+						end,
+					}),
+
+					Connecting = createPageElement(AppStatus.Connecting),
+
+					Connected = createPageElement(AppStatus.Connected, {
+						projectName = self.state.projectName,
+						address = self.state.address,
+						patchInfo = self.patchInfo,
+
+						onDisconnect = function()
+							self:endSession()
+						end,
+					}),
+
+					Settings = createPageElement(AppStatus.Settings, {
+						onBack = function()
+							self:setState({
+								appStatus = AppStatus.NotConnected,
+							})
+						end,
+					}),
+
+					Error = createPageElement(AppStatus.Error, {
+						errorMessage = self.state.errorMessage,
+
+						onClose = function()
+							self:setState({
+								appStatus = AppStatus.NotConnected,
+								toolbarIcon = Assets.Images.PluginButton,
+							})
+						end,
+					}),
+
+					Background = Theme.with(function(theme)
+						return e("Frame", {
+							Size = UDim2.new(1, 0, 1, 0),
+							BackgroundColor3 = theme.BackgroundColor,
+							ZIndex = 0,
+							BorderSizePixel = 0,
+						})
+					end),
 				}),
 
-				Background = Theme.with(function(theme)
-					return e("Frame", {
-						Size = UDim2.new(1, 0, 1, 0),
-						BackgroundColor3 = theme.BackgroundColor,
-						ZIndex = 0,
-						BorderSizePixel = 0,
-					})
-				end),
-			}),
-
-			RojoNotifications = e("ScreenGui", {}, {
-				layout = e("UIListLayout", {
-					SortOrder = Enum.SortOrder.LayoutOrder,
-					HorizontalAlignment = Enum.HorizontalAlignment.Right,
-					VerticalAlignment = Enum.VerticalAlignment.Bottom,
-					Padding = UDim.new(0, 5),
-				}),
-				padding = e("UIPadding", {
-					PaddingTop = UDim.new(0, 5);
-					PaddingBottom = UDim.new(0, 5);
-					PaddingLeft = UDim.new(0, 5);
-					PaddingRight = UDim.new(0, 5);
-				}),
-				notifs = e(Notifications, {
-					soundPlayer = self.props.soundPlayer,
-					notifications = self.state.notifications,
-					onClose = function(index)
-						self:closeNotification(index)
-					end,
+				RojoNotifications = e("ScreenGui", {}, {
+					layout = e("UIListLayout", {
+						SortOrder = Enum.SortOrder.LayoutOrder,
+						HorizontalAlignment = Enum.HorizontalAlignment.Right,
+						VerticalAlignment = Enum.VerticalAlignment.Bottom,
+						Padding = UDim.new(0, 5),
+					}),
+					padding = e("UIPadding", {
+						PaddingTop = UDim.new(0, 5);
+						PaddingBottom = UDim.new(0, 5);
+						PaddingLeft = UDim.new(0, 5);
+						PaddingRight = UDim.new(0, 5);
+					}),
+					notifs = e(Notifications, {
+						soundPlayer = self.props.soundPlayer,
+						notifications = self.state.notifications,
+						onClose = function(index)
+							self:closeNotification(index)
+						end,
+					}),
 				}),
 			}),
 

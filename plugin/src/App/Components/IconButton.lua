@@ -75,6 +75,8 @@ function IconButton:render()
 
 			BackgroundTransparency = 1,
 		}),
+
+		Children = e("Folder", {}, self.props[Roact.Children]),
 	})
 end
 
