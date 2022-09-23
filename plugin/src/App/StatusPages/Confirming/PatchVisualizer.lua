@@ -7,6 +7,7 @@ local Packages = Rojo.Packages
 local Roact = require(Packages.Roact)
 local Log = require(Packages.Log)
 
+local PatchSet = require(Plugin.PatchSet)
 local decodeValue = require(Plugin.Reconciler.decodeValue)
 local getProperty = require(Plugin.Reconciler.getProperty)
 
@@ -57,73 +58,6 @@ end
 local function alphabeticalPairs(t)
 	-- Equivalent of the pairs() iterator, but sorted
 	return alphabeticalNext, t, nil
-end
-
-local function deepEquals(a: { [any]: any }, b: { [any]: any })
-	local checkedKeys = {}
-
-	for key, aValue in a do
-		checkedKeys[key] = true
-
-		local bValue = b[key]
-		local aT = typeof(aValue)
-
-		if aT ~= typeof(bValue) then
-			-- Different types are obviously not equal so we can exit early
-			return false
-		end
-
-		if aT == "function" then
-			-- For function deep equality, check for identical definitions
-			if debug.info(aValue, "snl") ~= debug.info(bValue, "snl") then
-				return false
-			end
-		elseif aT == "table" and aValue ~= a and bValue ~= a and aValue ~= b and bValue ~= b then
-			-- Recursively compare nested tables, avoiding cyclic inf recursion
-			if not deepEquals(aValue, bValue) then
-				return false
-			end
-		else
-			-- Basic equality on primitive types
-			if aValue ~= bValue then
-				return false
-			end
-		end
-	end
-
-	for key, bValue in b do
-		-- Avoid wastefully checking keys in both directions
-		if checkedKeys[key] then
-			continue
-		end
-
-		local aValue = a[key]
-		local bT = typeof(bValue)
-
-		if bT ~= typeof(aValue) then
-			-- Different types are obviously not equal so we can exit early
-			return false
-		end
-
-		if bT == "function" then
-			-- For function deep equality, check for identical definitions
-			if debug.info(aValue, "snl") ~= debug.info(bValue, "snl") then
-				return false
-			end
-		elseif bT == "table" and aValue ~= a and bValue ~= a and aValue ~= b and bValue ~= b then
-			-- Recursively compare nested tables, avoiding cyclic inf recursion
-			if not deepEquals(aValue, bValue) then
-				return false
-			end
-		else
-			-- Basic equality on primitive types
-			if aValue ~= bValue then
-				return false
-			end
-		end
-	end
-
-	return true
 end
 
 local function Tree()
@@ -221,7 +155,7 @@ end
 function PatchVisualizer:shouldUpdate(nextProps)
 	local currentPatch, nextPatch = self.props.patch, nextProps.patch
 
-	return not deepEquals(currentPatch, nextPatch)
+	return not PatchSet.isEqual(currentPatch, nextPatch)
 end
 
 function PatchVisualizer:buildTree(patch, instanceMap)
