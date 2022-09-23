@@ -47,8 +47,10 @@ local App = Roact.Component:extend("App")
 function App:init()
 	preloadAssets()
 
-	self.host, self.setHost = Roact.createBinding("")
-	self.port, self.setPort = Roact.createBinding("")
+	local priorHost, priorPort = self:getPriorEndpoint()
+	self.host, self.setHost = Roact.createBinding(priorHost or "")
+	self.port, self.setPort = Roact.createBinding(priorPort or "")
+
 	self.patchInfo, self.setPatchInfo = Roact.createBinding({
 		changes = 0,
 		timestamp = os.time(),
@@ -89,6 +91,45 @@ function App:closeNotification(index: number)
 	self:setState({
 		notifications = notifications,
 	})
+end
+
+function App:getPriorEndpoint()
+	local priorEndpoints = Settings:get("priorEndpoints")
+	if not priorEndpoints then return end
+
+	local place = priorEndpoints[tostring(game.PlaceId)]
+	if not place then return end
+
+	return place.host, place.port
+end
+
+function App:setPriorEndpoint(host: string, port: string)
+	local priorEndpoints = Settings:get("priorEndpoints")
+	if not priorEndpoints then
+		priorEndpoints = {}
+	end
+
+	-- Clear any stale saves to avoid disc bloat
+	for placeId, endpoint in priorEndpoints do
+		if os.time() - endpoint.timestamp > 12_960_000 then
+			priorEndpoints[placeId] = nil
+			Log.trace("Cleared stale saved endpoint for {}", placeId)
+		end
+	end
+
+	if host == Config.defaultHost and port == Config.defaultPort then
+		-- Don't save default
+		priorEndpoints[tostring(game.PlaceId)] = nil
+	else
+		priorEndpoints[tostring(game.PlaceId)] = {
+			host = host ~= Config.defaultHost and host or nil,
+			port = port ~= Config.defaultPort and port or nil,
+			timestamp = os.time(),
+		}
+		Log.trace("Saved last used endpoint for {}", game.PlaceId)
+	end
+
+	Settings:set("priorEndpoints", priorEndpoints)
 end
 
 function App:getHostAndPort()
@@ -208,6 +249,8 @@ function App:startSession()
 
 	serveSession:onStatusChanged(function(status, details)
 		if status == ServeSession.Status.Connecting then
+			self:setPriorEndpoint(host, port)
+
 			self:setState({
 				appStatus = AppStatus.Connecting,
 				toolbarIcon = Assets.Images.PluginButton,
