@@ -16,6 +16,7 @@ local defaultSettings = {
 	playSounds = true,
 	typecheckingEnabled = false,
 	logLevel = "Info",
+	priorEndpoints = {},
 }
 
 local Settings = {}
