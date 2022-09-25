@@ -87,6 +87,9 @@ end
 
 function Notification:render()
 	local time = DateTime.fromUnixTimestampMillis(self.props.timestamp)
+	local infoText =
+		time:FormatLocalTime("LTS", "en-us") ..
+		(if self.props.source then " • From: " .. self.props.source else "")
 
 	local textBounds = TextService:GetTextSize(
 		self.props.text,
@@ -95,13 +98,22 @@ function Notification:render()
 		Vector2.new(350, 700)
 	)
 
+	local infoTextBounds = TextService:GetTextSize(
+		infoText,
+		12,
+		Enum.Font.Gotham,
+		Vector2.new(350, 14)
+	)
+
+	local textWidth = math.max(infoTextBounds.X, textBounds.X)
+
 	local transparency = self.binding:map(function(value)
 		return 1 - value
 	end)
 
 	local size = self.binding:map(function(value)
 		return UDim2.fromOffset(
-			(35+40+textBounds.X)*value,
+			(35+40+textWidth)*value,
 			math.max(16+20+textBounds.Y, 54)
 		)
 	end)
@@ -123,7 +135,7 @@ function Notification:render()
 				size = UDim2.new(1, 0, 1, 0),
 			}, {
 				TextContainer = e("Frame", {
-					Size = UDim2.new(0, 35+textBounds.X, 1, -20),
+					Size = UDim2.new(1, 0, 1, -20),
 					Position = UDim2.new(0, 0, 0, 10),
 					BackgroundTransparency = 1
 				}, {
@@ -151,7 +163,7 @@ function Notification:render()
 						BackgroundTransparency = 1,
 					}),
 					Info = e("TextLabel", {
-						Text = if self.props.source then "From: " .. self.props.source else time:FormatLocalTime("LTS", "en-us"),
+						Text = infoText,
 						Font = Enum.Font.Gotham,
 						TextSize = 12,
 						TextColor3 = theme.Notification.InfoColor,
