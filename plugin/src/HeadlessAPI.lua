@@ -4,6 +4,8 @@ function API.new(app, config, settings)
 	local Rojo = {}
 
 	Rojo.Connected = if app.serveSession then app.serveSession:getStatus() == "Connected" else false
+	Rojo.Address = nil
+	Rojo.ProjectName = nil
 	Rojo.Version = table.clone(config.version)
 	Rojo.ProtocolVersion = config.protocolVersion
 

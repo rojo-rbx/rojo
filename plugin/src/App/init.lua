@@ -268,6 +268,10 @@ function App:startSession(host: string?, port: string?)
 
 	serveSession:onStatusChanged(function(status, details)
 		self.headlessAPI.Connected = status == ServeSession.Status.Connected
+		if not self.headlessAPI.Connected then
+			self.headlessAPI.Address = nil
+			self.headlessAPI.ProjectName = nil
+		end
 
 		if status == ServeSession.Status.Connecting then
 			self:setPriorEndpoint(host, port)
@@ -279,6 +283,10 @@ function App:startSession(host: string?, port: string?)
 			self:addNotification("Connecting to session...")
 		elseif status == ServeSession.Status.Connected then
 			local address = string.format("%s:%s", host :: string, port :: string)
+
+			self.headlessAPI.Address = address
+			self.headlessAPI.ProjectName = details
+
 			self:setState({
 				appStatus = AppStatus.Connected,
 				projectName = details,
