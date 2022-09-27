@@ -49,7 +49,7 @@ function App:init()
 	self.host, self.setHost = Roact.createBinding(priorHost or "")
 	self.port, self.setPort = Roact.createBinding(priorPort or "")
 
-	self.headlessAPI, self.readOnlyHeadlessAPI = HeadlessAPI.new(self, Config, Settings)
+	self.headlessAPI, self.readOnlyHeadlessAPI = HeadlessAPI.new(self)
 
 	-- selene: allow(global_usage)
 	_G.Rojo = self.readOnlyHeadlessAPI -- Expose headless to other plugins and command bar

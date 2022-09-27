@@ -1,18 +1,47 @@
+local Parent = script:FindFirstAncestor("Rojo")
+local Plugin = Parent.Plugin
+
+local Config = require(Plugin.Config)
+local Settings = require(Plugin.Settings)
+local ApiContext = require(Plugin.ApiContext)
+
 local API  = {}
 
-function API.new(app, config, settings)
+function API.new(app)
 	local Rojo = {}
 
 	Rojo.Connected = if app.serveSession then app.serveSession:getStatus() == "Connected" else false
 	Rojo.Address = nil
 	Rojo.ProjectName = nil
-	Rojo.Version = table.clone(config.version)
-	Rojo.ProtocolVersion = config.protocolVersion
+	Rojo.Version = table.clone(Config.version)
+	Rojo.ProtocolVersion = Config.protocolVersion
 
 	Rojo._notifRateLimit = {}
 
 	function Rojo:Test(...)
 		print("Rojo:Test called by", Rojo:_getCaller(), "with args", ...)
+	end
+
+	function Rojo:_getCallerFull()
+		local traceback = string.split(debug.traceback(), "\n")
+		local topLevel = traceback[#traceback - 1]
+
+		local debugPlugin = string.match(topLevel, "^(PluginDebugService%.user_.-)%.")
+		if debugPlugin then
+			return debugPlugin
+		end
+
+		local localPlugin = string.match(topLevel, "^(user_.-)%.")
+		if localPlugin then
+			return localPlugin
+		end
+
+		local cloudPlugin = string.match(topLevel, "(cloud_%d-%..-)%.")
+		if cloudPlugin then
+			return cloudPlugin
+		end
+
+		return "RobloxStudio.CommandBar"
 	end
 
 	function Rojo:_getCaller()
@@ -34,7 +63,26 @@ function API.new(app, config, settings)
 			return cloudPlugin
 		end
 
-		return "Command Bar"
+		return "CommandBar"
+	end
+
+	function Rojo:_getCallerType()
+		local traceback = string.split(debug.traceback(), "\n")
+		local topLevel = traceback[#traceback - 1]
+
+		if string.find(topLevel, "^PluginDebugService%.user_") then
+			return "Debug"
+		end
+
+		if string.find(topLevel, "^user_") then
+			return "Local"
+		end
+
+		if string.find(topLevel, "cloud_%d+%.") then
+			return "Cloud"
+		end
+
+		return "CommandBar"
 	end
 
 	function Rojo:ConnectAsync(host: string?, port: number?)
@@ -46,11 +94,11 @@ function API.new(app, config, settings)
 	end
 
 	function Rojo:GetSetting(setting: string): any
-		return settings:get(setting)
+		return Settings:get(setting)
 	end
 
 	function Rojo:SetSetting(setting: string, value: any)
-		return settings:set(setting, value)
+		return Settings:set(setting, value)
 	end
 
 	function Rojo:Notify(msg: string, timeout: number?)
@@ -73,6 +121,10 @@ function API.new(app, config, settings)
 
 	function Rojo:GetHostAndPort(): (string, string)
 		return app:getHostAndPort()
+	end
+
+	function Rojo:CreateApiContext(baseUrl: string)
+		return ApiContext.new(baseUrl)
 	end
 
 	local ReadOnly = setmetatable({}, {
