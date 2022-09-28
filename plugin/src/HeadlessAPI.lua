@@ -110,7 +110,7 @@ function API.new(app)
 	end
 
 	function Rojo:Notify(msg: string, timeout: number?)
-		local source = Rojo:_getCaller()
+		local source = Rojo:_getCallerFull()
 
 		if Rojo._notifRateLimit[source] == nil then
 			Rojo._notifRateLimit[source] = 0
@@ -123,7 +123,7 @@ function API.new(app)
 			Rojo._notifRateLimit[source] -= 1
 		end)
 
-		app:addThirdPartyNotification(source, msg, timeout)
+		app:addThirdPartyNotification(Rojo:_getCaller(), msg, timeout)
 		return
 	end
 
