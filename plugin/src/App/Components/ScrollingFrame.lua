@@ -25,6 +25,7 @@ local function ScrollingFrame(props)
 			ElasticBehavior = Enum.ElasticBehavior.Always,
 			ScrollingDirection = Enum.ScrollingDirection.Y,
 
+			LayoutOrder = props.layoutOrder,
 			Size = props.size,
 			Position = props.position,
 			AnchorPoint = props.anchorPoint,

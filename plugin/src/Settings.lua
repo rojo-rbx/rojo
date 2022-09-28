@@ -17,6 +17,7 @@ local defaultSettings = {
 	typecheckingEnabled = false,
 	logLevel = "Info",
 	priorEndpoints = {},
+	apiPermissions = {},
 }
 
 local Settings = {}
