@@ -10,16 +10,20 @@ local API  = {}
 function API.new(app)
 	local Rojo = {}
 
+	Rojo._notifRateLimit = {}
+	Rojo._changedEvent = Instance.new("BindableEvent")
+
+	Rojo.Changed = Rojo._changedEvent.Event
 	Rojo.Connected = if app.serveSession then app.serveSession:getStatus() == "Connected" else false
 	Rojo.Address = nil
 	Rojo.ProjectName = nil
 	Rojo.Version = table.clone(Config.version)
 	Rojo.ProtocolVersion = Config.protocolVersion
 
-	Rojo._notifRateLimit = {}
-
-	function Rojo:Test(...)
-		print("Rojo:Test called by", Rojo:_getCaller(), "with args", ...)
+	function Rojo:_updateProperty(property: string, value: any?)
+		local oldValue = Rojo[property]
+		Rojo[property] = value
+		Rojo._changedEvent:Fire(property, value, oldValue)
 	end
 
 	function Rojo:_getCallerFull()
@@ -83,6 +87,10 @@ function API.new(app)
 		end
 
 		return "CommandBar"
+	end
+
+	function Rojo:Test(...)
+		print("Rojo:Test called by", Rojo:_getCaller(), "with args", ...)
 	end
 
 	function Rojo:ConnectAsync(host: string?, port: number?)
