@@ -203,8 +203,8 @@ function App:startSession()
 	}
 
 	local baseUrl = if string.find(host, "^https?://")
-		then string.format("%s:%d", host, port)
-		else string.format("http://%s:%d", host, port)
+		then string.format("%s:%s", host, port)
+		else string.format("http://%s:%s", host, port)
 	local apiContext = ApiContext.new(baseUrl)
 
 	local serveSession = ServeSession.new({
