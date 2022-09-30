@@ -122,6 +122,9 @@ function API.new(app)
 	end
 
 	function Rojo:RequestAccess(apis: {string}): {[string]: boolean}
+		assert(type(apis) == "table", "Rojo:RequestAccess expects an array of API names")
+		assert(#apis > 0, "Rojo:RequestAccess expects an array of API names")
+
 		local source, name = Rojo:_getCallerSource(), Rojo:_getCallerName()
 
 		if Rojo._permissions[source] == nil then
@@ -158,6 +161,7 @@ function API.new(app)
 		return response
 	end
 
+	Rojo._apiDescriptions.Test = "Prints the given arguments to the console"
 	function Rojo:Test(...)
 		local args = table.pack(...)
 		for i=1, args.n do
@@ -175,29 +179,39 @@ function API.new(app)
 			table.concat(args, ", "), Rojo:_getCallerName()
 		))
 	end
-	Rojo._apiDescriptions.Test = "Prints the given arguments to the console"
 
-	function Rojo:ConnectAsync(host: string?, port: number?)
+	Rojo._apiDescriptions.ConnectAsync = "Connects to a Rojo server"
+	function Rojo:ConnectAsync(host: string?, port: string?)
+		assert(type(host) == "string" or host == nil, "Host must be type `string?`")
+		assert(type(port) == "string" or port == nil, "Port must be type `string?`")
+
 		app:startSession(host, port)
 	end
-	Rojo._apiDescriptions.ConnectAsync = "Connects to a Rojo server"
 
+	Rojo._apiDescriptions.DisconnectAsync = "Disconnects from the Rojo server"
 	function Rojo:DisconnectAsync()
 		app:endSession()
 	end
-	Rojo._apiDescriptions.DisconnectAsync = "Disconnects from the Rojo server"
 
+	Rojo._apiDescriptions.GetSetting = "Gets a Rojo setting"
 	function Rojo:GetSetting(setting: string): any
+		assert(type(setting) == "string", "Setting must be type `string`")
+
 		return Settings:get(setting)
 	end
-	Rojo._apiDescriptions.GetSetting = "Gets a Rojo setting"
 
+	Rojo._apiDescriptions.SetSetting = "Sets a Rojo setting"
 	function Rojo:SetSetting(setting: string, value: any)
+		assert(type(setting) == "string", "Setting must be type `string`")
+
 		return Settings:set(setting, value)
 	end
-	Rojo._apiDescriptions.SetSetting = "Sets a Rojo setting"
 
+	Rojo._apiDescriptions.Notify = "Shows a notification in the Rojo UI"
 	function Rojo:Notify(msg: string, timeout: number?)
+		assert(type(msg) == "string", "Message must be type `string`")
+		assert(type(timeout) == "number" or timeout == nil, "Timeout must be type `number?`")
+
 		local source = Rojo:_getCallerSource()
 
 		if Rojo._notifRateLimit[source] == nil then
@@ -214,17 +228,18 @@ function API.new(app)
 		app:addThirdPartyNotification(Rojo:_getCallerName(), msg, timeout)
 		return
 	end
-	Rojo._apiDescriptions.Notify = "Shows a notification in the Rojo UI"
 
+	Rojo._apiDescriptions.GetHostAndPort = "Gets the host and port that Rojo is set to"
 	function Rojo:GetHostAndPort(): (string, string)
 		return app:getHostAndPort()
 	end
-	Rojo._apiDescriptions.GetHostAndPort = "Gets the host and port that Rojo is set to"
 
+	Rojo._apiDescriptions.CreateApiContext = "Creates a new API context"
 	function Rojo:CreateApiContext(baseUrl: string)
+		assert(type(baseUrl) == "string", "Base URL must be type `string`")
+
 		return ApiContext.new(baseUrl)
 	end
-	Rojo._apiDescriptions.CreateApiContext = "Creates a new API context"
 
 	local ReadOnly = setmetatable({}, {
 		__index = function(_, key)
