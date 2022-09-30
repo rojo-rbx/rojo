@@ -65,7 +65,7 @@ function App:init()
 		guiEnabled = false,
 		notifications = {},
 		toolbarIcon = Assets.Images.PluginButton,
-		popups = {},
+		permissionPopups = {},
 	})
 end
 
@@ -210,7 +210,7 @@ function App:requestPermission(source: string, name: string, apis: {string}, ini
 	local responseEvent = Instance.new("BindableEvent")
 
 	self:setState(function(state)
-		state.popups[source] = {
+		state.permissionPopups[source] = {
 			responseEvent = responseEvent,
 			initialState = initialState,
 			name = name,
@@ -232,7 +232,7 @@ function App:requestPermission(source: string, name: string, apis: {string}, ini
 	responseEvent:Destroy()
 
 	self:setState(function(state)
-		state.popups[source] = nil
+		state.permissionPopups[source] = nil
 		return state
 	end)
 
@@ -399,11 +399,11 @@ function App:render()
 		return e(Page, props)
 	end
 
-	local popups = {}
-	for id, popup in self.state.popups do
-		popups["Rojo_"..id] = e(StudioPluginGui, {
+	local permissionPopups = {}
+	for id, popup in self.state.permissionPopups do
+		permissionPopups["Rojo_"..id] = e(StudioPluginGui, {
 			id = id,
-			title = popup.name .. " Popup",
+			title = popup.name .. " Permissions",
 			active = true,
 
 			initDockState = Enum.InitialDockState.Top,
@@ -441,7 +441,7 @@ function App:render()
 		value = self.props.plugin,
 	}, {
 		e(Theme.StudioProvider, nil, {
-			popups = Roact.createFragment(popups),
+			permissionPopups = Roact.createFragment(permissionPopups),
 
 			gui = e(StudioPluginGui, {
 				id = pluginName,
