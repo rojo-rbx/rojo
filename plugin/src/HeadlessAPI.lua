@@ -22,7 +22,7 @@ local API  = {}
 function API.new(app)
 	local Rojo = {}
 
-	Rojo._notifRateLimit = {}
+	Rojo._rateLimit = {}
 	Rojo._permissions = Settings:get("apiPermissions") or {}
 	Rojo._changedEvent = Instance.new("BindableEvent")
 	Rojo._apiDescriptions = {}
@@ -121,9 +121,40 @@ function API.new(app)
 		return not not Rojo._permissions[source][key]
 	end
 
+	local BUCKET, LIMIT = 10, 15
+	function Rojo:_checkRateLimit(api: string): boolean
+		local source = Rojo:_getCallerSource()
+
+		if Rojo._rateLimit[source] == nil then
+			Rojo._rateLimit[source] = {
+				[api] = 0,
+			}
+
+		elseif Rojo._rateLimit[source][api] == nil then
+			Rojo._rateLimit[source][api] = 0
+
+		elseif Rojo._rateLimit[source][api] >= LIMIT then
+			-- No more than LIMIT requests per BUCKET seconds
+			return true
+
+		end
+
+		Rojo._rateLimit[source][api] += 1
+		task.delay(BUCKET, function()
+			Rojo._rateLimit[source][api] -= 1
+		end)
+
+		return false
+	end
+
 	function Rojo:RequestAccess(apis: {string}): {[string]: boolean}
 		assert(type(apis) == "table", "Rojo:RequestAccess expects an array of API names")
 		assert(#apis > 0, "Rojo:RequestAccess expects an array of API names")
+
+		if Rojo:_checkRateLimit("RequestAccess") then
+			-- Because this opens a popup, we dont want to let users get spammed by it
+			return {}
+		end
 
 		local source, name = Rojo:_getCallerSource(), Rojo:_getCallerName()
 
@@ -185,11 +216,19 @@ function API.new(app)
 		assert(type(host) == "string" or host == nil, "Host must be type `string?`")
 		assert(type(port) == "string" or port == nil, "Port must be type `string?`")
 
+		if Rojo:_checkRateLimit("ConnectAsync") then
+			return
+		end
+
 		app:startSession(host, port)
 	end
 
 	Rojo._apiDescriptions.DisconnectAsync = "Disconnects from the Rojo server"
 	function Rojo:DisconnectAsync()
+		if Rojo:_checkRateLimit("DisconnectAsync") then
+			return
+		end
+
 		app:endSession()
 	end
 
@@ -204,6 +243,10 @@ function API.new(app)
 	function Rojo:SetSetting(setting: string, value: any)
 		assert(type(setting) == "string", "Setting must be type `string`")
 
+		if Rojo:_checkRateLimit("SetSetting") then
+			return
+		end
+
 		return Settings:set(setting, value)
 	end
 
@@ -212,18 +255,9 @@ function API.new(app)
 		assert(type(msg) == "string", "Message must be type `string`")
 		assert(type(timeout) == "number" or timeout == nil, "Timeout must be type `number?`")
 
-		local source = Rojo:_getCallerSource()
-
-		if Rojo._notifRateLimit[source] == nil then
-			Rojo._notifRateLimit[source] = 0
-		elseif Rojo._notifRateLimit[source] > 45 then
-			return -- Rate limited
+		if Rojo:_checkRateLimit("Notify") then
+			return
 		end
-
-		Rojo._notifRateLimit[source] += 1
-		task.delay(30, function()
-			Rojo._notifRateLimit[source] -= 1
-		end)
 
 		app:addThirdPartyNotification(Rojo:_getCallerName(), msg, timeout)
 		return
