@@ -206,8 +206,8 @@ function API.new(app)
 		end
 
 		print(string.format(
-			"Rojo:Test(%s) called from '%s'",
-			table.concat(args, ", "), Rojo:_getCallerName()
+			"Rojo:Test(%s) called from '%s' (%s)",
+			table.concat(args, ", "), Rojo:_getCallerName(), Rojo:_getCallerSource()
 		))
 	end
 
