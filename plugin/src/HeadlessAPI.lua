@@ -74,7 +74,7 @@ function API.new(app)
 			return localPlugin
 		end
 
-		local cloudId, cloudInstance = string.match(topLevel, "cloud_(%d-)%.(.-)%.")
+		local cloudId, cloudInstance = string.match(topLevel, "cloud_(%d-)%.(.-)[^%w_%-]")
 		if cloudId then
 			local info = cloudIdInfoCache[cloudId]
 			if info then
