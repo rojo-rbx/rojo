@@ -264,7 +264,9 @@ function App:startSession(host: string?, port: string?)
 		twoWaySync = Settings:get("twoWaySync"),
 	}
 
-	local baseUrl = string.format("http://%s:%s", host :: string, port :: string)
+	local baseUrl = if string.find(host, "^https?://")
+		then string.format("%s:%s", host, port)
+		else string.format("http://%s:%s", host, port)
 	local apiContext = ApiContext.new(baseUrl)
 
 	local serveSession = ServeSession.new({
