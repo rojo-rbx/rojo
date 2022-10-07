@@ -166,7 +166,9 @@ function Trigger:init()
 	self.ref = Roact.createRef()
 	self.mousePos = Vector2.zero
 
-	self.destroy = nil
+	self.destroy = function()
+		self.props.context.removeTip(self.id)
+	end
 end
 
 function Trigger:willUnmount()
@@ -179,37 +181,40 @@ function Trigger:willUnmount()
 end
 
 function Trigger:render()
+	return e("Frame", {
+		Size = UDim2.fromScale(1, 1),
+		BackgroundTransparency = 1,
+		ZIndex = self.props.zIndex or 100,
+		[Roact.Ref] = self.ref,
+
+		[Roact.Event.MouseMoved] = function(_rbx, x, y)
+			self.mousePos = Vector2.new(x, y)
+		end,
+		[Roact.Event.MouseEnter] = function()
+			self.showDelayThread = task.delay(DELAY, function()
+				self.props.context.addTip(self.id, {
+					Text = self.props.text,
+					Position = self.mousePos,
+					Trigger = self.ref,
+				})
+			end)
+		end,
+		[Roact.Event.MouseLeave] = function()
+			if self.showDelayThread then
+				task.cancel(self.showDelayThread)
+			end
+			self.props.context.removeTip(self.id)
+		end,
+	})
+end
+
+local function TriggerConsumer(props)
 	return Roact.createElement(TooltipContext.Consumer, {
 		render = function(context)
-			self.destroy = function()
-				context.removeTip(self.id)
-			end
+			local innerProps = table.clone(props)
+			innerProps.context = context
 
-			return e("Frame", {
-				Size = UDim2.fromScale(1, 1),
-				BackgroundTransparency = 1,
-				ZIndex = self.props.zIndex or 100,
-				[Roact.Ref] = self.ref,
-
-				[Roact.Event.MouseMoved] = function(_rbx, x, y)
-					self.mousePos = Vector2.new(x, y)
-				end,
-				[Roact.Event.MouseEnter] = function()
-					self.showDelayThread = task.delay(DELAY, function()
-						context.addTip(self.id, {
-							Text = self.props.text,
-							Position = self.mousePos,
-							Trigger = self.ref,
-						})
-					end)
-				end,
-				[Roact.Event.MouseLeave] = function()
-					if self.showDelayThread then
-						task.cancel(self.showDelayThread)
-					end
-					context.removeTip(self.id)
-				end,
-			})
+			return e(Trigger, innerProps)
 		end,
 	})
 end
@@ -217,5 +222,5 @@ end
 return {
 	Provider = Provider,
 	Container = Container,
-	Trigger = Trigger,
+	Trigger = TriggerConsumer,
 }
