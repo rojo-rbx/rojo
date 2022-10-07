@@ -132,7 +132,7 @@ function TextButton:render()
 				zIndex = -2,
 			}),
 
-			Children = e("Folder", {}, self.props[Roact.Children]),
+			Children = Roact.createFragment(self.props[Roact.Children]),
 		})
 	end)
 end
