@@ -11,6 +11,7 @@ local Theme = require(Plugin.App.Theme)
 
 local IconButton = require(Plugin.App.Components.IconButton)
 local ScrollingFrame = require(Plugin.App.Components.ScrollingFrame)
+local Tooltip = require(Plugin.App.Components.Tooltip)
 local Setting = require(script.Setting)
 
 local e = Roact.createElement
@@ -44,6 +45,10 @@ local function Navbar(props)
 				anchorPoint = Vector2.new(0, 0.5),
 
 				onClick = props.onBack,
+			}, {
+				Tip = e(Tooltip.Trigger, {
+					text = "Back"
+				}),
 			}),
 
 			Text = e("TextLabel", {
