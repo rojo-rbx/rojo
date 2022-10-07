@@ -117,8 +117,8 @@ end
 
 function Provider:render()
 	return Roact.createElement(TooltipContext.Provider, {
-        value = self.state,
-    }, self.props[Roact.Children])
+		value = self.state,
+	}, self.props[Roact.Children])
 end
 
 local Canvas = Roact.Component:extend("TooltipCanvas")
@@ -131,7 +131,7 @@ end
 
 function Canvas:render()
 	return Roact.createElement(TooltipContext.Consumer, {
-        render = function(context)
+		render = function(context)
 			local tips = context.tips
 			local popups = {}
 
@@ -180,7 +180,7 @@ end
 
 function Trigger:render()
 	return Roact.createElement(TooltipContext.Consumer, {
-        render = function(context)
+		render = function(context)
 			self.destroy = function()
 				context.removeTip(self.id)
 			end
