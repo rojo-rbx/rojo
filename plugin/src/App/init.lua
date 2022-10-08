@@ -208,7 +208,9 @@ function App:startSession()
 		twoWaySync = Settings:get("twoWaySync"),
 	}
 
-	local baseUrl = ("http://%s:%s"):format(host, port)
+	local baseUrl = if string.find(host, "^https?://")
+		then string.format("%s:%s", host, port)
+		else string.format("http://%s:%s", host, port)
 	local apiContext = ApiContext.new(baseUrl)
 
 	local serveSession = ServeSession.new({
@@ -391,7 +393,7 @@ function App:render()
 						})
 					end,
 				}, {
-					Tooltips = e(Tooltip.Canvas, nil),
+					Tooltips = e(Tooltip.Container, nil),
 
 					NotConnectedPage = createPageElement(AppStatus.NotConnected, {
 						host = self.host,
