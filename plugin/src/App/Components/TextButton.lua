@@ -131,6 +131,8 @@ function TextButton:render()
 
 				zIndex = -2,
 			}),
+
+			Children = Roact.createFragment(self.props[Roact.Children]),
 		})
 	end)
 end

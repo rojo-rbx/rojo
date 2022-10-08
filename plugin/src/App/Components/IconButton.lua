@@ -75,6 +75,8 @@ function IconButton:render()
 
 			BackgroundTransparency = 1,
 		}),
+
+		Children = Roact.createFragment(self.props[Roact.Children]),
 	})
 end
 
