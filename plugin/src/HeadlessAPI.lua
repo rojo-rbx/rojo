@@ -148,8 +148,7 @@ function API.new(app)
 	end
 
 	function Rojo:RequestAccess(apis: {string}): {[string]: boolean}
-		assert(type(apis) == "table", "Rojo:RequestAccess expects an array of API names")
-		assert(#apis > 0, "Rojo:RequestAccess expects an array of API names")
+		assert(type(apis) == "table", "Rojo:RequestAccess expects an array of valid API names")
 
 		if Rojo:_checkRateLimit("RequestAccess") then
 			-- Because this opens a popup, we dont want to let users get spammed by it
@@ -162,8 +161,19 @@ function API.new(app)
 			Rojo._permissions[source] = {}
 		end
 
-		local alreadyAllowed = true
+		-- Sanitize request
+		local sanitizedApis = {}
 		for _, api in apis do
+			if Rojo[api] then
+				table.insert(sanitizedApis, api)
+			else
+				warn(string.format("Rojo.%s is not a valid API", api))
+			end
+		end
+		assert(#sanitizedApis > 0, "Rojo:RequestAccess expects an array of valid API names")
+
+		local alreadyAllowed = true
+		for _, api in sanitizedApis do
 			if not Rojo._permissions[source][api] then
 				alreadyAllowed = false
 				break
@@ -172,13 +182,13 @@ function API.new(app)
 
 		if alreadyAllowed then
 			local response = {}
-			for _, api in apis do
+			for _, api in sanitizedApis do
 				response[api] = true
 			end
 			return response
 		end
 
-		local response = app:requestPermission(source, name, apis, Rojo._permissions[source])
+		local response = app:requestPermission(source, name, sanitizedApis, Rojo._permissions[source])
 
 		for api, granted in response do
 			Log.warn(string.format(
