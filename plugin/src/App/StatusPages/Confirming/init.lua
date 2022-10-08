@@ -139,7 +139,7 @@ function ConfirmingPage:render()
 
 				onClose = self.props.onAbort,
 			}, {
-				Tooltips = e(Tooltip.Canvas, nil),
+				Tooltips = e(Tooltip.Container, nil),
 				Content = e("Frame", {
 					Size = UDim2.fromScale(1, 1),
 					BackgroundTransparency = 1,
