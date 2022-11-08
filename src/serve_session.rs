@@ -220,6 +220,9 @@ impl ServeSession {
     pub fn root_dir(&self) -> &Path {
         self.root_project.folder_location()
     }
+    pub fn set_watch_enabled(&mut self, enabled: bool) {
+        self.vfs.set_watch_enabled(enabled)
+    }
 }
 
 #[derive(Debug, Error)]

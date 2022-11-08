@@ -38,7 +38,8 @@ impl ServeCommand {
 
         let vfs = Vfs::new_default();
 
-        let session = ServeSession::new(vfs, &project_path)?;
+        vfs.set_watch_enabled(false);
+        let mut session = ServeSession::new(vfs, &project_path)?;
 
         let ip = self
             .address
@@ -50,8 +51,9 @@ impl ServeCommand {
             .or_else(|| session.project_port())
             .unwrap_or(DEFAULT_PORT);
 
+        
+        session.set_watch_enabled(true);
         let server = LiveServer::new(session);
-
         let _ = show_start_message(ip, port, global.color.into());
         server.start((ip, port).into());
 
