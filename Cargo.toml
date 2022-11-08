@@ -73,7 +73,7 @@ log = "0.4.14"
 maplit = "1.0.2"
 notify = "4.0.17"
 opener = "0.5.0"
-reqwest = { version = "0.11.10", features = ["blocking", "json"] }
+reqwest = { version = "0.11.10", features = ["blocking", "json", "native-tls-vendored"] }
 ritz = "0.1.0"
 roblox_install = "1.0.0"
 serde = { version = "1.0.130", features = ["derive", "rc"] }

@@ -115,6 +115,16 @@ local function diff(instanceMap, virtualInstances, rootId)
 			local childId = instanceMap.fromInstances[childInstance]
 
 			if childId == nil then
+				-- pcall to avoid security permission errors
+				local success, skip = pcall(function()
+					-- We don't remove instances that aren't going to be saved anyway,
+					-- such as the Rojo session lock value.
+					return childInstance.Archivable == false
+				end)
+				if success and skip then
+					continue
+				end
+
 				-- This is an existing instance not present in the virtual DOM.
 				-- We can mark it for deletion unless the user has asked us not
 				-- to delete unknown stuff.

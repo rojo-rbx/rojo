@@ -10,6 +10,7 @@ local Assets = require(Plugin.Assets)
 local Header = require(Plugin.App.Components.Header)
 local IconButton = require(Plugin.App.Components.IconButton)
 local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
+local Tooltip = require(Plugin.App.Components.Tooltip)
 
 local e = Roact.createElement
 
@@ -90,6 +91,10 @@ local function ConnectionDetails(props)
 				anchorPoint = Vector2.new(1, 0.5),
 
 				onClick = props.onDisconnect,
+			}, {
+				Tip = e(Tooltip.Trigger, {
+					text = "Disconnect from the Rojo sync server"
+				}),
 			}),
 
 			Padding = e("UIPadding", {

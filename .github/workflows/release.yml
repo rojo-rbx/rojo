@@ -29,10 +29,12 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Setup Foreman
-        uses: Roblox/setup-foreman@v1
+      - name: Setup Aftman
+        uses: ok-nick/setup-aftman@v0.1.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          trust-check: false
+          version: 'v0.2.6'
 
       - name: Install packages
         run: |
@@ -65,25 +67,21 @@ jobs:
       fail-fast: false
       matrix:
         # https://doc.rust-lang.org/rustc/platform-support.html
-        #
-        # FIXME: After the Rojo VS Code extension updates, add architecture
-        # names to each of these releases. We'll rename win64 to windows and add
-        # -x86_64 to each release.
         include:
           - host: linux
-            os: ubuntu-18.04
+            os: ubuntu-20.04
             target: x86_64-unknown-linux-gnu
-            label: linux
+            label: linux-x86_64
 
           - host: windows
             os: windows-latest
             target: x86_64-pc-windows-msvc
-            label: win64
+            label: windows-x86_64
 
           - host: macos
             os: macos-latest
             target: x86_64-apple-darwin
-            label: macos
+            label: macos-x86_64
 
           - host: macos
             os: macos-latest
@@ -111,6 +109,20 @@ jobs:
           target: ${{ matrix.target }}
           override: true
           profile: minimal
+
+      - name: Setup Aftman
+        uses: ok-nick/setup-aftman@v0.1.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          trust-check: false
+          version: 'v0.2.6'
+
+      - name: Install packages
+        run: |
+          cd plugin
+          wally install
+          cd ..
+        shell: bash
 
       - name: Build Release
         run: cargo build --release --locked --verbose

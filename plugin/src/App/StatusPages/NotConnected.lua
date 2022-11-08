@@ -10,6 +10,7 @@ local Theme = require(Plugin.App.Theme)
 local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
 local TextButton = require(Plugin.App.Components.TextButton)
 local Header = require(Plugin.App.Components.Header)
+local Tooltip = require(Plugin.App.Components.Tooltip)
 
 local PORT_WIDTH = 74
 local DIVIDER_WIDTH = 1
@@ -116,6 +117,10 @@ function NotConnectedPage:render()
 				transparency = self.props.transparency,
 				layoutOrder = 1,
 				onClick = self.props.onNavigateSettings,
+			}, {
+				Tip = e(Tooltip.Trigger, {
+					text = "View and modify plugin settings"
+				}),
 			}),
 
 			Connect = e(TextButton, {
@@ -124,6 +129,10 @@ function NotConnectedPage:render()
 				transparency = self.props.transparency,
 				layoutOrder = 2,
 				onClick = self.props.onConnect,
+			}, {
+				Tip = e(Tooltip.Trigger, {
+					text = "Connect to a Rojo sync server"
+				}),
 			}),
 
 			Layout = e("UIListLayout", {

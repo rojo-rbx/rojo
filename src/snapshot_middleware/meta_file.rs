@@ -19,6 +19,9 @@ pub struct AdjacentMetadata {
     #[serde(default, skip_serializing_if = "HashMap::is_empty")]
     pub properties: HashMap<String, UnresolvedValue>,
 
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    pub attributes: HashMap<String, UnresolvedValue>,
+
     #[serde(skip)]
     pub path: PathBuf,
 }
@@ -51,6 +54,19 @@ impl AdjacentMetadata {
                 .with_context(|| format!("error applying meta file {}", path.display()))?;
 
             snapshot.properties.insert(key, value);
+        }
+
+        if !self.attributes.is_empty() {
+            let mut attributes = Attributes::new();
+
+            for (key, unresolved) in self.attributes.drain() {
+                let value = unresolved.resolve_unambiguous()?;
+                attributes.insert(key, value);
+            }
+
+            snapshot
+                .properties
+                .insert("Attributes".into(), attributes.into());
         }
 
         Ok(())
