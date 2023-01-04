@@ -26,6 +26,7 @@ local Assets = {
 			Back = "rbxassetid://6017213752",
 			Reset = "rbxassetid://10142422327",
 			Expand = "rbxassetid://12045401097",
+			Settings = "rbxassetid://12046309515",
 		},
 		Checkbox = {
 			Active = "rbxassetid://6016251644",

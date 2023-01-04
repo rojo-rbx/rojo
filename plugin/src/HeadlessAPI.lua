@@ -95,6 +95,43 @@ function API.new(app)
 		return "Command Bar"
 	end
 
+	function Rojo:_getMetaFromSource(source)
+		local localPlugin = string.match(source, "user_(.+)")
+		if localPlugin then
+			return {
+				Type = "Local",
+				Name = localPlugin,
+			}
+		end
+
+		local cloudId = string.match(source, "cloud_(%d+)")
+		if cloudId then
+			local info = cloudIdInfoCache[cloudId]
+			if info then
+				return {
+					Type = "Cloud",
+					Name = info.Name,
+					Creator = info.Creator.Name,
+				}
+			else
+				local success, newInfo = pcall(MarketplaceService.GetProductInfo, MarketplaceService, tonumber(cloudId), Enum.InfoType.Asset)
+				if success then
+					cloudIdInfoCache[cloudId] = newInfo
+					return {
+						Type = "Cloud",
+						Name = newInfo.Name,
+						Creator = newInfo.Creator.Name,
+					}
+				end
+			end
+		end
+
+		return {
+			Type = "Studio",
+			Name = "Command Bar",
+		}
+	end
+
 	function Rojo:_getCallerType()
 		local traceback = string.split(debug.traceback(), "\n")
 		local topLevel = traceback[#traceback - 1]

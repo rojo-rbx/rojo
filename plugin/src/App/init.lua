@@ -519,10 +519,25 @@ function App:render()
 					}),
 
 					Permissions = createPageElement(AppStatus.Permissions, {
+						headlessAPI = self.headlessAPI,
+
 						onBack = function()
 							self:setState({
 								appStatus = AppStatus.Settings,
 							})
+						end,
+
+						onEdit = function(source, meta, apiMap)
+							local apiList = {}
+							for api in apiMap do
+								table.insert(apiList, api)
+							end
+							self:requestPermission(
+								source,
+								meta.Name .. if meta.Creator then " by " .. meta.Creator else "",
+								apiList,
+								apiMap
+							)
 						end,
 					}),
 
