@@ -213,10 +213,7 @@ function App:requestPermission(source: string, name: string, apis: {string}, ini
 
 	self:setState(function(state)
 		state.popups[source] = {
-			responseEvent = responseEvent,
-			initialState = initialState,
 			name = name,
-			apis = apis,
 			content = e(PermissionPopup, {
 				responseEvent = responseEvent,
 				initialState = initialState,
@@ -226,6 +223,10 @@ function App:requestPermission(source: string, name: string, apis: {string}, ini
 				apiDescriptions = self.headlessAPI._apiDescriptions,
 				transparency = Roact.createBinding(0),
 			}),
+			onClose = function()
+				responseEvent:Fire(initialState)
+				responseEvent:Destroy()
+			end,
 		}
 		return state
 	end)
@@ -418,15 +419,7 @@ function App:render()
 
 			zIndexBehavior = Enum.ZIndexBehavior.Sibling,
 
-			onClose = function()
-				popup.responseEvent:Fire(popup.initialState)
-				popup.responseEvent:Destroy()
-
-				self:setState(function(state)
-					state.popups[id] = nil
-					return state
-				end)
-			end,
+			onClose = popup.onClose,
 		}, {
 			Content = popup.content,
 
