@@ -33,19 +33,22 @@ function Setting:init()
 	self.contentSize, self.setContentSize = Roact.createBinding(Vector2.new(0, 0))
 	self.containerSize, self.setContainerSize = Roact.createBinding(Vector2.new(0, 0))
 
-	self:setState({
-		setting = Settings:get(self.props.id),
-	})
-
-	self.changedCleanup = Settings:onChanged(self.props.id, function(value)
+	if self.props.id then
 		self:setState({
-			setting = value,
+			setting = Settings:get(self.props.id),
 		})
-	end)
+		self.changedCleanup = Settings:onChanged(self.props.id, function(value)
+			self:setState({
+				setting = value,
+			})
+		end)
+	end
 end
 
 function Setting:willUnmount()
-	self.changedCleanup()
+	if self.changedCleanup then
+		self.changedCleanup()
+	end
 end
 
 function Setting:render()
@@ -64,7 +67,9 @@ function Setting:render()
 				self.setContainerSize(object.AbsoluteSize)
 			end,
 		}, {
-			Input = if self.props.options ~= nil then
+			Input = if self.props.customInput then
+				self.props.customInput
+			elseif self.props.options ~= nil then
 				e(Dropdown, {
 					options = self.props.options,
 					active = self.state.setting,

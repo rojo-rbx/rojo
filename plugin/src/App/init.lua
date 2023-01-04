@@ -35,6 +35,7 @@ local StatusPages = require(script.StatusPages)
 local AppStatus = strict("AppStatus", {
 	NotConnected = "NotConnected",
 	Settings = "Settings",
+	Permissions = "Permissions",
 	Connecting = "Connecting",
 	Connected = "Connected",
 	Error = "Error",
@@ -507,6 +508,20 @@ function App:render()
 						onBack = function()
 							self:setState({
 								appStatus = AppStatus.NotConnected,
+							})
+						end,
+
+						onNavigatePermissions = function()
+							self:setState({
+								appStatus = AppStatus.Permissions,
+							})
+						end,
+					}),
+
+					Permissions = createPageElement(AppStatus.Permissions, {
+						onBack = function()
+							self:setState({
+								appStatus = AppStatus.Settings,
 							})
 						end,
 					}),

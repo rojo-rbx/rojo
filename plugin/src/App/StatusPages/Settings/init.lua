@@ -12,6 +12,7 @@ local Theme = require(Plugin.App.Theme)
 local IconButton = require(Plugin.App.Components.IconButton)
 local ScrollingFrame = require(Plugin.App.Components.ScrollingFrame)
 local Tooltip = require(Plugin.App.Components.Tooltip)
+local SlicedImage = require(Plugin.App.Components.SlicedImage)
 local Setting = require(script.Setting)
 
 local e = Roact.createElement
@@ -95,12 +96,52 @@ function SettingsPage:render()
 				layoutOrder = 1,
 			}),
 
+			Permissions = e(Setting, {
+				name = "Third Party Permissions",
+				description = "Manage permissions for third party plugins",
+				transparency = self.props.transparency,
+				layoutOrder = 2,
+				customInput = e("TextButton", {
+					Text = "",
+					BackgroundTransparency = 1,
+					Size = UDim2.fromOffset(28, 28),
+					Position = UDim2.fromScale(1, 0.5),
+					AnchorPoint = Vector2.new(1, 0.5),
+
+					[Roact.Event.Activated] = function()
+						self.props.onNavigatePermissions()
+					end,
+				}, {
+					Button = Theme.with(function(theme)
+						theme = theme.Checkbox
+						return e(SlicedImage, {
+							slice = Assets.Slices.RoundedBorder,
+							color = theme.Inactive.BorderColor,
+							transparency = self.props.transparency,
+							size = UDim2.new(1, 0, 1, 0),
+						}, {
+							Icon = e("ImageLabel", {
+								Image = Assets.Images.Icons.Expand,
+								ImageColor3 = theme.Inactive.IconColor,
+								ImageTransparency = self.props.transparency,
+
+								Size = UDim2.new(0, 16, 0, 16),
+								Position = UDim2.new(0.5, 0, 0.5, 0),
+								AnchorPoint = Vector2.new(0.5, 0.5),
+
+								BackgroundTransparency = 1,
+							}),
+						})
+					end),
+				}),
+			}),
+
 			ShowNotifications = e(Setting, {
 				id = "showNotifications",
 				name = "Show Notifications",
 				description = "Popup notifications in viewport",
 				transparency = self.props.transparency,
-				layoutOrder = 2,
+				layoutOrder = 3,
 			}),
 
 			PlaySounds = e(Setting, {
@@ -108,7 +149,7 @@ function SettingsPage:render()
 				name = "Play Sounds",
 				description = "Toggle sound effects",
 				transparency = self.props.transparency,
-				layoutOrder = 3,
+				layoutOrder = 4,
 			}),
 
 			TwoWaySync = e(Setting, {
@@ -116,7 +157,7 @@ function SettingsPage:render()
 				name = "Two-Way Sync",
 				description = "EXPERIMENTAL! Editing files in Studio will sync them into the filesystem",
 				transparency = self.props.transparency,
-				layoutOrder = 4,
+				layoutOrder = 5,
 			}),
 
 			LogLevel = e(Setting, {
@@ -124,7 +165,7 @@ function SettingsPage:render()
 				name = "Log Level",
 				description = "Plugin output verbosity level",
 				transparency = self.props.transparency,
-				layoutOrder = 5,
+				layoutOrder = 6,
 
 				options = invertedLevels,
 				showReset = Settings:getBinding("logLevel"):map(function(value)
@@ -140,7 +181,7 @@ function SettingsPage:render()
 				name = "Typechecking",
 				description = "Toggle typechecking on the API surface",
 				transparency = self.props.transparency,
-				layoutOrder = 6,
+				layoutOrder = 7,
 			}),
 
 			Layout = e("UIListLayout", {
