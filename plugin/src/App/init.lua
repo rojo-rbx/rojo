@@ -24,6 +24,7 @@ local Theme = require(script.Theme)
 local Page = require(script.Page)
 local Notifications = require(script.Notifications)
 local PermissionPopup = require(script.PermissionPopup)
+local ConflictAPIPopup = require(script.ConflictAPIPopup)
 local Tooltip = require(script.Components.Tooltip)
 local StudioPluginAction = require(script.Components.Studio.StudioPluginAction)
 local StudioToolbar = require(script.Components.Studio.StudioToolbar)
@@ -52,11 +53,6 @@ function App:init()
 	self.host, self.setHost = Roact.createBinding(priorHost or "")
 	self.port, self.setPort = Roact.createBinding(priorPort or "")
 
-	self.headlessAPI, self.readOnlyHeadlessAPI = HeadlessAPI.new(self)
-
-	-- selene: allow(global_usage)
-	_G.Rojo = self.readOnlyHeadlessAPI -- Expose headless to other plugins and command bar
-
 	self.patchInfo, self.setPatchInfo = Roact.createBinding({
 		changes = 0,
 		timestamp = os.time(),
@@ -69,6 +65,50 @@ function App:init()
 		toolbarIcon = Assets.Images.PluginButton,
 		popups = {},
 	})
+
+	self.headlessAPI, self.readOnlyHeadlessAPI = HeadlessAPI.new(self)
+
+	-- selene: allow(global_usage)
+	local existingAPI = _G.Rojo
+	if existingAPI then
+		local responseEvent = Instance.new("BindableEvent")
+		responseEvent.Event:Once(function(accepted)
+			if accepted then
+				-- selene: allow(global_usage)
+				_G.Rojo = self.readOnlyHeadlessAPI -- Expose headless to other plugins and command bar
+			end
+
+			responseEvent:Destroy()
+			self:setState(function(state)
+				state.popups["apiReplacement"] = nil
+				return state
+			end)
+		end)
+
+		self:setState(function(state)
+			state.popups["apiReplacement"] = {
+				name = "Headless API Conflict",
+				dockState = Enum.InitialDockState.Float,
+				onClose = function()
+					responseEvent:Fire(false)
+				end,
+				content = e(ConflictAPIPopup, {
+					existingAPI = existingAPI,
+					onAccept = function()
+						responseEvent:Fire(true)
+					end,
+					onDeny = function()
+						responseEvent:Fire(false)
+					end,
+					transparency = Roact.createBinding(0),
+				}),
+			}
+			return state
+		end)
+	else
+		-- selene: allow(global_usage)
+		_G.Rojo = self.readOnlyHeadlessAPI -- Expose headless to other plugins and command bar
+	end
 end
 
 function App:addNotification(text: string, timeout: number?)
@@ -410,7 +450,7 @@ function App:render()
 			title = popup.name,
 			active = true,
 
-			initDockState = Enum.InitialDockState.Top,
+			initDockState = popup.dockState or Enum.InitialDockState.Top,
 			initEnabled = true,
 			overridePreviousState = true,
 			floatingSize = Vector2.new(400, 300),
