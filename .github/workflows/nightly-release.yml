@@ -1,0 +1,169 @@
+name: Nightly Release
+
+on: workflow_dispatch
+  # schedule:
+  #   - cron: '15 4 * * *' # Run at 4:15 AM UTC to avoid peak GH Action loads
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - name: Set current date as env variable
+        run: echo "DATE=$(date +'%m/%d/%Y')" >> $GITHUB_ENV
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: nightly-${{ env.DATE }}
+          release_name: Nightly ${{ env.DATE }}
+          draft: false
+          prerelease: true
+
+  build-plugin:
+    needs: ["create-release"]
+    name: Build Roblox Studio Plugin
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Aftman
+        uses: ok-nick/setup-aftman@v0.1.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          trust-check: false
+          version: 'v0.2.6'
+
+      - name: Install packages
+        run: |
+          cd plugin
+          wally install
+          cd ..
+
+      - name: Build Plugin
+        run: rojo build plugin --output Rojo.rbxm
+
+      - name: Upload Plugin to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: Rojo.rbxm
+          asset_name: Rojo.rbxm
+          asset_content_type: application/octet-stream
+
+      - name: Upload Plugin to Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: Rojo.rbxm
+          path: Rojo.rbxm
+
+  build:
+    needs: ["create-release"]
+    strategy:
+      fail-fast: false
+      matrix:
+        # https://doc.rust-lang.org/rustc/platform-support.html
+        include:
+          - host: linux
+            os: ubuntu-20.04
+            target: x86_64-unknown-linux-gnu
+            label: linux-x86_64
+
+          - host: windows
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+            label: windows-x86_64
+
+          - host: macos
+            os: macos-latest
+            target: x86_64-apple-darwin
+            label: macos-x86_64
+
+          - host: macos
+            os: macos-latest
+            target: aarch64-apple-darwin
+            label: macos-aarch64
+
+    name: Build (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    env:
+      BIN: rojo
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Get Version from Tag
+        shell: bash
+        # https://github.community/t/how-to-get-just-the-tag-name/16241/7#M1027
+        run: |
+          echo "PROJECT_VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+          echo "Version is: ${{ env.PROJECT_VERSION }}"
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+          override: true
+          profile: minimal
+
+      - name: Setup Aftman
+        uses: ok-nick/setup-aftman@v0.1.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          trust-check: false
+          version: 'v0.2.6'
+
+      - name: Install packages
+        run: |
+          cd plugin
+          wally install
+          cd ..
+        shell: bash
+
+      - name: Build Release
+        run: cargo build --release --locked --verbose
+        env:
+          # Build into a known directory so we can find our build artifact more
+          # easily.
+          CARGO_TARGET_DIR: output
+
+          # On platforms that use OpenSSL, ensure it is statically linked to
+          # make binaries more portable.
+          OPENSSL_STATIC: 1
+
+      - name: Create Release Archive
+        shell: bash
+        run: |
+          mkdir staging
+
+          if [ "${{ matrix.host }}" = "windows" ]; then
+            cp "output/release/$BIN.exe" staging/
+            cd staging
+            7z a ../release.zip *
+          else
+            cp "output/release/$BIN" staging/
+            cd staging
+            zip ../release.zip *
+          fi
+
+      - name: Upload Archive to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: release.zip
+          asset_name: ${{ env.BIN }}-${{ env.PROJECT_VERSION }}-${{ matrix.label }}.zip
+          asset_content_type: application/octet-stream
+
+      - name: Upload Archive to Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.BIN }}-${{ env.PROJECT_VERSION }}-${{ matrix.label }}.zip
+          path: release.zip
