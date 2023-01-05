@@ -29,11 +29,9 @@ jobs:
         profile: minimal
 
     - name: Setup Aftman
-      uses: ok-nick/setup-aftman@v0.1.0
+      uses: ok-nick/setup-aftman@v0.3.0
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        trust-check: false
-        version: 'v0.2.6'
+        version: 'v0.2.7'
 
     - name: Install packages
       run: |
@@ -62,11 +60,9 @@ jobs:
         components: rustfmt, clippy
 
     - name: Setup Aftman
-      uses: ok-nick/setup-aftman@v0.1.0
+      uses: ok-nick/setup-aftman@v0.3.0
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        trust-check: false
-        version: 'v0.2.6'
+        version: 'v0.2.7'
 
     - name: Install packages
       run: |
