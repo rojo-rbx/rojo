@@ -115,14 +115,14 @@ function SettingsPage:render()
 					Button = Theme.with(function(theme)
 						theme = theme.Checkbox
 						return e(SlicedImage, {
-							slice = Assets.Slices.RoundedBorder,
-							color = theme.Inactive.BorderColor,
+							slice = Assets.Slices.RoundedBackground,
+							color = theme.Active.BackgroundColor,
 							transparency = self.props.transparency,
 							size = UDim2.new(1, 0, 1, 0),
 						}, {
 							Icon = e("ImageLabel", {
 								Image = Assets.Images.Icons.Expand,
-								ImageColor3 = theme.Inactive.IconColor,
+								ImageColor3 = theme.Active.IconColor,
 								ImageTransparency = self.props.transparency,
 
 								Size = UDim2.new(0, 16, 0, 16),

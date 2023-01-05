@@ -72,7 +72,7 @@ function Listing:render()
 					}, {
 						Icon = e("ImageLabel", {
 							Image = Assets.Images.Icons.Settings,
-							ImageColor3 = theme.Inactive.IconColor,
+							ImageColor3 = theme.Active.IconColor,
 							ImageTransparency = self.props.transparency,
 
 							Size = UDim2.new(0, 16, 0, 16),
