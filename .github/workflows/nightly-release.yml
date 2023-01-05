@@ -17,9 +17,9 @@ jobs:
       - name: Delete old nightly releases
         uses: dev-drprasad/delete-older-releases@v0.2.0
         with:
-          keep_latest: 14 # Two weeks of nightly releases
-          delete_tags: true
           delete_tag_pattern: nightly- # Only delete nightly releases
+          keep_latest: 30 # Nightly releases old than 30 days will be deleted
+          delete_tags: true # Delete the git tags associated with the releases
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
