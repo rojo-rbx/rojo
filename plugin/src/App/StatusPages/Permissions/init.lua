@@ -24,6 +24,11 @@ local function Navbar(props)
 			LayoutOrder = props.layoutOrder,
 			BackgroundTransparency = 1,
 		}, {
+			Padding = e("UIPadding", {
+				PaddingLeft = UDim.new(0, 20),
+				PaddingRight = UDim.new(0, 20),
+			}),
+
 			Back = e(IconButton, {
 				icon = Assets.Images.Icons.Back,
 				iconSize = 24,
@@ -101,31 +106,36 @@ function PermissionsPage:render()
 			end
 		end
 
-		return e(ScrollingFrame, {
-			size = UDim2.new(1, 0, 1, 0),
-			contentSize = self.contentSize,
-			transparency = self.props.transparency,
+		return e("Frame", {
+			Size = UDim2.new(1, 0, 1, 0),
+			BackgroundTransparency = 1,
 		}, {
 			Navbar = e(Navbar, {
 				onBack = self.props.onBack,
 				transparency = self.props.transparency,
-				layoutOrder = 0,
 			}),
 
-			Layout = e("UIListLayout", {
-				FillDirection = Enum.FillDirection.Vertical,
-				SortOrder = Enum.SortOrder.LayoutOrder,
+			PluginSources = e(ScrollingFrame, {
+				size = UDim2.new(1, 0, 1, -47),
+				position = UDim2.new(0, 0, 0, 47),
+				contentSize = self.contentSize,
+				transparency = self.props.transparency,
+			}, {
+				Layout = e("UIListLayout", {
+					FillDirection = Enum.FillDirection.Vertical,
+					SortOrder = Enum.SortOrder.LayoutOrder,
 
-				[Roact.Change.AbsoluteContentSize] = function(object)
-					self.setContentSize(object.AbsoluteContentSize)
-				end,
-			}),
+					[Roact.Change.AbsoluteContentSize] = function(object)
+						self.setContentSize(object.AbsoluteContentSize)
+					end,
+				}),
 
-			Sources = Roact.createFragment(sources),
+				Padding = e("UIPadding", {
+					PaddingLeft = UDim.new(0, 20),
+					PaddingRight = UDim.new(0, 20),
+				}),
 
-			Padding = e("UIPadding", {
-				PaddingLeft = UDim.new(0, 20),
-				PaddingRight = UDim.new(0, 20),
+				Sources = Roact.createFragment(sources),
 			}),
 		})
 	end)
