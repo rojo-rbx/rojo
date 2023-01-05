@@ -201,10 +201,10 @@ function API.new(app)
 		-- Sanitize request
 		local sanitizedApis = {}
 		for _, api in apis do
-			if Rojo[api] then
+			if Rojo[api] ~= nil then
 				table.insert(sanitizedApis, api)
 			else
-				warn(string.format("Rojo.%s is not a valid API", api))
+				warn(string.format("Rojo.%s is not a valid API", tostring(api)))
 			end
 		end
 		assert(#sanitizedApis > 0, "Rojo:RequestAccess expects an array of valid API names")
@@ -326,6 +326,12 @@ function API.new(app)
 		__index = function(_, key)
 			-- Don't expose private members
 			if string.find(key, "^_") then
+				return nil
+			end
+
+			-- Existence check
+			if Rojo[key] == nil then
+				warn(string.format("Rojo.%s is not a valid API", tostring(key)))
 				return nil
 			end
 
