@@ -212,7 +212,7 @@ function App:requestPermission(source: string, name: string, apis: {string}, ini
 	local responseEvent = Instance.new("BindableEvent")
 
 	self:setState(function(state)
-		state.popups[source] = {
+		state.popups[source  .. " Permissions"] = {
 			name = name,
 			content = e(PermissionPopup, {
 				responseEvent = responseEvent,
@@ -225,7 +225,6 @@ function App:requestPermission(source: string, name: string, apis: {string}, ini
 			}),
 			onClose = function()
 				responseEvent:Fire(initialState)
-				responseEvent:Destroy()
 			end,
 		}
 		return state
@@ -235,7 +234,7 @@ function App:requestPermission(source: string, name: string, apis: {string}, ini
 	responseEvent:Destroy()
 
 	self:setState(function(state)
-		state.popups[source] = nil
+		state.popups[source  .. " Permissions"] = nil
 		return state
 	end)
 
@@ -408,7 +407,7 @@ function App:render()
 	for id, popup in self.state.popups do
 		popups["Rojo_"..id] = e(StudioPluginGui, {
 			id = id,
-			title = popup.name .. " Permissions",
+			title = popup.name,
 			active = true,
 
 			initDockState = Enum.InitialDockState.Top,
