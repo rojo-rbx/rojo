@@ -37,8 +37,6 @@ end
 
 function Listing:render()
 	return Theme.with(function(theme)
-		theme = theme.Settings
-
 		return e("Frame", {
 			Size = self.contentSize:map(function(value)
 				return UDim2.new(1, 0, 0, 20 + value.Y + 20)
@@ -62,27 +60,24 @@ function Listing:render()
 					self.props.onClick()
 				end,
 			}, {
-				Button = Theme.with(function(theme)
-					theme = theme.Checkbox
-					return e(SlicedImage, {
-						slice = Assets.Slices.RoundedBorder,
-						color = theme.Inactive.BorderColor,
-						transparency = self.props.transparency,
-						size = UDim2.new(1, 0, 1, 0),
-					}, {
-						Icon = e("ImageLabel", {
-							Image = Assets.Images.Icons.Settings,
-							ImageColor3 = theme.Active.IconColor,
-							ImageTransparency = self.props.transparency,
+				Button = e(SlicedImage, {
+					slice = Assets.Slices.RoundedBorder,
+					color = theme.Checkbox.Inactive.BorderColor,
+					transparency = self.props.transparency,
+					size = UDim2.new(1, 0, 1, 0),
+				}, {
+					Icon = e("ImageLabel", {
+						Image = Assets.Images.Icons.Settings,
+						ImageColor3 = theme.Notification.InfoColor,
+						ImageTransparency = self.props.transparency,
 
-							Size = UDim2.new(0, 16, 0, 16),
-							Position = UDim2.new(0.5, 0, 0.5, 0),
-							AnchorPoint = Vector2.new(0.5, 0.5),
+						Size = UDim2.new(0, 16, 0, 16),
+						Position = UDim2.new(0.5, 0, 0.5, 0),
+						AnchorPoint = Vector2.new(0.5, 0.5),
 
-							BackgroundTransparency = 1,
-						}),
-					})
-				end),
+						BackgroundTransparency = 1,
+					}),
+				}),
 			}),
 
 			Text = e("Frame", {
@@ -93,7 +88,7 @@ function Listing:render()
 					Text = self.props.name,
 					Font = Enum.Font.GothamBold,
 					TextSize = 17,
-					TextColor3 = theme.Setting.NameColor,
+					TextColor3 = theme.Settings.Setting.NameColor,
 					TextXAlignment = Enum.TextXAlignment.Left,
 					TextTransparency = self.props.transparency,
 
@@ -108,7 +103,7 @@ function Listing:render()
 					Font = Enum.Font.Gotham,
 					LineHeight = 1.2,
 					TextSize = 14,
-					TextColor3 = theme.Setting.DescriptionColor,
+					TextColor3 = theme.Settings.Setting.DescriptionColor,
 					TextXAlignment = Enum.TextXAlignment.Left,
 					TextTransparency = self.props.transparency,
 					TextWrapped = true,
@@ -143,7 +138,7 @@ function Listing:render()
 			}),
 
 			Divider = e("Frame", {
-				BackgroundColor3 = theme.DividerColor,
+				BackgroundColor3 = theme.Settings.DividerColor,
 				BackgroundTransparency = self.props.transparency,
 				Size = UDim2.new(1, 0, 0, 1),
 				BorderSizePixel = 0,
