@@ -27,23 +27,23 @@ function API.new(app)
 	Rojo._changedEvent = Instance.new("BindableEvent")
 	Rojo._apiDescriptions = {}
 
-	Rojo.Changed = Rojo._changedEvent.Event
 	Rojo._apiDescriptions.Changed = "An event that fires when a headless API property changes"
+	Rojo.Changed = Rojo._changedEvent.Event
 
-	Rojo.Connected = if app.serveSession then app.serveSession:getStatus() == "Connected" else false
 	Rojo._apiDescriptions.Connected = "Whether or not the plugin is connected to a Rojo server"
+	Rojo.Connected = if app.serveSession then app.serveSession:getStatus() == "Connected" else false
 
-	Rojo.Address = nil
 	Rojo._apiDescriptions.Address = "The address (host:port) that the plugin is connected to"
+	Rojo.Address = nil
 
-	Rojo.ProjectName = nil
 	Rojo._apiDescriptions.ProjectName = "The name of the project that the plugin is connected to"
+	Rojo.ProjectName = nil
 
-	Rojo.Version = table.clone(Config.version)
 	Rojo._apiDescriptions.Version = "The version of the plugin"
+	Rojo.Version = table.clone(Config.version)
 
-	Rojo.ProtocolVersion = Config.protocolVersion
 	Rojo._apiDescriptions.ProtocolVersion = "The protocol version that the plugin is using"
+	Rojo.ProtocolVersion = Config.protocolVersion
 
 	function Rojo:_updateProperty(property: string, value: any?)
 		local oldValue = Rojo[property]
@@ -187,6 +187,7 @@ function API.new(app)
 		return false
 	end
 
+	Rojo._apiDescriptions.RequestAccess = "Used to gain access to Rojo API members"
 	function Rojo:RequestAccess(apis: {string}): {[string]: boolean}
 		assert(type(apis) == "table", "Rojo:RequestAccess expects an array of valid API names")
 
