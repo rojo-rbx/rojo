@@ -40,7 +40,10 @@ function API.new(app)
 	Rojo._apiDescriptions.ProjectName = "The name of the project that the plugin is connected to"
 
 	Rojo.Version = table.clone(Config.version)
+	Rojo._apiDescriptions.Version = "The version of the plugin"
+
 	Rojo.ProtocolVersion = Config.protocolVersion
+	Rojo._apiDescriptions.ProtocolVersion = "The protocol version that the plugin is using"
 
 	function Rojo:_updateProperty(property: string, value: any?)
 		local oldValue = Rojo[property]
@@ -201,7 +204,7 @@ function API.new(app)
 		-- Sanitize request
 		local sanitizedApis = {}
 		for _, api in apis do
-			if Rojo[api] ~= nil then
+			if Rojo._apiDescriptions[api] ~= nil then
 				table.insert(sanitizedApis, api)
 			else
 				warn(string.format("Rojo.%s is not a valid API", tostring(api)))
@@ -330,7 +333,7 @@ function API.new(app)
 			end
 
 			-- Existence check
-			if Rojo[key] == nil then
+			if Rojo._apiDescriptions[key] == nil then
 				warn(string.format("Rojo.%s is not a valid API", tostring(key)))
 				return nil
 			end
