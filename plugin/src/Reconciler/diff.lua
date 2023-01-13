@@ -15,6 +15,48 @@ local function isEmpty(table)
 	return next(table) == nil
 end
 
+local function trueEquals(a, b): boolean
+	-- Exit early for simple equality values
+	if a == b then
+		return true
+	end
+
+	local typeA, typeB = typeof(a), typeof(b)
+
+	-- For tables, try recursive deep equality
+	if typeA == "table" and typeB == "table" then
+		local checkedKeys = {}
+		for key, value in pairs(a) do
+			checkedKeys[key] = true
+			if not trueEquals(value, b[key]) then
+				return false
+			end
+		end
+		for key, value in pairs(b) do
+			if checkedKeys[key] then continue end
+			if not trueEquals(value, a[key]) then
+				return false
+			end
+		end
+		return true
+
+	-- For EnumItem->number, compare the EnumItem's value
+	elseif typeA == "number" and typeB == "EnumItem" then
+		return a == b.Value
+	elseif typeA == "EnumItem" and typeB == "number" then
+		return a.Value == b
+
+	-- For Color3s, compare to RGB ints to avoid floating point inequality
+	elseif typeA == "Color3" and typeB == "Color3" then
+		local aR, aG, aB = math.floor(a.R * 255), math.floor(a.G * 255), math.floor(a.B * 255)
+		local bR, bG, bB = math.floor(b.R * 255), math.floor(b.G * 255), math.floor(b.B * 255)
+		return aR == bR and aG == bG and aB == bB
+
+	end
+
+	return false
+end
+
 local function shouldDeleteUnknownInstances(virtualInstance)
 	if virtualInstance.Metadata ~= nil then
 		return not virtualInstance.Metadata.ignoreUnknownInstances
@@ -73,7 +115,7 @@ local function diff(instanceMap, virtualInstances, rootId)
 				local ok, decodedValue = decodeValue(virtualValue, instanceMap)
 
 				if ok then
-					if existingValue ~= decodedValue then
+					if not trueEquals(existingValue, decodedValue) then
 						changedProperties[propertyName] = virtualValue
 					end
 				else
