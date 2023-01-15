@@ -116,6 +116,7 @@ local function diff(instanceMap, virtualInstances, rootId)
 
 				if ok then
 					if not trueEquals(existingValue, decodedValue) then
+						Log.debug("{}.{} changed from '{}' to '{}'", instance:GetFullName(), propertyName, existingValue, decodedValue)
 						changedProperties[propertyName] = virtualValue
 					end
 				else
