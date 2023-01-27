@@ -181,26 +181,31 @@ function PatchVisualizer:buildTree(patch, instanceMap)
 
 		-- Gather detail text
 		local changeList, hint = nil, nil
-		if next(change.changedProperties) then
+		if next(change.changedProperties) or change.changedName then
 			changeList = {}
 
 			local hintBuffer, i = {}, 0
-			for prop, incoming in change.changedProperties do
+			local function addProp(prop: string, current: any?, incoming: any?)
 				i += 1
 				hintBuffer[i] = prop
+				changeList[i] = { prop, current, incoming }
+			end
 
+			-- Gather the changes
+
+			if change.changedName then
+				addProp("Name", instance.Name, change.changedName)
+			end
+
+			for prop, incoming in change.changedProperties do
 				local incomingSuccess, incomingValue = decodeValue(incoming, instanceMap)
 				local currentSuccess, currentValue = getProperty(instance, prop)
 
-				if not currentSuccess then
-					currentValue = "[Error]"
-				end
-
-				if incomingSuccess then
-					table.insert(changeList, { prop, currentValue, incomingValue })
-				else
-					table.insert(changeList, { prop, currentValue, next(incoming) })
-				end
+				addProp(
+					prop,
+					if currentSuccess then currentValue else "[Error]",
+					if incomingSuccess then incomingValue else next(incoming)
+				)
 			end
 
 			-- Finalize detail values
