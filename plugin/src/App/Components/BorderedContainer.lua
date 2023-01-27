@@ -24,7 +24,8 @@ local function BorderedContainer(props)
 			layoutOrder = props.layoutOrder,
 		}, {
 			Content = e("Frame", {
-				Size = UDim2.new(1, 0, 1, 0),
+				Size = UDim2.new(1, -2, 1, -2),
+				Position = UDim2.new(0, 1, 0, 1),
 				BackgroundTransparency = 1,
 				ZIndex = 2,
 			}, props[Roact.Children]),
