@@ -15,6 +15,10 @@ local function isEmpty(table)
 	return next(table) == nil
 end
 
+local function fuzzyEq(a: number, b: number, epsilon: number): boolean
+	return math.abs(a - b) < epsilon
+end
+
 local function trueEquals(a, b): boolean
 	-- Exit early for simple equality values
 	if a == b then
@@ -51,6 +55,16 @@ local function trueEquals(a, b): boolean
 		local aR, aG, aB = math.floor(a.R * 255), math.floor(a.G * 255), math.floor(a.B * 255)
 		local bR, bG, bB = math.floor(b.R * 255), math.floor(b.G * 255), math.floor(b.B * 255)
 		return aR == bR and aG == bG and aB == bB
+
+	-- For CFrames, compare to components with epsilon of 0.0001 to avoid floating point inequality
+	elseif typeA == "CFrame" and typeB == "CFrame" then
+		local aComponents, bComponents = {a:GetComponents()}, {b:GetComponents()}
+		for i, aComponent in aComponents do
+			if not fuzzyEq(aComponent, bComponents[i], 0.0001) then
+				return false
+			end
+		end
+		return true
 
 	end
 
