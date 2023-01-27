@@ -189,7 +189,7 @@ function PatchVisualizer:buildTree(patch, instanceMap)
 				i += 1
 				hintBuffer[i] = prop
 
-				local incomingSuccess, incomingValue = decodeValue(incoming)
+				local incomingSuccess, incomingValue = decodeValue(incoming, instanceMap)
 				local currentSuccess, currentValue = getProperty(instance, prop)
 
 				if not currentSuccess then
@@ -294,7 +294,7 @@ function PatchVisualizer:buildTree(patch, instanceMap)
 				i += 1
 				hintBuffer[i] = prop
 
-				local success, incomingValue = decodeValue(incoming)
+				local success, incomingValue = decodeValue(incoming, instanceMap)
 				if success then
 					table.insert(changeList, { prop, "N/A", incomingValue })
 				else
