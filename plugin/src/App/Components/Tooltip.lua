@@ -13,7 +13,7 @@ local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
 local e = Roact.createElement
 
 local DELAY = 0.75 -- How long to hover before a popup is shown (seconds)
-local TEXT_PADDING = Vector2.new(9 * 2, 6 * 2) -- Padding for the popup text containers
+local TEXT_PADDING = Vector2.new(8 * 2, 6 * 2) -- Padding for the popup text containers
 local TAIL_SIZE = 16 -- Size of the triangle tail piece
 local X_OFFSET = 30 -- How far right (from left) the tail will be (assuming enough space)
 local Y_OVERLAP = 10 -- Let the triangle tail piece overlap the target a bit to help "connect" it
@@ -23,7 +23,7 @@ local TooltipContext = Roact.createContext({})
 local function Popup(props)
 	local textSize = TextService:GetTextSize(
 		props.Text, 16, Enum.Font.GothamMedium, Vector2.new(math.min(props.parentSize.X, 160), math.huge)
-	) + TEXT_PADDING
+	) + TEXT_PADDING + (Vector2.one * 2)
 
 	local trigger = props.Trigger:getValue()
 
