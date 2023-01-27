@@ -62,11 +62,13 @@ function DomLabel:init()
 		end
 
 		self:setState(function(state)
-			if state.renderExpansion ~= renderExpansion then
-				return {
-					renderExpansion = renderExpansion,
-				}
+			if state.renderExpansion == renderExpansion then
+				return nil
 			end
+
+			return {
+				renderExpansion = renderExpansion,
+			}
 		end)
 	end)
 end
