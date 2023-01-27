@@ -138,7 +138,7 @@ local function Tree()
 	return tree
 end
 
-local DomLabel = require(script.Parent.DomLabel)
+local DomLabel = require(script.DomLabel)
 
 local PatchVisualizer = Roact.Component:extend("PatchVisualizer")
 

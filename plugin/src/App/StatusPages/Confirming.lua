@@ -12,7 +12,7 @@ local TextButton = require(Plugin.App.Components.TextButton)
 local Header = require(Plugin.App.Components.Header)
 local StudioPluginGui = require(Plugin.App.Components.Studio.StudioPluginGui)
 local Tooltip = require(Plugin.App.Components.Tooltip)
-local PatchVisualizer = require(script.PatchVisualizer)
+local PatchVisualizer = require(Plugin.App.Components.PatchVisualizer)
 
 local e = Roact.createElement
 
