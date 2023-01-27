@@ -68,12 +68,12 @@ local function Popup(props)
 					if displayAbove then
 						UDim2.new(
 							0, math.clamp(props.Position.X - X, 6, textSize.X-6),
-							1, -3
+							1, -1
 						)
 					else
 						UDim2.new(
 							0, math.clamp(props.Position.X - X, 6, textSize.X-6),
-							0, -TAIL_SIZE+3
+							0, -TAIL_SIZE+1
 						),
 				Size = UDim2.fromOffset(TAIL_SIZE, TAIL_SIZE),
 				AnchorPoint = Vector2.new(0.5, 0),
