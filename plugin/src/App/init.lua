@@ -430,6 +430,7 @@ function App:render()
 						projectName = self.state.projectName,
 						address = self.state.address,
 						patchInfo = self.patchInfo,
+						serveSession = self.serveSession,
 
 						onDisconnect = function()
 							self:endSession()
