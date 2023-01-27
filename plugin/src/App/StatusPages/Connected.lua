@@ -6,6 +6,7 @@ local Roact = require(Packages.Roact)
 
 local Theme = require(Plugin.App.Theme)
 local Assets = require(Plugin.Assets)
+local PatchSet = require(Plugin.PatchSet)
 
 local Header = require(Plugin.App.Components.Header)
 local IconButton = require(Plugin.App.Components.IconButton)
@@ -126,10 +127,11 @@ function ConnectedPage:render()
 
 			Info = e("TextLabel", {
 				Text = self.props.patchInfo:map(function(info)
+					local changes = PatchSet.countChanges(info.patch)
 					return string.format(
 						"<i>Synced %d change%s %s</i>",
-						info.changes,
-						info.changes == 1 and "" or "s",
+						changes,
+						changes == 1 and "" or "s",
 						timeSinceText(os.time() - info.timestamp)
 					)
 				end),

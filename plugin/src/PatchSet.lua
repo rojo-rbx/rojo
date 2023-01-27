@@ -99,6 +99,25 @@ function PatchSet.isEqual(patchA, patchB)
 end
 
 --[[
+	Count the number of changes in the given PatchSet.
+]]
+function PatchSet.countChanges(patch)
+	local count = 0
+
+	for _ in patch.added do
+		count += 1
+	end
+	for _ in patch.removed do
+		count += 1
+	end
+	for _ in patch.updated do
+		count += 1
+	end
+
+	return count
+end
+
+--[[
 	Merge multiple PatchSet objects into the given PatchSet.
 ]]
 function PatchSet.assign(target, ...)

@@ -52,7 +52,7 @@ function App:init()
 	self.port, self.setPort = Roact.createBinding(priorPort or "")
 
 	self.patchInfo, self.setPatchInfo = Roact.createBinding({
-		changes = 0,
+		patch = PatchSet.newEmpty(),
 		timestamp = os.time(),
 	})
 	self.confirmationBindable = Instance.new("BindableEvent")
@@ -219,34 +219,31 @@ function App:startSession()
 		twoWaySync = sessionOptions.twoWaySync,
 	})
 
-	serveSession:onPatchApplied(function(patch, unapplied)
-		local now = os.time()
-		local changes = 0
-
-		for _, set in patch do
-			for _ in set do
-				changes += 1
-			end
-		end
-		for _, set in unapplied do
-			for _ in set do
-				changes -= 1
-			end
-		end
-
-		if changes == 0 then
+	serveSession:onPatchApplied(function(patch, _unapplied)
+		if PatchSet.isEmpty(patch) then
+			-- Ignore empty patches
 			return
 		end
 
+		local now = os.time()
+
 		local old = self.patchInfo:getValue()
 		if now - old.timestamp < 2 then
-			changes += old.changes
-		end
+			-- Patches that apply in the same second are
+			-- considered to be part of the same change for human clarity
+			local merged = PatchSet.newEmpty()
+			PatchSet.assign(merged, old.patch, patch)
 
-		self.setPatchInfo({
-			changes = changes,
-			timestamp = now,
-		})
+			self.setPatchInfo({
+				patch = merged,
+				timestamp = now,
+			})
+		else
+			self.setPatchInfo({
+				patch = patch,
+				timestamp = now,
+			})
+		end
 	end)
 
 	serveSession:onStatusChanged(function(status, details)
