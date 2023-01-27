@@ -74,6 +74,7 @@ local function ChangesDrawer(props)
 				transparency = props.transparency,
 				layoutOrder = 3,
 
+				columnVisibility = {true, false, true},
 				patch = props.patchInfo:getValue().patch,
 				instanceMap = props.serveSession.__instanceMap,
 			}),

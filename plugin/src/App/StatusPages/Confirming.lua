@@ -49,10 +49,12 @@ function ConfirmingPage:render()
 
 			PatchVisualizer = e(PatchVisualizer, {
 				size = UDim2.new(1, 0, 1, -150),
-				patch = self.props.confirmData.patch,
-				instanceMap = self.props.confirmData.instanceMap,
 				transparency = self.props.transparency,
 				layoutOrder = 3,
+
+				columnVisibility = {true, true, true},
+				patch = self.props.confirmData.patch,
+				instanceMap = self.props.confirmData.instanceMap,
 			}),
 
 			Buttons = e("Frame", {

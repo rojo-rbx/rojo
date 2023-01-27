@@ -356,6 +356,7 @@ function PatchVisualizer:render()
 		table.insert(
 			scrollElements,
 			e(DomLabel, {
+				columnVisibility = self.props.columnVisibility,
 				updateEvent = self.updateEvent,
 				elementHeight = elementHeight,
 				setElementHeight = setElementHeight,

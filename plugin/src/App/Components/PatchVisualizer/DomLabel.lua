@@ -32,6 +32,7 @@ function Expansion:render()
 		ChangeList = e(ChangeList, {
 			changes = props.changeList,
 			transparency = props.transparency,
+			columnVisibility = props.columnVisibility,
 		}),
 	})
 end
@@ -130,6 +131,7 @@ function DomLabel:render()
 					indent = indent,
 					transparency = props.transparency,
 					changeList = props.changeList,
+					columnVisibility = props.columnVisibility,
 				})
 				else nil,
 			DiffIcon = if props.patchType

@@ -26,6 +26,8 @@ function ChangeList:render()
 			return 0.93 + (0.07 * t)
 		end)
 
+		local columnVisibility = props.columnVisibility
+
 		local rows = {}
 		local pad = {
 			PaddingLeft = UDim.new(0, 5),
@@ -39,7 +41,14 @@ function ChangeList:render()
 			LayoutOrder = 0,
 		}, {
 			Padding = e("UIPadding", pad),
+			Layout = e("UIListLayout", {
+				FillDirection = Enum.FillDirection.Horizontal,
+				SortOrder = Enum.SortOrder.LayoutOrder,
+				HorizontalAlignment = Enum.HorizontalAlignment.Left,
+				VerticalAlignment = Enum.VerticalAlignment.Center,
+			}),
 			A = e("TextLabel", {
+				Visible = columnVisibility[1],
 				Text = tostring(changes[1][1]),
 				BackgroundTransparency = 1,
 				Font = Enum.Font.GothamBold,
@@ -49,9 +58,10 @@ function ChangeList:render()
 				TextTransparency = props.transparency,
 				TextTruncate = Enum.TextTruncate.AtEnd,
 				Size = UDim2.new(0.3, 0, 1, 0),
-				Position = UDim2.new(0, 0, 0, 0),
+				LayoutOrder = 1,
 			}),
 			B = e("TextLabel", {
+				Visible = columnVisibility[2],
 				Text = tostring(changes[1][2]),
 				BackgroundTransparency = 1,
 				Font = Enum.Font.GothamBold,
@@ -61,9 +71,10 @@ function ChangeList:render()
 				TextTransparency = props.transparency,
 				TextTruncate = Enum.TextTruncate.AtEnd,
 				Size = UDim2.new(0.35, 0, 1, 0),
-				Position = UDim2.new(0.3, 0, 0, 0),
+				LayoutOrder = 2,
 			}),
 			C = e("TextLabel", {
+				Visible = columnVisibility[3],
 				Text = tostring(changes[1][3]),
 				BackgroundTransparency = 1,
 				Font = Enum.Font.GothamBold,
@@ -73,7 +84,7 @@ function ChangeList:render()
 				TextTransparency = props.transparency,
 				TextTruncate = Enum.TextTruncate.AtEnd,
 				Size = UDim2.new(0.35, 0, 1, 0),
-				Position = UDim2.new(0.65, 0, 0, 0),
+				LayoutOrder = 3,
 			}),
 		})
 
@@ -90,7 +101,14 @@ function ChangeList:render()
 				LayoutOrder = row,
 			}, {
 				Padding = e("UIPadding", pad),
+				Layout = e("UIListLayout", {
+					FillDirection = Enum.FillDirection.Horizontal,
+					SortOrder = Enum.SortOrder.LayoutOrder,
+					HorizontalAlignment = Enum.HorizontalAlignment.Left,
+					VerticalAlignment = Enum.VerticalAlignment.Center,
+				}),
 				A = e("TextLabel", {
+					Visible = columnVisibility[1],
 					Text = tostring(values[1]),
 					BackgroundTransparency = 1,
 					Font = Enum.Font.GothamMedium,
@@ -100,14 +118,15 @@ function ChangeList:render()
 					TextTransparency = props.transparency,
 					TextTruncate = Enum.TextTruncate.AtEnd,
 					Size = UDim2.new(0.3, 0, 1, 0),
-					Position = UDim2.new(0, 0, 0, 0),
+					LayoutOrder = 1,
 				}),
 				B = e(
 					"Frame",
 					{
+						Visible = columnVisibility[2],
 						BackgroundTransparency = 1,
 						Size = UDim2.new(0.35, 0, 1, 0),
-						Position = UDim2.new(0.3, 0, 0, 0),
+						LayoutOrder = 2,
 					},
 					e(DisplayValue, {
 						value = values[2],
@@ -117,9 +136,10 @@ function ChangeList:render()
 				C = e(
 					"Frame",
 					{
+						Visible = columnVisibility[3],
 						BackgroundTransparency = 1,
 						Size = UDim2.new(0.35, 0, 1, 0),
-						Position = UDim2.new(0.65, 0, 0, 0),
+						LayoutOrder = 3,
 					},
 					e(DisplayValue, {
 						value = values[3],
