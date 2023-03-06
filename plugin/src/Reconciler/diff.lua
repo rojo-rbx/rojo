@@ -44,6 +44,10 @@ local function trueEquals(a, b): boolean
 		end
 		return true
 
+	-- For numbers, compare with epsilon of 0.0001 to avoid floating point inequality
+	elseif typeA == "number" and typeB == "number" then
+		return fuzzyEq(a, b, 0.0001)
+
 	-- For EnumItem->number, compare the EnumItem's value
 	elseif typeA == "number" and typeB == "EnumItem" then
 		return a == b.Value
@@ -59,6 +63,26 @@ local function trueEquals(a, b): boolean
 	-- For CFrames, compare to components with epsilon of 0.0001 to avoid floating point inequality
 	elseif typeA == "CFrame" and typeB == "CFrame" then
 		local aComponents, bComponents = {a:GetComponents()}, {b:GetComponents()}
+		for i, aComponent in aComponents do
+			if not fuzzyEq(aComponent, bComponents[i], 0.0001) then
+				return false
+			end
+		end
+		return true
+
+	-- For Vector3s, compare to components with epsilon of 0.0001 to avoid floating point inequality
+	elseif typeA == "Vector3" and typeB == "Vector3" then
+		local aComponents, bComponents = {a.X, a.Y, a.Z}, {b.X, b.Y, b.Z}
+		for i, aComponent in aComponents do
+			if not fuzzyEq(aComponent, bComponents[i], 0.0001) then
+				return false
+			end
+		end
+		return true
+
+	-- For Vector2s, compare to components with epsilon of 0.0001 to avoid floating point inequality
+	elseif typeA == "Vector2" and typeB == "Vector2" then
+		local aComponents, bComponents = {a.X, a.Y}, {b.X, b.Y}
 		for i, aComponent in aComponents do
 			if not fuzzyEq(aComponent, bComponents[i], 0.0001) then
 				return false
