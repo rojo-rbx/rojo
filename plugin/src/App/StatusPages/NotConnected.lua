@@ -110,6 +110,7 @@ function NotConnectedPage:render()
 			Size = UDim2.new(1, 0, 0, 34),
 			LayoutOrder = 3,
 			BackgroundTransparency = 1,
+			ZIndex = 2,
 		}, {
 			Settings = e(TextButton, {
 				text = "Settings",
