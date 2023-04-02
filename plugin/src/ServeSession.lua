@@ -5,8 +5,10 @@ local Packages = script.Parent.Parent.Packages
 local Log = require(Packages.Log)
 local Fmt = require(Packages.Fmt)
 local t = require(Packages.t)
+local Promise = require(Packages.Promise)
 
 local ChangeBatcher = require(script.Parent.ChangeBatcher)
+local encodePatchUpdate = require(script.Parent.ChangeBatcher.encodePatchUpdate)
 local InstanceMap = require(script.Parent.InstanceMap)
 local PatchSet = require(script.Parent.PatchSet)
 local Reconciler = require(script.Parent.Reconciler)
@@ -123,6 +125,10 @@ function ServeSession:onStatusChanged(callback)
 	self.__statusChangedCallback = callback
 end
 
+function ServeSession:setConfirmCallback(callback)
+	self.__userConfirmCallback = callback
+end
+
 function ServeSession:onPatchApplied(callback)
 	self.__patchAppliedCallback = callback
 end
@@ -132,13 +138,12 @@ function ServeSession:start()
 
 	self.__apiContext:connect()
 		:andThen(function(serverInfo)
-			self:__setStatus(Status.Connected, serverInfo.projectName)
 			self:__applyGameAndPlaceId(serverInfo)
 
-			local rootInstanceId = serverInfo.rootInstanceId
-
-			return self:__initialSync(rootInstanceId)
+			return self:__initialSync(serverInfo)
 				:andThen(function()
+					self:__setStatus(Status.Connected, serverInfo.projectName)
+
 					return self:__mainSyncLoop()
 				end)
 		end)
@@ -202,8 +207,8 @@ function ServeSession:__onActiveScriptChanged(activeScript)
 	self.__apiContext:open(scriptId)
 end
 
-function ServeSession:__initialSync(rootInstanceId)
-	return self.__apiContext:read({ rootInstanceId })
+function ServeSession:__initialSync(serverInfo)
+	return self.__apiContext:read({ serverInfo.rootInstanceId })
 		:andThen(function(readResponseBody)
 			-- Tell the API Context that we're up-to-date with the version of
 			-- the tree defined in this response.
@@ -212,14 +217,14 @@ function ServeSession:__initialSync(rootInstanceId)
 			-- For any instances that line up with the Rojo server's view, start
 			-- tracking them in the reconciler.
 			Log.trace("Matching existing Roblox instances to Rojo IDs")
-			self.__reconciler:hydrate(readResponseBody.instances, rootInstanceId, game)
+			self.__reconciler:hydrate(readResponseBody.instances, serverInfo.rootInstanceId, game)
 
 			-- Calculate the initial patch to apply to the DataModel to catch us
 			-- up to what Rojo thinks the place should look like.
 			Log.trace("Computing changes that plugin needs to make to catch up to server...")
 			local success, catchUpPatch = self.__reconciler:diff(
 				readResponseBody.instances,
-				rootInstanceId,
+				serverInfo.rootInstanceId,
 				game
 			)
 
@@ -229,19 +234,50 @@ function ServeSession:__initialSync(rootInstanceId)
 
 			Log.trace("Computed hydration patch: {:#?}", debugPatch(catchUpPatch))
 
-			-- TODO: Prompt user to notify them of this patch, since it's
-			-- effectively a conflict between the Rojo server and the client. In
-			-- the future, we'll ask which changes the user wants to keep.
-
-			local unappliedPatch = self.__reconciler:applyPatch(catchUpPatch)
-
-			if not PatchSet.isEmpty(unappliedPatch) then
-				Log.warn("Could not apply all changes requested by the Rojo server:\n{}",
-					PatchSet.humanSummary(self.__instanceMap, unappliedPatch))
+			local userDecision = "Accept"
+			if self.__userConfirmCallback ~= nil then
+				userDecision = self.__userConfirmCallback(self.__instanceMap, catchUpPatch, serverInfo)
 			end
 
-			if self.__patchAppliedCallback then
-				pcall(self.__patchAppliedCallback, catchUpPatch, unappliedPatch)
+			if userDecision == "Abort" then
+				return Promise.reject("Aborted Rojo sync operation")
+
+			elseif userDecision == "Reject" and self.__twoWaySync then
+				-- The user wants their studio DOM to write back to their Rojo DOM
+				-- so we will reverse the patch and send it back
+
+				local inversePatch = PatchSet.newEmpty()
+
+				-- Send back the current properties
+				for _, change in catchUpPatch.updated do
+					local instance = self.__instanceMap.fromIds[change.id]
+					if not instance then continue end
+
+					local update = encodePatchUpdate(instance, change.id, change.changedProperties)
+					table.insert(inversePatch.updated, update)
+				end
+				-- Add the removed instances back to Rojo
+				-- selene:allow(empty_if, unused_variable)
+				for _, instance in catchUpPatch.removed do
+					-- TODO: Generate ID for our instance and add it to inversePatch.added
+				end
+				-- Remove the additions we've rejected
+				for id, _change in catchUpPatch.added do
+					table.insert(inversePatch.removed, id)
+				end
+
+				self.__apiContext:write(inversePatch)
+
+			elseif userDecision == "Accept" then
+				local unappliedPatch = self.__reconciler:applyPatch(catchUpPatch)
+
+				if not PatchSet.isEmpty(unappliedPatch) then
+					Log.warn("Could not apply all changes requested by the Rojo server:\n{}",
+						PatchSet.humanSummary(self.__instanceMap, unappliedPatch))
+				end
+				if self.__patchAppliedCallback then
+					pcall(self.__patchAppliedCallback, catchUpPatch, unappliedPatch)
+				end
 			end
 		end)
 end

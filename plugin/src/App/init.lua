@@ -17,6 +17,7 @@ local Dictionary = require(Plugin.Dictionary)
 local ServeSession = require(Plugin.ServeSession)
 local ApiContext = require(Plugin.ApiContext)
 local HeadlessAPI = require(Plugin.HeadlessAPI)
+local PatchSet = require(Plugin.PatchSet)
 local preloadAssets = require(Plugin.preloadAssets)
 local soundPlayer = require(Plugin.soundPlayer)
 local Theme = require(script.Theme)
@@ -38,6 +39,7 @@ local AppStatus = strict("AppStatus", {
 	Settings = "Settings",
 	Permissions = "Permissions",
 	Connecting = "Connecting",
+	Confirming = "Confirming",
 	Connected = "Connected",
 	Error = "Error",
 })
@@ -54,13 +56,16 @@ function App:init()
 	self.port, self.setPort = Roact.createBinding(priorPort or "")
 
 	self.patchInfo, self.setPatchInfo = Roact.createBinding({
-		changes = 0,
+		patch = PatchSet.newEmpty(),
 		timestamp = os.time(),
 	})
+	self.confirmationBindable = Instance.new("BindableEvent")
+	self.confirmationEvent = self.confirmationBindable.Event
 
 	self:setState({
 		appStatus = AppStatus.NotConnected,
 		guiEnabled = false,
+		confirmData = {},
 		notifications = {},
 		toolbarIcon = Assets.Images.PluginButton,
 		popups = {},
@@ -317,32 +322,31 @@ function App:startSession(host: string?, port: string?)
 		twoWaySync = sessionOptions.twoWaySync,
 	})
 
-	serveSession:onPatchApplied(function(patch, unapplied)
+	serveSession:onPatchApplied(function(patch, _unapplied)
+		if PatchSet.isEmpty(patch) then
+			-- Ignore empty patches
+			return
+		end
+
 		local now = os.time()
-		local changes = 0
-
-		for _, set in patch do
-			for _ in set do
-				changes += 1
-			end
-		end
-		for _, set in unapplied do
-			for _ in set do
-				changes -= 1
-			end
-		end
-
-		if changes == 0 then return end
 
 		local old = self.patchInfo:getValue()
 		if now - old.timestamp < 2 then
-			changes += old.changes
-		end
+			-- Patches that apply in the same second are
+			-- considered to be part of the same change for human clarity
+			local merged = PatchSet.newEmpty()
+			PatchSet.assign(merged, old.patch, patch)
 
-		self.setPatchInfo({
-			changes = changes,
-			timestamp = now,
-		})
+			self.setPatchInfo({
+				patch = merged,
+				timestamp = now,
+			})
+		else
+			self.setPatchInfo({
+				patch = patch,
+				timestamp = now,
+			})
+		end
 	end)
 
 	serveSession:onStatusChanged(function(status, details)
@@ -398,6 +402,32 @@ function App:startSession(host: string?, port: string?)
 		end
 	end)
 
+	serveSession:setConfirmCallback(function(instanceMap, patch, serverInfo)
+		if PatchSet.isEmpty(patch) then
+			return "Accept"
+		end
+
+		self:setState({
+			appStatus = AppStatus.Confirming,
+			confirmData = {
+				instanceMap = instanceMap,
+				patch = patch,
+				serverInfo = serverInfo,
+			},
+			toolbarIcon = Assets.Images.PluginButton,
+		})
+
+		self:addNotification(
+			string.format(
+				"Please accept%sor abort the initializing sync session.",
+				Settings:get("twoWaySync") and ", reject, " or " "
+			),
+			7
+		)
+
+		return self.confirmationEvent:Wait()
+	end)
+
 	serveSession:start()
 
 	self.serveSession = serveSession
@@ -408,7 +438,7 @@ function App:startSession(host: string?, port: string?)
 			local patchInfo = table.clone(self.patchInfo:getValue())
 			self.setPatchInfo(patchInfo)
 			local elapsed = os.time() - patchInfo.timestamp
-			task.wait(elapsed < 60 and 1 or elapsed/5)
+			task.wait(elapsed < 60 and 1 or elapsed / 5)
 		end
 	end)
 end
@@ -524,12 +554,28 @@ function App:render()
 						end,
 					}),
 
+					ConfirmingPage = createPageElement(AppStatus.Confirming, {
+						confirmData = self.state.confirmData,
+						createPopup = not self.state.guiEnabled,
+
+						onAbort = function()
+							self.confirmationBindable:Fire("Abort")
+						end,
+						onAccept = function()
+							self.confirmationBindable:Fire("Accept")
+						end,
+						onReject = function()
+							self.confirmationBindable:Fire("Reject")
+						end,
+					}),
+
 					Connecting = createPageElement(AppStatus.Connecting),
 
 					Connected = createPageElement(AppStatus.Connected, {
 						projectName = self.state.projectName,
 						address = self.state.address,
 						patchInfo = self.patchInfo,
+						serveSession = self.serveSession,
 
 						onDisconnect = function()
 							self:endSession()
@@ -583,15 +629,6 @@ function App:render()
 							})
 						end,
 					}),
-
-					Background = Theme.with(function(theme)
-						return e("Frame", {
-							Size = UDim2.new(1, 0, 1, 0),
-							BackgroundColor3 = theme.BackgroundColor,
-							ZIndex = 0,
-							BorderSizePixel = 0,
-						})
-					end),
 				}),
 
 				RojoNotifications = e("ScreenGui", {}, {
@@ -602,10 +639,10 @@ function App:render()
 						Padding = UDim.new(0, 5),
 					}),
 					padding = e("UIPadding", {
-						PaddingTop = UDim.new(0, 5);
-						PaddingBottom = UDim.new(0, 5);
-						PaddingLeft = UDim.new(0, 5);
-						PaddingRight = UDim.new(0, 5);
+						PaddingTop = UDim.new(0, 5),
+						PaddingBottom = UDim.new(0, 5),
+						PaddingLeft = UDim.new(0, 5),
+						PaddingRight = UDim.new(0, 5),
 					}),
 					notifs = e(Notifications, {
 						soundPlayer = self.props.soundPlayer,
@@ -626,7 +663,9 @@ function App:render()
 				onTriggered = function()
 					if self.serveSession == nil or self.serveSession:getStatus() == ServeSession.Status.NotStarted then
 						self:startSession()
-					elseif self.serveSession ~= nil and self.serveSession:getStatus() == ServeSession.Status.Connected then
+					elseif
+						self.serveSession ~= nil and self.serveSession:getStatus() == ServeSession.Status.Connected
+					then
 						self:endSession()
 					end
 				end,
@@ -674,7 +713,7 @@ function App:render()
 							}
 						end)
 					end,
-				})
+				}),
 			}),
 		}),
 	})

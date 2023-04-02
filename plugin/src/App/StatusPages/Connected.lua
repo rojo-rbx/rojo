@@ -3,14 +3,18 @@ local Plugin = Rojo.Plugin
 local Packages = Rojo.Packages
 
 local Roact = require(Packages.Roact)
+local Flipper = require(Packages.Flipper)
 
+local bindingUtil = require(Plugin.App.bindingUtil)
 local Theme = require(Plugin.App.Theme)
 local Assets = require(Plugin.Assets)
+local PatchSet = require(Plugin.PatchSet)
 
 local Header = require(Plugin.App.Components.Header)
 local IconButton = require(Plugin.App.Components.IconButton)
 local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
 local Tooltip = require(Plugin.App.Components.Tooltip)
+local PatchVisualizer = require(Plugin.App.Components.PatchVisualizer)
 
 local e = Roact.createElement
 
@@ -32,6 +36,50 @@ function timeSinceText(elapsed: number): string
 	end
 
 	return ageText
+end
+
+local function ChangesDrawer(props)
+	if props.rendered == false then
+		return nil
+	end
+
+	return Theme.with(function(theme)
+		return e(BorderedContainer, {
+			transparency = props.transparency,
+			size = props.height:map(function(y)
+				return UDim2.new(1, 0, y, -180 * y)
+			end),
+			position = UDim2.new(0, 0, 1, 0),
+			anchorPoint = Vector2.new(0, 1),
+			layoutOrder = props.layoutOrder,
+		}, {
+			Close = e(IconButton, {
+				icon = Assets.Images.Icons.Close,
+				iconSize = 24,
+				color = theme.ConnectionDetails.DisconnectColor,
+				transparency = props.transparency,
+
+				position = UDim2.new(1, 0, 0, 0),
+				anchorPoint = Vector2.new(1, 0),
+
+				onClick = props.onClose,
+			}, {
+				Tip = e(Tooltip.Trigger, {
+					text = "Close the patch visualizer"
+				}),
+			}),
+
+			PatchVisualizer = e(PatchVisualizer, {
+				size = UDim2.new(1, 0, 1, 0),
+				transparency = props.transparency,
+				layoutOrder = 3,
+
+				columnVisibility = {true, false, true},
+				patch = props.patchInfo:getValue().patch,
+				instanceMap = props.serveSession.__instanceMap,
+			}),
+		})
+	end)
 end
 
 local function ConnectionDetails(props)
@@ -107,9 +155,44 @@ end
 
 local ConnectedPage = Roact.Component:extend("ConnectedPage")
 
+function ConnectedPage:init()
+	self.changeDrawerMotor = Flipper.SingleMotor.new(0)
+	self.changeDrawerHeight = bindingUtil.fromMotor(self.changeDrawerMotor)
+
+	self.changeDrawerMotor:onStep(function(value)
+		local renderChanges = value > 0.05
+
+		self:setState(function(state)
+			if state.renderChanges == renderChanges then
+				return nil
+			end
+
+			return {
+				renderChanges = renderChanges,
+			}
+		end)
+	end)
+
+	self:setState({
+		renderChanges = false,
+	})
+end
+
 function ConnectedPage:render()
 	return Theme.with(function(theme)
 		return Roact.createFragment({
+			Padding = e("UIPadding", {
+				PaddingLeft = UDim.new(0, 20),
+				PaddingRight = UDim.new(0, 20),
+			}),
+
+			Layout = e("UIListLayout", {
+				VerticalAlignment = Enum.VerticalAlignment.Center,
+				FillDirection = Enum.FillDirection.Vertical,
+				SortOrder = Enum.SortOrder.LayoutOrder,
+				Padding = UDim.new(0, 10),
+			}),
+
 			Header = e(Header, {
 				transparency = self.props.transparency,
 				layoutOrder = 1,
@@ -124,12 +207,13 @@ function ConnectedPage:render()
 				onDisconnect = self.props.onDisconnect,
 			}),
 
-			Info = e("TextLabel", {
+			ChangeInfo = e("TextButton", {
 				Text = self.props.patchInfo:map(function(info)
+					local changes = PatchSet.countChanges(info.patch)
 					return string.format(
 						"<i>Synced %d change%s %s</i>",
-						info.changes,
-						info.changes == 1 and "" or "s",
+						changes,
+						changes == 1 and "" or "s",
 						timeSinceText(os.time() - info.timestamp)
 					)
 				end),
@@ -146,18 +230,36 @@ function ConnectedPage:render()
 
 				LayoutOrder = 3,
 				BackgroundTransparency = 1,
+
+				[Roact.Event.Activated] = function()
+					if self.state.renderChanges then
+						self.changeDrawerMotor:setGoal(Flipper.Spring.new(0, {
+							frequency = 4,
+							dampingRatio = 1,
+						}))
+					else
+						self.changeDrawerMotor:setGoal(Flipper.Spring.new(1, {
+							frequency = 3,
+							dampingRatio = 1,
+						}))
+					end
+				end,
 			}),
 
-			Layout = e("UIListLayout", {
-				VerticalAlignment = Enum.VerticalAlignment.Center,
-				FillDirection = Enum.FillDirection.Vertical,
-				SortOrder = Enum.SortOrder.LayoutOrder,
-				Padding = UDim.new(0, 10),
-			}),
+			ChangesDrawer = e(ChangesDrawer, {
+				rendered = self.state.renderChanges,
+				transparency = self.props.transparency,
+				patchInfo = self.props.patchInfo,
+				serveSession = self.props.serveSession,
+				height = self.changeDrawerHeight,
+				layoutOrder = 4,
 
-			Padding = e("UIPadding", {
-				PaddingLeft = UDim.new(0, 20),
-				PaddingRight = UDim.new(0, 20),
+				onClose = function()
+					self.changeDrawerMotor:setGoal(Flipper.Spring.new(0, {
+						frequency = 4,
+						dampingRatio = 1,
+					}))
+				end,
 			}),
 		})
 	end)

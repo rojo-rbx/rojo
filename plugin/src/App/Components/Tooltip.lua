@@ -23,7 +23,7 @@ local TooltipContext = Roact.createContext({})
 local function Popup(props)
 	local textSize = TextService:GetTextSize(
 		props.Text, 16, Enum.Font.GothamMedium, Vector2.new(math.min(props.parentSize.X, 160), math.huge)
-	) + TEXT_PADDING
+	) + TEXT_PADDING + (Vector2.one * 2)
 
 	local trigger = props.Trigger:getValue()
 
@@ -68,12 +68,12 @@ local function Popup(props)
 					if displayAbove then
 						UDim2.new(
 							0, math.clamp(props.Position.X - X, 6, textSize.X-6),
-							1, -3
+							1, -1
 						)
 					else
 						UDim2.new(
 							0, math.clamp(props.Position.X - X, 6, textSize.X-6),
-							0, -TAIL_SIZE+3
+							0, -TAIL_SIZE+1
 						),
 				Size = UDim2.fromOffset(TAIL_SIZE, TAIL_SIZE),
 				AnchorPoint = Vector2.new(0.5, 0),
