@@ -38,9 +38,21 @@ pub fn snapshot_lua(
     };
 
     let contents = vfs.read(path)?;
-    let contents_str = str::from_utf8(&contents)
+    let mut contents_str = str::from_utf8(&contents)
         .with_context(|| format!("File was not valid UTF-8: {}", path.display()))?
         .to_owned();
+
+    let should_apply_boilerplate = |item_path: &Path| {
+        context
+            .boilerplate_ignore_rules
+            .iter()
+            .all(|rule| rule.passes(item_path))
+    };
+    
+    if should_apply_boilerplate(path) {
+        let boilerplate_text = &context.boilerplate_text;
+        contents_str = format!("{}{}", boilerplate_text, contents_str);
+    }
 
     let meta_path = path.with_file_name(format!("{}.meta.json", instance_name));
 

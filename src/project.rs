@@ -73,6 +73,17 @@ pub struct Project {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub serve_address: Option<IpAddr>,
 
+    /// If specified, sets the boilerplate text that rojo should add to
+    /// the beginning of scripts when parsing.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub boilerplate_text: Option<String>,
+
+    /// A list of globs, relative to the folder the project file is in, that
+    /// match files that should be excluded when Rojo is applying boilerplate
+    /// text.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub glob_boilerplate_ignore_paths: Vec<Glob>,
+
     /// A list of globs, relative to the folder the project file is in, that
     /// match files that should be excluded if Rojo encounters them.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]

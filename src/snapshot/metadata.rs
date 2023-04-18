@@ -2,6 +2,7 @@ use std::{
     fmt,
     path::{Path, PathBuf},
     sync::Arc,
+    string::String,
 };
 
 use serde::{Deserialize, Serialize};
@@ -103,6 +104,10 @@ impl Default for InstanceMetadata {
 pub struct InstanceContext {
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub path_ignore_rules: Arc<Vec<PathIgnoreRule>>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub boilerplate_ignore_rules: Arc<Vec<PathIgnoreRule>>,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub boilerplate_text: String,
 }
 
 impl InstanceContext {
@@ -123,12 +128,38 @@ impl InstanceContext {
         let rules = Arc::make_mut(&mut self.path_ignore_rules);
         rules.extend(new_rules);
     }
+    /// Extend the list of boilerplate ignore rules in the context with the given new rules.
+    pub fn add_boilerplate_ignore_rules<I>(&mut self, new_rules: I)
+    where
+        I: IntoIterator<Item = PathIgnoreRule>,
+        I::IntoIter: ExactSizeIterator,
+    {
+        let new_rules = new_rules.into_iter();
+
+        // If the iterator is empty, we can skip cloning our list of ignore
+        // rules and appending to it.
+        if new_rules.len() == 0 {
+            return;
+        }
+
+        let rules = Arc::make_mut(&mut self.boilerplate_ignore_rules);
+        rules.extend(new_rules);
+    }
+    /// Set the boilerplate text in the context to the given text.
+    pub fn set_boilerplate_text(&mut self, text: Option<String>)
+    {
+        if let Some(new_text) = text {
+            self.boilerplate_text = new_text;
+        }
+    }
 }
 
 impl Default for InstanceContext {
     fn default() -> Self {
         InstanceContext {
             path_ignore_rules: Arc::new(Vec::new()),
+            boilerplate_ignore_rules: Arc::new(Vec::new()),
+            boilerplate_text: String::from(""),
         }
     }
 }

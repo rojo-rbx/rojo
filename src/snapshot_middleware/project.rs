@@ -31,6 +31,15 @@ pub fn snapshot_project(
 
     context.add_path_ignore_rules(rules);
 
+    let boilerplate_rules = project.glob_boilerplate_ignore_paths.iter().map(|glob| PathIgnoreRule {
+        glob: glob.clone(),
+        base_path: project.folder_location().to_path_buf(),
+    });
+
+    context.add_boilerplate_ignore_rules(boilerplate_rules);
+
+    context.set_boilerplate_text(project.boilerplate_text);
+
     match snapshot_project_node(&context, path, &project.name, &project.tree, vfs, None)? {
         Some(found_snapshot) => {
             let mut snapshot = found_snapshot;
