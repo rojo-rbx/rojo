@@ -1900,6 +1900,7 @@ dependencies = [
  "maplit",
  "memofs",
  "notify",
+ "num_cpus",
  "opener",
  "paste",
  "pretty_assertions",

@@ -79,7 +79,7 @@ impl SourcemapCommand {
         // Pre-build a rayon threadpool with a low number of threads to avoid
         // dynamic creation overhead on systems with a high number of cpus.
         rayon::ThreadPoolBuilder::new()
-            .num_threads(6)
+            .num_threads(num_cpus::get().min(6))
             .build_global()
             .unwrap();
 
