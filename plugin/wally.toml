@@ -1,7 +1,7 @@
 [package]
 name = "rojo-rbx/rojo"
 description = "Rojo enables Roblox developers to use professional-grade software engineering tools"
-version = "7.2.1"
+version = "7.3.0"
 license = "MPL-2.0"
 authors = ["LPGhatguy (https://lpg.space/)"]
 registry = "https://github.com/upliftgames/wally-index"
