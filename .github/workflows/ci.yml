@@ -11,7 +11,7 @@ on:
 
 jobs:
   build:
-    name: Build and Test
+    name: Build, Test, and Publish
     runs-on: ubuntu-latest
 
     strategy:
@@ -44,6 +44,11 @@ jobs:
 
     - name: Test
       run: cargo test --locked --verbose
+      
+    - name: Publish
+      run: cargo publish --token ${CRATES_TOKEN}
+      env:
+        CRATES_TOKEN: ${{ secrets.CRATES_TOKEN }}
 
   lint:
     name: Rustfmt and Clippy
