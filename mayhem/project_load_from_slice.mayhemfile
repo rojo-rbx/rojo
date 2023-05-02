@@ -1,0 +1,5 @@
+project: rojo
+target: project_load_from_slice
+duration: 600
+cmds:
+    - cmd: /fuzzers/fuzz_project_load_from_slice

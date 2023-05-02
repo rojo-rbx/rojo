@@ -1,0 +1,22 @@
+[package]
+name = "fuzz_rojo"
+version = "0.0.0"
+authors = ["Automatically generated"]
+publish = false
+edition = "2018"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+rojo = { path = ".." }
+libfuzzer-sys = "0.4.0"
+
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "fuzz_project_load_from_slice"
+path = "fuzz_targets/project_load_from_slice.rs"
+test = false
+doc = false
