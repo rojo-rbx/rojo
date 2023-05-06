@@ -1,6 +1,9 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Significantly improved performance of `rojo sourcemap`. ([#668])
+
+[#668]: https://github.com/rojo-rbx/rojo/pull/668
 
 ## [7.3.0] - April 22, 2023
 * Added `$attributes` to project format. ([#574])
