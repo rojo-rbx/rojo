@@ -29,5 +29,5 @@ dependencies = []
 
 [[package]]
 name = "rojo-rbx/rojo"
-version = "7.2.1"
+version = "7.3.0"
 dependencies = [["Flipper", "reselim/flipper@2.0.0"], ["Promise", "evaera/promise@4.0.0"], ["Roact", "roblox/roact@1.4.4"], ["t", "osyrisrblx/t@3.0.0"]]
