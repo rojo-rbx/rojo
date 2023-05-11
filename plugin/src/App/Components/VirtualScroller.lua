@@ -104,13 +104,18 @@ function VirtualScroller:render()
 
 	local items = {}
 	for i = state.Start, state.End do
+		local content = props.render(i)
+		if content == nil then
+			continue
+		end
+
 		items["Item" .. i] = e("Frame", {
 			LayoutOrder = i,
 			Size = props.getHeightBinding(i):map(function(height)
 				return UDim2.new(1, 0, 0, height)
 			end),
 			BackgroundTransparency = 1,
-		}, props.render(i))
+		}, content)
 	end
 
 	return Theme.with(function(theme)
