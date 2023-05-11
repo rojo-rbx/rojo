@@ -99,6 +99,13 @@ function VirtualScroller:refresh()
 	})
 end
 
+function VirtualScroller:didUpdate(previousProps)
+	if self.props.count ~= previousProps.count then
+		-- Items have changed, so we need to refresh
+		self:refresh()
+	end
+end
+
 function VirtualScroller:render()
 	local props, state = self.props, self.state
 
