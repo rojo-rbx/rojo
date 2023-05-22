@@ -340,7 +340,7 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref) -> Option<
                 project_path,
                 instance_name,
                 project_node,
-                &vfs,
+                vfs,
                 parent_class.as_ref().map(|name| name.as_str()),
             );
 
