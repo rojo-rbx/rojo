@@ -54,7 +54,7 @@ fn main() -> Result<(), anyhow::Error> {
     });
 
     let out_path = Path::new(&out_dir).join("plugin.bincode");
-    let out_file = File::create(&out_path)?;
+    let out_file = File::create(out_path)?;
 
     bincode::serialize_into(out_file, &snapshot)?;
 
