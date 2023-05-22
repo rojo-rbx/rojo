@@ -39,7 +39,7 @@ impl ServeCommand {
 
         let vfs = Vfs::new_default();
 
-        let session = Arc::new(ServeSession::new(vfs, &project_path)?);
+        let session = Arc::new(ServeSession::new(vfs, project_path)?);
 
         let ip = self
             .address
