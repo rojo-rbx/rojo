@@ -62,12 +62,6 @@ jobs:
       with:
         version: 'v0.2.7'
 
-    - name: Install packages
-      run: |
-        cd plugin
-        wally install
-        cd ..
-
     - name: Rustfmt
       run: cargo fmt -- --check
 

@@ -115,13 +115,6 @@ jobs:
           trust-check: false
           version: 'v0.2.6'
 
-      - name: Install packages
-        run: |
-          cd plugin
-          wally install
-          cd ..
-        shell: bash
-
       - name: Build Release
         run: cargo build --release --locked --verbose
         env:
