@@ -37,7 +37,7 @@ where
             .and_then(|name| name.to_str())
             .with_context(|| format!("Path did not have a file name: {}", path.display()))?;
 
-        match_trailing(&file_name, suffix)
+        match_trailing(file_name, suffix)
             .with_context(|| format!("Path did not end in {}: {}", suffix, path.display()))
     }
 }
