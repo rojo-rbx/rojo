@@ -37,7 +37,7 @@ pub struct RojoTree {
 
 impl RojoTree {
     pub fn new(snapshot: InstanceSnapshot) -> RojoTree {
-        let root_builder = InstanceBuilder::new(snapshot.class_name.to_owned())
+        let root_builder = InstanceBuilder::new(snapshot.class_name)
             .with_name(snapshot.name.to_owned())
             .with_properties(snapshot.properties);
 
