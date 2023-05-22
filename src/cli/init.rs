@@ -184,7 +184,7 @@ fn try_git_init(path: &Path, git_ignore: &str) -> Result<(), anyhow::Error> {
 /// already inside a Git repository.
 fn should_git_init(path: &Path) -> bool {
     let result = Command::new("git")
-        .args(&["rev-parse", "--is-inside-work-tree"])
+        .args(["rev-parse", "--is-inside-work-tree"])
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .current_dir(path)
