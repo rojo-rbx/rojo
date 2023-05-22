@@ -245,7 +245,7 @@ impl<'a> InstanceWithMeta<'a> {
     }
 
     pub fn metadata(&self) -> &'a InstanceMetadata {
-        &self.metadata
+        self.metadata
     }
 }
 
