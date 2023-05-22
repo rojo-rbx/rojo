@@ -197,7 +197,7 @@ impl PathNode {
     pub fn path(&self) -> &Path {
         match self {
             PathNode::Required(pathbuf) => pathbuf,
-            PathNode::Optional(OptionalPathNode { optional }) => &optional,
+            PathNode::Optional(OptionalPathNode { optional }) => optional,
         }
     }
 }
