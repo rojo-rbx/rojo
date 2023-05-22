@@ -337,7 +337,7 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref) -> Option<
 
             let snapshot_result = snapshot_project_node(
                 &metadata.context,
-                &project_path,
+                project_path,
                 instance_name,
                 project_node,
                 &vfs,
