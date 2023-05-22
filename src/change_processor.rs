@@ -309,7 +309,7 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref) -> Option<
                     }
                 };
 
-                let patch_set = compute_patch_set(snapshot, &tree, id);
+                let patch_set = compute_patch_set(snapshot, tree, id);
                 apply_patch_set(tree, patch_set)
             }
             Ok(None) => {
