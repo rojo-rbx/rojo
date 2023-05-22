@@ -294,6 +294,6 @@ impl InstanceWithMetaMut<'_> {
     }
 
     pub fn metadata(&self) -> &InstanceMetadata {
-        &self.metadata
+        self.metadata
     }
 }
