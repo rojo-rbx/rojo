@@ -251,7 +251,7 @@ fn on_vfs_event(
 
     let mut current_path = path.as_path();
     let affected_ids = loop {
-        let ids = tree.get_ids_at_path(&current_path);
+        let ids = tree.get_ids_at_path(current_path);
 
         log::trace!("Path {} affects IDs {:?}", current_path.display(), ids);
 
