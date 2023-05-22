@@ -267,7 +267,7 @@ fn on_vfs_event(
     };
 
     for id in affected_ids {
-        if let Some(patch) = compute_and_apply_changes(&mut tree, &vfs, id) {
+        if let Some(patch) = compute_and_apply_changes(&mut tree, vfs, id) {
             if !patch.is_empty() {
                 applied_patches.push(patch);
             }
