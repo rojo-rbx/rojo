@@ -20,6 +20,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: true
 
     - name: Install Rust
       uses: actions-rs/toolchain@v1
@@ -33,12 +35,6 @@ jobs:
       with:
         version: 'v0.2.7'
 
-    - name: Install packages
-      run: |
-        cd plugin
-        wally install
-        cd ..
-
     - name: Build
       run: cargo build --locked --verbose
 
@@ -51,6 +47,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: true
 
     - name: Install Rust
       uses: actions-rs/toolchain@v1
@@ -63,12 +61,6 @@ jobs:
       uses: ok-nick/setup-aftman@v0.3.0
       with:
         version: 'v0.2.7'
-
-    - name: Install packages
-      run: |
-        cd plugin
-        wally install
-        cd ..
 
     - name: Rustfmt
       run: cargo fmt -- --check
