@@ -133,7 +133,7 @@ function SettingsPage:render()
 				name = "Log Level",
 				description = "Plugin output verbosity level",
 				transparency = self.props.transparency,
-				layoutOrder = 5,
+				layoutOrder = 100,
 
 				options = invertedLevels,
 				showReset = Settings:getBinding("logLevel"):map(function(value)
@@ -149,7 +149,7 @@ function SettingsPage:render()
 				name = "Typechecking",
 				description = "Toggle typechecking on the API surface",
 				transparency = self.props.transparency,
-				layoutOrder = 6,
+				layoutOrder = 101,
 			}),
 
 			Layout = e("UIListLayout", {
