@@ -67,7 +67,7 @@ function App:init()
 		toolbarIcon = Assets.Images.PluginButton,
 	})
 
-	if self:getLastSyncTimestamp() then
+	if Settings:get("syncReminder") and self:getLastSyncTimestamp() then
 		-- TODO: Build a system for notification actions
 		-- and then utilize them here
 		local dismiss = self:addNotification("You've previously synced this place. Would you like to reconnect?", 120)
