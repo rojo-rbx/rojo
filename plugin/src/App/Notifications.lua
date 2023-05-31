@@ -28,10 +28,8 @@ function Notification:init()
 	self.lifetime = self.props.timeout
 
 	self.motor:onStep(function(value)
-		if value <= 0 then
-			if self.props.onClose then
-				self.props.onClose()
-			end
+		if value <= 0 and self.props.onClose then
+			self.props.onClose()
 		end
 	end)
 end
@@ -91,7 +89,7 @@ function Notification:render()
 	local textBounds = TextService:GetTextSize(
 		self.props.text,
 		15,
-		Enum.Font.GothamSemibold,
+		Enum.Font.GothamMedium,
 		Vector2.new(350, 700)
 	)
 
@@ -137,7 +135,7 @@ function Notification:render()
 					}),
 					Info = e("TextLabel", {
 						Text = self.props.text,
-						Font = Enum.Font.GothamSemibold,
+						Font = Enum.Font.GothamMedium,
 						TextSize = 15,
 						TextColor3 = theme.Notification.InfoColor,
 						TextTransparency = transparency,
@@ -180,15 +178,15 @@ local Notifications = Roact.Component:extend("Notifications")
 function Notifications:render()
 	local notifs = {}
 
-	for index, notif in ipairs(self.props.notifications) do
-		notifs[notif] = e(Notification, {
+	for id, notif in self.props.notifications do
+		notifs["NotifID_" .. id] = e(Notification, {
 			soundPlayer = self.props.soundPlayer,
 			text = notif.text,
 			timestamp = notif.timestamp,
 			timeout = notif.timeout,
 			layoutOrder = (notif.timestamp - baseClock),
 			onClose = function()
-				self.props.onClose(index)
+				self.props.onClose(id)
 			end,
 		})
 	end

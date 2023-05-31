@@ -57,6 +57,7 @@ function App:init()
 	})
 	self.confirmationBindable = Instance.new("BindableEvent")
 	self.confirmationEvent = self.confirmationBindable.Event
+	self.notifId = 0
 
 	self:setState({
 		appStatus = AppStatus.NotConnected,
@@ -67,9 +68,9 @@ function App:init()
 	})
 
 	if priorHost and priorPort then
-		-- TODO: Build a system for notification actions and external dismissability
+		-- TODO: Build a system for notification actions
 		-- and then utilize them here
-		self:addNotification("You've previously synced this place. Would you like to reconnect?", 120)
+		local dismiss = self:addNotification("You've previously synced this place. Would you like to reconnect?", 120)
 	end
 end
 
@@ -78,21 +79,28 @@ function App:addNotification(text: string, timeout: number?)
 		return
 	end
 
+	self.notifId += 1
+	local id = self.notifId
+
 	local notifications = table.clone(self.state.notifications)
-	table.insert(notifications, {
+	notifications[id] = {
 		text = text,
 		timestamp = DateTime.now().UnixTimestampMillis,
 		timeout = timeout or 3,
-	})
+	}
 
 	self:setState({
 		notifications = notifications,
 	})
+
+	return function()
+		self:closeNotification(id)
+	end
 end
 
-function App:closeNotification(index: number)
+function App:closeNotification(id: number)
 	local notifications = table.clone(self.state.notifications)
-	table.remove(notifications, index)
+	notifications[id] = nil
 
 	self:setState({
 		notifications = notifications,
@@ -483,8 +491,8 @@ function App:render()
 					notifs = e(Notifications, {
 						soundPlayer = self.props.soundPlayer,
 						notifications = self.state.notifications,
-						onClose = function(index)
-							self:closeNotification(index)
+						onClose = function(id)
+							self:closeNotification(id)
 						end,
 					}),
 				}),
