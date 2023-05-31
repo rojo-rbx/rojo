@@ -92,6 +92,112 @@ function PatchSet.hasUpdates(patchSet)
 end
 
 --[[
+	Tells whether the given PatchSet contains changes to the given instance id
+]]
+function PatchSet.containsId(patchSet, instanceMap, id)
+	for addedId in patchSet.added do
+		if addedId == id then
+			return true
+		end
+	end
+
+	for _, idOrInstance in patchSet.removed do
+		local removedId = if type(idOrInstance) == "string" then idOrInstance else instanceMap.fromInstances[idOrInstance]
+		if removedId == id then
+			return true
+		end
+	end
+
+	for _, update in patchSet.updated do
+		if update.id == id then
+			return true
+		end
+	end
+
+	return false
+end
+
+--[[
+	Tells whether the given PatchSet contains changes to the given instance
+]]
+function PatchSet.containsInstance(patchSet, instanceMap, instance)
+	local id = instanceMap.fromInstances[instance]
+	if id == nil then
+		return false
+	end
+
+	return PatchSet.containsId(patchSet, instanceMap, id)
+end
+
+--[[
+	Tells whether the given PatchSet contains changes to nothing but the given instance id
+]]
+function PatchSet.containsOnlyId(patchSet, instanceMap, id)
+	if not PatchSet.containsId(patchSet, instanceMap, id) then
+		-- Patch doesn't contain the id at all
+		return false
+	end
+
+	for addedId in patchSet.added do
+		if addedId ~= id then
+			return false
+		end
+	end
+
+	for _, idOrInstance in patchSet.removed do
+		local removedId = if type(idOrInstance) == "string" then idOrInstance else instanceMap.fromInstances[idOrInstance]
+		if removedId ~= id then
+			return false
+		end
+	end
+
+	for _, update in patchSet.updated do
+		if update.id ~= id then
+			return false
+		end
+	end
+
+	return true
+end
+
+--[[
+	Tells whether the given PatchSet contains changes to nothing but the given instance
+]]
+function PatchSet.containsOnlyInstance(patchSet, instanceMap, instance)
+	local id = instanceMap.fromInstances[instance]
+	if id == nil then
+		return false
+	end
+
+	return PatchSet.containsOnlyId(patchSet, instanceMap, id)
+end
+
+--[[
+	Returns the update to the given instance id, or nil if there aren't any
+]]
+function PatchSet.getUpdateForId(patchSet, id)
+	for _, update in patchSet.updated do
+		if update.id == id then
+			return update
+		end
+	end
+
+	return nil
+end
+
+--[[
+	Returns the update to the given instance, or nil if there aren't any
+]]
+function PatchSet.getUpdateForInstance(patchSet, instanceMap, instance)
+	local id = instanceMap.fromInstances[instance]
+	if id == nil then
+		return nil
+	end
+
+	return PatchSet.getUpdateForId(patchSet, id)
+end
+
+--[[
 	Tells whether the given PatchSets are equal.
 ]]
 function PatchSet.isEqual(patchA, patchB)
