@@ -68,13 +68,29 @@ function App:init()
 	})
 
 	if Settings:get("syncReminder") and self:getLastSyncTimestamp() then
-		-- TODO: Build a system for notification actions
-		-- and then utilize them here
-		local dismiss = self:addNotification("You've previously synced this place. Would you like to reconnect?", 120)
+		self:addNotification("You've previously synced this place. Would you like to reconnect?", 300, {
+			Connect = {
+				text = "Connect",
+				style = "Solid",
+				layoutOrder = 1,
+				onClick = function(notification)
+					notification:dismiss()
+					self:startSession()
+				end
+			},
+			Dismiss = {
+				text = "Dismiss",
+				style = "Bordered",
+				layoutOrder = 2,
+				onClick = function(notification)
+					notification:dismiss()
+				end,
+			},
+		})
 	end
 end
 
-function App:addNotification(text: string, timeout: number?)
+function App:addNotification(text: string, timeout: number?, actions: { [string]: {text: string, style: string, layoutOrder: number, onClick: (any) -> ()} }?)
 	if not Settings:get("showNotifications") then
 		return
 	end
@@ -87,6 +103,7 @@ function App:addNotification(text: string, timeout: number?)
 		text = text,
 		timestamp = DateTime.now().UnixTimestampMillis,
 		timeout = timeout or 3,
+		actions = actions,
 	}
 
 	self:setState({
