@@ -1,5 +1,6 @@
 local Players = game:GetService("Players")
 local ServerStorage = game:GetService("ServerStorage")
+local RunService = game:GetService("RunService")
 
 local Rojo = script:FindFirstAncestor("Rojo")
 local Plugin = Rojo.Plugin
@@ -67,7 +68,11 @@ function App:init()
 		toolbarIcon = Assets.Images.PluginButton,
 	})
 
-	if Settings:get("syncReminder") and self:getLastSyncTimestamp() then
+	if
+		RunService:IsEdit()
+		and Settings:get("syncReminder")
+		and self:getLastSyncTimestamp()
+	then
 		self:addNotification("You've previously synced this place. Would you like to reconnect?", 300, {
 			Connect = {
 				text = "Connect",
