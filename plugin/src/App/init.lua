@@ -65,6 +65,12 @@ function App:init()
 		notifications = {},
 		toolbarIcon = Assets.Images.PluginButton,
 	})
+
+	if priorHost and priorPort then
+		-- TODO: Build a system for notification actions and external dismissability
+		-- and then utilize them here
+		self:addNotification("You've previously synced this place. Would you like to reconnect?", 120)
+	end
 end
 
 function App:addNotification(text: string, timeout: number?)
@@ -457,7 +463,11 @@ function App:render()
 					}),
 				}),
 
-				RojoNotifications = e("ScreenGui", {}, {
+				RojoNotifications = e("ScreenGui", {
+					ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+					ResetOnSpawn = false,
+					DisplayOrder = 100,
+				}, {
 					layout = e("UIListLayout", {
 						SortOrder = Enum.SortOrder.LayoutOrder,
 						HorizontalAlignment = Enum.HorizontalAlignment.Right,
