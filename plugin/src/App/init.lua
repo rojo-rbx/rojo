@@ -67,7 +67,7 @@ function App:init()
 		toolbarIcon = Assets.Images.PluginButton,
 	})
 
-	if priorHost and priorPort then
+	if self:getLastSyncTimestamp() then
 		-- TODO: Build a system for notification actions
 		-- and then utilize them here
 		local dismiss = self:addNotification("You've previously synced this place. Would you like to reconnect?", 120)
@@ -131,19 +131,25 @@ function App:setPriorEndpoint(host: string, port: string)
 		end
 	end
 
-	if host == Config.defaultHost and port == Config.defaultPort then
-		-- Don't save default
-		priorEndpoints[tostring(game.PlaceId)] = nil
-	else
-		priorEndpoints[tostring(game.PlaceId)] = {
-			host = host ~= Config.defaultHost and host or nil,
-			port = port ~= Config.defaultPort and port or nil,
-			timestamp = os.time(),
-		}
-		Log.trace("Saved last used endpoint for {}", game.PlaceId)
-	end
+	priorEndpoints[tostring(game.PlaceId)] = {
+		host = if host ~= Config.defaultHost then host else nil,
+		port = if port ~= Config.defaultPort then port else nil,
+		timestamp = os.time(),
+	}
+	Log.trace("Saved last used endpoint for {}", game.PlaceId)
+
 
 	Settings:set("priorEndpoints", priorEndpoints)
+end
+
+function App:getLastSyncTimestamp()
+	local priorEndpoints = Settings:get("priorEndpoints")
+	if not priorEndpoints then return end
+
+	local place = priorEndpoints[tostring(game.PlaceId)]
+	if not place then return end
+
+	return place.timestamp
 end
 
 function App:getHostAndPort()
