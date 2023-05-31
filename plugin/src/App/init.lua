@@ -70,6 +70,7 @@ function App:init()
 
 	if
 		RunService:IsEdit()
+		and self.serveSession == nil
 		and Settings:get("syncReminder")
 		and self:getLastSyncTimestamp()
 	then
