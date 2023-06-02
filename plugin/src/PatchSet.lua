@@ -100,7 +100,7 @@ function PatchSet.containsId(patchSet, instanceMap, id)
 	end
 
 	for _, idOrInstance in patchSet.removed do
-		local removedId = if type(idOrInstance) == "string" then idOrInstance else instanceMap.fromInstances[idOrInstance]
+		local removedId = if Types.RbxId(idOrInstance) then idOrInstance else instanceMap.fromInstances[idOrInstance]
 		if removedId == id then
 			return true
 		end
@@ -144,7 +144,7 @@ function PatchSet.containsOnlyId(patchSet, instanceMap, id)
 	end
 
 	for _, idOrInstance in patchSet.removed do
-		local removedId = if type(idOrInstance) == "string" then idOrInstance else instanceMap.fromInstances[idOrInstance]
+		local removedId = if Types.RbxId(idOrInstance) then idOrInstance else instanceMap.fromInstances[idOrInstance]
 		if removedId ~= id then
 			return false
 		end
@@ -257,7 +257,7 @@ function PatchSet.humanSummary(instanceMap, patchSet)
 	for _, idOrInstance in ipairs(patchSet.removed) do
 		local instance, id
 
-		if type(idOrInstance) == "string" then
+		if Types.RbxId(idOrInstance) then
 			id = idOrInstance
 			instance = instanceMap.fromIds[id]
 		else
