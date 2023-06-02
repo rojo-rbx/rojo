@@ -116,7 +116,8 @@ function PatchSet.containsId(patchSet, instanceMap, id)
 end
 
 --[[
-	Tells whether the given PatchSet contains changes to the given instance
+	Tells whether the given PatchSet contains changes to the given instance. 
+	If the given InstanceMap does not contain the instance, this function always returns false.
 ]]
 function PatchSet.containsInstance(patchSet, instanceMap, instance)
 	local id = instanceMap.fromInstances[instance]
