@@ -95,10 +95,8 @@ end
 	Tells whether the given PatchSet contains changes to the given instance id
 ]]
 function PatchSet.containsId(patchSet, instanceMap, id)
-	for addedId in patchSet.added do
-		if addedId == id then
-			return true
-		end
+	if patchSet.added[id] ~= nil then
+		return true
 	end
 
 	for _, idOrInstance in patchSet.removed do
