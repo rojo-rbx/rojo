@@ -186,7 +186,8 @@ function PatchSet.getUpdateForId(patchSet, id)
 end
 
 --[[
-	Returns the update to the given instance, or nil if there aren't any
+	Returns the update to the given instance, or nil if there aren't any.
+	If the given InstanceMap does not contain the instance, this function always returns nil.
 ]]
 function PatchSet.getUpdateForInstance(patchSet, instanceMap, instance)
 	local id = instanceMap.fromInstances[instance]
