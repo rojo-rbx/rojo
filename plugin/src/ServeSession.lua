@@ -232,6 +232,18 @@ function ServeSession:__initialSync(serverInfo)
 				Log.error("Could not compute a diff to catch up to the Rojo server: {:#?}", catchUpPatch)
 			end
 
+			for _, update in catchUpPatch.updated do
+				if
+					update.id == self.__instanceMap.fromInstances[game]
+					and update.changedClassName ~= nil
+				then
+					-- Non-place projects will try to update the classname of game from DataModel to
+					-- something like Folder, ModuleScript, etc. This would fail, so we exit with a clear
+					-- message instead of crashing.
+					return Promise.reject("Cannot sync a non-place project!")
+				end
+			end
+
 			Log.trace("Computed hydration patch: {:#?}", debugPatch(catchUpPatch))
 
 			local userDecision = "Accept"
