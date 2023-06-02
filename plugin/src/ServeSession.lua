@@ -240,7 +240,11 @@ function ServeSession:__initialSync(serverInfo)
 					-- Non-place projects will try to update the classname of game from DataModel to
 					-- something like Folder, ModuleScript, etc. This would fail, so we exit with a clear
 					-- message instead of crashing.
-					return Promise.reject("Cannot sync a non-place project!")
+					return Promise.reject(
+						"Cannot sync a model as a place."
+						.. "\nEnsure Rojo is serving a project file that has a DataModel at the root of its tree and try again."
+						.. "\nSee project file docs: https://rojo.space/docs/v7/project-format/"
+					)
 				end
 			end
 
