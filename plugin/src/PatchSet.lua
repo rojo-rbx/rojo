@@ -160,7 +160,8 @@ function PatchSet.containsOnlyId(patchSet, instanceMap, id)
 end
 
 --[[
-	Tells whether the given PatchSet contains changes to nothing but the given instance
+	Tells whether the given PatchSet contains changes to nothing but the given instance.
+	If the given InstanceMap does not contain the instance, this function always returns false.
 ]]
 function PatchSet.containsOnlyInstance(patchSet, instanceMap, instance)
 	local id = instanceMap.fromInstances[instance]
