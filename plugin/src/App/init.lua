@@ -51,11 +51,6 @@ function App:init()
 	self.host, self.setHost = Roact.createBinding(priorHost or "")
 	self.port, self.setPort = Roact.createBinding(priorPort or "")
 
-	self.patchInfo, self.setPatchInfo = Roact.createBinding({
-		patch = PatchSet.newEmpty(),
-		unapplied = PatchSet.newEmpty(),
-		timestamp = os.time(),
-	})
 	self.confirmationBindable = Instance.new("BindableEvent")
 	self.confirmationEvent = self.confirmationBindable.Event
 
@@ -63,6 +58,11 @@ function App:init()
 		appStatus = AppStatus.NotConnected,
 		guiEnabled = false,
 		confirmData = {},
+		patchData = {
+			patch = PatchSet.newEmpty(),
+			unapplied = PatchSet.newEmpty(),
+			timestamp = os.time(),
+		},
 		notifications = {},
 		toolbarIcon = Assets.Images.PluginButton,
 	})
@@ -228,7 +228,7 @@ function App:startSession()
 
 		local now = os.time()
 
-		local old = self.patchInfo:getValue()
+		local old = self.state.patchData
 		if now - old.timestamp < 2 then
 			-- Patches that apply in the same second are
 			-- considered to be part of the same change for human clarity
@@ -239,16 +239,20 @@ function App:startSession()
 			local mergedUnapplied = PatchSet.newEmpty()
 			PatchSet.assign(mergedUnapplied, old.unapplied, unapplied)
 
-			self.setPatchInfo({
-				patch = mergedPatch,
-				unapplied = mergedUnapplied,
-				timestamp = now,
+			self:setState({
+				patchData = {
+					patch = mergedPatch,
+					unapplied = mergedUnapplied,
+					timestamp = now,
+				},
 			})
 		else
-			self.setPatchInfo({
-				patch = patch,
-				unapplied = unapplied,
-				timestamp = now,
+			self:setState({
+				patchData = {
+					patch = patch,
+					unapplied = unapplied,
+					timestamp = now,
+				},
 			})
 		end
 	end)
@@ -330,16 +334,6 @@ function App:startSession()
 	serveSession:start()
 
 	self.serveSession = serveSession
-
-	task.defer(function()
-		while self.serveSession == serveSession do
-			-- Trigger rerender to update timestamp text
-			local patchInfo = table.clone(self.patchInfo:getValue())
-			self.setPatchInfo(patchInfo)
-			local elapsed = os.time() - patchInfo.timestamp
-			task.wait(elapsed < 60 and 1 or elapsed / 5)
-		end
-	end)
 end
 
 function App:endSession()
@@ -441,7 +435,7 @@ function App:render()
 					Connected = createPageElement(AppStatus.Connected, {
 						projectName = self.state.projectName,
 						address = self.state.address,
-						patchInfo = self.patchInfo,
+						patchData = self.state.patchData,
 						serveSession = self.serveSession,
 
 						onDisconnect = function()

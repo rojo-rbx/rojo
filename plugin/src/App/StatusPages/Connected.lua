@@ -26,11 +26,11 @@ function timeSinceText(elapsed: number): string
 
 	local ageText = string.format("%d seconds ago", elapsed)
 
-	for _,UnitData in ipairs(AGE_UNITS) do
+	for _, UnitData in ipairs(AGE_UNITS) do
 		local UnitSeconds, UnitName = UnitData[1], UnitData[2]
 		if elapsed > UnitSeconds then
-			local c = math.floor(elapsed/UnitSeconds)
-			ageText = string.format("%d %s%s ago", c, UnitName, c>1 and "s" or "")
+			local c = math.floor(elapsed / UnitSeconds)
+			ageText = string.format("%d %s%s ago", c, UnitName, c > 1 and "s" or "")
 			break
 		end
 	end
@@ -38,45 +38,53 @@ function timeSinceText(elapsed: number): string
 	return ageText
 end
 
-local function ChangesDrawer(props)
-	if props.rendered == false then
+local ChangesDrawer = Roact.Component:extend("ConnectedPage")
+
+function ChangesDrawer:init()
+	-- Hold onto the serve session during the lifecycle of this component
+	-- so that it can still render during the fade out after disconnecting
+	self.serveSession = self.props.serveSession
+end
+
+function ChangesDrawer:render()
+	if self.props.rendered == false or self.serveSession == nil then
 		return nil
 	end
 
 	return Theme.with(function(theme)
 		return e(BorderedContainer, {
-			transparency = props.transparency,
-			size = props.height:map(function(y)
+			transparency = self.props.transparency,
+			size = self.props.height:map(function(y)
 				return UDim2.new(1, 0, y, -180 * y)
 			end),
 			position = UDim2.new(0, 0, 1, 0),
 			anchorPoint = Vector2.new(0, 1),
-			layoutOrder = props.layoutOrder,
+			layoutOrder = self.props.layoutOrder,
 		}, {
 			Close = e(IconButton, {
 				icon = Assets.Images.Icons.Close,
 				iconSize = 24,
 				color = theme.ConnectionDetails.DisconnectColor,
-				transparency = props.transparency,
+				transparency = self.props.transparency,
 
 				position = UDim2.new(1, 0, 0, 0),
 				anchorPoint = Vector2.new(1, 0),
 
-				onClick = props.onClose,
+				onClick = self.props.onClose,
 			}, {
 				Tip = e(Tooltip.Trigger, {
-					text = "Close the patch visualizer"
+					text = "Close the patch visualizer",
 				}),
 			}),
 
 			PatchVisualizer = e(PatchVisualizer, {
 				size = UDim2.new(1, 0, 1, 0),
-				transparency = props.transparency,
+				transparency = self.props.transparency,
 				layoutOrder = 3,
 
-				columnVisibility = {true, false, true},
-				patch = props.patchInfo:getValue().patch,
-				instanceMap = props.serveSession.__instanceMap,
+				columnVisibility = { true, false, true },
+				patch = self.props.patch,
+				instanceMap = self.serveSession.__instanceMap,
 			}),
 		})
 	end)
@@ -91,7 +99,7 @@ local function ConnectionDetails(props)
 		}, {
 			TextContainer = e("Frame", {
 				Size = UDim2.new(1, 0, 1, 0),
-				BackgroundTransparency = 1
+				BackgroundTransparency = 1,
 			}, {
 				ProjectName = e("TextLabel", {
 					Text = props.projectName,
@@ -141,7 +149,7 @@ local function ConnectionDetails(props)
 				onClick = props.onDisconnect,
 			}, {
 				Tip = e(Tooltip.Trigger, {
-					text = "Disconnect from the Rojo sync server"
+					text = "Disconnect from the Rojo sync server",
 				}),
 			}),
 
@@ -154,6 +162,28 @@ local function ConnectionDetails(props)
 end
 
 local ConnectedPage = Roact.Component:extend("ConnectedPage")
+
+function ConnectedPage:getChangeInfoText()
+	local patchData = self.props.patchData
+	if patchData == nil then
+		return ""
+	end
+
+	local elapsed = os.time() - patchData.timestamp
+	local unapplied = PatchSet.countChanges(patchData.unapplied)
+
+	return
+		"<i>Synced "
+		.. timeSinceText(elapsed)
+		.. (if unapplied > 0 then
+			string.format(
+				", <font color=\"#FF8E3C\">but %d change%s failed to apply</font>",
+				unapplied,
+				unapplied == 1 and "" or "s"
+			)
+		else "")
+		.. "</i>"
+end
 
 function ConnectedPage:init()
 	self.changeDrawerMotor = Flipper.SingleMotor.new(0)
@@ -176,6 +206,34 @@ function ConnectedPage:init()
 	self:setState({
 		renderChanges = false,
 	})
+
+	self.changeInfoText, self.setChangeInfoText = Roact.createBinding("")
+
+	self.changeInfoTextUpdater = task.defer(function()
+		while true do
+			self.setChangeInfoText(self:getChangeInfoText())
+
+			local elapsed = os.time() - self.props.patchData.timestamp
+			local updateInterval = 1
+
+			-- Update timestamp text as frequently as currently needed
+			for _, UnitData in ipairs(AGE_UNITS) do
+				local UnitSeconds = UnitData[1]
+				if elapsed >= UnitSeconds then
+					updateInterval = UnitSeconds
+					break
+				end
+			end
+
+			task.wait(updateInterval)
+		end
+	end)
+end
+
+function ConnectedPage:willUnmount()
+	if self.changeInfoTextUpdater then
+		task.cancel(self.changeInfoTextUpdater)
+	end
 end
 
 function ConnectedPage:render()
@@ -208,22 +266,7 @@ function ConnectedPage:render()
 			}),
 
 			ChangeInfo = e("TextButton", {
-				Text = self.props.patchInfo:map(function(info)
-					local unapplied = PatchSet.countChanges(info.unapplied)
-
-					return
-						"<i>Synced "
-						.. timeSinceText(os.time() - info.timestamp)
-						.. (if unapplied > 0 then
-							string.format(
-								", <font color=\"#%s\">but %d change%s failed to apply</font>",
-								theme.WarningColor:ToHex(),
-								unapplied,
-								unapplied == 1 and "" or "s"
-							)
-						else "")
-						.. "</i>"
-				end),
+				Text = self.changeInfoText,
 				Font = Enum.Font.Gotham,
 				TextSize = 14,
 				TextWrapped = true,
@@ -256,7 +299,7 @@ function ConnectedPage:render()
 			ChangesDrawer = e(ChangesDrawer, {
 				rendered = self.state.renderChanges,
 				transparency = self.props.transparency,
-				patchInfo = self.props.patchInfo,
+				patch = self.props.patchData.patch,
 				serveSession = self.props.serveSession,
 				height = self.changeDrawerHeight,
 				layoutOrder = 4,
