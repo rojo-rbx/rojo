@@ -221,14 +221,21 @@ function App:startSession()
 	})
 
 	serveSession:onPatchApplied(function(patch, unapplied)
+		local now = os.time()
+		local old = self.state.patchData
+
 		if PatchSet.isEmpty(patch) then
-			-- Ignore empty patches
+			-- Ignore empty patch, but update timestamp
+			self:setState({
+				patchData = {
+					patch = old.patch,
+					unapplied = old.unapplied,
+					timestamp = now,
+				},
+			})
 			return
 		end
 
-		local now = os.time()
-
-		local old = self.state.patchData
 		if now - old.timestamp < 2 then
 			-- Patches that apply in the same second are
 			-- considered to be part of the same change for human clarity
