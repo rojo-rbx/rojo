@@ -209,13 +209,20 @@ function ConnectedPage:render()
 
 			ChangeInfo = e("TextButton", {
 				Text = self.props.patchInfo:map(function(info)
-					local changes = PatchSet.countChanges(info.patch)
-					return string.format(
-						"<i>Synced %d change%s %s</i>",
-						changes,
-						changes == 1 and "" or "s",
-						timeSinceText(os.time() - info.timestamp)
-					)
+					local unapplied = PatchSet.countChanges(info.unapplied)
+
+					return
+						"<i>Synced "
+						.. timeSinceText(os.time() - info.timestamp)
+						.. (if unapplied > 0 then
+							string.format(
+								", <font color=\"#%s\">but %d change%s failed to apply</font>",
+								theme.WarningColor:ToHex(),
+								unapplied,
+								unapplied == 1 and "" or "s"
+							)
+						else "")
+						.. "</i>"
 				end),
 				Font = Enum.Font.Gotham,
 				TextSize = 14,
