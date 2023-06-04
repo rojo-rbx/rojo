@@ -105,13 +105,24 @@ function PatchSet.countChanges(patch)
 	local count = 0
 
 	for _ in patch.added do
+		-- Adding an instance is 1 change
 		count += 1
 	end
 	for _ in patch.removed do
+		-- Removing an instance is 1 change
 		count += 1
 	end
-	for _ in patch.updated do
-		count += 1
+	for _, update in patch.updated do
+		-- Updating an instance is 1 change per property updated
+		for _ in update.changedProperties do
+			count += 1
+		end
+		if update.changedName ~= nil then
+			count += 1
+		end
+		if update.changedClassName ~= nil then
+			count += 1
+		end
 	end
 
 	return count
