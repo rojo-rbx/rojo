@@ -2,8 +2,10 @@
 
 ## Unreleased Changes
 * Significantly improved performance of `rojo sourcemap`. ([#668])
+* Added protection against syncing a model to a place. ([#691])
 
 [#668]: https://github.com/rojo-rbx/rojo/pull/668
+[#691]: https://github.com/rojo-rbx/rojo/pull/691
 
 ## [7.3.0] - April 22, 2023
 * Added `$attributes` to project format. ([#574])
