@@ -2,8 +2,10 @@
 
 ## Unreleased Changes
 * Significantly improved performance of `rojo sourcemap`. ([#668])
+* Improved sync info text on Connected page. ([#692])
 
 [#668]: https://github.com/rojo-rbx/rojo/pull/668
+[#692]: https://github.com/rojo-rbx/rojo/pull/692
 
 ## [7.3.0] - April 22, 2023
 * Added `$attributes` to project format. ([#574])
