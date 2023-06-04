@@ -1,5 +1,6 @@
 local Players = game:GetService("Players")
 local ServerStorage = game:GetService("ServerStorage")
+local RunService = game:GetService("RunService")
 
 local Rojo = script:FindFirstAncestor("Rojo")
 local Plugin = Rojo.Plugin
@@ -57,6 +58,7 @@ function App:init()
 	})
 	self.confirmationBindable = Instance.new("BindableEvent")
 	self.confirmationEvent = self.confirmationBindable.Event
+	self.notifId = 0
 
 	self:setState({
 		appStatus = AppStatus.NotConnected,
@@ -66,33 +68,62 @@ function App:init()
 		toolbarIcon = Assets.Images.PluginButton,
 	})
 
-	if priorHost and priorPort then
-		-- TODO: Build a system for notification actions and external dismissability
-		-- and then utilize them here
-		self:addNotification("You've previously synced this place. Would you like to reconnect?", 120)
+	if
+		RunService:IsEdit()
+		and self.serveSession == nil
+		and Settings:get("syncReminder")
+		and self:getLastSyncTimestamp()
+	then
+		self:addNotification("You've previously synced this place. Would you like to reconnect?", 300, {
+			Connect = {
+				text = "Connect",
+				style = "Solid",
+				layoutOrder = 1,
+				onClick = function(notification)
+					notification:dismiss()
+					self:startSession()
+				end
+			},
+			Dismiss = {
+				text = "Dismiss",
+				style = "Bordered",
+				layoutOrder = 2,
+				onClick = function(notification)
+					notification:dismiss()
+				end,
+			},
+		})
 	end
 end
 
-function App:addNotification(text: string, timeout: number?)
+function App:addNotification(text: string, timeout: number?, actions: { [string]: {text: string, style: string, layoutOrder: number, onClick: (any) -> ()} }?)
 	if not Settings:get("showNotifications") then
 		return
 	end
 
+	self.notifId += 1
+	local id = self.notifId
+
 	local notifications = table.clone(self.state.notifications)
-	table.insert(notifications, {
+	notifications[id] = {
 		text = text,
 		timestamp = DateTime.now().UnixTimestampMillis,
 		timeout = timeout or 3,
-	})
+		actions = actions,
+	}
 
 	self:setState({
 		notifications = notifications,
 	})
+
+	return function()
+		self:closeNotification(id)
+	end
 end
 
-function App:closeNotification(index: number)
+function App:closeNotification(id: number)
 	local notifications = table.clone(self.state.notifications)
-	table.remove(notifications, index)
+	notifications[id] = nil
 
 	self:setState({
 		notifications = notifications,
@@ -123,19 +154,25 @@ function App:setPriorEndpoint(host: string, port: string)
 		end
 	end
 
-	if host == Config.defaultHost and port == Config.defaultPort then
-		-- Don't save default
-		priorEndpoints[tostring(game.PlaceId)] = nil
-	else
-		priorEndpoints[tostring(game.PlaceId)] = {
-			host = host ~= Config.defaultHost and host or nil,
-			port = port ~= Config.defaultPort and port or nil,
-			timestamp = os.time(),
-		}
-		Log.trace("Saved last used endpoint for {}", game.PlaceId)
-	end
+	priorEndpoints[tostring(game.PlaceId)] = {
+		host = if host ~= Config.defaultHost then host else nil,
+		port = if port ~= Config.defaultPort then port else nil,
+		timestamp = os.time(),
+	}
+	Log.trace("Saved last used endpoint for {}", game.PlaceId)
+
 
 	Settings:set("priorEndpoints", priorEndpoints)
+end
+
+function App:getLastSyncTimestamp()
+	local priorEndpoints = Settings:get("priorEndpoints")
+	if not priorEndpoints then return end
+
+	local place = priorEndpoints[tostring(game.PlaceId)]
+	if not place then return end
+
+	return place.timestamp
 end
 
 function App:getHostAndPort()
@@ -483,8 +520,8 @@ function App:render()
 					notifs = e(Notifications, {
 						soundPlayer = self.props.soundPlayer,
 						notifications = self.state.notifications,
-						onClose = function(index)
-							self:closeNotification(index)
+						onClose = function(id)
+							self:closeNotification(id)
 						end,
 					}),
 				}),
