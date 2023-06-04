@@ -232,29 +232,17 @@ function App:startSession()
 		if now - old.timestamp < 2 then
 			-- Patches that apply in the same second are
 			-- considered to be part of the same change for human clarity
-
-			local mergedPatch = PatchSet.newEmpty()
-			PatchSet.assign(mergedPatch, old.patch, patch)
-
-			local mergedUnapplied = PatchSet.newEmpty()
-			PatchSet.assign(mergedUnapplied, old.unapplied, unapplied)
-
-			self:setState({
-				patchData = {
-					patch = mergedPatch,
-					unapplied = mergedUnapplied,
-					timestamp = now,
-				},
-			})
-		else
-			self:setState({
-				patchData = {
-					patch = patch,
-					unapplied = unapplied,
-					timestamp = now,
-				},
-			})
+			patch = PatchSet.assign(PatchSet.newEmpty(), old.patch, patch)
+			unapplied = PatchSet.assign(PatchSet.newEmpty(), old.unapplied, unapplied)
 		end
+
+		self:setState({
+			patchData = {
+				patch = patch,
+				unapplied = unapplied,
+				timestamp = now,
+			},
+		})
 	end)
 
 	serveSession:onStatusChanged(function(status, details)
