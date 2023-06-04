@@ -125,6 +125,7 @@ local lightTheme = strict("LightTheme", {
 		InfoColor = hexColor(0x00000),
 		CloseColor = BRAND_COLOR,
 	},
+	WarningColor = hexColor(0xB35009),
 	ErrorColor = hexColor(0x000000),
 	ScrollBarColor = hexColor(0x000000),
 })
@@ -220,6 +221,7 @@ local darkTheme = strict("DarkTheme", {
 		InfoColor = hexColor(0xFFFFFF),
 		CloseColor = hexColor(0xFFFFFF),
 	},
+	WarningColor = hexColor(0xFF8E3C),
 	ErrorColor = hexColor(0xFFFFFF),
 	ScrollBarColor = hexColor(0xFFFFFF),
 })
