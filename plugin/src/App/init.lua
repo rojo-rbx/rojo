@@ -278,10 +278,12 @@ function App:startSession()
 		elseif status == ServeSession.Status.Disconnected then
 			self.serveSession = nil
 			self:releaseSyncLock()
-			self.setPatchInfo({
-				patch = PatchSet.newEmpty(),
-				unapplied = PatchSet.newEmpty(),
-				timestamp = os.time(),
+			self:setState({
+				patchData = {
+					patch = PatchSet.newEmpty(),
+					unapplied = PatchSet.newEmpty(),
+					timestamp = os.time(),
+				},
 			})
 
 			-- Details being present indicates that this
