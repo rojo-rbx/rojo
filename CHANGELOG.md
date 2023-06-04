@@ -1,8 +1,10 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Added headless API for Studio companion plugins. ([#631])
 * Significantly improved performance of `rojo sourcemap`. ([#668])
 
+[#631]: https://github.com/rojo-rbx/rojo/pull/631
 [#668]: https://github.com/rojo-rbx/rojo/pull/668
 
 ## [7.3.0] - April 22, 2023
