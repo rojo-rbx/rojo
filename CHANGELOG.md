@@ -2,8 +2,10 @@
 
 ## Unreleased Changes
 * Significantly improved performance of `rojo sourcemap`. ([#668])
+* Skip confirming patches that contain only a datamodel name change. ([#688])
 
 [#668]: https://github.com/rojo-rbx/rojo/pull/668
+[#688]: https://github.com/rojo-rbx/rojo/pull/688
 
 ## [7.3.0] - April 22, 2023
 * Added `$attributes` to project format. ([#574])
