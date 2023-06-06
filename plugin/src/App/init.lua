@@ -20,6 +20,7 @@ local ApiContext = require(Plugin.ApiContext)
 local PatchSet = require(Plugin.PatchSet)
 local preloadAssets = require(Plugin.preloadAssets)
 local soundPlayer = require(Plugin.soundPlayer)
+local ignorePlaceIds = require(Plugin.ignorePlaceIds)
 local Theme = require(script.Theme)
 
 local Page = require(script.Page)
@@ -134,10 +135,26 @@ function App:getPriorEndpoint()
 	local priorEndpoints = Settings:get("priorEndpoints")
 	if not priorEndpoints then return end
 
-	local place = priorEndpoints[tostring(game.PlaceId)]
+	local id = tostring(game.PlaceId)
+	if ignorePlaceIds[id] then return end
+
+	local place = priorEndpoints[id]
 	if not place then return end
 
 	return place.host, place.port
+end
+
+function App:getLastSyncTimestamp()
+	local priorEndpoints = Settings:get("priorEndpoints")
+	if not priorEndpoints then return end
+
+	local id = tostring(game.PlaceId)
+	if ignorePlaceIds[id] then return end
+
+	local place = priorEndpoints[id]
+	if not place then return end
+
+	return place.timestamp
 end
 
 function App:setPriorEndpoint(host: string, port: string)
@@ -154,7 +171,10 @@ function App:setPriorEndpoint(host: string, port: string)
 		end
 	end
 
-	priorEndpoints[tostring(game.PlaceId)] = {
+	local id = tostring(game.PlaceId)
+	if ignorePlaceIds[id] then return end
+
+	priorEndpoints[id] = {
 		host = if host ~= Config.defaultHost then host else nil,
 		port = if port ~= Config.defaultPort then port else nil,
 		timestamp = os.time(),
@@ -163,16 +183,6 @@ function App:setPriorEndpoint(host: string, port: string)
 
 
 	Settings:set("priorEndpoints", priorEndpoints)
-end
-
-function App:getLastSyncTimestamp()
-	local priorEndpoints = Settings:get("priorEndpoints")
-	if not priorEndpoints then return end
-
-	local place = priorEndpoints[tostring(game.PlaceId)]
-	if not place then return end
-
-	return place.timestamp
 end
 
 function App:getHostAndPort()
