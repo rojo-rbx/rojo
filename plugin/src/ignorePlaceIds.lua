@@ -1,3 +1,9 @@
+--[[
+    These are place ids that will not have metadata saved for them,
+    such as last sync address or time. This is because they are not unique
+    so storing metadata for them does not make sense as these ids are reused.
+--]]
+
 return {
     ["0"] = true, -- Local file
     ["95206881"] = true, -- Baseplate
