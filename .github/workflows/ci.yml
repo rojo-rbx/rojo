@@ -16,10 +16,12 @@ jobs:
 
     strategy:
       matrix:
-        rust_version: [stable, 1.58.1]
+        rust_version: [stable, 1.69.0]
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: true
 
     - name: Install Rust
       uses: actions-rs/toolchain@v1
@@ -29,17 +31,9 @@ jobs:
         profile: minimal
 
     - name: Setup Aftman
-      uses: ok-nick/setup-aftman@v0.1.0
+      uses: ok-nick/setup-aftman@v0.3.0
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        trust-check: false
-        version: 'v0.2.6'
-
-    - name: Install packages
-      run: |
-        cd plugin
-        wally install
-        cd ..
+        version: 'v0.2.7'
 
     - name: Build
       run: cargo build --locked --verbose
@@ -53,6 +47,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: true
 
     - name: Install Rust
       uses: actions-rs/toolchain@v1
@@ -62,17 +58,9 @@ jobs:
         components: rustfmt, clippy
 
     - name: Setup Aftman
-      uses: ok-nick/setup-aftman@v0.1.0
+      uses: ok-nick/setup-aftman@v0.3.0
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        trust-check: false
-        version: 'v0.2.6'
-
-    - name: Install packages
-      run: |
-        cd plugin
-        wally install
-        cd ..
+        version: 'v0.2.7'
 
     - name: Rustfmt
       run: cargo fmt -- --check

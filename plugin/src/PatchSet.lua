@@ -8,6 +8,40 @@ local t = require(Packages.t)
 
 local Types = require(script.Parent.Types)
 
+local function deepEqual(a: any, b: any): boolean
+	local typeA = typeof(a)
+	if typeA ~= typeof(b) then
+		return false
+	end
+
+	if typeof(a) == "table" then
+		local checkedKeys = {}
+
+		for key, value in a do
+			checkedKeys[key] = true
+
+			if deepEqual(value, b[key]) == false then
+				return false
+			end
+		end
+
+		for key, value in b do
+			if checkedKeys[key] then continue end
+			if deepEqual(value, a[key]) == false then
+				return false
+			end
+		end
+
+		return true
+	end
+
+	if a == b then
+		return true
+	end
+
+	return false
+end
+
 local PatchSet = {}
 
 PatchSet.validate = t.interface({
@@ -55,6 +89,32 @@ end
 ]]
 function PatchSet.hasUpdates(patchSet)
 	return next(patchSet.updated) ~= nil
+end
+
+--[[
+	Tells whether the given PatchSets are equal.
+]]
+function PatchSet.isEqual(patchA, patchB)
+	return deepEqual(patchA, patchB)
+end
+
+--[[
+	Count the number of changes in the given PatchSet.
+]]
+function PatchSet.countChanges(patch)
+	local count = 0
+
+	for _ in patch.added do
+		count += 1
+	end
+	for _ in patch.removed do
+		count += 1
+	end
+	for _ in patch.updated do
+		count += 1
+	end
+
+	return count
 end
 
 --[[

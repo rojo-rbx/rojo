@@ -238,6 +238,23 @@ types = {
 		toPod = serializeFloat,
 	},
 
+	Font = {
+		fromPod = function(pod)
+			return Font.new(
+				pod.family,
+				if pod.weight ~= nil then Enum.FontWeight[pod.weight] else nil,
+				if pod.style ~= nil then Enum.FontStyle[pod.style] else nil
+			)
+		end,
+		toPod = function(roblox)
+			return {
+				family = roblox.Family,
+				weight = roblox.Weight.Name,
+				style = roblox.Style.Name,
+			}
+		end,
+	},
+
 	Int32 = {
 		fromPod = identity,
 		toPod = identity,
