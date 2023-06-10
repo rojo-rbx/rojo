@@ -51,7 +51,6 @@ impl ServeCommand {
             .or_else(|| session.project_port())
             .unwrap_or(DEFAULT_PORT);
 
-        
         session.set_watch_enabled(true);
         let server = LiveServer::new(session);
         let _ = show_start_message(ip, port, global.color.into());

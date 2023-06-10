@@ -28,7 +28,7 @@ pub struct LiveServer {
 impl LiveServer {
     pub fn new(serve_session: ServeSession) -> Self {
         LiveServer {
-            serve_session: Arc::new(serve_session)
+            serve_session: Arc::new(serve_session),
         }
     }
 
