@@ -219,6 +219,15 @@ impl JobThreadContext {
                     }
 
                     for (key, changed_value) in &update.changed_properties {
+                        log::debug!("{:?}", key);
+                        let mut meta_path = None;
+                        for path in instance.metadata().relevant_paths.iter() {
+                            log::debug!("{:?}", path);
+                            if path.to_str().unwrap().ends_with(".meta.json") {
+                                meta_path = Some(path);
+                                break;
+                            }
+                        }
                         if key == "Source" {
                             if let Some(instigating_source) =
                                 &instance.metadata().instigating_source
@@ -244,8 +253,7 @@ impl JobThreadContext {
                                     id
                                 );
                             }
-                        } else if instance.metadata().relevant_paths.len() >= 2 {
-                            let meta_path = instance.metadata().relevant_paths[1].clone();
+                        } else if let Some(meta_path) = meta_path {
                             if let Some(meta_contents) =
                                 self.vfs.read(&meta_path).with_not_found().unwrap()
                             {
