@@ -53,6 +53,11 @@ function PropertyDescriptor:read(instance)
 	end
 
 	if self.scriptability == "Custom" then
+		if customProperties[self.className] == nil then
+			local fullName = ("%s.%s"):format(instance.className, self.name)
+			return false, Error.new(Error.Kind.PropertyNotReadable, fullName)
+		end
+
 		local interface = customProperties[self.className][self.name]
 
 		return interface.read(instance, self.name)
@@ -79,6 +84,11 @@ function PropertyDescriptor:write(instance, value)
 	end
 
 	if self.scriptability == "Custom" then
+		if customProperties[self.className] == nil then
+			local fullName = ("%s.%s"):format(instance.className, self.name)
+			return false, Error.new(Error.Kind.PropertyNotWritable, fullName)
+		end
+
 		local interface = customProperties[self.className][self.name]
 
 		return interface.write(instance, self.name, value)

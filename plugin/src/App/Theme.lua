@@ -72,6 +72,17 @@ local lightTheme = strict("LightTheme", {
 			BorderColor = hexColor(0xAFAFAF),
 		},
 	},
+	Dropdown = {
+		TextColor = hexColor(0x00000),
+		BorderColor = hexColor(0xAFAFAF),
+		BackgroundColor = hexColor(0xEEEEEE),
+		Open = {
+			IconColor = BRAND_COLOR,
+		},
+		Closed = {
+			IconColor = hexColor(0xEEEEEE),
+		},
+	},
 	AddressEntry = {
 		TextColor = hexColor(0x000000),
 		PlaceholderColor = hexColor(0x8C8C8C)
@@ -83,6 +94,12 @@ local lightTheme = strict("LightTheme", {
 	Spinner = {
 		ForegroundColor = BRAND_COLOR,
 		BackgroundColor = hexColor(0xEEEEEE),
+	},
+	Diff = {
+		Add = hexColor(0xbaffbd),
+		Remove = hexColor(0xffbdba),
+		Edit = hexColor(0xbacdff),
+		Row = hexColor(0x000000),
 	},
 	ConnectionDetails = {
 		ProjectNameColor = hexColor(0x00000),
@@ -150,6 +167,17 @@ local darkTheme = strict("DarkTheme", {
 			BorderColor = hexColor(0x5A5A5A),
 		},
 	},
+	Dropdown = {
+		TextColor = hexColor(0xFFFFFF),
+		BorderColor = hexColor(0x5A5A5A),
+		BackgroundColor = hexColor(0x2B2B2B),
+		Open = {
+			IconColor = BRAND_COLOR,
+		},
+		Closed = {
+			IconColor = hexColor(0x484848),
+		},
+	},
 	AddressEntry = {
 		TextColor = hexColor(0xFFFFFF),
 		PlaceholderColor = hexColor(0x8B8B8B)
@@ -161,6 +189,12 @@ local darkTheme = strict("DarkTheme", {
 	Spinner = {
 		ForegroundColor = BRAND_COLOR,
 		BackgroundColor = hexColor(0x2B2B2B),
+	},
+	Diff = {
+		Add = hexColor(0x273732),
+		Remove = hexColor(0x3F2D32),
+		Edit = hexColor(0x193345),
+		Row = hexColor(0xFFFFFF),
 	},
 	ConnectionDetails = {
 		ProjectNameColor = hexColor(0xFFFFFF),

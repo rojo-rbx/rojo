@@ -207,6 +207,17 @@
     },
     "ty": "Float64"
   },
+  "Font": {
+    "value": {
+      "Font": {
+        "family": "rbxasset://fonts/families/SourceSansPro.json",
+        "weight": "Regular",
+        "style": "Normal",
+        "cachedFaceId": null
+      }
+    },
+    "ty": "Font"
+  },
   "Int32": {
     "value": {
       "Int32": 6014
