@@ -30,6 +30,7 @@ impl AdjacentMetadata {
         AdjacentMetadata {
             ignore_unknown_instances: None,
             properties: HashMap::new(),
+            attributes: HashMap::new(),
             path: path,
         }
     }
