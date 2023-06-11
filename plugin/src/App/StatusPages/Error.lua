@@ -11,6 +11,7 @@ local Theme = require(Plugin.App.Theme)
 local TextButton = require(Plugin.App.Components.TextButton)
 local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
 local ScrollingFrame = require(Plugin.App.Components.ScrollingFrame)
+local Tooltip = require(Plugin.App.Components.Tooltip)
 
 local e = Roact.createElement
 
@@ -123,6 +124,10 @@ function ErrorPage:render()
 				transparency = self.props.transparency,
 				layoutOrder = 1,
 				onClick = self.props.onClose,
+			}, {
+				Tip = e(Tooltip.Trigger, {
+					text = "Dismiss message"
+				}),
 			}),
 
 			Layout = e("UIListLayout", {

@@ -7,9 +7,12 @@ local Packages = Rojo.Packages
 local Roact = require(Packages.Roact)
 
 local Settings = require(Plugin.Settings)
+local Assets = require(Plugin.Assets)
 local Theme = require(Plugin.App.Theme)
 
 local Checkbox = require(Plugin.App.Components.Checkbox)
+local Dropdown = require(Plugin.App.Components.Dropdown)
+local IconButton = require(Plugin.App.Components.IconButton)
 
 local e = Roact.createElement
 
@@ -54,22 +57,48 @@ function Setting:render()
 				return UDim2.new(1, 0, 0, 20 + value.Y + 20)
 			end),
 			LayoutOrder = self.props.layoutOrder,
+			ZIndex = -self.props.layoutOrder,
 			BackgroundTransparency = 1,
 
 			[Roact.Change.AbsoluteSize] = function(object)
 				self.setContainerSize(object.AbsoluteSize)
 			end,
 		}, {
-			Checkbox = e(Checkbox, {
-				active = self.state.setting,
+			Input = if self.props.options ~= nil then
+				e(Dropdown, {
+					options = self.props.options,
+					active = self.state.setting,
+					transparency = self.props.transparency,
+					position = UDim2.new(1, 0, 0.5, 0),
+					anchorPoint = Vector2.new(1, 0.5),
+					onClick = function(option)
+						Settings:set(self.props.id, option)
+					end,
+				})
+			else
+				e(Checkbox, {
+					active = self.state.setting,
+					transparency = self.props.transparency,
+					position = UDim2.new(1, 0, 0.5, 0),
+					anchorPoint = Vector2.new(1, 0.5),
+					onClick = function()
+						local currentValue = Settings:get(self.props.id)
+						Settings:set(self.props.id, not currentValue)
+					end,
+				}),
+
+			Reset = if self.props.onReset then e(IconButton, {
+				icon = Assets.Images.Icons.Reset,
+				iconSize = 24,
+				color = theme.BackButtonColor,
 				transparency = self.props.transparency,
-				position = UDim2.new(1, 0, 0.5, 0),
-				anchorPoint = Vector2.new(1, 0.5),
-				onClick = function()
-					local currentValue = Settings:get(self.props.id)
-					Settings:set(self.props.id, not currentValue)
-				end,
-			}),
+				visible = self.props.showReset,
+
+				position = UDim2.new(1, -32 - (self.props.options ~= nil and 120 or 40), 0.5, 0),
+				anchorPoint = Vector2.new(0, 0.5),
+
+				onClick = self.props.onReset,
+			}) else nil,
 
 			Text = e("Frame", {
 				Size = UDim2.new(1, 0, 1, 0),
@@ -100,11 +129,12 @@ function Setting:render()
 					TextWrapped = true,
 
 					Size = self.containerSize:map(function(value)
+						local offset = (self.props.onReset and 34 or 0) + (self.props.options ~= nil and 120 or 40)
 						local textBounds = getTextBounds(
 							self.props.description, 14, Enum.Font.Gotham, 1.2,
-							Vector2.new(value.X - 50, math.huge)
+							Vector2.new(value.X - offset, math.huge)
 						)
-						return UDim2.new(1, -50, 0, textBounds.Y)
+						return UDim2.new(1, -offset, 0, textBounds.Y)
 					end),
 
 					LayoutOrder = 2,

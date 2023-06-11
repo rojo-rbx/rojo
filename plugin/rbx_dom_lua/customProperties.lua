@@ -61,4 +61,14 @@ return {
 			end,
 		},
 	},
+	Model = {
+		Scale = {
+			read = function(instance, _, _)
+				return true, instance:GetScale()
+			end,
+			write = function(instance, _, value)
+				return true, instance:ScaleTo(value)
+			end,
+		},
+	},
 }

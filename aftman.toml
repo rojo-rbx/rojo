@@ -1,0 +1,4 @@
+[tools]
+rojo = "rojo-rbx/rojo@7.3.0"
+selene = "Kampfkarren/selene@0.20.0"
+run-in-roblox = "rojo-rbx/run-in-roblox@0.3.0"

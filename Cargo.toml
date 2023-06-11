@@ -1,7 +1,7 @@
 [package]
 name = "rojo"
-version = "7.2.1"
-rust-version = "1.58.1"
+version = "7.3.0"
+rust-version = "1.68.2"
 authors = ["Lucien Greathouse <me@lpghatguy.com>"]
 description = "Enables professional-grade development tools for Roblox developers"
 license = "MPL-2.0"
@@ -51,11 +51,11 @@ memofs = { version = "0.2.0", path = "crates/memofs" }
 # rbx_reflection_database = { path = "../rbx-dom/rbx_reflection_database" }
 # rbx_xml = { path = "../rbx-dom/rbx_xml" }
 
-rbx_binary = "0.6.5"
+rbx_binary = "0.7.0"
 rbx_dom_weak = "2.4.0"
 rbx_reflection = "4.2.0"
-rbx_reflection_database = "0.2.2"
-rbx_xml = "0.12.3"
+rbx_reflection_database = "0.2.6"
+rbx_xml = "0.13.0"
 
 anyhow = "1.0.44"
 backtrace = "0.3.61"
@@ -72,7 +72,9 @@ jod-thread = "0.1.2"
 log = "0.4.14"
 maplit = "1.0.2"
 notify = "4.0.17"
+num_cpus = "1.15.0"
 opener = "0.5.0"
+rayon = "1.7.0"
 reqwest = { version = "0.11.10", features = ["blocking", "json", "native-tls-vendored"] }
 ritz = "0.1.0"
 roblox_install = "1.0.0"
@@ -102,7 +104,7 @@ maplit = "1.0.2"
 rojo-insta-ext = { path = "crates/rojo-insta-ext" }
 
 criterion = "0.3.5"
-insta = { version = "1.8.0", features = ["redactions"] }
+insta = { version = "1.8.0", features = ["redactions", "yaml"] }
 paste = "1.0.5"
 pretty_assertions = "1.2.1"
 serde_yaml = "0.8.21"
