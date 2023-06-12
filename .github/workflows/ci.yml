@@ -3,11 +3,13 @@ name: CI
 on:
   push:
     branches:
-    - master
+      - master
+      - codecov
 
   pull_request:
     branches:
-    - master
+      - master
+      - codecov
 
 jobs:
   build:
@@ -19,51 +21,69 @@ jobs:
         rust_version: [stable, 1.69.0]
 
     steps:
-    - uses: actions/checkout@v3
-      with:
-        submodules: true
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
 
-    - name: Install Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: ${{ matrix.rust_version }}
-        override: true
-        profile: minimal
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust_version }}
+          override: true
+          profile: minimal
 
-    - name: Setup Aftman
-      uses: ok-nick/setup-aftman@v0.3.0
-      with:
-        version: 'v0.2.7'
+      - name: Setup Aftman
+        uses: ok-nick/setup-aftman@v0.3.0
+        with:
+          version: "v0.2.7"
 
-    - name: Build
-      run: cargo build --locked --verbose
+      - name: Build
+        run: cargo build --locked --verbose
 
-    - name: Test
-      run: cargo test --locked --verbose
+      - name: Test
+        run: cargo test --locked --verbose
 
   lint:
     name: Rustfmt and Clippy
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-      with:
-        submodules: true
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
 
-    - name: Install Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        override: true
-        components: rustfmt, clippy
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
 
-    - name: Setup Aftman
-      uses: ok-nick/setup-aftman@v0.3.0
-      with:
-        version: 'v0.2.7'
+      - name: Setup Aftman
+        uses: ok-nick/setup-aftman@v0.3.0
+        with:
+          version: "v0.2.7"
 
-    - name: Rustfmt
-      run: cargo fmt -- --check
+      - name: Rustfmt
+        run: cargo fmt -- --check
 
-    - name: Clippy
-      run: cargo clippy
+      - name: Clippy
+        run: cargo clippy
+  coverage:
+    runs-on: ubuntu-latest
+    env:
+      CARGO_TERM_COLOR: always
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Rust
+        run: rustup update stable
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+      - name: Generate code coverage
+        run: cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
+          files: lcov.info
+          fail_ci_if_error: true
