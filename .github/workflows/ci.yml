@@ -67,6 +67,7 @@ jobs:
 
       - name: Clippy
         run: cargo clippy
+
   coverage:
     runs-on: ubuntu-latest
     env:
