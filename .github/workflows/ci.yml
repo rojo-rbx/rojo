@@ -4,12 +4,10 @@ on:
   push:
     branches:
       - master
-      - codecov
 
   pull_request:
     branches:
       - master
-      - codecov
 
 jobs:
   build:
