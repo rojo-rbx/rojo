@@ -194,10 +194,8 @@ impl JobThreadContext {
                     }
 
                     for (key, changed_value) in &update.changed_properties {
-                        log::debug!("{:?}", key);
                         let mut meta_path = None;
                         for path in instance.metadata().relevant_paths.iter() {
-                            log::debug!("{:?}", path);
                             if path.to_str().unwrap().ends_with(".meta.json") {
                                 meta_path = Some(path);
                                 break;
