@@ -313,6 +313,10 @@ function ConnectedPage:render()
 						}))
 					end
 				end,
+			}, {
+				Tooltip = e(Tooltip.Trigger, {
+					text = if self.state.renderChanges then "Hide the changes" else "View the changes",
+				}),
 			}),
 
 			ChangesDrawer = e(ChangesDrawer, {
