@@ -27,6 +27,7 @@ pub const PROTOCOL_VERSION: u64 = 4;
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SubscribeMessage<'a> {
+    pub client_id: Option<String>,
     pub removed: Vec<Ref>,
     pub added: HashMap<Ref, Instance<'a>>,
     pub updated: Vec<InstanceUpdate>,
@@ -72,6 +73,7 @@ impl<'a> SubscribeMessage<'a> {
             .collect();
 
         Self {
+            client_id: patch.client_id,
             removed,
             added,
             updated,
@@ -179,6 +181,7 @@ pub struct ReadResponse<'a> {
 #[serde(rename_all = "camelCase")]
 pub struct WriteRequest {
     pub session_id: SessionId,
+    pub client_id: Option<String>,
     pub removed: Vec<Ref>,
 
     #[serde(default)]

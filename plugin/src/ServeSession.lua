@@ -52,6 +52,7 @@ local validateServeOptions = t.strictInterface({
 	apiContext = t.table,
 	openScriptsExternally = t.boolean,
 	twoWaySync = t.boolean,
+	clientId = t.string
 })
 
 function ServeSession.new(options)
@@ -99,6 +100,7 @@ function ServeSession.new(options)
 		__statusChangedCallback = nil,
 		__patchAppliedCallback = nil,
 		__connections = connections,
+		__clientId = options.clientId
 	}
 
 	setmetatable(self, ServeSession)
@@ -288,6 +290,10 @@ function ServeSession:__mainSyncLoop()
 			Log.trace("Serve session {} retrieved {} messages", tostring(self), #messages)
 
 			for _, message in ipairs(messages) do
+				if message.clientId == self.__clientId then
+					continue
+				end
+
 				local unappliedPatch = self.__reconciler:applyPatch(message)
 
 				if not PatchSet.isEmpty(unappliedPatch) then
