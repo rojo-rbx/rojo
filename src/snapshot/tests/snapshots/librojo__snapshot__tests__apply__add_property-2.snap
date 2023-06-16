@@ -1,8 +1,8 @@
 ---
 source: src/snapshot/tests/apply.rs
 expression: applied_patch_value
-
 ---
+client_id: ~
 removed: []
 added: []
 updated:

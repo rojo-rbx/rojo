@@ -2,6 +2,7 @@
 source: src/snapshot/tests/compute.rs
 expression: patch_value
 ---
+client_id: ~
 removed_instances: []
 added_instances:
   - parent_id: id-1
@@ -16,3 +17,4 @@ added_instances:
       properties: {}
       children: []
 updated_instances: []
+
