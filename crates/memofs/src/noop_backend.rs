@@ -74,3 +74,9 @@ impl VfsBackend for NoopBackend {
         ))
     }
 }
+
+impl Default for NoopBackend {
+    fn default() -> Self {
+        Self::new()
+    }
+}

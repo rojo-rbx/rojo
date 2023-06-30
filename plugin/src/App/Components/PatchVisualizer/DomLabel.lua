@@ -40,11 +40,6 @@ end
 local DomLabel = Roact.Component:extend("DomLabel")
 
 function DomLabel:init()
-	self.maxElementHeight = 0
-	if self.props.changeList then
-		self.maxElementHeight = math.clamp(#self.props.changeList * 30, 30, 30 * 6)
-	end
-
 	local initHeight = self.props.elementHeight:getValue()
 	self.expanded = initHeight > 30
 
@@ -118,7 +113,8 @@ function DomLabel:render()
 					Size = UDim2.new(1, 0, 1, 0),
 					[Roact.Event.Activated] = function()
 						self.expanded = not self.expanded
-						self.motor:setGoal(Flipper.Spring.new((self.expanded and self.maxElementHeight or 0) + 30, {
+						local goalHeight = 30 + (if self.expanded then math.clamp(#self.props.changeList * 30, 30, 30 * 6) else 0)
+						self.motor:setGoal(Flipper.Spring.new(goalHeight, {
 							frequency = 5,
 							dampingRatio = 1,
 						}))

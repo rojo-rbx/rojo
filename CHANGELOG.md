@@ -2,9 +2,13 @@
 
 ## Unreleased Changes
 * Significantly improved performance of `rojo sourcemap`. ([#668])
+* Fixed the diff visualizer of connected sessions. ([#674])
+* Fixed disconnected session activity. ([#675])
 * Skip confirming patches that contain only a datamodel name change. ([#688])
 
 [#668]: https://github.com/rojo-rbx/rojo/pull/668
+[#674]: https://github.com/rojo-rbx/rojo/pull/674
+[#675]: https://github.com/rojo-rbx/rojo/pull/675
 [#688]: https://github.com/rojo-rbx/rojo/pull/688
 
 ## [7.3.0] - April 22, 2023

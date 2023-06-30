@@ -285,6 +285,8 @@ end
 function ServeSession:__mainSyncLoop()
 	return self.__apiContext:retrieveMessages()
 		:andThen(function(messages)
+			Log.trace("Serve session {} retrieved {} messages", tostring(self), #messages)
+
 			for _, message in ipairs(messages) do
 				local unappliedPatch = self.__reconciler:applyPatch(message)
 

@@ -24,7 +24,7 @@ impl FmtProjectCommand {
         let serialized = serde_json::to_string_pretty(&project)
             .context("could not re-encode project file as JSON")?;
 
-        fs_err::write(&project.file_location, &serialized)
+        fs_err::write(&project.file_location, serialized)
             .context("could not write back to project file")?;
 
         Ok(())
