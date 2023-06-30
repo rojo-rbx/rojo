@@ -194,11 +194,8 @@ impl VfsInner {
     }
 
     fn commit_event(&mut self, event: &VfsEvent) -> io::Result<()> {
-        match event {
-            VfsEvent::Remove(path) => {
-                let _ = self.backend.unwatch(&path);
-            }
-            _ => {}
+        if let VfsEvent::Remove(path) = event {
+            let _ = self.backend.unwatch(path);
         }
 
         Ok(())
