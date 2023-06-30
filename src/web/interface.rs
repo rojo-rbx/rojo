@@ -145,11 +145,7 @@ fn property_filter(value: Option<&Variant>) -> bool {
 
     // Lua can't do anything with SharedString values. They also can't be
     // serialized directly by Serde!
-    if ty == Some(VariantType::SharedString) {
-        return false;
-    }
-
-    return true;
+    ty != Some(VariantType::SharedString)
 }
 
 /// Response body from /api/rojo
