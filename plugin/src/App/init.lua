@@ -51,10 +51,6 @@ function App:init()
 	self.host, self.setHost = Roact.createBinding(priorHost or "")
 	self.port, self.setPort = Roact.createBinding(priorPort or "")
 
-	self.patchInfo, self.setPatchInfo = Roact.createBinding({
-		patch = PatchSet.newEmpty(),
-		timestamp = os.time(),
-	})
 	self.confirmationBindable = Instance.new("BindableEvent")
 	self.confirmationEvent = self.confirmationBindable.Event
 
@@ -62,6 +58,10 @@ function App:init()
 		appStatus = AppStatus.NotConnected,
 		guiEnabled = false,
 		confirmData = {},
+		patchData = {
+			patch = PatchSet.newEmpty(),
+			timestamp = os.time(),
+		},
 		notifications = {},
 		toolbarIcon = Assets.Images.PluginButton,
 	})
@@ -227,21 +227,25 @@ function App:startSession()
 
 		local now = os.time()
 
-		local old = self.patchInfo:getValue()
+		local old = self.state.patchData
 		if now - old.timestamp < 2 then
 			-- Patches that apply in the same second are
 			-- considered to be part of the same change for human clarity
 			local merged = PatchSet.newEmpty()
 			PatchSet.assign(merged, old.patch, patch)
 
-			self.setPatchInfo({
-				patch = merged,
-				timestamp = now,
+			self:setState({
+				patchData = {
+					patch = merged,
+					timestamp = now,
+				},
 			})
 		else
-			self.setPatchInfo({
-				patch = patch,
-				timestamp = now,
+			self:setState({
+				patchData = {
+					patch = patch,
+					timestamp = now,
+				},
 			})
 		end
 	end)
@@ -291,7 +295,26 @@ function App:startSession()
 
 	serveSession:setConfirmCallback(function(instanceMap, patch, serverInfo)
 		if PatchSet.isEmpty(patch) then
+			Log.trace("Accepting patch without confirmation because it is empty")
 			return "Accept"
+		end
+
+		-- The datamodel name gets overwritten by Studio, making confirmation of it intrusive
+		-- and unnecessary. This special case allows it to be accepted without confirmation.
+		if
+			PatchSet.hasAdditions(patch) == false
+			and PatchSet.hasRemoves(patch) == false
+			and PatchSet.containsOnlyInstance(patch, instanceMap, game)
+		then
+			local datamodelUpdates = PatchSet.getUpdateForInstance(patch, instanceMap, game)
+			if
+				datamodelUpdates ~= nil
+				and next(datamodelUpdates.changedProperties) == nil
+				and datamodelUpdates.changedClassName == nil
+			then
+				Log.trace("Accepting patch without confirmation because it only contains a datamodel name change")
+				return "Accept"
+			end
 		end
 
 		self:setState({
@@ -318,16 +341,6 @@ function App:startSession()
 	serveSession:start()
 
 	self.serveSession = serveSession
-
-	task.defer(function()
-		while self.serveSession == serveSession do
-			-- Trigger rerender to update timestamp text
-			local patchInfo = table.clone(self.patchInfo:getValue())
-			self.setPatchInfo(patchInfo)
-			local elapsed = os.time() - patchInfo.timestamp
-			task.wait(elapsed < 60 and 1 or elapsed / 5)
-		end
-	end)
 end
 
 function App:endSession()
@@ -429,7 +442,7 @@ function App:render()
 					Connected = createPageElement(AppStatus.Connected, {
 						projectName = self.state.projectName,
 						address = self.state.address,
-						patchInfo = self.patchInfo,
+						patchData = self.state.patchData,
 						serveSession = self.serveSession,
 
 						onDisconnect = function()

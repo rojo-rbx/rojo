@@ -251,7 +251,7 @@ fn on_vfs_event(
 
     let mut current_path = path.as_path();
     let affected_ids = loop {
-        let ids = tree.get_ids_at_path(&current_path);
+        let ids = tree.get_ids_at_path(current_path);
 
         log::trace!("Path {} affects IDs {:?}", current_path.display(), ids);
 
@@ -267,7 +267,7 @@ fn on_vfs_event(
     };
 
     for id in affected_ids {
-        if let Some(patch) = compute_and_apply_changes(&mut tree, &vfs, id) {
+        if let Some(patch) = compute_and_apply_changes(&mut tree, vfs, id) {
             if !patch.is_empty() {
                 applied_patches.push(patch);
             }
@@ -301,7 +301,7 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref) -> Option<
                 // path still exists. We can generate a snapshot starting at
                 // that path and use it as the source for our patch.
 
-                let snapshot = match snapshot_from_vfs(&metadata.context, &vfs, &path) {
+                let snapshot = match snapshot_from_vfs(&metadata.context, vfs, path) {
                     Ok(snapshot) => snapshot,
                     Err(err) => {
                         log::error!("Snapshot error: {:?}", err);
@@ -309,7 +309,7 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref) -> Option<
                     }
                 };
 
-                let patch_set = compute_patch_set(snapshot, &tree, id);
+                let patch_set = compute_patch_set(snapshot, tree, id);
                 apply_patch_set(tree, patch_set)
             }
             Ok(None) => {
@@ -337,10 +337,10 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref) -> Option<
 
             let snapshot_result = snapshot_project_node(
                 &metadata.context,
-                &project_path,
+                project_path,
                 instance_name,
                 project_node,
-                &vfs,
+                vfs,
                 parent_class.as_ref().map(|name| name.as_str()),
             );
 
@@ -352,7 +352,7 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref) -> Option<
                 }
             };
 
-            let patch_set = compute_patch_set(snapshot, &tree, id);
+            let patch_set = compute_patch_set(snapshot, tree, id);
             apply_patch_set(tree, patch_set)
         }
     };

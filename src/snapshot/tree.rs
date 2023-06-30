@@ -37,8 +37,8 @@ pub struct RojoTree {
 
 impl RojoTree {
     pub fn new(snapshot: InstanceSnapshot) -> RojoTree {
-        let root_builder = InstanceBuilder::new(snapshot.class_name.to_owned())
-            .with_name(snapshot.name.to_owned())
+        let root_builder = InstanceBuilder::new(snapshot.class_name)
+            .with_name(snapshot.name)
             .with_properties(snapshot.properties);
 
         let mut tree = RojoTree {
@@ -245,7 +245,7 @@ impl<'a> InstanceWithMeta<'a> {
     }
 
     pub fn metadata(&self) -> &'a InstanceMetadata {
-        &self.metadata
+        self.metadata
     }
 }
 
@@ -294,6 +294,6 @@ impl InstanceWithMetaMut<'_> {
     }
 
     pub fn metadata(&self) -> &InstanceMetadata {
-        &self.metadata
+        self.metadata
     }
 }

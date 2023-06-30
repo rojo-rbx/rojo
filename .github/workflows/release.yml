@@ -116,7 +116,7 @@ jobs:
           version: 'v0.2.6'
 
       - name: Build Release
-        run: cargo build --release --locked --verbose
+        run: cargo build --release --locked --verbose --target ${{ matrix.target }}
         env:
           # Build into a known directory so we can find our build artifact more
           # easily.
@@ -132,11 +132,11 @@ jobs:
           mkdir staging
 
           if [ "${{ matrix.host }}" = "windows" ]; then
-            cp "output/release/$BIN.exe" staging/
+            cp "output/${{ matrix.target }}/release/$BIN.exe" staging/
             cd staging
             7z a ../release.zip *
           else
-            cp "output/release/$BIN" staging/
+            cp "output/${{ matrix.target }}/release/$BIN" staging/
             cd staging
             zip ../release.zip *
           fi
