@@ -176,7 +176,7 @@ fn do_upload_open_cloud(
 
     log::debug!("Uploading to Roblox...");
     let response = client
-        .post(&url)
+        .post(url)
         .header("x-api-key", api_key)
         .header(CONTENT_TYPE, "application/xml")
         .header(ACCEPT, "application/json")
