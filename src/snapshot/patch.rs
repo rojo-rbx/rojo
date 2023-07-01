@@ -14,6 +14,7 @@ use super::{InstanceMetadata, InstanceSnapshot};
 /// conflict!
 #[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PatchSet {
+    pub client_id: Option<String>,
     pub removed_instances: Vec<Ref>,
     pub added_instances: Vec<PatchAdd>,
     pub updated_instances: Vec<PatchUpdate>,
@@ -22,6 +23,7 @@ pub struct PatchSet {
 impl PatchSet {
     pub fn new() -> Self {
         PatchSet {
+            client_id: None,
             removed_instances: Vec::new(),
             added_instances: Vec::new(),
             updated_instances: Vec::new(),
@@ -63,14 +65,16 @@ pub struct PatchUpdate {
 // current values in all fields.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct AppliedPatchSet {
+    pub client_id: Option<String>,
     pub removed: Vec<Ref>,
     pub added: Vec<Ref>,
     pub updated: Vec<AppliedPatchUpdate>,
 }
 
 impl AppliedPatchSet {
-    pub fn new() -> Self {
+    pub fn new(client_id: Option<String>) -> Self {
         AppliedPatchSet {
+            client_id: client_id,
             removed: Vec::new(),
             added: Vec::new(),
             updated: Vec::new(),

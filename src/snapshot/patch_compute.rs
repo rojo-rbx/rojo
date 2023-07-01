@@ -258,6 +258,7 @@ mod test {
         let patch_set = compute_patch_set(Some(snapshot), &tree, root_id);
 
         let expected_patch_set = PatchSet {
+            client_id: None,
             updated_instances: vec![PatchUpdate {
                 id: root_id,
                 changed_name: None,
@@ -308,6 +309,7 @@ mod test {
         let patch_set = compute_patch_set(Some(snapshot), &tree, root_id);
 
         let expected_patch_set = PatchSet {
+            client_id: None,
             added_instances: vec![PatchAdd {
                 parent_id: root_id,
                 instance: InstanceSnapshot {

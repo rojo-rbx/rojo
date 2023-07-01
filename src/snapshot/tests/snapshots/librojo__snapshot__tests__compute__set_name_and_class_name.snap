@@ -2,6 +2,7 @@
 source: src/snapshot/tests/compute.rs
 expression: patch_value
 ---
+client_id: ~
 removed_instances: []
 added_instances: []
 updated_instances:
@@ -10,3 +11,4 @@ updated_instances:
     changed_class_name: Folder
     changed_properties: {}
     changed_metadata: ~
+

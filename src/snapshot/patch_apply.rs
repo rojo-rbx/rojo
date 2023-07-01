@@ -17,7 +17,7 @@ use super::{
 /// tree in sync with Rojo's.
 #[profiling::function]
 pub fn apply_patch_set(tree: &mut RojoTree, patch_set: PatchSet) -> AppliedPatchSet {
-    let mut context = PatchApplyContext::default();
+    let mut context = PatchApplyContext::new(patch_set.client_id);
 
     {
         profiling::scope!("removals");
@@ -74,6 +74,16 @@ struct PatchApplyContext {
 
     /// The current applied patch result, describing changes made to the tree.
     applied_patch_set: AppliedPatchSet,
+}
+
+impl PatchApplyContext {
+    fn new(client_id: Option<String>) -> Self {
+        Self {
+            snapshot_id_to_instance_id: HashMap::new(),
+            has_refs_to_rewrite: HashSet::new(),
+            applied_patch_set: AppliedPatchSet::new(client_id),
+        }
+    }
 }
 
 /// Finalize this patch application, consuming the context, applying any

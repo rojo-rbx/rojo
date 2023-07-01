@@ -14,6 +14,8 @@ messages:
         Name: my-new-folder
         Parent: id-2
         Properties: {}
+    clientId: ~
     removed: []
     updated: []
 sessionId: id-1
+
