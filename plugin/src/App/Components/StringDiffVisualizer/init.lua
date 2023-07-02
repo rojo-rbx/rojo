@@ -73,7 +73,7 @@ function StringDiffVisualizer:calculateDiffLines()
 	-- Diff the two texts
 	local startClock = os.clock()
 	local diffs = DMP.diff_main(oldText, newText)
-	DMP.diff_cleanupSemantic(diffs)
+	DMP.diff_cleanupEfficiency(diffs)
 	local stopClock = os.clock()
 
 	Log.trace("Diffing {} byte and {} byte strings took {} microseconds and found {} diffs", #oldText, #newText, math.round((stopClock - startClock) * 1000 * 1000), #diffs)
@@ -90,13 +90,31 @@ function StringDiffVisualizer:calculateDiffLines()
 			oldLineNum += lines
 			newLineNum += lines
 		elseif action == DMP.DIFF_INSERT then
-			for i = newLineNum, newLineNum + lines do
-				add[i] = true
+			if lines > 0 then
+				local textLines = string.split(text, "\n")
+				for i, textLine in textLines do
+					if string.match(textLine, "%S") then
+						add[newLineNum + i - 1] = true
+					end
+				end
+			else
+				if string.match(text, "%S") then
+					add[newLineNum] = true
+				end
 			end
 			newLineNum += lines
 		elseif action == DMP.DIFF_DELETE then
-			for i = oldLineNum, oldLineNum + lines do
-				remove[i] = true
+			if lines > 0 then
+				local textLines = string.split(text, "\n")
+				for i, textLine in textLines do
+					if string.match(textLine, "%S") then
+						remove[oldLineNum + i - 1] = true
+					end
+				end
+			else
+				if string.match(text, "%S") then
+					remove[oldLineNum] = true
+				end
 			end
 			oldLineNum += lines
 		else
