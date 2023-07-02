@@ -152,8 +152,6 @@ function ConfirmingPage:render()
 				onClose = function()
 					self:setState({
 						showingSourceDiff = false,
-						oldSource = "",
-						newSource = "",
 					})
 				end,
 			}, {

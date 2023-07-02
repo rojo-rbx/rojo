@@ -6,11 +6,11 @@ local Packages = Rojo.Packages
 
 local Roact = require(Packages.Roact)
 local Log = require(Packages.Log)
-local Highlighter = require(Packages.Highlighter)
 local DMP = require(script:FindFirstChild("DiffMatchPatch"))
 
 local Theme = require(Plugin.App.Theme)
 
+local CodeLabel = require(Plugin.App.Components.CodeLabel)
 local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
 local ScrollingFrame = require(Plugin.App.Components.ScrollingFrame)
 
@@ -18,47 +18,40 @@ local e = Roact.createElement
 
 local StringDiffVisualizer = Roact.Component:extend("StringDiffVisualizer")
 
-settings().Studio.Theme:GetColor(Enum.StudioStyleGuideColor.MainButton, Enum.StudioStyleGuideModifier.Disabled)
-
 function StringDiffVisualizer:init()
 	self.scriptBackground, self.setScriptBackground = Roact.createBinding(Color3.fromRGB(0, 0, 0))
 	self.contentSize, self.setContentSize = Roact.createBinding(Vector2.new(0, 0))
 
-	self.oldHighlights = Roact.createRef()
-	self.newHighlights = Roact.createRef()
-
-	self.themeConnection = nil
-	self:updateHighlighterTheme()
-
 	self:calculateContentSize()
+	self:getScriptBackground()
+
+	self:setState({
+		add = {},
+		remove = {},
+	})
 end
 
-function StringDiffVisualizer:didMount()
-	self.themeConnection = settings():GetService("Studio").ThemeChanged:Connect(function()
-		self:updateHighlighterTheme()
-	end)
-end
-
-function StringDiffVisualizer:willUnmount()
-	self.themeConnection:Disconnect()
-end
-
-function StringDiffVisualizer:updateHighlighterTheme()
+function StringDiffVisualizer:getScriptBackground()
 	local studioTheme = settings():GetService("Studio").Theme
 	self.setScriptBackground(studioTheme:GetColor(Enum.StudioStyleGuideColor.ScriptBackground))
-	Highlighter.setTokenColors({
-		["iden"] = studioTheme:GetColor(Enum.StudioStyleGuideColor.ScriptText),
-		["keyword"] = studioTheme:GetColor(Enum.StudioStyleGuideColor.ScriptKeyword),
-		["builtin"] = studioTheme:GetColor(Enum.StudioStyleGuideColor.ScriptBuiltInFunction),
-		["string"] = studioTheme:GetColor(Enum.StudioStyleGuideColor.ScriptString),
-		["number"] = studioTheme:GetColor(Enum.StudioStyleGuideColor.ScriptNumber),
-		["comment"] = studioTheme:GetColor(Enum.StudioStyleGuideColor.ScriptComment),
-		["operator"] = studioTheme:GetColor(Enum.StudioStyleGuideColor.ScriptOperator),
-	})
+end
+
+function StringDiffVisualizer:didUpdate(previousProps)
+	self:getScriptBackground()
+
+	if previousProps.oldText ~= self.props.oldText or previousProps.newText ~= self.props.newText then
+		self:calculateContentSize()
+		local add, remove = self:calculateDiffLines()
+		self:setState({
+			add = add,
+			remove = remove,
+		})
+	end
 end
 
 function StringDiffVisualizer:calculateContentSize()
 	local oldText, newText = self.props.oldText, self.props.newText
+	Log.trace("Calculating content size for {} {}", #oldText, #newText)
 	local oldTextBounds = TextService:GetTextSize(oldText, 16, Enum.Font.RobotoMono, Vector2.new(99999, 99999))
 	local newTextBounds = TextService:GetTextSize(newText, 16, Enum.Font.RobotoMono, Vector2.new(99999, 99999))
 
@@ -76,7 +69,7 @@ function StringDiffVisualizer:calculateDiffLines()
 	DMP.diff_cleanupEfficiency(diffs)
 	local stopClock = os.clock()
 
-	Log.trace("Diffing {} byte and {} byte strings took {} microseconds and found {} diffs", #oldText, #newText, math.round((stopClock - startClock) * 1000 * 1000), #diffs)
+	Log.trace("Diffing {} byte and {} byte strings took {} microseconds and found {} diff sections", #oldText, #newText, math.round((stopClock - startClock) * 1000 * 1000), #diffs)
 
 	-- Determine which lines to highlight
 	local add, remove = {}, {}
@@ -122,46 +115,13 @@ function StringDiffVisualizer:calculateDiffLines()
 		end
 	end
 
-	if self.oldHighlights.current then
-		for _, lineLabel in self.oldHighlights.current:GetChildren() do
-			lineLabel.BackgroundTransparency =
-				if remove[tonumber(string.match(lineLabel.Name, "%d+"))] then 0.3 else 1
-		end
-	end
-
-	if self.newHighlights.current then
-		for _, lineLabel in self.newHighlights.current:GetChildren() do
-			lineLabel.BackgroundTransparency =
-				if add[tonumber(string.match(lineLabel.Name, "%d+"))] then 0.3 else 1
-		end
-	end
-
 	return add, remove
-end
-
-function StringDiffVisualizer:willUpdate()
-	self:calculateContentSize()
 end
 
 function StringDiffVisualizer:render()
 	local oldText, newText = self.props.oldText, self.props.newText
 
 	return Theme.with(function(theme)
-		if self.newHighlights.current then
-			for _, lineLabel in self.newHighlights.current:GetChildren() do
-				lineLabel.BackgroundColor3 = theme.Diff.Add
-				lineLabel.BorderSizePixel = 0
-			end
-		end
-		if self.oldHighlights.current then
-			for _, lineLabel in self.oldHighlights.current:GetChildren() do
-				lineLabel.BackgroundColor3 = theme.Diff.Remove
-				lineLabel.BorderSizePixel = 0
-			end
-		end
-
-		self:calculateDiffLines()
-
 		return e(BorderedContainer, {
 			size = self.props.size,
 			position = self.props.position,
@@ -194,26 +154,12 @@ function StringDiffVisualizer:render()
 				transparency = self.props.transparency,
 				contentSize = self.contentSize,
 			}, {
-				TextLabel = e("TextLabel", {
-					Size = UDim2.new(1, 0, 1, 0),
-					BackgroundTransparency = 1,
-					Text = oldText,
-					Font = Enum.Font.RobotoMono,
-					TextSize = 16,
-					TextXAlignment = Enum.TextXAlignment.Left,
-					TextYAlignment = Enum.TextYAlignment.Top,
-					TextColor3 = Color3.fromRGB(255, 255, 255),
-					[Roact.Event.AncestryChanged] = function(rbx)
-						if rbx:IsDescendantOf(game) then
-							Highlighter.highlight({
-								textObject = rbx,
-							})
-						end
-					end,
-				}, {
-					SyntaxHighlights = e("Folder", {
-						[Roact.Ref] = self.oldHighlights,
-					}),
+				Source = e(CodeLabel, {
+					size = UDim2.new(1, 0, 1, 0),
+					position = UDim2.new(0, 0, 0, 0),
+					text = oldText,
+					lineBackground = theme.Diff.Remove,
+					markedLines = self.state.remove,
 				}),
 			}),
 			New = e(ScrollingFrame, {
@@ -223,26 +169,12 @@ function StringDiffVisualizer:render()
 				transparency = self.props.transparency,
 				contentSize = self.contentSize,
 			}, {
-				TextLabel = e("TextLabel", {
-					Size = UDim2.new(1, 0, 1, 0),
-					BackgroundTransparency = 1,
-					Text = newText,
-					Font = Enum.Font.RobotoMono,
-					TextSize = 16,
-					TextXAlignment = Enum.TextXAlignment.Left,
-					TextYAlignment = Enum.TextYAlignment.Top,
-					TextColor3 = Color3.fromRGB(255, 255, 255),
-					[Roact.Event.AncestryChanged] = function(rbx)
-						if rbx:IsDescendantOf(game) then
-							Highlighter.highlight({
-								textObject = rbx,
-							})
-						end
-					end,
-				}, {
-					SyntaxHighlights = e("Folder", {
-						[Roact.Ref] = self.newHighlights,
-					}),
+				Source = e(CodeLabel, {
+					size = UDim2.new(1, 0, 1, 0),
+					position = UDim2.new(0, 0, 0, 0),
+					text = newText,
+					lineBackground = theme.Diff.Add,
+					markedLines = self.state.add,
 				}),
 			}),
 		})
