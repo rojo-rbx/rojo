@@ -71,8 +71,12 @@ function StringDiffVisualizer:calculateDiffLines()
 	local oldText, newText = self.props.oldText, self.props.newText
 
 	-- Diff the two texts
+	local startClock = os.clock()
 	local diffs = DMP.diff_main(oldText, newText)
 	DMP.diff_cleanupSemantic(diffs)
+	local stopClock = os.clock()
+
+	Log.trace("Diffing {} byte and {} byte strings took {} microseconds and found {} diffs", #oldText, #newText, math.round((stopClock - startClock) * 1000 * 1000), #diffs)
 
 	-- Determine which lines to highlight
 	local add, remove = {}, {}
