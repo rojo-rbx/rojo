@@ -96,9 +96,8 @@ function ChangeList:render()
 			end
 
 			-- Special case for .Source updates
-			-- because we want to display a syntax highlighted diff
-			-- for better UX
-			if tostring(values[1]) == "Source" and (columnVisibility[2] and columnVisibility[3]) then
+			-- because we want to display a syntax highlighted diff for better UX
+			if self.props.showSourceDiff and tostring(values[1]) == "Source" and (columnVisibility[2] and columnVisibility[3]) then
 				rows[row] = e("Frame", {
 					Size = UDim2.new(1, 0, 0, 30),
 					BackgroundTransparency = row % 2 ~= 0 and rowTransparency or 1,
