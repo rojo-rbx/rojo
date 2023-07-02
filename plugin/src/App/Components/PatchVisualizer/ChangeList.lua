@@ -4,8 +4,10 @@ local Packages = Rojo.Packages
 
 local Roact = require(Packages.Roact)
 
+local Assets = require(Plugin.Assets)
 local Theme = require(Plugin.App.Theme)
 local ScrollingFrame = require(Plugin.App.Components.ScrollingFrame)
+local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
 local DisplayValue = require(script.Parent.DisplayValue)
 
 local e = Roact.createElement
@@ -91,6 +93,89 @@ function ChangeList:render()
 		for row, values in changes do
 			if row == 1 then
 				continue -- Skip headers, already handled above
+			end
+
+			-- Special case for .Source updates
+			-- because we want to display a syntax highlighted diff
+			-- for better UX
+			if tostring(values[1]) == "Source" and (columnVisibility[2] and columnVisibility[3]) then
+				rows[row] = e("Frame", {
+					Size = UDim2.new(1, 0, 0, 30),
+					BackgroundTransparency = row % 2 ~= 0 and rowTransparency or 1,
+					BackgroundColor3 = theme.Diff.Row,
+					BorderSizePixel = 0,
+					LayoutOrder = row,
+				}, {
+					Padding = e("UIPadding", pad),
+					Layout = e("UIListLayout", {
+						FillDirection = Enum.FillDirection.Horizontal,
+						SortOrder = Enum.SortOrder.LayoutOrder,
+						HorizontalAlignment = Enum.HorizontalAlignment.Left,
+						VerticalAlignment = Enum.VerticalAlignment.Center,
+					}),
+					A = e("TextLabel", {
+						Visible = columnVisibility[1],
+						Text = tostring(values[1]),
+						BackgroundTransparency = 1,
+						Font = Enum.Font.GothamMedium,
+						TextSize = 14,
+						TextColor3 = theme.Settings.Setting.DescriptionColor,
+						TextXAlignment = Enum.TextXAlignment.Left,
+						TextTransparency = props.transparency,
+						TextTruncate = Enum.TextTruncate.AtEnd,
+						Size = UDim2.new(0.3, 0, 1, 0),
+						LayoutOrder = 1,
+					}),
+					Button = e("TextButton", {
+						Text = "",
+						Size = UDim2.new(0.7, 0, 1, -4),
+						LayoutOrder = 2,
+						BackgroundTransparency = 1,
+						[Roact.Event.Activated] = function()
+							if props.showSourceDiff then
+								props.showSourceDiff(tostring(values[2]), tostring(values[3]))
+							end
+						end,
+					}, {
+						e(BorderedContainer, {
+							size = UDim2.new(1, 0, 1, 0),
+							transparency = self.props.transparency,
+						}, {
+							Layout = e("UIListLayout", {
+								FillDirection = Enum.FillDirection.Horizontal,
+								SortOrder = Enum.SortOrder.LayoutOrder,
+								HorizontalAlignment = Enum.HorizontalAlignment.Center,
+								VerticalAlignment = Enum.VerticalAlignment.Center,
+								Padding = UDim.new(0, 5),
+							}),
+							Label = e("TextLabel", {
+								Text = "View Diff",
+								BackgroundTransparency = 1,
+								Font = Enum.Font.GothamMedium,
+								TextSize = 14,
+								TextColor3 = theme.Settings.Setting.DescriptionColor,
+								TextXAlignment = Enum.TextXAlignment.Left,
+								TextTransparency = props.transparency,
+								TextTruncate = Enum.TextTruncate.AtEnd,
+								Size = UDim2.new(0, 65, 1, 0),
+								LayoutOrder = 1,
+							}),
+							Icon = e("ImageLabel", {
+								Image = Assets.Images.Icons.Expand,
+								ImageColor3 = theme.Checkbox.Active.IconColor,
+								ImageTransparency = self.props.transparency,
+
+								Size = UDim2.new(0, 16, 0, 16),
+								Position = UDim2.new(0.5, 0, 0.5, 0),
+								AnchorPoint = Vector2.new(0.5, 0.5),
+
+								BackgroundTransparency = 1,
+								LayoutOrder = 2,
+							}),
+						}),
+					}),
+				})
+				continue
 			end
 
 			rows[row] = e("Frame", {
