@@ -97,8 +97,7 @@ fn finalize_patch_application(context: PatchApplyContext, tree: &mut RojoTree) -
 
         for value in instance.properties_mut().values_mut() {
             if let Variant::Ref(referent) = value {
-                if let Some(&instance_referent) = context.snapshot_id_to_instance_id.get(&referent)
-                {
+                if let Some(&instance_referent) = context.snapshot_id_to_instance_id.get(referent) {
                     *value = Variant::Ref(instance_referent);
                 }
             }

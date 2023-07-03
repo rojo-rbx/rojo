@@ -127,11 +127,10 @@ impl Project {
         contents: &[u8],
         project_file_location: &Path,
     ) -> Result<Self, ProjectError> {
-        let mut project: Self =
-            serde_json::from_slice(&contents).map_err(|source| Error::Json {
-                source,
-                path: project_file_location.to_owned(),
-            })?;
+        let mut project: Self = serde_json::from_slice(contents).map_err(|source| Error::Json {
+            source,
+            path: project_file_location.to_owned(),
+        })?;
 
         project.file_location = project_file_location.to_path_buf();
         project.check_compatibility();
@@ -197,8 +196,8 @@ pub enum PathNode {
 impl PathNode {
     pub fn path(&self) -> &Path {
         match self {
-            PathNode::Required(pathbuf) => &pathbuf,
-            PathNode::Optional(OptionalPathNode { optional }) => &optional,
+            PathNode::Required(pathbuf) => pathbuf,
+            PathNode::Optional(OptionalPathNode { optional }) => optional,
         }
     }
 }

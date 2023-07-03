@@ -15,7 +15,7 @@ where
         .as_os_str()
         .to_str()
         .expect("Invalid Unicode in file path, cannot serialize");
-    let replaced = as_str.replace("\\", "/");
+    let replaced = as_str.replace('\\', "/");
 
     serializer.serialize_str(&replaced)
 }
