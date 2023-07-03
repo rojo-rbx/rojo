@@ -26,10 +26,8 @@ pub fn compute_patch_set(snapshot: Option<InstanceSnapshot>, tree: &RojoTree, id
         // for all of the IDs that we know about so far.
         rewrite_refs_in_updates(&context, &mut patch_set.updated_instances);
         rewrite_refs_in_additions(&context, &mut patch_set.added_instances);
-    } else {
-        if id != tree.get_root_id() {
-            patch_set.removed_instances.push(id);
-        }
+    } else if id != tree.get_root_id() {
+        patch_set.removed_instances.push(id);
     }
 
     patch_set

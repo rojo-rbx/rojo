@@ -108,3 +108,9 @@ impl VfsBackend for StdBackend {
             .map_err(|inner| io::Error::new(io::ErrorKind::Other, inner))
     }
 }
+
+impl Default for StdBackend {
+    fn default() -> Self {
+        Self::new()
+    }
+}

@@ -50,6 +50,12 @@ impl InMemoryFs {
     }
 }
 
+impl Default for InMemoryFs {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[derive(Debug)]
 struct InMemoryFsInner {
     entries: HashMap<PathBuf, Entry>,

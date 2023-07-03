@@ -102,12 +102,11 @@ impl ServeSession {
 
         log::trace!("Starting new ServeSession at path {}", start_path.display());
 
-        let project_path;
-        if Project::is_project_file(start_path) {
-            project_path = Cow::Borrowed(start_path);
+        let project_path = if Project::is_project_file(start_path) {
+            Cow::Borrowed(start_path)
         } else {
-            project_path = Cow::Owned(start_path.join("default.project.json"));
-        }
+            Cow::Owned(start_path.join("default.project.json"))
+        };
 
         log::debug!("Loading project file from {}", project_path.display());
 
@@ -127,7 +126,7 @@ impl ServeSession {
         let instance_context = InstanceContext::default();
 
         log::trace!("Generating snapshot of instances from VFS");
-        let snapshot = snapshot_from_vfs(&instance_context, &vfs, &start_path)?;
+        let snapshot = snapshot_from_vfs(&instance_context, &vfs, start_path)?;
 
         log::trace!("Computing initial patch set");
         let patch_set = compute_patch_set(snapshot, &tree, root_id);

@@ -304,7 +304,26 @@ function App:startSession()
 
 	serveSession:setConfirmCallback(function(instanceMap, patch, serverInfo)
 		if PatchSet.isEmpty(patch) then
+			Log.trace("Accepting patch without confirmation because it is empty")
 			return "Accept"
+		end
+
+		-- The datamodel name gets overwritten by Studio, making confirmation of it intrusive
+		-- and unnecessary. This special case allows it to be accepted without confirmation.
+		if
+			PatchSet.hasAdditions(patch) == false
+			and PatchSet.hasRemoves(patch) == false
+			and PatchSet.containsOnlyInstance(patch, instanceMap, game)
+		then
+			local datamodelUpdates = PatchSet.getUpdateForInstance(patch, instanceMap, game)
+			if
+				datamodelUpdates ~= nil
+				and next(datamodelUpdates.changedProperties) == nil
+				and datamodelUpdates.changedClassName == nil
+			then
+				Log.trace("Accepting patch without confirmation because it only contains a datamodel name change")
+				return "Accept"
+			end
 		end
 
 		self:setState({
