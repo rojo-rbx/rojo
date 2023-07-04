@@ -127,7 +127,7 @@ function DomLabel:render()
 					if props.instance then
 						SelectionService:Set({props.instance})
 					end
-				end
+				end,
 			}),
 			Expansion = if props.changeList
 				then e(Expansion, {
