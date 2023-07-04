@@ -311,7 +311,7 @@ function App:releaseSyncLock()
 		return
 	end
 
-	Log.trace("Could not relase sync lock because it is owned by {}", lock.Value)
+	Log.trace("Could not release sync lock because it is owned by {}", lock.Value)
 end
 
 function App:requestPermission(source: string, name: string, apis: {string}, initialState: {[string]: boolean?}): {[string]: boolean}
