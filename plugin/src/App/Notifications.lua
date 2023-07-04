@@ -176,7 +176,7 @@ function Notification:render()
 						TextWrapped = true,
 
 						Size = UDim2.new(0, textBounds.X, 0, textBounds.Y),
-						Position = UDim2.fromOffset(38, 0),
+						Position = UDim2.fromOffset(35, 0),
 
 						LayoutOrder = 1,
 						BackgroundTransparency = 1,
@@ -199,8 +199,8 @@ function Notification:render()
 				}),
 
 				Padding = e("UIPadding", {
-					PaddingLeft = UDim.new(0, 12),
-					PaddingRight = UDim.new(0, 12),
+					PaddingLeft = UDim.new(0, 17),
+					PaddingRight = UDim.new(0, 15),
 				}),
 			})
 		})
