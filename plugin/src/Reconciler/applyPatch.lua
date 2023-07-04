@@ -19,6 +19,8 @@ local reify = require(script.Parent.reify)
 local setProperty = require(script.Parent.setProperty)
 
 local function applyPatch(instanceMap, patch)
+	local patchTimestamp = DateTime.now():FormatLocalTime("LTS", "en-us")
+
 	-- Tracks any portions of the patch that could not be applied to the DOM.
 	local unappliedPatch = PatchSet.newEmpty()
 
@@ -201,8 +203,7 @@ local function applyPatch(instanceMap, patch)
 		end
 	end
 
-	local patchAddress = string.match(tostring(patch), "0x%x+$") or tostring(patch)
-	ChangeHistoryService:SetWaypoint("Rojo: Patch " .. patchAddress)
+	ChangeHistoryService:SetWaypoint("Rojo: Patch " .. patchTimestamp)
 
 	return unappliedPatch
 end
