@@ -59,11 +59,54 @@ function App:init()
 	self.notifId = 0
 
 	self.waypointConnection = ChangeHistoryService.OnUndo:Connect(function(action: string)
-		if string.find(action, "^Rojo: Patch") then
-			local message = string.format("You've undone '%s'.\nIf this was not intended, please Redo in the topbar or with Ctrl/⌘+Y.", action)
-			Log.warn(message)
-			self:addNotification(message, 10)
+		if not string.find(action, "^Rojo: Patch") then return end
+
+		local undoConnection, redoConnection = nil, nil
+		local function cleanup()
+			undoConnection:Disconnect()
+			redoConnection:Disconnect()
 		end
+
+		Log.warn(string.format("You've undone '%s'.\nIf this was not intended, please Redo in the topbar or with Ctrl/⌘+Y.", action))
+		local dismissNotif = self:addNotification(
+			string.format("You've undone '%s'.\nIf this was not intended, please restore.", action),
+			10,
+			{
+				Restore = {
+					text = "Restore",
+					style = "Solid",
+					layoutOrder = 1,
+					onClick = function(notification)
+						cleanup()
+						notification:dismiss()
+						ChangeHistoryService:Redo()
+					end
+				},
+				Dismiss = {
+					text = "Dismiss",
+					style = "Bordered",
+					layoutOrder = 2,
+					onClick = function(notification)
+						cleanup()
+						notification:dismiss()
+					end,
+				},
+			}
+		)
+
+		undoConnection = ChangeHistoryService.OnUndo:Once(function()
+			-- Our notif is now out of date- redoing will not restore the patch
+			-- since we've undone even further. Dismiss the notif.
+			cleanup()
+			dismissNotif()
+		end)
+		redoConnection = ChangeHistoryService.OnRedo:Once(function(redoneAction: string)
+			if redoneAction == action then
+				-- The user has restored the patch, so we can dismiss the notif
+				cleanup()
+				dismissNotif()
+			end
+		end)
 	end)
 
 	self:setState({
@@ -137,6 +180,10 @@ function App:addNotification(text: string, timeout: number?, actions: { [string]
 end
 
 function App:closeNotification(id: number)
+	if not self.state.notifications[id] then
+		return
+	end
+
 	local notifications = table.clone(self.state.notifications)
 	notifications[id] = nil
 
