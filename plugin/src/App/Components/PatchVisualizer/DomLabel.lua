@@ -1,3 +1,4 @@
+local SelectionService = game:GetService("Selection")
 local StudioService = game:GetService("StudioService")
 
 local Rojo = script:FindFirstAncestor("Rojo")
@@ -106,21 +107,28 @@ function DomLabel:render()
 				PaddingLeft = UDim.new(0, 10),
 				PaddingRight = UDim.new(0, 10),
 			}),
-			ExpandButton = if props.changeList
-				then e("TextButton", {
-					BackgroundTransparency = 1,
-					Text = "",
-					Size = UDim2.new(1, 0, 1, 0),
-					[Roact.Event.Activated] = function()
+			Button = e("TextButton", {
+				BackgroundTransparency = 1,
+				Text = "",
+				Size = UDim2.new(1, 0, 1, 0),
+				[Roact.Event.MouseButton1Click] = function()
+					if props.changeList then
 						self.expanded = not self.expanded
 						local goalHeight = 30 + (if self.expanded then math.clamp(#self.props.changeList * 30, 30, 30 * 6) else 0)
 						self.motor:setGoal(Flipper.Spring.new(goalHeight, {
 							frequency = 5,
 							dampingRatio = 1,
 						}))
-					end,
-				})
-				else nil,
+					elseif props.instance then
+						SelectionService:Set({props.instance})
+					end
+				end,
+				[Roact.Event.MouseButton2Click] = function()
+					if props.instance then
+						SelectionService:Set({props.instance})
+					end
+				end
+			}),
 			Expansion = if props.changeList
 				then e(Expansion, {
 					rendered = self.state.renderExpansion,
