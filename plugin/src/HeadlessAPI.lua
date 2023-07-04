@@ -315,13 +315,14 @@ function API.new(app)
 		if actions then
 			sanitizedActions = {}
 			for id, action in actions do
-				assert(type(id) == "string", "Action key must be string")
-				assert(type(action) == "table", "Action must be table")
-				assert(type(action.text) == "string", "Action.text must be string")
-				assert(type(action.style) == "string", "Action.style must be string")
-				assert(action.style == "Solid" or action.style == "Bordered", "Action.style must be 'Solid' or 'Bordered'")
-				assert(type(action.layoutOrder) == "number", "Action.layoutOrder must be number")
-				assert(type(action.onClick) == "function", "Action.onClick must be function")
+				assert(type(id) == "string", "Actions key must be string")
+				local actionId = "Actions." .. id
+				assert(type(action) == "table", actionId .. " must be table")
+				assert(type(action.text) == "string", actionId .. ".text must be string")
+				assert(type(action.style) == "string", actionId .. ".style must be string")
+				assert(action.style == "Solid" or action.style == "Bordered", actionId .. ".style must be 'Solid' or 'Bordered'")
+				assert(type(action.layoutOrder) == "number", actionId .. ".layoutOrder must be number")
+				assert(type(action.onClick) == "function", actionId .. ".onClick must be function")
 
 				sanitizedActions[id] = {
 					text = action.text,
