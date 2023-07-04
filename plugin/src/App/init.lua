@@ -59,7 +59,9 @@ function App:init()
 	self.notifId = 0
 
 	self.waypointConnection = ChangeHistoryService.OnUndo:Connect(function(action: string)
-		if not string.find(action, "^Rojo: Patch") then return end
+		if not string.find(action, "^Rojo: Patch") then
+			return
+		end
 
 		local undoConnection, redoConnection = nil, nil
 		local function cleanup()
@@ -67,7 +69,12 @@ function App:init()
 			redoConnection:Disconnect()
 		end
 
-		Log.warn(string.format("You've undone '%s'.\nIf this was not intended, please Redo in the topbar or with Ctrl/⌘+Y.", action))
+		Log.warn(
+			string.format(
+				"You've undone '%s'.\nIf this was not intended, please Redo in the topbar or with Ctrl/⌘+Y.",
+				action
+			)
+		)
 		local dismissNotif = self:addNotification(
 			string.format("You've undone '%s'.\nIf this was not intended, please restore.", action),
 			10,
@@ -80,7 +87,7 @@ function App:init()
 						cleanup()
 						notification:dismiss()
 						ChangeHistoryService:Redo()
-					end
+					end,
 				},
 				Dismiss = {
 					text = "Dismiss",
@@ -135,7 +142,7 @@ function App:init()
 				onClick = function(notification)
 					notification:dismiss()
 					self:startSession()
-				end
+				end,
 			},
 			Dismiss = {
 				text = "Dismiss",
@@ -154,7 +161,11 @@ function App:didUnmount()
 	self.confirmationBindable:Destroy()
 end
 
-function App:addNotification(text: string, timeout: number?, actions: { [string]: {text: string, style: string, layoutOrder: number, onClick: (any) -> ()} }?)
+function App:addNotification(
+	text: string,
+	timeout: number?,
+	actions: { [string]: { text: string, style: string, layoutOrder: number, onClick: (any) -> () } }?
+)
 	if not Settings:get("showNotifications") then
 		return
 	end
@@ -194,26 +205,38 @@ end
 
 function App:getPriorEndpoint()
 	local priorEndpoints = Settings:get("priorEndpoints")
-	if not priorEndpoints then return end
+	if not priorEndpoints then
+		return
+	end
 
 	local id = tostring(game.PlaceId)
-	if ignorePlaceIds[id] then return end
+	if ignorePlaceIds[id] then
+		return
+	end
 
 	local place = priorEndpoints[id]
-	if not place then return end
+	if not place then
+		return
+	end
 
 	return place.host, place.port
 end
 
 function App:getLastSyncTimestamp()
 	local priorEndpoints = Settings:get("priorEndpoints")
-	if not priorEndpoints then return end
+	if not priorEndpoints then
+		return
+	end
 
 	local id = tostring(game.PlaceId)
-	if ignorePlaceIds[id] then return end
+	if ignorePlaceIds[id] then
+		return
+	end
 
 	local place = priorEndpoints[id]
-	if not place then return end
+	if not place then
+		return
+	end
 
 	return place.timestamp
 end
@@ -233,7 +256,9 @@ function App:setPriorEndpoint(host: string, port: string)
 	end
 
 	local id = tostring(game.PlaceId)
-	if ignorePlaceIds[id] then return end
+	if ignorePlaceIds[id] then
+		return
+	end
 
 	priorEndpoints[id] = {
 		host = if host ~= Config.defaultHost then host else nil,
@@ -241,7 +266,6 @@ function App:setPriorEndpoint(host: string, port: string)
 		timestamp = os.time(),
 	}
 	Log.trace("Saved last used endpoint for {}", game.PlaceId)
-
 
 	Settings:set("priorEndpoints", priorEndpoints)
 end
