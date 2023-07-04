@@ -130,6 +130,7 @@ local function Tree()
 				id = ancestorId,
 				className = value.ClassName,
 				name = value.Name,
+				instance = if typeof(value) == "Instance" then value else nil,
 			})
 			previousId = ancestorId
 		end
@@ -235,6 +236,7 @@ function PatchVisualizer:buildTree(patch, instanceMap)
 			patchType = "Edit",
 			className = instance.ClassName,
 			name = instance.Name,
+			instance = instance,
 			hint = hint,
 			changeList = changeList,
 		})
@@ -263,6 +265,7 @@ function PatchVisualizer:buildTree(patch, instanceMap)
 			patchType = "Remove",
 			className = instance.ClassName,
 			name = instance.Name,
+			instance = instance,
 		})
 	end
 
@@ -362,6 +365,7 @@ function PatchVisualizer:render()
 				setElementHeight = setElementHeight,
 				patchType = node.patchType,
 				className = node.className,
+				instance = node.instance,
 				name = node.name,
 				hint = node.hint,
 				changeList = node.changeList,
