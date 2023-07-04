@@ -15,6 +15,7 @@ local bindingUtil = require(Plugin.App.bindingUtil)
 local e = Roact.createElement
 
 local ChangeList = require(script.Parent.ChangeList)
+local Tooltip = require(script.Parent.Parent.Tooltip)
 
 local Expansion = Roact.Component:extend("Expansion")
 
@@ -115,13 +116,14 @@ function DomLabel:render()
 					if clickCount == 1 then
 						-- Double click opens the instance in explorer
 						if props.instance then
-							SelectionService:Set({props.instance})
+							SelectionService:Set({ props.instance })
 						end
 					elseif clickCount == 0 then
 						-- Single click expands the changes
 						if props.changeList then
 							self.expanded = not self.expanded
-							local goalHeight = 30 + (if self.expanded then math.clamp(#self.props.changeList * 30, 30, 30 * 6) else 0)
+							local goalHeight = 30
+								+ (if self.expanded then math.clamp(#self.props.changeList * 30, 30, 30 * 6) else 0)
 							self.motor:setGoal(Flipper.Spring.new(goalHeight, {
 								frequency = 5,
 								dampingRatio = 1,
@@ -129,6 +131,14 @@ function DomLabel:render()
 						end
 					end
 				end,
+			}, {
+				StateTip = if (props.instance or props.changeList)
+					then e(Tooltip.Trigger, {
+						text = (if props.changeList then "Click to view changes" else "") .. (if props.instance
+							then (if props.changeList then " & d" else "D") .. "ouble click to open in Explorer"
+							else ""),
+					})
+					else nil,
 			}),
 			Expansion = if props.changeList
 				then e(Expansion, {
