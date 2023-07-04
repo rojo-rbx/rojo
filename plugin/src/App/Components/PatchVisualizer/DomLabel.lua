@@ -134,7 +134,9 @@ function DomLabel:render()
 			}, {
 				StateTip = if (props.instance or props.changeList)
 					then e(Tooltip.Trigger, {
-						text = (if props.changeList then "Click to " .. (if self.expanded then "hide" else "view") .. " changes" else "") .. (if props.instance
+						text = (if props.changeList
+							then "Click to " .. (if self.expanded then "hide" else "view") .. " changes"
+							else "") .. (if props.instance
 							then (if props.changeList then " & d" else "D") .. "ouble click to open in Explorer"
 							else ""),
 					})
