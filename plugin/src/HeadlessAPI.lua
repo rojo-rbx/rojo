@@ -302,15 +302,37 @@ function API.new(app)
 	end
 
 	Rojo._apiDescriptions.Notify = "Shows a notification in the Rojo UI"
-	function Rojo:Notify(msg: string, timeout: number?)
+	function Rojo:Notify(msg: string, timeout: number?, actions: { [string]: {text: string, style: string, layoutOrder: number, onClick: (any) -> ()} }?)
 		assert(type(msg) == "string", "Message must be type `string`")
 		assert(type(timeout) == "number" or timeout == nil, "Timeout must be type `number?`")
+		assert((actions == nil) or (type(actions) == "table"), "Actions must be table or nil")
 
 		if Rojo:_checkRateLimit("Notify") then
 			return
 		end
 
-		app:addThirdPartyNotification(Rojo:_getCallerName(), msg, timeout)
+		local sanitizedActions = nil
+		if actions then
+			sanitizedActions = {}
+			for id, action in actions do
+				assert(type(id) == "string", "Action key must be string")
+				assert(type(action) == "table", "Action must be table")
+				assert(type(action.text) == "string", "Action.text must be string")
+				assert(type(action.style) == "string", "Action.style must be string")
+				assert(action.style == "Solid" or action.style == "Bordered", "Action.style must be 'Solid' or 'Bordered'")
+				assert(type(action.layoutOrder) == "number", "Action.layoutOrder must be number")
+				assert(type(action.onClick) == "function", "Action.onClick must be function")
+
+				sanitizedActions[id] = {
+					text = action.text,
+					style = action.style,
+					layoutOrder = action.layoutOrder,
+					onClick = action.onClick,
+				}
+			end
+		end
+
+		app:addThirdPartyNotification(Rojo:_getCallerName(), msg, timeout, sanitizedActions)
 		return
 	end
 
