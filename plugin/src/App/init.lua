@@ -1,3 +1,4 @@
+local ChangeHistoryService = game:GetService("ChangeHistoryService")
 local Players = game:GetService("Players")
 local ServerStorage = game:GetService("ServerStorage")
 
@@ -54,6 +55,14 @@ function App:init()
 	self.confirmationBindable = Instance.new("BindableEvent")
 	self.confirmationEvent = self.confirmationBindable.Event
 
+	self.waypointConnection = ChangeHistoryService.OnUndo:Connect(function(action: string)
+		if string.find(action, "^Rojo: Patch") then
+			local message = string.format("You've undone '%s'.\nIf this was not intended, please Redo in the topbar or with Ctrl/⌘+Y.", action)
+			Log.warn(message)
+			self:addNotification(message, 10)
+		end
+	end)
+
 	self:setState({
 		appStatus = AppStatus.NotConnected,
 		guiEnabled = false,
@@ -65,6 +74,11 @@ function App:init()
 		notifications = {},
 		toolbarIcon = Assets.Images.PluginButton,
 	})
+end
+
+function App:didUnmount()
+	self.waypointConnection:Disconnect()
+	self.confirmationBindable:Destroy()
 end
 
 function App:addNotification(text: string, timeout: number?)
