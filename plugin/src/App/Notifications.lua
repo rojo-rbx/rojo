@@ -155,7 +155,7 @@ function Notification:render()
 			}, {
 				Contents = e("Frame", {
 					Size = UDim2.new(0, 35 + contentX, 1, -paddingY),
-					Position = UDim2.new(0, 0, 0, paddingY/2),
+					Position = UDim2.new(0, 0, 0, paddingY / 2),
 					BackgroundTransparency = 1
 				}, {
 					Logo = e("ImageLabel", {
