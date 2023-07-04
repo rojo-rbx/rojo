@@ -232,6 +232,22 @@ function ServeSession:__initialSync(serverInfo)
 				Log.error("Could not compute a diff to catch up to the Rojo server: {:#?}", catchUpPatch)
 			end
 
+			for _, update in catchUpPatch.updated do
+				if
+					update.id == self.__instanceMap.fromInstances[game]
+					and update.changedClassName ~= nil
+				then
+					-- Non-place projects will try to update the classname of game from DataModel to
+					-- something like Folder, ModuleScript, etc. This would fail, so we exit with a clear
+					-- message instead of crashing.
+					return Promise.reject(
+						"Cannot sync a model as a place."
+						.. "\nEnsure Rojo is serving a project file that has a DataModel at the root of its tree and try again."
+						.. "\nSee project file docs: https://rojo.space/docs/v7/project-format/"
+					)
+				end
+			end
+
 			Log.trace("Computed hydration patch: {:#?}", debugPatch(catchUpPatch))
 
 			local userDecision = "Accept"
@@ -285,6 +301,8 @@ end
 function ServeSession:__mainSyncLoop()
 	return self.__apiContext:retrieveMessages()
 		:andThen(function(messages)
+			Log.trace("Serve session {} retrieved {} messages", tostring(self), #messages)
+
 			for _, message in ipairs(messages) do
 				local unappliedPatch = self.__reconciler:applyPatch(message)
 

@@ -1,5 +1,6 @@
 local Players = game:GetService("Players")
 local ServerStorage = game:GetService("ServerStorage")
+local RunService = game:GetService("RunService")
 
 local Rojo = script:FindFirstAncestor("Rojo")
 local Plugin = Rojo.Plugin
@@ -20,6 +21,7 @@ local HeadlessAPI = require(Plugin.HeadlessAPI)
 local PatchSet = require(Plugin.PatchSet)
 local preloadAssets = require(Plugin.preloadAssets)
 local soundPlayer = require(Plugin.soundPlayer)
+local ignorePlaceIds = require(Plugin.ignorePlaceIds)
 local Theme = require(script.Theme)
 
 local Page = require(script.Page)
@@ -55,17 +57,18 @@ function App:init()
 	self.host, self.setHost = Roact.createBinding(priorHost or "")
 	self.port, self.setPort = Roact.createBinding(priorPort or "")
 
-	self.patchInfo, self.setPatchInfo = Roact.createBinding({
-		patch = PatchSet.newEmpty(),
-		timestamp = os.time(),
-	})
 	self.confirmationBindable = Instance.new("BindableEvent")
 	self.confirmationEvent = self.confirmationBindable.Event
+	self.notifId = 0
 
 	self:setState({
 		appStatus = AppStatus.NotConnected,
 		guiEnabled = false,
 		confirmData = {},
+		patchData = {
+			patch = PatchSet.newEmpty(),
+			timestamp = os.time(),
+		},
 		notifications = {},
 		toolbarIcon = Assets.Images.PluginButton,
 		popups = {},
@@ -114,47 +117,90 @@ function App:init()
 		-- selene: allow(global_usage)
 		_G.Rojo = self.readOnlyHeadlessAPI -- Expose headless to other plugins and command bar
 	end
+
+	if
+		RunService:IsEdit()
+		and self.serveSession == nil
+		and Settings:get("syncReminder")
+		and self:getLastSyncTimestamp()
+	then
+		self:addNotification("You've previously synced this place. Would you like to reconnect?", 300, {
+			Connect = {
+				text = "Connect",
+				style = "Solid",
+				layoutOrder = 1,
+				onClick = function(notification)
+					notification:dismiss()
+					self:startSession()
+				end
+			},
+			Dismiss = {
+				text = "Dismiss",
+				style = "Bordered",
+				layoutOrder = 2,
+				onClick = function(notification)
+					notification:dismiss()
+				end,
+			},
+		})
+	end
 end
 
-function App:addNotification(text: string, timeout: number?)
+function App:addNotification(text: string, timeout: number?, actions: { [string]: {text: string, style: string, layoutOrder: number, onClick: (any) -> ()} }?)
 	if not Settings:get("showNotifications") then
 		return
 	end
 
+	self.notifId += 1
+	local id = self.notifId
+
 	local notifications = table.clone(self.state.notifications)
-	table.insert(notifications, {
+	notifications[id] = {
 		text = text,
 		timestamp = DateTime.now().UnixTimestampMillis,
 		timeout = timeout or 3,
-	})
+		actions = actions,
+	}
 
 	self:setState({
 		notifications = notifications,
 	})
+
+	return function()
+		self:closeNotification(id)
+	end
 end
 
-function App:addThirdPartyNotification(source: string, text: string, timeout: number?)
+function App:addThirdPartyNotification(source: string, text: string, timeout: number?, actions: { [string]: {text: string, style: string, layoutOrder: number, onClick: (any) -> ()} }?)
 	if not Settings:get("showNotifications") then
 		return
 	end
 
+	self.notifId += 1
+	local id = self.notifId
+
 	local notifications = table.clone(self.state.notifications)
-	table.insert(notifications, {
+	notifications[id] = {
 		text = text,
 		timestamp = DateTime.now().UnixTimestampMillis,
 		timeout = timeout or 3,
+		actions = actions,
 		thirdParty = true,
 		source = source,
-	})
+	}
 
 	self:setState({
 		notifications = notifications,
 	})
+
+	return function()
+		self:closeNotification(id)
+	end
 end
 
-function App:closeNotification(index: number)
+function App:closeNotification(id: number)
 	local notifications = table.clone(self.state.notifications)
-	table.remove(notifications, index)
+	notifications[id] = nil
 
 	self:setState({
 		notifications = notifications,
@@ -165,10 +211,26 @@ function App:getPriorEndpoint()
 	local priorEndpoints = Settings:get("priorEndpoints")
 	if not priorEndpoints then return end
 
-	local place = priorEndpoints[tostring(game.PlaceId)]
+	local id = tostring(game.PlaceId)
+	if ignorePlaceIds[id] then return end
+
+	local place = priorEndpoints[id]
 	if not place then return end
 
 	return place.host, place.port
+end
+
+function App:getLastSyncTimestamp()
+	local priorEndpoints = Settings:get("priorEndpoints")
+	if not priorEndpoints then return end
+
+	local id = tostring(game.PlaceId)
+	if ignorePlaceIds[id] then return end
+
+	local place = priorEndpoints[id]
+	if not place then return end
+
+	return place.timestamp
 end
 
 function App:setPriorEndpoint(host: string, port: string)
@@ -185,17 +247,16 @@ function App:setPriorEndpoint(host: string, port: string)
 		end
 	end
 
-	if host == Config.defaultHost and port == Config.defaultPort then
-		-- Don't save default
-		priorEndpoints[tostring(game.PlaceId)] = nil
-	else
-		priorEndpoints[tostring(game.PlaceId)] = {
-			host = host ~= Config.defaultHost and host or nil,
-			port = port ~= Config.defaultPort and port or nil,
-			timestamp = os.time(),
-		}
-		Log.trace("Saved last used endpoint for {}", game.PlaceId)
-	end
+	local id = tostring(game.PlaceId)
+	if ignorePlaceIds[id] then return end
+
+	priorEndpoints[id] = {
+		host = if host ~= Config.defaultHost then host else nil,
+		port = if port ~= Config.defaultPort then port else nil,
+		timestamp = os.time(),
+	}
+	Log.trace("Saved last used endpoint for {}", game.PlaceId)
+
 
 	Settings:set("priorEndpoints", priorEndpoints)
 end
@@ -330,21 +391,25 @@ function App:startSession(host: string?, port: string?)
 
 		local now = os.time()
 
-		local old = self.patchInfo:getValue()
+		local old = self.state.patchData
 		if now - old.timestamp < 2 then
 			-- Patches that apply in the same second are
 			-- considered to be part of the same change for human clarity
 			local merged = PatchSet.newEmpty()
 			PatchSet.assign(merged, old.patch, patch)
 
-			self.setPatchInfo({
-				patch = merged,
-				timestamp = now,
+			self:setState({
+				patchData = {
+					patch = merged,
+					timestamp = now,
+				},
 			})
 		else
-			self.setPatchInfo({
-				patch = patch,
-				timestamp = now,
+			self:setState({
+				patchData = {
+					patch = patch,
+					timestamp = now,
+				},
 			})
 		end
 	end)
@@ -404,7 +469,26 @@ function App:startSession(host: string?, port: string?)
 
 	serveSession:setConfirmCallback(function(instanceMap, patch, serverInfo)
 		if PatchSet.isEmpty(patch) then
+			Log.trace("Accepting patch without confirmation because it is empty")
 			return "Accept"
+		end
+
+		-- The datamodel name gets overwritten by Studio, making confirmation of it intrusive
+		-- and unnecessary. This special case allows it to be accepted without confirmation.
+		if
+			PatchSet.hasAdditions(patch) == false
+			and PatchSet.hasRemoves(patch) == false
+			and PatchSet.containsOnlyInstance(patch, instanceMap, game)
+		then
+			local datamodelUpdates = PatchSet.getUpdateForInstance(patch, instanceMap, game)
+			if
+				datamodelUpdates ~= nil
+				and next(datamodelUpdates.changedProperties) == nil
+				and datamodelUpdates.changedClassName == nil
+			then
+				Log.trace("Accepting patch without confirmation because it only contains a datamodel name change")
+				return "Accept"
+			end
 		end
 
 		self:setState({
@@ -431,16 +515,6 @@ function App:startSession(host: string?, port: string?)
 	serveSession:start()
 
 	self.serveSession = serveSession
-
-	task.defer(function()
-		while self.serveSession == serveSession do
-			-- Trigger rerender to update timestamp text
-			local patchInfo = table.clone(self.patchInfo:getValue())
-			self.setPatchInfo(patchInfo)
-			local elapsed = os.time() - patchInfo.timestamp
-			task.wait(elapsed < 60 and 1 or elapsed / 5)
-		end
-	end)
 end
 
 function App:endSession()
@@ -574,7 +648,7 @@ function App:render()
 					Connected = createPageElement(AppStatus.Connected, {
 						projectName = self.state.projectName,
 						address = self.state.address,
-						patchInfo = self.patchInfo,
+						patchData = self.state.patchData,
 						serveSession = self.serveSession,
 
 						onDisconnect = function()
@@ -631,7 +705,11 @@ function App:render()
 					}),
 				}),
 
-				RojoNotifications = e("ScreenGui", {}, {
+				RojoNotifications = e("ScreenGui", {
+					ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+					ResetOnSpawn = false,
+					DisplayOrder = 100,
+				}, {
 					layout = e("UIListLayout", {
 						SortOrder = Enum.SortOrder.LayoutOrder,
 						HorizontalAlignment = Enum.HorizontalAlignment.Right,
@@ -647,8 +725,8 @@ function App:render()
 					notifs = e(Notifications, {
 						soundPlayer = self.props.soundPlayer,
 						notifications = self.state.notifications,
-						onClose = function(index)
-							self:closeNotification(index)
+						onClose = function(id)
+							self:closeNotification(id)
 						end,
 					}),
 				}),

@@ -7,6 +7,7 @@ local Packages = Rojo.Packages
 
 local Roact = require(Packages.Roact)
 local Flipper = require(Packages.Flipper)
+local Log = require(Packages.Log)
 
 local bindingUtil = require(script.Parent.bindingUtil)
 
@@ -14,6 +15,7 @@ local Theme = require(Plugin.App.Theme)
 local Assets = require(Plugin.Assets)
 
 local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
+local TextButton = require(Plugin.App.Components.TextButton)
 
 local baseClock = DateTime.now().UnixTimestampMillis
 
@@ -28,10 +30,8 @@ function Notification:init()
 	self.lifetime = self.props.timeout
 
 	self.motor:onStep(function(value)
-		if value <= 0 then
-			if self.props.onClose then
-				self.props.onClose()
-			end
+		if value <= 0 and self.props.onClose then
+			self.props.onClose()
 		end
 	end)
 end
@@ -86,10 +86,9 @@ function Notification:willUnmount()
 end
 
 function Notification:render()
-	local time = DateTime.fromUnixTimestampMillis(self.props.timestamp)
-	local infoText =
-		time:FormatLocalTime("LTS", "en-us") ..
-		(if self.props.source then " • From: " .. self.props.source else "")
+	local transparency = self.binding:map(function(value)
+		return 1 - value
+	end)
 
 	local textBounds = TextService:GetTextSize(
 		self.props.text,
@@ -98,23 +97,43 @@ function Notification:render()
 		Vector2.new(350, 700)
 	)
 
-	local infoTextBounds = TextService:GetTextSize(
-		infoText,
-		12,
-		Enum.Font.Gotham,
-		Vector2.new(350, 14)
-	)
+	local actionButtons = {}
+	local buttonsX = 0
+	if self.props.actions then
+		local count = 0
+		for key, action in self.props.actions do
+			actionButtons[key] = e(TextButton, {
+				text = action.text,
+				style = action.style,
+				onClick = function()
+					local success, err = pcall(action.onClick, self)
+					if not success then
+						Log.warn("Error in notification action: " .. tostring(err))
+					end
+				end,
+				layoutOrder = -action.layoutOrder,
+				transparency = transparency,
+			})
 
-	local textWidth = math.max(infoTextBounds.X, textBounds.X)
+			buttonsX += TextService:GetTextSize(
+				action.text, 18, Enum.Font.GothamMedium,
+				Vector2.new(math.huge, math.huge)
+			).X + 30
 
-	local transparency = self.binding:map(function(value)
-		return 1 - value
-	end)
+			count += 1
+		end
+
+		buttonsX += (count - 1) * 5
+	end
+
+	local paddingY, logoSize = 20, 32
+	local actionsY = if self.props.actions then 35 else 0
+	local contentX = math.max(textBounds.X, buttonsX)
 
 	local size = self.binding:map(function(value)
 		return UDim2.fromOffset(
-			(35+40+textWidth)*value,
-			math.max(16+20+textBounds.Y, 54)
+			(35 + 40 + contentX) * value,
+			5 + actionsY + paddingY + math.max(logoSize, textBounds.Y)
 		)
 	end)
 
@@ -134,18 +153,18 @@ function Notification:render()
 				transparency = transparency,
 				size = UDim2.new(1, 0, 1, 0),
 			}, {
-				TextContainer = e("Frame", {
-					Size = UDim2.new(1, 0, 1, -20),
-					Position = UDim2.new(0, 0, 0, 10),
+				Contents = e("Frame", {
+					Size = UDim2.new(0, 35 + contentX, 1, -paddingY),
+					Position = UDim2.new(0, 0, 0, paddingY / 2),
 					BackgroundTransparency = 1
 				}, {
 					Logo = e("ImageLabel", {
 						ImageTransparency = transparency,
 						Image = if self.props.thirdParty then Assets.Images.ThirdPartyPlugin else Assets.Images.PluginButton,
 						BackgroundTransparency = 1,
-						Size = UDim2.new(0, 32, 0, 32),
-						Position = UDim2.new(0, 0, 0.5, 0),
-						AnchorPoint = Vector2.new(0, 0.5),
+						Size = UDim2.new(0, logoSize, 0, logoSize),
+						Position = UDim2.new(0, 0, 0, 0),
+						AnchorPoint = Vector2.new(0, 0),
 					}),
 					Message = e("TextLabel", {
 						Text = self.props.text,
@@ -162,20 +181,21 @@ function Notification:render()
 						LayoutOrder = 1,
 						BackgroundTransparency = 1,
 					}),
-					Info = e("TextLabel", {
-						Text = infoText,
-						Font = Enum.Font.Gotham,
-						TextSize = 12,
-						TextColor3 = theme.Notification.InfoColor,
-						TextTransparency = transparency,
-						TextXAlignment = Enum.TextXAlignment.Left,
-
-						Size = UDim2.new(1, -38, 0, 14),
-						Position = UDim2.new(0, 38, 1, -14),
-
-						LayoutOrder = 1,
+					Actions = if self.props.actions then e("Frame", {
+						Size = UDim2.new(1, -40, 0, 35),
+						Position = UDim2.new(1, 0, 1, 0),
+						AnchorPoint = Vector2.new(1, 1),
 						BackgroundTransparency = 1,
-					}),
+					}, {
+						Layout = e("UIListLayout", {
+							FillDirection = Enum.FillDirection.Horizontal,
+							HorizontalAlignment = Enum.HorizontalAlignment.Right,
+							VerticalAlignment = Enum.VerticalAlignment.Center,
+							SortOrder = Enum.SortOrder.LayoutOrder,
+							Padding = UDim.new(0, 5),
+						}),
+						Buttons = Roact.createFragment(actionButtons),
+					}) else nil,
 				}),
 
 				Padding = e("UIPadding", {
@@ -192,19 +212,20 @@ local Notifications = Roact.Component:extend("Notifications")
 function Notifications:render()
 	local notifs = {}
 
-	for index, notif in ipairs(self.props.notifications) do
-		local props = {
+	for id, notif in self.props.notifications do
+		notifs["NotifID_" .. id] = e(Notification, {
 			soundPlayer = self.props.soundPlayer,
+			text = notif.text,
+			timestamp = notif.timestamp,
+			timeout = notif.timeout,
+			actions = notif.actions,
+			source = notif.source,
+			thirdParty = notif.thirdParty,
 			layoutOrder = (notif.timestamp - baseClock),
 			onClose = function()
-				self.props.onClose(index)
+				self.props.onClose(id)
 			end,
-		}
-		for key, value in notif do
-			props[key] = value
-		end
-
-		notifs[notif] = e(Notification, props)
+		})
 	end
 
 	return Roact.createFragment(notifs)
