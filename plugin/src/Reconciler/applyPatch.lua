@@ -204,7 +204,6 @@ local function applyPatch(instanceMap, patch)
 	end
 
 	ChangeHistoryService:SetWaypoint("Rojo: Patch " .. patchTimestamp)
-	ChangeHistoryService:SetWaypoint("Rojo Patch Protection")
 
 	return unappliedPatch
 end
