@@ -302,13 +302,13 @@ function API.new(app)
 	end
 
 	Rojo._apiDescriptions.Notify = "Shows a notification in the Rojo UI"
-	function Rojo:Notify(msg: string, timeout: number?, actions: { [string]: {text: string, style: string, layoutOrder: number, onClick: (any) -> ()} }?)
+	function Rojo:Notify(msg: string, timeout: number?, actions: { [string]: {text: string, style: string, layoutOrder: number, onClick: (any) -> ()} }?): () -> ()
 		assert(type(msg) == "string", "Message must be type `string`")
 		assert(type(timeout) == "number" or timeout == nil, "Timeout must be type `number?`")
 		assert((actions == nil) or (type(actions) == "table"), "Actions must be table or nil")
 
 		if Rojo:_checkRateLimit("Notify") then
-			return
+			return function() end
 		end
 
 		local sanitizedActions = nil
@@ -333,8 +333,7 @@ function API.new(app)
 			end
 		end
 
-		app:addThirdPartyNotification(Rojo:_getCallerName(), msg, timeout, sanitizedActions)
-		return
+		return app:addThirdPartyNotification(Rojo:_getCallerName(), msg, timeout, sanitizedActions)
 	end
 
 	Rojo._apiDescriptions.GetHostAndPort = "Gets the host and port that Rojo is set to"
