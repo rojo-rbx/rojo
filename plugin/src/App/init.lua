@@ -122,6 +122,7 @@ function App:init()
 		confirmData = {},
 		patchData = {
 			patch = PatchSet.newEmpty(),
+			unapplied = PatchSet.newEmpty(),
 			timestamp = os.time(),
 		},
 		notifications = {},
@@ -357,35 +358,36 @@ function App:startSession()
 		twoWaySync = sessionOptions.twoWaySync,
 	})
 
-	serveSession:onPatchApplied(function(patch, _unapplied)
+	serveSession:onPatchApplied(function(patch, unapplied)
+		local now = os.time()
+		local old = self.state.patchData
+
 		if PatchSet.isEmpty(patch) then
-			-- Ignore empty patches
+			-- Ignore empty patch, but update timestamp
+			self:setState({
+				patchData = {
+					patch = old.patch,
+					unapplied = old.unapplied,
+					timestamp = now,
+				},
+			})
 			return
 		end
 
-		local now = os.time()
-
-		local old = self.state.patchData
 		if now - old.timestamp < 2 then
 			-- Patches that apply in the same second are
 			-- considered to be part of the same change for human clarity
-			local merged = PatchSet.newEmpty()
-			PatchSet.assign(merged, old.patch, patch)
-
-			self:setState({
-				patchData = {
-					patch = merged,
-					timestamp = now,
-				},
-			})
-		else
-			self:setState({
-				patchData = {
-					patch = patch,
-					timestamp = now,
-				},
-			})
+			patch = PatchSet.assign(PatchSet.newEmpty(), old.patch, patch)
+			unapplied = PatchSet.assign(PatchSet.newEmpty(), old.unapplied, unapplied)
 		end
+
+		self:setState({
+			patchData = {
+				patch = patch,
+				unapplied = unapplied,
+				timestamp = now,
+			},
+		})
 	end)
 
 	serveSession:onStatusChanged(function(status, details)
@@ -409,6 +411,13 @@ function App:startSession()
 		elseif status == ServeSession.Status.Disconnected then
 			self.serveSession = nil
 			self:releaseSyncLock()
+			self:setState({
+				patchData = {
+					patch = PatchSet.newEmpty(),
+					unapplied = PatchSet.newEmpty(),
+					timestamp = os.time(),
+				},
+			})
 
 			-- Details being present indicates that this
 			-- disconnection was from an error.
