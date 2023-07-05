@@ -156,7 +156,7 @@ function App:init()
 	end
 end
 
-function App:didUnmount()
+function App:willUnmount()
 	self.waypointConnection:Disconnect()
 	self.confirmationBindable:Destroy()
 end
