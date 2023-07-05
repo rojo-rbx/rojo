@@ -59,6 +59,7 @@ function Setting:render()
 			LayoutOrder = self.props.layoutOrder,
 			ZIndex = -self.props.layoutOrder,
 			BackgroundTransparency = 1,
+			Visible = self.props.visible,
 
 			[Roact.Change.AbsoluteSize] = function(object)
 				self.setContainerSize(object.AbsoluteSize)
