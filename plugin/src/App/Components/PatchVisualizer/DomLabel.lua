@@ -115,11 +115,18 @@ function DomLabel:render()
 				[Roact.Event.Activated] = function(_rbx: Instance, _input: InputObject, clickCount: number)
 					if clickCount == 1 then
 						-- Double click opens the instance in explorer
+						self.lastDoubleClickTime = os.clock()
 						if props.instance then
 							SelectionService:Set({ props.instance })
 						end
 					elseif clickCount == 0 then
 						-- Single click expands the changes
+						task.wait(0.25)
+						if os.clock() - (self.lastDoubleClickTime or 0) <= 0.25 then
+							-- This is a double click, so don't expand
+							return
+						end
+
 						if props.changeList then
 							self.expanded = not self.expanded
 							local goalHeight = 30
