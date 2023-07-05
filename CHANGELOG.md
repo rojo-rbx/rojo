@@ -6,12 +6,14 @@
 * Fixed disconnected session activity. ([#675])
 * Skip confirming patches that contain only a datamodel name change. ([#688])
 * Added protection against syncing a model to a place. ([#691])
+* Select Instances from diff tree view ([#709])
 
 [#668]: https://github.com/rojo-rbx/rojo/pull/668
 [#674]: https://github.com/rojo-rbx/rojo/pull/674
 [#675]: https://github.com/rojo-rbx/rojo/pull/675
 [#688]: https://github.com/rojo-rbx/rojo/pull/688
 [#691]: https://github.com/rojo-rbx/rojo/pull/691
+[#709]: https://github.com/rojo-rbx/rojo/pull/709
 
 ## [7.3.0] - April 22, 2023
 * Added `$attributes` to project format. ([#574])
