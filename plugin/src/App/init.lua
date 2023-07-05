@@ -1,3 +1,4 @@
+local ChangeHistoryService = game:GetService("ChangeHistoryService")
 local Players = game:GetService("Players")
 local ServerStorage = game:GetService("ServerStorage")
 local RunService = game:GetService("RunService")
@@ -57,6 +58,64 @@ function App:init()
 	self.confirmationEvent = self.confirmationBindable.Event
 	self.notifId = 0
 
+	self.waypointConnection = ChangeHistoryService.OnUndo:Connect(function(action: string)
+		if not string.find(action, "^Rojo: Patch") then
+			return
+		end
+
+		local undoConnection, redoConnection = nil, nil
+		local function cleanup()
+			undoConnection:Disconnect()
+			redoConnection:Disconnect()
+		end
+
+		Log.warn(
+			string.format(
+				"You've undone '%s'.\nIf this was not intended, please Redo in the topbar or with Ctrl/⌘+Y.",
+				action
+			)
+		)
+		local dismissNotif = self:addNotification(
+			string.format("You've undone '%s'.\nIf this was not intended, please restore.", action),
+			10,
+			{
+				Restore = {
+					text = "Restore",
+					style = "Solid",
+					layoutOrder = 1,
+					onClick = function(notification)
+						cleanup()
+						notification:dismiss()
+						ChangeHistoryService:Redo()
+					end,
+				},
+				Dismiss = {
+					text = "Dismiss",
+					style = "Bordered",
+					layoutOrder = 2,
+					onClick = function(notification)
+						cleanup()
+						notification:dismiss()
+					end,
+				},
+			}
+		)
+
+		undoConnection = ChangeHistoryService.OnUndo:Once(function()
+			-- Our notif is now out of date- redoing will not restore the patch
+			-- since we've undone even further. Dismiss the notif.
+			cleanup()
+			dismissNotif()
+		end)
+		redoConnection = ChangeHistoryService.OnRedo:Once(function(redoneAction: string)
+			if redoneAction == action then
+				-- The user has restored the patch, so we can dismiss the notif
+				cleanup()
+				dismissNotif()
+			end
+		end)
+	end)
+
 	self:setState({
 		appStatus = AppStatus.NotConnected,
 		guiEnabled = false,
@@ -83,7 +142,7 @@ function App:init()
 				onClick = function(notification)
 					notification:dismiss()
 					self:startSession()
-				end
+				end,
 			},
 			Dismiss = {
 				text = "Dismiss",
@@ -97,7 +156,16 @@ function App:init()
 	end
 end
 
-function App:addNotification(text: string, timeout: number?, actions: { [string]: {text: string, style: string, layoutOrder: number, onClick: (any) -> ()} }?)
+function App:willUnmount()
+	self.waypointConnection:Disconnect()
+	self.confirmationBindable:Destroy()
+end
+
+function App:addNotification(
+	text: string,
+	timeout: number?,
+	actions: { [string]: { text: string, style: string, layoutOrder: number, onClick: (any) -> () } }?
+)
 	if not Settings:get("showNotifications") then
 		return
 	end
@@ -123,6 +191,10 @@ function App:addNotification(text: string, timeout: number?, actions: { [string]
 end
 
 function App:closeNotification(id: number)
+	if not self.state.notifications[id] then
+		return
+	end
+
 	local notifications = table.clone(self.state.notifications)
 	notifications[id] = nil
 
@@ -133,26 +205,38 @@ end
 
 function App:getPriorEndpoint()
 	local priorEndpoints = Settings:get("priorEndpoints")
-	if not priorEndpoints then return end
+	if not priorEndpoints then
+		return
+	end
 
 	local id = tostring(game.PlaceId)
-	if ignorePlaceIds[id] then return end
+	if ignorePlaceIds[id] then
+		return
+	end
 
 	local place = priorEndpoints[id]
-	if not place then return end
+	if not place then
+		return
+	end
 
 	return place.host, place.port
 end
 
 function App:getLastSyncTimestamp()
 	local priorEndpoints = Settings:get("priorEndpoints")
-	if not priorEndpoints then return end
+	if not priorEndpoints then
+		return
+	end
 
 	local id = tostring(game.PlaceId)
-	if ignorePlaceIds[id] then return end
+	if ignorePlaceIds[id] then
+		return
+	end
 
 	local place = priorEndpoints[id]
-	if not place then return end
+	if not place then
+		return
+	end
 
 	return place.timestamp
 end
@@ -172,7 +256,9 @@ function App:setPriorEndpoint(host: string, port: string)
 	end
 
 	local id = tostring(game.PlaceId)
-	if ignorePlaceIds[id] then return end
+	if ignorePlaceIds[id] then
+		return
+	end
 
 	priorEndpoints[id] = {
 		host = if host ~= Config.defaultHost then host else nil,
@@ -180,7 +266,6 @@ function App:setPriorEndpoint(host: string, port: string)
 		timestamp = os.time(),
 	}
 	Log.trace("Saved last used endpoint for {}", game.PlaceId)
-
 
 	Settings:set("priorEndpoints", priorEndpoints)
 end
