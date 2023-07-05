@@ -23,7 +23,9 @@ function API.new(app)
 	local Rojo = {}
 
 	Rojo._rateLimit = {}
+	Rojo._sourceToPlugin = {}
 	Rojo._permissions = Settings:get("apiPermissions") or {}
+	Rojo._activePermissionRequests = {}
 	Rojo._changedEvent = Instance.new("BindableEvent")
 	Rojo._apiDescriptions = {}
 
@@ -55,7 +57,7 @@ function API.new(app)
 		local traceback = string.split(debug.traceback(), "\n")
 		local topLevel = traceback[#traceback - 1]
 
-		local localPlugin = string.match(topLevel, "(user_.-)%.")
+		local localPlugin = string.match(topLevel, "user_.-%.%w+")
 		if localPlugin then
 			return localPlugin
 		end
@@ -188,15 +190,26 @@ function API.new(app)
 	end
 
 	Rojo._apiDescriptions.RequestAccess = "Used to gain access to Rojo API members"
-	function Rojo:RequestAccess(apis: {string}): {[string]: boolean}
-		assert(type(apis) == "table", "Rojo:RequestAccess expects an array of valid API names")
+	function Rojo:RequestAccess(plugin: Plugin, apis: {string}): {[string]: boolean}
+		assert(type(apis) == "table", "Rojo:RequestAccess expects an array of valid API names as the second argument")
+		assert(typeof(plugin) == "Instance" and plugin:IsA("Plugin"), "Rojo:RequestAccess expects a Plugin as the first argument")
+
+		local source, name = Rojo:_getCallerSource(), Rojo:_getCallerName()
+		Rojo._sourceToPlugin[source] = plugin
 
 		if Rojo:_checkRateLimit("RequestAccess") then
 			-- Because this opens a popup, we dont want to let users get spammed by it
 			return {}
 		end
 
-		local source, name = Rojo:_getCallerSource(), Rojo:_getCallerName()
+		if Rojo._activePermissionRequests[source] then
+			-- If a request is already active, exit
+			error(
+				"Rojo:RequestAccess cannot be called in multiple threads at once. Please call it once and wait for the response before calling it again.",
+				2
+			)
+		end
+		Rojo._activePermissionRequests[source] = true
 
 		if Rojo._permissions[source] == nil then
 			Rojo._permissions[source] = {}
@@ -226,10 +239,11 @@ function API.new(app)
 			for _, api in sanitizedApis do
 				response[api] = true
 			end
+			Rojo._activePermissionRequests[source] = nil
 			return response
 		end
 
-		local response = app:requestPermission(source, name, sanitizedApis, Rojo._permissions[source])
+		local response = app:requestPermission(plugin, source, name, sanitizedApis, Rojo._permissions[source])
 
 		for api, granted in response do
 			Log.warn(string.format(
@@ -240,6 +254,7 @@ function API.new(app)
 		end
 		Settings:set("apiPermissions", Rojo._permissions)
 
+		Rojo._activePermissionRequests[source] = nil
 		return response
 	end
 
