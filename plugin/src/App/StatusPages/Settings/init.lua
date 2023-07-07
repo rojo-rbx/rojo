@@ -87,19 +87,20 @@ function SettingsPage:render()
 				layoutOrder = 0,
 			}),
 
-			OpenScriptsExternally = e(Setting, {
-				id = "openScriptsExternally",
-				name = "Open Scripts Externally",
-				description = "Attempt to open scripts in an external editor",
-				transparency = self.props.transparency,
-				layoutOrder = 1,
-			}),
-
 			ShowNotifications = e(Setting, {
 				id = "showNotifications",
 				name = "Show Notifications",
 				description = "Popup notifications in viewport",
 				transparency = self.props.transparency,
+				layoutOrder = 1,
+			}),
+
+			SyncReminder = e(Setting, {
+				id = "syncReminder",
+				name = "Sync Reminder",
+				description = "Notify to sync when opening a place that has previously been synced",
+				transparency = self.props.transparency,
+				visible = Settings:getBinding("showNotifications"),
 				layoutOrder = 2,
 			}),
 
@@ -111,12 +112,20 @@ function SettingsPage:render()
 				layoutOrder = 3,
 			}),
 
+			OpenScriptsExternally = e(Setting, {
+				id = "openScriptsExternally",
+				name = "Open Scripts Externally",
+				description = "EXPERIMENTAL! Attempt to open scripts in an external editor",
+				transparency = self.props.transparency,
+				layoutOrder = 4,
+			}),
+
 			TwoWaySync = e(Setting, {
 				id = "twoWaySync",
 				name = "Two-Way Sync",
 				description = "EXPERIMENTAL! Editing files in Studio will sync them into the filesystem",
 				transparency = self.props.transparency,
-				layoutOrder = 4,
+				layoutOrder = 5,
 			}),
 
 			LogLevel = e(Setting, {
@@ -124,7 +133,7 @@ function SettingsPage:render()
 				name = "Log Level",
 				description = "Plugin output verbosity level",
 				transparency = self.props.transparency,
-				layoutOrder = 5,
+				layoutOrder = 100,
 
 				options = invertedLevels,
 				showReset = Settings:getBinding("logLevel"):map(function(value)
@@ -140,7 +149,7 @@ function SettingsPage:render()
 				name = "Typechecking",
 				description = "Toggle typechecking on the API surface",
 				transparency = self.props.transparency,
-				layoutOrder = 6,
+				layoutOrder = 101,
 			}),
 
 			Layout = e("UIListLayout", {
