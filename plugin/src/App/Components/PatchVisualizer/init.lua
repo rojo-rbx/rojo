@@ -269,7 +269,7 @@ function PatchVisualizer:buildTree(patch, instanceMap)
 		})
 	end
 
-	for _, change in patch.added do
+	for id, change in patch.added do
 		-- Gather ancestors from existing DOM or future additions
 		local ancestry = {}
 		local parentId = change.Parent
@@ -339,6 +339,7 @@ function PatchVisualizer:buildTree(patch, instanceMap)
 			name = change.Name,
 			hint = hint,
 			changeList = changeList,
+			instance = instanceMap.fromIds[id],
 		})
 	end
 
