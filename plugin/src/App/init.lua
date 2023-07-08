@@ -319,10 +319,10 @@ function App:requestPermission(plugin: Plugin, source: string, name: string, api
 
 	Log.info("The third-party plugin '{}' is requesting permission to use the API!", name)
 
-	local unloadProtection = plugin.Unloading:Connect(function()
+	local unloadProtection = if plugin then plugin.Unloading:Connect(function()
 		Log.warn("Cancelling API permission request for '{}' because the third-party plugin has been removed.", name)
 		responseEvent:Fire(initialState)
-	end)
+	end) else nil
 
 	self:setState(function(state)
 		state.popups[source  .. " Permissions"] = {
@@ -345,7 +345,9 @@ function App:requestPermission(plugin: Plugin, source: string, name: string, api
 
 	local response = responseEvent.Event:Wait()
 	responseEvent:Destroy()
-	unloadProtection:Disconnect()
+	if unloadProtection then
+		unloadProtection:Disconnect()
+	end
 
 	self:setState(function(state)
 		state.popups[source  .. " Permissions"] = nil
@@ -687,12 +689,13 @@ function App:render()
 							})
 						end,
 
-						onEdit = function(source, meta, apiMap)
+						onEdit = function(plugin, source, meta, apiMap)
 							local apiList = {}
 							for api in apiMap do
 								table.insert(apiList, api)
 							end
 							self:requestPermission(
+								plugin,
 								source,
 								meta.Name .. if meta.Creator then " by " .. meta.Creator else "",
 								apiList,

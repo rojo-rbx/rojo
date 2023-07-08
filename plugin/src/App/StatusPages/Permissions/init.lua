@@ -100,7 +100,7 @@ function PermissionsPage:render()
 					),
 
 					onClick = function()
-						self.props.onEdit(source, meta, self.props.headlessAPI._permissions[source] or {})
+						self.props.onEdit(self.props.headlessAPI._sourceToPlugin[source], source, meta, self.props.headlessAPI._permissions[source] or {})
 					end,
 				})
 			end
