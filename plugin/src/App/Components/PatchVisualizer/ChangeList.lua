@@ -92,7 +92,8 @@ function ChangeList:render()
 				continue -- Skip headers, already handled above
 			end
 
-			local isWarning = values[4]
+			local metadata = values[4]
+			local isWarning = metadata.isWarning
 
 			rows[row] = e("Frame", {
 				Size = UDim2.new(1, 0, 0, 30),

@@ -196,10 +196,10 @@ function PatchVisualizer:buildTree(patch, unappliedPatch, instanceMap)
 			changeList = {}
 
 			local hintBuffer, i = {}, 0
-			local function addProp(prop: string, current: any?, incoming: any?, isWarning: boolean?)
+			local function addProp(prop: string, current: any?, incoming: any?, metadata: any?)
 				i += 1
 				hintBuffer[i] = prop
-				changeList[i] = { prop, current, incoming, isWarning }
+				changeList[i] = { prop, current, incoming, metadata }
 			end
 
 			-- Gather the changes
@@ -216,7 +216,9 @@ function PatchVisualizer:buildTree(patch, unappliedPatch, instanceMap)
 					prop,
 					if currentSuccess then currentValue else "[Error]",
 					if incomingSuccess then incomingValue else next(incoming),
-					unappliedChanges[prop] ~= nil
+					{
+						isWarning = unappliedChanges[prop] ~= nil
+					}
 				)
 			end
 
@@ -315,9 +317,13 @@ function PatchVisualizer:buildTree(patch, unappliedPatch, instanceMap)
 
 				local success, incomingValue = decodeValue(incoming, instanceMap)
 				if success then
-					table.insert(changeList, { prop, "N/A", incomingValue, unappliedChanges[prop] ~= nil})
+					table.insert(changeList, { prop, "N/A", incomingValue, {
+						isWarning = unappliedChanges[prop] ~= nil
+					} })
 				else
-					table.insert(changeList, { prop, "N/A", next(incoming), unappliedChanges[prop] ~= nil })
+					table.insert(changeList, { prop, "N/A", next(incoming), {
+						isWarning = unappliedChanges[prop] ~= nil
+					} })
 				end
 			end
 
