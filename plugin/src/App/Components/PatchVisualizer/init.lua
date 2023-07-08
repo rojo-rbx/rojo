@@ -7,6 +7,7 @@ local Packages = Rojo.Packages
 local Roact = require(Packages.Roact)
 local Log = require(Packages.Log)
 
+local Types = require(Plugin.Types)
 local PatchSet = require(Plugin.PatchSet)
 local decodeValue = require(Plugin.Reconciler.decodeValue)
 local getProperty = require(Plugin.Reconciler.getProperty)
@@ -254,7 +255,14 @@ function PatchVisualizer:buildTree(patch, unappliedPatch, instanceMap)
 		})
 	end
 
-	for _, instance in patch.removed do
+	for _, idOrInstance in patch.removed do
+		local instance = if Types.RbxId(idOrInstance) then instanceMap.fromIds[idOrInstance] else idOrInstance
+		if not instance then
+			-- If we're viewing a past patch, the instance is already removed
+			-- and we therefore cannot get the tree for it anymore
+			continue
+		end
+
 		-- Gather ancestors from existing DOM
 		-- (note that they may have no ID if they're being removed as unknown)
 		local ancestry = {}
