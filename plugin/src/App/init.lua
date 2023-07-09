@@ -563,6 +563,7 @@ function App:render()
 						end,
 
 						onNavigateSettings = function()
+							self.backPage = AppStatus.NotConnected
 							self:setState({
 								appStatus = AppStatus.Settings,
 							})
@@ -595,12 +596,19 @@ function App:render()
 						onDisconnect = function()
 							self:endSession()
 						end,
+
+						onNavigateSettings = function()
+							self.backPage = AppStatus.Connected
+							self:setState({
+								appStatus = AppStatus.Settings,
+							})
+						end,
 					}),
 
 					Settings = createPageElement(AppStatus.Settings, {
 						onBack = function()
 							self:setState({
-								appStatus = AppStatus.NotConnected,
+								appStatus = self.backPage or AppStatus.NotConnected,
 							})
 						end,
 					}),
