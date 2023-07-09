@@ -29,8 +29,8 @@ function Dropdown:init()
 	})
 end
 
-function Dropdown:didUpdate()
-	if self.props.locked then
+function Dropdown:didUpdate(prevProps)
+	if self.props.locked and not prevProps.locked then
 		self:setState({
 			open = false,
 		})
