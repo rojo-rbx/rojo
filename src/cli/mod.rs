@@ -26,9 +26,7 @@ pub use self::upload::UploadCommand;
 /// Command line options that Rojo accepts, defined using the clap crate.
 #[derive(Debug, Parser)]
 #[command(name = "Rojo", version, about, author)]
-#[command(help_template(
-    "{name} {version}{about-section}\n{usage-heading} {usage}\n\n{all-args}{tab}"
-))]
+#[command(help_template("{name} {version}{about-section}\n{usage-heading} {usage}\n\n{all-args}"))]
 pub struct Options {
     #[command(flatten)]
     pub global: GlobalOptions,
