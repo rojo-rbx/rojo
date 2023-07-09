@@ -78,6 +78,7 @@ function Setting:render()
 				})
 			else
 				e(Checkbox, {
+					locked = self.props.locked,
 					active = self.state.setting,
 					transparency = self.props.transparency,
 					position = UDim2.new(1, 0, 0.5, 0),
