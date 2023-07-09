@@ -23,15 +23,6 @@ jobs:
       with:
         submodules: true
 
-    - name: Changelog check
-      uses: Zomzog/changelog-checker@v1.3.0
-      with:
-        fileName: CHANGELOG.md 
-        noChangelogLabel: no changelog
-        checkNotification: Simple
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
     - name: Install Rust
       uses: actions-rs/toolchain@v1
       with:
@@ -76,3 +67,18 @@ jobs:
 
     - name: Clippy
       run: cargo clippy
+
+  Changelog:
+    name: Changelog Check
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Changelog check
+      uses: Zomzog/changelog-checker@v1.3.0
+      with:
+        fileName: CHANGELOG.md 
+        noChangelogLabel: no changelog
+        checkNotification: Simple
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
