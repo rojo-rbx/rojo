@@ -22,13 +22,12 @@ function ChangeList:render()
 	return Theme.with(function(theme)
 		local props = self.props
 		local changes = props.changes
+		local columnVisibility = props.columnVisibility
 
 		-- Color alternating rows for readability
 		local rowTransparency = props.transparency:map(function(t)
 			return 0.93 + (0.07 * t)
 		end)
-
-		local columnVisibility = props.columnVisibility
 
 		local rows = {}
 		local pad = {
@@ -94,6 +93,9 @@ function ChangeList:render()
 			if row == 1 then
 				continue -- Skip headers, already handled above
 			end
+
+			local metadata = values[4]
+			local isWarning = metadata.isWarning
 
 			-- Special case for .Source updates
 			-- because we want to display a syntax highlighted diff for better UX
@@ -193,11 +195,11 @@ function ChangeList:render()
 				}),
 				A = e("TextLabel", {
 					Visible = columnVisibility[1],
-					Text = tostring(values[1]),
+					Text = (if isWarning then "⚠ " else "") .. tostring(values[1]),
 					BackgroundTransparency = 1,
 					Font = Enum.Font.GothamMedium,
 					TextSize = 14,
-					TextColor3 = theme.Settings.Setting.DescriptionColor,
+					TextColor3 = if isWarning then theme.Diff.Warning else theme.Settings.Setting.DescriptionColor,
 					TextXAlignment = Enum.TextXAlignment.Left,
 					TextTransparency = props.transparency,
 					TextTruncate = Enum.TextTruncate.AtEnd,
@@ -215,6 +217,7 @@ function ChangeList:render()
 					e(DisplayValue, {
 						value = values[2],
 						transparency = props.transparency,
+						textColor = if isWarning then theme.Diff.Warning else theme.Settings.Setting.DescriptionColor,
 					})
 				),
 				C = e(
@@ -228,6 +231,7 @@ function ChangeList:render()
 					e(DisplayValue, {
 						value = values[3],
 						transparency = props.transparency,
+						textColor = if isWarning then theme.Diff.Warning else theme.Settings.Setting.DescriptionColor,
 					})
 				),
 			})

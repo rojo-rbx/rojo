@@ -7,6 +7,7 @@ local Packages = Rojo.Packages
 local Roact = require(Packages.Roact)
 local Log = require(Packages.Log)
 
+local Types = require(Plugin.Types)
 local PatchSet = require(Plugin.PatchSet)
 local decodeValue = require(Plugin.Reconciler.decodeValue)
 local getProperty = require(Plugin.Reconciler.getProperty)
@@ -130,12 +131,22 @@ local function Tree()
 				id = ancestorId,
 				className = value.ClassName,
 				name = value.Name,
+				instance = if typeof(value) == "Instance" then value else nil,
 			})
 			previousId = ancestorId
 		end
 	end
 
 	return tree
+end
+
+local function findUnappliedPropsForId(unappliedPatch, id)
+	for _, change in unappliedPatch.updated do
+		if change.id == id then
+			return change.changedProperties or {}
+		end
+	end
+	return {}
 end
 
 local DomLabel = require(script.DomLabel)
@@ -158,7 +169,7 @@ function PatchVisualizer:shouldUpdate(nextProps)
 	return not PatchSet.isEqual(currentPatch, nextPatch)
 end
 
-function PatchVisualizer:buildTree(patch, instanceMap)
+function PatchVisualizer:buildTree(patch, unappliedPatch, instanceMap)
 	local tree = Tree()
 
 	for _, change in patch.updated do
@@ -182,13 +193,15 @@ function PatchVisualizer:buildTree(patch, instanceMap)
 		-- Gather detail text
 		local changeList, hint = nil, nil
 		if next(change.changedProperties) or change.changedName then
+			local unappliedChanges = findUnappliedPropsForId(unappliedPatch, change.id)
+
 			changeList = {}
 
 			local hintBuffer, i = {}, 0
-			local function addProp(prop: string, current: any?, incoming: any?)
+			local function addProp(prop: string, current: any?, incoming: any?, metadata: any?)
 				i += 1
 				hintBuffer[i] = prop
-				changeList[i] = { prop, current, incoming }
+				changeList[i] = { prop, current, incoming, metadata }
 			end
 
 			-- Gather the changes
@@ -204,7 +217,10 @@ function PatchVisualizer:buildTree(patch, instanceMap)
 				addProp(
 					prop,
 					if currentSuccess then currentValue else "[Error]",
-					if incomingSuccess then incomingValue else next(incoming)
+					if incomingSuccess then incomingValue else next(incoming),
+					{
+						isWarning = unappliedChanges[prop] ~= nil
+					}
 				)
 			end
 
@@ -235,12 +251,20 @@ function PatchVisualizer:buildTree(patch, instanceMap)
 			patchType = "Edit",
 			className = instance.ClassName,
 			name = instance.Name,
+			instance = instance,
 			hint = hint,
 			changeList = changeList,
 		})
 	end
 
-	for _, instance in patch.removed do
+	for _, idOrInstance in patch.removed do
+		local instance = if Types.RbxId(idOrInstance) then instanceMap.fromIds[idOrInstance] else idOrInstance
+		if not instance then
+			-- If we're viewing a past patch, the instance is already removed
+			-- and we therefore cannot get the tree for it anymore
+			continue
+		end
+
 		-- Gather ancestors from existing DOM
 		-- (note that they may have no ID if they're being removed as unknown)
 		local ancestry = {}
@@ -263,10 +287,11 @@ function PatchVisualizer:buildTree(patch, instanceMap)
 			patchType = "Remove",
 			className = instance.ClassName,
 			name = instance.Name,
+			instance = instance,
 		})
 	end
 
-	for _, change in patch.added do
+	for id, change in patch.added do
 		-- Gather ancestors from existing DOM or future additions
 		local ancestry = {}
 		local parentId = change.Parent
@@ -292,6 +317,8 @@ function PatchVisualizer:buildTree(patch, instanceMap)
 		-- Gather detail text
 		local changeList, hint = nil, nil
 		if next(change.Properties) then
+			local unappliedChanges = findUnappliedPropsForId(unappliedPatch, change.Id)
+
 			changeList = {}
 
 			local hintBuffer, i = {}, 0
@@ -301,9 +328,13 @@ function PatchVisualizer:buildTree(patch, instanceMap)
 
 				local success, incomingValue = decodeValue(incoming, instanceMap)
 				if success then
-					table.insert(changeList, { prop, "N/A", incomingValue })
+					table.insert(changeList, { prop, "N/A", incomingValue, {
+						isWarning = unappliedChanges[prop] ~= nil
+					} })
 				else
-					table.insert(changeList, { prop, "N/A", next(incoming) })
+					table.insert(changeList, { prop, "N/A", next(incoming), {
+						isWarning = unappliedChanges[prop] ~= nil
+					} })
 				end
 			end
 
@@ -336,6 +367,7 @@ function PatchVisualizer:buildTree(patch, instanceMap)
 			name = change.Name,
 			hint = hint,
 			changeList = changeList,
+			instance = instanceMap.fromIds[id],
 		})
 	end
 
@@ -343,10 +375,11 @@ function PatchVisualizer:buildTree(patch, instanceMap)
 end
 
 function PatchVisualizer:render()
-	local patch = self.props.patch
+	local patch = self.props.patch or PatchSet.newEmpty()
+	local unappliedPatch = self.props.unappliedPatch or PatchSet.newEmpty()
 	local instanceMap = self.props.instanceMap
 
-	local tree = self:buildTree(patch, instanceMap)
+	local tree = self:buildTree(patch, unappliedPatch, instanceMap)
 
 	-- Recusively draw tree
 	local scrollElements, elementHeights = {}, {}
@@ -362,6 +395,8 @@ function PatchVisualizer:render()
 				setElementHeight = setElementHeight,
 				patchType = node.patchType,
 				className = node.className,
+				isWarning = next(findUnappliedPropsForId(unappliedPatch, node.id)) ~= nil,
+				instance = node.instance,
 				name = node.name,
 				hint = node.hint,
 				changeList = node.changeList,
