@@ -67,6 +67,7 @@ function Setting:render()
 		}, {
 			Input = if self.props.options ~= nil then
 				e(Dropdown, {
+					locked = self.props.locked,
 					options = self.props.options,
 					active = self.state.setting,
 					transparency = self.props.transparency,

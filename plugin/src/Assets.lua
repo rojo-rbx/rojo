@@ -37,6 +37,7 @@ local Assets = {
 		},
 		Dropdown = {
 			Arrow = "rbxassetid://10131770538",
+			Locked = "rbxassetid://14011257320",
 		},
 		Spinner = {
 			Foreground = "rbxassetid://3222731032",
