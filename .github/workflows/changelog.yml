@@ -5,6 +5,7 @@ on:
     types: [assigned, opened, synchronize, reopened, labeled, unlabeled]
     branches:
       - master
+
 jobs:
   build:
     name: Check Actions
