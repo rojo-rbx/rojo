@@ -140,6 +140,15 @@ local function Tree()
 	return tree
 end
 
+local function findUnappliedPropsForId(unappliedPatch, id)
+	for _, change in unappliedPatch.updated do
+		if change.id == id then
+			return change.changedProperties or {}
+		end
+	end
+	return {}
+end
+
 local DomLabel = require(script.DomLabel)
 
 local PatchVisualizer = Roact.Component:extend("PatchVisualizer")
@@ -160,7 +169,7 @@ function PatchVisualizer:shouldUpdate(nextProps)
 	return not PatchSet.isEqual(currentPatch, nextPatch)
 end
 
-function PatchVisualizer:buildTree(patch, instanceMap)
+function PatchVisualizer:buildTree(patch, unappliedPatch, instanceMap)
 	local tree = Tree()
 
 	for _, change in patch.updated do
@@ -184,13 +193,15 @@ function PatchVisualizer:buildTree(patch, instanceMap)
 		-- Gather detail text
 		local changeList, hint = nil, nil
 		if next(change.changedProperties) or change.changedName then
+			local unappliedChanges = findUnappliedPropsForId(unappliedPatch, change.id)
+
 			changeList = {}
 
 			local hintBuffer, i = {}, 0
-			local function addProp(prop: string, current: any?, incoming: any?)
+			local function addProp(prop: string, current: any?, incoming: any?, metadata: any?)
 				i += 1
 				hintBuffer[i] = prop
-				changeList[i] = { prop, current, incoming }
+				changeList[i] = { prop, current, incoming, metadata }
 			end
 
 			-- Gather the changes
@@ -206,7 +217,10 @@ function PatchVisualizer:buildTree(patch, instanceMap)
 				addProp(
 					prop,
 					if currentSuccess then currentValue else "[Error]",
-					if incomingSuccess then incomingValue else next(incoming)
+					if incomingSuccess then incomingValue else next(incoming),
+					{
+						isWarning = unappliedChanges[prop] ~= nil
+					}
 				)
 			end
 
@@ -303,6 +317,8 @@ function PatchVisualizer:buildTree(patch, instanceMap)
 		-- Gather detail text
 		local changeList, hint = nil, nil
 		if next(change.Properties) then
+			local unappliedChanges = findUnappliedPropsForId(unappliedPatch, change.Id)
+
 			changeList = {}
 
 			local hintBuffer, i = {}, 0
@@ -312,9 +328,13 @@ function PatchVisualizer:buildTree(patch, instanceMap)
 
 				local success, incomingValue = decodeValue(incoming, instanceMap)
 				if success then
-					table.insert(changeList, { prop, "N/A", incomingValue })
+					table.insert(changeList, { prop, "N/A", incomingValue, {
+						isWarning = unappliedChanges[prop] ~= nil
+					} })
 				else
-					table.insert(changeList, { prop, "N/A", next(incoming) })
+					table.insert(changeList, { prop, "N/A", next(incoming), {
+						isWarning = unappliedChanges[prop] ~= nil
+					} })
 				end
 			end
 
@@ -355,10 +375,11 @@ function PatchVisualizer:buildTree(patch, instanceMap)
 end
 
 function PatchVisualizer:render()
-	local patch = self.props.patch
+	local patch = self.props.patch or PatchSet.newEmpty()
+	local unappliedPatch = self.props.unappliedPatch or PatchSet.newEmpty()
 	local instanceMap = self.props.instanceMap
 
-	local tree = self:buildTree(patch, instanceMap)
+	local tree = self:buildTree(patch, unappliedPatch, instanceMap)
 
 	-- Recusively draw tree
 	local scrollElements, elementHeights = {}, {}
@@ -374,6 +395,7 @@ function PatchVisualizer:render()
 				setElementHeight = setElementHeight,
 				patchType = node.patchType,
 				className = node.className,
+				isWarning = next(findUnappliedPropsForId(unappliedPatch, node.id)) ~= nil,
 				instance = node.instance,
 				name = node.name,
 				hint = node.hint,

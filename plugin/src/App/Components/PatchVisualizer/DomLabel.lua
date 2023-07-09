@@ -180,7 +180,7 @@ function DomLabel:render()
 				AnchorPoint = Vector2.new(0, 0.5),
 			}),
 			InstanceName = e("TextLabel", {
-				Text = props.name .. (props.hint and string.format(
+				Text = (if props.isWarning then "⚠ " else "") .. props.name .. (props.hint and string.format(
 					'  <font color="#%s">%s</font>',
 					theme.AddressEntry.PlaceholderColor:ToHex(),
 					props.hint
@@ -189,7 +189,7 @@ function DomLabel:render()
 				BackgroundTransparency = 1,
 				Font = Enum.Font.GothamMedium,
 				TextSize = 14,
-				TextColor3 = theme.Settings.Setting.DescriptionColor,
+				TextColor3 = if props.isWarning then theme.Diff.Warning else theme.Settings.Setting.DescriptionColor,
 				TextXAlignment = Enum.TextXAlignment.Left,
 				TextTransparency = props.transparency,
 				TextTruncate = Enum.TextTruncate.AtEnd,

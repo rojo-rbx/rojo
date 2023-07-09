@@ -11,6 +11,7 @@
 * Fix Rojo breaking when users undo/redo in Studio ([#708])
 * Improved sync info text on Connected page. ([#692])
 * Fix patch visualizer breaking when instances are removed during sync ([#713])
+* Patch visualizer now indicates what changes failed to apply. ([#717])
 
 [#668]: https://github.com/rojo-rbx/rojo/pull/668
 [#674]: https://github.com/rojo-rbx/rojo/pull/674
@@ -22,6 +23,7 @@
 [#708]: https://github.com/rojo-rbx/rojo/pull/708
 [#692]: https://github.com/rojo-rbx/rojo/pull/692
 [#713]: https://github.com/rojo-rbx/rojo/pull/713
+[#717]: https://github.com/rojo-rbx/rojo/pull/717
 
 
 ## [7.3.0] - April 22, 2023
