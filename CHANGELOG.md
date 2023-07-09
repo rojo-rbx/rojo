@@ -9,7 +9,7 @@
 * Added protection against syncing a model to a place. ([#691])
 * Fix Rojo breaking when users undo/redo in Studio ([#708])
 * Improved sync info text on Connected page. ([#692])
-* Show failed to apply warning in patch visualizer. ([#717])
+* Patch visualizer now indicates what changes failed to apply. ([#717])
 
 [#668]: https://github.com/rojo-rbx/rojo/pull/668
 [#674]: https://github.com/rojo-rbx/rojo/pull/674
