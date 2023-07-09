@@ -131,6 +131,7 @@ local function Tree()
 				id = ancestorId,
 				className = value.ClassName,
 				name = value.Name,
+				instance = if typeof(value) == "Instance" then value else nil,
 			})
 			previousId = ancestorId
 		end
@@ -250,6 +251,7 @@ function PatchVisualizer:buildTree(patch, unappliedPatch, instanceMap)
 			patchType = "Edit",
 			className = instance.ClassName,
 			name = instance.Name,
+			instance = instance,
 			hint = hint,
 			changeList = changeList,
 		})
@@ -285,10 +287,11 @@ function PatchVisualizer:buildTree(patch, unappliedPatch, instanceMap)
 			patchType = "Remove",
 			className = instance.ClassName,
 			name = instance.Name,
+			instance = instance,
 		})
 	end
 
-	for _, change in patch.added do
+	for id, change in patch.added do
 		-- Gather ancestors from existing DOM or future additions
 		local ancestry = {}
 		local parentId = change.Parent
@@ -364,6 +367,7 @@ function PatchVisualizer:buildTree(patch, unappliedPatch, instanceMap)
 			name = change.Name,
 			hint = hint,
 			changeList = changeList,
+			instance = instanceMap.fromIds[id],
 		})
 	end
 
@@ -392,6 +396,7 @@ function PatchVisualizer:render()
 				patchType = node.patchType,
 				className = node.className,
 				isWarning = next(findUnappliedPropsForId(unappliedPatch, node.id)) ~= nil,
+				instance = node.instance,
 				name = node.name,
 				hint = node.hint,
 				changeList = node.changeList,
