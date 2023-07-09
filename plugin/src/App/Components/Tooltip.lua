@@ -182,6 +182,17 @@ function Trigger:willUnmount()
 	end
 end
 
+function Trigger:didUpdate(prevProps)
+	if prevProps.text ~= self.props.text then
+		-- Any existing popup is now invalid
+		self.props.context.removeTip(self.id)
+		self.showingPopup = false
+
+		-- Let the new text propagate
+		self:managePopup()
+	end
+end
+
 function Trigger:isHovering()
 	local rbx = self.ref.current
 	if rbx then
