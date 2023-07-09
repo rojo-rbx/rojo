@@ -1,3 +1,4 @@
+local SelectionService = game:GetService("Selection")
 local StudioService = game:GetService("StudioService")
 
 local Rojo = script:FindFirstAncestor("Rojo")
@@ -14,6 +15,7 @@ local bindingUtil = require(Plugin.App.bindingUtil)
 local e = Roact.createElement
 
 local ChangeList = require(script.Parent.ChangeList)
+local Tooltip = require(script.Parent.Parent.Tooltip)
 
 local Expansion = Roact.Component:extend("Expansion")
 
@@ -106,21 +108,47 @@ function DomLabel:render()
 				PaddingLeft = UDim.new(0, 10),
 				PaddingRight = UDim.new(0, 10),
 			}),
-			ExpandButton = if props.changeList
-				then e("TextButton", {
-					BackgroundTransparency = 1,
-					Text = "",
-					Size = UDim2.new(1, 0, 1, 0),
-					[Roact.Event.Activated] = function()
-						self.expanded = not self.expanded
-						local goalHeight = 30 + (if self.expanded then math.clamp(#self.props.changeList * 30, 30, 30 * 6) else 0)
-						self.motor:setGoal(Flipper.Spring.new(goalHeight, {
-							frequency = 5,
-							dampingRatio = 1,
-						}))
-					end,
-				})
-				else nil,
+			Button = e("TextButton", {
+				BackgroundTransparency = 1,
+				Text = "",
+				Size = UDim2.new(1, 0, 1, 0),
+				[Roact.Event.Activated] = function(_rbx: Instance, _input: InputObject, clickCount: number)
+					if clickCount == 1 then
+						-- Double click opens the instance in explorer
+						self.lastDoubleClickTime = os.clock()
+						if props.instance then
+							SelectionService:Set({ props.instance })
+						end
+					elseif clickCount == 0 then
+						-- Single click expands the changes
+						task.wait(0.25)
+						if os.clock() - (self.lastDoubleClickTime or 0) <= 0.25 then
+							-- This is a double click, so don't expand
+							return
+						end
+
+						if props.changeList then
+							self.expanded = not self.expanded
+							local goalHeight = 30
+								+ (if self.expanded then math.clamp(#self.props.changeList * 30, 30, 30 * 6) else 0)
+							self.motor:setGoal(Flipper.Spring.new(goalHeight, {
+								frequency = 5,
+								dampingRatio = 1,
+							}))
+						end
+					end
+				end,
+			}, {
+				StateTip = if (props.instance or props.changeList)
+					then e(Tooltip.Trigger, {
+						text = (if props.changeList
+							then "Click to " .. (if self.expanded then "hide" else "view") .. " changes"
+							else "") .. (if props.instance
+							then (if props.changeList then " & d" else "D") .. "ouble click to open in Explorer"
+							else ""),
+					})
+					else nil,
+			}),
 			Expansion = if props.changeList
 				then e(Expansion, {
 					rendered = self.state.renderExpansion,
