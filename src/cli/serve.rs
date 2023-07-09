@@ -5,7 +5,7 @@ use std::{
     sync::Arc,
 };
 
-use clap::Parser;
+use clap::Args;
 use memofs::Vfs;
 use termcolor::{BufferWriter, Color, ColorChoice, ColorSpec, WriteColor};
 
@@ -17,19 +17,19 @@ const DEFAULT_BIND_ADDRESS: Ipv4Addr = Ipv4Addr::new(127, 0, 0, 1);
 const DEFAULT_PORT: u16 = 34872;
 
 /// Expose a Rojo project to the Rojo Studio plugin.
-#[derive(Debug, Parser)]
+#[derive(Debug, Args)]
 pub struct ServeCommand {
-    /// Path to the project to serve. Defaults to the current directory.
-    #[clap(default_value = "")]
+    /// Path to the project to serve.
+    #[arg(default_value = "default.project.json")]
     pub project: PathBuf,
 
     /// The IP address to listen on. Defaults to `127.0.0.1`.
-    #[clap(long)]
+    #[arg(long)]
     pub address: Option<IpAddr>,
 
     /// The port to listen on. Defaults to the project's preference, or `34872` if
     /// it has none.
-    #[clap(long)]
+    #[arg(long)]
     pub port: Option<u16>,
 }
 

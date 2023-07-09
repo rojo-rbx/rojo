@@ -1,7 +1,7 @@
-use clap::Parser;
+use clap::Args;
 
 /// Open Rojo's documentation in your browser.
-#[derive(Debug, Parser)]
+#[derive(Debug, Args)]
 pub struct DocCommand {}
 
 impl DocCommand {

@@ -2,7 +2,7 @@ use std::path::PathBuf;
 use std::str::FromStr;
 
 use anyhow::{bail, format_err, Context};
-use clap::Parser;
+use clap::Args;
 use memofs::Vfs;
 use reqwest::{
     header::{ACCEPT, CONTENT_TYPE, COOKIE, USER_AGENT},
@@ -14,26 +14,26 @@ use crate::{auth_cookie::get_auth_cookie, serve_session::ServeSession};
 use super::resolve_path;
 
 /// Builds the project and uploads it to Roblox.
-#[derive(Debug, Parser)]
+#[derive(Debug, Args)]
 pub struct UploadCommand {
-    /// Path to the project to upload. Defaults to the current directory.
-    #[clap(default_value = "")]
+    /// Path to the project to upload.
+    #[arg(default_value = "default.project.json")]
     pub project: PathBuf,
 
     /// Authenication cookie to use. If not specified, Rojo will attempt to find one from the system automatically.
-    #[clap(long)]
+    #[arg(long)]
     pub cookie: Option<String>,
 
     /// API key obtained from create.roblox.com/credentials. Rojo will use the Open Cloud API when this is provided. Only supports uploading to a place.
-    #[clap(long = "api_key")]
+    #[arg(long = "api_key")]
     pub api_key: Option<String>,
 
     /// The Universe ID of the given place. Required when using the Open Cloud API.
-    #[clap(long = "universe_id")]
+    #[arg(long = "universe_id")]
     pub universe_id: Option<u64>,
 
     /// Asset ID to upload to.
-    #[clap(long = "asset_id")]
+    #[arg(long = "asset_id")]
     pub asset_id: u64,
 }
 

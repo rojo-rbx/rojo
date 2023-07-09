@@ -3,7 +3,7 @@ use std::{
     io::BufWriter,
 };
 
-use clap::Parser;
+use clap::{Args, Parser};
 use memofs::{InMemoryFs, Vfs, VfsSnapshot};
 use roblox_install::RobloxStudio;
 
@@ -13,9 +13,9 @@ static PLUGIN_BINCODE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/plugin.
 static PLUGIN_FILE_NAME: &str = "RojoManagedPlugin.rbxm";
 
 /// Install Rojo's plugin.
-#[derive(Debug, Parser)]
+#[derive(Debug, Args)]
 pub struct PluginCommand {
-    #[clap(subcommand)]
+    #[command(subcommand)]
     subcommand: PluginSubcommand,
 }
 

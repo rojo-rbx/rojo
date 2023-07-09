@@ -4,7 +4,7 @@ use std::process::{Command, Stdio};
 use std::str::FromStr;
 
 use anyhow::{bail, format_err};
-use clap::Parser;
+use clap::Args;
 use fs_err as fs;
 use fs_err::OpenOptions;
 
@@ -22,14 +22,14 @@ static PLACE_README: &str = include_str!("../../assets/default-place-project/REA
 static PLACE_GIT_IGNORE: &str = include_str!("../../assets/default-place-project/gitignore.txt");
 
 /// Initializes a new Rojo project.
-#[derive(Debug, Parser)]
+#[derive(Debug, Args)]
 pub struct InitCommand {
-    /// Path to the place to create the project. Defaults to the current directory.
-    #[clap(default_value = "")]
+    /// Path to the place to create the project.
+    #[arg(default_value = "./")]
     pub path: PathBuf,
 
     /// The kind of project to create, 'place' or 'model'. Defaults to place.
-    #[clap(long, default_value = "place")]
+    #[arg(long, default_value = "place")]
     pub kind: InitKind,
 }
 

@@ -11,7 +11,7 @@ mod upload;
 
 use std::{borrow::Cow, env, path::Path, str::FromStr};
 
-use clap::Parser;
+use clap::{ArgAction, Args, Parser};
 use thiserror::Error;
 
 pub use self::build::BuildCommand;
@@ -25,13 +25,16 @@ pub use self::upload::UploadCommand;
 
 /// Command line options that Rojo accepts, defined using the clap crate.
 #[derive(Debug, Parser)]
-#[clap(name = "Rojo", version, about, author)]
+#[command(name = "Rojo", version, about, author)]
+#[command(help_template(
+    "{name} {version}{about-section}\n{usage-heading} {usage}\n\n{all-args}{tab}"
+))]
 pub struct Options {
-    #[clap(flatten)]
+    #[command(flatten)]
     pub global: GlobalOptions,
 
     /// Subcommand to run in this invocation.
-    #[clap(subcommand)]
+    #[command(subcommand)]
     pub subcommand: Subcommand,
 }
 
@@ -50,14 +53,14 @@ impl Options {
     }
 }
 
-#[derive(Debug, Parser)]
+#[derive(Debug, Args)]
 pub struct GlobalOptions {
     /// Sets verbosity level. Can be specified multiple times.
-    #[clap(long("verbose"), short, global(true), parse(from_occurrences))]
+    #[arg(long("verbose"), short, global(true), action(ArgAction::Count))]
     pub verbosity: u8,
 
     /// Set color behavior. Valid values are auto, always, and never.
-    #[clap(long("color"), global(true), default_value("auto"))]
+    #[arg(long("color"), global(true), default_value("auto"))]
     pub color: ColorChoice,
 }
 

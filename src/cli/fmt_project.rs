@@ -1,17 +1,17 @@
 use std::path::PathBuf;
 
 use anyhow::Context;
-use clap::Parser;
+use clap::Args;
 
 use crate::project::Project;
 
 use super::resolve_path;
 
 /// Reformat a Rojo project using the standard JSON formatting rules.
-#[derive(Debug, Parser)]
+#[derive(Debug, Args)]
 pub struct FmtProjectCommand {
-    /// Path to the project to format. Defaults to the current directory.
-    #[clap(default_value = "")]
+    /// Path to the project to format.
+    #[arg(default_value = "default.project.json")]
     pub project: PathBuf,
 }
 

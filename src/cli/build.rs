@@ -5,7 +5,7 @@ use std::{
 };
 
 use anyhow::Context;
-use clap::Parser;
+use clap::Args;
 use fs_err::File;
 use memofs::Vfs;
 use tokio::runtime::Runtime;
@@ -18,20 +18,20 @@ const UNKNOWN_OUTPUT_KIND_ERR: &str = "Could not detect what kind of file to bui
                                        Expected output file to end in .rbxl, .rbxlx, .rbxm, or .rbxmx.";
 
 /// Generates a model or place file from the Rojo project.
-#[derive(Debug, Parser)]
+#[derive(Debug, Args)]
 pub struct BuildCommand {
-    /// Path to the project to serve. Defaults to the current directory.
-    #[clap(default_value = "")]
+    /// Path to the project to serve.
+    #[arg(default_value = "default.project.json")]
     pub project: PathBuf,
 
     /// Where to output the result.
     ///
     /// Should end in .rbxm, .rbxl, .rbxmx, or .rbxlx.
-    #[clap(long, short)]
+    #[arg(long, short)]
     pub output: PathBuf,
 
     /// Whether to automatically rebuild when any input files change.
-    #[clap(long)]
+    #[arg(long)]
     pub watch: bool,
 }
 
@@ -45,7 +45,7 @@ impl BuildCommand {
         let vfs = Vfs::new_default();
         vfs.set_watch_enabled(self.watch);
 
-        let session = ServeSession::new(vfs, &project_path)?;
+        let session = ServeSession::new(vfs, project_path)?;
         let mut cursor = session.message_queue().cursor();
 
         write_model(&session, &self.output, output_kind)?;

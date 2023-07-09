@@ -4,7 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use clap::Parser;
+use clap::Args;
 use fs_err::File;
 use memofs::Vfs;
 use rayon::prelude::*;
@@ -36,26 +36,25 @@ struct SourcemapNode<'a> {
 }
 
 /// Generates a sourcemap file from the Rojo project.
-#[derive(Debug, Parser)]
+#[derive(Debug, Args)]
 pub struct SourcemapCommand {
-    /// Path to the project to use for the sourcemap. Defaults to the current
-    /// directory.
-    #[clap(default_value = "")]
+    /// Path to the project to use for the sourcemap.
+    #[arg(default_value = "default.project.json")]
     pub project: PathBuf,
 
     /// Where to output the sourcemap. Omit this to use stdout instead of
     /// writing to a file.
     ///
     /// Should end in .json.
-    #[clap(long, short)]
+    #[arg(long, short)]
     pub output: Option<PathBuf>,
 
     /// If non-script files should be included or not. Defaults to false.
-    #[clap(long)]
+    #[arg(long)]
     pub include_non_scripts: bool,
 
     /// Whether to automatically recreate a snapshot when any input files change.
-    #[clap(long)]
+    #[arg(long)]
     pub watch: bool,
 }
 
@@ -67,7 +66,7 @@ impl SourcemapCommand {
         let vfs = Vfs::new_default();
         vfs.set_watch_enabled(self.watch);
 
-        let session = ServeSession::new(vfs, &project_path)?;
+        let session = ServeSession::new(vfs, project_path)?;
         let mut cursor = session.message_queue().cursor();
 
         let filter = if self.include_non_scripts {
