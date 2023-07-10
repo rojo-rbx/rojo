@@ -7,6 +7,7 @@ local Roact = require(Packages.Roact)
 local PatchTree = require(Plugin.PatchTree)
 local PatchSet = require(Plugin.PatchSet)
 
+local Theme = require(Plugin.App.Theme)
 local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
 local VirtualScroller = require(Plugin.App.Components.VirtualScroller)
 
@@ -79,25 +80,38 @@ function PatchVisualizer:render()
 		end)
 	end
 
-	return e(BorderedContainer, {
-		transparency = self.props.transparency,
-		size = self.props.size,
-		position = self.props.position,
-		layoutOrder = self.props.layoutOrder,
-	}, {
-		VirtualScroller = e(VirtualScroller, {
-			size = UDim2.new(1, 0, 1, 0),
+	return Theme.with(function(theme)
+		return e(BorderedContainer, {
 			transparency = self.props.transparency,
-			count = #scrollElements,
-			updateEvent = self.updateEvent.Event,
-			render = function(i)
-				return scrollElements[i]
-			end,
-			getHeightBinding = function(i)
-				return elementHeights[i]
-			end,
-		}),
-	})
+			size = self.props.size,
+			position = self.props.position,
+			layoutOrder = self.props.layoutOrder,
+		}, {
+			CleanMerge = e("TextLabel", {
+				Visible = #scrollElements == 0,
+				Text = "No changes to sync, project is up to date.",
+				Font = Enum.Font.GothamMedium,
+				TextSize = 15,
+				TextColor3 = theme.Settings.Setting.DescriptionColor,
+				TextWrapped = true,
+				Size = UDim2.new(1, 0, 1, 0),
+				BackgroundTransparency = 1,
+			}),
+
+			VirtualScroller = e(VirtualScroller, {
+				size = UDim2.new(1, 0, 1, 0),
+				transparency = self.props.transparency,
+				count = #scrollElements,
+				updateEvent = self.updateEvent.Event,
+				render = function(i)
+					return scrollElements[i]
+				end,
+				getHeightBinding = function(i)
+					return elementHeights[i]
+				end,
+			}),
+		})
+	end)
 end
 
 return PatchVisualizer
