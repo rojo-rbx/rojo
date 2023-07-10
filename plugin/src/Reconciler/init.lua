@@ -26,12 +26,14 @@ end
 
 function Reconciler:hookPrecommit(callback: (patch: any, instanceMap: any) -> ()): () -> ()
 	table.insert(self.__precommitCallbacks, callback)
+	Log.trace("Added precommit callback: {}", callback)
 
 	return function()
 		-- Remove the callback from the list
 		for i, cb in self.__precommitCallbacks do
 			if cb == callback then
 				table.remove(self.__precommitCallbacks, i)
+				Log.trace("Removed precommit callback: {}", callback)
 				break
 			end
 		end
@@ -40,12 +42,14 @@ end
 
 function Reconciler:hookPostcommit(callback: (patch: any, instanceMap: any, unappliedPatch: any) -> ()): () -> ()
 	table.insert(self.__postcommitCallbacks, callback)
+	Log.trace("Added postcommit callback: {}", callback)
 
 	return function()
 		-- Remove the callback from the list
 		for i, cb in self.__postcommitCallbacks do
 			if cb == callback then
 				table.remove(self.__postcommitCallbacks, i)
+				Log.trace("Removed postcommit callback: {}", callback)
 				break
 			end
 		end
