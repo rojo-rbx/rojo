@@ -14,6 +14,7 @@
 * Patch visualizer now indicates what changes failed to apply. ([#717])
 * Add buttons for navigation on the Connected page ([#722])
 * Improve tooltip behavior ([#723])
+* Rework patch visualizer with many fixes and improvements ([#726])
 
 [#668]: https://github.com/rojo-rbx/rojo/pull/668
 [#674]: https://github.com/rojo-rbx/rojo/pull/674
@@ -28,6 +29,7 @@
 [#717]: https://github.com/rojo-rbx/rojo/pull/717
 [#722]: https://github.com/rojo-rbx/rojo/pull/722
 [#723]: https://github.com/rojo-rbx/rojo/pull/723
+[#726]: https://github.com/rojo-rbx/rojo/pull/726
 
 ## [7.3.0] - April 22, 2023
 * Added `$attributes` to project format. ([#574])
