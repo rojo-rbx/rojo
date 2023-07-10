@@ -346,6 +346,7 @@ local function updateMetadata(tree, patch, instanceMap, unappliedPatch)
 		tree = build(patch, instanceMap)
 	end
 
+	-- Update isWarning metadata
 	for _, failedChange in unappliedPatch.updated do
 		local node = tree:getNode(failedChange.id)
 		if node then
@@ -363,6 +364,19 @@ local function updateMetadata(tree, patch, instanceMap, unappliedPatch)
 			end
 		end
 	end
+
+	-- Update if instances exist
+	tree:forEach(function(node)
+		if node.instance then
+			if node.instance.Parent == nil and node.instance ~= game then
+				-- This instance has been removed
+				node.instance = nil
+			end
+		else
+			-- This instance may have been added
+			node.instance = instanceMap.fromIds[node.id]
+		end
+	end)
 
 	return tree
 end
