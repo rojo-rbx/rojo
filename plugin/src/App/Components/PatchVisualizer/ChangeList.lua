@@ -116,11 +116,11 @@ function ChangeList:render()
 					}),
 					A = e("TextLabel", {
 						Visible = columnVisibility[1],
-						Text = tostring(values[1]),
+						Text = (if isWarning then "⚠ " else "") .. tostring(values[1]),
 						BackgroundTransparency = 1,
 						Font = Enum.Font.GothamMedium,
 						TextSize = 14,
-						TextColor3 = theme.Settings.Setting.DescriptionColor,
+						TextColor3 = if isWarning then theme.Diff.Warning else theme.Settings.Setting.DescriptionColor,
 						TextXAlignment = Enum.TextXAlignment.Left,
 						TextTransparency = props.transparency,
 						TextTruncate = Enum.TextTruncate.AtEnd,
@@ -140,7 +140,9 @@ function ChangeList:render()
 					}, {
 						e(BorderedContainer, {
 							size = UDim2.new(1, 0, 1, 0),
-							transparency = self.props.transparency,
+							transparency = self.props.transparency:map(function(t)
+								return 0.5 + (0.5 * t)
+							end),
 						}, {
 							Layout = e("UIListLayout", {
 								FillDirection = Enum.FillDirection.Horizontal,
