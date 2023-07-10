@@ -554,8 +554,8 @@ function App:render()
 					initDockState = Enum.InitialDockState.Right,
 					initEnabled = false,
 					overridePreviousState = false,
-					floatingSize = Vector2.new(300, 200),
-					minimumSize = Vector2.new(300, 120),
+					floatingSize = Vector2.new(320, 210),
+					minimumSize = Vector2.new(300, 210),
 
 					zIndexBehavior = Enum.ZIndexBehavior.Sibling,
 
