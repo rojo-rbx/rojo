@@ -12,6 +12,7 @@ local PatchSet = require(Plugin.PatchSet)
 
 local Header = require(Plugin.App.Components.Header)
 local IconButton = require(Plugin.App.Components.IconButton)
+local TextButton = require(Plugin.App.Components.TextButton)
 local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
 local Tooltip = require(Plugin.App.Components.Tooltip)
 local PatchVisualizer = require(Plugin.App.Components.PatchVisualizer)
@@ -55,7 +56,7 @@ function ChangesDrawer:render()
 		return e(BorderedContainer, {
 			transparency = self.props.transparency,
 			size = self.props.height:map(function(y)
-				return UDim2.new(1, 0, y, -180 * y)
+				return UDim2.new(1, 0, y, -220 * y)
 			end),
 			position = UDim2.new(0, 0, 1, 0),
 			anchorPoint = Vector2.new(0, 1),
@@ -84,6 +85,7 @@ function ChangesDrawer:render()
 
 				columnVisibility = { true, false, true },
 				patch = self.props.patch,
+				unappliedPatch = self.props.unappliedPatch,
 				instanceMap = self.serveSession.__instanceMap,
 			}),
 		})
@@ -134,22 +136,6 @@ local function ConnectionDetails(props)
 					FillDirection = Enum.FillDirection.Vertical,
 					SortOrder = Enum.SortOrder.LayoutOrder,
 					Padding = UDim.new(0, 6),
-				}),
-			}),
-
-			Disconnect = e(IconButton, {
-				icon = Assets.Images.Icons.Close,
-				iconSize = 24,
-				color = theme.ConnectionDetails.DisconnectColor,
-				transparency = props.transparency,
-
-				position = UDim2.new(1, 0, 0.5, 0),
-				anchorPoint = Vector2.new(1, 0.5),
-
-				onClick = props.onDisconnect,
-			}, {
-				Tip = e(Tooltip.Trigger, {
-					text = "Disconnect from the Rojo sync server",
 				}),
 			}),
 
@@ -289,6 +275,44 @@ function ConnectedPage:render()
 				onDisconnect = self.props.onDisconnect,
 			}),
 
+			Buttons = e("Frame", {
+				Size = UDim2.new(1, 0, 0, 34),
+				LayoutOrder = 3,
+				BackgroundTransparency = 1,
+				ZIndex = 2,
+			}, {
+				Settings = e(TextButton, {
+					text = "Settings",
+					style = "Bordered",
+					transparency = self.props.transparency,
+					layoutOrder = 1,
+					onClick = self.props.onNavigateSettings,
+				}, {
+					Tip = e(Tooltip.Trigger, {
+						text = "View and modify plugin settings"
+					}),
+				}),
+
+				Disconnect = e(TextButton, {
+					text = "Disconnect",
+					style = "Solid",
+					transparency = self.props.transparency,
+					layoutOrder = 2,
+					onClick = self.props.onDisconnect,
+				}, {
+					Tip = e(Tooltip.Trigger, {
+						text = "Disconnect from the Rojo sync server"
+					}),
+				}),
+
+				Layout = e("UIListLayout", {
+					HorizontalAlignment = Enum.HorizontalAlignment.Right,
+					FillDirection = Enum.FillDirection.Horizontal,
+					SortOrder = Enum.SortOrder.LayoutOrder,
+					Padding = UDim.new(0, 10),
+				}),
+			}),
+
 			ChangeInfo = e("TextButton", {
 				Text = self.changeInfoText,
 				Font = Enum.Font.Gotham,
@@ -302,7 +326,7 @@ function ConnectedPage:render()
 
 				Size = UDim2.new(1, 0, 0, 28),
 
-				LayoutOrder = 3,
+				LayoutOrder = 4,
 				BackgroundTransparency = 1,
 
 				[Roact.Event.MouseEnter] = function()
@@ -342,9 +366,10 @@ function ConnectedPage:render()
 				rendered = self.state.renderChanges,
 				transparency = self.props.transparency,
 				patch = self.props.patchData.patch,
+				unappliedPatch = self.props.patchData.unapplied,
 				serveSession = self.props.serveSession,
 				height = self.changeDrawerHeight,
-				layoutOrder = 4,
+				layoutOrder = 5,
 
 				onClose = function()
 					self.changeDrawerMotor:setGoal(Flipper.Spring.new(0, {

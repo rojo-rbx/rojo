@@ -1,0 +1,23 @@
+name: Changelog Check
+
+on:
+  pull_request:
+    types: [assigned, opened, synchronize, reopened, labeled, unlabeled]
+    branches:
+      - master
+
+jobs:
+  build:
+    name: Check Actions
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Changelog check
+      uses: Zomzog/changelog-checker@v1.3.0
+      with:
+        fileName: CHANGELOG.md 
+        noChangelogLabel: skip changelog
+        checkNotification: Simple
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
