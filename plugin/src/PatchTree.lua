@@ -351,10 +351,12 @@ local function updateMetadata(tree, patch, instanceMap, unappliedPatch)
 		local node = tree:getNode(failedChange.id)
 		if node then
 			node.isWarning = true
+			Log.trace("Marked node as warning: {} {}", node.id, node.name)
 
 			if node.changeList then
 				for _, change in node.changeList do
 					if failedChange.changedProperties[change[1]] then
+						Log.trace("  Marked property as warning: {}", change[1])
 						if change[4] == nil then
 							change[4] = {}
 						end
@@ -370,15 +372,19 @@ local function updateMetadata(tree, patch, instanceMap, unappliedPatch)
 		if node.instance then
 			if node.instance.Parent == nil and node.instance ~= game then
 				-- This instance has been removed
+				Log.trace("Removed instance from node: {} {}", node.id, node.name)
 				node.instance = nil
 			end
 		else
 			-- This instance may have been added
 			node.instance = instanceMap.fromIds[node.id]
+			if node.instance then
+				Log.trace("Added instance to node: {} {}", node.id, node.name)
+			end
 		end
 	end)
 
-	return tree
+	return table.clone(tree)
 end
 
 return {
