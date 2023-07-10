@@ -155,20 +155,22 @@ function ConfirmingPage:render()
 					})
 				end,
 			}, {
-				Tooltips = e(Tooltip.Container, nil),
-				Content = e("Frame", {
-					Size = UDim2.fromScale(1, 1),
-					BackgroundTransparency = 1,
-				}, {
-					e(StringDiffVisualizer, {
-						size = UDim2.new(1, -10, 1, -10),
-						position = UDim2.new(0, 5, 0, 5),
-						anchorPoint = Vector2.new(0, 0),
-						transparency = self.props.transparency,
+				TooltipsProvider = e(Tooltip.Provider, nil, {
+					Tooltips = e(Tooltip.Container, nil),
+					Content = e("Frame", {
+						Size = UDim2.fromScale(1, 1),
+						BackgroundTransparency = 1,
+					}, {
+						e(StringDiffVisualizer, {
+							size = UDim2.new(1, -10, 1, -10),
+							position = UDim2.new(0, 5, 0, 5),
+							anchorPoint = Vector2.new(0, 0),
+							transparency = self.props.transparency,
 
-						oldText = self.state.oldSource,
-						newText = self.state.newSource,
-					})
+							oldText = self.state.oldSource,
+							newText = self.state.newSource,
+						})
+					}),
 				}),
 			}),
 		})
