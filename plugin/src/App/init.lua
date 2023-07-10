@@ -367,9 +367,11 @@ function App:startSession()
 	end)
 	self.cleanupPostcommit = serveSession.__reconciler:hookPostcommit(function(patch, instanceMap, unappliedPatch)
 		-- Update tree with unapplied metadata
-		self:setState({
-			patchTree = PatchTree.updateMetadata(self.state.patchTree, patch, instanceMap, unappliedPatch),
-		})
+		self:setState(function(prevState)
+			return {
+				patchTree = PatchTree.updateMetadata(prevState.patchTree, patch, instanceMap, unappliedPatch),
+			}
+		end)
 	end)
 
 	serveSession:onPatchApplied(function(patch, unapplied)
