@@ -28,7 +28,7 @@ function PatchVisualizer:willUnmount()
 end
 
 function PatchVisualizer:shouldUpdate(nextProps)
-	if self.props.tree ~= nextProps.tree then
+	if self.props.patchTree ~= nextProps.patchTree then
 		return true
 	end
 
@@ -41,18 +41,18 @@ function PatchVisualizer:shouldUpdate(nextProps)
 end
 
 function PatchVisualizer:render()
-	local tree = self.props.tree
-	if tree == nil and self.props.patch ~= nil then
-		tree = PatchTree.build(self.props.patch, self.props.instanceMap, self.props.changeListHeaders or { "Property", "Current", "Incoming" })
+	local patchTree = self.props.patchTree
+	if patchTree == nil and self.props.patch ~= nil then
+		patchTree = PatchTree.build(self.props.patch, self.props.instanceMap, self.props.changeListHeaders or { "Property", "Current", "Incoming" })
 		if self.props.unappliedPatch then
-			tree = PatchTree.updateMetadata(tree, self.props.patch, self.props.instanceMap, self.props.unappliedPatch)
+			patchTree = PatchTree.updateMetadata(patchTree, self.props.patch, self.props.instanceMap, self.props.unappliedPatch)
 		end
 	end
 
 	-- Recusively draw tree
 	local scrollElements, elementHeights = {}, {}
 
-	if tree then
+	if patchTree then
 		local function drawNode(node, depth)
 			local elementHeight, setElementHeight = Roact.createBinding(30)
 			table.insert(elementHeights, elementHeight)
@@ -75,7 +75,7 @@ function PatchVisualizer:render()
 			)
 		end
 
-		tree:forEach(function(node, depth)
+		patchTree:forEach(function(node, depth)
 			drawNode(node, depth)
 		end)
 	end

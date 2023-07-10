@@ -83,7 +83,7 @@ function ChangesDrawer:render()
 				transparency = self.props.transparency,
 				layoutOrder = 3,
 
-				tree = self.props.patchTree,
+				patchTree = self.props.patchTree,
 			}),
 		})
 	end)
