@@ -343,7 +343,7 @@ end
 
 local function updateMetadata(tree, patch, instanceMap, unappliedPatch)
 	if not tree then
-		tree = buildTree(patch, instanceMap)
+		tree = build(patch, instanceMap)
 	end
 
 	for _, failedChange in unappliedPatch.updated do
