@@ -2,7 +2,7 @@
 source: src/snapshot_middleware/project.rs
 expression: instance_snapshot
 ---
-snapshot_id: ~
+snapshot_id: "00000000000000000000000000000000"
 metadata:
   ignore_unknown_instances: true
   instigating_source:
@@ -14,7 +14,7 @@ name: children
 class_name: Folder
 properties: {}
 children:
-  - snapshot_id: ~
+  - snapshot_id: "00000000000000000000000000000000"
     metadata:
       ignore_unknown_instances: true
       instigating_source:
@@ -29,3 +29,4 @@ children:
     class_name: Model
     properties: {}
     children: []
+
