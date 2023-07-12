@@ -3,6 +3,7 @@ use std::borrow::Cow;
 use insta::assert_yaml_snapshot;
 use maplit::hashmap;
 
+use rbx_dom_weak::types::Ref;
 use rojo_insta_ext::RedactionMap;
 
 use crate::snapshot::{compute_patch_set, InstanceSnapshot, RojoTree};
@@ -15,7 +16,7 @@ fn set_name_and_class_name() {
     redactions.intern(tree.get_root_id());
 
     let snapshot = InstanceSnapshot {
-        snapshot_id: None,
+        snapshot_id: Ref::none(),
         metadata: Default::default(),
         name: Cow::Borrowed("Some Folder"),
         class_name: Cow::Borrowed("Folder"),
@@ -37,7 +38,7 @@ fn set_property() {
     redactions.intern(tree.get_root_id());
 
     let snapshot = InstanceSnapshot {
-        snapshot_id: None,
+        snapshot_id: Ref::none(),
         metadata: Default::default(),
         name: Cow::Borrowed("ROOT"),
         class_name: Cow::Borrowed("ROOT"),
@@ -70,7 +71,7 @@ fn remove_property() {
     }
 
     let snapshot = InstanceSnapshot {
-        snapshot_id: None,
+        snapshot_id: Ref::none(),
         metadata: Default::default(),
         name: Cow::Borrowed("ROOT"),
         class_name: Cow::Borrowed("ROOT"),
@@ -92,13 +93,13 @@ fn add_child() {
     redactions.intern(tree.get_root_id());
 
     let snapshot = InstanceSnapshot {
-        snapshot_id: None,
+        snapshot_id: Ref::none(),
         metadata: Default::default(),
         name: Cow::Borrowed("ROOT"),
         class_name: Cow::Borrowed("ROOT"),
         properties: Default::default(),
         children: vec![InstanceSnapshot {
-            snapshot_id: None,
+            snapshot_id: Ref::none(),
             metadata: Default::default(),
             name: Cow::Borrowed("New"),
             class_name: Cow::Borrowed("Folder"),
@@ -131,7 +132,7 @@ fn remove_child() {
     }
 
     let snapshot = InstanceSnapshot {
-        snapshot_id: None,
+        snapshot_id: Ref::none(),
         metadata: Default::default(),
         name: Cow::Borrowed("ROOT"),
         class_name: Cow::Borrowed("ROOT"),

@@ -2,7 +2,7 @@ use std::{borrow::Cow, collections::HashMap, path::Path, str};
 
 use anyhow::Context;
 use memofs::Vfs;
-use rbx_dom_weak::types::Attributes;
+use rbx_dom_weak::types::{Attributes, Ref};
 use serde::Deserialize;
 
 use crate::{
@@ -112,7 +112,7 @@ impl JsonModel {
         }
 
         Ok(InstanceSnapshot {
-            snapshot_id: None,
+            snapshot_id: Ref::none(),
             metadata: Default::default(),
             name: Cow::Owned(name),
             class_name: Cow::Owned(class_name),

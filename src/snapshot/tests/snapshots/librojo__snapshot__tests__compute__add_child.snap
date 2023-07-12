@@ -6,7 +6,7 @@ removed_instances: []
 added_instances:
   - parent_id: id-1
     instance:
-      snapshot_id: ~
+      snapshot_id: "00000000000000000000000000000000"
       metadata:
         ignore_unknown_instances: false
         relevant_paths: []
@@ -16,3 +16,4 @@ added_instances:
       properties: {}
       children: []
 updated_instances: []
+
