@@ -115,13 +115,16 @@ end
 
 -- Adds a node to the tree as a child of the node with id == parent
 -- If parent is nil, it defaults to root
--- props must contain id, and cannot contain children
--- other than those two, it can hold anything
+-- props must contain id, and cannot contain children or parentId
+-- other than those three, it can hold anything
 function Tree:addNode(parent, props)
+	assert(props.id, "props must contain id")
+
     parent = parent or "ROOT"
 
     local node = self:getNode(props.id)
     if node then
+		-- Update existing node
         for k, v in props do
             node[k] = v
         end
@@ -130,6 +133,7 @@ function Tree:addNode(parent, props)
 
     node = table.clone(props)
     node.children = {}
+	node.parentId = parent
 
     local parentNode = self:getNode(parent)
     if not parentNode then
@@ -164,9 +168,11 @@ function Tree:buildAncestryNodes(ancestryIds: { string }, patch, instanceMap)
     end
 end
 
+local PatchTree = {}
+
 -- Builds a new tree from a patch and instanceMap
 -- uses changeListHeaders in node.changeList
-local function build(patch, instanceMap, changeListHeaders)
+function PatchTree.build(patch, instanceMap, changeListHeaders)
 	local tree = Tree.new()
 
 	for _, change in patch.updated do
@@ -362,11 +368,26 @@ local function build(patch, instanceMap, changeListHeaders)
 	return tree
 end
 
+-- Creates a deep copy of a tree for immutability purposes in Roact
+function PatchTree.clone(tree)
+	if not tree then return end
+
+	local newTree = Tree.new()
+	tree:forEach(function(node)
+		newTree:addNode(node.parentId, table.clone(node))
+	end)
+
+	return newTree
+end
+
 -- Updates the metadata of a tree with the unapplied patch and currently existing instances
--- Builds a new tree from the data if one does not exist
-local function updateMetadata(tree, patch, instanceMap, unappliedPatch)
-	if not tree then
-		tree = build(patch, instanceMap)
+-- Builds a new tree from the data if one isn't provided
+-- Always returns a new tree for immutability purposes in Roact
+function PatchTree.updateMetadata(tree, patch, instanceMap, unappliedPatch)
+	if tree then
+		tree = PatchTree.clone(tree)
+	else
+		tree = PatchTree.build(patch, instanceMap)
 	end
 
 	-- Update isWarning metadata
@@ -407,10 +428,7 @@ local function updateMetadata(tree, patch, instanceMap, unappliedPatch)
 		end
 	end)
 
-	return table.clone(tree)
+	return tree
 end
 
-return {
-    build = build,
-    updateMetadata = updateMetadata,
-}
+return PatchTree
