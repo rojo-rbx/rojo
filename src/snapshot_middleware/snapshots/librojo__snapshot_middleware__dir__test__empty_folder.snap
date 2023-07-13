@@ -1,9 +1,8 @@
 ---
 source: src/snapshot_middleware/dir.rs
-assertion_line: 127
 expression: instance_snapshot
 ---
-snapshot_id: ~
+snapshot_id: "00000000000000000000000000000000"
 metadata:
   ignore_unknown_instances: false
   instigating_source:

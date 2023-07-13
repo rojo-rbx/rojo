@@ -175,7 +175,7 @@ end
 
 function Trigger:willUnmount()
 	if self.showDelayThread then
-		task.cancel(self.showDelayThread)
+		pcall(task.cancel, self.showDelayThread)
 	end
 	if self.destroy then
 		self.destroy()
@@ -225,7 +225,7 @@ function Trigger:managePopup()
 		end)
 	else
 		if self.showDelayThread then
-			task.cancel(self.showDelayThread)
+			pcall(task.cancel, self.showDelayThread)
 			self.showDelayThread = nil
 		end
 		self.props.context.removeTip(self.id)
