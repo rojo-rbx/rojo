@@ -73,6 +73,9 @@ function Tree.new()
     return setmetatable(tree, Tree)
 end
 
+-- Iterates over all sub-nodes, depth first
+-- node is where to start from, defaults to root
+-- depth is used for recursion but can be used to set the starting depth
 function Tree:forEach(callback, node, depth)
 	depth = depth or 1
 	for _, child in alphabeticalPairs(if node then node.children else self.ROOT.children) do
@@ -83,6 +86,8 @@ function Tree:forEach(callback, node, depth)
 	end
 end
 
+-- Finds a node by id, depth first
+-- target is the node to search within, defaults to root
 function Tree:getNode(id, target)
     if self.idToNode[id] then
         return self.idToNode[id]
@@ -102,6 +107,10 @@ function Tree:getNode(id, target)
     return nil
 end
 
+-- Adds a node to the tree as a child of the node with id == parent
+-- If parent is nil, it defaults to root
+-- props must contain id, and cannot contain children
+-- other than those two, it can hold anything
 function Tree:addNode(parent, props)
     parent = parent or "ROOT"
 
@@ -128,6 +137,8 @@ function Tree:addNode(parent, props)
     return node
 end
 
+-- Given a list of ancestor ids in descending order, builds the nodes for them
+-- using the patch and instanceMap info
 function Tree:buildAncestryNodes(ancestry, patch, instanceMap)
     -- Build nodes for ancestry by going up the tree
     local previousId = "ROOT"
@@ -147,6 +158,8 @@ function Tree:buildAncestryNodes(ancestry, patch, instanceMap)
     end
 end
 
+-- Builds a new tree from a patch and instanceMap
+-- uses changeListHeaders in node.changeList
 local function build(patch, instanceMap, changeListHeaders)
 	local tree = Tree.new()
 
@@ -244,7 +257,7 @@ local function build(patch, instanceMap, changeListHeaders)
 		local parentObject = instance.Parent
 		local parentId = instanceMap.fromInstances[parentObject] or HttpService:GenerateGUID(false)
 		while parentObject do
-			instanceMap:insert(parentId, parentObject)
+			instanceMap:insert(parentId, parentObject) -- This ensures we can find the parent later
 			table.insert(ancestry, 1, parentId)
 			parentObject = parentObject.Parent
 			parentId = instanceMap.fromInstances[parentObject] or HttpService:GenerateGUID(false)
@@ -275,10 +288,12 @@ local function build(patch, instanceMap, changeListHeaders)
 			parentId = nil
 
 			if parentData then
+				-- object is parented to an instance that does not exist yet
 				parentId = parentData.Parent
 				parentData = patch.added[parentId]
 				parentObject = instanceMap.fromIds[parentId]
 			elseif parentObject then
+				-- object is parented to an instance that exists
 				parentObject = parentObject.Parent
 				parentId = instanceMap.fromInstances[parentObject]
 				parentData = patch.added[parentId]
@@ -341,6 +356,8 @@ local function build(patch, instanceMap, changeListHeaders)
 	return tree
 end
 
+-- Updates the metadata of a tree with the unapplied patch and currently existing instances
+-- Builds a new tree from the data if one does not exist
 local function updateMetadata(tree, patch, instanceMap, unappliedPatch)
 	if not tree then
 		tree = build(patch, instanceMap)
