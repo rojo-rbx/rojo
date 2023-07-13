@@ -1,3 +1,8 @@
+--[[
+	Methods to turn PatchSets into trees matching the DataModel containing
+	the changes and metadata for use in the PatchVisualizer component.
+]]
+
 local HttpService = game:GetService("HttpService")
 
 local Rojo = script:FindFirstAncestor("Rojo")
