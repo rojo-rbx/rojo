@@ -92,18 +92,19 @@ function Tree:forEach(callback, node, depth)
 end
 
 -- Finds a node by id, depth first
--- target is the node to search within, defaults to root
-function Tree:getNode(id, target)
+-- searchNode is the node to start the search within, defaults to root
+function Tree:getNode(id, searchNode)
     if self.idToNode[id] then
         return self.idToNode[id]
     end
 
-    for nodeId, node in target or self.ROOT.children do
+	local searchChildren = (searchNode or self.ROOT).children
+    for nodeId, node in searchChildren do
         if nodeId == id then
             self.idToNode[id] = node
             return node
         end
-        local descendant = self:getNode(id, node.children)
+        local descendant = self:getNode(id, node)
         if descendant then
             return descendant
         end
