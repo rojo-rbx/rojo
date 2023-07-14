@@ -1,6 +1,8 @@
 # memofs Changelog
 
 ## Unreleased Changes
+* Updated `notify` to 6.0.1.
+* Added `notify-debouncer-mini` at 0.2.0 as a dependency.
 
 ## 0.2.0 (2021-08-23)
 * Updated to `crossbeam-channel` 0.5.1.
