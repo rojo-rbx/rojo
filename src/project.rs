@@ -10,7 +10,7 @@ use thiserror::Error;
 
 use crate::{glob::Glob, resolution::UnresolvedValue};
 
-static PROJECT_FILENAME: &str = "default.project.json";
+pub(crate) static PROJECT_FILENAME: &str = "default.project.json";
 
 /// Error type returned by any function that handles projects.
 #[derive(Debug, Error)]

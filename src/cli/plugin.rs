@@ -46,7 +46,7 @@ impl PluginSubcommand {
     }
 }
 
-fn install_plugin() -> anyhow::Result<()> {
+pub(in crate::cli) fn install_plugin() -> anyhow::Result<()> {
     let plugin_snapshot: VfsSnapshot = bincode::deserialize(PLUGIN_BINCODE)
         .expect("Rojo's plugin was not properly packed into Rojo's binary");
 

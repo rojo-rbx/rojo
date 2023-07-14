@@ -13,8 +13,8 @@ use crate::{serve_session::ServeSession, web::LiveServer};
 
 use super::{resolve_path, GlobalOptions};
 
-const DEFAULT_BIND_ADDRESS: Ipv4Addr = Ipv4Addr::new(127, 0, 0, 1);
-const DEFAULT_PORT: u16 = 34872;
+pub(in crate::cli) const DEFAULT_BIND_ADDRESS: Ipv4Addr = Ipv4Addr::new(127, 0, 0, 1);
+pub(in crate::cli) const DEFAULT_PORT: u16 = 34872;
 
 /// Expose a Rojo project to the Rojo Studio plugin.
 #[derive(Debug, Parser)]
@@ -60,7 +60,11 @@ impl ServeCommand {
     }
 }
 
-fn show_start_message(bind_address: IpAddr, port: u16, color: ColorChoice) -> io::Result<()> {
+pub(in crate::cli) fn show_start_message(
+    bind_address: IpAddr,
+    port: u16,
+    color: ColorChoice,
+) -> io::Result<()> {
     let mut green = ColorSpec::new();
     green.set_fg(Some(Color::Green)).set_bold(true);
 
