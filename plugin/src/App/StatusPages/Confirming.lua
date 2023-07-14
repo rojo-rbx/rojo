@@ -59,7 +59,7 @@ function ConfirmingPage:render()
 				transparency = self.props.transparency,
 				layoutOrder = 3,
 
-				columnVisibility = {true, true, true},
+				changeListHeaders = { "Property", "Current", "Incoming" },
 				patch = self.props.confirmData.patch,
 				instanceMap = self.props.confirmData.instanceMap,
 

@@ -34,9 +34,11 @@ local Assets = {
 		Checkbox = {
 			Active = "rbxassetid://6016251644",
 			Inactive = "rbxassetid://6016251963",
+			Locked = "rbxassetid://14011257320",
 		},
 		Dropdown = {
 			Arrow = "rbxassetid://10131770538",
+			Locked = "rbxassetid://14011257320",
 		},
 		Spinner = {
 			Foreground = "rbxassetid://3222731032",

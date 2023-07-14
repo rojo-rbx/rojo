@@ -83,10 +83,7 @@ function ChangesDrawer:render()
 				transparency = self.props.transparency,
 				layoutOrder = 3,
 
-				columnVisibility = { true, false, true },
-				patch = self.props.patch,
-				unappliedPatch = self.props.unappliedPatch,
-				instanceMap = self.serveSession.__instanceMap,
+				patchTree = self.props.patchTree,
 			}),
 		})
 	end)
@@ -365,8 +362,7 @@ function ConnectedPage:render()
 			ChangesDrawer = e(ChangesDrawer, {
 				rendered = self.state.renderChanges,
 				transparency = self.props.transparency,
-				patch = self.props.patchData.patch,
-				unappliedPatch = self.props.patchData.unapplied,
+				patchTree = self.props.patchTree,
 				serveSession = self.props.serveSession,
 				height = self.changeDrawerHeight,
 				layoutOrder = 5,

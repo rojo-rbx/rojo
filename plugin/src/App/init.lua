@@ -19,6 +19,7 @@ local Dictionary = require(Plugin.Dictionary)
 local ServeSession = require(Plugin.ServeSession)
 local ApiContext = require(Plugin.ApiContext)
 local PatchSet = require(Plugin.PatchSet)
+local PatchTree = require(Plugin.PatchTree)
 local preloadAssets = require(Plugin.preloadAssets)
 local soundPlayer = require(Plugin.soundPlayer)
 local ignorePlaceIds = require(Plugin.ignorePlaceIds)
@@ -358,6 +359,21 @@ function App:startSession()
 		twoWaySync = sessionOptions.twoWaySync,
 	})
 
+	self.cleanupPrecommit = serveSession.__reconciler:hookPrecommit(function(patch, instanceMap)
+		-- Build new tree for patch
+		self:setState({
+			patchTree = PatchTree.build(patch, instanceMap, { "Property", "Old", "New" }),
+		})
+	end)
+	self.cleanupPostcommit = serveSession.__reconciler:hookPostcommit(function(patch, instanceMap, unappliedPatch)
+		-- Update tree with unapplied metadata
+		self:setState(function(prevState)
+			return {
+				patchTree = PatchTree.updateMetadata(prevState.patchTree, patch, instanceMap, unappliedPatch),
+			}
+		end)
+	end)
+
 	serveSession:onPatchApplied(function(patch, unapplied)
 		local now = os.time()
 		local old = self.state.patchData
@@ -503,6 +519,13 @@ function App:endSession()
 		appStatus = AppStatus.NotConnected,
 	})
 
+	if self.cleanupPrecommit ~= nil then
+		self.cleanupPrecommit()
+	end
+	if self.cleanupPostcommit ~= nil then
+		self.cleanupPostcommit()
+	end
+
 	Log.trace("Session terminated by user")
 end
 
@@ -533,8 +556,8 @@ function App:render()
 					initDockState = Enum.InitialDockState.Right,
 					initEnabled = false,
 					overridePreviousState = false,
-					floatingSize = Vector2.new(300, 200),
-					minimumSize = Vector2.new(300, 120),
+					floatingSize = Vector2.new(320, 210),
+					minimumSize = Vector2.new(300, 210),
 
 					zIndexBehavior = Enum.ZIndexBehavior.Sibling,
 
@@ -590,6 +613,7 @@ function App:render()
 					Connected = createPageElement(AppStatus.Connected, {
 						projectName = self.state.projectName,
 						address = self.state.address,
+						patchTree = self.state.patchTree,
 						patchData = self.state.patchData,
 						serveSession = self.serveSession,
 
@@ -606,6 +630,8 @@ function App:render()
 					}),
 
 					Settings = createPageElement(AppStatus.Settings, {
+						syncActive = self.serveSession ~= nil and self.serveSession:getStatus() == ServeSession.Status.Connected,
+
 						onBack = function()
 							self:setState({
 								appStatus = self.backPage or AppStatus.NotConnected,

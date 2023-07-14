@@ -10,6 +10,8 @@ local ScrollingFrame = require(Plugin.App.Components.ScrollingFrame)
 local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
 local DisplayValue = require(script.Parent.DisplayValue)
 
+local EMPTY_TABLE = {}
+
 local e = Roact.createElement
 
 local ChangeList = Roact.Component:extend("ChangeList")
@@ -22,7 +24,6 @@ function ChangeList:render()
 	return Theme.with(function(theme)
 		local props = self.props
 		local changes = props.changes
-		local columnVisibility = props.columnVisibility
 
 		-- Color alternating rows for readability
 		local rowTransparency = props.transparency:map(function(t)
@@ -49,7 +50,6 @@ function ChangeList:render()
 				VerticalAlignment = Enum.VerticalAlignment.Center,
 			}),
 			A = e("TextLabel", {
-				Visible = columnVisibility[1],
 				Text = tostring(changes[1][1]),
 				BackgroundTransparency = 1,
 				Font = Enum.Font.GothamBold,
@@ -62,7 +62,6 @@ function ChangeList:render()
 				LayoutOrder = 1,
 			}),
 			B = e("TextLabel", {
-				Visible = columnVisibility[2],
 				Text = tostring(changes[1][2]),
 				BackgroundTransparency = 1,
 				Font = Enum.Font.GothamBold,
@@ -75,7 +74,6 @@ function ChangeList:render()
 				LayoutOrder = 2,
 			}),
 			C = e("TextLabel", {
-				Visible = columnVisibility[3],
 				Text = tostring(changes[1][3]),
 				BackgroundTransparency = 1,
 				Font = Enum.Font.GothamBold,
@@ -94,7 +92,7 @@ function ChangeList:render()
 				continue -- Skip headers, already handled above
 			end
 
-			local metadata = values[4]
+			local metadata = values[4] or EMPTY_TABLE
 			local isWarning = metadata.isWarning
 
 			-- Special case for .Source updates
@@ -196,7 +194,6 @@ function ChangeList:render()
 					VerticalAlignment = Enum.VerticalAlignment.Center,
 				}),
 				A = e("TextLabel", {
-					Visible = columnVisibility[1],
 					Text = (if isWarning then "⚠ " else "") .. tostring(values[1]),
 					BackgroundTransparency = 1,
 					Font = Enum.Font.GothamMedium,
@@ -211,7 +208,6 @@ function ChangeList:render()
 				B = e(
 					"Frame",
 					{
-						Visible = columnVisibility[2],
 						BackgroundTransparency = 1,
 						Size = UDim2.new(0.35, 0, 1, 0),
 						LayoutOrder = 2,
@@ -225,7 +221,6 @@ function ChangeList:render()
 				C = e(
 					"Frame",
 					{
-						Visible = columnVisibility[3],
 						BackgroundTransparency = 1,
 						Size = UDim2.new(0.35, 0, 1, 0),
 						LayoutOrder = 3,
