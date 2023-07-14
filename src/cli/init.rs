@@ -21,6 +21,11 @@ static PLACE_PROJECT: &str =
 static PLACE_README: &str = include_str!("../../assets/default-place-project/README.md");
 static PLACE_GIT_IGNORE: &str = include_str!("../../assets/default-place-project/gitignore.txt");
 
+static PLUGIN_PROJECT: &str =
+    include_str!("../../assets/default-plugin-project/default.project.json");
+static PLUGIN_README: &str = include_str!("../../assets/default-plugin-project/README.md");
+static PLUGIN_GIT_IGNORE: &str = include_str!("../../assets/default-plugin-project/gitignore.txt");
+
 /// Initializes a new Rojo project.
 #[derive(Debug, Parser)]
 pub struct InitCommand {
@@ -51,6 +56,7 @@ impl InitCommand {
         match self.kind {
             InitKind::Place => init_place(&base_path, project_params)?,
             InitKind::Model => init_model(&base_path, project_params)?,
+            InitKind::Plugin => init_plugin(&base_path, project_params)?,
         }
 
         println!("Created project successfully.");
@@ -67,6 +73,9 @@ pub enum InitKind {
 
     /// An empty model, suitable for a library or plugin.
     Model,
+
+    /// An empty plugin.
+    Plugin,
 }
 
 impl FromStr for InitKind {
@@ -76,8 +85,9 @@ impl FromStr for InitKind {
         match source {
             "place" => Ok(InitKind::Place),
             "model" => Ok(InitKind::Model),
+            "plugin" => Ok(InitKind::Plugin),
             _ => Err(format_err!(
-                "Invalid init kind '{}'. Valid kinds are: place, model",
+                "Invalid init kind '{}'. Valid kinds are: place, model, plugin",
                 source
             )),
         }
@@ -142,6 +152,29 @@ fn init_model(base_path: &Path, project_params: ProjectParams) -> anyhow::Result
     write_if_not_exists(&src.join("init.lua"), &init)?;
 
     let git_ignore = project_params.render_template(MODEL_GIT_IGNORE);
+    try_git_init(base_path, &git_ignore)?;
+
+    Ok(())
+}
+
+fn init_plugin(base_path: &Path, project_params: ProjectParams) -> anyhow::Result<()> {
+    println!("Creating new plugin project '{}'", project_params.name);
+
+    let project_file = project_params.render_template(PLUGIN_PROJECT);
+    try_create_project(base_path, &project_file)?;
+
+    let readme = project_params.render_template(PLUGIN_README);
+    write_if_not_exists(&base_path.join("README.md"), &readme)?;
+
+    let src = base_path.join("src");
+    fs::create_dir_all(&src)?;
+
+    write_if_not_exists(
+        &src.join("init.server.lua"),
+        "print(\"Hello world, from plugin!\")\n",
+    )?;
+
+    let git_ignore = project_params.render_template(PLUGIN_GIT_IGNORE);
     try_git_init(base_path, &git_ignore)?;
 
     Ok(())
