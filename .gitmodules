@@ -1,0 +1,15 @@
+[submodule "plugin/Packages/Roact"]
+	path = plugin/Packages/Roact
+	url = https://github.com/roblox/roact.git
+[submodule "plugin/Packages/Flipper"]
+	path = plugin/Packages/Flipper
+	url = https://github.com/reselim/flipper.git
+[submodule "plugin/Packages/Promise"]
+	path = plugin/Packages/Promise
+	url = https://github.com/evaera/roblox-lua-promise.git
+[submodule "plugin/Packages/t"]
+	path = plugin/Packages/t
+	url = https://github.com/osyrisrblx/t.git
+[submodule "plugin/Packages/TestEZ"]
+	path = plugin/Packages/TestEZ
+	url = https://github.com/roblox/testez.git

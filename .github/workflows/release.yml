@@ -28,6 +28,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: true
 
       - name: Setup Aftman
         uses: ok-nick/setup-aftman@v0.1.0
@@ -35,12 +37,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           trust-check: false
           version: 'v0.2.6'
-
-      - name: Install packages
-        run: |
-          cd plugin
-          wally install
-          cd ..
 
       - name: Build Plugin
         run: rojo build plugin --output Rojo.rbxm
@@ -94,6 +90,8 @@ jobs:
       BIN: rojo
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: true
 
       - name: Get Version from Tag
         shell: bash
@@ -117,15 +115,8 @@ jobs:
           trust-check: false
           version: 'v0.2.6'
 
-      - name: Install packages
-        run: |
-          cd plugin
-          wally install
-          cd ..
-        shell: bash
-
       - name: Build Release
-        run: cargo build --release --locked --verbose
+        run: cargo build --release --locked --verbose --target ${{ matrix.target }}
         env:
           # Build into a known directory so we can find our build artifact more
           # easily.
@@ -141,11 +132,11 @@ jobs:
           mkdir staging
 
           if [ "${{ matrix.host }}" = "windows" ]; then
-            cp "output/release/$BIN.exe" staging/
+            cp "output/${{ matrix.target }}/release/$BIN.exe" staging/
             cd staging
             7z a ../release.zip *
           else
-            cp "output/release/$BIN" staging/
+            cp "output/${{ matrix.target }}/release/$BIN" staging/
             cd staging
             zip ../release.zip *
           fi

@@ -26,10 +26,8 @@ pub fn compute_patch_set(snapshot: Option<InstanceSnapshot>, tree: &RojoTree, id
         // for all of the IDs that we know about so far.
         rewrite_refs_in_updates(&context, &mut patch_set.updated_instances);
         rewrite_refs_in_additions(&context, &mut patch_set.added_instances);
-    } else {
-        if id != tree.get_root_id() {
-            patch_set.removed_instances.push(id);
-        }
+    } else if id != tree.get_root_id() {
+        patch_set.removed_instances.push(id);
     }
 
     patch_set
@@ -79,8 +77,10 @@ fn compute_patch_set_internal(
     id: Ref,
     patch_set: &mut PatchSet,
 ) {
-    if let Some(snapshot_id) = snapshot.snapshot_id {
-        context.snapshot_id_to_instance_id.insert(snapshot_id, id);
+    if snapshot.snapshot_id.is_some() {
+        context
+            .snapshot_id_to_instance_id
+            .insert(snapshot.snapshot_id, id);
     }
 
     let instance = tree
@@ -246,7 +246,7 @@ mod test {
         // addition of a prop named Self, which is a self-referential Ref.
         let snapshot_id = Ref::new();
         let snapshot = InstanceSnapshot {
-            snapshot_id: Some(snapshot_id),
+            snapshot_id: snapshot_id,
             properties: hashmap! {
                 "Self".to_owned() => Variant::Ref(snapshot_id),
             },
@@ -288,13 +288,13 @@ mod test {
         // This patch describes the existing instance with a new child added.
         let snapshot_id = Ref::new();
         let snapshot = InstanceSnapshot {
-            snapshot_id: Some(snapshot_id),
+            snapshot_id: snapshot_id,
             children: vec![InstanceSnapshot {
                 properties: hashmap! {
                     "Self".to_owned() => Variant::Ref(snapshot_id),
                 },
 
-                snapshot_id: None,
+                snapshot_id: Ref::none(),
                 metadata: Default::default(),
                 name: Cow::Borrowed("child"),
                 class_name: Cow::Borrowed("child"),
@@ -313,7 +313,7 @@ mod test {
             added_instances: vec![PatchAdd {
                 parent_id: root_id,
                 instance: InstanceSnapshot {
-                    snapshot_id: None,
+                    snapshot_id: Ref::none(),
                     metadata: Default::default(),
                     properties: hashmap! {
                         "Self".to_owned() => Variant::Ref(root_id),

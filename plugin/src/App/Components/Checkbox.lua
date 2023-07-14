@@ -10,6 +10,7 @@ local Theme = require(Plugin.App.Theme)
 local bindingUtil = require(Plugin.App.bindingUtil)
 
 local SlicedImage = require(script.Parent.SlicedImage)
+local Tooltip = require(script.Parent.Tooltip)
 
 local e = Roact.createElement
 
@@ -50,8 +51,17 @@ function Checkbox:render()
 			ZIndex = self.props.zIndex,
 			BackgroundTransparency = 1,
 
-			[Roact.Event.Activated] = self.props.onClick,
+			[Roact.Event.Activated] = function()
+				if self.props.locked then return end
+				self.props.onClick()
+			end,
 		}, {
+			StateTip = e(Tooltip.Trigger, {
+				text =
+					(if self.props.locked then "[LOCKED] " else "")
+					.. (if self.props.active then "Enabled" else "Disabled"),
+			}),
+
 			Active = e(SlicedImage, {
 				slice = Assets.Slices.RoundedBackground,
 				color = theme.Active.BackgroundColor,
@@ -60,7 +70,7 @@ function Checkbox:render()
 				zIndex = 2,
 			}, {
 				Icon = e("ImageLabel", {
-					Image = Assets.Images.Checkbox.Active,
+					Image = if self.props.locked then Assets.Images.Checkbox.Locked else Assets.Images.Checkbox.Active,
 					ImageColor3 = theme.Active.IconColor,
 					ImageTransparency = activeTransparency,
 
@@ -79,7 +89,7 @@ function Checkbox:render()
 				size = UDim2.new(1, 0, 1, 0),
 			}, {
 				Icon = e("ImageLabel", {
-					Image = Assets.Images.Checkbox.Inactive,
+					Image = if self.props.locked then Assets.Images.Checkbox.Locked else Assets.Images.Checkbox.Inactive,
 					ImageColor3 = theme.Inactive.IconColor,
 					ImageTransparency = self.props.transparency,
 

@@ -13,9 +13,11 @@ local defaultSettings = {
 	openScriptsExternally = false,
 	twoWaySync = false,
 	showNotifications = true,
+	syncReminder = true,
 	playSounds = true,
 	typecheckingEnabled = false,
 	logLevel = "Info",
+	priorEndpoints = {},
 }
 
 local Settings = {}

@@ -93,6 +93,7 @@ function ApiContext.new(baseUrl)
 		__sessionId = nil,
 		__messageCursor = -1,
 		__connected = true,
+		__activeRequests = {},
 	}
 
 	return setmetatable(self, ApiContext)
@@ -113,6 +114,11 @@ end
 
 function ApiContext:disconnect()
 	self.__connected = false
+	for request in self.__activeRequests do
+		Log.trace("Cancelling request {}", request)
+		request:cancel()
+	end
+	self.__activeRequests = {}
 end
 
 function ApiContext:setMessageCursor(index)
@@ -204,7 +210,7 @@ function ApiContext:retrieveMessages()
 	local url = ("%s/api/subscribe/%s"):format(self.__baseUrl, self.__messageCursor)
 
 	local function sendRequest()
-		return Http.get(url)
+		local request = Http.get(url)
 			:catch(function(err)
 				if err.type == Http.Error.Kind.Timeout then
 					if self.__connected then
@@ -216,6 +222,15 @@ function ApiContext:retrieveMessages()
 
 				return Promise.reject(err)
 			end)
+
+		Log.trace("Tracking request {}", request)
+		self.__activeRequests[request] = true
+
+		return request:finally(function(...)
+			Log.trace("Cleaning up request {}", request)
+			self.__activeRequests[request] = nil
+			return ...
+		end)
 	end
 
 	return sendRequest()

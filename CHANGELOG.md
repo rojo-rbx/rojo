@@ -1,9 +1,73 @@
 # Rojo Changelog
 
 ## Unreleased Changes
-* Added `--watch` flag to `rojo sourcemap` ([#602])
+* Significantly improved performance of `rojo sourcemap`. ([#668])
+* Fixed the diff visualizer of connected sessions. ([#674])
+* Fixed disconnected session activity. ([#675])
+* Skip confirming patches that contain only a datamodel name change. ([#688])
+* Added sync reminder notification. ([#689])
+* Added protection against syncing a model to a place. ([#691])
+* Select Instances from diff tree view ([#709])
+* Fix Rojo breaking when users undo/redo in Studio ([#708])
+* Improved sync info text on Connected page. ([#692])
+* Fix patch visualizer breaking when instances are removed during sync ([#713])
+* Patch visualizer now indicates what changes failed to apply. ([#717])
+* Add buttons for navigation on the Connected page ([#722])
+* Improve tooltip behavior ([#723])
+* Better settings controls ([#725])
+* Rework patch visualizer with many fixes and improvements ([#726])
 
+[#668]: https://github.com/rojo-rbx/rojo/pull/668
+[#674]: https://github.com/rojo-rbx/rojo/pull/674
+[#675]: https://github.com/rojo-rbx/rojo/pull/675
+[#688]: https://github.com/rojo-rbx/rojo/pull/688
+[#689]: https://github.com/rojo-rbx/rojo/pull/689
+[#691]: https://github.com/rojo-rbx/rojo/pull/691
+[#709]: https://github.com/rojo-rbx/rojo/pull/709
+[#708]: https://github.com/rojo-rbx/rojo/pull/708
+[#692]: https://github.com/rojo-rbx/rojo/pull/692
+[#713]: https://github.com/rojo-rbx/rojo/pull/713
+[#717]: https://github.com/rojo-rbx/rojo/pull/717
+[#722]: https://github.com/rojo-rbx/rojo/pull/722
+[#723]: https://github.com/rojo-rbx/rojo/pull/723
+[#725]: https://github.com/rojo-rbx/rojo/pull/725
+[#726]: https://github.com/rojo-rbx/rojo/pull/726
+
+## [7.3.0] - April 22, 2023
+* Added `$attributes` to project format. ([#574])
+* Added `--watch` flag to `rojo sourcemap`. ([#602])
+* Added support for `init.csv` files. ([#594])
+* Added real-time sync status to the Studio plugin. ([#569])
+* Added support for copying error messages to the clipboard. ([#614])
+* Added sync locking for Team Create. ([#590])
+* Added support for specifying HTTP or HTTPS protocol in plugin. ([#642])
+* Added tooltips to buttons in the Studio plugin. ([#637])
+* Added visual diffs when connecting from the Studio plugin. ([#603])
+* Host and port are now saved in the Studio plugin. ([#613])
+* Improved padding on notifications in Studio plugin. ([#589])
+* Renamed `Common` to `Shared` in the default Rojo project. ([#611])
+* Reduced the minimum size of the Studio plugin widget. ([#606])
+* Fixed current directory in `rojo fmt-project`. ([#581])
+* Fixed errors after a session has already ended. ([#587])
+* Fixed an uncommon security permission error ([#619])
+
+[#569]: https://github.com/rojo-rbx/rojo/pull/569
+[#574]: https://github.com/rojo-rbx/rojo/pull/574
+[#581]: https://github.com/rojo-rbx/rojo/pull/581
+[#587]: https://github.com/rojo-rbx/rojo/pull/587
+[#589]: https://github.com/rojo-rbx/rojo/pull/589
+[#590]: https://github.com/rojo-rbx/rojo/pull/590
+[#594]: https://github.com/rojo-rbx/rojo/pull/594
 [#602]: https://github.com/rojo-rbx/rojo/pull/602
+[#603]: https://github.com/rojo-rbx/rojo/pull/603
+[#606]: https://github.com/rojo-rbx/rojo/pull/606
+[#611]: https://github.com/rojo-rbx/rojo/pull/611
+[#613]: https://github.com/rojo-rbx/rojo/pull/613
+[#614]: https://github.com/rojo-rbx/rojo/pull/614
+[#619]: https://github.com/rojo-rbx/rojo/pull/619
+[#637]: https://github.com/rojo-rbx/rojo/pull/637
+[#642]: https://github.com/rojo-rbx/rojo/pull/642
+[7.3.0]: https://github.com/rojo-rbx/rojo/releases/tag/v7.3.0
 
 ## [7.2.1] - July 8, 2022
 * Fixed notification sound by changing it to a generic sound. ([#566])

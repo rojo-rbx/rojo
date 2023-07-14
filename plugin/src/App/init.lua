@@ -1,5 +1,7 @@
+local ChangeHistoryService = game:GetService("ChangeHistoryService")
 local Players = game:GetService("Players")
 local ServerStorage = game:GetService("ServerStorage")
+local RunService = game:GetService("RunService")
 
 local Rojo = script:FindFirstAncestor("Rojo")
 local Plugin = Rojo.Plugin
@@ -16,12 +18,16 @@ local strict = require(Plugin.strict)
 local Dictionary = require(Plugin.Dictionary)
 local ServeSession = require(Plugin.ServeSession)
 local ApiContext = require(Plugin.ApiContext)
+local PatchSet = require(Plugin.PatchSet)
+local PatchTree = require(Plugin.PatchTree)
 local preloadAssets = require(Plugin.preloadAssets)
 local soundPlayer = require(Plugin.soundPlayer)
+local ignorePlaceIds = require(Plugin.ignorePlaceIds)
 local Theme = require(script.Theme)
 
 local Page = require(script.Page)
 local Notifications = require(script.Notifications)
+local Tooltip = require(script.Components.Tooltip)
 local StudioPluginAction = require(script.Components.Studio.StudioPluginAction)
 local StudioToolbar = require(script.Components.Studio.StudioToolbar)
 local StudioToggleButton = require(script.Components.Studio.StudioToggleButton)
@@ -33,6 +39,7 @@ local AppStatus = strict("AppStatus", {
 	NotConnected = "NotConnected",
 	Settings = "Settings",
 	Connecting = "Connecting",
+	Confirming = "Confirming",
 	Connected = "Connected",
 	Error = "Error",
 })
@@ -44,45 +51,225 @@ local App = Roact.Component:extend("App")
 function App:init()
 	preloadAssets()
 
-	self.host, self.setHost = Roact.createBinding("")
-	self.port, self.setPort = Roact.createBinding("")
-	self.patchInfo, self.setPatchInfo = Roact.createBinding({
-		changes = 0,
-		timestamp = os.time(),
-	})
+	local priorHost, priorPort = self:getPriorEndpoint()
+	self.host, self.setHost = Roact.createBinding(priorHost or "")
+	self.port, self.setPort = Roact.createBinding(priorPort or "")
+
+	self.confirmationBindable = Instance.new("BindableEvent")
+	self.confirmationEvent = self.confirmationBindable.Event
+	self.notifId = 0
+
+	self.waypointConnection = ChangeHistoryService.OnUndo:Connect(function(action: string)
+		if not string.find(action, "^Rojo: Patch") then
+			return
+		end
+
+		local undoConnection, redoConnection = nil, nil
+		local function cleanup()
+			undoConnection:Disconnect()
+			redoConnection:Disconnect()
+		end
+
+		Log.warn(
+			string.format(
+				"You've undone '%s'.\nIf this was not intended, please Redo in the topbar or with Ctrl/⌘+Y.",
+				action
+			)
+		)
+		local dismissNotif = self:addNotification(
+			string.format("You've undone '%s'.\nIf this was not intended, please restore.", action),
+			10,
+			{
+				Restore = {
+					text = "Restore",
+					style = "Solid",
+					layoutOrder = 1,
+					onClick = function(notification)
+						cleanup()
+						notification:dismiss()
+						ChangeHistoryService:Redo()
+					end,
+				},
+				Dismiss = {
+					text = "Dismiss",
+					style = "Bordered",
+					layoutOrder = 2,
+					onClick = function(notification)
+						cleanup()
+						notification:dismiss()
+					end,
+				},
+			}
+		)
+
+		undoConnection = ChangeHistoryService.OnUndo:Once(function()
+			-- Our notif is now out of date- redoing will not restore the patch
+			-- since we've undone even further. Dismiss the notif.
+			cleanup()
+			dismissNotif()
+		end)
+		redoConnection = ChangeHistoryService.OnRedo:Once(function(redoneAction: string)
+			if redoneAction == action then
+				-- The user has restored the patch, so we can dismiss the notif
+				cleanup()
+				dismissNotif()
+			end
+		end)
+	end)
 
 	self:setState({
 		appStatus = AppStatus.NotConnected,
 		guiEnabled = false,
+		confirmData = {},
+		patchData = {
+			patch = PatchSet.newEmpty(),
+			unapplied = PatchSet.newEmpty(),
+			timestamp = os.time(),
+		},
 		notifications = {},
 		toolbarIcon = Assets.Images.PluginButton,
 	})
+
+	if
+		RunService:IsEdit()
+		and self.serveSession == nil
+		and Settings:get("syncReminder")
+		and self:getLastSyncTimestamp()
+	then
+		self:addNotification("You've previously synced this place. Would you like to reconnect?", 300, {
+			Connect = {
+				text = "Connect",
+				style = "Solid",
+				layoutOrder = 1,
+				onClick = function(notification)
+					notification:dismiss()
+					self:startSession()
+				end,
+			},
+			Dismiss = {
+				text = "Dismiss",
+				style = "Bordered",
+				layoutOrder = 2,
+				onClick = function(notification)
+					notification:dismiss()
+				end,
+			},
+		})
+	end
 end
 
-function App:addNotification(text: string, timeout: number?)
+function App:willUnmount()
+	self.waypointConnection:Disconnect()
+	self.confirmationBindable:Destroy()
+end
+
+function App:addNotification(
+	text: string,
+	timeout: number?,
+	actions: { [string]: { text: string, style: string, layoutOrder: number, onClick: (any) -> () } }?
+)
 	if not Settings:get("showNotifications") then
 		return
 	end
 
+	self.notifId += 1
+	local id = self.notifId
+
 	local notifications = table.clone(self.state.notifications)
-	table.insert(notifications, {
+	notifications[id] = {
 		text = text,
 		timestamp = DateTime.now().UnixTimestampMillis,
 		timeout = timeout or 3,
+		actions = actions,
+	}
+
+	self:setState({
+		notifications = notifications,
 	})
+
+	return function()
+		self:closeNotification(id)
+	end
+end
+
+function App:closeNotification(id: number)
+	if not self.state.notifications[id] then
+		return
+	end
+
+	local notifications = table.clone(self.state.notifications)
+	notifications[id] = nil
 
 	self:setState({
 		notifications = notifications,
 	})
 end
 
-function App:closeNotification(index: number)
-	local notifications = table.clone(self.state.notifications)
-	table.remove(notifications, index)
+function App:getPriorEndpoint()
+	local priorEndpoints = Settings:get("priorEndpoints")
+	if not priorEndpoints then
+		return
+	end
 
-	self:setState({
-		notifications = notifications,
-	})
+	local id = tostring(game.PlaceId)
+	if ignorePlaceIds[id] then
+		return
+	end
+
+	local place = priorEndpoints[id]
+	if not place then
+		return
+	end
+
+	return place.host, place.port
+end
+
+function App:getLastSyncTimestamp()
+	local priorEndpoints = Settings:get("priorEndpoints")
+	if not priorEndpoints then
+		return
+	end
+
+	local id = tostring(game.PlaceId)
+	if ignorePlaceIds[id] then
+		return
+	end
+
+	local place = priorEndpoints[id]
+	if not place then
+		return
+	end
+
+	return place.timestamp
+end
+
+function App:setPriorEndpoint(host: string, port: string)
+	local priorEndpoints = Settings:get("priorEndpoints")
+	if not priorEndpoints then
+		priorEndpoints = {}
+	end
+
+	-- Clear any stale saves to avoid disc bloat
+	for placeId, endpoint in priorEndpoints do
+		if os.time() - endpoint.timestamp > 12_960_000 then
+			priorEndpoints[placeId] = nil
+			Log.trace("Cleared stale saved endpoint for {}", placeId)
+		end
+	end
+
+	local id = tostring(game.PlaceId)
+	if ignorePlaceIds[id] then
+		return
+	end
+
+	priorEndpoints[id] = {
+		host = if host ~= Config.defaultHost then host else nil,
+		port = if port ~= Config.defaultPort then port else nil,
+		timestamp = os.time(),
+	}
+	Log.trace("Saved last used endpoint for {}", game.PlaceId)
+
+	Settings:set("priorEndpoints", priorEndpoints)
 end
 
 function App:getHostAndPort()
@@ -161,7 +348,9 @@ function App:startSession()
 		twoWaySync = Settings:get("twoWaySync"),
 	}
 
-	local baseUrl = ("http://%s:%s"):format(host, port)
+	local baseUrl = if string.find(host, "^https?://")
+		then string.format("%s:%s", host, port)
+		else string.format("http://%s:%s", host, port)
 	local apiContext = ApiContext.new(baseUrl)
 
 	local serveSession = ServeSession.new({
@@ -170,36 +359,57 @@ function App:startSession()
 		twoWaySync = sessionOptions.twoWaySync,
 	})
 
+	self.cleanupPrecommit = serveSession.__reconciler:hookPrecommit(function(patch, instanceMap)
+		-- Build new tree for patch
+		self:setState({
+			patchTree = PatchTree.build(patch, instanceMap, { "Property", "Old", "New" }),
+		})
+	end)
+	self.cleanupPostcommit = serveSession.__reconciler:hookPostcommit(function(patch, instanceMap, unappliedPatch)
+		-- Update tree with unapplied metadata
+		self:setState(function(prevState)
+			return {
+				patchTree = PatchTree.updateMetadata(prevState.patchTree, patch, instanceMap, unappliedPatch),
+			}
+		end)
+	end)
+
 	serveSession:onPatchApplied(function(patch, unapplied)
 		local now = os.time()
-		local changes = 0
+		local old = self.state.patchData
 
-		for _, set in patch do
-			for _ in set do
-				changes += 1
-			end
+		if PatchSet.isEmpty(patch) then
+			-- Ignore empty patch, but update timestamp
+			self:setState({
+				patchData = {
+					patch = old.patch,
+					unapplied = old.unapplied,
+					timestamp = now,
+				},
+			})
+			return
 		end
-		for _, set in unapplied do
-			for _ in set do
-				changes -= 1
-			end
-		end
 
-		if changes == 0 then return end
-
-		local old = self.patchInfo:getValue()
 		if now - old.timestamp < 2 then
-			changes += old.changes
+			-- Patches that apply in the same second are
+			-- considered to be part of the same change for human clarity
+			patch = PatchSet.assign(PatchSet.newEmpty(), old.patch, patch)
+			unapplied = PatchSet.assign(PatchSet.newEmpty(), old.unapplied, unapplied)
 		end
 
-		self.setPatchInfo({
-			changes = changes,
-			timestamp = now,
+		self:setState({
+			patchData = {
+				patch = patch,
+				unapplied = unapplied,
+				timestamp = now,
+			},
 		})
 	end)
 
 	serveSession:onStatusChanged(function(status, details)
 		if status == ServeSession.Status.Connecting then
+			self:setPriorEndpoint(host, port)
+
 			self:setState({
 				appStatus = AppStatus.Connecting,
 				toolbarIcon = Assets.Images.PluginButton,
@@ -217,6 +427,13 @@ function App:startSession()
 		elseif status == ServeSession.Status.Disconnected then
 			self.serveSession = nil
 			self:releaseSyncLock()
+			self:setState({
+				patchData = {
+					patch = PatchSet.newEmpty(),
+					unapplied = PatchSet.newEmpty(),
+					timestamp = os.time(),
+				},
+			})
 
 			-- Details being present indicates that this
 			-- disconnection was from an error.
@@ -239,19 +456,54 @@ function App:startSession()
 		end
 	end)
 
+	serveSession:setConfirmCallback(function(instanceMap, patch, serverInfo)
+		if PatchSet.isEmpty(patch) then
+			Log.trace("Accepting patch without confirmation because it is empty")
+			return "Accept"
+		end
+
+		-- The datamodel name gets overwritten by Studio, making confirmation of it intrusive
+		-- and unnecessary. This special case allows it to be accepted without confirmation.
+		if
+			PatchSet.hasAdditions(patch) == false
+			and PatchSet.hasRemoves(patch) == false
+			and PatchSet.containsOnlyInstance(patch, instanceMap, game)
+		then
+			local datamodelUpdates = PatchSet.getUpdateForInstance(patch, instanceMap, game)
+			if
+				datamodelUpdates ~= nil
+				and next(datamodelUpdates.changedProperties) == nil
+				and datamodelUpdates.changedClassName == nil
+			then
+				Log.trace("Accepting patch without confirmation because it only contains a datamodel name change")
+				return "Accept"
+			end
+		end
+
+		self:setState({
+			appStatus = AppStatus.Confirming,
+			confirmData = {
+				instanceMap = instanceMap,
+				patch = patch,
+				serverInfo = serverInfo,
+			},
+			toolbarIcon = Assets.Images.PluginButton,
+		})
+
+		self:addNotification(
+			string.format(
+				"Please accept%sor abort the initializing sync session.",
+				Settings:get("twoWaySync") and ", reject, " or " "
+			),
+			7
+		)
+
+		return self.confirmationEvent:Wait()
+	end)
+
 	serveSession:start()
 
 	self.serveSession = serveSession
-
-	task.defer(function()
-		while self.serveSession == serveSession do
-			-- Trigger rerender to update timestamp text
-			local patchInfo = table.clone(self.patchInfo:getValue())
-			self.setPatchInfo(patchInfo)
-			local elapsed = os.time() - patchInfo.timestamp
-			task.wait(elapsed < 60 and 1 or elapsed/5)
-		end
-	end)
 end
 
 function App:endSession()
@@ -266,6 +518,13 @@ function App:endSession()
 	self:setState({
 		appStatus = AppStatus.NotConnected,
 	})
+
+	if self.cleanupPrecommit ~= nil then
+		self.cleanupPrecommit()
+	end
+	if self.cleanupPostcommit ~= nil then
+		self.cleanupPostcommit()
+	end
 
 	Log.trace("Session terminated by user")
 end
@@ -288,108 +547,134 @@ function App:render()
 		value = self.props.plugin,
 	}, {
 		e(Theme.StudioProvider, nil, {
-			gui = e(StudioPluginGui, {
-				id = pluginName,
-				title = pluginName,
-				active = self.state.guiEnabled,
+			e(Tooltip.Provider, nil, {
+				gui = e(StudioPluginGui, {
+					id = pluginName,
+					title = pluginName,
+					active = self.state.guiEnabled,
 
-				initDockState = Enum.InitialDockState.Right,
-				initEnabled = false,
-				overridePreviousState = false,
-				floatingSize = Vector2.new(300, 200),
-				minimumSize = Vector2.new(300, 120),
+					initDockState = Enum.InitialDockState.Right,
+					initEnabled = false,
+					overridePreviousState = false,
+					floatingSize = Vector2.new(320, 210),
+					minimumSize = Vector2.new(300, 210),
 
-				zIndexBehavior = Enum.ZIndexBehavior.Sibling,
+					zIndexBehavior = Enum.ZIndexBehavior.Sibling,
 
-				onInitialState = function(initialState)
-					self:setState({
-						guiEnabled = initialState,
-					})
-				end,
-
-				onClose = function()
-					self:setState({
-						guiEnabled = false,
-					})
-				end,
-			}, {
-				NotConnectedPage = createPageElement(AppStatus.NotConnected, {
-					host = self.host,
-					onHostChange = self.setHost,
-					port = self.port,
-					onPortChange = self.setPort,
-
-					onConnect = function()
-						self:startSession()
-					end,
-
-					onNavigateSettings = function()
+					onInitialState = function(initialState)
 						self:setState({
-							appStatus = AppStatus.Settings,
+							guiEnabled = initialState,
 						})
 					end,
-				}),
-
-				Connecting = createPageElement(AppStatus.Connecting),
-
-				Connected = createPageElement(AppStatus.Connected, {
-					projectName = self.state.projectName,
-					address = self.state.address,
-					patchInfo = self.patchInfo,
-
-					onDisconnect = function()
-						self:endSession()
-					end,
-				}),
-
-				Settings = createPageElement(AppStatus.Settings, {
-					onBack = function()
-						self:setState({
-							appStatus = AppStatus.NotConnected,
-						})
-					end,
-				}),
-
-				Error = createPageElement(AppStatus.Error, {
-					errorMessage = self.state.errorMessage,
 
 					onClose = function()
 						self:setState({
-							appStatus = AppStatus.NotConnected,
-							toolbarIcon = Assets.Images.PluginButton,
+							guiEnabled = false,
 						})
 					end,
+				}, {
+					Tooltips = e(Tooltip.Container, nil),
+
+					NotConnectedPage = createPageElement(AppStatus.NotConnected, {
+						host = self.host,
+						onHostChange = self.setHost,
+						port = self.port,
+						onPortChange = self.setPort,
+
+						onConnect = function()
+							self:startSession()
+						end,
+
+						onNavigateSettings = function()
+							self.backPage = AppStatus.NotConnected
+							self:setState({
+								appStatus = AppStatus.Settings,
+							})
+						end,
+					}),
+
+					ConfirmingPage = createPageElement(AppStatus.Confirming, {
+						confirmData = self.state.confirmData,
+						createPopup = not self.state.guiEnabled,
+
+						onAbort = function()
+							self.confirmationBindable:Fire("Abort")
+						end,
+						onAccept = function()
+							self.confirmationBindable:Fire("Accept")
+						end,
+						onReject = function()
+							self.confirmationBindable:Fire("Reject")
+						end,
+					}),
+
+					Connecting = createPageElement(AppStatus.Connecting),
+
+					Connected = createPageElement(AppStatus.Connected, {
+						projectName = self.state.projectName,
+						address = self.state.address,
+						patchTree = self.state.patchTree,
+						patchData = self.state.patchData,
+						serveSession = self.serveSession,
+
+						onDisconnect = function()
+							self:endSession()
+						end,
+
+						onNavigateSettings = function()
+							self.backPage = AppStatus.Connected
+							self:setState({
+								appStatus = AppStatus.Settings,
+							})
+						end,
+					}),
+
+					Settings = createPageElement(AppStatus.Settings, {
+						syncActive = self.serveSession ~= nil and self.serveSession:getStatus() == ServeSession.Status.Connected,
+
+						onBack = function()
+							self:setState({
+								appStatus = self.backPage or AppStatus.NotConnected,
+							})
+						end,
+					}),
+
+					Error = createPageElement(AppStatus.Error, {
+						errorMessage = self.state.errorMessage,
+
+						onClose = function()
+							self:setState({
+								appStatus = AppStatus.NotConnected,
+								toolbarIcon = Assets.Images.PluginButton,
+							})
+						end,
+					}),
 				}),
 
-				Background = Theme.with(function(theme)
-					return e("Frame", {
-						Size = UDim2.new(1, 0, 1, 0),
-						BackgroundColor3 = theme.BackgroundColor,
-						ZIndex = 0,
-						BorderSizePixel = 0,
-					})
-				end),
-			}),
-
-			RojoNotifications = e("ScreenGui", {}, {
-				layout = e("UIListLayout", {
-					SortOrder = Enum.SortOrder.LayoutOrder,
-					HorizontalAlignment = Enum.HorizontalAlignment.Right,
-					VerticalAlignment = Enum.VerticalAlignment.Bottom,
-					Padding = UDim.new(0, 5),
-				}),
-				padding = e("UIPadding", {
-					PaddingTop = UDim.new(0, 5);
-					PaddingBottom = UDim.new(0, 5);
-					PaddingLeft = UDim.new(0, 5);
-					PaddingRight = UDim.new(0, 5);
-				}),
-				notifs = e(Notifications, {
-					soundPlayer = self.props.soundPlayer,
-					notifications = self.state.notifications,
-					onClose = function(index)
-						self:closeNotification(index)
-					end,
+				RojoNotifications = e("ScreenGui", {
+					ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+					ResetOnSpawn = false,
+					DisplayOrder = 100,
+				}, {
+					layout = e("UIListLayout", {
+						SortOrder = Enum.SortOrder.LayoutOrder,
+						HorizontalAlignment = Enum.HorizontalAlignment.Right,
+						VerticalAlignment = Enum.VerticalAlignment.Bottom,
+						Padding = UDim.new(0, 5),
+					}),
+					padding = e("UIPadding", {
+						PaddingTop = UDim.new(0, 5),
+						PaddingBottom = UDim.new(0, 5),
+						PaddingLeft = UDim.new(0, 5),
+						PaddingRight = UDim.new(0, 5),
+					}),
+					notifs = e(Notifications, {
+						soundPlayer = self.props.soundPlayer,
+						notifications = self.state.notifications,
+						onClose = function(id)
+							self:closeNotification(id)
+						end,
+					}),
 				}),
 			}),
 
@@ -402,7 +687,9 @@ function App:render()
 				onTriggered = function()
 					if self.serveSession == nil or self.serveSession:getStatus() == ServeSession.Status.NotStarted then
 						self:startSession()
-					elseif self.serveSession ~= nil and self.serveSession:getStatus() == ServeSession.Status.Connected then
+					elseif
+						self.serveSession ~= nil and self.serveSession:getStatus() == ServeSession.Status.Connected
+					then
 						self:endSession()
 					end
 				end,
@@ -450,7 +737,7 @@ function App:render()
 							}
 						end)
 					end,
-				})
+				}),
 			}),
 		}),
 	})
