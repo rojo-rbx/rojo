@@ -2,7 +2,7 @@
 name = "memofs"
 description = "Virtual filesystem with configurable backends."
 version = "0.2.0"
-authors = ["Lucien Greathouse <me@lpghatguy.com>"]
+authors = ["Lucien Greathouse <me@lpghatguy.com>", "utrain"]
 edition = "2018"
 readme = "README.md"
 license = "MIT"
@@ -13,5 +13,6 @@ homepage = "https://github.com/rojo-rbx/rojo/tree/master/memofs"
 [dependencies]
 crossbeam-channel = "0.5.1"
 fs-err = "2.3.0"
-notify = "4.0.15"
+notify = "6.0.1"
 serde = { version = "1.0", features = ["derive"] }
+notify-debouncer-full = "0.2.0"  
