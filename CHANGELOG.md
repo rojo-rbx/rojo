@@ -17,6 +17,7 @@
 * Better settings controls ([#725])
 * Rework patch visualizer with many fixes and improvements ([#726])
 * Added support for syncing in `.toml` files ([#633])
+* Add new plugin template to the `init` command ([#738])
 
 [#668]: https://github.com/rojo-rbx/rojo/pull/668
 [#674]: https://github.com/rojo-rbx/rojo/pull/674
@@ -34,6 +35,7 @@
 [#725]: https://github.com/rojo-rbx/rojo/pull/725
 [#726]: https://github.com/rojo-rbx/rojo/pull/726
 [#633]: https://github.com/rojo-rbx/rojo/pull/633
+[#738]: https://github.com/rojo-rbx/rojo/pull/738
 
 ## [7.3.0] - April 22, 2023
 * Added `$attributes` to project format. ([#574])
