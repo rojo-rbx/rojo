@@ -1922,6 +1922,7 @@ dependencies = [
  "termcolor",
  "thiserror",
  "tokio",
+ "toml",
  "tracy-client 0.13.2",
  "uuid",
  "walkdir",
