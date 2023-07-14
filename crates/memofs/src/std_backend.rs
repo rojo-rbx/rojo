@@ -148,7 +148,7 @@ impl StdBackend {
                                 notify::ErrorKind::Generic(generic) => panic!("Internal notify error (memofs): {}", generic),
                                 notify::ErrorKind::InvalidConfig(config) => panic!("Internal memofs error: Invalid configuration for the watcher. How did we get here?\n{:?}", config),
                                 notify::ErrorKind::MaxFilesWatch => panic!("Internal notify error (memofs): The maximum amount of files that can be kept track of has been reached!"),
-                                
+
                                 notify::ErrorKind::Io(err) => todo!("What happens when IO errors like this: {}", err),
                                 notify::ErrorKind::PathNotFound => todo!("What happens when a path doesn't exist?"),
                                 notify::ErrorKind::WatchNotFound => todo!("What happens when a watch is not found when trying to remove it?"),
