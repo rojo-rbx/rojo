@@ -34,7 +34,6 @@ function Expansion:render()
 		ChangeList = e(ChangeList, {
 			changes = props.changeList,
 			transparency = props.transparency,
-			columnVisibility = props.columnVisibility,
 		}),
 	})
 end
@@ -69,6 +68,22 @@ function DomLabel:init()
 			}
 		end)
 	end)
+end
+
+function DomLabel:didUpdate(prevProps)
+	if
+		prevProps.instance ~= self.props.instance
+		or prevProps.patchType ~= self.props.patchType
+		or prevProps.name ~= self.props.name
+		or prevProps.changeList ~= self.props.changeList
+	then
+		-- Close the expansion when the domlabel is changed to a different thing
+		self.expanded = false
+		self.motor:setGoal(Flipper.Spring.new(30, {
+			frequency = 5,
+			dampingRatio = 1,
+		}))
+	end
 end
 
 function DomLabel:render()
@@ -130,7 +145,7 @@ function DomLabel:render()
 						if props.changeList then
 							self.expanded = not self.expanded
 							local goalHeight = 30
-								+ (if self.expanded then math.clamp(#self.props.changeList * 30, 30, 30 * 6) else 0)
+								+ (if self.expanded then math.clamp(#props.changeList * 30, 30, 30 * 6) else 0)
 							self.motor:setGoal(Flipper.Spring.new(goalHeight, {
 								frequency = 5,
 								dampingRatio = 1,
@@ -155,7 +170,6 @@ function DomLabel:render()
 					indent = indent,
 					transparency = props.transparency,
 					changeList = props.changeList,
-					columnVisibility = props.columnVisibility,
 				})
 				else nil,
 			DiffIcon = if props.patchType
