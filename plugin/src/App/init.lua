@@ -606,6 +606,8 @@ function App:render()
 					}),
 
 					Settings = createPageElement(AppStatus.Settings, {
+						syncActive = self.serveSession ~= nil and self.serveSession:getStatus() == ServeSession.Status.Connected,
+
 						onBack = function()
 							self:setState({
 								appStatus = self.backPage or AppStatus.NotConnected,

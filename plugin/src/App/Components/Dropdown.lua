@@ -29,7 +29,13 @@ function Dropdown:init()
 	})
 end
 
-function Dropdown:didUpdate()
+function Dropdown:didUpdate(prevProps)
+	if self.props.locked and not prevProps.locked then
+		self:setState({
+			open = false,
+		})
+	end
+
 	self.openMotor:setGoal(
 		Flipper.Spring.new(self.state.open and 1 or 0, {
 			frequency = 6,
@@ -68,6 +74,7 @@ function Dropdown:render()
 				Font = Enum.Font.GothamMedium,
 
 				[Roact.Event.Activated] = function()
+					if self.props.locked then return end
 					self:setState({
 						open = false,
 					})
@@ -89,6 +96,7 @@ function Dropdown:render()
 			BackgroundTransparency = 1,
 
 			[Roact.Event.Activated] = function()
+				if self.props.locked then return end
 				self:setState({
 					open = not self.state.open,
 				})
@@ -101,7 +109,7 @@ function Dropdown:render()
 				size = UDim2.new(1, 0, 1, 0),
 			}, {
 				DropArrow = e("ImageLabel", {
-					Image = Assets.Images.Dropdown.Arrow,
+					Image = if self.props.locked then Assets.Images.Dropdown.Locked else Assets.Images.Dropdown.Arrow,
 					ImageColor3 = self.openBinding:map(function(a)
 						return theme.Closed.IconColor:Lerp(theme.Open.IconColor, a)
 					end),

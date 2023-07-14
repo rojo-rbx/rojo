@@ -17,9 +17,8 @@ use super::InstanceMetadata;
 // - Replace use of Variant with a sum of Variant + borrowed value
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct InstanceSnapshot {
-    // FIXME: Don't use Option<Ref> anymore!
     /// A temporary ID applied to the snapshot that's used for Ref properties.
-    pub snapshot_id: Option<Ref>,
+    pub snapshot_id: Ref,
 
     /// Rojo-specific metadata associated with the instance.
     pub metadata: InstanceMetadata,
@@ -42,7 +41,7 @@ pub struct InstanceSnapshot {
 impl InstanceSnapshot {
     pub fn new() -> Self {
         Self {
-            snapshot_id: None,
+            snapshot_id: Ref::none(),
             metadata: InstanceMetadata::default(),
             name: Cow::Borrowed("DEFAULT"),
             class_name: Cow::Borrowed("DEFAULT"),
@@ -88,7 +87,7 @@ impl InstanceSnapshot {
         }
     }
 
-    pub fn snapshot_id(self, snapshot_id: Option<Ref>) -> Self {
+    pub fn snapshot_id(self, snapshot_id: Ref) -> Self {
         Self {
             snapshot_id,
             ..self
@@ -120,7 +119,7 @@ impl InstanceSnapshot {
             .collect();
 
         Self {
-            snapshot_id: Some(id),
+            snapshot_id: id,
             metadata: InstanceMetadata::default(),
             name: Cow::Owned(instance.name),
             class_name: Cow::Owned(instance.class),
