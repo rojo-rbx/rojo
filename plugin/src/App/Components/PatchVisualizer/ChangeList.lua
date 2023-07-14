@@ -97,7 +97,7 @@ function ChangeList:render()
 
 			-- Special case for .Source updates
 			-- because we want to display a syntax highlighted diff for better UX
-			if self.props.showSourceDiff and tostring(values[1]) == "Source" and (columnVisibility[2] and columnVisibility[3]) then
+			if self.props.showSourceDiff and tostring(values[1]) == "Source" then
 				rows[row] = e("Frame", {
 					Size = UDim2.new(1, 0, 0, 30),
 					BackgroundTransparency = row % 2 ~= 0 and rowTransparency or 1,
@@ -113,7 +113,6 @@ function ChangeList:render()
 						VerticalAlignment = Enum.VerticalAlignment.Center,
 					}),
 					A = e("TextLabel", {
-						Visible = columnVisibility[1],
 						Text = (if isWarning then "⚠ " else "") .. tostring(values[1]),
 						BackgroundTransparency = 1,
 						Font = Enum.Font.GothamMedium,
