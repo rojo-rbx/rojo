@@ -16,6 +16,7 @@
 * Improve tooltip behavior ([#723])
 * Better settings controls ([#725])
 * Rework patch visualizer with many fixes and improvements ([#726])
+* Added support for syncing in `.toml` files ([#633])
 
 [#668]: https://github.com/rojo-rbx/rojo/pull/668
 [#674]: https://github.com/rojo-rbx/rojo/pull/674
@@ -32,6 +33,7 @@
 [#723]: https://github.com/rojo-rbx/rojo/pull/723
 [#725]: https://github.com/rojo-rbx/rojo/pull/725
 [#726]: https://github.com/rojo-rbx/rojo/pull/726
+[#633]: https://github.com/rojo-rbx/rojo/pull/633
 
 ## [7.3.0] - April 22, 2023
 * Added `$attributes` to project format. ([#574])
