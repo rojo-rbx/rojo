@@ -17,6 +17,8 @@ use super::resolve_path;
 
 const UNKNOWN_OUTPUT_KIND_ERR: &str = "Could not detect what kind of file to build. \
                                        Expected output file to end in .rbxl, .rbxlx, .rbxm, or .rbxmx.";
+const UNKNOWN_PLUGIN_KIND_ERR: &str = "Could not detect what kind of file to build. \
+                                       Expected plugin file to end in .rbxm or .rbxmx.";
 
 /// Generates a model or place file from the Rojo project.
 #[derive(Debug, Parser)]
@@ -33,7 +35,7 @@ pub struct BuildCommand {
 
     /// Alternative to the output flag that outputs the result in the local plugins folder.
     ///
-    /// Should end in .rbxm, .rbxl, .rbxmx, or .rbxlx.
+    /// Should end in .rbxm, .rbxl.
     #[clap(long, short)]
     pub plugin: Option<PathBuf>,
 
@@ -44,7 +46,7 @@ pub struct BuildCommand {
 
 impl BuildCommand {
     pub fn run(self) -> anyhow::Result<()> {
-        let output_path = match (self.output, self.plugin) {
+        let (output_path, output_kind) = match (self.output, self.plugin) {
             (Some(_), Some(_)) => {
                 BuildCommand::command()
                     .error(
@@ -61,21 +63,26 @@ impl BuildCommand {
                     )
                     .exit();
             }
-            (Some(output), None) => output,
+            (Some(output), None) => {
+                let output_kind =
+                    OutputKind::from_output_path(&output).context(UNKNOWN_OUTPUT_KIND_ERR)?;
+
+                (output, output_kind)
+            }
             (None, Some(plugin)) => {
                 if plugin.is_absolute() {
                     bail!("plugin flag path cannot be absolute.")
                 }
 
+                let output_kind =
+                    OutputKind::from_plugin_path(&plugin).context(UNKNOWN_PLUGIN_KIND_ERR)?;
                 let studio = RobloxStudio::locate()?;
 
-                studio.plugins_path().join(plugin)
+                (studio.plugins_path().join(&plugin), output_kind)
             }
         };
 
         let project_path = resolve_path(&self.project);
-
-        let output_kind = detect_output_kind(&output_path).context(UNKNOWN_OUTPUT_KIND_ERR)?;
 
         log::trace!("Constructing in-memory filesystem");
         let vfs = Vfs::new_default();
@@ -122,15 +129,27 @@ enum OutputKind {
     Rbxl,
 }
 
-fn detect_output_kind(output: &Path) -> Option<OutputKind> {
-    let extension = output.extension()?.to_str()?;
+impl OutputKind {
+    fn from_output_path(output: &Path) -> Option<OutputKind> {
+        let extension = output.extension()?.to_str()?;
 
-    match extension {
-        "rbxlx" => Some(OutputKind::Rbxlx),
-        "rbxmx" => Some(OutputKind::Rbxmx),
-        "rbxl" => Some(OutputKind::Rbxl),
-        "rbxm" => Some(OutputKind::Rbxm),
-        _ => None,
+        match extension {
+            "rbxlx" => Some(OutputKind::Rbxlx),
+            "rbxmx" => Some(OutputKind::Rbxmx),
+            "rbxl" => Some(OutputKind::Rbxl),
+            "rbxm" => Some(OutputKind::Rbxm),
+            _ => None,
+        }
+    }
+
+    fn from_plugin_path(output: &Path) -> Option<OutputKind> {
+        let extension = output.extension()?.to_str()?;
+
+        match extension {
+            "rbxmx" => Some(OutputKind::Rbxmx),
+            "rbxm" => Some(OutputKind::Rbxm),
+            _ => None,
+        }
     }
 }
 
