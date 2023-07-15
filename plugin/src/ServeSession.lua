@@ -299,27 +299,44 @@ function ServeSession:__initialSync(serverInfo)
 end
 
 function ServeSession:__mainSyncLoop()
-	return self.__apiContext:retrieveMessages()
-		:andThen(function(messages)
-			Log.trace("Serve session {} retrieved {} messages", tostring(self), #messages)
+	return Promise.new(function(resolve, reject)
+		while self.__status == Status.Connected do
+			local success, result = self.__apiContext:retrieveMessages()
+				:andThen(function(messages)
+					if self.__status == Status.Disconnected then
+						-- In the time it took to retrieve messages, we disconnected
+						-- so we just resolve immediately without patching anything
+						return
+					end
 
-			for _, message in ipairs(messages) do
-				local unappliedPatch = self.__reconciler:applyPatch(message)
+					Log.trace("Serve session {} retrieved {} messages", tostring(self), #messages)
 
-				if not PatchSet.isEmpty(unappliedPatch) then
-					Log.warn("Could not apply all changes requested by the Rojo server:\n{}",
-						PatchSet.humanSummary(self.__instanceMap, unappliedPatch))
-				end
+					for _, message in messages do
+						local unappliedPatch = self.__reconciler:applyPatch(message)
 
-				if self.__patchAppliedCallback then
-					pcall(self.__patchAppliedCallback, message, unappliedPatch)
-				end
+						if not PatchSet.isEmpty(unappliedPatch) then
+							Log.warn("Could not apply all changes requested by the Rojo server:\n{}",
+								PatchSet.humanSummary(self.__instanceMap, unappliedPatch))
+						end
+
+						if self.__patchAppliedCallback then
+							pcall(self.__patchAppliedCallback, message, unappliedPatch)
+						end
+					end
+				end):await()
+
+			if self.__status == Status.Disconnected then
+				-- If we are no longer connected after applying, we stop silently
+				-- without checking for errors as they are no longer relevant
+				break
+			elseif success == false then
+				reject(result)
 			end
+		end
 
-			if self.__status ~= Status.Disconnected then
-				return self:__mainSyncLoop()
-			end
-		end)
+		-- We are no longer connected, so we resolve the promise
+		resolve()
+	end)
 end
 
 function ServeSession:__stopInternal(err)
