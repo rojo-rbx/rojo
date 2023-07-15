@@ -97,7 +97,6 @@ function ServeSession.new(options)
 		__instanceMap = instanceMap,
 		__changeBatcher = changeBatcher,
 		__statusChangedCallback = nil,
-		__patchAppliedCallback = nil,
 		__connections = connections,
 	}
 
@@ -129,8 +128,12 @@ function ServeSession:setConfirmCallback(callback)
 	self.__userConfirmCallback = callback
 end
 
-function ServeSession:onPatchApplied(callback)
-	self.__patchAppliedCallback = callback
+function ServeSession:hookPrecommit(callback)
+	return self.__reconciler:hookPrecommit(callback)
+end
+
+function ServeSession:hookPostcommit(callback)
+	return self.__reconciler:hookPostcommit(callback)
 end
 
 function ServeSession:start()
@@ -291,9 +294,6 @@ function ServeSession:__initialSync(serverInfo)
 					Log.warn("Could not apply all changes requested by the Rojo server:\n{}",
 						PatchSet.humanSummary(self.__instanceMap, unappliedPatch))
 				end
-				if self.__patchAppliedCallback then
-					pcall(self.__patchAppliedCallback, catchUpPatch, unappliedPatch)
-				end
 			end
 		end)
 end
@@ -309,10 +309,6 @@ function ServeSession:__mainSyncLoop()
 				if not PatchSet.isEmpty(unappliedPatch) then
 					Log.warn("Could not apply all changes requested by the Rojo server:\n{}",
 						PatchSet.humanSummary(self.__instanceMap, unappliedPatch))
-				end
-
-				if self.__patchAppliedCallback then
-					pcall(self.__patchAppliedCallback, message, unappliedPatch)
 				end
 			end
 
