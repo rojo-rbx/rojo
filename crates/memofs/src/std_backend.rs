@@ -7,7 +7,7 @@ use std::time::Duration;
 use crate::{DirEntry, Metadata, ReadDir, VfsBackend, VfsEvent};
 use crossbeam_channel::Receiver;
 use notify::{
-    event::{ModifyKind, RenameMode},
+    event::{MetadataKind, ModifyKind, RenameMode},
     EventKind, RecommendedWatcher, RecursiveMode, Watcher,
 };
 use notify_debouncer_full::{new_debouncer, Debouncer, FileIdMap};
@@ -35,8 +35,8 @@ impl StdBackend {
                                 // So, we can ignore the actual event (anyhow, should always be an "Other" event after auditing the code)!
                                 let path = event.paths[0].clone();
 
-                                match fs_err::metadata(&path) {
-                                    // The file still exists, we just say that it changed.
+                                match fs_err::OpenOptions::new().open(&path) {
+                                    // The file still exists, we'll just say that it changed.
                                     Ok(_) => tx.send(VfsEvent::Write(path))?,
 
                                     // It is inaccessible, it doesn't exist to us.
@@ -71,19 +71,21 @@ impl StdBackend {
                                             tx.send(VfsEvent::Create(event.paths[1].clone()))?;
                                         }
 
-                                        // We just start with the original name...
+                                        // We could also get with two separate events.
+                                        // Start with the original name...
                                         RenameMode::From => {
-                                            tx.send(VfsEvent::Remove(event.paths[0].clone()))?
+                                            tx.send(VfsEvent::Remove(event.paths[0].clone()))?;
                                         }
 
                                         // And end with the new name.
                                         RenameMode::To => {
-                                            tx.send(VfsEvent::Create(event.paths[0].clone()))?
+                                            tx.send(VfsEvent::Create(event.paths[0].clone()))?;
                                         }
 
-                                        // Catch-all for really any modification and so we play it safe.
+                                        // After auditing the code, this event will be fired if the original file was renamed with fsevent and kqueue.
+                                        // However, no way to actually say what it was renamed to...
                                         RenameMode::Any => {
-                                            tx.send(VfsEvent::Write(event.paths[0].clone()))?
+                                            tx.send(VfsEvent::Remove(event.paths[0].clone()))?;
                                         }
 
                                         // After auditing the code, this event will never be fired.
@@ -96,8 +98,22 @@ impl StdBackend {
                                     },
 
                                     // Vfs does not care for any metadata changes.
-                                    // We are screwed if permissions change, effectively making the
-                                    ModifyKind::Metadata(_) => {}
+                                    // However, we do care if a file becomes inaccessible or not (turns out, notify will not fire a Create/Remove event).
+                                    ModifyKind::Metadata(kind) => {
+                                        match kind {
+                                            // It doesn't matter if these metadata changes.
+                                            MetadataKind::Extended
+                                            | MetadataKind::AccessTime
+                                            | MetadataKind::WriteTime => {}
+
+                                            // However, these metadata changes could make a file/directory inaccessible or accessible.
+                                            // TODO: Fix so that we emit create/removals. For now, the behavior prior was to ignore such changes.
+                                            MetadataKind::Any
+                                            | MetadataKind::Ownership
+                                            | MetadataKind::Permissions
+                                            | MetadataKind::Other => {}
+                                        }
+                                    }
 
                                     // After auditing the code, the only way for Modify::Any to be triggered is if the backend is...
                                     // kqueue, then the number of links to the given path changed. We don't really care on that case.
@@ -121,7 +137,7 @@ impl StdBackend {
                                 EventKind::Access(_) => {}
 
                                 // After auditing notify, this can only be fired by fsevent, but that's only imprecise mode.
-                                // We'll never be in imprecise mode since it's useless (all events default to ::Any()).
+                                // Imprecise mode is never enabled in notify (thank goodness).
                                 EventKind::Any => panic!(
                                     r#"EventKind::Any() was impossibly issued!
                                     Log an issue with the following information:
@@ -142,6 +158,7 @@ impl StdBackend {
                             }
                         }
                     }
+
                     Err(errors) => {
                         for error in errors {
                             match error.kind {
@@ -150,8 +167,20 @@ impl StdBackend {
                                 notify::ErrorKind::MaxFilesWatch => panic!("Internal notify error (memofs): The maximum amount of files that can be kept track of has been reached!"),
 
                                 notify::ErrorKind::Io(err) => todo!("What happens when IO errors like this: {}", err),
-                                notify::ErrorKind::PathNotFound => todo!("What happens when a path doesn't exist?"),
-                                notify::ErrorKind::WatchNotFound => todo!("What happens when a watch is not found when trying to remove it?"),
+                                notify::ErrorKind::PathNotFound => {
+                                    let path = error.paths[0].clone();
+                                    println!("memofs warning: path {} was not found!", path.display());
+
+                                    // This seems like a reasonable default.
+                                    tx.send(VfsEvent::Remove(path))?
+                                },
+                                notify::ErrorKind::WatchNotFound => {
+                                    let path = error.paths[0].clone();
+                                    println!("memofs warning: watch for path {} was not found! Internal error of notify?", path.display());
+
+                                    // TODO: I think it's probably best to remove the object from our side and try rewatching.
+                                    // However, we have not a way to see if was a new object we're watching or an old object.
+                                },
                             }
                         }
                     }
