@@ -166,7 +166,9 @@ impl StdBackend {
                                 notify::ErrorKind::InvalidConfig(config) => panic!("Internal memofs error: Invalid configuration for the watcher. How did we get here?\n{:?}", config),
                                 notify::ErrorKind::MaxFilesWatch => panic!("Internal notify error (memofs): The maximum amount of files that can be kept track of has been reached!"),
 
-                                notify::ErrorKind::Io(err) => todo!("What happens when IO errors like this: {}", err),
+                                notify::ErrorKind::Io(err) => {
+                                    println!("memofs warning: io error from notify\n {}", err)
+                                },
                                 notify::ErrorKind::PathNotFound => {
                                     let path = error.paths[0].clone();
                                     println!("memofs warning: path {} was not found!", path.display());
