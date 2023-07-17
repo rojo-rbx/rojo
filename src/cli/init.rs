@@ -33,7 +33,7 @@ pub struct InitCommand {
     #[clap(default_value = "")]
     pub path: PathBuf,
 
-    /// The kind of project to create, 'place' or 'model'. Defaults to place.
+    /// The kind of project to create, 'place', 'plugin', or 'model'. Defaults to place.
     #[clap(long, default_value = "place")]
     pub kind: InitKind,
 }
@@ -71,7 +71,7 @@ pub enum InitKind {
     /// A place that contains a baseplate.
     Place,
 
-    /// An empty model, suitable for a library or plugin.
+    /// An empty model, suitable for a library.
     Model,
 
     /// An empty plugin.
