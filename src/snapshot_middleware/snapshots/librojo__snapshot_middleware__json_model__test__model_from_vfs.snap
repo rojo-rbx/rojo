@@ -1,9 +1,8 @@
 ---
 source: src/snapshot_middleware/json_model.rs
 expression: instance_snapshot
-
 ---
-snapshot_id: ~
+snapshot_id: "00000000000000000000000000000000"
 metadata:
   ignore_unknown_instances: false
   instigating_source:
@@ -17,7 +16,7 @@ properties:
   Value:
     Int64: 5
 children:
-  - snapshot_id: ~
+  - snapshot_id: "00000000000000000000000000000000"
     metadata:
       ignore_unknown_instances: false
       relevant_paths: []

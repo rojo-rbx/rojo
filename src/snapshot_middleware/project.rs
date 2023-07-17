@@ -2,7 +2,7 @@ use std::{borrow::Cow, collections::HashMap, path::Path};
 
 use anyhow::{bail, Context};
 use memofs::Vfs;
-use rbx_dom_weak::types::Attributes;
+use rbx_dom_weak::types::{Attributes, Ref};
 use rbx_reflection::ClassTag;
 
 use crate::{
@@ -271,7 +271,7 @@ pub fn snapshot_project_node(
     ));
 
     Ok(Some(InstanceSnapshot {
-        snapshot_id: None,
+        snapshot_id: Ref::none(),
         name,
         class_name,
         properties,

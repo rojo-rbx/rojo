@@ -100,6 +100,7 @@ local lightTheme = strict("LightTheme", {
 		Remove = hexColor(0xffbdba),
 		Edit = hexColor(0xbacdff),
 		Row = hexColor(0x000000),
+		Warning = hexColor(0xFF8E3C),
 	},
 	ConnectionDetails = {
 		ProjectNameColor = hexColor(0x00000),
@@ -195,6 +196,7 @@ local darkTheme = strict("DarkTheme", {
 		Remove = hexColor(0x3F2D32),
 		Edit = hexColor(0x193345),
 		Row = hexColor(0xFFFFFF),
+		Warning = hexColor(0xFF8E3C),
 	},
 	ConnectionDetails = {
 		ProjectNameColor = hexColor(0xFFFFFF),

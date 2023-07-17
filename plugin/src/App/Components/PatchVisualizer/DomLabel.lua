@@ -1,3 +1,4 @@
+local SelectionService = game:GetService("Selection")
 local StudioService = game:GetService("StudioService")
 
 local Rojo = script:FindFirstAncestor("Rojo")
@@ -14,6 +15,7 @@ local bindingUtil = require(Plugin.App.bindingUtil)
 local e = Roact.createElement
 
 local ChangeList = require(script.Parent.ChangeList)
+local Tooltip = require(script.Parent.Parent.Tooltip)
 
 local Expansion = Roact.Component:extend("Expansion")
 
@@ -32,7 +34,6 @@ function Expansion:render()
 		ChangeList = e(ChangeList, {
 			changes = props.changeList,
 			transparency = props.transparency,
-			columnVisibility = props.columnVisibility,
 		}),
 	})
 end
@@ -67,6 +68,22 @@ function DomLabel:init()
 			}
 		end)
 	end)
+end
+
+function DomLabel:didUpdate(prevProps)
+	if
+		prevProps.instance ~= self.props.instance
+		or prevProps.patchType ~= self.props.patchType
+		or prevProps.name ~= self.props.name
+		or prevProps.changeList ~= self.props.changeList
+	then
+		-- Close the expansion when the domlabel is changed to a different thing
+		self.expanded = false
+		self.motor:setGoal(Flipper.Spring.new(30, {
+			frequency = 5,
+			dampingRatio = 1,
+		}))
+	end
 end
 
 function DomLabel:render()
@@ -106,28 +123,53 @@ function DomLabel:render()
 				PaddingLeft = UDim.new(0, 10),
 				PaddingRight = UDim.new(0, 10),
 			}),
-			ExpandButton = if props.changeList
-				then e("TextButton", {
-					BackgroundTransparency = 1,
-					Text = "",
-					Size = UDim2.new(1, 0, 1, 0),
-					[Roact.Event.Activated] = function()
-						self.expanded = not self.expanded
-						local goalHeight = 30 + (if self.expanded then math.clamp(#self.props.changeList * 30, 30, 30 * 6) else 0)
-						self.motor:setGoal(Flipper.Spring.new(goalHeight, {
-							frequency = 5,
-							dampingRatio = 1,
-						}))
-					end,
-				})
-				else nil,
+			Button = e("TextButton", {
+				BackgroundTransparency = 1,
+				Text = "",
+				Size = UDim2.new(1, 0, 1, 0),
+				[Roact.Event.Activated] = function(_rbx: Instance, _input: InputObject, clickCount: number)
+					if clickCount == 1 then
+						-- Double click opens the instance in explorer
+						self.lastDoubleClickTime = os.clock()
+						if props.instance then
+							SelectionService:Set({ props.instance })
+						end
+					elseif clickCount == 0 then
+						-- Single click expands the changes
+						task.wait(0.25)
+						if os.clock() - (self.lastDoubleClickTime or 0) <= 0.25 then
+							-- This is a double click, so don't expand
+							return
+						end
+
+						if props.changeList then
+							self.expanded = not self.expanded
+							local goalHeight = 30
+								+ (if self.expanded then math.clamp(#props.changeList * 30, 30, 30 * 6) else 0)
+							self.motor:setGoal(Flipper.Spring.new(goalHeight, {
+								frequency = 5,
+								dampingRatio = 1,
+							}))
+						end
+					end
+				end,
+			}, {
+				StateTip = if (props.instance or props.changeList)
+					then e(Tooltip.Trigger, {
+						text = (if props.changeList
+							then "Click to " .. (if self.expanded then "hide" else "view") .. " changes"
+							else "") .. (if props.instance
+							then (if props.changeList then " & d" else "D") .. "ouble click to open in Explorer"
+							else ""),
+					})
+					else nil,
+			}),
 			Expansion = if props.changeList
 				then e(Expansion, {
 					rendered = self.state.renderExpansion,
 					indent = indent,
 					transparency = props.transparency,
 					changeList = props.changeList,
-					columnVisibility = props.columnVisibility,
 				})
 				else nil,
 			DiffIcon = if props.patchType
@@ -152,7 +194,7 @@ function DomLabel:render()
 				AnchorPoint = Vector2.new(0, 0.5),
 			}),
 			InstanceName = e("TextLabel", {
-				Text = props.name .. (props.hint and string.format(
+				Text = (if props.isWarning then "⚠ " else "") .. props.name .. (props.hint and string.format(
 					'  <font color="#%s">%s</font>',
 					theme.AddressEntry.PlaceholderColor:ToHex(),
 					props.hint
@@ -161,7 +203,7 @@ function DomLabel:render()
 				BackgroundTransparency = 1,
 				Font = Enum.Font.GothamMedium,
 				TextSize = 14,
-				TextColor3 = theme.Settings.Setting.DescriptionColor,
+				TextColor3 = if props.isWarning then theme.Diff.Warning else theme.Settings.Setting.DescriptionColor,
 				TextXAlignment = Enum.TextXAlignment.Left,
 				TextTransparency = props.transparency,
 				TextTruncate = Enum.TextTruncate.AtEnd,

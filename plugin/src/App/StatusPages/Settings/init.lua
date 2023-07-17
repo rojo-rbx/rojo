@@ -156,7 +156,9 @@ function SettingsPage:render()
 			OpenScriptsExternally = e(Setting, {
 				id = "openScriptsExternally",
 				name = "Open Scripts Externally",
-				description = "EXPERIMENTAL! Attempt to open scripts in an external editor",
+				description = "Attempt to open scripts in an external editor",
+				locked = self.props.syncActive,
+				experimental = true,
 				transparency = self.props.transparency,
 				layoutOrder = 5,
 			}),
@@ -164,7 +166,9 @@ function SettingsPage:render()
 			TwoWaySync = e(Setting, {
 				id = "twoWaySync",
 				name = "Two-Way Sync",
-				description = "EXPERIMENTAL! Editing files in Studio will sync them into the filesystem",
+				description = "Editing files in Studio will sync them into the filesystem",
+				locked = self.props.syncActive,
+				experimental = true,
 				transparency = self.props.transparency,
 				layoutOrder = 6,
 			}),

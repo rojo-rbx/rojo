@@ -135,7 +135,7 @@ fn apply_add_child(
         context.has_refs_to_rewrite.insert(id);
     }
 
-    if let Some(snapshot_id) = snapshot_id {
+    if snapshot_id.is_some() {
         context.snapshot_id_to_instance_id.insert(snapshot_id, id);
     }
 
@@ -231,7 +231,7 @@ mod test {
         let root_id = tree.get_root_id();
 
         let snapshot = InstanceSnapshot {
-            snapshot_id: None,
+            snapshot_id: Ref::none(),
             metadata: Default::default(),
             name: Cow::Borrowed("Foo"),
             class_name: Cow::Borrowed("Bar"),

@@ -72,6 +72,7 @@ function Setting:render()
 				self.props.customInput
 			elseif self.props.options ~= nil then
 				e(Dropdown, {
+					locked = self.props.locked,
 					options = self.props.options,
 					active = self.state.setting,
 					transparency = self.props.transparency,
@@ -83,6 +84,7 @@ function Setting:render()
 				})
 			else
 				e(Checkbox, {
+					locked = self.props.locked,
 					active = self.state.setting,
 					transparency = self.props.transparency,
 					position = UDim2.new(1, 0, 0.5, 0),
@@ -111,12 +113,13 @@ function Setting:render()
 				BackgroundTransparency = 1,
 			}, {
 				Name = e("TextLabel", {
-					Text = self.props.name,
+					Text = (if self.props.experimental then "<font color=\"#FF8E3C\">⚠ </font>" else "") .. self.props.name,
 					Font = Enum.Font.GothamBold,
 					TextSize = 17,
 					TextColor3 = theme.Setting.NameColor,
 					TextXAlignment = Enum.TextXAlignment.Left,
 					TextTransparency = self.props.transparency,
+					RichText = true,
 
 					Size = UDim2.new(1, 0, 0, 17),
 
@@ -125,7 +128,7 @@ function Setting:render()
 				}),
 
 				Description = e("TextLabel", {
-					Text = self.props.description,
+					Text = (if self.props.experimental then "<font color=\"#FF8E3C\">[Experimental] </font>" else "") .. self.props.description,
 					Font = Enum.Font.Gotham,
 					LineHeight = 1.2,
 					TextSize = 14,
@@ -133,11 +136,13 @@ function Setting:render()
 					TextXAlignment = Enum.TextXAlignment.Left,
 					TextTransparency = self.props.transparency,
 					TextWrapped = true,
+					RichText = true,
 
 					Size = self.containerSize:map(function(value)
+						local desc = (if self.props.experimental then "[Experimental] " else "") .. self.props.description
 						local offset = (self.props.onReset and 34 or 0) + (self.props.options ~= nil and 120 or 40)
 						local textBounds = getTextBounds(
-							self.props.description, 14, Enum.Font.Gotham, 1.2,
+							desc, 14, Enum.Font.Gotham, 1.2,
 							Vector2.new(value.X - offset, math.huge)
 						)
 						return UDim2.new(1, -offset, 0, textBounds.Y)
