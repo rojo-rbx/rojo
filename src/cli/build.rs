@@ -35,7 +35,7 @@ pub struct BuildCommand {
 
     /// Alternative to the output flag that outputs the result in the local plugins folder.
     ///
-    /// Should end in .rbxm, .rbxl.
+    /// Should end in .rbxm or .rbxl.
     #[clap(long, short)]
     pub plugin: Option<PathBuf>,
 
