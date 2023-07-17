@@ -374,7 +374,7 @@ function App:startSession()
 		end)
 	end)
 
-	serveSession:onPatchApplied(function(patch, unapplied)
+	serveSession:hookPostcommit(function(patch, _instanceMap, unapplied)
 		local now = os.time()
 		local old = self.state.patchData
 
