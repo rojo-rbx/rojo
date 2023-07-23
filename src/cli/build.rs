@@ -4,10 +4,11 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use anyhow::Context;
-use clap::Parser;
+use anyhow::{bail, Context};
+use clap::{CommandFactory, Parser};
 use fs_err::File;
 use memofs::Vfs;
+use roblox_install::RobloxStudio;
 use tokio::runtime::Runtime;
 
 use crate::serve_session::ServeSession;
@@ -16,6 +17,8 @@ use super::resolve_path;
 
 const UNKNOWN_OUTPUT_KIND_ERR: &str = "Could not detect what kind of file to build. \
                                        Expected output file to end in .rbxl, .rbxlx, .rbxm, or .rbxmx.";
+const UNKNOWN_PLUGIN_KIND_ERR: &str = "Could not detect what kind of file to build. \
+                                       Expected plugin file to end in .rbxm or .rbxmx.";
 
 /// Generates a model or place file from the Rojo project.
 #[derive(Debug, Parser)]
@@ -28,7 +31,13 @@ pub struct BuildCommand {
     ///
     /// Should end in .rbxm, .rbxl, .rbxmx, or .rbxlx.
     #[clap(long, short)]
-    pub output: PathBuf,
+    pub output: Option<PathBuf>,
+
+    /// Alternative to the output flag that outputs the result in the local plugins folder.
+    ///
+    /// Should end in .rbxm or .rbxl.
+    #[clap(long, short)]
+    pub plugin: Option<PathBuf>,
 
     /// Whether to automatically rebuild when any input files change.
     #[clap(long)]
@@ -37,18 +46,52 @@ pub struct BuildCommand {
 
 impl BuildCommand {
     pub fn run(self) -> anyhow::Result<()> {
-        let project_path = resolve_path(&self.project);
+        let (output_path, output_kind) = match (self.output, self.plugin) {
+            (Some(_), Some(_)) => {
+                BuildCommand::command()
+                    .error(
+                        clap::ErrorKind::ArgumentConflict,
+                        "the argument '--output <OUTPUT>' cannot be used with '--plugin <PLUGIN>'",
+                    )
+                    .exit();
+            }
+            (None, None) => {
+                BuildCommand::command()
+                    .error(
+                        clap::ErrorKind::MissingRequiredArgument,
+                        "one of the following arguments must be provided: \n    --output <OUTPUT>\n    --plugin <PLUGIN>",
+                    )
+                    .exit();
+            }
+            (Some(output), None) => {
+                let output_kind =
+                    OutputKind::from_output_path(&output).context(UNKNOWN_OUTPUT_KIND_ERR)?;
 
-        let output_kind = detect_output_kind(&self.output).context(UNKNOWN_OUTPUT_KIND_ERR)?;
+                (output, output_kind)
+            }
+            (None, Some(plugin)) => {
+                if plugin.is_absolute() {
+                    bail!("plugin flag path cannot be absolute.")
+                }
+
+                let output_kind =
+                    OutputKind::from_plugin_path(&plugin).context(UNKNOWN_PLUGIN_KIND_ERR)?;
+                let studio = RobloxStudio::locate()?;
+
+                (studio.plugins_path().join(&plugin), output_kind)
+            }
+        };
+
+        let project_path = resolve_path(&self.project);
 
         log::trace!("Constructing in-memory filesystem");
         let vfs = Vfs::new_default();
         vfs.set_watch_enabled(self.watch);
 
-        let session = ServeSession::new(vfs, &project_path)?;
+        let session = ServeSession::new(vfs, project_path)?;
         let mut cursor = session.message_queue().cursor();
 
-        write_model(&session, &self.output, output_kind)?;
+        write_model(&session, &output_path, output_kind)?;
 
         if self.watch {
             let rt = Runtime::new().unwrap();
@@ -58,7 +101,7 @@ impl BuildCommand {
                 let (new_cursor, _patch_set) = rt.block_on(receiver).unwrap();
                 cursor = new_cursor;
 
-                write_model(&session, &self.output, output_kind)?;
+                write_model(&session, &output_path, output_kind)?;
             }
         }
 
@@ -86,15 +129,27 @@ enum OutputKind {
     Rbxl,
 }
 
-fn detect_output_kind(output: &Path) -> Option<OutputKind> {
-    let extension = output.extension()?.to_str()?;
+impl OutputKind {
+    fn from_output_path(output: &Path) -> Option<OutputKind> {
+        let extension = output.extension()?.to_str()?;
 
-    match extension {
-        "rbxlx" => Some(OutputKind::Rbxlx),
-        "rbxmx" => Some(OutputKind::Rbxmx),
-        "rbxl" => Some(OutputKind::Rbxl),
-        "rbxm" => Some(OutputKind::Rbxm),
-        _ => None,
+        match extension {
+            "rbxlx" => Some(OutputKind::Rbxlx),
+            "rbxmx" => Some(OutputKind::Rbxmx),
+            "rbxl" => Some(OutputKind::Rbxl),
+            "rbxm" => Some(OutputKind::Rbxm),
+            _ => None,
+        }
+    }
+
+    fn from_plugin_path(output: &Path) -> Option<OutputKind> {
+        let extension = output.extension()?.to_str()?;
+
+        match extension {
+            "rbxmx" => Some(OutputKind::Rbxmx),
+            "rbxm" => Some(OutputKind::Rbxm),
+            _ => None,
+        }
     }
 }
 

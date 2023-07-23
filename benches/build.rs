@@ -31,11 +31,12 @@ fn bench_build_place(c: &mut Criterion, name: &str, path: &str) {
 fn place_setup<P: AsRef<Path>>(input_path: P) -> (TempDir, BuildCommand) {
     let dir = tempdir().unwrap();
     let input = input_path.as_ref().to_path_buf();
-    let output = dir.path().join("output.rbxlx");
+    let output = Some(dir.path().join("output.rbxlx"));
 
     let options = BuildCommand {
         project: input,
         watch: false,
+        plugin: None,
         output,
     };
 
