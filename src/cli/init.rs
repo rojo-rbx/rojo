@@ -117,17 +117,17 @@ fn init_place(base_path: &Path, project_params: ProjectParams) -> anyhow::Result
 
     write_if_not_exists(
         &src_shared.join("Hello.lua"),
-        "return function()\n\tprint(\"Hello, world!\")\nend",
+        "return function()\n\tprint(\"Hello, world!\")\nend\n",
     )?;
 
     write_if_not_exists(
         &src_server.join("init.server.lua"),
-        "print(\"Hello world, from server!\")",
+        "print(\"Hello world, from server!\")\n",
     )?;
 
     write_if_not_exists(
         &src_client.join("init.client.lua"),
-        "print(\"Hello world, from client!\")",
+        "print(\"Hello world, from client!\")\n",
     )?;
 
     let git_ignore = project_params.render_template(PLACE_GIT_IGNORE);
