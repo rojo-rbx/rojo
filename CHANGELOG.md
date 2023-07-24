@@ -19,6 +19,7 @@
 * Added support for syncing in `.toml` files ([#633])
 * Add `plugin` flag to the `build` command that outputs to the local plugins folder ([#735])
 * Added better support for `Font` properties ([#731])
+* Add new plugin template to the `init` command ([#738])
 
 [#668]: https://github.com/rojo-rbx/rojo/pull/668
 [#674]: https://github.com/rojo-rbx/rojo/pull/674
@@ -38,6 +39,7 @@
 [#633]: https://github.com/rojo-rbx/rojo/pull/633
 [#735]: https://github.com/rojo-rbx/rojo/pull/735
 [#731]: https://github.com/rojo-rbx/rojo/pull/731
+[#738]: https://github.com/rojo-rbx/rojo/pull/738
 
 ## [7.3.0] - April 22, 2023
 * Added `$attributes` to project format. ([#574])
