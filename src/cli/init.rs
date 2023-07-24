@@ -10,11 +10,12 @@ use fs_err::OpenOptions;
 
 use super::resolve_path;
 
-static MODEL_PROJECT: &str =
-    include_str!("../../assets/default-model-project/default.project.json");
-static MODEL_README: &str = include_str!("../../assets/default-model-project/README.md");
-static MODEL_INIT: &str = include_str!("../../assets/default-model-project/src-init.lua");
-static MODEL_GIT_IGNORE: &str = include_str!("../../assets/default-model-project/gitignore.txt");
+static LIBRARY_PROJECT: &str =
+    include_str!("../../assets/default-library-project/default.project.json");
+static LIBRARY_README: &str = include_str!("../../assets/default-library-project/README.md");
+static LIBRARY_INIT: &str = include_str!("../../assets/default-library-project/src-init.lua");
+static LIBRARY_GIT_IGNORE: &str =
+    include_str!("../../assets/default-library-project/gitignore.txt");
 
 static PLACE_PROJECT: &str =
     include_str!("../../assets/default-place-project/default.project.json");
@@ -33,7 +34,7 @@ pub struct InitCommand {
     #[clap(default_value = "")]
     pub path: PathBuf,
 
-    /// The kind of project to create, 'place', 'plugin', or 'model'. Defaults to place.
+    /// The kind of project to create, 'place', 'plugin', or 'library'. Defaults to place.
     #[clap(long, default_value = "place")]
     pub kind: InitKind,
 }
@@ -55,7 +56,7 @@ impl InitCommand {
 
         match self.kind {
             InitKind::Place => init_place(&base_path, project_params)?,
-            InitKind::Model => init_model(&base_path, project_params)?,
+            InitKind::Library => init_library(&base_path, project_params)?,
             InitKind::Plugin => init_plugin(&base_path, project_params)?,
         }
 
@@ -71,8 +72,8 @@ pub enum InitKind {
     /// A place that contains a baseplate.
     Place,
 
-    /// An empty model, suitable for a library.
-    Model,
+    /// An empty library.
+    Library,
 
     /// An empty plugin.
     Plugin,
@@ -84,10 +85,10 @@ impl FromStr for InitKind {
     fn from_str(source: &str) -> Result<Self, Self::Err> {
         match source {
             "place" => Ok(InitKind::Place),
-            "model" => Ok(InitKind::Model),
+            "library" => Ok(InitKind::Library),
             "plugin" => Ok(InitKind::Plugin),
             _ => Err(format_err!(
-                "Invalid init kind '{}'. Valid kinds are: place, model, plugin",
+                "Invalid init kind '{}'. Valid kinds are: place, library, plugin",
                 source
             )),
         }
@@ -136,22 +137,22 @@ fn init_place(base_path: &Path, project_params: ProjectParams) -> anyhow::Result
     Ok(())
 }
 
-fn init_model(base_path: &Path, project_params: ProjectParams) -> anyhow::Result<()> {
-    println!("Creating new model project '{}'", project_params.name);
+fn init_library(base_path: &Path, project_params: ProjectParams) -> anyhow::Result<()> {
+    println!("Creating new library project '{}'", project_params.name);
 
-    let project_file = project_params.render_template(MODEL_PROJECT);
+    let project_file = project_params.render_template(LIBRARY_PROJECT);
     try_create_project(base_path, &project_file)?;
 
-    let readme = project_params.render_template(MODEL_README);
+    let readme = project_params.render_template(LIBRARY_README);
     write_if_not_exists(&base_path.join("README.md"), &readme)?;
 
     let src = base_path.join("src");
     fs::create_dir_all(&src)?;
 
-    let init = project_params.render_template(MODEL_INIT);
+    let init = project_params.render_template(LIBRARY_INIT);
     write_if_not_exists(&src.join("init.lua"), &init)?;
 
-    let git_ignore = project_params.render_template(MODEL_GIT_IGNORE);
+    let git_ignore = project_params.render_template(LIBRARY_GIT_IGNORE);
     try_git_init(base_path, &git_ignore)?;
 
     Ok(())
