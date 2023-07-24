@@ -59,9 +59,6 @@
           "Anchored": true,
           "Locked": true
         }
-      },
-      "$properties": {
-        "FilteringEnabled": true
       }
     }
   }
