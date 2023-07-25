@@ -13,8 +13,6 @@ local CodeLabel = Roact.PureComponent:extend("CodeLabel")
 function CodeLabel:init()
 	self.labelRef = Roact.createRef()
 	self.highlightsRef = Roact.createRef()
-
-	self.themeConnection = nil
 end
 
 function CodeLabel:didMount()
@@ -22,13 +20,6 @@ function CodeLabel:didMount()
 		textObject = self.labelRef:getValue(),
 	})
 	self:updateHighlights()
-end
-
-function CodeLabel:willUnmount()
-	if self.themeConnection then
-		self.themeConnection:Disconnect()
-		self.themeConnection = nil
-	end
 end
 
 function CodeLabel:didUpdate()
