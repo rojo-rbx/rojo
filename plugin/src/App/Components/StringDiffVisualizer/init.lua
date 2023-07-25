@@ -6,6 +6,7 @@ local Packages = Rojo.Packages
 
 local Roact = require(Packages.Roact)
 local Log = require(Packages.Log)
+local Highlighter = require(Packages.Highlighter)
 local DMP = require(script:FindFirstChild("DiffMatchPatch"))
 
 local Theme = require(Plugin.App.Theme)
@@ -32,8 +33,7 @@ function StringDiffVisualizer:init()
 end
 
 function StringDiffVisualizer:getScriptBackground()
-	local studioTheme = settings():GetService("Studio").Theme
-	self.setScriptBackground(studioTheme:GetColor(Enum.StudioStyleGuideColor.ScriptBackground))
+	self.setScriptBackground(Highlighter.getTokenColor("background"))
 end
 
 function StringDiffVisualizer:didUpdate(previousProps)
