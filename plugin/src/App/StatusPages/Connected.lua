@@ -10,12 +10,14 @@ local Theme = require(Plugin.App.Theme)
 local Assets = require(Plugin.Assets)
 local PatchSet = require(Plugin.PatchSet)
 
+local StudioPluginGui = require(Plugin.App.Components.Studio.StudioPluginGui)
 local Header = require(Plugin.App.Components.Header)
 local IconButton = require(Plugin.App.Components.IconButton)
 local TextButton = require(Plugin.App.Components.TextButton)
 local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
 local Tooltip = require(Plugin.App.Components.Tooltip)
 local PatchVisualizer = require(Plugin.App.Components.PatchVisualizer)
+local StringDiffVisualizer = require(Plugin.App.Components.StringDiffVisualizer)
 
 local e = Roact.createElement
 
@@ -39,7 +41,7 @@ function timeSinceText(elapsed: number): string
 	return ageText
 end
 
-local ChangesDrawer = Roact.Component:extend("ConnectedPage")
+local ChangesDrawer = Roact.Component:extend("ChangesDrawer")
 
 function ChangesDrawer:init()
 	-- Hold onto the serve session during the lifecycle of this component
@@ -84,6 +86,8 @@ function ChangesDrawer:render()
 				layoutOrder = 3,
 
 				patchTree = self.props.patchTree,
+
+				showSourceDiff = self.props.showSourceDiff,
 			}),
 		})
 	end)
@@ -226,6 +230,9 @@ function ConnectedPage:init()
 	self:setState({
 		renderChanges = false,
 		hoveringChangeInfo = false,
+		showingSourceDiff = false,
+		oldSource = "",
+		newSource = "",
 	})
 
 	self.changeInfoText, self.setChangeInfoText = Roact.createBinding("")
@@ -367,12 +374,58 @@ function ConnectedPage:render()
 				height = self.changeDrawerHeight,
 				layoutOrder = 5,
 
+				showSourceDiff = function(oldSource: string, newSource: string)
+					self:setState({
+						showingSourceDiff = true,
+						oldSource = oldSource,
+						newSource = newSource,
+					})
+				end,
+
 				onClose = function()
 					self.changeDrawerMotor:setGoal(Flipper.Spring.new(0, {
 						frequency = 4,
 						dampingRatio = 1,
 					}))
 				end,
+			}),
+
+			SourceDiff = e(StudioPluginGui, {
+				id = "Rojo_ConnectedSourceDiff",
+				title = "Source diff",
+				active = self.state.showingSourceDiff,
+
+				initDockState = Enum.InitialDockState.Float,
+				initEnabled = true,
+				overridePreviousState = true,
+				floatingSize = Vector2.new(500, 350),
+				minimumSize = Vector2.new(400, 250),
+
+				zIndexBehavior = Enum.ZIndexBehavior.Sibling,
+
+				onClose = function()
+					self:setState({
+						showingSourceDiff = false,
+					})
+				end,
+			}, {
+				TooltipsProvider = e(Tooltip.Provider, nil, {
+					Tooltips = e(Tooltip.Container, nil),
+					Content = e("Frame", {
+						Size = UDim2.fromScale(1, 1),
+						BackgroundTransparency = 1,
+					}, {
+						e(StringDiffVisualizer, {
+							size = UDim2.new(1, -10, 1, -10),
+							position = UDim2.new(0, 5, 0, 5),
+							anchorPoint = Vector2.new(0, 0),
+							transparency = self.props.transparency,
+
+							oldText = self.state.oldSource,
+							newText = self.state.newSource,
+						})
+					}),
+				}),
 			}),
 		})
 	end)

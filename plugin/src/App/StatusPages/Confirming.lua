@@ -137,7 +137,7 @@ function ConfirmingPage:render()
 			}),
 
 			SourceDiff = e(StudioPluginGui, {
-				id = "Rojo_SourceDiff",
+				id = "Rojo_ConfirmingSourceDiff",
 				title = "Source diff",
 				active = self.state.showingSourceDiff,
 
