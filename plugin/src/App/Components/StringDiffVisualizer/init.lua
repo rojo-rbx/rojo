@@ -7,7 +7,7 @@ local Packages = Rojo.Packages
 local Roact = require(Packages.Roact)
 local Log = require(Packages.Log)
 local Highlighter = require(Packages.Highlighter)
-local DMP = require(script:FindFirstChild("DiffMatchPatch"))
+local StringDiff = require(script:FindFirstChild("StringDiff"))
 
 local Theme = require(Plugin.App.Theme)
 
@@ -65,7 +65,7 @@ function StringDiffVisualizer:calculateDiffLines()
 
 	-- Diff the two texts
 	local startClock = os.clock()
-	local diffs = DMP.diff_main(oldText, newText)
+	local diffs = StringDiff.findDiffs(oldText, newText)
 	local stopClock = os.clock()
 
 	Log.trace("Diffing {} byte and {} byte strings took {} microseconds and found {} diff sections", #oldText, #newText, math.round((stopClock - startClock) * 1000 * 1000), #diffs)
@@ -75,13 +75,13 @@ function StringDiffVisualizer:calculateDiffLines()
 
 	local oldLineNum, newLineNum = 1, 1
 	for _, diff in diffs do
-		local action, text = diff[1], diff[2]
+		local actionType, text = diff.actionType, diff.value
 		local lines = select(2, string.gsub(text, "\n", "\n"))
 
-		if action == DMP.DIFF_EQUAL then
+		if actionType == StringDiff.ActionTypes.Equal then
 			oldLineNum += lines
 			newLineNum += lines
-		elseif action == DMP.DIFF_INSERT then
+		elseif actionType == StringDiff.ActionTypes.Insert then
 			if lines > 0 then
 				local textLines = string.split(text, "\n")
 				for i, textLine in textLines do
@@ -95,7 +95,7 @@ function StringDiffVisualizer:calculateDiffLines()
 				end
 			end
 			newLineNum += lines
-		elseif action == DMP.DIFF_DELETE then
+		elseif actionType == StringDiff.ActionTypes.Delete then
 			if lines > 0 then
 				local textLines = string.split(text, "\n")
 				for i, textLine in textLines do
@@ -110,7 +110,7 @@ function StringDiffVisualizer:calculateDiffLines()
 			end
 			oldLineNum += lines
 		else
-			Log.warn("Unknown diff action: {} {}", action, text)
+			Log.warn("Unknown diff action: {} {}", actionType, text)
 		end
 	end
 
