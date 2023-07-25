@@ -79,6 +79,7 @@ function StudioPluginGui:didUpdate(lastProps)
 
 		-- Studio widgets are very unreliable and sometimes need to be flickered
 		-- in order to force them to render correctly
+		-- This happens within a single frame so it doesn't flicker visibly
 		self.pluginGui.Enabled = self.props.active
 		self.pluginGui.Enabled = not self.props.active
 		self.pluginGui.Enabled = self.props.active
