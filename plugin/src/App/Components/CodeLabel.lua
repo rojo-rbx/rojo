@@ -4,6 +4,7 @@ local Packages = Rojo.Packages
 
 local Roact = require(Packages.Roact)
 local Highlighter = require(Packages.Highlighter)
+Highlighter.matchStudioSettings()
 
 local e = Roact.createElement
 
@@ -17,11 +18,6 @@ function CodeLabel:init()
 end
 
 function CodeLabel:didMount()
-    self:updateHighlighterTheme()
-	self.themeConnection = settings():GetService("Studio").ThemeChanged:Connect(function()
-		self:updateHighlighterTheme()
-	end)
-
 	Highlighter.highlight({
 		textObject = self.labelRef:getValue(),
 	})
@@ -37,19 +33,6 @@ end
 
 function CodeLabel:didUpdate()
     self:updateHighlights()
-end
-
-function CodeLabel:updateHighlighterTheme()
-	local studioTheme = settings():GetService("Studio").Theme
-	Highlighter.setTokenColors({
-		["iden"] = studioTheme:GetColor(Enum.StudioStyleGuideColor.ScriptText),
-		["keyword"] = studioTheme:GetColor(Enum.StudioStyleGuideColor.ScriptKeyword),
-		["builtin"] = studioTheme:GetColor(Enum.StudioStyleGuideColor.ScriptBuiltInFunction),
-		["string"] = studioTheme:GetColor(Enum.StudioStyleGuideColor.ScriptString),
-		["number"] = studioTheme:GetColor(Enum.StudioStyleGuideColor.ScriptNumber),
-		["comment"] = studioTheme:GetColor(Enum.StudioStyleGuideColor.ScriptComment),
-		["operator"] = studioTheme:GetColor(Enum.StudioStyleGuideColor.ScriptOperator),
-	})
 end
 
 function CodeLabel:updateHighlights()
