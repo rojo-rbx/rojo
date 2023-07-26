@@ -365,7 +365,7 @@ function StringDiff._reorderAndMerge(diffs: Diffs): Diffs
 				end
 				-- Delete the offending records and add the merged ones
 				pointer = pointer - countDelete - countInsert
-				for i = 1, countDelete + countInsert do
+				for _ = 1, countDelete + countInsert do
 					table.remove(diffs, pointer)
 				end
 				if #textDelete > 0 then
