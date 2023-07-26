@@ -162,7 +162,7 @@ function ChangeList:render()
 							}),
 							Icon = e("ImageLabel", {
 								Image = Assets.Images.Icons.Expand,
-								ImageColor3 = theme.Checkbox.Active.IconColor,
+								ImageColor3 = theme.Settings.Setting.DescriptionColor,
 								ImageTransparency = self.props.transparency,
 
 								Size = UDim2.new(0, 16, 0, 16),
