@@ -246,7 +246,11 @@ end
 
 function ConnectedPage:didUpdate(previousProps)
 	if self.props.patchData.timestamp ~= previousProps.patchData.timestamp then
+		-- New patch recieved
 		self:startChangeInfoTextUpdater()
+		self:setState({
+			showingSourceDiff = false,
+		})
 	end
 end
 
