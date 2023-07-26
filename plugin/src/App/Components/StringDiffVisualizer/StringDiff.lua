@@ -140,8 +140,8 @@ function StringDiff._computeDiff(text1: string, text2: string): Diffs
 		return { { actionType = StringDiff.ActionTypes.Delete, value = text1 } }
 	end
 
-	local longText = if (text1Length > text2Length) then text1 else text2
-	local shortText = if (text1Length > text2Length) then text2 else text1
+	local longText = if text1Length > text2Length then text1 else text2
+	local shortText = if text1Length > text2Length then text2 else text1
 	local shortTextLength = #shortText
 
 	-- Shortcut if the shorter string exists entirely inside the longer one
@@ -217,7 +217,11 @@ function StringDiff._bisect(text1: string, text2: string): Diffs
 				x1 = v1[k1_offset - 1] + 1
 			end
 			local y1 = x1 - k1
-			while (x1 <= text1Length) and (y1 <= text2Length) and (string.sub(text1, x1, x1) == string.sub(text2, y1, y1)) do
+			while
+				(x1 <= text1Length)
+				and (y1 <= text2Length)
+				and (string.sub(text1, x1, x1) == string.sub(text2, y1, y1))
+			do
 				x1 = x1 + 1
 				y1 = y1 + 1
 			end
@@ -342,14 +346,10 @@ function StringDiff._reorderAndMerge(diffs: Diffs): Diffs
 							diffs[back_pointer - 1].value = diffs[back_pointer - 1].value
 								.. string.sub(textInsert, 1, commonLength)
 						else
-							table.insert(
-								diffs,
-								1,
-								{
-									actionType = StringDiff.ActionTypes.Equal,
-									value = string.sub(textInsert, 1, commonLength),
-								}
-							)
+							table.insert(diffs, 1, {
+								actionType = StringDiff.ActionTypes.Equal,
+								value = string.sub(textInsert, 1, commonLength),
+							})
 							pointer = pointer + 1
 						end
 						textInsert = string.sub(textInsert, commonLength + 1)

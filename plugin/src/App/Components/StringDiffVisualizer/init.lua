@@ -68,7 +68,13 @@ function StringDiffVisualizer:calculateDiffLines()
 	local diffs = StringDiff.findDiffs(oldText, newText)
 	local stopClock = os.clock()
 
-	Log.trace("Diffing {} byte and {} byte strings took {} microseconds and found {} diff sections", #oldText, #newText, math.round((stopClock - startClock) * 1000 * 1000), #diffs)
+	Log.trace(
+		"Diffing {} byte and {} byte strings took {} microseconds and found {} diff sections",
+		#oldText,
+		#newText,
+		math.round((stopClock - startClock) * 1000 * 1000),
+		#diffs
+	)
 
 	-- Determine which lines to highlight
 	local add, remove = {}, {}
@@ -136,7 +142,7 @@ function StringDiffVisualizer:render()
 			}, {
 				UICorner = e("UICorner", {
 					CornerRadius = UDim.new(0, 5),
-				})
+				}),
 			}),
 			Separator = e("Frame", {
 				Size = UDim2.new(0, 2, 1, 0),
