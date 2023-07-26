@@ -4,6 +4,7 @@
 use std::{collections::HashMap, fs, path::PathBuf, str::FromStr, sync::Arc};
 
 use hyper::{body, Body, Method, Request, Response, StatusCode};
+use opener::OpenError;
 use rbx_dom_weak::types::Ref;
 
 use crate::{
@@ -236,7 +237,39 @@ impl ApiService {
             }
         };
 
-        let _ = opener::open(script_path);
+        match opener::open(&script_path) {
+            Ok(()) => {}
+            Err(error) => match error {
+                OpenError::Io(io_error) => {
+                    return json(
+                        ErrorResponse::internal_error(format!(
+                            "Attempting to open {} failed because of the following io error: {}",
+                            script_path.display(),
+                            io_error
+                        )),
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                    )
+                }
+                OpenError::ExitStatus {
+                    cmd,
+                    status,
+                    stderr,
+                } => {
+                    return json(
+                        ErrorResponse::internal_error(format!(
+                            r#"The command '{}' to open '{}' failed with the error code '{}'.
+                            Error logs:
+                            {}"#,
+                            cmd,
+                            script_path.display(),
+                            status,
+                            stderr
+                        )),
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                    )
+                }
+            },
+        };
 
         json_ok(&OpenResponse {
             session_id: self.serve_session.session_id(),

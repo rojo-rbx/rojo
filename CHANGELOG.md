@@ -1,6 +1,7 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* On failing to open a file from Roblox Studio, it is now logged appropriately instead of being ignored ([#745]).
 * Significantly improved performance of `rojo sourcemap`. ([#668])
 * Fixed the diff visualizer of connected sessions. ([#674])
 * Fixed disconnected session activity. ([#675])
@@ -21,6 +22,7 @@
 * Added better support for `Font` properties ([#731])
 * Add new plugin template to the `init` command ([#738])
 
+[#745]: https://github.com/rojo-rbx/rojo/pull/745
 [#668]: https://github.com/rojo-rbx/rojo/pull/668
 [#674]: https://github.com/rojo-rbx/rojo/pull/674
 [#675]: https://github.com/rojo-rbx/rojo/pull/675
