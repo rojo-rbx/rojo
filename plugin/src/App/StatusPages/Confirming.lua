@@ -142,7 +142,6 @@ function ConfirmingPage:render()
 				active = self.state.showingSourceDiff,
 
 				initDockState = Enum.InitialDockState.Float,
-				initEnabled = true,
 				overridePreviousState = true,
 				floatingSize = Vector2.new(500, 350),
 				minimumSize = Vector2.new(400, 250),
@@ -185,7 +184,6 @@ function ConfirmingPage:render()
 				active = true,
 
 				initDockState = Enum.InitialDockState.Float,
-				initEnabled = true,
 				overridePreviousState = true,
 				floatingSize = Vector2.new(500, 350),
 				minimumSize = Vector2.new(400, 250),
