@@ -51,7 +51,7 @@ end
 
 function StringDiffVisualizer:calculateContentSize()
 	local oldText, newText = self.props.oldText, self.props.newText
-	Log.trace("Calculating content size for {} {}", #oldText, #newText)
+
 	local oldTextBounds = TextService:GetTextSize(oldText, 16, Enum.Font.RobotoMono, Vector2.new(99999, 99999))
 	local newTextBounds = TextService:GetTextSize(newText, 16, Enum.Font.RobotoMono, Vector2.new(99999, 99999))
 
