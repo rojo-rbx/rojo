@@ -23,6 +23,14 @@ function StringDiffVisualizer:init()
 	self.scriptBackground, self.setScriptBackground = Roact.createBinding(Color3.fromRGB(0, 0, 0))
 	self.contentSize, self.setContentSize = Roact.createBinding(Vector2.new(0, 0))
 
+	-- Ensure that the script background is up to date with the current theme
+	self.themeChangedConnection = settings().Studio.ThemeChanged:Connect(function()
+		task.defer(function()
+			-- Defer to allow Highlighter to process the theme change first
+			self:updateScriptBackground()
+		end)
+	end)
+
 	self:calculateContentSize()
 	self:updateScriptBackground()
 
@@ -30,6 +38,10 @@ function StringDiffVisualizer:init()
 		add = {},
 		remove = {},
 	})
+end
+
+function StringDiffVisualizer:willUnmount()
+	self.themeChangedConnection:Disconnect()
 end
 
 function StringDiffVisualizer:updateScriptBackground()
@@ -40,9 +52,6 @@ function StringDiffVisualizer:updateScriptBackground()
 end
 
 function StringDiffVisualizer:didUpdate(previousProps)
-	-- Ensure that the script background is up to date with the current theme
-	self:updateScriptBackground()
-
 	if previousProps.oldText ~= self.props.oldText or previousProps.newText ~= self.props.newText then
 		self:calculateContentSize()
 		local add, remove = self:calculateDiffLines()
