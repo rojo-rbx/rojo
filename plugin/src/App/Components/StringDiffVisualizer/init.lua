@@ -24,7 +24,7 @@ function StringDiffVisualizer:init()
 	self.contentSize, self.setContentSize = Roact.createBinding(Vector2.new(0, 0))
 
 	self:calculateContentSize()
-	self:getScriptBackground()
+	self:updateScriptBackground()
 
 	self:setState({
 		add = {},
@@ -32,12 +32,16 @@ function StringDiffVisualizer:init()
 	})
 end
 
-function StringDiffVisualizer:getScriptBackground()
-	self.setScriptBackground(Highlighter.getTokenColor("background"))
+function StringDiffVisualizer:updateScriptBackground()
+	local backgroundColor = Highlighter.getTokenColor("background")
+	if backgroundColor ~= self.scriptBackground:getValue() then
+		self.setScriptBackground(backgroundColor)
+	end
 end
 
 function StringDiffVisualizer:didUpdate(previousProps)
-	self:getScriptBackground()
+	-- Ensure that the script background is up to date with the current theme
+	self:updateScriptBackground()
 
 	if previousProps.oldText ~= self.props.oldText or previousProps.newText ~= self.props.newText then
 		self:calculateContentSize()
