@@ -1,5 +1,4 @@
 local Rojo = script:FindFirstAncestor("Rojo")
-local Plugin = Rojo.Plugin
 local Packages = Rojo.Packages
 
 local Roact = require(Packages.Roact)
