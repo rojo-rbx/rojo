@@ -10,7 +10,7 @@ Rojo is divided into two main pieces: the server and the plugin. The server is w
 
 When serving a project, the server gathers data on all of the files in that project, puts it into a nice format, and then sends it to the plugin. Then, when something changes on the file system, it does the same thing for only the changed files and sends them to the plugin.
 
-When it recieves a patch (whether it be the initial patch or any subsequent ones), the plugin reads through it and attempts to to apply it. Any sugar (the patch visualizer, as an example) happens on top of the patches received from the server.
+When it receives a patch (whether it be the initial patch or any subsequent ones), the plugin reads through it and attempts to to apply it. Any sugar (the patch visualizer, as an example) happens on top of the patches received from the server.
 
 ## Server
 
@@ -22,7 +22,7 @@ Rojo's server component is divided into a few distinct pieces:
 
 ### The CLI
 
-The Comand Line Interface (CLI) of Rojo is the only interface for the program. It's initialized in `main.rs` but is hosted in `src/cli`.
+The Command Line Interface (CLI) of Rojo is the only interface for the program. It's initialized in `main.rs` but is hosted in `src/cli`.
 
 Each command for the CLI is hosted in its own file, with the `mod.rs` file for the `cli` module handling parsing and running each command. The commands are mostly self-contained, though may also interface with Rojo's other code when necessary.
 
@@ -57,6 +57,8 @@ This section of the document is left incomplete.
 Rojo has many data structures and their purpose might not be immediately clear at a glance. To alleviate this, they are documented below.
 
 ### Vfs
+
+To learn more, read about [`memofs` architecture](crates/memofs/ARCHITECTURE.md).
 
 ### ServeSession
 
