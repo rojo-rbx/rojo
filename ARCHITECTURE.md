@@ -44,7 +44,7 @@ Because snapshots are designed to be translated into Instances anyway, this syst
 
 ### The Web Server
 
-Rojo uses a small web server to forward changes to the plugin. Once a patch is computed by the snapshot system, it's made available via the server's API. Then, the plugin requests regularly, and if a new patch exists, recieves it and applies it in Studio.
+Rojo uses a small web server to forward changes to the plugin. Once a patch is computed by the snapshot system, it's made available via the server's API. The plugin is requesting patches regularly using a technique called [long polling](https://en.wikipedia.org/wiki/Push_technology#Long_polling) to receive the patches from the server and apply them to the datamodel in Studio.
 
 The web server itself is very basic, consisting of around half a dozen endpoints. The bulk of the work is performed by either the snapshot system or the plugin, with the web server acting as a middleman.
 
