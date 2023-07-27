@@ -23,19 +23,26 @@ local function ScrollingFrame(props)
 			BottomImage = Assets.Images.ScrollBar.Bottom,
 
 			ElasticBehavior = Enum.ElasticBehavior.Always,
-			ScrollingDirection = Enum.ScrollingDirection.Y,
+			ScrollingDirection = props.scrollingDirection or Enum.ScrollingDirection.Y,
 
 			Size = props.size,
 			Position = props.position,
 			AnchorPoint = props.anchorPoint,
 			CanvasSize = props.contentSize:map(function(value)
-				return UDim2.new(0, 0, 0, value.Y)
+				return UDim2.new(
+					0,
+					if (props.scrollingDirection and props.scrollingDirection ~= Enum.ScrollingDirection.Y)
+						then value.X
+						else 0,
+					0,
+					value.Y
+				)
 			end),
 
 			BorderSizePixel = 0,
 			BackgroundTransparency = 1,
 
-			[Roact.Change.AbsoluteSize] = props[Roact.Change.AbsoluteSize]
+			[Roact.Change.AbsoluteSize] = props[Roact.Change.AbsoluteSize],
 		}, props[Roact.Children])
 	end)
 end

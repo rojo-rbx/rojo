@@ -554,7 +554,6 @@ function App:render()
 					active = self.state.guiEnabled,
 
 					initDockState = Enum.InitialDockState.Right,
-					initEnabled = false,
 					overridePreviousState = false,
 					floatingSize = Vector2.new(320, 210),
 					minimumSize = Vector2.new(300, 210),

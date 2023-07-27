@@ -13,3 +13,6 @@
 [submodule "plugin/Packages/TestEZ"]
 	path = plugin/Packages/TestEZ
 	url = https://github.com/roblox/testez.git
+[submodule "plugin/Packages/Highlighter"]
+	path = plugin/Packages/Highlighter
+	url = https://github.com/boatbomber/highlighter.git

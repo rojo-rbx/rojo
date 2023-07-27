@@ -13,6 +13,7 @@ local Header = require(Plugin.App.Components.Header)
 local StudioPluginGui = require(Plugin.App.Components.Studio.StudioPluginGui)
 local Tooltip = require(Plugin.App.Components.Tooltip)
 local PatchVisualizer = require(Plugin.App.Components.PatchVisualizer)
+local StringDiffVisualizer = require(Plugin.App.Components.StringDiffVisualizer)
 
 local e = Roact.createElement
 
@@ -21,6 +22,12 @@ local ConfirmingPage = Roact.Component:extend("ConfirmingPage")
 function ConfirmingPage:init()
 	self.contentSize, self.setContentSize = Roact.createBinding(0)
 	self.containerSize, self.setContainerSize = Roact.createBinding(Vector2.new(0, 0))
+
+	self:setState({
+		showingSourceDiff = false,
+		oldSource = "",
+		newSource = "",
+	})
 end
 
 function ConfirmingPage:render()
@@ -55,6 +62,14 @@ function ConfirmingPage:render()
 				changeListHeaders = { "Property", "Current", "Incoming" },
 				patch = self.props.confirmData.patch,
 				instanceMap = self.props.confirmData.instanceMap,
+
+				showSourceDiff = function(oldSource: string, newSource: string)
+					self:setState({
+						showingSourceDiff = true,
+						oldSource = oldSource,
+						newSource = newSource,
+					})
+				end,
 			}),
 
 			Buttons = e("Frame", {
@@ -120,6 +135,43 @@ function ConfirmingPage:render()
 				PaddingLeft = UDim.new(0, 20),
 				PaddingRight = UDim.new(0, 20),
 			}),
+
+			SourceDiff = e(StudioPluginGui, {
+				id = "Rojo_ConfirmingSourceDiff",
+				title = "Source diff",
+				active = self.state.showingSourceDiff,
+
+				initDockState = Enum.InitialDockState.Float,
+				overridePreviousState = true,
+				floatingSize = Vector2.new(500, 350),
+				minimumSize = Vector2.new(400, 250),
+
+				zIndexBehavior = Enum.ZIndexBehavior.Sibling,
+
+				onClose = function()
+					self:setState({
+						showingSourceDiff = false,
+					})
+				end,
+			}, {
+				TooltipsProvider = e(Tooltip.Provider, nil, {
+					Tooltips = e(Tooltip.Container, nil),
+					Content = e("Frame", {
+						Size = UDim2.fromScale(1, 1),
+						BackgroundTransparency = 1,
+					}, {
+						e(StringDiffVisualizer, {
+							size = UDim2.new(1, -10, 1, -10),
+							position = UDim2.new(0, 5, 0, 5),
+							anchorPoint = Vector2.new(0, 0),
+							transparency = self.props.transparency,
+
+							oldText = self.state.oldSource,
+							newText = self.state.newSource,
+						})
+					}),
+				}),
+			}),
 		})
 
 		if self.props.createPopup then
@@ -132,7 +184,6 @@ function ConfirmingPage:render()
 				active = true,
 
 				initDockState = Enum.InitialDockState.Float,
-				initEnabled = true,
 				overridePreviousState = true,
 				floatingSize = Vector2.new(500, 350),
 				minimumSize = Vector2.new(400, 250),
