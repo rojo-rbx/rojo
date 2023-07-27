@@ -10,7 +10,7 @@ Rojo is divided into two main pieces: the server and the Studio plugin. The serv
 
 When serving a project, the server gathers data on all of the files in that project, puts it into a nice format, and then sends it to the plugin. Then, when something changes on the file system, it does the same thing for only the changed files and sends them to the plugin.
 
-When it receives a patch (whether it be the initial patch or any subsequent ones), the plugin reads through it and attempts to to apply it. Any sugar (the patch visualizer, as an example) happens on top of the patches received from the server.
+When the plugin receives a patch from the server (whether it be the initial patch or any subsequent ones), the plugin reads through the patch and attempts to to apply the changes described by it. Any sugar (the patch visualizer, as an example) happens on top of the patches received from the server.
 
 ## Server
 
