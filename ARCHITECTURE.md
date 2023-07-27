@@ -6,7 +6,7 @@ This document is a "what the heck is going on" level view of Rojo and the codeba
 
 ## Overarching
 
-Rojo is divided into two main pieces: the server and the plugin. The server is what's ran on your computer (whether it be via the terminal or the visual studio code extension), with the plugin serving as its main client.
+Rojo is divided into two main pieces: the server and the Studio plugin. The server runs with access to your filesystem (whether it be via the terminal, the visual studio code extension, or a remote machine), with the Studio plugin acting as its main client.
 
 When serving a project, the server gathers data on all of the files in that project, puts it into a nice format, and then sends it to the plugin. Then, when something changes on the file system, it does the same thing for only the changed files and sends them to the plugin.
 
