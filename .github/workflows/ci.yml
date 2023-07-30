@@ -6,7 +6,7 @@ on:
     - master
 
   pull_request:
-    paths: ["*.rs", "*.toml", "*.json", "*.lua", "*.luau"]
+    paths: ["*.rs", "*.toml", "*.json", "*.lua", "*.luau", "*.rbxm", "*.rbxl", "*.rbxmx", "*.rbxlx", "*.txt", "*.yml", "*.csv"]
     branches:
     - master
 
