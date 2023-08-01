@@ -64,18 +64,18 @@ local Tree = {}
 Tree.__index = Tree
 
 function Tree.new()
-    local tree = {
-        idToNode = {},
+	local tree = {
+		idToNode = {},
 		ROOT = {
 			className = "DataModel",
 			name = "ROOT",
 			children = {},
 		},
-    }
-    -- Add ROOT to idToNode or it won't be found by getNode since that searches *within* ROOT
+	}
+	-- Add ROOT to idToNode or it won't be found by getNode since that searches *within* ROOT
 	tree.idToNode["ROOT"] = tree.ROOT
 
-    return setmetatable(tree, Tree)
+	return setmetatable(tree, Tree)
 end
 
 -- Iterates over all sub-nodes, depth first
@@ -94,23 +94,23 @@ end
 -- Finds a node by id, depth first
 -- searchNode is the node to start the search within, defaults to root
 function Tree:getNode(id, searchNode)
-    if self.idToNode[id] then
-        return self.idToNode[id]
-    end
+	if self.idToNode[id] then
+		return self.idToNode[id]
+	end
 
 	local searchChildren = (searchNode or self.ROOT).children
-    for nodeId, node in searchChildren do
-        if nodeId == id then
-            self.idToNode[id] = node
-            return node
-        end
-        local descendant = self:getNode(id, node)
-        if descendant then
-            return descendant
-        end
-    end
+	for nodeId, node in searchChildren do
+		if nodeId == id then
+			self.idToNode[id] = node
+			return node
+		end
+		local descendant = self:getNode(id, node)
+		if descendant then
+			return descendant
+		end
+	end
 
-    return nil
+	return nil
 end
 
 function Tree:doesNodeExist(id)
@@ -124,53 +124,53 @@ end
 function Tree:addNode(parent, props)
 	assert(props.id, "props must contain id")
 
-    parent = parent or "ROOT"
+	parent = parent or "ROOT"
 
 	if self:doesNodeExist(props.id) then
 		-- Update existing node
 		local node = self:getNode(props.id)
-        for k, v in props do
-            node[k] = v
-        end
-        return node
+		for k, v in props do
+			node[k] = v
+		end
+		return node
 	end
 
-    local node = table.clone(props)
-    node.children = {}
+	local node = table.clone(props)
+	node.children = {}
 	node.parentId = parent
 
-    local parentNode = self:getNode(parent)
-    if not parentNode then
-        Log.warn("Failed to create node since parent doesnt exist: {}, {}", parent, props)
-        return
-    end
+	local parentNode = self:getNode(parent)
+	if not parentNode then
+		Log.warn("Failed to create node since parent doesnt exist: {}, {}", parent, props)
+		return
+	end
 
-    parentNode.children[node.id] = node
-    self.idToNode[node.id] = node
+	parentNode.children[node.id] = node
+	self.idToNode[node.id] = node
 
-    return node
+	return node
 end
 
 -- Given a list of ancestor ids in descending order, builds the nodes for them
 -- using the patch and instanceMap info
 function Tree:buildAncestryNodes(previousId: string?, ancestryIds: { string }, patch, instanceMap)
-    -- Build nodes for ancestry by going up the tree
-    previousId = previousId or "ROOT"
+	-- Build nodes for ancestry by going up the tree
+	previousId = previousId or "ROOT"
 
-    for _, ancestorId in ancestryIds do
-        local value = instanceMap.fromIds[ancestorId] or patch.added[ancestorId]
-        if not value then
-            Log.warn("Failed to find ancestor object for " .. ancestorId)
-            continue
-        end
-        self:addNode(previousId, {
-            id = ancestorId,
-            className = value.ClassName,
-            name = value.Name,
-            instance = if typeof(value) == "Instance" then value else nil,
-        })
-        previousId = ancestorId
-    end
+	for _, ancestorId in ancestryIds do
+		local value = instanceMap.fromIds[ancestorId] or patch.added[ancestorId]
+		if not value then
+			Log.warn("Failed to find ancestor object for " .. ancestorId)
+			continue
+		end
+		self:addNode(previousId, {
+			id = ancestorId,
+			className = value.ClassName,
+			name = value.Name,
+			instance = if typeof(value) == "Instance" then value else nil,
+		})
+		previousId = ancestorId
+	end
 end
 
 local PatchTree = {}
