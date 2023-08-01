@@ -22,6 +22,7 @@
 * Added better support for `Font` properties ([#731])
 * Add new plugin template to the `init` command ([#738])
 * Added rich Source diffs in patch visualizer ([#748])
+* Fix PatchTree performance issues ([#755])
 
 [#745]: https://github.com/rojo-rbx/rojo/pull/745
 [#668]: https://github.com/rojo-rbx/rojo/pull/668
@@ -44,6 +45,7 @@
 [#731]: https://github.com/rojo-rbx/rojo/pull/731
 [#738]: https://github.com/rojo-rbx/rojo/pull/738
 [#748]: https://github.com/rojo-rbx/rojo/pull/748
+[#755]: https://github.com/rojo-rbx/rojo/pull/755
 
 ## [7.3.0] - April 22, 2023
 * Added `$attributes` to project format. ([#574])
