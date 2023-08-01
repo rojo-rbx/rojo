@@ -122,16 +122,7 @@ function Tree:addNode(parent, props)
 
     parent = parent or "ROOT"
 
-    local node = self:getNode(props.id)
-    if node then
-		-- Update existing node
-        for k, v in props do
-            node[k] = v
-        end
-        return node
-    end
-
-    node = table.clone(props)
+    local node = table.clone(props)
     node.children = {}
 	node.parentId = parent
 
@@ -149,9 +140,10 @@ end
 
 -- Given a list of ancestor ids in descending order, builds the nodes for them
 -- using the patch and instanceMap info
-function Tree:buildAncestryNodes(ancestryIds: { string }, patch, instanceMap)
+function Tree:buildAncestryNodes(previousId: string?, ancestryIds: { string }, patch, instanceMap)
     -- Build nodes for ancestry by going up the tree
-    local previousId = "ROOT"
+    previousId = previousId or "ROOT"
+
     for _, ancestorId in ancestryIds do
         local value = instanceMap.fromIds[ancestorId] or patch.added[ancestorId]
         if not value then
@@ -175,6 +167,8 @@ local PatchTree = {}
 function PatchTree.build(patch, instanceMap, changeListHeaders)
 	local tree = Tree.new()
 
+	local knownAncestors = {}
+
 	for _, change in patch.updated do
 		local instance = instanceMap.fromIds[change.id]
 		if not instance then
@@ -185,13 +179,21 @@ function PatchTree.build(patch, instanceMap, changeListHeaders)
 		local ancestryIds = {}
 		local parentObject = instance.Parent
 		local parentId = instanceMap.fromInstances[parentObject]
+		local previousId = nil
 		while parentObject do
+			if knownAncestors[parentId] then
+				-- We've already added this ancestor
+				previousId = parentId
+				break
+			end
+
 			table.insert(ancestryIds, 1, parentId)
+			knownAncestors[parentId] = true
 			parentObject = parentObject.Parent
 			parentId = instanceMap.fromInstances[parentObject]
 		end
 
-		tree:buildAncestryNodes(ancestryIds, patch, instanceMap)
+		tree:buildAncestryNodes(previousId, ancestryIds, patch, instanceMap)
 
 		-- Gather detail text
 		local changeList, hint = nil, nil
@@ -268,14 +270,22 @@ function PatchTree.build(patch, instanceMap, changeListHeaders)
 		local ancestryIds = {}
 		local parentObject = instance.Parent
 		local parentId = instanceMap.fromInstances[parentObject] or HttpService:GenerateGUID(false)
+		local previousId = nil
 		while parentObject do
+			if knownAncestors[parentId] then
+				-- We've already added this ancestor
+				previousId = parentId
+				break
+			end
+
 			instanceMap:insert(parentId, parentObject) -- This ensures we can find the parent later
 			table.insert(ancestryIds, 1, parentId)
+			knownAncestors[parentId] = true
 			parentObject = parentObject.Parent
 			parentId = instanceMap.fromInstances[parentObject] or HttpService:GenerateGUID(false)
 		end
 
-		tree:buildAncestryNodes(ancestryIds, patch, instanceMap)
+		tree:buildAncestryNodes(previousId, ancestryIds, patch, instanceMap)
 
 		-- Add this node to tree
 		local nodeId = instanceMap.fromInstances[instance] or HttpService:GenerateGUID(false)
@@ -295,8 +305,16 @@ function PatchTree.build(patch, instanceMap, changeListHeaders)
 		local parentId = change.Parent
 		local parentData = patch.added[parentId]
 		local parentObject = instanceMap.fromIds[parentId]
+		local previousId = nil
 		while parentId do
+			if knownAncestors[parentId] then
+				-- We've already added this ancestor
+				previousId = parentId
+				break
+			end
+
 			table.insert(ancestryIds, 1, parentId)
+			knownAncestors[parentId] = true
 			parentId = nil
 
 			if parentData then
@@ -312,7 +330,7 @@ function PatchTree.build(patch, instanceMap, changeListHeaders)
 			end
 		end
 
-		tree:buildAncestryNodes(ancestryIds, patch, instanceMap)
+		tree:buildAncestryNodes(previousId, ancestryIds, patch, instanceMap)
 
 		-- Gather detail text
 		local changeList, hint = nil, nil
