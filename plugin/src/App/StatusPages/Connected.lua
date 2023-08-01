@@ -400,7 +400,7 @@ function ConnectedPage:render()
 				active = self.state.showingSourceDiff,
 
 				initDockState = Enum.InitialDockState.Float,
-				overridePreviousState = true,
+				overridePreviousState = false,
 				floatingSize = Vector2.new(500, 350),
 				minimumSize = Vector2.new(400, 250),
 
