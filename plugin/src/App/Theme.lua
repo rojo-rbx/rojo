@@ -23,207 +23,198 @@ local Log = require(Packages.Log)
 
 local strict = require(script.Parent.Parent.strict)
 
--- Copying hex colors back and forth from design programs is faster
-local function hexColor(decimal)
-	local red = bit32.band(bit32.rshift(decimal, 16), 2^8 - 1)
-	local green = bit32.band(bit32.rshift(decimal, 8), 2^8 - 1)
-	local blue = bit32.band(decimal, 2^8 - 1)
-
-	return Color3.fromRGB(red, green, blue)
-end
-
-local BRAND_COLOR = hexColor(0xE13835)
+local BRAND_COLOR = Color3.fromHex("E13835")
 
 local lightTheme = strict("LightTheme", {
-	BackgroundColor = hexColor(0xFFFFFF),
+	BackgroundColor = Color3.fromHex("FFFFFF"),
 	Button = {
 		Solid = {
-			ActionFillColor = hexColor(0xFFFFFF),
+			ActionFillColor = Color3.fromHex("FFFFFF"),
 			ActionFillTransparency = 0.8,
 			Enabled = {
-				TextColor = hexColor(0xFFFFFF),
+				TextColor = Color3.fromHex("FFFFFF"),
 				BackgroundColor = BRAND_COLOR,
 			},
 			Disabled = {
-				TextColor = hexColor(0xFFFFFF),
+				TextColor = Color3.fromHex("FFFFFF"),
 				BackgroundColor = BRAND_COLOR,
 			},
 		},
 		Bordered = {
-			ActionFillColor = hexColor(0x000000),
+			ActionFillColor = Color3.fromHex("000000"),
 			ActionFillTransparency = 0.9,
 			Enabled = {
-				TextColor = hexColor(0x393939),
-				BorderColor = hexColor(0xACACAC),
+				TextColor = Color3.fromHex("393939"),
+				BorderColor = Color3.fromHex("ACACAC"),
 			},
 			Disabled = {
-				TextColor = hexColor(0x393939),
-				BorderColor = hexColor(0xACACAC),
+				TextColor = Color3.fromHex("393939"),
+				BorderColor = Color3.fromHex("ACACAC"),
 			},
 		},
 	},
 	Checkbox = {
 		Active = {
-			IconColor = hexColor(0xFFFFFF),
+			IconColor = Color3.fromHex("FFFFFF"),
 			BackgroundColor = BRAND_COLOR,
 		},
 		Inactive = {
-			IconColor = hexColor(0xEEEEEE),
-			BorderColor = hexColor(0xAFAFAF),
+			IconColor = Color3.fromHex("EEEEEE"),
+			BorderColor = Color3.fromHex("AFAFAF"),
 		},
 	},
 	Dropdown = {
-		TextColor = hexColor(0x00000),
-		BorderColor = hexColor(0xAFAFAF),
-		BackgroundColor = hexColor(0xEEEEEE),
+		TextColor = Color3.fromHex("00000"),
+		BorderColor = Color3.fromHex("AFAFAF"),
+		BackgroundColor = Color3.fromHex("EEEEEE"),
 		Open = {
 			IconColor = BRAND_COLOR,
 		},
 		Closed = {
-			IconColor = hexColor(0xEEEEEE),
+			IconColor = Color3.fromHex("EEEEEE"),
 		},
 	},
 	AddressEntry = {
-		TextColor = hexColor(0x000000),
-		PlaceholderColor = hexColor(0x8C8C8C)
+		TextColor = Color3.fromHex("000000"),
+		PlaceholderColor = Color3.fromHex("8C8C8C")
 	},
 	BorderedContainer = {
-		BorderColor = hexColor(0xCBCBCB),
-		BackgroundColor = hexColor(0xEEEEEE),
+		BorderColor = Color3.fromHex("CBCBCB"),
+		BackgroundColor = Color3.fromHex("EEEEEE"),
 	},
 	Spinner = {
 		ForegroundColor = BRAND_COLOR,
-		BackgroundColor = hexColor(0xEEEEEE),
+		BackgroundColor = Color3.fromHex("EEEEEE"),
 	},
 	Diff = {
-		Add = hexColor(0xbaffbd),
-		Remove = hexColor(0xffbdba),
-		Edit = hexColor(0xbacdff),
-		Row = hexColor(0x000000),
-		Warning = hexColor(0xFF8E3C),
+		Add = Color3.fromHex("baffbd"),
+		Remove = Color3.fromHex("ffbdba"),
+		Edit = Color3.fromHex("bacdff"),
+		Row = Color3.fromHex("000000"),
+		Warning = Color3.fromHex("FF8E3C"),
 	},
 	ConnectionDetails = {
-		ProjectNameColor = hexColor(0x00000),
-		AddressColor = hexColor(0x00000),
+		ProjectNameColor = Color3.fromHex("00000"),
+		AddressColor = Color3.fromHex("00000"),
 		DisconnectColor = BRAND_COLOR,
 	},
 	Settings = {
-		DividerColor = hexColor(0xCBCBCB),
+		DividerColor = Color3.fromHex("CBCBCB"),
 		Navbar = {
-			BackButtonColor = hexColor(0x000000),
-			TextColor = hexColor(0x000000),
+			BackButtonColor = Color3.fromHex("000000"),
+			TextColor = Color3.fromHex("000000"),
 		},
 		Setting = {
-			NameColor = hexColor(0x000000),
-			DescriptionColor = hexColor(0x5F5F5F),
+			NameColor = Color3.fromHex("000000"),
+			DescriptionColor = Color3.fromHex("5F5F5F"),
 		},
 	},
 	Header = {
 		LogoColor = BRAND_COLOR,
-		VersionColor = hexColor(0x727272),
+		VersionColor = Color3.fromHex("727272"),
 	},
 	Notification = {
-		InfoColor = hexColor(0x00000),
+		InfoColor = Color3.fromHex("00000"),
 		CloseColor = BRAND_COLOR,
 	},
-	ErrorColor = hexColor(0x000000),
-	ScrollBarColor = hexColor(0x000000),
+	ErrorColor = Color3.fromHex("000000"),
+	ScrollBarColor = Color3.fromHex("000000"),
 })
 
 local darkTheme = strict("DarkTheme", {
-	BackgroundColor = hexColor(0x2E2E2E),
+	BackgroundColor = Color3.fromHex("2E2E2E"),
 	Button = {
 		Solid = {
-			ActionFillColor = hexColor(0xFFFFFF),
+			ActionFillColor = Color3.fromHex("FFFFFF"),
 			ActionFillTransparency = 0.8,
 			Enabled = {
-				TextColor = hexColor(0xFFFFFF),
+				TextColor = Color3.fromHex("FFFFFF"),
 				BackgroundColor = BRAND_COLOR,
 			},
 			Disabled = {
-				TextColor = hexColor(0xFFFFFF),
+				TextColor = Color3.fromHex("FFFFFF"),
 				BackgroundColor = BRAND_COLOR,
 			},
 		},
 		Bordered = {
-			ActionFillColor = hexColor(0xFFFFFF),
+			ActionFillColor = Color3.fromHex("FFFFFF"),
 			ActionFillTransparency = 0.9,
 			Enabled = {
-				TextColor = hexColor(0xDBDBDB),
-				BorderColor = hexColor(0x535353),
+				TextColor = Color3.fromHex("DBDBDB"),
+				BorderColor = Color3.fromHex("535353"),
 			},
 			Disabled = {
-				TextColor = hexColor(0xDBDBDB),
-				BorderColor = hexColor(0x535353),
+				TextColor = Color3.fromHex("DBDBDB"),
+				BorderColor = Color3.fromHex("535353"),
 			},
 		},
 	},
 	Checkbox = {
 		Active = {
-			IconColor = hexColor(0xFFFFFF),
+			IconColor = Color3.fromHex("FFFFFF"),
 			BackgroundColor = BRAND_COLOR,
 		},
 		Inactive = {
-			IconColor = hexColor(0x484848),
-			BorderColor = hexColor(0x5A5A5A),
+			IconColor = Color3.fromHex("484848"),
+			BorderColor = Color3.fromHex("5A5A5A"),
 		},
 	},
 	Dropdown = {
-		TextColor = hexColor(0xFFFFFF),
-		BorderColor = hexColor(0x5A5A5A),
-		BackgroundColor = hexColor(0x2B2B2B),
+		TextColor = Color3.fromHex("FFFFFF"),
+		BorderColor = Color3.fromHex("5A5A5A"),
+		BackgroundColor = Color3.fromHex("2B2B2B"),
 		Open = {
 			IconColor = BRAND_COLOR,
 		},
 		Closed = {
-			IconColor = hexColor(0x484848),
+			IconColor = Color3.fromHex("484848"),
 		},
 	},
 	AddressEntry = {
-		TextColor = hexColor(0xFFFFFF),
-		PlaceholderColor = hexColor(0x8B8B8B)
+		TextColor = Color3.fromHex("FFFFFF"),
+		PlaceholderColor = Color3.fromHex("8B8B8B")
 	},
 	BorderedContainer = {
-		BorderColor = hexColor(0x535353),
-		BackgroundColor = hexColor(0x2B2B2B),
+		BorderColor = Color3.fromHex("535353"),
+		BackgroundColor = Color3.fromHex("2B2B2B"),
 	},
 	Spinner = {
 		ForegroundColor = BRAND_COLOR,
-		BackgroundColor = hexColor(0x2B2B2B),
+		BackgroundColor = Color3.fromHex("2B2B2B"),
 	},
 	Diff = {
-		Add = hexColor(0x273732),
-		Remove = hexColor(0x3F2D32),
-		Edit = hexColor(0x193345),
-		Row = hexColor(0xFFFFFF),
-		Warning = hexColor(0xFF8E3C),
+		Add = Color3.fromHex("273732"),
+		Remove = Color3.fromHex("3F2D32"),
+		Edit = Color3.fromHex("193345"),
+		Row = Color3.fromHex("FFFFFF"),
+		Warning = Color3.fromHex("FF8E3C"),
 	},
 	ConnectionDetails = {
-		ProjectNameColor = hexColor(0xFFFFFF),
-		AddressColor = hexColor(0xFFFFFF),
-		DisconnectColor = hexColor(0xFFFFFF),
+		ProjectNameColor = Color3.fromHex("FFFFFF"),
+		AddressColor = Color3.fromHex("FFFFFF"),
+		DisconnectColor = Color3.fromHex("FFFFFF"),
 	},
 	Settings = {
-		DividerColor = hexColor(0x535353),
+		DividerColor = Color3.fromHex("535353"),
 		Navbar = {
-			BackButtonColor = hexColor(0xFFFFFF),
-			TextColor = hexColor(0xFFFFFF),
+			BackButtonColor = Color3.fromHex("FFFFFF"),
+			TextColor = Color3.fromHex("FFFFFF"),
 		},
 		Setting = {
-			NameColor = hexColor(0xFFFFFF),
-			DescriptionColor = hexColor(0xD3D3D3),
+			NameColor = Color3.fromHex("FFFFFF"),
+			DescriptionColor = Color3.fromHex("D3D3D3"),
 		},
 	},
 	Header = {
 		LogoColor = BRAND_COLOR,
-		VersionColor = hexColor(0xD3D3D3)
+		VersionColor = Color3.fromHex("D3D3D3")
 	},
 	Notification = {
-		InfoColor = hexColor(0xFFFFFF),
-		CloseColor = hexColor(0xFFFFFF),
+		InfoColor = Color3.fromHex("FFFFFF"),
+		CloseColor = Color3.fromHex("FFFFFF"),
 	},
-	ErrorColor = hexColor(0xFFFFFF),
-	ScrollBarColor = hexColor(0xFFFFFF),
+	ErrorColor = Color3.fromHex("FFFFFF"),
+	ScrollBarColor = Color3.fromHex("FFFFFF"),
 })
 
 local Context = Roact.createContext(lightTheme)
