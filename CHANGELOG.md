@@ -1,6 +1,7 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Internally for themes, we use `Color3.fromHex` now instead of custom-made solution ([#761]).
 * On failing to open a file from Roblox Studio, it is now logged appropriately instead of being ignored ([#745]).
 * Significantly improved performance of `rojo sourcemap`. ([#668])
 * Fixed the diff visualizer of connected sessions. ([#674])
@@ -24,6 +25,7 @@
 * Added rich Source diffs in patch visualizer ([#748])
 * Fix PatchTree performance issues ([#755])
 
+[#761]: https://github.com/rojo-rbx/rojo/pull/761
 [#745]: https://github.com/rojo-rbx/rojo/pull/745
 [#668]: https://github.com/rojo-rbx/rojo/pull/668
 [#674]: https://github.com/rojo-rbx/rojo/pull/674
