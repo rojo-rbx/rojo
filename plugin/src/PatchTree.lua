@@ -113,6 +113,10 @@ function Tree:getNode(id, searchNode)
     return nil
 end
 
+function Tree:doesNodeExist(id)
+	return self.idToNode[id] ~= nil
+end
+
 -- Adds a node to the tree as a child of the node with id == parent
 -- If parent is nil, it defaults to root
 -- props must contain id, and cannot contain children or parentId
@@ -121,6 +125,15 @@ function Tree:addNode(parent, props)
 	assert(props.id, "props must contain id")
 
     parent = parent or "ROOT"
+
+	if self:doesNodeExist(props.id) then
+		-- Update existing node
+		local node = self:getNode(props.id)
+        for k, v in props do
+            node[k] = v
+        end
+        return node
+	end
 
     local node = table.clone(props)
     node.children = {}
