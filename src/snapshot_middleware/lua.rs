@@ -1,8 +1,10 @@
 use std::{path::Path, str};
 
-use anyhow::Context;
+use anyhow::{Context, format_err};
 use maplit::hashmap;
 use memofs::{IoResultExt, Vfs};
+use rbx_dom_weak::types::Enum;
+use serde::{Deserialize, Serialize};
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
@@ -12,6 +14,20 @@ use super::{
     util::match_trailing,
 };
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+pub enum ScriptContextType {
+    #[default]
+    Class,
+    RunContext
+}
+
+#[derive(Debug)]
+enum ScriptType {
+    Server,
+    Client,
+    Module,
+}
+
 /// Core routine for turning Lua files into snapshots.
 pub fn snapshot_lua(
     context: &InstanceContext,
@@ -20,21 +36,33 @@ pub fn snapshot_lua(
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let file_name = path.file_name().unwrap().to_string_lossy();
 
-    let (class_name, instance_name) = if let Some(name) = match_trailing(&file_name, ".server.lua")
+    let is_runcontext_enabled = true; //project.script_type == ScriptType::RunContext;
+
+    let run_context = &rbx_reflection_database::get().enums.get("RunContext").ok_or_else(|| format_err!("Unable to get RunContext enums!"))?.items;
+
+    let (script_type, instance_name) = if let Some(name) = match_trailing(&file_name, ".server.lua")
     {
-        ("Script", name)
+        (ScriptType::Server, name)
     } else if let Some(name) = match_trailing(&file_name, ".client.lua") {
-        ("LocalScript", name)
+        (ScriptType::Client, name)
     } else if let Some(name) = match_trailing(&file_name, ".lua") {
-        ("ModuleScript", name)
+        (ScriptType::Module, name)
     } else if let Some(name) = match_trailing(&file_name, ".server.luau") {
-        ("Script", name)
+        (ScriptType::Server, name)
     } else if let Some(name) = match_trailing(&file_name, ".client.luau") {
-        ("LocalScript", name)
+        (ScriptType::Client, name)
     } else if let Some(name) = match_trailing(&file_name, ".luau") {
-        ("ModuleScript", name)
+        (ScriptType::Module, name)
     } else {
         return Ok(None);
+    };
+
+    let (class_name, run_context) = match (is_runcontext_enabled, script_type) {
+        (true, ScriptType::Server) => ("Script", run_context.get("Server")),
+        (true, ScriptType::Client) => ("Script", run_context.get("Client")),
+        (false, ScriptType::Server) => ("Script", run_context.get("Legacy")),
+        (false, ScriptType::Client) => ("LocalScript", None),
+        (_, ScriptType::Module) => ("ModuleScript", None),
     };
 
     let contents = vfs.read(path)?;
@@ -42,14 +70,20 @@ pub fn snapshot_lua(
         .with_context(|| format!("File was not valid UTF-8: {}", path.display()))?
         .to_owned();
 
+    let mut properties = hashmap! {
+        "Source".to_owned() => contents_str.into(),
+    };
+
+    if let Some(run_context) = run_context {
+        properties.insert("RunContext".to_owned(), Enum::from_u32(run_context.to_owned()).into());
+    }
+
     let meta_path = path.with_file_name(format!("{}.meta.json", instance_name));
 
     let mut snapshot = InstanceSnapshot::new()
         .name(instance_name)
         .class_name(class_name)
-        .properties(hashmap! {
-            "Source".to_owned() => contents_str.into(),
-        })
+        .properties(properties)
         .metadata(
             InstanceMetadata::new()
                 .instigating_source(path)

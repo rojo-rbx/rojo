@@ -8,7 +8,7 @@ use std::{
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use crate::{glob::Glob, resolution::UnresolvedValue};
+use crate::{glob::Glob, resolution::UnresolvedValue, snapshot_middleware::ScriptContextType};
 
 static PROJECT_FILENAME: &str = "default.project.json";
 
@@ -72,6 +72,10 @@ pub struct Project {
     /// As long as --address is unprovided.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub serve_address: Option<IpAddr>,
+
+    /// The mode to use when mapping scripts onto Roblox
+    #[serde(default)]
+    pub script_type: ScriptContextType,
 
     /// A list of globs, relative to the folder the project file is in, that
     /// match files that should be excluded if Rojo encounters them.
