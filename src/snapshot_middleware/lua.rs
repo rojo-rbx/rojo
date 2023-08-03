@@ -18,7 +18,7 @@ use super::{
 pub enum ScriptContextType {
     #[default]
     Class,
-    RunContext
+    RunContext,
 }
 
 #[derive(Debug)]
@@ -36,9 +36,9 @@ pub fn snapshot_lua(
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let file_name = path.file_name().unwrap().to_string_lossy();
 
-    let is_runcontext_enabled = true; //project.script_type == ScriptType::RunContext;
+    let is_run_context_enabled = true; //project.script_type == ScriptType::RunContext;
 
-    let run_context = &rbx_reflection_database::get().enums.get("RunContext").ok_or_else(|| format_err!("Unable to get RunContext enums!"))?.items;
+    let run_context = &rbx_reflection_database::get().enums.get("RunContext").expect("Unable to get RunContext enums!").items;
 
     let (script_type, instance_name) = if let Some(name) = match_trailing(&file_name, ".server.lua")
     {
@@ -57,7 +57,7 @@ pub fn snapshot_lua(
         return Ok(None);
     };
 
-    let (class_name, run_context) = match (is_runcontext_enabled, script_type) {
+    let (class_name, run_context) = match (is_run_context_enabled, script_type) {
         (true, ScriptType::Server) => ("Script", run_context.get("Server")),
         (true, ScriptType::Client) => ("Script", run_context.get("Client")),
         (false, ScriptType::Server) => ("Script", run_context.get("Legacy")),
