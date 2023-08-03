@@ -64,7 +64,7 @@ local lightTheme = strict("LightTheme", {
 		},
 	},
 	Dropdown = {
-		TextColor = Color3.fromHex("00000"),
+		TextColor = Color3.fromHex("000000"),
 		BorderColor = Color3.fromHex("AFAFAF"),
 		BackgroundColor = Color3.fromHex("EEEEEE"),
 		Open = {
@@ -94,8 +94,8 @@ local lightTheme = strict("LightTheme", {
 		Warning = Color3.fromHex("FF8E3C"),
 	},
 	ConnectionDetails = {
-		ProjectNameColor = Color3.fromHex("00000"),
-		AddressColor = Color3.fromHex("00000"),
+		ProjectNameColor = Color3.fromHex("000000"),
+		AddressColor = Color3.fromHex("000000"),
 		DisconnectColor = BRAND_COLOR,
 	},
 	Settings = {
@@ -114,7 +114,7 @@ local lightTheme = strict("LightTheme", {
 		VersionColor = Color3.fromHex("727272"),
 	},
 	Notification = {
-		InfoColor = Color3.fromHex("00000"),
+		InfoColor = Color3.fromHex("000000"),
 		CloseColor = BRAND_COLOR,
 	},
 	ErrorColor = Color3.fromHex("000000"),
