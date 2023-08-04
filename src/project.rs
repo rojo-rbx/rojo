@@ -73,7 +73,9 @@ pub struct Project {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub serve_address: Option<IpAddr>,
 
-    /// The mode to use when mapping scripts onto Roblox
+    /// The mode to use when mapping scripts into Roblox.
+    /// Can be either `Class` or `RunContext` and determines whether script
+    /// behavior is set using the `RunContext` property or the script's `ClassName`.
     #[serde(default)]
     pub script_type: ScriptContextType,
 
