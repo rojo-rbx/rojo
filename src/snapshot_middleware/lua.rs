@@ -1,7 +1,6 @@
-use std::{path::Path, str};
+use std::{path::Path, str, collections::HashMap};
 
-use anyhow::{Context};
-use maplit::hashmap;
+use anyhow::Context;
 use memofs::{IoResultExt, Vfs};
 use rbx_dom_weak::types::Enum;
 use serde::{Deserialize, Serialize};
@@ -14,7 +13,7 @@ use super::{
     util::match_trailing,
 };
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Default)]
 pub enum ScriptContextType {
     #[default]
     Class,
@@ -36,7 +35,7 @@ pub fn snapshot_lua(
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let file_name = path.file_name().unwrap().to_string_lossy();
 
-    let is_run_context_enabled = true; //project.script_type == ScriptType::RunContext;
+    let is_run_context_enabled = context.script_type == ScriptContextType::RunContext;
 
     let run_context = &rbx_reflection_database::get().enums.get("RunContext").expect("Unable to get RunContext enums!").items;
 
@@ -70,9 +69,8 @@ pub fn snapshot_lua(
         .with_context(|| format!("File was not valid UTF-8: {}", path.display()))?
         .to_owned();
 
-    let mut properties = hashmap! {
-        "Source".to_owned() => contents_str.into(),
-    };
+    let mut properties = HashMap::with_capacity(2);
+    properties.insert("Source".to_owned(), contents_str.into());
 
     if let Some(run_context) = run_context {
         properties.insert("RunContext".to_owned(), Enum::from_u32(run_context.to_owned()).into());
@@ -85,10 +83,9 @@ pub fn snapshot_lua(
         .class_name(class_name)
         .properties(properties)
         .metadata(
-            InstanceMetadata::new()
+            InstanceMetadata::from(context)
                 .instigating_source(path)
                 .relevant_paths(vec![path.to_path_buf(), meta_path.clone()])
-                .context(context),
         );
 
     if let Some(meta_contents) = vfs.read(&meta_path).with_not_found()? {
@@ -141,6 +138,7 @@ pub fn snapshot_lua_init(
 mod test {
     use super::*;
 
+    use maplit::hashmap;
     use memofs::{InMemoryFs, VfsSnapshot};
 
     #[test]
@@ -152,11 +150,13 @@ mod test {
         let mut vfs = Vfs::new(imfs);
 
         let instance_snapshot =
-            snapshot_lua(&InstanceContext::default(), &mut vfs, Path::new("/foo.lua"))
+            snapshot_lua(&InstanceContext::from(ScriptContextType::Class), &mut vfs, Path::new("/foo.lua"))
                 .unwrap()
                 .unwrap();
 
-        insta::assert_yaml_snapshot!(instance_snapshot);
+        insta::with_settings!({ sort_maps => true }, {
+            insta::assert_yaml_snapshot!(instance_snapshot);
+        });
     }
 
     #[test]
@@ -168,14 +168,16 @@ mod test {
         let mut vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_lua(
-            &InstanceContext::default(),
+            &InstanceContext::from(ScriptContextType::Class),
             &mut vfs,
             Path::new("/foo.server.lua"),
         )
         .unwrap()
         .unwrap();
 
-        insta::assert_yaml_snapshot!(instance_snapshot);
+        insta::with_settings!({ sort_maps => true }, {
+            insta::assert_yaml_snapshot!(instance_snapshot);
+        });
     }
 
     #[test]
@@ -187,14 +189,16 @@ mod test {
         let mut vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_lua(
-            &InstanceContext::default(),
+            &InstanceContext::from(ScriptContextType::Class),
             &mut vfs,
             Path::new("/foo.client.lua"),
         )
         .unwrap()
         .unwrap();
 
-        insta::assert_yaml_snapshot!(instance_snapshot);
+        insta::with_settings!({ sort_maps => true }, {
+            insta::assert_yaml_snapshot!(instance_snapshot);
+        });
     }
 
     #[ignore = "init.lua functionality has moved to the root snapshot function"]
@@ -212,11 +216,13 @@ mod test {
         let mut vfs = Vfs::new(imfs);
 
         let instance_snapshot =
-            snapshot_lua(&InstanceContext::default(), &mut vfs, Path::new("/root"))
+            snapshot_lua(&InstanceContext::from(ScriptContextType::Class), &mut vfs, Path::new("/root"))
                 .unwrap()
                 .unwrap();
 
-        insta::assert_yaml_snapshot!(instance_snapshot);
+        insta::with_settings!({ sort_maps => true }, {
+            insta::assert_yaml_snapshot!(instance_snapshot);
+        });
     }
 
     #[test]
@@ -239,11 +245,13 @@ mod test {
         let mut vfs = Vfs::new(imfs);
 
         let instance_snapshot =
-            snapshot_lua(&InstanceContext::default(), &mut vfs, Path::new("/foo.lua"))
+            snapshot_lua(&InstanceContext::from(ScriptContextType::Class), &mut vfs, Path::new("/foo.lua"))
                 .unwrap()
                 .unwrap();
 
-        insta::assert_yaml_snapshot!(instance_snapshot);
+        insta::with_settings!({ sort_maps => true }, {
+            insta::assert_yaml_snapshot!(instance_snapshot);
+        });
     }
 
     #[test]
@@ -266,14 +274,16 @@ mod test {
         let mut vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_lua(
-            &InstanceContext::default(),
+            &InstanceContext::from(ScriptContextType::Class),
             &mut vfs,
             Path::new("/foo.server.lua"),
         )
         .unwrap()
         .unwrap();
 
-        insta::assert_yaml_snapshot!(instance_snapshot);
+        insta::with_settings!({ sort_maps => true }, {
+            insta::assert_yaml_snapshot!(instance_snapshot);
+        });
     }
 
     #[test]
@@ -298,7 +308,7 @@ mod test {
         let mut vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_lua(
-            &InstanceContext::default(),
+            &InstanceContext::from(ScriptContextType::Class),
             &mut vfs,
             Path::new("/bar.server.lua"),
         )

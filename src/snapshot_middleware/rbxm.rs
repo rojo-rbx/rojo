@@ -26,7 +26,7 @@ pub fn snapshot_rbxm(
         let snapshot = InstanceSnapshot::from_tree(temp_tree, child)
             .name(name)
             .metadata(
-                InstanceMetadata::new()
+                InstanceMetadata::default()
                     .instigating_source(path)
                     .relevant_paths(vec![path.to_path_buf()])
                     .context(context),

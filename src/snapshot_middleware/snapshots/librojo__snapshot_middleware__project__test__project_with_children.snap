@@ -9,7 +9,8 @@ metadata:
     Path: /foo.project.json
   relevant_paths:
     - /foo.project.json
-  context: {}
+  context:
+    script_type: Class
 name: children
 class_name: Folder
 properties: {}
@@ -24,7 +25,8 @@ children:
           - $className: Model
           - Folder
       relevant_paths: []
-      context: {}
+      context:
+        script_type: Class
     name: Child
     class_name: Model
     properties: {}

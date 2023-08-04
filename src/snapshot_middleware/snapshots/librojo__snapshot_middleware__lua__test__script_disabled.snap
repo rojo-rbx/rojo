@@ -10,12 +10,15 @@ metadata:
   relevant_paths:
     - /bar.server.lua
     - /bar.meta.json
-  context: {}
+  context:
+    script_type: Class
 name: bar
 class_name: Script
 properties:
   Disabled:
     Bool: true
+  RunContext:
+    Enum: 0
   Source:
     String: Hello there!
 children: []

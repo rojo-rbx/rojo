@@ -10,10 +10,13 @@ metadata:
   relevant_paths:
     - /foo.server.lua
     - /foo.meta.json
-  context: {}
+  context:
+    script_type: Class
 name: foo
 class_name: Script
 properties:
+  RunContext:
+    Enum: 0
   Source:
     String: Hello there!
 children: []

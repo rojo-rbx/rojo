@@ -10,7 +10,8 @@ metadata:
   relevant_paths:
     - /foo.txt
     - /foo.meta.json
-  context: {}
+  context:
+    script_type: Class
 name: foo
 class_name: StringValue
 properties:

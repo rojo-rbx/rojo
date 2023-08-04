@@ -6,7 +6,7 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::{glob::Glob, path_serializer, project::ProjectNode};
+use crate::{glob::Glob, path_serializer, project::ProjectNode, snapshot_middleware::ScriptContextType};
 
 /// Rojo-specific metadata that can be associated with an instance or a snapshot
 /// of an instance.
@@ -55,15 +55,6 @@ pub struct InstanceMetadata {
 }
 
 impl InstanceMetadata {
-    pub fn new() -> Self {
-        Self {
-            ignore_unknown_instances: false,
-            instigating_source: None,
-            relevant_paths: Vec::new(),
-            context: InstanceContext::default(),
-        }
-    }
-
     pub fn ignore_unknown_instances(self, ignore_unknown_instances: bool) -> Self {
         Self {
             ignore_unknown_instances,
@@ -93,9 +84,25 @@ impl InstanceMetadata {
     }
 }
 
+impl From<&InstanceContext> for InstanceMetadata {
+    fn from(context: &InstanceContext) -> Self {
+        Self {
+            ignore_unknown_instances: false,
+            instigating_source: None,
+            relevant_paths: Vec::new(),
+            context: context.to_owned(),
+        }
+    }
+}
+
 impl Default for InstanceMetadata {
     fn default() -> Self {
-        Self::new()
+        Self {
+            ignore_unknown_instances: false,
+            instigating_source: None,
+            relevant_paths: Vec::new(),
+            context: InstanceContext::from(ScriptContextType::Class),
+        }
     }
 }
 
@@ -103,6 +110,7 @@ impl Default for InstanceMetadata {
 pub struct InstanceContext {
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub path_ignore_rules: Arc<Vec<PathIgnoreRule>>,
+    pub script_type: ScriptContextType,
 }
 
 impl InstanceContext {
@@ -125,10 +133,21 @@ impl InstanceContext {
     }
 }
 
+impl From<ScriptContextType> for InstanceContext {
+    fn from(script_type: ScriptContextType) -> Self {
+        Self {
+            path_ignore_rules: Arc::new(Vec::new()),
+            script_type,
+        }
+    }
+}
+
+
 impl Default for InstanceContext {
     fn default() -> Self {
-        InstanceContext {
+        Self {
             path_ignore_rules: Arc::new(Vec::new()),
+            script_type: ScriptContextType::Class,
         }
     }
 }

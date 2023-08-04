@@ -10,7 +10,8 @@ metadata:
   relevant_paths:
     - /foo/other.project.json
     - /foo/default.project.json
-  context: {}
+  context:
+    script_type: Class
 name: path-project
 class_name: Model
 properties: {}

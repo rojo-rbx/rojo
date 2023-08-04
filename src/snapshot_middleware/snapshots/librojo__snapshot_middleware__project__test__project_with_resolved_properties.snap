@@ -9,7 +9,8 @@ metadata:
     Path: /foo.project.json
   relevant_paths:
     - /foo.project.json
-  context: {}
+  context:
+    script_type: Class
 name: resolved-properties
 class_name: StringValue
 properties:

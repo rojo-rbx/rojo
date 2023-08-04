@@ -95,7 +95,7 @@ pub fn snapshot_dir_no_meta(
         .class_name("Folder")
         .children(snapshot_children)
         .metadata(
-            InstanceMetadata::new()
+            InstanceMetadata::default()
                 .instigating_source(path)
                 .relevant_paths(relevant_paths)
                 .context(context),
