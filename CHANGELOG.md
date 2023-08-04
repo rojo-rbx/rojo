@@ -1,6 +1,7 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Internally for themes, we use `Color3.fromHex` now instead of custom-made solution ([#761]).
 * On failing to open a file from Roblox Studio, it is now logged appropriately instead of being ignored ([#745]).
 * Significantly improved performance of `rojo sourcemap`. ([#668])
 * Fixed the diff visualizer of connected sessions. ([#674])
@@ -23,8 +24,10 @@
 * Add new plugin template to the `init` command ([#738])
 * Added rich Source diffs in patch visualizer ([#748])
 * Fix PatchTree performance issues ([#755])
+* Don't override the initial enabled state for source diffing ([#760])
 * A `$scriptType` field has been added to the project.json schema, allowing for scripts to be differentiated as lasses or through RunContext ([#765]).
 
+[#761]: https://github.com/rojo-rbx/rojo/pull/761
 [#745]: https://github.com/rojo-rbx/rojo/pull/745
 [#668]: https://github.com/rojo-rbx/rojo/pull/668
 [#674]: https://github.com/rojo-rbx/rojo/pull/674
@@ -47,6 +50,7 @@
 [#738]: https://github.com/rojo-rbx/rojo/pull/738
 [#748]: https://github.com/rojo-rbx/rojo/pull/748
 [#755]: https://github.com/rojo-rbx/rojo/pull/755
+[#760]: https://github.com/rojo-rbx/rojo/pull/760
 [#765]: https://github.com/rojo-rbx/rojo/pull/765
 
 ## [7.3.0] - April 22, 2023
