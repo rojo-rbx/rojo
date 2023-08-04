@@ -1,4 +1,4 @@
-use std::{path::Path, str, collections::HashMap};
+use std::{collections::HashMap, path::Path, str};
 
 use anyhow::Context;
 use memofs::{IoResultExt, Vfs};
@@ -37,7 +37,11 @@ pub fn snapshot_lua(
 
     let is_run_context_enabled = context.script_type == ScriptContextType::RunContext;
 
-    let run_context = &rbx_reflection_database::get().enums.get("RunContext").expect("Unable to get RunContext enums!").items;
+    let run_context = &rbx_reflection_database::get()
+        .enums
+        .get("RunContext")
+        .expect("Unable to get RunContext enums!")
+        .items;
 
     let (script_type, instance_name) = if let Some(name) = match_trailing(&file_name, ".server.lua")
     {
@@ -73,7 +77,10 @@ pub fn snapshot_lua(
     properties.insert("Source".to_owned(), contents_str.into());
 
     if let Some(run_context) = run_context {
-        properties.insert("RunContext".to_owned(), Enum::from_u32(run_context.to_owned()).into());
+        properties.insert(
+            "RunContext".to_owned(),
+            Enum::from_u32(run_context.to_owned()).into(),
+        );
     }
 
     let meta_path = path.with_file_name(format!("{}.meta.json", instance_name));
@@ -85,7 +92,7 @@ pub fn snapshot_lua(
         .metadata(
             InstanceMetadata::from(context)
                 .instigating_source(path)
-                .relevant_paths(vec![path.to_path_buf(), meta_path.clone()])
+                .relevant_paths(vec![path.to_path_buf(), meta_path.clone()]),
         );
 
     if let Some(meta_contents) = vfs.read(&meta_path).with_not_found()? {
@@ -149,10 +156,13 @@ mod test {
 
         let mut vfs = Vfs::new(imfs);
 
-        let instance_snapshot =
-            snapshot_lua(&InstanceContext::from(ScriptContextType::Class), &mut vfs, Path::new("/foo.lua"))
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = snapshot_lua(
+            &InstanceContext::from(ScriptContextType::Class),
+            &mut vfs,
+            Path::new("/foo.lua"),
+        )
+        .unwrap()
+        .unwrap();
 
         insta::with_settings!({ sort_maps => true }, {
             insta::assert_yaml_snapshot!(instance_snapshot);
@@ -215,10 +225,13 @@ mod test {
 
         let mut vfs = Vfs::new(imfs);
 
-        let instance_snapshot =
-            snapshot_lua(&InstanceContext::from(ScriptContextType::Class), &mut vfs, Path::new("/root"))
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = snapshot_lua(
+            &InstanceContext::from(ScriptContextType::Class),
+            &mut vfs,
+            Path::new("/root"),
+        )
+        .unwrap()
+        .unwrap();
 
         insta::with_settings!({ sort_maps => true }, {
             insta::assert_yaml_snapshot!(instance_snapshot);
@@ -244,10 +257,13 @@ mod test {
 
         let mut vfs = Vfs::new(imfs);
 
-        let instance_snapshot =
-            snapshot_lua(&InstanceContext::from(ScriptContextType::Class), &mut vfs, Path::new("/foo.lua"))
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = snapshot_lua(
+            &InstanceContext::from(ScriptContextType::Class),
+            &mut vfs,
+            Path::new("/foo.lua"),
+        )
+        .unwrap()
+        .unwrap();
 
         insta::with_settings!({ sort_maps => true }, {
             insta::assert_yaml_snapshot!(instance_snapshot);

@@ -6,7 +6,9 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::{glob::Glob, path_serializer, project::ProjectNode, snapshot_middleware::ScriptContextType};
+use crate::{
+    glob::Glob, path_serializer, project::ProjectNode, snapshot_middleware::ScriptContextType,
+};
 
 /// Rojo-specific metadata that can be associated with an instance or a snapshot
 /// of an instance.
@@ -141,7 +143,6 @@ impl From<ScriptContextType> for InstanceContext {
         }
     }
 }
-
 
 impl Default for InstanceContext {
     fn default() -> Self {
