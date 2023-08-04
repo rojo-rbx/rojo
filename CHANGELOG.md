@@ -23,6 +23,7 @@
 * Add new plugin template to the `init` command ([#738])
 * Added rich Source diffs in patch visualizer ([#748])
 * Fix PatchTree performance issues ([#755])
+* A `$scriptType` field has been added to the project.json schema, allowing for scripts to be differentiated as lasses or through RunContext ([#765]).
 
 [#745]: https://github.com/rojo-rbx/rojo/pull/745
 [#668]: https://github.com/rojo-rbx/rojo/pull/668
@@ -46,6 +47,7 @@
 [#738]: https://github.com/rojo-rbx/rojo/pull/738
 [#748]: https://github.com/rojo-rbx/rojo/pull/748
 [#755]: https://github.com/rojo-rbx/rojo/pull/755
+[#765]: https://github.com/rojo-rbx/rojo/pull/765
 
 ## [7.3.0] - April 22, 2023
 * Added `$attributes` to project format. ([#574])
