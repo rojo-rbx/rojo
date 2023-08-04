@@ -1,6 +1,6 @@
 use std::{path::Path, str};
 
-use anyhow::{Context, format_err};
+use anyhow::{Context};
 use maplit::hashmap;
 use memofs::{IoResultExt, Vfs};
 use rbx_dom_weak::types::Enum;
