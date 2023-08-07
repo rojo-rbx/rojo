@@ -138,7 +138,7 @@ fn do_upload(buffer: Vec<u8>, asset_id: u64, cookie: &str) -> anyhow::Result<()>
     // This endpoint is used only for fetching a CSRF token, as the upload endpoint 
     // requires one. Because this endpoint itself requires a CSRF token for all
     // requests, it will provide one in its response headers, with a HTTP 403 response.
-    let csrf_response = client.post("https://economy.roblox.com/v1/purchases/products/1")
+    let csrf_response = client.post("https://auth.roblox.com")
         .header(COOKIE, &cookie_string)
         .header(CONTENT_LENGTH, 0)
         .send()?;
