@@ -125,6 +125,12 @@ fn do_upload(buffer: Vec<u8>, asset_id: u64, cookie: &str) -> anyhow::Result<()>
         cookie
     );
 
+    let mut content_type = "application/octet-stream";
+
+    if buffer.starts_with(b"<roblox ") {
+        content_type = "application/xml";
+    }
+
     let client = reqwest::blocking::Client::new();
 
     log::debug!("Obtaining CSRF token...");
@@ -146,10 +152,10 @@ fn do_upload(buffer: Vec<u8>, asset_id: u64, cookie: &str) -> anyhow::Result<()>
     log::debug!("Uploading to Roblox...");
     
     let response = client
-        .post(&url)
+        .post(url)
         .header(COOKIE, &cookie_string)
         .header(USER_AGENT, "Roblox/WinInet")
-        .header(CONTENT_TYPE, "application/xml")
+        .header(CONTENT_TYPE, content_type)
         .header(ACCEPT, "application/json")
         .header("X-CSRF-TOKEN", csrf_token.unwrap())
         .body(buffer.clone())
