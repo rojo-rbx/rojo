@@ -4,10 +4,7 @@ use std::str::FromStr;
 use anyhow::{bail, format_err, Context};
 use clap::Parser;
 use memofs::Vfs;
-use reqwest::{
-    header::{ACCEPT, CONTENT_TYPE, COOKIE, USER_AGENT},
-    StatusCode,
-};
+use reqwest::header::{ACCEPT, CONTENT_TYPE, CONTENT_LENGTH, COOKIE, USER_AGENT};
 
 use crate::{auth_cookie::get_auth_cookie, serve_session::ServeSession};
 
@@ -123,32 +120,43 @@ fn do_upload(buffer: Vec<u8>, asset_id: u64, cookie: &str) -> anyhow::Result<()>
         asset_id
     );
 
+    let cookie_string = format!(
+        ".ROBLOSECURITY={}", 
+        cookie
+    );
+
     let client = reqwest::blocking::Client::new();
 
-    let build_request = move || {
-        client
-            .post(&url)
-            .header(COOKIE, format!(".ROBLOSECURITY={}", cookie))
-            .header(USER_AGENT, "Roblox/WinInet")
-            .header(CONTENT_TYPE, "application/xml")
-            .header(ACCEPT, "application/json")
-            .body(buffer.clone())
-    };
+    log::debug!("Obtaining CSRF token...");
 
-    log::debug!("Uploading to Roblox...");
-    let mut response = build_request().send()?;
+    // This endpoint is used only for fetching a CSRF token, as the upload endpoint 
+    // requires one. Because this endpoint itself requires a CSRF token for all
+    // requests, it will provide one in its response headers, with a HTTP 403 response.
+    let csrf_response = client.post("https://economy.roblox.com/v1/purchases/products/1")
+        .header(COOKIE, &cookie_string)
+        .header(CONTENT_LENGTH, 0)
+        .send()?;
 
-    // Starting in Feburary, 2021, the upload endpoint performs CSRF challenges.
-    // If we receive an HTTP 403 with a X-CSRF-Token reply, we should retry the
-    // request, echoing the value of that header.
-    if response.status() == StatusCode::FORBIDDEN {
-        if let Some(csrf_token) = response.headers().get("X-CSRF-Token") {
-            log::debug!("Received CSRF challenge, retrying with token...");
-            response = build_request().header("X-CSRF-Token", csrf_token).send()?;
-        }
+    let csrf_token = csrf_response.headers().get("X-CSRF-TOKEN");
+
+    if csrf_token.is_none() {
+        bail!("Could not obtain a CSRF token when making a request to the API.")
     }
 
+    log::debug!("Uploading to Roblox...");
+    
+    let response = client
+        .post(&url)
+        .header(COOKIE, &cookie_string)
+        .header(USER_AGENT, "Roblox/WinInet")
+        .header(CONTENT_TYPE, "application/xml")
+        .header(ACCEPT, "application/json")
+        .header("X-CSRF-TOKEN", csrf_token.unwrap())
+        .body(buffer.clone())
+        .send()?;
+
     let status = response.status();
+
     if !status.is_success() {
         bail!(
             "The Roblox API returned an unexpected error: {}",
