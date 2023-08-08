@@ -31,7 +31,7 @@ pub fn snapshot_txt(
         .class_name("StringValue")
         .properties(properties)
         .metadata(
-            InstanceMetadata::default()
+            InstanceMetadata::new()
                 .instigating_source(path)
                 .relevant_paths(vec![path.to_path_buf(), meta_path.clone()])
                 .context(context),

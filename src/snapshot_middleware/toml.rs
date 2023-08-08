@@ -35,7 +35,7 @@ pub fn snapshot_toml(
         .class_name("ModuleScript")
         .properties(properties)
         .metadata(
-            InstanceMetadata::default()
+            InstanceMetadata::new()
                 .instigating_source(path)
                 .relevant_paths(vec![path.to_path_buf(), meta_path.clone()])
                 .context(context),

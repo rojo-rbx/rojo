@@ -90,7 +90,8 @@ pub fn snapshot_lua(
         .class_name(class_name)
         .properties(properties)
         .metadata(
-            InstanceMetadata::from(context)
+            InstanceMetadata::new()
+                .context(context)
                 .instigating_source(path)
                 .relevant_paths(vec![path.to_path_buf(), meta_path.clone()]),
         );

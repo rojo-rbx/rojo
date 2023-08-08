@@ -57,6 +57,15 @@ pub struct InstanceMetadata {
 }
 
 impl InstanceMetadata {
+    pub fn new() -> Self {
+        Self {
+            ignore_unknown_instances: false,
+            instigating_source: None,
+            relevant_paths: Vec::new(),
+            context: InstanceContext::new(),
+        }
+    }
+
     pub fn ignore_unknown_instances(self, ignore_unknown_instances: bool) -> Self {
         Self {
             ignore_unknown_instances,
@@ -86,25 +95,9 @@ impl InstanceMetadata {
     }
 }
 
-impl From<&InstanceContext> for InstanceMetadata {
-    fn from(context: &InstanceContext) -> Self {
-        Self {
-            ignore_unknown_instances: false,
-            instigating_source: None,
-            relevant_paths: Vec::new(),
-            context: context.to_owned(),
-        }
-    }
-}
-
 impl Default for InstanceMetadata {
     fn default() -> Self {
-        Self {
-            ignore_unknown_instances: false,
-            instigating_source: None,
-            relevant_paths: Vec::new(),
-            context: InstanceContext::from(ScriptContextType::Class),
-        }
+        Self::new()
     }
 }
 
@@ -116,6 +109,13 @@ pub struct InstanceContext {
 }
 
 impl InstanceContext {
+    pub fn new() -> Self {
+        Self {
+            path_ignore_rules: Arc::new(Vec::new()),
+            script_type: ScriptContextType::Class,
+        }
+    }
+
     /// Extend the list of ignore rules in the context with the given new rules.
     pub fn add_path_ignore_rules<I>(&mut self, new_rules: I)
     where
@@ -138,18 +138,15 @@ impl InstanceContext {
 impl From<ScriptContextType> for InstanceContext {
     fn from(script_type: ScriptContextType) -> Self {
         Self {
-            path_ignore_rules: Arc::new(Vec::new()),
             script_type,
+            ..Self::new()
         }
     }
 }
 
 impl Default for InstanceContext {
     fn default() -> Self {
-        Self {
-            path_ignore_rules: Arc::new(Vec::new()),
-            script_type: ScriptContextType::Class,
-        }
+        Self::new()
     }
 }
 

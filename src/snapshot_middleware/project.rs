@@ -77,7 +77,7 @@ pub fn snapshot_project_node(
     let name = Cow::Owned(instance_name.to_owned());
     let mut properties = HashMap::new();
     let mut children = Vec::new();
-    let mut metadata = InstanceMetadata::from(context);
+    let mut metadata = InstanceMetadata::new().context(context);
 
     if let Some(path_node) = &node.path {
         let path = path_node.path();

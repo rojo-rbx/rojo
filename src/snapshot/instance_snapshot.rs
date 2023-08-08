@@ -42,7 +42,7 @@ impl InstanceSnapshot {
     pub fn new() -> Self {
         Self {
             snapshot_id: Ref::none(),
-            metadata: InstanceMetadata::default(),
+            metadata: InstanceMetadata::new(),
             name: Cow::Borrowed("DEFAULT"),
             class_name: Cow::Borrowed("DEFAULT"),
             properties: HashMap::new(),
@@ -120,7 +120,7 @@ impl InstanceSnapshot {
 
         Self {
             snapshot_id: id,
-            metadata: InstanceMetadata::default(),
+            metadata: InstanceMetadata::new(),
             name: Cow::Owned(instance.name),
             class_name: Cow::Owned(instance.class),
             properties: instance.properties,
