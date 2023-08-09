@@ -1647,9 +1647,9 @@ dependencies = [
 
 [[package]]
 name = "rbx_binary"
-version = "0.7.0"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1631584eb343930a5a738635504b8c1f3ef2ae9c947bff942bbbac075f6887f6"
+checksum = "4e50573021d04b680018955662eba7dc4aac3de92219231798f6c9b41e38ab01"
 dependencies = [
  "log",
  "lz4",
@@ -1662,9 +1662,9 @@ dependencies = [
 
 [[package]]
 name = "rbx_dom_weak"
-version = "2.4.0"
+version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b7cc2238fd858d706f4f5c6a0f9af3cd4a10f3f8dc8b6534e683f8543af26f33"
+checksum = "161729449bbb0cfa657ce7bcca6a160d0af06d8b8d9efdc9abe14735dccacdb9"
 dependencies = [
  "rbx_types",
  "serde",
@@ -1672,19 +1672,20 @@ dependencies = [
 
 [[package]]
 name = "rbx_reflection"
-version = "4.2.0"
+version = "4.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a8915748c8a3b2a92540e4e35e99ebd548df2d62b0a6cf38ae5d0081f0e611d5"
+checksum = "08bd48487192046fec8f805f3fa29f3d7d5beb9890b0859b1a92bd8aff580343"
 dependencies = [
  "rbx_types",
  "serde",
+ "thiserror",
 ]
 
 [[package]]
 name = "rbx_reflection_database"
-version = "0.2.6+roblox-572"
+version = "0.2.7+roblox-588"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "780a70e2aff0c2a922bf2e72449e3a67e656ce622af4f8895c22d15cd98dfd5b"
+checksum = "1be6cf674182806f11ad4899dd1feafe977591f1ae035ae05a58d4b74e487276"
 dependencies = [
  "lazy_static",
  "rbx_reflection",
@@ -1694,9 +1695,9 @@ dependencies = [
 
 [[package]]
 name = "rbx_types"
-version = "1.5.0"
+version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b9644faf3ae1858ba10615fa5955c330e49cf0f6ad37a83db3e1c398c4afac12"
+checksum = "070106e926b8ae54c7bc443e5db4d868d7f0af51c1d7cfd7efe1364c1753d8a3"
 dependencies = [
  "base64 0.13.1",
  "bitflags",
@@ -1709,9 +1710,9 @@ dependencies = [
 
 [[package]]
 name = "rbx_xml"
-version = "0.13.0"
+version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6d5f9361d83d06aae8ea42d7002d35e2652b198e8ce68c918b97e371f8a31352"
+checksum = "4bc65b70827519fdc4ab47416d1085b912f087fadab9ed415471b6daba635574"
 dependencies = [
  "base64 0.13.1",
  "log",
@@ -1856,9 +1857,9 @@ dependencies = [
 
 [[package]]
 name = "rmp-serde"
-version = "0.14.4"
+version = "1.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ce7d70c926fe472aed493b902010bccc17fa9f7284145cb8772fd22fdb052d8"
+checksum = "bffea85eea980d8a74453e5d02a8d93028f3c34725de143085a844ebe953258a"
 dependencies = [
  "byteorder",
  "rmp",
