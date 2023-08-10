@@ -230,6 +230,118 @@
     },
     "ty": "Int64"
   },
+  "MaterialColors": {
+    "value": {
+      "MaterialColors": {
+        "Grass": [
+          106,
+          127,
+          63
+        ],
+        "Slate": [
+          63,
+          127,
+          107
+        ],
+        "Concrete": [
+          127,
+          102,
+          63
+        ],
+        "Brick": [
+          138,
+          86,
+          62
+        ],
+        "Sand": [
+          143,
+          126,
+          95
+        ],
+        "WoodPlanks": [
+          139,
+          109,
+          79
+        ],
+        "Rock": [
+          102,
+          108,
+          111
+        ],
+        "Glacier": [
+          101,
+          176,
+          234
+        ],
+        "Snow": [
+          195,
+          199,
+          218
+        ],
+        "Sandstone": [
+          137,
+          90,
+          71
+        ],
+        "Mud": [
+          58,
+          46,
+          36
+        ],
+        "Basalt": [
+          30,
+          30,
+          37
+        ],
+        "Ground": [
+          102,
+          92,
+          59
+        ],
+        "CrackedLava": [
+          232,
+          156,
+          74
+        ],
+        "Asphalt": [
+          115,
+          123,
+          107
+        ],
+        "Cobblestone": [
+          132,
+          123,
+          90
+        ],
+        "Ice": [
+          129,
+          194,
+          224
+        ],
+        "LeafyGrass": [
+          115,
+          132,
+          74
+        ],
+        "Salt": [
+          198,
+          189,
+          181
+        ],
+        "Limestone": [
+          206,
+          173,
+          148
+        ],
+        "Pavement": [
+          148,
+          148,
+          140
+        ]
+      }
+    },
+    "ty": "MaterialColors"
+  },
   "NumberRange": {
     "value": {
       "NumberRange": [
