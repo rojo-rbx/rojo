@@ -62,7 +62,7 @@ impl InstanceMetadata {
             ignore_unknown_instances: false,
             instigating_source: None,
             relevant_paths: Vec::new(),
-            context: InstanceContext::new(),
+            context: InstanceContext::default(),
         }
     }
 

@@ -91,9 +91,9 @@ pub fn snapshot_lua(
         .properties(properties)
         .metadata(
             InstanceMetadata::new()
-                .context(context)
                 .instigating_source(path)
-                .relevant_paths(vec![path.to_path_buf(), meta_path.clone()]),
+                .relevant_paths(vec![path.to_path_buf(), meta_path.clone()])
+                .context(context),
         );
 
     if let Some(meta_contents) = vfs.read(&meta_path).with_not_found()? {
