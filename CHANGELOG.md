@@ -25,6 +25,7 @@
 * Added rich Source diffs in patch visualizer ([#748])
 * Fix PatchTree performance issues ([#755])
 * Don't override the initial enabled state for source diffing ([#760])
+* Allow `Terrain` to be specified without a classname ([#771])
 
 [#761]: https://github.com/rojo-rbx/rojo/pull/761
 [#745]: https://github.com/rojo-rbx/rojo/pull/745
@@ -50,6 +51,7 @@
 [#748]: https://github.com/rojo-rbx/rojo/pull/748
 [#755]: https://github.com/rojo-rbx/rojo/pull/755
 [#760]: https://github.com/rojo-rbx/rojo/pull/760
+[#771]: https://github.com/rojo-rbx/rojo/pull/771
 
 ## [7.3.0] - April 22, 2023
 * Added `$attributes` to project format. ([#574])
