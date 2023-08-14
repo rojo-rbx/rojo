@@ -26,6 +26,7 @@
 * Fix PatchTree performance issues ([#755])
 * Don't override the initial enabled state for source diffing ([#760])
 * Projects can no longer be built with the wrong file extension ([#772])
+* Projects can no longer be served if they don't have a DataModel root ([#722])
 
 [#761]: https://github.com/rojo-rbx/rojo/pull/761
 [#745]: https://github.com/rojo-rbx/rojo/pull/745
