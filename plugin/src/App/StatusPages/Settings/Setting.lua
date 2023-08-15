@@ -65,43 +65,50 @@ function Setting:render()
 				self.setContainerSize(object.AbsoluteSize)
 			end,
 		}, {
-			Input = if self.props.options ~= nil then
-				e(Dropdown, {
-					locked = self.props.locked,
-					options = self.props.options,
-					active = self.state.setting,
-					transparency = self.props.transparency,
-					position = UDim2.new(1, 0, 0.5, 0),
-					anchorPoint = Vector2.new(1, 0.5),
-					onClick = function(option)
-						Settings:set(self.props.id, option)
-					end,
-				})
-			else
-				e(Checkbox, {
-					locked = self.props.locked,
-					active = self.state.setting,
-					transparency = self.props.transparency,
-					position = UDim2.new(1, 0, 0.5, 0),
-					anchorPoint = Vector2.new(1, 0.5),
-					onClick = function()
-						local currentValue = Settings:get(self.props.id)
-						Settings:set(self.props.id, not currentValue)
-					end,
+			RightAligned = Roact.createElement("Frame", {
+				BackgroundTransparency = 1,
+				Size = UDim2.new(1, 0, 1, 0),
+			}, {
+				Layout = e("UIListLayout", {
+					VerticalAlignment = Enum.VerticalAlignment.Center,
+					HorizontalAlignment = Enum.HorizontalAlignment.Right,
+					FillDirection = Enum.FillDirection.Horizontal,
+					SortOrder = Enum.SortOrder.LayoutOrder,
+					Padding = UDim.new(0, 2),
 				}),
 
-			Reset = if self.props.onReset then e(IconButton, {
-				icon = Assets.Images.Icons.Reset,
-				iconSize = 24,
-				color = theme.BackButtonColor,
-				transparency = self.props.transparency,
-				visible = self.props.showReset,
+				Input = if self.props.options ~= nil then
+					e(Dropdown, {
+						locked = self.props.locked,
+						options = self.props.options,
+						active = self.state.setting,
+						transparency = self.props.transparency,
+						onClick = function(option)
+							Settings:set(self.props.id, option)
+						end,
+					})
+				else
+					e(Checkbox, {
+						locked = self.props.locked,
+						active = self.state.setting,
+						transparency = self.props.transparency,
+						onClick = function()
+							local currentValue = Settings:get(self.props.id)
+							Settings:set(self.props.id, not currentValue)
+						end,
+					}),
 
-				position = UDim2.new(1, -32 - (self.props.options ~= nil and 120 or 40), 0.5, 0),
-				anchorPoint = Vector2.new(0, 0.5),
+				Reset = if self.props.onReset then e(IconButton, {
+					icon = Assets.Images.Icons.Reset,
+					iconSize = 24,
+					color = theme.BackButtonColor,
+					transparency = self.props.transparency,
+					visible = self.props.showReset,
+					layoutOrder = -1,
 
-				onClick = self.props.onReset,
-			}) else nil,
+					onClick = self.props.onReset,
+				}) else nil,
+			}),
 
 			Text = e("Frame", {
 				Size = UDim2.new(1, 0, 1, 0),
