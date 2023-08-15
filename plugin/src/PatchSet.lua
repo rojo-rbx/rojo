@@ -116,7 +116,7 @@ function PatchSet.containsId(patchSet, instanceMap, id)
 end
 
 --[[
-	Tells whether the given PatchSet contains changes to the given instance. 
+	Tells whether the given PatchSet contains changes to the given instance.
 	If the given InstanceMap does not contain the instance, this function always returns false.
 ]]
 function PatchSet.containsInstance(patchSet, instanceMap, instance)
@@ -230,6 +230,28 @@ function PatchSet.countChanges(patch)
 		if update.changedClassName ~= nil then
 			count += 1
 		end
+	end
+
+	return count
+end
+
+--[[
+	Count the number of instances affected by the given PatchSet.
+]]
+function PatchSet.countInstances(patch)
+	local count = 0
+
+	-- Added instances
+	for _ in patch.added do
+		count += 1
+	end
+	-- Removed instances
+	for _ in patch.removed do
+		count += 1
+	end
+	-- Updated instances
+	for _ in patch.updated do
+		count += 1
 	end
 
 	return count
