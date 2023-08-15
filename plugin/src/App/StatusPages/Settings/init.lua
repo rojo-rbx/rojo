@@ -25,6 +25,7 @@ local function invertTbl(tbl)
 end
 
 local invertedLevels = invertTbl(Log.Level)
+local confirmationBehaviors = { "Always", "Large Changes", "Initial", "Unlisted PlaceId" }
 
 local function Navbar(props)
 	return Theme.with(function(theme)
@@ -104,12 +105,28 @@ function SettingsPage:render()
 				layoutOrder = 2,
 			}),
 
+			ConfirmationBehavior = e(Setting, {
+				id = "confirmationBehavior",
+				name = "Confirmation Behavior",
+				description = "When to prompt for confirmation before syncing",
+				transparency = self.props.transparency,
+				layoutOrder = 3,
+
+				options = confirmationBehaviors,
+				showReset = Settings:getBinding("confirmationBehavior"):map(function(value)
+					return value ~= "Initial"
+				end),
+				onReset = function()
+					Settings:set("confirmationBehavior", "Initial")
+				end,
+			}),
+
 			PlaySounds = e(Setting, {
 				id = "playSounds",
 				name = "Play Sounds",
 				description = "Toggle sound effects",
 				transparency = self.props.transparency,
-				layoutOrder = 3,
+				layoutOrder = 4,
 			}),
 
 			OpenScriptsExternally = e(Setting, {
@@ -119,7 +136,7 @@ function SettingsPage:render()
 				locked = self.props.syncActive,
 				experimental = true,
 				transparency = self.props.transparency,
-				layoutOrder = 4,
+				layoutOrder = 5,
 			}),
 
 			TwoWaySync = e(Setting, {
@@ -129,7 +146,7 @@ function SettingsPage:render()
 				locked = self.props.syncActive,
 				experimental = true,
 				transparency = self.props.transparency,
-				layoutOrder = 5,
+				layoutOrder = 6,
 			}),
 
 			LogLevel = e(Setting, {

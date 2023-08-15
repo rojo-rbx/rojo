@@ -14,6 +14,7 @@ local defaultSettings = {
 	twoWaySync = false,
 	showNotifications = true,
 	syncReminder = true,
+	confirmationBehavior = "Initial",
 	playSounds = true,
 	typecheckingEnabled = false,
 	logLevel = "Info",
