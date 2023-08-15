@@ -71,6 +71,7 @@ function PatchVisualizer:render()
 					changeList = node.changeList,
 					depth = depth,
 					transparency = self.props.transparency,
+					showSourceDiff = self.props.showSourceDiff,
 				})
 			)
 		end

@@ -76,6 +76,12 @@ function StudioPluginGui:didUpdate(lastProps)
 	if self.props.active ~= lastProps.active then
 		-- This is intentionally in didUpdate to make sure the initial active state
 		-- (if the PluginGui is open initially) is preserved.
+
+		-- Studio widgets are very unreliable and sometimes need to be flickered
+		-- in order to force them to render correctly
+		-- This happens within a single frame so it doesn't flicker visibly
+		self.pluginGui.Enabled = self.props.active
+		self.pluginGui.Enabled = not self.props.active
 		self.pluginGui.Enabled = self.props.active
 	end
 end

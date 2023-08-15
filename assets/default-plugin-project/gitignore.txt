@@ -1,0 +1,3 @@
+# Plugin model files
+/{project_name}.rbxmx
+/{project_name}.rbxm

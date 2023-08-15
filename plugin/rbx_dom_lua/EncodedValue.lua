@@ -265,6 +265,26 @@ types = {
 		toPod = identity,
 	},
 
+	MaterialColors = {
+		fromPod = function(pod: { [string]: { number } })
+			local real = {}
+			for name, color in pod do
+				real[Enum.Material[name]] = Color3.fromRGB(color[1], color[2], color[3])
+			end
+			return real
+		end,
+		toPod = function(roblox: { [Enum.Material]: Color3 })
+			local pod = {}
+			for material, color in roblox do
+				pod[material.Name] = {
+					math.round(math.clamp(color.R, 0, 1) * 255),
+					math.round(math.clamp(color.G, 0, 1) * 255),
+					math.round(math.clamp(color.B, 0, 1) * 255)
+				}
+			end
+		end,
+	},
+
 	NumberRange = {
 		fromPod = unpackDecoder(NumberRange.new),
 

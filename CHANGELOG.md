@@ -2,6 +2,8 @@
 
 ## Unreleased Changes
 * Added headless API for Studio companion plugins. ([#631])
+* Internally for themes, we use `Color3.fromHex` now instead of custom-made solution ([#761]).
+* On failing to open a file from Roblox Studio, it is now logged appropriately instead of being ignored ([#745]).
 * Significantly improved performance of `rojo sourcemap`. ([#668])
 * Fixed the diff visualizer of connected sessions. ([#674])
 * Fixed disconnected session activity. ([#675])
@@ -20,8 +22,16 @@
 * Added support for syncing in `.toml` files ([#633])
 * Add `plugin` flag to the `build` command that outputs to the local plugins folder ([#735])
 * Added better support for `Font` properties ([#731])
+* Add new plugin template to the `init` command ([#738])
+* Added rich Source diffs in patch visualizer ([#748])
+* Fix PatchTree performance issues ([#755])
+* Don't override the initial enabled state for source diffing ([#760])
+* Added support for `Terrain.MaterialColors` ([#770])
+* Allow `Terrain` to be specified without a classname ([#771])
 
 [#631]: https://github.com/rojo-rbx/rojo/pull/631
+[#761]: https://github.com/rojo-rbx/rojo/pull/761
+[#745]: https://github.com/rojo-rbx/rojo/pull/745
 [#668]: https://github.com/rojo-rbx/rojo/pull/668
 [#674]: https://github.com/rojo-rbx/rojo/pull/674
 [#675]: https://github.com/rojo-rbx/rojo/pull/675
@@ -40,6 +50,12 @@
 [#633]: https://github.com/rojo-rbx/rojo/pull/633
 [#735]: https://github.com/rojo-rbx/rojo/pull/735
 [#731]: https://github.com/rojo-rbx/rojo/pull/731
+[#738]: https://github.com/rojo-rbx/rojo/pull/738
+[#748]: https://github.com/rojo-rbx/rojo/pull/748
+[#755]: https://github.com/rojo-rbx/rojo/pull/755
+[#760]: https://github.com/rojo-rbx/rojo/pull/760
+[#770]: https://github.com/rojo-rbx/rojo/pull/770
+[#771]: https://github.com/rojo-rbx/rojo/pull/771
 
 ## [7.3.0] - April 22, 2023
 * Added `$attributes` to project format. ([#574])
