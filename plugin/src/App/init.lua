@@ -474,8 +474,7 @@ function App:startSession()
 			end
 		elseif confirmationBehavior == "Large Changes" then
 			-- Only confirm if the patch impacts many instances
-			local instanceThreshold = 5
-			if PatchSet.countInstances(patch) <= instanceThreshold then
+			if PatchSet.countInstances(patch) < Settings:get("largeChangesConfirmationThreshold") then
 				Log.trace("Accepting patch without confirmation because patch is small and behavior is set to Large Changes")
 				return "Accept"
 			end
