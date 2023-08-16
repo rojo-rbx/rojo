@@ -74,6 +74,20 @@ local lightTheme = strict("LightTheme", {
 			IconColor = Color3.fromHex("EEEEEE"),
 		},
 	},
+	TextInput = {
+		Enabled = {
+			TextColor = Color3.fromHex("000000"),
+			PlaceholderColor = Color3.fromHex("8C8C8C"),
+			BorderColor = Color3.fromHex("ACACAC"),
+		},
+		Disabled = {
+			TextColor = Color3.fromHex("393939"),
+			PlaceholderColor = Color3.fromHex("8C8C8C"),
+			BorderColor = Color3.fromHex("AFAFAF"),
+		},
+		ActionFillColor = Color3.fromHex("000000"),
+		ActionFillTransparency = 0.9,
+	},
 	AddressEntry = {
 		TextColor = Color3.fromHex("000000"),
 		PlaceholderColor = Color3.fromHex("8C8C8C")
@@ -169,6 +183,20 @@ local darkTheme = strict("DarkTheme", {
 		Closed = {
 			IconColor = Color3.fromHex("484848"),
 		},
+	},
+	TextInput = {
+		Enabled = {
+			TextColor = Color3.fromHex("FFFFFF"),
+			PlaceholderColor = Color3.fromHex("8B8B8B"),
+			BorderColor = Color3.fromHex("535353"),
+		},
+		Disabled = {
+			TextColor = Color3.fromHex("484848"),
+			PlaceholderColor = Color3.fromHex("8B8B8B"),
+			BorderColor = Color3.fromHex("5A5A5A"),
+		},
+		ActionFillColor = Color3.fromHex("FFFFFF"),
+		ActionFillTransparency = 0.9,
 	},
 	AddressEntry = {
 		TextColor = Color3.fromHex("FFFFFF"),
