@@ -48,7 +48,7 @@ impl ServeCommand {
         // of scope when we're done.
         {
             let tree = session.tree();
-            // This cannot fail because a root cant' ever not exist.
+            // This cannot fail because the root must always exist.
             let root = tree.get_instance(tree.get_root_id()).unwrap();
             if root.class_name() != "DataModel" {
                 anyhow::bail!(SYNCING_MODEL_ERR)
