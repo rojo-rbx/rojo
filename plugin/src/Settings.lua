@@ -15,6 +15,7 @@ local defaultSettings = {
 	showNotifications = true,
 	syncReminder = true,
 	confirmationBehavior = "Initial",
+	largeChangesConfirmationThreshold = 5,
 	playSounds = true,
 	typecheckingEnabled = false,
 	logLevel = "Info",
