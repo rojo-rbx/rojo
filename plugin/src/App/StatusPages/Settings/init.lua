@@ -119,7 +119,7 @@ function SettingsPage:render()
 			LargeChangesConfirmationThreshold = e(Setting, {
 				id = "largeChangesConfirmationThreshold",
 				name = "Confirmation Threshold",
-				description = "How many instances a patch modifies before being considered a large change",
+				description = "How many modified instances to be considered a large change",
 				transparency = self.props.transparency,
 				layoutOrder = 4,
 				visible = Settings:getBinding("confirmationBehavior"):map(function(value)
