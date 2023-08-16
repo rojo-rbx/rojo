@@ -32,6 +32,7 @@ local Setting = Roact.Component:extend("Setting")
 function Setting:init()
 	self.contentSize, self.setContentSize = Roact.createBinding(Vector2.new(0, 0))
 	self.containerSize, self.setContainerSize = Roact.createBinding(Vector2.new(0, 0))
+	self.inputSize, self.setInputSize = Roact.createBinding(Vector2.new(0, 0))
 
 	self:setState({
 		setting = Settings:get(self.props.id),
@@ -75,28 +76,34 @@ function Setting:render()
 					FillDirection = Enum.FillDirection.Horizontal,
 					SortOrder = Enum.SortOrder.LayoutOrder,
 					Padding = UDim.new(0, 2),
+					[Roact.Change.AbsoluteContentSize] = function(rbx)
+						self.setInputSize(rbx.AbsoluteContentSize)
+					end,
 				}),
 
-				Input = if self.props.options ~= nil then
-					e(Dropdown, {
-						locked = self.props.locked,
-						options = self.props.options,
-						active = self.state.setting,
-						transparency = self.props.transparency,
-						onClick = function(option)
-							Settings:set(self.props.id, option)
-						end,
-					})
-				else
-					e(Checkbox, {
-						locked = self.props.locked,
-						active = self.state.setting,
-						transparency = self.props.transparency,
-						onClick = function()
-							local currentValue = Settings:get(self.props.id)
-							Settings:set(self.props.id, not currentValue)
-						end,
-					}),
+				Input =
+					if self.props.input ~= nil then
+						self.props.input
+					elseif self.props.options ~= nil then
+						e(Dropdown, {
+							locked = self.props.locked,
+							options = self.props.options,
+							active = self.state.setting,
+							transparency = self.props.transparency,
+							onClick = function(option)
+								Settings:set(self.props.id, option)
+							end,
+						})
+					else
+						e(Checkbox, {
+							locked = self.props.locked,
+							active = self.state.setting,
+							transparency = self.props.transparency,
+							onClick = function()
+								local currentValue = Settings:get(self.props.id)
+								Settings:set(self.props.id, not currentValue)
+							end,
+						}),
 
 				Reset = if self.props.onReset then e(IconButton, {
 					icon = Assets.Images.Icons.Reset,
@@ -140,12 +147,15 @@ function Setting:render()
 					TextWrapped = true,
 					RichText = true,
 
-					Size = self.containerSize:map(function(value)
+					Size = Roact.joinBindings({
+						containerSize = self.containerSize,
+						inputSize = self.inputSize,
+					}):map(function(values)
 						local desc = (if self.props.experimental then "[Experimental] " else "") .. self.props.description
-						local offset = (self.props.onReset and 34 or 0) + (self.props.options ~= nil and 120 or 40)
+						local offset = values.inputSize.X + 5
 						local textBounds = getTextBounds(
 							desc, 14, Enum.Font.Gotham, 1.2,
-							Vector2.new(value.X - offset, math.huge)
+							Vector2.new(values.containerSize.X - offset, math.huge)
 						)
 						return UDim2.new(1, -offset, 0, textBounds.Y)
 					end),
