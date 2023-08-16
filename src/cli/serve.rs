@@ -16,8 +16,8 @@ use super::{resolve_path, GlobalOptions};
 const DEFAULT_BIND_ADDRESS: Ipv4Addr = Ipv4Addr::new(127, 0, 0, 1);
 const DEFAULT_PORT: u16 = 34872;
 
-const SYNCING_MODEL_ERR: &str = "Cannot sync a model project file. \
-    Projects must have a `DataModel` at their root to be synced.";
+const SERVING_MODEL_ERR: &str = "Cannot serve a model project file. \
+    Projects must have a `DataModel` at their root to be served.";
 
 /// Expose a Rojo project to the Rojo Studio plugin.
 #[derive(Debug, Parser)]
@@ -51,7 +51,7 @@ impl ServeCommand {
             // This cannot fail because the root must always exist.
             let root = tree.get_instance(tree.get_root_id()).unwrap();
             if root.class_name() != "DataModel" {
-                anyhow::bail!(SYNCING_MODEL_ERR)
+                anyhow::bail!(SERVING_MODEL_ERR)
             }
         }
 
