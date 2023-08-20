@@ -6,14 +6,14 @@ use tempfile::tempdir;
 use crate::rojo_test::io_util::{get_working_dir_path, BUILD_TESTS_PATH, ROJO_PATH};
 
 macro_rules! gen_build_tests {
-    ( $($test_name: ident,)* ) => {
+    ( $($test_name:ident: $out_format:literal,)* ) => {
         $(
             paste::item! {
                 #[test]
                 fn [<build_ $test_name>]() {
                     let _ = env_logger::try_init();
 
-                    run_build_test(stringify!($test_name));
+                    run_build_test(stringify!($test_name), $out_format);
                 }
             }
         )*
@@ -21,52 +21,54 @@ macro_rules! gen_build_tests {
 }
 
 gen_build_tests! {
-    init_csv_with_children,
-    attributes,
-    client_in_folder,
-    client_init,
-    csv_bug_145,
-    csv_bug_147,
-    csv_in_folder,
-    deep_nesting,
-    gitkeep,
-    ignore_glob_inner,
-    ignore_glob_nested,
-    ignore_glob_spec,
-    infer_service_name,
-    infer_starter_player,
-    init_meta_class_name,
-    init_meta_properties,
-    init_with_children,
-    issue_546,
-    json_as_lua,
-    json_model_in_folder,
-    json_model_legacy_name,
-    module_in_folder,
-    module_init,
-    optional,
-    project_composed_default,
-    project_composed_file,
-    project_root_name,
-    rbxm_in_folder,
-    rbxmx_in_folder,
-    rbxmx_ref,
-    script_meta_disabled,
-    server_in_folder,
-    server_init,
-    txt,
-    txt_in_folder,
-    unresolved_values,
-    weldconstraint,
+    init_csv_with_children: "rbxmx",
+    attributes: "rbxmx",
+    client_in_folder: "rbxmx",
+    client_init: "rbxmx",
+    csv_bug_145: "rbxmx",
+    csv_bug_147: "rbxmx",
+    csv_in_folder: "rbxmx",
+    deep_nesting: "rbxmx",
+    gitkeep: "rbxmx",
+    ignore_glob_inner: "rbxmx",
+    ignore_glob_nested: "rbxmx",
+    ignore_glob_spec: "rbxmx",
+    infer_service_name: "rbxlx",
+    infer_starter_player: "rbxlx",
+    init_meta_class_name: "rbxmx",
+    init_meta_properties: "rbxmx",
+    init_with_children: "rbxmx",
+    issue_546: "rbxmx",
+    json_as_lua: "rbxmx",
+    json_model_in_folder: "rbxmx",
+    json_model_legacy_name: "rbxmx",
+    module_in_folder: "rbxmx",
+    module_init: "rbxmx",
+    optional: "rbxmx",
+    project_composed_default: "rbxmx",
+    project_composed_file: "rbxmx",
+    project_root_name: "rbxmx",
+    rbxm_in_folder: "rbxmx",
+    rbxmx_in_folder: "rbxmx",
+    rbxmx_ref: "rbxmx",
+    script_meta_disabled: "rbxmx",
+    server_in_folder: "rbxmx",
+    server_init: "rbxmx",
+    txt: "rbxmx",
+    txt_in_folder: "rbxmx",
+    unresolved_values: "rbxlx",
+    weldconstraint: "rbxmx",
 }
 
-fn run_build_test(test_name: &str) {
+fn run_build_test(test_name: &str, out_format: &str) {
     let working_dir = get_working_dir_path();
 
     let input_path = Path::new(BUILD_TESTS_PATH).join(test_name);
 
     let output_dir = tempdir().expect("couldn't create temporary directory");
-    let output_path = output_dir.path().join(format!("{}.rbxmx", test_name));
+    let output_path = output_dir
+        .path()
+        .join(format!("{}.{}", test_name, out_format));
 
     let output = Command::new(ROJO_PATH)
         .args(&[
