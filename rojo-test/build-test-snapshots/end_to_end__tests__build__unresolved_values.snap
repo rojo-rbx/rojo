@@ -1,66 +1,60 @@
 ---
 source: tests/tests/build.rs
 expression: contents
-
 ---
 <roblox version="4">
-  <Item class="DataModel" referent="0">
+  <Item class="Lighting" referent="0">
     <Properties>
-      <string name="Name">unresolved-values</string>
+      <string name="Name">Lighting</string>
+      <Color3 name="Ambient">
+        <R>1</R>
+        <G>0</G>
+        <B>0</B>
+      </Color3>
+      <token name="Technology">1</token>
     </Properties>
-    <Item class="Lighting" referent="1">
+  </Item>
+  <Item class="Workspace" referent="1">
+    <Properties>
+      <string name="Name">Workspace</string>
+    </Properties>
+    <Item class="BoolValue" referent="2">
       <Properties>
-        <string name="Name">Lighting</string>
-        <Color3 name="Ambient">
-          <R>1</R>
-          <G>0</G>
-          <B>0</B>
-        </Color3>
-        <token name="Technology">1</token>
+        <string name="Name">Bool</string>
+        <bool name="Value">true</bool>
       </Properties>
     </Item>
-    <Item class="Workspace" referent="2">
+    <Item class="Part" referent="3">
       <Properties>
-        <string name="Name">Workspace</string>
+        <string name="Name">Color</string>
+        <CoordinateFrame name="CFrame">
+          <X>1</X>
+          <Y>2</Y>
+          <Z>3</Z>
+          <R00>0</R00>
+          <R01>1</R01>
+          <R02>0</R02>
+          <R10>0</R10>
+          <R11>0</R11>
+          <R12>1</R12>
+          <R20>1</R20>
+          <R21>0</R21>
+          <R22>0</R22>
+        </CoordinateFrame>
+        <Color3uint8 name="Color3uint8">8404992</Color3uint8>
       </Properties>
-      <Item class="BoolValue" referent="3">
-        <Properties>
-          <string name="Name">Bool</string>
-          <bool name="Value">true</bool>
-        </Properties>
-      </Item>
-      <Item class="Part" referent="4">
-        <Properties>
-          <string name="Name">Color</string>
-          <CoordinateFrame name="CFrame">
-            <X>1</X>
-            <Y>2</Y>
-            <Z>3</Z>
-            <R00>0</R00>
-            <R01>1</R01>
-            <R02>0</R02>
-            <R10>0</R10>
-            <R11>0</R11>
-            <R12>1</R12>
-            <R20>1</R20>
-            <R21>0</R21>
-            <R22>0</R22>
-          </CoordinateFrame>
-          <Color3uint8 name="Color3uint8">8404992</Color3uint8>
-        </Properties>
-      </Item>
-      <Item class="NumberValue" referent="5">
-        <Properties>
-          <string name="Name">Float</string>
-          <double name="Value">123.5</double>
-        </Properties>
-      </Item>
-      <Item class="IntValue" referent="6">
-        <Properties>
-          <string name="Name">Int</string>
-          <int64 name="Value">65</int64>
-        </Properties>
-      </Item>
+    </Item>
+    <Item class="NumberValue" referent="4">
+      <Properties>
+        <string name="Name">Float</string>
+        <double name="Value">123.5</double>
+      </Properties>
+    </Item>
+    <Item class="IntValue" referent="5">
+      <Properties>
+        <string name="Name">Int</string>
+        <int64 name="Value">65</int64>
+      </Properties>
     </Item>
   </Item>
 </roblox>
