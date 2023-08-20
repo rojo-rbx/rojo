@@ -1,13 +1,12 @@
 ---
 source: tests/tests/serve.rs
 expression: "read_response.intern_and_redact(&mut redactions, root_id)"
-
 ---
 instances:
   id-2:
     Children:
       - id-3
-    ClassName: Folder
+    ClassName: DataModel
     Id: id-2
     Metadata:
       ignoreUnknownInstances: false

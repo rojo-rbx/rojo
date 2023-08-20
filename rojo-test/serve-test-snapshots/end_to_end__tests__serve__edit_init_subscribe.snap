@@ -1,7 +1,6 @@
 ---
 source: tests/tests/serve.rs
 expression: "subscribe_response.intern_and_redact(&mut redactions, ())"
-
 ---
 messageCursor: 1
 messages:
@@ -14,6 +13,6 @@ messages:
         changedProperties:
           Source:
             String: "-- Edited contents"
-        id: id-2
+        id: id-3
 sessionId: id-1
 

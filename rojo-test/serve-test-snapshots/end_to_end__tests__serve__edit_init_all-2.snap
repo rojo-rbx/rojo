@@ -1,17 +1,26 @@
 ---
 source: tests/tests/serve.rs
 expression: "read_response.intern_and_redact(&mut redactions, root_id)"
-
 ---
 instances:
   id-2:
+    Children:
+      - id-3
+    ClassName: DataModel
+    Id: id-2
+    Metadata:
+      ignoreUnknownInstances: true
+    Name: edit_init
+    Parent: "00000000000000000000000000000000"
+    Properties: {}
+  id-3:
     Children: []
     ClassName: ModuleScript
-    Id: id-2
+    Id: id-3
     Metadata:
       ignoreUnknownInstances: false
     Name: edit_init
-    Parent: "00000000000000000000000000000000"
+    Parent: id-2
     Properties:
       Source:
         String: "-- Edited contents"
