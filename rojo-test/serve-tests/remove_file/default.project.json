@@ -1,6 +1,7 @@
 {
   "name": "remove_file",
   "tree": {
+    "$className": "DataModel",
     "$path": "src"
   }
 }

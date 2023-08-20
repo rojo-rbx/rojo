@@ -1,6 +1,7 @@
 {
   "name": "scripts",
   "tree": {
+    "$className": "DataModel",
     "$path": "src"
   }
 }

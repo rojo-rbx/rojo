@@ -1,6 +1,7 @@
 {
   "name": "move_folder_of_stuff",
   "tree": {
+    "$className": "DataModel",
     "$path": "src"
   }
 }

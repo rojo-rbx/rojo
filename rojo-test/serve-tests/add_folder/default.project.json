@@ -1,6 +1,7 @@
 {
   "name": "add_folder",
   "tree": {
+    "$className": "DataModel",
     "$path": "src"
   }
 }
