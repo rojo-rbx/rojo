@@ -13,6 +13,7 @@ local IconButton = require(Plugin.App.Components.IconButton)
 local ScrollingFrame = require(Plugin.App.Components.ScrollingFrame)
 local Tooltip = require(Plugin.App.Components.Tooltip)
 local SlicedImage = require(Plugin.App.Components.SlicedImage)
+local TextInput = require(Plugin.App.Components.TextInput)
 local Setting = require(script.Setting)
 
 local e = Roact.createElement
@@ -26,6 +27,7 @@ local function invertTbl(tbl)
 end
 
 local invertedLevels = invertTbl(Log.Level)
+local confirmationBehaviors = { "Initial", "Always", "Large Changes", "Unlisted PlaceId" }
 
 local function Navbar(props)
 	return Theme.with(function(theme)
@@ -105,19 +107,57 @@ function SettingsPage:render()
 				layoutOrder = 2,
 			}),
 
+			ConfirmationBehavior = e(Setting, {
+				id = "confirmationBehavior",
+				name = "Confirmation Behavior",
+				description = "When to prompt for confirmation before syncing",
+				transparency = self.props.transparency,
+				layoutOrder = 3,
+
+				options = confirmationBehaviors,
+			}),
+
+			LargeChangesConfirmationThreshold = e(Setting, {
+				id = "largeChangesConfirmationThreshold",
+				name = "Confirmation Threshold",
+				description = "How many modified instances to be considered a large change",
+				transparency = self.props.transparency,
+				layoutOrder = 4,
+				visible = Settings:getBinding("confirmationBehavior"):map(function(value)
+					return value == "Large Changes"
+				end),
+				input = e(TextInput, {
+					size = UDim2.new(0, 40, 0, 28),
+					text = Settings:getBinding("largeChangesConfirmationThreshold"):map(function(value)
+						return tostring(value)
+					end),
+					transparency = self.props.transparency,
+					enabled = true,
+					onEntered = function(text)
+						local number = tonumber(string.match(text, "%d+"))
+						if number then
+							Settings:set("largeChangesConfirmationThreshold", math.clamp(number, 1, 999))
+						else
+							-- Force text back to last valid value
+							Settings:set("largeChangesConfirmationThreshold", Settings:get("largeChangesConfirmationThreshold"))
+						end
+					end,
+				}),
+			}),
+
 			PlaySounds = e(Setting, {
 				id = "playSounds",
 				name = "Play Sounds",
 				description = "Toggle sound effects",
 				transparency = self.props.transparency,
-				layoutOrder = 3,
+				layoutOrder = 5,
 			}),
 
 			Permissions = e(Setting, {
 				name = "Third Party Permissions",
 				description = "Manage permissions for third party plugins",
 				transparency = self.props.transparency,
-				layoutOrder = 4,
+				layoutOrder = 6,
 				customInput = e("TextButton", {
 					Text = "",
 					BackgroundTransparency = 1,
@@ -160,7 +200,7 @@ function SettingsPage:render()
 				locked = self.props.syncActive,
 				experimental = true,
 				transparency = self.props.transparency,
-				layoutOrder = 5,
+				layoutOrder = 7,
 			}),
 
 			TwoWaySync = e(Setting, {
@@ -170,7 +210,7 @@ function SettingsPage:render()
 				locked = self.props.syncActive,
 				experimental = true,
 				transparency = self.props.transparency,
-				layoutOrder = 6,
+				layoutOrder = 8,
 			}),
 
 			LogLevel = e(Setting, {

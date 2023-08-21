@@ -28,6 +28,7 @@
 * Don't override the initial enabled state for source diffing ([#760])
 * Added support for `Terrain.MaterialColors` ([#770])
 * Allow `Terrain` to be specified without a classname ([#771])
+* Add Confirmation Behavior setting ([#774])
 
 [#631]: https://github.com/rojo-rbx/rojo/pull/631
 [#761]: https://github.com/rojo-rbx/rojo/pull/761
@@ -56,6 +57,7 @@
 [#760]: https://github.com/rojo-rbx/rojo/pull/760
 [#770]: https://github.com/rojo-rbx/rojo/pull/770
 [#771]: https://github.com/rojo-rbx/rojo/pull/771
+[#774]: https://github.com/rojo-rbx/rojo/pull/774
 
 ## [7.3.0] - April 22, 2023
 * Added `$attributes` to project format. ([#574])

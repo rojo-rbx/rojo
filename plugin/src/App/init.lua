@@ -61,6 +61,7 @@ function App:init()
 
 	self.confirmationBindable = Instance.new("BindableEvent")
 	self.confirmationEvent = self.confirmationBindable.Event
+	self.knownProjects = {}
 	self.notifId = 0
 
 	self.waypointConnection = ChangeHistoryService.OnUndo:Connect(function(action: string)
@@ -542,6 +543,8 @@ function App:startSession(host: string?, port: string?)
 			self.headlessAPI:_updateProperty("Address", address)
 			self.headlessAPI:_updateProperty("ProjectName", details)
 
+			self.knownProjects[details] = true
+
 			self:setState({
 				appStatus = AppStatus.Connected,
 				projectName = details,
@@ -591,6 +594,30 @@ function App:startSession(host: string?, port: string?)
 		if PatchSet.isEmpty(patch) then
 			Log.trace("Accepting patch without confirmation because it is empty")
 			return "Accept"
+		end
+
+		local confirmationBehavior = Settings:get("confirmationBehavior")
+		if confirmationBehavior == "Initial" then
+			-- Only confirm if we haven't synced this project yet this session
+			if self.knownProjects[serverInfo.projectName] then
+				Log.trace("Accepting patch without confirmation because project has already been connected and behavior is set to Initial")
+				return "Accept"
+			end
+		elseif confirmationBehavior == "Large Changes" then
+			-- Only confirm if the patch impacts many instances
+			if PatchSet.countInstances(patch) < Settings:get("largeChangesConfirmationThreshold") then
+				Log.trace("Accepting patch without confirmation because patch is small and behavior is set to Large Changes")
+				return "Accept"
+			end
+		elseif confirmationBehavior == "Unlisted PlaceId" then
+			-- Only confirm if the current placeId is not in the servePlaceIds allowlist
+			if serverInfo.expectedPlaceIds then
+				local isListed = table.find(serverInfo.expectedPlaceIds, game.PlaceId) ~= nil
+				if isListed then
+					Log.trace("Accepting patch without confirmation because placeId is listed and behavior is set to Unlisted PlaceId")
+					return "Accept"
+				end
+			end
 		end
 
 		-- The datamodel name gets overwritten by Studio, making confirmation of it intrusive
