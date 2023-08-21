@@ -158,7 +158,7 @@ function SettingsPage:render()
 				description = "Manage permissions for third party plugins",
 				transparency = self.props.transparency,
 				layoutOrder = 6,
-				customInput = e("TextButton", {
+				input = e("TextButton", {
 					Text = "",
 					BackgroundTransparency = 1,
 					Size = UDim2.fromOffset(28, 28),
