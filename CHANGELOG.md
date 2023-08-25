@@ -26,6 +26,9 @@
 * Fix PatchTree performance issues ([#755])
 * Don't override the initial enabled state for source diffing ([#760])
 * A `$scriptType` field has been added to the project.json schema, allowing for scripts to be differentiated as lasses or through RunContext ([#765]).
+* Added support for `Terrain.MaterialColors` ([#770])
+* Allow `Terrain` to be specified without a classname ([#771])
+* Add Confirmation Behavior setting ([#774])
 
 [#761]: https://github.com/rojo-rbx/rojo/pull/761
 [#745]: https://github.com/rojo-rbx/rojo/pull/745
@@ -52,6 +55,9 @@
 [#755]: https://github.com/rojo-rbx/rojo/pull/755
 [#760]: https://github.com/rojo-rbx/rojo/pull/760
 [#765]: https://github.com/rojo-rbx/rojo/pull/765
+[#770]: https://github.com/rojo-rbx/rojo/pull/770
+[#771]: https://github.com/rojo-rbx/rojo/pull/771
+[#774]: https://github.com/rojo-rbx/rojo/pull/774
 
 ## [7.3.0] - April 22, 2023
 * Added `$attributes` to project format. ([#574])
