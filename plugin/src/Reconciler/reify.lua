@@ -9,7 +9,7 @@ local decodeValue = require(script.Parent.decodeValue)
 
 local reifyInner, applyDeferredRefs
 
-local function reify(instanceMap, virtualInstances, rootId, parentInstance)
+local function reify(instanceMap, virtualInstances, rootId, parentInstance, serveSession)
 	-- Create an empty patch that will be populated with any parts of this reify
 	-- that could not happen, like instances that couldn't be created and
 	-- properties that could not be assigned.

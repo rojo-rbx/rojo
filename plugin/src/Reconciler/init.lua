@@ -56,7 +56,7 @@ function Reconciler:hookPostcommit(callback: (patch: any, instanceMap: any, unap
 	end
 end
 
-function Reconciler:applyPatch(patch)
+function Reconciler:applyPatch(patch, serveSession)
 	for _, callback in self.__precommitCallbacks do
 		local success, err = pcall(callback, patch, self.__instanceMap)
 		if not success then
@@ -64,7 +64,7 @@ function Reconciler:applyPatch(patch)
 		end
 	end
 
-	local unappliedPatch = applyPatch(self.__instanceMap, patch)
+	local unappliedPatch = applyPatch(self.__instanceMap, patch, serveSession)
 
 	for _, callback in self.__postcommitCallbacks do
 		local success, err = pcall(callback, patch, self.__instanceMap, unappliedPatch)
