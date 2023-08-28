@@ -253,4 +253,18 @@ function ApiContext:open(id)
 		end)
 end
 
+function ApiContext:fetch(ids: {string})
+	local url = ("%s/api/fetch/%s"):format(self.__baseUrl, table.concat(ids, ","))
+	return Http.get(url)
+		:andThen(rejectFailedRequests)
+		:andThen(Http.Response.json)
+		:andThen(function(body)
+			if body.sessionId ~= self.__sessionId then
+				return Promise.reject("Server changed ID")
+			end
+
+			return body
+		end)
+end
+
 return ApiContext
