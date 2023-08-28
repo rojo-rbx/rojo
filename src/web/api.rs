@@ -1,18 +1,23 @@
 //! Defines Rojo's HTTP API, all under /api. These endpoints generally return
 //! JSON.
 
-use std::{collections::HashMap, fs, path::PathBuf, str::FromStr, sync::Arc};
+use std::{collections::HashMap, fs, io::BufWriter, path::PathBuf, str::FromStr, sync::Arc};
 
 use hyper::{body, Body, Method, Request, Response, StatusCode};
 use opener::OpenError;
-use rbx_dom_weak::types::Ref;
+use rbx_dom_weak::{
+    types::{Ref, Variant},
+    InstanceBuilder, WeakDom,
+};
+use roblox_install::RobloxStudio;
+use uuid::Uuid;
 
 use crate::{
     serve_session::ServeSession,
     snapshot::{InstanceWithMeta, PatchSet, PatchUpdate},
     web::{
         interface::{
-            ErrorResponse, Instance, OpenResponse, ReadResponse, ServerInfoResponse,
+            ErrorResponse, FetchResponse, Instance, OpenResponse, ReadResponse, ServerInfoResponse,
             SubscribeMessage, SubscribeResponse, WriteRequest, WriteResponse, PROTOCOL_VERSION,
             SERVER_VERSION,
         },
@@ -23,6 +28,7 @@ use crate::{
 pub async fn call(serve_session: Arc<ServeSession>, request: Request<Body>) -> Response<Body> {
     let service = ApiService::new(serve_session);
 
+    log::debug!("{} request received to {}", request.method(), request.uri());
     match (request.method(), request.uri().path()) {
         (&Method::GET, "/api/rojo") => service.handle_api_rojo().await,
         (&Method::GET, path) if path.starts_with("/api/read/") => {
@@ -36,6 +42,10 @@ pub async fn call(serve_session: Arc<ServeSession>, request: Request<Body>) -> R
         }
 
         (&Method::POST, "/api/write") => service.handle_api_write(request).await,
+
+        (&Method::GET, path) if path.starts_with("/api/fetch/") => {
+            service.handle_api_fetch_get(request).await
+        }
 
         (_method, path) => json(
             ErrorResponse::not_found(format!("Route not found: {}", path)),
@@ -274,6 +284,112 @@ impl ApiService {
         json_ok(&OpenResponse {
             session_id: self.serve_session.session_id(),
         })
+    }
+
+    async fn handle_api_fetch_get(&self, request: Request<Body>) -> Response<Body> {
+        let argument = &request.uri().path()["/api/fetch/".len()..];
+        let requested_ids: Vec<Ref> = match argument.split(',').map(Ref::from_str).collect() {
+            Ok(ids) => ids,
+            Err(_) => {
+                return json(
+                    ErrorResponse::bad_request("Malformed ID list"),
+                    StatusCode::BAD_REQUEST,
+                );
+            }
+        };
+
+        let content_dir = match RobloxStudio::locate() {
+            Ok(path) => path.content_path().to_path_buf(),
+            Err(_) => {
+                return json(
+                    ErrorResponse::internal_error("Cannot locate Studio install"),
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                )
+            }
+        };
+
+        let temp_dir = match self.serve_session.temp_dir() {
+            Some(dir) => dir,
+            None => {
+                return json(
+                    ErrorResponse::bad_request("could not create temporary directory"),
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                )
+            }
+        };
+
+        let uuid = Uuid::new_v4();
+        let mut file_name = PathBuf::from(uuid.to_string());
+        file_name.set_extension("rbxm");
+
+        let out_path = temp_dir.join(&file_name);
+        let studio_path = content_dir.join(&file_name);
+
+        let mut writer = BufWriter::new(match fs::File::create(&out_path) {
+            Ok(handle) => handle,
+            Err(_) => {
+                return json(
+                    ErrorResponse::internal_error("Could not create temporary file"),
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                );
+            }
+        });
+
+        let tree = self.serve_session.tree();
+        let inner_tree = tree.inner();
+        let mut sub_tree = WeakDom::new(InstanceBuilder::new("Folder"));
+        let reify_ref = sub_tree.insert(
+            sub_tree.root_ref(),
+            InstanceBuilder::new("Folder").with_name("Reified"),
+        );
+        let map_ref = sub_tree.insert(
+            sub_tree.root_ref(),
+            InstanceBuilder::new("Folder").with_name("ReferentMap"),
+        );
+        for referent in requested_ids {
+            if inner_tree.get_by_ref(referent).is_some() {
+                log::trace!("Creating clone of {referent} into subtree");
+                let new_ref = inner_tree.clone_into_external(referent, &mut sub_tree);
+                sub_tree.transfer_within(new_ref, reify_ref);
+                sub_tree.insert(
+                    map_ref,
+                    InstanceBuilder::new("ObjectValue")
+                        .with_property("Value", Variant::Ref(new_ref))
+                        .with_name(referent.to_string()),
+                );
+            } else {
+                // TODO handle this better
+                log::error!("bad ref {referent}! ahh!")
+            }
+        }
+        if let Err(_) = rbx_binary::to_writer(&mut writer, &sub_tree, &[sub_tree.root_ref()]) {
+            return json(
+                ErrorResponse::internal_error("Could not build subtree into model file"),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            );
+        }
+        drop(tree);
+
+        log::debug!("Wrote model file to {}", out_path.display());
+
+        match fs_err::hard_link(&out_path, &studio_path) {
+            Ok(_) => {
+                log::debug!("Created hardlink to {}", &studio_path.display());
+                json_ok(FetchResponse {
+                    session_id: self.serve_session.session_id(),
+                    path: file_name.to_string_lossy(),
+                })
+            }
+            Err(err) => {
+                log::debug!("Failed to create hardlink to {}", &studio_path.display());
+                json(
+                    ErrorResponse::internal_error(format!(
+                        "Could not put file in Roblox content folder: {err}"
+                    )),
+                    StatusCode::SERVICE_UNAVAILABLE,
+                )
+            }
+        }
     }
 }
 
