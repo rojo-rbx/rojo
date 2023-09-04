@@ -64,6 +64,20 @@ local PermissionsPage = Roact.Component:extend("PermissionsPage")
 
 function PermissionsPage:init()
 	self.contentSize, self.setContentSize = Roact.createBinding(Vector2.new(0, 0))
+
+	self:setState({
+		permissions = self.props.headlessAPI._permissions,
+	})
+
+	self.changedListener = self.props.headlessAPI._permissionsChanged:Connect(function()
+		self:setState({
+			permissions = self.props.headlessAPI._permissions,
+		})
+	end)
+end
+
+function PermissionsPage:willUnmount()
+	self.changedListener:Disconnect()
 end
 
 function PermissionsPage:render()
@@ -71,7 +85,7 @@ function PermissionsPage:render()
 		theme = theme.Settings
 
 		local sources = {}
-		if next(self.props.headlessAPI._permissions) == nil then
+		if next(self.state.permissions) == nil then
 			sources.noSources = e("TextLabel", {
 				Text = "No third-party plugins have been granted permissions.",
 				Font = Enum.Font.Gotham,
@@ -86,7 +100,11 @@ function PermissionsPage:render()
 				BackgroundTransparency = 1,
 			})
 		else
-			for source in self.props.headlessAPI._permissions do
+			for source, permissions in self.state.permissions do
+				if next(permissions) == nil then
+					continue
+				end
+
 				local meta = self.props.headlessAPI:_getMetaFromSource(source)
 				sources[source] = e(Listing, {
 					layoutOrder = string.byte(source),

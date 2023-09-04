@@ -152,17 +152,6 @@ function API.new(app)
 		return "CommandBar"
 	end
 
-	function Rojo:_permissionCheck(key: string): boolean
-		if apiPermissionAllowlist[key] then return true end
-
-		local source = Rojo:_getCallerSource()
-		if Rojo._permissions[source] == nil then
-			Rojo._permissions[source] = {}
-		end
-
-		return not not Rojo._permissions[source][key]
-	end
-
 	local BUCKET, LIMIT = 10, 15
 	function Rojo:_checkRateLimit(api: string): boolean
 		local source = Rojo:_getCallerSource()
@@ -187,6 +176,54 @@ function API.new(app)
 		end)
 
 		return false
+	end
+
+	Rojo._permissionsChangedEvent = Instance.new("BindableEvent")
+	Rojo._permissionsChanged = Rojo._permissionsChangedEvent.Event
+
+	function Rojo:_permissionCheck(key: string): boolean
+		if apiPermissionAllowlist[key] then return true end
+
+		local source = Rojo:_getCallerSource()
+		if Rojo._permissions[source] == nil then
+			Rojo._permissions[source] = {}
+		end
+
+		return not not Rojo._permissions[source][key]
+	end
+
+	function Rojo:_setPermissions(source, name, permissions)
+		-- Ensure permissions exist for this source
+		if Rojo._permissions[source] == nil then
+			Rojo._permissions[source] = {}
+		end
+
+		-- Set permissions
+		for api, granted in permissions do
+			Log.warn(string.format(
+				"%s Rojo.%s for '%s'",
+				granted and "Granting permission to" or "Denying permission to", api, name
+			))
+			Rojo._permissions[source][api] = granted
+		end
+
+		-- Clear out source if no permissions are granted
+		local hasAnyPermissions = false
+		for _, granted in Rojo._permissions[source] do
+			if granted then
+				hasAnyPermissions = true
+				break
+			end
+		end
+		if not hasAnyPermissions then
+			Rojo._permissions[source] = nil
+		end
+
+		-- Update stored permissions
+		Settings:set("apiPermissions", Rojo._permissions)
+
+		-- Share changes
+		Rojo._permissionsChangedEvent:Fire(source, Rojo._permissions[source])
 	end
 
 	Rojo._apiDescriptions.RequestAccess = "Used to gain access to Rojo API members"
@@ -245,14 +282,7 @@ function API.new(app)
 
 		local response = app:requestPermission(plugin, source, name, sanitizedApis, Rojo._permissions[source])
 
-		for api, granted in response do
-			Log.warn(string.format(
-				"%s Rojo.%s for '%s'",
-				granted and "Granting permission to" or "Denying permission to", api, name
-			))
-			Rojo._permissions[source][api] = granted
-		end
-		Settings:set("apiPermissions", Rojo._permissions)
+		Rojo:_setPermissions(source, name, response)
 
 		Rojo._activePermissionRequests[source] = nil
 		return response

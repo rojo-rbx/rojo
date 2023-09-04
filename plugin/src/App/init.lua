@@ -851,17 +851,19 @@ function App:render()
 						end,
 
 						onEdit = function(plugin, source, meta, apiMap)
+							local name = meta.Name .. if meta.Creator then " by " .. meta.Creator else ""
 							local apiList = {}
 							for api in apiMap do
 								table.insert(apiList, api)
 							end
-							self:requestPermission(
+							local response = self:requestPermission(
 								plugin,
 								source,
-								meta.Name .. if meta.Creator then " by " .. meta.Creator else "",
+								name,
 								apiList,
 								apiMap
 							)
+							self.headlessAPI:_setPermissions(source, name, response)
 						end,
 					}),
 
