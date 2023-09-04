@@ -138,14 +138,14 @@ function App:init()
 
 	self.headlessAPI, self.readOnlyHeadlessAPI = HeadlessAPI.new(self)
 
-	-- selene: allow(global_usage)
-	local existingAPI = _G.Rojo
-	if existingAPI then
+	local existingAPIModule = game:FindFirstChild("Rojo")
+	if existingAPIModule and existingAPIModule:IsA("ModuleScript") then
+		local existingAPI = require(existingAPIModule :: ModuleScript)
+
 		local responseEvent = Instance.new("BindableEvent")
 		responseEvent.Event:Once(function(accepted)
 			if accepted then
-				-- selene: allow(global_usage)
-				_G.Rojo = self.readOnlyHeadlessAPI -- Expose headless to other plugins and command bar
+				existingAPI.API = self.readOnlyHeadlessAPI
 			end
 
 			responseEvent:Destroy()
@@ -163,7 +163,7 @@ function App:init()
 					responseEvent:Fire(false)
 				end,
 				content = e(ConflictAPIPopup, {
-					existingAPI = existingAPI,
+					existingAPI = existingAPI.API,
 					onAccept = function()
 						responseEvent:Fire(true)
 					end,
@@ -176,8 +176,15 @@ function App:init()
 			return state
 		end)
 	else
-		-- selene: allow(global_usage)
-		_G.Rojo = self.readOnlyHeadlessAPI -- Expose headless to other plugins and command bar
+		local ExposedAPIModule = Instance.new("ModuleScript")
+		ExposedAPIModule.Name = "Rojo"
+		ExposedAPIModule.Archivable = false
+		ExposedAPIModule.Source = "return { API = nil }"
+
+		local ExposedAPI = require(ExposedAPIModule)
+		ExposedAPI.API = self.readOnlyHeadlessAPI
+
+		ExposedAPIModule.Parent = game
 	end
 
 	if
