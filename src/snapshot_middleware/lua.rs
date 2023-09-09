@@ -150,7 +150,7 @@ mod test {
     use memofs::{InMemoryFs, VfsSnapshot};
 
     #[test]
-    fn module_from_vfs() {
+    fn class_module_from_vfs() {
         let mut imfs = InMemoryFs::new();
         imfs.load_snapshot("/foo.lua", VfsSnapshot::file("Hello there!"))
             .unwrap();
@@ -171,7 +171,28 @@ mod test {
     }
 
     #[test]
-    fn server_from_vfs() {
+    fn runcontext_module_from_vfs() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot("/foo.lua", VfsSnapshot::file("Hello there!"))
+            .unwrap();
+
+        let mut vfs = Vfs::new(imfs);
+
+        let instance_snapshot = snapshot_lua(
+            &InstanceContext::from(ScriptContextType::RunContext),
+            &mut vfs,
+            Path::new("/foo.lua"),
+        )
+        .unwrap()
+        .unwrap();
+
+        insta::with_settings!({ sort_maps => true }, {
+            insta::assert_yaml_snapshot!(instance_snapshot);
+        });
+    }
+
+    #[test]
+    fn class_server_from_vfs() {
         let mut imfs = InMemoryFs::new();
         imfs.load_snapshot("/foo.server.lua", VfsSnapshot::file("Hello there!"))
             .unwrap();
@@ -192,7 +213,28 @@ mod test {
     }
 
     #[test]
-    fn client_from_vfs() {
+    fn runcontext_server_from_vfs() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot("/foo.server.lua", VfsSnapshot::file("Hello there!"))
+            .unwrap();
+
+        let mut vfs = Vfs::new(imfs);
+
+        let instance_snapshot = snapshot_lua(
+            &InstanceContext::from(ScriptContextType::RunContext),
+            &mut vfs,
+            Path::new("/foo.server.lua"),
+        )
+        .unwrap()
+        .unwrap();
+
+        insta::with_settings!({ sort_maps => true }, {
+            insta::assert_yaml_snapshot!(instance_snapshot);
+        });
+    }
+
+    #[test]
+    fn class_client_from_vfs() {
         let mut imfs = InMemoryFs::new();
         imfs.load_snapshot("/foo.client.lua", VfsSnapshot::file("Hello there!"))
             .unwrap();
@@ -201,6 +243,27 @@ mod test {
 
         let instance_snapshot = snapshot_lua(
             &InstanceContext::from(ScriptContextType::Class),
+            &mut vfs,
+            Path::new("/foo.client.lua"),
+        )
+        .unwrap()
+        .unwrap();
+
+        insta::with_settings!({ sort_maps => true }, {
+            insta::assert_yaml_snapshot!(instance_snapshot);
+        });
+    }
+
+    #[test]
+    fn runcontext_client_from_vfs() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot("/foo.client.lua", VfsSnapshot::file("Hello there!"))
+            .unwrap();
+
+        let mut vfs = Vfs::new(imfs);
+
+        let instance_snapshot = snapshot_lua(
+            &InstanceContext::from(ScriptContextType::RunContext),
             &mut vfs,
             Path::new("/foo.client.lua"),
         )
@@ -240,7 +303,7 @@ mod test {
     }
 
     #[test]
-    fn module_with_meta() {
+    fn class_module_with_meta() {
         let mut imfs = InMemoryFs::new();
         imfs.load_snapshot("/foo.lua", VfsSnapshot::file("Hello there!"))
             .unwrap();
@@ -272,7 +335,39 @@ mod test {
     }
 
     #[test]
-    fn script_with_meta() {
+    fn runcontext_module_with_meta() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot("/foo.lua", VfsSnapshot::file("Hello there!"))
+            .unwrap();
+        imfs.load_snapshot(
+            "/foo.meta.json",
+            VfsSnapshot::file(
+                r#"
+                    {
+                        "ignoreUnknownInstances": true
+                    }
+                "#,
+            ),
+        )
+        .unwrap();
+
+        let mut vfs = Vfs::new(imfs);
+
+        let instance_snapshot = snapshot_lua(
+            &InstanceContext::from(ScriptContextType::RunContext),
+            &mut vfs,
+            Path::new("/foo.lua"),
+        )
+        .unwrap()
+        .unwrap();
+
+        insta::with_settings!({ sort_maps => true }, {
+            insta::assert_yaml_snapshot!(instance_snapshot);
+        });
+    }
+
+    #[test]
+    fn class_script_with_meta() {
         let mut imfs = InMemoryFs::new();
         imfs.load_snapshot("/foo.server.lua", VfsSnapshot::file("Hello there!"))
             .unwrap();
@@ -304,7 +399,39 @@ mod test {
     }
 
     #[test]
-    fn script_disabled() {
+    fn runcontext_script_with_meta() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot("/foo.server.lua", VfsSnapshot::file("Hello there!"))
+            .unwrap();
+        imfs.load_snapshot(
+            "/foo.meta.json",
+            VfsSnapshot::file(
+                r#"
+                    {
+                        "ignoreUnknownInstances": true
+                    }
+                "#,
+            ),
+        )
+        .unwrap();
+
+        let mut vfs = Vfs::new(imfs);
+
+        let instance_snapshot = snapshot_lua(
+            &InstanceContext::from(ScriptContextType::RunContext),
+            &mut vfs,
+            Path::new("/foo.server.lua"),
+        )
+        .unwrap()
+        .unwrap();
+
+        insta::with_settings!({ sort_maps => true }, {
+            insta::assert_yaml_snapshot!(instance_snapshot);
+        });
+    }
+
+    #[test]
+    fn class_script_disabled() {
         let mut imfs = InMemoryFs::new();
         imfs.load_snapshot("/bar.server.lua", VfsSnapshot::file("Hello there!"))
             .unwrap();
@@ -326,6 +453,40 @@ mod test {
 
         let instance_snapshot = snapshot_lua(
             &InstanceContext::from(ScriptContextType::Class),
+            &mut vfs,
+            Path::new("/bar.server.lua"),
+        )
+        .unwrap()
+        .unwrap();
+
+        insta::with_settings!({ sort_maps => true }, {
+            insta::assert_yaml_snapshot!(instance_snapshot);
+        });
+    }
+
+    #[test]
+    fn runcontext_script_disabled() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot("/bar.server.lua", VfsSnapshot::file("Hello there!"))
+            .unwrap();
+        imfs.load_snapshot(
+            "/bar.meta.json",
+            VfsSnapshot::file(
+                r#"
+                    {
+                        "properties": {
+                            "Disabled": true
+                        }
+                    }
+                "#,
+            ),
+        )
+        .unwrap();
+
+        let mut vfs = Vfs::new(imfs);
+
+        let instance_snapshot = snapshot_lua(
+            &InstanceContext::from(ScriptContextType::RunContext),
             &mut vfs,
             Path::new("/bar.server.lua"),
         )
