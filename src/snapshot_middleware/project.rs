@@ -30,6 +30,7 @@ pub fn snapshot_project(
     });
 
     context.add_path_ignore_rules(rules);
+    context.set_script_type(project.script_type.unwrap_or_default());
 
     match snapshot_project_node(&context, path, &project.name, &project.tree, vfs, None)? {
         Some(found_snapshot) => {

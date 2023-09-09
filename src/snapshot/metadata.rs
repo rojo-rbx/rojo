@@ -133,6 +133,10 @@ impl InstanceContext {
         let rules = Arc::make_mut(&mut self.path_ignore_rules);
         rules.extend(new_rules);
     }
+
+    pub fn set_script_type(&mut self, script_type: ScriptContextType) {
+        self.script_type = script_type
+    }
 }
 
 // serve_session always passes an option from the config file, but tests want it to be explict
