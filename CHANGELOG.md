@@ -25,7 +25,7 @@
 * Added rich Source diffs in patch visualizer ([#748])
 * Fix PatchTree performance issues ([#755])
 * Don't override the initial enabled state for source diffing ([#760])
-* A `$scriptType` field has been added to the project.json schema, allowing for scripts to be differentiated as lasses or through RunContext ([#765]).
+* A `$scriptType` field has been added to the project.json schema, allowing for scripts to be differentiated through classes or RunContext ([#765]).
 * Added support for `Terrain.MaterialColors` ([#770])
 * Allow `Terrain` to be specified without a classname ([#771])
 * Add Confirmation Behavior setting ([#774])
