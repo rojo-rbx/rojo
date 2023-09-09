@@ -135,10 +135,21 @@ impl InstanceContext {
     }
 }
 
+// serve_session always passes an option from the config file, but tests want it to be explict
+#[cfg(test)]
 impl From<ScriptContextType> for InstanceContext {
     fn from(script_type: ScriptContextType) -> Self {
         Self {
             script_type,
+            ..Self::new()
+        }
+    }
+}
+
+impl From<Option<ScriptContextType>> for InstanceContext {
+    fn from(script_type: Option<ScriptContextType>) -> Self {
+        Self {
+            script_type: script_type.unwrap_or_default(),
             ..Self::new()
         }
     }

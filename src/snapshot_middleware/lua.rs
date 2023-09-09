@@ -35,9 +35,7 @@ pub fn snapshot_lua(
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let file_name = path.file_name().unwrap().to_string_lossy();
 
-    let is_run_context_enabled = context.script_type == ScriptContextType::RunContext;
-
-    let run_context = &rbx_reflection_database::get()
+    let run_context_enums = &rbx_reflection_database::get()
         .enums
         .get("RunContext")
         .expect("Unable to get RunContext enums!")
@@ -60,10 +58,12 @@ pub fn snapshot_lua(
         return Ok(None);
     };
 
+    let is_run_context_enabled = context.script_type == ScriptContextType::RunContext;
+
     let (class_name, run_context) = match (is_run_context_enabled, script_type) {
-        (true, ScriptType::Server) => ("Script", run_context.get("Server")),
-        (true, ScriptType::Client) => ("Script", run_context.get("Client")),
-        (false, ScriptType::Server) => ("Script", run_context.get("Legacy")),
+        (true, ScriptType::Server) => ("Script", run_context_enums.get("Server")),
+        (true, ScriptType::Client) => ("Script", run_context_enums.get("Client")),
+        (false, ScriptType::Server) => ("Script", run_context_enums.get("Legacy")),
         (false, ScriptType::Client) => ("LocalScript", None),
         (_, ScriptType::Module) => ("ModuleScript", None),
     };

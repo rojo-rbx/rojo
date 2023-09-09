@@ -76,8 +76,8 @@ pub struct Project {
     /// The mode to use when mapping scripts into Roblox.
     /// Can be either `Class` or `RunContext` and determines whether script
     /// behavior is set using the `RunContext` property or the script's `ClassName`.
-    #[serde(default)]
-    pub script_type: ScriptContextType,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub script_type: Option<ScriptContextType>,
 
     /// A list of globs, relative to the folder the project file is in, that
     /// match files that should be excluded if Rojo encounters them.
