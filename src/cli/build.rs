@@ -30,13 +30,13 @@ pub struct BuildCommand {
     /// Where to output the result.
     ///
     /// Should end in .rbxm, .rbxl, .rbxmx, or .rbxlx.
-    #[clap(long, short)]
+    #[clap(long, short, conflicts_with = "plugin")]
     pub output: Option<PathBuf>,
 
     /// Alternative to the output flag that outputs the result in the local plugins folder.
     ///
     /// Should end in .rbxm or .rbxl.
-    #[clap(long, short)]
+    #[clap(long, short, conflicts_with = "output")]
     pub plugin: Option<PathBuf>,
 
     /// Whether to automatically rebuild when any input files change.
@@ -47,14 +47,6 @@ pub struct BuildCommand {
 impl BuildCommand {
     pub fn run(self) -> anyhow::Result<()> {
         let (output_path, output_kind) = match (self.output, self.plugin) {
-            (Some(_), Some(_)) => {
-                BuildCommand::command()
-                    .error(
-                        clap::ErrorKind::ArgumentConflict,
-                        "the argument '--output <OUTPUT>' cannot be used with '--plugin <PLUGIN>'",
-                    )
-                    .exit();
-            }
             (None, None) => {
                 BuildCommand::command()
                     .error(
@@ -80,6 +72,7 @@ impl BuildCommand {
 
                 (studio.plugins_path().join(&plugin), output_kind)
             }
+            _ => unreachable!(),
         };
 
         let project_path = resolve_path(&self.project);
