@@ -8,7 +8,9 @@ use std::{
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use crate::{glob::Glob, resolution::UnresolvedValue, snapshot_middleware::ScriptContextType};
+use crate::{
+    glob::Glob, resolution::UnresolvedValue, snapshot_middleware::emit_legacy_scripts_default,
+};
 
 static PROJECT_FILENAME: &str = "default.project.json";
 
@@ -76,8 +78,11 @@ pub struct Project {
     /// The mode to use when mapping scripts into Roblox.
     /// Can be either `Class` or `RunContext` and determines whether script
     /// behavior is set using the `RunContext` property or the script's `ClassName`.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub script_type: Option<ScriptContextType>,
+    #[serde(
+        default = "emit_legacy_scripts_default",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub emit_legacy_scripts: Option<bool>,
 
     /// A list of globs, relative to the folder the project file is in, that
     /// match files that should be excluded if Rojo encounters them.

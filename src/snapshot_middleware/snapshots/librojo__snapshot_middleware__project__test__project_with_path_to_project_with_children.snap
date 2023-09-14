@@ -11,7 +11,7 @@ metadata:
     - /foo/other.project.json
     - /foo/default.project.json
   context:
-    script_type: Class
+    emit_legacy_scripts: true
 name: path-child-project
 class_name: Folder
 properties: {}
@@ -27,7 +27,7 @@ children:
           - Folder
       relevant_paths: []
       context:
-        script_type: Class
+        emit_legacy_scripts: true
     name: SomeChild
     class_name: Model
     properties: {}

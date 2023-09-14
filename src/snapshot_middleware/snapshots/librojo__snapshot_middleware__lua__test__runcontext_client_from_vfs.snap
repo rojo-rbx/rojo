@@ -11,7 +11,7 @@ metadata:
     - /foo.client.lua
     - /foo.meta.json
   context:
-    script_type: RunContext
+    emit_legacy_scripts: false
 name: foo
 class_name: Script
 properties:

@@ -11,7 +11,7 @@ metadata:
     - /foo/other.project.json
     - /foo/default.project.json
   context:
-    script_type: Class
+    emit_legacy_scripts: true
 name: path-project
 class_name: Model
 properties: {}

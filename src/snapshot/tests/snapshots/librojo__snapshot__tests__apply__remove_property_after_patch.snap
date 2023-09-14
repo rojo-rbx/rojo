@@ -10,5 +10,6 @@ metadata:
   ignore_unknown_instances: false
   relevant_paths: []
   context:
-    script_type: Class
+    emit_legacy_scripts: true
 children: []
+

@@ -3,7 +3,6 @@ use std::{collections::HashMap, path::Path, str};
 use anyhow::Context;
 use memofs::{IoResultExt, Vfs};
 use rbx_dom_weak::types::Enum;
-use serde::{Deserialize, Serialize};
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
@@ -12,13 +11,6 @@ use super::{
     meta_file::AdjacentMetadata,
     util::match_trailing,
 };
-
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Default)]
-pub enum ScriptContextType {
-    #[default]
-    Class,
-    RunContext,
-}
 
 #[derive(Debug)]
 enum ScriptType {
@@ -58,13 +50,11 @@ pub fn snapshot_lua(
         return Ok(None);
     };
 
-    let is_run_context_enabled = context.script_type == ScriptContextType::RunContext;
-
-    let (class_name, run_context) = match (is_run_context_enabled, script_type) {
-        (true, ScriptType::Server) => ("Script", run_context_enums.get("Server")),
-        (true, ScriptType::Client) => ("Script", run_context_enums.get("Client")),
-        (false, ScriptType::Server) => ("Script", run_context_enums.get("Legacy")),
-        (false, ScriptType::Client) => ("LocalScript", None),
+    let (class_name, run_context) = match (context.emit_legacy_scripts, script_type) {
+        (false, ScriptType::Server) => ("Script", run_context_enums.get("Server")),
+        (false, ScriptType::Client) => ("Script", run_context_enums.get("Client")),
+        (true, ScriptType::Server) => ("Script", run_context_enums.get("Legacy")),
+        (true, ScriptType::Client) => ("LocalScript", None),
         (_, ScriptType::Module) => ("ModuleScript", None),
     };
 
@@ -158,7 +148,7 @@ mod test {
         let mut vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_lua(
-            &InstanceContext::from(ScriptContextType::Class),
+            &InstanceContext::from(true),
             &mut vfs,
             Path::new("/foo.lua"),
         )
@@ -179,7 +169,7 @@ mod test {
         let mut vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_lua(
-            &InstanceContext::from(ScriptContextType::RunContext),
+            &InstanceContext::from(false),
             &mut vfs,
             Path::new("/foo.lua"),
         )
@@ -200,7 +190,7 @@ mod test {
         let mut vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_lua(
-            &InstanceContext::from(ScriptContextType::Class),
+            &InstanceContext::from(true),
             &mut vfs,
             Path::new("/foo.server.lua"),
         )
@@ -221,7 +211,7 @@ mod test {
         let mut vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_lua(
-            &InstanceContext::from(ScriptContextType::RunContext),
+            &InstanceContext::from(false),
             &mut vfs,
             Path::new("/foo.server.lua"),
         )
@@ -242,7 +232,7 @@ mod test {
         let mut vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_lua(
-            &InstanceContext::from(ScriptContextType::Class),
+            &InstanceContext::from(true),
             &mut vfs,
             Path::new("/foo.client.lua"),
         )
@@ -263,7 +253,7 @@ mod test {
         let mut vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_lua(
-            &InstanceContext::from(ScriptContextType::RunContext),
+            &InstanceContext::from(false),
             &mut vfs,
             Path::new("/foo.client.lua"),
         )
@@ -289,13 +279,10 @@ mod test {
 
         let mut vfs = Vfs::new(imfs);
 
-        let instance_snapshot = snapshot_lua(
-            &InstanceContext::from(ScriptContextType::Class),
-            &mut vfs,
-            Path::new("/root"),
-        )
-        .unwrap()
-        .unwrap();
+        let instance_snapshot =
+            snapshot_lua(&InstanceContext::from(true), &mut vfs, Path::new("/root"))
+                .unwrap()
+                .unwrap();
 
         insta::with_settings!({ sort_maps => true }, {
             insta::assert_yaml_snapshot!(instance_snapshot);
@@ -322,7 +309,7 @@ mod test {
         let mut vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_lua(
-            &InstanceContext::from(ScriptContextType::Class),
+            &InstanceContext::from(true),
             &mut vfs,
             Path::new("/foo.lua"),
         )
@@ -354,7 +341,7 @@ mod test {
         let mut vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_lua(
-            &InstanceContext::from(ScriptContextType::RunContext),
+            &InstanceContext::from(false),
             &mut vfs,
             Path::new("/foo.lua"),
         )
@@ -386,7 +373,7 @@ mod test {
         let mut vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_lua(
-            &InstanceContext::from(ScriptContextType::Class),
+            &InstanceContext::from(true),
             &mut vfs,
             Path::new("/foo.server.lua"),
         )
@@ -418,7 +405,7 @@ mod test {
         let mut vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_lua(
-            &InstanceContext::from(ScriptContextType::RunContext),
+            &InstanceContext::from(false),
             &mut vfs,
             Path::new("/foo.server.lua"),
         )
@@ -452,7 +439,7 @@ mod test {
         let mut vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_lua(
-            &InstanceContext::from(ScriptContextType::Class),
+            &InstanceContext::from(true),
             &mut vfs,
             Path::new("/bar.server.lua"),
         )
@@ -486,7 +473,7 @@ mod test {
         let mut vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_lua(
-            &InstanceContext::from(ScriptContextType::RunContext),
+            &InstanceContext::from(false),
             &mut vfs,
             Path::new("/bar.server.lua"),
         )

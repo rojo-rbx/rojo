@@ -38,7 +38,7 @@ use self::{
     util::PathExt,
 };
 
-pub use self::{lua::ScriptContextType, project::snapshot_project_node};
+pub use self::{project::snapshot_project_node, util::emit_legacy_scripts_default};
 
 /// The main entrypoint to the snapshot function. This function can be pointed
 /// at any path and will return something if Rojo knows how to deal with it.

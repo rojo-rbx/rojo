@@ -11,7 +11,7 @@ metadata:
     - /foo.txt
     - /foo.meta.json
   context:
-    script_type: Class
+    emit_legacy_scripts: true
 name: foo
 class_name: StringValue
 properties:

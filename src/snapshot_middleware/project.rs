@@ -12,7 +12,7 @@ use crate::{
     },
 };
 
-use super::snapshot_from_vfs;
+use super::{emit_legacy_scripts_default, snapshot_from_vfs};
 
 pub fn snapshot_project(
     context: &InstanceContext,
@@ -30,7 +30,11 @@ pub fn snapshot_project(
     });
 
     context.add_path_ignore_rules(rules);
-    context.set_script_type(project.script_type.unwrap_or_default());
+    context.set_emit_legacy_scripts(
+        project
+            .emit_legacy_scripts
+            .unwrap_or_else(|| emit_legacy_scripts_default().unwrap()),
+    );
 
     match snapshot_project_node(&context, path, &project.name, &project.tree, vfs, None)? {
         Some(found_snapshot) => {

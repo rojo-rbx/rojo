@@ -7,7 +7,8 @@ use std::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    glob::Glob, path_serializer, project::ProjectNode, snapshot_middleware::ScriptContextType,
+    glob::Glob, path_serializer, project::ProjectNode,
+    snapshot_middleware::emit_legacy_scripts_default,
 };
 
 /// Rojo-specific metadata that can be associated with an instance or a snapshot
@@ -105,14 +106,14 @@ impl Default for InstanceMetadata {
 pub struct InstanceContext {
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub path_ignore_rules: Arc<Vec<PathIgnoreRule>>,
-    pub script_type: ScriptContextType,
+    pub emit_legacy_scripts: bool,
 }
 
 impl InstanceContext {
     pub fn new() -> Self {
         Self {
             path_ignore_rules: Arc::new(Vec::new()),
-            script_type: ScriptContextType::Class,
+            emit_legacy_scripts: emit_legacy_scripts_default().unwrap(),
         }
     }
 
@@ -134,26 +135,27 @@ impl InstanceContext {
         rules.extend(new_rules);
     }
 
-    pub fn set_script_type(&mut self, script_type: ScriptContextType) {
-        self.script_type = script_type
+    pub fn set_emit_legacy_scripts(&mut self, emit_legacy_scripts: bool) {
+        self.emit_legacy_scripts = emit_legacy_scripts
     }
 }
 
 // serve_session always passes an option from the config file, but tests want it to be explict
 #[cfg(test)]
-impl From<ScriptContextType> for InstanceContext {
-    fn from(script_type: ScriptContextType) -> Self {
+impl From<bool> for InstanceContext {
+    fn from(emit_legacy_scripts: bool) -> Self {
         Self {
-            script_type,
+            emit_legacy_scripts,
             ..Self::new()
         }
     }
 }
 
-impl From<Option<ScriptContextType>> for InstanceContext {
-    fn from(script_type: Option<ScriptContextType>) -> Self {
+impl From<Option<bool>> for InstanceContext {
+    fn from(emit_legacy_scripts: Option<bool>) -> Self {
         Self {
-            script_type: script_type.unwrap_or_default(),
+            emit_legacy_scripts: emit_legacy_scripts
+                .unwrap_or_else(|| emit_legacy_scripts_default().unwrap()),
             ..Self::new()
         }
     }

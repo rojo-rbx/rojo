@@ -1,6 +1,6 @@
 {
   "name": "nested_runcontext",
-  "scriptType": "Class",
+  "emitLegacyScripts": true,
   "tree": {
     "$path": "folder3"
   }

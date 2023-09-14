@@ -10,7 +10,7 @@ metadata:
   relevant_paths:
     - /foo.project.json
   context:
-    script_type: Class
+    emit_legacy_scripts: true
 name: unresolved-properties
 class_name: StringValue
 properties:

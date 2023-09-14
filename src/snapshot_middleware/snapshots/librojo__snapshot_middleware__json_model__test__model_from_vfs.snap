@@ -10,7 +10,7 @@ metadata:
   relevant_paths:
     - /foo.model.json
   context:
-    script_type: Class
+    emit_legacy_scripts: true
 name: foo
 class_name: IntValue
 properties:
@@ -22,7 +22,7 @@ children:
       ignore_unknown_instances: false
       relevant_paths: []
       context:
-        script_type: Class
+        emit_legacy_scripts: true
     name: The Child
     class_name: StringValue
     properties: {}

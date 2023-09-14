@@ -10,7 +10,7 @@ metadata:
   relevant_paths:
     - /foo.project.json
   context:
-    script_type: Class
+    emit_legacy_scripts: true
 name: children
 class_name: Folder
 properties: {}
@@ -26,7 +26,7 @@ children:
           - Folder
       relevant_paths: []
       context:
-        script_type: Class
+        emit_legacy_scripts: true
     name: Child
     class_name: Model
     properties: {}

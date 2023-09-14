@@ -25,10 +25,15 @@
 * Added rich Source diffs in patch visualizer ([#748])
 * Fix PatchTree performance issues ([#755])
 * Don't override the initial enabled state for source diffing ([#760])
-* A `$scriptType` field has been added to the project.json schema, allowing for scripts to be differentiated through classes or RunContext ([#765]).
 * Added support for `Terrain.MaterialColors` ([#770])
 * Allow `Terrain` to be specified without a classname ([#771])
 * Add Confirmation Behavior setting ([#774])
+* Added the `emitLegacyScripts` field to the project format ([#765]). Right now, it defaults to `true`:
+
+| `$emitLegacyScripts` Value | Action Taken by Rojo                                                                                             |
+|----------------------------|------------------------------------------------------------------------------------------------------------------|
+| false                      | Rojo emits Scripts with the appropriate `RunContext` for `*.client.lua` and `*.server.lua` files in the project. |
+| true   (current default)   | Rojo emits LocalScripts and Scripts with legacy Runcontext (same behavior as previously).                        |
 
 [#761]: https://github.com/rojo-rbx/rojo/pull/761
 [#745]: https://github.com/rojo-rbx/rojo/pull/745

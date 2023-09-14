@@ -10,7 +10,7 @@ metadata:
   relevant_paths:
     - /foo/hello.project.json
   context:
-    script_type: Class
+    emit_legacy_scripts: true
 name: direct-project
 class_name: Model
 properties: {}
