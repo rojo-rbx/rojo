@@ -75,9 +75,8 @@ pub struct Project {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub serve_address: Option<IpAddr>,
 
-    /// The mode to use when mapping scripts into Roblox.
-    /// Can be either `Class` or `RunContext` and determines whether script
-    /// behavior is set using the `RunContext` property or the script's `ClassName`.
+    /// Determines if rojo should emit scripts with the appropriate `RunContext` for `*.client.lua` and `*.server.lua` files in the project.
+    /// Or, if rojo should keep the legacy behavior of emitting LocalScripts and Scripts with legacy Runcontext
     #[serde(
         default = "emit_legacy_scripts_default",
         skip_serializing_if = "Option::is_none"
