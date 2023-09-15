@@ -123,7 +123,8 @@ impl ServeSession {
 
         let root_id = tree.get_root_id();
 
-        let instance_context = InstanceContext::from(root_project.emit_legacy_scripts);
+        let instance_context =
+            InstanceContext::with_emit_legacy_scripts(root_project.emit_legacy_scripts);
 
         log::trace!("Generating snapshot of instances from VFS");
         let snapshot = snapshot_from_vfs(&instance_context, &vfs, start_path)?;

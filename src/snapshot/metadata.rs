@@ -117,6 +117,14 @@ impl InstanceContext {
         }
     }
 
+    pub fn with_emit_legacy_scripts(emit_legacy_scripts: Option<bool>) -> Self {
+        Self {
+            emit_legacy_scripts: emit_legacy_scripts
+                .unwrap_or_else(|| emit_legacy_scripts_default().unwrap()),
+            ..Self::new()
+        }
+    }
+
     /// Extend the list of ignore rules in the context with the given new rules.
     pub fn add_path_ignore_rules<I>(&mut self, new_rules: I)
     where
@@ -136,28 +144,7 @@ impl InstanceContext {
     }
 
     pub fn set_emit_legacy_scripts(&mut self, emit_legacy_scripts: bool) {
-        self.emit_legacy_scripts = emit_legacy_scripts
-    }
-}
-
-// serve_session always passes an option from the config file, but tests want it to be explict
-#[cfg(test)]
-impl From<bool> for InstanceContext {
-    fn from(emit_legacy_scripts: bool) -> Self {
-        Self {
-            emit_legacy_scripts,
-            ..Self::new()
-        }
-    }
-}
-
-impl From<Option<bool>> for InstanceContext {
-    fn from(emit_legacy_scripts: Option<bool>) -> Self {
-        Self {
-            emit_legacy_scripts: emit_legacy_scripts
-                .unwrap_or_else(|| emit_legacy_scripts_default().unwrap()),
-            ..Self::new()
-        }
+        self.emit_legacy_scripts = emit_legacy_scripts;
     }
 }
 
