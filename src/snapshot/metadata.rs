@@ -120,7 +120,8 @@ impl InstanceContext {
     pub fn with_emit_legacy_scripts(emit_legacy_scripts: Option<bool>) -> Self {
         Self {
             emit_legacy_scripts: emit_legacy_scripts
-                .unwrap_or_else(|| emit_legacy_scripts_default().unwrap()),
+                .or_else(emit_legacy_scripts_default)
+                .unwrap(),
             ..Self::new()
         }
     }

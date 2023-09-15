@@ -33,7 +33,8 @@ pub fn snapshot_project(
     context.set_emit_legacy_scripts(
         project
             .emit_legacy_scripts
-            .unwrap_or_else(|| emit_legacy_scripts_default().unwrap()),
+            .or_else(emit_legacy_scripts_default)
+            .unwrap(),
     );
 
     match snapshot_project_node(&context, path, &project.name, &project.tree, vfs, None)? {
