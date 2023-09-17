@@ -90,7 +90,6 @@ uuid = { version = "1.0.0", features = ["v4", "serde"] }
 clap = { version = "3.1.18", features = ["derive"] }
 profiling = "1.0.6"
 tracy-client = { version = "0.13.2", optional = true }
-tempfile = "3.2.0"
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.10.1"
@@ -112,4 +111,5 @@ insta = { version = "1.8.0", features = ["redactions", "yaml"] }
 paste = "1.0.5"
 pretty_assertions = "1.2.1"
 serde_yaml = "0.8.21"
+tempfile = "3.2.0"
 walkdir = "2.3.2"
