@@ -18,7 +18,7 @@ local decodeValue = require(script.Parent.decodeValue)
 local reify = require(script.Parent.reify)
 local setProperty = require(script.Parent.setProperty)
 
-local function applyPatch(instanceMap, patch, serveSession)
+local function applyPatch(instanceMap, patch)
 	local patchTimestamp = DateTime.now():FormatLocalTime("LTS", "en-us")
 
 	-- Tracks any portions of the patch that could not be applied to the DOM.
@@ -65,7 +65,7 @@ local function applyPatch(instanceMap, patch, serveSession)
 			)
 		end
 
-		local failedToReify = reify(instanceMap, patch.added, id, parentInstance, serveSession)
+		local failedToReify = reify(instanceMap, patch.added, id, parentInstance)
 
 		if not PatchSet.isEmpty(failedToReify) then
 			Log.debug("Failed to reify as part of applying a patch: {:#?}", failedToReify)
@@ -130,7 +130,7 @@ local function applyPatch(instanceMap, patch, serveSession)
 				[update.id] = mockVirtualInstance,
 			}
 
-			local failedToReify = reify(instanceMap, mockAdded, update.id, instance.Parent, serveSession)
+			local failedToReify = reify(instanceMap, mockAdded, update.id, instance.Parent)
 
 			local newInstance = instanceMap.fromIds[update.id]
 

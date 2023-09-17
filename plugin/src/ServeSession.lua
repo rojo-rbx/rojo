@@ -288,7 +288,7 @@ function ServeSession:__initialSync(serverInfo)
 				self.__apiContext:write(inversePatch)
 
 			elseif userDecision == "Accept" then
-				local unappliedPatch = self.__reconciler:applyPatch(catchUpPatch, self)
+				local unappliedPatch = self.__reconciler:applyPatch(catchUpPatch)
 
 				if not PatchSet.isEmpty(unappliedPatch) then
 					Log.warn("Could not apply all changes requested by the Rojo server:\n{}",
@@ -312,7 +312,7 @@ function ServeSession:__mainSyncLoop()
 					Log.trace("Serve session {} retrieved {} messages", tostring(self), #messages)
 
 					for _, message in messages do
-						local unappliedPatch = self.__reconciler:applyPatch(message, self)
+						local unappliedPatch = self.__reconciler:applyPatch(message)
 
 						if not PatchSet.isEmpty(unappliedPatch) then
 							Log.warn("Could not apply all changes requested by the Rojo server:\n{}",

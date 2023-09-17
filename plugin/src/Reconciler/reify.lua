@@ -11,9 +11,9 @@ local decodeValue = require(script.Parent.decodeValue)
 
 local Log = require(Rojo.Packages.Log)
 
-local reifyInner, fetchUnapplied, applyDeferredRefs
+local reifyInner, applyDeferredRefs
 
-local function reify(instanceMap, virtualInstances, rootId, parentInstance, serveSession)
+local function reify(instanceMap, virtualInstances, rootId, parentInstance)
 	-- Create an empty patch that will be populated with any parts of this reify
 	-- that could not happen, like instances that couldn't be created and
 	-- properties that could not be assigned.
