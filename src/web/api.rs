@@ -1,7 +1,7 @@
 //! Defines Rojo's HTTP API, all under /api. These endpoints generally return
 //! JSON.
 
-use std::{collections::HashMap, fs, io::BufWriter, path::PathBuf, str::FromStr, sync::Arc};
+use std::{collections::HashMap, fs, io, io::BufWriter, path::PathBuf, str::FromStr, sync::Arc};
 
 use hyper::{body, Body, Method, Request, Response, StatusCode};
 use opener::OpenError;
@@ -24,6 +24,8 @@ use crate::{
         util::{json, json_ok},
     },
 };
+
+const ROJO_DIR_NAME: &str = ".rojo";
 
 pub async fn call(serve_session: Arc<ServeSession>, request: Request<Body>) -> Response<Body> {
     let service = ApiService::new(serve_session);
@@ -308,22 +310,27 @@ impl ApiService {
             }
         };
 
-        let temp_dir = match self.serve_session.temp_dir() {
-            Some(dir) => dir,
-            None => {
+        let temp_dir = content_dir.join(ROJO_DIR_NAME);
+        match fs::create_dir(&temp_dir) {
+            // We want to silently move on if the folder already exists
+            Err(err) if err.kind() != io::ErrorKind::AlreadyExists => {
                 return json(
-                    ErrorResponse::bad_request("could not create temporary directory"),
+                    ErrorResponse::internal_error(format!(
+                        "Could not create Rojo content directory: {}",
+                        &temp_dir.display()
+                    )),
                     StatusCode::INTERNAL_SERVER_ERROR,
-                )
+                );
             }
-        };
+            _ => {}
+        }
 
         let uuid = Uuid::new_v4();
         let mut file_name = PathBuf::from(uuid.to_string());
         file_name.set_extension("rbxm");
 
         let out_path = temp_dir.join(&file_name);
-        let studio_path = content_dir.join(&file_name);
+        let relative_path = PathBuf::from(ROJO_DIR_NAME).join(file_name);
 
         let mut writer = BufWriter::new(match fs::File::create(&out_path) {
             Ok(handle) => handle,
@@ -372,24 +379,10 @@ impl ApiService {
 
         log::debug!("Wrote model file to {}", out_path.display());
 
-        match fs_err::hard_link(&out_path, &studio_path) {
-            Ok(_) => {
-                log::debug!("Created hardlink to {}", &studio_path.display());
-                json_ok(FetchResponse {
-                    session_id: self.serve_session.session_id(),
-                    path: file_name.to_string_lossy(),
-                })
-            }
-            Err(err) => {
-                log::debug!("Failed to create hardlink to {}", &studio_path.display());
-                json(
-                    ErrorResponse::internal_error(format!(
-                        "Could not put file in Roblox content folder: {err}"
-                    )),
-                    StatusCode::SERVICE_UNAVAILABLE,
-                )
-            }
-        }
+        json_ok(FetchResponse {
+            session_id: self.serve_session.session_id(),
+            path: relative_path.to_string_lossy(),
+        })
     }
 }
 

@@ -4,14 +4,13 @@ use std::{
     io,
     net::IpAddr,
     path::{Path, PathBuf},
-    sync::{Arc, Mutex, MutexGuard, OnceLock},
+    sync::{Arc, Mutex, MutexGuard},
     time::Instant,
 };
 
 use crossbeam_channel::Sender;
 use memofs::IoResultExt;
 use memofs::Vfs;
-use tempfile::TempDir;
 use thiserror::Error;
 
 use crate::{
@@ -88,10 +87,6 @@ pub struct ServeSession {
     /// A channel to send mutation requests on. These will be handled by the
     /// ChangeProcessor and trigger changes in the tree.
     tree_mutation_sender: Sender<PatchSet>,
-
-    /// A temporary directory that is cleaned up at the end of this structure's
-    /// lifespan. This is not initialized directly to avoid unnecessary work.
-    temporary_folder: OnceLock<Option<TempDir>>,
 }
 
 impl ServeSession {
@@ -165,7 +160,6 @@ impl ServeSession {
             message_queue,
             tree_mutation_sender,
             vfs,
-            temporary_folder: OnceLock::new(),
         })
     }
 
@@ -224,20 +218,6 @@ impl ServeSession {
 
     pub fn root_dir(&self) -> &Path {
         self.root_project.folder_location()
-    }
-
-    /// Returns a path to a temporary directory if it could be created.
-    /// Otherwise, returns `None`.
-    pub fn temp_dir(&self) -> Option<&Path> {
-        self.temporary_folder
-            .get_or_init(
-                || match tempfile::Builder::new().prefix("rojo-").tempdir() {
-                    Ok(dir) => Some(dir),
-                    Err(_) => None,
-                },
-            )
-            .as_ref()
-            .map(|dir| dir.path())
     }
 }
 
