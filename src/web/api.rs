@@ -25,7 +25,7 @@ use crate::{
     },
 };
 
-const ROJO_DIR_NAME: &str = ".rojo";
+const FETCH_DIR_NAME: &str = ".rojo";
 
 pub async fn call(serve_session: Arc<ServeSession>, request: Request<Body>) -> Response<Body> {
     let service = ApiService::new(serve_session);
@@ -310,7 +310,7 @@ impl ApiService {
             }
         };
 
-        let temp_dir = content_dir.join(ROJO_DIR_NAME);
+        let temp_dir = content_dir.join(FETCH_DIR_NAME);
         match fs::create_dir(&temp_dir) {
             // We want to silently move on if the folder already exists
             Err(err) if err.kind() != io::ErrorKind::AlreadyExists => {
@@ -330,7 +330,7 @@ impl ApiService {
         file_name.set_extension("rbxm");
 
         let out_path = temp_dir.join(&file_name);
-        let relative_path = PathBuf::from(ROJO_DIR_NAME).join(file_name);
+        let relative_path = PathBuf::from(FETCH_DIR_NAME).join(file_name);
 
         let mut writer = BufWriter::new(match fs::File::create(&out_path) {
             Ok(handle) => handle,
