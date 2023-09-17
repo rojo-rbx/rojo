@@ -18,7 +18,7 @@ local decodeValue = require(script.Parent.decodeValue)
 local reify = require(script.Parent.reify)
 local setProperty = require(script.Parent.setProperty)
 
-local function applyPatch(instanceMap, patch)
+local function applyPatch(instanceMap, apiContext, patch)
 	local patchTimestamp = DateTime.now():FormatLocalTime("LTS", "en-us")
 
 	-- Tracks any portions of the patch that could not be applied to the DOM.

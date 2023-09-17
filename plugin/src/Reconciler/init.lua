@@ -13,10 +13,12 @@ local diff = require(script.diff)
 local Reconciler = {}
 Reconciler.__index = Reconciler
 
-function Reconciler.new(instanceMap)
+function Reconciler.new(instanceMap, apiContext)
 	local self = {
 		-- Tracks all of the instances known by the reconciler by ID.
 		__instanceMap = instanceMap,
+		-- An API context for sending requests back to the server
+		__apiContext = apiContext,
 		__precommitCallbacks = {},
 		__postcommitCallbacks = {},
 	}
@@ -64,7 +66,7 @@ function Reconciler:applyPatch(patch)
 		end
 	end
 
-	local unappliedPatch = applyPatch(self.__instanceMap, patch)
+	local unappliedPatch = applyPatch(self.__instanceMap, self.__apiContext, patch)
 
 	for _, callback in self.__postcommitCallbacks do
 		local success, err = pcall(callback, patch, self.__instanceMap, unappliedPatch)

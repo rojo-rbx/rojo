@@ -73,7 +73,7 @@ function ServeSession.new(options)
 
 	local instanceMap = InstanceMap.new(onInstanceChanged)
 	local changeBatcher = ChangeBatcher.new(instanceMap, onChangesFlushed)
-	local reconciler = Reconciler.new(instanceMap)
+	local reconciler = Reconciler.new(instanceMap, options.apiContext)
 
 	local connections = {}
 
@@ -288,7 +288,7 @@ function ServeSession:__initialSync(serverInfo)
 				self.__apiContext:write(inversePatch)
 
 			elseif userDecision == "Accept" then
-				local unappliedPatch = self.__reconciler:applyPatch(catchUpPatch)
+				local unappliedPatch = self.__reconciler:applyPatch(catchUpPatch, self.__apiContext)
 
 				if not PatchSet.isEmpty(unappliedPatch) then
 					Log.warn("Could not apply all changes requested by the Rojo server:\n{}",
