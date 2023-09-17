@@ -365,8 +365,10 @@ impl ApiService {
                         .with_name(referent.to_string()),
                 );
             } else {
-                // TODO handle this better
-                log::error!("bad ref {referent}! ahh!")
+                return json(
+                    ErrorResponse::bad_request("Invalid ID provided to fetch endpoint"),
+                    StatusCode::BAD_REQUEST,
+                );
             }
         }
         if let Err(_) = rbx_binary::to_writer(&mut writer, &sub_tree, &[sub_tree.root_ref()]) {
