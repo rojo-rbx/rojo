@@ -5,20 +5,20 @@ use std::thread;
 use std::time::Duration;
 
 use crossbeam_channel::Receiver;
-use notify::{watcher, DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher};
+use notify::{DebouncedEvent, PollWatcher, RecursiveMode, Watcher};
 
 use crate::{DirEntry, Metadata, ReadDir, VfsBackend, VfsEvent};
 
 /// `VfsBackend` that uses `std::fs` and the `notify` crate.
 pub struct StdBackend {
-    watcher: RecommendedWatcher,
+    watcher: PollWatcher,
     watcher_receiver: Receiver<VfsEvent>,
 }
 
 impl StdBackend {
     pub fn new() -> StdBackend {
         let (notify_tx, notify_rx) = mpsc::channel();
-        let watcher = watcher(notify_tx, Duration::from_millis(50)).unwrap();
+        let watcher = PollWatcher::new(notify_tx, Duration::from_millis(50)).unwrap();
 
         let (tx, rx) = crossbeam_channel::unbounded();
 
