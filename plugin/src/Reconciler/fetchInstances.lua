@@ -9,7 +9,6 @@ local function fetchInstances(idList, instanceMap, apiContext)
 			-- The endpoint `api/fetech/idlist` returns a table that contains
 			-- `sessionId` and `path`. The value of `path` is the name of a
 			-- file in the Content folder that may be loaded via `GetObjects`.
-			Log.debug("Loading assets for {:?}", idList)
 			local objects = game:GetObjects("rbxasset://" .. body.path)
 			-- `ReferentMap` is a folder that contains nothing but
 			-- ObjectValues which will be named after entries in `instanceMap`
@@ -51,7 +50,6 @@ local function fetchInstances(idList, instanceMap, apiContext)
 					invariant("ReferentMap entry `{}` was a `{}` and not an ObjectValue", entry.Name, entry.ClassName)
 				end
 			end
-
 		end)
 end
 
