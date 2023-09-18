@@ -42,7 +42,6 @@ local function DisplayValue(props)
 					Position = UDim2.new(0, 25, 0, 0),
 				}),
 			})
-
 		elseif t == "table" then
 			-- Showing a memory address for tables is useless, so we want to show the best we can
 			local textRepresentation = nil
@@ -62,10 +61,10 @@ local function DisplayValue(props)
 
 					-- Wrap strings in quotes
 					if type(k) == "string" then
-						k = "\"" .. k .. "\""
+						k = '"' .. k .. '"'
 					end
 					if type(v) == "string" then
-						v = "\"" .. v .. "\""
+						v = '"' .. v .. '"'
 					end
 
 					out[i] = string.format("[%s] = %s", tostring(k), tostring(v))

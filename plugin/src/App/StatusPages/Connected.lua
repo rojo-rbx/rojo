@@ -21,7 +21,17 @@ local StringDiffVisualizer = require(Plugin.App.Components.StringDiffVisualizer)
 
 local e = Roact.createElement
 
-local AGE_UNITS = { {31556909, "year"}, {2629743, "month"}, {604800, "week"}, {86400, "day"}, {3600, "hour"}, {60, "minute"}, }
+local AGE_UNITS = {
+	{ 31556909, "year" },
+	{ 2629743, "month" },
+	{ 604800, "week" },
+	{ 86400, "day" },
+	{ 3600, "hour" },
+	{
+		60,
+		"minute",
+	},
+}
 function timeSinceText(elapsed: number): string
 	if elapsed < 3 then
 		return "just now"
@@ -159,16 +169,15 @@ function ConnectedPage:getChangeInfoText()
 	local elapsed = os.time() - patchData.timestamp
 	local unapplied = PatchSet.countChanges(patchData.unapplied)
 
-	return
-		"<i>Synced "
+	return "<i>Synced "
 		.. timeSinceText(elapsed)
-		.. (if unapplied > 0 then
-			string.format(
-				", <font color=\"#FF8E3C\">but %d change%s failed to apply</font>",
+		.. (if unapplied > 0
+			then string.format(
+				', <font color="#FF8E3C">but %d change%s failed to apply</font>',
 				unapplied,
 				unapplied == 1 and "" or "s"
 			)
-		else "")
+			else "")
 		.. "</i>"
 end
 
@@ -297,7 +306,7 @@ function ConnectedPage:render()
 					onClick = self.props.onNavigateSettings,
 				}, {
 					Tip = e(Tooltip.Trigger, {
-						text = "View and modify plugin settings"
+						text = "View and modify plugin settings",
 					}),
 				}),
 
@@ -309,7 +318,7 @@ function ConnectedPage:render()
 					onClick = self.props.onDisconnect,
 				}, {
 					Tip = e(Tooltip.Trigger, {
-						text = "Disconnect from the Rojo sync server"
+						text = "Disconnect from the Rojo sync server",
 					}),
 				}),
 
@@ -427,7 +436,7 @@ function ConnectedPage:render()
 
 							oldText = self.state.oldSource,
 							newText = self.state.newSource,
-						})
+						}),
 					}),
 				}),
 			}),

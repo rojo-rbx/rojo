@@ -36,12 +36,10 @@ function Dropdown:didUpdate(prevProps)
 		})
 	end
 
-	self.openMotor:setGoal(
-		Flipper.Spring.new(self.state.open and 1 or 0, {
-			frequency = 6,
-			dampingRatio = 1.1,
-		})
-	)
+	self.openMotor:setGoal(Flipper.Spring.new(self.state.open and 1 or 0, {
+		frequency = 6,
+		dampingRatio = 1.1,
+	}))
 end
 
 function Dropdown:render()
@@ -52,10 +50,7 @@ function Dropdown:render()
 		local width = -1
 		for i, option in self.props.options do
 			local text = tostring(option or "")
-			local textSize = TextService:GetTextSize(
-				text, 15, Enum.Font.GothamMedium,
-				Vector2.new(math.huge, 20)
-			)
+			local textSize = TextService:GetTextSize(text, 15, Enum.Font.GothamMedium, Vector2.new(math.huge, 20))
 			if textSize.X > width then
 				width = textSize.X
 			end
@@ -74,7 +69,9 @@ function Dropdown:render()
 				Font = Enum.Font.GothamMedium,
 
 				[Roact.Event.Activated] = function()
-					if self.props.locked then return end
+					if self.props.locked then
+						return
+					end
 					self:setState({
 						open = false,
 					})
@@ -88,7 +85,7 @@ function Dropdown:render()
 		end
 
 		return e("ImageButton", {
-			Size = UDim2.new(0, width+50, 0, 28),
+			Size = UDim2.new(0, width + 50, 0, 28),
 			Position = self.props.position,
 			AnchorPoint = self.props.anchorPoint,
 			LayoutOrder = self.props.layoutOrder,
@@ -96,7 +93,9 @@ function Dropdown:render()
 			BackgroundTransparency = 1,
 
 			[Roact.Event.Activated] = function()
-				if self.props.locked then return end
+				if self.props.locked then
+					return
+				end
 				self:setState({
 					open = not self.state.open,
 				})
@@ -136,40 +135,42 @@ function Dropdown:render()
 					TextTransparency = self.props.transparency,
 				}),
 			}),
-			Options = if self.state.open then e(SlicedImage, {
-				slice = Assets.Slices.RoundedBackground,
-				color = theme.BackgroundColor,
-				position = UDim2.new(1, 0, 1, 3),
-				size = self.openBinding:map(function(a)
-					return UDim2.new(1, 0, a*math.min(3, #self.props.options), 0)
-				end),
-				anchorPoint = Vector2.new(1, 0),
-			}, {
-				Border = e(SlicedImage, {
-					slice = Assets.Slices.RoundedBorder,
-					color = theme.BorderColor,
-					transparency = self.props.transparency,
-					size = UDim2.new(1, 0, 1, 0),
-				}),
-				ScrollingFrame = e(ScrollingFrame, {
-					size = UDim2.new(1, -4, 1, -4),
-					position = UDim2.new(0, 2, 0, 2),
-					transparency = self.props.transparency,
-					contentSize = self.contentSize,
+			Options = if self.state.open
+				then e(SlicedImage, {
+					slice = Assets.Slices.RoundedBackground,
+					color = theme.BackgroundColor,
+					position = UDim2.new(1, 0, 1, 3),
+					size = self.openBinding:map(function(a)
+						return UDim2.new(1, 0, a * math.min(3, #self.props.options), 0)
+					end),
+					anchorPoint = Vector2.new(1, 0),
 				}, {
-					Layout = e("UIListLayout", {
-						VerticalAlignment = Enum.VerticalAlignment.Top,
-						FillDirection = Enum.FillDirection.Vertical,
-						SortOrder = Enum.SortOrder.LayoutOrder,
-						Padding = UDim.new(0, 0),
-
-						[Roact.Change.AbsoluteContentSize] = function(object)
-							self.setContentSize(object.AbsoluteContentSize)
-						end,
+					Border = e(SlicedImage, {
+						slice = Assets.Slices.RoundedBorder,
+						color = theme.BorderColor,
+						transparency = self.props.transparency,
+						size = UDim2.new(1, 0, 1, 0),
 					}),
-					Roact.createFragment(optionButtons),
-				}),
-			}) else nil,
+					ScrollingFrame = e(ScrollingFrame, {
+						size = UDim2.new(1, -4, 1, -4),
+						position = UDim2.new(0, 2, 0, 2),
+						transparency = self.props.transparency,
+						contentSize = self.contentSize,
+					}, {
+						Layout = e("UIListLayout", {
+							VerticalAlignment = Enum.VerticalAlignment.Top,
+							FillDirection = Enum.FillDirection.Vertical,
+							SortOrder = Enum.SortOrder.LayoutOrder,
+							Padding = UDim.new(0, 0),
+
+							[Roact.Change.AbsoluteContentSize] = function(object)
+								self.setContentSize(object.AbsoluteContentSize)
+							end,
+						}),
+						Roact.createFragment(optionButtons),
+					}),
+				})
+				else nil,
 		})
 	end)
 end

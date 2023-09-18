@@ -77,15 +77,13 @@ function ServeSession.new(options)
 
 	local connections = {}
 
-	local connection = StudioService
-		:GetPropertyChangedSignal("ActiveScript")
-		:Connect(function()
-			local activeScript = StudioService.ActiveScript
+	local connection = StudioService:GetPropertyChangedSignal("ActiveScript"):Connect(function()
+		local activeScript = StudioService.ActiveScript
 
-			if activeScript ~= nil then
-				self:__onActiveScriptChanged(activeScript)
-			end
-		end)
+		if activeScript ~= nil then
+			self:__onActiveScriptChanged(activeScript)
+		end
+	end)
 	table.insert(connections, connection)
 
 	self = {
@@ -139,16 +137,16 @@ end
 function ServeSession:start()
 	self:__setStatus(Status.Connecting)
 
-	self.__apiContext:connect()
+	self.__apiContext
+		:connect()
 		:andThen(function(serverInfo)
 			self:__applyGameAndPlaceId(serverInfo)
 
-			return self:__initialSync(serverInfo)
-				:andThen(function()
-					self:__setStatus(Status.Connected, serverInfo.projectName)
+			return self:__initialSync(serverInfo):andThen(function()
+				self:__setStatus(Status.Connected, serverInfo.projectName)
 
-					return self:__mainSyncLoop()
-				end)
+				return self:__mainSyncLoop()
+			end)
 		end)
 		:catch(function(err)
 			if self.__status ~= Status.Disconnected then
@@ -211,97 +209,93 @@ function ServeSession:__onActiveScriptChanged(activeScript)
 end
 
 function ServeSession:__initialSync(serverInfo)
-	return self.__apiContext:read({ serverInfo.rootInstanceId })
-		:andThen(function(readResponseBody)
-			-- Tell the API Context that we're up-to-date with the version of
-			-- the tree defined in this response.
-			self.__apiContext:setMessageCursor(readResponseBody.messageCursor)
+	return self.__apiContext:read({ serverInfo.rootInstanceId }):andThen(function(readResponseBody)
+		-- Tell the API Context that we're up-to-date with the version of
+		-- the tree defined in this response.
+		self.__apiContext:setMessageCursor(readResponseBody.messageCursor)
 
-			-- For any instances that line up with the Rojo server's view, start
-			-- tracking them in the reconciler.
-			Log.trace("Matching existing Roblox instances to Rojo IDs")
-			self.__reconciler:hydrate(readResponseBody.instances, serverInfo.rootInstanceId, game)
+		-- For any instances that line up with the Rojo server's view, start
+		-- tracking them in the reconciler.
+		Log.trace("Matching existing Roblox instances to Rojo IDs")
+		self.__reconciler:hydrate(readResponseBody.instances, serverInfo.rootInstanceId, game)
 
-			-- Calculate the initial patch to apply to the DataModel to catch us
-			-- up to what Rojo thinks the place should look like.
-			Log.trace("Computing changes that plugin needs to make to catch up to server...")
-			local success, catchUpPatch = self.__reconciler:diff(
-				readResponseBody.instances,
-				serverInfo.rootInstanceId,
-				game
-			)
+		-- Calculate the initial patch to apply to the DataModel to catch us
+		-- up to what Rojo thinks the place should look like.
+		Log.trace("Computing changes that plugin needs to make to catch up to server...")
+		local success, catchUpPatch =
+			self.__reconciler:diff(readResponseBody.instances, serverInfo.rootInstanceId, game)
 
-			if not success then
-				Log.error("Could not compute a diff to catch up to the Rojo server: {:#?}", catchUpPatch)
-			end
+		if not success then
+			Log.error("Could not compute a diff to catch up to the Rojo server: {:#?}", catchUpPatch)
+		end
 
-			for _, update in catchUpPatch.updated do
-				if
-					update.id == self.__instanceMap.fromInstances[game]
-					and update.changedClassName ~= nil
-				then
-					-- Non-place projects will try to update the classname of game from DataModel to
-					-- something like Folder, ModuleScript, etc. This would fail, so we exit with a clear
-					-- message instead of crashing.
-					return Promise.reject(
-						"Cannot sync a model as a place."
+		for _, update in catchUpPatch.updated do
+			if update.id == self.__instanceMap.fromInstances[game] and update.changedClassName ~= nil then
+				-- Non-place projects will try to update the classname of game from DataModel to
+				-- something like Folder, ModuleScript, etc. This would fail, so we exit with a clear
+				-- message instead of crashing.
+				return Promise.reject(
+					"Cannot sync a model as a place."
 						.. "\nEnsure Rojo is serving a project file that has a DataModel at the root of its tree and try again."
 						.. "\nSee project file docs: https://rojo.space/docs/v7/project-format/"
-					)
+				)
+			end
+		end
+
+		Log.trace("Computed hydration patch: {:#?}", debugPatch(catchUpPatch))
+
+		local userDecision = "Accept"
+		if self.__userConfirmCallback ~= nil then
+			userDecision = self.__userConfirmCallback(self.__instanceMap, catchUpPatch, serverInfo)
+		end
+
+		if userDecision == "Abort" then
+			return Promise.reject("Aborted Rojo sync operation")
+		elseif userDecision == "Reject" and self.__twoWaySync then
+			-- The user wants their studio DOM to write back to their Rojo DOM
+			-- so we will reverse the patch and send it back
+
+			local inversePatch = PatchSet.newEmpty()
+
+			-- Send back the current properties
+			for _, change in catchUpPatch.updated do
+				local instance = self.__instanceMap.fromIds[change.id]
+				if not instance then
+					continue
 				end
+
+				local update = encodePatchUpdate(instance, change.id, change.changedProperties)
+				table.insert(inversePatch.updated, update)
+			end
+			-- Add the removed instances back to Rojo
+			-- selene:allow(empty_if, unused_variable)
+			for _, instance in catchUpPatch.removed do
+				-- TODO: Generate ID for our instance and add it to inversePatch.added
+			end
+			-- Remove the additions we've rejected
+			for id, _change in catchUpPatch.added do
+				table.insert(inversePatch.removed, id)
 			end
 
-			Log.trace("Computed hydration patch: {:#?}", debugPatch(catchUpPatch))
+			self.__apiContext:write(inversePatch)
+		elseif userDecision == "Accept" then
+			local unappliedPatch = self.__reconciler:applyPatch(catchUpPatch)
 
-			local userDecision = "Accept"
-			if self.__userConfirmCallback ~= nil then
-				userDecision = self.__userConfirmCallback(self.__instanceMap, catchUpPatch, serverInfo)
+			if not PatchSet.isEmpty(unappliedPatch) then
+				Log.warn(
+					"Could not apply all changes requested by the Rojo server:\n{}",
+					PatchSet.humanSummary(self.__instanceMap, unappliedPatch)
+				)
 			end
-
-			if userDecision == "Abort" then
-				return Promise.reject("Aborted Rojo sync operation")
-
-			elseif userDecision == "Reject" and self.__twoWaySync then
-				-- The user wants their studio DOM to write back to their Rojo DOM
-				-- so we will reverse the patch and send it back
-
-				local inversePatch = PatchSet.newEmpty()
-
-				-- Send back the current properties
-				for _, change in catchUpPatch.updated do
-					local instance = self.__instanceMap.fromIds[change.id]
-					if not instance then continue end
-
-					local update = encodePatchUpdate(instance, change.id, change.changedProperties)
-					table.insert(inversePatch.updated, update)
-				end
-				-- Add the removed instances back to Rojo
-				-- selene:allow(empty_if, unused_variable)
-				for _, instance in catchUpPatch.removed do
-					-- TODO: Generate ID for our instance and add it to inversePatch.added
-				end
-				-- Remove the additions we've rejected
-				for id, _change in catchUpPatch.added do
-					table.insert(inversePatch.removed, id)
-				end
-
-				self.__apiContext:write(inversePatch)
-
-			elseif userDecision == "Accept" then
-				local unappliedPatch = self.__reconciler:applyPatch(catchUpPatch)
-
-				if not PatchSet.isEmpty(unappliedPatch) then
-					Log.warn("Could not apply all changes requested by the Rojo server:\n{}",
-						PatchSet.humanSummary(self.__instanceMap, unappliedPatch))
-				end
-			end
-		end)
+		end
+	end)
 end
 
 function ServeSession:__mainSyncLoop()
 	return Promise.new(function(resolve, reject)
 		while self.__status == Status.Connected do
-			local success, result = self.__apiContext:retrieveMessages()
+			local success, result = self.__apiContext
+				:retrieveMessages()
 				:andThen(function(messages)
 					if self.__status == Status.Disconnected then
 						-- In the time it took to retrieve messages, we disconnected
@@ -315,11 +309,14 @@ function ServeSession:__mainSyncLoop()
 						local unappliedPatch = self.__reconciler:applyPatch(message)
 
 						if not PatchSet.isEmpty(unappliedPatch) then
-							Log.warn("Could not apply all changes requested by the Rojo server:\n{}",
-								PatchSet.humanSummary(self.__instanceMap, unappliedPatch))
+							Log.warn(
+								"Could not apply all changes requested by the Rojo server:\n{}",
+								PatchSet.humanSummary(self.__instanceMap, unappliedPatch)
+							)
 						end
 					end
-				end):await()
+				end)
+				:await()
 
 			if self.__status == Status.Disconnected then
 				-- If we are no longer connected after applying, we stop silently

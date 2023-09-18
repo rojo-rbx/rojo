@@ -85,7 +85,7 @@ function ConfirmingPage:render()
 					onClick = self.props.onAbort,
 				}, {
 					Tip = e(Tooltip.Trigger, {
-						text = "Stop the connection process"
+						text = "Stop the connection process",
 					}),
 				}),
 
@@ -98,7 +98,7 @@ function ConfirmingPage:render()
 						onClick = self.props.onReject,
 					}, {
 						Tip = e(Tooltip.Trigger, {
-							text = "Push Studio changes to the Rojo server"
+							text = "Push Studio changes to the Rojo server",
 						}),
 					})
 					else nil,
@@ -111,7 +111,7 @@ function ConfirmingPage:render()
 					onClick = self.props.onAccept,
 				}, {
 					Tip = e(Tooltip.Trigger, {
-						text = "Pull Rojo server changes to Studio"
+						text = "Pull Rojo server changes to Studio",
 					}),
 				}),
 
@@ -169,7 +169,7 @@ function ConfirmingPage:render()
 
 							oldText = self.state.oldSource,
 							newText = self.state.newSource,
-						})
+						}),
 					}),
 				}),
 			}),
