@@ -1,3 +1,5 @@
+local HttpService = game:GetService("HttpService")
+
 local Rojo = script:FindFirstAncestor("Rojo")
 local Plugin = Rojo.Plugin
 local Packages = Rojo.Packages
@@ -36,7 +38,7 @@ function StudioPluginGui:init()
 		minimumSize.Y
 	)
 
-	local pluginGui = self.props.plugin:CreateDockWidgetPluginGui(self.props.id, dockWidgetPluginGuiInfo)
+	local pluginGui = self.props.plugin:CreateDockWidgetPluginGui(HttpService:GenerateGUID(false), dockWidgetPluginGuiInfo)
 
 	pluginGui.Name = self.props.id
 	pluginGui.Title = self.props.title
