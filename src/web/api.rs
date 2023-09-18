@@ -353,6 +353,10 @@ impl ApiService {
             sub_tree.root_ref(),
             InstanceBuilder::new("Folder").with_name("ReferentMap"),
         );
+        // Because referents can't be cleanly communicated across a network
+        // boundary, we have to get creative. So for every Instance we're
+        // building into a model, an ObjectValue is created's named after the
+        // old referent and points to the fetched copy of the Instance.
         for referent in requested_ids {
             if inner_tree.get_by_ref(referent).is_some() {
                 log::trace!("Creating clone of {referent} into subtree");
