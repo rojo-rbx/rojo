@@ -17,9 +17,9 @@ use crate::{
     snapshot::{InstanceWithMeta, PatchSet, PatchUpdate},
     web::{
         interface::{
-            ErrorResponse, FetchResponse, Instance, OpenResponse, ReadResponse, ServerInfoResponse,
-            SubscribeMessage, SubscribeResponse, WriteRequest, WriteResponse, PROTOCOL_VERSION,
-            SERVER_VERSION,
+            ErrorResponse, FetchRequest, FetchResponse, Instance, OpenResponse, ReadResponse,
+            ServerInfoResponse, SubscribeMessage, SubscribeResponse, WriteRequest, WriteResponse,
+            PROTOCOL_VERSION, SERVER_VERSION,
         },
         util::{json, json_ok},
     },
@@ -45,7 +45,7 @@ pub async fn call(serve_session: Arc<ServeSession>, request: Request<Body>) -> R
 
         (&Method::POST, "/api/write") => service.handle_api_write(request).await,
 
-        (&Method::GET, path) if path.starts_with("/api/fetch/") => {
+        (&Method::POST, path) if path.starts_with("/api/fetch/") => {
             service.handle_api_fetch_get(request).await
         }
 
@@ -289,12 +289,13 @@ impl ApiService {
     }
 
     async fn handle_api_fetch_get(&self, request: Request<Body>) -> Response<Body> {
-        let argument = &request.uri().path()["/api/fetch/".len()..];
-        let requested_ids: Vec<Ref> = match argument.split(',').map(Ref::from_str).collect() {
-            Ok(ids) => ids,
-            Err(_) => {
+        let body = body::to_bytes(request.into_body()).await.unwrap();
+
+        let request: FetchRequest = match serde_json::from_slice(&body) {
+            Ok(request) => request,
+            Err(err) => {
                 return json(
-                    ErrorResponse::bad_request("Malformed ID list"),
+                    ErrorResponse::bad_request(format!("Malformed request body: {}", err)),
                     StatusCode::BAD_REQUEST,
                 );
             }
@@ -357,7 +358,7 @@ impl ApiService {
         // boundary, we have to get creative. So for every Instance we're
         // building into a model, an ObjectValue is created's named after the
         // old referent and points to the fetched copy of the Instance.
-        for referent in requested_ids {
+        for referent in request.id_list {
             if inner_tree.get_by_ref(referent).is_some() {
                 log::trace!("Creating clone of {referent} into subtree");
                 let new_ref = generate_fetch_copy(&inner_tree, &mut sub_tree, reify_ref, referent);
