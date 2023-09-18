@@ -140,6 +140,7 @@ function ConfirmingPage:render()
 				id = "Rojo_ConfirmingSourceDiff",
 				title = "Source diff",
 				active = self.state.showingSourceDiff,
+				isEphemeral = true,
 
 				initDockState = Enum.InitialDockState.Float,
 				overridePreviousState = true,
@@ -182,6 +183,7 @@ function ConfirmingPage:render()
 					self.props.confirmData.serverInfo.projectName or "UNKNOWN"
 				),
 				active = true,
+				isEphemeral = true,
 
 				initDockState = Enum.InitialDockState.Float,
 				overridePreviousState = false,

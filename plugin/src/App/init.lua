@@ -579,6 +579,7 @@ function App:render()
 					id = pluginName,
 					title = pluginName,
 					active = self.state.guiEnabled,
+					isEphemeral = false,
 
 					initDockState = Enum.InitialDockState.Right,
 					overridePreviousState = false,
