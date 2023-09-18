@@ -714,6 +714,7 @@ function App:render()
 			id = id,
 			title = popup.name,
 			active = true,
+			isEphemeral = true,
 
 			initDockState = popup.dockState or Enum.InitialDockState.Top,
 			initEnabled = true,
@@ -724,18 +725,7 @@ function App:render()
 			zIndexBehavior = Enum.ZIndexBehavior.Sibling,
 
 			onClose = popup.onClose,
-		}, {
-			Content = popup.content,
-
-			Background = Theme.with(function(theme)
-				return e("Frame", {
-					Size = UDim2.new(1, 0, 1, 0),
-					BackgroundColor3 = theme.BackgroundColor,
-					ZIndex = 0,
-					BorderSizePixel = 0,
-				})
-			end),
-		})
+		}, popup.content)
 	end
 
 	return e(StudioPluginContext.Provider, {
