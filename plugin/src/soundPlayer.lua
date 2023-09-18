@@ -2,12 +2,10 @@
 local plugin = plugin or script:FindFirstAncestorWhichIsA("Plugin")
 local widget = nil
 if plugin then
-	widget = plugin:CreateDockWidgetPluginGui("Rojo_soundPlayer", DockWidgetPluginGuiInfo.new(
-		Enum.InitialDockState.Float,
-		false, true,
-		10, 10,
-		10, 10
-	))
+	widget = plugin:CreateDockWidgetPluginGui(
+		"Rojo_soundPlayer",
+		DockWidgetPluginGuiInfo.new(Enum.InitialDockState.Float, false, true, 10, 10, 10, 10)
+	)
 	widget.Name = "Rojo_soundPlayer"
 	widget.Title = "Rojo Sound Player"
 end
@@ -22,7 +20,9 @@ function SoundPlayer.new(settings)
 end
 
 function SoundPlayer:play(soundId)
-	if self.settings and self.settings:get("playSounds") == false then return end
+	if self.settings and self.settings:get("playSounds") == false then
+		return
+	end
 
 	local sound = Instance.new("Sound")
 	sound.SoundId = soundId

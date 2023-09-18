@@ -38,7 +38,10 @@ function StudioPluginGui:init()
 		minimumSize.Y
 	)
 
-	local pluginGui = self.props.plugin:CreateDockWidgetPluginGui(if self.props.isEphemeral then HttpService:GenerateGUID(false) else self.props.id, dockWidgetPluginGuiInfo)
+	local pluginGui = self.props.plugin:CreateDockWidgetPluginGui(
+		if self.props.isEphemeral then HttpService:GenerateGUID(false) else self.props.id,
+		dockWidgetPluginGuiInfo
+	)
 
 	pluginGui.Name = self.props.id
 	pluginGui.Title = self.props.title

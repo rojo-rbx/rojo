@@ -50,7 +50,9 @@ function Error:render()
 				local containerSize = object.AbsoluteSize - ERROR_PADDING * 2
 
 				local textBounds = TextService:GetTextSize(
-					self.props.errorMessage, 16, Enum.Font.Code,
+					self.props.errorMessage,
+					16,
+					Enum.Font.Code,
 					Vector2.new(containerSize.X, math.huge)
 				)
 
@@ -60,11 +62,12 @@ function Error:render()
 			ErrorMessage = Theme.with(function(theme)
 				return e("TextBox", {
 					[Roact.Event.InputBegan] = function(rbx, input)
-						if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
+						if input.UserInputType ~= Enum.UserInputType.MouseButton1 then
+							return
+						end
 						rbx.SelectionStart = 0
-						rbx.CursorPosition = #rbx.Text+1
+						rbx.CursorPosition = #rbx.Text + 1
 					end,
-
 
 					Text = self.props.errorMessage,
 					TextEditable = false,
@@ -126,7 +129,7 @@ function ErrorPage:render()
 				onClick = self.props.onClose,
 			}, {
 				Tip = e(Tooltip.Trigger, {
-					text = "Dismiss message"
+					text = "Dismiss message",
 				}),
 			}),
 

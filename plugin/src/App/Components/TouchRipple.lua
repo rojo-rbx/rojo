@@ -24,9 +24,7 @@ function TouchRipple:init()
 	})
 	self.binding = bindingUtil.fromMotor(self.motor)
 
-	self.position, self.setPosition = Roact.createBinding(
-		Vector2.new(0, 0)
-	)
+	self.position, self.setPosition = Roact.createBinding(Vector2.new(0, 0))
 end
 
 function TouchRipple:reset()
@@ -43,10 +41,7 @@ function TouchRipple:calculateRadius(position)
 	local container = self.ref.current
 
 	if container then
-		local corner = Vector2.new(
-			math.floor((1 - position.X) + 0.5),
-			math.floor((1 - position.Y) + 0.5)
-		)
+		local corner = Vector2.new(math.floor((1 - position.X) + 0.5), math.floor((1 - position.Y) + 0.5))
 
 		local size = container.AbsoluteSize
 		local ratio = size / math.min(size.X, size.Y)
@@ -93,10 +88,7 @@ function TouchRipple:render()
 				input:GetPropertyChangedSignal("UserInputState"):Connect(function()
 					local userInputState = input.UserInputState
 
-					if
-						userInputState == Enum.UserInputState.Cancel
-						or userInputState == Enum.UserInputState.End
-					then
+					if userInputState == Enum.UserInputState.Cancel or userInputState == Enum.UserInputState.End then
 						self.motor:setGoal({
 							opacity = Flipper.Spring.new(0, {
 								frequency = 5,
@@ -127,8 +119,10 @@ function TouchRipple:render()
 					local containerAspect = containerSize.X / containerSize.Y
 
 					return UDim2.new(
-						currentSize / math.max(containerAspect, 1), 0,
-						currentSize * math.min(containerAspect, 1), 0
+						currentSize / math.max(containerAspect, 1),
+						0,
+						currentSize * math.min(containerAspect, 1),
+						0
 					)
 				end
 			end),

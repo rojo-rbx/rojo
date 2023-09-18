@@ -91,7 +91,7 @@ return function()
 				ClassName = "Folder",
 				Name = "Root",
 				Properties = {},
-				Children = {"CHILD1", "CHILD2"},
+				Children = { "CHILD1", "CHILD2" },
 			},
 
 			CHILD1 = {

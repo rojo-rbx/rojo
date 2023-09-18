@@ -36,9 +36,12 @@ end
 local function StudioToolbarWrapper(props)
 	return e(StudioPluginContext.Consumer, {
 		render = function(plugin)
-			return e(StudioToolbar, Dictionary.merge(props, {
-				plugin = plugin,
-			}))
+			return e(
+				StudioToolbar,
+				Dictionary.merge(props, {
+					plugin = plugin,
+				})
+			)
 		end,
 	})
 end
