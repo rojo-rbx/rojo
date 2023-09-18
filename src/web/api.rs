@@ -356,8 +356,7 @@ impl ApiService {
         for referent in requested_ids {
             if inner_tree.get_by_ref(referent).is_some() {
                 log::trace!("Creating clone of {referent} into subtree");
-                let new_ref = inner_tree.clone_into_external(referent, &mut sub_tree);
-                sub_tree.transfer_within(new_ref, reify_ref);
+                let new_ref = generate_fetch_copy(&inner_tree, &mut sub_tree, reify_ref, referent);
                 sub_tree.insert(
                     map_ref,
                     InstanceBuilder::new("ObjectValue")
@@ -415,4 +414,41 @@ fn pick_script_path(instance: InstanceWithMeta<'_>) -> Option<PathBuf> {
                 .unwrap_or(false)
         })
         .map(|path| path.to_owned())
+}
+
+/// Creates a copy of the Instance pointed to by `referent` from `old_tree`,
+/// puts it inside of `new_tree`, and parents it to `parent_ref`.
+///
+/// In the event that the Instance is of a class with special parent
+/// requirements such as `Attachment`, it will instead make an Instance
+/// of the required parent class and place the cloned Instance as a child
+/// of that Instance.
+///
+/// Regardless, the referent of the clone is returned.
+fn generate_fetch_copy(
+    old_tree: &WeakDom,
+    new_tree: &mut WeakDom,
+    parent_ref: Ref,
+    referent: Ref,
+) -> Ref {
+    let new_ref = old_tree.clone_into_external(referent, new_tree);
+    let inst = new_tree.get_by_ref(new_ref).unwrap();
+
+    // Certain classes need to have specific parents otherwise Studio
+    // doesn't want to load the model.
+    let real_parent = match inst.class.as_str() {
+        // These are services, but they're listed here for posterity.
+        "Terrain" | "StarterPlayerScripts" | "StarterCharacterScripts" => parent_ref,
+
+        "Attachment" => new_tree.insert(parent_ref, InstanceBuilder::new("Part")),
+        "Bone" => new_tree.insert(parent_ref, InstanceBuilder::new("Part")),
+        "Animator" => new_tree.insert(parent_ref, InstanceBuilder::new("Humanoid")),
+        "BaseWrap" => new_tree.insert(parent_ref, InstanceBuilder::new("MeshPart")),
+        "WrapLayer" => new_tree.insert(parent_ref, InstanceBuilder::new("MeshPart")),
+        "WrapTarget" => new_tree.insert(parent_ref, InstanceBuilder::new("MeshPart")),
+        _ => parent_ref,
+    };
+    new_tree.transfer_within(new_ref, real_parent);
+
+    new_ref
 }
