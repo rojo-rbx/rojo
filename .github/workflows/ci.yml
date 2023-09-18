@@ -63,7 +63,7 @@ jobs:
         version: 'v0.2.7'
 
     - name: Stylua
-      run: stylua --check plugin
+      run: stylua --check plugin/src
 
     - name: Rustfmt
       run: cargo fmt -- --check
