@@ -27,7 +27,7 @@ local function fetchInstances(idList, instanceMap, apiContext)
 			for _, entry in map:GetChildren() do
 				if entry:IsA("ObjectValue") then
 					local key, value = entry.Name, entry.Value
-					if value == nil or value.Parent ~= reified then
+					if value == nil or not value:IsDescendantOf(reified) then
 						invariant("ReferentMap contained entry {} that was parented to an outside source", key)
 					else
 						-- This could be a problem if Roblox ever supports
