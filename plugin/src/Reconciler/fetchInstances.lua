@@ -34,7 +34,7 @@ local function fetchInstances(idList, instanceMap, apiContext)
 						-- there's no way this results in a data race.
 						local oldInstance: Instance = instanceMap.fromIds[key]
 						instanceMap:insert(key, value)
-						Log.trace("Swapping Instance {} out", oldInstance:GetFullName())
+						Log.trace("Swapping Instance {} out", key)
 
 						local oldParent = oldInstance.Parent
 						local children = oldInstance:GetChildren()
