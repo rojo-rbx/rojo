@@ -398,6 +398,7 @@ function ConnectedPage:render()
 				id = "Rojo_ConnectedSourceDiff",
 				title = "Source diff",
 				active = self.state.showingSourceDiff,
+				isEphemeral = true,
 
 				initDockState = Enum.InitialDockState.Float,
 				overridePreviousState = false,
