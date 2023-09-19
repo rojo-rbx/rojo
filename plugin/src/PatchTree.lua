@@ -401,7 +401,9 @@ end
 
 -- Creates a deep copy of a tree for immutability purposes in Roact
 function PatchTree.clone(tree)
-	if not tree then return end
+	if not tree then
+		return
+	end
 
 	local newTree = Tree.new()
 	tree:forEach(function(node)

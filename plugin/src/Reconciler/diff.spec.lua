@@ -264,7 +264,7 @@ return function()
 				ClassName = "Folder",
 				Name = "Folder",
 				Properties = {},
-				Children = {"CHILD"},
+				Children = { "CHILD" },
 			},
 
 			CHILD = {

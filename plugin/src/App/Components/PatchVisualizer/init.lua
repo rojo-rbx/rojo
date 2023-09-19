@@ -43,9 +43,14 @@ end
 function PatchVisualizer:render()
 	local patchTree = self.props.patchTree
 	if patchTree == nil and self.props.patch ~= nil then
-		patchTree = PatchTree.build(self.props.patch, self.props.instanceMap, self.props.changeListHeaders or { "Property", "Current", "Incoming" })
+		patchTree = PatchTree.build(
+			self.props.patch,
+			self.props.instanceMap,
+			self.props.changeListHeaders or { "Property", "Current", "Incoming" }
+		)
 		if self.props.unappliedPatch then
-			patchTree = PatchTree.updateMetadata(patchTree, self.props.patch, self.props.instanceMap, self.props.unappliedPatch)
+			patchTree =
+				PatchTree.updateMetadata(patchTree, self.props.patch, self.props.instanceMap, self.props.unappliedPatch)
 		end
 	end
 

@@ -85,7 +85,7 @@ function ConfirmingPage:render()
 					onClick = self.props.onAbort,
 				}, {
 					Tip = e(Tooltip.Trigger, {
-						text = "Stop the connection process"
+						text = "Stop the connection process",
 					}),
 				}),
 
@@ -98,7 +98,7 @@ function ConfirmingPage:render()
 						onClick = self.props.onReject,
 					}, {
 						Tip = e(Tooltip.Trigger, {
-							text = "Push Studio changes to the Rojo server"
+							text = "Push Studio changes to the Rojo server",
 						}),
 					})
 					else nil,
@@ -111,7 +111,7 @@ function ConfirmingPage:render()
 					onClick = self.props.onAccept,
 				}, {
 					Tip = e(Tooltip.Trigger, {
-						text = "Pull Rojo server changes to Studio"
+						text = "Pull Rojo server changes to Studio",
 					}),
 				}),
 
@@ -140,6 +140,7 @@ function ConfirmingPage:render()
 				id = "Rojo_ConfirmingSourceDiff",
 				title = "Source diff",
 				active = self.state.showingSourceDiff,
+				isEphemeral = true,
 
 				initDockState = Enum.InitialDockState.Float,
 				overridePreviousState = true,
@@ -168,7 +169,7 @@ function ConfirmingPage:render()
 
 							oldText = self.state.oldSource,
 							newText = self.state.newSource,
-						})
+						}),
 					}),
 				}),
 			}),
@@ -182,6 +183,7 @@ function ConfirmingPage:render()
 					self.props.confirmData.serverInfo.projectName or "UNKNOWN"
 				),
 				active = true,
+				isEphemeral = true,
 
 				initDockState = Enum.InitialDockState.Float,
 				overridePreviousState = false,
