@@ -1,3 +1,5 @@
+local Selection = game:GetService("Selection")
+
 local Rojo = script:FindFirstAncestor("Rojo")
 local invariant = require(script.Parent.Parent.invariant)
 
@@ -22,6 +24,14 @@ local function fetchInstances(idList, instanceMap, apiContext)
 		if reified == nil then
 			invariant("The fetch endpoint returned a malformed folder: missing Reified")
 		end
+
+		-- We want to preserve selection between replacements.
+		local selected = Selection:Get()
+		local selectedMap = {}
+		for i, inst in selected do
+			selectedMap[inst] = i
+		end
+
 		for _, entry in map:GetChildren() do
 			if entry:IsA("ObjectValue") then
 				local key, value = entry.Name, entry.Value
@@ -41,6 +51,12 @@ local function fetchInstances(idList, instanceMap, apiContext)
 						child.Parent = value
 					end
 					value.Parent = oldParent
+					if selectedMap[oldInstance] then
+						-- Swapping section like this preserves order
+						-- It might not matter, but it's also basically free
+						-- So we may as well.
+						selected[selectedMap[oldInstance]] = value
+					end
 
 					-- So long and thanks for all the fish :-)
 					oldInstance:Destroy()
@@ -49,6 +65,8 @@ local function fetchInstances(idList, instanceMap, apiContext)
 				invariant("ReferentMap entry `{}` was a `{}` and not an ObjectValue", entry.Name, entry.ClassName)
 			end
 		end
+
+		Selection:Set(selected)
 	end)
 end
 
