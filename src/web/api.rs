@@ -436,12 +436,19 @@ fn generate_fetch_copy(
     parent_ref: Ref,
     referent: Ref,
 ) -> Ref {
-    let new_ref = old_tree.clone_into_external(referent, new_tree);
-    let inst = new_tree.get_by_ref(new_ref).unwrap();
+    // We can't use `clone_into_external` here because it also clones the
+    // subtree
+    let old_inst = old_tree.get_by_ref(referent).unwrap();
+    let new_ref = new_tree.insert(
+        Ref::none(),
+        InstanceBuilder::new(&old_inst.class)
+            .with_name(&old_inst.name)
+            .with_properties(old_inst.properties.clone()),
+    );
 
     // Certain classes need to have specific parents otherwise Studio
     // doesn't want to load the model.
-    let real_parent = match inst.class.as_str() {
+    let real_parent = match old_inst.class.as_str() {
         // These are services, but they're listed here for posterity.
         "Terrain" | "StarterPlayerScripts" | "StarterCharacterScripts" => parent_ref,
 
