@@ -121,17 +121,11 @@ function Notification:render()
 
 	local paddingX, paddingY, logoSize = 24, 20, 32
 	local sourceY = if self.props.source then logoSize + 5 else 0
-	local sourceX = if self.props.source then TextService:GetTextSize(
-		self.props.source,
-		15,
-		Enum.Font.GothamMedium,
-		Vector2.new(350, 15)
-	).X + logoSize + 5 else 0
+	local sourceX = if self.props.source
+		then TextService:GetTextSize(self.props.source, 15, Enum.Font.GothamMedium, Vector2.new(350, 15)).X + logoSize + 5
+		else 0
 	local actionsY = if self.props.actions then 35 else 0
-	local contentX =
-		math.max(textBounds.X, buttonsX, sourceX)
-		+ (if self.props.thirdParty then 0 else logoSize + 3)
-		+ 2
+	local contentX = math.max(textBounds.X, buttonsX, sourceX) + (if self.props.thirdParty then 0 else logoSize + 3) + 2
 
 	local size = self.binding:map(function(value)
 		return UDim2.fromOffset(
@@ -163,25 +157,29 @@ function Notification:render()
 				}, {
 					Logo = e("ImageLabel", {
 						ImageTransparency = transparency,
-						Image = if self.props.thirdParty then Assets.Images.ThirdPartyPlugin else Assets.Images.PluginButton,
+						Image = if self.props.thirdParty
+							then Assets.Images.ThirdPartyPlugin
+							else Assets.Images.PluginButton,
 						BackgroundTransparency = 1,
 						Size = UDim2.new(0, logoSize, 0, logoSize),
 						Position = UDim2.new(0, 0, 0, 0),
 						AnchorPoint = Vector2.new(0, 0),
 					}),
-					Source = if self.props.source then e("TextLabel", {
-						Text = self.props.source,
-						Font = Enum.Font.GothamMedium,
-						TextSize = 15,
-						TextColor3 = theme.Notification.InfoColor,
-						TextTransparency = transparency,
-						TextXAlignment = Enum.TextXAlignment.Left,
-						TextTruncate = Enum.TextTruncate.AtEnd,
+					Source = if self.props.source
+						then e("TextLabel", {
+							Text = self.props.source,
+							Font = Enum.Font.GothamMedium,
+							TextSize = 15,
+							TextColor3 = theme.Notification.InfoColor,
+							TextTransparency = transparency,
+							TextXAlignment = Enum.TextXAlignment.Left,
+							TextTruncate = Enum.TextTruncate.AtEnd,
 
-						Size = UDim2.new(1, -logoSize - 5, 0, logoSize),
-						Position = UDim2.fromOffset(logoSize + 5, 0),
-						BackgroundTransparency = 1,
-					}) else nil,
+							Size = UDim2.new(1, -logoSize - 5, 0, logoSize),
+							Position = UDim2.fromOffset(logoSize + 5, 0),
+							BackgroundTransparency = 1,
+						})
+						else nil,
 					Message = e("TextLabel", {
 						Text = self.props.text,
 						Font = Enum.Font.GothamMedium,
@@ -192,7 +190,9 @@ function Notification:render()
 						TextWrapped = true,
 
 						Size = UDim2.new(0, textBounds.X, 0, textBounds.Y),
-						Position = if self.props.thirdParty then UDim2.fromOffset(0, logoSize + 5) else UDim2.fromOffset(logoSize + 3, 0),
+						Position = if self.props.thirdParty
+							then UDim2.fromOffset(0, logoSize + 5)
+							else UDim2.fromOffset(logoSize + 3, 0),
 						BackgroundTransparency = 1,
 					}),
 					Actions = if self.props.actions

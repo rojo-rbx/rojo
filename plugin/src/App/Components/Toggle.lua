@@ -85,7 +85,10 @@ function Toggle:render()
 					Size = self.containerSize:map(function(value)
 						local offset = self.props.options ~= nil and 120 or 40
 						local textBounds = getTextBounds(
-							self.props.description, 14, Enum.Font.Gotham, 1.2,
+							self.props.description,
+							14,
+							Enum.Font.Gotham,
+							1.2,
 							Vector2.new(value.X - offset, math.huge)
 						)
 						return UDim2.new(1, -offset, 0, textBounds.Y)

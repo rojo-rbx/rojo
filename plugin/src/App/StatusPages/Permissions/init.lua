@@ -41,7 +41,7 @@ local function Navbar(props)
 				onClick = props.onBack,
 			}, {
 				Tip = e(Tooltip.Trigger, {
-					text = "Back"
+					text = "Back",
 				}),
 			}),
 
@@ -55,7 +55,7 @@ local function Navbar(props)
 				Size = UDim2.new(1, 0, 1, 0),
 
 				BackgroundTransparency = 1,
-			})
+			}),
 		})
 	end)
 end
@@ -118,7 +118,12 @@ function PermissionsPage:render()
 					),
 
 					onClick = function()
-						self.props.onEdit(self.props.headlessAPI._sourceToPlugin[source], source, meta, self.props.headlessAPI._permissions[source] or {})
+						self.props.onEdit(
+							self.props.headlessAPI._sourceToPlugin[source],
+							source,
+							meta,
+							self.props.headlessAPI._permissions[source] or {}
+						)
 					end,
 				})
 			end

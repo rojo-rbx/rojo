@@ -110,10 +110,13 @@ function Listing:render()
 
 					Size = self.containerSize:map(function(value)
 						local textBounds = getTextBounds(
-							self.props.description, 14, Enum.Font.Gotham, 1.2,
+							self.props.description,
+							14,
+							Enum.Font.Gotham,
+							1.2,
 							Vector2.new(value.X - 40, math.huge)
 						)
-						return UDim2.new(1, - 40, 0, textBounds.Y)
+						return UDim2.new(1, -40, 0, textBounds.Y)
 					end),
 
 					LayoutOrder = 2,

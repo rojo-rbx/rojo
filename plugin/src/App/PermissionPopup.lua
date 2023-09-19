@@ -71,7 +71,10 @@ function PermissionPopup:render()
 				BackgroundTransparency = 1,
 				Size = UDim2.new(1, 0, 0, 0),
 				AutomaticSize = Enum.AutomaticSize.Y,
-				Text = string.format("A third-party plugin, %s, is asking to use the following parts of the Rojo API. Please grant/deny access.", self.props.name or "[Unknown]"),
+				Text = string.format(
+					"A third-party plugin, %s, is asking to use the following parts of the Rojo API. Please grant/deny access.",
+					self.props.name or "[Unknown]"
+				),
 				Font = Enum.Font.GothamMedium,
 				TextSize = 17,
 				TextColor3 = theme.Setting.NameColor,
@@ -97,7 +100,7 @@ function PermissionPopup:render()
 
 			ScrollingFrame = e(ScrollingFrame, {
 				size = self.infoSize:map(function(infoSize)
-					return UDim2.new(1, 0, 1, -infoSize.Y-44)
+					return UDim2.new(1, 0, 1, -infoSize.Y - 44)
 				end),
 				layoutOrder = 2,
 				contentSize = self.contentSize,

@@ -17,7 +17,7 @@ local apiPermissionAllowlist = {
 	RequestAccess = true,
 }
 
-local API  = {}
+local API = {}
 
 function API.new(app)
 	local Rojo = {}
@@ -85,7 +85,8 @@ function API.new(app)
 			if info then
 				return info.Name .. " by " .. info.Creator.Name
 			else
-				local success, newInfo = pcall(MarketplaceService.GetProductInfo, MarketplaceService, tonumber(cloudId), Enum.InfoType.Asset)
+				local success, newInfo =
+					pcall(MarketplaceService.GetProductInfo, MarketplaceService, tonumber(cloudId), Enum.InfoType.Asset)
 				if success then
 					cloudIdInfoCache[cloudId] = newInfo
 					return newInfo.Name .. " by " .. newInfo.Creator.Name
@@ -119,7 +120,8 @@ function API.new(app)
 					Creator = info.Creator.Name,
 				}
 			else
-				local success, newInfo = pcall(MarketplaceService.GetProductInfo, MarketplaceService, tonumber(cloudId), Enum.InfoType.Asset)
+				local success, newInfo =
+					pcall(MarketplaceService.GetProductInfo, MarketplaceService, tonumber(cloudId), Enum.InfoType.Asset)
 				if success then
 					cloudIdInfoCache[cloudId] = newInfo
 					return {
@@ -160,14 +162,11 @@ function API.new(app)
 			Rojo._rateLimit[source] = {
 				[api] = 0,
 			}
-
 		elseif Rojo._rateLimit[source][api] == nil then
 			Rojo._rateLimit[source][api] = 0
-
 		elseif Rojo._rateLimit[source][api] >= LIMIT then
 			-- No more than LIMIT requests per BUCKET seconds
 			return true
-
 		end
 
 		Rojo._rateLimit[source][api] += 1
@@ -182,7 +181,9 @@ function API.new(app)
 	Rojo._permissionsChanged = Rojo._permissionsChangedEvent.Event
 
 	function Rojo:_permissionCheck(key: string): boolean
-		if apiPermissionAllowlist[key] then return true end
+		if apiPermissionAllowlist[key] then
+			return true
+		end
 
 		local source = Rojo:_getCallerSource()
 		if Rojo._permissions[source] == nil then
@@ -200,10 +201,14 @@ function API.new(app)
 
 		-- Set permissions
 		for api, granted in permissions do
-			Log.warn(string.format(
-				"%s Rojo.%s for '%s'",
-				granted and "Granting permission to" or "Denying permission to", api, name
-			))
+			Log.warn(
+				string.format(
+					"%s Rojo.%s for '%s'",
+					granted and "Granting permission to" or "Denying permission to",
+					api,
+					name
+				)
+			)
 			Rojo._permissions[source][api] = granted
 		end
 
@@ -227,9 +232,12 @@ function API.new(app)
 	end
 
 	Rojo._apiDescriptions.RequestAccess = "Used to gain access to Rojo API members"
-	function Rojo:RequestAccess(plugin: Plugin, apis: {string}): {[string]: boolean}
+	function Rojo:RequestAccess(plugin: Plugin, apis: { string }): { [string]: boolean }
 		assert(type(apis) == "table", "Rojo:RequestAccess expects an array of valid API names as the second argument")
-		assert(typeof(plugin) == "Instance" and plugin:IsA("Plugin"), "Rojo:RequestAccess expects a Plugin as the first argument")
+		assert(
+			typeof(plugin) == "Instance" and plugin:IsA("Plugin"),
+			"Rojo:RequestAccess expects a Plugin as the first argument"
+		)
 
 		local source, name = Rojo:_getCallerSource(), Rojo:_getCallerName()
 		Rojo._sourceToPlugin[source] = plugin
@@ -291,7 +299,7 @@ function API.new(app)
 	Rojo._apiDescriptions.Test = "Prints the given arguments to the console"
 	function Rojo:Test(...)
 		local args = table.pack(...)
-		for i=1, args.n do
+		for i = 1, args.n do
 			local v = args[i]
 			local t = type(v)
 			if t == "string" then
@@ -301,10 +309,14 @@ function API.new(app)
 			end
 		end
 
-		print(string.format(
-			"Rojo:Test(%s) called from '%s' (%s)",
-			table.concat(args, ", "), Rojo:_getCallerName(), Rojo:_getCallerSource()
-		))
+		print(
+			string.format(
+				"Rojo:Test(%s) called from '%s' (%s)",
+				table.concat(args, ", "),
+				Rojo:_getCallerName(),
+				Rojo:_getCallerSource()
+			)
+		)
 	end
 
 	Rojo._apiDescriptions.ConnectAsync = "Connects to a Rojo server"
@@ -347,7 +359,11 @@ function API.new(app)
 	end
 
 	Rojo._apiDescriptions.Notify = "Shows a notification in the Rojo UI"
-	function Rojo:Notify(msg: string, timeout: number?, actions: { [string]: {text: string, style: string, layoutOrder: number, onClick: (any) -> ()} }?): () -> ()
+	function Rojo:Notify(
+		msg: string,
+		timeout: number?,
+		actions: { [string]: { text: string, style: string, layoutOrder: number, onClick: (any) -> () } }?
+	): () -> ()
 		assert(type(msg) == "string", "Message must be type `string`")
 		assert(type(timeout) == "number" or timeout == nil, "Timeout must be type `number?`")
 		assert((actions == nil) or (type(actions) == "table"), "Actions must be table or nil")
@@ -365,7 +381,10 @@ function API.new(app)
 				assert(type(action) == "table", actionId .. " must be table")
 				assert(type(action.text) == "string", actionId .. ".text must be string")
 				assert(type(action.style) == "string", actionId .. ".style must be string")
-				assert(action.style == "Solid" or action.style == "Bordered", actionId .. ".style must be 'Solid' or 'Bordered'")
+				assert(
+					action.style == "Solid" or action.style == "Bordered",
+					actionId .. ".style must be 'Solid' or 'Bordered'"
+				)
 				assert(type(action.layoutOrder) == "number", actionId .. ".layoutOrder must be number")
 				assert(type(action.onClick) == "function", actionId .. ".onClick must be function")
 
@@ -409,10 +428,14 @@ function API.new(app)
 			-- Permissions check
 			local granted = Rojo:_permissionCheck(key)
 			if not granted then
-				error(string.format(
-					"Attempted to read Rojo.%s, but the plugin does not have permission to do so.\nPlease first use Rojo:RequestAccess({ \"%s\" }) to gain access to this API.",
-					key, key
-				), 2)
+				error(
+					string.format(
+						'Attempted to read Rojo.%s, but the plugin does not have permission to do so.\nPlease first use Rojo:RequestAccess({ "%s" }) to gain access to this API.',
+						key,
+						key
+					),
+					2
+				)
 			end
 
 			return Rojo[key]

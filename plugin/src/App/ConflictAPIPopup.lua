@@ -58,7 +58,11 @@ function ConflictAPIPopup:render()
 					BackgroundTransparency = 1,
 					Size = UDim2.new(1, 0, 0, 0),
 					AutomaticSize = Enum.AutomaticSize.Y,
-					Text = string.format("Existing: Version %s, Protocol %d", Version.display(self.props.existingAPI.Version), self.props.existingAPI.ProtocolVersion),
+					Text = string.format(
+						"Existing: Version %s, Protocol %d",
+						Version.display(self.props.existingAPI.Version),
+						self.props.existingAPI.ProtocolVersion
+					),
 					Font = Enum.Font.Gotham,
 					TextSize = 15,
 					TextColor3 = theme.Setting.DescriptionColor,
@@ -71,7 +75,11 @@ function ConflictAPIPopup:render()
 					BackgroundTransparency = 1,
 					Size = UDim2.new(1, 0, 0, 0),
 					AutomaticSize = Enum.AutomaticSize.Y,
-					Text = string.format("Incoming: Version %s, Protocol %d", Version.display(Config.version), Config.protocolVersion),
+					Text = string.format(
+						"Incoming: Version %s, Protocol %d",
+						Version.display(Config.version),
+						Config.protocolVersion
+					),
 					Font = Enum.Font.Gotham,
 					TextSize = 15,
 					TextColor3 = theme.Setting.DescriptionColor,
