@@ -2,14 +2,10 @@
 	"Reifies" a virtual DOM, constructing a real DOM with the same shape.
 ]]
 
-local Rojo = script:FindFirstAncestor("Rojo")
-
 local invariant = require(script.Parent.Parent.invariant)
 local PatchSet = require(script.Parent.Parent.PatchSet)
 local setProperty = require(script.Parent.setProperty)
 local decodeValue = require(script.Parent.decodeValue)
-
-local Log = require(Rojo.Packages.Log)
 
 local reifyInner, applyDeferredRefs
 
