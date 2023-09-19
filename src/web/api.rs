@@ -45,9 +45,7 @@ pub async fn call(serve_session: Arc<ServeSession>, request: Request<Body>) -> R
 
         (&Method::POST, "/api/write") => service.handle_api_write(request).await,
 
-        (&Method::POST, path) if path.starts_with("/api/fetch/") => {
-            service.handle_api_fetch_get(request).await
-        }
+        (&Method::POST, "/api/fetch") => service.handle_api_fetch_post(request).await,
 
         (_method, path) => json(
             ErrorResponse::not_found(format!("Route not found: {}", path)),
@@ -288,7 +286,7 @@ impl ApiService {
         })
     }
 
-    async fn handle_api_fetch_get(&self, request: Request<Body>) -> Response<Body> {
+    async fn handle_api_fetch_post(&self, request: Request<Body>) -> Response<Body> {
         let body = body::to_bytes(request.into_body()).await.unwrap();
 
         let request: FetchRequest = match serde_json::from_slice(&body) {

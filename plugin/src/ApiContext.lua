@@ -240,7 +240,7 @@ function ApiContext:open(id)
 end
 
 function ApiContext:fetch(ids: { string })
-	local url = ("%s/api/fetch/%s"):format(self.__baseUrl, table.concat(ids, ","))
+	local url = ("%s/api/fetch"):format(self.__baseUrl)
 	local requestBody = {
 		sessionId = self.__sessionId,
 		idList = ids,

@@ -204,6 +204,7 @@ pub struct OpenResponse {
     pub session_id: SessionId,
 }
 
+/// A request POSTed to /api/fetch
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FetchRequest {
@@ -211,7 +212,7 @@ pub struct FetchRequest {
     pub id_list: Vec<Ref>,
 }
 
-/// Response body from GET /api/fetch/{ids}
+/// Response body from POST /api/fetch
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FetchResponse<'a> {
