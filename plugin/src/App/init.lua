@@ -607,13 +607,17 @@ function App:startSession(host: string?, port: string?)
 		if confirmationBehavior == "Initial" then
 			-- Only confirm if we haven't synced this project yet this session
 			if self.knownProjects[serverInfo.projectName] then
-				Log.trace("Accepting patch without confirmation because project has already been connected and behavior is set to Initial")
+				Log.trace(
+					"Accepting patch without confirmation because project has already been connected and behavior is set to Initial"
+				)
 				return "Accept"
 			end
 		elseif confirmationBehavior == "Large Changes" then
 			-- Only confirm if the patch impacts many instances
 			if PatchSet.countInstances(patch) < Settings:get("largeChangesConfirmationThreshold") then
-				Log.trace("Accepting patch without confirmation because patch is small and behavior is set to Large Changes")
+				Log.trace(
+					"Accepting patch without confirmation because patch is small and behavior is set to Large Changes"
+				)
 				return "Accept"
 			end
 		elseif confirmationBehavior == "Unlisted PlaceId" then
@@ -621,7 +625,9 @@ function App:startSession(host: string?, port: string?)
 			if serverInfo.expectedPlaceIds then
 				local isListed = table.find(serverInfo.expectedPlaceIds, game.PlaceId) ~= nil
 				if isListed then
-					Log.trace("Accepting patch without confirmation because placeId is listed and behavior is set to Unlisted PlaceId")
+					Log.trace(
+						"Accepting patch without confirmation because placeId is listed and behavior is set to Unlisted PlaceId"
+					)
 					return "Accept"
 				end
 			end
@@ -817,7 +823,8 @@ function App:render()
 					}),
 
 					Settings = createPageElement(AppStatus.Settings, {
-						syncActive = self.serveSession ~= nil and self.serveSession:getStatus() == ServeSession.Status.Connected,
+						syncActive = self.serveSession ~= nil
+							and self.serveSession:getStatus() == ServeSession.Status.Connected,
 
 						onBack = function()
 							self:setState({

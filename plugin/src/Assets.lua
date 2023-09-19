@@ -56,7 +56,7 @@ local Assets = {
 			[32] = "rbxassetid://3088713341",
 			[64] = "rbxassetid://4918677124",
 			[128] = "rbxassetid://2600845734",
-			[500] = "rbxassetid://2609138523"
+			[500] = "rbxassetid://2609138523",
 		},
 	},
 	Sounds = {

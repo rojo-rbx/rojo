@@ -37,28 +37,24 @@ function Notification:init()
 end
 
 function Notification:dismiss()
-	self.motor:setGoal(
-		Flipper.Spring.new(0, {
-			frequency = 5,
-			dampingRatio = 1,
-		})
-	)
+	self.motor:setGoal(Flipper.Spring.new(0, {
+		frequency = 5,
+		dampingRatio = 1,
+	}))
 end
 
 function Notification:didMount()
-	self.motor:setGoal(
-		Flipper.Spring.new(1, {
-			frequency = 3,
-			dampingRatio = 1,
-		})
-	)
+	self.motor:setGoal(Flipper.Spring.new(1, {
+		frequency = 3,
+		dampingRatio = 1,
+	}))
 
 	self.props.soundPlayer:play(Assets.Sounds.Notification)
 
 	self.timeout = task.spawn(function()
 		local clock = os.clock()
 		local seen = false
-		while task.wait(1/10) do
+		while task.wait(1 / 10) do
 			local now = os.clock()
 			local dt = now - clock
 			clock = now
@@ -90,12 +86,7 @@ function Notification:render()
 		return 1 - value
 	end)
 
-	local textBounds = TextService:GetTextSize(
-		self.props.text,
-		15,
-		Enum.Font.GothamMedium,
-		Vector2.new(350, 700)
-	)
+	local textBounds = TextService:GetTextSize(self.props.text, 15, Enum.Font.GothamMedium, Vector2.new(350, 700))
 
 	local actionButtons = {}
 	local buttonsX = 0
@@ -116,7 +107,9 @@ function Notification:render()
 			})
 
 			buttonsX += TextService:GetTextSize(
-				action.text, 18, Enum.Font.GothamMedium,
+				action.text,
+				18,
+				Enum.Font.GothamMedium,
 				Vector2.new(math.huge, math.huge)
 			).X + 30
 
@@ -164,9 +157,9 @@ function Notification:render()
 				size = UDim2.new(1, 0, 1, 0),
 			}, {
 				Contents = e("Frame", {
-					Size = UDim2.new(1, 0, 1, 0),
-					Position = UDim2.new(0, 0, 0, 0),
-					BackgroundTransparency = 1
+					Size = UDim2.new(0, 35 + contentX, 1, -paddingY),
+					Position = UDim2.new(0, 0, 0, paddingY / 2),
+					BackgroundTransparency = 1,
 				}, {
 					Logo = e("ImageLabel", {
 						ImageTransparency = transparency,
@@ -202,21 +195,23 @@ function Notification:render()
 						Position = if self.props.thirdParty then UDim2.fromOffset(0, logoSize + 5) else UDim2.fromOffset(logoSize + 3, 0),
 						BackgroundTransparency = 1,
 					}),
-					Actions = if self.props.actions then e("Frame", {
-						Size = UDim2.new(1, -40, 0, 35),
-						Position = UDim2.new(1, 0, 1, 0),
-						AnchorPoint = Vector2.new(1, 1),
-						BackgroundTransparency = 1,
-					}, {
-						Layout = e("UIListLayout", {
-							FillDirection = Enum.FillDirection.Horizontal,
-							HorizontalAlignment = Enum.HorizontalAlignment.Right,
-							VerticalAlignment = Enum.VerticalAlignment.Center,
-							SortOrder = Enum.SortOrder.LayoutOrder,
-							Padding = UDim.new(0, 5),
-						}),
-						Buttons = Roact.createFragment(actionButtons),
-					}) else nil,
+					Actions = if self.props.actions
+						then e("Frame", {
+							Size = UDim2.new(1, -40, 0, 35),
+							Position = UDim2.new(1, 0, 1, 0),
+							AnchorPoint = Vector2.new(1, 1),
+							BackgroundTransparency = 1,
+						}, {
+							Layout = e("UIListLayout", {
+								FillDirection = Enum.FillDirection.Horizontal,
+								HorizontalAlignment = Enum.HorizontalAlignment.Right,
+								VerticalAlignment = Enum.VerticalAlignment.Center,
+								SortOrder = Enum.SortOrder.LayoutOrder,
+								Padding = UDim.new(0, 5),
+							}),
+							Buttons = Roact.createFragment(actionButtons),
+						})
+						else nil,
 				}),
 
 				Padding = e("UIPadding", {
@@ -225,7 +220,7 @@ function Notification:render()
 					PaddingTop = UDim.new(0, paddingY / 2),
 					PaddingBottom = UDim.new(0, paddingY / 2),
 				}),
-			})
+			}),
 		})
 	end)
 end

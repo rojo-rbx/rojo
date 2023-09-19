@@ -90,7 +90,7 @@ local lightTheme = strict("LightTheme", {
 	},
 	AddressEntry = {
 		TextColor = Color3.fromHex("000000"),
-		PlaceholderColor = Color3.fromHex("8C8C8C")
+		PlaceholderColor = Color3.fromHex("8C8C8C"),
 	},
 	BorderedContainer = {
 		BorderColor = Color3.fromHex("CBCBCB"),
@@ -200,7 +200,7 @@ local darkTheme = strict("DarkTheme", {
 	},
 	AddressEntry = {
 		TextColor = Color3.fromHex("FFFFFF"),
-		PlaceholderColor = Color3.fromHex("8B8B8B")
+		PlaceholderColor = Color3.fromHex("8B8B8B"),
 	},
 	BorderedContainer = {
 		BorderColor = Color3.fromHex("535353"),
@@ -235,7 +235,7 @@ local darkTheme = strict("DarkTheme", {
 	},
 	Header = {
 		LogoColor = BRAND_COLOR,
-		VersionColor = Color3.fromHex("D3D3D3")
+		VersionColor = Color3.fromHex("D3D3D3"),
 	},
 	Notification = {
 		InfoColor = Color3.fromHex("FFFFFF"),

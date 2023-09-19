@@ -84,40 +84,39 @@ function Setting:render()
 					end,
 				}),
 
-				Input =
-					if self.props.input ~= nil then
-						self.props.input
-					elseif self.props.options ~= nil then
-						e(Dropdown, {
-							locked = self.props.locked,
-							options = self.props.options,
-							active = self.state.setting,
-							transparency = self.props.transparency,
-							onClick = function(option)
-								Settings:set(self.props.id, option)
-							end,
-						})
-					else
-						e(Checkbox, {
-							locked = self.props.locked,
-							active = self.state.setting,
-							transparency = self.props.transparency,
-							onClick = function()
-								local currentValue = Settings:get(self.props.id)
-								Settings:set(self.props.id, not currentValue)
-							end,
-						}),
+				Input = if self.props.input ~= nil
+					then self.props.input
+					elseif self.props.options ~= nil then e(Dropdown, {
+						locked = self.props.locked,
+						options = self.props.options,
+						active = self.state.setting,
+						transparency = self.props.transparency,
+						onClick = function(option)
+							Settings:set(self.props.id, option)
+						end,
+					})
+					else e(Checkbox, {
+						locked = self.props.locked,
+						active = self.state.setting,
+						transparency = self.props.transparency,
+						onClick = function()
+							local currentValue = Settings:get(self.props.id)
+							Settings:set(self.props.id, not currentValue)
+						end,
+					}),
 
-				Reset = if self.props.onReset then e(IconButton, {
-					icon = Assets.Images.Icons.Reset,
-					iconSize = 24,
-					color = theme.BackButtonColor,
-					transparency = self.props.transparency,
-					visible = self.props.showReset,
-					layoutOrder = -1,
+				Reset = if self.props.onReset
+					then e(IconButton, {
+						icon = Assets.Images.Icons.Reset,
+						iconSize = 24,
+						color = theme.BackButtonColor,
+						transparency = self.props.transparency,
+						visible = self.props.showReset,
+						layoutOrder = -1,
 
-					onClick = self.props.onReset,
-				}) else nil,
+						onClick = self.props.onReset,
+					})
+					else nil,
 			}),
 
 			Text = e("Frame", {
@@ -125,7 +124,8 @@ function Setting:render()
 				BackgroundTransparency = 1,
 			}, {
 				Name = e("TextLabel", {
-					Text = (if self.props.experimental then "<font color=\"#FF8E3C\">⚠ </font>" else "") .. self.props.name,
+					Text = (if self.props.experimental then '<font color="#FF8E3C">⚠ </font>' else "")
+						.. self.props.name,
 					Font = Enum.Font.GothamBold,
 					TextSize = 17,
 					TextColor3 = theme.Setting.NameColor,
@@ -140,7 +140,8 @@ function Setting:render()
 				}),
 
 				Description = e("TextLabel", {
-					Text = (if self.props.experimental then "<font color=\"#FF8E3C\">[Experimental] </font>" else "") .. self.props.description,
+					Text = (if self.props.experimental then '<font color="#FF8E3C">[Experimental] </font>' else "")
+						.. self.props.description,
 					Font = Enum.Font.Gotham,
 					LineHeight = 1.2,
 					TextSize = 14,
@@ -154,10 +155,14 @@ function Setting:render()
 						containerSize = self.containerSize,
 						inputSize = self.inputSize,
 					}):map(function(values)
-						local desc = (if self.props.experimental then "[Experimental] " else "") .. self.props.description
+						local desc = (if self.props.experimental then "[Experimental] " else "")
+							.. self.props.description
 						local offset = values.inputSize.X + 5
 						local textBounds = getTextBounds(
-							desc, 14, Enum.Font.Gotham, 1.2,
+							desc,
+							14,
+							Enum.Font.Gotham,
+							1.2,
 							Vector2.new(values.containerSize.X - offset, math.huge)
 						)
 						return UDim2.new(1, -offset, 0, textBounds.Y)

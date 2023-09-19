@@ -37,7 +37,9 @@ local function trueEquals(a, b): boolean
 			end
 		end
 		for key, value in pairs(b) do
-			if checkedKeys[key] then continue end
+			if checkedKeys[key] then
+				continue
+			end
 			if not trueEquals(value, a[key]) then
 				return false
 			end
@@ -62,7 +64,7 @@ local function trueEquals(a, b): boolean
 
 	-- For CFrames, compare to components with epsilon of 0.0001 to avoid floating point inequality
 	elseif typeA == "CFrame" and typeB == "CFrame" then
-		local aComponents, bComponents = {a:GetComponents()}, {b:GetComponents()}
+		local aComponents, bComponents = { a:GetComponents() }, { b:GetComponents() }
 		for i, aComponent in aComponents do
 			if not fuzzyEq(aComponent, bComponents[i], 0.0001) then
 				return false
@@ -72,7 +74,7 @@ local function trueEquals(a, b): boolean
 
 	-- For Vector3s, compare to components with epsilon of 0.0001 to avoid floating point inequality
 	elseif typeA == "Vector3" and typeB == "Vector3" then
-		local aComponents, bComponents = {a.X, a.Y, a.Z}, {b.X, b.Y, b.Z}
+		local aComponents, bComponents = { a.X, a.Y, a.Z }, { b.X, b.Y, b.Z }
 		for i, aComponent in aComponents do
 			if not fuzzyEq(aComponent, bComponents[i], 0.0001) then
 				return false
@@ -82,14 +84,13 @@ local function trueEquals(a, b): boolean
 
 	-- For Vector2s, compare to components with epsilon of 0.0001 to avoid floating point inequality
 	elseif typeA == "Vector2" and typeB == "Vector2" then
-		local aComponents, bComponents = {a.X, a.Y}, {b.X, b.Y}
+		local aComponents, bComponents = { a.X, a.Y }, { b.X, b.Y }
 		for i, aComponent in aComponents do
 			if not fuzzyEq(aComponent, bComponents[i], 0.0001) then
 				return false
 			end
 		end
 		return true
-
 	end
 
 	return false
@@ -154,7 +155,13 @@ local function diff(instanceMap, virtualInstances, rootId)
 
 				if ok then
 					if not trueEquals(existingValue, decodedValue) then
-						Log.debug("{}.{} changed from '{}' to '{}'", instance:GetFullName(), propertyName, existingValue, decodedValue)
+						Log.debug(
+							"{}.{} changed from '{}' to '{}'",
+							instance:GetFullName(),
+							propertyName,
+							existingValue,
+							decodedValue
+						)
 						changedProperties[propertyName] = virtualValue
 					end
 				else

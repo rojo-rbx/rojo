@@ -50,7 +50,7 @@ local function Navbar(props)
 				onClick = props.onBack,
 			}, {
 				Tip = e(Tooltip.Trigger, {
-					text = "Back"
+					text = "Back",
 				}),
 			}),
 
@@ -64,7 +64,7 @@ local function Navbar(props)
 				Size = UDim2.new(1, 0, 1, 0),
 
 				BackgroundTransparency = 1,
-			})
+			}),
 		})
 	end)
 end
@@ -139,7 +139,10 @@ function SettingsPage:render()
 							Settings:set("largeChangesConfirmationThreshold", math.clamp(number, 1, 999))
 						else
 							-- Force text back to last valid value
-							Settings:set("largeChangesConfirmationThreshold", Settings:get("largeChangesConfirmationThreshold"))
+							Settings:set(
+								"largeChangesConfirmationThreshold",
+								Settings:get("largeChangesConfirmationThreshold")
+							)
 						end
 					end,
 				}),

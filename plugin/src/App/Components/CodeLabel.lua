@@ -22,7 +22,7 @@ function CodeLabel:didMount()
 end
 
 function CodeLabel:didUpdate()
-    self:updateHighlights()
+	self:updateHighlights()
 end
 
 function CodeLabel:updateHighlights()
