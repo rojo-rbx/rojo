@@ -150,69 +150,63 @@ function Notification:render()
 				transparency = transparency,
 				size = UDim2.new(1, 0, 1, 0),
 			}, {
-				Contents = e("Frame", {
-					Size = UDim2.new(0, 35 + contentX, 1, -paddingY),
-					Position = UDim2.new(0, 0, 0, paddingY / 2),
+				Logo = e("ImageLabel", {
+					ImageTransparency = transparency,
+					Image = if self.props.thirdParty
+						then Assets.Images.ThirdPartyPlugin
+						else Assets.Images.PluginButton,
 					BackgroundTransparency = 1,
-				}, {
-					Logo = e("ImageLabel", {
-						ImageTransparency = transparency,
-						Image = if self.props.thirdParty
-							then Assets.Images.ThirdPartyPlugin
-							else Assets.Images.PluginButton,
-						BackgroundTransparency = 1,
-						Size = UDim2.new(0, logoSize, 0, logoSize),
-						Position = UDim2.new(0, 0, 0, 0),
-						AnchorPoint = Vector2.new(0, 0),
-					}),
-					Source = if self.props.source
-						then e("TextLabel", {
-							Text = self.props.source,
-							Font = Enum.Font.GothamMedium,
-							TextSize = 15,
-							TextColor3 = theme.Notification.InfoColor,
-							TextTransparency = transparency,
-							TextXAlignment = Enum.TextXAlignment.Left,
-							TextTruncate = Enum.TextTruncate.AtEnd,
-
-							Size = UDim2.new(1, -logoSize - 5, 0, logoSize),
-							Position = UDim2.fromOffset(logoSize + 5, 0),
-							BackgroundTransparency = 1,
-						})
-						else nil,
-					Message = e("TextLabel", {
-						Text = self.props.text,
+					Size = UDim2.new(0, logoSize, 0, logoSize),
+					Position = UDim2.new(0, 0, 0, 0),
+					AnchorPoint = Vector2.new(0, 0),
+				}),
+				Source = if self.props.source
+					then e("TextLabel", {
+						Text = self.props.source,
 						Font = Enum.Font.GothamMedium,
 						TextSize = 15,
 						TextColor3 = theme.Notification.InfoColor,
 						TextTransparency = transparency,
 						TextXAlignment = Enum.TextXAlignment.Left,
-						TextWrapped = true,
+						TextTruncate = Enum.TextTruncate.AtEnd,
 
-						Size = UDim2.new(0, textBounds.X, 0, textBounds.Y),
-						Position = if self.props.thirdParty
-							then UDim2.fromOffset(0, logoSize + 5)
-							else UDim2.fromOffset(logoSize + 3, 0),
+						Size = UDim2.new(1, -logoSize - 5, 0, logoSize),
+						Position = UDim2.fromOffset(logoSize + 5, 0),
 						BackgroundTransparency = 1,
-					}),
-					Actions = if self.props.actions
-						then e("Frame", {
-							Size = UDim2.new(1, -40, 0, 35),
-							Position = UDim2.new(1, 0, 1, 0),
-							AnchorPoint = Vector2.new(1, 1),
-							BackgroundTransparency = 1,
-						}, {
-							Layout = e("UIListLayout", {
-								FillDirection = Enum.FillDirection.Horizontal,
-								HorizontalAlignment = Enum.HorizontalAlignment.Right,
-								VerticalAlignment = Enum.VerticalAlignment.Center,
-								SortOrder = Enum.SortOrder.LayoutOrder,
-								Padding = UDim.new(0, 5),
-							}),
-							Buttons = Roact.createFragment(actionButtons),
-						})
-						else nil,
+					})
+					else nil,
+				Message = e("TextLabel", {
+					Text = self.props.text,
+					Font = Enum.Font.GothamMedium,
+					TextSize = 15,
+					TextColor3 = theme.Notification.InfoColor,
+					TextTransparency = transparency,
+					TextXAlignment = Enum.TextXAlignment.Left,
+					TextWrapped = true,
+
+					Size = UDim2.new(0, textBounds.X, 0, textBounds.Y),
+					Position = if self.props.thirdParty
+						then UDim2.fromOffset(0, logoSize + 5)
+						else UDim2.fromOffset(logoSize + 3, 0),
+					BackgroundTransparency = 1,
 				}),
+				Actions = if self.props.actions
+					then e("Frame", {
+						Size = UDim2.new(1, -40, 0, 35),
+						Position = UDim2.new(1, 0, 1, 0),
+						AnchorPoint = Vector2.new(1, 1),
+						BackgroundTransparency = 1,
+					}, {
+						Layout = e("UIListLayout", {
+							FillDirection = Enum.FillDirection.Horizontal,
+							HorizontalAlignment = Enum.HorizontalAlignment.Right,
+							VerticalAlignment = Enum.VerticalAlignment.Center,
+							SortOrder = Enum.SortOrder.LayoutOrder,
+							Padding = UDim.new(0, 5),
+						}),
+						Buttons = Roact.createFragment(actionButtons),
+					})
+					else nil,
 
 				Padding = e("UIPadding", {
 					PaddingLeft = UDim.new(0, paddingX / 2),
