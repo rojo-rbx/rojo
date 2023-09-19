@@ -279,7 +279,7 @@ function ServeSession:__initialSync(serverInfo)
 
 			self.__apiContext:write(inversePatch)
 		elseif userDecision == "Accept" then
-			local unappliedPatch = self.__reconciler:applyPatch(catchUpPatch, self.__apiContext)
+			local unappliedPatch = self.__reconciler:applyPatch(catchUpPatch)
 
 			if not PatchSet.isEmpty(unappliedPatch) then
 				Log.warn(
