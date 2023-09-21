@@ -50,7 +50,18 @@
 	}
 	```
 
-* Add Confirmation Behavior setting ([#774])
+* Added a setting to control patch confirmation behavior ([#774])
+
+	This is a new setting for controlling when the Rojo plugin prompts for confirmation before syncing. It has four options:
+    * Initial (default)
+		Prompts only once for a project in a given Studio session
+    * Always
+		Always prompts for confirmation
+    * Large Changes
+		Only confirms when there are more than X changed instances. The number of instances is configurable - an additional setting for the number of instances becomes available when this option is chosen
+    * Unlisted PlaceId
+		Only prompts if the place ID is not present in servePlaceIds
+
 * Select Instances from diff tree view ([#709])
 * Added sync reminder notification. ([#689])
 * Added protection against syncing a model to a place. ([#691])
