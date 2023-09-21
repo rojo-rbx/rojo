@@ -58,7 +58,10 @@
     * Large Changes: only confirms when there are more than X changed instances. The number of instances is configurable - an additional setting for the number of instances becomes available when this option is chosen
     * Unlisted PlaceId: only prompts if the place ID is not present in servePlaceIds
 
-* Select Instances from diff tree view ([#709])
+* Added the ability to select Instances in patch visualizer ([#709])
+
+	Double-clicking an instance in the patch visualizer will set Roblox Studio's selection to the instance.
+
 * Added sync reminder notification. ([#689])
 * Added protection against syncing a model to a place. ([#691])
 * Add new plugin template to the `init` command ([#738])
