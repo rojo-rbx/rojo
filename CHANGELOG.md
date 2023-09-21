@@ -92,7 +92,7 @@
 
 	This is new template geared towards plugins. It is similar to the model template, but creates a `Script` instead of a `ModuleScript` in the `src` directory. It can be used like this: `rojo init --kind plugin`
 
-* Added protection against syncing a model to a place. ([#691])
+* Added protection against syncing non-place projects as a place. ([#691])
 * Add buttons for navigation on the Connected page ([#722])
 
 ### Fixes
