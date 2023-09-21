@@ -35,6 +35,21 @@
 	```
 
 * Added better support for `Font` properties ([#731])
+
+	`FontFace` properties may now be defined using implicit property syntax:
+	```json
+	"TextBox": {
+		"$className": "TextBox",
+		"$properties": {
+			"FontFace": {
+				"family": "rbxasset://fonts/families/RobotoMono.json",
+				"weight": "Thin",
+				"style": "Normal"
+			}
+		}
+	}
+	```
+
 * Add Confirmation Behavior setting ([#774])
 * Select Instances from diff tree view ([#709])
 * Added sync reminder notification. ([#689])
