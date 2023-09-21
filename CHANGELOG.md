@@ -58,6 +58,7 @@
 * Added rich Source diffs in patch visualizer ([#748])
 * Patch visualizer now indicates what changes failed to apply. ([#717])
 
+	A clickable warning label is displayed when the Rojo plugin is unable to apply changes. Clicking the label displays precise information about which changes failed:
 	![Patch visualizer displays a clickable warning label when changes fail to apply](https://user-images.githubusercontent.com/40185666/252063660-f08399ef-1e16-4f1c-bed8-552821f98cef.png)
 
 * Add buttons for navigation on the Connected page ([#722])
