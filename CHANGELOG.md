@@ -64,7 +64,10 @@
 
 * Added sync reminder notification. ([#689])
 * Added protection against syncing a model to a place. ([#691])
-* Add new plugin template to the `init` command ([#738])
+* Added new plugin template to the `init` command ([#738])
+
+	This is new template geared towards plugins. It is similar to the model template, but creates a `Script` instead of a `ModuleScript` in the `src` directory. It can be used like this: `rojo init --kind plugin`
+
 * Added rich Source diffs in patch visualizer ([#748])
 * Patch visualizer now indicates what changes failed to apply. ([#717])
 
