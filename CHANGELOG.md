@@ -57,6 +57,9 @@
 * Add new plugin template to the `init` command ([#738])
 * Added rich Source diffs in patch visualizer ([#748])
 * Patch visualizer now indicates what changes failed to apply. ([#717])
+
+	![Patch visualizer displays a clickable warning label when changes fail to apply](https://user-images.githubusercontent.com/40185666/252063660-f08399ef-1e16-4f1c-bed8-552821f98cef.png)
+
 * Add buttons for navigation on the Connected page ([#722])
 * Improved sync info text on Connected page. ([#692])
 
