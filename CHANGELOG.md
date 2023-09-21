@@ -1,7 +1,6 @@
 # Rojo Changelog
 
 ## Unreleased Changes
-* On failing to open a file from Roblox Studio, it is now logged appropriately instead of being ignored ([#745]).
 * Significantly improved performance of `rojo sourcemap`. ([#668])
 * Fixed the diff visualizer of connected sessions. ([#674])
 * Fixed disconnected session activity. ([#675])
