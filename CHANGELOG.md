@@ -2,12 +2,8 @@
 
 ## Unreleased Changes
 ### Additions
+#### Project format
 * Added support for `.toml` files to `$path` ([#633])
-* Significantly improved performance of `rojo sourcemap` ([#668])
-* Added `plugin` flag to the `build` command that outputs to the local plugins folder ([#735])
-
-	This is a flag that builds a Rojo project into Roblox Studio's plugins directory. This allows you to build a Rojo project and load it into Studio as a plugin without having to type the full path to the plugins directory. It can be used like this: `rojo build <PATH-TO_PROJECT> --plugin <FILE-NAME>`
-
 * Added `Terrain` classname inference, similar to services ([#771])
 
 	`Terrain` may now be defined in the projects without using `$classname`:
@@ -53,6 +49,7 @@
 	}
 	```
 
+#### Patch visualizer and notifications
 * Added a setting to control patch confirmation behavior ([#774])
 
 	This is a new setting for controlling when the Rojo plugin prompts for confirmation before syncing. It has four options:
@@ -71,18 +68,32 @@
 
 	![Rojo reminds you to sync a place that you've synced previously](https://user-images.githubusercontent.com/40185666/242397435-ccdfddf2-a63f-420c-bc18-a6e3d6455bba.png)
 
-* Added protection against syncing a model to a place. ([#691])
-* Added new plugin template to the `init` command ([#738])
-
-	This is new template geared towards plugins. It is similar to the model template, but creates a `Script` instead of a `ModuleScript` in the `src` directory. It can be used like this: `rojo init --kind plugin`
-
 * Added rich Source diffs in patch visualizer ([#748])
+
+	A "View Diff" button for script sources is now present in the patch visualizer. Clicking it will display a side-by-side diff of the script changes:
+
+	![The patch visualizer contains a "view diff" button](https://user-images.githubusercontent.com/40185666/256065992-3f03558f-84b0-45a1-80eb-901f348cf067.png)
+
+	![The "View Diff" button opens a widget that displays a diff](https://user-images.githubusercontent.com/40185666/256066084-1d9d8fe8-7dad-4ee7-a542-b4aee35a5644.png)
+
 * Patch visualizer now indicates what changes failed to apply. ([#717])
 
 	A clickable warning label is displayed when the Rojo plugin is unable to apply changes. Clicking the label displays precise information about which changes failed:
 
 	![Patch visualizer displays a clickable warning label when changes fail to apply](https://user-images.githubusercontent.com/40185666/252063660-f08399ef-1e16-4f1c-bed8-552821f98cef.png)
 
+
+#### Miscellaneous
+* Significantly improved performance of `rojo sourcemap` ([#668])
+* Added `plugin` flag to the `build` command that outputs to the local plugins folder ([#735])
+
+	This is a flag that builds a Rojo project into Roblox Studio's plugins directory. This allows you to build a Rojo project and load it into Studio as a plugin without having to type the full path to the plugins directory. It can be used like this: `rojo build <PATH-TO_PROJECT> --plugin <FILE-NAME>`
+
+* Added new plugin template to the `init` command ([#738])
+
+	This is new template geared towards plugins. It is similar to the model template, but creates a `Script` instead of a `ModuleScript` in the `src` directory. It can be used like this: `rojo init --kind plugin`
+
+* Added protection against syncing a model to a place. ([#691])
 * Add buttons for navigation on the Connected page ([#722])
 
 ### Fixes
