@@ -84,7 +84,6 @@
 	![Patch visualizer displays a clickable warning label when changes fail to apply](https://user-images.githubusercontent.com/40185666/252063660-f08399ef-1e16-4f1c-bed8-552821f98cef.png)
 
 * Add buttons for navigation on the Connected page ([#722])
-* Improved sync info text on Connected page. ([#692])
 
 ### Fixes
 * Fixed the diff visualizer of connected sessions. ([#674])
@@ -103,7 +102,6 @@
 [#691]: https://github.com/rojo-rbx/rojo/pull/691
 [#709]: https://github.com/rojo-rbx/rojo/pull/709
 [#708]: https://github.com/rojo-rbx/rojo/pull/708
-[#692]: https://github.com/rojo-rbx/rojo/pull/692
 [#713]: https://github.com/rojo-rbx/rojo/pull/713
 [#717]: https://github.com/rojo-rbx/rojo/pull/717
 [#722]: https://github.com/rojo-rbx/rojo/pull/722
