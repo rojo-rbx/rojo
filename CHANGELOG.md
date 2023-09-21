@@ -18,7 +18,7 @@
 
 * Added support for `Terrain.MaterialColors` ([#770])
 
-	`Terrain.MaterialColors` is now representable in projects in a human readable format:
+	`Terrain.MaterialColors` is now represented in projects in a human readable format:
 	```json
 	"Workspace": {
 		"Terrain": {
