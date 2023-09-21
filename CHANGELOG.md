@@ -65,7 +65,12 @@
 
 	Double-clicking an instance in the patch visualizer will set Roblox Studio's selection to the instance.
 
-* Added sync reminder notification. ([#689])
+* Added a sync reminder notification. ([#689])
+
+	Rojo detects if you have previously synced to a place, and displays a notification reminding you to sync again:
+
+	![Rojo reminds you to sync a place that you've synced previously](https://user-images.githubusercontent.com/40185666/242397435-ccdfddf2-a63f-420c-bc18-a6e3d6455bba.png)
+
 * Added protection against syncing a model to a place. ([#691])
 * Added new plugin template to the `init` command ([#738])
 
