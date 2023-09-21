@@ -1,6 +1,7 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+### Additions
 * Added support for syncing in `.toml` files ([#633])
 * Significantly improved performance of `rojo sourcemap` ([#668])
 * Add `plugin` flag to the `build` command that outputs to the local plugins folder ([#735])
@@ -40,6 +41,7 @@
 * Add buttons for navigation on the Connected page ([#722])
 * Improved sync info text on Connected page. ([#692])
 
+### Fixes
 * Fixed the diff visualizer of connected sessions. ([#674])
 * Fixed disconnected session activity. ([#675])
 * Skip confirming patches that contain only a datamodel name change. ([#688])
