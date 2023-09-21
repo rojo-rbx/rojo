@@ -53,7 +53,6 @@
 * Improve tooltip behavior ([#723])
 * Better settings controls ([#725])
 * Rework patch visualizer with many fixes and improvements ([#713], [#726], [#755])
-* Don't override the initial enabled state for source diffing ([#760])
 
 [#761]: https://github.com/rojo-rbx/rojo/pull/761
 [#745]: https://github.com/rojo-rbx/rojo/pull/745
@@ -78,7 +77,6 @@
 [#738]: https://github.com/rojo-rbx/rojo/pull/738
 [#748]: https://github.com/rojo-rbx/rojo/pull/748
 [#755]: https://github.com/rojo-rbx/rojo/pull/755
-[#760]: https://github.com/rojo-rbx/rojo/pull/760
 [#770]: https://github.com/rojo-rbx/rojo/pull/770
 [#771]: https://github.com/rojo-rbx/rojo/pull/771
 [#774]: https://github.com/rojo-rbx/rojo/pull/774
