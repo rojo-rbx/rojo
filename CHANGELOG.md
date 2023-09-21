@@ -7,7 +7,7 @@
 * Add `plugin` flag to the `build` command that outputs to the local plugins folder ([#735])
 * Added `Terrain` classname inference, similar to services ([#771])
 
-	`Terrain` may now be defined in the projects without using `$classname`, like:
+	`Terrain` may now be defined in the projects without using `$classname`:
 	```json
 	"Workspace": {
 		"Terrain": {
@@ -18,7 +18,7 @@
 
 * Added support for `Terrain.MaterialColors` ([#770])
 
-	`Terrain.MaterialColors` is now representable in projects in a human readable format, like:
+	`Terrain.MaterialColors` is now representable in projects in a human readable format:
 	```json
 	"Workspace": {
 		"Terrain": {
