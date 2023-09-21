@@ -60,7 +60,7 @@
 
 * Added the ability to select Instances in patch visualizer ([#709])
 
-	Double-clicking an instance in the patch visualizer will set Roblox Studio's selection to the instance.
+	Double-clicking an instance in the patch visualizer sets Roblox Studio's selection to the instance.
 
 * Added a sync reminder notification. ([#689])
 
@@ -70,7 +70,7 @@
 
 * Added rich Source diffs in patch visualizer ([#748])
 
-	A "View Diff" button for script sources is now present in the patch visualizer. Clicking it will display a side-by-side diff of the script changes:
+	A "View Diff" button for script sources is now present in the patch visualizer. Clicking it displays a side-by-side diff of the script changes:
 
 	![The patch visualizer contains a "view diff" button](https://user-images.githubusercontent.com/40185666/256065992-3f03558f-84b0-45a1-80eb-901f348cf067.png)
 
