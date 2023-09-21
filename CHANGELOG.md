@@ -6,7 +6,7 @@
 * Added support for `.toml` files to `$path` ([#633])
 * Added `Terrain` classname inference, similar to services ([#771])
 
-	`Terrain` may now be defined in the projects without using `$classname`:
+	`Terrain` may now be defined in projects without using `$classname`:
 	```json
 	"Workspace": {
 		"Terrain": {
@@ -55,7 +55,7 @@
 	This is a new setting for controlling when the Rojo plugin prompts for confirmation before syncing. It has four options:
     * Initial (default): prompts only once for a project in a given Studio session
     * Always: always prompts for confirmation
-    * Large Changes: only confirms when there are more than X changed instances. The number of instances is configurable - an additional setting for the number of instances becomes available when this option is chosen
+    * Large Changes: only prompts when there are more than X changed instances. The number of instances is configurable - an additional setting for the number of instances becomes available when this option is chosen
     * Unlisted PlaceId: only prompts if the place ID is not present in servePlaceIds
 
 * Added the ability to select Instances in patch visualizer ([#709])
