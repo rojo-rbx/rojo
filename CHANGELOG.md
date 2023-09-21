@@ -50,11 +50,9 @@
 * Fixed disconnected session activity. ([#675])
 * Skip confirming patches that contain only a datamodel name change. ([#688])
 * Fix Rojo breaking when users undo/redo in Studio ([#708])
-* Fix patch visualizer breaking when instances are removed during sync ([#713])
 * Improve tooltip behavior ([#723])
 * Better settings controls ([#725])
-* Rework patch visualizer with many fixes and improvements ([#726])
-* Fix PatchTree performance issues ([#755])
+* Rework patch visualizer with many fixes and improvements ([#713], [#726], [#755])
 * Don't override the initial enabled state for source diffing ([#760])
 
 [#761]: https://github.com/rojo-rbx/rojo/pull/761
