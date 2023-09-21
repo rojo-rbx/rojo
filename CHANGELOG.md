@@ -7,6 +7,16 @@
 * Added better support for `Font` properties ([#731])
 * Added support for `Terrain.MaterialColors` ([#770])
 * Added `Terrain` classname inference, similar to services ([#771])
+
+`Terrain` may now be defined in the project format without using `$classname`, like:
+```json
+"Workspace": {
+	"Terrain": {
+		"$path": "path/to/terrain.rbxm"
+	}
+}
+```
+
 * Add Confirmation Behavior setting ([#774])
 * Select Instances from diff tree view ([#709])
 * Added sync reminder notification. ([#689])
