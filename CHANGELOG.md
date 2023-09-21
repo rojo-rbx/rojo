@@ -1,12 +1,11 @@
 # Rojo Changelog
 
 ## Unreleased Changes
-* Significantly improved performance of `rojo sourcemap` ([#668])
 * Added support for syncing in `.toml` files ([#633])
+* Significantly improved performance of `rojo sourcemap` ([#668])
 * Add `plugin` flag to the `build` command that outputs to the local plugins folder ([#735])
-* Added better support for `Font` properties ([#731])
 * Added `Terrain` classname inference, similar to services ([#771])
-`Terrain` may now be defined in the project format without using `$classname`, like:
+`Terrain` may now be defined in the projects without using `$classname`, like:
 ```json
 "Workspace": {
 	"Terrain": {
@@ -30,6 +29,7 @@
 	}
 }
 ```
+* Added better support for `Font` properties ([#731])
 * Add Confirmation Behavior setting ([#774])
 * Select Instances from diff tree view ([#709])
 * Added sync reminder notification. ([#689])
