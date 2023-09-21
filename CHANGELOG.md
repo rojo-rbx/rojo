@@ -54,8 +54,6 @@
 * Better settings controls ([#725])
 * Rework patch visualizer with many fixes and improvements ([#713], [#726], [#755])
 
-[#761]: https://github.com/rojo-rbx/rojo/pull/761
-[#745]: https://github.com/rojo-rbx/rojo/pull/745
 [#668]: https://github.com/rojo-rbx/rojo/pull/668
 [#674]: https://github.com/rojo-rbx/rojo/pull/674
 [#675]: https://github.com/rojo-rbx/rojo/pull/675
