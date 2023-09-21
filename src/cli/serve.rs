@@ -16,6 +16,9 @@ use super::{resolve_path, GlobalOptions};
 const DEFAULT_BIND_ADDRESS: Ipv4Addr = Ipv4Addr::new(127, 0, 0, 1);
 const DEFAULT_PORT: u16 = 34872;
 
+const SERVING_MODEL_ERR: &str = "Cannot serve a model project file. \
+    Projects must have a `DataModel` at their root to be served.";
+
 /// Expose a Rojo project to the Rojo Studio plugin.
 #[derive(Debug, Parser)]
 pub struct ServeCommand {
@@ -40,6 +43,17 @@ impl ServeCommand {
         let vfs = Vfs::new_default();
 
         let session = Arc::new(ServeSession::new(vfs, project_path)?);
+
+        // `ServeSession.tree()` is locking, so we have to let it fall out
+        // of scope when we're done.
+        {
+            let tree = session.tree();
+            // This cannot fail because the root must always exist.
+            let root = tree.get_instance(tree.get_root_id()).unwrap();
+            if root.class_name() != "DataModel" {
+                anyhow::bail!(SERVING_MODEL_ERR)
+            }
+        }
 
         let ip = self
             .address

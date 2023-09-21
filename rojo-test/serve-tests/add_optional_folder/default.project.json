@@ -1,9 +1,11 @@
 {
   "name": "optional",
   "tree": {
-    "$className": "Folder",
+    "$className": "DataModel",
     "create-later": {
-      "$path": { "optional": "create-later" }
+      "$path": {
+        "optional": "create-later"
+      }
     }
   }
 }

@@ -6,7 +6,7 @@ instances:
   id-2:
     Children:
       - id-3
-    ClassName: Folder
+    ClassName: DataModel
     Id: id-2
     Metadata:
       ignoreUnknownInstances: false
@@ -24,3 +24,4 @@ instances:
     Properties: {}
 messageCursor: 1
 sessionId: id-1
+

@@ -1,7 +1,6 @@
 ---
 source: tests/tests/serve.rs
 expression: "subscribe_response.intern_and_redact(&mut redactions, ())"
-
 ---
 messageCursor: 1
 messages:

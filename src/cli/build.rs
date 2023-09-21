@@ -20,6 +20,11 @@ const UNKNOWN_OUTPUT_KIND_ERR: &str = "Could not detect what kind of file to bui
 const UNKNOWN_PLUGIN_KIND_ERR: &str = "Could not detect what kind of file to build. \
                                        Expected plugin file to end in .rbxm or .rbxmx.";
 
+const PLACE_AS_MODEL_ERR: &str = "Cannot build a place project file as a model file. \
+                                       Expected output file to end in .rbxl or .rbxlx.";
+const MODEL_AS_PLACE_ERR: &str = "Cannot build a model project file as a place file. \
+                                       Expected output file file to end in .rbxm or .rbxmx.";
+
 /// Generates a model or place file from the Rojo project.
 #[derive(Debug, Parser)]
 pub struct BuildCommand {
@@ -160,6 +165,17 @@ fn write_model(
 
     let tree = session.tree();
     let root_id = tree.get_root_id();
+
+    let root_class = tree.get_instance(root_id).unwrap().class_name();
+
+    // Bail out of building a model if the internal project is wrong.
+    if matches!(output_kind, OutputKind::Rbxm | OutputKind::Rbxmx) && root_class == "DataModel" {
+        bail!(PLACE_AS_MODEL_ERR)
+    } else if matches!(output_kind, OutputKind::Rbxl | OutputKind::Rbxlx)
+        && root_class != "DataModel"
+    {
+        bail!(MODEL_AS_PLACE_ERR)
+    }
 
     log::trace!("Opening output file for write");
     let mut file = BufWriter::new(File::create(output)?);

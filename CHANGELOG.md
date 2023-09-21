@@ -28,6 +28,8 @@
 * Added support for `Terrain.MaterialColors` ([#770])
 * Allow `Terrain` to be specified without a classname ([#771])
 * Add Confirmation Behavior setting ([#774])
+* Projects can no longer be built with the wrong file extension ([#772])
+* Projects can no longer be served if they don't have a DataModel root ([#722])
 
 [#761]: https://github.com/rojo-rbx/rojo/pull/761
 [#745]: https://github.com/rojo-rbx/rojo/pull/745
@@ -55,6 +57,7 @@
 [#760]: https://github.com/rojo-rbx/rojo/pull/760
 [#770]: https://github.com/rojo-rbx/rojo/pull/770
 [#771]: https://github.com/rojo-rbx/rojo/pull/771
+[#772]: https://github.com/rojo-rbx/rojo/pull/772
 [#774]: https://github.com/rojo-rbx/rojo/pull/774
 
 ## [7.3.0] - April 22, 2023

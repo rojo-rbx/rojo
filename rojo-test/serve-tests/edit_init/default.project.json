@@ -1,6 +1,9 @@
 {
   "name": "edit_init",
   "tree": {
-    "$path": "src"
+    "$className": "DataModel",
+    "edit_init": {
+      "$path": "src"
+    }
   }
 }
