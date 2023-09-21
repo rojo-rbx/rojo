@@ -2,7 +2,7 @@
 
 ## Unreleased Changes
 ### Additions
-* Added support for syncing in `.toml` files ([#633])
+* Added support for `.toml` files to `$path` ([#633])
 * Significantly improved performance of `rojo sourcemap` ([#668])
 * Add `plugin` flag to the `build` command that outputs to the local plugins folder ([#735])
 * Added `Terrain` classname inference, similar to services ([#771])
