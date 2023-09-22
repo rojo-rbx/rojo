@@ -347,6 +347,7 @@ function App:startSession()
 	local sessionOptions = {
 		openScriptsExternally = Settings:get("openScriptsExternally"),
 		twoWaySync = Settings:get("twoWaySync"),
+		fetchOnPatchFail = Settings:get("fetchOnPatchFail"),
 	}
 
 	local baseUrl = if string.find(host, "^https?://")
@@ -358,6 +359,7 @@ function App:startSession()
 		apiContext = apiContext,
 		openScriptsExternally = sessionOptions.openScriptsExternally,
 		twoWaySync = sessionOptions.twoWaySync,
+		fetchOnPatchFail = sessionOptions.fetchOnPatchFail,
 	})
 
 	self.cleanupPrecommit = serveSession.__reconciler:hookPrecommit(function(patch, instanceMap)

@@ -52,6 +52,7 @@ local validateServeOptions = t.strictInterface({
 	apiContext = t.table,
 	openScriptsExternally = t.boolean,
 	twoWaySync = t.boolean,
+	fetchOnPatchFail = t.boolean,
 })
 
 function ServeSession.new(options)
@@ -91,6 +92,7 @@ function ServeSession.new(options)
 		__apiContext = options.apiContext,
 		__openScriptsExternally = options.openScriptsExternally,
 		__twoWaySync = options.twoWaySync,
+		__fetchOnPatchFail = options.fetchOnPatchFail,
 		__reconciler = reconciler,
 		__instanceMap = instanceMap,
 		__changeBatcher = changeBatcher,
