@@ -7,7 +7,7 @@
 * Added support for `Font` and `CFrame` attributes ([rbx-dom#299], [rbx-dom#296])
 * Added `Terrain` classname inference, similar to services ([#771])
 
-	`Terrain` may now be defined in projects without using `$classname`:
+	`Terrain` may now be defined in projects without using `$className`:
 	```json
 	"Workspace": {
 		"Terrain": {
