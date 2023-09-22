@@ -15,9 +15,8 @@ local invariant = require(script.Parent.Parent.invariant)
 local decodeValue = require(script.Parent.decodeValue)
 local reify = require(script.Parent.reify)
 local setProperty = require(script.Parent.setProperty)
-local fetchInstances = require(script.Parent.fetchInstances)
 
-local function applyPatch(instanceMap, apiContext, patch)
+local function applyPatch(instanceMap, patch)
 	-- Tracks any portions of the patch that could not be applied to the DOM.
 	local unappliedPatch = PatchSet.newEmpty()
 
@@ -198,21 +197,6 @@ local function applyPatch(instanceMap, apiContext, patch)
 		if partiallyApplied then
 			table.insert(unappliedPatch.updated, unappliedUpdate)
 		end
-	end
-
-	-- TODO Is it worth doing this for additions that fail?
-	-- It seems unlikely that a valid Instance can't be made with `Instance.new`
-	-- but can be made using GetObjects
-	if PatchSet.hasUpdates(unappliedPatch) then
-		local idList = table.create(#unappliedPatch.updated)
-		for i, entry in unappliedPatch.updated do
-			idList[i] = entry.id
-		end
-		-- TODO this is destructive to any properties that are
-		-- overwritten by the user but not known to Rojo. We can probably
-		-- mitigate that by keeping tabs of any instances we need to swap.
-		fetchInstances(idList, instanceMap, apiContext)
-		table.clear(unappliedPatch.updated)
 	end
 
 	return unappliedPatch

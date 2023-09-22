@@ -7,6 +7,9 @@ local ChangeHistoryService = game:GetService("ChangeHistoryService")
 local Packages = script.Parent.Parent.Packages
 local Log = require(Packages.Log)
 
+local PatchSet = require(script.Parent.PatchSet)
+
+local fetchInstances = require(script.fetchInstances)
 local applyPatch = require(script.applyPatch)
 local hydrate = require(script.hydrate)
 local diff = require(script.diff)
@@ -69,7 +72,22 @@ function Reconciler:applyPatch(patch)
 
 	local patchTimestamp = DateTime.now():FormatLocalTime("LTS", "en-us")
 
-	local unappliedPatch = applyPatch(self.__instanceMap, self.__apiContext, patch)
+	local unappliedPatch = applyPatch(self.__instanceMap, patch)
+
+	-- TODO Is it worth doing this for additions that fail?
+	-- It seems unlikely that a valid Instance can't be made with `Instance.new`
+	-- but can be made using GetObjects
+	if PatchSet.hasUpdates(unappliedPatch) then
+		local idList = table.create(#unappliedPatch.updated)
+		for i, entry in unappliedPatch.updated do
+			idList[i] = entry.id
+		end
+		-- TODO this is destructive to any properties that are
+		-- overwritten by the user but not known to Rojo. We can probably
+		-- mitigate that by keeping tabs of any instances we need to swap.
+		fetchInstances(idList, self.__instanceMap, self.__apiContext)
+		table.clear(unappliedPatch.updated)
+	end
 
 	ChangeHistoryService:SetWaypoint("Rojo: Patch " .. patchTimestamp)
 
