@@ -160,6 +160,7 @@ function SettingsPage:render()
 				name = "Load Model On Patch Fail",
 				description = "Whenever a patch fails to fully apply, send a request to the server to have it "
 					.. "placed into the local file system for the plugin to load.",
+				locked = self.props.syncActive,
 				transparency = self.props.transparency,
 				layoutOrder = 6,
 			}),
