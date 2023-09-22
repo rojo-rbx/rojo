@@ -4,6 +4,7 @@
 ### Additions
 #### Project format
 * Added support for `.toml` files to `$path` ([#633])
+* Added support for `Font` and `CFrame` attributes ([rbx-dom#299], [rbx-dom#296])
 * Added `Terrain` classname inference, similar to services ([#771])
 
 	`Terrain` may now be defined in projects without using `$classname`:
@@ -128,6 +129,8 @@
 [#770]: https://github.com/rojo-rbx/rojo/pull/770
 [#771]: https://github.com/rojo-rbx/rojo/pull/771
 [#774]: https://github.com/rojo-rbx/rojo/pull/774
+[rbx-dom#299]: https://github.com/rojo-rbx/rbx-dom/pull/299
+[rbx-dom#296]: https://github.com/rojo-rbx/rbx-dom/pull/296
 
 ## [7.3.0] - April 22, 2023
 * Added `$attributes` to project format. ([#574])
