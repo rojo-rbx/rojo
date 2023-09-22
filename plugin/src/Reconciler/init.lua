@@ -2,6 +2,7 @@
 	This module defines the meat of the Rojo plugin and how it manages tracking
 	and mutating the Roblox DOM.
 ]]
+local ChangeHistoryService = game:GetService("ChangeHistoryService")
 
 local Packages = script.Parent.Parent.Packages
 local Log = require(Packages.Log)
@@ -66,7 +67,11 @@ function Reconciler:applyPatch(patch)
 		end
 	end
 
+	local patchTimestamp = DateTime.now():FormatLocalTime("LTS", "en-us")
+
 	local unappliedPatch = applyPatch(self.__instanceMap, self.__apiContext, patch)
+
+	ChangeHistoryService:SetWaypoint("Rojo: Patch " .. patchTimestamp)
 
 	for _, callback in self.__postcommitCallbacks do
 		local success, err = pcall(callback, patch, self.__instanceMap, unappliedPatch)
