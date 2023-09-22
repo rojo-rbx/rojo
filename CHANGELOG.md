@@ -86,7 +86,7 @@
 #### Miscellaneous
 * Added `plugin` flag to the `build` command that outputs to the local plugins folder ([#735])
 
-	This is a flag that builds a Rojo project into Roblox Studio's plugins directory. This allows you to build a Rojo project and load it into Studio as a plugin without having to type the full path to the plugins directory. It can be used like this: `rojo build <PATH-TO_PROJECT> --plugin <FILE-NAME>`
+	This is a flag that builds a Rojo project into Roblox Studio's plugins directory. This allows you to build a Rojo project and load it into Studio as a plugin without having to type the full path to the plugins directory. It can be used like this: `rojo build <PATH-TO-PROJECT> --plugin <FILE-NAME>`
 
 * Added new plugin template to the `init` command ([#738])
 
