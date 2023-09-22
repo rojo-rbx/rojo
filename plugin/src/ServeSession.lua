@@ -74,7 +74,7 @@ function ServeSession.new(options)
 
 	local instanceMap = InstanceMap.new(onInstanceChanged)
 	local changeBatcher = ChangeBatcher.new(instanceMap, onChangesFlushed)
-	local reconciler = Reconciler.new(instanceMap, options.apiContext)
+	local reconciler = Reconciler.new(instanceMap, options.apiContext, options.fetchOnPatchFail)
 
 	local connections = {}
 
