@@ -30,10 +30,10 @@
 * Add Confirmation Behavior setting ([#774])
 * Added the `emitLegacyScripts` field to the project format ([#765]). The behavior is outlined below:
 
-| `emitLegacyScripts` Value  | Action Taken by Rojo                                                                                             |
-|----------------------------|------------------------------------------------------------------------------------------------------------------|
-| false                      | Rojo emits Scripts with the appropriate `RunContext` for `*.client.lua` and `*.server.lua` files in the project. |
-| true   (default)           | Rojo emits LocalScripts and Scripts with legacy Runcontext (same behavior as previously).                        |
+| `emitLegacyScripts` Value  | Action Taken by Rojo                                                                                               |
+|----------------------------|--------------------------------------------------------------------------------------------------------------------|
+| false                      | Rojo emits Scripts with the appropriate `RunContext` for `*.client.lua` and `*.server.lua` files in the project.   |
+| true   (default)           | Rojo emits LocalScripts and Scripts with legacy `RunContext` (same behavior as previously).                        |
 
 [#761]: https://github.com/rojo-rbx/rojo/pull/761
 [#745]: https://github.com/rojo-rbx/rojo/pull/745
