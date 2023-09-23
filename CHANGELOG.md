@@ -12,8 +12,8 @@
 | false                     | Rojo emits Scripts with the appropriate `RunContext` for `*.client.lua` and `*.server.lua` files in the project. |
 | true   (default)          | Rojo emits LocalScripts and Scripts with legacy `RunContext` (same behavior as previously).                      |
 
-	It can be used like this:
 
+	It can be used like this:
 	```json
 	{
 		"emitLegacyScripts": false,
