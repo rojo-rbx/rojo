@@ -12,6 +12,17 @@
 | false                     | Rojo emits Scripts with the appropriate `RunContext` for `*.client.lua` and `*.server.lua` files in the project. |
 | true   (default)          | Rojo emits LocalScripts and Scripts with legacy `RunContext` (same behavior as previously).                      |
 
+	It can be used like this:
+	```json
+	{
+		"emitLegacyScripts": false,
+		"name": "MyCoolRunContextProject",
+		"tree": {
+			"$path": "src"
+		},
+	}
+	```
+
 * Added `Terrain` classname inference, similar to services ([#771])
 
 	`Terrain` may now be defined in projects without using `$className`:
