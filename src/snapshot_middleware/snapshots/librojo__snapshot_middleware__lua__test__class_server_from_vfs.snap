@@ -1,21 +1,23 @@
 ---
-source: src/snapshot_middleware/csv.rs
+source: src/snapshot_middleware/lua.rs
 expression: instance_snapshot
 ---
 snapshot_id: "00000000000000000000000000000000"
 metadata:
   ignore_unknown_instances: false
   instigating_source:
-    Path: /foo.csv
+    Path: /foo.server.lua
   relevant_paths:
-    - /foo.csv
+    - /foo.server.lua
     - /foo.meta.json
   context:
     emit_legacy_scripts: true
 name: foo
-class_name: LocalizationTable
+class_name: Script
 properties:
-  Contents:
-    String: "[{\"key\":\"Ack\",\"example\":\"An exclamation of despair\",\"source\":\"Ack!\",\"values\":{\"es\":\"¡Ay!\"}}]"
+  RunContext:
+    Enum: 0
+  Source:
+    String: Hello there!
 children: []
 

@@ -12,7 +12,7 @@ use crate::{
     },
 };
 
-use super::snapshot_from_vfs;
+use super::{emit_legacy_scripts_default, snapshot_from_vfs};
 
 pub fn snapshot_project(
     context: &InstanceContext,
@@ -30,6 +30,12 @@ pub fn snapshot_project(
     });
 
     context.add_path_ignore_rules(rules);
+    context.set_emit_legacy_scripts(
+        project
+            .emit_legacy_scripts
+            .or_else(emit_legacy_scripts_default)
+            .unwrap(),
+    );
 
     match snapshot_project_node(&context, path, &project.name, &project.tree, vfs, None)? {
         Some(found_snapshot) => {
@@ -77,7 +83,7 @@ pub fn snapshot_project_node(
     let name = Cow::Owned(instance_name.to_owned());
     let mut properties = HashMap::new();
     let mut children = Vec::new();
-    let mut metadata = InstanceMetadata::default();
+    let mut metadata = InstanceMetadata::new().context(context);
 
     if let Some(path_node) = &node.path {
         let path = path_node.path();

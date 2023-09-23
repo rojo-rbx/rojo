@@ -28,6 +28,12 @@
 * Added support for `Terrain.MaterialColors` ([#770])
 * Allow `Terrain` to be specified without a classname ([#771])
 * Add Confirmation Behavior setting ([#774])
+* Added the `emitLegacyScripts` field to the project format ([#765]). The behavior is outlined below:
+
+| `emitLegacyScripts` Value  | Action Taken by Rojo                                                                                               |
+|----------------------------|--------------------------------------------------------------------------------------------------------------------|
+| false                      | Rojo emits Scripts with the appropriate `RunContext` for `*.client.lua` and `*.server.lua` files in the project.   |
+| true   (default)           | Rojo emits LocalScripts and Scripts with legacy `RunContext` (same behavior as previously).                        |
 
 [#761]: https://github.com/rojo-rbx/rojo/pull/761
 [#745]: https://github.com/rojo-rbx/rojo/pull/745
@@ -53,6 +59,7 @@
 [#748]: https://github.com/rojo-rbx/rojo/pull/748
 [#755]: https://github.com/rojo-rbx/rojo/pull/755
 [#760]: https://github.com/rojo-rbx/rojo/pull/760
+[#765]: https://github.com/rojo-rbx/rojo/pull/765
 [#770]: https://github.com/rojo-rbx/rojo/pull/770
 [#771]: https://github.com/rojo-rbx/rojo/pull/771
 [#774]: https://github.com/rojo-rbx/rojo/pull/774

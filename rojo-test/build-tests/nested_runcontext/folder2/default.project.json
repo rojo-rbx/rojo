@@ -1,0 +1,7 @@
+{
+  "name": "nested_runcontext",
+  "emitLegacyScripts": true,
+  "tree": {
+    "$path": "folder3"
+  }
+}
