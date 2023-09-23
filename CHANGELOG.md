@@ -13,16 +13,16 @@
 | true   (default)          | Rojo emits LocalScripts and Scripts with legacy `RunContext` (same behavior as previously).                      |
 
 
-	It can be used like this:
-	```json
-	{
-		"emitLegacyScripts": false,
-		"name": "MyCoolRunContextProject",
-		"tree": {
-			"$path": "src"
-		}
+It can be used like this:
+```json
+{
+	"emitLegacyScripts": false,
+	"name": "MyCoolRunContextProject",
+	"tree": {
+		"$path": "src"
 	}
-	```
+}
+```
 
 * Added `Terrain` classname inference, similar to services ([#771])
 
