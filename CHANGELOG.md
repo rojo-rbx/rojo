@@ -20,7 +20,7 @@
 		"name": "MyCoolRunContextProject",
 		"tree": {
 			"$path": "src"
-		},
+		}
 	}
 	```
 
