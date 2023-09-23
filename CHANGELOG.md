@@ -7,22 +7,22 @@
 * Added support for `Font` and `CFrame` attributes ([rbx-dom#299], [rbx-dom#296])
 * Added the `emitLegacyScripts` field to the project format ([#765]). The behavior is outlined below:
 
-| `emitLegacyScripts` Value | Action Taken by Rojo                                                                                             |
-|---------------------------|------------------------------------------------------------------------------------------------------------------|
-| false                     | Rojo emits Scripts with the appropriate `RunContext` for `*.client.lua` and `*.server.lua` files in the project. |
-| true   (default)          | Rojo emits LocalScripts and Scripts with legacy `RunContext` (same behavior as previously).                      |
+	| `emitLegacyScripts` Value | Action Taken by Rojo                                                                                             |
+	|---------------------------|------------------------------------------------------------------------------------------------------------------|
+	| false                     | Rojo emits Scripts with the appropriate `RunContext` for `*.client.lua` and `*.server.lua` files in the project. |
+	| true   (default)          | Rojo emits LocalScripts and Scripts with legacy `RunContext` (same behavior as previously).                      |
 
 
-It can be used like this:
-```json
-{
-	"emitLegacyScripts": false,
-	"name": "MyCoolRunContextProject",
-	"tree": {
-		"$path": "src"
+	It can be used like this:
+	```json
+	{
+		"emitLegacyScripts": false,
+		"name": "MyCoolRunContextProject",
+		"tree": {
+			"$path": "src"
+		}
 	}
-}
-```
+	```
 
 * Added `Terrain` classname inference, similar to services ([#771])
 
