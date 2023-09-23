@@ -13,6 +13,7 @@
 | true   (default)          | Rojo emits LocalScripts and Scripts with legacy `RunContext` (same behavior as previously).                      |
 
 	It can be used like this:
+
 	```json
 	{
 		"emitLegacyScripts": false,
