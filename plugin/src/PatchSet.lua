@@ -26,7 +26,9 @@ local function deepEqual(a: any, b: any): boolean
 		end
 
 		for key, value in b do
-			if checkedKeys[key] then continue end
+			if checkedKeys[key] then
+				continue
+			end
 			if deepEqual(value, a[key]) == false then
 				return false
 			end
@@ -65,9 +67,7 @@ end
 	Tells whether the given PatchSet is empty.
 ]]
 function PatchSet.isEmpty(patchSet)
-	return next(patchSet.removed) == nil and
-		next(patchSet.added) == nil and
-		next(patchSet.updated) == nil
+	return next(patchSet.removed) == nil and next(patchSet.added) == nil and next(patchSet.updated) == nil
 end
 
 --[[
@@ -342,9 +342,15 @@ function PatchSet.humanSummary(instanceMap, patchSet)
 			end
 		end
 
-		table.insert(statements, string.format(
-			"- Add instance %q (ClassName %q) to %s",
-			virtualInstance.Name, virtualInstance.ClassName, parentDisplayName))
+		table.insert(
+			statements,
+			string.format(
+				"- Add instance %q (ClassName %q) to %s",
+				virtualInstance.Name,
+				virtualInstance.ClassName,
+				parentDisplayName
+			)
+		)
 	end
 
 	for _, update in ipairs(patchSet.updated) do
@@ -374,9 +380,10 @@ function PatchSet.humanSummary(instanceMap, patchSet)
 			displayName = "[unknown instance]"
 		end
 
-		table.insert(statements, string.format(
-			"- Update properties on %s: %s",
-			displayName, table.concat(updatedProperties, ",")))
+		table.insert(
+			statements,
+			string.format("- Update properties on %s: %s", displayName, table.concat(updatedProperties, ","))
+		)
 	end
 
 	return table.concat(statements, "\n")

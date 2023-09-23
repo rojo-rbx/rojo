@@ -66,7 +66,7 @@ function InstanceMap:__fmtDebug(output)
 	for id, instance in pairs(self.fromIds) do
 		local label = string.format("%s (%s)", instance:GetFullName(), instance.ClassName)
 
-		table.insert(entries, {id, label})
+		table.insert(entries, { id, label })
 	end
 
 	table.sort(entries, function(a, b)

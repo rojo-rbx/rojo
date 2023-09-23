@@ -38,22 +38,22 @@ end
 
 function TextInput:render()
 	return Theme.with(function(theme)
-        theme = theme.TextInput
+		theme = theme.TextInput
 
 		local bindingHover = bindingUtil.deriveProperty(self.binding, "hover")
 		local bindingEnabled = bindingUtil.deriveProperty(self.binding, "enabled")
 
-        return e(SlicedImage, {
-            slice = Assets.Slices.RoundedBorder,
-            color = bindingUtil.mapLerp(bindingEnabled, theme.Enabled.BorderColor, theme.Disabled.BorderColor),
-            transparency = self.props.transparency,
+		return e(SlicedImage, {
+			slice = Assets.Slices.RoundedBorder,
+			color = bindingUtil.mapLerp(bindingEnabled, theme.Enabled.BorderColor, theme.Disabled.BorderColor),
+			transparency = self.props.transparency,
 
-            size = self.props.size or UDim2.new(1, 0, 1, 0),
-            position = self.props.position,
-            layoutOrder = self.props.layoutOrder,
-            anchorPoint = self.props.anchorPoint,
-        }, {
-            HoverOverlay = e(SlicedImage, {
+			size = self.props.size or UDim2.new(1, 0, 1, 0),
+			position = self.props.position,
+			layoutOrder = self.props.layoutOrder,
+			anchorPoint = self.props.anchorPoint,
+		}, {
+			HoverOverlay = e(SlicedImage, {
 				slice = Assets.Slices.RoundedBackground,
 				color = theme.ActionFillColor,
 				transparency = Roact.joinBindings({
@@ -67,36 +67,40 @@ function TextInput:render()
 				size = UDim2.new(1, 0, 1, 0),
 				zIndex = -1,
 			}),
-            Input = e("TextBox", {
-                BackgroundTransparency = 1,
-                Size = UDim2.fromScale(1, 1),
-                Text = self.props.text,
-                PlaceholderText = self.props.placeholder,
-                Font = Enum.Font.GothamMedium,
-                TextColor3 = bindingUtil.mapLerp(bindingEnabled, theme.Disabled.TextColor, theme.Enabled.TextColor),
-                PlaceholderColor3 = bindingUtil.mapLerp(bindingEnabled, theme.Disabled.PlaceholderColor, theme.Enabled.PlaceholderColor),
-                TextSize = 18,
-                TextEditable = self.props.enabled,
-                ClearTextOnFocus = self.props.clearTextOnFocus,
+			Input = e("TextBox", {
+				BackgroundTransparency = 1,
+				Size = UDim2.fromScale(1, 1),
+				Text = self.props.text,
+				PlaceholderText = self.props.placeholder,
+				Font = Enum.Font.GothamMedium,
+				TextColor3 = bindingUtil.mapLerp(bindingEnabled, theme.Disabled.TextColor, theme.Enabled.TextColor),
+				PlaceholderColor3 = bindingUtil.mapLerp(
+					bindingEnabled,
+					theme.Disabled.PlaceholderColor,
+					theme.Enabled.PlaceholderColor
+				),
+				TextSize = 18,
+				TextEditable = self.props.enabled,
+				ClearTextOnFocus = self.props.clearTextOnFocus,
 
-                [Roact.Event.MouseEnter] = function()
-                    self.motor:setGoal({
-                        hover = Flipper.Spring.new(1, SPRING_PROPS),
-                    })
-                end,
+				[Roact.Event.MouseEnter] = function()
+					self.motor:setGoal({
+						hover = Flipper.Spring.new(1, SPRING_PROPS),
+					})
+				end,
 
-                [Roact.Event.MouseLeave] = function()
-                    self.motor:setGoal({
-                        hover = Flipper.Spring.new(0, SPRING_PROPS),
-                    })
-                end,
+				[Roact.Event.MouseLeave] = function()
+					self.motor:setGoal({
+						hover = Flipper.Spring.new(0, SPRING_PROPS),
+					})
+				end,
 
-                [Roact.Event.FocusLost] = function(rbx)
-                    self.props.onEntered(rbx.Text)
-                end,
-            }),
-            Children = Roact.createFragment(self.props[Roact.Children]),
-        })
+				[Roact.Event.FocusLost] = function(rbx)
+					self.props.onEntered(rbx.Text)
+				end,
+			}),
+			Children = Roact.createFragment(self.props[Roact.Children]),
+		})
 	end)
 end
 

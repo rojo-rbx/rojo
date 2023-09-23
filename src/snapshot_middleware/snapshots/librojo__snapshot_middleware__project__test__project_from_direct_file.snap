@@ -9,7 +9,8 @@ metadata:
     Path: /foo/hello.project.json
   relevant_paths:
     - /foo/hello.project.json
-  context: {}
+  context:
+    emit_legacy_scripts: true
 name: direct-project
 class_name: Model
 properties: {}

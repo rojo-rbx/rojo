@@ -38,15 +38,11 @@ function IconButton:render()
 		[Roact.Event.Activated] = self.props.onClick,
 
 		[Roact.Event.MouseEnter] = function()
-			self.motor:setGoal(
-				Flipper.Spring.new(1, HOVER_SPRING_PROPS)
-			)
+			self.motor:setGoal(Flipper.Spring.new(1, HOVER_SPRING_PROPS))
 		end,
 
 		[Roact.Event.MouseLeave] = function()
-			self.motor:setGoal(
-				Flipper.Spring.new(0, HOVER_SPRING_PROPS)
-			)
+			self.motor:setGoal(Flipper.Spring.new(0, HOVER_SPRING_PROPS))
 		end,
 	}, {
 		Icon = e("ImageLabel", {

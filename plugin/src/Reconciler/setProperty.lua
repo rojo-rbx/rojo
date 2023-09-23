@@ -21,26 +21,29 @@ local function setProperty(instance, propertyName, value)
 	end
 
 	if descriptor.scriptability == "None" or descriptor.scriptability == "Read" then
-		return false, Error.new(Error.UnwritableProperty, {
-			className = instance.ClassName,
-			propertyName = propertyName,
-		})
+		return false,
+			Error.new(Error.UnwritableProperty, {
+				className = instance.ClassName,
+				propertyName = propertyName,
+			})
 	end
 
 	local ok, err = descriptor:write(instance, value)
 
 	if not ok then
 		if err.kind == RbxDom.Error.Kind.Roblox and err.extra:find("lacking permission") then
-			return false, Error.new(Error.LackingPropertyPermissions, {
+			return false,
+				Error.new(Error.LackingPropertyPermissions, {
+					className = instance.ClassName,
+					propertyName = propertyName,
+				})
+		end
+
+		return false,
+			Error.new(Error.OtherPropertyError, {
 				className = instance.ClassName,
 				propertyName = propertyName,
 			})
-		end
-
-		return false, Error.new(Error.OtherPropertyError, {
-			className = instance.ClassName,
-			propertyName = propertyName,
-		})
 	end
 
 	return true

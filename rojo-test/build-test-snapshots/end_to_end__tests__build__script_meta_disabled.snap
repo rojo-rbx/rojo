@@ -11,6 +11,7 @@ expression: contents
       <Properties>
         <string name="Name">hello</string>
         <bool name="Disabled">true</bool>
+        <token name="RunContext">0</token>
         <string name="Source">-- This script should be marked 'Disabled'</string>
       </Properties>
     </Item>

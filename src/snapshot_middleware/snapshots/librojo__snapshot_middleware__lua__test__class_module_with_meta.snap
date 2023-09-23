@@ -4,15 +4,16 @@ expression: instance_snapshot
 ---
 snapshot_id: "00000000000000000000000000000000"
 metadata:
-  ignore_unknown_instances: false
+  ignore_unknown_instances: true
   instigating_source:
-    Path: /foo.server.lua
+    Path: /foo.lua
   relevant_paths:
-    - /foo.server.lua
+    - /foo.lua
     - /foo.meta.json
-  context: {}
+  context:
+    emit_legacy_scripts: true
 name: foo
-class_name: Script
+class_name: ModuleScript
 properties:
   Source:
     String: Hello there!
