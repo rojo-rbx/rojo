@@ -16,8 +16,8 @@ use crate::{DirEntry, Metadata, ReadDir, VfsBackend, VfsEvent};
 
 /// `VfsBackend` that uses `std::fs` and the `notify` crate.
 pub struct StdBackend {
-    // We use PollWatcher on macos because using INotifyWatcher can cause
-    // some gnarly performance problems.
+    // We use PollWatcher on macos because using the KQueue watcher
+    // can cause some gnarly performance problems.
     #[cfg(target_os = "macos")]
     watcher: PollWatcher,
     #[cfg(not(target_os = "macos"))]
