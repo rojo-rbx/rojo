@@ -17,7 +17,7 @@ Log.setLogLevelThunk(function()
 end)
 
 local app = Roact.createElement(App, {
-	plugin = plugin
+	plugin = plugin,
 })
 local tree = Roact.mount(app, game:GetService("CoreGui"), "Rojo UI")
 

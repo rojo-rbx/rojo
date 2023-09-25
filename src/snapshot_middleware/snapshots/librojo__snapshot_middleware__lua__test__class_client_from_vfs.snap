@@ -6,13 +6,14 @@ snapshot_id: "00000000000000000000000000000000"
 metadata:
   ignore_unknown_instances: false
   instigating_source:
-    Path: /foo.lua
+    Path: /foo.client.lua
   relevant_paths:
-    - /foo.lua
+    - /foo.client.lua
     - /foo.meta.json
-  context: {}
+  context:
+    emit_legacy_scripts: true
 name: foo
-class_name: ModuleScript
+class_name: LocalScript
 properties:
   Source:
     String: Hello there!

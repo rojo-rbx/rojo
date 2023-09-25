@@ -46,7 +46,7 @@ local function AddressEntry(props)
 					if props.onHostChange ~= nil then
 						props.onHostChange(object.Text)
 					end
-				end
+				end,
 			}),
 
 			Port = e("TextBox", {
@@ -120,7 +120,7 @@ function NotConnectedPage:render()
 				onClick = self.props.onNavigateSettings,
 			}, {
 				Tip = e(Tooltip.Trigger, {
-					text = "View and modify plugin settings"
+					text = "View and modify plugin settings",
 				}),
 			}),
 
@@ -132,7 +132,7 @@ function NotConnectedPage:render()
 				onClick = self.props.onConnect,
 			}, {
 				Tip = e(Tooltip.Trigger, {
-					text = "Connect to a Rojo sync server"
+					text = "Connect to a Rojo sync server",
 				}),
 			}),
 

@@ -17,7 +17,8 @@ metadata:
     - /foo/init.client.lua
     - /foo/init.client.luau
     - /foo/init.csv
-  context: {}
+  context:
+    emit_legacy_scripts: true
 name: foo
 class_name: Folder
 properties: {}

@@ -1,0 +1,21 @@
+---
+source: src/snapshot_middleware/lua.rs
+expression: instance_snapshot
+---
+snapshot_id: "00000000000000000000000000000000"
+metadata:
+  ignore_unknown_instances: true
+  instigating_source:
+    Path: /foo.lua
+  relevant_paths:
+    - /foo.lua
+    - /foo.meta.json
+  context:
+    emit_legacy_scripts: false
+name: foo
+class_name: ModuleScript
+properties:
+  Source:
+    String: Hello there!
+children: []
+

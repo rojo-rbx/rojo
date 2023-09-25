@@ -10,7 +10,8 @@ metadata:
   relevant_paths:
     - /foo.json
     - /foo.meta.json
-  context: {}
+  context:
+    emit_legacy_scripts: true
 name: foo
 class_name: ModuleScript
 properties:

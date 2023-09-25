@@ -80,7 +80,7 @@ return function()
 				ClassName = "Folder",
 				Name = "Parent",
 				Properties = {},
-				Children = {"CHILD"},
+				Children = { "CHILD" },
 			},
 
 			CHILD = {
@@ -112,7 +112,7 @@ return function()
 				ClassName = "Folder",
 				Name = "Parent",
 				Properties = {},
-				Children = {"CHILD"},
+				Children = { "CHILD" },
 			},
 
 			CHILD = {
@@ -147,7 +147,7 @@ return function()
 				Properties = {
 					Value = {
 						Type = "Vector3",
-						Value = {1, 2, 3},
+						Value = { 1, 2, 3 },
 					},
 				},
 				Children = {},
@@ -182,7 +182,7 @@ return function()
 				ClassName = "Folder",
 				Name = "Root",
 				Properties = {},
-				Children = {"CHILD"},
+				Children = { "CHILD" },
 			},
 
 			CHILD = {
@@ -247,7 +247,7 @@ return function()
 				ClassName = "Folder",
 				Name = "Root",
 				Properties = {},
-				Children = {"CHILD_A", "CHILD_B"},
+				Children = { "CHILD_A", "CHILD_B" },
 			},
 
 			CHILD_A = {
@@ -297,7 +297,7 @@ return function()
 						Ref = "CHILD",
 					},
 				},
-				Children = {"CHILD"},
+				Children = { "CHILD" },
 			},
 
 			CHILD = {

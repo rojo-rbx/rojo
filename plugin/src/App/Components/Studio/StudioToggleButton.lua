@@ -18,12 +18,8 @@ StudioToggleButton.defaultProps = {
 }
 
 function StudioToggleButton:init()
-	local button = self.props.toolbar:CreateButton(
-		self.props.name,
-		self.props.tooltip,
-		self.props.icon,
-		self.props.text
-	)
+	local button =
+		self.props.toolbar:CreateButton(self.props.name, self.props.tooltip, self.props.icon, self.props.text)
 
 	button.Click:Connect(function()
 		if self.props.onClick then
@@ -61,9 +57,12 @@ end
 local function StudioToggleButtonWrapper(props)
 	return e(StudioToolbarContext.Consumer, {
 		render = function(toolbar)
-			return e(StudioToggleButton, Dictionary.merge(props, {
-				toolbar = toolbar,
-			}))
+			return e(
+				StudioToggleButton,
+				Dictionary.merge(props, {
+					toolbar = toolbar,
+				})
+			)
 		end,
 	})
 end

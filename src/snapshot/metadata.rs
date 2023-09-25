@@ -6,7 +6,10 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::{glob::Glob, path_serializer, project::ProjectNode};
+use crate::{
+    glob::Glob, path_serializer, project::ProjectNode,
+    snapshot_middleware::emit_legacy_scripts_default,
+};
 
 /// Rojo-specific metadata that can be associated with an instance or a snapshot
 /// of an instance.
@@ -103,9 +106,26 @@ impl Default for InstanceMetadata {
 pub struct InstanceContext {
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub path_ignore_rules: Arc<Vec<PathIgnoreRule>>,
+    pub emit_legacy_scripts: bool,
 }
 
 impl InstanceContext {
+    pub fn new() -> Self {
+        Self {
+            path_ignore_rules: Arc::new(Vec::new()),
+            emit_legacy_scripts: emit_legacy_scripts_default().unwrap(),
+        }
+    }
+
+    pub fn with_emit_legacy_scripts(emit_legacy_scripts: Option<bool>) -> Self {
+        Self {
+            emit_legacy_scripts: emit_legacy_scripts
+                .or_else(emit_legacy_scripts_default)
+                .unwrap(),
+            ..Self::new()
+        }
+    }
+
     /// Extend the list of ignore rules in the context with the given new rules.
     pub fn add_path_ignore_rules<I>(&mut self, new_rules: I)
     where
@@ -123,13 +143,15 @@ impl InstanceContext {
         let rules = Arc::make_mut(&mut self.path_ignore_rules);
         rules.extend(new_rules);
     }
+
+    pub fn set_emit_legacy_scripts(&mut self, emit_legacy_scripts: bool) {
+        self.emit_legacy_scripts = emit_legacy_scripts;
+    }
 }
 
 impl Default for InstanceContext {
     fn default() -> Self {
-        InstanceContext {
-            path_ignore_rules: Arc::new(Vec::new()),
-        }
+        Self::new()
     }
 }
 
