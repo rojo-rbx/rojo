@@ -10,6 +10,7 @@ expression: contents
     <Item class="Script" referent="1">
       <Properties>
         <string name="Name">serverScript</string>
+        <token name="RunContext">0</token>
         <string name="Source">-- This is a Lua server script</string>
       </Properties>
     </Item>

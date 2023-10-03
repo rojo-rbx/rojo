@@ -1,20 +1,21 @@
 ---
-source: src/snapshot_middleware/project.rs
+source: src/snapshot_middleware/lua.rs
 expression: instance_snapshot
 ---
 snapshot_id: "00000000000000000000000000000000"
 metadata:
   ignore_unknown_instances: true
   instigating_source:
-    Path: /foo.project.json
+    Path: /foo.lua
   relevant_paths:
-    - /foo.project.json
+    - /foo.lua
+    - /foo.meta.json
   context:
-    emit_legacy_scripts: true
-name: unresolved-properties
-class_name: StringValue
+    emit_legacy_scripts: false
+name: foo
+class_name: ModuleScript
 properties:
-  Value:
-    String: Hi!
+  Source:
+    String: Hello there!
 children: []
 

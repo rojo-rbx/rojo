@@ -44,6 +44,7 @@ gen_build_tests! {
     json_model_legacy_name,
     module_in_folder,
     module_init,
+    nested_runcontext,
     optional,
     project_composed_default,
     project_composed_file,

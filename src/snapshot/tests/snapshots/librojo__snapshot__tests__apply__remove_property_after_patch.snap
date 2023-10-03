@@ -9,5 +9,7 @@ properties: {}
 metadata:
   ignore_unknown_instances: false
   relevant_paths: []
-  context: {}
+  context:
+    emit_legacy_scripts: true
 children: []
+

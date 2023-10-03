@@ -1,0 +1,13 @@
+{
+  "name": "nested_runcontext",
+  "emitLegacyScripts": false,
+  "tree": {
+    "$className": "Folder",
+    "folder1": {
+      "$path": "folder1"
+    },
+    "folder2": {
+      "$path": "folder2"
+    }
+  }
+}
