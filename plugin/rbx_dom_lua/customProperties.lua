@@ -77,10 +77,10 @@ return {
 	},
 	LocalizationTable = {
 		Contents = {
-			read = function(instance, key)
+			read = function(instance, _)
 				return true, instance:GetContents()
 			end,
-			write = function(instance, key, value)
+			write = function(instance, _, value)
 				instance:SetContents(value)
 				return true
 			end,
