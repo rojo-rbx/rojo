@@ -1,6 +1,8 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+
+## [7.4.0-rc1] - October 3, 2023
 ### Additions
 #### Project format
 * Added support for `.toml` files to `$path` ([#633])
