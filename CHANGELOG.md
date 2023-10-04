@@ -2,6 +2,7 @@
 
 ## Unreleased Changes
 
+## [7.4.0-rc2] - October 3, 2023
 * Fixed bug with parsing version for plugin validation ([#797])
 
 [#797]: https://github.com/rojo-rbx/rojo/pull/797
