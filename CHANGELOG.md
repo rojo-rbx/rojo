@@ -1,7 +1,7 @@
 # Rojo Changelog
 
 ## Unreleased Changes
-* Skip sourcemap generation when unaffected by changes in watch mode ([#800])
+* Changed `sourcemap --watch` to only generate the sourcemap when it's necessary ([#800])
 
 [#800]: https://github.com/rojo-rbx/rojo/pull/800
 

@@ -134,7 +134,7 @@ fn patch_set_affects_sourcemap(
             || set.added.iter().any(|referent| {
                 let instance = tree
                     .get_instance(*referent)
-                    .expect("instance did not exist");
+                    .expect("instance did not exist when updating sourcemap");
                 filter(&instance)
             })
             // 3. An existing instance has its class name, name,
@@ -146,7 +146,7 @@ fn patch_set_affects_sourcemap(
                 if changed {
                     let instance = tree
                         .get_instance(updated.id)
-                        .expect("instance did not exist");
+                        .expect("instance did not exist when updating sourcemap");
                     filter(&instance)
                 } else {
                     false
