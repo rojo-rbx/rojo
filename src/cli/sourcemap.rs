@@ -130,7 +130,7 @@ fn patch_set_affects_sourcemap(
         // 1. An instance was removed, in which case it will no
         // longer exist in the tree and we cant check the filter
         !set.removed.is_empty()
-            // 2. An instance passes the filter
+            // 2. A newly added instance passes the filter
             || set.added.iter().any(|referent| {
                 let instance = tree
                     .get_instance(*referent)
