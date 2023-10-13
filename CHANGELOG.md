@@ -1,6 +1,9 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Changed `sourcemap --watch` to only generate the sourcemap when it's necessary ([#800])
+
+[#800]: https://github.com/rojo-rbx/rojo/pull/800
 
 ## [7.4.0-rc2] - October 3, 2023
 * Fixed bug with parsing version for plugin validation ([#797])
