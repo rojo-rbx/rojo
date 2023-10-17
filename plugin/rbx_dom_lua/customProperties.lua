@@ -1,4 +1,5 @@
 local CollectionService = game:GetService("CollectionService")
+local ScriptEditorService = game:GetService("ScriptEditorService")
 
 --- A list of `Enum.Material` values that are used for Terrain.MaterialColors
 local TERRAIN_MATERIAL_COLORS = {
@@ -112,6 +113,36 @@ return {
 				for material, color in value do
 					instance:SetMaterialColor(material, color)
 				end
+				return true
+			end,
+		},
+	},
+	Script = {
+		Source = {
+			read = function(instance: Script)
+				return true, ScriptEditorService:GetEditorSource(instance)
+			end,
+			write = function(instance: Script, _, value: string)
+				task.spawn(function()
+					ScriptEditorService:UpdateSourceAsync(instance, function()
+						return value
+					end)
+				end)
+				return true
+			end,
+		},
+	},
+	ModuleScript = {
+		Source = {
+			read = function(instance: ModuleScript)
+				return true, ScriptEditorService:GetEditorSource(instance)
+			end,
+			write = function(instance: ModuleScript, _, value: string)
+				task.spawn(function()
+					ScriptEditorService:UpdateSourceAsync(instance, function()
+						return value
+					end)
+				end)
 				return true
 			end,
 		},

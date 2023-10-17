@@ -1,9 +1,9 @@
 {
   "Version": [
     0,
-    596,
+    597,
     1,
-    5960685
+    5970668
   ],
   "Classes": {
     "Accessory": {
@@ -4502,6 +4502,17 @@
           }
         }
       },
+      "DefaultProperties": {}
+    },
+    "AvatarCreationService": {
+      "Name": "AvatarCreationService",
+      "Tags": [
+        "NotCreatable",
+        "NotReplicated",
+        "Service"
+      ],
+      "Superclass": "Instance",
+      "Properties": {},
       "DefaultProperties": {}
     },
     "AvatarEditorService": {
@@ -15560,9 +15571,7 @@
     },
     "DragDetector": {
       "Name": "DragDetector",
-      "Tags": [
-        "NotBrowsable"
-      ],
+      "Tags": [],
       "Superclass": "ClickDetector",
       "Properties": {
         "ActivatedCursorIcon": {
@@ -28121,6 +28130,17 @@
         }
       }
     },
+    "LogReporterService": {
+      "Name": "LogReporterService",
+      "Tags": [
+        "NotCreatable",
+        "NotReplicated",
+        "Service"
+      ],
+      "Superclass": "Instance",
+      "Properties": {},
+      "DefaultProperties": {}
+    },
     "LogService": {
       "Name": "LogService",
       "Tags": [
@@ -31192,7 +31212,7 @@
         },
         "Source": {
           "Name": "Source",
-          "Scriptability": "ReadWrite",
+          "Scriptability": "Custom",
           "DataType": {
             "Value": "String"
           },
@@ -41454,7 +41474,7 @@
       "Properties": {
         "Source": {
           "Name": "Source",
-          "Scriptability": "ReadWrite",
+          "Scriptability": "Custom",
           "DataType": {
             "Value": "String"
           },
@@ -47977,6 +47997,19 @@
             }
           }
         },
+        "Camera Speed Adjust Binding": {
+          "Name": "Camera Speed Adjust Binding",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Enum": "CameraSpeedAdjustBinding"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
         "Camera Zoom to Mouse Position": {
           "Name": "Camera Zoom to Mouse Position",
           "Scriptability": "ReadWrite",
@@ -49545,7 +49578,9 @@
     },
     "StudioAttachment": {
       "Name": "StudioAttachment",
-      "Tags": [],
+      "Tags": [
+        "NotReplicated"
+      ],
       "Superclass": "Instance",
       "Properties": {
         "AutoHideParent": {
@@ -49614,52 +49649,11 @@
           }
         }
       },
-      "DefaultProperties": {
-        "Attributes": {
-          "Attributes": {}
-        },
-        "AutoHideParent": {
-          "Bool": false
-        },
-        "Capabilities": {
-          "SecurityCapabilities": 0
-        },
-        "DefinesCapabilities": {
-          "Bool": false
-        },
-        "IsArrowVisible": {
-          "Bool": false
-        },
-        "Offset": {
-          "Vector2": [
-            0.0,
-            0.0
-          ]
-        },
-        "SourceAnchorPoint": {
-          "Vector2": [
-            0.0,
-            0.0
-          ]
-        },
-        "SourceAssetId": {
-          "Int64": -1
-        },
-        "Tags": {
-          "Tags": []
-        },
-        "TargetAnchorPoint": {
-          "Vector2": [
-            0.0,
-            0.0
-          ]
-        }
-      }
+      "DefaultProperties": {}
     },
     "StudioCallout": {
       "Name": "StudioCallout",
       "Tags": [
-        "NotCreatable",
         "NotReplicated"
       ],
       "Superclass": "Instance",
@@ -64701,6 +64695,14 @@
         "EdgeBump": 1
       }
     },
+    "CameraSpeedAdjustBinding": {
+      "name": "CameraSpeedAdjustBinding",
+      "items": {
+        "AltScroll": 2,
+        "None": 0,
+        "RmbScroll": 1
+      }
+    },
     "CameraType": {
       "name": "CameraType",
       "items": {
@@ -67514,6 +67516,9 @@
         "Mid": 36,
         "Midlight": 98,
         "Notification": 4,
+        "OnboardingCover": 132,
+        "OnboardingHighlight": 133,
+        "OnboardingShadow": 134,
         "RibbonButton": 19,
         "RibbonTab": 15,
         "RibbonTabTopBar": 16,
