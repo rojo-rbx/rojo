@@ -233,7 +233,7 @@ function PatchTree.build(patch, instanceMap, changeListHeaders)
 				addProp(
 					prop,
 					if currentSuccess then currentValue else "[Error]",
-					if incomingSuccess then incomingValue else next(incoming)
+					if incomingSuccess then incomingValue else select(2, next(incoming))
 				)
 			end
 
@@ -359,7 +359,7 @@ function PatchTree.build(patch, instanceMap, changeListHeaders)
 				if success then
 					table.insert(changeList, { prop, "N/A", incomingValue })
 				else
-					table.insert(changeList, { prop, "N/A", next(incoming) })
+					table.insert(changeList, { prop, "N/A", select(2, next(incoming)) })
 				end
 			end
 
