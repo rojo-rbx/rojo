@@ -1586,9 +1586,9 @@ dependencies = [
 
 [[package]]
 name = "rbx_binary"
-version = "0.7.2"
+version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "10942950a57c939e540a2f977ba55e9140007d7e96c532d455502c290fdf710d"
+checksum = "ad50c13afe91296dad6508ea7e29f4b665fa56cb664ad01eaf8fdbd3da69d5e1"
 dependencies = [
  "log",
  "lz4",
