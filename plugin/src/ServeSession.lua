@@ -282,7 +282,7 @@ function ServeSession:__initialSync(serverInfo)
 			local unappliedPatch = self.__reconciler:applyPatch(catchUpPatch)
 
 			if not PatchSet.isEmpty(unappliedPatch) then
-				Log.warn(
+				Log.debug(
 					"Could not apply all changes requested by the Rojo server:\n{}",
 					PatchSet.humanSummary(self.__instanceMap, unappliedPatch)
 				)
@@ -309,7 +309,7 @@ function ServeSession:__mainSyncLoop()
 						local unappliedPatch = self.__reconciler:applyPatch(message)
 
 						if not PatchSet.isEmpty(unappliedPatch) then
-							Log.warn(
+							Log.debug(
 								"Could not apply all changes requested by the Rojo server:\n{}",
 								PatchSet.humanSummary(self.__instanceMap, unappliedPatch)
 							)
