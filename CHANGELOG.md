@@ -7,13 +7,13 @@
  	This ensures that the script editor reflects any changes Rojo makes to a script while it is open in the script editor.
 
 * Fixed issues when handling `SecurityCapabilities` values ([#803], [#807])
-* Fixed Rojo plugin erroring out when attempting to sync attributes with invalid names ([#808]
+* Fixed Rojo plugin erroring out when attempting to sync attributes with invalid names ([#809]
 
 [#800]: https://github.com/rojo-rbx/rojo/pull/800
 [#801]: https://github.com/rojo-rbx/rojo/pull/801
 [#803]: https://github.com/rojo-rbx/rojo/pull/803
 [#807]: https://github.com/rojo-rbx/rojo/pull/807
-[#808]: https://github.com/rojo-rbx/rojo/pull/808
+[#808]: https://github.com/rojo-rbx/rojo/pull/809
 
 ## [7.4.0-rc2] - October 3, 2023
 * Fixed bug with parsing version for plugin validation ([#797])
