@@ -13,7 +13,7 @@
 [#801]: https://github.com/rojo-rbx/rojo/pull/801
 [#803]: https://github.com/rojo-rbx/rojo/pull/803
 [#807]: https://github.com/rojo-rbx/rojo/pull/807
-[#808]: https://github.com/rojo-rbx/rojo/pull/809
+[#809]: https://github.com/rojo-rbx/rojo/pull/809
 
 ## [7.4.0-rc2] - October 3, 2023
 * Fixed bug with parsing version for plugin validation ([#797])
