@@ -37,9 +37,24 @@ return {
 			end,
 			write = function(instance, _, value)
 				local existing = instance:GetAttributes()
+				local didAllWritesSucceed = true
 
-				for key, attr in pairs(value) do
-					instance:SetAttribute(key, attr)
+				for attributeName, attributeValue in pairs(value) do
+					local isNameValid =
+						-- For our SetAttribute to succeed, the attribute name must be
+						-- less than or equal to 100 characters...
+						#attributeName <= 100
+						-- ...must only contain alphanumeric characters, periods, hyphens,
+						-- underscores, or forward slashes...
+						and attributeName:match("[^%w%.%-_/]") == nil
+						-- ... and must not use the RBX prefix, which is reserved by Roblox.
+						and attributeName:sub(1, 3) ~= "RBX"
+
+					if isNameValid then
+						instance:SetAttribute(attributeName, attributeValue)
+					else
+						didAllWritesSucceed = false
+					end
 				end
 
 				for key in pairs(existing) do
@@ -48,7 +63,7 @@ return {
 					end
 				end
 
-				return true
+				return didAllWritesSucceed
 			end,
 		},
 		Tags = {
