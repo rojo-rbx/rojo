@@ -46,7 +46,7 @@ fn main() -> Result<(), anyhow::Error> {
 
     let our_version = Version::parse(env::var_os("CARGO_PKG_VERSION").unwrap().to_str().unwrap())?;
     let plugin_version =
-        Version::parse(fs::read_to_string(&plugin_root.join("Version.txt"))?.trim())?;
+        Version::parse(fs::read_to_string(plugin_root.join("Version.txt"))?.trim())?;
 
     assert!(
         our_version.major == plugin_version.major,
