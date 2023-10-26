@@ -7,8 +7,10 @@ use std::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    glob::Glob, path_serializer, project::ProjectNode,
-    snapshot_middleware::emit_legacy_scripts_default,
+    glob::Glob,
+    path_serializer,
+    project::ProjectNode,
+    snapshot_middleware::{emit_legacy_scripts_default, Middleware, SyncRule},
 };
 
 /// Rojo-specific metadata that can be associated with an instance or a snapshot
@@ -107,6 +109,8 @@ pub struct InstanceContext {
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub path_ignore_rules: Arc<Vec<PathIgnoreRule>>,
     pub emit_legacy_scripts: bool,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub sync_rules: Vec<SyncRule>,
 }
 
 impl InstanceContext {
@@ -114,6 +118,7 @@ impl InstanceContext {
         Self {
             path_ignore_rules: Arc::new(Vec::new()),
             emit_legacy_scripts: emit_legacy_scripts_default().unwrap(),
+            sync_rules: Vec::new(),
         }
     }
 
@@ -144,8 +149,26 @@ impl InstanceContext {
         rules.extend(new_rules);
     }
 
+    /// Extend the list of syncing rules in the context with the given new rules.
+    pub fn add_sync_rules<I>(&mut self, new_rules: I)
+    where
+        I: IntoIterator<Item = SyncRule>,
+    {
+        self.sync_rules.extend(new_rules);
+    }
+
     pub fn set_emit_legacy_scripts(&mut self, emit_legacy_scripts: bool) {
         self.emit_legacy_scripts = emit_legacy_scripts;
+    }
+
+    pub fn get_sync_rule(&self, path: &Path) -> Option<Middleware> {
+        for rule in &self.sync_rules {
+            if rule.matches(path) {
+                return Some(rule.middleware());
+            }
+        }
+
+        None
     }
 }
 

@@ -9,7 +9,9 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 use crate::{
-    glob::Glob, resolution::UnresolvedValue, snapshot_middleware::emit_legacy_scripts_default,
+    glob::Glob,
+    resolution::UnresolvedValue,
+    snapshot_middleware::{emit_legacy_scripts_default, SyncRule},
 };
 
 static PROJECT_FILENAME: &str = "default.project.json";
@@ -87,6 +89,12 @@ pub struct Project {
     /// match files that should be excluded if Rojo encounters them.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub glob_ignore_paths: Vec<Glob>,
+
+    /// A list of mappings of globs to syncing rules. If a file matches a glob,
+    /// it will be 'transformed' into an Instance following the rule provided.
+    /// Globs are relative to the folder the project file is in.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub sync_rules: Vec<SyncRule>,
 
     /// The path to the file that this project came from. Relative paths in the
     /// project should be considered relative to the parent of this field, also

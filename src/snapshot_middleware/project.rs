@@ -29,6 +29,7 @@ pub fn snapshot_project(
         base_path: project.folder_location().to_path_buf(),
     });
 
+    context.add_sync_rules(project.sync_rules.clone());
     context.add_path_ignore_rules(rules);
     context.set_emit_legacy_scripts(
         project

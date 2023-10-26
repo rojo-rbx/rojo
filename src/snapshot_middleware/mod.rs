@@ -18,18 +18,23 @@ mod toml;
 mod txt;
 mod util;
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
+use anyhow::Context;
 use memofs::{IoResultExt, Vfs};
+use serde::{Deserialize, Serialize};
 
-use crate::snapshot::{InstanceContext, InstanceSnapshot};
+use crate::{
+    glob::Glob,
+    snapshot::{InstanceContext, InstanceSnapshot},
+};
 
 use self::{
     csv::{snapshot_csv, snapshot_csv_init},
     dir::snapshot_dir,
     json::snapshot_json,
     json_model::snapshot_json_model,
-    lua::{snapshot_lua, snapshot_lua_init},
+    lua::{snapshot_lua, snapshot_lua_init, ScriptType},
     project::snapshot_project,
     rbxm::snapshot_rbxm,
     rbxmx::snapshot_rbxmx,
@@ -54,89 +59,176 @@ pub fn snapshot_from_vfs(
     };
 
     if meta.is_dir() {
-        let project_path = path.join("default.project.json");
-        if vfs.metadata(&project_path).with_not_found()?.is_some() {
-            return snapshot_project(context, vfs, &project_path);
-        }
+        if let Some(init_path) = get_init_path(vfs, path)? {
+            match get_middleware(context, &init_path) {
+                Some(Middleware::Project) => snapshot_project(context, vfs, &init_path),
 
-        let init_path = path.join("init.luau");
-        if vfs.metadata(&init_path).with_not_found()?.is_some() {
-            return snapshot_lua_init(context, vfs, &init_path);
-        }
+                Some(Middleware::ModuleScript) => snapshot_lua_init(context, vfs, &init_path),
+                Some(Middleware::ServerScript) => snapshot_lua_init(context, vfs, &init_path),
+                Some(Middleware::ClientScript) => snapshot_lua_init(context, vfs, &init_path),
 
-        let init_path = path.join("init.lua");
-        if vfs.metadata(&init_path).with_not_found()?.is_some() {
-            return snapshot_lua_init(context, vfs, &init_path);
-        }
+                Some(Middleware::Csv) => snapshot_csv_init(context, vfs, &init_path),
 
-        let init_path = path.join("init.server.luau");
-        if vfs.metadata(&init_path).with_not_found()?.is_some() {
-            return snapshot_lua_init(context, vfs, &init_path);
+                Some(_) | None => snapshot_dir(context, vfs, path),
+            }
+        } else {
+            snapshot_dir(context, vfs, path)
         }
-
-        let init_path = path.join("init.server.lua");
-        if vfs.metadata(&init_path).with_not_found()?.is_some() {
-            return snapshot_lua_init(context, vfs, &init_path);
-        }
-
-        let init_path = path.join("init.client.luau");
-        if vfs.metadata(&init_path).with_not_found()?.is_some() {
-            return snapshot_lua_init(context, vfs, &init_path);
-        }
-
-        let init_path = path.join("init.client.lua");
-        if vfs.metadata(&init_path).with_not_found()?.is_some() {
-            return snapshot_lua_init(context, vfs, &init_path);
-        }
-
-        let init_path = path.join("init.csv");
-        if vfs.metadata(&init_path).with_not_found()?.is_some() {
-            return snapshot_csv_init(context, vfs, &init_path);
-        }
-
-        snapshot_dir(context, vfs, path)
     } else {
-        let script_name = path
-            .file_name_trim_end(".lua")
-            .or_else(|_| path.file_name_trim_end(".luau"));
+        let file_name = path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .with_context(|| format!("file name of {} is invalid", path.display()))?;
 
-        let csv_name = path.file_name_trim_end(".csv");
-
-        if let Ok(name) = script_name {
-            match name {
-                // init scripts are handled elsewhere and should not turn into
-                // their own children.
-                "init" | "init.client" | "init.server" => return Ok(None),
-
-                _ => return snapshot_lua(context, vfs, path),
-            }
-        } else if path.file_name_ends_with(".project.json") {
-            return snapshot_project(context, vfs, path);
-        } else if path.file_name_ends_with(".model.json") {
-            return snapshot_json_model(context, vfs, path);
-        } else if path.file_name_ends_with(".meta.json") {
-            // .meta.json files do not turn into their own instances.
-            return Ok(None);
-        } else if path.file_name_ends_with(".json") {
-            return snapshot_json(context, vfs, path);
-        } else if path.file_name_ends_with(".toml") {
-            return snapshot_toml(context, vfs, path);
-        } else if let Ok(name) = csv_name {
-            match name {
-                // init csv are handled elsewhere and should not turn into
-                // their own children.
-                "init" => return Ok(None),
-
-                _ => return snapshot_csv(context, vfs, path),
-            }
-        } else if path.file_name_ends_with(".txt") {
-            return snapshot_txt(context, vfs, path);
-        } else if path.file_name_ends_with(".rbxmx") {
-            return snapshot_rbxmx(context, vfs, path);
-        } else if path.file_name_ends_with(".rbxm") {
-            return snapshot_rbxm(context, vfs, path);
+        match file_name {
+            "init.server.luau" | "init.server.lua" | "init.client.luau" | "init.client.lua"
+            | "init.luau" | "init.lua" | "init.csv" => return Ok(None),
+            _ => {}
         }
 
+        if let Some(middleware) = get_middleware(context, path) {
+            return middleware.snapshot(context, vfs, path);
+        }
         Ok(None)
+    }
+}
+
+pub fn get_middleware<P: AsRef<Path>>(context: &InstanceContext, path: P) -> Option<Middleware> {
+    let path = path.as_ref();
+
+    if let Some(middleware) = context.get_sync_rule(path) {
+        Some(middleware)
+    } else if path.file_name_ends_with(".server.lua") || path.file_name_ends_with(".server.luau") {
+        Some(Middleware::ServerScript)
+    } else if path.file_name_ends_with(".client.lua") || path.file_name_ends_with(".client.luau") {
+        Some(Middleware::ClientScript)
+    } else if path.file_name_ends_with(".lua") || path.file_name_ends_with(".luau") {
+        Some(Middleware::ModuleScript)
+    } else if path.file_name_ends_with(".project.json") {
+        Some(Middleware::Project)
+    } else if path.file_name_ends_with(".model.json") {
+        Some(Middleware::JsonModel)
+    } else if path.file_name_ends_with(".meta.json") {
+        // .meta.json files do not turn into their own instances.
+        None
+    } else if path.file_name_ends_with(".json") {
+        Some(Middleware::Json)
+    } else if path.file_name_ends_with(".toml") {
+        Some(Middleware::Toml)
+    } else if path.file_name_ends_with(".csv") {
+        Some(Middleware::Csv)
+    } else if path.file_name_ends_with(".txt") {
+        Some(Middleware::Text)
+    } else if path.file_name_ends_with(".rbxmx") {
+        Some(Middleware::Rbxmx)
+    } else if path.file_name_ends_with(".rbxm") {
+        Some(Middleware::Rbxm)
+    } else {
+        None
+    }
+}
+
+fn get_init_path<P: AsRef<Path>>(vfs: &Vfs, dir: P) -> anyhow::Result<Option<PathBuf>> {
+    let path = dir.as_ref();
+
+    let project_path = path.join("default.project.json");
+    if vfs.metadata(&project_path).with_not_found()?.is_some() {
+        return Ok(Some(project_path));
+    }
+
+    let init_path = path.join("init.luau");
+    if vfs.metadata(&init_path).with_not_found()?.is_some() {
+        return Ok(Some(init_path));
+    }
+
+    let init_path = path.join("init.lua");
+    if vfs.metadata(&init_path).with_not_found()?.is_some() {
+        return Ok(Some(init_path));
+    }
+
+    let init_path = path.join("init.server.luau");
+    if vfs.metadata(&init_path).with_not_found()?.is_some() {
+        return Ok(Some(init_path));
+    }
+
+    let init_path = path.join("init.server.lua");
+    if vfs.metadata(&init_path).with_not_found()?.is_some() {
+        return Ok(Some(init_path));
+    }
+
+    let init_path = path.join("init.client.luau");
+    if vfs.metadata(&init_path).with_not_found()?.is_some() {
+        return Ok(Some(init_path));
+    }
+
+    let init_path = path.join("init.client.lua");
+    if vfs.metadata(&init_path).with_not_found()?.is_some() {
+        return Ok(Some(init_path));
+    }
+
+    let init_path = path.join("init.csv");
+    if vfs.metadata(&init_path).with_not_found()?.is_some() {
+        return Ok(Some(init_path));
+    }
+
+    Ok(None)
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
+pub struct SyncRule {
+    #[serde(rename = "pattern")]
+    glob: Glob,
+    #[serde(rename = "use")]
+    middleware: Middleware,
+}
+
+impl SyncRule {
+    pub fn matches(&self, path: &Path) -> bool {
+        self.glob.is_match(path)
+    }
+
+    pub fn middleware(&self) -> Middleware {
+        self.middleware
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Middleware {
+    Csv,
+    JsonModel,
+    Json,
+    ServerScript,
+    ClientScript,
+    ModuleScript,
+    Project,
+    Rbxm,
+    Rbxmx,
+    Toml,
+    Text,
+    Ignore,
+}
+
+impl Middleware {
+    pub fn snapshot(
+        &self,
+        context: &InstanceContext,
+        vfs: &Vfs,
+        path: &Path,
+    ) -> anyhow::Result<Option<InstanceSnapshot>> {
+        match self {
+            Self::Csv => snapshot_csv(context, vfs, path),
+            Self::JsonModel => snapshot_json_model(context, vfs, path),
+            Self::Json => snapshot_json(context, vfs, path),
+            Self::ServerScript => snapshot_lua(context, vfs, path, Some(ScriptType::Server)),
+            Self::ClientScript => snapshot_lua(context, vfs, path, Some(ScriptType::Client)),
+            Self::ModuleScript => snapshot_lua(context, vfs, path, Some(ScriptType::Module)),
+            Self::Project => snapshot_project(context, vfs, path),
+            Self::Rbxm => snapshot_rbxm(context, vfs, path),
+            Self::Rbxmx => snapshot_rbxmx(context, vfs, path),
+            Self::Toml => snapshot_toml(context, vfs, path),
+            Self::Text => snapshot_txt(context, vfs, path),
+            Self::Ignore => Ok(None),
+        }
     }
 }
