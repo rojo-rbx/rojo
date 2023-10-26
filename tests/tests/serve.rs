@@ -255,3 +255,19 @@ fn add_optional_folder() {
         );
     });
 }
+
+#[test]
+fn sync_rule_alone() {
+    run_serve_test("sync_rule_alone", |session, mut redactions| {
+        let info = session.get_api_rojo().unwrap();
+        let root_id = info.root_instance_id;
+
+        assert_yaml_snapshot!("sync_rule_alone_info", redactions.redacted_yaml(info));
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "sync_rule_alone_all",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+    });
+}
