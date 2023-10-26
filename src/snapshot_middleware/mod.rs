@@ -45,8 +45,10 @@ use self::{
 
 pub use self::{project::snapshot_project_node, util::emit_legacy_scripts_default};
 
-/// The main entrypoint to the snapshot function. This function can be pointed
-/// at any path and will return something if Rojo knows how to deal with it.
+/// Returns an `InstanceSnapshot` for the provided path.
+/// This will inspect the path and find the appropriate middleware for it,
+/// taking user-written rules into account. Then, it will attempt to convert
+/// the path into an InstanceSnapshot using that middleware.
 #[profiling::function]
 pub fn snapshot_from_vfs(
     context: &InstanceContext,
@@ -90,6 +92,9 @@ pub fn snapshot_from_vfs(
     }
 }
 
+/// Gets an `init` path for the given directory.
+/// This uses an intrinsic priority list and for compatibility,
+/// it should not be changed.
 fn get_init_path<P: AsRef<Path>>(vfs: &Vfs, dir: P) -> anyhow::Result<Option<PathBuf>> {
     let path = dir.as_ref();
 
@@ -136,7 +141,13 @@ fn get_init_path<P: AsRef<Path>>(vfs: &Vfs, dir: P) -> anyhow::Result<Option<Pat
     Ok(None)
 }
 
-pub fn snapshot_from_path<P: AsRef<Path>>(
+/// Gets a snapshot for a path given an InstanceContext and Vfs.
+///
+/// This is independent of the actual middleware and this function
+/// should be used when possible. The middleware enum assumes that it is being
+/// used as an override, and as a result Scripts do not have their paths
+/// trimmed properly if it's used directly.
+fn snapshot_from_path<P: AsRef<Path>>(
     context: &InstanceContext,
     vfs: &Vfs,
     path: P,
@@ -158,6 +169,8 @@ pub fn snapshot_from_path<P: AsRef<Path>>(
     }
 }
 
+/// Represents an override or extension for Rojo's 'syncing rules'.
+/// That is, for a specified pattern, Rojo will use the provided middleware.
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct SyncRule {
     #[serde(rename = "pattern")]
@@ -167,15 +180,21 @@ pub struct SyncRule {
 }
 
 impl SyncRule {
+    /// Returns whether the given path matches this rule.
     pub fn matches(&self, path: &Path) -> bool {
         self.glob.is_match(path)
     }
 
+    /// Returns the middleware this rule represents.
     pub fn middleware(&self) -> Middleware {
         self.middleware
     }
 }
 
+/// Represents a possible 'transformer' used by Rojo to turn a file system
+/// item into a Roblox Instance. Missing from this list are directories and
+/// metadata. This is deliberate, as metadata is not a snapshot middleware
+/// and directories do not make sense to turn into files.
 #[derive(Debug, Clone, Copy, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Middleware {
@@ -194,7 +213,10 @@ pub enum Middleware {
 }
 
 impl Middleware {
-    pub fn from_path<P: AsRef<Path>>(context: &InstanceContext, path: P) -> Option<Middleware> {
+    /// Returns a `Middleware` from the provided path, taking user-specified
+    /// syncing rules into account. If one exists, it is returned. Otherwise,
+    /// `None` is returned.
+    fn from_path<P: AsRef<Path>>(context: &InstanceContext, path: P) -> Option<Middleware> {
         let path = path.as_ref();
 
         if let Some(middleware) = context.get_sync_rule(path) {
@@ -233,7 +255,13 @@ impl Middleware {
         }
     }
 
-    pub fn snapshot(
+    /// Creates a snapshot for the given path from the Middleware.
+    ///
+    /// This function assumes that the snapshot is being used as an override
+    /// and thus no processing is done on the the path. This means that paths
+    /// with multiple extensions (i.e. scripts) are not handled well by it.
+    /// You should prefer `snapshot_from_path` when possible as a result.
+    fn snapshot(
         &self,
         context: &InstanceContext,
         vfs: &Vfs,
