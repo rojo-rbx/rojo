@@ -60,7 +60,7 @@ pub fn snapshot_from_vfs(
 
     if meta.is_dir() {
         if let Some(init_path) = get_init_path(vfs, path)? {
-            match get_middleware(context, &init_path) {
+            match Middleware::from_path(context, &init_path) {
                 Some(Middleware::Project) => snapshot_project(context, vfs, &init_path),
 
                 Some(Middleware::ModuleScript) => snapshot_lua_init(context, vfs, &init_path),
@@ -86,45 +86,7 @@ pub fn snapshot_from_vfs(
             _ => {}
         }
 
-        if let Some(middleware) = get_middleware(context, path) {
-            return middleware.snapshot(context, vfs, path);
-        }
-        Ok(None)
-    }
-}
-
-pub fn get_middleware<P: AsRef<Path>>(context: &InstanceContext, path: P) -> Option<Middleware> {
-    let path = path.as_ref();
-
-    if let Some(middleware) = context.get_sync_rule(path) {
-        Some(middleware)
-    } else if path.file_name_ends_with(".server.lua") || path.file_name_ends_with(".server.luau") {
-        Some(Middleware::ServerScript)
-    } else if path.file_name_ends_with(".client.lua") || path.file_name_ends_with(".client.luau") {
-        Some(Middleware::ClientScript)
-    } else if path.file_name_ends_with(".lua") || path.file_name_ends_with(".luau") {
-        Some(Middleware::ModuleScript)
-    } else if path.file_name_ends_with(".project.json") {
-        Some(Middleware::Project)
-    } else if path.file_name_ends_with(".model.json") {
-        Some(Middleware::JsonModel)
-    } else if path.file_name_ends_with(".meta.json") {
-        // .meta.json files do not turn into their own instances.
-        None
-    } else if path.file_name_ends_with(".json") {
-        Some(Middleware::Json)
-    } else if path.file_name_ends_with(".toml") {
-        Some(Middleware::Toml)
-    } else if path.file_name_ends_with(".csv") {
-        Some(Middleware::Csv)
-    } else if path.file_name_ends_with(".txt") {
-        Some(Middleware::Text)
-    } else if path.file_name_ends_with(".rbxmx") {
-        Some(Middleware::Rbxmx)
-    } else if path.file_name_ends_with(".rbxm") {
-        Some(Middleware::Rbxm)
-    } else {
-        None
+        snapshot_from_path(context, vfs, path)
     }
 }
 
@@ -174,6 +136,28 @@ fn get_init_path<P: AsRef<Path>>(vfs: &Vfs, dir: P) -> anyhow::Result<Option<Pat
     Ok(None)
 }
 
+pub fn snapshot_from_path<P: AsRef<Path>>(
+    context: &InstanceContext,
+    vfs: &Vfs,
+    path: P,
+) -> anyhow::Result<Option<InstanceSnapshot>> {
+    let path = path.as_ref();
+
+    if let Some(middleware) = context.get_sync_rule(path) {
+        middleware.snapshot(context, vfs, path)
+    } else if path.file_name_ends_with(".server.lua") || path.file_name_ends_with(".server.luau") {
+        snapshot_lua(context, vfs, path, None)
+    } else if path.file_name_ends_with(".client.lua") || path.file_name_ends_with(".client.luau") {
+        snapshot_lua(context, vfs, path, None)
+    } else if path.file_name_ends_with(".lua") || path.file_name_ends_with(".luau") {
+        snapshot_lua(context, vfs, path, None)
+    } else if let Some(middleware) = Middleware::from_path(context, path) {
+        middleware.snapshot(context, vfs, path)
+    } else {
+        Ok(None)
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct SyncRule {
     #[serde(rename = "pattern")]
@@ -210,6 +194,45 @@ pub enum Middleware {
 }
 
 impl Middleware {
+    pub fn from_path<P: AsRef<Path>>(context: &InstanceContext, path: P) -> Option<Middleware> {
+        let path = path.as_ref();
+
+        if let Some(middleware) = context.get_sync_rule(path) {
+            Some(middleware)
+        } else if path.file_name_ends_with(".server.lua")
+            || path.file_name_ends_with(".server.luau")
+        {
+            Some(Middleware::ServerScript)
+        } else if path.file_name_ends_with(".client.lua")
+            || path.file_name_ends_with(".client.luau")
+        {
+            Some(Middleware::ClientScript)
+        } else if path.file_name_ends_with(".lua") || path.file_name_ends_with(".luau") {
+            Some(Middleware::ModuleScript)
+        } else if path.file_name_ends_with(".project.json") {
+            Some(Middleware::Project)
+        } else if path.file_name_ends_with(".model.json") {
+            Some(Middleware::JsonModel)
+        } else if path.file_name_ends_with(".meta.json") {
+            // .meta.json files do not turn into their own instances.
+            None
+        } else if path.file_name_ends_with(".json") {
+            Some(Middleware::Json)
+        } else if path.file_name_ends_with(".toml") {
+            Some(Middleware::Toml)
+        } else if path.file_name_ends_with(".csv") {
+            Some(Middleware::Csv)
+        } else if path.file_name_ends_with(".txt") {
+            Some(Middleware::Text)
+        } else if path.file_name_ends_with(".rbxmx") {
+            Some(Middleware::Rbxmx)
+        } else if path.file_name_ends_with(".rbxm") {
+            Some(Middleware::Rbxm)
+        } else {
+            None
+        }
+    }
+
     pub fn snapshot(
         &self,
         context: &InstanceContext,
