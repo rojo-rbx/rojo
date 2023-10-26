@@ -1,6 +1,8 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+
+## [7.4.0-rc3] - October 25, 2023
 * Changed `sourcemap --watch` to only generate the sourcemap when it's necessary ([#800])
 * Switched script source property getter and setter to `ScriptEditorService` methods ([#801])
 
