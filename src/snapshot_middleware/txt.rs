@@ -13,7 +13,7 @@ pub fn snapshot_txt(
     vfs: &Vfs,
     path: &Path,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let name = path.file_name_trim_end(".txt")?;
+    let name = path.file_name_trim_extension()?;
 
     let contents = vfs.read(path)?;
     let contents_str = str::from_utf8(&contents)

@@ -17,7 +17,7 @@ pub fn snapshot_json_model(
     vfs: &Vfs,
     path: &Path,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let name = path.file_name_trim_end(".model.json")?;
+    let name = path.file_name_trim_extension()?;
 
     let contents = vfs.read(path)?;
     let contents_str = str::from_utf8(&contents)

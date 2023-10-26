@@ -12,7 +12,7 @@ pub fn snapshot_rbxmx(
     vfs: &Vfs,
     path: &Path,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let name = path.file_name_trim_end(".rbxmx")?;
+    let name = path.file_name_trim_extension()?;
 
     let options = rbx_xml::DecodeOptions::new()
         .property_behavior(rbx_xml::DecodePropertyBehavior::ReadUnknown);

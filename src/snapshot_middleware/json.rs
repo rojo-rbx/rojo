@@ -16,7 +16,7 @@ pub fn snapshot_json(
     vfs: &Vfs,
     path: &Path,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let name = path.file_name_trim_end(".json")?;
+    let name = path.file_name_trim_extension()?;
     let contents = vfs.read(path)?;
 
     let value: serde_json::Value = serde_json::from_slice(&contents)
