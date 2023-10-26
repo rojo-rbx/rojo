@@ -9,11 +9,11 @@ use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 use super::{
     dir::{dir_meta, snapshot_dir_no_meta},
     meta_file::AdjacentMetadata,
-    util::match_trailing,
+    util::{match_trailing, PathExt as _},
 };
 
 #[derive(Debug)]
-enum ScriptType {
+pub enum ScriptType {
     Server,
     Client,
     Module,
@@ -24,6 +24,7 @@ pub fn snapshot_lua(
     context: &InstanceContext,
     vfs: &Vfs,
     path: &Path,
+    script_type_overload: Option<ScriptType>,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let file_name = path.file_name().unwrap().to_string_lossy();
 
@@ -33,8 +34,9 @@ pub fn snapshot_lua(
         .expect("Unable to get RunContext enums!")
         .items;
 
-    let (script_type, instance_name) = if let Some(name) = match_trailing(&file_name, ".server.lua")
-    {
+    let (script_type, instance_name) = if let Some(script_type) = script_type_overload {
+        (script_type, path.file_name_trim_extension()?)
+    } else if let Some(name) = match_trailing(&file_name, ".server.lua") {
         (ScriptType::Server, name)
     } else if let Some(name) = match_trailing(&file_name, ".client.lua") {
         (ScriptType::Client, name)
@@ -119,7 +121,7 @@ pub fn snapshot_lua_init(
         );
     }
 
-    let mut init_snapshot = snapshot_lua(context, vfs, init_path)?.unwrap();
+    let mut init_snapshot = snapshot_lua(context, vfs, init_path, None)?.unwrap();
 
     init_snapshot.name = dir_snapshot.name;
     init_snapshot.children = dir_snapshot.children;
@@ -151,6 +153,7 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
             &mut vfs,
             Path::new("/foo.lua"),
+            None,
         )
         .unwrap()
         .unwrap();
@@ -172,6 +175,7 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(false)),
             &mut vfs,
             Path::new("/foo.lua"),
+            None,
         )
         .unwrap()
         .unwrap();
@@ -193,6 +197,7 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
             &mut vfs,
             Path::new("/foo.server.lua"),
+            None,
         )
         .unwrap()
         .unwrap();
@@ -214,6 +219,7 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(false)),
             &mut vfs,
             Path::new("/foo.server.lua"),
+            None,
         )
         .unwrap()
         .unwrap();
@@ -235,6 +241,7 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
             &mut vfs,
             Path::new("/foo.client.lua"),
+            None,
         )
         .unwrap()
         .unwrap();
@@ -256,6 +263,7 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(false)),
             &mut vfs,
             Path::new("/foo.client.lua"),
+            None,
         )
         .unwrap()
         .unwrap();
@@ -283,6 +291,7 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
             &mut vfs,
             Path::new("/root"),
+            None,
         )
         .unwrap()
         .unwrap();
@@ -315,6 +324,7 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
             &mut vfs,
             Path::new("/foo.lua"),
+            None,
         )
         .unwrap()
         .unwrap();
@@ -347,6 +357,7 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(false)),
             &mut vfs,
             Path::new("/foo.lua"),
+            None,
         )
         .unwrap()
         .unwrap();
@@ -379,6 +390,7 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
             &mut vfs,
             Path::new("/foo.server.lua"),
+            None,
         )
         .unwrap()
         .unwrap();
@@ -411,6 +423,7 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(false)),
             &mut vfs,
             Path::new("/foo.server.lua"),
+            None,
         )
         .unwrap()
         .unwrap();
@@ -445,6 +458,7 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
             &mut vfs,
             Path::new("/bar.server.lua"),
+            None,
         )
         .unwrap()
         .unwrap();
@@ -479,6 +493,32 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(false)),
             &mut vfs,
             Path::new("/bar.server.lua"),
+            None,
+        )
+        .unwrap()
+        .unwrap();
+
+        insta::with_settings!({ sort_maps => true }, {
+            insta::assert_yaml_snapshot!(instance_snapshot);
+        });
+    }
+
+    #[test]
+    fn double_name_trim() {
+        // Due to the existence of transformers, the way file extensions
+        // get trimmed is different now. A regression of this nature is
+        // possible, so we test against double-trimming.
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot("/.server.server.lua", VfsSnapshot::file("Hello there!"))
+            .unwrap();
+
+        let mut vfs = Vfs::new(imfs);
+
+        let instance_snapshot = snapshot_lua(
+            &InstanceContext::with_emit_legacy_scripts(Some(true)),
+            &mut vfs,
+            Path::new("/.server.server.lua"),
+            None,
         )
         .unwrap()
         .unwrap();

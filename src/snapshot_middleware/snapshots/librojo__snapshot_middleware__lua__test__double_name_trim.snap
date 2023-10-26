@@ -1,0 +1,24 @@
+---
+source: src/snapshot_middleware/lua.rs
+assertion_line: 524
+expression: instance_snapshot
+---
+snapshot_id: "00000000000000000000000000000000"
+metadata:
+  ignore_unknown_instances: false
+  instigating_source:
+    Path: /.server.server.lua
+  relevant_paths:
+    - /.server.server.lua
+    - /.server.meta.json
+  context:
+    emit_legacy_scripts: true
+name: ".server"
+class_name: Script
+properties:
+  RunContext:
+    Enum: 0
+  Source:
+    String: Hello there!
+children: []
+
