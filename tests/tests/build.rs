@@ -61,6 +61,7 @@ gen_build_tests! {
     weldconstraint,
     sync_rule_alone,
     sync_rule_complex,
+    sync_rule_nested_projects,
 }
 
 fn run_build_test(test_name: &str) {

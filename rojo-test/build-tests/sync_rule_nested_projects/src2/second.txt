@@ -1,0 +1,12 @@
+{
+  "name": "second",
+  "tree": {
+    "$path": "../src3"
+  },
+  "syncRules": [
+    {
+      "pattern": "*.rojo",
+      "use": "text"
+    }
+  ]
+}

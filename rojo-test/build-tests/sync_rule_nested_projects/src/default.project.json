@@ -1,0 +1,12 @@
+{
+  "name": "first",
+  "tree": {
+    "$path": "../src2"
+  },
+  "syncRules": [
+    {
+      "pattern": "*.txt",
+      "use": "project"
+    }
+  ]
+}

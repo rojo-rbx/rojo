@@ -1,0 +1,1 @@
+This should be a StringValue. If it isn't, something is wrong.

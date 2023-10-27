@@ -1,0 +1,6 @@
+{
+  "name": "sync_rule_nested_projects",
+  "tree": {
+    "$path": "src"
+  }
+}
