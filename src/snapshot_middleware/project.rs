@@ -24,6 +24,7 @@ pub fn snapshot_project(
         .with_context(|| format!("File was not a valid Rojo project: {}", path.display()))?;
 
     let mut context = context.clone();
+    context.clear_sync_rules();
 
     let rules = project.glob_ignore_paths.iter().map(|glob| PathIgnoreRule {
         glob: glob.clone(),

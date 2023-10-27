@@ -157,6 +157,10 @@ impl InstanceContext {
         self.sync_rules.extend(new_rules);
     }
 
+    pub fn clear_sync_rules(&mut self) {
+        self.sync_rules.clear();
+    }
+
     pub fn set_emit_legacy_scripts(&mut self, emit_legacy_scripts: bool) {
         self.emit_legacy_scripts = emit_legacy_scripts;
     }
