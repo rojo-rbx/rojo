@@ -1,7 +1,7 @@
 //! Wrapper around globset's Glob type that has better serialization
 //! characteristics by coupling Glob and GlobMatcher into a single type.
 
-use std::{hash::Hash, path::Path};
+use std::path::Path;
 
 use globset::{Glob as InnerGlob, GlobMatcher};
 use serde::{de::Error as _, Deserialize, Deserializer, Serialize, Serializer};
@@ -34,12 +34,6 @@ impl PartialEq for Glob {
 }
 
 impl Eq for Glob {}
-
-impl Hash for Glob {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.inner.hash(state)
-    }
-}
 
 impl Serialize for Glob {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
