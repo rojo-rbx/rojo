@@ -60,6 +60,7 @@ gen_build_tests! {
     unresolved_values,
     weldconstraint,
     sync_rule_alone,
+    sync_rule_complex,
 }
 
 fn run_build_test(test_name: &str) {
