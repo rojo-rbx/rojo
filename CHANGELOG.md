@@ -2,6 +2,44 @@
 
 ## Unreleased Changes
 
+* Projects may now specify rules for syncing files as if they had a different file extension. ([#DDD])
+ 	This is specified via a new field on project files, `syncRules`:
+
+ 	```json
+ 	{
+ 		"syncRules": [
+ 	        {
+ 	            "pattern": "include_this.extension",
+ 	            "use": "text",
+ 	        }
+ 	    ],
+ 		"name": "SyncRulesAreCool",
+ 		"tree": {
+ 			"$path": "src"
+ 		}
+ 	}
+ 	```
+
+ 	The `use` field corresponds to one of the potential file type that Rojo will currently include in a project. Files that match the provided pattern will be treated as if they had the file extension for that file type. A full list is below:
+
+ 	| `use` value    | file extension  |
+ 	|:---------------|:----------------|
+ 	| `serverscript` | `.server.lua`   |
+ 	| `clientscript` | `.client.lua`   |
+ 	| `modulescript` | `.lua`          |
+ 	| `json`         | `.json`         |
+ 	| `toml`         | `.toml`         |
+ 	| `csv`          | `.csv`          |
+ 	| `text`         | `.txt`          |
+ 	| `jsonmodel`    | `.model.json`   |
+ 	| `rbxm`         | `.rbxm`         |
+ 	| `rbxmx`        | `.rbxmx`        |
+ 	| `project`      | `.project.json` |
+ 	| `ignore`       | None!           |
+
+
+[#DDD]: https://github.com/rojo-rbx/rojo/pull/800
+
 ## [7.4.0-rc3] - October 25, 2023
 * Changed `sourcemap --watch` to only generate the sourcemap when it's necessary ([#800])
 * Switched script source property getter and setter to `ScriptEditorService` methods ([#801])
