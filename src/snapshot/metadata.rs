@@ -10,7 +10,7 @@ use crate::{
     glob::Glob,
     path_serializer,
     project::ProjectNode,
-    snapshot_middleware::{emit_legacy_scripts_default, Middleware, SyncRule},
+    snapshot_middleware::{emit_legacy_scripts_default, Middleware},
 };
 
 /// Rojo-specific metadata that can be associated with an instance or a snapshot
@@ -164,7 +164,7 @@ impl InstanceContext {
     pub fn get_sync_rule(&self, path: &Path) -> Option<Middleware> {
         for rule in &self.sync_rules {
             if rule.matches(path) {
-                return Some(rule.middleware());
+                return Some(rule.middleware);
             }
         }
 
@@ -237,5 +237,32 @@ impl From<PathBuf> for InstigatingSource {
 impl From<&Path> for InstigatingSource {
     fn from(path: &Path) -> Self {
         InstigatingSource::Path(path.to_path_buf())
+    }
+}
+
+/// Represents an user-specified rule for transforming files
+/// into Instances using a given middleware.
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
+pub struct SyncRuleOuter {
+    #[serde(rename = "pattern")]
+    pub glob: Glob,
+    #[serde(rename = "use")]
+    pub middleware: Middleware,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SyncRule {
+    pub glob: Glob,
+    pub base_path: PathBuf,
+    pub middleware: Middleware,
+}
+
+impl SyncRule {
+    /// Returns whether the given path matches this rule.
+    pub fn matches(&self, path: &Path) -> bool {
+        match path.strip_prefix(&self.base_path) {
+            Ok(suffix) => self.glob.is_match(suffix),
+            Err(_) => false,
+        }
     }
 }

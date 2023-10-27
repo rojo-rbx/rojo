@@ -24,10 +24,7 @@ use anyhow::Context;
 use memofs::{IoResultExt, Vfs};
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    glob::Glob,
-    snapshot::{InstanceContext, InstanceSnapshot},
-};
+use crate::snapshot::{InstanceContext, InstanceSnapshot};
 
 use self::{
     csv::{snapshot_csv, snapshot_csv_init},
@@ -166,28 +163,6 @@ fn snapshot_from_path<P: AsRef<Path>>(
         middleware.snapshot(context, vfs, path)
     } else {
         Ok(None)
-    }
-}
-
-/// Represents an override or extension for Rojo's 'syncing rules'.
-/// That is, for a specified pattern, Rojo will use the provided middleware.
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
-pub struct SyncRule {
-    #[serde(rename = "pattern")]
-    glob: Glob,
-    #[serde(rename = "use")]
-    middleware: Middleware,
-}
-
-impl SyncRule {
-    /// Returns whether the given path matches this rule.
-    pub fn matches(&self, path: &Path) -> bool {
-        self.glob.is_match(path)
-    }
-
-    /// Returns the middleware this rule represents.
-    pub fn middleware(&self) -> Middleware {
-        self.middleware
     }
 }
 

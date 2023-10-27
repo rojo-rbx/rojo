@@ -9,6 +9,7 @@ use crate::{
     project::{PathNode, Project, ProjectNode},
     snapshot::{
         InstanceContext, InstanceMetadata, InstanceSnapshot, InstigatingSource, PathIgnoreRule,
+        SyncRule,
     },
 };
 
@@ -29,7 +30,13 @@ pub fn snapshot_project(
         base_path: project.folder_location().to_path_buf(),
     });
 
-    context.add_sync_rules(project.sync_rules.clone());
+    let sync_rules = project.sync_rules.iter().map(|outer| SyncRule {
+        glob: outer.glob.clone(),
+        base_path: project.folder_location().to_path_buf(),
+        middleware: outer.middleware,
+    });
+
+    context.add_sync_rules(sync_rules);
     context.add_path_ignore_rules(rules);
     context.set_emit_legacy_scripts(
         project

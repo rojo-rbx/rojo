@@ -9,9 +9,8 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 use crate::{
-    glob::Glob,
-    resolution::UnresolvedValue,
-    snapshot_middleware::{emit_legacy_scripts_default, SyncRule},
+    glob::Glob, resolution::UnresolvedValue, snapshot::SyncRuleOuter,
+    snapshot_middleware::emit_legacy_scripts_default,
 };
 
 static PROJECT_FILENAME: &str = "default.project.json";
@@ -94,7 +93,7 @@ pub struct Project {
     /// it will be 'transformed' into an Instance following the rule provided.
     /// Globs are relative to the folder the project file is in.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub sync_rules: Vec<SyncRule>,
+    pub sync_rules: Vec<SyncRuleOuter>,
 
     /// The path to the file that this project came from. Relative paths in the
     /// project should be considered relative to the parent of this field, also
