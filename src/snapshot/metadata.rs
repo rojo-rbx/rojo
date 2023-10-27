@@ -157,6 +157,7 @@ impl InstanceContext {
         self.sync_rules.extend(new_rules);
     }
 
+    /// Clears all sync rules for this InstanceContext
     pub fn clear_sync_rules(&mut self) {
         self.sync_rules.clear();
     }
@@ -165,6 +166,8 @@ impl InstanceContext {
         self.emit_legacy_scripts = emit_legacy_scripts;
     }
 
+    /// Returns the middleware specified by the first syncrule that that
+    /// matches the provided path. This does not handle default syncing rules.
     pub fn get_sync_rule(&self, path: &Path) -> Option<Middleware> {
         for rule in &self.sync_rules {
             if rule.matches(path) {
@@ -248,12 +251,17 @@ impl From<&Path> for InstigatingSource {
 /// into Instances using a given middleware.
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct SyncRuleOuter {
+    /// The pattern specified by the user
     #[serde(rename = "pattern")]
     pub glob: Glob,
+    /// The middleware specified by the user
     #[serde(rename = "use")]
     pub middleware: Middleware,
 }
 
+/// An internal representation of the user-specified sync rules. This
+/// allows the base path of the pattern to be set by Rojo but not be handled
+/// by Serde.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SyncRule {
     pub glob: Glob,
