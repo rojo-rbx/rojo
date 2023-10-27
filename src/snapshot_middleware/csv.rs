@@ -18,7 +18,7 @@ pub fn snapshot_csv(
     vfs: &Vfs,
     path: &Path,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let name = path.file_name_trim_extension()?;
+    let name = path.file_name_trim_extensions()?;
 
     let meta_path = path.with_file_name(format!("{}.meta.json", name));
     let contents = vfs.read(path)?;

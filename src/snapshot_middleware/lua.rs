@@ -35,7 +35,7 @@ pub fn snapshot_lua(
         .items;
 
     let (script_type, instance_name) = if let Some(script_type) = script_type_overload {
-        (script_type, path.file_name_trim_extension()?)
+        (script_type, path.file_name_trim_extensions()?)
     } else if let Some(name) = match_trailing(&file_name, ".server.lua") {
         (ScriptType::Server, name)
     } else if let Some(name) = match_trailing(&file_name, ".client.lua") {

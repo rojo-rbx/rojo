@@ -16,7 +16,7 @@ pub fn snapshot_toml(
     vfs: &Vfs,
     path: &Path,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let name = path.file_name_trim_extension()?;
+    let name = path.file_name_trim_extensions()?;
     let contents = vfs.read(path)?;
 
     let value: toml::Value = toml::from_slice(&contents)
