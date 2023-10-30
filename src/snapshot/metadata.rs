@@ -4,6 +4,7 @@ use std::{
     sync::Arc,
 };
 
+use anyhow::Context;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -257,6 +258,10 @@ pub struct SyncRuleOuter {
     /// The middleware specified by the user
     #[serde(rename = "use")]
     pub middleware: Middleware,
+    /// A suffix to trim off of file names, including the file extension.
+    /// If not specified, the file extension is the only thing cut off.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub suffix: Option<String>,
 }
 
 /// An internal representation of the user-specified sync rules. This
@@ -267,6 +272,7 @@ pub struct SyncRule {
     pub glob: Glob,
     pub base_path: PathBuf,
     pub middleware: Middleware,
+    pub suffix: Option<String>,
 }
 
 impl SyncRule {
@@ -275,6 +281,28 @@ impl SyncRule {
         match path.strip_prefix(&self.base_path) {
             Ok(suffix) => self.glob.is_match(suffix),
             Err(_) => false,
+        }
+    }
+
+    pub fn file_name_for_path<'a>(&self, path: &'a Path) -> anyhow::Result<&'a str> {
+        let suffix = if let Some(suffix) = &self.suffix {
+            suffix
+        } else {
+            // If the user doesn't specify a suffix, we assume the extension
+            // should be trimmed (or "" if there is no extension)
+            path.extension()
+                .map_or_else(|| Some(""), |s| s.to_str())
+                .with_context(|| format!("file name of {} is invalid", path.display()))?
+        };
+        let file_name = path
+            .file_name()
+            .and_then(|s| s.to_str())
+            .with_context(|| format!("file name of {} is invalid", path.display()))?;
+        if file_name.ends_with(suffix) {
+            let end = file_name.len().saturating_sub(suffix.len());
+            Ok(&file_name[..end])
+        } else {
+            Ok(file_name)
         }
     }
 }

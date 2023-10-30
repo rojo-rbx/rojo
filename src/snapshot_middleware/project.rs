@@ -35,6 +35,7 @@ pub fn snapshot_project(
         glob: outer.glob.clone(),
         base_path: project.folder_location().to_path_buf(),
         middleware: outer.middleware,
+        suffix: outer.suffix.clone(),
     });
 
     context.add_sync_rules(sync_rules);
