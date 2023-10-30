@@ -144,26 +144,67 @@ fn get_init_path<P: AsRef<Path>>(vfs: &Vfs, dir: P) -> anyhow::Result<Option<Pat
 /// should be used when possible. The middleware enum assumes that it is being
 /// used as an override, and as a result Scripts do not have their paths
 /// trimmed properly if it's used directly.
-fn snapshot_from_path<P: AsRef<Path>>(
+fn snapshot_from_path(
     context: &InstanceContext,
     vfs: &Vfs,
-    path: P,
+    path: &Path,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let path = path.as_ref();
-
-    if let Some(middleware) = context.get_sync_rule(path) {
-        middleware.snapshot(context, vfs, path)
-    } else if path.file_name_ends_with(".server.lua") || path.file_name_ends_with(".server.luau") {
-        snapshot_lua(context, vfs, path, None)
-    } else if path.file_name_ends_with(".client.lua") || path.file_name_ends_with(".client.luau") {
-        snapshot_lua(context, vfs, path, None)
-    } else if path.file_name_ends_with(".lua") || path.file_name_ends_with(".luau") {
-        snapshot_lua(context, vfs, path, None)
-    } else if let Some(middleware) = Middleware::from_path(context, path) {
-        middleware.snapshot(context, vfs, path)
+    let (middleware, name) = if let Some(rule) = context.get_sync_rule(path) {
+        (rule.middleware, rule.file_name_for_path(path)?)
+    } else if path.file_name_ends_with(".server.lua") {
+        (
+            Middleware::ServerScript,
+            path.file_name_trim_end(".server.lua")?,
+        )
+    } else if path.file_name_ends_with(".server.luau") {
+        (
+            Middleware::ServerScript,
+            path.file_name_trim_end(".server.luau")?,
+        )
+    } else if path.file_name_ends_with(".client.lua") {
+        (
+            Middleware::ClientScript,
+            path.file_name_trim_end(".client.lua")?,
+        )
+    } else if path.file_name_ends_with(".client.luau") {
+        (
+            Middleware::ClientScript,
+            path.file_name_trim_end(".client.luau")?,
+        )
+    } else if path.file_name_ends_with(".lua") {
+        (Middleware::ModuleScript, path.file_name_trim_end(".lua")?)
+    } else if path.file_name_ends_with(".luau") {
+        (Middleware::ModuleScript, path.file_name_trim_end(".luau")?)
+    } else if path.file_name_ends_with(".project.json") {
+        (
+            Middleware::Project,
+            path.file_name_trim_end(".project.json")?,
+        )
+    } else if path.file_name_ends_with(".model.json") {
+        (
+            Middleware::JsonModel,
+            path.file_name_trim_end(".model.json")?,
+        )
+    } else if path.file_name_ends_with(".meta.json") {
+        // .meta.json files do not turn into InstanceSnapshots
+        return Ok(None);
+    } else if path.file_name_ends_with(".json") {
+        (Middleware::Json, path.file_name_trim_end(".json")?)
+    } else if path.file_name_ends_with(".toml") {
+        (Middleware::Toml, path.file_name_trim_end(".toml")?)
+    } else if path.file_name_ends_with(".csv") {
+        (Middleware::Csv, path.file_name_trim_end(".csv")?)
+    } else if path.file_name_ends_with(".txt") {
+        (Middleware::Text, path.file_name_trim_end(".txt")?)
+    } else if path.file_name_ends_with(".rbxmx") {
+        (Middleware::Rbxmx, path.file_name_trim_end(".rbxmx")?)
+    } else if path.file_name_ends_with(".rbxm") {
+        (Middleware::Rbxm, path.file_name_trim_end(".rbxm")?)
     } else {
-        Ok(None)
-    }
+        return Ok(None);
+    };
+
+    middleware.snapshot(context, vfs, path, name)
 }
 
 /// Represents a possible 'transformer' used by Rojo to turn a file system
@@ -194,8 +235,8 @@ impl Middleware {
     fn from_path<P: AsRef<Path>>(context: &InstanceContext, path: P) -> Option<Middleware> {
         let path = path.as_ref();
 
-        if let Some(middleware) = context.get_sync_rule(path) {
-            Some(middleware)
+        if let Some(rule) = context.get_sync_rule(path) {
+            Some(rule.middleware)
         } else if path.file_name_ends_with(".server.lua")
             || path.file_name_ends_with(".server.luau")
         {
@@ -230,17 +271,14 @@ impl Middleware {
         }
     }
 
-    /// Creates a snapshot for the given path from the Middleware.
-    ///
-    /// This function assumes that the snapshot is being used as an override
-    /// and thus no processing is done on the the path. This means that paths
-    /// with multiple extensions (i.e. scripts) are not handled well by it.
-    /// You should prefer `snapshot_from_path` when possible as a result.
+    /// Creates a snapshot for the given path from the Middleware with
+    /// the provided name.
     fn snapshot(
         &self,
         context: &InstanceContext,
         vfs: &Vfs,
         path: &Path,
+        name: &str,
     ) -> anyhow::Result<Option<InstanceSnapshot>> {
         match self {
             Self::Csv => snapshot_csv(context, vfs, path),
