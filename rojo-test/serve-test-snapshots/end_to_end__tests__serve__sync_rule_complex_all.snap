@@ -10,6 +10,7 @@ instances:
       - id-4
       - id-5
       - id-6
+      - id-7
     ClassName: Folder
     Id: id-2
     Metadata:
@@ -43,8 +44,19 @@ instances:
         String: "-- Hello, from baz (a LocalScript)!"
   id-5:
     Children: []
-    ClassName: ModuleScript
+    ClassName: StringValue
     Id: id-5
+    Metadata:
+      ignoreUnknownInstances: false
+    Name: cat
+    Parent: id-2
+    Properties:
+      Value:
+        String: "Hello, from cat (a StringValue)!"
+  id-6:
+    Children: []
+    ClassName: ModuleScript
+    Id: id-6
     Metadata:
       ignoreUnknownInstances: false
     Name: foo
@@ -52,10 +64,10 @@ instances:
     Properties:
       Source:
         String: "-- Hello, from foo (a ModuleScript)!"
-  id-6:
+  id-7:
     Children: []
     ClassName: StringValue
-    Id: id-6
+    Id: id-7
     Metadata:
       ignoreUnknownInstances: true
     Name: qux

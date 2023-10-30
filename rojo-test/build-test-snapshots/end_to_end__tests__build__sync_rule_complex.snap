@@ -1,6 +1,6 @@
 ---
 source: tests/tests/build.rs
-assertion_line: 103
+assertion_line: 104
 expression: contents
 ---
 <roblox version="4">
@@ -21,13 +21,19 @@ expression: contents
         <string name="Source">-- Hello, from baz (a LocalScript)!</string>
       </Properties>
     </Item>
-    <Item class="ModuleScript" referent="3">
+    <Item class="StringValue" referent="3">
+      <Properties>
+        <string name="Name">cat</string>
+        <string name="Value">Hello, from cat (a StringValue)!</string>
+      </Properties>
+    </Item>
+    <Item class="ModuleScript" referent="4">
       <Properties>
         <string name="Name">foo</string>
         <string name="Source">-- Hello, from foo (a ModuleScript)!</string>
       </Properties>
     </Item>
-    <Item class="StringValue" referent="4">
+    <Item class="StringValue" referent="5">
       <Properties>
         <string name="Name">qux</string>
         <string name="Value">Hello, from qux (a .rojo file that's turned into a StringValue)!</string>

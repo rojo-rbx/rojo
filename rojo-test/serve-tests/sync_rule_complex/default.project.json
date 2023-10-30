@@ -19,6 +19,11 @@
     {
       "pattern": "*.rojo",
       "use": "project"
+    },
+    {
+      "pattern": "*.dog.rojo2",
+      "use": "text",
+      "suffix": ".dog.rojo2"
     }
   ]
 }
