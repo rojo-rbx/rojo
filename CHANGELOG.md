@@ -27,6 +27,7 @@
 
 ## [7.4.0-rc1] - October 3, 2023
 ### Additions
+
 #### Project format
 * Added support for `.toml` files to `$path` ([#633])
 * Added support for `Font` and `CFrame` attributes ([rbx-dom#299], [rbx-dom#296])
