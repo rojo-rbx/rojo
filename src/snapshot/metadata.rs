@@ -285,24 +285,23 @@ impl SyncRule {
     }
 
     pub fn file_name_for_path<'a>(&self, path: &'a Path) -> anyhow::Result<&'a str> {
-        let suffix = if let Some(suffix) = &self.suffix {
-            suffix
+        if let Some(suffix) = &self.suffix {
+            let file_name = path
+                .file_name()
+                .and_then(|s| s.to_str())
+                .with_context(|| format!("file name of {} is invalid", path.display()))?;
+            if file_name.ends_with(suffix) {
+                let end = file_name.len().saturating_sub(suffix.len());
+                Ok(&file_name[..end])
+            } else {
+                Ok(file_name)
+            }
         } else {
-            // If the user doesn't specify a suffix, we assume the extension
-            // should be trimmed (or "" if there is no extension)
-            path.extension()
-                .map_or_else(|| Some(""), |s| s.to_str())
-                .with_context(|| format!("file name of {} is invalid", path.display()))?
-        };
-        let file_name = path
-            .file_name()
-            .and_then(|s| s.to_str())
-            .with_context(|| format!("file name of {} is invalid", path.display()))?;
-        if file_name.ends_with(suffix) {
-            let end = file_name.len().saturating_sub(suffix.len());
-            Ok(&file_name[..end])
-        } else {
-            Ok(file_name)
+            // If the user doesn't specify a suffix, we assume they just want
+            // the name of the file (the file_stem)
+            path.file_stem()
+                .and_then(|s| s.to_str())
+                .with_context(|| format!("file name of {} is invalid", path.display()))
         }
     }
 }
