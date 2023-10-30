@@ -287,3 +287,22 @@ fn sync_rule_complex() {
         );
     });
 }
+
+#[test]
+fn sync_rule_no_extension() {
+    run_serve_test("sync_rule_no_extension", |session, mut redactions| {
+        let info = session.get_api_rojo().unwrap();
+        let root_id = info.root_instance_id;
+
+        assert_yaml_snapshot!(
+            "sync_rule_no_extension_info",
+            redactions.redacted_yaml(info)
+        );
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "sync_rule_no_extension_all",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+    });
+}
