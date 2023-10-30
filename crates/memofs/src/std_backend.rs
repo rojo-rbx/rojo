@@ -5,19 +5,34 @@ use std::thread;
 use std::time::Duration;
 
 use crossbeam_channel::Receiver;
-use notify::{watcher, DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher};
+use notify::{DebouncedEvent, RecursiveMode, Watcher};
+
+#[cfg(target_os = "macos")]
+use notify::PollWatcher;
+#[cfg(not(target_os = "macos"))]
+use notify::{watcher, RecommendedWatcher};
 
 use crate::{DirEntry, Metadata, ReadDir, VfsBackend, VfsEvent};
 
 /// `VfsBackend` that uses `std::fs` and the `notify` crate.
 pub struct StdBackend {
+    // We use PollWatcher on macos because using the KQueue watcher
+    // can cause some gnarly performance problems.
+    #[cfg(target_os = "macos")]
+    watcher: PollWatcher,
+    #[cfg(not(target_os = "macos"))]
     watcher: RecommendedWatcher,
+
     watcher_receiver: Receiver<VfsEvent>,
 }
 
 impl StdBackend {
     pub fn new() -> StdBackend {
         let (notify_tx, notify_rx) = mpsc::channel();
+
+        #[cfg(target_os = "macos")]
+        let watcher = PollWatcher::new(notify_tx, Duration::from_millis(50)).unwrap();
+        #[cfg(not(target_os = "macos"))]
         let watcher = watcher(notify_tx, Duration::from_millis(50)).unwrap();
 
         let (tx, rx) = crossbeam_channel::unbounded();

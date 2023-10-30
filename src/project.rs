@@ -8,7 +8,9 @@ use std::{
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use crate::{glob::Glob, resolution::UnresolvedValue};
+use crate::{
+    glob::Glob, resolution::UnresolvedValue, snapshot_middleware::emit_legacy_scripts_default,
+};
 
 static PROJECT_FILENAME: &str = "default.project.json";
 
@@ -72,6 +74,14 @@ pub struct Project {
     /// As long as --address is unprovided.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub serve_address: Option<IpAddr>,
+
+    /// Determines if rojo should emit scripts with the appropriate `RunContext` for `*.client.lua` and `*.server.lua` files in the project.
+    /// Or, if rojo should keep the legacy behavior of emitting LocalScripts and Scripts with legacy Runcontext
+    #[serde(
+        default = "emit_legacy_scripts_default",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub emit_legacy_scripts: Option<bool>,
 
     /// A list of globs, relative to the folder the project file is in, that
     /// match files that should be excluded if Rojo encounters them.

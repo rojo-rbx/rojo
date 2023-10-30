@@ -24,7 +24,7 @@ impl<K: Hash + Eq, V: Eq> MultiMap<K, V> {
         K: Borrow<Q>,
         Q: Hash + Eq,
     {
-        self.inner.get(k.borrow()).map(Vec::as_slice).unwrap_or(&[])
+        self.inner.get(k).map(Vec::as_slice).unwrap_or(&[])
     }
 
     pub fn insert(&mut self, k: K, v: V) {

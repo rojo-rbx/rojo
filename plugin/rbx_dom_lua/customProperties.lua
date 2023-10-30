@@ -1,4 +1,5 @@
 local CollectionService = game:GetService("CollectionService")
+local ScriptEditorService = game:GetService("ScriptEditorService")
 
 --- A list of `Enum.Material` values that are used for Terrain.MaterialColors
 local TERRAIN_MATERIAL_COLORS = {
@@ -36,9 +37,24 @@ return {
 			end,
 			write = function(instance, _, value)
 				local existing = instance:GetAttributes()
+				local didAllWritesSucceed = true
 
-				for key, attr in pairs(value) do
-					instance:SetAttribute(key, attr)
+				for attributeName, attributeValue in pairs(value) do
+					local isNameValid =
+						-- For our SetAttribute to succeed, the attribute name must be
+						-- less than or equal to 100 characters...
+						#attributeName <= 100
+						-- ...must only contain alphanumeric characters, periods, hyphens,
+						-- underscores, or forward slashes...
+						and attributeName:match("[^%w%.%-_/]") == nil
+						-- ... and must not use the RBX prefix, which is reserved by Roblox.
+						and attributeName:sub(1, 3) ~= "RBX"
+
+					if isNameValid then
+						instance:SetAttribute(attributeName, attributeValue)
+					else
+						didAllWritesSucceed = false
+					end
 				end
 
 				for key in pairs(existing) do
@@ -47,7 +63,7 @@ return {
 					end
 				end
 
-				return true
+				return didAllWritesSucceed
 			end,
 		},
 		Tags = {
@@ -77,10 +93,10 @@ return {
 	},
 	LocalizationTable = {
 		Contents = {
-			read = function(instance, key)
+			read = function(instance, _)
 				return true, instance:GetContents()
 			end,
-			write = function(instance, key, value)
+			write = function(instance, _, value)
 				instance:SetContents(value)
 				return true
 			end,
@@ -112,6 +128,36 @@ return {
 				for material, color in value do
 					instance:SetMaterialColor(material, color)
 				end
+				return true
+			end,
+		},
+	},
+	Script = {
+		Source = {
+			read = function(instance: Script)
+				return true, ScriptEditorService:GetEditorSource(instance)
+			end,
+			write = function(instance: Script, _, value: string)
+				task.spawn(function()
+					ScriptEditorService:UpdateSourceAsync(instance, function()
+						return value
+					end)
+				end)
+				return true
+			end,
+		},
+	},
+	ModuleScript = {
+		Source = {
+			read = function(instance: ModuleScript)
+				return true, ScriptEditorService:GetEditorSource(instance)
+			end,
+			write = function(instance: ModuleScript, _, value: string)
+				task.spawn(function()
+					ScriptEditorService:UpdateSourceAsync(instance, function()
+						return value
+					end)
+				end)
 				return true
 			end,
 		},

@@ -9,7 +9,8 @@ metadata:
     Path: /foo/default.project.json
   relevant_paths:
     - /foo/default.project.json
-  context: {}
+  context:
+    script_type: Class
 name: indirect-project
 class_name: Folder
 properties: {}

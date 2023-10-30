@@ -1,9 +1,9 @@
 {
   "Version": [
     0,
-    588,
-    0,
-    5880517
+    597,
+    1,
+    5970668
   ],
   "Classes": {
     "Accessory": {
@@ -57,6 +57,131 @@
         },
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
+        "SourceAssetId": {
+          "Int64": -1
+        },
+        "Tags": {
+          "Tags": []
+        }
+      }
+    },
+    "AccessoryDescription": {
+      "Name": "AccessoryDescription",
+      "Tags": [
+        "NotBrowsable"
+      ],
+      "Superclass": "Instance",
+      "Properties": {
+        "AccessoryType": {
+          "Name": "AccessoryType",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Enum": "AccessoryType"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "AssetId": {
+          "Name": "AssetId",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Int64"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "Instance": {
+          "Name": "Instance",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Ref"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "IsLayered": {
+          "Name": "IsLayered",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "Order": {
+          "Name": "Order",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Int32"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "Puffiness": {
+          "Name": "Puffiness",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Float32"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        }
+      },
+      "DefaultProperties": {
+        "AccessoryType": {
+          "Enum": 0
+        },
+        "AssetId": {
+          "Int64": 0
+        },
+        "Attributes": {
+          "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
+        "IsLayered": {
+          "Bool": false
+        },
+        "Order": {
+          "Int32": 0
+        },
+        "Puffiness": {
+          "Float32": 1.0
         },
         "SourceAssetId": {
           "Int64": -1
@@ -195,6 +320,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -211,6 +342,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "LevelOfDetail": {
           "Enum": 0
@@ -418,9 +555,7 @@
     },
     "AirController": {
       "Name": "AirController",
-      "Tags": [
-        "NotBrowsable"
-      ],
+      "Tags": [],
       "Superclass": "ControllerBase",
       "Properties": {
         "BalanceMaxTorque": {
@@ -543,6 +678,12 @@
         },
         "BalanceSpeed": {
           "Float32": 100.0
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "MaintainAngularMomentum": {
           "Bool": true
@@ -771,8 +912,14 @@
             ]
           }
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color": {
           "BrickColor": 23
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -965,8 +1112,14 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color": {
           "BrickColor": 194
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -1060,6 +1213,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -1137,8 +1296,14 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color": {
           "BrickColor": 23
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -1188,6 +1353,12 @@
         },
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -1283,6 +1454,42 @@
       ],
       "Superclass": "Constraint",
       "Properties": {
+        "C0": {
+          "Name": "C0",
+          "Scriptability": "Read",
+          "DataType": {
+            "Value": "CFrame"
+          },
+          "Tags": [
+            "Deprecated",
+            "Hidden",
+            "NotReplicated",
+            "ReadOnly"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
+            }
+          }
+        },
+        "C1": {
+          "Name": "C1",
+          "Scriptability": "Read",
+          "DataType": {
+            "Value": "CFrame"
+          },
+          "Tags": [
+            "Deprecated",
+            "Hidden",
+            "NotReplicated",
+            "ReadOnly"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
+            }
+          }
+        },
         "IsKinematic": {
           "Name": "IsKinematic",
           "Scriptability": "ReadWrite",
@@ -1322,6 +1529,42 @@
             }
           }
         },
+        "Part0": {
+          "Name": "Part0",
+          "Scriptability": "Read",
+          "DataType": {
+            "Value": "Ref"
+          },
+          "Tags": [
+            "Deprecated",
+            "Hidden",
+            "NotReplicated",
+            "ReadOnly"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
+            }
+          }
+        },
+        "Part1": {
+          "Name": "Part1",
+          "Scriptability": "Read",
+          "DataType": {
+            "Value": "Ref"
+          },
+          "Tags": [
+            "Deprecated",
+            "Hidden",
+            "NotReplicated",
+            "ReadOnly"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
+            }
+          }
+        },
         "Transform": {
           "Name": "Transform",
           "Scriptability": "ReadWrite",
@@ -1340,8 +1583,14 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color": {
           "BrickColor": 23
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -1401,6 +1650,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -1420,6 +1675,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -1615,6 +1876,22 @@
             }
           }
         },
+        "rootMotion": {
+          "Name": "rootMotion",
+          "Scriptability": "None",
+          "DataType": {
+            "Value": "BinaryString"
+          },
+          "Tags": [
+            "Hidden",
+            "NotScriptable"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
         "transform": {
           "Name": "transform",
           "Scriptability": "None",
@@ -1652,6 +1929,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -1687,6 +1970,9 @@
         },
         "preTransform": {
           "BinaryString": "AQAAAAEAAAAAAIA/AAAAAAAAAAAAAAAAAACAPwAAAAAAAAAAAAAAAAAAgD8AAAAAAAAAAAAAAAA="
+        },
+        "rootMotion": {
+          "BinaryString": ""
         },
         "transform": {
           "BinaryString": "AQAAAAEAAAAAAIA/AAAAAAAAAAAAAAAAAACAPwAAAAAAAAAAAAAAAAAAgD8AAAAAAAAAAAAAAAA="
@@ -1972,11 +2258,51 @@
               "Serialization": "Serializes"
             }
           }
+        },
+        "RootMotion": {
+          "Name": "RootMotion",
+          "Scriptability": "Read",
+          "DataType": {
+            "Value": "CFrame"
+          },
+          "Tags": [
+            "NotBrowsable",
+            "NotReplicated",
+            "ReadOnly"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
+            }
+          }
+        },
+        "RootMotionWeight": {
+          "Name": "RootMotionWeight",
+          "Scriptability": "Read",
+          "DataType": {
+            "Value": "Float32"
+          },
+          "Tags": [
+            "NotBrowsable",
+            "NotReplicated",
+            "ReadOnly"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
+            }
+          }
         }
       },
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "PreferLodEnabled": {
           "Bool": true
@@ -2121,12 +2447,18 @@
             "Z"
           ]
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color3": {
           "Color3": [
             0.050980397,
             0.41176474,
             0.6745098
           ]
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -2298,6 +2630,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -2403,6 +2741,9 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color": {
           "Color3": [
             0.7843,
@@ -2416,6 +2757,9 @@
             0.2353,
             0.0549
           ]
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Density": {
           "Float32": 0.395
@@ -2673,6 +3017,12 @@
             ]
           }
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -2727,6 +3077,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -2786,6 +3142,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Depth": {
           "Float32": 0.45
@@ -2883,6 +3245,12 @@
         },
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "MakeupGain": {
           "Float32": 0.0
@@ -3006,6 +3374,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "Muted": {
           "Bool": false
         },
@@ -3042,6 +3416,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -3074,6 +3454,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Level": {
           "Float32": 0.5
@@ -3150,6 +3536,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "DelayTime": {
           "Float32": 1.0
         },
@@ -3197,6 +3589,12 @@
         },
         "AudioInteractionGroup": {
           "String": ""
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -3270,6 +3668,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "HighGain": {
           "Float32": 0.0
         },
@@ -3317,6 +3721,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -3380,6 +3790,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "Depth": {
           "Float32": 0.45
         },
@@ -3425,6 +3841,12 @@
         "AudioInteractionGroup": {
           "String": ""
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -3467,6 +3889,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Pitch": {
           "Float32": 1.25
@@ -3632,6 +4060,12 @@
         },
         "AutoLoad": {
           "Bool": true
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "LoopRegion": {
           "NumberRange": [
@@ -3830,11 +4264,17 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "DecayRatio": {
           "Float32": 0.5
         },
         "DecayTime": {
           "Float32": 1.5
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Density": {
           "Float32": 1.0
@@ -4064,6 +4504,17 @@
       },
       "DefaultProperties": {}
     },
+    "AvatarCreationService": {
+      "Name": "AvatarCreationService",
+      "Tags": [
+        "NotCreatable",
+        "NotReplicated",
+        "Service"
+      ],
+      "Superclass": "Instance",
+      "Properties": {},
+      "DefaultProperties": {}
+    },
     "AvatarEditorService": {
       "Name": "AvatarEditorService",
       "Tags": [
@@ -4094,6 +4545,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -4267,8 +4724,14 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color": {
           "BrickColor": 1009
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -6046,6 +6509,9 @@
         "Brightness": {
           "Float32": 1.0
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color": {
           "ColorSequence": {
             "keypoints": [
@@ -6073,6 +6539,9 @@
         },
         "CurveSize1": {
           "Float32": 0.0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -6453,7 +6922,13 @@
         "Brightness": {
           "Float32": 1.0
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "ClipsDescendants": {
+          "Bool": false
+        },
+        "DefinesCapabilities": {
           "Bool": false
         },
         "DistanceLowerLimit": {
@@ -6575,6 +7050,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -6595,6 +7076,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -6611,6 +7098,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -6637,6 +7130,12 @@
         },
         "Bulge": {
           "Float32": 0.0
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Offset": {
           "Vector3": [
@@ -6716,6 +7215,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "Enabled": {
           "Bool": true
         },
@@ -6758,6 +7263,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -6862,6 +7373,12 @@
         },
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "MaxTorque": {
           "Vector3": [
@@ -7047,6 +7564,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "HeadColor3": {
           "Color3": [
             0.9921569,
@@ -7137,6 +7660,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Force": {
           "Vector3": [
@@ -7275,8 +7804,14 @@
             ]
           }
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "D": {
           "Float32": 500.0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "MaxTorque": {
           "Vector3": [
@@ -7305,6 +7840,97 @@
       "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {}
+    },
+    "BodyPartDescription": {
+      "Name": "BodyPartDescription",
+      "Tags": [
+        "NotBrowsable"
+      ],
+      "Superclass": "Instance",
+      "Properties": {
+        "AssetId": {
+          "Name": "AssetId",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Int64"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "BodyPart": {
+          "Name": "BodyPart",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Enum": "BodyPart"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "Color": {
+          "Name": "Color",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Color3"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "Instance": {
+          "Name": "Instance",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Ref"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        }
+      },
+      "DefaultProperties": {
+        "AssetId": {
+          "Int64": 0
+        },
+        "Attributes": {
+          "Attributes": {}
+        },
+        "BodyPart": {
+          "Enum": 0
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "Color": {
+          "Color3": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
+        "SourceAssetId": {
+          "Int64": -1
+        },
+        "Tags": {
+          "Tags": []
+        }
+      }
     },
     "BodyPosition": {
       "Name": "BodyPosition",
@@ -7402,8 +8028,14 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "D": {
           "Float32": 1250.0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "MaxForce": {
           "Vector3": [
@@ -7499,6 +8131,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Force": {
           "Vector3": [
@@ -7604,6 +8242,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "MaxForce": {
           "Vector3": [
@@ -7714,6 +8358,12 @@
             ]
           }
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -7747,6 +8397,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -7814,12 +8470,18 @@
             ]
           }
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color3": {
           "Color3": [
             0.050980397,
             0.41176474,
             0.6745098
           ]
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Size": {
           "Vector3": [
@@ -8066,6 +8728,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -8330,6 +8998,12 @@
         "BubblesSpacing": {
           "Float32": 6.0
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "Enabled": {
           "Bool": true
         },
@@ -8428,6 +9102,19 @@
             }
           }
         },
+        "TailVisible": {
+          "Name": "TailVisible",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
+            }
+          }
+        },
         "TextColor3": {
           "Name": "TextColor3",
           "Scriptability": "ReadWrite",
@@ -8459,6 +9146,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -8480,9 +9173,7 @@
     },
     "BuoyancySensor": {
       "Name": "BuoyancySensor",
-      "Tags": [
-        "NotBrowsable"
-      ],
+      "Tags": [],
       "Superclass": "SensorBase",
       "Properties": {
         "FullySubmerged": {
@@ -8515,6 +9206,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "FullySubmerged": {
           "Bool": false
@@ -8555,6 +9252,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -8600,6 +9303,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -8884,6 +9593,12 @@
         "CameraType": {
           "Enum": 0
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "FieldOfView": {
           "Float32": 70.0
         },
@@ -9007,8 +9722,14 @@
         "BorderSizePixel": {
           "Int32": 1
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "ClipsDescendants": {
           "Bool": true
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Draggable": {
           "Bool": false
@@ -9022,6 +9743,9 @@
         },
         "GroupTransparency": {
           "Float32": 0.0
+        },
+        "Interactable": {
+          "Bool": true
         },
         "LayoutOrder": {
           "Int32": 0
@@ -9148,8 +9872,14 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Channel": {
           "Int32": 1
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -9242,6 +9972,12 @@
         "BodyPart": {
           "Enum": 0
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "MeshId": {
           "Int64": 0
         },
@@ -9297,6 +10033,12 @@
           "Attributes": {}
         },
         "BubbleChatEnabled": {
+          "Bool": false
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
           "Bool": false
         },
         "LoadDefaultChat": {
@@ -9597,6 +10339,12 @@
         "BackgroundTransparency": {
           "Float64": 0.2
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "Enabled": {
           "Bool": true
         },
@@ -9886,6 +10634,12 @@
         "BackgroundTransparency": {
           "Float64": 0.3
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "Enabled": {
           "Bool": true
         },
@@ -9937,6 +10691,17 @@
         }
       }
     },
+    "ChatbotUIService": {
+      "Name": "ChatbotUIService",
+      "Tags": [
+        "NotCreatable",
+        "NotReplicated",
+        "Service"
+      ],
+      "Superclass": "Instance",
+      "Properties": {},
+      "DefaultProperties": {}
+    },
     "ChorusSoundEffect": {
       "Name": "ChorusSoundEffect",
       "Tags": [],
@@ -9985,6 +10750,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Depth": {
           "Float32": 0.15
@@ -10045,8 +10816,14 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "CursorIcon": {
           "Content": ""
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "MaxActivationDistance": {
           "Float32": 32.0
@@ -10071,9 +10848,7 @@
     },
     "ClimbController": {
       "Name": "ClimbController",
-      "Tags": [
-        "NotBrowsable"
-      ],
+      "Tags": [],
       "Superclass": "ControllerBase",
       "Properties": {
         "AccelerationTime": {
@@ -10144,6 +10919,12 @@
         },
         "BalanceSpeed": {
           "Float32": 100.0
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "MoveMaxForce": {
           "Float32": 10000.0
@@ -10288,6 +11069,9 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color": {
           "Color3": [
             1.0,
@@ -10297,6 +11081,9 @@
         },
         "Cover": {
           "Float32": 0.5
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Density": {
           "Float32": 0.7
@@ -10323,6 +11110,120 @@
       "Properties": {},
       "DefaultProperties": {}
     },
+    "Collaborator": {
+      "Name": "Collaborator",
+      "Tags": [
+        "NotCreatable"
+      ],
+      "Superclass": "Instance",
+      "Properties": {
+        "CFrame": {
+          "Name": "CFrame",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "CFrame"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "CollaboratorColor": {
+          "Name": "CollaboratorColor",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Int32"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "CurDocGUID": {
+          "Name": "CurDocGUID",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "String"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "CurScriptLineNumber": {
+          "Name": "CurScriptLineNumber",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Int32"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "Status": {
+          "Name": "Status",
+          "Scriptability": "None",
+          "DataType": {
+            "Enum": "CollaboratorStatus"
+          },
+          "Tags": [
+            "Hidden",
+            "NotScriptable"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
+            }
+          }
+        },
+        "UserId": {
+          "Name": "UserId",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Int64"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "Username": {
+          "Name": "Username",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "String"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        }
+      },
+      "DefaultProperties": {}
+    },
+    "CollaboratorsService": {
+      "Name": "CollaboratorsService",
+      "Tags": [
+        "NotCreatable",
+        "Service"
+      ],
+      "Superclass": "Instance",
+      "Properties": {},
+      "DefaultProperties": {}
+    },
     "CollectionService": {
       "Name": "CollectionService",
       "Tags": [
@@ -10334,6 +11235,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -10365,6 +11272,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -10446,8 +11359,14 @@
         "Brightness": {
           "Float32": 0.0
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Contrast": {
           "Float32": 0.0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -10722,6 +11641,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "Enabled": {
           "Bool": true
         },
@@ -10816,12 +11741,18 @@
             ]
           }
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color3": {
           "Color3": [
             0.050980397,
             0.41176474,
             0.6745098
           ]
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Height": {
           "Float32": 2.0
@@ -10861,6 +11792,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -11027,6 +11964,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -11098,9 +12041,7 @@
     },
     "ControllerManager": {
       "Name": "ControllerManager",
-      "Tags": [
-        "NotBrowsable"
-      ],
+      "Tags": [],
       "Superclass": "Instance",
       "Properties": {
         "ActiveController": {
@@ -11218,6 +12159,12 @@
         "BaseTurnSpeed": {
           "Float32": 8.0
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "FacingDirection": {
           "Vector3": [
             0.0,
@@ -11242,9 +12189,7 @@
     },
     "ControllerPartSensor": {
       "Name": "ControllerPartSensor",
-      "Tags": [
-        "NotBrowsable"
-      ],
+      "Tags": [],
       "Superclass": "ControllerSensor",
       "Properties": {
         "HitFrame": {
@@ -11316,6 +12261,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "HitFrame": {
           "CFrame": {
@@ -11398,6 +12349,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -11561,6 +12518,9 @@
         "CanTouch": {
           "Bool": true
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "CastShadow": {
           "Bool": true
         },
@@ -11579,6 +12539,9 @@
         },
         "CustomPhysicalProperties": {
           "PhysicalProperties": "Default"
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "EnableFluidForces": {
           "Bool": true
@@ -11707,6 +12670,17 @@
         }
       }
     },
+    "CreationDBService": {
+      "Name": "CreationDBService",
+      "Tags": [
+        "NotCreatable",
+        "NotReplicated",
+        "Service"
+      ],
+      "Superclass": "Instance",
+      "Properties": {},
+      "DefaultProperties": {}
+    },
     "CrossDMScriptChangeListener": {
       "Name": "CrossDMScriptChangeListener",
       "Tags": [
@@ -11726,6 +12700,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "GuidBinaryString": {
           "BinaryString": "AAAAAAAAAAAAAAAAAAAAAA=="
@@ -11772,6 +12752,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "PersistedCurrentValue": {
           "Float32": 0.0
         },
@@ -11807,6 +12793,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -11922,12 +12914,18 @@
             ]
           }
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color3": {
           "Color3": [
             0.050980397,
             0.41176474,
             0.6745098
           ]
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Height": {
           "Float32": 1.0
@@ -11981,6 +12979,12 @@
         },
         "Bulge": {
           "Float32": 0.0
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Offset": {
           "Vector3": [
@@ -12256,8 +13260,14 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color": {
           "BrickColor": 1009
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -12772,6 +13782,29 @@
       "Properties": {},
       "DefaultProperties": {}
     },
+    "DataStoreGetOptions": {
+      "Name": "DataStoreGetOptions",
+      "Tags": [
+        "NotReplicated"
+      ],
+      "Superclass": "Instance",
+      "Properties": {
+        "UseCache": {
+          "Name": "UseCache",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        }
+      },
+      "DefaultProperties": {}
+    },
     "DataStoreIncrementOptions": {
       "Name": "DataStoreIncrementOptions",
       "Tags": [
@@ -13120,6 +14153,12 @@
         "AutomaticRetry": {
           "Bool": true
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "LegacyNamingScheme": {
           "Bool": false
         },
@@ -13177,6 +14216,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "MaxItems": {
           "Int32": 1000
@@ -13924,12 +14969,18 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color3": {
           "Color3": [
             1.0,
             1.0,
             1.0
           ]
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Face": {
           "Enum": 5
@@ -14012,6 +15063,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -14190,8 +15247,14 @@
         "BehaviorType": {
           "Enum": 0
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "ConversationDistance": {
           "Float32": 25.0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "GoodbyeChoiceActive": {
           "Bool": true
@@ -14288,6 +15351,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "GoodbyeChoiceActive": {
           "Bool": true
         },
@@ -14330,6 +15399,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -14460,6 +15535,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "MaxValue": {
           "Float64": 1.0
         },
@@ -14490,9 +15571,7 @@
     },
     "DragDetector": {
       "Name": "DragDetector",
-      "Tags": [
-        "NotBrowsable"
-      ],
+      "Tags": [],
       "Superclass": "ClickDetector",
       "Properties": {
         "ActivatedCursorIcon": {
@@ -14724,6 +15803,22 @@
             }
           }
         },
+        "PhysicalDragIsInVR": {
+          "Name": "PhysicalDragIsInVR",
+          "Scriptability": "None",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [
+            "Hidden",
+            "NotScriptable"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
+            }
+          }
+        },
         "PhysicalDragTargetFrame": {
           "Name": "PhysicalDragTargetFrame",
           "Scriptability": "None",
@@ -14887,8 +15982,14 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "CursorIcon": {
           "Content": ""
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "DragFrame": {
           "CFrame": {
@@ -15283,9 +16384,7 @@
     },
     "DynamicImage": {
       "Name": "DynamicImage",
-      "Tags": [
-        "NotCreatable"
-      ],
+      "Tags": [],
       "Superclass": "Instance",
       "Properties": {
         "Size": {
@@ -15308,10 +16407,35 @@
       "Name": "DynamicMesh",
       "Tags": [],
       "Superclass": "DataModelMesh",
-      "Properties": {},
+      "Properties": {
+        "MeshVersion": {
+          "Name": "MeshVersion",
+          "Scriptability": "Read",
+          "DataType": {
+            "Value": "Int32"
+          },
+          "Tags": [
+            "Hidden"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        }
+      },
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
+        "MeshVersion": {
+          "Int32": 0
         },
         "Offset": {
           "Vector3": [
@@ -15427,6 +16551,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "Delay": {
           "Float32": 1.0
         },
@@ -15512,6 +16642,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "Enabled": {
           "Bool": true
         },
@@ -15557,6 +16693,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "RotationOrder": {
           "Enum": 0
@@ -15649,6 +16791,44 @@
           }
         }
       },
+      "DefaultProperties": {}
+    },
+    "ExperienceNotificationService": {
+      "Name": "ExperienceNotificationService",
+      "Tags": [
+        "NotCreatable",
+        "NotReplicated",
+        "Service"
+      ],
+      "Superclass": "Instance",
+      "Properties": {},
+      "DefaultProperties": {
+        "Attributes": {
+          "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
+        "SourceAssetId": {
+          "Int64": -1
+        },
+        "Tags": {
+          "Tags": []
+        }
+      }
+    },
+    "ExperienceService": {
+      "Name": "ExperienceService",
+      "Tags": [
+        "NotCreatable",
+        "NotReplicated",
+        "Service"
+      ],
+      "Superclass": "Instance",
+      "Properties": {},
       "DefaultProperties": {}
     },
     "Explosion": {
@@ -15758,6 +16938,12 @@
         "BlastRadius": {
           "Float32": 4.0
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "DestroyJointRadiusPercent": {
           "Float32": 1.0
         },
@@ -15799,6 +16985,22 @@
           "Scriptability": "None",
           "DataType": {
             "Value": "Bool"
+          },
+          "Tags": [
+            "Hidden",
+            "NotReplicated"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
+            }
+          }
+        },
+        "FaceTrackingStatusEnum": {
+          "Name": "FaceTrackingStatusEnum",
+          "Scriptability": "None",
+          "DataType": {
+            "Enum": "TrackerFaceTrackingStatus"
           },
           "Tags": [
             "Hidden",
@@ -16605,6 +17807,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -16847,6 +18055,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "MeshId": {
           "Content": ""
         },
@@ -17026,12 +18240,18 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color": {
           "Color3": [
             0.92549026,
             0.54509807,
             0.27450982
           ]
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -17087,6 +18307,12 @@
         },
         "CanBeDropped": {
           "Bool": true
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -17298,6 +18524,9 @@
         "CanTouch": {
           "Bool": true
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "CastShadow": {
           "Bool": true
         },
@@ -17316,6 +18545,9 @@
         },
         "CustomPhysicalProperties": {
           "PhysicalProperties": "Default"
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "EnableFluidForces": {
           "Bool": true
@@ -17512,6 +18744,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "Depth": {
           "Float32": 0.45
         },
@@ -17576,6 +18814,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -17704,6 +18948,9 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color3": {
           "Color3": [
             0.050980397,
@@ -17713,6 +18960,9 @@
         },
         "CycleOffset": {
           "Float32": 0.0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -17757,6 +19007,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -17791,6 +19047,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -17821,6 +19083,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -17955,11 +19223,20 @@
         "BorderSizePixel": {
           "Int32": 1
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "ClipsDescendants": {
+          "Bool": false
+        },
+        "DefinesCapabilities": {
           "Bool": false
         },
         "Draggable": {
           "Bool": false
+        },
+        "Interactable": {
+          "Bool": true
         },
         "LayoutOrder": {
           "Int32": 0
@@ -18161,6 +19438,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "Description": {
           "String": "?"
         },
@@ -18186,6 +19469,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -18487,6 +19776,12 @@
             ]
           }
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "Enabled": {
           "Bool": true
         },
@@ -18556,9 +19851,7 @@
     },
     "GroundController": {
       "Name": "GroundController",
-      "Tags": [
-        "NotBrowsable"
-      ],
+      "Tags": [],
       "Superclass": "ControllerBase",
       "Properties": {
         "AccelerationLean": {
@@ -18724,8 +20017,14 @@
         "BalanceSpeed": {
           "Float32": 100.0
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "DecelerationTime": {
           "Float32": 0.0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Friction": {
           "Float32": 2.0
@@ -19325,8 +20624,14 @@
         "AutoLocalize": {
           "Bool": true
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "ClipToDeviceSafeArea": {
           "Bool": true
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "DisplayOrder": {
           "Int32": 0
@@ -19588,6 +20893,19 @@
           "Kind": {
             "Canonical": {
               "Serialization": "DoesNotSerialize"
+            }
+          }
+        },
+        "Interactable": {
+          "Name": "Interactable",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
             }
           }
         },
@@ -20068,6 +21386,23 @@
             }
           }
         },
+        "TopbarInset": {
+          "Name": "TopbarInset",
+          "Scriptability": "Read",
+          "DataType": {
+            "Value": "Rect"
+          },
+          "Tags": [
+            "Hidden",
+            "NotReplicated",
+            "ReadOnly"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
+            }
+          }
+        },
         "TouchControlsEnabled": {
           "Name": "TouchControlsEnabled",
           "Scriptability": "ReadWrite",
@@ -20296,12 +21631,18 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color3": {
           "Color3": [
             0.050980397,
             0.41176474,
             0.6745098
           ]
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Faces": {
           "Faces": [
@@ -20387,6 +21728,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -20448,6 +21795,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "HSRData": {
           "BinaryString": ""
@@ -20593,6 +21946,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "DepthMode": {
           "Enum": 0
@@ -20835,8 +22194,14 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color": {
           "BrickColor": 1009
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -20890,6 +22255,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -20911,6 +22282,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "FaceId": {
           "Enum": 0
@@ -21022,6 +22399,12 @@
         },
         "BinType": {
           "Enum": 0
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "LevelOfDetail": {
           "Enum": 0
@@ -21149,6 +22532,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "HttpEnabled": {
           "Bool": false
@@ -21326,9 +22715,7 @@
           "DataType": {
             "Value": "Bool"
           },
-          "Tags": [
-            "NotBrowsable"
-          ],
+          "Tags": [],
           "Kind": {
             "Canonical": {
               "Serialization": "Serializes"
@@ -21925,8 +23312,14 @@
         "BreakJointsOnDeath": {
           "Bool": true
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "CollisionType": {
           "Enum": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "DisplayDistanceType": {
           "Enum": 0
@@ -22006,6 +23399,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -22026,6 +23425,22 @@
             "Value": "String"
           },
           "Tags": [
+            "NotScriptable"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "AccessoryRigidAndLayeredBlob": {
+          "Name": "AccessoryRigidAndLayeredBlob",
+          "Scriptability": "None",
+          "DataType": {
+            "Value": "String"
+          },
+          "Tags": [
+            "Hidden",
             "NotScriptable"
           ],
           "Kind": {
@@ -22580,6 +23995,9 @@
         "AccessoryBlob": {
           "String": "[]"
         },
+        "AccessoryRigidAndLayeredBlob": {
+          "String": "[]"
+        },
         "Attributes": {
           "Attributes": {}
         },
@@ -22589,8 +24007,14 @@
         "BodyTypeScale": {
           "Float32": 0.3
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "ClimbAnimation": {
           "Int64": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "DepthScale": {
           "Float32": 1.0
@@ -22887,6 +24311,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -23224,7 +24654,13 @@
         "BorderSizePixel": {
           "Int32": 1
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "ClipsDescendants": {
+          "Bool": false
+        },
+        "DefinesCapabilities": {
           "Bool": false
         },
         "Draggable": {
@@ -23257,6 +24693,9 @@
         },
         "ImageTransparency": {
           "Float32": 0.0
+        },
+        "Interactable": {
+          "Bool": true
         },
         "LayoutOrder": {
           "Int32": 0
@@ -23439,12 +24878,18 @@
             ]
           }
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color3": {
           "Color3": [
             0.9490197,
             0.95294124,
             0.95294124
           ]
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Image": {
           "Content": "rbxasset://textures/SurfacesDefault.png"
@@ -23690,7 +25135,13 @@
         "BorderSizePixel": {
           "Int32": 1
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "ClipsDescendants": {
+          "Bool": false
+        },
+        "DefinesCapabilities": {
           "Bool": false
         },
         "Draggable": {
@@ -23720,6 +25171,9 @@
         },
         "ImageTransparency": {
           "Float32": 0.0
+        },
+        "Interactable": {
+          "Bool": true
         },
         "LayoutOrder": {
           "Int32": 0
@@ -24025,6 +25479,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -24109,6 +25569,22 @@
             }
           }
         },
+        "Capabilities": {
+          "Name": "Capabilities",
+          "Scriptability": "None",
+          "DataType": {
+            "Value": "SecurityCapabilities"
+          },
+          "Tags": [
+            "Hidden",
+            "NotScriptable"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
         "ClassName": {
           "Name": "ClassName",
           "Scriptability": "Read",
@@ -24140,6 +25616,22 @@
           "Kind": {
             "Canonical": {
               "Serialization": "DoesNotSerialize"
+            }
+          }
+        },
+        "DefinesCapabilities": {
+          "Name": "DefinesCapabilities",
+          "Scriptability": "None",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [
+            "Hidden",
+            "NotScriptable"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
             }
           }
         },
@@ -24431,6 +25923,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "MaxValue": {
           "Int64": 10
         },
@@ -24470,6 +25968,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -24637,6 +26141,9 @@
         "CanTouch": {
           "Bool": true
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "CastShadow": {
           "Bool": true
         },
@@ -24658,6 +26165,9 @@
         },
         "CustomPhysicalProperties": {
           "PhysicalProperties": "Default"
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "EnableFluidForces": {
           "Bool": true
@@ -24983,6 +26493,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -25016,6 +26532,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -25055,6 +26577,12 @@
         },
         "AuthoredHipHeight": {
           "Float32": 2.0
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "GuidBinaryString": {
           "BinaryString": "AAAAAAAAAAAAAAAAAAAAAA=="
@@ -25107,6 +26635,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -25534,6 +27068,9 @@
         "Brightness": {
           "Float32": 1.0
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "ColorShift_Bottom": {
           "Color3": [
             0.0,
@@ -25547,6 +27084,9 @@
             0.0,
             0.0
           ]
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "EnvironmentDiffuseScale": {
           "Float32": 0.0
@@ -25681,8 +27221,14 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color": {
           "BrickColor": 23
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -25778,12 +27324,18 @@
             ]
           }
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color3": {
           "Color3": [
             0.050980397,
             0.41176474,
             0.6745098
           ]
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Length": {
           "Float32": 5.0
@@ -25825,6 +27377,19 @@
           "Scriptability": "ReadWrite",
           "DataType": {
             "Enum": "ForceLimitMode"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "ForceLimitsEnabled": {
+          "Name": "ForceLimitsEnabled",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Bool"
           },
           "Tags": [],
           "Kind": {
@@ -25981,14 +27546,23 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color": {
           "BrickColor": 26
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
         },
         "ForceLimitMode": {
           "Enum": 0
+        },
+        "ForceLimitsEnabled": {
+          "Bool": true
         },
         "LineDirection": {
           "Vector3": [
@@ -26067,7 +27641,24 @@
         "Service"
       ],
       "Superclass": "Instance",
-      "Properties": {},
+      "Properties": {
+        "ServerLiveEditingMode": {
+          "Name": "ServerLiveEditingMode",
+          "Scriptability": "None",
+          "DataType": {
+            "Enum": "ServerLiveEditingMode"
+          },
+          "Tags": [
+            "Hidden",
+            "NotScriptable"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
+            }
+          }
+        }
+      },
       "DefaultProperties": {}
     },
     "LocalDebuggerConnection": {
@@ -26088,6 +27679,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Disabled": {
           "Bool": false
@@ -26293,6 +27890,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -26390,8 +27993,14 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Contents": {
           "String": "[]"
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -26507,6 +28116,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -26514,6 +28129,17 @@
           "Tags": []
         }
       }
+    },
+    "LogReporterService": {
+      "Name": "LogReporterService",
+      "Tags": [
+        "NotCreatable",
+        "NotReplicated",
+        "Service"
+      ],
+      "Superclass": "Instance",
+      "Properties": {},
+      "DefaultProperties": {}
     },
     "LogService": {
       "Name": "LogService",
@@ -26729,6 +28355,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -26810,6 +28442,12 @@
               ]
             ]
           }
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -26895,6 +28533,12 @@
             ]
           }
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "Enabled": {
           "Bool": true
         },
@@ -26947,6 +28591,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -27724,6 +29374,9 @@
         "BrickName": {
           "String": "Brick"
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "CardboardName": {
           "String": "Cardboard"
         },
@@ -27747,6 +29400,9 @@
         },
         "CrackedLavaName": {
           "String": "CrackedLava"
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "DiamondPlateName": {
           "String": "DiamondPlate"
@@ -28013,11 +29669,17 @@
         "BaseMaterial": {
           "Enum": 256
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "ColorMap": {
           "Content": ""
         },
         "CustomPhysicalProperties": {
           "PhysicalProperties": "Default"
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "MaterialPattern": {
           "Enum": 0
@@ -28066,6 +29728,16 @@
       "Properties": {},
       "DefaultProperties": {}
     },
+    "MemoryStoreHashMap": {
+      "Name": "MemoryStoreHashMap",
+      "Tags": [
+        "NotCreatable",
+        "NotReplicated"
+      ],
+      "Superclass": "Instance",
+      "Properties": {},
+      "DefaultProperties": {}
+    },
     "MemoryStoreQueue": {
       "Name": "MemoryStoreQueue",
       "Tags": [
@@ -28086,6 +29758,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -28419,22 +30097,6 @@
       "Tags": [],
       "Superclass": "TriangleMeshPart",
       "Properties": {
-        "AeroMeshData": {
-          "Name": "AeroMeshData",
-          "Scriptability": "None",
-          "DataType": {
-            "Value": "SharedString"
-          },
-          "Tags": [
-            "Hidden",
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
         "AlternateMeshHash": {
           "Name": "AlternateMeshHash",
           "Scriptability": "None",
@@ -28701,6 +30363,9 @@
         "CanTouch": {
           "Bool": true
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "CastShadow": {
           "Bool": true
         },
@@ -28719,6 +30384,9 @@
         },
         "CustomPhysicalProperties": {
           "PhysicalProperties": "Default"
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "DoubleSided": {
           "Bool": false
@@ -28909,6 +30577,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -29129,10 +30803,16 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Condition": {
           "String": ""
         },
         "ContinueExecution": {
+          "Bool": false
+        },
+        "DefinesCapabilities": {
           "Bool": false
         },
         "Enabled": {
@@ -29187,8 +30867,14 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "ContextDataInternal": {
           "String": "0 1 2 "
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -29404,6 +31090,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "LevelOfDetail": {
           "Enum": 0
         },
@@ -29520,7 +31212,7 @@
         },
         "Source": {
           "Name": "Source",
-          "Scriptability": "ReadWrite",
+          "Scriptability": "Custom",
           "DataType": {
             "Value": "String"
           },
@@ -29535,6 +31227,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "LinkedSource": {
           "Content": ""
@@ -29652,6 +31350,12 @@
               ]
             ]
           }
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "DesiredAngle": {
           "Float32": 0.0
@@ -29782,6 +31486,12 @@
             ]
           }
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "DesiredAngle": {
           "Float32": 0.0
         },
@@ -29809,6 +31519,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "FaceId": {
           "Enum": 0
@@ -30158,6 +31874,9 @@
         "CanTouch": {
           "Bool": true
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "CastShadow": {
           "Bool": true
         },
@@ -30179,6 +31898,9 @@
         },
         "CustomPhysicalProperties": {
           "PhysicalProperties": "Default"
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "EnableFluidForces": {
           "Bool": true
@@ -30612,6 +32334,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "Enabled": {
           "Bool": true
         },
@@ -30633,6 +32361,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -30741,6 +32475,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "EasingDirection": {
           "Enum": 0
         },
@@ -30784,6 +32524,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -30817,6 +32563,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -30859,6 +32611,35 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
+        "SourceAssetId": {
+          "Int64": -1
+        },
+        "Tags": {
+          "Tags": []
+        }
+      }
+    },
+    "OperationTree": {
+      "Name": "OperationTree",
+      "Tags": [],
+      "Superclass": "Instance",
+      "Properties": {},
+      "DefaultProperties": {
+        "Attributes": {
+          "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -31233,12 +33014,18 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color3": {
           "Color3": [
             1.0,
             1.0,
             1.0
           ]
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "PantsTemplate": {
           "Content": ""
@@ -31336,12 +33123,18 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color3": {
           "Color3": [
             0.9490197,
             0.95294124,
             0.95294124
           ]
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -31480,6 +33273,9 @@
         "CanTouch": {
           "Bool": true
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "CastShadow": {
           "Bool": true
         },
@@ -31498,6 +33294,9 @@
         },
         "CustomPhysicalProperties": {
           "PhysicalProperties": "Default"
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "EnableFluidForces": {
           "Bool": true
@@ -31949,6 +33748,9 @@
         "CanTouch": {
           "Bool": true
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "CastShadow": {
           "Bool": true
         },
@@ -31970,6 +33772,9 @@
         },
         "CustomPhysicalProperties": {
           "PhysicalProperties": "Default"
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "EnableFluidForces": {
           "Bool": true
@@ -32166,8 +33971,14 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "ChildData": {
           "BinaryString": ""
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "MeshData": {
           "BinaryString": ""
@@ -32325,23 +34136,6 @@
           "Kind": {
             "Canonical": {
               "Serialization": "Serializes"
-            }
-          }
-        },
-        "FlipbookTextureCompatible": {
-          "Name": "FlipbookTextureCompatible",
-          "Scriptability": "None",
-          "DataType": {
-            "Enum": "ParticleFlipbookTextureCompatible"
-          },
-          "Tags": [
-            "Hidden",
-            "NotReplicated",
-            "NotScriptable"
-          ],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "DoesNotSerialize"
             }
           }
         },
@@ -32662,6 +34456,9 @@
         "Brightness": {
           "Float32": 1.0
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color": {
           "ColorSequence": {
             "keypoints": [
@@ -32683,6 +34480,9 @@
               }
             ]
           }
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Drag": {
           "Float32": 0.0
@@ -32989,6 +34789,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "IsBidirectional": {
           "Bool": true
         },
@@ -33038,6 +34844,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Label": {
           "String": ""
@@ -33211,6 +35023,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -33230,6 +35048,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -33455,6 +35279,19 @@
             }
           }
         },
+        "AreNonAnchorsShown": {
+          "Name": "AreNonAnchorsShown",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
         "AreOwnersShown": {
           "Name": "AreOwnersShown",
           "Scriptability": "ReadWrite",
@@ -33585,6 +35422,19 @@
             }
           }
         },
+        "FluidForceDrawScale": {
+          "Name": "FluidForceDrawScale",
+          "Scriptability": "None",
+          "DataType": {
+            "Value": "Float32"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
         "ForceCSGv2": {
           "Name": "ForceCSGv2",
           "Scriptability": "ReadWrite",
@@ -33679,6 +35529,32 @@
             }
           }
         },
+        "ShowFluidForcesForSelectedOrHoveredAssemblies": {
+          "Name": "ShowFluidForcesForSelectedOrHoveredAssemblies",
+          "Scriptability": "None",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "SolverConvergenceMetricType": {
+          "Name": "SolverConvergenceMetricType",
+          "Scriptability": "None",
+          "DataType": {
+            "Enum": "SolverConvergenceMetricType"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
         "SolverConvergenceVisualizationMode": {
           "Name": "SolverConvergenceVisualizationMode",
           "Scriptability": "None",
@@ -33744,6 +35620,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "Enabled": {
           "Bool": true
         },
@@ -33794,8 +35676,14 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color": {
           "BrickColor": 194
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -33820,8 +35708,14 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color": {
           "BrickColor": 194
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -33843,6 +35737,17 @@
         "NotCreatable"
       ],
       "Superclass": "Part",
+      "Properties": {},
+      "DefaultProperties": {}
+    },
+    "PlatformFriendsService": {
+      "Name": "PlatformFriendsService",
+      "Tags": [
+        "NotCreatable",
+        "NotReplicated",
+        "Service"
+      ],
+      "Superclass": "Instance",
       "Properties": {},
       "DefaultProperties": {}
     },
@@ -34797,7 +36702,13 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "CustomPoliciesEnabled": {
+          "Bool": false
+        },
+        "DefinesCapabilities": {
           "Bool": false
         },
         "EmulatedCountryCode": {
@@ -34887,6 +36798,17 @@
       "Tags": [
         "NotCreatable",
         "NotReplicated"
+      ],
+      "Superclass": "Instance",
+      "Properties": {},
+      "DefaultProperties": {}
+    },
+    "PlayerViewService": {
+      "Name": "PlayerViewService",
+      "Tags": [
+        "NotCreatable",
+        "NotReplicated",
+        "Service"
       ],
       "Superclass": "Instance",
       "Properties": {},
@@ -35147,8 +37069,14 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "CharacterAutoLoads": {
           "Bool": true
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "MaxPlayers": {
           "Int32": 12
@@ -35423,6 +37351,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Manifest": {
           "String": "{\"Metadata\":{\"TargetDataModels\": [\"Edit\", \"Server\", \"Client\"]},\"Permissions\":{}}"
@@ -35737,12 +37671,18 @@
         "Brightness": {
           "Float32": 1.0
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color": {
           "Color3": [
             1.0,
             1.0,
             1.0
           ]
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -35879,6 +37819,12 @@
             ]
           }
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "EasingDirection": {
           "Enum": 0
         },
@@ -35980,8 +37926,14 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color": {
           "BrickColor": 1009
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -36044,6 +37996,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -36251,8 +38209,14 @@
         "AutoLocalize": {
           "Bool": true
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "ClickablePrompt": {
           "Bool": true
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -36334,6 +38298,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "Enabled": {
           "Bool": true
         },
@@ -36392,6 +38362,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -36433,6 +38409,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -36449,6 +38431,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -36539,6 +38527,9 @@
         "Browsable": {
           "Bool": true
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "ClassCategory": {
           "String": ""
         },
@@ -36547,6 +38538,9 @@
         },
         "Constraint": {
           "String": ""
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Deprecated": {
           "Bool": false
@@ -36616,6 +38610,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -36636,6 +38636,9 @@
         "Browsable": {
           "Bool": true
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "ClassCategory": {
           "String": ""
         },
@@ -36644,6 +38647,9 @@
         },
         "Constraint": {
           "String": ""
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Deprecated": {
           "Bool": false
@@ -36701,6 +38707,9 @@
         "Browsable": {
           "Bool": true
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "ClassCategory": {
           "String": ""
         },
@@ -36709,6 +38718,9 @@
         },
         "Constraint": {
           "String": ""
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Deprecated": {
           "Bool": false
@@ -36763,6 +38775,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -36780,6 +38798,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -36796,6 +38820,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -37035,6 +39065,9 @@
         "Browsable": {
           "Bool": true
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "ClassCategory": {
           "String": ""
         },
@@ -37043,6 +39076,9 @@
         },
         "Constraint": {
           "String": ""
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Deprecated": {
           "Bool": false
@@ -37097,6 +39133,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -37114,6 +39156,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -37121,6 +39169,17 @@
           "Tags": []
         }
       }
+    },
+    "ReflectionService": {
+      "Name": "ReflectionService",
+      "Tags": [
+        "NotCreatable",
+        "NotReplicated",
+        "Service"
+      ],
+      "Superclass": "Instance",
+      "Properties": {},
+      "DefaultProperties": {}
     },
     "RemoteCursorService": {
       "Name": "RemoteCursorService",
@@ -37152,6 +39211,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -37168,6 +39233,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -37598,6 +39669,9 @@
             ]
           }
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "ComparisonDiffThreshold": {
           "Int32": 10
         },
@@ -37606,6 +39680,9 @@
         },
         "ComparisonPsnrThreshold": {
           "Float32": 50.0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Description": {
           "String": ""
@@ -37648,6 +39725,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -37667,6 +39750,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -37751,8 +39840,14 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "DecayTime": {
           "Float32": 1.5
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Density": {
           "Float32": 1.0
@@ -37780,6 +39875,17 @@
         }
       }
     },
+    "RibbonNotificationService": {
+      "Name": "RibbonNotificationService",
+      "Tags": [
+        "NotCreatable",
+        "NotReplicated",
+        "Service"
+      ],
+      "Superclass": "Instance",
+      "Properties": {},
+      "DefaultProperties": {}
+    },
     "RigidConstraint": {
       "Name": "RigidConstraint",
       "Tags": [],
@@ -37789,8 +39895,14 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color": {
           "BrickColor": 194
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -38010,8 +40122,14 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "CartoonFactor": {
           "Float32": 0.7
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "MaxSpeed": {
           "Float32": 30.0
@@ -38147,8 +40265,14 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color": {
           "BrickColor": 26
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -38463,6 +40587,19 @@
             }
           }
         },
+        "ValidateUgcBody": {
+          "Name": "ValidateUgcBody",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
         "WorldForward": {
           "Name": "WorldForward",
           "Scriptability": "ReadWrite",
@@ -38622,8 +40759,14 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color": {
           "BrickColor": 25
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -38726,6 +40869,12 @@
             ]
           }
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "Enabled": {
           "Bool": true
         },
@@ -38802,6 +40951,12 @@
               ]
             ]
           }
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -38880,6 +41035,12 @@
             ]
           }
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "Enabled": {
           "Bool": true
         },
@@ -38933,6 +41094,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -38940,7 +41107,7 @@
           "Tags": []
         },
         "ValuesAndTimes": {
-          "BinaryString": "AAAAAAAAAAAAAAAAAAAWRQAAAAA="
+          "BinaryString": "AQAAAAAAAAAAAAAAAAAWRQAAAAA="
         }
       }
     },
@@ -39135,8 +41302,14 @@
         "AutoLocalize": {
           "Bool": true
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "ClipToDeviceSafeArea": {
           "Bool": true
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "DisplayOrder": {
           "Int32": 0
@@ -39301,7 +41474,7 @@
       "Properties": {
         "Source": {
           "Name": "Source",
-          "Scriptability": "ReadWrite",
+          "Scriptability": "Custom",
           "DataType": {
             "Value": "String"
           },
@@ -39316,6 +41489,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Disabled": {
           "Bool": false
@@ -39577,6 +41756,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -39952,8 +42137,14 @@
             ]
           ]
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "ClipsDescendants": {
           "Bool": true
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Draggable": {
           "Bool": false
@@ -39963,6 +42154,9 @@
         },
         "HorizontalScrollBarInset": {
           "Enum": 0
+        },
+        "Interactable": {
+          "Bool": true
         },
         "LayoutOrder": {
           "Int32": 0
@@ -40164,6 +42358,9 @@
         "CanTouch": {
           "Bool": true
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "CastShadow": {
           "Bool": true
         },
@@ -40182,6 +42379,9 @@
         },
         "CustomPhysicalProperties": {
           "PhysicalProperties": "Default"
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Disabled": {
           "Bool": false
@@ -40432,6 +42632,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -40521,12 +42727,18 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color3": {
           "Color3": [
             0.050980397,
             0.41176474,
             0.6745098
           ]
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "LineThickness": {
           "Float32": 0.15
@@ -40616,12 +42828,18 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color3": {
           "Color3": [
             0.050980397,
             0.41176474,
             0.6745098
           ]
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -40662,12 +42880,18 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color3": {
           "Color3": [
             0.050980397,
             0.41176474,
             0.6745098
           ]
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Point": {
           "Vector3": [
@@ -40743,12 +42967,18 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color3": {
           "Color3": [
             0.050980397,
             0.41176474,
             0.6745098
           ]
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -40837,6 +43067,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "LoadStringEnabled": {
           "Bool": false
         },
@@ -40860,6 +43096,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -40917,6 +43159,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "HiddenServices": {
           "BinaryString": "AAAAAA=="
@@ -40976,12 +43224,18 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color3": {
           "Color3": [
             1.0,
             1.0,
             1.0
           ]
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "ShirtTemplate": {
           "Content": ""
@@ -41030,12 +43284,18 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color3": {
           "Color3": [
             1.0,
             1.0,
             1.0
           ]
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Graphic": {
           "Content": ""
@@ -41100,6 +43360,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -41270,6 +43536,9 @@
         "CanTouch": {
           "Bool": true
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "CastShadow": {
           "Bool": true
         },
@@ -41288,6 +43557,9 @@
         },
         "CustomPhysicalProperties": {
           "PhysicalProperties": "Default"
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "EnableFluidForces": {
           "Bool": true
@@ -41455,6 +43727,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SkinColor": {
           "BrickColor": 226
@@ -41633,8 +43911,14 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "CelestialBodiesShown": {
           "Bool": true
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "MoonAngularSize": {
           "Float32": 11.0
@@ -42020,12 +44304,18 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color": {
           "Color3": [
             1.0,
             1.0,
             1.0
           ]
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -42123,6 +44413,12 @@
               ]
             ]
           }
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -42668,6 +44964,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "LoopRegion": {
           "NumberRange": [
             0.0,
@@ -42780,6 +45082,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -42887,6 +45195,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "DistanceFactor": {
           "Float32": 3.33
         },
@@ -42974,6 +45288,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -43136,6 +45456,9 @@
         "CanTouch": {
           "Bool": true
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "CastShadow": {
           "Bool": true
         },
@@ -43154,6 +45477,9 @@
         },
         "CustomPhysicalProperties": {
           "PhysicalProperties": "Default"
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Duration": {
           "Int32": 10
@@ -43333,6 +45659,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "MeshId": {
           "Content": ""
         },
@@ -43426,12 +45758,18 @@
             ]
           }
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color3": {
           "Color3": [
             0.050980397,
             0.41176474,
             0.6745098
           ]
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Radius": {
           "Float32": 1.0
@@ -43515,12 +45853,18 @@
         "Brightness": {
           "Float32": 1.0
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color": {
           "Color3": [
             1.0,
             1.0,
             1.0
           ]
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -43698,6 +46042,9 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Coils": {
           "Float32": 3.0
         },
@@ -43706,6 +46053,9 @@
         },
         "Damping": {
           "Float32": 0.0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -43918,6 +46268,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -43947,6 +46303,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -43963,6 +46325,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -44072,6 +46440,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "ResetPlayerGuiOnSpawn": {
           "Bool": true
         },
@@ -44107,6 +46481,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -44138,6 +46518,21 @@
             }
           }
         },
+        "AnimationCompositorMode": {
+          "Name": "AnimationCompositorMode",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Enum": "AnimationCompositorMode"
+          },
+          "Tags": [
+            "NotBrowsable"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
         "AutoJumpEnabled": {
           "Name": "AutoJumpEnabled",
           "Scriptability": "ReadWrite",
@@ -44158,7 +46553,24 @@
             "Enum": "AvatarJointUpgrade"
           },
           "Tags": [
-            "NotBrowsable"
+            "NotBrowsable",
+            "NotReplicated"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
+            }
+          }
+        },
+        "AvatarJointUpgrade_Serialized": {
+          "Name": "AvatarJointUpgrade_Serialized",
+          "Scriptability": "None",
+          "DataType": {
+            "Enum": "AvatarJointUpgrade"
+          },
+          "Tags": [
+            "Hidden",
+            "NotScriptable"
           ],
           "Kind": {
             "Canonical": {
@@ -44754,13 +47166,16 @@
         "AllowCustomAnimations": {
           "Bool": true
         },
+        "AnimationCompositorMode": {
+          "Enum": 0
+        },
         "Attributes": {
           "Attributes": {}
         },
         "AutoJumpEnabled": {
           "Bool": true
         },
-        "AvatarJointUpgrade": {
+        "AvatarJointUpgrade_Serialized": {
           "Enum": 0
         },
         "CameraMaxZoomDistance": {
@@ -44771,6 +47186,9 @@
         },
         "CameraMode": {
           "Enum": 0
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
         },
         "CharacterJumpHeight": {
           "Float32": 7.2
@@ -44789,6 +47207,9 @@
         },
         "DeathStyle": {
           "Enum": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "DevCameraOcclusionMode": {
           "Enum": 0
@@ -44913,6 +47334,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -45141,6 +47568,17 @@
       "Properties": {},
       "DefaultProperties": {}
     },
+    "StreamingService": {
+      "Name": "StreamingService",
+      "Tags": [
+        "NotCreatable",
+        "NotReplicated",
+        "Service"
+      ],
+      "Superclass": "Instance",
+      "Properties": {},
+      "DefaultProperties": {}
+    },
     "StringValue": {
       "Name": "StringValue",
       "Tags": [],
@@ -45163,6 +47601,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -45553,9 +47997,48 @@
             }
           }
         },
+        "Camera Speed Adjust Binding": {
+          "Name": "Camera Speed Adjust Binding",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Enum": "CameraSpeedAdjustBinding"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
         "Camera Zoom to Mouse Position": {
           "Name": "Camera Zoom to Mouse Position",
           "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "CameraAdaptiveSpeed": {
+          "Name": "CameraAdaptiveSpeed",
+          "Scriptability": "None",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "CameraTweenFocus": {
+          "Name": "CameraTweenFocus",
+          "Scriptability": "None",
           "DataType": {
             "Value": "Bool"
           },
@@ -45948,6 +48431,19 @@
             }
           }
         },
+        "FreeCameraSpeedScroll": {
+          "Name": "FreeCameraSpeedScroll",
+          "Scriptability": "None",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
         "Function Name Color": {
           "Name": "Function Name Color",
           "Scriptability": "ReadWrite",
@@ -46111,6 +48607,32 @@
           "Kind": {
             "Canonical": {
               "Serialization": "DoesNotSerialize"
+            }
+          }
+        },
+        "LargeFileLineCountThreshold": {
+          "Name": "LargeFileLineCountThreshold",
+          "Scriptability": "None",
+          "DataType": {
+            "Value": "Int32"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "LargeFileThreshold": {
+          "Name": "LargeFileThreshold",
+          "Scriptability": "None",
+          "DataType": {
+            "Value": "Int32"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
             }
           }
         },
@@ -46399,19 +48921,6 @@
           "Scriptability": "None",
           "DataType": {
             "Value": "Bool"
-          },
-          "Tags": [],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
-        "Render Throttle Percentage": {
-          "Name": "Render Throttle Percentage",
-          "Scriptability": "ReadWrite",
-          "DataType": {
-            "Value": "Int32"
           },
           "Tags": [],
           "Kind": {
@@ -47067,9 +49576,86 @@
       "Properties": {},
       "DefaultProperties": {}
     },
+    "StudioAttachment": {
+      "Name": "StudioAttachment",
+      "Tags": [
+        "NotReplicated"
+      ],
+      "Superclass": "Instance",
+      "Properties": {
+        "AutoHideParent": {
+          "Name": "AutoHideParent",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "IsArrowVisible": {
+          "Name": "IsArrowVisible",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "Offset": {
+          "Name": "Offset",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Vector2"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "SourceAnchorPoint": {
+          "Name": "SourceAnchorPoint",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Vector2"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "TargetAnchorPoint": {
+          "Name": "TargetAnchorPoint",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Vector2"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        }
+      },
+      "DefaultProperties": {}
+    },
     "StudioCallout": {
       "Name": "StudioCallout",
-      "Tags": [],
+      "Tags": [
+        "NotReplicated"
+      ],
       "Superclass": "Instance",
       "Properties": {
         "AnchorPoint": {
@@ -47169,17 +49755,7 @@
           }
         }
       },
-      "DefaultProperties": {
-        "Attributes": {
-          "Attributes": {}
-        },
-        "SourceAssetId": {
-          "Int64": -1
-        },
-        "Tags": {
-          "Tags": []
-        }
-      }
+      "DefaultProperties": {}
     },
     "StudioData": {
       "Name": "StudioData",
@@ -47208,6 +49784,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "EnableScriptCollabByDefaultOnLoad": {
           "Bool": false
@@ -47301,20 +49883,13 @@
     },
     "StudioObjectBase": {
       "Name": "StudioObjectBase",
-      "Tags": [],
+      "Tags": [
+        "NotCreatable",
+        "NotReplicated"
+      ],
       "Superclass": "Instance",
       "Properties": {},
-      "DefaultProperties": {
-        "Attributes": {
-          "Attributes": {}
-        },
-        "SourceAssetId": {
-          "Int64": -1
-        },
-        "Tags": {
-          "Tags": []
-        }
-      }
+      "DefaultProperties": {}
     },
     "StudioPublishService": {
       "Name": "StudioPublishService",
@@ -47568,20 +50143,24 @@
     },
     "StudioWidget": {
       "Name": "StudioWidget",
-      "Tags": [],
+      "Tags": [
+        "NotCreatable",
+        "NotReplicated"
+      ],
       "Superclass": "StudioObjectBase",
       "Properties": {},
-      "DefaultProperties": {
-        "Attributes": {
-          "Attributes": {}
-        },
-        "SourceAssetId": {
-          "Int64": -1
-        },
-        "Tags": {
-          "Tags": []
-        }
-      }
+      "DefaultProperties": {}
+    },
+    "StudioWidgetsService": {
+      "Name": "StudioWidgetsService",
+      "Tags": [
+        "NotCreatable",
+        "NotReplicated",
+        "Service"
+      ],
+      "Superclass": "Instance",
+      "Properties": {},
+      "DefaultProperties": {}
     },
     "StyleBase": {
       "Name": "StyleBase",
@@ -47631,6 +50210,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "Index": {
           "Int32": -1
         },
@@ -47664,6 +50249,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -47744,11 +50335,17 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "Index": {
           "Int32": -1
         },
         "PropertiesSerialize": {
-          "BinaryString": ""
+          "BinaryString": "AAAAAA=="
         },
         "Selector": {
           "String": ""
@@ -47769,6 +50366,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -47824,6 +50427,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -47933,8 +50542,14 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "ColorMap": {
           "Content": ""
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "MetalnessMap": {
           "Content": ""
@@ -48041,6 +50656,19 @@
             }
           }
         },
+        "MaxDistance": {
+          "Name": "MaxDistance",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Float32"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
         "PixelsPerStud": {
           "Name": "PixelsPerStud",
           "Scriptability": "ReadWrite",
@@ -48131,7 +50759,13 @@
             600.0
           ]
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "ClipsDescendants": {
+          "Bool": false
+        },
+        "DefinesCapabilities": {
           "Bool": false
         },
         "Enabled": {
@@ -48141,6 +50775,9 @@
           "Enum": 5
         },
         "LightInfluence": {
+          "Float32": 0.0
+        },
+        "MaxDistance": {
           "Float32": 0.0
         },
         "PixelsPerStud": {
@@ -48288,12 +50925,18 @@
         "Brightness": {
           "Float32": 1.0
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color": {
           "Color3": [
             1.0,
             1.0,
             1.0
           ]
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -48338,12 +50981,18 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color3": {
           "Color3": [
             0.050980397,
             0.41176474,
             0.6745098
           ]
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -48364,9 +51013,7 @@
     },
     "SwimController": {
       "Name": "SwimController",
-      "Tags": [
-        "NotBrowsable"
-      ],
+      "Tags": [],
       "Superclass": "ControllerBase",
       "Properties": {
         "AccelerationTime": {
@@ -48443,6 +51090,12 @@
           "Attributes": {}
         },
         "BalanceRigidityEnabled": {
+          "Bool": false
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
           "Bool": false
         },
         "MoveSpeedFactor": {
@@ -48704,6 +51357,12 @@
         "AutoAssignable": {
           "Bool": true
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -48774,6 +51433,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -48874,6 +51539,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "ReservedServerAccessCode": {
           "String": ""
         },
@@ -48919,6 +51590,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -49034,6 +51711,22 @@
             "Value": "Bool"
           },
           "Tags": [
+            "NotScriptable"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "GrassLength": {
+          "Name": "GrassLength",
+          "Scriptability": "None",
+          "DataType": {
+            "Value": "Float32"
+          },
+          "Tags": [
+            "NotBrowsable",
             "NotScriptable"
           ],
           "Kind": {
@@ -49305,6 +51998,9 @@
         "CanTouch": {
           "Bool": true
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "CastShadow": {
           "Bool": true
         },
@@ -49327,6 +52023,9 @@
         "Decoration": {
           "Bool": false
         },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "EnableFluidForces": {
           "Bool": true
         },
@@ -49341,6 +52040,9 @@
         },
         "FrontSurfaceInput": {
           "Enum": 0
+        },
+        "GrassLength": {
+          "Float32": 0.7
         },
         "LeftParamA": {
           "Float32": -0.5
@@ -49711,8 +52413,14 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "ColorMap": {
           "Content": ""
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Face": {
           "Enum": 1
@@ -49853,6 +52561,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "ExtentsMax": {
           "Vector3int16": [
             0,
@@ -49946,10 +52660,13 @@
           "DataType": {
             "Value": "Bool"
           },
-          "Tags": [],
+          "Tags": [
+            "Hidden",
+            "NotReplicated"
+          ],
           "Kind": {
             "Canonical": {
-              "Serialization": "Serializes"
+              "Serialization": "DoesNotSerialize"
             }
           }
         },
@@ -49959,10 +52676,13 @@
           "DataType": {
             "Value": "Bool"
           },
-          "Tags": [],
+          "Tags": [
+            "Hidden",
+            "NotReplicated"
+          ],
           "Kind": {
             "Canonical": {
-              "Serialization": "Serializes"
+              "Serialization": "DoesNotSerialize"
             }
           }
         },
@@ -50058,17 +52778,17 @@
         "AutoRuns": {
           "Bool": true
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "Description": {
           "String": ""
         },
         "ExecuteWithStudioRun": {
           "Bool": false
-        },
-        "Is30FpsThrottleEnabled": {
-          "Bool": true
-        },
-        "IsPhysicsEnvironmentalThrottled": {
-          "Bool": true
         },
         "IsSleepAllowed": {
           "Bool": true
@@ -50649,10 +53369,16 @@
         "BorderSizePixel": {
           "Int32": 1
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "ClearTextOnFocus": {
           "Bool": true
         },
         "ClipsDescendants": {
+          "Bool": false
+        },
+        "DefinesCapabilities": {
           "Bool": false
         },
         "Draggable": {
@@ -50665,6 +53391,9 @@
             "style": "Normal",
             "cachedFaceId": "rbxasset://fonts/arial.ttf"
           }
+        },
+        "Interactable": {
+          "Bool": true
         },
         "LayoutOrder": {
           "Int32": 0
@@ -51227,7 +53956,13 @@
         "BorderSizePixel": {
           "Int32": 1
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "ClipsDescendants": {
+          "Bool": false
+        },
+        "DefinesCapabilities": {
           "Bool": false
         },
         "Draggable": {
@@ -51240,6 +53975,9 @@
             "style": "Normal",
             "cachedFaceId": "rbxasset://fonts/arial.ttf"
           }
+        },
+        "Interactable": {
+          "Bool": true
         },
         "LayoutOrder": {
           "Int32": 0
@@ -51380,6 +54118,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -51393,6 +54137,19 @@
       "Tags": [],
       "Superclass": "Instance",
       "Properties": {
+        "AutocompleteVisible": {
+          "Name": "AutocompleteVisible",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
         "Enabled": {
           "Name": "Enabled",
           "Scriptability": "ReadWrite",
@@ -51436,6 +54193,15 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "AutocompleteVisible": {
+          "Bool": true
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -51574,6 +54340,19 @@
               "Serialization": "Serializes"
             }
           }
+        },
+        "Translation": {
+          "Name": "Translation",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "String"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
+            }
+          }
         }
       },
       "DefaultProperties": {}
@@ -51608,11 +54387,30 @@
               "Serialization": "DoesNotSerialize"
             }
           }
+        },
+        "Translation": {
+          "Name": "Translation",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "String"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
+            }
+          }
         }
       },
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -51630,6 +54428,32 @@
       ],
       "Superclass": "Instance",
       "Properties": {
+        "ChatTranslationEnabled": {
+          "Name": "ChatTranslationEnabled",
+          "Scriptability": "Read",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "ChatTranslationToggleEnabled": {
+          "Name": "ChatTranslationToggleEnabled",
+          "Scriptability": "None",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
         "ChatVersion": {
           "Name": "ChatVersion",
           "Scriptability": "Read",
@@ -51674,6 +54498,15 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "ChatTranslationEnabled": {
+          "Bool": true
+        },
+        "ChatTranslationToggleEnabled": {
+          "Bool": false
+        },
         "ChatVersion": {
           "Enum": 0
         },
@@ -51682,6 +54515,9 @@
         },
         "CreateDefaultTextChannels": {
           "Bool": true
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -52152,7 +54988,13 @@
         "BorderSizePixel": {
           "Int32": 1
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "ClipsDescendants": {
+          "Bool": false
+        },
+        "DefinesCapabilities": {
           "Bool": false
         },
         "Draggable": {
@@ -52165,6 +55007,9 @@
             "style": "Normal",
             "cachedFaceId": "rbxasset://fonts/arial.ttf"
           }
+        },
+        "Interactable": {
+          "Bool": true
         },
         "LayoutOrder": {
           "Int32": 0
@@ -52415,12 +55260,18 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color3": {
           "Color3": [
             1.0,
             1.0,
             1.0
           ]
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Face": {
           "Enum": 5
@@ -52555,6 +55406,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -52730,6 +55587,12 @@
         "CanBeDropped": {
           "Bool": true
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "Enabled": {
           "Bool": true
         },
@@ -52886,8 +55749,14 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color": {
           "BrickColor": 23
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -53059,6 +55928,9 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Coils": {
           "Float32": 8.0
         },
@@ -53067,6 +55939,9 @@
         },
         "Damping": {
           "Float32": 0.01
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -53123,6 +55998,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -53446,6 +56327,9 @@
         "Brightness": {
           "Float32": 1.0
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color": {
           "ColorSequence": {
             "keypoints": [
@@ -53467,6 +56351,9 @@
               }
             ]
           }
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -53614,6 +56501,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "Depth": {
           "Float32": 1.0
         },
@@ -53644,6 +56537,22 @@
       ],
       "Superclass": "BasePart",
       "Properties": {
+        "AeroMeshData": {
+          "Name": "AeroMeshData",
+          "Scriptability": "None",
+          "DataType": {
+            "Value": "SharedString"
+          },
+          "Tags": [
+            "Hidden",
+            "NotScriptable"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
         "CollisionFidelity": {
           "Name": "CollisionFidelity",
           "Scriptability": "ReadWrite",
@@ -53797,6 +56706,9 @@
         "CanTouch": {
           "Bool": true
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "CastShadow": {
           "Bool": true
         },
@@ -53815,6 +56727,9 @@
         },
         "CustomPhysicalProperties": {
           "PhysicalProperties": "Default"
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "EnableFluidForces": {
           "Bool": true
@@ -53983,6 +56898,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -54030,6 +56951,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -54049,6 +56976,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -54124,6 +57057,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "DominantAxis": {
           "Enum": 0
         },
@@ -54185,11 +57124,17 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "CornerRadius": {
           "UDim": [
             0.0,
             8
           ]
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -54274,6 +57219,9 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color": {
           "ColorSequence": {
             "keypoints": [
@@ -54295,6 +57243,9 @@
               }
             ]
           }
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -54426,6 +57377,9 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "CellPadding": {
           "UDim2": [
             [
@@ -54449,6 +57403,9 @@
               100
             ]
           ]
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "FillDirection": {
           "Enum": 0
@@ -54587,6 +57544,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "FillDirection": {
           "Enum": 1
         },
@@ -54674,6 +57637,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "PaddingBottom": {
           "UDim": [
@@ -54853,7 +57822,13 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Circular": {
+          "Bool": false
+        },
+        "DefinesCapabilities": {
           "Bool": false
         },
         "EasingDirection": {
@@ -54923,6 +57898,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "Scale": {
           "Float32": 1.0
         },
@@ -54969,6 +57950,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "MaxSize": {
           "Vector2": [
@@ -55081,12 +58068,18 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color": {
           "Color3": [
             0.0,
             0.0,
             0.0
           ]
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -55170,6 +58163,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "FillDirection": {
           "Enum": 1
         },
@@ -55246,6 +58245,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "MaxTextSize": {
           "Int32": 100
@@ -55335,6 +58340,9 @@
         "CanTouch": {
           "Bool": true
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "CastShadow": {
           "Bool": true
         },
@@ -55356,6 +58364,9 @@
         },
         "CustomPhysicalProperties": {
           "PhysicalProperties": "Default"
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "EnableFluidForces": {
           "Bool": true
@@ -55571,8 +58582,14 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color": {
           "BrickColor": 1009
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -55631,6 +58648,12 @@
         },
         "CachedData": {
           "String": "{\"lastSaveTime\":0,\"lastKnownPublishRequest\":0,\"users\":[]}"
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -56307,6 +59330,22 @@
             }
           }
         },
+        "VRComfortSetting": {
+          "Name": "VRComfortSetting",
+          "Scriptability": "None",
+          "DataType": {
+            "Enum": "VRComfortSetting"
+          },
+          "Tags": [
+            "Hidden",
+            "NotReplicated"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
         "VREnabled": {
           "Name": "VREnabled",
           "Scriptability": "None",
@@ -56362,6 +59401,54 @@
             }
           }
         },
+        "VRSmoothRotationEnabledCustomOption": {
+          "Name": "VRSmoothRotationEnabledCustomOption",
+          "Scriptability": "None",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [
+            "Hidden",
+            "NotReplicated"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "VRThirdPersonFollowCamEnabled": {
+          "Name": "VRThirdPersonFollowCamEnabled",
+          "Scriptability": "None",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [
+            "Hidden",
+            "NotReplicated"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "VRThirdPersonFollowCamEnabledCustomOption": {
+          "Name": "VRThirdPersonFollowCamEnabledCustomOption",
+          "Scriptability": "None",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [
+            "Hidden",
+            "NotReplicated"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
         "VignetteEnabled": {
           "Name": "VignetteEnabled",
           "Scriptability": "Read",
@@ -56369,6 +59456,22 @@
             "Value": "Bool"
           },
           "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "VignetteEnabledCustomOption": {
+          "Name": "VignetteEnabledCustomOption",
+          "Scriptability": "None",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [
+            "Hidden",
+            "NotReplicated"
+          ],
           "Kind": {
             "Canonical": {
               "Serialization": "Serializes"
@@ -56768,6 +59871,277 @@
       },
       "DefaultProperties": {}
     },
+    "UserNotification": {
+      "Name": "UserNotification",
+      "Tags": [],
+      "Superclass": "Instance",
+      "Properties": {
+        "Id": {
+          "Name": "Id",
+          "Scriptability": "Read",
+          "DataType": {
+            "Value": "String"
+          },
+          "Tags": [
+            "NotReplicated",
+            "ReadOnly"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
+            }
+          }
+        },
+        "Payload": {
+          "Name": "Payload",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Ref"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        }
+      },
+      "DefaultProperties": {
+        "Attributes": {
+          "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
+        "SourceAssetId": {
+          "Int64": -1
+        },
+        "Tags": {
+          "Tags": []
+        }
+      }
+    },
+    "UserNotificationPayload": {
+      "Name": "UserNotificationPayload",
+      "Tags": [],
+      "Superclass": "Instance",
+      "Properties": {
+        "AnalyticsData": {
+          "Name": "AnalyticsData",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Ref"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "JoinExperience": {
+          "Name": "JoinExperience",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Ref"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "MessageId": {
+          "Name": "MessageId",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "String"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "Type": {
+          "Name": "Type",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "String"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        }
+      },
+      "DefaultProperties": {
+        "Attributes": {
+          "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
+        "MessageId": {
+          "String": ""
+        },
+        "SourceAssetId": {
+          "Int64": -1
+        },
+        "Tags": {
+          "Tags": []
+        },
+        "Type": {
+          "String": ""
+        }
+      }
+    },
+    "UserNotificationPayloadAnalyticsData": {
+      "Name": "UserNotificationPayloadAnalyticsData",
+      "Tags": [],
+      "Superclass": "Instance",
+      "Properties": {
+        "Category": {
+          "Name": "Category",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "String"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        }
+      },
+      "DefaultProperties": {
+        "Attributes": {
+          "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "Category": {
+          "String": ""
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
+        "SourceAssetId": {
+          "Int64": -1
+        },
+        "Tags": {
+          "Tags": []
+        }
+      }
+    },
+    "UserNotificationPayloadJoinExperience": {
+      "Name": "UserNotificationPayloadJoinExperience",
+      "Tags": [],
+      "Superclass": "Instance",
+      "Properties": {
+        "LaunchData": {
+          "Name": "LaunchData",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "String"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        }
+      },
+      "DefaultProperties": {
+        "Attributes": {
+          "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
+        "LaunchData": {
+          "String": ""
+        },
+        "SourceAssetId": {
+          "Int64": -1
+        },
+        "Tags": {
+          "Tags": []
+        }
+      }
+    },
+    "UserNotificationPayloadParameterValue": {
+      "Name": "UserNotificationPayloadParameterValue",
+      "Tags": [],
+      "Superclass": "Instance",
+      "Properties": {
+        "Int64Value": {
+          "Name": "Int64Value",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "Int64"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
+        "StringValue": {
+          "Name": "StringValue",
+          "Scriptability": "ReadWrite",
+          "DataType": {
+            "Value": "String"
+          },
+          "Tags": [],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        }
+      },
+      "DefaultProperties": {
+        "Attributes": {
+          "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
+        "Int64Value": {
+          "Int64": 0
+        },
+        "SourceAssetId": {
+          "Int64": -1
+        },
+        "StringValue": {
+          "String": ""
+        },
+        "Tags": {
+          "Tags": []
+        }
+      }
+    },
     "UserService": {
       "Name": "UserService",
       "Tags": [
@@ -56898,6 +60272,52 @@
             }
           }
         },
+        "QuestASWState": {
+          "Name": "QuestASWState",
+          "Scriptability": "None",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [
+            "Hidden"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
+            }
+          }
+        },
+        "QuestDisplayRefreshRate": {
+          "Name": "QuestDisplayRefreshRate",
+          "Scriptability": "None",
+          "DataType": {
+            "Value": "Float32"
+          },
+          "Tags": [
+            "Hidden"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
+            }
+          }
+        },
+        "ThirdPersonFollowCamEnabled": {
+          "Name": "ThirdPersonFollowCamEnabled",
+          "Scriptability": "Read",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [
+            "NotReplicated",
+            "ReadOnly"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
+            }
+          }
+        },
         "VRDeviceAvailable": {
           "Name": "VRDeviceAvailable",
           "Scriptability": "None",
@@ -56970,6 +60390,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -57006,6 +60432,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -57036,6 +60468,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -57104,8 +60542,14 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color": {
           "BrickColor": 23
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -57139,6 +60583,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -57373,6 +60823,9 @@
         "CanTouch": {
           "Bool": true
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "CastShadow": {
           "Bool": true
         },
@@ -57391,6 +60844,9 @@
         },
         "CustomPhysicalProperties": {
           "PhysicalProperties": "Default"
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Disabled": {
           "Bool": false
@@ -57660,8 +61116,14 @@
             ]
           }
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "CurrentAngle": {
           "Float32": 0.0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "DesiredAngle": {
           "Float32": 0.0
@@ -57766,6 +61228,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -57972,11 +61440,20 @@
         "BorderSizePixel": {
           "Int32": 1
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "ClipsDescendants": {
+          "Bool": false
+        },
+        "DefinesCapabilities": {
           "Bool": false
         },
         "Draggable": {
           "Bool": false
+        },
+        "Interactable": {
+          "Bool": true
         },
         "LayoutOrder": {
           "Int32": 0
@@ -58072,6 +61549,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "SourceAssetId": {
           "Int64": -1
@@ -58293,7 +61776,13 @@
         "CameraFieldOfView": {
           "Float32": 1.2217306
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "ClipsDescendants": {
+          "Bool": false
+        },
+        "DefinesCapabilities": {
           "Bool": false
         },
         "Draggable": {
@@ -58308,6 +61797,9 @@
         },
         "ImageTransparency": {
           "Float32": 0.0
+        },
+        "Interactable": {
+          "Bool": true
         },
         "LayoutOrder": {
           "Int32": 0
@@ -58419,6 +61911,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -58501,6 +61999,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -58527,6 +62031,36 @@
           "Kind": {
             "Canonical": {
               "Serialization": "Serializes"
+            }
+          }
+        },
+        "UseNewAudioApi": {
+          "Name": "UseNewAudioApi",
+          "Scriptability": "None",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [
+            "Hidden"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
+            }
+          }
+        },
+        "UseNewControlPaths": {
+          "Name": "UseNewControlPaths",
+          "Scriptability": "None",
+          "DataType": {
+            "Value": "Bool"
+          },
+          "Tags": [
+            "Hidden"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "DoesNotSerialize"
             }
           }
         },
@@ -58579,6 +62113,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "EnableDefaultVoice": {
           "Bool": true
@@ -58662,6 +62202,9 @@
         "CanTouch": {
           "Bool": true
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "CastShadow": {
           "Bool": true
         },
@@ -58680,6 +62223,9 @@
         },
         "CustomPhysicalProperties": {
           "PhysicalProperties": "Default"
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "EnableFluidForces": {
           "Bool": true
@@ -58871,6 +62417,12 @@
               ]
             ]
           }
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Enabled": {
           "Bool": true
@@ -59065,6 +62617,12 @@
             ]
           }
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -59156,6 +62714,12 @@
         "Attributes": {
           "Attributes": {}
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "SourceAssetId": {
           "Int64": -1
         },
@@ -59225,12 +62789,18 @@
             ]
           }
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "Color3": {
           "Color3": [
             0.050980397,
             0.41176474,
             0.6745098
           ]
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "Scale": {
           "Vector3": [
@@ -59407,6 +62977,21 @@
             }
           }
         },
+        "EditorLiveScripting": {
+          "Name": "EditorLiveScripting",
+          "Scriptability": "None",
+          "DataType": {
+            "Enum": "EditorLiveScripting"
+          },
+          "Tags": [
+            "NotScriptable"
+          ],
+          "Kind": {
+            "Canonical": {
+              "Serialization": "Serializes"
+            }
+          }
+        },
         "ExplicitAutoJoints": {
           "Name": "ExplicitAutoJoints",
           "Scriptability": "None",
@@ -59488,21 +63073,6 @@
             "Value": "Float32"
           },
           "Tags": [],
-          "Kind": {
-            "Canonical": {
-              "Serialization": "Serializes"
-            }
-          }
-        },
-        "HumanoidOnlySetCollisionsOnStateChange": {
-          "Name": "HumanoidOnlySetCollisionsOnStateChange",
-          "Scriptability": "None",
-          "DataType": {
-            "Enum": "HumanoidOnlySetCollisionsOnStateChange"
-          },
-          "Tags": [
-            "NotScriptable"
-          ],
           "Kind": {
             "Canonical": {
               "Serialization": "Serializes"
@@ -59726,8 +63296,7 @@
           "Tags": [
             "Hidden",
             "NotReplicated",
-            "NotScriptable",
-            "WriteOnly"
+            "NotScriptable"
           ],
           "Kind": {
             "Canonical": {
@@ -59811,14 +63380,23 @@
         "AvatarUnificationMode": {
           "Enum": 0
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
         "ClientAnimatorThrottling": {
           "Enum": 0
         },
         "CollisionGroupData": {
           "BinaryString": "AQEABP////8HRGVmYXVsdA=="
         },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "DistributedGameTime": {
           "Float64": 0.0
+        },
+        "EditorLiveScripting": {
+          "Enum": 0
         },
         "ExplicitAutoJoints": {
           "Bool": true
@@ -59838,9 +63416,6 @@
         },
         "Gravity": {
           "Float32": 196.2
-        },
-        "HumanoidOnlySetCollisionsOnStateChange": {
-          "Enum": 0
         },
         "IKControlConstraintSupport": {
           "Enum": 0
@@ -59977,6 +63552,12 @@
       "DefaultProperties": {
         "Attributes": {
           "Attributes": {}
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "LevelOfDetail": {
           "Enum": 0
@@ -60302,6 +63883,12 @@
             ]
           }
         },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
+        },
         "Enabled": {
           "Bool": true
         },
@@ -60469,6 +64056,12 @@
               ]
             ]
           }
+        },
+        "Capabilities": {
+          "SecurityCapabilities": 0
+        },
+        "DefinesCapabilities": {
+          "Bool": false
         },
         "HSRAssetId": {
           "Content": ""
@@ -60645,6 +64238,31 @@
         "Fail": 4
       }
     },
+    "AnimationClipFromVideoStatus": {
+      "name": "AnimationClipFromVideoStatus",
+      "items": {
+        "Cancelled": 11,
+        "ErrorGeneric": 4,
+        "ErrorMultiplePeople": 12,
+        "ErrorNoPersonDetected": 8,
+        "ErrorUploadingVideo": 2001,
+        "ErrorVideoTooLong": 7,
+        "ErrorVideoUnstable": 9,
+        "Initializing": 0,
+        "Pending": 1,
+        "Processing": 2,
+        "Success": 6,
+        "Timeout": 10
+      }
+    },
+    "AnimationCompositorMode": {
+      "name": "AnimationCompositorMode",
+      "items": {
+        "Default": 0,
+        "Disabled": 2,
+        "Enabled": 1
+      }
+    },
     "AnimationPriority": {
       "name": "AnimationPriority",
       "items": {
@@ -60715,6 +64333,13 @@
       "items": {
         "FitWithinMaxSize": 0,
         "ScaleWithParentSize": 1
+      }
+    },
+    "AssetCreatorType": {
+      "name": "AssetCreatorType",
+      "items": {
+        "Group": 1,
+        "User": 0
       }
     },
     "AssetFetchStatus": {
@@ -61070,6 +64695,14 @@
         "EdgeBump": 1
       }
     },
+    "CameraSpeedAdjustBinding": {
+      "name": "CameraSpeedAdjustBinding",
+      "items": {
+        "AltScroll": 2,
+        "None": 0,
+        "RmbScroll": 1
+      }
+    },
     "CameraType": {
       "name": "CameraType",
       "items": {
@@ -61223,12 +64856,20 @@
         "Enabled": 2
       }
     },
+    "CollaboratorStatus": {
+      "name": "CollaboratorStatus",
+      "items": {
+        "Editing3D": 0,
+        "None": 3,
+        "PrivateScripting": 2,
+        "Scripting": 1
+      }
+    },
     "CollisionFidelity": {
       "name": "CollisionFidelity",
       "items": {
         "Box": 2,
         "Default": 0,
-        "DynamicPreciseConvexDecomposition": 4,
         "Hull": 1,
         "PreciseConvexDecomposition": 3
       }
@@ -61287,7 +64928,9 @@
         "CommandLinePermissions": 4,
         "Deprecated": 1,
         "IncorrectIndexType": 2,
+        "Invalidated": 10,
         "PluginPermissions": 3,
+        "PutCursorBeforeEnd": 11,
         "PutCursorInParens": 7,
         "RobloxPermissions": 5,
         "TypeCorrect": 8
@@ -61357,6 +65000,11 @@
         "DisconnectSendPacketError": 262,
         "DisconnectTimeout": 266,
         "DisconnectWrongVersion": 280,
+        "NetworkInternal": 296,
+        "NetworkMisbehavior": 299,
+        "NetworkSecurity": 300,
+        "NetworkSend": 297,
+        "NetworkTimeout": 298,
         "OK": 0,
         "PlacelaunchCustomMessage": 610,
         "PlacelaunchDisabled": 515,
@@ -61376,6 +65024,7 @@
         "PlacelaunchUserPrivacyUnauthorized": 533,
         "PlayerRemoved": 291,
         "ReplicatorTimeout": 290,
+        "ServerShutdown": 288,
         "TeleportErrors": 768,
         "TeleportFailure": 769,
         "TeleportFlooded": 774,
@@ -61472,7 +65121,10 @@
       "items": {
         "GetAsync": 0,
         "GetSortedAsync": 3,
+        "GetVersionAsync": 7,
+        "ListAsync": 6,
         "OnUpdate": 5,
+        "RemoveVersionAsync": 8,
         "SetIncrementAsync": 1,
         "SetIncrementSortedAsync": 4,
         "UpdateAsync": 2
@@ -61721,6 +65373,14 @@
         "Quart": 4,
         "Quint": 5,
         "Sine": 1
+      }
+    },
+    "EditorLiveScripting": {
+      "name": "EditorLiveScripting",
+      "items": {
+        "Default": 0,
+        "Disabled": 1,
+        "Enabled": 2
       }
     },
     "ElasticBehavior": {
@@ -62024,6 +65684,7 @@
       "items": {
         "Hover": 1,
         "Idle": 0,
+        "NonInteractable": 3,
         "Press": 2
       }
     },
@@ -62141,14 +65802,6 @@
         "DisplayWhenDamaged": 0
       }
     },
-    "HumanoidOnlySetCollisionsOnStateChange": {
-      "name": "HumanoidOnlySetCollisionsOnStateChange",
-      "items": {
-        "Default": 0,
-        "Disabled": 1,
-        "Enabled": 2
-      }
-    },
     "HumanoidRigType": {
       "name": "HumanoidRigType",
       "items": {
@@ -62222,6 +65875,13 @@
         "Initialized": 2,
         "None": 0,
         "Pending": 1
+      }
+    },
+    "ImageCombineType": {
+      "name": "ImageCombineType",
+      "items": {
+        "BlendSourceOver": 1,
+        "Overwrite": 2
       }
     },
     "InOut": {
@@ -62600,6 +66260,23 @@
         "ObjectPosition": 2
       }
     },
+    "LiveEditingAtomicUpdateResponse": {
+      "name": "LiveEditingAtomicUpdateResponse",
+      "items": {
+        "FailureGuidNotFound": 1,
+        "FailureHashMismatch": 2,
+        "FailureOperationIllegal": 3,
+        "Success": 0
+      }
+    },
+    "LiveEditingBroadcastMessageType": {
+      "name": "LiveEditingBroadcastMessageType",
+      "items": {
+        "Error": 2,
+        "Normal": 0,
+        "Warning": 1
+      }
+    },
     "LoadCharacterLayeredClothing": {
       "name": "LoadCharacterLayeredClothing",
       "items": {
@@ -62831,6 +66508,16 @@
         "Left": 3,
         "Right": 0,
         "Top": 1
+      }
+    },
+    "OperationType": {
+      "name": "OperationType",
+      "items": {
+        "Intersection": 3,
+        "Null": 0,
+        "Primitive": 4,
+        "Subtraction": 2,
+        "Union": 1
       }
     },
     "OrientationAlignmentMode": {
@@ -63075,6 +66762,17 @@
         "TwoAttachment": 1
       }
     },
+    "PrimitiveType": {
+      "name": "PrimitiveType",
+      "items": {
+        "Ball": 1,
+        "Block": 3,
+        "CornerWedge": 5,
+        "Cylinder": 2,
+        "Null": 0,
+        "Wedge": 4
+      }
+    },
     "PrivilegeType": {
       "name": "PrivilegeType",
       "items": {
@@ -63307,6 +67005,7 @@
         "MaterialPicker": 6,
         "Move": 3,
         "None": 9,
+        "PivotEditor": 10,
         "Rotate": 2,
         "Scale": 1,
         "Select": 0,
@@ -63404,7 +67103,8 @@
         "BadFieldOfViewDeg": 3,
         "BadThumbnailType": 1,
         "BadYRotDeg": 2,
-        "Other": 5
+        "Other": 5,
+        "Throttled": 6
       }
     },
     "SaveFilter": {
@@ -63459,7 +67159,8 @@
       "items": {
         "CoreUISafeInsets": 2,
         "DeviceSafeInsets": 1,
-        "None": 0
+        "None": 0,
+        "TopbarSafeInsets": 3
       }
     },
     "ScreenOrientation": {
@@ -63535,6 +67236,14 @@
         "OnlineGame": 2
       }
     },
+    "ServerLiveEditingMode": {
+      "name": "ServerLiveEditingMode",
+      "items": {
+        "Disabled": 2,
+        "Enabled": 1,
+        "Uninitialized": 0
+      }
+    },
     "ServiceVisibility": {
       "name": "ServiceVisibility",
       "items": {
@@ -63567,6 +67276,13 @@
         "RelativeXX": 1,
         "RelativeXY": 0,
         "RelativeYY": 2
+      }
+    },
+    "SolverConvergenceMetricType": {
+      "name": "SolverConvergenceMetricType",
+      "items": {
+        "AlgorithmAgnostic": 1,
+        "IterationBased": 0
       }
     },
     "SolverConvergenceVisualizationMode": {
@@ -63800,6 +67516,9 @@
         "Mid": 36,
         "Midlight": 98,
         "Notification": 4,
+        "OnboardingCover": 132,
+        "OnboardingHighlight": 133,
+        "OnboardingShadow": 134,
         "RibbonButton": 19,
         "RibbonTab": 15,
         "RibbonTabTopBar": 16,
@@ -63867,6 +67586,19 @@
         "AlternatingSupports": 0,
         "BridgeStyleSupports": 1,
         "NoSupports": 2
+      }
+    },
+    "SubscriptionPaymentStatus": {
+      "name": "SubscriptionPaymentStatus",
+      "items": {
+        "Paid": 0,
+        "Refunded": 1
+      }
+    },
+    "SubscriptionPeriod": {
+      "name": "SubscriptionPeriod",
+      "items": {
+        "Month": 0
       }
     },
     "SurfaceConstraint": {
@@ -63941,7 +67673,8 @@
         "TeleportToPlaceInstance": 1,
         "TeleportToPrivateServer": 2,
         "TeleportToSpawnByName": 0,
-        "TeleportUnknown": 4
+        "TeleportToVIPServer": 4,
+        "TeleportUnknown": 5
       }
     },
     "TeleportResult": {
@@ -63972,7 +67705,8 @@
       "items": {
         "ToInstance": 1,
         "ToPlace": 0,
-        "ToReservedServer": 2
+        "ToReservedServer": 2,
+        "ToVIPServer": 3
       }
     },
     "TerrainAcquisitionMethod": {
@@ -64187,6 +67921,18 @@
         "ForceDisabled": 0
       }
     },
+    "TrackerFaceTrackingStatus": {
+      "name": "TrackerFaceTrackingStatus",
+      "items": {
+        "FaceTrackingHasTrackingError": 4,
+        "FaceTrackingIsOccluded": 5,
+        "FaceTrackingLost": 3,
+        "FaceTrackingNoFaceFound": 1,
+        "FaceTrackingSuccess": 0,
+        "FaceTrackingUninitialized": 6,
+        "FaceTrackingUnknown": 2
+      }
+    },
     "TrackerLodFlagMode": {
       "name": "TrackerLodFlagMode",
       "items": {
@@ -64299,6 +68045,15 @@
         "Touch": 7
       }
     },
+    "VRComfortSetting": {
+      "name": "VRComfortSetting",
+      "items": {
+        "Comfort": 0,
+        "Custom": 3,
+        "Expert": 2,
+        "Normal": 1
+      }
+    },
     "VRSafetyBubbleMode": {
       "name": "VRSafetyBubbleMode",
       "items": {
@@ -64408,6 +68163,14 @@
         "Joining": 1,
         "JoiningRetry": 2,
         "Leaving": 4
+      }
+    },
+    "VoiceControlPath": {
+      "name": "VoiceControlPath",
+      "items": {
+        "Join": 2,
+        "Publish": 0,
+        "Subscribe": 1
       }
     },
     "VolumetricAudio": {

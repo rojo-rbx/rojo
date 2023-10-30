@@ -159,7 +159,7 @@ impl ApiService {
             })
             .unwrap();
 
-        json_ok(&WriteResponse { session_id })
+        json_ok(WriteResponse { session_id })
     }
 
     async fn handle_api_read(&self, request: Request<Body>) -> Response<Body> {
@@ -271,7 +271,7 @@ impl ApiService {
             },
         };
 
-        json_ok(&OpenResponse {
+        json_ok(OpenResponse {
             session_id: self.serve_session.session_id(),
         })
     }

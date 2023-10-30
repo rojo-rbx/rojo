@@ -1,6 +1,6 @@
 use std::fs;
 
-use insta::assert_yaml_snapshot;
+use insta::{assert_yaml_snapshot, with_settings};
 use tempfile::tempdir;
 
 use crate::rojo_test::{internable::InternAndRedact, serve_util::run_serve_test};
@@ -30,10 +30,12 @@ fn scripts() {
         assert_yaml_snapshot!("scripts_info", redactions.redacted_yaml(info));
 
         let read_response = session.get_api_read(root_id).unwrap();
-        assert_yaml_snapshot!(
-            "scripts_all",
-            read_response.intern_and_redact(&mut redactions, root_id)
-        );
+        with_settings!({ sort_maps => true }, {
+            assert_yaml_snapshot!(
+                "scripts_all",
+                read_response.intern_and_redact(&mut redactions, root_id)
+            );
+        });
 
         fs::write(session.path().join("src/foo.lua"), "Updated foo!").unwrap();
 
@@ -44,10 +46,12 @@ fn scripts() {
         );
 
         let read_response = session.get_api_read(root_id).unwrap();
-        assert_yaml_snapshot!(
-            "scripts_all-2",
-            read_response.intern_and_redact(&mut redactions, root_id)
-        );
+        with_settings!({ sort_maps => true }, {
+            assert_yaml_snapshot!(
+                "scripts_all-2",
+                read_response.intern_and_redact(&mut redactions, root_id)
+            );
+        });
     });
 }
 
