@@ -281,17 +281,19 @@ impl Middleware {
         name: &str,
     ) -> anyhow::Result<Option<InstanceSnapshot>> {
         match self {
-            Self::Csv => snapshot_csv(context, vfs, path),
-            Self::JsonModel => snapshot_json_model(context, vfs, path),
-            Self::Json => snapshot_json(context, vfs, path),
-            Self::ServerScript => snapshot_lua(context, vfs, path, Some(ScriptType::Server)),
-            Self::ClientScript => snapshot_lua(context, vfs, path, Some(ScriptType::Client)),
-            Self::ModuleScript => snapshot_lua(context, vfs, path, Some(ScriptType::Module)),
+            Self::Csv => snapshot_csv(context, vfs, path, name),
+            Self::JsonModel => snapshot_json_model(context, vfs, path, name),
+            Self::Json => snapshot_json(context, vfs, path, name),
+            Self::ServerScript => snapshot_lua(context, vfs, path, name, Some(ScriptType::Server)),
+            Self::ClientScript => snapshot_lua(context, vfs, path, name, Some(ScriptType::Client)),
+            Self::ModuleScript => snapshot_lua(context, vfs, path, name, Some(ScriptType::Module)),
+            // At the moment, snapshot_project does not use `name` so we
+            // don't provide it.
             Self::Project => snapshot_project(context, vfs, path),
-            Self::Rbxm => snapshot_rbxm(context, vfs, path),
-            Self::Rbxmx => snapshot_rbxmx(context, vfs, path),
-            Self::Toml => snapshot_toml(context, vfs, path),
-            Self::Text => snapshot_txt(context, vfs, path),
+            Self::Rbxm => snapshot_rbxm(context, vfs, path, name),
+            Self::Rbxmx => snapshot_rbxmx(context, vfs, path, name),
+            Self::Toml => snapshot_toml(context, vfs, path, name),
+            Self::Text => snapshot_txt(context, vfs, path, name),
             Self::Ignore => Ok(None),
         }
     }

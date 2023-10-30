@@ -9,7 +9,7 @@ use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 use super::{
     dir::{dir_meta, snapshot_dir_no_meta},
     meta_file::AdjacentMetadata,
-    util::{match_trailing, PathExt as _},
+    util::match_trailing,
 };
 
 #[derive(Debug)]
@@ -24,6 +24,7 @@ pub fn snapshot_lua(
     context: &InstanceContext,
     vfs: &Vfs,
     path: &Path,
+    name: &str,
     script_type_overload: Option<ScriptType>,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let file_name = path.file_name().unwrap().to_string_lossy();
@@ -34,20 +35,20 @@ pub fn snapshot_lua(
         .expect("Unable to get RunContext enums!")
         .items;
 
-    let (script_type, instance_name) = if let Some(script_type) = script_type_overload {
-        (script_type, path.file_name_trim_extensions()?)
-    } else if let Some(name) = match_trailing(&file_name, ".server.lua") {
-        (ScriptType::Server, name)
-    } else if let Some(name) = match_trailing(&file_name, ".client.lua") {
-        (ScriptType::Client, name)
-    } else if let Some(name) = match_trailing(&file_name, ".lua") {
-        (ScriptType::Module, name)
-    } else if let Some(name) = match_trailing(&file_name, ".server.luau") {
-        (ScriptType::Server, name)
-    } else if let Some(name) = match_trailing(&file_name, ".client.luau") {
-        (ScriptType::Client, name)
-    } else if let Some(name) = match_trailing(&file_name, ".luau") {
-        (ScriptType::Module, name)
+    let script_type = if let Some(script_type) = script_type_overload {
+        script_type
+    } else if match_trailing(&file_name, ".server.lua").is_some() {
+        ScriptType::Server
+    } else if match_trailing(&file_name, ".client.lua").is_some() {
+        ScriptType::Client
+    } else if match_trailing(&file_name, ".lua").is_some() {
+        ScriptType::Module
+    } else if match_trailing(&file_name, ".server.luau").is_some() {
+        ScriptType::Server
+    } else if match_trailing(&file_name, ".client.luau").is_some() {
+        ScriptType::Client
+    } else if match_trailing(&file_name, ".luau").is_some() {
+        ScriptType::Module
     } else {
         return Ok(None);
     };
@@ -75,10 +76,10 @@ pub fn snapshot_lua(
         );
     }
 
-    let meta_path = path.with_file_name(format!("{}.meta.json", instance_name));
+    let meta_path = path.with_file_name(format!("{}.meta.json", name));
 
     let mut snapshot = InstanceSnapshot::new()
-        .name(instance_name)
+        .name(name)
         .class_name(class_name)
         .properties(properties)
         .metadata(
@@ -121,9 +122,9 @@ pub fn snapshot_lua_init(
         );
     }
 
-    let mut init_snapshot = snapshot_lua(context, vfs, init_path, None)?.unwrap();
+    let mut init_snapshot =
+        snapshot_lua(context, vfs, init_path, &dir_snapshot.name, None)?.unwrap();
 
-    init_snapshot.name = dir_snapshot.name;
     init_snapshot.children = dir_snapshot.children;
     init_snapshot.metadata = dir_snapshot.metadata;
 
@@ -153,6 +154,7 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
             &mut vfs,
             Path::new("/foo.lua"),
+            "foo",
             None,
         )
         .unwrap()
@@ -175,6 +177,7 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(false)),
             &mut vfs,
             Path::new("/foo.lua"),
+            "foo",
             None,
         )
         .unwrap()
@@ -197,6 +200,7 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
             &mut vfs,
             Path::new("/foo.server.lua"),
+            "foo",
             None,
         )
         .unwrap()
@@ -219,6 +223,7 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(false)),
             &mut vfs,
             Path::new("/foo.server.lua"),
+            "foo",
             None,
         )
         .unwrap()
@@ -241,6 +246,7 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
             &mut vfs,
             Path::new("/foo.client.lua"),
+            "foo",
             None,
         )
         .unwrap()
@@ -263,6 +269,7 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(false)),
             &mut vfs,
             Path::new("/foo.client.lua"),
+            "foo",
             None,
         )
         .unwrap()
@@ -291,6 +298,7 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
             &mut vfs,
             Path::new("/root"),
+            "root",
             None,
         )
         .unwrap()
@@ -324,6 +332,7 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
             &mut vfs,
             Path::new("/foo.lua"),
+            "foo",
             None,
         )
         .unwrap()
@@ -357,6 +366,7 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(false)),
             &mut vfs,
             Path::new("/foo.lua"),
+            "foo",
             None,
         )
         .unwrap()
@@ -390,6 +400,7 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
             &mut vfs,
             Path::new("/foo.server.lua"),
+            "foo",
             None,
         )
         .unwrap()
@@ -423,6 +434,7 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(false)),
             &mut vfs,
             Path::new("/foo.server.lua"),
+            "foo",
             None,
         )
         .unwrap()
@@ -458,6 +470,7 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
             &mut vfs,
             Path::new("/bar.server.lua"),
+            "bar",
             None,
         )
         .unwrap()
@@ -493,6 +506,7 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(false)),
             &mut vfs,
             Path::new("/bar.server.lua"),
+            "bar",
             None,
         )
         .unwrap()
@@ -503,6 +517,7 @@ mod test {
         });
     }
 
+    #[ignore = "name trimming is no longer handled by individual snapshots"]
     #[test]
     fn double_name_trim() {
         // Due to the existence of transformers, the way file extensions
@@ -518,6 +533,7 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
             &mut vfs,
             Path::new("/.server.server.lua"),
+            "",
             None,
         )
         .unwrap()
