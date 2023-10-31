@@ -251,7 +251,7 @@ impl From<&Path> for InstigatingSource {
 /// Represents an user-specified rule for transforming files
 /// into Instances using a given middleware.
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
-pub struct SyncRuleOuter {
+pub struct SyncRule {
     /// The pattern specified by the user
     #[serde(rename = "pattern")]
     pub glob: Glob,
@@ -262,17 +262,10 @@ pub struct SyncRuleOuter {
     /// If not specified, the file extension is the only thing cut off.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub suffix: Option<String>,
-}
-
-/// An internal representation of the user-specified sync rules. This
-/// allows the base path of the pattern to be set by Rojo but not be handled
-/// by Serde.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct SyncRule {
-    pub glob: Glob,
+    /// The 'base' of the glob above, allowing it to be used
+    /// relative to a path instead of absolute.
+    #[serde(skip)]
     pub base_path: PathBuf,
-    pub middleware: Middleware,
-    pub suffix: Option<String>,
 }
 
 impl SyncRule {
