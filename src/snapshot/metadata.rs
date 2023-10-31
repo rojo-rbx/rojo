@@ -167,7 +167,7 @@ impl InstanceContext {
         self.emit_legacy_scripts = emit_legacy_scripts;
     }
 
-    /// Returns the middleware specified by the first syncrule that that
+    /// Returns the middleware specified by the first sync rule that
     /// matches the provided path. This does not handle default syncing rules.
     pub fn get_sync_rule(&self, path: &Path) -> Option<&SyncRule> {
         for rule in &self.sync_rules {

@@ -144,12 +144,8 @@ fn get_init_path<P: AsRef<Path>>(vfs: &Vfs, dir: P) -> anyhow::Result<Option<Pat
     Ok(None)
 }
 
-/// Gets a snapshot for a path given an InstanceContext and Vfs.
-///
-/// This is independent of the actual middleware and this function
-/// should be used when possible. The middleware enum assumes that it is being
-/// used as an override, and as a result Scripts do not have their paths
-/// trimmed properly if it's used directly.
+/// Gets a snapshot for a path given an InstanceContext and Vfs, taking
+/// user specified sync rules into account.
 fn snapshot_from_path(
     context: &InstanceContext,
     vfs: &Vfs,
