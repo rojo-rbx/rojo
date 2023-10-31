@@ -214,7 +214,7 @@ fn snapshot_from_path(
 /// metadata. This is deliberate, as metadata is not a snapshot middleware
 /// and directories do not make sense to turn into files.
 #[derive(Debug, Clone, Copy, PartialEq, Deserialize, Serialize)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "camelCase")]
 pub enum Middleware {
     Csv,
     JsonModel,

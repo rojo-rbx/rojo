@@ -6,15 +6,15 @@
   "syncRules": [
     {
       "pattern": "*.module",
-      "use": "modulescript"
+      "use": "moduleScript"
     },
     {
       "pattern": "*.server",
-      "use": "serverscript"
+      "use": "serverScript"
     },
     {
       "pattern": "*.client",
-      "use": "clientscript"
+      "use": "clientScript"
     },
     {
       "pattern": "*.rojo",

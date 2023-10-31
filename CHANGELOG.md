@@ -31,14 +31,14 @@
 
  	| `use` value    | file extension  |
  	|:---------------|:----------------|
- 	| `serverscript` | `.server.lua`   |
- 	| `clientscript` | `.client.lua`   |
- 	| `modulescript` | `.lua`          |
+ 	| `serverScript` | `.server.lua`   |
+ 	| `clientScript` | `.client.lua`   |
+ 	| `moduleScript` | `.lua`          |
  	| `json`         | `.json`         |
  	| `toml`         | `.toml`         |
  	| `csv`          | `.csv`          |
  	| `text`         | `.txt`          |
- 	| `jsonmodel`    | `.model.json`   |
+ 	| `jsonModel`    | `.model.json`   |
  	| `rbxm`         | `.rbxm`         |
  	| `rbxmx`        | `.rbxmx`        |
  	| `project`      | `.project.json` |
