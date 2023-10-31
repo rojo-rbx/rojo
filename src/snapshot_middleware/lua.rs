@@ -496,31 +496,4 @@ mod test {
             insta::assert_yaml_snapshot!(instance_snapshot);
         });
     }
-
-    #[ignore = "name trimming is no longer handled by individual snapshots"]
-    #[test]
-    fn double_name_trim() {
-        // Due to the existence of transformers, the way file extensions
-        // get trimmed is different now. A regression of this nature is
-        // possible, so we test against double-trimming.
-        let mut imfs = InMemoryFs::new();
-        imfs.load_snapshot("/.server.server.lua", VfsSnapshot::file("Hello there!"))
-            .unwrap();
-
-        let mut vfs = Vfs::new(imfs);
-
-        let instance_snapshot = snapshot_lua(
-            &InstanceContext::with_emit_legacy_scripts(Some(true)),
-            &mut vfs,
-            Path::new("/.server.server.lua"),
-            "",
-            ScriptType::Server,
-        )
-        .unwrap()
-        .unwrap();
-
-        insta::with_settings!({ sort_maps => true }, {
-            insta::assert_yaml_snapshot!(instance_snapshot);
-        });
-    }
 }
