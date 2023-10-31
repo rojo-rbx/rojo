@@ -62,9 +62,15 @@ pub fn snapshot_from_vfs(
             match Middleware::from_path(context, &init_path) {
                 Some(Middleware::Project) => snapshot_project(context, vfs, &init_path),
 
-                Some(Middleware::ModuleScript) => snapshot_lua_init(context, vfs, &init_path),
-                Some(Middleware::ServerScript) => snapshot_lua_init(context, vfs, &init_path),
-                Some(Middleware::ClientScript) => snapshot_lua_init(context, vfs, &init_path),
+                Some(Middleware::ModuleScript) => {
+                    snapshot_lua_init(context, vfs, &init_path, ScriptType::Module)
+                }
+                Some(Middleware::ServerScript) => {
+                    snapshot_lua_init(context, vfs, &init_path, ScriptType::Server)
+                }
+                Some(Middleware::ClientScript) => {
+                    snapshot_lua_init(context, vfs, &init_path, ScriptType::Client)
+                }
 
                 Some(Middleware::Csv) => snapshot_csv_init(context, vfs, &init_path),
 
@@ -284,9 +290,9 @@ impl Middleware {
             Self::Csv => snapshot_csv(context, vfs, path, name),
             Self::JsonModel => snapshot_json_model(context, vfs, path, name),
             Self::Json => snapshot_json(context, vfs, path, name),
-            Self::ServerScript => snapshot_lua(context, vfs, path, name, Some(ScriptType::Server)),
-            Self::ClientScript => snapshot_lua(context, vfs, path, name, Some(ScriptType::Client)),
-            Self::ModuleScript => snapshot_lua(context, vfs, path, name, Some(ScriptType::Module)),
+            Self::ServerScript => snapshot_lua(context, vfs, path, name, ScriptType::Server),
+            Self::ClientScript => snapshot_lua(context, vfs, path, name, ScriptType::Client),
+            Self::ModuleScript => snapshot_lua(context, vfs, path, name, ScriptType::Module),
             // At the moment, snapshot_project does not use `name` so we
             // don't provide it.
             Self::Project => snapshot_project(context, vfs, path),
