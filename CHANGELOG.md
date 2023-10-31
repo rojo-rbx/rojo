@@ -2,7 +2,7 @@
 
 ## Unreleased Changes
 
-* Projects may now specify rules for syncing files as if they had a different file extension. ([#DDD])
+* Projects may now specify rules for syncing files as if they had a different file extension. ([#813])
  	This is specified via a new field on project files, `syncRules`:
 
  	```json
@@ -45,7 +45,7 @@
  	| `ignore`       | None!           |
 
 
-[#DDD]: https://github.com/rojo-rbx/rojo/pull/DDD
+[#813]: https://github.com/rojo-rbx/rojo/pull/813
 
 ## [7.4.0-rc3] - October 25, 2023
 * Changed `sourcemap --watch` to only generate the sourcemap when it's necessary ([#800])
