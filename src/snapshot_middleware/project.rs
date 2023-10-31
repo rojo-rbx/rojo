@@ -31,11 +31,9 @@ pub fn snapshot_project(
         base_path: project.folder_location().to_path_buf(),
     });
 
-    let sync_rules = project.sync_rules.iter().map(|outer| SyncRule {
-        glob: outer.glob.clone(),
+    let sync_rules = project.sync_rules.iter().map(|rule| SyncRule {
         base_path: project.folder_location().to_path_buf(),
-        middleware: outer.middleware,
-        suffix: outer.suffix.clone(),
+        ..rule.clone()
     });
 
     context.add_sync_rules(sync_rules);
