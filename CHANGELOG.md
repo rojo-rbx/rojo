@@ -7,18 +7,25 @@
 
  	```json
  	{
- 		"syncRules": [
- 	        {
- 	            "pattern": "include_this.extension",
- 	            "use": "text",
- 	        }
- 	    ],
- 		"name": "SyncRulesAreCool",
- 		"tree": {
- 			"$path": "src"
- 		}
+ 	 	"syncRules": [
+ 	 	 	{
+ 	 	 	 	"pattern": "*.foo",
+ 	 	 	 	"use": "text",
+ 	 	 	},
+ 	 	 	{
+ 	 	 	 	"pattern": "*.bar.baz",
+ 	 	 	 	"use": "json",
+ 	 	 	 	"suffix": ".bar.baz",
+ 	 	 	},
+ 	 	],
+ 	 	"name": "SyncRulesAreCool",
+ 	 	"tree": {
+ 	 	 	"$path": "src"
+ 	 	}
  	}
  	```
+
+ 	The `pattern` field is a glob used to match the sync rule to files. If present, the `suffix` field allows you to specify parts of a file's name get cut off by Rojo to name the Instance, including the file extension. If it isn't specified, Rojo will only cut off the first part of the file extension, up to the first dot.
 
  	The `use` field corresponds to one of the potential file type that Rojo will currently include in a project. Files that match the provided pattern will be treated as if they had the file extension for that file type. A full list is below:
 
@@ -38,7 +45,7 @@
  	| `ignore`       | None!           |
 
 
-[#DDD]: https://github.com/rojo-rbx/rojo/pull/800
+[#DDD]: https://github.com/rojo-rbx/rojo/pull/DDD
 
 ## [7.4.0-rc3] - October 25, 2023
 * Changed `sourcemap --watch` to only generate the sourcemap when it's necessary ([#800])
