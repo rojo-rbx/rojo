@@ -151,7 +151,7 @@ fn snapshot_from_path(
     vfs: &Vfs,
     path: &Path,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let (middleware, name) = if let Some(rule) = context.get_sync_rule(path) {
+    let (middleware, name) = if let Some(rule) = context.get_user_sync_rule(path) {
         (rule.middleware, rule.file_name_for_path(path)?)
     } else if path.file_name_ends_with(".server.lua") {
         (
@@ -237,7 +237,7 @@ impl Middleware {
     fn from_path<P: AsRef<Path>>(context: &InstanceContext, path: P) -> Option<Middleware> {
         let path = path.as_ref();
 
-        if let Some(rule) = context.get_sync_rule(path) {
+        if let Some(rule) = context.get_user_sync_rule(path) {
             Some(rule.middleware)
         } else if path.file_name_ends_with(".server.lua")
             || path.file_name_ends_with(".server.luau")
