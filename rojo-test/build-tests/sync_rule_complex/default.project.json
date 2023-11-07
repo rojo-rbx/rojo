@@ -18,6 +18,7 @@
     },
     {
       "pattern": "*.rojo",
+      "exclude": "*.ignore.rojo",
       "use": "project"
     },
     {

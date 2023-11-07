@@ -252,10 +252,13 @@ impl From<&Path> for InstigatingSource {
 /// into Instances using a given middleware.
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct SyncRule {
-    /// The pattern specified by the user
+    /// A pattern used to determine if a file is included in this SyncRule
     #[serde(rename = "pattern")]
-    pub glob: Glob,
-    /// The middleware specified by the user
+    pub include: Glob,
+    /// A pattern used to determine if a file is excluded from this SyncRule.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub exclude: Option<Glob>,
+    /// The middleware specified by the user for this SyncRule
     #[serde(rename = "use")]
     pub middleware: Middleware,
     /// A suffix to trim off of file names, including the file extension.
@@ -272,7 +275,14 @@ impl SyncRule {
     /// Returns whether the given path matches this rule.
     pub fn matches(&self, path: &Path) -> bool {
         match path.strip_prefix(&self.base_path) {
-            Ok(suffix) => self.glob.is_match(suffix),
+            Ok(suffix) => {
+                if let Some(pattern) = &self.exclude {
+                    if pattern.is_match(suffix) {
+                        return false;
+                    }
+                }
+                self.include.is_match(suffix)
+            }
             Err(_) => false,
         }
     }
