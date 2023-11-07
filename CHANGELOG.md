@@ -11,6 +11,7 @@
  	 	 	{
  	 	 	 	"pattern": "*.foo",
  	 	 	 	"use": "text",
+                "exclude": "*.exclude.foo",
  	 	 	},
  	 	 	{
  	 	 	 	"pattern": "*.bar.baz",
@@ -26,6 +27,8 @@
  	```
 
  	The `pattern` field is a glob used to match the sync rule to files. If present, the `suffix` field allows you to specify parts of a file's name get cut off by Rojo to name the Instance, including the file extension. If it isn't specified, Rojo will only cut off the first part of the file extension, up to the first dot.
+
+    Additionally, the `exclude` field allows files to be excluded from the sync rule if they match a pattern specified by it. If it's not present, all files that match `pattern` will be modified using the sync rule.
 
  	The `use` field corresponds to one of the potential file type that Rojo will currently include in a project. Files that match the provided pattern will be treated as if they had the file extension for that file type. A full list is below:
 
@@ -43,6 +46,8 @@
  	| `rbxmx`        | `.rbxmx`        |
  	| `project`      | `.project.json` |
  	| `ignore`       | None!           |
+
+    **All** sync rules are reset between project files, so they must be specified in each one when nesting them. This is to ensure that nothing can break other projects by changing how files are synced!
 
 
 [#813]: https://github.com/rojo-rbx/rojo/pull/813
