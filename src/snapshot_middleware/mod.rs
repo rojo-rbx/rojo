@@ -18,13 +18,17 @@ mod toml;
 mod txt;
 mod util;
 
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    sync::OnceLock,
+};
 
 use anyhow::Context;
 use memofs::{IoResultExt, Vfs};
 use serde::{Deserialize, Serialize};
 
-use crate::snapshot::{InstanceContext, InstanceSnapshot};
+use crate::glob::Glob;
+use crate::snapshot::{InstanceContext, InstanceSnapshot, SyncRule};
 
 use self::{
     csv::{snapshot_csv, snapshot_csv_init},
@@ -37,10 +41,11 @@ use self::{
     rbxmx::snapshot_rbxmx,
     toml::snapshot_toml,
     txt::snapshot_txt,
-    util::PathExt,
 };
 
 pub use self::{project::snapshot_project_node, util::emit_legacy_scripts_default};
+
+static DEFAULT_SYNC_RULES: OnceLock<Vec<SyncRule>> = OnceLock::new();
 
 /// Returns an `InstanceSnapshot` for the provided path.
 /// This will inspect the path and find the appropriate middleware for it,
@@ -59,23 +64,29 @@ pub fn snapshot_from_vfs(
 
     if meta.is_dir() {
         if let Some(init_path) = get_init_path(vfs, path)? {
-            match Middleware::from_path(context, &init_path) {
-                Some(Middleware::Project) => snapshot_project(context, vfs, &init_path),
+            // TODO: support user-defined init paths
+            for rule in default_sync_rules() {
+                if rule.matches(&init_path) {
+                    return match rule.middleware {
+                        Middleware::Project => snapshot_project(context, vfs, &init_path),
 
-                Some(Middleware::ModuleScript) => {
-                    snapshot_lua_init(context, vfs, &init_path, ScriptType::Module)
-                }
-                Some(Middleware::ServerScript) => {
-                    snapshot_lua_init(context, vfs, &init_path, ScriptType::Server)
-                }
-                Some(Middleware::ClientScript) => {
-                    snapshot_lua_init(context, vfs, &init_path, ScriptType::Client)
-                }
+                        Middleware::ModuleScript => {
+                            snapshot_lua_init(context, vfs, &init_path, ScriptType::Module)
+                        }
+                        Middleware::ServerScript => {
+                            snapshot_lua_init(context, vfs, &init_path, ScriptType::Server)
+                        }
+                        Middleware::ClientScript => {
+                            snapshot_lua_init(context, vfs, &init_path, ScriptType::Client)
+                        }
 
-                Some(Middleware::Csv) => snapshot_csv_init(context, vfs, &init_path),
+                        Middleware::Csv => snapshot_csv_init(context, vfs, &init_path),
 
-                Some(_) | None => snapshot_dir(context, vfs, path),
+                        _ => snapshot_dir(context, vfs, path),
+                    };
+                }
             }
+            snapshot_dir(context, vfs, path)
         } else {
             snapshot_dir(context, vfs, path)
         }
@@ -85,6 +96,7 @@ pub fn snapshot_from_vfs(
             .and_then(|n| n.to_str())
             .with_context(|| format!("file name of {} is invalid", path.display()))?;
 
+        // TODO: Is this even necessary anymore?
         match file_name {
             "init.server.luau" | "init.server.lua" | "init.client.luau" | "init.client.lua"
             | "init.luau" | "init.lua" | "init.csv" => return Ok(None),
@@ -151,62 +163,23 @@ fn snapshot_from_path(
     vfs: &Vfs,
     path: &Path,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let (middleware, name) = if let Some(rule) = context.get_user_sync_rule(path) {
-        (rule.middleware, rule.file_name_for_path(path)?)
-    } else if path.file_name_ends_with(".server.lua") {
-        (
-            Middleware::ServerScript,
-            path.file_name_trim_end(".server.lua")?,
-        )
-    } else if path.file_name_ends_with(".server.luau") {
-        (
-            Middleware::ServerScript,
-            path.file_name_trim_end(".server.luau")?,
-        )
-    } else if path.file_name_ends_with(".client.lua") {
-        (
-            Middleware::ClientScript,
-            path.file_name_trim_end(".client.lua")?,
-        )
-    } else if path.file_name_ends_with(".client.luau") {
-        (
-            Middleware::ClientScript,
-            path.file_name_trim_end(".client.luau")?,
-        )
-    } else if path.file_name_ends_with(".lua") {
-        (Middleware::ModuleScript, path.file_name_trim_end(".lua")?)
-    } else if path.file_name_ends_with(".luau") {
-        (Middleware::ModuleScript, path.file_name_trim_end(".luau")?)
-    } else if path.file_name_ends_with(".project.json") {
-        (
-            Middleware::Project,
-            path.file_name_trim_end(".project.json")?,
-        )
-    } else if path.file_name_ends_with(".model.json") {
-        (
-            Middleware::JsonModel,
-            path.file_name_trim_end(".model.json")?,
-        )
-    } else if path.file_name_ends_with(".meta.json") {
-        // .meta.json files do not turn into InstanceSnapshots
-        return Ok(None);
-    } else if path.file_name_ends_with(".json") {
-        (Middleware::Json, path.file_name_trim_end(".json")?)
-    } else if path.file_name_ends_with(".toml") {
-        (Middleware::Toml, path.file_name_trim_end(".toml")?)
-    } else if path.file_name_ends_with(".csv") {
-        (Middleware::Csv, path.file_name_trim_end(".csv")?)
-    } else if path.file_name_ends_with(".txt") {
-        (Middleware::Text, path.file_name_trim_end(".txt")?)
-    } else if path.file_name_ends_with(".rbxmx") {
-        (Middleware::Rbxmx, path.file_name_trim_end(".rbxmx")?)
-    } else if path.file_name_ends_with(".rbxm") {
-        (Middleware::Rbxm, path.file_name_trim_end(".rbxm")?)
+    if let Some(rule) = context.get_user_sync_rule(path) {
+        return rule
+            .middleware
+            .snapshot(context, vfs, path, rule.file_name_for_path(path)?);
     } else {
-        return Ok(None);
-    };
-
-    middleware.snapshot(context, vfs, path, name)
+        for rule in default_sync_rules() {
+            if rule.matches(path) {
+                return rule.middleware.snapshot(
+                    context,
+                    vfs,
+                    path,
+                    rule.file_name_for_path(path)?,
+                );
+            }
+        }
+    }
+    Ok(None)
 }
 
 /// Represents a possible 'transformer' used by Rojo to turn a file system
@@ -231,48 +204,6 @@ pub enum Middleware {
 }
 
 impl Middleware {
-    /// Returns a `Middleware` from the provided path, taking user-specified
-    /// syncing rules into account. If one exists, it is returned. Otherwise,
-    /// `None` is returned.
-    fn from_path<P: AsRef<Path>>(context: &InstanceContext, path: P) -> Option<Middleware> {
-        let path = path.as_ref();
-
-        if let Some(rule) = context.get_user_sync_rule(path) {
-            Some(rule.middleware)
-        } else if path.file_name_ends_with(".server.lua")
-            || path.file_name_ends_with(".server.luau")
-        {
-            Some(Middleware::ServerScript)
-        } else if path.file_name_ends_with(".client.lua")
-            || path.file_name_ends_with(".client.luau")
-        {
-            Some(Middleware::ClientScript)
-        } else if path.file_name_ends_with(".lua") || path.file_name_ends_with(".luau") {
-            Some(Middleware::ModuleScript)
-        } else if path.file_name_ends_with(".project.json") {
-            Some(Middleware::Project)
-        } else if path.file_name_ends_with(".model.json") {
-            Some(Middleware::JsonModel)
-        } else if path.file_name_ends_with(".meta.json") {
-            // .meta.json files do not turn into their own instances.
-            None
-        } else if path.file_name_ends_with(".json") {
-            Some(Middleware::Json)
-        } else if path.file_name_ends_with(".toml") {
-            Some(Middleware::Toml)
-        } else if path.file_name_ends_with(".csv") {
-            Some(Middleware::Csv)
-        } else if path.file_name_ends_with(".txt") {
-            Some(Middleware::Text)
-        } else if path.file_name_ends_with(".rbxmx") {
-            Some(Middleware::Rbxmx)
-        } else if path.file_name_ends_with(".rbxm") {
-            Some(Middleware::Rbxm)
-        } else {
-            None
-        }
-    }
-
     /// Creates a snapshot for the given path from the Middleware with
     /// the provided name.
     fn snapshot(
@@ -299,4 +230,65 @@ impl Middleware {
             Self::Ignore => Ok(None),
         }
     }
+}
+
+/// A helper for easily defining a SyncRule. Arguments are passed literally
+/// to this macro in the order `include`, `middleware`, `suffix`,
+/// and `exclude`. Both `suffix` and `exclude` are optional.
+///
+/// All arguments except `middleware` are expected to be strings.
+/// The `middleware` parameter is expected to be a variant of `Middleware`,
+/// not including the enum name itself.
+macro_rules! sync_rule {
+    ($pattern:expr, $middleware:ident) => {
+        SyncRule {
+            middleware: Middleware::$middleware,
+            include: Glob::new($pattern).unwrap(),
+            exclude: None,
+            suffix: None,
+            base_path: PathBuf::new(),
+        }
+    };
+    ($pattern:expr, $middleware:ident, $suffix:expr) => {
+        SyncRule {
+            middleware: Middleware::$middleware,
+            include: Glob::new($pattern).unwrap(),
+            exclude: None,
+            suffix: Some($suffix.into()),
+            base_path: PathBuf::new(),
+        }
+    };
+    ($pattern:expr, $middleware:ident, $suffix:expr, $exclude:expr) => {
+        SyncRule {
+            middleware: Middleware::$middleware,
+            include: Glob::new($pattern).unwrap(),
+            exclude: Some(Glob::new($exclude).unwrap()),
+            suffix: Some($suffix.into()),
+            base_path: PathBuf::new(),
+        }
+    };
+}
+
+/// Defines the 'default' syncing rules that Rojo uses.
+/// These do not broadly overlap, but the order matters for some in the case of
+/// e.g. JSON models.
+fn default_sync_rules() -> &'static [SyncRule] {
+    DEFAULT_SYNC_RULES.get_or_init(|| {
+        vec![
+            sync_rule!("*.server.lua", ServerScript, ".server.lua"),
+            sync_rule!("*.server.luau", ServerScript, ".server.luau"),
+            sync_rule!("*.client.lua", ClientScript, ".client.lua"),
+            sync_rule!("*.client.luau", ClientScript, ".client.luau"),
+            sync_rule!("*.{lua,luau}", ModuleScript),
+            // Project middleware doesn't use the file name.
+            sync_rule!("*.project.json", Project),
+            sync_rule!("*.model.json", JsonModel, ".model.json"),
+            sync_rule!("*.json", Json, ".json", "*.meta.json"),
+            sync_rule!("*.toml", Toml),
+            sync_rule!("*.csv", Csv),
+            sync_rule!("*.txt", Text),
+            sync_rule!("*.rbxmx", Rbxmx),
+            sync_rule!("*.rbxm", Rbxm),
+        ]
+    })
 }
