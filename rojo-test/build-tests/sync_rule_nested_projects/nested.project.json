@@ -7,10 +7,6 @@
     {
       "pattern": "*.txt",
       "use": "ignore"
-    },
-    {
-      "pattern": "*.rojo",
-      "use": "ignore"
     }
   ]
 }
