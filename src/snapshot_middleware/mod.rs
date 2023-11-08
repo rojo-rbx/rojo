@@ -45,8 +45,6 @@ use self::{
 
 pub use self::{project::snapshot_project_node, util::emit_legacy_scripts_default};
 
-static DEFAULT_SYNC_RULES: OnceLock<Vec<SyncRule>> = OnceLock::new();
-
 /// Returns an `InstanceSnapshot` for the provided path.
 /// This will inspect the path and find the appropriate middleware for it,
 /// taking user-written rules into account. Then, it will attempt to convert
@@ -273,6 +271,8 @@ macro_rules! sync_rule {
 /// These do not broadly overlap, but the order matters for some in the case of
 /// e.g. JSON models.
 fn default_sync_rules() -> &'static [SyncRule] {
+    static DEFAULT_SYNC_RULES: OnceLock<Vec<SyncRule>> = OnceLock::new();
+
     DEFAULT_SYNC_RULES.get_or_init(|| {
         vec![
             sync_rule!("*.server.lua", ServerScript, ".server.lua"),
