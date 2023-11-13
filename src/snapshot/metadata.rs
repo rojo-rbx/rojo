@@ -170,13 +170,7 @@ impl InstanceContext {
     /// Returns the middleware specified by the first sync rule that
     /// matches the provided path. This does not handle default syncing rules.
     pub fn get_user_sync_rule(&self, path: &Path) -> Option<&SyncRule> {
-        for rule in &self.sync_rules {
-            if rule.matches(path) {
-                return Some(rule);
-            }
-        }
-
-        None
+        self.sync_rules.iter().find(|&rule| rule.matches(path))
     }
 }
 
