@@ -90,6 +90,9 @@ clap = { version = "3.1.18", features = ["derive"] }
 profiling = "1.0.6"
 tracy-client = { version = "0.13.2", optional = true }
 
+blake3 = "1.5.0"
+float-cmp = "0.9.0"
+
 [target.'cfg(windows)'.dependencies]
 winreg = "0.10.1"
 
