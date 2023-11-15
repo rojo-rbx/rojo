@@ -99,8 +99,10 @@ macro_rules! hash {
     }};
 }
 
+/// Places `value` into the provided hasher.
 fn hash_variant(hasher: &mut Hasher, value: &Variant) {
-    // im da joker babeh
+    // We need to round floats, though I'm not sure to what degree we can
+    // realistically do that.
     match value {
         Variant::String(str) => hash!(hasher, str.as_bytes()),
         Variant::Bool(bool) => hash!(hasher, &[*bool as u8]),
