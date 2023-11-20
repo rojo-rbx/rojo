@@ -36,9 +36,22 @@ fn hash_inst<'map, 'inst>(
     hasher.update(inst.class.as_bytes());
     hasher.update(inst.name.as_bytes());
 
+    let descriptor = rbx_reflection_database::get()
+        .classes
+        .get(inst.class.as_str())
+        .expect("class should be known to Rojo");
+
     for (name, value) in &inst.properties {
-        prop_list.push((name, value))
+        if let Some(default) = descriptor.default_properties.get(name.as_str()) {
+            // TODO: Float comparison
+            if value != default {
+                prop_list.push((name, value))
+            }
+        } else {
+            prop_list.push((name, value))
+        }
     }
+
     prop_list.sort_unstable_by_key(|(key, _)| *key);
     for (name, value) in prop_list.iter() {
         hasher.update(name.as_bytes());
