@@ -1,6 +1,8 @@
 use blake3::Hasher;
 use rbx_dom_weak::types::{Variant, Vector3};
 
+use float_cmp::approx_eq;
+
 macro_rules! round {
     ($value:expr) => {
         (($value * 10.0).round() / 10.0)
@@ -78,4 +80,47 @@ pub fn hash_variant(hasher: &mut Hasher, value: &Variant) {
 
 fn vector_hash(hasher: &mut Hasher, vector: Vector3) {
     n_hash!(hasher, round!(vector.x), round!(vector.y), round!(vector.z))
+}
+
+/// Compares to variants to determine if they're equal. This correctly takes
+/// float comparisons into account.
+pub fn variant_eq(variant_a: &Variant, variant_b: &Variant) -> bool {
+    if variant_a.ty() != variant_b.ty() {
+        return false;
+    }
+
+    match (variant_a, variant_b) {
+        (Variant::Float32(a), Variant::Float32(b)) => {
+            approx_eq!(f32, *a, *b)
+        }
+        (Variant::Float64(a), Variant::Float64(b)) => {
+            approx_eq!(f64, *a, *b)
+        }
+        (Variant::Vector3(a), Variant::Vector3(b)) => vector_eq(a, b),
+        (Variant::CFrame(a), Variant::CFrame(b)) => {
+            vector_eq(&a.position, &b.position)
+                & vector_eq(&a.orientation.x, &b.orientation.x)
+                & vector_eq(&a.orientation.y, &b.orientation.y)
+                & vector_eq(&a.orientation.z, &b.orientation.z)
+        }
+
+        (Variant::String(a), Variant::String(b)) => a == b,
+        (Variant::BinaryString(a), Variant::BinaryString(b)) => a == b,
+        (Variant::Bool(a), Variant::Bool(b)) => a == b,
+        (Variant::Int32(a), Variant::Int32(b)) => a == b,
+        (Variant::Int64(a), Variant::Int64(b)) => a == b,
+        (Variant::Axes(a), Variant::Axes(b)) => a == b,
+        (Variant::Faces(a), Variant::Faces(b)) => a == b,
+
+        (a, b) => panic!(
+            "unsupport variant comparison: {:?} and {:?}",
+            a.ty(),
+            b.ty()
+        ),
+    }
+}
+
+#[inline(always)]
+fn vector_eq(a: &Vector3, b: &Vector3) -> bool {
+    approx_eq!(f32, a.x, b.x) & approx_eq!(f32, a.y, b.y) & approx_eq!(f32, a.z, b.z)
 }

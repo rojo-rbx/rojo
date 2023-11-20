@@ -8,7 +8,7 @@ use rbx_dom_weak::{
 
 use std::collections::{HashMap, VecDeque};
 
-use super::hash_variant;
+use super::{hash_variant, variant_eq};
 
 pub fn hash_tree(dom: &WeakDom) -> HashMap<Ref, Hash> {
     let mut map: HashMap<Ref, Hash> = HashMap::new();
@@ -46,7 +46,7 @@ fn hash_inst<'map, 'inst>(
     for (name, value) in &inst.properties {
         if let Some(default) = descriptor.default_properties.get(name.as_str()) {
             // TODO: Float comparison
-            if value != default {
+            if variant_eq(default, value) {
                 prop_list.push((name, value))
             }
         } else {
