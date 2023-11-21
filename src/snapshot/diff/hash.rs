@@ -33,7 +33,7 @@ pub fn hash_tree(dom: &WeakDom) -> HashMap<Ref, Hash> {
     map
 }
 
-fn hash_inst<'map, 'inst>(
+pub fn hash_inst<'map, 'inst>(
     prop_list: &mut Vec<(&'inst str, &'inst Variant)>,
     map: &'map HashMap<Ref, Hash>,
     inst: &'inst Instance,
