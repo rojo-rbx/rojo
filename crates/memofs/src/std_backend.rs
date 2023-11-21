@@ -2,7 +2,14 @@ use std::io;
 use std::path::Path;
 
 use crossbeam_channel::Receiver;
+
 use notify::{Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
+
+#[cfg(target_os = "macos")]
+use notify::{Config, PollWatcher};
+
+#[cfg(target_os = "macos")]
+use std::time::Duration;
 
 use crate::{DirEntry, Metadata, ReadDir, VfsBackend, VfsEvent};
 
@@ -10,6 +17,7 @@ use crate::{DirEntry, Metadata, ReadDir, VfsBackend, VfsEvent};
 pub struct StdBackend {
     #[cfg(target_os = "macos")]
     watcher: PollWatcher,
+
     #[cfg(not(target_os = "macos"))]
     watcher: RecommendedWatcher,
 
@@ -20,7 +28,7 @@ impl StdBackend {
     pub fn new() -> StdBackend {
         let (tx, rx) = crossbeam_channel::unbounded();
 
-        let watcher = notify::recommended_watcher(move |res: Result<Event, _>| match res {
+        let event_handler = move |res: Result<Event, _>| match res {
             Ok(event) => match event.kind {
                 EventKind::Create(_) => {
                     for path in event.paths {
@@ -40,7 +48,16 @@ impl StdBackend {
                 _ => {}
             },
             Err(e) => println!("watch error: {:?}", e),
-        })
+        };
+
+        #[cfg(not(target_os = "macos"))]
+        let watcher = notify::recommended_watcher(event_handler).unwrap();
+
+        #[cfg(target_os = "macos")]
+        let watcher = PollWatcher::new(
+            event_handler,
+            Config::default().with_poll_interval(Duration::from_millis(200)),
+        )
         .unwrap();
 
         Self {
