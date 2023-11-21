@@ -49,8 +49,7 @@ fn hash_inst<'map, 'inst>(
 
     for (name, value) in &inst.properties {
         if let Some(default) = descriptor.default_properties.get(name.as_str()) {
-            // TODO: Float comparison
-            if variant_eq(default, value) {
+            if !variant_eq(default, value) {
                 prop_list.push((name, value))
             }
         } else {
