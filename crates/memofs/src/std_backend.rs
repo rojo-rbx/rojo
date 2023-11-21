@@ -8,7 +8,11 @@ use crate::{DirEntry, Metadata, ReadDir, VfsBackend, VfsEvent};
 
 /// `VfsBackend` that uses `std::fs` and the `notify` crate.
 pub struct StdBackend {
+    #[cfg(target_os = "macos")]
+    watcher: PollWatcher,
+    #[cfg(not(target_os = "macos"))]
     watcher: RecommendedWatcher,
+
     watcher_receiver: Receiver<VfsEvent>,
 }
 
