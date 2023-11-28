@@ -75,20 +75,7 @@ pub fn snapshot_dir_no_meta(
 
     let meta_path = path.join("init.meta.json");
 
-    let relevant_paths = vec![
-        path.to_path_buf(),
-        meta_path,
-        // TODO: We shouldn't need to know about Lua existing in this
-        // middleware. Should we figure out a way for that function to add
-        // relevant paths to this middleware?
-        path.join("init.lua"),
-        path.join("init.luau"),
-        path.join("init.server.lua"),
-        path.join("init.server.luau"),
-        path.join("init.client.lua"),
-        path.join("init.client.luau"),
-        path.join("init.csv"),
-    ];
+    let relevant_paths = vec![path.to_path_buf(), meta_path];
 
     let snapshot = InstanceSnapshot::new()
         .name(instance_name)

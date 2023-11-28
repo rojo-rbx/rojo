@@ -76,6 +76,10 @@ pub fn snapshot_csv_init(
 
     init_snapshot.children = dir_snapshot.children;
     init_snapshot.metadata = dir_snapshot.metadata;
+    init_snapshot
+        .metadata
+        .relevant_paths
+        .push(init_path.to_owned());
 
     if let Some(mut meta) = dir_meta(vfs, folder_path)? {
         meta.apply_all(&mut init_snapshot)?;
