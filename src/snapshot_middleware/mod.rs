@@ -161,23 +161,27 @@ fn snapshot_from_path(
     vfs: &Vfs,
     path: &Path,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    if let Some(rule) = context.get_user_sync_rule(path) {
-        return rule
-            .middleware
-            .snapshot(context, vfs, path, rule.file_name_for_path(path)?);
+    let mut rule = None;
+    if let Some(user_rule) = context.get_user_sync_rule(path) {
+        rule = Some(user_rule);
     } else {
-        for rule in default_sync_rules() {
-            if rule.matches(path) {
-                return rule.middleware.snapshot(
-                    context,
-                    vfs,
-                    path,
-                    rule.file_name_for_path(path)?,
-                );
+        for default_rule in default_sync_rules() {
+            if default_rule.matches(path) {
+                rule = Some(default_rule);
             }
         }
     }
-    Ok(None)
+    if let Some(rule) = rule {
+        Ok(rule
+            .middleware
+            .snapshot(context, vfs, path, rule.file_name_for_path(path)?)?
+            .and_then(|mut snapshot| {
+                snapshot.metadata.middleware = Some(rule.middleware);
+                Some(snapshot)
+            }))
+    } else {
+        Ok(None)
+    }
 }
 
 /// Represents a possible 'transformer' used by Rojo to turn a file system

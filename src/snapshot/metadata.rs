@@ -58,6 +58,8 @@ pub struct InstanceMetadata {
     /// that instance's instigating source is snapshotted directly, the same
     /// context will be passed into it.
     pub context: InstanceContext,
+
+    pub middleware: Option<Middleware>,
 }
 
 impl InstanceMetadata {
@@ -67,6 +69,7 @@ impl InstanceMetadata {
             instigating_source: None,
             relevant_paths: Vec::new(),
             context: InstanceContext::default(),
+            middleware: None,
         }
     }
 
