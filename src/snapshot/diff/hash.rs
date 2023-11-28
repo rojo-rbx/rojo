@@ -6,9 +6,9 @@ use rbx_dom_weak::{
     Instance, WeakDom,
 };
 
-use std::collections::{HashMap, VecDeque};
+use std::collections::HashMap;
 
-use super::{hash_variant, variant_eq};
+use super::{descendants, hash_variant, variant_eq};
 
 pub fn hash_tree(dom: &WeakDom) -> HashMap<Ref, Hash> {
     let mut map: HashMap<Ref, Hash> = HashMap::new();
@@ -79,22 +79,4 @@ pub fn hash_inst<'map, 'inst>(
     prop_list.clear();
 
     hasher.finalize()
-}
-
-fn descendants(dom: &WeakDom) -> Vec<Ref> {
-    let mut queue = VecDeque::new();
-    let mut ordered = Vec::new();
-    queue.push_front(dom.root_ref());
-
-    while let Some(referent) = queue.pop_front() {
-        let inst = dom
-            .get_by_ref(referent)
-            .expect("Invariant: WeakDom had a Ref that wasn't inside it");
-        ordered.push(referent);
-        for child in inst.children() {
-            queue.push_back(*child)
-        }
-    }
-
-    ordered
 }

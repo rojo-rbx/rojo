@@ -5,7 +5,10 @@ pub use hash::*;
 pub use variant::*;
 
 use rbx_dom_weak::{types::Ref, WeakDom};
-use std::{collections::HashMap, hash::Hash};
+use std::{
+    collections::{HashMap, VecDeque},
+    hash::Hash,
+};
 
 pub fn diff_trees(dom_1: &WeakDom, dom_2: &WeakDom) -> Diff {
     let list_1 = hash_tree(dom_1);
@@ -46,4 +49,22 @@ impl Diff {
     pub fn total(&self) -> usize {
         self.removals.len() + self.additions.len()
     }
+}
+
+pub(crate) fn descendants(dom: &WeakDom) -> Vec<Ref> {
+    let mut queue = VecDeque::new();
+    let mut ordered = Vec::new();
+    queue.push_front(dom.root_ref());
+
+    while let Some(referent) = queue.pop_front() {
+        let inst = dom
+            .get_by_ref(referent)
+            .expect("Invariant: WeakDom had a Ref that wasn't inside it");
+        ordered.push(referent);
+        for child in inst.children() {
+            queue.push_back(*child)
+        }
+    }
+
+    ordered
 }
