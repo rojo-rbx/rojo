@@ -13,7 +13,7 @@ function gatherAssetUrlsRecursive(currentTable, currentUrls)
 		if typeof(value) == "string" then
 			table.insert(currentUrls, value)
 		elseif typeof(value) == "table" then
-			gatherAssetUrlsRecursive(value)
+			gatherAssetUrlsRecursive(value, currentUrls)
 		end
 	end
 
