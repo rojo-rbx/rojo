@@ -10,15 +10,9 @@ metadata:
   relevant_paths:
     - /foo
     - /foo/init.meta.json
-    - /foo/init.lua
-    - /foo/init.luau
-    - /foo/init.server.lua
-    - /foo/init.server.luau
-    - /foo/init.client.lua
-    - /foo/init.client.luau
-    - /foo/init.csv
   context:
     emit_legacy_scripts: true
+  middleware: ~
 name: foo
 class_name: Folder
 properties: {}
@@ -31,15 +25,9 @@ children:
       relevant_paths:
         - /foo/Child
         - /foo/Child/init.meta.json
-        - /foo/Child/init.lua
-        - /foo/Child/init.luau
-        - /foo/Child/init.server.lua
-        - /foo/Child/init.server.luau
-        - /foo/Child/init.client.lua
-        - /foo/Child/init.client.luau
-        - /foo/Child/init.csv
       context:
         emit_legacy_scripts: true
+      middleware: dir
     name: Child
     class_name: Folder
     properties: {}

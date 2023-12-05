@@ -12,6 +12,7 @@ metadata:
     - /foo.meta.json
   context:
     emit_legacy_scripts: true
+  middleware: ~
 name: foo
 class_name: LocalizationTable
 properties:

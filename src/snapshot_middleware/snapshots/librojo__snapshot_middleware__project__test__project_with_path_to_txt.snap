@@ -13,6 +13,7 @@ metadata:
     - /foo/default.project.json
   context:
     emit_legacy_scripts: true
+  middleware: text
 name: path-project
 class_name: StringValue
 properties:

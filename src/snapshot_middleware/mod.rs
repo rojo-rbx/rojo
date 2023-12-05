@@ -61,33 +61,9 @@ pub fn snapshot_from_vfs(
     };
 
     if meta.is_dir() {
-        if let Some(init_path) = get_init_path(vfs, path)? {
-            // TODO: support user-defined init paths
-            for rule in default_sync_rules() {
-                if rule.matches(&init_path) {
-                    return match rule.middleware {
-                        Middleware::Project => snapshot_project(context, vfs, &init_path),
-
-                        Middleware::ModuleScript => {
-                            snapshot_lua_init(context, vfs, &init_path, ScriptType::Module)
-                        }
-                        Middleware::ServerScript => {
-                            snapshot_lua_init(context, vfs, &init_path, ScriptType::Server)
-                        }
-                        Middleware::ClientScript => {
-                            snapshot_lua_init(context, vfs, &init_path, ScriptType::Client)
-                        }
-
-                        Middleware::Csv => snapshot_csv_init(context, vfs, &init_path),
-
-                        _ => snapshot_dir(context, vfs, path),
-                    };
-                }
-            }
-            snapshot_dir(context, vfs, path)
-        } else {
-            snapshot_dir(context, vfs, path)
-        }
+        let (middleware, name) = get_dir_middleware(vfs, path)?;
+        // TODO: Support user defined init paths
+        middleware.snapshot(context, vfs, path, &name)
     } else {
         let file_name = path
             .file_name()
@@ -105,53 +81,39 @@ pub fn snapshot_from_vfs(
     }
 }
 
-/// Gets an `init` path for the given directory.
-/// This uses an intrinsic priority list and for compatibility,
-/// it should not be changed.
-fn get_init_path<P: AsRef<Path>>(vfs: &Vfs, dir: P) -> anyhow::Result<Option<PathBuf>> {
+/// Gets the appropriate middleware for a directory by checking for `init`
+/// files. This uses an intrinsic priority list and for compatibility,
+/// that order should be left unchanged.
+fn get_dir_middleware<P: AsRef<Path>>(vfs: &Vfs, dir: P) -> anyhow::Result<(Middleware, String)> {
     let path = dir.as_ref();
+    let dir_name = path
+        .file_name()
+        .expect("Could not extract directory name")
+        .to_str()
+        .ok_or_else(|| anyhow::anyhow!("File name was not valid UTF-8: {}", path.display()))?
+        .to_string();
 
-    let project_path = path.join("default.project.json");
-    if vfs.metadata(&project_path).with_not_found()?.is_some() {
-        return Ok(Some(project_path));
+    static INIT_PATHS: OnceLock<Vec<(Middleware, &str)>> = OnceLock::new();
+    let order = INIT_PATHS.get_or_init(|| {
+        vec![
+            (Middleware::Project, "default.project.json"),
+            (Middleware::ModuleScriptDir, "init.luau"),
+            (Middleware::ModuleScriptDir, "init.lua"),
+            (Middleware::ServerScriptDir, "init.server.luau"),
+            (Middleware::ServerScriptDir, "init.server.lua"),
+            (Middleware::ClientScriptDir, "init.client.luau"),
+            (Middleware::ClientScriptDir, "init.client.lua"),
+            (Middleware::CsvDir, "init.csv"),
+        ]
+    });
+
+    for (middleware, name) in order {
+        if vfs.metadata(path.join(name)).with_not_found()?.is_some() {
+            return Ok((*middleware, dir_name));
+        }
     }
 
-    let init_path = path.join("init.luau");
-    if vfs.metadata(&init_path).with_not_found()?.is_some() {
-        return Ok(Some(init_path));
-    }
-
-    let init_path = path.join("init.lua");
-    if vfs.metadata(&init_path).with_not_found()?.is_some() {
-        return Ok(Some(init_path));
-    }
-
-    let init_path = path.join("init.server.luau");
-    if vfs.metadata(&init_path).with_not_found()?.is_some() {
-        return Ok(Some(init_path));
-    }
-
-    let init_path = path.join("init.server.lua");
-    if vfs.metadata(&init_path).with_not_found()?.is_some() {
-        return Ok(Some(init_path));
-    }
-
-    let init_path = path.join("init.client.luau");
-    if vfs.metadata(&init_path).with_not_found()?.is_some() {
-        return Ok(Some(init_path));
-    }
-
-    let init_path = path.join("init.client.lua");
-    if vfs.metadata(&init_path).with_not_found()?.is_some() {
-        return Ok(Some(init_path));
-    }
-
-    let init_path = path.join("init.csv");
-    if vfs.metadata(&init_path).with_not_found()?.is_some() {
-        return Ok(Some(init_path));
-    }
-
-    Ok(None)
+    Ok((Middleware::Dir, dir_name))
 }
 
 /// Gets a snapshot for a path given an InstanceContext and Vfs, taking
@@ -161,33 +123,30 @@ fn snapshot_from_path(
     vfs: &Vfs,
     path: &Path,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let mut rule = None;
-    if let Some(user_rule) = context.get_user_sync_rule(path) {
-        rule = Some(user_rule);
+    if let Some(rule) = context.get_user_sync_rule(path) {
+        return rule
+            .middleware
+            .snapshot(context, vfs, path, rule.file_name_for_path(path)?);
     } else {
-        for default_rule in default_sync_rules() {
-            if default_rule.matches(path) {
-                rule = Some(default_rule);
+        for rule in default_sync_rules() {
+            if rule.matches(path) {
+                return rule.middleware.snapshot(
+                    context,
+                    vfs,
+                    path,
+                    rule.file_name_for_path(path)?,
+                );
             }
         }
     }
-    if let Some(rule) = rule {
-        Ok(rule
-            .middleware
-            .snapshot(context, vfs, path, rule.file_name_for_path(path)?)?
-            .and_then(|mut snapshot| {
-                snapshot.metadata.middleware = Some(rule.middleware);
-                Some(snapshot)
-            }))
-    } else {
-        Ok(None)
-    }
+    Ok(None)
 }
 
 /// Represents a possible 'transformer' used by Rojo to turn a file system
-/// item into a Roblox Instance. Missing from this list are directories and
-/// metadata. This is deliberate, as metadata is not a snapshot middleware
-/// and directories do not make sense to turn into files.
+/// item into a Roblox Instance. Missing from this list is metadata.
+/// This is deliberate, as metadata is not a snapshot middleware.
+///
+/// Directories cannot be used for sync rules so they're ignored by Serde.
 #[derive(Debug, Clone, Copy, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum Middleware {
@@ -203,6 +162,17 @@ pub enum Middleware {
     Toml,
     Text,
     Ignore,
+
+    #[serde(skip_deserializing)]
+    Dir,
+    #[serde(skip_deserializing)]
+    ServerScriptDir,
+    #[serde(skip_deserializing)]
+    ClientScriptDir,
+    #[serde(skip_deserializing)]
+    ModuleScriptDir,
+    #[serde(skip_deserializing)]
+    CsvDir,
 }
 
 impl Middleware {
@@ -215,7 +185,7 @@ impl Middleware {
         path: &Path,
         name: &str,
     ) -> anyhow::Result<Option<InstanceSnapshot>> {
-        match self {
+        let mut output = match self {
             Self::Csv => snapshot_csv(context, vfs, path, name),
             Self::JsonModel => snapshot_json_model(context, vfs, path, name),
             Self::Json => snapshot_json(context, vfs, path, name),
@@ -230,7 +200,23 @@ impl Middleware {
             Self::Toml => snapshot_toml(context, vfs, path, name),
             Self::Text => snapshot_txt(context, vfs, path, name),
             Self::Ignore => Ok(None),
+
+            Self::Dir => snapshot_dir(context, vfs, path, name),
+            Self::ServerScriptDir => {
+                snapshot_lua_init(context, vfs, path, name, ScriptType::Server)
+            }
+            Self::ClientScriptDir => {
+                snapshot_lua_init(context, vfs, path, name, ScriptType::Client)
+            }
+            Self::ModuleScriptDir => {
+                snapshot_lua_init(context, vfs, path, name, ScriptType::Module)
+            }
+            Self::CsvDir => snapshot_csv_init(context, vfs, path, name),
+        };
+        if let Ok(Some(ref mut snapshot)) = output {
+            snapshot.metadata.middleware = Some(*self);
         }
+        output
     }
 }
 

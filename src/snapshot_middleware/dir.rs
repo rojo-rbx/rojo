@@ -10,8 +10,9 @@ pub fn snapshot_dir(
     context: &InstanceContext,
     vfs: &Vfs,
     path: &Path,
+    name: &str,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let mut snapshot = match snapshot_dir_no_meta(context, vfs, path)? {
+    let mut snapshot = match snapshot_dir_no_meta(context, vfs, path, name)? {
         Some(snapshot) => snapshot,
         None => return Ok(None),
     };
@@ -44,6 +45,7 @@ pub fn snapshot_dir_no_meta(
     context: &InstanceContext,
     vfs: &Vfs,
     path: &Path,
+    name: &str,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let passes_filter_rules = |child: &DirEntry| {
         context
@@ -66,19 +68,12 @@ pub fn snapshot_dir_no_meta(
         }
     }
 
-    let instance_name = path
-        .file_name()
-        .expect("Could not extract file name")
-        .to_str()
-        .ok_or_else(|| anyhow::anyhow!("File name was not valid UTF-8: {}", path.display()))?
-        .to_string();
-
     let meta_path = path.join("init.meta.json");
 
     let relevant_paths = vec![path.to_path_buf(), meta_path];
 
     let snapshot = InstanceSnapshot::new()
-        .name(instance_name)
+        .name(name)
         .class_name("Folder")
         .children(snapshot_children)
         .metadata(
@@ -106,10 +101,14 @@ mod test {
 
         let mut vfs = Vfs::new(imfs);
 
-        let instance_snapshot =
-            snapshot_dir(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = snapshot_dir(
+            &InstanceContext::default(),
+            &mut vfs,
+            Path::new("/foo"),
+            "foo",
+        )
+        .unwrap()
+        .unwrap();
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }
@@ -127,10 +126,14 @@ mod test {
 
         let mut vfs = Vfs::new(imfs);
 
-        let instance_snapshot =
-            snapshot_dir(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = snapshot_dir(
+            &InstanceContext::default(),
+            &mut vfs,
+            Path::new("/foo"),
+            "foo",
+        )
+        .unwrap()
+        .unwrap();
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }

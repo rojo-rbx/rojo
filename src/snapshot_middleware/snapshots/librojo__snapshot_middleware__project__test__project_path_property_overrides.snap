@@ -12,6 +12,7 @@ metadata:
     - /foo/default.project.json
   context:
     emit_legacy_scripts: true
+  middleware: project
 name: path-property-override
 class_name: StringValue
 properties:

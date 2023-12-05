@@ -12,6 +12,7 @@ metadata:
     - /bar.meta.json
   context:
     emit_legacy_scripts: true
+  middleware: ~
 name: bar
 class_name: Script
 properties:
