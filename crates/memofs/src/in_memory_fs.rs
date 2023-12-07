@@ -176,6 +176,11 @@ impl VfsBackend for InMemoryFs {
         }
     }
 
+    fn create_dir(&mut self, path: &Path) -> io::Result<()> {
+        let mut inner = self.inner.lock().unwrap();
+        inner.load_snapshot(path.to_path_buf(), VfsSnapshot::empty_dir())
+    }
+
     fn remove_file(&mut self, path: &Path) -> io::Result<()> {
         let mut inner = self.inner.lock().unwrap();
 

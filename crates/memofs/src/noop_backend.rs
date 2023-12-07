@@ -35,6 +35,13 @@ impl VfsBackend for NoopBackend {
         ))
     }
 
+    fn create_dir(&mut self, _path: &Path) -> io::Result<()> {
+        Err(io::Error::new(
+            io::ErrorKind::Other,
+            "NoopBackend doesn't do anything",
+        ))
+    }
+
     fn remove_file(&mut self, _path: &Path) -> io::Result<()> {
         Err(io::Error::new(
             io::ErrorKind::Other,

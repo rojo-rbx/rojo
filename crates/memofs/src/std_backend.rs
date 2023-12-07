@@ -78,6 +78,10 @@ impl VfsBackend for StdBackend {
         })
     }
 
+    fn create_dir(&mut self, path: &Path) -> io::Result<()> {
+        fs_err::create_dir(path)
+    }
+
     fn remove_file(&mut self, path: &Path) -> io::Result<()> {
         fs_err::remove_file(path)
     }

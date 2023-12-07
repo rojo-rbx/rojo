@@ -71,6 +71,7 @@ pub trait VfsBackend: sealed::Sealed + Send + 'static {
     fn read(&mut self, path: &Path) -> io::Result<Vec<u8>>;
     fn write(&mut self, path: &Path, data: &[u8]) -> io::Result<()>;
     fn read_dir(&mut self, path: &Path) -> io::Result<ReadDir>;
+    fn create_dir(&mut self, path: &Path) -> io::Result<()>;
     fn metadata(&mut self, path: &Path) -> io::Result<Metadata>;
     fn remove_file(&mut self, path: &Path) -> io::Result<()>;
     fn remove_dir_all(&mut self, path: &Path) -> io::Result<()>;
@@ -170,6 +171,11 @@ impl VfsInner {
         }
 
         Ok(dir)
+    }
+
+    fn create_dir<P: AsRef<Path>>(&mut self, path: P) -> io::Result<()> {
+        let path = path.as_ref();
+        self.backend.create_dir(path)
     }
 
     fn remove_file<P: AsRef<Path>>(&mut self, path: P) -> io::Result<()> {
@@ -279,6 +285,19 @@ impl Vfs {
     pub fn read_dir<P: AsRef<Path>>(&self, path: P) -> io::Result<ReadDir> {
         let path = path.as_ref();
         self.inner.lock().unwrap().read_dir(path)
+    }
+
+    /// Creates a directory at the provided location.
+    ///
+    /// Roughly equivalent to [`std::fs::create_dir`][std::fs::create_dir].
+    /// Similiar to that function, this function will fail if the parent of the
+    /// path does not exist.
+    ///
+    /// [std::fs::create_dir]: https://doc.rust-lang.org/stable/std/fs/fn.create_dir.html
+    #[inline]
+    pub fn create_dir<P: AsRef<Path>>(&self, path: P) -> io::Result<()> {
+        let path = path.as_ref();
+        self.inner.lock().unwrap().create_dir(path)
     }
 
     /// Remove a file.
