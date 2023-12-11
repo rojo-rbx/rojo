@@ -35,7 +35,7 @@ use self::{
     dir::snapshot_dir,
     json::snapshot_json,
     json_model::snapshot_json_model,
-    lua::{snapshot_lua, snapshot_lua_init, ScriptType},
+    lua::{snapshot_lua, snapshot_lua_init},
     project::snapshot_project,
     rbxm::snapshot_rbxm,
     rbxmx::snapshot_rbxmx,
@@ -43,7 +43,12 @@ use self::{
     txt::snapshot_txt,
 };
 
-pub use self::{project::snapshot_project_node, util::emit_legacy_scripts_default};
+pub use self::{
+    lua::ScriptType,
+    meta_file::{AdjacentMetadata, DirectoryMetadata},
+    project::snapshot_project_node,
+    util::emit_legacy_scripts_default,
+};
 
 /// Returns an `InstanceSnapshot` for the provided path.
 /// This will inspect the path and find the appropriate middleware for it,
