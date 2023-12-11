@@ -220,6 +220,10 @@ impl ServeSession {
     pub fn root_dir(&self) -> &Path {
         self.root_project.folder_location()
     }
+
+    pub fn root_project(&self) -> &Project {
+        &self.root_project
+    }
 }
 
 #[derive(Debug, Error)]
