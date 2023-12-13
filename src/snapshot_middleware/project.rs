@@ -277,12 +277,12 @@ pub fn snapshot_project_node(
         metadata.ignore_unknown_instances = true;
     }
 
-    metadata.instigating_source = Some(InstigatingSource::ProjectNode(
-        project_path.to_path_buf(),
-        instance_name.to_string(),
-        node.clone(),
-        parent_class.map(|name| name.to_owned()),
-    ));
+    metadata.instigating_source = Some(InstigatingSource::ProjectNode {
+        path: project_path.to_path_buf(),
+        name: instance_name.to_string(),
+        node: node.clone(),
+        parent_class: parent_class.map(|name| name.to_owned()),
+    });
 
     Ok(Some(InstanceSnapshot {
         snapshot_id: Ref::none(),

@@ -206,22 +206,31 @@ impl PathIgnoreRule {
     }
 }
 
+/// Represents where a particular Instance or InstanceSnapshot came from.
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub enum InstigatingSource {
+    /// The path the Instance was made from.
     Path(#[serde(serialize_with = "path_serializer::serialize_absolute")] PathBuf),
-    ProjectNode(
-        #[serde(serialize_with = "path_serializer::serialize_absolute")] PathBuf,
-        String,
-        ProjectNode,
-        Option<String>,
-    ),
+    /// The node in a Project that the Instance was made from.
+    ProjectNode {
+        #[serde(serialize_with = "path_serializer::serialize_absolute")]
+        path: PathBuf,
+        name: String,
+        node: ProjectNode,
+        parent_class: Option<String>,
+    },
 }
 
 impl fmt::Debug for InstigatingSource {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             InstigatingSource::Path(path) => write!(formatter, "Path({})", path.display()),
-            InstigatingSource::ProjectNode(path, name, node, parent_class) => write!(
+            InstigatingSource::ProjectNode {
+                name,
+                node,
+                path,
+                parent_class,
+            } => write!(
                 formatter,
                 "ProjectNode({}: {:?}) from path {} and parent class {:?}",
                 name,
