@@ -19,6 +19,7 @@ mod txt;
 mod util;
 
 use std::{
+    borrow::Cow,
     path::{Path, PathBuf},
     sync::OnceLock,
 };
@@ -68,7 +69,13 @@ pub fn snapshot_from_vfs(
     if meta.is_dir() {
         let (middleware, name) = get_dir_middleware(vfs, path)?;
         // TODO: Support user defined init paths
-        middleware.snapshot(context, vfs, path, &name)
+        match middleware {
+            Middleware::Dir => middleware.snapshot(context, vfs, path, &name),
+            _ => {
+                let name_as_path: PathBuf = name.as_ref().into();
+                middleware.snapshot(context, vfs, &path.join(name_as_path), &name)
+            }
+        }
     } else {
         let file_name = path
             .file_name()
@@ -89,7 +96,10 @@ pub fn snapshot_from_vfs(
 /// Gets the appropriate middleware for a directory by checking for `init`
 /// files. This uses an intrinsic priority list and for compatibility,
 /// that order should be left unchanged.
-fn get_dir_middleware<P: AsRef<Path>>(vfs: &Vfs, dir: P) -> anyhow::Result<(Middleware, String)> {
+fn get_dir_middleware<P: AsRef<Path>>(
+    vfs: &Vfs,
+    dir: P,
+) -> anyhow::Result<(Middleware, Cow<'static, str>)> {
     let path = dir.as_ref();
     let dir_name = path
         .file_name()
@@ -114,11 +124,11 @@ fn get_dir_middleware<P: AsRef<Path>>(vfs: &Vfs, dir: P) -> anyhow::Result<(Midd
 
     for (middleware, name) in order {
         if vfs.metadata(path.join(name)).with_not_found()?.is_some() {
-            return Ok((*middleware, dir_name));
+            return Ok((*middleware, Cow::Borrowed(*name)));
         }
     }
 
-    Ok((Middleware::Dir, dir_name))
+    Ok((Middleware::Dir, Cow::Owned(dir_name)))
 }
 
 /// Gets a snapshot for a path given an InstanceContext and Vfs, taking
