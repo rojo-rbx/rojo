@@ -21,10 +21,6 @@ pub fn hash_tree(dom: &WeakDom) -> HashMap<Ref, Hash> {
     // end
     while let Some(referent) = order.pop() {
         let inst = dom.get_by_ref(referent).unwrap();
-        // We don't really care about the equality of a DataModel.
-        if inst.class == "DataModel" {
-            continue;
-        }
         let hash = hash_inst(&mut prop_list, &map, inst);
 
         map.insert(referent, hash);
