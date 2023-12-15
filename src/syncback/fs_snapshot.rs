@@ -37,13 +37,18 @@ impl FsSnapshot {
     }
 
     pub fn write_to_vfs(&self, vfs: &Vfs) -> io::Result<()> {
+        let mut dirs = 0;
+        let mut files = 0;
         for dir_path in &self.dir {
             vfs.create_dir(dir_path)?;
+            dirs += 1;
         }
         for (path, contents) in &self.files {
             vfs.write(path, contents.as_slice())?;
+            files += 1;
         }
 
+        log::debug!("Wrote {dirs} directories and {files} files to the VFS");
         Ok(())
     }
 }
