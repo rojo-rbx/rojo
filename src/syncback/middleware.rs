@@ -250,7 +250,7 @@ fn syncback_project<'new, 'old>(
         inst_snapshot: InstanceSnapshot::from_instance(snapshot.new_inst()),
         fs_snapshot: FsSnapshot::new().with_file(
             &project.file_location,
-            serde_json::to_vec(&project).unwrap(),
+            serde_json::to_vec_pretty(&project).unwrap(),
         ),
         children,
         removed_children,
