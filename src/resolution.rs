@@ -190,6 +190,50 @@ impl AmbiguousValue {
     }
 }
 
+impl From<Variant> for UnresolvedValue {
+    fn from(value: Variant) -> Self {
+        Self::Ambiguous(match value {
+            Variant::Bool(bool) => AmbiguousValue::Bool(bool),
+            Variant::Float32(n) => AmbiguousValue::Number(n as f64),
+            Variant::Float64(n) => AmbiguousValue::Number(n),
+            Variant::Int32(n) => AmbiguousValue::Number(n as f64),
+            Variant::Int64(n) => AmbiguousValue::Number(n as f64),
+            Variant::String(str) => AmbiguousValue::String(str),
+            Variant::Tags(tags) => {
+                AmbiguousValue::StringArray(tags.iter().map(|s| s.to_string()).collect())
+            }
+            Variant::Content(content) => AmbiguousValue::String(content.into_string()),
+            Variant::Vector2(vector) => AmbiguousValue::Array2([vector.x as f64, vector.y as f64]),
+            Variant::Vector3(vector) => {
+                AmbiguousValue::Array3([vector.x as f64, vector.y as f64, vector.z as f64])
+            }
+            Variant::Color3(color) => {
+                AmbiguousValue::Array3([color.r as f64, color.g as f64, color.b as f64])
+            }
+            Variant::CFrame(cf) => AmbiguousValue::Array12([
+                cf.position.x as f64,
+                cf.position.y as f64,
+                cf.position.z as f64,
+                cf.orientation.x.x as f64,
+                cf.orientation.x.y as f64,
+                cf.orientation.x.z as f64,
+                cf.orientation.y.x as f64,
+                cf.orientation.y.y as f64,
+                cf.orientation.y.z as f64,
+                cf.orientation.z.x as f64,
+                cf.orientation.z.y as f64,
+                cf.orientation.z.z as f64,
+            ]),
+            Variant::Attributes(attr) => AmbiguousValue::Attributes(attr),
+            Variant::Font(font) => AmbiguousValue::Font(font),
+            Variant::MaterialColors(colors) => AmbiguousValue::MaterialColors(colors),
+            _ => {
+                return Self::FullyQualified(value);
+            }
+        })
+    }
+}
+
 fn find_descriptor(
     class_name: &str,
     prop_name: &str,
