@@ -185,6 +185,7 @@ fn syncback_project<'new, 'old>(
         snapshot.new_inst(),
         snapshot.old_inst().unwrap(),
     )];
+
     while let Some((node, new_inst, old_inst)) = nodes.pop() {
         let mut old_child_map = HashMap::with_capacity(old_inst.children().len());
         for child_ref in old_inst.children() {
@@ -196,6 +197,7 @@ fn syncback_project<'new, 'old>(
             let child = snapshot.get_new_instance(*child_ref).unwrap();
             new_child_map.insert(child.name.as_str(), child);
         }
+
         for (child_name, child_node) in &mut node.children {
             if let Some(new_child) = new_child_map.get(child_name.as_str()) {
                 if let Some(old_child) = old_child_map.get(child_name.as_str()) {
@@ -220,6 +222,7 @@ fn syncback_project<'new, 'old>(
                 panic!("Cannot add or remove children from a project")
             }
         }
+
         // From this point, both maps contain only children of the current
         // instance that aren't in the project. So, we just do some quick and
         // dirty matching to identify children that were added and removed.
