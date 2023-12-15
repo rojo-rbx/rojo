@@ -30,6 +30,7 @@ pub fn syncback_middleware<'new, 'old>(
         Middleware::ModuleScript => syncback_script(ScriptType::Module, snapshot),
         Middleware::ClientScript => syncback_script(ScriptType::Client, snapshot),
         Middleware::ServerScript => syncback_script(ScriptType::Server, snapshot),
+        Middleware::Rbxmx => syncback_rbxmx(snapshot),
         Middleware::Dir => syncback_dir(snapshot),
         _ => panic!("unsupported instance middleware {:?}", middleware),
     }
@@ -221,9 +222,7 @@ fn syncback_project<'new, 'old>(
         }
         // From this point, both maps contain only children of the current
         // instance that aren't in the project. So, we just do some quick and
-        // dirty matching to identify children that were:
-        // - added (in new but not old)
-        // - removed (in old but not new)
+        // dirty matching to identify children that were added and removed.
         for (new_name, new_child) in new_child_map {
             if let Some(old_inst) = old_child_map.get(new_name) {
                 children.push(snapshot.from_parent(
@@ -254,5 +253,25 @@ fn syncback_project<'new, 'old>(
         ),
         children,
         removed_children,
+    }
+}
+
+pub fn syncback_rbxmx<'new, 'old>(
+    snapshot: &SyncbackSnapshot<'new, 'old>,
+) -> SyncbackReturn<'new, 'old> {
+    // If any of the children of this Instance are scripts, we don't want
+    // include them in the model. So instead, we'll check and then serialize.
+
+    let inst = snapshot.new_inst();
+    let mut path = snapshot.parent_path.join(&inst.name);
+    path.set_extension("rbxmx");
+    // Long-term, anyway. Right now we stay silly.
+    let mut serialized = Vec::new();
+    rbx_xml::to_writer_default(&mut serialized, snapshot.new_tree(), &[inst.referent()]).unwrap();
+    SyncbackReturn {
+        inst_snapshot: InstanceSnapshot::from_instance(inst),
+        fs_snapshot: FsSnapshot::new().with_file(&path, serialized),
+        children: Vec::new(),
+        removed_children: Vec::new(),
     }
 }
