@@ -30,6 +30,7 @@ pub fn syncback_middleware<'new, 'old>(
         Middleware::ModuleScript => syncback_script(ScriptType::Module, snapshot),
         Middleware::ClientScript => syncback_script(ScriptType::Client, snapshot),
         Middleware::ServerScript => syncback_script(ScriptType::Server, snapshot),
+        Middleware::Text => syncback_text(snapshot),
         Middleware::Rbxmx => syncback_rbxmx(snapshot),
         Middleware::Dir => syncback_dir(snapshot),
         Middleware::ModuleScriptDir => syncback_script_dir(ScriptType::Module, snapshot),
@@ -335,6 +336,28 @@ pub fn syncback_rbxmx<'new, 'old>(
     SyncbackReturn {
         inst_snapshot: InstanceSnapshot::from_instance(inst),
         fs_snapshot: FsSnapshot::new().with_file(&path, serialized),
+        children: Vec::new(),
+        removed_children: Vec::new(),
+    }
+}
+
+fn syncback_text<'new, 'old>(
+    snapshot: &SyncbackSnapshot<'new, 'old>,
+) -> SyncbackReturn<'new, 'old> {
+    let inst = snapshot.new_inst();
+
+    let mut path = snapshot.parent_path.clone();
+    path.set_file_name(snapshot.name.clone());
+    path.set_extension("txt");
+    let contents = if let Some(Variant::String(source)) = inst.properties.get("Value") {
+        source.as_bytes().to_vec()
+    } else {
+        panic!("Value should be a string")
+    };
+
+    SyncbackReturn {
+        inst_snapshot: InstanceSnapshot::from_instance(inst).metadata(InstanceMetadata::new()),
+        fs_snapshot: FsSnapshot::new().with_file(path, contents),
         children: Vec::new(),
         removed_children: Vec::new(),
     }
