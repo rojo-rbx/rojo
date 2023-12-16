@@ -7,7 +7,7 @@ use rbx_dom_weak::{
 
 use crate::{
     resolution::UnresolvedValue,
-    snapshot::{InstanceMetadata, InstanceSnapshot, InstanceWithMeta},
+    snapshot::{InstanceMetadata, InstanceSnapshot, InstanceWithMeta, InstigatingSource},
     snapshot_middleware::{Middleware, ScriptType},
     Project,
 };
@@ -199,14 +199,23 @@ fn syncback_dir<'new, 'old>(snapshot: &SyncbackSnapshot<'new, 'old>) -> Syncback
 fn syncback_project<'new, 'old>(
     snapshot: &SyncbackSnapshot<'new, 'old>,
 ) -> SyncbackReturn<'new, 'old> {
+    let old_inst = snapshot
+        .old_inst()
+        .expect("project middleware shouldn't be used to make new files");
+    // This can never be None.
+    let source = old_inst.metadata().instigating_source.as_ref().unwrap();
+
+    let project_path = match source {
+        InstigatingSource::Path(path) => path.as_path(),
+        InstigatingSource::ProjectNode { path, .. } => path.as_path(),
+    };
+
     // We need to build a 'new' project and serialize it using an FsSnapshot.
     // It's convenient to start with the old one though, since it means we have
     // a thing to iterate through.
-    let mut project = Project::load_from_slice(
-        &snapshot.vfs().read(&snapshot.parent_path).unwrap(),
-        &snapshot.parent_path,
-    )
-    .unwrap();
+    let mut project =
+        Project::load_from_slice(&snapshot.vfs().read(project_path).unwrap(), project_path)
+            .unwrap();
 
     let mut children = Vec::new();
     let mut removed_children = Vec::new();
@@ -215,11 +224,7 @@ fn syncback_project<'new, 'old>(
     // so we'll simply match Instances on a per-node basis and rebuild the tree
     // with the new instance's data. This matching will be done by class and name
     // to simplify things.
-    let mut nodes = vec![(
-        &mut project.tree,
-        snapshot.new_inst(),
-        snapshot.old_inst().unwrap(),
-    )];
+    let mut nodes = vec![(&mut project.tree, snapshot.new_inst(), old_inst)];
 
     // A map of referents from the new tree to the Path that created it,
     // if it exists. This is a roundabout way to locate the parents of
