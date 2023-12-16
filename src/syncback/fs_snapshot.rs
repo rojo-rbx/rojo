@@ -31,20 +31,34 @@ impl FsSnapshot {
         self
     }
 
+    pub fn merge(&mut self, other: Self) {
+        self.dir.extend(other.dir);
+        self.files.extend(other.files);
+    }
+
     pub fn push_file<P: AsRef<Path>>(&mut self, path: P, data: Vec<u8>) {
         self.files
             .insert(path.as_ref().to_path_buf(), Arc::new(data));
     }
 
-    pub fn write_to_vfs(&self, vfs: &Vfs) -> io::Result<()> {
+    pub fn pop_dir<P: AsRef<Path>>(&mut self, path: P) -> bool {
+        self.dir.remove(path.as_ref())
+    }
+
+    pub fn write_to_vfs<P: AsRef<Path>>(&self, base: P, vfs: &Vfs) -> io::Result<()> {
+        let base_path = base.as_ref();
         let mut dirs = 0;
         let mut files = 0;
         for dir_path in &self.dir {
-            vfs.create_dir(dir_path)?;
+            match vfs.create_dir(base_path.join(dir_path)) {
+                Ok(_) => (),
+                Err(err) if err.kind() == io::ErrorKind::AlreadyExists => (),
+                Err(err) => return Err(err),
+            };
             dirs += 1;
         }
         for (path, contents) in &self.files {
-            vfs.write(path, contents.as_slice())?;
+            vfs.write(base_path.join(path), contents.as_slice())?;
             files += 1;
         }
 
