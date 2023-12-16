@@ -7,9 +7,9 @@ use rbx_dom_weak::{
 
 use crate::{
     resolution::UnresolvedValue,
-    snapshot::{InstanceMetadata, InstanceSnapshot, InstanceWithMeta, InstigatingSource},
-    snapshot_middleware::{DirectoryMetadata, Middleware, ScriptType},
-    Project, ProjectNode,
+    snapshot::{InstanceMetadata, InstanceSnapshot, InstanceWithMeta},
+    snapshot_middleware::{Middleware, ScriptType},
+    Project,
 };
 
 use super::{FsSnapshot, SyncbackSnapshot};
@@ -32,6 +32,9 @@ pub fn syncback_middleware<'new, 'old>(
         Middleware::ServerScript => syncback_script(ScriptType::Server, snapshot),
         Middleware::Rbxmx => syncback_rbxmx(snapshot),
         Middleware::Dir => syncback_dir(snapshot),
+        Middleware::ModuleScriptDir => syncback_script_dir(ScriptType::Module, snapshot),
+        Middleware::ClientScriptDir => syncback_script_dir(ScriptType::Client, snapshot),
+        Middleware::ServerScriptDir => syncback_script_dir(ScriptType::Server, snapshot),
         _ => panic!("unsupported instance middleware {:?}", middleware),
     }
 }
@@ -91,6 +94,38 @@ fn syncback_script<'new, 'old>(
         // Scripts don't have a child!
         children: Vec::new(),
         removed_children: Vec::new(),
+    }
+}
+
+fn syncback_script_dir<'new, 'old>(
+    script_type: ScriptType,
+    snapshot: &SyncbackSnapshot<'new, 'old>,
+) -> SyncbackReturn<'new, 'old> {
+    let mut path = snapshot.parent_path.join("init");
+    path.set_extension(match script_type {
+        ScriptType::Module => "lua",
+        ScriptType::Client => "client.lua",
+        ScriptType::Server => "server.lua",
+    });
+    let contents =
+        if let Some(Variant::String(source)) = snapshot.new_inst().properties.get("Source") {
+            source.as_bytes().to_vec()
+        } else {
+            panic!("Source should be a string")
+        };
+
+    let dir_syncback = syncback_dir(snapshot);
+    let init_syncback = syncback_script(script_type, snapshot);
+
+    let mut fs_snapshot = FsSnapshot::new();
+    fs_snapshot.push_file(path, contents);
+    fs_snapshot.merge(dir_syncback.fs_snapshot);
+
+    SyncbackReturn {
+        inst_snapshot: InstanceSnapshot::from_instance(snapshot.new_inst()),
+        fs_snapshot,
+        children: dir_syncback.children,
+        removed_children: dir_syncback.removed_children,
     }
 }
 
@@ -186,7 +221,14 @@ fn syncback_project<'new, 'old>(
         snapshot.old_inst().unwrap(),
     )];
 
+    // A map of referents from the new tree to the Path that created it,
+    // if it exists. This is a roundabout way to locate the parents of
+    // Instances.
+    let mut ref_to_node = HashMap::new();
+
     while let Some((node, new_inst, old_inst)) = nodes.pop() {
+        ref_to_node.insert(new_inst.referent(), node.path.as_ref());
+
         let mut old_child_map = HashMap::with_capacity(old_inst.children().len());
         for child_ref in old_inst.children() {
             let child = snapshot.get_old_instance(*child_ref).unwrap();
@@ -227,22 +269,37 @@ fn syncback_project<'new, 'old>(
         // instance that aren't in the project. So, we just do some quick and
         // dirty matching to identify children that were added and removed.
         for (new_name, new_child) in new_child_map {
+            let parent_path = match ref_to_node.get(&new_child.parent()) {
+                Some(Some(path)) => path.path().to_path_buf(),
+                Some(None) => {
+                    log::debug!("{new_name} was visited but has no path");
+                    continue;
+                }
+                None => {
+                    log::debug!("{new_name} does not currently exist on FS");
+                    continue;
+                }
+            };
             if let Some(old_inst) = old_child_map.get(new_name) {
-                children.push(snapshot.from_parent(
-                    new_name,
-                    new_name.to_string(),
-                    new_child.referent(),
-                    Some(old_inst.id()),
-                ));
+                // All children are descendants of a node of a project
+                // So we really just need to track which one is which.
+                children.push(SyncbackSnapshot {
+                    data: snapshot.data.clone(),
+                    old: Some(old_inst.id()),
+                    new: new_child.referent(),
+                    name: new_name.to_string(),
+                    parent_path,
+                });
                 old_child_map.remove(new_name);
             } else {
                 // it's new
-                children.push(snapshot.from_parent(
-                    new_name,
-                    new_name.to_string(),
-                    new_child.referent(),
-                    None,
-                ));
+                children.push(SyncbackSnapshot {
+                    data: snapshot.data.clone(),
+                    old: None,
+                    new: new_child.referent(),
+                    name: new_name.to_string(),
+                    parent_path,
+                });
             }
         }
         removed_children.extend(old_child_map.into_values());
