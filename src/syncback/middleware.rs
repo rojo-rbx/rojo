@@ -115,7 +115,6 @@ fn syncback_script_dir<'new, 'old>(
         };
 
     let dir_syncback = syncback_dir(snapshot);
-    let init_syncback = syncback_script(script_type, snapshot);
 
     let mut fs_snapshot = FsSnapshot::new();
     fs_snapshot.push_file(path, contents);
