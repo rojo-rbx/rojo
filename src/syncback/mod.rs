@@ -35,18 +35,24 @@ pub fn syncback_loop<'old, 'new>(
         data: syncback_data,
         old: Some(old_tree.get_root_id()),
         new: new_tree.root_ref(),
-        parent_path: project.file_location.clone(),
+        parent_path: project.folder_location().to_path_buf(),
         name: project.name.clone(),
     }];
 
     let mut replacements = Vec::new();
+    let mut fs_snapshot = FsSnapshot::new();
 
     while let Some(snapshot) = snapshots.pop() {
+        log::debug!(
+            "instance {} parent is {}",
+            snapshot.name,
+            snapshot.parent_path.display()
+        );
         // We can quickly check that two subtrees are identical and if they are,
         // skip reconciling them.
         if let Some(old_ref) = snapshot.old {
             if old_hashes.get(&old_ref) == new_hashes.get(&snapshot.new) {
-                log::debug!(
+                log::trace!(
                     "Skipping {} due to it being identically hashed as {:?}",
                     get_inst_path(new_tree, snapshot.new),
                     old_hashes.get(&old_ref)
@@ -59,7 +65,7 @@ pub fn syncback_loop<'old, 'new>(
             .old_inst()
             .and_then(|inst| inst.metadata().middleware)
             .unwrap_or_else(|| get_best_middleware(snapshot.new_inst()));
-        log::debug!(
+        log::trace!(
             "Middleware for {}: {:?}",
             get_inst_path(new_tree, snapshot.new),
             middleware
@@ -72,11 +78,12 @@ pub fn syncback_loop<'old, 'new>(
         }
 
         // TODO: Check if file names are valid files
-        log::debug!("Writing {} to vfs", get_inst_path(new_tree, snapshot.new));
-        syncback.fs_snapshot.write_to_vfs(vfs)?;
+        fs_snapshot.merge(syncback.fs_snapshot);
 
         snapshots.extend(syncback.children);
     }
+
+    fs_snapshot.write_to_vfs(project.folder_location(), vfs)?;
 
     Ok(replacements)
 }
