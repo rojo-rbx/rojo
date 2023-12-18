@@ -205,16 +205,11 @@ fn syncback_project<'new, 'old>(
     // This can never be None.
     let source = old_inst.metadata().instigating_source.as_ref().unwrap();
 
-    let project_path = match source {
-        InstigatingSource::Path(path) => path.as_path(),
-        InstigatingSource::ProjectNode { path, .. } => path.as_path(),
-    };
-
     // We need to build a 'new' project and serialize it using an FsSnapshot.
     // It's convenient to start with the old one though, since it means we have
     // a thing to iterate through.
     let mut project =
-        Project::load_from_slice(&snapshot.vfs().read(project_path).unwrap(), project_path)
+        Project::load_from_slice(&snapshot.vfs().read(source.path()).unwrap(), source.path())
             .unwrap();
 
     let mut children = Vec::new();

@@ -221,6 +221,15 @@ pub enum InstigatingSource {
     },
 }
 
+impl InstigatingSource {
+    pub fn path(&self) -> &Path {
+        match self {
+            Self::Path(path) => path.as_path(),
+            Self::ProjectNode { path, .. } => path.as_path(),
+        }
+    }
+}
+
 impl fmt::Debug for InstigatingSource {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
