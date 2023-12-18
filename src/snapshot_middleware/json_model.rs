@@ -3,7 +3,7 @@ use std::{borrow::Cow, collections::HashMap, path::Path, str};
 use anyhow::Context;
 use memofs::Vfs;
 use rbx_dom_weak::types::{Attributes, Ref};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     resolution::UnresolvedValue,
@@ -54,9 +54,9 @@ pub fn snapshot_json_model(
     Ok(Some(snapshot))
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-struct JsonModel {
+pub struct JsonModel {
     #[serde(alias = "Name")]
     name: Option<String>,
 
@@ -116,6 +116,36 @@ impl JsonModel {
             properties,
             children,
         })
+    }
+
+    /// Constructs an empty JSON model with the provided name and class.
+    #[inline]
+    pub fn new(name: &str, class_name: &str) -> Self {
+        Self {
+            name: Some(name.to_string()),
+            class_name: class_name.to_string(),
+            children: Vec::new(),
+            properties: HashMap::new(),
+            attributes: HashMap::new(),
+        }
+    }
+
+    /// Sets the properties of this `JsonModel`.
+    #[inline]
+    pub fn set_properties(&mut self, properties: HashMap<String, UnresolvedValue>) {
+        self.properties = properties;
+    }
+
+    /// Sets the attributes of this `JsonModel`.
+    #[inline]
+    pub fn set_attributes(&mut self, attributes: HashMap<String, UnresolvedValue>) {
+        self.attributes = attributes;
+    }
+
+    /// Pushes the provided `JsonModel` as a child of this one.
+    #[inline]
+    pub fn push_child(&mut self, child: Self) {
+        self.children.push(child);
     }
 }
 

@@ -45,6 +45,7 @@ use self::{
 };
 
 pub use self::{
+    json_model::JsonModel,
     lua::ScriptType,
     meta_file::{AdjacentMetadata, DirectoryMetadata},
     project::snapshot_project_node,
