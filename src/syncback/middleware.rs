@@ -7,8 +7,8 @@ use rbx_dom_weak::{
 
 use crate::{
     resolution::UnresolvedValue,
-    snapshot::{InstanceMetadata, InstanceSnapshot, InstanceWithMeta, InstigatingSource},
-    snapshot_middleware::{Middleware, ScriptType},
+    snapshot::{InstanceMetadata, InstanceSnapshot, InstanceWithMeta},
+    snapshot_middleware::{JsonModel, Middleware, ScriptType},
     Project,
 };
 
@@ -31,6 +31,7 @@ pub fn syncback_middleware<'new, 'old>(
         Middleware::ClientScript => syncback_script(ScriptType::Client, snapshot),
         Middleware::ServerScript => syncback_script(ScriptType::Server, snapshot),
         Middleware::Text => syncback_text(snapshot),
+        Middleware::JsonModel => syncback_json_model(snapshot),
         Middleware::Rbxmx => syncback_rbxmx(snapshot),
         Middleware::Dir => syncback_dir(snapshot),
         Middleware::ModuleScriptDir => syncback_script_dir(ScriptType::Module, snapshot),
@@ -130,6 +131,11 @@ fn syncback_script_dir<'new, 'old>(
 }
 
 fn syncback_dir<'new, 'old>(snapshot: &SyncbackSnapshot<'new, 'old>) -> SyncbackReturn<'new, 'old> {
+    log::debug!(
+        "parent of {} is {}",
+        snapshot.name,
+        snapshot.parent_path.display()
+    );
     let path = snapshot.parent_path.join(snapshot.name.clone());
 
     let mut removed_children = Vec::new();
@@ -353,6 +359,41 @@ fn syncback_text<'new, 'old>(
     SyncbackReturn {
         inst_snapshot: InstanceSnapshot::from_instance(inst).metadata(InstanceMetadata::new()),
         fs_snapshot: FsSnapshot::new().with_file(path, contents),
+        children: Vec::new(),
+        removed_children: Vec::new(),
+    }
+}
+
+fn syncback_json_model<'new, 'old>(
+    snapshot: &SyncbackSnapshot<'new, 'old>,
+) -> SyncbackReturn<'new, 'old> {
+    let mut path = snapshot.parent_path.clone();
+    path.set_file_name(snapshot.name.clone());
+    path.set_extension("model.json");
+
+    let new_inst = snapshot.new_inst();
+    let mut model = JsonModel::new(&new_inst.name, &new_inst.class);
+    let mut properties = HashMap::with_capacity(new_inst.properties.len());
+
+    // TODO handle attributes separately
+    if let Some(old_inst) = snapshot.old_inst() {
+        for (name, value) in &new_inst.properties {
+            if old_inst.properties().contains_key(name) {
+                properties.insert(name.clone(), UnresolvedValue::from(value.clone()));
+            }
+        }
+    } else {
+        for (name, value) in new_inst.properties.clone() {
+            properties.insert(name, UnresolvedValue::from(value));
+        }
+    }
+    model.set_properties(properties);
+
+    // TODO children
+
+    SyncbackReturn {
+        inst_snapshot: InstanceSnapshot::from_instance(new_inst),
+        fs_snapshot: FsSnapshot::new().with_file(&path, serde_json::to_vec_pretty(&model).unwrap()),
         children: Vec::new(),
         removed_children: Vec::new(),
     }
