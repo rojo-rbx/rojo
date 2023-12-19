@@ -93,7 +93,7 @@ pub fn get_best_middleware(inst: &Instance) -> Middleware {
     match inst.class.as_str() {
         "Folder" => Middleware::Dir,
         // TODO this should probably just be rbxm
-        "Model" => Middleware::Rbxmx,
+        "Model" => Middleware::Rbxm,
         "Script" => {
             if inst.children().len() == 0 {
                 Middleware::ServerScript
@@ -115,7 +115,7 @@ pub fn get_best_middleware(inst: &Instance) -> Middleware {
                 Middleware::ModuleScriptDir
             }
         }
-        _ => Middleware::Rbxmx,
+        _ => Middleware::Rbxm,
     }
 }
 
