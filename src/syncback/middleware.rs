@@ -12,7 +12,7 @@ use crate::{
     Project,
 };
 
-use super::{FsSnapshot, SyncbackSnapshot};
+use super::{is_valid_file_name, FsSnapshot, SyncbackSnapshot};
 
 pub struct SyncbackReturn<'new, 'old> {
     pub inst_snapshot: InstanceSnapshot,
@@ -75,6 +75,10 @@ fn syncback_script<'new, 'old>(
     script_type: ScriptType,
     snapshot: &SyncbackSnapshot<'new, 'old>,
 ) -> SyncbackReturn<'new, 'old> {
+    if !is_valid_file_name(&snapshot.name) {
+        panic!("cannot create a file with name {}", snapshot.name);
+    }
+
     let inst = snapshot.new_inst();
 
     let mut path = snapshot.parent_path.clone();
@@ -103,6 +107,10 @@ fn syncback_script_dir<'new, 'old>(
     script_type: ScriptType,
     snapshot: &SyncbackSnapshot<'new, 'old>,
 ) -> SyncbackReturn<'new, 'old> {
+    if !is_valid_file_name(&snapshot.name) {
+        panic!("cannot create a directory with name {}", snapshot.name);
+    }
+
     let mut path = snapshot.parent_path.join("init");
     path.set_extension(match script_type {
         ScriptType::Module => "lua",
@@ -131,6 +139,10 @@ fn syncback_script_dir<'new, 'old>(
 }
 
 fn syncback_dir<'new, 'old>(snapshot: &SyncbackSnapshot<'new, 'old>) -> SyncbackReturn<'new, 'old> {
+    if !is_valid_file_name(&snapshot.name) {
+        panic!("cannot create a directory with name {}", snapshot.name);
+    }
+
     let path = snapshot.parent_path.join(snapshot.name.clone());
 
     let mut removed_children = Vec::new();
@@ -303,6 +315,9 @@ fn syncback_project<'new, 'old>(
         removed_children.extend(old_child_map.into_values());
     }
 
+    // We don't need to validate any file names for the FsSnapshot
+    // because projects can't ever be made by syncback, so they must
+    // already exist on the file system
     SyncbackReturn {
         inst_snapshot: InstanceSnapshot::from_instance(snapshot.new_inst()),
         fs_snapshot: FsSnapshot::new().with_file(
@@ -319,9 +334,12 @@ pub fn syncback_rbxmx<'new, 'old>(
 ) -> SyncbackReturn<'new, 'old> {
     // If any of the children of this Instance are scripts, we don't want
     // include them in the model. So instead, we'll check and then serialize.
+    if !is_valid_file_name(&snapshot.name) {
+        panic!("cannot create a file with name {}", snapshot.name);
+    }
 
     let inst = snapshot.new_inst();
-    let mut path = snapshot.parent_path.join(&inst.name);
+    let mut path = snapshot.parent_path.join(&snapshot.name);
     path.set_extension("rbxmx");
     // Long-term, anyway. Right now we stay silly.
     let mut serialized = Vec::new();
@@ -337,8 +355,11 @@ pub fn syncback_rbxmx<'new, 'old>(
 fn syncback_text<'new, 'old>(
     snapshot: &SyncbackSnapshot<'new, 'old>,
 ) -> SyncbackReturn<'new, 'old> {
-    let inst = snapshot.new_inst();
+    if !is_valid_file_name(&snapshot.name) {
+        panic!("cannot create a file with name {}", snapshot.name);
+    }
 
+    let inst = snapshot.new_inst();
     let mut path = snapshot.parent_path.clone();
     path.set_file_name(snapshot.name.clone());
     path.set_extension("txt");
@@ -359,6 +380,10 @@ fn syncback_text<'new, 'old>(
 fn syncback_json_model<'new, 'old>(
     snapshot: &SyncbackSnapshot<'new, 'old>,
 ) -> SyncbackReturn<'new, 'old> {
+    if !is_valid_file_name(&snapshot.name) {
+        panic!("cannot create a file with name {}", snapshot.name);
+    }
+
     let mut path = snapshot.parent_path.clone();
     path.set_file_name(snapshot.name.clone());
     path.set_extension("model.json");
