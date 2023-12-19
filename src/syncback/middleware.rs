@@ -132,12 +132,6 @@ fn syncback_script_dir<'new, 'old>(
 
 fn syncback_dir<'new, 'old>(snapshot: &SyncbackSnapshot<'new, 'old>) -> SyncbackReturn<'new, 'old> {
     let path = snapshot.parent_path.join(snapshot.name.clone());
-    log::debug!(
-        "parent of {} is {}, writing to {}",
-        snapshot.name,
-        snapshot.parent_path.display(),
-        path.display()
-    );
 
     let mut removed_children = Vec::new();
     let mut children = Vec::new();
@@ -214,6 +208,7 @@ fn syncback_project<'new, 'old>(
     let mut project =
         Project::load_from_slice(&snapshot.vfs().read(source.path()).unwrap(), source.path())
             .unwrap();
+    let base_path = source.path().parent().unwrap();
 
     let mut children = Vec::new();
     let mut removed_children = Vec::new();
@@ -273,7 +268,7 @@ fn syncback_project<'new, 'old>(
         // dirty matching to identify children that were added and removed.
         for (new_name, new_child) in new_child_map {
             let parent_path = match ref_to_node.get(&new_child.parent()) {
-                Some(Some(path)) => path.path().to_path_buf(),
+                Some(Some(path)) => base_path.join(path.path()),
                 Some(None) => {
                     log::debug!("{new_name} was visited but has no path");
                     continue;
