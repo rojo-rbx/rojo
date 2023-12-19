@@ -81,8 +81,7 @@ fn syncback_script<'new, 'old>(
 
     let inst = snapshot.new_inst();
 
-    let mut path = snapshot.parent_path.clone();
-    path.set_file_name(snapshot.name.clone());
+    let mut path = snapshot.parent_path.join(&snapshot.name);
     path.set_extension(match script_type {
         ScriptType::Module => "lua",
         ScriptType::Client => "client.lua",
@@ -111,7 +110,8 @@ fn syncback_script_dir<'new, 'old>(
         panic!("cannot create a directory with name {}", snapshot.name);
     }
 
-    let mut path = snapshot.parent_path.join("init");
+    let mut path = snapshot.parent_path.join(&snapshot.name);
+    path.push("init");
     path.set_extension(match script_type {
         ScriptType::Module => "lua",
         ScriptType::Client => "client.lua",
@@ -360,9 +360,9 @@ fn syncback_text<'new, 'old>(
     }
 
     let inst = snapshot.new_inst();
-    let mut path = snapshot.parent_path.clone();
-    path.set_file_name(snapshot.name.clone());
+    let mut path = snapshot.parent_path.join(&snapshot.name);
     path.set_extension("txt");
+
     let contents = if let Some(Variant::String(source)) = inst.properties.get("Value") {
         source.as_bytes().to_vec()
     } else {
@@ -384,8 +384,7 @@ fn syncback_json_model<'new, 'old>(
         panic!("cannot create a file with name {}", snapshot.name);
     }
 
-    let mut path = snapshot.parent_path.clone();
-    path.set_file_name(snapshot.name.clone());
+    let mut path = snapshot.parent_path.join(&snapshot.name);
     path.set_extension("model.json");
 
     let new_inst = snapshot.new_inst();
