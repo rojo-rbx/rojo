@@ -1,7 +1,5 @@
 use std::{
-    collections::HashMap,
     fs,
-    hash::Hash,
     path::{Path, PathBuf},
     time::Instant,
 };
@@ -32,22 +30,33 @@ impl SyncbackCommand {
         let path_old = resolve_path(&self.project);
         let path_new = resolve_path(&self.input);
 
+        let project_start = Instant::now();
         log::info!("Opening project at {}", path_old.display());
         let session_old = ServeSession::new(Vfs::new_default(), path_old.clone())?;
+        log::info!(
+            "Finished opening project in {:0.02}s",
+            project_start.elapsed().as_secs_f32()
+        );
 
         let dom_old = session_old.tree();
+
+        let dom_start = Instant::now();
         log::info!("Reading place file at {}", path_new.display());
         let dom_new = read_dom(&path_new);
+        log::info!(
+            "Finished opening file in {:0.02}s",
+            dom_start.elapsed().as_secs_f32()
+        );
 
         let start = Instant::now();
-        log::debug!("Beginning syncback...");
+        log::info!("Beginning syncback...");
         syncback_loop(
             session_old.vfs(),
             &dom_old,
             &dom_new,
             session_old.root_project(),
         )?;
-        log::debug!(
+        log::info!(
             "Syncback finished in {:.02}s!",
             start.elapsed().as_secs_f32()
         );
@@ -71,9 +80,4 @@ fn read_dom(path: &Path) -> WeakDom {
     } else {
         panic!("invalid Roblox file at {}", path.display())
     }
-}
-
-#[inline]
-fn invert_map<K: Hash + Eq, V: Hash + Eq>(map: HashMap<K, V>) -> HashMap<V, K> {
-    map.into_iter().map(|(key, value)| (value, key)).collect()
 }
