@@ -1,8 +1,5 @@
 use memofs::Vfs;
-use std::{
-    path::{Path, PathBuf},
-    rc::Rc,
-};
+use std::{path::PathBuf, rc::Rc};
 
 use crate::snapshot::{InstanceWithMeta, RojoTree};
 use rbx_dom_weak::{types::Ref, Instance, WeakDom};
@@ -14,11 +11,11 @@ pub struct SyncbackData<'new, 'old> {
 }
 
 pub struct SyncbackSnapshot<'new, 'old> {
-    pub(super) data: Rc<SyncbackData<'new, 'old>>,
-    pub(super) old: Option<Ref>,
-    pub(super) new: Ref,
-    pub(super) parent_path: PathBuf,
-    pub(super) name: String,
+    pub data: Rc<SyncbackData<'new, 'old>>,
+    pub old: Option<Ref>,
+    pub new: Ref,
+    pub parent_path: PathBuf,
+    pub name: String,
 }
 
 impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
@@ -71,7 +68,7 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
         self.data.vfs
     }
 
-    /// Returns the WeakDom used for the 'new' tree
+    /// Returns the WeakDom used for the 'new' tree.
     #[inline]
     pub fn new_tree(&self) -> &'new WeakDom {
         self.data.new_tree

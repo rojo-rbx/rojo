@@ -1,8 +1,15 @@
-use std::path::Path;
+use std::{
+    collections::{HashMap, HashSet},
+    path::Path,
+};
 
 use memofs::{DirEntry, IoResultExt, Vfs};
+use rbx_dom_weak::types::Ref;
 
-use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
+use crate::{
+    snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
+    syncback::{is_valid_file_name, FsSnapshot, SyncbackReturn, SyncbackSnapshot},
+};
 
 use super::{meta_file::DirectoryMetadata, snapshot_from_vfs};
 
@@ -84,6 +91,75 @@ pub fn snapshot_dir_no_meta(
         );
 
     Ok(Some(snapshot))
+}
+
+pub fn syncback_dir<'new, 'old>(
+    snapshot: &SyncbackSnapshot<'new, 'old>,
+) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
+    if !is_valid_file_name(&snapshot.name) {
+        anyhow::bail!("cannot create a directory with name {}", snapshot.name);
+    }
+
+    let path = snapshot.parent_path.join(&snapshot.name);
+
+    let mut removed_children = Vec::new();
+    let mut children = Vec::new();
+
+    if let Some(old_inst) = snapshot.old_inst() {
+        let old_children: HashMap<&str, Ref> = old_inst
+            .children()
+            .iter()
+            .map(|old_ref| {
+                (
+                    snapshot.get_old_instance(*old_ref).unwrap().name(),
+                    *old_ref,
+                )
+            })
+            .collect();
+        let new_children: HashSet<&str> = snapshot
+            .new_inst()
+            .children()
+            .iter()
+            .map(|new_ref| snapshot.get_new_instance(*new_ref).unwrap().name.as_str())
+            .collect();
+
+        for child_ref in old_inst.children() {
+            let old_child = snapshot.get_old_instance(*child_ref).unwrap();
+            // If it exists in the old tree but not the new one, it was removed.
+            if !new_children.contains(old_child.name()) {
+                removed_children.push(old_child);
+            }
+        }
+
+        for child_ref in snapshot.new_inst().children() {
+            let new_child = snapshot.get_new_instance(*child_ref).unwrap();
+            // If it exists in the new tree but not the old one, it was added.
+            match old_children.get(new_child.name.as_str()) {
+                None => {
+                    children.push(snapshot.from_parent(new_child.name.clone(), *child_ref, None))
+                }
+                Some(old_ref) => children.push(snapshot.from_parent(
+                    new_child.name.clone(),
+                    *child_ref,
+                    Some(*old_ref),
+                )),
+            }
+        }
+    } else {
+        for child_ref in snapshot.new_inst().children() {
+            let child = snapshot.get_new_instance(*child_ref).unwrap();
+            children.push(snapshot.from_parent(child.name.clone(), *child_ref, None))
+        }
+    }
+    let fs_snapshot = FsSnapshot::new().with_dir(&path);
+    // TODO metadata, including classname
+
+    Ok(SyncbackReturn {
+        inst_snapshot: InstanceSnapshot::from_instance(snapshot.new_inst()),
+        fs_snapshot,
+        children,
+        removed_children,
+    })
 }
 
 #[cfg(test)]

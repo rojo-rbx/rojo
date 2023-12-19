@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     resolution::UnresolvedValue,
     snapshot::{InstanceContext, InstanceSnapshot},
+    syncback::{is_valid_file_name, FsSnapshot, SyncbackReturn, SyncbackSnapshot},
 };
 
 pub fn snapshot_json_model(
@@ -52,6 +53,47 @@ pub fn snapshot_json_model(
         .context(context);
 
     Ok(Some(snapshot))
+}
+
+pub fn syncback_json_model<'new, 'old>(
+    snapshot: &SyncbackSnapshot<'new, 'old>,
+) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
+    if !is_valid_file_name(&snapshot.name) {
+        anyhow::bail!("cannot create a file with name {}", snapshot.name);
+    }
+
+    let mut path = snapshot.parent_path.join(&snapshot.name);
+    path.set_extension("model.json");
+
+    let new_inst = snapshot.new_inst();
+    let mut model = JsonModel::new(&new_inst.name, &new_inst.class);
+    let mut properties = HashMap::with_capacity(new_inst.properties.len());
+
+    // TODO handle attributes separately
+    if let Some(old_inst) = snapshot.old_inst() {
+        for (name, value) in &new_inst.properties {
+            if old_inst.properties().contains_key(name) {
+                properties.insert(name.clone(), UnresolvedValue::from(value.clone()));
+            }
+        }
+    } else {
+        for (name, value) in new_inst.properties.clone() {
+            properties.insert(name, UnresolvedValue::from(value));
+        }
+    }
+    model.set_properties(properties);
+
+    // TODO children
+
+    Ok(SyncbackReturn {
+        inst_snapshot: InstanceSnapshot::from_instance(new_inst),
+        fs_snapshot: FsSnapshot::new().with_file(
+            &path,
+            serde_json::to_vec_pretty(&model).context("failed to serialize new JSON Model")?,
+        ),
+        children: Vec::new(),
+        removed_children: Vec::new(),
+    })
 }
 
 #[derive(Debug, Deserialize, Serialize)]

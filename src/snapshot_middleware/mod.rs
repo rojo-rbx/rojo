@@ -28,20 +28,23 @@ use anyhow::Context;
 use memofs::{IoResultExt, Vfs};
 use serde::{Deserialize, Serialize};
 
-use crate::glob::Glob;
 use crate::snapshot::{InstanceContext, InstanceSnapshot, SyncRule};
+use crate::{
+    glob::Glob,
+    syncback::{SyncbackReturn, SyncbackSnapshot},
+};
 
 use self::{
     csv::{snapshot_csv, snapshot_csv_init},
-    dir::snapshot_dir,
+    dir::{snapshot_dir, syncback_dir},
     json::snapshot_json,
-    json_model::snapshot_json_model,
-    lua::{snapshot_lua, snapshot_lua_init},
-    project::snapshot_project,
+    json_model::{snapshot_json_model, syncback_json_model},
+    lua::{snapshot_lua, snapshot_lua_init, syncback_lua, syncback_lua_init},
+    project::{snapshot_project, syncback_project},
     rbxm::snapshot_rbxm,
-    rbxmx::snapshot_rbxmx,
+    rbxmx::{snapshot_rbxmx, syncback_rbxmx},
     toml::snapshot_toml,
-    txt::snapshot_txt,
+    txt::{snapshot_txt, syncback_txt},
 };
 
 pub use self::{
@@ -233,6 +236,28 @@ impl Middleware {
             snapshot.metadata.middleware = Some(*self);
         }
         output
+    }
+
+    /// Runs the syncback mechanism for the provided middleware given a
+    /// SyncbackSnapshot.
+    pub fn syncback<'new, 'old>(
+        &self,
+        snapshot: &SyncbackSnapshot<'new, 'old>,
+    ) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
+        match self {
+            Middleware::Project => syncback_project(snapshot),
+            Middleware::ServerScript => syncback_lua(ScriptType::Server, snapshot),
+            Middleware::ClientScript => syncback_lua(ScriptType::Client, snapshot),
+            Middleware::ModuleScript => syncback_lua(ScriptType::Module, snapshot),
+            Middleware::Rbxmx => syncback_rbxmx(snapshot),
+            Middleware::Text => syncback_txt(snapshot),
+            Middleware::JsonModel => syncback_json_model(snapshot),
+            Middleware::Dir => syncback_dir(snapshot),
+            Middleware::ServerScriptDir => syncback_lua_init(ScriptType::Server, snapshot),
+            Middleware::ClientScriptDir => syncback_lua_init(ScriptType::Client, snapshot),
+            Middleware::ModuleScriptDir => syncback_lua_init(ScriptType::Module, snapshot),
+            _ => anyhow::bail!("cannot syncback with middleware {:?}", self),
+        }
     }
 }
 

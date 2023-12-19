@@ -2,12 +2,15 @@ use std::{collections::HashMap, path::Path, str};
 
 use anyhow::Context;
 use memofs::{IoResultExt, Vfs};
-use rbx_dom_weak::types::Enum;
+use rbx_dom_weak::types::{Enum, Variant};
 
-use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
+use crate::{
+    snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
+    syncback::{is_valid_file_name, FsSnapshot, SyncbackReturn, SyncbackSnapshot},
+};
 
 use super::{
-    dir::{dir_meta, snapshot_dir_no_meta},
+    dir::{dir_meta, snapshot_dir_no_meta, syncback_dir},
     meta_file::AdjacentMetadata,
 };
 
@@ -118,6 +121,73 @@ pub fn snapshot_lua_init(
     }
 
     Ok(Some(init_snapshot))
+}
+
+pub fn syncback_lua<'new, 'old>(
+    script_type: ScriptType,
+    snapshot: &SyncbackSnapshot<'new, 'old>,
+) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
+    if !is_valid_file_name(&snapshot.name) {
+        anyhow::bail!("cannot create a file with name {}", snapshot.name);
+    }
+
+    let inst = snapshot.new_inst();
+
+    let mut path = snapshot.parent_path.join(&snapshot.name);
+    path.set_extension(match script_type {
+        ScriptType::Module => "lua",
+        ScriptType::Client => "client.lua",
+        ScriptType::Server => "server.lua",
+    });
+    let contents = if let Some(Variant::String(source)) = inst.properties.get("Source") {
+        source.as_bytes().to_vec()
+    } else {
+        anyhow::bail!("Scripts must have a `Source` property that is a String")
+    };
+
+    Ok(SyncbackReturn {
+        inst_snapshot: InstanceSnapshot::from_instance(inst).metadata(InstanceMetadata::new()),
+        fs_snapshot: FsSnapshot::new().with_file(path, contents),
+        // Scripts don't have a child!
+        children: Vec::new(),
+        removed_children: Vec::new(),
+    })
+}
+
+pub fn syncback_lua_init<'new, 'old>(
+    script_type: ScriptType,
+    snapshot: &SyncbackSnapshot<'new, 'old>,
+) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
+    if !is_valid_file_name(&snapshot.name) {
+        anyhow::bail!("cannot create a directory with name {}", snapshot.name);
+    }
+
+    let mut path = snapshot.parent_path.join(&snapshot.name);
+    path.push("init");
+    path.set_extension(match script_type {
+        ScriptType::Module => "lua",
+        ScriptType::Client => "client.lua",
+        ScriptType::Server => "server.lua",
+    });
+    let contents =
+        if let Some(Variant::String(source)) = snapshot.new_inst().properties.get("Source") {
+            source.as_bytes().to_vec()
+        } else {
+            anyhow::bail!("Scripts must have a `Source` property that is a String")
+        };
+
+    let dir_syncback = syncback_dir(snapshot)?;
+
+    let mut fs_snapshot = FsSnapshot::new();
+    fs_snapshot.push_file(path, contents);
+    fs_snapshot.merge(dir_syncback.fs_snapshot);
+
+    Ok(SyncbackReturn {
+        inst_snapshot: InstanceSnapshot::from_instance(snapshot.new_inst()),
+        fs_snapshot,
+        children: dir_syncback.children,
+        removed_children: dir_syncback.removed_children,
+    })
 }
 
 #[cfg(test)]

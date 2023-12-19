@@ -1,24 +1,23 @@
 mod fs_snapshot;
-mod middleware;
 mod snapshot;
 
 use crate::{
-    snapshot::{hash_tree, InstanceSnapshot, RojoTree},
+    snapshot::{hash_tree, InstanceSnapshot, InstanceWithMeta, RojoTree},
+    snapshot_middleware::Middleware,
     Project,
 };
 use memofs::Vfs;
-use rbx_dom_weak::{types::Ref, WeakDom};
+use rbx_dom_weak::{types::Ref, Instance, WeakDom};
 use std::{collections::VecDeque, rc::Rc};
 
 pub use fs_snapshot::FsSnapshot;
-pub use middleware::{get_best_middleware, syncback_middleware};
 pub use snapshot::{SyncbackData, SyncbackSnapshot};
 
 pub fn syncback_loop<'old, 'new>(
     vfs: &'old Vfs,
     old_tree: &'old RojoTree,
     new_tree: &'new WeakDom,
-    project: &Project,
+    project: &'old Project,
 ) -> anyhow::Result<Vec<(Ref, InstanceSnapshot)>> {
     log::debug!("Hashing project DOM");
     let old_hashes = hash_tree(old_tree.inner());
@@ -67,7 +66,7 @@ pub fn syncback_loop<'old, 'new>(
             middleware
         );
 
-        let syncback = syncback_middleware(&snapshot, middleware);
+        let syncback = middleware.syncback(&snapshot)?;
 
         if let Some(old_inst) = snapshot.old_inst() {
             replacements.push((old_inst.parent(), syncback.inst_snapshot));
@@ -81,6 +80,43 @@ pub fn syncback_loop<'old, 'new>(
     fs_snapshot.write_to_vfs(project.folder_location(), vfs)?;
 
     Ok(replacements)
+}
+
+pub struct SyncbackReturn<'new, 'old> {
+    pub inst_snapshot: InstanceSnapshot,
+    pub fs_snapshot: FsSnapshot,
+    pub children: Vec<SyncbackSnapshot<'new, 'old>>,
+    pub removed_children: Vec<InstanceWithMeta<'old>>,
+}
+
+pub fn get_best_middleware(inst: &Instance) -> Middleware {
+    match inst.class.as_str() {
+        "Folder" => Middleware::Dir,
+        // TODO this should probably just be rbxm
+        "Model" => Middleware::Rbxmx,
+        "Script" => {
+            if inst.children().len() == 0 {
+                Middleware::ServerScript
+            } else {
+                Middleware::ServerScriptDir
+            }
+        }
+        "LocalScript" => {
+            if inst.children().len() == 0 {
+                Middleware::ClientScript
+            } else {
+                Middleware::ClientScriptDir
+            }
+        }
+        "ModuleScript" => {
+            if inst.children().len() == 0 {
+                Middleware::ModuleScript
+            } else {
+                Middleware::ModuleScriptDir
+            }
+        }
+        _ => Middleware::Rbxmx,
+    }
 }
 
 fn get_inst_path(dom: &WeakDom, referent: Ref) -> String {

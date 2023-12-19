@@ -3,7 +3,10 @@ use std::path::Path;
 use anyhow::Context;
 use memofs::Vfs;
 
-use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
+use crate::{
+    snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
+    syncback::{is_valid_file_name, FsSnapshot, SyncbackReturn, SyncbackSnapshot},
+};
 
 pub fn snapshot_rbxmx(
     context: &InstanceContext,
@@ -39,6 +42,31 @@ pub fn snapshot_rbxmx(
             path.display()
         );
     }
+}
+
+pub fn syncback_rbxmx<'new, 'old>(
+    snapshot: &SyncbackSnapshot<'new, 'old>,
+) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
+    // If any of the children of this Instance are scripts, we don't want
+    // include them in the model. So instead, we'll check and then serialize.
+    if !is_valid_file_name(&snapshot.name) {
+        anyhow::bail!("cannot create a file with name {}", snapshot.name);
+    }
+
+    let inst = snapshot.new_inst();
+    let mut path = snapshot.parent_path.join(&snapshot.name);
+    path.set_extension("rbxmx");
+    // Long-term, anyway. Right now we stay silly.
+    let mut serialized = Vec::new();
+    rbx_xml::to_writer_default(&mut serialized, snapshot.new_tree(), &[inst.referent()])
+        .context("failed to serialize new rbxmx")?;
+
+    Ok(SyncbackReturn {
+        inst_snapshot: InstanceSnapshot::from_instance(inst),
+        fs_snapshot: FsSnapshot::new().with_file(&path, serialized),
+        children: Vec::new(),
+        removed_children: Vec::new(),
+    })
 }
 
 #[cfg(test)]

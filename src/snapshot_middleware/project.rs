@@ -7,10 +7,12 @@ use rbx_reflection::ClassTag;
 
 use crate::{
     project::{PathNode, Project, ProjectNode},
+    resolution::UnresolvedValue,
     snapshot::{
         InstanceContext, InstanceMetadata, InstanceSnapshot, InstigatingSource, PathIgnoreRule,
         SyncRule,
     },
+    syncback::{FsSnapshot, SyncbackReturn, SyncbackSnapshot},
 };
 
 use super::{emit_legacy_scripts_default, snapshot_from_vfs};
@@ -292,6 +294,124 @@ pub fn snapshot_project_node(
         children,
         metadata,
     }))
+}
+
+pub fn syncback_project<'new, 'old>(
+    snapshot: &SyncbackSnapshot<'new, 'old>,
+) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
+    let old_inst = snapshot
+        .old_inst()
+        .context("project middleware shouldn't be used to make new files")?;
+    // This can never be None.
+    let source = old_inst.metadata().instigating_source.as_ref().unwrap();
+
+    // We need to build a 'new' project and serialize it using an FsSnapshot.
+    // It's convenient to start with the old one though, since it means we have
+    // a thing to iterate through.
+    let mut project =
+        Project::load_from_slice(&snapshot.vfs().read(source.path()).unwrap(), source.path())
+            .context("could not syncback project due to fs error")?;
+
+    let base_path = source.path().parent().unwrap();
+
+    let mut children = Vec::new();
+    let mut removed_children = Vec::new();
+
+    // Projects are special. We won't be adding or removing things from them,
+    // so we'll simply match Instances on a per-node basis and rebuild the tree
+    // with the new instance's data. This matching will be done by class and name
+    // to simplify things.
+    let mut nodes = vec![(&mut project.tree, snapshot.new_inst(), old_inst)];
+
+    // A map of referents from the new tree to the Path that created it,
+    // if it exists. This is a roundabout way to locate the parents of
+    // Instances.
+    let mut ref_to_node = HashMap::new();
+
+    while let Some((node, new_inst, old_inst)) = nodes.pop() {
+        ref_to_node.insert(new_inst.referent(), node.path.as_ref());
+
+        let mut old_child_map = HashMap::with_capacity(old_inst.children().len());
+        for child_ref in old_inst.children() {
+            let child = snapshot.get_old_instance(*child_ref).unwrap();
+            old_child_map.insert(child.name(), child);
+        }
+        let mut new_child_map = HashMap::with_capacity(new_inst.children().len());
+        for child_ref in new_inst.children() {
+            let child = snapshot.get_new_instance(*child_ref).unwrap();
+            new_child_map.insert(child.name.as_str(), child);
+        }
+
+        for (child_name, child_node) in &mut node.children {
+            if let Some(new_child) = new_child_map.get(child_name.as_str()) {
+                if let Some(old_child) = old_child_map.get(child_name.as_str()) {
+                    // TODO verify class names
+                    for (name, value) in &new_child.properties {
+                        if child_node.properties.contains_key(name) {
+                            child_node
+                                .properties
+                                .insert(name.clone(), UnresolvedValue::from(value.clone()));
+                        }
+                    }
+                    nodes.push((child_node, new_child, *old_child));
+                    new_child_map.remove(child_name.as_str());
+                    old_child_map.remove(child_name.as_str());
+                }
+            } else {
+                anyhow::bail!("Cannot add or remove children from a project")
+            }
+        }
+
+        // From this point, both maps contain only children of the current
+        // instance that aren't in the project. So, we just do some quick and
+        // dirty matching to identify children that were added and removed.
+        for (new_name, new_child) in new_child_map {
+            let parent_path = match ref_to_node.get(&new_child.parent()) {
+                Some(Some(path)) => base_path.join(path.path()),
+                Some(None) => {
+                    continue;
+                }
+                None => {
+                    continue;
+                }
+            };
+            if let Some(old_inst) = old_child_map.get(new_name) {
+                // All children are descendants of a node of a project
+                // So we really just need to track which one is which.
+                children.push(SyncbackSnapshot {
+                    data: snapshot.data.clone(),
+                    old: Some(old_inst.id()),
+                    new: new_child.referent(),
+                    parent_path,
+                    name: new_name.to_string(),
+                });
+                old_child_map.remove(new_name);
+            } else {
+                // it's new
+                children.push(SyncbackSnapshot {
+                    data: snapshot.data.clone(),
+                    old: None,
+                    new: new_child.referent(),
+                    parent_path,
+                    name: new_name.to_string(),
+                });
+            }
+        }
+        removed_children.extend(old_child_map.into_values());
+    }
+
+    // We don't need to validate any file names for the FsSnapshot
+    // because projects can't ever be made by syncback, so they must
+    // already exist on the file system
+    Ok(SyncbackReturn {
+        inst_snapshot: InstanceSnapshot::from_instance(snapshot.new_inst()),
+        fs_snapshot: FsSnapshot::new().with_file(
+            &project.file_location,
+            serde_json::to_vec_pretty(&project).context("failed to serialize new project")?,
+        ),
+        children,
+        removed_children,
+    })
 }
 
 fn infer_class_name(name: &str, parent_class: Option<&str>) -> Option<Cow<'static, str>> {

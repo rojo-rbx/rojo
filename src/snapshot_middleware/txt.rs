@@ -3,8 +3,12 @@ use std::{path::Path, str};
 use anyhow::Context;
 use maplit::hashmap;
 use memofs::{IoResultExt, Vfs};
+use rbx_dom_weak::types::Variant;
 
-use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
+use crate::{
+    snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
+    syncback::{is_valid_file_name, FsSnapshot, SyncbackReturn, SyncbackSnapshot},
+};
 
 use super::meta_file::AdjacentMetadata;
 
@@ -42,6 +46,31 @@ pub fn snapshot_txt(
     }
 
     Ok(Some(snapshot))
+}
+
+pub fn syncback_txt<'new, 'old>(
+    snapshot: &SyncbackSnapshot<'new, 'old>,
+) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
+    if !is_valid_file_name(&snapshot.name) {
+        anyhow::bail!("cannot create a file with name {}", snapshot.name);
+    }
+
+    let inst = snapshot.new_inst();
+    let mut path = snapshot.parent_path.join(&snapshot.name);
+    path.set_extension("txt");
+
+    let contents = if let Some(Variant::String(source)) = inst.properties.get("Value") {
+        source.as_bytes().to_vec()
+    } else {
+        anyhow::bail!("StringValues must have a `Value` property that is a String");
+    };
+
+    Ok(SyncbackReturn {
+        inst_snapshot: InstanceSnapshot::from_instance(inst),
+        fs_snapshot: FsSnapshot::new().with_file(path, contents),
+        children: Vec::new(),
+        removed_children: Vec::new(),
+    })
 }
 
 #[cfg(test)]
