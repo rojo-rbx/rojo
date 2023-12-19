@@ -62,7 +62,7 @@ impl FsSnapshot {
             files += 1;
         }
 
-        log::debug!("Wrote {dirs} directories and {files} files to the VFS");
+        log::info!("Wrote {dirs} directories and {files} files to the file system!");
         Ok(())
     }
 }
