@@ -131,12 +131,13 @@ fn syncback_script_dir<'new, 'old>(
 }
 
 fn syncback_dir<'new, 'old>(snapshot: &SyncbackSnapshot<'new, 'old>) -> SyncbackReturn<'new, 'old> {
-    log::debug!(
-        "parent of {} is {}",
-        snapshot.name,
-        snapshot.parent_path.display()
-    );
     let path = snapshot.parent_path.join(snapshot.name.clone());
+    log::debug!(
+        "parent of {} is {}, writing to {}",
+        snapshot.name,
+        snapshot.parent_path.display(),
+        path.display()
+    );
 
     let mut removed_children = Vec::new();
     let mut children = Vec::new();
@@ -171,14 +172,10 @@ fn syncback_dir<'new, 'old>(snapshot: &SyncbackSnapshot<'new, 'old>) -> Syncback
             let new_child = snapshot.get_new_instance(*child_ref).unwrap();
             // If it exists in the new tree but not the old one, it was added.
             match old_children.get(new_child.name.as_str()) {
-                None => children.push(snapshot.from_parent(
-                    &new_child.name,
-                    new_child.name.clone(),
-                    *child_ref,
-                    None,
-                )),
+                None => {
+                    children.push(snapshot.from_parent(new_child.name.clone(), *child_ref, None))
+                }
                 Some(old_ref) => children.push(snapshot.from_parent(
-                    &new_child.name,
                     new_child.name.clone(),
                     *child_ref,
                     Some(*old_ref),
@@ -188,7 +185,7 @@ fn syncback_dir<'new, 'old>(snapshot: &SyncbackSnapshot<'new, 'old>) -> Syncback
     } else {
         for child_ref in snapshot.new_inst().children() {
             let child = snapshot.get_new_instance(*child_ref).unwrap();
-            children.push(snapshot.from_parent(&child.name, child.name.clone(), *child_ref, None))
+            children.push(snapshot.from_parent(child.name.clone(), *child_ref, None))
         }
     }
     let mut fs_snapshot = FsSnapshot::new().with_dir(&path);
