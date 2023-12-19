@@ -57,7 +57,7 @@ pub fn snapshot_json_model(
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct JsonModel {
-    #[serde(alias = "Name")]
+    #[serde(alias = "Name", skip_serializing)]
     name: Option<String>,
 
     #[serde(alias = "ClassName")]
