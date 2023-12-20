@@ -110,8 +110,15 @@ pub struct SyncbackReturn<'new, 'old> {
 pub fn get_best_middleware(inst: &Instance) -> Middleware {
     match inst.class.as_str() {
         "Folder" => Middleware::Dir,
-        // TODO this should probably just be rbxm
-        "Model" => Middleware::Rbxm,
+        "Sound"
+        | "SoundGroup"
+        | "Sky"
+        | "Atmosphere"
+        | "BloomEffect"
+        | "BlurEffect"
+        | "ColorCorrectionEffect"
+        | "DepthOfFieldEffect"
+        | "SunRaysEffect" => Middleware::JsonModel,
         "Script" => {
             if inst.children().len() == 0 {
                 Middleware::ServerScript
