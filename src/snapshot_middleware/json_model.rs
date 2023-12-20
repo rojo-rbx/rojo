@@ -2,13 +2,14 @@ use std::{borrow::Cow, collections::HashMap, path::Path, str};
 
 use anyhow::Context;
 use memofs::Vfs;
-use rbx_dom_weak::types::{Attributes, Ref};
+use rbx_dom_weak::types::{Attributes, Ref, Variant};
 use serde::{Deserialize, Serialize};
 
 use crate::{
     resolution::UnresolvedValue,
     snapshot::{InstanceContext, InstanceSnapshot},
     syncback::{is_valid_file_name, FsSnapshot, SyncbackReturn, SyncbackSnapshot},
+    variant_eq::variant_eq,
 };
 
 pub fn snapshot_json_model(
@@ -69,16 +70,43 @@ pub fn syncback_json_model<'new, 'old>(
     let mut model = JsonModel::new(&new_inst.name, &new_inst.class);
     let mut properties = HashMap::with_capacity(new_inst.properties.len());
 
+    let class_data = rbx_reflection_database::get()
+        .classes
+        .get(model.class_name.as_str());
+
     // TODO handle attributes separately
     if let Some(old_inst) = snapshot.old_inst() {
         for (name, value) in &new_inst.properties {
+            // We do not currently support Ref properties.
+            if matches!(value, Variant::Ref(_)) {
+                continue;
+            }
             if old_inst.properties().contains_key(name) {
                 properties.insert(name.clone(), UnresolvedValue::from(value.clone()));
             }
         }
     } else {
-        for (name, value) in new_inst.properties.clone() {
-            properties.insert(name, UnresolvedValue::from(value));
+        if let Some(class_data) = class_data {
+            let default_properties = &class_data.default_properties;
+            for (name, value) in new_inst.properties.clone() {
+                // We do not currently support Ref properties.
+                if matches!(value, Variant::Ref(_)) {
+                    continue;
+                }
+                match default_properties.get(name.as_str()) {
+                    Some(default) if variant_eq(&value, default) => {}
+                    _ => {
+                        properties.insert(name, UnresolvedValue::from(value));
+                    }
+                }
+            }
+        } else {
+            for (name, value) in new_inst.properties.clone() {
+                if matches!(value, Variant::Ref(_)) {
+                    continue;
+                }
+                properties.insert(name, UnresolvedValue::from(value));
+            }
         }
     }
     model.set_properties(properties);
