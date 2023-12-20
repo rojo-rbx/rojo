@@ -2,7 +2,7 @@
 
 ## Unreleased Changes
 * Changed `StdBackend` file watching component to use minimal recursive watches. [#830]
-* Added `create_dir` to allow creating directories.
+* Added `create_dir` and `create_dir_all` to allow creating directories.
 
 [#830]: https://github.com/rojo-rbx/rojo/pull/830
 

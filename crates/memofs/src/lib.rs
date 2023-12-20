@@ -72,6 +72,7 @@ pub trait VfsBackend: sealed::Sealed + Send + 'static {
     fn write(&mut self, path: &Path, data: &[u8]) -> io::Result<()>;
     fn read_dir(&mut self, path: &Path) -> io::Result<ReadDir>;
     fn create_dir(&mut self, path: &Path) -> io::Result<()>;
+    fn create_dir_all(&mut self, path: &Path) -> io::Result<()>;
     fn metadata(&mut self, path: &Path) -> io::Result<Metadata>;
     fn remove_file(&mut self, path: &Path) -> io::Result<()>;
     fn remove_dir_all(&mut self, path: &Path) -> io::Result<()>;
@@ -176,6 +177,11 @@ impl VfsInner {
     fn create_dir<P: AsRef<Path>>(&mut self, path: P) -> io::Result<()> {
         let path = path.as_ref();
         self.backend.create_dir(path)
+    }
+
+    fn create_dir_all<P: AsRef<Path>>(&mut self, path: P) -> io::Result<()> {
+        let path = path.as_ref();
+        self.backend.create_dir_all(path)
     }
 
     fn remove_file<P: AsRef<Path>>(&mut self, path: P) -> io::Result<()> {
@@ -298,6 +304,18 @@ impl Vfs {
     pub fn create_dir<P: AsRef<Path>>(&self, path: P) -> io::Result<()> {
         let path = path.as_ref();
         self.inner.lock().unwrap().create_dir(path)
+    }
+
+    /// Creates a directory at the provided location, recursively creating
+    /// all parent components if they are missing.
+    ///
+    /// Roughly equivalent to [`std::fs::create_dir_all`][std::fs::create_dir_all].
+    ///
+    /// [std::fs::create_dir_all]: https://doc.rust-lang.org/stable/std/fs/fn.create_dir_all.html
+    #[inline]
+    pub fn create_dir_all<P: AsRef<Path>>(&self, path: P) -> io::Result<()> {
+        let path = path.as_ref();
+        self.inner.lock().unwrap().create_dir_all(path)
     }
 
     /// Remove a file.
