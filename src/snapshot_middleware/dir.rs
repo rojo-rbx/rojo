@@ -8,7 +8,7 @@ use rbx_dom_weak::types::Ref;
 
 use crate::{
     snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
-    syncback::{is_valid_file_name, FsSnapshot, SyncbackReturn, SyncbackSnapshot},
+    syncback::{FsSnapshot, SyncbackReturn, SyncbackSnapshot},
 };
 
 use super::{meta_file::DirectoryMetadata, snapshot_from_vfs};
@@ -96,10 +96,6 @@ pub fn snapshot_dir_no_meta(
 pub fn syncback_dir<'new, 'old>(
     snapshot: &SyncbackSnapshot<'new, 'old>,
 ) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
-    if !is_valid_file_name(&snapshot.name) {
-        anyhow::bail!("cannot create a directory with name {}", snapshot.name);
-    }
-
     let path = snapshot.parent_path.join(&snapshot.name);
 
     let mut removed_children = Vec::new();

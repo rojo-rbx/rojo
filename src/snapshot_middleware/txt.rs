@@ -7,7 +7,7 @@ use rbx_dom_weak::types::Variant;
 
 use crate::{
     snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
-    syncback::{is_valid_file_name, FsSnapshot, SyncbackReturn, SyncbackSnapshot},
+    syncback::{FsSnapshot, SyncbackReturn, SyncbackSnapshot},
 };
 
 use super::meta_file::AdjacentMetadata;
@@ -51,10 +51,6 @@ pub fn snapshot_txt(
 pub fn syncback_txt<'new, 'old>(
     snapshot: &SyncbackSnapshot<'new, 'old>,
 ) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
-    if !is_valid_file_name(&snapshot.name) {
-        anyhow::bail!("cannot create a file with name {}", snapshot.name);
-    }
-
     let inst = snapshot.new_inst();
     let mut path = snapshot.parent_path.join(&snapshot.name);
     path.set_extension("txt");

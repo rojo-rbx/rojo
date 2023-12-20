@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     resolution::UnresolvedValue,
     snapshot::{InstanceContext, InstanceSnapshot},
-    syncback::{is_valid_file_name, FsSnapshot, SyncbackReturn, SyncbackSnapshot},
+    syncback::{FsSnapshot, SyncbackReturn, SyncbackSnapshot},
     variant_eq::variant_eq,
 };
 
@@ -59,10 +59,6 @@ pub fn snapshot_json_model(
 pub fn syncback_json_model<'new, 'old>(
     snapshot: &SyncbackSnapshot<'new, 'old>,
 ) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
-    if !is_valid_file_name(&snapshot.name) {
-        anyhow::bail!("cannot create a file with name {}", snapshot.name);
-    }
-
     let mut path = snapshot.parent_path.join(&snapshot.name);
     path.set_extension("model.json");
 

@@ -28,10 +28,13 @@ use anyhow::Context;
 use memofs::{IoResultExt, Vfs};
 use serde::{Deserialize, Serialize};
 
-use crate::snapshot::{InstanceContext, InstanceSnapshot, SyncRule};
 use crate::{
     glob::Glob,
     syncback::{SyncbackReturn, SyncbackSnapshot},
+};
+use crate::{
+    snapshot::{InstanceContext, InstanceSnapshot, SyncRule},
+    syncback::is_valid_file_name,
 };
 
 use self::{
@@ -243,6 +246,12 @@ impl Middleware {
         &self,
         snapshot: &SyncbackSnapshot<'new, 'old>,
     ) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
+        if !is_valid_file_name(&snapshot.name) {
+            anyhow::bail!(
+                "cannot create a file or directory with name {}",
+                snapshot.name
+            );
+        }
         match self {
             Middleware::Project => syncback_project(snapshot),
             Middleware::ServerScript => syncback_lua(ScriptType::Server, snapshot),

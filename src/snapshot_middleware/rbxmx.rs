@@ -5,7 +5,7 @@ use memofs::Vfs;
 
 use crate::{
     snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
-    syncback::{is_valid_file_name, FsSnapshot, SyncbackReturn, SyncbackSnapshot},
+    syncback::{FsSnapshot, SyncbackReturn, SyncbackSnapshot},
 };
 
 pub fn snapshot_rbxmx(
@@ -49,9 +49,6 @@ pub fn syncback_rbxmx<'new, 'old>(
 ) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
     // If any of the children of this Instance are scripts, we don't want
     // include them in the model. So instead, we'll check and then serialize.
-    if !is_valid_file_name(&snapshot.name) {
-        anyhow::bail!("cannot create a file with name {}", snapshot.name);
-    }
 
     let inst = snapshot.new_inst();
     let mut path = snapshot.parent_path.join(&snapshot.name);

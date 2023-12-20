@@ -6,7 +6,7 @@ use rbx_dom_weak::types::{Enum, Variant};
 
 use crate::{
     snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
-    syncback::{is_valid_file_name, FsSnapshot, SyncbackReturn, SyncbackSnapshot},
+    syncback::{FsSnapshot, SyncbackReturn, SyncbackSnapshot},
 };
 
 use super::{
@@ -127,10 +127,6 @@ pub fn syncback_lua<'new, 'old>(
     script_type: ScriptType,
     snapshot: &SyncbackSnapshot<'new, 'old>,
 ) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
-    if !is_valid_file_name(&snapshot.name) {
-        anyhow::bail!("cannot create a file with name {}", snapshot.name);
-    }
-
     let inst = snapshot.new_inst();
 
     let mut path = snapshot.parent_path.join(&snapshot.name);
@@ -158,10 +154,6 @@ pub fn syncback_lua_init<'new, 'old>(
     script_type: ScriptType,
     snapshot: &SyncbackSnapshot<'new, 'old>,
 ) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
-    if !is_valid_file_name(&snapshot.name) {
-        anyhow::bail!("cannot create a directory with name {}", snapshot.name);
-    }
-
     let mut path = snapshot.parent_path.join(&snapshot.name);
     path.push("init");
     path.set_extension(match script_type {
