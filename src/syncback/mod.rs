@@ -66,7 +66,7 @@ pub fn syncback_loop<'old, 'new>(
 
         if let Some(syncback_rules) = &project.syncback_rules {
             if !syncback_rules.acceptable(new_tree, snapshot.new) {
-                log::error!(
+                log::debug!(
                     "Path {} is blocked by project",
                     get_inst_path(new_tree, snapshot.new)
                 );
@@ -78,6 +78,11 @@ pub fn syncback_loop<'old, 'new>(
             .old_inst()
             .and_then(|inst| inst.metadata().middleware)
             .unwrap_or_else(|| get_best_middleware(snapshot.new_inst()));
+        log::trace!(
+            "Middleware for {} is {:?}",
+            get_inst_path(new_tree, snapshot.new),
+            middleware
+        );
 
         let syncback = middleware.syncback(&snapshot)?;
 
