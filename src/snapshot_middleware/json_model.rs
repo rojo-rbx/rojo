@@ -67,7 +67,13 @@ pub fn syncback_json_model<'new, 'old>(
     path.set_extension("model.json");
 
     let new_inst = snapshot.new_inst();
-    let mut model = JsonModel::new(&new_inst.name, &new_inst.class);
+    let mut model = JsonModel {
+        name: Some(new_inst.name.clone()),
+        class_name: new_inst.class.clone(),
+        children: Vec::new(),
+        properties: HashMap::new(),
+        attributes: HashMap::new(),
+    };
     let mut properties = HashMap::with_capacity(new_inst.properties.len());
 
     let class_data = rbx_reflection_database::get()
@@ -109,7 +115,7 @@ pub fn syncback_json_model<'new, 'old>(
             }
         }
     }
-    model.set_properties(properties);
+    model.properties = properties;
 
     // TODO children
 
@@ -126,7 +132,7 @@ pub fn syncback_json_model<'new, 'old>(
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct JsonModel {
+struct JsonModel {
     #[serde(alias = "Name", skip_serializing)]
     name: Option<String>,
 
@@ -186,36 +192,6 @@ impl JsonModel {
             properties,
             children,
         })
-    }
-
-    /// Constructs an empty JSON model with the provided name and class.
-    #[inline]
-    pub fn new(name: &str, class_name: &str) -> Self {
-        Self {
-            name: Some(name.to_string()),
-            class_name: class_name.to_string(),
-            children: Vec::new(),
-            properties: HashMap::new(),
-            attributes: HashMap::new(),
-        }
-    }
-
-    /// Sets the properties of this `JsonModel`.
-    #[inline]
-    pub fn set_properties(&mut self, properties: HashMap<String, UnresolvedValue>) {
-        self.properties = properties;
-    }
-
-    /// Sets the attributes of this `JsonModel`.
-    #[inline]
-    pub fn set_attributes(&mut self, attributes: HashMap<String, UnresolvedValue>) {
-        self.attributes = attributes;
-    }
-
-    /// Pushes the provided `JsonModel` as a child of this one.
-    #[inline]
-    pub fn push_child(&mut self, child: Self) {
-        self.children.push(child);
     }
 }
 
