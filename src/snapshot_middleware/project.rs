@@ -345,7 +345,9 @@ pub fn syncback_project<'new, 'old>(
         for (child_name, child_node) in &mut node.children {
             if let Some(new_child) = new_child_map.get(child_name.as_str()) {
                 if let Some(old_child) = old_child_map.get(child_name.as_str()) {
-                    // TODO verify class names
+                    if &new_child.class != old_child.class_name() {
+                        anyhow::bail!("Cannot change the class of items in a project");
+                    }
                     for (name, value) in &new_child.properties {
                         if child_node.properties.contains_key(name) {
                             child_node
