@@ -19,7 +19,6 @@ mod txt;
 mod util;
 
 use std::{
-    borrow::Cow,
     path::{Path, PathBuf},
     sync::OnceLock,
 };
@@ -73,14 +72,11 @@ pub fn snapshot_from_vfs(
     };
 
     if meta.is_dir() {
-        let (middleware, name) = get_dir_middleware(vfs, path)?;
+        let (middleware, dir_name, init_path) = get_dir_middleware(vfs, path)?;
         // TODO: Support user defined init paths
         match middleware {
-            Middleware::Dir => middleware.snapshot(context, vfs, path, &name),
-            _ => {
-                let name_as_path: PathBuf = name.as_ref().into();
-                middleware.snapshot(context, vfs, &path.join(name_as_path), &name)
-            }
+            Middleware::Dir => middleware.snapshot(context, vfs, path, &dir_name),
+            _ => middleware.snapshot(context, vfs, &init_path, &dir_name),
         }
     } else {
         let file_name = path
@@ -102,10 +98,13 @@ pub fn snapshot_from_vfs(
 /// Gets the appropriate middleware for a directory by checking for `init`
 /// files. This uses an intrinsic priority list and for compatibility,
 /// that order should be left unchanged.
+///
+/// Returns the middleware, the name of the directory, and the path to
+/// the init location.
 fn get_dir_middleware<P: AsRef<Path>>(
     vfs: &Vfs,
     dir: P,
-) -> anyhow::Result<(Middleware, Cow<'static, str>)> {
+) -> anyhow::Result<(Middleware, String, PathBuf)> {
     let path = dir.as_ref();
     let dir_name = path
         .file_name()
@@ -129,12 +128,13 @@ fn get_dir_middleware<P: AsRef<Path>>(
     });
 
     for (middleware, name) in order {
-        if vfs.metadata(path.join(name)).with_not_found()?.is_some() {
-            return Ok((*middleware, Cow::Borrowed(*name)));
+        let test_path = path.join(name);
+        if vfs.metadata(&test_path).with_not_found()?.is_some() {
+            return Ok((*middleware, dir_name, test_path));
         }
     }
 
-    Ok((Middleware::Dir, Cow::Owned(dir_name)))
+    Ok((Middleware::Dir, dir_name, path.to_path_buf()))
 }
 
 /// Gets a snapshot for a path given an InstanceContext and Vfs, taking
