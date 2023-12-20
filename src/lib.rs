@@ -21,6 +21,7 @@ mod session_id;
 mod snapshot;
 mod snapshot_middleware;
 mod syncback;
+mod variant_eq;
 mod web;
 
 pub use project::*;
