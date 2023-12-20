@@ -50,7 +50,7 @@ impl FsSnapshot {
         let mut dirs = 0;
         let mut files = 0;
         for dir_path in &self.dir {
-            match vfs.create_dir(base_path.join(dir_path)) {
+            match vfs.create_dir_all(base_path.join(dir_path)) {
                 Ok(_) => (),
                 Err(err) if err.kind() == io::ErrorKind::AlreadyExists => (),
                 Err(err) => return Err(err),
