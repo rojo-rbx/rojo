@@ -346,7 +346,7 @@ pub fn syncback_project<'new, 'old>(
             if let Some(new_child) = new_child_map.get(child_name.as_str()) {
                 if let Some(old_child) = old_child_map.get(child_name.as_str()) {
                     if &new_child.class != old_child.class_name() {
-                        anyhow::bail!("Cannot change the class of items in a project");
+                        anyhow::bail!("Cannot change the class of {child_name} in a project");
                     }
                     for (name, value) in &new_child.properties {
                         if child_node.properties.contains_key(name) {
@@ -365,7 +365,7 @@ pub fn syncback_project<'new, 'old>(
                     old_child_map.remove(child_name.as_str());
                 }
             } else {
-                anyhow::bail!("Cannot add or remove children from a project")
+                anyhow::bail!("Cannot add or remove {child_name} from project")
             }
         }
 
