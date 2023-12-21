@@ -246,7 +246,8 @@ impl Middleware {
         &self,
         snapshot: &SyncbackSnapshot<'new, 'old>,
     ) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
-        if !is_valid_file_name(&snapshot.name) {
+        // We don't care about the names of projects
+        if !is_valid_file_name(&snapshot.name) && !matches!(self, Middleware::Project) {
             anyhow::bail!(
                 "cannot create a file or directory with name {}",
                 snapshot.name
