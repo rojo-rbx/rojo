@@ -40,7 +40,9 @@ name = "build"
 harness = false
 
 [dependencies]
-memofs = { version = "0.2.0", path = "crates/memofs" }
+memofs = { version = "0.2.0", path = "crates/memofs", features = [
+    "poll-watcher-mac",
+] }
 
 # These dependencies can be uncommented when working on rbx-dom simultaneously
 # rbx_binary = { path = "../rbx-dom/rbx_binary" }

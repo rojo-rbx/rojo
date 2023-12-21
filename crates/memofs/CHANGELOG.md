@@ -1,7 +1,7 @@
 # memofs Changelog
 
 ## Unreleased Changes
-* Changed the `StdBackend` file watcher to use `PollWatcher` on macOS.
+* Added a `poll-watcher-mac` feature to swap the `StdBackend` filewatcher to use `PollWatcher` on macOs.
 
 ## 0.2.0 (2021-08-23)
 * Updated to `crossbeam-channel` 0.5.1.
