@@ -86,6 +86,8 @@ pub struct Project {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub glob_ignore_paths: Vec<Glob>,
 
+    /// A list of rules for syncback with this project file.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub syncback_rules: Option<SyncbackIgnoreRules>,
 
     /// A list of mappings of globs to syncing rules. If a file matches a glob,
