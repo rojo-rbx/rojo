@@ -350,9 +350,14 @@ pub fn syncback_project<'new, 'old>(
                     }
                     for (name, value) in &new_child.properties {
                         if child_node.properties.contains_key(name) {
-                            child_node
-                                .properties
-                                .insert(name.clone(), UnresolvedValue::from(value.clone()));
+                            child_node.properties.insert(
+                                name.clone(),
+                                UnresolvedValue::from_variant(
+                                    value.clone(),
+                                    &new_child.class,
+                                    name.as_str(),
+                                ),
+                            );
                         }
                     }
                     nodes.push((child_node, new_child, *old_child));

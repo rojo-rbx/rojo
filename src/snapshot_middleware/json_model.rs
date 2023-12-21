@@ -84,13 +84,16 @@ pub fn syncback_json_model<'new, 'old>(
                 continue;
             }
             if old_inst.properties().contains_key(name) {
-                properties.insert(name.clone(), UnresolvedValue::from(value.clone()));
+                properties.insert(
+                    name.clone(),
+                    UnresolvedValue::from_variant(value.clone(), &new_inst.class, &*name),
+                );
             }
         }
     } else {
         if let Some(class_data) = class_data {
             let default_properties = &class_data.default_properties;
-            for (name, value) in new_inst.properties.clone() {
+            for (name, value) in &new_inst.properties {
                 // We do not currently support Ref properties.
                 if matches!(value, Variant::Ref(_)) {
                     continue;
@@ -98,7 +101,10 @@ pub fn syncback_json_model<'new, 'old>(
                 match default_properties.get(name.as_str()) {
                     Some(default) if variant_eq(&value, default) => {}
                     _ => {
-                        properties.insert(name, UnresolvedValue::from(value));
+                        properties.insert(
+                            name.clone(),
+                            UnresolvedValue::from_variant(value.clone(), &new_inst.class, &name),
+                        );
                     }
                 }
             }
@@ -107,7 +113,10 @@ pub fn syncback_json_model<'new, 'old>(
                 if matches!(value, Variant::Ref(_)) {
                     continue;
                 }
-                properties.insert(name, UnresolvedValue::from(value));
+                // Inserting `name` into the map takes ownership of it, so we
+                // have to make this first.
+                let value = UnresolvedValue::from_variant(value, &new_inst.class, &name);
+                properties.insert(name, value);
             }
         }
     }
