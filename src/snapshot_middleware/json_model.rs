@@ -63,64 +63,70 @@ pub fn syncback_json_model<'new, 'old>(
     path.set_extension("model.json");
 
     let new_inst = snapshot.new_inst();
-    let mut model = JsonModel {
-        name: Some(new_inst.name.clone()),
-        class_name: new_inst.class.clone(),
-        children: Vec::new(),
-        properties: HashMap::new(),
-        attributes: HashMap::new(),
-    };
-    let mut properties = HashMap::with_capacity(new_inst.properties.len());
 
     let class_data = rbx_reflection_database::get()
         .classes
-        .get(model.class_name.as_str());
+        .get(new_inst.class.as_str());
 
-    // TODO handle attributes separately
-    if let Some(old_inst) = snapshot.old_inst() {
-        for (name, value) in &new_inst.properties {
-            // We do not currently support Ref properties.
-            if matches!(value, Variant::Ref(_)) {
-                continue;
-            }
-            if old_inst.properties().contains_key(name) {
-                properties.insert(
-                    name.clone(),
-                    UnresolvedValue::from_variant(value.clone(), &new_inst.class, &*name),
-                );
-            }
-        }
+    let filtered: HashMap<&String, &Variant> = if let Some(old_inst) = snapshot.old_inst() {
+        new_inst
+            .properties
+            .iter()
+            .filter(|(name, _)| old_inst.properties().contains_key(*name))
+            .collect()
     } else {
         if let Some(class_data) = class_data {
             let default_properties = &class_data.default_properties;
-            for (name, value) in &new_inst.properties {
-                // We do not currently support Ref properties.
-                if matches!(value, Variant::Ref(_)) {
-                    continue;
-                }
-                match default_properties.get(name.as_str()) {
-                    Some(default) if variant_eq(&value, default) => {}
-                    _ => {
-                        properties.insert(
-                            name.clone(),
-                            UnresolvedValue::from_variant(value.clone(), &new_inst.class, &name),
-                        );
-                    }
-                }
-            }
+            new_inst
+                .properties
+                .iter()
+                .filter(
+                    |(name, value)| match default_properties.get(name.as_str()) {
+                        Some(default) => !variant_eq(value, default),
+                        None => true,
+                    },
+                )
+                .collect()
         } else {
-            for (name, value) in new_inst.properties.clone() {
-                if matches!(value, Variant::Ref(_)) {
-                    continue;
-                }
-                // Inserting `name` into the map takes ownership of it, so we
-                // have to make this first.
-                let value = UnresolvedValue::from_variant(value, &new_inst.class, &name);
-                properties.insert(name, value);
+            new_inst.properties.iter().collect()
+        }
+    };
+
+    let mut properties = HashMap::with_capacity(new_inst.properties.capacity());
+    let mut attributes = HashMap::new();
+    for (name, value) in filtered {
+        if name == "Attributes" || name == "AttributesSerialize" {
+            if let Variant::Attributes(attr) = value {
+                attributes.extend(attr.iter().map(|(name, value)| {
+                    (
+                        name.clone(),
+                        UnresolvedValue::from_variant(value.clone(), &new_inst.class, &name),
+                    )
+                }))
+            } else {
+                log::error!(
+                    "Property {name} should be Attributes but is {:?}",
+                    value.ty()
+                );
             }
+        } else if let Variant::Ref(_) = value {
+            // We do not currently support Ref properties
+            continue;
+        } else {
+            properties.insert(
+                name.clone(),
+                UnresolvedValue::from_variant(value.clone(), &new_inst.class, &name),
+            );
         }
     }
-    model.properties = properties;
+
+    let model = JsonModel {
+        name: Some(new_inst.name.clone()),
+        class_name: new_inst.class.clone(),
+        children: Vec::new(),
+        properties,
+        attributes,
+    };
 
     // TODO children
 
