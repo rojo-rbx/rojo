@@ -138,7 +138,6 @@
 * Add buttons for navigation on the Connected page ([#722])
 
 ### Fixes
-* Significantly improved performance of `rojo serve` and `rojo build` on macOS. [#783]
 * Significantly improved performance of `rojo sourcemap` ([#668])
 * Fixed the diff visualizer of connected sessions. ([#674])
 * Fixed disconnected session activity. ([#675])
@@ -172,7 +171,6 @@
 [#770]: https://github.com/rojo-rbx/rojo/pull/770
 [#771]: https://github.com/rojo-rbx/rojo/pull/771
 [#774]: https://github.com/rojo-rbx/rojo/pull/774
-[#783]: https://github.com/rojo-rbx/rojo/pull/783
 [rbx-dom#299]: https://github.com/rojo-rbx/rbx-dom/pull/299
 [rbx-dom#296]: https://github.com/rojo-rbx/rbx-dom/pull/296
 
