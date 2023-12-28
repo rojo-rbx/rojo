@@ -41,6 +41,10 @@ impl FsSnapshot {
             .insert(path.as_ref().to_path_buf(), Arc::new(data));
     }
 
+    pub fn push_dir<P: AsRef<Path>>(&mut self, path: P) {
+        self.dir.insert(path.as_ref().to_path_buf());
+    }
+
     pub fn pop_dir<P: AsRef<Path>>(&mut self, path: P) -> bool {
         self.dir.remove(path.as_ref())
     }
