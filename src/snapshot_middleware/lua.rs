@@ -12,7 +12,7 @@ use crate::{
 
 use super::{
     dir::{dir_meta, snapshot_dir_no_meta, syncback_dir_no_meta},
-    meta_file::AdjacentMetadata,
+    meta_file::{file_meta, AdjacentMetadata},
     DirectoryMetadata,
 };
 
@@ -129,7 +129,7 @@ pub fn syncback_lua<'new, 'old>(
     script_type: ScriptType,
     snapshot: &SyncbackSnapshot<'new, 'old>,
 ) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
-    let inst = snapshot.new_inst();
+    let new_inst = snapshot.new_inst();
 
     let mut path = snapshot.parent_path.join(&snapshot.name);
     path.set_extension(match script_type {
@@ -137,14 +137,48 @@ pub fn syncback_lua<'new, 'old>(
         ScriptType::Client => "client.lua",
         ScriptType::Server => "server.lua",
     });
-    let contents = if let Some(Variant::String(source)) = inst.properties.get("Source") {
+    let contents = if let Some(Variant::String(source)) = new_inst.properties.get("Source") {
         source.as_bytes().to_vec()
     } else {
         anyhow::bail!("Scripts must have a `Source` property that is a String")
     };
 
+    let mut meta = if let Some(meta) = file_meta(snapshot.vfs(), &path, &snapshot.name)? {
+        meta
+    } else {
+        AdjacentMetadata {
+            ignore_unknown_instances: None,
+            properties: HashMap::with_capacity(new_inst.properties.capacity()),
+            attributes: HashMap::new(),
+            path: path
+                .with_file_name(&snapshot.name)
+                .with_extension("meta.json"),
+        }
+    };
+    for (name, value) in snapshot.get_filtered_properties() {
+        if name == "Source" {
+            continue;
+        } else if name == "Attributes" || name == "AttributesSerialize" {
+            if let Variant::Attributes(attrs) = value {
+                meta.attributes.extend(attrs.iter().map(|(name, value)| {
+                    (
+                        name.to_string(),
+                        UnresolvedValue::FullyQualified(value.clone()),
+                    )
+                }))
+            } else {
+                log::error!("Property {name} should be Attributes but is not");
+            }
+        } else {
+            meta.properties.insert(
+                name.to_string(),
+                UnresolvedValue::from_variant(value.to_owned(), &new_inst.class, name),
+            );
+        }
+    }
+
     Ok(SyncbackReturn {
-        inst_snapshot: InstanceSnapshot::from_instance(inst),
+        inst_snapshot: InstanceSnapshot::from_instance(new_inst),
         fs_snapshot: FsSnapshot::new().with_file(path, contents),
         // Scripts don't have a child!
         children: Vec::new(),
