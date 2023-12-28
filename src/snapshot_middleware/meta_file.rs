@@ -1,6 +1,11 @@
-use std::{borrow::Cow, collections::HashMap, path::PathBuf};
+use std::{
+    borrow::Cow,
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 
 use anyhow::{format_err, Context};
+use memofs::{IoResultExt as _, Vfs};
 use rbx_dom_weak::types::Attributes;
 use serde::{Deserialize, Serialize};
 
@@ -191,5 +196,35 @@ impl DirectoryMetadata {
             } else {
                 true
             }
+    }
+}
+
+/// Retrieves the meta file that should be applied for the provided directory,
+/// if it exists.
+pub fn dir_meta(vfs: &Vfs, path: &Path) -> anyhow::Result<Option<DirectoryMetadata>> {
+    let meta_path = path.join("init.meta.json");
+
+    if let Some(meta_contents) = vfs.read(&meta_path).with_not_found()? {
+        let metadata = DirectoryMetadata::from_slice(&meta_contents, meta_path)?;
+        Ok(Some(metadata))
+    } else {
+        Ok(None)
+    }
+}
+
+/// Retrieves the meta file that should be applied for the provided file,
+/// if it exists.
+///
+/// The `name` field should be the name the metadata should have.
+pub fn file_meta(vfs: &Vfs, path: &Path, name: &str) -> anyhow::Result<Option<AdjacentMetadata>> {
+    let mut meta_path = path.with_file_name(name);
+    meta_path.set_extension("meta.json");
+
+    log::debug!("metadata: {}", meta_path.display());
+    if let Some(meta_contents) = vfs.read(&meta_path).with_not_found()? {
+        let metadata = AdjacentMetadata::from_slice(&meta_contents, meta_path)?;
+        Ok(Some(metadata))
+    } else {
+        Ok(None)
     }
 }
