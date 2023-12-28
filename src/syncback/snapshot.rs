@@ -1,8 +1,14 @@
 use memofs::Vfs;
-use std::{path::PathBuf, rc::Rc};
+use std::{collections::HashMap, path::PathBuf, rc::Rc};
 
-use crate::snapshot::{InstanceWithMeta, RojoTree};
-use rbx_dom_weak::{types::Ref, Instance, WeakDom};
+use crate::{
+    snapshot::{InstanceWithMeta, RojoTree},
+    variant_eq::variant_eq,
+};
+use rbx_dom_weak::{
+    types::{Ref, Variant},
+    Instance, WeakDom,
+};
 
 pub struct SyncbackData<'new, 'old> {
     pub(super) vfs: &'old Vfs,
@@ -30,6 +36,47 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
             parent_path: self.parent_path.join(&self.name),
             name: new_name,
         }
+    }
+
+    /// Returns a map of properties for the 'new' Instance with filtering
+    /// done to avoid noise.
+    ///
+    /// Note that the returned map does not filter any properties by name, nor
+    /// does it clone the values. This is left to the consumer.
+    pub fn get_filtered_properties(&self) -> HashMap<&'new str, &'new Variant> {
+        let new_inst = self.new_inst();
+        let mut properties: HashMap<&str, &Variant> =
+            HashMap::with_capacity(new_inst.properties.capacity());
+
+        if let Some(old_inst) = self.old_inst() {
+            for (name, value) in &new_inst.properties {
+                if old_inst.properties().contains_key(name) {
+                    properties.insert(name, value);
+                }
+            }
+        } else {
+            let class_data = rbx_reflection_database::get()
+                .classes
+                .get(new_inst.class.as_str());
+            if let Some(class_data) = class_data {
+                let defaults = &class_data.default_properties;
+                for (name, value) in &new_inst.properties {
+                    if let Some(default) = defaults.get(name.as_str()) {
+                        if !variant_eq(value, default) {
+                            properties.insert(name, value);
+                        }
+                    } else {
+                        properties.insert(name, value);
+                    }
+                }
+            } else {
+                for (name, value) in &new_inst.properties {
+                    properties.insert(name, value);
+                }
+            }
+        }
+
+        properties
     }
 
     /// Returns an Instance from the old tree with the provided referent, if it
