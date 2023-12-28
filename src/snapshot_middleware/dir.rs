@@ -3,10 +3,12 @@ use std::{
     path::Path,
 };
 
+use anyhow::Context;
 use memofs::{DirEntry, IoResultExt, Vfs};
-use rbx_dom_weak::types::Ref;
+use rbx_dom_weak::types::{Ref, Variant};
 
 use crate::{
+    resolution::UnresolvedValue,
     snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
     syncback::{FsSnapshot, SyncbackReturn, SyncbackSnapshot},
 };
@@ -97,6 +99,60 @@ pub fn syncback_dir<'new, 'old>(
     snapshot: &SyncbackSnapshot<'new, 'old>,
 ) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
     let path = snapshot.parent_path.join(&snapshot.name);
+    let new_inst = snapshot.new_inst();
+
+    let mut dir_syncback = syncback_dir_no_meta(snapshot)?;
+
+    let mut meta = if let Some(dir) = dir_meta(snapshot.vfs(), &path)? {
+        dir
+    } else {
+        DirectoryMetadata {
+            ignore_unknown_instances: None,
+            properties: HashMap::with_capacity(new_inst.properties.capacity()),
+            attributes: HashMap::new(),
+            class_name: if new_inst.class == "Folder" {
+                None
+            } else {
+                Some(new_inst.class.clone())
+            },
+            path: path.join("init.meta.json"),
+        }
+    };
+    for (name, value) in snapshot.get_filtered_properties() {
+        if name == "Attributes" || name == "AttributesSerialize" {
+            if let Variant::Attributes(attrs) = value {
+                meta.attributes.extend(attrs.iter().map(|(name, value)| {
+                    (
+                        name.to_string(),
+                        UnresolvedValue::FullyQualified(value.clone()),
+                    )
+                }))
+            } else {
+                log::error!("Property {name} should be Attributes but is not");
+            }
+        } else {
+            meta.properties.insert(
+                name.to_string(),
+                UnresolvedValue::from_variant(value.to_owned(), &new_inst.class, name),
+            );
+        }
+    }
+
+    if !meta.is_empty() {
+        dir_syncback.fs_snapshot.push_file(
+            &meta.path,
+            serde_json::to_vec_pretty(&meta).context("could not serialize new init.meta.json")?,
+        );
+    }
+    Ok(dir_syncback)
+}
+
+pub fn syncback_dir_no_meta<'new, 'old>(
+    snapshot: &SyncbackSnapshot<'new, 'old>,
+) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
+    let path = snapshot.parent_path.join(&snapshot.name);
+
+    let new_inst = snapshot.new_inst();
 
     let mut removed_children = Vec::new();
     let mut children = Vec::new();
@@ -127,7 +183,7 @@ pub fn syncback_dir<'new, 'old>(
             }
         }
 
-        for child_ref in snapshot.new_inst().children() {
+        for child_ref in new_inst.children() {
             let new_child = snapshot.get_new_instance(*child_ref).unwrap();
             // If it exists in the new tree but not the old one, it was added.
             match old_children.get(new_child.name.as_str()) {
@@ -142,17 +198,15 @@ pub fn syncback_dir<'new, 'old>(
             }
         }
     } else {
-        for child_ref in snapshot.new_inst().children() {
+        for child_ref in new_inst.children() {
             let child = snapshot.get_new_instance(*child_ref).unwrap();
             children.push(snapshot.from_parent(child.name.clone(), *child_ref, None))
         }
     }
-    let fs_snapshot = FsSnapshot::new().with_dir(&path);
-    // TODO metadata, including classname
 
     Ok(SyncbackReturn {
-        inst_snapshot: InstanceSnapshot::from_instance(snapshot.new_inst()),
-        fs_snapshot,
+        inst_snapshot: InstanceSnapshot::from_instance(new_inst),
+        fs_snapshot: FsSnapshot::new().with_dir(path),
         children,
         removed_children,
     })
