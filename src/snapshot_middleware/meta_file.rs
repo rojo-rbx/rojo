@@ -174,4 +174,22 @@ impl DirectoryMetadata {
 
         Ok(())
     }
+
+    /// Returns whether the metadata is 'empty', meaning it doesn't have anything
+    /// worth persisting in it. Specifically:
+    ///
+    /// - The number of properties and attributes is 0
+    /// - `ignore_unknown_instances` is None
+    /// - `class_name` is either None or not Some("Folder")
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.attributes.len() == 0
+            && self.properties.len() == 0
+            && self.ignore_unknown_instances.is_none()
+            && if let Some(class) = &self.class_name {
+                class == "Folder"
+            } else {
+                true
+            }
+    }
 }
