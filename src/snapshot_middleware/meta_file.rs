@@ -220,7 +220,6 @@ pub fn file_meta(vfs: &Vfs, path: &Path, name: &str) -> anyhow::Result<Option<Ad
     let mut meta_path = path.with_file_name(name);
     meta_path.set_extension("meta.json");
 
-    log::debug!("metadata: {}", meta_path.display());
     if let Some(meta_contents) = vfs.read(&meta_path).with_not_found()? {
         let metadata = AdjacentMetadata::from_slice(&meta_contents, meta_path)?;
         Ok(Some(metadata))
