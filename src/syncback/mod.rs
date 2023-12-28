@@ -109,7 +109,7 @@ pub struct SyncbackReturn<'new, 'old> {
 
 pub fn get_best_middleware(inst: &Instance) -> Middleware {
     match inst.class.as_str() {
-        "Folder" => Middleware::Dir,
+        "Folder" | "Configuration" | "Tool" | "ScreenGui" => Middleware::Dir,
         "Sound"
         | "SoundGroup"
         | "Sky"
@@ -120,14 +120,14 @@ pub fn get_best_middleware(inst: &Instance) -> Middleware {
         | "DepthOfFieldEffect"
         | "SunRaysEffect" => Middleware::JsonModel,
         "Script" => {
-            if inst.children().len() == 0 {
+            if inst.children().is_empty() {
                 Middleware::ServerScript
             } else {
                 Middleware::ServerScriptDir
             }
         }
         "LocalScript" => {
-            if inst.children().len() == 0 {
+            if inst.children().is_empty() {
                 Middleware::ClientScript
             } else {
                 Middleware::ClientScriptDir
