@@ -5,13 +5,15 @@ use memofs::{IoResultExt, Vfs};
 use rbx_dom_weak::types::{Enum, Variant};
 
 use crate::{
+    resolution::UnresolvedValue,
     snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
     syncback::{FsSnapshot, SyncbackReturn, SyncbackSnapshot},
 };
 
 use super::{
-    dir::{dir_meta, snapshot_dir_no_meta, syncback_dir},
+    dir::{dir_meta, snapshot_dir_no_meta, syncback_dir_no_meta},
     meta_file::AdjacentMetadata,
+    DirectoryMetadata,
 };
 
 #[derive(Debug)]
@@ -142,7 +144,7 @@ pub fn syncback_lua<'new, 'old>(
     };
 
     Ok(SyncbackReturn {
-        inst_snapshot: InstanceSnapshot::from_instance(inst).metadata(InstanceMetadata::new()),
+        inst_snapshot: InstanceSnapshot::from_instance(inst),
         fs_snapshot: FsSnapshot::new().with_file(path, contents),
         // Scripts don't have a child!
         children: Vec::new(),
@@ -154,6 +156,8 @@ pub fn syncback_lua_init<'new, 'old>(
     script_type: ScriptType,
     snapshot: &SyncbackSnapshot<'new, 'old>,
 ) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
+    let new_inst = snapshot.new_inst();
+
     let mut path = snapshot.parent_path.join(&snapshot.name);
     path.push("init");
     path.set_extension(match script_type {
@@ -161,18 +165,60 @@ pub fn syncback_lua_init<'new, 'old>(
         ScriptType::Client => "client.lua",
         ScriptType::Server => "server.lua",
     });
-    let contents =
-        if let Some(Variant::String(source)) = snapshot.new_inst().properties.get("Source") {
-            source.as_bytes().to_vec()
-        } else {
-            anyhow::bail!("Scripts must have a `Source` property that is a String")
-        };
+    let contents = if let Some(Variant::String(source)) = new_inst.properties.get("Source") {
+        source.as_bytes().to_vec()
+    } else {
+        anyhow::bail!("Scripts must have a `Source` property that is a String")
+    };
 
-    let dir_syncback = syncback_dir(snapshot)?;
+    let dir_syncback = syncback_dir_no_meta(snapshot)?;
+
+    let mut meta = if let Some(dir) = dir_meta(snapshot.vfs(), &path)? {
+        dir
+    } else {
+        DirectoryMetadata {
+            ignore_unknown_instances: None,
+            class_name: None,
+            properties: HashMap::with_capacity(new_inst.properties.capacity()),
+            attributes: HashMap::new(),
+            path: snapshot
+                .parent_path
+                .join(&snapshot.name)
+                .join("init.meta.json"),
+        }
+    };
+    for (name, value) in snapshot.get_filtered_properties() {
+        if name == "Source" {
+            continue;
+        } else if name == "Attributes" || name == "AttributesSerialize" {
+            if let Variant::Attributes(attrs) = value {
+                meta.attributes.extend(attrs.iter().map(|(name, value)| {
+                    (
+                        name.to_string(),
+                        UnresolvedValue::FullyQualified(value.clone()),
+                    )
+                }))
+            } else {
+                log::error!("Property {name} should be Attributes but is not");
+            }
+        } else {
+            meta.properties.insert(
+                name.to_string(),
+                UnresolvedValue::from_variant(value.to_owned(), &new_inst.class, name),
+            );
+        }
+    }
 
     let mut fs_snapshot = FsSnapshot::new();
     fs_snapshot.push_file(path, contents);
     fs_snapshot.merge(dir_syncback.fs_snapshot);
+
+    if !meta.is_empty() {
+        fs_snapshot.push_file(
+            &meta.path,
+            serde_json::to_vec_pretty(&meta).context("could not serialize new init.meta.json")?,
+        );
+    }
 
     Ok(SyncbackReturn {
         inst_snapshot: InstanceSnapshot::from_instance(snapshot.new_inst()),
