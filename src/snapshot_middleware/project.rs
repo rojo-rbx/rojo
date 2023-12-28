@@ -345,7 +345,7 @@ pub fn syncback_project<'new, 'old>(
         for (child_name, child_node) in &mut node.children {
             if let Some(new_child) = new_child_map.get(child_name.as_str()) {
                 if let Some(old_child) = old_child_map.get(child_name.as_str()) {
-                    if &new_child.class != old_child.class_name() {
+                    if new_child.class != old_child.class_name() {
                         anyhow::bail!("Cannot change the class of {child_name} in a project");
                     }
                     for (name, value) in &new_child.properties {
@@ -386,7 +386,7 @@ pub fn syncback_project<'new, 'old>(
                 // All children are descendants of a node of a project
                 // So we really just need to track which one is which.
                 children.push(SyncbackSnapshot {
-                    data: snapshot.data.clone(),
+                    data: snapshot.data,
                     old: Some(old_inst.id()),
                     new: new_child.referent(),
                     parent_path,
@@ -396,7 +396,7 @@ pub fn syncback_project<'new, 'old>(
             } else {
                 // it's new
                 children.push(SyncbackSnapshot {
-                    data: snapshot.data.clone(),
+                    data: snapshot.data,
                     old: None,
                     new: new_child.referent(),
                     parent_path,

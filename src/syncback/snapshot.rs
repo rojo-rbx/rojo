@@ -1,5 +1,5 @@
 use memofs::Vfs;
-use std::{collections::HashMap, path::PathBuf, rc::Rc};
+use std::{collections::HashMap, path::PathBuf};
 
 use crate::{
     snapshot::{InstanceWithMeta, RojoTree},
@@ -10,6 +10,7 @@ use rbx_dom_weak::{
     Instance, WeakDom,
 };
 
+#[derive(Clone, Copy)]
 pub struct SyncbackData<'new, 'old> {
     pub(super) vfs: &'old Vfs,
     pub(super) old_tree: &'old RojoTree,
@@ -17,7 +18,7 @@ pub struct SyncbackData<'new, 'old> {
 }
 
 pub struct SyncbackSnapshot<'new, 'old> {
-    pub data: Rc<SyncbackData<'new, 'old>>,
+    pub data: SyncbackData<'new, 'old>,
     pub old: Option<Ref>,
     pub new: Ref,
     pub parent_path: PathBuf,
@@ -30,7 +31,7 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
     #[inline]
     pub fn from_parent(&self, new_name: String, new_ref: Ref, old_ref: Option<Ref>) -> Self {
         Self {
-            data: Rc::clone(&self.data),
+            data: self.data,
             old: old_ref,
             new: new_ref,
             parent_path: self.parent_path.join(&self.name),

@@ -7,10 +7,7 @@ use rbx_dom_weak::{
     Instance, WeakDom,
 };
 use serde::{Deserialize, Serialize};
-use std::{
-    collections::{HashMap, VecDeque},
-    rc::Rc,
-};
+use std::collections::{HashMap, VecDeque};
 
 use crate::{
     resolution::UnresolvedValue,
@@ -33,11 +30,11 @@ pub fn syncback_loop<'old, 'new>(
     log::debug!("Hashing file DOM");
     let new_hashes = hash_tree(new_tree);
 
-    let syncback_data = Rc::new(SyncbackData {
+    let syncback_data = SyncbackData {
         vfs,
         old_tree,
         new_tree,
-    });
+    };
 
     let mut snapshots = vec![SyncbackSnapshot {
         data: syncback_data,
