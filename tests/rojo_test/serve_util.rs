@@ -66,7 +66,11 @@ impl TestServeSession {
 
         let source_path = Path::new(SERVE_TESTS_PATH).join(name);
         let dir = tempdir().expect("Couldn't create temporary directory");
-        let project_path = dir.path().join(name);
+        let project_path = dir
+            .path()
+            .canonicalize()
+            .expect("Couldn't canonicalize temporary directory path")
+            .join(name);
 
         let source_is_file = fs::metadata(&source_path).unwrap().is_file();
 
