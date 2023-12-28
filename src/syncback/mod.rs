@@ -134,7 +134,7 @@ pub fn get_best_middleware(inst: &Instance) -> Middleware {
             }
         }
         "ModuleScript" => {
-            if inst.children().len() == 0 {
+            if inst.children().is_empty() {
                 Middleware::ModuleScript
             } else {
                 Middleware::ModuleScriptDir
