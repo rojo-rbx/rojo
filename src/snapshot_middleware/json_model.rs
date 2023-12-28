@@ -63,17 +63,15 @@ pub fn syncback_json_model<'new, 'old>(
 
     let new_inst = snapshot.new_inst();
 
-    let filtered = snapshot.get_filtered_properties();
-
     let mut properties = HashMap::with_capacity(new_inst.properties.capacity());
     let mut attributes = HashMap::new();
-    for (name, value) in filtered {
+    for (name, value) in snapshot.get_filtered_properties() {
         if name == "Attributes" || name == "AttributesSerialize" {
             if let Variant::Attributes(attr) = value {
                 attributes.extend(attr.iter().map(|(name, value)| {
                     (
                         name.to_string(),
-                        UnresolvedValue::from_variant(value.clone(), &new_inst.class, &name),
+                        UnresolvedValue::from_variant(value.clone(), &new_inst.class, name),
                     )
                 }))
             } else {
@@ -88,7 +86,7 @@ pub fn syncback_json_model<'new, 'old>(
         } else {
             properties.insert(
                 name.to_string(),
-                UnresolvedValue::from_variant(value.clone(), &new_inst.class, &name),
+                UnresolvedValue::from_variant(value.clone(), &new_inst.class, name),
             );
         }
     }
