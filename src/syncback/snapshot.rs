@@ -61,6 +61,10 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
             if let Some(class_data) = class_data {
                 let defaults = &class_data.default_properties;
                 for (name, value) in &new_inst.properties {
+                    // We don't currently support refs or shared strings
+                    if matches!(value, Variant::Ref(_) | Variant::SharedString(_)) {
+                        continue;
+                    }
                     if let Some(default) = defaults.get(name.as_str()) {
                         if !variant_eq(value, default) {
                             properties.insert(name, value);
@@ -71,6 +75,10 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
                 }
             } else {
                 for (name, value) in &new_inst.properties {
+                    // We don't currently support refs or shared strings
+                    if matches!(value, Variant::Ref(_) | Variant::SharedString(_)) {
+                        continue;
+                    }
                     properties.insert(name, value);
                 }
             }

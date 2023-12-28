@@ -60,15 +60,15 @@ impl UnresolvedValue {
             Variant::Float64(n) => AmbiguousValue::Number(n),
             Variant::Int32(n) => AmbiguousValue::Number(n as f64),
             Variant::Int64(n) => AmbiguousValue::Number(n as f64),
-            Variant::SharedString(sstr) => {
-                if let Ok(str) = std::str::from_utf8(sstr.data()) {
-                    AmbiguousValue::String(str.to_string())
-                } else {
-                    return Self::FullyQualified(Variant::BinaryString(BinaryString::from(
-                        sstr.data(),
-                    )));
-                }
-            }
+            // Variant::SharedString(sstr) => {
+            //     if let Ok(str) = std::str::from_utf8(sstr.data()) {
+            //         AmbiguousValue::String(str.to_string())
+            //     } else {
+            //         return Self::FullyQualified(Variant::BinaryString(BinaryString::from(
+            //             sstr.data(),
+            //         )));
+            //     }
+            // }
             Variant::String(str) => AmbiguousValue::String(str),
             Variant::Tags(tags) => {
                 AmbiguousValue::StringArray(tags.iter().map(|s| s.to_string()).collect())
