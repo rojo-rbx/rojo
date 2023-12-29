@@ -1,4 +1,9 @@
-use std::{borrow::Cow, collections::HashMap, path::Path, str};
+use std::{
+    borrow::Cow,
+    collections::{BTreeMap, HashMap},
+    path::Path,
+    str,
+};
 
 use anyhow::Context;
 use memofs::Vfs;
@@ -63,8 +68,8 @@ pub fn syncback_json_model<'new, 'old>(
 
     let new_inst = snapshot.new_inst();
 
-    let mut properties = HashMap::with_capacity(new_inst.properties.capacity());
-    let mut attributes = HashMap::new();
+    let mut properties = BTreeMap::new();
+    let mut attributes = BTreeMap::new();
     for (name, value) in snapshot.get_filtered_properties() {
         if name == "Attributes" || name == "AttributesSerialize" {
             if let Variant::Attributes(attr) = value {
@@ -130,13 +135,13 @@ struct JsonModel {
 
     #[serde(
         alias = "Properties",
-        default = "HashMap::new",
-        skip_serializing_if = "HashMap::is_empty"
+        default = "BTreeMap::new",
+        skip_serializing_if = "BTreeMap::is_empty"
     )]
-    properties: HashMap<String, UnresolvedValue>,
+    properties: BTreeMap<String, UnresolvedValue>,
 
-    #[serde(default = "HashMap::new", skip_serializing_if = "HashMap::is_empty")]
-    attributes: HashMap<String, UnresolvedValue>,
+    #[serde(default = "BTreeMap::new", skip_serializing_if = "BTreeMap::is_empty")]
+    attributes: BTreeMap<String, UnresolvedValue>,
 }
 
 impl JsonModel {

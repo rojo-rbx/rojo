@@ -1,5 +1,5 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{BTreeMap, HashMap, HashSet},
     path::Path,
 };
 
@@ -108,8 +108,8 @@ pub fn syncback_dir<'new, 'old>(
     } else {
         DirectoryMetadata {
             ignore_unknown_instances: None,
-            properties: HashMap::with_capacity(new_inst.properties.capacity()),
-            attributes: HashMap::new(),
+            properties: BTreeMap::new(),
+            attributes: BTreeMap::new(),
             class_name: if new_inst.class == "Folder" {
                 None
             } else {

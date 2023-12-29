@@ -1,4 +1,8 @@
-use std::{collections::HashMap, path::Path, str};
+use std::{
+    collections::{BTreeMap, HashMap},
+    path::Path,
+    str,
+};
 
 use anyhow::Context;
 use memofs::{IoResultExt, Vfs};
@@ -148,8 +152,8 @@ pub fn syncback_lua<'new, 'old>(
     } else {
         AdjacentMetadata {
             ignore_unknown_instances: None,
-            properties: HashMap::with_capacity(new_inst.properties.capacity()),
-            attributes: HashMap::new(),
+            properties: BTreeMap::new(),
+            attributes: BTreeMap::new(),
             path: path
                 .with_file_name(&snapshot.name)
                 .with_extension("meta.json"),
@@ -213,8 +217,8 @@ pub fn syncback_lua_init<'new, 'old>(
         DirectoryMetadata {
             ignore_unknown_instances: None,
             class_name: None,
-            properties: HashMap::with_capacity(new_inst.properties.capacity()),
-            attributes: HashMap::new(),
+            properties: BTreeMap::new(),
+            attributes: BTreeMap::new(),
             path: snapshot
                 .parent_path
                 .join(&snapshot.name)

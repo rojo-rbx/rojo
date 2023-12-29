@@ -1,5 +1,5 @@
 use std::{
-    collections::{BTreeMap, HashMap, HashSet},
+    collections::{BTreeMap, HashSet},
     fs, io,
     net::IpAddr,
     path::{Path, PathBuf},
@@ -242,16 +242,16 @@ pub struct ProjectNode {
     #[serde(
         rename = "$properties",
         default,
-        skip_serializing_if = "HashMap::is_empty"
+        skip_serializing_if = "BTreeMap::is_empty"
     )]
-    pub properties: HashMap<String, UnresolvedValue>,
+    pub properties: BTreeMap<String, UnresolvedValue>,
 
     #[serde(
         rename = "$attributes",
         default,
-        skip_serializing_if = "HashMap::is_empty"
+        skip_serializing_if = "BTreeMap::is_empty"
     )]
-    pub attributes: HashMap<String, UnresolvedValue>,
+    pub attributes: BTreeMap<String, UnresolvedValue>,
 
     /// Defines the behavior when Rojo encounters unknown instances in Roblox
     /// Studio during live sync. `$ignoreUnknownInstances` should be considered

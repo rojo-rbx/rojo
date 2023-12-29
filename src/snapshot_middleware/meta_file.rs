@@ -1,6 +1,6 @@
 use std::{
     borrow::Cow,
-    collections::HashMap,
+    collections::BTreeMap,
     path::{Path, PathBuf},
 };
 
@@ -21,11 +21,11 @@ pub struct AdjacentMetadata {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ignore_unknown_instances: Option<bool>,
 
-    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-    pub properties: HashMap<String, UnresolvedValue>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub properties: BTreeMap<String, UnresolvedValue>,
 
-    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-    pub attributes: HashMap<String, UnresolvedValue>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub attributes: BTreeMap<String, UnresolvedValue>,
 
     #[serde(skip)]
     pub path: PathBuf,
@@ -53,7 +53,10 @@ impl AdjacentMetadata {
     pub fn apply_properties(&mut self, snapshot: &mut InstanceSnapshot) -> anyhow::Result<()> {
         let path = &self.path;
 
-        for (key, unresolved) in self.properties.drain() {
+        // BTreeMaps don't have an equivalent to HashMap::drain, so the next
+        // best option is to take ownership of the entire map. Not free, but
+        // very cheap.
+        for (key, unresolved) in std::mem::take(&mut self.properties) {
             let value = unresolved
                 .resolve(&snapshot.class_name, &key)
                 .with_context(|| format!("error applying meta file {}", path.display()))?;
@@ -64,7 +67,7 @@ impl AdjacentMetadata {
         if !self.attributes.is_empty() {
             let mut attributes = Attributes::new();
 
-            for (key, unresolved) in self.attributes.drain() {
+            for (key, unresolved) in std::mem::take(&mut self.attributes) {
                 let value = unresolved.resolve_unambiguous()?;
                 attributes.insert(key, value);
             }
@@ -109,11 +112,11 @@ pub struct DirectoryMetadata {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ignore_unknown_instances: Option<bool>,
 
-    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-    pub properties: HashMap<String, UnresolvedValue>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub properties: BTreeMap<String, UnresolvedValue>,
 
-    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-    pub attributes: HashMap<String, UnresolvedValue>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub attributes: BTreeMap<String, UnresolvedValue>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub class_name: Option<String>,
@@ -168,7 +171,7 @@ impl DirectoryMetadata {
     fn apply_properties(&mut self, snapshot: &mut InstanceSnapshot) -> anyhow::Result<()> {
         let path = &self.path;
 
-        for (key, unresolved) in self.properties.drain() {
+        for (key, unresolved) in std::mem::take(&mut self.properties) {
             let value = unresolved
                 .resolve(&snapshot.class_name, &key)
                 .with_context(|| format!("error applying meta file {}", path.display()))?;
@@ -179,7 +182,7 @@ impl DirectoryMetadata {
         if !self.attributes.is_empty() {
             let mut attributes = Attributes::new();
 
-            for (key, unresolved) in self.attributes.drain() {
+            for (key, unresolved) in std::mem::take(&mut self.attributes) {
                 let value = unresolved.resolve_unambiguous()?;
                 attributes.insert(key, value);
             }

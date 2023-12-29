@@ -1,5 +1,5 @@
 use std::{
-    collections::{BTreeMap, BTreeSet, HashMap},
+    collections::{BTreeMap, BTreeSet},
     path::Path,
 };
 
@@ -116,8 +116,8 @@ pub fn syncback_csv<'new, 'old>(
     } else {
         AdjacentMetadata {
             ignore_unknown_instances: None,
-            properties: HashMap::with_capacity(new_inst.properties.len()),
-            attributes: HashMap::new(),
+            properties: BTreeMap::new(),
+            attributes: BTreeMap::new(),
             path: path
                 .with_file_name(&snapshot.name)
                 .with_extension("meta.json"),
