@@ -115,7 +115,15 @@ pub fn get_best_middleware(inst: &Instance) -> Middleware {
         | "BlurEffect"
         | "ColorCorrectionEffect"
         | "DepthOfFieldEffect"
-        | "SunRaysEffect" => Middleware::JsonModel,
+        | "SunRaysEffect" => {
+            if inst.children().is_empty() {
+                Middleware::JsonModel
+            } else {
+                // This begs the question of an init.model.json but we'll leave
+                // that for another day.
+                Middleware::Dir
+            }
+        }
         "Script" => {
             if inst.children().is_empty() {
                 Middleware::ServerScript
