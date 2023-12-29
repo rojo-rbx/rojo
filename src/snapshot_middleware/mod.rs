@@ -255,19 +255,22 @@ impl Middleware {
         }
         match self {
             Middleware::Csv => syncback_csv(snapshot),
+            Middleware::JsonModel => syncback_json_model(snapshot),
+            Middleware::Json => unimplemented!(),
             Middleware::Project => syncback_project(snapshot),
             Middleware::ServerScript => syncback_lua(ScriptType::Server, snapshot),
             Middleware::ClientScript => syncback_lua(ScriptType::Client, snapshot),
             Middleware::ModuleScript => syncback_lua(ScriptType::Module, snapshot),
-            Middleware::Rbxmx => syncback_rbxmx(snapshot),
             Middleware::Rbxm => syncback_rbxm(snapshot),
+            Middleware::Rbxmx => syncback_rbxmx(snapshot),
+            Middleware::Toml => unimplemented!(),
             Middleware::Text => syncback_txt(snapshot),
-            Middleware::JsonModel => syncback_json_model(snapshot),
+            Middleware::Ignore => anyhow::bail!("cannot syncback Ignore middleware"),
             Middleware::Dir => syncback_dir(snapshot),
             Middleware::ServerScriptDir => syncback_lua_init(ScriptType::Server, snapshot),
             Middleware::ClientScriptDir => syncback_lua_init(ScriptType::Client, snapshot),
             Middleware::ModuleScriptDir => syncback_lua_init(ScriptType::Module, snapshot),
-            _ => anyhow::bail!("cannot syncback with middleware {:?}", self),
+            Middleware::CsvDir => unimplemented!(),
         }
     }
 }
