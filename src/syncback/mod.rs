@@ -137,6 +137,13 @@ pub fn get_best_middleware(inst: &Instance) -> Middleware {
                 Middleware::ModuleScriptDir
             }
         }
+        "LocalizationTable" => {
+            if inst.children().is_empty() {
+                Middleware::Csv
+            } else {
+                Middleware::CsvDir
+            }
+        }
         _ => Middleware::Rbxm,
     }
 }

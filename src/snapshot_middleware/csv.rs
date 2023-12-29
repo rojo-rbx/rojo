@@ -1,15 +1,23 @@
-use std::{collections::BTreeMap, path::Path};
+use std::{
+    collections::{BTreeMap, BTreeSet, HashMap},
+    path::Path,
+};
 
 use anyhow::Context;
 use maplit::hashmap;
 use memofs::{IoResultExt, Vfs};
-use serde::Serialize;
+use rbx_dom_weak::types::Variant;
+use serde::{Deserialize, Serialize};
 
-use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
+use crate::{
+    resolution::UnresolvedValue,
+    snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
+    syncback::{FsSnapshot, SyncbackReturn, SyncbackSnapshot},
+};
 
 use super::{
     dir::{dir_meta, snapshot_dir_no_meta},
-    meta_file::AdjacentMetadata,
+    meta_file::{file_meta, AdjacentMetadata},
 };
 
 pub fn snapshot_csv(
@@ -89,11 +97,78 @@ pub fn snapshot_csv_init(
     Ok(Some(init_snapshot))
 }
 
+pub fn syncback_csv<'new, 'old>(
+    snapshot: &SyncbackSnapshot<'new, 'old>,
+) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
+    let new_inst = snapshot.new_inst();
+
+    let mut path = snapshot.parent_path.join(&snapshot.name);
+    path.set_extension("csv");
+
+    let contents = if let Some(Variant::String(content)) = new_inst.properties.get("Contents") {
+        content.as_str()
+    } else {
+        anyhow::bail!("LocalizationTables must have a `Contents` property that is a String")
+    };
+
+    let mut meta = if let Some(meta) = file_meta(snapshot.vfs(), &path, &snapshot.name)? {
+        meta
+    } else {
+        AdjacentMetadata {
+            ignore_unknown_instances: None,
+            properties: HashMap::with_capacity(new_inst.properties.len()),
+            attributes: HashMap::new(),
+            path: path
+                .with_file_name(&snapshot.name)
+                .with_extension("meta.json"),
+        }
+    };
+    for (name, value) in snapshot.get_filtered_properties() {
+        log::debug!("property: {name}");
+        if name == "Contents" {
+            continue;
+        } else if name == "Attributes" || name == "AttributesSerialize" {
+            if let Variant::Attributes(attrs) = value {
+                meta.attributes.extend(attrs.iter().map(|(name, value)| {
+                    (
+                        name.to_string(),
+                        UnresolvedValue::FullyQualified(value.clone()),
+                    )
+                }))
+            } else {
+                log::error!("Property {name} should be Attributes but is not");
+            }
+        } else {
+            meta.properties.insert(
+                name.to_string(),
+                UnresolvedValue::from_variant(value.to_owned(), &new_inst.class, name),
+            );
+        }
+    }
+
+    // TODO tags don't work, why?
+    let mut fs_snapshot = FsSnapshot::new();
+    fs_snapshot.push_file(path, localization_to_csv(contents)?);
+    if !meta.is_empty() {
+        fs_snapshot.push_file(
+            &meta.path,
+            serde_json::to_vec_pretty(&meta).context("failed to reserialize metadata")?,
+        )
+    }
+
+    Ok(SyncbackReturn {
+        inst_snapshot: InstanceSnapshot::from_instance(new_inst),
+        fs_snapshot,
+        children: Vec::new(),
+        removed_children: Vec::new(),
+    })
+}
+
 /// Struct that holds any valid row from a Roblox CSV translation table.
 ///
 /// We manually deserialize into this table from CSV, but let serde_json handle
 /// serialization.
-#[derive(Debug, Default, Serialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct LocalizationEntry<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -164,6 +239,62 @@ fn convert_localization_csv(contents: &[u8]) -> Result<String, csv::Error> {
         serde_json::to_string(&entries).expect("Could not encode JSON for localization table");
 
     Ok(encoded)
+}
+
+/// Takes a localization table (as a string) and converts it into a CSV file.
+///
+/// The CSV file is ordered, so it should be deterministic.
+fn localization_to_csv(csv_contents: &str) -> anyhow::Result<Vec<u8>> {
+    let mut out = Vec::new();
+    let mut writer = csv::Writer::from_writer(&mut out);
+
+    // TODO deserialize this properly to dodge the bug listed above
+    let mut csv: Vec<LocalizationEntry> =
+        serde_json::from_str(csv_contents).context("cannot decode JSON from localization table")?;
+
+    // TODO sort this better
+    csv.sort_unstable_by_key(|entry| entry.source);
+
+    let mut headers = vec!["Key", "Source", "Context", "Example"];
+    // We want both order and a lack of duplicates, so we use a BTreeSet.
+    let mut extra_headers = BTreeSet::new();
+    for entry in &csv {
+        for lang in entry.values.keys() {
+            extra_headers.insert(*lang);
+        }
+    }
+    headers.extend(extra_headers.iter());
+
+    writer
+        .write_record(&headers)
+        .context("could not write headers for localization table")?;
+
+    let mut record = Vec::with_capacity(headers.len());
+    for entry in csv {
+        record.push(entry.key.unwrap_or_default());
+        record.push(entry.source.unwrap_or_default());
+        record.push(entry.context.unwrap_or_default());
+        record.push(entry.example.unwrap_or_default());
+
+        let values = entry.values;
+        for header in &extra_headers {
+            record.push(
+                values
+                    .get(header)
+                    .context("missing header for localization table record")?,
+            );
+        }
+
+        writer
+            .write_record(&record)
+            .context("cannot write record for localization table")?;
+        record.clear();
+    }
+
+    // We must drop `writer`` here to regain access to `out`.
+    drop(writer);
+
+    Ok(out)
 }
 
 #[cfg(test)]

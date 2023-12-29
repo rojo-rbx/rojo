@@ -37,7 +37,7 @@ use crate::{
 };
 
 use self::{
-    csv::{snapshot_csv, snapshot_csv_init},
+    csv::{snapshot_csv, snapshot_csv_init, syncback_csv},
     dir::{snapshot_dir, syncback_dir},
     json::snapshot_json,
     json_model::{snapshot_json_model, syncback_json_model},
@@ -254,6 +254,7 @@ impl Middleware {
             );
         }
         match self {
+            Middleware::Csv => syncback_csv(snapshot),
             Middleware::Project => syncback_project(snapshot),
             Middleware::ServerScript => syncback_lua(ScriptType::Server, snapshot),
             Middleware::ClientScript => syncback_lua(ScriptType::Client, snapshot),
