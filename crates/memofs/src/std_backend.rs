@@ -1,8 +1,8 @@
-use std::io;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
+use std::{collections::HashSet, io};
 
 use crossbeam_channel::Receiver;
 use notify::{watcher, DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher};
@@ -13,6 +13,7 @@ use crate::{DirEntry, Metadata, ReadDir, VfsBackend, VfsEvent};
 pub struct StdBackend {
     watcher: RecommendedWatcher,
     watcher_receiver: Receiver<VfsEvent>,
+    watches: HashSet<PathBuf>,
 }
 
 impl StdBackend {
@@ -48,6 +49,7 @@ impl StdBackend {
         Self {
             watcher,
             watcher_receiver: rx,
+            watches: HashSet::new(),
         }
     }
 }
@@ -97,12 +99,22 @@ impl VfsBackend for StdBackend {
     }
 
     fn watch(&mut self, path: &Path) -> io::Result<()> {
-        self.watcher
-            .watch(path, RecursiveMode::NonRecursive)
-            .map_err(|inner| io::Error::new(io::ErrorKind::Other, inner))
+        if self.watches.contains(path)
+            || path
+                .ancestors()
+                .any(|ancestor| self.watches.contains(ancestor))
+        {
+            Ok(())
+        } else {
+            self.watches.insert(path.to_path_buf());
+            self.watcher
+                .watch(path, RecursiveMode::Recursive)
+                .map_err(|inner| io::Error::new(io::ErrorKind::Other, inner))
+        }
     }
 
     fn unwatch(&mut self, path: &Path) -> io::Result<()> {
+        self.watches.remove(path);
         self.watcher
             .unwatch(path)
             .map_err(|inner| io::Error::new(io::ErrorKind::Other, inner))
