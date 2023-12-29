@@ -12,11 +12,12 @@ on:
 jobs:
   build:
     name: Build and Test
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
         rust_version: [stable, 1.70.0]
+        os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
     - uses: actions/checkout@v3
