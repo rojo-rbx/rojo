@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     collections::{BTreeMap, BTreeSet},
     path::Path,
 };
@@ -172,19 +173,19 @@ pub fn syncback_csv<'new, 'old>(
 #[serde(rename_all = "camelCase")]
 struct LocalizationEntry<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
-    key: Option<&'a str>,
+    key: Option<Cow<'a, str>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    context: Option<&'a str>,
+    context: Option<Cow<'a, str>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    example: Option<&'a str>,
+    example: Option<Cow<'a, str>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    source: Option<&'a str>,
+    source: Option<Cow<'a, str>>,
 
     // We use a BTreeMap here to get deterministic output order.
-    values: BTreeMap<&'a str, &'a str>,
+    values: BTreeMap<Cow<'a, str>, Cow<'a, str>>,
 }
 
 /// Normally, we'd be able to let the csv crate construct our struct for us.
@@ -218,12 +219,14 @@ fn convert_localization_csv(contents: &[u8]) -> Result<String, csv::Error> {
             }
 
             match header {
-                "Key" => entry.key = Some(value),
-                "Source" => entry.source = Some(value),
-                "Context" => entry.context = Some(value),
-                "Example" => entry.example = Some(value),
+                "Key" => entry.key = Some(Cow::Borrowed(value)),
+                "Source" => entry.source = Some(Cow::Borrowed(value)),
+                "Context" => entry.context = Some(Cow::Borrowed(value)),
+                "Example" => entry.example = Some(Cow::Borrowed(value)),
                 _ => {
-                    entry.values.insert(header, value);
+                    entry
+                        .values
+                        .insert(Cow::Borrowed(value), Cow::Borrowed(value));
                 }
             }
         }
@@ -248,19 +251,18 @@ fn localization_to_csv(csv_contents: &str) -> anyhow::Result<Vec<u8>> {
     let mut out = Vec::new();
     let mut writer = csv::Writer::from_writer(&mut out);
 
-    // TODO deserialize this properly to dodge the bug listed above
     let mut csv: Vec<LocalizationEntry> =
         serde_json::from_str(csv_contents).context("cannot decode JSON from localization table")?;
 
     // TODO sort this better
-    csv.sort_unstable_by_key(|entry| entry.source);
+    csv.sort_unstable_by(|a, b| a.source.partial_cmp(&b.source).unwrap());
 
     let mut headers = vec!["Key", "Source", "Context", "Example"];
     // We want both order and a lack of duplicates, so we use a BTreeSet.
     let mut extra_headers = BTreeSet::new();
     for entry in &csv {
         for lang in entry.values.keys() {
-            extra_headers.insert(*lang);
+            extra_headers.insert(lang.as_ref());
         }
     }
     headers.extend(extra_headers.iter());
@@ -269,20 +271,16 @@ fn localization_to_csv(csv_contents: &str) -> anyhow::Result<Vec<u8>> {
         .write_record(&headers)
         .context("could not write headers for localization table")?;
 
-    let mut record = Vec::with_capacity(headers.len());
-    for entry in csv {
-        record.push(entry.key.unwrap_or_default());
-        record.push(entry.source.unwrap_or_default());
-        record.push(entry.context.unwrap_or_default());
-        record.push(entry.example.unwrap_or_default());
+    let mut record: Vec<&str> = Vec::with_capacity(headers.len());
+    for entry in &csv {
+        record.push(entry.key.as_ref().unwrap_or(&Cow::Borrowed("")));
+        record.push(entry.source.as_ref().unwrap_or(&Cow::Borrowed("")));
+        record.push(entry.context.as_ref().unwrap_or(&Cow::Borrowed("")));
+        record.push(entry.example.as_ref().unwrap_or(&Cow::Borrowed("")));
 
-        let values = entry.values;
+        let values = &entry.values;
         for header in &extra_headers {
-            record.push(
-                values
-                    .get(header)
-                    .context("missing header for localization table record")?,
-            );
+            record.push(values.get(*header).unwrap_or(&Cow::Borrowed("")));
         }
 
         writer
