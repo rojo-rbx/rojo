@@ -124,6 +124,13 @@ pub fn get_best_middleware(inst: &Instance) -> Middleware {
                 Middleware::Dir
             }
         }
+        "StringValue" => {
+            if inst.children().is_empty() {
+                Middleware::Text
+            } else {
+                Middleware::Dir
+            }
+        }
         "Script" => {
             if inst.children().is_empty() {
                 Middleware::ServerScript
