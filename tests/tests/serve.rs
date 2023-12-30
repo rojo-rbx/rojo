@@ -145,7 +145,6 @@ fn edit_init() {
     });
 }
 
-#[ignore = "Does not pass on Github's runner"]
 #[test]
 fn move_folder_of_stuff() {
     run_serve_test("move_folder_of_stuff", |session, mut redactions| {
