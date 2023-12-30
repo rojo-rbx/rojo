@@ -1,4 +1,4 @@
-use std::{path::Path, str};
+use std::{collections::BTreeMap, path::Path, str};
 
 use anyhow::Context;
 use maplit::hashmap;
@@ -6,11 +6,12 @@ use memofs::{IoResultExt, Vfs};
 use rbx_dom_weak::types::Variant;
 
 use crate::{
+    resolution::UnresolvedValue,
     snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
     syncback::{FsSnapshot, SyncbackReturn, SyncbackSnapshot},
 };
 
-use super::meta_file::AdjacentMetadata;
+use super::meta_file::{file_meta, AdjacentMetadata};
 
 pub fn snapshot_txt(
     context: &InstanceContext,
@@ -51,18 +52,52 @@ pub fn snapshot_txt(
 pub fn syncback_txt<'new, 'old>(
     snapshot: &SyncbackSnapshot<'new, 'old>,
 ) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
-    let inst = snapshot.new_inst();
+    let new_inst = snapshot.new_inst();
     let mut path = snapshot.parent_path.join(&snapshot.name);
     path.set_extension("txt");
 
-    let contents = if let Some(Variant::String(source)) = inst.properties.get("Value") {
+    let contents = if let Some(Variant::String(source)) = new_inst.properties.get("Value") {
         source.as_bytes().to_vec()
     } else {
         anyhow::bail!("StringValues must have a `Value` property that is a String");
     };
 
+    let mut meta = if let Some(meta) = file_meta(snapshot.vfs(), &path, &snapshot.name)? {
+        meta
+    } else {
+        AdjacentMetadata {
+            ignore_unknown_instances: None,
+            properties: BTreeMap::new(),
+            attributes: BTreeMap::new(),
+            path: path
+                .with_file_name(&snapshot.name)
+                .with_extension("meta.json"),
+        }
+    };
+    for (name, value) in snapshot.get_filtered_properties() {
+        if name == "Value" {
+            continue;
+        } else if name == "Attributes" || name == "AttributesSerialize" {
+            if let Variant::Attributes(attrs) = value {
+                meta.attributes.extend(attrs.iter().map(|(name, value)| {
+                    (
+                        name.to_string(),
+                        UnresolvedValue::FullyQualified(value.clone()),
+                    )
+                }))
+            } else {
+                log::error!("Property {name} should be Attributes but is not");
+            }
+        } else {
+            meta.properties.insert(
+                name.to_string(),
+                UnresolvedValue::from_variant(value.to_owned(), &new_inst.class, name),
+            );
+        }
+    }
+
     Ok(SyncbackReturn {
-        inst_snapshot: InstanceSnapshot::from_instance(inst),
+        inst_snapshot: InstanceSnapshot::from_instance(new_inst),
         fs_snapshot: FsSnapshot::new().with_file(path, contents),
         children: Vec::new(),
         removed_children: Vec::new(),
