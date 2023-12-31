@@ -41,6 +41,9 @@ jobs:
         override: true
         profile: minimal
 
+    - name: Rust cache
+      uses: Swatinem/rust-cache@v2
+
     - name: Setup Aftman
       uses: ok-nick/setup-aftman@v0.3.0
       with:
