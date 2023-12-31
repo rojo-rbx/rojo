@@ -19,6 +19,16 @@ jobs:
         rust_version: [stable, 1.70.0]
         os: [ubuntu-latest, windows-latest, macos-latest]
 
+        # It's unnecessary to build using MSRV on macOS and Windows
+        # because MSRV builds will not fail on a platform specific
+        # basis. So, we skip these two configurations to conserve
+        # GitHub Actions minutes.
+        exclude:
+          - os: macos-latest
+            rust_version: 1.70.0
+          - os: windows-latest
+            rust_version: 1.70.0
+
     steps:
     - uses: actions/checkout@v3
       with:
