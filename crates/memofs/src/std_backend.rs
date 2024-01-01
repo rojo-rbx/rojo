@@ -1,23 +1,25 @@
 use std::io;
 use std::path::Path;
+use std::sync::mpsc;
+use std::thread;
+use std::time::Duration;
 
 use crossbeam_channel::Receiver;
-
-use notify::{Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
-
-#[cfg(target_os = "macos")]
-use notify::{Config, PollWatcher};
+use notify::{DebouncedEvent, RecursiveMode, Watcher};
 
 #[cfg(target_os = "macos")]
-use std::time::Duration;
+use notify::PollWatcher;
+#[cfg(not(target_os = "macos"))]
+use notify::{watcher, RecommendedWatcher};
 
 use crate::{DirEntry, Metadata, ReadDir, VfsBackend, VfsEvent};
 
 /// `VfsBackend` that uses `std::fs` and the `notify` crate.
 pub struct StdBackend {
+    // We use PollWatcher on macos because using the KQueue watcher
+    // can cause some gnarly performance problems.
     #[cfg(target_os = "macos")]
     watcher: PollWatcher,
-
     #[cfg(not(target_os = "macos"))]
     watcher: RecommendedWatcher,
 
@@ -26,39 +28,37 @@ pub struct StdBackend {
 
 impl StdBackend {
     pub fn new() -> StdBackend {
-        let (tx, rx) = crossbeam_channel::unbounded();
-
-        let event_handler = move |res: Result<Event, _>| match res {
-            Ok(event) => match event.kind {
-                EventKind::Create(_) => {
-                    for path in event.paths {
-                        let _ = tx.send(VfsEvent::Create(path));
-                    }
-                }
-                EventKind::Modify(_) => {
-                    for path in event.paths {
-                        let _ = tx.send(VfsEvent::Write(path));
-                    }
-                }
-                EventKind::Remove(_) => {
-                    for path in event.paths {
-                        let _ = tx.send(VfsEvent::Remove(path));
-                    }
-                }
-                _ => {}
-            },
-            Err(e) => println!("watch error: {:?}", e),
-        };
-
-        #[cfg(not(target_os = "macos"))]
-        let watcher = notify::recommended_watcher(event_handler).unwrap();
+        let (notify_tx, notify_rx) = mpsc::channel();
 
         #[cfg(target_os = "macos")]
-        let watcher = PollWatcher::new(
-            event_handler,
-            Config::default().with_poll_interval(Duration::from_millis(200)),
-        )
-        .unwrap();
+        let watcher = PollWatcher::new(notify_tx, Duration::from_millis(50)).unwrap();
+        #[cfg(not(target_os = "macos"))]
+        let watcher = watcher(notify_tx, Duration::from_millis(50)).unwrap();
+
+        let (tx, rx) = crossbeam_channel::unbounded();
+
+        thread::spawn(move || {
+            for event in notify_rx {
+                match event {
+                    DebouncedEvent::Create(path) => {
+                        tx.send(VfsEvent::Create(path))?;
+                    }
+                    DebouncedEvent::Write(path) => {
+                        tx.send(VfsEvent::Write(path))?;
+                    }
+                    DebouncedEvent::Remove(path) => {
+                        tx.send(VfsEvent::Remove(path))?;
+                    }
+                    DebouncedEvent::Rename(from, to) => {
+                        tx.send(VfsEvent::Remove(from))?;
+                        tx.send(VfsEvent::Create(to))?;
+                    }
+                    _ => {}
+                }
+            }
+
+            Result::<(), crossbeam_channel::SendError<VfsEvent>>::Ok(())
+        });
 
         Self {
             watcher,
