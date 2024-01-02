@@ -17,8 +17,9 @@ use crate::{
 };
 
 use super::{
-    dir::{dir_meta, snapshot_dir_no_meta},
+    dir::{dir_meta, snapshot_dir_no_meta, syncback_dir_no_meta},
     meta_file::{file_meta, AdjacentMetadata},
+    DirectoryMetadata,
 };
 
 pub fn snapshot_csv(
@@ -125,7 +126,6 @@ pub fn syncback_csv<'new, 'old>(
         }
     };
     for (name, value) in snapshot.get_filtered_properties() {
-        log::debug!("property: {name}");
         if name == "Contents" {
             continue;
         } else if name == "Attributes" || name == "AttributesSerialize" {
@@ -162,6 +162,74 @@ pub fn syncback_csv<'new, 'old>(
         fs_snapshot,
         children: Vec::new(),
         removed_children: Vec::new(),
+    })
+}
+
+pub fn syncback_csv_init<'new, 'old>(
+    snapshot: &SyncbackSnapshot<'new, 'old>,
+) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
+    let new_inst = snapshot.new_inst();
+
+    let mut path = snapshot.parent_path.join(&snapshot.name);
+    path.push("init.csv");
+
+    let contents = if let Some(Variant::String(content)) = new_inst.properties.get("Contents") {
+        content.as_str()
+    } else {
+        anyhow::bail!("LocalizationTables must have a `Contents` property that is a String")
+    };
+
+    let mut dir_syncback = syncback_dir_no_meta(snapshot)?;
+    let mut meta = if let Some(dir) = dir_meta(snapshot.vfs(), &path)? {
+        dir
+    } else {
+        DirectoryMetadata {
+            ignore_unknown_instances: None,
+            class_name: None,
+            properties: BTreeMap::new(),
+            attributes: BTreeMap::new(),
+            path: snapshot
+                .parent_path
+                .join(&snapshot.name)
+                .join("init.meta.json"),
+        }
+    };
+    for (name, value) in snapshot.get_filtered_properties() {
+        if name == "Contents" {
+            continue;
+        } else if name == "Attributes" || name == "AttributesSerialize" {
+            if let Variant::Attributes(attrs) = value {
+                meta.attributes.extend(attrs.iter().map(|(name, value)| {
+                    (
+                        name.to_string(),
+                        UnresolvedValue::FullyQualified(value.clone()),
+                    )
+                }))
+            } else {
+                log::error!("Property {name} should be Attributes but is not");
+            }
+        } else {
+            meta.properties.insert(
+                name.to_string(),
+                UnresolvedValue::from_variant(value.to_owned(), &new_inst.class, name),
+            );
+        }
+    }
+
+    let mut fs_snapshot = std::mem::take(&mut dir_syncback.fs_snapshot);
+    fs_snapshot.push_file(&path, localization_to_csv(contents)?);
+    if !meta.is_empty() {
+        fs_snapshot.push_file(
+            &meta.path,
+            serde_json::to_vec_pretty(&meta).context("could not serialize new init.meta.json")?,
+        );
+    }
+
+    Ok(SyncbackReturn {
+        inst_snapshot: InstanceSnapshot::from_instance(new_inst),
+        fs_snapshot,
+        children: dir_syncback.children,
+        removed_children: dir_syncback.removed_children,
     })
 }
 
@@ -289,7 +357,7 @@ fn localization_to_csv(csv_contents: &str) -> anyhow::Result<Vec<u8>> {
         record.clear();
     }
 
-    // We must drop `writer`` here to regain access to `out`.
+    // We must drop `writer` here to regain access to `out`.
     drop(writer);
 
     Ok(out)

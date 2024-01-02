@@ -37,7 +37,7 @@ use crate::{
 };
 
 use self::{
-    csv::{snapshot_csv, snapshot_csv_init, syncback_csv},
+    csv::{snapshot_csv, snapshot_csv_init, syncback_csv, syncback_csv_init},
     dir::{snapshot_dir, syncback_dir},
     json::snapshot_json,
     json_model::{snapshot_json_model, syncback_json_model},
@@ -50,9 +50,7 @@ use self::{
 };
 
 pub use self::{
-    lua::ScriptType,
-    meta_file::{AdjacentMetadata, DirectoryMetadata},
-    project::snapshot_project_node,
+    lua::ScriptType, meta_file::DirectoryMetadata, project::snapshot_project_node,
     util::emit_legacy_scripts_default,
 };
 
@@ -270,7 +268,7 @@ impl Middleware {
             Middleware::ServerScriptDir => syncback_lua_init(ScriptType::Server, snapshot),
             Middleware::ClientScriptDir => syncback_lua_init(ScriptType::Client, snapshot),
             Middleware::ModuleScriptDir => syncback_lua_init(ScriptType::Module, snapshot),
-            Middleware::CsvDir => unimplemented!(),
+            Middleware::CsvDir => syncback_csv_init(snapshot),
         }
     }
 }
