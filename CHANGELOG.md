@@ -18,9 +18,6 @@
             "ignoreProperties": {
                 "Part": ["Color"]
             },
-            "defaultOverrides": {
-                "Part":
-            }
         }
     }
     ```
