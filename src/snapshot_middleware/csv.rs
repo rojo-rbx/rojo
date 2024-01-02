@@ -149,9 +149,9 @@ pub fn syncback_csv<'new, 'old>(
 
     // TODO tags don't work, why?
     let mut fs_snapshot = FsSnapshot::new();
-    fs_snapshot.push_file(path, localization_to_csv(contents)?);
+    fs_snapshot.add_file(path, localization_to_csv(contents)?);
     if !meta.is_empty() {
-        fs_snapshot.push_file(
+        fs_snapshot.add_file(
             &meta.path,
             serde_json::to_vec_pretty(&meta).context("failed to reserialize metadata")?,
         )
@@ -217,9 +217,9 @@ pub fn syncback_csv_init<'new, 'old>(
     }
 
     let mut fs_snapshot = std::mem::take(&mut dir_syncback.fs_snapshot);
-    fs_snapshot.push_file(&path, localization_to_csv(contents)?);
+    fs_snapshot.add_file(&path, localization_to_csv(contents)?);
     if !meta.is_empty() {
-        fs_snapshot.push_file(
+        fs_snapshot.add_file(
             &meta.path,
             serde_json::to_vec_pretty(&meta).context("could not serialize new init.meta.json")?,
         );

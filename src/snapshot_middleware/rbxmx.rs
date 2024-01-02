@@ -60,7 +60,7 @@ pub fn syncback_rbxmx<'new, 'old>(
 
     Ok(SyncbackReturn {
         inst_snapshot: InstanceSnapshot::from_instance(inst),
-        fs_snapshot: FsSnapshot::new().with_file(&path, serialized),
+        fs_snapshot: FsSnapshot::new().with_added_file(&path, serialized),
         children: Vec::new(),
         removed_children: Vec::new(),
     })

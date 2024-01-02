@@ -139,7 +139,7 @@ pub fn syncback_dir<'new, 'old>(
     }
 
     if !meta.is_empty() {
-        dir_syncback.fs_snapshot.push_file(
+        dir_syncback.fs_snapshot.add_file(
             &meta.path,
             serde_json::to_vec_pretty(&meta).context("could not serialize new init.meta.json")?,
         );
@@ -206,7 +206,7 @@ pub fn syncback_dir_no_meta<'new, 'old>(
 
     Ok(SyncbackReturn {
         inst_snapshot: InstanceSnapshot::from_instance(new_inst),
-        fs_snapshot: FsSnapshot::new().with_dir(path),
+        fs_snapshot: FsSnapshot::new().with_added_dir(path),
         children,
         removed_children,
     })

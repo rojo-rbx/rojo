@@ -412,7 +412,7 @@ pub fn syncback_project<'new, 'old>(
     // already exist on the file system
     Ok(SyncbackReturn {
         inst_snapshot: InstanceSnapshot::from_instance(snapshot.new_inst()),
-        fs_snapshot: FsSnapshot::new().with_file(
+        fs_snapshot: FsSnapshot::new().with_added_file(
             &project.file_location,
             serde_json::to_vec_pretty(&project).context("failed to serialize new project")?,
         ),

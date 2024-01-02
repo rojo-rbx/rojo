@@ -98,7 +98,7 @@ pub fn syncback_txt<'new, 'old>(
 
     Ok(SyncbackReturn {
         inst_snapshot: InstanceSnapshot::from_instance(new_inst),
-        fs_snapshot: FsSnapshot::new().with_file(path, contents),
+        fs_snapshot: FsSnapshot::new().with_added_file(path, contents),
         children: Vec::new(),
         removed_children: Vec::new(),
     })
