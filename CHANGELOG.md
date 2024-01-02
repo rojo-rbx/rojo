@@ -1,6 +1,30 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* A new command `rojo syncback` has been added. It can be used as `rojo syncback [path to project] --input [path to file]`.
+ 	This command takes a Roblox file and pulls Instances out of it and places them in the correct position in the provided project.
+    Syncback is primarily controlled by the project file. Any Instances who are either referenced in the project file or a descendant
+    of one that is will be placed in an appropriate location.
+
+    In addition, a new field has been added to project files, `syncbackRules` to control how it behaves:
+
+    ```json
+    {
+        "syncbackRules": {
+            "ignorePaths": [
+                "Workspace/Camera",
+                "ServerStorage/ImportantSecrets/**",
+            ],
+            "ignoreProperties": {
+                "Part": ["Color"]
+            },
+            "defaultOverrides": {
+                "Part":
+            }
+        }
+    }
+    ```
+
 * Added popout diff visualizer for table properties like Attributes and Tags ([#834])
 * Updated Theme to use Studio colors ([#838])
 * Projects may now specify rules for syncing files as if they had a different file extension. ([#813])
