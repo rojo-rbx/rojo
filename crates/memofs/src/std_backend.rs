@@ -1,68 +1,55 @@
-use std::io;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use std::sync::mpsc;
+use std::thread;
+use std::time::Duration;
+use std::{collections::HashSet, io};
 
 use crossbeam_channel::Receiver;
-
-use notify::{Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
-
-#[cfg(target_os = "macos")]
-use notify::{Config, PollWatcher};
-
-#[cfg(target_os = "macos")]
-use std::time::Duration;
+use notify::{watcher, DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher};
 
 use crate::{DirEntry, Metadata, ReadDir, VfsBackend, VfsEvent};
 
 /// `VfsBackend` that uses `std::fs` and the `notify` crate.
 pub struct StdBackend {
-    #[cfg(target_os = "macos")]
-    watcher: PollWatcher,
-
-    #[cfg(not(target_os = "macos"))]
     watcher: RecommendedWatcher,
-
     watcher_receiver: Receiver<VfsEvent>,
+    watches: HashSet<PathBuf>,
 }
 
 impl StdBackend {
     pub fn new() -> StdBackend {
+        let (notify_tx, notify_rx) = mpsc::channel();
+        let watcher = watcher(notify_tx, Duration::from_millis(50)).unwrap();
+
         let (tx, rx) = crossbeam_channel::unbounded();
 
-        let event_handler = move |res: Result<Event, _>| match res {
-            Ok(event) => match event.kind {
-                EventKind::Create(_) => {
-                    for path in event.paths {
-                        let _ = tx.send(VfsEvent::Create(path));
+        thread::spawn(move || {
+            for event in notify_rx {
+                match event {
+                    DebouncedEvent::Create(path) => {
+                        tx.send(VfsEvent::Create(path))?;
                     }
-                }
-                EventKind::Modify(_) => {
-                    for path in event.paths {
-                        let _ = tx.send(VfsEvent::Write(path));
+                    DebouncedEvent::Write(path) => {
+                        tx.send(VfsEvent::Write(path))?;
                     }
-                }
-                EventKind::Remove(_) => {
-                    for path in event.paths {
-                        let _ = tx.send(VfsEvent::Remove(path));
+                    DebouncedEvent::Remove(path) => {
+                        tx.send(VfsEvent::Remove(path))?;
                     }
+                    DebouncedEvent::Rename(from, to) => {
+                        tx.send(VfsEvent::Remove(from))?;
+                        tx.send(VfsEvent::Create(to))?;
+                    }
+                    _ => {}
                 }
-                _ => {}
-            },
-            Err(e) => println!("watch error: {:?}", e),
-        };
+            }
 
-        #[cfg(not(target_os = "macos"))]
-        let watcher = notify::recommended_watcher(event_handler).unwrap();
-
-        #[cfg(target_os = "macos")]
-        let watcher = PollWatcher::new(
-            event_handler,
-            Config::default().with_poll_interval(Duration::from_millis(200)),
-        )
-        .unwrap();
+            Result::<(), crossbeam_channel::SendError<VfsEvent>>::Ok(())
+        });
 
         Self {
             watcher,
             watcher_receiver: rx,
+            watches: HashSet::new(),
         }
     }
 }
@@ -112,12 +99,22 @@ impl VfsBackend for StdBackend {
     }
 
     fn watch(&mut self, path: &Path) -> io::Result<()> {
-        self.watcher
-            .watch(path, RecursiveMode::NonRecursive)
-            .map_err(|inner| io::Error::new(io::ErrorKind::Other, inner))
+        if self.watches.contains(path)
+            || path
+                .ancestors()
+                .any(|ancestor| self.watches.contains(ancestor))
+        {
+            Ok(())
+        } else {
+            self.watches.insert(path.to_path_buf());
+            self.watcher
+                .watch(path, RecursiveMode::Recursive)
+                .map_err(|inner| io::Error::new(io::ErrorKind::Other, inner))
+        }
     }
 
     fn unwatch(&mut self, path: &Path) -> io::Result<()> {
+        self.watches.remove(path);
         self.watcher
             .unwatch(path)
             .map_err(|inner| io::Error::new(io::ErrorKind::Other, inner))

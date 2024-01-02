@@ -1,7 +1,9 @@
 # memofs Changelog
 
 ## Unreleased Changes
-* Changed the `StdBackend` file watcher to use `PollWatcher` on macOS.
+* Changed `StdBackend` file watching component to use minimal recursive watches. [#830]
+
+[#830]: https://github.com/rojo-rbx/rojo/pull/830
 
 ## 0.2.0 (2021-08-23)
 * Updated to `crossbeam-channel` 0.5.1.
