@@ -180,10 +180,18 @@ pub fn syncback_lua<'new, 'old>(
             );
         }
     }
+    let mut fs_snapshot = FsSnapshot::new();
+    fs_snapshot.add_file(path, contents);
+    if !meta.is_empty() {
+        fs_snapshot.add_file(
+            &meta.path,
+            serde_json::to_vec_pretty(&meta).context("could not serialize new init.meta.json")?,
+        );
+    }
 
     Ok(SyncbackReturn {
         inst_snapshot: InstanceSnapshot::from_instance(new_inst),
-        fs_snapshot: FsSnapshot::new().with_added_file(path, contents),
+        fs_snapshot,
         // Scripts don't have a child!
         children: Vec::new(),
         removed_children: Vec::new(),
