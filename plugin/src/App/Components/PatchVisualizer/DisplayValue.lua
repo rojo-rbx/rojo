@@ -53,8 +53,23 @@ local function DisplayValue(props)
 			elseif next(props.value) == nil then
 				-- If it's empty, show empty braces
 				textRepresentation = "{}"
+			elseif next(props.value) == 1 then
+				-- We don't need to support mixed tables, so checking the first key is enough
+				-- to determine if it's a simple array
+				local out, i = table.create(#props.value), 0
+				for k, v in props.value do
+					i += 1
+
+					-- Wrap strings in quotes
+					if type(v) == "string" then
+						v = '"' .. v .. '"'
+					end
+
+					out[i] = tostring(v)
+				end
+				textRepresentation = "{ " .. table.concat(out, ", ") .. " }"
 			else
-				-- If it has children, list them out
+				-- Otherwise, show the table contents as a dictionary
 				local out, i = {}, 0
 				for k, v in pairs(props.value) do
 					i += 1
