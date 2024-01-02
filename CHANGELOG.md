@@ -2,8 +2,10 @@
 
 ## Unreleased Changes
 * Improved the visualization for array properties like Tags ([#829])
+* Significantly improved performance of `rojo serve`, `rojo build --watch`, and `rojo sourcemap --watch` on macOS. [#830]
 
 [#829]: https://github.com/rojo-rbx/rojo/pull/829
+[#830]: https://github.com/rojo-rbx/rojo/pull/830
 
 ## [7.4.0-rc3] - October 25, 2023
 * Changed `sourcemap --watch` to only generate the sourcemap when it's necessary ([#800])
@@ -141,7 +143,6 @@
 * Add buttons for navigation on the Connected page ([#722])
 
 ### Fixes
-* Significantly improved performance of `rojo serve` and `rojo build` on macOS. [#783]
 * Significantly improved performance of `rojo sourcemap` ([#668])
 * Fixed the diff visualizer of connected sessions. ([#674])
 * Fixed disconnected session activity. ([#675])
@@ -175,7 +176,6 @@
 [#770]: https://github.com/rojo-rbx/rojo/pull/770
 [#771]: https://github.com/rojo-rbx/rojo/pull/771
 [#774]: https://github.com/rojo-rbx/rojo/pull/774
-[#783]: https://github.com/rojo-rbx/rojo/pull/783
 [rbx-dom#299]: https://github.com/rojo-rbx/rbx-dom/pull/299
 [rbx-dom#296]: https://github.com/rojo-rbx/rbx-dom/pull/296
 
