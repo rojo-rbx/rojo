@@ -1852,7 +1852,6 @@ dependencies = [
  "log",
  "maplit",
  "memofs",
- "notify",
  "num_cpus",
  "opener",
  "paste",
