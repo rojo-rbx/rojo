@@ -13,7 +13,7 @@ use super::resolve_path;
 static MODEL_PROJECT: &str =
     include_str!("../../assets/default-model-project/default.project.json");
 static MODEL_README: &str = include_str!("../../assets/default-model-project/README.md");
-static MODEL_INIT: &str = include_str!("../../assets/default-model-project/src-init.lua");
+static MODEL_INIT: &str = include_str!("../../assets/default-model-project/src-init.luau");
 static MODEL_GIT_IGNORE: &str = include_str!("../../assets/default-model-project/gitignore.txt");
 
 static PLACE_PROJECT: &str =
@@ -116,17 +116,17 @@ fn init_place(base_path: &Path, project_params: ProjectParams) -> anyhow::Result
     fs::create_dir_all(src.join(&src_client))?;
 
     write_if_not_exists(
-        &src_shared.join("Hello.lua"),
+        &src_shared.join("Hello.luau"),
         "return function()\n\tprint(\"Hello, world!\")\nend",
     )?;
 
     write_if_not_exists(
-        &src_server.join("init.server.lua"),
+        &src_server.join("init.server.luau"),
         "print(\"Hello world, from server!\")",
     )?;
 
     write_if_not_exists(
-        &src_client.join("init.client.lua"),
+        &src_client.join("init.client.luau"),
         "print(\"Hello world, from client!\")",
     )?;
 
@@ -149,7 +149,7 @@ fn init_model(base_path: &Path, project_params: ProjectParams) -> anyhow::Result
     fs::create_dir_all(&src)?;
 
     let init = project_params.render_template(MODEL_INIT);
-    write_if_not_exists(&src.join("init.lua"), &init)?;
+    write_if_not_exists(&src.join("init.luau"), &init)?;
 
     let git_ignore = project_params.render_template(MODEL_GIT_IGNORE);
     try_git_init(base_path, &git_ignore)?;
@@ -170,7 +170,7 @@ fn init_plugin(base_path: &Path, project_params: ProjectParams) -> anyhow::Resul
     fs::create_dir_all(&src)?;
 
     write_if_not_exists(
-        &src.join("init.server.lua"),
+        &src.join("init.server.luau"),
         "print(\"Hello world, from plugin!\")\n",
     )?;
 

@@ -1,0 +1,1 @@
+return "From folder/init.server.luau"
