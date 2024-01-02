@@ -8,9 +8,7 @@ use std::{
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use crate::{
-    glob::Glob, resolution::UnresolvedValue, snapshot::SyncRule, syncback::SyncbackIgnoreRules,
-};
+use crate::{glob::Glob, resolution::UnresolvedValue, snapshot::SyncRule, syncback::SyncbackRules};
 
 static PROJECT_FILENAME: &str = "default.project.json";
 
@@ -88,7 +86,7 @@ pub struct Project {
 
     /// A list of rules for syncback with this project file.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub syncback_rules: Option<SyncbackIgnoreRules>,
+    pub syncback_rules: Option<SyncbackRules>,
 
     /// A list of mappings of globs to syncing rules. If a file matches a glob,
     /// it will be 'transformed' into an Instance following the rule provided.

@@ -1,5 +1,8 @@
 use memofs::Vfs;
-use std::{collections::HashMap, path::PathBuf};
+use std::{
+    collections::{BTreeSet, HashMap},
+    path::PathBuf,
+};
 
 use crate::{
     snapshot::{InstanceWithMeta, RojoTree},
@@ -15,6 +18,7 @@ pub struct SyncbackData<'new, 'old> {
     pub(super) vfs: &'old Vfs,
     pub(super) old_tree: &'old RojoTree,
     pub(super) new_tree: &'new WeakDom,
+    pub(super) ignore_props: Option<&'old HashMap<String, Vec<String>>>,
 }
 
 pub struct SyncbackSnapshot<'new, 'old> {
@@ -42,12 +46,15 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
     /// Returns a map of properties for the 'new' Instance with filtering
     /// done to avoid noise.
     ///
-    /// Note that the returned map does not filter any properties by name, nor
-    /// does it clone the values. This is left to the consumer.
+    /// Note that while the returned map does filter based on the user's
+    /// `ignore_props` field, it does not do any other filtering and doesn't
+    /// clone any data. This is left to the consumer.
     pub fn get_filtered_properties(&self) -> HashMap<&'new str, &'new Variant> {
         let new_inst = self.new_inst();
         let mut properties: HashMap<&str, &Variant> =
             HashMap::with_capacity(new_inst.properties.capacity());
+
+        let filter = self.get_property_filter();
 
         if let Some(old_inst) = self.old_inst() {
             for (name, value) in &new_inst.properties {
@@ -66,6 +73,11 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
                     if matches!(value, Variant::Ref(_) | Variant::SharedString(_)) {
                         continue;
                     }
+                    if let Some(list) = &filter {
+                        if list.contains(name) {
+                            continue;
+                        }
+                    }
                     if let Some(default) = defaults.get(name.as_str()) {
                         if !variant_eq(value, default) {
                             properties.insert(name, value);
@@ -80,12 +92,26 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
                     if matches!(value, Variant::Ref(_) | Variant::SharedString(_)) {
                         continue;
                     }
+                    if let Some(list) = &filter {
+                        if list.contains(name) {
+                            continue;
+                        }
+                    }
                     properties.insert(name, value);
                 }
             }
         }
 
         properties
+    }
+
+    /// Returns a set of properties that should not be written with syncback if
+    /// one exists.
+    fn get_property_filter(&self) -> Option<BTreeSet<&String>> {
+        self.data
+            .ignore_props
+            .and_then(|filter| filter.get(&self.new_inst().class))
+            .map(|list| list.iter().collect())
     }
 
     /// Returns an Instance from the old tree with the provided referent, if it

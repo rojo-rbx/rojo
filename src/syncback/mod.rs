@@ -2,15 +2,11 @@ mod fs_snapshot;
 mod snapshot;
 
 use memofs::Vfs;
-use rbx_dom_weak::{
-    types::{Ref, Variant},
-    Instance, WeakDom,
-};
+use rbx_dom_weak::{types::Ref, Instance, WeakDom};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
 
 use crate::{
-    resolution::UnresolvedValue,
     snapshot::{hash_tree, InstanceSnapshot, InstanceWithMeta, RojoTree},
     snapshot_middleware::Middleware,
     Project,
@@ -34,6 +30,10 @@ pub fn syncback_loop<'old, 'new>(
         vfs,
         old_tree,
         new_tree,
+        ignore_props: project
+            .syncback_rules
+            .as_ref()
+            .map(|rules| &rules.ignore_properties),
     };
 
     let mut snapshots = vec![SyncbackSnapshot {
@@ -172,41 +172,24 @@ pub fn get_best_middleware(inst: &Instance) -> Middleware {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct SyncbackIgnoreRules {
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct SyncbackRules {
+    /// A list of paths in a file that will be ignored by Syncback.
     #[serde(default)]
-    paths: Vec<String>,
-    #[serde(default, skip)]
-    classes: HashMap<String, HashMap<String, UnresolvedValue>>,
+    ignore_paths: Vec<String>,
+    /// A map of classes to properties to ignore for that class when doing
+    /// syncback.
+    #[serde(default)]
+    ignore_properties: HashMap<String, Vec<String>>,
 }
 
-impl SyncbackIgnoreRules {
-    /// If possible, resolves all of the properties in the ignore rules so that
-    /// they're Variants.
-    pub fn resolve(&self) -> anyhow::Result<HashMap<&str, HashMap<&str, Variant>>> {
-        let mut resolved = HashMap::with_capacity(self.classes.capacity());
-
-        for (class_name, properties) in &self.classes {
-            let mut resolved_props = HashMap::with_capacity(properties.capacity());
-            for (prop_name, prop_value) in properties {
-                resolved_props.insert(
-                    prop_name.as_str(),
-                    prop_value.clone().resolve(class_name, prop_name)?,
-                );
-            }
-
-            resolved.insert(class_name.as_str(), resolved_props);
-        }
-
-        Ok(resolved)
-    }
-
+impl SyncbackRules {
     /// Returns whether the provided Instance is allowed to be handled with
     /// syncback.
     #[inline]
     pub fn acceptable(&self, dom: &WeakDom, inst: Ref) -> bool {
         let path = get_inst_path(dom, inst);
-        for ignored in &self.paths {
+        for ignored in &self.ignore_paths {
             if path.starts_with(ignored.as_str()) {
                 return false;
             }
