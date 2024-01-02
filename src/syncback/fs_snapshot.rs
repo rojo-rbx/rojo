@@ -7,6 +7,12 @@ use std::{
 
 use memofs::Vfs;
 
+/// A simple representation of a subsection of a file system.
+///
+/// This is distinct from the snapshot provided by memofs (`VfsSnapshot`) due
+/// to the need to support writing to the file system instead of an in-memory
+/// file system.
+#[derive(Default)]
 pub struct FsSnapshot {
     files: HashMap<PathBuf, Arc<Vec<u8>>>,
     dir: HashSet<PathBuf>,
