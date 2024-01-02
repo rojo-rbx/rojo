@@ -108,10 +108,26 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
     /// Returns a set of properties that should not be written with syncback if
     /// one exists.
     fn get_property_filter(&self) -> Option<BTreeSet<&String>> {
-        self.data
-            .ignore_props
-            .and_then(|filter| filter.get(&self.new_inst().class))
-            .map(|list| list.iter().collect())
+        let filter = self.data.ignore_props?;
+        let mut set = BTreeSet::new();
+
+        let database = rbx_reflection_database::get();
+        let mut current_class_name = self.new_inst().class.as_str();
+
+        loop {
+            if let Some(list) = filter.get(current_class_name) {
+                set.extend(list)
+            }
+
+            let class = database.classes.get(current_class_name)?;
+            if let Some(super_class) = class.superclass.as_ref() {
+                current_class_name = &super_class;
+            } else {
+                break;
+            }
+        }
+
+        Some(set)
     }
 
     /// Returns an Instance from the old tree with the provided referent, if it
