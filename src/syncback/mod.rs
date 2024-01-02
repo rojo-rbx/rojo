@@ -81,6 +81,14 @@ pub fn syncback_loop<'old, 'new>(
             middleware
         );
 
+        if matches!(middleware, Middleware::Json | Middleware::Toml) {
+            log::warn!(
+                "Cannot syncback {middleware:?} at {}, skipping",
+                get_inst_path(new_tree, snapshot.new)
+            );
+            continue;
+        }
+
         let syncback = middleware.syncback(&snapshot)?;
 
         if let Some(old_inst) = snapshot.old_inst() {
