@@ -69,7 +69,6 @@ hyper = { version = "0.14.13", features = ["server", "tcp", "http1"] }
 jod-thread = "0.1.2"
 log = "0.4.14"
 maplit = "1.0.2"
-notify = "4.0.17"
 num_cpus = "1.15.0"
 opener = "0.5.0"
 rayon = "1.7.0"
