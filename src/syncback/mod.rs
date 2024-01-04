@@ -15,10 +15,10 @@ use crate::{
 pub use fs_snapshot::FsSnapshot;
 pub use snapshot::{SyncbackData, SyncbackSnapshot};
 
-pub fn syncback_loop<'old, 'new>(
+pub fn syncback_loop<'old>(
     vfs: &'old Vfs,
     old_tree: &'old RojoTree,
-    new_tree: &'new WeakDom,
+    new_tree: &WeakDom,
     project: &'old Project,
 ) -> anyhow::Result<Vec<(Ref, InstanceSnapshot)>> {
     log::debug!("Hashing project DOM");
@@ -90,6 +90,21 @@ pub fn syncback_loop<'old, 'new>(
         }
 
         let syncback = middleware.syncback(&snapshot)?;
+        if !syncback.removed_children.is_empty() {
+            log::debug!(
+                "removed children for {}: {}",
+                get_inst_path(new_tree, snapshot.new),
+                syncback.removed_children.len()
+            );
+            for inst in &syncback.removed_children {
+                let path = inst.metadata().instigating_source.as_ref().unwrap().path();
+                if path.is_dir() {
+                    fs_snapshot.remove_dir(path)
+                } else {
+                    fs_snapshot.remove_file(path)
+                }
+            }
+        }
 
         if let Some(old_inst) = snapshot.old_inst() {
             replacements.push((old_inst.parent(), syncback.inst_snapshot));
