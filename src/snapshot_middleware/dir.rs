@@ -188,9 +188,9 @@ pub fn syncback_dir_no_meta<'new, 'old>(
             // If it exists in the new tree but not the old one, it was added.
             match old_children.get(new_child.name.as_str()) {
                 None => {
-                    children.push(snapshot.from_parent(new_child.name.clone(), *child_ref, None))
+                    children.push(snapshot.with_parent(new_child.name.clone(), *child_ref, None))
                 }
-                Some(old_ref) => children.push(snapshot.from_parent(
+                Some(old_ref) => children.push(snapshot.with_parent(
                     new_child.name.clone(),
                     *child_ref,
                     Some(*old_ref),
@@ -200,7 +200,7 @@ pub fn syncback_dir_no_meta<'new, 'old>(
     } else {
         for child_ref in new_inst.children() {
             let child = snapshot.get_new_instance(*child_ref).unwrap();
-            children.push(snapshot.from_parent(child.name.clone(), *child_ref, None))
+            children.push(snapshot.with_parent(child.name.clone(), *child_ref, None))
         }
     }
 

@@ -33,7 +33,7 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
     /// Constructs a SyncbackSnapshot from the provided refs
     /// while inheriting the parent's trees and path
     #[inline]
-    pub fn from_parent(&self, new_name: String, new_ref: Ref, old_ref: Option<Ref>) -> Self {
+    pub fn with_parent(&self, new_name: String, new_ref: Ref, old_ref: Option<Ref>) -> Self {
         Self {
             data: self.data,
             old: old_ref,
