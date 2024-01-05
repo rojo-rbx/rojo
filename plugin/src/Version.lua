@@ -52,14 +52,11 @@ function Version.compare(a, b)
 	end
 
 	-- If they are both prereleases, compare those based on number
-	return compare(
-		tonumber(string.match(a[4], "(%d+).*$")) or 0,
-		tonumber(string.match(b[4], "(%d+).*$")) or 0
-	)
+	return compare(tonumber(string.match(a[4], "(%d+).*$")) or 0, tonumber(string.match(b[4], "(%d+).*$")) or 0)
 end
 
 function Version.parse(versionString: string)
-	local version = {string.match(versionString, "^v?(%d+)%.(%d+)%.(%d+)(.*)$")}
+	local version = { string.match(versionString, "^v?(%d+)%.(%d+)%.(%d+)(.*)$") }
 	for i, v in version do
 		version[i] = tonumber(v) or v
 	end
@@ -82,12 +79,12 @@ function Version.display(version)
 end
 
 function Version.retrieveLatestCompatible(options: {
-	version: {number},
+	version: { number },
 	includePrereleases: boolean?,
 }): {
-	version: {number},
+	version: { number },
 	prerelease: boolean,
-	publishedUnixTimestamp: number
+	publishedUnixTimestamp: number,
 }?
 	local success, releases = Http.get("https://api.github.com/repos/rojo-rbx/rojo/releases?per_page=10")
 		:andThen(function(response)
