@@ -155,6 +155,23 @@ function SettingsPage:render()
 				layoutOrder = 5,
 			}),
 
+			CheckForUpdates = e(Setting, {
+				id = "checkForUpdates",
+				name = "Check For Updates",
+				description = "Notify about newer compatible Rojo releases",
+				transparency = self.props.transparency,
+				layoutOrder = 6,
+			}),
+
+			CheckForPreleases = e(Setting, {
+				id = "checkForPrereleases",
+				name = "Include Prerelease Updates",
+				description = "Include prereleases when checking for updates",
+				transparency = self.props.transparency,
+				layoutOrder = 7,
+				visible = Settings:getBinding("checkForUpdates"),
+			}),
+
 			OpenScriptsExternally = e(Setting, {
 				id = "openScriptsExternally",
 				name = "Open Scripts Externally",
@@ -162,7 +179,7 @@ function SettingsPage:render()
 				locked = self.props.syncActive,
 				experimental = true,
 				transparency = self.props.transparency,
-				layoutOrder = 6,
+				layoutOrder = 8,
 			}),
 
 			TwoWaySync = e(Setting, {
@@ -172,7 +189,7 @@ function SettingsPage:render()
 				locked = self.props.syncActive,
 				experimental = true,
 				transparency = self.props.transparency,
-				layoutOrder = 7,
+				layoutOrder = 9,
 			}),
 
 			LogLevel = e(Setting, {
