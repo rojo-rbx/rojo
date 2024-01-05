@@ -6,6 +6,7 @@ local Roact = require(Packages.Roact)
 local Flipper = require(Packages.Flipper)
 
 local bindingUtil = require(Plugin.App.bindingUtil)
+local timeUtil = require(Plugin.timeUtil)
 local Theme = require(Plugin.App.Theme)
 local Assets = require(Plugin.Assets)
 local PatchSet = require(Plugin.PatchSet)
@@ -20,36 +21,6 @@ local PatchVisualizer = require(Plugin.App.Components.PatchVisualizer)
 local StringDiffVisualizer = require(Plugin.App.Components.StringDiffVisualizer)
 
 local e = Roact.createElement
-
-local AGE_UNITS = {
-	{ 31556909, "year" },
-	{ 2629743, "month" },
-	{ 604800, "week" },
-	{ 86400, "day" },
-	{ 3600, "hour" },
-	{
-		60,
-		"minute",
-	},
-}
-function timeSinceText(elapsed: number): string
-	if elapsed < 3 then
-		return "just now"
-	end
-
-	local ageText = string.format("%d seconds ago", elapsed)
-
-	for _, UnitData in ipairs(AGE_UNITS) do
-		local UnitSeconds, UnitName = UnitData[1], UnitData[2]
-		if elapsed > UnitSeconds then
-			local c = math.floor(elapsed / UnitSeconds)
-			ageText = string.format("%d %s%s ago", c, UnitName, c > 1 and "s" or "")
-			break
-		end
-	end
-
-	return ageText
-end
 
 local ChangesDrawer = Roact.Component:extend("ChangesDrawer")
 
@@ -170,7 +141,7 @@ function ConnectedPage:getChangeInfoText()
 	local unapplied = PatchSet.countChanges(patchData.unapplied)
 
 	return "<i>Synced "
-		.. timeSinceText(elapsed)
+		.. timeUtil.elapsedToText(elapsed)
 		.. (if unapplied > 0
 			then string.format(
 				', <font color="#FF8E3C">but %d change%s failed to apply</font>',
@@ -198,7 +169,7 @@ function ConnectedPage:startChangeInfoTextUpdater()
 			local updateInterval = 1
 
 			-- Update timestamp text as frequently as currently needed
-			for _, UnitData in ipairs(AGE_UNITS) do
+			for _, UnitData in ipairs(timeUtil.AGE_UNITS) do
 				local UnitSeconds = UnitData[1]
 				if elapsed > UnitSeconds then
 					updateInterval = UnitSeconds
