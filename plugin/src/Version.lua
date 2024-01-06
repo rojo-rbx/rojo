@@ -52,7 +52,14 @@ function Version.compare(a, b)
 	end
 
 	-- If they are both prereleases, compare those based on number
-	return compare(tonumber(string.match(a[4], "(%d+).*$")) or 0, tonumber(string.match(b[4], "(%d+).*$")) or 0)
+	local aPrereleaseNumeric = string.match(a[4], "(%d+).*$")
+	local bPrereleaseNumeric = string.match(b[4], "(%d+).*$")
+
+	if aPrereleaseNumeric == nil or bPrereleaseNumeric == nil then
+		-- If one or both lack a number, comparing isn't meaningful
+		return 0
+	end
+	return compare(tonumber(aPrereleaseNumeric) or 0, tonumber(bPrereleaseNumeric) or 0)
 end
 
 function Version.parse(versionString: string)
