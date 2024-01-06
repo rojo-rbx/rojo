@@ -24,3 +24,6 @@ insert_final_newline = true
 
 [*.lua]
 indent_style = tab
+
+[*.luau]
+indent_style = tab

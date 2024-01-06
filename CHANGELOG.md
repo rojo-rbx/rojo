@@ -3,10 +3,12 @@
 ## Unreleased Changes
 * Improved the visualization for array properties like Tags ([#829])
 * Significantly improved performance of `rojo serve`, `rojo build --watch`, and `rojo sourcemap --watch` on macOS. [#830]
+* Changed *.lua files that init command generates to *.luau ([#831])
 * Added update notifications for newer compatible versions in the Studio plugin. ([#832])
 
 [#829]: https://github.com/rojo-rbx/rojo/pull/829
 [#830]: https://github.com/rojo-rbx/rojo/pull/830
+[#831]: https://github.com/rojo-rbx/rojo/pull/831
 [#832]: https://github.com/rojo-rbx/rojo/pull/832
 
 ## [7.4.0-rc3] - October 25, 2023
