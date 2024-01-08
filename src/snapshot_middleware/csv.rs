@@ -294,7 +294,7 @@ fn convert_localization_csv(contents: &[u8]) -> Result<String, csv::Error> {
                 _ => {
                     entry
                         .values
-                        .insert(Cow::Borrowed(value), Cow::Borrowed(value));
+                        .insert(Cow::Borrowed(header), Cow::Borrowed(value));
                 }
             }
         }
