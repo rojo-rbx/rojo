@@ -15,6 +15,8 @@ use crate::{
 
 use super::{meta_file::DirectoryMetadata, snapshot_from_vfs};
 
+const EMPTY_DIR_KEEP_NAME: &str = ".gitkeep";
+
 pub fn snapshot_dir(
     context: &InstanceContext,
     vfs: &Vfs,
@@ -204,9 +206,15 @@ pub fn syncback_dir_no_meta<'new, 'old>(
         }
     }
 
+    let mut fs_snapshot = FsSnapshot::new();
+    fs_snapshot.add_dir(&path);
+    if new_inst.children().is_empty() {
+        fs_snapshot.add_file(path.join(EMPTY_DIR_KEEP_NAME), Vec::new())
+    }
+
     Ok(SyncbackReturn {
         inst_snapshot: InstanceSnapshot::from_instance(new_inst),
-        fs_snapshot: FsSnapshot::new().with_added_dir(path),
+        fs_snapshot,
         children,
         removed_children,
     })
