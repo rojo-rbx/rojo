@@ -74,7 +74,7 @@ pub fn syncback_txt<'new, 'old>(
                 .with_extension("meta.json"),
         }
     };
-    for (name, value) in snapshot.get_filtered_properties() {
+    for (name, value) in snapshot.new_filtered_properties() {
         if name == "Value" {
             continue;
         } else if name == "Attributes" || name == "AttributesSerialize" {

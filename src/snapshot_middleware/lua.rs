@@ -159,7 +159,7 @@ pub fn syncback_lua<'new, 'old>(
                 .with_extension("meta.json"),
         }
     };
-    for (name, value) in snapshot.get_filtered_properties() {
+    for (name, value) in snapshot.new_filtered_properties() {
         if name == "Source" {
             continue;
         } else if name == "Attributes" || name == "AttributesSerialize" {
@@ -233,7 +233,7 @@ pub fn syncback_lua_init<'new, 'old>(
                 .join("init.meta.json"),
         }
     };
-    for (name, value) in snapshot.get_filtered_properties() {
+    for (name, value) in snapshot.new_filtered_properties() {
         if name == "Source" {
             continue;
         } else if name == "Attributes" || name == "AttributesSerialize" {

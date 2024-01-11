@@ -70,7 +70,7 @@ pub fn syncback_json_model<'new, 'old>(
 
     let mut properties = BTreeMap::new();
     let mut attributes = BTreeMap::new();
-    for (name, value) in snapshot.get_filtered_properties() {
+    for (name, value) in snapshot.new_filtered_properties() {
         if name == "Attributes" || name == "AttributesSerialize" {
             if let Variant::Attributes(attr) = value {
                 attributes.extend(attr.iter().map(|(name, value)| {

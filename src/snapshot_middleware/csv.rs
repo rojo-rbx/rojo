@@ -125,7 +125,7 @@ pub fn syncback_csv<'new, 'old>(
                 .with_extension("meta.json"),
         }
     };
-    for (name, value) in snapshot.get_filtered_properties() {
+    for (name, value) in snapshot.new_filtered_properties() {
         if name == "Contents" {
             continue;
         } else if name == "Attributes" || name == "AttributesSerialize" {
@@ -194,7 +194,7 @@ pub fn syncback_csv_init<'new, 'old>(
                 .join("init.meta.json"),
         }
     };
-    for (name, value) in snapshot.get_filtered_properties() {
+    for (name, value) in snapshot.new_filtered_properties() {
         if name == "Contents" {
             continue;
         } else if name == "Attributes" || name == "AttributesSerialize" {

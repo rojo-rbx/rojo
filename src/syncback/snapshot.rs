@@ -49,7 +49,7 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
     /// Note that while the returned map does filter based on the user's
     /// `ignore_props` field, it does not do any other filtering and doesn't
     /// clone any data. This is left to the consumer.
-    pub fn get_filtered_properties(&self) -> HashMap<&'new str, &'new Variant> {
+    pub fn new_filtered_properties(&self) -> HashMap<&'new str, &'new Variant> {
         let new_inst = self.new_inst();
         let mut properties: HashMap<&str, &Variant> =
             HashMap::with_capacity(new_inst.properties.capacity());

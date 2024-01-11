@@ -120,7 +120,7 @@ pub fn syncback_dir<'new, 'old>(
             path: path.join("init.meta.json"),
         }
     };
-    for (name, value) in snapshot.get_filtered_properties() {
+    for (name, value) in snapshot.new_filtered_properties() {
         if name == "Attributes" || name == "AttributesSerialize" {
             if let Variant::Attributes(attrs) = value {
                 meta.attributes.extend(attrs.iter().map(|(name, value)| {
