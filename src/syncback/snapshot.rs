@@ -49,15 +49,29 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
     /// Note that while the returned map does filter based on the user's
     /// `ignore_props` field, it does not do any other filtering and doesn't
     /// clone any data. This is left to the consumer.
+    #[inline]
     pub fn new_filtered_properties(&self) -> HashMap<&'new str, &'new Variant> {
-        let new_inst = self.new_inst();
+        self.get_filtered_properties(self.new).unwrap()
+    }
+
+    /// Returns a map of properties for an Instance from the 'new' tree
+    /// with filtering done to avoid noise.
+    ///
+    /// Note that while the returned map does filter based on the user's
+    /// `ignore_props` field, it does not do any other filtering and doesn't
+    /// clone any data. This is left to the consumer.
+    pub fn get_filtered_properties(
+        &self,
+        new_ref: Ref,
+    ) -> Option<HashMap<&'new str, &'new Variant>> {
+        let inst = self.get_new_instance(new_ref)?;
         let mut properties: HashMap<&str, &Variant> =
-            HashMap::with_capacity(new_inst.properties.capacity());
+            HashMap::with_capacity(inst.properties.capacity());
 
         let filter = self.get_property_filter();
 
         if let Some(old_inst) = self.old_inst() {
-            for (name, value) in &new_inst.properties {
+            for (name, value) in &inst.properties {
                 if old_inst.properties().contains_key(name) {
                     properties.insert(name, value);
                 }
@@ -65,10 +79,10 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
         } else {
             let class_data = rbx_reflection_database::get()
                 .classes
-                .get(new_inst.class.as_str());
+                .get(inst.class.as_str());
             if let Some(class_data) = class_data {
                 let defaults = &class_data.default_properties;
-                for (name, value) in &new_inst.properties {
+                for (name, value) in &inst.properties {
                     // We don't currently support refs or shared strings
                     if matches!(value, Variant::Ref(_) | Variant::SharedString(_)) {
                         continue;
@@ -87,7 +101,7 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
                     }
                 }
             } else {
-                for (name, value) in &new_inst.properties {
+                for (name, value) in &inst.properties {
                     // We don't currently support refs or shared strings
                     if matches!(value, Variant::Ref(_) | Variant::SharedString(_)) {
                         continue;
@@ -102,7 +116,7 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
             }
         }
 
-        properties
+        Some(properties)
     }
 
     /// Returns a set of properties that should not be written with syncback if
