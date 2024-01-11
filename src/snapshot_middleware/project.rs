@@ -348,17 +348,14 @@ pub fn syncback_project<'new, 'old>(
                     if new_child.class != old_child.class_name() {
                         anyhow::bail!("Cannot change the class of {child_name} in a project");
                     }
-                    for (name, value) in &new_child.properties {
-                        if child_node.properties.contains_key(name) {
-                            child_node.properties.insert(
-                                name.clone(),
-                                UnresolvedValue::from_variant(
-                                    value.clone(),
-                                    &new_child.class,
-                                    name.as_str(),
-                                ),
-                            );
-                        }
+                    let properties = snapshot
+                        .get_filtered_properties(new_child.referent())
+                        .expect("all project nodes should exist in the DOM");
+                    for (name, value) in properties {
+                        child_node.properties.insert(
+                            name.to_owned(),
+                            UnresolvedValue::from_variant(value.clone(), &new_child.class, name),
+                        );
                     }
                     nodes.push((child_node, new_child, *old_child));
                     new_child_map.remove(child_name.as_str());
