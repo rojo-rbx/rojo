@@ -435,8 +435,8 @@ function ConnectedPage:render()
 							anchorPoint = Vector2.new(0, 0),
 							transparency = self.props.transparency,
 
-							oldText = self.state.oldString,
-							newText = self.state.newString,
+							oldString = self.state.oldString,
+							newString = self.state.newString,
 						}),
 					}),
 				}),

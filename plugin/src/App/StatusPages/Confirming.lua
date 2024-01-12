@@ -27,6 +27,9 @@ function ConfirmingPage:init()
 		showingStringDiff = false,
 		oldString = "",
 		newString = "",
+		showingTableDiff = false,
+		oldTable = {},
+		newTable = {},
 	})
 end
 
@@ -167,8 +170,8 @@ function ConfirmingPage:render()
 							anchorPoint = Vector2.new(0, 0),
 							transparency = self.props.transparency,
 
-							oldText = self.state.oldString,
-							newText = self.state.newString,
+							oldString = self.state.oldString,
+							newString = self.state.newString,
 						}),
 					}),
 				}),
