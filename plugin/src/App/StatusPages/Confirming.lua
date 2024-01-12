@@ -63,7 +63,7 @@ function ConfirmingPage:render()
 				patch = self.props.confirmData.patch,
 				instanceMap = self.props.confirmData.instanceMap,
 
-				showSourceDiff = function(oldSource: string, newSource: string)
+				showStringDiff = function(oldSource: string, newSource: string)
 					self:setState({
 						showingSourceDiff = true,
 						oldSource = oldSource,

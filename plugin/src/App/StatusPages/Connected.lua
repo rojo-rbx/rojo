@@ -97,7 +97,8 @@ function ChangesDrawer:render()
 
 				patchTree = self.props.patchTree,
 
-				showSourceDiff = self.props.showSourceDiff,
+				showStringDiff = self.props.showStringDiff,
+				showTableDiff = self.props.showTableDiff,
 			}),
 		})
 	end)
@@ -387,7 +388,7 @@ function ConnectedPage:render()
 				height = self.changeDrawerHeight,
 				layoutOrder = 5,
 
-				showSourceDiff = function(oldSource: string, newSource: string)
+				showStringDiff = function(oldSource: string, newSource: string)
 					self:setState({
 						showingSourceDiff = true,
 						oldSource = oldSource,

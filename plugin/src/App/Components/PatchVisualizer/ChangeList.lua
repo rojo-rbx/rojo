@@ -19,7 +19,7 @@ local function RowContent(props)
 	local metadata = props.metadata
 	local propertyName = tostring(values[1])
 
-	if propertyName == "Source" and props.showSourceDiff then
+	if propertyName == "Source" and props.showStringDiff then
 		-- Special case for .Source updates
 		-- because we want to display a syntax highlighted diff for better UX
 		return Theme.with(function(theme)
@@ -29,8 +29,8 @@ local function RowContent(props)
 				LayoutOrder = 2,
 				BackgroundTransparency = 1,
 				[Roact.Event.Activated] = function()
-					if props.showSourceDiff then
-						props.showSourceDiff(tostring(values[2]), tostring(values[3]))
+					if props.showStringDiff then
+						props.showStringDiff(tostring(values[2]), tostring(values[3]))
 					end
 				end,
 			}, {
@@ -224,7 +224,7 @@ function ChangeList:render()
 					values = values,
 					metadata = metadata,
 					transparency = props.transparency,
-					showSourceDiff = props.showSourceDiff,
+					showStringDiff = props.showStringDiff,
 					showTableDiff = props.showTableDiff,
 				}),
 			})
