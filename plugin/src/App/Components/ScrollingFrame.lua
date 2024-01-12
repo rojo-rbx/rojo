@@ -34,17 +34,21 @@ local function ScrollingFrame(props)
 			Size = props.size,
 			Position = props.position,
 			AnchorPoint = props.anchorPoint,
-			CanvasSize = if props.contentSize then props.contentSize:map(function(value)
-				return UDim2.new(
-					0,
-					if (props.scrollingDirection and props.scrollingDirection ~= Enum.ScrollingDirection.Y)
-						then value.X
-						else 0,
-					0,
-					value.Y
-				)
-			end) else UDim2.new(),
-			AutomaticCanvasSize = if props.contentSize == nil then scrollDirToAutoSize[props.scrollingDirection or Enum.ScrollingDirection.XY] else nil,
+			CanvasSize = if props.contentSize
+				then props.contentSize:map(function(value)
+					return UDim2.new(
+						0,
+						if (props.scrollingDirection and props.scrollingDirection ~= Enum.ScrollingDirection.Y)
+							then value.X
+							else 0,
+						0,
+						value.Y
+					)
+				end)
+				else UDim2.new(),
+			AutomaticCanvasSize = if props.contentSize == nil
+				then scrollDirToAutoSize[props.scrollingDirection or Enum.ScrollingDirection.XY]
+				else nil,
 
 			BorderSizePixel = 0,
 			BackgroundTransparency = 1,

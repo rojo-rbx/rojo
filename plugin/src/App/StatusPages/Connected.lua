@@ -396,7 +396,7 @@ function ConnectedPage:render()
 						newString = newString,
 					})
 				end,
-				showTableDiff = function(oldTable: {[any]: any?}, newTable: {[any]: any?})
+				showTableDiff = function(oldTable: { [any]: any? }, newTable: { [any]: any? })
 					self:setState({
 						showingTableDiff = true,
 						oldTable = oldTable,

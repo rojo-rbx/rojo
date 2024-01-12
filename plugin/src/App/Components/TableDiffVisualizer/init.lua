@@ -76,65 +76,69 @@ function TableDiffVisualizer:render()
 	local diffKeys = self.state.diffKeys
 
 	return Theme.with(function(theme)
-
 		local lines = table.create(#diffKeys)
 		for order, line in diffKeys do
 			local key = line.key
 			local oldValue = oldTable[key]
 			local newValue = newTable[key]
 
-			table.insert(lines, e("Frame", {
-				Size = UDim2.new(1, 0, 0, 25),
-				LayoutOrder = order,
-				BorderSizePixel = 0,
-				BackgroundTransparency = if line.patchType == "Remain" then 1 else 0,
-				BackgroundColor3 = if line.patchType == "Remain" then theme.Diff.Row else theme.Diff[line.patchType],
-			}, {
-				DiffIcon = if line.patchType ~= "Remain" then
-					e("ImageLabel", {
-						Image = Assets.Images.Diff[line.patchType],
-						ImageColor3 = theme.AddressEntry.PlaceholderColor,
-						ImageTransparency = self.props.transparency,
+			table.insert(
+				lines,
+				e("Frame", {
+					Size = UDim2.new(1, 0, 0, 25),
+					LayoutOrder = order,
+					BorderSizePixel = 0,
+					BackgroundTransparency = if line.patchType == "Remain" then 1 else 0,
+					BackgroundColor3 = if line.patchType == "Remain"
+						then theme.Diff.Row
+						else theme.Diff[line.patchType],
+				}, {
+					DiffIcon = if line.patchType ~= "Remain"
+						then e("ImageLabel", {
+							Image = Assets.Images.Diff[line.patchType],
+							ImageColor3 = theme.AddressEntry.PlaceholderColor,
+							ImageTransparency = self.props.transparency,
+							BackgroundTransparency = 1,
+							Size = UDim2.new(0, 15, 0, 15),
+							Position = UDim2.new(0, 7, 0.5, 0),
+							AnchorPoint = Vector2.new(0, 0.5),
+						})
+						else nil,
+					KeyName = e("TextLabel", {
+						Size = UDim2.new(0.3, -15, 1, 0),
+						Position = UDim2.new(0, 30, 0, 0),
 						BackgroundTransparency = 1,
-						Size = UDim2.new(0, 15, 0, 15),
-						Position = UDim2.new(0, 7, 0.5, 0),
-						AnchorPoint = Vector2.new(0, 0.5),
-					})
-					else nil,
-				KeyName = e("TextLabel", {
-					Size = UDim2.new(0.3, -15, 1, 0),
-					Position = UDim2.new(0, 30, 0, 0),
-					BackgroundTransparency = 1,
-					Text = key,
-					TextXAlignment = Enum.TextXAlignment.Left,
-					Font = Enum.Font.GothamMedium,
-					TextSize = 14,
-					TextColor3 = theme.Settings.Setting.DescriptionColor,
-					TextTruncate = Enum.TextTruncate.AtEnd,
-				}),
-				OldValue = e("Frame", {
-					Size = UDim2.new(0.35, -7, 1, 0),
-					Position = UDim2.new(0.3, 15, 0, 0),
-					BackgroundTransparency = 1,
-				}, {
-					e(DisplayValue, {
-						value = oldValue,
-						transparency = self.props.transparency,
-						textColor = theme.Settings.Setting.DescriptionColor,
+						Text = key,
+						TextXAlignment = Enum.TextXAlignment.Left,
+						Font = Enum.Font.GothamMedium,
+						TextSize = 14,
+						TextColor3 = theme.Settings.Setting.DescriptionColor,
+						TextTruncate = Enum.TextTruncate.AtEnd,
 					}),
-				}),
-				NewValue = e("Frame", {
-					Size = UDim2.new(0.35, -8, 1, 0),
-					Position = UDim2.new(0.65, 8, 0, 0),
-					BackgroundTransparency = 1,
-				}, {
-					e(DisplayValue, {
-						value = newValue,
-						transparency = self.props.transparency,
-						textColor = theme.Settings.Setting.DescriptionColor,
+					OldValue = e("Frame", {
+						Size = UDim2.new(0.35, -7, 1, 0),
+						Position = UDim2.new(0.3, 15, 0, 0),
+						BackgroundTransparency = 1,
+					}, {
+						e(DisplayValue, {
+							value = oldValue,
+							transparency = self.props.transparency,
+							textColor = theme.Settings.Setting.DescriptionColor,
+						}),
 					}),
-				}),
-			}))
+					NewValue = e("Frame", {
+						Size = UDim2.new(0.35, -8, 1, 0),
+						Position = UDim2.new(0.65, 8, 0, 0),
+						BackgroundTransparency = 1,
+					}, {
+						e(DisplayValue, {
+							value = newValue,
+							transparency = self.props.transparency,
+							textColor = theme.Settings.Setting.DescriptionColor,
+						}),
+					}),
+				})
+			)
 		end
 
 		return e(BorderedContainer, {
