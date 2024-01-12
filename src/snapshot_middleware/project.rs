@@ -301,117 +301,123 @@ pub fn syncback_project<'new, 'old>(
 ) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
     let old_inst = snapshot
         .old_inst()
-        .context("project middleware shouldn't be used to make new files")?;
-    // This can never be None.
-    let source = old_inst.metadata().instigating_source.as_ref().unwrap();
+        .expect("projects should always exist in both trees");
+    // Project roots have to come from somewhere!
+    let path = old_inst
+        .metadata()
+        .instigating_source
+        .as_ref()
+        .unwrap()
+        .path();
 
-    // We need to build a 'new' project and serialize it using an FsSnapshot.
-    // It's convenient to start with the old one though, since it means we have
-    // a thing to iterate through.
-    let mut project =
-        Project::load_from_slice(&snapshot.vfs().read(source.path()).unwrap(), source.path())
-            .context("could not syncback project due to fs error")?;
+    let base_path = path.parent().expect("project did not have a parent");
 
-    let base_path = source.path().parent().unwrap();
+    let vfs = snapshot.vfs();
+
+    let mut project = Project::load_from_slice(&vfs.read(path)?, path)?;
 
     let mut children = Vec::new();
     let mut removed_children = Vec::new();
 
-    // Projects are special. We won't be adding or removing things from them,
-    // so we'll simply match Instances on a per-node basis and rebuild the tree
-    // with the new instance's data. This matching will be done by class and name
-    // to simplify things.
-    let mut nodes = vec![(&mut project.tree, snapshot.new_inst(), old_inst)];
+    // A map of every node and the Instances they map to. This is fine because
+    // we don't add or remove from projects, so every node must map somewhere.
+    let mut project_nodes = vec![(&mut project.tree, snapshot.new_inst(), old_inst)];
 
-    // A map of referents from the new tree to the Path that created it,
-    // if it exists. This is a roundabout way to locate the parents of
-    // Instances.
-    let mut ref_to_node = HashMap::new();
+    // A map of refs to the path of a node they represent. This is used later to
+    // match children to their parent's path.
+    let mut ref_to_path = HashMap::new();
 
-    while let Some((node, new_inst, old_inst)) = nodes.pop() {
-        ref_to_node.insert(new_inst.referent(), node.path.as_ref());
+    // These map children of a node by name to the actual Instance
+    let mut old_child_map = HashMap::new();
+    let mut new_child_map = HashMap::new();
 
-        let mut old_child_map = HashMap::with_capacity(old_inst.children().len());
-        for child_ref in old_inst.children() {
-            let child = snapshot.get_old_instance(*child_ref).unwrap();
-            old_child_map.insert(child.name(), child);
-        }
-        let mut new_child_map = HashMap::with_capacity(new_inst.children().len());
-        for child_ref in new_inst.children() {
-            let child = snapshot.get_new_instance(*child_ref).unwrap();
-            new_child_map.insert(child.name.as_str(), child);
+    while let Some((node, new_inst, old_inst)) = project_nodes.pop() {
+        log::trace!("Processing node '{}' of project", old_inst.name());
+        ref_to_path.insert(new_inst.referent(), node.path.as_ref());
+
+        old_child_map.extend(old_inst.children().iter().map(|referent| {
+            let child = snapshot.get_old_instance(*referent).unwrap();
+            (child.name(), child)
+        }));
+        new_child_map.extend(new_inst.children().iter().map(|referent| {
+            let child = snapshot.get_new_instance(*referent).unwrap();
+            (&child.name, child)
+        }));
+
+        let properties = &mut node.properties;
+
+        let filtered_properties = snapshot
+            .get_filtered_properties(new_inst.referent())
+            .expect("all project nodes should exist in both trees when in queue");
+        for (name, value) in filtered_properties {
+            properties.insert(
+                name.to_owned(),
+                UnresolvedValue::from_variant(value.clone(), &new_inst.class, name),
+            );
         }
 
         for (child_name, child_node) in &mut node.children {
-            if let Some(new_child) = new_child_map.get(child_name.as_str()) {
-                if let Some(old_child) = old_child_map.get(child_name.as_str()) {
+            // There could be no old_child if the node is optional and not
+            // present on the file system, which is why this isn't an `unwrap`.
+            if let Some(old_child) = old_child_map.get(child_name.as_str()) {
+                if let Some(new_child) = new_child_map.get(child_name) {
                     if new_child.class != old_child.class_name() {
-                        anyhow::bail!("Cannot change the class of {child_name} in a project");
+                        anyhow::bail!("cannot change the class of {child_name} in project");
                     }
-                    let properties = snapshot
-                        .get_filtered_properties(new_child.referent())
-                        .expect("all project nodes should exist in the DOM");
-                    for (name, value) in properties {
-                        child_node.properties.insert(
-                            name.to_owned(),
-                            UnresolvedValue::from_variant(value.clone(), &new_child.class, name),
-                        );
-                    }
-                    nodes.push((child_node, new_child, *old_child));
-                    new_child_map.remove(child_name.as_str());
+                    project_nodes.push((child_node, new_child, *old_child));
                     old_child_map.remove(child_name.as_str());
+                    new_child_map.remove(child_name);
+                } else {
+                    anyhow::bail!("cannot add or remove {child_name} from project");
                 }
             } else {
-                anyhow::bail!("Cannot add or remove {child_name} from project")
+                log::warn!(
+                    "Project node '{child_name}' is optional and does not \
+                    exist on the file system. It will be skipped during syncback."
+                )
             }
         }
 
-        // From this point, both maps contain only children of the current
-        // instance that aren't in the project. So, we just do some quick and
-        // dirty matching to identify children that were added and removed.
-        for (new_name, new_child) in new_child_map {
-            let parent_path = match ref_to_node.get(&new_child.parent()) {
+        // After matching children above, the child maps only contain children
+        // of this node that aren't in the project file.
+        for (new_name, new_child) in new_child_map.drain() {
+            let parent_path = match ref_to_path.get(&new_child.parent()) {
                 Some(Some(path)) => base_path.join(path.path()),
-                Some(None) => {
-                    continue;
-                }
-                None => {
+                _ => {
+                    // For this to happen, the instance isn't a part of the
+                    // project at all, so we need to just skip it.
                     continue;
                 }
             };
-            if let Some(old_inst) = old_child_map.get(new_name) {
-                // All children are descendants of a node of a project
-                // So we really just need to track which one is which.
+            if let Some(old_inst) = old_child_map.get(new_name.as_str()) {
+                // This new instance represents an older one!
                 children.push(SyncbackSnapshot {
                     data: snapshot.data,
                     old: Some(old_inst.id()),
                     new: new_child.referent(),
                     parent_path,
-                    name: new_name.to_string(),
+                    name: new_name.to_owned(),
                 });
-                old_child_map.remove(new_name);
+                old_child_map.remove(new_name.as_str());
             } else {
-                // it's new
+                // This new instance is... new.
                 children.push(SyncbackSnapshot {
                     data: snapshot.data,
                     old: None,
                     new: new_child.referent(),
                     parent_path,
-                    name: new_name.to_string(),
+                    name: new_name.to_owned(),
                 });
             }
         }
-        removed_children.extend(old_child_map.into_values());
+        removed_children.extend(old_child_map.drain().map(|(_, inst)| inst));
     }
 
-    // We don't need to validate any file names for the FsSnapshot
-    // because projects can't ever be made by syncback, so they must
-    // already exist on the file system
     Ok(SyncbackReturn {
         inst_snapshot: InstanceSnapshot::from_instance(snapshot.new_inst()),
         fs_snapshot: FsSnapshot::new().with_added_file(
             &project.file_location,
-            serde_json::to_vec_pretty(&project).context("failed to serialize new project")?,
+            serde_json::to_vec_pretty(&project).context("failed to serialize updated project")?,
         ),
         children,
         removed_children,
