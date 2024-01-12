@@ -24,9 +24,9 @@ function ConfirmingPage:init()
 	self.containerSize, self.setContainerSize = Roact.createBinding(Vector2.new(0, 0))
 
 	self:setState({
-		showingSourceDiff = false,
-		oldSource = "",
-		newSource = "",
+		showingStringDiff = false,
+		oldString = "",
+		newString = "",
 	})
 end
 
@@ -63,11 +63,11 @@ function ConfirmingPage:render()
 				patch = self.props.confirmData.patch,
 				instanceMap = self.props.confirmData.instanceMap,
 
-				showStringDiff = function(oldSource: string, newSource: string)
+				showStringDiff = function(oldString: string, newString: string)
 					self:setState({
-						showingSourceDiff = true,
-						oldSource = oldSource,
-						newSource = newSource,
+						showingStringDiff = true,
+						oldString = oldString,
+						newString = newString,
 					})
 				end,
 			}),
@@ -136,10 +136,10 @@ function ConfirmingPage:render()
 				PaddingRight = UDim.new(0, 20),
 			}),
 
-			SourceDiff = e(StudioPluginGui, {
-				id = "Rojo_ConfirmingSourceDiff",
-				title = "Source diff",
-				active = self.state.showingSourceDiff,
+			StringDiff = e(StudioPluginGui, {
+				id = "Rojo_ConfirmingStringDiff",
+				title = "String diff",
+				active = self.state.showingStringDiff,
 				isEphemeral = true,
 
 				initDockState = Enum.InitialDockState.Float,
@@ -151,7 +151,7 @@ function ConfirmingPage:render()
 
 				onClose = function()
 					self:setState({
-						showingSourceDiff = false,
+						showingStringDiff = false,
 					})
 				end,
 			}, {
@@ -167,8 +167,8 @@ function ConfirmingPage:render()
 							anchorPoint = Vector2.new(0, 0),
 							transparency = self.props.transparency,
 
-							oldText = self.state.oldSource,
-							newText = self.state.newSource,
+							oldText = self.state.oldString,
+							newText = self.state.newString,
 						}),
 					}),
 				}),
