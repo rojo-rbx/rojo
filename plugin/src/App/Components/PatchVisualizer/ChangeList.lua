@@ -82,8 +82,8 @@ local function RowContent(props)
 		})
 	end
 
-	if props.showTableDiff and type(values[2]) == "table" and type(values[3]) == "table" and next(values[3]) ~= 1 then
-		-- Special case for dictionary properties (like Attributes)
+	if props.showTableDiff and type(values[2]) == "table" and type(values[3]) == "table" then
+		-- Special case for table properties (like Attributes/Tags)
 		return e(ViewDiffButton, {
 			transparency = props.transparency,
 			onClick = function()
