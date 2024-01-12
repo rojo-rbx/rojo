@@ -344,6 +344,9 @@ pub fn syncback_project<'new, 'old>(
             (&child.name, child)
         }));
 
+        // The fact we are not removing old properties might be a problem but
+        // removing them is worse! Consider a property that doesn't serialize,
+        // like HttpEnabled.
         let properties = &mut node.properties;
 
         let filtered_properties = snapshot
@@ -355,26 +358,33 @@ pub fn syncback_project<'new, 'old>(
                 UnresolvedValue::from_variant(value.clone(), &new_inst.class, name),
             );
         }
-
         for (child_name, child_node) in &mut node.children {
-            // There could be no old_child if the node is optional and not
-            // present on the file system, which is why this isn't an `unwrap`.
-            if let Some(old_child) = old_child_map.get(child_name.as_str()) {
-                if let Some(new_child) = new_child_map.get(child_name) {
-                    if new_child.class != old_child.class_name() {
-                        anyhow::bail!("cannot change the class of {child_name} in project");
-                    }
-                    project_nodes.push((child_node, new_child, *old_child));
+            if let Some(path_node) = &child_node.path {
+                if let Ok(false) = base_path.join(path_node.path()).try_exists() {
+                    log::warn!(
+                        "The project refers to '{child_name}' with path '{}' \
+                            which does not exist in the project directory.",
+                        path_node.path().display()
+                    );
                     old_child_map.remove(child_name.as_str());
                     new_child_map.remove(child_name);
-                } else {
-                    anyhow::bail!("cannot add or remove {child_name} from project");
+                    continue;
                 }
+            }
+            let old_child = old_child_map
+                .get(child_name.as_str())
+                .expect("all nodes in queue should have old instances");
+
+            if let Some(new_child) = new_child_map.get(child_name) {
+                if new_child.class != old_child.class_name() {
+                    anyhow::bail!("cannot change the class of {child_name} in project");
+                }
+
+                project_nodes.push((child_node, new_child, *old_child));
+                old_child_map.remove(child_name.as_str());
+                new_child_map.remove(child_name);
             } else {
-                log::warn!(
-                    "Project node '{child_name}' is optional and does not \
-                    exist on the file system. It will be skipped during syncback."
-                )
+                anyhow::bail!("cannot add or remove {child_name} from project");
             }
         }
 
