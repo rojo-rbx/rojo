@@ -441,6 +441,44 @@ function ConnectedPage:render()
 					}),
 				}),
 			}),
+
+			TableDiff = e(StudioPluginGui, {
+				id = "Rojo_ConnectedTableDiff",
+				title = "Table diff",
+				active = self.state.showingTableDiff,
+				isEphemeral = true,
+
+				initDockState = Enum.InitialDockState.Float,
+				overridePreviousState = false,
+				floatingSize = Vector2.new(500, 350),
+				minimumSize = Vector2.new(400, 250),
+
+				zIndexBehavior = Enum.ZIndexBehavior.Sibling,
+
+				onClose = function()
+					self:setState({
+						showingTableDiff = false,
+					})
+				end,
+			}, {
+				TooltipsProvider = e(Tooltip.Provider, nil, {
+					Tooltips = e(Tooltip.Container, nil),
+					Content = e("Frame", {
+						Size = UDim2.fromScale(1, 1),
+						BackgroundTransparency = 1,
+					}, {
+						-- e(TableDiffVisualizer, {
+						-- 	size = UDim2.new(1, -10, 1, -10),
+						-- 	position = UDim2.new(0, 5, 0, 5),
+						-- 	anchorPoint = Vector2.new(0, 0),
+						-- 	transparency = self.props.transparency,
+
+						-- 	oldTable = self.state.oldTable,
+						-- 	newTable = self.state.newTable,
+						-- }),
+					}),
+				}),
+			}),
 		})
 	end)
 end
