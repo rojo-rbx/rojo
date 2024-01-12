@@ -14,6 +14,7 @@ local StudioPluginGui = require(Plugin.App.Components.Studio.StudioPluginGui)
 local Tooltip = require(Plugin.App.Components.Tooltip)
 local PatchVisualizer = require(Plugin.App.Components.PatchVisualizer)
 local StringDiffVisualizer = require(Plugin.App.Components.StringDiffVisualizer)
+local TableDiffVisualizer = require(Plugin.App.Components.TableDiffVisualizer)
 
 local e = Roact.createElement
 
@@ -71,6 +72,13 @@ function ConfirmingPage:render()
 						showingStringDiff = true,
 						oldString = oldString,
 						newString = newString,
+					})
+				end,
+				showTableDiff = function(oldTable: {[any]: any?}, newTable: {[any]: any?})
+					self:setState({
+						showingTableDiff = true,
+						oldTable = oldTable,
+						newTable = newTable,
 					})
 				end,
 			}),
@@ -202,15 +210,15 @@ function ConfirmingPage:render()
 						Size = UDim2.fromScale(1, 1),
 						BackgroundTransparency = 1,
 					}, {
-						-- e(TableDiffVisualizer, {
-						-- 	size = UDim2.new(1, -10, 1, -10),
-						-- 	position = UDim2.new(0, 5, 0, 5),
-						-- 	anchorPoint = Vector2.new(0, 0),
-						-- 	transparency = self.props.transparency,
+						e(TableDiffVisualizer, {
+							size = UDim2.new(1, -10, 1, -10),
+							position = UDim2.new(0, 5, 0, 5),
+							anchorPoint = Vector2.new(0, 0),
+							transparency = self.props.transparency,
 
-						-- 	oldTable = self.state.oldTable,
-						-- 	newTable = self.state.newTable,
-						-- }),
+							oldTable = self.state.oldTable,
+							newTable = self.state.newTable,
+						}),
 					}),
 				}),
 			}),

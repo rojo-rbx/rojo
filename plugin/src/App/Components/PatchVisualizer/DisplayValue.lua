@@ -104,8 +104,13 @@ local function DisplayValue(props)
 		-- Or special text handling tostring for some?
 		-- Will add as needed, let's see what cases arise.
 
+		local textRepresentation = string.gsub(tostring(props.value), "%s", " ")
+		if t == "string" then
+			textRepresentation = '"' .. textRepresentation .. '"'
+		end
+
 		return e("TextLabel", {
-			Text = string.gsub(tostring(props.value), "%s", " "),
+			Text = textRepresentation,
 			BackgroundTransparency = 1,
 			Font = Enum.Font.GothamMedium,
 			TextSize = 14,
