@@ -68,9 +68,8 @@ end
 local function RowContent(props)
 	local values = props.values
 	local metadata = props.metadata
-	local propertyName = tostring(values[1])
 
-	if props.showStringDiff and propertyName == "Source" then
+	if props.showStringDiff and values[1] == "Source" then
 		-- Special case for .Source updates
 		return e(ViewDiffButton, {
 			transparency = props.transparency,
