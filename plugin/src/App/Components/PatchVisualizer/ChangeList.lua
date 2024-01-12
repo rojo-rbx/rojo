@@ -14,66 +14,86 @@ local EMPTY_TABLE = {}
 
 local e = Roact.createElement
 
+local function ViewDiffButton(props)
+	return Theme.with(function(theme)
+		return e("TextButton", {
+			Text = "",
+			Size = UDim2.new(0.7, 0, 1, -4),
+			LayoutOrder = 2,
+			BackgroundTransparency = 1,
+			[Roact.Event.Activated] = props.onClick,
+		}, {
+			e(BorderedContainer, {
+				size = UDim2.new(1, 0, 1, 0),
+				transparency = props.transparency:map(function(t)
+					return 0.5 + (0.5 * t)
+				end),
+			}, {
+				Layout = e("UIListLayout", {
+					FillDirection = Enum.FillDirection.Horizontal,
+					SortOrder = Enum.SortOrder.LayoutOrder,
+					HorizontalAlignment = Enum.HorizontalAlignment.Center,
+					VerticalAlignment = Enum.VerticalAlignment.Center,
+					Padding = UDim.new(0, 5),
+				}),
+				Label = e("TextLabel", {
+					Text = "View Diff",
+					BackgroundTransparency = 1,
+					Font = Enum.Font.GothamMedium,
+					TextSize = 14,
+					TextColor3 = theme.Settings.Setting.DescriptionColor,
+					TextXAlignment = Enum.TextXAlignment.Left,
+					TextTransparency = props.transparency,
+					TextTruncate = Enum.TextTruncate.AtEnd,
+					Size = UDim2.new(0, 65, 1, 0),
+					LayoutOrder = 1,
+				}),
+				Icon = e("ImageLabel", {
+					Image = Assets.Images.Icons.Expand,
+					ImageColor3 = theme.Settings.Setting.DescriptionColor,
+					ImageTransparency = props.transparency,
+
+					Size = UDim2.new(0, 16, 0, 16),
+					Position = UDim2.new(0.5, 0, 0.5, 0),
+					AnchorPoint = Vector2.new(0.5, 0.5),
+
+					BackgroundTransparency = 1,
+					LayoutOrder = 2,
+				}),
+			}),
+		})
+	end)
+end
+
 local function RowContent(props)
 	local values = props.values
 	local metadata = props.metadata
 	local propertyName = tostring(values[1])
 
-	if propertyName == "Source" and props.showStringDiff then
+	if props.showStringDiff and propertyName == "Source" then
 		-- Special case for .Source updates
-		-- because we want to display a syntax highlighted diff for better UX
-		return Theme.with(function(theme)
-			return e("TextButton", {
-				Text = "",
-				Size = UDim2.new(0.7, 0, 1, -4),
-				LayoutOrder = 2,
-				BackgroundTransparency = 1,
-				[Roact.Event.Activated] = function()
-					if props.showStringDiff then
-						props.showStringDiff(tostring(values[2]), tostring(values[3]))
-					end
-				end,
-			}, {
-				e(BorderedContainer, {
-					size = UDim2.new(1, 0, 1, 0),
-					transparency = props.transparency:map(function(t)
-						return 0.5 + (0.5 * t)
-					end),
-				}, {
-					Layout = e("UIListLayout", {
-						FillDirection = Enum.FillDirection.Horizontal,
-						SortOrder = Enum.SortOrder.LayoutOrder,
-						HorizontalAlignment = Enum.HorizontalAlignment.Center,
-						VerticalAlignment = Enum.VerticalAlignment.Center,
-						Padding = UDim.new(0, 5),
-					}),
-					Label = e("TextLabel", {
-						Text = "View Diff",
-						BackgroundTransparency = 1,
-						Font = Enum.Font.GothamMedium,
-						TextSize = 14,
-						TextColor3 = theme.Settings.Setting.DescriptionColor,
-						TextXAlignment = Enum.TextXAlignment.Left,
-						TextTransparency = props.transparency,
-						TextTruncate = Enum.TextTruncate.AtEnd,
-						Size = UDim2.new(0, 65, 1, 0),
-						LayoutOrder = 1,
-					}),
-					Icon = e("ImageLabel", {
-						Image = Assets.Images.Icons.Expand,
-						ImageColor3 = theme.Settings.Setting.DescriptionColor,
-						ImageTransparency = props.transparency,
+		return e(ViewDiffButton, {
+			transparency = props.transparency,
+			onClick = function()
+				if not props.showStringDiff then
+					return
+				end
+				props.showStringDiff(tostring(values[2]), tostring(values[3]))
+			end,
+		})
+	end
 
-						Size = UDim2.new(0, 16, 0, 16),
-						Position = UDim2.new(0.5, 0, 0.5, 0),
-						AnchorPoint = Vector2.new(0.5, 0.5),
-
-						BackgroundTransparency = 1,
-						LayoutOrder = 2,
-					}),
-				}),
-			})
-		end)
+	if props.showTableDiff and type(values[2]) == "table" and type(values[3]) == "table" and next(values[3]) ~= 1 then
+		-- Special case for dictionary properties (like Attributes)
+		return e(ViewDiffButton, {
+			transparency = props.transparency,
+			onClick = function()
+				if not props.showTableDiff then
+					return
+				end
+				props.showTableDiff(values[2], values[3])
+			end,
+		})
 	end
 
 	return Theme.with(function(theme)
