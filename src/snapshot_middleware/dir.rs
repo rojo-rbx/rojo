@@ -1,11 +1,11 @@
 use std::{
-    collections::{BTreeMap, HashMap, HashSet},
+    collections::{BTreeMap, HashMap},
     path::Path,
 };
 
 use anyhow::Context;
 use memofs::{DirEntry, IoResultExt, Vfs};
-use rbx_dom_weak::types::{Ref, Variant};
+use rbx_dom_weak::types::Variant;
 
 use crate::{
     resolution::UnresolvedValue,
