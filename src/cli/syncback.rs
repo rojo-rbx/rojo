@@ -1,5 +1,4 @@
 use std::{
-    fs,
     path::{Path, PathBuf},
     time::Instant,
 };
@@ -42,7 +41,7 @@ impl SyncbackCommand {
 
         let dom_start = Instant::now();
         log::info!("Reading place file at {}", path_new.display());
-        let dom_new = read_dom(&path_new);
+        let dom_new = read_dom(&path_new)?;
         log::info!(
             "Finished opening file in {:0.02}s",
             dom_start.elapsed().as_secs_f32()
@@ -65,19 +64,18 @@ impl SyncbackCommand {
     }
 }
 
-fn read_dom(path: &Path) -> WeakDom {
-    let content = fs::read(path).unwrap();
-    if &content[0..8] == b"<roblox!" {
+fn read_dom(path: &Path) -> anyhow::Result<WeakDom> {
+    let content = fs_err::read(path)?;
+    Ok(if &content[0..8] == b"<roblox!" {
         log::debug!("Reading {} as a binary file", path.display());
-        rbx_binary::from_reader(content.as_slice()).unwrap()
+        rbx_binary::from_reader(content.as_slice())?
     } else if &content[0..7] == b"<roblox" {
         log::debug!("Reading {} as an xml file", path.display());
         rbx_xml::from_reader(
             content.as_slice(),
             DecodeOptions::new().property_behavior(rbx_xml::DecodePropertyBehavior::ReadUnknown),
-        )
-        .unwrap()
+        )?
     } else {
-        panic!("invalid Roblox file at {}", path.display())
-    }
+        anyhow::bail!("invalid Roblox file at {}", path.display())
+    })
 }
