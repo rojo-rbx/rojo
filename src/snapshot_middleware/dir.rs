@@ -153,59 +153,41 @@ pub fn syncback_dir_no_meta<'new, 'old>(
     snapshot: &SyncbackSnapshot<'new, 'old>,
 ) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
     let path = snapshot.parent_path.join(&snapshot.name);
-
     let new_inst = snapshot.new_inst();
 
-    let mut removed_children = Vec::new();
     let mut children = Vec::new();
+    let mut removed_children = Vec::new();
 
     if let Some(old_inst) = snapshot.old_inst() {
-        let old_children: HashMap<&str, Ref> = old_inst
-            .children()
-            .iter()
-            .map(|old_ref| {
-                (
-                    snapshot.get_old_instance(*old_ref).unwrap().name(),
-                    *old_ref,
-                )
-            })
-            .collect();
-        let new_children: HashSet<&str> = snapshot
-            .new_inst()
-            .children()
-            .iter()
-            .map(|new_ref| snapshot.get_new_instance(*new_ref).unwrap().name.as_str())
-            .collect();
-
-        for child_ref in old_inst.children() {
-            let old_child = snapshot.get_old_instance(*child_ref).unwrap();
-            // If it exists in the old tree but not the new one, it was removed.
-            if !new_children.contains(old_child.name()) {
-                removed_children.push(old_child);
-            }
+        let mut old_child_map = HashMap::new();
+        for child in old_inst.children() {
+            let inst = snapshot.get_old_instance(*child).unwrap();
+            old_child_map.insert(inst.name(), inst);
         }
 
-        for child_ref in new_inst.children() {
-            let new_child = snapshot.get_new_instance(*child_ref).unwrap();
-            // If it exists in the new tree but not the old one, it was added.
-            match old_children.get(new_child.name.as_str()) {
-                None => {
-                    children.push(snapshot.with_parent(new_child.name.clone(), *child_ref, None))
-                }
-                Some(old_ref) => children.push(snapshot.with_parent(
+        for new_child_ref in new_inst.children() {
+            let new_child = snapshot.get_new_instance(*new_child_ref).unwrap();
+            if let Some(old_child) = old_child_map.remove(new_child.name.as_str()) {
+                // This child exists in both doms. Pass it on.
+                children.push(snapshot.with_parent(
                     new_child.name.clone(),
-                    *child_ref,
-                    Some(*old_ref),
-                )),
+                    *new_child_ref,
+                    Some(old_child.id()),
+                ));
+            } else {
+                // The child only exists in the the new dom
+                children.push(snapshot.with_parent(new_child.name.clone(), *new_child_ref, None));
             }
         }
+        // Any children that are in the old dom but not the new one are removed.
+        removed_children.extend(old_child_map.into_values());
     } else {
-        for child_ref in new_inst.children() {
-            let child = snapshot.get_new_instance(*child_ref).unwrap();
-            children.push(snapshot.with_parent(child.name.clone(), *child_ref, None))
+        // There is no old instance. Just add every child.
+        for new_child_ref in new_inst.children() {
+            let new_child = snapshot.get_new_instance(*new_child_ref).unwrap();
+            children.push(snapshot.with_parent(new_child.name.clone(), *new_child_ref, None));
         }
     }
-
     let mut fs_snapshot = FsSnapshot::new();
     fs_snapshot.add_dir(&path);
     if new_inst.children().is_empty() {
