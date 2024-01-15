@@ -1,6 +1,7 @@
 mod fs_snapshot;
 mod snapshot;
 
+use anyhow::Context;
 use memofs::Vfs;
 use rbx_dom_weak::{types::Ref, Instance, WeakDom};
 use serde::{Deserialize, Serialize};
@@ -89,7 +90,12 @@ pub fn syncback_loop<'old>(
             continue;
         }
 
-        let syncback = middleware.syncback(&snapshot)?;
+        let syncback = middleware.syncback(&snapshot).with_context(|| {
+            format!(
+                "Failed to syncback {}",
+                get_inst_path(new_tree, snapshot.new)
+            )
+        })?;
         if !syncback.removed_children.is_empty() {
             log::debug!(
                 "removed children for {}: {}",
