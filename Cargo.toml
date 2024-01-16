@@ -1,6 +1,6 @@
 [package]
 name = "rojo"
-version = "7.4.0-rc3"
+version = "7.4.0"
 rust-version = "1.70.0"
 authors = ["Lucien Greathouse <me@lpghatguy.com>"]
 description = "Enables professional-grade development tools for Roblox developers"
