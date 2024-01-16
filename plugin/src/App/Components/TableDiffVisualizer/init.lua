@@ -15,6 +15,14 @@ local TableDiffVisualizer = Roact.Component:extend("TableDiffVisualizer")
 function TableDiffVisualizer:render()
 	local oldTable, newTable = self.props.oldTable or {}, self.props.newTable or {}
 
+	-- Ensure we're diffing tables, not mixing types
+	if type(oldTable) ~= "table" then
+		oldTable = {}
+	end
+	if type(newTable) ~= "table" then
+		newTable = {}
+	end
+
 	local isArray = next(newTable) == 1 or next(oldTable) == 1
 
 	return e(BorderedContainer, {
