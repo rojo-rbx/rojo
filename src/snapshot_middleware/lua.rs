@@ -134,13 +134,24 @@ pub fn syncback_lua<'new, 'old>(
     snapshot: &SyncbackSnapshot<'new, 'old>,
 ) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
     let new_inst = snapshot.new_inst();
+    let path = snapshot
+        .old_inst()
+        .and_then(|inst| inst.metadata().instigating_source.as_ref())
+        .map_or_else(
+            || {
+                // Since Roblox instances may or may not a `.` character in
+                // their names, we can't just use `.set_file_name` and
+                // `.set_extension`.
+                snapshot.parent_path.join(match script_type {
+                    ScriptType::Server => format!("{}.server.lua", snapshot.name),
+                    ScriptType::Client => format!("{}.client.lua", snapshot.name),
+                    ScriptType::Module => format!("{}.lua", snapshot.name),
+                })
+            },
+            |source| source.path().to_path_buf(),
+        );
+    log::debug!("Luau middleware: {}", path.display());
 
-    let mut path = snapshot.parent_path.join(&snapshot.name);
-    path.set_extension(match script_type {
-        ScriptType::Module => "lua",
-        ScriptType::Client => "client.lua",
-        ScriptType::Server => "server.lua",
-    });
     let contents = if let Some(Variant::String(source)) = new_inst.properties.get("Source") {
         source.as_bytes().to_vec()
     } else {
@@ -203,14 +214,19 @@ pub fn syncback_lua_init<'new, 'old>(
     snapshot: &SyncbackSnapshot<'new, 'old>,
 ) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
     let new_inst = snapshot.new_inst();
+    let path = snapshot
+        .old_inst()
+        .and_then(|inst| inst.metadata().instigating_source.as_ref())
+        .map_or_else(|| snapshot.parent_path.as_path(), |source| source.path())
+        // Instigating source for 'init' middleware is the directory they point
+        // to, not the `init.*` file, which is good since that's what we rerun
+        // the snapshot middleware on, but it means we have to do this:
+        .join(match script_type {
+            ScriptType::Server => "init.server.lua",
+            ScriptType::Client => "init.client.lua",
+            ScriptType::Module => "init.lua",
+        });
 
-    let mut path = snapshot.parent_path.join(&snapshot.name);
-    path.push("init");
-    path.set_extension(match script_type {
-        ScriptType::Module => "lua",
-        ScriptType::Client => "client.lua",
-        ScriptType::Server => "server.lua",
-    });
     let contents = if let Some(Variant::String(source)) = new_inst.properties.get("Source") {
         source.as_bytes().to_vec()
     } else {

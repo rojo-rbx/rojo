@@ -103,9 +103,18 @@ pub fn syncback_csv<'new, 'old>(
     snapshot: &SyncbackSnapshot<'new, 'old>,
 ) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
     let new_inst = snapshot.new_inst();
-
-    let mut path = snapshot.parent_path.join(&snapshot.name);
-    path.set_extension("csv");
+    let path = snapshot
+        .old_inst()
+        .and_then(|inst| inst.metadata().instigating_source.as_ref())
+        .map_or_else(
+            || {
+                // Since Roblox instances may or may not a `.` character in
+                // their names, we can't just use `.set_file_name` and
+                // `.set_extension`.
+                snapshot.parent_path.join(format!("{}.csv", snapshot.name))
+            },
+            |source| source.path().to_path_buf(),
+        );
 
     let contents = if let Some(Variant::String(content)) = new_inst.properties.get("Contents") {
         content.as_str()
@@ -170,8 +179,14 @@ pub fn syncback_csv_init<'new, 'old>(
 ) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
     let new_inst = snapshot.new_inst();
 
-    let mut path = snapshot.parent_path.join(&snapshot.name);
-    path.push("init.csv");
+    let path = snapshot
+        .old_inst()
+        .and_then(|inst| inst.metadata().instigating_source.as_ref())
+        .map_or_else(|| snapshot.parent_path.as_path(), |source| source.path())
+        // Instigating source for 'init' middleware is the directory they point
+        // to, not the `init.*` file, which is good since that's what we rerun
+        // the snapshot middleware on, but it means we have to do this:
+        .join("init.csv");
 
     let contents = if let Some(Variant::String(content)) = new_inst.properties.get("Contents") {
         content.as_str()

@@ -63,8 +63,20 @@ pub fn snapshot_json_model(
 pub fn syncback_json_model<'new, 'old>(
     snapshot: &SyncbackSnapshot<'new, 'old>,
 ) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
-    let mut path = snapshot.parent_path.join(&snapshot.name);
-    path.set_extension("model.json");
+    let path = snapshot
+        .old_inst()
+        .and_then(|inst| inst.metadata().instigating_source.as_ref())
+        .map_or_else(
+            || {
+                // Since Roblox instances may or may not a `.` character in
+                // their names, we can't just use `.set_file_name` and
+                // `.set_extension`.
+                snapshot
+                    .parent_path
+                    .join(format!("{}.model.json", snapshot.name))
+            },
+            |source| source.path().to_path_buf(),
+        );
 
     let new_inst = snapshot.new_inst();
 

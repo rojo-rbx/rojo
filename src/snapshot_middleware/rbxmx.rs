@@ -47,20 +47,31 @@ pub fn snapshot_rbxmx(
 pub fn syncback_rbxmx<'new, 'old>(
     snapshot: &SyncbackSnapshot<'new, 'old>,
 ) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
-    // If any of the children of this Instance are scripts, we don't want
-    // include them in the model. So instead, we'll check and then serialize.
-
     let inst = snapshot.new_inst();
-    let mut path = snapshot.parent_path.join(&snapshot.name);
-    path.set_extension("rbxmx");
-    // Long-term, anyway. Right now we stay silly.
+    let path = snapshot
+        .old_inst()
+        .and_then(|inst| inst.metadata().instigating_source.as_ref())
+        .map_or_else(
+            || {
+                // Since Roblox instances may or may not a `.` character in
+                // their names, we can't just use `.set_file_name` and
+                // `.set_extension`.
+                snapshot
+                    .parent_path
+                    .join(format!("{}.rbxmx", &snapshot.name))
+            },
+            |source| source.path().to_path_buf(),
+        );
+
+    // Long-term, we probably want to have some logic for if this contains a
+    // script. That's a future endeavor though.
     let mut serialized = Vec::new();
     rbx_xml::to_writer_default(&mut serialized, snapshot.new_tree(), &[inst.referent()])
         .context("failed to serialize new rbxmx")?;
 
     Ok(SyncbackReturn {
         inst_snapshot: InstanceSnapshot::from_instance(inst),
-        fs_snapshot: FsSnapshot::new().with_added_file(&path, serialized),
+        fs_snapshot: FsSnapshot::new().with_added_file(path, serialized),
         children: Vec::new(),
         removed_children: Vec::new(),
     })
