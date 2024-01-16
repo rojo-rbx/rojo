@@ -16,31 +16,31 @@ local Dictionary = Roact.Component:extend("Dictionary")
 
 function Dictionary:init()
 	self:setState({
-		diffKeys = {},
+		diff = self:calculateDiff(),
 	})
 end
 
-function Dictionary:calculateDiffKeys()
+function Dictionary:calculateDiff()
 	local oldTable, newTable = self.props.oldTable or {}, self.props.newTable or {}
 
 	-- Diff the two tables and find the added keys, removed keys, and changed keys
-	local diffKeys = {}
+	local diff = {}
 
 	for key, oldValue in oldTable do
 		local newValue = newTable[key]
 		if newValue == nil then
-			table.insert(diffKeys, {
+			table.insert(diff, {
 				key = key,
 				patchType = "Remove",
 			})
 		elseif newValue ~= oldValue then
 			-- Note: should this do some sort of deep comparison for various types?
-			table.insert(diffKeys, {
+			table.insert(diff, {
 				key = key,
 				patchType = "Edit",
 			})
 		else
-			table.insert(diffKeys, {
+			table.insert(diff, {
 				key = key,
 				patchType = "Remain",
 			})
@@ -48,35 +48,35 @@ function Dictionary:calculateDiffKeys()
 	end
 	for key in newTable do
 		if oldTable[key] == nil then
-			table.insert(diffKeys, {
+			table.insert(diff, {
 				key = key,
 				patchType = "Add",
 			})
 		end
 	end
 
-	table.sort(diffKeys, function(a, b)
+	table.sort(diff, function(a, b)
 		return a.key < b.key
 	end)
 
-	return diffKeys
+	return diff
 end
 
 function Dictionary:didUpdate(previousProps)
 	if previousProps.oldTable ~= self.props.oldTable or previousProps.newTable ~= self.props.newTable then
 		self:setState({
-			diffKeys = self:calculateDiffKeys(),
+			diff = self:calculateDiff(),
 		})
 	end
 end
 
 function Dictionary:render()
 	local oldTable, newTable = self.props.oldTable or {}, self.props.newTable or {}
-	local diffKeys = self.state.diffKeys
+	local diff = self.state.diff
 
 	return Theme.with(function(theme)
-		local lines = table.create(#diffKeys)
-		for order, line in diffKeys do
+		local lines = table.create(#diff)
+		for order, line in diff do
 			local key = line.key
 			local oldValue = oldTable[key]
 			local newValue = newTable[key]
