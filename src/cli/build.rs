@@ -146,7 +146,7 @@ impl OutputKind {
     }
 }
 
-fn xml_encode_config() -> rbx_xml::EncodeOptions {
+fn xml_encode_config() -> rbx_xml::EncodeOptions<'static> {
     rbx_xml::EncodeOptions::new().property_behavior(rbx_xml::EncodePropertyBehavior::WriteUnknown)
 }
 
