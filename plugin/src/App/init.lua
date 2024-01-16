@@ -136,6 +136,7 @@ function App:init()
 		and self.serveSession == nil
 		and Settings:get("syncReminder")
 		and self:getLastSyncTimestamp()
+		and (self:isSyncLockAvailable())
 	then
 		self:addNotification("You've previously synced this place. Would you like to reconnect?", 300, {
 			Connect = {
@@ -283,10 +284,37 @@ function App:getHostAndPort()
 	return host, port
 end
 
+function App:isSyncLockAvailable()
+	if #Players:GetPlayers() == 0 then
+		-- Team Create is not active, so no one can be holding the lock
+		return true
+	end
+
+	local lock = ServerStorage:FindFirstChild("__Rojo_SessionLock")
+	if not lock then
+		-- No lock is made yet, so it is available
+		return true
+	end
+
+	if lock.Value and lock.Value ~= Players.LocalPlayer and lock.Value.Parent then
+		-- Someone else is holding the lock
+		return false, lock.Value
+	end
+
+	-- The lock exists, but is not claimed
+	return true
+end
+
 function App:claimSyncLock()
 	if #Players:GetPlayers() == 0 then
 		Log.trace("Skipping sync lock because this isn't in Team Create")
 		return true
+	end
+
+	local isAvailable, priorOwner = self:isSyncLockAvailable()
+	if not isAvailable then
+		Log.trace("Skipping sync lock because it is already claimed")
+		return false, priorOwner
 	end
 
 	local lock = ServerStorage:FindFirstChild("__Rojo_SessionLock")
@@ -298,11 +326,6 @@ function App:claimSyncLock()
 		lock.Parent = ServerStorage
 		Log.trace("Created and claimed sync lock")
 		return true
-	end
-
-	if lock.Value and lock.Value ~= Players.LocalPlayer and lock.Value.Parent then
-		Log.trace("Found existing sync lock owned by {}", lock.Value)
-		return false, lock.Value
 	end
 
 	lock.Value = Players.LocalPlayer

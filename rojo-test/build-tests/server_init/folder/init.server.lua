@@ -1,1 +1,0 @@
-return "From folder/init.server.lua"
