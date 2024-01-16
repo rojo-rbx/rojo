@@ -30,7 +30,7 @@ local function DisplayValue(props)
 					}),
 				}),
 				Label = e("TextLabel", {
-					Text = string.format("%d,%d,%d", props.value.R * 255, props.value.G * 255, props.value.B * 255),
+					Text = string.format("%d, %d, %d", props.value.R * 255, props.value.G * 255, props.value.B * 255),
 					BackgroundTransparency = 1,
 					Font = Enum.Font.GothamMedium,
 					TextSize = 14,
