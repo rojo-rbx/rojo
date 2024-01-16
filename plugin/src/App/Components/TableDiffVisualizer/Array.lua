@@ -33,21 +33,21 @@ function Array:calculateDiff()
 
 	while i <= #oldTable and j <= #newTable do
 		if oldTable[i] == newTable[j] then
-			table.insert(diff, {oldTable[i], newTable[j]}) -- Unchanged
+			table.insert(diff, { oldTable[i], newTable[j] }) -- Unchanged
 			i += 1
 			j += 1
 		elseif not table.find(newTable, oldTable[i], j) then
-			table.insert(diff, {oldTable[i], nil}) -- Removal
+			table.insert(diff, { oldTable[i], nil }) -- Removal
 			i += 1
 		elseif not table.find(oldTable, newTable[j], i) then
-			table.insert(diff, {nil, newTable[j]}) -- Addition
+			table.insert(diff, { nil, newTable[j] }) -- Addition
 			j += 1
 		else
 			if table.find(newTable, oldTable[i], j) then
-				table.insert(diff, {nil, newTable[j]}) -- Addition
+				table.insert(diff, { nil, newTable[j] }) -- Addition
 				j += 1
 			else
-				table.insert(diff, {oldTable[i], nil}) -- Removal
+				table.insert(diff, { oldTable[i], nil }) -- Removal
 				i += 1
 			end
 		end
@@ -55,11 +55,11 @@ function Array:calculateDiff()
 
 	-- Handle remaining elements
 	while i <= #oldTable do
-		table.insert(diff, {oldTable[i], nil}) -- Remaining Removals
+		table.insert(diff, { oldTable[i], nil }) -- Remaining Removals
 		i += 1
 	end
 	while j <= #newTable do
-		table.insert(diff, {nil, newTable[j]}) -- Remaining Additions
+		table.insert(diff, { nil, newTable[j] }) -- Remaining Additions
 		j += 1
 	end
 
@@ -85,47 +85,54 @@ function Array:render()
 
 			local patchType = if oldValue == nil then "Add" elseif newValue == nil then "Remove" else "Remain"
 
-			table.insert(lines, e("Frame", {
-				Size = UDim2.new(1, 0, 0, 25),
-				BackgroundTransparency = if patchType == "Remain" then 1 else self.props.transparency,
-				BackgroundColor3 = if patchType == "Remain" then theme.Diff.Row else theme.Diff[patchType],
-				BorderSizePixel = 0,
-				LayoutOrder = i,
-			}, {
-				DiffIcon = if patchType ~= "Remain"
-					then e("ImageLabel", {
-						Image = Assets.Images.Diff[patchType],
-						ImageColor3 = theme.AddressEntry.PlaceholderColor,
-						ImageTransparency = self.props.transparency,
+			table.insert(
+				lines,
+				e("Frame", {
+					Size = UDim2.new(1, 0, 0, 25),
+					BackgroundTransparency = if patchType == "Remain" then 1 else self.props.transparency,
+					BackgroundColor3 = if patchType == "Remain" then theme.Diff.Row else theme.Diff[patchType],
+					BorderSizePixel = 0,
+					LayoutOrder = i,
+				}, {
+					DiffIcon = if patchType ~= "Remain"
+						then e("ImageLabel", {
+							Image = Assets.Images.Diff[patchType],
+							ImageColor3 = theme.AddressEntry.PlaceholderColor,
+							ImageTransparency = self.props.transparency,
+							BackgroundTransparency = 1,
+							Size = UDim2.new(0, 15, 0, 15),
+							Position = UDim2.new(0, 7, 0.5, 0),
+							AnchorPoint = Vector2.new(0, 0.5),
+						})
+						else nil,
+					Old = e("Frame", {
+						Size = UDim2.new(0.5, -30, 1, 0),
+						Position = UDim2.new(0, 30, 0, 0),
 						BackgroundTransparency = 1,
-						Size = UDim2.new(0, 15, 0, 15),
-						Position = UDim2.new(0, 7, 0.5, 0),
-						AnchorPoint = Vector2.new(0, 0.5),
-					})
-					else nil,
-				Old = e("Frame", {
-					Size = UDim2.new(0.5, -30, 1, 0),
-					Position = UDim2.new(0, 30, 0, 0),
-					BackgroundTransparency = 1,
-				}, {
-					Display = if oldValue ~= nil then e(DisplayValue, {
-						value = oldValue,
-						transparency = self.props.transparency,
-						textColor = theme.Settings.Setting.DescriptionColor,
-					}) else nil,
-				}),
-				New = e("Frame", {
-					Size = UDim2.new(0.5, -10, 1, 0),
-					Position = UDim2.new(0.5, 5, 0, 0),
-					BackgroundTransparency = 1,
-				}, {
-					Display = if newValue ~= nil then e(DisplayValue, {
-						value = newValue,
-						transparency = self.props.transparency,
-						textColor = theme.Settings.Setting.DescriptionColor,
-					}) else nil,
-				}),
-			}))
+					}, {
+						Display = if oldValue ~= nil
+							then e(DisplayValue, {
+								value = oldValue,
+								transparency = self.props.transparency,
+								textColor = theme.Settings.Setting.DescriptionColor,
+							})
+							else nil,
+					}),
+					New = e("Frame", {
+						Size = UDim2.new(0.5, -10, 1, 0),
+						Position = UDim2.new(0.5, 5, 0, 0),
+						BackgroundTransparency = 1,
+					}, {
+						Display = if newValue ~= nil
+							then e(DisplayValue, {
+								value = newValue,
+								transparency = self.props.transparency,
+								textColor = theme.Settings.Setting.DescriptionColor,
+							})
+							else nil,
+					}),
+				})
+			)
 		end
 
 		return Roact.createFragment({
