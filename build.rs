@@ -48,12 +48,8 @@ fn main() -> Result<(), anyhow::Error> {
     let plugin_version =
         Version::parse(fs::read_to_string(plugin_root.join("Version.txt"))?.trim())?;
 
-    assert!(
-        our_version.major == plugin_version.major,
-        "plugin version does not match Cargo version"
-    );
-    assert!(
-        our_version.minor == plugin_version.minor,
+    assert_eq!(
+        our_version, plugin_version,
         "plugin version does not match Cargo version"
     );
 
