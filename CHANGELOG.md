@@ -1,6 +1,8 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+
+## [7.4.0] - January 16, 2024
 * Improved the visualization for array properties like Tags ([#829])
 * Significantly improved performance of `rojo serve`, `rojo build --watch`, and `rojo sourcemap --watch` on macOS. ([#830])
 * Changed *.lua files that init command generates to *.luau ([#831])
