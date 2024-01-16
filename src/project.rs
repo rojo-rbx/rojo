@@ -8,7 +8,7 @@ use std::{
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use crate::{glob::Glob, resolution::UnresolvedValue. snapshot::SyncRule};
+use crate::{glob::Glob, resolution::UnresolvedValue, snapshot::SyncRule};
 
 static PROJECT_FILENAME: &str = "default.project.json";
 
