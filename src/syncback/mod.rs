@@ -5,9 +5,13 @@ use anyhow::Context;
 use memofs::Vfs;
 use rbx_dom_weak::{types::Ref, Instance, WeakDom};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, VecDeque};
+use std::{
+    collections::{HashMap, VecDeque},
+    sync::OnceLock,
+};
 
 use crate::{
+    glob::Glob,
     snapshot::{hash_tree, InstanceSnapshot, InstanceWithMeta, RojoTree},
     snapshot_middleware::Middleware,
     Project,
@@ -15,6 +19,9 @@ use crate::{
 
 pub use fs_snapshot::FsSnapshot;
 pub use snapshot::{SyncbackData, SyncbackSnapshot};
+
+/// A glob that can be used to tell if a path contains a `.git` folder.
+static GIT_IGNORE_GLOB: OnceLock<Glob> = OnceLock::new();
 
 pub fn syncback_loop<'old>(
     vfs: &'old Vfs,
@@ -26,6 +33,9 @@ pub fn syncback_loop<'old>(
     let old_hashes = hash_tree(old_tree.inner());
     log::debug!("Hashing file DOM");
     let new_hashes = hash_tree(new_tree);
+
+    let git_glob = GIT_IGNORE_GLOB.get_or_init(|| Glob::new(".git/**").unwrap());
+    let project_path = project.folder_location();
 
     let syncback_data = SyncbackData {
         vfs,
@@ -49,6 +59,16 @@ pub fn syncback_loop<'old>(
     let mut fs_snapshot = FsSnapshot::new();
 
     while let Some(snapshot) = snapshots.pop() {
+        if let Ok(suffix) = snapshot.parent_path.strip_prefix(project_path) {
+            if git_glob.is_match(suffix) {
+                log::warn!(
+                    "Cannot syncback into `.git`, {} will be skipped.",
+                    get_inst_path(new_tree, snapshot.new)
+                );
+                continue;
+            }
+        }
+
         // We can quickly check that two subtrees are identical and if they are,
         // skip reconciling them.
         if let Some(old_ref) = snapshot.old {
@@ -96,6 +116,7 @@ pub fn syncback_loop<'old>(
                 get_inst_path(new_tree, snapshot.new)
             )
         })?;
+
         if !syncback.removed_children.is_empty() {
             log::debug!(
                 "removed children for {}: {}",
