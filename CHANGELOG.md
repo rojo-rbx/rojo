@@ -1,6 +1,9 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Added popout diff visualizer for table properties like Attributes and Tags ([#834])
+
+[#834]: https://github.com/rojo-rbx/rojo/pull/834
 
 ## [7.4.0] - January 16, 2024
 * Improved the visualization for array properties like Tags ([#829])
