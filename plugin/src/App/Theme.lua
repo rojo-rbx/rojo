@@ -51,15 +51,27 @@ function StudioProvider:updateTheme()
 				},
 			},
 			Bordered = {
-				ActionFillColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.ButtonText, Enum.StudioStyleGuideModifier.Selected),
+				ActionFillColor = studioTheme:GetColor(
+					Enum.StudioStyleGuideColor.ButtonText,
+					Enum.StudioStyleGuideModifier.Selected
+				),
 				ActionFillTransparency = 0.9,
 				Enabled = {
 					TextColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.ButtonText),
-					BorderColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.CheckedFieldBorder, Enum.StudioStyleGuideModifier.Disabled),
+					BorderColor = studioTheme:GetColor(
+						Enum.StudioStyleGuideColor.CheckedFieldBorder,
+						Enum.StudioStyleGuideModifier.Disabled
+					),
 				},
 				Disabled = {
-					TextColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.ButtonText, Enum.StudioStyleGuideModifier.Disabled),
-					BorderColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.CheckedFieldBorder, Enum.StudioStyleGuideModifier.Disabled),
+					TextColor = studioTheme:GetColor(
+						Enum.StudioStyleGuideColor.ButtonText,
+						Enum.StudioStyleGuideModifier.Disabled
+					),
+					BorderColor = studioTheme:GetColor(
+						Enum.StudioStyleGuideColor.CheckedFieldBorder,
+						Enum.StudioStyleGuideModifier.Disabled
+					),
 				},
 			},
 		},
@@ -70,26 +82,44 @@ function StudioProvider:updateTheme()
 				BackgroundColor = BRAND_COLOR,
 			},
 			Inactive = {
-				IconColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.CheckedFieldIndicator, Enum.StudioStyleGuideModifier.Disabled),
-				BorderColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.CheckedFieldBorder, Enum.StudioStyleGuideModifier.Disabled),
+				IconColor = studioTheme:GetColor(
+					Enum.StudioStyleGuideColor.CheckedFieldIndicator,
+					Enum.StudioStyleGuideModifier.Disabled
+				),
+				BorderColor = studioTheme:GetColor(
+					Enum.StudioStyleGuideColor.CheckedFieldBorder,
+					Enum.StudioStyleGuideModifier.Disabled
+				),
 			},
 		},
 		Dropdown = {
 			TextColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.ButtonText),
-			BorderColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.CheckedFieldBorder, Enum.StudioStyleGuideModifier.Disabled),
+			BorderColor = studioTheme:GetColor(
+				Enum.StudioStyleGuideColor.CheckedFieldBorder,
+				Enum.StudioStyleGuideModifier.Disabled
+			),
 			BackgroundColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.MainBackground),
-			IconColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.CheckedFieldIndicator, Enum.StudioStyleGuideModifier.Disabled),
+			IconColor = studioTheme:GetColor(
+				Enum.StudioStyleGuideColor.CheckedFieldIndicator,
+				Enum.StudioStyleGuideModifier.Disabled
+			),
 		},
 		TextInput = {
 			Enabled = {
 				TextColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.BrightText),
 				PlaceholderColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.SubText),
-				BorderColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.CheckedFieldBorder, Enum.StudioStyleGuideModifier.Disabled),
+				BorderColor = studioTheme:GetColor(
+					Enum.StudioStyleGuideColor.CheckedFieldBorder,
+					Enum.StudioStyleGuideModifier.Disabled
+				),
 			},
 			Disabled = {
 				TextColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.MainText),
 				PlaceholderColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.SubText),
-				BorderColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.CheckedFieldBorder, Enum.StudioStyleGuideModifier.Disabled),
+				BorderColor = studioTheme:GetColor(
+					Enum.StudioStyleGuideColor.CheckedFieldBorder,
+					Enum.StudioStyleGuideModifier.Disabled
+				),
 			},
 			ActionFillColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.BrightText),
 			ActionFillTransparency = 0.9,
@@ -99,7 +129,10 @@ function StudioProvider:updateTheme()
 			PlaceholderColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.SubText),
 		},
 		BorderedContainer = {
-			BorderColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.CheckedFieldBorder, Enum.StudioStyleGuideModifier.Disabled),
+			BorderColor = studioTheme:GetColor(
+				Enum.StudioStyleGuideColor.CheckedFieldBorder,
+				Enum.StudioStyleGuideModifier.Disabled
+			),
 			BackgroundColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.InputFieldBackground),
 		},
 		Spinner = {
@@ -119,7 +152,10 @@ function StudioProvider:updateTheme()
 			DisconnectColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.BrightText),
 		},
 		Settings = {
-			DividerColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.CheckedFieldBorder, Enum.StudioStyleGuideModifier.Disabled),
+			DividerColor = studioTheme:GetColor(
+				Enum.StudioStyleGuideColor.CheckedFieldBorder,
+				Enum.StudioStyleGuideModifier.Disabled
+			),
 			Navbar = {
 				BackButtonColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.BrightText),
 				TextColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.BrightText),
