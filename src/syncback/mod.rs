@@ -58,24 +58,14 @@ pub fn syncback_loop<'old>(
     let mut replacements = Vec::new();
     let mut fs_snapshot = FsSnapshot::new();
 
-    while let Some(snapshot) = snapshots.pop() {
-        if let Ok(suffix) = snapshot.parent_path.strip_prefix(project_path) {
-            if git_glob.is_match(suffix) {
-                log::warn!(
-                    "Cannot syncback into `.git`, {} will be skipped.",
-                    get_inst_path(new_tree, snapshot.new)
-                );
-                continue;
-            }
-        }
-
+    'syncback: while let Some(snapshot) = snapshots.pop() {
+        let inst_path = get_inst_path(new_tree, snapshot.new);
         // We can quickly check that two subtrees are identical and if they are,
         // skip reconciling them.
         if let Some(old_ref) = snapshot.old {
             if old_hashes.get(&old_ref) == new_hashes.get(&snapshot.new) {
                 log::trace!(
-                    "Skipping {} due to it being identically hashed as {:?}",
-                    get_inst_path(new_tree, snapshot.new),
+                    "Skipping {inst_path} due to it being identically hashed as {:?}",
                     old_hashes.get(&old_ref)
                 );
                 continue;
@@ -83,11 +73,26 @@ pub fn syncback_loop<'old>(
         }
 
         if let Some(syncback_rules) = &project.syncback_rules {
-            if !syncback_rules.acceptable(new_tree, snapshot.new) {
-                log::debug!(
-                    "Path {} is blocked by project",
-                    get_inst_path(new_tree, snapshot.new)
-                );
+            // Ignore paths
+            if let Ok(suffix) = snapshot.parent_path.strip_prefix(project_path) {
+                for glob in &syncback_rules.ignore_paths {
+                    if glob.is_match(suffix) {
+                        log::debug!("Skipping {inst_path} because its path matches ignore pattern");
+                        continue 'syncback;
+                    }
+                }
+            }
+            // Ignore trees;
+            for ignored in &syncback_rules.ignore_trees {
+                if inst_path.starts_with(ignored.as_str()) {
+                    log::debug!("Tree {inst_path} is blocked by project");
+                    continue 'syncback;
+                }
+            }
+        }
+        if let Ok(suffix) = snapshot.parent_path.strip_prefix(project_path) {
+            if git_glob.is_match(suffix) {
+                log::warn!("Cannot syncback into `.git`, {inst_path} will be skipped.");
                 continue;
             }
         }
@@ -96,31 +101,20 @@ pub fn syncback_loop<'old>(
             .old_inst()
             .and_then(|inst| inst.metadata().middleware)
             .unwrap_or_else(|| get_best_middleware(snapshot.new_inst()));
-        log::trace!(
-            "Middleware for {} is {:?}",
-            get_inst_path(new_tree, snapshot.new),
-            middleware
-        );
+        log::trace!("Middleware for {inst_path} is {:?}", middleware);
 
         if matches!(middleware, Middleware::Json | Middleware::Toml) {
-            log::warn!(
-                "Cannot syncback {middleware:?} at {}, skipping",
-                get_inst_path(new_tree, snapshot.new)
-            );
+            log::warn!("Cannot syncback {middleware:?} at {inst_path}, skipping");
             continue;
         }
 
-        let syncback = middleware.syncback(&snapshot).with_context(|| {
-            format!(
-                "Failed to syncback {}",
-                get_inst_path(new_tree, snapshot.new)
-            )
-        })?;
+        let syncback = middleware
+            .syncback(&snapshot)
+            .with_context(|| format!("Failed to syncback {inst_path}"))?;
 
         if !syncback.removed_children.is_empty() {
             log::debug!(
-                "removed children for {}: {}",
-                get_inst_path(new_tree, snapshot.new),
+                "removed children for {inst_path}: {}",
                 syncback.removed_children.len()
             );
             for inst in &syncback.removed_children {
@@ -216,28 +210,17 @@ pub fn get_best_middleware(inst: &Instance) -> Middleware {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct SyncbackRules {
-    /// A list of paths in a file that will be ignored by Syncback.
+    /// A list of subtrees in a file that will be ignored by Syncback.
     #[serde(default)]
-    ignore_paths: Vec<String>,
+    ignore_trees: Vec<String>,
+    /// A list of patterns to check against the path an Instance would serialize
+    /// to. If a path matches one of these, the Instance won't be syncbacked.
+    #[serde(default)]
+    ignore_paths: Vec<Glob>,
     /// A map of classes to properties to ignore for that class when doing
     /// syncback.
     #[serde(default)]
     ignore_properties: HashMap<String, Vec<String>>,
-}
-
-impl SyncbackRules {
-    /// Returns whether the provided Instance is allowed to be handled with
-    /// syncback.
-    #[inline]
-    pub fn acceptable(&self, dom: &WeakDom, inst: Ref) -> bool {
-        let path = get_inst_path(dom, inst);
-        for ignored in &self.ignore_paths {
-            if path.starts_with(ignored.as_str()) {
-                return false;
-            }
-        }
-        true
-    }
 }
 
 fn get_inst_path(dom: &WeakDom, referent: Ref) -> String {
