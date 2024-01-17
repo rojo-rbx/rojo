@@ -142,7 +142,12 @@ function App:init()
 	if RunService:IsEdit() then
 		self:checkForUpdates()
 
-		if Settings:get("syncReminder") and self.serveSession == nil and self:getLastSyncTimestamp() and (self:isSyncLockAvailable()) then
+		if
+			Settings:get("syncReminder")
+			and self.serveSession == nil
+			and self:getLastSyncTimestamp()
+			and (self:isSyncLockAvailable())
+		then
 			self:addNotification("You've previously synced this place. Would you like to reconnect?", 300, {
 				Connect = {
 					text = "Connect",
