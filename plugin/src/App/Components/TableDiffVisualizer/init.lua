@@ -31,15 +31,17 @@ function TableDiffVisualizer:render()
 		anchorPoint = self.props.anchorPoint,
 		transparency = self.props.transparency,
 	}, {
-		Content = if isArray then e(Array, {
-			oldTable = oldTable,
-			newTable = newTable,
-			transparency = self.props.transparency,
-		}) else e(Dictionary, {
-			oldTable = oldTable,
-			newTable = newTable,
-			transparency = self.props.transparency,
-		}),
+		Content = if isArray
+			then e(Array, {
+				oldTable = oldTable,
+				newTable = newTable,
+				transparency = self.props.transparency,
+			})
+			else e(Dictionary, {
+				oldTable = oldTable,
+				newTable = newTable,
+				transparency = self.props.transparency,
+			}),
 	})
 end
 
