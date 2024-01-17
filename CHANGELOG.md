@@ -1,6 +1,9 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Updated Theme to use Studio colors ([#838])
+
+[#838]: https://github.com/rojo-rbx/rojo/pull/838
 
 ## [7.4.0] - January 16, 2024
 * Improved the visualization for array properties like Tags ([#829])
