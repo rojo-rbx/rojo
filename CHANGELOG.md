@@ -2,14 +2,19 @@
 
 ## Unreleased Changes
 * Added headless API for Studio companion plugins. ([#631])
+
+[#631]: https://github.com/rojo-rbx/rojo/pull/631
+
+## [7.4.0] - January 16, 2024
 * Improved the visualization for array properties like Tags ([#829])
 * Significantly improved performance of `rojo serve`, `rojo build --watch`, and `rojo sourcemap --watch` on macOS. ([#830])
 * Changed *.lua files that init command generates to *.luau ([#831])
+* Does not remind users to sync if the sync lock is claimed already ([#833])
 
-[#631]: https://github.com/rojo-rbx/rojo/pull/631
 [#829]: https://github.com/rojo-rbx/rojo/pull/829
 [#830]: https://github.com/rojo-rbx/rojo/pull/830
 [#831]: https://github.com/rojo-rbx/rojo/pull/831
+[#833]: https://github.com/rojo-rbx/rojo/pull/833
 
 ## [7.4.0-rc3] - October 25, 2023
 * Changed `sourcemap --watch` to only generate the sourcemap when it's necessary ([#800])
