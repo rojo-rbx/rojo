@@ -150,7 +150,6 @@ pub fn syncback_lua<'new, 'old>(
             },
             |source| source.path().to_path_buf(),
         );
-    log::debug!("Luau middleware: {}", path.display());
 
     let contents = if let Some(Variant::String(source)) = new_inst.properties.get("Source") {
         source.as_bytes().to_vec()
