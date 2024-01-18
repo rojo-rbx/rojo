@@ -101,7 +101,7 @@ pub fn syncback_dir<'new, 'old>(
     snapshot: &SyncbackSnapshot<'new, 'old>,
     dir_name: &str,
 ) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
-    let path = snapshot.parent_path.join(&dir_name);
+    let path = snapshot.parent_path.join(dir_name);
     let new_inst = snapshot.new_inst();
 
     let mut dir_syncback = syncback_dir_no_meta(snapshot, dir_name)?;
