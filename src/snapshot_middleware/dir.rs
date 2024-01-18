@@ -1,5 +1,5 @@
 use std::{
-    collections::{BTreeMap, HashMap},
+    collections::{BTreeMap, HashMap, HashSet},
     path::Path,
 };
 
@@ -160,8 +160,17 @@ pub fn syncback_dir_no_meta<'new, 'old>(
     let mut children = Vec::new();
     let mut removed_children = Vec::new();
 
+    // We have to enforce unique child names for the file system.
+    let mut duplicate_check = HashSet::with_capacity(new_inst.children().len());
+    for child in new_inst.children() {
+        let child = snapshot.get_new_instance(*child).unwrap();
+        if !duplicate_check.insert(&child.name) {
+            anyhow::bail!("Instance has duplicate child {}", child.name);
+        }
+    }
+
     if let Some(old_inst) = snapshot.old_inst() {
-        let mut old_child_map = HashMap::new();
+        let mut old_child_map = HashMap::with_capacity(old_inst.children().len());
         for child in old_inst.children() {
             let inst = snapshot.get_old_instance(*child).unwrap();
             old_child_map.insert(inst.name(), inst);
