@@ -164,8 +164,8 @@ pub fn syncback_dir_no_meta<'new, 'old>(
     let mut duplicate_check = HashSet::with_capacity(new_inst.children().len());
     for child in new_inst.children() {
         let child = snapshot.get_new_instance(*child).unwrap();
-        if !duplicate_check.insert(&child.name) {
-            anyhow::bail!("Instance has duplicate child {}", child.name);
+        if !duplicate_check.insert(child.name.to_lowercase()) {
+            anyhow::bail!("Instance has duplicate child {}", child.name.to_lowercase());
         }
     }
 
