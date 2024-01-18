@@ -43,10 +43,7 @@ pub fn syncback_loop<'old>(
         vfs,
         old_tree,
         new_tree,
-        ignore_props: project
-            .syncback_rules
-            .as_ref()
-            .map(|rules| &rules.ignore_properties),
+        syncback_rules: project.syncback_rules.as_ref(),
     };
 
     let mut snapshots = vec![SyncbackSnapshot {

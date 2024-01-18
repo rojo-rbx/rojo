@@ -5,6 +5,7 @@ use std::{
 };
 
 use crate::{
+    glob::Glob,
     snapshot::{InstanceWithMeta, RojoTree},
     variant_eq::variant_eq,
 };
@@ -13,12 +14,14 @@ use rbx_dom_weak::{
     Instance, WeakDom,
 };
 
+use super::SyncbackRules;
+
 #[derive(Clone, Copy)]
 pub struct SyncbackData<'new, 'old> {
     pub(super) vfs: &'old Vfs,
     pub(super) old_tree: &'old RojoTree,
     pub(super) new_tree: &'new WeakDom,
-    pub(super) ignore_props: Option<&'old HashMap<String, Vec<String>>>,
+    pub(super) syncback_rules: Option<&'old SyncbackRules>,
 }
 
 pub struct SyncbackSnapshot<'new, 'old> {
@@ -122,7 +125,7 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
     /// Returns a set of properties that should not be written with syncback if
     /// one exists.
     fn get_property_filter(&self) -> Option<BTreeSet<&String>> {
-        let filter = self.data.ignore_props?;
+        let filter = self.ignore_props()?;
         let mut set = BTreeSet::new();
 
         let database = rbx_reflection_database::get();
@@ -184,5 +187,29 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
     #[inline]
     pub fn new_tree(&self) -> &'new WeakDom {
         self.data.new_tree
+    }
+
+    /// Returns user-specified property ignore rules.
+    #[inline]
+    pub fn ignore_props(&self) -> Option<&HashMap<String, Vec<String>>> {
+        self.data
+            .syncback_rules
+            .map(|rules| &rules.ignore_properties)
+    }
+
+    /// Returns user-specified ignore paths.
+    #[inline]
+    pub fn ignore_paths(&self) -> Option<&[Glob]> {
+        self.data
+            .syncback_rules
+            .map(|rules| rules.ignore_paths.as_slice())
+    }
+
+    /// Returns user-specified ignore tree.
+    #[inline]
+    pub fn ignore_tree(&self) -> Option<&[String]> {
+        self.data
+            .syncback_rules
+            .map(|rules| rules.ignore_trees.as_slice())
     }
 }
