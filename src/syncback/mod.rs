@@ -6,10 +6,7 @@ use anyhow::Context;
 use memofs::Vfs;
 use rbx_dom_weak::{types::Ref, Instance, WeakDom};
 use serde::{Deserialize, Serialize};
-use std::{
-    collections::{HashMap, VecDeque},
-    sync::OnceLock,
-};
+use std::collections::{HashMap, VecDeque};
 
 use crate::{
     glob::Glob,
@@ -18,12 +15,9 @@ use crate::{
     Project,
 };
 
-pub use file_names::is_valid_file_name;
+pub use file_names::{is_valid_file_name, name_for_inst};
 pub use fs_snapshot::FsSnapshot;
 pub use snapshot::{SyncbackData, SyncbackSnapshot};
-
-/// A glob that can be used to tell if a path contains a `.git` folder.
-static GIT_IGNORE_GLOB: OnceLock<Glob> = OnceLock::new();
 
 pub fn syncback_loop<'old>(
     vfs: &'old Vfs,
@@ -36,7 +30,6 @@ pub fn syncback_loop<'old>(
     log::debug!("Hashing file DOM");
     let new_hashes = hash_tree(new_tree);
 
-    let git_glob = GIT_IGNORE_GLOB.get_or_init(|| Glob::new(".git/**").unwrap());
     let project_path = project.folder_location();
 
     let syncback_data = SyncbackData {
@@ -71,31 +64,6 @@ pub fn syncback_loop<'old>(
             }
         }
 
-        if let Some(syncback_rules) = &project.syncback_rules {
-            // Ignore paths
-            if let Ok(suffix) = snapshot.parent_path.strip_prefix(project_path) {
-                for glob in &syncback_rules.ignore_paths {
-                    if glob.is_match(suffix) {
-                        log::debug!("Skipping {inst_path} because its path matches ignore pattern");
-                        continue 'syncback;
-                    }
-                }
-            }
-            // Ignore trees;
-            for ignored in &syncback_rules.ignore_trees {
-                if inst_path.starts_with(ignored.as_str()) {
-                    log::debug!("Tree {inst_path} is blocked by project");
-                    continue 'syncback;
-                }
-            }
-        }
-        if let Ok(suffix) = snapshot.parent_path.strip_prefix(project_path) {
-            if git_glob.is_match(suffix) {
-                log::warn!("Cannot syncback into `.git`, {inst_path} will be skipped.");
-                continue;
-            }
-        }
-
         let middleware = snapshot
             .old_inst()
             .and_then(|inst| inst.metadata().middleware)
@@ -105,6 +73,24 @@ pub fn syncback_loop<'old>(
         if matches!(middleware, Middleware::Json | Middleware::Toml) {
             log::warn!("Cannot syncback {middleware:?} at {inst_path}, skipping");
             continue;
+        }
+
+        let appended_name = name_for_inst(middleware, snapshot.new_inst(), snapshot.old_inst())?;
+        let working_path = snapshot.parent_path.join(appended_name.as_ref());
+
+        if !snapshot.is_valid_path(project_path, &working_path) {
+            log::debug!("Skipping {inst_path} because its path matches ignore pattern");
+            continue;
+        }
+
+        if let Some(syncback_rules) = &project.syncback_rules {
+            // Ignore trees;
+            for ignored in &syncback_rules.ignore_trees {
+                if inst_path.starts_with(ignored.as_str()) {
+                    log::debug!("Tree {inst_path} is blocked by project");
+                    continue 'syncback;
+                }
+            }
         }
 
         let syncback = middleware
