@@ -243,6 +243,7 @@ impl Middleware {
     pub fn syncback<'new, 'old>(
         &self,
         snapshot: &SyncbackSnapshot<'new, 'old>,
+        file_name: &str,
     ) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
         // We don't care about the names of projects
         if !is_valid_file_name(&snapshot.name) && !matches!(self, Middleware::Project) {
@@ -252,23 +253,31 @@ impl Middleware {
             );
         }
         match self {
-            Middleware::Csv => syncback_csv(snapshot),
-            Middleware::JsonModel => syncback_json_model(snapshot),
+            Middleware::Csv => syncback_csv(snapshot, file_name),
+            Middleware::JsonModel => syncback_json_model(snapshot, file_name),
             Middleware::Json => unimplemented!("cannot syncback Json middleware"),
+            // Projects are only generated from files that already exist on the
+            // file system, so we don't need to pass a file name.
             Middleware::Project => syncback_project(snapshot),
-            Middleware::ServerScript => syncback_lua(ScriptType::Server, snapshot),
-            Middleware::ClientScript => syncback_lua(ScriptType::Client, snapshot),
-            Middleware::ModuleScript => syncback_lua(ScriptType::Module, snapshot),
-            Middleware::Rbxm => syncback_rbxm(snapshot),
-            Middleware::Rbxmx => syncback_rbxmx(snapshot),
+            Middleware::ServerScript => syncback_lua(snapshot, file_name),
+            Middleware::ClientScript => syncback_lua(snapshot, file_name),
+            Middleware::ModuleScript => syncback_lua(snapshot, file_name),
+            Middleware::Rbxm => syncback_rbxm(snapshot, file_name),
+            Middleware::Rbxmx => syncback_rbxmx(snapshot, file_name),
             Middleware::Toml => unimplemented!("cannot syncback Toml middleware"),
-            Middleware::Text => syncback_txt(snapshot),
+            Middleware::Text => syncback_txt(snapshot, file_name),
             Middleware::Ignore => anyhow::bail!("cannot syncback Ignore middleware"),
-            Middleware::Dir => syncback_dir(snapshot),
-            Middleware::ServerScriptDir => syncback_lua_init(ScriptType::Server, snapshot),
-            Middleware::ClientScriptDir => syncback_lua_init(ScriptType::Client, snapshot),
-            Middleware::ModuleScriptDir => syncback_lua_init(ScriptType::Module, snapshot),
-            Middleware::CsvDir => syncback_csv_init(snapshot),
+            Middleware::Dir => syncback_dir(snapshot, file_name),
+            Middleware::ServerScriptDir => {
+                syncback_lua_init(ScriptType::Server, snapshot, file_name)
+            }
+            Middleware::ClientScriptDir => {
+                syncback_lua_init(ScriptType::Client, snapshot, file_name)
+            }
+            Middleware::ModuleScriptDir => {
+                syncback_lua_init(ScriptType::Module, snapshot, file_name)
+            }
+            Middleware::CsvDir => syncback_csv_init(snapshot, file_name),
         }
     }
 }

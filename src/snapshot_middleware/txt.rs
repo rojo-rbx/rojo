@@ -51,20 +51,10 @@ pub fn snapshot_txt(
 
 pub fn syncback_txt<'new, 'old>(
     snapshot: &SyncbackSnapshot<'new, 'old>,
+    file_name: &str,
 ) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
     let new_inst = snapshot.new_inst();
-    let path = snapshot
-        .old_inst()
-        .and_then(|inst| inst.metadata().instigating_source.as_ref())
-        .map_or_else(
-            || {
-                // Since Roblox instances may or may not a `.` character in
-                // their names, we can't just use `.set_file_name` and
-                // `.set_extension`.
-                snapshot.parent_path.join(format!("{}.txt", &snapshot.name))
-            },
-            |source| source.path().to_path_buf(),
-        );
+    let path = snapshot.parent_path.join(file_name);
 
     let contents = if let Some(Variant::String(source)) = new_inst.properties.get("Value") {
         source.as_bytes().to_vec()

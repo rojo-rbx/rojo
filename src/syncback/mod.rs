@@ -94,7 +94,7 @@ pub fn syncback_loop<'old>(
         }
 
         let syncback = middleware
-            .syncback(&snapshot)
+            .syncback(&snapshot, &appended_name)
             .with_context(|| format!("Failed to syncback {inst_path}"))?;
 
         if !syncback.removed_children.is_empty() {

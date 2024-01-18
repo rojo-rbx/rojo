@@ -44,20 +44,10 @@ pub fn snapshot_rbxm(
 
 pub fn syncback_rbxm<'new, 'old>(
     snapshot: &SyncbackSnapshot<'new, 'old>,
+    file_name: &str,
 ) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
     let inst = snapshot.new_inst();
-    let path = snapshot
-        .old_inst()
-        .and_then(|inst| inst.metadata().instigating_source.as_ref())
-        .map_or_else(
-            || {
-                // Since Roblox instances may or may not a `.` character in
-                // their names, we can't just use `.set_file_name` and
-                // `.set_extension`.
-                snapshot.parent_path.join(format!("{}.rbxm", snapshot.name))
-            },
-            |source| source.path().to_path_buf(),
-        );
+    let path = snapshot.parent_path.join(file_name);
 
     // Long-term, we probably want to have some logic for if this contains a
     // script. That's a future endeavor though.

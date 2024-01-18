@@ -99,11 +99,12 @@ pub fn snapshot_dir_no_meta(
 
 pub fn syncback_dir<'new, 'old>(
     snapshot: &SyncbackSnapshot<'new, 'old>,
+    dir_name: &str,
 ) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
-    let path = snapshot.parent_path.join(&snapshot.name);
+    let path = snapshot.parent_path.join(&dir_name);
     let new_inst = snapshot.new_inst();
 
-    let mut dir_syncback = syncback_dir_no_meta(snapshot)?;
+    let mut dir_syncback = syncback_dir_no_meta(snapshot, dir_name)?;
 
     let mut meta = if let Some(dir) = dir_meta(snapshot.vfs(), &path)? {
         dir
@@ -151,8 +152,9 @@ pub fn syncback_dir<'new, 'old>(
 
 pub fn syncback_dir_no_meta<'new, 'old>(
     snapshot: &SyncbackSnapshot<'new, 'old>,
+    dir_name: &str,
 ) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
-    let path = snapshot.parent_path.join(&snapshot.name);
+    let path = snapshot.parent_path.join(dir_name);
     let new_inst = snapshot.new_inst();
 
     let mut children = Vec::new();
