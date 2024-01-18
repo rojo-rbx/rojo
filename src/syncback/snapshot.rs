@@ -2,6 +2,7 @@ use memofs::Vfs;
 use std::{
     collections::{BTreeSet, HashMap},
     path::{Path, PathBuf},
+    sync::OnceLock,
 };
 
 use crate::{
@@ -15,6 +16,9 @@ use rbx_dom_weak::{
 };
 
 use super::SyncbackRules;
+
+/// A glob that can be used to tell if a path contains a `.git` folder.
+static GIT_IGNORE_GLOB: OnceLock<Glob> = OnceLock::new();
 
 #[derive(Clone, Copy)]
 pub struct SyncbackData<'new, 'old> {
@@ -154,20 +158,18 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
     /// to allow globs to operate as if it were local.
     #[inline]
     pub fn is_valid_path(&self, base_path: &Path, path: &Path) -> bool {
+        let git_glob = GIT_IGNORE_GLOB.get_or_init(|| Glob::new(".git/**").unwrap());
+        let test_path = match path.strip_prefix(base_path) {
+            Ok(suffix) => suffix,
+            Err(_) => path,
+        };
+        if git_glob.is_match(test_path) {
+            return false;
+        }
         if let Some(ignore_paths) = self.ignore_paths() {
-            if path.is_absolute() {
-                if let Ok(suffix) = path.strip_prefix(base_path) {
-                    for glob in ignore_paths {
-                        if glob.is_match(suffix) {
-                            return false;
-                        }
-                    }
-                }
-            } else {
-                for glob in ignore_paths {
-                    if glob.is_match(path) {
-                        return false;
-                    }
+            for glob in ignore_paths {
+                if glob.is_match(test_path) {
+                    return false;
                 }
             }
         }
