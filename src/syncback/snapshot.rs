@@ -1,7 +1,7 @@
 use memofs::Vfs;
 use std::{
     collections::{BTreeSet, HashMap},
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 
 use crate::{
@@ -145,6 +145,33 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
         }
 
         Some(set)
+    }
+
+    /// Returns whether a given path is allowed for syncback by matching `path`
+    /// against every user specified glob for ignoring.
+    ///
+    /// If the provided `path` is absolute, it has `base_path` stripped from it
+    /// to allow globs to operate as if it were local.
+    #[inline]
+    pub fn is_valid_path(&self, base_path: &Path, path: &Path) -> bool {
+        if let Some(ignore_paths) = self.ignore_paths() {
+            if path.is_absolute() {
+                if let Ok(suffix) = path.strip_prefix(base_path) {
+                    for glob in ignore_paths {
+                        if glob.is_match(suffix) {
+                            return false;
+                        }
+                    }
+                }
+            } else {
+                for glob in ignore_paths {
+                    if glob.is_match(path) {
+                        return false;
+                    }
+                }
+            }
+        }
+        true
     }
 
     /// Returns an Instance from the old tree with the provided referent, if it
