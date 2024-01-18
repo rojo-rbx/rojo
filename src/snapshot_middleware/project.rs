@@ -333,6 +333,16 @@ pub fn syncback_project<'new, 'old>(
 
     while let Some((node, new_inst, old_inst)) = project_nodes.pop() {
         log::trace!("Processing node '{}' of project", old_inst.name());
+        if let Some(node_path) = &node.path {
+            let node_path = node_path.path();
+            if !snapshot.is_valid_path(base_path, node_path) {
+                log::debug!(
+                    "Skipping {} because its path matches ignore pattern",
+                    new_inst.name,
+                );
+                continue;
+            }
+        }
         ref_to_path.insert(new_inst.referent(), node.path.as_ref());
 
         old_child_map.extend(old_inst.children().iter().map(|referent| {
@@ -379,7 +389,6 @@ pub fn syncback_project<'new, 'old>(
                 if new_child.class != old_child.class_name() {
                     anyhow::bail!("cannot change the class of {child_name} in project");
                 }
-
                 project_nodes.push((child_node, new_child, *old_child));
                 old_child_map.remove(child_name.as_str());
                 new_child_map.remove(child_name);
