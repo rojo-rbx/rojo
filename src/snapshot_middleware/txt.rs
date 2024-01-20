@@ -6,15 +6,14 @@ use memofs::{IoResultExt, Vfs};
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
-use super::{meta_file::AdjacentMetadata, util::PathExt};
+use super::meta_file::AdjacentMetadata;
 
 pub fn snapshot_txt(
     context: &InstanceContext,
     vfs: &Vfs,
     path: &Path,
+    name: &str,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let name = path.file_name_trim_end(".txt")?;
-
     let contents = vfs.read(path)?;
     let contents_str = str::from_utf8(&contents)
         .with_context(|| format!("File was not valid UTF-8: {}", path.display()))?
@@ -59,10 +58,14 @@ mod test {
 
         let mut vfs = Vfs::new(imfs.clone());
 
-        let instance_snapshot =
-            snapshot_txt(&InstanceContext::default(), &mut vfs, Path::new("/foo.txt"))
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = snapshot_txt(
+            &InstanceContext::default(),
+            &mut vfs,
+            Path::new("/foo.txt"),
+            "foo",
+        )
+        .unwrap()
+        .unwrap();
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }

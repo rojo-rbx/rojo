@@ -1,0 +1,12 @@
+{
+  "name": "nested",
+  "tree": {
+    "$path": "src"
+  },
+  "syncRules": [
+    {
+      "pattern": "*.txt",
+      "use": "ignore"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "sync_rule_nested_projects",
+  "tree": {
+    "$path": "nested.project.json"
+  },
+  "syncRules": [
+    {
+      "pattern": "*.rojo",
+      "use": "text"
+    }
+  ]
+}
