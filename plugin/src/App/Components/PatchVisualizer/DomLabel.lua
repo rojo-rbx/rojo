@@ -205,7 +205,7 @@ function DomLabel:render()
 				BackgroundTransparency = 1,
 				Font = Enum.Font.GothamMedium,
 				TextSize = 14,
-				TextColor3 = if props.isWarning then theme.Diff.Warning else theme.Settings.Setting.DescriptionColor,
+				TextColor3 = if props.isWarning then theme.Diff.Warning else theme.TextColor,
 				TextXAlignment = Enum.TextXAlignment.Left,
 				TextTransparency = props.transparency,
 				TextTruncate = Enum.TextTruncate.AtEnd,

@@ -1,6 +1,9 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Updated Theme to use Studio colors ([#838])
+
+[#838]: https://github.com/rojo-rbx/rojo/pull/838
 
 * Projects may now specify rules for syncing files as if they had a different file extension. ([#813])
  	This is specified via a new field on project files, `syncRules`:

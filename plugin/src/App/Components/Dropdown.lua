@@ -109,9 +109,7 @@ function Dropdown:render()
 			}, {
 				DropArrow = e("ImageLabel", {
 					Image = if self.props.locked then Assets.Images.Dropdown.Locked else Assets.Images.Dropdown.Arrow,
-					ImageColor3 = self.openBinding:map(function(a)
-						return theme.Closed.IconColor:Lerp(theme.Open.IconColor, a)
-					end),
+					ImageColor3 = theme.IconColor,
 					ImageTransparency = self.props.transparency,
 
 					Size = UDim2.new(0, 18, 0, 18),
