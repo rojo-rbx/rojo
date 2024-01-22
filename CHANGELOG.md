@@ -1,10 +1,8 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Added popout diff visualizer for table properties like Attributes and Tags ([#834])
 * Updated Theme to use Studio colors ([#838])
-
-[#838]: https://github.com/rojo-rbx/rojo/pull/838
-
 * Projects may now specify rules for syncing files as if they had a different file extension. ([#813])
  	This is specified via a new field on project files, `syncRules`:
 
@@ -53,6 +51,8 @@
     **All** sync rules are reset between project files, so they must be specified in each one when nesting them. This is to ensure that nothing can break other projects by changing how files are synced!
 
 [#813]: https://github.com/rojo-rbx/rojo/pull/813
+[#834]: https://github.com/rojo-rbx/rojo/pull/834
+[#838]: https://github.com/rojo-rbx/rojo/pull/838
 
 ## [7.4.0] - January 16, 2024
 * Improved the visualization for array properties like Tags ([#829])

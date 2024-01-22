@@ -18,6 +18,7 @@ local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
 local Tooltip = require(Plugin.App.Components.Tooltip)
 local PatchVisualizer = require(Plugin.App.Components.PatchVisualizer)
 local StringDiffVisualizer = require(Plugin.App.Components.StringDiffVisualizer)
+local TableDiffVisualizer = require(Plugin.App.Components.TableDiffVisualizer)
 
 local e = Roact.createElement
 
@@ -97,7 +98,8 @@ function ChangesDrawer:render()
 
 				patchTree = self.props.patchTree,
 
-				showSourceDiff = self.props.showSourceDiff,
+				showStringDiff = self.props.showStringDiff,
+				showTableDiff = self.props.showTableDiff,
 			}),
 		})
 	end)
@@ -239,9 +241,9 @@ function ConnectedPage:init()
 	self:setState({
 		renderChanges = false,
 		hoveringChangeInfo = false,
-		showingSourceDiff = false,
-		oldSource = "",
-		newSource = "",
+		showingStringDiff = false,
+		oldString = "",
+		newString = "",
 	})
 
 	self.changeInfoText, self.setChangeInfoText = Roact.createBinding("")
@@ -258,7 +260,7 @@ function ConnectedPage:didUpdate(previousProps)
 		-- New patch recieved
 		self:startChangeInfoTextUpdater()
 		self:setState({
-			showingSourceDiff = false,
+			showingStringDiff = false,
 		})
 	end
 end
@@ -387,11 +389,18 @@ function ConnectedPage:render()
 				height = self.changeDrawerHeight,
 				layoutOrder = 5,
 
-				showSourceDiff = function(oldSource: string, newSource: string)
+				showStringDiff = function(oldString: string, newString: string)
 					self:setState({
-						showingSourceDiff = true,
-						oldSource = oldSource,
-						newSource = newSource,
+						showingStringDiff = true,
+						oldString = oldString,
+						newString = newString,
+					})
+				end,
+				showTableDiff = function(oldTable: { [any]: any? }, newTable: { [any]: any? })
+					self:setState({
+						showingTableDiff = true,
+						oldTable = oldTable,
+						newTable = newTable,
 					})
 				end,
 
@@ -403,10 +412,10 @@ function ConnectedPage:render()
 				end,
 			}),
 
-			SourceDiff = e(StudioPluginGui, {
-				id = "Rojo_ConnectedSourceDiff",
-				title = "Source diff",
-				active = self.state.showingSourceDiff,
+			StringDiff = e(StudioPluginGui, {
+				id = "Rojo_ConnectedStringDiff",
+				title = "String diff",
+				active = self.state.showingStringDiff,
 				isEphemeral = true,
 
 				initDockState = Enum.InitialDockState.Float,
@@ -418,7 +427,7 @@ function ConnectedPage:render()
 
 				onClose = function()
 					self:setState({
-						showingSourceDiff = false,
+						showingStringDiff = false,
 					})
 				end,
 			}, {
@@ -434,8 +443,46 @@ function ConnectedPage:render()
 							anchorPoint = Vector2.new(0, 0),
 							transparency = self.props.transparency,
 
-							oldText = self.state.oldSource,
-							newText = self.state.newSource,
+							oldString = self.state.oldString,
+							newString = self.state.newString,
+						}),
+					}),
+				}),
+			}),
+
+			TableDiff = e(StudioPluginGui, {
+				id = "Rojo_ConnectedTableDiff",
+				title = "Table diff",
+				active = self.state.showingTableDiff,
+				isEphemeral = true,
+
+				initDockState = Enum.InitialDockState.Float,
+				overridePreviousState = false,
+				floatingSize = Vector2.new(500, 350),
+				minimumSize = Vector2.new(400, 250),
+
+				zIndexBehavior = Enum.ZIndexBehavior.Sibling,
+
+				onClose = function()
+					self:setState({
+						showingTableDiff = false,
+					})
+				end,
+			}, {
+				TooltipsProvider = e(Tooltip.Provider, nil, {
+					Tooltips = e(Tooltip.Container, nil),
+					Content = e("Frame", {
+						Size = UDim2.fromScale(1, 1),
+						BackgroundTransparency = 1,
+					}, {
+						e(TableDiffVisualizer, {
+							size = UDim2.new(1, -10, 1, -10),
+							position = UDim2.new(0, 5, 0, 5),
+							anchorPoint = Vector2.new(0, 0),
+							transparency = self.props.transparency,
+
+							oldTable = self.state.oldTable,
+							newTable = self.state.newTable,
 						}),
 					}),
 				}),
