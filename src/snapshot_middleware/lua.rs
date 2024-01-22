@@ -9,11 +9,10 @@ use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 use super::{
     dir::{dir_meta, snapshot_dir_no_meta},
     meta_file::AdjacentMetadata,
-    util::match_trailing,
 };
 
 #[derive(Debug)]
-enum ScriptType {
+pub enum ScriptType {
     Server,
     Client,
     Module,
@@ -24,31 +23,14 @@ pub fn snapshot_lua(
     context: &InstanceContext,
     vfs: &Vfs,
     path: &Path,
+    name: &str,
+    script_type: ScriptType,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let file_name = path.file_name().unwrap().to_string_lossy();
-
     let run_context_enums = &rbx_reflection_database::get()
         .enums
         .get("RunContext")
         .expect("Unable to get RunContext enums!")
         .items;
-
-    let (script_type, instance_name) = if let Some(name) = match_trailing(&file_name, ".server.lua")
-    {
-        (ScriptType::Server, name)
-    } else if let Some(name) = match_trailing(&file_name, ".client.lua") {
-        (ScriptType::Client, name)
-    } else if let Some(name) = match_trailing(&file_name, ".lua") {
-        (ScriptType::Module, name)
-    } else if let Some(name) = match_trailing(&file_name, ".server.luau") {
-        (ScriptType::Server, name)
-    } else if let Some(name) = match_trailing(&file_name, ".client.luau") {
-        (ScriptType::Client, name)
-    } else if let Some(name) = match_trailing(&file_name, ".luau") {
-        (ScriptType::Module, name)
-    } else {
-        return Ok(None);
-    };
 
     let (class_name, run_context) = match (context.emit_legacy_scripts, script_type) {
         (false, ScriptType::Server) => ("Script", run_context_enums.get("Server")),
@@ -73,10 +55,10 @@ pub fn snapshot_lua(
         );
     }
 
-    let meta_path = path.with_file_name(format!("{}.meta.json", instance_name));
+    let meta_path = path.with_file_name(format!("{}.meta.json", name));
 
     let mut snapshot = InstanceSnapshot::new()
-        .name(instance_name)
+        .name(name)
         .class_name(class_name)
         .properties(properties)
         .metadata(
@@ -103,6 +85,7 @@ pub fn snapshot_lua_init(
     context: &InstanceContext,
     vfs: &Vfs,
     init_path: &Path,
+    script_type: ScriptType,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let folder_path = init_path.parent().unwrap();
     let dir_snapshot = snapshot_dir_no_meta(context, vfs, folder_path)?.unwrap();
@@ -119,9 +102,9 @@ pub fn snapshot_lua_init(
         );
     }
 
-    let mut init_snapshot = snapshot_lua(context, vfs, init_path)?.unwrap();
+    let mut init_snapshot =
+        snapshot_lua(context, vfs, init_path, &dir_snapshot.name, script_type)?.unwrap();
 
-    init_snapshot.name = dir_snapshot.name;
     init_snapshot.children = dir_snapshot.children;
     init_snapshot.metadata = dir_snapshot.metadata;
 
@@ -151,6 +134,8 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
             &mut vfs,
             Path::new("/foo.lua"),
+            "foo",
+            ScriptType::Module,
         )
         .unwrap()
         .unwrap();
@@ -172,6 +157,8 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(false)),
             &mut vfs,
             Path::new("/foo.lua"),
+            "foo",
+            ScriptType::Module,
         )
         .unwrap()
         .unwrap();
@@ -193,6 +180,8 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
             &mut vfs,
             Path::new("/foo.server.lua"),
+            "foo",
+            ScriptType::Server,
         )
         .unwrap()
         .unwrap();
@@ -214,6 +203,8 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(false)),
             &mut vfs,
             Path::new("/foo.server.lua"),
+            "foo",
+            ScriptType::Server,
         )
         .unwrap()
         .unwrap();
@@ -235,6 +226,8 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
             &mut vfs,
             Path::new("/foo.client.lua"),
+            "foo",
+            ScriptType::Client,
         )
         .unwrap()
         .unwrap();
@@ -256,6 +249,8 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(false)),
             &mut vfs,
             Path::new("/foo.client.lua"),
+            "foo",
+            ScriptType::Client,
         )
         .unwrap()
         .unwrap();
@@ -283,6 +278,8 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
             &mut vfs,
             Path::new("/root"),
+            "root",
+            ScriptType::Module,
         )
         .unwrap()
         .unwrap();
@@ -315,6 +312,8 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
             &mut vfs,
             Path::new("/foo.lua"),
+            "foo",
+            ScriptType::Module,
         )
         .unwrap()
         .unwrap();
@@ -347,6 +346,8 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(false)),
             &mut vfs,
             Path::new("/foo.lua"),
+            "foo",
+            ScriptType::Module,
         )
         .unwrap()
         .unwrap();
@@ -379,6 +380,8 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
             &mut vfs,
             Path::new("/foo.server.lua"),
+            "foo",
+            ScriptType::Server,
         )
         .unwrap()
         .unwrap();
@@ -411,6 +414,8 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(false)),
             &mut vfs,
             Path::new("/foo.server.lua"),
+            "foo",
+            ScriptType::Server,
         )
         .unwrap()
         .unwrap();
@@ -445,6 +450,8 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
             &mut vfs,
             Path::new("/bar.server.lua"),
+            "bar",
+            ScriptType::Server,
         )
         .unwrap()
         .unwrap();
@@ -479,6 +486,8 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(false)),
             &mut vfs,
             Path::new("/bar.server.lua"),
+            "bar",
+            ScriptType::Server,
         )
         .unwrap()
         .unwrap();

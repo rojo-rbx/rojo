@@ -99,7 +99,7 @@ function PatchVisualizer:render()
 				Text = "No changes to sync, project is up to date.",
 				Font = Enum.Font.GothamMedium,
 				TextSize = 15,
-				TextColor3 = theme.Settings.Setting.DescriptionColor,
+				TextColor3 = theme.TextColor,
 				TextWrapped = true,
 				Size = UDim2.new(1, 0, 1, 0),
 				BackgroundTransparency = 1,

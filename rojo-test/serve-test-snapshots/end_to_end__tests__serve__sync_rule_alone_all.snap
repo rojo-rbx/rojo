@@ -1,0 +1,30 @@
+---
+source: tests/tests/serve.rs
+assertion_line: 268
+expression: "read_response.intern_and_redact(&mut redactions, root_id)"
+---
+instances:
+  id-2:
+    Children:
+      - id-3
+    ClassName: Folder
+    Id: id-2
+    Metadata:
+      ignoreUnknownInstances: false
+    Name: sync_rule_alone
+    Parent: "00000000000000000000000000000000"
+    Properties: {}
+  id-3:
+    Children: []
+    ClassName: StringValue
+    Id: id-3
+    Metadata:
+      ignoreUnknownInstances: false
+    Name: foo
+    Parent: id-2
+    Properties:
+      Value:
+        String: "Hello, world!"
+messageCursor: 0
+sessionId: id-1
+

@@ -1,0 +1,12 @@
+---
+source: tests/tests/build.rs
+assertion_line: 104
+expression: contents
+---
+<roblox version="4">
+  <Item class="Folder" referent="0">
+    <Properties>
+      <string name="Name">sync_rule_nested_projects</string>
+    </Properties>
+  </Item>
+</roblox>

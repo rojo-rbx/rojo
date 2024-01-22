@@ -1,0 +1,80 @@
+---
+source: tests/tests/serve.rs
+assertion_line: 284
+expression: "read_response.intern_and_redact(&mut redactions, root_id)"
+---
+instances:
+  id-2:
+    Children:
+      - id-3
+      - id-4
+      - id-5
+      - id-6
+      - id-7
+    ClassName: Folder
+    Id: id-2
+    Metadata:
+      ignoreUnknownInstances: false
+    Name: sync_rule_complex
+    Parent: "00000000000000000000000000000000"
+    Properties: {}
+  id-3:
+    Children: []
+    ClassName: Script
+    Id: id-3
+    Metadata:
+      ignoreUnknownInstances: false
+    Name: bar
+    Parent: id-2
+    Properties:
+      RunContext:
+        Enum: 0
+      Source:
+        String: "-- Hello, from bar (a Script)!"
+  id-4:
+    Children: []
+    ClassName: LocalScript
+    Id: id-4
+    Metadata:
+      ignoreUnknownInstances: false
+    Name: baz
+    Parent: id-2
+    Properties:
+      Source:
+        String: "-- Hello, from baz (a LocalScript)!"
+  id-5:
+    Children: []
+    ClassName: StringValue
+    Id: id-5
+    Metadata:
+      ignoreUnknownInstances: false
+    Name: cat
+    Parent: id-2
+    Properties:
+      Value:
+        String: "Hello, from cat (a StringValue)!"
+  id-6:
+    Children: []
+    ClassName: ModuleScript
+    Id: id-6
+    Metadata:
+      ignoreUnknownInstances: false
+    Name: foo
+    Parent: id-2
+    Properties:
+      Source:
+        String: "-- Hello, from foo (a ModuleScript)!"
+  id-7:
+    Children: []
+    ClassName: StringValue
+    Id: id-7
+    Metadata:
+      ignoreUnknownInstances: true
+    Name: qux
+    Parent: id-2
+    Properties:
+      Value:
+        String: "Hello, from qux (a .rojo file that's turned into a StringValue)!"
+messageCursor: 0
+sessionId: id-1
+
