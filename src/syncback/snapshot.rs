@@ -90,6 +90,9 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
         if let Some(class_data) = class_data {
             let defaults = &class_data.default_properties;
             for (name, value) in &inst.properties {
+                if filter_out_property(inst, name.as_str()) {
+                    continue;
+                }
                 // We don't currently support refs or shared strings
                 if matches!(value, Variant::Ref(_) | Variant::SharedString(_)) {
                     continue;
@@ -109,6 +112,9 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
             }
         } else {
             for (name, value) in &inst.properties {
+                if filter_out_property(inst, name.as_str()) {
+                    continue;
+                }
                 // We don't currently support refs or shared strings
                 if matches!(value, Variant::Ref(_) | Variant::SharedString(_)) {
                     continue;
@@ -239,5 +245,17 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
         self.data
             .syncback_rules
             .map(|rules| rules.ignore_trees.as_slice())
+    }
+}
+
+fn filter_out_property(inst: &Instance, prop_name: &str) -> bool {
+    // We don't need SourceAssetId.
+    if prop_name == "Tags" || prop_name == "Attributes" || prop_name == "SourceAssetId" {
+        return true;
+    }
+    match inst.class.as_str() {
+        "Script" | "LocalScript" | "ModuleScript" => prop_name == "Source",
+        "LocalizationTable" => prop_name == "Contents",
+        _ => false,
     }
 }
