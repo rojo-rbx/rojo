@@ -104,12 +104,13 @@ pub fn syncback_json_model<'new, 'old>(
         attributes,
     };
 
-    // TODO children
+    // TODO Do we want children to be included in a JSON model?
+    // Feels unlikely, since it could be very dense in the case of e.g. Tools
 
     Ok(SyncbackReturn {
         inst_snapshot: InstanceSnapshot::from_instance(new_inst),
         fs_snapshot: FsSnapshot::new().with_added_file(
-            &path,
+            path,
             serde_json::to_vec_pretty(&model).context("failed to serialize new JSON Model")?,
         ),
         children: Vec::new(),
