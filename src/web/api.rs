@@ -1,28 +1,36 @@
 //! Defines Rojo's HTTP API, all under /api. These endpoints generally return
 //! JSON.
 
-use std::{collections::HashMap, fs, path::PathBuf, str::FromStr, sync::Arc};
+use std::{collections::HashMap, fs, io, io::BufWriter, path::PathBuf, str::FromStr, sync::Arc};
 
 use hyper::{body, Body, Method, Request, Response, StatusCode};
 use opener::OpenError;
-use rbx_dom_weak::types::Ref;
+use rbx_dom_weak::{
+    types::{Ref, Variant},
+    InstanceBuilder, WeakDom,
+};
+use roblox_install::RobloxStudio;
+use uuid::Uuid;
 
 use crate::{
     serve_session::ServeSession,
     snapshot::{InstanceWithMeta, PatchSet, PatchUpdate},
     web::{
         interface::{
-            ErrorResponse, Instance, OpenResponse, ReadResponse, ServerInfoResponse,
-            SubscribeMessage, SubscribeResponse, WriteRequest, WriteResponse, PROTOCOL_VERSION,
-            SERVER_VERSION,
+            ErrorResponse, FetchRequest, FetchResponse, Instance, OpenResponse, ReadResponse,
+            ServerInfoResponse, SubscribeMessage, SubscribeResponse, WriteRequest, WriteResponse,
+            PROTOCOL_VERSION, SERVER_VERSION,
         },
         util::{json, json_ok},
     },
 };
 
+const FETCH_DIR_NAME: &str = ".rojo";
+
 pub async fn call(serve_session: Arc<ServeSession>, request: Request<Body>) -> Response<Body> {
     let service = ApiService::new(serve_session);
 
+    log::debug!("{} request received to {}", request.method(), request.uri());
     match (request.method(), request.uri().path()) {
         (&Method::GET, "/api/rojo") => service.handle_api_rojo().await,
         (&Method::GET, path) if path.starts_with("/api/read/") => {
@@ -36,6 +44,8 @@ pub async fn call(serve_session: Arc<ServeSession>, request: Request<Body>) -> R
         }
 
         (&Method::POST, "/api/write") => service.handle_api_write(request).await,
+
+        (&Method::POST, "/api/fetch") => service.handle_api_fetch_post(request).await,
 
         (_method, path) => json(
             ErrorResponse::not_found(format!("Route not found: {}", path)),
@@ -275,6 +285,109 @@ impl ApiService {
             session_id: self.serve_session.session_id(),
         })
     }
+
+    async fn handle_api_fetch_post(&self, request: Request<Body>) -> Response<Body> {
+        let body = body::to_bytes(request.into_body()).await.unwrap();
+
+        let request: FetchRequest = match serde_json::from_slice(&body) {
+            Ok(request) => request,
+            Err(err) => {
+                return json(
+                    ErrorResponse::bad_request(format!("Malformed request body: {}", err)),
+                    StatusCode::BAD_REQUEST,
+                );
+            }
+        };
+
+        let content_dir = match RobloxStudio::locate() {
+            Ok(path) => path.content_path().to_path_buf(),
+            Err(_) => {
+                return json(
+                    ErrorResponse::internal_error("Cannot locate Studio install"),
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                )
+            }
+        };
+
+        let temp_dir = content_dir.join(FETCH_DIR_NAME);
+        match fs::create_dir(&temp_dir) {
+            // We want to silently move on if the folder already exists
+            Err(err) if err.kind() != io::ErrorKind::AlreadyExists => {
+                return json(
+                    ErrorResponse::internal_error(format!(
+                        "Could not create Rojo content directory: {}",
+                        &temp_dir.display()
+                    )),
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                );
+            }
+            _ => {}
+        }
+
+        let uuid = Uuid::new_v4();
+        let mut file_name = PathBuf::from(uuid.to_string());
+        file_name.set_extension("rbxm");
+
+        let out_path = temp_dir.join(&file_name);
+        let relative_path = PathBuf::from(FETCH_DIR_NAME).join(file_name);
+
+        let mut writer = BufWriter::new(match fs::File::create(&out_path) {
+            Ok(handle) => handle,
+            Err(_) => {
+                return json(
+                    ErrorResponse::internal_error("Could not create temporary file"),
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                );
+            }
+        });
+
+        let tree = self.serve_session.tree();
+        let inner_tree = tree.inner();
+        let mut sub_tree = WeakDom::new(InstanceBuilder::new("Folder"));
+        let reify_ref = sub_tree.insert(
+            sub_tree.root_ref(),
+            InstanceBuilder::new("Folder").with_name("Reified"),
+        );
+        let map_ref = sub_tree.insert(
+            sub_tree.root_ref(),
+            InstanceBuilder::new("Folder").with_name("ReferentMap"),
+        );
+        // Because referents can't be cleanly communicated across a network
+        // boundary, we have to get creative. So for every Instance we're
+        // building into a model, an ObjectValue is created's named after the
+        // old referent and points to the fetched copy of the Instance.
+        for referent in request.id_list {
+            if inner_tree.get_by_ref(referent).is_some() {
+                log::trace!("Creating clone of {referent} into subtree");
+                let new_ref = generate_fetch_copy(&inner_tree, &mut sub_tree, reify_ref, referent);
+                sub_tree.insert(
+                    map_ref,
+                    InstanceBuilder::new("ObjectValue")
+                        .with_property("Value", Variant::Ref(new_ref))
+                        .with_name(referent.to_string()),
+                );
+            } else {
+                return json(
+                    ErrorResponse::bad_request("Invalid ID provided to fetch endpoint"),
+                    StatusCode::BAD_REQUEST,
+                );
+            }
+        }
+        if let Err(_) = rbx_binary::to_writer(&mut writer, &sub_tree, &[sub_tree.root_ref()]) {
+            return json(
+                ErrorResponse::internal_error("Could not build subtree into model file"),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            );
+        }
+        drop(tree);
+
+        log::debug!("Wrote model file to {}", out_path.display());
+
+        json_ok(FetchResponse {
+            session_id: self.serve_session.session_id(),
+            path: relative_path.to_string_lossy(),
+        })
+    }
 }
 
 /// If this instance is represented by a script, try to find the correct .lua or .luau
@@ -304,4 +417,48 @@ fn pick_script_path(instance: InstanceWithMeta<'_>) -> Option<PathBuf> {
                 .unwrap_or(false)
         })
         .map(|path| path.to_owned())
+}
+
+/// Creates a copy of the Instance pointed to by `referent` from `old_tree`,
+/// puts it inside of `new_tree`, and parents it to `parent_ref`.
+///
+/// In the event that the Instance is of a class with special parent
+/// requirements such as `Attachment`, it will instead make an Instance
+/// of the required parent class and place the cloned Instance as a child
+/// of that Instance.
+///
+/// Regardless, the referent of the clone is returned.
+fn generate_fetch_copy(
+    old_tree: &WeakDom,
+    new_tree: &mut WeakDom,
+    parent_ref: Ref,
+    referent: Ref,
+) -> Ref {
+    // We can't use `clone_into_external` here because it also clones the
+    // subtree
+    let old_inst = old_tree.get_by_ref(referent).unwrap();
+    let new_ref = new_tree.insert(
+        Ref::none(),
+        InstanceBuilder::new(&old_inst.class)
+            .with_name(&old_inst.name)
+            .with_properties(old_inst.properties.clone()),
+    );
+
+    // Certain classes need to have specific parents otherwise Studio
+    // doesn't want to load the model.
+    let real_parent = match old_inst.class.as_str() {
+        // These are services, but they're listed here for posterity.
+        "Terrain" | "StarterPlayerScripts" | "StarterCharacterScripts" => parent_ref,
+
+        "Attachment" => new_tree.insert(parent_ref, InstanceBuilder::new("Part")),
+        "Bone" => new_tree.insert(parent_ref, InstanceBuilder::new("Part")),
+        "Animator" => new_tree.insert(parent_ref, InstanceBuilder::new("Humanoid")),
+        "BaseWrap" => new_tree.insert(parent_ref, InstanceBuilder::new("MeshPart")),
+        "WrapLayer" => new_tree.insert(parent_ref, InstanceBuilder::new("MeshPart")),
+        "WrapTarget" => new_tree.insert(parent_ref, InstanceBuilder::new("MeshPart")),
+        _ => parent_ref,
+    };
+    new_tree.transfer_within(new_ref, real_parent);
+
+    new_ref
 }

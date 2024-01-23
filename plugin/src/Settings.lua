@@ -13,6 +13,7 @@ local defaultSettings = {
 	openScriptsExternally = false,
 	twoWaySync = false,
 	showNotifications = true,
+	fetchOnPatchFail = true,
 	syncReminder = true,
 	confirmationBehavior = "Initial",
 	largeChangesConfirmationThreshold = 5,

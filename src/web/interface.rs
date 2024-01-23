@@ -204,6 +204,22 @@ pub struct OpenResponse {
     pub session_id: SessionId,
 }
 
+/// A request POSTed to /api/fetch
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FetchRequest {
+    pub session_id: SessionId,
+    pub id_list: Vec<Ref>,
+}
+
+/// Response body from POST /api/fetch
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FetchResponse<'a> {
+    pub session_id: SessionId,
+    pub path: Cow<'a, str>,
+}
+
 /// General response type returned from all Rojo routes
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

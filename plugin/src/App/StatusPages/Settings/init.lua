@@ -155,6 +155,16 @@ function SettingsPage:render()
 				layoutOrder = 5,
 			}),
 
+			FetchOnPatchFail = e(Setting, {
+				id = "fetchOnPatchFail",
+				name = "Load Model On Patch Fail",
+				description = "Whenever a patch fails to fully apply, send a request to the server to have it "
+					.. "placed into the local file system for the plugin to load.",
+				locked = self.props.syncActive,
+				transparency = self.props.transparency,
+				layoutOrder = 6,
+			}),
+
 			OpenScriptsExternally = e(Setting, {
 				id = "openScriptsExternally",
 				name = "Open Scripts Externally",
@@ -162,7 +172,7 @@ function SettingsPage:render()
 				locked = self.props.syncActive,
 				experimental = true,
 				transparency = self.props.transparency,
-				layoutOrder = 6,
+				layoutOrder = 7,
 			}),
 
 			TwoWaySync = e(Setting, {
@@ -172,7 +182,7 @@ function SettingsPage:render()
 				locked = self.props.syncActive,
 				experimental = true,
 				transparency = self.props.transparency,
-				layoutOrder = 7,
+				layoutOrder = 8,
 			}),
 
 			LogLevel = e(Setting, {
