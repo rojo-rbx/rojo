@@ -3,14 +3,17 @@ use std::{
     time::Instant,
 };
 
+use anyhow::Context;
 use clap::Parser;
 use memofs::Vfs;
-use rbx_dom_weak::WeakDom;
-use rbx_xml::DecodeOptions;
+use rbx_dom_weak::{InstanceBuilder, WeakDom};
 
 use crate::{serve_session::ServeSession, syncback::syncback_loop};
 
 use super::resolve_path;
+
+const UNKNOWN_INPUT_KIND_ERR: &str = "Could not detect what kind of file was inputted. \
+                                       Expected input file to end in .rbxl, .rbxlx, .rbxm, or .rbxmx.";
 
 /// Performs syncback for a project file
 #[derive(Debug, Parser)]
@@ -29,6 +32,15 @@ impl SyncbackCommand {
         let path_old = resolve_path(&self.project);
         let path_new = resolve_path(&self.input);
 
+        let input_kind = FileKind::from_path(&path_new).context(UNKNOWN_INPUT_KIND_ERR)?;
+        let dom_start = Instant::now();
+        log::info!("Reading place file at {}", path_new.display());
+        let dom_new = read_dom(&path_new, input_kind)?;
+        log::info!(
+            "Finished opening file in {:0.02}s",
+            dom_start.elapsed().as_secs_f32()
+        );
+
         let project_start = Instant::now();
         log::info!("Opening project at {}", path_old.display());
         let session_old = ServeSession::new(Vfs::new_default(), path_old.clone())?;
@@ -39,13 +51,8 @@ impl SyncbackCommand {
 
         let dom_old = session_old.tree();
 
-        let dom_start = Instant::now();
-        log::info!("Reading place file at {}", path_new.display());
-        let dom_new = read_dom(&path_new)?;
-        log::info!(
-            "Finished opening file in {:0.02}s",
-            dom_start.elapsed().as_secs_f32()
-        );
+        log::debug!("Old root: {}", dom_old.inner().root().class);
+        log::debug!("New root: {}", dom_new.root().class);
 
         let start = Instant::now();
         log::info!("Beginning syncback...");
@@ -64,18 +71,74 @@ impl SyncbackCommand {
     }
 }
 
-fn read_dom(path: &Path) -> anyhow::Result<WeakDom> {
+fn read_dom(path: &Path, file_kind: FileKind) -> anyhow::Result<WeakDom> {
     let content = fs_err::read(path)?;
-    Ok(if &content[0..8] == b"<roblox!" {
-        log::debug!("Reading {} as a binary file", path.display());
-        rbx_binary::from_reader(content.as_slice())?
-    } else if &content[0..7] == b"<roblox" {
-        log::debug!("Reading {} as an xml file", path.display());
-        rbx_xml::from_reader(
-            content.as_slice(),
-            DecodeOptions::new().property_behavior(rbx_xml::DecodePropertyBehavior::ReadUnknown),
-        )?
-    } else {
-        anyhow::bail!("invalid Roblox file at {}", path.display())
+    Ok(match file_kind {
+        FileKind::Rbxl => rbx_binary::from_reader(content.as_slice())?,
+        FileKind::Rbxlx => rbx_xml::from_reader(content.as_slice(), xml_decode_config())?,
+        FileKind::Rbxm => {
+            let temp_tree = rbx_binary::from_reader(content.as_slice())?;
+            let root_children = temp_tree.root().children();
+            if root_children.len() != 1 {
+                anyhow::bail!(
+                    "Rojo does not currently support models with more \
+                than one Instance at the Root!"
+                );
+            }
+            let real_root = temp_tree.get_by_ref(root_children[0]).unwrap();
+            let mut new_tree = WeakDom::new(InstanceBuilder::new(&real_root.class));
+            temp_tree.clone_multiple_into_external(real_root.children(), &mut new_tree);
+
+            new_tree
+        }
+        FileKind::Rbxmx => {
+            let temp_tree = rbx_xml::from_reader(content.as_slice(), xml_decode_config())?;
+            let root_children = temp_tree.root().children();
+            if root_children.len() != 1 {
+                anyhow::bail!(
+                    "Rojo does not currently support models with more \
+                than one Instance at the Root!"
+                );
+            }
+            let real_root = temp_tree.get_by_ref(root_children[0]).unwrap();
+            let mut new_tree = WeakDom::new(InstanceBuilder::new(&real_root.class));
+            temp_tree.clone_multiple_into_external(real_root.children(), &mut new_tree);
+
+            new_tree
+        }
     })
+}
+
+fn xml_decode_config() -> rbx_xml::DecodeOptions<'static> {
+    rbx_xml::DecodeOptions::new().property_behavior(rbx_xml::DecodePropertyBehavior::ReadUnknown)
+}
+
+/// The different kinds of input that Rojo can syncback.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum FileKind {
+    /// An XML model file.
+    Rbxmx,
+
+    /// An XML place file.
+    Rbxlx,
+
+    /// A binary model file.
+    Rbxm,
+
+    /// A binary place file.
+    Rbxl,
+}
+
+impl FileKind {
+    fn from_path(output: &Path) -> Option<FileKind> {
+        let extension = output.extension()?.to_str()?;
+
+        match extension {
+            "rbxlx" => Some(FileKind::Rbxlx),
+            "rbxmx" => Some(FileKind::Rbxmx),
+            "rbxl" => Some(FileKind::Rbxl),
+            "rbxm" => Some(FileKind::Rbxm),
+            _ => None,
+        }
+    }
 }
