@@ -354,9 +354,6 @@ pub fn syncback_project<'new, 'old>(
             (&child.name, child)
         }));
 
-        // The fact we are not removing old properties might be a problem but
-        // removing them is worse! Consider a property that doesn't serialize,
-        // like HttpEnabled.
         let properties = &mut node.properties;
 
         let filtered_properties = snapshot

@@ -83,43 +83,42 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
                     properties.insert(name, value);
                 }
             }
-        } else {
-            let class_data = rbx_reflection_database::get()
-                .classes
-                .get(inst.class.as_str());
-            if let Some(class_data) = class_data {
-                let defaults = &class_data.default_properties;
-                for (name, value) in &inst.properties {
-                    // We don't currently support refs or shared strings
-                    if matches!(value, Variant::Ref(_) | Variant::SharedString(_)) {
+        }
+        let class_data = rbx_reflection_database::get()
+            .classes
+            .get(inst.class.as_str());
+        if let Some(class_data) = class_data {
+            let defaults = &class_data.default_properties;
+            for (name, value) in &inst.properties {
+                // We don't currently support refs or shared strings
+                if matches!(value, Variant::Ref(_) | Variant::SharedString(_)) {
+                    continue;
+                }
+                if let Some(list) = &filter {
+                    if list.contains(name) {
                         continue;
                     }
-                    if let Some(list) = &filter {
-                        if list.contains(name) {
-                            continue;
-                        }
-                    }
-                    if let Some(default) = defaults.get(name.as_str()) {
-                        if !variant_eq(value, default) {
-                            properties.insert(name, value);
-                        }
-                    } else {
+                }
+                if let Some(default) = defaults.get(name.as_str()) {
+                    if !variant_eq(value, default) {
                         properties.insert(name, value);
                     }
-                }
-            } else {
-                for (name, value) in &inst.properties {
-                    // We don't currently support refs or shared strings
-                    if matches!(value, Variant::Ref(_) | Variant::SharedString(_)) {
-                        continue;
-                    }
-                    if let Some(list) = &filter {
-                        if list.contains(name) {
-                            continue;
-                        }
-                    }
+                } else {
                     properties.insert(name, value);
                 }
+            }
+        } else {
+            for (name, value) in &inst.properties {
+                // We don't currently support refs or shared strings
+                if matches!(value, Variant::Ref(_) | Variant::SharedString(_)) {
+                    continue;
+                }
+                if let Some(list) = &filter {
+                    if list.contains(name) {
+                        continue;
+                    }
+                }
+                properties.insert(name, value);
             }
         }
 
