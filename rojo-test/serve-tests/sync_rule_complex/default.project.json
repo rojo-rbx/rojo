@@ -1,0 +1,30 @@
+{
+  "name": "sync_rule_complex",
+  "tree": {
+    "$path": "src"
+  },
+  "syncRules": [
+    {
+      "pattern": "*.module",
+      "use": "moduleScript"
+    },
+    {
+      "pattern": "*.server",
+      "use": "serverScript"
+    },
+    {
+      "pattern": "*.client",
+      "use": "clientScript"
+    },
+    {
+      "pattern": "*.rojo",
+      "exclude": "*.ignore.rojo",
+      "use": "project"
+    },
+    {
+      "pattern": "*.dog.rojo2",
+      "use": "text",
+      "suffix": ".dog.rojo2"
+    }
+  ]
+}

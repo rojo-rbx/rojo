@@ -34,7 +34,8 @@ function Expansion:render()
 		ChangeList = e(ChangeList, {
 			changes = props.changeList,
 			transparency = props.transparency,
-			showSourceDiff = props.showSourceDiff,
+			showStringDiff = props.showStringDiff,
+			showTableDiff = props.showTableDiff,
 		}),
 	})
 end
@@ -171,7 +172,8 @@ function DomLabel:render()
 					indent = indent,
 					transparency = props.transparency,
 					changeList = props.changeList,
-					showSourceDiff = props.showSourceDiff,
+					showStringDiff = props.showStringDiff,
+					showTableDiff = props.showTableDiff,
 				})
 				else nil,
 			DiffIcon = if props.patchType
@@ -205,7 +207,7 @@ function DomLabel:render()
 				BackgroundTransparency = 1,
 				Font = Enum.Font.GothamMedium,
 				TextSize = 14,
-				TextColor3 = if props.isWarning then theme.Diff.Warning else theme.Settings.Setting.DescriptionColor,
+				TextColor3 = if props.isWarning then theme.Diff.Warning else theme.TextColor,
 				TextXAlignment = Enum.TextXAlignment.Left,
 				TextTransparency = props.transparency,
 				TextTruncate = Enum.TextTruncate.AtEnd,

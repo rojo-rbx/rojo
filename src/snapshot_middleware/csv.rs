@@ -10,16 +10,14 @@ use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 use super::{
     dir::{dir_meta, snapshot_dir_no_meta},
     meta_file::AdjacentMetadata,
-    util::PathExt,
 };
 
 pub fn snapshot_csv(
     _context: &InstanceContext,
     vfs: &Vfs,
     path: &Path,
+    name: &str,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let name = path.file_name_trim_end(".csv")?;
-
     let meta_path = path.with_file_name(format!("{}.meta.json", name));
     let contents = vfs.read(path)?;
 
@@ -74,9 +72,8 @@ pub fn snapshot_csv_init(
         );
     }
 
-    let mut init_snapshot = snapshot_csv(context, vfs, init_path)?.unwrap();
+    let mut init_snapshot = snapshot_csv(context, vfs, init_path, &dir_snapshot.name)?.unwrap();
 
-    init_snapshot.name = dir_snapshot.name;
     init_snapshot.children = dir_snapshot.children;
     init_snapshot.metadata = dir_snapshot.metadata;
 
@@ -185,10 +182,14 @@ Ack,Ack!,,An exclamation of despair,¡Ay!"#,
 
         let mut vfs = Vfs::new(imfs);
 
-        let instance_snapshot =
-            snapshot_csv(&InstanceContext::default(), &mut vfs, Path::new("/foo.csv"))
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = snapshot_csv(
+            &InstanceContext::default(),
+            &mut vfs,
+            Path::new("/foo.csv"),
+            "foo",
+        )
+        .unwrap()
+        .unwrap();
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }
@@ -213,10 +214,14 @@ Ack,Ack!,,An exclamation of despair,¡Ay!"#,
 
         let mut vfs = Vfs::new(imfs);
 
-        let instance_snapshot =
-            snapshot_csv(&InstanceContext::default(), &mut vfs, Path::new("/foo.csv"))
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = snapshot_csv(
+            &InstanceContext::default(),
+            &mut vfs,
+            Path::new("/foo.csv"),
+            "foo",
+        )
+        .unwrap()
+        .unwrap();
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }

@@ -1,0 +1,43 @@
+---
+source: tests/tests/build.rs
+assertion_line: 104
+expression: contents
+---
+<roblox version="4">
+  <Item class="Folder" referent="0">
+    <Properties>
+      <string name="Name">sync_rule_complex</string>
+    </Properties>
+    <Item class="Script" referent="1">
+      <Properties>
+        <string name="Name">bar</string>
+        <token name="RunContext">0</token>
+        <string name="Source">-- Hello, from bar (a Script)!</string>
+      </Properties>
+    </Item>
+    <Item class="LocalScript" referent="2">
+      <Properties>
+        <string name="Name">baz</string>
+        <string name="Source">-- Hello, from baz (a LocalScript)!</string>
+      </Properties>
+    </Item>
+    <Item class="StringValue" referent="3">
+      <Properties>
+        <string name="Name">cat</string>
+        <string name="Value">Hello, from cat (a StringValue)!</string>
+      </Properties>
+    </Item>
+    <Item class="ModuleScript" referent="4">
+      <Properties>
+        <string name="Name">foo</string>
+        <string name="Source">-- Hello, from foo (a ModuleScript)!</string>
+      </Properties>
+    </Item>
+    <Item class="StringValue" referent="5">
+      <Properties>
+        <string name="Name">qux</string>
+        <string name="Value">Hello, from qux (a .rojo file that's turned into a StringValue)!</string>
+      </Properties>
+    </Item>
+  </Item>
+</roblox>

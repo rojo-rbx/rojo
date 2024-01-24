@@ -10,15 +10,12 @@ use crate::{
     snapshot::{InstanceContext, InstanceSnapshot},
 };
 
-use super::util::PathExt;
-
 pub fn snapshot_json_model(
     context: &InstanceContext,
     vfs: &Vfs,
     path: &Path,
+    name: &str,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let name = path.file_name_trim_end(".model.json")?;
-
     let contents = vfs.read(path)?;
     let contents_str = str::from_utf8(&contents)
         .with_context(|| format!("File was not valid UTF-8: {}", path.display()))?;
@@ -158,6 +155,7 @@ mod test {
             &InstanceContext::default(),
             &vfs,
             Path::new("/foo.model.json"),
+            "foo",
         )
         .unwrap()
         .unwrap();
@@ -195,6 +193,7 @@ mod test {
             &InstanceContext::default(),
             &vfs,
             Path::new("/foo.model.json"),
+            "foo",
         )
         .unwrap()
         .unwrap();
