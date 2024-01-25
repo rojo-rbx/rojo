@@ -61,7 +61,7 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
     /// clone any data. This is left to the consumer.
     #[inline]
     pub fn new_filtered_properties(&self) -> HashMap<&'new str, &'new Variant> {
-        self.get_filtered_properties(self.new).unwrap()
+        self.get_filtered_properties(self.new, self.old).unwrap()
     }
 
     /// Returns a map of properties for an Instance from the 'new' tree
@@ -73,6 +73,7 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
     pub fn get_filtered_properties(
         &self,
         new_ref: Ref,
+        old_ref: Option<Ref>,
     ) -> Option<HashMap<&'new str, &'new Variant>> {
         let inst = self.get_new_instance(new_ref)?;
         let mut properties: HashMap<&str, &Variant> =
@@ -80,7 +81,7 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
 
         let filter = self.get_property_filter();
 
-        if let Some(old_inst) = self.old_inst() {
+        if let Some(old_inst) = old_ref.and_then(|referent| self.get_old_instance(referent)) {
             for (name, value) in &inst.properties {
                 if old_inst.properties().contains_key(name) {
                     properties.insert(name, value);

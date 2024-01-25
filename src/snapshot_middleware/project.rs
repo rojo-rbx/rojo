@@ -357,7 +357,7 @@ pub fn syncback_project<'new, 'old>(
         let properties = &mut node.properties;
 
         let filtered_properties = snapshot
-            .get_filtered_properties(new_inst.referent())
+            .get_filtered_properties(new_inst.referent(), Some(old_inst.id()))
             .expect("all project nodes should exist in both trees when in queue");
         for (name, value) in filtered_properties {
             properties.insert(
