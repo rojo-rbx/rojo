@@ -141,7 +141,6 @@ function Version.retrieveLatestCompatible(options: {
 	end
 
 	-- Don't return anything if the latest found is not newer than the current version
-	print(latestCompatible.version, options.version, Version.compare(latestCompatible.version, options.version))
 	if latestCompatible == nil or Version.compare(latestCompatible.version, options.version) <= 0 then
 		return nil
 	end
