@@ -1,4 +1,4 @@
-//! Hashing utility for a RojoTree
+//! Hashing utilities for a WeakDom.
 mod variant;
 
 pub use variant::*;
@@ -12,18 +12,45 @@ use std::collections::{HashMap, VecDeque};
 
 use crate::variant_eq::variant_eq;
 
+/// Returns a map of every `Ref` in the `WeakDom` to a hashed version of the
+/// `Instance` it points to, including the properties but not including the
+/// descendants of the Instance.
+///
+/// The hashes **do not** include the descendants of the Instances in them,
+/// so they should only be used for comparing Instances directly. To compare a
+/// subtree, use `hash_tree`.
+pub fn hash_tree_no_descendants(dom: &WeakDom) -> HashMap<Ref, Hash> {
+    let mut map: HashMap<Ref, Hash> = HashMap::new();
+    let mut order = descendants(dom);
+
+    let mut prop_list = Vec::with_capacity(2);
+
+    while let Some(referent) = order.pop() {
+        let inst = dom.get_by_ref(referent).unwrap();
+        let hash = hash_inst_no_descendants(inst, &mut prop_list);
+
+        map.insert(referent, hash.finalize());
+    }
+
+    map
+}
+
+/// Returns a map of every `Ref` in the `WeakDom` to a hashed version of the
+/// `Instance` it points to, including the properties and descendants of the
+/// `Instance`.
+///
+/// The hashes **do** include the descendants of the Instances in them,
+/// so they should only be used for comparing subtrees directly. To compare an
+/// `Instance` directly, use `hash_tree_no_descendants`.
 pub fn hash_tree(dom: &WeakDom) -> HashMap<Ref, Hash> {
     let mut map: HashMap<Ref, Hash> = HashMap::new();
     let mut order = descendants(dom);
 
     let mut prop_list = Vec::with_capacity(2);
 
-    // function get_hash_id(inst)
-    // return hash({ sort(foreach(inst.properties, hash)), sort(foreach(inst.children, get_hash_id)) })
-    // end
     while let Some(referent) = order.pop() {
         let inst = dom.get_by_ref(referent).unwrap();
-        let hash = hash_inst(&mut prop_list, &map, inst);
+        let hash = hash_inst(inst, &mut prop_list, &map);
 
         map.insert(referent, hash);
     }
@@ -31,11 +58,12 @@ pub fn hash_tree(dom: &WeakDom) -> HashMap<Ref, Hash> {
     map
 }
 
-pub fn hash_inst<'map, 'inst>(
-    prop_list: &mut Vec<(&'inst str, &'inst Variant)>,
-    map: &'map HashMap<Ref, Hash>,
+/// Hashes an Instance using its class, name, and properties. The passed
+/// `prop_list` is used to sort properties before hashing them.
+fn hash_inst_no_descendants<'inst>(
     inst: &'inst Instance,
-) -> Hash {
+    prop_list: &mut Vec<(&'inst str, &'inst Variant)>,
+) -> Hasher {
     let mut hasher = Hasher::new();
     hasher.update(inst.class.as_bytes());
     hasher.update(inst.name.as_bytes());
@@ -61,7 +89,24 @@ pub fn hash_inst<'map, 'inst>(
         hash_variant(&mut hasher, value)
     }
 
+    prop_list.clear();
+
+    hasher
+}
+
+/// Hashes an Instance using its class, name, properties, and descendants.
+/// The passed `prop_list` is used to sort properties before hashing them.
+///
+/// # Panics
+/// If any children of the Instance are inside `map`, this function will panic.
+fn hash_inst<'inst>(
+    inst: &'inst Instance,
+    prop_list: &mut Vec<(&'inst str, &'inst Variant)>,
+    map: &HashMap<Ref, Hash>,
+) -> Hash {
+    let mut hasher = hash_inst_no_descendants(inst, prop_list);
     let mut child_list = Vec::with_capacity(inst.children().len());
+
     for child in inst.children() {
         if let Some(hash) = map.get(child) {
             child_list.push(hash.as_bytes())
@@ -73,8 +118,6 @@ pub fn hash_inst<'map, 'inst>(
     for hash in child_list {
         hasher.update(hash);
     }
-
-    prop_list.clear();
 
     hasher.finalize()
 }
