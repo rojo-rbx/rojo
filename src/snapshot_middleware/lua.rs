@@ -141,45 +141,16 @@ pub fn syncback_lua<'new, 'old>(
         anyhow::bail!("Scripts must have a `Source` property that is a String")
     };
 
-    let mut meta = if let Some(meta) = file_meta(snapshot.vfs(), &path, &snapshot.name)? {
-        meta
-    } else {
-        AdjacentMetadata {
-            ignore_unknown_instances: None,
-            properties: BTreeMap::new(),
-            attributes: BTreeMap::new(),
-            path: path
-                .with_file_name(&snapshot.name)
-                .with_extension("meta.json"),
-        }
-    };
-    for (name, value) in snapshot.new_filtered_properties() {
-        if name == "Source" {
-            continue;
-        } else if name == "Attributes" || name == "AttributesSerialize" {
-            if let Variant::Attributes(attrs) = value {
-                meta.attributes.extend(attrs.iter().map(|(name, value)| {
-                    (
-                        name.to_string(),
-                        UnresolvedValue::FullyQualified(value.clone()),
-                    )
-                }))
-            } else {
-                log::error!("Property {name} should be Attributes but is not");
-            }
-        } else {
-            meta.properties.insert(
-                name.to_string(),
-                UnresolvedValue::from_variant(value.to_owned(), &new_inst.class, name),
-            );
-        }
-    }
+    let meta = AdjacentMetadata::from_syncback_snapshot(snapshot, path.clone())?;
+
     let mut fs_snapshot = FsSnapshot::new();
     fs_snapshot.add_file(path, contents);
     if !meta.is_empty() {
         fs_snapshot.add_file(
-            &meta.path,
-            serde_json::to_vec_pretty(&meta).context("could not serialize new init.meta.json")?,
+            snapshot
+                .parent_path
+                .join(format!("{}.meta.json", new_inst.name)),
+            serde_json::to_vec_pretty(&meta).context("cannot serialize metadata")?,
         );
     }
 

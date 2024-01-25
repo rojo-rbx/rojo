@@ -6,10 +6,10 @@ use std::{
 
 use anyhow::{format_err, Context};
 use memofs::{IoResultExt as _, Vfs};
-use rbx_dom_weak::types::Attributes;
+use rbx_dom_weak::types::{Attributes, Variant};
 use serde::{Deserialize, Serialize};
 
-use crate::{resolution::UnresolvedValue, snapshot::InstanceSnapshot};
+use crate::{resolution::UnresolvedValue, snapshot::InstanceSnapshot, syncback::SyncbackSnapshot};
 
 /// Represents metadata in a sibling file with the same basename.
 ///
@@ -42,6 +42,61 @@ impl AdjacentMetadata {
 
         meta.path = path;
         Ok(meta)
+    }
+
+    /// Constructs an `AdjacentMetadata` from the provided snapshot, assuming it
+    /// will be at the provided path.
+    pub fn from_syncback_snapshot(
+        snapshot: &SyncbackSnapshot,
+        path: PathBuf,
+    ) -> anyhow::Result<Self> {
+        let mut properties = BTreeMap::new();
+        let mut attributes = BTreeMap::new();
+
+        let ignore_unknown_instances = if let Some(old_inst) = snapshot.old_inst() {
+            if old_inst.metadata().ignore_unknown_instances {
+                Some(true)
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+
+        let class = &snapshot.new_inst().class;
+        for (name, value) in snapshot.new_filtered_properties() {
+            properties.insert(
+                name.to_owned(),
+                UnresolvedValue::from_variant(value.clone(), class, name),
+            );
+        }
+        if let Some(value) = snapshot.new_inst().properties.get("Attributes") {
+            if let Variant::Attributes(attrs) = value {
+                for (name, value) in attrs.iter() {
+                    let value = if let Variant::BinaryString(bstr) = value {
+                        match std::str::from_utf8(bstr.as_ref()) {
+                            Ok(str) => Variant::String(str.to_owned()),
+                            Err(_) => value.clone(),
+                        }
+                    } else {
+                        value.clone()
+                    };
+                    attributes.insert(name.to_owned(), UnresolvedValue::FullyQualified(value));
+                }
+            } else {
+                anyhow::bail!(
+                    "expected Attributes to be of type Attributes but it was {:?}",
+                    value.ty()
+                );
+            }
+        }
+
+        Ok(Self {
+            ignore_unknown_instances,
+            properties,
+            attributes,
+            path,
+        })
     }
 
     pub fn apply_ignore_unknown_instances(&mut self, snapshot: &mut InstanceSnapshot) {
