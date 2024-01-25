@@ -7,8 +7,9 @@ use memofs::Vfs;
 use rbx_dom_weak::{types::Ref, Instance, WeakDom};
 use serde::{Deserialize, Serialize};
 use std::{
-    collections::{HashMap, VecDeque},
+    collections::{HashMap, HashSet, VecDeque},
     rc::Rc,
+    sync::OnceLock,
 };
 
 use crate::{
@@ -134,25 +135,29 @@ pub struct SyncbackReturn<'new, 'old> {
 }
 
 pub fn get_best_middleware(inst: &Instance) -> Middleware {
-    match inst.class.as_str() {
-        "Folder" | "Configuration" | "Tool" | "ScreenGui" => Middleware::Dir,
-        "Sound"
-        | "SoundGroup"
-        | "Sky"
-        | "Atmosphere"
-        | "BloomEffect"
-        | "BlurEffect"
-        | "ColorCorrectionEffect"
-        | "DepthOfFieldEffect"
-        | "SunRaysEffect" => {
-            if inst.children().is_empty() {
-                Middleware::JsonModel
-            } else {
-                // This begs the question of an init.model.json but we'll leave
-                // that for another day.
-                Middleware::Dir
-            }
+    // At some point, we're better off using an O(1) method for checking
+    // equality for classes like this.
+    static JSON_MODEL_CLASSES: OnceLock<HashSet<&str>> = OnceLock::new();
+    let json_model_classes = JSON_MODEL_CLASSES.get_or_init(|| {
+        maplit::hashset! {
+            "Sound", "SoundGroup", "Sky", "Atmosphere", "BloomEffect",
+            "BlurEffect", "ColorCorrectionEffect", "DepthOfFieldEffect",
+            "SunRaysEffect", "ParticleEmitter"
         }
+    });
+
+    if json_model_classes.contains(inst.class.as_str()) {
+        if inst.children().is_empty() {
+            return Middleware::JsonModel;
+        } else {
+            // This begs the question of an init.model.json but we'll leave
+            // that for another day.
+            return Middleware::Dir;
+        }
+    }
+
+    match inst.class.as_str() {
+        "Folder" | "Configuration" | "Tool" => Middleware::Dir,
         "StringValue" => {
             if inst.children().is_empty() {
                 Middleware::Text
