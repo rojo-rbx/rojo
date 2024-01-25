@@ -38,22 +38,25 @@ function Version.compare(a, b)
 		return revision
 	end
 
+	local aPrerelease = if a[4] == "" then nil else a[4]
+	local bPrerelease = if b[4] == "" then nil else b[4]
+
 	-- If neither are prerelease, they are the same
-	if a[4] == nil and b[4] == nil then
+	if aPrerelease == nil and bPrerelease == nil then
 		return 0
 	end
 
 	-- If one is prerelease it is older
-	if a[4] ~= nil and b[4] == nil then
+	if aPrerelease ~= nil and bPrerelease == nil then
 		return -1
 	end
-	if a[4] == nil and b[4] ~= nil then
+	if aPrerelease == nil and bPrerelease ~= nil then
 		return 1
 	end
 
 	-- If they are both prereleases, compare those based on number
-	local aPrereleaseNumeric = string.match(a[4], "(%d+).*$")
-	local bPrereleaseNumeric = string.match(b[4], "(%d+).*$")
+	local aPrereleaseNumeric = string.match(aPrerelease, "(%d+).*$")
+	local bPrereleaseNumeric = string.match(bPrerelease, "(%d+).*$")
 
 	if aPrereleaseNumeric == nil or bPrereleaseNumeric == nil then
 		-- If one or both lack a number, comparing isn't meaningful
@@ -138,6 +141,7 @@ function Version.retrieveLatestCompatible(options: {
 	end
 
 	-- Don't return anything if the latest found is not newer than the current version
+	print(latestCompatible.version, options.version, Version.compare(latestCompatible.version, options.version))
 	if latestCompatible == nil or Version.compare(latestCompatible.version, options.version) <= 0 then
 		return nil
 	end
