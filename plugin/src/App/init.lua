@@ -226,19 +226,20 @@ function App:checkForUpdates()
 		return
 	end
 
-	local lastestCompatibleVersion = Version.retrieveLatestCompatible({
+	local isLocalInstall = string.find(debug.traceback(), "\n[^\n]-user_.-$") ~= nil
+	local latestCompatibleVersion = Version.retrieveLatestCompatible({
 		version = Config.version,
-		includePrereleases = Settings:get("checkForPrereleases"),
+		includePrereleases = isLocalInstall and Settings:get("checkForPrereleases"),
 	})
-	if not lastestCompatibleVersion then
+	if not latestCompatibleVersion then
 		return
 	end
 
 	self:addNotification(
 		string.format(
 			"A newer compatible version of Rojo, %s, was published %s! Go to the Rojo releases page to learn more.",
-			Version.display(lastestCompatibleVersion.version),
-			timeUtil.elapsedToText(DateTime.now().UnixTimestamp - lastestCompatibleVersion.publishedUnixTimestamp)
+			Version.display(latestCompatibleVersion.version),
+			timeUtil.elapsedToText(DateTime.now().UnixTimestamp - latestCompatibleVersion.publishedUnixTimestamp)
 		),
 		500,
 		{
