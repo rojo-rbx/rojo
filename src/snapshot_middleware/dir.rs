@@ -161,11 +161,22 @@ pub fn syncback_dir_no_meta<'new, 'old>(
     let mut removed_children = Vec::new();
 
     // We have to enforce unique child names for the file system.
-    let mut duplicate_check = HashSet::with_capacity(new_inst.children().len());
-    for child in new_inst.children() {
-        let child = snapshot.get_new_instance(*child).unwrap();
-        if !duplicate_check.insert(child.name.to_lowercase()) {
-            anyhow::bail!("Instance has duplicate child {}", child.name.to_lowercase());
+    let mut child_names = HashSet::with_capacity(new_inst.children().len());
+    let mut duplicate_set = HashSet::new();
+    for child_ref in new_inst.children() {
+        let child = snapshot.get_new_instance(*child_ref).unwrap();
+        if !child_names.insert(child.name.to_lowercase()) {
+            duplicate_set.insert(child.name.as_str());
+        }
+    }
+    if !duplicate_set.is_empty() {
+        if duplicate_set.len() <= 25 {
+            anyhow::bail!(
+                "Instance has children with duplicate name (case may not exactly match):\n {}",
+                duplicate_set.into_iter().collect::<Vec<&str>>().join(", ")
+            );
+        } else {
+            anyhow::bail!("Instance has more than 25 children with duplicate names");
         }
     }
 
