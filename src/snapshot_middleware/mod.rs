@@ -50,8 +50,7 @@ use self::{
 };
 
 pub use self::{
-    lua::ScriptType, meta_file::DirectoryMetadata, project::snapshot_project_node,
-    util::emit_legacy_scripts_default,
+    lua::ScriptType, project::snapshot_project_node, util::emit_legacy_scripts_default,
 };
 
 /// Returns an `InstanceSnapshot` for the provided path.
