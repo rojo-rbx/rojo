@@ -6,11 +6,14 @@ use anyhow::Context;
 use memofs::Vfs;
 use rbx_dom_weak::{types::Ref, Instance, WeakDom};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, VecDeque};
+use std::{
+    collections::{HashMap, VecDeque},
+    rc::Rc,
+};
 
 use crate::{
     glob::Glob,
-    snapshot::{hash_tree, InstanceSnapshot, InstanceWithMeta, RojoTree},
+    snapshot::{hash_tree_both, InstanceSnapshot, InstanceWithMeta, RojoTree},
     snapshot_middleware::Middleware,
     Project,
 };
@@ -26,18 +29,20 @@ pub fn syncback_loop<'old>(
     project: &'old Project,
 ) -> anyhow::Result<Vec<(Ref, InstanceSnapshot)>> {
     log::debug!("Hashing project DOM");
-    let old_hashes = hash_tree(old_tree.inner());
+    let old_hashes = hash_tree_both(old_tree.inner());
     log::debug!("Hashing file DOM");
-    let new_hashes = hash_tree(new_tree);
+    let new_hashes = hash_tree_both(new_tree);
 
     let project_path = project.folder_location();
 
-    let syncback_data = SyncbackData {
+    let syncback_data = Rc::new(SyncbackData {
         vfs,
         old_tree,
         new_tree,
         syncback_rules: project.syncback_rules.as_ref(),
-    };
+        old_hashes,
+        new_hashes,
+    });
 
     let mut snapshots = vec![SyncbackSnapshot {
         data: syncback_data,
@@ -54,14 +59,9 @@ pub fn syncback_loop<'old>(
         let inst_path = get_inst_path(new_tree, snapshot.new);
         // We can quickly check that two subtrees are identical and if they are,
         // skip reconciling them.
-        if let Some(old_ref) = snapshot.old {
-            if old_hashes.get(&old_ref) == new_hashes.get(&snapshot.new) {
-                log::trace!(
-                    "Skipping {inst_path} due to it being identically hashed as {:?}",
-                    old_hashes.get(&old_ref)
-                );
-                continue;
-            }
+        if snapshot.trees_are_deep_eq() {
+            log::trace!("Skipping {inst_path} due to it being identically hashed");
+            continue;
         }
 
         let middleware = snapshot

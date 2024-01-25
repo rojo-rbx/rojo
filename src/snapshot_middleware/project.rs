@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::HashMap, path::Path};
+use std::{borrow::Cow, collections::HashMap, path::Path, rc::Rc};
 
 use anyhow::{bail, Context};
 use memofs::Vfs;
@@ -408,7 +408,7 @@ pub fn syncback_project<'new, 'old>(
             if let Some(old_inst) = old_child_map.get(new_name.as_str()) {
                 // This new instance represents an older one!
                 children.push(SyncbackSnapshot {
-                    data: snapshot.data,
+                    data: Rc::clone(&snapshot.data),
                     old: Some(old_inst.id()),
                     new: new_child.referent(),
                     parent_path,
@@ -418,7 +418,7 @@ pub fn syncback_project<'new, 'old>(
             } else {
                 // This new instance is... new.
                 children.push(SyncbackSnapshot {
-                    data: snapshot.data,
+                    data: Rc::clone(&snapshot.data),
                     old: None,
                     new: new_child.referent(),
                     parent_path,
