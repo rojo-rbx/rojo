@@ -1,14 +1,12 @@
 use std::{
-    collections::{BTreeMap, HashMap, HashSet},
+    collections::{HashMap, HashSet},
     path::Path,
 };
 
 use anyhow::Context;
 use memofs::{DirEntry, IoResultExt, Vfs};
-use rbx_dom_weak::types::Variant;
 
 use crate::{
-    resolution::UnresolvedValue,
     snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
     syncback::{FsSnapshot, SyncbackReturn, SyncbackSnapshot},
 };
@@ -106,48 +104,18 @@ pub fn syncback_dir<'new, 'old>(
 
     let mut dir_syncback = syncback_dir_no_meta(snapshot, dir_name)?;
 
-    let mut meta = if let Some(dir) = dir_meta(snapshot.vfs(), &path)? {
-        dir
-    } else {
-        DirectoryMetadata {
-            ignore_unknown_instances: None,
-            properties: BTreeMap::new(),
-            attributes: BTreeMap::new(),
-            class_name: if new_inst.class == "Folder" {
-                None
-            } else {
-                Some(new_inst.class.clone())
-            },
-            path: path.join("init.meta.json"),
-        }
-    };
-    for (name, value) in snapshot.new_filtered_properties() {
-        if name == "Attributes" || name == "AttributesSerialize" {
-            if let Variant::Attributes(attrs) = value {
-                meta.attributes.extend(attrs.iter().map(|(name, value)| {
-                    (
-                        name.to_string(),
-                        UnresolvedValue::FullyQualified(value.clone()),
-                    )
-                }))
-            } else {
-                log::error!("Property {name} should be Attributes but is not");
-            }
-        } else {
-            meta.properties.insert(
-                name.to_string(),
-                UnresolvedValue::from_variant(value.to_owned(), &new_inst.class, name),
-            );
-        }
+    let mut meta = DirectoryMetadata::from_syncback_snapshot(snapshot, path.clone())?;
+    if new_inst.class != "Folder" {
+        meta.class_name = Some(new_inst.class.clone());
     }
 
     if !meta.is_empty() {
         dir_syncback.fs_snapshot.add_file(
-            &meta.path,
+            path.join("init.meta.json"),
             serde_json::to_vec_pretty(&meta).context("could not serialize new init.meta.json")?,
         );
     }
-    if new_inst.children().is_empty() {
+    if new_inst.children().is_empty() && meta.is_empty() {
         dir_syncback
             .fs_snapshot
             .add_file(path.join(EMPTY_DIR_KEEP_NAME), Vec::new())

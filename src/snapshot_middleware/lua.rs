@@ -1,15 +1,10 @@
-use std::{
-    collections::{BTreeMap, HashMap},
-    path::Path,
-    str,
-};
+use std::{collections::HashMap, path::Path, str};
 
 use anyhow::Context;
 use memofs::{IoResultExt, Vfs};
 use rbx_dom_weak::types::{Enum, Variant};
 
 use crate::{
-    resolution::UnresolvedValue,
     snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
     syncback::{FsSnapshot, SyncbackReturn, SyncbackSnapshot},
 };
@@ -183,41 +178,7 @@ pub fn syncback_lua_init<'new, 'old>(
 
     let dir_syncback = syncback_dir_no_meta(snapshot, dir_name)?;
 
-    let mut meta = if let Some(dir) = dir_meta(snapshot.vfs(), &path)? {
-        dir
-    } else {
-        DirectoryMetadata {
-            ignore_unknown_instances: None,
-            class_name: None,
-            properties: BTreeMap::new(),
-            attributes: BTreeMap::new(),
-            path: snapshot
-                .parent_path
-                .join(&snapshot.name)
-                .join("init.meta.json"),
-        }
-    };
-    for (name, value) in snapshot.new_filtered_properties() {
-        if name == "Source" {
-            continue;
-        } else if name == "Attributes" || name == "AttributesSerialize" {
-            if let Variant::Attributes(attrs) = value {
-                meta.attributes.extend(attrs.iter().map(|(name, value)| {
-                    (
-                        name.to_string(),
-                        UnresolvedValue::FullyQualified(value.clone()),
-                    )
-                }))
-            } else {
-                log::error!("Property {name} should be Attributes but is not");
-            }
-        } else {
-            meta.properties.insert(
-                name.to_string(),
-                UnresolvedValue::from_variant(value.to_owned(), &new_inst.class, name),
-            );
-        }
-    }
+    let meta = DirectoryMetadata::from_syncback_snapshot(snapshot, path.clone())?;
 
     let mut fs_snapshot = FsSnapshot::new();
     fs_snapshot.add_file(path, contents);
@@ -225,7 +186,7 @@ pub fn syncback_lua_init<'new, 'old>(
 
     if !meta.is_empty() {
         fs_snapshot.add_file(
-            &meta.path,
+            snapshot.parent_path.join(dir_name).join("init.meta.json"),
             serde_json::to_vec_pretty(&meta).context("could not serialize new init.meta.json")?,
         );
     }

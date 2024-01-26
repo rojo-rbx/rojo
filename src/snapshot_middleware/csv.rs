@@ -11,7 +11,6 @@ use rbx_dom_weak::types::Variant;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    resolution::UnresolvedValue,
     snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
     syncback::{FsSnapshot, SyncbackReturn, SyncbackSnapshot},
 };
@@ -147,47 +146,13 @@ pub fn syncback_csv_init<'new, 'old>(
     };
 
     let mut dir_syncback = syncback_dir_no_meta(snapshot, dir_name)?;
-    let mut meta = if let Some(dir) = dir_meta(snapshot.vfs(), &path)? {
-        dir
-    } else {
-        DirectoryMetadata {
-            ignore_unknown_instances: None,
-            class_name: None,
-            properties: BTreeMap::new(),
-            attributes: BTreeMap::new(),
-            path: snapshot
-                .parent_path
-                .join(&snapshot.name)
-                .join("init.meta.json"),
-        }
-    };
-    for (name, value) in snapshot.new_filtered_properties() {
-        if name == "Contents" {
-            continue;
-        } else if name == "Attributes" || name == "AttributesSerialize" {
-            if let Variant::Attributes(attrs) = value {
-                meta.attributes.extend(attrs.iter().map(|(name, value)| {
-                    (
-                        name.to_string(),
-                        UnresolvedValue::FullyQualified(value.clone()),
-                    )
-                }))
-            } else {
-                log::error!("Property {name} should be Attributes but is not");
-            }
-        } else {
-            meta.properties.insert(
-                name.to_string(),
-                UnresolvedValue::from_variant(value.to_owned(), &new_inst.class, name),
-            );
-        }
-    }
+    let meta = DirectoryMetadata::from_syncback_snapshot(snapshot, path.clone())?;
 
     let mut fs_snapshot = std::mem::take(&mut dir_syncback.fs_snapshot);
     fs_snapshot.add_file(&path, localization_to_csv(contents)?);
     if !meta.is_empty() {
         fs_snapshot.add_file(
-            &meta.path,
+            snapshot.parent_path.join(dir_name).join("init.meta.json"),
             serde_json::to_vec_pretty(&meta).context("could not serialize new init.meta.json")?,
         );
     }
