@@ -117,7 +117,9 @@ pub fn syncback_csv<'new, 'old>(
     fs_snapshot.add_file(path, localization_to_csv(contents)?);
     if !meta.is_empty() {
         fs_snapshot.add_file(
-            &meta.path,
+            snapshot
+                .parent_path
+                .join(format!("{}.meta.json", new_inst.name)),
             serde_json::to_vec_pretty(&meta).context("cannot serialize metadata")?,
         )
     }
