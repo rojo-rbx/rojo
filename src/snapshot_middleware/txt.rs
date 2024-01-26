@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, path::Path, str};
+use std::{path::Path, str};
 
 use anyhow::Context;
 use maplit::hashmap;
@@ -6,12 +6,11 @@ use memofs::{IoResultExt, Vfs};
 use rbx_dom_weak::types::Variant;
 
 use crate::{
-    resolution::UnresolvedValue,
     snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
     syncback::{FsSnapshot, SyncbackReturn, SyncbackSnapshot},
 };
 
-use super::meta_file::{file_meta, AdjacentMetadata};
+use super::meta_file::AdjacentMetadata;
 
 pub fn snapshot_txt(
     context: &InstanceContext,
@@ -62,45 +61,14 @@ pub fn syncback_txt<'new, 'old>(
         anyhow::bail!("StringValues must have a `Value` property that is a String");
     };
 
-    let mut meta = if let Some(meta) = file_meta(snapshot.vfs(), &path, &snapshot.name)? {
-        meta
-    } else {
-        AdjacentMetadata {
-            ignore_unknown_instances: None,
-            properties: BTreeMap::new(),
-            attributes: BTreeMap::new(),
-            path: path
-                .with_file_name(&snapshot.name)
-                .with_extension("meta.json"),
-        }
-    };
-    for (name, value) in snapshot.new_filtered_properties() {
-        if name == "Value" {
-            continue;
-        } else if name == "Attributes" || name == "AttributesSerialize" {
-            if let Variant::Attributes(attrs) = value {
-                meta.attributes.extend(attrs.iter().map(|(name, value)| {
-                    (
-                        name.to_string(),
-                        UnresolvedValue::FullyQualified(value.clone()),
-                    )
-                }))
-            } else {
-                log::error!("Property {name} should be Attributes but is not");
-            }
-        } else {
-            meta.properties.insert(
-                name.to_string(),
-                UnresolvedValue::from_variant(value.to_owned(), &new_inst.class, name),
-            );
-        }
-    }
+    let meta = AdjacentMetadata::from_syncback_snapshot(snapshot, path.clone())?;
+
     let mut fs_snapshot = FsSnapshot::new();
     fs_snapshot.add_file(path, contents);
     if !meta.is_empty() {
         fs_snapshot.add_file(
             &meta.path,
-            serde_json::to_vec_pretty(&meta).context("could not serialize new init.meta.json")?,
+            serde_json::to_vec_pretty(&meta).context("could not serialize metadata")?,
         );
     }
 

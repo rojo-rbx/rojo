@@ -16,7 +16,7 @@ use crate::{
 
 use super::{
     dir::{dir_meta, snapshot_dir_no_meta, syncback_dir_no_meta},
-    meta_file::{file_meta, AdjacentMetadata, DirectoryMetadata},
+    meta_file::{AdjacentMetadata, DirectoryMetadata},
 };
 
 #[derive(Debug)]
