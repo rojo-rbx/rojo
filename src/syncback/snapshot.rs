@@ -83,6 +83,9 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
 
         if let Some(old_inst) = old_ref.and_then(|referent| self.get_old_instance(referent)) {
             for (name, value) in &inst.properties {
+                if filter_out_property(inst, name.as_str()) {
+                    continue;
+                }
                 if old_inst.properties().contains_key(name) {
                     properties.insert(name, value);
                 }
