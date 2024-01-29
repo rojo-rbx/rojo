@@ -306,3 +306,19 @@ fn sync_rule_no_extension() {
         );
     });
 }
+
+#[test]
+fn project_ref_property() {
+    run_serve_test("ref_properties", |session, mut redactions| {
+        let info = session.get_api_rojo().unwrap();
+        let root_id = info.root_instance_id;
+
+        assert_yaml_snapshot!("ref_properties_info", redactions.redacted_yaml(info));
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "ref_properties_all",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+    });
+}
