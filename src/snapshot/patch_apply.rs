@@ -9,9 +9,9 @@ use rbx_dom_weak::types::{Ref, Variant};
 
 use super::{
     patch::{AppliedPatchSet, AppliedPatchUpdate, PatchSet, PatchUpdate},
-    InstanceSnapshot, RojoTree,
+    InstanceSnapshot, InstanceWithMetaMut, RojoTree,
 };
-use crate::{RojoRef, REF_POINTER_ATTRIBUTE_PREFIX};
+use crate::{multimap::MultiMap, RojoRef, REF_POINTER_ATTRIBUTE_PREFIX};
 
 /// Consumes the input `PatchSet`, applying all of its prescribed changes to the
 /// tree and returns an `AppliedPatchSet`, which can be used to keep another
@@ -73,6 +73,11 @@ struct PatchApplyContext {
     /// to be rewritten.
     has_refs_to_rewrite: HashSet<Ref>,
 
+    /// Tracks all ref properties that were specified using attributes. This has
+    /// to be handled after everything else is done just like normal referent
+    /// properties.
+    attribute_refs_to_rewrite: MultiMap<Ref, (String, String)>,
+
     /// The current applied patch result, describing changes made to the tree.
     applied_patch_set: AppliedPatchSet,
 }
@@ -103,6 +108,22 @@ fn finalize_patch_application(context: PatchApplyContext, tree: &mut RojoTree) -
                 }
             }
         }
+    }
+
+    // This is to get around the fact that `RojoTre::get_specified_id` borrows
+    // the tree as immutable, but we need to hold a mutable reference to it.
+    // Not exactly elegant, but it does the job.
+    let mut real_rewrites = Vec::new();
+    for (id, map) in context.attribute_refs_to_rewrite {
+        for (prop_name, prop_value) in map {
+            if let Some(target) = tree.get_specified_id(RojoRef::some(prop_value)) {
+                real_rewrites.push((prop_name, Variant::Ref(target)))
+            }
+        }
+        let mut instance = tree
+            .get_instance_mut(id)
+            .expect("Invalid instance ID in deferred attribute ref map");
+        instance.properties_mut().extend(real_rewrites.drain(..));
     }
 
     context.applied_patch_set
@@ -144,7 +165,11 @@ fn apply_add_child(
         apply_add_child(context, tree, id, child);
     }
 
-    let _ = process_attribute_ref_properties(tree, id);
+    defer_ref_properties(
+        tree.get_instance_mut(id)
+            .expect("Instances that were just inserted into the tree should exist"),
+        context,
+    );
 }
 
 fn apply_update_child(context: &mut PatchApplyContext, tree: &mut RojoTree, patch: PatchUpdate) {
@@ -211,40 +236,30 @@ fn apply_update_child(context: &mut PatchApplyContext, tree: &mut RojoTree, patc
         applied_patch.changed_properties.insert(key, property_entry);
     }
 
-    if let Some(update) = process_attribute_ref_properties(tree, patch.id) {
-        applied_patch
-            .changed_properties
-            .extend(update.into_iter().map(|(name, value)| (name, Some(value))));
-    }
+    defer_ref_properties(instance, context);
 
     context.applied_patch_set.updated.push(applied_patch)
 }
 
-/// Processes referent properties that the user has specified using attributes.
-fn process_attribute_ref_properties(
-    tree: &mut RojoTree,
-    id: Ref,
-) -> Option<Vec<(String, Variant)>> {
-    let instance = tree
-        .get_instance(id)
-        .expect("all Instances in a patch should exist in the tree");
+/// Calculates manually-specified Ref properties and marks them in the provided
+/// `PatchApplyContext` to be rewritten at the end of the patch application
+/// process.
+///
+/// Currently, this only uses attributes but it can easily handle rewriting
+/// referents in other ways too!
+fn defer_ref_properties(instance: InstanceWithMetaMut, context: &mut PatchApplyContext) {
     let attributes = match instance.properties().get("Attributes") {
         Some(Variant::Attributes(attrs)) => attrs,
-        _ => return None,
+        _ => return,
     };
 
-    log::debug!("Rewriting attribute-specified referent properties for {id}");
-
-    let mut list = Vec::new();
-
-    let attr_filter = |entry: &(&String, &Variant)| {
-        let (attr_name, attr_value) = entry;
-        if attr_name
-            .strip_prefix(REF_POINTER_ATTRIBUTE_PREFIX)
-            .is_some()
-        {
-            if matches!(attr_value, Variant::String(_)) {
-                return true;
+    let id = instance.id();
+    for (attr_name, attr_value) in attributes.iter() {
+        if let Some(prop_name) = attr_name.strip_prefix(REF_POINTER_ATTRIBUTE_PREFIX) {
+            if let Variant::String(prop_value) = attr_value {
+                context
+                    .attribute_refs_to_rewrite
+                    .insert(id, (prop_name.to_owned(), prop_value.clone()));
             } else {
                 log::warn!(
                     "Attribute {attr_name} is of type {:?} when it was \
@@ -253,38 +268,7 @@ fn process_attribute_ref_properties(
                 )
             }
         }
-        false
-    };
-
-    for (attr_name, attr_value) in attributes.iter().filter(attr_filter) {
-        // This is safe due to the filtering we do in this loop
-        let prop_name = attr_name
-            .strip_prefix(REF_POINTER_ATTRIBUTE_PREFIX)
-            .unwrap();
-        let specified_id = match attr_value {
-            Variant::String(specified_id) => specified_id,
-            _ => unreachable!(),
-        };
-
-        if let Some(referent) = tree.get_specified_id(RojoRef::some(specified_id.to_owned())) {
-            list.push((prop_name.to_owned(), referent.into()))
-        } else {
-            log::warn!(
-                "Property {prop_name} of {} is a broken reference!\
-                    The attribute-specified ID '{specified_id}' is not valid.",
-                instance.name()
-            );
-            list.push((prop_name.to_owned(), Ref::none().into()))
-        }
     }
-
-    tree.get_instance_mut(id)
-        .unwrap()
-        .properties_mut()
-        // Cloning this list isn't ideal but it's necessary
-        .extend(list.clone());
-
-    Some(list)
 }
 
 #[cfg(test)]
