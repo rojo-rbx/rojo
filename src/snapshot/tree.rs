@@ -174,8 +174,17 @@ impl RojoTree {
             self.path_to_ids.insert(path.clone(), id);
         }
 
-        self.specified_id_to_refs
-            .insert(metadata.specified_id.clone(), id);
+        if metadata.specified_id.is_some()
+            && self
+                .specified_id_to_refs
+                .insert(metadata.specified_id.clone(), id)
+                .is_some()
+        {
+            log::warn!(
+                "Duplicate user-specified referent {:?}",
+                metadata.specified_id.as_str()
+            )
+        }
 
         self.metadata_map.insert(id, metadata);
     }
