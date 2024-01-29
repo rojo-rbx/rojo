@@ -11,6 +11,7 @@ use super::{
     patch::{AppliedPatchSet, AppliedPatchUpdate, PatchSet, PatchUpdate},
     InstanceSnapshot, RojoTree,
 };
+use crate::{RojoRef, REF_POINTER_ATTRIBUTE_PREFIX};
 
 /// Consumes the input `PatchSet`, applying all of its prescribed changes to the
 /// tree and returns an `AppliedPatchSet`, which can be used to keep another
@@ -142,6 +143,8 @@ fn apply_add_child(
     for child in children {
         apply_add_child(context, tree, id, child);
     }
+
+    let _ = process_attribute_ref_properties(tree, id);
 }
 
 fn apply_update_child(context: &mut PatchApplyContext, tree: &mut RojoTree, patch: PatchUpdate) {
@@ -208,7 +211,80 @@ fn apply_update_child(context: &mut PatchApplyContext, tree: &mut RojoTree, patc
         applied_patch.changed_properties.insert(key, property_entry);
     }
 
+    if let Some(update) = process_attribute_ref_properties(tree, patch.id) {
+        applied_patch
+            .changed_properties
+            .extend(update.into_iter().map(|(name, value)| (name, Some(value))));
+    }
+
     context.applied_patch_set.updated.push(applied_patch)
+}
+
+/// Processes referent properties that the user has specified using attributes.
+fn process_attribute_ref_properties(
+    tree: &mut RojoTree,
+    id: Ref,
+) -> Option<Vec<(String, Variant)>> {
+    let instance = tree
+        .get_instance(id)
+        .expect("all Instances in a patch should exist in the tree");
+    let attributes = match instance.properties().get("Attributes") {
+        Some(Variant::Attributes(attrs)) => attrs,
+        _ => return None,
+    };
+
+    log::debug!("Rewriting attribute-specified referent properties for {id}");
+
+    let mut list = Vec::new();
+
+    let attr_filter = |entry: &(&String, &Variant)| {
+        let (attr_name, attr_value) = entry;
+        if attr_name
+            .strip_prefix(REF_POINTER_ATTRIBUTE_PREFIX)
+            .is_some()
+        {
+            if matches!(attr_value, Variant::Ref(_)) {
+                return true;
+            } else {
+                log::warn!(
+                    "Attribute {attr_name} is of type {:?} when it was \
+                    expected to be a string",
+                    attr_value.ty()
+                )
+            }
+        }
+        false
+    };
+
+    for (attr_name, attr_value) in attributes.iter().filter(attr_filter) {
+        // This is safe due to the filtering we do in this loop
+        let prop_name = attr_name
+            .strip_prefix(REF_POINTER_ATTRIBUTE_PREFIX)
+            .unwrap();
+        let specified_id = match attr_value {
+            Variant::String(specified_id) => specified_id,
+            _ => unreachable!(),
+        };
+
+        if let Some(referent) = tree.get_specified_id(RojoRef::none()) {
+            list.push((prop_name.to_owned(), referent.into()))
+        } else {
+            log::warn!(
+                "Property {prop_name} of {} is a broken reference!\
+                    The attribute-specified ID '{specified_id}' is not valid.",
+                instance.name()
+            );
+            list.push((prop_name.to_owned(), Ref::none().into()))
+        }
+    }
+
+    tree.get_instance_mut(id)
+        .unwrap()
+        .properties_mut()
+        // Cloning this list isn't ideal but it's necessary
+        .extend(list.clone());
+
+    Some(list)
 }
 
 #[cfg(test)]
