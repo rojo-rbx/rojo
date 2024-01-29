@@ -243,7 +243,7 @@ fn process_attribute_ref_properties(
             .strip_prefix(REF_POINTER_ATTRIBUTE_PREFIX)
             .is_some()
         {
-            if matches!(attr_value, Variant::Ref(_)) {
+            if matches!(attr_value, Variant::String(_)) {
                 return true;
             } else {
                 log::warn!(
@@ -266,7 +266,7 @@ fn process_attribute_ref_properties(
             _ => unreachable!(),
         };
 
-        if let Some(referent) = tree.get_specified_id(RojoRef::none()) {
+        if let Some(referent) = tree.get_specified_id(RojoRef::some(specified_id.to_owned())) {
             list.push((prop_name.to_owned(), referent.into()))
         } else {
             log::warn!(
