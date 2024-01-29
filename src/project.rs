@@ -230,7 +230,7 @@ pub struct ProjectNode {
     /// If set, defines an ID for the described Instance that can be used
     /// to refer to it for the purpose of referent properties.
     #[serde(rename = "$id", skip_serializing_if = "Option::is_none")]
-    pub id: Option<Arc<String>>,
+    pub id: Option<Arc<str>>,
 
     /// Contains all of the children of the described instance.
     #[serde(flatten)]

@@ -8,8 +8,8 @@ pub const REF_POINTER_ATTRIBUTE_PREFIX: &str = "Rojo_Target_";
 // TODO add an internment strategy for RojoRefs
 // Something like what rbx-dom does for SharedStrings probably works
 
-#[derive(Debug, Default, PartialEq, Hash, Clone, Serialize, Deserialize)]
-pub struct RojoRef(Option<Arc<String>>);
+#[derive(Debug, Default, PartialEq, Hash, Clone, Serialize, Deserialize, Eq)]
+pub struct RojoRef(Option<Arc<str>>);
 
 impl RojoRef {
     #[inline]
@@ -34,8 +34,8 @@ impl From<Option<String>> for RojoRef {
     }
 }
 
-impl From<Arc<String>> for RojoRef {
-    fn from(value: Arc<String>) -> Self {
+impl From<Arc<str>> for RojoRef {
+    fn from(value: Arc<str>) -> Self {
         Self(Some(value))
     }
 }
