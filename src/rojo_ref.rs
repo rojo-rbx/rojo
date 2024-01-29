@@ -26,6 +26,11 @@ impl RojoRef {
     pub fn is_some(&self) -> bool {
         self.0.is_some()
     }
+
+    #[inline]
+    pub fn as_str(&self) -> Option<&str> {
+        self.0.as_ref().map(AsRef::as_ref)
+    }
 }
 
 impl From<Option<String>> for RojoRef {
