@@ -8,7 +8,7 @@ use rbx_dom_weak::{
     Instance, InstanceBuilder, WeakDom,
 };
 
-use crate::multimap::MultiMap;
+use crate::{multimap::MultiMap, RojoRef};
 
 use super::{InstanceMetadata, InstanceSnapshot};
 
@@ -33,6 +33,9 @@ pub struct RojoTree {
     /// appearing multiple times in the same Rojo project. This is sometimes
     /// called "path aliasing" in various Rojo documentation.
     path_to_ids: MultiMap<PathBuf, Ref>,
+
+    /// A map of specified RojoRefs to the actual underlying Ref they represent.
+    specified_id_to_refs: HashMap<RojoRef, Ref>,
 }
 
 impl RojoTree {
@@ -45,6 +48,7 @@ impl RojoTree {
             inner: WeakDom::new(root_builder),
             metadata_map: HashMap::new(),
             path_to_ids: MultiMap::new(),
+            specified_id_to_refs: HashMap::new(),
         };
 
         let root_ref = tree.inner.root_ref();
@@ -161,10 +165,17 @@ impl RojoTree {
         self.metadata_map.get(&id)
     }
 
+    pub fn get_specified_id(&self, specified: RojoRef) -> Option<Ref> {
+        self.specified_id_to_refs.get(&specified).copied()
+    }
+
     fn insert_metadata(&mut self, id: Ref, metadata: InstanceMetadata) {
         for path in &metadata.relevant_paths {
             self.path_to_ids.insert(path.clone(), id);
         }
+
+        self.specified_id_to_refs
+            .insert(metadata.specified_id.clone(), id);
 
         self.metadata_map.insert(id, metadata);
     }
