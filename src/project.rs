@@ -3,6 +3,7 @@ use std::{
     fs, io,
     net::IpAddr,
     path::{Path, PathBuf},
+    sync::Arc,
 };
 
 use serde::{Deserialize, Serialize};
@@ -225,6 +226,11 @@ pub struct ProjectNode {
     /// by that path has a ClassName other than Folder.
     #[serde(rename = "$className", skip_serializing_if = "Option::is_none")]
     pub class_name: Option<String>,
+
+    /// If set, defines an ID for the described Instance that can be used
+    /// to refer to it for the purpose of referent properties.
+    #[serde(rename = "$id", skip_serializing_if = "Option::is_none")]
+    pub id: Option<Arc<String>>,
 
     /// Contains all of the children of the described instance.
     #[serde(flatten)]

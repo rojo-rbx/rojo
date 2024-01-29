@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::HashMap, path::Path};
+use std::{borrow::Cow, collections::HashMap, path::Path, sync::Arc};
 
 use anyhow::{bail, Context};
 use memofs::Vfs;
@@ -275,6 +275,10 @@ pub fn snapshot_project_node(
         // TODO: Introduce a strict mode where $ignoreUnknownInstances is never
         // set implicitly.
         metadata.ignore_unknown_instances = true;
+    }
+
+    if let Some(id) = &node.id {
+        metadata.specified_id = Arc::clone(id).into()
     }
 
     metadata.instigating_source = Some(InstigatingSource::ProjectNode(
