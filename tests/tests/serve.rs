@@ -320,5 +320,35 @@ fn project_ref_property() {
             "ref_properties_all",
             read_response.intern_and_redact(&mut redactions, root_id)
         );
+
+        fs::write(
+            session.path().join("ModelTarget.model.json"),
+            r#"{
+                "id": "invalid referent",
+                "className": "Folder",
+                "children": [
+                  {
+                    "name": "ModelPointer",
+                    "className": "Model",
+                    "attributes": {
+                      "Rojo_Target_PrimaryPart": "project target"
+                    }
+                  }
+                ]
+              }"#,
+        )
+        .unwrap();
+
+        let subscribe_response = session.get_api_subscribe(0).unwrap();
+        assert_yaml_snapshot!(
+            "ref_properties_subscribe",
+            subscribe_response.intern_and_redact(&mut redactions, ())
+        );
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "ref_properties_all-2",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
     });
 }

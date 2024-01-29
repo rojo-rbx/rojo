@@ -1,0 +1,27 @@
+---
+source: tests/tests/serve.rs
+expression: "subscribe_response.intern_and_redact(&mut redactions, ())"
+---
+messageCursor: 1
+messages:
+  - added: {}
+    removed: []
+    updated:
+      - changedClassName: ~
+        changedMetadata:
+          ignoreUnknownInstances: false
+        changedName: ~
+        changedProperties: {}
+        id: id-7
+      - changedClassName: ~
+        changedMetadata: ~
+        changedName: ~
+        changedProperties:
+          Attributes:
+            Attributes:
+              Rojo_Target_PrimaryPart:
+                String: project target
+          PrimaryPart: ~
+        id: id-8
+sessionId: id-1
+
