@@ -9,9 +9,9 @@ use rbx_dom_weak::types::{Ref, Variant};
 
 use super::{
     patch::{AppliedPatchSet, AppliedPatchUpdate, PatchSet, PatchUpdate},
-    InstanceSnapshot, InstanceWithMetaMut, RojoTree,
+    InstanceSnapshot, RojoTree,
 };
-use crate::{multimap::MultiMap, RojoRef, REF_POINTER_ATTRIBUTE_PREFIX};
+use crate::{multimap::MultiMap, RojoRef, REF_ID_ATTRIBUTE_NAME, REF_POINTER_ATTRIBUTE_PREFIX};
 
 /// Consumes the input `PatchSet`, applying all of its prescribed changes to the
 /// tree and returns an `AppliedPatchSet`, which can be used to keep another
@@ -116,7 +116,7 @@ fn finalize_patch_application(context: PatchApplyContext, tree: &mut RojoTree) -
     let mut real_rewrites = Vec::new();
     for (id, map) in context.attribute_refs_to_rewrite {
         for (prop_name, prop_value) in map {
-            if let Some(target) = tree.get_specified_id(RojoRef::some(prop_value)) {
+            if let Some(target) = tree.get_specified_id(&RojoRef::some(prop_value)) {
                 real_rewrites.push((prop_name, Variant::Ref(target)))
             }
         }
@@ -165,11 +165,7 @@ fn apply_add_child(
         apply_add_child(context, tree, id, child);
     }
 
-    defer_ref_properties(
-        tree.get_instance_mut(id)
-            .expect("Instances that were just inserted into the tree should exist"),
-        context,
-    );
+    defer_ref_properties(tree, id, context);
 }
 
 fn apply_update_child(context: &mut PatchApplyContext, tree: &mut RojoTree, patch: PatchUpdate) {
@@ -236,7 +232,7 @@ fn apply_update_child(context: &mut PatchApplyContext, tree: &mut RojoTree, patc
         applied_patch.changed_properties.insert(key, property_entry);
     }
 
-    defer_ref_properties(instance, context);
+    defer_ref_properties(tree, patch.id, context);
 
     context.applied_patch_set.updated.push(applied_patch)
 }
@@ -247,14 +243,28 @@ fn apply_update_child(context: &mut PatchApplyContext, tree: &mut RojoTree, patc
 ///
 /// Currently, this only uses attributes but it can easily handle rewriting
 /// referents in other ways too!
-fn defer_ref_properties(instance: InstanceWithMetaMut, context: &mut PatchApplyContext) {
+fn defer_ref_properties(tree: &mut RojoTree, id: Ref, context: &mut PatchApplyContext) {
+    let instance = tree
+        .get_instance(id)
+        .expect("Instances should exist when calculating deferred refs");
     let attributes = match instance.properties().get("Attributes") {
         Some(Variant::Attributes(attrs)) => attrs,
         _ => return,
     };
 
-    let id = instance.id();
+    let mut attr_id = None;
     for (attr_name, attr_value) in attributes.iter() {
+        if attr_name == REF_ID_ATTRIBUTE_NAME {
+            if let Variant::String(specified_id) = attr_value {
+                attr_id = Some(RojoRef::some(specified_id.clone()));
+            } else {
+                log::warn!(
+                    "Attribute {attr_name} is of type {:?} when it was \
+                    expected to be a String",
+                    attr_value.ty()
+                )
+            }
+        }
         if let Some(prop_name) = attr_name.strip_prefix(REF_POINTER_ATTRIBUTE_PREFIX) {
             if let Variant::String(prop_value) = attr_value {
                 context
@@ -263,11 +273,14 @@ fn defer_ref_properties(instance: InstanceWithMetaMut, context: &mut PatchApplyC
             } else {
                 log::warn!(
                     "Attribute {attr_name} is of type {:?} when it was \
-                    expected to be a string",
+                    expected to be a String",
                     attr_value.ty()
                 )
             }
         }
+    }
+    if let Some(specified_id) = attr_id {
+        tree.set_specified_id(id, specified_id);
     }
 }
 

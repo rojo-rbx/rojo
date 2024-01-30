@@ -324,11 +324,20 @@ fn project_ref_property() {
         fs::write(
             session.path().join("ModelTarget.model.json"),
             r#"{
-                "id": "invalid referent",
                 "className": "Folder",
+                "attributes": {
+                    "Rojo_Id": "model target 2"
+                },
                 "children": [
                   {
                     "name": "ModelPointer",
+                    "className": "Model",
+                    "attributes": {
+                      "Rojo_Target_PrimaryPart": "model target 2"
+                    }
+                  },
+                  {
+                    "name": "ProjectPointer",
                     "className": "Model",
                     "attributes": {
                       "Rojo_Target_PrimaryPart": "project target"

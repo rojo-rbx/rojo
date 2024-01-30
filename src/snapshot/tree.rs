@@ -36,6 +36,9 @@ pub struct RojoTree {
 
     /// A map of specified RojoRefs to the actual underlying Ref they represent.
     specified_id_to_refs: HashMap<RojoRef, Ref>,
+
+    /// A map of Refs in the tree to the RojoRef they represent.
+    refs_to_specified_id: HashMap<Ref, RojoRef>,
 }
 
 impl RojoTree {
@@ -49,6 +52,7 @@ impl RojoTree {
             metadata_map: HashMap::new(),
             path_to_ids: MultiMap::new(),
             specified_id_to_refs: HashMap::new(),
+            refs_to_specified_id: HashMap::new(),
         };
 
         let root_ref = tree.inner.root_ref();
@@ -165,8 +169,16 @@ impl RojoTree {
         self.metadata_map.get(&id)
     }
 
-    pub fn get_specified_id(&self, specified: RojoRef) -> Option<Ref> {
-        self.specified_id_to_refs.get(&specified).copied()
+    pub fn get_specified_id(&self, specified: &RojoRef) -> Option<Ref> {
+        self.specified_id_to_refs.get(specified).copied()
+    }
+
+    pub fn set_specified_id(&mut self, id: Ref, specified: RojoRef) {
+        if let Some(old) = self.refs_to_specified_id.remove(&id) {
+            self.specified_id_to_refs.remove(&old);
+        }
+        self.refs_to_specified_id.insert(id, specified.clone());
+        self.specified_id_to_refs.insert(specified, id);
     }
 
     fn insert_metadata(&mut self, id: Ref, metadata: InstanceMetadata) {
@@ -174,16 +186,15 @@ impl RojoTree {
             self.path_to_ids.insert(path.clone(), id);
         }
 
-        if metadata.specified_id.is_some()
-            && self
-                .specified_id_to_refs
-                .insert(metadata.specified_id.clone(), id)
-                .is_some()
-        {
-            log::warn!(
-                "Duplicate user-specified referent {:?}",
-                metadata.specified_id.as_str()
-            )
+        if metadata.specified_id.is_some() {
+            if self.get_specified_id(&metadata.specified_id).is_some() {
+                log::warn!(
+                    "Duplicate user-specified referent {:?}",
+                    metadata.specified_id.as_str()
+                )
+            } else {
+                self.set_specified_id(id, metadata.specified_id.clone());
+            }
         }
 
         self.metadata_map.insert(id, metadata);
