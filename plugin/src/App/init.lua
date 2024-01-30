@@ -159,13 +159,13 @@ function App:init()
 		})
 	end
 
-	if self:isPlaySoloAutoConnectAvailable() then
+	if self:isAutoConnectPlaytestServerAvailable() then
 		self:useRunningConnectionInfo()
 		self:startSession()
 	end
-	self.playSoloAutoConnectListener = Settings:onChanged("playSoloAutoConnect", function(enabled)
+	self.autoConnectPlaytestServerListener = Settings:onChanged("autoConnectPlaytestServer", function(enabled)
 		if enabled then
-			if self:isPlaySoloAutoConnectWriteable() and self.serveSession ~= nil then
+			if self:isAutoConnectPlaytestServerWriteable() and self.serveSession ~= nil then
 				-- Write the existing session
 				local baseUrl = self.serveSession.__apiContext.__baseUrl
 				self:setRunningConnectionInfo(baseUrl)
@@ -179,7 +179,7 @@ end
 function App:willUnmount()
 	self.waypointConnection:Disconnect()
 	self.confirmationBindable:Destroy()
-	self.playSoloAutoConnectListener()
+	self.autoConnectPlaytestServerListener()
 	self:clearRunningConnectionInfo()
 end
 
@@ -364,19 +364,19 @@ function App:releaseSyncLock()
 	Log.trace("Could not relase sync lock because it is owned by {}", lock.Value)
 end
 
-function App:isPlaySoloAutoConnectAvailable()
+function App:isAutoConnectPlaytestServerAvailable()
 	return RunService:IsRunMode()
 		and RunService:IsServer()
-		and Settings:get("playSoloAutoConnect")
+		and Settings:get("autoConnectPlaytestServer")
 		and workspace:GetAttribute("__RojoConnectionUrl")
 end
 
-function App:isPlaySoloAutoConnectWriteable()
-	return RunService:IsEdit() and Settings:get("playSoloAutoConnect")
+function App:isAutoConnectPlaytestServerWriteable()
+	return RunService:IsEdit() and Settings:get("autoConnectPlaytestServer")
 end
 
 function App:setRunningConnectionInfo(baseUrl: string)
-	if not self:isPlaySoloAutoConnectWriteable() then
+	if not self:isAutoConnectPlaytestServerWriteable() then
 		return
 	end
 
@@ -549,7 +549,7 @@ function App:startSession()
 		end
 
 		-- Play solo auto-connect does not require confirmation
-		if self:isPlaySoloAutoConnectAvailable() then
+		if self:isAutoConnectPlaytestServerAvailable() then
 			Log.trace("Accepting patch without confirmation because play solo auto-connect is enabled")
 			return "Accept"
 		end
