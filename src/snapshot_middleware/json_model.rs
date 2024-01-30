@@ -8,6 +8,7 @@ use serde::Deserialize;
 use crate::{
     resolution::UnresolvedValue,
     snapshot::{InstanceContext, InstanceSnapshot},
+    RojoRef,
 };
 
 pub fn snapshot_json_model(
@@ -41,7 +42,7 @@ pub fn snapshot_json_model(
 
     instance.name = Some(name.to_owned());
 
-    let id = instance.id.take();
+    let id = instance.id.take().map(RojoRef::new);
 
     let mut snapshot = instance
         .into_snapshot()
@@ -52,7 +53,7 @@ pub fn snapshot_json_model(
         .instigating_source(path)
         .relevant_paths(vec![path.to_path_buf()])
         .context(context)
-        .specified_id(id.into());
+        .specified_id(id);
 
     Ok(Some(snapshot))
 }

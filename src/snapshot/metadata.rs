@@ -61,7 +61,7 @@ pub struct InstanceMetadata {
     pub context: InstanceContext,
 
     /// Indicates the ID used for Ref properties pointing to this Instance.
-    pub specified_id: RojoRef,
+    pub specified_id: Option<RojoRef>,
 }
 
 impl InstanceMetadata {
@@ -71,7 +71,7 @@ impl InstanceMetadata {
             instigating_source: None,
             relevant_paths: Vec::new(),
             context: InstanceContext::default(),
-            specified_id: RojoRef::none(),
+            specified_id: None,
         }
     }
 
@@ -103,7 +103,7 @@ impl InstanceMetadata {
         }
     }
 
-    pub fn specified_id(self, id: RojoRef) -> Self {
+    pub fn specified_id(self, id: Option<RojoRef>) -> Self {
         Self {
             specified_id: id,
             ..self

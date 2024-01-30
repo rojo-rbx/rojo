@@ -116,7 +116,7 @@ fn finalize_patch_application(context: PatchApplyContext, tree: &mut RojoTree) -
     let mut real_rewrites = Vec::new();
     for (id, map) in context.attribute_refs_to_rewrite {
         for (prop_name, prop_value) in map {
-            if let Some(target) = tree.get_specified_id(&RojoRef::some(prop_value)) {
+            if let Some(target) = tree.get_specified_id(&RojoRef::new(prop_value)) {
                 real_rewrites.push((prop_name, Variant::Ref(target)))
             }
         }
@@ -256,7 +256,7 @@ fn defer_ref_properties(tree: &mut RojoTree, id: Ref, context: &mut PatchApplyCo
     for (attr_name, attr_value) in attributes.iter() {
         if attr_name == REF_ID_ATTRIBUTE_NAME {
             if let Variant::String(specified_id) = attr_value {
-                attr_id = Some(RojoRef::some(specified_id.clone()));
+                attr_id = Some(RojoRef::new(specified_id.clone()));
             } else {
                 log::warn!(
                     "Attribute {attr_name} is of type {:?} when it was \

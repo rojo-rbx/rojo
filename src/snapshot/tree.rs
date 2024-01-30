@@ -1,6 +1,5 @@
 use std::{
     collections::{HashMap, VecDeque},
-    mem::replace,
     path::{Path, PathBuf},
 };
 
@@ -142,10 +141,13 @@ impl RojoTree {
                         self.path_to_ids.insert(new_path.clone(), id);
                     }
                 }
-
                 if existing_metadata.specified_id != metadata.specified_id {
-                    self.specified_id_to_refs
-                        .insert(metadata.specified_id.clone(), id);
+                    if let Some(old) = &existing_metadata.specified_id {
+                        self.specified_id_to_refs.remove(old);
+                    }
+                    if let Some(new) = &metadata.specified_id {
+                        self.specified_id_to_refs.insert(new.clone(), id);
+                    }
                 }
 
                 entry.insert(metadata);
@@ -177,8 +179,9 @@ impl RojoTree {
 
     pub fn set_specified_id(&mut self, id: Ref, specified: RojoRef) {
         if let Some(metadata) = self.metadata_map.get_mut(&id) {
-            let old_id = replace(&mut metadata.specified_id, specified.clone());
-            self.specified_id_to_refs.remove(&old_id);
+            if let Some(old) = metadata.specified_id.replace(specified.clone()) {
+                self.specified_id_to_refs.remove(&old);
+            }
         }
         self.specified_id_to_refs.insert(specified, id);
     }
@@ -188,14 +191,14 @@ impl RojoTree {
             self.path_to_ids.insert(path.clone(), id);
         }
 
-        if metadata.specified_id.is_some() {
-            if self.get_specified_id(&metadata.specified_id).is_some() {
+        if let Some(specified_id) = &metadata.specified_id {
+            if self.get_specified_id(specified_id).is_some() {
                 log::warn!(
-                    "Duplicate user-specified referent {:?}",
-                    metadata.specified_id.as_str()
+                    "Duplicate user-specified referent {}",
+                    specified_id.as_str()
                 )
             } else {
-                self.set_specified_id(id, metadata.specified_id.clone());
+                self.set_specified_id(id, specified_id.clone());
             }
         }
 
@@ -207,7 +210,9 @@ impl RojoTree {
     fn remove_metadata(&mut self, id: Ref) {
         let metadata = self.metadata_map.remove(&id).unwrap();
 
-        self.specified_id_to_refs.remove(&metadata.specified_id);
+        if let Some(specified) = metadata.specified_id {
+            self.specified_id_to_refs.remove(&specified);
+        }
 
         for path in &metadata.relevant_paths {
             self.path_to_ids.remove(path, id);

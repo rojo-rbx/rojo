@@ -4,7 +4,7 @@ use anyhow::{format_err, Context};
 use rbx_dom_weak::types::Attributes;
 use serde::{Deserialize, Serialize};
 
-use crate::{resolution::UnresolvedValue, snapshot::InstanceSnapshot};
+use crate::{resolution::UnresolvedValue, snapshot::InstanceSnapshot, RojoRef};
 
 /// Represents metadata in a sibling file with the same basename.
 ///
@@ -82,7 +82,7 @@ impl AdjacentMetadata {
                 self.path.display()
             );
         }
-        snapshot.metadata.specified_id = self.id.take().into();
+        snapshot.metadata.specified_id = self.id.take().map(RojoRef::new);
         Ok(())
     }
 
@@ -201,7 +201,7 @@ impl DirectoryMetadata {
                 self.path.display()
             );
         }
-        snapshot.metadata.specified_id = self.id.take().into();
+        snapshot.metadata.specified_id = self.id.take().map(RojoRef::new);
         Ok(())
     }
 }

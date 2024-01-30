@@ -9,38 +9,16 @@ pub const REF_POINTER_ATTRIBUTE_PREFIX: &str = "Rojo_Target_";
 // Something like what rbx-dom does for SharedStrings probably works
 
 #[derive(Debug, Default, PartialEq, Hash, Clone, Serialize, Deserialize, Eq)]
-pub struct RojoRef(Option<Arc<str>>);
+pub struct RojoRef(Arc<String>);
 
 impl RojoRef {
     #[inline]
-    pub fn none() -> Self {
-        Self(None)
+    pub fn new(id: String) -> Self {
+        Self(Arc::from(id))
     }
 
     #[inline]
-    pub fn some(id: String) -> Self {
-        Self(Some(Arc::from(id)))
-    }
-
-    #[inline]
-    pub fn is_some(&self) -> bool {
-        self.0.is_some()
-    }
-
-    #[inline]
-    pub fn as_str(&self) -> Option<&str> {
-        self.0.as_ref().map(AsRef::as_ref)
-    }
-}
-
-impl From<Option<String>> for RojoRef {
-    fn from(value: Option<String>) -> Self {
-        Self(value.map(Arc::from))
-    }
-}
-
-impl From<Arc<str>> for RojoRef {
-    fn from(value: Arc<str>) -> Self {
-        Self(Some(value))
+    pub fn as_str(&self) -> &str {
+        self.0.as_str()
     }
 }

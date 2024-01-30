@@ -111,11 +111,12 @@ fn compute_patch_set_internal(
     patch_set: &mut PatchSet,
 ) {
     if snapshot.snapshot_id.is_some() {
-        let specified_id = take(&mut snapshot.metadata.specified_id);
-        context
-            .snapshot_id_to_specified_id
-            .insert(snapshot.snapshot_id, specified_id.clone());
-        context.specified_id_to_instance_id.insert(specified_id, id);
+        if let Some(specified_id) = snapshot.metadata.specified_id.take() {
+            context
+                .snapshot_id_to_specified_id
+                .insert(snapshot.snapshot_id, specified_id.clone());
+            context.specified_id_to_instance_id.insert(specified_id, id);
+        }
     }
 
     let instance = tree

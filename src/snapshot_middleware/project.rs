@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::HashMap, path::Path, sync::Arc};
+use std::{borrow::Cow, collections::HashMap, path::Path};
 
 use anyhow::{bail, Context};
 use memofs::Vfs;
@@ -11,6 +11,7 @@ use crate::{
         InstanceContext, InstanceMetadata, InstanceSnapshot, InstigatingSource, PathIgnoreRule,
         SyncRule,
     },
+    RojoRef,
 };
 
 use super::{emit_legacy_scripts_default, snapshot_from_vfs};
@@ -278,7 +279,7 @@ pub fn snapshot_project_node(
     }
 
     if let Some(id) = &node.id {
-        metadata.specified_id = Arc::clone(id).into()
+        metadata.specified_id = Some(RojoRef::new(id.clone()))
     }
 
     metadata.instigating_source = Some(InstigatingSource::ProjectNode(
