@@ -164,7 +164,7 @@ function SettingsPage:render()
 			PlaySoloAutoConnect = e(Setting, {
 				id = "playSoloAutoConnect",
 				name = "Play Solo Auto Connect",
-				description = "Automatically connect to Rojo in Play Solo from the server when connected in Edit",
+				description = "Automatically connect game server to Rojo when playtesting while connected in Edit",
 				experimental = true,
 				transparency = self.props.transparency,
 				layoutOrder = layoutIncrement(),
