@@ -112,14 +112,6 @@ function SettingsPage:render()
 				layoutOrder = layoutIncrement(),
 			}),
 
-			PlaySoloAutoConnect = e(Setting, {
-				id = "playSoloAutoConnect",
-				name = "Play Solo Auto Connect",
-				description = "Automatically connect to Rojo in Play Solo from the server when connected in Edit",
-				transparency = self.props.transparency,
-				layoutOrder = layoutIncrement(),
-			}),
-
 			ConfirmationBehavior = e(Setting, {
 				id = "confirmationBehavior",
 				name = "Confirmation Behavior",
@@ -165,6 +157,15 @@ function SettingsPage:render()
 				id = "playSounds",
 				name = "Play Sounds",
 				description = "Toggle sound effects",
+				transparency = self.props.transparency,
+				layoutOrder = layoutIncrement(),
+			}),
+
+			PlaySoloAutoConnect = e(Setting, {
+				id = "playSoloAutoConnect",
+				name = "Play Solo Auto Connect",
+				description = "Automatically connect to Rojo in Play Solo from the server when connected in Edit",
+				experimental = true,
 				transparency = self.props.transparency,
 				layoutOrder = layoutIncrement(),
 			}),
