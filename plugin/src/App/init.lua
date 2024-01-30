@@ -368,7 +368,7 @@ function App:isPlaySoloAutoConnectAvailable()
 	return RunService:IsRunMode()
 		and RunService:IsServer()
 		and Settings:get("playSoloAutoConnect")
-		and workspace:GetAttribute("__RojoConnectionInfo")
+		and workspace:GetAttribute("__RojoConnectionUrl")
 end
 
 function App:isPlaySoloAutoConnectWriteable()
@@ -381,7 +381,7 @@ function App:setRunningConnectionInfo(baseUrl: string)
 	end
 
 	Log.trace("Setting connection info for play solo auto-connect")
-	workspace:SetAttribute("__RojoConnectionInfo", baseUrl)
+	workspace:SetAttribute("__RojoConnectionUrl", baseUrl)
 end
 
 function App:clearRunningConnectionInfo()
@@ -391,11 +391,11 @@ function App:clearRunningConnectionInfo()
 	end
 
 	Log.trace("Clearing connection info for play solo auto-connect")
-	workspace:SetAttribute("__RojoConnectionInfo", nil)
+	workspace:SetAttribute("__RojoConnectionUrl", nil)
 end
 
 function App:useRunningConnectionInfo()
-	local connectionInfo = workspace:GetAttribute("__RojoConnectionInfo")
+	local connectionInfo = workspace:GetAttribute("__RojoConnectionUrl")
 	if not connectionInfo then
 		return
 	end
