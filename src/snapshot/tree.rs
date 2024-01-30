@@ -1,5 +1,6 @@
 use std::{
     collections::{HashMap, VecDeque},
+    mem::replace,
     path::{Path, PathBuf},
 };
 
@@ -36,9 +37,6 @@ pub struct RojoTree {
 
     /// A map of specified RojoRefs to the actual underlying Ref they represent.
     specified_id_to_refs: HashMap<RojoRef, Ref>,
-
-    /// A map of Refs in the tree to the RojoRef they represent.
-    refs_to_specified_id: HashMap<Ref, RojoRef>,
 }
 
 impl RojoTree {
@@ -52,7 +50,6 @@ impl RojoTree {
             metadata_map: HashMap::new(),
             path_to_ids: MultiMap::new(),
             specified_id_to_refs: HashMap::new(),
-            refs_to_specified_id: HashMap::new(),
         };
 
         let root_ref = tree.inner.root_ref();
@@ -146,6 +143,11 @@ impl RojoTree {
                     }
                 }
 
+                if existing_metadata.specified_id != metadata.specified_id {
+                    self.specified_id_to_refs
+                        .insert(metadata.specified_id.clone(), id);
+                }
+
                 entry.insert(metadata);
             }
             Entry::Vacant(entry) => {
@@ -174,10 +176,10 @@ impl RojoTree {
     }
 
     pub fn set_specified_id(&mut self, id: Ref, specified: RojoRef) {
-        if let Some(old) = self.refs_to_specified_id.remove(&id) {
-            self.specified_id_to_refs.remove(&old);
+        if let Some(metadata) = self.metadata_map.get_mut(&id) {
+            let old_id = replace(&mut metadata.specified_id, specified.clone());
+            self.specified_id_to_refs.remove(&old_id);
         }
-        self.refs_to_specified_id.insert(id, specified.clone());
         self.specified_id_to_refs.insert(specified, id);
     }
 
@@ -204,6 +206,8 @@ impl RojoTree {
     /// tree into some loose maps.
     fn remove_metadata(&mut self, id: Ref) {
         let metadata = self.metadata_map.remove(&id).unwrap();
+
+        self.specified_id_to_refs.remove(&metadata.specified_id);
 
         for path in &metadata.relevant_paths {
             self.path_to_ids.remove(path, id);
