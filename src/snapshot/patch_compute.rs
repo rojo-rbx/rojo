@@ -8,8 +8,6 @@ use std::{
 
 use rbx_dom_weak::types::{Ref, Variant};
 
-use crate::RojoRef;
-
 use super::{
     patch::{PatchAdd, PatchSet, PatchUpdate},
     InstanceSnapshot, InstanceWithMeta, RojoTree,
@@ -26,7 +24,7 @@ pub fn compute_patch_set(snapshot: Option<InstanceSnapshot>, tree: &RojoTree, id
 
         // Rewrite Ref properties to refer to instance IDs instead of snapshot IDs
         // for all of the IDs that we know about so far.
-        rewrite_refs_in_updates(tree, &context, &mut patch_set.updated_instances);
+        rewrite_refs_in_updates(&context, &mut patch_set.updated_instances);
         rewrite_refs_in_additions(&context, &mut patch_set.added_instances);
     } else if id != tree.get_root_id() {
         patch_set.removed_instances.push(id);
@@ -37,35 +35,15 @@ pub fn compute_patch_set(snapshot: Option<InstanceSnapshot>, tree: &RojoTree, id
 
 #[derive(Default)]
 struct ComputePatchContext {
-    /// A map of snapshot IDs to user-specified IDs
-    snapshot_id_to_specified_id: HashMap<Ref, RojoRef>,
-    /// A map of user-specified IDs to Instance Refs
-    specified_id_to_instance_id: HashMap<RojoRef, Ref>,
+    snapshot_id_to_instance_id: HashMap<Ref, Ref>,
 }
 
-fn rewrite_refs_in_updates(
-    tree: &RojoTree,
-    context: &ComputePatchContext,
-    updates: &mut [PatchUpdate],
-) {
+fn rewrite_refs_in_updates(context: &ComputePatchContext, updates: &mut [PatchUpdate]) {
     for update in updates {
-        for (name, property_value) in update.changed_properties.iter_mut() {
+        for property_value in update.changed_properties.values_mut() {
             if let Some(Variant::Ref(referent)) = property_value {
-                if let Some(specified_ref) = context.snapshot_id_to_specified_id.get(referent) {
-                    *property_value = Some(Variant::Ref(
-                        *context
-                            .specified_id_to_instance_id
-                            .get(specified_ref)
-                            .unwrap(),
-                    ));
-                } else if referent.is_some() {
-                    log::warn!(
-                        "Property {name} of {} is now an orphaned referent \
-                        and will not be updated correctly!",
-                        tree.get_instance(update.id)
-                            .expect("all snapshots in an update should exist in tree already")
-                            .name()
-                    )
+                if let Some(&instance_ref) = context.snapshot_id_to_instance_id.get(referent) {
+                    *property_value = Some(Variant::Ref(instance_ref));
                 }
             }
         }
@@ -79,21 +57,10 @@ fn rewrite_refs_in_additions(context: &ComputePatchContext, additions: &mut [Pat
 }
 
 fn rewrite_refs_in_snapshot(context: &ComputePatchContext, snapshot: &mut InstanceSnapshot) {
-    for (name, property_value) in snapshot.properties.iter_mut() {
+    for property_value in snapshot.properties.values_mut() {
         if let Variant::Ref(referent) = property_value {
-            if let Some(specified_ref) = context.snapshot_id_to_specified_id.get(referent) {
-                *property_value = Variant::Ref(
-                    *context
-                        .specified_id_to_instance_id
-                        .get(specified_ref)
-                        .unwrap(),
-                );
-            } else if referent.is_some() {
-                log::warn!(
-                    "Property {name} of {} is an orphaned reference and \
-                    will not be linked correctly",
-                    snapshot.name
-                );
+            if let Some(&instance_referent) = context.snapshot_id_to_instance_id.get(referent) {
+                *property_value = Variant::Ref(instance_referent);
             }
         }
     }
@@ -111,12 +78,9 @@ fn compute_patch_set_internal(
     patch_set: &mut PatchSet,
 ) {
     if snapshot.snapshot_id.is_some() {
-        if let Some(specified_id) = snapshot.metadata.specified_id.take() {
-            context
-                .snapshot_id_to_specified_id
-                .insert(snapshot.snapshot_id, specified_id.clone());
-            context.specified_id_to_instance_id.insert(specified_id, id);
-        }
+        context
+            .snapshot_id_to_instance_id
+            .insert(snapshot.snapshot_id, id);
     }
 
     let instance = tree
@@ -282,7 +246,7 @@ mod test {
         // addition of a prop named Self, which is a self-referential Ref.
         let snapshot_id = Ref::new();
         let snapshot = InstanceSnapshot {
-            snapshot_id,
+            snapshot_id: snapshot_id,
             properties: hashmap! {
                 "Self".to_owned() => Variant::Ref(snapshot_id),
             },
@@ -324,7 +288,7 @@ mod test {
         // This patch describes the existing instance with a new child added.
         let snapshot_id = Ref::new();
         let snapshot = InstanceSnapshot {
-            snapshot_id,
+            snapshot_id: snapshot_id,
             children: vec![InstanceSnapshot {
                 properties: hashmap! {
                     "Self".to_owned() => Variant::Ref(snapshot_id),
