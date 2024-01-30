@@ -1,0 +1,12 @@
+{
+  "name": "sync_rule_no_extension",
+  "tree": {
+    "$path": "src"
+  },
+  "syncRules": [
+    {
+      "pattern": "src/**",
+      "use": "json"
+    }
+  ]
+}

@@ -14,6 +14,7 @@ local StudioPluginGui = require(Plugin.App.Components.Studio.StudioPluginGui)
 local Tooltip = require(Plugin.App.Components.Tooltip)
 local PatchVisualizer = require(Plugin.App.Components.PatchVisualizer)
 local StringDiffVisualizer = require(Plugin.App.Components.StringDiffVisualizer)
+local TableDiffVisualizer = require(Plugin.App.Components.TableDiffVisualizer)
 
 local e = Roact.createElement
 
@@ -24,9 +25,12 @@ function ConfirmingPage:init()
 	self.containerSize, self.setContainerSize = Roact.createBinding(Vector2.new(0, 0))
 
 	self:setState({
-		showingSourceDiff = false,
-		oldSource = "",
-		newSource = "",
+		showingStringDiff = false,
+		oldString = "",
+		newString = "",
+		showingTableDiff = false,
+		oldTable = {},
+		newTable = {},
 	})
 end
 
@@ -47,7 +51,7 @@ function ConfirmingPage:render()
 				Font = Enum.Font.Gotham,
 				LineHeight = 1.2,
 				TextSize = 14,
-				TextColor3 = theme.Settings.Setting.DescriptionColor,
+				TextColor3 = theme.TextColor,
 				TextXAlignment = Enum.TextXAlignment.Left,
 				TextTransparency = self.props.transparency,
 				Size = UDim2.new(1, 0, 0, 20),
@@ -63,11 +67,18 @@ function ConfirmingPage:render()
 				patch = self.props.confirmData.patch,
 				instanceMap = self.props.confirmData.instanceMap,
 
-				showSourceDiff = function(oldSource: string, newSource: string)
+				showStringDiff = function(oldString: string, newString: string)
 					self:setState({
-						showingSourceDiff = true,
-						oldSource = oldSource,
-						newSource = newSource,
+						showingStringDiff = true,
+						oldString = oldString,
+						newString = newString,
+					})
+				end,
+				showTableDiff = function(oldTable: { [any]: any? }, newTable: { [any]: any? })
+					self:setState({
+						showingTableDiff = true,
+						oldTable = oldTable,
+						newTable = newTable,
 					})
 				end,
 			}),
@@ -136,10 +147,10 @@ function ConfirmingPage:render()
 				PaddingRight = UDim.new(0, 20),
 			}),
 
-			SourceDiff = e(StudioPluginGui, {
-				id = "Rojo_ConfirmingSourceDiff",
-				title = "Source diff",
-				active = self.state.showingSourceDiff,
+			StringDiff = e(StudioPluginGui, {
+				id = "Rojo_ConfirmingStringDiff",
+				title = "String diff",
+				active = self.state.showingStringDiff,
 				isEphemeral = true,
 
 				initDockState = Enum.InitialDockState.Float,
@@ -151,7 +162,7 @@ function ConfirmingPage:render()
 
 				onClose = function()
 					self:setState({
-						showingSourceDiff = false,
+						showingStringDiff = false,
 					})
 				end,
 			}, {
@@ -167,8 +178,46 @@ function ConfirmingPage:render()
 							anchorPoint = Vector2.new(0, 0),
 							transparency = self.props.transparency,
 
-							oldText = self.state.oldSource,
-							newText = self.state.newSource,
+							oldString = self.state.oldString,
+							newString = self.state.newString,
+						}),
+					}),
+				}),
+			}),
+
+			TableDiff = e(StudioPluginGui, {
+				id = "Rojo_ConfirmingTableDiff",
+				title = "Table diff",
+				active = self.state.showingTableDiff,
+				isEphemeral = true,
+
+				initDockState = Enum.InitialDockState.Float,
+				overridePreviousState = true,
+				floatingSize = Vector2.new(500, 350),
+				minimumSize = Vector2.new(400, 250),
+
+				zIndexBehavior = Enum.ZIndexBehavior.Sibling,
+
+				onClose = function()
+					self:setState({
+						showingTableDiff = false,
+					})
+				end,
+			}, {
+				TooltipsProvider = e(Tooltip.Provider, nil, {
+					Tooltips = e(Tooltip.Container, nil),
+					Content = e("Frame", {
+						Size = UDim2.fromScale(1, 1),
+						BackgroundTransparency = 1,
+					}, {
+						e(TableDiffVisualizer, {
+							size = UDim2.new(1, -10, 1, -10),
+							position = UDim2.new(0, 5, 0, 5),
+							anchorPoint = Vector2.new(0, 0),
+							transparency = self.props.transparency,
+
+							oldTable = self.state.oldTable,
+							newTable = self.state.newTable,
 						}),
 					}),
 				}),

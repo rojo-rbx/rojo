@@ -1,0 +1,9 @@
+{
+  "name": "qux",
+  "tree": {
+    "$className": "StringValue",
+    "$properties": {
+      "Value": "Hello, from qux (a .rojo file that's turned into a StringValue)!"
+    }
+  }
+}

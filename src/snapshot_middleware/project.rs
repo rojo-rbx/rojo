@@ -9,6 +9,7 @@ use crate::{
     project::{PathNode, Project, ProjectNode},
     snapshot::{
         InstanceContext, InstanceMetadata, InstanceSnapshot, InstigatingSource, PathIgnoreRule,
+        SyncRule,
     },
 };
 
@@ -23,12 +24,19 @@ pub fn snapshot_project(
         .with_context(|| format!("File was not a valid Rojo project: {}", path.display()))?;
 
     let mut context = context.clone();
+    context.clear_sync_rules();
 
     let rules = project.glob_ignore_paths.iter().map(|glob| PathIgnoreRule {
         glob: glob.clone(),
         base_path: project.folder_location().to_path_buf(),
     });
 
+    let sync_rules = project.sync_rules.iter().map(|rule| SyncRule {
+        base_path: project.folder_location().to_path_buf(),
+        ..rule.clone()
+    });
+
+    context.add_sync_rules(sync_rules);
     context.add_path_ignore_rules(rules);
     context.set_emit_legacy_scripts(
         project

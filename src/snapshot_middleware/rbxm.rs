@@ -5,16 +5,13 @@ use memofs::Vfs;
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
-use super::util::PathExt;
-
 #[profiling::function]
 pub fn snapshot_rbxm(
     context: &InstanceContext,
     vfs: &Vfs,
     path: &Path,
+    name: &str,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let name = path.file_name_trim_end(".rbxm")?;
-
     let temp_tree = rbx_binary::from_reader(vfs.read(path)?.as_slice())
         .with_context(|| format!("Malformed rbxm file: {}", path.display()))?;
 
@@ -63,6 +60,7 @@ mod test {
             &InstanceContext::default(),
             &mut vfs,
             Path::new("/foo.rbxm"),
+            "foo",
         )
         .unwrap()
         .unwrap();

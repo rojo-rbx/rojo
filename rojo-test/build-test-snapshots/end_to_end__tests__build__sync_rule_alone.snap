@@ -1,0 +1,18 @@
+---
+source: tests/tests/build.rs
+assertion_line: 102
+expression: contents
+---
+<roblox version="4">
+  <Item class="Folder" referent="0">
+    <Properties>
+      <string name="Name">sync_rule_alone</string>
+    </Properties>
+    <Item class="StringValue" referent="1">
+      <Properties>
+        <string name="Name">foo</string>
+        <string name="Value">Hello, world!</string>
+      </Properties>
+    </Item>
+  </Item>
+</roblox>

@@ -18,30 +18,37 @@ mod toml;
 mod txt;
 mod util;
 
-use std::path::Path;
+use std::{
+    path::{Path, PathBuf},
+    sync::OnceLock,
+};
 
+use anyhow::Context;
 use memofs::{IoResultExt, Vfs};
+use serde::{Deserialize, Serialize};
 
-use crate::snapshot::{InstanceContext, InstanceSnapshot};
+use crate::glob::Glob;
+use crate::snapshot::{InstanceContext, InstanceSnapshot, SyncRule};
 
 use self::{
     csv::{snapshot_csv, snapshot_csv_init},
     dir::snapshot_dir,
     json::snapshot_json,
     json_model::snapshot_json_model,
-    lua::{snapshot_lua, snapshot_lua_init},
+    lua::{snapshot_lua, snapshot_lua_init, ScriptType},
     project::snapshot_project,
     rbxm::snapshot_rbxm,
     rbxmx::snapshot_rbxmx,
     toml::snapshot_toml,
     txt::snapshot_txt,
-    util::PathExt,
 };
 
 pub use self::{project::snapshot_project_node, util::emit_legacy_scripts_default};
 
-/// The main entrypoint to the snapshot function. This function can be pointed
-/// at any path and will return something if Rojo knows how to deal with it.
+/// Returns an `InstanceSnapshot` for the provided path.
+/// This will inspect the path and find the appropriate middleware for it,
+/// taking user-written rules into account. Then, it will attempt to convert
+/// the path into an InstanceSnapshot using that middleware.
 #[profiling::function]
 pub fn snapshot_from_vfs(
     context: &InstanceContext,
@@ -54,89 +61,234 @@ pub fn snapshot_from_vfs(
     };
 
     if meta.is_dir() {
-        let project_path = path.join("default.project.json");
-        if vfs.metadata(&project_path).with_not_found()?.is_some() {
-            return snapshot_project(context, vfs, &project_path);
-        }
+        if let Some(init_path) = get_init_path(vfs, path)? {
+            // TODO: support user-defined init paths
+            for rule in default_sync_rules() {
+                if rule.matches(&init_path) {
+                    return match rule.middleware {
+                        Middleware::Project => snapshot_project(context, vfs, &init_path),
 
-        let init_path = path.join("init.luau");
-        if vfs.metadata(&init_path).with_not_found()?.is_some() {
-            return snapshot_lua_init(context, vfs, &init_path);
-        }
+                        Middleware::ModuleScript => {
+                            snapshot_lua_init(context, vfs, &init_path, ScriptType::Module)
+                        }
+                        Middleware::ServerScript => {
+                            snapshot_lua_init(context, vfs, &init_path, ScriptType::Server)
+                        }
+                        Middleware::ClientScript => {
+                            snapshot_lua_init(context, vfs, &init_path, ScriptType::Client)
+                        }
 
-        let init_path = path.join("init.lua");
-        if vfs.metadata(&init_path).with_not_found()?.is_some() {
-            return snapshot_lua_init(context, vfs, &init_path);
-        }
+                        Middleware::Csv => snapshot_csv_init(context, vfs, &init_path),
 
-        let init_path = path.join("init.server.luau");
-        if vfs.metadata(&init_path).with_not_found()?.is_some() {
-            return snapshot_lua_init(context, vfs, &init_path);
+                        _ => snapshot_dir(context, vfs, path),
+                    };
+                }
+            }
+            snapshot_dir(context, vfs, path)
+        } else {
+            snapshot_dir(context, vfs, path)
         }
-
-        let init_path = path.join("init.server.lua");
-        if vfs.metadata(&init_path).with_not_found()?.is_some() {
-            return snapshot_lua_init(context, vfs, &init_path);
-        }
-
-        let init_path = path.join("init.client.luau");
-        if vfs.metadata(&init_path).with_not_found()?.is_some() {
-            return snapshot_lua_init(context, vfs, &init_path);
-        }
-
-        let init_path = path.join("init.client.lua");
-        if vfs.metadata(&init_path).with_not_found()?.is_some() {
-            return snapshot_lua_init(context, vfs, &init_path);
-        }
-
-        let init_path = path.join("init.csv");
-        if vfs.metadata(&init_path).with_not_found()?.is_some() {
-            return snapshot_csv_init(context, vfs, &init_path);
-        }
-
-        snapshot_dir(context, vfs, path)
     } else {
-        let script_name = path
-            .file_name_trim_end(".lua")
-            .or_else(|_| path.file_name_trim_end(".luau"));
+        let file_name = path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .with_context(|| format!("file name of {} is invalid", path.display()))?;
 
-        let csv_name = path.file_name_trim_end(".csv");
-
-        if let Ok(name) = script_name {
-            match name {
-                // init scripts are handled elsewhere and should not turn into
-                // their own children.
-                "init" | "init.client" | "init.server" => return Ok(None),
-
-                _ => return snapshot_lua(context, vfs, path),
-            }
-        } else if path.file_name_ends_with(".project.json") {
-            return snapshot_project(context, vfs, path);
-        } else if path.file_name_ends_with(".model.json") {
-            return snapshot_json_model(context, vfs, path);
-        } else if path.file_name_ends_with(".meta.json") {
-            // .meta.json files do not turn into their own instances.
-            return Ok(None);
-        } else if path.file_name_ends_with(".json") {
-            return snapshot_json(context, vfs, path);
-        } else if path.file_name_ends_with(".toml") {
-            return snapshot_toml(context, vfs, path);
-        } else if let Ok(name) = csv_name {
-            match name {
-                // init csv are handled elsewhere and should not turn into
-                // their own children.
-                "init" => return Ok(None),
-
-                _ => return snapshot_csv(context, vfs, path),
-            }
-        } else if path.file_name_ends_with(".txt") {
-            return snapshot_txt(context, vfs, path);
-        } else if path.file_name_ends_with(".rbxmx") {
-            return snapshot_rbxmx(context, vfs, path);
-        } else if path.file_name_ends_with(".rbxm") {
-            return snapshot_rbxm(context, vfs, path);
+        // TODO: Is this even necessary anymore?
+        match file_name {
+            "init.server.luau" | "init.server.lua" | "init.client.luau" | "init.client.lua"
+            | "init.luau" | "init.lua" | "init.csv" => return Ok(None),
+            _ => {}
         }
 
-        Ok(None)
+        snapshot_from_path(context, vfs, path)
     }
+}
+
+/// Gets an `init` path for the given directory.
+/// This uses an intrinsic priority list and for compatibility,
+/// it should not be changed.
+fn get_init_path<P: AsRef<Path>>(vfs: &Vfs, dir: P) -> anyhow::Result<Option<PathBuf>> {
+    let path = dir.as_ref();
+
+    let project_path = path.join("default.project.json");
+    if vfs.metadata(&project_path).with_not_found()?.is_some() {
+        return Ok(Some(project_path));
+    }
+
+    let init_path = path.join("init.luau");
+    if vfs.metadata(&init_path).with_not_found()?.is_some() {
+        return Ok(Some(init_path));
+    }
+
+    let init_path = path.join("init.lua");
+    if vfs.metadata(&init_path).with_not_found()?.is_some() {
+        return Ok(Some(init_path));
+    }
+
+    let init_path = path.join("init.server.luau");
+    if vfs.metadata(&init_path).with_not_found()?.is_some() {
+        return Ok(Some(init_path));
+    }
+
+    let init_path = path.join("init.server.lua");
+    if vfs.metadata(&init_path).with_not_found()?.is_some() {
+        return Ok(Some(init_path));
+    }
+
+    let init_path = path.join("init.client.luau");
+    if vfs.metadata(&init_path).with_not_found()?.is_some() {
+        return Ok(Some(init_path));
+    }
+
+    let init_path = path.join("init.client.lua");
+    if vfs.metadata(&init_path).with_not_found()?.is_some() {
+        return Ok(Some(init_path));
+    }
+
+    let init_path = path.join("init.csv");
+    if vfs.metadata(&init_path).with_not_found()?.is_some() {
+        return Ok(Some(init_path));
+    }
+
+    Ok(None)
+}
+
+/// Gets a snapshot for a path given an InstanceContext and Vfs, taking
+/// user specified sync rules into account.
+fn snapshot_from_path(
+    context: &InstanceContext,
+    vfs: &Vfs,
+    path: &Path,
+) -> anyhow::Result<Option<InstanceSnapshot>> {
+    if let Some(rule) = context.get_user_sync_rule(path) {
+        return rule
+            .middleware
+            .snapshot(context, vfs, path, rule.file_name_for_path(path)?);
+    } else {
+        for rule in default_sync_rules() {
+            if rule.matches(path) {
+                return rule.middleware.snapshot(
+                    context,
+                    vfs,
+                    path,
+                    rule.file_name_for_path(path)?,
+                );
+            }
+        }
+    }
+    Ok(None)
+}
+
+/// Represents a possible 'transformer' used by Rojo to turn a file system
+/// item into a Roblox Instance. Missing from this list are directories and
+/// metadata. This is deliberate, as metadata is not a snapshot middleware
+/// and directories do not make sense to turn into files.
+#[derive(Debug, Clone, Copy, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum Middleware {
+    Csv,
+    JsonModel,
+    Json,
+    ServerScript,
+    ClientScript,
+    ModuleScript,
+    Project,
+    Rbxm,
+    Rbxmx,
+    Toml,
+    Text,
+    Ignore,
+}
+
+impl Middleware {
+    /// Creates a snapshot for the given path from the Middleware with
+    /// the provided name.
+    fn snapshot(
+        &self,
+        context: &InstanceContext,
+        vfs: &Vfs,
+        path: &Path,
+        name: &str,
+    ) -> anyhow::Result<Option<InstanceSnapshot>> {
+        match self {
+            Self::Csv => snapshot_csv(context, vfs, path, name),
+            Self::JsonModel => snapshot_json_model(context, vfs, path, name),
+            Self::Json => snapshot_json(context, vfs, path, name),
+            Self::ServerScript => snapshot_lua(context, vfs, path, name, ScriptType::Server),
+            Self::ClientScript => snapshot_lua(context, vfs, path, name, ScriptType::Client),
+            Self::ModuleScript => snapshot_lua(context, vfs, path, name, ScriptType::Module),
+            // At the moment, snapshot_project does not use `name` so we
+            // don't provide it.
+            Self::Project => snapshot_project(context, vfs, path),
+            Self::Rbxm => snapshot_rbxm(context, vfs, path, name),
+            Self::Rbxmx => snapshot_rbxmx(context, vfs, path, name),
+            Self::Toml => snapshot_toml(context, vfs, path, name),
+            Self::Text => snapshot_txt(context, vfs, path, name),
+            Self::Ignore => Ok(None),
+        }
+    }
+}
+
+/// A helper for easily defining a SyncRule. Arguments are passed literally
+/// to this macro in the order `include`, `middleware`, `suffix`,
+/// and `exclude`. Both `suffix` and `exclude` are optional.
+///
+/// All arguments except `middleware` are expected to be strings.
+/// The `middleware` parameter is expected to be a variant of `Middleware`,
+/// not including the enum name itself.
+macro_rules! sync_rule {
+    ($pattern:expr, $middleware:ident) => {
+        SyncRule {
+            middleware: Middleware::$middleware,
+            include: Glob::new($pattern).unwrap(),
+            exclude: None,
+            suffix: None,
+            base_path: PathBuf::new(),
+        }
+    };
+    ($pattern:expr, $middleware:ident, $suffix:expr) => {
+        SyncRule {
+            middleware: Middleware::$middleware,
+            include: Glob::new($pattern).unwrap(),
+            exclude: None,
+            suffix: Some($suffix.into()),
+            base_path: PathBuf::new(),
+        }
+    };
+    ($pattern:expr, $middleware:ident, $suffix:expr, $exclude:expr) => {
+        SyncRule {
+            middleware: Middleware::$middleware,
+            include: Glob::new($pattern).unwrap(),
+            exclude: Some(Glob::new($exclude).unwrap()),
+            suffix: Some($suffix.into()),
+            base_path: PathBuf::new(),
+        }
+    };
+}
+
+/// Defines the 'default' syncing rules that Rojo uses.
+/// These do not broadly overlap, but the order matters for some in the case of
+/// e.g. JSON models.
+fn default_sync_rules() -> &'static [SyncRule] {
+    static DEFAULT_SYNC_RULES: OnceLock<Vec<SyncRule>> = OnceLock::new();
+
+    DEFAULT_SYNC_RULES.get_or_init(|| {
+        vec![
+            sync_rule!("*.server.lua", ServerScript, ".server.lua"),
+            sync_rule!("*.server.luau", ServerScript, ".server.luau"),
+            sync_rule!("*.client.lua", ClientScript, ".client.lua"),
+            sync_rule!("*.client.luau", ClientScript, ".client.luau"),
+            sync_rule!("*.{lua,luau}", ModuleScript),
+            // Project middleware doesn't use the file name.
+            sync_rule!("*.project.json", Project),
+            sync_rule!("*.model.json", JsonModel, ".model.json"),
+            sync_rule!("*.json", Json, ".json", "*.meta.json"),
+            sync_rule!("*.toml", Toml),
+            sync_rule!("*.csv", Csv),
+            sync_rule!("*.txt", Text),
+            sync_rule!("*.rbxmx", Rbxmx),
+            sync_rule!("*.rbxm", Rbxm),
+        ]
+    })
 }

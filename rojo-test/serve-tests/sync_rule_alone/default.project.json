@@ -1,0 +1,12 @@
+{
+  "name": "sync_rule_alone",
+  "tree": {
+    "$path": "src"
+  },
+  "syncRules": [
+    {
+      "pattern": "*.nothing",
+      "use": "text"
+    }
+  ]
+}

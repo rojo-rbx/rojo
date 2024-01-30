@@ -9,14 +9,14 @@ use crate::{
     snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
 };
 
-use super::{meta_file::AdjacentMetadata, util::PathExt};
+use super::meta_file::AdjacentMetadata;
 
 pub fn snapshot_toml(
     context: &InstanceContext,
     vfs: &Vfs,
     path: &Path,
+    name: &str,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let name = path.file_name_trim_end(".toml")?;
     let contents = vfs.read(path)?;
 
     let value: toml::Value = toml::from_slice(&contents)
@@ -114,6 +114,7 @@ mod test {
             &InstanceContext::default(),
             &mut vfs,
             Path::new("/foo.toml"),
+            "foo",
         )
         .unwrap()
         .unwrap();
