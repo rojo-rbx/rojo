@@ -1,9 +1,7 @@
-use blake3::Hash;
 use memofs::Vfs;
 use std::{
     collections::{BTreeSet, HashMap},
     path::{Path, PathBuf},
-    rc::Rc,
     sync::OnceLock,
 };
 
@@ -22,17 +20,16 @@ use super::SyncbackRules;
 /// A glob that can be used to tell if a path contains a `.git` folder.
 static GIT_IGNORE_GLOB: OnceLock<Glob> = OnceLock::new();
 
+#[derive(Clone, Copy)]
 pub struct SyncbackData<'new, 'old> {
     pub(super) vfs: &'old Vfs,
     pub(super) old_tree: &'old RojoTree,
     pub(super) new_tree: &'new WeakDom,
     pub(super) syncback_rules: Option<&'old SyncbackRules>,
-    pub(super) new_hashes: HashMap<Ref, (Hash, Hash)>,
-    pub(super) old_hashes: HashMap<Ref, (Hash, Hash)>,
 }
 
 pub struct SyncbackSnapshot<'new, 'old> {
-    pub data: Rc<SyncbackData<'new, 'old>>,
+    pub data: SyncbackData<'new, 'old>,
     pub old: Option<Ref>,
     pub new: Ref,
     pub parent_path: PathBuf,
@@ -45,7 +42,7 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
     #[inline]
     pub fn with_parent(&self, new_name: String, new_ref: Ref, old_ref: Option<Ref>) -> Self {
         Self {
-            data: Rc::clone(&self.data),
+            data: self.data,
             old: old_ref,
             new: new_ref,
             parent_path: self.parent_path.join(&self.name),
@@ -186,36 +183,6 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
             }
         }
         true
-    }
-
-    /// Returns whether two Instances are equal, using their hash for O(1)
-    /// comparisons. This comparison **does not** take descendants into account.
-    #[inline]
-    pub fn trees_are_eq(&self) -> bool {
-        let old_hashes = self
-            .old
-            .and_then(|referent| self.data.old_hashes.get(&referent));
-        let new_hashes = self.data.new_hashes.get(&self.new);
-
-        match (old_hashes, new_hashes) {
-            (Some((old_hash, _)), Some((new_hash, _))) => old_hash == new_hash,
-            _ => false,
-        }
-    }
-
-    /// Returns whether two Instance trees are equal, using their hash for O(1)
-    /// comparisons. This comparison **does** take descendants into account.
-    #[inline]
-    pub fn trees_are_deep_eq(&self) -> bool {
-        let old_hashes = self
-            .old
-            .and_then(|referent| self.data.old_hashes.get(&referent));
-        let new_hashes = self.data.new_hashes.get(&self.new);
-
-        match (old_hashes, new_hashes) {
-            (Some((_, old_hash)), Some((_, new_hash))) => old_hash == new_hash,
-            _ => false,
-        }
     }
 
     /// Returns an Instance from the old tree with the provided referent, if it

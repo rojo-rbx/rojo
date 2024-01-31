@@ -12,42 +12,6 @@ use std::collections::{HashMap, VecDeque};
 
 use crate::variant_eq::variant_eq;
 
-/// Returns a map of hashes for every Instance contained in the DOM.
-/// Hashes are mapped to the Instance's referent.
-///
-/// The first hash in each tuple is the Instance's hash with no descendants,
-/// the second is one using descendants.
-pub fn hash_tree_both(dom: &WeakDom) -> HashMap<Ref, (Hash, Hash)> {
-    let mut map: HashMap<Ref, (Hash, Hash)> = HashMap::new();
-    let mut order = descendants(dom);
-
-    let mut prop_list = Vec::with_capacity(2);
-
-    while let Some(referent) = order.pop() {
-        let inst = dom.get_by_ref(referent).unwrap();
-        let mut hasher = hash_inst_no_descendants(inst, &mut prop_list);
-        let no_descendants = hasher.finalize();
-
-        let mut child_list = Vec::with_capacity(inst.children().len());
-
-        for child in inst.children() {
-            if let Some((_, descendant)) = map.get(child) {
-                child_list.push(descendant.as_bytes())
-            } else {
-                panic!("Invariant: child {} not hashed before its parent", child);
-            }
-        }
-        child_list.sort_unstable();
-        for hash in child_list {
-            hasher.update(hash);
-        }
-
-        map.insert(referent, (no_descendants, hasher.finalize()));
-    }
-
-    map
-}
-
 /// Returns a map of every `Ref` in the `WeakDom` to a hashed version of the
 /// `Instance` it points to, including the properties but not including the
 /// descendants of the Instance.
@@ -86,22 +50,9 @@ pub fn hash_tree(dom: &WeakDom) -> HashMap<Ref, Hash> {
 
     while let Some(referent) = order.pop() {
         let inst = dom.get_by_ref(referent).unwrap();
-        let mut hasher = hash_inst_no_descendants(inst, &mut prop_list);
+        let hash = hash_inst(inst, &mut prop_list, &map);
 
-        let mut child_list = Vec::with_capacity(inst.children().len());
-        for child in inst.children() {
-            if let Some(hash) = map.get(child) {
-                child_list.push(hash.as_bytes())
-            } else {
-                panic!("Invariant: child {} not hashed before its parent", child);
-            }
-        }
-        child_list.sort_unstable();
-        for hash in child_list {
-            hasher.update(hash);
-        }
-
-        map.insert(referent, hasher.finalize());
+        map.insert(referent, hash);
     }
 
     map
@@ -141,6 +92,34 @@ fn hash_inst_no_descendants<'inst>(
     prop_list.clear();
 
     hasher
+}
+
+/// Hashes an Instance using its class, name, properties, and descendants.
+/// The passed `prop_list` is used to sort properties before hashing them.
+///
+/// # Panics
+/// If any children of the Instance are inside `map`, this function will panic.
+fn hash_inst<'inst>(
+    inst: &'inst Instance,
+    prop_list: &mut Vec<(&'inst str, &'inst Variant)>,
+    map: &HashMap<Ref, Hash>,
+) -> Hash {
+    let mut hasher = hash_inst_no_descendants(inst, prop_list);
+    let mut child_list = Vec::with_capacity(inst.children().len());
+
+    for child in inst.children() {
+        if let Some(hash) = map.get(child) {
+            child_list.push(hash.as_bytes())
+        } else {
+            panic!("Invariant: child {} not hashed before its parent", child);
+        }
+    }
+    child_list.sort_unstable();
+    for hash in child_list {
+        hasher.update(hash);
+    }
+
+    hasher.finalize()
 }
 
 pub(crate) fn descendants(dom: &WeakDom) -> Vec<Ref> {
