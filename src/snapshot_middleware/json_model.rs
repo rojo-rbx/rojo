@@ -66,26 +66,29 @@ pub fn syncback_json_model<'new, 'old>(
 ) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
     let path = snapshot.parent_path.join(file_name);
 
-    let new_inst = snapshot.new_inst();
+    let model = json_model_from_pair(snapshot, snapshot.new, snapshot.old);
+
+    Ok(SyncbackReturn {
+        inst_snapshot: InstanceSnapshot::from_instance(snapshot.new_inst()),
+        fs_snapshot: FsSnapshot::new().with_added_file(
+            path,
+            serde_json::to_vec_pretty(&model).context("failed to serialize new JSON Model")?,
+        ),
+        children: Vec::new(),
+        removed_children: Vec::new(),
+    })
+}
+
+fn json_model_from_pair(snapshot: &SyncbackSnapshot, new: Ref, old: Option<Ref>) -> JsonModel {
+    let new_inst = snapshot
+        .get_new_instance(new)
+        .expect("all new referents passed to json_model_from_pair should exist");
+    let old_inst = old.and_then(|r| snapshot.get_old_instance(r));
 
     let mut properties = BTreeMap::new();
     let mut attributes = BTreeMap::new();
-    for (name, value) in snapshot.new_filtered_properties() {
-        if name == "Attributes" || name == "AttributesSerialize" {
-            if let Variant::Attributes(attr) = value {
-                attributes.extend(attr.iter().map(|(name, value)| {
-                    (
-                        name.to_string(),
-                        UnresolvedValue::from_variant(value.clone(), &new_inst.class, name),
-                    )
-                }))
-            } else {
-                log::error!(
-                    "Property {name} should be Attributes but is {:?}",
-                    value.ty()
-                );
-            }
-        } else if let Variant::Ref(_) = value {
+    for (name, value) in snapshot.get_filtered_properties(new, old).unwrap() {
+        if let Variant::Ref(_) = value {
             // We do not currently support Ref properties
             continue;
         } else {
@@ -95,27 +98,49 @@ pub fn syncback_json_model<'new, 'old>(
             );
         }
     }
+    if let Some(Variant::Attributes(attrs)) = new_inst.properties.get("Attributes") {
+        for (attr_name, attr_value) in attrs.iter() {
+            attributes.insert(
+                attr_name.clone(),
+                UnresolvedValue::FullyQualified(attr_value.clone()),
+            );
+        }
+    }
 
-    let model = JsonModel {
+    let mut children = Vec::with_capacity(new_inst.children().len());
+
+    if let Some(old_inst) = old_inst {
+        let mut old_child_map = HashMap::with_capacity(old_inst.children().len());
+        for child_ref in old_inst.children() {
+            let inst = snapshot.get_old_instance(*child_ref).unwrap();
+            old_child_map.insert(inst.name(), *child_ref);
+        }
+
+        for new_child_ref in new_inst.children() {
+            let new_child = snapshot.get_new_instance(*new_child_ref).unwrap();
+            if let Some(old_child) = old_child_map.remove(new_child.name.as_str()) {
+                children.push(json_model_from_pair(
+                    snapshot,
+                    *new_child_ref,
+                    Some(old_child),
+                ))
+            } else {
+                children.push(json_model_from_pair(snapshot, new, None))
+            }
+        }
+    } else {
+        for new_child_ref in new_inst.children() {
+            children.push(json_model_from_pair(snapshot, *new_child_ref, None))
+        }
+    }
+
+    JsonModel {
         name: Some(new_inst.name.clone()),
         class_name: new_inst.class.clone(),
-        children: Vec::new(),
+        children,
         properties,
         attributes,
-    };
-
-    // TODO Do we want children to be included in a JSON model?
-    // Feels unlikely, since it could be very dense in the case of e.g. Tools
-
-    Ok(SyncbackReturn {
-        inst_snapshot: InstanceSnapshot::from_instance(new_inst),
-        fs_snapshot: FsSnapshot::new().with_added_file(
-            path,
-            serde_json::to_vec_pretty(&model).context("failed to serialize new JSON Model")?,
-        ),
-        children: Vec::new(),
-        removed_children: Vec::new(),
-    })
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize)]
