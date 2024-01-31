@@ -442,8 +442,8 @@ function PatchTree.updateMetadata(tree, patch, instanceMap, unappliedPatch)
 				then failedChange.changedName ~= nil -- Name is not in changedProperties, so it needs a special case
 				else failedChange.changedProperties[property] ~= nil
 
-			if propertyFailedToApply then
-				-- This change didn't fail
+			if not propertyFailedToApply then
+				-- This change didn't fail, no need to mark
 				continue
 			end
 			if change[4] == nil then
