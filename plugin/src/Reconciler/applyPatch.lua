@@ -175,7 +175,13 @@ local function applyPatch(instanceMap, patch)
 		end
 
 		if update.changedName ~= nil then
-			instance.Name = update.changedName
+			local ok = pcall(function()
+				instance.Name = update.changedName
+			end)
+			if not ok then
+				unappliedUpdate.changedName = update.changedName
+				partiallyApplied = true
+			end
 		end
 
 		if update.changedMetadata ~= nil then
