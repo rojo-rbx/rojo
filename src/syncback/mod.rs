@@ -6,7 +6,10 @@ use anyhow::Context;
 use memofs::Vfs;
 use rbx_dom_weak::{types::Ref, Instance, WeakDom};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, VecDeque};
+use std::{
+    collections::{HashMap, HashSet, VecDeque},
+    sync::OnceLock,
+};
 
 use crate::{
     glob::Glob,
