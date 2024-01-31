@@ -25,10 +25,15 @@ local function applyPatch(instanceMap, patch)
 	local unappliedPatch = PatchSet.newEmpty()
 
 	for _, removedIdOrInstance in ipairs(patch.removed) do
-		if Types.RbxId(removedIdOrInstance) then
-			instanceMap:destroyId(removedIdOrInstance)
-		else
-			instanceMap:destroyInstance(removedIdOrInstance)
+		local ok = pcall(function()
+			if Types.RbxId(removedIdOrInstance) then
+				instanceMap:destroyId(removedIdOrInstance)
+			else
+				instanceMap:destroyInstance(removedIdOrInstance)
+			end
+		end)
+		if not ok then
+			table.insert(unappliedPatch.removed, removedIdOrInstance)
 		end
 	end
 
