@@ -158,11 +158,29 @@ function App:init()
 			},
 		})
 	end
+
+	if self:isAutoConnectPlaytestServerAvailable() then
+		self:useRunningConnectionInfo()
+		self:startSession()
+	end
+	self.autoConnectPlaytestServerListener = Settings:onChanged("autoConnectPlaytestServer", function(enabled)
+		if enabled then
+			if self:isAutoConnectPlaytestServerWriteable() and self.serveSession ~= nil then
+				-- Write the existing session
+				local baseUrl = self.serveSession.__apiContext.__baseUrl
+				self:setRunningConnectionInfo(baseUrl)
+			end
+		else
+			self:clearRunningConnectionInfo()
+		end
+	end)
 end
 
 function App:willUnmount()
 	self.waypointConnection:Disconnect()
 	self.confirmationBindable:Destroy()
+	self.autoConnectPlaytestServerListener()
+	self:clearRunningConnectionInfo()
 end
 
 function App:addNotification(
@@ -278,10 +296,7 @@ function App:getHostAndPort()
 	local host = self.host:getValue()
 	local port = self.port:getValue()
 
-	local host = if #host > 0 then host else Config.defaultHost
-	local port = if #port > 0 then port else Config.defaultPort
-
-	return host, port
+	return if #host > 0 then host else Config.defaultHost, if #port > 0 then port else Config.defaultPort
 end
 
 function App:isSyncLockAvailable()
@@ -347,6 +362,49 @@ function App:releaseSyncLock()
 	end
 
 	Log.trace("Could not relase sync lock because it is owned by {}", lock.Value)
+end
+
+function App:isAutoConnectPlaytestServerAvailable()
+	return RunService:IsRunMode()
+		and RunService:IsServer()
+		and Settings:get("autoConnectPlaytestServer")
+		and workspace:GetAttribute("__Rojo_ConnectionUrl")
+end
+
+function App:isAutoConnectPlaytestServerWriteable()
+	return RunService:IsEdit() and Settings:get("autoConnectPlaytestServer")
+end
+
+function App:setRunningConnectionInfo(baseUrl: string)
+	if not self:isAutoConnectPlaytestServerWriteable() then
+		return
+	end
+
+	Log.trace("Setting connection info for play solo auto-connect")
+	workspace:SetAttribute("__Rojo_ConnectionUrl", baseUrl)
+end
+
+function App:clearRunningConnectionInfo()
+	if not RunService:IsEdit() then
+		-- Only write connection info from edit mode
+		return
+	end
+
+	Log.trace("Clearing connection info for play solo auto-connect")
+	workspace:SetAttribute("__Rojo_ConnectionUrl", nil)
+end
+
+function App:useRunningConnectionInfo()
+	local connectionInfo = workspace:GetAttribute("__Rojo_ConnectionUrl")
+	if not connectionInfo then
+		return
+	end
+
+	Log.trace("Using connection info for play solo auto-connect")
+	local host, port = string.match(connectionInfo, "^(.+):(.-)$")
+
+	self.setHost(host)
+	self.setPort(port)
 end
 
 function App:startSession()
@@ -441,6 +499,7 @@ function App:startSession()
 			self:addNotification("Connecting to session...")
 		elseif status == ServeSession.Status.Connected then
 			self.knownProjects[details] = true
+			self:setRunningConnectionInfo(baseUrl)
 
 			local address = ("%s:%s"):format(host, port)
 			self:setState({
@@ -453,6 +512,7 @@ function App:startSession()
 		elseif status == ServeSession.Status.Disconnected then
 			self.serveSession = nil
 			self:releaseSyncLock()
+			self:clearRunningConnectionInfo()
 			self:setState({
 				patchData = {
 					patch = PatchSet.newEmpty(),
@@ -485,6 +545,12 @@ function App:startSession()
 	serveSession:setConfirmCallback(function(instanceMap, patch, serverInfo)
 		if PatchSet.isEmpty(patch) then
 			Log.trace("Accepting patch without confirmation because it is empty")
+			return "Accept"
+		end
+
+		-- Play solo auto-connect does not require confirmation
+		if self:isAutoConnectPlaytestServerAvailable() then
+			Log.trace("Accepting patch without confirmation because play solo auto-connect is enabled")
 			return "Accept"
 		end
 
@@ -603,7 +669,7 @@ function App:render()
 		value = self.props.plugin,
 	}, {
 		e(Theme.StudioProvider, nil, {
-			e(Tooltip.Provider, nil, {
+			tooltip = e(Tooltip.Provider, nil, {
 				gui = e(StudioPluginGui, {
 					id = pluginName,
 					title = pluginName,

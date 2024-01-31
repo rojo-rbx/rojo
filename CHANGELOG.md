@@ -22,6 +22,7 @@
 
 * Added popout diff visualizer for table properties like Attributes and Tags ([#834])
 * Updated Theme to use Studio colors ([#838])
+* Added experimental setting for Auto Connect in playtests ([#840])
 * Projects may now specify rules for syncing files as if they had a different file extension. ([#813])
  	This is specified via a new field on project files, `syncRules`:
 
@@ -72,6 +73,7 @@
 [#813]: https://github.com/rojo-rbx/rojo/pull/813
 [#834]: https://github.com/rojo-rbx/rojo/pull/834
 [#838]: https://github.com/rojo-rbx/rojo/pull/838
+[#840]: https://github.com/rojo-rbx/rojo/pull/840
 [#843]: https://github.com/rojo-rbx/rojo/pull/843
 
 ## [7.4.0] - January 16, 2024

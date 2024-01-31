@@ -14,6 +14,7 @@ local defaultSettings = {
 	twoWaySync = false,
 	showNotifications = true,
 	syncReminder = true,
+	autoConnectPlaytestServer = false,
 	confirmationBehavior = "Initial",
 	largeChangesConfirmationThreshold = 5,
 	playSounds = true,
