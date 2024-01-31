@@ -438,6 +438,7 @@ function PatchTree.updateMetadata(tree, patch, instanceMap, unappliedPatch)
 		end
 		for _, change in node.changeList do
 			if not failedChange.changedProperties[change[1]] then
+				-- This change didn't fail
 				continue
 			end
 			if change[4] == nil then
