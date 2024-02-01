@@ -83,8 +83,6 @@ function SettingsPage:render()
 	end
 
 	return Theme.with(function(theme)
-		theme = theme.Settings
-
 		return e(ScrollingFrame, {
 			size = UDim2.new(1, 0, 1, 0),
 			contentSize = self.contentSize,
@@ -187,27 +185,24 @@ function SettingsPage:render()
 						self.props.onNavigatePermissions()
 					end,
 				}, {
-					Button = Theme.with(function(theme)
-						theme = theme.Checkbox
-						return e(SlicedImage, {
-							slice = Assets.Slices.RoundedBackground,
-							color = theme.Active.BackgroundColor,
-							transparency = self.props.transparency,
-							size = UDim2.new(1, 0, 1, 0),
-						}, {
-							Icon = e("ImageLabel", {
-								Image = Assets.Images.Icons.Expand,
-								ImageColor3 = theme.Active.IconColor,
-								ImageTransparency = self.props.transparency,
+					Button = e(SlicedImage, {
+						slice = Assets.Slices.RoundedBackground,
+						color = theme.Checkbox.Active.BackgroundColor,
+						transparency = self.props.transparency,
+						size = UDim2.new(1, 0, 1, 0),
+					}, {
+						Icon = e("ImageLabel", {
+							Image = Assets.Images.Icons.Expand,
+							ImageColor3 = theme.Checkbox.Active.IconColor,
+							ImageTransparency = self.props.transparency,
 
-								Size = UDim2.new(0, 16, 0, 16),
-								Position = UDim2.new(0.5, 0, 0.5, 0),
-								AnchorPoint = Vector2.new(0.5, 0.5),
+							Size = UDim2.new(0, 16, 0, 16),
+							Position = UDim2.new(0.5, 0, 0.5, 0),
+							AnchorPoint = Vector2.new(0.5, 0.5),
 
-								BackgroundTransparency = 1,
-							}),
-						})
-					end),
+							BackgroundTransparency = 1,
+						}),
+					}),
 				}),
 			}),
 
