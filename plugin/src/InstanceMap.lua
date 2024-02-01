@@ -113,27 +113,29 @@ end
 function InstanceMap:destroyInstance(instance)
 	local id = self.fromInstances[instance]
 
+	local descendants = instance:GetDescendants()
+	instance:Destroy()
+
+	-- After the instance is successfully destroyed,
+	-- we can remove all the id mappings
+
 	if id ~= nil then
 		self:removeId(id)
 	end
 
-	for _, descendantInstance in ipairs(instance:GetDescendants()) do
+	for _, descendantInstance in descendants do
 		self:removeInstance(descendantInstance)
 	end
-
-	instance:Destroy()
 end
 
 function InstanceMap:destroyId(id)
 	local instance = self.fromIds[id]
-	self:removeId(id)
-
 	if instance ~= nil then
-		for _, descendantInstance in ipairs(instance:GetDescendants()) do
-			self:removeInstance(descendantInstance)
-		end
-
-		instance:Destroy()
+		self:destroyInstance(instance)
+	else
+		-- There is no instance with this id, so we can just remove the id
+		-- without worrying about instance destruction
+		self:removeId(id)
 	end
 end
 
