@@ -76,6 +76,12 @@ function SettingsPage:init()
 end
 
 function SettingsPage:render()
+	local layoutOrder = 0
+	local function layoutIncrement()
+		layoutOrder += 1
+		return layoutOrder
+	end
+
 	return Theme.with(function(theme)
 		theme = theme.Settings
 
@@ -87,7 +93,7 @@ function SettingsPage:render()
 			Navbar = e(Navbar, {
 				onBack = self.props.onBack,
 				transparency = self.props.transparency,
-				layoutOrder = 0,
+				layoutOrder = layoutIncrement(),
 			}),
 
 			ShowNotifications = e(Setting, {
@@ -95,7 +101,7 @@ function SettingsPage:render()
 				name = "Show Notifications",
 				description = "Popup notifications in viewport",
 				transparency = self.props.transparency,
-				layoutOrder = 1,
+				layoutOrder = layoutIncrement(),
 			}),
 
 			SyncReminder = e(Setting, {
@@ -104,7 +110,7 @@ function SettingsPage:render()
 				description = "Notify to sync when opening a place that has previously been synced",
 				transparency = self.props.transparency,
 				visible = Settings:getBinding("showNotifications"),
-				layoutOrder = 2,
+				layoutOrder = layoutIncrement(),
 			}),
 
 			ConfirmationBehavior = e(Setting, {
@@ -112,7 +118,7 @@ function SettingsPage:render()
 				name = "Confirmation Behavior",
 				description = "When to prompt for confirmation before syncing",
 				transparency = self.props.transparency,
-				layoutOrder = 3,
+				layoutOrder = layoutIncrement(),
 
 				options = confirmationBehaviors,
 			}),
@@ -122,7 +128,7 @@ function SettingsPage:render()
 				name = "Confirmation Threshold",
 				description = "How many modified instances to be considered a large change",
 				transparency = self.props.transparency,
-				layoutOrder = 4,
+				layoutOrder = layoutIncrement(),
 				visible = Settings:getBinding("confirmationBehavior"):map(function(value)
 					return value == "Large Changes"
 				end),
@@ -153,7 +159,16 @@ function SettingsPage:render()
 				name = "Play Sounds",
 				description = "Toggle sound effects",
 				transparency = self.props.transparency,
-				layoutOrder = 5,
+				layoutOrder = layoutIncrement(),
+			}),
+
+			AutoConnectPlaytestServer = e(Setting, {
+				id = "autoConnectPlaytestServer",
+				name = "Auto Connect Playtest Server",
+				description = "Automatically connect game server to Rojo when playtesting while connected in Edit",
+				experimental = true,
+				transparency = self.props.transparency,
+				layoutOrder = layoutIncrement(),
 			}),
 
 			Permissions = e(Setting, {
@@ -203,7 +218,7 @@ function SettingsPage:render()
 				locked = self.props.syncActive,
 				experimental = true,
 				transparency = self.props.transparency,
-				layoutOrder = 7,
+				layoutOrder = layoutIncrement(),
 			}),
 
 			TwoWaySync = e(Setting, {
@@ -213,7 +228,7 @@ function SettingsPage:render()
 				locked = self.props.syncActive,
 				experimental = true,
 				transparency = self.props.transparency,
-				layoutOrder = 8,
+				layoutOrder = layoutIncrement(),
 			}),
 
 			LogLevel = e(Setting, {
@@ -221,7 +236,7 @@ function SettingsPage:render()
 				name = "Log Level",
 				description = "Plugin output verbosity level",
 				transparency = self.props.transparency,
-				layoutOrder = 100,
+				layoutOrder = layoutIncrement(),
 
 				options = invertedLevels,
 				showReset = Settings:getBinding("logLevel"):map(function(value)
@@ -237,7 +252,7 @@ function SettingsPage:render()
 				name = "Typechecking",
 				description = "Toggle typechecking on the API surface",
 				transparency = self.props.transparency,
-				layoutOrder = 101,
+				layoutOrder = layoutIncrement(),
 			}),
 
 			Layout = e("UIListLayout", {

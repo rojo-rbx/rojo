@@ -426,22 +426,71 @@ function PatchTree.updateMetadata(tree, patch, instanceMap, unappliedPatch)
 	-- Update isWarning metadata
 	for _, failedChange in unappliedPatch.updated do
 		local node = tree:getNode(failedChange.id)
-		if node then
-			node.isWarning = true
-			Log.trace("Marked node as warning: {} {}", node.id, node.name)
-
-			if node.changeList then
-				for _, change in node.changeList do
-					if failedChange.changedProperties[change[1]] then
-						Log.trace("  Marked property as warning: {}", change[1])
-						if change[4] == nil then
-							change[4] = {}
-						end
-						change[4].isWarning = true
-					end
-				end
-			end
+		if not node then
+			continue
 		end
+
+		node.isWarning = true
+		Log.trace("Marked node as warning: {} {}", node.id, node.name)
+
+		if not node.changeList then
+			continue
+		end
+		for _, change in node.changeList do
+			local property = change[1]
+			local propertyFailedToApply = if property == "Name"
+				then failedChange.changedName ~= nil -- Name is not in changedProperties, so it needs a special case
+				else failedChange.changedProperties[property] ~= nil
+
+			if not propertyFailedToApply then
+				-- This change didn't fail, no need to mark
+				continue
+			end
+			if change[4] == nil then
+				change[4] = { isWarning = true }
+			else
+				change[4].isWarning = true
+			end
+			Log.trace("  Marked property as warning: {}.{}", node.name, property)
+		end
+	end
+	for failedAdditionId in unappliedPatch.added do
+		local node = tree:getNode(failedAdditionId)
+		if not node then
+			continue
+		end
+
+		node.isWarning = true
+		Log.trace("Marked node as warning: {} {}", node.id, node.name)
+
+		if not node.changeList then
+			continue
+		end
+		for _, change in node.changeList do
+			-- Failed addition means that all properties failed to be added
+			if change[4] == nil then
+				change[4] = { isWarning = true }
+			else
+				change[4].isWarning = true
+			end
+			Log.trace("  Marked property as warning: {}.{}", node.name, change[1])
+		end
+	end
+	for _, failedRemovalIdOrInstance in unappliedPatch.removed do
+		local failedRemovalId = if Types.RbxId(failedRemovalIdOrInstance)
+			then failedRemovalIdOrInstance
+			else instanceMap.fromInstances[failedRemovalIdOrInstance]
+		if not failedRemovalId then
+			continue
+		end
+
+		local node = tree:getNode(failedRemovalId)
+		if not node then
+			continue
+		end
+
+		node.isWarning = true
+		Log.trace("Marked node as warning: {} {}", node.id, node.name)
 	end
 
 	-- Update if instances exist
