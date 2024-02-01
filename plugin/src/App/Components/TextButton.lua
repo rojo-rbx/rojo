@@ -42,7 +42,7 @@ end
 function TextButton:render()
 	return Theme.with(function(theme)
 		local textSize =
-			TextService:GetTextSize(self.props.text, 18, Enum.Font.GothamSemibold, Vector2.new(math.huge, math.huge))
+			TextService:GetTextSize(self.props.text, 18, Enum.Font.GothamMedium, Vector2.new(math.huge, math.huge))
 
 		local style = self.props.style
 
@@ -83,7 +83,7 @@ function TextButton:render()
 
 			Text = e("TextLabel", {
 				Text = self.props.text,
-				Font = Enum.Font.GothamSemibold,
+				Font = Enum.Font.GothamMedium,
 				TextSize = 18,
 				TextColor3 = bindingUtil.mapLerp(bindingEnabled, theme.Enabled.TextColor, theme.Disabled.TextColor),
 				TextTransparency = self.props.transparency,
