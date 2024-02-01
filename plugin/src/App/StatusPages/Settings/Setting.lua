@@ -126,7 +126,7 @@ function Setting:render()
 							then '<font color="#FF8E3C">⚠ </font>'
 							elseif
 								self.props.developerDebug
-							then '<font family="rbxasset://fonts/families/Guru.json" color="#0D58E5">⚑ </font>' -- Guru is the only font with the flag emoji
+							then '<font family="rbxasset://fonts/families/Guru.json" color="#35B5FF">⚑ </font>' -- Guru is the only font with the flag emoji
 							else ""
 					) .. self.props.name,
 					Font = Enum.Font.GothamBold,
@@ -145,7 +145,7 @@ function Setting:render()
 				Description = e("TextLabel", {
 					Text = (if self.props.experimental
 						then '<font color="#FF8E3C">[Experimental] </font>'
-						elseif self.props.developerDebug then '<font color="#0D58E5">[Dev Debug] </font>'
+						elseif self.props.developerDebug then '<font color="#35B5FF">[Dev Debug] </font>'
 						else "") .. self.props.description,
 					Font = Enum.Font.Gotham,
 					LineHeight = 1.2,
