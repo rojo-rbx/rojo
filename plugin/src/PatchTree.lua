@@ -9,10 +9,9 @@ local Rojo = script:FindFirstAncestor("Rojo")
 local Plugin = Rojo.Plugin
 local Packages = Rojo.Packages
 
-local Timer = require(script.Parent.Timer)
-
 local Log = require(Packages.Log)
 
+local Timer = require(Plugin.Timer)
 local Types = require(Plugin.Types)
 local decodeValue = require(Plugin.Reconciler.decodeValue)
 local getProperty = require(Plugin.Reconciler.getProperty)

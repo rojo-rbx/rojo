@@ -3,10 +3,13 @@
 	and mutating the Roblox DOM.
 ]]
 
-local Packages = script.Parent.Parent.Packages
+local Rojo = script:FindFirstAncestor("Rojo")
+local Plugin = Rojo.Plugin
+local Packages = Rojo.Packages
+
 local Log = require(Packages.Log)
 
-local Timer = require(script.Parent.Timer)
+local Timer = require(Plugin.Timer)
 
 local applyPatch = require(script.applyPatch)
 local hydrate = require(script.hydrate)
