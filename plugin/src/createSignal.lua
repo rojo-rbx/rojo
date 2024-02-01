@@ -17,24 +17,19 @@
 local function createSignal()
 	local listeners = {}
 
-	local function connect(newListener)
-		local nextListeners = {}
-		for listener in pairs(listeners) do
-			nextListeners[listener] = true
-		end
+	local function disconnect(listener)
+		local nextListeners = table.clone(listeners)
+		nextListeners[listener] = nil
+		listeners = nextListeners
+	end
 
-		nextListeners[newListener] = true
+	local function connect(listener)
+		local nextListeners = table.clone(listeners)
+		nextListeners[listener] = true
 		listeners = nextListeners
 
 		return function()
-			local nextListeners = {}
-			for listener in pairs(listeners) do
-				if listener ~= newListener then
-					nextListeners[listener] = true
-				end
-			end
-
-			listeners = nextListeners
+			return disconnect(listener)
 		end
 	end
 
