@@ -3,7 +3,6 @@ local Plugin = Rojo.Plugin
 local Packages = Rojo.Packages
 
 local Roact = require(Packages.Roact)
-local Log = require(Packages.Log)
 
 local Assets = require(Plugin.Assets)
 local Theme = require(Plugin.App.Theme)

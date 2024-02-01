@@ -6,13 +6,9 @@ local Packages = Rojo.Packages
 
 local Roact = require(Packages.Roact)
 
-local Settings = require(Plugin.Settings)
 local Assets = require(Plugin.Assets)
 local Theme = require(Plugin.App.Theme)
 
-local Checkbox = require(Plugin.App.Components.Checkbox)
-local Dropdown = require(Plugin.App.Components.Dropdown)
-local IconButton = require(Plugin.App.Components.IconButton)
 local SlicedImage = require(Plugin.App.Components.SlicedImage)
 
 local e = Roact.createElement
