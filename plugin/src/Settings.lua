@@ -16,6 +16,7 @@ local defaultSettings = {
 	syncReminder = true,
 	checkForUpdates = false,
 	checkForPrereleases = false,
+	autoConnectPlaytestServer = false,
 	confirmationBehavior = "Initial",
 	largeChangesConfirmationThreshold = 5,
 	playSounds = true,

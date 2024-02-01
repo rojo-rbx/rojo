@@ -25,10 +25,15 @@ local function applyPatch(instanceMap, patch)
 	local unappliedPatch = PatchSet.newEmpty()
 
 	for _, removedIdOrInstance in ipairs(patch.removed) do
-		if Types.RbxId(removedIdOrInstance) then
-			instanceMap:destroyId(removedIdOrInstance)
-		else
-			instanceMap:destroyInstance(removedIdOrInstance)
+		local ok = pcall(function()
+			if Types.RbxId(removedIdOrInstance) then
+				instanceMap:destroyId(removedIdOrInstance)
+			else
+				instanceMap:destroyInstance(removedIdOrInstance)
+			end
+		end)
+		if not ok then
+			table.insert(unappliedPatch.removed, removedIdOrInstance)
 		end
 	end
 
@@ -170,7 +175,13 @@ local function applyPatch(instanceMap, patch)
 		end
 
 		if update.changedName ~= nil then
-			instance.Name = update.changedName
+			local ok = pcall(function()
+				instance.Name = update.changedName
+			end)
+			if not ok then
+				unappliedUpdate.changedName = update.changedName
+				partiallyApplied = true
+			end
 		end
 
 		if update.changedMetadata ~= nil then
