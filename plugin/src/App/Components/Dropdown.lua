@@ -167,7 +167,7 @@ function Dropdown:render()
 								self.setContentSize(object.AbsoluteContentSize)
 							end,
 						}),
-						Roact.createFragment(optionButtons),
+						Options = Roact.createFragment(optionButtons),
 					}),
 				})
 				else nil,

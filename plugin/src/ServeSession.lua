@@ -21,8 +21,8 @@ local Status = strict("Session.Status", {
 	Disconnected = "Disconnected",
 })
 
-local function debugPatch(patch)
-	return Fmt.debugify(patch, function(patch, output)
+local function debugPatch(object)
+	return Fmt.debugify(object, function(patch, output)
 		output:writeLine("Patch {{")
 		output:indent()
 
@@ -197,7 +197,7 @@ function ServeSession:__onActiveScriptChanged(activeScript)
 		local existingParent = activeScript.Parent
 		activeScript.Parent = nil
 
-		for i = 1, 3 do
+		for _ = 1, 3 do
 			RunService.Heartbeat:Wait()
 		end
 
@@ -251,7 +251,10 @@ function ServeSession:__initialSync(serverInfo)
 
 		if userDecision == "Abort" then
 			return Promise.reject("Aborted Rojo sync operation")
-		elseif userDecision == "Reject" and self.__twoWaySync then
+		elseif userDecision == "Reject" then
+			if not self.__twoWaySync then
+				return Promise.reject("Cannot reject sync operation without two-way sync enabled")
+			end
 			-- The user wants their studio DOM to write back to their Rojo DOM
 			-- so we will reverse the patch and send it back
 
@@ -268,7 +271,7 @@ function ServeSession:__initialSync(serverInfo)
 				table.insert(inversePatch.updated, update)
 			end
 			-- Add the removed instances back to Rojo
-			-- selene:allow(empty_if, unused_variable)
+			-- selene:allow(empty_if, unused_variable, empty_loop)
 			for _, instance in catchUpPatch.removed do
 				-- TODO: Generate ID for our instance and add it to inversePatch.added
 			end
@@ -277,7 +280,7 @@ function ServeSession:__initialSync(serverInfo)
 				table.insert(inversePatch.removed, id)
 			end
 
-			self.__apiContext:write(inversePatch)
+			return self.__apiContext:write(inversePatch)
 		elseif userDecision == "Accept" then
 			local unappliedPatch = self.__reconciler:applyPatch(catchUpPatch)
 
@@ -287,6 +290,10 @@ function ServeSession:__initialSync(serverInfo)
 					PatchSet.humanSummary(self.__instanceMap, unappliedPatch)
 				)
 			end
+
+			return Promise.resolve()
+		else
+			return Promise.reject("Invalid user decision: " .. userDecision)
 		end
 	end)
 end
