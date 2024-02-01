@@ -98,21 +98,16 @@ function DomLabel:render()
 		-- Line guides help indent depth remain readable
 		local lineGuides = {}
 		for i = 1, props.depth or 0 do
-			table.insert(
-				lineGuides,
-				e("Frame", {
-					Name = "Line_" .. i,
-					Size = UDim2.new(0, 2, 1, 2),
-					Position = UDim2.new(0, (20 * i) + 15, 0, -1),
-					BorderSizePixel = 0,
-					BackgroundTransparency = props.transparency,
-					BackgroundColor3 = theme.BorderedContainer.BorderColor,
-				})
-			)
+			lineGuides["Line_" .. i] = e("Frame", {
+				Size = UDim2.new(0, 2, 1, 2),
+				Position = UDim2.new(0, (20 * i) + 15, 0, -1),
+				BorderSizePixel = 0,
+				BackgroundTransparency = props.transparency,
+				BackgroundColor3 = theme.BorderedContainer.BorderColor,
+			})
 		end
 
 		return e("Frame", {
-			Name = "Change",
 			ClipsDescendants = true,
 			BackgroundColor3 = if props.patchType then theme.Diff[props.patchType] else nil,
 			BorderSizePixel = 0,

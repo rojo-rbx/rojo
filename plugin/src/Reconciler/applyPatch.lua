@@ -25,14 +25,14 @@ local function applyPatch(instanceMap, patch)
 	local unappliedPatch = PatchSet.newEmpty()
 
 	for _, removedIdOrInstance in ipairs(patch.removed) do
-		local ok = pcall(function()
+		local removeInstanceSuccess = pcall(function()
 			if Types.RbxId(removedIdOrInstance) then
 				instanceMap:destroyId(removedIdOrInstance)
 			else
 				instanceMap:destroyInstance(removedIdOrInstance)
 			end
 		end)
-		if not ok then
+		if not removeInstanceSuccess then
 			table.insert(unappliedPatch.removed, removedIdOrInstance)
 		end
 	end
@@ -175,10 +175,10 @@ local function applyPatch(instanceMap, patch)
 		end
 
 		if update.changedName ~= nil then
-			local ok = pcall(function()
+			local setNameSuccess = pcall(function()
 				instance.Name = update.changedName
 			end)
-			if not ok then
+			if not setNameSuccess then
 				unappliedUpdate.changedName = update.changedName
 				partiallyApplied = true
 			end
@@ -194,15 +194,15 @@ local function applyPatch(instanceMap, patch)
 
 		if update.changedProperties ~= nil then
 			for propertyName, propertyValue in pairs(update.changedProperties) do
-				local ok, decodedValue = decodeValue(propertyValue, instanceMap)
-				if not ok then
+				local decodeSuccess, decodedValue = decodeValue(propertyValue, instanceMap)
+				if not decodeSuccess then
 					unappliedUpdate.changedProperties[propertyName] = propertyValue
 					partiallyApplied = true
 					continue
 				end
 
-				local ok = setProperty(instance, propertyName, decodedValue)
-				if not ok then
+				local setPropertySuccess = setProperty(instance, propertyName, decodedValue)
+				if not setPropertySuccess then
 					unappliedUpdate.changedProperties[propertyName] = propertyValue
 					partiallyApplied = true
 				end

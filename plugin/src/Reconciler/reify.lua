@@ -53,9 +53,9 @@ function reifyInner(instanceMap, virtualInstances, id, parentInstance, unapplied
 	-- Instance.new can fail if we're passing in something that can't be
 	-- created, like a service, something enabled with a feature flag, or
 	-- something that requires higher security than we have.
-	local ok, instance = pcall(Instance.new, virtualInstance.ClassName)
+	local createSuccess, instance = pcall(Instance.new, virtualInstance.ClassName)
 
-	if not ok then
+	if not createSuccess then
 		addAllToPatch(unappliedPatch, virtualInstances, id)
 		return
 	end
@@ -80,14 +80,14 @@ function reifyInner(instanceMap, virtualInstances, id, parentInstance, unapplied
 			continue
 		end
 
-		local ok, value = decodeValue(virtualValue, instanceMap)
-		if not ok then
+		local decodeSuccess, value = decodeValue(virtualValue, instanceMap)
+		if not decodeSuccess then
 			unappliedProperties[propertyName] = virtualValue
 			continue
 		end
 
-		local ok = setProperty(instance, propertyName, value)
-		if not ok then
+		local setPropertySuccess = setProperty(instance, propertyName, value)
+		if not setPropertySuccess then
 			unappliedProperties[propertyName] = virtualValue
 		end
 	end
@@ -148,8 +148,8 @@ function applyDeferredRefs(instanceMap, deferredRefs, unappliedPatch)
 			continue
 		end
 
-		local ok = setProperty(entry.instance, entry.propertyName, targetInstance)
-		if not ok then
+		local setPropertySuccess = setProperty(entry.instance, entry.propertyName, targetInstance)
+		if not setPropertySuccess then
 			markFailed(entry.id, entry.propertyName, entry.virtualValue)
 		end
 	end
