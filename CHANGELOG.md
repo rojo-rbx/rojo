@@ -1,6 +1,7 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Fixed Rojo plugin failing to connect when project contains certain unreadable properties ([#848])
 * Added popout diff visualizer for table properties like Attributes and Tags ([#834])
 * Updated Theme to use Studio colors ([#838])
 * Added experimental setting for Auto Connect in playtests ([#840])
@@ -55,6 +56,7 @@
 [#834]: https://github.com/rojo-rbx/rojo/pull/834
 [#838]: https://github.com/rojo-rbx/rojo/pull/838
 [#840]: https://github.com/rojo-rbx/rojo/pull/840
+[#848]: https://github.com/rojo-rbx/rojo/pull/848
 
 ## [7.4.0] - January 16, 2024
 * Improved the visualization for array properties like Tags ([#829])
