@@ -9,6 +9,8 @@ local Rojo = script:FindFirstAncestor("Rojo")
 local Plugin = Rojo.Plugin
 local Packages = Rojo.Packages
 
+local Timer = require(script.Parent.Timer)
+
 local Log = require(Packages.Log)
 
 local Types = require(Plugin.Types)
@@ -122,6 +124,7 @@ end
 -- props must contain id, and cannot contain children or parentId
 -- other than those three, it can hold anything
 function Tree:addNode(parent, props)
+	Timer.start("Tree:addNode")
 	assert(props.id, "props must contain id")
 
 	parent = parent or "ROOT"
@@ -148,12 +151,14 @@ function Tree:addNode(parent, props)
 	parentNode.children[node.id] = node
 	self.idToNode[node.id] = node
 
+	Timer.stop()
 	return node
 end
 
 -- Given a list of ancestor ids in descending order, builds the nodes for them
 -- using the patch and instanceMap info
 function Tree:buildAncestryNodes(previousId: string?, ancestryIds: { string }, patch, instanceMap)
+	Timer.start("Tree:buildAncestryNodes")
 	-- Build nodes for ancestry by going up the tree
 	previousId = previousId or "ROOT"
 
@@ -171,6 +176,8 @@ function Tree:buildAncestryNodes(previousId: string?, ancestryIds: { string }, p
 		})
 		previousId = ancestorId
 	end
+
+	Timer.stop()
 end
 
 local PatchTree = {}
@@ -178,10 +185,12 @@ local PatchTree = {}
 -- Builds a new tree from a patch and instanceMap
 -- uses changeListHeaders in node.changeList
 function PatchTree.build(patch, instanceMap, changeListHeaders)
+	Timer.start("PatchTree.build")
 	local tree = Tree.new()
 
 	local knownAncestors = {}
 
+	Timer.start("patch.updated")
 	for _, change in patch.updated do
 		local instance = instanceMap.fromIds[change.id]
 		if not instance then
@@ -269,7 +278,9 @@ function PatchTree.build(patch, instanceMap, changeListHeaders)
 			changeList = changeList,
 		})
 	end
+	Timer.stop()
 
+	Timer.start("patch.removed")
 	for _, idOrInstance in patch.removed do
 		local instance = if Types.RbxId(idOrInstance) then instanceMap.fromIds[idOrInstance] else idOrInstance
 		if not instance then
@@ -311,7 +322,9 @@ function PatchTree.build(patch, instanceMap, changeListHeaders)
 			instance = instance,
 		})
 	end
+	Timer.stop()
 
+	Timer.start("patch.added")
 	for id, change in patch.added do
 		-- Gather ancestors from existing DOM or future additions
 		local ancestryIds = {}
@@ -395,12 +408,15 @@ function PatchTree.build(patch, instanceMap, changeListHeaders)
 			instance = instanceMap.fromIds[id],
 		})
 	end
+	Timer.stop()
 
+	Timer.stop()
 	return tree
 end
 
 -- Creates a deep copy of a tree for immutability purposes in Roact
 function PatchTree.clone(tree)
+	Timer.start("PatchTree.clone")
 	if not tree then
 		return
 	end
@@ -410,6 +426,8 @@ function PatchTree.clone(tree)
 		newTree:addNode(node.parentId, table.clone(node))
 	end)
 
+	Timer.stop()
+
 	return newTree
 end
 
@@ -417,6 +435,7 @@ end
 -- Builds a new tree from the data if one isn't provided
 -- Always returns a new tree for immutability purposes in Roact
 function PatchTree.updateMetadata(tree, patch, instanceMap, unappliedPatch)
+	Timer.start("PatchTree.updateMetadata")
 	if tree then
 		tree = PatchTree.clone(tree)
 	else
@@ -424,6 +443,7 @@ function PatchTree.updateMetadata(tree, patch, instanceMap, unappliedPatch)
 	end
 
 	-- Update isWarning metadata
+	Timer.start("isWarning")
 	for _, failedChange in unappliedPatch.updated do
 		local node = tree:getNode(failedChange.id)
 		if not node then
@@ -492,8 +512,10 @@ function PatchTree.updateMetadata(tree, patch, instanceMap, unappliedPatch)
 		node.isWarning = true
 		Log.trace("Marked node as warning: {} {}", node.id, node.name)
 	end
+	Timer.stop()
 
 	-- Update if instances exist
+	Timer.start("instanceAncestry")
 	tree:forEach(function(node)
 		if node.instance then
 			if node.instance.Parent == nil and node.instance ~= game then
@@ -509,7 +531,9 @@ function PatchTree.updateMetadata(tree, patch, instanceMap, unappliedPatch)
 			end
 		end
 	end)
+	Timer.stop()
 
+	Timer.stop()
 	return tree
 end
 

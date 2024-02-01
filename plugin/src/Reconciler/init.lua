@@ -6,6 +6,8 @@
 local Packages = script.Parent.Parent.Packages
 local Log = require(Packages.Log)
 
+local Timer = require(script.Parent.Timer)
+
 local applyPatch = require(script.applyPatch)
 local hydrate = require(script.hydrate)
 local diff = require(script.diff)
@@ -57,31 +59,49 @@ function Reconciler:hookPostcommit(callback: (patch: any, instanceMap: any, unap
 end
 
 function Reconciler:applyPatch(patch)
+	Timer.start("Reconciler:applyPatch")
+
+	Timer.start("precommitCallbacks")
 	for _, callback in self.__precommitCallbacks do
 		local success, err = pcall(callback, patch, self.__instanceMap)
 		if not success then
 			Log.warn("Precommit hook errored: {}", err)
 		end
 	end
+	Timer.stop()
 
+	Timer.start("apply")
 	local unappliedPatch = applyPatch(self.__instanceMap, patch)
+	Timer.stop()
 
+	Timer.start("postcommitCallbacks")
 	for _, callback in self.__postcommitCallbacks do
 		local success, err = pcall(callback, patch, self.__instanceMap, unappliedPatch)
 		if not success then
 			Log.warn("Postcommit hook errored: {}", err)
 		end
 	end
+	Timer.stop()
+
+	Timer.stop()
 
 	return unappliedPatch
 end
 
 function Reconciler:hydrate(virtualInstances, rootId, rootInstance)
-	return hydrate(self.__instanceMap, virtualInstances, rootId, rootInstance)
+	Timer.start("Reconciler:hydrate")
+	local result = hydrate(self.__instanceMap, virtualInstances, rootId, rootInstance)
+	Timer.stop()
+
+	return result
 end
 
 function Reconciler:diff(virtualInstances, rootId)
-	return diff(self.__instanceMap, virtualInstances, rootId)
+	Timer.start("Reconciler:diff")
+	local success, result = diff(self.__instanceMap, virtualInstances, rootId)
+	Timer.stop()
+
+	return success, result
 end
 
 return Reconciler
