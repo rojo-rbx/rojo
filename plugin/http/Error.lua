@@ -3,12 +3,12 @@ Error.__index = Error
 
 Error.Kind = {
 	HttpNotEnabled = {
-		message = "Rojo requires HTTP access, which is not enabled.\n" ..
-			"Check your game settings, located in the 'Home' tab of Studio.",
+		message = "Rojo requires HTTP access, which is not enabled.\n"
+			.. "Check your game settings, located in the 'Home' tab of Studio.",
 	},
 	ConnectFailed = {
-		message = "Couldn't connect to the Rojo server.\n" ..
-			"Make sure the server is running — use 'rojo serve' to run it!",
+		message = "Couldn't connect to the Rojo server.\n"
+			.. "Make sure the server is running — use 'rojo serve' to run it!",
 	},
 	Timeout = {
 		message = "HTTP request timed out.",
@@ -61,6 +61,15 @@ function Error.fromRobloxErrorString(message)
 	end
 
 	return Error.new(Error.Kind.Unknown, message)
+end
+
+function Error.fromResponse(response)
+	local lower = (response.body or ""):lower()
+	if response.code == 408 or response.code == 504 or lower:find("timed? ?out") then
+		return Error.new(Error.Kind.Timeout)
+	end
+
+	return Error.new(Error.Kind.Unknown, string.format("%s: %s", tostring(response.code), tostring(response.body)))
 end
 
 return Error
