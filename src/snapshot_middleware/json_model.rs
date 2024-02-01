@@ -42,7 +42,7 @@ pub fn snapshot_json_model(
 
     instance.name = Some(name.to_owned());
 
-    let id = instance.id.take().map(RojoRef::new);
+    let id = instance.id.take().map(RojoRef::from_string);
 
     let mut snapshot = instance
         .into_snapshot()

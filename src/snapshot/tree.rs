@@ -193,10 +193,7 @@ impl RojoTree {
 
         if let Some(specified_id) = &metadata.specified_id {
             if self.get_specified_id(specified_id).is_some() {
-                log::warn!(
-                    "Duplicate user-specified referent {}",
-                    specified_id.as_str()
-                )
+                // log::warn!("Duplicate user-specified referent {specified_id}")
             } else {
                 self.set_specified_id(id, specified_id.clone());
             }

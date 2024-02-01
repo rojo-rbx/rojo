@@ -279,7 +279,7 @@ pub fn snapshot_project_node(
     }
 
     if let Some(id) = &node.id {
-        metadata.specified_id = Some(RojoRef::new(id.clone()))
+        metadata.specified_id = Some(RojoRef::from_string(id.clone()))
     }
 
     metadata.instigating_source = Some(InstigatingSource::ProjectNode(

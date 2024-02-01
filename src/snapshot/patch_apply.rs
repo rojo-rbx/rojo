@@ -76,7 +76,7 @@ struct PatchApplyContext {
     /// Tracks all ref properties that were specified using attributes. This has
     /// to be handled after everything else is done just like normal referent
     /// properties.
-    attribute_refs_to_rewrite: MultiMap<Ref, (String, String)>,
+    attribute_refs_to_rewrite: MultiMap<Ref, (String, Vec<u8>)>,
 
     /// The current applied patch result, describing changes made to the tree.
     applied_patch_set: AppliedPatchSet,
@@ -256,7 +256,9 @@ fn defer_ref_properties(tree: &mut RojoTree, id: Ref, context: &mut PatchApplyCo
     for (attr_name, attr_value) in attributes.iter() {
         if attr_name == REF_ID_ATTRIBUTE_NAME {
             if let Variant::String(specified_id) = attr_value {
-                attr_id = Some(RojoRef::new(specified_id.clone()));
+                attr_id = Some(RojoRef::from_string(specified_id.clone()));
+            } else if let Variant::BinaryString(specified_id) = attr_value {
+                attr_id = Some(RojoRef::new(specified_id.clone().into_vec()))
             } else {
                 log::warn!(
                     "Attribute {attr_name} is of type {:?} when it was \
@@ -269,7 +271,11 @@ fn defer_ref_properties(tree: &mut RojoTree, id: Ref, context: &mut PatchApplyCo
             if let Variant::String(prop_value) = attr_value {
                 context
                     .attribute_refs_to_rewrite
-                    .insert(id, (prop_name.to_owned(), prop_value.clone()));
+                    .insert(id, (prop_name.to_owned(), prop_value.clone().into_bytes()));
+            } else if let Variant::BinaryString(specified_id) = attr_value {
+                context
+                    .attribute_refs_to_rewrite
+                    .insert(id, (prop_name.to_owned(), specified_id.clone().into_vec()));
             } else {
                 log::warn!(
                     "Attribute {attr_name} is of type {:?} when it was \
