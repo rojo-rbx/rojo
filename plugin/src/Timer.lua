@@ -1,6 +1,3 @@
-local Packages = script.Parent.Parent.Packages
-local Log = require(Packages.Log)
-
 local Settings = require(script.Parent.Settings)
 
 -- Cache enabled to avoid overhead impacting timings
@@ -22,7 +19,7 @@ function Timer.start(label)
 
 	local start = clock()
 	if not label then
-		Log.error("Timer.start: label is required")
+		error("[Rojo-Timer] Timer.start: label is required")
 		return
 	end
 
@@ -38,7 +35,7 @@ function Timer.stop()
 
 	local entry = table.remove(Timer._entries)
 	if not entry then
-		Log.error("Timer.stop: no label to stop")
+		error("[Rojo-Timer] Timer.stop: no label to stop")
 		return
 	end
 
@@ -53,7 +50,7 @@ function Timer.stop()
 
 	local start = entry[2]
 	local duration = stop - start
-	Log.info(string.format("%s took %.3f ms", label, duration * 1000))
+	print(string.format("[Rojo-Timer] %s took %.3f ms", label, duration * 1000))
 end
 
 return Timer
