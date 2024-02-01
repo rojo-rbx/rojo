@@ -184,8 +184,9 @@ function SettingsPage:render()
 				description = "Include prereleases when checking for updates",
 				transparency = self.props.transparency,
 				layoutOrder = 7,
-				visible = string.find(debug.traceback(), "\n[^\n]-user_.-$") ~= nil -- Must be a local install to allow prerelease checks
-					and Settings:getBinding("checkForUpdates"),
+				visible = if string.find(debug.traceback(), "\n[^\n]-user_.-$") == nil
+					then false -- Must be a local install to allow prerelease checks
+					else Settings:getBinding("checkForUpdates"),
 			}),
 
 			OpenScriptsExternally = e(Setting, {
