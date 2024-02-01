@@ -72,7 +72,7 @@ jobs:
       run: cargo build --locked --verbose
 
   lint:
-    name: Rustfmt, Clippy, & Stylua
+    name: Rustfmt, Clippy, Stylua, & Selene
     runs-on: ubuntu-latest
 
     steps:
@@ -97,6 +97,9 @@ jobs:
 
     - name: Stylua
       run: stylua --check plugin/src
+
+    - name: Selene
+      run: selene plugin/src
 
     - name: Rustfmt
       run: cargo fmt -- --check

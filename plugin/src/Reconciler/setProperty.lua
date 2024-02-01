@@ -28,9 +28,9 @@ local function setProperty(instance, propertyName, value)
 			})
 	end
 
-	local ok, err = descriptor:write(instance, value)
+	local writeSuccess, err = descriptor:write(instance, value)
 
-	if not ok then
+	if not writeSuccess then
 		if err.kind == RbxDom.Error.Kind.Roblox and err.extra:find("lacking permission") then
 			return false,
 				Error.new(Error.LackingPropertyPermissions, {

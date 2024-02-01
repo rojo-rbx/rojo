@@ -185,10 +185,10 @@ function ApiContext:write(patch)
 
 	body = Http.jsonEncode(body)
 
-	return Http.post(url, body):andThen(rejectFailedRequests):andThen(Http.Response.json):andThen(function(body)
-		Log.info("Write response: {:?}", body)
+	return Http.post(url, body):andThen(rejectFailedRequests):andThen(Http.Response.json):andThen(function(responseBody)
+		Log.info("Write response: {:?}", responseBody)
 
-		return body
+		return responseBody
 	end)
 end
 

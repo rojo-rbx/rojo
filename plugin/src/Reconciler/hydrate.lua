@@ -31,13 +31,13 @@ local function hydrate(instanceMap, virtualInstances, rootId, rootInstance)
 				-- We guard accessing Name and ClassName in order to avoid
 				-- tripping over children of DataModel that Rojo won't have
 				-- permissions to access at all.
-				local ok, name, className = pcall(function()
+				local accessSuccess, name, className = pcall(function()
 					return childInstance.Name, childInstance.ClassName
 				end)
 
 				-- This rule is very conservative and could be loosened in the
 				-- future, or more heuristics could be introduced.
-				if ok and name == virtualChild.Name and className == virtualChild.ClassName then
+				if accessSuccess and name == virtualChild.Name and className == virtualChild.ClassName then
 					isExistingChildVisited[childIndex] = true
 					hydrate(instanceMap, virtualInstances, childId, childInstance)
 					break

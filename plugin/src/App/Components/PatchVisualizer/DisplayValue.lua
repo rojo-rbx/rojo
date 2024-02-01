@@ -57,7 +57,7 @@ local function DisplayValue(props)
 				-- We don't need to support mixed tables, so checking the first key is enough
 				-- to determine if it's a simple array
 				local out, i = table.create(#props.value), 0
-				for k, v in props.value do
+				for _, v in props.value do
 					i += 1
 
 					-- Wrap strings in quotes
