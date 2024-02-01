@@ -194,6 +194,7 @@ function SettingsPage:render()
 				id = "logLevel",
 				name = "Log Level",
 				description = "Plugin output verbosity level",
+				developerDebug = true,
 				transparency = self.props.transparency,
 				layoutOrder = layoutIncrement(),
 
@@ -210,6 +211,16 @@ function SettingsPage:render()
 				id = "typecheckingEnabled",
 				name = "Typechecking",
 				description = "Toggle typechecking on the API surface",
+				developerDebug = true,
+				transparency = self.props.transparency,
+				layoutOrder = layoutIncrement(),
+			}),
+
+			TimingLogsEnabled = e(Setting, {
+				id = "timingLogsEnabled",
+				name = "Timing Logs",
+				description = "Toggle logging timing of internal actions for benchmarking Rojo performance",
+				developerDebug = true,
 				transparency = self.props.transparency,
 				layoutOrder = layoutIncrement(),
 			}),
