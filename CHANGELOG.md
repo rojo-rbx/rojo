@@ -1,6 +1,9 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Fixed Rojo plugin failing to connect when project contains certain unreadable properties ([#848])
+
+[#848]: https://github.com/rojo-rbx/rojo/pull/848
 
 ## [7.4.0] - January 16, 2024
 * Improved the visualization for array properties like Tags ([#829])
