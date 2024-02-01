@@ -2,8 +2,11 @@
 
 ## Unreleased Changes
 * Fixed Rojo plugin failing to connect when project contains certain unreadable properties ([#848])
+* Fixed various cases where patch visualizer would not display sync failures ([#845], [#844])
 
 [#848]: https://github.com/rojo-rbx/rojo/pull/848
+[#845]: https://github.com/rojo-rbx/rojo/pull/845
+[#844]: https://github.com/rojo-rbx/rojo/pull/844
 
 ## [7.4.0] - January 16, 2024
 * Improved the visualization for array properties like Tags ([#829])
