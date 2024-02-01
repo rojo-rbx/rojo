@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{fmt, sync::Arc};
 
 use serde::{Deserialize, Serialize};
 
@@ -25,5 +25,16 @@ impl RojoRef {
     #[inline]
     pub fn as_str(&self) -> Option<&str> {
         std::str::from_utf8(&self.0).ok()
+    }
+}
+
+impl fmt::Display for RojoRef {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self.as_str() {
+            Some(str) => write!(f, "{str}"),
+            None => {
+                write!(f, "Binary({:?})", self.0.as_slice())
+            }
+        }
     }
 }
