@@ -437,8 +437,13 @@ function PatchTree.updateMetadata(tree, patch, instanceMap, unappliedPatch)
 			continue
 		end
 		for _, change in node.changeList do
-			if not failedChange.changedProperties[change[1]] then
-				-- This change didn't fail
+			local property = change[1]
+			local propertyFailedToApply = if property == "Name"
+				then failedChange.changedName ~= nil -- Name is not in changedProperties, so it needs a special case
+				else failedChange.changedProperties[property] ~= nil
+
+			if not propertyFailedToApply then
+				-- This change didn't fail, no need to mark
 				continue
 			end
 			if change[4] == nil then
@@ -446,7 +451,7 @@ function PatchTree.updateMetadata(tree, patch, instanceMap, unappliedPatch)
 			else
 				change[4].isWarning = true
 			end
-			Log.trace("  Marked property as warning: {}.{}", node.name, change[1])
+			Log.trace("  Marked property as warning: {}.{}", node.name, property)
 		end
 	end
 	for failedAdditionId in unappliedPatch.added do
