@@ -161,7 +161,8 @@ function Tree:buildAncestryNodes(previousId: string?, ancestryIds: { string }, p
 	-- Build nodes for ancestry by going up the tree
 	previousId = previousId or "ROOT"
 
-	for _, ancestorId in ancestryIds do
+	for i = #ancestryIds, 1, -1 do
+		local ancestorId = ancestryIds[i]
 		local value = instanceMap.fromIds[ancestorId] or patch.added[ancestorId]
 		if not value then
 			Log.warn("Failed to find ancestor object for " .. ancestorId)
@@ -197,7 +198,7 @@ function PatchTree.build(patch, instanceMap, changeListHeaders)
 		end
 
 		-- Gather ancestors from existing DOM
-		local ancestryIds = {}
+		local ancestryIds, ancestryIndex = {}, 0
 		local parentObject = instance.Parent
 		local parentId = instanceMap.fromInstances[parentObject]
 		local previousId = nil
@@ -208,7 +209,8 @@ function PatchTree.build(patch, instanceMap, changeListHeaders)
 				break
 			end
 
-			table.insert(ancestryIds, 1, parentId)
+			ancestryIndex += 1
+			ancestryIds[ancestryIndex] = parentId
 			knownAncestors[parentId] = true
 			parentObject = parentObject.Parent
 			parentId = instanceMap.fromInstances[parentObject]
