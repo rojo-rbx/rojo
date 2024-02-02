@@ -382,32 +382,47 @@ function PatchTree.build(patch, instanceMap, changeListHeaders)
 		if next(change.Properties) then
 			changeList = {}
 
-			local hintBuffer, i = {}, 0
-			for prop, incoming in change.Properties do
-				i += 1
-				hintBuffer[i] = prop
+			local hintBuffer, hintBufferSize, hintOverflow = table.create(3), 0, 0
+			local changeIndex = 0
+			local function addProp(prop: string, incoming: any)
+				changeIndex += 1
+				changeList[changeIndex] = { prop, "N/A", incoming }
 
-				local success, incomingValue = decodeValue(incoming, instanceMap)
-				if success then
-					table.insert(changeList, { prop, "N/A", incomingValue })
-				else
-					table.insert(changeList, { prop, "N/A", select(2, next(incoming)) })
+				if hintBufferSize < 3 then
+					hintBufferSize += 1
+					hintBuffer[hintBufferSize] = prop
+					return
+				end
+
+				-- We only want to have 3 hints
+				-- to keep it deterministic, we sort them alphabetically
+
+				-- Either this prop overflows, or it makes another one move to overflow
+				hintOverflow += 1
+
+				-- Shortcut for the common case
+				if hintBuffer[3] <= prop then
+					-- This prop is below the last hint, no need to insert
+					return
+				end
+
+				-- Find the first available spot
+				for i, hintItem in hintBuffer do
+					if prop < hintItem then
+						-- This prop is before the currently selected hint,
+						-- so take its place and then continue to find a spot for the old hint
+						hintBuffer[i], prop = prop, hintBuffer[i]
+					end
 				end
 			end
 
-			-- Finalize detail values
-
-			-- Trim hint to top 3
-			table.sort(hintBuffer)
-			if #hintBuffer > 3 then
-				hintBuffer = {
-					hintBuffer[1],
-					hintBuffer[2],
-					hintBuffer[3],
-					i - 3 .. " more",
-				}
+			for prop, incoming in change.Properties do
+				local success, incomingValue = decodeValue(incoming, instanceMap)
+				addProp(prop, if success then incomingValue else select(2, next(incoming)))
 			end
-			hint = table.concat(hintBuffer, ", ")
+
+			-- Finalize detail values
+			hint = table.concat(hintBuffer, ", ") .. (if hintOverflow == 0 then "" else ", " .. hintOverflow .. " more")
 
 			-- Sort changes and add header
 			table.sort(changeList, function(a, b)
