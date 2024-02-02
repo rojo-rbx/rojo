@@ -134,6 +134,7 @@ function Tree:addNode(parent, props)
 		for k, v in props do
 			node[k] = v
 		end
+		Timer.stop()
 		return node
 	end
 
@@ -144,6 +145,7 @@ function Tree:addNode(parent, props)
 	local parentNode = self:getNode(parent)
 	if not parentNode then
 		Log.warn("Failed to create node since parent doesnt exist: {}, {}", parent, props)
+		Timer.stop()
 		return
 	end
 
@@ -431,30 +433,15 @@ function PatchTree.build(patch, instanceMap, changeListHeaders)
 	return tree
 end
 
--- Creates a deep copy of a tree for immutability purposes in Roact
-function PatchTree.clone(tree)
-	Timer.start("PatchTree.clone")
-	if not tree then
-		return
-	end
-
-	local newTree = Tree.new()
-	tree:forEach(function(node)
-		newTree:addNode(node.parentId, table.clone(node))
-	end)
-
-	Timer.stop()
-
-	return newTree
-end
-
 -- Updates the metadata of a tree with the unapplied patch and currently existing instances
 -- Builds a new tree from the data if one isn't provided
 -- Always returns a new tree for immutability purposes in Roact
 function PatchTree.updateMetadata(tree, patch, instanceMap, unappliedPatch)
 	Timer.start("PatchTree.updateMetadata")
 	if tree then
-		tree = PatchTree.clone(tree)
+		-- A shallow copy is enough for our purposes here since we really only need a new top-level object
+		-- for immutable comparison checks in Roact
+		tree = table.clone(tree)
 	else
 		tree = PatchTree.build(patch, instanceMap)
 	end
