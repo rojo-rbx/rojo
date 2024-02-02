@@ -223,11 +223,32 @@ function PatchTree.build(patch, instanceMap, changeListHeaders)
 		if next(change.changedProperties) or change.changedName then
 			changeList = {}
 
-			local hintBuffer, i = {}, 0
+			local hintBuffer, hintBufferSize, hintOverflow = table.create(3), 0, 0
+			local changeIndex = 0
 			local function addProp(prop: string, current: any?, incoming: any?, metadata: any?)
-				i += 1
-				hintBuffer[i] = prop
-				changeList[i] = { prop, current, incoming, metadata }
+				changeIndex += 1
+				changeList[changeIndex] = { prop, current, incoming, metadata }
+
+				if hintBufferSize < 3 then
+					hintBufferSize += 1
+					hintBuffer[hintBufferSize] = prop
+					return
+				end
+
+				-- We only want to have 3 hints
+				-- to keep it deterministic, we sort them alphabetically
+
+				-- Find the first available spot
+				for i, hintItem in hintBuffer do
+					if hintItem > prop then
+						-- This prop is before the currently selected hint,
+						-- so take its place and then continue to find a spot for the old hint
+						hintBuffer[i], prop = prop, hintBuffer[i]
+					end
+				end
+
+				-- Either this prop overflowed, or it replaced one that overflowed.
+				hintOverflow += 1
 			end
 
 			-- Gather the changes
@@ -248,18 +269,7 @@ function PatchTree.build(patch, instanceMap, changeListHeaders)
 			end
 
 			-- Finalize detail values
-
-			-- Trim hint to top 3
-			table.sort(hintBuffer)
-			if #hintBuffer > 3 then
-				hintBuffer = {
-					hintBuffer[1],
-					hintBuffer[2],
-					hintBuffer[3],
-					i - 3 .. " more",
-				}
-			end
-			hint = table.concat(hintBuffer, ", ")
+			hint = table.concat(hintBuffer, ", ") .. (if hintOverflow == 0 then "" else ", " .. hintOverflow .. " more")
 
 			-- Sort changes and add header
 			table.sort(changeList, function(a, b)
