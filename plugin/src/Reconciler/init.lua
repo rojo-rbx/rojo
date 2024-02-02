@@ -65,6 +65,8 @@ function Reconciler:applyPatch(patch)
 	Timer.start("Reconciler:applyPatch")
 
 	Timer.start("precommitCallbacks")
+	-- Precommit callbacks must be serial in order to obey the contract that
+	-- they execute before commit
 	for _, callback in self.__precommitCallbacks do
 		local success, err = pcall(callback, patch, self.__instanceMap)
 		if not success then
@@ -78,11 +80,15 @@ function Reconciler:applyPatch(patch)
 	Timer.stop()
 
 	Timer.start("postcommitCallbacks")
+	-- Postcommit callbacks can be called with spawn since regardless of firing order, they are
+	-- guaranteed to be called after the commit
 	for _, callback in self.__postcommitCallbacks do
-		local success, err = pcall(callback, patch, self.__instanceMap, unappliedPatch)
-		if not success then
-			Log.warn("Postcommit hook errored: {}", err)
-		end
+		task.spawn(function()
+			local success, err = pcall(callback, patch, self.__instanceMap, unappliedPatch)
+			if not success then
+				Log.warn("Postcommit hook errored: {}", err)
+			end
+		end)
 	end
 	Timer.stop()
 
