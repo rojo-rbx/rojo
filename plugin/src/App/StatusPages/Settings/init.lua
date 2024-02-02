@@ -84,159 +84,161 @@ function SettingsPage:render()
 	return Theme.with(function(theme)
 		theme = theme.Settings
 
-		return e(ScrollingFrame, {
-			size = UDim2.new(1, 0, 1, 0),
-			contentSize = self.contentSize,
-			transparency = self.props.transparency,
-		}, {
+		return Roact.createFragment({
 			Navbar = e(Navbar, {
 				onBack = self.props.onBack,
 				transparency = self.props.transparency,
 				layoutOrder = layoutIncrement(),
 			}),
-
-			ShowNotifications = e(Setting, {
-				id = "showNotifications",
-				name = "Show Notifications",
-				description = "Popup notifications in viewport",
+			Content = e(ScrollingFrame, {
+				size = UDim2.new(1, 0, 1, -47),
+				position = UDim2.new(0, 0, 0, 47),
+				contentSize = self.contentSize,
 				transparency = self.props.transparency,
-				layoutOrder = layoutIncrement(),
-			}),
-
-			SyncReminder = e(Setting, {
-				id = "syncReminder",
-				name = "Sync Reminder",
-				description = "Notify to sync when opening a place that has previously been synced",
-				transparency = self.props.transparency,
-				visible = Settings:getBinding("showNotifications"),
-				layoutOrder = layoutIncrement(),
-			}),
-
-			ConfirmationBehavior = e(Setting, {
-				id = "confirmationBehavior",
-				name = "Confirmation Behavior",
-				description = "When to prompt for confirmation before syncing",
-				transparency = self.props.transparency,
-				layoutOrder = layoutIncrement(),
-
-				options = confirmationBehaviors,
-			}),
-
-			LargeChangesConfirmationThreshold = e(Setting, {
-				id = "largeChangesConfirmationThreshold",
-				name = "Confirmation Threshold",
-				description = "How many modified instances to be considered a large change",
-				transparency = self.props.transparency,
-				layoutOrder = layoutIncrement(),
-				visible = Settings:getBinding("confirmationBehavior"):map(function(value)
-					return value == "Large Changes"
-				end),
-				input = e(TextInput, {
-					size = UDim2.new(0, 40, 0, 28),
-					text = Settings:getBinding("largeChangesConfirmationThreshold"):map(function(value)
-						return tostring(value)
-					end),
+			}, {
+				ShowNotifications = e(Setting, {
+					id = "showNotifications",
+					name = "Show Notifications",
+					description = "Popup notifications in viewport",
 					transparency = self.props.transparency,
-					enabled = true,
-					onEntered = function(text)
-						local number = tonumber(string.match(text, "%d+"))
-						if number then
-							Settings:set("largeChangesConfirmationThreshold", math.clamp(number, 1, 999))
-						else
-							-- Force text back to last valid value
-							Settings:set(
-								"largeChangesConfirmationThreshold",
-								Settings:get("largeChangesConfirmationThreshold")
-							)
-						end
+					layoutOrder = layoutIncrement(),
+				}),
+
+				SyncReminder = e(Setting, {
+					id = "syncReminder",
+					name = "Sync Reminder",
+					description = "Notify to sync when opening a place that has previously been synced",
+					transparency = self.props.transparency,
+					visible = Settings:getBinding("showNotifications"),
+					layoutOrder = layoutIncrement(),
+				}),
+
+				ConfirmationBehavior = e(Setting, {
+					id = "confirmationBehavior",
+					name = "Confirmation Behavior",
+					description = "When to prompt for confirmation before syncing",
+					transparency = self.props.transparency,
+					layoutOrder = layoutIncrement(),
+
+					options = confirmationBehaviors,
+				}),
+
+				LargeChangesConfirmationThreshold = e(Setting, {
+					id = "largeChangesConfirmationThreshold",
+					name = "Confirmation Threshold",
+					description = "How many modified instances to be considered a large change",
+					transparency = self.props.transparency,
+					layoutOrder = layoutIncrement(),
+					visible = Settings:getBinding("confirmationBehavior"):map(function(value)
+						return value == "Large Changes"
+					end),
+					input = e(TextInput, {
+						size = UDim2.new(0, 40, 0, 28),
+						text = Settings:getBinding("largeChangesConfirmationThreshold"):map(function(value)
+							return tostring(value)
+						end),
+						transparency = self.props.transparency,
+						enabled = true,
+						onEntered = function(text)
+							local number = tonumber(string.match(text, "%d+"))
+							if number then
+								Settings:set("largeChangesConfirmationThreshold", math.clamp(number, 1, 999))
+							else
+								-- Force text back to last valid value
+								Settings:set(
+									"largeChangesConfirmationThreshold",
+									Settings:get("largeChangesConfirmationThreshold")
+								)
+							end
+						end,
+					}),
+				}),
+
+				PlaySounds = e(Setting, {
+					id = "playSounds",
+					name = "Play Sounds",
+					description = "Toggle sound effects",
+					transparency = self.props.transparency,
+					layoutOrder = layoutIncrement(),
+				}),
+
+				AutoConnectPlaytestServer = e(Setting, {
+					id = "autoConnectPlaytestServer",
+					name = "Auto Connect Playtest Server",
+					description = "Automatically connect game server to Rojo when playtesting while connected in Edit",
+					experimental = true,
+					transparency = self.props.transparency,
+					layoutOrder = layoutIncrement(),
+				}),
+
+				OpenScriptsExternally = e(Setting, {
+					id = "openScriptsExternally",
+					name = "Open Scripts Externally",
+					description = "Attempt to open scripts in an external editor",
+					locked = self.props.syncActive,
+					experimental = true,
+					transparency = self.props.transparency,
+					layoutOrder = layoutIncrement(),
+				}),
+
+				TwoWaySync = e(Setting, {
+					id = "twoWaySync",
+					name = "Two-Way Sync",
+					description = "Editing files in Studio will sync them into the filesystem",
+					locked = self.props.syncActive,
+					experimental = true,
+					transparency = self.props.transparency,
+					layoutOrder = layoutIncrement(),
+				}),
+
+				LogLevel = e(Setting, {
+					id = "logLevel",
+					name = "Log Level",
+					description = "Plugin output verbosity level",
+					developerDebug = true,
+					transparency = self.props.transparency,
+					layoutOrder = layoutIncrement(),
+
+					options = invertedLevels,
+					showReset = Settings:getBinding("logLevel"):map(function(value)
+						return value ~= "Info"
+					end),
+					onReset = function()
+						Settings:set("logLevel", "Info")
 					end,
 				}),
-			}),
 
-			PlaySounds = e(Setting, {
-				id = "playSounds",
-				name = "Play Sounds",
-				description = "Toggle sound effects",
-				transparency = self.props.transparency,
-				layoutOrder = layoutIncrement(),
-			}),
+				TypecheckingEnabled = e(Setting, {
+					id = "typecheckingEnabled",
+					name = "Typechecking",
+					description = "Toggle typechecking on the API surface",
+					developerDebug = true,
+					transparency = self.props.transparency,
+					layoutOrder = layoutIncrement(),
+				}),
 
-			AutoConnectPlaytestServer = e(Setting, {
-				id = "autoConnectPlaytestServer",
-				name = "Auto Connect Playtest Server",
-				description = "Automatically connect game server to Rojo when playtesting while connected in Edit",
-				experimental = true,
-				transparency = self.props.transparency,
-				layoutOrder = layoutIncrement(),
-			}),
+				TimingLogsEnabled = e(Setting, {
+					id = "timingLogsEnabled",
+					name = "Timing Logs",
+					description = "Toggle logging timing of internal actions for benchmarking Rojo performance",
+					developerDebug = true,
+					transparency = self.props.transparency,
+					layoutOrder = layoutIncrement(),
+				}),
 
-			OpenScriptsExternally = e(Setting, {
-				id = "openScriptsExternally",
-				name = "Open Scripts Externally",
-				description = "Attempt to open scripts in an external editor",
-				locked = self.props.syncActive,
-				experimental = true,
-				transparency = self.props.transparency,
-				layoutOrder = layoutIncrement(),
-			}),
+				Layout = e("UIListLayout", {
+					FillDirection = Enum.FillDirection.Vertical,
+					SortOrder = Enum.SortOrder.LayoutOrder,
 
-			TwoWaySync = e(Setting, {
-				id = "twoWaySync",
-				name = "Two-Way Sync",
-				description = "Editing files in Studio will sync them into the filesystem",
-				locked = self.props.syncActive,
-				experimental = true,
-				transparency = self.props.transparency,
-				layoutOrder = layoutIncrement(),
-			}),
+					[Roact.Change.AbsoluteContentSize] = function(object)
+						self.setContentSize(object.AbsoluteContentSize)
+					end,
+				}),
 
-			LogLevel = e(Setting, {
-				id = "logLevel",
-				name = "Log Level",
-				description = "Plugin output verbosity level",
-				developerDebug = true,
-				transparency = self.props.transparency,
-				layoutOrder = layoutIncrement(),
-
-				options = invertedLevels,
-				showReset = Settings:getBinding("logLevel"):map(function(value)
-					return value ~= "Info"
-				end),
-				onReset = function()
-					Settings:set("logLevel", "Info")
-				end,
-			}),
-
-			TypecheckingEnabled = e(Setting, {
-				id = "typecheckingEnabled",
-				name = "Typechecking",
-				description = "Toggle typechecking on the API surface",
-				developerDebug = true,
-				transparency = self.props.transparency,
-				layoutOrder = layoutIncrement(),
-			}),
-
-			TimingLogsEnabled = e(Setting, {
-				id = "timingLogsEnabled",
-				name = "Timing Logs",
-				description = "Toggle logging timing of internal actions for benchmarking Rojo performance",
-				developerDebug = true,
-				transparency = self.props.transparency,
-				layoutOrder = layoutIncrement(),
-			}),
-
-			Layout = e("UIListLayout", {
-				FillDirection = Enum.FillDirection.Vertical,
-				SortOrder = Enum.SortOrder.LayoutOrder,
-
-				[Roact.Change.AbsoluteContentSize] = function(object)
-					self.setContentSize(object.AbsoluteContentSize)
-				end,
-			}),
-
-			Padding = e("UIPadding", {
-				PaddingLeft = UDim.new(0, 20),
-				PaddingRight = UDim.new(0, 20),
+				Padding = e("UIPadding", {
+					PaddingLeft = UDim.new(0, 20),
+					PaddingRight = UDim.new(0, 20),
+				}),
 			}),
 		})
 	end)
