@@ -1,22 +1,12 @@
 local Settings = require(script.Parent.Settings)
 
--- Cache enabled to avoid overhead impacting timings
-local timerEnabled = Settings:get("timingLogsEnabled")
-Settings:onChanged("timingLogsEnabled", function(enabled)
-	timerEnabled = enabled
-end)
-
 local clock = os.clock
 
 local Timer = {
 	_entries = {},
 }
 
-function Timer.start(label)
-	if not timerEnabled then
-		return
-	end
-
+function Timer._start(label)
 	local start = clock()
 	if not label then
 		error("[Rojo-Timer] Timer.start: label is required")
@@ -26,11 +16,7 @@ function Timer.start(label)
 	table.insert(Timer._entries, { label, start })
 end
 
-function Timer.stop()
-	if not timerEnabled then
-		return
-	end
-
+function Timer._stop()
 	local stop = clock()
 
 	local entry = table.remove(Timer._entries)
@@ -52,5 +38,20 @@ function Timer.stop()
 	local duration = stop - start
 	print(string.format("[Rojo-Timer] %s took %.3f ms", label, duration * 1000))
 end
+
+-- Replace functions with no-op if not in debug mode
+local function no_op() end
+local function setFunctions(enabled)
+	if enabled then
+		Timer.start = Timer._start
+		Timer.stop = Timer._stop
+	else
+		Timer.start = no_op
+		Timer.stop = no_op
+	end
+end
+
+Settings:onChanged("timingLogsEnabled", setFunctions)
+setFunctions(Settings:get("timingLogsEnabled"))
 
 return Timer
