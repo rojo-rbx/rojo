@@ -238,17 +238,23 @@ function PatchTree.build(patch, instanceMap, changeListHeaders)
 				-- We only want to have 3 hints
 				-- to keep it deterministic, we sort them alphabetically
 
+				-- Either this prop overflows, or it makes another one move to overflow
+				hintOverflow += 1
+
+				-- Shortcut for the common case
+				if hintBuffer[3] <= prop then
+					-- This prop is below the last hint, no need to insert
+					return
+				end
+
 				-- Find the first available spot
 				for i, hintItem in hintBuffer do
-					if hintItem > prop then
+					if prop < hintItem then
 						-- This prop is before the currently selected hint,
 						-- so take its place and then continue to find a spot for the old hint
 						hintBuffer[i], prop = prop, hintBuffer[i]
 					end
 				end
-
-				-- Either this prop overflowed, or it replaced one that overflowed.
-				hintOverflow += 1
 			end
 
 			-- Gather the changes
