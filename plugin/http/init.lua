@@ -30,8 +30,13 @@ local function performRequest(requestParams)
 			end)
 
 			if success then
-				Log.trace("Request {} success, status code {}", requestId, response.StatusCode)
-				resolve(HttpResponse.fromRobloxResponse(response))
+				Log.trace("Request {} success, response {:#?}", requestId, response)
+				local httpResponse = HttpResponse.fromRobloxResponse(response)
+				if httpResponse:isSuccess() then
+					resolve(httpResponse)
+				else
+					reject(HttpError.fromResponse(httpResponse))
+				end
 			else
 				Log.trace("Request {} failure: {:?}", requestId, response)
 				reject(HttpError.fromRobloxErrorString(response))
