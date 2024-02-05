@@ -147,13 +147,13 @@ local function diff(instanceMap, virtualInstances, rootId)
 
 		local changedProperties = {}
 		for propertyName, virtualValue in pairs(virtualInstance.Properties) do
-			local ok, existingValueOrErr = getProperty(instance, propertyName)
+			local getProperySuccess, existingValueOrErr = getProperty(instance, propertyName)
 
-			if ok then
+			if getProperySuccess then
 				local existingValue = existingValueOrErr
-				local ok, decodedValue = decodeValue(virtualValue, instanceMap)
+				local decodeSuccess, decodedValue = decodeValue(virtualValue, instanceMap)
 
-				if ok then
+				if decodeSuccess then
 					if not trueEquals(existingValue, decodedValue) then
 						Log.debug(
 							"{}.{} changed from '{}' to '{}'",
@@ -165,7 +165,6 @@ local function diff(instanceMap, virtualInstances, rootId)
 						changedProperties[propertyName] = virtualValue
 					end
 				else
-					local propertyType = next(virtualValue)
 					Log.warn(
 						"Failed to decode property {}.{}. Encoded property was: {:#?}",
 						virtualInstance.ClassName,
@@ -178,10 +177,8 @@ local function diff(instanceMap, virtualInstances, rootId)
 
 				if err.kind == Error.UnknownProperty then
 					Log.trace("Skipping unknown property {}.{}", err.details.className, err.details.propertyName)
-				elseif err.kind == Error.UnreadableProperty then
-					Log.trace("Skipping unreadable property {}.{}", err.details.className, err.details.propertyName)
 				else
-					return false, err
+					Log.trace("Skipping unreadable property {}.{}", err.details.className, err.details.propertyName)
 				end
 			end
 		end
@@ -220,9 +217,9 @@ local function diff(instanceMap, virtualInstances, rootId)
 					table.insert(patch.removed, childInstance)
 				end
 			else
-				local ok, err = diffInternal(childId)
+				local diffSuccess, err = diffInternal(childId)
 
-				if not ok then
+				if not diffSuccess then
 					return false, err
 				end
 			end
@@ -243,9 +240,9 @@ local function diff(instanceMap, virtualInstances, rootId)
 		return true
 	end
 
-	local ok, err = diffInternal(rootId)
+	local diffSuccess, err = diffInternal(rootId)
 
-	if not ok then
+	if not diffSuccess then
 		return false, err
 	end
 

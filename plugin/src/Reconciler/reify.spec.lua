@@ -3,7 +3,6 @@ return function()
 
 	local PatchSet = require(script.Parent.Parent.PatchSet)
 	local InstanceMap = require(script.Parent.Parent.InstanceMap)
-	local Error = require(script.Parent.Error)
 
 	local function isEmpty(table)
 		return next(table) == nil, "Table was not empty"
