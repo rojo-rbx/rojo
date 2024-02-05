@@ -11,16 +11,28 @@
     ```json
     {
         "syncbackRules": {
+            "ignoreTrees": [
+                "DataModel/ServerStorage/ImportantSecrets",
+            ],
             "ignorePaths": [
-                "Workspace/Camera",
-                "ServerStorage/ImportantSecrets/**",
+                "src/ServerStorage/Secrets/*"
             ],
             "ignoreProperties": {
-                "Part": ["Color"]
+                "BasePart": ["Color"]
             },
+            "syncCurrentCamera": false,
+            "syncUnscriptable": true,
         }
     }
     ```
+
+    A brief explanation of each field:
+
+    - `ignoreTrees` is a list of paths in the **roblox file** that should be ignored
+    - `ignorePaths` is a list of paths in the **file system** that should be ignored
+    - `ignoreProperties` is a list of properties that won't be synced back
+    - `syncCurrentCamera` is a toggle for whether to sync back the Workspace's CurrentCamera. Defaults to `false`.
+    - `syncUnscriptable` is a toggle for whether to sync back properties that cannot be set by the Roblox Studio plugin. Defaults to `false`.
 
 * Projects may now manually link `Ref` properties together using `Attributes`. ([#843])
  	This has two parts: using `id` or `$id` in JSON files or a `Rojo_Target` attribute, an Instance
