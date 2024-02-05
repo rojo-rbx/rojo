@@ -25,11 +25,6 @@ impl RojoRef {
 
 impl fmt::Display for RojoRef {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self.as_str() {
-            Some(str) => write!(f, "{str}"),
-            None => {
-                write!(f, "Binary({:?})", self.0.as_slice())
-            }
-        }
+        write!(f, "{}", self.as_str())
     }
 }
