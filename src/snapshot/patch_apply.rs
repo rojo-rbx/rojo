@@ -282,7 +282,7 @@ fn defer_ref_properties(tree: &mut RojoTree, id: Ref, context: &mut PatchApplyCo
                         .attribute_refs_to_rewrite
                         .insert(id, (prop_name.to_owned(), str.to_string()));
                 } else {
-                    log::error!("Specified IDs must be valid UTF-8 strings.")
+                    log::error!("IDs specified by referent property attributes must be valid UTF-8 strings.")
                 }
             } else {
                 log::warn!(
