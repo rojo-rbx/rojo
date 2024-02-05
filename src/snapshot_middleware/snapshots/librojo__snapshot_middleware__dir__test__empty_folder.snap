@@ -12,6 +12,7 @@ metadata:
     - /foo/init.meta.json
   context:
     emit_legacy_scripts: true
+  specified_id: ~
   middleware: ~
 name: foo
 class_name: Folder

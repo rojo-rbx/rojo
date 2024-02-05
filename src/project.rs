@@ -230,6 +230,11 @@ pub struct ProjectNode {
     #[serde(rename = "$className", skip_serializing_if = "Option::is_none")]
     pub class_name: Option<String>,
 
+    /// If set, defines an ID for the described Instance that can be used
+    /// to refer to it for the purpose of referent properties.
+    #[serde(rename = "$id", skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
+
     /// Contains all of the children of the described instance.
     #[serde(flatten)]
     pub children: BTreeMap<String, ProjectNode>,

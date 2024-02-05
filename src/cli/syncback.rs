@@ -59,7 +59,7 @@ impl SyncbackCommand {
         syncback_loop(
             session_old.vfs(),
             &dom_old,
-            &dom_new,
+            dom_new,
             session_old.root_project(),
         )?;
         log::info!(

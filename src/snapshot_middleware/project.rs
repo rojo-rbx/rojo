@@ -13,6 +13,7 @@ use crate::{
         SyncRule,
     },
     syncback::{FsSnapshot, SyncbackReturn, SyncbackSnapshot},
+    RojoRef,
 };
 
 use super::{emit_legacy_scripts_default, snapshot_from_vfs};
@@ -277,6 +278,10 @@ pub fn snapshot_project_node(
         // TODO: Introduce a strict mode where $ignoreUnknownInstances is never
         // set implicitly.
         metadata.ignore_unknown_instances = true;
+    }
+
+    if let Some(id) = &node.id {
+        metadata.specified_id = Some(RojoRef::from_string(id.clone()))
     }
 
     metadata.instigating_source = Some(InstigatingSource::ProjectNode {

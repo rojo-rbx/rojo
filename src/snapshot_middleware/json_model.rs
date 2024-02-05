@@ -14,6 +14,7 @@ use crate::{
     resolution::UnresolvedValue,
     snapshot::{InstanceContext, InstanceSnapshot},
     syncback::{FsSnapshot, SyncbackReturn, SyncbackSnapshot},
+    RojoRef,
 };
 
 pub fn snapshot_json_model(
@@ -47,6 +48,8 @@ pub fn snapshot_json_model(
 
     instance.name = Some(name.to_owned());
 
+    let id = instance.id.take().map(RojoRef::from_string);
+
     let mut snapshot = instance
         .into_snapshot()
         .with_context(|| format!("Could not load JSON model: {}", path.display()))?;
@@ -55,7 +58,8 @@ pub fn snapshot_json_model(
         .metadata
         .instigating_source(path)
         .relevant_paths(vec![path.to_path_buf()])
-        .context(context);
+        .context(context)
+        .specified_id(id);
 
     Ok(Some(snapshot))
 }
@@ -140,6 +144,7 @@ fn json_model_from_pair(snapshot: &SyncbackSnapshot, new: Ref, old: Option<Ref>)
         children,
         properties,
         attributes,
+        id: None,
     }
 }
 
@@ -151,6 +156,9 @@ struct JsonModel {
 
     #[serde(alias = "ClassName")]
     class_name: String,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    id: Option<String>,
 
     #[serde(
         alias = "Children",

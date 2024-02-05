@@ -11,6 +11,7 @@ metadata:
     - /foo.project.json
   context:
     emit_legacy_scripts: true
+  specified_id: ~
   middleware: ~
 name: unresolved-properties
 class_name: StringValue

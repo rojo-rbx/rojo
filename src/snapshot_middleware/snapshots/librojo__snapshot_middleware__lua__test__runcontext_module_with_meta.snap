@@ -12,6 +12,7 @@ metadata:
     - /foo.meta.json
   context:
     emit_legacy_scripts: false
+  specified_id: ~
   middleware: ~
 name: foo
 class_name: ModuleScript

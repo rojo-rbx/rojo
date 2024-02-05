@@ -48,7 +48,6 @@
 
 #![allow(dead_code)]
 
-mod hash;
 mod instance_snapshot;
 mod metadata;
 mod patch;
@@ -56,7 +55,6 @@ mod patch_apply;
 mod patch_compute;
 mod tree;
 
-pub use hash::*;
 pub use instance_snapshot::InstanceSnapshot;
 pub use metadata::*;
 pub use patch::*;

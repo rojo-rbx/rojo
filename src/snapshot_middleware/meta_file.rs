@@ -9,7 +9,9 @@ use memofs::{IoResultExt as _, Vfs};
 use rbx_dom_weak::types::{Attributes, Variant};
 use serde::{Deserialize, Serialize};
 
-use crate::{resolution::UnresolvedValue, snapshot::InstanceSnapshot, syncback::SyncbackSnapshot};
+use crate::{
+    resolution::UnresolvedValue, snapshot::InstanceSnapshot, syncback::SyncbackSnapshot, RojoRef,
+};
 
 /// Represents metadata in a sibling file with the same basename.
 ///
@@ -18,6 +20,9 @@ use crate::{resolution::UnresolvedValue, snapshot::InstanceSnapshot, syncback::S
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AdjacentMetadata {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
+
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ignore_unknown_instances: Option<bool>,
 
@@ -96,6 +101,7 @@ impl AdjacentMetadata {
             properties,
             attributes,
             path,
+            id: None,
         })
     }
 
@@ -135,9 +141,21 @@ impl AdjacentMetadata {
         Ok(())
     }
 
+    fn apply_id(&mut self, snapshot: &mut InstanceSnapshot) -> anyhow::Result<()> {
+        if self.id.is_some() && snapshot.metadata.specified_id.is_some() {
+            anyhow::bail!(
+                "cannot specify an ID using {} (instance has an ID from somewhere else)",
+                self.path.display()
+            );
+        }
+        snapshot.metadata.specified_id = self.id.take().map(RojoRef::from_string);
+        Ok(())
+    }
+
     pub fn apply_all(&mut self, snapshot: &mut InstanceSnapshot) -> anyhow::Result<()> {
         self.apply_ignore_unknown_instances(snapshot);
         self.apply_properties(snapshot)?;
+        self.apply_id(snapshot)?;
         Ok(())
     }
 
@@ -164,6 +182,9 @@ impl AdjacentMetadata {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DirectoryMetadata {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
+
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ignore_unknown_instances: Option<bool>,
 
@@ -249,6 +270,7 @@ impl DirectoryMetadata {
             attributes,
             class_name: None,
             path,
+            id: None,
         })
     }
 
@@ -256,6 +278,7 @@ impl DirectoryMetadata {
         self.apply_ignore_unknown_instances(snapshot);
         self.apply_class_name(snapshot)?;
         self.apply_properties(snapshot)?;
+        self.apply_id(snapshot)?;
 
         Ok(())
     }
@@ -306,6 +329,17 @@ impl DirectoryMetadata {
                 .insert("Attributes".into(), attributes.into());
         }
 
+        Ok(())
+    }
+
+    fn apply_id(&mut self, snapshot: &mut InstanceSnapshot) -> anyhow::Result<()> {
+        if self.id.is_some() && snapshot.metadata.specified_id.is_some() {
+            anyhow::bail!(
+                "cannot specify an ID using {} (instance has an ID from somewhere else)",
+                self.path.display()
+            );
+        }
+        snapshot.metadata.specified_id = self.id.take().map(RojoRef::from_string);
         Ok(())
     }
 

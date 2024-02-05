@@ -8,6 +8,8 @@ use rbx_dom_weak::types::{
 use rbx_reflection::{DataType, PropertyDescriptor};
 use serde::{Deserialize, Serialize};
 
+use crate::REF_POINTER_ATTRIBUTE_PREFIX;
+
 /// A user-friendly version of `Variant` that supports specifying ambiguous
 /// values. Ambiguous values need a reflection database to be resolved to a
 /// usable value.
@@ -206,6 +208,10 @@ impl AmbiguousValue {
                     Ok(value.into())
                 }
 
+                (VariantType::Ref, AmbiguousValue::String(_)) => Err(format_err!(
+                    "Cannot resolve Ref properties as a String.\
+                    Use an attribute named `{REF_POINTER_ATTRIBUTE_PREFIX}{prop_name}"
+                )),
                 (_, unresolved) => Err(format_err!(
                     "Wrong type of value for property {}.{}. Expected {:?}, got {}",
                     class_name,

@@ -12,6 +12,7 @@ metadata:
     - /foo/default.project.json
   context:
     emit_legacy_scripts: true
+  specified_id: ~
   middleware: project
 name: path-child-project
 class_name: Folder
@@ -30,6 +31,7 @@ children:
       relevant_paths: []
       context:
         emit_legacy_scripts: true
+      specified_id: ~
       middleware: ~
     name: SomeChild
     class_name: Model

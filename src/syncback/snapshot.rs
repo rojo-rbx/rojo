@@ -97,7 +97,9 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
                 if filter_out_property(inst, name.as_str()) {
                     continue;
                 }
-                // We don't currently support refs or shared strings
+                // We don't currently support refs or shared strings as properties.
+                // Technically, Refs are supported as attributes but we don't want
+                // those handled as properties.
                 if matches!(value, Variant::Ref(_) | Variant::SharedString(_)) {
                     continue;
                 }
