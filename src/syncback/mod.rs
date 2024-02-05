@@ -232,15 +232,15 @@ pub fn get_best_middleware(inst: &Instance) -> Middleware {
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct SyncbackRules {
     /// A list of subtrees in a file that will be ignored by Syncback.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     ignore_trees: Vec<String>,
     /// A list of patterns to check against the path an Instance would serialize
     /// to. If a path matches one of these, the Instance won't be syncbacked.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     ignore_paths: Vec<Glob>,
     /// A map of classes to properties to ignore for that class when doing
     /// syncback.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
     ignore_properties: HashMap<String, Vec<String>>,
     /// Whether or not the `CurrentCamera` of `Workspace` is included in the
     /// syncback or not. Defaults to `false`.
