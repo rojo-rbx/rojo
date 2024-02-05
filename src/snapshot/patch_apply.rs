@@ -257,6 +257,12 @@ fn defer_ref_properties(tree: &mut RojoTree, id: Ref, context: &mut PatchApplyCo
         if attr_name == REF_ID_ATTRIBUTE_NAME {
             if let Variant::String(specified_id) = attr_value {
                 attr_id = Some(RojoRef::new(specified_id.clone()));
+            } else if let Variant::BinaryString(specified_id) = attr_value {
+                if let Ok(str) = std::str::from_utf8(specified_id.as_ref()) {
+                    attr_id = Some(RojoRef::new(str.to_string()))
+                } else {
+                    log::error!("Specified IDs must be valid UTF-8 strings.")
+                }
             } else {
                 log::warn!(
                     "Attribute {attr_name} is of type {:?} when it was \
@@ -270,6 +276,14 @@ fn defer_ref_properties(tree: &mut RojoTree, id: Ref, context: &mut PatchApplyCo
                 context
                     .attribute_refs_to_rewrite
                     .insert(id, (prop_name.to_owned(), prop_value.clone()));
+            } else if let Variant::BinaryString(prop_value) = attr_value {
+                if let Ok(str) = std::str::from_utf8(prop_value.as_ref()) {
+                    context
+                        .attribute_refs_to_rewrite
+                        .insert(id, (prop_name.to_owned(), str.to_string()));
+                } else {
+                    log::error!("Specified IDs must be valid UTF-8 strings.")
+                }
             } else {
                 log::warn!(
                     "Attribute {attr_name} is of type {:?} when it was \
