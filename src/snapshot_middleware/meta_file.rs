@@ -82,7 +82,7 @@ impl AdjacentMetadata {
                 self.path.display()
             );
         }
-        snapshot.metadata.specified_id = self.id.take().map(RojoRef::from_string);
+        snapshot.metadata.specified_id = self.id.take().map(RojoRef::new);
         Ok(())
     }
 
@@ -201,7 +201,7 @@ impl DirectoryMetadata {
                 self.path.display()
             );
         }
-        snapshot.metadata.specified_id = self.id.take().map(RojoRef::from_string);
+        snapshot.metadata.specified_id = self.id.take().map(RojoRef::new);
         Ok(())
     }
 }
