@@ -6,7 +6,10 @@ mod snapshot;
 
 use anyhow::Context;
 use memofs::Vfs;
-use rbx_dom_weak::{types::Ref, Instance, WeakDom};
+use rbx_dom_weak::{
+    types::{Ref, Variant},
+    Instance, WeakDom,
+};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{HashMap, HashSet, VecDeque},
@@ -36,6 +39,25 @@ pub fn syncback_loop<'old>(
     let old_hashes = hash_tree(old_tree.inner());
     log::debug!("Hashing file DOM");
     let new_hashes = hash_tree(&new_tree);
+
+    if let Some(syncback_rules) = &project.syncback_rules {
+        // I think this is a neat way to handle `sync_current_camera` being
+        // Option<bool>!
+        if let Some(true) = syncback_rules.sync_current_camera {
+            let mut camera_ref = None;
+            for child_ref in new_tree.root().children() {
+                let inst = new_tree.get_by_ref(*child_ref).unwrap();
+                if inst.class == "Workspace" {
+                    camera_ref = inst.properties.get("CurrentCamera")
+                }
+            }
+            if let Some(Variant::Ref(camera_ref)) = camera_ref {
+                if new_tree.get_by_ref(*camera_ref).is_some() {
+                    new_tree.destroy(*camera_ref);
+                }
+            }
+        }
+    }
 
     log::debug!("Linking referents for new DOM...");
     link_referents(&mut new_tree)?;
@@ -220,6 +242,14 @@ pub struct SyncbackRules {
     /// syncback.
     #[serde(default)]
     ignore_properties: HashMap<String, Vec<String>>,
+    /// Whether or not the `CurrentCamera` of `Workspace` is included in the
+    /// syncback or not. Defaults to `false`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    sync_current_camera: Option<bool>,
+    /// Whether or not to sync properties that cannot be modified via scripts.
+    /// Defaults to `false`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    sync_unscriptable: Option<bool>,
 }
 
 fn get_inst_path(dom: &WeakDom, referent: Ref) -> String {

@@ -1,4 +1,5 @@
 use memofs::Vfs;
+use rbx_reflection::Scriptability;
 use std::{
     collections::{BTreeSet, HashMap},
     path::{Path, PathBuf},
@@ -77,10 +78,37 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
             HashMap::with_capacity(inst.properties.capacity());
 
         let filter = self.get_property_filter();
+        let class_data = rbx_reflection_database::get()
+            .classes
+            .get(inst.class.as_str());
+
+        let predicate = |prop_name: &String, prop_value: &Variant| {
+            if matches!(prop_value, Variant::Ref(_) | Variant::SharedString(_)) {
+                return true;
+            }
+            if filter_out_property(inst, prop_name) {
+                return true;
+            }
+            if let Some(list) = &filter {
+                if list.contains(prop_name) {
+                    return true;
+                }
+            }
+            if !self.sync_unscriptable() {
+                if let Some(data) = class_data {
+                    if let Some(prop_data) = data.properties.get(prop_name.as_str()) {
+                        if matches!(prop_data.scriptability, Scriptability::None) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            false
+        };
 
         if let Some(old_inst) = old_ref.and_then(|referent| self.get_old_instance(referent)) {
             for (name, value) in &inst.properties {
-                if filter_out_property(inst, name.as_str()) {
+                if predicate(name, value) {
                     continue;
                 }
                 if old_inst.properties().contains_key(name) {
@@ -88,25 +116,11 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
                 }
             }
         }
-        let class_data = rbx_reflection_database::get()
-            .classes
-            .get(inst.class.as_str());
         if let Some(class_data) = class_data {
             let defaults = &class_data.default_properties;
             for (name, value) in &inst.properties {
-                if filter_out_property(inst, name.as_str()) {
+                if predicate(name, value) {
                     continue;
-                }
-                // We don't currently support refs or shared strings as properties.
-                // Technically, Refs are supported as attributes but we don't want
-                // those handled as properties.
-                if matches!(value, Variant::Ref(_) | Variant::SharedString(_)) {
-                    continue;
-                }
-                if let Some(list) = &filter {
-                    if list.contains(name) {
-                        continue;
-                    }
                 }
                 if let Some(default) = defaults.get(name.as_str()) {
                     if !variant_eq(value, default) {
@@ -118,17 +132,8 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
             }
         } else {
             for (name, value) in &inst.properties {
-                if filter_out_property(inst, name.as_str()) {
+                if predicate(name, value) {
                     continue;
-                }
-                // We don't currently support refs or shared strings
-                if matches!(value, Variant::Ref(_) | Variant::SharedString(_)) {
-                    continue;
-                }
-                if let Some(list) = &filter {
-                    if list.contains(name) {
-                        continue;
-                    }
                 }
                 properties.insert(name, value);
             }
@@ -251,6 +256,16 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
         self.data
             .syncback_rules
             .map(|rules| rules.ignore_trees.as_slice())
+    }
+
+    /// Returns the user-defined setting to determine whether unscriptable
+    /// properties should be synced back or not.
+    #[inline]
+    pub fn sync_unscriptable(&self) -> bool {
+        self.data
+            .syncback_rules
+            .and_then(|sr| sr.sync_unscriptable)
+            .unwrap_or_default()
     }
 }
 
