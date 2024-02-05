@@ -142,11 +142,25 @@ impl RojoTree {
                     }
                 }
                 if existing_metadata.specified_id != metadata.specified_id {
-                    if let Some(old) = &existing_metadata.specified_id {
-                        self.specified_id_to_refs.remove(old);
-                    }
+                    // We need to uphold the invariant that each ID can only map
+                    // to one referent.
                     if let Some(new) = &metadata.specified_id {
-                        self.specified_id_to_refs.insert(new.clone(), id);
+                        if let Some(existing_id) = self.specified_id_to_refs.get(new) {
+                            if *existing_id != id {
+                                log::error!("Duplicate user-specified referent '{existing_id}'");
+                            }
+                        } else {
+                            self.specified_id_to_refs.insert(new.clone(), id);
+                        }
+                    }
+                    if let Some(old) = &existing_metadata.specified_id {
+                        if let Some(existing) = self.specified_id_to_refs.get(old) {
+                            if *existing != id {
+                                log::error!("Duplicate user-specified referent '{old}'");
+                            } else {
+                                self.specified_id_to_refs.remove(old);
+                            }
+                        }
                     }
                 }
 
@@ -193,7 +207,7 @@ impl RojoTree {
 
         if let Some(specified_id) = &metadata.specified_id {
             if self.get_specified_id(specified_id).is_some() {
-                log::warn!("Duplicate user-specified referent {specified_id}")
+                log::error!("Duplicate user-specified referent '{specified_id}'")
             } else {
                 self.set_specified_id(id, specified_id.clone());
             }
@@ -208,7 +222,13 @@ impl RojoTree {
         let metadata = self.metadata_map.remove(&id).unwrap();
 
         if let Some(specified) = metadata.specified_id {
-            self.specified_id_to_refs.remove(&specified);
+            if let Some(old_id) = self.specified_id_to_refs.get(&specified) {
+                if *old_id == id {
+                    self.specified_id_to_refs.remove(&specified);
+                } else {
+                    log::error!("Duplicate user-specified referent '{specified}'");
+                }
+            }
         }
 
         for path in &metadata.relevant_paths {
