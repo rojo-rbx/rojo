@@ -34,7 +34,10 @@ pub struct RojoTree {
     /// called "path aliasing" in various Rojo documentation.
     path_to_ids: MultiMap<PathBuf, Ref>,
 
-    /// A map of specified RojoRefs to the actual underlying Ref they represent.
+    /// A map of specified RojoRefs to underlying Refs they represent.
+    /// This field is a MultiMap to allow for the possibility of the user specifying
+    /// the same RojoRef for multiple different instances. An entry containing
+    /// multiple elements is an error condition that should be raised to the user.
     specified_id_to_refs: MultiMap<RojoRef, Ref>,
 }
 
