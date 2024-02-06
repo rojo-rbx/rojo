@@ -1,4 +1,5 @@
 use std::{
+    mem::forget,
     path::{Path, PathBuf},
     time::Instant,
 };
@@ -71,6 +72,12 @@ impl SyncbackCommand {
             "Syncback finished in {:.02}s!",
             start.elapsed().as_secs_f32()
         );
+
+        // It is potentially prohibitively expensive to drop a ServeSession,
+        // and the program is about to exit anyway so we're just going to forget
+        // about it.
+        drop(dom_old);
+        forget(session_old);
 
         Ok(())
     }
