@@ -35,7 +35,7 @@ pub struct RojoTree {
     path_to_ids: MultiMap<PathBuf, Ref>,
 
     /// A map of specified RojoRefs to the actual underlying Ref they represent.
-    specified_id_to_refs: HashMap<RojoRef, Ref>,
+    specified_id_to_refs: MultiMap<RojoRef, Ref>,
 }
 
 impl RojoTree {
@@ -48,7 +48,7 @@ impl RojoTree {
             inner: WeakDom::new(root_builder),
             metadata_map: HashMap::new(),
             path_to_ids: MultiMap::new(),
-            specified_id_to_refs: HashMap::new(),
+            specified_id_to_refs: MultiMap::new(),
         };
 
         let root_ref = tree.inner.root_ref();
@@ -145,22 +145,14 @@ impl RojoTree {
                     // We need to uphold the invariant that each ID can only map
                     // to one referent.
                     if let Some(new) = &metadata.specified_id {
-                        if let Some(existing_id) = self.specified_id_to_refs.get(new) {
-                            if *existing_id != id {
-                                log::error!("Duplicate user-specified referent '{existing_id}'");
-                            }
-                        } else {
-                            self.specified_id_to_refs.insert(new.clone(), id);
+                        if self.specified_id_to_refs.get(new).len() > 0 {
+                            log::error!("Duplicate user-specified referent '{new}'");
                         }
+
+                        self.specified_id_to_refs.insert(new.clone(), id);
                     }
                     if let Some(old) = &existing_metadata.specified_id {
-                        if let Some(existing) = self.specified_id_to_refs.get(old) {
-                            if *existing != id {
-                                log::error!("Duplicate user-specified referent '{old}'");
-                            } else {
-                                self.specified_id_to_refs.remove(old);
-                            }
-                        }
+                        self.specified_id_to_refs.remove(old, id);
                     }
                 }
 
@@ -188,13 +180,16 @@ impl RojoTree {
     }
 
     pub fn get_specified_id(&self, specified: &RojoRef) -> Option<Ref> {
-        self.specified_id_to_refs.get(specified).copied()
+        match self.specified_id_to_refs.get(specified)[..] {
+            [referent] => Some(referent),
+            _ => None,
+        }
     }
 
     pub fn set_specified_id(&mut self, id: Ref, specified: RojoRef) {
         if let Some(metadata) = self.metadata_map.get_mut(&id) {
             if let Some(old) = metadata.specified_id.replace(specified.clone()) {
-                self.specified_id_to_refs.remove(&old);
+                self.specified_id_to_refs.remove(&old, id);
             }
         }
         self.specified_id_to_refs.insert(specified, id);
@@ -206,11 +201,11 @@ impl RojoTree {
         }
 
         if let Some(specified_id) = &metadata.specified_id {
-            if self.get_specified_id(specified_id).is_some() {
-                log::error!("Duplicate user-specified referent '{specified_id}'")
-            } else {
-                self.set_specified_id(id, specified_id.clone());
+            if self.specified_id_to_refs.get(specified_id).len() > 0 {
+                log::error!("Duplicate user-specified referent '{specified_id}'");
             }
+
+            self.set_specified_id(id, specified_id.clone());
         }
 
         self.metadata_map.insert(id, metadata);
@@ -222,13 +217,7 @@ impl RojoTree {
         let metadata = self.metadata_map.remove(&id).unwrap();
 
         if let Some(specified) = metadata.specified_id {
-            if let Some(old_id) = self.specified_id_to_refs.get(&specified) {
-                if *old_id == id {
-                    self.specified_id_to_refs.remove(&specified);
-                } else {
-                    log::error!("Duplicate user-specified referent '{specified}'");
-                }
-            }
+            self.specified_id_to_refs.remove(&specified, id);
         }
 
         for path in &metadata.relevant_paths {
@@ -352,5 +341,32 @@ impl InstanceWithMetaMut<'_> {
 
     pub fn metadata(&self) -> &InstanceMetadata {
         self.metadata
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{
+        snapshot::{InstanceMetadata, InstanceSnapshot},
+        RojoRef,
+    };
+
+    use super::RojoTree;
+
+    #[test]
+    fn swap_duped_specified_ids() {
+        let custom_ref = RojoRef::new("MyCoolRef".into());
+        let snapshot = InstanceSnapshot::new()
+            .metadata(InstanceMetadata::new().specified_id(Some(custom_ref.clone())));
+        let mut tree = RojoTree::new(InstanceSnapshot::new());
+
+        let original = tree.insert_instance(tree.get_root_id(), snapshot.clone());
+        assert_eq!(tree.get_specified_id(&custom_ref.clone()), Some(original));
+
+        let duped = tree.insert_instance(tree.get_root_id(), snapshot.clone());
+        assert_eq!(tree.get_specified_id(&custom_ref.clone()), None);
+
+        tree.remove(original);
+        assert_eq!(tree.get_specified_id(&custom_ref.clone()), Some(duped));
     }
 }
