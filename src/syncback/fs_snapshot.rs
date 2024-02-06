@@ -1,6 +1,6 @@
 use std::{
     collections::{HashMap, HashSet},
-    fmt, io,
+    io,
     path::{Path, PathBuf},
 };
 
@@ -111,17 +111,5 @@ impl FsSnapshot {
             );
         }
         Ok(())
-    }
-}
-
-impl fmt::Debug for FsSnapshot {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let files = self
-            .added_files
-            .iter()
-            .map(|(k, v)| format!("{}: {} bytes", k.display(), v.len()));
-        let dirs = self.added_dirs.iter().map(|v| format!("{}", v.display()));
-
-        f.debug_list().entries(files).entries(dirs).finish()
     }
 }
