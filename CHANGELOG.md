@@ -1,6 +1,7 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Rojo now converts any line endings to LF, preventing spurious diffs when syncing text or Lua files on Windows (#[854])
 * Fixed Rojo plugin failing to connect when project contains certain unreadable properties ([#848])
 * Added popout diff visualizer for table properties like Attributes and Tags ([#834])
 * Updated Theme to use Studio colors ([#838])
@@ -59,6 +60,7 @@
 [#840]: https://github.com/rojo-rbx/rojo/pull/840
 [#847]: https://github.com/rojo-rbx/rojo/pull/847
 [#848]: https://github.com/rojo-rbx/rojo/pull/848
+[#854]: https://github.com/rojo-rbx/rojo/pull/854
 
 
 ## [7.4.0] - January 16, 2024
