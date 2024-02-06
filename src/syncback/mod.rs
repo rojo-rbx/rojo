@@ -34,7 +34,7 @@ pub fn syncback_loop<'old>(
     old_tree: &'old RojoTree,
     mut new_tree: WeakDom,
     project: &'old Project,
-) -> anyhow::Result<Vec<(Ref, InstanceSnapshot)>> {
+) -> anyhow::Result<FsSnapshot> {
     log::debug!("Hashing project DOM");
     let old_hashes = hash_tree(old_tree.inner());
     log::debug!("Hashing file DOM");
@@ -153,9 +153,7 @@ pub fn syncback_loop<'old>(
         snapshots.extend(syncback.children);
     }
 
-    fs_snapshot.write_to_vfs(project.folder_location(), vfs)?;
-
-    Ok(replacements)
+    Ok(fs_snapshot)
 }
 
 pub struct SyncbackReturn<'new, 'old> {

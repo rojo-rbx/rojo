@@ -56,11 +56,16 @@ impl SyncbackCommand {
 
         let start = Instant::now();
         log::info!("Beginning syncback...");
-        syncback_loop(
+        let snapshot = syncback_loop(
             session_old.vfs(),
             &dom_old,
             dom_new,
             session_old.root_project(),
+        )?;
+
+        snapshot.write_to_vfs(
+            session_old.root_project().folder_location(),
+            session_old.vfs(),
         )?;
         log::info!(
             "Syncback finished in {:.02}s!",
