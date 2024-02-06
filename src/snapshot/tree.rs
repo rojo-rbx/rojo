@@ -182,6 +182,8 @@ impl RojoTree {
         self.metadata_map.get(&id)
     }
 
+    /// Get the backing Ref of the given RojoRef. If the RojoRef maps to exactly 
+    /// one Ref, this method returns Some. Otherwise, it returns None.
     pub fn get_specified_id(&self, specified: &RojoRef) -> Option<Ref> {
         match self.specified_id_to_refs.get(specified)[..] {
             [referent] => Some(referent),
