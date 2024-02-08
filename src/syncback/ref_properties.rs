@@ -4,11 +4,13 @@
 use std::collections::VecDeque;
 
 use rbx_dom_weak::{
-    types::{Attributes, BinaryString, Variant},
+    types::{Attributes, Variant},
     Instance, WeakDom,
 };
 
 use crate::{multimap::MultiMap, REF_ID_ATTRIBUTE_NAME, REF_POINTER_ATTRIBUTE_PREFIX};
+
+use super::get_inst_path;
 
 /// Iterates through a WeakDom and links referent properties using attributes.
 pub fn link_referents(dom: &mut WeakDom) -> anyhow::Result<()> {
@@ -25,6 +27,11 @@ pub fn link_referents(dom: &mut WeakDom) -> anyhow::Result<()> {
         for (name, value) in &instance.properties {
             if let Variant::Ref(prop_value) = value {
                 if dom.get_by_ref(*prop_value).is_some() {
+                    log::trace!(
+                        "{}.{name} -> {}",
+                        get_inst_path(dom, referent),
+                        get_inst_path(dom, *prop_value)
+                    );
                     links.insert(referent, (name.clone(), *prop_value))
                 }
             }
@@ -32,12 +39,12 @@ pub fn link_referents(dom: &mut WeakDom) -> anyhow::Result<()> {
     }
     let mut rewrites = Vec::new();
 
-    for (referent, ref_properties) in links {
+    for (pointer_ref, ref_properties) in links {
         for (prop_name, target_ref) in ref_properties {
             log::debug!(
-                "Linking {} to {}.{prop_name}",
+                "Linking {}.{prop_name} to {} ({pointer_ref} to {target_ref})",
+                dom.get_by_ref(pointer_ref).unwrap().name,
                 dom.get_by_ref(target_ref).unwrap().name,
-                dom.get_by_ref(referent).unwrap().name,
             );
             let target_inst = dom
                 .get_by_ref_mut(target_ref)
@@ -47,24 +54,26 @@ pub fn link_referents(dom: &mut WeakDom) -> anyhow::Result<()> {
             if attributes.get(REF_ID_ATTRIBUTE_NAME).is_none() {
                 attributes.insert(
                     REF_ID_ATTRIBUTE_NAME.to_owned(),
-                    Variant::BinaryString(referent.to_string().into_bytes().into()),
+                    Variant::String(target_ref.to_string()),
                 );
             }
 
             let target_id = attributes
                 .get(REF_ID_ATTRIBUTE_NAME)
                 .expect("every Instance to have an ID");
-            if let Variant::BinaryString(target_id) = target_id {
-                rewrites.push((prop_name, target_id.clone()));
+            if let Variant::String(value) = target_id {
+                rewrites.push((prop_name, value.clone().into_bytes()));
+            } else if let Variant::BinaryString(value) = target_id {
+                rewrites.push((prop_name, value.clone().into_vec()))
             }
         }
 
-        let inst = dom.get_by_ref_mut(referent).unwrap();
+        let inst = dom.get_by_ref_mut(pointer_ref).unwrap();
         let attrs = get_or_insert_attributes(inst)?;
         for (name, id) in rewrites.drain(..) {
             attrs.insert(
                 format!("{REF_POINTER_ATTRIBUTE_PREFIX}{name}"),
-                BinaryString::from(id.into_vec()).into(),
+                String::from_utf8(id).unwrap().into(),
             );
         }
     }
