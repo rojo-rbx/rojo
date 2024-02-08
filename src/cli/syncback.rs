@@ -34,13 +34,17 @@ pub struct SyncbackCommand {
 
     /// If provided, syncback will list all of the changes it will make to the
     /// file system before making them.
-    #[clap(long)]
+    #[clap(long, short)]
     pub list: bool,
 
     /// If provided, syncback will not actually write anything to the file
     /// system.
     #[clap(long)]
     pub dry_run: bool,
+
+    /// If provided, the prompt for writing to the file system is skipped.
+    #[clap(long, short = 'y')]
+    pub non_interactive: bool,
 }
 
 impl SyncbackCommand {
@@ -89,6 +93,22 @@ impl SyncbackCommand {
         }
 
         if !self.dry_run {
+            if !self.non_interactive {
+                println!(
+                    "Would write {} files/folders and remove {} files/folders.",
+                    snapshot.added_paths().len(),
+                    snapshot.removed_paths().len()
+                );
+                print!("Is this okay? (Y/N): ");
+                io::stdout().flush()?;
+                let mut line = String::with_capacity(1);
+                io::stdin().read_line(&mut line)?;
+                line = line.trim().to_lowercase();
+                if line != "y" {
+                    println!("Aborting due to user input!");
+                    return Ok(());
+                }
+            }
             log::info!("Writing to the file system...");
             snapshot.write_to_vfs(base_path, session_old.vfs())?;
         } else {
