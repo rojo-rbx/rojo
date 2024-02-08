@@ -1,4 +1,5 @@
 use std::{
+    io::{self, Write as _},
     mem::forget,
     path::{Path, PathBuf},
     time::Instant,
@@ -8,10 +9,14 @@ use anyhow::Context;
 use clap::Parser;
 use memofs::Vfs;
 use rbx_dom_weak::{InstanceBuilder, WeakDom};
+use termcolor::{BufferWriter, Color, ColorChoice, ColorSpec, WriteColor};
 
-use crate::{serve_session::ServeSession, syncback::syncback_loop};
+use crate::{
+    serve_session::ServeSession,
+    syncback::{syncback_loop, FsSnapshot},
+};
 
-use super::resolve_path;
+use super::{resolve_path, GlobalOptions};
 
 const UNKNOWN_INPUT_KIND_ERR: &str = "Could not detect what kind of file was inputted. \
                                        Expected input file to end in .rbxl, .rbxlx, .rbxm, or .rbxmx.";
@@ -26,10 +31,20 @@ pub struct SyncbackCommand {
     /// Path to the place to perform syncback on.
     #[clap(long, short)]
     pub input: PathBuf,
+
+    /// If provided, syncback will list all of the changes it will make to the
+    /// file system before making them.
+    #[clap(long)]
+    pub list: bool,
+
+    /// If provided, syncback will not actually write anything to the file
+    /// system.
+    #[clap(long)]
+    pub dry_run: bool,
 }
 
 impl SyncbackCommand {
-    pub fn run(&self) -> anyhow::Result<()> {
+    pub fn run(&self, global: GlobalOptions) -> anyhow::Result<()> {
         let path_old = resolve_path(&self.project);
         let path_new = resolve_path(&self.input);
 
@@ -63,15 +78,22 @@ impl SyncbackCommand {
             dom_new,
             session_old.root_project(),
         )?;
-
-        snapshot.write_to_vfs(
-            session_old.root_project().folder_location(),
-            session_old.vfs(),
-        )?;
         log::info!(
             "Syncback finished in {:.02}s!",
             start.elapsed().as_secs_f32()
         );
+
+        let base_path = session_old.root_project().folder_location();
+        if self.list {
+            list_files(&snapshot, global.color.into(), base_path)?;
+        }
+
+        if !self.dry_run {
+            log::info!("Writing to the file system...");
+            snapshot.write_to_vfs(base_path, session_old.vfs())?;
+        } else {
+            log::info!("Aborting before writing to file system due to `--dry-run`");
+        }
 
         // It is potentially prohibitively expensive to drop a ServeSession,
         // and the program is about to exit anyway so we're just going to forget
@@ -153,4 +175,50 @@ impl FileKind {
             _ => None,
         }
     }
+}
+
+fn list_files(snapshot: &FsSnapshot, color: ColorChoice, base_path: &Path) -> io::Result<()> {
+    let no_color = ColorSpec::new();
+    let mut add_color = ColorSpec::new();
+    add_color.set_fg(Some(Color::Green));
+    let mut remove_color = ColorSpec::new();
+    remove_color.set_fg(Some(Color::Red));
+
+    // We emit this to stderr because otherwise it'd be impossible
+    // to pipe it separately from normal output.
+    let writer = BufferWriter::stderr(color);
+    let mut buffer = writer.buffer();
+
+    if snapshot.is_empty() {
+        writeln!(&mut buffer, "No files/added would be removed or added.")?;
+    } else {
+        let added = snapshot.added_paths();
+        if !added.is_empty() {
+            writeln!(&mut buffer, "Writing files/folders:")?;
+            buffer.set_color(&add_color)?;
+            for path in added {
+                writeln!(
+                    &mut buffer,
+                    "{}",
+                    path.strip_prefix(base_path).unwrap_or(path).display()
+                )?;
+            }
+            buffer.set_color(&no_color)?;
+        }
+        let removed = snapshot.removed_paths();
+        if !removed.is_empty() {
+            writeln!(&mut buffer, "Removing files/folders:")?;
+            buffer.set_color(&remove_color)?;
+            for path in removed {
+                writeln!(
+                    &mut buffer,
+                    "{}",
+                    path.strip_prefix(base_path).unwrap_or(path).display()
+                )?;
+            }
+        }
+        buffer.set_color(&no_color)?;
+    }
+
+    writer.print(&buffer)
 }

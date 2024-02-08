@@ -112,4 +112,33 @@ impl FsSnapshot {
         }
         Ok(())
     }
+
+    /// Returns whether this `FsSnapshot` is empty or not.
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.added_files.is_empty()
+            && self.added_dirs.is_empty()
+            && self.removed_files.is_empty()
+            && self.removed_dirs.is_empty()
+    }
+
+    /// Returns a list of paths that would be added by this `FsSnapshot`.
+    #[inline]
+    pub fn added_paths(&self) -> Vec<&Path> {
+        let mut list = Vec::with_capacity(self.added_files.len() + self.added_dirs.len());
+        list.extend(self.added_files.keys().map(PathBuf::as_path));
+        list.extend(self.added_dirs.iter().map(PathBuf::as_path));
+
+        list
+    }
+
+    /// Returns a list of paths that would be removed by this `FsSnapshot`.
+    #[inline]
+    pub fn removed_paths(&self) -> Vec<&Path> {
+        let mut list = Vec::with_capacity(self.removed_files.len() + self.removed_dirs.len());
+        list.extend(self.removed_files.iter().map(PathBuf::as_path));
+        list.extend(self.removed_dirs.iter().map(PathBuf::as_path));
+
+        list
+    }
 }

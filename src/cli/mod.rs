@@ -48,7 +48,7 @@ impl Options {
             Subcommand::FmtProject(subcommand) => subcommand.run(),
             Subcommand::Doc(subcommand) => subcommand.run(),
             Subcommand::Plugin(subcommand) => subcommand.run(),
-            Subcommand::Syncback(subcommand) => subcommand.run(),
+            Subcommand::Syncback(subcommand) => subcommand.run(self.global),
         }
     }
 }
