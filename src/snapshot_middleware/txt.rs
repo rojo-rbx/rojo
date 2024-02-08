@@ -13,7 +13,7 @@ pub fn snapshot_txt(
     path: &Path,
     name: &str,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let contents = vfs.read_to_string_lf_normalized(path)?;
+    let contents = vfs.read_to_string(path)?;
     let contents_str = contents.as_str();
 
     let properties = hashmap! {
