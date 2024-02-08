@@ -2,7 +2,7 @@
 
 ## Unreleased Changes
 * Changed `StdBackend` file watching component to use minimal recursive watches. [#830]
-* Added `Vfs::read_to_string_lf_normalized` [#854]
+* Added `Vfs::read_to_string` and `Vfs::read_to_string_lf_normalized` [#854]
 
 [#830]: https://github.com/rojo-rbx/rojo/pull/830
 [#854]: https://github.com/rojo-rbx/rojo/pull/854

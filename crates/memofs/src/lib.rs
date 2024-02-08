@@ -155,7 +155,7 @@ impl VfsInner {
         Ok(Arc::new(contents))
     }
 
-    fn read_to_string_lf_normalized<P: AsRef<Path>>(&mut self, path: P) -> io::Result<Arc<String>> {
+    fn read_to_string<P: AsRef<Path>>(&mut self, path: P) -> io::Result<Arc<String>> {
         let path = path.as_ref();
         let contents = self.backend.read(path)?;
 
@@ -170,9 +170,7 @@ impl VfsInner {
             )
         })?;
 
-        Ok(Arc::new(
-            contents_str.lines().collect::<Vec<&str>>().join("\n"),
-        ))
+        Ok(Arc::new(contents_str.into()))
     }
 
     fn write<P: AsRef<Path>, C: AsRef<[u8]>>(&mut self, path: P, contents: C) -> io::Result<()> {
@@ -278,21 +276,31 @@ impl Vfs {
         self.inner.lock().unwrap().read(path)
     }
 
-    /// Read a file from the VFS, or the underlying backend if it isn't
-    /// resident.
+    /// Read a file from the VFS (or from the underlying backend if it isn't
+    /// resident) into a string.
+    ///
+    /// Roughly equivalent to [`std::fs::read_to_string`][std::fs::read_to_string].
+    ///
+    /// [std::fs::read_to_string]: https://doc.rust-lang.org/stable/std/fs/fn.read_to_string.html
+    #[inline]
+    pub fn read_to_string<P: AsRef<Path>>(&self, path: P) -> io::Result<Arc<String>> {
+        let path = path.as_ref();
+        self.inner.lock().unwrap().read_to_string(path)
+    }
+
+    /// Read a file from the VFS (or the underlying backend if it isn't
+    /// resident) into a string, and normalize its line endings to LF.
     ///
     /// Roughly equivalent to [`std::fs::read_to_string`][std::fs::read_to_string], but also performs
-    /// line ending normalization. This method first confirms that the file
-    /// contains UTF-8, then converts any line endings to LF.
+    /// line ending normalization.
     ///
     /// [std::fs::read_to_string]: https://doc.rust-lang.org/stable/std/fs/fn.read_to_string.html
     #[inline]
     pub fn read_to_string_lf_normalized<P: AsRef<Path>>(&self, path: P) -> io::Result<Arc<String>> {
         let path = path.as_ref();
-        self.inner
-            .lock()
-            .unwrap()
-            .read_to_string_lf_normalized(path)
+        let contents = self.inner.lock().unwrap().read_to_string(path)?;
+
+        Ok(contents.lines().collect::<Vec<&str>>().join("\n").into())
     }
 
     /// Write a file to the VFS and the underlying backend.
