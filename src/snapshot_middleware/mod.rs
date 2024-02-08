@@ -256,7 +256,7 @@ impl Middleware {
         match self {
             Middleware::Csv => syncback_csv(snapshot, file_name),
             Middleware::JsonModel => syncback_json_model(snapshot, file_name),
-            Middleware::Json => unimplemented!("cannot syncback Json middleware"),
+            Middleware::Json => anyhow::bail!("cannot syncback Json middleware"),
             // Projects are only generated from files that already exist on the
             // file system, so we don't need to pass a file name.
             Middleware::Project => syncback_project(snapshot),
@@ -265,7 +265,7 @@ impl Middleware {
             Middleware::ModuleScript => syncback_lua(snapshot, file_name),
             Middleware::Rbxm => syncback_rbxm(snapshot, file_name),
             Middleware::Rbxmx => syncback_rbxmx(snapshot, file_name),
-            Middleware::Toml => unimplemented!("cannot syncback Toml middleware"),
+            Middleware::Toml => anyhow::bail!("cannot syncback Toml middleware"),
             Middleware::Text => syncback_txt(snapshot, file_name),
             Middleware::Ignore => anyhow::bail!("cannot syncback Ignore middleware"),
             Middleware::Dir => syncback_dir(snapshot, file_name),
