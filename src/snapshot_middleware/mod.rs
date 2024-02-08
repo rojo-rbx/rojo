@@ -33,7 +33,7 @@ use crate::{
 };
 use crate::{
     snapshot::{InstanceContext, InstanceSnapshot, SyncRule},
-    syncback::is_valid_file_name,
+    syncback::validate_file_name,
 };
 
 use self::{
@@ -245,11 +245,13 @@ impl Middleware {
         file_name: &str,
     ) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
         // We don't care about the names of projects
-        if !is_valid_file_name(&snapshot.name) && !matches!(self, Middleware::Project) {
-            anyhow::bail!(
-                "cannot create a file or directory with name {}",
-                snapshot.name
-            );
+        if !matches!(self, Middleware::Project) {
+            validate_file_name(&snapshot.name).with_context(|| {
+                format!(
+                    "cannot create a file or directory with name {}",
+                    snapshot.name
+                )
+            })?;
         }
         match self {
             Middleware::Csv => syncback_csv(snapshot, file_name),

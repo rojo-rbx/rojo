@@ -34,11 +34,10 @@ pub fn name_for_inst<'old>(
             _ => {
                 let extension = extension_for_middleware(middleware);
                 let name = &new_inst.name;
-                if is_valid_file_name(name) {
-                    Cow::Owned(format!("{name}.{extension}"))
-                } else {
-                    anyhow::bail!("name '{name}' is not legal to write to the file system")
-                }
+                validate_file_name(name).with_context(|| {
+                    format!("name '{name}' is not legal to write to the file system")
+                })?;
+                Cow::Owned(format!("{name}.{extension}"))
             }
         })
     }
@@ -81,29 +80,35 @@ const INVALID_WINDOWS_NAMES: [&str; 22] = [
 /// in a file's name.
 const FORBIDDEN_CHARS: [char; 9] = ['<', '>', ':', '"', '/', '|', '?', '*', '\\'];
 
-/// Returns whether a given name is a valid file name. This takes into account
-/// rules for Windows, MacOS, and Linux.
+/// Validates a provided file name to ensure it's allowed on the file system. An
+/// error is returned if the name isn't allowed, indicating why.
+/// This takes into account rules for Windows, MacOS, and Linux.
 ///
 /// In practice however, these broadly overlap so the only unexpected behavior
 /// is Windows, where there are 22 reserved names.
-pub fn is_valid_file_name<S: AsRef<str>>(name: S) -> bool {
+pub fn validate_file_name<S: AsRef<str>>(name: S) -> anyhow::Result<()> {
     let str = name.as_ref();
 
-    if str.ends_with(' ') || str.ends_with('.') {
-        return false;
+    if str.ends_with(' ') {
+        anyhow::bail!("file names cannot end with a space")
+    }
+    if str.ends_with('.') {
+        anyhow::bail!("file names cannot end with '.'")
     }
 
     for char in str.chars() {
-        if char.is_control() || FORBIDDEN_CHARS.contains(&char) {
-            return false;
+        if FORBIDDEN_CHARS.contains(&char) {
+            anyhow::bail!("file names cannot contain <, >, :, \", /, |, ?, *, or \\")
+        } else if char.is_control() {
+            anyhow::bail!("file names cannot contain control characters")
         }
     }
 
     for forbidden in INVALID_WINDOWS_NAMES {
         if str == forbidden {
-            return false;
+            anyhow::bail!("files cannot be named {str}")
         }
     }
 
-    true
+    Ok(())
 }

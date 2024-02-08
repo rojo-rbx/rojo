@@ -23,7 +23,7 @@ use crate::{
     Project,
 };
 
-pub use file_names::{is_valid_file_name, name_for_inst};
+pub use file_names::{name_for_inst, validate_file_name};
 pub use fs_snapshot::FsSnapshot;
 pub use hash::*;
 pub use ref_properties::link_referents;
