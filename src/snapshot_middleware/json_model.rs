@@ -70,7 +70,9 @@ pub fn syncback_json_model<'new, 'old>(
 ) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
     let path = snapshot.parent_path.join(file_name);
 
-    let model = json_model_from_pair(snapshot, snapshot.new, snapshot.old);
+    let mut model = json_model_from_pair(snapshot, snapshot.new, snapshot.old);
+    // We don't need the name on the root, but we do for children.
+    model.name = None;
 
     Ok(SyncbackReturn {
         inst_snapshot: InstanceSnapshot::from_instance(snapshot.new_inst()),
@@ -151,7 +153,7 @@ fn json_model_from_pair(snapshot: &SyncbackSnapshot, new: Ref, old: Option<Ref>)
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct JsonModel {
-    #[serde(alias = "Name", skip_serializing)]
+    #[serde(alias = "Name", skip_serializing_if = "Option::is_none")]
     name: Option<String>,
 
     #[serde(alias = "ClassName")]
