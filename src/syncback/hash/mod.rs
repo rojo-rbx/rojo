@@ -13,35 +13,11 @@ use std::collections::{HashMap, VecDeque};
 use crate::variant_eq::variant_eq;
 
 /// Returns a map of every `Ref` in the `WeakDom` to a hashed version of the
-/// `Instance` it points to, including the properties but not including the
-/// descendants of the Instance.
-///
-/// The hashes **do not** include the descendants of the Instances in them,
-/// so they should only be used for comparing Instances directly. To compare a
-/// subtree, use `hash_tree`.
-pub fn hash_tree_no_descendants(dom: &WeakDom, root_ref: Ref) -> HashMap<Ref, Hash> {
-    let mut map: HashMap<Ref, Hash> = HashMap::new();
-    let mut order = descendants(dom, root_ref);
-
-    let mut prop_list = Vec::with_capacity(2);
-
-    while let Some(referent) = order.pop() {
-        let inst = dom.get_by_ref(referent).unwrap();
-        let hash = hash_inst_no_descendants(inst, &mut prop_list);
-
-        map.insert(referent, hash.finalize());
-    }
-
-    map
-}
-
-/// Returns a map of every `Ref` in the `WeakDom` to a hashed version of the
 /// `Instance` it points to, including the properties and descendants of the
 /// `Instance`.
 ///
-/// The hashes **do** include the descendants of the Instances in them,
-/// so they should only be used for comparing subtrees directly. To compare an
-/// `Instance` directly, use `hash_tree_no_descendants`.
+/// The hashes include the descendants of the Instances in them, so they should
+/// only be used for comparing subtrees directly.
 pub fn hash_tree(dom: &WeakDom, root_ref: Ref) -> HashMap<Ref, Hash> {
     let mut map: HashMap<Ref, Hash> = HashMap::new();
     let mut order = descendants(dom, root_ref);
