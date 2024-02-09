@@ -36,9 +36,9 @@ pub fn syncback_loop<'old>(
     project: &'old Project,
 ) -> anyhow::Result<FsSnapshot> {
     log::debug!("Hashing project DOM");
-    let old_hashes = hash_tree(old_tree.inner());
+    let old_hashes = hash_tree(old_tree.inner(), old_tree.get_root_id());
     log::debug!("Hashing file DOM");
-    let new_hashes = hash_tree(&new_tree);
+    let new_hashes = hash_tree(&new_tree, new_tree.root_ref());
 
     if let Some(syncback_rules) = &project.syncback_rules {
         // I think this is a neat way to handle `sync_current_camera` being
@@ -258,24 +258,4 @@ fn get_inst_path(dom: &WeakDom, referent: Ref) -> String {
         inst = dom.get_by_ref(instance.parent());
     }
     path.into_iter().collect::<Vec<&str>>().join("/")
-}
-
-/// Produces a list of descendants in the WeakDom such that all children come
-/// before their parents.
-pub(crate) fn descendants(dom: &WeakDom) -> Vec<Ref> {
-    let mut queue = VecDeque::new();
-    let mut ordered = Vec::new();
-    queue.push_front(dom.root_ref());
-
-    while let Some(referent) = queue.pop_front() {
-        let inst = dom
-            .get_by_ref(referent)
-            .expect("Invariant: WeakDom had a Ref that wasn't inside it");
-        ordered.push(referent);
-        for child in inst.children() {
-            queue.push_back(*child)
-        }
-    }
-
-    ordered
 }

@@ -8,9 +8,8 @@ use rbx_dom_weak::{
     types::{Ref, Variant},
     Instance, WeakDom,
 };
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 
-use super::descendants;
 use crate::variant_eq::variant_eq;
 
 /// Returns a map of every `Ref` in the `WeakDom` to a hashed version of the
@@ -20,9 +19,9 @@ use crate::variant_eq::variant_eq;
 /// The hashes **do not** include the descendants of the Instances in them,
 /// so they should only be used for comparing Instances directly. To compare a
 /// subtree, use `hash_tree`.
-pub fn hash_tree_no_descendants(dom: &WeakDom) -> HashMap<Ref, Hash> {
+pub fn hash_tree_no_descendants(dom: &WeakDom, root_ref: Ref) -> HashMap<Ref, Hash> {
     let mut map: HashMap<Ref, Hash> = HashMap::new();
-    let mut order = descendants(dom);
+    let mut order = descendants(dom, root_ref);
 
     let mut prop_list = Vec::with_capacity(2);
 
@@ -43,9 +42,9 @@ pub fn hash_tree_no_descendants(dom: &WeakDom) -> HashMap<Ref, Hash> {
 /// The hashes **do** include the descendants of the Instances in them,
 /// so they should only be used for comparing subtrees directly. To compare an
 /// `Instance` directly, use `hash_tree_no_descendants`.
-pub fn hash_tree(dom: &WeakDom) -> HashMap<Ref, Hash> {
+pub fn hash_tree(dom: &WeakDom, root_ref: Ref) -> HashMap<Ref, Hash> {
     let mut map: HashMap<Ref, Hash> = HashMap::new();
-    let mut order = descendants(dom);
+    let mut order = descendants(dom, root_ref);
 
     let mut prop_list = Vec::with_capacity(2);
 
@@ -121,4 +120,24 @@ fn hash_inst<'inst>(
     }
 
     hasher.finalize()
+}
+
+/// Produces a list of descendants in the WeakDom such that all children come
+/// before their parents.
+fn descendants(dom: &WeakDom, root_ref: Ref) -> Vec<Ref> {
+    let mut queue = VecDeque::new();
+    let mut ordered = Vec::new();
+    queue.push_front(root_ref);
+
+    while let Some(referent) = queue.pop_front() {
+        let inst = dom
+            .get_by_ref(referent)
+            .expect("Invariant: WeakDom had a Ref that wasn't inside it");
+        ordered.push(referent);
+        for child in inst.children() {
+            queue.push_back(*child)
+        }
+    }
+
+    ordered
 }
