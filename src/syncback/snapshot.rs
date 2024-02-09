@@ -3,6 +3,7 @@ use rbx_reflection::Scriptability;
 use std::{
     collections::{BTreeSet, HashMap},
     path::{Path, PathBuf},
+    rc::Rc,
     sync::OnceLock,
 };
 
@@ -21,12 +22,13 @@ use super::SyncbackRules;
 /// A glob that can be used to tell if a path contains a `.git` folder.
 static GIT_IGNORE_GLOB: OnceLock<Glob> = OnceLock::new();
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct SyncbackData<'new, 'old> {
     pub(super) vfs: &'old Vfs,
     pub(super) old_tree: &'old RojoTree,
     pub(super) new_tree: &'new WeakDom,
     pub(super) syncback_rules: Option<&'old SyncbackRules>,
+    pub(super) ref_map: Rc<HashMap<Ref, Ref>>,
 }
 
 pub struct SyncbackSnapshot<'new, 'old> {
@@ -43,7 +45,7 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
     #[inline]
     pub fn with_parent(&self, new_name: String, new_ref: Ref, old_ref: Option<Ref>) -> Self {
         Self {
-            data: self.data,
+            data: self.data.clone(),
             old: old_ref,
             new: new_ref,
             parent_path: self.parent_path.join(&self.name),
@@ -220,6 +222,12 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
             .new_tree
             .get_by_ref(self.new)
             .expect("SyncbackSnapshot should not contain invalid referents")
+    }
+
+    /// Returns the old tree equivalent to the provided Ref, if one exists.
+    #[inline]
+    pub fn old_ref_match(&self, referent: Ref) -> Option<Ref> {
+        self.data.ref_map.get(&referent).copied()
     }
 
     /// Returns the underlying VFS being used for syncback.

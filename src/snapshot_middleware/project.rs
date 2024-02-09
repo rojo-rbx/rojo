@@ -413,7 +413,7 @@ pub fn syncback_project<'new, 'old>(
             if let Some(old_inst) = old_child_map.get(new_name.as_str()) {
                 // This new instance represents an older one!
                 children.push(SyncbackSnapshot {
-                    data: snapshot.data,
+                    data: snapshot.data.clone(),
                     old: Some(old_inst.id()),
                     new: new_child.referent(),
                     parent_path,
@@ -423,7 +423,7 @@ pub fn syncback_project<'new, 'old>(
             } else {
                 // This new instance is... new.
                 children.push(SyncbackSnapshot {
-                    data: snapshot.data,
+                    data: snapshot.data.clone(),
                     old: None,
                     new: new_child.referent(),
                     parent_path,

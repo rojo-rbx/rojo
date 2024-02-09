@@ -14,6 +14,7 @@ use rbx_dom_weak::{
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{HashMap, HashSet, VecDeque},
+    rc::Rc,
     sync::OnceLock,
 };
 
@@ -85,6 +86,7 @@ pub fn syncback_loop<'old>(
         old_tree,
         new_tree: &new_tree,
         syncback_rules: project.syncback_rules.as_ref(),
+        ref_map: Rc::new(ref_map),
     };
 
     let mut snapshots = vec![SyncbackSnapshot {
