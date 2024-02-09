@@ -61,7 +61,8 @@ pub fn syncback_txt<'new, 'old>(
         anyhow::bail!("StringValues must have a `Value` property that is a String");
     };
 
-    let meta = AdjacentMetadata::from_syncback_snapshot(snapshot, path.clone())?;
+    let mut meta = AdjacentMetadata::from_syncback_snapshot(snapshot, path.clone())?;
+    meta.properties.remove("Value");
 
     let mut fs_snapshot = FsSnapshot::new();
     fs_snapshot.add_file(path, contents);

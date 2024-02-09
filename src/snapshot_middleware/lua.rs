@@ -136,7 +136,8 @@ pub fn syncback_lua<'new, 'old>(
         anyhow::bail!("Scripts must have a `Source` property that is a String")
     };
 
-    let meta = AdjacentMetadata::from_syncback_snapshot(snapshot, path.clone())?;
+    let mut meta = AdjacentMetadata::from_syncback_snapshot(snapshot, path.clone())?;
+    meta.properties.remove("Source");
 
     let mut fs_snapshot = FsSnapshot::new();
     fs_snapshot.add_file(path, contents);
@@ -178,7 +179,8 @@ pub fn syncback_lua_init<'new, 'old>(
 
     let dir_syncback = syncback_dir_no_meta(snapshot, dir_name)?;
 
-    let meta = DirectoryMetadata::from_syncback_snapshot(snapshot, path.clone())?;
+    let mut meta = DirectoryMetadata::from_syncback_snapshot(snapshot, path.clone())?;
+    meta.properties.remove("Source");
 
     let mut fs_snapshot = FsSnapshot::new();
     fs_snapshot.add_file(path, contents);

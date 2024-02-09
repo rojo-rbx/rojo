@@ -93,22 +93,18 @@ fn json_model_from_pair(snapshot: &SyncbackSnapshot, new: Ref, old: Option<Ref>)
 
     let mut properties = BTreeMap::new();
     let mut attributes = BTreeMap::new();
-    for (name, value) in snapshot.get_filtered_properties(new, old).unwrap() {
-        if let Variant::Ref(_) = value {
-            // We do not currently support Ref properties
-            continue;
+    for (name, value) in &new_inst.properties {
+        if let Variant::Attributes(attrs) = value {
+            for (attr_name, attr_value) in attrs.iter() {
+                attributes.insert(
+                    attr_name.clone(),
+                    UnresolvedValue::FullyQualified(attr_value.clone()),
+                );
+            }
         } else {
             properties.insert(
-                name.to_string(),
+                name.clone(),
                 UnresolvedValue::from_variant(value.clone(), &new_inst.class, name),
-            );
-        }
-    }
-    if let Some(Variant::Attributes(attrs)) = new_inst.properties.get("Attributes") {
-        for (attr_name, attr_value) in attrs.iter() {
-            attributes.insert(
-                attr_name.clone(),
-                UnresolvedValue::FullyQualified(attr_value.clone()),
             );
         }
     }

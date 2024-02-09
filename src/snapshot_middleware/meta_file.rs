@@ -58,29 +58,18 @@ impl AdjacentMetadata {
         let mut properties = BTreeMap::new();
         let mut attributes = BTreeMap::new();
 
-        let ignore_unknown_instances = if let Some(old_inst) = snapshot.old_inst() {
-            if old_inst.metadata().ignore_unknown_instances {
-                Some(true)
-            } else {
-                None
-            }
-        } else {
-            None
-        };
+        let ignore_unknown_instances = snapshot
+            .old_inst()
+            .map(|inst| inst.metadata().ignore_unknown_instances)
+            .unwrap_or_default();
 
         let class = &snapshot.new_inst().class;
-        for (name, value) in snapshot.new_filtered_properties() {
-            properties.insert(
-                name.to_owned(),
-                UnresolvedValue::from_variant(value.clone(), class, name),
-            );
-        }
-        if let Some(value) = snapshot.new_inst().properties.get("Attributes") {
+        for (name, value) in &snapshot.new_inst().properties {
             if let Variant::Attributes(attrs) = value {
                 for (name, value) in attrs.iter() {
                     let value = if let Variant::BinaryString(bstr) = value {
                         match std::str::from_utf8(bstr.as_ref()) {
-                            Ok(str) => Variant::String(str.to_owned()),
+                            Ok(str) => Variant::String(str.to_string()),
                             Err(_) => value.clone(),
                         }
                     } else {
@@ -89,15 +78,19 @@ impl AdjacentMetadata {
                     attributes.insert(name.to_owned(), UnresolvedValue::FullyQualified(value));
                 }
             } else {
-                anyhow::bail!(
-                    "expected Attributes to be of type Attributes but it was {:?}",
-                    value.ty()
+                properties.insert(
+                    name.clone(),
+                    UnresolvedValue::from_variant(value.clone(), class, name),
                 );
             }
         }
 
         Ok(Self {
-            ignore_unknown_instances,
+            ignore_unknown_instances: if ignore_unknown_instances {
+                Some(true)
+            } else {
+                None
+            },
             properties,
             attributes,
             path,
@@ -226,29 +219,18 @@ impl DirectoryMetadata {
         let mut properties = BTreeMap::new();
         let mut attributes = BTreeMap::new();
 
-        let ignore_unknown_instances = if let Some(old_inst) = snapshot.old_inst() {
-            if old_inst.metadata().ignore_unknown_instances {
-                Some(true)
-            } else {
-                None
-            }
-        } else {
-            None
-        };
+        let ignore_unknown_instances = snapshot
+            .old_inst()
+            .map(|inst| inst.metadata().ignore_unknown_instances)
+            .unwrap_or_default();
 
         let class = &snapshot.new_inst().class;
-        for (name, value) in snapshot.new_filtered_properties() {
-            properties.insert(
-                name.to_owned(),
-                UnresolvedValue::from_variant(value.clone(), class, name),
-            );
-        }
-        if let Some(value) = snapshot.new_inst().properties.get("Attributes") {
+        for (name, value) in &snapshot.new_inst().properties {
             if let Variant::Attributes(attrs) = value {
                 for (name, value) in attrs.iter() {
                     let value = if let Variant::BinaryString(bstr) = value {
                         match std::str::from_utf8(bstr.as_ref()) {
-                            Ok(str) => Variant::String(str.to_owned()),
+                            Ok(str) => Variant::String(str.to_string()),
                             Err(_) => value.clone(),
                         }
                     } else {
@@ -257,15 +239,19 @@ impl DirectoryMetadata {
                     attributes.insert(name.to_owned(), UnresolvedValue::FullyQualified(value));
                 }
             } else {
-                anyhow::bail!(
-                    "expected Attributes to be of type Attributes but it was {:?}",
-                    value.ty()
+                properties.insert(
+                    name.clone(),
+                    UnresolvedValue::from_variant(value.clone(), class, name),
                 );
             }
         }
 
         Ok(Self {
-            ignore_unknown_instances,
+            ignore_unknown_instances: if ignore_unknown_instances {
+                Some(true)
+            } else {
+                None
+            },
             properties,
             attributes,
             class_name: None,

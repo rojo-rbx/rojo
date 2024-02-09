@@ -110,7 +110,8 @@ pub fn syncback_csv<'new, 'old>(
         anyhow::bail!("LocalizationTables must have a `Contents` property that is a String")
     };
 
-    let meta = AdjacentMetadata::from_syncback_snapshot(snapshot, path.clone())?;
+    let mut meta = AdjacentMetadata::from_syncback_snapshot(snapshot, path.clone())?;
+    meta.properties.remove("Contents");
 
     let mut fs_snapshot = FsSnapshot::new();
     fs_snapshot.add_file(path, localization_to_csv(contents)?);
@@ -146,7 +147,8 @@ pub fn syncback_csv_init<'new, 'old>(
     };
 
     let mut dir_syncback = syncback_dir_no_meta(snapshot, dir_name)?;
-    let meta = DirectoryMetadata::from_syncback_snapshot(snapshot, path.clone())?;
+    let mut meta = DirectoryMetadata::from_syncback_snapshot(snapshot, path.clone())?;
+    meta.properties.remove("Contents");
 
     let mut fs_snapshot = std::mem::take(&mut dir_syncback.fs_snapshot);
     fs_snapshot.add_file(&path, localization_to_csv(contents)?);
