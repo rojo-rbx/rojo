@@ -30,7 +30,7 @@ pub use fs_snapshot::FsSnapshot;
 pub use hash::*;
 pub use property_filter::filter_properties;
 pub use ref_properties::link_referents;
-pub use snapshot::{SyncbackData, SyncbackSnapshot};
+pub use snapshot::{filter_out_property, SyncbackData, SyncbackSnapshot};
 
 pub fn syncback_loop<'old>(
     vfs: &'old Vfs,

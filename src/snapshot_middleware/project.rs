@@ -12,7 +12,7 @@ use crate::{
         InstanceContext, InstanceMetadata, InstanceSnapshot, InstigatingSource, PathIgnoreRule,
         SyncRule,
     },
-    syncback::{FsSnapshot, SyncbackReturn, SyncbackSnapshot},
+    syncback::{filter_out_property, FsSnapshot, SyncbackReturn, SyncbackSnapshot},
     RojoRef,
 };
 
@@ -361,14 +361,20 @@ pub fn syncback_project<'new, 'old>(
 
         let properties = &mut node.properties;
 
-        let filtered_properties = snapshot
-            .get_filtered_properties(new_inst.referent(), Some(old_inst.id()))
-            .expect("all project nodes should exist in both trees when in queue");
-        for (name, value) in filtered_properties {
-            properties.insert(
-                name.to_owned(),
-                UnresolvedValue::from_variant(value.clone(), &new_inst.class, name),
-            );
+        for (name, value) in &new_inst.properties {
+            if node.path.is_some() {
+                if !filter_out_property(new_inst, name) {
+                    properties.insert(
+                        name.to_owned(),
+                        UnresolvedValue::from_variant(value.clone(), &new_inst.class, name),
+                    );
+                }
+            } else {
+                properties.insert(
+                    name.to_owned(),
+                    UnresolvedValue::from_variant(value.clone(), &new_inst.class, name),
+                );
+            }
         }
         for (child_name, child_node) in &mut node.children {
             if let Some(path_node) = &child_node.path {

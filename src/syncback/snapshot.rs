@@ -277,7 +277,7 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
     }
 }
 
-fn filter_out_property(inst: &Instance, prop_name: &str) -> bool {
+pub fn filter_out_property(inst: &Instance, prop_name: &str) -> bool {
     // We don't need SourceAssetId.
     if prop_name == "Tags" || prop_name == "Attributes" || prop_name == "SourceAssetId" {
         return true;
