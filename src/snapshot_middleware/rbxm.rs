@@ -9,7 +9,7 @@ use rbx_dom_weak::{types::Ref, InstanceBuilder, WeakDom};
 
 use crate::{
     snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
-    syncback::{FsSnapshot, SyncbackReturn, SyncbackSnapshot},
+    syncback::{hash_tree, FsSnapshot, SyncbackReturn, SyncbackSnapshot},
 };
 
 #[profiling::function]
@@ -56,6 +56,21 @@ pub fn syncback_rbxm<'new, 'old>(
     // script. That's a future endeavor though.
 
     let (dom, referent) = clone_and_filter(snapshot);
+    if let Some(old_ref) = snapshot.old {
+        log::trace!("Comparing two rbxmx trees to avoid extra writes");
+        let new_hashes = hash_tree(&dom, referent);
+        let old_hashes = hash_tree(snapshot.old_tree(), old_ref);
+
+        if new_hashes.get(&referent) == old_hashes.get(&old_ref) {
+            return Ok(SyncbackReturn {
+                inst_snapshot: InstanceSnapshot::from_instance(dom.get_by_ref(referent).unwrap()),
+                fs_snapshot: FsSnapshot::new(),
+                children: Vec::new(),
+                removed_children: Vec::new(),
+            });
+        }
+    }
+
     let mut serialized = Vec::new();
     rbx_binary::to_writer(&mut serialized, &dom, &[referent])
         .context("failed to serialize new rbxm")?;
@@ -87,13 +102,15 @@ fn clone_and_filter(snapshot: &SyncbackSnapshot) -> (WeakDom, Ref) {
             .new_tree()
             .get_by_ref(referent)
             .expect("all Instances should be in the new subtree");
-        let builder = InstanceBuilder::new(&inst.class).with_properties(
-            snapshot
-                .get_filtered_properties(referent, None)
-                .unwrap()
-                .into_iter()
-                .map(|(k, v)| (k.to_string(), v.clone())),
-        );
+        let builder = InstanceBuilder::new(&inst.class)
+            .with_properties(
+                snapshot
+                    .get_filtered_properties(referent, None)
+                    .unwrap()
+                    .into_iter()
+                    .map(|(k, v)| (k.to_string(), v.clone())),
+            )
+            .with_name(&inst.name);
         let parent = old_to_parent
             .get(&referent)
             .expect("children should come after parents");

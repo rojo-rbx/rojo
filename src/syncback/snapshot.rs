@@ -234,6 +234,12 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
         self.data.new_tree
     }
 
+    /// Returns the WeakDom used for the 'old' tree.
+    #[inline]
+    pub fn old_tree(&self) -> &'old WeakDom {
+        self.data.old_tree.inner()
+    }
+
     /// Returns user-specified property ignore rules.
     #[inline]
     pub fn ignore_props(&self) -> Option<&HashMap<String, Vec<String>>> {
