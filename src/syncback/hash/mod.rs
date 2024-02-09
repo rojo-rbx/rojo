@@ -8,9 +8,11 @@ use rbx_dom_weak::{
     types::{Ref, Variant},
     Instance, WeakDom,
 };
-use std::collections::{HashMap, VecDeque};
+use std::collections::HashMap;
 
 use crate::variant_eq::variant_eq;
+
+use super::descendants;
 
 /// Returns a map of every `Ref` in the `WeakDom` to a hashed version of the
 /// `Instance` it points to, including the properties and descendants of the
@@ -96,24 +98,4 @@ fn hash_inst<'inst>(
     }
 
     hasher.finalize()
-}
-
-/// Produces a list of descendants in the WeakDom such that all children come
-/// before their parents.
-fn descendants(dom: &WeakDom, root_ref: Ref) -> Vec<Ref> {
-    let mut queue = VecDeque::new();
-    let mut ordered = Vec::new();
-    queue.push_front(root_ref);
-
-    while let Some(referent) = queue.pop_front() {
-        let inst = dom
-            .get_by_ref(referent)
-            .expect("Invariant: WeakDom had a Ref that wasn't inside it");
-        ordered.push(referent);
-        for child in inst.children() {
-            queue.push_back(*child)
-        }
-    }
-
-    ordered
 }
