@@ -4,6 +4,7 @@ local Packages = Rojo.Packages
 
 local Roact = require(Packages.Roact)
 
+local Timer = require(Plugin.Timer)
 local Assets = require(Plugin.Assets)
 local Theme = require(Plugin.App.Theme)
 
@@ -21,6 +22,7 @@ function Array:init()
 end
 
 function Array:calculateDiff()
+	Timer.start("Array:calculateDiff")
 	--[[
 		Find the indexes that are added or removed from the array,
 		and display them side by side with gaps for the indexes that
@@ -63,6 +65,7 @@ function Array:calculateDiff()
 		j += 1
 	end
 
+	Timer.stop()
 	return diff
 end
 
