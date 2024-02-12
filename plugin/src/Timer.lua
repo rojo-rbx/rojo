@@ -21,7 +21,7 @@ function Timer._stop()
 
 	local entry = table.remove(Timer._entries)
 	if not entry then
-		error("[Rojo-Timer] Timer.stop: no label to stop")
+		error("[Rojo-Timer] Timer.stop: no label to stop", 2)
 		return
 	end
 
