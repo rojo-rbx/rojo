@@ -9,7 +9,7 @@ local Timer = {
 function Timer._start(label)
 	local start = clock()
 	if not label then
-		error("[Rojo-Timer] Timer.start: label is required")
+		error("[Rojo-Timer] Timer.start: label is required", 2)
 		return
 	end
 
