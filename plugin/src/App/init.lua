@@ -23,6 +23,7 @@ local PatchTree = require(Plugin.PatchTree)
 local preloadAssets = require(Plugin.preloadAssets)
 local soundPlayer = require(Plugin.soundPlayer)
 local ignorePlaceIds = require(Plugin.ignorePlaceIds)
+local timeUtil = require(Plugin.timeUtil)
 local Theme = require(script.Theme)
 
 local Page = require(script.Page)
@@ -118,6 +119,13 @@ function App:init()
 		end)
 	end)
 
+	self.disconnectUpdatesCheckChanged = Settings:onChanged("checkForUpdates", function()
+		self:checkForUpdates()
+	end)
+	self.disconnectPrereleasesCheckChanged = Settings:onChanged("checkForPrereleases", function()
+		self:checkForUpdates()
+	end)
+
 	self:setState({
 		appStatus = AppStatus.NotConnected,
 		guiEnabled = false,
@@ -131,32 +139,35 @@ function App:init()
 		toolbarIcon = Assets.Images.PluginButton,
 	})
 
-	if
-		RunService:IsEdit()
-		and self.serveSession == nil
-		and Settings:get("syncReminder")
-		and self:getLastSyncTimestamp()
-		and (self:isSyncLockAvailable())
-	then
-		self:addNotification("You've previously synced this place. Would you like to reconnect?", 300, {
-			Connect = {
-				text = "Connect",
-				style = "Solid",
-				layoutOrder = 1,
-				onClick = function(notification)
-					notification:dismiss()
-					self:startSession()
-				end,
-			},
-			Dismiss = {
-				text = "Dismiss",
-				style = "Bordered",
-				layoutOrder = 2,
-				onClick = function(notification)
-					notification:dismiss()
-				end,
-			},
-		})
+	if RunService:IsEdit() then
+		self:checkForUpdates()
+
+		if
+			Settings:get("syncReminder")
+			and self.serveSession == nil
+			and self:getLastSyncTimestamp()
+			and (self:isSyncLockAvailable())
+		then
+			self:addNotification("You've previously synced this place. Would you like to reconnect?", 300, {
+				Connect = {
+					text = "Connect",
+					style = "Solid",
+					layoutOrder = 1,
+					onClick = function(notification)
+						notification:dismiss()
+						self:startSession()
+					end,
+				},
+				Dismiss = {
+					text = "Dismiss",
+					style = "Bordered",
+					layoutOrder = 2,
+					onClick = function(notification)
+						notification:dismiss()
+					end,
+				},
+			})
+		end
 	end
 
 	if self:isAutoConnectPlaytestServerAvailable() then
@@ -179,6 +190,10 @@ end
 function App:willUnmount()
 	self.waypointConnection:Disconnect()
 	self.confirmationBindable:Destroy()
+
+	self.disconnectUpdatesCheckChanged()
+	self.disconnectPrereleasesCheckChanged()
+
 	self.autoConnectPlaytestServerListener()
 	self:clearRunningConnectionInfo()
 end
@@ -223,6 +238,40 @@ function App:closeNotification(id: number)
 	self:setState({
 		notifications = notifications,
 	})
+end
+
+function App:checkForUpdates()
+	if not Settings:get("checkForUpdates") then
+		return
+	end
+
+	local isLocalInstall = string.find(debug.traceback(), "\n[^\n]-user_.-$") ~= nil
+	local latestCompatibleVersion = Version.retrieveLatestCompatible({
+		version = Config.version,
+		includePrereleases = isLocalInstall and Settings:get("checkForPrereleases"),
+	})
+	if not latestCompatibleVersion then
+		return
+	end
+
+	self:addNotification(
+		string.format(
+			"A newer compatible version of Rojo, %s, was published %s! Go to the Rojo releases page to learn more.",
+			Version.display(latestCompatibleVersion.version),
+			timeUtil.elapsedToText(DateTime.now().UnixTimestamp - latestCompatibleVersion.publishedUnixTimestamp)
+		),
+		500,
+		{
+			Dismiss = {
+				text = "Dismiss",
+				style = "Bordered",
+				layoutOrder = 2,
+				onClick = function(notification)
+					notification:dismiss()
+				end,
+			},
+		}
+	)
 end
 
 function App:getPriorEndpoint()
