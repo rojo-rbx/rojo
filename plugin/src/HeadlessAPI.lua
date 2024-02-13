@@ -31,7 +31,7 @@ function API.new(app)
 
 	Rojo._apiDescriptions.Changed = {
 		Type = "Event",
-		Description = "An event that fires when a headless API property changes",
+		Description = "An event that fires when a Rojo API property changes",
 	}
 	Rojo.Changed = Rojo._changedEvent.Event
 
