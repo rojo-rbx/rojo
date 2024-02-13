@@ -22,6 +22,7 @@ local defaultSettings = {
 	playSounds = true,
 	typecheckingEnabled = false,
 	logLevel = "Info",
+	timingLogsEnabled = false,
 	priorEndpoints = {},
 }
 
