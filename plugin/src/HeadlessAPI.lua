@@ -393,7 +393,9 @@ function API.new(app)
 					text = action.text,
 					style = action.style,
 					layoutOrder = action.layoutOrder,
-					onClick = action.onClick,
+					onClick = function()
+						task.spawn(action.onClick)
+					end,
 				}
 			end
 		end
