@@ -313,7 +313,7 @@ function API.new(app)
 
 	Rojo._apiDescriptions.Test = {
 		Type = "Method",
-		Description = "Prints the given arguments to the console",
+		Description = "Prints the given arguments to the console. Useful during development for testing purposes.",
 	}
 	function Rojo:Test(...)
 		local args = table.pack(...)
