@@ -1,6 +1,25 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Projects may now manually link `Ref` properties together using `Attributes`. ([#843])
+ 	This has two parts: using `id` or `$id` in JSON files or a `Rojo_Target` attribute, an Instance
+    is given an ID. Then, that ID may be used elsewhere in the project to point to an Instance
+    using an attribute named `Rojo_Target_PROP_NAME`, where `PROP_NAME` is the name of a property.
+
+    As an example, here is a `model.json` for an ObjectValue that refers to itself:
+
+    ```json
+    {
+        "id": "arbitrary string",
+        "attributes": {
+            "Rojo_Target_Value": "arbitrary string"
+        }
+    }
+    ```
+
+    This is a very rough implementation and the usage will become more ergonomic
+    over time.
+
 * Rojo now converts any line endings to LF, preventing spurious diffs when syncing Lua files on Windows ([#854])
 * Fixed Rojo plugin failing to connect when project contains certain unreadable properties ([#848])
 * Added popout diff visualizer for table properties like Attributes and Tags ([#834])
@@ -61,7 +80,7 @@
 [#847]: https://github.com/rojo-rbx/rojo/pull/847
 [#848]: https://github.com/rojo-rbx/rojo/pull/848
 [#854]: https://github.com/rojo-rbx/rojo/pull/854
-
+[#843]: https://github.com/rojo-rbx/rojo/pull/843
 
 ## [7.4.0] - January 16, 2024
 * Improved the visualization for array properties like Tags ([#829])

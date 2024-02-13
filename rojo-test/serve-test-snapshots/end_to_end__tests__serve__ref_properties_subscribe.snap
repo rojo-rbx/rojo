@@ -1,0 +1,46 @@
+---
+source: tests/tests/serve.rs
+expression: "subscribe_response.intern_and_redact(&mut redactions, ())"
+---
+messageCursor: 1
+messages:
+  - added:
+      id-11:
+        Children: []
+        ClassName: Model
+        Id: id-11
+        Metadata:
+          ignoreUnknownInstances: false
+        Name: ProjectPointer
+        Parent: id-7
+        Properties:
+          Attributes:
+            Attributes:
+              Rojo_Target_PrimaryPart:
+                String: project target
+          PrimaryPart:
+            Ref: id-9
+    removed: []
+    updated:
+      - changedClassName: ~
+        changedMetadata:
+          ignoreUnknownInstances: false
+        changedName: ~
+        changedProperties:
+          Attributes:
+            Attributes:
+              Rojo_Id:
+                String: model target 2
+        id: id-7
+      - changedClassName: ~
+        changedMetadata: ~
+        changedName: ~
+        changedProperties:
+          Attributes:
+            Attributes:
+              Rojo_Target_PrimaryPart:
+                String: model target 2
+          PrimaryPart: ~
+        id: id-8
+sessionId: id-1
+

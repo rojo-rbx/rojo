@@ -1,0 +1,32 @@
+{
+  "name": "ref_properties",
+  "tree": {
+    "$className": "DataModel",
+    "Workspace": {
+      "ProjectTarget": {
+        "$className": "Folder",
+        "$id": "project target",
+        "ProjectPointer": {
+          "$className": "ObjectValue",
+          "$attributes": {
+            "Rojo_Target_Value": {
+              "String": "project target"
+            }
+          }
+        }
+      },
+      "ModelTarget": {
+        "$path": "ModelTarget.model.json"
+      },
+      "FolderTarget": {
+        "$path": "FolderTarget"
+      },
+      "CrossFormatPointer": {
+        "$className": "ObjectValue",
+        "$attributes": {
+          "Rojo_Target_Value": "folder target"
+        }
+      }
+    }
+  }
+}

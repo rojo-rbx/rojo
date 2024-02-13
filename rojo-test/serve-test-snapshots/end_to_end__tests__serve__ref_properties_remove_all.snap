@@ -1,0 +1,47 @@
+---
+source: tests/tests/serve.rs
+expression: "read_response.intern_and_redact(&mut redactions, root_id)"
+---
+instances:
+  id-2:
+    Children:
+      - id-3
+      - id-4
+    ClassName: Folder
+    Id: id-2
+    Metadata:
+      ignoreUnknownInstances: false
+    Name: ref_properties_remove
+    Parent: "00000000000000000000000000000000"
+    Properties: {}
+  id-3:
+    Children: []
+    ClassName: ObjectValue
+    Id: id-3
+    Metadata:
+      ignoreUnknownInstances: false
+    Name: pointer
+    Parent: id-2
+    Properties:
+      Attributes:
+        Attributes:
+          Rojo_Target_Value:
+            String: test pointer
+      Value:
+        Ref: id-4
+  id-4:
+    Children: []
+    ClassName: ObjectValue
+    Id: id-4
+    Metadata:
+      ignoreUnknownInstances: false
+    Name: target
+    Parent: id-2
+    Properties:
+      Attributes:
+        Attributes:
+          Rojo_Id:
+            String: test pointer
+messageCursor: 0
+sessionId: id-1
+

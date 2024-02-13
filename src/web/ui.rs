@@ -163,6 +163,7 @@ impl UiService {
 
             let content = html! {
                 <>
+                    <div>"specified_id: " { format!("{:?}", metadata.specified_id) } </div>
                     <div>"ignore_unknown_instances: " { metadata.ignore_unknown_instances.to_string() }</div>
                     <div>"instigating source: " { format!("{:?}", metadata.instigating_source) }</div>
                     { relevant_paths }
@@ -192,7 +193,7 @@ impl UiService {
 
         html! {
             <div class="instance">
-                <label class="instance-title" for={ format!("instance-{:?}", id) }>
+                <label class="instance-title" for={ format!("instance-{:?}", id) } title={ format!("ref: {:?}", instance.id())}>
                     { instance.name().to_owned() }
                     { class_name_specifier }
                 </label>

@@ -1,0 +1,13 @@
+{
+  "id": "model target",
+  "className": "Folder",
+  "children": [
+    {
+      "name": "ModelPointer",
+      "className": "Model",
+      "attributes": {
+        "Rojo_Target_PrimaryPart": "model target"
+      }
+    }
+  ]
+}

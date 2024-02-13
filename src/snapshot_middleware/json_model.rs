@@ -8,6 +8,7 @@ use serde::Deserialize;
 use crate::{
     resolution::UnresolvedValue,
     snapshot::{InstanceContext, InstanceSnapshot},
+    RojoRef,
 };
 
 pub fn snapshot_json_model(
@@ -41,6 +42,8 @@ pub fn snapshot_json_model(
 
     instance.name = Some(name.to_owned());
 
+    let id = instance.id.take().map(RojoRef::new);
+
     let mut snapshot = instance
         .into_snapshot()
         .with_context(|| format!("Could not load JSON model: {}", path.display()))?;
@@ -49,7 +52,8 @@ pub fn snapshot_json_model(
         .metadata
         .instigating_source(path)
         .relevant_paths(vec![path.to_path_buf()])
-        .context(context);
+        .context(context)
+        .specified_id(id);
 
     Ok(Some(snapshot))
 }
@@ -62,6 +66,9 @@ struct JsonModel {
 
     #[serde(alias = "ClassName")]
     class_name: String,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    id: Option<String>,
 
     #[serde(
         alias = "Children",

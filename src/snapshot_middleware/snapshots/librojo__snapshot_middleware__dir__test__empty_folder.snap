@@ -19,6 +19,7 @@ metadata:
     - /foo/init.csv
   context:
     emit_legacy_scripts: true
+  specified_id: ~
 name: foo
 class_name: Folder
 properties: {}
