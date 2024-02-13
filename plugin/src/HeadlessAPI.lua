@@ -29,22 +29,40 @@ function API.new(app)
 	Rojo._changedEvent = Instance.new("BindableEvent")
 	Rojo._apiDescriptions = {}
 
-	Rojo._apiDescriptions.Changed = "An event that fires when a headless API property changes"
+	Rojo._apiDescriptions.Changed = {
+		Type = "Event",
+		Description = "An event that fires when a headless API property changes",
+	}
 	Rojo.Changed = Rojo._changedEvent.Event
 
-	Rojo._apiDescriptions.Connected = "Whether or not the plugin is connected to a Rojo server"
+	Rojo._apiDescriptions.Connected = {
+		Type = "Property",
+		Description = "Whether or not the plugin is connected to a Rojo server",
+	}
 	Rojo.Connected = if app.serveSession then app.serveSession:getStatus() == "Connected" else false
 
-	Rojo._apiDescriptions.Address = "The address (host:port) that the plugin is connected to"
+	Rojo._apiDescriptions.Address = {
+		Type = "Property",
+		Description = "The address (host:port) that the plugin is connected to",
+	}
 	Rojo.Address = nil
 
-	Rojo._apiDescriptions.ProjectName = "The name of the project that the plugin is connected to"
+	Rojo._apiDescriptions.ProjectName = {
+		Type = "Property",
+		Description = "The name of the project that the plugin is connected to",
+	}
 	Rojo.ProjectName = nil
 
-	Rojo._apiDescriptions.Version = "The version of the plugin"
+	Rojo._apiDescriptions.Version = {
+		Type = "Property",
+		Description = "The version of the plugin",
+	}
 	Rojo.Version = table.clone(Config.version)
 
-	Rojo._apiDescriptions.ProtocolVersion = "The protocol version that the plugin is using"
+	Rojo._apiDescriptions.ProtocolVersion = {
+		Type = "Property",
+		Description = "The protocol version that the plugin is using",
+	}
 	Rojo.ProtocolVersion = Config.protocolVersion
 
 	function Rojo:_updateProperty(property: string, value: any?)
@@ -187,52 +205,49 @@ function API.new(app)
 
 		local source = Rojo:_getCallerSource()
 		if Rojo._permissions[source] == nil then
-			Rojo._permissions[source] = {}
+			return false
 		end
 
 		return not not Rojo._permissions[source][key]
 	end
 
 	function Rojo:_setPermissions(source, name, permissions)
-		-- Ensure permissions exist for this source
-		if Rojo._permissions[source] == nil then
-			Rojo._permissions[source] = {}
+		if next(permissions) == nil then
+			Rojo:_removePermissions(source, name)
+			return
 		end
 
 		-- Set permissions
-		for api, granted in permissions do
-			Log.warn(
-				string.format(
-					"%s Rojo.%s for '%s'",
-					granted and "Granting permission to" or "Denying permission to",
-					api,
-					name
-				)
-			)
-			Rojo._permissions[source][api] = granted
+		local sourcePermissions = {}
+		for _, api in permissions do
+			Log.info(string.format("Granting '%s' access to Rojo.%s", name, api))
+			sourcePermissions[api] = true
 		end
 
-		-- Clear out source if no permissions are granted
-		local hasAnyPermissions = false
-		for _, granted in Rojo._permissions[source] do
-			if granted then
-				hasAnyPermissions = true
-				break
-			end
-		end
-		if not hasAnyPermissions then
-			Rojo._permissions[source] = nil
-		end
+		-- Update stored permissions
+		Rojo._permissions[source] = sourcePermissions
+		Settings:set("apiPermissions", Rojo._permissions)
+
+		-- Share changes
+		Rojo._permissionsChangedEvent:Fire(source, sourcePermissions)
+	end
+
+	function Rojo:_removePermissions(source, name)
+		Rojo._permissions[source] = nil
+		Log.info(string.format("Denying access to Rojo APIs for '%s'", name))
 
 		-- Update stored permissions
 		Settings:set("apiPermissions", Rojo._permissions)
 
 		-- Share changes
-		Rojo._permissionsChangedEvent:Fire(source, Rojo._permissions[source])
+		Rojo._permissionsChangedEvent:Fire(source, nil)
 	end
 
-	Rojo._apiDescriptions.RequestAccess = "Used to gain access to Rojo API members"
-	function Rojo:RequestAccess(plugin: Plugin, apis: { string }): { [string]: boolean }
+	Rojo._apiDescriptions.RequestAccess = {
+		Type = "Method",
+		Description = "Used to gain access to Rojo API members",
+	}
+	function Rojo:RequestAccess(plugin: Plugin, apis: { string }): boolean
 		assert(type(apis) == "table", "Rojo:RequestAccess expects an array of valid API names as the second argument")
 		assert(
 			typeof(plugin) == "Instance" and plugin:IsA("Plugin"),
@@ -244,7 +259,7 @@ function API.new(app)
 
 		if Rojo:_checkRateLimit("RequestAccess") then
 			-- Because this opens a popup, we dont want to let users get spammed by it
-			return {}
+			return false
 		end
 
 		if Rojo._activePermissionRequests[source] then
@@ -256,10 +271,6 @@ function API.new(app)
 		end
 		Rojo._activePermissionRequests[source] = true
 
-		if Rojo._permissions[source] == nil then
-			Rojo._permissions[source] = {}
-		end
-
 		-- Sanitize request
 		local sanitizedApis = {}
 		for _, api in apis do
@@ -270,33 +281,40 @@ function API.new(app)
 			end
 		end
 		assert(#sanitizedApis > 0, "Rojo:RequestAccess expects an array of valid API names")
+		table.sort(sanitizedApis)
 
 		local alreadyAllowed = true
-		for _, api in sanitizedApis do
-			if not Rojo._permissions[source][api] then
-				alreadyAllowed = false
-				break
+		if Rojo._permissions[source] == nil then
+			alreadyAllowed = false
+		else
+			for _, api in sanitizedApis do
+				if not Rojo._permissions[source][api] then
+					alreadyAllowed = false
+					break
+				end
 			end
 		end
 
 		if alreadyAllowed then
-			local response = {}
-			for _, api in sanitizedApis do
-				response[api] = true
-			end
 			Rojo._activePermissionRequests[source] = nil
-			return response
+			return true
 		end
 
-		local response = app:requestPermission(plugin, source, name, sanitizedApis, Rojo._permissions[source])
-
-		Rojo:_setPermissions(source, name, response)
+		local granted = app:requestPermission(plugin, source, name, sanitizedApis, false)
+		if granted then
+			Rojo:_setPermissions(source, name, sanitizedApis)
+		else
+			Rojo:_removePermissions(source, name)
+		end
 
 		Rojo._activePermissionRequests[source] = nil
-		return response
+		return granted
 	end
 
-	Rojo._apiDescriptions.Test = "Prints the given arguments to the console"
+	Rojo._apiDescriptions.Test = {
+		Type = "Method",
+		Description = "Prints the given arguments to the console",
+	}
 	function Rojo:Test(...)
 		local args = table.pack(...)
 		for i = 1, args.n do
@@ -319,7 +337,10 @@ function API.new(app)
 		)
 	end
 
-	Rojo._apiDescriptions.ConnectAsync = "Connects to a Rojo server"
+	Rojo._apiDescriptions.ConnectAsync = {
+		Type = "Method",
+		Description = "Connects to a Rojo server",
+	}
 	function Rojo:ConnectAsync(host: string?, port: string?)
 		assert(type(host) == "string" or host == nil, "Host must be type `string?`")
 		assert(type(port) == "string" or port == nil, "Port must be type `string?`")
@@ -331,7 +352,10 @@ function API.new(app)
 		app:startSession(host, port)
 	end
 
-	Rojo._apiDescriptions.DisconnectAsync = "Disconnects from the Rojo server"
+	Rojo._apiDescriptions.DisconnectAsync = {
+		Type = "Method",
+		Description = "Disconnects from the Rojo server",
+	}
 	function Rojo:DisconnectAsync()
 		if Rojo:_checkRateLimit("DisconnectAsync") then
 			return
@@ -340,14 +364,20 @@ function API.new(app)
 		app:endSession()
 	end
 
-	Rojo._apiDescriptions.GetSetting = "Gets a Rojo setting"
+	Rojo._apiDescriptions.GetSetting = {
+		Type = "Method",
+		Description = "Gets a Rojo setting",
+	}
 	function Rojo:GetSetting(setting: string): any
 		assert(type(setting) == "string", "Setting must be type `string`")
 
 		return Settings:get(setting)
 	end
 
-	Rojo._apiDescriptions.SetSetting = "Sets a Rojo setting"
+	Rojo._apiDescriptions.SetSetting = {
+		Type = "Method",
+		Description = "Sets a Rojo setting",
+	}
 	function Rojo:SetSetting(setting: string, value: any)
 		assert(type(setting) == "string", "Setting must be type `string`")
 		assert(type(value) == type(Settings:get(setting)), "Value must be the same type as the setting")
@@ -359,7 +389,10 @@ function API.new(app)
 		return Settings:set(setting, value)
 	end
 
-	Rojo._apiDescriptions.Notify = "Shows a notification in the Rojo UI"
+	Rojo._apiDescriptions.Notify = {
+		Type = "Method",
+		Description = "Shows a notification in the Rojo UI",
+	}
 	function Rojo:Notify(
 		msg: string,
 		timeout: number?,
@@ -403,12 +436,18 @@ function API.new(app)
 		return app:addThirdPartyNotification(Rojo:_getCallerName(), msg, timeout, sanitizedActions)
 	end
 
-	Rojo._apiDescriptions.GetHostAndPort = "Gets the host and port that Rojo is set to"
+	Rojo._apiDescriptions.GetHostAndPort = {
+		Type = "Method",
+		Description = "Gets the host and port that Rojo is set to",
+	}
 	function Rojo:GetHostAndPort(): (string, string)
 		return app:getHostAndPort()
 	end
 
-	Rojo._apiDescriptions.CreateApiContext = "Creates a new API context"
+	Rojo._apiDescriptions.CreateApiContext = {
+		Type = "Method",
+		Description = "Creates a new API context",
+	}
 	function Rojo:CreateApiContext(baseUrl: string)
 		assert(type(baseUrl) == "string", "Base URL must be type `string`")
 

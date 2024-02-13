@@ -4,49 +4,137 @@ local Packages = Rojo.Packages
 
 local Roact = require(Packages.Roact)
 
+local Assets = require(Plugin.Assets)
 local Theme = require(Plugin.App.Theme)
 
-local Toggle = require(Plugin.App.Components.Toggle)
 local ScrollingFrame = require(Plugin.App.Components.ScrollingFrame)
 local TextButton = require(Plugin.App.Components.TextButton)
 
 local e = Roact.createElement
+
+local DIVIDER_FADE_SIZE = 0.1
 
 local PermissionPopup = Roact.Component:extend("PermissionPopup")
 
 function PermissionPopup:init()
 	self.contentSize, self.setContentSize = Roact.createBinding(Vector2.new(0, 0))
 	self.infoSize, self.setInfoSize = Roact.createBinding(Vector2.new(0, 0))
-
-	local response = {}
-	for _, api in self.props.apis do
-		response[api] = if self.props.initialState[api] == nil then true else self.props.initialState[api]
-	end
-
-	self:setState({
-		response = response,
-	})
 end
 
 function PermissionPopup:render()
 	return Theme.with(function(theme)
 		theme = theme.Settings
 
-		local apiToggles = {}
+		local thumbnail = Assets.Images.ThirdPartyPlugin
+		local thumbnailId = string.match(self.props.source, "cloud_(%d+)")
+		if thumbnailId then
+			thumbnail = string.format("rbxthumb://type=Asset&id=%s&w=150&h=150", thumbnailId)
+		end
+
+		local apiRequests = {
+			Event = {},
+			Property = {},
+			Method = {},
+		}
 		for index, api in self.props.apis do
-			apiToggles[api] = e(Toggle, {
-				active = self.state.response[api],
-				name = api,
-				description = self.props.apiDescriptions[api],
-				transparency = self.props.transparency,
-				layoutOrder = index,
-				onClick = function()
-					self:setState(function(state)
-						state.response[api] = not state.response[api]
-						return state
-					end)
-				end,
+			local apiDesc = self.props.apiDescriptions[api]
+
+			apiRequests[apiDesc.Type][api] = e("Frame", {
+				LayoutOrder = index,
+				BackgroundTransparency = 1,
+				Size = UDim2.new(1, 0, 0, 17),
+				AutomaticSize = Enum.AutomaticSize.Y,
+			}, {
+				Divider = e("Frame", {
+					BackgroundColor3 = theme.DividerColor,
+					BackgroundTransparency = self.props.transparency,
+					Size = UDim2.new(1, 0, 0, 1),
+					Position = UDim2.new(0, 0, 0, -2),
+					BorderSizePixel = 0,
+				}, {
+					Gradient = e("UIGradient", {
+						Transparency = NumberSequence.new({
+							NumberSequenceKeypoint.new(0, 1),
+							NumberSequenceKeypoint.new(DIVIDER_FADE_SIZE, 0),
+							NumberSequenceKeypoint.new(1 - DIVIDER_FADE_SIZE, 0),
+							NumberSequenceKeypoint.new(1, 1),
+						}),
+					}),
+				}),
+				Name = e("TextLabel", {
+					BackgroundTransparency = 1,
+					Position = UDim2.new(0, 0, 0, 0),
+					Size = UDim2.new(0, 140, 0, 17),
+					TextWrapped = true,
+					AutomaticSize = Enum.AutomaticSize.Y,
+					Text = api,
+					Font = Enum.Font.Gotham,
+					TextSize = 17,
+					TextColor3 = theme.Setting.NameColor,
+					TextXAlignment = Enum.TextXAlignment.Left,
+					TextTransparency = self.props.transparency,
+				}),
+				Desc = e("TextLabel", {
+					BackgroundTransparency = 1,
+					Position = UDim2.new(0, 145, 0, 0),
+					Size = UDim2.new(1, -145, 0, 17),
+					TextWrapped = true,
+					AutomaticSize = Enum.AutomaticSize.Y,
+					Text = apiDesc.Description,
+					Font = Enum.Font.Gotham,
+					TextSize = 15,
+					TextColor3 = theme.Setting.DescriptionColor,
+					TextXAlignment = Enum.TextXAlignment.Left,
+					TextTransparency = self.props.transparency,
+				}),
 			})
+		end
+
+		-- Add labels to explain the api types
+		if next(apiRequests.Event) then
+			apiRequests.Event["_apiTypeInfo"] = e("TextLabel", {
+				LayoutOrder = -1,
+				BackgroundTransparency = 1,
+				Size = UDim2.new(1, 0, 0, 18),
+				Text = string.format("%s will be able to listen to these events:", self.props.name),
+				TextWrapped = true,
+				AutomaticSize = Enum.AutomaticSize.Y,
+				Font = Enum.Font.GothamMedium,
+				TextSize = 17,
+				TextColor3 = theme.Setting.NameColor,
+				TextXAlignment = Enum.TextXAlignment.Left,
+				TextTransparency = self.props.transparency,
+			}, e("UIPadding", { PaddingBottom = UDim.new(0, 8) }))
+		end
+		if next(apiRequests.Property) then
+			apiRequests.Property["_apiTypeInfo"] = e("TextLabel", {
+				LayoutOrder = -1,
+				BackgroundTransparency = 1,
+				Size = UDim2.new(1, 0, 0, 18),
+				Text = string.format("%s will be able to read these properties:", self.props.name),
+				TextWrapped = true,
+				AutomaticSize = Enum.AutomaticSize.Y,
+				Font = Enum.Font.GothamMedium,
+				TextSize = 17,
+				TextColor3 = theme.Setting.NameColor,
+				TextXAlignment = Enum.TextXAlignment.Left,
+				TextTransparency = self.props.transparency,
+			}, e("UIPadding", { PaddingBottom = UDim.new(0, 8) }))
+		end
+		if next(apiRequests.Method) then
+			apiRequests.Method["_apiTypeInfo"] = e("TextLabel", {
+				LayoutOrder = -1,
+				BackgroundTransparency = 1,
+				Size = UDim2.new(1, 0, 0, 18),
+				Text = string.format("%s will be able to call these methods:", self.props.name),
+				TextWrapped = true,
+				AutomaticSize = Enum.AutomaticSize.Y,
+				Font = Enum.Font.GothamMedium,
+				TextSize = 17,
+				TextColor3 = theme.Setting.NameColor,
+				TextXAlignment = Enum.TextXAlignment.Left,
+				TextTransparency = self.props.transparency,
+			}, e("UIPadding", { PaddingBottom = UDim.new(0, 8) }))
 		end
 
 		return e("Frame", {
@@ -56,8 +144,8 @@ function PermissionPopup:render()
 			Layout = e("UIListLayout", {
 				FillDirection = Enum.FillDirection.Vertical,
 				SortOrder = Enum.SortOrder.LayoutOrder,
-				Padding = UDim.new(0, 5),
-				HorizontalAlignment = Enum.HorizontalAlignment.Right,
+				Padding = UDim.new(0, 15),
+				HorizontalAlignment = Enum.HorizontalAlignment.Center,
 			}),
 
 			Padding = e("UIPadding", {
@@ -67,57 +155,169 @@ function PermissionPopup:render()
 				PaddingBottom = UDim.new(0, 15),
 			}),
 
+			Icons = e("Frame", {
+				BackgroundTransparency = 1,
+				Size = UDim2.new(1, 0, 0, 32),
+				LayoutOrder = 1,
+			}, {
+				Layout = e("UIListLayout", {
+					FillDirection = Enum.FillDirection.Horizontal,
+					SortOrder = Enum.SortOrder.LayoutOrder,
+					Padding = UDim.new(0, 5),
+					HorizontalAlignment = Enum.HorizontalAlignment.Center,
+					VerticalAlignment = Enum.VerticalAlignment.Center,
+				}),
+
+				ThirdPartyIcon = e("ImageLabel", {
+					BackgroundTransparency = 1,
+					Size = UDim2.new(0, 32, 0, 32),
+					Image = thumbnail,
+					LayoutOrder = 1,
+				}),
+
+				TransactIcon = e("ImageLabel", {
+					BackgroundTransparency = 1,
+					Size = UDim2.new(0, 24, 0, 24),
+					Image = Assets.Images.Icons.Transact,
+					ImageColor3 = theme.Setting.DescriptionColor,
+					LayoutOrder = 2,
+				}),
+
+				RojoIcon = e("ImageLabel", {
+					BackgroundTransparency = 1,
+					Size = UDim2.new(0, 32, 0, 32),
+					Image = Assets.Images.PluginButton,
+					LayoutOrder = 3,
+				}),
+			}),
+
 			Info = e("TextLabel", {
 				BackgroundTransparency = 1,
 				Size = UDim2.new(1, 0, 0, 0),
 				AutomaticSize = Enum.AutomaticSize.Y,
-				Text = string.format(
-					"A third-party plugin, %s, is asking to use the following parts of the Rojo API. Please grant/deny access.",
-					self.props.name or "[Unknown]"
-				),
-				Font = Enum.Font.GothamMedium,
+				Text = string.format("%s is asking to use the Rojo API", self.props.name or "[Unknown]"),
+				Font = Enum.Font.GothamBold,
 				TextSize = 17,
 				TextColor3 = theme.Setting.NameColor,
-				TextXAlignment = Enum.TextXAlignment.Left,
+				TextXAlignment = Enum.TextXAlignment.Center,
 				TextWrapped = true,
 				TextTransparency = self.props.transparency,
-				LayoutOrder = 1,
+				LayoutOrder = 2,
 
 				[Roact.Change.AbsoluteSize] = function(rbx)
 					self.setInfoSize(rbx.AbsoluteSize)
 				end,
 			}),
 
-			Submit = e(TextButton, {
-				text = "Submit",
-				style = "Solid",
-				transparency = self.props.transparency,
-				layoutOrder = 3,
-				onClick = function()
-					self.props.responseEvent:Fire(self.state.response)
-				end,
+			Divider = e("Frame", {
+				LayoutOrder = 3,
+				BackgroundColor3 = theme.DividerColor,
+				BackgroundTransparency = self.props.transparency,
+				Size = UDim2.new(1, 0, 0, 1),
+				Position = UDim2.new(0, 0, 0, -2),
+				BorderSizePixel = 0,
+			}, {
+				Gradient = e("UIGradient", {
+					Transparency = NumberSequence.new({
+						NumberSequenceKeypoint.new(0, 1),
+						NumberSequenceKeypoint.new(DIVIDER_FADE_SIZE, 0),
+						NumberSequenceKeypoint.new(1 - DIVIDER_FADE_SIZE, 0),
+						NumberSequenceKeypoint.new(1, 1),
+					}),
+				}),
 			}),
 
 			ScrollingFrame = e(ScrollingFrame, {
 				size = self.infoSize:map(function(infoSize)
-					return UDim2.new(1, 0, 1, -infoSize.Y - 44)
+					return UDim2.new(0.9, 0, 1, -infoSize.Y - 140)
 				end),
-				layoutOrder = 2,
+				layoutOrder = 9,
 				contentSize = self.contentSize,
 				transparency = self.props.transparency,
 			}, {
-				APIToggles = Roact.createFragment(apiToggles),
-
-				Padding = e("UIPadding", {
-					PaddingRight = UDim.new(0, 15),
-				}),
-
 				Layout = e("UIListLayout", {
 					FillDirection = Enum.FillDirection.Vertical,
 					SortOrder = Enum.SortOrder.LayoutOrder,
+					Padding = UDim.new(0, 18),
 
 					[Roact.Change.AbsoluteContentSize] = function(object)
 						self.setContentSize(object.AbsoluteContentSize)
+					end,
+				}),
+
+				PropertyRequests = e("Frame", {
+					BackgroundTransparency = 1,
+					Size = UDim2.new(1, 0, 0, 0),
+					AutomaticSize = Enum.AutomaticSize.Y,
+					LayoutOrder = 1,
+				}, {
+					APIs = Roact.createFragment(apiRequests.Property),
+					Layout = e("UIListLayout", {
+						FillDirection = Enum.FillDirection.Vertical,
+						SortOrder = Enum.SortOrder.LayoutOrder,
+						Padding = UDim.new(0, 4),
+					}),
+				}),
+
+				EventRequests = e("Frame", {
+					BackgroundTransparency = 1,
+					Size = UDim2.new(1, 0, 0, 0),
+					AutomaticSize = Enum.AutomaticSize.Y,
+					LayoutOrder = 2,
+				}, {
+					APIs = Roact.createFragment(apiRequests.Event),
+					Layout = e("UIListLayout", {
+						FillDirection = Enum.FillDirection.Vertical,
+						SortOrder = Enum.SortOrder.LayoutOrder,
+						Padding = UDim.new(0, 4),
+					}),
+				}),
+
+				MethodRequests = e("Frame", {
+					BackgroundTransparency = 1,
+					Size = UDim2.new(1, 0, 0, 0),
+					AutomaticSize = Enum.AutomaticSize.Y,
+					LayoutOrder = 3,
+				}, {
+					APIs = Roact.createFragment(apiRequests.Method),
+					Layout = e("UIListLayout", {
+						FillDirection = Enum.FillDirection.Vertical,
+						SortOrder = Enum.SortOrder.LayoutOrder,
+						Padding = UDim.new(0, 4),
+					}),
+				}),
+			}),
+
+			Actions = e("Frame", {
+				BackgroundTransparency = 1,
+				Size = UDim2.new(1, 0, 0, 34),
+				LayoutOrder = 10,
+			}, {
+				Layout = e("UIListLayout", {
+					FillDirection = Enum.FillDirection.Horizontal,
+					HorizontalAlignment = Enum.HorizontalAlignment.Center,
+					VerticalAlignment = Enum.VerticalAlignment.Center,
+					SortOrder = Enum.SortOrder.LayoutOrder,
+					Padding = UDim.new(0, 10),
+				}),
+
+				Deny = e(TextButton, {
+					text = "Deny",
+					style = "Bordered",
+					transparency = self.props.transparency,
+					layoutOrder = 1,
+					onClick = function()
+						self.props.responseEvent:Fire(false)
+					end,
+				}),
+
+				Allow = e(TextButton, {
+					text = "Allow",
+					style = "Solid",
+					transparency = self.props.transparency,
+					layoutOrder = 2,
+					onClick = function()
+						self.props.responseEvent:Fire(true)
 					end,
 				}),
 			}),

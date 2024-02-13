@@ -84,7 +84,35 @@ function PermissionsPage:render()
 		theme = theme.Settings
 
 		local sources = {}
-		if next(self.state.permissions) == nil then
+		for source, permissions in self.state.permissions do
+			if next(permissions) == nil then
+				continue
+			end
+
+			local meta = self.props.headlessAPI:_getMetaFromSource(source)
+			sources[source] = e(Listing, {
+				layoutOrder = string.byte(source),
+				transparency = self.props.transparency,
+
+				name = meta.Name,
+				description = string.format(
+					"%s plugin%s",
+					meta.Type,
+					if meta.Creator then " by " .. meta.Creator else ""
+				),
+
+				onClick = function()
+					self.props.onEdit(
+						self.props.headlessAPI._sourceToPlugin[source],
+						source,
+						meta,
+						self.props.headlessAPI._permissions[source] or {}
+					)
+				end,
+			})
+		end
+
+		if next(sources) == nil then
 			sources.noSources = e("TextLabel", {
 				Text = "No third-party plugins have been granted permissions.",
 				Font = Enum.Font.Gotham,
@@ -98,34 +126,6 @@ function PermissionsPage:render()
 
 				BackgroundTransparency = 1,
 			})
-		else
-			for source, permissions in self.state.permissions do
-				if next(permissions) == nil then
-					continue
-				end
-
-				local meta = self.props.headlessAPI:_getMetaFromSource(source)
-				sources[source] = e(Listing, {
-					layoutOrder = string.byte(source),
-					transparency = self.props.transparency,
-
-					name = meta.Name,
-					description = string.format(
-						"%s plugin%s",
-						meta.Type,
-						if meta.Creator then " by " .. meta.Creator else ""
-					),
-
-					onClick = function()
-						self.props.onEdit(
-							self.props.headlessAPI._sourceToPlugin[source],
-							source,
-							meta,
-							self.props.headlessAPI._permissions[source] or {}
-						)
-					end,
-				})
-			end
 		end
 
 		return e("Frame", {

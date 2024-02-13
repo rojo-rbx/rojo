@@ -459,7 +459,7 @@ function App:requestPermission(
 	source: string,
 	name: string,
 	apis: { string },
-	initialState: { [string]: boolean? }
+	initialState: boolean?
 ): { [string]: boolean }
 	local responseEvent = Instance.new("BindableEvent")
 
@@ -471,7 +471,7 @@ function App:requestPermission(
 				"Cancelling API permission request for '{}' because the third-party plugin has been removed.",
 				name
 			)
-			responseEvent:Fire(initialState)
+			responseEvent:Fire(initialState or false)
 		end)
 		else nil
 
@@ -480,7 +480,6 @@ function App:requestPermission(
 			name = name,
 			content = e(PermissionPopup, {
 				responseEvent = responseEvent,
-				initialState = initialState,
 				source = source,
 				name = name,
 				apis = apis,
@@ -488,7 +487,7 @@ function App:requestPermission(
 				transparency = Roact.createBinding(0),
 			}),
 			onClose = function()
-				responseEvent:Fire(initialState)
+				responseEvent:Fire(initialState or false)
 			end,
 		}
 		return state
@@ -833,7 +832,7 @@ function App:render()
 			initEnabled = true,
 			overridePreviousState = true,
 			floatingSize = Vector2.new(400, 300),
-			minimumSize = Vector2.new(390, 240),
+			minimumSize = Vector2.new(390, 240) or popup.minimumSize,
 
 			zIndexBehavior = Enum.ZIndexBehavior.Sibling,
 
@@ -961,8 +960,12 @@ function App:render()
 							for api in apiMap do
 								table.insert(apiList, api)
 							end
-							local response = self:requestPermission(plugin, source, name, apiList, apiMap)
-							self.headlessAPI:_setPermissions(source, name, response)
+							local granted = self:requestPermission(plugin, source, name, apiList, true)
+							if granted then
+								self.headlessAPI:_setPermissions(source, name, apiList)
+							else
+								self.headlessAPI:_removePermissions(source, name)
+							end
 						end,
 					}),
 

@@ -27,6 +27,7 @@ local Assets = {
 			Reset = "rbxassetid://10142422327",
 			Expand = "rbxassetid://12045401097",
 			Settings = "rbxassetid://12046309515",
+			Transact = "rbxassetid://16350762910",
 		},
 		Diff = {
 			Add = "rbxassetid://10434145835",
