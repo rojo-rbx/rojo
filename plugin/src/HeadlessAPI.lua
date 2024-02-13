@@ -396,7 +396,7 @@ function API.new(app)
 	function Rojo:Notify(
 		msg: string,
 		timeout: number?,
-		actions: { [string]: { text: string, style: string, layoutOrder: number, onClick: (any) -> () } }?
+		actions: { [string]: { text: string, style: string, layoutOrder: number, onClick: () -> () } }?
 	): () -> ()
 		assert(type(msg) == "string", "Message must be type `string`")
 		assert(type(timeout) == "number" or timeout == nil, "Timeout must be type `number?`")
