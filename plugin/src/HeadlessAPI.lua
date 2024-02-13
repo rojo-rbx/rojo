@@ -350,6 +350,7 @@ function API.new(app)
 	Rojo._apiDescriptions.SetSetting = "Sets a Rojo setting"
 	function Rojo:SetSetting(setting: string, value: any)
 		assert(type(setting) == "string", "Setting must be type `string`")
+		assert(type(value) == type(Settings:get(setting)), "Value must be the same type as the setting")
 
 		if Rojo:_checkRateLimit("SetSetting") then
 			return
