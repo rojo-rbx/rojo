@@ -413,39 +413,40 @@ function API.new(app)
 		return ApiContext.new(baseUrl)
 	end
 
-	local ReadOnly = setmetatable({}, {
-		__index = function(_, key)
-			-- Don't expose private members
-			if string.find(key, "^_") then
-				return nil
-			end
+	local ReadOnly = newproxy(true)
+	local Metatable = getmetatable(ReadOnly)
+	Metatable.__index = function(_, key)
+		-- Don't expose private members
+		if string.find(key, "^_") then
+			return nil
+		end
 
-			-- Existence check
-			if Rojo._apiDescriptions[key] == nil then
-				warn(string.format("Rojo.%s is not a valid API", tostring(key)))
-				return nil
-			end
+		-- Existence check
+		if Rojo._apiDescriptions[key] == nil then
+			warn(string.format("Rojo.%s is not a valid API", tostring(key)))
+			return nil
+		end
 
-			-- Permissions check
-			local granted = Rojo:_permissionCheck(key)
-			if not granted then
-				error(
-					string.format(
-						'Attempted to read Rojo.%s, but the plugin does not have permission to do so.\nPlease first use Rojo:RequestAccess({ "%s" }) to gain access to this API.',
-						key,
-						key
-					),
-					2
-				)
-			end
+		-- Permissions check
+		local granted = Rojo:_permissionCheck(key)
+		if not granted then
+			error(
+				string.format(
+					'Attempted to read Rojo.%s, but the plugin does not have permission to do so.\nPlease first use Rojo:RequestAccess({ "%s" }) to gain access to this API.',
+					key,
+					key
+				),
+				2
+			)
+		end
 
-			return Rojo[key]
-		end,
-		__newindex = function(_, key, value)
-			error(string.format("Attempted to set Rojo.%s to %q but it's a read-only value", key, value), 2)
-			return
-		end,
-	})
+		return Rojo[key]
+	end
+	Metatable.__newindex = function(_, key, value)
+		error(string.format("Attempted to set Rojo.%s to %q but it's a read-only value", key, value), 2)
+		return
+	end
+	Metatable.__metatable = "The metatable of the Rojo API is locked"
 
 	return Rojo, ReadOnly
 end
