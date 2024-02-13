@@ -161,15 +161,6 @@ function SettingsPage:render()
 					layoutOrder = layoutIncrement(),
 				}),
 
-				AutoConnectPlaytestServer = e(Setting, {
-					id = "autoConnectPlaytestServer",
-					name = "Auto Connect Playtest Server",
-					description = "Automatically connect game server to Rojo when playtesting while connected in Edit",
-					experimental = true,
-					transparency = self.props.transparency,
-					layoutOrder = layoutIncrement(),
-				}),
-
 				Permissions = e(Setting, {
 					name = "Third Party Permissions",
 					description = "Manage permissions for third party plugins",
@@ -205,6 +196,15 @@ function SettingsPage:render()
 							}),
 						}),
 					}),
+				}),
+
+				AutoConnectPlaytestServer = e(Setting, {
+					id = "autoConnectPlaytestServer",
+					name = "Auto Connect Playtest Server",
+					description = "Automatically connect game server to Rojo when playtesting while connected in Edit",
+					experimental = true,
+					transparency = self.props.transparency,
+					layoutOrder = layoutIncrement(),
 				}),
 
 				OpenScriptsExternally = e(Setting, {
