@@ -11,6 +11,7 @@ local Packages = Rojo.Packages
 
 local Log = require(Packages.Log)
 
+local Timer = require(Plugin.Timer)
 local Types = require(Plugin.Types)
 local decodeValue = require(Plugin.Reconciler.decodeValue)
 local getProperty = require(Plugin.Reconciler.getProperty)
@@ -122,6 +123,7 @@ end
 -- props must contain id, and cannot contain children or parentId
 -- other than those three, it can hold anything
 function Tree:addNode(parent, props)
+	Timer.start("Tree:addNode")
 	assert(props.id, "props must contain id")
 
 	parent = parent or "ROOT"
@@ -132,6 +134,7 @@ function Tree:addNode(parent, props)
 		for k, v in props do
 			node[k] = v
 		end
+		Timer.stop()
 		return node
 	end
 
@@ -142,22 +145,26 @@ function Tree:addNode(parent, props)
 	local parentNode = self:getNode(parent)
 	if not parentNode then
 		Log.warn("Failed to create node since parent doesnt exist: {}, {}", parent, props)
+		Timer.stop()
 		return
 	end
 
 	parentNode.children[node.id] = node
 	self.idToNode[node.id] = node
 
+	Timer.stop()
 	return node
 end
 
 -- Given a list of ancestor ids in descending order, builds the nodes for them
 -- using the patch and instanceMap info
 function Tree:buildAncestryNodes(previousId: string?, ancestryIds: { string }, patch, instanceMap)
+	Timer.start("Tree:buildAncestryNodes")
 	-- Build nodes for ancestry by going up the tree
 	previousId = previousId or "ROOT"
 
-	for _, ancestorId in ancestryIds do
+	for i = #ancestryIds, 1, -1 do
+		local ancestorId = ancestryIds[i]
 		local value = instanceMap.fromIds[ancestorId] or patch.added[ancestorId]
 		if not value then
 			Log.warn("Failed to find ancestor object for " .. ancestorId)
@@ -171,6 +178,8 @@ function Tree:buildAncestryNodes(previousId: string?, ancestryIds: { string }, p
 		})
 		previousId = ancestorId
 	end
+
+	Timer.stop()
 end
 
 local PatchTree = {}
@@ -178,10 +187,12 @@ local PatchTree = {}
 -- Builds a new tree from a patch and instanceMap
 -- uses changeListHeaders in node.changeList
 function PatchTree.build(patch, instanceMap, changeListHeaders)
+	Timer.start("PatchTree.build")
 	local tree = Tree.new()
 
 	local knownAncestors = {}
 
+	Timer.start("patch.updated")
 	for _, change in patch.updated do
 		local instance = instanceMap.fromIds[change.id]
 		if not instance then
@@ -189,7 +200,7 @@ function PatchTree.build(patch, instanceMap, changeListHeaders)
 		end
 
 		-- Gather ancestors from existing DOM
-		local ancestryIds = {}
+		local ancestryIds, ancestryIndex = {}, 0
 		local parentObject = instance.Parent
 		local parentId = instanceMap.fromInstances[parentObject]
 		local previousId = nil
@@ -200,7 +211,8 @@ function PatchTree.build(patch, instanceMap, changeListHeaders)
 				break
 			end
 
-			table.insert(ancestryIds, 1, parentId)
+			ancestryIndex += 1
+			ancestryIds[ancestryIndex] = parentId
 			knownAncestors[parentId] = true
 			parentObject = parentObject.Parent
 			parentId = instanceMap.fromInstances[parentObject]
@@ -213,11 +225,38 @@ function PatchTree.build(patch, instanceMap, changeListHeaders)
 		if next(change.changedProperties) or change.changedName then
 			changeList = {}
 
-			local hintBuffer, i = {}, 0
+			local hintBuffer, hintBufferSize, hintOverflow = table.create(3), 0, 0
+			local changeIndex = 0
 			local function addProp(prop: string, current: any?, incoming: any?, metadata: any?)
-				i += 1
-				hintBuffer[i] = prop
-				changeList[i] = { prop, current, incoming, metadata }
+				changeIndex += 1
+				changeList[changeIndex] = { prop, current, incoming, metadata }
+
+				if hintBufferSize < 3 then
+					hintBufferSize += 1
+					hintBuffer[hintBufferSize] = prop
+					return
+				end
+
+				-- We only want to have 3 hints
+				-- to keep it deterministic, we sort them alphabetically
+
+				-- Either this prop overflows, or it makes another one move to overflow
+				hintOverflow += 1
+
+				-- Shortcut for the common case
+				if hintBuffer[3] <= prop then
+					-- This prop is below the last hint, no need to insert
+					return
+				end
+
+				-- Find the first available spot
+				for i, hintItem in hintBuffer do
+					if prop < hintItem then
+						-- This prop is before the currently selected hint,
+						-- so take its place and then continue to find a spot for the old hint
+						hintBuffer[i], prop = prop, hintBuffer[i]
+					end
+				end
 			end
 
 			-- Gather the changes
@@ -238,18 +277,7 @@ function PatchTree.build(patch, instanceMap, changeListHeaders)
 			end
 
 			-- Finalize detail values
-
-			-- Trim hint to top 3
-			table.sort(hintBuffer)
-			if #hintBuffer > 3 then
-				hintBuffer = {
-					hintBuffer[1],
-					hintBuffer[2],
-					hintBuffer[3],
-					i - 3 .. " more",
-				}
-			end
-			hint = table.concat(hintBuffer, ", ")
+			hint = table.concat(hintBuffer, ", ") .. (if hintOverflow == 0 then "" else ", " .. hintOverflow .. " more")
 
 			-- Sort changes and add header
 			table.sort(changeList, function(a, b)
@@ -269,7 +297,9 @@ function PatchTree.build(patch, instanceMap, changeListHeaders)
 			changeList = changeList,
 		})
 	end
+	Timer.stop()
 
+	Timer.start("patch.removed")
 	for _, idOrInstance in patch.removed do
 		local instance = if Types.RbxId(idOrInstance) then instanceMap.fromIds[idOrInstance] else idOrInstance
 		if not instance then
@@ -311,7 +341,9 @@ function PatchTree.build(patch, instanceMap, changeListHeaders)
 			instance = instance,
 		})
 	end
+	Timer.stop()
 
+	Timer.start("patch.added")
 	for id, change in patch.added do
 		-- Gather ancestors from existing DOM or future additions
 		local ancestryIds = {}
@@ -350,32 +382,47 @@ function PatchTree.build(patch, instanceMap, changeListHeaders)
 		if next(change.Properties) then
 			changeList = {}
 
-			local hintBuffer, i = {}, 0
-			for prop, incoming in change.Properties do
-				i += 1
-				hintBuffer[i] = prop
+			local hintBuffer, hintBufferSize, hintOverflow = table.create(3), 0, 0
+			local changeIndex = 0
+			local function addProp(prop: string, incoming: any)
+				changeIndex += 1
+				changeList[changeIndex] = { prop, "N/A", incoming }
 
-				local success, incomingValue = decodeValue(incoming, instanceMap)
-				if success then
-					table.insert(changeList, { prop, "N/A", incomingValue })
-				else
-					table.insert(changeList, { prop, "N/A", select(2, next(incoming)) })
+				if hintBufferSize < 3 then
+					hintBufferSize += 1
+					hintBuffer[hintBufferSize] = prop
+					return
+				end
+
+				-- We only want to have 3 hints
+				-- to keep it deterministic, we sort them alphabetically
+
+				-- Either this prop overflows, or it makes another one move to overflow
+				hintOverflow += 1
+
+				-- Shortcut for the common case
+				if hintBuffer[3] <= prop then
+					-- This prop is below the last hint, no need to insert
+					return
+				end
+
+				-- Find the first available spot
+				for i, hintItem in hintBuffer do
+					if prop < hintItem then
+						-- This prop is before the currently selected hint,
+						-- so take its place and then continue to find a spot for the old hint
+						hintBuffer[i], prop = prop, hintBuffer[i]
+					end
 				end
 			end
 
-			-- Finalize detail values
-
-			-- Trim hint to top 3
-			table.sort(hintBuffer)
-			if #hintBuffer > 3 then
-				hintBuffer = {
-					hintBuffer[1],
-					hintBuffer[2],
-					hintBuffer[3],
-					i - 3 .. " more",
-				}
+			for prop, incoming in change.Properties do
+				local success, incomingValue = decodeValue(incoming, instanceMap)
+				addProp(prop, if success then incomingValue else select(2, next(incoming)))
 			end
-			hint = table.concat(hintBuffer, ", ")
+
+			-- Finalize detail values
+			hint = table.concat(hintBuffer, ", ") .. (if hintOverflow == 0 then "" else ", " .. hintOverflow .. " more")
 
 			-- Sort changes and add header
 			table.sort(changeList, function(a, b)
@@ -395,35 +442,27 @@ function PatchTree.build(patch, instanceMap, changeListHeaders)
 			instance = instanceMap.fromIds[id],
 		})
 	end
+	Timer.stop()
 
+	Timer.stop()
 	return tree
-end
-
--- Creates a deep copy of a tree for immutability purposes in Roact
-function PatchTree.clone(tree)
-	if not tree then
-		return
-	end
-
-	local newTree = Tree.new()
-	tree:forEach(function(node)
-		newTree:addNode(node.parentId, table.clone(node))
-	end)
-
-	return newTree
 end
 
 -- Updates the metadata of a tree with the unapplied patch and currently existing instances
 -- Builds a new tree from the data if one isn't provided
 -- Always returns a new tree for immutability purposes in Roact
 function PatchTree.updateMetadata(tree, patch, instanceMap, unappliedPatch)
+	Timer.start("PatchTree.updateMetadata")
 	if tree then
-		tree = PatchTree.clone(tree)
+		-- A shallow copy is enough for our purposes here since we really only need a new top-level object
+		-- for immutable comparison checks in Roact
+		tree = table.clone(tree)
 	else
 		tree = PatchTree.build(patch, instanceMap)
 	end
 
 	-- Update isWarning metadata
+	Timer.start("isWarning")
 	for _, failedChange in unappliedPatch.updated do
 		local node = tree:getNode(failedChange.id)
 		if not node then
@@ -492,8 +531,10 @@ function PatchTree.updateMetadata(tree, patch, instanceMap, unappliedPatch)
 		node.isWarning = true
 		Log.trace("Marked node as warning: {} {}", node.id, node.name)
 	end
+	Timer.stop()
 
 	-- Update if instances exist
+	Timer.start("instanceAncestry")
 	tree:forEach(function(node)
 		if node.instance then
 			if node.instance.Parent == nil and node.instance ~= game then
@@ -509,7 +550,9 @@ function PatchTree.updateMetadata(tree, patch, instanceMap, unappliedPatch)
 			end
 		end
 	end)
+	Timer.stop()
 
+	Timer.stop()
 	return tree
 end
 

@@ -177,10 +177,8 @@ local function diff(instanceMap, virtualInstances, rootId)
 
 				if err.kind == Error.UnknownProperty then
 					Log.trace("Skipping unknown property {}.{}", err.details.className, err.details.propertyName)
-				elseif err.kind == Error.UnreadableProperty then
-					Log.trace("Skipping unreadable property {}.{}", err.details.className, err.details.propertyName)
 				else
-					return false, err
+					Log.trace("Skipping unreadable property {}.{}", err.details.className, err.details.propertyName)
 				end
 			end
 		end
