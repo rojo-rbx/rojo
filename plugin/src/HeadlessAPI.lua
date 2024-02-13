@@ -263,7 +263,7 @@ function API.new(app)
 		-- Sanitize request
 		local sanitizedApis = {}
 		for _, api in apis do
-			if Rojo._apiDescriptions[api] ~= nil then
+			if Rojo._apiDescriptions[api] ~= nil and table.find(sanitizedApis, api) == nil then
 				table.insert(sanitizedApis, api)
 			else
 				warn(string.format("Rojo.%s is not a valid API", tostring(api)))
