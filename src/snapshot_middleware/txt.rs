@@ -1,6 +1,5 @@
-use std::{path::Path, str};
+use std::path::Path;
 
-use anyhow::Context;
 use maplit::hashmap;
 use memofs::{IoResultExt, Vfs};
 
@@ -14,11 +13,8 @@ pub fn snapshot_txt(
     path: &Path,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let name = path.file_name_trim_end(".txt")?;
-
-    let contents = vfs.read(path)?;
-    let contents_str = str::from_utf8(&contents)
-        .with_context(|| format!("File was not valid UTF-8: {}", path.display()))?
-        .to_owned();
+    let contents = vfs.read_to_string(path)?;
+    let contents_str = contents.as_str();
 
     let properties = hashmap! {
         "Value".to_owned() => contents_str.into(),
