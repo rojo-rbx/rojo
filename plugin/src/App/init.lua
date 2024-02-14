@@ -960,6 +960,8 @@ function App:render()
 							for api in apiMap do
 								table.insert(apiList, api)
 							end
+							table.sort(apiList)
+
 							local granted = self:requestPermission(plugin, source, name, apiList, true)
 							if granted then
 								self.headlessAPI:_setPermissions(source, name, apiList)
