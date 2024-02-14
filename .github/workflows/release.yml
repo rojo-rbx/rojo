@@ -122,10 +122,6 @@ jobs:
           # easily.
           CARGO_TARGET_DIR: output
 
-          # On platforms that use OpenSSL, ensure it is statically linked to
-          # make binaries more portable.
-          OPENSSL_STATIC: 1
-
       - name: Create Release Archive
         shell: bash
         run: |
