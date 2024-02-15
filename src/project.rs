@@ -39,6 +39,7 @@ enum Error {
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct Project {
     /// The name of the top-level instance described by the project.
+    #[serde(default)]
     pub name: String,
 
     /// The tree of instances described by this project. Projects always
@@ -135,6 +136,26 @@ impl Project {
         }
     }
 
+    /// If the project's name is not set and the project file is named `default.project.json`,
+    /// then the name will be set to the name of the parent folder.
+    fn solve_default_name(&mut self, project_file_location: &Path) {
+        if self.name.is_empty() {
+            let project_file_name = project_file_location
+                .file_name()
+                .and_then(|name| name.to_str());
+
+            if project_file_name == Some(PROJECT_FILENAME) {
+                if let Some(parent_folder_name) = project_file_location
+                    .parent()
+                    .and_then(|parent| parent.file_name())
+                    .and_then(|name| name.to_str())
+                {
+                    self.name = parent_folder_name.to_owned();
+                }
+            }
+        }
+    }
+
     pub fn load_from_slice(
         contents: &[u8],
         project_file_location: &Path,
@@ -145,6 +166,7 @@ impl Project {
         })?;
 
         project.file_location = project_file_location.to_path_buf();
+        project.solve_default_name(project_file_location);
         project.check_compatibility();
         Ok(project)
     }
@@ -169,6 +191,7 @@ impl Project {
             })?;
 
         project.file_location = project_file_location.to_path_buf();
+        project.solve_default_name(project_file_location);
         project.check_compatibility();
 
         Ok(project)
