@@ -29,7 +29,7 @@ pub use file_names::{name_for_inst, validate_file_name};
 pub use fs_snapshot::FsSnapshot;
 pub use hash::*;
 pub use property_filter::filter_properties;
-pub use ref_properties::link_referents;
+pub use ref_properties::collect_referents;
 pub use snapshot::{filter_out_property, SyncbackData, SyncbackSnapshot};
 
 pub fn syncback_loop<'old>(
@@ -41,8 +41,8 @@ pub fn syncback_loop<'old>(
     log::debug!("Mapping doms together");
     let ref_map = match_descendants(old_tree.inner(), &new_tree);
 
-    log::debug!("Linking referents for new DOM...");
-    link_referents(&mut new_tree)?;
+    log::debug!("Collecting referents for new DOM...");
+    let deferred_referents = collect_referents(&new_tree)?;
 
     log::debug!("Pre-filtering properties on new DOM");
     for referent in descendants(&new_tree, new_tree.root_ref()) {
@@ -60,6 +60,9 @@ pub fn syncback_loop<'old>(
     let old_hashes = hash_tree(old_tree.inner(), old_tree.get_root_id());
     log::debug!("Hashing file DOM");
     let new_hashes = hash_tree(&new_tree, new_tree.root_ref());
+
+    log::debug!("Linking referents for new DOM");
+    deferred_referents.link(&mut new_tree)?;
 
     if let Some(syncback_rules) = &project.syncback_rules {
         // I think this is a neat way to handle `sync_current_camera` being
