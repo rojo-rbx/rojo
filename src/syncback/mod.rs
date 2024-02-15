@@ -40,6 +40,10 @@ pub fn syncback_loop<'old>(
 ) -> anyhow::Result<FsSnapshot> {
     log::debug!("Mapping doms together");
     let ref_map = match_descendants(old_tree.inner(), &new_tree);
+
+    log::debug!("Linking referents for new DOM...");
+    link_referents(&mut new_tree)?;
+
     log::debug!("Pre-filtering properties on new DOM");
     for referent in descendants(&new_tree, new_tree.root_ref()) {
         let new_inst = new_tree.get_by_ref(referent).unwrap();
@@ -75,9 +79,6 @@ pub fn syncback_loop<'old>(
             }
         }
     }
-
-    log::debug!("Linking referents for new DOM...");
-    link_referents(&mut new_tree)?;
 
     let project_path = project.folder_location();
 
