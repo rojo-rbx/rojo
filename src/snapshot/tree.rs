@@ -90,8 +90,8 @@ impl RojoTree {
         // !!!!!!!!!! UGLY HACK !!!!!!!!!!
         //
         // This is a set of special cases working around a more general problem upstream
-        // in rbx-dom that causes issues pivots to not build to file correctly, described
-        // in github.com/rojo-rbx/rojo/issues/628.
+        // in rbx-dom that causes pivots to not build to file correctly, described in
+        // github.com/rojo-rbx/rojo/issues/628.
         //
         // We need to insert the NeedsPivotMigration property with a value of false on
         // every instance that inherits from Model for pivots to build correctly.
