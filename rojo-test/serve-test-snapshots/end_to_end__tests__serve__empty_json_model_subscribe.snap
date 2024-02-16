@@ -1,7 +1,6 @@
 ---
 source: tests/tests/serve.rs
 expression: "subscribe_response.intern_and_redact(&mut redactions, ())"
-
 ---
 messageCursor: 1
 messages:
@@ -14,7 +13,9 @@ messages:
           ignoreUnknownInstances: false
         Name: test
         Parent: id-2
-        Properties: {}
+        Properties:
+          NeedsPivotMigration:
+            Bool: false
     removed: []
     updated: []
 sessionId: id-1
