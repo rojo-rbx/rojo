@@ -14,6 +14,7 @@ use rbx_dom_weak::{
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{HashMap, HashSet, VecDeque},
+    env,
     rc::Rc,
     sync::OnceLock,
 };
@@ -31,6 +32,8 @@ pub use hash::*;
 pub use property_filter::filter_properties;
 pub use ref_properties::collect_referents;
 pub use snapshot::{filter_out_property, SyncbackData, SyncbackSnapshot};
+
+const DEBUG_MODEL_FORMAT_VAR: &str = "ROJO_SYNCBACK_DEBUG";
 
 pub fn syncback_loop<'old>(
     vfs: &'old Vfs,
@@ -253,7 +256,10 @@ pub fn get_best_middleware(inst: &Instance) -> Middleware {
                 Middleware::CsvDir
             }
         }
-        _ => Middleware::Rbxm,
+        _ => match env::var(DEBUG_MODEL_FORMAT_VAR) {
+            Ok(value) if value == "1" => Middleware::Rbxmx,
+            _ => Middleware::Rbxm,
+        },
     }
 }
 
