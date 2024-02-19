@@ -35,7 +35,7 @@ pub fn collect_referents(dom: &WeakDom) -> anyhow::Result<RefRewrites> {
             if let Variant::Ref(prop_value) = value {
                 if dom.get_by_ref(*prop_value).is_some() {
                     log::trace!(
-                        "{}.{name} -> {}",
+                        "Ref property: {}.{name} -> {}",
                         get_inst_path(dom, referent),
                         get_inst_path(dom, *prop_value)
                     );
@@ -55,7 +55,7 @@ impl RefRewrites {
         let mut rewrites = Vec::new();
         for (pointer_ref, ref_properties) in self.links {
             for (prop_name, target_ref) in ref_properties {
-                log::debug!(
+                log::trace!(
                     "Linking {}.{prop_name} to {} ({pointer_ref} to {target_ref})",
                     dom.get_by_ref(pointer_ref).unwrap().name,
                     dom.get_by_ref(target_ref).unwrap().name,
