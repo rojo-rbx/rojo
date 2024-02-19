@@ -69,7 +69,7 @@ impl SyncbackCommand {
             project_start.elapsed().as_secs_f32()
         );
 
-        let dom_old = session_old.tree();
+        let mut dom_old = session_old.tree();
 
         log::debug!("Old root: {}", dom_old.inner().root().class);
         log::debug!("New root: {}", dom_new.root().class);
@@ -78,7 +78,7 @@ impl SyncbackCommand {
         log::info!("Beginning syncback...");
         let snapshot = syncback_loop(
             session_old.vfs(),
-            &dom_old,
+            &mut dom_old,
             dom_new,
             session_old.root_project(),
         )?;

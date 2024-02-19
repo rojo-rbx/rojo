@@ -34,26 +34,35 @@ pub use snapshot::{filter_out_property, SyncbackData, SyncbackSnapshot};
 
 pub fn syncback_loop<'old>(
     vfs: &'old Vfs,
-    old_tree: &'old RojoTree,
+    old_tree: &'old mut RojoTree,
     mut new_tree: WeakDom,
     project: &'old Project,
 ) -> anyhow::Result<FsSnapshot> {
     log::debug!("Mapping doms together");
     let ref_map = match_descendants(old_tree.inner(), &new_tree);
-
     log::debug!("Collecting referents for new DOM...");
     let deferred_referents = collect_referents(&new_tree)?;
 
-    log::debug!("Pre-filtering properties on new DOM");
+    log::debug!("Pre-filtering properties on DOMs");
     for referent in descendants(&new_tree, new_tree.root_ref()) {
-        let new_inst = new_tree.get_by_ref(referent).unwrap();
-
-        let matching_old = ref_map
+        let new_inst = new_tree.get_by_ref_mut(referent).unwrap();
+        let old_inst = ref_map
             .get(&referent)
             .and_then(|r| old_tree.get_instance(*r));
-        let prop_list = filter_properties(project.syncback_rules.as_ref(), new_inst, matching_old);
+        let filtered_props = filter_properties(project.syncback_rules.as_ref(), new_inst, old_inst);
 
-        new_tree.get_by_ref_mut(referent).unwrap().properties = prop_list;
+        if old_inst.is_some() {
+            // This can never be None.
+            let mut old_inst = old_tree
+                .get_instance_mut(*ref_map.get(&referent).unwrap())
+                .unwrap();
+            let old_properties = std::mem::take(old_inst.properties_mut())
+                .into_iter()
+                .filter(|(name, _)| filtered_props.contains_key(name))
+                .collect();
+            *old_inst.properties_mut() = old_properties;
+        }
+        new_inst.properties = filtered_props;
     }
 
     log::debug!("Hashing project DOM");
