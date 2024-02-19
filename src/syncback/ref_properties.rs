@@ -52,42 +52,40 @@ impl RefRewrites {
     /// Links referents for the provided DOM, using the links stored in this
     /// struct.
     pub fn link(self, dom: &mut WeakDom) -> anyhow::Result<()> {
-        let mut rewrites = Vec::new();
+        let mut id_prop_list = Vec::new();
+
         for (pointer_ref, ref_properties) in self.links {
             for (prop_name, target_ref) in ref_properties {
-                log::trace!(
-                    "Linking {}.{prop_name} to {} ({pointer_ref} to {target_ref})",
-                    dom.get_by_ref(pointer_ref).unwrap().name,
-                    dom.get_by_ref(target_ref).unwrap().name,
-                );
                 let target_inst = dom
                     .get_by_ref_mut(target_ref)
-                    .expect("Ref properties that aren't in DOM should be filtered");
-
-                let attributes = get_or_insert_attributes(target_inst)?;
-                if attributes.get(REF_ID_ATTRIBUTE_NAME).is_none() {
-                    attributes.insert(
+                    .expect("Ref properties that aren't in the DOM should be filtered out");
+                let target_attrs = get_or_insert_attributes(target_inst)?;
+                if target_attrs.get(REF_ID_ATTRIBUTE_NAME).is_none() {
+                    target_attrs.insert(
                         REF_ID_ATTRIBUTE_NAME.to_owned(),
                         Variant::String(target_ref.to_string()),
                     );
                 }
 
-                let target_id = attributes
-                    .get(REF_ID_ATTRIBUTE_NAME)
-                    .expect("every Instance to have an ID");
-                if let Variant::String(value) = target_id {
-                    rewrites.push((prop_name, value.clone().into_bytes()));
-                } else if let Variant::BinaryString(value) = target_id {
-                    rewrites.push((prop_name, value.clone().into_vec()))
+                match target_attrs.get(REF_ID_ATTRIBUTE_NAME) {
+                    Some(Variant::String(id)) => id_prop_list.push((prop_name, id.clone())),
+                    Some(Variant::BinaryString(id)) => match std::str::from_utf8(id.as_ref()) {
+                        Ok(str) => id_prop_list.push((prop_name, str.to_string())),
+                        Err(_) => anyhow::bail!("expected attribute {REF_ID_ATTRIBUTE_NAME} to be a UTF-8 string")
+                    },
+                    Some(value) => anyhow::bail!("expected attribute {REF_ID_ATTRIBUTE_NAME} to be a string but it was a {:?}", value.ty()),
+                    None => unreachable!("{} should always be inserted as an attribute if it's missing", REF_ID_ATTRIBUTE_NAME),
                 }
             }
 
-            let inst = dom.get_by_ref_mut(pointer_ref).unwrap();
-            let attrs = get_or_insert_attributes(inst)?;
-            for (name, id) in rewrites.drain(..) {
-                attrs.insert(
+            let pointer_inst = dom
+                .get_by_ref_mut(pointer_ref)
+                .expect("invalid referents shouldn't be in the DOM");
+            let pointer_attrs = get_or_insert_attributes(pointer_inst)?;
+            for (name, id) in id_prop_list.drain(..) {
+                pointer_attrs.insert(
                     format!("{REF_POINTER_ATTRIBUTE_PREFIX}{name}"),
-                    String::from_utf8(id).unwrap().into(),
+                    Variant::BinaryString(id.into_bytes().into()),
                 );
             }
         }
