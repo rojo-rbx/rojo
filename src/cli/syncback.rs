@@ -7,6 +7,7 @@ use std::{
 
 use anyhow::Context;
 use clap::Parser;
+use fs_err::File;
 use memofs::Vfs;
 use rbx_dom_weak::{InstanceBuilder, WeakDom};
 use termcolor::{BufferWriter, Color, ColorChoice, ColorSpec, WriteColor};
@@ -126,12 +127,12 @@ impl SyncbackCommand {
 }
 
 fn read_dom(path: &Path, file_kind: FileKind) -> anyhow::Result<WeakDom> {
-    let content = fs_err::read(path)?;
+    let content = File::open(path)?;
     Ok(match file_kind {
-        FileKind::Rbxl => rbx_binary::from_reader(content.as_slice())?,
-        FileKind::Rbxlx => rbx_xml::from_reader(content.as_slice(), xml_decode_config())?,
+        FileKind::Rbxl => rbx_binary::from_reader(content)?,
+        FileKind::Rbxlx => rbx_xml::from_reader(content, xml_decode_config())?,
         FileKind::Rbxm => {
-            let temp_tree = rbx_binary::from_reader(content.as_slice())?;
+            let temp_tree = rbx_binary::from_reader(content)?;
             let root_children = temp_tree.root().children();
             if root_children.len() != 1 {
                 anyhow::bail!(
@@ -146,7 +147,7 @@ fn read_dom(path: &Path, file_kind: FileKind) -> anyhow::Result<WeakDom> {
             new_tree
         }
         FileKind::Rbxmx => {
-            let temp_tree = rbx_xml::from_reader(content.as_slice(), xml_decode_config())?;
+            let temp_tree = rbx_xml::from_reader(content, xml_decode_config())?;
             let root_children = temp_tree.root().children();
             if root_children.len() != 1 {
                 anyhow::bail!(
