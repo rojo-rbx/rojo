@@ -9,17 +9,16 @@ use super::SyncbackRules;
 
 pub fn filter_properties(
     data: Option<&SyncbackRules>,
-    new_inst: &Instance,
-    old_inst: Option<InstanceWithMeta>,
+    inst: &Instance,
 ) -> HashMap<String, Variant> {
     let sync_unscriptable = data.and_then(|s| s.sync_unscriptable).unwrap_or_default();
     let mut properties: HashMap<String, Variant> =
-        HashMap::with_capacity(new_inst.properties.capacity());
+        HashMap::with_capacity(inst.properties.capacity());
 
-    let filter = get_property_filter(data, new_inst);
+    let filter = get_property_filter(data, inst);
     let class_data = rbx_reflection_database::get()
         .classes
-        .get(new_inst.class.as_str());
+        .get(inst.class.as_str());
 
     let predicate = |prop_name: &String, prop_value: &Variant| {
         if matches!(prop_value, Variant::Ref(_) | Variant::SharedString(_)) {
@@ -42,19 +41,9 @@ pub fn filter_properties(
         false
     };
 
-    if let Some(old_inst) = old_inst {
-        for (name, value) in &new_inst.properties {
-            if predicate(name, value) {
-                continue;
-            }
-            if old_inst.properties().contains_key(name) {
-                properties.insert(name.clone(), value.clone());
-            }
-        }
-    }
     if let Some(class_data) = class_data {
         let defaults = &class_data.default_properties;
-        for (name, value) in &new_inst.properties {
+        for (name, value) in &inst.properties {
             if predicate(name, value) {
                 continue;
             }
@@ -67,7 +56,7 @@ pub fn filter_properties(
             }
         }
     } else {
-        for (name, value) in &new_inst.properties {
+        for (name, value) in &inst.properties {
             if predicate(name, value) {
                 continue;
             }

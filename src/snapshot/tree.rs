@@ -284,6 +284,10 @@ impl<'a> InstanceWithMeta<'a> {
     pub fn metadata(&self) -> &'a InstanceMetadata {
         self.metadata
     }
+
+    pub fn inner(&self) -> &Instance {
+        self.instance
+    }
 }
 
 /// RojoTree's equivalent of `&'a mut Instance`.
@@ -332,5 +336,13 @@ impl InstanceWithMetaMut<'_> {
 
     pub fn metadata(&self) -> &InstanceMetadata {
         self.metadata
+    }
+
+    pub fn inner(&self) -> &Instance {
+        self.instance
+    }
+
+    pub fn inner_mut(&mut self) -> &mut Instance {
+        self.instance
     }
 }

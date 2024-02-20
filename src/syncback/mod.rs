@@ -40,31 +40,18 @@ pub fn syncback_loop<'old>(
     mut new_tree: WeakDom,
     project: &'old Project,
 ) -> anyhow::Result<FsSnapshot> {
-    log::debug!("Mapping doms together");
-    let ref_map = match_descendants(old_tree.inner(), &new_tree);
     log::debug!("Collecting referents for new DOM...");
     let deferred_referents = collect_referents(&new_tree)?;
 
     log::debug!("Pre-filtering properties on DOMs");
     for referent in descendants(&new_tree, new_tree.root_ref()) {
         let new_inst = new_tree.get_by_ref_mut(referent).unwrap();
-        let old_inst = ref_map
-            .get(&referent)
-            .and_then(|r| old_tree.get_instance(*r));
-        let filtered_props = filter_properties(project.syncback_rules.as_ref(), new_inst, old_inst);
-
-        if old_inst.is_some() {
-            // This can never be None.
-            let mut old_inst = old_tree
-                .get_instance_mut(*ref_map.get(&referent).unwrap())
-                .unwrap();
-            let old_properties = std::mem::take(old_inst.properties_mut())
-                .into_iter()
-                .filter(|(name, _)| filtered_props.contains_key(name))
-                .collect();
-            *old_inst.properties_mut() = old_properties;
-        }
-        new_inst.properties = filtered_props;
+        new_inst.properties = filter_properties(project.syncback_rules.as_ref(), new_inst);
+    }
+    for referent in descendants(old_tree.inner(), old_tree.get_root_id()) {
+        let mut old_inst_rojo = old_tree.get_instance_mut(referent).unwrap();
+        let old_inst = old_inst_rojo.inner_mut();
+        old_inst.properties = filter_properties(project.syncback_rules.as_ref(), old_inst);
     }
 
     log::debug!("Hashing project DOM");
@@ -293,36 +280,6 @@ fn get_inst_path(dom: &WeakDom, referent: Ref) -> String {
         inst = dom.get_by_ref(instance.parent());
     }
     path.into_iter().collect::<Vec<&str>>().join("/")
-}
-
-fn match_descendants(old_dom: &WeakDom, new_dom: &WeakDom) -> HashMap<Ref, Ref> {
-    let mut map = HashMap::new();
-    let mut queue = VecDeque::new();
-    queue.push_back((new_dom.root_ref(), old_dom.root_ref()));
-
-    let mut old_child_map = HashMap::new();
-    while let Some((new_ref, old_ref)) = queue.pop_front() {
-        let old_inst = old_dom.get_by_ref(old_ref).unwrap();
-        for child in old_inst.children() {
-            let inst = old_dom.get_by_ref(*child).unwrap();
-            old_child_map.insert(&inst.name, inst);
-        }
-
-        let inst = new_dom.get_by_ref(new_ref).unwrap();
-        for child_ref in inst.children() {
-            let new_child = new_dom.get_by_ref(*child_ref).unwrap();
-            if let Some(old_child) = old_child_map.get(&new_child.name) {
-                if old_child.class == new_child.class {
-                    queue.push_back((new_child.referent(), old_child.referent()));
-                }
-            }
-        }
-
-        old_child_map.clear();
-        map.insert(new_ref, old_ref);
-    }
-
-    map
 }
 
 /// Produces a list of descendants in the WeakDom such that all children come
