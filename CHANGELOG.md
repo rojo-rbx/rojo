@@ -2,6 +2,7 @@
 
 ## Unreleased Changes
 * Fixed incorrect results when building model pivots ([#865])
+* Fixed incorrect results when serving model pivots ([#868])
 * Rojo now converts any line endings to LF, preventing spurious diffs when syncing Lua files on Windows ([#854])
 * Fixed Rojo plugin failing to connect when project contains certain unreadable properties ([#848])
 * Fixed various cases where patch visualizer would not display sync failures ([#845], [#844])
@@ -13,6 +14,7 @@
 [#847]: https://github.com/rojo-rbx/rojo/pull/847
 [#854]: https://github.com/rojo-rbx/rojo/pull/854
 [#865]: https://github.com/rojo-rbx/rojo/pull/865
+[#868]: https://github.com/rojo-rbx/rojo/pull/868
 
 ## [7.4.0] - January 16, 2024
 * Improved the visualization for array properties like Tags ([#829])
