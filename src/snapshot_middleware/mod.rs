@@ -281,6 +281,19 @@ impl Middleware {
             Middleware::CsvDir => syncback_csv_init(snapshot, file_name),
         }
     }
+
+    /// Returns whether this particular middleware would become a directory.
+    #[inline]
+    pub fn is_dir(&self) -> bool {
+        matches!(
+            self,
+            Middleware::Dir
+                | Middleware::ServerScriptDir
+                | Middleware::ClientScriptDir
+                | Middleware::ModuleScriptDir
+                | Middleware::CsvDir
+        )
+    }
 }
 
 /// A helper for easily defining a SyncRule. Arguments are passed literally

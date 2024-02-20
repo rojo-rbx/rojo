@@ -126,14 +126,6 @@ pub fn syncback_loop(
             continue;
         }
 
-        let appended_name = name_for_inst(middleware, snapshot.new_inst(), snapshot.old_inst())?;
-        let working_path = snapshot.parent_path.join(appended_name.as_ref());
-
-        if !snapshot.is_valid_path(project_path, &working_path) {
-            log::debug!("Skipping {inst_path} because its path matches ignore pattern");
-            continue;
-        }
-
         if let Some(syncback_rules) = &project.syncback_rules {
             // Ignore trees;
             for ignored in &syncback_rules.ignore_trees {
@@ -144,9 +136,37 @@ pub fn syncback_loop(
             }
         }
 
-        let syncback = middleware
-            .syncback(&snapshot, &appended_name)
-            .with_context(|| format!("Failed to syncback {inst_path}"))?;
+        let appended_name = name_for_inst(middleware, snapshot.new_inst(), snapshot.old_inst())?;
+        let working_path = snapshot.parent_path.join(appended_name.as_ref());
+
+        if !snapshot.is_valid_path(project_path, &working_path) {
+            log::debug!("Skipping {inst_path} because its path matches ignore pattern");
+            continue;
+        }
+
+        let mut syncback_res = middleware.syncback(&snapshot, &appended_name);
+        if syncback_res.is_err() && middleware.is_dir() {
+            let new_middleware = Middleware::Rbxm;
+            let appended_name =
+                name_for_inst(new_middleware, snapshot.new_inst(), snapshot.old_inst())?;
+            let working_path = snapshot.parent_path.join(appended_name.as_ref());
+
+            if !snapshot.is_valid_path(project_path, &working_path) {
+                log::warn!(
+                    "Skipping {inst_path} because it could not be syncbacked as a directory \
+                    and the new path matches an ignore pattern."
+                );
+                log::debug!("New path: {}", working_path.display());
+                continue;
+            }
+            log::warn!(
+                "Failed to syncback {inst_path} as a directory, it will \
+                instead be synced back as {}",
+                working_path.file_name().and_then(|s| s.to_str()).unwrap()
+            );
+            syncback_res = new_middleware.syncback(&snapshot, &appended_name);
+        }
+        let syncback = syncback_res.with_context(|| format!("Failed to syncback {inst_path}"))?;
 
         if !syncback.removed_children.is_empty() {
             log::debug!(
@@ -197,11 +217,10 @@ pub fn get_best_middleware(inst: &Instance) -> Middleware {
     if json_model_classes.contains(inst.class.as_str()) {
         if inst.children().is_empty() {
             return Middleware::JsonModel;
-        } else {
-            // This begs the question of an init.model.json but we'll leave
-            // that for another day.
-            return Middleware::Dir;
         }
+        // This begs the question of an init.model.json but we'll leave
+        // that for another day.
+        return Middleware::Dir;
     }
 
     match inst.class.as_str() {
