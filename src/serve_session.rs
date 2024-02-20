@@ -118,6 +118,9 @@ impl ServeSession {
                 });
             }
         };
+        if root_project.name.is_none() {
+            return Err(ServeSessionError::NoProjectName);
+        }
 
         let mut tree = RojoTree::new(InstanceSnapshot::new());
 
@@ -190,7 +193,10 @@ impl ServeSession {
     }
 
     pub fn project_name(&self) -> &str {
-        &self.root_project.name
+        self.root_project
+            .name
+            .as_ref()
+            .expect("all top-level projects must have their name set")
     }
 
     pub fn project_port(&self) -> Option<u16> {
@@ -230,6 +236,9 @@ pub enum ServeSessionError {
         .path.display()
     )]
     NoProjectFound { path: PathBuf },
+
+    #[error("Rojo requires the top-level project file to have the 'name' field set.")]
+    NoProjectName,
 
     #[error(transparent)]
     Io {
