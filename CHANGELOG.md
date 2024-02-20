@@ -1,6 +1,11 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Made the `name` field optional on project files when they are not the top-level project ([#870])
+ 	Files named `default.project.json` inherit the name of the folder they're in and all other projects
+    are named as expect (e.g. `foo.project.json` becomes an Instance named `foo`)
+
+    There is no change in behavior if `name` is set.
 * Fixed incorrect results when building model pivots ([#865])
 * Fixed incorrect results when serving model pivots ([#868])
 * Rojo now converts any line endings to LF, preventing spurious diffs when syncing Lua files on Windows ([#854])
@@ -15,6 +20,7 @@
 [#854]: https://github.com/rojo-rbx/rojo/pull/854
 [#865]: https://github.com/rojo-rbx/rojo/pull/865
 [#868]: https://github.com/rojo-rbx/rojo/pull/868
+[#870]: https://github.com/rojo-rbx/rojo/pull/870
 
 ## [7.4.0] - January 16, 2024
 * Improved the visualization for array properties like Tags ([#829])
