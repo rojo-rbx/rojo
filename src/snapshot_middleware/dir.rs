@@ -1,4 +1,7 @@
-use std::{collections::HashSet, path::Path};
+use std::{
+    collections::{HashMap, HashSet},
+    path::Path,
+};
 
 use anyhow::Context;
 use memofs::{DirEntry, IoResultExt, Vfs};
@@ -151,26 +154,36 @@ pub fn syncback_dir_no_meta<'new, 'old>(
         }
     }
 
-    let mut visited_children = HashSet::new();
-    for child_ref in new_inst.children() {
-        let new_child = snapshot.get_new_instance(*child_ref).unwrap();
-        if let Some(old_ref) = snapshot.old_ref_match(*child_ref) {
-            // This child exists in both DOMs. Pass it on.
-            children.push(snapshot.with_parent(new_child.name.clone(), *child_ref, Some(old_ref)));
-            visited_children.insert(old_ref);
-        } else {
-            children.push(snapshot.with_parent(new_child.name.clone(), *child_ref, None));
-        }
-    }
     if let Some(old_inst) = snapshot.old_inst() {
-        for child_ref in old_inst.children() {
-            if !visited_children.contains(child_ref) {
-                // This child was removed
-                removed_children.push(snapshot.get_old_instance(*child_ref).unwrap());
+        let mut old_child_map = HashMap::with_capacity(old_inst.children().len());
+        for child in old_inst.children() {
+            let inst = snapshot.get_old_instance(*child).unwrap();
+            old_child_map.insert(inst.name(), inst);
+        }
+
+        for new_child_ref in new_inst.children() {
+            let new_child = snapshot.get_new_instance(*new_child_ref).unwrap();
+            if let Some(old_child) = old_child_map.remove(new_child.name.as_str()) {
+                // This child exists in both doms. Pass it on.
+                children.push(snapshot.with_parent(
+                    new_child.name.clone(),
+                    *new_child_ref,
+                    Some(old_child.id()),
+                ));
+            } else {
+                // The child only exists in the the new dom
+                children.push(snapshot.with_parent(new_child.name.clone(), *new_child_ref, None));
             }
         }
+        // Any children that are in the old dom but not the new one are removed.
+        removed_children.extend(old_child_map.into_values());
+    } else {
+        // There is no old instance. Just add every child.
+        for new_child_ref in new_inst.children() {
+            let new_child = snapshot.get_new_instance(*new_child_ref).unwrap();
+            children.push(snapshot.with_parent(new_child.name.clone(), *new_child_ref, None));
+        }
     }
-
     let mut fs_snapshot = FsSnapshot::new();
     fs_snapshot.add_dir(&path);
 
