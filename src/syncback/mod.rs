@@ -34,11 +34,11 @@ pub use snapshot::{filter_out_property, SyncbackData, SyncbackSnapshot};
 
 const DEBUG_MODEL_FORMAT_VAR: &str = "ROJO_SYNCBACK_DEBUG";
 
-pub fn syncback_loop<'old>(
-    vfs: &'old Vfs,
-    old_tree: &'old mut RojoTree,
+pub fn syncback_loop(
+    vfs: &Vfs,
+    old_tree: &mut RojoTree,
     mut new_tree: WeakDom,
-    project: &'old Project,
+    project: &Project,
 ) -> anyhow::Result<FsSnapshot> {
     log::debug!("Collecting referents for new DOM...");
     let deferred_referents = collect_referents(&new_tree)?;
@@ -175,11 +175,11 @@ pub fn syncback_loop<'old>(
     Ok(fs_snapshot)
 }
 
-pub struct SyncbackReturn<'new, 'old> {
+pub struct SyncbackReturn<'sync> {
     pub inst_snapshot: InstanceSnapshot,
     pub fs_snapshot: FsSnapshot,
-    pub children: Vec<SyncbackSnapshot<'new, 'old>>,
-    pub removed_children: Vec<InstanceWithMeta<'old>>,
+    pub children: Vec<SyncbackSnapshot<'sync>>,
+    pub removed_children: Vec<InstanceWithMeta<'sync>>,
 }
 
 pub fn get_best_middleware(inst: &Instance) -> Middleware {

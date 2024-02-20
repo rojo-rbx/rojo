@@ -95,10 +95,10 @@ pub fn snapshot_dir_no_meta(
     Ok(Some(snapshot))
 }
 
-pub fn syncback_dir<'new, 'old>(
-    snapshot: &SyncbackSnapshot<'new, 'old>,
+pub fn syncback_dir<'sync>(
+    snapshot: &SyncbackSnapshot<'sync>,
     dir_name: &str,
-) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
+) -> anyhow::Result<SyncbackReturn<'sync>> {
     let path = snapshot.parent_path.join(dir_name);
     let new_inst = snapshot.new_inst();
 
@@ -124,10 +124,10 @@ pub fn syncback_dir<'new, 'old>(
     Ok(dir_syncback)
 }
 
-pub fn syncback_dir_no_meta<'new, 'old>(
-    snapshot: &SyncbackSnapshot<'new, 'old>,
+pub fn syncback_dir_no_meta<'sync>(
+    snapshot: &SyncbackSnapshot<'sync>,
     dir_name: &str,
-) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
+) -> anyhow::Result<SyncbackReturn<'sync>> {
     let path = snapshot.parent_path.join(dir_name);
     let new_inst = snapshot.new_inst();
 

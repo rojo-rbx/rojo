@@ -64,10 +64,10 @@ pub fn snapshot_json_model(
     Ok(Some(snapshot))
 }
 
-pub fn syncback_json_model<'new, 'old>(
-    snapshot: &SyncbackSnapshot<'new, 'old>,
+pub fn syncback_json_model<'sync>(
+    snapshot: &SyncbackSnapshot<'sync>,
     file_name: &str,
-) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
+) -> anyhow::Result<SyncbackReturn<'sync>> {
     let path = snapshot.parent_path.join(file_name);
 
     let mut model = json_model_from_pair(snapshot, snapshot.new, snapshot.old);

@@ -22,22 +22,22 @@ use super::SyncbackRules;
 static GIT_IGNORE_GLOB: OnceLock<Glob> = OnceLock::new();
 
 #[derive(Clone, Copy)]
-pub struct SyncbackData<'new, 'old> {
-    pub(super) vfs: &'old Vfs,
-    pub(super) old_tree: &'old RojoTree,
-    pub(super) new_tree: &'new WeakDom,
-    pub(super) syncback_rules: Option<&'old SyncbackRules>,
+pub struct SyncbackData<'sync> {
+    pub(super) vfs: &'sync Vfs,
+    pub(super) old_tree: &'sync RojoTree,
+    pub(super) new_tree: &'sync WeakDom,
+    pub(super) syncback_rules: Option<&'sync SyncbackRules>,
 }
 
-pub struct SyncbackSnapshot<'new, 'old> {
-    pub data: SyncbackData<'new, 'old>,
+pub struct SyncbackSnapshot<'sync> {
+    pub data: SyncbackData<'sync>,
     pub old: Option<Ref>,
     pub new: Ref,
     pub parent_path: PathBuf,
     pub name: String,
 }
 
-impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
+impl<'sync> SyncbackSnapshot<'sync> {
     /// Constructs a SyncbackSnapshot from the provided refs
     /// while inheriting the parent's trees and path
     #[inline]
@@ -58,7 +58,7 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
     /// `ignore_props` field, it does not do any other filtering and doesn't
     /// clone any data. This is left to the consumer.
     #[inline]
-    pub fn new_filtered_properties(&self) -> HashMap<&'new str, &'new Variant> {
+    pub fn new_filtered_properties(&self) -> HashMap<&'sync str, &'sync Variant> {
         self.get_filtered_properties(self.new, self.old).unwrap()
     }
 
@@ -72,7 +72,7 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
         &self,
         new_ref: Ref,
         old_ref: Option<Ref>,
-    ) -> Option<HashMap<&'new str, &'new Variant>> {
+    ) -> Option<HashMap<&'sync str, &'sync Variant>> {
         let inst = self.get_new_instance(new_ref)?;
         let mut properties: HashMap<&str, &Variant> =
             HashMap::with_capacity(inst.properties.capacity());
@@ -195,27 +195,27 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
     /// Returns an Instance from the old tree with the provided referent, if it
     /// exists.
     #[inline]
-    pub fn get_old_instance(&self, referent: Ref) -> Option<InstanceWithMeta<'old>> {
+    pub fn get_old_instance(&self, referent: Ref) -> Option<InstanceWithMeta<'sync>> {
         self.data.old_tree.get_instance(referent)
     }
 
     /// Returns an Instance from the new tree with the provided referent, if it
     /// exists.
     #[inline]
-    pub fn get_new_instance(&self, referent: Ref) -> Option<&'new Instance> {
+    pub fn get_new_instance(&self, referent: Ref) -> Option<&'sync Instance> {
         self.data.new_tree.get_by_ref(referent)
     }
 
     /// The 'old' Instance this snapshot is for, if it exists.
     #[inline]
-    pub fn old_inst(&self) -> Option<InstanceWithMeta<'old>> {
+    pub fn old_inst(&self) -> Option<InstanceWithMeta<'sync>> {
         self.old
             .and_then(|old| self.data.old_tree.get_instance(old))
     }
 
     /// The 'new' Instance this snapshot is for.
     #[inline]
-    pub fn new_inst(&self) -> &'new Instance {
+    pub fn new_inst(&self) -> &'sync Instance {
         self.data
             .new_tree
             .get_by_ref(self.new)
@@ -224,13 +224,13 @@ impl<'new, 'old> SyncbackSnapshot<'new, 'old> {
 
     /// Returns the underlying VFS being used for syncback.
     #[inline]
-    pub fn vfs(&self) -> &'old Vfs {
+    pub fn vfs(&self) -> &'sync Vfs {
         self.data.vfs
     }
 
     /// Returns the WeakDom used for the 'new' tree.
     #[inline]
-    pub fn new_tree(&self) -> &'new WeakDom {
+    pub fn new_tree(&self) -> &'sync WeakDom {
         self.data.new_tree
     }
 

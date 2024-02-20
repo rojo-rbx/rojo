@@ -44,10 +44,10 @@ pub fn snapshot_rbxmx(
     }
 }
 
-pub fn syncback_rbxmx<'new, 'old>(
-    snapshot: &SyncbackSnapshot<'new, 'old>,
+pub fn syncback_rbxmx<'sync>(
+    snapshot: &SyncbackSnapshot<'sync>,
     file_name: &str,
-) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
+) -> anyhow::Result<SyncbackReturn<'sync>> {
     let inst = snapshot.new_inst();
     let path = snapshot.parent_path.join(file_name);
 

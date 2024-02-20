@@ -97,10 +97,10 @@ pub fn snapshot_csv_init(
     Ok(Some(init_snapshot))
 }
 
-pub fn syncback_csv<'new, 'old>(
-    snapshot: &SyncbackSnapshot<'new, 'old>,
+pub fn syncback_csv<'sync>(
+    snapshot: &SyncbackSnapshot<'sync>,
     file_name: &str,
-) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
+) -> anyhow::Result<SyncbackReturn<'sync>> {
     let new_inst = snapshot.new_inst();
     let path = snapshot.parent_path.join(file_name);
 
@@ -132,10 +132,10 @@ pub fn syncback_csv<'new, 'old>(
     })
 }
 
-pub fn syncback_csv_init<'new, 'old>(
-    snapshot: &SyncbackSnapshot<'new, 'old>,
+pub fn syncback_csv_init<'sync>(
+    snapshot: &SyncbackSnapshot<'sync>,
     dir_name: &str,
-) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
+) -> anyhow::Result<SyncbackReturn<'sync>> {
     let new_inst = snapshot.new_inst();
 
     let path = snapshot.parent_path.join(dir_name).join("init.csv");

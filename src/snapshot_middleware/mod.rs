@@ -239,11 +239,11 @@ impl Middleware {
 
     /// Runs the syncback mechanism for the provided middleware given a
     /// SyncbackSnapshot.
-    pub fn syncback<'new, 'old>(
+    pub fn syncback<'sync>(
         &self,
-        snapshot: &SyncbackSnapshot<'new, 'old>,
+        snapshot: &SyncbackSnapshot<'sync>,
         file_name: &str,
-    ) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
+    ) -> anyhow::Result<SyncbackReturn<'sync>> {
         // We don't care about the names of projects
         if !matches!(self, Middleware::Project) {
             validate_file_name(&snapshot.name).with_context(|| {

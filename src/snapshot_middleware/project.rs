@@ -301,9 +301,9 @@ pub fn snapshot_project_node(
     }))
 }
 
-pub fn syncback_project<'new, 'old>(
-    snapshot: &SyncbackSnapshot<'new, 'old>,
-) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
+pub fn syncback_project<'sync>(
+    snapshot: &SyncbackSnapshot<'sync>,
+) -> anyhow::Result<SyncbackReturn<'sync>> {
     let old_inst = snapshot
         .old_inst()
         .expect("projects should always exist in both trees");

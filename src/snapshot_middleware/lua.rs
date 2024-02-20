@@ -123,10 +123,10 @@ pub fn snapshot_lua_init(
     Ok(Some(init_snapshot))
 }
 
-pub fn syncback_lua<'new, 'old>(
-    snapshot: &SyncbackSnapshot<'new, 'old>,
+pub fn syncback_lua<'sync>(
+    snapshot: &SyncbackSnapshot<'sync>,
     file_name: &str,
-) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
+) -> anyhow::Result<SyncbackReturn<'sync>> {
     let new_inst = snapshot.new_inst();
     let path = snapshot.parent_path.join(file_name);
 
@@ -159,11 +159,11 @@ pub fn syncback_lua<'new, 'old>(
     })
 }
 
-pub fn syncback_lua_init<'new, 'old>(
+pub fn syncback_lua_init<'sync>(
     script_type: ScriptType,
-    snapshot: &SyncbackSnapshot<'new, 'old>,
+    snapshot: &SyncbackSnapshot<'sync>,
     dir_name: &str,
-) -> anyhow::Result<SyncbackReturn<'new, 'old>> {
+) -> anyhow::Result<SyncbackReturn<'sync>> {
     let new_inst = snapshot.new_inst();
     let path = snapshot.parent_path.join(dir_name).join(match script_type {
         ScriptType::Server => "init.server.lua",
