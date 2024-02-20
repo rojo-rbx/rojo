@@ -146,7 +146,10 @@ pub fn syncback_loop(
 
         let mut syncback_res = middleware.syncback(&snapshot, &appended_name);
         if syncback_res.is_err() && middleware.is_dir() {
-            let new_middleware = Middleware::Rbxm;
+            let new_middleware = match env::var(DEBUG_MODEL_FORMAT_VAR) {
+                Ok(value) if value == "1" => Middleware::Rbxmx,
+                _ => Middleware::Rbxm,
+            };
             let appended_name =
                 name_for_inst(new_middleware, snapshot.new_inst(), snapshot.old_inst())?;
             let working_path = snapshot.parent_path.join(appended_name.as_ref());
