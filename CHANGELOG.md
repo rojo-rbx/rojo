@@ -1,6 +1,7 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Fixed incorrect results when serving model pivots ([#868])
 * Rojo now converts any line endings to LF, preventing spurious diffs when syncing Lua files on Windows ([#854])
 * Fixed Rojo plugin failing to connect when project contains certain unreadable properties ([#848])
 * Added popout diff visualizer for table properties like Attributes and Tags ([#834])
@@ -61,6 +62,7 @@
 [#847]: https://github.com/rojo-rbx/rojo/pull/847
 [#848]: https://github.com/rojo-rbx/rojo/pull/848
 [#854]: https://github.com/rojo-rbx/rojo/pull/854
+[#868]: https://github.com/rojo-rbx/rojo/pull/868
 
 
 ## [7.4.0] - January 16, 2024

@@ -111,6 +111,18 @@ return {
 				return true, instance:ScaleTo(value)
 			end,
 		},
+		WorldPivotData = {
+			read = function(instance)
+				return true, instance:GetPivot()
+			end,
+			write = function(instance, _, value)
+				if value == nil then
+					return true, nil
+				else
+					return true, instance:PivotTo(value)
+				end
+			end,
+		},
 	},
 	Terrain = {
 		MaterialColors = {
