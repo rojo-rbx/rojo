@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 use rbx_dom_weak::{types::Variant, Instance};
 use rbx_reflection::Scriptability;
 
-use crate::{snapshot::InstanceWithMeta, variant_eq::variant_eq};
+use crate::variant_eq::variant_eq;
 
 use super::SyncbackRules;
 
