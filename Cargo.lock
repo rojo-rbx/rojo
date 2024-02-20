@@ -1406,19 +1406,19 @@ dependencies = [
 
 [[package]]
 name = "profiling"
-version = "1.0.11"
+version = "1.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f89dff0959d98c9758c88826cc002e2c3d0b9dfac4139711d1f30de442f1139b"
+checksum = "0f0f7f43585c34e4fdd7497d746bc32e14458cf11c69341cc0587b1d825dde42"
 dependencies = [
  "profiling-procmacros",
- "tracy-client 0.16.3",
+ "tracy-client",
 ]
 
 [[package]]
 name = "profiling-procmacros"
-version = "1.0.11"
+version = "1.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eb156a45b6b9fe8027497422179fb65afc84d36707a7ca98297bf06bccb8d43f"
+checksum = "ce97fecd27bc49296e5e20518b5a1bb54a14f7d5fe6228bc9686ee2a74915cc8"
 dependencies = [
  "quote 1.0.33",
  "syn 2.0.37",
@@ -1800,7 +1800,6 @@ dependencies = [
  "thiserror",
  "tokio",
  "toml",
- "tracy-client 0.13.2",
  "uuid",
  "walkdir",
  "winreg 0.10.1",
@@ -2323,33 +2322,13 @@ dependencies = [
 
 [[package]]
 name = "tracy-client"
-version = "0.13.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "42ebfe7a24c18b5ba86d8920c124b41b942352f863fbe0c84d3d63428fa1860f"
-dependencies = [
- "loom",
- "once_cell",
- "tracy-client-sys 0.17.1",
-]
-
-[[package]]
-name = "tracy-client"
 version = "0.16.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "03684af8fb393cc7903210d868e4cb9f5c1e156737be38f52c4217fb21b86bf6"
 dependencies = [
  "loom",
  "once_cell",
- "tracy-client-sys 0.21.2",
-]
-
-[[package]]
-name = "tracy-client-sys"
-version = "0.17.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "178d021455e83078bb38c00b70046b95117ef0a0312cbef925f426d833d11c79"
-dependencies = [
- "cc",
+ "tracy-client-sys",
 ]
 
 [[package]]
