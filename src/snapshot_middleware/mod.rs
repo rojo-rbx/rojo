@@ -69,7 +69,6 @@ pub fn snapshot_from_vfs(
                         Middleware::Project => {
                             let name = init_path
                                 .parent()
-                                .and_then(Path::parent)
                                 .and_then(Path::file_name)
                                 .and_then(|s| s.to_str()).expect("default.project.json should be inside a folder with a unicode name");
                             snapshot_project(context, vfs, &init_path, name)
