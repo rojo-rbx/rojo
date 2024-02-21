@@ -1,7 +1,7 @@
 # Rojo Changelog
 
 ## Unreleased Changes
-* Made the `name` field optional on project files when they are not the top-level project ([#870])
+* Made the `name` field optional on project files ([#870])
  	Files named `default.project.json` inherit the name of the folder they're in and all other projects
     are named as expect (e.g. `foo.project.json` becomes an Instance named `foo`)
 
