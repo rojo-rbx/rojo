@@ -19,9 +19,11 @@ pub fn snapshot_project(
     context: &InstanceContext,
     vfs: &Vfs,
     path: &Path,
+    name: &str,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let project = Project::load_from_slice(&vfs.read(path)?, path)
         .with_context(|| format!("File was not a valid Rojo project: {}", path.display()))?;
+    let project_name = project.name.as_deref().unwrap_or(name);
 
     let mut context = context.clone();
     context.clear_sync_rules();
@@ -45,7 +47,7 @@ pub fn snapshot_project(
             .unwrap(),
     );
 
-    match snapshot_project_node(&context, path, &project.name, &project.tree, vfs, None)? {
+    match snapshot_project_node(&context, path, project_name, &project.tree, vfs, None)? {
         Some(found_snapshot) => {
             let mut snapshot = found_snapshot;
             // Setting the instigating source to the project file path is a little
@@ -354,12 +356,16 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
-        let instance_snapshot =
-            snapshot_project(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
-                .expect("snapshot error")
-                .expect("snapshot returned no instances");
+        let instance_snapshot = snapshot_project(
+            &InstanceContext::default(),
+            &vfs,
+            Path::new("/foo"),
+            "NOT_IN_SNAPSHOT",
+        )
+        .expect("snapshot error")
+        .expect("snapshot returned no instances");
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }
@@ -384,12 +390,13 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_project(
             &InstanceContext::default(),
-            &mut vfs,
+            &vfs,
             Path::new("/foo/hello.project.json"),
+            "NOT_IN_SNAPSHOT",
         )
         .expect("snapshot error")
         .expect("snapshot returned no instances");
@@ -422,12 +429,13 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_project(
             &InstanceContext::default(),
-            &mut vfs,
+            &vfs,
             Path::new("/foo.project.json"),
+            "NOT_IN_SNAPSHOT",
         )
         .expect("snapshot error")
         .expect("snapshot returned no instances");
@@ -458,12 +466,13 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_project(
             &InstanceContext::default(),
-            &mut vfs,
+            &vfs,
             Path::new("/foo.project.json"),
+            "NOT_IN_SNAPSHOT",
         )
         .expect("snapshot error")
         .expect("snapshot returned no instances");
@@ -495,12 +504,13 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_project(
             &InstanceContext::default(),
-            &mut vfs,
+            &vfs,
             Path::new("/foo.project.json"),
+            "NOT_IN_SNAPSHOT",
         )
         .expect("snapshot error")
         .expect("snapshot returned no instances");
@@ -529,12 +539,13 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_project(
             &InstanceContext::default(),
-            &mut vfs,
+            &vfs,
             Path::new("/foo/default.project.json"),
+            "NOT_IN_SNAPSHOT",
         )
         .expect("snapshot error")
         .expect("snapshot returned no instances");
@@ -570,12 +581,13 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_project(
             &InstanceContext::default(),
-            &mut vfs,
+            &vfs,
             Path::new("/foo/default.project.json"),
+            "NOT_IN_SNAPSHOT",
         )
         .expect("snapshot error")
         .expect("snapshot returned no instances");
@@ -615,12 +627,13 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_project(
             &InstanceContext::default(),
-            &mut vfs,
+            &vfs,
             Path::new("/foo/default.project.json"),
+            "NOT_IN_SNAPSHOT",
         )
         .expect("snapshot error")
         .expect("snapshot returned no instances");
@@ -665,12 +678,46 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_project(
             &InstanceContext::default(),
-            &mut vfs,
+            &vfs,
             Path::new("/foo/default.project.json"),
+            "NOT_IN_SNAPSHOT",
+        )
+        .expect("snapshot error")
+        .expect("snapshot returned no instances");
+
+        insta::assert_yaml_snapshot!(instance_snapshot);
+    }
+
+    #[test]
+    fn no_name_project() {
+        let _ = env_logger::try_init();
+
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
+            "/foo",
+            VfsSnapshot::dir(hashmap! {
+                "default.project.json" => VfsSnapshot::file(r#"
+                    {
+                        "tree": {
+                            "$className": "Model"
+                        }
+                    }
+                "#),
+            }),
+        )
+        .unwrap();
+
+        let vfs = Vfs::new(imfs);
+
+        let instance_snapshot = snapshot_project(
+            &InstanceContext::default(),
+            &vfs,
+            Path::new("/foo/default.project.json"),
+            "no_name_project",
         )
         .expect("snapshot error")
         .expect("snapshot returned no instances");

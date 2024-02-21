@@ -1,0 +1,8 @@
+{
+  "tree": {
+    "$className": "StringValue",
+    "$properties": {
+      "Value": "If this isn't named `no_name_top_level_project`, something went wrong!"
+    }
+  }
+}

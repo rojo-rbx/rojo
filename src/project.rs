@@ -39,7 +39,7 @@ enum Error {
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct Project {
     /// The name of the top-level instance described by the project.
-    pub name: String,
+    pub name: Option<String>,
 
     /// The tree of instances described by this project. Projects always
     /// describe at least one instance.

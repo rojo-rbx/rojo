@@ -1,0 +1,19 @@
+---
+source: src/snapshot_middleware/project.rs
+assertion_line: 725
+expression: instance_snapshot
+---
+snapshot_id: "00000000000000000000000000000000"
+metadata:
+  ignore_unknown_instances: true
+  instigating_source:
+    Path: /foo/default.project.json
+  relevant_paths:
+    - /foo/default.project.json
+  context:
+    emit_legacy_scripts: true
+name: no_name_project
+class_name: Model
+properties: {}
+children: []
+
