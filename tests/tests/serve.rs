@@ -255,3 +255,57 @@ fn add_optional_folder() {
         );
     });
 }
+
+#[test]
+fn no_name_default_project() {
+    run_serve_test("no_name_default_project", |session, mut redactions| {
+        let info = session.get_api_rojo().unwrap();
+        let root_id = info.root_instance_id;
+
+        assert_yaml_snapshot!(
+            "no_name_default_project_info",
+            redactions.redacted_yaml(info)
+        );
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "no_name_default_project_all",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+    });
+}
+
+#[test]
+fn no_name_project() {
+    run_serve_test("no_name_project", |session, mut redactions| {
+        let info = session.get_api_rojo().unwrap();
+        let root_id = info.root_instance_id;
+
+        assert_yaml_snapshot!("no_name_project_info", redactions.redacted_yaml(info));
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "no_name_project_all",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+    });
+}
+
+#[test]
+fn no_name_top_level_project() {
+    run_serve_test("no_name_top_level_project", |session, mut redactions| {
+        let info = session.get_api_rojo().unwrap();
+        let root_id = info.root_instance_id;
+
+        assert_yaml_snapshot!(
+            "no_name_top_level_project_info",
+            redactions.redacted_yaml(info)
+        );
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "no_name_top_level_project_all",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+    });
+}

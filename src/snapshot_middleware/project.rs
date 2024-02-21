@@ -22,6 +22,25 @@ pub fn snapshot_project(
     let project = Project::load_from_slice(&vfs.read(path)?, path)
         .with_context(|| format!("File was not a valid Rojo project: {}", path.display()))?;
 
+    // This is not how I would normally do this, but this is a temporary
+    // implementation. The one in 7.5+ is better.
+    let project_name = project.name.as_deref().unwrap_or_else(|| {
+        let file_name = path
+            .file_name()
+            .and_then(|s| s.to_str())
+            .expect("project file names should be valid UTF-8");
+        if file_name == "default.project.json" {
+            path.parent()
+                .and_then(Path::file_name)
+                .and_then(|s| s.to_str())
+                .expect("default.project.json should be inside a folder with a valid UTF-8 name")
+        } else {
+            file_name
+                .strip_suffix(".project.json")
+                .expect("project file names should end with .project.json")
+        }
+    });
+
     let mut context = context.clone();
 
     let rules = project.glob_ignore_paths.iter().map(|glob| PathIgnoreRule {
@@ -37,7 +56,7 @@ pub fn snapshot_project(
             .unwrap(),
     );
 
-    match snapshot_project_node(&context, path, &project.name, &project.tree, vfs, None)? {
+    match snapshot_project_node(&context, path, project_name, &project.tree, vfs, None)? {
         Some(found_snapshot) => {
             let mut snapshot = found_snapshot;
             // Setting the instigating source to the project file path is a little
@@ -663,6 +682,38 @@ mod test {
             &InstanceContext::default(),
             &mut vfs,
             Path::new("/foo/default.project.json"),
+        )
+        .expect("snapshot error")
+        .expect("snapshot returned no instances");
+
+        insta::assert_yaml_snapshot!(instance_snapshot);
+    }
+
+    #[test]
+    fn no_name_project() {
+        let _ = env_logger::try_init();
+
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
+            "/no_name_project",
+            VfsSnapshot::dir(hashmap! {
+                "default.project.json" => VfsSnapshot::file(r#"
+                    {
+                        "tree": {
+                            "$className": "Model"
+                        }
+                    }
+                "#),
+            }),
+        )
+        .unwrap();
+
+        let vfs = Vfs::new(imfs);
+
+        let instance_snapshot = snapshot_project(
+            &InstanceContext::default(),
+            &vfs,
+            Path::new("/no_name_project/default.project.json"),
         )
         .expect("snapshot error")
         .expect("snapshot returned no instances");
