@@ -1,6 +1,8 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+
+## [7.4.1] - February 20, 2024
 * Made the `name` field optional on project files ([#870])
  	Files named `default.project.json` inherit the name of the folder they're in and all other projects
     are named as expect (e.g. `foo.project.json` becomes an Instance named `foo`)
