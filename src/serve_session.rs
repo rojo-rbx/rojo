@@ -110,7 +110,7 @@ impl ServeSession {
 
         log::debug!("Loading project file from {}", project_path.display());
 
-        let root_project = match vfs.read(&project_path).with_not_found()? {
+        let mut root_project = match vfs.read(&project_path).with_not_found()? {
             Some(contents) => Project::load_from_slice(&contents, &project_path)?,
             None => {
                 return Err(ServeSessionError::NoProjectFound {
@@ -119,8 +119,34 @@ impl ServeSession {
             }
         };
         if root_project.name.is_none() {
-            return Err(ServeSessionError::NoProjectName);
+            if let Some(file_name) = project_path.file_name().and_then(|s| s.to_str()) {
+                if file_name == "default.project.json" {
+                    let folder_name = project_path
+                        .parent()
+                        .and_then(Path::file_name)
+                        .and_then(|s| s.to_str());
+                    if let Some(folder_name) = folder_name {
+                        root_project.name = Some(folder_name.to_string());
+                    } else {
+                        return Err(ServeSessionError::FolderNameInvalid {
+                            path: project_path.to_path_buf(),
+                        });
+                    }
+                } else if let Some(trimmed) = file_name.strip_suffix(".project.json") {
+                    root_project.name = Some(trimmed.to_string());
+                } else {
+                    return Err(ServeSessionError::ProjectNameInvalid {
+                        path: project_path.to_path_buf(),
+                    });
+                }
+            } else {
+                return Err(ServeSessionError::ProjectNameInvalid {
+                    path: project_path.to_path_buf(),
+                });
+            }
         }
+        // Rebind it to make it no longer mutable
+        let root_project = root_project;
 
         let mut tree = RojoTree::new(InstanceSnapshot::new());
 
@@ -237,8 +263,13 @@ pub enum ServeSessionError {
     )]
     NoProjectFound { path: PathBuf },
 
-    #[error("Rojo requires the top-level project file to have the 'name' field set.")]
-    NoProjectName,
+    #[error("The folder for the provided project cannot be used as a project name: {}\n\
+            Consider setting the `name` field on this project.", .path.display())]
+    FolderNameInvalid { path: PathBuf },
+
+    #[error("The file name of the provided project cannot be used as a project name: {}.\n\
+            Consider setting the `name` field on this project.", .path.display())]
+    ProjectNameInvalid { path: PathBuf },
 
     #[error(transparent)]
     Io {
