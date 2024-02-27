@@ -210,11 +210,20 @@ pub enum PathNode {
 }
 
 impl PathNode {
+    /// Returns the path of the `PathNode`, without regard for if it's optional
+    // or not.
+    #[inline]
     pub fn path(&self) -> &Path {
         match self {
             PathNode::Required(pathbuf) => pathbuf,
             PathNode::Optional(OptionalPathNode { optional }) => optional,
         }
+    }
+
+    /// Returns whether this `PathNode` is optional or not.
+    #[inline]
+    pub fn is_optional(&self) -> bool {
+        matches!(self, PathNode::Optional(_))
     }
 }
 
