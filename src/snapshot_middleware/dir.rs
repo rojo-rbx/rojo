@@ -149,9 +149,8 @@ pub fn syncback_dir_no_meta<'sync>(
                 "Instance has children with duplicate name (case may not exactly match):\n {}",
                 duplicate_set.into_iter().collect::<Vec<&str>>().join(", ")
             );
-        } else {
-            anyhow::bail!("Instance has more than 25 children with duplicate names");
         }
+        anyhow::bail!("Instance has more than 25 children with duplicate names");
     }
 
     if let Some(old_inst) = snapshot.old_inst() {
