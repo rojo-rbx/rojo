@@ -72,8 +72,8 @@ pub fn snapshot_from_vfs(
         let (middleware, dir_name, init_path) = get_dir_middleware(vfs, path)?;
         // TODO: Support user defined init paths
         match middleware {
-            Middleware::Dir => middleware.snapshot(context, vfs, path, &dir_name),
-            _ => middleware.snapshot(context, vfs, &init_path, &dir_name),
+            Middleware::Dir => middleware.snapshot(context, vfs, path, dir_name),
+            _ => middleware.snapshot(context, vfs, &init_path, dir_name),
         }
     } else {
         let file_name = path
@@ -98,17 +98,15 @@ pub fn snapshot_from_vfs(
 ///
 /// Returns the middleware, the name of the directory, and the path to
 /// the init location.
-fn get_dir_middleware<P: AsRef<Path>>(
+fn get_dir_middleware<'path>(
     vfs: &Vfs,
-    dir: P,
-) -> anyhow::Result<(Middleware, String, PathBuf)> {
-    let path = dir.as_ref();
-    let dir_name = path
+    dir_path: &'path Path,
+) -> anyhow::Result<(Middleware, &'path str, PathBuf)> {
+    let dir_name = dir_path
         .file_name()
         .expect("Could not extract directory name")
         .to_str()
-        .ok_or_else(|| anyhow::anyhow!("File name was not valid UTF-8: {}", path.display()))?
-        .to_string();
+        .ok_or_else(|| anyhow::anyhow!("File name was not valid UTF-8: {}", dir_path.display()))?;
 
     static INIT_PATHS: OnceLock<Vec<(Middleware, &str)>> = OnceLock::new();
     let order = INIT_PATHS.get_or_init(|| {
@@ -125,13 +123,13 @@ fn get_dir_middleware<P: AsRef<Path>>(
     });
 
     for (middleware, name) in order {
-        let test_path = path.join(name);
+        let test_path = dir_path.join(name);
         if vfs.metadata(&test_path).with_not_found()?.is_some() {
             return Ok((*middleware, dir_name, test_path));
         }
     }
 
-    Ok((Middleware::Dir, dir_name, path.to_path_buf()))
+    Ok((Middleware::Dir, dir_name, dir_path.to_path_buf()))
 }
 
 /// Gets a snapshot for a path given an InstanceContext and Vfs, taking
@@ -293,6 +291,45 @@ impl Middleware {
                 | Middleware::ModuleScriptDir
                 | Middleware::CsvDir
         )
+    }
+
+    /// Attempts to return a middleware for a given path, along with the name of
+    /// the file or directory that should be passed to either
+    /// [`Middleware::syncback`] or [`Middleware::snapshot`] and the path of
+    /// said file.
+    #[inline]
+    pub fn middleware_and_path<'path>(
+        vfs: &Vfs,
+        sync_rules: &[SyncRule],
+        path: &'path Path,
+    ) -> anyhow::Result<Option<(Self, &'path str, PathBuf)>> {
+        let meta = match vfs.metadata(path).with_not_found()? {
+            Some(meta) => meta,
+            None => return Ok(None),
+        };
+        if meta.is_dir() {
+            get_dir_middleware(vfs, path).map(Some)
+        } else {
+            for rule in sync_rules {
+                if rule.matches(path) {
+                    return Ok(Some((
+                        rule.middleware,
+                        rule.file_name_for_path(path)?,
+                        path.to_path_buf(),
+                    )));
+                }
+            }
+            for rule in default_sync_rules() {
+                if rule.matches(path) {
+                    return Ok(Some((
+                        rule.middleware,
+                        rule.file_name_for_path(path)?,
+                        path.to_path_buf(),
+                    )));
+                }
+            }
+            Ok(None)
+        }
     }
 }
 
