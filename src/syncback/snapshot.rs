@@ -270,10 +270,6 @@ impl<'sync> SyncbackSnapshot<'sync> {
 }
 
 pub fn filter_out_property(inst: &Instance, prop_name: &str) -> bool {
-    // We don't need SourceAssetId.
-    if prop_name == "Tags" || prop_name == "Attributes" || prop_name == "SourceAssetId" {
-        return true;
-    }
     match inst.class.as_str() {
         "Script" | "LocalScript" | "ModuleScript" => prop_name == "Source",
         "LocalizationTable" => prop_name == "Contents",
