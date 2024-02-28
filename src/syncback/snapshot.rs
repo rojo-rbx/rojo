@@ -94,7 +94,9 @@ impl<'sync> SyncbackSnapshot<'sync> {
     }
 
     /// Returns a map of properties for an Instance from the 'new' tree
-    /// with filtering done to avoid noise.
+    /// with filtering done to avoid noise. Returns `None` only if `new_ref`
+    /// instance is not in the new tree or if `old_ref` is provided and not in
+    /// the old tree.
     ///
     /// Note that while the returned map does filter based on the user's
     /// `ignore_props` field, it does not do any other filtering and doesn't
