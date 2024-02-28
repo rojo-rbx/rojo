@@ -94,7 +94,7 @@ pub fn syncback_loop(
         data: syncback_data,
         old: Some(old_tree.get_root_id()),
         new: new_tree.root_ref(),
-        parent_path: project.folder_location().to_path_buf(),
+        parent_path: project.file_location.clone(),
         name: project.name.clone(),
     }];
 
