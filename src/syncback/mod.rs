@@ -30,7 +30,7 @@ pub use fs_snapshot::FsSnapshot;
 pub use hash::*;
 pub use property_filter::filter_properties;
 pub use ref_properties::collect_referents;
-pub use snapshot::{filter_out_property, SyncbackData, SyncbackSnapshot};
+pub use snapshot::{SyncbackData, SyncbackSnapshot};
 
 const DEBUG_MODEL_FORMAT_VAR: &str = "ROJO_SYNCBACK_DEBUG";
 
@@ -96,6 +96,7 @@ pub fn syncback_loop(
         new: new_tree.root_ref(),
         parent_path: project.file_location.clone(),
         name: project.name.clone(),
+        middleware: Some(Middleware::Project),
     }];
 
     let mut replacements = Vec::new();
@@ -116,9 +117,12 @@ pub fn syncback_loop(
         }
 
         let middleware = snapshot
-            .old_inst()
-            .and_then(|inst| inst.metadata().middleware)
+            .middleware
+            .or(snapshot
+                .old_inst()
+                .and_then(|inst| inst.metadata().middleware))
             .unwrap_or_else(|| get_best_middleware(snapshot.new_inst()));
+
         log::trace!("Middleware for {inst_path} is {:?}", middleware);
 
         if matches!(middleware, Middleware::Json | Middleware::Toml) {

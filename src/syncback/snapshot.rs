@@ -9,6 +9,7 @@ use std::{
 use crate::{
     glob::Glob,
     snapshot::{InstanceWithMeta, RojoTree},
+    snapshot_middleware::Middleware,
     variant_eq::variant_eq,
 };
 use rbx_dom_weak::{
@@ -35,6 +36,7 @@ pub struct SyncbackSnapshot<'sync> {
     pub new: Ref,
     pub parent_path: PathBuf,
     pub name: String,
+    pub middleware: Option<Middleware>,
 }
 
 impl<'sync> SyncbackSnapshot<'sync> {
@@ -48,7 +50,36 @@ impl<'sync> SyncbackSnapshot<'sync> {
             new: new_ref,
             parent_path: self.parent_path.join(&self.name),
             name: new_name,
+            middleware: None,
         }
+    }
+
+    /// Constructs a SyncbackSnapshot from the provided refs and path, while
+    /// inheriting this snapshot's trees.
+    #[inline]
+    pub fn with_new_parent(
+        &self,
+        new_parent: PathBuf,
+        new_name: String,
+        new_ref: Ref,
+        old_ref: Option<Ref>,
+    ) -> Self {
+        Self {
+            data: self.data,
+            old: old_ref,
+            new: new_ref,
+            parent_path: new_parent,
+            name: new_name,
+            middleware: None,
+        }
+    }
+
+    /// Allows a middleware to be 'forced' onto a SyncbackSnapshot to override
+    /// the attempts to derive it.
+    #[inline]
+    pub fn middleware(mut self, middleware: Middleware) -> Self {
+        self.middleware = Some(middleware);
+        self
     }
 
     /// Returns a map of properties for the 'new' Instance with filtering
