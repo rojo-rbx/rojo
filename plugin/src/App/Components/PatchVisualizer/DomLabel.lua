@@ -109,7 +109,7 @@ function DomLabel:render()
 			if props.isFinalChild and i == depth then
 				-- This line stops halfway down to merge with our connector for the right angle
 				lineGuides["Line_" .. i] = e("Frame", {
-					Size = UDim2.new(0, 2, 1, -9),
+					Size = UDim2.new(0, 2, 0, 15),
 					Position = UDim2.new(0, (12 * (i - 1)) + 6, 0, -1),
 					BorderSizePixel = 0,
 					BackgroundTransparency = props.transparency,
