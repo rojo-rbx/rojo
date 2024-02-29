@@ -436,7 +436,7 @@ pub fn syncback_project<'sync>(
             if old_child_map.insert(child.name(), child).is_some() {
                 anyhow::bail!(
                     "Instances that are direct children of an Instance that is made by a project file \
-                    must have a unique name.\nThe child '{}' is duplicated.", child.name()
+                    must have a unique name.\nThe child '{}' of '{}' is duplicated.", child.name(), old_inst.name()
                 );
             }
         }
