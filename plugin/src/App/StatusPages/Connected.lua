@@ -64,8 +64,8 @@ function ChangesViewer:render()
 				Size = UDim2.new(1, 0, 0, 40),
 				BackgroundTransparency = 1,
 			}, {
-				Back = e(IconButton, {
-					icon = Assets.Images.Icons.Back,
+				Close = e(IconButton, {
+					icon = Assets.Images.Icons.Close,
 					iconSize = 24,
 					color = theme.Settings.Navbar.BackButtonColor,
 					transparency = self.props.transparency,
@@ -76,34 +76,104 @@ function ChangesViewer:render()
 					onClick = self.props.onBack,
 				}, {
 					Tip = e(Tooltip.Trigger, {
-						text = "Back",
+						text = "Close",
 					}),
 				}),
 
 				Title = e("TextLabel", {
-					Text = "Sync " .. DateTime.fromUnixTimestamp(self.props.patchData.timestamp)
-						:FormatLocalTime("LTS", "en-us"),
-					Font = Enum.Font.Gotham,
+					Text = "Sync",
+					Font = Enum.Font.GothamMedium,
 					TextSize = 17,
-					TextColor3 = if unapplied > 0 then theme.Diff.Warning else theme.TextColor,
+					TextXAlignment = Enum.TextXAlignment.Left,
+					TextColor3 = theme.TextColor,
 					TextTransparency = self.props.transparency,
-					Size = UDim2.new(1, 0, 0, 20),
+					Size = UDim2.new(1, -40, 0, 20),
+					Position = UDim2.new(0, 40, 0, 0),
 					BackgroundTransparency = 1,
 				}),
 
 				Subtitle = e("TextLabel", {
-					Text = `Synced {applied} changes{if unapplied > 0
-						then `, <font color="#{theme.Diff.Warning:ToHex()}">and {unapplied} changes failed to apply</font>`
-						else ""}`,
-					RichText = true,
+					Text = DateTime.fromUnixTimestamp(self.props.patchData.timestamp):FormatLocalTime("LTS", "en-us"),
+					TextXAlignment = Enum.TextXAlignment.Left,
 					Font = Enum.Font.Gotham,
 					TextSize = 15,
 					TextColor3 = theme.SubTextColor,
 					TextTruncate = Enum.TextTruncate.AtEnd,
 					TextTransparency = self.props.transparency,
-					Size = UDim2.new(1, 0, 0, 16),
-					Position = UDim2.new(0, 0, 0, 20),
+					Size = UDim2.new(1, -40, 0, 16),
+					Position = UDim2.new(0, 40, 0, 20),
 					BackgroundTransparency = 1,
+				}),
+
+				Icon = e("ImageLabel", {
+					BackgroundTransparency = 1,
+					Image = if unapplied > 0 then Assets.Images.Icons.SyncWarning else Assets.Images.Icons.SyncSuccess,
+					ImageColor3 = if unapplied > 0 then theme.Diff.Warning else theme.TextColor,
+					Size = UDim2.new(0, 24, 0, 24),
+					Position = UDim2.new(1, -10, 0.5, 0),
+					AnchorPoint = Vector2.new(1, 0.5),
+				}),
+
+				Info = e("Frame", {
+					BackgroundTransparency = 1,
+					Size = UDim2.new(0.5, 0, 0, 16),
+					Position = UDim2.new(0.5, 0, 0.5, 0),
+					AnchorPoint = Vector2.new(0.5, 0.5),
+				}, {
+					Layout = e("UIListLayout", {
+						FillDirection = Enum.FillDirection.Horizontal,
+						HorizontalAlignment = Enum.HorizontalAlignment.Center,
+						VerticalAlignment = Enum.VerticalAlignment.Center,
+						SortOrder = Enum.SortOrder.LayoutOrder,
+						Padding = UDim.new(0, 5),
+					}),
+					AppliedIcon = e("ImageLabel", {
+						BackgroundTransparency = 1,
+						Image = Assets.Images.Icons.Checkmark,
+						ImageColor3 = theme.TextColor,
+						Size = UDim2.new(0, 16, 0, 16),
+						LayoutOrder = 1,
+					}),
+					AppliedText = e("TextLabel", {
+						Text = applied,
+						Font = Enum.Font.Gotham,
+						TextSize = 15,
+						TextColor3 = theme.TextColor,
+						TextTransparency = self.props.transparency,
+						Size = UDim2.new(0, 0, 1, 0),
+						AutomaticSize = Enum.AutomaticSize.X,
+						BackgroundTransparency = 1,
+						LayoutOrder = 2,
+					}),
+					Warnings = if unapplied > 0
+						then Roact.createFragment({
+							Dot = e("ImageLabel", {
+								BackgroundTransparency = 1,
+								Image = Assets.Images.Circles[16],
+								ImageColor3 = theme.SubTextColor,
+								Size = UDim2.new(0, 4, 0, 4),
+								LayoutOrder = 3,
+							}),
+							UnappliedIcon = e("ImageLabel", {
+								BackgroundTransparency = 1,
+								Image = Assets.Images.Icons.Exclaimation,
+								ImageColor3 = theme.Diff.Warning,
+								Size = UDim2.new(0, 4, 0, 16),
+								LayoutOrder = 4,
+							}),
+							UnappliedText = e("TextLabel", {
+								Text = unapplied,
+								Font = Enum.Font.Gotham,
+								TextSize = 15,
+								TextColor3 = theme.Diff.Warning,
+								TextTransparency = self.props.transparency,
+								Size = UDim2.new(0, 0, 1, 0),
+								AutomaticSize = Enum.AutomaticSize.X,
+								BackgroundTransparency = 1,
+								LayoutOrder = 5,
+							}),
+						})
+						else nil,
 				}),
 
 				Divider = e("Frame", {
@@ -295,7 +365,8 @@ function ConnectedPage:render()
 
 				ChangeInfo = e("TextButton", {
 					Text = "",
-					Size = UDim2.new(0, 50, 1, 0),
+					Size = UDim2.new(0, 0, 1, 0),
+					AutomaticSize = Enum.AutomaticSize.X,
 					BackgroundColor3 = theme.BorderedContainer.BorderedColor,
 					BackgroundTransparency = if self.state.hoveringChangeInfo then 0.7 else 1,
 					BorderSizePixel = 0,
@@ -326,26 +397,44 @@ function ConnectedPage:render()
 					Tooltip = e(Tooltip.Trigger, {
 						text = if self.state.renderChanges then "Hide changes" else "View changes",
 					}),
-					Icon = e("ImageLabel", {
+					Content = e("Frame", {
 						BackgroundTransparency = 1,
-						Image = if syncWarning
-							then Assets.Images.Icons.SyncWarning
-							else Assets.Images.Icons.SyncSuccess,
-						ImageColor3 = if syncWarning then theme.Diff.Warning else theme.Header.VersionColor,
-						ImageTransparency = self.props.transparency,
-						Position = UDim2.new(1, -4, 0.5, 0),
-						AnchorPoint = Vector2.new(1, 0.5),
-						Size = UDim2.new(0, 16, 0, 16),
-					}),
-					Text = e("TextLabel", {
-						BackgroundTransparency = 1,
-						Text = self.changeInfoText,
-						Font = Enum.Font.Gotham,
-						TextSize = 15,
-						TextColor3 = if syncWarning then theme.Diff.Warning else theme.Header.VersionColor,
-						TextTransparency = self.props.transparency,
-						TextXAlignment = Enum.TextXAlignment.Right,
-						Size = UDim2.new(1, -25, 1, 0),
+						Size = UDim2.new(0, 0, 1, 0),
+						AutomaticSize = Enum.AutomaticSize.X,
+					}, {
+						Layout = e("UIListLayout", {
+							FillDirection = Enum.FillDirection.Horizontal,
+							HorizontalAlignment = Enum.HorizontalAlignment.Center,
+							VerticalAlignment = Enum.VerticalAlignment.Center,
+							SortOrder = Enum.SortOrder.LayoutOrder,
+							Padding = UDim.new(0, 5),
+						}),
+						Padding = e("UIPadding", {
+							PaddingLeft = UDim.new(0, 5),
+							PaddingRight = UDim.new(0, 5),
+						}),
+						Text = e("TextLabel", {
+							BackgroundTransparency = 1,
+							Text = self.changeInfoText,
+							Font = Enum.Font.Gotham,
+							TextSize = 15,
+							TextColor3 = if syncWarning then theme.Diff.Warning else theme.Header.VersionColor,
+							TextTransparency = self.props.transparency,
+							TextXAlignment = Enum.TextXAlignment.Right,
+							Size = UDim2.new(0, 0, 1, 0),
+							AutomaticSize = Enum.AutomaticSize.X,
+							LayoutOrder = 1,
+						}),
+						Icon = e("ImageLabel", {
+							BackgroundTransparency = 1,
+							Image = if syncWarning
+								then Assets.Images.Icons.SyncWarning
+								else Assets.Images.Icons.SyncSuccess,
+							ImageColor3 = if syncWarning then theme.Diff.Warning else theme.Header.VersionColor,
+							ImageTransparency = self.props.transparency,
+							Size = UDim2.new(0, 24, 0, 24),
+							LayoutOrder = 2,
+						}),
 					}),
 				}),
 			}),
