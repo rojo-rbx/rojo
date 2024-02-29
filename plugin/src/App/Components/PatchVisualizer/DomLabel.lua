@@ -165,7 +165,17 @@ function DomLabel:render()
 		-- Line guides help indent depth remain readable
 		local lineGuides = {}
 		for i = 1, depth do
-			if i == depth and props.isFinalChild and not props.hasChildren then
+			if depth == 1 then
+				-- The root line starts halfway down since there's no parent to connect to
+				lineGuides["Line_" .. i] = e("Frame", {
+					Size = UDim2.new(0, 2, 1, -12),
+					Position = UDim2.new(0, (12 * i) + 6, 0, 12),
+					BorderSizePixel = 0,
+					BackgroundTransparency = props.transparency,
+					BackgroundColor3 = theme.BorderedContainer.BorderColor,
+				})
+			elseif props.isFinalChild and not props.hasChildren and i == depth then
+				-- This line stops halfway down to merge with our connector for the right angle
 				lineGuides["Line_" .. i] = e("Frame", {
 					Size = UDim2.new(0, 2, 1, 2 - 12),
 					Position = UDim2.new(0, (12 * i) + 6, 0, -1),
@@ -174,8 +184,10 @@ function DomLabel:render()
 					BackgroundColor3 = theme.BorderedContainer.BorderColor,
 				})
 			else
+				-- All other lines go all the way
+				-- with the exception of the final element, which stops halfway down
 				lineGuides["Line_" .. i] = e("Frame", {
-					Size = UDim2.new(0, 2, 1, 2),
+					Size = UDim2.new(0, 2, 1, 2 - (if props.isFinalElement then 12 else 0)),
 					Position = UDim2.new(0, (12 * i) + 6, 0, -1),
 					BorderSizePixel = 0,
 					BackgroundTransparency = props.transparency,
@@ -186,7 +198,8 @@ function DomLabel:render()
 
 		lineGuides["Connector"] = e("Frame", {
 			Size = UDim2.new(0, 8, 0, 2),
-			Position = UDim2.new(0, (12 * props.depth) + 6, 0, 12),
+			Position = UDim2.new(0, 2 + (12 * (props.depth + 1)), 0, 12),
+			AnchorPoint = Vector2.xAxis,
 			BorderSizePixel = 0,
 			BackgroundTransparency = props.transparency,
 			BackgroundColor3 = theme.BorderedContainer.BorderColor,

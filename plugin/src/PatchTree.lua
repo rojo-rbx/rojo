@@ -79,6 +79,15 @@ function Tree.new()
 	return setmetatable(tree, Tree)
 end
 
+-- Iterates over all nodes and counts them up
+function Tree:getCount()
+	local count = 0
+	self:forEach(function()
+		count += 1
+	end)
+	return count
+end
+
 -- Iterates over all sub-nodes, depth first
 -- node is where to start from, defaults to root
 -- depth is used for recursion but can be used to set the starting depth

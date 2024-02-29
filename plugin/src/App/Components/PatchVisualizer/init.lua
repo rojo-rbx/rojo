@@ -58,6 +58,7 @@ function PatchVisualizer:render()
 	local scrollElements, elementHeights, elementIndex = {}, {}, 0
 
 	if patchTree then
+		local elementTotal = patchTree:getCount()
 		local function drawNode(node, depth)
 			elementIndex += 1
 
@@ -79,6 +80,7 @@ function PatchVisualizer:render()
 				elementHeight = elementHeight,
 				setElementHeight = setElementHeight,
 				elementIndex = elementIndex,
+				isFinalElement = elementIndex == elementTotal,
 				patchType = node.patchType,
 				className = node.className,
 				isWarning = node.isWarning,
