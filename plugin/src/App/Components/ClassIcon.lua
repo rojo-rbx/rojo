@@ -2,13 +2,14 @@ local StudioService = game:GetService("StudioService")
 local AssetService = game:GetService("AssetService")
 
 local Rojo = script:FindFirstAncestor("Rojo")
+local Plugin = Rojo.Plugin
 local Packages = Rojo.Packages
 
 local Roact = require(Packages.Roact)
 
 local e = Roact.createElement
 
-local EditableImage = require(script.Parent.EditableImage)
+local EditableImage = require(Plugin.App.Components.EditableImage)
 
 local function getRecoloredClassIcon(className, color)
 	-- HACK: DataModel is currently missing an icon so we redirect it
