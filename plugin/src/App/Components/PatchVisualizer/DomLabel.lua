@@ -174,10 +174,10 @@ function DomLabel:render()
 					BackgroundTransparency = props.transparency,
 					BackgroundColor3 = theme.BorderedContainer.BorderColor,
 				})
-			elseif props.isFinalChild and not props.hasChildren and i == depth then
+			elseif props.isFinalChild and not props.hasChildren and i >= depth - 1 then
 				-- This line stops halfway down to merge with our connector for the right angle
 				lineGuides["Line_" .. i] = e("Frame", {
-					Size = UDim2.new(0, 2, 1, 2 - 12),
+					Size = UDim2.new(0, 2, 1, -9),
 					Position = UDim2.new(0, (12 * i) + 6, 0, -1),
 					BorderSizePixel = 0,
 					BackgroundTransparency = props.transparency,
@@ -187,7 +187,7 @@ function DomLabel:render()
 				-- All other lines go all the way
 				-- with the exception of the final element, which stops halfway down
 				lineGuides["Line_" .. i] = e("Frame", {
-					Size = UDim2.new(0, 2, 1, 2 - (if props.isFinalElement then 12 else 0)),
+					Size = UDim2.new(0, 2, 1, if props.isFinalElement then -9 else 2),
 					Position = UDim2.new(0, (12 * i) + 6, 0, -1),
 					BorderSizePixel = 0,
 					BackgroundTransparency = props.transparency,
