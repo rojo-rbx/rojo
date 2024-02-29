@@ -528,7 +528,7 @@ fn syncback_project_node<'sync>(
         Middleware::middleware_and_path(snapshot.vfs(), sync_rules, node_path)?
             .context("middleware_and_path should not fail for project nodes that exist")?;
 
-    if middleware.is_dir() && !file_path.pop() {
+    if !file_path.pop() {
         anyhow::bail!(
             "cannot syncback node {} using middleware {:?} because it is at the disk root",
             old_inst.name(),
