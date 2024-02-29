@@ -37,6 +37,7 @@ function StudioProvider:updateTheme()
 	local theme = strict(studioTheme.Name .. "Theme", {
 		BackgroundColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.MainBackground),
 		TextColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.MainText),
+		SubTextColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.SubText),
 		Button = {
 			Solid = {
 				-- Solid uses brand theming, not Studio theming.

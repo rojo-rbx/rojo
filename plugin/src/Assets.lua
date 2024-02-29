@@ -25,6 +25,8 @@ local Assets = {
 			Back = "rbxassetid://6017213752",
 			Reset = "rbxassetid://10142422327",
 			Expand = "rbxassetid://12045401097",
+			SyncSuccess = "rbxassetid://16565035221",
+			SyncWarning = "rbxassetid://16565325171",
 		},
 		Diff = {
 			Add = "rbxassetid://10434145835",
