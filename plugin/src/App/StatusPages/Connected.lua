@@ -116,13 +116,13 @@ function ChangesViewer:render()
 
 				Info = e("Frame", {
 					BackgroundTransparency = 1,
-					Size = UDim2.new(0.5, 0, 0, 16),
-					Position = UDim2.new(0.5, 0, 0.5, 0),
-					AnchorPoint = Vector2.new(0.5, 0.5),
+					Size = UDim2.new(1, -90, 0, 16),
+					Position = UDim2.new(1, -45, 0.5, 0),
+					AnchorPoint = Vector2.new(1, 0.5),
 				}, {
 					Layout = e("UIListLayout", {
 						FillDirection = Enum.FillDirection.Horizontal,
-						HorizontalAlignment = Enum.HorizontalAlignment.Center,
+						HorizontalAlignment = Enum.HorizontalAlignment.Right,
 						VerticalAlignment = Enum.VerticalAlignment.Center,
 						SortOrder = Enum.SortOrder.LayoutOrder,
 						Padding = UDim.new(0, 5),
@@ -147,10 +147,8 @@ function ChangesViewer:render()
 					}),
 					Warnings = if unapplied > 0
 						then Roact.createFragment({
-							Dot = e("ImageLabel", {
+							Spacer = e("Frame", {
 								BackgroundTransparency = 1,
-								Image = Assets.Images.Circles[16],
-								ImageColor3 = theme.SubTextColor,
 								Size = UDim2.new(0, 4, 0, 4),
 								LayoutOrder = 3,
 							}),
