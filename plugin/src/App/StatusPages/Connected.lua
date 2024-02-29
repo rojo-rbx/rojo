@@ -117,7 +117,7 @@ function ChangesViewer:render()
 				Info = e("Frame", {
 					BackgroundTransparency = 1,
 					Size = UDim2.new(1, -90, 0, 16),
-					Position = UDim2.new(1, -45, 0.5, 0),
+					Position = UDim2.new(1, -48, 0.5, 0),
 					AnchorPoint = Vector2.new(1, 0.5),
 				}, {
 					Layout = e("UIListLayout", {
@@ -125,7 +125,7 @@ function ChangesViewer:render()
 						HorizontalAlignment = Enum.HorizontalAlignment.Right,
 						VerticalAlignment = Enum.VerticalAlignment.Center,
 						SortOrder = Enum.SortOrder.LayoutOrder,
-						Padding = UDim.new(0, 5),
+						Padding = UDim.new(0, 4),
 					}),
 					AppliedIcon = e("ImageLabel", {
 						BackgroundTransparency = 1,
