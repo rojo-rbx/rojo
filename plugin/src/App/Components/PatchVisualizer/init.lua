@@ -118,6 +118,7 @@ function PatchVisualizer:render()
 			transparency = self.props.transparency,
 			size = self.props.size,
 			position = self.props.position,
+			anchorPoint = self.props.anchorPoint,
 			layoutOrder = self.props.layoutOrder,
 		}, {
 			CleanMerge = e("TextLabel", {
@@ -132,7 +133,8 @@ function PatchVisualizer:render()
 			}),
 
 			VirtualScroller = e(VirtualScroller, {
-				size = UDim2.new(1, 0, 1, 0),
+				size = UDim2.new(1, 0, 1, -2),
+				position = UDim2.new(0, 0, 0, 2),
 				transparency = self.props.transparency,
 				count = #scrollElements,
 				updateEvent = self.updateEvent.Event,
