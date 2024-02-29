@@ -340,7 +340,6 @@ pub fn syncback_project<'sync>(
 
     let mut descendant_snapshots = Vec::new();
     let mut removed_descendants = Vec::new();
-    let mut fs_snapshot = FsSnapshot::new();
 
     let mut ref_to_path_map = HashMap::new();
     let mut old_child_map = HashMap::new();
@@ -509,11 +508,10 @@ pub fn syncback_project<'sync>(
         removed_descendants.extend(old_child_map.drain().map(|(_, v)| v));
     }
 
-    fs_snapshot.add_file(project_path, serde_json::to_vec_pretty(&project)?);
-
     Ok(SyncbackReturn {
         inst_snapshot: InstanceSnapshot::from_instance(snapshot.new_inst()),
-        fs_snapshot,
+        fs_snapshot: FsSnapshot::new()
+            .with_added_file(project_path, serde_json::to_vec_pretty(&project)?),
         children: descendant_snapshots,
         removed_children: removed_descendants,
     })
