@@ -195,14 +195,7 @@ end
 function Trigger:isHovering()
 	local rbx = self.ref.current
 	if rbx then
-		local pos = rbx.AbsolutePosition
-		local size = rbx.AbsoluteSize
-		local mousePos = self.mousePos
-
-		return mousePos.X >= pos.X
-			and mousePos.X <= pos.X + size.X
-			and mousePos.Y >= pos.Y
-			and mousePos.Y <= pos.Y + size.Y
+		return rbx.GuiState == Enum.GuiState.Hover
 	end
 	return false
 end
@@ -215,6 +208,14 @@ function Trigger:managePopup()
 		end
 
 		self.showDelayThread = task.delay(DELAY, function()
+			local rbx = self.ref.current
+			if rbx then
+				local widget = rbx:FindFirstAncestorOfClass("DockWidgetPluginGui")
+				if widget then
+					self.mousePos = widget:GetRelativeMousePosition()
+				end
+			end
+
 			self.props.context.addTip(self.id, {
 				Text = self.props.text,
 				Position = self.mousePos,
@@ -234,13 +235,7 @@ function Trigger:managePopup()
 end
 
 function Trigger:render()
-	local function recalculate(rbx)
-		local widget = rbx:FindFirstAncestorOfClass("DockWidgetPluginGui")
-		if not widget then
-			return
-		end
-		self.mousePos = widget:GetRelativeMousePosition()
-
+	local function recalculate()
 		self:managePopup()
 	end
 
@@ -250,11 +245,9 @@ function Trigger:render()
 		ZIndex = self.props.zIndex or 100,
 		[Roact.Ref] = self.ref,
 
+		[Roact.Change.GuiState] = recalculate,
 		[Roact.Change.AbsolutePosition] = recalculate,
 		[Roact.Change.AbsoluteSize] = recalculate,
-		[Roact.Event.MouseMoved] = recalculate,
-		[Roact.Event.MouseLeave] = recalculate,
-		[Roact.Event.MouseEnter] = recalculate,
 	})
 end
 
