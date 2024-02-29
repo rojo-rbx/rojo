@@ -6,18 +6,21 @@ use std::{
 
 use anyhow::{bail, Context};
 use memofs::Vfs;
-use rbx_dom_weak::types::{Attributes, Ref};
+use rbx_dom_weak::{
+    types::{Attributes, Ref},
+    Instance,
+};
 use rbx_reflection::ClassTag;
 
 use crate::{
     project::{PathNode, Project, ProjectNode},
     resolution::UnresolvedValue,
     snapshot::{
-        InstanceContext, InstanceMetadata, InstanceSnapshot, InstigatingSource, PathIgnoreRule,
-        SyncRule,
+        InstanceContext, InstanceMetadata, InstanceSnapshot, InstanceWithMeta, InstigatingSource,
+        PathIgnoreRule, SyncRule,
     },
     snapshot_middleware::Middleware,
-    syncback::{filter_out_property, FsSnapshot, SyncbackReturn, SyncbackSnapshot},
+    syncback::{FsSnapshot, SyncbackReturn, SyncbackSnapshot},
     RojoRef,
 };
 
@@ -313,13 +316,27 @@ pub fn syncback_project<'sync>(
         .old_inst()
         .expect("projects should always exist in both trees");
     // Project roots have to come from somewhere!
-    let path = &snapshot.parent_path;
-    log::debug!("Processing project {}", path.display());
-    let base_path = path.parent().expect("project did not have a parent");
+    let project_path = old_inst
+        .metadata()
+        .instigating_source
+        .as_ref()
+        .unwrap()
+        .path();
     let vfs = snapshot.vfs();
 
-    log::trace!("Reloading project from vfs");
-    let mut project = Project::load_from_slice(&vfs.read(path)?, path)?;
+    log::debug!(
+        "Reloading project {} from vfs (name: {})",
+        project_path.display(),
+        snapshot.name
+    );
+    let mut project = Project::load_from_slice(&vfs.read(project_path)?, project_path)?;
+    let base_path = project.folder_location().to_path_buf();
+
+    // Sync rules for this project do not have their base rule set but it is
+    // important when performing syncback on other projects.
+    for rule in &mut project.sync_rules {
+        rule.base_path = base_path.clone()
+    }
 
     let mut descendant_snapshots = Vec::new();
     let mut removed_descendants = Vec::new();
@@ -336,71 +353,29 @@ pub fn syncback_project<'sync>(
         log::debug!("Processing node {}", old_inst.name());
         if old_inst.class_name() != new_inst.class {
             anyhow::bail!(
-                "Cannot change the class of {} in project file at {}",
+                "Cannot change the class of {} in project file {}",
                 old_inst.name(),
-                path.display()
+                project_path.display()
             );
         }
 
+        let filtered_properties = snapshot
+            .get_filtered_properties(new_inst.referent(), Some(old_inst.id()))
+            .unwrap();
+        let properties = &mut node.properties;
         if node.path.is_none() {
-            // This node is entirely defined in the project
-            let filtered_properties = snapshot
-                .get_filtered_properties(new_inst.referent(), Some(old_inst.id()))
-                .unwrap();
-            let properties = &mut node.properties;
+            // This node is entirely defined in the project, so we put all
+            // properties in the node.
             properties.clear();
             for (name, value) in filtered_properties {
-                if filter_out_property(new_inst, name) {
-                    continue;
-                }
                 properties.insert(
                     name.to_owned(),
                     UnresolvedValue::from_variant(value.to_owned(), old_inst.class_name(), name),
                 );
             }
-        } else if node.properties.is_empty() {
-            // This node is entirely defined in a file
-            let node_path = node.path.as_ref().map(PathNode::path).expect(
-                "Project nodes with a path must have a path. \
-                If you see this message, something went seriously wrong. Please report it.",
-            );
-            let real_path = if node_path.is_absolute() {
-                node_path.to_path_buf()
-            } else {
-                base_path.join(node_path)
-            };
-
-            let (middleware, file_name, mut file_path) =
-                Middleware::middleware_and_path(vfs, &project.sync_rules, &real_path)?.expect(
-                    "Middleware::middleware_and_path should fail given an already loaded project node path",
-                );
-            if middleware.is_dir() && !file_path.pop() {
-                anyhow::bail!(
-                    "cannot syncback project node {} because it points to path {}",
-                    old_inst.name(),
-                    real_path.display()
-                )
-            }
-            let syncback_ret = middleware.syncback(
-                &SyncbackSnapshot {
-                    data: snapshot.data,
-                    old: Some(old_inst.id()),
-                    new: new_inst.referent(),
-                    parent_path: file_path,
-                    name: old_inst.name().to_owned(),
-                },
-                file_name,
-            )?;
-            descendant_snapshots.extend(syncback_ret.children.into_iter());
-            removed_descendants.extend(syncback_ret.removed_children.into_iter());
-            fs_snapshot.merge(syncback_ret.fs_snapshot);
-            continue;
         } else {
-            // This node has both a path and properties set.
-            let filtered_properties = snapshot
-                .get_filtered_properties(new_inst.referent(), Some(old_inst.id()))
-                .unwrap();
-            let properties = &mut node.properties;
+            // This node has both a path so we only update properties. Adding
+            // new things is potentially destructive.
             for (name, value) in filtered_properties {
                 if properties.contains_key(name) {
                     properties.insert(
@@ -413,25 +388,28 @@ pub fn syncback_project<'sync>(
                     );
                 }
             }
+
+            // And since it has a path, we have to run syncback on that path.
             let node_path = node.path.as_ref().map(PathNode::path).expect(
                 "Project nodes with a path must have a path \
                 If you see this message, something went seriously wrong. Please report it.",
             );
-            let real_path = if node_path.is_absolute() {
+            let full_path = if node_path.is_absolute() {
                 node_path.to_path_buf()
             } else {
                 base_path.join(node_path)
             };
 
-            log::debug!("Mixed node with path {}", real_path.display());
-            // descendant_snapshots.push(SyncbackSnapshot {
-            //     data: snapshot.data,
-            //     old: Some(old_inst.id()),
-            //     new: new_inst.referent(),
-            //     parent_path: real_path.clone(),
-            //     name: old_inst.name().to_owned(),
-            // });
-            ref_to_path_map.insert(new_inst.referent(), real_path);
+            let snapshot = syncback_project_node(
+                snapshot,
+                &project.sync_rules,
+                &full_path,
+                new_inst,
+                old_inst,
+            )?;
+            descendant_snapshots.push(snapshot);
+
+            ref_to_path_map.insert(new_inst.referent(), full_path);
         }
 
         for child_ref in new_inst.children() {
@@ -458,12 +436,17 @@ pub fn syncback_project<'sync>(
             if old_child_map.insert(child.name(), child).is_some() {
                 anyhow::bail!(
                     "Instances that are direct children of an Instance that is made by a project file \
-                    must have a unique name. The child '{}' is duplicated.", child.name()
+                    must have a unique name.\nThe child '{}' is duplicated.", child.name()
                 );
             }
         }
 
+        // This loop does basic matching of Instance children to the node's
+        // children. It ensures that `new_child_map` and `old_child_map` will
+        // only contain Instances that don't belong to the project after this.
         for (child_name, child_node) in &mut node.children {
+            // If a node's path is optional, we want to skip it if the path
+            // doesn't exist since it isn't in the current old DOM.
             if let Some(path) = &child_node.path {
                 if path.is_optional() {
                     let real_path = if path.path().is_absolute() {
@@ -472,9 +455,9 @@ pub fn syncback_project<'sync>(
                         base_path.join(path.path())
                     };
                     if !real_path.exists() {
-                        log::debug!(
-                        "Skipping optional node '{child_name}' of project because it is optional \
-                        and not present on the disk."
+                        log::warn!(
+                            "Skipping node '{child_name}' of project because it is optional and not present on the disk.\n\
+                            If this is not deliberate, please create a file or directory at {}", real_path.display()
                         );
                         continue;
                     }
@@ -488,54 +471,45 @@ pub fn syncback_project<'sync>(
                 (Some(new), Some(old)) => node_queue.push_back((child_node, old, new)),
                 (_, None) => anyhow::bail!(
                     "The child '{child_name}' of Instance '{}' would be removed.\n\
-                    Syncback cannot add or remove Instances from project {}", old_inst.name(), path.display()),
+                    Syncback cannot add or remove Instances from project {}", old_inst.name(), project_path.display()),
                 (None, _) => panic!(
                     "Invariant violated: the Instance matching of project nodes is flawed somehow.\n\
                     Specifically, a child of the node did not exist in the old tree."
                 ),
             }
         }
+
+        // All of the children in this loop are by their nature not in the
+        // project, so we just need to run syncback on them.
         for (name, new_child) in new_child_map.drain() {
-            // All children must be a descendant of a node.
             let parent_path = match ref_to_path_map.get(&new_child.parent()) {
-                Some(path) => path,
+                Some(path) => path.clone(),
                 None => {
-                    log::trace!("Skipping new child {name}");
+                    log::debug!("Skipping child {name} of node because it has no parent_path");
                     continue;
                 }
-            }
-            .to_owned();
+            };
 
             if let Some(old_child) = old_child_map.remove(name.as_str()) {
-                log::debug!("child, old instance: {}", parent_path.display());
-                descendant_snapshots.push(SyncbackSnapshot {
-                    data: snapshot.data,
-                    old: Some(old_child.id()),
-                    new: new_child.referent(),
+                descendant_snapshots.push(snapshot.with_new_parent(
                     parent_path,
-                    name: old_inst.name().to_string(),
-                })
+                    old_child.name().to_string(),
+                    new_child.referent(),
+                    Some(old_child.id()),
+                ))
             } else {
-                descendant_snapshots.push(SyncbackSnapshot {
-                    data: snapshot.data,
-                    old: None,
-                    new: new_child.referent(),
+                descendant_snapshots.push(snapshot.with_new_parent(
                     parent_path,
-                    name: old_inst.name().to_string(),
-                })
+                    new_child.name.clone(),
+                    new_child.referent(),
+                    None,
+                ));
             }
         }
         removed_descendants.extend(old_child_map.drain().map(|(_, v)| v));
     }
 
-    for snapshot in &descendant_snapshots {
-        log::debug!(
-            "returning snapshot at path {}",
-            snapshot.parent_path.display()
-        )
-    }
-
-    fs_snapshot.add_file(path, serde_json::to_vec_pretty(&project)?);
+    fs_snapshot.add_file(project_path, serde_json::to_vec_pretty(&project)?);
 
     Ok(SyncbackReturn {
         inst_snapshot: InstanceSnapshot::from_instance(snapshot.new_inst()),
@@ -543,6 +517,34 @@ pub fn syncback_project<'sync>(
         children: descendant_snapshots,
         removed_children: removed_descendants,
     })
+}
+
+fn syncback_project_node<'sync>(
+    snapshot: &SyncbackSnapshot<'sync>,
+    sync_rules: &[SyncRule],
+    node_path: &Path,
+    new_inst: &Instance,
+    old_inst: InstanceWithMeta,
+) -> anyhow::Result<SyncbackSnapshot<'sync>> {
+    let (middleware, _, mut file_path) =
+        Middleware::middleware_and_path(snapshot.vfs(), sync_rules, node_path)?
+            .context("middleware_and_path should not fail for project nodes that exist")?;
+
+    if middleware.is_dir() && !file_path.pop() {
+        anyhow::bail!(
+            "cannot syncback node {} using middleware {:?} because it is at the disk root",
+            old_inst.name(),
+            middleware
+        )
+    }
+    Ok(snapshot
+        .with_new_parent(
+            file_path,
+            old_inst.name().to_owned(),
+            new_inst.referent(),
+            Some(old_inst.id()),
+        )
+        .middleware(middleware))
 }
 
 fn infer_class_name(name: &str, parent_class: Option<&str>) -> Option<Cow<'static, str>> {
