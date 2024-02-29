@@ -105,73 +105,90 @@ function ChangesViewer:render()
 					BackgroundTransparency = 1,
 				}),
 
-				Icon = e("ImageLabel", {
-					BackgroundTransparency = 1,
-					Image = if unapplied > 0 then Assets.Images.Icons.SyncWarning else Assets.Images.Icons.SyncSuccess,
-					ImageColor3 = if unapplied > 0 then theme.Diff.Warning else theme.TextColor,
-					Size = UDim2.new(0, 24, 0, 24),
-					Position = UDim2.new(1, -10, 0.5, 0),
-					AnchorPoint = Vector2.new(1, 0.5),
-				}),
-
 				Info = e("Frame", {
 					BackgroundTransparency = 1,
-					Size = UDim2.new(1, -90, 0, 16),
-					Position = UDim2.new(1, -48, 0.5, 0),
+					Size = UDim2.new(0, 10, 0, 24),
+					AutomaticSize = Enum.AutomaticSize.X,
+					Position = UDim2.new(1, -5, 0.5, 0),
 					AnchorPoint = Vector2.new(1, 0.5),
 				}, {
-					Layout = e("UIListLayout", {
-						FillDirection = Enum.FillDirection.Horizontal,
-						HorizontalAlignment = Enum.HorizontalAlignment.Right,
-						VerticalAlignment = Enum.VerticalAlignment.Center,
-						SortOrder = Enum.SortOrder.LayoutOrder,
-						Padding = UDim.new(0, 4),
+					Tooltip = e(Tooltip.Trigger, {
+						text = `{applied} changes applied`
+							.. (if unapplied > 0 then `, {unapplied} changes failed` else ""),
 					}),
-					AppliedIcon = e("ImageLabel", {
+					Content = e("Frame", {
 						BackgroundTransparency = 1,
-						Image = Assets.Images.Icons.Checkmark,
-						ImageColor3 = theme.TextColor,
-						Size = UDim2.new(0, 16, 0, 16),
-						LayoutOrder = 1,
-					}),
-					AppliedText = e("TextLabel", {
-						Text = applied,
-						Font = Enum.Font.Gotham,
-						TextSize = 15,
-						TextColor3 = theme.TextColor,
-						TextTransparency = self.props.transparency,
 						Size = UDim2.new(0, 0, 1, 0),
 						AutomaticSize = Enum.AutomaticSize.X,
-						BackgroundTransparency = 1,
-						LayoutOrder = 2,
+					}, {
+						Layout = e("UIListLayout", {
+							FillDirection = Enum.FillDirection.Horizontal,
+							HorizontalAlignment = Enum.HorizontalAlignment.Right,
+							VerticalAlignment = Enum.VerticalAlignment.Center,
+							SortOrder = Enum.SortOrder.LayoutOrder,
+							Padding = UDim.new(0, 4),
+						}),
+
+						StatusIcon = e("ImageLabel", {
+							BackgroundTransparency = 1,
+							Image = if unapplied > 0
+								then Assets.Images.Icons.SyncWarning
+								else Assets.Images.Icons.SyncSuccess,
+							ImageColor3 = if unapplied > 0 then theme.Diff.Warning else theme.TextColor,
+							Size = UDim2.new(0, 24, 0, 24),
+							LayoutOrder = 10,
+						}),
+						StatusSpacer = e("Frame", {
+							BackgroundTransparency = 1,
+							Size = UDim2.new(0, 6, 0, 4),
+							LayoutOrder = 9,
+						}),
+						AppliedIcon = e("ImageLabel", {
+							BackgroundTransparency = 1,
+							Image = Assets.Images.Icons.Checkmark,
+							ImageColor3 = theme.TextColor,
+							Size = UDim2.new(0, 16, 0, 16),
+							LayoutOrder = 1,
+						}),
+						AppliedText = e("TextLabel", {
+							Text = applied,
+							Font = Enum.Font.Gotham,
+							TextSize = 15,
+							TextColor3 = theme.TextColor,
+							TextTransparency = self.props.transparency,
+							Size = UDim2.new(0, 0, 1, 0),
+							AutomaticSize = Enum.AutomaticSize.X,
+							BackgroundTransparency = 1,
+							LayoutOrder = 2,
+						}),
+						Warnings = if unapplied > 0
+							then Roact.createFragment({
+								WarningsSpacer = e("Frame", {
+									BackgroundTransparency = 1,
+									Size = UDim2.new(0, 4, 0, 4),
+									LayoutOrder = 3,
+								}),
+								UnappliedIcon = e("ImageLabel", {
+									BackgroundTransparency = 1,
+									Image = Assets.Images.Icons.Exclaimation,
+									ImageColor3 = theme.Diff.Warning,
+									Size = UDim2.new(0, 4, 0, 16),
+									LayoutOrder = 4,
+								}),
+								UnappliedText = e("TextLabel", {
+									Text = unapplied,
+									Font = Enum.Font.Gotham,
+									TextSize = 15,
+									TextColor3 = theme.Diff.Warning,
+									TextTransparency = self.props.transparency,
+									Size = UDim2.new(0, 0, 1, 0),
+									AutomaticSize = Enum.AutomaticSize.X,
+									BackgroundTransparency = 1,
+									LayoutOrder = 5,
+								}),
+							})
+							else nil,
 					}),
-					Warnings = if unapplied > 0
-						then Roact.createFragment({
-							Spacer = e("Frame", {
-								BackgroundTransparency = 1,
-								Size = UDim2.new(0, 4, 0, 4),
-								LayoutOrder = 3,
-							}),
-							UnappliedIcon = e("ImageLabel", {
-								BackgroundTransparency = 1,
-								Image = Assets.Images.Icons.Exclaimation,
-								ImageColor3 = theme.Diff.Warning,
-								Size = UDim2.new(0, 4, 0, 16),
-								LayoutOrder = 4,
-							}),
-							UnappliedText = e("TextLabel", {
-								Text = unapplied,
-								Font = Enum.Font.Gotham,
-								TextSize = 15,
-								TextColor3 = theme.Diff.Warning,
-								TextTransparency = self.props.transparency,
-								Size = UDim2.new(0, 0, 1, 0),
-								AutomaticSize = Enum.AutomaticSize.X,
-								BackgroundTransparency = 1,
-								LayoutOrder = 5,
-							}),
-						})
-						else nil,
 				}),
 
 				Divider = e("Frame", {
