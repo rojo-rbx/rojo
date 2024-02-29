@@ -9,6 +9,7 @@ local PatchSet = require(Plugin.PatchSet)
 
 local Theme = require(Plugin.App.Theme)
 local VirtualScroller = require(Plugin.App.Components.VirtualScroller)
+local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
 
 local e = Roact.createElement
 
@@ -113,11 +114,11 @@ function PatchVisualizer:render()
 	end
 
 	return Theme.with(function(theme)
-		return e("Frame", {
-			BackgroundTransparency = 1,
-			Size = self.props.size,
-			Position = self.props.position,
-			LayoutOrder = self.props.layoutOrder,
+		return e(BorderedContainer, {
+			transparency = self.props.transparency,
+			size = self.props.size,
+			position = self.props.position,
+			layoutOrder = self.props.layoutOrder,
 		}, {
 			CleanMerge = e("TextLabel", {
 				Visible = #scrollElements == 0,
