@@ -60,28 +60,20 @@ end
 function ConfirmingPage:render()
 	return Theme.with(function(theme)
 		local pageContent = Roact.createFragment({
-			Heading = e("Frame", {
-				Size = UDim2.new(1, 0, 0, 54),
+			Title = e("TextLabel", {
+				Text = string.format(
+					"Sync changes for project '%s':",
+					self.props.confirmData.serverInfo.projectName or "UNKNOWN"
+				),
+				Font = Enum.Font.Gotham,
+				LineHeight = 1.2,
+				TextSize = 14,
+				TextColor3 = theme.TextColor,
+				TextXAlignment = Enum.TextXAlignment.Left,
+				TextTransparency = self.props.transparency,
+				Size = UDim2.new(1, 0, 0, 20),
 				BackgroundTransparency = 1,
 			}, {
-				Header = e(Header, {
-					transparency = self.props.transparency,
-				}),
-				Title = e("TextLabel", {
-					Text = string.format(
-						"Sync changes for project '%s':",
-						self.props.confirmData.serverInfo.projectName or "UNKNOWN"
-					),
-					Font = Enum.Font.Gotham,
-					LineHeight = 1.2,
-					TextSize = 14,
-					TextColor3 = theme.TextColor,
-					TextXAlignment = Enum.TextXAlignment.Left,
-					TextTransparency = self.props.transparency,
-					Position = UDim2.new(0, 0, 0, 34),
-					Size = UDim2.new(1, 0, 0, 20),
-					BackgroundTransparency = 1,
-				}),
 				Padding = e("UIPadding", {
 					PaddingLeft = UDim.new(0, 20),
 					PaddingRight = UDim.new(0, 20),
@@ -89,7 +81,7 @@ function ConfirmingPage:render()
 			}),
 
 			PatchVisualizer = e(PatchVisualizer, {
-				size = UDim2.new(1, 0, 1, -150),
+				size = UDim2.new(1, -10, 1, -100),
 				transparency = self.props.transparency,
 				layoutOrder = 3,
 
