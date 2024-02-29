@@ -16,67 +16,7 @@ local e = Roact.createElement
 
 local ChangeList = require(script.Parent.ChangeList)
 local Tooltip = require(script.Parent.Parent.Tooltip)
-
-local function getRecoloredClassIcon(className, color)
-	local iconProps = StudioService:GetClassIcon(className)
-
-	if iconProps then
-		local success, editableImageSize, editableImagePixels = pcall(function()
-			local editableImage = game:GetService("AssetService"):CreateEditableImageAsync(iconProps.Image)
-			local pixels = editableImage:ReadPixels(Vector2.zero, editableImage.Size)
-			local hue, sat = color:ToHSV()
-			for i = 1, #pixels, 4 do
-				if pixels[i + 3] == 0 then
-					continue
-				end
-				local pixelColor = Color3.new(pixels[i], pixels[i + 1], pixels[i + 2])
-				local _, _, val = pixelColor:ToHSV()
-				local newPixelColor = Color3.fromHSV(hue, sat, val)
-				pixels[i], pixels[i + 1], pixels[i + 2] = newPixelColor.R, newPixelColor.G, newPixelColor.B
-			end
-			return editableImage.Size, pixels
-		end)
-		if success then
-			iconProps.EditableImagePixels = editableImagePixels
-			iconProps.EditableImageSize = editableImageSize
-		end
-	end
-
-	return iconProps
-end
-
-local EditableImage = Roact.Component:extend("EditableImage")
-
-function EditableImage:init()
-	self.ref = Roact.createRef()
-end
-
-function EditableImage:writePixels()
-	local image = self.ref.current
-	if not image then
-		return
-	end
-	if not self.props.pixels then
-		return
-	end
-
-	image:WritePixels(Vector2.zero, self.props.size, self.props.pixels)
-end
-
-function EditableImage:render()
-	return e("EditableImage", {
-		Size = self.props.size,
-		[Roact.Ref] = self.ref,
-	})
-end
-
-function EditableImage:didMount()
-	self:writePixels()
-end
-
-function EditableImage:didUpdate()
-	self:writePixels()
-end
+local ClassIcon = require(script.Parent.Parent.ClassIcon)
 
 local Expansion = Roact.Component:extend("Expansion")
 
@@ -151,34 +91,27 @@ end
 
 function DomLabel:render()
 	local props = self.props
-	local depth = props.depth or 0
+	local depth = props.depth or 1
 
 	return Theme.with(function(theme)
 		local color = if props.isWarning
 			then theme.Diff.Warning
 			elseif props.patchType then theme.Diff[props.patchType]
 			else theme.TextColor
-		local iconProps = getRecoloredClassIcon(props.className, color)
 
-		local indent = (props.depth or 0) * 12 + 15
+		local indent = (depth - 1) * 12 + 15
 
 		-- Line guides help indent depth remain readable
 		local lineGuides = {}
-		for i = 1, depth do
-			if depth == 1 then
-				-- The root line starts halfway down since there's no parent to connect to
-				lineGuides["Line_" .. i] = e("Frame", {
-					Size = UDim2.new(0, 2, 1, -12),
-					Position = UDim2.new(0, (12 * i) + 6, 0, 12),
-					BorderSizePixel = 0,
-					BackgroundTransparency = props.transparency,
-					BackgroundColor3 = theme.BorderedContainer.BorderColor,
-				})
-			elseif props.isFinalChild and not props.hasChildren and i >= depth - 1 then
+		for i = 2, depth do
+			if props.depthsComplete[i] then
+				continue
+			end
+			if props.isFinalChild and i == depth then
 				-- This line stops halfway down to merge with our connector for the right angle
 				lineGuides["Line_" .. i] = e("Frame", {
 					Size = UDim2.new(0, 2, 1, -9),
-					Position = UDim2.new(0, (12 * i) + 6, 0, -1),
+					Position = UDim2.new(0, (12 * (i - 1)) + 6, 0, -1),
 					BorderSizePixel = 0,
 					BackgroundTransparency = props.transparency,
 					BackgroundColor3 = theme.BorderedContainer.BorderColor,
@@ -188,7 +121,7 @@ function DomLabel:render()
 				-- with the exception of the final element, which stops halfway down
 				lineGuides["Line_" .. i] = e("Frame", {
 					Size = UDim2.new(0, 2, 1, if props.isFinalElement then -9 else 2),
-					Position = UDim2.new(0, (12 * i) + 6, 0, -1),
+					Position = UDim2.new(0, (12 * (i - 1)) + 6, 0, -1),
 					BorderSizePixel = 0,
 					BackgroundTransparency = props.transparency,
 					BackgroundColor3 = theme.BorderedContainer.BorderColor,
@@ -196,18 +129,20 @@ function DomLabel:render()
 			end
 		end
 
-		lineGuides["Connector"] = e("Frame", {
-			Size = UDim2.new(0, 8, 0, 2),
-			Position = UDim2.new(0, 2 + (12 * (props.depth + 1)), 0, 12),
-			AnchorPoint = Vector2.xAxis,
-			BorderSizePixel = 0,
-			BackgroundTransparency = props.transparency,
-			BackgroundColor3 = theme.BorderedContainer.BorderColor,
-		})
+		if depth ~= 1 then
+			lineGuides["Connector"] = e("Frame", {
+				Size = UDim2.new(0, 8, 0, 2),
+				Position = UDim2.new(0, 2 + (12 * props.depth), 0, 12),
+				AnchorPoint = Vector2.xAxis,
+				BorderSizePixel = 0,
+				BackgroundTransparency = props.transparency,
+				BackgroundColor3 = theme.BorderedContainer.BorderColor,
+			})
+		end
 
 		return e("Frame", {
 			ClipsDescendants = true,
-			BackgroundTransparency = if props.elementIndex % 2 == 0 then 0.98 else 1,
+			BackgroundTransparency = if props.elementIndex % 2 == 0 then 0.985 else 1,
 			BackgroundColor3 = theme.Diff.Row,
 			Size = self.binding:map(function(expand)
 				return UDim2.new(1, 0, 0, expand)
@@ -279,25 +214,14 @@ function DomLabel:render()
 					AnchorPoint = Vector2.new(0, 0.5),
 				})
 				else nil,
-			ClassIcon = e(
-				"ImageLabel",
-				{
-					Image = iconProps.Image,
-					ImageTransparency = props.transparency,
-					ImageRectOffset = iconProps.ImageRectOffset,
-					ImageRectSize = iconProps.ImageRectSize,
-					BackgroundTransparency = 1,
-					Size = UDim2.new(0, 16, 0, 16),
-					Position = UDim2.new(0, indent + 2, 0, 12),
-					AnchorPoint = Vector2.new(0, 0.5),
-				},
-				if iconProps.EditableImagePixels
-					then e(EditableImage, {
-						size = iconProps.EditableImageSize,
-						pixels = iconProps.EditableImagePixels, --
-					})
-					else nil
-			),
+			ClassIcon = e(ClassIcon, {
+				className = props.className,
+				color = color,
+				transparency = props.transparency,
+				size = UDim2.new(0, 16, 0, 16),
+				position = UDim2.new(0, indent + 2, 0, 12),
+				anchorPoint = Vector2.new(0, 0.5),
+			}),
 			InstanceName = e("TextLabel", {
 				Text = (if props.isWarning then "⚠ " else "") .. props.name,
 				RichText = true,

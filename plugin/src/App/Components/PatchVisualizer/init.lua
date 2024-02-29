@@ -8,7 +8,6 @@ local PatchTree = require(Plugin.PatchTree)
 local PatchSet = require(Plugin.PatchSet)
 
 local Theme = require(Plugin.App.Theme)
-local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
 local VirtualScroller = require(Plugin.App.Components.VirtualScroller)
 
 local e = Roact.createElement
@@ -59,6 +58,7 @@ function PatchVisualizer:render()
 
 	if patchTree then
 		local elementTotal = patchTree:getCount()
+		local depthsComplete = {}
 		local function drawNode(node, depth)
 			elementIndex += 1
 
@@ -76,11 +76,18 @@ function PatchVisualizer:render()
 			local elementHeight, setElementHeight = Roact.createBinding(24)
 			elementHeights[elementIndex] = elementHeight
 			scrollElements[elementIndex] = e(DomLabel, {
+				transparency = self.props.transparency,
+				showStringDiff = self.props.showStringDiff,
+				showTableDiff = self.props.showTableDiff,
 				updateEvent = self.updateEvent,
 				elementHeight = elementHeight,
 				setElementHeight = setElementHeight,
 				elementIndex = elementIndex,
 				isFinalElement = elementIndex == elementTotal,
+				depth = depth,
+				depthsComplete = table.clone(depthsComplete),
+				hasChildren = (node.children ~= nil and next(node.children) ~= nil),
+				isFinalChild = isFinalChild,
 				patchType = node.patchType,
 				className = node.className,
 				isWarning = node.isWarning,
@@ -88,16 +95,19 @@ function PatchVisualizer:render()
 				name = node.name,
 				hint = node.hint,
 				changeList = node.changeList,
-				depth = depth,
-				hasChildren = (node.children ~= nil and next(node.children) ~= nil),
-				isFinalChild = isFinalChild,
-				transparency = self.props.transparency,
-				showStringDiff = self.props.showStringDiff,
-				showTableDiff = self.props.showTableDiff,
 			})
+
+			if isFinalChild then
+				depthsComplete[depth] = true
+			end
 		end
 
 		patchTree:forEach(function(node, depth)
+			depthsComplete[depth] = false
+			for i = depth + 1, #depthsComplete do
+				depthsComplete[i] = nil
+			end
+
 			drawNode(node, depth)
 		end)
 	end
