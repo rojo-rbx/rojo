@@ -492,8 +492,8 @@ function ConnectedPage:render()
 
 				initDockState = Enum.InitialDockState.Float,
 				overridePreviousState = true,
-				floatingSize = Vector2.new(320, 210),
-				minimumSize = Vector2.new(300, 210),
+				floatingSize = Vector2.new(400, 500),
+				minimumSize = Vector2.new(300, 300),
 
 				zIndexBehavior = Enum.ZIndexBehavior.Sibling,
 
