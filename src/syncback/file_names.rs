@@ -14,15 +14,20 @@ pub fn name_for_inst<'old>(
     old_inst: Option<InstanceWithMeta<'old>>,
 ) -> anyhow::Result<Cow<'old, str>> {
     if let Some(old_inst) = old_inst {
-        if let Some(source) = &old_inst.metadata().instigating_source {
+        if let Some(source) = old_inst.metadata().relevant_paths.first() {
             source
-                .path()
                 .file_name()
                 .and_then(|s| s.to_str())
                 .map(Cow::Borrowed)
                 .context("sources on the file system should be valid unicode and not be stubs")
         } else {
-            anyhow::bail!("members of 'old' trees should have an instigating source!");
+            // This is technically not /always/ true, but we want to avoid
+            // running syncback on anything that has no instigating source
+            // anyway.
+            anyhow::bail!(
+                "members of 'old' trees should have an instigating source. Somehow, {} did not.",
+                old_inst.name(),
+            );
         }
     } else {
         Ok(match middleware {

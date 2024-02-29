@@ -163,6 +163,13 @@ pub fn syncback_dir_no_meta<'sync>(
         for new_child_ref in new_inst.children() {
             let new_child = snapshot.get_new_instance(*new_child_ref).unwrap();
             if let Some(old_child) = old_child_map.remove(new_child.name.as_str()) {
+                if old_child.metadata().relevant_paths.is_empty() {
+                    log::debug!(
+                        "Skipping instance {} because it doesn't exist on the disk",
+                        old_child.name()
+                    );
+                    continue;
+                }
                 // This child exists in both doms. Pass it on.
                 children.push(snapshot.with_parent(
                     new_child.name.clone(),
