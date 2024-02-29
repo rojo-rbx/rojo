@@ -32,6 +32,8 @@ local StudioProvider = Roact.Component:extend("StudioProvider")
 function StudioProvider:updateTheme()
 	local studioTheme = getStudio().Theme
 
+	local isDark = studioTheme.Name == "Dark"
+
 	local theme = strict(studioTheme.Name .. "Theme", {
 		BackgroundColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.MainBackground),
 		TextColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.MainText),
@@ -139,9 +141,10 @@ function StudioProvider:updateTheme()
 			BackgroundColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.InputFieldBackground),
 		},
 		Diff = {
-			Add = studioTheme:GetColor(Enum.StudioStyleGuideColor.DiffTextAdditionBackground),
-			Remove = studioTheme:GetColor(Enum.StudioStyleGuideColor.DiffTextDeletionBackground),
-			Edit = studioTheme:GetColor(Enum.StudioStyleGuideColor.DiffLineNumSeparatorBackground),
+			-- Studio doesn't have good colors since their diffs use backgrounds, not text
+			Add = if isDark then Color3.fromRGB(143, 227, 154) else Color3.fromRGB(44, 87, 33),
+			Remove = if isDark then Color3.fromRGB(242, 125, 125) else Color3.fromRGB(87, 33, 33),
+			Edit = if isDark then Color3.fromRGB(120, 154, 248) else Color3.fromRGB(33, 52, 87),
 			Row = studioTheme:GetColor(Enum.StudioStyleGuideColor.BrightText),
 			Warning = studioTheme:GetColor(Enum.StudioStyleGuideColor.WarningText),
 		},

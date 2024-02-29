@@ -55,31 +55,44 @@ function PatchVisualizer:render()
 	end
 
 	-- Recusively draw tree
-	local scrollElements, elementHeights = {}, {}
+	local scrollElements, elementHeights, elementIndex = {}, {}, 0
 
 	if patchTree then
 		local function drawNode(node, depth)
-			local elementHeight, setElementHeight = Roact.createBinding(30)
-			table.insert(elementHeights, elementHeight)
-			table.insert(
-				scrollElements,
-				e(DomLabel, {
-					updateEvent = self.updateEvent,
-					elementHeight = elementHeight,
-					setElementHeight = setElementHeight,
-					patchType = node.patchType,
-					className = node.className,
-					isWarning = node.isWarning,
-					instance = node.instance,
-					name = node.name,
-					hint = node.hint,
-					changeList = node.changeList,
-					depth = depth,
-					transparency = self.props.transparency,
-					showStringDiff = self.props.showStringDiff,
-					showTableDiff = self.props.showTableDiff,
-				})
-			)
+			elementIndex += 1
+
+			local parentNode = patchTree:getNode(node.parentId)
+			local isFinalChild = true
+			if parentNode then
+				for _id, sibling in parentNode.children do
+					if type(sibling) == "table" and sibling.name and sibling.name > node.name then
+						isFinalChild = false
+						break
+					end
+				end
+			end
+
+			local elementHeight, setElementHeight = Roact.createBinding(24)
+			elementHeights[elementIndex] = elementHeight
+			scrollElements[elementIndex] = e(DomLabel, {
+				updateEvent = self.updateEvent,
+				elementHeight = elementHeight,
+				setElementHeight = setElementHeight,
+				elementIndex = elementIndex,
+				patchType = node.patchType,
+				className = node.className,
+				isWarning = node.isWarning,
+				instance = node.instance,
+				name = node.name,
+				hint = node.hint,
+				changeList = node.changeList,
+				depth = depth,
+				hasChildren = (node.children ~= nil and next(node.children) ~= nil),
+				isFinalChild = isFinalChild,
+				transparency = self.props.transparency,
+				showStringDiff = self.props.showStringDiff,
+				showTableDiff = self.props.showTableDiff,
+			})
 		end
 
 		patchTree:forEach(function(node, depth)
@@ -88,11 +101,11 @@ function PatchVisualizer:render()
 	end
 
 	return Theme.with(function(theme)
-		return e(BorderedContainer, {
-			transparency = self.props.transparency,
-			size = self.props.size,
-			position = self.props.position,
-			layoutOrder = self.props.layoutOrder,
+		return e("Frame", {
+			BackgroundTransparency = 1,
+			Size = self.props.size,
+			Position = self.props.position,
+			LayoutOrder = self.props.layoutOrder,
 		}, {
 			CleanMerge = e("TextLabel", {
 				Visible = #scrollElements == 0,
