@@ -1,5 +1,4 @@
 local SelectionService = game:GetService("Selection")
-local StudioService = game:GetService("StudioService")
 
 local Rojo = script:FindFirstAncestor("Rojo")
 local Plugin = Rojo.Plugin
