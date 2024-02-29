@@ -364,8 +364,8 @@ pub fn syncback_project<'sync>(
         let properties = &mut node.properties;
         if node.path.is_none() {
             // This node is entirely defined in the project, so we put all
-            // properties in the node.
-            properties.clear();
+            // properties in the node. We explicitly DO NOT clear old properties
+            // since it's likely people want them there.
             for (name, value) in filtered_properties {
                 properties.insert(
                     name.to_owned(),
