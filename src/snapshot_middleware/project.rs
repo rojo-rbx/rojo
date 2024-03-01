@@ -373,19 +373,22 @@ pub fn syncback_project<'sync>(
                 );
             }
         } else {
+            // TODO handle this in a way that doesn't suck.
+            // Due to an issue with middlewares not knowing they originate
+            // from a project with a path, we do not write metadata. This means
+            // that properties won't be written unless we update them in the
+            // path. So, while the below comment is left, it is not accurate
+            // at this time because we simply write all properties.
+
             // This node has both a path so we only update properties. Adding
             // new things is potentially destructive.
             for (name, value) in filtered_properties {
-                if properties.contains_key(name) {
-                    properties.insert(
-                        name.to_owned(),
-                        UnresolvedValue::from_variant(
-                            value.to_owned(),
-                            old_inst.class_name(),
-                            name,
-                        ),
-                    );
-                }
+                // if properties.contains_key(name) { // See TODO above
+                properties.insert(
+                    name.to_owned(),
+                    UnresolvedValue::from_variant(value.to_owned(), old_inst.class_name(), name),
+                );
+                // }
             }
 
             // And since it has a path, we have to run syncback on that path.
