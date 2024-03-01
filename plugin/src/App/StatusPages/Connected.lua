@@ -56,7 +56,7 @@ function ChangesViewer:render()
 	end
 
 	local unapplied = PatchSet.countChanges(self.props.patchData.unapplied)
-	local applied = PatchSet.countChanges(self.props.patchData.patch)
+	local applied = PatchSet.countChanges(self.props.patchData.patch) - unapplied
 
 	return Theme.with(function(theme)
 		return Roact.createFragment({
@@ -170,7 +170,7 @@ function ChangesViewer:render()
 								}),
 								UnappliedIcon = e("ImageLabel", {
 									BackgroundTransparency = 1,
-									Image = Assets.Images.Icons.Exclaimation,
+									Image = Assets.Images.Icons.Exclamation,
 									ImageColor3 = theme.Diff.Warning,
 									Size = UDim2.new(0, 4, 0, 16),
 									LayoutOrder = 4,
