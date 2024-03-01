@@ -228,42 +228,14 @@ function PatchTree.build(patch, instanceMap, changeListHeaders)
 		tree:buildAncestryNodes(previousId, ancestryIds, patch, instanceMap)
 
 		-- Gather detail text
-		local changeList, hint = nil, nil
+		local changeList, changeInfo = nil, nil
 		if next(change.changedProperties) or change.changedName then
 			changeList = {}
 
-			local hintBuffer, hintBufferSize, hintOverflow = table.create(3), 0, 0
 			local changeIndex = 0
 			local function addProp(prop: string, current: any?, incoming: any?, metadata: any?)
 				changeIndex += 1
 				changeList[changeIndex] = { prop, current, incoming, metadata }
-
-				if hintBufferSize < 3 then
-					hintBufferSize += 1
-					hintBuffer[hintBufferSize] = prop
-					return
-				end
-
-				-- We only want to have 3 hints
-				-- to keep it deterministic, we sort them alphabetically
-
-				-- Either this prop overflows, or it makes another one move to overflow
-				hintOverflow += 1
-
-				-- Shortcut for the common case
-				if hintBuffer[3] <= prop then
-					-- This prop is below the last hint, no need to insert
-					return
-				end
-
-				-- Find the first available spot
-				for i, hintItem in hintBuffer do
-					if prop < hintItem then
-						-- This prop is before the currently selected hint,
-						-- so take its place and then continue to find a spot for the old hint
-						hintBuffer[i], prop = prop, hintBuffer[i]
-					end
-				end
 			end
 
 			-- Gather the changes
@@ -283,8 +255,9 @@ function PatchTree.build(patch, instanceMap, changeListHeaders)
 				)
 			end
 
-			-- Finalize detail values
-			hint = table.concat(hintBuffer, ", ") .. (if hintOverflow == 0 then "" else ", " .. hintOverflow .. " more")
+			changeInfo = {
+				edits = changeIndex,
+			}
 
 			-- Sort changes and add header
 			table.sort(changeList, function(a, b)
@@ -300,7 +273,7 @@ function PatchTree.build(patch, instanceMap, changeListHeaders)
 			className = instance.ClassName,
 			name = instance.Name,
 			instance = instance,
-			hint = hint,
+			changeInfo = changeInfo,
 			changeList = changeList,
 		})
 	end
@@ -385,42 +358,14 @@ function PatchTree.build(patch, instanceMap, changeListHeaders)
 		tree:buildAncestryNodes(previousId, ancestryIds, patch, instanceMap)
 
 		-- Gather detail text
-		local changeList, hint = nil, nil
+		local changeList, changeInfo = nil, nil
 		if next(change.Properties) then
 			changeList = {}
 
-			local hintBuffer, hintBufferSize, hintOverflow = table.create(3), 0, 0
 			local changeIndex = 0
 			local function addProp(prop: string, incoming: any)
 				changeIndex += 1
 				changeList[changeIndex] = { prop, "N/A", incoming }
-
-				if hintBufferSize < 3 then
-					hintBufferSize += 1
-					hintBuffer[hintBufferSize] = prop
-					return
-				end
-
-				-- We only want to have 3 hints
-				-- to keep it deterministic, we sort them alphabetically
-
-				-- Either this prop overflows, or it makes another one move to overflow
-				hintOverflow += 1
-
-				-- Shortcut for the common case
-				if hintBuffer[3] <= prop then
-					-- This prop is below the last hint, no need to insert
-					return
-				end
-
-				-- Find the first available spot
-				for i, hintItem in hintBuffer do
-					if prop < hintItem then
-						-- This prop is before the currently selected hint,
-						-- so take its place and then continue to find a spot for the old hint
-						hintBuffer[i], prop = prop, hintBuffer[i]
-					end
-				end
 			end
 
 			for prop, incoming in change.Properties do
@@ -428,8 +373,9 @@ function PatchTree.build(patch, instanceMap, changeListHeaders)
 				addProp(prop, if success then incomingValue else select(2, next(incoming)))
 			end
 
-			-- Finalize detail values
-			hint = table.concat(hintBuffer, ", ") .. (if hintOverflow == 0 then "" else ", " .. hintOverflow .. " more")
+			changeInfo = {
+				edits = changeIndex,
+			}
 
 			-- Sort changes and add header
 			table.sort(changeList, function(a, b)
@@ -444,7 +390,7 @@ function PatchTree.build(patch, instanceMap, changeListHeaders)
 			patchType = "Add",
 			className = change.ClassName,
 			name = change.Name,
-			hint = hint,
+			changeInfo = changeInfo,
 			changeList = changeList,
 			instance = instanceMap.fromIds[id],
 		})
@@ -482,6 +428,8 @@ function PatchTree.updateMetadata(tree, patch, instanceMap, unappliedPatch)
 		if not node.changeList then
 			continue
 		end
+
+		local warnings = 0
 		for _, change in node.changeList do
 			local property = change[1]
 			local propertyFailedToApply = if property == "Name"
@@ -492,6 +440,8 @@ function PatchTree.updateMetadata(tree, patch, instanceMap, unappliedPatch)
 				-- This change didn't fail, no need to mark
 				continue
 			end
+
+			warnings += 1
 			if change[4] == nil then
 				change[4] = { isWarning = true }
 			else
@@ -499,6 +449,11 @@ function PatchTree.updateMetadata(tree, patch, instanceMap, unappliedPatch)
 			end
 			Log.trace("  Marked property as warning: {}.{}", node.name, property)
 		end
+
+		node.changeInfo = {
+			applied = (node.changeInfo.edits or (#node.changeList - 1)) - warnings,
+			failed = if warnings > 0 then warnings else nil,
+		}
 	end
 	for failedAdditionId in unappliedPatch.added do
 		local node = tree:getNode(failedAdditionId)
@@ -512,6 +467,7 @@ function PatchTree.updateMetadata(tree, patch, instanceMap, unappliedPatch)
 		if not node.changeList then
 			continue
 		end
+
 		for _, change in node.changeList do
 			-- Failed addition means that all properties failed to be added
 			if change[4] == nil then
@@ -521,6 +477,10 @@ function PatchTree.updateMetadata(tree, patch, instanceMap, unappliedPatch)
 			end
 			Log.trace("  Marked property as warning: {}.{}", node.name, change[1])
 		end
+
+		node.changeInfo = {
+			failed = node.changeInfo.edits or (#node.changeList - 1),
+		}
 	end
 	for _, failedRemovalIdOrInstance in unappliedPatch.removed do
 		local failedRemovalId = if Types.RbxId(failedRemovalIdOrInstance)
@@ -543,6 +503,12 @@ function PatchTree.updateMetadata(tree, patch, instanceMap, unappliedPatch)
 	-- Update if instances exist
 	Timer.start("instanceAncestry")
 	tree:forEach(function(node)
+		if node.changeInfo and node.changeInfo.edits then
+			node.changeInfo = {
+				applied = node.changeInfo.edits,
+			}
+		end
+
 		if node.instance then
 			if node.instance.Parent == nil and node.instance ~= game then
 				-- This instance has been removed

@@ -234,6 +234,59 @@ function DomLabel:render()
 				Size = UDim2.new(1, -indent - 50, 0, 24),
 				Position = UDim2.new(0, indent + 22, 0, 0),
 			}),
+			ChangeInfo = e("Frame", {
+				BackgroundTransparency = 1,
+				Size = UDim2.new(1, -indent - 80, 0, 24),
+				Position = UDim2.new(1, -2, 0, 0),
+				AnchorPoint = Vector2.new(1, 0),
+			}, {
+				Layout = e("UIListLayout", {
+					FillDirection = Enum.FillDirection.Horizontal,
+					HorizontalAlignment = Enum.HorizontalAlignment.Right,
+					VerticalAlignment = Enum.VerticalAlignment.Center,
+					SortOrder = Enum.SortOrder.LayoutOrder,
+					Padding = UDim.new(0, 4),
+				}),
+				Edits = if props.changeInfo and props.changeInfo.edits
+					then e("TextLabel", {
+						Text = props.changeInfo.edits .. " change" .. if props.changeInfo.edits > 1 then "s" else "",
+						BackgroundTransparency = 1,
+						Font = Enum.Font.Gotham,
+						TextSize = 14,
+						TextColor3 = theme.SubTextColor,
+						TextTransparency = props.transparency,
+						Size = UDim2.new(0, 0, 0, 16),
+						AutomaticSize = Enum.AutomaticSize.X,
+						LayoutOrder = 2,
+					})
+					else nil,
+				Applied = if props.changeInfo and props.changeInfo.applied
+					then e("TextLabel", {
+						Text = props.changeInfo.applied .. " applied" .. if props.changeInfo.failed then "," else "",
+						BackgroundTransparency = 1,
+						Font = Enum.Font.Gotham,
+						TextSize = 14,
+						TextColor3 = theme.SubTextColor,
+						TextTransparency = props.transparency,
+						Size = UDim2.new(0, 0, 0, 16),
+						AutomaticSize = Enum.AutomaticSize.X,
+						LayoutOrder = 4,
+					})
+					else nil,
+				Failed = if props.changeInfo and props.changeInfo.failed
+					then e("TextLabel", {
+						Text = props.changeInfo.failed .. " failed",
+						BackgroundTransparency = 1,
+						Font = Enum.Font.Gotham,
+						TextSize = 14,
+						TextColor3 = theme.Diff.Warning,
+						TextTransparency = props.transparency,
+						Size = UDim2.new(0, 0, 0, 16),
+						AutomaticSize = Enum.AutomaticSize.X,
+						LayoutOrder = 6,
+					})
+					else nil,
+			}),
 			LineGuides = e("Folder", nil, lineGuides),
 		})
 	end)

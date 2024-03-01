@@ -94,7 +94,7 @@ function PatchVisualizer:render()
 				isWarning = node.isWarning,
 				instance = node.instance,
 				name = node.name,
-				hint = node.hint,
+				changeInfo = node.changeInfo,
 				changeList = node.changeList,
 			})
 
