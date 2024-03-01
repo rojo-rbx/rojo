@@ -109,19 +109,21 @@ pub fn syncback_csv<'sync>(
     } else {
         anyhow::bail!("LocalizationTables must have a `Contents` property that is a String")
     };
-
-    let mut meta = AdjacentMetadata::from_syncback_snapshot(snapshot, path.clone())?;
-    meta.properties.remove("Contents");
-
     let mut fs_snapshot = FsSnapshot::new();
-    fs_snapshot.add_file(path, localization_to_csv(contents)?);
-    if !meta.is_empty() {
-        fs_snapshot.add_file(
-            snapshot
-                .parent_path
-                .join(format!("{}.meta.json", new_inst.name)),
-            serde_json::to_vec_pretty(&meta).context("cannot serialize metadata")?,
-        )
+    fs_snapshot.add_file(&path, localization_to_csv(contents)?);
+
+    let meta = AdjacentMetadata::from_syncback_snapshot(snapshot, path.clone())?;
+    if let Some(mut meta) = meta {
+        meta.properties.remove("Contents");
+
+        if !meta.is_empty() {
+            fs_snapshot.add_file(
+                snapshot
+                    .parent_path
+                    .join(format!("{}.meta.json", new_inst.name)),
+                serde_json::to_vec_pretty(&meta).context("cannot serialize metadata")?,
+            )
+        }
     }
 
     Ok(SyncbackReturn {
@@ -147,23 +149,25 @@ pub fn syncback_csv_init<'sync>(
     };
 
     let mut dir_syncback = syncback_dir_no_meta(snapshot, dir_name)?;
-    let mut meta = DirectoryMetadata::from_syncback_snapshot(snapshot, path.clone())?;
-    meta.properties.remove("Contents");
+    dir_syncback
+        .fs_snapshot
+        .add_file(&path, localization_to_csv(contents)?);
 
-    let mut fs_snapshot = std::mem::take(&mut dir_syncback.fs_snapshot);
-    fs_snapshot.add_file(&path, localization_to_csv(contents)?);
-    if !meta.is_empty() {
-        fs_snapshot.add_file(
-            snapshot.parent_path.join(dir_name).join("init.meta.json"),
-            serde_json::to_vec_pretty(&meta).context("could not serialize new init.meta.json")?,
-        );
+    let meta = DirectoryMetadata::from_syncback_snapshot(snapshot, path.clone())?;
+    if let Some(mut meta) = meta {
+        meta.properties.remove("Contents");
+        if !meta.is_empty() {
+            dir_syncback.fs_snapshot.add_file(
+                snapshot.parent_path.join(dir_name).join("init.meta.json"),
+                serde_json::to_vec_pretty(&meta)
+                    .context("could not serialize new init.meta.json")?,
+            );
+        }
     }
 
     Ok(SyncbackReturn {
         inst_snapshot: InstanceSnapshot::from_instance(new_inst),
-        fs_snapshot,
-        children: dir_syncback.children,
-        removed_children: dir_syncback.removed_children,
+        ..dir_syncback
     })
 }
 

@@ -105,17 +105,25 @@ pub fn syncback_dir<'sync>(
     let mut dir_syncback = syncback_dir_no_meta(snapshot, dir_name)?;
 
     let mut meta = DirectoryMetadata::from_syncback_snapshot(snapshot, path.clone())?;
-    if new_inst.class != "Folder" {
-        meta.class_name = Some(new_inst.class.clone());
+    if let Some(meta) = &mut meta {
+        if new_inst.class != "Folder" {
+            meta.class_name = Some(new_inst.class.clone());
+        }
+
+        if !meta.is_empty() {
+            dir_syncback.fs_snapshot.add_file(
+                path.join("init.meta.json"),
+                serde_json::to_vec_pretty(&meta)
+                    .context("could not serialize new init.meta.json")?,
+            );
+        }
     }
 
-    if !meta.is_empty() {
-        dir_syncback.fs_snapshot.add_file(
-            path.join("init.meta.json"),
-            serde_json::to_vec_pretty(&meta).context("could not serialize new init.meta.json")?,
-        );
-    }
-    if new_inst.children().is_empty() && meta.is_empty() {
+    let metadata_empty = meta
+        .as_ref()
+        .map(DirectoryMetadata::is_empty)
+        .unwrap_or_default();
+    if new_inst.children().is_empty() && metadata_empty {
         dir_syncback
             .fs_snapshot
             .add_file(path.join(EMPTY_DIR_KEEP_NAME), Vec::new())

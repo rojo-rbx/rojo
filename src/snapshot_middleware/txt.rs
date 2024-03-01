@@ -60,19 +60,21 @@ pub fn syncback_txt<'sync>(
     } else {
         anyhow::bail!("StringValues must have a `Value` property that is a String");
     };
-
-    let mut meta = AdjacentMetadata::from_syncback_snapshot(snapshot, path.clone())?;
-    meta.properties.remove("Value");
-
     let mut fs_snapshot = FsSnapshot::new();
-    fs_snapshot.add_file(path, contents);
-    if !meta.is_empty() {
-        fs_snapshot.add_file(
-            snapshot
-                .parent_path
-                .join(format!("{}.meta.json", new_inst.name)),
-            serde_json::to_vec_pretty(&meta).context("could not serialize metadata")?,
-        );
+    fs_snapshot.add_file(&path, contents);
+
+    let meta = AdjacentMetadata::from_syncback_snapshot(snapshot, path.clone())?;
+    if let Some(mut meta) = meta {
+        meta.properties.remove("Value");
+
+        if !meta.is_empty() {
+            fs_snapshot.add_file(
+                snapshot
+                    .parent_path
+                    .join(format!("{}.meta.json", new_inst.name)),
+                serde_json::to_vec_pretty(&meta).context("could not serialize metadata")?,
+            );
+        }
     }
 
     Ok(SyncbackReturn {

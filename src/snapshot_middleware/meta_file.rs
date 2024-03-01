@@ -54,9 +54,26 @@ impl AdjacentMetadata {
     pub fn from_syncback_snapshot(
         snapshot: &SyncbackSnapshot,
         path: PathBuf,
-    ) -> anyhow::Result<Self> {
+    ) -> anyhow::Result<Option<Self>> {
         let mut properties = BTreeMap::new();
         let mut attributes = BTreeMap::new();
+        // TODO make this more granular.
+        // I am breaking the cycle of bad TODOs. This is in reference to the fact
+        // that right now, this will just not write any metadata at all for
+        // project nodes, which is not always desirable. We should try to be
+        // smarter about it.
+        if let Some(old_inst) = snapshot.old_inst() {
+            if let Some(source) = &old_inst.metadata().instigating_source {
+                let source = source.path();
+                if source != path {
+                    log::debug!(
+                        "Instance origin is mismatched so its metadata is being skipped. Path: {}",
+                        path.display()
+                    );
+                    return Ok(None);
+                }
+            }
+        }
 
         let ignore_unknown_instances = snapshot
             .old_inst()
@@ -85,7 +102,7 @@ impl AdjacentMetadata {
             }
         }
 
-        Ok(Self {
+        Ok(Some(Self {
             ignore_unknown_instances: if ignore_unknown_instances {
                 Some(true)
             } else {
@@ -95,7 +112,7 @@ impl AdjacentMetadata {
             attributes,
             path,
             id: None,
-        })
+        }))
     }
 
     pub fn apply_ignore_unknown_instances(&mut self, snapshot: &mut InstanceSnapshot) {
@@ -215,9 +232,26 @@ impl DirectoryMetadata {
     pub fn from_syncback_snapshot(
         snapshot: &SyncbackSnapshot,
         path: PathBuf,
-    ) -> anyhow::Result<Self> {
+    ) -> anyhow::Result<Option<Self>> {
         let mut properties = BTreeMap::new();
         let mut attributes = BTreeMap::new();
+        // TODO make this more granular.
+        // I am breaking the cycle of bad TODOs. This is in reference to the fact
+        // that right now, this will just not write any metadata at all for
+        // project nodes, which is not always desirable. We should try to be
+        // smarter about it.
+        if let Some(old_inst) = snapshot.old_inst() {
+            if let Some(source) = &old_inst.metadata().instigating_source {
+                let source = source.path();
+                if source != path {
+                    log::debug!(
+                        "Instance origin is mismatched so its metadata is being skipped. Path: {}",
+                        path.display()
+                    );
+                    return Ok(None);
+                }
+            }
+        }
 
         let ignore_unknown_instances = snapshot
             .old_inst()
@@ -246,7 +280,7 @@ impl DirectoryMetadata {
             }
         }
 
-        Ok(Self {
+        Ok(Some(Self {
             ignore_unknown_instances: if ignore_unknown_instances {
                 Some(true)
             } else {
@@ -257,7 +291,7 @@ impl DirectoryMetadata {
             class_name: None,
             path,
             id: None,
-        })
+        }))
     }
 
     pub fn apply_all(&mut self, snapshot: &mut InstanceSnapshot) -> anyhow::Result<()> {

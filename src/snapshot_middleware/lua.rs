@@ -135,19 +135,21 @@ pub fn syncback_lua<'sync>(
     } else {
         anyhow::bail!("Scripts must have a `Source` property that is a String")
     };
-
-    let mut meta = AdjacentMetadata::from_syncback_snapshot(snapshot, path.clone())?;
-    meta.properties.remove("Source");
-
     let mut fs_snapshot = FsSnapshot::new();
-    fs_snapshot.add_file(path, contents);
-    if !meta.is_empty() {
-        fs_snapshot.add_file(
-            snapshot
-                .parent_path
-                .join(format!("{}.meta.json", new_inst.name)),
-            serde_json::to_vec_pretty(&meta).context("cannot serialize metadata")?,
-        );
+    fs_snapshot.add_file(&path, contents);
+
+    let meta = AdjacentMetadata::from_syncback_snapshot(snapshot, path.clone())?;
+    if let Some(mut meta) = meta {
+        meta.properties.remove("Source");
+
+        if !meta.is_empty() {
+            fs_snapshot.add_file(
+                snapshot
+                    .parent_path
+                    .join(format!("{}.meta.json", new_inst.name)),
+                serde_json::to_vec_pretty(&meta).context("cannot serialize metadata")?,
+            );
+        }
     }
 
     Ok(SyncbackReturn {
@@ -177,27 +179,25 @@ pub fn syncback_lua_init<'sync>(
         anyhow::bail!("Scripts must have a `Source` property that is a String")
     };
 
-    let dir_syncback = syncback_dir_no_meta(snapshot, dir_name)?;
+    let mut dir_syncback = syncback_dir_no_meta(snapshot, dir_name)?;
+    dir_syncback.fs_snapshot.add_file(&path, contents);
 
-    let mut meta = DirectoryMetadata::from_syncback_snapshot(snapshot, path.clone())?;
-    meta.properties.remove("Source");
+    let meta = DirectoryMetadata::from_syncback_snapshot(snapshot, path.clone())?;
+    if let Some(mut meta) = meta {
+        meta.properties.remove("Source");
 
-    let mut fs_snapshot = FsSnapshot::new();
-    fs_snapshot.add_file(path, contents);
-    fs_snapshot.merge(dir_syncback.fs_snapshot);
-
-    if !meta.is_empty() {
-        fs_snapshot.add_file(
-            snapshot.parent_path.join(dir_name).join("init.meta.json"),
-            serde_json::to_vec_pretty(&meta).context("could not serialize new init.meta.json")?,
-        );
+        if !meta.is_empty() {
+            dir_syncback.fs_snapshot.add_file(
+                snapshot.parent_path.join(dir_name).join("init.meta.json"),
+                serde_json::to_vec_pretty(&meta)
+                    .context("could not serialize new init.meta.json")?,
+            );
+        }
     }
 
     Ok(SyncbackReturn {
-        inst_snapshot: InstanceSnapshot::from_instance(snapshot.new_inst()),
-        fs_snapshot,
-        children: dir_syncback.children,
-        removed_children: dir_syncback.removed_children,
+        inst_snapshot: InstanceSnapshot::from_instance(new_inst),
+        ..dir_syncback
     })
 }
 
