@@ -143,7 +143,6 @@ function Setting:render()
 					then e(Tag, {
 						layoutOrder = 2,
 						transparency = self.props.transparency,
-						textColor = theme.BackgroundColor,
 						text = if self.props.experimental then "EXPERIMENTAL" else "DEBUG",
 						icon = if self.props.experimental
 							then Assets.Images.Icons.Experimental
