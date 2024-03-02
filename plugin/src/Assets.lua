@@ -25,6 +25,8 @@ local Assets = {
 			Back = "rbxassetid://6017213752",
 			Reset = "rbxassetid://10142422327",
 			Expand = "rbxassetid://12045401097",
+			Experimental = "rbxassetid://16571019891",
+			Debug = "rbxassetid://16588411361",
 		},
 		Diff = {
 			Add = "rbxassetid://10434145835",
