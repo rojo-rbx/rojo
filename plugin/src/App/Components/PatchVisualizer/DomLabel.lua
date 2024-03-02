@@ -249,7 +249,7 @@ function DomLabel:render()
 				}),
 				Edits = if props.changeInfo and props.changeInfo.edits
 					then e("TextLabel", {
-						Text = props.changeInfo.edits .. " change" .. if props.changeInfo.edits > 1 then "s" else "",
+						Text = props.changeInfo.edits,
 						BackgroundTransparency = 1,
 						Font = Enum.Font.Gotham,
 						TextSize = 14,
@@ -262,11 +262,11 @@ function DomLabel:render()
 					else nil,
 				Applied = if props.changeInfo and props.changeInfo.applied
 					then e("TextLabel", {
-						Text = props.changeInfo.applied .. " applied" .. if props.changeInfo.failed then "," else "",
+						Text = props.changeInfo.applied .. if props.changeInfo.failed then "," else "",
 						BackgroundTransparency = 1,
 						Font = Enum.Font.Gotham,
 						TextSize = 14,
-						TextColor3 = theme.SubTextColor,
+						TextColor3 = theme.TextColor,
 						TextTransparency = props.transparency,
 						Size = UDim2.new(0, 0, 0, 16),
 						AutomaticSize = Enum.AutomaticSize.X,
@@ -275,7 +275,7 @@ function DomLabel:render()
 					else nil,
 				Failed = if props.changeInfo and props.changeInfo.failed
 					then e("TextLabel", {
-						Text = props.changeInfo.failed .. " failed",
+						Text = props.changeInfo.failed,
 						BackgroundTransparency = 1,
 						Font = Enum.Font.Gotham,
 						TextSize = 14,
