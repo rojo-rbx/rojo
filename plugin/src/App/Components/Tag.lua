@@ -15,11 +15,11 @@ return function(props)
 		slice = Assets.Slices.RoundedBackground,
 		color = props.color,
 		transparency = props.transparency,
-
+		layoutOrder = props.layoutOrder,
+		position = props.position,
+		anchorPoint = props.anchorPoint,
 		size = UDim2.new(0, 0, 0, 16),
 		automaticSize = Enum.AutomaticSize.X,
-
-		layoutOrder = props.layoutOrder,
 	}, {
 		Padding = e("UIPadding", {
 			PaddingLeft = UDim.new(0, 4),
