@@ -451,7 +451,7 @@ function PatchTree.updateMetadata(tree, patch, instanceMap, unappliedPatch)
 		end
 
 		node.changeInfo = {
-			applied = (node.changeInfo.edits or (#node.changeList - 1)) - warnings,
+			edits = (node.changeInfo.edits or (#node.changeList - 1)) - warnings,
 			failed = if warnings > 0 then warnings else nil,
 		}
 	end
@@ -503,12 +503,6 @@ function PatchTree.updateMetadata(tree, patch, instanceMap, unappliedPatch)
 	-- Update if instances exist
 	Timer.start("instanceAncestry")
 	tree:forEach(function(node)
-		if node.changeInfo and node.changeInfo.edits then
-			node.changeInfo = {
-				applied = node.changeInfo.edits,
-			}
-		end
-
 		if node.instance then
 			if node.instance.Parent == nil and node.instance ~= game then
 				-- This instance has been removed
