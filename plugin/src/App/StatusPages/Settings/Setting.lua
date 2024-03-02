@@ -149,9 +149,9 @@ function Setting:render()
 						Text = self.props.name,
 						Font = Enum.Font.GothamBold,
 						TextSize = 16,
-						TextColor3 = if self.props.experimental
-							then settingsTheme.Setting.ExperimentalColor
-							elseif self.props.developerDebug then settingsTheme.Setting.DebugColor
+						TextColor3 = if self.props.unstable
+							then settingsTheme.Setting.UnstableColor
+							elseif self.props.debug then settingsTheme.Setting.DebugColor
 							else settingsTheme.Setting.NameColor,
 						TextXAlignment = Enum.TextXAlignment.Left,
 						TextTransparency = self.props.transparency,
