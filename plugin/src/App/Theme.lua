@@ -163,7 +163,7 @@ function StudioProvider:updateTheme()
 			Setting = {
 				NameColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.BrightText),
 				DescriptionColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.MainText),
-				ExperimentalColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.WarningText),
+				UnstableColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.WarningText),
 				DebugColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.InfoText),
 			},
 		},

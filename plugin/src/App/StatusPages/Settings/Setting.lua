@@ -121,38 +121,48 @@ function Setting:render()
 				Size = UDim2.new(1, 0, 1, 0),
 				BackgroundTransparency = 1,
 			}, {
-				Name = e("TextLabel", {
-					Text = self.props.name,
-					Font = Enum.Font.GothamBold,
-					TextSize = 16,
-					TextColor3 = if self.props.experimental
-						then settingsTheme.Setting.ExperimentalColor
-						elseif self.props.developerDebug then settingsTheme.Setting.DebugColor
-						else settingsTheme.Setting.NameColor,
-					TextXAlignment = Enum.TextXAlignment.Left,
-					TextTransparency = self.props.transparency,
-					RichText = true,
-
+				Heading = e("Frame", {
 					Size = UDim2.new(1, 0, 0, 16),
-
-					LayoutOrder = 1,
 					BackgroundTransparency = 1,
-				}),
-
-				Tag = if self.props.experimental or self.props.developerDebug
-					then e(Tag, {
-						layoutOrder = 2,
-						transparency = self.props.transparency,
-						text = if self.props.experimental then "EXPERIMENTAL" else "DEBUG",
-						icon = if self.props.experimental
-							then Assets.Images.Icons.Experimental
-							else Assets.Images.Icons.Debug,
-						color = if self.props.experimental
+				}, {
+					Layout = e("UIListLayout", {
+						VerticalAlignment = Enum.VerticalAlignment.Center,
+						FillDirection = Enum.FillDirection.Horizontal,
+						SortOrder = Enum.SortOrder.LayoutOrder,
+						Padding = UDim.new(0, 5),
+					}),
+					Tag = if self.props.unstable or self.props.debug
+						then e(Tag, {
+							layoutOrder = 1,
+							transparency = self.props.transparency,
+							text = if self.props.unstable then "UNSTABLE" else "DEBUG",
+							icon = if self.props.unstable
+								then Assets.Images.Icons.Warning
+								else Assets.Images.Icons.Debug,
+							color = if self.props.unstable
+								then settingsTheme.Setting.UnstableColor
+								elseif self.props.debug then settingsTheme.Setting.DebugColor
+								else settingsTheme.BrandColor,
+						})
+						else nil,
+					Name = e("TextLabel", {
+						Text = self.props.name,
+						Font = Enum.Font.GothamBold,
+						TextSize = 16,
+						TextColor3 = if self.props.experimental
 							then settingsTheme.Setting.ExperimentalColor
 							elseif self.props.developerDebug then settingsTheme.Setting.DebugColor
-							else settingsTheme.BrandColor,
-					})
-					else nil,
+							else settingsTheme.Setting.NameColor,
+						TextXAlignment = Enum.TextXAlignment.Left,
+						TextTransparency = self.props.transparency,
+						RichText = true,
+
+						Size = UDim2.new(1, 0, 0, 16),
+
+						LayoutOrder = 2,
+						BackgroundTransparency = 1,
+					}),
+				}),
 
 				Description = e("TextLabel", {
 					Text = self.props.description,
