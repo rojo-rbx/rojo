@@ -56,7 +56,7 @@ function Setting:render()
 
 		return e("Frame", {
 			Size = self.contentSize:map(function(value)
-				return UDim2.new(1, 0, 0, 20 + value.Y + 20)
+				return UDim2.new(1, 0, 0, value.Y + 10)
 			end),
 			LayoutOrder = self.props.layoutOrder,
 			ZIndex = -self.props.layoutOrder,
@@ -124,7 +124,7 @@ function Setting:render()
 				Name = e("TextLabel", {
 					Text = self.props.name,
 					Font = Enum.Font.GothamBold,
-					TextSize = 17,
+					TextSize = 16,
 					TextColor3 = if self.props.experimental
 						then settingsTheme.Setting.ExperimentalColor
 						elseif self.props.developerDebug then settingsTheme.Setting.DebugColor
@@ -133,7 +133,7 @@ function Setting:render()
 					TextTransparency = self.props.transparency,
 					RichText = true,
 
-					Size = UDim2.new(1, 0, 0, 17),
+					Size = UDim2.new(1, 0, 0, 16),
 
 					LayoutOrder = 1,
 					BackgroundTransparency = 1,
@@ -169,10 +169,9 @@ function Setting:render()
 						containerSize = self.containerSize,
 						inputSize = self.inputSize,
 					}):map(function(values)
-						local desc = self.props.description
 						local offset = values.inputSize.X + 5
 						local textBounds = getTextBounds(
-							desc,
+							self.props.description,
 							14,
 							Enum.Font.Gotham,
 							1.2,
@@ -189,7 +188,7 @@ function Setting:render()
 					VerticalAlignment = Enum.VerticalAlignment.Center,
 					FillDirection = Enum.FillDirection.Vertical,
 					SortOrder = Enum.SortOrder.LayoutOrder,
-					Padding = UDim.new(0, 6),
+					Padding = UDim.new(0, 5),
 
 					[Roact.Change.AbsoluteContentSize] = function(object)
 						self.setContentSize(object.AbsoluteContentSize)
@@ -197,8 +196,8 @@ function Setting:render()
 				}),
 
 				Padding = e("UIPadding", {
-					PaddingTop = UDim.new(0, 20),
-					PaddingBottom = UDim.new(0, 20),
+					PaddingTop = UDim.new(0, 5),
+					PaddingBottom = UDim.new(0, 5),
 				}),
 			}),
 
