@@ -72,15 +72,10 @@ function ConfirmingPage:render()
 				TextTransparency = self.props.transparency,
 				Size = UDim2.new(1, 0, 0, 20),
 				BackgroundTransparency = 1,
-			}, {
-				Padding = e("UIPadding", {
-					PaddingLeft = UDim.new(0, 20),
-					PaddingRight = UDim.new(0, 20),
-				}),
 			}),
 
 			PatchVisualizer = e(PatchVisualizer, {
-				size = UDim2.new(1, -10, 1, -100),
+				size = UDim2.new(1, 0, 1, -100),
 				transparency = self.props.transparency,
 				layoutOrder = 3,
 
@@ -151,11 +146,11 @@ function ConfirmingPage:render()
 					SortOrder = Enum.SortOrder.LayoutOrder,
 					Padding = UDim.new(0, 10),
 				}),
+			}),
 
-				Padding = e("UIPadding", {
-					PaddingLeft = UDim.new(0, 20),
-					PaddingRight = UDim.new(0, 20),
-				}),
+			Padding = e("UIPadding", {
+				PaddingLeft = UDim.new(0, 8),
+				PaddingRight = UDim.new(0, 8),
 			}),
 
 			Layout = e("UIListLayout", {
