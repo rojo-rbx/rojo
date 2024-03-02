@@ -13,7 +13,7 @@ local Theme = require(Plugin.App.Theme)
 local Checkbox = require(Plugin.App.Components.Checkbox)
 local Dropdown = require(Plugin.App.Components.Dropdown)
 local IconButton = require(Plugin.App.Components.IconButton)
-local SlicedImage = require(Plugin.App.Components.SlicedImage)
+local Tag = require(Plugin.App.Components.Tag)
 
 local e = Roact.createElement
 
@@ -140,48 +140,18 @@ function Setting:render()
 				}),
 
 				Tag = if self.props.experimental or self.props.developerDebug
-					then e(SlicedImage, {
-						slice = Assets.Slices.RoundedBackground,
+					then e(Tag, {
+						layoutOrder = 2,
+						transparency = self.props.transparency,
+						textColor = theme.BackgroundColor,
+						text = if self.props.experimental then "EXPERIMENTAL" else "DEBUG",
+						icon = if self.props.experimental
+							then Assets.Images.Icons.Experimental
+							else Assets.Images.Icons.Debug,
 						color = if self.props.experimental
 							then settingsTheme.Setting.ExperimentalColor
 							elseif self.props.developerDebug then settingsTheme.Setting.DebugColor
 							else settingsTheme.BrandColor,
-						transparency = self.props.transparency,
-
-						size = UDim2.new(0, 0, 0, 16),
-						automaticSize = Enum.AutomaticSize.X,
-
-						layoutOrder = 2,
-					}, {
-						Padding = e("UIPadding", {
-							PaddingLeft = UDim.new(0, 4),
-							PaddingRight = UDim.new(0, 4),
-							PaddingTop = UDim.new(0, 2),
-							PaddingBottom = UDim.new(0, 2),
-						}),
-						Icon = e("ImageLabel", {
-							Size = UDim2.new(0, 12, 0, 12),
-							Position = UDim2.new(0, 0, 0.5, 0),
-							AnchorPoint = Vector2.new(0, 0.5),
-							Image = if self.props.experimental
-								then Assets.Images.Icons.Experimental
-								else Assets.Images.Icons.Debug,
-							BackgroundTransparency = 1,
-							ImageColor3 = theme.BackgroundColor,
-						}),
-						Text = e("TextLabel", {
-							Text = if self.props.experimental then "EXPERIMENTAL" else "DEBUG",
-							RichText = true,
-							Font = Enum.Font.GothamMedium,
-							TextSize = 12,
-							TextColor3 = theme.BackgroundColor,
-							TextXAlignment = Enum.TextXAlignment.Center,
-							TextTransparency = self.props.transparency,
-							Size = UDim2.new(0, 0, 1, 0),
-							Position = UDim2.new(0, 15, 0, 0),
-							AutomaticSize = Enum.AutomaticSize.X,
-							BackgroundTransparency = 1,
-						}),
 					})
 					else nil,
 
