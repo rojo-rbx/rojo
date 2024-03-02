@@ -56,7 +56,7 @@ function Setting:render()
 
 		return e("Frame", {
 			Size = self.contentSize:map(function(value)
-				return UDim2.new(1, 0, 0, value.Y + 10)
+				return UDim2.new(1, 0, 0, value.Y + 15)
 			end),
 			LayoutOrder = self.props.layoutOrder,
 			ZIndex = -self.props.layoutOrder,
@@ -193,11 +193,6 @@ function Setting:render()
 					[Roact.Change.AbsoluteContentSize] = function(object)
 						self.setContentSize(object.AbsoluteContentSize)
 					end,
-				}),
-
-				Padding = e("UIPadding", {
-					PaddingTop = UDim.new(0, 5),
-					PaddingBottom = UDim.new(0, 5),
 				}),
 			}),
 
