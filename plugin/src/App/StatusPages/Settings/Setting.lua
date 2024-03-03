@@ -56,7 +56,7 @@ function Setting:render()
 
 		return e("Frame", {
 			Size = self.contentSize:map(function(value)
-				return UDim2.new(1, 0, 0, value.Y + 15)
+				return UDim2.new(1, 0, 0, value.Y + 20)
 			end),
 			LayoutOrder = self.props.layoutOrder,
 			ZIndex = -self.props.layoutOrder,
