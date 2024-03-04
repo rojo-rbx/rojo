@@ -315,13 +315,13 @@ pub fn syncback_project<'sync>(
     let old_inst = snapshot
         .old_inst()
         .expect("projects should always exist in both trees");
-    // Project roots have to come from somewhere!
+    // Generally, the path of a project is the first thing added to the relevant
+    // paths. So, we take the last one.
     let project_path = old_inst
         .metadata()
-        .instigating_source
-        .as_ref()
-        .unwrap()
-        .path();
+        .relevant_paths
+        .last()
+        .expect("all projects should have a relevant path");
     let vfs = snapshot.vfs();
 
     log::debug!(
