@@ -492,14 +492,10 @@ pub fn syncback_project<'sync>(
                 }
             };
 
-            if let Some(old_child) = old_child_map.remove(name.as_str()) {
-                descendant_snapshots.push(snapshot.with_new_parent(
-                    parent_path,
-                    old_child.name().to_string(),
-                    new_child.referent(),
-                    Some(old_child.id()),
-                ))
-            } else {
+            // If a child also exists in the old tree, it will be caught in the
+            // syncback on the project node path above (or is itself a node).
+            // So the only things we need to run seperately is new children.
+            if old_child_map.remove(name.as_str()).is_none() {
                 descendant_snapshots.push(snapshot.with_new_parent(
                     parent_path,
                     new_child.name.clone(),
