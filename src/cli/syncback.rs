@@ -116,7 +116,12 @@ impl SyncbackCommand {
             log::info!("Writing to the file system...");
             snapshot.write_to_vfs(base_path, session_old.vfs())?;
         } else {
-            log::info!("Aborting before writing to file system due to `--dry-run`");
+            println!(
+                "Would write {} files/folders and remove {} files/folders.",
+                snapshot.added_paths().len(),
+                snapshot.removed_paths().len()
+            );
+            println!("Aborting before writing to file system due to `--dry-run`");
         }
 
         // It is potentially prohibitively expensive to drop a ServeSession,
