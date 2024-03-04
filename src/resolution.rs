@@ -38,6 +38,8 @@ impl UnresolvedValue {
         }
     }
 
+    /// Creates an `UnresolvedValue` from a variant, using a class and property
+    /// name to potentially allow for ambiguous Enum variants.
     pub fn from_variant(variant: Variant, class_name: &str, prop_name: &str) -> Self {
         Self::Ambiguous(match variant {
             Variant::Enum(rbx_enum) => {
@@ -95,6 +97,23 @@ impl UnresolvedValue {
                 return Self::FullyQualified(variant);
             }
         })
+    }
+
+    /// Creates an `UnresolvedValue` from a variant, only returning ambiguous
+    /// values if they're able to be resolved in a context-free environment.
+    pub fn from_variant_unambiguous(variant: Variant) -> Self {
+        match variant {
+            Variant::String(str) => Self::Ambiguous(AmbiguousValue::String(str)),
+            Variant::Float64(number) => Self::Ambiguous(AmbiguousValue::Number(number)),
+            Variant::Bool(bool) => Self::Ambiguous(AmbiguousValue::Bool(bool)),
+            Variant::BinaryString(bstr) => match std::str::from_utf8(bstr.as_ref()) {
+                Ok(_) => Self::Ambiguous(AmbiguousValue::String(
+                    String::from_utf8(bstr.into_vec()).unwrap(),
+                )),
+                Err(_) => Self::FullyQualified(Variant::BinaryString(bstr)),
+            },
+            _ => Self::FullyQualified(variant),
+        }
     }
 }
 

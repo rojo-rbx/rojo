@@ -98,7 +98,7 @@ fn json_model_from_pair(snapshot: &SyncbackSnapshot, new: Ref, old: Option<Ref>)
             for (attr_name, attr_value) in attrs.iter() {
                 attributes.insert(
                     attr_name.clone(),
-                    UnresolvedValue::FullyQualified(attr_value.clone()),
+                    UnresolvedValue::from_variant_unambiguous(attr_value.clone()),
                 );
             }
         } else {

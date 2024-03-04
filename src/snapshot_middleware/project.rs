@@ -1,13 +1,13 @@
 use std::{
     borrow::Cow,
-    collections::{HashMap, VecDeque},
+    collections::{BTreeMap, HashMap, VecDeque},
     path::Path,
 };
 
 use anyhow::{bail, Context};
 use memofs::Vfs;
 use rbx_dom_weak::{
-    types::{Attributes, Ref},
+    types::{Attributes, Ref, Variant},
     Instance,
 };
 use rbx_reflection::ClassTag;
@@ -362,15 +362,25 @@ pub fn syncback_project<'sync>(
             .get_filtered_properties(new_inst.referent(), Some(old_inst.id()))
             .unwrap();
         let properties = &mut node.properties;
+        let mut attributes = BTreeMap::new();
         if node.path.is_none() {
             // This node is entirely defined in the project, so we put all
             // properties in the node. We explicitly DO NOT clear old properties
             // since it's likely people want them there.
             for (name, value) in filtered_properties {
-                properties.insert(
-                    name.to_owned(),
-                    UnresolvedValue::from_variant(value.to_owned(), old_inst.class_name(), name),
-                );
+                if let Variant::Attributes(attrs) = value {
+                    for (attr_name, attr_value) in attrs.iter() {
+                        attributes.insert(
+                            attr_name.clone(),
+                            UnresolvedValue::from_variant_unambiguous(attr_value.clone()),
+                        );
+                    }
+                } else {
+                    properties.insert(
+                        name.to_string(),
+                        UnresolvedValue::from_variant(value.clone(), &new_inst.class, name),
+                    );
+                }
             }
         } else {
             // TODO handle this in a way that doesn't suck.
@@ -383,13 +393,27 @@ pub fn syncback_project<'sync>(
             // This node has both a path so we only update properties. Adding
             // new things is potentially destructive.
             for (name, value) in filtered_properties {
-                // if properties.contains_key(name) { // See TODO above
-                properties.insert(
-                    name.to_owned(),
-                    UnresolvedValue::from_variant(value.to_owned(), old_inst.class_name(), name),
-                );
-                // }
+                if let Variant::Attributes(attrs) = value {
+                    for (attr_name, attr_value) in attrs.iter() {
+                        attributes.insert(
+                            attr_name.clone(),
+                            UnresolvedValue::from_variant_unambiguous(attr_value.clone()),
+                        );
+                    }
+                } else {
+                    // if properties.contains_key(name) { // See TODO above
+                    properties.insert(
+                        name.to_owned(),
+                        UnresolvedValue::from_variant(
+                            value.to_owned(),
+                            old_inst.class_name(),
+                            name,
+                        ),
+                    );
+                    // }
+                }
             }
+            node.attributes = attributes;
 
             // And since it has a path, we have to run syncback on that path.
             let node_path = node.path.as_ref().map(PathNode::path).expect(

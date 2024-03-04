@@ -84,15 +84,10 @@ impl AdjacentMetadata {
         for (name, value) in &snapshot.new_inst().properties {
             if let Variant::Attributes(attrs) = value {
                 for (name, value) in attrs.iter() {
-                    let value = if let Variant::BinaryString(bstr) = value {
-                        match std::str::from_utf8(bstr.as_ref()) {
-                            Ok(str) => Variant::String(str.to_string()),
-                            Err(_) => value.clone(),
-                        }
-                    } else {
-                        value.clone()
-                    };
-                    attributes.insert(name.to_owned(), UnresolvedValue::FullyQualified(value));
+                    attributes.insert(
+                        name.to_owned(),
+                        UnresolvedValue::from_variant_unambiguous(value.clone()),
+                    );
                 }
             } else {
                 properties.insert(
@@ -262,15 +257,10 @@ impl DirectoryMetadata {
         for (name, value) in &snapshot.new_inst().properties {
             if let Variant::Attributes(attrs) = value {
                 for (name, value) in attrs.iter() {
-                    let value = if let Variant::BinaryString(bstr) = value {
-                        match std::str::from_utf8(bstr.as_ref()) {
-                            Ok(str) => Variant::String(str.to_string()),
-                            Err(_) => value.clone(),
-                        }
-                    } else {
-                        value.clone()
-                    };
-                    attributes.insert(name.to_owned(), UnresolvedValue::FullyQualified(value));
+                    attributes.insert(
+                        name.to_owned(),
+                        UnresolvedValue::from_variant_unambiguous(value.clone()),
+                    );
                 }
             } else {
                 properties.insert(
