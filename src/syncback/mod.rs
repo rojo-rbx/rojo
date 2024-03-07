@@ -9,7 +9,7 @@ use anyhow::Context;
 use memofs::Vfs;
 use rbx_dom_weak::{
     types::{Ref, Variant},
-    Instance, WeakDom,
+    WeakDom,
 };
 use serde::{Deserialize, Serialize};
 use std::{
@@ -116,12 +116,7 @@ pub fn syncback_loop(
             }
         }
 
-        let middleware = snapshot
-            .middleware
-            .or(snapshot
-                .old_inst()
-                .and_then(|inst| inst.metadata().middleware))
-            .unwrap_or_else(|| get_best_middleware(snapshot.new_inst()));
+        let middleware = get_best_middleware(&snapshot);
 
         log::trace!("Middleware for {inst_path} is {:?}", middleware);
 
@@ -209,7 +204,18 @@ pub struct SyncbackReturn<'sync> {
     pub removed_children: Vec<InstanceWithMeta<'sync>>,
 }
 
-pub fn get_best_middleware(inst: &Instance) -> Middleware {
+pub fn get_best_middleware(snapshot: &SyncbackSnapshot) -> Middleware {
+    if let Some(middleware) = snapshot.middleware {
+        return middleware;
+    };
+    let old_middleware = snapshot
+        .old_inst()
+        .and_then(|inst| inst.metadata().middleware);
+    if let Some(old_middleware) = old_middleware {
+        return old_middleware;
+    }
+
+    let inst = snapshot.new_inst();
     // At some point, we're better off using an O(1) method for checking
     // equality for classes like this.
     static JSON_MODEL_CLASSES: OnceLock<HashSet<&str>> = OnceLock::new();
