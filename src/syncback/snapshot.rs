@@ -225,6 +225,29 @@ impl<'sync> SyncbackSnapshot<'sync> {
         true
     }
 
+    /// Returns a path to the provided Instance in the new DOM. This path is
+    /// where you would look for the object in Roblox Studio.
+    #[inline]
+    pub fn get_new_inst_path(&self, referent: Ref) -> String {
+        let mut path = Vec::new();
+        let mut path_capacity = 0;
+
+        let mut inst = self.get_new_instance(referent);
+        while let Some(instance) = inst {
+            path.push(&instance.name);
+            path_capacity += instance.name.len() + 1;
+            inst = self.get_new_instance(instance.parent());
+        }
+        let mut str = String::with_capacity(path_capacity);
+        while let Some(segment) = path.pop() {
+            str.push_str(segment);
+            str.push('/')
+        }
+        str.pop();
+
+        str
+    }
+
     /// Returns an Instance from the old tree with the provided referent, if it
     /// exists.
     #[inline]
