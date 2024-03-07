@@ -103,7 +103,7 @@ pub fn syncback_loop(
     let mut fs_snapshot = FsSnapshot::new();
 
     'syncback: while let Some(snapshot) = snapshots.pop() {
-        let inst_path = get_inst_path(&new_tree, snapshot.new);
+        let inst_path = snapshot.get_new_inst_path(snapshot.new);
         // We can quickly check that two subtrees are identical and if they are,
         // skip reconciling them.
         if let Some(old_ref) = snapshot.old {
@@ -205,17 +205,6 @@ pub struct SyncbackReturn<'sync> {
 }
 
 pub fn get_best_middleware(snapshot: &SyncbackSnapshot) -> Middleware {
-    if let Some(middleware) = snapshot.middleware {
-        return middleware;
-    };
-    let old_middleware = snapshot
-        .old_inst()
-        .and_then(|inst| inst.metadata().middleware);
-    if let Some(old_middleware) = old_middleware {
-        return old_middleware;
-    }
-
-    let inst = snapshot.new_inst();
     // At some point, we're better off using an O(1) method for checking
     // equality for classes like this.
     static JSON_MODEL_CLASSES: OnceLock<HashSet<&str>> = OnceLock::new();
@@ -227,57 +216,54 @@ pub fn get_best_middleware(snapshot: &SyncbackSnapshot) -> Middleware {
         }
     });
 
-    if json_model_classes.contains(inst.class.as_str()) {
-        if inst.children().is_empty() {
-            return Middleware::JsonModel;
+    let old_middleware = snapshot
+        .old_inst()
+        .and_then(|inst| inst.metadata().middleware);
+    let inst = snapshot.new_inst();
+
+    let mut middleware;
+
+    if let Some(override_middleware) = snapshot.middleware {
+        middleware = override_middleware;
+    } else if let Some(old_middleware) = old_middleware {
+        middleware = old_middleware;
+    } else if json_model_classes.contains(inst.class.as_str()) {
+        middleware = Middleware::JsonModel;
+    } else {
+        middleware = match inst.class.as_str() {
+            "Folder" | "Configuration" | "Tool" => Middleware::Dir,
+            "StringValue" => Middleware::Text,
+            "Script" => Middleware::ServerScript,
+            "LocalScript" => Middleware::ClientScript,
+            "ModuleScript" => Middleware::ModuleScript,
+            "LocalizationTable" => Middleware::Csv,
+            _ => match env::var(DEBUG_MODEL_FORMAT_VAR) {
+                Ok(value) if value == "1" => Middleware::Rbxmx,
+                _ => Middleware::Rbxm,
+            },
         }
-        // This begs the question of an init.model.json but we'll leave
-        // that for another day.
-        return Middleware::Dir;
     }
 
-    match inst.class.as_str() {
-        "Folder" | "Configuration" | "Tool" => Middleware::Dir,
-        "StringValue" => {
-            if inst.children().is_empty() {
-                Middleware::Text
-            } else {
-                Middleware::Dir
-            }
+    if !inst.children().is_empty() {
+        middleware = match middleware {
+            Middleware::ServerScript => Middleware::ServerScriptDir,
+            Middleware::ClientScript => Middleware::ClientScriptDir,
+            Middleware::ModuleScript => Middleware::ModuleScriptDir,
+            Middleware::Csv => Middleware::CsvDir,
+            Middleware::JsonModel | Middleware::Text => Middleware::Dir,
+            _ => middleware,
         }
-        "Script" => {
-            if inst.children().is_empty() {
-                Middleware::ServerScript
-            } else {
-                Middleware::ServerScriptDir
-            }
-        }
-        "LocalScript" => {
-            if inst.children().is_empty() {
-                Middleware::ClientScript
-            } else {
-                Middleware::ClientScriptDir
-            }
-        }
-        "ModuleScript" => {
-            if inst.children().is_empty() {
-                Middleware::ModuleScript
-            } else {
-                Middleware::ModuleScriptDir
-            }
-        }
-        "LocalizationTable" => {
-            if inst.children().is_empty() {
-                Middleware::Csv
-            } else {
-                Middleware::CsvDir
-            }
-        }
-        _ => match env::var(DEBUG_MODEL_FORMAT_VAR) {
-            Ok(value) if value == "1" => Middleware::Rbxmx,
-            _ => Middleware::Rbxm,
-        },
     }
+
+    if middleware == Middleware::Rbxm {
+        middleware = match env::var(DEBUG_MODEL_FORMAT_VAR) {
+            Ok(value) if value == "1" => Middleware::Rbxmx,
+            Ok(value) if value == "2" => Middleware::JsonModel,
+            _ => Middleware::Rbxm,
+        }
+    }
+
+    middleware
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -302,16 +288,6 @@ pub struct SyncbackRules {
     /// Defaults to `false`.
     #[serde(skip_serializing_if = "Option::is_none")]
     sync_unscriptable: Option<bool>,
-}
-
-fn get_inst_path(dom: &WeakDom, referent: Ref) -> String {
-    let mut path: VecDeque<&str> = VecDeque::new();
-    let mut inst = dom.get_by_ref(referent);
-    while let Some(instance) = inst {
-        path.push_front(&instance.name);
-        inst = dom.get_by_ref(instance.parent());
-    }
-    path.into_iter().collect::<Vec<&str>>().join("/")
 }
 
 /// Produces a list of descendants in the WeakDom such that all children come

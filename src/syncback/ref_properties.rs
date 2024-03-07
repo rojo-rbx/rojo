@@ -10,8 +10,6 @@ use rbx_dom_weak::{
 
 use crate::{multimap::MultiMap, REF_ID_ATTRIBUTE_NAME, REF_POINTER_ATTRIBUTE_PREFIX};
 
-use super::get_inst_path;
-
 pub struct RefRewrites {
     links: MultiMap<Ref, (String, Ref)>,
 }
@@ -34,11 +32,6 @@ pub fn collect_referents(dom: &WeakDom) -> anyhow::Result<RefRewrites> {
         for (name, value) in &instance.properties {
             if let Variant::Ref(prop_value) = value {
                 if dom.get_by_ref(*prop_value).is_some() {
-                    log::trace!(
-                        "Ref property: {}.{name} -> {}",
-                        get_inst_path(dom, referent),
-                        get_inst_path(dom, *prop_value)
-                    );
                     links.insert(referent, (name.clone(), *prop_value))
                 }
             }
