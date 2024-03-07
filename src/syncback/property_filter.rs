@@ -21,7 +21,7 @@ pub fn filter_properties(
         .get(inst.class.as_str());
 
     let predicate = |prop_name: &String, prop_value: &Variant| {
-        if matches!(prop_value, Variant::Ref(_) | Variant::SharedString(_)) {
+        if matches!(prop_value, Variant::Ref(_)) {
             return true;
         }
         if let Some(list) = &filter {
