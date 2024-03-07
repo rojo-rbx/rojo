@@ -82,6 +82,27 @@ impl AdjacentMetadata {
 
         let class = &snapshot.new_inst().class;
         for (name, value) in &snapshot.new_inst().properties {
+            match value {
+                Variant::Attributes(attrs) => {
+                    for (attr_name, attr_value) in attrs.iter() {
+                        attributes.insert(
+                            attr_name.clone(),
+                            UnresolvedValue::from_variant_unambiguous(attr_value.clone()),
+                        );
+                    }
+                }
+                Variant::SharedString(_) => {
+                    log::warn!(
+                    "Rojo cannot serialize the property {}.{name} in meta.json files.\n\
+                    If this is not acceptable, resave the Instance at '{}' manually as an RBXM or RBXMX.", class, snapshot.get_new_inst_path(snapshot.new))
+                }
+                _ => {
+                    properties.insert(
+                        name.clone(),
+                        UnresolvedValue::from_variant(value.clone(), class, name),
+                    );
+                }
+            }
             if let Variant::Attributes(attrs) = value {
                 for (name, value) in attrs.iter() {
                     attributes.insert(

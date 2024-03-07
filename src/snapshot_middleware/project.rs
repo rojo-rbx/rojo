@@ -363,59 +363,42 @@ pub fn syncback_project<'sync>(
             .unwrap();
         let properties = &mut node.properties;
         let mut attributes = BTreeMap::new();
-        if node.path.is_none() {
-            // This node is entirely defined in the project, so we put all
-            // properties in the node. We explicitly DO NOT clear old properties
-            // since it's likely people want them there.
-            for (name, value) in filtered_properties {
-                if let Variant::Attributes(attrs) = value {
+
+        // We would ideally have different behavior here based on whether a
+        // node has `$path` set. However, due to an issue with Middleware not
+        // knowing whether they originate from a project or not, we just skip
+        // writing metadata for things from projects. So to avoid properties
+        // being dropped, we don't filter them specially.
+        // TODO: We should handle this branching somehow so that meta.json files
+        // are respected.
+        for (name, value) in filtered_properties {
+            match value {
+                Variant::Attributes(attrs) => {
                     for (attr_name, attr_value) in attrs.iter() {
                         attributes.insert(
                             attr_name.clone(),
                             UnresolvedValue::from_variant_unambiguous(attr_value.clone()),
                         );
                     }
-                } else {
+                }
+                Variant::SharedString(_) => {
+                    log::warn!(
+                        "Rojo cannot serialize the property {}.{name} in project files.\n\
+                        If this is not acceptable, resave the Instance at '{}' manually as an RBXM or RBXMX.", new_inst.class, snapshot.get_new_inst_path(snapshot.new)
+                    );
+                }
+                _ => {
                     properties.insert(
                         name.to_string(),
                         UnresolvedValue::from_variant(value.clone(), &new_inst.class, name),
                     );
                 }
             }
-        } else {
-            // TODO handle this in a way that doesn't suck.
-            // Due to an issue with middlewares not knowing they originate
-            // from a project with a path, we do not write metadata. This means
-            // that properties won't be written unless we update them in the
-            // path. So, while the below comment is left, it is not accurate
-            // at this time because we simply write all properties.
+        }
+        node.attributes = attributes;
 
-            // This node has both a path so we only update properties. Adding
-            // new things is potentially destructive.
-            for (name, value) in filtered_properties {
-                if let Variant::Attributes(attrs) = value {
-                    for (attr_name, attr_value) in attrs.iter() {
-                        attributes.insert(
-                            attr_name.clone(),
-                            UnresolvedValue::from_variant_unambiguous(attr_value.clone()),
-                        );
-                    }
-                } else {
-                    // if properties.contains_key(name) { // See TODO above
-                    properties.insert(
-                        name.to_owned(),
-                        UnresolvedValue::from_variant(
-                            value.to_owned(),
-                            old_inst.class_name(),
-                            name,
-                        ),
-                    );
-                    // }
-                }
-            }
-            node.attributes = attributes;
-
-            // And since it has a path, we have to run syncback on that path.
+        if node.path.is_some() {
+            // Since the node has a path, we have to run syncback on it.
             let node_path = node.path.as_ref().map(PathNode::path).expect(
                 "Project nodes with a path must have a path \
                 If you see this message, something went seriously wrong. Please report it.",

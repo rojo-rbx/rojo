@@ -94,18 +94,26 @@ fn json_model_from_pair(snapshot: &SyncbackSnapshot, new: Ref, old: Option<Ref>)
     let mut properties = BTreeMap::new();
     let mut attributes = BTreeMap::new();
     for (name, value) in &new_inst.properties {
-        if let Variant::Attributes(attrs) = value {
-            for (attr_name, attr_value) in attrs.iter() {
-                attributes.insert(
-                    attr_name.clone(),
-                    UnresolvedValue::from_variant_unambiguous(attr_value.clone()),
+        match value {
+            Variant::Attributes(attrs) => {
+                for (attr_name, attr_value) in attrs.iter() {
+                    attributes.insert(
+                        attr_name.clone(),
+                        UnresolvedValue::from_variant_unambiguous(attr_value.clone()),
+                    );
+                }
+            }
+            Variant::SharedString(_) => {
+                log::warn!(
+                "Rojo cannot serialize the property {}.{name} in .model.json files.\n\
+                If this is not acceptable, resave the Instance at '{}' manually as an RBXM or RBXMX.", new_inst.class, snapshot.get_new_inst_path(new))
+            }
+            _ => {
+                properties.insert(
+                    name.clone(),
+                    UnresolvedValue::from_variant(value.clone(), &new_inst.class, name),
                 );
             }
-        } else {
-            properties.insert(
-                name.clone(),
-                UnresolvedValue::from_variant(value.clone(), &new_inst.class, name),
-            );
         }
     }
 
