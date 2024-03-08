@@ -63,9 +63,7 @@ pub fn syncback_loop(
     deferred_referents.link(&mut new_tree)?;
 
     if let Some(syncback_rules) = &project.syncback_rules {
-        // I think this is a neat way to handle `sync_current_camera` being
-        // Option<bool>!
-        if let Some(true) = syncback_rules.sync_current_camera {
+        if !syncback_rules.sync_current_camera.unwrap_or_default() {
             let mut camera_ref = None;
             for child_ref in new_tree.root().children() {
                 let inst = new_tree.get_by_ref(*child_ref).unwrap();
