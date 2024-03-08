@@ -70,6 +70,13 @@ impl RojoTree {
         self.inner.root_ref()
     }
 
+    /// Returns the root Instance of this tree.
+    #[inline]
+    pub fn root(&self) -> InstanceWithMeta {
+        self.get_instance(self.get_root_id())
+            .expect("RojoTrees should have a root")
+    }
+
     pub fn get_instance(&self, id: Ref) -> Option<InstanceWithMeta> {
         if let Some(instance) = self.inner.get_by_ref(id) {
             let metadata = self.metadata_map.get(&id).unwrap();
