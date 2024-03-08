@@ -67,7 +67,7 @@ impl AdjacentMetadata {
                 let source = source.path();
                 if source != path {
                     log::debug!(
-                        "Instance origin is mismatched so its metadata is being skipped. Path: {}",
+                        "Instigating source for Instance is mismatched so its metadata is being skipped.\nPath: {}",
                         path.display()
                     );
                     return Ok(None);
@@ -261,7 +261,7 @@ impl DirectoryMetadata {
                 let source = source.path();
                 if source != path {
                     log::debug!(
-                        "Instance origin is mismatched so its metadata is being skipped. Path: {}",
+                        "Instigating source for Instance is mismatched so its metadata is being skipped.\nPath: {}",
                         path.display()
                     );
                     return Ok(None);
