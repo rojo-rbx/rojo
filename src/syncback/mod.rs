@@ -43,6 +43,9 @@ pub fn syncback_loop(
     log::debug!("Collecting referents for new DOM...");
     let deferred_referents = collect_referents(&new_tree)?;
 
+    log::debug!("Pruning new tree");
+    strip_unknown_root_children(&mut new_tree, old_tree);
+
     log::debug!("Pre-filtering properties on DOMs");
     for referent in descendants(&new_tree, new_tree.root_ref()) {
         let new_inst = new_tree.get_by_ref_mut(referent).unwrap();
@@ -306,4 +309,38 @@ fn descendants(dom: &WeakDom, root_ref: Ref) -> Vec<Ref> {
     }
 
     ordered
+}
+
+/// Removes the children of `new`'s root that are not also children of `old`'s
+/// root.
+///
+/// This does not care about duplicates, and only filters based on names and
+/// class names.
+fn strip_unknown_root_children(new: &mut WeakDom, old: &RojoTree) {
+    let old_root = old.root();
+    let old_root_children: HashMap<&str, InstanceWithMeta> = old_root
+        .children()
+        .iter()
+        .map(|referent| {
+            let inst = old
+                .get_instance(*referent)
+                .expect("all children of a DOM's root should exist");
+            (inst.name(), inst)
+        })
+        .collect();
+
+    let root_children = new.root().children().to_vec();
+
+    for child_ref in root_children {
+        let child = new
+            .get_by_ref(child_ref)
+            .expect("all children of the root should exist in the DOM");
+        if let Some(old) = old_root_children.get(child.name.as_str()) {
+            if old.class_name() == child.class {
+                continue;
+            }
+        }
+        log::trace!("Pruning root child {} of class {}", child.name, child.class);
+        new.destroy(child_ref);
+    }
 }
