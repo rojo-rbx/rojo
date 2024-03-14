@@ -112,7 +112,7 @@ fn json_model_from_pair<'sync>(
             }
             Variant::SharedString(_) => {
                 log::warn!(
-                "Rojo cannot serialize the property {}.{name} in .model.json files.\n\
+                "Rojo cannot serialize the property {}.{name} in model.json files.\n\
                 If this is not acceptable, resave the Instance at '{}' manually as an RBXM or RBXMX.", new_inst.class, snapshot.get_new_inst_path(new))
             }
             _ => {
