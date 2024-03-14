@@ -1,5 +1,4 @@
 use memofs::Vfs;
-use rbx_reflection::Scriptability;
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
@@ -10,13 +9,14 @@ use crate::{
     glob::Glob,
     snapshot::{InstanceWithMeta, RojoTree},
     snapshot_middleware::Middleware,
-    variant_eq::variant_eq,
     Project,
 };
 use rbx_dom_weak::{
     types::{Ref, Variant},
     Instance, WeakDom,
 };
+
+use super::property_filter::filter_properties;
 
 /// A glob that can be used to tell if a path contains a `.git` folder.
 static GIT_IGNORE_GLOB: OnceLock<Glob> = OnceLock::new();
@@ -81,89 +81,25 @@ impl<'sync> SyncbackSnapshot<'sync> {
         self
     }
 
-    /// Returns a map of properties for the 'new' Instance with filtering
-    /// done to avoid noise.
-    ///
-    /// Note that while the returned map does filter based on the user's
-    /// `ignore_props` field, it does not do any other filtering and doesn't
-    /// clone any data. This is left to the consumer.
-    #[inline]
-    pub fn new_filtered_properties(&self) -> HashMap<&'sync str, &'sync Variant> {
-        self.get_filtered_properties(self.new, self.old).unwrap()
-    }
-
     /// Returns a map of properties for an Instance from the 'new' tree
     /// with filtering done to avoid noise. Returns `None` only if `new_ref`
-    /// instance is not in the new tree or if `old_ref` is provided and not in
-    /// the old tree.
+    /// instance is not in the new tree.
     ///
-    /// Note that while the returned map does filter based on the user's
-    /// `ignore_props` field, it does not do any other filtering and doesn't
-    /// clone any data. This is left to the consumer.
+    /// This method is not necessary or desired for blobs like RBXM or RBXMX.
+    #[inline]
+    #[must_use]
     pub fn get_filtered_properties(
         &self,
         new_ref: Ref,
-        old_ref: Option<Ref>,
     ) -> Option<HashMap<&'sync str, &'sync Variant>> {
         let inst = self.get_new_instance(new_ref)?;
-        let mut properties: HashMap<&str, &Variant> =
-            HashMap::with_capacity(inst.properties.capacity());
 
-        let class_data = rbx_reflection_database::get()
-            .classes
-            .get(inst.class.as_str());
-
-        let predicate = |prop_name: &String, prop_value: &Variant| {
-            if matches!(prop_value, Variant::Ref(_) | Variant::SharedString(_)) {
-                return true;
-            }
-            if filter_out_property(inst, prop_name) {
-                return true;
-            }
-            if !self.sync_unscriptable() {
-                if let Some(data) = class_data {
-                    if let Some(prop_data) = data.properties.get(prop_name.as_str()) {
-                        if matches!(prop_data.scriptability, Scriptability::None) {
-                            return true;
-                        }
-                    }
-                }
-            }
-            false
-        };
-
-        if let Some(old_inst) = old_ref.and_then(|referent| self.get_old_instance(referent)) {
-            for (name, value) in &inst.properties {
-                if predicate(name, value) {
-                    continue;
-                }
-                if old_inst.properties().contains_key(name) {
-                    properties.insert(name, value);
-                }
-            }
-        }
-        if let Some(class_data) = class_data {
-            let defaults = &class_data.default_properties;
-            for (name, value) in &inst.properties {
-                if predicate(name, value) {
-                    continue;
-                }
-                if let Some(default) = defaults.get(name.as_str()) {
-                    if !variant_eq(value, default) {
-                        properties.insert(name, value);
-                    }
-                } else {
-                    properties.insert(name, value);
-                }
-            }
-        } else {
-            for (name, value) in &inst.properties {
-                if predicate(name, value) {
-                    continue;
-                }
-                properties.insert(name, value);
-            }
-        }
+        // The only filtering we have to do is filter out properties that are
+        // special-cased in some capacity.
+        let properties = filter_properties(self.data.project, inst)
+            .into_iter()
+            .filter(|(name, _)| !filter_out_property(inst, name))
+            .collect();
 
         Some(properties)
     }
