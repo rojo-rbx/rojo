@@ -32,6 +32,13 @@ pub use property_filter::{filter_properties, filter_properties_preallocated};
 pub use ref_properties::collect_referents;
 pub use snapshot::{SyncbackData, SyncbackSnapshot};
 
+/// The name of an enviroment variable to use to override the behavior of
+/// syncback on model files.
+/// By default, syncabck will use `Rbxm` for model files.
+/// If this is set to `1`, it will instead use `Rbxmx`. If it is set to `2`,
+/// it will use `JsonModel`.
+///
+/// This will override existing `Rbxm` middleware too, not just new files.
 const DEBUG_MODEL_FORMAT_VAR: &str = "ROJO_SYNCBACK_DEBUG";
 
 pub fn syncback_loop(
@@ -160,6 +167,7 @@ pub fn syncback_loop(
         if syncback_res.is_err() && middleware.is_dir() {
             let new_middleware = match env::var(DEBUG_MODEL_FORMAT_VAR) {
                 Ok(value) if value == "1" => Middleware::Rbxmx,
+                Ok(value) if value == "2" => Middleware::JsonModel,
                 _ => Middleware::Rbxm,
             };
             let appended_name =
@@ -179,6 +187,7 @@ pub fn syncback_loop(
                 instead be synced back as {}",
                 working_path.file_name().and_then(|s| s.to_str()).unwrap()
             );
+            log::debug!("Reason: {:?}", syncback_res.err().unwrap());
             syncback_res = new_middleware.syncback(&snapshot, &appended_name);
         }
         let syncback = syncback_res.with_context(|| format!("Failed to syncback {inst_path}"))?;
