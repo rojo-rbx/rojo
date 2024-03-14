@@ -28,6 +28,7 @@ use crate::{
 pub use file_names::{name_for_inst, validate_file_name};
 pub use fs_snapshot::FsSnapshot;
 pub use hash::*;
+pub use property_filter::{filter_properties, filter_properties_preallocated};
 pub use ref_properties::collect_referents;
 pub use snapshot::{SyncbackData, SyncbackSnapshot};
 

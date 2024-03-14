@@ -12,7 +12,7 @@ use std::collections::HashMap;
 
 use crate::{variant_eq::variant_eq, Project};
 
-use super::{descendants, property_filter::filter_properties_preallocated};
+use super::{descendants, filter_properties_preallocated};
 
 /// Returns a map of every `Ref` in the `WeakDom` to a hashed version of the
 /// `Instance` it points to, including the properties and descendants of the
