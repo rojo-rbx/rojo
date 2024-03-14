@@ -1,6 +1,7 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Added Never option to Confirmation ([#893])
 * Added popout diff visualizer for table properties like Attributes and Tags ([#834])
 * Updated Theme to use Studio colors ([#838])
 * Added experimental setting for Auto Connect in playtests ([#840])
@@ -55,6 +56,7 @@
 [#834]: https://github.com/rojo-rbx/rojo/pull/834
 [#838]: https://github.com/rojo-rbx/rojo/pull/838
 [#840]: https://github.com/rojo-rbx/rojo/pull/840
+[#893]: https://github.com/rojo-rbx/rojo/pull/893
 
 ## [7.4.1] - February 20, 2024
 * Made the `name` field optional on project files ([#870])

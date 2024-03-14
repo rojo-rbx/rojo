@@ -582,6 +582,9 @@ function App:startSession()
 					return "Accept"
 				end
 			end
+		elseif confirmationBehavior == "Never" then
+			Log.trace("Accepting patch without confirmation because behavior is set to Never")
+			return "Accept"
 		end
 
 		-- The datamodel name gets overwritten by Studio, making confirmation of it intrusive
