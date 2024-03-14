@@ -9,7 +9,7 @@ use anyhow::Context;
 use memofs::Vfs;
 use rbx_dom_weak::{
     types::{Ref, Variant},
-    WeakDom,
+    Instance, WeakDom,
 };
 use serde::{Deserialize, Serialize};
 use std::{
@@ -22,7 +22,6 @@ use crate::{
     glob::Glob,
     snapshot::{InstanceSnapshot, InstanceWithMeta, RojoTree},
     snapshot_middleware::Middleware,
-    syncback::property_filter::get_property_filter,
     Project,
 };
 
@@ -66,9 +65,9 @@ pub fn syncback_loop(
     }
 
     log::debug!("Hashing project DOM");
-    let old_hashes = hash_tree(old_tree.inner(), old_tree.get_root_id());
+    let old_hashes = hash_tree(project, old_tree.inner(), old_tree.get_root_id());
     log::debug!("Hashing file DOM");
-    let new_hashes = hash_tree(&new_tree, new_tree.root_ref());
+    let new_hashes = hash_tree(project, &new_tree, new_tree.root_ref());
 
     log::debug!("Linking referents for new DOM");
     deferred_referents.link(&mut new_tree)?;
@@ -297,6 +296,35 @@ pub struct SyncbackRules {
     /// Defaults to `false`.
     #[serde(skip_serializing_if = "Option::is_none")]
     sync_unscriptable: Option<bool>,
+}
+
+/// Returns a set of properties that should not be written with syncback if
+/// one exists. This list is read directly from the Project and takes
+/// inheritance into effect.
+fn get_property_filter<'project>(
+    project: &'project Project,
+    new_inst: &Instance,
+) -> Option<HashSet<&'project String>> {
+    let filter = &project.syncback_rules.as_ref()?.ignore_properties;
+    let mut set = HashSet::new();
+
+    let database = rbx_reflection_database::get();
+    let mut current_class_name = new_inst.class.as_str();
+
+    loop {
+        if let Some(list) = filter.get(current_class_name) {
+            set.extend(list)
+        }
+
+        let class = database.classes.get(current_class_name)?;
+        if let Some(super_class) = class.superclass.as_ref() {
+            current_class_name = &super_class;
+        } else {
+            break;
+        }
+    }
+
+    Some(set)
 }
 
 /// Produces a list of descendants in the WeakDom such that all children come
