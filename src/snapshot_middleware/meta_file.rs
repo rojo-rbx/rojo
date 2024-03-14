@@ -81,7 +81,7 @@ impl AdjacentMetadata {
             .unwrap_or_default();
 
         let class = &snapshot.new_inst().class;
-        for (name, value) in &snapshot.new_inst().properties {
+        for (name, value) in snapshot.get_filtered_properties(snapshot.new).unwrap() {
             match value {
                 Variant::Attributes(attrs) => {
                     for (attr_name, attr_value) in attrs.iter() {
@@ -98,23 +98,10 @@ impl AdjacentMetadata {
                 }
                 _ => {
                     properties.insert(
-                        name.clone(),
+                        name.to_owned(),
                         UnresolvedValue::from_variant(value.clone(), class, name),
                     );
                 }
-            }
-            if let Variant::Attributes(attrs) = value {
-                for (name, value) in attrs.iter() {
-                    attributes.insert(
-                        name.to_owned(),
-                        UnresolvedValue::from_variant_unambiguous(value.clone()),
-                    );
-                }
-            } else {
-                properties.insert(
-                    name.clone(),
-                    UnresolvedValue::from_variant(value.clone(), class, name),
-                );
             }
         }
 
@@ -275,7 +262,7 @@ impl DirectoryMetadata {
             .unwrap_or_default();
 
         let class = &snapshot.new_inst().class;
-        for (name, value) in &snapshot.new_inst().properties {
+        for (name, value) in snapshot.get_filtered_properties(snapshot.new).unwrap() {
             if let Variant::Attributes(attrs) = value {
                 for (name, value) in attrs.iter() {
                     attributes.insert(
@@ -285,7 +272,7 @@ impl DirectoryMetadata {
                 }
             } else {
                 properties.insert(
-                    name.clone(),
+                    name.to_owned(),
                     UnresolvedValue::from_variant(value.clone(), class, name),
                 );
             }

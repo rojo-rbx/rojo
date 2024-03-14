@@ -359,7 +359,7 @@ pub fn syncback_project<'sync>(
         }
 
         let filtered_properties = snapshot
-            .get_filtered_properties(new_inst.referent(), Some(old_inst.id()))
+            .get_filtered_properties(new_inst.referent())
             .unwrap();
         let properties = &mut node.properties;
         let mut attributes = BTreeMap::new();
