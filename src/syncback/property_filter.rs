@@ -5,8 +5,8 @@ use rbx_reflection::Scriptability;
 
 use crate::{variant_eq::variant_eq, Project};
 
-/// Returns a map of properties from `inst` that are allowed as per the filters
-/// in `project`.
+/// Returns a map of properties from `inst` that are both allowed under the
+/// user-provided settings *and* not their default value.
 pub fn filter_properties<'inst>(
     project: &Project,
     inst: &'inst Instance,
@@ -17,8 +17,8 @@ pub fn filter_properties<'inst>(
     map.into_iter().collect()
 }
 
-/// Fills `allocation` with a list of properties from `inst` that are allowed
-/// as per the filters in `project`.
+/// Fills `allocation` with a list of properties from `inst` that are both
+/// allowed under the user-provided settings *and* not their default value.
 pub fn filter_properties_preallocated<'inst>(
     project: &Project,
     inst: &'inst Instance,
