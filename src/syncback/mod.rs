@@ -95,7 +95,7 @@ pub fn syncback_loop(
         vfs,
         old_tree,
         new_tree: &new_tree,
-        syncback_rules: project.syncback_rules.as_ref(),
+        project,
     };
 
     let mut snapshots = vec![SyncbackSnapshot {

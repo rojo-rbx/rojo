@@ -11,13 +11,12 @@ use crate::{
     snapshot::{InstanceWithMeta, RojoTree},
     snapshot_middleware::Middleware,
     variant_eq::variant_eq,
+    Project,
 };
 use rbx_dom_weak::{
     types::{Ref, Variant},
     Instance, WeakDom,
 };
-
-use super::SyncbackRules;
 
 /// A glob that can be used to tell if a path contains a `.git` folder.
 static GIT_IGNORE_GLOB: OnceLock<Glob> = OnceLock::new();
@@ -27,7 +26,7 @@ pub struct SyncbackData<'sync> {
     pub(super) vfs: &'sync Vfs,
     pub(super) old_tree: &'sync RojoTree,
     pub(super) new_tree: &'sync WeakDom,
-    pub(super) syncback_rules: Option<&'sync SyncbackRules>,
+    pub(super) project: &'sync Project,
 }
 
 pub struct SyncbackSnapshot<'sync> {
@@ -294,7 +293,9 @@ impl<'sync> SyncbackSnapshot<'sync> {
     #[inline]
     pub fn ignore_props(&self) -> Option<&HashMap<String, Vec<String>>> {
         self.data
+            .project
             .syncback_rules
+            .as_ref()
             .map(|rules| &rules.ignore_properties)
     }
 
@@ -302,7 +303,9 @@ impl<'sync> SyncbackSnapshot<'sync> {
     #[inline]
     pub fn ignore_paths(&self) -> Option<&[Glob]> {
         self.data
+            .project
             .syncback_rules
+            .as_ref()
             .map(|rules| rules.ignore_paths.as_slice())
     }
 
@@ -310,7 +313,9 @@ impl<'sync> SyncbackSnapshot<'sync> {
     #[inline]
     pub fn ignore_tree(&self) -> Option<&[String]> {
         self.data
+            .project
             .syncback_rules
+            .as_ref()
             .map(|rules| rules.ignore_trees.as_slice())
     }
 
@@ -319,7 +324,9 @@ impl<'sync> SyncbackSnapshot<'sync> {
     #[inline]
     pub fn sync_unscriptable(&self) -> bool {
         self.data
+            .project
             .syncback_rules
+            .as_ref()
             .and_then(|sr| sr.sync_unscriptable)
             .unwrap_or_default()
     }
