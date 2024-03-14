@@ -1,7 +1,7 @@
 use memofs::Vfs;
 use rbx_reflection::Scriptability;
 use std::{
-    collections::{BTreeSet, HashMap},
+    collections::HashMap,
     path::{Path, PathBuf},
     sync::OnceLock,
 };
@@ -109,7 +109,6 @@ impl<'sync> SyncbackSnapshot<'sync> {
         let mut properties: HashMap<&str, &Variant> =
             HashMap::with_capacity(inst.properties.capacity());
 
-        let filter = self.get_property_filter();
         let class_data = rbx_reflection_database::get()
             .classes
             .get(inst.class.as_str());
@@ -120,11 +119,6 @@ impl<'sync> SyncbackSnapshot<'sync> {
             }
             if filter_out_property(inst, prop_name) {
                 return true;
-            }
-            if let Some(list) = &filter {
-                if list.contains(prop_name) {
-                    return true;
-                }
             }
             if !self.sync_unscriptable() {
                 if let Some(data) = class_data {
@@ -172,31 +166,6 @@ impl<'sync> SyncbackSnapshot<'sync> {
         }
 
         Some(properties)
-    }
-
-    /// Returns a set of properties that should not be written with syncback if
-    /// one exists.
-    fn get_property_filter(&self) -> Option<BTreeSet<&String>> {
-        let filter = self.ignore_props()?;
-        let mut set = BTreeSet::new();
-
-        let database = rbx_reflection_database::get();
-        let mut current_class_name = self.new_inst().class.as_str();
-
-        loop {
-            if let Some(list) = filter.get(current_class_name) {
-                set.extend(list)
-            }
-
-            let class = database.classes.get(current_class_name)?;
-            if let Some(super_class) = class.superclass.as_ref() {
-                current_class_name = &super_class;
-            } else {
-                break;
-            }
-        }
-
-        Some(set)
     }
 
     /// Returns whether a given path is allowed for syncback by matching `path`
