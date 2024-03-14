@@ -182,6 +182,12 @@ impl<'sync> SyncbackSnapshot<'sync> {
             .expect("SyncbackSnapshot should not contain invalid referents")
     }
 
+    /// Returns the root Project that was used to make this snapshot.
+    #[inline]
+    pub fn project(&self) -> &'sync Project {
+        self.data.project
+    }
+
     /// Returns the underlying VFS being used for syncback.
     #[inline]
     pub fn vfs(&self) -> &'sync Vfs {
