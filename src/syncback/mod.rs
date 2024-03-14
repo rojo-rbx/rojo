@@ -22,13 +22,13 @@ use crate::{
     glob::Glob,
     snapshot::{InstanceSnapshot, InstanceWithMeta, RojoTree},
     snapshot_middleware::Middleware,
+    syncback::property_filter::get_property_filter,
     Project,
 };
 
 pub use file_names::{name_for_inst, validate_file_name};
 pub use fs_snapshot::FsSnapshot;
 pub use hash::*;
-pub use property_filter::filter_properties;
 pub use ref_properties::collect_referents;
 pub use snapshot::{SyncbackData, SyncbackSnapshot};
 
@@ -49,12 +49,20 @@ pub fn syncback_loop(
     log::debug!("Pre-filtering properties on DOMs");
     for referent in descendants(&new_tree, new_tree.root_ref()) {
         let new_inst = new_tree.get_by_ref_mut(referent).unwrap();
-        new_inst.properties = filter_properties(project.syncback_rules.as_ref(), new_inst);
+        if let Some(filter) = get_property_filter(project, new_inst) {
+            for prop in filter {
+                new_inst.properties.remove(prop);
+            }
+        }
     }
     for referent in descendants(old_tree.inner(), old_tree.get_root_id()) {
         let mut old_inst_rojo = old_tree.get_instance_mut(referent).unwrap();
         let old_inst = old_inst_rojo.inner_mut();
-        old_inst.properties = filter_properties(project.syncback_rules.as_ref(), old_inst);
+        if let Some(filter) = get_property_filter(project, old_inst) {
+            for prop in filter {
+                old_inst.properties.remove(prop);
+            }
+        }
     }
 
     log::debug!("Hashing project DOM");
