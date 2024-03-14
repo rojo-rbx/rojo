@@ -116,12 +116,16 @@ pub fn syncback_loop(
         // We can quickly check that two subtrees are identical and if they are,
         // skip reconciling them.
         if let Some(old_ref) = snapshot.old {
-            if old_hashes.get(&old_ref) == new_hashes.get(&snapshot.new) {
-                log::trace!(
-                    "Skipping {inst_path} due to it being identically hashed as {:?}",
-                    old_hashes.get(&old_ref)
-                );
-                continue;
+            match (old_hashes.get(&old_ref), new_hashes.get(&snapshot.new)) {
+                (Some(old), Some(new)) => {
+                    if old == new {
+                        log::trace!(
+                            "Skipping {inst_path} due to it being identically hashed as {old:?}"
+                        );
+                        continue;
+                    }
+                }
+                _ => unreachable!("All Instances in both DOMs should have hashes"),
             }
         }
 
