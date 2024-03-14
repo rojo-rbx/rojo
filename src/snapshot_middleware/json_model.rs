@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     resolution::UnresolvedValue,
     snapshot::{InstanceContext, InstanceSnapshot},
-    syncback::{FsSnapshot, SyncbackReturn, SyncbackSnapshot},
+    syncback::{filter_properties_preallocated, FsSnapshot, SyncbackReturn, SyncbackSnapshot},
     RojoRef,
 };
 
@@ -70,7 +70,9 @@ pub fn syncback_json_model<'sync>(
 ) -> anyhow::Result<SyncbackReturn<'sync>> {
     let path = snapshot.parent_path.join(file_name);
 
-    let mut model = json_model_from_pair(snapshot, snapshot.new, snapshot.old);
+    let mut property_buffer = Vec::with_capacity(snapshot.new_inst().properties.len());
+
+    let mut model = json_model_from_pair(snapshot, &mut property_buffer, snapshot.new);
     // We don't need the name on the root, but we do for children.
     model.name = None;
 
@@ -85,15 +87,20 @@ pub fn syncback_json_model<'sync>(
     })
 }
 
-fn json_model_from_pair(snapshot: &SyncbackSnapshot, new: Ref, old: Option<Ref>) -> JsonModel {
+fn json_model_from_pair<'sync>(
+    snapshot: &SyncbackSnapshot<'sync>,
+    prop_buffer: &mut Vec<(&'sync str, &'sync Variant)>,
+    new: Ref,
+) -> JsonModel {
     let new_inst = snapshot
         .get_new_instance(new)
         .expect("all new referents passed to json_model_from_pair should exist");
-    let old_inst = old.and_then(|r| snapshot.get_old_instance(r));
+
+    filter_properties_preallocated(snapshot.project(), new_inst, prop_buffer);
 
     let mut properties = BTreeMap::new();
     let mut attributes = BTreeMap::new();
-    for (name, value) in &new_inst.properties {
+    for (name, value) in prop_buffer.drain(..) {
         match value {
             Variant::Attributes(attrs) => {
                 for (attr_name, attr_value) in attrs.iter() {
@@ -110,7 +117,7 @@ fn json_model_from_pair(snapshot: &SyncbackSnapshot, new: Ref, old: Option<Ref>)
             }
             _ => {
                 properties.insert(
-                    name.clone(),
+                    name.to_owned(),
                     UnresolvedValue::from_variant(value.clone(), &new_inst.class, name),
                 );
             }
@@ -119,29 +126,8 @@ fn json_model_from_pair(snapshot: &SyncbackSnapshot, new: Ref, old: Option<Ref>)
 
     let mut children = Vec::with_capacity(new_inst.children().len());
 
-    if let Some(old_inst) = old_inst {
-        let mut old_child_map = HashMap::with_capacity(old_inst.children().len());
-        for child_ref in old_inst.children() {
-            let inst = snapshot.get_old_instance(*child_ref).unwrap();
-            old_child_map.insert(inst.name(), *child_ref);
-        }
-
-        for new_child_ref in new_inst.children() {
-            let new_child = snapshot.get_new_instance(*new_child_ref).unwrap();
-            if let Some(old_child) = old_child_map.remove(new_child.name.as_str()) {
-                children.push(json_model_from_pair(
-                    snapshot,
-                    *new_child_ref,
-                    Some(old_child),
-                ))
-            } else {
-                children.push(json_model_from_pair(snapshot, new, None))
-            }
-        }
-    } else {
-        for new_child_ref in new_inst.children() {
-            children.push(json_model_from_pair(snapshot, *new_child_ref, None))
-        }
+    for new_child_ref in new_inst.children() {
+        children.push(json_model_from_pair(snapshot, prop_buffer, *new_child_ref))
     }
 
     JsonModel {
