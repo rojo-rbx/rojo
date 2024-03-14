@@ -26,7 +26,7 @@ local function invertTbl(tbl)
 end
 
 local invertedLevels = invertTbl(Log.Level)
-local confirmationBehaviors = { "Initial", "Always", "Large Changes", "Unlisted PlaceId" }
+local confirmationBehaviors = { "Initial", "Always", "Large Changes", "Unlisted PlaceId", "Never" }
 
 local function Navbar(props)
 	return Theme.with(function(theme)
