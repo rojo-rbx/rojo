@@ -263,18 +263,26 @@ impl DirectoryMetadata {
 
         let class = &snapshot.new_inst().class;
         for (name, value) in snapshot.get_filtered_properties(snapshot.new).unwrap() {
-            if let Variant::Attributes(attrs) = value {
-                for (name, value) in attrs.iter() {
-                    attributes.insert(
+            match value {
+                Variant::Attributes(attrs) => {
+                    for (name, value) in attrs.iter() {
+                        attributes.insert(
+                            name.to_owned(),
+                            UnresolvedValue::from_variant_unambiguous(value.clone()),
+                        );
+                    }
+                }
+                Variant::SharedString(_) => {
+                    log::warn!(
+                    "Rojo cannot serialize the property {}.{name} in meta.json files.\n\
+                    If this is not acceptable, resave the Instance at '{}' manually as an RBXM or RBXMX.", class, snapshot.get_new_inst_path(snapshot.new))
+                }
+                _ => {
+                    properties.insert(
                         name.to_owned(),
-                        UnresolvedValue::from_variant_unambiguous(value.clone()),
+                        UnresolvedValue::from_variant(value.clone(), class, name),
                     );
                 }
-            } else {
-                properties.insert(
-                    name.to_owned(),
-                    UnresolvedValue::from_variant(value.clone(), class, name),
-                );
             }
         }
 
