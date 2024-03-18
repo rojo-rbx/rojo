@@ -531,8 +531,15 @@ fn syncback_project_node<'sync>(
     old_inst: InstanceWithMeta,
 ) -> anyhow::Result<SyncbackSnapshot<'sync>> {
     let (middleware, _, mut file_path) =
-        Middleware::middleware_and_path(snapshot.vfs(), sync_rules, node_path)?
-            .context("middleware_and_path should not fail for project nodes that exist")?;
+        match Middleware::middleware_and_path(snapshot.vfs(), sync_rules, node_path)? {
+            Some(stuff) => stuff,
+            // The only way this can happen at this point is if the path does
+            // not exist on the file system or there's no middleware for it.
+            None => anyhow::bail!(
+                "path does not exist or could not be turned into a file Rojo understands: {}",
+                node_path.display()
+            ),
+        };
 
     if !file_path.pop() {
         anyhow::bail!(
