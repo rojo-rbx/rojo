@@ -48,10 +48,17 @@ impl RefRewrites {
         let mut id_prop_list = Vec::new();
 
         for (pointer_ref, ref_properties) in self.links {
+            if dom.get_by_ref(pointer_ref).is_none() {
+                continue;
+            }
+
             for (prop_name, target_ref) in ref_properties {
-                let target_inst = dom
-                    .get_by_ref_mut(target_ref)
-                    .expect("Ref properties that aren't in the DOM should be filtered out");
+                let target_inst = match dom.get_by_ref_mut(target_ref) {
+                    Some(inst) => inst,
+                    None => {
+                        continue;
+                    }
+                };
                 let target_attrs = get_or_insert_attributes(target_inst)?;
                 if target_attrs.get(REF_ID_ATTRIBUTE_NAME).is_none() {
                     target_attrs.insert(
@@ -71,9 +78,7 @@ impl RefRewrites {
                 }
             }
 
-            let pointer_inst = dom
-                .get_by_ref_mut(pointer_ref)
-                .expect("invalid referents shouldn't be in the DOM");
+            let pointer_inst = dom.get_by_ref_mut(pointer_ref).unwrap();
             let pointer_attrs = get_or_insert_attributes(pointer_inst)?;
             for (name, id) in id_prop_list.drain(..) {
                 pointer_attrs.insert(
