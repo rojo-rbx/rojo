@@ -1,0 +1,15 @@
+{
+  "name": "Nested",
+  "tree": {
+    "$className": "Configuration",
+    "StringValue": {
+      "$path": "string_value.txt"
+    },
+    "BoolValue": {
+      "$className": "BoolValue",
+      "$properties": {
+        "Value": true
+      }
+    }
+  }
+}

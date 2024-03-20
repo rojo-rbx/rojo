@@ -14,4 +14,5 @@ macro_rules! syncback_basic_test {
 syncback_basic_test! {
     baseplate,
     respect_old_middleware,
+    nested_projects
 }
