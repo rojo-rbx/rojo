@@ -483,7 +483,8 @@ pub fn syncback_project<'sync>(
                     Syncback cannot add or remove Instances from project {}", old_inst.name(), project_path.display()),
                 (None, _) => panic!(
                     "Invariant violated: the Instance matching of project nodes is flawed somehow.\n\
-                    Specifically, a child of the node did not exist in the old tree."
+                    Specifically, a child named {} of the node {} did not exist in the old tree.",
+                    child_name, old_inst.name()
                 ),
             }
         }
