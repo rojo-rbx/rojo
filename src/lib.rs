@@ -25,7 +25,15 @@ mod syncback;
 mod variant_eq;
 mod web;
 
+// TODO: Work out what we should expose publicly
+
 pub use project::*;
 pub use rojo_ref::*;
 pub use session_id::SessionId;
+pub use snapshot::{
+    InstanceContext, InstanceMetadata, InstanceSnapshot, InstanceWithMeta, InstanceWithMetaMut,
+    RojoDescendants, RojoTree,
+};
+pub use snapshot_middleware::{snapshot_from_vfs, Middleware, ScriptType};
+pub use syncback::{syncback_loop, FsSnapshot, SyncbackData, SyncbackSnapshot};
 pub use web::interface as web_api;
