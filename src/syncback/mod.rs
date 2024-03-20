@@ -38,7 +38,8 @@ pub use snapshot::{SyncbackData, SyncbackSnapshot};
 /// If this is set to `1`, it will instead use `Rbxmx`. If it is set to `2`,
 /// it will use `JsonModel`.
 ///
-/// This will override existing `Rbxm` middleware too, not just new files.
+/// This will **not** override existing `Rbxm` middleware. It will only impact
+/// new files.
 const DEBUG_MODEL_FORMAT_VAR: &str = "ROJO_SYNCBACK_DEBUG";
 
 pub fn syncback_loop(
@@ -257,7 +258,7 @@ pub fn get_best_middleware(snapshot: &SyncbackSnapshot) -> Middleware {
     if let Some(override_middleware) = snapshot.middleware {
         middleware = override_middleware;
     } else if let Some(old_middleware) = old_middleware {
-        middleware = old_middleware;
+        return old_middleware;
     } else if json_model_classes.contains(inst.class.as_str()) {
         middleware = Middleware::JsonModel;
     } else {
