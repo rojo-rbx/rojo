@@ -14,7 +14,6 @@ const INPUT_FILE: &str = "input.rbxl";
 const EXPECTED_DIR: &str = "expected";
 
 pub fn basic_syncback_test(name: &str) -> anyhow::Result<()> {
-    let _ = env_logger::try_init();
     let test_path = Path::new(SYNCBACK_TESTS_PATH).join(name);
     let output_path = test_path.join(OUTPUT_DIR);
     let expected_path = test_path.join(EXPECTED_DIR);
