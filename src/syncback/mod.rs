@@ -77,8 +77,17 @@ pub fn syncback_loop(
     log::debug!("Hashing file DOM");
     let new_hashes = hash_tree(project, &new_tree, new_tree.root_ref());
 
-    log::debug!("Linking referents for new DOM");
-    deferred_referents.link(&mut new_tree)?;
+    let ignore_referents = project
+        .syncback_rules
+        .as_ref()
+        .and_then(|s| s.ignore_referents)
+        .unwrap_or_default();
+    if !ignore_referents {
+        log::debug!("Linking referents for new DOM");
+        deferred_referents.link(&mut new_tree)?;
+    } else {
+        log::debug!("Skipping referent linking as per project syncback rules");
+    }
 
     if let Some(syncback_rules) = &project.syncback_rules {
         if !syncback_rules.sync_current_camera.unwrap_or_default() {
@@ -310,6 +319,10 @@ pub struct SyncbackRules {
     /// Defaults to `false`.
     #[serde(skip_serializing_if = "Option::is_none")]
     sync_unscriptable: Option<bool>,
+    /// Whether to skip serializing referent properties like `Model.PrimaryPart`
+    /// during syncback. Defaults to `false`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    ignore_referents: Option<bool>,
 }
 
 /// Returns a set of properties that should not be written with syncback if
