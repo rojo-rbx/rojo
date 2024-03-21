@@ -123,7 +123,7 @@ pub(super) enum OutputKind {
 }
 
 impl OutputKind {
-    pub(super) fn from_output_path_place(output: &Path) -> Option<OutputKind> {
+    pub(super) fn from_place_path(output: &Path) -> Option<OutputKind> {
         let extension = output.extension()?.to_str()?;
 
         match extension {

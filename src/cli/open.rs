@@ -68,7 +68,7 @@ impl OpenCommand {
             .unwrap_or(DEFAULT_PORT);
 
         let output_kind =
-            OutputKind::from_output_path_place(&self.output).context(UNKNOWN_OUTPUT_KIND_ERR)?;
+            OutputKind::from_place_path(&self.output).context(UNKNOWN_OUTPUT_KIND_ERR)?;
 
         write_model(&session, &self.output, OutputKind::Rbxl)?;
 
