@@ -4,6 +4,7 @@ mod build;
 mod doc;
 mod fmt_project;
 mod init;
+mod open;
 mod plugin;
 mod serve;
 mod sourcemap;
@@ -18,6 +19,7 @@ pub use self::build::BuildCommand;
 pub use self::doc::DocCommand;
 pub use self::fmt_project::FmtProjectCommand;
 pub use self::init::{InitCommand, InitKind};
+use self::open::OpenCommand;
 pub use self::plugin::{PluginCommand, PluginSubcommand};
 pub use self::serve::ServeCommand;
 pub use self::sourcemap::SourcemapCommand;
@@ -41,6 +43,7 @@ impl Options {
             Subcommand::Init(subcommand) => subcommand.run(),
             Subcommand::Serve(subcommand) => subcommand.run(self.global),
             Subcommand::Build(subcommand) => subcommand.run(),
+            Subcommand::Open(subcommand) => subcommand.run(self.global),
             Subcommand::Upload(subcommand) => subcommand.run(),
             Subcommand::Sourcemap(subcommand) => subcommand.run(),
             Subcommand::FmtProject(subcommand) => subcommand.run(),
@@ -114,6 +117,7 @@ pub enum Subcommand {
     Init(InitCommand),
     Serve(ServeCommand),
     Build(BuildCommand),
+    Open(OpenCommand),
     Upload(UploadCommand),
     Sourcemap(SourcemapCommand),
     FmtProject(FmtProjectCommand),
