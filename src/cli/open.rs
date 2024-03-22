@@ -7,7 +7,7 @@ use std::{
 };
 
 use anyhow::Context;
-use clap::Parser;
+use clap::{IntoApp, Parser};
 use memofs::Vfs;
 use rbx_dom_weak::InstanceBuilder;
 
@@ -35,8 +35,12 @@ pub struct OpenCommand {
     /// Where to output the result.
     ///
     /// Should end in .rbxm, .rbxl.
-    #[clap(long, short)]
-    pub output: PathBuf,
+    #[clap(long, short, conflicts_with = "place")]
+    pub output: Option<PathBuf>,
+
+    /// TODO
+    #[clap(long, short, conflicts_with = "output")]
+    pub place: Option<PathBuf>,
 
     /// The IP address to listen on. Defaults to `127.0.0.1`.
     #[clap(long)]
@@ -51,6 +55,18 @@ pub struct OpenCommand {
 // TODO: Support existing places.
 impl OpenCommand {
     pub fn run(self, global: GlobalOptions) -> anyhow::Result<()> {
+        if self.output.is_none() && self.place.is_none() {
+            OpenCommand::command()
+                    .error(
+                        clap::ErrorKind::MissingRequiredArgument,
+                        "one of the following arguments must be provided: \n    --output <OUTPUT>\n    --place <PLACE>",
+                    )
+                    .exit();
+        }
+
+        let is_existing_place = self.place.is_some();
+        let path = self.output.unwrap_or_else(|| self.place.unwrap());
+
         let project = resolve_path(&self.project);
 
         let vfs = Vfs::new_default();
@@ -67,14 +83,15 @@ impl OpenCommand {
             .or_else(|| random_port(ip))
             .unwrap_or(DEFAULT_PORT);
 
-        let output_kind =
-            OutputKind::from_place_path(&self.output).context(UNKNOWN_OUTPUT_KIND_ERR)?;
+        let output_kind = OutputKind::from_place_path(&path).context(UNKNOWN_OUTPUT_KIND_ERR)?;
 
-        write_model(&session, &self.output, OutputKind::Rbxl)?;
+        if !is_existing_place {
+            write_model(&session, &path, OutputKind::Rbxl)?;
+        }
 
-        inject_rojo_open_string_value(&self.output, output_kind, ip, port)?;
+        inject_rojo_open_string_value(&path, output_kind, ip, port)?;
 
-        opener::open(self.output)?;
+        opener::open(path)?;
 
         let server = LiveServer::new(Arc::new(session));
 
