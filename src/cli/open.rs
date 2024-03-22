@@ -35,12 +35,16 @@ pub struct OpenCommand {
     /// Where to output the result.
     ///
     /// Should end in .rbxm, .rbxl.
-    #[clap(long, short, conflicts_with = "place")]
+    #[clap(long, short, conflicts_with = "place", conflicts_with = "cloud")]
     pub output: Option<PathBuf>,
 
     /// TODO
-    #[clap(long, short, conflicts_with = "output")]
+    #[clap(long, short, conflicts_with = "output", conflicts_with = "cloud")]
     pub place: Option<PathBuf>,
+
+    /// TODO
+    #[clap(long, short, conflicts_with = "output", conflicts_with = "place")]
+    pub cloud: Option<u64>,
 
     /// The IP address to listen on. Defaults to `127.0.0.1`.
     #[clap(long)]
@@ -55,17 +59,14 @@ pub struct OpenCommand {
 // TODO: Support existing places.
 impl OpenCommand {
     pub fn run(self, global: GlobalOptions) -> anyhow::Result<()> {
-        if self.output.is_none() && self.place.is_none() {
+        if self.output.is_none() && self.place.is_none() && self.cloud.is_none() {
             OpenCommand::command()
                     .error(
                         clap::ErrorKind::MissingRequiredArgument,
-                        "one of the following arguments must be provided: \n    --output <OUTPUT>\n    --place <PLACE>",
+                        "one of the following arguments must be provided: \n    --output <OUTPUT>\n    --place <PLACE>\n   --cloud <CLOUD>",
                     )
                     .exit();
         }
-
-        let is_existing_place = self.place.is_some();
-        let path = self.output.unwrap_or_else(|| self.place.unwrap());
 
         let project = resolve_path(&self.project);
 
@@ -80,18 +81,36 @@ impl OpenCommand {
         let port = self
             .port
             .or_else(|| session.project_port())
-            .or_else(|| random_port(ip))
+            .or_else(|| {
+                if self.cloud.is_some() {
+                    None
+                } else {
+                    random_port(ip)
+                }
+            })
             .unwrap_or(DEFAULT_PORT);
 
-        let output_kind = OutputKind::from_place_path(&path).context(UNKNOWN_OUTPUT_KIND_ERR)?;
+        match self.cloud {
+            Some(place_id) => {
+                opener::open(format!(
+                    "roblox-studio:1+task:EditPlace+universeId:0+placeId:{place_id}"
+                ))?;
+            }
+            None => {
+                let is_existing_place = self.place.is_some();
+                let path = self.output.unwrap_or_else(|| self.place.unwrap());
+                let output_kind =
+                    OutputKind::from_place_path(&path).context(UNKNOWN_OUTPUT_KIND_ERR)?;
 
-        if !is_existing_place {
-            write_model(&session, &path, OutputKind::Rbxl)?;
+                if !is_existing_place {
+                    write_model(&session, &path, OutputKind::Rbxl)?;
+                }
+
+                inject_rojo_open_string_value(&path, output_kind, ip, port)?;
+
+                opener::open(path)?;
+            }
         }
-
-        inject_rojo_open_string_value(&path, output_kind, ip, port)?;
-
-        opener::open(path)?;
 
         let server = LiveServer::new(Arc::new(session));
 
