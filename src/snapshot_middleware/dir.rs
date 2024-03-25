@@ -99,7 +99,7 @@ pub fn syncback_dir<'sync>(
     snapshot: &SyncbackSnapshot<'sync>,
     dir_name: &str,
 ) -> anyhow::Result<SyncbackReturn<'sync>> {
-    let path = snapshot.parent_path.join(dir_name);
+    let path = snapshot.path.join(dir_name);
     let new_inst = snapshot.new_inst();
 
     let mut dir_syncback = syncback_dir_no_meta(snapshot, dir_name)?;
@@ -136,7 +136,7 @@ pub fn syncback_dir_no_meta<'sync>(
     snapshot: &SyncbackSnapshot<'sync>,
     dir_name: &str,
 ) -> anyhow::Result<SyncbackReturn<'sync>> {
-    let path = snapshot.parent_path.join(dir_name);
+    let path = snapshot.path.join(dir_name);
     let new_inst = snapshot.new_inst();
 
     let mut children = Vec::new();
@@ -179,14 +179,18 @@ pub fn syncback_dir_no_meta<'sync>(
                     continue;
                 }
                 // This child exists in both doms. Pass it on.
-                children.push(snapshot.with_parent(
+                children.push(snapshot.with_joined_path(
                     new_child.name.clone(),
                     *new_child_ref,
                     Some(old_child.id()),
                 ));
             } else {
                 // The child only exists in the the new dom
-                children.push(snapshot.with_parent(new_child.name.clone(), *new_child_ref, None));
+                children.push(snapshot.with_joined_path(
+                    new_child.name.clone(),
+                    *new_child_ref,
+                    None,
+                ));
             }
         }
         // Any children that are in the old dom but not the new one are removed.
@@ -195,7 +199,7 @@ pub fn syncback_dir_no_meta<'sync>(
         // There is no old instance. Just add every child.
         for new_child_ref in new_inst.children() {
             let new_child = snapshot.get_new_instance(*new_child_ref).unwrap();
-            children.push(snapshot.with_parent(new_child.name.clone(), *new_child_ref, None));
+            children.push(snapshot.with_joined_path(new_child.name.clone(), *new_child_ref, None));
         }
     }
     let mut fs_snapshot = FsSnapshot::new();

@@ -68,7 +68,7 @@ pub fn syncback_json_model<'sync>(
     snapshot: &SyncbackSnapshot<'sync>,
     file_name: &str,
 ) -> anyhow::Result<SyncbackReturn<'sync>> {
-    let path = snapshot.parent_path.join(file_name);
+    let path = snapshot.path.join(file_name);
 
     let mut property_buffer = Vec::with_capacity(snapshot.new_inst().properties.len());
 

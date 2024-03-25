@@ -53,7 +53,7 @@ pub fn syncback_txt<'sync>(
     file_name: &str,
 ) -> anyhow::Result<SyncbackReturn<'sync>> {
     let new_inst = snapshot.new_inst();
-    let path = snapshot.parent_path.join(file_name);
+    let path = snapshot.path.join(file_name);
 
     let contents = if let Some(Variant::String(source)) = new_inst.properties.get("Value") {
         source.as_bytes().to_vec()
@@ -69,9 +69,7 @@ pub fn syncback_txt<'sync>(
 
         if !meta.is_empty() {
             fs_snapshot.add_file(
-                snapshot
-                    .parent_path
-                    .join(format!("{}.meta.json", new_inst.name)),
+                snapshot.path.join(format!("{}.meta.json", new_inst.name)),
                 serde_json::to_vec_pretty(&meta).context("could not serialize metadata")?,
             );
         }

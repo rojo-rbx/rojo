@@ -128,7 +128,7 @@ pub fn syncback_lua<'sync>(
     file_name: &str,
 ) -> anyhow::Result<SyncbackReturn<'sync>> {
     let new_inst = snapshot.new_inst();
-    let path = snapshot.parent_path.join(file_name);
+    let path = snapshot.path.join(file_name);
 
     let contents = if let Some(Variant::String(source)) = new_inst.properties.get("Source") {
         source.as_bytes().to_vec()
@@ -144,9 +144,7 @@ pub fn syncback_lua<'sync>(
 
         if !meta.is_empty() {
             fs_snapshot.add_file(
-                snapshot
-                    .parent_path
-                    .join(format!("{}.meta.json", new_inst.name)),
+                snapshot.path.join(format!("{}.meta.json", new_inst.name)),
                 serde_json::to_vec_pretty(&meta).context("cannot serialize metadata")?,
             );
         }
@@ -167,7 +165,7 @@ pub fn syncback_lua_init<'sync>(
     dir_name: &str,
 ) -> anyhow::Result<SyncbackReturn<'sync>> {
     let new_inst = snapshot.new_inst();
-    let path = snapshot.parent_path.join(dir_name).join(match script_type {
+    let path = snapshot.path.join(dir_name).join(match script_type {
         ScriptType::Server => "init.server.lua",
         ScriptType::Client => "init.client.lua",
         ScriptType::Module => "init.lua",
@@ -188,7 +186,7 @@ pub fn syncback_lua_init<'sync>(
 
         if !meta.is_empty() {
             dir_syncback.fs_snapshot.add_file(
-                snapshot.parent_path.join(dir_name).join("init.meta.json"),
+                snapshot.path.join(dir_name).join("init.meta.json"),
                 serde_json::to_vec_pretty(&meta)
                     .context("could not serialize new init.meta.json")?,
             );

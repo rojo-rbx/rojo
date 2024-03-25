@@ -504,7 +504,7 @@ pub fn syncback_project<'sync>(
             // syncback on the project node path above (or is itself a node).
             // So the only things we need to run seperately is new children.
             if old_child_map.remove(name.as_str()).is_none() {
-                descendant_snapshots.push(snapshot.with_new_parent(
+                descendant_snapshots.push(snapshot.with_new_path(
                     parent_path,
                     new_child.name.clone(),
                     new_child.referent(),
@@ -550,7 +550,7 @@ fn syncback_project_node<'sync>(
         )
     }
     Ok(snapshot
-        .with_new_parent(
+        .with_new_path(
             file_path,
             old_inst.name().to_owned(),
             new_inst.referent(),

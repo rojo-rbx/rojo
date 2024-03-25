@@ -120,7 +120,7 @@ pub fn syncback_loop(
         data: syncback_data,
         old: Some(old_tree.get_root_id()),
         new: new_tree.root_ref(),
-        parent_path: project.file_location.clone(),
+        path: project.file_location.clone(),
         name: project.name.clone(),
         middleware: Some(Middleware::Project),
     }];
@@ -166,7 +166,7 @@ pub fn syncback_loop(
         }
 
         let appended_name = name_for_inst(middleware, snapshot.new_inst(), snapshot.old_inst())?;
-        let working_path = snapshot.parent_path.join(appended_name.as_ref());
+        let working_path = snapshot.path.join(appended_name.as_ref());
 
         if !snapshot.is_valid_path(project_path, &working_path) {
             log::debug!("Skipping {inst_path} because its path matches ignore pattern");
@@ -182,7 +182,7 @@ pub fn syncback_loop(
             };
             let appended_name =
                 name_for_inst(new_middleware, snapshot.new_inst(), snapshot.old_inst())?;
-            let working_path = snapshot.parent_path.join(appended_name.as_ref());
+            let working_path = snapshot.path.join(appended_name.as_ref());
 
             if !snapshot.is_valid_path(project_path, &working_path) {
                 log::warn!(

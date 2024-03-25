@@ -49,7 +49,7 @@ pub fn syncback_rbxmx<'sync>(
     file_name: &str,
 ) -> anyhow::Result<SyncbackReturn<'sync>> {
     let inst = snapshot.new_inst();
-    let path = snapshot.parent_path.join(file_name);
+    let path = snapshot.path.join(file_name);
 
     // Long-term, we probably want to have some logic for if this contains a
     // script. That's a future endeavor though.

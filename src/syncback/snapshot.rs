@@ -33,30 +33,31 @@ pub struct SyncbackSnapshot<'sync> {
     pub data: SyncbackData<'sync>,
     pub old: Option<Ref>,
     pub new: Ref,
-    pub parent_path: PathBuf,
+    pub path: PathBuf,
     pub name: String,
     pub middleware: Option<Middleware>,
 }
 
 impl<'sync> SyncbackSnapshot<'sync> {
     /// Constructs a SyncbackSnapshot from the provided refs
-    /// while inheriting the parent's trees and path
+    /// while inheriting this snapshot's path and data. This should be used for
+    /// directories.
     #[inline]
-    pub fn with_parent(&self, new_name: String, new_ref: Ref, old_ref: Option<Ref>) -> Self {
+    pub fn with_joined_path(&self, new_name: String, new_ref: Ref, old_ref: Option<Ref>) -> Self {
         Self {
             data: self.data,
             old: old_ref,
             new: new_ref,
-            parent_path: self.parent_path.join(&self.name),
+            path: self.path.join(&self.name),
             name: new_name,
             middleware: None,
         }
     }
 
     /// Constructs a SyncbackSnapshot from the provided refs and path, while
-    /// inheriting this snapshot's trees.
+    /// inheriting this snapshot's data.
     #[inline]
-    pub fn with_new_parent(
+    pub fn with_new_path(
         &self,
         new_parent: PathBuf,
         new_name: String,
@@ -67,7 +68,7 @@ impl<'sync> SyncbackSnapshot<'sync> {
             data: self.data,
             old: old_ref,
             new: new_ref,
-            parent_path: new_parent,
+            path: new_parent,
             name: new_name,
             middleware: None,
         }
