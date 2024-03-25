@@ -60,7 +60,11 @@ impl ServeCommand {
     }
 }
 
-fn show_start_message(bind_address: IpAddr, port: u16, color: ColorChoice) -> io::Result<()> {
+pub(super) fn show_start_message(
+    bind_address: IpAddr,
+    port: u16,
+    color: ColorChoice,
+) -> io::Result<()> {
     let mut green = ColorSpec::new();
     green.set_fg(Some(Color::Green)).set_bold(true);
 
