@@ -421,12 +421,6 @@ pub fn syncback_project<'sync>(
             let child = snapshot
                 .get_new_instance(*child_ref)
                 .expect("all children of Instances should be in new DOM");
-            // As of writing (Feb 27 2024) Roblox serializes several Instances
-            // with the class 'Instance' that all have the same name. To avoid
-            // difficulties, we just ignore them. :-)
-            if child.class == "Instance" {
-                continue;
-            }
             if new_child_map.insert(&child.name, child).is_some() {
                 anyhow::bail!(
                     "Instances that are direct children of an Instance that is made by a project file \
