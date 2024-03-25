@@ -18,6 +18,7 @@ use crate::{
 use super::{
     dir::{dir_meta, snapshot_dir_no_meta, syncback_dir_no_meta},
     meta_file::{AdjacentMetadata, DirectoryMetadata},
+    PathExt as _,
 };
 
 pub fn snapshot_csv(
@@ -99,10 +100,8 @@ pub fn snapshot_csv_init(
 
 pub fn syncback_csv<'sync>(
     snapshot: &SyncbackSnapshot<'sync>,
-    file_name: &str,
 ) -> anyhow::Result<SyncbackReturn<'sync>> {
     let new_inst = snapshot.new_inst();
-    let path = snapshot.path.join(file_name);
 
     let contents = if let Some(Variant::String(content)) = new_inst.properties.get("Contents") {
         content.as_str()
@@ -110,15 +109,16 @@ pub fn syncback_csv<'sync>(
         anyhow::bail!("LocalizationTables must have a `Contents` property that is a String")
     };
     let mut fs_snapshot = FsSnapshot::new();
-    fs_snapshot.add_file(&path, localization_to_csv(contents)?);
+    fs_snapshot.add_file(&snapshot.path, localization_to_csv(contents)?);
 
-    let meta = AdjacentMetadata::from_syncback_snapshot(snapshot, path.clone())?;
+    let meta = AdjacentMetadata::from_syncback_snapshot(snapshot, snapshot.path.clone())?;
     if let Some(mut meta) = meta {
         meta.properties.remove("Contents");
 
         if !meta.is_empty() {
+            let parent = snapshot.path.parent_err()?;
             fs_snapshot.add_file(
-                snapshot.path.join(format!("{}.meta.json", new_inst.name)),
+                parent.join(format!("{}.meta.json", new_inst.name)),
                 serde_json::to_vec_pretty(&meta).context("cannot serialize metadata")?,
             )
         }
@@ -134,11 +134,8 @@ pub fn syncback_csv<'sync>(
 
 pub fn syncback_csv_init<'sync>(
     snapshot: &SyncbackSnapshot<'sync>,
-    dir_name: &str,
 ) -> anyhow::Result<SyncbackReturn<'sync>> {
     let new_inst = snapshot.new_inst();
-
-    let path = snapshot.path.join(dir_name).join("init.csv");
 
     let contents = if let Some(Variant::String(content)) = new_inst.properties.get("Contents") {
         content.as_str()
@@ -146,17 +143,18 @@ pub fn syncback_csv_init<'sync>(
         anyhow::bail!("LocalizationTables must have a `Contents` property that is a String")
     };
 
-    let mut dir_syncback = syncback_dir_no_meta(snapshot, dir_name)?;
-    dir_syncback
-        .fs_snapshot
-        .add_file(&path, localization_to_csv(contents)?);
+    let mut dir_syncback = syncback_dir_no_meta(snapshot)?;
+    dir_syncback.fs_snapshot.add_file(
+        &snapshot.path.join("init.csv"),
+        localization_to_csv(contents)?,
+    );
 
-    let meta = DirectoryMetadata::from_syncback_snapshot(snapshot, path.clone())?;
+    let meta = DirectoryMetadata::from_syncback_snapshot(snapshot, snapshot.path.clone())?;
     if let Some(mut meta) = meta {
         meta.properties.remove("Contents");
         if !meta.is_empty() {
             dir_syncback.fs_snapshot.add_file(
-                snapshot.path.join(dir_name).join("init.meta.json"),
+                snapshot.path.join("init.meta.json"),
                 serde_json::to_vec_pretty(&meta)
                     .context("could not serialize new init.meta.json")?,
             );

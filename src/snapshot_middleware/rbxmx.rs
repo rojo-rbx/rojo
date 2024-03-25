@@ -46,10 +46,8 @@ pub fn snapshot_rbxmx(
 
 pub fn syncback_rbxmx<'sync>(
     snapshot: &SyncbackSnapshot<'sync>,
-    file_name: &str,
 ) -> anyhow::Result<SyncbackReturn<'sync>> {
     let inst = snapshot.new_inst();
-    let path = snapshot.path.join(file_name);
 
     // Long-term, we probably want to have some logic for if this contains a
     // script. That's a future endeavor though.
@@ -59,7 +57,7 @@ pub fn syncback_rbxmx<'sync>(
 
     Ok(SyncbackReturn {
         inst_snapshot: InstanceSnapshot::from_instance(inst),
-        fs_snapshot: FsSnapshot::new().with_added_file(path, serialized),
+        fs_snapshot: FsSnapshot::new().with_added_file(&snapshot.path, serialized),
         children: Vec::new(),
         removed_children: Vec::new(),
     })

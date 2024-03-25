@@ -324,11 +324,7 @@ pub fn syncback_project<'sync>(
         .expect("all projects should have a relevant path");
     let vfs = snapshot.vfs();
 
-    log::debug!(
-        "Reloading project {} from vfs (name: {})",
-        project_path.display(),
-        snapshot.name
-    );
+    log::debug!("Reloading project {} from vfs", project_path.display(),);
     let mut project = Project::load_from_slice(&vfs.read(project_path)?, project_path)?;
     let base_path = project.folder_location().to_path_buf();
 
@@ -506,7 +502,6 @@ pub fn syncback_project<'sync>(
             if old_child_map.remove(name.as_str()).is_none() {
                 descendant_snapshots.push(snapshot.with_new_path(
                     parent_path,
-                    new_child.name.clone(),
                     new_child.referent(),
                     None,
                 ));
@@ -531,7 +526,7 @@ fn syncback_project_node<'sync>(
     new_inst: &Instance,
     old_inst: InstanceWithMeta,
 ) -> anyhow::Result<SyncbackSnapshot<'sync>> {
-    let (middleware, _, mut file_path) =
+    let (middleware, _, file_path) =
         match Middleware::middleware_and_path(snapshot.vfs(), sync_rules, node_path)? {
             Some(stuff) => stuff,
             // The only way this can happen at this point is if the path does
@@ -542,20 +537,8 @@ fn syncback_project_node<'sync>(
             ),
         };
 
-    if !file_path.pop() {
-        anyhow::bail!(
-            "cannot syncback node {} using middleware {:?} because it is at the disk root",
-            old_inst.name(),
-            middleware
-        )
-    }
     Ok(snapshot
-        .with_new_path(
-            file_path,
-            old_inst.name().to_owned(),
-            new_inst.referent(),
-            Some(old_inst.id()),
-        )
+        .with_new_path(file_path, new_inst.referent(), Some(old_inst.id()))
         .middleware(middleware))
 }
 

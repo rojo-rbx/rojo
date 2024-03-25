@@ -10,7 +10,7 @@ use crate::{
     syncback::{FsSnapshot, SyncbackReturn, SyncbackSnapshot},
 };
 
-use super::meta_file::AdjacentMetadata;
+use super::{meta_file::AdjacentMetadata, PathExt as _};
 
 pub fn snapshot_txt(
     context: &InstanceContext,
@@ -50,10 +50,8 @@ pub fn snapshot_txt(
 
 pub fn syncback_txt<'sync>(
     snapshot: &SyncbackSnapshot<'sync>,
-    file_name: &str,
 ) -> anyhow::Result<SyncbackReturn<'sync>> {
     let new_inst = snapshot.new_inst();
-    let path = snapshot.path.join(file_name);
 
     let contents = if let Some(Variant::String(source)) = new_inst.properties.get("Value") {
         source.as_bytes().to_vec()
@@ -61,15 +59,16 @@ pub fn syncback_txt<'sync>(
         anyhow::bail!("StringValues must have a `Value` property that is a String");
     };
     let mut fs_snapshot = FsSnapshot::new();
-    fs_snapshot.add_file(&path, contents);
+    fs_snapshot.add_file(&snapshot.path, contents);
 
-    let meta = AdjacentMetadata::from_syncback_snapshot(snapshot, path.clone())?;
+    let meta = AdjacentMetadata::from_syncback_snapshot(snapshot, snapshot.path.clone())?;
     if let Some(mut meta) = meta {
         meta.properties.remove("Value");
 
         if !meta.is_empty() {
+            let parent = snapshot.path.parent_err()?;
             fs_snapshot.add_file(
-                snapshot.path.join(format!("{}.meta.json", new_inst.name)),
+                parent.join(format!("{}.meta.json", new_inst.name)),
                 serde_json::to_vec_pretty(&meta).context("could not serialize metadata")?,
             );
         }

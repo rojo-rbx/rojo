@@ -16,6 +16,7 @@ pub fn match_trailing<'a>(input: &'a str, suffix: &str) -> Option<&'a str> {
 pub trait PathExt {
     fn file_name_ends_with(&self, suffix: &str) -> bool;
     fn file_name_trim_end<'a>(&'a self, suffix: &str) -> anyhow::Result<&'a str>;
+    fn parent_err(&self) -> anyhow::Result<&Path>;
 }
 
 impl<P> PathExt for P
@@ -39,6 +40,12 @@ where
 
         match_trailing(file_name, suffix)
             .with_context(|| format!("Path did not end in {}: {}", suffix, path.display()))
+    }
+
+    fn parent_err(&self) -> anyhow::Result<&Path> {
+        let path = self.as_ref();
+        path.parent()
+            .with_context(|| format!("Path does not have a parent: {}", path.display()))
     }
 }
 

@@ -16,7 +16,7 @@ use rbx_dom_weak::{
     Instance, WeakDom,
 };
 
-use super::property_filter::filter_properties;
+use super::{get_best_middleware, name_for_inst, property_filter::filter_properties};
 
 /// A glob that can be used to tell if a path contains a `.git` folder.
 static GIT_IGNORE_GLOB: OnceLock<Glob> = OnceLock::new();
@@ -34,7 +34,6 @@ pub struct SyncbackSnapshot<'sync> {
     pub old: Option<Ref>,
     pub new: Ref,
     pub path: PathBuf,
-    pub name: String,
     pub middleware: Option<Middleware>,
 }
 
@@ -43,33 +42,30 @@ impl<'sync> SyncbackSnapshot<'sync> {
     /// while inheriting this snapshot's path and data. This should be used for
     /// directories.
     #[inline]
-    pub fn with_joined_path(&self, new_name: String, new_ref: Ref, old_ref: Option<Ref>) -> Self {
-        Self {
+    pub fn with_joined_path(&self, new_ref: Ref, old_ref: Option<Ref>) -> anyhow::Result<Self> {
+        let mut snapshot = Self {
             data: self.data,
             old: old_ref,
             new: new_ref,
-            path: self.path.join(&self.name),
-            name: new_name,
+            path: PathBuf::new(),
             middleware: None,
-        }
+        };
+        let middleware = get_best_middleware(&snapshot);
+        let name = name_for_inst(middleware, snapshot.new_inst(), snapshot.old_inst())?;
+        snapshot.path = self.path.join(name.as_ref());
+
+        Ok(snapshot)
     }
 
     /// Constructs a SyncbackSnapshot from the provided refs and path, while
     /// inheriting this snapshot's data.
     #[inline]
-    pub fn with_new_path(
-        &self,
-        new_parent: PathBuf,
-        new_name: String,
-        new_ref: Ref,
-        old_ref: Option<Ref>,
-    ) -> Self {
+    pub fn with_new_path(&self, new_parent: PathBuf, new_ref: Ref, old_ref: Option<Ref>) -> Self {
         Self {
             data: self.data,
             old: old_ref,
             new: new_ref,
             path: new_parent,
-            name: new_name,
             middleware: None,
         }
     }

@@ -97,14 +97,12 @@ pub fn snapshot_dir_no_meta(
 
 pub fn syncback_dir<'sync>(
     snapshot: &SyncbackSnapshot<'sync>,
-    dir_name: &str,
 ) -> anyhow::Result<SyncbackReturn<'sync>> {
-    let path = snapshot.path.join(dir_name);
     let new_inst = snapshot.new_inst();
 
-    let mut dir_syncback = syncback_dir_no_meta(snapshot, dir_name)?;
+    let mut dir_syncback = syncback_dir_no_meta(snapshot)?;
 
-    let mut meta = DirectoryMetadata::from_syncback_snapshot(snapshot, path.clone())?;
+    let mut meta = DirectoryMetadata::from_syncback_snapshot(snapshot, snapshot.path.clone())?;
     if let Some(meta) = &mut meta {
         if new_inst.class != "Folder" {
             meta.class_name = Some(new_inst.class.clone());
@@ -112,7 +110,7 @@ pub fn syncback_dir<'sync>(
 
         if !meta.is_empty() {
             dir_syncback.fs_snapshot.add_file(
-                path.join("init.meta.json"),
+                snapshot.path.join("init.meta.json"),
                 serde_json::to_vec_pretty(&meta)
                     .context("could not serialize new init.meta.json")?,
             );
@@ -126,7 +124,7 @@ pub fn syncback_dir<'sync>(
     if new_inst.children().is_empty() && metadata_empty {
         dir_syncback
             .fs_snapshot
-            .add_file(path.join(EMPTY_DIR_KEEP_NAME), Vec::new())
+            .add_file(snapshot.path.join(EMPTY_DIR_KEEP_NAME), Vec::new())
     }
 
     Ok(dir_syncback)
@@ -134,9 +132,7 @@ pub fn syncback_dir<'sync>(
 
 pub fn syncback_dir_no_meta<'sync>(
     snapshot: &SyncbackSnapshot<'sync>,
-    dir_name: &str,
 ) -> anyhow::Result<SyncbackReturn<'sync>> {
-    let path = snapshot.path.join(dir_name);
     let new_inst = snapshot.new_inst();
 
     let mut children = Vec::new();
@@ -179,18 +175,10 @@ pub fn syncback_dir_no_meta<'sync>(
                     continue;
                 }
                 // This child exists in both doms. Pass it on.
-                children.push(snapshot.with_joined_path(
-                    new_child.name.clone(),
-                    *new_child_ref,
-                    Some(old_child.id()),
-                ));
+                children.push(snapshot.with_joined_path(*new_child_ref, Some(old_child.id()))?);
             } else {
                 // The child only exists in the the new dom
-                children.push(snapshot.with_joined_path(
-                    new_child.name.clone(),
-                    *new_child_ref,
-                    None,
-                ));
+                children.push(snapshot.with_joined_path(*new_child_ref, None)?);
             }
         }
         // Any children that are in the old dom but not the new one are removed.
@@ -198,12 +186,11 @@ pub fn syncback_dir_no_meta<'sync>(
     } else {
         // There is no old instance. Just add every child.
         for new_child_ref in new_inst.children() {
-            let new_child = snapshot.get_new_instance(*new_child_ref).unwrap();
-            children.push(snapshot.with_joined_path(new_child.name.clone(), *new_child_ref, None));
+            children.push(snapshot.with_joined_path(*new_child_ref, None)?);
         }
     }
     let mut fs_snapshot = FsSnapshot::new();
-    fs_snapshot.add_dir(&path);
+    fs_snapshot.add_dir(&snapshot.path);
 
     Ok(SyncbackReturn {
         inst_snapshot: InstanceSnapshot::from_instance(new_inst),

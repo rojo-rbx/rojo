@@ -66,10 +66,7 @@ pub fn snapshot_json_model(
 
 pub fn syncback_json_model<'sync>(
     snapshot: &SyncbackSnapshot<'sync>,
-    file_name: &str,
 ) -> anyhow::Result<SyncbackReturn<'sync>> {
-    let path = snapshot.path.join(file_name);
-
     let mut property_buffer = Vec::with_capacity(snapshot.new_inst().properties.len());
 
     let mut model = json_model_from_pair(snapshot, &mut property_buffer, snapshot.new);
@@ -79,7 +76,7 @@ pub fn syncback_json_model<'sync>(
     Ok(SyncbackReturn {
         inst_snapshot: InstanceSnapshot::from_instance(snapshot.new_inst()),
         fs_snapshot: FsSnapshot::new().with_added_file(
-            path,
+            &snapshot.path,
             serde_json::to_vec_pretty(&model).context("failed to serialize new JSON Model")?,
         ),
         children: Vec::new(),
