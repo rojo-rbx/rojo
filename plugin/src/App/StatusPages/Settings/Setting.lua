@@ -18,6 +18,18 @@ local Tag = require(Plugin.App.Components.Tag)
 local e = Roact.createElement
 
 local DIVIDER_FADE_SIZE = 0.1
+local TAG_TYPES = {
+	unstable = {
+		text = "UNSTABLE",
+		icon = Assets.Images.Icons.Warning,
+		color = { "Settings", "Setting", "UnstableColor" },
+	},
+	debug = {
+		text = "DEBUG",
+		icon = Assets.Images.Icons.Debug,
+		color = { "Settings", "Setting", "DebugColor" },
+	},
+}
 
 local function getTextBounds(text, textSize, font, lineHeight, bounds)
 	local textBounds = TextService:GetTextSize(text, textSize, font, bounds)
@@ -26,6 +38,17 @@ local function getTextBounds(text, textSize, font, lineHeight, bounds)
 	local lineHeightAbsolute = textSize * lineHeight
 
 	return Vector2.new(textBounds.X, lineHeightAbsolute * lineCount - (lineHeightAbsolute - textSize))
+end
+
+local function getThemeColorFromPath(theme, path)
+	local color = theme
+	for _, key in path do
+		if color[key] == nil then
+			return theme.BrandColor
+		end
+		color = color[key]
+	end
+	return color
 end
 
 local Setting = Roact.Component:extend("Setting")
@@ -131,27 +154,21 @@ function Setting:render()
 						SortOrder = Enum.SortOrder.LayoutOrder,
 						Padding = UDim.new(0, 5),
 					}),
-					Tag = if self.props.unstable or self.props.debug
+					Tag = if self.props.tag and TAG_TYPES[self.props.tag]
 						then e(Tag, {
 							layoutOrder = 1,
 							transparency = self.props.transparency,
-							text = if self.props.unstable then "UNSTABLE" else "DEBUG",
-							icon = if self.props.unstable
-								then Assets.Images.Icons.Warning
-								else Assets.Images.Icons.Debug,
-							color = if self.props.unstable
-								then settingsTheme.Setting.UnstableColor
-								elseif self.props.debug then settingsTheme.Setting.DebugColor
-								else settingsTheme.BrandColor,
+							text = TAG_TYPES[self.props.tag].text,
+							icon = TAG_TYPES[self.props.tag].icon,
+							color = getThemeColorFromPath(theme, TAG_TYPES[self.props.tag].color),
 						})
 						else nil,
 					Name = e("TextLabel", {
 						Text = self.props.name,
 						Font = Enum.Font.GothamBold,
 						TextSize = 16,
-						TextColor3 = if self.props.unstable
-							then settingsTheme.Setting.UnstableColor
-							elseif self.props.debug then settingsTheme.Setting.DebugColor
+						TextColor3 = if self.props.tag and TAG_TYPES[self.props.tag]
+							then getThemeColorFromPath(theme, TAG_TYPES[self.props.tag].color)
 							else settingsTheme.Setting.NameColor,
 						TextXAlignment = Enum.TextXAlignment.Left,
 						TextTransparency = self.props.transparency,
