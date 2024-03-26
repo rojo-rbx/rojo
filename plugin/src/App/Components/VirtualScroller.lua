@@ -131,8 +131,8 @@ function VirtualScroller:render()
 			Position = props.position,
 			AnchorPoint = props.anchorPoint,
 			BackgroundTransparency = props.backgroundTransparency or 1,
-			BackgroundColor3 = props.backgroundColor3,
-			BorderColor3 = props.borderColor3,
+			BackgroundColor3 = props.backgroundColor3 or theme.BorderedContainer.BackgroundColor,
+			BorderColor3 = props.borderColor3 or theme.BorderedContainer.BorderColor,
 			CanvasSize = self.totalCanvas:map(function(s)
 				return UDim2.fromOffset(0, s)
 			end),

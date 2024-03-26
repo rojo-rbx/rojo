@@ -155,7 +155,7 @@ function ChangeList:render()
 
 		local headerRow = changes[1]
 		local headers = e("Frame", {
-			Size = UDim2.new(1, 0, 0, 30),
+			Size = UDim2.new(1, 0, 0, 24),
 			BackgroundTransparency = rowTransparency,
 			BackgroundColor3 = theme.Diff.Row,
 			LayoutOrder = 0,
@@ -214,7 +214,7 @@ function ChangeList:render()
 			local isWarning = metadata.isWarning
 
 			rows[row] = e("Frame", {
-				Size = UDim2.new(1, 0, 0, 30),
+				Size = UDim2.new(1, 0, 0, 24),
 				BackgroundTransparency = row % 2 ~= 0 and rowTransparency or 1,
 				BackgroundColor3 = theme.Diff.Row,
 				BorderSizePixel = 0,
@@ -269,8 +269,8 @@ function ChangeList:render()
 		}, {
 			Headers = headers,
 			Values = e(ScrollingFrame, {
-				size = UDim2.new(1, 0, 1, -30),
-				position = UDim2.new(0, 0, 0, 30),
+				size = UDim2.new(1, 0, 1, -24),
+				position = UDim2.new(0, 0, 0, 24),
 				contentSize = self.contentSize,
 				transparency = props.transparency,
 			}, rows),

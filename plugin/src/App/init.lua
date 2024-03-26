@@ -457,7 +457,7 @@ function App:startSession()
 	end)
 
 	serveSession:hookPostcommit(function(patch, _instanceMap, unapplied)
-		local now = os.time()
+		local now = DateTime.now().UnixTimestamp
 		local old = self.state.patchData
 
 		if PatchSet.isEmpty(patch) then

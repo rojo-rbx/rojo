@@ -4,6 +4,7 @@
 * Added Never option to Confirmation ([#893])
 * Added popout diff visualizer for table properties like Attributes and Tags ([#834])
 * Updated Theme to use Studio colors ([#838])
+* Improved patch visualizer UX ([#883])
 * Added experimental setting for Auto Connect in playtests ([#840])
 * Projects may now specify rules for syncing files as if they had a different file extension. ([#813])
  	This is specified via a new field on project files, `syncRules`:
@@ -56,6 +57,7 @@
 [#834]: https://github.com/rojo-rbx/rojo/pull/834
 [#838]: https://github.com/rojo-rbx/rojo/pull/838
 [#840]: https://github.com/rojo-rbx/rojo/pull/840
+[#883]: https://github.com/rojo-rbx/rojo/pull/883
 [#893]: https://github.com/rojo-rbx/rojo/pull/893
 
 ## [7.4.1] - February 20, 2024
