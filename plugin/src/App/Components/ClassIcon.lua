@@ -12,11 +12,6 @@ local e = Roact.createElement
 local EditableImage = require(Plugin.App.Components.EditableImage)
 
 local function getRecoloredClassIcon(className, color)
-	-- HACK: DataModel is currently missing an icon so we redirect it
-	if className == "DataModel" then
-		className = "Class"
-	end
-
 	local iconProps = StudioService:GetClassIcon(className)
 
 	if iconProps and color then
