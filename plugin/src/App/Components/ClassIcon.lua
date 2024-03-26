@@ -21,8 +21,6 @@ local function getImageSizeAndPixels(image)
 		}
 	end
 
-	imageCache[image].LastAccess = tick()
-
 	return imageCache[image].Size, table.clone(imageCache[image].Pixels)
 end
 
