@@ -141,4 +141,28 @@ impl FsSnapshot {
 
         list
     }
+
+    /// Returns a list of file paths that would be added by this `FsSnapshot`
+    #[inline]
+    pub fn added_files(&self) -> Vec<&Path> {
+        self.added_files.keys().map(PathBuf::as_path).collect()
+    }
+
+    /// Returns a list of directory paths that would be added by this `FsSnapshot`
+    #[inline]
+    pub fn added_dirs(&self) -> Vec<&Path> {
+        self.added_dirs.iter().map(PathBuf::as_path).collect()
+    }
+
+    /// Returns a list of file paths that would be removed by this `FsSnapshot`
+    #[inline]
+    pub fn removed_files(&self) -> Vec<&Path> {
+        self.removed_files.iter().map(PathBuf::as_path).collect()
+    }
+
+    /// Returns a list of directory paths that would be removed by this `FsSnapshot`
+    #[inline]
+    pub fn removed_dirs(&self) -> Vec<&Path> {
+        self.removed_dirs.iter().map(PathBuf::as_path).collect()
+    }
 }
