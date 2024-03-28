@@ -4,8 +4,10 @@ use std::{
 };
 
 use anyhow::Context;
-use librojo::{snapshot_from_vfs, syncback_loop, InstanceContext, Project, RojoTree};
+use insta::assert_yaml_snapshot;
+use librojo::{snapshot_from_vfs, syncback_loop, FsSnapshot, InstanceContext, Project, RojoTree};
 use memofs::{InMemoryFs, IoResultExt, Vfs, VfsSnapshot};
+use serde::Serialize;
 
 use crate::rojo_test::io_util::SYNCBACK_TESTS_PATH;
 
@@ -17,6 +19,13 @@ pub fn basic_syncback_test(name: &str) -> anyhow::Result<()> {
     let test_path = Path::new(SYNCBACK_TESTS_PATH).join(name);
     let output_path = test_path.join(OUTPUT_DIR);
     let expected_path = test_path.join(EXPECTED_DIR);
+
+    let mut settings = insta::Settings::new();
+    let snapshot_path = Path::new(SYNCBACK_TESTS_PATH)
+        .parent()
+        .unwrap()
+        .join("syncback-test-snapshots");
+    settings.set_snapshot_path(snapshot_path);
 
     let std_vfs = Vfs::new_default();
     std_vfs.set_watch_enabled(false);
@@ -33,10 +42,14 @@ pub fn basic_syncback_test(name: &str) -> anyhow::Result<()> {
 
     let output_project_path = output_path.join("default.project.json");
     let (mut output_tree, output_project) = rojo_tree_from_path(&std_vfs, &output_project_path)?;
-
     let fs_snapshot = syncback_loop(&std_vfs, &mut output_tree, input_dom, &output_project)?;
+
+    settings.bind(|| {
+        assert_yaml_snapshot!(name, visualize_fs_snapshot(&fs_snapshot, &output_path));
+    });
+
     // We write to the in-memory VFS and not the file system!
-    fs_snapshot.write_to_vfs(test_path.join(OUTPUT_DIR), &im_vfs)?;
+    fs_snapshot.write_to_vfs(&output_path, &im_vfs)?;
 
     // And now the hard part: diffing two sub-trees.
     let mut path_queue: VecDeque<PathBuf> = [expected_path.join("default.project.json")].into();
@@ -109,5 +122,46 @@ fn to_vfs_snapshot(vfs: &Vfs, path: &Path) -> anyhow::Result<VfsSnapshot> {
     } else {
         let contents = vfs.read(path)?;
         Ok(VfsSnapshot::file(contents.as_slice()))
+    }
+}
+
+#[derive(Default, Debug, Serialize)]
+struct FsSnapshotVisual<'a> {
+    added_files: Vec<&'a Path>,
+    added_dirs: Vec<&'a Path>,
+    removed_files: Vec<&'a Path>,
+    removed_dirs: Vec<&'a Path>,
+}
+
+fn visualize_fs_snapshot<'a>(snapshot: &'a FsSnapshot, base_path: &Path) -> FsSnapshotVisual<'a> {
+    let map_closure = |p: &'a Path| p.strip_prefix(base_path).unwrap();
+
+    let mut added_files: Vec<_> = snapshot
+        .added_files()
+        .into_iter()
+        .map(map_closure)
+        .collect();
+    let mut added_dirs: Vec<_> = snapshot.added_dirs().into_iter().map(map_closure).collect();
+    let mut removed_files: Vec<_> = snapshot
+        .removed_files()
+        .into_iter()
+        .map(map_closure)
+        .collect();
+    let mut removed_dirs: Vec<_> = snapshot
+        .removed_dirs()
+        .into_iter()
+        .map(map_closure)
+        .collect();
+
+    added_files.sort_unstable();
+    added_dirs.sort_unstable();
+    removed_files.sort_unstable();
+    removed_dirs.sort_unstable();
+
+    FsSnapshotVisual {
+        added_files,
+        added_dirs,
+        removed_files,
+        removed_dirs,
     }
 }
