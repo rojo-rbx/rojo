@@ -20,6 +20,7 @@ local function SlicedImage(props)
 		Size = props.size,
 		Position = props.position,
 		AnchorPoint = props.anchorPoint,
+		AutomaticSize = props.automaticSize,
 
 		ZIndex = props.zIndex,
 		LayoutOrder = props.layoutOrder,
