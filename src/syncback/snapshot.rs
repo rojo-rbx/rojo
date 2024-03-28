@@ -57,17 +57,30 @@ impl<'sync> SyncbackSnapshot<'sync> {
         Ok(snapshot)
     }
 
-    /// Constructs a SyncbackSnapshot from the provided refs and path, while
-    /// inheriting this snapshot's data.
+    /// Constructs a SyncbackSnapshot from the provided refs and a base path,
+    /// while inheriting this snapshot's data.
+    ///
+    /// The actual path of the snapshot is made by getting a file name for the
+    /// snapshot and then appending it to the provided base path.
     #[inline]
-    pub fn with_new_path(&self, new_parent: PathBuf, new_ref: Ref, old_ref: Option<Ref>) -> Self {
-        Self {
+    pub fn with_base_path(
+        &self,
+        base_path: &Path,
+        new_ref: Ref,
+        old_ref: Option<Ref>,
+    ) -> anyhow::Result<Self> {
+        let mut snapshot = Self {
             data: self.data,
             old: old_ref,
             new: new_ref,
-            path: new_parent,
+            path: PathBuf::new(),
             middleware: None,
-        }
+        };
+        let middleware = get_best_middleware(&snapshot);
+        let name = name_for_inst(middleware, snapshot.new_inst(), snapshot.old_inst())?;
+        snapshot.path = base_path.join(name.as_ref());
+
+        Ok(snapshot)
     }
 
     /// Allows a middleware to be 'forced' onto a SyncbackSnapshot to override

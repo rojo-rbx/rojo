@@ -494,11 +494,20 @@ pub fn syncback_project<'sync>(
             // syncback on the project node path above (or is itself a node).
             // So the only things we need to run seperately is new children.
             if old_child_map.remove(name.as_str()).is_none() {
-                descendant_snapshots.push(snapshot.with_new_path(
-                    parent_path,
-                    new_child.referent(),
-                    None,
-                ));
+                let (parent_middleware, _, _) =
+                    Middleware::middleware_and_path(vfs, &project.sync_rules, &parent_path)?
+                        .expect("project nodes should have a middleware if they have children.");
+                // If this node points directly to a project, it may still have
+                // children but they'll be handled by syncback. This isn't a
+                // concern with directories because they're singular things,
+                // files that contain their own children.
+                if parent_middleware != Middleware::Project {
+                    descendant_snapshots.push(snapshot.with_base_path(
+                        &parent_path,
+                        new_child.referent(),
+                        None,
+                    )?);
+                }
             }
         }
         removed_descendants.extend(old_child_map.drain().map(|(_, v)| v));
@@ -531,9 +540,13 @@ fn syncback_project_node<'sync>(
             ),
         };
 
-    Ok(snapshot
-        .with_new_path(file_path, new_inst.referent(), Some(old_inst.id()))
-        .middleware(middleware))
+    Ok(SyncbackSnapshot {
+        data: snapshot.data,
+        old: Some(old_inst.id()),
+        new: new_inst.referent(),
+        path: file_path,
+        middleware: Some(middleware),
+    })
 }
 
 fn infer_class_name(name: &str, parent_class: Option<&str>) -> Option<Cow<'static, str>> {
