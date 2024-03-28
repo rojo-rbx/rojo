@@ -17,4 +17,5 @@ syncback_basic_test! {
     nested_projects,
     unscriptable_properties,
     nested_projects_weird,
+    project_init,
 }
