@@ -29,7 +29,7 @@ macro_rules! declare_asset {
 declare_asset!(css, "../../assets/index.css");
 
 pub fn logo() -> &'static [u8] {
-    static LOGO: &[u8] = include_bytes!("../../assets/brand-images/logo-512.png");
+    static LOGO: &[u8] = include_bytes!("../../assets/brand_images/logo-512.png");
 
     LOGO
 }
