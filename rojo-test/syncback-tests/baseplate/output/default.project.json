@@ -10,6 +10,7 @@
     }
   },
   "syncbackRules": {
-    "ignoreReferents": true
+    "ignoreReferents": true,
+    "syncCurrentCamera": true
   }
 }

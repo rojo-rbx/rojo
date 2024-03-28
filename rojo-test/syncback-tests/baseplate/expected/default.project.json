@@ -41,6 +41,7 @@
     }
   },
   "syncbackRules": {
+    "syncCurrentCamera": true,
     "ignoreReferents": true
   }
 }
