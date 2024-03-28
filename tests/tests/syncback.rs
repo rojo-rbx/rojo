@@ -16,4 +16,5 @@ syncback_basic_test! {
     respect_old_middleware,
     nested_projects,
     unscriptable_properties,
+    nested_projects_weird,
 }
