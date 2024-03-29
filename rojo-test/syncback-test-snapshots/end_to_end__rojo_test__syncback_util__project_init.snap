@@ -7,7 +7,7 @@ added_files:
   - default.project.json
   - "src\\init.lua"
 added_dirs:
-  - "src"
+  - src
 removed_files: []
 removed_dirs: []
 
