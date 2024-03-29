@@ -18,4 +18,5 @@ syncback_basic_test! {
     unscriptable_properties,
     nested_projects_weird,
     project_init,
+    all_middleware,
 }
