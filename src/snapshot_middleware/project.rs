@@ -494,8 +494,8 @@ pub fn syncback_project<'sync>(
             // syncback on the project node path above (or is itself a node).
             // So the only things we need to run seperately is new children.
             if old_child_map.remove(name.as_str()).is_none() {
-                let (parent_middleware, _, _) =
-                    Middleware::middleware_and_path(vfs, &project.sync_rules, &parent_path)?
+                let parent_middleware =
+                    Middleware::middleware_for_path(vfs, &project.sync_rules, &parent_path)?
                         .expect("project nodes should have a middleware if they have children.");
                 // If this node points directly to a project, it may still have
                 // children but they'll be handled by syncback. This isn't a
@@ -529,22 +529,21 @@ fn syncback_project_node<'sync>(
     new_inst: &Instance,
     old_inst: InstanceWithMeta,
 ) -> anyhow::Result<SyncbackSnapshot<'sync>> {
-    let (middleware, _, file_path) =
-        match Middleware::middleware_and_path(snapshot.vfs(), sync_rules, node_path)? {
-            Some(stuff) => stuff,
-            // The only way this can happen at this point is if the path does
-            // not exist on the file system or there's no middleware for it.
-            None => anyhow::bail!(
-                "path does not exist or could not be turned into a file Rojo understands: {}",
-                node_path.display()
-            ),
-        };
+    let middleware = match Middleware::middleware_for_path(snapshot.vfs(), sync_rules, node_path)? {
+        Some(stuff) => stuff,
+        // The only way this can happen at this point is if the path does
+        // not exist on the file system or there's no middleware for it.
+        None => anyhow::bail!(
+            "path does not exist or could not be turned into a file Rojo understands: {}",
+            node_path.display()
+        ),
+    };
 
     Ok(SyncbackSnapshot {
         data: snapshot.data,
         old: Some(old_inst.id()),
         new: new_inst.referent(),
-        path: file_path,
+        path: node_path.to_path_buf(),
         middleware: Some(middleware),
     })
 }

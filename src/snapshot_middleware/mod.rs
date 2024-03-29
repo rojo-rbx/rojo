@@ -284,39 +284,26 @@ impl Middleware {
         )
     }
 
-    /// Attempts to return a middleware for a given path, along with the name of
-    /// the file or directory that should be passed to either
-    /// [`Middleware::syncback`] or [`Middleware::snapshot`] and the path of
-    /// said file.
-    #[inline]
-    pub fn middleware_and_path<'path>(
+    /// Attempts to return a middleware that should be used for the given path.
+    ///
+    /// Returns `Err` only if the Vfs cannot read information about the path.
+    pub fn middleware_for_path(
         vfs: &Vfs,
         sync_rules: &[SyncRule],
-        path: &'path Path,
-    ) -> anyhow::Result<Option<(Self, &'path str, PathBuf)>> {
+        path: &Path,
+    ) -> anyhow::Result<Option<Self>> {
         let meta = match vfs.metadata(path).with_not_found()? {
             Some(meta) => meta,
             None => return Ok(None),
         };
+
         if meta.is_dir() {
-            get_dir_middleware(vfs, path).map(Some)
+            let (middleware, _, _) = get_dir_middleware(vfs, path)?;
+            Ok(Some(middleware))
         } else {
-            for rule in sync_rules {
+            for rule in sync_rules.iter().chain(default_sync_rules()) {
                 if rule.matches(path) {
-                    return Ok(Some((
-                        rule.middleware,
-                        rule.file_name_for_path(path)?,
-                        path.to_path_buf(),
-                    )));
-                }
-            }
-            for rule in default_sync_rules() {
-                if rule.matches(path) {
-                    return Ok(Some((
-                        rule.middleware,
-                        rule.file_name_for_path(path)?,
-                        path.to_path_buf(),
-                    )));
+                    return Ok(Some(rule.middleware));
                 }
             }
             Ok(None)
