@@ -1,0 +1,9 @@
+<roblox version="4">
+	<Meta name="ExplicitAutoJoints">true</Meta>
+	<External>null</External>
+	<External>nil</External>
+	<Item class="ForceField" referent="0">
+		<Properties>
+		</Properties>
+	</Item>
+</roblox>
