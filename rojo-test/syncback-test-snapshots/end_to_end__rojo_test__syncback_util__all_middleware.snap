@@ -1,0 +1,30 @@
+---
+source: tests/rojo_test/syncback_util.rs
+assertion_line: 48
+expression: "visualize_fs_snapshot(&fs_snapshot, &output_path)"
+---
+added_files:
+  - default.project.json
+  - "src\\csv.csv"
+  - "src\\csv_init\\init.csv"
+  - "src\\dir\\client_script.client.luau"
+  - "src\\dir\\init_client_script\\init.client.lua"
+  - "src\\dir\\init_module_script\\init.lua"
+  - "src\\dir\\init_server_script\\init.server.lua"
+  - "src\\dir\\module_script.luau"
+  - "src\\dir\\server_script.server.luau"
+  - "src\\model_json.model.json"
+  - "src\\project_json.project.json"
+  - "src\\rbxm.rbxm"
+  - "src\\rbxmx.rbxmx"
+  - "src\\text.txt"
+added_dirs:
+  - src
+  - "src\\csv_init"
+  - "src\\dir"
+  - "src\\dir\\init_client_script"
+  - "src\\dir\\init_module_script"
+  - "src\\dir\\init_server_script"
+removed_files: []
+removed_dirs: []
+
