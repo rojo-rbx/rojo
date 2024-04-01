@@ -1,7 +1,4 @@
-use std::{
-    collections::{HashMap, VecDeque},
-    path::{Path, PathBuf},
-};
+use std::{collections::HashMap, path::Path};
 
 use anyhow::Context;
 use insta::assert_yaml_snapshot;
@@ -11,15 +8,11 @@ use serde::Serialize;
 
 use crate::rojo_test::io_util::SYNCBACK_TESTS_PATH;
 
-const OUTPUT_DIR: &str = "output";
 const INPUT_FILE: &str = "input.rbxl";
 const EXPECTED_DIR: &str = "expected";
+const OUTPUT_DIR: &str = "output";
 
 pub fn basic_syncback_test(name: &str) -> anyhow::Result<()> {
-    let test_path = Path::new(SYNCBACK_TESTS_PATH).join(name);
-    let output_path = test_path.join(OUTPUT_DIR);
-    let expected_path = test_path.join(EXPECTED_DIR);
-
     let mut settings = insta::Settings::new();
     let snapshot_path = Path::new(SYNCBACK_TESTS_PATH)
         .parent()
@@ -27,9 +20,13 @@ pub fn basic_syncback_test(name: &str) -> anyhow::Result<()> {
         .join("syncback-test-snapshots");
     settings.set_snapshot_path(snapshot_path);
 
+    let test_path = Path::new(SYNCBACK_TESTS_PATH).join(name);
+    let input_path = test_path.join(INPUT_FILE);
+    let expected_path = test_path.join(EXPECTED_DIR);
+    let output_path = test_path.join(OUTPUT_DIR);
+
     let std_vfs = Vfs::new_default();
     std_vfs.set_watch_enabled(false);
-
     let im_vfs = {
         let mut imfs = InMemoryFs::new();
         imfs.load_snapshot(&output_path, to_vfs_snapshot(&std_vfs, &output_path)?)?;
@@ -37,58 +34,60 @@ pub fn basic_syncback_test(name: &str) -> anyhow::Result<()> {
     };
     im_vfs.set_watch_enabled(false);
 
-    let input_file_path = test_path.join(INPUT_FILE);
-    let input_dom = rbx_binary::from_reader(std_vfs.read(input_file_path)?.as_slice())?;
+    let input_dom = rbx_binary::from_reader(std_vfs.read(input_path)?.as_slice())?;
+    let (mut output_dom, project) =
+        rojo_tree_from_path(&std_vfs, &output_path.join("default.project.json"))?;
 
-    let output_project_path = output_path.join("default.project.json");
-    let (mut output_tree, output_project) = rojo_tree_from_path(&std_vfs, &output_project_path)?;
-    let fs_snapshot = syncback_loop(&std_vfs, &mut output_tree, input_dom, &output_project)?;
+    let fs_snapshot = syncback_loop(&std_vfs, &mut output_dom, input_dom, &project)?;
 
-    settings.bind(|| {
-        assert_yaml_snapshot!(name, visualize_fs_snapshot(&fs_snapshot, &output_path));
-    });
+    settings
+        .bind(|| assert_yaml_snapshot!(name, visualize_fs_snapshot(&fs_snapshot, &output_path)));
 
-    // We write to the in-memory VFS and not the file system!
     fs_snapshot.write_to_vfs(&output_path, &im_vfs)?;
+    let paths = fs_snapshot.added_paths();
 
-    // And now the hard part: diffing two sub-trees.
-    let mut path_queue: VecDeque<PathBuf> = [expected_path.join("default.project.json")].into();
-
-    while let Some(path) = path_queue.pop_front() {
-        let path = path.strip_prefix(&expected_path)?;
-        let path_display = path.display();
-
-        let expected = expected_path.join(path);
-        let output = output_path.join(path);
+    for path in paths {
+        let trimmed = path.strip_prefix(&output_path)?;
+        let expected = expected_path.join(trimmed);
 
         let expected_meta = std_vfs.metadata(&expected).with_not_found()?;
-        let output_meta = im_vfs.metadata(&output).with_not_found()?;
+        let output_meta = match im_vfs.metadata(path).with_not_found()? {
+            Some(meta) => meta,
+            None => anyhow::bail!(
+                "Somehow, a path did not exist in the InMemoryVfs: {}",
+                trimmed.display()
+            ),
+        };
 
-        match (expected_meta, output_meta) {
-            (Some(expected_meta), Some(emitted_meta)) => {
-                if expected_meta.is_dir() && emitted_meta.is_dir() {
-                    for item in std_vfs.read_dir(&expected)? {
-                        path_queue.push_back(item?.path().to_path_buf());
+        if let Some(expected_meta) = expected_meta {
+            match (expected_meta.is_dir(), output_meta.is_dir()) {
+                (true, true) => {}
+                (true, false) => anyhow::bail!(
+                    "A path was a file when it should be a directory: {}",
+                    trimmed.display()
+                ),
+                (false, true) => anyhow::bail!(
+                    "A path was a directory when it should be a file: {}",
+                    trimmed.display()
+                ),
+                (false, false) => {
+                    let output_contents = im_vfs.read(path).unwrap();
+                    let expected_contents = std_vfs.read(&expected).unwrap();
+                    if output_contents.as_slice() != expected_contents.as_slice() {
+                        anyhow::bail!(
+                            "The contents of a file did not match what was expected: {}. Expected {} bytes, got {}.",
+                            trimmed.display(), expected_contents.len(), output_contents.len()
+                        );
                     }
-                } else if expected_meta.is_file() && emitted_meta.is_file() {
-                    let expected_contents = std_vfs.read(&expected)?;
-                    let output_contents = im_vfs.read(&output)?;
-                    if expected_contents != output_contents {
-                        anyhow::bail!("path {path_display} is not as expected.");
-                    }
-                } else if expected_meta.is_file() {
-                    anyhow::bail!("path {path_display} should be a file but was emitted as a directory");
-                } else {
-                    anyhow::bail!("path {path_display} should be a directory but was emitted as a file");
                 }
             }
-            (Some(_), None) => anyhow::bail!(
-                "path {path_display} does not exist in actual output for syncback despite being expected"
-            ),
-            (None, _) => anyhow::bail!("Somehow, {} did not exist on the FS.", expected.display()),
+        } else {
+            anyhow::bail!(
+                "A path existed in the output when it shouldn't: {}",
+                trimmed.display()
+            )
         }
     }
-
     Ok(())
 }
 
