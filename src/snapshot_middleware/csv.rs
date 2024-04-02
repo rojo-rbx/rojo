@@ -180,7 +180,7 @@ struct LocalizationEntry<'a> {
     context: Option<&'a str>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    example: Option<&'a str>,
+    examples: Option<&'a str>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     source: Option<&'a str>,
@@ -223,7 +223,7 @@ fn convert_localization_csv(contents: &[u8]) -> Result<String, csv::Error> {
                 "Key" => entry.key = Some(value),
                 "Source" => entry.source = Some(value),
                 "Context" => entry.context = Some(value),
-                "Example" => entry.example = Some(value),
+                "Example" => entry.examples = Some(value),
                 _ => {
                     entry.values.insert(header, value);
                 }
@@ -275,7 +275,7 @@ fn localization_to_csv(csv_contents: &str) -> anyhow::Result<Vec<u8>> {
         record.push(entry.key.unwrap_or_default());
         record.push(entry.source.unwrap_or_default());
         record.push(entry.context.unwrap_or_default());
-        record.push(entry.example.unwrap_or_default());
+        record.push(entry.examples.unwrap_or_default());
 
         let values = &entry.values;
         for header in &extra_headers {

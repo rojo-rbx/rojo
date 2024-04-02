@@ -18,6 +18,6 @@ name: foo
 class_name: LocalizationTable
 properties:
   Contents:
-    String: "[{\"key\":\"Ack\",\"example\":\"An exclamation of despair\",\"source\":\"Ack!\",\"values\":{\"es\":\"¡Ay!\"}}]"
+    String: "[{\"key\":\"Ack\",\"examples\":\"An exclamation of despair\",\"source\":\"Ack!\",\"values\":{\"es\":\"¡Ay!\"}}]"
 children: []
 
