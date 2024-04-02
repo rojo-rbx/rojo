@@ -1,5 +1,4 @@
 local SelectionService = game:GetService("Selection")
-local StudioService = game:GetService("StudioService")
 
 local Rojo = script:FindFirstAncestor("Rojo")
 local Plugin = Rojo.Plugin
@@ -15,7 +14,8 @@ local bindingUtil = require(Plugin.App.bindingUtil)
 local e = Roact.createElement
 
 local ChangeList = require(script.Parent.ChangeList)
-local Tooltip = require(script.Parent.Parent.Tooltip)
+local Tooltip = require(Plugin.App.Components.Tooltip)
+local ClassIcon = require(Plugin.App.Components.ClassIcon)
 
 local Expansion = Roact.Component:extend("Expansion")
 
@@ -28,8 +28,8 @@ function Expansion:render()
 
 	return e("Frame", {
 		BackgroundTransparency = 1,
-		Size = UDim2.new(1, -props.indent, 1, -30),
-		Position = UDim2.new(0, props.indent, 0, 30),
+		Size = UDim2.new(1, -props.indent, 1, -24),
+		Position = UDim2.new(0, props.indent, 0, 24),
 	}, {
 		ChangeList = e(ChangeList, {
 			changes = props.changeList,
@@ -44,7 +44,7 @@ local DomLabel = Roact.Component:extend("DomLabel")
 
 function DomLabel:init()
 	local initHeight = self.props.elementHeight:getValue()
-	self.expanded = initHeight > 30
+	self.expanded = initHeight > 24
 
 	self.motor = Flipper.SingleMotor.new(initHeight)
 	self.binding = bindingUtil.fromMotor(self.motor)
@@ -53,7 +53,7 @@ function DomLabel:init()
 		renderExpansion = self.expanded,
 	})
 	self.motor:onStep(function(value)
-		local renderExpansion = value > 30
+		local renderExpansion = value > 24
 
 		self.props.setElementHeight(value)
 		if self.props.updateEvent then
@@ -81,7 +81,7 @@ function DomLabel:didUpdate(prevProps)
 	then
 		-- Close the expansion when the domlabel is changed to a different thing
 		self.expanded = false
-		self.motor:setGoal(Flipper.Spring.new(30, {
+		self.motor:setGoal(Flipper.Spring.new(24, {
 			frequency = 5,
 			dampingRatio = 1,
 		}))
@@ -90,17 +90,49 @@ end
 
 function DomLabel:render()
 	local props = self.props
+	local depth = props.depth or 1
 
 	return Theme.with(function(theme)
-		local iconProps = StudioService:GetClassIcon(props.className)
-		local indent = (props.depth or 0) * 20 + 25
+		local color = if props.isWarning
+			then theme.Diff.Warning
+			elseif props.patchType then theme.Diff[props.patchType]
+			else theme.TextColor
+
+		local indent = (depth - 1) * 12 + 15
 
 		-- Line guides help indent depth remain readable
 		local lineGuides = {}
-		for i = 1, props.depth or 0 do
-			lineGuides["Line_" .. i] = e("Frame", {
-				Size = UDim2.new(0, 2, 1, 2),
-				Position = UDim2.new(0, (20 * i) + 15, 0, -1),
+		for i = 2, depth do
+			if props.depthsComplete[i] then
+				continue
+			end
+			if props.isFinalChild and i == depth then
+				-- This line stops halfway down to merge with our connector for the right angle
+				lineGuides["Line_" .. i] = e("Frame", {
+					Size = UDim2.new(0, 2, 0, 15),
+					Position = UDim2.new(0, (12 * (i - 1)) + 6, 0, -1),
+					BorderSizePixel = 0,
+					BackgroundTransparency = props.transparency,
+					BackgroundColor3 = theme.BorderedContainer.BorderColor,
+				})
+			else
+				-- All other lines go all the way
+				-- with the exception of the final element, which stops halfway down
+				lineGuides["Line_" .. i] = e("Frame", {
+					Size = UDim2.new(0, 2, 1, if props.isFinalElement then -9 else 2),
+					Position = UDim2.new(0, (12 * (i - 1)) + 6, 0, -1),
+					BorderSizePixel = 0,
+					BackgroundTransparency = props.transparency,
+					BackgroundColor3 = theme.BorderedContainer.BorderColor,
+				})
+			end
+		end
+
+		if depth ~= 1 then
+			lineGuides["Connector"] = e("Frame", {
+				Size = UDim2.new(0, 8, 0, 2),
+				Position = UDim2.new(0, 2 + (12 * props.depth), 0, 12),
+				AnchorPoint = Vector2.xAxis,
 				BorderSizePixel = 0,
 				BackgroundTransparency = props.transparency,
 				BackgroundColor3 = theme.BorderedContainer.BorderColor,
@@ -109,9 +141,8 @@ function DomLabel:render()
 
 		return e("Frame", {
 			ClipsDescendants = true,
-			BackgroundColor3 = if props.patchType then theme.Diff[props.patchType] else nil,
-			BorderSizePixel = 0,
-			BackgroundTransparency = props.patchType and props.transparency or 1,
+			BackgroundTransparency = if props.elementIndex % 2 == 0 then 0.985 else 1,
+			BackgroundColor3 = theme.Diff.Row,
 			Size = self.binding:map(function(expand)
 				return UDim2.new(1, 0, 0, expand)
 			end),
@@ -141,8 +172,8 @@ function DomLabel:render()
 
 						if props.changeList then
 							self.expanded = not self.expanded
-							local goalHeight = 30
-								+ (if self.expanded then math.clamp(#props.changeList * 30, 30, 30 * 6) else 0)
+							local goalHeight = 24
+								+ (if self.expanded then math.clamp(#props.changeList * 24, 24, 24 * 6) else 0)
 							self.motor:setGoal(Flipper.Spring.new(goalHeight, {
 								frequency = 5,
 								dampingRatio = 1,
@@ -174,40 +205,74 @@ function DomLabel:render()
 			DiffIcon = if props.patchType
 				then e("ImageLabel", {
 					Image = Assets.Images.Diff[props.patchType],
-					ImageColor3 = theme.AddressEntry.PlaceholderColor,
+					ImageColor3 = color,
 					ImageTransparency = props.transparency,
 					BackgroundTransparency = 1,
-					Size = UDim2.new(0, 20, 0, 20),
-					Position = UDim2.new(0, 0, 0, 15),
+					Size = UDim2.new(0, 14, 0, 14),
+					Position = UDim2.new(0, 0, 0, 12),
 					AnchorPoint = Vector2.new(0, 0.5),
 				})
 				else nil,
-			ClassIcon = e("ImageLabel", {
-				Image = iconProps.Image,
-				ImageTransparency = props.transparency,
-				ImageRectOffset = iconProps.ImageRectOffset,
-				ImageRectSize = iconProps.ImageRectSize,
-				BackgroundTransparency = 1,
-				Size = UDim2.new(0, 20, 0, 20),
-				Position = UDim2.new(0, indent, 0, 15),
-				AnchorPoint = Vector2.new(0, 0.5),
+			ClassIcon = e(ClassIcon, {
+				className = props.className,
+				color = color,
+				transparency = props.transparency,
+				size = UDim2.new(0, 16, 0, 16),
+				position = UDim2.new(0, indent + 2, 0, 12),
+				anchorPoint = Vector2.new(0, 0.5),
 			}),
 			InstanceName = e("TextLabel", {
-				Text = (if props.isWarning then "⚠ " else "") .. props.name .. (props.hint and string.format(
-					'  <font color="#%s">%s</font>',
-					theme.AddressEntry.PlaceholderColor:ToHex(),
-					props.hint
-				) or ""),
+				Text = (if props.isWarning then "⚠ " else "") .. props.name,
 				RichText = true,
 				BackgroundTransparency = 1,
-				Font = Enum.Font.GothamMedium,
+				Font = if props.patchType then Enum.Font.GothamBold else Enum.Font.GothamMedium,
 				TextSize = 14,
-				TextColor3 = if props.isWarning then theme.Diff.Warning else theme.TextColor,
+				TextColor3 = color,
 				TextXAlignment = Enum.TextXAlignment.Left,
 				TextTransparency = props.transparency,
 				TextTruncate = Enum.TextTruncate.AtEnd,
-				Size = UDim2.new(1, -indent - 50, 0, 30),
-				Position = UDim2.new(0, indent + 30, 0, 0),
+				Size = UDim2.new(1, -indent - 50, 0, 24),
+				Position = UDim2.new(0, indent + 22, 0, 0),
+			}),
+			ChangeInfo = e("Frame", {
+				BackgroundTransparency = 1,
+				Size = UDim2.new(1, -indent - 80, 0, 24),
+				Position = UDim2.new(1, -2, 0, 0),
+				AnchorPoint = Vector2.new(1, 0),
+			}, {
+				Layout = e("UIListLayout", {
+					FillDirection = Enum.FillDirection.Horizontal,
+					HorizontalAlignment = Enum.HorizontalAlignment.Right,
+					VerticalAlignment = Enum.VerticalAlignment.Center,
+					SortOrder = Enum.SortOrder.LayoutOrder,
+					Padding = UDim.new(0, 4),
+				}),
+				Edits = if props.changeInfo and props.changeInfo.edits
+					then e("TextLabel", {
+						Text = props.changeInfo.edits .. if props.changeInfo.failed then "," else "",
+						BackgroundTransparency = 1,
+						Font = Enum.Font.Gotham,
+						TextSize = 14,
+						TextColor3 = theme.SubTextColor,
+						TextTransparency = props.transparency,
+						Size = UDim2.new(0, 0, 0, 16),
+						AutomaticSize = Enum.AutomaticSize.X,
+						LayoutOrder = 2,
+					})
+					else nil,
+				Failed = if props.changeInfo and props.changeInfo.failed
+					then e("TextLabel", {
+						Text = props.changeInfo.failed,
+						BackgroundTransparency = 1,
+						Font = Enum.Font.Gotham,
+						TextSize = 14,
+						TextColor3 = theme.Diff.Warning,
+						TextTransparency = props.transparency,
+						Size = UDim2.new(0, 0, 0, 16),
+						AutomaticSize = Enum.AutomaticSize.X,
+						LayoutOrder = 6,
+					})
+					else nil,
 			}),
 			LineGuides = e("Folder", nil, lineGuides),
 		})
