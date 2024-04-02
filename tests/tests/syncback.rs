@@ -19,4 +19,5 @@ syncback_basic_test! {
     nested_projects_weird,
     project_init,
     all_middleware,
+    ref_properties,
 }
