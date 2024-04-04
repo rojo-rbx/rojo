@@ -22,6 +22,7 @@ use crate::{
     glob::Glob,
     snapshot::{InstanceSnapshot, InstanceWithMeta, RojoTree},
     snapshot_middleware::Middleware,
+    syncback::ref_properties::link_referents,
     Project,
 };
 
@@ -103,7 +104,7 @@ pub fn syncback_loop(
         .unwrap_or_default();
     if !ignore_referents {
         log::debug!("Linking referents for new DOM");
-        deferred_referents.link(&mut new_tree)?;
+        link_referents(deferred_referents, &mut new_tree)?;
     } else {
         log::debug!("Skipping referent linking as per project syncback rules");
     }

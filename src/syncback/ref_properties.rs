@@ -10,15 +10,11 @@ use rbx_dom_weak::{
 
 use crate::{multimap::MultiMap, REF_ID_ATTRIBUTE_NAME, REF_POINTER_ATTRIBUTE_PREFIX};
 
-pub struct RefRewrites {
-    links: MultiMap<Ref, (String, Ref)>,
-}
-
 /// Iterates through a WeakDom and collects referent properties.
 ///
 /// They can be linked to a dom later using the `link` method on the returned
 /// struct.
-pub fn collect_referents(dom: &WeakDom) -> anyhow::Result<RefRewrites> {
+pub fn collect_referents(dom: &WeakDom) -> anyhow::Result<MultiMap<Ref, (String, Ref)>> {
     let mut links = MultiMap::new();
     let mut queue = VecDeque::new();
 
@@ -38,58 +34,65 @@ pub fn collect_referents(dom: &WeakDom) -> anyhow::Result<RefRewrites> {
         }
     }
 
-    Ok(RefRewrites { links })
+    Ok(links)
 }
 
-impl RefRewrites {
-    /// Links referents for the provided DOM, using the links stored in this
-    /// struct.
-    pub fn link(self, dom: &mut WeakDom) -> anyhow::Result<()> {
-        let mut id_prop_list = Vec::new();
+pub fn link_referents(
+    link_list: MultiMap<Ref, (String, Ref)>,
+    dom: &mut WeakDom,
+) -> anyhow::Result<()> {
+    let mut id_prop_list = Vec::new();
 
-        for (pointer_ref, ref_properties) in self.links {
-            if dom.get_by_ref(pointer_ref).is_none() {
-                continue;
-            }
+    for (pointer_ref, ref_properties) in link_list {
+        if dom.get_by_ref(pointer_ref).is_none() {
+            continue;
+        }
 
-            for (prop_name, target_ref) in ref_properties {
-                let target_inst = match dom.get_by_ref_mut(target_ref) {
-                    Some(inst) => inst,
-                    None => {
-                        continue;
-                    }
-                };
-                let target_attrs = get_or_insert_attributes(target_inst)?;
-                if target_attrs.get(REF_ID_ATTRIBUTE_NAME).is_none() {
-                    target_attrs.insert(
-                        REF_ID_ATTRIBUTE_NAME.to_owned(),
-                        Variant::String(target_ref.to_string()),
-                    );
+        for (prop_name, target_ref) in ref_properties {
+            let target_inst = match dom.get_by_ref_mut(target_ref) {
+                Some(inst) => inst,
+                None => {
+                    continue;
                 }
-
-                match target_attrs.get(REF_ID_ATTRIBUTE_NAME) {
-                    Some(Variant::String(id)) => id_prop_list.push((prop_name, id.clone())),
-                    Some(Variant::BinaryString(id)) => match std::str::from_utf8(id.as_ref()) {
-                        Ok(str) => id_prop_list.push((prop_name, str.to_string())),
-                        Err(_) => anyhow::bail!("expected attribute {REF_ID_ATTRIBUTE_NAME} to be a UTF-8 string")
-                    },
-                    Some(value) => anyhow::bail!("expected attribute {REF_ID_ATTRIBUTE_NAME} to be a string but it was a {:?}", value.ty()),
-                    None => unreachable!("{} should always be inserted as an attribute if it's missing", REF_ID_ATTRIBUTE_NAME),
-                }
-            }
-
-            let pointer_inst = dom.get_by_ref_mut(pointer_ref).unwrap();
-            let pointer_attrs = get_or_insert_attributes(pointer_inst)?;
-            for (name, id) in id_prop_list.drain(..) {
-                pointer_attrs.insert(
-                    format!("{REF_POINTER_ATTRIBUTE_PREFIX}{name}"),
-                    Variant::BinaryString(id.into_bytes().into()),
+            };
+            let target_attrs = get_or_insert_attributes(target_inst)?;
+            if target_attrs.get(REF_ID_ATTRIBUTE_NAME).is_none() {
+                target_attrs.insert(
+                    REF_ID_ATTRIBUTE_NAME.to_owned(),
+                    Variant::String(target_ref.to_string()),
                 );
+            }
+
+            match target_attrs.get(REF_ID_ATTRIBUTE_NAME) {
+                Some(Variant::String(id)) => id_prop_list.push((prop_name, id.clone())),
+                Some(Variant::BinaryString(id)) => match std::str::from_utf8(id.as_ref()) {
+                    Ok(str) => id_prop_list.push((prop_name, str.to_string())),
+                    Err(_) => anyhow::bail!(
+                        "expected attribute {REF_ID_ATTRIBUTE_NAME} to be a UTF-8 string"
+                    ),
+                },
+                Some(value) => anyhow::bail!(
+                    "expected attribute {REF_ID_ATTRIBUTE_NAME} to be a string but it was a {:?}",
+                    value.ty()
+                ),
+                None => unreachable!(
+                    "{} should always be inserted as an attribute if it's missing",
+                    REF_ID_ATTRIBUTE_NAME
+                ),
             }
         }
 
-        Ok(())
+        let pointer_inst = dom.get_by_ref_mut(pointer_ref).unwrap();
+        let pointer_attrs = get_or_insert_attributes(pointer_inst)?;
+        for (name, id) in id_prop_list.drain(..) {
+            pointer_attrs.insert(
+                format!("{REF_POINTER_ATTRIBUTE_PREFIX}{name}"),
+                Variant::BinaryString(id.into_bytes().into()),
+            );
+        }
     }
+
+    Ok(())
 }
 
 fn get_or_insert_attributes(inst: &mut Instance) -> anyhow::Result<&mut Attributes> {
