@@ -420,6 +420,31 @@ impl VfsLock<'_> {
         self.inner.read_dir(path)
     }
 
+    /// Creates a directory at the provided location.
+    ///
+    /// Roughly equivalent to [`std::fs::create_dir`][std::fs::create_dir].
+    /// Similiar to that function, this function will fail if the parent of the
+    /// path does not exist.
+    ///
+    /// [std::fs::create_dir]: https://doc.rust-lang.org/stable/std/fs/fn.create_dir.html
+    #[inline]
+    pub fn create_dir<P: AsRef<Path>>(&mut self, path: P) -> io::Result<()> {
+        let path = path.as_ref();
+        self.inner.create_dir(path)
+    }
+
+    /// Creates a directory at the provided location, recursively creating
+    /// all parent components if they are missing.
+    ///
+    /// Roughly equivalent to [`std::fs::create_dir_all`][std::fs::create_dir_all].
+    ///
+    /// [std::fs::create_dir_all]: https://doc.rust-lang.org/stable/std/fs/fn.create_dir_all.html
+    #[inline]
+    pub fn create_dir_all<P: AsRef<Path>>(&mut self, path: P) -> io::Result<()> {
+        let path = path.as_ref();
+        self.inner.create_dir_all(path)
+    }
+
     /// Remove a file.
     ///
     /// Roughly equivalent to [`std::fs::remove_file`][std::fs::remove_file].
