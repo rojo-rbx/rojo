@@ -20,4 +20,5 @@ syncback_basic_test! {
     project_init,
     all_middleware,
     ref_properties,
+    rbxm_fallback
 }
