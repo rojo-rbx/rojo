@@ -1,4 +1,6 @@
 {
   "className": "Folder",
-  "id": "test referent id"
+  "attributes": {
+    "Rojo_Id": "test referent id"
+  }
 }
