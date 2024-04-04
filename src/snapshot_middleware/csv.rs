@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     collections::{BTreeMap, BTreeSet},
     path::Path,
 };
@@ -174,19 +175,19 @@ pub fn syncback_csv_init<'sync>(
 #[serde(rename_all = "camelCase")]
 struct LocalizationEntry<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
-    key: Option<&'a str>,
+    key: Option<Cow<'a, str>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    context: Option<&'a str>,
+    context: Option<Cow<'a, str>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    examples: Option<&'a str>,
+    examples: Option<Cow<'a, str>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    source: Option<&'a str>,
+    source: Option<Cow<'a, str>>,
 
     // We use a BTreeMap here to get deterministic output order.
-    values: BTreeMap<&'a str, &'a str>,
+    values: BTreeMap<Cow<'a, str>, Cow<'a, str>>,
 }
 
 /// Normally, we'd be able to let the csv crate construct our struct for us.
@@ -220,12 +221,14 @@ fn convert_localization_csv(contents: &[u8]) -> Result<String, csv::Error> {
             }
 
             match header {
-                "Key" => entry.key = Some(value),
-                "Source" => entry.source = Some(value),
-                "Context" => entry.context = Some(value),
-                "Example" => entry.examples = Some(value),
+                "Key" => entry.key = Some(Cow::Borrowed(value)),
+                "Source" => entry.source = Some(Cow::Borrowed(value)),
+                "Context" => entry.context = Some(Cow::Borrowed(value)),
+                "Example" => entry.examples = Some(Cow::Borrowed(value)),
                 _ => {
-                    entry.values.insert(header, value);
+                    entry
+                        .values
+                        .insert(Cow::Borrowed(header), Cow::Borrowed(value));
                 }
             }
         }
@@ -272,14 +275,14 @@ fn localization_to_csv(csv_contents: &str) -> anyhow::Result<Vec<u8>> {
 
     let mut record: Vec<&str> = Vec::with_capacity(headers.len());
     for entry in &csv {
-        record.push(entry.key.unwrap_or_default());
-        record.push(entry.source.unwrap_or_default());
-        record.push(entry.context.unwrap_or_default());
-        record.push(entry.examples.unwrap_or_default());
+        record.push(entry.key.as_ref().unwrap_or(&Cow::Borrowed("")));
+        record.push(entry.source.as_ref().unwrap_or(&Cow::Borrowed("")));
+        record.push(entry.context.as_ref().unwrap_or(&Cow::Borrowed("")));
+        record.push(entry.examples.as_ref().unwrap_or(&Cow::Borrowed("")));
 
         let values = &entry.values;
         for header in &extra_headers {
-            record.push(values.get(*header).copied().unwrap_or_default());
+            record.push(values.get(*header).unwrap_or(&Cow::Borrowed("")));
         }
 
         writer
