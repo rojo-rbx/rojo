@@ -275,14 +275,14 @@ fn localization_to_csv(csv_contents: &str) -> anyhow::Result<Vec<u8>> {
 
     let mut record: Vec<&str> = Vec::with_capacity(headers.len());
     for entry in &csv {
-        record.push(entry.key.as_ref().unwrap_or(&Cow::Borrowed("")));
-        record.push(entry.source.as_ref().unwrap_or(&Cow::Borrowed("")));
-        record.push(entry.context.as_ref().unwrap_or(&Cow::Borrowed("")));
-        record.push(entry.examples.as_ref().unwrap_or(&Cow::Borrowed("")));
+        record.push(entry.key.as_deref().unwrap_or_default());
+        record.push(entry.source.as_deref().unwrap_or_default());
+        record.push(entry.context.as_deref().unwrap_or_default());
+        record.push(entry.examples.as_deref().unwrap_or_default());
 
         let values = &entry.values;
         for header in &extra_headers {
-            record.push(values.get(*header).unwrap_or(&Cow::Borrowed("")));
+            record.push(values.get(*header).map(AsRef::as_ref).unwrap_or_default());
         }
 
         writer
