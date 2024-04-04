@@ -25,7 +25,7 @@ use crate::{
     Project,
 };
 
-pub use file_names::{name_for_inst, validate_file_name};
+pub use file_names::{extension_for_middleware, name_for_inst, validate_file_name};
 pub use fs_snapshot::FsSnapshot;
 pub use hash::*;
 pub use property_filter::{filter_properties, filter_properties_preallocated};
@@ -174,8 +174,30 @@ pub fn syncback_loop(
         }
 
         let mut syncback_res = middleware.syncback(&snapshot);
-        if syncback_res.is_err() && middleware.is_dir() {
-            todo!("Directory syncback failures will eventually result in an rbxm syncback");
+        if syncback_res.is_err() && middleware == Middleware::Dir {
+            let new_middleware = match env::var(DEBUG_MODEL_FORMAT_VAR) {
+                Ok(value) if value == "1" => Middleware::Rbxmx,
+                Ok(value) if value == "2" => Middleware::JsonModel,
+                _ => Middleware::Rbxm,
+            };
+
+            let file_name = snapshot
+                .path
+                .file_name()
+                .and_then(|s| s.to_str())
+                .context("Directory middleware should have a name in its path")?;
+            let mut path = snapshot.path.clone();
+            path.set_file_name(format!(
+                "{file_name}.{}",
+                extension_for_middleware(new_middleware)
+            ));
+
+            let new_snapshot = snapshot.with_new_path(path, snapshot.new, snapshot.old);
+            log::warn!(
+                "Could not syncback {inst_path} as a Directory, it will \
+                instead be synced back as a {new_middleware:?}."
+            );
+            syncback_res = new_middleware.syncback(&new_snapshot);
         }
         let syncback = syncback_res.with_context(|| format!("Failed to syncback {inst_path}"))?;
 

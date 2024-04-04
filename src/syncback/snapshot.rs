@@ -83,6 +83,19 @@ impl<'sync> SyncbackSnapshot<'sync> {
         Ok(snapshot)
     }
 
+    /// Constructs a SyncbackSnapshot with the provided path and refs while
+    /// inheriting the data of the this snapshot.
+    #[inline]
+    pub fn with_new_path(&self, path: PathBuf, new_ref: Ref, old_ref: Option<Ref>) -> Self {
+        Self {
+            data: self.data,
+            old: old_ref,
+            new: new_ref,
+            path,
+            middleware: None,
+        }
+    }
+
     /// Allows a middleware to be 'forced' onto a SyncbackSnapshot to override
     /// the attempts to derive it.
     #[inline]

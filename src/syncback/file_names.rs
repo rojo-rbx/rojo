@@ -49,7 +49,7 @@ pub fn name_for_inst<'old>(
 }
 
 /// Returns the extension a provided piece of middleware is supposed to use.
-fn extension_for_middleware(middleware: Middleware) -> &'static str {
+pub fn extension_for_middleware(middleware: Middleware) -> &'static str {
     match middleware {
         Middleware::Csv => "csv",
         Middleware::JsonModel => "model.json",

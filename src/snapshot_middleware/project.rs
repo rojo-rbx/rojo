@@ -539,13 +539,13 @@ fn syncback_project_node<'sync>(
         ),
     };
 
-    Ok(SyncbackSnapshot {
-        data: snapshot.data,
-        old: Some(old_inst.id()),
-        new: new_inst.referent(),
-        path: node_path.to_path_buf(),
-        middleware: Some(middleware),
-    })
+    Ok(snapshot
+        .with_new_path(
+            node_path.to_path_buf(),
+            new_inst.referent(),
+            Some(old_inst.id()),
+        )
+        .middleware(middleware))
 }
 
 fn infer_class_name(name: &str, parent_class: Option<&str>) -> Option<Cow<'static, str>> {
