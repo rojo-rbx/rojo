@@ -78,23 +78,26 @@ impl FsSnapshot {
     ///
     /// This includes removals, but makes no effort to minimize work done.
     pub fn write_to_vfs<P: AsRef<Path>>(&self, base: P, vfs: &Vfs) -> io::Result<()> {
+        let mut lock = vfs.lock();
+
         let base_path = base.as_ref();
         for dir_path in &self.added_dirs {
-            match vfs.create_dir_all(base_path.join(dir_path)) {
+            match lock.create_dir_all(base_path.join(dir_path)) {
                 Ok(_) => (),
                 Err(err) if err.kind() == io::ErrorKind::AlreadyExists => (),
                 Err(err) => return Err(err),
             };
         }
         for (path, contents) in &self.added_files {
-            vfs.write(base_path.join(path), contents)?;
+            lock.write(base_path.join(path), contents)?;
         }
         for dir_path in &self.removed_dirs {
-            vfs.remove_dir_all(base_path.join(dir_path))?;
+            lock.remove_dir_all(base_path.join(dir_path))?;
         }
         for path in &self.removed_files {
-            vfs.remove_file(base_path.join(path))?;
+            lock.remove_file(base_path.join(path))?;
         }
+        drop(lock);
 
         if self.added_dirs.len() + self.added_files.len() > 0 {
             log::info!(
