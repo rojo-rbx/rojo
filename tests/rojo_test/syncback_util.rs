@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::Path};
+use std::{borrow::Cow, collections::HashMap, path::Path};
 
 use anyhow::Context;
 use insta::assert_yaml_snapshot;
@@ -73,9 +73,12 @@ pub fn basic_syncback_test(name: &str) -> anyhow::Result<()> {
                 (false, false) => {
                     let output_contents = im_vfs.read(path).unwrap();
                     let expected_contents = std_vfs.read(&expected).unwrap();
-                    if output_contents.as_slice() != expected_contents.as_slice() {
-                        let output_str = std::str::from_utf8(&output_contents);
-                        let expected_str = std::str::from_utf8(&output_contents);
+
+                    let normalized_output = normalize_line_endings(&output_contents);
+                    let normalized_expected = normalize_line_endings(&expected_contents);
+                    if normalized_output.as_slice() != normalized_expected.as_slice() {
+                        let output_str = std::str::from_utf8(&normalized_output);
+                        let expected_str = std::str::from_utf8(&normalized_expected);
                         let display = trimmed.display();
                         match (output_str, expected_str) {
                             (Ok(output), Ok(expected)) => anyhow::bail!(
@@ -86,7 +89,7 @@ pub fn basic_syncback_test(name: &str) -> anyhow::Result<()> {
                             _ => anyhow::bail!(
                                 "The contents of a file did not match what was expected: {display}. \
                                 Expected {} bytes, got {}.",
-                                expected_contents.len(), output_contents.len()
+                                normalized_output.len(), normalized_expected.len()
                             ),
                         }
                     }
@@ -132,6 +135,23 @@ fn to_vfs_snapshot(vfs: &Vfs, path: &Path) -> anyhow::Result<VfsSnapshot> {
     } else {
         let contents = vfs.read(path)?;
         Ok(VfsSnapshot::file(contents.as_slice()))
+    }
+}
+
+/// Normalizes the line endings of a vector if it's user-readable.
+/// If it isn't, the vector is returned unmodified.
+fn normalize_line_endings(input: &Vec<u8>) -> Cow<Vec<u8>> {
+    match std::str::from_utf8(input) {
+        Ok(str) => {
+            let mut new_str = Vec::with_capacity(input.len());
+            for line in str.lines() {
+                new_str.extend(line.as_bytes());
+                new_str.push(b'\n')
+            }
+            new_str.pop();
+            Cow::Owned(new_str)
+        }
+        Err(_) => Cow::Borrowed(input),
     }
 }
 
