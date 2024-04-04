@@ -74,10 +74,21 @@ pub fn basic_syncback_test(name: &str) -> anyhow::Result<()> {
                     let output_contents = im_vfs.read(path).unwrap();
                     let expected_contents = std_vfs.read(&expected).unwrap();
                     if output_contents.as_slice() != expected_contents.as_slice() {
-                        anyhow::bail!(
-                            "The contents of a file did not match what was expected: {}. Expected {} bytes, got {}.",
-                            trimmed.display(), expected_contents.len(), output_contents.len()
-                        );
+                        let output_str = std::str::from_utf8(&output_contents);
+                        let expected_str = std::str::from_utf8(&output_contents);
+                        let display = trimmed.display();
+                        match (output_str, expected_str) {
+                            (Ok(output), Ok(expected)) => anyhow::bail!(
+                                "The contents of a file did not match what was expected: {display}.\n\
+                                Expected: {expected}\n\
+                                Actual: {output}"
+                            ),
+                            _ => anyhow::bail!(
+                                "The contents of a file did not match what was expected: {display}. \
+                                Expected {} bytes, got {}.",
+                                expected_contents.len(), output_contents.len()
+                            ),
+                        }
                     }
                 }
             }
