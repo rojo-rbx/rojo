@@ -4,6 +4,7 @@ on:
   push:
     branches:
     - master
+    - ci-workflow-maintenence
 
   pull_request:
     branches:
@@ -106,4 +107,3 @@ jobs:
 
     - name: Clippy
       run: cargo clippy
-
