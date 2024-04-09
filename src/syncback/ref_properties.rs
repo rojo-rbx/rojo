@@ -1,7 +1,7 @@
 //! Implements iterating through an entire WeakDom and linking all Ref
 //! properties using attributes.
 
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
 
 use rbx_dom_weak::{
     types::{Attributes, Ref, Variant},
@@ -10,12 +10,21 @@ use rbx_dom_weak::{
 
 use crate::{multimap::MultiMap, REF_ID_ATTRIBUTE_NAME, REF_POINTER_ATTRIBUTE_PREFIX};
 
+#[derive(PartialEq, Eq)]
+pub struct RefLink {
+    /// The name of a property
+    name: String,
+    /// The value of the property.
+    value: Ref,
+}
+
 /// Iterates through a WeakDom and collects referent properties.
 ///
 /// They can be linked to a dom later using the `link` method on the returned
 /// struct.
-pub fn collect_referents(dom: &WeakDom) -> anyhow::Result<MultiMap<Ref, (String, Ref)>> {
+pub fn collect_referents(dom: &WeakDom) -> anyhow::Result<MultiMap<Ref, RefLink>> {
     let mut links = MultiMap::new();
+
     let mut queue = VecDeque::new();
 
     // Note that this is back-in, front-out. This is important because
@@ -23,12 +32,18 @@ pub fn collect_referents(dom: &WeakDom) -> anyhow::Result<MultiMap<Ref, (String,
     queue.push_back(dom.root_ref());
     while let Some(referent) = queue.pop_front() {
         let instance = dom.get_by_ref(referent).unwrap();
-
         queue.extend(instance.children().iter().copied());
+
         for (name, value) in &instance.properties {
             if let Variant::Ref(prop_value) = value {
                 if dom.get_by_ref(*prop_value).is_some() {
-                    links.insert(referent, (name.clone(), *prop_value))
+                    links.insert(
+                        referent,
+                        RefLink {
+                            name: name.clone(),
+                            value: *prop_value,
+                        },
+                    );
                 }
             }
         }
@@ -37,54 +52,28 @@ pub fn collect_referents(dom: &WeakDom) -> anyhow::Result<MultiMap<Ref, (String,
     Ok(links)
 }
 
-pub fn link_referents(
-    link_list: MultiMap<Ref, (String, Ref)>,
-    dom: &mut WeakDom,
-) -> anyhow::Result<()> {
-    let mut id_prop_list = Vec::new();
-
+pub fn link_referents(link_list: MultiMap<Ref, RefLink>, dom: &mut WeakDom) -> anyhow::Result<()> {
+    let mut pointer_attributes = HashMap::new();
     for (pointer_ref, ref_properties) in link_list {
         if dom.get_by_ref(pointer_ref).is_none() {
             continue;
         }
 
-        for (prop_name, target_ref) in ref_properties {
-            let target_inst = match dom.get_by_ref_mut(target_ref) {
+        // In this loop, we need to add the `Rojo_Id` attributes to the
+        // Instances.
+        for ref_link in ref_properties {
+            let target_inst = match dom.get_by_ref_mut(ref_link.value) {
                 Some(inst) => inst,
                 None => {
                     continue;
                 }
             };
-            let target_attrs = get_or_insert_attributes(target_inst)?;
-            if target_attrs.get(REF_ID_ATTRIBUTE_NAME).is_none() {
-                target_attrs.insert(
-                    REF_ID_ATTRIBUTE_NAME.to_owned(),
-                    Variant::String(target_ref.to_string()),
-                );
-            }
-
-            match target_attrs.get(REF_ID_ATTRIBUTE_NAME) {
-                Some(Variant::String(id)) => id_prop_list.push((prop_name, id.clone())),
-                Some(Variant::BinaryString(id)) => match std::str::from_utf8(id.as_ref()) {
-                    Ok(str) => id_prop_list.push((prop_name, str.to_string())),
-                    Err(_) => anyhow::bail!(
-                        "expected attribute {REF_ID_ATTRIBUTE_NAME} to be a UTF-8 string"
-                    ),
-                },
-                Some(value) => anyhow::bail!(
-                    "expected attribute {REF_ID_ATTRIBUTE_NAME} to be a string but it was a {:?}",
-                    value.ty()
-                ),
-                None => unreachable!(
-                    "{} should always be inserted as an attribute if it's missing",
-                    REF_ID_ATTRIBUTE_NAME
-                ),
-            }
+            pointer_attributes.insert(ref_link.name, get_or_insert_id(target_inst)?);
         }
 
         let pointer_inst = dom.get_by_ref_mut(pointer_ref).unwrap();
         let pointer_attrs = get_or_insert_attributes(pointer_inst)?;
-        for (name, id) in id_prop_list.drain(..) {
+        for (name, id) in pointer_attributes.drain() {
             pointer_attrs.insert(
                 format!("{REF_POINTER_ATTRIBUTE_PREFIX}{name}"),
                 Variant::BinaryString(id.into_bytes().into()),
@@ -108,4 +97,31 @@ fn get_or_insert_attributes(inst: &mut Instance) -> anyhow::Result<&mut Attribut
         )),
         None => unreachable!(),
     }
+}
+
+fn get_or_insert_id(inst: &mut Instance) -> anyhow::Result<String> {
+    let unique_id = match inst.properties.get("UniqueId") {
+        Some(Variant::UniqueId(id)) => Some(*id),
+        _ => None,
+    };
+    let referent = inst.referent();
+    let attributes = get_or_insert_attributes(inst)?;
+    match attributes.get(REF_ID_ATTRIBUTE_NAME) {
+        Some(Variant::String(str)) => return Ok(str.clone()),
+        Some(Variant::BinaryString(bytes)) => match std::str::from_utf8(bytes.as_ref()) {
+            Ok(str) => return Ok(str.to_string()),
+            Err(_) => {
+                anyhow::bail!("expected attribute {REF_ID_ATTRIBUTE_NAME} to be a UTF-8 string")
+            }
+        },
+        _ => {}
+    }
+    let id_string = unique_id
+        .map(|id| id.to_string())
+        .unwrap_or_else(|| referent.to_string());
+    attributes.insert(
+        REF_ID_ATTRIBUTE_NAME.to_string(),
+        Variant::BinaryString(id_string.clone().into_bytes().into()),
+    );
+    Ok(id_string)
 }
