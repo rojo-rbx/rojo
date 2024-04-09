@@ -25,11 +25,7 @@ jobs:
         submodules: true
 
     - name: Install Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        override: true
-        profile: minimal
+      uses: dtolnay/rust-toolchain@stable
 
     - name: Rust cache
       uses: Swatinem/rust-cache@v2
@@ -55,11 +51,7 @@ jobs:
         submodules: true
 
     - name: Install Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: 1.70.0
-        override: true
-        profile: minimal
+      uses: dtolnay/rust-toolchain@1.70.0
 
     - name: Rust cache
       uses: Swatinem/rust-cache@v2
@@ -82,10 +74,8 @@ jobs:
         submodules: true
 
     - name: Install Rust
-      uses: actions-rs/toolchain@v1
+      uses: dtolnay/rust-toolchain@stable
       with:
-        toolchain: stable
-        override: true
         components: rustfmt, clippy
 
     - name: Rust cache
