@@ -91,12 +91,12 @@ jobs:
         with:
           submodules: true
 
-      - name: Get Version from Tag
-        shell: bash
-        # https://github.community/t/how-to-get-just-the-tag-name/16241/7#M1027
-        run: |
-          echo "PROJECT_VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
-          echo "Version is: ${{ env.PROJECT_VERSION }}"
+      - name: Get Version
+        uses: SebRollen/toml-action@v1.2.0
+        id: get_version
+        with:
+          file: Cargo.toml
+          field: package.version
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -139,11 +139,11 @@ jobs:
         with:
           upload_url: ${{ needs.create-release.outputs.upload_url }}
           asset_path: release.zip
-          asset_name: ${{ env.BIN }}-${{ env.PROJECT_VERSION }}-${{ matrix.label }}.zip
+          asset_name: ${{ env.BIN }}-${{ steps.get_version.outputs.value }}-${{ matrix.label }}.zip
           asset_content_type: application/octet-stream
 
       - name: Upload Archive to Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ env.BIN }}-${{ env.PROJECT_VERSION }}-${{ matrix.label }}.zip
+          name: ${{ env.BIN }}-${{ steps.get_version.outputs.value }}-${{ matrix.label }}.zip
           path: release.zip
