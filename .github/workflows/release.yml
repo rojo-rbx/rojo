@@ -40,14 +40,10 @@ jobs:
         run: rojo build plugin --output Rojo.rbxm
 
       - name: Upload Plugin to Release
-        uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: Rojo.rbxm
-          asset_name: Rojo.rbxm
-          asset_content_type: application/octet-stream
+        run: |
+          gh release upload ${{ github.ref }} Rojo.rbxm
 
       - name: Upload Plugin to Artifacts
         uses: actions/upload-artifact@v3
@@ -122,8 +118,10 @@ jobs:
         run: |
           echo "ARTIFACT_NAME=$BIN-${{ steps.get_version.outputs.value }}-${{ matrix.label }}.zip" >> "$GITHUB_ENV"
 
-      - name: Create Release Archive
+      - name: Create Archive and Upload to Release
         shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mkdir staging
 
@@ -137,18 +135,10 @@ jobs:
             zip ../$ARTIFACT_NAME *
           fi
 
-      - name: Upload Archive to Release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ${{ env.ARTIFACT_NAME }}
-          asset_name: ${{ env.ARTIFACT_NAME }}
-          asset_content_type: application/octet-stream
+          gh release upload ${{ github.ref }} ../$ARTIFACT_NAME
 
       - name: Upload Archive to Artifacts
         uses: actions/upload-artifact@v3
         with:
+          path: ${{ env.ARTIFACT_NAME }}
           name: ${{ env.ARTIFACT_NAME }}
-          path: release.zip
