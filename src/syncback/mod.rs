@@ -49,11 +49,11 @@ pub fn syncback_loop(
     mut new_tree: WeakDom,
     project: &Project,
 ) -> anyhow::Result<FsSnapshot> {
-    log::debug!("Collecting referents for new DOM...");
-    let deferred_referents = collect_referents(&new_tree)?;
-
     log::debug!("Pruning new tree");
     strip_unknown_root_children(&mut new_tree, old_tree);
+
+    log::debug!("Collecting referents for new DOM...");
+    let deferred_referents = collect_referents(&new_tree)?;
 
     log::debug!("Pre-filtering properties on DOMs");
     for referent in descendants(&new_tree, new_tree.root_ref()) {
@@ -73,12 +73,6 @@ pub fn syncback_loop(
             }
         }
     }
-
-    log::debug!("Hashing project DOM");
-    let old_hashes = hash_tree(project, old_tree.inner(), old_tree.get_root_id());
-    log::debug!("Hashing file DOM");
-    let new_hashes = hash_tree(project, &new_tree, new_tree.root_ref());
-
     if let Some(syncback_rules) = &project.syncback_rules {
         if !syncback_rules.sync_current_camera.unwrap_or_default() {
             log::debug!("Removing CurrentCamera from new DOM");
@@ -108,6 +102,11 @@ pub fn syncback_loop(
     } else {
         log::debug!("Skipping referent linking as per project syncback rules");
     }
+
+    log::debug!("Hashing project DOM");
+    let old_hashes = hash_tree(project, old_tree.inner(), old_tree.get_root_id());
+    log::debug!("Hashing file DOM");
+    let new_hashes = hash_tree(project, &new_tree, new_tree.root_ref());
 
     let project_path = project.folder_location();
 
