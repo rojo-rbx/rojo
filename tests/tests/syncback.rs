@@ -22,4 +22,5 @@ syncback_basic_test! {
     nested_projects_weird,
     ref_properties,
     ref_properties_blank,
+    ref_properties_update,
 }
