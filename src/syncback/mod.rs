@@ -269,10 +269,9 @@ pub fn get_best_middleware(snapshot: &SyncbackSnapshot) -> Middleware {
             "LocalScript" => Middleware::ClientScript,
             "ModuleScript" => Middleware::ModuleScript,
             "LocalizationTable" => Middleware::Csv,
-            _ => match env::var(DEBUG_MODEL_FORMAT_VAR) {
-                Ok(value) if value == "1" => Middleware::Rbxmx,
-                _ => Middleware::Rbxm,
-            },
+            // This isn't the ideal way to handle this but it works.
+            name if name.ends_with("Value") => Middleware::JsonModel,
+            _ => Middleware::Rbxmx,
         }
     }
 
