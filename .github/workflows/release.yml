@@ -117,6 +117,11 @@ jobs:
           # easily.
           CARGO_TARGET_DIR: output
 
+      - name: Generate Artifact Name
+        shell: bash
+        run: |
+          echo "ARTIFACT_NAME=$BIN-${{ steps.get_version.outputs.value }}-${{ matrix.label }}.zip" >> "$GITHUB_ENV"
+
       - name: Create Release Archive
         shell: bash
         run: |
@@ -125,11 +130,11 @@ jobs:
           if [ "${{ matrix.host }}" = "windows" ]; then
             cp "output/${{ matrix.target }}/release/$BIN.exe" staging/
             cd staging
-            7z a ../release.zip *
+            7z a ../$ARTIFACT_NAME *
           else
             cp "output/${{ matrix.target }}/release/$BIN" staging/
             cd staging
-            zip ../release.zip *
+            zip ../$ARTIFACT_NAME *
           fi
 
       - name: Upload Archive to Release
@@ -138,12 +143,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: release.zip
-          asset_name: ${{ env.BIN }}-${{ steps.get_version.outputs.value }}-${{ matrix.label }}.zip
+          asset_path: ${{ env.ARTIFACT_NAME }}
+          asset_name: ${{ env.ARTIFACT_NAME }}
           asset_content_type: application/octet-stream
 
       - name: Upload Archive to Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ env.BIN }}-${{ steps.get_version.outputs.value }}-${{ matrix.label }}.zip
+          name: ${{ env.ARTIFACT_NAME }}
           path: release.zip
