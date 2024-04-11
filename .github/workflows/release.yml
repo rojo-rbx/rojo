@@ -84,13 +84,6 @@ jobs:
         with:
           submodules: true
 
-      - name: Get Version
-        uses: SebRollen/toml-action@v1.2.0
-        id: get_version
-        with:
-          file: Cargo.toml
-          field: package.version
-
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -112,8 +105,10 @@ jobs:
 
       - name: Generate Artifact Name
         shell: bash
+        env:
+          TAG_NAME: ${{ github.ref_name }}
         run: |
-          echo "ARTIFACT_NAME=$BIN-${{ steps.get_version.outputs.value }}-${{ matrix.label }}.zip" >> "$GITHUB_ENV"
+          echo "ARTIFACT_NAME=$BIN-${TAG_NAME#v}-${{ matrix.label }}.zip" >> "$GITHUB_ENV"
 
       - name: Create Archive and Upload to Release
         shell: bash
