@@ -46,7 +46,7 @@ jobs:
           gh release upload ${{ github.ref }} Rojo.rbxm
 
       - name: Upload Plugin to Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Rojo.rbxm
           path: Rojo.rbxm
@@ -138,7 +138,7 @@ jobs:
           gh release upload ${{ github.ref }} ../$ARTIFACT_NAME
 
       - name: Upload Archive to Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           path: ${{ env.ARTIFACT_NAME }}
           name: ${{ env.ARTIFACT_NAME }}
