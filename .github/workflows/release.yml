@@ -8,11 +8,8 @@ jobs:
   create-release:
     name: Create Release
     runs-on: ubuntu-latest
-    outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
     steps:
       - name: Create Release
-        id: create_release
         uses: softprops/action-gh-release@v2
         with:
           name: ${{ github.ref_name }}
