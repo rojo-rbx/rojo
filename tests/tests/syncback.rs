@@ -21,4 +21,5 @@ syncback_basic_test! {
     all_middleware,
     ref_properties,
     rbxm_fallback
+    ref_properties_blank
 }
