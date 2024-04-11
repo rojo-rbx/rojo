@@ -188,6 +188,7 @@ fn xml_decode_config() -> rbx_xml::DecodeOptions<'static> {
 
 fn binary_db() -> Option<ReflectionDatabase<'static>> {
     // HACK: UniqueId does not deserialize right now, so we force it to
+    // Don't forget to change this in the syncback test when changing it here.
     use rbx_reflection::{PropertyKind, PropertySerialization};
     use std::borrow::Cow;
 
