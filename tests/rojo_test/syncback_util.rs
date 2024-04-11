@@ -4,6 +4,7 @@ use anyhow::Context;
 use insta::assert_yaml_snapshot;
 use librojo::{snapshot_from_vfs, syncback_loop, FsSnapshot, InstanceContext, Project, RojoTree};
 use memofs::{InMemoryFs, IoResultExt, Vfs, VfsSnapshot};
+use rbx_reflection::ReflectionDatabase;
 use serde::Serialize;
 
 use crate::rojo_test::io_util::SYNCBACK_TESTS_PATH;
@@ -34,7 +35,10 @@ pub fn basic_syncback_test(name: &str) -> anyhow::Result<()> {
     };
     im_vfs.set_watch_enabled(false);
 
-    let input_dom = rbx_binary::from_reader(std_vfs.read(input_path)?.as_slice())?;
+    let database = database_shim().unwrap();
+    let deserializer = rbx_binary::Deserializer::new().reflection_database(&database);
+    let input_dom = deserializer.deserialize(std_vfs.read(input_path)?.as_slice())?;
+
     let (mut output_dom, project) =
         rojo_tree_from_path(&std_vfs, &output_path.join("default.project.json"))?;
 
@@ -136,6 +140,30 @@ fn to_vfs_snapshot(vfs: &Vfs, path: &Path) -> anyhow::Result<VfsSnapshot> {
         let contents = vfs.read(path)?;
         Ok(VfsSnapshot::file(contents.as_slice()))
     }
+}
+
+fn database_shim() -> Option<ReflectionDatabase<'static>> {
+    // HACK: UniqueId does not deserialize right now, so we force it to
+    // Don't forget to change this in the syncback CLI when changing it here.
+    use rbx_reflection::{PropertyKind, PropertySerialization};
+
+    let mut unique_id = rbx_reflection_database::get()
+        .classes
+        .get("Instance")?
+        .properties
+        .get("UniqueId")?
+        .clone();
+    unique_id.kind = PropertyKind::Canonical {
+        serialization: PropertySerialization::Serializes,
+    };
+
+    let mut db = rbx_reflection_database::get().clone();
+    let instance = db.classes.get_mut("Instance")?;
+    instance
+        .properties
+        .insert(Cow::Borrowed("UniqueId"), unique_id);
+
+    Some(db)
 }
 
 /// Normalizes the line endings of a vector if it's user-readable.
