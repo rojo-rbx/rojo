@@ -15,6 +15,7 @@ use serde::{Deserialize, Serialize};
 use std::{
     collections::{HashMap, HashSet, VecDeque},
     env,
+    path::Path,
     sync::OnceLock,
 };
 
@@ -43,12 +44,21 @@ pub use snapshot::{SyncbackData, SyncbackSnapshot};
 /// new files.
 const DEBUG_MODEL_FORMAT_VAR: &str = "ROJO_SYNCBACK_DEBUG";
 
+/// A glob that can be used to tell if a path contains a `.git` folder.
+static GIT_IGNORE_GLOB: OnceLock<Glob> = OnceLock::new();
+
 pub fn syncback_loop(
     vfs: &Vfs,
     old_tree: &mut RojoTree,
     mut new_tree: WeakDom,
     project: &Project,
 ) -> anyhow::Result<FsSnapshot> {
+    let ignore_patterns = project
+        .syncback_rules
+        .as_ref()
+        .map(|rules| rules.compile_globs())
+        .transpose()?;
+
     log::debug!("Pruning new tree");
     strip_unknown_root_children(&mut new_tree, old_tree);
 
@@ -146,7 +156,7 @@ pub fn syncback_loop(
             }
         }
 
-        if !snapshot.is_valid_path(project_path, &snapshot.path) {
+        if !is_valid_path(&ignore_patterns, project_path, &snapshot.path) {
             log::debug!("Skipping {inst_path} because its path matches ignore pattern");
             continue;
         }
@@ -305,7 +315,7 @@ pub struct SyncbackRules {
     /// A list of patterns to check against the path an Instance would serialize
     /// to. If a path matches one of these, the Instance won't be syncbacked.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    ignore_paths: Vec<Glob>,
+    ignore_paths: Vec<String>,
     /// A map of classes to properties to ignore for that class when doing
     /// syncback.
     #[serde(default, skip_serializing_if = "HashMap::is_empty")]
@@ -322,6 +332,56 @@ pub struct SyncbackRules {
     /// during syncback. Defaults to `false`.
     #[serde(skip_serializing_if = "Option::is_none")]
     ignore_referents: Option<bool>,
+    /// Whether the globs specified in `ignore_paths` should be modified to also
+    /// match directories. Defaults to `true`.
+    ///
+    /// If this is `true`, it'll take ignore globs that end in `/**` and convert
+    /// them to also handle the directory they're referring to. This is
+    /// generally a better UX.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    create_ignore_dir_paths: Option<bool>,
+}
+
+impl SyncbackRules {
+    pub fn compile_globs(&self) -> anyhow::Result<Vec<Glob>> {
+        let mut globs = Vec::with_capacity(self.ignore_paths.len());
+        let dir_ignore_paths = self.create_ignore_dir_paths.unwrap_or(true);
+
+        for pattern in &self.ignore_paths {
+            let glob = Glob::new(pattern)
+                .with_context(|| format!("the pattern '{pattern}' is not a valid glob"))?;
+            globs.push(glob);
+
+            if dir_ignore_paths {
+                if let Some(dir_pattern) = pattern.strip_suffix("/**") {
+                    if let Ok(glob) = Glob::new(dir_pattern) {
+                        globs.push(glob)
+                    }
+                }
+            }
+        }
+
+        Ok(globs)
+    }
+}
+
+fn is_valid_path(globs: &Option<Vec<Glob>>, base_path: &Path, path: &Path) -> bool {
+    let git_glob = GIT_IGNORE_GLOB.get_or_init(|| Glob::new(".git/**").unwrap());
+    let test_path = match path.strip_prefix(base_path) {
+        Ok(suffix) => suffix,
+        Err(_) => path,
+    };
+    if git_glob.is_match(test_path) {
+        return false;
+    }
+    if let Some(ref ignore_paths) = globs {
+        for glob in ignore_paths {
+            if glob.is_match(test_path) {
+                return false;
+            }
+        }
+    }
+    true
 }
 
 /// Returns a set of properties that should not be written with syncback if

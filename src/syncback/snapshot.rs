@@ -2,7 +2,6 @@ use memofs::Vfs;
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
-    sync::OnceLock,
 };
 
 use crate::{
@@ -17,9 +16,6 @@ use rbx_dom_weak::{
 };
 
 use super::{get_best_middleware, name_for_inst, property_filter::filter_properties};
-
-/// A glob that can be used to tell if a path contains a `.git` folder.
-static GIT_IGNORE_GLOB: OnceLock<Glob> = OnceLock::new();
 
 #[derive(Clone, Copy)]
 pub struct SyncbackData<'sync> {
@@ -127,31 +123,6 @@ impl<'sync> SyncbackSnapshot<'sync> {
         Some(properties)
     }
 
-    /// Returns whether a given path is allowed for syncback by matching `path`
-    /// against every user specified glob for ignoring.
-    ///
-    /// If the provided `path` is absolute, it has `base_path` stripped from it
-    /// to allow globs to operate as if it were local.
-    #[inline]
-    pub fn is_valid_path(&self, base_path: &Path, path: &Path) -> bool {
-        let git_glob = GIT_IGNORE_GLOB.get_or_init(|| Glob::new(".git/**").unwrap());
-        let test_path = match path.strip_prefix(base_path) {
-            Ok(suffix) => suffix,
-            Err(_) => path,
-        };
-        if git_glob.is_match(test_path) {
-            return false;
-        }
-        if let Some(ignore_paths) = self.ignore_paths() {
-            for glob in ignore_paths {
-                if glob.is_match(test_path) {
-                    return false;
-                }
-            }
-        }
-        true
-    }
-
     /// Returns a path to the provided Instance in the new DOM. This path is
     /// where you would look for the object in Roblox Studio.
     #[inline]
@@ -231,16 +202,6 @@ impl<'sync> SyncbackSnapshot<'sync> {
             .syncback_rules
             .as_ref()
             .map(|rules| &rules.ignore_properties)
-    }
-
-    /// Returns user-specified ignore paths.
-    #[inline]
-    pub fn ignore_paths(&self) -> Option<&[Glob]> {
-        self.data
-            .project
-            .syncback_rules
-            .as_ref()
-            .map(|rules| rules.ignore_paths.as_slice())
     }
 
     /// Returns user-specified ignore tree.
