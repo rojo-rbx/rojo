@@ -271,7 +271,7 @@ pub fn get_best_middleware(snapshot: &SyncbackSnapshot) -> Middleware {
             "LocalizationTable" => Middleware::Csv,
             // This isn't the ideal way to handle this but it works.
             name if name.ends_with("Value") => Middleware::JsonModel,
-            _ => Middleware::Rbxmx,
+            _ => Middleware::Rbxm,
         }
     }
 
