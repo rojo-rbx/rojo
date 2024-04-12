@@ -9,13 +9,12 @@ jobs:
     name: Create Release
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - name: Create Release
-        uses: softprops/action-gh-release@v2
-        with:
-          name: ${{ github.ref_name }}
-          tag_name: ${{ github.ref }}
-          draft: true
-          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create ${{ github.ref_name }} --draft --verify-tag --title ${{ github.ref_name }}
 
   build-plugin:
     needs: ["create-release"]
@@ -40,7 +39,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload ${{ github.ref }} Rojo.rbxm
+          gh release upload ${{ github.ref_name }} Rojo.rbxm
 
       - name: Upload Plugin to Artifacts
         uses: actions/upload-artifact@v4
@@ -127,7 +126,7 @@ jobs:
             zip ../$ARTIFACT_NAME *
           fi
 
-          gh release upload ${{ github.ref }} ../$ARTIFACT_NAME
+          gh release upload ${{ github.ref_name }} ../$ARTIFACT_NAME
 
       - name: Upload Archive to Artifacts
         uses: actions/upload-artifact@v4
