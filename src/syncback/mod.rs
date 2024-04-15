@@ -113,6 +113,8 @@ pub fn syncback_loop(
         log::debug!("Skipping referent linking as per project syncback rules");
     }
 
+    new_tree.root_mut().name = project.name.clone();
+
     log::debug!("Hashing project DOM");
     let old_hashes = hash_tree(project, old_tree.inner(), old_tree.get_root_id());
     log::debug!("Hashing file DOM");
