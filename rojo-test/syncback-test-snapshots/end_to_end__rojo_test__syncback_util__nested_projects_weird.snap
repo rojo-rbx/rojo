@@ -4,9 +4,6 @@ assertion_line: 48
 expression: "visualize_fs_snapshot(&fs_snapshot, &output_path)"
 ---
 added_files:
-  - client-only.project.json
-  - default.project.json
-  - server-only.project.json
   - "src/modules\\ClientModule.luau"
   - "src/modules\\ServerModule.luau"
 added_dirs:

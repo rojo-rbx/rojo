@@ -4,7 +4,6 @@ assertion_line: 48
 expression: "visualize_fs_snapshot(&fs_snapshot, &output_path)"
 ---
 added_files:
-  - default.project.json
   - "src\\pointer.model.json"
   - "src\\target.model.json"
 added_dirs:
