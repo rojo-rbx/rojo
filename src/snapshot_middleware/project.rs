@@ -588,6 +588,8 @@ fn project_node_should_reserialize(
                         if !variant_eq(inst_value, &node_value) {
                             return Ok(true);
                         }
+                    } else {
+                        return Ok(true);
                     }
                 }
                 Ok(false)
