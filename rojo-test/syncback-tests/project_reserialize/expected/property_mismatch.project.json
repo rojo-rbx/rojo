@@ -1,0 +1,9 @@
+{
+  "name": "property_mismatch",
+  "tree": {
+    "$className": "StringValue",
+    "$properties": {
+      "Value": "apple dinner use transaction haunt"
+    }
+  }
+}

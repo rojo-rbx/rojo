@@ -3,6 +3,12 @@
   "tree": {
     "$className": "DataModel",
     "Workspace": {
+      "attribute_mismatch": {
+        "$path": "attribute_mismatch.project.json"
+      },
+      "property_mismatch": {
+        "$path": "property_mismatch.project.json"
+      },
       "$properties": {
         "CSGAsyncDynamicCollision": {
           "Enum": 0
@@ -13,7 +19,7 @@
         "StreamingEnabled": true
       },
       "$attributes": {
-        "Rojo_Target_CurrentCamera": "6d6ae1d713c82fae0620aa1300000375"
+        "Rojo_Target_CurrentCamera": "59453add28d8288f0631b41500003fd3"
       }
     }
   }
