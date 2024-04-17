@@ -21,6 +21,7 @@ use crate::{
     },
     snapshot_middleware::Middleware,
     syncback::{FsSnapshot, SyncbackReturn, SyncbackSnapshot},
+    variant_eq::variant_eq,
     RojoRef,
 };
 
@@ -341,6 +342,7 @@ pub fn syncback_project<'sync>(
     let mut old_child_map = HashMap::new();
     let mut new_child_map = HashMap::new();
 
+    let mut node_changed_map = Vec::new();
     let mut node_queue = VecDeque::with_capacity(1);
     node_queue.push_back((&mut project.tree, old_inst, snapshot.new_inst()));
 
@@ -511,12 +513,20 @@ pub fn syncback_project<'sync>(
             }
         }
         removed_descendants.extend(old_child_map.drain().map(|(_, v)| v));
+        node_changed_map.push((&node.properties, &node.attributes, old_inst))
+    }
+    let mut fs_snapshot = FsSnapshot::new();
+
+    for (node_properties, node_attributes, old_inst) in node_changed_map {
+        if project_node_should_reserialize(node_properties, node_attributes, old_inst)? {
+            fs_snapshot.add_file(project_path, serde_json::to_vec_pretty(&project)?);
+            break;
+        }
     }
 
     Ok(SyncbackReturn {
         inst_snapshot: InstanceSnapshot::from_instance(snapshot.new_inst()),
-        fs_snapshot: FsSnapshot::new()
-            .with_added_file(project_path, serde_json::to_vec_pretty(&project)?),
+        fs_snapshot,
         children: descendant_snapshots,
         removed_children: removed_descendants,
     })
@@ -546,6 +556,52 @@ fn syncback_project_node<'sync>(
             Some(old_inst.id()),
         )
         .middleware(middleware))
+}
+
+fn project_node_should_reserialize(
+    node_properties: &BTreeMap<String, UnresolvedValue>,
+    node_attributes: &BTreeMap<String, UnresolvedValue>,
+    instance: InstanceWithMeta,
+) -> anyhow::Result<bool> {
+    for (prop_name, unresolved_node_value) in node_properties {
+        if let Some(inst_value) = instance.properties().get(prop_name) {
+            let node_value = unresolved_node_value
+                .clone()
+                .resolve(instance.name(), prop_name)?;
+            if !variant_eq(inst_value, &node_value) {
+                return Ok(true);
+            }
+        } else {
+            return Ok(true);
+        }
+    }
+
+    match instance.properties().get("Attributes") {
+        Some(Variant::Attributes(inst_attributes)) => {
+            // This will also catch if one is empty but the other isn't
+            if node_attributes.len() != inst_attributes.len() {
+                Ok(true)
+            } else {
+                for (attr_name, unresolved_node_value) in node_attributes {
+                    if let Some(inst_value) = inst_attributes.get(attr_name.as_str()) {
+                        let node_value = unresolved_node_value.clone().resolve_unambiguous()?;
+                        if !variant_eq(inst_value, &node_value) {
+                            return Ok(true);
+                        }
+                    }
+                }
+                Ok(false)
+            }
+        }
+        Some(_) => Ok(true),
+        None => {
+            if !node_attributes.is_empty() {
+                Ok(true)
+            } else {
+                Ok(false)
+            }
+        }
+    }
 }
 
 fn infer_class_name(name: &str, parent_class: Option<&str>) -> Option<Cow<'static, str>> {
