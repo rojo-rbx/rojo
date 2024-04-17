@@ -5,7 +5,6 @@ use std::{
 };
 
 use crate::{
-    glob::Glob,
     snapshot::{InstanceWithMeta, RojoTree},
     snapshot_middleware::Middleware,
     Project,
