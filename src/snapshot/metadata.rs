@@ -63,6 +63,8 @@ pub struct InstanceMetadata {
     /// Indicates the ID used for Ref properties pointing to this Instance.
     pub specified_id: Option<RojoRef>,
 
+    /// The Middleware that was used to create this Instance. Should generally
+    /// not be `None` except if the snapshotting process is not completed.
     pub middleware: Option<Middleware>,
 }
 
@@ -102,6 +104,13 @@ impl InstanceMetadata {
     pub fn context(self, context: &InstanceContext) -> Self {
         Self {
             context: context.clone(),
+            ..self
+        }
+    }
+
+    pub fn middleware(self, middleware: Middleware) -> Self {
+        Self {
+            middleware: Some(middleware),
             ..self
         }
     }
