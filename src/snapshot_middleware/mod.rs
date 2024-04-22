@@ -284,6 +284,21 @@ impl Middleware {
         )
     }
 
+    /// Returns whether this particular middleware sets its own properties.
+    /// This applies to things like `JsonModel` and `Project`, since they
+    /// set properties without needing a meta.json file.
+    ///
+    /// It does not cover middleware like `ServerScript` or `Csv` because they
+    /// need a meta.json file set properties that aren't their designated
+    /// 'special' properties.
+    #[inline]
+    pub fn handles_own_properties(&self) -> bool {
+        matches!(
+            self,
+            Middleware::JsonModel | Middleware::Project | Middleware::Rbxm | Middleware::Rbxmx
+        )
+    }
+
     /// Attempts to return a middleware that should be used for the given path.
     ///
     /// Returns `Err` only if the Vfs cannot read information about the path.

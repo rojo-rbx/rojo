@@ -356,45 +356,12 @@ pub fn syncback_project<'sync>(
             );
         }
 
-        let filtered_properties = snapshot
-            .get_filtered_properties(new_inst.referent())
-            .unwrap();
-        let properties = &mut node.properties;
-        let mut attributes = BTreeMap::new();
-
-        // We would ideally have different behavior here based on whether a
-        // node has `$path` set. However, due to an issue with Middleware not
-        // knowing whether they originate from a project or not, we just skip
-        // writing metadata for things from projects. So to avoid properties
-        // being dropped, we don't filter them specially.
-        // TODO: We should handle this branching somehow so that meta.json files
-        // are respected.
-        for (name, value) in filtered_properties {
-            match value {
-                Variant::Attributes(attrs) => {
-                    for (attr_name, attr_value) in attrs.iter() {
-                        attributes.insert(
-                            attr_name.clone(),
-                            UnresolvedValue::from_variant_unambiguous(attr_value.clone()),
-                        );
-                    }
-                }
-                Variant::SharedString(_) => {
-                    log::warn!(
-                        "Rojo cannot serialize the property {}.{name} in project files.\n\
-                        If this is not acceptable, resave the Instance at '{}' manually as an RBXM or RBXMX.", new_inst.class, snapshot.get_new_inst_path(snapshot.new)
-                    );
-                }
-                _ => {
-                    properties.insert(
-                        name.to_string(),
-                        UnresolvedValue::from_variant(value.clone(), &new_inst.class, name),
-                    );
-                }
-            }
-        }
-        node.attributes = attributes;
-
+        // TODO handle meta.json files in this branch. Right now, we perform
+        // syncback if a node has `$path` set but the Middleware aren't aware
+        // that the Instances they're running on originate in a project.json.
+        // As a result, the `meta.json` syncback code is hardcoded to not work
+        // if the Instance originates from a project file. However, we should
+        // ideally use a .meta.json over the project node if it exists already.
         if node.path.is_some() {
             // Since the node has a path, we have to run syncback on it.
             let node_path = node.path.as_ref().map(PathNode::path).expect(
@@ -407,16 +374,34 @@ pub fn syncback_project<'sync>(
                 base_path.join(node_path)
             };
 
-            let snapshot = syncback_project_node(
-                snapshot,
+            let middleware = match Middleware::middleware_for_path(
+                snapshot.vfs(),
                 &project.sync_rules,
                 &full_path,
-                new_inst,
-                old_inst,
-            )?;
-            descendant_snapshots.push(snapshot);
+            )? {
+                Some(stuff) => stuff,
+                // The only way this can happen at this point is if the path does
+                // not exist on the file system or there's no middleware for it.
+                None => anyhow::bail!(
+                    "path does not exist or could not be turned into a file Rojo understands: {}",
+                    full_path.display()
+                ),
+            };
+
+            descendant_snapshots.push(
+                snapshot
+                    .with_new_path(full_path.clone(), new_inst.referent(), Some(old_inst.id()))
+                    .middleware(middleware),
+            );
 
             ref_to_path_map.insert(new_inst.referent(), full_path);
+
+            // We only want to set properties if it needs it.
+            if !middleware.handles_own_properties() {
+                project_node_property_syncback(snapshot, new_inst, node);
+            }
+        } else {
+            project_node_property_syncback(snapshot, new_inst, node);
         }
 
         for child_ref in new_inst.children() {
@@ -532,30 +517,41 @@ pub fn syncback_project<'sync>(
     })
 }
 
-fn syncback_project_node<'sync>(
-    snapshot: &SyncbackSnapshot<'sync>,
-    sync_rules: &[SyncRule],
-    node_path: &Path,
+fn project_node_property_syncback(
+    snapshot: &SyncbackSnapshot,
     new_inst: &Instance,
-    old_inst: InstanceWithMeta,
-) -> anyhow::Result<SyncbackSnapshot<'sync>> {
-    let middleware = match Middleware::middleware_for_path(snapshot.vfs(), sync_rules, node_path)? {
-        Some(stuff) => stuff,
-        // The only way this can happen at this point is if the path does
-        // not exist on the file system or there's no middleware for it.
-        None => anyhow::bail!(
-            "path does not exist or could not be turned into a file Rojo understands: {}",
-            node_path.display()
-        ),
-    };
-
-    Ok(snapshot
-        .with_new_path(
-            node_path.to_path_buf(),
-            new_inst.referent(),
-            Some(old_inst.id()),
-        )
-        .middleware(middleware))
+    node: &mut ProjectNode,
+) {
+    let properties = &mut node.properties;
+    let mut attributes = BTreeMap::new();
+    for (name, value) in snapshot
+        .get_filtered_properties(new_inst.referent())
+        .unwrap()
+    {
+        match value {
+            Variant::Attributes(attrs) => {
+                for (attr_name, attr_value) in attrs.iter() {
+                    attributes.insert(
+                        attr_name.clone(),
+                        UnresolvedValue::from_variant_unambiguous(attr_value.clone()),
+                    );
+                }
+            }
+            Variant::SharedString(_) => {
+                log::warn!(
+                    "Rojo cannot serialize the property {}.{name} in project files.\n\
+                    If this is not acceptable, resave the Instance at '{}' manually as an RBXM or RBXMX.", new_inst.class, snapshot.get_new_inst_path(snapshot.new)
+                );
+            }
+            _ => {
+                properties.insert(
+                    name.to_string(),
+                    UnresolvedValue::from_variant(value.clone(), &new_inst.class, name),
+                );
+            }
+        }
+    }
+    node.attributes = attributes;
 }
 
 fn project_node_should_reserialize(
