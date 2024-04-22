@@ -4,7 +4,10 @@
     "$className": "DataModel",
     "Workspace": {
       "attribute_mismatch": {
-        "$path": "attribute_mismatch.project.json"
+        "$attributes": {
+          "foo": "bar"
+        },
+        "$path": "attribute_mismatch.luau"
       },
       "property_mismatch": {
         "$path": "property_mismatch.project.json"
@@ -19,7 +22,7 @@
         "StreamingEnabled": true
       },
       "$attributes": {
-        "Rojo_Target_CurrentCamera": "59453add28d8288f0631b41500003fd3"
+        "Rojo_Target_CurrentCamera": "6d6ae1d713c82fae0620aa1300000375"
       }
     }
   }

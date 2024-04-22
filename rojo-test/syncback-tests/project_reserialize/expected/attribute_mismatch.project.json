@@ -1,9 +1,0 @@
-{
-  "name": "attribute_mismatch",
-  "tree": {
-    "$className": "Folder",
-    "$attributes": {
-      "foo": "bar"
-    }
-  }
-}
