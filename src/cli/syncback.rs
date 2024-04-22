@@ -254,11 +254,14 @@ fn list_files(snapshot: &FsSnapshot, color: ColorChoice, base_path: &Path) -> io
     let mut buffer = writer.buffer();
 
     if snapshot.is_empty() {
-        writeln!(&mut buffer, "No files/added would be removed or added.")?;
+        writeln!(
+            &mut buffer,
+            "No files/directories would be removed or added."
+        )?;
     } else {
         let added = snapshot.added_paths();
         if !added.is_empty() {
-            writeln!(&mut buffer, "Writing files/folders:")?;
+            writeln!(&mut buffer, "Writing files/directories:")?;
             buffer.set_color(&add_color)?;
             for path in added {
                 writeln!(
@@ -271,7 +274,7 @@ fn list_files(snapshot: &FsSnapshot, color: ColorChoice, base_path: &Path) -> io
         }
         let removed = snapshot.removed_paths();
         if !removed.is_empty() {
-            writeln!(&mut buffer, "Removing files/folders:")?;
+            writeln!(&mut buffer, "Removing files/directories:")?;
             buffer.set_color(&remove_color)?;
             for path in removed {
                 writeln!(
