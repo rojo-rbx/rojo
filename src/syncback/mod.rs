@@ -63,7 +63,7 @@ pub fn syncback_loop(
     strip_unknown_root_children(&mut new_tree, old_tree);
 
     log::debug!("Collecting referents for new DOM...");
-    let deferred_referents = collect_referents(&new_tree)?;
+    let deferred_referents = collect_referents(&new_tree);
 
     log::debug!("Pre-filtering properties on DOMs");
     for referent in descendants(&new_tree, new_tree.root_ref()) {

@@ -1,17 +1,25 @@
 //! Implements iterating through an entire WeakDom and linking all Ref
 //! properties using attributes.
 
-use std::collections::{HashMap, VecDeque};
+use std::collections::{hash_map::Entry, HashMap, VecDeque};
 
 use rbx_dom_weak::{
-    types::{Attributes, Ref, Variant},
+    types::{Attributes, Ref, UniqueId, Variant},
     Instance, WeakDom,
 };
 
 use crate::{multimap::MultiMap, REF_ID_ATTRIBUTE_NAME, REF_POINTER_ATTRIBUTE_PREFIX};
 
+pub struct RefLinks {
+    /// A map of referents to each of their Ref properties.
+    prop_links: MultiMap<Ref, RefLink>,
+    /// A set of referents that need their ID rewritten. This includes
+    /// Instances that have no existing ID.
+    need_rewrite: Vec<Ref>,
+}
+
 #[derive(PartialEq, Eq)]
-pub struct RefLink {
+struct RefLink {
     /// The name of a property
     name: String,
     /// The value of the property.
@@ -22,7 +30,9 @@ pub struct RefLink {
 ///
 /// They can be linked to a dom later using the `link` method on the returned
 /// struct.
-pub fn collect_referents(dom: &WeakDom) -> anyhow::Result<MultiMap<Ref, RefLink>> {
+pub fn collect_referents(dom: &WeakDom) -> RefLinks {
+    let mut existing_ids = HashMap::new();
+    let mut need_rewrite = Vec::new();
     let mut links = MultiMap::new();
 
     let mut queue = VecDeque::new();
@@ -30,53 +40,93 @@ pub fn collect_referents(dom: &WeakDom) -> anyhow::Result<MultiMap<Ref, RefLink>
     // Note that this is back-in, front-out. This is important because
     // VecDeque::extend is the equivalent to using push_back.
     queue.push_back(dom.root_ref());
-    while let Some(referent) = queue.pop_front() {
-        let instance = dom.get_by_ref(referent).unwrap();
+    while let Some(inst_ref) = queue.pop_front() {
+        let instance = dom.get_by_ref(inst_ref).unwrap();
         queue.extend(instance.children().iter().copied());
 
-        for (name, value) in &instance.properties {
-            if let Variant::Ref(prop_value) = value {
-                if dom.get_by_ref(*prop_value).is_some() {
-                    links.insert(
-                        referent,
-                        RefLink {
-                            name: name.clone(),
-                            value: *prop_value,
-                        },
-                    );
+        // Collect all referent properties for easy access later
+        for (property_name, prop_value) in &instance.properties {
+            if let Variant::Ref(prop_ref) = prop_value {
+                // Any Instance that's pointed to as a property needs an ID.
+                let existing_id = match dom.get_by_ref(*prop_ref) {
+                    Some(inst) => get_existing_id(inst),
+                    None => continue,
+                };
+                if let Some(existing_id) = existing_id {
+                    match existing_ids.entry(existing_id) {
+                        Entry::Occupied(entry) => {
+                            if entry.get() != prop_ref {
+                                need_rewrite.push(*prop_ref);
+                            }
+                        }
+                        Entry::Vacant(entry) => {
+                            entry.insert(*prop_ref);
+                        }
+                    }
+                } else {
+                    need_rewrite.push(*prop_ref);
                 }
+                // We also need a list of these properties for linking later
+                links.insert(
+                    inst_ref,
+                    RefLink {
+                        name: property_name.to_owned(),
+                        value: *prop_ref,
+                    },
+                );
             }
         }
     }
 
-    Ok(links)
+    RefLinks {
+        prop_links: links,
+        need_rewrite,
+    }
 }
 
-pub fn link_referents(link_list: MultiMap<Ref, RefLink>, dom: &mut WeakDom) -> anyhow::Result<()> {
-    let mut pointer_attributes = HashMap::new();
-    for (pointer_ref, ref_properties) in link_list {
-        if dom.get_by_ref(pointer_ref).is_none() {
-            continue;
-        }
+pub fn link_referents(links: RefLinks, dom: &mut WeakDom) -> anyhow::Result<()> {
+    write_id_attributes(&links, dom)?;
 
-        // In this loop, we need to add the `Rojo_Id` attributes to the
-        // Instances.
-        for ref_link in ref_properties {
-            let target_inst = match dom.get_by_ref_mut(ref_link.value) {
+    let mut prop_list = Vec::new();
+    for (inst_id, properties) in links.prop_links {
+        for ref_link in properties {
+            let prop_inst = match dom.get_by_ref(ref_link.value) {
                 Some(inst) => inst,
-                None => {
-                    continue;
-                }
+                None => continue,
             };
-            pointer_attributes.insert(ref_link.name, get_or_insert_id(target_inst)?);
+            let id = get_existing_id(prop_inst)
+                .expect("all Instances that are pointed to should have an ID");
+            prop_list.push((ref_link.name, Variant::String(id.to_owned())));
         }
-
-        let pointer_inst = dom.get_by_ref_mut(pointer_ref).unwrap();
-        let pointer_attrs = get_or_insert_attributes(pointer_inst)?;
-        for (name, id) in pointer_attributes.drain() {
-            pointer_attrs.insert(
-                format!("{REF_POINTER_ATTRIBUTE_PREFIX}{name}"),
-                Variant::BinaryString(id.into_bytes().into()),
+        let inst = match dom.get_by_ref_mut(inst_id) {
+            Some(inst) => inst,
+            None => continue,
+        };
+        // Ideally, this method for getting attributes would be a function
+        // since the code is duplicated elsewhere. Alas, it runs into a problem
+        // with the borrow checker, so it can't easily be abstracted away.
+        let attributes = match inst.properties.get_mut("Attributes") {
+            Some(Variant::Attributes(attrs)) => attrs,
+            None => {
+                inst.properties
+                    .insert("Attributes".into(), Attributes::new().into());
+                match inst.properties.get_mut("Attributes") {
+                    Some(Variant::Attributes(attrs)) => attrs,
+                    _ => unreachable!(),
+                }
+            }
+            Some(value) => {
+                anyhow::bail!(
+                    "expected Attributes to be of type 'Attributes' but it was of type '{:?}'",
+                    value.ty()
+                );
+            }
+        };
+        for (prop_name, prop_value) in prop_list.drain(..) {
+            log::debug!("adding pointer for {prop_name} => {prop_value:?}");
+            attributes.insert(
+                format!("{REF_POINTER_ATTRIBUTE_PREFIX}{prop_name}"),
+                prop_value,
             );
         }
     }
@@ -84,44 +134,68 @@ pub fn link_referents(link_list: MultiMap<Ref, RefLink>, dom: &mut WeakDom) -> a
     Ok(())
 }
 
-fn get_or_insert_attributes(inst: &mut Instance) -> anyhow::Result<&mut Attributes> {
-    if !inst.properties.contains_key("Attributes") {
-        inst.properties
-            .insert("Attributes".into(), Attributes::new().into());
+fn write_id_attributes(links: &RefLinks, dom: &mut WeakDom) -> anyhow::Result<()> {
+    for referent in &links.need_rewrite {
+        let inst = match dom.get_by_ref_mut(*referent) {
+            Some(inst) => inst,
+            None => continue,
+        };
+        let unique_id = match inst.properties.get("UniqueId") {
+            Some(Variant::UniqueId(id)) => Some(*id),
+            _ => None,
+        }
+        .unwrap_or_else(|| UniqueId::now().unwrap());
+
+        let attributes = match inst.properties.get_mut("Attributes") {
+            Some(Variant::Attributes(attrs)) => attrs,
+            None => {
+                inst.properties
+                    .insert("Attributes".into(), Attributes::new().into());
+                match inst.properties.get_mut("Attributes") {
+                    Some(Variant::Attributes(attrs)) => attrs,
+                    _ => unreachable!(),
+                }
+            }
+            Some(value) => {
+                anyhow::bail!(
+                    "expected Attributes to be of type 'Attributes' but it was of type '{:?}'",
+                    value.ty()
+                );
+            }
+        };
+        attributes.insert(
+            REF_ID_ATTRIBUTE_NAME.into(),
+            Variant::String(unique_id.to_string()),
+        );
     }
-    match inst.properties.get_mut("Attributes") {
-        Some(Variant::Attributes(attrs)) => Ok(attrs),
-        Some(ty) => Err(anyhow::format_err!(
-            "expected property Attributes to be an Attributes but it was {:?}",
-            ty.ty()
-        )),
-        None => unreachable!(),
+    Ok(())
+}
+
+fn get_existing_id(inst: &Instance) -> Option<&str> {
+    if let Variant::Attributes(attrs) = inst.properties.get("Attributes")? {
+        let id = attrs.get(REF_ID_ATTRIBUTE_NAME)?;
+        match id {
+            Variant::String(str) => Some(str),
+            Variant::BinaryString(bstr) => match std::str::from_utf8(bstr.as_ref()) {
+                Ok(str) => Some(str),
+                Err(_) => None,
+            },
+            _ => None,
+        }
+    } else {
+        None
     }
 }
 
-fn get_or_insert_id(inst: &mut Instance) -> anyhow::Result<String> {
-    let unique_id = match inst.properties.get("UniqueId") {
-        Some(Variant::UniqueId(id)) => Some(*id),
-        _ => None,
-    };
-    let referent = inst.referent();
-    let attributes = get_or_insert_attributes(inst)?;
-    match attributes.get(REF_ID_ATTRIBUTE_NAME) {
-        Some(Variant::String(str)) => return Ok(str.clone()),
-        Some(Variant::BinaryString(bytes)) => match std::str::from_utf8(bytes.as_ref()) {
-            Ok(str) => return Ok(str.to_string()),
-            Err(_) => {
-                anyhow::bail!("expected attribute {REF_ID_ATTRIBUTE_NAME} to be a UTF-8 string")
-            }
-        },
-        _ => {}
-    }
-    let id_string = unique_id
-        .map(|id| id.to_string())
-        .unwrap_or_else(|| referent.to_string());
-    attributes.insert(
-        REF_ID_ATTRIBUTE_NAME.to_string(),
-        Variant::BinaryString(id_string.clone().into_bytes().into()),
-    );
-    Ok(id_string)
-}
+/*
+When loading IDs we need to create a list and if there's a collision,
+cause it to have a stroke. If that works to catch the duplicates then we just
+need to re-serialize the IDs that collide. I think it's probably acceptable to
+just pick one of the two if we can't tell the difference between them and give
+the other a new ID. Maybe we emit a warning.
+
+This is gonna require a redo of the linking a bit, since it'll mean that we
+can't just blindly use the old IDs. The plus side is that it means we can
+collect these in a way that isn't awful via mapping an ID to a referent, so
+it may end up improving the overall quality of the above code.
+*/
