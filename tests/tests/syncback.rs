@@ -26,4 +26,5 @@ syncback_basic_test! {
     ignore_paths,
     project_reserialize,
     project_all_middleware,
+    duplicate_rojo_id,
 }
