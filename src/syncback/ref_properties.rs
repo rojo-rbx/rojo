@@ -88,6 +88,8 @@ pub fn link_referents(links: RefLinks, dom: &mut WeakDom) -> anyhow::Result<()> 
     write_id_attributes(&links, dom)?;
 
     let mut prop_list = Vec::new();
+    let mut attribute_list = HashMap::new();
+
     for (inst_id, properties) in links.prop_links {
         for ref_link in properties {
             let prop_inst = match dom.get_by_ref(ref_link.value) {
@@ -102,19 +104,12 @@ pub fn link_referents(links: RefLinks, dom: &mut WeakDom) -> anyhow::Result<()> 
             Some(inst) => inst,
             None => continue,
         };
-        // Ideally, this method for getting attributes would be a function
-        // since the code is duplicated elsewhere. Alas, it runs into a problem
-        // with the borrow checker, so it can't easily be abstracted away.
-        let attributes = match inst.properties.get_mut("Attributes") {
+
+        // TODO: Replace this whole rigamarole with `Attributes::drain`
+        // eventually.
+        let attributes = match inst.properties.remove("Attributes") {
             Some(Variant::Attributes(attrs)) => attrs,
-            None => {
-                inst.properties
-                    .insert("Attributes".into(), Attributes::new().into());
-                match inst.properties.get_mut("Attributes") {
-                    Some(Variant::Attributes(attrs)) => attrs,
-                    _ => unreachable!(),
-                }
-            }
+            None => Attributes::new(),
             Some(value) => {
                 anyhow::bail!(
                     "expected Attributes to be of type 'Attributes' but it was of type '{:?}'",
@@ -122,13 +117,25 @@ pub fn link_referents(links: RefLinks, dom: &mut WeakDom) -> anyhow::Result<()> 
                 );
             }
         };
+        for (name, value) in attributes.into_iter() {
+            if !name.starts_with(REF_POINTER_ATTRIBUTE_PREFIX) {
+                attribute_list.insert(name, value);
+            }
+        }
+
         for (prop_name, prop_value) in prop_list.drain(..) {
-            log::debug!("adding pointer for {prop_name} => {prop_value:?}");
-            attributes.insert(
+            attribute_list.insert(
                 format!("{REF_POINTER_ATTRIBUTE_PREFIX}{prop_name}"),
                 prop_value,
             );
         }
+
+        // TODO: Same as above, when `Attributes::drain` is live, replace this
+        // with it.
+        inst.properties.insert(
+            "Attributes".into(),
+            Attributes::from_iter(attribute_list.drain()).into(),
+        );
     }
 
     Ok(())
