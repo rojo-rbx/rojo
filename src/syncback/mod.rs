@@ -267,7 +267,7 @@ pub fn get_best_middleware(snapshot: &SyncbackSnapshot) -> Middleware {
     let mut middleware;
 
     if let Some(override_middleware) = snapshot.middleware {
-        middleware = override_middleware;
+        return override_middleware;
     } else if let Some(old_middleware) = old_middleware {
         return old_middleware;
     } else if json_model_classes.contains(inst.class.as_str()) {
