@@ -379,7 +379,7 @@ pub fn syncback_project<'sync>(
                 &project.sync_rules,
                 &full_path,
             )? {
-                Some(stuff) => stuff,
+                Some(middleware) => middleware,
                 // The only way this can happen at this point is if the path does
                 // not exist on the file system or there's no middleware for it.
                 None => anyhow::bail!(
