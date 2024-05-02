@@ -20,7 +20,7 @@ use crate::{
         PathIgnoreRule, SyncRule,
     },
     snapshot_middleware::Middleware,
-    syncback::{FsSnapshot, SyncbackReturn, SyncbackSnapshot},
+    syncback::{filter_properties, FsSnapshot, SyncbackReturn, SyncbackSnapshot},
     variant_eq::variant_eq,
     RojoRef,
 };
@@ -401,10 +401,10 @@ pub fn syncback_project<'sync>(
 
             // We only want to set properties if it needs it.
             if !middleware.handles_own_properties() {
-                project_node_property_syncback(snapshot, new_inst, node);
+                project_node_property_syncback_path(snapshot, new_inst, node);
             }
         } else {
-            project_node_property_syncback(snapshot, new_inst, node);
+            project_node_property_syncback_no_path(snapshot, new_inst, node);
         }
 
         for child_ref in new_inst.children() {
@@ -520,17 +520,15 @@ pub fn syncback_project<'sync>(
     })
 }
 
-fn project_node_property_syncback(
+fn project_node_property_syncback<'inst>(
     snapshot: &SyncbackSnapshot,
+    filtered_properties: HashMap<&'inst str, &'inst Variant>,
     new_inst: &Instance,
     node: &mut ProjectNode,
 ) {
     let properties = &mut node.properties;
     let mut attributes = BTreeMap::new();
-    for (name, value) in snapshot
-        .get_path_filtered_properties(new_inst.referent())
-        .unwrap()
-    {
+    for (name, value) in filtered_properties {
         match value {
             Variant::Attributes(attrs) => {
                 for (attr_name, attr_value) in attrs.iter() {
@@ -555,6 +553,26 @@ fn project_node_property_syncback(
         }
     }
     node.attributes = attributes;
+}
+
+fn project_node_property_syncback_path(
+    snapshot: &SyncbackSnapshot,
+    new_inst: &Instance,
+    node: &mut ProjectNode,
+) {
+    let filtered_properties = snapshot
+        .get_path_filtered_properties(new_inst.referent())
+        .unwrap();
+    project_node_property_syncback(snapshot, filtered_properties, new_inst, node)
+}
+
+fn project_node_property_syncback_no_path(
+    snapshot: &SyncbackSnapshot,
+    new_inst: &Instance,
+    node: &mut ProjectNode,
+) {
+    let filtered_properties = filter_properties(snapshot.project(), new_inst);
+    project_node_property_syncback(snapshot, filtered_properties, new_inst, node)
 }
 
 fn project_node_should_reserialize(
