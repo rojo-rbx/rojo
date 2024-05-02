@@ -350,9 +350,12 @@ pub fn syncback_project<'sync>(
         log::debug!("Processing node {}", old_inst.name());
         if old_inst.class_name() != new_inst.class {
             anyhow::bail!(
-                "Cannot change the class of {} in project file {}",
+                "Cannot change the class of {} in project file {}.\n\
+                Current class is {}, it is a {} in the input file.",
                 old_inst.name(),
-                project_path.display()
+                project_path.display(),
+                old_inst.class_name(),
+                new_inst.class
             );
         }
 
