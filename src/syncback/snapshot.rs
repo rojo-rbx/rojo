@@ -100,13 +100,15 @@ impl<'sync> SyncbackSnapshot<'sync> {
     }
 
     /// Returns a map of properties for an Instance from the 'new' tree
-    /// with filtering done to avoid noise. Returns `None` only if `new_ref`
-    /// instance is not in the new tree.
+    /// with filtering done to avoid noise. This method filters out properties
+    /// that are not meant to be present in Instances that are represented
+    /// specially by a path, like `LocalScript.Source` and `StringValue.Value`.
     ///
-    /// This method is not necessary or desired for blobs like RBXM or RBXMX.
+    /// This method is not necessary or desired for blobs like Rbxm or non-path
+    /// middlewares like JsonModel.
     #[inline]
     #[must_use]
-    pub fn get_filtered_properties(
+    pub fn get_path_filtered_properties(
         &self,
         new_ref: Ref,
     ) -> Option<HashMap<&'sync str, &'sync Variant>> {

@@ -525,7 +525,7 @@ fn project_node_property_syncback(
     let properties = &mut node.properties;
     let mut attributes = BTreeMap::new();
     for (name, value) in snapshot
-        .get_filtered_properties(new_inst.referent())
+        .get_path_filtered_properties(new_inst.referent())
         .unwrap()
     {
         match value {
