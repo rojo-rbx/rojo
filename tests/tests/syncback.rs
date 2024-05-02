@@ -27,4 +27,5 @@ syncback_basic_test! {
     project_reserialize,
     project_all_middleware,
     duplicate_rojo_id,
+    string_value_project,
 }

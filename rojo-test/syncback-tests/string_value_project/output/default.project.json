@@ -1,0 +1,14 @@
+{
+  "name": "string_value_project",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "on_file_system": {
+        "$path": "string_value.txt"
+      },
+      "inside_project_file": {
+        "$className": "StringValue"
+      }
+    }
+  }
+}
