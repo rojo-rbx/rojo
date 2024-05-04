@@ -16,7 +16,7 @@ use crate::{
             SubscribeMessage, SubscribeResponse, WriteRequest, WriteResponse, PROTOCOL_VERSION,
             SERVER_VERSION,
         },
-        util::{json, json_ok},
+        util::{json, msgpack_ok},
     },
 };
 
@@ -58,7 +58,7 @@ impl ApiService {
         let tree = self.serve_session.tree();
         let root_instance_id = tree.get_root_id();
 
-        json_ok(&ServerInfoResponse {
+        msgpack_ok(&ServerInfoResponse {
             server_version: SERVER_VERSION.to_owned(),
             protocol_version: PROTOCOL_VERSION,
             session_id: self.serve_session.session_id(),
@@ -103,7 +103,7 @@ impl ApiService {
                     .map(|patch| SubscribeMessage::from_patch_update(&tree, patch))
                     .collect();
 
-                json_ok(SubscribeResponse {
+                msgpack_ok(SubscribeResponse {
                     session_id,
                     message_cursor,
                     messages: api_messages,
@@ -159,7 +159,7 @@ impl ApiService {
             })
             .unwrap();
 
-        json_ok(WriteResponse { session_id })
+        msgpack_ok(WriteResponse { session_id })
     }
 
     async fn handle_api_read(&self, request: Request<Body>) -> Response<Body> {
@@ -193,7 +193,7 @@ impl ApiService {
             }
         }
 
-        json_ok(ReadResponse {
+        msgpack_ok(ReadResponse {
             session_id: self.serve_session.session_id(),
             message_cursor,
             instances,
@@ -271,7 +271,7 @@ impl ApiService {
             },
         };
 
-        json_ok(OpenResponse {
+        msgpack_ok(OpenResponse {
             session_id: self.serve_session.session_id(),
         })
     }

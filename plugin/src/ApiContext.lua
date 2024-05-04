@@ -122,7 +122,7 @@ function ApiContext:connect()
 
 	return Http.get(url)
 		:andThen(rejectFailedRequests)
-		:andThen(Http.Response.json)
+		:andThen(Http.Response.msgpack)
 		:andThen(rejectWrongProtocolVersion)
 		:andThen(function(body)
 			assert(validateApiInfo(body))
@@ -140,7 +140,7 @@ end
 function ApiContext:read(ids)
 	local url = ("%s/api/read/%s"):format(self.__baseUrl, table.concat(ids, ","))
 
-	return Http.get(url):andThen(rejectFailedRequests):andThen(Http.Response.json):andThen(function(body)
+	return Http.get(url):andThen(rejectFailedRequests):andThen(Http.Response.msgpack):andThen(function(body)
 		if body.sessionId ~= self.__sessionId then
 			return Promise.reject("Server changed ID")
 		end
@@ -185,11 +185,14 @@ function ApiContext:write(patch)
 
 	body = Http.jsonEncode(body)
 
-	return Http.post(url, body):andThen(rejectFailedRequests):andThen(Http.Response.json):andThen(function(responseBody)
-		Log.info("Write response: {:?}", responseBody)
+	return Http.post(url, body)
+		:andThen(rejectFailedRequests)
+		:andThen(Http.Response.msgpack)
+		:andThen(function(responseBody)
+			Log.info("Write response: {:?}", responseBody)
 
-		return responseBody
-	end)
+			return responseBody
+		end)
 end
 
 function ApiContext:retrieveMessages()
@@ -214,7 +217,7 @@ function ApiContext:retrieveMessages()
 		end)
 	end
 
-	return sendRequest():andThen(rejectFailedRequests):andThen(Http.Response.json):andThen(function(body)
+	return sendRequest():andThen(rejectFailedRequests):andThen(Http.Response.msgpack):andThen(function(body)
 		if body.sessionId ~= self.__sessionId then
 			return Promise.reject("Server changed ID")
 		end
@@ -230,7 +233,7 @@ end
 function ApiContext:open(id)
 	local url = ("%s/api/open/%s"):format(self.__baseUrl, id)
 
-	return Http.post(url, ""):andThen(rejectFailedRequests):andThen(Http.Response.json):andThen(function(body)
+	return Http.post(url, ""):andThen(rejectFailedRequests):andThen(Http.Response.msgpack):andThen(function(body)
 		if body.sessionId ~= self.__sessionId then
 			return Promise.reject("Server changed ID")
 		end
