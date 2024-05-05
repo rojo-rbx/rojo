@@ -183,7 +183,7 @@ function ApiContext:write(patch)
 		added = added,
 	}
 
-	body = Http.jsonEncode(body)
+	body = Http.msgpackEncode(body)
 
 	return Http.post(url, body)
 		:andThen(rejectFailedRequests)

@@ -16,7 +16,7 @@ use crate::{
             SubscribeMessage, SubscribeResponse, WriteRequest, WriteResponse, PROTOCOL_VERSION,
             SERVER_VERSION,
         },
-        util::{json, msgpack_ok},
+        util::{deserialize_msgpack, json, msgpack_ok},
     },
 };
 
@@ -122,7 +122,7 @@ impl ApiService {
 
         let body = body::to_bytes(request.into_body()).await.unwrap();
 
-        let request: WriteRequest = match serde_json::from_slice(&body) {
+        let request: WriteRequest = match deserialize_msgpack(&body) {
             Ok(request) => request,
             Err(err) => {
                 return json(

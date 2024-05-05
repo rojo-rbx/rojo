@@ -88,7 +88,7 @@ impl TestServeSession {
         let port_string = port.to_string();
 
         let rojo_process = Command::new(ROJO_PATH)
-            .args(&[
+            .args([
                 "serve",
                 project_path.to_str().unwrap(),
                 "--port",

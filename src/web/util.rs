@@ -1,5 +1,5 @@
 use hyper::{header::CONTENT_TYPE, Body, Response, StatusCode};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 pub fn msgpack_ok<T: Serialize>(value: T) -> Response<Body> {
     msgpack(value, StatusCode::OK)
@@ -24,6 +24,14 @@ pub fn msgpack<T: Serialize>(value: T, code: StatusCode) -> Response<Body> {
         .header(CONTENT_TYPE, "application/msgpack")
         .body(Body::from(serialized))
         .unwrap()
+}
+
+pub fn deserialize_msgpack<'a, T: Deserialize<'a>>(
+    input: &'a [u8],
+) -> Result<T, rmp_serde::decode::Error> {
+    let mut deserializer = rmp_serde::Deserializer::new(input).with_human_readable();
+
+    T::deserialize(&mut deserializer)
 }
 
 pub fn json<T: Serialize>(value: T, code: StatusCode) -> Response<Body> {
