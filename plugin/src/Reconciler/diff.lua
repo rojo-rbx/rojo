@@ -46,6 +46,10 @@ local function trueEquals(a, b): boolean
 		end
 		return true
 
+	-- For NaN, check if both values are not equal to themselves
+	elseif a ~= a and b ~= b then
+		return true
+
 	-- For numbers, compare with epsilon of 0.0001 to avoid floating point inequality
 	elseif typeA == "number" and typeB == "number" then
 		return fuzzyEq(a, b, 0.0001)
