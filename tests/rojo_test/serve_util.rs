@@ -9,6 +9,7 @@ use std::{
 
 use rbx_dom_weak::types::Ref;
 
+use serde::Deserialize;
 use tempfile::{tempdir, TempDir};
 
 use librojo::web_api::{ReadResponse, ServerInfoResponse, SubscribeResponse};
@@ -145,16 +146,16 @@ impl TestServeSession {
 
     pub fn get_api_rojo(&self) -> Result<ServerInfoResponse, reqwest::Error> {
         let url = format!("http://localhost:{}/api/rojo", self.port);
-        let body = reqwest::blocking::get(&url)?.text()?;
+        let body = reqwest::blocking::get(url)?.bytes()?;
 
-        Ok(serde_json::from_str(&body).expect("Server returned malformed response"))
+        Ok(deserialize_msgpack(&body).expect("Server returned malformed response"))
     }
 
     pub fn get_api_read(&self, id: Ref) -> Result<ReadResponse, reqwest::Error> {
         let url = format!("http://localhost:{}/api/read/{}", self.port, id);
-        let body = reqwest::blocking::get(&url)?.text()?;
+        let body = reqwest::blocking::get(url)?.bytes()?;
 
-        Ok(serde_json::from_str(&body).expect("Server returned malformed response"))
+        Ok(deserialize_msgpack(&body).expect("Server returned malformed response"))
     }
 
     pub fn get_api_subscribe(
@@ -162,9 +163,18 @@ impl TestServeSession {
         cursor: u32,
     ) -> Result<SubscribeResponse<'static>, reqwest::Error> {
         let url = format!("http://localhost:{}/api/subscribe/{}", self.port, cursor);
+        let body = reqwest::blocking::get(url)?.bytes()?;
 
-        reqwest::blocking::get(&url)?.json()
+        Ok(deserialize_msgpack(&body).expect("Server returned malformed response"))
     }
+}
+
+fn deserialize_msgpack<'a, T: Deserialize<'a>>(
+    input: &'a [u8],
+) -> Result<T, rmp_serde::decode::Error> {
+    let mut deserializer = rmp_serde::Deserializer::new(input).with_human_readable();
+
+    T::deserialize(&mut deserializer)
 }
 
 /// Probably-okay way to generate random enough port numbers for running the
