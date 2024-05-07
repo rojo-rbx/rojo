@@ -28,7 +28,7 @@ jobs:
       - name: Setup Aftman
         uses: ok-nick/setup-aftman@v0.4.2
         with:
-          version: 'v0.2.6'
+          version: 'v0.2.8'
 
       - name: Build Plugin
         run: rojo build plugin --output Rojo.rbxm
@@ -89,7 +89,7 @@ jobs:
       - name: Setup Aftman
         uses: ok-nick/setup-aftman@v0.4.2
         with:
-          version: 'v0.2.6'
+          version: 'v0.2.8'
 
       - name: Build Release
         run: cargo build --release --locked --verbose --target ${{ matrix.target }}
