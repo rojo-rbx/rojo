@@ -15,6 +15,8 @@ pub enum ScriptType {
     Server,
     Client,
     Module,
+    LegacyServer,
+    LegacyClient,
 }
 
 /// Core routine for turning Lua files into snapshots.
@@ -36,6 +38,8 @@ pub fn snapshot_lua(
         (false, ScriptType::Client) => ("Script", run_context_enums.get("Client")),
         (true, ScriptType::Server) => ("Script", run_context_enums.get("Legacy")),
         (true, ScriptType::Client) => ("LocalScript", None),
+        (_, ScriptType::LegacyServer) => ("Script", run_context_enums.get("Legacy")),
+        (_, ScriptType::LegacyClient) => ("LocalScript", None),
         (_, ScriptType::Module) => ("ModuleScript", None),
     };
 
