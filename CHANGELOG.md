@@ -7,7 +7,7 @@
 * Updated Theme to use Studio colors ([#838])
 * Improved patch visualizer UX ([#883])
 * Added experimental setting for Auto Connect in playtests ([#840])
-* Projects may now specify rules for syncing files as if they had a different file extension. ([#813])
+* Projects may now specify rules for syncing files as if they had a different file extension. ([#813], [#909])
  	This is specified via a new field on project files, `syncRules`:
 
  	```json
@@ -52,6 +52,8 @@
  	| `project`      | `.project.json` |
  	| `ignore`       | None!           |
 
+	Additionaly, regardless of your `emitLegacyScripts` setting, the `legacyServerScript` `use` value will become a Script with Legacy RunContext, and `legacyClientScript` will become a LocalScript.
+
     **All** sync rules are reset between project files, so they must be specified in each one when nesting them. This is to ensure that nothing can break other projects by changing how files are synced!
 
 [#813]: https://github.com/rojo-rbx/rojo/pull/813
@@ -61,6 +63,7 @@
 [#883]: https://github.com/rojo-rbx/rojo/pull/883
 [#893]: https://github.com/rojo-rbx/rojo/pull/893
 [#903]: https://github.com/rojo-rbx/rojo/pull/903
+[#909]: https://github.com/rojo-rbx/rojo/pull/909
 
 ## [7.4.1] - February 20, 2024
 * Made the `name` field optional on project files ([#870])
