@@ -11,12 +11,12 @@ jobs:
     name: Check Actions
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    
+    - uses: actions/checkout@v4
+
     - name: Changelog check
       uses: Zomzog/changelog-checker@v1.3.0
       with:
-        fileName: CHANGELOG.md 
+        fileName: CHANGELOG.md
         noChangelogLabel: skip changelog
         checkNotification: Simple
       env:
