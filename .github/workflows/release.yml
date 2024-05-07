@@ -26,10 +26,8 @@ jobs:
           submodules: true
 
       - name: Setup Aftman
-        uses: ok-nick/setup-aftman@v0.1.0
+        uses: ok-nick/setup-aftman@v0.4.2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          trust-check: false
           version: 'v0.2.6'
 
       - name: Build Plugin
@@ -89,10 +87,8 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Setup Aftman
-        uses: ok-nick/setup-aftman@v0.1.0
+        uses: ok-nick/setup-aftman@v0.4.2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          trust-check: false
           version: 'v0.2.6'
 
       - name: Build Release
