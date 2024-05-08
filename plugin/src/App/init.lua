@@ -425,11 +425,6 @@ function App:startSession()
 
 	local host, port = self:getHostAndPort()
 
-	local sessionOptions = {
-		openScriptsExternally = Settings:get("openScriptsExternally"),
-		twoWaySync = Settings:get("twoWaySync"),
-	}
-
 	local baseUrl = if string.find(host, "^https?://")
 		then string.format("%s:%s", host, port)
 		else string.format("http://%s:%s", host, port)
@@ -437,8 +432,7 @@ function App:startSession()
 
 	local serveSession = ServeSession.new({
 		apiContext = apiContext,
-		openScriptsExternally = sessionOptions.openScriptsExternally,
-		twoWaySync = sessionOptions.twoWaySync,
+		twoWaySync = Settings:get("twoWaySync"),
 	})
 
 	self.cleanupPrecommit = serveSession.__reconciler:hookPrecommit(function(patch, instanceMap)

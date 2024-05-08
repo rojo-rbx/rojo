@@ -175,7 +175,6 @@ function SettingsPage:render()
 					id = "openScriptsExternally",
 					name = "Open Scripts Externally",
 					description = "Attempt to open scripts in an external editor",
-					locked = self.props.syncActive,
 					experimental = true,
 					transparency = self.props.transparency,
 					layoutOrder = layoutIncrement(),
