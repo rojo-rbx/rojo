@@ -6,7 +6,10 @@ use std::{
     mem::take,
 };
 
-use rbx_dom_weak::types::{Ref, Variant};
+use rbx_dom_weak::types::{
+    CFrame, Matrix3, NumberSequenceKeypoint, PhysicalProperties, Ref, UDim, Variant, Vector2,
+    Vector3,
+};
 
 use super::{
     patch::{PatchAdd, PatchSet, PatchUpdate},
@@ -122,7 +125,7 @@ fn compute_property_patches(
 
         match instance.properties().get(&name) {
             Some(instance_value) => {
-                if &snapshot_value != instance_value {
+                if snapshot_value.different(instance_value) {
                     changed_properties.insert(name, Some(snapshot_value));
                 }
             }
@@ -224,6 +227,128 @@ fn compute_children_patches(
     }
 }
 
+/// Trait where NaN values must not be treated as different.
+trait Different {
+    fn different(&self, b: &Self) -> bool;
+}
+
+impl Different for Variant {
+    fn different(&self, b: &Self) -> bool {
+        match (self, b) {
+            (Variant::CFrame(a), Variant::CFrame(b)) => a.different(b),
+            (Variant::Float32(a), Variant::Float32(b)) => a.different(b),
+            (Variant::Float64(a), Variant::Float64(b)) => a.different(b),
+            (Variant::NumberRange(a), Variant::NumberRange(b)) => {
+                a.min.different(&b.min) || a.max.different(&b.max)
+            }
+            (Variant::NumberSequence(a), Variant::NumberSequence(b)) => {
+                if a.keypoints.len() != b.keypoints.len() {
+                    return true;
+                }
+
+                for i in 0..a.keypoints.len() {
+                    if a.keypoints[i].different(&b.keypoints[i]) {
+                        return true;
+                    }
+                }
+
+                false
+            }
+            (
+                Variant::PhysicalProperties(PhysicalProperties::Custom(a)),
+                Variant::PhysicalProperties(PhysicalProperties::Custom(b)),
+            ) => {
+                a.density.different(&b.density)
+                    || a.elasticity.different(&b.elasticity)
+                    || a.elasticity_weight.different(&b.elasticity_weight)
+                    || a.friction.different(&b.friction)
+                    || a.friction_weight.different(&b.friction_weight)
+            }
+            (Variant::Ray(a), Variant::Ray(b)) => {
+                a.direction.different(&b.direction) || a.origin.different(&b.origin)
+            }
+            (Variant::Rect(a), Variant::Rect(b)) => {
+                a.min.different(&b.min) || a.max.different(&b.max)
+            }
+            (Variant::Region3(a), Variant::Region3(b)) => {
+                a.min.different(&b.min) || a.max.different(&b.max)
+            }
+            (Variant::UDim(a), Variant::UDim(b)) => a.different(b),
+            (Variant::UDim2(a), Variant::UDim2(b)) => a.x.different(&b.x) || a.y.different(&b.y),
+            (Variant::Vector2(a), Variant::Vector2(b)) => a.different(b),
+            (Variant::Vector3(a), Variant::Vector3(b)) => a.different(b),
+            (Variant::OptionalCFrame(Some(a)), Variant::OptionalCFrame(Some(b))) => a.different(b),
+            (Variant::Attributes(a), Variant::Attributes(b)) => {
+                a.len() != b.len()
+                    || a.iter()
+                        .zip(b.iter())
+                        .any(|((a_name, a_value), (b_name, b_value))| {
+                            a_name != b_name || a_value.different(b_value)
+                        })
+            }
+            _ => self != b,
+        }
+    }
+}
+
+impl Different for f32 {
+    fn different(&self, b: &Self) -> bool {
+        if self.is_nan() && b.is_nan() {
+            return false;
+        }
+
+        self != b
+    }
+}
+
+impl Different for f64 {
+    fn different(&self, b: &Self) -> bool {
+        if self.is_nan() && b.is_nan() {
+            return false;
+        }
+
+        self != b
+    }
+}
+
+impl Different for UDim {
+    fn different(&self, b: &Self) -> bool {
+        self.offset != b.offset || self.scale.different(&b.scale)
+    }
+}
+
+impl Different for Vector2 {
+    fn different(&self, b: &Self) -> bool {
+        self.x.different(&b.x) || self.y.different(&b.y)
+    }
+}
+
+impl Different for Vector3 {
+    fn different(&self, b: &Self) -> bool {
+        self.x.different(&b.x) || self.y.different(&b.y) || self.z.different(&b.z)
+    }
+}
+
+impl Different for CFrame {
+    fn different(&self, b: &Self) -> bool {
+        self.position.different(&b.position) || self.orientation.different(&b.orientation)
+    }
+}
+
+impl Different for Matrix3 {
+    fn different(&self, b: &Self) -> bool {
+        self.x.different(&b.x) || self.y.different(&b.y) || self.z.different(&b.z)
+    }
+}
+
+impl Different for NumberSequenceKeypoint {
+    fn different(&self, b: &Self) -> bool {
+        self.envelope.different(&b.envelope)
+            || self.time.different(&b.time)
+            || self.value.different(&b.time)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -246,7 +371,7 @@ mod test {
         // addition of a prop named Self, which is a self-referential Ref.
         let snapshot_id = Ref::new();
         let snapshot = InstanceSnapshot {
-            snapshot_id: snapshot_id,
+            snapshot_id,
             properties: hashmap! {
                 "Self".to_owned() => Variant::Ref(snapshot_id),
             },
@@ -288,7 +413,7 @@ mod test {
         // This patch describes the existing instance with a new child added.
         let snapshot_id = Ref::new();
         let snapshot = InstanceSnapshot {
-            snapshot_id: snapshot_id,
+            snapshot_id,
             children: vec![InstanceSnapshot {
                 properties: hashmap! {
                     "Self".to_owned() => Variant::Ref(snapshot_id),
@@ -328,5 +453,13 @@ mod test {
         };
 
         assert_eq!(patch_set, expected_patch_set);
+    }
+
+    #[test]
+    fn different() {
+        assert!(5.0.different(&6.0));
+        assert!(!5.0.different(&5.0));
+        assert!(!f32::NAN.different(&f32::NAN));
+        assert!(f32::NAN.different(&5.0));
     }
 }
