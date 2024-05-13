@@ -56,6 +56,8 @@
 
     **All** sync rules are reset between project files, so they must be specified in each one when nesting them. This is to ensure that nothing can break other projects by changing how files are synced!
 
+* Added the ability to sync `YAML` files into ModuleScripts in the same way that `TOML` and `JSON` files are synced. This is not enabled by default and must be enabled via an entry in `syncRules` with `use` set to `yaml`. ([#913])
+
 [#813]: https://github.com/rojo-rbx/rojo/pull/813
 [#834]: https://github.com/rojo-rbx/rojo/pull/834
 [#838]: https://github.com/rojo-rbx/rojo/pull/838
@@ -65,6 +67,7 @@
 [#893]: https://github.com/rojo-rbx/rojo/pull/893
 [#903]: https://github.com/rojo-rbx/rojo/pull/903
 [#911]: https://github.com/rojo-rbx/rojo/pull/911
+[#913]: https://github.com/rojo-rbx/rojo/pull/913
 
 ## [7.4.1] - February 20, 2024
 * Made the `name` field optional on project files ([#870])
