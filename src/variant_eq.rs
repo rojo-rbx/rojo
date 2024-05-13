@@ -1,7 +1,16 @@
 use std::collections::HashMap;
 
-use float_cmp::approx_eq;
 use rbx_dom_weak::types::{PhysicalProperties, Variant, Vector3};
+
+/// Accepts three argumets: a float type and two values to compare.
+///
+/// Returns a bool indicating whether they're equal. This accounts for NaN such
+/// that `approx_eq!(f32, f32::NAN, f32::NAN)` is `true`.
+macro_rules! approx_eq {
+    ($Ty:ty, $a:expr, $b:expr) => {
+        float_cmp::approx_eq!($Ty, $a, $b) || $a.is_nan() && $b.is_nan()
+    };
+}
 
 /// Compares two variants to determine if they're equal. This correctly takes
 /// float comparisons into account.
