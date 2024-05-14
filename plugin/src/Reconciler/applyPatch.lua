@@ -20,6 +20,12 @@ local setProperty = require(script.Parent.setProperty)
 
 local function applyPatch(instanceMap, patch)
 	local patchTimestamp = DateTime.now():FormatLocalTime("LTS", "en-us")
+	local historyRecording = ChangeHistoryService:TryBeginRecording("Rojo: Patch " .. patchTimestamp)
+	if not historyRecording then
+		-- There can only be one recording at a time
+		Log.debug("Failed to begin history recording for " .. patchTimestamp .. ". Another recording is in progress.")
+		return
+	end
 
 	-- Tracks any portions of the patch that could not be applied to the DOM.
 	local unappliedPatch = PatchSet.newEmpty()
@@ -214,7 +220,9 @@ local function applyPatch(instanceMap, patch)
 		end
 	end
 
-	ChangeHistoryService:SetWaypoint("Rojo: Patch " .. patchTimestamp)
+	if historyRecording then
+		ChangeHistoryService:FinishRecording(historyRecording, Enum.FinishRecordingOperation.Commit)
+	end
 
 	return unappliedPatch
 end
