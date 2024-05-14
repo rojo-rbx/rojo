@@ -20,6 +20,7 @@ mod serve_session;
 mod session_id;
 mod snapshot;
 mod snapshot_middleware;
+mod variant_eq;
 mod web;
 
 pub use project::*;

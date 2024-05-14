@@ -11,6 +11,8 @@ use rbx_dom_weak::types::{
     Vector3,
 };
 
+use crate::variant_eq::variant_eq;
+
 use super::{
     patch::{PatchAdd, PatchSet, PatchUpdate},
     InstanceSnapshot, InstanceWithMeta, RojoTree,
@@ -125,7 +127,7 @@ fn compute_property_patches(
 
         match instance.properties().get(&name) {
             Some(instance_value) => {
-                if snapshot_value.different(instance_value) {
+                if !variant_eq(&snapshot_value, instance_value) {
                     changed_properties.insert(name, Some(snapshot_value));
                 }
             }
