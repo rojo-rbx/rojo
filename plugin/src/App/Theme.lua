@@ -35,6 +35,7 @@ function StudioProvider:updateTheme()
 	local isDark = studioTheme.Name == "Dark"
 
 	local theme = strict(studioTheme.Name .. "Theme", {
+		BrandColor = BRAND_COLOR,
 		BackgroundColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.MainBackground),
 		TextColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.MainText),
 		SubTextColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.SubText),
@@ -166,6 +167,8 @@ function StudioProvider:updateTheme()
 			Setting = {
 				NameColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.BrightText),
 				DescriptionColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.MainText),
+				UnstableColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.WarningText),
+				DebugColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.InfoText),
 			},
 		},
 		Header = {

@@ -13,6 +13,7 @@ local InstanceMap = require(script.Parent.InstanceMap)
 local PatchSet = require(script.Parent.PatchSet)
 local Reconciler = require(script.Parent.Reconciler)
 local strict = require(script.Parent.strict)
+local Settings = require(script.Parent.Settings)
 
 local Status = strict("Session.Status", {
 	NotStarted = "NotStarted",
@@ -50,7 +51,6 @@ ServeSession.Status = Status
 
 local validateServeOptions = t.strictInterface({
 	apiContext = t.table,
-	openScriptsExternally = t.boolean,
 	twoWaySync = t.boolean,
 })
 
@@ -89,7 +89,6 @@ function ServeSession.new(options)
 	self = {
 		__status = Status.NotStarted,
 		__apiContext = options.apiContext,
-		__openScriptsExternally = options.openScriptsExternally,
 		__twoWaySync = options.twoWaySync,
 		__reconciler = reconciler,
 		__instanceMap = instanceMap,
@@ -170,7 +169,7 @@ function ServeSession:__applyGameAndPlaceId(serverInfo)
 end
 
 function ServeSession:__onActiveScriptChanged(activeScript)
-	if not self.__openScriptsExternally then
+	if not Settings:get("openScriptsExternally") then
 		Log.trace("Not opening script {} because feature not enabled.", activeScript)
 
 		return
