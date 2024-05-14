@@ -170,10 +170,14 @@ local function applyPatch(instanceMap, patch)
 			end
 
 			-- See you later, original instance.
-			--
+
+			-- Because the user might want to Undo this change, we cannot use Destroy
+			-- since that locks that parent and prevents ChangeHistoryService from
+			-- ever bringing it back. Instead, we use Remove.
+
 			-- TODO: Can this fail? Some kinds of instance may not appreciate
-			-- being destroyed, like services.
-			instance:Destroy()
+			-- being Removed, like services.
+			instance:Remove()
 
 			-- This completes your rebuilding a plane mid-flight safety
 			-- instruction. Please sit back, relax, and enjoy your flight.
