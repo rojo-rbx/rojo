@@ -15,6 +15,8 @@ pub enum ScriptType {
     Server,
     Client,
     Module,
+    LegacyServer,
+    LegacyClient,
     RunContextServer,
     RunContextClient,
 }
@@ -34,9 +36,23 @@ pub fn snapshot_lua(
         .items;
 
     let (class_name, run_context) = match script_type {
-        ScriptType::Server => ("Script", run_context_enums.get("Legacy")),
-        ScriptType::Client => ("LocalScript", None),
+        ScriptType::Server => {
+            if context.emit_legacy_scripts {
+                ("Script", None)
+            } else {
+                ("Script", run_context_enums.get("Server"))
+            }
+        }
+        ScriptType::Client => {
+            if context.emit_legacy_scripts {
+                ("LocalScript", None)
+            } else {
+                ("Script", run_context_enums.get("Client"))
+            }
+        }
         ScriptType::Module => ("ModuleScript", None),
+        ScriptType::LegacyServer => ("Script", run_context_enums.get("Legacy")),
+        ScriptType::LegacyClient => ("LocalScript", None),
         ScriptType::RunContextServer => ("Script", run_context_enums.get("Server")),
         ScriptType::RunContextClient => ("Script", run_context_enums.get("Client")),
     };

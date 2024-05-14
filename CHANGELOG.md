@@ -35,7 +35,7 @@
 
     Additionally, the `exclude` field allows files to be excluded from the sync rule if they match a pattern specified by it. If it's not present, all files that match `pattern` will be modified using the sync rule.
 
- 	The `use` field corresponds to one of the potential file type that Rojo will currently include in a project. Files that match the provided pattern will be treated as if they had the file extension for that file type. A full list is below:
+ 	The `use` field corresponds to one of the potential file type that Rojo will currently include in a project. Files that match the provided pattern will be treated as if they had the file extension for that file type.
 
  	| `use` value    | file extension  |
  	|:---------------|:----------------|
@@ -52,7 +52,14 @@
  	| `project`      | `.project.json` |
  	| `ignore`       | None!           |
 
-	Additionaly, regardless of your `emitLegacyScripts` setting, the `legacyServerScript` `use` value will become a Script with Legacy RunContext, and `legacyClientScript` will become a LocalScript.
+	Additionally, there are `use` values for specific script types:
+
+	| `use` value              | script type                            |
+	|:-------------------------|:---------------------------------------|
+	| `legacyServerScript`     | `Script` with `Enum.RunContext.Legacy` |
+	| `legactClientScript`     | `LocalScript`                          |
+	| `runContextServerScript` | `Script` with `Enum.RunContext.Server` |
+	| `runContextClientScript` | `Script` with `Enum.RunContext.Client` |
 
     **All** sync rules are reset between project files, so they must be specified in each one when nesting them. This is to ensure that nothing can break other projects by changing how files are synced!
 
