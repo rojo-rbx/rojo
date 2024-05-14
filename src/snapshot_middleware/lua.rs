@@ -38,7 +38,7 @@ pub fn snapshot_lua(
     let (class_name, run_context) = match script_type {
         ScriptType::Server => {
             if context.emit_legacy_scripts {
-                ("Script", None)
+                ("Script", run_context_enums.get("Legacy"))
             } else {
                 ("Script", run_context_enums.get("Server"))
             }
