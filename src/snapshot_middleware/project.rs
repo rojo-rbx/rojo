@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::HashMap, path::Path};
+use std::{borrow::Cow, collections::HashMap, ffi::OsStr, path::Path};
 
 use anyhow::{bail, Context};
 use memofs::Vfs;
@@ -23,7 +23,17 @@ pub fn snapshot_project(
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let project = Project::load_from_slice(&vfs.read(path)?, path)
         .with_context(|| format!("File was not a valid Rojo project: {}", path.display()))?;
-    let project_name = project.name.as_deref().unwrap_or(name);
+    let project_name = match project.name.as_deref() {
+        Some(name) => name,
+        None => match path.file_name().and_then(OsStr::to_str) {
+            Some("default.project.json") => project
+                .folder_location()
+                .file_name()
+                .and_then(OsStr::to_str)
+                .unwrap_or(name),
+            _ => name,
+        },
+    };
 
     let mut context = context.clone();
     context.clear_sync_rules();
