@@ -112,9 +112,12 @@ end
 
 function InstanceMap:destroyInstance(instance)
 	local id = self.fromInstances[instance]
-
 	local descendants = instance:GetDescendants()
-	instance:Destroy()
+
+	-- Because the user might want to Undo this change, we cannot use Destroy
+	-- since that locks that parent and prevents ChangeHistoryService from
+	-- ever bringing it back. Instead, we parent to nil.
+	instance.Parent = nil
 
 	-- After the instance is successfully destroyed,
 	-- we can remove all the id mappings

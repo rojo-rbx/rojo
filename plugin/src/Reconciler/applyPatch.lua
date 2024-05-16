@@ -173,11 +173,11 @@ local function applyPatch(instanceMap, patch)
 
 			-- Because the user might want to Undo this change, we cannot use Destroy
 			-- since that locks that parent and prevents ChangeHistoryService from
-			-- ever bringing it back. Instead, we use Remove.
+			-- ever bringing it back. Instead, we parent to nil.
 
 			-- TODO: Can this fail? Some kinds of instance may not appreciate
-			-- being Removed, like services.
-			instance:Remove()
+			-- being reparented, like services.
+			instance.Parent = nil
 
 			-- This completes your rebuilding a plane mid-flight safety
 			-- instruction. Please sit back, relax, and enjoy your flight.
