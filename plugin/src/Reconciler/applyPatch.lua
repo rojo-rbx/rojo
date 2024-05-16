@@ -24,7 +24,6 @@ local function applyPatch(instanceMap, patch)
 	if not historyRecording then
 		-- There can only be one recording at a time
 		Log.debug("Failed to begin history recording for " .. patchTimestamp .. ". Another recording is in progress.")
-		return
 	end
 
 	-- Tracks any portions of the patch that could not be applied to the DOM.
@@ -68,6 +67,9 @@ local function applyPatch(instanceMap, patch)
 		if parentInstance == nil then
 			-- This would be peculiar. If you create an instance with no
 			-- parent, were you supposed to create it at all?
+			if historyRecording then
+				ChangeHistoryService:FinishRecording(historyRecording, Enum.FinishRecordingOperation.Commit)
+			end
 			invariant(
 				"Cannot add an instance from a patch that has no parent.\nInstance {} with parent {}.\nState: {:#?}",
 				id,
