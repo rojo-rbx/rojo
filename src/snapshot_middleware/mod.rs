@@ -296,6 +296,7 @@ fn default_sync_rules() -> &'static [SyncRule] {
             sync_rule!("*.txt", Text),
             sync_rule!("*.rbxmx", Rbxmx),
             sync_rule!("*.rbxm", Rbxm),
+            sync_rule!("*.{yml,yaml}", Yaml),
         ]
     })
 }
