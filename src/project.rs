@@ -5,6 +5,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use memofs::Vfs;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -135,43 +136,39 @@ impl Project {
         }
     }
 
-    pub fn load_from_slice(
-        contents: &[u8],
-        project_file_location: &Path,
-    ) -> Result<Self, ProjectError> {
+    /// Loads a Project file from the provided contents with its source set as
+    /// the provided location.
+    fn load_from_slice(contents: &[u8], project_file_location: PathBuf) -> Result<Self, Error> {
         let mut project: Self = serde_json::from_slice(contents).map_err(|source| Error::Json {
             source,
-            path: project_file_location.to_owned(),
+            path: project_file_location.clone(),
         })?;
 
-        project.file_location = project_file_location.to_path_buf();
+        project.file_location = project_file_location;
         project.check_compatibility();
         Ok(project)
     }
 
-    pub fn load_fuzzy(fuzzy_project_location: &Path) -> Result<Option<Self>, ProjectError> {
+    /// Loads a Project from a path. This will find the project if it refers to
+    /// a `.project.json` file or if it refers to a directory that contains a
+    /// file named `default.project.json`.
+    pub fn load_fuzzy(
+        vfs: &Vfs,
+        fuzzy_project_location: &Path,
+    ) -> Result<Option<Self>, ProjectError> {
         if let Some(project_path) = Self::locate(fuzzy_project_location) {
-            let project = Self::load_exact(&project_path)?;
-
-            Ok(Some(project))
+            let contents = vfs.read(&project_path).map_err(Error::from)?;
+            Ok(Some(Self::load_from_slice(&contents, project_path)?))
         } else {
             Ok(None)
         }
     }
 
-    fn load_exact(project_file_location: &Path) -> Result<Self, Error> {
-        let contents = fs::read_to_string(project_file_location)?;
-
-        let mut project: Project =
-            serde_json::from_str(&contents).map_err(|source| Error::Json {
-                source,
-                path: project_file_location.to_owned(),
-            })?;
-
-        project.file_location = project_file_location.to_path_buf();
-        project.check_compatibility();
-
-        Ok(project)
+    /// Loads a Project from a path.
+    pub fn load_exact(vfs: &Vfs, project_file_location: &Path) -> Result<Self, ProjectError> {
+        let project_path = project_file_location.to_path_buf();
+        let contents = vfs.read(&project_path).map_err(Error::from)?;
+        Ok(Self::load_from_slice(&contents, project_path)?)
     }
 
     /// Checks if there are any compatibility issues with this project file and

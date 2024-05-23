@@ -21,7 +21,7 @@ pub fn snapshot_project(
     path: &Path,
     name: &str,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let project = Project::load_from_slice(&vfs.read(path)?, path)
+    let project = Project::load_exact(vfs, path)
         .with_context(|| format!("File was not a valid Rojo project: {}", path.display()))?;
     let project_name = match project.name.as_deref() {
         Some(name) => name,
