@@ -1,0 +1,17 @@
+{
+  "tree": {
+    "$className": "StringValue",
+    "$properties": {
+      "Value": "This should be named `sync_rule_no_name_project` and have a child at `src/not_a_project`"
+    },
+    "src": {
+      "$path": "src"
+    }
+  },
+  "syncRules": [
+    {
+      "use": "project",
+      "pattern": "*.rojo"
+    }
+  ]
+}

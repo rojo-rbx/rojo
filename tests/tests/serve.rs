@@ -373,3 +373,22 @@ fn no_name_top_level_project() {
         );
     });
 }
+
+#[test]
+fn sync_rule_no_name_project() {
+    run_serve_test("sync_rule_no_name_project", |session, mut redactions| {
+        let info = session.get_api_rojo().unwrap();
+        let root_id = info.root_instance_id;
+
+        assert_yaml_snapshot!(
+            "sync_rule_no_name_project_info",
+            redactions.redacted_yaml(info)
+        );
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "sync_rule_no_name_project_all",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+    });
+}
