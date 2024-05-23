@@ -1,5 +1,6 @@
 use std::{
     collections::{BTreeMap, HashMap, HashSet},
+    ffi::OsStr,
     fs, io,
     net::IpAddr,
     path::{Path, PathBuf},
@@ -20,6 +21,14 @@ pub struct ProjectError(#[from] Error);
 
 #[derive(Debug, Error)]
 enum Error {
+    #[error("The folder for the provided project cannot be used as a project name: {}\n\
+            Consider setting the `name` field on this project.", .path.display())]
+    FolderNameInvalid { path: PathBuf },
+
+    #[error("The file name of the provided project cannot be used as a project name: {}.\n\
+            Consider setting the `name` field on this project.", .path.display())]
+    ProjectNameInvalid { path: PathBuf },
+
     #[error(transparent)]
     Io {
         #[from]
@@ -138,11 +147,47 @@ impl Project {
 
     /// Loads a Project file from the provided contents with its source set as
     /// the provided location.
-    fn load_from_slice(contents: &[u8], project_file_location: PathBuf) -> Result<Self, Error> {
+    fn load_from_slice(
+        contents: &[u8],
+        project_file_location: PathBuf,
+        fallback_name: Option<&str>,
+    ) -> Result<Self, Error> {
         let mut project: Self = serde_json::from_slice(contents).map_err(|source| Error::Json {
             source,
             path: project_file_location.clone(),
         })?;
+
+        match (&project.name, fallback_name) {
+            (None, Some(fallback)) => project.name = Some(fallback.to_string()),
+            (None, None) => {
+                if let Some(file_name) = project_file_location.file_name().and_then(OsStr::to_str) {
+                    if file_name == PROJECT_FILENAME {
+                        let folder_name = project_file_location
+                            .parent()
+                            .and_then(Path::file_name)
+                            .and_then(OsStr::to_str);
+                        if let Some(folder_name) = folder_name {
+                            project.name = Some(folder_name.to_string());
+                        } else {
+                            return Err(Error::FolderNameInvalid {
+                                path: project_file_location,
+                            });
+                        }
+                    } else if let Some(trimmed) = file_name.strip_suffix(".project.json") {
+                        project.name = Some(trimmed.to_string());
+                    } else {
+                        return Err(Error::ProjectNameInvalid {
+                            path: project_file_location,
+                        });
+                    }
+                } else {
+                    return Err(Error::ProjectNameInvalid {
+                        path: project_file_location,
+                    });
+                }
+            }
+            _ => {}
+        }
 
         project.file_location = project_file_location;
         project.check_compatibility();
@@ -158,17 +203,25 @@ impl Project {
     ) -> Result<Option<Self>, ProjectError> {
         if let Some(project_path) = Self::locate(fuzzy_project_location) {
             let contents = vfs.read(&project_path).map_err(Error::from)?;
-            Ok(Some(Self::load_from_slice(&contents, project_path)?))
+            Ok(Some(Self::load_from_slice(&contents, project_path, None)?))
         } else {
             Ok(None)
         }
     }
 
     /// Loads a Project from a path.
-    pub fn load_exact(vfs: &Vfs, project_file_location: &Path) -> Result<Self, ProjectError> {
+    pub fn load_exact(
+        vfs: &Vfs,
+        project_file_location: &Path,
+        fallback_name: Option<&str>,
+    ) -> Result<Self, ProjectError> {
         let project_path = project_file_location.to_path_buf();
         let contents = vfs.read(&project_path).map_err(Error::from)?;
-        Ok(Self::load_from_slice(&contents, project_path)?)
+        Ok(Self::load_from_slice(
+            &contents,
+            project_path,
+            fallback_name,
+        )?)
     }
 
     /// Checks if there are any compatibility issues with this project file and
