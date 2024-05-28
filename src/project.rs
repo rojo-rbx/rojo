@@ -10,7 +10,10 @@ use memofs::Vfs;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use crate::{glob::Glob, resolution::UnresolvedValue, snapshot::SyncRule};
+use crate::{
+    glob::Glob, resolution::UnresolvedValue, snapshot::SyncRule,
+    snapshot_middleware::default_sync_rules,
+};
 
 static PROJECT_FILENAME: &str = "default.project.json";
 
@@ -145,6 +148,56 @@ impl Project {
         }
     }
 
+    /// Sets the name of a project. The order it handles is as follows:
+    ///
+    /// - If the project is a `default.project.json`, uses the folder's name
+    /// - If a fallback is specified, uses that blindly
+    /// - Otherwise, loops through sync rules (including the default ones!) and
+    ///   uses the name of the first one that matches and is a project file
+    fn set_file_name(&mut self, fallback: Option<&str>) -> Result<(), Error> {
+        let file_name = self
+            .file_location
+            .file_name()
+            .and_then(OsStr::to_str)
+            .ok_or_else(|| Error::ProjectNameInvalid {
+                path: self.file_location.clone(),
+            })?;
+
+        // If you're editing this to be generic, make sure you also alter the
+        // snapshot middleware to support generic init paths.
+        if file_name == PROJECT_FILENAME {
+            let folder_name = self.folder_location().file_name().and_then(OsStr::to_str);
+            if let Some(folder_name) = folder_name {
+                self.name = Some(folder_name.to_string());
+            } else {
+                return Err(Error::FolderNameInvalid {
+                    path: self.file_location.clone(),
+                });
+            }
+        } else if let Some(fallback) = fallback {
+            self.name = Some(fallback.to_string());
+        } else {
+            for rule in self.sync_rules.iter().chain(default_sync_rules()) {
+                // I don't believe there's any way to get here without the
+                // matching middleware being a Project middleware.
+                if rule.matches(&self.file_location) {
+                    self.name = Some(
+                        rule.file_name_for_path(&self.file_location)
+                            .map_err(|_| Error::ProjectNameInvalid {
+                                path: self.file_location.clone(),
+                            })?
+                            .to_string(),
+                    )
+                }
+            }
+            return Err(Error::ProjectNameInvalid {
+                path: std::mem::take(&mut self.file_location),
+            });
+        }
+
+        Ok(())
+    }
+
     /// Loads a Project file from the provided contents with its source set as
     /// the provided location.
     fn load_from_slice(
@@ -156,61 +209,12 @@ impl Project {
             source,
             path: project_file_location.clone(),
         })?;
-
-        match (&project.name, fallback_name) {
-            (None, Some(fallback)) => {
-                match project_file_location.file_name().and_then(OsStr::to_str) {
-                    // If you're changing this to not be hardcoded, please make
-                    // sure that the snapshot middleware also supports generic
-                    // init files, otherwise something will break.
-                    Some(file_name) if file_name == PROJECT_FILENAME => {
-                        let folder_name = project_file_location
-                            .parent()
-                            .and_then(Path::file_name)
-                            .and_then(OsStr::to_str);
-                        if let Some(folder_name) = folder_name {
-                            project.name = Some(folder_name.to_string());
-                        } else {
-                            return Err(Error::FolderNameInvalid {
-                                path: project_file_location,
-                            });
-                        }
-                    }
-                    _ => project.name = Some(fallback.to_string()),
-                }
-            }
-            (None, None) => {
-                let file_name = project_file_location
-                    .file_name()
-                    .and_then(OsStr::to_str)
-                    .ok_or_else(|| Error::ProjectNameInvalid {
-                        path: project_file_location.clone(),
-                    })?;
-                if file_name == PROJECT_FILENAME {
-                    let folder_name = project_file_location
-                        .parent()
-                        .and_then(Path::file_name)
-                        .and_then(OsStr::to_str);
-                    if let Some(folder_name) = folder_name {
-                        project.name = Some(folder_name.to_string());
-                    } else {
-                        return Err(Error::FolderNameInvalid {
-                            path: project_file_location,
-                        });
-                    }
-                } else if let Some(trimmed) = file_name.strip_suffix(".project.json") {
-                    project.name = Some(trimmed.to_string());
-                } else {
-                    return Err(Error::ProjectNameInvalid {
-                        path: project_file_location,
-                    });
-                }
-            }
-            _ => {}
-        }
-
         project.file_location = project_file_location;
         project.check_compatibility();
+        if project.name.is_none() {
+            project.set_file_name(fallback_name)?;
+        }
+
         Ok(project)
     }
 
