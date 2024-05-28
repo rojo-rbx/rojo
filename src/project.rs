@@ -158,10 +158,12 @@ impl Project {
         })?;
 
         match (&project.name, fallback_name) {
-            (None, Some(fallback)) => project.name = Some(fallback.to_string()),
-            (None, None) => {
-                if let Some(file_name) = project_file_location.file_name().and_then(OsStr::to_str) {
-                    if file_name == PROJECT_FILENAME {
+            (None, Some(fallback)) => {
+                match project_file_location.file_name().and_then(OsStr::to_str) {
+                    // If you're changing this to not be hardcoded, please make
+                    // sure that the snapshot middleware also supports generic
+                    // init files, otherwise something will break.
+                    Some(file_name) if file_name == PROJECT_FILENAME => {
                         let folder_name = project_file_location
                             .parent()
                             .and_then(Path::file_name)
@@ -173,13 +175,31 @@ impl Project {
                                 path: project_file_location,
                             });
                         }
-                    } else if let Some(trimmed) = file_name.strip_suffix(".project.json") {
-                        project.name = Some(trimmed.to_string());
+                    }
+                    _ => project.name = Some(fallback.to_string()),
+                }
+            }
+            (None, None) => {
+                let file_name = project_file_location
+                    .file_name()
+                    .and_then(OsStr::to_str)
+                    .ok_or_else(|| Error::ProjectNameInvalid {
+                        path: project_file_location.clone(),
+                    })?;
+                if file_name == PROJECT_FILENAME {
+                    let folder_name = project_file_location
+                        .parent()
+                        .and_then(Path::file_name)
+                        .and_then(OsStr::to_str);
+                    if let Some(folder_name) = folder_name {
+                        project.name = Some(folder_name.to_string());
                     } else {
-                        return Err(Error::ProjectNameInvalid {
+                        return Err(Error::FolderNameInvalid {
                             path: project_file_location,
                         });
                     }
+                } else if let Some(trimmed) = file_name.strip_suffix(".project.json") {
+                    project.name = Some(trimmed.to_string());
                 } else {
                     return Err(Error::ProjectNameInvalid {
                         path: project_file_location,
