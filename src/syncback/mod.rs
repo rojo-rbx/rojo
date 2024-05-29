@@ -263,6 +263,11 @@ pub fn get_best_middleware(snapshot: &SyncbackSnapshot) -> Middleware {
             "DepthOfFieldEffect",
             "SunRaysEffect",
             "ParticleEmitter",
+            "TextChannel",
+            "TextChatCommand",
+            "ChatWindowConfiguration",
+            "ChatInputBarConfiguration",
+            "BubbleChatConfiguration",
         ]
         .into()
     });
