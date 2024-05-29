@@ -113,7 +113,7 @@ pub fn syncback_loop(
         log::debug!("Skipping referent linking as per project syncback rules");
     }
 
-    new_tree.root_mut().name = project.name.clone();
+    new_tree.root_mut().name.clone_from(&project.name);
 
     log::debug!("Hashing project DOM");
     let old_hashes = hash_tree(project, old_tree.inner(), old_tree.get_root_id());
@@ -406,7 +406,7 @@ fn get_property_filter<'project>(
 
         let class = database.classes.get(current_class_name)?;
         if let Some(super_class) = class.superclass.as_ref() {
-            current_class_name = &super_class;
+            current_class_name = super_class;
         } else {
             break;
         }
