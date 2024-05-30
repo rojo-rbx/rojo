@@ -1,0 +1,41 @@
+---
+source: tests/tests/serve.rs
+assertion_line: 389
+expression: "read_response.intern_and_redact(&mut redactions, root_id)"
+---
+instances:
+  id-2:
+    Children:
+      - id-3
+    ClassName: StringValue
+    Id: id-2
+    Metadata:
+      ignoreUnknownInstances: true
+    Name: sync_rule_no_name_project
+    Parent: "00000000000000000000000000000000"
+    Properties:
+      Value:
+        String: "This should be named `sync_rule_no_name_project` and have a child at `src/not_a_project`"
+  id-3:
+    Children:
+      - id-4
+    ClassName: Folder
+    Id: id-3
+    Metadata:
+      ignoreUnknownInstances: false
+    Name: src
+    Parent: id-2
+    Properties: {}
+  id-4:
+    Children: []
+    ClassName: StringValue
+    Id: id-4
+    Metadata:
+      ignoreUnknownInstances: true
+    Name: not_a_project
+    Parent: id-3
+    Properties:
+      Value:
+        String: "If this isn't named `not_a_project`, something has gone wrong!"
+messageCursor: 0
+sessionId: id-1
