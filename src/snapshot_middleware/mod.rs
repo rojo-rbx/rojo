@@ -64,7 +64,7 @@ pub fn snapshot_from_vfs(
         if let Some(init_path) = get_init_path(vfs, path)? {
             // TODO: support user-defined init paths
             // If and when we do, make sure to go support it in
-            // `Project::load_from_slice`, as right now it special-cases
+            // `Project::set_file_name`, as right now it special-cases
             // `default.project.json` as an `init` path.
             for rule in default_sync_rules() {
                 if rule.matches(&init_path) {
