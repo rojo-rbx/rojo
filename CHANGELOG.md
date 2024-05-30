@@ -53,7 +53,7 @@
  	| `rbxm`         | `.rbxm`         |
  	| `rbxmx`        | `.rbxmx`        |
  	| `project`      | `.project.json` |
-  | `yaml`         | `.yml`          |
+    | `yaml`         | `.yml`          |
  	| `ignore`       | None!           |
 
     **All** sync rules are reset between project files, so they must be specified in each one when nesting them. This is to ensure that nothing can break other projects by changing how files are synced!
