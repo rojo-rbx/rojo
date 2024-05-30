@@ -1,6 +1,7 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Updated Undo/Redo history to be more robust ([#915])
 * Fixed removing trailing newlines ([#903])
 * Added Never option to Confirmation ([#893])
 * Added popout diff visualizer for table properties like Attributes and Tags ([#834])
@@ -65,6 +66,7 @@
 [#893]: https://github.com/rojo-rbx/rojo/pull/893
 [#903]: https://github.com/rojo-rbx/rojo/pull/903
 [#911]: https://github.com/rojo-rbx/rojo/pull/911
+[#915]: https://github.com/rojo-rbx/rojo/pull/915
 
 ## [7.4.1] - February 20, 2024
 * Made the `name` field optional on project files ([#870])
