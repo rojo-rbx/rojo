@@ -20,6 +20,11 @@ local setProperty = require(script.Parent.setProperty)
 
 local function applyPatch(instanceMap, patch)
 	local patchTimestamp = DateTime.now():FormatLocalTime("LTS", "en-us")
+	local historyRecording = ChangeHistoryService:TryBeginRecording("Rojo: Patch " .. patchTimestamp)
+	if not historyRecording then
+		-- There can only be one recording at a time
+		Log.debug("Failed to begin history recording for " .. patchTimestamp .. ". Another recording is in progress.")
+	end
 
 	-- Tracks any portions of the patch that could not be applied to the DOM.
 	local unappliedPatch = PatchSet.newEmpty()
@@ -62,6 +67,9 @@ local function applyPatch(instanceMap, patch)
 		if parentInstance == nil then
 			-- This would be peculiar. If you create an instance with no
 			-- parent, were you supposed to create it at all?
+			if historyRecording then
+				ChangeHistoryService:FinishRecording(historyRecording, Enum.FinishRecordingOperation.Commit)
+			end
 			invariant(
 				"Cannot add an instance from a patch that has no parent.\nInstance {} with parent {}.\nState: {:#?}",
 				id,
@@ -164,10 +172,14 @@ local function applyPatch(instanceMap, patch)
 			end
 
 			-- See you later, original instance.
-			--
+
+			-- Because the user might want to Undo this change, we cannot use Destroy
+			-- since that locks that parent and prevents ChangeHistoryService from
+			-- ever bringing it back. Instead, we parent to nil.
+
 			-- TODO: Can this fail? Some kinds of instance may not appreciate
-			-- being destroyed, like services.
-			instance:Destroy()
+			-- being reparented, like services.
+			instance.Parent = nil
 
 			-- This completes your rebuilding a plane mid-flight safety
 			-- instruction. Please sit back, relax, and enjoy your flight.
@@ -214,7 +226,9 @@ local function applyPatch(instanceMap, patch)
 		end
 	end
 
-	ChangeHistoryService:SetWaypoint("Rojo: Patch " .. patchTimestamp)
+	if historyRecording then
+		ChangeHistoryService:FinishRecording(historyRecording, Enum.FinishRecordingOperation.Commit)
+	end
 
 	return unappliedPatch
 end
