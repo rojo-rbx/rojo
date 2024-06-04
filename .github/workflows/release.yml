@@ -133,3 +133,19 @@ jobs:
         with:
           path: ${{ env.ARTIFACT_NAME }}
           name: ${{ env.ARTIFACT_NAME }}
+
+  publish:
+    name: Publish to crates.io
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run publish action
+        uses: katyo/publish-crates@v2
+        with:
+          registry-token: ${{ secrets.CARGO_REGISTRY_TOKEN }}
