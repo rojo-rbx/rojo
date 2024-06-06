@@ -124,16 +124,16 @@ pub fn variant_eq(variant_a: &Variant, variant_b: &Variant) -> bool {
             }
             true
         }
-        (Variant::OptionalCFrame(a), Variant::OptionalCFrame(b)) => {
-            if let (Some(a2), Some(b2)) = (a, b) {
-                vector_eq(&a2.position, &b2.position)
-                    && vector_eq(&a2.orientation.x, &b2.orientation.x)
-                    && vector_eq(&a2.orientation.y, &b2.orientation.y)
-                    && vector_eq(&a2.orientation.z, &b2.orientation.z)
-            } else {
-                false
+        (Variant::OptionalCFrame(a), Variant::OptionalCFrame(b)) => match (a, b) {
+            (Some(a), Some(b)) => {
+                vector_eq(&a.position, &b.position)
+                    && vector_eq(&a.orientation.x, &b.orientation.x)
+                    && vector_eq(&a.orientation.y, &b.orientation.y)
+                    && vector_eq(&a.orientation.z, &b.orientation.z)
             }
-        }
+            (None, None) => true,
+            _ => false,
+        },
         (Variant::PhysicalProperties(a), Variant::PhysicalProperties(b)) => match (a, b) {
             (PhysicalProperties::Default, PhysicalProperties::Default) => true,
             (PhysicalProperties::Custom(a2), PhysicalProperties::Custom(b2)) => {
@@ -143,7 +143,7 @@ pub fn variant_eq(variant_a: &Variant, variant_b: &Variant) -> bool {
                     && approx_eq!(f32, a2.elasticity_weight, b2.elasticity_weight)
                     && approx_eq!(f32, a2.friction_weight, b2.friction_weight)
             }
-            (_, _) => false,
+            _ => false,
         },
         (Variant::Ray(a), Variant::Ray(b)) => {
             vector_eq(&a.direction, &b.direction) && vector_eq(&a.origin, &b.origin)
