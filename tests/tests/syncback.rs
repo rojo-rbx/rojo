@@ -28,4 +28,5 @@ syncback_basic_test! {
     project_all_middleware,
     duplicate_rojo_id,
     string_value_project,
+    child_but_not,
 }
