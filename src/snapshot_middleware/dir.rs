@@ -7,7 +7,7 @@ use anyhow::Context;
 use memofs::{DirEntry, IoResultExt, Vfs};
 
 use crate::{
-    snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
+    snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot, InstigatingSource},
     syncback::{FsSnapshot, SyncbackReturn, SyncbackSnapshot},
 };
 
@@ -170,6 +170,15 @@ pub fn syncback_dir_no_meta<'sync>(
                 if old_child.metadata().relevant_paths.is_empty() {
                     log::debug!(
                         "Skipping instance {} because it doesn't exist on the disk",
+                        old_child.name()
+                    );
+                    continue;
+                } else if matches!(
+                    old_child.metadata().instigating_source,
+                    Some(InstigatingSource::ProjectNode { .. })
+                ) {
+                    log::debug!(
+                        "Skipping instance {} because it originates in a project file",
                         old_child.name()
                     );
                     continue;
