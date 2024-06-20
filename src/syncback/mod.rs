@@ -402,6 +402,10 @@ fn is_valid_path(globs: &Option<Vec<Glob>>, base_path: &Path, path: &Path) -> bo
 /// Returns a set of properties that should not be written with syncback if
 /// one exists. This list is read directly from the Project and takes
 /// inheritance into effect.
+///
+/// It **does not** handle properties that should not serialize for other
+/// reasons, such as being defaults or being marked as not serializing in the
+/// ReflectionDatabase.
 fn get_property_filter<'project>(
     project: &'project Project,
     new_inst: &Instance,

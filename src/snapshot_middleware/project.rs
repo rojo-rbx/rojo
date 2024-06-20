@@ -332,7 +332,7 @@ pub fn syncback_project<'sync>(
     // Sync rules for this project do not have their base rule set but it is
     // important when performing syncback on other projects.
     for rule in &mut project.sync_rules {
-        rule.base_path = base_path.clone()
+        rule.base_path.clone_from(&base_path)
     }
 
     let mut descendant_snapshots = Vec::new();
