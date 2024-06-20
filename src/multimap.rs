@@ -1,6 +1,6 @@
 use std::{
     borrow::Borrow,
-    collections::HashMap,
+    collections::{hash_map, HashMap},
     fmt::{self, Debug},
     hash::Hash,
 };
@@ -69,5 +69,35 @@ impl<K: Debug + Hash + Eq, V: Debug + Eq> Debug for MultiMap<K, V> {
 impl<K: Hash + Eq, V: Eq> PartialEq for MultiMap<K, V> {
     fn eq(&self, other: &Self) -> bool {
         self.inner == other.inner
+    }
+}
+
+impl<K, V> Default for MultiMap<K, V> {
+    fn default() -> Self {
+        Self {
+            inner: Default::default(),
+        }
+    }
+}
+
+impl<K: Hash + Eq, V: Eq> IntoIterator for MultiMap<K, V> {
+    type IntoIter = MultiMapIntoIter<K, V>;
+    type Item = (K, Vec<V>);
+    fn into_iter(self) -> Self::IntoIter {
+        Self::IntoIter {
+            inner: self.inner.into_iter(),
+        }
+    }
+}
+
+pub struct MultiMapIntoIter<K: Hash + Eq, V: Eq> {
+    inner: hash_map::IntoIter<K, Vec<V>>,
+}
+
+impl<K: Hash + Eq, V: Eq> Iterator for MultiMapIntoIter<K, V> {
+    type Item = (K, Vec<V>);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next()
     }
 }
