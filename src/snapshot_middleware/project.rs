@@ -584,7 +584,7 @@ fn project_node_should_reserialize(
         if let Some(inst_value) = instance.properties().get(prop_name) {
             let node_value = unresolved_node_value
                 .clone()
-                .resolve(instance.name(), prop_name)?;
+                .resolve(instance.class_name(), prop_name)?;
             if !variant_eq(inst_value, &node_value) {
                 return Ok(true);
             }
