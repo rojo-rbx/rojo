@@ -9,6 +9,7 @@ local Log = require(Packages.Log)
 local Highlighter = require(Packages.Highlighter)
 local StringDiff = require(script:FindFirstChild("StringDiff"))
 
+local Timer = require(Plugin.Timer)
 local Theme = require(Plugin.App.Theme)
 
 local CodeLabel = require(Plugin.App.Components.CodeLabel)
@@ -74,6 +75,7 @@ function StringDiffVisualizer:calculateContentSize()
 end
 
 function StringDiffVisualizer:calculateDiffLines()
+	Timer.start("StringDiffVisualizer:calculateDiffLines")
 	local oldString, newString = self.props.oldString, self.props.newString
 
 	-- Diff the two texts
@@ -133,6 +135,7 @@ function StringDiffVisualizer:calculateDiffLines()
 		end
 	end
 
+	Timer.stop()
 	return add, remove
 end
 

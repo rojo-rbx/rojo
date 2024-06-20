@@ -20,12 +20,15 @@
     This is a very rough implementation and the usage will become more ergonomic
     over time.
 
-* Rojo now converts any line endings to LF, preventing spurious diffs when syncing Lua files on Windows ([#854])
-* Fixed Rojo plugin failing to connect when project contains certain unreadable properties ([#848])
+* Updated Undo/Redo history to be more robust ([#915])
+* Fixed removing trailing newlines ([#903])
+* Added Never option to Confirmation ([#893])
 * Added popout diff visualizer for table properties like Attributes and Tags ([#834])
 * Updated Theme to use Studio colors ([#838])
+* Improved patch visualizer UX ([#883])
 * Added experimental setting for Auto Connect in playtests ([#840])
-* Fixed http error handling so Rojo can be used in Github Codespaces ([#847])
+* Improved settings UI ([#886])
+* `Open Scripts Externally` option can now be changed while syncing ([#911])
 * Projects may now specify rules for syncing files as if they had a different file extension. ([#813])
  	This is specified via a new field on project files, `syncRules`:
 
@@ -77,10 +80,36 @@
 [#834]: https://github.com/rojo-rbx/rojo/pull/834
 [#838]: https://github.com/rojo-rbx/rojo/pull/838
 [#840]: https://github.com/rojo-rbx/rojo/pull/840
-[#847]: https://github.com/rojo-rbx/rojo/pull/847
-[#848]: https://github.com/rojo-rbx/rojo/pull/848
-[#854]: https://github.com/rojo-rbx/rojo/pull/854
 [#843]: https://github.com/rojo-rbx/rojo/pull/843
+[#883]: https://github.com/rojo-rbx/rojo/pull/883
+[#886]: https://github.com/rojo-rbx/rojo/pull/886
+[#893]: https://github.com/rojo-rbx/rojo/pull/893
+[#903]: https://github.com/rojo-rbx/rojo/pull/903
+[#911]: https://github.com/rojo-rbx/rojo/pull/911
+[#915]: https://github.com/rojo-rbx/rojo/pull/915
+
+## [7.4.1] - February 20, 2024
+* Made the `name` field optional on project files ([#870])
+
+	Files named `default.project.json` inherit the name of the folder they're in and all other projects
+    are named as expect (e.g. `foo.project.json` becomes an Instance named `foo`)
+
+    There is no change in behavior if `name` is set.
+* Fixed incorrect results when building model pivots ([#865])
+* Fixed incorrect results when serving model pivots ([#868])
+* Rojo now converts any line endings to LF, preventing spurious diffs when syncing Lua files on Windows ([#854])
+* Fixed Rojo plugin failing to connect when project contains certain unreadable properties ([#848])
+* Fixed various cases where patch visualizer would not display sync failures ([#845], [#844])
+* Fixed http error handling so Rojo can be used in Github Codespaces ([#847])
+
+[#848]: https://github.com/rojo-rbx/rojo/pull/848
+[#845]: https://github.com/rojo-rbx/rojo/pull/845
+[#844]: https://github.com/rojo-rbx/rojo/pull/844
+[#847]: https://github.com/rojo-rbx/rojo/pull/847
+[#854]: https://github.com/rojo-rbx/rojo/pull/854
+[#865]: https://github.com/rojo-rbx/rojo/pull/865
+[#868]: https://github.com/rojo-rbx/rojo/pull/868
+[#870]: https://github.com/rojo-rbx/rojo/pull/870
 
 ## [7.4.0] - January 16, 2024
 * Improved the visualization for array properties like Tags ([#829])

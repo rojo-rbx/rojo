@@ -4,6 +4,7 @@ local Packages = Rojo.Packages
 
 local Roact = require(Packages.Roact)
 
+local Timer = require(Plugin.Timer)
 local Assets = require(Plugin.Assets)
 local Theme = require(Plugin.App.Theme)
 
@@ -21,6 +22,7 @@ function Dictionary:init()
 end
 
 function Dictionary:calculateDiff()
+	Timer.start("Dictionary:calculateDiff")
 	local oldTable, newTable = self.props.oldTable or {}, self.props.newTable or {}
 
 	-- Diff the two tables and find the added keys, removed keys, and changed keys
@@ -59,6 +61,7 @@ function Dictionary:calculateDiff()
 		return a.key < b.key
 	end)
 
+	Timer.stop()
 	return diff
 end
 

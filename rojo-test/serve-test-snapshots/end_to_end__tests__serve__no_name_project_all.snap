@@ -1,0 +1,40 @@
+---
+source: tests/tests/serve.rs
+assertion_line: 338
+expression: "read_response.intern_and_redact(&mut redactions, root_id)"
+---
+instances:
+  id-2:
+    Children:
+      - id-3
+    ClassName: Folder
+    Id: id-2
+    Metadata:
+      ignoreUnknownInstances: true
+    Name: no_name_project
+    Parent: "00000000000000000000000000000000"
+    Properties: {}
+  id-3:
+    Children:
+      - id-4
+    ClassName: Folder
+    Id: id-3
+    Metadata:
+      ignoreUnknownInstances: false
+    Name: second-level
+    Parent: id-2
+    Properties: {}
+  id-4:
+    Children: []
+    ClassName: BoolValue
+    Id: id-4
+    Metadata:
+      ignoreUnknownInstances: true
+    Name: bool_value
+    Parent: id-3
+    Properties:
+      Value:
+        Bool: true
+messageCursor: 0
+sessionId: id-1
+

@@ -1,0 +1,9 @@
+{
+  "name": "no_name_project",
+  "tree": {
+    "$className": "Folder",
+    "second-level": {
+      "$path": "src"
+    }
+  }
+}

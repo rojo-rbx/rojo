@@ -32,9 +32,13 @@ local StudioProvider = Roact.Component:extend("StudioProvider")
 function StudioProvider:updateTheme()
 	local studioTheme = getStudio().Theme
 
+	local isDark = studioTheme.Name == "Dark"
+
 	local theme = strict(studioTheme.Name .. "Theme", {
+		BrandColor = BRAND_COLOR,
 		BackgroundColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.MainBackground),
 		TextColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.MainText),
+		SubTextColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.SubText),
 		Button = {
 			Solid = {
 				-- Solid uses brand theming, not Studio theming.
@@ -139,9 +143,10 @@ function StudioProvider:updateTheme()
 			BackgroundColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.InputFieldBackground),
 		},
 		Diff = {
-			Add = studioTheme:GetColor(Enum.StudioStyleGuideColor.DiffTextAdditionBackground),
-			Remove = studioTheme:GetColor(Enum.StudioStyleGuideColor.DiffTextDeletionBackground),
-			Edit = studioTheme:GetColor(Enum.StudioStyleGuideColor.DiffLineNumSeparatorBackground),
+			-- Studio doesn't have good colors since their diffs use backgrounds, not text
+			Add = if isDark then Color3.fromRGB(143, 227, 154) else Color3.fromRGB(41, 164, 45),
+			Remove = if isDark then Color3.fromRGB(242, 125, 125) else Color3.fromRGB(150, 29, 29),
+			Edit = if isDark then Color3.fromRGB(120, 154, 248) else Color3.fromRGB(0, 70, 160),
 			Row = studioTheme:GetColor(Enum.StudioStyleGuideColor.BrightText),
 			Warning = studioTheme:GetColor(Enum.StudioStyleGuideColor.WarningText),
 		},
@@ -162,6 +167,8 @@ function StudioProvider:updateTheme()
 			Setting = {
 				NameColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.BrightText),
 				DescriptionColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.MainText),
+				UnstableColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.WarningText),
+				DebugColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.InfoText),
 			},
 		},
 		Header = {

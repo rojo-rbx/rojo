@@ -1,0 +1,14 @@
+---
+source: tests/tests/serve.rs
+assertion_line: 351
+expression: redactions.redacted_yaml(info)
+---
+expectedPlaceIds: ~
+gameId: ~
+placeId: ~
+projectName: no_name_top_level_project
+protocolVersion: 4
+rootInstanceId: id-2
+serverVersion: "[server-version]"
+sessionId: id-1
+

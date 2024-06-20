@@ -8,8 +8,8 @@ local PatchTree = require(Plugin.PatchTree)
 local PatchSet = require(Plugin.PatchSet)
 
 local Theme = require(Plugin.App.Theme)
-local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
 local VirtualScroller = require(Plugin.App.Components.VirtualScroller)
+local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
 
 local e = Roact.createElement
 
@@ -55,34 +55,60 @@ function PatchVisualizer:render()
 	end
 
 	-- Recusively draw tree
-	local scrollElements, elementHeights = {}, {}
+	local scrollElements, elementHeights, elementIndex = {}, {}, 0
 
 	if patchTree then
+		local elementTotal = patchTree:getCount()
+		local depthsComplete = {}
 		local function drawNode(node, depth)
-			local elementHeight, setElementHeight = Roact.createBinding(30)
-			table.insert(elementHeights, elementHeight)
-			table.insert(
-				scrollElements,
-				e(DomLabel, {
-					updateEvent = self.updateEvent,
-					elementHeight = elementHeight,
-					setElementHeight = setElementHeight,
-					patchType = node.patchType,
-					className = node.className,
-					isWarning = node.isWarning,
-					instance = node.instance,
-					name = node.name,
-					hint = node.hint,
-					changeList = node.changeList,
-					depth = depth,
-					transparency = self.props.transparency,
-					showStringDiff = self.props.showStringDiff,
-					showTableDiff = self.props.showTableDiff,
-				})
-			)
+			elementIndex += 1
+
+			local parentNode = patchTree:getNode(node.parentId)
+			local isFinalChild = true
+			if parentNode then
+				for _id, sibling in parentNode.children do
+					if type(sibling) == "table" and sibling.name and sibling.name > node.name then
+						isFinalChild = false
+						break
+					end
+				end
+			end
+
+			local elementHeight, setElementHeight = Roact.createBinding(24)
+			elementHeights[elementIndex] = elementHeight
+			scrollElements[elementIndex] = e(DomLabel, {
+				transparency = self.props.transparency,
+				showStringDiff = self.props.showStringDiff,
+				showTableDiff = self.props.showTableDiff,
+				updateEvent = self.updateEvent,
+				elementHeight = elementHeight,
+				setElementHeight = setElementHeight,
+				elementIndex = elementIndex,
+				isFinalElement = elementIndex == elementTotal,
+				depth = depth,
+				depthsComplete = table.clone(depthsComplete),
+				hasChildren = (node.children ~= nil and next(node.children) ~= nil),
+				isFinalChild = isFinalChild,
+				patchType = node.patchType,
+				className = node.className,
+				isWarning = node.isWarning,
+				instance = node.instance,
+				name = node.name,
+				changeInfo = node.changeInfo,
+				changeList = node.changeList,
+			})
+
+			if isFinalChild then
+				depthsComplete[depth] = true
+			end
 		end
 
 		patchTree:forEach(function(node, depth)
+			depthsComplete[depth] = false
+			for i = depth + 1, #depthsComplete do
+				depthsComplete[i] = nil
+			end
+
 			drawNode(node, depth)
 		end)
 	end
@@ -92,6 +118,7 @@ function PatchVisualizer:render()
 			transparency = self.props.transparency,
 			size = self.props.size,
 			position = self.props.position,
+			anchorPoint = self.props.anchorPoint,
 			layoutOrder = self.props.layoutOrder,
 		}, {
 			CleanMerge = e("TextLabel", {
@@ -106,7 +133,8 @@ function PatchVisualizer:render()
 			}),
 
 			VirtualScroller = e(VirtualScroller, {
-				size = UDim2.new(1, 0, 1, 0),
+				size = UDim2.new(1, 0, 1, -2),
+				position = UDim2.new(0, 0, 0, 2),
 				transparency = self.props.transparency,
 				count = #scrollElements,
 				updateEvent = self.updateEvent.Event,

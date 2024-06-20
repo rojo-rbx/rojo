@@ -3,7 +3,8 @@ local strict = require(script.Parent.strict)
 local isDevBuild = script.Parent.Parent:FindFirstChild("ROJO_DEV_BUILD") ~= nil
 
 local Version = script.Parent.Parent.Version
-local major, minor, patch, metadata = Version.Value:match("^(%d+)%.(%d+)%.(%d+)(.*)$")
+local trimmedVersionValue = Version.Value:gsub("^%s+", ""):gsub("%s+$", "")
+local major, minor, patch, metadata = trimmedVersionValue:match("^(%d+)%.(%d+)%.(%d+)(.*)$")
 
 local realVersion = { major, minor, patch, metadata }
 for i = 1, 3 do
