@@ -199,6 +199,10 @@ pub enum Middleware {
     ServerScript,
     ClientScript,
     ModuleScript,
+    LegacyClientScript,
+    LegacyServerScript,
+    RunContextServerScript,
+    RunContextClientScript,
     Project,
     Rbxm,
     Rbxmx,
@@ -224,6 +228,18 @@ impl Middleware {
             Self::ServerScript => snapshot_lua(context, vfs, path, name, ScriptType::Server),
             Self::ClientScript => snapshot_lua(context, vfs, path, name, ScriptType::Client),
             Self::ModuleScript => snapshot_lua(context, vfs, path, name, ScriptType::Module),
+            Self::LegacyClientScript => {
+                snapshot_lua(context, vfs, path, name, ScriptType::LegacyClient)
+            }
+            Self::LegacyServerScript => {
+                snapshot_lua(context, vfs, path, name, ScriptType::LegacyServer)
+            }
+            Self::RunContextClientScript => {
+                snapshot_lua(context, vfs, path, name, ScriptType::RunContextClient)
+            }
+            Self::RunContextServerScript => {
+                snapshot_lua(context, vfs, path, name, ScriptType::RunContextServer)
+            }
             Self::Project => snapshot_project(context, vfs, path, name),
             Self::Rbxm => snapshot_rbxm(context, vfs, path, name),
             Self::Rbxmx => snapshot_rbxmx(context, vfs, path, name),

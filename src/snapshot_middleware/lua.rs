@@ -15,6 +15,10 @@ pub enum ScriptType {
     Server,
     Client,
     Module,
+    LegacyServer,
+    LegacyClient,
+    RunContextServer,
+    RunContextClient,
 }
 
 /// Core routine for turning Lua files into snapshots.
@@ -31,12 +35,26 @@ pub fn snapshot_lua(
         .expect("Unable to get RunContext enums!")
         .items;
 
-    let (class_name, run_context) = match (context.emit_legacy_scripts, script_type) {
-        (false, ScriptType::Server) => ("Script", run_context_enums.get("Server")),
-        (false, ScriptType::Client) => ("Script", run_context_enums.get("Client")),
-        (true, ScriptType::Server) => ("Script", run_context_enums.get("Legacy")),
-        (true, ScriptType::Client) => ("LocalScript", None),
-        (_, ScriptType::Module) => ("ModuleScript", None),
+    let (class_name, run_context) = match script_type {
+        ScriptType::Server => {
+            if context.emit_legacy_scripts {
+                ("Script", run_context_enums.get("Legacy"))
+            } else {
+                ("Script", run_context_enums.get("Server"))
+            }
+        }
+        ScriptType::Client => {
+            if context.emit_legacy_scripts {
+                ("LocalScript", None)
+            } else {
+                ("Script", run_context_enums.get("Client"))
+            }
+        }
+        ScriptType::Module => ("ModuleScript", None),
+        ScriptType::LegacyServer => ("Script", run_context_enums.get("Legacy")),
+        ScriptType::LegacyClient => ("LocalScript", None),
+        ScriptType::RunContextServer => ("Script", run_context_enums.get("Server")),
+        ScriptType::RunContextClient => ("Script", run_context_enums.get("Client")),
     };
 
     let contents = vfs.read_to_string_lf_normalized(path)?;
