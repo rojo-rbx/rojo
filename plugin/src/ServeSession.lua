@@ -133,7 +133,7 @@ function ServeSession:hookPostcommit(callback)
 	return self.__reconciler:hookPostcommit(callback)
 end
 
-function ServeSession:start()
+function ServeSession:start(skipInitialSync)
 	self:__setStatus(Status.Connecting)
 
 	self.__apiContext
@@ -141,7 +141,7 @@ function ServeSession:start()
 		:andThen(function(serverInfo)
 			self:__applyGameAndPlaceId(serverInfo)
 
-			return self:__initialSync(serverInfo):andThen(function()
+			return self:__initialSync(serverInfo, skipInitialSync):andThen(function()
 				self:__setStatus(Status.Connected, serverInfo.projectName)
 
 				return self:__mainSyncLoop()
@@ -207,7 +207,7 @@ function ServeSession:__onActiveScriptChanged(activeScript)
 	self.__apiContext:open(scriptId)
 end
 
-function ServeSession:__initialSync(serverInfo)
+function ServeSession:__initialSync(serverInfo, skipInitialSync)
 	return self.__apiContext:read({ serverInfo.rootInstanceId }):andThen(function(readResponseBody)
 		-- Tell the API Context that we're up-to-date with the version of
 		-- the tree defined in this response.
@@ -217,6 +217,10 @@ function ServeSession:__initialSync(serverInfo)
 		-- tracking them in the reconciler.
 		Log.trace("Matching existing Roblox instances to Rojo IDs")
 		self.__reconciler:hydrate(readResponseBody.instances, serverInfo.rootInstanceId, game)
+
+		if skipInitialSync then
+			return Promise.resolve()
+		end
 
 		-- Calculate the initial patch to apply to the DataModel to catch us
 		-- up to what Rojo thinks the place should look like.

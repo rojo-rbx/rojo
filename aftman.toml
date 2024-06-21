@@ -1,5 +1,5 @@
 [tools]
-rojo = "rojo-rbx/rojo@7.3.0"
+rojo = "rojo-rbx/rojo@7.4.1"
 selene = "Kampfkarren/selene@0.26.1"
-stylua = "JohnnyMorganz/stylua@0.18.2"
+stylua = "JohnnyMorganz/stylua@0.20.0"
 run-in-roblox = "rojo-rbx/run-in-roblox@0.3.0"
