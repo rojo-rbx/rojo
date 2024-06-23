@@ -8,6 +8,8 @@ use std::{
 
 use rbx_dom_weak::types::{Ref, Variant};
 
+use crate::variant_eq::variant_eq;
+
 use super::{
     patch::{PatchAdd, PatchSet, PatchUpdate},
     InstanceSnapshot, InstanceWithMeta, RojoTree,
@@ -122,7 +124,7 @@ fn compute_property_patches(
 
         match instance.properties().get(&name) {
             Some(instance_value) => {
-                if &snapshot_value != instance_value {
+                if !variant_eq(&snapshot_value, instance_value) {
                     changed_properties.insert(name, Some(snapshot_value));
                 }
             }
@@ -246,7 +248,7 @@ mod test {
         // addition of a prop named Self, which is a self-referential Ref.
         let snapshot_id = Ref::new();
         let snapshot = InstanceSnapshot {
-            snapshot_id: snapshot_id,
+            snapshot_id,
             properties: hashmap! {
                 "Self".to_owned() => Variant::Ref(snapshot_id),
             },
@@ -288,7 +290,7 @@ mod test {
         // This patch describes the existing instance with a new child added.
         let snapshot_id = Ref::new();
         let snapshot = InstanceSnapshot {
-            snapshot_id: snapshot_id,
+            snapshot_id,
             children: vec![InstanceSnapshot {
                 properties: hashmap! {
                     "Self".to_owned() => Variant::Ref(snapshot_id),

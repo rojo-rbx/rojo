@@ -75,6 +75,7 @@
  	| `ignore`       | None!           |
 
     **All** sync rules are reset between project files, so they must be specified in each one when nesting them. This is to ensure that nothing can break other projects by changing how files are synced!
+* `inf` and `nan` values in properties are now synced ([#908])
 
 [#813]: https://github.com/rojo-rbx/rojo/pull/813
 [#834]: https://github.com/rojo-rbx/rojo/pull/834
@@ -85,6 +86,7 @@
 [#886]: https://github.com/rojo-rbx/rojo/pull/886
 [#893]: https://github.com/rojo-rbx/rojo/pull/893
 [#903]: https://github.com/rojo-rbx/rojo/pull/903
+[#908]: https://github.com/rojo-rbx/rojo/pull/908
 [#911]: https://github.com/rojo-rbx/rojo/pull/911
 [#915]: https://github.com/rojo-rbx/rojo/pull/915
 
