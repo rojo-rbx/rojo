@@ -165,9 +165,9 @@ pub fn syncback_lua_init<'sync>(
 ) -> anyhow::Result<SyncbackReturn<'sync>> {
     let new_inst = snapshot.new_inst();
     let path = snapshot.path.join(match script_type {
-        ScriptType::Server => "init.server.lua",
-        ScriptType::Client => "init.client.lua",
-        ScriptType::Module => "init.lua",
+        ScriptType::Server => "init.server.luau",
+        ScriptType::Client => "init.client.luau",
+        ScriptType::Module => "init.luau",
     });
 
     let contents = if let Some(Variant::String(source)) = new_inst.properties.get("Source") {
