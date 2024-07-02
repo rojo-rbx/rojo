@@ -513,7 +513,6 @@ pub fn syncback_project<'sync>(
     }
 
     Ok(SyncbackReturn {
-        inst_snapshot: InstanceSnapshot::from_instance(snapshot.new_inst()),
         fs_snapshot,
         children: descendant_snapshots,
         removed_children: removed_descendants,

@@ -202,7 +202,6 @@ pub fn syncback_dir_no_meta<'sync>(
     fs_snapshot.add_dir(&snapshot.path);
 
     Ok(SyncbackReturn {
-        inst_snapshot: InstanceSnapshot::from_instance(new_inst),
         fs_snapshot,
         children,
         removed_children,

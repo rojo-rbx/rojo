@@ -21,7 +21,7 @@ use std::{
 
 use crate::{
     glob::Glob,
-    snapshot::{InstanceSnapshot, InstanceWithMeta, RojoTree},
+    snapshot::{InstanceWithMeta, RojoTree},
     snapshot_middleware::Middleware,
     syncback::ref_properties::link_referents,
     Project,
@@ -137,7 +137,6 @@ pub fn syncback_loop(
         middleware: Some(Middleware::Project),
     }];
 
-    let mut replacements = Vec::new();
     let mut fs_snapshot = FsSnapshot::new();
 
     'syncback: while let Some(snapshot) = snapshots.pop() {
@@ -228,9 +227,7 @@ pub fn syncback_loop(
             }
         }
 
-        if let Some(old_inst) = snapshot.old_inst() {
-            replacements.push((old_inst.parent(), syncback.inst_snapshot));
-        }
+        // TODO provide replacement snapshots for e.g. two way sync
 
         fs_snapshot.merge(syncback.fs_snapshot);
 
@@ -241,7 +238,6 @@ pub fn syncback_loop(
 }
 
 pub struct SyncbackReturn<'sync> {
-    pub inst_snapshot: InstanceSnapshot,
     pub fs_snapshot: FsSnapshot,
     pub children: Vec<SyncbackSnapshot<'sync>>,
     pub removed_children: Vec<InstanceWithMeta<'sync>>,

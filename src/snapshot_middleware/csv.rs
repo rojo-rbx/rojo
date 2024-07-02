@@ -125,7 +125,6 @@ pub fn syncback_csv<'sync>(
     }
 
     Ok(SyncbackReturn {
-        inst_snapshot: InstanceSnapshot::from_instance(new_inst),
         fs_snapshot,
         children: Vec::new(),
         removed_children: Vec::new(),
@@ -161,10 +160,7 @@ pub fn syncback_csv_init<'sync>(
         }
     }
 
-    Ok(SyncbackReturn {
-        inst_snapshot: InstanceSnapshot::from_instance(new_inst),
-        ..dir_syncback
-    })
+    Ok(dir_syncback)
 }
 
 /// Struct that holds any valid row from a Roblox CSV translation table.

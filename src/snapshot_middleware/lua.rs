@@ -151,7 +151,6 @@ pub fn syncback_lua<'sync>(
     }
 
     Ok(SyncbackReturn {
-        inst_snapshot: InstanceSnapshot::from_instance(new_inst),
         fs_snapshot,
         // Scripts don't have a child!
         children: Vec::new(),
@@ -192,10 +191,7 @@ pub fn syncback_lua_init<'sync>(
         }
     }
 
-    Ok(SyncbackReturn {
-        inst_snapshot: InstanceSnapshot::from_instance(new_inst),
-        ..dir_syncback
-    })
+    Ok(dir_syncback)
 }
 
 #[cfg(test)]

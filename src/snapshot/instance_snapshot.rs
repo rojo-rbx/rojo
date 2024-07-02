@@ -127,17 +127,6 @@ impl InstanceSnapshot {
             children,
         }
     }
-
-    pub fn from_instance(instance: &Instance) -> Self {
-        Self {
-            snapshot_id: instance.referent(),
-            metadata: InstanceMetadata::new(),
-            name: Cow::Owned(instance.name.clone()),
-            class_name: Cow::Owned(instance.class.clone()),
-            properties: instance.properties.clone(),
-            children: Vec::new(),
-        }
-    }
 }
 
 impl Default for InstanceSnapshot {
