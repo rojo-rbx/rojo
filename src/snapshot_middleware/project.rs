@@ -454,18 +454,19 @@ pub fn syncback_project<'sync>(
             }
             let new_equivalent = new_child_map.remove(child_name);
             let old_equivalent = old_child_map.remove(child_name.as_str());
-            // The panic below should never happen. If it does, something's gone
-            // wrong with the Instance matching for nodes.
             match (new_equivalent, old_equivalent) {
                 (Some(new), Some(old)) => node_queue.push_back((child_node, old, new)),
                 (_, None) => anyhow::bail!(
                     "The child '{child_name}' of Instance '{}' would be removed.\n\
-                    Syncback cannot add or remove Instances from project {}", old_inst.name(), project_path.display()),
-                (None, _) => panic!(
-                    "Invariant violated: the Instance matching of project nodes is flawed somehow.\n\
-                    Specifically, a child named {} of the node {} did not exist in the old tree.",
-                    child_name, old_inst.name()
+                    Syncback cannot add or remove Instances from project {}",
+                    old_inst.name(),
+                    project_path.display()
                 ),
+                (None, _) => anyhow::bail!(
+                    "The child '{child_name}' of Instance '{}' is present only in a project file,\n\
+                    and not the provided file. Syncback cannot add or remove Instances from project:\n{}.",
+                    old_inst.name(), project_path.display(),
+                )
             }
         }
 
