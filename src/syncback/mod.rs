@@ -36,7 +36,7 @@ pub use snapshot::{SyncbackData, SyncbackSnapshot};
 
 /// The name of an enviroment variable to use to override the behavior of
 /// syncback on model files.
-/// By default, syncabck will use `Rbxm` for model files.
+/// By default, syncback will use `Rbxm` for model files.
 /// If this is set to `1`, it will instead use `Rbxmx`. If it is set to `2`,
 /// it will use `JsonModel`.
 ///
