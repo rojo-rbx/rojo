@@ -1,0 +1,9 @@
+{
+  "name": "rbxm_fallback",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$path": "ReplicatedStorage"
+    }
+  }
+}

@@ -1,15 +1,24 @@
-use std::{collections::BTreeMap, path::Path};
+use std::{
+    borrow::Cow,
+    collections::{BTreeMap, BTreeSet},
+    path::Path,
+};
 
 use anyhow::Context;
 use maplit::hashmap;
 use memofs::{IoResultExt, Vfs};
-use serde::Serialize;
+use rbx_dom_weak::types::Variant;
+use serde::{Deserialize, Serialize};
 
-use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
+use crate::{
+    snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
+    syncback::{FsSnapshot, SyncbackReturn, SyncbackSnapshot},
+};
 
 use super::{
-    dir::{dir_meta, snapshot_dir_no_meta},
-    meta_file::AdjacentMetadata,
+    dir::{dir_meta, snapshot_dir_no_meta, syncback_dir_no_meta},
+    meta_file::{AdjacentMetadata, DirectoryMetadata},
+    PathExt as _,
 };
 
 pub fn snapshot_csv(
@@ -57,9 +66,10 @@ pub fn snapshot_csv_init(
     context: &InstanceContext,
     vfs: &Vfs,
     init_path: &Path,
+    name: &str,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let folder_path = init_path.parent().unwrap();
-    let dir_snapshot = snapshot_dir_no_meta(context, vfs, folder_path)?.unwrap();
+    let dir_snapshot = snapshot_dir_no_meta(context, vfs, folder_path, name)?.unwrap();
 
     if dir_snapshot.class_name != "Folder" {
         anyhow::bail!(
@@ -76,6 +86,10 @@ pub fn snapshot_csv_init(
 
     init_snapshot.children = dir_snapshot.children;
     init_snapshot.metadata = dir_snapshot.metadata;
+    init_snapshot
+        .metadata
+        .relevant_paths
+        .push(init_path.to_owned());
 
     if let Some(mut meta) = dir_meta(vfs, folder_path)? {
         meta.apply_all(&mut init_snapshot)?;
@@ -84,27 +98,96 @@ pub fn snapshot_csv_init(
     Ok(Some(init_snapshot))
 }
 
+pub fn syncback_csv<'sync>(
+    snapshot: &SyncbackSnapshot<'sync>,
+) -> anyhow::Result<SyncbackReturn<'sync>> {
+    let new_inst = snapshot.new_inst();
+
+    let contents = if let Some(Variant::String(content)) = new_inst.properties.get("Contents") {
+        content.as_str()
+    } else {
+        anyhow::bail!("LocalizationTables must have a `Contents` property that is a String")
+    };
+    let mut fs_snapshot = FsSnapshot::new();
+    fs_snapshot.add_file(&snapshot.path, localization_to_csv(contents)?);
+
+    let meta = AdjacentMetadata::from_syncback_snapshot(snapshot, snapshot.path.clone())?;
+    if let Some(mut meta) = meta {
+        meta.properties.remove("Contents");
+
+        if !meta.is_empty() {
+            let parent = snapshot.path.parent_err()?;
+            fs_snapshot.add_file(
+                parent.join(format!("{}.meta.json", new_inst.name)),
+                serde_json::to_vec_pretty(&meta).context("cannot serialize metadata")?,
+            )
+        }
+    }
+
+    Ok(SyncbackReturn {
+        inst_snapshot: InstanceSnapshot::from_instance(new_inst),
+        fs_snapshot,
+        children: Vec::new(),
+        removed_children: Vec::new(),
+    })
+}
+
+pub fn syncback_csv_init<'sync>(
+    snapshot: &SyncbackSnapshot<'sync>,
+) -> anyhow::Result<SyncbackReturn<'sync>> {
+    let new_inst = snapshot.new_inst();
+
+    let contents = if let Some(Variant::String(content)) = new_inst.properties.get("Contents") {
+        content.as_str()
+    } else {
+        anyhow::bail!("LocalizationTables must have a `Contents` property that is a String")
+    };
+
+    let mut dir_syncback = syncback_dir_no_meta(snapshot)?;
+    dir_syncback.fs_snapshot.add_file(
+        &snapshot.path.join("init.csv"),
+        localization_to_csv(contents)?,
+    );
+
+    let meta = DirectoryMetadata::from_syncback_snapshot(snapshot, snapshot.path.clone())?;
+    if let Some(mut meta) = meta {
+        meta.properties.remove("Contents");
+        if !meta.is_empty() {
+            dir_syncback.fs_snapshot.add_file(
+                snapshot.path.join("init.meta.json"),
+                serde_json::to_vec_pretty(&meta)
+                    .context("could not serialize new init.meta.json")?,
+            );
+        }
+    }
+
+    Ok(SyncbackReturn {
+        inst_snapshot: InstanceSnapshot::from_instance(new_inst),
+        ..dir_syncback
+    })
+}
+
 /// Struct that holds any valid row from a Roblox CSV translation table.
 ///
 /// We manually deserialize into this table from CSV, but let serde_json handle
 /// serialization.
-#[derive(Debug, Default, Serialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct LocalizationEntry<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
-    key: Option<&'a str>,
+    key: Option<Cow<'a, str>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    context: Option<&'a str>,
+    context: Option<Cow<'a, str>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    example: Option<&'a str>,
+    examples: Option<Cow<'a, str>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    source: Option<&'a str>,
+    source: Option<Cow<'a, str>>,
 
     // We use a BTreeMap here to get deterministic output order.
-    values: BTreeMap<&'a str, &'a str>,
+    values: BTreeMap<Cow<'a, str>, Cow<'a, str>>,
 }
 
 /// Normally, we'd be able to let the csv crate construct our struct for us.
@@ -138,12 +221,14 @@ fn convert_localization_csv(contents: &[u8]) -> Result<String, csv::Error> {
             }
 
             match header {
-                "Key" => entry.key = Some(value),
-                "Source" => entry.source = Some(value),
-                "Context" => entry.context = Some(value),
-                "Example" => entry.example = Some(value),
+                "Key" => entry.key = Some(Cow::Borrowed(value)),
+                "Source" => entry.source = Some(Cow::Borrowed(value)),
+                "Context" => entry.context = Some(Cow::Borrowed(value)),
+                "Example" => entry.examples = Some(Cow::Borrowed(value)),
                 _ => {
-                    entry.values.insert(header, value);
+                    entry
+                        .values
+                        .insert(Cow::Borrowed(header), Cow::Borrowed(value));
                 }
             }
         }
@@ -159,6 +244,57 @@ fn convert_localization_csv(contents: &[u8]) -> Result<String, csv::Error> {
         serde_json::to_string(&entries).expect("Could not encode JSON for localization table");
 
     Ok(encoded)
+}
+
+/// Takes a localization table (as a string) and converts it into a CSV file.
+///
+/// The CSV file is ordered, so it should be deterministic.
+fn localization_to_csv(csv_contents: &str) -> anyhow::Result<Vec<u8>> {
+    let mut out = Vec::new();
+    let mut writer = csv::Writer::from_writer(&mut out);
+
+    let mut csv: Vec<LocalizationEntry> =
+        serde_json::from_str(csv_contents).context("cannot decode JSON from localization table")?;
+
+    // TODO sort this better
+    csv.sort_unstable_by(|a, b| a.key.partial_cmp(&b.key).unwrap());
+
+    let mut headers = vec!["Key", "Source", "Context", "Example"];
+    // We want both order and a lack of duplicates, so we use a BTreeSet.
+    let mut extra_headers = BTreeSet::new();
+    for entry in &csv {
+        for lang in entry.values.keys() {
+            extra_headers.insert(lang.as_ref());
+        }
+    }
+    headers.extend(extra_headers.iter());
+
+    writer
+        .write_record(&headers)
+        .context("could not write headers for localization table")?;
+
+    let mut record: Vec<&str> = Vec::with_capacity(headers.len());
+    for entry in &csv {
+        record.push(entry.key.as_deref().unwrap_or_default());
+        record.push(entry.source.as_deref().unwrap_or_default());
+        record.push(entry.context.as_deref().unwrap_or_default());
+        record.push(entry.examples.as_deref().unwrap_or_default());
+
+        let values = &entry.values;
+        for header in &extra_headers {
+            record.push(values.get(*header).map(AsRef::as_ref).unwrap_or_default());
+        }
+
+        writer
+            .write_record(&record)
+            .context("cannot write record for localization table")?;
+        record.clear();
+    }
+
+    // We must drop `writer` here to regain access to `out`.
+    drop(writer);
+
+    Ok(out)
 }
 
 #[cfg(test)]

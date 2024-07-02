@@ -1,6 +1,39 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* A new command `rojo syncback` has been added. It can be used as `rojo syncback [path to project] --input [path to file]`.
+ 	This command takes a Roblox file and pulls Instances out of it and places them in the correct position in the provided project.
+    Syncback is primarily controlled by the project file. Any Instances who are either referenced in the project file or a descendant
+    of one that is will be placed in an appropriate location.
+
+    In addition, a new field has been added to project files, `syncbackRules` to control how it behaves:
+
+    ```json
+    {
+        "syncbackRules": {
+            "ignoreTrees": [
+                "DataModel/ServerStorage/ImportantSecrets",
+            ],
+            "ignorePaths": [
+                "src/ServerStorage/Secrets/*"
+            ],
+            "ignoreProperties": {
+                "BasePart": ["Color"]
+            },
+            "syncCurrentCamera": false,
+            "syncUnscriptable": true,
+        }
+    }
+    ```
+
+    A brief explanation of each field:
+
+    - `ignoreTrees` is a list of paths in the **roblox file** that should be ignored
+    - `ignorePaths` is a list of paths in the **file system** that should be ignored
+    - `ignoreProperties` is a list of properties that won't be synced back
+    - `syncCurrentCamera` is a toggle for whether to sync back the Workspace's CurrentCamera. Defaults to `false`.
+    - `syncUnscriptable` is a toggle for whether to sync back properties that cannot be set by the Roblox Studio plugin. Defaults to `false`.
+
 * Projects may now manually link `Ref` properties together using `Attributes`. ([#843])
  	This has two parts: using `id` or `$id` in JSON files or a `Rojo_Target` attribute, an Instance
     is given an ID. Then, that ID may be used elsewhere in the project to point to an Instance

@@ -1,0 +1,47 @@
+{
+  "name": "Baseplate",
+  "tree": {
+    "$className": "DataModel",
+    "Lighting": {
+      "$properties": {
+        "Ambient": [
+          0.27450981736183167,
+          0.27450981736183167,
+          0.27450981736183167
+        ],
+        "Brightness": 3.0,
+        "EnvironmentDiffuseScale": 1.0,
+        "EnvironmentSpecularScale": 1.0,
+        "FogColor": [
+          0.7529412508010864,
+          0.7529412508010864,
+          0.7529412508010864
+        ],
+        "GeographicLatitude": 0.0,
+        "GlobalShadows": true,
+        "OutdoorAmbient": [
+          0.27450981736183167,
+          0.27450981736183167,
+          0.27450981736183167
+        ],
+        "Outlines": false,
+        "ShadowSoftness": 0.20000000298023224,
+        "TimeOfDay": "14:30:00"
+      },
+      "$path": "Lighting"
+    },
+    "Workspace": {
+      "$properties": {
+        "CSGAsyncDynamicCollision": {
+          "Enum": 0
+        },
+        "StreamingEnabled": true
+      },
+      "$path": "Workspace"
+    }
+  },
+  "syncbackRules": {
+    "syncCurrentCamera": true,
+    "ignoreReferents": true
+  }
+}

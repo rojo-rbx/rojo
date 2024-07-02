@@ -5,6 +5,7 @@
 ## 0.3.0 (2024-03-15)
 * Changed `StdBackend` file watching component to use minimal recursive watches. [#830]
 * Added `Vfs::read_to_string` and `Vfs::read_to_string_lf_normalized` [#854]
+* Added `create_dir` and `create_dir_all` to allow creating directories.
 
 [#830]: https://github.com/rojo-rbx/rojo/pull/830
 [#854]: https://github.com/rojo-rbx/rojo/pull/854

@@ -1,0 +1,22 @@
+---
+source: tests/rojo_test/syncback_util.rs
+assertion_line: 48
+expression: "visualize_fs_snapshot(&fs_snapshot, &output_path)"
+---
+added_files:
+  - "Lighting\\Atmosphere.model.json"
+  - "Lighting\\Bloom.model.json"
+  - "Lighting\\DepthOfField.model.json"
+  - "Lighting\\Sky.model.json"
+  - "Lighting\\SunRays.model.json"
+  - "Workspace\\Baseplate.rbxm"
+  - "Workspace\\Camera.rbxm"
+  - "Workspace\\SpawnLocation.rbxm"
+  - "Workspace\\Terrain.rbxm"
+  - default.project.json
+added_dirs:
+  - Lighting
+  - Workspace
+removed_files: []
+removed_dirs: []
+

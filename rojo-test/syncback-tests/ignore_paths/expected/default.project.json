@@ -1,0 +1,24 @@
+{
+  "name": "ignore_paths",
+  "tree": {
+    "$className": "DataModel",
+    "Workspace": {
+      "$properties": {
+        "CSGAsyncDynamicCollision": {
+          "Enum": 0
+        },
+        "DecreaseMinimumPartDensityMode": {
+          "Enum": 0
+        },
+        "StreamingEnabled": true
+      },
+      "$path": "src"
+    }
+  },
+  "syncbackRules": {
+    "ignorePaths": [
+      "src/*.rbxm",
+      "src/folder_name/**"
+    ]
+  }
+}

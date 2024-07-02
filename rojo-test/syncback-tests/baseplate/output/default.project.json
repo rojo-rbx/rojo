@@ -1,0 +1,16 @@
+{
+  "name": "Baseplate",
+  "tree": {
+    "$className": "DataModel",
+    "Lighting": {
+      "$path": "Lighting"
+    },
+    "Workspace": {
+      "$path": "Workspace"
+    }
+  },
+  "syncbackRules": {
+    "ignoreReferents": true,
+    "syncCurrentCamera": true
+  }
+}

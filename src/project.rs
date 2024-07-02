@@ -1,5 +1,5 @@
 use std::{
-    collections::{BTreeMap, HashMap, HashSet},
+    collections::{BTreeMap, HashSet},
     fs, io,
     net::IpAddr,
     path::{Path, PathBuf},
@@ -8,7 +8,7 @@ use std::{
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use crate::{glob::Glob, resolution::UnresolvedValue, snapshot::SyncRule};
+use crate::{glob::Glob, resolution::UnresolvedValue, snapshot::SyncRule, syncback::SyncbackRules};
 
 static PROJECT_FILENAME: &str = "default.project.json";
 
@@ -83,6 +83,10 @@ pub struct Project {
     /// match files that should be excluded if Rojo encounters them.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub glob_ignore_paths: Vec<Glob>,
+
+    /// A list of rules for syncback with this project file.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub syncback_rules: Option<SyncbackRules>,
 
     /// A list of mappings of globs to syncing rules. If a file matches a glob,
     /// it will be 'transformed' into an Instance following the rule provided.
@@ -206,11 +210,20 @@ pub enum PathNode {
 }
 
 impl PathNode {
+    /// Returns the path of the `PathNode`, without regard for if it's optional
+    // or not.
+    #[inline]
     pub fn path(&self) -> &Path {
         match self {
             PathNode::Required(pathbuf) => pathbuf,
             PathNode::Optional(OptionalPathNode { optional }) => optional,
         }
+    }
+
+    /// Returns whether this `PathNode` is optional or not.
+    #[inline]
+    pub fn is_optional(&self) -> bool {
+        matches!(self, PathNode::Optional(_))
     }
 }
 
@@ -241,16 +254,16 @@ pub struct ProjectNode {
     #[serde(
         rename = "$properties",
         default,
-        skip_serializing_if = "HashMap::is_empty"
+        skip_serializing_if = "BTreeMap::is_empty"
     )]
-    pub properties: HashMap<String, UnresolvedValue>,
+    pub properties: BTreeMap<String, UnresolvedValue>,
 
     #[serde(
         rename = "$attributes",
         default,
-        skip_serializing_if = "HashMap::is_empty"
+        skip_serializing_if = "BTreeMap::is_empty"
     )]
-    pub attributes: HashMap<String, UnresolvedValue>,
+    pub attributes: BTreeMap<String, UnresolvedValue>,
 
     /// Defines the behavior when Rojo encounters unknown instances in Roblox
     /// Studio during live sync. `$ignoreUnknownInstances` should be considered

@@ -3,7 +3,10 @@ use std::path::Path;
 use anyhow::Context;
 use memofs::Vfs;
 
-use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
+use crate::{
+    snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
+    syncback::{FsSnapshot, SyncbackReturn, SyncbackSnapshot},
+};
 
 #[profiling::function]
 pub fn snapshot_rbxm(
@@ -37,6 +40,25 @@ pub fn snapshot_rbxm(
             path.display()
         );
     }
+}
+
+pub fn syncback_rbxm<'sync>(
+    snapshot: &SyncbackSnapshot<'sync>,
+) -> anyhow::Result<SyncbackReturn<'sync>> {
+    let inst = snapshot.new_inst();
+
+    // Long-term, we probably want to have some logic for if this contains a
+    // script. That's a future endeavor though.
+    let mut serialized = Vec::new();
+    rbx_binary::to_writer(&mut serialized, snapshot.new_tree(), &[inst.referent()])
+        .context("failed to serialize new rbxm")?;
+
+    Ok(SyncbackReturn {
+        inst_snapshot: InstanceSnapshot::from_instance(inst),
+        fs_snapshot: FsSnapshot::new().with_added_file(&snapshot.path, serialized),
+        children: Vec::new(),
+        removed_children: Vec::new(),
+    })
 }
 
 #[cfg(test)]

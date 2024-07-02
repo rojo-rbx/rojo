@@ -13,6 +13,7 @@ added_instances:
         context:
           emit_legacy_scripts: true
         specified_id: ~
+        middleware: ~
       name: New
       class_name: Folder
       properties: {}

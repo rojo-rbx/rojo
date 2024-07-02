@@ -13,6 +13,7 @@ metadata:
   context:
     emit_legacy_scripts: false
   specified_id: ~
+  middleware: ~
 name: foo
 class_name: Script
 properties:

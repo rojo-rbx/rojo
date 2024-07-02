@@ -14,5 +14,6 @@ metadata:
   context:
     emit_legacy_scripts: true
   specified_id: ~
+  middleware: ~
 children: []
 

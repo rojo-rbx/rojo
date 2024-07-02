@@ -1,0 +1,21 @@
+{
+  "name": "ref_properties_blank",
+  "tree": {
+    "$className": "DataModel",
+    "Workspace": {
+      "$properties": {
+        "CSGAsyncDynamicCollision": {
+          "Enum": 0
+        },
+        "DecreaseMinimumPartDensityMode": {
+          "Enum": 0
+        },
+        "StreamingEnabled": true
+      },
+      "$attributes": {
+        "Rojo_Target_CurrentCamera": "62e89c49e4f800c20629c71b00003fcb"
+      },
+      "$path": "src"
+    }
+  }
+}

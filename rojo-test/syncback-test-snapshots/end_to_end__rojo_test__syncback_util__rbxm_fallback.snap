@@ -1,0 +1,15 @@
+---
+source: tests/rojo_test/syncback_util.rs
+assertion_line: 48
+expression: "visualize_fs_snapshot(&fs_snapshot, &output_path)"
+---
+added_files:
+  - "ReplicatedStorage\\ChildWithDuplicates.rbxm"
+  - "ReplicatedStorage\\ChildWithoutDuplicates\\Child\\.gitkeep"
+added_dirs:
+  - ReplicatedStorage
+  - "ReplicatedStorage\\ChildWithoutDuplicates"
+  - "ReplicatedStorage\\ChildWithoutDuplicates\\Child"
+removed_files: []
+removed_dirs: []
+

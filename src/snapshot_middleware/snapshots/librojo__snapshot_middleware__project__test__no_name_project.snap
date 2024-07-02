@@ -1,6 +1,5 @@
 ---
 source: src/snapshot_middleware/project.rs
-assertion_line: 730
 expression: instance_snapshot
 ---
 snapshot_id: "00000000000000000000000000000000"
@@ -13,6 +12,7 @@ metadata:
   context:
     emit_legacy_scripts: true
   specified_id: ~
+  middleware: ~
 name: no_name_project
 class_name: Model
 properties: {}
