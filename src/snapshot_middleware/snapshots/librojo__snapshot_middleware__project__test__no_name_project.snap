@@ -13,6 +13,7 @@ metadata:
   context:
     emit_legacy_scripts: true
 name: foo
+  specified_id: ~
 class_name: Model
 properties: {}
 children: []

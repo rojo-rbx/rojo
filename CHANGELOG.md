@@ -1,6 +1,26 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Projects may now manually link `Ref` properties together using `Attributes`. ([#843])
+ 	This has two parts: using `id` or `$id` in JSON files or a `Rojo_Target` attribute, an Instance
+    is given an ID. Then, that ID may be used elsewhere in the project to point to an Instance
+    using an attribute named `Rojo_Target_PROP_NAME`, where `PROP_NAME` is the name of a property.
+
+    As an example, here is a `model.json` for an ObjectValue that refers to itself:
+
+    ```json
+    {
+        "id": "arbitrary string",
+        "attributes": {
+            "Rojo_Target_Value": "arbitrary string"
+        }
+    }
+    ```
+
+    This is a very rough implementation and the usage will become more ergonomic
+    over time.
+
+* Updated Undo/Redo history to be more robust ([#915])
 * Fixed removing trailing newlines ([#903])
 * Added Never option to Confirmation ([#893])
 * Added popout diff visualizer for table properties like Attributes and Tags ([#834])
@@ -60,11 +80,13 @@
 [#834]: https://github.com/rojo-rbx/rojo/pull/834
 [#838]: https://github.com/rojo-rbx/rojo/pull/838
 [#840]: https://github.com/rojo-rbx/rojo/pull/840
+[#843]: https://github.com/rojo-rbx/rojo/pull/843
 [#883]: https://github.com/rojo-rbx/rojo/pull/883
 [#886]: https://github.com/rojo-rbx/rojo/pull/886
 [#893]: https://github.com/rojo-rbx/rojo/pull/893
 [#903]: https://github.com/rojo-rbx/rojo/pull/903
 [#911]: https://github.com/rojo-rbx/rojo/pull/911
+[#915]: https://github.com/rojo-rbx/rojo/pull/915
 
 ## [7.4.1] - February 20, 2024
 * Made the `name` field optional on project files ([#870])
