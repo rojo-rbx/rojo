@@ -10,7 +10,7 @@ expression: contents
     <Item class="LocalizationTable" referent="1">
       <Properties>
         <string name="Name">normal</string>
-        <string name="Contents">[{"key":"Count","examples":"A number demonstrating issue 145","source":"3","values":{"es":"7"}}]</string>
+        <string name="Contents">[{"key":"Count","example":"A number demonstrating issue 145","source":"3","values":{"es":"7"}}]</string>
       </Properties>
     </Item>
   </Item>
