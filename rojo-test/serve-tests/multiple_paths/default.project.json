@@ -1,0 +1,9 @@
+{
+	"name": "multiple_paths",
+	"tree": {
+		"$paths": [
+			"src1",
+			"src2"
+		]
+	}
+}

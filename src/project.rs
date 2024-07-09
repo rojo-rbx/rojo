@@ -278,6 +278,9 @@ pub struct ProjectNode {
     /// spreadsheets (`.csv`).
     #[serde(rename = "$path", skip_serializing_if = "Option::is_none")]
     pub path: Option<PathNode>,
+
+    #[serde(rename = "$paths", skip_serializing_if = "Option::is_none")]
+    pub paths: Option<Vec<PathNode>>,
 }
 
 impl ProjectNode {
