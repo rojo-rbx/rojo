@@ -231,7 +231,11 @@ pub fn snapshot_project_node(
         }
 
         (None, None, None, None, Some(_)) => {
-            return Ok(None);
+            bail!(
+                "Instance \"{}\" has $paths set but no type was inferred.\n\
+				This is a bug. Please file an issue!",
+                instance_name
+            )
         }
 
         (_, None, _, Some(PathNode::Required(path)), None) => {
