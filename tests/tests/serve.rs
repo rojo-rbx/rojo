@@ -445,3 +445,72 @@ fn ref_properties_remove() {
         );
     });
 }
+
+#[test]
+fn multiple_paths_serve() {
+    run_serve_test("multiple_paths", |session, mut redactions| {
+        let info = session.get_api_rojo().unwrap();
+        let root_id = info.root_instance_id;
+
+        assert_yaml_snapshot!("multiple_paths_info", redactions.redacted_yaml(info));
+
+        let first_read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "multiple_paths_all",
+            first_read_response.intern_and_redact(&mut redactions, root_id)
+        );
+    })
+}
+
+#[test]
+fn multiple_paths_updates() {
+    run_serve_test("multiple_paths", |session, mut redactions| {
+        let info = session.get_api_rojo().unwrap();
+        let root_id = info.root_instance_id;
+
+        assert_yaml_snapshot!("multiple_paths_info", redactions.redacted_yaml(info));
+
+        let first_read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "multiple_paths_all",
+            first_read_response.intern_and_redact(&mut redactions, root_id)
+        );
+
+        // Rename the files in both paths
+        fs::rename(
+            session.path().join("src1/eg1.luau"),
+            session.path().join("src2/eg11.luau"),
+        )
+        .unwrap();
+
+        let subscribe_response = session.get_api_subscribe(0).unwrap();
+        assert_yaml_snapshot!(
+            "multiple_paths_rename1_subscribe",
+            subscribe_response.intern_and_redact(&mut redactions, ())
+        );
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "multiple_paths_rename1_all",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+
+        fs::rename(
+            session.path().join("src2/eg2.luau"),
+            session.path().join("src2/eg22.luau"),
+        )
+        .unwrap();
+
+        let subscribe_response = session.get_api_subscribe(1).unwrap();
+        assert_yaml_snapshot!(
+            "multiple_paths_rename2_subscribe",
+            subscribe_response.intern_and_redact(&mut redactions, ())
+        );
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "multiple_paths_rename2_all",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+    })
+}

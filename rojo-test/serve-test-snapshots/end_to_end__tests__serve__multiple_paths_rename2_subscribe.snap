@@ -1,0 +1,40 @@
+---
+source: tests/tests/serve.rs
+expression: "subscribe_response.intern_and_redact(&mut redactions, ())"
+
+---
+messageCursor: 4
+messages:
+  - added:
+      id-5:
+        Children: []
+        ClassName: ModuleScript
+        Id: id-5
+        Metadata:
+          ignoreUnknownInstances: false
+        Name: eg11
+        Parent: id-2
+        Properties:
+          Source:
+            String: ""
+    removed: []
+    updated: []
+  - added: {}
+    removed:
+      - id-4
+    updated: []
+  - added:
+      id-6:
+        Children: []
+        ClassName: ModuleScript
+        Id: id-6
+        Metadata:
+          ignoreUnknownInstances: false
+        Name: eg22
+        Parent: id-2
+        Properties:
+          Source:
+            String: ""
+    removed: []
+    updated: []
+sessionId: id-1
