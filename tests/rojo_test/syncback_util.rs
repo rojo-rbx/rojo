@@ -7,7 +7,7 @@ use memofs::{InMemoryFs, IoResultExt, Vfs, VfsSnapshot};
 use rbx_reflection::ReflectionDatabase;
 use serde::Serialize;
 
-use crate::rojo_test::io_util::SYNCBACK_TESTS_PATH;
+use crate::rojo_test::io_util::{serialize_vec_absolute, SYNCBACK_TESTS_PATH};
 
 const INPUT_FILE: &str = "input.rbxl";
 const EXPECTED_DIR: &str = "expected";
@@ -184,30 +184,34 @@ fn normalize_line_endings(input: &Vec<u8>) -> Cow<Vec<u8>> {
 }
 
 #[derive(Default, Debug, Serialize)]
-struct FsSnapshotVisual {
-    added_files: Vec<String>,
-    added_dirs: Vec<String>,
-    removed_files: Vec<String>,
-    removed_dirs: Vec<String>,
+struct FsSnapshotVisual<'a> {
+    #[serde(serialize_with = "serialize_vec_absolute")]
+    added_files: Vec<&'a Path>,
+    #[serde(serialize_with = "serialize_vec_absolute")]
+    added_dirs: Vec<&'a Path>,
+    #[serde(serialize_with = "serialize_vec_absolute")]
+    removed_files: Vec<&'a Path>,
+    #[serde(serialize_with = "serialize_vec_absolute")]
+    removed_dirs: Vec<&'a Path>,
 }
 
-fn visualize_fs_snapshot(snapshot: &FsSnapshot, base_path: &Path) -> FsSnapshotVisual {
+fn visualize_fs_snapshot<'a>(snapshot: &'a FsSnapshot, base_path: &Path) -> FsSnapshotVisual<'a> {
     let mut added_files = Vec::new();
     let mut added_dirs = Vec::new();
     let mut removed_files = Vec::new();
     let mut removed_dirs = Vec::new();
 
     for file in snapshot.added_files() {
-        added_files.push(file.strip_prefix(base_path).unwrap().display().to_string())
+        added_files.push(file.strip_prefix(base_path).unwrap())
     }
     for file in snapshot.added_dirs() {
-        added_dirs.push(file.strip_prefix(base_path).unwrap().display().to_string())
+        added_dirs.push(file.strip_prefix(base_path).unwrap())
     }
     for file in snapshot.removed_dirs() {
-        removed_dirs.push(file.strip_prefix(base_path).unwrap().display().to_string())
+        removed_dirs.push(file.strip_prefix(base_path).unwrap())
     }
     for file in snapshot.removed_files() {
-        removed_files.push(file.strip_prefix(base_path).unwrap().display().to_string())
+        removed_files.push(file.strip_prefix(base_path).unwrap())
     }
 
     added_files.sort_unstable();

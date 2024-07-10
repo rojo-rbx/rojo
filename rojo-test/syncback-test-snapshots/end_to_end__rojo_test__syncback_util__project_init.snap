@@ -3,7 +3,7 @@ source: tests/rojo_test/syncback_util.rs
 expression: "visualize_fs_snapshot(&fs_snapshot, &output_path)"
 ---
 added_files:
-  - "src\\init.luau"
+  - src/init.luau
 added_dirs:
   - src
 removed_files: []
