@@ -184,38 +184,38 @@ fn normalize_line_endings(input: &Vec<u8>) -> Cow<Vec<u8>> {
 }
 
 #[derive(Default, Debug, Serialize)]
-struct FsSnapshotVisual<'a> {
-    added_files: Vec<&'a Path>,
-    added_dirs: Vec<&'a Path>,
-    removed_files: Vec<&'a Path>,
-    removed_dirs: Vec<&'a Path>,
+struct FsSnapshotVisual {
+    added_files: Vec<String>,
+    added_dirs: Vec<String>,
+    removed_files: Vec<String>,
+    removed_dirs: Vec<String>,
 }
 
-fn visualize_fs_snapshot<'a>(snapshot: &'a FsSnapshot, base_path: &Path) -> FsSnapshotVisual<'a> {
-    let map_closure = |p: &'a Path| p.strip_prefix(base_path).unwrap();
+fn visualize_fs_snapshot(snapshot: &FsSnapshot, base_path: &Path) -> FsSnapshotVisual {
+    let mut added_files = Vec::new();
+    let mut added_dirs = Vec::new();
+    let mut removed_files = Vec::new();
+    let mut removed_dirs = Vec::new();
 
-    let mut added_files: Vec<_> = snapshot
-        .added_files()
-        .into_iter()
-        .map(map_closure)
-        .collect();
-    let mut added_dirs: Vec<_> = snapshot.added_dirs().into_iter().map(map_closure).collect();
-    let mut removed_files: Vec<_> = snapshot
-        .removed_files()
-        .into_iter()
-        .map(map_closure)
-        .collect();
-    let mut removed_dirs: Vec<_> = snapshot
-        .removed_dirs()
-        .into_iter()
-        .map(map_closure)
-        .collect();
+    for file in snapshot.added_files() {
+        added_files.push(file.strip_prefix(base_path).unwrap().display().to_string())
+    }
+    for file in snapshot.added_dirs() {
+        added_dirs.push(file.strip_prefix(base_path).unwrap().display().to_string())
+    }
+    for file in snapshot.removed_dirs() {
+        removed_dirs.push(file.strip_prefix(base_path).unwrap().display().to_string())
+    }
+    for file in snapshot.removed_files() {
+        removed_files.push(file.strip_prefix(base_path).unwrap().display().to_string())
+    }
 
     added_files.sort_unstable();
     added_dirs.sort_unstable();
     removed_files.sort_unstable();
     removed_dirs.sort_unstable();
 
+    // Turns out that the debug display for Path isn't stable. Who knew!
     FsSnapshotVisual {
         added_files,
         added_dirs,
