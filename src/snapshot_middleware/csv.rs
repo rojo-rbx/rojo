@@ -125,7 +125,6 @@ pub fn syncback_csv<'sync>(
     }
 
     Ok(SyncbackReturn {
-        inst_snapshot: InstanceSnapshot::from_instance(new_inst),
         fs_snapshot,
         children: Vec::new(),
         removed_children: Vec::new(),
@@ -161,10 +160,7 @@ pub fn syncback_csv_init<'sync>(
         }
     }
 
-    Ok(SyncbackReturn {
-        inst_snapshot: InstanceSnapshot::from_instance(new_inst),
-        ..dir_syncback
-    })
+    Ok(dir_syncback)
 }
 
 /// Struct that holds any valid row from a Roblox CSV translation table.
@@ -180,8 +176,13 @@ struct LocalizationEntry<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     context: Option<Cow<'a, str>>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
-    examples: Option<Cow<'a, str>>,
+    // Roblox writes `examples` for LocalizationTable's Content property, which
+    // causes it to not roundtrip correctly.
+    // This is reported here: https://devforum.roblox.com/t/2908720.
+    //
+    // To support their mistake, we support an alias named `examples`.
+    #[serde(skip_serializing_if = "Option::is_none", alias = "examples")]
+    example: Option<Cow<'a, str>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     source: Option<Cow<'a, str>>,
@@ -224,7 +225,7 @@ fn convert_localization_csv(contents: &[u8]) -> Result<String, csv::Error> {
                 "Key" => entry.key = Some(Cow::Borrowed(value)),
                 "Source" => entry.source = Some(Cow::Borrowed(value)),
                 "Context" => entry.context = Some(Cow::Borrowed(value)),
-                "Example" => entry.examples = Some(Cow::Borrowed(value)),
+                "Example" => entry.example = Some(Cow::Borrowed(value)),
                 _ => {
                     entry
                         .values
@@ -278,7 +279,7 @@ fn localization_to_csv(csv_contents: &str) -> anyhow::Result<Vec<u8>> {
         record.push(entry.key.as_deref().unwrap_or_default());
         record.push(entry.source.as_deref().unwrap_or_default());
         record.push(entry.context.as_deref().unwrap_or_default());
-        record.push(entry.examples.as_deref().unwrap_or_default());
+        record.push(entry.example.as_deref().unwrap_or_default());
 
         let values = &entry.values;
         for header in &extra_headers {

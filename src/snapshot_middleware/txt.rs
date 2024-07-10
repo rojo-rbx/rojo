@@ -73,7 +73,6 @@ pub fn syncback_txt<'sync>(
     }
 
     Ok(SyncbackReturn {
-        inst_snapshot: InstanceSnapshot::from_instance(new_inst),
         fs_snapshot,
         children: Vec::new(),
         removed_children: Vec::new(),

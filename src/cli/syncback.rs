@@ -79,6 +79,19 @@ impl SyncbackCommand {
         log::debug!("Old root: {}", dom_old.inner().root().class);
         log::debug!("New root: {}", dom_new.root().class);
 
+        if log::log_enabled!(log::Level::Trace) {
+            log::trace!("Children of old root:");
+            for child in dom_old.inner().root().children() {
+                let inst = dom_old.get_instance(*child).unwrap();
+                log::trace!("{} (class: {})", inst.name(), inst.class_name());
+            }
+            log::trace!("Children of new root:");
+            for child in dom_new.root().children() {
+                let inst = dom_new.get_by_ref(*child).unwrap();
+                log::trace!("{} (class: {})", inst.name, inst.class);
+            }
+        }
+
         let start = Instant::now();
         log::info!("Beginning syncback...");
         let snapshot = syncback_loop(
@@ -137,49 +150,66 @@ impl SyncbackCommand {
 
 fn read_dom(path: &Path, file_kind: FileKind) -> anyhow::Result<WeakDom> {
     let content = File::open(path)?;
-    Ok(match file_kind {
+    match file_kind {
         FileKind::Rbxl => {
             // HACK: A custom reflection database is used to deserialize UniqueId
             let db = binary_db().expect("A custom ReflectionDatabase to deserialize UniqueId");
             let binary_decoder = rbx_binary::Deserializer::new().reflection_database(&db);
-            binary_decoder.deserialize(content)?
+            binary_decoder.deserialize(content).with_context(|| {
+                format!(
+                    "Could not deserialize binary place file at {}",
+                    path.display()
+                )
+            })
         }
-        FileKind::Rbxlx => rbx_xml::from_reader(content, xml_decode_config())?,
+        FileKind::Rbxlx => rbx_xml::from_reader(content, xml_decode_config())
+            .with_context(|| format!("Could not deserialize XML place file at {}", path.display())),
         FileKind::Rbxm => {
             // HACK: A custom reflection database is used to deserialize UniqueId
             let db = binary_db().expect("A custom ReflectionDatabase to deserialize UniqueId");
             let binary_decoder = rbx_binary::Deserializer::new().reflection_database(&db);
-            let temp_tree = binary_decoder.deserialize(content)?;
+            let temp_tree = binary_decoder.deserialize(content).with_context(|| {
+                format!(
+                    "Could not deserialize binary model file at {}",
+                    path.display()
+                )
+            })?;
 
-            let root_children = temp_tree.root().children();
-            if root_children.len() != 1 {
-                anyhow::bail!(
-                    "Rojo does not currently support models with more \
-                than one Instance at the Root!"
-                );
-            }
-            let real_root = temp_tree.get_by_ref(root_children[0]).unwrap();
-            let mut new_tree = WeakDom::new(InstanceBuilder::new(&real_root.class));
-            temp_tree.clone_multiple_into_external(real_root.children(), &mut new_tree);
-
-            new_tree
+            process_model_dom(temp_tree)
         }
         FileKind::Rbxmx => {
-            let temp_tree = rbx_xml::from_reader(content, xml_decode_config())?;
-            let root_children = temp_tree.root().children();
-            if root_children.len() != 1 {
-                anyhow::bail!(
-                    "Rojo does not currently support models with more \
-                than one Instance at the Root!"
-                );
-            }
-            let real_root = temp_tree.get_by_ref(root_children[0]).unwrap();
-            let mut new_tree = WeakDom::new(InstanceBuilder::new(&real_root.class));
-            temp_tree.clone_multiple_into_external(real_root.children(), &mut new_tree);
-
-            new_tree
+            let temp_tree =
+                rbx_xml::from_reader(content, xml_decode_config()).with_context(|| {
+                    format!("Could not deserialize XML model file at {}", path.display())
+                })?;
+            process_model_dom(temp_tree)
         }
-    })
+    }
+}
+
+fn process_model_dom(dom: WeakDom) -> anyhow::Result<WeakDom> {
+    let temp_children = dom.root().children();
+    if temp_children.len() == 1 {
+        let real_root = dom.get_by_ref(temp_children[0]).unwrap();
+        let mut new_tree = WeakDom::new(InstanceBuilder::new(&real_root.class));
+        for (name, property) in &real_root.properties {
+            new_tree
+                .root_mut()
+                .properties
+                .insert(name.to_owned(), property.to_owned());
+        }
+
+        let children = dom.clone_multiple_into_external(real_root.children(), &mut new_tree);
+        for child in children {
+            new_tree.transfer_within(child, new_tree.root_ref());
+        }
+        Ok(new_tree)
+    } else {
+        anyhow::bail!(
+            "Rojo does not currently support models with more \
+        than one Instance at the Root!"
+        );
+    }
 }
 
 fn xml_decode_config() -> rbx_xml::DecodeOptions<'static> {

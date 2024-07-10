@@ -54,7 +54,6 @@ pub fn syncback_rbxm<'sync>(
         .context("failed to serialize new rbxm")?;
 
     Ok(SyncbackReturn {
-        inst_snapshot: InstanceSnapshot::from_instance(inst),
         fs_snapshot: FsSnapshot::new().with_added_file(&snapshot.path, serialized),
         children: Vec::new(),
         removed_children: Vec::new(),

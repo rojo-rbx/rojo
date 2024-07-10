@@ -287,7 +287,7 @@ impl Middleware {
     /// set properties without needing a meta.json file.
     ///
     /// It does not cover middleware like `ServerScript` or `Csv` because they
-    /// need a meta.json file set properties that aren't their designated
+    /// need a meta.json file to set properties that aren't their designated
     /// 'special' properties.
     #[inline]
     pub fn handles_own_properties(&self) -> bool {

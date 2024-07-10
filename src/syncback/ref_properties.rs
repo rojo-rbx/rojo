@@ -28,8 +28,7 @@ struct RefLink {
 
 /// Iterates through a WeakDom and collects referent properties.
 ///
-/// They can be linked to a dom later using the `link` method on the returned
-/// struct.
+/// They can be linked to a dom later using `link_referents`.
 pub fn collect_referents(dom: &WeakDom) -> RefLinks {
     let mut existing_ids = HashMap::new();
     let mut need_rewrite = Vec::new();
@@ -193,16 +192,3 @@ fn get_existing_id(inst: &Instance) -> Option<&str> {
         None
     }
 }
-
-/*
-When loading IDs we need to create a list and if there's a collision,
-cause it to have a stroke. If that works to catch the duplicates then we just
-need to re-serialize the IDs that collide. I think it's probably acceptable to
-just pick one of the two if we can't tell the difference between them and give
-the other a new ID. Maybe we emit a warning.
-
-This is gonna require a redo of the linking a bit, since it'll mean that we
-can't just blindly use the old IDs. The plus side is that it means we can
-collect these in a way that isn't awful via mapping an ID to a referent, so
-it may end up improving the overall quality of the above code.
-*/

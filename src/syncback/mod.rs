@@ -21,7 +21,7 @@ use std::{
 
 use crate::{
     glob::Glob,
-    snapshot::{InstanceSnapshot, InstanceWithMeta, RojoTree},
+    snapshot::{InstanceWithMeta, RojoTree},
     snapshot_middleware::Middleware,
     syncback::ref_properties::link_referents,
     Project,
@@ -36,7 +36,7 @@ pub use snapshot::{SyncbackData, SyncbackSnapshot};
 
 /// The name of an enviroment variable to use to override the behavior of
 /// syncback on model files.
-/// By default, syncabck will use `Rbxm` for model files.
+/// By default, syncback will use `Rbxm` for model files.
 /// If this is set to `1`, it will instead use `Rbxmx`. If it is set to `2`,
 /// it will use `JsonModel`.
 ///
@@ -59,12 +59,18 @@ pub fn syncback_loop(
         .map(|rules| rules.compile_globs())
         .transpose()?;
 
+    // Strip out any objects from the new tree that aren't in the old tree. This
+    // is necessary so that hashing the roots of each tree won't always result
+    // in different hashes. Shout out to Roblox for serializing a bunch of
+    // Services nobody cares about.
     log::debug!("Pruning new tree");
     strip_unknown_root_children(&mut new_tree, old_tree);
 
     log::debug!("Collecting referents for new DOM...");
     let deferred_referents = collect_referents(&new_tree);
 
+    // Remove any properties that are manually blocked from syncback via the
+    // project file.
     log::debug!("Pre-filtering properties on DOMs");
     for referent in descendants(&new_tree, new_tree.root_ref()) {
         let new_inst = new_tree.get_by_ref_mut(referent).unwrap();
@@ -83,6 +89,8 @@ pub fn syncback_loop(
             }
         }
     }
+
+    // Handle removing the current camera.
     if let Some(syncback_rules) = &project.syncback_rules {
         if !syncback_rules.sync_current_camera.unwrap_or_default() {
             log::debug!("Removing CurrentCamera from new DOM");
@@ -90,7 +98,8 @@ pub fn syncback_loop(
             for child_ref in new_tree.root().children() {
                 let inst = new_tree.get_by_ref(*child_ref).unwrap();
                 if inst.class == "Workspace" {
-                    camera_ref = inst.properties.get("CurrentCamera")
+                    camera_ref = inst.properties.get("CurrentCamera");
+                    break;
                 }
             }
             if let Some(Variant::Ref(camera_ref)) = camera_ref {
@@ -113,6 +122,9 @@ pub fn syncback_loop(
         log::debug!("Skipping referent linking as per project syncback rules");
     }
 
+    // As with pruning the children of the new root, we need to ensure the roots
+    // for both DOMs have the same name otherwise their hashes will always be
+    // different.
     new_tree.root_mut().name = old_tree.root().name().to_string();
 
     log::debug!("Hashing project DOM");
@@ -137,7 +149,6 @@ pub fn syncback_loop(
         middleware: Some(Middleware::Project),
     }];
 
-    let mut replacements = Vec::new();
     let mut fs_snapshot = FsSnapshot::new();
 
     'syncback: while let Some(snapshot) = snapshots.pop() {
@@ -228,9 +239,7 @@ pub fn syncback_loop(
             }
         }
 
-        if let Some(old_inst) = snapshot.old_inst() {
-            replacements.push((old_inst.parent(), syncback.inst_snapshot));
-        }
+        // TODO provide replacement snapshots for e.g. two way sync
 
         fs_snapshot.merge(syncback.fs_snapshot);
 
@@ -241,7 +250,6 @@ pub fn syncback_loop(
 }
 
 pub struct SyncbackReturn<'sync> {
-    pub inst_snapshot: InstanceSnapshot,
     pub fs_snapshot: FsSnapshot,
     pub children: Vec<SyncbackSnapshot<'sync>>,
     pub removed_children: Vec<InstanceWithMeta<'sync>>,
