@@ -28,8 +28,7 @@ struct RefLink {
 
 /// Iterates through a WeakDom and collects referent properties.
 ///
-/// They can be linked to a dom later using the `link` method on the returned
-/// struct.
+/// They can be linked to a dom later using `link_referents`.
 pub fn collect_referents(dom: &WeakDom) -> RefLinks {
     let mut existing_ids = HashMap::new();
     let mut need_rewrite = Vec::new();
