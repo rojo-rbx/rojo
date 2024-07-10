@@ -207,6 +207,20 @@ pub fn snapshot_project_node(
             }
         }
 
+        (Some(project), _, _, None, Some(_)) => {
+            if project == "Folder" {
+                project
+            } else {
+                bail!(
+                    "Instance \"{}\" has has $classname \"{}\", but $paths can only be used on Folder classes.\n\
+                    Project path: {}",
+                    instance_name,
+                    project,
+                    project_path.display()
+                )
+            }
+        }
+
         (Some(project), Some(path), _, _, _) => {
             if path == "Folder" {
                 project
@@ -268,7 +282,7 @@ pub fn snapshot_project_node(
             bail!(
                 "Instance \"{}\" has both $path and $paths set.\n\
 				rojo has different rules for behavior of these fields, so they cannot be combined.\n\
-                Project path: {}\n",
+                Project path: {}",
                 instance_name,
                 project_path.display(),
             )
