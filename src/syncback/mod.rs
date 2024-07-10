@@ -59,12 +59,18 @@ pub fn syncback_loop(
         .map(|rules| rules.compile_globs())
         .transpose()?;
 
+    // Strip out any objects from the new tree that aren't in the old tree. This
+    // is necessary so that hashing the roots of each tree won't always result
+    // in different hashes. Shout out to Roblox for serializing a bunch of
+    // Services nobody cares about.
     log::debug!("Pruning new tree");
     strip_unknown_root_children(&mut new_tree, old_tree);
 
     log::debug!("Collecting referents for new DOM...");
     let deferred_referents = collect_referents(&new_tree);
 
+    // Remove any properties that are manually blocked from syncback via the
+    // project file.
     log::debug!("Pre-filtering properties on DOMs");
     for referent in descendants(&new_tree, new_tree.root_ref()) {
         let new_inst = new_tree.get_by_ref_mut(referent).unwrap();
@@ -83,6 +89,8 @@ pub fn syncback_loop(
             }
         }
     }
+
+    // Handle removing the current camera.
     if let Some(syncback_rules) = &project.syncback_rules {
         if !syncback_rules.sync_current_camera.unwrap_or_default() {
             log::debug!("Removing CurrentCamera from new DOM");
@@ -90,7 +98,8 @@ pub fn syncback_loop(
             for child_ref in new_tree.root().children() {
                 let inst = new_tree.get_by_ref(*child_ref).unwrap();
                 if inst.class == "Workspace" {
-                    camera_ref = inst.properties.get("CurrentCamera")
+                    camera_ref = inst.properties.get("CurrentCamera");
+                    break;
                 }
             }
             if let Some(Variant::Ref(camera_ref)) = camera_ref {
@@ -113,6 +122,9 @@ pub fn syncback_loop(
         log::debug!("Skipping referent linking as per project syncback rules");
     }
 
+    // As with pruning the children of the new root, we need to ensure the roots
+    // for both DOMs have the same name otherwise their hashes will always be
+    // different.
     new_tree.root_mut().name.clone_from(&project.name);
 
     log::debug!("Hashing project DOM");
