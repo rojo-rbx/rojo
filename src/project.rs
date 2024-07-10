@@ -177,22 +177,15 @@ impl Project {
         } else if let Some(fallback) = fallback {
             self.name = Some(fallback.to_string());
         } else {
-            for rule in self.sync_rules.iter().chain(default_sync_rules()) {
-                // I don't believe there's any way to get here without the
-                // matching middleware being a Project middleware.
-                if rule.matches(&self.file_location) {
-                    self.name = Some(
-                        rule.file_name_for_path(&self.file_location)
-                            .map_err(|_| Error::ProjectNameInvalid {
-                                path: self.file_location.clone(),
-                            })?
-                            .to_string(),
-                    )
-                }
-            }
-            return Err(Error::ProjectNameInvalid {
-                path: std::mem::take(&mut self.file_location),
-            });
+            // As of the time of writing (July 10, 2024) there is no way for
+            // this code path to be reachable. It can in theory be reached from
+            // both `load_fuzzy` and `load_exact` but in practice it's never
+            // invoked.
+            // If you're adding this codepath, make sure a test for it exists
+            // and that it handles sync rules appropriately.
+            todo!(
+                "set_file_name doesn't support loading project files that aren't default.project.json without a fallback provided"
+            );
         }
 
         Ok(())
