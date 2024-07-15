@@ -1,0 +1,13 @@
+---
+source: tests/tests/serve.rs
+assertion_line: 383
+expression: redactions.redacted_yaml(info)
+---
+expectedPlaceIds: ~
+gameId: ~
+placeId: ~
+projectName: sync_rule_no_name_project
+protocolVersion: 4
+rootInstanceId: id-2
+serverVersion: "[server-version]"
+sessionId: id-1
