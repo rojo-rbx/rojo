@@ -348,7 +348,7 @@ pub struct SyncbackRules {
     #[serde(skip_serializing_if = "Option::is_none")]
     sync_current_camera: Option<bool>,
     /// Whether or not to sync properties that cannot be modified via scripts.
-    /// Defaults to `false`.
+    /// Defaults to `true`.
     #[serde(skip_serializing_if = "Option::is_none")]
     sync_unscriptable: Option<bool>,
     /// Whether to skip serializing referent properties like `Model.PrimaryPart`

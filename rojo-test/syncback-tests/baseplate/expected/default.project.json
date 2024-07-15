@@ -26,6 +26,7 @@
         ],
         "Outlines": false,
         "ShadowSoftness": 0.20000000298023224,
+        "Technology": "ShadowMap",
         "TimeOfDay": "14:30:00"
       },
       "$path": "Lighting"
@@ -35,7 +36,10 @@
         "CSGAsyncDynamicCollision": {
           "Enum": 0
         },
-        "StreamingEnabled": true
+        "SignalBehavior": "Deferred",
+        "StreamOutBehavior": "Opportunistic",
+        "StreamingEnabled": true,
+        "StreamingIntegrityMode": "PauseOutsideLoadedArea"
       },
       "$path": "Workspace"
     }

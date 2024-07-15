@@ -214,18 +214,6 @@ impl<'sync> SyncbackSnapshot<'sync> {
             .as_ref()
             .map(|rules| rules.ignore_trees.as_slice())
     }
-
-    /// Returns the user-defined setting to determine whether unscriptable
-    /// properties should be synced back or not.
-    #[inline]
-    pub fn sync_unscriptable(&self) -> bool {
-        self.data
-            .project
-            .syncback_rules
-            .as_ref()
-            .and_then(|sr| sr.sync_unscriptable)
-            .unwrap_or_default()
-    }
 }
 
 pub fn filter_out_property(inst: &Instance, prop_name: &str) -> bool {

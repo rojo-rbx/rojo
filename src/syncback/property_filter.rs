@@ -28,7 +28,7 @@ pub fn filter_properties_preallocated<'inst>(
         .syncback_rules
         .as_ref()
         .and_then(|s| s.sync_unscriptable)
-        .unwrap_or_default();
+        .unwrap_or(true);
 
     let class_data = rbx_reflection_database::get()
         .classes

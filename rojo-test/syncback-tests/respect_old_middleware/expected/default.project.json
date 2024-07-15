@@ -10,7 +10,10 @@
         "DecreaseMinimumPartDensityMode": {
           "Enum": 0
         },
-        "StreamingEnabled": true
+        "SignalBehavior": "Deferred",
+        "StreamOutBehavior": "Opportunistic",
+        "StreamingEnabled": true,
+        "StreamingIntegrityMode": "PauseOutsideLoadedArea"
       },
       "$path": "Workspace"
     }

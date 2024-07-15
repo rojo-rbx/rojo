@@ -10,7 +10,10 @@
         "DecreaseMinimumPartDensityMode": {
           "Enum": 0
         },
-        "StreamingEnabled": true
+        "SignalBehavior": "Deferred",
+        "StreamOutBehavior": "Opportunistic",
+        "StreamingEnabled": true,
+        "StreamingIntegrityMode": "PauseOutsideLoadedArea"
       },
       "$attributes": {
         "Rojo_Target_CurrentCamera": "62e89c49e4f800c20629c71b00003fcb"
