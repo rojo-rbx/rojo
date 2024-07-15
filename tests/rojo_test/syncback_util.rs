@@ -110,7 +110,7 @@ pub fn basic_syncback_test(name: &str) -> anyhow::Result<()> {
 }
 
 fn rojo_tree_from_path(vfs: &Vfs, path: &Path) -> anyhow::Result<(RojoTree, Project)> {
-    let project = Project::load_fuzzy(path)?
+    let project = Project::load_fuzzy(vfs, path)?
         .with_context(|| format!("no project file located at {}", path.display()))?;
 
     let context = InstanceContext::with_emit_legacy_scripts(project.emit_legacy_scripts);

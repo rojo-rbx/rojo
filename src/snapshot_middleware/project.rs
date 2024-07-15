@@ -33,9 +33,12 @@ pub fn snapshot_project(
     path: &Path,
     name: &str,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let project = Project::load_from_slice(&vfs.read(path)?, path)
+    let project = Project::load_exact(vfs, path, Some(name))
         .with_context(|| format!("File was not a valid Rojo project: {}", path.display()))?;
-    let project_name = project.name.as_deref().unwrap_or(name);
+    let project_name = match project.name.as_deref() {
+        Some(name) => name,
+        None => panic!("Project is missing a name"),
+    };
 
     let mut context = context.clone();
     context.clear_sync_rules();
@@ -328,7 +331,7 @@ pub fn syncback_project<'sync>(
     let vfs = snapshot.vfs();
 
     log::debug!("Reloading project {} from vfs", project_path.display(),);
-    let mut project = Project::load_from_slice(&vfs.read(project_path)?, project_path)?;
+    let mut project = Project::load_exact(&vfs, project_path, None)?;
     let base_path = project.folder_location().to_path_buf();
 
     // Sync rules for this project do not have their base rule set but it is

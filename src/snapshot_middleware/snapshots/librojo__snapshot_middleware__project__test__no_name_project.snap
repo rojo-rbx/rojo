@@ -13,7 +13,7 @@ metadata:
     emit_legacy_scripts: true
   specified_id: ~
   middleware: ~
-name: no_name_project
+name: foo
 class_name: Model
 properties: {}
 children: []
