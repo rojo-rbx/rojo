@@ -1,6 +1,11 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Added Never option to Confirmation ([#893])
+* Fixed removing trailing newlines ([#903])
+
+[#893]: https://github.com/rojo-rbx/rojo/pull/893
+[#903]: https://github.com/rojo-rbx/rojo/pull/903
 
 ## [7.4.1] - February 20, 2024
 * Made the `name` field optional on project files ([#870])
