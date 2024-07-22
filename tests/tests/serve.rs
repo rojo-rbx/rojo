@@ -296,15 +296,26 @@ fn no_name_top_level_project() {
     run_serve_test("no_name_top_level_project", |session, mut redactions| {
         let info = session.get_api_rojo().unwrap();
         let root_id = info.root_instance_id;
-
         assert_yaml_snapshot!(
             "no_name_top_level_project_info",
             redactions.redacted_yaml(info)
         );
-
         let read_response = session.get_api_read(root_id).unwrap();
         assert_yaml_snapshot!(
             "no_name_top_level_project_all",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+
+        let project_path = session.path().join("default.project.json");
+        let mut project_contents = fs::read_to_string(&project_path).unwrap();
+        project_contents.push('\n');
+        fs::write(&project_path, project_contents).unwrap();
+
+        // The cursor shouldn't be changing so this snapshot is fine for testing
+        // the response.
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "no_name_top_level_project_all-2",
             read_response.intern_and_redact(&mut redactions, root_id)
         );
     });

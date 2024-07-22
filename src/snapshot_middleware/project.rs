@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::HashMap, path::Path};
+use std::{borrow::Cow, collections::HashMap, ffi::OsStr, path::Path};
 
 use anyhow::{bail, Context};
 use memofs::Vfs;
@@ -19,7 +19,18 @@ pub fn snapshot_project(
     vfs: &Vfs,
     path: &Path,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let project = Project::load_from_slice(&vfs.read(path)?, path)
+    let fallback_name = match path.file_name().and_then(OsStr::to_str) {
+        Some("default.project.json") => path
+            .parent()
+            .and_then(Path::file_name)
+            .and_then(OsStr::to_str),
+        Some(name) => name.strip_suffix(".project.json"),
+        None => anyhow::bail!(
+            "project file does not have valid utf-8 name: {}",
+            path.display()
+        ),
+    };
+    let project = Project::load_exact(vfs, path, fallback_name)
         .with_context(|| format!("File was not a valid Rojo project: {}", path.display()))?;
 
     // This is not how I would normally do this, but this is a temporary
