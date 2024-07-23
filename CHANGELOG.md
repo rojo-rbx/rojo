@@ -1,11 +1,17 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+
+## [7.4.2] - July 23, 2024
 * Added Never option to Confirmation ([#893])
 * Fixed removing trailing newlines ([#903])
+* Updated the internal property database, correcting an issue with `SurfaceAppearance.Color` that was reported [here][Surface_Appearance_Color_1] and [here][Surface_Appearance_Color_2] ([#948])
 
 [#893]: https://github.com/rojo-rbx/rojo/pull/893
 [#903]: https://github.com/rojo-rbx/rojo/pull/903
+[#948]: https://github.com/rojo-rbx/rojo/pull/948
+[Surface_Appearance_Color_1]: https://devforum.roblox.com/t/jailbreak-custom-character-turned-shiny-black-no-texture/3075563
+[Surface_Appearance_Color_2]: https://devforum.roblox.com/t/surfaceappearance-not-displaying-correctly/3075588
 
 ## [7.4.1] - February 20, 2024
 * Made the `name` field optional on project files ([#870])
