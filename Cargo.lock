@@ -1586,9 +1586,9 @@ dependencies = [
 
 [[package]]
 name = "rbx_binary"
-version = "0.7.4"
+version = "0.7.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6314dd6bf5c21d0598cdb53cf5d241aa643ba41da8b8abf7402b4a35096f03f6"
+checksum = "a7f03840a9fe103f124d1f71c86eb6e2c70e8c0db0454a0eb353db3c64d6de8e"
 dependencies = [
  "log",
  "lz4",
@@ -1601,9 +1601,9 @@ dependencies = [
 
 [[package]]
 name = "rbx_dom_weak"
-version = "2.7.0"
+version = "2.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b67b56bac99849c2e3c57547b036927f71c57cf7f4d900d04e3e4ee774ec316"
+checksum = "34d35df0f09290d32976f655366342676a6645b87c39b6949473b9d28a969733"
 dependencies = [
  "rbx_types",
  "serde",
@@ -1611,9 +1611,9 @@ dependencies = [
 
 [[package]]
 name = "rbx_reflection"
-version = "4.5.0"
+version = "4.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d41509c991b53a7276a746a795eae2b9204f398164920f61976995b47fe1722"
+checksum = "04ca5496737668378b17bacc9090ad361fc9c8b5f346bbd33162e083c98fa248"
 dependencies = [
  "rbx_types",
  "serde",
@@ -1622,9 +1622,9 @@ dependencies = [
 
 [[package]]
 name = "rbx_reflection_database"
-version = "0.2.10+roblox-607"
+version = "0.2.11+roblox-634"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "12e20c06fa41f7aadc79005c8354f592b2c2f4d0c61e1080ed5718dafc30aea0"
+checksum = "399ab2e1fa27c8428fe43fc4148d8085d187881f1c59cefea3711a2112e9cccc"
 dependencies = [
  "lazy_static",
  "rbx_reflection",
@@ -1634,9 +1634,9 @@ dependencies = [
 
 [[package]]
 name = "rbx_types"
-version = "1.8.0"
+version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7ca23bfd469d067d81ef14f65fe09aeddc25abcf576a889d1a7664fe021cf18c"
+checksum = "6ed7bbc0e1864143546b12ee0cf64a1a6f447d8ce7baf4fae755e4581929d230"
 dependencies = [
  "base64 0.13.1",
  "bitflags 1.3.2",
@@ -1649,9 +1649,9 @@ dependencies = [
 
 [[package]]
 name = "rbx_xml"
-version = "0.13.3"
+version = "0.13.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f8c03f95500961c32340791d1fabd4587f6873bdbff077ecca6ae32db7960dea"
+checksum = "1c2abac6e71c97a56243f00c9c2def504fe4b698019d854dd8720da700a80d7c"
 dependencies = [
  "base64 0.13.1",
  "log",
