@@ -40,7 +40,7 @@ name = "build"
 harness = false
 
 [dependencies]
-memofs = { version = "0.2.0", path = "crates/memofs" }
+memofs = { version = "0.3.0", path = "crates/memofs" }
 
 # These dependencies can be uncommented when working on rbx-dom simultaneously
 # rbx_binary = { path = "../rbx-dom/rbx_binary" }
@@ -94,7 +94,7 @@ tracy-client = { version = "0.13.2", optional = true }
 winreg = "0.10.1"
 
 [build-dependencies]
-memofs = { version = "0.2.0", path = "crates/memofs" }
+memofs = { version = "0.3.0", path = "crates/memofs" }
 
 embed-resource = "1.6.4"
 anyhow = "1.0.44"
