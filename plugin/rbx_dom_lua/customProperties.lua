@@ -113,13 +113,14 @@ return {
 		},
 		WorldPivotData = {
 			read = function(instance)
-				return true, instance:GetPivot()
+				return true, instance.WorldPivot
 			end,
 			write = function(instance, _, value)
 				if value == nil then
 					return true, nil
 				else
-					return true, instance:PivotTo(value)
+					instance.WorldPivot = value
+					return true
 				end
 			end,
 		},
