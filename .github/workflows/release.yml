@@ -36,7 +36,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           trust-check: false
-          version: 'v0.2.6'
+          version: 'v0.3.0'
 
       - name: Build Plugin
         run: rojo build plugin --output Rojo.rbxm
