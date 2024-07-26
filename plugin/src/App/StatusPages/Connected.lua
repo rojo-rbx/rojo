@@ -4,7 +4,6 @@ local Packages = Rojo.Packages
 
 local Roact = require(Packages.Roact)
 
-local bindingUtil = require(Plugin.App.bindingUtil)
 local timeUtil = require(Plugin.timeUtil)
 local Theme = require(Plugin.App.Theme)
 local Assets = require(Plugin.Assets)
