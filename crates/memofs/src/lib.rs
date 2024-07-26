@@ -300,7 +300,7 @@ impl Vfs {
         let path = path.as_ref();
         let contents = self.inner.lock().unwrap().read_to_string(path)?;
 
-        Ok(contents.lines().collect::<Vec<&str>>().join("\n").into())
+        Ok(contents.replace("\r\n", "\n").into())
     }
 
     /// Write a file to the VFS and the underlying backend.
@@ -471,5 +471,25 @@ impl VfsLock<'_> {
     #[inline]
     pub fn commit_event(&mut self, event: &VfsEvent) -> io::Result<()> {
         self.inner.commit_event(event)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{InMemoryFs, Vfs, VfsSnapshot};
+
+    /// https://github.com/rojo-rbx/rojo/issues/899
+    #[test]
+    fn read_to_string_lf_normalized_keeps_trailing_newline() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot("test", VfsSnapshot::file("bar\r\nfoo\r\n\r\n"))
+            .unwrap();
+
+        let vfs = Vfs::new(imfs);
+
+        assert_eq!(
+            vfs.read_to_string_lf_normalized("test").unwrap().as_str(),
+            "bar\nfoo\n\n"
+        );
     }
 }

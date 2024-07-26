@@ -163,7 +163,6 @@ local Trigger = Roact.Component:extend("TooltipTrigger")
 function Trigger:init()
 	self.id = HttpService:GenerateGUID(false)
 	self.ref = Roact.createRef()
-	self.mousePos = Vector2.zero
 	self.showingPopup = false
 
 	self.destroy = function()
@@ -195,16 +194,20 @@ end
 function Trigger:isHovering()
 	local rbx = self.ref.current
 	if rbx then
-		local pos = rbx.AbsolutePosition
-		local size = rbx.AbsoluteSize
-		local mousePos = self.mousePos
-
-		return mousePos.X >= pos.X
-			and mousePos.X <= pos.X + size.X
-			and mousePos.Y >= pos.Y
-			and mousePos.Y <= pos.Y + size.Y
+		return rbx.GuiState == Enum.GuiState.Hover
 	end
 	return false
+end
+
+function Trigger:getMousePos()
+	local rbx = self.ref.current
+	if rbx then
+		local widget = rbx:FindFirstAncestorOfClass("DockWidgetPluginGui")
+		if widget then
+			return widget:GetRelativeMousePosition()
+		end
+	end
+	return Vector2.zero
 end
 
 function Trigger:managePopup()
@@ -217,7 +220,7 @@ function Trigger:managePopup()
 		self.showDelayThread = task.delay(DELAY, function()
 			self.props.context.addTip(self.id, {
 				Text = self.props.text,
-				Position = self.mousePos,
+				Position = self:getMousePos(),
 				Trigger = self.ref,
 			})
 			self.showDelayThread = nil
@@ -234,13 +237,7 @@ function Trigger:managePopup()
 end
 
 function Trigger:render()
-	local function recalculate(rbx)
-		local widget = rbx:FindFirstAncestorOfClass("DockWidgetPluginGui")
-		if not widget then
-			return
-		end
-		self.mousePos = widget:GetRelativeMousePosition()
-
+	local function recalculate()
 		self:managePopup()
 	end
 
@@ -250,11 +247,9 @@ function Trigger:render()
 		ZIndex = self.props.zIndex or 100,
 		[Roact.Ref] = self.ref,
 
+		[Roact.Change.GuiState] = recalculate,
 		[Roact.Change.AbsolutePosition] = recalculate,
 		[Roact.Change.AbsoluteSize] = recalculate,
-		[Roact.Event.MouseMoved] = recalculate,
-		[Roact.Event.MouseLeave] = recalculate,
-		[Roact.Event.MouseEnter] = recalculate,
 	})
 end
 

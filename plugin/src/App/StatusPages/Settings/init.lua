@@ -26,7 +26,7 @@ local function invertTbl(tbl)
 end
 
 local invertedLevels = invertTbl(Log.Level)
-local confirmationBehaviors = { "Initial", "Always", "Large Changes", "Unlisted PlaceId" }
+local confirmationBehaviors = { "Initial", "Always", "Large Changes", "Unlisted PlaceId", "Never" }
 
 local function Navbar(props)
 	return Theme.with(function(theme)
@@ -185,7 +185,7 @@ function SettingsPage:render()
 					id = "autoConnectPlaytestServer",
 					name = "Auto Connect Playtest Server",
 					description = "Automatically connect game server to Rojo when playtesting while connected in Edit",
-					experimental = true,
+					tag = "unstable",
 					transparency = self.props.transparency,
 					layoutOrder = layoutIncrement(),
 				}),
@@ -194,8 +194,7 @@ function SettingsPage:render()
 					id = "openScriptsExternally",
 					name = "Open Scripts Externally",
 					description = "Attempt to open scripts in an external editor",
-					locked = self.props.syncActive,
-					experimental = true,
+					tag = "unstable",
 					transparency = self.props.transparency,
 					layoutOrder = layoutIncrement(),
 				}),
@@ -205,7 +204,7 @@ function SettingsPage:render()
 					name = "Two-Way Sync",
 					description = "Editing files in Studio will sync them into the filesystem",
 					locked = self.props.syncActive,
-					experimental = true,
+					tag = "unstable",
 					transparency = self.props.transparency,
 					layoutOrder = layoutIncrement(),
 				}),
@@ -214,7 +213,7 @@ function SettingsPage:render()
 					id = "logLevel",
 					name = "Log Level",
 					description = "Plugin output verbosity level",
-					developerDebug = true,
+					tag = "debug",
 					transparency = self.props.transparency,
 					layoutOrder = layoutIncrement(),
 
@@ -231,7 +230,7 @@ function SettingsPage:render()
 					id = "typecheckingEnabled",
 					name = "Typechecking",
 					description = "Toggle typechecking on the API surface",
-					developerDebug = true,
+					tag = "debug",
 					transparency = self.props.transparency,
 					layoutOrder = layoutIncrement(),
 				}),
@@ -240,7 +239,7 @@ function SettingsPage:render()
 					id = "timingLogsEnabled",
 					name = "Timing Logs",
 					description = "Toggle logging timing of internal actions for benchmarking Rojo performance",
-					developerDebug = true,
+					tag = "debug",
 					transparency = self.props.transparency,
 					layoutOrder = layoutIncrement(),
 				}),

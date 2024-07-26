@@ -370,6 +370,41 @@
     },
     "ty": "NumberSequence"
   },
+  "OptionalCFrame-None": {
+    "value": {
+      "OptionalCFrame": null
+    },
+    "ty": "OptionalCFrame"
+  },
+  "OptionalCFrame-Some": {
+    "value": {
+      "OptionalCFrame": {
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "orientation": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ]
+      }
+    },
+    "ty": "OptionalCFrame"
+  },
   "PhysicalProperties-Custom": {
     "value": {
       "PhysicalProperties": {

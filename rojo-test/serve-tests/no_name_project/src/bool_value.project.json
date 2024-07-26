@@ -1,0 +1,8 @@
+{
+  "tree": {
+    "$className": "BoolValue",
+    "$properties": {
+      "Value": true
+    }
+  }
+}

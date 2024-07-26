@@ -1,0 +1,19 @@
+---
+source: tests/tests/serve.rs
+assertion_line: 370
+expression: "read_response.intern_and_redact(&mut redactions, root_id)"
+---
+instances:
+  id-2:
+    Children: []
+    ClassName: StringValue
+    Id: id-2
+    Metadata:
+      ignoreUnknownInstances: true
+    Name: no_name_top_level_project
+    Parent: "00000000000000000000000000000000"
+    Properties:
+      Value:
+        String: "If this isn't named `no_name_top_level_project`, something went wrong!"
+messageCursor: 0
+sessionId: id-1

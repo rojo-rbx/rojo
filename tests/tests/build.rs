@@ -62,6 +62,9 @@ gen_build_tests! {
     sync_rule_alone,
     sync_rule_complex,
     sync_rule_nested_projects,
+    no_name_default_project,
+    no_name_project,
+    no_name_top_level_project,
 }
 
 fn run_build_test(test_name: &str) {
@@ -73,7 +76,7 @@ fn run_build_test(test_name: &str) {
     let output_path = output_dir.path().join(format!("{}.rbxmx", test_name));
 
     let output = Command::new(ROJO_PATH)
-        .args(&[
+        .args([
             "build",
             input_path.to_str().unwrap(),
             "-o",

@@ -7,7 +7,7 @@ use librojo::cli::Options;
 
 fn main() {
     #[cfg(feature = "profile-with-tracy")]
-    tracy_client::Client::start();
+    profiling::tracy_client::Client::start();
 
     panic::set_hook(Box::new(|panic_info| {
         // PanicInfo's payload is usually a &'static str or String.

@@ -306,3 +306,174 @@ fn sync_rule_no_extension() {
         );
     });
 }
+
+#[test]
+fn no_name_default_project() {
+    run_serve_test("no_name_default_project", |session, mut redactions| {
+        let info = session.get_api_rojo().unwrap();
+        let root_id = info.root_instance_id;
+
+        assert_yaml_snapshot!(
+            "no_name_default_project_info",
+            redactions.redacted_yaml(info)
+        );
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "no_name_default_project_all",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+    });
+}
+
+#[test]
+fn no_name_project() {
+    run_serve_test("no_name_project", |session, mut redactions| {
+        let info = session.get_api_rojo().unwrap();
+        let root_id = info.root_instance_id;
+
+        assert_yaml_snapshot!("no_name_project_info", redactions.redacted_yaml(info));
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "no_name_project_all",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+    });
+}
+
+#[test]
+fn no_name_top_level_project() {
+    run_serve_test("no_name_top_level_project", |session, mut redactions| {
+        let info = session.get_api_rojo().unwrap();
+        let root_id = info.root_instance_id;
+
+        assert_yaml_snapshot!(
+            "no_name_top_level_project_info",
+            redactions.redacted_yaml(info)
+        );
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "no_name_top_level_project_all",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+
+        let project_path = session.path().join("default.project.json");
+        let mut project_contents = fs::read_to_string(&project_path).unwrap();
+        project_contents.push('\n');
+        fs::write(&project_path, project_contents).unwrap();
+
+        // The cursor shouldn't be changing so this snapshot is fine for testing
+        // the response.
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "no_name_top_level_project_all-2",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+    });
+}
+
+#[test]
+fn sync_rule_no_name_project() {
+    run_serve_test("sync_rule_no_name_project", |session, mut redactions| {
+        let info = session.get_api_rojo().unwrap();
+        let root_id = info.root_instance_id;
+
+        assert_yaml_snapshot!(
+            "sync_rule_no_name_project_info",
+            redactions.redacted_yaml(info)
+        );
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "sync_rule_no_name_project_all",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+    });
+}
+
+#[test]
+fn ref_properties() {
+    run_serve_test("ref_properties", |session, mut redactions| {
+        let info = session.get_api_rojo().unwrap();
+        let root_id = info.root_instance_id;
+
+        assert_yaml_snapshot!("ref_properties_info", redactions.redacted_yaml(info));
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "ref_properties_all",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+
+        fs::write(
+            session.path().join("ModelTarget.model.json"),
+            r#"{
+                "className": "Folder",
+                "attributes": {
+                    "Rojo_Id": "model target 2"
+                },
+                "children": [
+                  {
+                    "name": "ModelPointer",
+                    "className": "Model",
+                    "attributes": {
+                      "Rojo_Target_PrimaryPart": "model target 2"
+                    }
+                  },
+                  {
+                    "name": "ProjectPointer",
+                    "className": "Model",
+                    "attributes": {
+                      "Rojo_Target_PrimaryPart": "project target"
+                    }
+                  }
+                ]
+              }"#,
+        )
+        .unwrap();
+
+        let subscribe_response = session.get_api_subscribe(0).unwrap();
+        assert_yaml_snapshot!(
+            "ref_properties_subscribe",
+            subscribe_response.intern_and_redact(&mut redactions, ())
+        );
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "ref_properties_all-2",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+    });
+}
+
+#[test]
+fn ref_properties_remove() {
+    run_serve_test("ref_properties_remove", |session, mut redactions| {
+        let info = session.get_api_rojo().unwrap();
+        let root_id = info.root_instance_id;
+
+        assert_yaml_snapshot!("ref_properties_remove_info", redactions.redacted_yaml(info));
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "ref_properties_remove_all",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+
+        fs::remove_file(session.path().join("src/target.model.json")).unwrap();
+
+        let subscribe_response = session.get_api_subscribe(0).unwrap();
+        assert_yaml_snapshot!(
+            "ref_properties_remove_subscribe",
+            subscribe_response.intern_and_redact(&mut redactions, ())
+        );
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "ref_properties_remove_all-2",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+    });
+}
