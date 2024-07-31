@@ -12,7 +12,7 @@
     {
         "syncbackRules": {
             "ignoreTrees": [
-                "DataModel/ServerStorage/ImportantSecrets",
+                "ServerStorage/ImportantSecrets",
             ],
             "ignorePaths": [
                 "src/ServerStorage/Secrets/*"
@@ -32,7 +32,11 @@
     - `ignorePaths` is a list of paths in the **file system** that should be ignored
     - `ignoreProperties` is a list of properties that won't be synced back
     - `syncCurrentCamera` is a toggle for whether to sync back the Workspace's CurrentCamera. Defaults to `false`.
-    - `syncUnscriptable` is a toggle for whether to sync back properties that cannot be set by the Roblox Studio plugin. Defaults to `false`.
+    - `syncUnscriptable` is a toggle for whether to sync back properties that cannot be set by the Roblox Studio plugin. Defaults to `true`.
+
+ 	If you are used to the `UpliftGames` version of this feature, there are a few notable differences:
+    - `syncUnscriptable` defaults to `true` instead of `false`
+    - `ignoreTrees` doesn't require the root of the project's name in it.
 
 * Projects may now manually link `Ref` properties together using `Attributes`. ([#843])
  	This has two parts: using `id` or `$id` in JSON files or a `Rojo_Target` attribute, an Instance
