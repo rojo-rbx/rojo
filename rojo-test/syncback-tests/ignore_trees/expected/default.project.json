@@ -8,7 +8,7 @@
   },
   "syncbackRules": {
     "ignoreTrees": [
-      "ignore_trees/ReplicatedStorage/IgnoreMe"
+      "ReplicatedStorage/IgnoreMe"
     ]
   }
 }

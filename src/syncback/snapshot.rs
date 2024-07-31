@@ -128,16 +128,7 @@ impl<'sync> SyncbackSnapshot<'sync> {
     /// where you would look for the object in Roblox Studio.
     #[inline]
     pub fn get_new_inst_path(&self, referent: Ref) -> String {
-        let mut path = Vec::new();
-
-        let mut inst = self.get_new_instance(referent);
-        while let Some(instance) = inst {
-            path.push(instance.name.as_str());
-            inst = self.get_new_instance(instance.parent());
-        }
-
-        path.reverse();
-        path.join("/")
+        inst_path(self.new_tree(), referent)
     }
 
     /// Returns an Instance from the old tree with the provided referent, if it
@@ -215,5 +206,42 @@ pub fn filter_out_property(inst: &Instance, prop_name: &str) -> bool {
         "LocalizationTable" => prop_name == "Contents",
         "StringValue" => prop_name == "Value",
         _ => false,
+    }
+}
+
+pub fn inst_path(dom: &WeakDom, referent: Ref) -> String {
+    let mut path = Vec::new();
+
+    let mut inst = dom.get_by_ref(referent);
+    while let Some(instance) = inst {
+        path.push(instance.name.as_str());
+        inst = dom.get_by_ref(instance.parent());
+    }
+    // This is to avoid the root's name from appearing in the path. Not
+    // optimal, but should be fine.
+    path.pop();
+
+    path.reverse();
+    path.join("/")
+}
+
+#[cfg(test)]
+mod test {
+    use rbx_dom_weak::{InstanceBuilder, WeakDom};
+
+    use super::inst_path as inst_path_outer;
+
+    #[test]
+    fn inst_path() {
+        let mut new_tree = WeakDom::new(InstanceBuilder::new("ROOT"));
+
+        let child_1 = new_tree.insert(new_tree.root_ref(), InstanceBuilder::new("Child1"));
+        let child_2 = new_tree.insert(child_1, InstanceBuilder::new("Child2"));
+        let child_3 = new_tree.insert(child_2, InstanceBuilder::new("Child3"));
+
+        assert_eq!(inst_path_outer(&new_tree, new_tree.root_ref()), "");
+        assert_eq!(inst_path_outer(&new_tree, child_1), "Child1");
+        assert_eq!(inst_path_outer(&new_tree, child_2), "Child1/Child2");
+        assert_eq!(inst_path_outer(&new_tree, child_3), "Child1/Child2/Child3");
     }
 }
