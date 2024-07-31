@@ -128,24 +128,17 @@ impl<'sync> SyncbackSnapshot<'sync> {
     /// where you would look for the object in Roblox Studio.
     #[inline]
     pub fn get_new_inst_path(&self, referent: Ref) -> String {
-        let mut path = Vec::new();
-        let mut path_capacity = 0;
+       let mut path = Vec::new();
 
-        let mut inst = self.get_new_instance(referent);
-        while let Some(instance) = inst {
-            path.push(&instance.name);
-            path_capacity += instance.name.len() + 1;
-            inst = self.get_new_instance(instance.parent());
-        }
-        let mut str = String::with_capacity(path_capacity);
-        while let Some(segment) = path.pop() {
-            str.push_str(segment);
-            str.push('/')
-        }
-        str.pop();
+       let mut inst = self.get_new_instance(referent);
+       while let Some(instance) = inst {
+           path.push(instance.name.as_str());
+           inst = self.get_new_instance(instance.parent());
+       }
 
-        str
-    }
+       path.reverse();
+       path.join("/")
+   }
 
     /// Returns an Instance from the old tree with the provided referent, if it
     /// exists.
