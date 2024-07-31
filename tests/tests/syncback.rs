@@ -29,4 +29,5 @@ syncback_basic_test! {
     duplicate_rojo_id,
     string_value_project,
     child_but_not,
+    ignore_trees,
 }
