@@ -2,6 +2,10 @@
 
 ## Unreleased Changes
 
+* Fixed `value of type nil cannot be converted to number` warning spam in output. [#955]
+
+[#955]: https://github.com/rojo-rbx/rojo/pull/893
+
 ## [7.4.2] - July 23, 2024
 * Added Never option to Confirmation ([#893])
 * Fixed removing trailing newlines ([#903])
