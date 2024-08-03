@@ -131,6 +131,23 @@ function App:init()
 		toolbarIcon = Assets.Images.PluginButton,
 	})
 
+	local rojoOpenValue = game:FindFirstChild("ROJO_OPEN")
+	if rojoOpenValue and rojoOpenValue:IsA("StringValue") then
+		local host, port = unpack(rojoOpenValue.Value:split(","))
+
+		if host ~= Config.defaultHost then
+			self.setHost(host)
+		end
+
+		if port ~= Config.defaultPort then
+			self.setPort(port)
+		end
+
+		rojoOpenValue:Destroy()
+
+		self:startSession(true)
+	end
+
 	if
 		RunService:IsEdit()
 		and self.serveSession == nil
@@ -407,7 +424,7 @@ function App:useRunningConnectionInfo()
 	self.setPort(port)
 end
 
-function App:startSession()
+function App:startSession(skipInitialSync)
 	local claimedLock, priorOwner = self:claimSyncLock()
 	if not claimedLock then
 		local msg = string.format("Could not sync because user '%s' is already syncing", tostring(priorOwner))
@@ -620,7 +637,7 @@ function App:startSession()
 		return self.confirmationEvent:Wait()
 	end)
 
-	serveSession:start()
+	serveSession:start(not not skipInitialSync)
 
 	self.serveSession = serveSession
 end
