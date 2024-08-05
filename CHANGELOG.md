@@ -24,6 +24,7 @@
 * Added popout diff visualizer for table properties like Attributes and Tags ([#834])
 * Updated Theme to use Studio colors ([#838])
 * Improved patch visualizer UX ([#883])
+* Added update notifications for newer compatible versions in the Studio plugin. ([#832])
 * Added experimental setting for Auto Connect in playtests ([#840])
 * Improved settings UI ([#886])
 * `Open Scripts Externally` option can now be changed while syncing ([#911])
@@ -75,6 +76,7 @@
     **All** sync rules are reset between project files, so they must be specified in each one when nesting them. This is to ensure that nothing can break other projects by changing how files are synced!
 
 [#813]: https://github.com/rojo-rbx/rojo/pull/813
+[#832]: https://github.com/rojo-rbx/rojo/pull/832
 [#834]: https://github.com/rojo-rbx/rojo/pull/834
 [#838]: https://github.com/rojo-rbx/rojo/pull/838
 [#840]: https://github.com/rojo-rbx/rojo/pull/840
