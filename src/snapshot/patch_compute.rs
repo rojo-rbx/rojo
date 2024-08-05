@@ -8,6 +8,8 @@ use std::{
 
 use rbx_dom_weak::types::{Ref, Variant};
 
+use crate::{RojoRef, REF_POINTER_ATTRIBUTE_PREFIX};
+
 use super::{
     patch::{PatchAdd, PatchSet, PatchUpdate},
     InstanceSnapshot, InstanceWithMeta, RojoTree,
@@ -87,7 +89,7 @@ fn compute_patch_set_internal(
         .get_instance(id)
         .expect("Instance did not exist in tree");
 
-    compute_property_patches(&mut snapshot, &instance, patch_set);
+    compute_property_patches(&mut snapshot, &instance, patch_set, tree);
     compute_children_patches(context, &mut snapshot, tree, id, patch_set);
 }
 
@@ -95,9 +97,12 @@ fn compute_property_patches(
     snapshot: &mut InstanceSnapshot,
     instance: &InstanceWithMeta,
     patch_set: &mut PatchSet,
+    tree: &RojoTree,
 ) {
     let mut visited_properties = HashSet::new();
     let mut changed_properties = HashMap::new();
+
+    let attribute_ref_properties = compute_ref_properties(snapshot, tree);
 
     let changed_name = if snapshot.name == instance.name() {
         None
@@ -138,6 +143,24 @@ fn compute_property_patches(
         }
 
         changed_properties.insert(name.clone(), None);
+    }
+
+    for (name, ref_value) in attribute_ref_properties {
+        match (&ref_value, instance.properties().get(&name)) {
+            (Some(referent), Some(instance_value)) => {
+                if referent != instance_value {
+                    changed_properties.insert(name, ref_value);
+                } else {
+                    changed_properties.remove(&name);
+                }
+            }
+            (Some(_), None) | (None, Some(_)) => {
+                changed_properties.insert(name, ref_value);
+            }
+            (None, None) => {
+                changed_properties.remove(&name);
+            }
+        }
     }
 
     if changed_properties.is_empty()
@@ -222,6 +245,52 @@ fn compute_children_patches(
 
         patch_set.removed_instances.push(*instance_child_id);
     }
+}
+
+fn compute_ref_properties(
+    snapshot: &InstanceSnapshot,
+    tree: &RojoTree,
+) -> HashMap<String, Option<Variant>> {
+    let mut map = HashMap::new();
+    let attributes = match snapshot.properties.get("Attributes") {
+        Some(Variant::Attributes(attrs)) => attrs,
+        _ => return map,
+    };
+
+    for (attr_name, attr_value) in attributes.iter() {
+        let prop_name = match attr_name.strip_prefix(REF_POINTER_ATTRIBUTE_PREFIX) {
+            Some(str) => str,
+            None => continue,
+        };
+        let rojo_ref = match attr_value {
+            Variant::String(str) => RojoRef::new(str.clone()),
+            Variant::BinaryString(bytes) => {
+                if let Ok(str) = std::str::from_utf8(bytes.as_ref()) {
+                    RojoRef::new(str.to_string())
+                } else {
+                    log::warn!(
+                        "IDs specified by referent property attributes must be valid UTF-8 strings"
+                    );
+                    continue;
+                }
+            }
+            _ => {
+                log::warn!(
+                    "Attribute {attr_name} is of type {:?} when it was \
+                expected to be a String",
+                    attr_value.ty()
+                );
+                continue;
+            }
+        };
+        if let Some(target_id) = tree.get_specified_id(&rojo_ref) {
+            map.insert(prop_name.to_string(), Some(Variant::Ref(target_id)));
+        } else {
+            map.insert(prop_name.to_string(), None);
+        }
+    }
+
+    map
 }
 
 #[cfg(test)]
