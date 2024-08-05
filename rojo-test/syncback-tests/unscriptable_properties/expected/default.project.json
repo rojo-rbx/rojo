@@ -1,0 +1,35 @@
+{
+  "name": "unscriptable_properties",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "Model": {
+        "$className": "Model",
+        "$properties": {
+          "Scale": 1337.0,
+          "WorldPivotData": {
+            "OptionalCFrame": null
+          }
+        }
+      }
+    },
+    "Workspace": {
+      "$properties": {
+        "CSGAsyncDynamicCollision": {
+          "Enum": 0
+        },
+        "DecreaseMinimumPartDensityMode": {
+          "Enum": 0
+        },
+        "SignalBehavior": "Deferred",
+        "StreamOutBehavior": "Opportunistic",
+        "StreamingEnabled": true,
+        "StreamingIntegrityMode": "PauseOutsideLoadedArea"
+      }
+    }
+  },
+  "syncbackRules": {
+    "syncUnscriptable": true,
+    "ignoreReferents": true
+  }
+}

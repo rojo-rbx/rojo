@@ -166,6 +166,7 @@ impl UiService {
                     <div>"specified_id: " { format!("{:?}", metadata.specified_id) } </div>
                     <div>"ignore_unknown_instances: " { metadata.ignore_unknown_instances.to_string() }</div>
                     <div>"instigating source: " { format!("{:?}", metadata.instigating_source) }</div>
+                    <div>"middleware: " { format!("{:?}", metadata.middleware) }</div>
                     { relevant_paths }
                 </>
             };

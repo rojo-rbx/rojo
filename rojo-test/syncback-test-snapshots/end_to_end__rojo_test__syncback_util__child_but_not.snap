@@ -1,0 +1,12 @@
+---
+source: tests/rojo_test/syncback_util.rs
+expression: "visualize_fs_snapshot(&fs_snapshot, &output_path)"
+---
+added_files:
+  - OnlyOneCopy/child_of_one.luau
+  - ReplicatedStorage/child_replicated_storage.luau
+added_dirs:
+  - OnlyOneCopy
+  - ReplicatedStorage
+removed_files: []
+removed_dirs: []

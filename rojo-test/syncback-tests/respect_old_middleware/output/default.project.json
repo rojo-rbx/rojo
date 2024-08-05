@@ -1,0 +1,12 @@
+{
+  "name": "respect_old_middleware",
+  "tree": {
+    "$className": "DataModel",
+    "Workspace": {
+      "$path": "Workspace"
+    }
+  },
+  "syncbackRules": {
+    "ignoreReferents": true
+  }
+}

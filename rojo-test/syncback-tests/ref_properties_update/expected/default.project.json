@@ -1,0 +1,9 @@
+{
+  "name": "ref_properties_update",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$path": "src"
+    }
+  }
+}

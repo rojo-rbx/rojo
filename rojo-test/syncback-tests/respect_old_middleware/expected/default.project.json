@@ -1,0 +1,24 @@
+{
+  "name": "respect_old_middleware",
+  "tree": {
+    "$className": "DataModel",
+    "Workspace": {
+      "$properties": {
+        "CSGAsyncDynamicCollision": {
+          "Enum": 0
+        },
+        "DecreaseMinimumPartDensityMode": {
+          "Enum": 0
+        },
+        "SignalBehavior": "Deferred",
+        "StreamOutBehavior": "Opportunistic",
+        "StreamingEnabled": true,
+        "StreamingIntegrityMode": "PauseOutsideLoadedArea"
+      },
+      "$path": "Workspace"
+    }
+  },
+  "syncbackRules": {
+    "ignoreReferents": true
+  }
+}
