@@ -2,6 +2,8 @@
 
 ## Unreleased Changes
 
+## [7.4.3] - August 6th, 2024
+* Fixed issue with building binary files introduced in 7.4.2
 * Fixed `value of type nil cannot be converted to number` warning spam in output. [#955]
 
 [#955]: https://github.com/rojo-rbx/rojo/pull/893
