@@ -28,6 +28,7 @@
 * Added experimental setting for Auto Connect in playtests ([#840])
 * Improved settings UI ([#886])
 * `Open Scripts Externally` option can now be changed while syncing ([#911])
+* Folders can specify `$paths` rather than `$path` to combine multiple folders on the filesystem ([#936])
 * Projects may now specify rules for syncing files as if they had a different file extension. ([#813])
  	This is specified via a new field on project files, `syncRules`:
 
@@ -85,6 +86,7 @@
 [#886]: https://github.com/rojo-rbx/rojo/pull/886
 [#911]: https://github.com/rojo-rbx/rojo/pull/911
 [#915]: https://github.com/rojo-rbx/rojo/pull/915
+[#936]: https://github.com/rojo-rbx/rojo/pull/936
 
 ## [7.4.2] - July 23, 2024
 * Added Never option to Confirmation ([#893])

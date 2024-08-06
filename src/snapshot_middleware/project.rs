@@ -131,6 +131,54 @@ pub fn snapshot_project_node(
             // on.
             metadata = snapshot.metadata;
         }
+    } else if let Some(paths) = &node.paths {
+        let mut relevant_paths = vec![];
+        class_name_from_path = Some(Cow::Borrowed("Folder"));
+
+        for path_node in paths {
+            let path = path_node.path();
+
+            // As above, assume relative paths are relative to project_folder
+            let full_path = if path.is_relative() {
+                Cow::Owned(project_folder.join(path))
+            } else {
+                Cow::Borrowed(path)
+            };
+
+            if let Some(snapshot) = snapshot_from_vfs(context, vfs, &full_path)? {
+                // Since class_name_from_path is a single value, we can't check
+                // it in the inference-checking block below for multiple paths.
+                // Thus we bail here if it is ever something other than folder
+                if snapshot.class_name != "Folder" {
+                    bail!(
+                        "Instance \"{}\" has $paths values which are not of type Folder.\n\
+						All inferred class names for paths in $paths must be of type Folder.\n\
+						Found: {}\n\
+						At: {}\n\
+						Project path: {}",
+                        instance_name,
+                        snapshot.class_name,
+                        full_path.display(),
+                        project_path.display()
+                    );
+                }
+
+                // Combine all relevant paths of our children into us
+                // Otherwise, parts of our children can be destroyed but
+                // not recreated or modified
+                for relevant_path in snapshot.metadata.relevant_paths.iter() {
+                    relevant_paths.push(relevant_path.to_path_buf());
+                }
+
+                // As above, merge the snapshot's children into ours
+                children.reserve(snapshot.children.len());
+                for child in snapshot.children.into_iter() {
+                    children.push(child);
+                }
+            }
+        }
+
+        metadata.relevant_paths = relevant_paths;
     }
 
     let class_name_from_inference = infer_class_name(&name, parent_class);
@@ -140,20 +188,21 @@ pub fn snapshot_project_node(
         class_name_from_path,
         class_name_from_inference,
         &node.path,
+        &node.paths,
     ) {
         // These are the easy, happy paths!
-        (Some(project), None, None, _) => project,
-        (None, Some(path), None, _) => path,
-        (None, None, Some(inference), _) => inference,
+        (Some(project), None, None, _, _) => project,
+        (None, Some(path), None, _, _) => path,
+        (None, None, Some(inference), _, _) => inference,
 
         // If the user specifies a class name, but there's an inferred class
         // name, we prefer the name listed explicitly by the user.
-        (Some(project), None, Some(_), _) => project,
+        (Some(project), None, Some(_), _, _) => project,
 
         // If the user has a $path pointing to a folder and we're able to infer
         // a class name, let's use the inferred name. If the path we're pointing
         // to isn't a folder, though, that's a user error.
-        (None, Some(path), Some(inference), _) => {
+        (None, Some(path), Some(inference), _, _) => {
             if path == "Folder" {
                 inference
             } else {
@@ -161,7 +210,21 @@ pub fn snapshot_project_node(
             }
         }
 
-        (Some(project), Some(path), _, _) => {
+        (Some(project), _, _, None, Some(_)) => {
+            if project == "Folder" {
+                project
+            } else {
+                bail!(
+                    "Instance \"{}\" has has $classname \"{}\", but $paths can only be used on Folder classes.\n\
+                    Project path: {}",
+                    instance_name,
+                    project,
+                    project_path.display()
+                )
+            }
+        }
+
+        (Some(project), Some(path), _, _, _) => {
             if path == "Folder" {
                 project
             } else {
@@ -180,11 +243,19 @@ pub fn snapshot_project_node(
             }
         }
 
-        (None, None, None, Some(PathNode::Optional(_))) => {
+        (None, None, None, Some(PathNode::Optional(_)), None) => {
             return Ok(None);
         }
 
-        (_, None, _, Some(PathNode::Required(path))) => {
+        (None, None, None, None, Some(_)) => {
+            bail!(
+                "Instance \"{}\" has $paths set but no type was inferred.\n\
+				This is a bug. Please file an issue!",
+                instance_name
+            )
+        }
+
+        (_, None, _, Some(PathNode::Required(path)), None) => {
             anyhow::bail!(
                 "Rojo project referred to a file using $path that could not be turned into a Roblox Instance by Rojo.\n\
                 Check that the file exists and is a file type known by Rojo.\n\
@@ -196,18 +267,28 @@ pub fn snapshot_project_node(
             );
         }
 
-        (None, None, None, None) => {
+        (None, None, None, None, None) => {
             bail!(
                 "Instance \"{}\" is missing some required information.\n\
                  One of the following must be true:\n\
                  - $className must be set to the name of a Roblox class\n\
                  - $path must be set to a path of an instance\n\
+				 - $paths must be set to a list of folders\n\
                  - The instance must be a known service, like ReplicatedStorage\n\
                  \n\
                  Project path: {}",
                 instance_name,
                 project_path.display(),
             );
+        }
+        (None, None, None, Some(_), Some(_)) => {
+            bail!(
+                "Instance \"{}\" has both $path and $paths set.\n\
+				rojo has different rules for behavior of these fields, so they cannot be combined.\n\
+                Project path: {}",
+                instance_name,
+                project_path.display(),
+            )
         }
     };
 
@@ -277,7 +358,7 @@ pub fn snapshot_project_node(
     // file), set it to true.
     if let Some(ignore) = node.ignore_unknown_instances {
         metadata.ignore_unknown_instances = ignore;
-    } else if node.path.is_none() {
+    } else if node.path.is_none() || node.paths.is_some() {
         // TODO: Introduce a strict mode where $ignoreUnknownInstances is never
         // set implicitly.
         metadata.ignore_unknown_instances = true;
