@@ -55,23 +55,21 @@ impl SyncbackCommand {
         let path_new = resolve_path(&self.input);
 
         let input_kind = FileKind::from_path(&path_new).context(UNKNOWN_INPUT_KIND_ERR)?;
-        let dom_start = Instant::now();
-        log::info!("Reading place file at {}", path_new.display());
+        let dom_start_timer = Instant::now();
         let dom_new = read_dom(&path_new, input_kind)?;
-        log::info!(
+        log::debug!(
             "Finished opening file in {:0.02}s",
-            dom_start.elapsed().as_secs_f32()
+            dom_start_timer.elapsed().as_secs_f32()
         );
 
         let vfs = Vfs::new_default();
         vfs.set_watch_enabled(false);
 
-        let project_start = Instant::now();
-        log::info!("Opening project at {}", path_old.display());
+        let project_start_timer = Instant::now();
         let session_old = ServeSession::new(vfs, path_old.clone())?;
-        log::info!(
+        log::debug!(
             "Finished opening project in {:0.02}s",
-            project_start.elapsed().as_secs_f32()
+            project_start_timer.elapsed().as_secs_f32()
         );
 
         let mut dom_old = session_old.tree();
@@ -92,17 +90,17 @@ impl SyncbackCommand {
             }
         }
 
-        let start = Instant::now();
-        log::info!("Beginning syncback...");
+        let syncback_timer = Instant::now();
+        println!("Beginning syncback...");
         let snapshot = syncback_loop(
             session_old.vfs(),
             &mut dom_old,
             dom_new,
             session_old.root_project(),
         )?;
-        log::info!(
+        log::debug!(
             "Syncback finished in {:.02}s!",
-            start.elapsed().as_secs_f32()
+            syncback_timer.elapsed().as_secs_f32()
         );
 
         let base_path = session_old.root_project().folder_location();
@@ -127,8 +125,9 @@ impl SyncbackCommand {
                     return Ok(());
                 }
             }
-            log::info!("Writing to the file system...");
+            println!("Writing to the file system...");
             snapshot.write_to_vfs(base_path, session_old.vfs())?;
+            println!("Finished syncback.")
         } else {
             println!(
                 "Would write {} files/folders and remove {} files/folders.",

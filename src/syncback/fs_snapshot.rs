@@ -99,20 +99,16 @@ impl FsSnapshot {
         }
         drop(lock);
 
-        if self.added_dirs.len() + self.added_files.len() > 0 {
-            log::info!(
-                "Wrote {} directories and {} files to the file system!",
-                self.added_dirs.len(),
-                self.added_files.len()
-            );
-        }
-        if self.removed_dirs.len() + self.removed_files.len() > 0 {
-            log::info!(
-                "Removed {} directories and {} files from the file system. Yikes!",
-                self.removed_dirs.len(),
-                self.removed_files.len()
-            );
-        }
+        log::debug!(
+            "Wrote {} directories and {} files to the file system",
+            self.added_dirs.len(),
+            self.added_files.len()
+        );
+        log::debug!(
+            "Removed {} directories and {} files from the file system",
+            self.removed_dirs.len(),
+            self.removed_files.len()
+        );
         Ok(())
     }
 
