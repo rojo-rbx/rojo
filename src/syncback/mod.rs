@@ -233,6 +233,13 @@ pub fn syncback_loop(
             );
             for inst in &syncback.removed_children {
                 let path = inst.metadata().instigating_source.as_ref().unwrap().path();
+                if !is_valid_path(&ignore_patterns, project_path, path) {
+                    log::debug!(
+                        "Skipping removing {} because its matches an ignore pattern",
+                        path.display()
+                    );
+                    continue;
+                }
                 if path.is_dir() {
                     fs_snapshot.remove_dir(path)
                 } else {

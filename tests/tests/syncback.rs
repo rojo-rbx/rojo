@@ -30,4 +30,5 @@ syncback_basic_test! {
     string_value_project,
     child_but_not,
     ignore_trees,
+    ignore_paths_removing,
 }
