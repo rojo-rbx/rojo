@@ -4,6 +4,7 @@ local Packages = Rojo.Packages
 
 local Roact = require(Packages.Roact)
 
+local timeUtil = require(Plugin.timeUtil)
 local Theme = require(Plugin.App.Theme)
 local Assets = require(Plugin.Assets)
 local PatchSet = require(Plugin.PatchSet)
@@ -19,28 +20,6 @@ local StringDiffVisualizer = require(Plugin.App.Components.StringDiffVisualizer)
 local TableDiffVisualizer = require(Plugin.App.Components.TableDiffVisualizer)
 
 local e = Roact.createElement
-
-local AGE_UNITS = {
-	{ 31556909, "y" },
-	{ 2629743, "mon" },
-	{ 604800, "w" },
-	{ 86400, "d" },
-	{ 3600, "h" },
-	{ 60, "m" },
-}
-function timeSinceText(elapsed: number): string
-	local ageText = string.format("%ds", elapsed)
-
-	for _, UnitData in ipairs(AGE_UNITS) do
-		local UnitSeconds, UnitName = UnitData[1], UnitData[2]
-		if elapsed > UnitSeconds then
-			ageText = elapsed // UnitSeconds .. UnitName
-			break
-		end
-	end
-
-	return ageText
-end
 
 local ChangesViewer = Roact.Component:extend("ChangesViewer")
 
@@ -287,7 +266,7 @@ function ConnectedPage:getChangeInfoText()
 	if patchData == nil then
 		return ""
 	end
-	return timeSinceText(DateTime.now().UnixTimestamp - patchData.timestamp)
+	return timeUtil.elapsedToText(DateTime.now().UnixTimestamp - patchData.timestamp)
 end
 
 function ConnectedPage:startChangeInfoTextUpdater()
@@ -303,7 +282,7 @@ function ConnectedPage:startChangeInfoTextUpdater()
 			local updateInterval = 1
 
 			-- Update timestamp text as frequently as currently needed
-			for _, UnitData in ipairs(AGE_UNITS) do
+			for _, UnitData in ipairs(timeUtil.AGE_UNITS) do
 				local UnitSeconds = UnitData[1]
 				if elapsed > UnitSeconds then
 					updateInterval = UnitSeconds

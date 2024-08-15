@@ -162,6 +162,25 @@ function SettingsPage:render()
 					layoutOrder = layoutIncrement(),
 				}),
 
+				CheckForUpdates = e(Setting, {
+					id = "checkForUpdates",
+					name = "Check For Updates",
+					description = "Notify about newer compatible Rojo releases",
+					transparency = self.props.transparency,
+					layoutOrder = layoutIncrement(),
+				}),
+
+				CheckForPreleases = e(Setting, {
+					id = "checkForPrereleases",
+					name = "Include Prerelease Updates",
+					description = "Include prereleases when checking for updates",
+					transparency = self.props.transparency,
+					layoutOrder = layoutIncrement(),
+					visible = if string.find(debug.traceback(), "\n[^\n]-user_.-$") == nil
+						then false -- Must be a local install to allow prerelease checks
+						else Settings:getBinding("checkForUpdates"),
+				}),
+
 				AutoConnectPlaytestServer = e(Setting, {
 					id = "autoConnectPlaytestServer",
 					name = "Auto Connect Playtest Server",

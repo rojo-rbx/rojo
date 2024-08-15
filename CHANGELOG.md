@@ -58,11 +58,10 @@
     over time.
 
 * Updated Undo/Redo history to be more robust ([#915])
-* Fixed removing trailing newlines ([#903])
-* Added Never option to Confirmation ([#893])
 * Added popout diff visualizer for table properties like Attributes and Tags ([#834])
 * Updated Theme to use Studio colors ([#838])
 * Improved patch visualizer UX ([#883])
+* Added update notifications for newer compatible versions in the Studio plugin. ([#832])
 * Added experimental setting for Auto Connect in playtests ([#840])
 * Improved settings UI ([#886])
 * `Open Scripts Externally` option can now be changed while syncing ([#911])
@@ -114,16 +113,26 @@
     **All** sync rules are reset between project files, so they must be specified in each one when nesting them. This is to ensure that nothing can break other projects by changing how files are synced!
 
 [#813]: https://github.com/rojo-rbx/rojo/pull/813
+[#832]: https://github.com/rojo-rbx/rojo/pull/832
 [#834]: https://github.com/rojo-rbx/rojo/pull/834
 [#838]: https://github.com/rojo-rbx/rojo/pull/838
 [#840]: https://github.com/rojo-rbx/rojo/pull/840
 [#843]: https://github.com/rojo-rbx/rojo/pull/843
 [#883]: https://github.com/rojo-rbx/rojo/pull/883
 [#886]: https://github.com/rojo-rbx/rojo/pull/886
-[#893]: https://github.com/rojo-rbx/rojo/pull/893
-[#903]: https://github.com/rojo-rbx/rojo/pull/903
 [#911]: https://github.com/rojo-rbx/rojo/pull/911
 [#915]: https://github.com/rojo-rbx/rojo/pull/915
+
+## [7.4.2] - July 23, 2024
+* Added Never option to Confirmation ([#893])
+* Fixed removing trailing newlines ([#903])
+* Updated the internal property database, correcting an issue with `SurfaceAppearance.Color` that was reported [here][Surface_Appearance_Color_1] and [here][Surface_Appearance_Color_2] ([#948])
+
+[#893]: https://github.com/rojo-rbx/rojo/pull/893
+[#903]: https://github.com/rojo-rbx/rojo/pull/903
+[#948]: https://github.com/rojo-rbx/rojo/pull/948
+[Surface_Appearance_Color_1]: https://devforum.roblox.com/t/jailbreak-custom-character-turned-shiny-black-no-texture/3075563
+[Surface_Appearance_Color_2]: https://devforum.roblox.com/t/surfaceappearance-not-displaying-correctly/3075588
 
 ## [7.4.1] - February 20, 2024
 * Made the `name` field optional on project files ([#870])
