@@ -1,5 +1,5 @@
 use std::{
-    io::{self, Write as _},
+    io::{self, BufReader, Write as _},
     mem::forget,
     path::{Path, PathBuf},
     time::Instant,
@@ -148,7 +148,7 @@ impl SyncbackCommand {
 }
 
 fn read_dom(path: &Path, file_kind: FileKind) -> anyhow::Result<WeakDom> {
-    let content = File::open(path)?;
+    let content = BufReader::new(File::open(path)?);
     match file_kind {
         FileKind::Rbxl => {
             // HACK: A custom reflection database is used to deserialize UniqueId
