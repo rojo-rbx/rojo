@@ -23,24 +23,29 @@ use super::{resolve_path, GlobalOptions};
 const UNKNOWN_INPUT_KIND_ERR: &str = "Could not detect what kind of file was inputted. \
                                        Expected input file to end in .rbxl, .rbxlx, .rbxm, or .rbxmx.";
 
-/// Performs syncback for a project file
+/// Performs 'syncback' for the provided project, using the `input` file
+/// given.
+///
+/// Syncback exists to convert Roblox files into a Rojo project automatically.
+/// It uses the project.json file provided to traverse the Roblox file passed as
+/// to serialize Instances to the file system in a format that Rojo understands.
 #[derive(Debug, Parser)]
 pub struct SyncbackCommand {
     /// Path to the project to sync back to.
     #[clap(default_value = "")]
     pub project: PathBuf,
 
-    /// Path to the place to perform syncback on.
+    /// Path to the Roblox file to pull Instances from.
     #[clap(long, short)]
     pub input: PathBuf,
 
-    /// If provided, syncback will list all of the changes it will make to the
-    /// file system before making them.
+    /// If provided, a list all of the files and directories that will be
+    /// added or removed is emitted.
     #[clap(long, short)]
     pub list: bool,
 
     /// If provided, syncback will not actually write anything to the file
-    /// system.
+    /// system. The command will otherwise run normally.
     #[clap(long)]
     pub dry_run: bool,
 
