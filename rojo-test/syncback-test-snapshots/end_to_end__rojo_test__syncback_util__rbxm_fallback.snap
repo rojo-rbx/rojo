@@ -6,7 +6,6 @@ added_files:
   - ReplicatedStorage/ChildWithDuplicates.rbxm
   - ReplicatedStorage/ChildWithoutDuplicates/Child/.gitkeep
 added_dirs:
-  - ReplicatedStorage
   - ReplicatedStorage/ChildWithoutDuplicates
   - ReplicatedStorage/ChildWithoutDuplicates/Child
 removed_files: []

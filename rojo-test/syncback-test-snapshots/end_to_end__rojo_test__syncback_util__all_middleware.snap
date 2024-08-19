@@ -17,9 +17,7 @@ added_files:
   - src/rbxmx.rbxmx
   - src/text.txt
 added_dirs:
-  - src
   - src/csv_init
-  - src/dir
   - src/dir/init_client_script
   - src/dir/init_module_script
   - src/dir/init_server_script
