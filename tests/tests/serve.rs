@@ -478,6 +478,12 @@ fn ref_properties_remove() {
     });
 }
 
+/// When Ref properties were first implemented, a mistake was made that resulted
+/// in Ref properties defined via attributes not being included in patch
+/// computation, which resulted in subsequent patches setting those properties
+/// to `nil`.
+///
+/// See: https://github.com/rojo-rbx/rojo/issues/929
 #[test]
 fn ref_properties_patch_update() {
     // Reusing ref_properties is fun and easy.
