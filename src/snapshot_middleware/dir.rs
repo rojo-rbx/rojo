@@ -8,7 +8,7 @@ use memofs::{DirEntry, IoResultExt, Vfs};
 
 use crate::{
     snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot, InstigatingSource},
-    syncback::{FsSnapshot, SyncbackReturn, SyncbackSnapshot},
+    syncback::{hash_instance, FsSnapshot, SyncbackReturn, SyncbackSnapshot},
 };
 
 use super::{meta_file::DirectoryMetadata, snapshot_from_vfs};
@@ -199,7 +199,24 @@ pub fn syncback_dir_no_meta<'sync>(
         }
     }
     let mut fs_snapshot = FsSnapshot::new();
-    fs_snapshot.add_dir(&snapshot.path);
+
+    if let Some(old_ref) = snapshot.old {
+        let new_hash = hash_instance(snapshot.project(), snapshot.new_tree(), snapshot.new)
+            .expect("new Instance should be hashable");
+        let old_hash = hash_instance(snapshot.project(), snapshot.old_tree(), old_ref)
+            .expect("old Instance should be hashable");
+
+        if old_hash != new_hash {
+            fs_snapshot.add_dir(&snapshot.path);
+        } else {
+            log::debug!(
+                "Skipping reserializing directory {} because old and new tree hash the same",
+                new_inst.name
+            );
+        }
+    } else {
+        fs_snapshot.add_dir(&snapshot.path);
+    }
 
     Ok(SyncbackReturn {
         fs_snapshot,
