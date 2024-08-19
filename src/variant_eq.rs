@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use rbx_dom_weak::types::{PhysicalProperties, Variant, Vector3};
 
 /// Accepts three argumets: a float type and two values to compare.
@@ -22,27 +20,19 @@ pub fn variant_eq(variant_a: &Variant, variant_b: &Variant) -> bool {
     match (variant_a, variant_b) {
         (Variant::Attributes(a), Variant::Attributes(b)) => {
             // If they're not the same size, we can just abort
-            if a.iter().count() != b.iter().count() {
+            if a.len() != b.len() {
                 return false;
             }
-            // Using a duplicated map, we can determine if we have
-            // mismatched keys between A and B
-            let mut b_dupe = HashMap::with_capacity(b.iter().count());
-            for (name, value) in b.iter() {
-                b_dupe.insert(name, value);
-            }
-            for (name, a_value) in a.iter() {
-                if let Some(b_value) = b.get(name.as_str()) {
-                    if variant_eq(a_value, b_value) {
-                        b_dupe.remove(name);
-                    } else {
-                        return false;
-                    }
-                } else {
+
+            // Since Attributes are stored with a BTreeMap, the keys are sorted
+            // and we can compare each map's keys in order.
+            for ((a_name, a_value), (b_name, b_value)) in a.iter().zip(b.iter()) {
+                if !(a_name == b_name && variant_eq(a_value, b_value)) {
                     return false;
                 }
             }
-            b_dupe.is_empty()
+
+            true
         }
         (Variant::Axes(a), Variant::Axes(b)) => a == b,
         (Variant::BinaryString(a), Variant::BinaryString(b)) => a == b,
@@ -55,23 +45,18 @@ pub fn variant_eq(variant_a: &Variant, variant_b: &Variant) -> bool {
                 && vector_eq(&a.orientation.z, &b.orientation.z)
         }
         (Variant::Color3(a), Variant::Color3(b)) => {
-            approx_eq!(f32, a.r, b.r) && approx_eq!(f32, a.b, b.b) && approx_eq!(f32, a.g, b.g)
+            approx_eq!(f32, a.r, b.r) && approx_eq!(f32, a.g, b.g) && approx_eq!(f32, a.b, b.b)
         }
         (Variant::Color3uint8(a), Variant::Color3uint8(b)) => a == b,
         (Variant::ColorSequence(a), Variant::ColorSequence(b)) => {
             if a.keypoints.len() != b.keypoints.len() {
                 return false;
             }
-            let mut a_keypoints = Vec::with_capacity(a.keypoints.len());
-            let mut b_keypoints = Vec::with_capacity(b.keypoints.len());
-            for keypoint in &a.keypoints {
-                a_keypoints.push(keypoint)
-            }
-            for keypoint in &b.keypoints {
-                b_keypoints.push(keypoint)
-            }
+            let mut a_keypoints: Vec<_> = a.keypoints.iter().collect();
+            let mut b_keypoints: Vec<_> = b.keypoints.iter().collect();
             a_keypoints.sort_unstable_by(|k1, k2| k1.time.partial_cmp(&k2.time).unwrap());
             b_keypoints.sort_unstable_by(|k1, k2| k1.time.partial_cmp(&k2.time).unwrap());
+
             for (a_kp, b_kp) in a_keypoints.iter().zip(b_keypoints) {
                 if !(approx_eq!(f32, a_kp.time, b_kp.time)
                     && approx_eq!(f32, a_kp.color.r, b_kp.color.r)
@@ -98,22 +83,17 @@ pub fn variant_eq(variant_a: &Variant, variant_b: &Variant) -> bool {
         (Variant::Int64(a), Variant::Int64(b)) => a == b,
         (Variant::MaterialColors(a), Variant::MaterialColors(b)) => a.encode() == b.encode(),
         (Variant::NumberRange(a), Variant::NumberRange(b)) => {
-            approx_eq!(f32, a.max, b.max) && approx_eq!(f32, a.min, a.max)
+            approx_eq!(f32, a.max, b.max) && approx_eq!(f32, a.min, b.min)
         }
         (Variant::NumberSequence(a), Variant::NumberSequence(b)) => {
             if a.keypoints.len() != b.keypoints.len() {
                 return false;
             }
-            let mut a_keypoints = Vec::with_capacity(a.keypoints.len());
-            let mut b_keypoints = Vec::with_capacity(b.keypoints.len());
-            for keypoint in &a.keypoints {
-                a_keypoints.push(keypoint)
-            }
-            for keypoint in &b.keypoints {
-                b_keypoints.push(keypoint)
-            }
+            let mut a_keypoints: Vec<_> = a.keypoints.iter().collect();
+            let mut b_keypoints: Vec<_> = b.keypoints.iter().collect();
             a_keypoints.sort_unstable_by(|k1, k2| k1.time.partial_cmp(&k2.time).unwrap());
             b_keypoints.sort_unstable_by(|k1, k2| k1.time.partial_cmp(&k2.time).unwrap());
+
             for (a_kp, b_kp) in a_keypoints.iter().zip(b_keypoints) {
                 if !(approx_eq!(f32, a_kp.time, b_kp.time)
                     && approx_eq!(f32, a_kp.value, b_kp.value)
