@@ -4,6 +4,7 @@
 
 ## [7.4.4] - August 22nd, 2024
 * Fixed issue with reading attributes from `Lighting` in new place files
+* `Instance.Archivable` will now default to `true` when building a project into a binary (`rbxm`/`rbxl`) file rather than `false`.
 
 ## [7.4.3] - August 6th, 2024
 * Fixed issue with building binary files introduced in 7.4.2
