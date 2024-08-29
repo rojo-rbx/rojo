@@ -477,3 +477,42 @@ fn ref_properties_remove() {
         );
     });
 }
+
+/// When Ref properties were first implemented, a mistake was made that resulted
+/// in Ref properties defined via attributes not being included in patch
+/// computation, which resulted in subsequent patches setting those properties
+/// to `nil`.
+///
+/// See: https://github.com/rojo-rbx/rojo/issues/929
+#[test]
+fn ref_properties_patch_update() {
+    // Reusing ref_properties is fun and easy.
+    run_serve_test("ref_properties", |session, mut redactions| {
+        let info = session.get_api_rojo().unwrap();
+        let root_id = info.root_instance_id;
+
+        assert_yaml_snapshot!(
+            "ref_properties_patch_update_info",
+            redactions.redacted_yaml(info)
+        );
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "ref_properties_patch_update_all",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+
+        let project_path = session.path().join("default.project.json");
+        let mut project_content = fs::read(&project_path).unwrap();
+        // Adding a newline to force the change processor to pick up a change.
+        project_content.push(b'\n');
+
+        fs::write(project_path, project_content).unwrap();
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "ref_properties_patch_update_all-2",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+    });
+}
