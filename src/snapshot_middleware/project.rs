@@ -539,7 +539,7 @@ fn project_node_property_syncback<'inst>(
                 for (attr_name, attr_value) in attrs.iter() {
                     // We (probably) don't want to preserve internal attributes,
                     // only user defined ones.
-                    if attr_name.starts_with("RBX_") {
+                    if attr_name.starts_with("RBX") {
                         continue;
                     }
                     attributes.insert(
