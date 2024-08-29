@@ -10,7 +10,6 @@ use clap::Parser;
 use fs_err::File;
 use memofs::Vfs;
 use rbx_dom_weak::{InstanceBuilder, WeakDom};
-use rbx_reflection::ReflectionDatabase;
 use termcolor::{BufferWriter, Color, ColorChoice, ColorSpec, WriteColor};
 
 use crate::{
@@ -155,26 +154,18 @@ impl SyncbackCommand {
 fn read_dom(path: &Path, file_kind: FileKind) -> anyhow::Result<WeakDom> {
     let content = BufReader::new(File::open(path)?);
     match file_kind {
-        FileKind::Rbxl => {
-            // HACK: A custom reflection database is used to deserialize UniqueId
-            let db = binary_db().expect("A custom ReflectionDatabase to deserialize UniqueId");
-            let binary_decoder = rbx_binary::Deserializer::new().reflection_database(&db);
-            binary_decoder.deserialize(content).with_context(|| {
-                format!(
-                    "Could not deserialize binary place file at {}",
-                    path.display()
-                )
-            })
-        }
+        FileKind::Rbxl => rbx_binary::from_reader(content).with_context(|| {
+            format!(
+                "Could not deserialize binary place file at {}",
+                path.display()
+            )
+        }),
         FileKind::Rbxlx => rbx_xml::from_reader(content, xml_decode_config())
             .with_context(|| format!("Could not deserialize XML place file at {}", path.display())),
         FileKind::Rbxm => {
-            // HACK: A custom reflection database is used to deserialize UniqueId
-            let db = binary_db().expect("A custom ReflectionDatabase to deserialize UniqueId");
-            let binary_decoder = rbx_binary::Deserializer::new().reflection_database(&db);
-            let temp_tree = binary_decoder.deserialize(content).with_context(|| {
+            let temp_tree = rbx_binary::from_reader(content).with_context(|| {
                 format!(
-                    "Could not deserialize binary model file at {}",
+                    "Could not deserialize binary place file at {}",
                     path.display()
                 )
             })?;
@@ -218,31 +209,6 @@ fn process_model_dom(dom: WeakDom) -> anyhow::Result<WeakDom> {
 
 fn xml_decode_config() -> rbx_xml::DecodeOptions<'static> {
     rbx_xml::DecodeOptions::new().property_behavior(rbx_xml::DecodePropertyBehavior::ReadUnknown)
-}
-
-fn binary_db() -> Option<ReflectionDatabase<'static>> {
-    // HACK: UniqueId does not deserialize right now, so we force it to
-    // Don't forget to change this in the syncback test when changing it here.
-    use rbx_reflection::{PropertyKind, PropertySerialization};
-    use std::borrow::Cow;
-
-    let mut unique_id = rbx_reflection_database::get()
-        .classes
-        .get("Instance")?
-        .properties
-        .get("UniqueId")?
-        .clone();
-    unique_id.kind = PropertyKind::Canonical {
-        serialization: PropertySerialization::Serializes,
-    };
-
-    let mut db = rbx_reflection_database::get().clone();
-    let instance = db.classes.get_mut("Instance")?;
-    instance
-        .properties
-        .insert(Cow::Borrowed("UniqueId"), unique_id);
-
-    Some(db)
 }
 
 /// The different kinds of input that Rojo can syncback.
