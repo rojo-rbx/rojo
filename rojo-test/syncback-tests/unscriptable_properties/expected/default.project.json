@@ -15,10 +15,7 @@
     },
     "Workspace": {
       "$properties": {
-        "CSGAsyncDynamicCollision": {
-          "Enum": 0
-        },
-        "DecreaseMinimumPartDensityMode": {
+        "EditorLiveScripting": {
           "Enum": 0
         },
         "SignalBehavior": "Deferred",

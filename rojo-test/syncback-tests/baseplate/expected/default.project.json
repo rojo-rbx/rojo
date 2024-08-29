@@ -33,7 +33,7 @@
     },
     "Workspace": {
       "$properties": {
-        "CSGAsyncDynamicCollision": {
+        "EditorLiveScripting": {
           "Enum": 0
         },
         "SignalBehavior": "Deferred",
