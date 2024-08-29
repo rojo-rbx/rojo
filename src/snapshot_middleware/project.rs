@@ -546,7 +546,7 @@ fn project_node_property_syncback<'inst>(
             Variant::SharedString(_) => {
                 log::warn!(
                     "Rojo cannot serialize the property {}.{name} in project files.\n\
-                    If this is not acceptable, resave the Instance at '{}' manually as an RBXM or RBXMX.", new_inst.class, snapshot.get_new_inst_path(snapshot.new)
+                    If this is not acceptable, resave the Instance at '{}' manually as an RBXM or RBXMX.", new_inst.class, snapshot.get_new_inst_path(new_inst.referent())
                 );
             }
             _ => {
