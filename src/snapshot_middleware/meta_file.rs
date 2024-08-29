@@ -85,6 +85,11 @@ impl AdjacentMetadata {
             match value {
                 Variant::Attributes(attrs) => {
                     for (attr_name, attr_value) in attrs.iter() {
+                        // We (probably) don't want to preserve internal
+                        // attributes, only user defined ones.
+                        if attr_name.starts_with("RBX_") {
+                            continue;
+                        }
                         attributes.insert(
                             attr_name.clone(),
                             UnresolvedValue::from_variant_unambiguous(attr_value.clone()),
@@ -266,6 +271,11 @@ impl DirectoryMetadata {
             match value {
                 Variant::Attributes(attrs) => {
                     for (name, value) in attrs.iter() {
+                        // We (probably) don't want to preserve internal
+                        // attributes, only user defined ones.
+                        if name.starts_with("RBX_") {
+                            continue;
+                        }
                         attributes.insert(
                             name.to_owned(),
                             UnresolvedValue::from_variant_unambiguous(value.clone()),
