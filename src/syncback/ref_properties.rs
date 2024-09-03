@@ -87,7 +87,6 @@ pub fn link_referents(links: RefLinks, dom: &mut WeakDom) -> anyhow::Result<()> 
     write_id_attributes(&links, dom)?;
 
     let mut prop_list = Vec::new();
-    let mut attribute_list = HashMap::new();
 
     for (inst_id, properties) in links.prop_links {
         for ref_link in properties {
@@ -104,9 +103,7 @@ pub fn link_referents(links: RefLinks, dom: &mut WeakDom) -> anyhow::Result<()> 
             None => continue,
         };
 
-        // TODO: Replace this whole rigamarole with `Attributes::drain`
-        // eventually.
-        let attributes = match inst.properties.remove("Attributes") {
+        let mut attributes: Attributes = match inst.properties.remove("Attributes") {
             Some(Variant::Attributes(attrs)) => attrs,
             None => Attributes::new(),
             Some(value) => {
@@ -115,26 +112,20 @@ pub fn link_referents(links: RefLinks, dom: &mut WeakDom) -> anyhow::Result<()> 
                     value.ty()
                 );
             }
-        };
-        for (name, value) in attributes.into_iter() {
-            if !name.starts_with(REF_POINTER_ATTRIBUTE_PREFIX) {
-                attribute_list.insert(name, value);
-            }
         }
+        .into_iter()
+        .filter(|(name, _)| !name.starts_with(REF_POINTER_ATTRIBUTE_PREFIX))
+        .collect();
 
         for (prop_name, prop_value) in prop_list.drain(..) {
-            attribute_list.insert(
+            attributes.insert(
                 format!("{REF_POINTER_ATTRIBUTE_PREFIX}{prop_name}"),
                 prop_value,
             );
         }
 
-        // TODO: Same as above, when `Attributes::drain` is live, replace this
-        // with it.
-        inst.properties.insert(
-            "Attributes".into(),
-            Attributes::from_iter(attribute_list.drain()).into(),
-        );
+        inst.properties
+            .insert("Attributes".into(), attributes.into());
     }
 
     Ok(())
