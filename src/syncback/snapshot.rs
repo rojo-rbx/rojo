@@ -131,6 +131,13 @@ impl<'sync> SyncbackSnapshot<'sync> {
         inst_path(self.new_tree(), referent)
     }
 
+    /// Returns a path to the provided Instance in the old DOM. This path is
+    /// where you would look for the object in Roblox Studio.
+    #[inline]
+    pub fn get_old_inst_path(&self, referent: Ref) -> String {
+        inst_path(self.old_tree(), referent)
+    }
+
     /// Returns an Instance from the old tree with the provided referent, if it
     /// exists.
     #[inline]

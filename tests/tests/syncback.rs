@@ -31,4 +31,5 @@ syncback_basic_test! {
     child_but_not,
     ignore_trees,
     ignore_paths_removing,
+    ignore_trees_removing,
 }

@@ -231,14 +231,23 @@ pub fn syncback_loop(
                 "removed children for {inst_path}: {}",
                 syncback.removed_children.len()
             );
-            for inst in &syncback.removed_children {
+            'remove: for inst in &syncback.removed_children {
                 let path = inst.metadata().instigating_source.as_ref().unwrap().path();
+                let inst_path = snapshot.get_old_inst_path(inst.id());
                 if !is_valid_path(&ignore_patterns, project_path, path) {
                     log::debug!(
                         "Skipping removing {} because its matches an ignore pattern",
                         path.display()
                     );
                     continue;
+                }
+                if let Some(syncback_rules) = &project.syncback_rules {
+                    for ignored in &syncback_rules.ignore_trees {
+                        if inst_path.starts_with(ignored.as_str()) {
+                            log::debug!("Skipping removing {inst_path} because its path is blocked by project");
+                            continue 'remove;
+                        }
+                    }
                 }
                 if path.is_dir() {
                     fs_snapshot.remove_dir(path)

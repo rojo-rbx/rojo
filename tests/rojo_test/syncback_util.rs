@@ -4,7 +4,6 @@ use anyhow::Context;
 use insta::assert_yaml_snapshot;
 use librojo::{snapshot_from_vfs, syncback_loop, FsSnapshot, InstanceContext, Project, RojoTree};
 use memofs::{InMemoryFs, IoResultExt, Vfs, VfsSnapshot};
-use rbx_reflection::ReflectionDatabase;
 use serde::Serialize;
 
 use crate::rojo_test::io_util::{serialize_vec_absolute, SYNCBACK_TESTS_PATH};
