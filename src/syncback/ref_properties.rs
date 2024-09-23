@@ -1,7 +1,7 @@
 //! Implements iterating through an entire WeakDom and linking all Ref
 //! properties using attributes.
 
-use std::collections::{hash_map::Entry, HashMap, VecDeque};
+use std::collections::{HashSet, VecDeque};
 
 use rbx_dom_weak::{
     types::{Attributes, Ref, UniqueId, Variant},
@@ -30,7 +30,7 @@ struct RefLink {
 ///
 /// They can be linked to a dom later using `link_referents`.
 pub fn collect_referents(dom: &WeakDom) -> RefLinks {
-    let mut existing_ids = HashMap::new();
+    let mut ids = HashSet::new();
     let mut need_rewrite = Vec::new();
     let mut links = MultiMap::new();
 
@@ -43,36 +43,33 @@ pub fn collect_referents(dom: &WeakDom) -> RefLinks {
         let instance = dom.get_by_ref(inst_ref).unwrap();
         queue.extend(instance.children().iter().copied());
 
-        // Collect all referent properties for easy access later
         for (property_name, prop_value) in &instance.properties {
-            if let Variant::Ref(prop_ref) = prop_value {
-                // Any Instance that's pointed to as a property needs an ID.
-                let existing_id = match dom.get_by_ref(*prop_ref) {
-                    Some(inst) => get_existing_id(inst),
-                    None => continue,
-                };
-                if let Some(existing_id) = existing_id {
-                    match existing_ids.entry(existing_id) {
-                        Entry::Occupied(entry) => {
-                            if entry.get() != prop_ref {
-                                need_rewrite.push(*prop_ref);
-                            }
-                        }
-                        Entry::Vacant(entry) => {
-                            entry.insert(*prop_ref);
-                        }
-                    }
-                } else {
-                    need_rewrite.push(*prop_ref);
+            let Variant::Ref(prop_ref) = prop_value else {
+                continue;
+            };
+            // Any ref property has to get a Target attribute, which is what the
+            // `link` map is for.
+            links.insert(
+                inst_ref,
+                RefLink {
+                    name: property_name.to_owned(),
+                    value: *prop_ref,
+                },
+            );
+            // Additionally, all ref properties need to have an ID attribute
+            let existing_id = match dom.get_by_ref(*prop_ref) {
+                Some(inst) => get_existing_id(inst),
+                None => continue,
+            };
+            if let Some(existing_id) = existing_id {
+                // If an ID is already on this Instance, we need to check if it
+                // is a duplicate. If it is, rewrite it.
+                if ids.contains(existing_id) {
+                    need_rewrite.push(*prop_ref)
                 }
-                // We also need a list of these properties for linking later
-                links.insert(
-                    inst_ref,
-                    RefLink {
-                        name: property_name.to_owned(),
-                        value: *prop_ref,
-                    },
-                );
+                ids.insert(existing_id);
+            } else {
+                need_rewrite.push(*prop_ref)
             }
         }
     }
