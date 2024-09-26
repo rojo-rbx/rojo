@@ -199,6 +199,11 @@ pub fn syncback_loop(
         let syncback = match middleware.syncback(&snapshot) {
             Ok(syncback) => syncback,
             Err(err) if middleware == Middleware::Dir => {
+                if snapshot.old_inst().is_some() {
+                    // We need to remove the old FS representation if we're
+                    // reserializing it as an rbxm.
+                    fs_snapshot.remove_dir(&snapshot.path);
+                }
                 let new_middleware = match env::var(DEBUG_MODEL_FORMAT_VAR) {
                     Ok(value) if value == "1" => Middleware::Rbxmx,
                     Ok(value) if value == "2" => Middleware::JsonModel,
