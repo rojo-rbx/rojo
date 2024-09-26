@@ -258,7 +258,7 @@ fn localization_to_csv(csv_contents: &str) -> anyhow::Result<Vec<u8>> {
         serde_json::from_str(csv_contents).context("cannot decode JSON from localization table")?;
 
     // TODO sort this better
-    csv.sort_unstable_by(|a, b| a.key.partial_cmp(&b.key).unwrap());
+    csv.sort_by(|a, b| a.source.partial_cmp(&b.source).unwrap());
 
     let mut headers = vec!["Key", "Source", "Context", "Example"];
     // We want both order and a lack of duplicates, so we use a BTreeSet.
