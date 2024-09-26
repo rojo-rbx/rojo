@@ -1,0 +1,9 @@
+---
+source: tests/rojo_test/syncback_util.rs
+assertion_line: 45
+expression: "visualize_fs_snapshot(&fs_snapshot, &output_path)"
+---
+added_files: []
+added_dirs: []
+removed_files: []
+removed_dirs: []

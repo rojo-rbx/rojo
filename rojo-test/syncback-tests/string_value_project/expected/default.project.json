@@ -1,0 +1,20 @@
+{
+  "name": "string_value_project",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "inside_project_file": {
+        "$className": "StringValue",
+        "$properties": {
+          "Value": "imgettingverytiredofwritingthesetests2"
+        }
+      },
+      "on_file_system": {
+        "$attributes": {
+          "imgettingverytiredofwritingthesetests": "person299 was ahead of his time"
+        },
+        "$path": "string_value.txt"
+      }
+    }
+  }
+}

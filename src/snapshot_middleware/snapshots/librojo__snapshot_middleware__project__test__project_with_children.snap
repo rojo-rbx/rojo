@@ -12,6 +12,7 @@ metadata:
   context:
     emit_legacy_scripts: true
   specified_id: ~
+  middleware: ~
 name: children
 class_name: Folder
 properties: {}
@@ -21,14 +22,16 @@ children:
       ignore_unknown_instances: true
       instigating_source:
         ProjectNode:
-          - /foo.project.json
-          - Child
-          - $className: Model
-          - Folder
+          path: /foo.project.json
+          name: Child
+          node:
+            $className: Model
+          parent_class: Folder
       relevant_paths: []
       context:
         emit_legacy_scripts: true
       specified_id: ~
+      middleware: ~
     name: Child
     class_name: Model
     properties: {}

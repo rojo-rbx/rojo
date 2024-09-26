@@ -1,0 +1,13 @@
+{
+  "className": "Folder",
+  "children": [
+    {
+      "name": "value_1",
+      "className": "ObjectValue"
+    },
+    {
+      "name": "value_2",
+      "className": "ObjectValue"
+    }
+  ]
+}

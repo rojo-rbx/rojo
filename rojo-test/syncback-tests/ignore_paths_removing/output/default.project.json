@@ -1,0 +1,33 @@
+{
+  "name": "ignore_paths",
+  "tree": {
+    "$className": "DataModel",
+    "Workspace": {
+      "$properties": {
+        "CSGAsyncDynamicCollision": {
+          "Enum": 0
+        },
+        "DecreaseMinimumPartDensityMode": {
+          "Enum": 0
+        },
+        "MoverConstraintRootBehavior": {
+          "Enum": 0
+        },
+        "RenderingCacheOptimizations": {
+          "Enum": 0
+        },
+        "SignalBehavior": "Deferred",
+        "StreamOutBehavior": "Opportunistic",
+        "StreamingEnabled": true,
+        "StreamingIntegrityMode": "PauseOutsideLoadedArea"
+      },
+      "$path": "src"
+    }
+  },
+  "syncbackRules": {
+    "ignorePaths": [
+      "*.rbxm",
+      "*.luau"
+    ]
+  }
+}

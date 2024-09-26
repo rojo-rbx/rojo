@@ -1,0 +1,53 @@
+{
+  "name": "project_all_middleware",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "client_script": {
+        "$path": "src/client_script.client.luau"
+      },
+      "csv": {
+        "$path": "src/csv.csv"
+      },
+      "csv_init": {
+        "$path": "src/csv_init"
+      },
+      "dir": {
+        "$path": "src/dir"
+      },
+      "dir_with_meta": {
+        "$path": "src/dir_with_meta"
+      },
+      "init_client_script": {
+        "$path": "src/init_client_script"
+      },
+      "init_module_script": {
+        "$path": "src/init_module_script"
+      },
+      "init_server_script": {
+        "$path": "src/init_server_script"
+      },
+      "model_json": {
+        "$path": "src/model_json.model.json"
+      },
+      "module_script": {
+        "$path": "src/module_script.luau"
+      },
+      "project_json": {
+        "$path": "src/project_json.project.json"
+      },
+      "rbxm": {
+        "$path": "src/rbxm.rbxm"
+      },
+      "rbxmx": {
+        "$path": "src/rbxmx.rbxmx"
+      },
+      "server_script": {
+        "$path": "src/server_script.server.luau"
+      },
+      "text": {
+        "$path": "src/text.txt"
+      }
+    }
+  }
+}
