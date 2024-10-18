@@ -13,6 +13,9 @@ use crate::{resolution::UnresolvedValue, snapshot::InstanceSnapshot, RojoRef};
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AdjacentMetadata {
+    #[serde(rename = "$schema", skip_serializing_if = "Option::is_none")]
+    schema: Option<String>,
+
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
 
@@ -104,6 +107,9 @@ impl AdjacentMetadata {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DirectoryMetadata {
+    #[serde(rename = "$schema", skip_serializing_if = "Option::is_none")]
+    schema: Option<String>,
+
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
 

@@ -51,6 +51,9 @@ enum Error {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct Project {
+    #[serde(rename = "$schema", skip_serializing_if = "Option::is_none")]
+    schema: Option<String>,
+
     /// The name of the top-level instance described by the project.
     pub name: Option<String>,
 

@@ -61,6 +61,9 @@ pub fn snapshot_json_model(
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct JsonModel {
+    #[serde(rename = "$schema", skip_serializing_if = "Option::is_none")]
+    schema: Option<String>,
+
     #[serde(alias = "Name")]
     name: Option<String>,
 
