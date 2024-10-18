@@ -1,0 +1,15 @@
+{
+  "name": "ignore_paths",
+  "tree": {
+    "$className": "DataModel",
+    "Workspace": {
+      "$path": "src"
+    }
+  },
+  "syncbackRules": {
+    "ignorePaths": [
+      "src/*.rbxm",
+      "src/folder_name/**"
+    ]
+  }
+}

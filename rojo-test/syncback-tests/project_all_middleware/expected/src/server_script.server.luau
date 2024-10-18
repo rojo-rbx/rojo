@@ -1,0 +1,1 @@
+-- ostracize fraud consciousness seal architecture

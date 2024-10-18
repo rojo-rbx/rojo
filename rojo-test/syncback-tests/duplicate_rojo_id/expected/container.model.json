@@ -1,0 +1,21 @@
+{
+  "className": "Folder",
+  "children": [
+    {
+      "name": "value_1",
+      "className": "ObjectValue",
+      "attributes": {
+        "Rojo_Id": "value_1",
+        "Rojo_Target_Value": "value_1"
+      }
+    },
+    {
+      "name": "value_2",
+      "className": "ObjectValue",
+      "attributes": {
+        "Rojo_Id": "72bc28150ada2e6206442ee300004084",
+        "Rojo_Target_Value": "72bc28150ada2e6206442ee300004084"
+      }
+    }
+  ]
+}

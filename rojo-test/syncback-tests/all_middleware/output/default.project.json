@@ -1,0 +1,9 @@
+{
+  "name": "all_middleware",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$path": "src"
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "server_only",
+  "tree": {
+    "$path": "src/modules"
+  },
+  "globIgnorePaths": [
+    "**Client**"
+  ]
+}

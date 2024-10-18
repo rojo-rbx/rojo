@@ -7,6 +7,7 @@ mod init;
 mod plugin;
 mod serve;
 mod sourcemap;
+mod syncback;
 mod upload;
 
 use std::{borrow::Cow, env, path::Path, str::FromStr};
@@ -21,6 +22,7 @@ pub use self::init::{InitCommand, InitKind};
 pub use self::plugin::{PluginCommand, PluginSubcommand};
 pub use self::serve::ServeCommand;
 pub use self::sourcemap::SourcemapCommand;
+pub use self::syncback::SyncbackCommand;
 pub use self::upload::UploadCommand;
 
 /// Command line options that Rojo accepts, defined using the clap crate.
@@ -46,6 +48,7 @@ impl Options {
             Subcommand::FmtProject(subcommand) => subcommand.run(),
             Subcommand::Doc(subcommand) => subcommand.run(),
             Subcommand::Plugin(subcommand) => subcommand.run(),
+            Subcommand::Syncback(subcommand) => subcommand.run(self.global),
         }
     }
 }
@@ -119,6 +122,7 @@ pub enum Subcommand {
     FmtProject(FmtProjectCommand),
     Doc(DocCommand),
     Plugin(PluginCommand),
+    Syncback(SyncbackCommand),
 }
 
 pub(super) fn resolve_path(path: &Path) -> Cow<'_, Path> {

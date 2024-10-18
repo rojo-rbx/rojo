@@ -1,0 +1,10 @@
+<roblox version="4">
+  <Meta name="ExplicitAutoJoints">true</Meta>
+  <External>null</External>
+  <External>nil</External>
+  <Item class="Message" referent="0">
+    <Properties>
+      <string name="Name">rbxmx</string>
+    </Properties>
+  </Item>
+</roblox>

@@ -1,0 +1,14 @@
+{
+  "name": "ignore_trees",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$path": "src"
+    }
+  },
+  "syncbackRules": {
+    "ignoreTrees": [
+      "ReplicatedStorage/IgnoreMe"
+    ]
+  }
+}

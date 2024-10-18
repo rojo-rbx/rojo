@@ -1,0 +1,16 @@
+{
+  "name": "unscriptable_properties",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "Model": {
+        "$className": "Model"
+      }
+    },
+    "Workspace": {}
+  },
+  "syncbackRules": {
+    "syncUnscriptable": true,
+    "ignoreReferents": true
+  }
+}
