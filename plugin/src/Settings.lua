@@ -13,6 +13,7 @@ local defaultSettings = {
 	openScriptsExternally = false,
 	twoWaySync = false,
 	showNotifications = true,
+	syncLock = true,
 	syncReminder = true,
 	checkForUpdates = true,
 	checkForPrereleases = false,

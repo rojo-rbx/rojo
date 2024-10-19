@@ -104,6 +104,14 @@ function SettingsPage:render()
 					layoutOrder = layoutIncrement(),
 				}),
 
+				SyncLock = e(Setting, {
+					id = "syncLock",
+					name = "Sync Lock",
+					description = "Toggle sync lock",
+					transparency = self.props.transparency,
+					layoutOrder = layoutIncrement(),
+				}),
+
 				SyncReminder = e(Setting, {
 					id = "syncReminder",
 					name = "Sync Reminder",

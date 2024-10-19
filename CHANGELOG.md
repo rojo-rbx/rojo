@@ -1,5 +1,8 @@
 # Rojo Changelog
 
+## [7.4.3] - 31 July, 2024
+* Added Sync lock toggle
+
 ## Unreleased Changes
 * Projects may now manually link `Ref` properties together using `Attributes`. ([#843])
  	This has two parts: using `id` or `$id` in JSON files or a `Rojo_Target` attribute, an Instance
