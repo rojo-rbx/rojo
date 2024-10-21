@@ -17,6 +17,7 @@ mod rbxmx;
 mod toml;
 mod txt;
 mod util;
+mod yaml;
 
 use std::{
     path::{Path, PathBuf},
@@ -41,6 +42,7 @@ use self::{
     rbxmx::snapshot_rbxmx,
     toml::snapshot_toml,
     txt::snapshot_txt,
+    yaml::snapshot_yaml,
 };
 
 pub use self::{project::snapshot_project_node, util::emit_legacy_scripts_default};
@@ -207,6 +209,7 @@ pub enum Middleware {
     Rbxmx,
     Toml,
     Text,
+    Yaml,
     Ignore,
 }
 
@@ -232,6 +235,7 @@ impl Middleware {
             Self::Rbxmx => snapshot_rbxmx(context, vfs, path, name),
             Self::Toml => snapshot_toml(context, vfs, path, name),
             Self::Text => snapshot_txt(context, vfs, path, name),
+            Self::Yaml => snapshot_yaml(context, vfs, path, name),
             Self::Ignore => Ok(None),
         }
     }
@@ -295,6 +299,7 @@ pub fn default_sync_rules() -> &'static [SyncRule] {
             sync_rule!("*.txt", Text),
             sync_rule!("*.rbxmx", Rbxmx),
             sync_rule!("*.rbxm", Rbxm),
+            sync_rule!("*.{yml,yaml}", Yaml),
         ]
     })
 }
