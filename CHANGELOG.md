@@ -72,9 +72,12 @@
  	| `rbxm`         | `.rbxm`         |
  	| `rbxmx`        | `.rbxmx`        |
  	| `project`      | `.project.json` |
+    | `yaml`         | `.yml`          |
  	| `ignore`       | None!           |
 
     **All** sync rules are reset between project files, so they must be specified in each one when nesting them. This is to ensure that nothing can break other projects by changing how files are synced!
+
+* Added the ability to sync `YAML` files into ModuleScripts in the same way that `TOML` and `JSON` files are synced. This will apply to `.yml` and `.yaml` files. ([#913])
 
 [#813]: https://github.com/rojo-rbx/rojo/pull/813
 [#832]: https://github.com/rojo-rbx/rojo/pull/832
@@ -85,6 +88,7 @@
 [#883]: https://github.com/rojo-rbx/rojo/pull/883
 [#886]: https://github.com/rojo-rbx/rojo/pull/886
 [#911]: https://github.com/rojo-rbx/rojo/pull/911
+[#913]: https://github.com/rojo-rbx/rojo/pull/913
 [#915]: https://github.com/rojo-rbx/rojo/pull/915
 [#974]: https://github.com/rojo-rbx/rojo/pull/974
 
