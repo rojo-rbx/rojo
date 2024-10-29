@@ -304,7 +304,6 @@ mod test {
 
     use std::borrow::Cow;
 
-    use maplit::hashmap;
     use rbx_dom_weak::types::Variant;
 
     use super::super::PatchAdd;
@@ -322,9 +321,7 @@ mod test {
             metadata: Default::default(),
             name: Cow::Borrowed("Foo"),
             class_name: Cow::Borrowed("Bar"),
-            properties: hashmap! {
-                "Baz".to_owned() => Variant::Int32(5),
-            },
+            properties: [("Baz".to_owned(), Variant::Int32(5))].into(),
             children: Vec::new(),
         };
 
@@ -367,16 +364,15 @@ mod test {
             id: root_id,
             changed_name: Some("Foo".to_owned()),
             changed_class_name: Some("NewClassName".to_owned()),
-            changed_properties: hashmap! {
+            changed_properties: [
                 // The value of Foo has changed
-                "Foo".to_owned() => Some(Variant::Int32(8)),
-
+                ("Foo".to_owned(), Some(Variant::Int32(8))),
                 // Bar has been deleted
-                "Bar".to_owned() => None,
-
+                ("Bar".to_owned(), None),
                 // Baz has been added
-                "Baz".to_owned() => Some(Variant::Int32(10)),
-            },
+                ("Baz".to_owned(), Some(Variant::Int32(10))),
+            ]
+            .into(),
             changed_metadata: None,
         };
 
@@ -387,11 +383,12 @@ mod test {
 
         apply_patch_set(&mut tree, patch_set);
 
-        let expected_properties = hashmap! {
-            "Foo".to_owned() => Variant::Int32(8),
-            "Baz".to_owned() => Variant::Int32(10),
-            "Unchanged".to_owned() => Variant::Int32(-5),
-        };
+        let expected_properties = [
+            ("Foo".to_owned(), Variant::Int32(8)),
+            ("Baz".to_owned(), Variant::Int32(10)),
+            ("Unchanged".to_owned(), Variant::Int32(-5)),
+        ]
+        .into();
 
         let root_instance = tree.get_instance(root_id).unwrap();
         assert_eq!(root_instance.name(), "Foo");

@@ -116,7 +116,6 @@ pub fn snapshot_lua_init(
 mod test {
     use super::*;
 
-    use maplit::hashmap;
     use memofs::{InMemoryFs, VfsSnapshot};
 
     #[test]
@@ -263,9 +262,7 @@ mod test {
         let mut imfs = InMemoryFs::new();
         imfs.load_snapshot(
             "/root",
-            VfsSnapshot::dir(hashmap! {
-                "init.lua" => VfsSnapshot::file("Hello!"),
-            }),
+            VfsSnapshot::dir([("init.lua", VfsSnapshot::file("Hello!"))]),
         )
         .unwrap();
 
