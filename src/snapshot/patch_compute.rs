@@ -299,8 +299,6 @@ mod test {
 
     use std::borrow::Cow;
 
-    use maplit::hashmap;
-
     /// This test makes sure that rewriting refs in instance update patches to
     /// instances that already exists works. We should be able to correlate the
     /// snapshot ID and instance ID during patch computation and replace the
@@ -316,9 +314,7 @@ mod test {
         let snapshot_id = Ref::new();
         let snapshot = InstanceSnapshot {
             snapshot_id: snapshot_id,
-            properties: hashmap! {
-                "Self".to_owned() => Variant::Ref(snapshot_id),
-            },
+            properties: [("Self".to_owned(), Variant::Ref(snapshot_id))].into(),
 
             metadata: Default::default(),
             name: Cow::Borrowed("foo"),
@@ -333,9 +329,7 @@ mod test {
                 id: root_id,
                 changed_name: None,
                 changed_class_name: None,
-                changed_properties: hashmap! {
-                    "Self".to_owned() => Some(Variant::Ref(root_id)),
-                },
+                changed_properties: [("Self".to_owned(), Some(Variant::Ref(root_id)))].into(),
                 changed_metadata: None,
             }],
             added_instances: Vec::new(),
@@ -359,9 +353,7 @@ mod test {
         let snapshot = InstanceSnapshot {
             snapshot_id: snapshot_id,
             children: vec![InstanceSnapshot {
-                properties: hashmap! {
-                    "Self".to_owned() => Variant::Ref(snapshot_id),
-                },
+                properties: [("Self".to_owned(), Variant::Ref(snapshot_id))].into(),
 
                 snapshot_id: Ref::none(),
                 metadata: Default::default(),
@@ -384,9 +376,7 @@ mod test {
                 instance: InstanceSnapshot {
                     snapshot_id: Ref::none(),
                     metadata: Default::default(),
-                    properties: hashmap! {
-                        "Self".to_owned() => Variant::Ref(root_id),
-                    },
+                    properties: [("Self".to_owned(), Variant::Ref(root_id))].into(),
                     name: Cow::Borrowed("child"),
                     class_name: Cow::Borrowed("child"),
                     children: Vec::new(),

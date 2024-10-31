@@ -1,7 +1,6 @@
 use std::{collections::BTreeMap, path::Path};
 
 use anyhow::Context;
-use maplit::hashmap;
 use memofs::{IoResultExt, Vfs};
 use serde::Serialize;
 
@@ -31,9 +30,7 @@ pub fn snapshot_csv(
     let mut snapshot = InstanceSnapshot::new()
         .name(name)
         .class_name("LocalizationTable")
-        .properties(hashmap! {
-            "Contents".to_owned() => table_contents.into(),
-        })
+        .properties([("Contents".to_owned(), table_contents.into())])
         .metadata(
             InstanceMetadata::new()
                 .instigating_source(path)

@@ -108,7 +108,6 @@ pub fn snapshot_dir_no_meta(
 mod test {
     use super::*;
 
-    use maplit::hashmap;
     use memofs::{InMemoryFs, VfsSnapshot};
 
     #[test]
@@ -132,9 +131,7 @@ mod test {
         let mut imfs = InMemoryFs::new();
         imfs.load_snapshot(
             "/foo",
-            VfsSnapshot::dir(hashmap! {
-                "Child" => VfsSnapshot::empty_dir(),
-            }),
+            VfsSnapshot::dir([("Child", VfsSnapshot::empty_dir())]),
         )
         .unwrap();
 
