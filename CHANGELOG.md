@@ -29,7 +29,7 @@
 * Added experimental setting for Auto Connect in playtests ([#840])
 * Improved settings UI ([#886])
 * `Open Scripts Externally` option can now be changed while syncing ([#911])
-* Projects may now specify rules for syncing files as if they had a different file extension. ([#813])
+* Projects may now specify rules for syncing files as if they had a different file extension. ([#813], [#909])
  	This is specified via a new field on project files, `syncRules`:
 
  	```json
@@ -57,7 +57,7 @@
 
     Additionally, the `exclude` field allows files to be excluded from the sync rule if they match a pattern specified by it. If it's not present, all files that match `pattern` will be modified using the sync rule.
 
- 	The `use` field corresponds to one of the potential file type that Rojo will currently include in a project. Files that match the provided pattern will be treated as if they had the file extension for that file type. A full list is below:
+ 	The `use` field corresponds to one of the potential file type that Rojo will currently include in a project. Files that match the provided pattern will be treated as if they had the file extension for that file type.
 
  	| `use` value    | file extension  |
  	|:---------------|:----------------|
@@ -74,6 +74,15 @@
  	| `project`      | `.project.json` |
  	| `ignore`       | None!           |
 
+	Additionally, there are `use` values for specific script types:
+
+	| `use` value              | script type                            |
+	|:-------------------------|:---------------------------------------|
+	| `legacyServerScript`     | `Script` with `Enum.RunContext.Legacy` |
+	| `legactClientScript`     | `LocalScript`                          |
+	| `runContextServerScript` | `Script` with `Enum.RunContext.Server` |
+	| `runContextClientScript` | `Script` with `Enum.RunContext.Client` |
+
     **All** sync rules are reset between project files, so they must be specified in each one when nesting them. This is to ensure that nothing can break other projects by changing how files are synced!
 
 [#813]: https://github.com/rojo-rbx/rojo/pull/813
@@ -84,6 +93,7 @@
 [#843]: https://github.com/rojo-rbx/rojo/pull/843
 [#883]: https://github.com/rojo-rbx/rojo/pull/883
 [#886]: https://github.com/rojo-rbx/rojo/pull/886
+[#909]: https://github.com/rojo-rbx/rojo/pull/909
 [#911]: https://github.com/rojo-rbx/rojo/pull/911
 [#915]: https://github.com/rojo-rbx/rojo/pull/915
 [#974]: https://github.com/rojo-rbx/rojo/pull/974
