@@ -1,7 +1,6 @@
 use std::borrow::Cow;
 
 use insta::assert_yaml_snapshot;
-use maplit::hashmap;
 
 use rbx_dom_weak::types::Ref;
 use rojo_insta_ext::RedactionMap;
@@ -42,9 +41,7 @@ fn set_property() {
         metadata: Default::default(),
         name: Cow::Borrowed("ROOT"),
         class_name: Cow::Borrowed("ROOT"),
-        properties: hashmap! {
-            "PropertyName".to_owned() => "Hello, world!".into(),
-        },
+        properties: [("PropertyName".into(), "Hello, world!".into())].into(),
         children: Vec::new(),
     };
 

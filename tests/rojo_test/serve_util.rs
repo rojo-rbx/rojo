@@ -83,11 +83,20 @@ impl TestServeSession {
                 .expect("Couldn't copy project to temporary directory");
         };
 
+        // This is an ugly workaround for FSEvents sometimes reporting events
+        // for the above copy operations, similar to this Stack Overflow question:
+        // https://stackoverflow.com/questions/47679298/howto-avoid-receiving-old-events-in-fseventstream-callback-fsevents-framework-o
+        // We'll hope that 100ms is enough for FSEvents to get whatever it is
+        // out of its system.
+        // TODO: find a better way to avoid processing these spurious events.
+        #[cfg(target_os = "macos")]
+        std::thread::sleep(Duration::from_millis(100));
+
         let port = get_port_number();
         let port_string = port.to_string();
 
         let rojo_process = Command::new(ROJO_PATH)
-            .args(&[
+            .args([
                 "serve",
                 project_path.to_str().unwrap(),
                 "--port",
@@ -145,14 +154,14 @@ impl TestServeSession {
 
     pub fn get_api_rojo(&self) -> Result<ServerInfoResponse, reqwest::Error> {
         let url = format!("http://localhost:{}/api/rojo", self.port);
-        let body = reqwest::blocking::get(&url)?.text()?;
+        let body = reqwest::blocking::get(url)?.text()?;
 
         Ok(serde_json::from_str(&body).expect("Server returned malformed response"))
     }
 
     pub fn get_api_read(&self, id: Ref) -> Result<ReadResponse, reqwest::Error> {
         let url = format!("http://localhost:{}/api/read/{}", self.port, id);
-        let body = reqwest::blocking::get(&url)?.text()?;
+        let body = reqwest::blocking::get(url)?.text()?;
 
         Ok(serde_json::from_str(&body).expect("Server returned malformed response"))
     }
@@ -163,7 +172,7 @@ impl TestServeSession {
     ) -> Result<SubscribeResponse<'static>, reqwest::Error> {
         let url = format!("http://localhost:{}/api/subscribe/{}", self.port, cursor);
 
-        reqwest::blocking::get(&url)?.json()
+        reqwest::blocking::get(url)?.json()
     }
 }
 

@@ -67,7 +67,7 @@ impl SourcemapCommand {
         let vfs = Vfs::new_default();
         vfs.set_watch_enabled(self.watch);
 
-        let session = ServeSession::new(vfs, &project_path)?;
+        let session = ServeSession::new(vfs, project_path)?;
         let mut cursor = session.message_queue().cursor();
 
         let filter = if self.include_non_scripts {

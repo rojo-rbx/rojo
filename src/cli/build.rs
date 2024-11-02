@@ -23,7 +23,7 @@ const UNKNOWN_PLUGIN_KIND_ERR: &str = "Could not detect what kind of file to bui
 /// Generates a model or place file from the Rojo project.
 #[derive(Debug, Parser)]
 pub struct BuildCommand {
-    /// Path to the project to serve. Defaults to the current directory.
+    /// Path to the project to build. Defaults to the current directory.
     #[clap(default_value = "")]
     pub project: PathBuf,
 

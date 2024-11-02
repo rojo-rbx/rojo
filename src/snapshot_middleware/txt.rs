@@ -1,6 +1,5 @@
 use std::{path::Path, str};
 
-use maplit::hashmap;
 use memofs::{IoResultExt, Vfs};
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
@@ -16,9 +15,7 @@ pub fn snapshot_txt(
     let contents = vfs.read_to_string(path)?;
     let contents_str = contents.as_str();
 
-    let properties = hashmap! {
-        "Value".to_owned() => contents_str.into(),
-    };
+    let properties = [("Value".to_owned(), contents_str.into())];
 
     let meta_path = path.with_file_name(format!("{}.meta.json", name));
 
