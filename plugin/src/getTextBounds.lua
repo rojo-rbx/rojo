@@ -1,0 +1,26 @@
+local TextService = game:GetService("TextService")
+
+local Rojo = script:FindFirstAncestor("Rojo")
+local Packages = Rojo.Packages
+
+local Log = require(Packages.Log)
+
+local params = Instance.new("GetTextBoundsParams")
+
+local function getTextBounds(text: string, font: Font, textSize: number, width: number, richText: boolean?): Vector2
+	params.Text = text
+	params.Font = font
+	params.Size = textSize
+	params.Width = width
+	params.RichText = not not richText
+
+	local success, bounds = pcall(TextService.GetTextBoundsAsync, TextService, params)
+	if not success then
+		Log.warn(`Failed to get text bounds: {bounds}`)
+		return Vector2.zero
+	end
+
+	return bounds
+end
+
+return getTextBounds
