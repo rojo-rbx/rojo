@@ -161,7 +161,7 @@ function Notification:render()
 					}),
 					Info = e("TextLabel", {
 						Text = self.props.text,
-						Font = Enum.Font.GothamMedium,
+						FontFace = theme.Font.Main,
 						TextSize = theme.TextSize.Body,
 						TextColor3 = theme.Notification.InfoColor,
 						TextTransparency = transparency,

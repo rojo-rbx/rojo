@@ -44,7 +44,7 @@ return function(props)
 				else nil,
 			Text = e("TextLabel", {
 				Text = props.text,
-				Font = Enum.Font.GothamMedium,
+				FontFace = theme.Font.Main,
 				TextSize = theme.TextSize.Small,
 				TextColor3 = props.color,
 				TextXAlignment = Enum.TextXAlignment.Center,

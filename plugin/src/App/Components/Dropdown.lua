@@ -66,7 +66,7 @@ function Dropdown:render()
 				TextColor3 = dropdownTheme.TextColor,
 				TextXAlignment = Enum.TextXAlignment.Left,
 				TextSize = theme.TextSize.Body,
-				Font = Enum.Font.GothamMedium,
+				FontFace = theme.Font.Main,
 
 				[Roact.Event.Activated] = function()
 					if self.props.locked then
@@ -126,7 +126,7 @@ function Dropdown:render()
 					Position = UDim2.new(0, 6, 0, 0),
 					BackgroundTransparency = 1,
 					Text = self.props.active,
-					Font = Enum.Font.GothamMedium,
+					FontFace = theme.Font.Main,
 					TextSize = theme.TextSize.Body,
 					TextColor3 = dropdownTheme.TextColor,
 					TextXAlignment = Enum.TextXAlignment.Left,

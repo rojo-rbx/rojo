@@ -49,7 +49,7 @@ function CodeLabel:render()
 			Position = self.props.position,
 			Text = self.props.text,
 			BackgroundTransparency = 1,
-			Font = Enum.Font.RobotoMono,
+			FontFace = theme.Font.Code,
 			TextSize = theme.TextSize.Code,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			TextYAlignment = Enum.TextYAlignment.Top,

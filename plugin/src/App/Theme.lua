@@ -42,7 +42,11 @@ function StudioProvider:updateTheme()
 				Enum.FontWeight.Regular,
 				Enum.FontStyle.Normal
 			),
-			Code = Font.new("rbxasset://fonts/families/RobotoMono.json", Enum.FontWeight.Medium, Enum.FontStyle.Normal),
+			Code = Font.new(
+				"rbxasset://fonts/families/Inconsolata.json",
+				Enum.FontWeight.Regular,
+				Enum.FontStyle.Normal
+			),
 		},
 		TextSize = {
 			Body = 14,

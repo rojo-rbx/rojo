@@ -83,7 +83,7 @@ function TextButton:render()
 
 			Text = e("TextLabel", {
 				Text = self.props.text,
-				Font = Enum.Font.GothamMedium,
+				FontFace = theme.Font.Main,
 				TextSize = theme.TextSize.Large,
 				TextColor3 = bindingUtil.mapLerp(
 					bindingEnabled,

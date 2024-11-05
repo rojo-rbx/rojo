@@ -225,7 +225,7 @@ function DomLabel:render()
 				Text = (if props.isWarning then "⚠ " else "") .. props.name,
 				RichText = true,
 				BackgroundTransparency = 1,
-				Font = if props.patchType then Enum.Font.GothamBold else Enum.Font.GothamMedium,
+				FontFace = if props.patchType then theme.Font.Bold else theme.Font.Main,
 				TextSize = theme.TextSize.Body,
 				TextColor3 = color,
 				TextXAlignment = Enum.TextXAlignment.Left,
@@ -251,7 +251,7 @@ function DomLabel:render()
 					then e("TextLabel", {
 						Text = props.changeInfo.edits .. if props.changeInfo.failed then "," else "",
 						BackgroundTransparency = 1,
-						Font = Enum.Font.Gotham,
+						FontFace = theme.Font.Thin,
 						TextSize = theme.TextSize.Body,
 						TextColor3 = theme.SubTextColor,
 						TextTransparency = props.transparency,
@@ -264,7 +264,7 @@ function DomLabel:render()
 					then e("TextLabel", {
 						Text = props.changeInfo.failed,
 						BackgroundTransparency = 1,
-						Font = Enum.Font.Gotham,
+						FontFace = theme.Font.Thin,
 						TextSize = theme.TextSize.Body,
 						TextColor3 = theme.Diff.Warning,
 						TextTransparency = props.transparency,

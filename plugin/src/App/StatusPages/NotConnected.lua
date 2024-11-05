@@ -27,7 +27,7 @@ local function AddressEntry(props)
 		}, {
 			Host = e("TextBox", {
 				Text = props.host or "",
-				Font = Enum.Font.Code,
+				FontFace = theme.Font.Code,
 				TextSize = theme.TextSize.Large,
 				TextColor3 = theme.AddressEntry.TextColor,
 				TextXAlignment = Enum.TextXAlignment.Left,
@@ -51,7 +51,7 @@ local function AddressEntry(props)
 
 			Port = e("TextBox", {
 				Text = props.port or "",
-				Font = Enum.Font.Code,
+				FontFace = theme.Font.Code,
 				TextSize = theme.TextSize.Large,
 				TextColor3 = theme.AddressEntry.TextColor,
 				TextTransparency = props.transparency,

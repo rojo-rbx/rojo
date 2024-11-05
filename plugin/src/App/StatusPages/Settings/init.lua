@@ -55,7 +55,7 @@ local function Navbar(props)
 
 			Text = e("TextLabel", {
 				Text = "Settings",
-				Font = Enum.Font.Gotham,
+				FontFace = theme.Font.Thin,
 				TextSize = theme.TextSize.Large,
 				TextColor3 = navbarTheme.TextColor,
 				TextTransparency = props.transparency,

@@ -31,7 +31,7 @@ local function Header(props)
 
 			Version = e("TextLabel", {
 				Text = Version.display(Config.version),
-				Font = Enum.Font.Gotham,
+				FontFace = theme.Font.Thin,
 				TextSize = theme.TextSize.Body,
 				TextColor3 = theme.Header.VersionColor,
 				TextXAlignment = Enum.TextXAlignment.Left,

@@ -61,7 +61,7 @@ function ChangesViewer:render()
 
 				Title = e("TextLabel", {
 					Text = "Sync",
-					Font = Enum.Font.GothamMedium,
+					FontFace = theme.Font.Main,
 					TextSize = theme.TextSize.Large,
 					TextXAlignment = Enum.TextXAlignment.Left,
 					TextColor3 = theme.TextColor,
@@ -74,7 +74,7 @@ function ChangesViewer:render()
 				Subtitle = e("TextLabel", {
 					Text = DateTime.fromUnixTimestamp(self.props.patchData.timestamp):FormatLocalTime("LTS", "en-us"),
 					TextXAlignment = Enum.TextXAlignment.Left,
-					Font = Enum.Font.Gotham,
+					FontFace = theme.Font.Thin,
 					TextSize = theme.TextSize.Medium,
 					TextColor3 = theme.SubTextColor,
 					TextTruncate = Enum.TextTruncate.AtEnd,
@@ -131,7 +131,7 @@ function ChangesViewer:render()
 						}),
 						AppliedText = e("TextLabel", {
 							Text = applied,
-							Font = Enum.Font.Gotham,
+							FontFace = theme.Font.Thin,
 							TextSize = theme.TextSize.Body,
 							TextColor3 = theme.TextColor,
 							TextTransparency = self.props.transparency,
@@ -156,7 +156,7 @@ function ChangesViewer:render()
 								}),
 								UnappliedText = e("TextLabel", {
 									Text = unapplied,
-									Font = Enum.Font.Gotham,
+									FontFace = theme.Font.Thin,
 									TextSize = theme.TextSize.Body,
 									TextColor3 = theme.Diff.Warning,
 									TextTransparency = self.props.transparency,
@@ -217,7 +217,7 @@ local function ConnectionDetails(props)
 			}, {
 				ProjectName = e("TextLabel", {
 					Text = props.projectName,
-					Font = Enum.Font.GothamBold,
+					FontFace = theme.Font.Bold,
 					TextSize = theme.TextSize.Large,
 					TextColor3 = theme.ConnectionDetails.ProjectNameColor,
 					TextTransparency = props.transparency,
@@ -231,7 +231,7 @@ local function ConnectionDetails(props)
 
 				Address = e("TextLabel", {
 					Text = props.address,
-					Font = Enum.Font.Code,
+					FontFace = theme.Font.Code,
 					TextSize = theme.TextSize.Medium,
 					TextColor3 = theme.ConnectionDetails.AddressColor,
 					TextTransparency = props.transparency,
@@ -410,7 +410,7 @@ function ConnectedPage:render()
 						Text = e("TextLabel", {
 							BackgroundTransparency = 1,
 							Text = self.changeInfoText,
-							Font = Enum.Font.Gotham,
+							FontFace = theme.Font.Thin,
 							TextSize = theme.TextSize.Body,
 							TextColor3 = if syncWarning then theme.Diff.Warning else theme.Header.VersionColor,
 							TextTransparency = self.props.transparency,

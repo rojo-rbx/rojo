@@ -124,7 +124,7 @@ function PatchVisualizer:render()
 			CleanMerge = e("TextLabel", {
 				Visible = #scrollElements == 0,
 				Text = "No changes to sync, project is up to date.",
-				Font = Enum.Font.GothamMedium,
+				FontFace = theme.Font.Main,
 				TextSize = theme.TextSize.Medium,
 				TextColor3 = theme.TextColor,
 				TextWrapped = true,

@@ -80,7 +80,7 @@ function TextInput:render()
 				Size = UDim2.fromScale(1, 1),
 				Text = self.props.text,
 				PlaceholderText = self.props.placeholder,
-				Font = Enum.Font.GothamMedium,
+				FontFace = theme.Font.Main,
 				TextColor3 = bindingUtil.mapLerp(
 					bindingEnabled,
 					textInputTheme.Disabled.TextColor,

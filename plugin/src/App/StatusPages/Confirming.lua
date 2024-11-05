@@ -64,7 +64,7 @@ function ConfirmingPage:render()
 					"Sync changes for project '%s':",
 					self.props.confirmData.serverInfo.projectName or "UNKNOWN"
 				),
-				Font = Enum.Font.Gotham,
+				FontFace = theme.Font.Thin,
 				LineHeight = 1.2,
 				TextSize = theme.TextSize.Body,
 				TextColor3 = theme.TextColor,

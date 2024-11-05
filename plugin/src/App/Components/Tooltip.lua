@@ -62,7 +62,7 @@ local function Popup(props)
 				AnchorPoint = Vector2.new(0.5, 0.5),
 				Text = props.Text,
 				TextSize = theme.TextSize.Medium,
-				Font = Enum.Font.GothamMedium,
+				FontFace = theme.Font.Main,
 				TextWrapped = true,
 				TextXAlignment = Enum.TextXAlignment.Left,
 				TextColor3 = theme.Button.Bordered.Enabled.TextColor,

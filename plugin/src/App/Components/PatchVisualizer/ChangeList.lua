@@ -39,7 +39,7 @@ local function ViewDiffButton(props)
 				Label = e("TextLabel", {
 					Text = "View Diff",
 					BackgroundTransparency = 1,
-					Font = Enum.Font.GothamMedium,
+					FontFace = theme.Font.Main,
 					TextSize = theme.TextSize.Body,
 					TextColor3 = theme.Settings.Setting.DescriptionColor,
 					TextXAlignment = Enum.TextXAlignment.Left,
@@ -170,7 +170,7 @@ function ChangeList:render()
 			ColumnA = e("TextLabel", {
 				Text = tostring(headerRow[1]),
 				BackgroundTransparency = 1,
-				Font = Enum.Font.GothamBold,
+				FontFace = theme.Font.Bold,
 				TextSize = theme.TextSize.Body,
 				TextColor3 = theme.TextColor,
 				TextXAlignment = Enum.TextXAlignment.Left,
@@ -182,7 +182,7 @@ function ChangeList:render()
 			ColumnB = e("TextLabel", {
 				Text = tostring(headerRow[2]),
 				BackgroundTransparency = 1,
-				Font = Enum.Font.GothamBold,
+				FontFace = theme.Font.Bold,
 				TextSize = theme.TextSize.Body,
 				TextColor3 = theme.TextColor,
 				TextXAlignment = Enum.TextXAlignment.Left,
@@ -194,7 +194,7 @@ function ChangeList:render()
 			ColumnC = e("TextLabel", {
 				Text = tostring(headerRow[3]),
 				BackgroundTransparency = 1,
-				Font = Enum.Font.GothamBold,
+				FontFace = theme.Font.Bold,
 				TextSize = theme.TextSize.Body,
 				TextColor3 = theme.TextColor,
 				TextXAlignment = Enum.TextXAlignment.Left,
@@ -230,7 +230,7 @@ function ChangeList:render()
 				ColumnA = e("TextLabel", {
 					Text = (if isWarning then "⚠ " else "") .. tostring(values[1]),
 					BackgroundTransparency = 1,
-					Font = Enum.Font.GothamMedium,
+					FontFace = theme.Font.Main,
 					TextSize = theme.TextSize.Body,
 					TextColor3 = if isWarning then theme.Diff.Warning else theme.TextColor,
 					TextXAlignment = Enum.TextXAlignment.Left,
