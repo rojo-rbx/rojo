@@ -9,15 +9,13 @@ local Roact = require(Packages.Roact)
 local Flipper = require(Packages.Flipper)
 local Log = require(Packages.Log)
 
-local bindingUtil = require(script.Parent.bindingUtil)
-
 local Theme = require(Plugin.App.Theme)
 local Assets = require(Plugin.Assets)
+local bindingUtil = require(Plugin.App.bindingUtil)
+local getTextBounds = require(Plugin.App.getTextBounds)
 
 local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
 local TextButton = require(Plugin.App.Components.TextButton)
-
-local getTextBounds = require(Plugin.getTextBounds)
 
 local baseClock = DateTime.now().UnixTimestampMillis
 

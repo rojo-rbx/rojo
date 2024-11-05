@@ -10,6 +10,7 @@ local Flipper = require(Packages.Flipper)
 local Assets = require(Plugin.Assets)
 local Theme = require(Plugin.App.Theme)
 local bindingUtil = require(Plugin.App.bindingUtil)
+local getTextBounds = require(Plugin.App.getTextBounds)
 
 local SlicedImage = require(script.Parent.SlicedImage)
 local ScrollingFrame = require(script.Parent.ScrollingFrame)
@@ -50,9 +51,9 @@ function Dropdown:render()
 		local width = -1
 		for i, option in self.props.options do
 			local text = tostring(option or "")
-			local textSize = TextService:GetTextSize(text, 15, Enum.Font.GothamMedium, Vector2.new(math.huge, 20))
-			if textSize.X > width then
-				width = textSize.X
+			local textBounds = getTextBounds(text, theme.Font.Main, theme.TextSize.Body, math.huge)
+			if textBounds.X > width then
+				width = textBounds.X
 			end
 
 			optionButtons[text] = e("TextButton", {
