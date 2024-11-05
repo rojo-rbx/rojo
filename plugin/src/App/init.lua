@@ -52,9 +52,9 @@ local App = Roact.Component:extend("App")
 function App:init()
 	preloadAssets()
 
-	local priorHost, priorPort = self:getPriorEndpoint()
-	self.host, self.setHost = Roact.createBinding(priorHost or "")
-	self.port, self.setPort = Roact.createBinding(priorPort or "")
+	local priorSyncInfo = self:getPriorSyncInfo()
+	self.host, self.setHost = Roact.createBinding(priorSyncInfo.host or "")
+	self.port, self.setPort = Roact.createBinding(priorSyncInfo.port or "")
 
 	self.confirmationBindable = Instance.new("BindableEvent")
 	self.confirmationEvent = self.confirmationBindable.Event
@@ -145,28 +145,38 @@ function App:init()
 		if
 			Settings:get("syncReminder")
 			and self.serveSession == nil
-			and self:getLastSyncTimestamp()
+			and self:getPriorSyncInfo().timestamp ~= nil
 			and (self:isSyncLockAvailable())
 		then
-			self:addNotification("You've previously synced this place. Would you like to reconnect?", 300, {
-				Connect = {
-					text = "Connect",
-					style = "Solid",
-					layoutOrder = 1,
-					onClick = function(notification)
-						notification:dismiss()
-						self:startSession()
-					end,
-				},
-				Dismiss = {
-					text = "Dismiss",
-					style = "Bordered",
-					layoutOrder = 2,
-					onClick = function(notification)
-						notification:dismiss()
-					end,
-				},
-			})
+			local syncInfo = self:getPriorSyncInfo()
+			local timeSinceSync = timeUtil.elapsedToText(os.time() - syncInfo.timestamp)
+			local syncDetail = if syncInfo.projectName
+				then `project '{syncInfo.projectName}'`
+				else `{syncInfo.host or Config.defaultHost}:{syncInfo.port or Config.defaultPort}`
+
+			self:addNotification(
+				`You synced {syncDetail} to this place {timeSinceSync}. Would you like to reconnect?`,
+				300,
+				{
+					Connect = {
+						text = "Connect",
+						style = "Solid",
+						layoutOrder = 1,
+						onClick = function(notification)
+							notification:dismiss()
+							self:startSession()
+						end,
+					},
+					Dismiss = {
+						text = "Dismiss",
+						style = "Bordered",
+						layoutOrder = 2,
+						onClick = function(notification)
+							notification:dismiss()
+						end,
+					},
+				}
+			)
 		end
 	end
 
@@ -274,54 +284,32 @@ function App:checkForUpdates()
 	)
 end
 
-function App:getPriorEndpoint()
-	local priorEndpoints = Settings:get("priorEndpoints")
-	if not priorEndpoints then
-		return
+function App:getPriorSyncInfo(): { host: string?, port: string?, projectName: string?, timestamp: number? }
+	local priorSyncInfos = Settings:get("priorEndpoints")
+	if not priorSyncInfos then
+		return {}
 	end
 
 	local id = tostring(game.PlaceId)
 	if ignorePlaceIds[id] then
-		return
+		return {}
 	end
 
-	local place = priorEndpoints[id]
-	if not place then
-		return
-	end
-
-	return place.host, place.port
+	return priorSyncInfos[id] or {}
 end
 
-function App:getLastSyncTimestamp()
-	local priorEndpoints = Settings:get("priorEndpoints")
-	if not priorEndpoints then
-		return
+function App:setPriorSyncInfo(host: string, port: string, projectName: string)
+	local priorSyncInfos = Settings:get("priorEndpoints")
+	if not priorSyncInfos then
+		priorSyncInfos = {}
 	end
 
-	local id = tostring(game.PlaceId)
-	if ignorePlaceIds[id] then
-		return
-	end
-
-	local place = priorEndpoints[id]
-	if not place then
-		return
-	end
-
-	return place.timestamp
-end
-
-function App:setPriorEndpoint(host: string, port: string)
-	local priorEndpoints = Settings:get("priorEndpoints")
-	if not priorEndpoints then
-		priorEndpoints = {}
-	end
+	local now = os.time()
 
 	-- Clear any stale saves to avoid disc bloat
-	for placeId, endpoint in priorEndpoints do
-		if os.time() - endpoint.timestamp > 12_960_000 then
-			priorEndpoints[placeId] = nil
+	for placeId, syncInfo in priorSyncInfos do
+		if now - (syncInfo.timestamp or now) > 12_960_000 then
+			priorSyncInfos[placeId] = nil
 			Log.trace("Cleared stale saved endpoint for {}", placeId)
 		end
 	end
@@ -331,14 +319,15 @@ function App:setPriorEndpoint(host: string, port: string)
 		return
 	end
 
-	priorEndpoints[id] = {
+	priorSyncInfos[id] = {
 		host = if host ~= Config.defaultHost then host else nil,
 		port = if port ~= Config.defaultPort then port else nil,
-		timestamp = os.time(),
+		projectName = projectName,
+		timestamp = now,
 	}
 	Log.trace("Saved last used endpoint for {}", game.PlaceId)
 
-	Settings:set("priorEndpoints", priorEndpoints)
+	Settings:set("priorEndpoints", priorSyncInfos)
 end
 
 function App:getHostAndPort()
@@ -533,8 +522,6 @@ function App:startSession()
 
 	serveSession:onStatusChanged(function(status, details)
 		if status == ServeSession.Status.Connecting then
-			self:setPriorEndpoint(host, port)
-
 			self:setState({
 				appStatus = AppStatus.Connecting,
 				toolbarIcon = Assets.Images.PluginButton,
@@ -542,6 +529,7 @@ function App:startSession()
 			self:addNotification("Connecting to session...")
 		elseif status == ServeSession.Status.Connected then
 			self.knownProjects[details] = true
+			self:setPriorSyncInfo(host, port, details)
 			self:setRunningConnectionInfo(baseUrl)
 
 			local address = ("%s:%s"):format(host, port)
