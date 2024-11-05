@@ -34,7 +34,7 @@ function StudioProvider:updateTheme()
 	local isDark = studioTheme.Name == "Dark"
 
 	local theme = strict(studioTheme.Name .. "Theme", {
-		Fonts = {
+		Font = {
 			Main = Font.new("rbxasset://fonts/families/Montserrat.json", Enum.FontWeight.Medium, Enum.FontStyle.Normal),
 			Bold = Font.new("rbxasset://fonts/families/Montserrat.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal),
 			Thin = Font.new(
