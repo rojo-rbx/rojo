@@ -72,7 +72,7 @@ function Error:render()
 					Text = self.props.errorMessage,
 					TextEditable = false,
 					Font = Enum.Font.Code,
-					TextSize = 16,
+					TextSize = theme.TextSize.Code,
 					TextColor3 = theme.ErrorColor,
 					TextXAlignment = Enum.TextXAlignment.Left,
 					TextYAlignment = Enum.TextYAlignment.Top,

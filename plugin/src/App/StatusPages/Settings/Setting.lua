@@ -166,7 +166,7 @@ function Setting:render()
 					Name = e("TextLabel", {
 						Text = self.props.name,
 						Font = Enum.Font.GothamBold,
-						TextSize = 16,
+						TextSize = theme.TextSize.Medium,
 						TextColor3 = if self.props.tag and TAG_TYPES[self.props.tag]
 							then getThemeColorFromPath(theme, TAG_TYPES[self.props.tag].color)
 							else settingsTheme.Setting.NameColor,
@@ -185,7 +185,7 @@ function Setting:render()
 					Text = self.props.description,
 					Font = Enum.Font.Gotham,
 					LineHeight = 1.2,
-					TextSize = 14,
+					TextSize = theme.TextSize.Body,
 					TextColor3 = settingsTheme.Setting.DescriptionColor,
 					TextXAlignment = Enum.TextXAlignment.Left,
 					TextTransparency = self.props.transparency,

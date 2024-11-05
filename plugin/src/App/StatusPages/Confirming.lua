@@ -66,7 +66,7 @@ function ConfirmingPage:render()
 				),
 				Font = Enum.Font.Gotham,
 				LineHeight = 1.2,
-				TextSize = 14,
+				TextSize = theme.TextSize.Body,
 				TextColor3 = theme.TextColor,
 				TextXAlignment = Enum.TextXAlignment.Left,
 				TextTransparency = self.props.transparency,

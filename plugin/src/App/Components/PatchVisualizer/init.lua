@@ -125,7 +125,7 @@ function PatchVisualizer:render()
 				Visible = #scrollElements == 0,
 				Text = "No changes to sync, project is up to date.",
 				Font = Enum.Font.GothamMedium,
-				TextSize = 15,
+				TextSize = theme.TextSize.Medium,
 				TextColor3 = theme.TextColor,
 				TextWrapped = true,
 				Size = UDim2.new(1, 0, 1, 0),

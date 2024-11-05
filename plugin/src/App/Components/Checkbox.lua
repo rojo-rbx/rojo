@@ -32,7 +32,7 @@ end
 
 function Checkbox:render()
 	return Theme.with(function(theme)
-		theme = theme.Checkbox
+		local checkboxTheme = theme.Checkbox
 
 		local activeTransparency = Roact.joinBindings({
 			self.binding:map(function(value)
@@ -63,14 +63,14 @@ function Checkbox:render()
 
 			Active = e(SlicedImage, {
 				slice = Assets.Slices.RoundedBackground,
-				color = theme.Active.BackgroundColor,
+				color = checkboxTheme.Active.BackgroundColor,
 				transparency = activeTransparency,
 				size = UDim2.new(1, 0, 1, 0),
 				zIndex = 2,
 			}, {
 				Icon = e("ImageLabel", {
 					Image = if self.props.locked then Assets.Images.Checkbox.Locked else Assets.Images.Checkbox.Active,
-					ImageColor3 = theme.Active.IconColor,
+					ImageColor3 = checkboxTheme.Active.IconColor,
 					ImageTransparency = activeTransparency,
 
 					Size = UDim2.new(0, 16, 0, 16),
@@ -83,7 +83,7 @@ function Checkbox:render()
 
 			Inactive = e(SlicedImage, {
 				slice = Assets.Slices.RoundedBorder,
-				color = theme.Inactive.BorderColor,
+				color = checkboxTheme.Inactive.BorderColor,
 				transparency = self.props.transparency,
 				size = UDim2.new(1, 0, 1, 0),
 			}, {
@@ -91,7 +91,7 @@ function Checkbox:render()
 					Image = if self.props.locked
 						then Assets.Images.Checkbox.Locked
 						else Assets.Images.Checkbox.Inactive,
-					ImageColor3 = theme.Inactive.IconColor,
+					ImageColor3 = checkboxTheme.Inactive.IconColor,
 					ImageTransparency = self.props.transparency,
 
 					Size = UDim2.new(0, 16, 0, 16),

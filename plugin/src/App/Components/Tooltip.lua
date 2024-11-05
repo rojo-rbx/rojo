@@ -21,35 +21,35 @@ local Y_OVERLAP = 10 -- Let the triangle tail piece overlap the target a bit to 
 local TooltipContext = Roact.createContext({})
 
 local function Popup(props)
-	local textSize = TextService:GetTextSize(
-		props.Text,
-		16,
-		Enum.Font.GothamMedium,
-		Vector2.new(math.min(props.parentSize.X, 160), math.huge)
-	) + TEXT_PADDING + (Vector2.one * 2)
-
-	local trigger = props.Trigger:getValue()
-
-	local spaceBelow = props.parentSize.Y
-		- (trigger.AbsolutePosition.Y + trigger.AbsoluteSize.Y - Y_OVERLAP + TAIL_SIZE)
-	local spaceAbove = trigger.AbsolutePosition.Y + Y_OVERLAP - TAIL_SIZE
-
-	-- If there's not enough space below, and there's more space above, then show the tooltip above the trigger
-	local displayAbove = spaceBelow < textSize.Y and spaceAbove > spaceBelow
-
-	local X = math.clamp(props.Position.X - X_OFFSET, 0, props.parentSize.X - textSize.X)
-	local Y = 0
-
-	if displayAbove then
-		Y = math.max(trigger.AbsolutePosition.Y - TAIL_SIZE - textSize.Y + Y_OVERLAP, 0)
-	else
-		Y = math.min(
-			trigger.AbsolutePosition.Y + trigger.AbsoluteSize.Y + TAIL_SIZE - Y_OVERLAP,
-			props.parentSize.Y - textSize.Y
-		)
-	end
-
 	return Theme.with(function(theme)
+		local textSize = TextService:GetTextSize(
+			props.Text,
+			16,
+			Enum.Font.GothamMedium,
+			Vector2.new(math.min(props.parentSize.X, 160), math.huge)
+		) + TEXT_PADDING + (Vector2.one * 2)
+
+		local trigger = props.Trigger:getValue()
+
+		local spaceBelow = props.parentSize.Y
+			- (trigger.AbsolutePosition.Y + trigger.AbsoluteSize.Y - Y_OVERLAP + TAIL_SIZE)
+		local spaceAbove = trigger.AbsolutePosition.Y + Y_OVERLAP - TAIL_SIZE
+
+		-- If there's not enough space below, and there's more space above, then show the tooltip above the trigger
+		local displayAbove = spaceBelow < textSize.Y and spaceAbove > spaceBelow
+
+		local X = math.clamp(props.Position.X - X_OFFSET, 0, props.parentSize.X - textSize.X)
+		local Y = 0
+
+		if displayAbove then
+			Y = math.max(trigger.AbsolutePosition.Y - TAIL_SIZE - textSize.Y + Y_OVERLAP, 0)
+		else
+			Y = math.min(
+				trigger.AbsolutePosition.Y + trigger.AbsoluteSize.Y + TAIL_SIZE - Y_OVERLAP,
+				props.parentSize.Y - textSize.Y
+			)
+		end
+
 		return e(BorderedContainer, {
 			position = UDim2.fromOffset(X, Y),
 			size = UDim2.fromOffset(textSize.X, textSize.Y),
@@ -61,7 +61,7 @@ local function Popup(props)
 				Size = UDim2.new(1, -TEXT_PADDING.X, 1, -TEXT_PADDING.Y),
 				AnchorPoint = Vector2.new(0.5, 0.5),
 				Text = props.Text,
-				TextSize = 16,
+				TextSize = theme.TextSize.Medium,
 				Font = Enum.Font.GothamMedium,
 				TextWrapped = true,
 				TextXAlignment = Enum.TextXAlignment.Left,

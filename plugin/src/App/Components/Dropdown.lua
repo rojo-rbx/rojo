@@ -44,7 +44,7 @@ end
 
 function Dropdown:render()
 	return Theme.with(function(theme)
-		theme = theme.Dropdown
+		local dropdownTheme = theme.Dropdown
 
 		local optionButtons = {}
 		local width = -1
@@ -59,13 +59,13 @@ function Dropdown:render()
 				Text = text,
 				LayoutOrder = i,
 				Size = UDim2.new(1, 0, 0, 24),
-				BackgroundColor3 = theme.BackgroundColor,
+				BackgroundColor3 = dropdownTheme.BackgroundColor,
 				TextTransparency = self.props.transparency,
 				BackgroundTransparency = self.props.transparency,
 				BorderSizePixel = 0,
-				TextColor3 = theme.TextColor,
+				TextColor3 = dropdownTheme.TextColor,
 				TextXAlignment = Enum.TextXAlignment.Left,
-				TextSize = 15,
+				TextSize = theme.TextSize.Body,
 				Font = Enum.Font.GothamMedium,
 
 				[Roact.Event.Activated] = function()
@@ -103,13 +103,13 @@ function Dropdown:render()
 		}, {
 			Border = e(SlicedImage, {
 				slice = Assets.Slices.RoundedBorder,
-				color = theme.BorderColor,
+				color = dropdownTheme.BorderColor,
 				transparency = self.props.transparency,
 				size = UDim2.new(1, 0, 1, 0),
 			}, {
 				DropArrow = e("ImageLabel", {
 					Image = if self.props.locked then Assets.Images.Dropdown.Locked else Assets.Images.Dropdown.Arrow,
-					ImageColor3 = theme.IconColor,
+					ImageColor3 = dropdownTheme.IconColor,
 					ImageTransparency = self.props.transparency,
 
 					Size = UDim2.new(0, 18, 0, 18),
@@ -127,8 +127,8 @@ function Dropdown:render()
 					BackgroundTransparency = 1,
 					Text = self.props.active,
 					Font = Enum.Font.GothamMedium,
-					TextSize = 15,
-					TextColor3 = theme.TextColor,
+					TextSize = theme.TextSize.Body,
+					TextColor3 = dropdownTheme.TextColor,
 					TextXAlignment = Enum.TextXAlignment.Left,
 					TextTransparency = self.props.transparency,
 				}),
@@ -136,7 +136,7 @@ function Dropdown:render()
 			Options = if self.state.open
 				then e(SlicedImage, {
 					slice = Assets.Slices.RoundedBackground,
-					color = theme.BackgroundColor,
+					color = dropdownTheme.BackgroundColor,
 					position = UDim2.new(1, 0, 1, 3),
 					size = self.openBinding:map(function(a)
 						return UDim2.new(1, 0, a * math.min(3, #self.props.options), 0)
@@ -145,7 +145,7 @@ function Dropdown:render()
 				}, {
 					Border = e(SlicedImage, {
 						slice = Assets.Slices.RoundedBorder,
-						color = theme.BorderColor,
+						color = dropdownTheme.BorderColor,
 						transparency = self.props.transparency,
 						size = UDim2.new(1, 0, 1, 0),
 					}),
