@@ -10,6 +10,7 @@ local Flipper = require(Packages.Flipper)
 local Theme = require(Plugin.App.Theme)
 local Assets = require(Plugin.Assets)
 local bindingUtil = require(Plugin.App.bindingUtil)
+local getTextBounds = require(Plugin.App.getTextBounds)
 
 local SlicedImage = require(script.Parent.SlicedImage)
 local TouchRipple = require(script.Parent.TouchRipple)
@@ -41,8 +42,7 @@ end
 
 function TextButton:render()
 	return Theme.with(function(theme)
-		local textSize =
-			TextService:GetTextSize(self.props.text, 18, Enum.Font.GothamMedium, Vector2.new(math.huge, math.huge))
+		local textBounds = getTextBounds(self.props.text, theme.Font.Main, theme.TextSize.Large, math.huge)
 
 		local style = self.props.style
 
@@ -52,7 +52,7 @@ function TextButton:render()
 		local bindingEnabled = bindingUtil.deriveProperty(self.binding, "enabled")
 
 		return e("ImageButton", {
-			Size = UDim2.new(0, 15 + textSize.X + 15, 0, 34),
+			Size = UDim2.new(0, 15 + textBounds.X + 15, 0, 34),
 			Position = self.props.position,
 			AnchorPoint = self.props.anchorPoint,
 
