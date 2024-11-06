@@ -63,8 +63,8 @@ end
 function StringDiffVisualizer:calculateContentSize(theme)
 	local oldString, newString = self.props.oldString, self.props.newString
 
-	local oldStringBounds = getTextBounds(oldString, theme.Font.Code, theme.TextSize.Code, math.huge) -- TextService:GetTextSize(oldString, 16, Enum.Font.RobotoMono, Vector2.new(99999, 99999))
-	local newStringBounds = getTextBounds(newString, theme.Font.Code, theme.TextSize.Code, math.huge) -- TextService:GetTextSize(newString, 16, Enum.Font.RobotoMono, Vector2.new(99999, 99999))
+	local oldStringBounds = getTextBounds(oldString, theme.Font.Code, theme.TextSize.Code, math.huge)
+	local newStringBounds = getTextBounds(newString, theme.Font.Code, theme.TextSize.Code, math.huge)
 
 	self.setContentSize(
 		Vector2.new(math.max(oldStringBounds.X, newStringBounds.X), math.max(oldStringBounds.Y, newStringBounds.Y))
