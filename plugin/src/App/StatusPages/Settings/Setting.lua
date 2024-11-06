@@ -1,5 +1,3 @@
-local TextService = game:GetService("TextService")
-
 local Rojo = script:FindFirstAncestor("Rojo")
 local Plugin = Rojo.Plugin
 local Packages = Rojo.Packages
@@ -9,6 +7,7 @@ local Roact = require(Packages.Roact)
 local Settings = require(Plugin.Settings)
 local Assets = require(Plugin.Assets)
 local Theme = require(Plugin.App.Theme)
+local getTextBounds = require(Plugin.App.getTextBounds)
 
 local Checkbox = require(Plugin.App.Components.Checkbox)
 local Dropdown = require(Plugin.App.Components.Dropdown)
@@ -31,10 +30,16 @@ local TAG_TYPES = {
 	},
 }
 
-local function getTextBounds(text, textSize, font, lineHeight, bounds)
-	local textBounds = TextService:GetTextSize(text, textSize, font, bounds)
+local function getTextBoundsWithLineHeight(
+	text: string,
+	font: Font,
+	textSize: number,
+	width: number,
+	lineHeight: number
+)
+	local textBounds = getTextBounds(text, font, textSize, width)
 
-	local lineCount = textBounds.Y / textSize
+	local lineCount = math.ceil(textBounds.Y / textSize)
 	local lineHeightAbsolute = textSize * lineHeight
 
 	return Vector2.new(textBounds.X, lineHeightAbsolute * lineCount - (lineHeightAbsolute - textSize))
@@ -197,12 +202,12 @@ function Setting:render()
 						inputSize = self.inputSize,
 					}):map(function(values)
 						local offset = values.inputSize.X + 5
-						local textBounds = getTextBounds(
+						local textBounds = getTextBoundsWithLineHeight(
 							self.props.description,
-							14,
-							Enum.Font.Gotham,
-							1.2,
-							Vector2.new(values.containerSize.X - offset, math.huge)
+							theme.Font.Main,
+							theme.TextSize.Body,
+							values.containerSize.X - offset,
+							1.2
 						)
 						return UDim2.new(1, -offset, 0, textBounds.Y)
 					end),
