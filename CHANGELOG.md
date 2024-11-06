@@ -1,5 +1,8 @@
 # Rojo Changelog
 
+## [7.4.3] - 31 July, 2024
+* Added Sync lock toggle
+
 ## Unreleased Changes
 * Support for a `$schema` field in all special JSON files (`.project.json`, `.model.json`, and `.meta.json`) ([#974])
 * Projects may now manually link `Ref` properties together using `Attributes`. ([#843])

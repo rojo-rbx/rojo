@@ -337,7 +337,7 @@ function App:getHostAndPort()
 	return if #host > 0 then host else Config.defaultHost, if #port > 0 then port else Config.defaultPort
 end
 
-function App:isSyncLockAvailable()
+function App:isSyncLockAvailable()	
 	if #Players:GetPlayers() == 0 then
 		-- Team Create is not active, so no one can be holding the lock
 		return true
@@ -446,21 +446,24 @@ function App:useRunningConnectionInfo()
 end
 
 function App:startSession()
-	local claimedLock, priorOwner = self:claimSyncLock()
-	if not claimedLock then
-		local msg = string.format("Could not sync because user '%s' is already syncing", tostring(priorOwner))
+	local syncLockEnabled = Settings:get("syncLock")
 
-		Log.warn(msg)
-		self:addNotification(msg, 10)
-		self:setState({
-			appStatus = AppStatus.Error,
-			errorMessage = msg,
-			toolbarIcon = Assets.Images.PluginButtonWarning,
-		})
+	if syncLockEnabled then
+		local claimedLock, priorOwner = self:claimSyncLock()
+		if not claimedLock then
+			local msg = string.format("Could not sync because user '%s' is already syncing", tostring(priorOwner))
 
-		return
+			Log.warn(msg)
+			self:addNotification(msg, 10)
+			self:setState({
+				appStatus = AppStatus.Error,
+				errorMessage = msg,
+				toolbarIcon = Assets.Images.PluginButtonWarning,
+			})
+
+			return
+			end
 	end
-
 	local host, port = self:getHostAndPort()
 
 	local baseUrl = if string.find(host, "^https?://")
