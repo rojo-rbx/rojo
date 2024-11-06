@@ -115,14 +115,15 @@ function Notification:render()
 
 		local paddingY, logoSize = 20, 32
 		local actionsY = if self.props.actions then 35 else 0
+		local textXSpace = math.max(250, buttonsX) + 35
 		local textBounds =
-			getTextBounds(self.props.text, theme.Font.Main, theme.TextSize.Body, math.max(250, buttonsX) + 35)
+			Vector2.new(textXSpace, getTextBounds(self.props.text, theme.Font.Main, theme.TextSize.Body, textXSpace).Y)
 		local contentX = math.max(textBounds.X, buttonsX)
 
 		local size = self.binding:map(function(value)
 			return UDim2.fromOffset(
 				(35 + 40 + contentX) * value,
-				10 + actionsY + paddingY + math.max(logoSize, textBounds.Y)
+				5 + actionsY + paddingY + math.max(logoSize, textBounds.Y)
 			)
 		end)
 
@@ -163,7 +164,7 @@ function Notification:render()
 						TextYAlignment = Enum.TextYAlignment.Top,
 						TextWrapped = true,
 
-						Size = UDim2.new(1, -35, 1, -35),
+						Size = UDim2.new(1, -35, 1, -actionsY),
 						Position = UDim2.fromOffset(35, 0),
 
 						LayoutOrder = 1,
@@ -171,7 +172,7 @@ function Notification:render()
 					}),
 					Actions = if self.props.actions
 						then e("Frame", {
-							Size = UDim2.new(1, -40, 0, 35),
+							Size = UDim2.new(1, -40, 0, actionsY),
 							Position = UDim2.new(1, 0, 1, 0),
 							AnchorPoint = Vector2.new(1, 1),
 							BackgroundTransparency = 1,
