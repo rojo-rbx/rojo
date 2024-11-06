@@ -22,7 +22,7 @@ return function(props)
 			layoutOrder = props.layoutOrder,
 			position = props.position,
 			anchorPoint = props.anchorPoint,
-			size = UDim2.new(0, 0, 0, 16),
+			size = UDim2.new(0, 0, 0, theme.TextSize.Medium),
 			automaticSize = Enum.AutomaticSize.X,
 		}, {
 			Padding = e("UIPadding", {

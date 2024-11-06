@@ -70,7 +70,7 @@ function ConfirmingPage:render()
 				TextColor3 = theme.TextColor,
 				TextXAlignment = Enum.TextXAlignment.Left,
 				TextTransparency = self.props.transparency,
-				Size = UDim2.new(1, 0, 0, 20),
+				Size = UDim2.new(1, 0, 0, theme.TextSize.Large + 2),
 				BackgroundTransparency = 1,
 			}),
 

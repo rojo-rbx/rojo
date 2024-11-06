@@ -105,7 +105,7 @@ function Notification:render()
 					transparency = transparency,
 				})
 
-				buttonsX += getTextBounds(action.text, theme.Font.Main, theme.TextSize.Large, math.huge).X + 30
+				buttonsX += getTextBounds(action.text, theme.Font.Main, theme.TextSize.Large, math.huge).X + (theme.TextSize.Body * 2)
 
 				count += 1
 			end

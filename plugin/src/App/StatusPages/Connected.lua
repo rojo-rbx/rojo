@@ -66,7 +66,7 @@ function ChangesViewer:render()
 					TextXAlignment = Enum.TextXAlignment.Left,
 					TextColor3 = theme.TextColor,
 					TextTransparency = self.props.transparency,
-					Size = UDim2.new(1, -40, 0, 20),
+					Size = UDim2.new(1, -40, 0, theme.TextSize.Large + 2),
 					Position = UDim2.new(0, 40, 0, 0),
 					BackgroundTransparency = 1,
 				}),
@@ -79,8 +79,8 @@ function ChangesViewer:render()
 					TextColor3 = theme.SubTextColor,
 					TextTruncate = Enum.TextTruncate.AtEnd,
 					TextTransparency = self.props.transparency,
-					Size = UDim2.new(1, -40, 0, 16),
-					Position = UDim2.new(0, 40, 0, 20),
+					Size = UDim2.new(1, -40, 0, theme.TextSize.Medium),
+					Position = UDim2.new(0, 40, 0, theme.TextSize.Large + 2),
 					BackgroundTransparency = 1,
 				}),
 
@@ -223,7 +223,7 @@ local function ConnectionDetails(props)
 					TextTransparency = props.transparency,
 					TextXAlignment = Enum.TextXAlignment.Left,
 
-					Size = UDim2.new(1, 0, 0, 20),
+					Size = UDim2.new(1, 0, 0, theme.TextSize.Large),
 
 					LayoutOrder = 1,
 					BackgroundTransparency = 1,
@@ -237,7 +237,7 @@ local function ConnectionDetails(props)
 					TextTransparency = props.transparency,
 					TextXAlignment = Enum.TextXAlignment.Left,
 
-					Size = UDim2.new(1, 0, 0, 15),
+					Size = UDim2.new(1, 0, 0, theme.TextSize.Medium),
 
 					LayoutOrder = 2,
 					BackgroundTransparency = 1,

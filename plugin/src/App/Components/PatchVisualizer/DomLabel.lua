@@ -255,7 +255,7 @@ function DomLabel:render()
 						TextSize = theme.TextSize.Body,
 						TextColor3 = theme.SubTextColor,
 						TextTransparency = props.transparency,
-						Size = UDim2.new(0, 0, 0, 16),
+						Size = UDim2.new(0, 0, 0, theme.TextSize.Body),
 						AutomaticSize = Enum.AutomaticSize.X,
 						LayoutOrder = 2,
 					})
@@ -268,7 +268,7 @@ function DomLabel:render()
 						TextSize = theme.TextSize.Body,
 						TextColor3 = theme.Diff.Warning,
 						TextTransparency = props.transparency,
-						Size = UDim2.new(0, 0, 0, 16),
+						Size = UDim2.new(0, 0, 0, theme.TextSize.Body),
 						AutomaticSize = Enum.AutomaticSize.X,
 						LayoutOrder = 6,
 					})

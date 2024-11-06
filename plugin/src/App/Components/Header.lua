@@ -37,7 +37,7 @@ local function Header(props)
 				TextXAlignment = Enum.TextXAlignment.Left,
 				TextTransparency = props.transparency,
 
-				Size = UDim2.new(1, 0, 0, 14),
+				Size = UDim2.new(1, 0, 0, theme.TextSize.Body),
 
 				LayoutOrder = 2,
 				BackgroundTransparency = 1,

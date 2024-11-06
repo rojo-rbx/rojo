@@ -150,7 +150,7 @@ function Setting:render()
 				BackgroundTransparency = 1,
 			}, {
 				Heading = e("Frame", {
-					Size = UDim2.new(1, 0, 0, 16),
+					Size = UDim2.new(1, 0, 0, theme.TextSize.Medium),
 					BackgroundTransparency = 1,
 				}, {
 					Layout = e("UIListLayout", {
@@ -179,7 +179,7 @@ function Setting:render()
 						TextTransparency = self.props.transparency,
 						RichText = true,
 
-						Size = UDim2.new(1, 0, 0, 16),
+						Size = UDim2.new(1, 0, 0, theme.TextSize.Medium),
 
 						LayoutOrder = 2,
 						BackgroundTransparency = 1,

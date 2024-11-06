@@ -52,7 +52,7 @@ function TextButton:render()
 		local bindingEnabled = bindingUtil.deriveProperty(self.binding, "enabled")
 
 		return e("ImageButton", {
-			Size = UDim2.new(0, 15 + textBounds.X + 15, 0, 34),
+			Size = UDim2.new(0, (theme.TextSize.Body * 2) + textBounds.X, 0, 34),
 			Position = self.props.position,
 			AnchorPoint = self.props.anchorPoint,
 
