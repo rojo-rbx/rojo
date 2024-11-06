@@ -1,4 +1,3 @@
-local TextService = game:GetService("TextService")
 local StudioService = game:GetService("StudioService")
 
 local Rojo = script:FindFirstAncestor("Rojo")
