@@ -12,6 +12,7 @@ use crate::{
     path_serializer,
     project::ProjectNode,
     snapshot_middleware::{emit_legacy_scripts_default, Middleware},
+    RojoRef,
 };
 
 /// Rojo-specific metadata that can be associated with an instance or a snapshot
@@ -58,6 +59,9 @@ pub struct InstanceMetadata {
     /// that instance's instigating source is snapshotted directly, the same
     /// context will be passed into it.
     pub context: InstanceContext,
+
+    /// Indicates the ID used for Ref properties pointing to this Instance.
+    pub specified_id: Option<RojoRef>,
 }
 
 impl InstanceMetadata {
@@ -67,6 +71,7 @@ impl InstanceMetadata {
             instigating_source: None,
             relevant_paths: Vec::new(),
             context: InstanceContext::default(),
+            specified_id: None,
         }
     }
 
@@ -94,6 +99,13 @@ impl InstanceMetadata {
     pub fn context(self, context: &InstanceContext) -> Self {
         Self {
             context: context.clone(),
+            ..self
+        }
+    }
+
+    pub fn specified_id(self, id: Option<RojoRef>) -> Self {
+        Self {
+            specified_id: id,
             ..self
         }
     }

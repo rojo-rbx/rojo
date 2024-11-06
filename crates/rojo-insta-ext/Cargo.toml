@@ -6,5 +6,5 @@ edition = "2018"
 publish = false
 
 [dependencies]
-serde = "1.0.99"
-serde_yaml = "0.8.9"
+serde = "1.0.197"
+serde_yaml = "0.8.26"

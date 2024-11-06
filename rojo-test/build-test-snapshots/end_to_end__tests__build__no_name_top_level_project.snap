@@ -1,0 +1,13 @@
+---
+source: tests/tests/build.rs
+assertion_line: 107
+expression: contents
+---
+<roblox version="4">
+  <Item class="StringValue" referent="0">
+    <Properties>
+      <string name="Name">no_name_top_level_project</string>
+      <string name="Value">If this isn't named `no_name_top_level_project`, something went wrong!</string>
+    </Properties>
+  </Item>
+</roblox>

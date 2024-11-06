@@ -19,24 +19,20 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: true
 
     - name: Install Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        override: true
-        profile: minimal
+      uses: dtolnay/rust-toolchain@stable
 
     - name: Rust cache
       uses: Swatinem/rust-cache@v2
 
     - name: Setup Aftman
-      uses: ok-nick/setup-aftman@v0.3.0
+      uses: ok-nick/setup-aftman@v0.4.2
       with:
-        version: 'v0.2.7'
+        version: 'v0.3.0'
 
     - name: Build
       run: cargo build --locked --verbose
@@ -49,24 +45,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: true
 
     - name: Install Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: 1.70.0
-        override: true
-        profile: minimal
+      uses: dtolnay/rust-toolchain@1.70.0
 
     - name: Rust cache
       uses: Swatinem/rust-cache@v2
 
     - name: Setup Aftman
-      uses: ok-nick/setup-aftman@v0.3.0
+      uses: ok-nick/setup-aftman@v0.4.2
       with:
-        version: 'v0.2.7'
+        version: 'v0.3.0'
 
     - name: Build
       run: cargo build --locked --verbose
@@ -76,24 +68,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: true
 
     - name: Install Rust
-      uses: actions-rs/toolchain@v1
+      uses: dtolnay/rust-toolchain@stable
       with:
-        toolchain: stable
-        override: true
         components: rustfmt, clippy
 
     - name: Rust cache
       uses: Swatinem/rust-cache@v2
 
     - name: Setup Aftman
-      uses: ok-nick/setup-aftman@v0.3.0
+      uses: ok-nick/setup-aftman@v0.4.2
       with:
-        version: 'v0.2.7'
+        version: 'v0.3.0'
 
     - name: Stylua
       run: stylua --check plugin/src

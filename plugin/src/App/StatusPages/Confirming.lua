@@ -9,7 +9,6 @@ local PatchTree = require(Plugin.PatchTree)
 local Settings = require(Plugin.Settings)
 local Theme = require(Plugin.App.Theme)
 local TextButton = require(Plugin.App.Components.TextButton)
-local Header = require(Plugin.App.Components.Header)
 local StudioPluginGui = require(Plugin.App.Components.Studio.StudioPluginGui)
 local Tooltip = require(Plugin.App.Components.Tooltip)
 local PatchVisualizer = require(Plugin.App.Components.PatchVisualizer)
@@ -60,17 +59,11 @@ end
 function ConfirmingPage:render()
 	return Theme.with(function(theme)
 		local pageContent = Roact.createFragment({
-			Header = e(Header, {
-				transparency = self.props.transparency,
-				layoutOrder = 1,
-			}),
-
 			Title = e("TextLabel", {
 				Text = string.format(
 					"Sync changes for project '%s':",
 					self.props.confirmData.serverInfo.projectName or "UNKNOWN"
 				),
-				LayoutOrder = 2,
 				Font = Enum.Font.Gotham,
 				LineHeight = 1.2,
 				TextSize = 14,
@@ -82,7 +75,7 @@ function ConfirmingPage:render()
 			}),
 
 			PatchVisualizer = e(PatchVisualizer, {
-				size = UDim2.new(1, 0, 1, -150),
+				size = UDim2.new(1, 0, 1, -100),
 				transparency = self.props.transparency,
 				layoutOrder = 3,
 
@@ -155,17 +148,17 @@ function ConfirmingPage:render()
 				}),
 			}),
 
+			Padding = e("UIPadding", {
+				PaddingLeft = UDim.new(0, 8),
+				PaddingRight = UDim.new(0, 8),
+			}),
+
 			Layout = e("UIListLayout", {
 				HorizontalAlignment = Enum.HorizontalAlignment.Center,
 				VerticalAlignment = Enum.VerticalAlignment.Center,
 				FillDirection = Enum.FillDirection.Vertical,
 				SortOrder = Enum.SortOrder.LayoutOrder,
 				Padding = UDim.new(0, 10),
-			}),
-
-			Padding = e("UIPadding", {
-				PaddingLeft = UDim.new(0, 20),
-				PaddingRight = UDim.new(0, 20),
 			}),
 
 			StringDiff = e(StudioPluginGui, {

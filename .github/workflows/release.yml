@@ -8,51 +8,39 @@ jobs:
   create-release:
     name: Create Release
     runs-on: ubuntu-latest
-    outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
     steps:
+      - uses: actions/checkout@v4
       - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
-          draft: true
-          prerelease: false
+        run: |
+          gh release create ${{ github.ref_name }} --draft --verify-tag --title ${{ github.ref_name }}
 
   build-plugin:
     needs: ["create-release"]
     name: Build Roblox Studio Plugin
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: true
 
       - name: Setup Aftman
-        uses: ok-nick/setup-aftman@v0.1.0
+        uses: ok-nick/setup-aftman@v0.4.2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          trust-check: false
-          version: 'v0.2.6'
+          version: 'v0.3.0'
 
       - name: Build Plugin
         run: rojo build plugin --output Rojo.rbxm
 
       - name: Upload Plugin to Release
-        uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: Rojo.rbxm
-          asset_name: Rojo.rbxm
-          asset_content_type: application/octet-stream
+        run: |
+          gh release upload ${{ github.ref_name }} Rojo.rbxm
 
       - name: Upload Plugin to Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Rojo.rbxm
           path: Rojo.rbxm
@@ -89,31 +77,19 @@ jobs:
     env:
       BIN: rojo
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: true
 
-      - name: Get Version from Tag
-        shell: bash
-        # https://github.community/t/how-to-get-just-the-tag-name/16241/7#M1027
-        run: |
-          echo "PROJECT_VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
-          echo "Version is: ${{ env.PROJECT_VERSION }}"
-
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-          target: ${{ matrix.target }}
-          override: true
-          profile: minimal
+          targets: ${{ matrix.target }}
 
       - name: Setup Aftman
-        uses: ok-nick/setup-aftman@v0.1.0
+        uses: ok-nick/setup-aftman@v0.4.2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          trust-check: false
-          version: 'v0.2.6'
+          version: 'v0.3.0'
 
       - name: Build Release
         run: cargo build --release --locked --verbose --target ${{ matrix.target }}
@@ -122,37 +98,34 @@ jobs:
           # easily.
           CARGO_TARGET_DIR: output
 
-          # On platforms that use OpenSSL, ensure it is statically linked to
-          # make binaries more portable.
-          OPENSSL_STATIC: 1
-
-      - name: Create Release Archive
+      - name: Generate Artifact Name
         shell: bash
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          echo "ARTIFACT_NAME=$BIN-${TAG_NAME#v}-${{ matrix.label }}.zip" >> "$GITHUB_ENV"
+
+      - name: Create Archive and Upload to Release
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mkdir staging
 
           if [ "${{ matrix.host }}" = "windows" ]; then
             cp "output/${{ matrix.target }}/release/$BIN.exe" staging/
             cd staging
-            7z a ../release.zip *
+            7z a ../$ARTIFACT_NAME *
           else
             cp "output/${{ matrix.target }}/release/$BIN" staging/
             cd staging
-            zip ../release.zip *
+            zip ../$ARTIFACT_NAME *
           fi
 
-      - name: Upload Archive to Release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: release.zip
-          asset_name: ${{ env.BIN }}-${{ env.PROJECT_VERSION }}-${{ matrix.label }}.zip
-          asset_content_type: application/octet-stream
+          gh release upload ${{ github.ref_name }} ../$ARTIFACT_NAME
 
       - name: Upload Archive to Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.BIN }}-${{ env.PROJECT_VERSION }}-${{ matrix.label }}.zip
-          path: release.zip
+          path: ${{ env.ARTIFACT_NAME }}
+          name: ${{ env.ARTIFACT_NAME }}

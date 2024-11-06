@@ -11,6 +11,7 @@ use crate::{
         InstanceContext, InstanceMetadata, InstanceSnapshot, InstigatingSource, PathIgnoreRule,
         SyncRule,
     },
+    RojoRef,
 };
 
 use super::{emit_legacy_scripts_default, snapshot_from_vfs};
@@ -19,9 +20,14 @@ pub fn snapshot_project(
     context: &InstanceContext,
     vfs: &Vfs,
     path: &Path,
+    name: &str,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let project = Project::load_from_slice(&vfs.read(path)?, path)
+    let project = Project::load_exact(vfs, path, Some(name))
         .with_context(|| format!("File was not a valid Rojo project: {}", path.display()))?;
+    let project_name = match project.name.as_deref() {
+        Some(name) => name,
+        None => panic!("Project is missing a name"),
+    };
 
     let mut context = context.clone();
     context.clear_sync_rules();
@@ -45,7 +51,7 @@ pub fn snapshot_project(
             .unwrap(),
     );
 
-    match snapshot_project_node(&context, path, &project.name, &project.tree, vfs, None)? {
+    match snapshot_project_node(&context, path, project_name, &project.tree, vfs, None)? {
         Some(found_snapshot) => {
             let mut snapshot = found_snapshot;
             // Setting the instigating source to the project file path is a little
@@ -277,6 +283,10 @@ pub fn snapshot_project_node(
         metadata.ignore_unknown_instances = true;
     }
 
+    if let Some(id) = &node.id {
+        metadata.specified_id = Some(RojoRef::new(id.clone()))
+    }
+
     metadata.instigating_source = Some(InstigatingSource::ProjectNode(
         project_path.to_path_buf(),
         instance_name.to_string(),
@@ -330,7 +340,6 @@ fn infer_class_name(name: &str, parent_class: Option<&str>) -> Option<Cow<'stati
 mod test {
     use super::*;
 
-    use maplit::hashmap;
     use memofs::{InMemoryFs, VfsSnapshot};
 
     #[ignore = "Functionality moved to root snapshot middleware"]
@@ -341,25 +350,32 @@ mod test {
         let mut imfs = InMemoryFs::new();
         imfs.load_snapshot(
             "/foo",
-            VfsSnapshot::dir(hashmap! {
-                "default.project.json" => VfsSnapshot::file(r#"
+            VfsSnapshot::dir([(
+                "default.project.json",
+                VfsSnapshot::file(
+                    r#"
                     {
                         "name": "indirect-project",
                         "tree": {
                             "$className": "Folder"
                         }
                     }
-                "#),
-            }),
+                "#,
+                ),
+            )]),
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
-        let instance_snapshot =
-            snapshot_project(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
-                .expect("snapshot error")
-                .expect("snapshot returned no instances");
+        let instance_snapshot = snapshot_project(
+            &InstanceContext::default(),
+            &vfs,
+            Path::new("/foo"),
+            "NOT_IN_SNAPSHOT",
+        )
+        .expect("snapshot error")
+        .expect("snapshot returned no instances");
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }
@@ -371,25 +387,29 @@ mod test {
         let mut imfs = InMemoryFs::new();
         imfs.load_snapshot(
             "/foo",
-            VfsSnapshot::dir(hashmap! {
-                "hello.project.json" => VfsSnapshot::file(r#"
+            VfsSnapshot::dir([(
+                "hello.project.json",
+                VfsSnapshot::file(
+                    r#"
                     {
                         "name": "direct-project",
                         "tree": {
                             "$className": "Model"
                         }
                     }
-                "#),
-            }),
+                "#,
+                ),
+            )]),
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_project(
             &InstanceContext::default(),
-            &mut vfs,
+            &vfs,
             Path::new("/foo/hello.project.json"),
+            "NOT_IN_SNAPSHOT",
         )
         .expect("snapshot error")
         .expect("snapshot returned no instances");
@@ -422,12 +442,13 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_project(
             &InstanceContext::default(),
-            &mut vfs,
+            &vfs,
             Path::new("/foo.project.json"),
+            "NOT_IN_SNAPSHOT",
         )
         .expect("snapshot error")
         .expect("snapshot returned no instances");
@@ -458,12 +479,13 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_project(
             &InstanceContext::default(),
-            &mut vfs,
+            &vfs,
             Path::new("/foo.project.json"),
+            "NOT_IN_SNAPSHOT",
         )
         .expect("snapshot error")
         .expect("snapshot returned no instances");
@@ -495,12 +517,13 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_project(
             &InstanceContext::default(),
-            &mut vfs,
+            &vfs,
             Path::new("/foo.project.json"),
+            "NOT_IN_SNAPSHOT",
         )
         .expect("snapshot error")
         .expect("snapshot returned no instances");
@@ -515,26 +538,32 @@ mod test {
         let mut imfs = InMemoryFs::new();
         imfs.load_snapshot(
             "/foo",
-            VfsSnapshot::dir(hashmap! {
-                "default.project.json" => VfsSnapshot::file(r#"
+            VfsSnapshot::dir([
+                (
+                    "default.project.json",
+                    VfsSnapshot::file(
+                        r#"
                     {
                         "name": "path-project",
                         "tree": {
                             "$path": "other.txt"
                         }
                     }
-                "#),
-                "other.txt" => VfsSnapshot::file("Hello, world!"),
-            }),
+                "#,
+                    ),
+                ),
+                ("other.txt", VfsSnapshot::file("Hello, world!")),
+            ]),
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_project(
             &InstanceContext::default(),
-            &mut vfs,
+            &vfs,
             Path::new("/foo/default.project.json"),
+            "NOT_IN_SNAPSHOT",
         )
         .expect("snapshot error")
         .expect("snapshot returned no instances");
@@ -549,33 +578,44 @@ mod test {
         let mut imfs = InMemoryFs::new();
         imfs.load_snapshot(
             "/foo",
-            VfsSnapshot::dir(hashmap! {
-                "default.project.json" => VfsSnapshot::file(r#"
+            VfsSnapshot::dir([
+                (
+                    "default.project.json",
+                    VfsSnapshot::file(
+                        r#"
                     {
                         "name": "path-project",
                         "tree": {
                             "$path": "other.project.json"
                         }
                     }
-                "#),
-                "other.project.json" => VfsSnapshot::file(r#"
+                "#,
+                    ),
+                ),
+                (
+                    "other.project.json",
+                    VfsSnapshot::file(
+                        r#"
                     {
                         "name": "other-project",
                         "tree": {
                             "$className": "Model"
                         }
                     }
-                "#),
-            }),
+                "#,
+                    ),
+                ),
+            ]),
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_project(
             &InstanceContext::default(),
-            &mut vfs,
+            &vfs,
             Path::new("/foo/default.project.json"),
+            "NOT_IN_SNAPSHOT",
         )
         .expect("snapshot error")
         .expect("snapshot returned no instances");
@@ -590,16 +630,24 @@ mod test {
         let mut imfs = InMemoryFs::new();
         imfs.load_snapshot(
             "/foo",
-            VfsSnapshot::dir(hashmap! {
-                "default.project.json" => VfsSnapshot::file(r#"
+            VfsSnapshot::dir([
+                (
+                    "default.project.json",
+                    VfsSnapshot::file(
+                        r#"
                     {
                         "name": "path-child-project",
                         "tree": {
                             "$path": "other.project.json"
                         }
                     }
-                "#),
-                "other.project.json" => VfsSnapshot::file(r#"
+                "#,
+                    ),
+                ),
+                (
+                    "other.project.json",
+                    VfsSnapshot::file(
+                        r#"
                     {
                         "name": "other-project",
                         "tree": {
@@ -610,17 +658,20 @@ mod test {
                             }
                         }
                     }
-                "#),
-            }),
+                "#,
+                    ),
+                ),
+            ]),
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_project(
             &InstanceContext::default(),
-            &mut vfs,
+            &vfs,
             Path::new("/foo/default.project.json"),
+            "NOT_IN_SNAPSHOT",
         )
         .expect("snapshot error")
         .expect("snapshot returned no instances");
@@ -638,8 +689,11 @@ mod test {
         let mut imfs = InMemoryFs::new();
         imfs.load_snapshot(
             "/foo",
-            VfsSnapshot::dir(hashmap! {
-                "default.project.json" => VfsSnapshot::file(r#"
+            VfsSnapshot::dir([
+                (
+                    "default.project.json",
+                    VfsSnapshot::file(
+                        r#"
                     {
                         "name": "path-property-override",
                         "tree": {
@@ -649,8 +703,13 @@ mod test {
                             }
                         }
                     }
-                "#),
-                "other.project.json" => VfsSnapshot::file(r#"
+                "#,
+                    ),
+                ),
+                (
+                    "other.project.json",
+                    VfsSnapshot::file(
+                        r#"
                     {
                         "name": "other-project",
                         "tree": {
@@ -660,17 +719,56 @@ mod test {
                             }
                         }
                     }
-                "#),
-            }),
+                "#,
+                    ),
+                ),
+            ]),
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_project(
             &InstanceContext::default(),
-            &mut vfs,
+            &vfs,
             Path::new("/foo/default.project.json"),
+            "NOT_IN_SNAPSHOT",
+        )
+        .expect("snapshot error")
+        .expect("snapshot returned no instances");
+
+        insta::assert_yaml_snapshot!(instance_snapshot);
+    }
+
+    #[test]
+    fn no_name_project() {
+        let _ = env_logger::try_init();
+
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
+            "/foo",
+            VfsSnapshot::dir([(
+                "default.project.json",
+                VfsSnapshot::file(
+                    r#"
+                    {
+                        "tree": {
+                            "$className": "Model"
+                        }
+                    }
+                "#,
+                ),
+            )]),
+        )
+        .unwrap();
+
+        let vfs = Vfs::new(imfs);
+
+        let instance_snapshot = snapshot_project(
+            &InstanceContext::default(),
+            &vfs,
+            Path::new("/foo/default.project.json"),
+            "no_name_project",
         )
         .expect("snapshot error")
         .expect("snapshot returned no instances");

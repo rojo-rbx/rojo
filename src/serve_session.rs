@@ -9,7 +9,6 @@ use std::{
 };
 
 use crossbeam_channel::Sender;
-use memofs::IoResultExt;
 use memofs::Vfs;
 use thiserror::Error;
 
@@ -110,12 +109,12 @@ impl ServeSession {
 
         log::debug!("Loading project file from {}", project_path.display());
 
-        let root_project = match vfs.read(&project_path).with_not_found()? {
-            Some(contents) => Project::load_from_slice(&contents, &project_path)?,
-            None => {
+        let root_project = match Project::load_exact(&vfs, &project_path, None) {
+            Ok(project) => project,
+            Err(_) => {
                 return Err(ServeSessionError::NoProjectFound {
                     path: project_path.to_path_buf(),
-                });
+                })
             }
         };
 
@@ -190,7 +189,10 @@ impl ServeSession {
     }
 
     pub fn project_name(&self) -> &str {
-        &self.root_project.name
+        self.root_project
+            .name
+            .as_ref()
+            .expect("all top-level projects must have their name set")
     }
 
     pub fn project_port(&self) -> Option<u16> {

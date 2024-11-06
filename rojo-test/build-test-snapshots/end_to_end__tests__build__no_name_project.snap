@@ -1,0 +1,22 @@
+---
+source: tests/tests/build.rs
+expression: contents
+---
+<roblox version="4">
+  <Item class="Folder" referent="0">
+    <Properties>
+      <string name="Name">no_name_project</string>
+    </Properties>
+    <Item class="Folder" referent="1">
+      <Properties>
+        <string name="Name">second-level</string>
+      </Properties>
+      <Item class="BoolValue" referent="2">
+        <Properties>
+          <string name="Name">bool_value</string>
+          <bool name="Value">true</bool>
+        </Properties>
+      </Item>
+    </Item>
+  </Item>
+</roblox>

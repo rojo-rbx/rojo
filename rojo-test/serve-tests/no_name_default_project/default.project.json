@@ -1,0 +1,9 @@
+{
+  "name": "top-level",
+  "tree": {
+    "$className": "Folder",
+    "second-level": {
+      "$path": "src"
+    }
+  }
+}

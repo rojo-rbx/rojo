@@ -211,9 +211,11 @@ end
 function PatchSet.countChanges(patch)
 	local count = 0
 
-	for _ in patch.added do
-		-- Adding an instance is 1 change
-		count += 1
+	for _, add in patch.added do
+		-- Adding an instance is 1 change per property
+		for _ in add.Properties do
+			count += 1
+		end
 	end
 	for _ in patch.removed do
 		-- Removing an instance is 1 change
