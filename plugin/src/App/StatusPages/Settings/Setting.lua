@@ -183,7 +183,7 @@ function Setting:render()
 
 				Description = e("TextLabel", {
 					Text = self.props.description,
-					FontFace = theme.Font.Thin,
+					FontFace = theme.Font.Main,
 					LineHeight = 1.2,
 					TextSize = theme.TextSize.Body,
 					TextColor3 = settingsTheme.Setting.DescriptionColor,

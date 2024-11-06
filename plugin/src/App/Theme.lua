@@ -49,8 +49,8 @@ function StudioProvider:updateTheme()
 			),
 		},
 		TextSize = {
-			Body = 14,
-			Small = 12,
+			Body = 15,
+			Small = 13,
 			Medium = 16,
 			Large = 18,
 			Code = 16,
