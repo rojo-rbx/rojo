@@ -58,19 +58,22 @@ function Setting:init()
 	self.containerSize, self.setContainerSize = Roact.createBinding(Vector2.new(0, 0))
 	self.inputSize, self.setInputSize = Roact.createBinding(Vector2.new(0, 0))
 
-	self:setState({
-		setting = Settings:get(self.props.id),
-	})
-
-	self.changedCleanup = Settings:onChanged(self.props.id, function(value)
+	if self.props.id then
 		self:setState({
-			setting = value,
+			setting = Settings:get(self.props.id),
 		})
-	end)
+		self.changedCleanup = Settings:onChanged(self.props.id, function(value)
+			self:setState({
+				setting = value,
+			})
+		end)
+	end
 end
 
 function Setting:willUnmount()
-	self.changedCleanup()
+	if self.changedCleanup then
+		self.changedCleanup()
+	end
 end
 
 function Setting:render()

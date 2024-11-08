@@ -119,14 +119,18 @@ function Notification:render()
 		buttonsX += (count - 1) * 5
 	end
 
-	local paddingY, logoSize = 20, 32
+	local paddingX, paddingY, logoSize = 24, 20, 32
+	local sourceY = if self.props.source then logoSize + 5 else 0
+	local sourceX = if self.props.source
+		then TextService:GetTextSize(self.props.source, 15, Enum.Font.GothamMedium, Vector2.new(350, 15)).X + logoSize + 5
+		else 0
 	local actionsY = if self.props.actions then 35 else 0
-	local contentX = math.max(textBounds.X, buttonsX)
+	local contentX = math.max(textBounds.X, buttonsX, sourceX) + (if self.props.thirdParty then 0 else logoSize + 3) + 2
 
 	local size = self.binding:map(function(value)
 		return UDim2.fromOffset(
-			(35 + 40 + contentX) * value,
-			5 + actionsY + paddingY + math.max(logoSize, textBounds.Y)
+			(paddingX + contentX) * value,
+			5 + actionsY + sourceY + paddingY + math.max(logoSize, textBounds.Y)
 		)
 	end)
 
@@ -146,56 +150,69 @@ function Notification:render()
 				transparency = transparency,
 				size = UDim2.new(1, 0, 1, 0),
 			}, {
-				Contents = e("Frame", {
-					Size = UDim2.new(0, 35 + contentX, 1, -paddingY),
-					Position = UDim2.new(0, 0, 0, paddingY / 2),
+				Logo = e("ImageLabel", {
+					ImageTransparency = transparency,
+					Image = if self.props.thirdParty
+						then Assets.Images.ThirdPartyPlugin
+						else Assets.Images.PluginButton,
 					BackgroundTransparency = 1,
-				}, {
-					Logo = e("ImageLabel", {
-						ImageTransparency = transparency,
-						Image = Assets.Images.PluginButton,
-						BackgroundTransparency = 1,
-						Size = UDim2.new(0, logoSize, 0, logoSize),
-						Position = UDim2.new(0, 0, 0, 0),
-						AnchorPoint = Vector2.new(0, 0),
-					}),
-					Info = e("TextLabel", {
-						Text = self.props.text,
+					Size = UDim2.new(0, logoSize, 0, logoSize),
+					Position = UDim2.new(0, 0, 0, 0),
+					AnchorPoint = Vector2.new(0, 0),
+				}),
+				Source = if self.props.source
+					then e("TextLabel", {
+						Text = self.props.source,
 						Font = Enum.Font.GothamMedium,
 						TextSize = 15,
 						TextColor3 = theme.Notification.InfoColor,
 						TextTransparency = transparency,
 						TextXAlignment = Enum.TextXAlignment.Left,
-						TextWrapped = true,
+						TextTruncate = Enum.TextTruncate.AtEnd,
 
-						Size = UDim2.new(0, textBounds.X, 0, textBounds.Y),
-						Position = UDim2.fromOffset(35, 0),
-
-						LayoutOrder = 1,
+						Size = UDim2.new(1, -logoSize - 5, 0, logoSize),
+						Position = UDim2.fromOffset(logoSize + 5, 0),
 						BackgroundTransparency = 1,
-					}),
-					Actions = if self.props.actions
-						then e("Frame", {
-							Size = UDim2.new(1, -40, 0, 35),
-							Position = UDim2.new(1, 0, 1, 0),
-							AnchorPoint = Vector2.new(1, 1),
-							BackgroundTransparency = 1,
-						}, {
-							Layout = e("UIListLayout", {
-								FillDirection = Enum.FillDirection.Horizontal,
-								HorizontalAlignment = Enum.HorizontalAlignment.Right,
-								VerticalAlignment = Enum.VerticalAlignment.Center,
-								SortOrder = Enum.SortOrder.LayoutOrder,
-								Padding = UDim.new(0, 5),
-							}),
-							Buttons = Roact.createFragment(actionButtons),
-						})
-						else nil,
+					})
+					else nil,
+				Message = e("TextLabel", {
+					Text = self.props.text,
+					Font = Enum.Font.GothamMedium,
+					TextSize = 15,
+					TextColor3 = theme.Notification.InfoColor,
+					TextTransparency = transparency,
+					TextXAlignment = Enum.TextXAlignment.Left,
+					TextWrapped = true,
+
+					Size = UDim2.new(0, textBounds.X, 0, textBounds.Y),
+					Position = if self.props.thirdParty
+						then UDim2.fromOffset(0, logoSize + 5)
+						else UDim2.fromOffset(logoSize + 3, 0),
+					BackgroundTransparency = 1,
 				}),
+				Actions = if self.props.actions
+					then e("Frame", {
+						Size = UDim2.new(1, -40, 0, 35),
+						Position = UDim2.new(1, 0, 1, 0),
+						AnchorPoint = Vector2.new(1, 1),
+						BackgroundTransparency = 1,
+					}, {
+						Layout = e("UIListLayout", {
+							FillDirection = Enum.FillDirection.Horizontal,
+							HorizontalAlignment = Enum.HorizontalAlignment.Right,
+							VerticalAlignment = Enum.VerticalAlignment.Center,
+							SortOrder = Enum.SortOrder.LayoutOrder,
+							Padding = UDim.new(0, 5),
+						}),
+						Buttons = Roact.createFragment(actionButtons),
+					})
+					else nil,
 
 				Padding = e("UIPadding", {
-					PaddingLeft = UDim.new(0, 17),
-					PaddingRight = UDim.new(0, 15),
+					PaddingLeft = UDim.new(0, paddingX / 2),
+					PaddingRight = UDim.new(0, paddingX / 2),
+					PaddingTop = UDim.new(0, paddingY / 2),
+					PaddingBottom = UDim.new(0, paddingY / 2),
 				}),
 			}),
 		})
@@ -214,6 +231,8 @@ function Notifications:render()
 			timestamp = notif.timestamp,
 			timeout = notif.timeout,
 			actions = notif.actions,
+			source = notif.source,
+			thirdParty = notif.thirdParty,
 			layoutOrder = (notif.timestamp - baseClock),
 			onClose = function()
 				self.props.onClose(id)

@@ -24,6 +24,7 @@ local defaultSettings = {
 	logLevel = "Info",
 	timingLogsEnabled = false,
 	priorEndpoints = {},
+	apiPermissions = {},
 }
 
 local Settings = {}

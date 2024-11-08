@@ -1,6 +1,8 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+
+* Added headless API for Studio companion plugins. ([#639])
 * Support for a `$schema` field in all special JSON files (`.project.json`, `.model.json`, and `.meta.json`) ([#974])
 * Projects may now manually link `Ref` properties together using `Attributes`. ([#843])
  	This has two parts: using `id` or `$id` in JSON files or a `Rojo_Target` attribute, an Instance
@@ -77,6 +79,7 @@
 
     **All** sync rules are reset between project files, so they must be specified in each one when nesting them. This is to ensure that nothing can break other projects by changing how files are synced!
 
+[#639]: https://github.com/rojo-rbx/rojo/pull/639
 [#813]: https://github.com/rojo-rbx/rojo/pull/813
 [#832]: https://github.com/rojo-rbx/rojo/pull/832
 [#834]: https://github.com/rojo-rbx/rojo/pull/834
@@ -163,6 +166,7 @@
 
 ## [7.4.0-rc1] - October 3, 2023
 ### Additions
+
 #### Project format
 * Added support for `.toml` files to `$path` ([#633])
 * Added support for `Font` and `CFrame` attributes ([rbx-dom#299], [rbx-dom#296])
