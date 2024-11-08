@@ -10,10 +10,7 @@ use memofs::Vfs;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use crate::{
-    glob::Glob, resolution::UnresolvedValue, snapshot::SyncRule,
-    snapshot_middleware::default_sync_rules,
-};
+use crate::{glob::Glob, resolution::UnresolvedValue, snapshot::SyncRule};
 
 static PROJECT_FILENAME: &str = "default.project.json";
 
@@ -24,6 +21,13 @@ pub struct ProjectError(#[from] Error);
 
 #[derive(Debug, Error)]
 enum Error {
+    #[error(
+        "Rojo requires a project file, but no project file was found in path {}\n\
+        See https://rojo.space/docs/ for guides and documentation.",
+        .path.display()
+    )]
+    NoProjectFound { path: PathBuf },
+
     #[error("The folder for the provided project cannot be used as a project name: {}\n\
             Consider setting the `name` field on this project.", .path.display())]
     FolderNameInvalid { path: PathBuf },
@@ -222,7 +226,13 @@ impl Project {
         fuzzy_project_location: &Path,
     ) -> Result<Option<Self>, ProjectError> {
         if let Some(project_path) = Self::locate(fuzzy_project_location) {
-            let contents = vfs.read(&project_path).map_err(Error::from)?;
+            let contents = vfs.read(&project_path).map_err(|e| match e.kind() {
+                io::ErrorKind::NotFound => Error::NoProjectFound {
+                    path: project_path.to_path_buf(),
+                },
+                _ => return e.into(),
+            })?;
+
             Ok(Some(Self::load_from_slice(&contents, project_path, None)?))
         } else {
             Ok(None)
@@ -236,7 +246,13 @@ impl Project {
         fallback_name: Option<&str>,
     ) -> Result<Self, ProjectError> {
         let project_path = project_file_location.to_path_buf();
-        let contents = vfs.read(&project_path).map_err(Error::from)?;
+        let contents = vfs.read(&project_path).map_err(|e| match e.kind() {
+            io::ErrorKind::NotFound => Error::NoProjectFound {
+                path: project_path.to_path_buf(),
+            },
+            _ => return e.into(),
+        })?;
+
         Ok(Self::load_from_slice(
             &contents,
             project_path,
