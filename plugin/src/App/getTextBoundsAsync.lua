@@ -14,6 +14,11 @@ local function getTextBoundsAsync(
 	width: number,
 	richText: boolean?
 ): Vector2
+	if type(text) ~= "string" or #text > 200_000 then
+		Log.warn(`Invalid text: {text}`)
+		return Vector2.zero
+	end
+
 	params.Text = text
 	params.Font = font
 	params.Size = textSize
