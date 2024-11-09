@@ -14,8 +14,12 @@ local function getTextBoundsAsync(
 	width: number,
 	richText: boolean?
 ): Vector2
-	if type(text) ~= "string" or #text > 200_000 then
-		Log.warn(`Invalid text: {text}`)
+	if type(text) ~= "string" then
+		Log.warn(`Invalid text. Expected string, received {type(text)} instead`)
+		return Vector2.zero
+	end
+	if #text >= 200_000 then
+		Log.warn(`Invalid text. Exceeds the 199,999 character limit`)
 		return Vector2.zero
 	end
 
