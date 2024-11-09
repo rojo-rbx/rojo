@@ -16,8 +16,9 @@ You'll want these tools to work on Rojo:
 * Latest stable Rust compiler
 * Latest stable [Rojo](https://github.com/rojo-rbx/rojo)
 * [Foreman](https://github.com/Roblox/foreman)
+* [Luau Language Server](https://github.com/JohnnyMorganz/luau-lsp) (Only needed if working on the Studio plugin.)
 
-When working on the Studio plugin, we recommend using this command to rebuild the plugin when you save a change:
+When working on the Studio plugin, we recommend using this command to automatically rebuild the plugin when you save a change:
 
 *(Make sure you've enabled the Studio setting to reload plugins on file change!)*
 
