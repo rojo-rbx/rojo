@@ -8,7 +8,7 @@ local Flipper = require(Packages.Flipper)
 local Theme = require(Plugin.App.Theme)
 local Assets = require(Plugin.Assets)
 local bindingUtil = require(Plugin.App.bindingUtil)
-local getTextBounds = require(Plugin.App.getTextBounds)
+local getTextBoundsAsync = require(Plugin.App.getTextBoundsAsync)
 
 local SlicedImage = require(script.Parent.SlicedImage)
 local TouchRipple = require(script.Parent.TouchRipple)
@@ -40,7 +40,7 @@ end
 
 function TextButton:render()
 	return Theme.with(function(theme)
-		local textBounds = getTextBounds(self.props.text, theme.Font.Main, theme.TextSize.Large, math.huge)
+		local textBounds = getTextBoundsAsync(self.props.text, theme.Font.Main, theme.TextSize.Large, math.huge)
 
 		local style = self.props.style
 

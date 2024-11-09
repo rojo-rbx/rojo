@@ -14,6 +14,8 @@ local function getStudio()
 	return _Studio
 end
 
+local ContentProvider = game:GetService("ContentProvider")
+
 local Rojo = script:FindFirstAncestor("Rojo")
 local Packages = Rojo.Packages
 
@@ -210,6 +212,13 @@ end
 
 function StudioProvider:init()
 	self:updateTheme()
+
+	-- Preload the Fonts so that getTextBoundsAsync won't yield
+	local fontAssetIds = {}
+	for _, font in self.state.theme.Font do
+		table.insert(fontAssetIds, font.Family)
+	end
+	pcall(ContentProvider.PreloadAsync, ContentProvider, fontAssetIds)
 end
 
 function StudioProvider:render()

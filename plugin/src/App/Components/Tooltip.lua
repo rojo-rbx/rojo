@@ -7,7 +7,7 @@ local Packages = Rojo.Packages
 local Roact = require(Packages.Roact)
 local Theme = require(Plugin.App.Theme)
 
-local getTextBounds = require(Plugin.App.getTextBounds)
+local getTextBoundsAsync = require(Plugin.App.getTextBoundsAsync)
 
 local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
 
@@ -24,8 +24,10 @@ local TooltipContext = Roact.createContext({})
 local function Popup(props)
 	return Theme.with(function(theme)
 		local textXSpace = math.min(props.parentSize.X, 120)
-		local textBounds =
-			Vector2.new(textXSpace, getTextBounds(props.Text, theme.Font.Main, theme.TextSize.Medium, textXSpace).Y)
+		local textBounds = Vector2.new(
+			textXSpace,
+			getTextBoundsAsync(props.Text, theme.Font.Main, theme.TextSize.Medium, textXSpace).Y
+		)
 		local contentSize = textBounds + TEXT_PADDING + (Vector2.one * 2)
 
 		local trigger = props.Trigger:getValue()

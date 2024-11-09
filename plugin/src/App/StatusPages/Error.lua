@@ -5,7 +5,7 @@ local Packages = Rojo.Packages
 local Roact = require(Packages.Roact)
 
 local Theme = require(Plugin.App.Theme)
-local getTextBounds = require(Plugin.App.getTextBounds)
+local getTextBoundsAsync = require(Plugin.App.getTextBoundsAsync)
 
 local TextButton = require(Plugin.App.Components.TextButton)
 local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
@@ -49,8 +49,12 @@ function Error:render()
 				[Roact.Change.AbsoluteSize] = function(object)
 					local containerSize = object.AbsoluteSize - ERROR_PADDING * 2
 
-					local textBounds =
-						getTextBounds(self.props.errorMessage, theme.Font.Code, theme.TextSize.Code, containerSize.X)
+					local textBounds = getTextBoundsAsync(
+						self.props.errorMessage,
+						theme.Font.Code,
+						theme.TextSize.Code,
+						containerSize.X
+					)
 
 					self.setContentSize(Vector2.new(containerSize.X, textBounds.Y))
 				end,

@@ -9,7 +9,7 @@ local StringDiff = require(script:FindFirstChild("StringDiff"))
 
 local Timer = require(Plugin.Timer)
 local Theme = require(Plugin.App.Theme)
-local getTextBounds = require(Plugin.App.getTextBounds)
+local getTextBoundsAsync = require(Plugin.App.getTextBoundsAsync)
 
 local CodeLabel = require(Plugin.App.Components.CodeLabel)
 local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
@@ -63,8 +63,8 @@ end
 function StringDiffVisualizer:calculateContentSize(theme)
 	local oldString, newString = self.props.oldString, self.props.newString
 
-	local oldStringBounds = getTextBounds(oldString, theme.Font.Code, theme.TextSize.Code, math.huge)
-	local newStringBounds = getTextBounds(newString, theme.Font.Code, theme.TextSize.Code, math.huge)
+	local oldStringBounds = getTextBoundsAsync(oldString, theme.Font.Code, theme.TextSize.Code, math.huge)
+	local newStringBounds = getTextBoundsAsync(newString, theme.Font.Code, theme.TextSize.Code, math.huge)
 
 	self.setContentSize(
 		Vector2.new(math.max(oldStringBounds.X, newStringBounds.X), math.max(oldStringBounds.Y, newStringBounds.Y))

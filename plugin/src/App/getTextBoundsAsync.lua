@@ -7,7 +7,13 @@ local Log = require(Packages.Log)
 
 local params = Instance.new("GetTextBoundsParams")
 
-local function getTextBounds(text: string, font: Font, textSize: number, width: number, richText: boolean?): Vector2
+local function getTextBoundsAsync(
+	text: string,
+	font: Font,
+	textSize: number,
+	width: number,
+	richText: boolean?
+): Vector2
 	params.Text = text
 	params.Font = font
 	params.Size = textSize
@@ -23,4 +29,4 @@ local function getTextBounds(text: string, font: Font, textSize: number, width: 
 	return bounds
 end
 
-return getTextBounds
+return getTextBoundsAsync

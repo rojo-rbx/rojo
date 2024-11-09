@@ -11,7 +11,7 @@ local Log = require(Packages.Log)
 local Theme = require(Plugin.App.Theme)
 local Assets = require(Plugin.Assets)
 local bindingUtil = require(Plugin.App.bindingUtil)
-local getTextBounds = require(Plugin.App.getTextBounds)
+local getTextBoundsAsync = require(Plugin.App.getTextBoundsAsync)
 
 local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
 local TextButton = require(Plugin.App.Components.TextButton)
@@ -104,7 +104,7 @@ function Notification:render()
 					transparency = transparency,
 				})
 
-				buttonsX += getTextBounds(action.text, theme.Font.Main, theme.TextSize.Large, math.huge).X + (theme.TextSize.Body * 2)
+				buttonsX += getTextBoundsAsync(action.text, theme.Font.Main, theme.TextSize.Large, math.huge).X + (theme.TextSize.Body * 2)
 
 				count += 1
 			end
@@ -115,8 +115,10 @@ function Notification:render()
 		local paddingY, logoSize = 20, 32
 		local actionsY = if self.props.actions then 35 else 0
 		local textXSpace = math.max(250, buttonsX) + 35
-		local textBounds =
-			Vector2.new(textXSpace, getTextBounds(self.props.text, theme.Font.Main, theme.TextSize.Body, textXSpace).Y)
+		local textBounds = Vector2.new(
+			textXSpace,
+			getTextBoundsAsync(self.props.text, theme.Font.Main, theme.TextSize.Body, textXSpace).Y
+		)
 		local contentX = math.max(textBounds.X, buttonsX)
 
 		local size = self.binding:map(function(value)

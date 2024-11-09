@@ -7,7 +7,7 @@ local Roact = require(Packages.Roact)
 local Settings = require(Plugin.Settings)
 local Assets = require(Plugin.Assets)
 local Theme = require(Plugin.App.Theme)
-local getTextBounds = require(Plugin.App.getTextBounds)
+local getTextBoundsAsync = require(Plugin.App.getTextBoundsAsync)
 
 local Checkbox = require(Plugin.App.Components.Checkbox)
 local Dropdown = require(Plugin.App.Components.Dropdown)
@@ -37,7 +37,7 @@ local function getTextBoundsWithLineHeight(
 	width: number,
 	lineHeight: number
 )
-	local textBounds = getTextBounds(text, font, textSize, width)
+	local textBounds = getTextBoundsAsync(text, font, textSize, width)
 
 	local lineCount = math.ceil(textBounds.Y / textSize)
 	local lineHeightAbsolute = textSize * lineHeight
