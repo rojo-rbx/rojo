@@ -1,5 +1,3 @@
-local TextService = game:GetService("TextService")
-
 local Rojo = script:FindFirstAncestor("Rojo")
 local Plugin = Rojo.Plugin
 local Packages = Rojo.Packages
@@ -11,6 +9,7 @@ local StringDiff = require(script:FindFirstChild("StringDiff"))
 
 local Timer = require(Plugin.Timer)
 local Theme = require(Plugin.App.Theme)
+local getTextBoundsAsync = require(Plugin.App.getTextBoundsAsync)
 
 local CodeLabel = require(Plugin.App.Components.CodeLabel)
 local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
@@ -32,7 +31,6 @@ function StringDiffVisualizer:init()
 		end)
 	end)
 
-	self:calculateContentSize()
 	self:updateScriptBackground()
 
 	self:setState({
@@ -54,7 +52,6 @@ end
 
 function StringDiffVisualizer:didUpdate(previousProps)
 	if previousProps.oldString ~= self.props.oldString or previousProps.newString ~= self.props.newString then
-		self:calculateContentSize()
 		local add, remove = self:calculateDiffLines()
 		self:setState({
 			add = add,
@@ -63,11 +60,11 @@ function StringDiffVisualizer:didUpdate(previousProps)
 	end
 end
 
-function StringDiffVisualizer:calculateContentSize()
+function StringDiffVisualizer:calculateContentSize(theme)
 	local oldString, newString = self.props.oldString, self.props.newString
 
-	local oldStringBounds = TextService:GetTextSize(oldString, 16, Enum.Font.RobotoMono, Vector2.new(99999, 99999))
-	local newStringBounds = TextService:GetTextSize(newString, 16, Enum.Font.RobotoMono, Vector2.new(99999, 99999))
+	local oldStringBounds = getTextBoundsAsync(oldString, theme.Font.Code, theme.TextSize.Code, math.huge)
+	local newStringBounds = getTextBoundsAsync(newString, theme.Font.Code, theme.TextSize.Code, math.huge)
 
 	self.setContentSize(
 		Vector2.new(math.max(oldStringBounds.X, newStringBounds.X), math.max(oldStringBounds.Y, newStringBounds.Y))
@@ -143,6 +140,8 @@ function StringDiffVisualizer:render()
 	local oldString, newString = self.props.oldString, self.props.newString
 
 	return Theme.with(function(theme)
+		self:calculateContentSize(theme)
+
 		return e(BorderedContainer, {
 			size = self.props.size,
 			position = self.props.position,
