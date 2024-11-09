@@ -1,0 +1,8 @@
+{
+  "recommendations": [
+    "JohnnyMorganz.luau-lsp",
+    "JohnnyMorganz.stylua",
+    "Kampfkarren.selene-vscode",
+    "rust-lang.rust-analyzer"
+  ]
+}

@@ -54,7 +54,7 @@ fn main() -> Result<(), anyhow::Error> {
     );
 
     let snapshot = VfsSnapshot::dir(hashmap! {
-        "default.project.json" => snapshot_from_fs_path(&root_dir.join("default.project.json"))?,
+        "default.project.json" => snapshot_from_fs_path(&root_dir.join("plugin.project.json"))?,
         "fmt" => snapshot_from_fs_path(&plugin_dir.join("fmt"))?,
         "http" => snapshot_from_fs_path(&plugin_dir.join("http"))?,
         "log" => snapshot_from_fs_path(&plugin_dir.join("log"))?,
