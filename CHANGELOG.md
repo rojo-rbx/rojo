@@ -30,6 +30,7 @@
 * Improved settings UI ([#886])
 * `Open Scripts Externally` option can now be changed while syncing ([#911])
 * The sync reminder notification will now tell you what was last synced and when ([#987])
+* Fixed notification and tooltip text sometimes getting cut off ([#988])
 * Projects may now specify rules for syncing files as if they had a different file extension. ([#813])
  	This is specified via a new field on project files, `syncRules`:
 
@@ -89,6 +90,7 @@
 [#915]: https://github.com/rojo-rbx/rojo/pull/915
 [#974]: https://github.com/rojo-rbx/rojo/pull/974
 [#987]: https://github.com/rojo-rbx/rojo/pull/987
+[#988]: https://github.com/rojo-rbx/rojo/pull/988
 
 ## [7.4.3] - August 6th, 2024
 * Fixed issue with building binary files introduced in 7.4.2
