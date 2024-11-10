@@ -55,13 +55,15 @@ fn main() -> Result<(), anyhow::Error> {
 
     let snapshot = VfsSnapshot::dir(hashmap! {
         "default.project.json" => snapshot_from_fs_path(&root_dir.join("plugin.project.json"))?,
-        "fmt" => snapshot_from_fs_path(&plugin_dir.join("fmt"))?,
-        "http" => snapshot_from_fs_path(&plugin_dir.join("http"))?,
-        "log" => snapshot_from_fs_path(&plugin_dir.join("log"))?,
-        "rbx_dom_lua" => snapshot_from_fs_path(&plugin_dir.join("rbx_dom_lua"))?,
-        "src" => snapshot_from_fs_path(&plugin_dir.join("src"))?,
-        "Packages" => snapshot_from_fs_path(&plugin_dir.join("Packages"))?,
-        "Version.txt" => snapshot_from_fs_path(&plugin_dir.join("Version.txt"))?,
+        "plugin" => VfsSnapshot::dir(hashmap! {
+            "fmt" => snapshot_from_fs_path(&plugin_dir.join("fmt"))?,
+            "http" => snapshot_from_fs_path(&plugin_dir.join("http"))?,
+            "log" => snapshot_from_fs_path(&plugin_dir.join("log"))?,
+            "rbx_dom_lua" => snapshot_from_fs_path(&plugin_dir.join("rbx_dom_lua"))?,
+            "src" => snapshot_from_fs_path(&plugin_dir.join("src"))?,
+            "Packages" => snapshot_from_fs_path(&plugin_dir.join("Packages"))?,
+            "Version.txt" => snapshot_from_fs_path(&plugin_dir.join("Version.txt"))?,
+        }),
     });
 
     let out_path = Path::new(&out_dir).join("plugin.bincode");
