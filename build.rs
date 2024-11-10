@@ -41,12 +41,12 @@ fn snapshot_from_fs_path(path: &Path) -> io::Result<VfsSnapshot> {
 fn main() -> Result<(), anyhow::Error> {
     let out_dir = env::var_os("OUT_DIR").unwrap();
 
-    let root_dir = env::var_os("CARGO_MANIFEST_DIR").unwrap();
-    let plugin_root = PathBuf::from(root_dir).join("plugin");
+    let root_dir = PathBuf::from(env::var_os("CARGO_MANIFEST_DIR").unwrap());
+    let plugin_dir = root_dir.join("plugin");
 
     let our_version = Version::parse(env::var_os("CARGO_PKG_VERSION").unwrap().to_str().unwrap())?;
     let plugin_version =
-        Version::parse(fs::read_to_string(plugin_root.join("Version.txt"))?.trim())?;
+        Version::parse(fs::read_to_string(plugin_dir.join("Version.txt"))?.trim())?;
 
     assert_eq!(
         our_version, plugin_version,
@@ -54,14 +54,16 @@ fn main() -> Result<(), anyhow::Error> {
     );
 
     let snapshot = VfsSnapshot::dir(hashmap! {
-        "default.project.json" => snapshot_from_fs_path(&plugin_root.join("default.project.json"))?,
-        "fmt" => snapshot_from_fs_path(&plugin_root.join("fmt"))?,
-        "http" => snapshot_from_fs_path(&plugin_root.join("http"))?,
-        "log" => snapshot_from_fs_path(&plugin_root.join("log"))?,
-        "rbx_dom_lua" => snapshot_from_fs_path(&plugin_root.join("rbx_dom_lua"))?,
-        "src" => snapshot_from_fs_path(&plugin_root.join("src"))?,
-        "Packages" => snapshot_from_fs_path(&plugin_root.join("Packages"))?,
-        "Version.txt" => snapshot_from_fs_path(&plugin_root.join("Version.txt"))?,
+        "default.project.json" => snapshot_from_fs_path(&root_dir.join("plugin.project.json"))?,
+        "plugin" => VfsSnapshot::dir(hashmap! {
+            "fmt" => snapshot_from_fs_path(&plugin_dir.join("fmt"))?,
+            "http" => snapshot_from_fs_path(&plugin_dir.join("http"))?,
+            "log" => snapshot_from_fs_path(&plugin_dir.join("log"))?,
+            "rbx_dom_lua" => snapshot_from_fs_path(&plugin_dir.join("rbx_dom_lua"))?,
+            "src" => snapshot_from_fs_path(&plugin_dir.join("src"))?,
+            "Packages" => snapshot_from_fs_path(&plugin_dir.join("Packages"))?,
+            "Version.txt" => snapshot_from_fs_path(&plugin_dir.join("Version.txt"))?,
+        }),
     });
 
     let out_path = Path::new(&out_dir).join("plugin.bincode");
