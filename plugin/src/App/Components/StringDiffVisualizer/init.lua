@@ -23,12 +23,15 @@ function StringDiffVisualizer:init()
 	self.scriptBackground, self.setScriptBackground = Roact.createBinding(Color3.fromRGB(0, 0, 0))
 	self.updateEvent = Instance.new("BindableEvent")
 	self.lineHeight, self.setLineHeight = Roact.createBinding(15)
+	self.canvasPosition, self.setCanvasPosition = Roact.createBinding(Vector2.zero)
 
 	-- Ensure that the script background is up to date with the current theme
 	self.themeChangedConnection = settings().Studio.ThemeChanged:Connect(function()
-		task.defer(function()
-			-- Defer to allow Highlighter to process the theme change first
+		task.delay(1 / 20, function()
+			-- Delay to allow Highlighter to process the theme change first
 			self:updateScriptBackground()
+			-- Refresh the code label colors too
+			self.updateEvent:Fire()
 		end)
 	end)
 
@@ -37,6 +40,8 @@ function StringDiffVisualizer:init()
 	self:setState({
 		oldDiffs = {},
 		newDiffs = {},
+		oldSpacers = {},
+		newSpacers = {},
 	})
 end
 
@@ -54,11 +59,7 @@ end
 
 function StringDiffVisualizer:didUpdate(previousProps)
 	if previousProps.oldString ~= self.props.oldString or previousProps.newString ~= self.props.newString then
-		local oldDiffs, newDiffs = self:calculateDiffs()
-		self:setState({
-			oldDiffs = oldDiffs,
-			newDiffs = newDiffs,
-		})
+		self:updateDiffs()
 	end
 end
 
@@ -71,8 +72,8 @@ function StringDiffVisualizer:calculateContentSize(theme)
 	return Vector2.new(math.max(oldStringBounds.X, newStringBounds.X), math.max(oldStringBounds.Y, newStringBounds.Y))
 end
 
-function StringDiffVisualizer:calculateDiffs()
-	Timer.start("StringDiffVisualizer:calculateDiffs")
+function StringDiffVisualizer:updateDiffs()
+	Timer.start("StringDiffVisualizer:updateDiffs")
 	local oldString, newString = self.props.oldString, self.props.newString
 
 	-- Diff the two texts
@@ -90,6 +91,9 @@ function StringDiffVisualizer:calculateDiffs()
 
 	-- Find the diff locations
 	local oldDiffs, newDiffs = {}, {}
+	local oldSpacers, newSpacers = {}, {}
+
+	local firstDiffLineNum = 0
 
 	local oldLineNum, oldIdx, newLineNum, newIdx = 1, 0, 1, 0
 	for _, diff in diffs do
@@ -108,10 +112,16 @@ function StringDiffVisualizer:calculateDiffs()
 				newIdx += #line
 			end
 		elseif actionType == StringDiff.ActionTypes.Insert then
+			if firstDiffLineNum == 0 then
+				firstDiffLineNum = newLineNum
+			end
+
 			for i, line in lines do
 				if i > 1 then
 					newLineNum += 1
 					newIdx = 0
+
+					table.insert(oldSpacers, { oldLineNum = oldLineNum, newLineNum = newLineNum })
 				end
 				if not newDiffs[newLineNum] then
 					newDiffs[newLineNum] = {
@@ -126,10 +136,16 @@ function StringDiffVisualizer:calculateDiffs()
 				newIdx += #line
 			end
 		elseif actionType == StringDiff.ActionTypes.Delete then
+			if firstDiffLineNum == 0 then
+				firstDiffLineNum = oldLineNum
+			end
+
 			for i, line in lines do
 				if i > 1 then
 					oldLineNum += 1
 					oldIdx = 0
+
+					table.insert(newSpacers, { oldLineNum = oldLineNum, newLineNum = newLineNum })
 				end
 				if not oldDiffs[oldLineNum] then
 					oldDiffs[oldLineNum] = {
@@ -149,17 +165,24 @@ function StringDiffVisualizer:calculateDiffs()
 	end
 
 	Timer.stop()
-	return oldDiffs, newDiffs
+
+	self:setState({
+		oldDiffs = oldDiffs,
+		newDiffs = newDiffs,
+		oldSpacers = oldSpacers,
+		newSpacers = newSpacers,
+	})
+	-- Scroll to the first diff line
+	self.setCanvasPosition(Vector2.new(0, math.max(0, (firstDiffLineNum - 4) * 16)))
 end
 
 function StringDiffVisualizer:render()
 	local oldString, newString = self.props.oldString, self.props.newString
 	local oldDiffs, newDiffs = self.state.oldDiffs, self.state.newDiffs
+	local oldSpacers, newSpacers = self.state.oldSpacers, self.state.newSpacers
 
 	return Theme.with(function(theme)
 		self.setLineHeight(theme.TextSize.Code)
-
-		local contentSize = self:calculateContentSize(theme)
 
 		local richTextLinesOldString = Highlighter.buildRichTextLines({
 			src = oldString,
@@ -167,6 +190,60 @@ function StringDiffVisualizer:render()
 		local richTextLinesNewString = Highlighter.buildRichTextLines({
 			src = newString,
 		})
+
+		local maxLines = math.max(#richTextLinesOldString, #richTextLinesNewString)
+
+		-- Calculate the width of the canvas
+		-- (One line at a time to avoid the 200k char limit of getTextBoundsAsync)
+		local canvasWidth = 0
+		for i = 1, maxLines do
+			local oldLine = richTextLinesOldString[i]
+			if oldLine and oldLine ~= "" then
+				local bounds = getTextBoundsAsync(oldLine, theme.Font.Code, theme.TextSize.Code, math.huge, true)
+				if bounds.X > canvasWidth then
+					canvasWidth = bounds.X
+				end
+			end
+			local newLine = richTextLinesNewString[i]
+			if newLine and oldLine ~= "" then
+				local bounds = getTextBoundsAsync(newLine, theme.Font.Code, theme.TextSize.Code, math.huge, true)
+				if bounds.X > canvasWidth then
+					canvasWidth = bounds.X
+				end
+			end
+		end
+
+		-- Adjust the rich text lines and their diffs to include spacers (aka nil lines)
+		for spacerIdx, spacer in oldSpacers do
+			local spacerLineNum = spacer.oldLineNum + (spacerIdx - 1)
+			table.insert(richTextLinesOldString, spacerLineNum, nil)
+			-- The oldDiffs that come after this spacer need to be moved down
+			-- without overwriting the oldDiffs that are already there
+			local updatedOldDiffs = {}
+			for lineNum, diffs in pairs(oldDiffs) do
+				if lineNum >= spacerLineNum then
+					updatedOldDiffs[lineNum + 1] = diffs
+				else
+					updatedOldDiffs[lineNum] = diffs
+				end
+			end
+			oldDiffs = updatedOldDiffs
+		end
+		for spacerIdx, spacer in newSpacers do
+			local spacerLineNum = spacer.newLineNum + (spacerIdx - 1)
+			table.insert(richTextLinesNewString, spacerLineNum, nil)
+			-- The newDiffs that come after this spacer need to be moved down
+			-- without overwriting the newDiffs that are already there
+			local updatedNewDiffs = {}
+			for lineNum, diffs in pairs(newDiffs) do
+				if lineNum >= spacerLineNum then
+					updatedNewDiffs[lineNum + 1] = diffs
+				else
+					updatedNewDiffs[lineNum] = diffs
+				end
+			end
+			newDiffs = updatedNewDiffs
+		end
 
 		return e(BorderedContainer, {
 			size = self.props.size,
@@ -197,10 +274,26 @@ function StringDiffVisualizer:render()
 				position = UDim2.new(0, 2, 0, 2),
 				size = UDim2.new(0.5, -7, 1, -4),
 				transparency = self.props.transparency,
-				count = #richTextLinesOldString,
+				count = maxLines,
 				updateEvent = self.updateEvent.Event,
-				canvasWidth = contentSize.X,
+				canvasWidth = canvasWidth,
+				canvasPosition = self.canvasPosition,
+				onCanvasPositionChanged = self.setCanvasPosition,
 				render = function(i)
+					if not richTextLinesOldString[i] then
+						return e("ImageLabel", {
+							Size = UDim2.fromScale(1, 1),
+							Position = UDim2.fromScale(0, 0),
+							BackgroundTransparency = 1,
+							BorderSizePixel = 0,
+							Image = "rbxassetid://117018699617466",
+							ImageTransparency = 0.7,
+							ImageColor3 = theme.TextColor,
+							ScaleType = Enum.ScaleType.Tile,
+							TileSize = UDim2.new(0, 64, 4, 0),
+						})
+					end
+
 					local lineDiffs = oldDiffs[i]
 					local diffFrames = table.create(if lineDiffs then #lineDiffs else 0)
 
@@ -245,10 +338,26 @@ function StringDiffVisualizer:render()
 				position = UDim2.new(0.5, 5, 0, 2),
 				size = UDim2.new(0.5, -7, 1, -4),
 				transparency = self.props.transparency,
-				count = #richTextLinesNewString,
+				count = maxLines,
 				updateEvent = self.updateEvent.Event,
-				canvasWidth = contentSize.X,
+				canvasWidth = canvasWidth,
+				canvasPosition = self.canvasPosition,
+				onCanvasPositionChanged = self.setCanvasPosition,
 				render = function(i)
+					if not richTextLinesNewString[i] then
+						return e("ImageLabel", {
+							Size = UDim2.fromScale(1, 1),
+							Position = UDim2.fromScale(0, 0),
+							BackgroundTransparency = 1,
+							BorderSizePixel = 0,
+							Image = "rbxassetid://117018699617466",
+							ImageTransparency = 0.7,
+							ImageColor3 = theme.TextColor,
+							ScaleType = Enum.ScaleType.Tile,
+							TileSize = UDim2.new(0, 64, 4, 0),
+						})
+					end
+
 					local lineDiffs = newDiffs[i]
 					local diffFrames = table.create(if lineDiffs then #lineDiffs else 0)
 
