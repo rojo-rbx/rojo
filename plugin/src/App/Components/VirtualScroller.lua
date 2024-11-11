@@ -41,6 +41,10 @@ function VirtualScroller:didMount()
 
 	local canvasPositionSignal = rbx:GetPropertyChangedSignal("CanvasPosition")
 	self.canvasPositionChanged = canvasPositionSignal:Connect(function()
+		if self.props.onCanvasPositionChanged then
+			pcall(self.props.onCanvasPositionChanged, rbx.CanvasPosition)
+		end
+
 		if math.abs(rbx.CanvasPosition.Y - self.state.CanvasPosition.Y) > 5 then
 			self:setState({ CanvasPosition = rbx.CanvasPosition })
 			self:refresh()
@@ -136,6 +140,7 @@ function VirtualScroller:render()
 			CanvasSize = self.totalCanvas:map(function(s)
 				return UDim2.fromOffset(props.canvasWidth or 0, s)
 			end),
+			CanvasPosition = self.props.canvasPosition,
 			ScrollBarThickness = 9,
 			ScrollBarImageColor3 = theme.ScrollBarColor,
 			ScrollBarImageTransparency = props.transparency:map(function(value)
