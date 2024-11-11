@@ -164,6 +164,36 @@ function StringDiffVisualizer:updateDiffs()
 		end
 	end
 
+	-- Filter out diffs that are just newlines being added/removed from existing non-empty lines.
+	-- This is done to make the diff visualization less noisy.
+
+	local oldStringLines = string.split(oldString, "\n")
+	local newStringLines = string.split(newString, "\n")
+
+	for lineNum, lineDiffs in oldDiffs do
+		if
+			(#lineDiffs > 1) -- Not just newline
+			or (lineDiffs[1].start ~= lineDiffs[1].stop) -- Not a newline at all
+			or (oldStringLines[lineNum] == "") -- Empty line, so the newline change is significant
+		then
+			continue
+		end
+		-- Just a noisy newline diff, clear it
+		oldDiffs[lineNum] = nil
+	end
+
+	for lineNum, lineDiffs in newDiffs do
+		if
+			(#lineDiffs > 1) -- Not just newline
+			or (lineDiffs[1].start ~= lineDiffs[1].stop) -- Not a newline at all
+			or (newStringLines[lineNum] == "") -- Empty line, so the newline change is significant
+		then
+			continue
+		end
+		-- Just a noisy newline diff, clear it
+		newDiffs[lineNum] = nil
+	end
+
 	Timer.stop()
 
 	self:setState({
@@ -302,7 +332,7 @@ function StringDiffVisualizer:render()
 						for diffIdx, diff in lineDiffs do
 							local start, stop = diff.start, diff.stop
 							diffFrames[diffIdx] = e("Frame", {
-								Size = UDim2.new(0, math.max(charWidth * (stop - start), charWidth / 2), 1, 0),
+								Size = UDim2.new(0, math.max(charWidth * (stop - start), charWidth * 0.4), 1, 0),
 								Position = UDim2.fromOffset(charWidth * start, 0),
 								BackgroundColor3 = theme.Diff.Remove,
 								BackgroundTransparency = 0.75,
@@ -366,7 +396,7 @@ function StringDiffVisualizer:render()
 						for diffIdx, diff in lineDiffs do
 							local start, stop = diff.start, diff.stop
 							diffFrames[diffIdx] = e("Frame", {
-								Size = UDim2.new(0, math.max(charWidth * (stop - start), charWidth / 2), 1, 0),
+								Size = UDim2.new(0, math.max(charWidth * (stop - start), charWidth * 0.4), 1, 0),
 								Position = UDim2.fromOffset(charWidth * start, 0),
 								BackgroundColor3 = theme.Diff.Add,
 								BackgroundTransparency = 0.75,
