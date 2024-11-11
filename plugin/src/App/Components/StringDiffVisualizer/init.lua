@@ -9,6 +9,7 @@ Highlighter.matchStudioSettings()
 local StringDiff = require(script:FindFirstChild("StringDiff"))
 
 local Timer = require(Plugin.Timer)
+local Assets = require(Plugin.Assets)
 local Theme = require(Plugin.App.Theme)
 local getTextBoundsAsync = require(Plugin.App.getTextBoundsAsync)
 
@@ -24,6 +25,7 @@ function StringDiffVisualizer:init()
 	self.updateEvent = Instance.new("BindableEvent")
 	self.lineHeight, self.setLineHeight = Roact.createBinding(15)
 	self.canvasPosition, self.setCanvasPosition = Roact.createBinding(Vector2.zero)
+	self.windowWidth, self.setWindowWidth = Roact.createBinding(math.huge)
 
 	-- Ensure that the script background is up to date with the current theme
 	self.themeChangedConnection = settings().Studio.ThemeChanged:Connect(function()
@@ -275,6 +277,34 @@ function StringDiffVisualizer:render()
 			newDiffs = updatedNewDiffs
 		end
 
+		-- Update the maxLines after we may have inserted new lines
+		maxLines = math.max(#richTextLinesOldString, #richTextLinesNewString)
+
+		local removalScrollMarkers = {}
+		local insertionScrollMarkers = {}
+		for lineNum in oldDiffs do
+			table.insert(
+				removalScrollMarkers,
+				e("Frame", {
+					Size = UDim2.fromScale(0.5, 1 / maxLines),
+					Position = UDim2.fromScale(0, (lineNum - 1) / maxLines),
+					BorderSizePixel = 0,
+					BackgroundColor3 = theme.Diff.Remove,
+				})
+			)
+		end
+		for lineNum in newDiffs do
+			table.insert(
+				insertionScrollMarkers,
+				e("Frame", {
+					Size = UDim2.fromScale(0.5, 1 / maxLines),
+					Position = UDim2.fromScale(0.5, (lineNum - 1) / maxLines),
+					BorderSizePixel = 0,
+					BackgroundColor3 = theme.Diff.Add,
+				})
+			)
+		end
+
 		return e(BorderedContainer, {
 			size = self.props.size,
 			position = self.props.position,
@@ -292,141 +322,161 @@ function StringDiffVisualizer:render()
 					CornerRadius = UDim.new(0, 5),
 				}),
 			}),
-			Separator = e("Frame", {
-				Size = UDim2.new(0, 2, 1, 0),
-				Position = UDim2.new(0.5, 0, 0, 0),
-				AnchorPoint = Vector2.new(0.5, 0),
-				BorderSizePixel = 0,
-				BackgroundColor3 = theme.BorderedContainer.BorderColor,
-				BackgroundTransparency = 0.5,
-			}),
-			Old = e(VirtualScroller, {
-				position = UDim2.new(0, 2, 0, 2),
-				size = UDim2.new(0.5, -7, 1, -4),
-				transparency = self.props.transparency,
-				count = maxLines,
-				updateEvent = self.updateEvent.Event,
-				canvasWidth = canvasWidth,
-				canvasPosition = self.canvasPosition,
-				onCanvasPositionChanged = self.setCanvasPosition,
-				render = function(i)
-					if not richTextLinesOldString[i] then
-						return e("ImageLabel", {
-							Size = UDim2.fromScale(1, 1),
-							Position = UDim2.fromScale(0, 0),
-							BackgroundTransparency = 1,
-							BorderSizePixel = 0,
-							Image = "rbxassetid://117018699617466",
-							ImageTransparency = 0.7,
-							ImageColor3 = theme.TextColor,
-							ScaleType = Enum.ScaleType.Tile,
-							TileSize = UDim2.new(0, 64, 4, 0),
-						})
-					end
+			Main = e("Frame", {
+				Size = UDim2.new(1, -10, 1, -2),
+				Position = UDim2.new(0, 2, 0, 2),
+				BackgroundTransparency = 1,
+				[Roact.Change.AbsoluteSize] = function(rbx)
+					self.setWindowWidth(rbx.AbsoluteSize.X * 0.5 - 10)
+				end,
+			}, {
+				Separator = e("Frame", {
+					Size = UDim2.new(0, 2, 1, 0),
+					Position = UDim2.new(0.5, 0, 0, 0),
+					AnchorPoint = Vector2.new(0.5, 0),
+					BorderSizePixel = 0,
+					BackgroundColor3 = theme.BorderedContainer.BorderColor,
+					BackgroundTransparency = 0.5,
+				}),
+				Old = e(VirtualScroller, {
+					position = UDim2.new(0, 0, 0, 0),
+					size = UDim2.new(0.5, -1, 1, 0),
+					transparency = self.props.transparency,
+					count = maxLines,
+					updateEvent = self.updateEvent.Event,
+					canvasWidth = canvasWidth,
+					canvasPosition = self.canvasPosition,
+					onCanvasPositionChanged = self.setCanvasPosition,
+					render = function(i)
+						if not richTextLinesOldString[i] then
+							return e("ImageLabel", {
+								Size = UDim2.fromScale(1, 1),
+								Position = UDim2.fromScale(0, 0),
+								BackgroundTransparency = 1,
+								BorderSizePixel = 0,
+								Image = Assets.Images.DiagonalLines,
+								ImageTransparency = 0.7,
+								ImageColor3 = theme.TextColor,
+								ScaleType = Enum.ScaleType.Tile,
+								TileSize = UDim2.new(0, 64, 4, 0),
+							})
+						end
 
-					local lineDiffs = oldDiffs[i]
-					local diffFrames = table.create(if lineDiffs then #lineDiffs else 0)
+						local lineDiffs = oldDiffs[i]
+						local diffFrames = table.create(if lineDiffs then #lineDiffs else 0)
 
-					if lineDiffs then
-						local charWidth = math.round(theme.TextSize.Code * 0.5)
-						for diffIdx, diff in lineDiffs do
-							local start, stop = diff.start, diff.stop
-							diffFrames[diffIdx] = e("Frame", {
-								Size = UDim2.new(0, math.max(charWidth * (stop - start), charWidth * 0.4), 1, 0),
-								Position = UDim2.fromOffset(charWidth * start, 0),
+						if lineDiffs then
+							local charWidth = math.round(theme.TextSize.Code * 0.5)
+							for diffIdx, diff in lineDiffs do
+								local start, stop = diff.start, diff.stop
+								diffFrames[diffIdx] = e("Frame", {
+									Size = UDim2.new(0, math.max(charWidth * (stop - start), charWidth * 0.4), 1, 0),
+									Position = UDim2.fromOffset(charWidth * start, 0),
+									BackgroundColor3 = theme.Diff.Remove,
+									BackgroundTransparency = 0.75,
+									BorderSizePixel = 0,
+									ZIndex = -1,
+								})
+							end
+						end
+
+						return Roact.createFragment({
+							CodeLabel = e("TextLabel", {
+								Size = UDim2.fromScale(1, 1),
+								Position = UDim2.fromScale(0, 0),
+								Text = richTextLinesOldString[i],
+								RichText = true,
 								BackgroundColor3 = theme.Diff.Remove,
-								BackgroundTransparency = 0.75,
+								BackgroundTransparency = if lineDiffs then 0.85 else 1,
 								BorderSizePixel = 0,
-								ZIndex = -1,
-							})
-						end
-					end
-
-					return Roact.createFragment({
-						CodeLabel = e("TextLabel", {
-							Size = UDim2.fromScale(1, 1),
-							Position = UDim2.fromScale(0, 0),
-							Text = richTextLinesOldString[i],
-							RichText = true,
-							BackgroundColor3 = theme.Diff.Remove,
-							BackgroundTransparency = if lineDiffs then 0.85 else 1,
-							BorderSizePixel = 0,
-							FontFace = theme.Font.Code,
-							TextSize = theme.TextSize.Code,
-							TextXAlignment = Enum.TextXAlignment.Left,
-							TextYAlignment = Enum.TextYAlignment.Top,
-							TextColor3 = Color3.fromRGB(255, 255, 255),
-						}),
-						DiffFrames = Roact.createFragment(diffFrames),
-					})
-				end,
-				getHeightBinding = function()
-					return self.lineHeight
-				end,
-			}),
-			New = e(VirtualScroller, {
-				position = UDim2.new(0.5, 5, 0, 2),
-				size = UDim2.new(0.5, -7, 1, -4),
-				transparency = self.props.transparency,
-				count = maxLines,
-				updateEvent = self.updateEvent.Event,
-				canvasWidth = canvasWidth,
-				canvasPosition = self.canvasPosition,
-				onCanvasPositionChanged = self.setCanvasPosition,
-				render = function(i)
-					if not richTextLinesNewString[i] then
-						return e("ImageLabel", {
-							Size = UDim2.fromScale(1, 1),
-							Position = UDim2.fromScale(0, 0),
-							BackgroundTransparency = 1,
-							BorderSizePixel = 0,
-							Image = "rbxassetid://117018699617466",
-							ImageTransparency = 0.7,
-							ImageColor3 = theme.TextColor,
-							ScaleType = Enum.ScaleType.Tile,
-							TileSize = UDim2.new(0, 64, 4, 0),
+								FontFace = theme.Font.Code,
+								TextSize = theme.TextSize.Code,
+								TextXAlignment = Enum.TextXAlignment.Left,
+								TextYAlignment = Enum.TextYAlignment.Top,
+								TextColor3 = Color3.fromRGB(255, 255, 255),
+							}),
+							DiffFrames = Roact.createFragment(diffFrames),
 						})
-					end
-
-					local lineDiffs = newDiffs[i]
-					local diffFrames = table.create(if lineDiffs then #lineDiffs else 0)
-
-					if lineDiffs then
-						local charWidth = math.round(theme.TextSize.Code * 0.5)
-						for diffIdx, diff in lineDiffs do
-							local start, stop = diff.start, diff.stop
-							diffFrames[diffIdx] = e("Frame", {
-								Size = UDim2.new(0, math.max(charWidth * (stop - start), charWidth * 0.4), 1, 0),
-								Position = UDim2.fromOffset(charWidth * start, 0),
-								BackgroundColor3 = theme.Diff.Add,
-								BackgroundTransparency = 0.75,
+					end,
+					getHeightBinding = function()
+						return self.lineHeight
+					end,
+				}),
+				New = e(VirtualScroller, {
+					position = UDim2.new(0.5, 1, 0, 0),
+					size = UDim2.new(0.5, -1, 1, 0),
+					transparency = self.props.transparency,
+					count = maxLines,
+					updateEvent = self.updateEvent.Event,
+					canvasWidth = canvasWidth,
+					canvasPosition = self.canvasPosition,
+					onCanvasPositionChanged = self.setCanvasPosition,
+					render = function(i)
+						if not richTextLinesNewString[i] then
+							return e("ImageLabel", {
+								Size = UDim2.fromScale(1, 1),
+								Position = UDim2.fromScale(0, 0),
+								BackgroundTransparency = 1,
 								BorderSizePixel = 0,
-								ZIndex = -1,
+								Image = Assets.Images.DiagonalLines,
+								ImageTransparency = 0.7,
+								ImageColor3 = theme.TextColor,
+								ScaleType = Enum.ScaleType.Tile,
+								TileSize = UDim2.new(0, 64, 4, 0),
 							})
 						end
-					end
 
-					return Roact.createFragment({
-						CodeLabel = e("TextLabel", {
-							Size = UDim2.fromScale(1, 1),
-							Position = UDim2.fromScale(0, 0),
-							Text = richTextLinesNewString[i],
-							RichText = true,
-							BackgroundColor3 = theme.Diff.Add,
-							BackgroundTransparency = if lineDiffs then 0.85 else 1,
-							BorderSizePixel = 0,
-							FontFace = theme.Font.Code,
-							TextSize = theme.TextSize.Code,
-							TextXAlignment = Enum.TextXAlignment.Left,
-							TextYAlignment = Enum.TextYAlignment.Top,
-							TextColor3 = Color3.fromRGB(255, 255, 255),
-						}),
-						DiffFrames = Roact.createFragment(diffFrames),
-					})
-				end,
-				getHeightBinding = function()
-					return self.lineHeight
-				end,
+						local lineDiffs = newDiffs[i]
+						local diffFrames = table.create(if lineDiffs then #lineDiffs else 0)
+
+						if lineDiffs then
+							local charWidth = math.round(theme.TextSize.Code * 0.5)
+							for diffIdx, diff in lineDiffs do
+								local start, stop = diff.start, diff.stop
+								diffFrames[diffIdx] = e("Frame", {
+									Size = UDim2.new(0, math.max(charWidth * (stop - start), charWidth * 0.4), 1, 0),
+									Position = UDim2.fromOffset(charWidth * start, 0),
+									BackgroundColor3 = theme.Diff.Add,
+									BackgroundTransparency = 0.75,
+									BorderSizePixel = 0,
+									ZIndex = -1,
+								})
+							end
+						end
+
+						return Roact.createFragment({
+							CodeLabel = e("TextLabel", {
+								Size = UDim2.fromScale(1, 1),
+								Position = UDim2.fromScale(0, 0),
+								Text = richTextLinesNewString[i],
+								RichText = true,
+								BackgroundColor3 = theme.Diff.Add,
+								BackgroundTransparency = if lineDiffs then 0.85 else 1,
+								BorderSizePixel = 0,
+								FontFace = theme.Font.Code,
+								TextSize = theme.TextSize.Code,
+								TextXAlignment = Enum.TextXAlignment.Left,
+								TextYAlignment = Enum.TextYAlignment.Top,
+								TextColor3 = Color3.fromRGB(255, 255, 255),
+							}),
+							DiffFrames = Roact.createFragment(diffFrames),
+						})
+					end,
+					getHeightBinding = function()
+						return self.lineHeight
+					end,
+				}),
+			}),
+			ScrollMarkers = e("Frame", {
+				Size = self.windowWidth:map(function(windowWidth)
+					return UDim2.new(0, 8, 1, -4 - (if canvasWidth > windowWidth then 10 else 0))
+				end),
+				Position = UDim2.new(1, -2, 0, 2),
+				AnchorPoint = Vector2.new(1, 0),
+				BackgroundTransparency = 1,
+			}, {
+				insertions = Roact.createFragment(insertionScrollMarkers),
+				removals = Roact.createFragment(removalScrollMarkers),
 			}),
 		})
 	end)
