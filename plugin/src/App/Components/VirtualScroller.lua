@@ -15,8 +15,8 @@ local VirtualScroller = Roact.Component:extend("VirtualScroller")
 function VirtualScroller:init()
 	self.scrollFrameRef = Roact.createRef()
 	self:setState({
-		WindowSize = Vector2.new(),
-		CanvasPosition = Vector2.new(),
+		WindowSize = Vector2.zero,
+		CanvasPosition = Vector2.zero,
 	})
 
 	self.totalCanvas, self.setTotalCanvas = Roact.createBinding(0)
@@ -134,7 +134,7 @@ function VirtualScroller:render()
 			BackgroundColor3 = props.backgroundColor3 or theme.BorderedContainer.BackgroundColor,
 			BorderColor3 = props.borderColor3 or theme.BorderedContainer.BorderColor,
 			CanvasSize = self.totalCanvas:map(function(s)
-				return UDim2.fromOffset(0, s)
+				return UDim2.fromOffset(props.canvasWidth or 0, s)
 			end),
 			ScrollBarThickness = 9,
 			ScrollBarImageColor3 = theme.ScrollBarColor,
@@ -146,7 +146,7 @@ function VirtualScroller:render()
 			BottomImage = Assets.Images.ScrollBar.Bottom,
 
 			ElasticBehavior = Enum.ElasticBehavior.Always,
-			ScrollingDirection = Enum.ScrollingDirection.Y,
+			ScrollingDirection = Enum.ScrollingDirection.XY,
 			VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar,
 			[Roact.Ref] = self.scrollFrameRef,
 		}, {
