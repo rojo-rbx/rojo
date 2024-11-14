@@ -296,9 +296,11 @@ pub fn get_best_middleware(snapshot: &SyncbackSnapshot) -> Middleware {
             "ParticleEmitter",
             "TextChannel",
             "TextChatCommand",
+            // TODO: Implement a way to use inheritance for this
             "ChatWindowConfiguration",
             "ChatInputBarConfiguration",
             "BubbleChatConfiguration",
+            "ChannelTabsConfiguration",
         ]
         .into()
     });
