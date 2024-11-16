@@ -40,10 +40,10 @@ function StringDiffVisualizer:init()
 	self:updateScriptBackground()
 
 	self:setState({
-		oldDiffs = {},
-		newDiffs = {},
-		oldSpacers = {},
-		newSpacers = {},
+		currentDiffs = {},
+		incomingDiffs = {},
+		currentSpacers = {},
+		incomingSpacers = {},
 	})
 end
 
@@ -60,44 +60,51 @@ function StringDiffVisualizer:updateScriptBackground()
 end
 
 function StringDiffVisualizer:didUpdate(previousProps)
-	if previousProps.oldString ~= self.props.oldString or previousProps.newString ~= self.props.newString then
+	if
+		previousProps.currentString ~= self.props.currentString
+		or previousProps.incomingString ~= self.props.incomingString
+	then
 		self:updateDiffs()
 	end
 end
 
 function StringDiffVisualizer:calculateContentSize(theme)
-	local oldString, newString = self.props.oldString, self.props.newString
+	local currentString, incomingString = self.props.currentString, self.props.incomingString
 
-	local oldStringBounds = getTextBoundsAsync(oldString, theme.Font.Code, theme.TextSize.Code, math.huge)
-	local newStringBounds = getTextBoundsAsync(newString, theme.Font.Code, theme.TextSize.Code, math.huge)
+	local currentStringBounds = getTextBoundsAsync(currentString, theme.Font.Code, theme.TextSize.Code, math.huge)
+	local incomingStringBounds = getTextBoundsAsync(incomingString, theme.Font.Code, theme.TextSize.Code, math.huge)
 
-	return Vector2.new(math.max(oldStringBounds.X, newStringBounds.X), math.max(oldStringBounds.Y, newStringBounds.Y))
+	return Vector2.new(
+		math.max(currentStringBounds.X, incomingStringBounds.X),
+		math.max(currentStringBounds.Y, incomingStringBounds.Y)
+	)
 end
 
 function StringDiffVisualizer:updateDiffs()
 	Timer.start("StringDiffVisualizer:updateDiffs")
-	local oldString, newString = self.props.oldString, self.props.newString
+	local currentString, incomingString = self.props.currentString, self.props.incomingString
 
 	-- Diff the two texts
 	local startClock = os.clock()
-	local diffs = StringDiff.findDiffs((string.gsub(oldString, "\t", "    ")), (string.gsub(newString, "\t", "    ")))
+	local diffs =
+		StringDiff.findDiffs((string.gsub(currentString, "\t", "    ")), (string.gsub(incomingString, "\t", "    ")))
 	local stopClock = os.clock()
 
 	Log.trace(
 		"Diffing {} byte and {} byte strings took {} microseconds and found {} diff sections",
-		#oldString,
-		#newString,
+		#currentString,
+		#incomingString,
 		math.round((stopClock - startClock) * 1000 * 1000),
 		#diffs
 	)
 
 	-- Find the diff locations
-	local oldDiffs, newDiffs = {}, {}
-	local oldSpacers, newSpacers = {}, {}
+	local currentDiffs, incomingDiffs = {}, {}
+	local currentSpacers, incomingSpacers = {}, {}
 
 	local firstDiffLineNum = 0
 
-	local oldLineNum, oldIdx, newLineNum, newIdx = 1, 0, 1, 0
+	local currentLineNum, currentIdx, incomingLineNum, incomingIdx = 1, 0, 1, 0
 	for _, diff in diffs do
 		local actionType, text = diff.actionType, diff.value
 		local lines = string.split(text, "\n")
@@ -105,140 +112,143 @@ function StringDiffVisualizer:updateDiffs()
 		if actionType == StringDiff.ActionTypes.Equal then
 			for i, line in lines do
 				if i > 1 then
-					oldLineNum += 1
-					oldIdx = 0
-					newLineNum += 1
-					newIdx = 0
+					currentLineNum += 1
+					currentIdx = 0
+					incomingLineNum += 1
+					incomingIdx = 0
 				end
-				oldIdx += #line
-				newIdx += #line
+				currentIdx += #line
+				incomingIdx += #line
 			end
 		elseif actionType == StringDiff.ActionTypes.Insert then
 			if firstDiffLineNum == 0 then
-				firstDiffLineNum = newLineNum
+				firstDiffLineNum = incomingLineNum
 			end
 
 			for i, line in lines do
 				if i > 1 then
-					newLineNum += 1
-					newIdx = 0
+					incomingLineNum += 1
+					incomingIdx = 0
 
-					table.insert(oldSpacers, { oldLineNum = oldLineNum, newLineNum = newLineNum })
+					table.insert(currentSpacers, { currentLineNum = currentLineNum, incomingLineNum = incomingLineNum })
 				end
-				if not newDiffs[newLineNum] then
-					newDiffs[newLineNum] = {
-						{ start = newIdx, stop = newIdx + #line },
+				if not incomingDiffs[incomingLineNum] then
+					incomingDiffs[incomingLineNum] = {
+						{ start = incomingIdx, stop = incomingIdx + #line },
 					}
 				else
-					table.insert(newDiffs[newLineNum], {
-						start = newIdx,
-						stop = newIdx + #line,
+					table.insert(incomingDiffs[incomingLineNum], {
+						start = incomingIdx,
+						stop = incomingIdx + #line,
 					})
 				end
-				newIdx += #line
+				incomingIdx += #line
 			end
 		elseif actionType == StringDiff.ActionTypes.Delete then
 			if firstDiffLineNum == 0 then
-				firstDiffLineNum = oldLineNum
+				firstDiffLineNum = currentLineNum
 			end
 
 			for i, line in lines do
 				if i > 1 then
-					oldLineNum += 1
-					oldIdx = 0
+					currentLineNum += 1
+					currentIdx = 0
 
-					table.insert(newSpacers, { oldLineNum = oldLineNum, newLineNum = newLineNum })
+					table.insert(
+						incomingSpacers,
+						{ currentLineNum = currentLineNum, incomingLineNum = incomingLineNum }
+					)
 				end
-				if not oldDiffs[oldLineNum] then
-					oldDiffs[oldLineNum] = {
-						{ start = oldIdx, stop = oldIdx + #line },
+				if not currentDiffs[currentLineNum] then
+					currentDiffs[currentLineNum] = {
+						{ start = currentIdx, stop = currentIdx + #line },
 					}
 				else
-					table.insert(oldDiffs[oldLineNum], {
-						start = oldIdx,
-						stop = oldIdx + #line,
+					table.insert(currentDiffs[currentLineNum], {
+						start = currentIdx,
+						stop = currentIdx + #line,
 					})
 				end
-				oldIdx += #line
+				currentIdx += #line
 			end
 		else
 			Log.warn("Unknown diff action: {} {}", actionType, text)
 		end
 	end
 
-	-- Filter out diffs that are just newlines being added/removed from existing non-empty lines.
+	-- Filter out diffs that are just incominglines being added/removed from existing non-empty lines.
 	-- This is done to make the diff visualization less noisy.
 
-	local oldStringLines = string.split(oldString, "\n")
-	local newStringLines = string.split(newString, "\n")
+	local currentStringLines = string.split(currentString, "\n")
+	local incomingStringLines = string.split(incomingString, "\n")
 
-	for lineNum, lineDiffs in oldDiffs do
+	for lineNum, lineDiffs in currentDiffs do
 		if
-			(#lineDiffs > 1) -- Not just newline
-			or (lineDiffs[1].start ~= lineDiffs[1].stop) -- Not a newline at all
-			or (oldStringLines[lineNum] == "") -- Empty line, so the newline change is significant
+			(#lineDiffs > 1) -- Not just incomingline
+			or (lineDiffs[1].start ~= lineDiffs[1].stop) -- Not a incomingline at all
+			or (currentStringLines[lineNum] == "") -- Empty line, so the incomingline change is significant
 		then
 			continue
 		end
-		-- Just a noisy newline diff, clear it
-		oldDiffs[lineNum] = nil
+		-- Just a noisy incomingline diff, clear it
+		currentDiffs[lineNum] = nil
 	end
 
-	for lineNum, lineDiffs in newDiffs do
+	for lineNum, lineDiffs in incomingDiffs do
 		if
-			(#lineDiffs > 1) -- Not just newline
-			or (lineDiffs[1].start ~= lineDiffs[1].stop) -- Not a newline at all
-			or (newStringLines[lineNum] == "") -- Empty line, so the newline change is significant
+			(#lineDiffs > 1) -- Not just incomingline
+			or (lineDiffs[1].start ~= lineDiffs[1].stop) -- Not a incomingline at all
+			or (incomingStringLines[lineNum] == "") -- Empty line, so the incomingline change is significant
 		then
 			continue
 		end
-		-- Just a noisy newline diff, clear it
-		newDiffs[lineNum] = nil
+		-- Just a noisy incomingline diff, clear it
+		incomingDiffs[lineNum] = nil
 	end
 
 	Timer.stop()
 
 	self:setState({
-		oldDiffs = oldDiffs,
-		newDiffs = newDiffs,
-		oldSpacers = oldSpacers,
-		newSpacers = newSpacers,
+		currentDiffs = currentDiffs,
+		incomingDiffs = incomingDiffs,
+		currentSpacers = currentSpacers,
+		incomingSpacers = incomingSpacers,
 	})
 	-- Scroll to the first diff line
 	self.setCanvasPosition(Vector2.new(0, math.max(0, (firstDiffLineNum - 4) * 16)))
 end
 
 function StringDiffVisualizer:render()
-	local oldString, newString = self.props.oldString, self.props.newString
-	local oldDiffs, newDiffs = self.state.oldDiffs, self.state.newDiffs
-	local oldSpacers, newSpacers = self.state.oldSpacers, self.state.newSpacers
+	local currentString, incomingString = self.props.currentString, self.props.incomingString
+	local currentDiffs, incomingDiffs = self.state.currentDiffs, self.state.incomingDiffs
+	local currentSpacers, incomingSpacers = self.state.currentSpacers, self.state.incomingSpacers
 
 	return Theme.with(function(theme)
 		self.setLineHeight(theme.TextSize.Code)
 
-		local richTextLinesOldString = Highlighter.buildRichTextLines({
-			src = oldString,
+		local richTextLinesCurrentString = Highlighter.buildRichTextLines({
+			src = currentString,
 		})
-		local richTextLinesNewString = Highlighter.buildRichTextLines({
-			src = newString,
+		local richTextLinesIncomingString = Highlighter.buildRichTextLines({
+			src = incomingString,
 		})
 
-		local maxLines = math.max(#richTextLinesOldString, #richTextLinesNewString)
+		local maxLines = math.max(#richTextLinesCurrentString, #richTextLinesIncomingString)
 
 		-- Calculate the width of the canvas
 		-- (One line at a time to avoid the 200k char limit of getTextBoundsAsync)
 		local canvasWidth = 0
 		for i = 1, maxLines do
-			local oldLine = richTextLinesOldString[i]
-			if oldLine and oldLine ~= "" then
-				local bounds = getTextBoundsAsync(oldLine, theme.Font.Code, theme.TextSize.Code, math.huge, true)
+			local currentLine = richTextLinesCurrentString[i]
+			if currentLine and currentLine ~= "" then
+				local bounds = getTextBoundsAsync(currentLine, theme.Font.Code, theme.TextSize.Code, math.huge, true)
 				if bounds.X > canvasWidth then
 					canvasWidth = bounds.X
 				end
 			end
-			local newLine = richTextLinesNewString[i]
-			if newLine and oldLine ~= "" then
-				local bounds = getTextBoundsAsync(newLine, theme.Font.Code, theme.TextSize.Code, math.huge, true)
+			local incomingLine = richTextLinesIncomingString[i]
+			if incomingLine and currentLine ~= "" then
+				local bounds = getTextBoundsAsync(incomingLine, theme.Font.Code, theme.TextSize.Code, math.huge, true)
 				if bounds.X > canvasWidth then
 					canvasWidth = bounds.X
 				end
@@ -246,43 +256,43 @@ function StringDiffVisualizer:render()
 		end
 
 		-- Adjust the rich text lines and their diffs to include spacers (aka nil lines)
-		for spacerIdx, spacer in oldSpacers do
-			local spacerLineNum = spacer.oldLineNum + (spacerIdx - 1)
-			table.insert(richTextLinesOldString, spacerLineNum, nil)
-			-- The oldDiffs that come after this spacer need to be moved down
-			-- without overwriting the oldDiffs that are already there
-			local updatedOldDiffs = {}
-			for lineNum, diffs in pairs(oldDiffs) do
+		for spacerIdx, spacer in currentSpacers do
+			local spacerLineNum = spacer.currentLineNum + (spacerIdx - 1)
+			table.insert(richTextLinesCurrentString, spacerLineNum, nil)
+			-- The currentDiffs that come after this spacer need to be moved down
+			-- without overwriting the currentDiffs that are already there
+			local updatedCurrentDiffs = {}
+			for lineNum, diffs in pairs(currentDiffs) do
 				if lineNum >= spacerLineNum then
-					updatedOldDiffs[lineNum + 1] = diffs
+					updatedCurrentDiffs[lineNum + 1] = diffs
 				else
-					updatedOldDiffs[lineNum] = diffs
+					updatedCurrentDiffs[lineNum] = diffs
 				end
 			end
-			oldDiffs = updatedOldDiffs
+			currentDiffs = updatedCurrentDiffs
 		end
-		for spacerIdx, spacer in newSpacers do
-			local spacerLineNum = spacer.newLineNum + (spacerIdx - 1)
-			table.insert(richTextLinesNewString, spacerLineNum, nil)
-			-- The newDiffs that come after this spacer need to be moved down
-			-- without overwriting the newDiffs that are already there
-			local updatedNewDiffs = {}
-			for lineNum, diffs in pairs(newDiffs) do
+		for spacerIdx, spacer in incomingSpacers do
+			local spacerLineNum = spacer.incomingLineNum + (spacerIdx - 1)
+			table.insert(richTextLinesIncomingString, spacerLineNum, nil)
+			-- The incomingDiffs that come after this spacer need to be moved down
+			-- without overwriting the incomingDiffs that are already there
+			local updatedIncomingDiffs = {}
+			for lineNum, diffs in pairs(incomingDiffs) do
 				if lineNum >= spacerLineNum then
-					updatedNewDiffs[lineNum + 1] = diffs
+					updatedIncomingDiffs[lineNum + 1] = diffs
 				else
-					updatedNewDiffs[lineNum] = diffs
+					updatedIncomingDiffs[lineNum] = diffs
 				end
 			end
-			newDiffs = updatedNewDiffs
+			incomingDiffs = updatedIncomingDiffs
 		end
 
-		-- Update the maxLines after we may have inserted new lines
-		maxLines = math.max(#richTextLinesOldString, #richTextLinesNewString)
+		-- Update the maxLines after we may have inserted additional lines
+		maxLines = math.max(#richTextLinesCurrentString, #richTextLinesIncomingString)
 
 		local removalScrollMarkers = {}
 		local insertionScrollMarkers = {}
-		for lineNum in oldDiffs do
+		for lineNum in currentDiffs do
 			table.insert(
 				removalScrollMarkers,
 				e("Frame", {
@@ -293,7 +303,7 @@ function StringDiffVisualizer:render()
 				})
 			)
 		end
-		for lineNum in newDiffs do
+		for lineNum in incomingDiffs do
 			table.insert(
 				insertionScrollMarkers,
 				e("Frame", {
@@ -338,7 +348,7 @@ function StringDiffVisualizer:render()
 					BackgroundColor3 = theme.BorderedContainer.BorderColor,
 					BackgroundTransparency = 0.5,
 				}),
-				Old = e(VirtualScroller, {
+				Current = e(VirtualScroller, {
 					position = UDim2.new(0, 0, 0, 0),
 					size = UDim2.new(0.5, -1, 1, 0),
 					transparency = self.props.transparency,
@@ -348,7 +358,7 @@ function StringDiffVisualizer:render()
 					canvasPosition = self.canvasPosition,
 					onCanvasPositionChanged = self.setCanvasPosition,
 					render = function(i)
-						if not richTextLinesOldString[i] then
+						if not richTextLinesCurrentString[i] then
 							return e("ImageLabel", {
 								Size = UDim2.fromScale(1, 1),
 								Position = UDim2.fromScale(0, 0),
@@ -362,7 +372,7 @@ function StringDiffVisualizer:render()
 							})
 						end
 
-						local lineDiffs = oldDiffs[i]
+						local lineDiffs = currentDiffs[i]
 						local diffFrames = table.create(if lineDiffs then #lineDiffs else 0)
 
 						if lineDiffs then
@@ -384,7 +394,7 @@ function StringDiffVisualizer:render()
 							CodeLabel = e("TextLabel", {
 								Size = UDim2.fromScale(1, 1),
 								Position = UDim2.fromScale(0, 0),
-								Text = richTextLinesOldString[i],
+								Text = richTextLinesCurrentString[i],
 								RichText = true,
 								BackgroundColor3 = theme.Diff.Remove,
 								BackgroundTransparency = if lineDiffs then 0.85 else 1,
@@ -402,7 +412,7 @@ function StringDiffVisualizer:render()
 						return self.lineHeight
 					end,
 				}),
-				New = e(VirtualScroller, {
+				Incoming = e(VirtualScroller, {
 					position = UDim2.new(0.5, 1, 0, 0),
 					size = UDim2.new(0.5, -1, 1, 0),
 					transparency = self.props.transparency,
@@ -412,7 +422,7 @@ function StringDiffVisualizer:render()
 					canvasPosition = self.canvasPosition,
 					onCanvasPositionChanged = self.setCanvasPosition,
 					render = function(i)
-						if not richTextLinesNewString[i] then
+						if not richTextLinesIncomingString[i] then
 							return e("ImageLabel", {
 								Size = UDim2.fromScale(1, 1),
 								Position = UDim2.fromScale(0, 0),
@@ -426,7 +436,7 @@ function StringDiffVisualizer:render()
 							})
 						end
 
-						local lineDiffs = newDiffs[i]
+						local lineDiffs = incomingDiffs[i]
 						local diffFrames = table.create(if lineDiffs then #lineDiffs else 0)
 
 						if lineDiffs then
@@ -448,7 +458,7 @@ function StringDiffVisualizer:render()
 							CodeLabel = e("TextLabel", {
 								Size = UDim2.fromScale(1, 1),
 								Position = UDim2.fromScale(0, 0),
-								Text = richTextLinesNewString[i],
+								Text = richTextLinesIncomingString[i],
 								RichText = true,
 								BackgroundColor3 = theme.Diff.Add,
 								BackgroundTransparency = if lineDiffs then 0.85 else 1,
