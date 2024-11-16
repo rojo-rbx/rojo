@@ -16,7 +16,9 @@ function VirtualScroller:init()
 	self.scrollFrameRef = Roact.createRef()
 	self:setState({
 		WindowSize = Vector2.zero,
-		CanvasPosition = Vector2.zero,
+		CanvasPosition = if self.props.canvasPosition
+			then self.props.canvasPosition:getValue() or Vector2.zero
+			else Vector2.zero,
 	})
 
 	self.totalCanvas, self.setTotalCanvas = Roact.createBinding(0)

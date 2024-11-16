@@ -40,10 +40,13 @@ function StringDiffVisualizer:init()
 	self:updateScriptBackground()
 
 	self:setState({
+		maxLines = 0,
+		currentRichTextLines = {},
+		incomingRichTextLines = {},
 		currentDiffs = {},
+		currentLineNumbers = {},
 		incomingDiffs = {},
-		currentSpacers = {},
-		incomingSpacers = {},
+		incomingLineNumbers = {},
 	})
 end
 
@@ -206,48 +209,102 @@ function StringDiffVisualizer:updateDiffs()
 		incomingDiffs[lineNum] = nil
 	end
 
+	local currentRichTextLines = Highlighter.buildRichTextLines({
+		src = currentString,
+	})
+	local incomingRichTextLines = Highlighter.buildRichTextLines({
+		src = incomingString,
+	})
+
+	local maxLines = math.max(#currentRichTextLines, #incomingRichTextLines)
+
+	-- Adjust the rich text lines and their diffs to include spacers (aka nil lines)
+	for spacerIdx, spacer in currentSpacers do
+		local spacerLineNum = spacer.currentLineNum + (spacerIdx - 1)
+		table.insert(currentRichTextLines, spacerLineNum, nil)
+		-- The currentDiffs that come after this spacer need to be moved down
+		-- without overwriting the currentDiffs that are already there
+		local updatedCurrentDiffs = {}
+		for lineNum, lineDiffs in pairs(currentDiffs) do
+			if lineNum >= spacerLineNum then
+				updatedCurrentDiffs[lineNum + 1] = lineDiffs
+			else
+				updatedCurrentDiffs[lineNum] = lineDiffs
+			end
+		end
+		currentDiffs = updatedCurrentDiffs
+	end
+	for spacerIdx, spacer in incomingSpacers do
+		local spacerLineNum = spacer.incomingLineNum + (spacerIdx - 1)
+		table.insert(incomingRichTextLines, spacerLineNum, nil)
+		-- The incomingDiffs that come after this spacer need to be moved down
+		-- without overwriting the incomingDiffs that are already there
+		local updatedIncomingDiffs = {}
+		for lineNum, lineDiffs in pairs(incomingDiffs) do
+			if lineNum >= spacerLineNum then
+				updatedIncomingDiffs[lineNum + 1] = lineDiffs
+			else
+				updatedIncomingDiffs[lineNum] = lineDiffs
+			end
+		end
+		incomingDiffs = updatedIncomingDiffs
+	end
+
+	-- Update the maxLines after we may have inserted additional lines
+	maxLines = math.max(#currentRichTextLines, #incomingRichTextLines)
+
+	local currentLineNumbers, incomingLineNumbers = table.create(maxLines, 0), table.create(maxLines, 0)
+	local currentLineNumber, incomingLineNumber = 0, 0
+	for lineNum = 1, maxLines do
+		if currentRichTextLines[lineNum] then
+			currentLineNumber += 1
+			currentLineNumbers[lineNum] = currentLineNumber
+		end
+		if incomingRichTextLines[lineNum] then
+			incomingLineNumber += 1
+			incomingLineNumbers[lineNum] = incomingLineNumber
+		end
+	end
+
 	Timer.stop()
 
 	self:setState({
+		maxLines = maxLines,
+		currentRichTextLines = currentRichTextLines,
+		incomingRichTextLines = incomingRichTextLines,
 		currentDiffs = currentDiffs,
+		currentLineNumbers = currentLineNumbers,
 		incomingDiffs = incomingDiffs,
-		currentSpacers = currentSpacers,
-		incomingSpacers = incomingSpacers,
+		incomingLineNumbers = incomingLineNumbers,
 	})
+
 	-- Scroll to the first diff line
-	self.setCanvasPosition(Vector2.new(0, math.max(0, (firstDiffLineNum - 4) * 16)))
+	task.defer(self.setCanvasPosition, Vector2.new(0, math.max(0, (firstDiffLineNum - 4) * 16)))
 end
 
 function StringDiffVisualizer:render()
-	local currentString, incomingString = self.props.currentString, self.props.incomingString
 	local currentDiffs, incomingDiffs = self.state.currentDiffs, self.state.incomingDiffs
-	local currentSpacers, incomingSpacers = self.state.currentSpacers, self.state.incomingSpacers
+	local currentLineNumbers, incomingLineNumbers = self.state.currentLineNumbers, self.state.incomingLineNumbers
+	local currentRichTextLines, incomingRichTextLines =
+		self.state.currentRichTextLines, self.state.incomingRichTextLines
+	local maxLines = self.state.maxLines
 
 	return Theme.with(function(theme)
 		self.setLineHeight(theme.TextSize.Code)
-
-		local richTextLinesCurrentString = Highlighter.buildRichTextLines({
-			src = currentString,
-		})
-		local richTextLinesIncomingString = Highlighter.buildRichTextLines({
-			src = incomingString,
-		})
-
-		local maxLines = math.max(#richTextLinesCurrentString, #richTextLinesIncomingString)
 
 		-- Calculate the width of the canvas
 		-- (One line at a time to avoid the 200k char limit of getTextBoundsAsync)
 		local canvasWidth = 0
 		for i = 1, maxLines do
-			local currentLine = richTextLinesCurrentString[i]
-			if currentLine and currentLine ~= "" then
+			local currentLine = currentRichTextLines[i]
+			if currentLine and string.find(currentLine, "%S") then
 				local bounds = getTextBoundsAsync(currentLine, theme.Font.Code, theme.TextSize.Code, math.huge, true)
 				if bounds.X > canvasWidth then
 					canvasWidth = bounds.X
 				end
 			end
-			local incomingLine = richTextLinesIncomingString[i]
-			if incomingLine and currentLine ~= "" then
+			local incomingLine = incomingRichTextLines[i]
+			if incomingLine and string.find(incomingLine, "%S") then
 				local bounds = getTextBoundsAsync(incomingLine, theme.Font.Code, theme.TextSize.Code, math.huge, true)
 				if bounds.X > canvasWidth then
 					canvasWidth = bounds.X
@@ -255,40 +312,10 @@ function StringDiffVisualizer:render()
 			end
 		end
 
-		-- Adjust the rich text lines and their diffs to include spacers (aka nil lines)
-		for spacerIdx, spacer in currentSpacers do
-			local spacerLineNum = spacer.currentLineNum + (spacerIdx - 1)
-			table.insert(richTextLinesCurrentString, spacerLineNum, nil)
-			-- The currentDiffs that come after this spacer need to be moved down
-			-- without overwriting the currentDiffs that are already there
-			local updatedCurrentDiffs = {}
-			for lineNum, diffs in pairs(currentDiffs) do
-				if lineNum >= spacerLineNum then
-					updatedCurrentDiffs[lineNum + 1] = diffs
-				else
-					updatedCurrentDiffs[lineNum] = diffs
-				end
-			end
-			currentDiffs = updatedCurrentDiffs
-		end
-		for spacerIdx, spacer in incomingSpacers do
-			local spacerLineNum = spacer.incomingLineNum + (spacerIdx - 1)
-			table.insert(richTextLinesIncomingString, spacerLineNum, nil)
-			-- The incomingDiffs that come after this spacer need to be moved down
-			-- without overwriting the incomingDiffs that are already there
-			local updatedIncomingDiffs = {}
-			for lineNum, diffs in pairs(incomingDiffs) do
-				if lineNum >= spacerLineNum then
-					updatedIncomingDiffs[lineNum + 1] = diffs
-				else
-					updatedIncomingDiffs[lineNum] = diffs
-				end
-			end
-			incomingDiffs = updatedIncomingDiffs
-		end
+		local lineNumberWidth =
+			getTextBoundsAsync(tostring(maxLines), theme.Font.Code, theme.TextSize.Body, math.huge, true).X
 
-		-- Update the maxLines after we may have inserted additional lines
-		maxLines = math.max(#richTextLinesCurrentString, #richTextLinesIncomingString)
+		canvasWidth += lineNumberWidth + 12
 
 		local removalScrollMarkers = {}
 		local insertionScrollMarkers = {}
@@ -358,7 +385,7 @@ function StringDiffVisualizer:render()
 					canvasPosition = self.canvasPosition,
 					onCanvasPositionChanged = self.setCanvasPosition,
 					render = function(i)
-						if not richTextLinesCurrentString[i] then
+						if not currentRichTextLines[i] then
 							return e("ImageLabel", {
 								Size = UDim2.fromScale(1, 1),
 								Position = UDim2.fromScale(0, 0),
@@ -391,21 +418,41 @@ function StringDiffVisualizer:render()
 						end
 
 						return Roact.createFragment({
-							CodeLabel = e("TextLabel", {
-								Size = UDim2.fromScale(1, 1),
-								Position = UDim2.fromScale(0, 0),
-								Text = richTextLinesCurrentString[i],
-								RichText = true,
-								BackgroundColor3 = theme.Diff.Remove,
-								BackgroundTransparency = if lineDiffs then 0.85 else 1,
+							LineNumber = e("TextLabel", {
+								Size = UDim2.new(0, lineNumberWidth + 8, 1, 0),
+								Text = currentLineNumbers[i] or "",
+								BackgroundColor3 = Color3.new(0, 0, 0),
+								BackgroundTransparency = 0.9,
 								BorderSizePixel = 0,
 								FontFace = theme.Font.Code,
-								TextSize = theme.TextSize.Code,
-								TextXAlignment = Enum.TextXAlignment.Left,
-								TextYAlignment = Enum.TextYAlignment.Top,
-								TextColor3 = Color3.fromRGB(255, 255, 255),
+								TextSize = theme.TextSize.Body,
+								TextColor3 = if lineDiffs then theme.Diff.Remove else theme.SubTextColor,
+								TextXAlignment = Enum.TextXAlignment.Right,
+							}, {
+								Padding = e("UIPadding", { PaddingRight = UDim.new(0, 6) }),
 							}),
-							DiffFrames = Roact.createFragment(diffFrames),
+							Content = e("Frame", {
+								Size = UDim2.new(1, -(lineNumberWidth + 10), 1, 0),
+								Position = UDim2.fromScale(1, 0),
+								AnchorPoint = Vector2.new(1, 0),
+								BackgroundTransparency = 1,
+							}, {
+								CodeLabel = e("TextLabel", {
+									Size = UDim2.fromScale(1, 1),
+									Position = UDim2.fromScale(0, 0),
+									Text = currentRichTextLines[i],
+									RichText = true,
+									BackgroundColor3 = theme.Diff.Remove,
+									BackgroundTransparency = if lineDiffs then 0.85 else 1,
+									BorderSizePixel = 0,
+									FontFace = theme.Font.Code,
+									TextSize = theme.TextSize.Code,
+									TextXAlignment = Enum.TextXAlignment.Left,
+									TextYAlignment = Enum.TextYAlignment.Top,
+									TextColor3 = Color3.fromRGB(255, 255, 255),
+								}),
+								DiffFrames = Roact.createFragment(diffFrames),
+							}),
 						})
 					end,
 					getHeightBinding = function()
@@ -422,7 +469,7 @@ function StringDiffVisualizer:render()
 					canvasPosition = self.canvasPosition,
 					onCanvasPositionChanged = self.setCanvasPosition,
 					render = function(i)
-						if not richTextLinesIncomingString[i] then
+						if not incomingRichTextLines[i] then
 							return e("ImageLabel", {
 								Size = UDim2.fromScale(1, 1),
 								Position = UDim2.fromScale(0, 0),
@@ -455,21 +502,41 @@ function StringDiffVisualizer:render()
 						end
 
 						return Roact.createFragment({
-							CodeLabel = e("TextLabel", {
-								Size = UDim2.fromScale(1, 1),
-								Position = UDim2.fromScale(0, 0),
-								Text = richTextLinesIncomingString[i],
-								RichText = true,
-								BackgroundColor3 = theme.Diff.Add,
-								BackgroundTransparency = if lineDiffs then 0.85 else 1,
+							LineNumber = e("TextLabel", {
+								Size = UDim2.new(0, lineNumberWidth + 8, 1, 0),
+								Text = incomingLineNumbers[i] or "",
+								BackgroundColor3 = Color3.new(0, 0, 0),
+								BackgroundTransparency = 0.9,
 								BorderSizePixel = 0,
 								FontFace = theme.Font.Code,
-								TextSize = theme.TextSize.Code,
-								TextXAlignment = Enum.TextXAlignment.Left,
-								TextYAlignment = Enum.TextYAlignment.Top,
-								TextColor3 = Color3.fromRGB(255, 255, 255),
+								TextSize = theme.TextSize.Body,
+								TextColor3 = if lineDiffs then theme.Diff.Add else theme.SubTextColor,
+								TextXAlignment = Enum.TextXAlignment.Right,
+							}, {
+								Padding = e("UIPadding", { PaddingRight = UDim.new(0, 6) }),
 							}),
-							DiffFrames = Roact.createFragment(diffFrames),
+							Content = e("Frame", {
+								Size = UDim2.new(1, -(lineNumberWidth + 10), 1, 0),
+								Position = UDim2.fromScale(1, 0),
+								AnchorPoint = Vector2.new(1, 0),
+								BackgroundTransparency = 1,
+							}, {
+								CodeLabel = e("TextLabel", {
+									Size = UDim2.fromScale(1, 1),
+									Position = UDim2.fromScale(0, 0),
+									Text = incomingRichTextLines[i],
+									RichText = true,
+									BackgroundColor3 = theme.Diff.Add,
+									BackgroundTransparency = if lineDiffs then 0.85 else 1,
+									BorderSizePixel = 0,
+									FontFace = theme.Font.Code,
+									TextSize = theme.TextSize.Code,
+									TextXAlignment = Enum.TextXAlignment.Left,
+									TextYAlignment = Enum.TextYAlignment.Top,
+									TextColor3 = Color3.fromRGB(255, 255, 255),
+								}),
+								DiffFrames = Roact.createFragment(diffFrames),
+							}),
 						})
 					end,
 					getHeightBinding = function()
