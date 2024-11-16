@@ -5,7 +5,7 @@
 
     "ReplicatedStorage": {
       "Rojo": {
-        "$path": "default.project.json"
+        "$path": "../plugin.project.json"
       },
 
       "Packages": {

@@ -3,25 +3,25 @@
   "tree": {
     "$className": "Folder",
     "Plugin": {
-      "$path": "src"
+      "$path": "plugin/src"
     },
     "Packages": {
-      "$path": "Packages",
+      "$path": "plugin/Packages",
       "Log": {
-        "$path": "log"
+        "$path": "plugin/log"
       },
       "Http": {
-        "$path": "http"
+        "$path": "plugin/http"
       },
       "Fmt": {
-        "$path": "fmt"
+        "$path": "plugin/fmt"
       },
       "RbxDom": {
-        "$path": "rbx_dom_lua"
+        "$path": "plugin/rbx_dom_lua"
       }
     },
     "Version": {
-      "$path": "Version.txt"
+      "$path": "plugin/Version.txt"
     }
   }
 }
