@@ -220,7 +220,7 @@ function StringDiffVisualizer:updateDiffs()
 
 	-- Adjust the rich text lines and their diffs to include spacers (aka nil lines)
 	for spacerIdx, spacer in currentSpacers do
-		local spacerLineNum = spacer.currentLineNum + spacerIdx
+		local spacerLineNum = spacer.currentLineNum + (spacerIdx - 1)
 		table.insert(currentRichTextLines, spacerLineNum, nil)
 		-- The currentDiffs that come after this spacer need to be moved down
 		-- without overwriting the currentDiffs that are already there
@@ -235,7 +235,7 @@ function StringDiffVisualizer:updateDiffs()
 		currentDiffs = updatedCurrentDiffs
 	end
 	for spacerIdx, spacer in incomingSpacers do
-		local spacerLineNum = spacer.incomingLineNum + spacerIdx
+		local spacerLineNum = spacer.incomingLineNum + (spacerIdx - 1)
 		table.insert(incomingRichTextLines, spacerLineNum, nil)
 		-- The incomingDiffs that come after this spacer need to be moved down
 		-- without overwriting the incomingDiffs that are already there
