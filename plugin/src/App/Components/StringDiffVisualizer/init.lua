@@ -179,7 +179,7 @@ function StringDiffVisualizer:updateDiffs()
 		end
 	end
 
-	-- Filter out diffs that are just incominglines being added/removed from existing non-empty lines.
+	-- Filter out diffs that are just newlines being added/removed from existing non-empty lines.
 	-- This is done to make the diff visualization less noisy.
 
 	local currentStringLines = string.split(currentString, "\n")
@@ -187,25 +187,25 @@ function StringDiffVisualizer:updateDiffs()
 
 	for lineNum, lineDiffs in currentDiffs do
 		if
-			(#lineDiffs > 1) -- Not just incomingline
-			or (lineDiffs[1].start ~= lineDiffs[1].stop) -- Not a incomingline at all
-			or (currentStringLines[lineNum] == "") -- Empty line, so the incomingline change is significant
+			(#lineDiffs > 1) -- Not just newline
+			or (lineDiffs[1].start ~= lineDiffs[1].stop) -- Not a newline at all
+			or (currentStringLines[lineNum] == "") -- Empty line, so the newline change is significant
 		then
 			continue
 		end
-		-- Just a noisy incomingline diff, clear it
+		-- Just a noisy newline diff, clear it
 		currentDiffs[lineNum] = nil
 	end
 
 	for lineNum, lineDiffs in incomingDiffs do
 		if
-			(#lineDiffs > 1) -- Not just incomingline
-			or (lineDiffs[1].start ~= lineDiffs[1].stop) -- Not a incomingline at all
-			or (incomingStringLines[lineNum] == "") -- Empty line, so the incomingline change is significant
+			(#lineDiffs > 1) -- Not just newline
+			or (lineDiffs[1].start ~= lineDiffs[1].stop) -- Not a newline at all
+			or (incomingStringLines[lineNum] == "") -- Empty line, so the newline change is significant
 		then
 			continue
 		end
-		-- Just a noisy incomingline diff, clear it
+		-- Just a noisy newline diff, clear it
 		incomingDiffs[lineNum] = nil
 	end
 
