@@ -102,10 +102,10 @@ function SourceListing:render()
 					Creator = e(
 						"TextLabel",
 						{
-							Text = callerInfoFromSource.Creator.Name,
+							Text = "by " .. callerInfoFromSource.Creator.Name,
 							FontFace = theme.Font.Main,
 							TextSize = theme.TextSize.Body,
-							TextColor3 = theme.Settings.Setting.NameColor,
+							TextColor3 = theme.SubTextColor,
 							TextXAlignment = Enum.TextXAlignment.Left,
 							TextTransparency = self.props.transparency,
 							AutomaticSize = Enum.AutomaticSize.X,
