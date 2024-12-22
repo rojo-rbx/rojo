@@ -30,21 +30,6 @@ local TAG_TYPES = {
 	},
 }
 
-local function getTextBoundsWithLineHeight(
-	text: string,
-	font: Font,
-	textSize: number,
-	width: number,
-	lineHeight: number
-)
-	local textBounds = getTextBoundsAsync(text, font, textSize, width)
-
-	local lineCount = math.ceil(textBounds.Y / textSize)
-	local lineHeightAbsolute = textSize * lineHeight
-
-	return Vector2.new(textBounds.X, lineHeightAbsolute * lineCount - (lineHeightAbsolute - textSize))
-end
-
 local function getThemeColorFromPath(theme, path)
 	local color = theme
 	for _, key in path do
@@ -205,11 +190,12 @@ function Setting:render()
 						inputSize = self.inputSize,
 					}):map(function(values)
 						local offset = values.inputSize.X + 5
-						local textBounds = getTextBoundsWithLineHeight(
+						local textBounds = getTextBoundsAsync(
 							self.props.description,
 							theme.Font.Main,
 							theme.TextSize.Body,
 							values.containerSize.X - offset,
+							true,
 							1.2
 						)
 						return UDim2.new(1, -offset, 0, textBounds.Y)

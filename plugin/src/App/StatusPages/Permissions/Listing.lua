@@ -8,21 +8,13 @@ local Roact = require(Packages.Roact)
 
 local Assets = require(Plugin.Assets)
 local Theme = require(Plugin.App.Theme)
+local getTextBoundsAsync = require(Plugin.App.getTextBoundsAsync)
 
 local SlicedImage = require(Plugin.App.Components.SlicedImage)
 
 local e = Roact.createElement
 
 local DIVIDER_FADE_SIZE = 0.1
-
-local function getTextBounds(text, textSize, font, lineHeight, bounds)
-	local textBounds = TextService:GetTextSize(text, textSize, font, bounds)
-
-	local lineCount = textBounds.Y / textSize
-	local lineHeightAbsolute = textSize * lineHeight
-
-	return Vector2.new(textBounds.X, lineHeightAbsolute * lineCount - (lineHeightAbsolute - textSize))
-end
 
 local Listing = Roact.Component:extend("Listing")
 
@@ -82,8 +74,8 @@ function Listing:render()
 			}, {
 				Name = e("TextLabel", {
 					Text = self.props.name,
-					Font = Enum.Font.GothamBold,
-					TextSize = 17,
+					FontFace = theme.Font.Bold,
+					TextSize = theme.TextSize.Medium,
 					TextColor3 = theme.Settings.Setting.NameColor,
 					TextXAlignment = Enum.TextXAlignment.Left,
 					TextTransparency = self.props.transparency,
@@ -96,21 +88,22 @@ function Listing:render()
 
 				Description = e("TextLabel", {
 					Text = self.props.description,
-					Font = Enum.Font.Gotham,
+					FontFace = theme.Font.Thin,
 					LineHeight = 1.2,
-					TextSize = 14,
+					TextSize = theme.TextSize.Body,
 					TextColor3 = theme.Settings.Setting.DescriptionColor,
 					TextXAlignment = Enum.TextXAlignment.Left,
 					TextTransparency = self.props.transparency,
 					TextWrapped = true,
 
 					Size = self.containerSize:map(function(value)
-						local textBounds = getTextBounds(
+						local textBounds = getTextBoundsAsync(
 							self.props.description,
-							14,
-							Enum.Font.Gotham,
-							1.2,
-							Vector2.new(value.X - 40, math.huge)
+							theme.Font.Thin,
+							theme.TextSize.Body,
+							value.X - 40,
+							false,
+							1.2
 						)
 						return UDim2.new(1, -40, 0, textBounds.Y)
 					end),

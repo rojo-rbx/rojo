@@ -46,8 +46,8 @@ local function Navbar(props)
 
 			Text = e("TextLabel", {
 				Text = "Permissions",
-				Font = Enum.Font.Gotham,
-				TextSize = 18,
+				FontFace = theme.Font.Thin,
+				TextSize = theme.TextSize.Large,
 				TextColor3 = theme.TextColor,
 				TextTransparency = props.transparency,
 
@@ -115,8 +115,8 @@ function PermissionsPage:render()
 		if next(sources) == nil then
 			sources.noSources = e("TextLabel", {
 				Text = "No third-party plugins have been granted permissions.",
-				Font = Enum.Font.Gotham,
-				TextSize = 18,
+				FontFace = theme.Font.Thin,
+				TextSize = theme.TextSize.Large,
 				TextColor3 = theme.Setting.DescriptionColor,
 				TextTransparency = self.props.transparency,
 				TextWrapped = true,
