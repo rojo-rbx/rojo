@@ -34,6 +34,7 @@ local Assets = {
 			Exclamation = "rbxassetid://16571172190",
 			SyncSuccess = "rbxassetid://16565035221",
 			SyncWarning = "rbxassetid://16565325171",
+			Verified = "rbxassetid://128443712983654",
 		},
 		Diff = {
 			Add = "rbxassetid://10434145835",
