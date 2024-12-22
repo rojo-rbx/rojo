@@ -102,7 +102,7 @@ function SourceListing:render()
 					Creator = e(
 						"TextLabel",
 						{
-							Text = callerInfoFromSource.Creator,
+							Text = callerInfoFromSource.Creator.Name,
 							FontFace = theme.Font.Main,
 							TextSize = theme.TextSize.Body,
 							TextColor3 = theme.Settings.Setting.NameColor,
@@ -118,7 +118,7 @@ function SourceListing:render()
 							),
 							BackgroundTransparency = 1,
 						},
-						if callerInfoFromSource.HasVerifiedBadge
+						if callerInfoFromSource.Creator.HasVerifiedBadge
 							then e(
 								"ImageLabel",
 								{

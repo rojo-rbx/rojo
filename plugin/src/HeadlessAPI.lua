@@ -21,8 +21,11 @@ export type CallerInfo = {
 	Type: "Local" | "Cloud" | "Studio",
 	Name: string,
 	Description: string,
-	Creator: string,
-	HasVerifiedBadge: boolean?,
+	Creator: {
+		Name: string,
+		Id: number,
+		HasVerifiedBadge: boolean,
+	},
 }
 
 local API = {}
@@ -108,43 +111,6 @@ function API.new(app)
 		local cloudId, cloudInstance = string.match(topLevel, "cloud_(%d-)%.(.-)[^%w_%-]")
 		if cloudId then
 			local info = cloudIdProductInfoCache[cloudId]
-			if info then
-				return info.Name .. " by " .. info.Creator.Name
-			else
-				local success, newInfo =
-					pcall(MarketplaceService.GetProductInfo, MarketplaceService, tonumber(cloudId), Enum.InfoType.Asset)
-				if success then
-					cloudIdProductInfoCache[cloudId] = newInfo
-					return newInfo.Name .. " by " .. newInfo.Creator.Name
-				end
-			end
-
-			-- Fallback to the name of the instance uploaded inside this plugin
-			-- The reason this is not ideal is because creators often upload a folder named "Main" or something
-			return cloudInstance
-		end
-
-		return "Command Bar"
-	end
-
-	function Rojo:_getCallerInfo(): CallerInfo
-		local traceback = string.split(debug.traceback(), "\n")
-		local topLevel = traceback[#traceback - 1]
-
-		local localPlugin = string.match(topLevel, "user_(.-)%.")
-		if localPlugin then
-			return {
-				Type = "Local",
-				Name = localPlugin,
-				Description = "Locally installed plugin.",
-				Creator = "Unknown",
-				HasVerifiedBadge = false,
-			}
-		end
-
-		local cloudId, cloudInstance = string.match(topLevel, "cloud_(%d-)%.(.-)[^%w_%-]")
-		if cloudId then
-			local info = cloudIdProductInfoCache[cloudId]
 			if not info then
 				local success, newInfo =
 					pcall(MarketplaceService.GetProductInfo, MarketplaceService, tonumber(cloudId), Enum.InfoType.Asset)
@@ -155,31 +121,18 @@ function API.new(app)
 			end
 
 			if info then
-				return {
-					Type = "Cloud",
-					Name = info.Name,
-					Description = info.Description,
-					Creator = info.Creator.Name,
-					HasVerifiedBadge = info.Creator.HasVerifiedBadge,
-				}
+				return info.Name
+					.. " by "
+					.. (if info.Creator.CreatorType == "User" then "@" else "")
+					.. info.Creator.Name
 			else
-				return {
-					Type = "Cloud",
-					Name = cloudInstance,
-					Description = "Could not retrieve plugin asset info.",
-					Creator = "Unknown",
-					HasVerifiedBadge = false,
-				}
+				-- Fallback to the name of the instance uploaded inside this plugin
+				-- The reason this is not ideal is because creators often upload a folder named "Main" or something
+				return cloudInstance
 			end
 		end
 
-		return {
-			Type = "Studio",
-			Name = "Command Bar",
-			Description = "Command bar in Roblox Studio.",
-			Creator = "Unknown",
-			HasVerifiedBadge = false,
-		}
+		return "Command Bar"
 	end
 
 	function Rojo:_getCallerInfoFromSource(source: string): CallerInfo
@@ -189,8 +142,11 @@ function API.new(app)
 				Type = "Local",
 				Name = localPlugin,
 				Description = "Locally installed plugin.",
-				Creator = "Unknown",
-				HasVerifiedBadge = false,
+				Creator = {
+					Name = "Unknown",
+					Id = 0,
+					HasVerifiedBadge = false,
+				},
 			}
 		end
 
@@ -211,16 +167,22 @@ function API.new(app)
 					Type = "Cloud",
 					Name = info.Name,
 					Description = info.Description,
-					Creator = info.Creator.Name,
-					HasVerifiedBadge = info.Creator.HasVerifiedBadge,
+					Creator = {
+						Name = (if info.Creator.CreatorType == "User" then "@" else "") .. info.Creator.Name,
+						Id = info.Creator.CreatorTargetId,
+						HasVerifiedBadge = info.Creator.HasVerifiedBadge,
+					},
 				}
 			else
 				return {
 					Type = "Cloud",
 					Name = source,
 					Description = "Could not retrieve plugin asset info.",
-					Creator = "Unknown",
-					HasVerifiedBadge = false,
+					Creator = {
+						Name = "Unknown",
+						Id = 0,
+						HasVerifiedBadge = false,
+					},
 				}
 			end
 		end
@@ -229,8 +191,11 @@ function API.new(app)
 			Type = "Studio",
 			Name = "Command Bar",
 			Description = "Command bar in Roblox Studio.",
-			Creator = "Unknown",
-			HasVerifiedBadge = false,
+			Creator = {
+				Name = "N/A",
+				Id = 0,
+				HasVerifiedBadge = false,
+			},
 		}
 	end
 

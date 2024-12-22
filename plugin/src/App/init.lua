@@ -991,8 +991,7 @@ function App:render()
 						end,
 
 						onEdit = function(plugin, source, callerInfo, apiMap)
-							local name = callerInfo.Name
-								.. if callerInfo.Creator then " by " .. callerInfo.Creator else ""
+							local name = string.format("%s by %s", callerInfo.Name, callerInfo.Creator.Name)
 							local apiList = {}
 							for api in apiMap do
 								table.insert(apiList, api)
