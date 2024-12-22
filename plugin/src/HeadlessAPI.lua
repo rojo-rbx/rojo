@@ -10,11 +10,19 @@ local Config = require(Plugin.Config)
 local Settings = require(Plugin.Settings)
 local ApiContext = require(Plugin.ApiContext)
 
-local cloudIdInfoCache = {}
+local cloudIdProductInfoCache = {}
 local apiPermissionAllowlist = {
 	Version = true,
 	ProtocolVersion = true,
 	RequestAccess = true,
+}
+
+export type CallerInfo = {
+	Type: "Local" | "Cloud" | "Studio",
+	Name: string,
+	Description: string,
+	Creator: string,
+	HasVerifiedBadge: boolean?,
 }
 
 local API = {}
@@ -99,14 +107,14 @@ function API.new(app)
 
 		local cloudId, cloudInstance = string.match(topLevel, "cloud_(%d-)%.(.-)[^%w_%-]")
 		if cloudId then
-			local info = cloudIdInfoCache[cloudId]
+			local info = cloudIdProductInfoCache[cloudId]
 			if info then
 				return info.Name .. " by " .. info.Creator.Name
 			else
 				local success, newInfo =
 					pcall(MarketplaceService.GetProductInfo, MarketplaceService, tonumber(cloudId), Enum.InfoType.Asset)
 				if success then
-					cloudIdInfoCache[cloudId] = newInfo
+					cloudIdProductInfoCache[cloudId] = newInfo
 					return newInfo.Name .. " by " .. newInfo.Creator.Name
 				end
 			end
@@ -119,41 +127,110 @@ function API.new(app)
 		return "Command Bar"
 	end
 
-	function Rojo:_getMetaFromSource(source)
-		local localPlugin = string.match(source, "user_(.+)")
+	function Rojo:_getCallerInfo(): CallerInfo
+		local traceback = string.split(debug.traceback(), "\n")
+		local topLevel = traceback[#traceback - 1]
+
+		local localPlugin = string.match(topLevel, "user_(.-)%.")
 		if localPlugin then
 			return {
 				Type = "Local",
 				Name = localPlugin,
+				Description = "Locally installed plugin.",
+				Creator = "Unknown",
+				HasVerifiedBadge = false,
 			}
 		end
 
-		local cloudId = string.match(source, "cloud_(%d+)")
+		local cloudId, cloudInstance = string.match(topLevel, "cloud_(%d-)%.(.-)[^%w_%-]")
 		if cloudId then
-			local info = cloudIdInfoCache[cloudId]
+			local info = cloudIdProductInfoCache[cloudId]
+			if not info then
+				local success, newInfo =
+					pcall(MarketplaceService.GetProductInfo, MarketplaceService, tonumber(cloudId), Enum.InfoType.Asset)
+				if success then
+					cloudIdProductInfoCache[cloudId] = newInfo
+					info = newInfo
+				end
+			end
+
 			if info then
 				return {
 					Type = "Cloud",
 					Name = info.Name,
+					Description = info.Description,
 					Creator = info.Creator.Name,
+					HasVerifiedBadge = info.Creator.HasVerifiedBadge,
 				}
 			else
-				local success, newInfo =
-					pcall(MarketplaceService.GetProductInfo, MarketplaceService, tonumber(cloudId), Enum.InfoType.Asset)
-				if success then
-					cloudIdInfoCache[cloudId] = newInfo
-					return {
-						Type = "Cloud",
-						Name = newInfo.Name,
-						Creator = newInfo.Creator.Name,
-					}
-				end
+				return {
+					Type = "Cloud",
+					Name = cloudInstance,
+					Description = "Could not retrieve plugin asset info.",
+					Creator = "Unknown",
+					HasVerifiedBadge = false,
+				}
 			end
 		end
 
 		return {
 			Type = "Studio",
 			Name = "Command Bar",
+			Description = "Command bar in Roblox Studio.",
+			Creator = "Unknown",
+			HasVerifiedBadge = false,
+		}
+	end
+
+	function Rojo:_getCallerInfoFromSource(source: string): CallerInfo
+		local localPlugin = string.match(source, "user_(.+)")
+		if localPlugin then
+			return {
+				Type = "Local",
+				Name = localPlugin,
+				Description = "Locally installed plugin.",
+				Creator = "Unknown",
+				HasVerifiedBadge = false,
+			}
+		end
+
+		local cloudId = string.match(source, "cloud_(%d+)")
+		if cloudId then
+			local info = cloudIdProductInfoCache[cloudId]
+			if not info then
+				local success, newInfo =
+					pcall(MarketplaceService.GetProductInfo, MarketplaceService, tonumber(cloudId), Enum.InfoType.Asset)
+				if success then
+					cloudIdProductInfoCache[cloudId] = newInfo
+					info = newInfo
+				end
+			end
+
+			if info then
+				return {
+					Type = "Cloud",
+					Name = info.Name,
+					Description = info.Description,
+					Creator = info.Creator.Name,
+					HasVerifiedBadge = info.Creator.HasVerifiedBadge,
+				}
+			else
+				return {
+					Type = "Cloud",
+					Name = source,
+					Description = "Could not retrieve plugin asset info.",
+					Creator = "Unknown",
+					HasVerifiedBadge = false,
+				}
+			end
+		end
+
+		return {
+			Type = "Studio",
+			Name = "Command Bar",
+			Description = "Command bar in Roblox Studio.",
+			Creator = "Unknown",
+			HasVerifiedBadge = false,
 		}
 	end
 
@@ -418,7 +495,13 @@ function API.new(app)
 			end
 		end
 
-		return app:addThirdPartyNotification(Rojo:_getCallerName(), msg, timeout, sanitizedActions)
+		return app:addThirdPartyNotification(
+			Rojo:_getCallerName(),
+			Rojo:_getCallerSource(),
+			msg,
+			timeout,
+			sanitizedActions
+		)
 	end
 
 	Rojo._apiDescriptions.GetHostAndPort = {

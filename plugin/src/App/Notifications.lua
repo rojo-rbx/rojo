@@ -12,6 +12,7 @@ local Theme = require(Plugin.App.Theme)
 local Assets = require(Plugin.Assets)
 local bindingUtil = require(Plugin.App.bindingUtil)
 local getTextBoundsAsync = require(Plugin.App.getTextBoundsAsync)
+local getThirdPartyIcon = require(Plugin.getThirdPartyIcon)
 
 local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
 local TextButton = require(Plugin.App.Components.TextButton)
@@ -128,6 +129,10 @@ function Notification:render()
 			)
 		end)
 
+		local logoAssetId = if self.props.thirdParty
+			then getThirdPartyIcon(self.props.source)
+			else Assets.Images.PluginButton
+
 		return e("TextButton", {
 			BackgroundTransparency = 1,
 			Size = size,
@@ -149,7 +154,7 @@ function Notification:render()
 				}, {
 					Logo = e("ImageLabel", {
 						ImageTransparency = transparency,
-						Image = Assets.Images.PluginButton,
+						Image = logoAssetId,
 						BackgroundTransparency = 1,
 						Size = UDim2.new(0, logoSize, 0, logoSize),
 						Position = UDim2.new(0, 0, 0, 0),
@@ -225,14 +230,15 @@ function Notifications:render()
 
 	for id, notif in self.props.notifications do
 		notifs["NotifID_" .. id] = e(Notification, {
-			soundPlayer = self.props.soundPlayer,
+			layoutOrder = (notif.timestamp - baseClock),
 			text = notif.text,
 			timestamp = notif.timestamp,
 			timeout = notif.timeout,
 			actions = notif.actions,
-			source = notif.source,
+			soundPlayer = self.props.soundPlayer,
 			thirdParty = notif.thirdParty,
-			layoutOrder = (notif.timestamp - baseClock),
+			name = notif.name,
+			source = notif.source,
 			onClose = function()
 				self.props.onClose(id)
 			end,

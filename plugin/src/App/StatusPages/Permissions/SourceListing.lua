@@ -11,19 +11,22 @@ local Theme = require(Plugin.App.Theme)
 local getTextBoundsAsync = require(Plugin.App.getTextBoundsAsync)
 
 local SlicedImage = require(Plugin.App.Components.SlicedImage)
+local Tooltip = require(Plugin.App.Components.Tooltip)
 
 local e = Roact.createElement
 
 local DIVIDER_FADE_SIZE = 0.1
 
-local Listing = Roact.Component:extend("Listing")
+local SourceListing = Roact.Component:extend("SourceListing")
 
-function Listing:init()
+function SourceListing:init()
 	self.contentSize, self.setContentSize = Roact.createBinding(Vector2.new(0, 0))
 	self.containerSize, self.setContainerSize = Roact.createBinding(Vector2.new(0, 0))
 end
 
-function Listing:render()
+function SourceListing:render()
+	local callerInfoFromSource = self.props.callerInfoFromSource
+
 	return Theme.with(function(theme)
 		return e("Frame", {
 			Size = self.contentSize:map(function(value)
@@ -68,26 +71,76 @@ function Listing:render()
 				}),
 			}),
 
-			Text = e("Frame", {
+			Info = e("Frame", {
 				Size = UDim2.new(1, 0, 1, 0),
 				BackgroundTransparency = 1,
 			}, {
-				Name = e("TextLabel", {
-					Text = self.props.name,
-					FontFace = theme.Font.Bold,
-					TextSize = theme.TextSize.Medium,
-					TextColor3 = theme.Settings.Setting.NameColor,
-					TextXAlignment = Enum.TextXAlignment.Left,
-					TextTransparency = self.props.transparency,
-
-					Size = UDim2.new(1, 0, 0, 17),
-
-					LayoutOrder = 1,
+				PluginDetails = e("Frame", {
 					BackgroundTransparency = 1,
+					Size = UDim2.new(1, 0, 0, theme.TextSize.Medium + theme.TextSize.Body + 4),
+				}, {
+					Icon = e("ImageLabel", {
+						Image = self.props.icon,
+						BackgroundTransparency = 1,
+						SizeConstraint = Enum.SizeConstraint.RelativeYY,
+						AnchorPoint = Vector2.new(0, 0.5),
+						Position = UDim2.fromScale(0, 0.5),
+						Size = UDim2.fromScale(0.95, 0.95),
+					}),
+
+					Name = e("TextLabel", {
+						Text = callerInfoFromSource.Name,
+						FontFace = theme.Font.Bold,
+						TextSize = theme.TextSize.Medium,
+						TextColor3 = theme.Settings.Setting.NameColor,
+						TextXAlignment = Enum.TextXAlignment.Left,
+						TextTransparency = self.props.transparency,
+						AutomaticSize = Enum.AutomaticSize.X,
+						Size = UDim2.new(0, 0, 0, theme.TextSize.Medium),
+						Position = UDim2.new(0, theme.TextSize.Medium + theme.TextSize.Body + 8, 0, 0),
+						BackgroundTransparency = 1,
+					}),
+
+					Creator = e(
+						"TextLabel",
+						{
+							Text = callerInfoFromSource.Creator,
+							FontFace = theme.Font.Main,
+							TextSize = theme.TextSize.Body,
+							TextColor3 = theme.Settings.Setting.NameColor,
+							TextXAlignment = Enum.TextXAlignment.Left,
+							TextTransparency = self.props.transparency,
+							AutomaticSize = Enum.AutomaticSize.X,
+							Size = UDim2.fromOffset(0, theme.TextSize.Body),
+							Position = UDim2.new(
+								0,
+								theme.TextSize.Medium + theme.TextSize.Body + 8,
+								0,
+								theme.TextSize.Medium + 2
+							),
+							BackgroundTransparency = 1,
+						},
+						if callerInfoFromSource.HasVerifiedBadge
+							then e(
+								"ImageLabel",
+								{
+									Image = Assets.Images.Icons.Verified,
+									BackgroundTransparency = 1,
+									SizeConstraint = Enum.SizeConstraint.RelativeYY,
+									AnchorPoint = Vector2.new(0, 0.5),
+									Position = UDim2.new(1, 3, 0.5, 0),
+									Size = UDim2.fromScale(0.8, 0.8),
+								},
+								e(Tooltip.Trigger, {
+									text = "Creator has a verified badge",
+								})
+							)
+							else nil
+					),
 				}),
 
 				Description = e("TextLabel", {
-					Text = self.props.description,
+					Text = callerInfoFromSource.Description,
 					FontFace = theme.Font.Thin,
 					LineHeight = 1.2,
 					TextSize = theme.TextSize.Body,
@@ -98,7 +151,7 @@ function Listing:render()
 
 					Size = self.containerSize:map(function(value)
 						local textBounds = getTextBoundsAsync(
-							self.props.description,
+							callerInfoFromSource.Description,
 							theme.Font.Thin,
 							theme.TextSize.Body,
 							value.X - 40,
@@ -114,6 +167,7 @@ function Listing:render()
 
 				Layout = e("UIListLayout", {
 					VerticalAlignment = Enum.VerticalAlignment.Center,
+					HorizontalAlignment = Enum.HorizontalAlignment.Left,
 					FillDirection = Enum.FillDirection.Vertical,
 					SortOrder = Enum.SortOrder.LayoutOrder,
 					Padding = UDim.new(0, 6),
@@ -148,4 +202,4 @@ function Listing:render()
 	end)
 end
 
-return Listing
+return SourceListing

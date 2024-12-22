@@ -294,6 +294,7 @@ function App:addNotification(
 end
 
 function App:addThirdPartyNotification(
+	name: string,
 	source: string,
 	text: string,
 	timeout: number?,
@@ -315,6 +316,7 @@ function App:addThirdPartyNotification(
 		timeout = timeout or 3,
 		actions = actions,
 		thirdParty = true,
+		name = name,
 		source = source,
 	}
 
@@ -988,8 +990,9 @@ function App:render()
 							})
 						end,
 
-						onEdit = function(plugin, source, meta, apiMap)
-							local name = meta.Name .. if meta.Creator then " by " .. meta.Creator else ""
+						onEdit = function(plugin, source, callerInfo, apiMap)
+							local name = callerInfo.Name
+								.. if callerInfo.Creator then " by " .. callerInfo.Creator else ""
 							local apiList = {}
 							for api in apiMap do
 								table.insert(apiList, api)

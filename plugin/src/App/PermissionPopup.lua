@@ -7,6 +7,8 @@ local Roact = require(Packages.Roact)
 local Assets = require(Plugin.Assets)
 local Theme = require(Plugin.App.Theme)
 
+local getThirdPartyIcon = require(Plugin.getThirdPartyIcon)
+
 local ScrollingFrame = require(Plugin.App.Components.ScrollingFrame)
 local TextButton = require(Plugin.App.Components.TextButton)
 
@@ -25,11 +27,7 @@ function PermissionPopup:render()
 	return Theme.with(function(theme)
 		local settingsTheme = theme.Settings
 
-		local thumbnail = Assets.Images.ThirdPartyPlugin
-		local thumbnailId = string.match(self.props.source, "cloud_(%d+)")
-		if thumbnailId then
-			thumbnail = string.format("rbxthumb://type=Asset&id=%s&w=150&h=150", thumbnailId)
-		end
+		local iconAsset = getThirdPartyIcon(self.props.source)
 
 		local apiRequests = {
 			Event = {},
@@ -171,7 +169,7 @@ function PermissionPopup:render()
 				ThirdPartyIcon = e("ImageLabel", {
 					BackgroundTransparency = 1,
 					Size = UDim2.new(0, 32, 0, 32),
-					Image = thumbnail,
+					Image = iconAsset,
 					LayoutOrder = 1,
 				}),
 

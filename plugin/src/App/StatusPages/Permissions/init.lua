@@ -6,11 +6,12 @@ local Roact = require(Packages.Roact)
 
 local Assets = require(Plugin.Assets)
 local Theme = require(Plugin.App.Theme)
+local getThirdPartyIcon = require(Plugin.getThirdPartyIcon)
 
 local IconButton = require(Plugin.App.Components.IconButton)
 local ScrollingFrame = require(Plugin.App.Components.ScrollingFrame)
 local Tooltip = require(Plugin.App.Components.Tooltip)
-local Listing = require(script.Listing)
+local SourceListing = require(script.SourceListing)
 
 local e = Roact.createElement
 
@@ -89,23 +90,20 @@ function PermissionsPage:render()
 				continue
 			end
 
-			local meta = self.props.headlessAPI:_getMetaFromSource(source)
-			sources[source] = e(Listing, {
+			local callerInfoFromSource = self.props.headlessAPI:_getCallerInfoFromSource(source)
+			sources[source] = e(SourceListing, {
 				layoutOrder = string.byte(source),
 				transparency = self.props.transparency,
 
-				name = meta.Name,
-				description = string.format(
-					"%s plugin%s",
-					meta.Type,
-					if meta.Creator then " by " .. meta.Creator else ""
-				),
+				callerInfoFromSource = callerInfoFromSource,
+
+				icon = getThirdPartyIcon(source),
 
 				onClick = function()
 					self.props.onEdit(
 						self.props.headlessAPI._sourceToPlugin[source],
 						source,
-						meta,
+						callerInfoFromSource,
 						self.props.headlessAPI._permissions[source] or {}
 					)
 				end,
