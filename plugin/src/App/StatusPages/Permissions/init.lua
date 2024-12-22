@@ -16,7 +16,7 @@ local e = Roact.createElement
 
 local function Navbar(props)
 	return Theme.with(function(theme)
-		theme = theme.Settings.Navbar
+		local navbarTheme = theme.Settings.Navbar
 
 		return e("Frame", {
 			Size = UDim2.new(1, 0, 0, 46),
@@ -31,7 +31,7 @@ local function Navbar(props)
 			Back = e(IconButton, {
 				icon = Assets.Images.Icons.Back,
 				iconSize = 24,
-				color = theme.BackButtonColor,
+				color = navbarTheme.BackButtonColor,
 				transparency = props.transparency,
 
 				position = UDim2.new(0, 0, 0.5, 0),
@@ -48,7 +48,7 @@ local function Navbar(props)
 				Text = "Permissions",
 				FontFace = theme.Font.Thin,
 				TextSize = theme.TextSize.Large,
-				TextColor3 = theme.TextColor,
+				TextColor3 = navbarTheme.TextColor,
 				TextTransparency = props.transparency,
 
 				Size = UDim2.new(1, 0, 1, 0),
@@ -81,7 +81,7 @@ end
 
 function PermissionsPage:render()
 	return Theme.with(function(theme)
-		theme = theme.Settings
+		local settingsTheme = theme.Settings
 
 		local sources = {}
 		for source, permissions in self.state.permissions do
@@ -117,7 +117,7 @@ function PermissionsPage:render()
 				Text = "No third-party plugins have been granted permissions.",
 				FontFace = theme.Font.Thin,
 				TextSize = theme.TextSize.Large,
-				TextColor3 = theme.Setting.DescriptionColor,
+				TextColor3 = settingsTheme.Setting.DescriptionColor,
 				TextTransparency = self.props.transparency,
 				TextWrapped = true,
 

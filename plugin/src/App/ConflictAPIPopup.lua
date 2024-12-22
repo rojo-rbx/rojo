@@ -16,7 +16,7 @@ local ConflictAPIPopup = Roact.Component:extend("ConflictAPIPopup")
 
 function ConflictAPIPopup:render()
 	return Theme.with(function(theme)
-		theme = theme.Settings
+		local settingTheme = theme.Settings
 
 		return e("Frame", {
 			BackgroundTransparency = 1,
@@ -47,7 +47,7 @@ function ConflictAPIPopup:render()
 					Text = "There is already a Rojo API exposed by a Rojo plugin. Do you want to overwrite it with this one?",
 					FontFace = theme.Font.Main,
 					TextSize = theme.TextSize.Medium,
-					TextColor3 = theme.Setting.NameColor,
+					TextColor3 = settingTheme.Setting.NameColor,
 					TextXAlignment = Enum.TextXAlignment.Left,
 					TextWrapped = true,
 					TextTransparency = self.props.transparency,
@@ -65,7 +65,7 @@ function ConflictAPIPopup:render()
 					),
 					FontFace = theme.Font.Thin,
 					TextSize = theme.TextSize.Body,
-					TextColor3 = theme.Setting.DescriptionColor,
+					TextColor3 = settingTheme.Setting.DescriptionColor,
 					TextXAlignment = Enum.TextXAlignment.Left,
 					TextTransparency = self.props.transparency,
 					LayoutOrder = 2,
@@ -82,7 +82,7 @@ function ConflictAPIPopup:render()
 					),
 					FontFace = theme.Font.Thin,
 					TextSize = theme.TextSize.Body,
-					TextColor3 = theme.Setting.DescriptionColor,
+					TextColor3 = settingTheme.Setting.DescriptionColor,
 					TextXAlignment = Enum.TextXAlignment.Left,
 					TextTransparency = self.props.transparency,
 					LayoutOrder = 3,

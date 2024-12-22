@@ -23,7 +23,7 @@ end
 
 function PermissionPopup:render()
 	return Theme.with(function(theme)
-		theme = theme.Settings
+		local settingsTheme = theme.Settings
 
 		local thumbnail = Assets.Images.ThirdPartyPlugin
 		local thumbnailId = string.match(self.props.source, "cloud_(%d+)")
@@ -46,7 +46,7 @@ function PermissionPopup:render()
 				AutomaticSize = Enum.AutomaticSize.Y,
 			}, {
 				Divider = e("Frame", {
-					BackgroundColor3 = theme.DividerColor,
+					BackgroundColor3 = settingsTheme.DividerColor,
 					BackgroundTransparency = self.props.transparency,
 					Size = UDim2.new(1, 0, 0, 1),
 					Position = UDim2.new(0, 0, 0, -2),
@@ -70,7 +70,7 @@ function PermissionPopup:render()
 					Text = api,
 					FontFace = theme.Font.Thin,
 					TextSize = theme.TextSize.Medium,
-					TextColor3 = theme.Setting.NameColor,
+					TextColor3 = settingsTheme.Setting.NameColor,
 					TextXAlignment = Enum.TextXAlignment.Left,
 					TextTransparency = self.props.transparency,
 				}),
@@ -83,7 +83,7 @@ function PermissionPopup:render()
 					Text = apiDesc.Description,
 					FontFace = theme.Font.Thin,
 					TextSize = theme.TextSize.Body,
-					TextColor3 = theme.Setting.DescriptionColor,
+					TextColor3 = settingsTheme.Setting.DescriptionColor,
 					TextXAlignment = Enum.TextXAlignment.Left,
 					TextTransparency = self.props.transparency,
 				}),
@@ -101,7 +101,7 @@ function PermissionPopup:render()
 				AutomaticSize = Enum.AutomaticSize.Y,
 				FontFace = theme.Font.Main,
 				TextSize = theme.TextSize.Medium,
-				TextColor3 = theme.Setting.NameColor,
+				TextColor3 = settingsTheme.Setting.NameColor,
 				TextXAlignment = Enum.TextXAlignment.Left,
 				TextTransparency = self.props.transparency,
 			}, e("UIPadding", { PaddingBottom = UDim.new(0, 8) }))
@@ -116,7 +116,7 @@ function PermissionPopup:render()
 				AutomaticSize = Enum.AutomaticSize.Y,
 				FontFace = theme.Font.Main,
 				TextSize = theme.TextSize.Medium,
-				TextColor3 = theme.Setting.NameColor,
+				TextColor3 = settingsTheme.Setting.NameColor,
 				TextXAlignment = Enum.TextXAlignment.Left,
 				TextTransparency = self.props.transparency,
 			}, e("UIPadding", { PaddingBottom = UDim.new(0, 8) }))
@@ -131,7 +131,7 @@ function PermissionPopup:render()
 				AutomaticSize = Enum.AutomaticSize.Y,
 				FontFace = theme.Font.Main,
 				TextSize = theme.TextSize.Medium,
-				TextColor3 = theme.Setting.NameColor,
+				TextColor3 = settingsTheme.Setting.NameColor,
 				TextXAlignment = Enum.TextXAlignment.Left,
 				TextTransparency = self.props.transparency,
 			}, e("UIPadding", { PaddingBottom = UDim.new(0, 8) }))
@@ -179,7 +179,7 @@ function PermissionPopup:render()
 					BackgroundTransparency = 1,
 					Size = UDim2.new(0, 24, 0, 24),
 					Image = Assets.Images.Icons.Transact,
-					ImageColor3 = theme.Setting.DescriptionColor,
+					ImageColor3 = settingsTheme.Setting.DescriptionColor,
 					LayoutOrder = 2,
 				}),
 
@@ -198,7 +198,7 @@ function PermissionPopup:render()
 				Text = string.format("%s is asking to use the Rojo API", self.props.name or "[Unknown]"),
 				FontFace = theme.Font.Bold,
 				TextSize = theme.TextSize.Medium,
-				TextColor3 = theme.Setting.NameColor,
+				TextColor3 = settingsTheme.Setting.NameColor,
 				TextXAlignment = Enum.TextXAlignment.Center,
 				TextWrapped = true,
 				TextTransparency = self.props.transparency,
@@ -211,7 +211,7 @@ function PermissionPopup:render()
 
 			Divider = e("Frame", {
 				LayoutOrder = 3,
-				BackgroundColor3 = theme.DividerColor,
+				BackgroundColor3 = settingsTheme.DividerColor,
 				BackgroundTransparency = self.props.transparency,
 				Size = UDim2.new(1, 0, 0, 1),
 				Position = UDim2.new(0, 0, 0, -2),
