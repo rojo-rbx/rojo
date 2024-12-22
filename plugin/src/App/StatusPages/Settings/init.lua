@@ -31,7 +31,7 @@ local confirmationBehaviors = { "Initial", "Always", "Large Changes", "Unlisted 
 
 local function Navbar(props)
 	return Theme.with(function(theme)
-		theme = theme.Settings.Navbar
+		local navbarTheme = theme.Settings.Navbar
 
 		return e("Frame", {
 			Size = UDim2.new(1, 0, 0, 46),
@@ -41,7 +41,7 @@ local function Navbar(props)
 			Back = e(IconButton, {
 				icon = Assets.Images.Icons.Back,
 				iconSize = 24,
-				color = theme.BackButtonColor,
+				color = navbarTheme.BackButtonColor,
 				transparency = props.transparency,
 
 				position = UDim2.new(0, 0, 0.5, 0),
@@ -56,9 +56,9 @@ local function Navbar(props)
 
 			Text = e("TextLabel", {
 				Text = "Settings",
-				Font = Enum.Font.Gotham,
-				TextSize = 18,
-				TextColor3 = theme.TextColor,
+				FontFace = theme.Font.Thin,
+				TextSize = theme.TextSize.Large,
+				TextColor3 = navbarTheme.TextColor,
 				TextTransparency = props.transparency,
 
 				Size = UDim2.new(1, 0, 1, 0),
@@ -153,14 +153,6 @@ function SettingsPage:render()
 					}),
 				}),
 
-				PlaySounds = e(Setting, {
-					id = "playSounds",
-					name = "Play Sounds",
-					description = "Toggle sound effects",
-					transparency = self.props.transparency,
-					layoutOrder = layoutIncrement(),
-				}),
-
 				Permissions = e(Setting, {
 					name = "Third Party Permissions",
 					description = "Manage permissions for third party plugins",
@@ -196,6 +188,14 @@ function SettingsPage:render()
 							}),
 						}),
 					}),
+				}),
+
+				PlaySounds = e(Setting, {
+					id = "playSounds",
+					name = "Play Sounds",
+					description = "Toggle sound effects",
+					transparency = self.props.transparency,
+					layoutOrder = layoutIncrement(),
 				}),
 
 				CheckForUpdates = e(Setting, {

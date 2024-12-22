@@ -1,4 +1,3 @@
-local TextService = game:GetService("TextService")
 local StudioService = game:GetService("StudioService")
 
 local Rojo = script:FindFirstAncestor("Rojo")
@@ -9,10 +8,10 @@ local Roact = require(Packages.Roact)
 local Flipper = require(Packages.Flipper)
 local Log = require(Packages.Log)
 
-local bindingUtil = require(script.Parent.bindingUtil)
-
 local Theme = require(Plugin.App.Theme)
 local Assets = require(Plugin.Assets)
+local bindingUtil = require(Plugin.App.bindingUtil)
+local getTextBoundsAsync = require(Plugin.App.getTextBoundsAsync)
 
 local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
 local TextButton = require(Plugin.App.Components.TextButton)
@@ -86,55 +85,49 @@ function Notification:render()
 		return 1 - value
 	end)
 
-	local textBounds = TextService:GetTextSize(self.props.text, 15, Enum.Font.GothamMedium, Vector2.new(350, 700))
+	return Theme.with(function(theme)
+		local actionButtons = {}
+		local buttonsX = 0
+		if self.props.actions then
+			local count = 0
+			for key, action in self.props.actions do
+				actionButtons[key] = e(TextButton, {
+					text = action.text,
+					style = action.style,
+					onClick = function()
+						local success, err = pcall(action.onClick, self)
+						if not success then
+							Log.warn("Error in notification action: " .. tostring(err))
+						end
+					end,
+					layoutOrder = -action.layoutOrder,
+					transparency = transparency,
+				})
 
-	local actionButtons = {}
-	local buttonsX = 0
-	if self.props.actions then
-		local count = 0
-		for key, action in self.props.actions do
-			actionButtons[key] = e(TextButton, {
-				text = action.text,
-				style = action.style,
-				onClick = function()
-					local success, err = pcall(action.onClick, self)
-					if not success then
-						Log.warn("Error in notification action: " .. tostring(err))
-					end
-				end,
-				layoutOrder = -action.layoutOrder,
-				transparency = transparency,
-			})
+				buttonsX += getTextBoundsAsync(action.text, theme.Font.Main, theme.TextSize.Large, math.huge).X + (theme.TextSize.Body * 2)
 
-			buttonsX += TextService:GetTextSize(
-				action.text,
-				18,
-				Enum.Font.GothamMedium,
-				Vector2.new(math.huge, math.huge)
-			).X + 30
+				count += 1
+			end
 
-			count += 1
+			buttonsX += (count - 1) * 5
 		end
 
-		buttonsX += (count - 1) * 5
-	end
-
-	local paddingX, paddingY, logoSize = 24, 20, 32
-	local sourceY = if self.props.source then logoSize + 5 else 0
-	local sourceX = if self.props.source
-		then TextService:GetTextSize(self.props.source, 15, Enum.Font.GothamMedium, Vector2.new(350, 15)).X + logoSize + 5
-		else 0
-	local actionsY = if self.props.actions then 35 else 0
-	local contentX = math.max(textBounds.X, buttonsX, sourceX) + (if self.props.thirdParty then 0 else logoSize + 3) + 2
-
-	local size = self.binding:map(function(value)
-		return UDim2.fromOffset(
-			(paddingX + contentX) * value,
-			5 + actionsY + sourceY + paddingY + math.max(logoSize, textBounds.Y)
+		local paddingY, logoSize = 20, 32
+		local actionsY = if self.props.actions then 35 else 0
+		local textXSpace = math.max(250, buttonsX) + 35
+		local textBounds = Vector2.new(
+			textXSpace,
+			getTextBoundsAsync(self.props.text, theme.Font.Main, theme.TextSize.Body, textXSpace).Y
 		)
-	end)
+		local contentX = math.max(textBounds.X, buttonsX)
 
-	return Theme.with(function(theme)
+		local size = self.binding:map(function(value)
+			return UDim2.fromOffset(
+				(35 + 40 + contentX) * value,
+				5 + actionsY + paddingY + math.max(logoSize, textBounds.Y)
+			)
+		end)
+
 		return e("TextButton", {
 			BackgroundTransparency = 1,
 			Size = size,
@@ -150,45 +143,51 @@ function Notification:render()
 				transparency = transparency,
 				size = UDim2.new(1, 0, 1, 0),
 			}, {
-				Logo = e("ImageLabel", {
-					ImageTransparency = transparency,
-					Image = if self.props.thirdParty
-						then Assets.Images.ThirdPartyPlugin
-						else Assets.Images.PluginButton,
+				Contents = e("Frame", {
+					Size = UDim2.new(1, 0, 1, 0),
 					BackgroundTransparency = 1,
-					Size = UDim2.new(0, logoSize, 0, logoSize),
-					Position = UDim2.new(0, 0, 0, 0),
-					AnchorPoint = Vector2.new(0, 0),
-				}),
-				Source = if self.props.source
-					then e("TextLabel", {
-						Text = self.props.source,
-						Font = Enum.Font.GothamMedium,
-						TextSize = 15,
+				}, {
+					Logo = e("ImageLabel", {
+						ImageTransparency = transparency,
+						Image = Assets.Images.PluginButton,
+						BackgroundTransparency = 1,
+						Size = UDim2.new(0, logoSize, 0, logoSize),
+						Position = UDim2.new(0, 0, 0, 0),
+						AnchorPoint = Vector2.new(0, 0),
+					}),
+					Info = e("TextLabel", {
+						Text = self.props.text,
+						FontFace = theme.Font.Main,
+						TextSize = theme.TextSize.Body,
 						TextColor3 = theme.Notification.InfoColor,
 						TextTransparency = transparency,
 						TextXAlignment = Enum.TextXAlignment.Left,
-						TextTruncate = Enum.TextTruncate.AtEnd,
+						TextYAlignment = Enum.TextYAlignment.Top,
+						TextWrapped = true,
 
-						Size = UDim2.new(1, -logoSize - 5, 0, logoSize),
-						Position = UDim2.fromOffset(logoSize + 5, 0),
+						Size = UDim2.new(1, -35, 1, -actionsY),
+						Position = UDim2.fromOffset(35, 0),
+
+						LayoutOrder = 1,
 						BackgroundTransparency = 1,
-					})
-					else nil,
-				Message = e("TextLabel", {
-					Text = self.props.text,
-					Font = Enum.Font.GothamMedium,
-					TextSize = 15,
-					TextColor3 = theme.Notification.InfoColor,
-					TextTransparency = transparency,
-					TextXAlignment = Enum.TextXAlignment.Left,
-					TextWrapped = true,
-
-					Size = UDim2.new(0, textBounds.X, 0, textBounds.Y),
-					Position = if self.props.thirdParty
-						then UDim2.fromOffset(0, logoSize + 5)
-						else UDim2.fromOffset(logoSize + 3, 0),
-					BackgroundTransparency = 1,
+					}),
+					Actions = if self.props.actions
+						then e("Frame", {
+							Size = UDim2.new(1, -40, 0, actionsY),
+							Position = UDim2.new(1, 0, 1, 0),
+							AnchorPoint = Vector2.new(1, 1),
+							BackgroundTransparency = 1,
+						}, {
+							Layout = e("UIListLayout", {
+								FillDirection = Enum.FillDirection.Horizontal,
+								HorizontalAlignment = Enum.HorizontalAlignment.Right,
+								VerticalAlignment = Enum.VerticalAlignment.Center,
+								SortOrder = Enum.SortOrder.LayoutOrder,
+								Padding = UDim.new(0, 5),
+							}),
+							Buttons = Roact.createFragment(actionButtons),
+						})
+						else nil,
 				}),
 				Actions = if self.props.actions
 					then e("Frame", {
@@ -209,8 +208,8 @@ function Notification:render()
 					else nil,
 
 				Padding = e("UIPadding", {
-					PaddingLeft = UDim.new(0, paddingX / 2),
-					PaddingRight = UDim.new(0, paddingX / 2),
+					PaddingLeft = UDim.new(0, 17),
+					PaddingRight = UDim.new(0, 15),
 					PaddingTop = UDim.new(0, paddingY / 2),
 					PaddingBottom = UDim.new(0, paddingY / 2),
 				}),
