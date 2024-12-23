@@ -18,6 +18,7 @@ local apiPermissionAllowlist = {
 }
 
 export type CallerInfo = {
+	Source: string,
 	Type: "Local" | "Cloud" | "Studio",
 	Name: string,
 	Description: string,
@@ -139,6 +140,7 @@ function API.new(app)
 		local localPlugin = string.match(source, "user_(.+)")
 		if localPlugin then
 			return {
+				Source = source,
 				Type = "Local",
 				Name = localPlugin,
 				Description = "Locally installed plugin.",
@@ -164,6 +166,7 @@ function API.new(app)
 
 			if info then
 				return {
+					Source = source,
 					Type = "Cloud",
 					Name = info.Name,
 					Description = info.Description,
@@ -175,6 +178,7 @@ function API.new(app)
 				}
 			else
 				return {
+					Source = source,
 					Type = "Cloud",
 					Name = source,
 					Description = "Could not retrieve plugin asset info.",
@@ -188,6 +192,7 @@ function API.new(app)
 		end
 
 		return {
+			Source = source,
 			Type = "Studio",
 			Name = "Command Bar",
 			Description = "Command bar in Roblox Studio.",
@@ -461,8 +466,7 @@ function API.new(app)
 		end
 
 		return app:addThirdPartyNotification(
-			Rojo:_getCallerName(),
-			Rojo:_getCallerSource(),
+			Rojo:_getCallerInfoFromSource(Rojo:_getCallerSource()),
 			msg,
 			timeout,
 			sanitizedActions

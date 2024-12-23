@@ -113,24 +113,37 @@ function Notification:render()
 			buttonsX += (count - 1) * 5
 		end
 
+		local thirdPartyName = ""
+		if self.props.thirdParty and self.props.callerInfo then
+			thirdPartyName = self.props.callerInfo.Name .. " by " .. self.props.callerInfo.Creator.Name
+		end
+
 		local paddingY, logoSize = 20, 32
 		local actionsY = if self.props.actions then 35 else 0
-		local textXSpace = math.max(250, buttonsX) + 35
+		local thirdPartyBounds = if self.props.thirdParty
+			then getTextBoundsAsync(thirdPartyName, theme.Font.Main, theme.TextSize.Body, math.huge)
+				+ (
+					if self.props.callerInfo.Creator.HasVerifiedBadge
+						then Vector2.new(theme.TextSize.Body + 5, 0)
+						else Vector2.zero
+				)
+			else Vector2.zero
+		local textXSpace = math.max(250, thirdPartyBounds.X, buttonsX) + 35
 		local textBounds = Vector2.new(
 			textXSpace,
 			getTextBoundsAsync(self.props.text, theme.Font.Main, theme.TextSize.Body, textXSpace).Y
 		)
-		local contentX = math.max(textBounds.X, buttonsX)
+		local contentX = math.max(textBounds.X, buttonsX, thirdPartyBounds.X)
 
 		local size = self.binding:map(function(value)
 			return UDim2.fromOffset(
 				(35 + 40 + contentX) * value,
-				5 + actionsY + paddingY + math.max(logoSize, textBounds.Y)
+				5 + actionsY + thirdPartyBounds.Y + paddingY + math.max(logoSize, textBounds.Y)
 			)
 		end)
 
 		local logoAssetId = if self.props.thirdParty
-			then getThirdPartyIcon(self.props.source)
+			then getThirdPartyIcon(self.props.callerInfo.Source)
 			else Assets.Images.PluginButton
 
 		return e("TextButton", {
@@ -160,6 +173,36 @@ function Notification:render()
 						Position = UDim2.new(0, 0, 0, 0),
 						AnchorPoint = Vector2.new(0, 0),
 					}),
+					ThirdPartyName = if self.props.thirdParty
+						then e(
+							"TextLabel",
+							{
+								Text = thirdPartyName,
+								FontFace = theme.Font.Main,
+								TextSize = theme.TextSize.Body,
+								TextColor3 = theme.SubTextColor,
+								TextTransparency = transparency,
+								TextXAlignment = Enum.TextXAlignment.Left,
+								TextYAlignment = Enum.TextYAlignment.Top,
+								Size = UDim2.new(0, 0, 0, thirdPartyBounds.Y),
+								AutomaticSize = Enum.AutomaticSize.X,
+								Position = UDim2.fromOffset(35, 0),
+
+								LayoutOrder = 1,
+								BackgroundTransparency = 1,
+							},
+							if self.props.callerInfo and self.props.callerInfo.Creator.HasVerifiedBadge
+								then e("ImageLabel", {
+									Image = Assets.Images.Icons.Verified,
+									BackgroundTransparency = 1,
+									SizeConstraint = Enum.SizeConstraint.RelativeYY,
+									AnchorPoint = Vector2.new(0, 0.5),
+									Position = UDim2.new(1, 3, 0.5, 0),
+									Size = UDim2.fromScale(0.8, 0.8),
+								})
+								else nil
+						)
+						else nil,
 					Info = e("TextLabel", {
 						Text = self.props.text,
 						FontFace = theme.Font.Main,
@@ -170,8 +213,8 @@ function Notification:render()
 						TextYAlignment = Enum.TextYAlignment.Top,
 						TextWrapped = true,
 
-						Size = UDim2.new(1, -35, 1, -actionsY),
-						Position = UDim2.fromOffset(35, 0),
+						Size = UDim2.new(1, -35, 1, -actionsY - thirdPartyBounds.Y),
+						Position = UDim2.fromOffset(35, thirdPartyBounds.Y),
 
 						LayoutOrder = 1,
 						BackgroundTransparency = 1,
@@ -237,8 +280,7 @@ function Notifications:render()
 			actions = notif.actions,
 			soundPlayer = self.props.soundPlayer,
 			thirdParty = notif.thirdParty,
-			name = notif.name,
-			source = notif.source,
+			callerInfo = notif.callerInfo,
 			onClose = function()
 				self.props.onClose(id)
 			end,

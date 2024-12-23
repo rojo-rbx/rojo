@@ -294,8 +294,7 @@ function App:addNotification(
 end
 
 function App:addThirdPartyNotification(
-	name: string,
-	source: string,
+	callerInfo: HeadlessAPI.CallerInfo,
 	text: string,
 	timeout: number?,
 	actions: {
@@ -316,8 +315,7 @@ function App:addThirdPartyNotification(
 		timeout = timeout or 3,
 		actions = actions,
 		thirdParty = true,
-		name = name,
-		source = source,
+		callerInfo = callerInfo,
 	}
 
 	self:setState({
