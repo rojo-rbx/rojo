@@ -101,6 +101,16 @@ function StringDiffVisualizer:updateDiffs()
 		#diffs
 	)
 
+	-- Build the rich text lines
+	local currentRichTextLines = Highlighter.buildRichTextLines({
+		src = currentString,
+	})
+	local incomingRichTextLines = Highlighter.buildRichTextLines({
+		src = incomingString,
+	})
+
+	local maxLines = math.max(#currentRichTextLines, #incomingRichTextLines)
+
 	-- Find the diff locations
 	local currentDiffs, incomingDiffs = {}, {}
 	local currentSpacers, incomingSpacers = {}, {}
@@ -209,19 +219,10 @@ function StringDiffVisualizer:updateDiffs()
 		incomingDiffs[lineNum] = nil
 	end
 
-	local currentRichTextLines = Highlighter.buildRichTextLines({
-		src = currentString,
-	})
-	local incomingRichTextLines = Highlighter.buildRichTextLines({
-		src = incomingString,
-	})
-
-	local maxLines = math.max(#currentRichTextLines, #incomingRichTextLines)
-
 	-- Adjust the rich text lines and their diffs to include spacers (aka nil lines)
 	for spacerIdx, spacer in currentSpacers do
-		local spacerLineNum = spacer.currentLineNum + spacerIdx
-		table.insert(currentRichTextLines, spacerLineNum, nil)
+		local spacerLineNum = spacer.currentLineNum + spacerIdx - 1
+		table.insert(currentRichTextLines, spacerLineNum, 0)
 		-- The currentDiffs that come after this spacer need to be moved down
 		-- without overwriting the currentDiffs that are already there
 		local updatedCurrentDiffs = {}
@@ -235,8 +236,9 @@ function StringDiffVisualizer:updateDiffs()
 		currentDiffs = updatedCurrentDiffs
 	end
 	for spacerIdx, spacer in incomingSpacers do
-		local spacerLineNum = spacer.incomingLineNum + spacerIdx
-		table.insert(incomingRichTextLines, spacerLineNum, nil)
+		local spacerLineNum = spacer.incomingLineNum + spacerIdx - 1
+		table.insert(incomingRichTextLines, spacerLineNum, 0)
+
 		-- The incomingDiffs that come after this spacer need to be moved down
 		-- without overwriting the incomingDiffs that are already there
 		local updatedIncomingDiffs = {}
@@ -256,11 +258,11 @@ function StringDiffVisualizer:updateDiffs()
 	local currentLineNumbers, incomingLineNumbers = table.create(maxLines, 0), table.create(maxLines, 0)
 	local currentLineNumber, incomingLineNumber = 0, 0
 	for lineNum = 1, maxLines do
-		if currentRichTextLines[lineNum] then
+		if type(currentRichTextLines[lineNum]) == "string" then
 			currentLineNumber += 1
 			currentLineNumbers[lineNum] = currentLineNumber
 		end
-		if incomingRichTextLines[lineNum] then
+		if type(incomingRichTextLines[lineNum]) == "string" then
 			incomingLineNumber += 1
 			incomingLineNumbers[lineNum] = incomingLineNumber
 		end
@@ -297,14 +299,14 @@ function StringDiffVisualizer:render()
 		local canvasWidth = 0
 		for i = 1, maxLines do
 			local currentLine = currentRichTextLines[i]
-			if currentLine and string.find(currentLine, "%S") then
+			if type(currentLine) == "string" and string.find(currentLine, "%S") then
 				local bounds = getTextBoundsAsync(currentLine, theme.Font.Code, theme.TextSize.Code, math.huge, true)
 				if bounds.X > canvasWidth then
 					canvasWidth = bounds.X
 				end
 			end
 			local incomingLine = incomingRichTextLines[i]
-			if incomingLine and string.find(incomingLine, "%S") then
+			if type(incomingLine) == "string" and string.find(incomingLine, "%S") then
 				local bounds = getTextBoundsAsync(incomingLine, theme.Font.Code, theme.TextSize.Code, math.huge, true)
 				if bounds.X > canvasWidth then
 					canvasWidth = bounds.X
@@ -385,7 +387,7 @@ function StringDiffVisualizer:render()
 					canvasPosition = self.canvasPosition,
 					onCanvasPositionChanged = self.setCanvasPosition,
 					render = function(i)
-						if not currentRichTextLines[i] then
+						if type(currentRichTextLines[i]) ~= "string" then
 							return e("ImageLabel", {
 								Size = UDim2.fromScale(1, 1),
 								Position = UDim2.fromScale(0, 0),
@@ -469,7 +471,7 @@ function StringDiffVisualizer:render()
 					canvasPosition = self.canvasPosition,
 					onCanvasPositionChanged = self.setCanvasPosition,
 					render = function(i)
-						if not incomingRichTextLines[i] then
+						if type(incomingRichTextLines[i]) ~= "string" then
 							return e("ImageLabel", {
 								Size = UDim2.fromScale(1, 1),
 								Position = UDim2.fromScale(0, 0),
