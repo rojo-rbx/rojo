@@ -12,7 +12,8 @@ local function getTextBoundsAsync(
 	font: Font,
 	textSize: number,
 	width: number,
-	richText: boolean?
+	richText: boolean?,
+	lineHeight: number?
 ): Vector2
 	if type(text) ~= "string" then
 		Log.warn(`Invalid text. Expected string, received {type(text)} instead`)
@@ -33,6 +34,13 @@ local function getTextBoundsAsync(
 	if not success then
 		Log.warn(`Failed to get text bounds: {bounds}`)
 		return Vector2.zero
+	end
+
+	if lineHeight and type(lineHeight) == "number" then
+		local lineCount = math.ceil(bounds.Y / textSize)
+		local lineHeightAbsolute = textSize * lineHeight
+
+		return Vector2.new(bounds.X, lineHeightAbsolute * lineCount - (lineHeightAbsolute - textSize))
 	end
 
 	return bounds
