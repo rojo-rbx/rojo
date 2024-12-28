@@ -12,6 +12,7 @@ local getTextBoundsAsync = require(Plugin.App.getTextBoundsAsync)
 
 local SlicedImage = require(script.Parent.SlicedImage)
 local ScrollingFrame = require(script.Parent.ScrollingFrame)
+local Tooltip = require(script.Parent.Tooltip)
 
 local e = Roact.createElement
 
@@ -119,6 +120,12 @@ function Dropdown:render()
 					end),
 
 					BackgroundTransparency = 1,
+				}, {
+					StateTip = if self.props.locked
+						then e(Tooltip.Trigger, {
+							text = self.props.lockedTooltip or "(Cannot be changed right now)",
+						})
+						else nil,
 				}),
 				Active = e("TextLabel", {
 					Size = UDim2.new(1, -30, 1, 0),
