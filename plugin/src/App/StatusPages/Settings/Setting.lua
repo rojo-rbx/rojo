@@ -114,6 +114,7 @@ function Setting:render()
 					then self.props.input
 					elseif self.props.options ~= nil then e(Dropdown, {
 						locked = self.props.locked,
+						lockedTooltip = self.props.lockedTooltip,
 						options = self.props.options,
 						active = self.state.setting,
 						transparency = self.props.transparency,
@@ -123,6 +124,7 @@ function Setting:render()
 					})
 					else e(Checkbox, {
 						locked = self.props.locked,
+						lockedTooltip = self.props.lockedTooltip,
 						active = self.state.setting,
 						transparency = self.props.transparency,
 						onClick = function()

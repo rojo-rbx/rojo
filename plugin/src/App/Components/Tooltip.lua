@@ -23,11 +23,8 @@ local TooltipContext = Roact.createContext({})
 
 local function Popup(props)
 	return Theme.with(function(theme)
-		local textXSpace = math.min(props.parentSize.X, 120)
-		local textBounds = Vector2.new(
-			textXSpace,
-			getTextBoundsAsync(props.Text, theme.Font.Main, theme.TextSize.Medium, textXSpace).Y
-		)
+		local textXSpace = math.min(props.parentSize.X, 250)
+		local textBounds = getTextBoundsAsync(props.Text, theme.Font.Main, theme.TextSize.Medium, textXSpace)
 		local contentSize = textBounds + TEXT_PADDING + (Vector2.one * 2)
 
 		local trigger = props.Trigger:getValue()
