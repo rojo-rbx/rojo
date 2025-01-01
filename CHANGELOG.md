@@ -25,6 +25,7 @@
 * Added popout diff visualizer for table properties like Attributes and Tags ([#834])
 * Updated Theme to use Studio colors ([#838])
 * Improved patch visualizer UX ([#883])
+* Improved script source diff visualizer UX and performance ([#994])
 * Added update notifications for newer compatible versions in the Studio plugin. ([#832])
 * Added experimental setting for Auto Connect in playtests ([#840])
 * Improved settings UI ([#886])
@@ -91,6 +92,7 @@
 [#974]: https://github.com/rojo-rbx/rojo/pull/974
 [#987]: https://github.com/rojo-rbx/rojo/pull/987
 [#988]: https://github.com/rojo-rbx/rojo/pull/988
+[#994]: https://github.com/rojo-rbx/rojo/pull/994
 
 ## [7.4.3] - August 6th, 2024
 * Fixed issue with building binary files introduced in 7.4.2
