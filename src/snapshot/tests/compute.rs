@@ -9,7 +9,7 @@ use crate::snapshot::{compute_patch_set, InstanceSnapshot, RojoTree};
 
 #[test]
 fn set_name_and_class_name() {
-    let mut redactions = RedactionMap::new();
+    let mut redactions = RedactionMap::default();
 
     let tree = empty_tree();
     redactions.intern(tree.get_root_id());
@@ -31,7 +31,7 @@ fn set_name_and_class_name() {
 
 #[test]
 fn set_property() {
-    let mut redactions = RedactionMap::new();
+    let mut redactions = RedactionMap::default();
 
     let tree = empty_tree();
     redactions.intern(tree.get_root_id());
@@ -53,7 +53,7 @@ fn set_property() {
 
 #[test]
 fn remove_property() {
-    let mut redactions = RedactionMap::new();
+    let mut redactions = RedactionMap::default();
 
     let mut tree = empty_tree();
     redactions.intern(tree.get_root_id());
@@ -84,7 +84,7 @@ fn remove_property() {
 
 #[test]
 fn add_child() {
-    let mut redactions = RedactionMap::new();
+    let mut redactions = RedactionMap::default();
 
     let tree = empty_tree();
     redactions.intern(tree.get_root_id());
@@ -113,7 +113,7 @@ fn add_child() {
 
 #[test]
 fn remove_child() {
-    let mut redactions = RedactionMap::new();
+    let mut redactions = RedactionMap::default();
 
     let mut tree = empty_tree();
     redactions.intern(tree.get_root_id());

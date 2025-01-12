@@ -177,11 +177,11 @@ Ack,Ack!,,An exclamation of despair,¡Ay!"#,
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_csv(
             &InstanceContext::default(),
-            &mut vfs,
+            &vfs,
             Path::new("/foo.csv"),
             "foo",
         )
@@ -209,11 +209,11 @@ Ack,Ack!,,An exclamation of despair,¡Ay!"#,
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_csv(
             &InstanceContext::default(),
-            &mut vfs,
+            &vfs,
             Path::new("/foo.csv"),
             "foo",
         )
