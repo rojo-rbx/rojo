@@ -151,7 +151,25 @@ local function diff(instanceMap, virtualInstances, rootId)
 
 			if getProperySuccess then
 				local existingValue = existingValueOrErr
-				local decodeSuccess, decodedValue = decodeValue(virtualValue, instanceMap)
+				local decodeSuccess, decodedValue
+
+				-- If `virtualValue` is a ref then instead of decoding it to an instance,
+				-- we change `existingValue` to be a ref. This is because `virtualValue`
+				-- may point to an Instance which doesn't exist yet and therefore
+				-- decoding it may throw an error.
+				if next(virtualValue) == "Ref" then
+					decodeSuccess, decodedValue = true, virtualValue
+
+					if existingValue and typeof(existingValue) == "Instance" then
+						local existingValueRef = instanceMap.fromInstances[existingValue]
+						if existingValueRef then
+							existingValue = { Ref = existingValueRef }
+						end
+					end
+
+				else
+					decodeSuccess, decodedValue = decodeValue(virtualValue, instanceMap)
+				end
 
 				if decodeSuccess then
 					if not trueEquals(existingValue, decodedValue) then

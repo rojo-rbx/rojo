@@ -1,5 +1,6 @@
 return function()
 	local reify = require(script.Parent.reify)
+	local reifyInstance, applyDeferredRefs = reify.reifyInstance, reify.applyDeferredRefs
 
 	local PatchSet = require(script.Parent.Parent.PatchSet)
 	local InstanceMap = require(script.Parent.Parent.InstanceMap)
@@ -20,7 +21,7 @@ return function()
 
 	it("should throw when given a bogus ID", function()
 		expect(function()
-			reify(InstanceMap.new(), {}, "Hi, mom!", game)
+			reifyInstance({}, InstanceMap.new(), {}, "Hi, mom!", game)
 		end).to.throw()
 	end)
 
@@ -35,7 +36,7 @@ return function()
 		}
 
 		local instanceMap = InstanceMap.new()
-		local unappliedPatch = reify(instanceMap, virtualInstances, "ROOT", nil)
+		local unappliedPatch = reifyInstance({}, instanceMap, virtualInstances, "ROOT", nil)
 
 		assert(instanceMap:size() == 0, "expected instanceMap to be empty")
 
@@ -61,7 +62,7 @@ return function()
 		}
 
 		local instanceMap = InstanceMap.new()
-		local unappliedPatch = reify(instanceMap, virtualInstances, "ROOT")
+		local unappliedPatch = reifyInstance({}, instanceMap, virtualInstances, "ROOT")
 
 		assert(PatchSet.isEmpty(unappliedPatch), "expected remaining patch to be empty")
 
@@ -91,7 +92,7 @@ return function()
 		}
 
 		local instanceMap = InstanceMap.new()
-		local unappliedPatch = reify(instanceMap, virtualInstances, "ROOT")
+		local unappliedPatch = reifyInstance({}, instanceMap, virtualInstances, "ROOT")
 
 		assert(PatchSet.isEmpty(unappliedPatch), "expected remaining patch to be empty")
 
@@ -123,7 +124,7 @@ return function()
 		}
 
 		local instanceMap = InstanceMap.new()
-		local unappliedPatch = reify(instanceMap, virtualInstances, "ROOT")
+		local unappliedPatch = reifyInstance({}, instanceMap, virtualInstances, "ROOT")
 
 		expect(size(unappliedPatch.added)).to.equal(1)
 		expect(unappliedPatch.added["CHILD"]).to.equal(virtualInstances["CHILD"])
@@ -154,7 +155,7 @@ return function()
 		}
 
 		local instanceMap = InstanceMap.new()
-		local unappliedPatch = reify(instanceMap, virtualInstances, "ROOT")
+		local unappliedPatch = reifyInstance({}, instanceMap, virtualInstances, "ROOT")
 
 		local instance = instanceMap.fromIds["ROOT"]
 		expect(instance.ClassName).to.equal("StringValue")
@@ -197,7 +198,7 @@ return function()
 		}
 
 		local instanceMap = InstanceMap.new()
-		local unappliedPatch = reify(instanceMap, virtualInstances, "ROOT")
+		local unappliedPatch = reifyInstance({}, instanceMap, virtualInstances, "ROOT")
 
 		assert(PatchSet.isEmpty(unappliedPatch), "expected remaining patch to be empty")
 
@@ -229,7 +230,7 @@ return function()
 		existing.Name = "Existing"
 		instanceMap:insert("EXISTING", existing)
 
-		local unappliedPatch = reify(instanceMap, virtualInstances, "ROOT")
+		local unappliedPatch = reifyInstance({}, instanceMap, virtualInstances, "ROOT")
 
 		assert(PatchSet.isEmpty(unappliedPatch), "expected remaining patch to be empty")
 
@@ -269,7 +270,7 @@ return function()
 		}
 
 		local instanceMap = InstanceMap.new()
-		local unappliedPatch = reify(instanceMap, virtualInstances, "ROOT")
+		local unappliedPatch = reifyInstance({}, instanceMap, virtualInstances, "ROOT")
 
 		assert(PatchSet.isEmpty(unappliedPatch), "expected remaining patch to be empty")
 
@@ -308,7 +309,7 @@ return function()
 		}
 
 		local instanceMap = InstanceMap.new()
-		local unappliedPatch = reify(instanceMap, virtualInstances, "ROOT")
+		local unappliedPatch = reifyInstance({}, instanceMap, virtualInstances, "ROOT")
 
 		assert(PatchSet.isEmpty(unappliedPatch), "expected remaining patch to be empty")
 
@@ -333,7 +334,7 @@ return function()
 		}
 
 		local instanceMap = InstanceMap.new()
-		local unappliedPatch = reify(instanceMap, virtualInstances, "ROOT")
+		local unappliedPatch = reifyInstance({}, instanceMap, virtualInstances, "ROOT")
 
 		assert(not PatchSet.hasRemoves(unappliedPatch), "expected no removes")
 		assert(not PatchSet.hasAdditions(unappliedPatch), "expected no additions")
