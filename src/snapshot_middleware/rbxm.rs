@@ -54,11 +54,11 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_rbxm(
             &InstanceContext::default(),
-            &mut vfs,
+            &vfs,
             Path::new("/foo.rbxm"),
             "foo",
         )

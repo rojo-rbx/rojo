@@ -313,7 +313,7 @@ mod test {
         // addition of a prop named Self, which is a self-referential Ref.
         let snapshot_id = Ref::new();
         let snapshot = InstanceSnapshot {
-            snapshot_id: snapshot_id,
+            snapshot_id,
             properties: [("Self".to_owned(), Variant::Ref(snapshot_id))].into(),
 
             metadata: Default::default(),
@@ -351,7 +351,7 @@ mod test {
         // This patch describes the existing instance with a new child added.
         let snapshot_id = Ref::new();
         let snapshot = InstanceSnapshot {
-            snapshot_id: snapshot_id,
+            snapshot_id,
             children: vec![InstanceSnapshot {
                 properties: [("Self".to_owned(), Variant::Ref(snapshot_id))].into(),
 

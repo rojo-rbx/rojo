@@ -230,7 +230,7 @@ impl Project {
                 io::ErrorKind::NotFound => Error::NoProjectFound {
                     path: project_path.to_path_buf(),
                 },
-                _ => return e.into(),
+                _ => e.into(),
             })?;
 
             Ok(Some(Self::load_from_slice(&contents, project_path, None)?))
@@ -250,7 +250,7 @@ impl Project {
             io::ErrorKind::NotFound => Error::NoProjectFound {
                 path: project_path.to_path_buf(),
             },
-            _ => return e.into(),
+            _ => e.into(),
         })?;
 
         Ok(Self::load_from_slice(

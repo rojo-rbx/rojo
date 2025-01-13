@@ -98,11 +98,11 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs.clone());
+        let vfs = Vfs::new(imfs.clone());
 
         let instance_snapshot = snapshot_json(
             &InstanceContext::default(),
-            &mut vfs,
+            &vfs,
             Path::new("/foo.json"),
             "foo",
         )
