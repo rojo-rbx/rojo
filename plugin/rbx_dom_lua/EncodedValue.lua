@@ -300,7 +300,7 @@ types = {
 			local keypoints = {}
 
 			for index, keypoint in ipairs(pod.keypoints) do
-				keypoints[index] = NumberSequenceKeypoint.new(keypoint.time, keypoint.value, keypoint.envelope)
+				keypoints[index] = NumberSequenceKeypoint.new(keypoint.time, keypoint.value or 0, keypoint.envelope)
 			end
 
 			return NumberSequence.new(keypoints)
