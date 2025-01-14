@@ -113,12 +113,9 @@ function Notification:render()
 		end
 
 		local paddingY, logoSize = 20, 32
-		local actionsY = if self.props.actions then 35 else 0
+		local actionsY = if self.props.actions then 37 else 0
 		local textXSpace = math.max(250, buttonsX) + 35
-		local textBounds = Vector2.new(
-			textXSpace,
-			getTextBoundsAsync(self.props.text, theme.Font.Main, theme.TextSize.Body, textXSpace).Y
-		)
+		local textBounds = getTextBoundsAsync(self.props.text, theme.Font.Main, theme.TextSize.Body, textXSpace)
 		local contentX = math.max(textBounds.X, buttonsX)
 
 		local size = self.binding:map(function(value)
@@ -162,10 +159,10 @@ function Notification:render()
 						TextColor3 = theme.Notification.InfoColor,
 						TextTransparency = transparency,
 						TextXAlignment = Enum.TextXAlignment.Left,
-						TextYAlignment = Enum.TextYAlignment.Top,
+						TextYAlignment = Enum.TextYAlignment.Center,
 						TextWrapped = true,
 
-						Size = UDim2.new(1, -35, 1, -actionsY),
+						Size = UDim2.new(0, textBounds.X, 1, -actionsY),
 						Position = UDim2.fromOffset(35, 0),
 
 						LayoutOrder = 1,
