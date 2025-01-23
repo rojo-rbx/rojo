@@ -38,7 +38,7 @@ pub fn snapshot_lua(
         (true, ScriptType::Server) => ("Script", run_context_enums.get("Legacy")),
         (true, ScriptType::Client) => ("LocalScript", None),
         (_, ScriptType::Module) => ("ModuleScript", None),
-        (_, ScriptType::Plugin) => ("Script", run_context_enums.get("Plugin"))
+        (_, ScriptType::Plugin) => ("Script", run_context_enums.get("Plugin")),
     };
 
     let contents = vfs.read_to_string_lf_normalized(path)?;
