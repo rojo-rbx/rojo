@@ -15,6 +15,7 @@ pub enum ScriptType {
     Server,
     Client,
     Module,
+    Plugin,
 }
 
 /// Core routine for turning Lua files into snapshots.
@@ -37,6 +38,7 @@ pub fn snapshot_lua(
         (true, ScriptType::Server) => ("Script", run_context_enums.get("Legacy")),
         (true, ScriptType::Client) => ("LocalScript", None),
         (_, ScriptType::Module) => ("ModuleScript", None),
+        (_, ScriptType::Plugin) => ("Script", run_context_enums.get("Plugin"))
     };
 
     let contents = vfs.read_to_string_lf_normalized(path)?;
@@ -155,6 +157,29 @@ mod test {
             Path::new("/foo.lua"),
             "foo",
             ScriptType::Module,
+        )
+        .unwrap()
+        .unwrap();
+
+        insta::with_settings!({ sort_maps => true }, {
+            insta::assert_yaml_snapshot!(instance_snapshot);
+        });
+    }
+
+    #[test]
+    fn plugin_module_from_vfs() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot("/foo.plugin.lua", VfsSnapshot::file("Hello there!"))
+            .unwrap();
+
+        let vfs = Vfs::new(imfs);
+
+        let instance_snapshot = snapshot_lua(
+            &InstanceContext::with_emit_legacy_scripts(Some(false)),
+            &vfs,
+            Path::new("/foo.plugin.lua"),
+            "foo",
+            ScriptType::Plugin,
         )
         .unwrap()
         .unwrap();
