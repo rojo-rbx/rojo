@@ -20,6 +20,10 @@ fn snapshot_from_fs_path(path: &Path) -> io::Result<VfsSnapshot> {
 
             let file_name = entry.file_name().to_str().unwrap().to_owned();
 
+            if file_name.starts_with(".git") {
+                continue;
+            }
+
             // We can skip any TestEZ test files since they aren't necessary for
             // the plugin to run.
             if file_name.ends_with(".spec.lua") || file_name.ends_with(".spec.luau") {

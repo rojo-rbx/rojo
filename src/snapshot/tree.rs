@@ -148,7 +148,7 @@ impl RojoTree {
                     // We need to uphold the invariant that each ID can only map
                     // to one referent.
                     if let Some(new) = &metadata.specified_id {
-                        if self.specified_id_to_refs.get(new).len() > 0 {
+                        if !self.specified_id_to_refs.get(new).is_empty() {
                             log::error!("Duplicate user-specified referent '{new}'");
                         }
 
@@ -206,7 +206,7 @@ impl RojoTree {
         }
 
         if let Some(specified_id) = &metadata.specified_id {
-            if self.specified_id_to_refs.get(specified_id).len() > 0 {
+            if !self.specified_id_to_refs.get(specified_id).is_empty() {
                 log::error!("Duplicate user-specified referent '{specified_id}'");
             }
 

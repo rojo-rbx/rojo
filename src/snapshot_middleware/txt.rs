@@ -50,11 +50,11 @@ mod test {
         imfs.load_snapshot("/foo.txt", VfsSnapshot::file("Hello there!"))
             .unwrap();
 
-        let mut vfs = Vfs::new(imfs.clone());
+        let vfs = Vfs::new(imfs.clone());
 
         let instance_snapshot = snapshot_txt(
             &InstanceContext::default(),
-            &mut vfs,
+            &vfs,
             Path::new("/foo.txt"),
             "foo",
         )

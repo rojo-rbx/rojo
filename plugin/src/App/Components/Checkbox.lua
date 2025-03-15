@@ -57,8 +57,9 @@ function Checkbox:render()
 			end,
 		}, {
 			StateTip = e(Tooltip.Trigger, {
-				text = (if self.props.locked then "[LOCKED] " else "")
-					.. (if self.props.active then "Enabled" else "Disabled"),
+				text = (if self.props.locked
+					then (self.props.lockedTooltip or "(Cannot be changed right now)") .. "\n"
+					else "") .. (if self.props.active then "Enabled" else "Disabled"),
 			}),
 
 			Active = e(SlicedImage, {
