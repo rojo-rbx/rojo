@@ -30,7 +30,6 @@ In the future, Rojo will be able to:
 
 * Sync instances from Roblox Studio to the filesystem
 * Automatically convert your existing game to work with Rojo
-* Import custom instances like MoonScript code
 
 ## [Documentation](https://rojo.space/docs)
 Documentation is hosted in the [rojo.space repository](https://github.com/rojo-rbx/rojo.space).
