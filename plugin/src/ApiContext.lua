@@ -43,16 +43,22 @@ local function rejectWrongProtocolVersion(infoResponseBody)
 	return Promise.resolve(infoResponseBody)
 end
 
+local function findPlaceId(placeIds)
+	local foundId = false
+
+    for _, id in ipairs(placeIds) do
+        if id == game.PlaceId then
+            foundId = true
+            break
+        end
+    end
+
+    return foundId
+end
+
 local function rejectWrongPlaceId(infoResponseBody)
 	if infoResponseBody.expectedPlaceIds ~= nil then
-		local foundId = false
-
-		for _, id in ipairs(infoResponseBody.expectedPlaceIds) do
-			if id == game.PlaceId then
-				foundId = true
-				break
-			end
-		end
+		local foundId = findPlaceId(infoResponseBody.expectedPlaceIds)
 
 		if not foundId then
 			local idList = {}
@@ -65,6 +71,26 @@ local function rejectWrongPlaceId(infoResponseBody)
 				.. "\nYour place ID is %s, but needs to be one of these:"
 				.. "\n%s"
 				.. "\n\nTo change this list, edit 'servePlaceIds' in your .project.json file."
+			):format(tostring(game.PlaceId), table.concat(idList, "\n"))
+
+			return Promise.reject(message)
+		end
+	end
+
+	if infoResponseBody.unexpectedPlaceIds ~= nil then
+		local foundId = findPlaceId(infoResponseBody.unexpectedPlaceIds)
+
+		if foundId then
+			local idList = {}
+			for _, id in ipairs(infoResponseBody.unexpectedPlaceIds) do
+				table.insert(idList, "- " .. tostring(id))
+			end
+
+			local message = (
+				"Found a Rojo server, but its project is set to not be used with a specific list of places."
+				.. "\nYour place ID is %s, but needs to not be one of these:"
+				.. "\n%s"
+				.. "\n\nTo change this list, edit 'avoidPlaceIds' in your .project.json file."
 			):format(tostring(game.PlaceId), table.concat(idList, "\n"))
 
 			return Promise.reject(message)

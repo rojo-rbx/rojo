@@ -64,6 +64,7 @@ impl ApiService {
             session_id: self.serve_session.session_id(),
             project_name: self.serve_session.project_name().to_owned(),
             expected_place_ids: self.serve_session.serve_place_ids().cloned(),
+            unexpected_place_ids: self.serve_session.avoid_place_ids().cloned(),
             place_id: self.serve_session.place_id(),
             game_id: self.serve_session.game_id(),
             root_instance_id,
