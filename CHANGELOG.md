@@ -1,6 +1,7 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Add `avoidPlaceIds` project config field to allow blocking place ids from being live synced ([#1021])
 * Support for a `$schema` field in all special JSON files (`.project.json`, `.model.json`, and `.meta.json`) ([#974])
 * Projects may now manually link `Ref` properties together using `Attributes`. ([#843])
  	This has two parts: using `id` or `$id` in JSON files or a `Rojo_Target` attribute, an Instance
