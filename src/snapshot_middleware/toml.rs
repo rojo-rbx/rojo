@@ -105,11 +105,11 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs.clone());
+        let vfs = Vfs::new(imfs.clone());
 
         let instance_snapshot = snapshot_toml(
             &InstanceContext::default(),
-            &mut vfs,
+            &vfs,
             Path::new("/foo.toml"),
             "foo",
         )

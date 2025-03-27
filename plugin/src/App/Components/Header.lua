@@ -31,13 +31,13 @@ local function Header(props)
 
 			Version = e("TextLabel", {
 				Text = Version.display(Config.version),
-				Font = Enum.Font.Gotham,
-				TextSize = 14,
+				FontFace = theme.Font.Thin,
+				TextSize = theme.TextSize.Body,
 				TextColor3 = theme.Header.VersionColor,
 				TextXAlignment = Enum.TextXAlignment.Left,
 				TextTransparency = props.transparency,
 
-				Size = UDim2.new(1, 0, 0, 14),
+				Size = UDim2.new(1, 0, 0, theme.TextSize.Body),
 
 				LayoutOrder = 2,
 				BackgroundTransparency = 1,

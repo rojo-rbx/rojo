@@ -116,12 +116,11 @@ mod test {
         imfs.load_snapshot("/foo", VfsSnapshot::empty_dir())
             .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
-        let instance_snapshot =
-            snapshot_dir(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = snapshot_dir(&InstanceContext::default(), &vfs, Path::new("/foo"))
+            .unwrap()
+            .unwrap();
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }
@@ -135,12 +134,11 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
-        let instance_snapshot =
-            snapshot_dir(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = snapshot_dir(&InstanceContext::default(), &vfs, Path::new("/foo"))
+            .unwrap()
+            .unwrap();
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }

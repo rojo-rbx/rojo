@@ -119,7 +119,7 @@ pub struct Instance<'a> {
     pub metadata: Option<InstanceMetadata>,
 }
 
-impl<'a> Instance<'a> {
+impl Instance<'_> {
     pub(crate) fn from_rojo_instance(source: InstanceWithMeta<'_>) -> Instance<'_> {
         let properties = source
             .properties()
