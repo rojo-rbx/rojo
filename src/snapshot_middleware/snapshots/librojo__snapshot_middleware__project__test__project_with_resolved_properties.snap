@@ -9,7 +9,9 @@ metadata:
     Path: /foo.project.json
   relevant_paths:
     - /foo.project.json
-  context: {}
+  context:
+    emit_legacy_scripts: true
+  specified_id: ~
 name: resolved-properties
 class_name: StringValue
 properties:

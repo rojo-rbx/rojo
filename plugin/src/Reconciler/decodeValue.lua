@@ -27,13 +27,14 @@ local function decodeValue(encodedValue, instanceMap)
 		end
 	end
 
-	local ok, decodedValue = RbxDom.EncodedValue.decode(encodedValue)
+	local decodeSuccess, decodedValue = RbxDom.EncodedValue.decode(encodedValue)
 
-	if not ok then
-		return false, Error.new(Error.CannotDecodeValue, {
-			encodedValue = encodedValue,
-			innerError = decodedValue,
-		})
+	if not decodeSuccess then
+		return false,
+			Error.new(Error.CannotDecodeValue, {
+				encodedValue = encodedValue,
+				innerError = decodedValue,
+			})
 	end
 
 	return true, decodedValue

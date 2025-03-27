@@ -10,7 +10,9 @@ metadata:
   relevant_paths:
     - /foo.txt
     - /foo.meta.json
-  context: {}
+  context:
+    emit_legacy_scripts: true
+  specified_id: ~
 name: foo
 class_name: StringValue
 properties:

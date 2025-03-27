@@ -1,0 +1,27 @@
+{
+  "name": "Rojo",
+  "tree": {
+    "$className": "Folder",
+    "Plugin": {
+      "$path": "plugin/src"
+    },
+    "Packages": {
+      "$path": "plugin/Packages",
+      "Log": {
+        "$path": "plugin/log"
+      },
+      "Http": {
+        "$path": "plugin/http"
+      },
+      "Fmt": {
+        "$path": "plugin/fmt"
+      },
+      "RbxDom": {
+        "$path": "plugin/rbx_dom_lua"
+      }
+    },
+    "Version": {
+      "$path": "plugin/Version.txt"
+    }
+  }
+}

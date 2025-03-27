@@ -27,8 +27,8 @@ local function AddressEntry(props)
 		}, {
 			Host = e("TextBox", {
 				Text = props.host or "",
-				Font = Enum.Font.Code,
-				TextSize = 18,
+				FontFace = theme.Font.Code,
+				TextSize = theme.TextSize.Large,
 				TextColor3 = theme.AddressEntry.TextColor,
 				TextXAlignment = Enum.TextXAlignment.Left,
 				TextTransparency = props.transparency,
@@ -46,13 +46,13 @@ local function AddressEntry(props)
 					if props.onHostChange ~= nil then
 						props.onHostChange(object.Text)
 					end
-				end
+				end,
 			}),
 
 			Port = e("TextBox", {
 				Text = props.port or "",
-				Font = Enum.Font.Code,
-				TextSize = 18,
+				FontFace = theme.Font.Code,
+				TextSize = theme.TextSize.Large,
 				TextColor3 = theme.AddressEntry.TextColor,
 				TextTransparency = props.transparency,
 				PlaceholderText = Config.defaultPort,
@@ -120,7 +120,7 @@ function NotConnectedPage:render()
 				onClick = self.props.onNavigateSettings,
 			}, {
 				Tip = e(Tooltip.Trigger, {
-					text = "View and modify plugin settings"
+					text = "View and modify plugin settings",
 				}),
 			}),
 
@@ -132,7 +132,7 @@ function NotConnectedPage:render()
 				onClick = self.props.onConnect,
 			}, {
 				Tip = e(Tooltip.Trigger, {
-					text = "Connect to a Rojo sync server"
+					text = "Connect to a Rojo sync server",
 				}),
 			}),
 

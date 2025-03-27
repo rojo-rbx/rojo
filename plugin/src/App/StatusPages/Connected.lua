@@ -3,87 +3,202 @@ local Plugin = Rojo.Plugin
 local Packages = Rojo.Packages
 
 local Roact = require(Packages.Roact)
-local Flipper = require(Packages.Flipper)
 
-local bindingUtil = require(Plugin.App.bindingUtil)
+local timeUtil = require(Plugin.timeUtil)
 local Theme = require(Plugin.App.Theme)
 local Assets = require(Plugin.Assets)
 local PatchSet = require(Plugin.PatchSet)
 
+local StudioPluginGui = require(Plugin.App.Components.Studio.StudioPluginGui)
 local Header = require(Plugin.App.Components.Header)
 local IconButton = require(Plugin.App.Components.IconButton)
 local TextButton = require(Plugin.App.Components.TextButton)
 local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
 local Tooltip = require(Plugin.App.Components.Tooltip)
 local PatchVisualizer = require(Plugin.App.Components.PatchVisualizer)
+local StringDiffVisualizer = require(Plugin.App.Components.StringDiffVisualizer)
+local TableDiffVisualizer = require(Plugin.App.Components.TableDiffVisualizer)
 
 local e = Roact.createElement
 
-local AGE_UNITS = { {31556909, "year"}, {2629743, "month"}, {604800, "week"}, {86400, "day"}, {3600, "hour"}, {60, "minute"}, }
-function timeSinceText(elapsed: number): string
-	if elapsed < 3 then
-		return "just now"
-	end
+local ChangesViewer = Roact.Component:extend("ChangesViewer")
 
-	local ageText = string.format("%d seconds ago", elapsed)
-
-	for _, UnitData in ipairs(AGE_UNITS) do
-		local UnitSeconds, UnitName = UnitData[1], UnitData[2]
-		if elapsed > UnitSeconds then
-			local c = math.floor(elapsed / UnitSeconds)
-			ageText = string.format("%d %s%s ago", c, UnitName, c > 1 and "s" or "")
-			break
-		end
-	end
-
-	return ageText
-end
-
-local ChangesDrawer = Roact.Component:extend("ConnectedPage")
-
-function ChangesDrawer:init()
+function ChangesViewer:init()
 	-- Hold onto the serve session during the lifecycle of this component
 	-- so that it can still render during the fade out after disconnecting
 	self.serveSession = self.props.serveSession
 end
 
-function ChangesDrawer:render()
-	if self.props.rendered == false or self.serveSession == nil then
+function ChangesViewer:render()
+	if self.props.rendered == false or self.serveSession == nil or self.props.patchData == nil then
 		return nil
 	end
 
+	local unapplied = PatchSet.countChanges(self.props.patchData.unapplied)
+	local applied = PatchSet.countChanges(self.props.patchData.patch) - unapplied
+
 	return Theme.with(function(theme)
-		return e(BorderedContainer, {
-			transparency = self.props.transparency,
-			size = self.props.height:map(function(y)
-				return UDim2.new(1, 0, y, -220 * y)
-			end),
-			position = UDim2.new(0, 0, 1, 0),
-			anchorPoint = Vector2.new(0, 1),
-			layoutOrder = self.props.layoutOrder,
-		}, {
-			Close = e(IconButton, {
-				icon = Assets.Images.Icons.Close,
-				iconSize = 24,
-				color = theme.ConnectionDetails.DisconnectColor,
-				transparency = self.props.transparency,
-
-				position = UDim2.new(1, 0, 0, 0),
-				anchorPoint = Vector2.new(1, 0),
-
-				onClick = self.props.onClose,
+		return Roact.createFragment({
+			Navbar = e("Frame", {
+				Size = UDim2.new(1, 0, 0, 40),
+				BackgroundTransparency = 1,
 			}, {
-				Tip = e(Tooltip.Trigger, {
-					text = "Close the patch visualizer",
+				Close = e(IconButton, {
+					icon = Assets.Images.Icons.Close,
+					iconSize = 24,
+					color = theme.Settings.Navbar.BackButtonColor,
+					transparency = self.props.transparency,
+
+					position = UDim2.new(0, 0, 0.5, 0),
+					anchorPoint = Vector2.new(0, 0.5),
+
+					onClick = self.props.onBack,
+				}, {
+					Tip = e(Tooltip.Trigger, {
+						text = "Close",
+					}),
+				}),
+
+				Title = e("TextLabel", {
+					Text = "Sync",
+					FontFace = theme.Font.Main,
+					TextSize = theme.TextSize.Large,
+					TextXAlignment = Enum.TextXAlignment.Left,
+					TextColor3 = theme.TextColor,
+					TextTransparency = self.props.transparency,
+					Size = UDim2.new(1, -40, 0, theme.TextSize.Large + 2),
+					Position = UDim2.new(0, 40, 0, 0),
+					BackgroundTransparency = 1,
+				}),
+
+				Subtitle = e("TextLabel", {
+					Text = DateTime.fromUnixTimestamp(self.props.patchData.timestamp):FormatLocalTime("LTS", "en-us"),
+					TextXAlignment = Enum.TextXAlignment.Left,
+					FontFace = theme.Font.Thin,
+					TextSize = theme.TextSize.Medium,
+					TextColor3 = theme.SubTextColor,
+					TextTruncate = Enum.TextTruncate.AtEnd,
+					TextTransparency = self.props.transparency,
+					Size = UDim2.new(1, -40, 0, theme.TextSize.Medium),
+					Position = UDim2.new(0, 40, 0, theme.TextSize.Large + 2),
+					BackgroundTransparency = 1,
+				}),
+
+				Info = e("Frame", {
+					BackgroundTransparency = 1,
+					Size = UDim2.new(0, 10, 0, 24),
+					AutomaticSize = Enum.AutomaticSize.X,
+					Position = UDim2.new(1, -5, 0.5, 0),
+					AnchorPoint = Vector2.new(1, 0.5),
+				}, {
+					Tooltip = e(Tooltip.Trigger, {
+						text = `{applied} changes applied`
+							.. (if unapplied > 0 then `, {unapplied} changes failed` else ""),
+					}),
+					Content = e("Frame", {
+						BackgroundTransparency = 1,
+						Size = UDim2.new(0, 0, 1, 0),
+						AutomaticSize = Enum.AutomaticSize.X,
+					}, {
+						Layout = e("UIListLayout", {
+							FillDirection = Enum.FillDirection.Horizontal,
+							HorizontalAlignment = Enum.HorizontalAlignment.Right,
+							VerticalAlignment = Enum.VerticalAlignment.Center,
+							SortOrder = Enum.SortOrder.LayoutOrder,
+							Padding = UDim.new(0, 4),
+						}),
+
+						StatusIcon = e("ImageLabel", {
+							BackgroundTransparency = 1,
+							Image = if unapplied > 0
+								then Assets.Images.Icons.SyncWarning
+								else Assets.Images.Icons.SyncSuccess,
+							ImageColor3 = if unapplied > 0 then theme.Diff.Warning else theme.TextColor,
+							Size = UDim2.new(0, 24, 0, 24),
+							LayoutOrder = 10,
+						}),
+						StatusSpacer = e("Frame", {
+							BackgroundTransparency = 1,
+							Size = UDim2.new(0, 6, 0, 4),
+							LayoutOrder = 9,
+						}),
+						AppliedIcon = e("ImageLabel", {
+							BackgroundTransparency = 1,
+							Image = Assets.Images.Icons.Checkmark,
+							ImageColor3 = theme.TextColor,
+							Size = UDim2.new(0, 16, 0, 16),
+							LayoutOrder = 1,
+						}),
+						AppliedText = e("TextLabel", {
+							Text = applied,
+							FontFace = theme.Font.Thin,
+							TextSize = theme.TextSize.Body,
+							TextColor3 = theme.TextColor,
+							TextTransparency = self.props.transparency,
+							Size = UDim2.new(0, 0, 1, 0),
+							AutomaticSize = Enum.AutomaticSize.X,
+							BackgroundTransparency = 1,
+							LayoutOrder = 2,
+						}),
+						Warnings = if unapplied > 0
+							then Roact.createFragment({
+								WarningsSpacer = e("Frame", {
+									BackgroundTransparency = 1,
+									Size = UDim2.new(0, 4, 0, 4),
+									LayoutOrder = 3,
+								}),
+								UnappliedIcon = e("ImageLabel", {
+									BackgroundTransparency = 1,
+									Image = Assets.Images.Icons.Exclamation,
+									ImageColor3 = theme.Diff.Warning,
+									Size = UDim2.new(0, 4, 0, 16),
+									LayoutOrder = 4,
+								}),
+								UnappliedText = e("TextLabel", {
+									Text = unapplied,
+									FontFace = theme.Font.Thin,
+									TextSize = theme.TextSize.Body,
+									TextColor3 = theme.Diff.Warning,
+									TextTransparency = self.props.transparency,
+									Size = UDim2.new(0, 0, 1, 0),
+									AutomaticSize = Enum.AutomaticSize.X,
+									BackgroundTransparency = 1,
+									LayoutOrder = 5,
+								}),
+							})
+							else nil,
+					}),
+				}),
+
+				Divider = e("Frame", {
+					BackgroundColor3 = theme.Settings.DividerColor,
+					BackgroundTransparency = self.props.transparency,
+					Size = UDim2.new(1, 0, 0, 1),
+					Position = UDim2.new(0, 0, 1, 0),
+					BorderSizePixel = 0,
+				}, {
+					Gradient = e("UIGradient", {
+						Transparency = NumberSequence.new({
+							NumberSequenceKeypoint.new(0, 1),
+							NumberSequenceKeypoint.new(0.1, 0),
+							NumberSequenceKeypoint.new(0.9, 0),
+							NumberSequenceKeypoint.new(1, 1),
+						}),
+					}),
 				}),
 			}),
 
-			PatchVisualizer = e(PatchVisualizer, {
-				size = UDim2.new(1, 0, 1, 0),
+			Patch = e(PatchVisualizer, {
+				size = UDim2.new(1, -10, 1, -65),
+				position = UDim2.new(0, 5, 1, -5),
+				anchorPoint = Vector2.new(0, 1),
 				transparency = self.props.transparency,
-				layoutOrder = 3,
+				layoutOrder = self.props.layoutOrder,
 
 				patchTree = self.props.patchTree,
+
+				showStringDiff = self.props.showStringDiff,
+				showTableDiff = self.props.showTableDiff,
 			}),
 		})
 	end)
@@ -102,13 +217,13 @@ local function ConnectionDetails(props)
 			}, {
 				ProjectName = e("TextLabel", {
 					Text = props.projectName,
-					Font = Enum.Font.GothamBold,
-					TextSize = 20,
+					FontFace = theme.Font.Bold,
+					TextSize = theme.TextSize.Large,
 					TextColor3 = theme.ConnectionDetails.ProjectNameColor,
 					TextTransparency = props.transparency,
 					TextXAlignment = Enum.TextXAlignment.Left,
 
-					Size = UDim2.new(1, 0, 0, 20),
+					Size = UDim2.new(1, 0, 0, theme.TextSize.Large),
 
 					LayoutOrder = 1,
 					BackgroundTransparency = 1,
@@ -116,13 +231,13 @@ local function ConnectionDetails(props)
 
 				Address = e("TextLabel", {
 					Text = props.address,
-					Font = Enum.Font.Code,
-					TextSize = 15,
+					FontFace = theme.Font.Code,
+					TextSize = theme.TextSize.Medium,
 					TextColor3 = theme.ConnectionDetails.AddressColor,
 					TextTransparency = props.transparency,
 					TextXAlignment = Enum.TextXAlignment.Left,
 
-					Size = UDim2.new(1, 0, 0, 15),
+					Size = UDim2.new(1, 0, 0, theme.TextSize.Medium),
 
 					LayoutOrder = 2,
 					BackgroundTransparency = 1,
@@ -151,21 +266,7 @@ function ConnectedPage:getChangeInfoText()
 	if patchData == nil then
 		return ""
 	end
-
-	local elapsed = os.time() - patchData.timestamp
-	local unapplied = PatchSet.countChanges(patchData.unapplied)
-
-	return
-		"<i>Synced "
-		.. timeSinceText(elapsed)
-		.. (if unapplied > 0 then
-			string.format(
-				", <font color=\"#FF8E3C\">but %d change%s failed to apply</font>",
-				unapplied,
-				unapplied == 1 and "" or "s"
-			)
-		else "")
-		.. "</i>"
+	return timeUtil.elapsedToText(DateTime.now().UnixTimestamp - patchData.timestamp)
 end
 
 function ConnectedPage:startChangeInfoTextUpdater()
@@ -175,17 +276,13 @@ function ConnectedPage:startChangeInfoTextUpdater()
 	-- Start a new updater
 	self.changeInfoTextUpdater = task.defer(function()
 		while true do
-			if self.state.hoveringChangeInfo then
-				self.setChangeInfoText("<u>" .. self:getChangeInfoText() .. "</u>")
-			else
-				self.setChangeInfoText(self:getChangeInfoText())
-			end
+			self.setChangeInfoText(self:getChangeInfoText())
 
-			local elapsed = os.time() - self.props.patchData.timestamp
+			local elapsed = DateTime.now().UnixTimestamp - self.props.patchData.timestamp
 			local updateInterval = 1
 
 			-- Update timestamp text as frequently as currently needed
-			for _, UnitData in ipairs(AGE_UNITS) do
+			for _, UnitData in ipairs(timeUtil.AGE_UNITS) do
 				local UnitSeconds = UnitData[1]
 				if elapsed > UnitSeconds then
 					updateInterval = UnitSeconds
@@ -206,26 +303,12 @@ function ConnectedPage:stopChangeInfoTextUpdater()
 end
 
 function ConnectedPage:init()
-	self.changeDrawerMotor = Flipper.SingleMotor.new(0)
-	self.changeDrawerHeight = bindingUtil.fromMotor(self.changeDrawerMotor)
-
-	self.changeDrawerMotor:onStep(function(value)
-		local renderChanges = value > 0.05
-
-		self:setState(function(state)
-			if state.renderChanges == renderChanges then
-				return nil
-			end
-
-			return {
-				renderChanges = renderChanges,
-			}
-		end)
-	end)
-
 	self:setState({
 		renderChanges = false,
 		hoveringChangeInfo = false,
+		showingStringDiff = false,
+		oldString = "",
+		newString = "",
 	})
 
 	self.changeInfoText, self.setChangeInfoText = Roact.createBinding("")
@@ -239,11 +322,19 @@ end
 
 function ConnectedPage:didUpdate(previousProps)
 	if self.props.patchData.timestamp ~= previousProps.patchData.timestamp then
+		-- New patch recieved
 		self:startChangeInfoTextUpdater()
+		self:setState({
+			showingStringDiff = false,
+		})
 	end
 end
 
 function ConnectedPage:render()
+	local syncWarning = self.props.patchData
+		and self.props.patchData.unapplied
+		and PatchSet.countChanges(self.props.patchData.unapplied) > 0
+
 	return Theme.with(function(theme)
 		return Roact.createFragment({
 			Padding = e("UIPadding", {
@@ -258,9 +349,88 @@ function ConnectedPage:render()
 				Padding = UDim.new(0, 10),
 			}),
 
-			Header = e(Header, {
-				transparency = self.props.transparency,
-				layoutOrder = 1,
+			Heading = e("Frame", {
+				BackgroundTransparency = 1,
+				Size = UDim2.new(1, 0, 0, 32),
+			}, {
+				Header = e(Header, {
+					transparency = self.props.transparency,
+				}),
+
+				ChangeInfo = e("TextButton", {
+					Text = "",
+					Size = UDim2.new(0, 0, 1, 0),
+					AutomaticSize = Enum.AutomaticSize.X,
+					BackgroundColor3 = theme.BorderedContainer.BorderedColor,
+					BackgroundTransparency = if self.state.hoveringChangeInfo then 0.7 else 1,
+					BorderSizePixel = 0,
+					Position = UDim2.new(1, -5, 0.5, 0),
+					AnchorPoint = Vector2.new(1, 0.5),
+					[Roact.Event.MouseEnter] = function()
+						self:setState({
+							hoveringChangeInfo = true,
+						})
+					end,
+					[Roact.Event.MouseLeave] = function()
+						self:setState({
+							hoveringChangeInfo = false,
+						})
+					end,
+					[Roact.Event.Activated] = function()
+						self:setState(function(prevState)
+							prevState = prevState or {}
+							return {
+								renderChanges = not prevState.renderChanges,
+							}
+						end)
+					end,
+				}, {
+					Corner = e("UICorner", {
+						CornerRadius = UDim.new(0, 5),
+					}),
+					Tooltip = e(Tooltip.Trigger, {
+						text = if self.state.renderChanges then "Hide changes" else "View changes",
+					}),
+					Content = e("Frame", {
+						BackgroundTransparency = 1,
+						Size = UDim2.new(0, 0, 1, 0),
+						AutomaticSize = Enum.AutomaticSize.X,
+					}, {
+						Layout = e("UIListLayout", {
+							FillDirection = Enum.FillDirection.Horizontal,
+							HorizontalAlignment = Enum.HorizontalAlignment.Center,
+							VerticalAlignment = Enum.VerticalAlignment.Center,
+							SortOrder = Enum.SortOrder.LayoutOrder,
+							Padding = UDim.new(0, 5),
+						}),
+						Padding = e("UIPadding", {
+							PaddingLeft = UDim.new(0, 5),
+							PaddingRight = UDim.new(0, 5),
+						}),
+						Text = e("TextLabel", {
+							BackgroundTransparency = 1,
+							Text = self.changeInfoText,
+							FontFace = theme.Font.Thin,
+							TextSize = theme.TextSize.Body,
+							TextColor3 = if syncWarning then theme.Diff.Warning else theme.Header.VersionColor,
+							TextTransparency = self.props.transparency,
+							TextXAlignment = Enum.TextXAlignment.Right,
+							Size = UDim2.new(0, 0, 1, 0),
+							AutomaticSize = Enum.AutomaticSize.X,
+							LayoutOrder = 1,
+						}),
+						Icon = e("ImageLabel", {
+							BackgroundTransparency = 1,
+							Image = if syncWarning
+								then Assets.Images.Icons.SyncWarning
+								else Assets.Images.Icons.SyncSuccess,
+							ImageColor3 = if syncWarning then theme.Diff.Warning else theme.Header.VersionColor,
+							ImageTransparency = self.props.transparency,
+							Size = UDim2.new(0, 24, 0, 24),
+							LayoutOrder = 2,
+						}),
+					}),
+				}),
 			}),
 
 			ConnectionDetails = e(ConnectionDetails, {
@@ -286,7 +456,7 @@ function ConnectedPage:render()
 					onClick = self.props.onNavigateSettings,
 				}, {
 					Tip = e(Tooltip.Trigger, {
-						text = "View and modify plugin settings"
+						text = "View and modify plugin settings",
 					}),
 				}),
 
@@ -298,7 +468,7 @@ function ConnectedPage:render()
 					onClick = self.props.onDisconnect,
 				}, {
 					Tip = e(Tooltip.Trigger, {
-						text = "Disconnect from the Rojo sync server"
+						text = "Disconnect from the Rojo sync server",
 					}),
 				}),
 
@@ -310,69 +480,135 @@ function ConnectedPage:render()
 				}),
 			}),
 
-			ChangeInfo = e("TextButton", {
-				Text = self.changeInfoText,
-				Font = Enum.Font.Gotham,
-				TextSize = 14,
-				TextWrapped = true,
-				RichText = true,
-				TextColor3 = theme.Header.VersionColor,
-				TextXAlignment = Enum.TextXAlignment.Left,
-				TextYAlignment = Enum.TextYAlignment.Top,
-				TextTransparency = self.props.transparency,
+			ChangesViewer = e(StudioPluginGui, {
+				id = "Rojo_ChangesViewer",
+				title = "View changes",
+				active = self.state.renderChanges,
+				isEphemeral = true,
 
-				Size = UDim2.new(1, 0, 0, 28),
+				initDockState = Enum.InitialDockState.Float,
+				overridePreviousState = true,
+				floatingSize = Vector2.new(400, 500),
+				minimumSize = Vector2.new(300, 300),
 
-				LayoutOrder = 4,
-				BackgroundTransparency = 1,
+				zIndexBehavior = Enum.ZIndexBehavior.Sibling,
 
-				[Roact.Event.MouseEnter] = function()
+				onClose = function()
 					self:setState({
-						hoveringChangeInfo = true,
+						renderChanges = false,
 					})
-					self.setChangeInfoText("<u>" .. self:getChangeInfoText() .. "</u>")
-				end,
-
-				[Roact.Event.MouseLeave] = function()
-					self:setState({
-						hoveringChangeInfo = false,
-					})
-					self.setChangeInfoText(self:getChangeInfoText())
-				end,
-
-				[Roact.Event.Activated] = function()
-					if self.state.renderChanges then
-						self.changeDrawerMotor:setGoal(Flipper.Spring.new(0, {
-							frequency = 4,
-							dampingRatio = 1,
-						}))
-					else
-						self.changeDrawerMotor:setGoal(Flipper.Spring.new(1, {
-							frequency = 3,
-							dampingRatio = 1,
-						}))
-					end
 				end,
 			}, {
-				Tooltip = e(Tooltip.Trigger, {
-					text = if self.state.renderChanges then "Hide the changes" else "View the changes",
+				TooltipsProvider = e(Tooltip.Provider, nil, {
+					Tooltips = e(Tooltip.Container, nil),
+					Content = e("Frame", {
+						Size = UDim2.fromScale(1, 1),
+						BackgroundTransparency = 1,
+					}, {
+						Changes = e(ChangesViewer, {
+							transparency = self.props.transparency,
+							rendered = self.state.renderChanges,
+							patchData = self.props.patchData,
+							patchTree = self.props.patchTree,
+							serveSession = self.props.serveSession,
+							showStringDiff = function(oldString: string, newString: string)
+								self:setState({
+									showingStringDiff = true,
+									oldString = oldString,
+									newString = newString,
+								})
+							end,
+							showTableDiff = function(oldTable: { [any]: any? }, newTable: { [any]: any? })
+								self:setState({
+									showingTableDiff = true,
+									oldTable = oldTable,
+									newTable = newTable,
+								})
+							end,
+							onBack = function()
+								self:setState({
+									renderChanges = false,
+								})
+							end,
+						}),
+					}),
 				}),
 			}),
 
-			ChangesDrawer = e(ChangesDrawer, {
-				rendered = self.state.renderChanges,
-				transparency = self.props.transparency,
-				patchTree = self.props.patchTree,
-				serveSession = self.props.serveSession,
-				height = self.changeDrawerHeight,
-				layoutOrder = 5,
+			StringDiff = e(StudioPluginGui, {
+				id = "Rojo_ConnectedStringDiff",
+				title = "String diff",
+				active = self.state.showingStringDiff,
+				isEphemeral = true,
+
+				initDockState = Enum.InitialDockState.Float,
+				overridePreviousState = false,
+				floatingSize = Vector2.new(500, 350),
+				minimumSize = Vector2.new(400, 250),
+
+				zIndexBehavior = Enum.ZIndexBehavior.Sibling,
 
 				onClose = function()
-					self.changeDrawerMotor:setGoal(Flipper.Spring.new(0, {
-						frequency = 4,
-						dampingRatio = 1,
-					}))
+					self:setState({
+						showingStringDiff = false,
+					})
 				end,
+			}, {
+				TooltipsProvider = e(Tooltip.Provider, nil, {
+					Tooltips = e(Tooltip.Container, nil),
+					Content = e("Frame", {
+						Size = UDim2.fromScale(1, 1),
+						BackgroundTransparency = 1,
+					}, {
+						e(StringDiffVisualizer, {
+							size = UDim2.new(1, -10, 1, -10),
+							position = UDim2.new(0, 5, 0, 5),
+							anchorPoint = Vector2.new(0, 0),
+							transparency = self.props.transparency,
+
+							oldString = self.state.oldString,
+							newString = self.state.newString,
+						}),
+					}),
+				}),
+			}),
+
+			TableDiff = e(StudioPluginGui, {
+				id = "Rojo_ConnectedTableDiff",
+				title = "Table diff",
+				active = self.state.showingTableDiff,
+				isEphemeral = true,
+
+				initDockState = Enum.InitialDockState.Float,
+				overridePreviousState = false,
+				floatingSize = Vector2.new(500, 350),
+				minimumSize = Vector2.new(400, 250),
+
+				zIndexBehavior = Enum.ZIndexBehavior.Sibling,
+
+				onClose = function()
+					self:setState({
+						showingTableDiff = false,
+					})
+				end,
+			}, {
+				TooltipsProvider = e(Tooltip.Provider, nil, {
+					Tooltips = e(Tooltip.Container, nil),
+					Content = e("Frame", {
+						Size = UDim2.fromScale(1, 1),
+						BackgroundTransparency = 1,
+					}, {
+						e(TableDiffVisualizer, {
+							size = UDim2.new(1, -10, 1, -10),
+							position = UDim2.new(0, 5, 0, 5),
+							anchorPoint = Vector2.new(0, 0),
+							transparency = self.props.transparency,
+
+							oldTable = self.state.oldTable,
+							newTable = self.state.newTable,
+						}),
+					}),
+				}),
 			}),
 		})
 	end)

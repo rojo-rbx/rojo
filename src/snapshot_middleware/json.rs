@@ -1,7 +1,6 @@
 use std::path::Path;
 
 use anyhow::Context;
-use maplit::hashmap;
 use memofs::{IoResultExt, Vfs};
 
 use crate::{
@@ -9,14 +8,14 @@ use crate::{
     snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
 };
 
-use super::{meta_file::AdjacentMetadata, util::PathExt};
+use super::meta_file::AdjacentMetadata;
 
 pub fn snapshot_json(
     context: &InstanceContext,
     vfs: &Vfs,
     path: &Path,
+    name: &str,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let name = path.file_name_trim_end(".json")?;
     let contents = vfs.read(path)?;
 
     let value: serde_json::Value = serde_json::from_slice(&contents)
@@ -24,9 +23,7 @@ pub fn snapshot_json(
 
     let as_lua = json_to_lua(value).to_string();
 
-    let properties = hashmap! {
-        "Source".to_owned() => as_lua.into(),
-    };
+    let properties = [("Source".to_owned(), as_lua.into())];
 
     let meta_path = path.with_file_name(format!("{}.meta.json", name));
 
@@ -101,12 +98,13 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs.clone());
+        let vfs = Vfs::new(imfs.clone());
 
         let instance_snapshot = snapshot_json(
             &InstanceContext::default(),
-            &mut vfs,
+            &vfs,
             Path::new("/foo.json"),
+            "foo",
         )
         .unwrap()
         .unwrap();

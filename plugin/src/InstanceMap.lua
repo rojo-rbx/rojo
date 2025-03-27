@@ -66,7 +66,7 @@ function InstanceMap:__fmtDebug(output)
 	for id, instance in pairs(self.fromIds) do
 		local label = string.format("%s (%s)", instance:GetFullName(), instance.ClassName)
 
-		table.insert(entries, {id, label})
+		table.insert(entries, { id, label })
 	end
 
 	table.sort(entries, function(a, b)
@@ -112,28 +112,33 @@ end
 
 function InstanceMap:destroyInstance(instance)
 	local id = self.fromInstances[instance]
+	local descendants = instance:GetDescendants()
+
+	-- Because the user might want to Undo this change, we cannot use Destroy
+	-- since that locks that parent and prevents ChangeHistoryService from
+	-- ever bringing it back. Instead, we parent to nil.
+	instance.Parent = nil
+
+	-- After the instance is successfully destroyed,
+	-- we can remove all the id mappings
 
 	if id ~= nil then
 		self:removeId(id)
 	end
 
-	for _, descendantInstance in ipairs(instance:GetDescendants()) do
+	for _, descendantInstance in descendants do
 		self:removeInstance(descendantInstance)
 	end
-
-	instance:Destroy()
 end
 
 function InstanceMap:destroyId(id)
 	local instance = self.fromIds[id]
-	self:removeId(id)
-
 	if instance ~= nil then
-		for _, descendantInstance in ipairs(instance:GetDescendants()) do
-			self:removeInstance(descendantInstance)
-		end
-
-		instance:Destroy()
+		self:destroyInstance(instance)
+	else
+		-- There is no instance with this id, so we can just remove the id
+		-- without worrying about instance destruction
+		self:removeId(id)
 	end
 end
 

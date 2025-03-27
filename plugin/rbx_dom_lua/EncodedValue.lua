@@ -20,8 +20,8 @@ local function serializeFloat(value)
 	return value
 end
 
-local ALL_AXES = {"X", "Y", "Z"}
-local ALL_FACES = {"Right", "Top", "Back", "Left", "Bottom", "Front"}
+local ALL_AXES = { "X", "Y", "Z" }
+local ALL_FACES = { "Right", "Top", "Back", "Left", "Bottom", "Front" }
 
 local EncodedValue = {}
 
@@ -37,7 +37,10 @@ types = {
 				if ok then
 					output[key] = result
 				else
-					local warning = ("Could not decode attribute value of type %q: %s"):format(typeof(value), tostring(result))
+					local warning = ("Could not decode attribute value of type %q: %s"):format(
+						typeof(value),
+						tostring(result)
+					)
 					warn(warning)
 				end
 			end
@@ -53,7 +56,10 @@ types = {
 				if ok then
 					output[key] = result
 				else
-					local warning = ("Could not encode attribute value of type %q: %s"):format(typeof(value), tostring(result))
+					local warning = ("Could not encode attribute value of type %q: %s"):format(
+						typeof(value),
+						tostring(result)
+					)
 					warn(warning)
 				end
 			end
@@ -111,6 +117,7 @@ types = {
 			local pos = pod.position
 			local orient = pod.orientation
 
+			--stylua: ignore
 			return CFrame.new(
 				pos[1], pos[2], pos[3],
 				orient[1][1], orient[1][2], orient[1][3],
@@ -120,17 +127,14 @@ types = {
 		end,
 
 		toPod = function(roblox)
-			local x, y, z,
-				r00, r01, r02,
-				r10, r11, r12,
-				r20, r21, r22 = roblox:GetComponents()
+			local x, y, z, r00, r01, r02, r10, r11, r12, r20, r21, r22 = roblox:GetComponents()
 
 			return {
-				position = {x, y, z},
+				position = { x, y, z },
 				orientation = {
-					{r00, r01, r02},
-					{r10, r11, r12},
-					{r20, r21, r22},
+					{ r00, r01, r02 },
+					{ r10, r11, r12 },
+					{ r20, r21, r22 },
 				},
 			}
 		end,
@@ -140,7 +144,7 @@ types = {
 		fromPod = unpackDecoder(Color3.new),
 
 		toPod = function(roblox)
-			return {roblox.r, roblox.g, roblox.b}
+			return { roblox.r, roblox.g, roblox.b }
 		end,
 	},
 
@@ -161,10 +165,7 @@ types = {
 			local keypoints = {}
 
 			for index, keypoint in ipairs(pod.keypoints) do
-				keypoints[index] = ColorSequenceKeypoint.new(
-					keypoint.time,
-					types.Color3.fromPod(keypoint.color)
-				)
+				keypoints[index] = ColorSequenceKeypoint.new(keypoint.time, types.Color3.fromPod(keypoint.color))
 			end
 
 			return ColorSequence.new(keypoints)
@@ -265,11 +266,32 @@ types = {
 		toPod = identity,
 	},
 
+	MaterialColors = {
+		fromPod = function(pod: { [string]: { number } })
+			local real = {}
+			for name, color in pod do
+				real[Enum.Material[name]] = Color3.fromRGB(color[1], color[2], color[3])
+			end
+			return real
+		end,
+		toPod = function(roblox: { [Enum.Material]: Color3 })
+			local pod = {}
+			for material, color in roblox do
+				pod[material.Name] = {
+					math.round(math.clamp(color.R, 0, 1) * 255),
+					math.round(math.clamp(color.G, 0, 1) * 255),
+					math.round(math.clamp(color.B, 0, 1) * 255),
+				}
+			end
+			return pod
+		end,
+	},
+
 	NumberRange = {
 		fromPod = unpackDecoder(NumberRange.new),
 
 		toPod = function(roblox)
-			return {roblox.Min, roblox.Max}
+			return { roblox.Min, roblox.Max }
 		end,
 	},
 
@@ -278,11 +300,7 @@ types = {
 			local keypoints = {}
 
 			for index, keypoint in ipairs(pod.keypoints) do
-				keypoints[index] = NumberSequenceKeypoint.new(
-					keypoint.time,
-					keypoint.value,
-					keypoint.envelope
-				)
+				keypoints[index] = NumberSequenceKeypoint.new(keypoint.time, keypoint.value, keypoint.envelope)
 			end
 
 			return NumberSequence.new(keypoints)
@@ -337,10 +355,7 @@ types = {
 
 	Ray = {
 		fromPod = function(pod)
-			return Ray.new(
-				types.Vector3.fromPod(pod.origin),
-				types.Vector3.fromPod(pod.direction)
-			)
+			return Ray.new(types.Vector3.fromPod(pod.origin), types.Vector3.fromPod(pod.direction))
 		end,
 
 		toPod = function(roblox)
@@ -353,10 +368,7 @@ types = {
 
 	Rect = {
 		fromPod = function(pod)
-			return Rect.new(
-				types.Vector2.fromPod(pod[1]),
-				types.Vector2.fromPod(pod[2])
-			)
+			return Rect.new(types.Vector2.fromPod(pod[1]), types.Vector2.fromPod(pod[2]))
 		end,
 
 		toPod = function(roblox)
@@ -368,31 +380,28 @@ types = {
 	},
 
 	Ref = {
-		fromPod = function(_pod)
+		fromPod = function(_)
 			error("Ref cannot be decoded on its own")
 		end,
 
-		toPod = function(_roblox)
+		toPod = function(_)
 			error("Ref can not be encoded on its own")
 		end,
 	},
 
 	Region3 = {
-		fromPod = function(pod)
+		fromPod = function(_)
 			error("Region3 is not implemented")
 		end,
 
-		toPod = function(roblox)
+		toPod = function(_)
 			error("Region3 is not implemented")
 		end,
 	},
 
 	Region3int16 = {
 		fromPod = function(pod)
-			return Region3int16.new(
-				types.Vector3int16.fromPod(pod[1]),
-				types.Vector3int16.fromPod(pod[2])
-			)
+			return Region3int16.new(types.Vector3int16.fromPod(pod[1]), types.Vector3int16.fromPod(pod[2]))
 		end,
 
 		toPod = function(roblox)
@@ -404,11 +413,11 @@ types = {
 	},
 
 	SharedString = {
-		fromPod = function(pod)
+		fromPod = function(_pod)
 			error("SharedString is not supported")
 		end,
 
-		toPod = function(roblox)
+		toPod = function(_roblox)
 			error("SharedString is not supported")
 		end,
 	},
@@ -422,16 +431,13 @@ types = {
 		fromPod = unpackDecoder(UDim.new),
 
 		toPod = function(roblox)
-			return {roblox.Scale, roblox.Offset}
+			return { roblox.Scale, roblox.Offset }
 		end,
 	},
 
 	UDim2 = {
 		fromPod = function(pod)
-			return UDim2.new(
-				types.UDim.fromPod(pod[1]),
-				types.UDim.fromPod(pod[2])
-			)
+			return UDim2.new(types.UDim.fromPod(pod[1]), types.UDim.fromPod(pod[2]))
 		end,
 
 		toPod = function(roblox)
@@ -462,7 +468,7 @@ types = {
 		fromPod = unpackDecoder(Vector2int16.new),
 
 		toPod = function(roblox)
-			return {roblox.X, roblox.Y}
+			return { roblox.X, roblox.Y }
 		end,
 	},
 
@@ -482,13 +488,36 @@ types = {
 		fromPod = unpackDecoder(Vector3int16.new),
 
 		toPod = function(roblox)
-			return {roblox.X, roblox.Y, roblox.Z}
+			return { roblox.X, roblox.Y, roblox.Z }
 		end,
 	},
 }
 
+types.OptionalCFrame = {
+	fromPod = function(pod)
+		if pod == nil then
+			return nil
+		else
+			return types.CFrame.fromPod(pod)
+		end
+	end,
+
+	toPod = function(roblox)
+		if roblox == nil then
+			return nil
+		else
+			return types.CFrame.toPod(roblox)
+		end
+	end,
+}
+
 function EncodedValue.decode(encodedValue)
 	local ty, value = next(encodedValue)
+
+	if ty == nil then
+		-- If the encoded pair is empty, assume it is an unoccupied optional value
+		return true, nil
+	end
 
 	local typeImpl = types[ty]
 	if typeImpl == nil then

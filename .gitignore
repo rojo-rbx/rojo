@@ -10,8 +10,8 @@
 /*.rbxl
 /*.rbxlx
 
-# Test places for the Roblox Studio Plugin
-/plugin/*.rbxlx
+# Sourcemap for the Rojo plugin (for better intellisense)
+/sourcemap.json
 
 # Roblox Studio holds 'lock' files on places
 *.rbxl.lock

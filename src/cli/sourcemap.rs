@@ -14,7 +14,7 @@ use tokio::runtime::Runtime;
 
 use crate::{
     serve_session::ServeSession,
-    snapshot::{InstanceWithMeta, RojoTree},
+    snapshot::{AppliedPatchSet, InstanceWithMeta, RojoTree},
 };
 
 use super::resolve_path;
@@ -67,7 +67,7 @@ impl SourcemapCommand {
         let vfs = Vfs::new_default();
         vfs.set_watch_enabled(self.watch);
 
-        let session = ServeSession::new(vfs, &project_path)?;
+        let session = ServeSession::new(vfs, project_path)?;
         let mut cursor = session.message_queue().cursor();
 
         let filter = if self.include_non_scripts {
@@ -90,10 +90,12 @@ impl SourcemapCommand {
 
             loop {
                 let receiver = session.message_queue().subscribe(cursor);
-                let (new_cursor, _patch_set) = rt.block_on(receiver).unwrap();
+                let (new_cursor, patch_set) = rt.block_on(receiver).unwrap();
                 cursor = new_cursor;
 
-                write_sourcemap(&session, self.output.as_deref(), filter)?;
+                if patch_set_affects_sourcemap(&session, &patch_set, filter) {
+                    write_sourcemap(&session, self.output.as_deref(), filter)?;
+                }
             }
         }
 
@@ -114,6 +116,43 @@ fn filter_non_scripts(instance: &InstanceWithMeta) -> bool {
         instance.class_name(),
         "Script" | "LocalScript" | "ModuleScript"
     )
+}
+
+fn patch_set_affects_sourcemap(
+    session: &ServeSession,
+    patch_set: &[AppliedPatchSet],
+    filter: fn(&InstanceWithMeta) -> bool,
+) -> bool {
+    let tree = session.tree();
+
+    // A sourcemap has probably changed when:
+    patch_set.par_iter().any(|set| {
+        // 1. An instance was removed, in which case it will no
+        // longer exist in the tree and we cant check the filter
+        !set.removed.is_empty()
+            // 2. A newly added instance passes the filter
+            || set.added.iter().any(|referent| {
+                let instance = tree
+                    .get_instance(*referent)
+                    .expect("instance did not exist when updating sourcemap");
+                filter(&instance)
+            })
+            // 3. An existing instance has its class name, name,
+            // or file paths changed, and passes the filter
+            || set.updated.iter().any(|updated| {
+                let changed = updated.changed_class_name.is_some()
+                    || updated.changed_name.is_some()
+                    || updated.changed_metadata.is_some();
+                if changed {
+                    let instance = tree
+                        .get_instance(updated.id)
+                        .expect("instance did not exist when updating sourcemap");
+                    filter(&instance)
+                } else {
+                    false
+                }
+            })
+    })
 }
 
 fn recurse_create_node<'a>(

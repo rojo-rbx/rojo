@@ -1,3 +1,5 @@
+local HttpService = game:GetService("HttpService")
+
 local Rojo = script:FindFirstAncestor("Rojo")
 local Plugin = Rojo.Plugin
 local Packages = Rojo.Packages
@@ -36,7 +38,10 @@ function StudioPluginGui:init()
 		minimumSize.Y
 	)
 
-	local pluginGui = self.props.plugin:CreateDockWidgetPluginGui(self.props.id, dockWidgetPluginGuiInfo)
+	local pluginGui = self.props.plugin:CreateDockWidgetPluginGui(
+		if self.props.isEphemeral then HttpService:GenerateGUID(false) else self.props.id,
+		dockWidgetPluginGuiInfo
+	)
 
 	pluginGui.Name = self.props.id
 	pluginGui.Title = self.props.title
@@ -76,6 +81,12 @@ function StudioPluginGui:didUpdate(lastProps)
 	if self.props.active ~= lastProps.active then
 		-- This is intentionally in didUpdate to make sure the initial active state
 		-- (if the PluginGui is open initially) is preserved.
+
+		-- Studio widgets are very unreliable and sometimes need to be flickered
+		-- in order to force them to render correctly
+		-- This happens within a single frame so it doesn't flicker visibly
+		self.pluginGui.Enabled = self.props.active
+		self.pluginGui.Enabled = not self.props.active
 		self.pluginGui.Enabled = self.props.active
 	end
 end

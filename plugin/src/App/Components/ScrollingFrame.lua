@@ -10,6 +10,12 @@ local bindingUtil = require(Plugin.App.bindingUtil)
 
 local e = Roact.createElement
 
+local scrollDirToAutoSize = {
+	[Enum.ScrollingDirection.X] = Enum.AutomaticSize.X,
+	[Enum.ScrollingDirection.Y] = Enum.AutomaticSize.Y,
+	[Enum.ScrollingDirection.XY] = Enum.AutomaticSize.XY,
+}
+
 local function ScrollingFrame(props)
 	return Theme.with(function(theme)
 		return e("ScrollingFrame", {
@@ -23,19 +29,31 @@ local function ScrollingFrame(props)
 			BottomImage = Assets.Images.ScrollBar.Bottom,
 
 			ElasticBehavior = Enum.ElasticBehavior.Always,
-			ScrollingDirection = Enum.ScrollingDirection.Y,
+			ScrollingDirection = props.scrollingDirection or Enum.ScrollingDirection.Y,
 
 			Size = props.size,
 			Position = props.position,
 			AnchorPoint = props.anchorPoint,
-			CanvasSize = props.contentSize:map(function(value)
-				return UDim2.new(0, 0, 0, value.Y)
-			end),
+			CanvasSize = if props.contentSize
+				then props.contentSize:map(function(value)
+					return UDim2.new(
+						0,
+						if (props.scrollingDirection and props.scrollingDirection ~= Enum.ScrollingDirection.Y)
+							then value.X
+							else 0,
+						0,
+						value.Y
+					)
+				end)
+				else UDim2.new(),
+			AutomaticCanvasSize = if props.contentSize == nil
+				then scrollDirToAutoSize[props.scrollingDirection or Enum.ScrollingDirection.XY]
+				else nil,
 
 			BorderSizePixel = 0,
 			BackgroundTransparency = 1,
 
-			[Roact.Change.AbsoluteSize] = props[Roact.Change.AbsoluteSize]
+			[Roact.Change.AbsoluteSize] = props[Roact.Change.AbsoluteSize],
 		}, props[Roact.Children])
 	end)
 end

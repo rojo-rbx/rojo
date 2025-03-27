@@ -5,15 +5,12 @@ use memofs::Vfs;
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
-use super::util::PathExt;
-
 pub fn snapshot_rbxmx(
     context: &InstanceContext,
     vfs: &Vfs,
     path: &Path,
+    name: &str,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let name = path.file_name_trim_end(".rbxmx")?;
-
     let options = rbx_xml::DecodeOptions::new()
         .property_behavior(rbx_xml::DecodePropertyBehavior::ReadUnknown);
 
@@ -69,12 +66,13 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_rbxmx(
             &InstanceContext::default(),
-            &mut vfs,
+            &vfs,
             Path::new("/foo.rbxmx"),
+            "foo",
         )
         .unwrap()
         .unwrap();

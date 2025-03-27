@@ -24,7 +24,8 @@ local function findCanonicalPropertyDescriptor(className, propertyName)
 				return PropertyDescriptor.fromRaw(
 					currentClass.Properties[aliasData.AliasFor],
 					currentClassName,
-					aliasData.AliasFor)
+					aliasData.AliasFor
+				)
 			end
 
 			return nil

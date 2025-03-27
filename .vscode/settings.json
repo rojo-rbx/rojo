@@ -1,0 +1,4 @@
+{
+  "luau-lsp.sourcemap.rojoProjectFile": "plugin.project.json",
+  "luau-lsp.sourcemap.autogenerate": true
+}

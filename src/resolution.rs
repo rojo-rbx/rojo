@@ -2,11 +2,13 @@ use std::borrow::Borrow;
 
 use anyhow::{bail, format_err};
 use rbx_dom_weak::types::{
-    Attributes, CFrame, Color3, Content, Enum, Font, Matrix3, Tags, Variant, VariantType, Vector2,
-    Vector3,
+    Attributes, CFrame, Color3, Content, Enum, Font, MaterialColors, Matrix3, Tags, Variant,
+    VariantType, Vector2, Vector3,
 };
 use rbx_reflection::{DataType, PropertyDescriptor};
 use serde::{Deserialize, Serialize};
+
+use crate::REF_POINTER_ATTRIBUTE_PREFIX;
 
 /// A user-friendly version of `Variant` that supports specifying ambiguous
 /// values. Ambiguous values need a reflection database to be resolved to a
@@ -50,6 +52,7 @@ pub enum AmbiguousValue {
     Array12([f64; 12]),
     Attributes(Attributes),
     Font(Font),
+    MaterialColors(MaterialColors),
 }
 
 impl AmbiguousValue {
@@ -142,6 +145,14 @@ impl AmbiguousValue {
 
                 (VariantType::Font, AmbiguousValue::Font(value)) => Ok(value.into()),
 
+                (VariantType::MaterialColors, AmbiguousValue::MaterialColors(value)) => {
+                    Ok(value.into())
+                }
+
+                (VariantType::Ref, AmbiguousValue::String(_)) => Err(format_err!(
+                    "Cannot resolve Ref properties as a String.\
+                    Use an attribute named `{REF_POINTER_ATTRIBUTE_PREFIX}{prop_name}"
+                )),
                 (_, unresolved) => Err(format_err!(
                     "Wrong type of value for property {}.{}. Expected {:?}, got {}",
                     class_name,
@@ -180,6 +191,7 @@ impl AmbiguousValue {
             AmbiguousValue::Array12(_) => "an array of twelve numbers",
             AmbiguousValue::Attributes(_) => "an object containing attributes",
             AmbiguousValue::Font(_) => "an object describing a Font",
+            AmbiguousValue::MaterialColors(_) => "an object describing MaterialColors",
         }
     }
 }
@@ -349,6 +361,29 @@ mod test {
                 style: FontStyle::Normal,
                 cached_face_id: None,
             })
+        )
+    }
+
+    #[test]
+    fn material_colors() {
+        use rbx_dom_weak::types::{Color3uint8, TerrainMaterials};
+
+        let mut material_colors = MaterialColors::new();
+        material_colors.set_color(TerrainMaterials::Grass, Color3uint8::new(10, 20, 30));
+        material_colors.set_color(TerrainMaterials::Asphalt, Color3uint8::new(40, 50, 60));
+        material_colors.set_color(TerrainMaterials::LeafyGrass, Color3uint8::new(255, 155, 55));
+
+        assert_eq!(
+            resolve(
+                "Terrain",
+                "MaterialColors",
+                r#"{
+                    "Grass": [10, 20, 30],
+                    "Asphalt": [40, 50, 60],
+                    "LeafyGrass": [255, 155, 55]
+                }"#
+            ),
+            Variant::MaterialColors(material_colors)
         )
     }
 }

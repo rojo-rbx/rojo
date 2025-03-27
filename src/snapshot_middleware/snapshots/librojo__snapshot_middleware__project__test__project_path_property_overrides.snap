@@ -10,7 +10,9 @@ metadata:
   relevant_paths:
     - /foo/other.project.json
     - /foo/default.project.json
-  context: {}
+  context:
+    emit_legacy_scripts: true
+  specified_id: ~
 name: path-property-override
 class_name: StringValue
 properties:

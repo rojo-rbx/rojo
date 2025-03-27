@@ -22,9 +22,9 @@ mod noop_backend;
 mod snapshot;
 mod std_backend;
 
-use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, MutexGuard};
+use std::{io, str};
 
 pub use in_memory_fs::InMemoryFs;
 pub use noop_backend::NoopBackend;
@@ -155,6 +155,24 @@ impl VfsInner {
         Ok(Arc::new(contents))
     }
 
+    fn read_to_string<P: AsRef<Path>>(&mut self, path: P) -> io::Result<Arc<String>> {
+        let path = path.as_ref();
+        let contents = self.backend.read(path)?;
+
+        if self.watch_enabled {
+            self.backend.watch(path)?;
+        }
+
+        let contents_str = str::from_utf8(&contents).map_err(|_| {
+            io::Error::new(
+                io::ErrorKind::InvalidData,
+                format!("File was not valid UTF-8: {}", path.display()),
+            )
+        })?;
+
+        Ok(Arc::new(contents_str.into()))
+    }
+
     fn write<P: AsRef<Path>, C: AsRef<[u8]>>(&mut self, path: P, contents: C) -> io::Result<()> {
         let path = path.as_ref();
         let contents = contents.as_ref();
@@ -256,6 +274,33 @@ impl Vfs {
     pub fn read<P: AsRef<Path>>(&self, path: P) -> io::Result<Arc<Vec<u8>>> {
         let path = path.as_ref();
         self.inner.lock().unwrap().read(path)
+    }
+
+    /// Read a file from the VFS (or from the underlying backend if it isn't
+    /// resident) into a string.
+    ///
+    /// Roughly equivalent to [`std::fs::read_to_string`][std::fs::read_to_string].
+    ///
+    /// [std::fs::read_to_string]: https://doc.rust-lang.org/stable/std/fs/fn.read_to_string.html
+    #[inline]
+    pub fn read_to_string<P: AsRef<Path>>(&self, path: P) -> io::Result<Arc<String>> {
+        let path = path.as_ref();
+        self.inner.lock().unwrap().read_to_string(path)
+    }
+
+    /// Read a file from the VFS (or the underlying backend if it isn't
+    /// resident) into a string, and normalize its line endings to LF.
+    ///
+    /// Roughly equivalent to [`std::fs::read_to_string`][std::fs::read_to_string], but also performs
+    /// line ending normalization.
+    ///
+    /// [std::fs::read_to_string]: https://doc.rust-lang.org/stable/std/fs/fn.read_to_string.html
+    #[inline]
+    pub fn read_to_string_lf_normalized<P: AsRef<Path>>(&self, path: P) -> io::Result<Arc<String>> {
+        let path = path.as_ref();
+        let contents = self.inner.lock().unwrap().read_to_string(path)?;
+
+        Ok(contents.replace("\r\n", "\n").into())
     }
 
     /// Write a file to the VFS and the underlying backend.
@@ -426,5 +471,25 @@ impl VfsLock<'_> {
     #[inline]
     pub fn commit_event(&mut self, event: &VfsEvent) -> io::Result<()> {
         self.inner.commit_event(event)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{InMemoryFs, Vfs, VfsSnapshot};
+
+    /// https://github.com/rojo-rbx/rojo/issues/899
+    #[test]
+    fn read_to_string_lf_normalized_keeps_trailing_newline() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot("test", VfsSnapshot::file("bar\r\nfoo\r\n\r\n"))
+            .unwrap();
+
+        let vfs = Vfs::new(imfs);
+
+        assert_eq!(
+            vfs.read_to_string_lf_normalized("test").unwrap().as_str(),
+            "bar\nfoo\n\n"
+        );
     }
 }

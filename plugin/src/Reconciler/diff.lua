@@ -37,7 +37,9 @@ local function trueEquals(a, b): boolean
 			end
 		end
 		for key, value in pairs(b) do
-			if checkedKeys[key] then continue end
+			if checkedKeys[key] then
+				continue
+			end
 			if not trueEquals(value, a[key]) then
 				return false
 			end
@@ -62,7 +64,7 @@ local function trueEquals(a, b): boolean
 
 	-- For CFrames, compare to components with epsilon of 0.0001 to avoid floating point inequality
 	elseif typeA == "CFrame" and typeB == "CFrame" then
-		local aComponents, bComponents = {a:GetComponents()}, {b:GetComponents()}
+		local aComponents, bComponents = { a:GetComponents() }, { b:GetComponents() }
 		for i, aComponent in aComponents do
 			if not fuzzyEq(aComponent, bComponents[i], 0.0001) then
 				return false
@@ -72,7 +74,7 @@ local function trueEquals(a, b): boolean
 
 	-- For Vector3s, compare to components with epsilon of 0.0001 to avoid floating point inequality
 	elseif typeA == "Vector3" and typeB == "Vector3" then
-		local aComponents, bComponents = {a.X, a.Y, a.Z}, {b.X, b.Y, b.Z}
+		local aComponents, bComponents = { a.X, a.Y, a.Z }, { b.X, b.Y, b.Z }
 		for i, aComponent in aComponents do
 			if not fuzzyEq(aComponent, bComponents[i], 0.0001) then
 				return false
@@ -82,14 +84,13 @@ local function trueEquals(a, b): boolean
 
 	-- For Vector2s, compare to components with epsilon of 0.0001 to avoid floating point inequality
 	elseif typeA == "Vector2" and typeB == "Vector2" then
-		local aComponents, bComponents = {a.X, a.Y}, {b.X, b.Y}
+		local aComponents, bComponents = { a.X, a.Y }, { b.X, b.Y }
 		for i, aComponent in aComponents do
 			if not fuzzyEq(aComponent, bComponents[i], 0.0001) then
 				return false
 			end
 		end
 		return true
-
 	end
 
 	return false
@@ -146,19 +147,24 @@ local function diff(instanceMap, virtualInstances, rootId)
 
 		local changedProperties = {}
 		for propertyName, virtualValue in pairs(virtualInstance.Properties) do
-			local ok, existingValueOrErr = getProperty(instance, propertyName)
+			local getProperySuccess, existingValueOrErr = getProperty(instance, propertyName)
 
-			if ok then
+			if getProperySuccess then
 				local existingValue = existingValueOrErr
-				local ok, decodedValue = decodeValue(virtualValue, instanceMap)
+				local decodeSuccess, decodedValue = decodeValue(virtualValue, instanceMap)
 
-				if ok then
+				if decodeSuccess then
 					if not trueEquals(existingValue, decodedValue) then
-						Log.debug("{}.{} changed from '{}' to '{}'", instance:GetFullName(), propertyName, existingValue, decodedValue)
+						Log.debug(
+							"{}.{} changed from '{}' to '{}'",
+							instance:GetFullName(),
+							propertyName,
+							existingValue,
+							decodedValue
+						)
 						changedProperties[propertyName] = virtualValue
 					end
 				else
-					local propertyType = next(virtualValue)
 					Log.warn(
 						"Failed to decode property {}.{}. Encoded property was: {:#?}",
 						virtualInstance.ClassName,
@@ -171,10 +177,8 @@ local function diff(instanceMap, virtualInstances, rootId)
 
 				if err.kind == Error.UnknownProperty then
 					Log.trace("Skipping unknown property {}.{}", err.details.className, err.details.propertyName)
-				elseif err.kind == Error.UnreadableProperty then
-					Log.trace("Skipping unreadable property {}.{}", err.details.className, err.details.propertyName)
 				else
-					return false, err
+					Log.trace("Skipping unreadable property {}.{}", err.details.className, err.details.propertyName)
 				end
 			end
 		end
@@ -213,9 +217,9 @@ local function diff(instanceMap, virtualInstances, rootId)
 					table.insert(patch.removed, childInstance)
 				end
 			else
-				local ok, err = diffInternal(childId)
+				local diffSuccess, err = diffInternal(childId)
 
-				if not ok then
+				if not diffSuccess then
 					return false, err
 				end
 			end
@@ -236,9 +240,9 @@ local function diff(instanceMap, virtualInstances, rootId)
 		return true
 	end
 
-	local ok, err = diffInternal(rootId)
+	local diffSuccess, err = diffInternal(rootId)
 
-	if not ok then
+	if not diffSuccess then
 		return false, err
 	end
 

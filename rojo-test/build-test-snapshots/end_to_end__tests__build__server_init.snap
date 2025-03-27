@@ -6,7 +6,8 @@ expression: contents
   <Item class="Script" referent="0">
     <Properties>
       <string name="Name">server_init</string>
-      <string name="Source">return "From folder/init.server.lua"</string>
+      <token name="RunContext">0</token>
+      <string name="Source">return "From folder/init.server.luau"</string>
     </Properties>
   </Item>
 </roblox>

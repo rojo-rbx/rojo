@@ -12,28 +12,27 @@ on:
 jobs:
   build:
     name: Build and Test
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
-        rust_version: [stable, 1.69.0]
+        os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: true
 
     - name: Install Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: ${{ matrix.rust_version }}
-        override: true
-        profile: minimal
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Rust cache
+      uses: Swatinem/rust-cache@v2
 
     - name: Setup Aftman
-      uses: ok-nick/setup-aftman@v0.3.0
+      uses: ok-nick/setup-aftman@v0.4.2
       with:
-        version: 'v0.2.7'
+        version: 'v0.3.0'
 
     - name: Build
       run: cargo build --locked --verbose
@@ -41,26 +40,56 @@ jobs:
     - name: Test
       run: cargo test --locked --verbose
 
-  lint:
-    name: Rustfmt and Clippy
+  msrv:
+    name: Check MSRV
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: true
 
     - name: Install Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        override: true
-        components: rustfmt, clippy
+      uses: dtolnay/rust-toolchain@1.70.0
+
+    - name: Rust cache
+      uses: Swatinem/rust-cache@v2
 
     - name: Setup Aftman
-      uses: ok-nick/setup-aftman@v0.3.0
+      uses: ok-nick/setup-aftman@v0.4.2
       with:
-        version: 'v0.2.7'
+        version: 'v0.3.0'
+
+    - name: Build
+      run: cargo build --locked --verbose
+
+  lint:
+    name: Rustfmt, Clippy, Stylua, & Selene
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: rustfmt, clippy
+
+    - name: Rust cache
+      uses: Swatinem/rust-cache@v2
+
+    - name: Setup Aftman
+      uses: ok-nick/setup-aftman@v0.4.2
+      with:
+        version: 'v0.3.0'
+
+    - name: Stylua
+      run: stylua --check plugin/src
+
+    - name: Selene
+      run: selene plugin/src
 
     - name: Rustfmt
       run: cargo fmt -- --check

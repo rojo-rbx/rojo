@@ -4,6 +4,6 @@
     "$path": "src"
   },
   "plugins": [
-    "test-plugin.lua"
+    "test-plugin.luau"
   ]
 }

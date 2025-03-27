@@ -17,7 +17,9 @@ metadata:
     - /foo/init.client.lua
     - /foo/init.client.luau
     - /foo/init.csv
-  context: {}
+  context:
+    emit_legacy_scripts: true
+  specified_id: ~
 name: foo
 class_name: Folder
 properties: {}
@@ -37,7 +39,9 @@ children:
         - /foo/Child/init.client.lua
         - /foo/Child/init.client.luau
         - /foo/Child/init.csv
-      context: {}
+      context:
+        emit_legacy_scripts: true
+      specified_id: ~
     name: Child
     class_name: Folder
     properties: {}

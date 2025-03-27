@@ -1,55 +1,63 @@
-use std::{path::Path, str};
+use std::{collections::HashMap, path::Path, str};
 
-use anyhow::Context;
-use maplit::hashmap;
 use memofs::{IoResultExt, Vfs};
+use rbx_dom_weak::types::Enum;
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
 use super::{
     dir::{dir_meta, snapshot_dir_no_meta},
     meta_file::AdjacentMetadata,
-    util::match_trailing,
 };
+
+#[derive(Debug)]
+pub enum ScriptType {
+    Server,
+    Client,
+    Module,
+}
 
 /// Core routine for turning Lua files into snapshots.
 pub fn snapshot_lua(
     context: &InstanceContext,
     vfs: &Vfs,
     path: &Path,
+    name: &str,
+    script_type: ScriptType,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let file_name = path.file_name().unwrap().to_string_lossy();
+    let run_context_enums = &rbx_reflection_database::get()
+        .enums
+        .get("RunContext")
+        .expect("Unable to get RunContext enums!")
+        .items;
 
-    let (class_name, instance_name) = if let Some(name) = match_trailing(&file_name, ".server.lua")
-    {
-        ("Script", name)
-    } else if let Some(name) = match_trailing(&file_name, ".client.lua") {
-        ("LocalScript", name)
-    } else if let Some(name) = match_trailing(&file_name, ".lua") {
-        ("ModuleScript", name)
-    } else if let Some(name) = match_trailing(&file_name, ".server.luau") {
-        ("Script", name)
-    } else if let Some(name) = match_trailing(&file_name, ".client.luau") {
-        ("LocalScript", name)
-    } else if let Some(name) = match_trailing(&file_name, ".luau") {
-        ("ModuleScript", name)
-    } else {
-        return Ok(None);
+    let (class_name, run_context) = match (context.emit_legacy_scripts, script_type) {
+        (false, ScriptType::Server) => ("Script", run_context_enums.get("Server")),
+        (false, ScriptType::Client) => ("Script", run_context_enums.get("Client")),
+        (true, ScriptType::Server) => ("Script", run_context_enums.get("Legacy")),
+        (true, ScriptType::Client) => ("LocalScript", None),
+        (_, ScriptType::Module) => ("ModuleScript", None),
     };
 
-    let contents = vfs.read(path)?;
-    let contents_str = str::from_utf8(&contents)
-        .with_context(|| format!("File was not valid UTF-8: {}", path.display()))?
-        .to_owned();
+    let contents = vfs.read_to_string_lf_normalized(path)?;
+    let contents_str = contents.as_str();
 
-    let meta_path = path.with_file_name(format!("{}.meta.json", instance_name));
+    let mut properties = HashMap::with_capacity(2);
+    properties.insert("Source".to_owned(), contents_str.into());
+
+    if let Some(run_context) = run_context {
+        properties.insert(
+            "RunContext".to_owned(),
+            Enum::from_u32(run_context.to_owned()).into(),
+        );
+    }
+
+    let meta_path = path.with_file_name(format!("{}.meta.json", name));
 
     let mut snapshot = InstanceSnapshot::new()
-        .name(instance_name)
+        .name(name)
         .class_name(class_name)
-        .properties(hashmap! {
-            "Source".to_owned() => contents_str.into(),
-        })
+        .properties(properties)
         .metadata(
             InstanceMetadata::new()
                 .instigating_source(path)
@@ -74,6 +82,7 @@ pub fn snapshot_lua_init(
     context: &InstanceContext,
     vfs: &Vfs,
     init_path: &Path,
+    script_type: ScriptType,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let folder_path = init_path.parent().unwrap();
     let dir_snapshot = snapshot_dir_no_meta(context, vfs, folder_path)?.unwrap();
@@ -90,9 +99,9 @@ pub fn snapshot_lua_init(
         );
     }
 
-    let mut init_snapshot = snapshot_lua(context, vfs, init_path)?.unwrap();
+    let mut init_snapshot =
+        snapshot_lua(context, vfs, init_path, &dir_snapshot.name, script_type)?.unwrap();
 
-    init_snapshot.name = dir_snapshot.name;
     init_snapshot.children = dir_snapshot.children;
     init_snapshot.metadata = dir_snapshot.metadata;
 
@@ -110,57 +119,141 @@ mod test {
     use memofs::{InMemoryFs, VfsSnapshot};
 
     #[test]
-    fn module_from_vfs() {
+    fn class_module_from_vfs() {
         let mut imfs = InMemoryFs::new();
         imfs.load_snapshot("/foo.lua", VfsSnapshot::file("Hello there!"))
             .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
-        let instance_snapshot =
-            snapshot_lua(&InstanceContext::default(), &mut vfs, Path::new("/foo.lua"))
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = snapshot_lua(
+            &InstanceContext::with_emit_legacy_scripts(Some(true)),
+            &vfs,
+            Path::new("/foo.lua"),
+            "foo",
+            ScriptType::Module,
+        )
+        .unwrap()
+        .unwrap();
 
-        insta::assert_yaml_snapshot!(instance_snapshot);
+        insta::with_settings!({ sort_maps => true }, {
+            insta::assert_yaml_snapshot!(instance_snapshot);
+        });
     }
 
     #[test]
-    fn server_from_vfs() {
+    fn runcontext_module_from_vfs() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot("/foo.lua", VfsSnapshot::file("Hello there!"))
+            .unwrap();
+
+        let vfs = Vfs::new(imfs);
+
+        let instance_snapshot = snapshot_lua(
+            &InstanceContext::with_emit_legacy_scripts(Some(false)),
+            &vfs,
+            Path::new("/foo.lua"),
+            "foo",
+            ScriptType::Module,
+        )
+        .unwrap()
+        .unwrap();
+
+        insta::with_settings!({ sort_maps => true }, {
+            insta::assert_yaml_snapshot!(instance_snapshot);
+        });
+    }
+
+    #[test]
+    fn class_server_from_vfs() {
         let mut imfs = InMemoryFs::new();
         imfs.load_snapshot("/foo.server.lua", VfsSnapshot::file("Hello there!"))
             .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_lua(
-            &InstanceContext::default(),
-            &mut vfs,
+            &InstanceContext::with_emit_legacy_scripts(Some(true)),
+            &vfs,
             Path::new("/foo.server.lua"),
+            "foo",
+            ScriptType::Server,
         )
         .unwrap()
         .unwrap();
 
-        insta::assert_yaml_snapshot!(instance_snapshot);
+        insta::with_settings!({ sort_maps => true }, {
+            insta::assert_yaml_snapshot!(instance_snapshot);
+        });
     }
 
     #[test]
-    fn client_from_vfs() {
+    fn runcontext_server_from_vfs() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot("/foo.server.lua", VfsSnapshot::file("Hello there!"))
+            .unwrap();
+
+        let vfs = Vfs::new(imfs);
+
+        let instance_snapshot = snapshot_lua(
+            &InstanceContext::with_emit_legacy_scripts(Some(false)),
+            &vfs,
+            Path::new("/foo.server.lua"),
+            "foo",
+            ScriptType::Server,
+        )
+        .unwrap()
+        .unwrap();
+
+        insta::with_settings!({ sort_maps => true }, {
+            insta::assert_yaml_snapshot!(instance_snapshot);
+        });
+    }
+
+    #[test]
+    fn class_client_from_vfs() {
         let mut imfs = InMemoryFs::new();
         imfs.load_snapshot("/foo.client.lua", VfsSnapshot::file("Hello there!"))
             .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_lua(
-            &InstanceContext::default(),
-            &mut vfs,
+            &InstanceContext::with_emit_legacy_scripts(Some(true)),
+            &vfs,
             Path::new("/foo.client.lua"),
+            "foo",
+            ScriptType::Client,
         )
         .unwrap()
         .unwrap();
 
-        insta::assert_yaml_snapshot!(instance_snapshot);
+        insta::with_settings!({ sort_maps => true }, {
+            insta::assert_yaml_snapshot!(instance_snapshot);
+        });
+    }
+
+    #[test]
+    fn runcontext_client_from_vfs() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot("/foo.client.lua", VfsSnapshot::file("Hello there!"))
+            .unwrap();
+
+        let vfs = Vfs::new(imfs);
+
+        let instance_snapshot = snapshot_lua(
+            &InstanceContext::with_emit_legacy_scripts(Some(false)),
+            &vfs,
+            Path::new("/foo.client.lua"),
+            "foo",
+            ScriptType::Client,
+        )
+        .unwrap()
+        .unwrap();
+
+        insta::with_settings!({ sort_maps => true }, {
+            insta::assert_yaml_snapshot!(instance_snapshot);
+        });
     }
 
     #[ignore = "init.lua functionality has moved to the root snapshot function"]
@@ -169,24 +262,29 @@ mod test {
         let mut imfs = InMemoryFs::new();
         imfs.load_snapshot(
             "/root",
-            VfsSnapshot::dir(hashmap! {
-                "init.lua" => VfsSnapshot::file("Hello!"),
-            }),
+            VfsSnapshot::dir([("init.lua", VfsSnapshot::file("Hello!"))]),
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
-        let instance_snapshot =
-            snapshot_lua(&InstanceContext::default(), &mut vfs, Path::new("/root"))
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = snapshot_lua(
+            &InstanceContext::with_emit_legacy_scripts(Some(true)),
+            &vfs,
+            Path::new("/root"),
+            "root",
+            ScriptType::Module,
+        )
+        .unwrap()
+        .unwrap();
 
-        insta::assert_yaml_snapshot!(instance_snapshot);
+        insta::with_settings!({ sort_maps => true }, {
+            insta::assert_yaml_snapshot!(instance_snapshot);
+        });
     }
 
     #[test]
-    fn module_with_meta() {
+    fn class_module_with_meta() {
         let mut imfs = InMemoryFs::new();
         imfs.load_snapshot("/foo.lua", VfsSnapshot::file("Hello there!"))
             .unwrap();
@@ -202,18 +300,59 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
-        let instance_snapshot =
-            snapshot_lua(&InstanceContext::default(), &mut vfs, Path::new("/foo.lua"))
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = snapshot_lua(
+            &InstanceContext::with_emit_legacy_scripts(Some(true)),
+            &vfs,
+            Path::new("/foo.lua"),
+            "foo",
+            ScriptType::Module,
+        )
+        .unwrap()
+        .unwrap();
 
-        insta::assert_yaml_snapshot!(instance_snapshot);
+        insta::with_settings!({ sort_maps => true }, {
+            insta::assert_yaml_snapshot!(instance_snapshot);
+        });
     }
 
     #[test]
-    fn script_with_meta() {
+    fn runcontext_module_with_meta() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot("/foo.lua", VfsSnapshot::file("Hello there!"))
+            .unwrap();
+        imfs.load_snapshot(
+            "/foo.meta.json",
+            VfsSnapshot::file(
+                r#"
+                    {
+                        "ignoreUnknownInstances": true
+                    }
+                "#,
+            ),
+        )
+        .unwrap();
+
+        let vfs = Vfs::new(imfs);
+
+        let instance_snapshot = snapshot_lua(
+            &InstanceContext::with_emit_legacy_scripts(Some(false)),
+            &vfs,
+            Path::new("/foo.lua"),
+            "foo",
+            ScriptType::Module,
+        )
+        .unwrap()
+        .unwrap();
+
+        insta::with_settings!({ sort_maps => true }, {
+            insta::assert_yaml_snapshot!(instance_snapshot);
+        });
+    }
+
+    #[test]
+    fn class_script_with_meta() {
         let mut imfs = InMemoryFs::new();
         imfs.load_snapshot("/foo.server.lua", VfsSnapshot::file("Hello there!"))
             .unwrap();
@@ -229,21 +368,59 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_lua(
-            &InstanceContext::default(),
-            &mut vfs,
+            &InstanceContext::with_emit_legacy_scripts(Some(true)),
+            &vfs,
             Path::new("/foo.server.lua"),
+            "foo",
+            ScriptType::Server,
         )
         .unwrap()
         .unwrap();
 
-        insta::assert_yaml_snapshot!(instance_snapshot);
+        insta::with_settings!({ sort_maps => true }, {
+            insta::assert_yaml_snapshot!(instance_snapshot);
+        });
     }
 
     #[test]
-    fn script_disabled() {
+    fn runcontext_script_with_meta() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot("/foo.server.lua", VfsSnapshot::file("Hello there!"))
+            .unwrap();
+        imfs.load_snapshot(
+            "/foo.meta.json",
+            VfsSnapshot::file(
+                r#"
+                    {
+                        "ignoreUnknownInstances": true
+                    }
+                "#,
+            ),
+        )
+        .unwrap();
+
+        let vfs = Vfs::new(imfs);
+
+        let instance_snapshot = snapshot_lua(
+            &InstanceContext::with_emit_legacy_scripts(Some(false)),
+            &vfs,
+            Path::new("/foo.server.lua"),
+            "foo",
+            ScriptType::Server,
+        )
+        .unwrap()
+        .unwrap();
+
+        insta::with_settings!({ sort_maps => true }, {
+            insta::assert_yaml_snapshot!(instance_snapshot);
+        });
+    }
+
+    #[test]
+    fn class_script_disabled() {
         let mut imfs = InMemoryFs::new();
         imfs.load_snapshot("/bar.server.lua", VfsSnapshot::file("Hello there!"))
             .unwrap();
@@ -261,12 +438,50 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_lua(
-            &InstanceContext::default(),
-            &mut vfs,
+            &InstanceContext::with_emit_legacy_scripts(Some(true)),
+            &vfs,
             Path::new("/bar.server.lua"),
+            "bar",
+            ScriptType::Server,
+        )
+        .unwrap()
+        .unwrap();
+
+        insta::with_settings!({ sort_maps => true }, {
+            insta::assert_yaml_snapshot!(instance_snapshot);
+        });
+    }
+
+    #[test]
+    fn runcontext_script_disabled() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot("/bar.server.lua", VfsSnapshot::file("Hello there!"))
+            .unwrap();
+        imfs.load_snapshot(
+            "/bar.meta.json",
+            VfsSnapshot::file(
+                r#"
+                    {
+                        "properties": {
+                            "Disabled": true
+                        }
+                    }
+                "#,
+            ),
+        )
+        .unwrap();
+
+        let vfs = Vfs::new(imfs);
+
+        let instance_snapshot = snapshot_lua(
+            &InstanceContext::with_emit_legacy_scripts(Some(false)),
+            &vfs,
+            Path::new("/bar.server.lua"),
+            "bar",
+            ScriptType::Server,
         )
         .unwrap()
         .unwrap();

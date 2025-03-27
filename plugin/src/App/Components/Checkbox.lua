@@ -23,18 +23,16 @@ end
 
 function Checkbox:didUpdate(lastProps)
 	if lastProps.active ~= self.props.active then
-		self.motor:setGoal(
-			Flipper.Spring.new(self.props.active and 1 or 0, {
-				frequency = 6,
-				dampingRatio = 1.1,
-			})
-		)
+		self.motor:setGoal(Flipper.Spring.new(self.props.active and 1 or 0, {
+			frequency = 6,
+			dampingRatio = 1.1,
+		}))
 	end
 end
 
 function Checkbox:render()
 	return Theme.with(function(theme)
-		theme = theme.Checkbox
+		local checkboxTheme = theme.Checkbox
 
 		local activeTransparency = Roact.joinBindings({
 			self.binding:map(function(value)
@@ -52,26 +50,28 @@ function Checkbox:render()
 			BackgroundTransparency = 1,
 
 			[Roact.Event.Activated] = function()
-				if self.props.locked then return end
+				if self.props.locked then
+					return
+				end
 				self.props.onClick()
 			end,
 		}, {
 			StateTip = e(Tooltip.Trigger, {
-				text =
-					(if self.props.locked then "[LOCKED] " else "")
-					.. (if self.props.active then "Enabled" else "Disabled"),
+				text = (if self.props.locked
+					then (self.props.lockedTooltip or "(Cannot be changed right now)") .. "\n"
+					else "") .. (if self.props.active then "Enabled" else "Disabled"),
 			}),
 
 			Active = e(SlicedImage, {
 				slice = Assets.Slices.RoundedBackground,
-				color = theme.Active.BackgroundColor,
+				color = checkboxTheme.Active.BackgroundColor,
 				transparency = activeTransparency,
 				size = UDim2.new(1, 0, 1, 0),
 				zIndex = 2,
 			}, {
 				Icon = e("ImageLabel", {
 					Image = if self.props.locked then Assets.Images.Checkbox.Locked else Assets.Images.Checkbox.Active,
-					ImageColor3 = theme.Active.IconColor,
+					ImageColor3 = checkboxTheme.Active.IconColor,
 					ImageTransparency = activeTransparency,
 
 					Size = UDim2.new(0, 16, 0, 16),
@@ -84,13 +84,15 @@ function Checkbox:render()
 
 			Inactive = e(SlicedImage, {
 				slice = Assets.Slices.RoundedBorder,
-				color = theme.Inactive.BorderColor,
+				color = checkboxTheme.Inactive.BorderColor,
 				transparency = self.props.transparency,
 				size = UDim2.new(1, 0, 1, 0),
 			}, {
 				Icon = e("ImageLabel", {
-					Image = if self.props.locked then Assets.Images.Checkbox.Locked else Assets.Images.Checkbox.Inactive,
-					ImageColor3 = theme.Inactive.IconColor,
+					Image = if self.props.locked
+						then Assets.Images.Checkbox.Locked
+						else Assets.Images.Checkbox.Inactive,
+					ImageColor3 = checkboxTheme.Inactive.IconColor,
 					ImageTransparency = self.props.transparency,
 
 					Size = UDim2.new(0, 16, 0, 16),
