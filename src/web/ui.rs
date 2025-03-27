@@ -7,7 +7,6 @@
 use std::{borrow::Cow, sync::Arc, time::Duration};
 
 use hyper::{header, Body, Method, Request, Response, StatusCode};
-use maplit::hashmap;
 use rbx_dom_weak::types::{Ref, Variant};
 use ritz::{html, Fragment, HtmlContent, HtmlSelfClosingTag};
 
@@ -163,6 +162,7 @@ impl UiService {
 
             let content = html! {
                 <>
+                    <div>"specified_id: " { format!("{:?}", metadata.specified_id) } </div>
                     <div>"ignore_unknown_instances: " { metadata.ignore_unknown_instances.to_string() }</div>
                     <div>"instigating source: " { format!("{:?}", metadata.instigating_source) }</div>
                     { relevant_paths }
@@ -192,7 +192,7 @@ impl UiService {
 
         html! {
             <div class="instance">
-                <label class="instance-title" for={ format!("instance-{:?}", id) }>
+                <label class="instance-title" for={ format!("instance-{:?}", id) } title={ format!("ref: {:?}", instance.id())}>
                     { instance.name().to_owned() }
                     { class_name_specifier }
                 </label>
@@ -295,11 +295,12 @@ impl<'a> ExpandableSection<'a> {
         // support for conditional attributes like `checked`.
         let mut input = HtmlSelfClosingTag {
             name: Cow::Borrowed("input"),
-            attributes: hashmap! {
-                Cow::Borrowed("class") => Cow::Borrowed("expandable-input"),
-                Cow::Borrowed("id") => Cow::Owned(input_id.clone()),
-                Cow::Borrowed("type") => Cow::Borrowed("checkbox"),
-            },
+            attributes: [
+                (Cow::Borrowed("class"), Cow::Borrowed("expandable-input")),
+                (Cow::Borrowed("id"), Cow::Owned(input_id.clone())),
+                (Cow::Borrowed("type"), Cow::Borrowed("checkbox")),
+            ]
+            .into(),
         };
 
         if self.expanded {

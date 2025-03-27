@@ -116,7 +116,6 @@ pub fn snapshot_lua_init(
 mod test {
     use super::*;
 
-    use maplit::hashmap;
     use memofs::{InMemoryFs, VfsSnapshot};
 
     #[test]
@@ -125,11 +124,11 @@ mod test {
         imfs.load_snapshot("/foo.lua", VfsSnapshot::file("Hello there!"))
             .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_lua(
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
-            &mut vfs,
+            &vfs,
             Path::new("/foo.lua"),
             "foo",
             ScriptType::Module,
@@ -148,11 +147,11 @@ mod test {
         imfs.load_snapshot("/foo.lua", VfsSnapshot::file("Hello there!"))
             .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_lua(
             &InstanceContext::with_emit_legacy_scripts(Some(false)),
-            &mut vfs,
+            &vfs,
             Path::new("/foo.lua"),
             "foo",
             ScriptType::Module,
@@ -171,11 +170,11 @@ mod test {
         imfs.load_snapshot("/foo.server.lua", VfsSnapshot::file("Hello there!"))
             .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_lua(
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
-            &mut vfs,
+            &vfs,
             Path::new("/foo.server.lua"),
             "foo",
             ScriptType::Server,
@@ -194,11 +193,11 @@ mod test {
         imfs.load_snapshot("/foo.server.lua", VfsSnapshot::file("Hello there!"))
             .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_lua(
             &InstanceContext::with_emit_legacy_scripts(Some(false)),
-            &mut vfs,
+            &vfs,
             Path::new("/foo.server.lua"),
             "foo",
             ScriptType::Server,
@@ -217,11 +216,11 @@ mod test {
         imfs.load_snapshot("/foo.client.lua", VfsSnapshot::file("Hello there!"))
             .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_lua(
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
-            &mut vfs,
+            &vfs,
             Path::new("/foo.client.lua"),
             "foo",
             ScriptType::Client,
@@ -240,11 +239,11 @@ mod test {
         imfs.load_snapshot("/foo.client.lua", VfsSnapshot::file("Hello there!"))
             .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_lua(
             &InstanceContext::with_emit_legacy_scripts(Some(false)),
-            &mut vfs,
+            &vfs,
             Path::new("/foo.client.lua"),
             "foo",
             ScriptType::Client,
@@ -263,17 +262,15 @@ mod test {
         let mut imfs = InMemoryFs::new();
         imfs.load_snapshot(
             "/root",
-            VfsSnapshot::dir(hashmap! {
-                "init.lua" => VfsSnapshot::file("Hello!"),
-            }),
+            VfsSnapshot::dir([("init.lua", VfsSnapshot::file("Hello!"))]),
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_lua(
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
-            &mut vfs,
+            &vfs,
             Path::new("/root"),
             "root",
             ScriptType::Module,
@@ -303,11 +300,11 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_lua(
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
-            &mut vfs,
+            &vfs,
             Path::new("/foo.lua"),
             "foo",
             ScriptType::Module,
@@ -337,11 +334,11 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_lua(
             &InstanceContext::with_emit_legacy_scripts(Some(false)),
-            &mut vfs,
+            &vfs,
             Path::new("/foo.lua"),
             "foo",
             ScriptType::Module,
@@ -371,11 +368,11 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_lua(
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
-            &mut vfs,
+            &vfs,
             Path::new("/foo.server.lua"),
             "foo",
             ScriptType::Server,
@@ -405,11 +402,11 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_lua(
             &InstanceContext::with_emit_legacy_scripts(Some(false)),
-            &mut vfs,
+            &vfs,
             Path::new("/foo.server.lua"),
             "foo",
             ScriptType::Server,
@@ -441,11 +438,11 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_lua(
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
-            &mut vfs,
+            &vfs,
             Path::new("/bar.server.lua"),
             "bar",
             ScriptType::Server,
@@ -477,11 +474,11 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_lua(
             &InstanceContext::with_emit_legacy_scripts(Some(false)),
-            &mut vfs,
+            &vfs,
             Path::new("/bar.server.lua"),
             "bar",
             ScriptType::Server,

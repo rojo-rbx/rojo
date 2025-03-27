@@ -16,6 +16,7 @@ mod multimap;
 mod path_serializer;
 mod project;
 mod resolution;
+mod rojo_ref;
 mod serve_session;
 mod session_id;
 mod snapshot;
@@ -24,5 +25,6 @@ mod variant_eq;
 mod web;
 
 pub use project::*;
+pub use rojo_ref::*;
 pub use session_id::SessionId;
 pub use web::interface as web_api;

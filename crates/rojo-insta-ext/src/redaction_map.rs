@@ -5,19 +5,13 @@ use serde::Serialize;
 /// Enables redacting any value that serializes as a string.
 ///
 /// Used for transforming Rojo instance IDs into something deterministic.
+#[derive(Default)]
 pub struct RedactionMap {
     ids: HashMap<String, usize>,
     last_id: usize,
 }
 
 impl RedactionMap {
-    pub fn new() -> Self {
-        Self {
-            ids: HashMap::new(),
-            last_id: 0,
-        }
-    }
-
     pub fn get_redacted_value(&self, id: impl ToString) -> Option<String> {
         let id = id.to_string();
 

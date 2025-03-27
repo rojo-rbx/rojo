@@ -1,7 +1,6 @@
 use std::path::Path;
 
 use anyhow::Context;
-use maplit::hashmap;
 use memofs::{IoResultExt, Vfs};
 
 use crate::{
@@ -24,9 +23,7 @@ pub fn snapshot_toml(
 
     let as_lua = toml_to_lua(value).to_string();
 
-    let properties = hashmap! {
-        "Source".to_owned() => as_lua.into(),
-    };
+    let properties = [("Source".to_owned(), as_lua.into())];
 
     let meta_path = path.with_file_name(format!("{}.meta.json", name));
 
@@ -108,11 +105,11 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs.clone());
+        let vfs = Vfs::new(imfs.clone());
 
         let instance_snapshot = snapshot_toml(
             &InstanceContext::default(),
-            &mut vfs,
+            &vfs,
             Path::new("/foo.toml"),
             "foo",
         )

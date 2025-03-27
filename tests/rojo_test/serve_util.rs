@@ -29,7 +29,7 @@ use crate::rojo_test::io_util::{
 pub fn run_serve_test(test_name: &str, callback: impl FnOnce(TestServeSession, RedactionMap)) {
     let _ = env_logger::try_init();
 
-    let mut redactions = RedactionMap::new();
+    let mut redactions = RedactionMap::default();
 
     let mut session = TestServeSession::new(test_name);
     let info = session.wait_to_come_online();
@@ -83,6 +83,15 @@ impl TestServeSession {
             copy_recursive(&source_path, &project_path)
                 .expect("Couldn't copy project to temporary directory");
         };
+
+        // This is an ugly workaround for FSEvents sometimes reporting events
+        // for the above copy operations, similar to this Stack Overflow question:
+        // https://stackoverflow.com/questions/47679298/howto-avoid-receiving-old-events-in-fseventstream-callback-fsevents-framework-o
+        // We'll hope that 100ms is enough for FSEvents to get whatever it is
+        // out of its system.
+        // TODO: find a better way to avoid processing these spurious events.
+        #[cfg(target_os = "macos")]
+        std::thread::sleep(Duration::from_millis(100));
 
         let port = get_port_number();
         let port_string = port.to_string();

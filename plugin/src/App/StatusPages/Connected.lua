@@ -4,6 +4,7 @@ local Packages = Rojo.Packages
 
 local Roact = require(Packages.Roact)
 
+local timeUtil = require(Plugin.timeUtil)
 local Theme = require(Plugin.App.Theme)
 local Assets = require(Plugin.Assets)
 local PatchSet = require(Plugin.PatchSet)
@@ -19,28 +20,6 @@ local StringDiffVisualizer = require(Plugin.App.Components.StringDiffVisualizer)
 local TableDiffVisualizer = require(Plugin.App.Components.TableDiffVisualizer)
 
 local e = Roact.createElement
-
-local AGE_UNITS = {
-	{ 31556909, "y" },
-	{ 2629743, "mon" },
-	{ 604800, "w" },
-	{ 86400, "d" },
-	{ 3600, "h" },
-	{ 60, "m" },
-}
-function timeSinceText(elapsed: number): string
-	local ageText = string.format("%ds", elapsed)
-
-	for _, UnitData in ipairs(AGE_UNITS) do
-		local UnitSeconds, UnitName = UnitData[1], UnitData[2]
-		if elapsed > UnitSeconds then
-			ageText = elapsed // UnitSeconds .. UnitName
-			break
-		end
-	end
-
-	return ageText
-end
 
 local ChangesViewer = Roact.Component:extend("ChangesViewer")
 
@@ -82,12 +61,12 @@ function ChangesViewer:render()
 
 				Title = e("TextLabel", {
 					Text = "Sync",
-					Font = Enum.Font.GothamMedium,
-					TextSize = 17,
+					FontFace = theme.Font.Main,
+					TextSize = theme.TextSize.Large,
 					TextXAlignment = Enum.TextXAlignment.Left,
 					TextColor3 = theme.TextColor,
 					TextTransparency = self.props.transparency,
-					Size = UDim2.new(1, -40, 0, 20),
+					Size = UDim2.new(1, -40, 0, theme.TextSize.Large + 2),
 					Position = UDim2.new(0, 40, 0, 0),
 					BackgroundTransparency = 1,
 				}),
@@ -95,13 +74,13 @@ function ChangesViewer:render()
 				Subtitle = e("TextLabel", {
 					Text = DateTime.fromUnixTimestamp(self.props.patchData.timestamp):FormatLocalTime("LTS", "en-us"),
 					TextXAlignment = Enum.TextXAlignment.Left,
-					Font = Enum.Font.Gotham,
-					TextSize = 15,
+					FontFace = theme.Font.Thin,
+					TextSize = theme.TextSize.Medium,
 					TextColor3 = theme.SubTextColor,
 					TextTruncate = Enum.TextTruncate.AtEnd,
 					TextTransparency = self.props.transparency,
-					Size = UDim2.new(1, -40, 0, 16),
-					Position = UDim2.new(0, 40, 0, 20),
+					Size = UDim2.new(1, -40, 0, theme.TextSize.Medium),
+					Position = UDim2.new(0, 40, 0, theme.TextSize.Large + 2),
 					BackgroundTransparency = 1,
 				}),
 
@@ -152,8 +131,8 @@ function ChangesViewer:render()
 						}),
 						AppliedText = e("TextLabel", {
 							Text = applied,
-							Font = Enum.Font.Gotham,
-							TextSize = 15,
+							FontFace = theme.Font.Thin,
+							TextSize = theme.TextSize.Body,
 							TextColor3 = theme.TextColor,
 							TextTransparency = self.props.transparency,
 							Size = UDim2.new(0, 0, 1, 0),
@@ -177,8 +156,8 @@ function ChangesViewer:render()
 								}),
 								UnappliedText = e("TextLabel", {
 									Text = unapplied,
-									Font = Enum.Font.Gotham,
-									TextSize = 15,
+									FontFace = theme.Font.Thin,
+									TextSize = theme.TextSize.Body,
 									TextColor3 = theme.Diff.Warning,
 									TextTransparency = self.props.transparency,
 									Size = UDim2.new(0, 0, 1, 0),
@@ -238,13 +217,13 @@ local function ConnectionDetails(props)
 			}, {
 				ProjectName = e("TextLabel", {
 					Text = props.projectName,
-					Font = Enum.Font.GothamBold,
-					TextSize = 20,
+					FontFace = theme.Font.Bold,
+					TextSize = theme.TextSize.Large,
 					TextColor3 = theme.ConnectionDetails.ProjectNameColor,
 					TextTransparency = props.transparency,
 					TextXAlignment = Enum.TextXAlignment.Left,
 
-					Size = UDim2.new(1, 0, 0, 20),
+					Size = UDim2.new(1, 0, 0, theme.TextSize.Large),
 
 					LayoutOrder = 1,
 					BackgroundTransparency = 1,
@@ -252,13 +231,13 @@ local function ConnectionDetails(props)
 
 				Address = e("TextLabel", {
 					Text = props.address,
-					Font = Enum.Font.Code,
-					TextSize = 15,
+					FontFace = theme.Font.Code,
+					TextSize = theme.TextSize.Medium,
 					TextColor3 = theme.ConnectionDetails.AddressColor,
 					TextTransparency = props.transparency,
 					TextXAlignment = Enum.TextXAlignment.Left,
 
-					Size = UDim2.new(1, 0, 0, 15),
+					Size = UDim2.new(1, 0, 0, theme.TextSize.Medium),
 
 					LayoutOrder = 2,
 					BackgroundTransparency = 1,
@@ -287,7 +266,7 @@ function ConnectedPage:getChangeInfoText()
 	if patchData == nil then
 		return ""
 	end
-	return timeSinceText(DateTime.now().UnixTimestamp - patchData.timestamp)
+	return timeUtil.elapsedToText(DateTime.now().UnixTimestamp - patchData.timestamp)
 end
 
 function ConnectedPage:startChangeInfoTextUpdater()
@@ -303,7 +282,7 @@ function ConnectedPage:startChangeInfoTextUpdater()
 			local updateInterval = 1
 
 			-- Update timestamp text as frequently as currently needed
-			for _, UnitData in ipairs(AGE_UNITS) do
+			for _, UnitData in ipairs(timeUtil.AGE_UNITS) do
 				local UnitSeconds = UnitData[1]
 				if elapsed > UnitSeconds then
 					updateInterval = UnitSeconds
@@ -431,8 +410,8 @@ function ConnectedPage:render()
 						Text = e("TextLabel", {
 							BackgroundTransparency = 1,
 							Text = self.changeInfoText,
-							Font = Enum.Font.Gotham,
-							TextSize = 15,
+							FontFace = theme.Font.Thin,
+							TextSize = theme.TextSize.Body,
 							TextColor3 = if syncWarning then theme.Diff.Warning else theme.Header.VersionColor,
 							TextTransparency = self.props.transparency,
 							TextXAlignment = Enum.TextXAlignment.Right,
