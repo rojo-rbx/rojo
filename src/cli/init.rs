@@ -116,18 +116,18 @@ fn init_place(base_path: &Path, project_params: ProjectParams) -> anyhow::Result
     fs::create_dir_all(src.join(&src_client))?;
 
     write_if_not_exists(
-        &src_shared.join("Hello.lua"),
+        &src_shared.join("Hello.luau"),
         "return function()\n\tprint(\"Hello, world!\")\nend\n",
     )?;
 
     write_if_not_exists(
         &src_server.join("init.server.luau"),
-        "print(\"Hello world, from server!\")",
+        "print(\"Hello world, from server!\")\n",
     )?;
 
     write_if_not_exists(
         &src_client.join("init.client.luau"),
-        "print(\"Hello world, from client!\")",
+        "print(\"Hello world, from client!\")\n",
     )?;
 
     let git_ignore = project_params.render_template(PLACE_GIT_IGNORE);
