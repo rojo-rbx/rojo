@@ -1,6 +1,8 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Added support for `Enum` attributes
+* Significantly improved performance of `.rbxm` parsing
 * Support for a `$schema` field in all special JSON files (`.project.json`, `.model.json`, and `.meta.json`) ([#974])
 * Projects may now manually link `Ref` properties together using `Attributes`. ([#843])
  	This has two parts: using `id` or `$id` in JSON files or a `Rojo_Target` attribute, an Instance
