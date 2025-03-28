@@ -1,7 +1,7 @@
 # Rojo Changelog
 
 ## Unreleased Changes
-* Adds support for `.plugin.lua(u)` files - this applies the `Plugin` RunContext.
+* Adds support for `.plugin.lua(u)` files - this applies the `Plugin` RunContext. ([#1008])
 * Support for a `$schema` field in all special JSON files (`.project.json`, `.model.json`, and `.meta.json`) ([#974])
 * Projects may now manually link `Ref` properties together using `Attributes`. ([#843])
  	This has two parts: using `id` or `$id` in JSON files or a `Rojo_Target` attribute, an Instance
@@ -92,6 +92,7 @@
 [#974]: https://github.com/rojo-rbx/rojo/pull/974
 [#987]: https://github.com/rojo-rbx/rojo/pull/987
 [#988]: https://github.com/rojo-rbx/rojo/pull/988
+[#1008]: https://github.com/rojo-rbx/rojo/pull/1008
 
 ## [7.4.3] - August 6th, 2024
 * Fixed issue with building binary files introduced in 7.4.2
