@@ -43,22 +43,9 @@ local function rejectWrongProtocolVersion(infoResponseBody)
 	return Promise.resolve(infoResponseBody)
 end
 
-local function findPlaceId(placeIds)
-	local foundId = false
-
-    for _, id in ipairs(placeIds) do
-        if id == game.PlaceId then
-            foundId = true
-            break
-        end
-    end
-
-    return foundId
-end
-
 local function rejectWrongPlaceId(infoResponseBody)
 	if infoResponseBody.expectedPlaceIds ~= nil then
-		local foundId = findPlaceId(infoResponseBody.expectedPlaceIds)
+		local foundId = table.find(infoResponseBody.expectedPlaceIds, game.PlaceId)
 
 		if not foundId then
 			local idList = {}
@@ -68,17 +55,17 @@ local function rejectWrongPlaceId(infoResponseBody)
 
 			local message = (
 				"Found a Rojo server, but its project is set to only be used with a specific list of places."
-				.. "\nYour place ID is %s, but needs to be one of these:"
+				.. "\nYour place ID is %u, but needs to be one of these:"
 				.. "\n%s"
 				.. "\n\nTo change this list, edit 'servePlaceIds' in your .project.json file."
-			):format(tostring(game.PlaceId), table.concat(idList, "\n"))
+			):format(game.PlaceId, table.concat(idList, "\n"))
 
 			return Promise.reject(message)
 		end
 	end
 
 	if infoResponseBody.unexpectedPlaceIds ~= nil then
-		local foundId = findPlaceId(infoResponseBody.unexpectedPlaceIds)
+		local foundId = table.find(infoResponseBody.unexpectedPlaceIds, game.PlaceId)
 
 		if foundId then
 			local idList = {}
@@ -88,10 +75,10 @@ local function rejectWrongPlaceId(infoResponseBody)
 
 			local message = (
 				"Found a Rojo server, but its project is set to not be used with a specific list of places."
-				.. "\nYour place ID is %s, but needs to not be one of these:"
+				.. "\nYour place ID is %u, but needs to not be one of these:"
 				.. "\n%s"
-				.. "\n\nTo change this list, edit 'avoidPlaceIds' in your .project.json file."
-			):format(tostring(game.PlaceId), table.concat(idList, "\n"))
+				.. "\n\nTo change this list, edit 'blockedPlaceIds' in your .project.json file."
+			):format(game.PlaceId, table.concat(idList, "\n"))
 
 			return Promise.reject(message)
 		end
