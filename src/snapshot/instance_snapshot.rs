@@ -57,19 +57,19 @@ impl InstanceSnapshot {
         }
     }
 
-    pub fn class_name<'a, S: Into<&'a str>>(self, class_name: S) -> Self {
+    pub fn class_name<S: Into<Ustr>>(self, class_name: S) -> Self {
         Self {
-            class_name: ustr(class_name.into()),
+            class_name: class_name.into(),
             ..self
         }
     }
 
-    pub fn property<'a, K, V>(mut self, key: K, value: V) -> Self
+    pub fn property<K, V>(mut self, key: K, value: V) -> Self
     where
-        K: Into<&'a str>,
+        K: Into<Ustr>,
         V: Into<Variant>,
     {
-        self.properties.insert(ustr(key.into()), value.into());
+        self.properties.insert(key.into(), value.into());
         self
     }
 
