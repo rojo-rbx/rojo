@@ -2,6 +2,7 @@ local HttpService = game:GetService("HttpService")
 
 local Promise = require(script.Parent.Promise)
 local Log = require(script.Parent.Log)
+local msgpack = require(script.Parent.msgpack)
 
 local HttpError = require(script.Error)
 local HttpResponse = require(script.Response)
@@ -66,6 +67,10 @@ end
 
 function Http.jsonDecode(source)
 	return HttpService:JSONDecode(source)
+end
+
+function Http.msgpackEncode(object)
+	return msgpack.encode(object)
 end
 
 return Http

@@ -16,3 +16,6 @@
 [submodule "plugin/Packages/Highlighter"]
 	path = plugin/Packages/Highlighter
 	url = https://github.com/boatbomber/highlighter.git
+[submodule "plugin/Packages/msgpack-luau"]
+	path = plugin/Packages/msgpack-luau
+	url = https://github.com/cipharius/msgpack-luau
