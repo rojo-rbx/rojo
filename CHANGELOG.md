@@ -81,14 +81,15 @@
  	| `project`      | `.project.json` |
  	| `ignore`       | None!           |
 
-	Additionally, there are `use` values for specific script types:
+	Additionally, there are `use` values for specific script types ([#909]):
 
 	| `use` value              | script type                            |
 	|:-------------------------|:---------------------------------------|
 	| `legacyServerScript`     | `Script` with `Enum.RunContext.Legacy` |
-	| `legactClientScript`     | `LocalScript`                          |
+	| `legacyClientScript`     | `LocalScript`                          |
 	| `runContextServerScript` | `Script` with `Enum.RunContext.Server` |
 	| `runContextClientScript` | `Script` with `Enum.RunContext.Client` |
+    | `pluginScript`           | `Script` with `Enum.RunContext.Plugin` |
 
     **All** sync rules are reset between project files, so they must be specified in each one when nesting them. This is to ensure that nothing can break other projects by changing how files are synced!
 
