@@ -1,6 +1,7 @@
 use std::{path::Path, str};
 
 use memofs::{IoResultExt, Vfs};
+use rbx_dom_weak::ustr;
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
@@ -15,14 +16,12 @@ pub fn snapshot_txt(
     let contents = vfs.read_to_string(path)?;
     let contents_str = contents.as_str();
 
-    let properties = [("Value".to_owned(), contents_str.into())];
-
     let meta_path = path.with_file_name(format!("{}.meta.json", name));
 
     let mut snapshot = InstanceSnapshot::new()
         .name(name)
         .class_name("StringValue")
-        .properties(properties)
+        .property(ustr("Value"), contents_str)
         .metadata(
             InstanceMetadata::new()
                 .instigating_source(path)

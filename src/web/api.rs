@@ -280,7 +280,7 @@ impl ApiService {
 /// If this instance is represented by a script, try to find the correct .lua or .luau
 /// file to open to edit it.
 fn pick_script_path(instance: InstanceWithMeta<'_>) -> Option<PathBuf> {
-    match instance.class_name() {
+    match instance.class_name().as_str() {
         "Script" | "LocalScript" | "ModuleScript" => {}
         _ => return None,
     }

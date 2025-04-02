@@ -1,5 +1,6 @@
 use insta::assert_yaml_snapshot;
 
+use rbx_dom_weak::{ustr, UstrMap};
 use rojo_insta_ext::RedactionMap;
 
 use crate::{
@@ -18,7 +19,7 @@ fn set_name_and_class_name() {
         updated_instances: vec![PatchUpdate {
             id: tree.get_root_id(),
             changed_name: Some("Hello, world!".to_owned()),
-            changed_class_name: Some("Folder".to_owned()),
+            changed_class_name: Some(ustr("Folder")),
             changed_properties: Default::default(),
             changed_metadata: None,
         }],
@@ -46,7 +47,7 @@ fn add_property() {
             id: tree.get_root_id(),
             changed_name: None,
             changed_class_name: None,
-            changed_properties: [("Foo".to_owned(), Some("Value of Foo".into()))].into(),
+            changed_properties: UstrMap::from_iter([(ustr("Foo"), Some("Value of Foo".into()))]),
             changed_metadata: None,
         }],
         ..Default::default()
@@ -74,7 +75,7 @@ fn remove_property() {
 
         root_instance
             .properties_mut()
-            .insert("Foo".to_owned(), "Should be removed".into());
+            .insert(ustr("Foo"), "Should be removed".into());
     }
 
     let tree_view = view_tree(&tree, &mut redactions);
@@ -85,7 +86,7 @@ fn remove_property() {
             id: tree.get_root_id(),
             changed_name: None,
             changed_class_name: None,
-            changed_properties: [("Foo".to_owned(), None)].into(),
+            changed_properties: UstrMap::from_iter([(ustr("Foo"), None)]),
             changed_metadata: None,
         }],
         ..Default::default()
