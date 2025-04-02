@@ -1,7 +1,7 @@
-use std::{collections::HashMap, path::Path, str};
+use std::{path::Path, str};
 
 use memofs::{IoResultExt, Vfs};
-use rbx_dom_weak::types::Enum;
+use rbx_dom_weak::{types::Enum, ustr, HashMapExt as _, UstrMap};
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
@@ -44,12 +44,12 @@ pub fn snapshot_lua(
     let contents = vfs.read_to_string_lf_normalized(path)?;
     let contents_str = contents.as_str();
 
-    let mut properties = HashMap::with_capacity(2);
-    properties.insert("Source".to_owned(), contents_str.into());
+    let mut properties = UstrMap::with_capacity(2);
+    properties.insert(ustr("Source"), contents_str.into());
 
     if let Some(run_context) = run_context {
         properties.insert(
-            "RunContext".to_owned(),
+            ustr("RunContext"),
             Enum::from_u32(run_context.to_owned()).into(),
         );
     }
