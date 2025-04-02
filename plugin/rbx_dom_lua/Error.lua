@@ -5,6 +5,7 @@ Error.Kind = {
 	UnknownProperty = "UnknownProperty",
 	PropertyNotReadable = "PropertyNotReadable",
 	PropertyNotWritable = "PropertyNotWritable",
+	CannotParseBinaryString = "CannotParseBinaryString",
 	Roblox = "Roblox",
 }
 
