@@ -108,7 +108,6 @@ pub fn snapshot_dir_no_meta(
 mod test {
     use super::*;
 
-    use maplit::hashmap;
     use memofs::{InMemoryFs, VfsSnapshot};
 
     #[test]
@@ -117,12 +116,11 @@ mod test {
         imfs.load_snapshot("/foo", VfsSnapshot::empty_dir())
             .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
-        let instance_snapshot =
-            snapshot_dir(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = snapshot_dir(&InstanceContext::default(), &vfs, Path::new("/foo"))
+            .unwrap()
+            .unwrap();
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }
@@ -132,18 +130,15 @@ mod test {
         let mut imfs = InMemoryFs::new();
         imfs.load_snapshot(
             "/foo",
-            VfsSnapshot::dir(hashmap! {
-                "Child" => VfsSnapshot::empty_dir(),
-            }),
+            VfsSnapshot::dir([("Child", VfsSnapshot::empty_dir())]),
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
-        let instance_snapshot =
-            snapshot_dir(&InstanceContext::default(), &mut vfs, Path::new("/foo"))
-                .unwrap()
-                .unwrap();
+        let instance_snapshot = snapshot_dir(&InstanceContext::default(), &vfs, Path::new("/foo"))
+            .unwrap()
+            .unwrap();
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }

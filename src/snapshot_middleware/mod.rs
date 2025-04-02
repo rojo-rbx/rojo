@@ -65,6 +65,9 @@ pub fn snapshot_from_vfs(
     if meta.is_dir() {
         if let Some(init_path) = get_init_path(vfs, path)? {
             // TODO: support user-defined init paths
+            // If and when we do, make sure to go support it in
+            // `Project::set_file_name`, as right now it special-cases
+            // `default.project.json` as an `init` path.
             for rule in default_sync_rules() {
                 if rule.matches(&init_path) {
                     return match rule.middleware {
@@ -201,6 +204,7 @@ pub enum Middleware {
     ServerScript,
     ClientScript,
     ModuleScript,
+    PluginScript,
     Project,
     Rbxm,
     Rbxmx,
@@ -227,6 +231,7 @@ impl Middleware {
             Self::ServerScript => snapshot_lua(context, vfs, path, name, ScriptType::Server),
             Self::ClientScript => snapshot_lua(context, vfs, path, name, ScriptType::Client),
             Self::ModuleScript => snapshot_lua(context, vfs, path, name, ScriptType::Module),
+            Self::PluginScript => snapshot_lua(context, vfs, path, name, ScriptType::Plugin),
             Self::Project => snapshot_project(context, vfs, path, name),
             Self::Rbxm => snapshot_rbxm(context, vfs, path, name),
             Self::Rbxmx => snapshot_rbxmx(context, vfs, path, name),
@@ -278,7 +283,7 @@ macro_rules! sync_rule {
 /// Defines the 'default' syncing rules that Rojo uses.
 /// These do not broadly overlap, but the order matters for some in the case of
 /// e.g. JSON models.
-fn default_sync_rules() -> &'static [SyncRule] {
+pub fn default_sync_rules() -> &'static [SyncRule] {
     static DEFAULT_SYNC_RULES: OnceLock<Vec<SyncRule>> = OnceLock::new();
 
     DEFAULT_SYNC_RULES.get_or_init(|| {
@@ -287,6 +292,8 @@ fn default_sync_rules() -> &'static [SyncRule] {
             sync_rule!("*.server.luau", ServerScript, ".server.luau"),
             sync_rule!("*.client.lua", ClientScript, ".client.lua"),
             sync_rule!("*.client.luau", ClientScript, ".client.luau"),
+            sync_rule!("*.plugin.lua", PluginScript, ".plugin.lua"),
+            sync_rule!("*.plugin.luau", PluginScript, ".plugin.luau"),
             sync_rule!("*.{lua,luau}", ModuleScript),
             sync_rule!("*.project.json", Project, ".project.json"),
             sync_rule!("*.model.json", JsonModel, ".model.json"),

@@ -1,5 +1,3 @@
-local TextService = game:GetService("TextService")
-
 local Rojo = script:FindFirstAncestor("Rojo")
 local Plugin = Rojo.Plugin
 local Packages = Rojo.Packages
@@ -9,6 +7,7 @@ local Roact = require(Packages.Roact)
 local Settings = require(Plugin.Settings)
 local Assets = require(Plugin.Assets)
 local Theme = require(Plugin.App.Theme)
+local getTextBoundsAsync = require(Plugin.App.getTextBoundsAsync)
 
 local Checkbox = require(Plugin.App.Components.Checkbox)
 local Dropdown = require(Plugin.App.Components.Dropdown)
@@ -31,10 +30,16 @@ local TAG_TYPES = {
 	},
 }
 
-local function getTextBounds(text, textSize, font, lineHeight, bounds)
-	local textBounds = TextService:GetTextSize(text, textSize, font, bounds)
+local function getTextBoundsWithLineHeight(
+	text: string,
+	font: Font,
+	textSize: number,
+	width: number,
+	lineHeight: number
+)
+	local textBounds = getTextBoundsAsync(text, font, textSize, width)
 
-	local lineCount = textBounds.Y / textSize
+	local lineCount = math.ceil(textBounds.Y / textSize)
 	local lineHeightAbsolute = textSize * lineHeight
 
 	return Vector2.new(textBounds.X, lineHeightAbsolute * lineCount - (lineHeightAbsolute - textSize))
@@ -109,6 +114,7 @@ function Setting:render()
 					then self.props.input
 					elseif self.props.options ~= nil then e(Dropdown, {
 						locked = self.props.locked,
+						lockedTooltip = self.props.lockedTooltip,
 						options = self.props.options,
 						active = self.state.setting,
 						transparency = self.props.transparency,
@@ -118,6 +124,7 @@ function Setting:render()
 					})
 					else e(Checkbox, {
 						locked = self.props.locked,
+						lockedTooltip = self.props.lockedTooltip,
 						active = self.state.setting,
 						transparency = self.props.transparency,
 						onClick = function()
@@ -145,7 +152,7 @@ function Setting:render()
 				BackgroundTransparency = 1,
 			}, {
 				Heading = e("Frame", {
-					Size = UDim2.new(1, 0, 0, 16),
+					Size = UDim2.new(1, 0, 0, theme.TextSize.Medium),
 					BackgroundTransparency = 1,
 				}, {
 					Layout = e("UIListLayout", {
@@ -165,8 +172,8 @@ function Setting:render()
 						else nil,
 					Name = e("TextLabel", {
 						Text = self.props.name,
-						Font = Enum.Font.GothamBold,
-						TextSize = 16,
+						FontFace = theme.Font.Bold,
+						TextSize = theme.TextSize.Medium,
 						TextColor3 = if self.props.tag and TAG_TYPES[self.props.tag]
 							then getThemeColorFromPath(theme, TAG_TYPES[self.props.tag].color)
 							else settingsTheme.Setting.NameColor,
@@ -174,7 +181,7 @@ function Setting:render()
 						TextTransparency = self.props.transparency,
 						RichText = true,
 
-						Size = UDim2.new(1, 0, 0, 16),
+						Size = UDim2.new(1, 0, 0, theme.TextSize.Medium),
 
 						LayoutOrder = 2,
 						BackgroundTransparency = 1,
@@ -183,9 +190,9 @@ function Setting:render()
 
 				Description = e("TextLabel", {
 					Text = self.props.description,
-					Font = Enum.Font.Gotham,
+					FontFace = theme.Font.Main,
 					LineHeight = 1.2,
-					TextSize = 14,
+					TextSize = theme.TextSize.Body,
 					TextColor3 = settingsTheme.Setting.DescriptionColor,
 					TextXAlignment = Enum.TextXAlignment.Left,
 					TextTransparency = self.props.transparency,
@@ -197,12 +204,12 @@ function Setting:render()
 						inputSize = self.inputSize,
 					}):map(function(values)
 						local offset = values.inputSize.X + 5
-						local textBounds = getTextBounds(
+						local textBounds = getTextBoundsWithLineHeight(
 							self.props.description,
-							14,
-							Enum.Font.Gotham,
-							1.2,
-							Vector2.new(values.containerSize.X - offset, math.huge)
+							theme.Font.Main,
+							theme.TextSize.Body,
+							values.containerSize.X - offset,
+							1.2
 						)
 						return UDim2.new(1, -offset, 0, textBounds.Y)
 					end),

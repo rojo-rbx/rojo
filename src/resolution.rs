@@ -2,11 +2,13 @@ use std::borrow::Borrow;
 
 use anyhow::{bail, format_err};
 use rbx_dom_weak::types::{
-    Attributes, CFrame, Color3, Content, Enum, Font, MaterialColors, Matrix3, Tags, Variant,
-    VariantType, Vector2, Vector3,
+    Attributes, CFrame, Color3, Content, ContentId, Enum, Font, MaterialColors, Matrix3, Tags,
+    Variant, VariantType, Vector2, Vector3,
 };
 use rbx_reflection::{DataType, PropertyDescriptor};
 use serde::{Deserialize, Serialize};
+
+use crate::REF_POINTER_ATTRIBUTE_PREFIX;
 
 /// A user-friendly version of `Variant` that supports specifying ambiguous
 /// values. Ambiguous values need a reflection database to be resolved to a
@@ -114,6 +116,9 @@ impl AmbiguousValue {
                 (VariantType::Content, AmbiguousValue::String(value)) => {
                     Ok(Content::from(value).into())
                 }
+                (VariantType::ContentId, AmbiguousValue::String(value)) => {
+                    Ok(ContentId::from(value).into())
+                }
 
                 (VariantType::Vector2, AmbiguousValue::Array2(value)) => {
                     Ok(Vector2::new(value[0] as f32, value[1] as f32).into())
@@ -147,6 +152,10 @@ impl AmbiguousValue {
                     Ok(value.into())
                 }
 
+                (VariantType::Ref, AmbiguousValue::String(_)) => Err(format_err!(
+                    "Cannot resolve Ref properties as a String.\
+                    Use an attribute named `{REF_POINTER_ATTRIBUTE_PREFIX}{prop_name}"
+                )),
                 (_, unresolved) => Err(format_err!(
                     "Wrong type of value for property {}.{}. Expected {:?}, got {}",
                     class_name,
@@ -269,10 +278,20 @@ mod test {
             Variant::String("Hello!".into()),
         );
 
-        // String literals can also turn into Content
+        // String literals can also turn into ContentId
         assert_eq!(
             resolve("Sky", "MoonTextureId", "\"rbxassetid://12345\""),
-            Variant::Content("rbxassetid://12345".into()),
+            Variant::ContentId("rbxassetid://12345".into()),
+        );
+
+        // String literals can turn into Content!
+        assert_eq!(
+            resolve(
+                "MeshPart",
+                "MeshContent",
+                "\"rbxasset://totally-a-real-uri.tiff\""
+            ),
+            Variant::Content("rbxasset://totally-a-real-uri.tiff".into())
         );
 
         // What about BinaryString values? For forward-compatibility reasons, we

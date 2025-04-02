@@ -1,15 +1,41 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Adds support for `.plugin.lua(u)` files - this applies the `Plugin` RunContext. ([#1008])
+* Added support for Roblox's `Content` type. This replaces the old `Content` type with `ContentId` to reflect Roblox's change.
+ 	If you were previously using the fully-qualified syntax for `Content` you will need to switch it to `ContentId`.
+* Added support for `Enum` attributes
+* Significantly improved performance of `.rbxm` parsing
+* Support for a `$schema` field in all special JSON files (`.project.json`, `.model.json`, and `.meta.json`) ([#974])
+* Projects may now manually link `Ref` properties together using `Attributes`. ([#843])
+ 	This has two parts: using `id` or `$id` in JSON files or a `Rojo_Target` attribute, an Instance
+    is given an ID. Then, that ID may be used elsewhere in the project to point to an Instance
+    using an attribute named `Rojo_Target_PROP_NAME`, where `PROP_NAME` is the name of a property.
+
+    As an example, here is a `model.json` for an ObjectValue that refers to itself:
+
+    ```json
+    {
+        "id": "arbitrary string",
+        "attributes": {
+            "Rojo_Target_Value": "arbitrary string"
+        }
+    }
+    ```
+
+    This is a very rough implementation and the usage will become more ergonomic
+    over time.
+
 * Updated Undo/Redo history to be more robust ([#915])
-* Fixed removing trailing newlines ([#903])
-* Added Never option to Confirmation ([#893])
 * Added popout diff visualizer for table properties like Attributes and Tags ([#834])
 * Updated Theme to use Studio colors ([#838])
 * Improved patch visualizer UX ([#883])
+* Added update notifications for newer compatible versions in the Studio plugin. ([#832])
 * Added experimental setting for Auto Connect in playtests ([#840])
 * Improved settings UI ([#886])
 * `Open Scripts Externally` option can now be changed while syncing ([#911])
+* The sync reminder notification will now tell you what was last synced and when ([#987])
+* Fixed notification and tooltip text sometimes getting cut off ([#988])
 * Projects may now specify rules for syncing files as if they had a different file extension. ([#813])
  	This is specified via a new field on project files, `syncRules`:
 
@@ -61,16 +87,37 @@
 * Added the ability to sync `YAML` files into ModuleScripts in the same way that `TOML` and `JSON` files are synced. This will apply to `.yml` and `.yaml` files. ([#913])
 
 [#813]: https://github.com/rojo-rbx/rojo/pull/813
+[#832]: https://github.com/rojo-rbx/rojo/pull/832
 [#834]: https://github.com/rojo-rbx/rojo/pull/834
 [#838]: https://github.com/rojo-rbx/rojo/pull/838
 [#840]: https://github.com/rojo-rbx/rojo/pull/840
+[#843]: https://github.com/rojo-rbx/rojo/pull/843
 [#883]: https://github.com/rojo-rbx/rojo/pull/883
 [#886]: https://github.com/rojo-rbx/rojo/pull/886
-[#893]: https://github.com/rojo-rbx/rojo/pull/893
-[#903]: https://github.com/rojo-rbx/rojo/pull/903
 [#911]: https://github.com/rojo-rbx/rojo/pull/911
 [#913]: https://github.com/rojo-rbx/rojo/pull/913
 [#915]: https://github.com/rojo-rbx/rojo/pull/915
+[#974]: https://github.com/rojo-rbx/rojo/pull/974
+[#987]: https://github.com/rojo-rbx/rojo/pull/987
+[#988]: https://github.com/rojo-rbx/rojo/pull/988
+[#1008]: https://github.com/rojo-rbx/rojo/pull/1008
+
+## [7.4.3] - August 6th, 2024
+* Fixed issue with building binary files introduced in 7.4.2
+* Fixed `value of type nil cannot be converted to number` warning spam in output. [#955]
+
+[#955]: https://github.com/rojo-rbx/rojo/pull/955
+
+## [7.4.2] - July 23, 2024
+* Added Never option to Confirmation ([#893])
+* Fixed removing trailing newlines ([#903])
+* Updated the internal property database, correcting an issue with `SurfaceAppearance.Color` that was reported [here][Surface_Appearance_Color_1] and [here][Surface_Appearance_Color_2] ([#948])
+
+[#893]: https://github.com/rojo-rbx/rojo/pull/893
+[#903]: https://github.com/rojo-rbx/rojo/pull/903
+[#948]: https://github.com/rojo-rbx/rojo/pull/948
+[Surface_Appearance_Color_1]: https://devforum.roblox.com/t/jailbreak-custom-character-turned-shiny-black-no-texture/3075563
+[Surface_Appearance_Color_2]: https://devforum.roblox.com/t/surfaceappearance-not-displaying-correctly/3075588
 
 ## [7.4.1] - February 20, 2024
 * Made the `name` field optional on project files ([#870])

@@ -1,6 +1,8 @@
 local CollectionService = game:GetService("CollectionService")
 local ScriptEditorService = game:GetService("ScriptEditorService")
 
+local Error = require(script.Parent.Error)
+
 --- A list of `Enum.Material` values that are used for Terrain.MaterialColors
 local TERRAIN_MATERIAL_COLORS = {
 	Enum.Material.Grass,
@@ -26,6 +28,21 @@ local TERRAIN_MATERIAL_COLORS = {
 	Enum.Material.Pavement,
 }
 
+local function isAttributeNameValid(attributeName)
+	-- For SetAttribute to succeed, the attribute name must be less than or
+	-- equal to 100 characters...
+	return #attributeName <= 100
+		-- ...and must only contain alphanumeric characters, periods, hyphens,
+		-- underscores, or forward slashes.
+		and attributeName:match("[^%w%.%-_/]") == nil
+end
+
+local function isAttributeNameReserved(attributeName)
+	-- For SetAttribute to succeed, attribute names must not use the RBX
+	-- prefix, which is reserved by Roblox.
+	return attributeName:sub(1, 3) == "RBX"
+end
+
 -- Defines how to read and write properties that aren't directly scriptable.
 --
 -- The reflection database refers to these as having scriptability = "Custom"
@@ -36,30 +53,41 @@ return {
 				return true, instance:GetAttributes()
 			end,
 			write = function(instance, _, value)
+				if typeof(value) ~= "table" then
+					return false, Error.new(Error.Kind.CannotParseBinaryString)
+				end
+
 				local existing = instance:GetAttributes()
 				local didAllWritesSucceed = true
 
 				for attributeName, attributeValue in pairs(value) do
-					local isNameValid =
-						-- For our SetAttribute to succeed, the attribute name must be
-						-- less than or equal to 100 characters...
-						#attributeName <= 100
-						-- ...must only contain alphanumeric characters, periods, hyphens,
-						-- underscores, or forward slashes...
-						and attributeName:match("[^%w%.%-_/]") == nil
-						-- ... and must not use the RBX prefix, which is reserved by Roblox.
-						and attributeName:sub(1, 3) ~= "RBX"
-
-					if isNameValid then
-						instance:SetAttribute(attributeName, attributeValue)
-					else
-						didAllWritesSucceed = false
+					if isAttributeNameReserved(attributeName) then
+						-- If the attribute name is reserved, then we don't
+						-- really care about reporting any failures about
+						-- it.
+						continue
 					end
+
+					if not isAttributeNameValid(attributeName) then
+						didAllWritesSucceed = false
+						continue
+					end
+
+					instance:SetAttribute(attributeName, attributeValue)
 				end
 
-				for key in pairs(existing) do
-					if value[key] == nil then
-						instance:SetAttribute(key, nil)
+				for existingAttributeName in pairs(existing) do
+					if isAttributeNameReserved(existingAttributeName) then
+						continue
+					end
+
+					if not isAttributeNameValid(existingAttributeName) then
+						didAllWritesSucceed = false
+						continue
+					end
+
+					if value[existingAttributeName] == nil then
+						instance:SetAttribute(existingAttributeName, nil)
 					end
 				end
 
@@ -113,13 +141,14 @@ return {
 		},
 		WorldPivotData = {
 			read = function(instance)
-				return true, instance:GetPivot()
+				return true, instance.WorldPivot
 			end,
 			write = function(instance, _, value)
 				if value == nil then
 					return true, nil
 				else
-					return true, instance:PivotTo(value)
+					instance.WorldPivot = value
+					return true
 				end
 			end,
 		},
@@ -137,9 +166,14 @@ return {
 				return true, colors
 			end,
 			write = function(instance: Terrain, _, value: { [Enum.Material]: Color3 })
+				if typeof(value) ~= "table" then
+					return false, Error.new(Error.Kind.CannotParseBinaryString)
+				end
+
 				for material, color in value do
 					instance:SetMaterialColor(material, color)
 				end
+
 				return true
 			end,
 		},

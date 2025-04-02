@@ -1,6 +1,6 @@
 [package]
 name = "rojo"
-version = "7.4.0"
+version = "7.5.0-prealpha"
 rust-version = "1.70.0"
 authors = ["Lucien Greathouse <me@lpghatguy.com>"]
 description = "Enables professional-grade development tools for Roblox developers"
@@ -51,11 +51,11 @@ memofs = { version = "0.3.0", path = "crates/memofs" }
 # rbx_reflection_database = { path = "../rbx-dom/rbx_reflection_database" }
 # rbx_xml = { path = "../rbx-dom/rbx_xml" }
 
-rbx_binary = "0.7.4"
-rbx_dom_weak = "2.7.0"
-rbx_reflection = "4.5.0"
-rbx_reflection_database = "0.2.10"
-rbx_xml = "0.13.3"
+rbx_binary = "1.0.0"
+rbx_dom_weak = "3.0.0"
+rbx_reflection = "5.0.0"
+rbx_reflection_database = "1.0.0"
+rbx_xml = "1.0.0"
 
 serde = { version = "1.0.197", features = ["derive", "rc"] }
 serde_json = "1.0.114"
@@ -75,7 +75,6 @@ humantime = "2.1.0"
 hyper = { version = "0.14.28", features = ["server", "tcp", "http1"] }
 jod-thread = "0.1.2"
 log = "0.4.21"
-maplit = "1.0.2"
 num_cpus = "1.16.0"
 opener = "0.5.2"
 rayon = "1.9.0"

@@ -1,5 +1,3 @@
-local TextService = game:GetService("TextService")
-
 local Rojo = script:FindFirstAncestor("Rojo")
 local Plugin = Rojo.Plugin
 local Packages = Rojo.Packages
@@ -10,6 +8,7 @@ local Flipper = require(Packages.Flipper)
 local Theme = require(Plugin.App.Theme)
 local Assets = require(Plugin.Assets)
 local bindingUtil = require(Plugin.App.bindingUtil)
+local getTextBoundsAsync = require(Plugin.App.getTextBoundsAsync)
 
 local SlicedImage = require(script.Parent.SlicedImage)
 local TouchRipple = require(script.Parent.TouchRipple)
@@ -41,18 +40,17 @@ end
 
 function TextButton:render()
 	return Theme.with(function(theme)
-		local textSize =
-			TextService:GetTextSize(self.props.text, 18, Enum.Font.GothamMedium, Vector2.new(math.huge, math.huge))
+		local textBounds = getTextBoundsAsync(self.props.text, theme.Font.Main, theme.TextSize.Large, math.huge)
 
 		local style = self.props.style
 
-		theme = theme.Button[style]
+		local buttonTheme = theme.Button[style]
 
 		local bindingHover = bindingUtil.deriveProperty(self.binding, "hover")
 		local bindingEnabled = bindingUtil.deriveProperty(self.binding, "enabled")
 
 		return e("ImageButton", {
-			Size = UDim2.new(0, 15 + textSize.X + 15, 0, 34),
+			Size = UDim2.new(0, (theme.TextSize.Body * 2) + textBounds.X, 0, 34),
 			Position = self.props.position,
 			AnchorPoint = self.props.anchorPoint,
 
@@ -74,18 +72,22 @@ function TextButton:render()
 			end,
 		}, {
 			TouchRipple = e(TouchRipple, {
-				color = theme.ActionFillColor,
+				color = buttonTheme.ActionFillColor,
 				transparency = self.props.transparency:map(function(value)
-					return bindingUtil.blendAlpha({ theme.ActionFillTransparency, value })
+					return bindingUtil.blendAlpha({ buttonTheme.ActionFillTransparency, value })
 				end),
 				zIndex = 2,
 			}),
 
 			Text = e("TextLabel", {
 				Text = self.props.text,
-				Font = Enum.Font.GothamMedium,
-				TextSize = 18,
-				TextColor3 = bindingUtil.mapLerp(bindingEnabled, theme.Enabled.TextColor, theme.Disabled.TextColor),
+				FontFace = theme.Font.Main,
+				TextSize = theme.TextSize.Large,
+				TextColor3 = bindingUtil.mapLerp(
+					bindingEnabled,
+					buttonTheme.Enabled.TextColor,
+					buttonTheme.Disabled.TextColor
+				),
 				TextTransparency = self.props.transparency,
 
 				Size = UDim2.new(1, 0, 1, 0),
@@ -95,7 +97,11 @@ function TextButton:render()
 
 			Border = style == "Bordered" and e(SlicedImage, {
 				slice = Assets.Slices.RoundedBorder,
-				color = bindingUtil.mapLerp(bindingEnabled, theme.Enabled.BorderColor, theme.Disabled.BorderColor),
+				color = bindingUtil.mapLerp(
+					bindingEnabled,
+					buttonTheme.Enabled.BorderColor,
+					buttonTheme.Disabled.BorderColor
+				),
 				transparency = self.props.transparency,
 
 				size = UDim2.new(1, 0, 1, 0),
@@ -105,14 +111,18 @@ function TextButton:render()
 
 			HoverOverlay = e(SlicedImage, {
 				slice = Assets.Slices.RoundedBackground,
-				color = theme.ActionFillColor,
+				color = buttonTheme.ActionFillColor,
 				transparency = Roact.joinBindings({
 					hover = bindingHover:map(function(value)
 						return 1 - value
 					end),
 					transparency = self.props.transparency,
 				}):map(function(values)
-					return bindingUtil.blendAlpha({ theme.ActionFillTransparency, values.hover, values.transparency })
+					return bindingUtil.blendAlpha({
+						buttonTheme.ActionFillTransparency,
+						values.hover,
+						values.transparency,
+					})
 				end),
 
 				size = UDim2.new(1, 0, 1, 0),
@@ -124,8 +134,8 @@ function TextButton:render()
 				slice = Assets.Slices.RoundedBackground,
 				color = bindingUtil.mapLerp(
 					bindingEnabled,
-					theme.Enabled.BackgroundColor,
-					theme.Disabled.BackgroundColor
+					buttonTheme.Enabled.BackgroundColor,
+					buttonTheme.Disabled.BackgroundColor
 				),
 				transparency = self.props.transparency,
 

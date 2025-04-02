@@ -1,4 +1,5 @@
 local Rojo = script:FindFirstAncestor("Rojo")
+local Plugin = Rojo.Plugin
 local Packages = Rojo.Packages
 
 local Roact = require(Packages.Roact)
@@ -6,6 +7,8 @@ local Highlighter = require(Packages.Highlighter)
 Highlighter.matchStudioSettings()
 
 local e = Roact.createElement
+
+local Theme = require(Plugin.App.Theme)
 
 local CodeLabel = Roact.PureComponent:extend("CodeLabel")
 
@@ -40,22 +43,24 @@ function CodeLabel:updateHighlights()
 end
 
 function CodeLabel:render()
-	return e("TextLabel", {
-		Size = self.props.size,
-		Position = self.props.position,
-		Text = self.props.text,
-		BackgroundTransparency = 1,
-		Font = Enum.Font.RobotoMono,
-		TextSize = 16,
-		TextXAlignment = Enum.TextXAlignment.Left,
-		TextYAlignment = Enum.TextYAlignment.Top,
-		TextColor3 = Color3.fromRGB(255, 255, 255),
-		[Roact.Ref] = self.labelRef,
-	}, {
-		SyntaxHighlights = e("Folder", {
-			[Roact.Ref] = self.highlightsRef,
-		}),
-	})
+	return Theme.with(function(theme)
+		return e("TextLabel", {
+			Size = self.props.size,
+			Position = self.props.position,
+			Text = self.props.text,
+			BackgroundTransparency = 1,
+			FontFace = theme.Font.Code,
+			TextSize = theme.TextSize.Code,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			TextYAlignment = Enum.TextYAlignment.Top,
+			TextColor3 = Color3.fromRGB(255, 255, 255),
+			[Roact.Ref] = self.labelRef,
+		}, {
+			SyntaxHighlights = e("Folder", {
+				[Roact.Ref] = self.highlightsRef,
+			}),
+		})
+	end)
 end
 
 return CodeLabel

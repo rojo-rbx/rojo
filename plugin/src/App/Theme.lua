@@ -1,7 +1,6 @@
 --[[
-	Theming system taking advantage of Roact's new context API.
-	Doesn't use colors provided by Studio and instead just branches on theme
-	name. This isn't exactly best practice.
+	Theming system provided through Roact's context.
+	Uses Studio colors when possible.
 ]]
 
 -- Studio does not exist outside Roblox Studio, so we'll lazily initialize it
@@ -14,6 +13,8 @@ local function getStudio()
 
 	return _Studio
 end
+
+local ContentProvider = game:GetService("ContentProvider")
 
 local Rojo = script:FindFirstAncestor("Rojo")
 local Packages = Rojo.Packages
@@ -35,6 +36,27 @@ function StudioProvider:updateTheme()
 	local isDark = studioTheme.Name == "Dark"
 
 	local theme = strict(studioTheme.Name .. "Theme", {
+		Font = {
+			Main = Font.new("rbxasset://fonts/families/Montserrat.json", Enum.FontWeight.Medium, Enum.FontStyle.Normal),
+			Bold = Font.new("rbxasset://fonts/families/Montserrat.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal),
+			Thin = Font.new(
+				"rbxasset://fonts/families/Montserrat.json",
+				Enum.FontWeight.Regular,
+				Enum.FontStyle.Normal
+			),
+			Code = Font.new(
+				"rbxasset://fonts/families/Inconsolata.json",
+				Enum.FontWeight.Regular,
+				Enum.FontStyle.Normal
+			),
+		},
+		TextSize = {
+			Body = 15,
+			Small = 13,
+			Medium = 16,
+			Large = 18,
+			Code = 16,
+		},
 		BrandColor = BRAND_COLOR,
 		BackgroundColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.MainBackground),
 		TextColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.MainText),
@@ -190,6 +212,13 @@ end
 
 function StudioProvider:init()
 	self:updateTheme()
+
+	-- Preload the Fonts so that getTextBoundsAsync won't yield
+	local fontAssetIds = {}
+	for _, font in self.state.theme.Font do
+		table.insert(fontAssetIds, font.Family)
+	end
+	pcall(ContentProvider.PreloadAsync, ContentProvider, fontAssetIds)
 end
 
 function StudioProvider:render()
