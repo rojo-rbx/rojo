@@ -1,6 +1,7 @@
 # Rojo Changelog
 
 ## Unreleased Changes
+* Adds support for `.plugin.lua(u)` files - this applies the `Plugin` RunContext. ([#1008])
 * Added support for Roblox's `Content` type. This replaces the old `Content` type with `ContentId` to reflect Roblox's change.
  	If you were previously using the fully-qualified syntax for `Content` you will need to switch it to `ContentId`.
 * Added support for `Enum` attributes
@@ -95,6 +96,7 @@
 [#974]: https://github.com/rojo-rbx/rojo/pull/974
 [#987]: https://github.com/rojo-rbx/rojo/pull/987
 [#988]: https://github.com/rojo-rbx/rojo/pull/988
+[#1008]: https://github.com/rojo-rbx/rojo/pull/1008
 
 ## [7.4.3] - August 6th, 2024
 * Fixed issue with building binary files introduced in 7.4.2
