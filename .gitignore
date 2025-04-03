@@ -19,3 +19,7 @@
 
 # Snapshot files from the 'insta' Rust crate
 **/*.snap.new
+
+# Macos file system junk
+._*
+.DS_STORE
