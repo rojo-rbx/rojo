@@ -79,6 +79,14 @@ pub struct Project {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub serve_place_ids: Option<HashSet<u64>>,
 
+    /// If specified, contains a set of place IDs that this project is
+    /// not compatible with when doing live sync.
+    ///
+    /// This setting is intended to help prevent syncing a Rojo project into the
+    /// wrong Roblox place.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub blocked_place_ids: Option<HashSet<u64>>,
+
     /// If specified, sets the current place's place ID when connecting to the
     /// Rojo server from Roblox Studio.
     #[serde(skip_serializing_if = "Option::is_none")]

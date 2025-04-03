@@ -1,6 +1,5 @@
 ---
 source: tests/tests/serve.rs
-assertion_line: 351
 expression: redactions.redacted_yaml(info)
 ---
 expectedPlaceIds: ~
@@ -11,4 +10,4 @@ protocolVersion: 4
 rootInstanceId: id-2
 serverVersion: "[server-version]"
 sessionId: id-1
-
+unexpectedPlaceIds: ~
