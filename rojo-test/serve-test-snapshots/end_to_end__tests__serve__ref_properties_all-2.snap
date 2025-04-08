@@ -31,6 +31,8 @@ instances:
         Attributes:
           Rojo_Target_PrimaryPart:
             String: project target
+      NeedsPivotMigration:
+        Bool: false
       PrimaryPart:
         Ref: id-9
   id-2:
@@ -55,7 +57,9 @@ instances:
       ignoreUnknownInstances: true
     Name: Workspace
     Parent: id-2
-    Properties: {}
+    Properties:
+      NeedsPivotMigration:
+        Bool: false
   id-4:
     Children: []
     ClassName: ObjectValue
@@ -138,4 +142,3 @@ instances:
     Properties: {}
 messageCursor: 1
 sessionId: id-1
-

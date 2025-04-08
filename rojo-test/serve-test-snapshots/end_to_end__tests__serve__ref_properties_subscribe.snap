@@ -18,6 +18,8 @@ messages:
             Attributes:
               Rojo_Target_PrimaryPart:
                 String: project target
+          NeedsPivotMigration:
+            Bool: false
           PrimaryPart:
             Ref: id-9
     removed: []
@@ -40,7 +42,7 @@ messages:
             Attributes:
               Rojo_Target_PrimaryPart:
                 String: model target 2
+          NeedsPivotMigration: ~
           PrimaryPart: ~
         id: id-8
 sessionId: id-1
-
