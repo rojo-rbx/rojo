@@ -1,7 +1,6 @@
 ---
 source: tests/tests/build.rs
 expression: contents
-
 ---
 <roblox version="4">
   <Item class="Folder" referent="0">
@@ -25,6 +24,7 @@ expression: contents
           <R21>0</R21>
           <R22>1</R22>
         </CoordinateFrame>
+        <bool name="NeedsPivotMigration">false</bool>
         <Ref name="PrimaryPart">null</Ref>
         <BinaryString name="Tags"></BinaryString>
       </Properties>
