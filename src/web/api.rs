@@ -5,7 +5,7 @@ use std::{collections::HashMap, fs, path::PathBuf, str::FromStr, sync::Arc};
 
 use hyper::{body, Body, Method, Request, Response, StatusCode};
 use opener::OpenError;
-use rbx_dom_weak::types::Ref;
+use rbx_dom_weak::{types::Ref, InstanceBuilder, WeakDom};
 
 use crate::{
     serve_session::ServeSession,
@@ -18,6 +18,7 @@ use crate::{
         },
         util::{json, json_ok},
     },
+    web_api::{BufferEncode, ModelResponse},
 };
 
 pub async fn call(serve_session: Arc<ServeSession>, request: Request<Body>) -> Response<Body> {
@@ -31,10 +32,13 @@ pub async fn call(serve_session: Arc<ServeSession>, request: Request<Body>) -> R
         (&Method::GET, path) if path.starts_with("/api/subscribe/") => {
             service.handle_api_subscribe(request).await
         }
+        (&Method::GET, path) if path.starts_with("/api/model/") => {
+            service.handle_api_model(request).await
+        }
+
         (&Method::POST, path) if path.starts_with("/api/open/") => {
             service.handle_api_open(request).await
         }
-
         (&Method::POST, "/api/write") => service.handle_api_write(request).await,
 
         (_method, path) => json(
@@ -198,6 +202,55 @@ impl ApiService {
             session_id: self.serve_session.session_id(),
             message_cursor,
             instances,
+        })
+    }
+
+    async fn handle_api_model(&self, request: Request<Body>) -> Response<Body> {
+        let argument = &request.uri().path()["/api/model/".len()..];
+        let requested_ids: Result<Vec<Ref>, _> = argument.split(',').map(Ref::from_str).collect();
+
+        let requested_ids = match requested_ids {
+            Ok(ids) => ids,
+            Err(_) => {
+                return json(
+                    ErrorResponse::bad_request("Malformed ID list"),
+                    StatusCode::BAD_REQUEST,
+                );
+            }
+        };
+        let mut response_dom = WeakDom::new(InstanceBuilder::new("Folder"));
+
+        let tree = self.serve_session.tree();
+        for id in &requested_ids {
+            if let Some(instance) = tree.get_instance(*id) {
+                let clone = response_dom.insert(
+                    Ref::none(),
+                    InstanceBuilder::new(instance.class_name())
+                        .with_name(instance.name())
+                        .with_properties(instance.properties().clone()),
+                );
+                let parent = response_dom.insert(
+                    response_dom.root_ref(),
+                    InstanceBuilder::new("ObjectValue")
+                        .with_name(id.to_string())
+                        .with_property("Value", clone),
+                );
+                response_dom.transfer_within(clone, parent);
+            } else {
+                json(
+                    ErrorResponse::bad_request(format!("provided id {id} is not in the tree")),
+                    StatusCode::BAD_REQUEST,
+                );
+            }
+        }
+        drop(tree);
+
+        let mut source = Vec::new();
+        rbx_binary::to_writer(&mut source, &response_dom, &[response_dom.root_ref()]).unwrap();
+
+        json_ok(ModelResponse {
+            session_id: self.serve_session.session_id(),
+            model_contents: BufferEncode::new(source),
         })
     }
 

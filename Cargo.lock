@@ -396,6 +396,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "data-encoding"
+version = "2.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "575f75dfd25738df5b91b8e43e14d44bda14637a58fae779fd2b064f8bf3e010"
+
+[[package]]
 name = "diff"
 version = "0.1.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1603,9 +1609,9 @@ dependencies = [
 
 [[package]]
 name = "rbx_reflection_database"
-version = "1.0.0+roblox-666"
+version = "1.0.1+roblox-666"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a45b98a2794815736602087cf2fc9d85eb798e7c432d41307336014792768a46"
+checksum = "1ea11f26cfddc57a136781baed2e68eda5a3aa0735152d1562d65b1909c8d65d"
 dependencies = [
  "lazy_static",
  "rbx_reflection",
@@ -1840,6 +1846,7 @@ dependencies = [
  "criterion",
  "crossbeam-channel",
  "csv",
+ "data-encoding",
  "embed-resource",
  "env_logger",
  "fs-err",
@@ -1879,6 +1886,7 @@ dependencies = [
  "uuid",
  "walkdir",
  "winreg 0.10.1",
+ "zstd",
 ]
 
 [[package]]
