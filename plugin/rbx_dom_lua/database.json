@@ -39453,7 +39453,7 @@
             "Canonical": {
               "Serialization": {
                 "Migrate": {
-                  "To": "MeshContent",
+                  "To": "TextureContent",
                   "Migration": "ContentIdToContent"
                 }
               }
@@ -39720,6 +39720,9 @@
         },
         "Tags": {
           "Tags": []
+        },
+        "TextureContent": {
+          "Content": "None"
         },
         "TopParamA": {
           "Float32": -0.5
