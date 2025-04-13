@@ -246,6 +246,56 @@ function ServeSession:__onActiveScriptChanged(activeScript)
 	self.__apiContext:open(scriptId)
 end
 
+function ServeSession:__replaceInstances(patchPart)
+	local idList = table.create(#patchPart)
+	for i, v in patchPart do
+		idList[i] = v.id
+	end
+	type ModelResponse = {
+		sessionId: string,
+		modelContents: buffer,
+	}
+
+	-- TODO: Should we do this in multiple requests so we can more granularly mark failures?
+	local updatesSuccess, updatesReplacements = self.__apiContext
+		:model(idList)
+		:andThen(function(response: ModelResponse)
+			local objects = SerializationService:DeserializeInstancesAsync(response.modelContents)
+			local instance_map = {}
+			for _, item in objects[1]:GetChildren() do
+				instance_map[item.Name] = item.Value
+			end
+			return instance_map
+		end)
+		:await()
+
+	if not updatesSuccess then
+		return false
+	end
+
+	for id, replacement in updatesReplacements do
+		local oldInstance = self.__instanceMap.fromIds[id]
+		self.__instanceMap:insert(id, replacement)
+		Log.trace("Swapping Instance {} out via api/models/ endpoint", id)
+		local oldParent = oldInstance.Parent
+		for _, child in oldInstance:GetChildren() do
+			child.Parent = replacement
+		end
+		replacement.Parent = oldParent
+
+		-- TODO: Update selection
+		-- TODO: Update ref properties
+
+		-- ChangeHistoryService doesn't like it if an Instance has been
+		-- Destroyed. So, we have to accept the potential memory hit and
+		-- just set the parent to `nil`.
+		oldInstance.Parent = nil
+	end
+
+	table.clear(patchPart)
+	return true
+end
+
 function ServeSession:__applyPatch(patch)
 	local patchTimestamp = DateTime.now():FormatLocalTime("LTS", "en-us")
 	local historyRecording = ChangeHistoryService:TryBeginRecording("Rojo: Patch " .. patchTimestamp)
@@ -265,14 +315,14 @@ function ServeSession:__applyPatch(patch)
 	end
 	Timer.stop()
 
-	local success, unappliedPatch = pcall(self.__reconciler.applyPatch, self.__reconciler, patch)
-	if not success then
+	local patchApplySuccess, unappliedPatch = pcall(self.__reconciler.applyPatch, self.__reconciler, patch)
+	if not patchApplySuccess then
 		if historyRecording then
 			ChangeHistoryService:FinishRecording(historyRecording, Enum.FinishRecordingOperation.Commit)
 		end
 		-- This might make a weird stack trace but the only way applyPatch can
 		-- fail is if a bug occurs so it's probably fine.
-		error(success)
+		error(unappliedPatch)
 	end
 
 	if PatchSet.isEmpty(unappliedPatch) then
@@ -282,54 +332,20 @@ function ServeSession:__applyPatch(patch)
 		return
 	end
 
-	local idList = table.create(#unappliedPatch.updated)
-	for i, v in unappliedPatch.updated do
-		idList[i] = v.id
-	end
-	type ModelResponse = {
-		sessionId: string,
-		modelContents: buffer,
-	}
+	Timer.start("ServeSession:__replaceInstances(unappliedPatch.added)")
+	local addSuccess = self:__replaceInstances(unappliedPatch.added)
+	Timer.stop()
 
-	local updatesSuccess, update_replacements = self.__apiContext
-		:model(idList)
-		:andThen(function(response: ModelResponse)
-			local objects = SerializationService:DeserializeInstancesAsync(response.modelContents)
-			local instance_map = {}
-			for _, item in objects[1]:GetChildren() do
-				instance_map[item.Name] = item.Value
-			end
-			return instance_map
-		end)
-		:await()
+	Timer.start("ServeSession:__replaceInstances(unappliedPatch.updated)")
+	local updateSuccess = self:__replaceInstances(unappliedPatch.updated)
+	Timer.stop()
 
-	if not updatesSuccess then
+	if not (addSuccess and updateSuccess) then
 		Log.debug(
 			"Could not apply all changes requested by the Rojo server:\n{}",
 			PatchSet.humanSummary(self.__instanceMap, unappliedPatch)
 		)
-		return
 	end
-
-	for id, replacement in update_replacements do
-		local oldInstance = self.__instanceMap.fromIds[id]
-		self.__instanceMap:insert(id, replacement)
-		Log.trace("Swapping Instance {} out via api/models/ endpoint", id)
-		local oldParent = oldInstance.Parent
-		for _, child in oldInstance:GetChildren() do
-			child.Parent = replacement
-		end
-		replacement.Parent = oldParent
-
-		-- TODO: Update selection
-
-		-- ChangeHistoryService doesn't like it if an Instance has been
-		-- Destroyed. So, we have to accept the potential memory hit and
-		-- just set the parent to `nil`.
-		oldInstance.Parent = nil
-	end
-
-	table.clear(unappliedPatch.updated)
 
 	Timer.start("postcommitCallbacks")
 	-- Postcommit callbacks can be called with spawn since regardless of firing order, they are
