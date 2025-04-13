@@ -1,5 +1,7 @@
 local StudioService = game:GetService("StudioService")
 local RunService = game:GetService("RunService")
+local ChangeHistoryService = game:GetService("ChangeHistoryService")
+local SerializationService = game:GetService("SerializationService")
 
 local Packages = script.Parent.Parent.Packages
 local Log = require(Packages.Log)
@@ -207,6 +209,85 @@ function ServeSession:__onActiveScriptChanged(activeScript)
 	self.__apiContext:open(scriptId)
 end
 
+function ServeSession:__applyPatch(patch)
+	local patchTimestamp = DateTime.now():FormatLocalTime("LTS", "en-us")
+	local historyRecording = ChangeHistoryService:TryBeginRecording("Rojo: Patch " .. patchTimestamp)
+	if not historyRecording then
+		-- There can only be one recording at a time
+		Log.debug("Failed to begin history recording for " .. patchTimestamp .. ". Another recording is in progress.")
+	end
+
+	local success, unappliedPatch = pcall(self.__reconciler.applyPatch, self.__reconciler, patch)
+	if not success then
+		if historyRecording then
+			ChangeHistoryService:FinishRecording(historyRecording, Enum.FinishRecordingOperation.Commit)
+		end
+		-- This might make a weird stack trace but the only way applyPatch can
+		-- fail is if a bug occurs so it's probably fine.
+		error(success)
+	end
+
+	if PatchSet.isEmpty(unappliedPatch) then
+		if historyRecording then
+			ChangeHistoryService:FinishRecording(historyRecording, Enum.FinishRecordingOperation.Commit)
+		end
+		return
+	end
+
+	local idList = table.create(#unappliedPatch.updated)
+	for i, v in unappliedPatch.updated do
+		idList[i] = v.id
+	end
+	type ModelResponse = {
+		sessionId: string,
+		modelContents: buffer,
+	}
+
+	local updatesSuccess, update_replacements = self.__apiContext
+		:model(idList)
+		:andThen(function(response: ModelResponse)
+			local objects = SerializationService:DeserializeInstancesAsync(response.modelContents)
+			local instance_map = {}
+			for _, item in objects[1]:GetChildren() do
+				instance_map[item.Name] = item.Value
+			end
+			return instance_map
+		end)
+		:await()
+
+	if not updatesSuccess then
+		Log.debug(
+			"Could not apply all changes requested by the Rojo server:\n{}",
+			PatchSet.humanSummary(self.__instanceMap, unappliedPatch)
+		)
+		return
+	end
+
+	for id, replacement in update_replacements do
+		local oldInstance = self.__instanceMap.fromIds[id]
+		self.__instanceMap:insert(id, replacement)
+		Log.trace("Swapping Instance {} out via api/models/ endpoint", id)
+		local oldParent = oldInstance.Parent
+		for _, child in oldInstance:GetChildren() do
+			child.Parent = replacement
+		end
+		replacement.Parent = oldParent
+
+		-- TODO: Update selection
+
+		-- ChangeHistoryService doesn't like it if an Instance has been
+		-- Destroyed. So, we have to accept the potential memory hit and
+		-- just set the parent to `nil`.
+		oldInstance.Parent = nil
+	end
+
+	table.clear(unappliedPatch.updated)
+
+	if historyRecording then
+		ChangeHistoryService:FinishRecording(historyRecording, Enum.FinishRecordingOperation.Commit)
+	end
+end
+
 function ServeSession:__initialSync(serverInfo)
 	return self.__apiContext:read({ serverInfo.rootInstanceId }):andThen(function(readResponseBody)
 		-- Tell the API Context that we're up-to-date with the version of
@@ -281,15 +362,7 @@ function ServeSession:__initialSync(serverInfo)
 
 			return self.__apiContext:write(inversePatch)
 		elseif userDecision == "Accept" then
-			local unappliedPatch = self.__reconciler:applyPatch(catchUpPatch)
-
-			if not PatchSet.isEmpty(unappliedPatch) then
-				Log.debug(
-					"Could not apply all changes requested by the Rojo server:\n{}",
-					PatchSet.humanSummary(self.__instanceMap, unappliedPatch)
-				)
-			end
-
+			self:__applyPatch(catchUpPatch)
 			return Promise.resolve()
 		else
 			return Promise.reject("Invalid user decision: " .. userDecision)
@@ -312,14 +385,7 @@ function ServeSession:__mainSyncLoop()
 					Log.trace("Serve session {} retrieved {} messages", tostring(self), #messages)
 
 					for _, message in messages do
-						local unappliedPatch = self.__reconciler:applyPatch(message)
-
-						if not PatchSet.isEmpty(unappliedPatch) then
-							Log.debug(
-								"Could not apply all changes requested by the Rojo server:\n{}",
-								PatchSet.humanSummary(self.__instanceMap, unappliedPatch)
-							)
-						end
+						self:__applyPatch(message)
 					end
 				end)
 				:await()

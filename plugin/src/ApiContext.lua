@@ -252,4 +252,24 @@ function ApiContext:open(id)
 	end)
 end
 
+function ApiContext:model(ids: { string })
+	local url = ("%s/api/model/%s"):format(self.__baseUrl, table.concat(ids, ","))
+
+	type ModelResponse = {
+		sessionId: string,
+		modelContents: buffer,
+	}
+
+	return Http.get(url)
+		:andThen(rejectFailedRequests)
+		:andThen(Http.Response.json)
+		:andThen(function(responseBody: ModelResponse)
+			if responseBody.sessionId ~= self.__sessionId then
+				return Promise.reject("Server changed ID")
+			end
+
+			return responseBody
+		end)
+end
+
 return ApiContext
