@@ -1,0 +1,15 @@
+{
+  "name": "meshpart",
+  "tree": {
+    "$className": "DataModel",
+    "Workspace": {
+      "Sword": {
+        "$className": "MeshPart",
+        "$properties": {
+          "MeshId": "rbxasset://fonts/sword.mesh",
+          "TextureID": "rbxasset://textures/SwordTexture.png"
+        }
+      }
+    }
+  }
+}
