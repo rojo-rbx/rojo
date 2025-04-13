@@ -166,7 +166,6 @@ local function diff(instanceMap, virtualInstances, rootId)
 							existingValue = { Ref = existingValueRef }
 						end
 					end
-
 				else
 					decodeSuccess, decodedValue = decodeValue(virtualValue, instanceMap)
 				end

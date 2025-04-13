@@ -25,9 +25,9 @@ function reifyInstance(deferredRefs, instanceMap, virtualInstances, rootId, pare
 	-- that could not happen, like instances that couldn't be created and
 	-- properties that could not be assigned.
 	local unappliedPatch = PatchSet.newEmpty()
-	
+
 	reifyInstanceInner(unappliedPatch, deferredRefs, instanceMap, virtualInstances, rootId, parentInstance)
-	
+
 	return unappliedPatch
 end
 
@@ -128,7 +128,7 @@ function applyDeferredRefs(instanceMap, deferredRefs, unappliedPatch)
 
 	for _, entry in ipairs(deferredRefs) do
 		local _, refId = next(entry.virtualValue)
-	
+
 		if refId == nil then
 			continue
 		end
@@ -149,5 +149,5 @@ end
 
 return {
 	reifyInstance = reifyInstance,
-	applyDeferredRefs = applyDeferredRefs
+	applyDeferredRefs = applyDeferredRefs,
 }

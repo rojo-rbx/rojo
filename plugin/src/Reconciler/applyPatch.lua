@@ -29,9 +29,9 @@ local function applyPatch(instanceMap, patch)
 
 	-- Tracks any portions of the patch that could not be applied to the DOM.
 	local unappliedPatch = PatchSet.newEmpty()
-	
-	-- Contains a list of all of the ref properties that we'll need to assign. 
-	-- It is imperative that refs are assigned after all instances are created 
+
+	-- Contains a list of all of the ref properties that we'll need to assign.
+	-- It is imperative that refs are assigned after all instances are created
 	-- to ensure that referents can be mapped to instances correctly.
 	local deferredRefs = {}
 
