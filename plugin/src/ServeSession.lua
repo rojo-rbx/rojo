@@ -8,6 +8,7 @@ local Log = require(Packages.Log)
 local Fmt = require(Packages.Fmt)
 local t = require(Packages.t)
 local Promise = require(Packages.Promise)
+local Timer = require(script.Parent.Timer)
 
 local ChangeBatcher = require(script.Parent.ChangeBatcher)
 local encodePatchUpdate = require(script.Parent.ChangeBatcher.encodePatchUpdate)
@@ -97,6 +98,8 @@ function ServeSession.new(options)
 		__changeBatcher = changeBatcher,
 		__statusChangedCallback = nil,
 		__connections = connections,
+		__precommitCallbacks = {},
+		__postcommitCallbacks = {},
 	}
 
 	setmetatable(self, ServeSession)
@@ -127,12 +130,46 @@ function ServeSession:setConfirmCallback(callback)
 	self.__userConfirmCallback = callback
 end
 
+--[=[
+	Hooks a function to run before patch application.
+	The provided function is called with the incoming patch and an InstanceMap
+	as parameters.
+]=]
 function ServeSession:hookPrecommit(callback)
-	return self.__reconciler:hookPrecommit(callback)
+	table.insert(self.__precommitCallbacks, callback)
+	Log.trace("Added precommit callback: {}", callback)
+
+	return function()
+		-- Remove the callback from the list
+		for i, cb in self.__precommitCallbacks do
+			if cb == callback then
+				table.remove(self.__precommitCallbacks, i)
+				Log.trace("Removed precommit callback: {}", callback)
+				break
+			end
+		end
+	end
 end
 
+--[=[
+	Hooks a function to run after patch application.
+	The provided function is called with the applied patch, the current
+	InstanceMap, and a PatchSet containing any unapplied changes.
+]=]
 function ServeSession:hookPostcommit(callback)
-	return self.__reconciler:hookPostcommit(callback)
+	table.insert(self.__postcommitCallbacks, callback)
+	Log.trace("Added postcommit callback: {}", callback)
+
+	return function()
+		-- Remove the callback from the list
+		for i, cb in self.__postcommitCallbacks do
+			if cb == callback then
+				table.remove(self.__postcommitCallbacks, i)
+				Log.trace("Removed postcommit callback: {}", callback)
+				break
+			end
+		end
+	end
 end
 
 function ServeSession:start()
@@ -217,6 +254,17 @@ function ServeSession:__applyPatch(patch)
 		Log.debug("Failed to begin history recording for " .. patchTimestamp .. ". Another recording is in progress.")
 	end
 
+	Timer.start("precommitCallbacks")
+	-- Precommit callbacks must be serial in order to obey the contract that
+	-- they execute before commit
+	for _, callback in self.__precommitCallbacks do
+		local success, err = pcall(callback, patch, self.__instanceMap)
+		if not success then
+			Log.warn("Precommit hook errored: {}", err)
+		end
+	end
+	Timer.stop()
+
 	local success, unappliedPatch = pcall(self.__reconciler.applyPatch, self.__reconciler, patch)
 	if not success then
 		if historyRecording then
@@ -282,6 +330,19 @@ function ServeSession:__applyPatch(patch)
 	end
 
 	table.clear(unappliedPatch.updated)
+
+	Timer.start("postcommitCallbacks")
+	-- Postcommit callbacks can be called with spawn since regardless of firing order, they are
+	-- guaranteed to be called after the commit
+	for _, callback in self.__postcommitCallbacks do
+		task.spawn(function()
+			local success, err = pcall(callback, patch, self.__instanceMap, unappliedPatch)
+			if not success then
+				Log.warn("Postcommit hook errored: {}", err)
+			end
+		end)
+	end
+	Timer.stop()
 
 	if historyRecording then
 		ChangeHistoryService:FinishRecording(historyRecording, Enum.FinishRecordingOperation.Commit)
