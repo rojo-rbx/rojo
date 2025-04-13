@@ -47,7 +47,7 @@ function reifyInstanceInner(unappliedPatch, deferredRefs, instanceMap, virtualIn
 	local createSuccess, instance = pcall(Instance.new, virtualInstance.ClassName)
 
 	if not createSuccess then
-		addAllToPatch(virtualInstances, id)
+		addAllToPatch(unappliedPatch, virtualInstances, id)
 		return
 	end
 
