@@ -6,6 +6,7 @@ expression: contents
   <Item class="Model" referent="0">
     <Properties>
       <string name="Name">init_meta_class_name</string>
+      <bool name="NeedsPivotMigration">false</bool>
     </Properties>
   </Item>
 </roblox>

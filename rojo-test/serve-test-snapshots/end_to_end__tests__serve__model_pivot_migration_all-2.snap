@@ -1,0 +1,64 @@
+---
+source: tests/tests/serve.rs
+expression: "read_response.intern_and_redact(&mut redactions, root_id)"
+---
+instances:
+  id-2:
+    Children:
+      - id-3
+    ClassName: DataModel
+    Id: id-2
+    Metadata:
+      ignoreUnknownInstances: true
+    Name: pivot_migration
+    Parent: "00000000000000000000000000000000"
+    Properties: {}
+  id-3:
+    Children:
+      - id-4
+      - id-5
+      - id-6
+    ClassName: Workspace
+    Id: id-3
+    Metadata:
+      ignoreUnknownInstances: true
+    Name: Workspace
+    Parent: id-2
+    Properties:
+      NeedsPivotMigration:
+        Bool: false
+  id-4:
+    Children: []
+    ClassName: Model
+    Id: id-4
+    Metadata:
+      ignoreUnknownInstances: true
+    Name: Model
+    Parent: id-3
+    Properties:
+      NeedsPivotMigration:
+        Bool: false
+  id-5:
+    Children: []
+    ClassName: Tool
+    Id: id-5
+    Metadata:
+      ignoreUnknownInstances: false
+    Name: Tool
+    Parent: id-3
+    Properties:
+      NeedsPivotMigration:
+        Bool: false
+  id-6:
+    Children: []
+    ClassName: Actor
+    Id: id-6
+    Metadata:
+      ignoreUnknownInstances: true
+    Name: Actor
+    Parent: id-3
+    Properties:
+      NeedsPivotMigration:
+        Bool: false
+messageCursor: 1
+sessionId: id-1

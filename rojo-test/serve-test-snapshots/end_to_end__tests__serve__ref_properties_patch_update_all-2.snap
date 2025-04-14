@@ -110,6 +110,8 @@ instances:
         Bool: false
       PrimaryPart:
         Ref: id-7
+      Scale:
+        Float32: 1
   id-9:
     Children:
       - id-10
@@ -120,5 +122,5 @@ instances:
     Name: ProjectTarget
     Parent: id-3
     Properties: {}
-messageCursor: 0
+messageCursor: 1
 sessionId: id-1

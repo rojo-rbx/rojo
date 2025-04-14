@@ -128,6 +128,8 @@ instances:
         Attributes:
           Rojo_Target_PrimaryPart:
             String: model target 2
+      NeedsPivotMigration:
+        Bool: false
       PrimaryPart:
         Ref: id-7
   id-9:
