@@ -516,3 +516,49 @@ fn ref_properties_patch_update() {
         );
     });
 }
+
+#[test]
+fn model_pivot_migration() {
+    run_serve_test("pivot_migration", |session, mut redactions| {
+        let info = session.get_api_rojo().unwrap();
+        let root_id = info.root_instance_id;
+
+        assert_yaml_snapshot!("pivot_migration_info", redactions.redacted_yaml(info));
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "pivot_migration_all",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+
+        let project_path = session.path().join("default.project.json");
+
+        fs::write(
+            project_path,
+            r#"{
+            "name": "pivot_migration",
+            "tree": {
+                "$className": "DataModel",
+                "Workspace": {
+                    "Model": {
+                        "$className": "Model"
+                    },
+                    "Tool": {
+                        "$path": "Tool.model.json"
+                    },
+                    "Actor": {
+                        "$className": "Actor"
+                    }
+                }
+            }
+        }"#,
+        )
+        .unwrap();
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "model_pivot_migration_all-2",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+    });
+}
