@@ -235,6 +235,23 @@ fn apply_update_child(context: &mut PatchApplyContext, tree: &mut RojoTree, patc
         applied_patch.changed_properties.insert(key, property_entry);
     }
 
+    // !!!!!!!!!! UGLY HACK !!!!!!!!!!
+    //
+    // See RojoTree::insert_instance. Adjust that code also if you are touching this.
+    match instance.class_name() {
+        "Model" | "Actor" | "Tool" | "HopperBin" | "Flag" | "WorldModel" | "Workspace"
+        | "Status"
+            if !instance
+                .properties()
+                .contains_key(&ustr("NeedsPivotMigration")) =>
+        {
+            instance
+                .properties_mut()
+                .insert(ustr("NeedsPivotMigration"), Variant::Bool(false));
+        }
+        _ => {}
+    };
+
     defer_ref_properties(tree, patch.id, context);
 
     context.applied_patch_set.updated.push(applied_patch)

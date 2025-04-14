@@ -95,6 +95,7 @@ impl RojoTree {
 
     pub fn insert_instance(&mut self, parent_ref: Ref, snapshot: InstanceSnapshot) -> Ref {
         // !!!!!!!!!! UGLY HACK !!!!!!!!!!
+        // ! If you are going to change this, go change it in patch_apply/apply_update_child too
         //
         // This is a set of special cases working around a more general problem upstream
         // in rbx-dom that causes pivots to not build to file correctly, described in
