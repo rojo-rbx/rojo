@@ -502,12 +502,29 @@ fn ref_properties_patch_update() {
             read_response.intern_and_redact(&mut redactions, root_id)
         );
 
-        let project_path = session.path().join("default.project.json");
-        let mut project_content = fs::read(&project_path).unwrap();
-        // Adding a newline to force the change processor to pick up a change.
-        project_content.push(b'\n');
+        let target_path = session.path().join("ModelTarget.model.json");
 
-        fs::write(project_path, project_content).unwrap();
+        // Inserting scale just to force the change processor to run
+        fs::write(
+            target_path,
+            r#"{
+            "id": "model target",
+            "className": "Folder",
+            "children": [
+                {
+                    "name": "ModelPointer",
+                    "className": "Model",
+                    "attributes": {
+                        "Rojo_Target_PrimaryPart": "model target"
+                    },
+                    "properties": {
+                        "Scale": 1
+                    }
+                }
+            ]
+        }"#,
+        )
+        .unwrap();
 
         let read_response = session.get_api_read(root_id).unwrap();
         assert_yaml_snapshot!(
