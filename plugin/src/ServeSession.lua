@@ -257,23 +257,23 @@ function ServeSession:__replaceInstances(patchPart)
 	}
 
 	-- TODO: Should we do this in multiple requests so we can more granularly mark failures?
-	local updatesSuccess, updatesReplacements = self.__apiContext
+	local success, replacements = self.__apiContext
 		:model(idList)
 		:andThen(function(response: ModelResponse)
 			local objects = SerializationService:DeserializeInstancesAsync(response.modelContents)
-			local instance_map = {}
+			local instanceMap = {}
 			for _, item in objects[1]:GetChildren() do
-				instance_map[item.Name] = item.Value
+				instanceMap[item.Name] = item.Value
 			end
-			return instance_map
+			return instanceMap
 		end)
 		:await()
 
-	if not updatesSuccess then
+	if not success then
 		return false
 	end
 
-	for id, replacement in updatesReplacements do
+	for id, replacement in replacements do
 		local oldInstance = self.__instanceMap.fromIds[id]
 		self.__instanceMap:insert(id, replacement)
 		Log.trace("Swapping Instance {} out via api/models/ endpoint", id)
