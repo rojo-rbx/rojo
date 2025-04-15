@@ -526,6 +526,12 @@ fn ref_properties_patch_update() {
         )
         .unwrap();
 
+        let subscribe_response = session.get_api_subscribe(0).unwrap();
+        assert_yaml_snapshot!(
+            "ref_properties_patch_update_subscribe",
+            subscribe_response.intern_and_redact(&mut redactions, ())
+        );
+
         let read_response = session.get_api_read(root_id).unwrap();
         assert_yaml_snapshot!(
             "ref_properties_patch_update_all-2",
@@ -571,6 +577,12 @@ fn model_pivot_migration() {
         }"#,
         )
         .unwrap();
+
+        let subscribe_response = session.get_api_subscribe(0).unwrap();
+        assert_yaml_snapshot!(
+            "model_pivot_migration_all",
+            subscribe_response.intern_and_redact(&mut redactions, ())
+        );
 
         let read_response = session.get_api_read(root_id).unwrap();
         assert_yaml_snapshot!(
