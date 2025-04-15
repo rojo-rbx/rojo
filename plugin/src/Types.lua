@@ -57,13 +57,13 @@ local ApiSubscribeResponse = t.interface({
 
 local ApiModelResponse = t.interface({
 	sessionId = t.string,
-	model_contents = t.buffer,
+	modelContents = t.buffer,
 })
 
 local ApiReferencesResponse = t.interface({
 	sessionId = t.string,
-	message_cursor = t.number,
-	ref_list = t.map(RbxId, t.map(t.string, RbxId)),
+	messageCursor = t.number,
+	refList = t.map(RbxId, t.map(t.string, RbxId)),
 })
 
 local ApiError = t.interface({
