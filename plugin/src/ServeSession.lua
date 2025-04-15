@@ -247,6 +247,9 @@ function ServeSession:__onActiveScriptChanged(activeScript)
 end
 
 function ServeSession:__replaceInstances(patchPart)
+	if #patchPart == 0 then
+		return true
+	end
 	local idList = table.create(#patchPart)
 	for i, v in patchPart do
 		idList[i] = v.id
