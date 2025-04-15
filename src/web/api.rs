@@ -1,11 +1,20 @@
 //! Defines Rojo's HTTP API, all under /api. These endpoints generally return
 //! JSON.
 
-use std::{collections::HashMap, fs, path::PathBuf, str::FromStr, sync::Arc};
+use std::{
+    collections::{HashMap, HashSet},
+    fs,
+    path::PathBuf,
+    str::FromStr,
+    sync::Arc,
+};
 
 use hyper::{body, Body, Method, Request, Response, StatusCode};
 use opener::OpenError;
-use rbx_dom_weak::{types::Ref, InstanceBuilder, WeakDom};
+use rbx_dom_weak::{
+    types::{Ref, Variant},
+    InstanceBuilder, UstrMap, WeakDom,
+};
 
 use crate::{
     serve_session::ServeSession,
@@ -18,7 +27,7 @@ use crate::{
         },
         util::{json, json_ok},
     },
-    web_api::{BufferEncode, ModelResponse},
+    web_api::{BufferEncode, ModelResponse, RefPropsResponse},
 };
 
 pub async fn call(serve_session: Arc<ServeSession>, request: Request<Body>) -> Response<Body> {
@@ -34,6 +43,9 @@ pub async fn call(serve_session: Arc<ServeSession>, request: Request<Body>) -> R
         }
         (&Method::GET, path) if path.starts_with("/api/model/") => {
             service.handle_api_model(request).await
+        }
+        (&Method::GET, path) if path.starts_with("/api/references/") => {
+            service.handle_api_references(request).await
         }
 
         (&Method::POST, path) if path.starts_with("/api/open/") => {
@@ -251,6 +263,44 @@ impl ApiService {
         json_ok(ModelResponse {
             session_id: self.serve_session.session_id(),
             model_contents: BufferEncode::new(source),
+        })
+    }
+
+    async fn handle_api_references(self, request: Request<Body>) -> Response<Body> {
+        let argument = &request.uri().path()["/api/references/".len()..];
+        let requested_ids: Result<HashSet<Ref>, _> =
+            argument.split(',').map(Ref::from_str).collect();
+
+        let requested_ids = match requested_ids {
+            Ok(ids) => ids,
+            Err(_) => {
+                return json(
+                    ErrorResponse::bad_request("Malformed ID list"),
+                    StatusCode::BAD_REQUEST,
+                );
+            }
+        };
+
+        let mut ref_list = HashMap::with_capacity(requested_ids.len());
+
+        let tree = self.serve_session.tree();
+        for instance in tree.descendants(tree.get_root_id()) {
+            for (name, value) in instance.properties() {
+                let Variant::Ref(value) = value else { continue };
+                if let Some(matching_id) = requested_ids.get(value) {
+                    // This property references one of the listed IDs.
+                    let map = ref_list
+                        .entry(*matching_id)
+                        .or_insert_with(UstrMap::default);
+                    map.insert(*name, instance.id());
+                }
+            }
+        }
+
+        json_ok(RefPropsResponse {
+            session_id: self.serve_session.session_id(),
+            message_cursor: self.serve_session.message_queue().cursor(),
+            ref_list,
         })
     }
 

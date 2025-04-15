@@ -238,6 +238,13 @@ impl BufferEncode {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RefPropsResponse {
+    pub session_id: SessionId,
+    pub message_cursor: u32,
+    pub ref_list: HashMap<Ref, UstrMap<Ref>>,
+}
+
 /// General response type returned from all Rojo routes
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
