@@ -263,6 +263,7 @@ function ServeSession:__replaceInstances(patchPart)
 	local success, replacements = self.__apiContext
 		:model(idList)
 		:andThen(function(response: ModelResponse)
+			Log.debug("Deserializing results from model endpoint")
 			local objects = SerializationService:DeserializeInstancesAsync(response.modelContents)
 			local instanceMap = {}
 			for _, item in objects[1]:GetChildren() do
@@ -335,10 +336,12 @@ function ServeSession:__applyPatch(patch)
 		return
 	end
 
+	Log.debug("ServeSession:__replaceInstances(unappliedPatch.added)")
 	Timer.start("ServeSession:__replaceInstances(unappliedPatch.added)")
 	local addSuccess = self:__replaceInstances(unappliedPatch.added)
 	Timer.stop()
 
+	Log.debug("ServeSession:__replaceInstances(unappliedPatch.updated)")
 	Timer.start("ServeSession:__replaceInstances(unappliedPatch.updated)")
 	local updateSuccess = self:__replaceInstances(unappliedPatch.updated)
 	Timer.stop()
