@@ -1,0 +1,17 @@
+---
+source: tests/tests/serve.rs
+expression: "subscribe_response.intern_and_redact(&mut redactions, ())"
+---
+messageCursor: 1
+messages:
+  - added: {}
+    removed: []
+    updated:
+      - changedClassName: ~
+        changedMetadata: ~
+        changedName: ~
+        changedProperties:
+          Scale:
+            Float32: 1
+        id: id-8
+sessionId: id-1

@@ -42,7 +42,6 @@ messages:
             Attributes:
               Rojo_Target_PrimaryPart:
                 String: model target 2
-          NeedsPivotMigration: ~
           PrimaryPart: ~
         id: id-8
 sessionId: id-1
