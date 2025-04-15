@@ -55,6 +55,17 @@ local ApiSubscribeResponse = t.interface({
 	messages = t.array(ApiSubscribeMessage),
 })
 
+local ApiModelResponse = t.interface({
+	sessionId = t.string,
+	model_contents = t.buffer,
+})
+
+local ApiReferencesResponse = t.interface({
+	sessionId = t.string,
+	message_cursor = t.number,
+	ref_list = t.map(RbxId, t.map(t.string, RbxId)),
+})
+
 local ApiError = t.interface({
 	kind = t.union(t.literal("NotFound"), t.literal("BadRequest"), t.literal("InternalError")),
 	details = t.string,
@@ -82,6 +93,8 @@ return strict("Types", {
 	ApiInstanceUpdate = ApiInstanceUpdate,
 	ApiInstanceMetadata = ApiInstanceMetadata,
 	ApiSubscribeMessage = ApiSubscribeMessage,
+	ApiModelResponse = ApiModelResponse,
+	ApiReferencesResponse = ApiReferencesResponse,
 	ApiValue = ApiValue,
 	RbxId = RbxId,
 

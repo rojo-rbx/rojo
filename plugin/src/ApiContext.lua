@@ -10,6 +10,8 @@ local Version = require(script.Parent.Version)
 local validateApiInfo = Types.ifEnabled(Types.ApiInfoResponse)
 local validateApiRead = Types.ifEnabled(Types.ApiReadResponse)
 local validateApiSubscribe = Types.ifEnabled(Types.ApiSubscribeResponse)
+local validateApiModel = Types.ifEnabled(Types.ApiModelResponse)
+local validateApiReferences = Types.ifEnabled(Types.ApiReferencesResponse)
 
 local function rejectFailedRequests(response)
 	if response.code >= 400 then
@@ -260,16 +262,15 @@ function ApiContext:model(ids: { string })
 		modelContents: buffer,
 	}
 
-	return Http.get(url)
-		:andThen(rejectFailedRequests)
-		:andThen(Http.Response.json)
-		:andThen(function(responseBody: ModelResponse)
-			if responseBody.sessionId ~= self.__sessionId then
-				return Promise.reject("Server changed ID")
-			end
+	return Http.get(url):andThen(rejectFailedRequests):andThen(Http.Response.json):andThen(function(body: ModelResponse)
+		if body.sessionId ~= self.__sessionId then
+			return Promise.reject("Server changed ID")
+		end
 
-			return responseBody
-		end)
+		assert(validateApiModel(body))
+
+		return body
+	end)
 end
 
 function ApiContext:references(ids: { string })
@@ -279,6 +280,8 @@ function ApiContext:references(ids: { string })
 		if body.sessionId ~= self.__sessionId then
 			return Promise.reject("Server changed ID")
 		end
+
+		assert(validateApiReferences(body))
 
 		return body
 	end)
