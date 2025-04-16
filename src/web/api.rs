@@ -13,7 +13,7 @@ use hyper::{body, Body, Method, Request, Response, StatusCode};
 use opener::OpenError;
 use rbx_dom_weak::{
     types::{Ref, Variant},
-    InstanceBuilder, UstrMap, WeakDom,
+    InstanceBuilder, WeakDom,
 };
 
 use crate::{
@@ -289,10 +289,8 @@ impl ApiService {
                 let Variant::Ref(value) = value else { continue };
                 if let Some(matching_id) = requested_ids.get(value) {
                     // This property references one of the listed IDs.
-                    let map = ref_list
-                        .entry(*matching_id)
-                        .or_insert_with(UstrMap::default);
-                    map.insert(*name, instance.id());
+                    let list = ref_list.entry(*matching_id).or_insert_with(Vec::new);
+                    list.push((*name, instance.id()));
                 }
             }
         }

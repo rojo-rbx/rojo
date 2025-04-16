@@ -63,7 +63,7 @@ local ApiModelResponse = t.interface({
 local ApiReferencesResponse = t.interface({
 	sessionId = t.string,
 	messageCursor = t.number,
-	refList = t.map(RbxId, t.map(t.string, RbxId)),
+	refList = t.map(RbxId, t.array(t.array(t.string))),
 })
 
 local ApiError = t.interface({

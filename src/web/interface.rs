@@ -243,7 +243,7 @@ impl BufferEncode {
 pub struct ReferencesResponse {
     pub session_id: SessionId,
     pub message_cursor: u32,
-    pub ref_list: HashMap<Ref, UstrMap<Ref>>,
+    pub ref_list: HashMap<Ref, Vec<(Ustr, Ref)>>,
 }
 
 /// General response type returned from all Rojo routes
