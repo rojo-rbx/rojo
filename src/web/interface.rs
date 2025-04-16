@@ -240,9 +240,9 @@ impl BufferEncode {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ReferencesResponse {
+pub struct ReferencesResponse<'a> {
     pub session_id: SessionId,
-    pub ref_list: HashMap<Ref, Vec<(Ustr, Ref)>>,
+    pub patch: SubscribeMessage<'a>,
 }
 
 /// General response type returned from all Rojo routes

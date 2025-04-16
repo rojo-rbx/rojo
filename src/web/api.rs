@@ -13,7 +13,7 @@ use hyper::{body, Body, Method, Request, Response, StatusCode};
 use opener::OpenError;
 use rbx_dom_weak::{
     types::{Ref, Variant},
-    InstanceBuilder, WeakDom,
+    InstanceBuilder, UstrMap, WeakDom,
 };
 
 use crate::{
@@ -27,7 +27,7 @@ use crate::{
         },
         util::{json, json_ok},
     },
-    web_api::{BufferEncode, ModelResponse, ReferencesResponse},
+    web_api::{BufferEncode, InstanceUpdate, ModelResponse, ReferencesResponse},
 };
 
 pub async fn call(serve_session: Arc<ServeSession>, request: Request<Body>) -> Response<Body> {
@@ -281,23 +281,40 @@ impl ApiService {
             }
         };
 
-        let mut ref_list = HashMap::with_capacity(requested_ids.len());
+        let mut instance_updates: HashMap<Ref, InstanceUpdate> = HashMap::new();
 
         let tree = self.serve_session.tree();
         for instance in tree.descendants(tree.get_root_id()) {
-            for (name, value) in instance.properties() {
-                let Variant::Ref(value) = value else { continue };
-                if let Some(matching_id) = requested_ids.get(value) {
-                    // This property references one of the listed IDs.
-                    let list = ref_list.entry(*matching_id).or_insert_with(Vec::new);
-                    list.push((*name, instance.id()));
+            for (prop_name, prop_value) in instance.properties() {
+                let Variant::Ref(prop_value) = prop_value else {
+                    continue;
+                };
+                if let Some(target_id) = requested_ids.get(prop_value) {
+                    let instance_id = instance.id();
+                    let update =
+                        instance_updates
+                            .entry(instance_id)
+                            .or_insert_with(|| InstanceUpdate {
+                                id: instance_id,
+                                changed_class_name: None,
+                                changed_name: None,
+                                changed_metadata: None,
+                                changed_properties: UstrMap::default(),
+                            });
+                    update
+                        .changed_properties
+                        .insert(*prop_name, Some(Variant::Ref(*target_id)));
                 }
             }
         }
 
         json_ok(ReferencesResponse {
             session_id: self.serve_session.session_id(),
-            ref_list,
+            patch: SubscribeMessage {
+                added: HashMap::new(),
+                removed: Vec::new(),
+                updated: instance_updates.into_values().collect(),
+            },
         })
     }
 
