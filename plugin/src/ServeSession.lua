@@ -17,7 +17,6 @@ local PatchSet = require(script.Parent.PatchSet)
 local Reconciler = require(script.Parent.Reconciler)
 local strict = require(script.Parent.strict)
 local Settings = require(script.Parent.Settings)
-local ApiContext = require(script.Parent.ApiContext)
 
 local Status = strict("Session.Status", {
 	NotStarted = "NotStarted",
@@ -259,7 +258,7 @@ function ServeSession:__replaceInstances(patchPart)
 	-- TODO: Should we do this in multiple requests so we can more granularly mark failures?
 	local success, replacements = self.__apiContext
 		:model(idList)
-		:andThen(function(response: ApiContext.ModelResponse)
+		:andThen(function(response)
 			Log.debug("Deserializing results from model endpoint")
 			local objects = SerializationService:DeserializeInstancesAsync(response.modelContents)
 			local instanceMap = {}
@@ -272,28 +271,8 @@ function ServeSession:__replaceInstances(patchPart)
 
 	local refSuccess, refPatch = self.__apiContext
 		:references(idList)
-		:andThen(function(response: ApiContext.ReferenceResponse)
-			local patches = {}
-			for value_id, idList in response.refList do
-				for _, propInfo in idList do
-					local target_id, target_prop = propInfo[2], propInfo[1]
-					local patch = patches[target_id]
-					if not patch then
-						patch = {
-							id = target_id,
-							changedProperties = {},
-						}
-						patches[target_id] = patch
-					end
-					patch.changedProperties[target_prop] = { Ref = value_id }
-				end
-			end
-			local patchSet = PatchSet.newEmpty()
-			for _, patch in patches do
-				table.insert(patchSet.updated, patch)
-			end
-
-			return patchSet
+		:andThen(function(response)
+			return response.patch
 		end)
 		:await()
 
