@@ -2,6 +2,7 @@ local StudioService = game:GetService("StudioService")
 local RunService = game:GetService("RunService")
 local ChangeHistoryService = game:GetService("ChangeHistoryService")
 local SerializationService = game:GetService("SerializationService")
+local Selection = game:GetService("Selection")
 
 local Packages = script.Parent.Parent.Packages
 local Log = require(Packages.Log)
@@ -247,8 +248,15 @@ function ServeSession:__onActiveScriptChanged(activeScript)
 end
 
 function ServeSession:__replaceInstances(idList)
+	-- It would be annoying if selection went away, so we try to preserve it.
+	local selection = Selection:Get()
+	local selectionMap = {}
+	for i, instance in selection do
+		selectionMap[instance] = i
+	end
+
 	-- TODO: Should we do this in multiple requests so we can more granularly mark failures?
-	local success, replacements = self.__apiContext
+	local modelSuccess, replacements = self.__apiContext
 		:model(idList)
 		:andThen(function(response)
 			Log.debug("Deserializing results from model endpoint")
@@ -268,7 +276,7 @@ function ServeSession:__replaceInstances(idList)
 		end)
 		:await()
 
-	if not (success and refSuccess) then
+	if not (modelSuccess and refSuccess) then
 		return false
 	end
 
@@ -281,18 +289,22 @@ function ServeSession:__replaceInstances(idList)
 			child.Parent = replacement
 		end
 
-		-- TODO: Update selection
-		-- TODO: Update ref properties
-
 		replacement.Parent = oldParent
 		-- ChangeHistoryService doesn't like it if an Instance has been
 		-- Destroyed. So, we have to accept the potential memory hit and
 		-- just set the parent to `nil`.
 		oldInstance.Parent = nil
+
+		if selectionMap[oldInstance] then
+			-- This is a bit funky, but it saves the order of Selection
+			-- which might matter for some use cases.
+			selection[selectionMap[oldInstance]] = replacement
+		end
 	end
 
 	self.__reconciler:applyPatch(refPatch)
 
+	Selection:Set(selection)
 	return true
 end
 
