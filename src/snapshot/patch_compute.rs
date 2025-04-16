@@ -163,6 +163,34 @@ fn compute_property_patches(
         }
     }
 
+    // !!!!!!!!!! UGLY HACK !!!!!!!!!!
+    //
+    // See RojoTree::insert_instance. Adjust that code also if you are touching this.
+    let actual_class = changed_class_name.unwrap_or(instance.class_name());
+    match actual_class.as_str() {
+        "Model" | "Actor" | "Tool" | "HopperBin" | "Flag" | "WorldModel" | "Workspace"
+        | "Status" => {
+            let migration_prop = ustr("NeedsPivotMigration");
+            // We want to just ignore this if it's being removed by a patch.
+            // Normally this would not matter because serving != building but
+            // if we start syncing models using SerializationService
+            // (or GetObjects) it will affect how Studio deserializes things.
+            if !instance.properties().contains_key(&migration_prop) {
+                changed_properties.insert(migration_prop, Some(Variant::Bool(false)));
+            }
+            match changed_properties.get(&migration_prop) {
+                Some(Some(Variant::Bool(_))) => {}
+                Some(None) => {
+                    changed_properties.remove(&migration_prop);
+                }
+                _ => {
+                    changed_properties.insert(migration_prop, Some(Variant::Bool(false)));
+                }
+            }
+        }
+        _ => {}
+    };
+
     if changed_properties.is_empty()
         && changed_name.is_none()
         && changed_class_name.is_none()
