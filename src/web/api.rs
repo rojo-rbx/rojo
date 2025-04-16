@@ -297,7 +297,6 @@ impl ApiService {
 
         json_ok(ReferencesResponse {
             session_id: self.serve_session.session_id(),
-            message_cursor: self.serve_session.message_queue().cursor(),
             ref_list,
         })
     }
