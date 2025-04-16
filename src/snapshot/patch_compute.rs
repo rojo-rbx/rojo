@@ -166,7 +166,8 @@ fn compute_property_patches(
     // !!!!!!!!!! UGLY HACK !!!!!!!!!!
     //
     // See RojoTree::insert_instance. Adjust that code also if you are touching this.
-    match instance.class_name().as_str() {
+    let actual_class = changed_class_name.unwrap_or(instance.class_name());
+    match actual_class.as_str() {
         "Model" | "Actor" | "Tool" | "HopperBin" | "Flag" | "WorldModel" | "Workspace"
         | "Status" => {
             let migration_prop = ustr("NeedsPivotMigration");
