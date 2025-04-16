@@ -17,6 +17,7 @@ local PatchSet = require(script.Parent.PatchSet)
 local Reconciler = require(script.Parent.Reconciler)
 local strict = require(script.Parent.strict)
 local Settings = require(script.Parent.Settings)
+local ApiContext = require(script.Parent.ApiContext)
 
 local Status = strict("Session.Status", {
 	NotStarted = "NotStarted",
@@ -254,15 +255,11 @@ function ServeSession:__replaceInstances(patchPart)
 	for i, v in patchPart do
 		idList[i] = v.id
 	end
-	type ModelResponse = {
-		sessionId: string,
-		modelContents: buffer,
-	}
 
 	-- TODO: Should we do this in multiple requests so we can more granularly mark failures?
 	local success, replacements = self.__apiContext
 		:model(idList)
-		:andThen(function(response: ModelResponse)
+		:andThen(function(response: ApiContext.ModelResponse)
 			Log.debug("Deserializing results from model endpoint")
 			local objects = SerializationService:DeserializeInstancesAsync(response.modelContents)
 			local instanceMap = {}
@@ -273,7 +270,34 @@ function ServeSession:__replaceInstances(patchPart)
 		end)
 		:await()
 
-	if not success then
+	local refSuccess, refPatch = self.__apiContext
+		:references(idList)
+		:andThen(function(response: ApiContext.ReferenceResponse)
+			local patches = {}
+			for value_id, idList in response.refList do
+				for _, propInfo in idList do
+					local target_id, target_prop = propInfo[2], propInfo[1]
+					local patch = patches[target_id]
+					if not patch then
+						patch = {
+							id = target_id,
+							changedProperties = {},
+						}
+						patches[target_id] = patch
+					end
+					patch.changedProperties[target_prop] = { Ref = value_id }
+				end
+			end
+			local patchSet = PatchSet.newEmpty()
+			for _, patch in patches do
+				table.insert(patchSet.updated, patch)
+			end
+
+			return patchSet
+		end)
+		:await()
+
+	if not (success and refSuccess) then
 		return false
 	end
 
@@ -285,16 +309,18 @@ function ServeSession:__replaceInstances(patchPart)
 		for _, child in oldInstance:GetChildren() do
 			child.Parent = replacement
 		end
-		replacement.Parent = oldParent
 
 		-- TODO: Update selection
 		-- TODO: Update ref properties
 
+		replacement.Parent = oldParent
 		-- ChangeHistoryService doesn't like it if an Instance has been
 		-- Destroyed. So, we have to accept the potential memory hit and
 		-- just set the parent to `nil`.
 		oldInstance.Parent = nil
 	end
+
+	self.__reconciler:applyPatch(refPatch)
 
 	table.clear(patchPart)
 	return true

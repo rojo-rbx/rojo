@@ -254,13 +254,13 @@ function ApiContext:open(id)
 	end)
 end
 
+export type ModelResponse = {
+	sessionId: string,
+	modelContents: buffer,
+}
+
 function ApiContext:model(ids: { string })
 	local url = ("%s/api/model/%s"):format(self.__baseUrl, table.concat(ids, ","))
-
-	type ModelResponse = {
-		sessionId: string,
-		modelContents: buffer,
-	}
 
 	return Http.get(url):andThen(rejectFailedRequests):andThen(Http.Response.json):andThen(function(body: ModelResponse)
 		if body.sessionId ~= self.__sessionId then
@@ -273,18 +273,27 @@ function ApiContext:model(ids: { string })
 	end)
 end
 
+export type ReferenceResponse = {
+	sessionId: string,
+	messageCursor: number,
+	refList: { [string]: { { string } } },
+}
+
 function ApiContext:references(ids: { string })
 	local url = ("%s/api/references/%s"):format(self.__baseUrl, table.concat(ids, ","))
 
-	return Http.get(url):andThen(rejectFailedRequests):andThen(Http.Response.json):andThen(function(body)
-		if body.sessionId ~= self.__sessionId then
-			return Promise.reject("Server changed ID")
-		end
+	return Http.get(url)
+		:andThen(rejectFailedRequests)
+		:andThen(Http.Response.json)
+		:andThen(function(body: ReferenceResponse)
+			if body.sessionId ~= self.__sessionId then
+				return Promise.reject("Server changed ID")
+			end
 
-		assert(validateApiReferences(body))
+			assert(validateApiReferences(body))
 
-		return body
-	end)
+			return body
+		end)
 end
 
 return ApiContext
