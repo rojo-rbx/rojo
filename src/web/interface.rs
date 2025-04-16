@@ -239,7 +239,8 @@ impl BufferEncode {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct RefPropsResponse {
+#[serde(rename_all = "camelCase")]
+pub struct ReferencesResponse {
     pub session_id: SessionId,
     pub message_cursor: u32,
     pub ref_list: HashMap<Ref, UstrMap<Ref>>,

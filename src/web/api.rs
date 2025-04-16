@@ -27,7 +27,7 @@ use crate::{
         },
         util::{json, json_ok},
     },
-    web_api::{BufferEncode, ModelResponse, RefPropsResponse},
+    web_api::{BufferEncode, ModelResponse, ReferencesResponse},
 };
 
 pub async fn call(serve_session: Arc<ServeSession>, request: Request<Body>) -> Response<Body> {
@@ -297,7 +297,7 @@ impl ApiService {
             }
         }
 
-        json_ok(RefPropsResponse {
+        json_ok(ReferencesResponse {
             session_id: self.serve_session.session_id(),
             message_cursor: self.serve_session.message_queue().cursor(),
             ref_list,
