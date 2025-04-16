@@ -248,6 +248,9 @@ function ServeSession:__onActiveScriptChanged(activeScript)
 end
 
 function ServeSession:__replaceInstances(idList)
+	if #idList == 0 then
+		return true, PatchSet.newEmpty()
+	end
 	-- It would be annoying if selection went away, so we try to preserve it.
 	local selection = Selection:Get()
 	local selectionMap = {}
@@ -302,10 +305,13 @@ function ServeSession:__replaceInstances(idList)
 		end
 	end
 
-	self.__reconciler:applyPatch(refPatch)
-
-	Selection:Set(selection)
-	return true
+	local patchApplySuccess, unappliedPatch = pcall(self.__reconciler.applyPatch, self.__reconciler, refPatch)
+	if patchApplySuccess then
+		Selection:Set(selection)
+		return true, unappliedPatch
+	else
+		error(unappliedPatch)
+	end
 end
 
 function ServeSession:__applyPatch(patch)
@@ -349,22 +355,26 @@ function ServeSession:__applyPatch(patch)
 
 	Log.debug("ServeSession:__replaceInstances(unappliedPatch.added)")
 	Timer.start("ServeSession:__replaceInstances(unappliedPatch.added)")
-	local addSuccess = self:__replaceInstances(addedIdList)
+	local addSuccess, unappliedAddedRefs = self:__replaceInstances(addedIdList)
 	Timer.stop()
 
 	Log.debug("ServeSession:__replaceInstances(unappliedPatch.updated)")
 	Timer.start("ServeSession:__replaceInstances(unappliedPatch.updated)")
-	local updateSuccess = self:__replaceInstances(updatedIdList)
+	local updateSuccess, unappliedUpdateRefs = self:__replaceInstances(updatedIdList)
 	Timer.stop()
 
+	local actualUnappliedPatches = PatchSet.newEmpty()
 	if addSuccess then
 		table.clear(unappliedPatch.added)
+		PatchSet.assign(actualUnappliedPatches, unappliedAddedRefs)
 	end
 	if updateSuccess then
 		table.clear(unappliedPatch.updated)
+		PatchSet.assign(actualUnappliedPatches, unappliedUpdateRefs)
 	end
+	PatchSet.assign(actualUnappliedPatches, unappliedPatch)
 
-	if not (addSuccess and updateSuccess) then
+	if not PatchSet.isEmpty(actualUnappliedPatches) then
 		Log.debug(
 			"Could not apply all changes requested by the Rojo server:\n{}",
 			PatchSet.humanSummary(self.__instanceMap, unappliedPatch)
@@ -376,7 +386,7 @@ function ServeSession:__applyPatch(patch)
 	-- guaranteed to be called after the commit
 	for _, callback in self.__postcommitCallbacks do
 		task.spawn(function()
-			local success, err = pcall(callback, patch, self.__instanceMap, unappliedPatch)
+			local success, err = pcall(callback, patch, self.__instanceMap, actualUnappliedPatches)
 			if not success then
 				Log.warn("Postcommit hook errored: {}", err)
 			end
