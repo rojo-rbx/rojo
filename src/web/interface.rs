@@ -240,7 +240,7 @@ impl BufferEncode {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ReferencesResponse<'a> {
+pub struct RefPatchResponse<'a> {
     pub session_id: SessionId,
     pub patch: SubscribeMessage<'a>,
 }

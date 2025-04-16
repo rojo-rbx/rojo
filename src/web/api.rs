@@ -27,7 +27,7 @@ use crate::{
         },
         util::{json, json_ok},
     },
-    web_api::{BufferEncode, InstanceUpdate, ModelResponse, ReferencesResponse},
+    web_api::{BufferEncode, InstanceUpdate, ModelResponse, RefPatchResponse},
 };
 
 pub async fn call(serve_session: Arc<ServeSession>, request: Request<Body>) -> Response<Body> {
@@ -44,8 +44,8 @@ pub async fn call(serve_session: Arc<ServeSession>, request: Request<Body>) -> R
         (&Method::GET, path) if path.starts_with("/api/model/") => {
             service.handle_api_model(request).await
         }
-        (&Method::GET, path) if path.starts_with("/api/references/") => {
-            service.handle_api_references(request).await
+        (&Method::GET, path) if path.starts_with("/api/ref-patch/") => {
+            service.handle_api_ref_patch(request).await
         }
 
         (&Method::POST, path) if path.starts_with("/api/open/") => {
@@ -266,8 +266,8 @@ impl ApiService {
         })
     }
 
-    async fn handle_api_references(self, request: Request<Body>) -> Response<Body> {
-        let argument = &request.uri().path()["/api/references/".len()..];
+    async fn handle_api_ref_patch(self, request: Request<Body>) -> Response<Body> {
+        let argument = &request.uri().path()["/api/ref-patch/".len()..];
         let requested_ids: Result<HashSet<Ref>, _> =
             argument.split(',').map(Ref::from_str).collect();
 
@@ -308,7 +308,7 @@ impl ApiService {
             }
         }
 
-        json_ok(ReferencesResponse {
+        json_ok(RefPatchResponse {
             session_id: self.serve_session.session_id(),
             patch: SubscribeMessage {
                 added: HashMap::new(),

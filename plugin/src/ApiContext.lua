@@ -11,7 +11,7 @@ local validateApiInfo = Types.ifEnabled(Types.ApiInfoResponse)
 local validateApiRead = Types.ifEnabled(Types.ApiReadResponse)
 local validateApiSubscribe = Types.ifEnabled(Types.ApiSubscribeResponse)
 local validateApiModel = Types.ifEnabled(Types.ApiModelResponse)
-local validateApiReferences = Types.ifEnabled(Types.ApiReferencesResponse)
+local validateApiRefPatch = Types.ifEnabled(Types.ApiRefPatchResponse)
 
 local function rejectFailedRequests(response)
 	if response.code >= 400 then
@@ -268,15 +268,15 @@ function ApiContext:model(ids: { string })
 	end)
 end
 
-function ApiContext:references(ids: { string })
-	local url = ("%s/api/references/%s"):format(self.__baseUrl, table.concat(ids, ","))
+function ApiContext:refPatch(ids: { string })
+	local url = ("%s/api/ref-patch/%s"):format(self.__baseUrl, table.concat(ids, ","))
 
 	return Http.get(url):andThen(rejectFailedRequests):andThen(Http.Response.json):andThen(function(body)
 		if body.sessionId ~= self.__sessionId then
 			return Promise.reject("Server changed ID")
 		end
 
-		assert(validateApiReferences(body))
+		assert(validateApiRefPatch(body))
 
 		return body
 	end)

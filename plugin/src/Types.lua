@@ -60,7 +60,7 @@ local ApiModelResponse = t.interface({
 	modelContents = t.buffer,
 })
 
-local ApiReferencesResponse = t.interface({
+local ApiRefPatchResponse = t.interface({
 	sessionId = t.string,
 	patch = ApiSubscribeMessage,
 })
@@ -93,7 +93,7 @@ return strict("Types", {
 	ApiInstanceMetadata = ApiInstanceMetadata,
 	ApiSubscribeMessage = ApiSubscribeMessage,
 	ApiModelResponse = ApiModelResponse,
-	ApiReferencesResponse = ApiReferencesResponse,
+	ApiRefPatchResponse = ApiRefPatchResponse,
 	ApiValue = ApiValue,
 	RbxId = RbxId,
 

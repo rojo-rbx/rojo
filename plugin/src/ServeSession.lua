@@ -273,7 +273,7 @@ function ServeSession:__replaceInstances(idList)
 		:await()
 
 	local refSuccess, refPatch = self.__apiContext
-		:references(idList)
+		:refPatch(idList)
 		:andThen(function(response)
 			return response.patch
 		end)
