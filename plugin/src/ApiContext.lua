@@ -10,7 +10,7 @@ local Version = require(script.Parent.Version)
 local validateApiInfo = Types.ifEnabled(Types.ApiInfoResponse)
 local validateApiRead = Types.ifEnabled(Types.ApiReadResponse)
 local validateApiSubscribe = Types.ifEnabled(Types.ApiSubscribeResponse)
-local validateApiModel = Types.ifEnabled(Types.ApiModelResponse)
+local validateApiSerialize = Types.ifEnabled(Types.ApiSerializeResponse)
 local validateApiRefPatch = Types.ifEnabled(Types.ApiRefPatchResponse)
 
 local function rejectFailedRequests(response)
@@ -254,15 +254,15 @@ function ApiContext:open(id)
 	end)
 end
 
-function ApiContext:model(ids: { string })
-	local url = ("%s/api/model/%s"):format(self.__baseUrl, table.concat(ids, ","))
+function ApiContext:serialize(ids: { string })
+	local url = ("%s/api/serialize/%s"):format(self.__baseUrl, table.concat(ids, ","))
 
 	return Http.get(url):andThen(rejectFailedRequests):andThen(Http.Response.json):andThen(function(body)
 		if body.sessionId ~= self.__sessionId then
 			return Promise.reject("Server changed ID")
 		end
 
-		assert(validateApiModel(body))
+		assert(validateApiSerialize(body))
 
 		return body
 	end)

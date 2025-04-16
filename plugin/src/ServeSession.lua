@@ -260,7 +260,7 @@ function ServeSession:__replaceInstances(idList)
 
 	-- TODO: Should we do this in multiple requests so we can more granularly mark failures?
 	local modelSuccess, replacements = self.__apiContext
-		:model(idList)
+		:serialize(idList)
 		:andThen(function(response)
 			Log.debug("Deserializing results from model endpoint")
 			local objects = SerializationService:DeserializeInstancesAsync(response.modelContents)

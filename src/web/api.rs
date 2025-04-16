@@ -27,7 +27,7 @@ use crate::{
         },
         util::{json, json_ok},
     },
-    web_api::{BufferEncode, InstanceUpdate, ModelResponse, RefPatchResponse},
+    web_api::{BufferEncode, InstanceUpdate, RefPatchResponse, SerializeResponse},
 };
 
 pub async fn call(serve_session: Arc<ServeSession>, request: Request<Body>) -> Response<Body> {
@@ -41,8 +41,8 @@ pub async fn call(serve_session: Arc<ServeSession>, request: Request<Body>) -> R
         (&Method::GET, path) if path.starts_with("/api/subscribe/") => {
             service.handle_api_subscribe(request).await
         }
-        (&Method::GET, path) if path.starts_with("/api/model/") => {
-            service.handle_api_model(request).await
+        (&Method::GET, path) if path.starts_with("/api/serialize/") => {
+            service.handle_api_serialize(request).await
         }
         (&Method::GET, path) if path.starts_with("/api/ref-patch/") => {
             service.handle_api_ref_patch(request).await
@@ -217,8 +217,8 @@ impl ApiService {
         })
     }
 
-    async fn handle_api_model(&self, request: Request<Body>) -> Response<Body> {
-        let argument = &request.uri().path()["/api/model/".len()..];
+    async fn handle_api_serialize(&self, request: Request<Body>) -> Response<Body> {
+        let argument = &request.uri().path()["/api/serialize/".len()..];
         let requested_ids: Result<Vec<Ref>, _> = argument.split(',').map(Ref::from_str).collect();
 
         let requested_ids = match requested_ids {
@@ -260,7 +260,7 @@ impl ApiService {
         let mut source = Vec::new();
         rbx_binary::to_writer(&mut source, &response_dom, &[response_dom.root_ref()]).unwrap();
 
-        json_ok(ModelResponse {
+        json_ok(SerializeResponse {
             session_id: self.serve_session.session_id(),
             model_contents: BufferEncode::new(source),
         })

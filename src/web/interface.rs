@@ -210,7 +210,7 @@ pub struct OpenResponse {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ModelResponse {
+pub struct SerializeResponse {
     pub session_id: SessionId,
     pub model_contents: BufferEncode,
 }
