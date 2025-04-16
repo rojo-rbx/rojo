@@ -246,15 +246,7 @@ function ServeSession:__onActiveScriptChanged(activeScript)
 	self.__apiContext:open(scriptId)
 end
 
-function ServeSession:__replaceInstances(patchPart)
-	if #patchPart == 0 then
-		return true
-	end
-	local idList = table.create(#patchPart)
-	for i, v in patchPart do
-		idList[i] = v.id
-	end
-
+function ServeSession:__replaceInstances(idList)
 	-- TODO: Should we do this in multiple requests so we can more granularly mark failures?
 	local success, replacements = self.__apiContext
 		:model(idList)
@@ -301,7 +293,6 @@ function ServeSession:__replaceInstances(patchPart)
 
 	self.__reconciler:applyPatch(refPatch)
 
-	table.clear(patchPart)
 	return true
 end
 
@@ -341,15 +332,25 @@ function ServeSession:__applyPatch(patch)
 		return
 	end
 
+	local addedIdList = PatchSet.addedIdList(unappliedPatch)
+	local updatedIdList = PatchSet.updatedIdList(unappliedPatch)
+
 	Log.debug("ServeSession:__replaceInstances(unappliedPatch.added)")
 	Timer.start("ServeSession:__replaceInstances(unappliedPatch.added)")
-	local addSuccess = self:__replaceInstances(unappliedPatch.added)
+	local addSuccess = self:__replaceInstances(addedIdList)
 	Timer.stop()
 
 	Log.debug("ServeSession:__replaceInstances(unappliedPatch.updated)")
 	Timer.start("ServeSession:__replaceInstances(unappliedPatch.updated)")
-	local updateSuccess = self:__replaceInstances(unappliedPatch.updated)
+	local updateSuccess = self:__replaceInstances(updatedIdList)
 	Timer.stop()
+
+	if addSuccess then
+		table.clear(unappliedPatch.added)
+	end
+	if updateSuccess then
+		table.clear(unappliedPatch.updated)
+	end
 
 	if not (addSuccess and updateSuccess) then
 		Log.debug(
