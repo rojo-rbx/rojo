@@ -94,9 +94,33 @@ impl RojoTree {
     }
 
     pub fn insert_instance(&mut self, parent_ref: Ref, snapshot: InstanceSnapshot) -> Ref {
+        // !!!!!!!!!! UGLY HACK !!!!!!!!!!
+        // ! If you are going to change this, go change it in patch_compute/compute_property_patches too
+        //
+        // This is a set of special cases working around a more general problem upstream
+        // in rbx-dom that causes pivots to not build to file correctly, described in
+        // github.com/rojo-rbx/rojo/issues/628 and github.com/rojo-rbx/rbx-dom/issues/385
+        //
+        // We need to insert the NeedsPivotMigration property with a value of false on
+        // every instance that inherits from Model for pivots to build correctly.
+        let hack_needs_pivot_migration = match snapshot.class_name.as_ref() {
+            // This is not a future proof way to do this but the last time a
+            // descendant of Model was added was in 2020 so it's probably fine.
+            "Model" | "Actor" | "Tool" | "HopperBin" | "Flag" | "WorldModel" | "Workspace"
+            | "Status"
+                if !snapshot
+                    .properties
+                    .contains_key(&ustr("NeedsPivotMigration")) =>
+            {
+                vec![("NeedsPivotMigration", Variant::Bool(false))]
+            }
+            _ => Vec::new(),
+        };
+
         let builder = InstanceBuilder::empty()
             .with_class(snapshot.class_name)
             .with_name(snapshot.name.into_owned())
+            .with_properties(hack_needs_pivot_migration)
             .with_properties(snapshot.properties);
 
         let referent = self.inner.insert(parent_ref, builder);
