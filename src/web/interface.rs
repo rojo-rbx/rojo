@@ -226,7 +226,6 @@ pub struct BufferEncode {
 
 impl BufferEncode {
     pub fn new(content: Vec<u8>) -> Self {
-        // TODO: Is compression actually valuable here? rbxm is already fairly compressed.
         let base64 = data_encoding::BASE64.encode(&content);
         Self {
             m: (),
