@@ -23,7 +23,9 @@ instances:
       ignoreUnknownInstances: true
     Name: Workspace
     Parent: id-2
-    Properties: {}
+    Properties:
+      NeedsPivotMigration:
+        Bool: false
   id-4:
     Children: []
     ClassName: ObjectValue
