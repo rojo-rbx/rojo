@@ -1886,7 +1886,6 @@ dependencies = [
  "uuid",
  "walkdir",
  "winreg 0.10.1",
- "zstd",
 ]
 
 [[package]]

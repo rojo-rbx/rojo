@@ -221,20 +221,22 @@ pub struct SerializeResponse {
 pub struct BufferEncode {
     m: (),
     t: Cow<'static, str>,
-    zbase64: String,
+    base64: String,
 }
 
 impl BufferEncode {
     pub fn new(content: Vec<u8>) -> Self {
         // TODO: Is compression actually valuable here? rbxm is already fairly compressed.
-        let compressed =
-            zstd::bulk::compress(&content, 0).expect("zstd compression should not fail");
-        let base_64 = data_encoding::BASE64.encode(&compressed);
+        let base64 = data_encoding::BASE64.encode(&content);
         Self {
             m: (),
             t: Cow::Borrowed("buffer"),
-            zbase64: base_64,
+            base64,
         }
+    }
+
+    pub fn model(&self) -> &str {
+        &self.base64
     }
 }
 
