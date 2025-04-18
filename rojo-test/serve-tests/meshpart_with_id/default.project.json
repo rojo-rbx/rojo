@@ -1,0 +1,22 @@
+{
+  "name": "meshpart",
+  "tree": {
+    "$className": "DataModel",
+    "Workspace": {
+      "Sword": {
+        "$id": "sword",
+        "$className": "MeshPart",
+        "$properties": {
+          "MeshId": "rbxasset://fonts/sword.mesh",
+          "TextureID": "rbxasset://textures/SwordTexture.png"
+        }
+      },
+      "ObjectValue": {
+        "$className": "ObjectValue",
+        "$attributes": {
+          "Rojo_Target_Value": "sword"
+        }
+      }
+    }
+  }
+}
