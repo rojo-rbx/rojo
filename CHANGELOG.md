@@ -1,6 +1,6 @@
 # Rojo Changelog
 
-## Unreleased Changes
+## 7.5.0 - April 25th, 2025
 * Fixed an edge case that caused model pivots to not be built correctly in some cases ([#1027])
 * Add `blockedPlaceIds` project config field to allow blocking place ids from being live synced ([#1021])
 * Adds support for `.plugin.lua(u)` files - this applies the `Plugin` RunContext. ([#1008])
