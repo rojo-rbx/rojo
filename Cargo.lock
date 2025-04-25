@@ -1603,9 +1603,9 @@ dependencies = [
 
 [[package]]
 name = "rbx_reflection_database"
-version = "1.0.0+roblox-666"
+version = "1.0.2+roblox-670"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a45b98a2794815736602087cf2fc9d85eb798e7c432d41307336014792768a46"
+checksum = "5349b19e5e94fbcaba7a52175263ab64011e0a13f17ff57729f2f560ccdec615"
 dependencies = [
  "lazy_static",
  "rbx_reflection",
@@ -1831,7 +1831,7 @@ dependencies = [
 
 [[package]]
 name = "rojo"
-version = "7.5.0-prealpha"
+version = "7.5.0"
 dependencies = [
  "anyhow",
  "backtrace",
