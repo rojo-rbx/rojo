@@ -34234,7 +34234,7 @@
         },
         "Capabilities": {
           "Name": "Capabilities",
-          "Scriptability": "ReadWrite",
+          "Scriptability": "None",
           "DataType": {
             "Value": "SecurityCapabilities"
           },
