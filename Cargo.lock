@@ -1831,7 +1831,7 @@ dependencies = [
 
 [[package]]
 name = "rojo"
-version = "7.5.0"
+version = "7.5.1"
 dependencies = [
  "anyhow",
  "backtrace",
