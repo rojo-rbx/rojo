@@ -5,7 +5,7 @@ use std::{
 
 use rbx_dom_weak::{
     types::{Ref, Variant},
-    Instance, InstanceBuilder, WeakDom,
+    ustr, Instance, InstanceBuilder, Ustr, UstrMap, WeakDom,
 };
 
 use crate::{multimap::MultiMap, RojoRef};
@@ -102,7 +102,7 @@ impl RojoTree {
 
     pub fn insert_instance(&mut self, parent_ref: Ref, snapshot: InstanceSnapshot) -> Ref {
         let builder = InstanceBuilder::empty()
-            .with_class(snapshot.class_name.into_owned())
+            .with_class(snapshot.class_name)
             .with_name(snapshot.name.into_owned())
             .with_properties(snapshot.properties);
 
@@ -290,11 +290,11 @@ impl<'a> InstanceWithMeta<'a> {
         &self.instance.name
     }
 
-    pub fn class_name(&self) -> &'a str {
-        &self.instance.class
+    pub fn class_name(&self) -> Ustr {
+        self.instance.class
     }
 
-    pub fn properties(&self) -> &'a HashMap<String, Variant> {
+    pub fn properties(&self) -> &'a UstrMap<Variant> {
         &self.instance.properties
     }
 
@@ -339,15 +339,15 @@ impl InstanceWithMetaMut<'_> {
         &self.instance.class
     }
 
-    pub fn class_name_mut(&mut self) -> &mut String {
-        &mut self.instance.class
+    pub fn set_class_name<'a, S: Into<&'a str>>(&mut self, new_class: S) {
+        self.instance.class = ustr(new_class.into());
     }
 
-    pub fn properties(&self) -> &HashMap<String, Variant> {
+    pub fn properties(&self) -> &UstrMap<Variant> {
         &self.instance.properties
     }
 
-    pub fn properties_mut(&mut self) -> &mut HashMap<String, Variant> {
+    pub fn properties_mut(&mut self) -> &mut UstrMap<Variant> {
         &mut self.instance.properties
     }
 

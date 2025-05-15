@@ -6,7 +6,7 @@ use std::{
 
 use anyhow::{format_err, Context};
 use memofs::{IoResultExt as _, Vfs};
-use rbx_dom_weak::types::{Attributes, Variant};
+use rbx_dom_weak::types::{Attributes, Ustr, UstrMap, Variant};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -29,8 +29,8 @@ pub struct AdjacentMetadata {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ignore_unknown_instances: Option<bool>,
 
-    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
-    pub properties: BTreeMap<String, UnresolvedValue>,
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    pub properties: UstrMap<UnresolvedValue>,
 
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub attributes: BTreeMap<String, UnresolvedValue>,
@@ -213,14 +213,14 @@ pub struct DirectoryMetadata {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ignore_unknown_instances: Option<bool>,
 
-    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
-    pub properties: BTreeMap<String, UnresolvedValue>,
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    pub properties: UstrMap<UnresolvedValue>,
 
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub attributes: BTreeMap<String, UnresolvedValue>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub class_name: Option<String>,
+    pub class_name: Option<Ustr>,
 
     #[serde(skip)]
     pub path: PathBuf,
@@ -337,7 +337,7 @@ impl DirectoryMetadata {
                 ));
             }
 
-            snapshot.class_name = Cow::Owned(class_name);
+            snapshot.class_name = class_name;
         }
 
         Ok(())

@@ -6,7 +6,7 @@ use std::{
 
 use anyhow::Context;
 use memofs::{IoResultExt, Vfs};
-use rbx_dom_weak::types::Variant;
+use rbx_dom_weak::{types::Variant, ustr};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -39,7 +39,7 @@ pub fn snapshot_csv(
     let mut snapshot = InstanceSnapshot::new()
         .name(name)
         .class_name("LocalizationTable")
-        .properties([("Contents".to_owned(), table_contents.into())])
+        .property(ustr("Contents"), table_contents)
         .metadata(
             InstanceMetadata::new()
                 .instigating_source(path)
