@@ -123,6 +123,7 @@ impl AdjacentMetadata {
             attributes,
             path,
             id: None,
+            schema: None,
         }))
     }
 
@@ -313,6 +314,7 @@ impl DirectoryMetadata {
             class_name: None,
             path,
             id: None,
+            schema: None,
         }))
     }
 

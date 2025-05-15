@@ -138,6 +138,7 @@ fn json_model_from_pair<'sync>(
         properties,
         attributes,
         id: None,
+        schema: None,
     }
 }
 
