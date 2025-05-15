@@ -38,6 +38,7 @@
     - `syncUnscriptable` defaults to `true` instead of `false`
     - `ignoreTrees` doesn't require the root of the project's name in it.
 
+* Support for a `$schema` field in all special JSON files (`.project.json`, `.model.json`, and `.meta.json`) ([#974])
 * Projects may now manually link `Ref` properties together using `Attributes`. ([#843])
  	This has two parts: using `id` or `$id` in JSON files or a `Rojo_Target` attribute, an Instance
     is given an ID. Then, that ID may be used elsewhere in the project to point to an Instance
@@ -65,6 +66,8 @@
 * Added experimental setting for Auto Connect in playtests ([#840])
 * Improved settings UI ([#886])
 * `Open Scripts Externally` option can now be changed while syncing ([#911])
+* The sync reminder notification will now tell you what was last synced and when ([#987])
+* Fixed notification and tooltip text sometimes getting cut off ([#988])
 * Projects may now specify rules for syncing files as if they had a different file extension. ([#813])
  	This is specified via a new field on project files, `syncRules`:
 
@@ -122,6 +125,9 @@
 [#886]: https://github.com/rojo-rbx/rojo/pull/886
 [#911]: https://github.com/rojo-rbx/rojo/pull/911
 [#915]: https://github.com/rojo-rbx/rojo/pull/915
+[#974]: https://github.com/rojo-rbx/rojo/pull/974
+[#987]: https://github.com/rojo-rbx/rojo/pull/987
+[#988]: https://github.com/rojo-rbx/rojo/pull/988
 
 ## [7.4.3] - August 6th, 2024
 * Fixed issue with building binary files introduced in 7.4.2

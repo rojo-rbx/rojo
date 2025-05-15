@@ -1,6 +1,6 @@
 [package]
 name = "rojo"
-version = "7.4.0"
+version = "7.5.0-prealpha"
 rust-version = "1.70.0"
 authors = ["Lucien Greathouse <me@lpghatguy.com>"]
 description = "Enables professional-grade development tools for Roblox developers"
@@ -70,7 +70,6 @@ humantime = "2.1.0"
 hyper = { version = "0.14.28", features = ["server", "tcp", "http1"] }
 jod-thread = "0.1.2"
 log = "0.4.21"
-maplit = "1.0.2"
 num_cpus = "1.16.0"
 opener = "0.5.2"
 rayon = "1.9.0"

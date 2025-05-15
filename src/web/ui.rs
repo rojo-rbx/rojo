@@ -7,7 +7,6 @@
 use std::{borrow::Cow, sync::Arc, time::Duration};
 
 use hyper::{header, Body, Method, Request, Response, StatusCode};
-use maplit::hashmap;
 use rbx_dom_weak::types::{Ref, Variant};
 use ritz::{html, Fragment, HtmlContent, HtmlSelfClosingTag};
 
@@ -297,11 +296,12 @@ impl<'a> ExpandableSection<'a> {
         // support for conditional attributes like `checked`.
         let mut input = HtmlSelfClosingTag {
             name: Cow::Borrowed("input"),
-            attributes: hashmap! {
-                Cow::Borrowed("class") => Cow::Borrowed("expandable-input"),
-                Cow::Borrowed("id") => Cow::Owned(input_id.clone()),
-                Cow::Borrowed("type") => Cow::Borrowed("checkbox"),
-            },
+            attributes: [
+                (Cow::Borrowed("class"), Cow::Borrowed("expandable-input")),
+                (Cow::Borrowed("id"), Cow::Owned(input_id.clone())),
+                (Cow::Borrowed("type"), Cow::Borrowed("checkbox")),
+            ]
+            .into(),
         };
 
         if self.expanded {

@@ -5,7 +5,6 @@ use std::{
 };
 
 use anyhow::Context;
-use maplit::hashmap;
 use memofs::{IoResultExt, Vfs};
 use rbx_dom_weak::types::Variant;
 use serde::{Deserialize, Serialize};
@@ -40,9 +39,7 @@ pub fn snapshot_csv(
     let mut snapshot = InstanceSnapshot::new()
         .name(name)
         .class_name("LocalizationTable")
-        .properties(hashmap! {
-            "Contents".to_owned() => table_contents.into(),
-        })
+        .properties([("Contents".to_owned(), table_contents.into())])
         .metadata(
             InstanceMetadata::new()
                 .instigating_source(path)
@@ -317,11 +314,11 @@ Ack,Ack!,,An exclamation of despair,¡Ay!"#,
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_csv(
             &InstanceContext::default(),
-            &mut vfs,
+            &vfs,
             Path::new("/foo.csv"),
             "foo",
         )
@@ -349,11 +346,11 @@ Ack,Ack!,,An exclamation of despair,¡Ay!"#,
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_csv(
             &InstanceContext::default(),
-            &mut vfs,
+            &vfs,
             Path::new("/foo.csv"),
             "foo",
         )

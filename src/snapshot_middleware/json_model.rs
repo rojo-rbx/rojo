@@ -144,6 +144,9 @@ fn json_model_from_pair<'sync>(
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct JsonModel {
+    #[serde(rename = "$schema", skip_serializing_if = "Option::is_none")]
+    schema: Option<String>,
+
     #[serde(alias = "Name", skip_serializing_if = "Option::is_none")]
     name: Option<String>,
 

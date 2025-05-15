@@ -669,7 +669,6 @@ fn infer_class_name(name: &str, parent_class: Option<&str>) -> Option<Cow<'stati
 mod test {
     use super::*;
 
-    use maplit::hashmap;
     use memofs::{InMemoryFs, VfsSnapshot};
 
     #[ignore = "Functionality moved to root snapshot middleware"]
@@ -680,16 +679,19 @@ mod test {
         let mut imfs = InMemoryFs::new();
         imfs.load_snapshot(
             "/foo",
-            VfsSnapshot::dir(hashmap! {
-                "default.project.json" => VfsSnapshot::file(r#"
+            VfsSnapshot::dir([(
+                "default.project.json",
+                VfsSnapshot::file(
+                    r#"
                     {
                         "name": "indirect-project",
                         "tree": {
                             "$className": "Folder"
                         }
                     }
-                "#),
-            }),
+                "#,
+                ),
+            )]),
         )
         .unwrap();
 
@@ -714,16 +716,19 @@ mod test {
         let mut imfs = InMemoryFs::new();
         imfs.load_snapshot(
             "/foo",
-            VfsSnapshot::dir(hashmap! {
-                "hello.project.json" => VfsSnapshot::file(r#"
+            VfsSnapshot::dir([(
+                "hello.project.json",
+                VfsSnapshot::file(
+                    r#"
                     {
                         "name": "direct-project",
                         "tree": {
                             "$className": "Model"
                         }
                     }
-                "#),
-            }),
+                "#,
+                ),
+            )]),
         )
         .unwrap();
 
@@ -862,17 +867,22 @@ mod test {
         let mut imfs = InMemoryFs::new();
         imfs.load_snapshot(
             "/foo",
-            VfsSnapshot::dir(hashmap! {
-                "default.project.json" => VfsSnapshot::file(r#"
+            VfsSnapshot::dir([
+                (
+                    "default.project.json",
+                    VfsSnapshot::file(
+                        r#"
                     {
                         "name": "path-project",
                         "tree": {
                             "$path": "other.txt"
                         }
                     }
-                "#),
-                "other.txt" => VfsSnapshot::file("Hello, world!"),
-            }),
+                "#,
+                    ),
+                ),
+                ("other.txt", VfsSnapshot::file("Hello, world!")),
+            ]),
         )
         .unwrap();
 
@@ -897,24 +907,34 @@ mod test {
         let mut imfs = InMemoryFs::new();
         imfs.load_snapshot(
             "/foo",
-            VfsSnapshot::dir(hashmap! {
-                "default.project.json" => VfsSnapshot::file(r#"
+            VfsSnapshot::dir([
+                (
+                    "default.project.json",
+                    VfsSnapshot::file(
+                        r#"
                     {
                         "name": "path-project",
                         "tree": {
                             "$path": "other.project.json"
                         }
                     }
-                "#),
-                "other.project.json" => VfsSnapshot::file(r#"
+                "#,
+                    ),
+                ),
+                (
+                    "other.project.json",
+                    VfsSnapshot::file(
+                        r#"
                     {
                         "name": "other-project",
                         "tree": {
                             "$className": "Model"
                         }
                     }
-                "#),
-            }),
+                "#,
+                    ),
+                ),
+            ]),
         )
         .unwrap();
 
@@ -939,16 +959,24 @@ mod test {
         let mut imfs = InMemoryFs::new();
         imfs.load_snapshot(
             "/foo",
-            VfsSnapshot::dir(hashmap! {
-                "default.project.json" => VfsSnapshot::file(r#"
+            VfsSnapshot::dir([
+                (
+                    "default.project.json",
+                    VfsSnapshot::file(
+                        r#"
                     {
                         "name": "path-child-project",
                         "tree": {
                             "$path": "other.project.json"
                         }
                     }
-                "#),
-                "other.project.json" => VfsSnapshot::file(r#"
+                "#,
+                    ),
+                ),
+                (
+                    "other.project.json",
+                    VfsSnapshot::file(
+                        r#"
                     {
                         "name": "other-project",
                         "tree": {
@@ -959,8 +987,10 @@ mod test {
                             }
                         }
                     }
-                "#),
-            }),
+                "#,
+                    ),
+                ),
+            ]),
         )
         .unwrap();
 
@@ -988,8 +1018,11 @@ mod test {
         let mut imfs = InMemoryFs::new();
         imfs.load_snapshot(
             "/foo",
-            VfsSnapshot::dir(hashmap! {
-                "default.project.json" => VfsSnapshot::file(r#"
+            VfsSnapshot::dir([
+                (
+                    "default.project.json",
+                    VfsSnapshot::file(
+                        r#"
                     {
                         "name": "path-property-override",
                         "tree": {
@@ -999,8 +1032,13 @@ mod test {
                             }
                         }
                     }
-                "#),
-                "other.project.json" => VfsSnapshot::file(r#"
+                "#,
+                    ),
+                ),
+                (
+                    "other.project.json",
+                    VfsSnapshot::file(
+                        r#"
                     {
                         "name": "other-project",
                         "tree": {
@@ -1010,8 +1048,10 @@ mod test {
                             }
                         }
                     }
-                "#),
-            }),
+                "#,
+                    ),
+                ),
+            ]),
         )
         .unwrap();
 
@@ -1036,15 +1076,18 @@ mod test {
         let mut imfs = InMemoryFs::new();
         imfs.load_snapshot(
             "/foo",
-            VfsSnapshot::dir(hashmap! {
-                "default.project.json" => VfsSnapshot::file(r#"
+            VfsSnapshot::dir([(
+                "default.project.json",
+                VfsSnapshot::file(
+                    r#"
                     {
                         "tree": {
                             "$className": "Model"
                         }
                     }
-                "#),
-            }),
+                "#,
+                ),
+            )]),
         )
         .unwrap();
 

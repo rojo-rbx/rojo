@@ -1,4 +1,3 @@
-local TextService = game:GetService("TextService")
 local HttpService = game:GetService("HttpService")
 
 local Rojo = script:FindFirstAncestor("Rojo")
@@ -7,6 +6,8 @@ local Packages = Rojo.Packages
 
 local Roact = require(Packages.Roact)
 local Theme = require(Plugin.App.Theme)
+
+local getTextBoundsAsync = require(Plugin.App.getTextBoundsAsync)
 
 local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
 
@@ -21,50 +22,48 @@ local Y_OVERLAP = 10 -- Let the triangle tail piece overlap the target a bit to 
 local TooltipContext = Roact.createContext({})
 
 local function Popup(props)
-	local textSize = TextService:GetTextSize(
-		props.Text,
-		16,
-		Enum.Font.GothamMedium,
-		Vector2.new(math.min(props.parentSize.X, 160), math.huge)
-	) + TEXT_PADDING + (Vector2.one * 2)
-
-	local trigger = props.Trigger:getValue()
-
-	local spaceBelow = props.parentSize.Y
-		- (trigger.AbsolutePosition.Y + trigger.AbsoluteSize.Y - Y_OVERLAP + TAIL_SIZE)
-	local spaceAbove = trigger.AbsolutePosition.Y + Y_OVERLAP - TAIL_SIZE
-
-	-- If there's not enough space below, and there's more space above, then show the tooltip above the trigger
-	local displayAbove = spaceBelow < textSize.Y and spaceAbove > spaceBelow
-
-	local X = math.clamp(props.Position.X - X_OFFSET, 0, props.parentSize.X - textSize.X)
-	local Y = 0
-
-	if displayAbove then
-		Y = math.max(trigger.AbsolutePosition.Y - TAIL_SIZE - textSize.Y + Y_OVERLAP, 0)
-	else
-		Y = math.min(
-			trigger.AbsolutePosition.Y + trigger.AbsoluteSize.Y + TAIL_SIZE - Y_OVERLAP,
-			props.parentSize.Y - textSize.Y
-		)
-	end
-
 	return Theme.with(function(theme)
+		local textXSpace = math.min(props.parentSize.X, 250) - TEXT_PADDING.X
+		local textBounds = getTextBoundsAsync(props.Text, theme.Font.Main, theme.TextSize.Medium, textXSpace)
+		local contentSize = textBounds + TEXT_PADDING + (Vector2.one * 2)
+
+		local trigger = props.Trigger:getValue()
+
+		local spaceBelow = props.parentSize.Y
+			- (trigger.AbsolutePosition.Y + trigger.AbsoluteSize.Y - Y_OVERLAP + TAIL_SIZE)
+		local spaceAbove = trigger.AbsolutePosition.Y + Y_OVERLAP - TAIL_SIZE
+
+		-- If there's not enough space below, and there's more space above, then show the tooltip above the trigger
+		local displayAbove = spaceBelow < contentSize.Y and spaceAbove > spaceBelow
+
+		local X = math.clamp(props.Position.X - X_OFFSET, 0, math.max(props.parentSize.X - contentSize.X, 1))
+		local Y = 0
+
+		if displayAbove then
+			Y = math.max(trigger.AbsolutePosition.Y - TAIL_SIZE - contentSize.Y + Y_OVERLAP, 0)
+		else
+			Y = math.min(
+				trigger.AbsolutePosition.Y + trigger.AbsoluteSize.Y + TAIL_SIZE - Y_OVERLAP,
+				props.parentSize.Y - contentSize.Y
+			)
+		end
+
 		return e(BorderedContainer, {
 			position = UDim2.fromOffset(X, Y),
-			size = UDim2.fromOffset(textSize.X, textSize.Y),
+			size = UDim2.fromOffset(contentSize.X, contentSize.Y),
 			transparency = props.transparency,
 		}, {
 			Label = e("TextLabel", {
 				BackgroundTransparency = 1,
 				Position = UDim2.fromScale(0.5, 0.5),
-				Size = UDim2.new(1, -TEXT_PADDING.X, 1, -TEXT_PADDING.Y),
 				AnchorPoint = Vector2.new(0.5, 0.5),
+				Size = UDim2.fromOffset(textBounds.X, textBounds.Y),
 				Text = props.Text,
-				TextSize = 16,
-				Font = Enum.Font.GothamMedium,
+				TextSize = theme.TextSize.Medium,
+				FontFace = theme.Font.Main,
 				TextWrapped = true,
 				TextXAlignment = Enum.TextXAlignment.Left,
+				TextYAlignment = Enum.TextYAlignment.Center,
 				TextColor3 = theme.Button.Bordered.Enabled.TextColor,
 				TextTransparency = props.transparency,
 			}),
@@ -72,8 +71,8 @@ local function Popup(props)
 			Tail = e("ImageLabel", {
 				ZIndex = 100,
 				Position = if displayAbove
-					then UDim2.new(0, math.clamp(props.Position.X - X, 6, textSize.X - 6), 1, -1)
-					else UDim2.new(0, math.clamp(props.Position.X - X, 6, textSize.X - 6), 0, -TAIL_SIZE + 1),
+					then UDim2.new(0, math.clamp(props.Position.X - X, 6, contentSize.X - 6), 1, -1)
+					else UDim2.new(0, math.clamp(props.Position.X - X, 6, contentSize.X - 6), 0, -TAIL_SIZE + 1),
 				Size = UDim2.fromOffset(TAIL_SIZE, TAIL_SIZE),
 				AnchorPoint = Vector2.new(0.5, 0),
 				Rotation = if displayAbove then 180 else 0,
