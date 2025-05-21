@@ -69,6 +69,7 @@ pub fn variant_eq(variant_a: &Variant, variant_b: &Variant) -> bool {
             true
         }
         (Variant::Content(a), Variant::Content(b)) => a == b,
+        (Variant::ContentId(a), Variant::ContentId(b)) => a == b,
         (Variant::Enum(a), Variant::Enum(b)) => a == b,
         (Variant::Faces(a), Variant::Faces(b)) => a == b,
         (Variant::Float32(a), Variant::Float32(b)) => approx_eq!(f32, *a, *b),
