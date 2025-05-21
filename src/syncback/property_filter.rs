@@ -1,6 +1,4 @@
-use std::collections::HashMap;
-
-use rbx_dom_weak::{types::Variant, Instance};
+use rbx_dom_weak::{types::Variant, Instance, Ustr, UstrMap};
 use rbx_reflection::{PropertyKind, PropertySerialization, Scriptability};
 
 use crate::{variant_eq::variant_eq, Project};
@@ -10,8 +8,8 @@ use crate::{variant_eq::variant_eq, Project};
 pub fn filter_properties<'inst>(
     project: &Project,
     inst: &'inst Instance,
-) -> HashMap<&'inst str, &'inst Variant> {
-    let mut map: Vec<(&str, &Variant)> = Vec::with_capacity(inst.properties.len());
+) -> UstrMap<&'inst Variant> {
+    let mut map: Vec<(Ustr, &Variant)> = Vec::with_capacity(inst.properties.len());
     filter_properties_preallocated(project, inst, &mut map);
 
     map.into_iter().collect()
@@ -22,7 +20,7 @@ pub fn filter_properties<'inst>(
 pub fn filter_properties_preallocated<'inst>(
     project: &Project,
     inst: &'inst Instance,
-    allocation: &mut Vec<(&'inst str, &'inst Variant)>,
+    allocation: &mut Vec<(Ustr, &'inst Variant)>,
 ) {
     let sync_unscriptable = project
         .syncback_rules
@@ -34,7 +32,7 @@ pub fn filter_properties_preallocated<'inst>(
         .classes
         .get(inst.class.as_str());
 
-    let predicate = |prop_name: &String, prop_value: &Variant| {
+    let predicate = |prop_name: &Ustr, prop_value: &Variant| {
         // We don't want to serialize Ref or UniqueId properties in JSON files
         if matches!(prop_value, Variant::Ref(_) | Variant::UniqueId(_)) {
             return true;
@@ -62,10 +60,10 @@ pub fn filter_properties_preallocated<'inst>(
             }
             if let Some(default) = defaults.get(name.as_str()) {
                 if !variant_eq(value, default) {
-                    allocation.push((name, value));
+                    allocation.push((*name, value));
                 }
             } else {
-                allocation.push((name, value));
+                allocation.push((*name, value));
             }
         }
     } else {
@@ -73,7 +71,7 @@ pub fn filter_properties_preallocated<'inst>(
             if predicate(name, value) {
                 continue;
             }
-            allocation.push((name, value));
+            allocation.push((*name, value));
         }
     }
 }

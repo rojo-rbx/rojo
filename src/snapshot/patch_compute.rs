@@ -1,12 +1,12 @@
 //! Defines the algorithm for computing a roughly-minimal patch set given an
 //! existing instance tree and an instance snapshot.
 
-use std::{
-    collections::{HashMap, HashSet},
-    mem::take,
-};
+use std::{collections::HashMap, mem::take};
 
-use rbx_dom_weak::types::{Ref, Variant};
+use rbx_dom_weak::{
+    types::{Ref, Variant},
+    ustr, HashMapExt as _, UstrMap, UstrSet,
+};
 
 use crate::{RojoRef, REF_POINTER_ATTRIBUTE_PREFIX};
 
@@ -99,8 +99,8 @@ fn compute_property_patches(
     patch_set: &mut PatchSet,
     tree: &RojoTree,
 ) {
-    let mut visited_properties = HashSet::new();
-    let mut changed_properties = HashMap::new();
+    let mut visited_properties = UstrSet::default();
+    let mut changed_properties = UstrMap::new();
 
     let attribute_ref_properties = compute_ref_properties(snapshot, tree);
 
@@ -113,7 +113,7 @@ fn compute_property_patches(
     let changed_class_name = if snapshot.class_name == instance.class_name() {
         None
     } else {
-        Some(take(&mut snapshot.class_name).into_owned())
+        Some(take(&mut snapshot.class_name))
     };
 
     let changed_metadata = if &snapshot.metadata == instance.metadata() {
@@ -123,7 +123,7 @@ fn compute_property_patches(
     };
 
     for (name, snapshot_value) in take(&mut snapshot.properties) {
-        visited_properties.insert(name.clone());
+        visited_properties.insert(name);
 
         match instance.properties().get(&name) {
             Some(instance_value) => {
@@ -138,11 +138,11 @@ fn compute_property_patches(
     }
 
     for name in instance.properties().keys() {
-        if visited_properties.contains(name.as_str()) {
+        if visited_properties.contains(name) {
             continue;
         }
 
-        changed_properties.insert(name.clone(), None);
+        changed_properties.insert(*name, None);
     }
 
     for (name, ref_value) in attribute_ref_properties {
@@ -162,6 +162,34 @@ fn compute_property_patches(
             }
         }
     }
+
+    // !!!!!!!!!! UGLY HACK !!!!!!!!!!
+    //
+    // See RojoTree::insert_instance. Adjust that code also if you are touching this.
+    let actual_class = changed_class_name.unwrap_or(instance.class_name());
+    match actual_class.as_str() {
+        "Model" | "Actor" | "Tool" | "HopperBin" | "Flag" | "WorldModel" | "Workspace"
+        | "Status" => {
+            let migration_prop = ustr("NeedsPivotMigration");
+            // We want to just ignore this if it's being removed by a patch.
+            // Normally this would not matter because serving != building but
+            // if we start syncing models using SerializationService
+            // (or GetObjects) it will affect how Studio deserializes things.
+            if !instance.properties().contains_key(&migration_prop) {
+                changed_properties.insert(migration_prop, Some(Variant::Bool(false)));
+            }
+            match changed_properties.get(&migration_prop) {
+                Some(Some(Variant::Bool(_))) => {}
+                Some(None) => {
+                    changed_properties.remove(&migration_prop);
+                }
+                _ => {
+                    changed_properties.insert(migration_prop, Some(Variant::Bool(false)));
+                }
+            }
+        }
+        _ => {}
+    };
 
     if changed_properties.is_empty()
         && changed_name.is_none()
@@ -250,9 +278,9 @@ fn compute_children_patches(
 fn compute_ref_properties(
     snapshot: &InstanceSnapshot,
     tree: &RojoTree,
-) -> HashMap<String, Option<Variant>> {
-    let mut map = HashMap::new();
-    let attributes = match snapshot.properties.get("Attributes") {
+) -> UstrMap<Option<Variant>> {
+    let mut map = UstrMap::new();
+    let attributes = match snapshot.properties.get(&ustr("Attributes")) {
         Some(Variant::Attributes(attrs)) => attrs,
         _ => return map,
     };
@@ -284,9 +312,9 @@ fn compute_ref_properties(
             }
         };
         if let Some(target_id) = tree.get_specified_id(&rojo_ref) {
-            map.insert(prop_name.to_string(), Some(Variant::Ref(target_id)));
+            map.insert(ustr(prop_name), Some(Variant::Ref(target_id)));
         } else {
-            map.insert(prop_name.to_string(), None);
+            map.insert(ustr(prop_name), None);
         }
     }
 
@@ -298,8 +326,6 @@ mod test {
     use super::*;
 
     use std::borrow::Cow;
-
-    use maplit::hashmap;
 
     /// This test makes sure that rewriting refs in instance update patches to
     /// instances that already exists works. We should be able to correlate the
@@ -315,14 +341,12 @@ mod test {
         // addition of a prop named Self, which is a self-referential Ref.
         let snapshot_id = Ref::new();
         let snapshot = InstanceSnapshot {
-            snapshot_id: snapshot_id,
-            properties: hashmap! {
-                "Self".to_owned() => Variant::Ref(snapshot_id),
-            },
+            snapshot_id,
+            properties: UstrMap::from_iter([(ustr("Self"), Variant::Ref(snapshot_id))]),
 
             metadata: Default::default(),
             name: Cow::Borrowed("foo"),
-            class_name: Cow::Borrowed("foo"),
+            class_name: ustr("foo"),
             children: Vec::new(),
         };
 
@@ -333,9 +357,10 @@ mod test {
                 id: root_id,
                 changed_name: None,
                 changed_class_name: None,
-                changed_properties: hashmap! {
-                    "Self".to_owned() => Some(Variant::Ref(root_id)),
-                },
+                changed_properties: UstrMap::from_iter([(
+                    ustr("Self"),
+                    Some(Variant::Ref(root_id)),
+                )]),
                 changed_metadata: None,
             }],
             added_instances: Vec::new(),
@@ -357,23 +382,21 @@ mod test {
         // This patch describes the existing instance with a new child added.
         let snapshot_id = Ref::new();
         let snapshot = InstanceSnapshot {
-            snapshot_id: snapshot_id,
+            snapshot_id,
             children: vec![InstanceSnapshot {
-                properties: hashmap! {
-                    "Self".to_owned() => Variant::Ref(snapshot_id),
-                },
+                properties: UstrMap::from_iter([(ustr("Self"), Variant::Ref(snapshot_id))]),
 
                 snapshot_id: Ref::none(),
                 metadata: Default::default(),
                 name: Cow::Borrowed("child"),
-                class_name: Cow::Borrowed("child"),
+                class_name: ustr("child"),
                 children: Vec::new(),
             }],
 
             metadata: Default::default(),
-            properties: HashMap::new(),
+            properties: UstrMap::new(),
             name: Cow::Borrowed("foo"),
-            class_name: Cow::Borrowed("foo"),
+            class_name: ustr("foo"),
         };
 
         let patch_set = compute_patch_set(Some(snapshot), &tree, root_id);
@@ -384,11 +407,9 @@ mod test {
                 instance: InstanceSnapshot {
                     snapshot_id: Ref::none(),
                     metadata: Default::default(),
-                    properties: hashmap! {
-                        "Self".to_owned() => Variant::Ref(root_id),
-                    },
+                    properties: UstrMap::from_iter([(ustr("Self"), Variant::Ref(root_id))]),
                     name: Cow::Borrowed("child"),
-                    class_name: Cow::Borrowed("child"),
+                    class_name: ustr("child"),
                     children: Vec::new(),
                 },
             }],

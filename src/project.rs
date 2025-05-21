@@ -1,5 +1,5 @@
 use std::{
-    collections::{BTreeMap, HashSet},
+    collections::{BTreeMap, HashMap, HashSet},
     ffi::OsStr,
     fs, io,
     net::IpAddr,
@@ -7,6 +7,7 @@ use std::{
 };
 
 use memofs::Vfs;
+use rbx_dom_weak::{Ustr, UstrMap};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -21,6 +22,13 @@ pub struct ProjectError(#[from] Error);
 
 #[derive(Debug, Error)]
 enum Error {
+    #[error(
+        "Rojo requires a project file, but no project file was found in path {}\n\
+        See https://rojo.space/docs/ for guides and documentation.",
+        .path.display()
+    )]
+    NoProjectFound { path: PathBuf },
+
     #[error("The folder for the provided project cannot be used as a project name: {}\n\
             Consider setting the `name` field on this project.", .path.display())]
     FolderNameInvalid { path: PathBuf },
@@ -48,6 +56,9 @@ enum Error {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct Project {
+    #[serde(rename = "$schema", skip_serializing_if = "Option::is_none")]
+    schema: Option<String>,
+
     /// The name of the top-level instance described by the project.
     pub name: Option<String>,
 
@@ -67,6 +78,14 @@ pub struct Project {
     /// wrong Roblox place.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub serve_place_ids: Option<HashSet<u64>>,
+
+    /// If specified, contains a set of place IDs that this project is
+    /// not compatible with when doing live sync.
+    ///
+    /// This setting is intended to help prevent syncing a Rojo project into the
+    /// wrong Roblox place.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub blocked_place_ids: Option<HashSet<u64>>,
 
     /// If specified, sets the current place's place ID when connecting to the
     /// Rojo server from Roblox Studio.
@@ -220,7 +239,13 @@ impl Project {
         fuzzy_project_location: &Path,
     ) -> Result<Option<Self>, ProjectError> {
         if let Some(project_path) = Self::locate(fuzzy_project_location) {
-            let contents = vfs.read(&project_path).map_err(Error::from)?;
+            let contents = vfs.read(&project_path).map_err(|e| match e.kind() {
+                io::ErrorKind::NotFound => Error::NoProjectFound {
+                    path: project_path.to_path_buf(),
+                },
+                _ => e.into(),
+            })?;
+
             Ok(Some(Self::load_from_slice(&contents, project_path, None)?))
         } else {
             Ok(None)
@@ -234,7 +259,13 @@ impl Project {
         fallback_name: Option<&str>,
     ) -> Result<Self, ProjectError> {
         let project_path = project_file_location.to_path_buf();
-        let contents = vfs.read(&project_path).map_err(Error::from)?;
+        let contents = vfs.read(&project_path).map_err(|e| match e.kind() {
+            io::ErrorKind::NotFound => Error::NoProjectFound {
+                path: project_path.to_path_buf(),
+            },
+            _ => e.into(),
+        })?;
+
         Ok(Self::load_from_slice(
             &contents,
             project_path,
@@ -301,7 +332,7 @@ pub struct ProjectNode {
     /// `$className` CANNOT be set if `$path` is set and the instance described
     /// by that path has a ClassName other than Folder.
     #[serde(rename = "$className", skip_serializing_if = "Option::is_none")]
-    pub class_name: Option<String>,
+    pub class_name: Option<Ustr>,
 
     /// If set, defines an ID for the described Instance that can be used
     /// to refer to it for the purpose of referent properties.
@@ -318,9 +349,9 @@ pub struct ProjectNode {
     #[serde(
         rename = "$properties",
         default,
-        skip_serializing_if = "BTreeMap::is_empty"
+        skip_serializing_if = "HashMap::is_empty"
     )]
-    pub properties: BTreeMap<String, UnresolvedValue>,
+    pub properties: UstrMap<UnresolvedValue>,
 
     #[serde(
         rename = "$attributes",

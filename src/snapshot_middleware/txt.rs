@@ -1,9 +1,9 @@
 use std::{path::Path, str};
 
 use anyhow::Context as _;
-use maplit::hashmap;
 use memofs::{IoResultExt, Vfs};
 use rbx_dom_weak::types::Variant;
+use rbx_dom_weak::ustr;
 
 use crate::{
     snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
@@ -21,16 +21,12 @@ pub fn snapshot_txt(
     let contents = vfs.read_to_string(path)?;
     let contents_str = contents.as_str();
 
-    let properties = hashmap! {
-        "Value".to_owned() => contents_str.into(),
-    };
-
     let meta_path = path.with_file_name(format!("{}.meta.json", name));
 
     let mut snapshot = InstanceSnapshot::new()
         .name(name)
         .class_name("StringValue")
-        .properties(properties)
+        .property(ustr("Value"), contents_str)
         .metadata(
             InstanceMetadata::new()
                 .instigating_source(path)
@@ -51,7 +47,7 @@ pub fn syncback_txt<'sync>(
 ) -> anyhow::Result<SyncbackReturn<'sync>> {
     let new_inst = snapshot.new_inst();
 
-    let contents = if let Some(Variant::String(source)) = new_inst.properties.get("Value") {
+    let contents = if let Some(Variant::String(source)) = new_inst.properties.get(&ustr("Value")) {
         source.as_bytes().to_vec()
     } else {
         anyhow::bail!("StringValues must have a `Value` property that is a String");
@@ -61,7 +57,7 @@ pub fn syncback_txt<'sync>(
 
     let meta = AdjacentMetadata::from_syncback_snapshot(snapshot, snapshot.path.clone())?;
     if let Some(mut meta) = meta {
-        meta.properties.remove("Value");
+        meta.properties.remove(&ustr("Value"));
 
         if !meta.is_empty() {
             let parent = snapshot.path.parent_err()?;
@@ -91,11 +87,11 @@ mod test {
         imfs.load_snapshot("/foo.txt", VfsSnapshot::file("Hello there!"))
             .unwrap();
 
-        let mut vfs = Vfs::new(imfs.clone());
+        let vfs = Vfs::new(imfs.clone());
 
         let instance_snapshot = snapshot_txt(
             &InstanceContext::default(),
-            &mut vfs,
+            &vfs,
             Path::new("/foo.txt"),
             "foo",
         )

@@ -7,7 +7,10 @@ use std::{
 
 use anyhow::Context;
 use memofs::Vfs;
-use rbx_dom_weak::types::{Attributes, Ref, Variant};
+use rbx_dom_weak::{
+    types::{Attributes, Ref, Variant},
+    HashMapExt as _, Ustr, UstrMap,
+};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -85,7 +88,7 @@ pub fn syncback_json_model<'sync>(
 
 fn json_model_from_pair<'sync>(
     snapshot: &SyncbackSnapshot<'sync>,
-    prop_buffer: &mut Vec<(&'sync str, &'sync Variant)>,
+    prop_buffer: &mut Vec<(Ustr, &'sync Variant)>,
     new: Ref,
 ) -> JsonModel {
     let new_inst = snapshot
@@ -94,7 +97,7 @@ fn json_model_from_pair<'sync>(
 
     filter_properties_preallocated(snapshot.project(), new_inst, prop_buffer);
 
-    let mut properties = BTreeMap::new();
+    let mut properties = UstrMap::new();
     let mut attributes = BTreeMap::new();
     for (name, value) in prop_buffer.drain(..) {
         match value {
@@ -118,8 +121,8 @@ fn json_model_from_pair<'sync>(
             }
             _ => {
                 properties.insert(
-                    name.to_owned(),
-                    UnresolvedValue::from_variant(value.clone(), &new_inst.class, name),
+                    name,
+                    UnresolvedValue::from_variant(value.clone(), &new_inst.class, &name),
                 );
             }
         }
@@ -133,22 +136,26 @@ fn json_model_from_pair<'sync>(
 
     JsonModel {
         name: Some(new_inst.name.clone()),
-        class_name: new_inst.class.clone(),
+        class_name: new_inst.class,
         children,
         properties,
         attributes,
         id: None,
+        schema: None,
     }
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct JsonModel {
+    #[serde(rename = "$schema", skip_serializing_if = "Option::is_none")]
+    schema: Option<String>,
+
     #[serde(alias = "Name", skip_serializing_if = "Option::is_none")]
     name: Option<String>,
 
     #[serde(alias = "ClassName")]
-    class_name: String,
+    class_name: Ustr,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     id: Option<String>,
@@ -162,10 +169,10 @@ struct JsonModel {
 
     #[serde(
         alias = "Properties",
-        default = "BTreeMap::new",
-        skip_serializing_if = "BTreeMap::is_empty"
+        default = "UstrMap::new",
+        skip_serializing_if = "HashMap::is_empty"
     )]
-    properties: BTreeMap<String, UnresolvedValue>,
+    properties: UstrMap<UnresolvedValue>,
 
     #[serde(default = "BTreeMap::new", skip_serializing_if = "BTreeMap::is_empty")]
     attributes: BTreeMap<String, UnresolvedValue>,
@@ -173,7 +180,7 @@ struct JsonModel {
 
 impl JsonModel {
     fn into_snapshot(self) -> anyhow::Result<InstanceSnapshot> {
-        let name = self.name.unwrap_or_else(|| self.class_name.clone());
+        let name = self.name.unwrap_or_else(|| self.class_name.to_owned());
         let class_name = self.class_name;
 
         let mut children = Vec::with_capacity(self.children.len());
@@ -181,7 +188,7 @@ impl JsonModel {
             children.push(child.into_snapshot()?);
         }
 
-        let mut properties = HashMap::with_capacity(self.properties.len());
+        let mut properties = UstrMap::with_capacity(self.properties.len());
         for (key, unresolved) in self.properties {
             let value = unresolved.resolve(&class_name, &key)?;
             properties.insert(key, value);
@@ -202,7 +209,7 @@ impl JsonModel {
             snapshot_id: Ref::none(),
             metadata: Default::default(),
             name: Cow::Owned(name),
-            class_name: Cow::Owned(class_name),
+            class_name,
             properties,
             children,
         })

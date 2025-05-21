@@ -1,12 +1,14 @@
 use std::{
-    borrow::Cow,
-    collections::BTreeMap,
+    collections::{BTreeMap, HashMap},
     path::{Path, PathBuf},
 };
 
 use anyhow::{format_err, Context};
 use memofs::{IoResultExt as _, Vfs};
-use rbx_dom_weak::types::{Attributes, Variant};
+use rbx_dom_weak::{
+    types::{Attributes, Variant},
+    Ustr, UstrMap,
+};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -20,14 +22,17 @@ use crate::{
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AdjacentMetadata {
+    #[serde(rename = "$schema", skip_serializing_if = "Option::is_none")]
+    schema: Option<String>,
+
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ignore_unknown_instances: Option<bool>,
 
-    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
-    pub properties: BTreeMap<String, UnresolvedValue>,
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    pub properties: UstrMap<UnresolvedValue>,
 
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub attributes: BTreeMap<String, UnresolvedValue>,
@@ -55,7 +60,7 @@ impl AdjacentMetadata {
         snapshot: &SyncbackSnapshot,
         path: PathBuf,
     ) -> anyhow::Result<Option<Self>> {
-        let mut properties = BTreeMap::new();
+        let mut properties = UstrMap::default();
         let mut attributes = BTreeMap::new();
         // TODO make this more granular.
         // I am breaking the cycle of bad TODOs. This is in reference to the fact
@@ -103,8 +108,8 @@ impl AdjacentMetadata {
                 }
                 _ => {
                     properties.insert(
-                        name.to_owned(),
-                        UnresolvedValue::from_variant(value.clone(), class, name),
+                        name,
+                        UnresolvedValue::from_variant(value.clone(), class, &name),
                     );
                 }
             }
@@ -120,6 +125,7 @@ impl AdjacentMetadata {
             attributes,
             path,
             id: None,
+            schema: None,
         }))
     }
 
@@ -200,20 +206,23 @@ impl AdjacentMetadata {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DirectoryMetadata {
+    #[serde(rename = "$schema", skip_serializing_if = "Option::is_none")]
+    schema: Option<String>,
+
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ignore_unknown_instances: Option<bool>,
 
-    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
-    pub properties: BTreeMap<String, UnresolvedValue>,
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    pub properties: UstrMap<UnresolvedValue>,
 
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub attributes: BTreeMap<String, UnresolvedValue>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub class_name: Option<String>,
+    pub class_name: Option<Ustr>,
 
     #[serde(skip)]
     pub path: PathBuf,
@@ -241,7 +250,7 @@ impl DirectoryMetadata {
         snapshot: &SyncbackSnapshot,
         path: PathBuf,
     ) -> anyhow::Result<Option<Self>> {
-        let mut properties = BTreeMap::new();
+        let mut properties = UstrMap::default();
         let mut attributes = BTreeMap::new();
         // TODO make this more granular.
         // I am breaking the cycle of bad TODOs. This is in reference to the fact
@@ -289,8 +298,8 @@ impl DirectoryMetadata {
                 }
                 _ => {
                     properties.insert(
-                        name.to_owned(),
-                        UnresolvedValue::from_variant(value.clone(), class, name),
+                        name,
+                        UnresolvedValue::from_variant(value.clone(), class, &name),
                     );
                 }
             }
@@ -307,6 +316,7 @@ impl DirectoryMetadata {
             class_name: None,
             path,
             id: None,
+            schema: None,
         }))
     }
 
@@ -329,7 +339,7 @@ impl DirectoryMetadata {
                 ));
             }
 
-            snapshot.class_name = Cow::Owned(class_name);
+            snapshot.class_name = class_name;
         }
 
         Ok(())

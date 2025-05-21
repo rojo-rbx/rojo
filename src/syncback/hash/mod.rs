@@ -6,7 +6,7 @@ pub use variant::*;
 use blake3::{Hash, Hasher};
 use rbx_dom_weak::{
     types::{Ref, Variant},
-    Instance, WeakDom,
+    Instance, Ustr, WeakDom,
 };
 use std::collections::HashMap;
 
@@ -76,7 +76,7 @@ fn add_children(
 fn hash_inst_filtered<'inst>(
     project: &Project,
     inst: &'inst Instance,
-    prop_list: &mut Vec<(&'inst str, &'inst Variant)>,
+    prop_list: &mut Vec<(Ustr, &'inst Variant)>,
 ) -> Hasher {
     filter_properties_preallocated(project, inst, prop_list);
 
@@ -87,7 +87,7 @@ fn hash_inst_filtered<'inst>(
 /// It is assumed the property list is **not** sorted, so it is sorted in-line.
 fn hash_inst_prefilled<'inst>(
     inst: &'inst Instance,
-    prop_list: &mut Vec<(&'inst str, &'inst Variant)>,
+    prop_list: &mut Vec<(Ustr, &'inst Variant)>,
 ) -> Hasher {
     let mut hasher = Hasher::new();
     hasher.update(inst.name.as_bytes());
@@ -102,7 +102,7 @@ fn hash_inst_prefilled<'inst>(
     if let Some(descriptor) = descriptor {
         for (name, value) in prop_list.drain(..) {
             hasher.update(name.as_bytes());
-            if let Some(default) = descriptor.default_properties.get(name) {
+            if let Some(default) = descriptor.default_properties.get(name.as_str()) {
                 if !variant_eq(default, value) {
                     hash_variant(&mut hasher, value)
                 }

@@ -57,11 +57,19 @@ pub fn extension_for_middleware(middleware: Middleware) -> &'static str {
         Middleware::ServerScript => "server.luau",
         Middleware::ClientScript => "client.luau",
         Middleware::ModuleScript => "luau",
+        Middleware::PluginScript => "plugin.luau",
         Middleware::Project => "project.json",
         Middleware::Rbxm => "rbxm",
         Middleware::Rbxmx => "rbxmx",
         Middleware::Toml => "toml",
         Middleware::Text => "txt",
+
+        Middleware::LegacyServerScript
+        | Middleware::LegacyClientScript
+        | Middleware::RunContextServerScript
+        | Middleware::RunContextClientScript => {
+            todo!("syncback does not work on the middleware {middleware:?} yet")
+        }
         // These are manually specified and not `_` to guard against future
         // middleware additions missing this function.
         Middleware::Ignore => unimplemented!("syncback does not work on Ignore middleware"),

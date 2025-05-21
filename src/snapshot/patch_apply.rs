@@ -5,7 +5,10 @@ use std::{
     mem::take,
 };
 
-use rbx_dom_weak::types::{Ref, Variant};
+use rbx_dom_weak::{
+    types::{Ref, Variant},
+    ustr, Ustr,
+};
 
 use super::{
     patch::{AppliedPatchSet, AppliedPatchUpdate, PatchSet, PatchUpdate},
@@ -76,7 +79,7 @@ struct PatchApplyContext {
     /// Tracks all ref properties that were specified using attributes. This has
     /// to be handled after everything else is done just like normal referent
     /// properties.
-    attribute_refs_to_rewrite: MultiMap<Ref, (String, String)>,
+    attribute_refs_to_rewrite: MultiMap<Ref, (Ustr, String)>,
 
     /// The current applied patch result, describing changes made to the tree.
     applied_patch_set: AppliedPatchSet,
@@ -193,7 +196,7 @@ fn apply_update_child(context: &mut PatchApplyContext, tree: &mut RojoTree, patc
     }
 
     if let Some(class_name) = patch.changed_class_name {
-        *instance.class_name_mut() = class_name.clone();
+        instance.set_class_name(class_name);
         applied_patch.changed_class_name = Some(class_name);
     }
 
@@ -219,10 +222,10 @@ fn apply_update_child(context: &mut PatchApplyContext, tree: &mut RojoTree, patc
 
                 instance
                     .properties_mut()
-                    .insert(key.clone(), Variant::Ref(new_referent));
+                    .insert(key, Variant::Ref(new_referent));
             }
             Some(ref value) => {
-                instance.properties_mut().insert(key.clone(), value.clone());
+                instance.properties_mut().insert(key, value.clone());
             }
             None => {
                 instance.properties_mut().remove(&key);
@@ -247,7 +250,7 @@ fn defer_ref_properties(tree: &mut RojoTree, id: Ref, context: &mut PatchApplyCo
     let instance = tree
         .get_instance(id)
         .expect("Instances should exist when calculating deferred refs");
-    let attributes = match instance.properties().get("Attributes") {
+    let attributes = match instance.properties().get(&ustr("Attributes")) {
         Some(Variant::Attributes(attrs)) => attrs,
         _ => return,
     };
@@ -275,12 +278,12 @@ fn defer_ref_properties(tree: &mut RojoTree, id: Ref, context: &mut PatchApplyCo
             if let Variant::String(prop_value) = attr_value {
                 context
                     .attribute_refs_to_rewrite
-                    .insert(id, (prop_name.to_owned(), prop_value.clone()));
+                    .insert(id, (ustr(prop_name), prop_value.clone()));
             } else if let Variant::BinaryString(prop_value) = attr_value {
                 if let Ok(str) = std::str::from_utf8(prop_value.as_ref()) {
                     context
                         .attribute_refs_to_rewrite
-                        .insert(id, (prop_name.to_owned(), str.to_string()));
+                        .insert(id, (ustr(prop_name), str.to_string()));
                 } else {
                     log::error!("IDs specified by referent property attributes must be valid UTF-8 strings.")
                 }
@@ -304,8 +307,7 @@ mod test {
 
     use std::borrow::Cow;
 
-    use maplit::hashmap;
-    use rbx_dom_weak::types::Variant;
+    use rbx_dom_weak::{types::Variant, UstrMap};
 
     use super::super::PatchAdd;
 
@@ -321,10 +323,8 @@ mod test {
             snapshot_id: Ref::none(),
             metadata: Default::default(),
             name: Cow::Borrowed("Foo"),
-            class_name: Cow::Borrowed("Bar"),
-            properties: hashmap! {
-                "Baz".to_owned() => Variant::Int32(5),
-            },
+            class_name: ustr("Bar"),
+            properties: UstrMap::from_iter([(ustr("Baz"), Variant::Int32(5))]),
             children: Vec::new(),
         };
 
@@ -343,7 +343,7 @@ mod test {
         let child_instance = tree.get_instance(child_id).unwrap();
 
         assert_eq!(child_instance.name(), &snapshot.name);
-        assert_eq!(child_instance.class_name(), &snapshot.class_name);
+        assert_eq!(child_instance.class_name(), snapshot.class_name);
         assert_eq!(child_instance.properties(), &snapshot.properties);
         assert!(child_instance.children().is_empty());
     }
@@ -366,17 +366,15 @@ mod test {
         let patch = PatchUpdate {
             id: root_id,
             changed_name: Some("Foo".to_owned()),
-            changed_class_name: Some("NewClassName".to_owned()),
-            changed_properties: hashmap! {
+            changed_class_name: Some(ustr("NewClassName")),
+            changed_properties: UstrMap::from_iter([
                 // The value of Foo has changed
-                "Foo".to_owned() => Some(Variant::Int32(8)),
-
+                (ustr("Foo"), Some(Variant::Int32(8))),
                 // Bar has been deleted
-                "Bar".to_owned() => None,
-
+                (ustr("Bar"), None),
                 // Baz has been added
-                "Baz".to_owned() => Some(Variant::Int32(10)),
-            },
+                (ustr("Baz"), Some(Variant::Int32(10))),
+            ]),
             changed_metadata: None,
         };
 
@@ -387,11 +385,11 @@ mod test {
 
         apply_patch_set(&mut tree, patch_set);
 
-        let expected_properties = hashmap! {
-            "Foo".to_owned() => Variant::Int32(8),
-            "Baz".to_owned() => Variant::Int32(10),
-            "Unchanged".to_owned() => Variant::Int32(-5),
-        };
+        let expected_properties = UstrMap::from_iter([
+            (ustr("Foo"), Variant::Int32(8)),
+            (ustr("Baz"), Variant::Int32(10)),
+            (ustr("Unchanged"), Variant::Int32(-5)),
+        ]);
 
         let root_instance = tree.get_instance(root_id).unwrap();
         assert_eq!(root_instance.name(), "Foo");

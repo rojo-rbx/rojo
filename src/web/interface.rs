@@ -7,7 +7,10 @@ use std::{
     collections::{HashMap, HashSet},
 };
 
-use rbx_dom_weak::types::{Ref, Variant, VariantType};
+use rbx_dom_weak::{
+    types::{Ref, Variant, VariantType},
+    Ustr, UstrMap,
+};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -84,12 +87,12 @@ impl<'a> SubscribeMessage<'a> {
 pub struct InstanceUpdate {
     pub id: Ref,
     pub changed_name: Option<String>,
-    pub changed_class_name: Option<String>,
+    pub changed_class_name: Option<Ustr>,
 
-    // TODO: Transform from HashMap<String, Option<_>> to something else, since
+    // TODO: Transform from UstrMap<String, Option<_>> to something else, since
     // null will get lost when decoding from JSON in some languages.
     #[serde(default)]
-    pub changed_properties: HashMap<String, Option<Variant>>,
+    pub changed_properties: UstrMap<Option<Variant>>,
     pub changed_metadata: Option<InstanceMetadata>,
 }
 
@@ -113,26 +116,26 @@ pub struct Instance<'a> {
     pub id: Ref,
     pub parent: Ref,
     pub name: Cow<'a, str>,
-    pub class_name: Cow<'a, str>,
-    pub properties: HashMap<String, Cow<'a, Variant>>,
+    pub class_name: Ustr,
+    pub properties: UstrMap<Cow<'a, Variant>>,
     pub children: Cow<'a, [Ref]>,
     pub metadata: Option<InstanceMetadata>,
 }
 
-impl<'a> Instance<'a> {
+impl Instance<'_> {
     pub(crate) fn from_rojo_instance(source: InstanceWithMeta<'_>) -> Instance<'_> {
         let properties = source
             .properties()
             .iter()
             .filter(|(_key, value)| property_filter(Some(value)))
-            .map(|(key, value)| (key.clone(), Cow::Borrowed(value)))
+            .map(|(key, value)| (*key, Cow::Borrowed(value)))
             .collect();
 
         Instance {
             id: source.id(),
             parent: source.parent(),
             name: Cow::Borrowed(source.name()),
-            class_name: Cow::Borrowed(source.class_name()),
+            class_name: source.class_name(),
             properties,
             children: Cow::Borrowed(source.children()),
             metadata: Some(InstanceMetadata::from_rojo_metadata(source.metadata())),
@@ -157,6 +160,7 @@ pub struct ServerInfoResponse {
     pub protocol_version: u64,
     pub project_name: String,
     pub expected_place_ids: Option<HashSet<u64>>,
+    pub unexpected_place_ids: Option<HashSet<u64>>,
     pub game_id: Option<u64>,
     pub place_id: Option<u64>,
     pub root_instance_id: Ref,

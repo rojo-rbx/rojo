@@ -9,7 +9,7 @@ use anyhow::Context;
 use memofs::Vfs;
 use rbx_dom_weak::{
     types::{Ref, Variant},
-    Instance, WeakDom,
+    ustr, Instance, Ustr, UstrMap, UstrSet, WeakDom,
 };
 use serde::{Deserialize, Serialize};
 use std::{
@@ -76,7 +76,7 @@ pub fn syncback_loop(
         let new_inst = new_tree.get_by_ref_mut(referent).unwrap();
         if let Some(filter) = get_property_filter(project, new_inst) {
             for prop in filter {
-                new_inst.properties.remove(prop);
+                new_inst.properties.remove(&prop);
             }
         }
     }
@@ -85,7 +85,7 @@ pub fn syncback_loop(
         let old_inst = old_inst_rojo.inner_mut();
         if let Some(filter) = get_property_filter(project, old_inst) {
             for prop in filter {
-                old_inst.properties.remove(prop);
+                old_inst.properties.remove(&prop);
             }
         }
     }
@@ -98,7 +98,7 @@ pub fn syncback_loop(
             for child_ref in new_tree.root().children() {
                 let inst = new_tree.get_by_ref(*child_ref).unwrap();
                 if inst.class == "Workspace" {
-                    camera_ref = inst.properties.get("CurrentCamera");
+                    camera_ref = inst.properties.get(&ustr("CurrentCamera"));
                     break;
                 }
             }
@@ -368,7 +368,7 @@ pub struct SyncbackRules {
     /// A map of classes to properties to ignore for that class when doing
     /// syncback.
     #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-    ignore_properties: HashMap<String, Vec<String>>,
+    ignore_properties: UstrMap<Vec<Ustr>>,
     /// Whether or not the `CurrentCamera` of `Workspace` is included in the
     /// syncback or not. Defaults to `false`.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -440,18 +440,15 @@ fn is_valid_path(globs: &Option<Vec<Glob>>, base_path: &Path, path: &Path) -> bo
 /// It **does not** handle properties that should not serialize for other
 /// reasons, such as being defaults or being marked as not serializing in the
 /// ReflectionDatabase.
-fn get_property_filter<'project>(
-    project: &'project Project,
-    new_inst: &Instance,
-) -> Option<HashSet<&'project String>> {
+fn get_property_filter(project: &Project, new_inst: &Instance) -> Option<UstrSet> {
     let filter = &project.syncback_rules.as_ref()?.ignore_properties;
-    let mut set = HashSet::new();
+    let mut set = UstrSet::default();
 
     let database = rbx_reflection_database::get();
     let mut current_class_name = new_inst.class.as_str();
 
     loop {
-        if let Some(list) = filter.get(current_class_name) {
+        if let Some(list) = filter.get(&ustr(current_class_name)) {
             set.extend(list)
         }
 

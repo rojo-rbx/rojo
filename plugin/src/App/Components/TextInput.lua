@@ -38,14 +38,18 @@ end
 
 function TextInput:render()
 	return Theme.with(function(theme)
-		theme = theme.TextInput
+		local textInputTheme = theme.TextInput
 
 		local bindingHover = bindingUtil.deriveProperty(self.binding, "hover")
 		local bindingEnabled = bindingUtil.deriveProperty(self.binding, "enabled")
 
 		return e(SlicedImage, {
 			slice = Assets.Slices.RoundedBorder,
-			color = bindingUtil.mapLerp(bindingEnabled, theme.Enabled.BorderColor, theme.Disabled.BorderColor),
+			color = bindingUtil.mapLerp(
+				bindingEnabled,
+				textInputTheme.Enabled.BorderColor,
+				textInputTheme.Disabled.BorderColor
+			),
 			transparency = self.props.transparency,
 
 			size = self.props.size or UDim2.new(1, 0, 1, 0),
@@ -55,14 +59,18 @@ function TextInput:render()
 		}, {
 			HoverOverlay = e(SlicedImage, {
 				slice = Assets.Slices.RoundedBackground,
-				color = theme.ActionFillColor,
+				color = textInputTheme.ActionFillColor,
 				transparency = Roact.joinBindings({
 					hover = bindingHover:map(function(value)
 						return 1 - value
 					end),
 					transparency = self.props.transparency,
 				}):map(function(values)
-					return bindingUtil.blendAlpha({ theme.ActionFillTransparency, values.hover, values.transparency })
+					return bindingUtil.blendAlpha({
+						textInputTheme.ActionFillTransparency,
+						values.hover,
+						values.transparency,
+					})
 				end),
 				size = UDim2.new(1, 0, 1, 0),
 				zIndex = -1,
@@ -72,14 +80,18 @@ function TextInput:render()
 				Size = UDim2.fromScale(1, 1),
 				Text = self.props.text,
 				PlaceholderText = self.props.placeholder,
-				Font = Enum.Font.GothamMedium,
-				TextColor3 = bindingUtil.mapLerp(bindingEnabled, theme.Disabled.TextColor, theme.Enabled.TextColor),
+				FontFace = theme.Font.Main,
+				TextColor3 = bindingUtil.mapLerp(
+					bindingEnabled,
+					textInputTheme.Disabled.TextColor,
+					textInputTheme.Enabled.TextColor
+				),
 				PlaceholderColor3 = bindingUtil.mapLerp(
 					bindingEnabled,
-					theme.Disabled.PlaceholderColor,
-					theme.Enabled.PlaceholderColor
+					textInputTheme.Disabled.PlaceholderColor,
+					textInputTheme.Enabled.PlaceholderColor
 				),
-				TextSize = 18,
+				TextSize = theme.TextSize.Large,
 				TextEditable = self.props.enabled,
 				ClearTextOnFocus = self.props.clearTextOnFocus,
 

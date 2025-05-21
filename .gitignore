@@ -10,8 +10,8 @@
 /*.rbxl
 /*.rbxlx
 
-# Test places for the Roblox Studio Plugin
-/plugin/*.rbxlx
+# Sourcemap for the Rojo plugin (for better intellisense)
+/sourcemap.json
 
 # Roblox Studio holds 'lock' files on places
 *.rbxl.lock
@@ -19,3 +19,7 @@
 
 # Snapshot files from the 'insta' Rust crate
 **/*.snap.new
+
+# Macos file system junk
+._*
+.DS_STORE

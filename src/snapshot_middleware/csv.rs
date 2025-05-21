@@ -5,9 +5,8 @@ use std::{
 };
 
 use anyhow::Context;
-use maplit::hashmap;
 use memofs::{IoResultExt, Vfs};
-use rbx_dom_weak::types::Variant;
+use rbx_dom_weak::{types::Variant, ustr};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -40,9 +39,7 @@ pub fn snapshot_csv(
     let mut snapshot = InstanceSnapshot::new()
         .name(name)
         .class_name("LocalizationTable")
-        .properties(hashmap! {
-            "Contents".to_owned() => table_contents.into(),
-        })
+        .property(ustr("Contents"), table_contents)
         .metadata(
             InstanceMetadata::new()
                 .instigating_source(path)
@@ -103,17 +100,18 @@ pub fn syncback_csv<'sync>(
 ) -> anyhow::Result<SyncbackReturn<'sync>> {
     let new_inst = snapshot.new_inst();
 
-    let contents = if let Some(Variant::String(content)) = new_inst.properties.get("Contents") {
-        content.as_str()
-    } else {
-        anyhow::bail!("LocalizationTables must have a `Contents` property that is a String")
-    };
+    let contents =
+        if let Some(Variant::String(content)) = new_inst.properties.get(&ustr("Contents")) {
+            content.as_str()
+        } else {
+            anyhow::bail!("LocalizationTables must have a `Contents` property that is a String")
+        };
     let mut fs_snapshot = FsSnapshot::new();
     fs_snapshot.add_file(&snapshot.path, localization_to_csv(contents)?);
 
     let meta = AdjacentMetadata::from_syncback_snapshot(snapshot, snapshot.path.clone())?;
     if let Some(mut meta) = meta {
-        meta.properties.remove("Contents");
+        meta.properties.remove(&ustr("Contents"));
 
         if !meta.is_empty() {
             let parent = snapshot.path.parent_err()?;
@@ -136,21 +134,22 @@ pub fn syncback_csv_init<'sync>(
 ) -> anyhow::Result<SyncbackReturn<'sync>> {
     let new_inst = snapshot.new_inst();
 
-    let contents = if let Some(Variant::String(content)) = new_inst.properties.get("Contents") {
-        content.as_str()
-    } else {
-        anyhow::bail!("LocalizationTables must have a `Contents` property that is a String")
-    };
+    let contents =
+        if let Some(Variant::String(content)) = new_inst.properties.get(&ustr("Contents")) {
+            content.as_str()
+        } else {
+            anyhow::bail!("LocalizationTables must have a `Contents` property that is a String")
+        };
 
     let mut dir_syncback = syncback_dir_no_meta(snapshot)?;
     dir_syncback.fs_snapshot.add_file(
-        &snapshot.path.join("init.csv"),
+        snapshot.path.join("init.csv"),
         localization_to_csv(contents)?,
     );
 
     let meta = DirectoryMetadata::from_syncback_snapshot(snapshot, snapshot.path.clone())?;
     if let Some(mut meta) = meta {
-        meta.properties.remove("Contents");
+        meta.properties.remove(&ustr("Contents"));
         if !meta.is_empty() {
             dir_syncback.fs_snapshot.add_file(
                 snapshot.path.join("init.meta.json"),
@@ -317,11 +316,11 @@ Ack,Ack!,,An exclamation of despair,¡Ay!"#,
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_csv(
             &InstanceContext::default(),
-            &mut vfs,
+            &vfs,
             Path::new("/foo.csv"),
             "foo",
         )
@@ -349,11 +348,11 @@ Ack,Ack!,,An exclamation of despair,¡Ay!"#,
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs);
+        let vfs = Vfs::new(imfs);
 
         let instance_snapshot = snapshot_csv(
             &InstanceContext::default(),
-            &mut vfs,
+            &vfs,
             Path::new("/foo.csv"),
             "foo",
         )

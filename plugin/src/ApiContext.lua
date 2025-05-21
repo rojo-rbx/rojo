@@ -45,14 +45,7 @@ end
 
 local function rejectWrongPlaceId(infoResponseBody)
 	if infoResponseBody.expectedPlaceIds ~= nil then
-		local foundId = false
-
-		for _, id in ipairs(infoResponseBody.expectedPlaceIds) do
-			if id == game.PlaceId then
-				foundId = true
-				break
-			end
-		end
+		local foundId = table.find(infoResponseBody.expectedPlaceIds, game.PlaceId)
 
 		if not foundId then
 			local idList = {}
@@ -62,10 +55,30 @@ local function rejectWrongPlaceId(infoResponseBody)
 
 			local message = (
 				"Found a Rojo server, but its project is set to only be used with a specific list of places."
-				.. "\nYour place ID is %s, but needs to be one of these:"
+				.. "\nYour place ID is %u, but needs to be one of these:"
 				.. "\n%s"
 				.. "\n\nTo change this list, edit 'servePlaceIds' in your .project.json file."
-			):format(tostring(game.PlaceId), table.concat(idList, "\n"))
+			):format(game.PlaceId, table.concat(idList, "\n"))
+
+			return Promise.reject(message)
+		end
+	end
+
+	if infoResponseBody.unexpectedPlaceIds ~= nil then
+		local foundId = table.find(infoResponseBody.unexpectedPlaceIds, game.PlaceId)
+
+		if foundId then
+			local idList = {}
+			for _, id in ipairs(infoResponseBody.unexpectedPlaceIds) do
+				table.insert(idList, "- " .. tostring(id))
+			end
+
+			local message = (
+				"Found a Rojo server, but its project is set to not be used with a specific list of places."
+				.. "\nYour place ID is %u, but needs to not be one of these:"
+				.. "\n%s"
+				.. "\n\nTo change this list, edit 'blockedPlaceIds' in your .project.json file."
+			):format(game.PlaceId, table.concat(idList, "\n"))
 
 			return Promise.reject(message)
 		end
