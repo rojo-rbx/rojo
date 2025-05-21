@@ -1,8 +1,5 @@
 use memofs::Vfs;
-use std::{
-    collections::HashMap,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use crate::{
     snapshot::{InstanceWithMeta, RojoTree},
@@ -11,7 +8,7 @@ use crate::{
 };
 use rbx_dom_weak::{
     types::{Ref, Variant},
-    Instance, WeakDom,
+    Instance, Ustr, UstrMap, WeakDom,
 };
 
 use super::{get_best_middleware, name_for_inst, property_filter::filter_properties};
@@ -108,10 +105,7 @@ impl<'sync> SyncbackSnapshot<'sync> {
     /// middlewares like JsonModel.
     #[inline]
     #[must_use]
-    pub fn get_path_filtered_properties(
-        &self,
-        new_ref: Ref,
-    ) -> Option<HashMap<&'sync str, &'sync Variant>> {
+    pub fn get_path_filtered_properties(&self, new_ref: Ref) -> Option<UstrMap<&'sync Variant>> {
         let inst = self.get_new_instance(new_ref)?;
 
         // The only filtering we have to do is filter out properties that are
@@ -194,7 +188,7 @@ impl<'sync> SyncbackSnapshot<'sync> {
 
     /// Returns user-specified property ignore rules.
     #[inline]
-    pub fn ignore_props(&self) -> Option<&HashMap<String, Vec<String>>> {
+    pub fn ignore_props(&self) -> Option<&UstrMap<Vec<Ustr>>> {
         self.data
             .project
             .syncback_rules

@@ -327,7 +327,7 @@ pub fn syncback_project<'sync>(
     let vfs = snapshot.vfs();
 
     log::debug!("Reloading project {} from vfs", project_path.display(),);
-    let mut project = Project::load_exact(&vfs, project_path, None)?;
+    let mut project = Project::load_exact(vfs, project_path, None)?;
     let base_path = project.folder_location().to_path_buf();
 
     // Sync rules for this project do not have their base rule set but it is
@@ -521,9 +521,9 @@ pub fn syncback_project<'sync>(
     })
 }
 
-fn project_node_property_syncback<'inst>(
+fn project_node_property_syncback(
     snapshot: &SyncbackSnapshot,
-    filtered_properties: HashMap<&'inst str, &'inst Variant>,
+    filtered_properties: UstrMap<&Variant>,
     new_inst: &Instance,
     node: &mut ProjectNode,
 ) {
@@ -552,8 +552,8 @@ fn project_node_property_syncback<'inst>(
             }
             _ => {
                 properties.insert(
-                    name.to_string(),
-                    UnresolvedValue::from_variant(value.clone(), &new_inst.class, name),
+                    name,
+                    UnresolvedValue::from_variant(value.clone(), &new_inst.class, &name),
                 );
             }
         }
@@ -582,7 +582,7 @@ fn project_node_property_syncback_no_path(
 }
 
 fn project_node_should_reserialize(
-    node_properties: &BTreeMap<String, UnresolvedValue>,
+    node_properties: &UstrMap<UnresolvedValue>,
     node_attributes: &BTreeMap<String, UnresolvedValue>,
     instance: InstanceWithMeta,
 ) -> anyhow::Result<bool> {
@@ -590,7 +590,7 @@ fn project_node_should_reserialize(
         if let Some(inst_value) = instance.properties().get(prop_name) {
             let node_value = unresolved_node_value
                 .clone()
-                .resolve(instance.class_name(), prop_name)?;
+                .resolve(&instance.class_name(), prop_name)?;
             if !variant_eq(inst_value, &node_value) {
                 return Ok(true);
             }
@@ -599,7 +599,7 @@ fn project_node_should_reserialize(
         }
     }
 
-    match instance.properties().get("Attributes") {
+    match instance.properties().get(&ustr("Attributes")) {
         Some(Variant::Attributes(inst_attributes)) => {
             // This will also catch if one is empty but the other isn't
             if node_attributes.len() != inst_attributes.len() {

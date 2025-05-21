@@ -100,17 +100,18 @@ pub fn syncback_csv<'sync>(
 ) -> anyhow::Result<SyncbackReturn<'sync>> {
     let new_inst = snapshot.new_inst();
 
-    let contents = if let Some(Variant::String(content)) = new_inst.properties.get("Contents") {
-        content.as_str()
-    } else {
-        anyhow::bail!("LocalizationTables must have a `Contents` property that is a String")
-    };
+    let contents =
+        if let Some(Variant::String(content)) = new_inst.properties.get(&ustr("Contents")) {
+            content.as_str()
+        } else {
+            anyhow::bail!("LocalizationTables must have a `Contents` property that is a String")
+        };
     let mut fs_snapshot = FsSnapshot::new();
     fs_snapshot.add_file(&snapshot.path, localization_to_csv(contents)?);
 
     let meta = AdjacentMetadata::from_syncback_snapshot(snapshot, snapshot.path.clone())?;
     if let Some(mut meta) = meta {
-        meta.properties.remove("Contents");
+        meta.properties.remove(&ustr("Contents"));
 
         if !meta.is_empty() {
             let parent = snapshot.path.parent_err()?;
@@ -133,21 +134,22 @@ pub fn syncback_csv_init<'sync>(
 ) -> anyhow::Result<SyncbackReturn<'sync>> {
     let new_inst = snapshot.new_inst();
 
-    let contents = if let Some(Variant::String(content)) = new_inst.properties.get("Contents") {
-        content.as_str()
-    } else {
-        anyhow::bail!("LocalizationTables must have a `Contents` property that is a String")
-    };
+    let contents =
+        if let Some(Variant::String(content)) = new_inst.properties.get(&ustr("Contents")) {
+            content.as_str()
+        } else {
+            anyhow::bail!("LocalizationTables must have a `Contents` property that is a String")
+        };
 
     let mut dir_syncback = syncback_dir_no_meta(snapshot)?;
     dir_syncback.fs_snapshot.add_file(
-        &snapshot.path.join("init.csv"),
+        snapshot.path.join("init.csv"),
         localization_to_csv(contents)?,
     );
 
     let meta = DirectoryMetadata::from_syncback_snapshot(snapshot, snapshot.path.clone())?;
     if let Some(mut meta) = meta {
-        meta.properties.remove("Contents");
+        meta.properties.remove(&ustr("Contents"));
         if !meta.is_empty() {
             dir_syncback.fs_snapshot.add_file(
                 snapshot.path.join("init.meta.json"),

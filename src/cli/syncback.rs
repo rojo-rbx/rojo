@@ -186,12 +186,12 @@ fn process_model_dom(dom: WeakDom) -> anyhow::Result<WeakDom> {
     let temp_children = dom.root().children();
     if temp_children.len() == 1 {
         let real_root = dom.get_by_ref(temp_children[0]).unwrap();
-        let mut new_tree = WeakDom::new(InstanceBuilder::new(&real_root.class));
+        let mut new_tree = WeakDom::new(InstanceBuilder::new(real_root.class));
         for (name, property) in &real_root.properties {
             new_tree
                 .root_mut()
                 .properties
-                .insert(name.to_owned(), property.to_owned());
+                .insert(*name, property.to_owned());
         }
 
         let children = dom.clone_multiple_into_external(real_root.children(), &mut new_tree);

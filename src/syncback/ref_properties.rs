@@ -5,7 +5,7 @@ use std::collections::{HashSet, VecDeque};
 
 use rbx_dom_weak::{
     types::{Attributes, Ref, UniqueId, Variant},
-    Instance, WeakDom,
+    ustr, Instance, WeakDom,
 };
 
 use crate::{multimap::MultiMap, REF_ID_ATTRIBUTE_NAME, REF_POINTER_ATTRIBUTE_PREFIX};
@@ -100,7 +100,7 @@ pub fn link_referents(links: RefLinks, dom: &mut WeakDom) -> anyhow::Result<()> 
             None => continue,
         };
 
-        let mut attributes: Attributes = match inst.properties.remove("Attributes") {
+        let mut attributes: Attributes = match inst.properties.remove(&ustr("Attributes")) {
             Some(Variant::Attributes(attrs)) => attrs,
             None => Attributes::new(),
             Some(value) => {
@@ -134,18 +134,18 @@ fn write_id_attributes(links: &RefLinks, dom: &mut WeakDom) -> anyhow::Result<()
             Some(inst) => inst,
             None => continue,
         };
-        let unique_id = match inst.properties.get("UniqueId") {
+        let unique_id = match inst.properties.get(&ustr("UniqueId")) {
             Some(Variant::UniqueId(id)) => Some(*id),
             _ => None,
         }
         .unwrap_or_else(|| UniqueId::now().unwrap());
 
-        let attributes = match inst.properties.get_mut("Attributes") {
+        let attributes = match inst.properties.get_mut(&ustr("Attributes")) {
             Some(Variant::Attributes(attrs)) => attrs,
             None => {
                 inst.properties
                     .insert("Attributes".into(), Attributes::new().into());
-                match inst.properties.get_mut("Attributes") {
+                match inst.properties.get_mut(&ustr("Attributes")) {
                     Some(Variant::Attributes(attrs)) => attrs,
                     _ => unreachable!(),
                 }
@@ -166,14 +166,11 @@ fn write_id_attributes(links: &RefLinks, dom: &mut WeakDom) -> anyhow::Result<()
 }
 
 fn get_existing_id(inst: &Instance) -> Option<&str> {
-    if let Variant::Attributes(attrs) = inst.properties.get("Attributes")? {
+    if let Variant::Attributes(attrs) = inst.properties.get(&ustr("Attributes"))? {
         let id = attrs.get(REF_ID_ATTRIBUTE_NAME)?;
         match id {
             Variant::String(str) => Some(str),
-            Variant::BinaryString(bstr) => match std::str::from_utf8(bstr.as_ref()) {
-                Ok(str) => Some(str),
-                Err(_) => None,
-            },
+            Variant::BinaryString(bstr) => std::str::from_utf8(bstr.as_ref()).ok(),
             _ => None,
         }
     } else {

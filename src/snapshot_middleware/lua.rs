@@ -130,7 +130,7 @@ pub fn syncback_lua<'sync>(
 ) -> anyhow::Result<SyncbackReturn<'sync>> {
     let new_inst = snapshot.new_inst();
 
-    let contents = if let Some(Variant::String(source)) = new_inst.properties.get("Source") {
+    let contents = if let Some(Variant::String(source)) = new_inst.properties.get(&ustr("Source")) {
         source.as_bytes().to_vec()
     } else {
         anyhow::bail!("Scripts must have a `Source` property that is a String")
@@ -140,7 +140,7 @@ pub fn syncback_lua<'sync>(
 
     let meta = AdjacentMetadata::from_syncback_snapshot(snapshot, snapshot.path.clone())?;
     if let Some(mut meta) = meta {
-        meta.properties.remove("Source");
+        meta.properties.remove(&ustr("Source"));
 
         if !meta.is_empty() {
             let parent_location = snapshot.path.parent_err()?;
@@ -170,7 +170,7 @@ pub fn syncback_lua_init<'sync>(
         ScriptType::Module => "init.luau",
     });
 
-    let contents = if let Some(Variant::String(source)) = new_inst.properties.get("Source") {
+    let contents = if let Some(Variant::String(source)) = new_inst.properties.get(&ustr("Source")) {
         source.as_bytes().to_vec()
     } else {
         anyhow::bail!("Scripts must have a `Source` property that is a String")
@@ -181,7 +181,7 @@ pub fn syncback_lua_init<'sync>(
 
     let meta = DirectoryMetadata::from_syncback_snapshot(snapshot, path.clone())?;
     if let Some(mut meta) = meta {
-        meta.properties.remove("Source");
+        meta.properties.remove(&ustr("Source"));
 
         if !meta.is_empty() {
             dir_syncback.fs_snapshot.add_file(

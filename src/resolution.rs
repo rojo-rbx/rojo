@@ -2,8 +2,8 @@ use std::borrow::Borrow;
 
 use anyhow::{bail, format_err};
 use rbx_dom_weak::types::{
-    Attributes, CFrame, Color3, Content, ContentId, Enum, Font, MaterialColors, Matrix3, Tags,
-    Variant, VariantType, Vector2, Vector3,
+    Attributes, CFrame, Color3, Content, ContentId, ContentType, Enum, Font, MaterialColors,
+    Matrix3, Tags, Variant, VariantType, Vector2, Vector3,
 };
 use rbx_reflection::{DataType, PropertyDescriptor};
 use serde::{Deserialize, Serialize};
@@ -72,7 +72,12 @@ impl UnresolvedValue {
                 Variant::Tags(tags) => {
                     AmbiguousValue::StringArray(tags.iter().map(|s| s.to_string()).collect())
                 }
-                Variant::Content(content) => AmbiguousValue::String(content.into_string()),
+                Variant::Content(ref content) => match content.value() {
+                    ContentType::None => AmbiguousValue::String(String::new()),
+                    ContentType::Uri(uri) => AmbiguousValue::String(uri.clone()),
+                    _ => return Self::FullyQualified(variant),
+                },
+                Variant::ContentId(content) => AmbiguousValue::String(content.into_string()),
                 Variant::Vector2(vector) => {
                     AmbiguousValue::Array2([vector.x as f64, vector.y as f64])
                 }

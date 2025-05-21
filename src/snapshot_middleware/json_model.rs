@@ -88,7 +88,7 @@ pub fn syncback_json_model<'sync>(
 
 fn json_model_from_pair<'sync>(
     snapshot: &SyncbackSnapshot<'sync>,
-    prop_buffer: &mut Vec<(&'sync str, &'sync Variant)>,
+    prop_buffer: &mut Vec<(Ustr, &'sync Variant)>,
     new: Ref,
 ) -> JsonModel {
     let new_inst = snapshot
@@ -97,7 +97,7 @@ fn json_model_from_pair<'sync>(
 
     filter_properties_preallocated(snapshot.project(), new_inst, prop_buffer);
 
-    let mut properties = BTreeMap::new();
+    let mut properties = UstrMap::new();
     let mut attributes = BTreeMap::new();
     for (name, value) in prop_buffer.drain(..) {
         match value {
@@ -121,8 +121,8 @@ fn json_model_from_pair<'sync>(
             }
             _ => {
                 properties.insert(
-                    name.to_owned(),
-                    UnresolvedValue::from_variant(value.clone(), &new_inst.class, name),
+                    name,
+                    UnresolvedValue::from_variant(value.clone(), &new_inst.class, &name),
                 );
             }
         }
@@ -136,7 +136,7 @@ fn json_model_from_pair<'sync>(
 
     JsonModel {
         name: Some(new_inst.name.clone()),
-        class_name: new_inst.class.clone(),
+        class_name: new_inst.class,
         children,
         properties,
         attributes,

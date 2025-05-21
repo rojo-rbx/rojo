@@ -105,7 +105,7 @@ pub fn syncback_dir<'sync>(
     let mut meta = DirectoryMetadata::from_syncback_snapshot(snapshot, snapshot.path.clone())?;
     if let Some(meta) = &mut meta {
         if new_inst.class != "Folder" {
-            meta.class_name = Some(new_inst.class.clone());
+            meta.class_name = Some(new_inst.class);
         }
 
         if !meta.is_empty() {

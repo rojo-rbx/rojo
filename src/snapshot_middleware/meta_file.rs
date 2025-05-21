@@ -1,12 +1,14 @@
 use std::{
-    borrow::Cow,
-    collections::BTreeMap,
+    collections::{BTreeMap, HashMap},
     path::{Path, PathBuf},
 };
 
 use anyhow::{format_err, Context};
 use memofs::{IoResultExt as _, Vfs};
-use rbx_dom_weak::types::{Attributes, Ustr, UstrMap, Variant};
+use rbx_dom_weak::{
+    types::{Attributes, Variant},
+    Ustr, UstrMap,
+};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -58,7 +60,7 @@ impl AdjacentMetadata {
         snapshot: &SyncbackSnapshot,
         path: PathBuf,
     ) -> anyhow::Result<Option<Self>> {
-        let mut properties = BTreeMap::new();
+        let mut properties = UstrMap::default();
         let mut attributes = BTreeMap::new();
         // TODO make this more granular.
         // I am breaking the cycle of bad TODOs. This is in reference to the fact
@@ -106,8 +108,8 @@ impl AdjacentMetadata {
                 }
                 _ => {
                     properties.insert(
-                        name.to_owned(),
-                        UnresolvedValue::from_variant(value.clone(), class, name),
+                        name,
+                        UnresolvedValue::from_variant(value.clone(), class, &name),
                     );
                 }
             }
@@ -248,7 +250,7 @@ impl DirectoryMetadata {
         snapshot: &SyncbackSnapshot,
         path: PathBuf,
     ) -> anyhow::Result<Option<Self>> {
-        let mut properties = BTreeMap::new();
+        let mut properties = UstrMap::default();
         let mut attributes = BTreeMap::new();
         // TODO make this more granular.
         // I am breaking the cycle of bad TODOs. This is in reference to the fact
@@ -296,8 +298,8 @@ impl DirectoryMetadata {
                 }
                 _ => {
                     properties.insert(
-                        name.to_owned(),
-                        UnresolvedValue::from_variant(value.clone(), class, name),
+                        name,
+                        UnresolvedValue::from_variant(value.clone(), class, &name),
                     );
                 }
             }
