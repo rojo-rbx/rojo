@@ -287,6 +287,14 @@ impl Middleware {
             Middleware::ClientScriptDir => syncback_lua_init(ScriptType::Client, snapshot),
             Middleware::ModuleScriptDir => syncback_lua_init(ScriptType::Module, snapshot),
             Middleware::CsvDir => syncback_csv_init(snapshot),
+
+            Middleware::PluginScript
+            | Middleware::LegacyServerScript
+            | Middleware::LegacyClientScript
+            | Middleware::RunContextServerScript
+            | Middleware::RunContextClientScript => {
+                anyhow::bail!("syncback is not implemented for {self:?} yet")
+            }
         }
     }
 
