@@ -38,6 +38,13 @@
     - `syncUnscriptable` defaults to `true` instead of `false`
     - `ignoreTrees` doesn't require the root of the project's name in it.
 
+## 7.5.1 - April 25th, 2025
+* Fixed output spam related to `Instance.Capabilities` in the plugin
+
+## 7.5.0 - April 25th, 2025
+* Fixed an edge case that caused model pivots to not be built correctly in some cases ([#1027])
+* Add `blockedPlaceIds` project config field to allow blocking place ids from being live synced ([#1021])
+* Adds support for `.plugin.lua(u)` files - this applies the `Plugin` RunContext. ([#1008])
 * Added support for Roblox's `Content` type. This replaces the old `Content` type with `ContentId` to reflect Roblox's change.
  	If you were previously using the fully-qualified syntax for `Content` you will need to switch it to `ContentId`.
 * Added support for `Enum` attributes
@@ -100,7 +107,7 @@
 
     Additionally, the `exclude` field allows files to be excluded from the sync rule if they match a pattern specified by it. If it's not present, all files that match `pattern` will be modified using the sync rule.
 
- 	The `use` field corresponds to one of the potential file type that Rojo will currently include in a project. Files that match the provided pattern will be treated as if they had the file extension for that file type. A full list is below:
+ 	The `use` field corresponds to one of the potential file type that Rojo will currently include in a project. Files that match the provided pattern will be treated as if they had the file extension for that file type.
 
  	| `use` value    | file extension  |
  	|:---------------|:----------------|
@@ -117,6 +124,16 @@
  	| `project`      | `.project.json` |
  	| `ignore`       | None!           |
 
+	Additionally, there are `use` values for specific script types ([#909]):
+
+	| `use` value              | script type                            |
+	|:-------------------------|:---------------------------------------|
+	| `legacyServerScript`     | `Script` with `Enum.RunContext.Legacy` |
+	| `legacyClientScript`     | `LocalScript`                          |
+	| `runContextServerScript` | `Script` with `Enum.RunContext.Server` |
+	| `runContextClientScript` | `Script` with `Enum.RunContext.Client` |
+    | `pluginScript`           | `Script` with `Enum.RunContext.Plugin` |
+
     **All** sync rules are reset between project files, so they must be specified in each one when nesting them. This is to ensure that nothing can break other projects by changing how files are synced!
 
 [#813]: https://github.com/rojo-rbx/rojo/pull/813
@@ -127,11 +144,19 @@
 [#843]: https://github.com/rojo-rbx/rojo/pull/843
 [#883]: https://github.com/rojo-rbx/rojo/pull/883
 [#886]: https://github.com/rojo-rbx/rojo/pull/886
+[#909]: https://github.com/rojo-rbx/rojo/pull/909
 [#911]: https://github.com/rojo-rbx/rojo/pull/911
 [#915]: https://github.com/rojo-rbx/rojo/pull/915
 [#974]: https://github.com/rojo-rbx/rojo/pull/974
 [#987]: https://github.com/rojo-rbx/rojo/pull/987
 [#988]: https://github.com/rojo-rbx/rojo/pull/988
+[#1008]: https://github.com/rojo-rbx/rojo/pull/1008
+[#1021]: https://github.com/rojo-rbx/rojo/pull/1021
+[#1027]: https://github.com/rojo-rbx/rojo/pull/1027
+
+## [7.4.4] - August 22nd, 2024
+* Fixed issue with reading attributes from `Lighting` in new place files
+* `Instance.Archivable` will now default to `true` when building a project into a binary (`rbxm`/`rbxl`) file rather than `false`.
 
 ## [7.4.3] - August 6th, 2024
 * Fixed issue with building binary files introduced in 7.4.2
