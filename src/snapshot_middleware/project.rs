@@ -582,7 +582,7 @@ fn project_node_property_syncback_no_path(
 }
 
 fn project_node_should_reserialize(
-    node_properties: &UstrMap<UnresolvedValue>,
+    node_properties: &BTreeMap<Ustr, UnresolvedValue>,
     node_attributes: &BTreeMap<String, UnresolvedValue>,
     instance: InstanceWithMeta,
 ) -> anyhow::Result<bool> {

@@ -1,5 +1,5 @@
 use std::{
-    collections::{BTreeMap, HashMap, HashSet},
+    collections::{BTreeMap, HashSet},
     ffi::OsStr,
     fs, io,
     net::IpAddr,
@@ -7,7 +7,7 @@ use std::{
 };
 
 use memofs::Vfs;
-use rbx_dom_weak::{Ustr, UstrMap};
+use rbx_dom_weak::Ustr;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -349,9 +349,9 @@ pub struct ProjectNode {
     #[serde(
         rename = "$properties",
         default,
-        skip_serializing_if = "HashMap::is_empty"
+        skip_serializing_if = "BTreeMap::is_empty"
     )]
-    pub properties: UstrMap<UnresolvedValue>,
+    pub properties: BTreeMap<Ustr, UnresolvedValue>,
 
     #[serde(
         rename = "$attributes",

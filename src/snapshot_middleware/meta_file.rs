@@ -1,5 +1,5 @@
 use std::{
-    collections::{BTreeMap, HashMap},
+    collections::BTreeMap,
     path::{Path, PathBuf},
 };
 
@@ -7,7 +7,7 @@ use anyhow::{format_err, Context};
 use memofs::{IoResultExt as _, Vfs};
 use rbx_dom_weak::{
     types::{Attributes, Variant},
-    Ustr, UstrMap,
+    Ustr,
 };
 use serde::{Deserialize, Serialize};
 
@@ -31,8 +31,8 @@ pub struct AdjacentMetadata {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ignore_unknown_instances: Option<bool>,
 
-    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-    pub properties: UstrMap<UnresolvedValue>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub properties: BTreeMap<Ustr, UnresolvedValue>,
 
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub attributes: BTreeMap<String, UnresolvedValue>,
@@ -60,7 +60,7 @@ impl AdjacentMetadata {
         snapshot: &SyncbackSnapshot,
         path: PathBuf,
     ) -> anyhow::Result<Option<Self>> {
-        let mut properties = UstrMap::default();
+        let mut properties = BTreeMap::new();
         let mut attributes = BTreeMap::new();
         // TODO make this more granular.
         // I am breaking the cycle of bad TODOs. This is in reference to the fact
@@ -215,8 +215,8 @@ pub struct DirectoryMetadata {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ignore_unknown_instances: Option<bool>,
 
-    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-    pub properties: UstrMap<UnresolvedValue>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub properties: BTreeMap<Ustr, UnresolvedValue>,
 
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub attributes: BTreeMap<String, UnresolvedValue>,
@@ -250,7 +250,7 @@ impl DirectoryMetadata {
         snapshot: &SyncbackSnapshot,
         path: PathBuf,
     ) -> anyhow::Result<Option<Self>> {
-        let mut properties = UstrMap::default();
+        let mut properties = BTreeMap::new();
         let mut attributes = BTreeMap::new();
         // TODO make this more granular.
         // I am breaking the cycle of bad TODOs. This is in reference to the fact

@@ -1,9 +1,4 @@
-use std::{
-    borrow::Cow,
-    collections::{BTreeMap, HashMap},
-    path::Path,
-    str,
-};
+use std::{borrow::Cow, collections::BTreeMap, path::Path, str};
 
 use anyhow::Context;
 use memofs::Vfs;
@@ -97,7 +92,7 @@ fn json_model_from_pair<'sync>(
 
     filter_properties_preallocated(snapshot.project(), new_inst, prop_buffer);
 
-    let mut properties = UstrMap::new();
+    let mut properties = BTreeMap::new();
     let mut attributes = BTreeMap::new();
     for (name, value) in prop_buffer.drain(..) {
         match value {
@@ -169,10 +164,10 @@ struct JsonModel {
 
     #[serde(
         alias = "Properties",
-        default = "UstrMap::new",
-        skip_serializing_if = "HashMap::is_empty"
+        default,
+        skip_serializing_if = "BTreeMap::is_empty"
     )]
-    properties: UstrMap<UnresolvedValue>,
+    properties: BTreeMap<Ustr, UnresolvedValue>,
 
     #[serde(default = "BTreeMap::new", skip_serializing_if = "BTreeMap::is_empty")]
     attributes: BTreeMap<String, UnresolvedValue>,
