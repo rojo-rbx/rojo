@@ -7,6 +7,7 @@ use std::{
 };
 
 use memofs::Vfs;
+use rbx_dom_weak::{Ustr, UstrMap};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -77,6 +78,14 @@ pub struct Project {
     /// wrong Roblox place.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub serve_place_ids: Option<HashSet<u64>>,
+
+    /// If specified, contains a set of place IDs that this project is
+    /// not compatible with when doing live sync.
+    ///
+    /// This setting is intended to help prevent syncing a Rojo project into the
+    /// wrong Roblox place.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub blocked_place_ids: Option<HashSet<u64>>,
 
     /// If specified, sets the current place's place ID when connecting to the
     /// Rojo server from Roblox Studio.
@@ -310,7 +319,7 @@ pub struct ProjectNode {
     /// `$className` CANNOT be set if `$path` is set and the instance described
     /// by that path has a ClassName other than Folder.
     #[serde(rename = "$className", skip_serializing_if = "Option::is_none")]
-    pub class_name: Option<String>,
+    pub class_name: Option<Ustr>,
 
     /// If set, defines an ID for the described Instance that can be used
     /// to refer to it for the purpose of referent properties.
@@ -329,7 +338,7 @@ pub struct ProjectNode {
         default,
         skip_serializing_if = "HashMap::is_empty"
     )]
-    pub properties: HashMap<String, UnresolvedValue>,
+    pub properties: UstrMap<UnresolvedValue>,
 
     #[serde(
         rename = "$attributes",

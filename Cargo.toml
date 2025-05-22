@@ -1,8 +1,12 @@
 [package]
 name = "rojo"
-version = "7.5.0-prealpha"
+version = "7.5.1"
 rust-version = "1.70.0"
-authors = ["Lucien Greathouse <me@lpghatguy.com>"]
+authors = [
+    "Lucien Greathouse <me@lpghatguy.com>",
+    "Micah Reid <git@dekkonot.com>",
+    "Ken Loeffler <kenloef@gmail.com>",
+]
 description = "Enables professional-grade development tools for Roblox developers"
 license = "MPL-2.0"
 homepage = "https://rojo.space"
@@ -51,11 +55,11 @@ memofs = { version = "0.3.0", path = "crates/memofs" }
 # rbx_reflection_database = { path = "../rbx-dom/rbx_reflection_database" }
 # rbx_xml = { path = "../rbx-dom/rbx_xml" }
 
-rbx_binary = "0.7.7"
-rbx_dom_weak = "2.9.0"
-rbx_reflection = "4.7.0"
-rbx_reflection_database = "0.2.12"
-rbx_xml = "0.13.5"
+rbx_binary = "1.0.0"
+rbx_dom_weak = "3.0.0"
+rbx_reflection = "5.0.0"
+rbx_reflection_database = "1.0.3"
+rbx_xml = "1.0.0"
 
 anyhow = "1.0.80"
 backtrace = "0.3.69"

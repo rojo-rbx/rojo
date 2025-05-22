@@ -1,7 +1,6 @@
 ---
 source: tests/tests/build.rs
 expression: contents
-
 ---
 <roblox version="4">
   <Item class="DataModel" referent="0">
@@ -22,6 +21,7 @@ expression: contents
     <Item class="Workspace" referent="2">
       <Properties>
         <string name="Name">Workspace</string>
+        <bool name="NeedsPivotMigration">false</bool>
       </Properties>
       <Item class="BoolValue" referent="3">
         <Properties>

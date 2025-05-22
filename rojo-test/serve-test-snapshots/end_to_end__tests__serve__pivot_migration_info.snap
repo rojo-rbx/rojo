@@ -5,7 +5,7 @@ expression: redactions.redacted_yaml(info)
 expectedPlaceIds: ~
 gameId: ~
 placeId: ~
-projectName: empty_folder
+projectName: pivot_migration
 protocolVersion: 4
 rootInstanceId: id-2
 serverVersion: "[server-version]"

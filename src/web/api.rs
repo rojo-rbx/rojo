@@ -64,6 +64,7 @@ impl ApiService {
             session_id: self.serve_session.session_id(),
             project_name: self.serve_session.project_name().to_owned(),
             expected_place_ids: self.serve_session.serve_place_ids().cloned(),
+            unexpected_place_ids: self.serve_session.blocked_place_ids().cloned(),
             place_id: self.serve_session.place_id(),
             game_id: self.serve_session.game_id(),
             root_instance_id,
@@ -280,7 +281,7 @@ impl ApiService {
 /// If this instance is represented by a script, try to find the correct .lua or .luau
 /// file to open to edit it.
 fn pick_script_path(instance: InstanceWithMeta<'_>) -> Option<PathBuf> {
-    match instance.class_name() {
+    match instance.class_name().as_str() {
         "Script" | "LocalScript" | "ModuleScript" => {}
         _ => return None,
     }

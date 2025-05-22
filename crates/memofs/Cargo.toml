@@ -2,7 +2,11 @@
 name = "memofs"
 description = "Virtual filesystem with configurable backends."
 version = "0.3.0"
-authors = ["Lucien Greathouse <me@lpghatguy.com>"]
+authors = [
+    "Lucien Greathouse <me@lpghatguy.com>",
+    "Micah Reid <git@dekkonot.com>",
+    "Ken Loeffler <kenloef@gmail.com>",
+]
 edition = "2018"
 readme = "README.md"
 license = "MIT"
