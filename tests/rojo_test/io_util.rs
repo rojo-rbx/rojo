@@ -5,11 +5,14 @@ use std::{
     process::Child,
 };
 
+use serde::{ser::SerializeSeq, Serialize, Serializer};
 use walkdir::WalkDir;
 
 pub static ROJO_PATH: &str = env!("CARGO_BIN_EXE_rojo");
 pub static BUILD_TESTS_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/rojo-test/build-tests");
 pub static SERVE_TESTS_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/rojo-test/serve-tests");
+pub static SYNCBACK_TESTS_PATH: &str =
+    concat!(env!("CARGO_MANIFEST_DIR"), "/rojo-test/syncback-tests");
 
 pub fn get_working_dir_path() -> PathBuf {
     let mut manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -64,4 +67,37 @@ impl Drop for KillOnDrop {
             eprint!("{}", String::from_utf8_lossy(&output));
         }
     }
+}
+
+// Stolen from librojo::path_serializer
+pub fn serialize_absolute<S, T>(path: T, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+    T: AsRef<Path>,
+{
+    let as_str = path
+        .as_ref()
+        .as_os_str()
+        .to_str()
+        .expect("Invalid Unicode in file path, cannot serialize");
+    let replaced = as_str.replace('\\', "/");
+
+    serializer.serialize_str(&replaced)
+}
+
+#[derive(Serialize)]
+struct WithAbsolute<'a>(#[serde(serialize_with = "serialize_absolute")] &'a Path);
+
+pub fn serialize_vec_absolute<S, T>(paths: &[T], serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+    T: AsRef<Path>,
+{
+    let mut seq = serializer.serialize_seq(Some(paths.len()))?;
+
+    for path in paths {
+        seq.serialize_element(&WithAbsolute(path.as_ref()))?;
+    }
+
+    seq.end()
 }

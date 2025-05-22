@@ -1,0 +1,13 @@
+{
+  "name": "project_json",
+  "tree": {
+    "$className": "Color3Value",
+    "$properties": {
+      "Value": [
+        1.0,
+        0.5,
+        0.0
+      ]
+    }
+  }
+}

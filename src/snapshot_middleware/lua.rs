@@ -1,13 +1,21 @@
 use std::{path::Path, str};
 
+use anyhow::Context as _;
 use memofs::{IoResultExt, Vfs};
-use rbx_dom_weak::{types::Enum, ustr, HashMapExt as _, UstrMap};
+use rbx_dom_weak::{
+    types::{Enum, Variant},
+    ustr, HashMapExt as _, UstrMap,
+};
 
-use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
+use crate::{
+    snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
+    syncback::{FsSnapshot, SyncbackReturn, SyncbackSnapshot},
+};
 
 use super::{
-    dir::{dir_meta, snapshot_dir_no_meta},
-    meta_file::AdjacentMetadata,
+    dir::{dir_meta, snapshot_dir_no_meta, syncback_dir_no_meta},
+    meta_file::{AdjacentMetadata, DirectoryMetadata},
+    PathExt as _,
 };
 
 #[derive(Debug)]
@@ -102,10 +110,11 @@ pub fn snapshot_lua_init(
     context: &InstanceContext,
     vfs: &Vfs,
     init_path: &Path,
+    name: &str,
     script_type: ScriptType,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let folder_path = init_path.parent().unwrap();
-    let dir_snapshot = snapshot_dir_no_meta(context, vfs, folder_path)?.unwrap();
+    let dir_snapshot = snapshot_dir_no_meta(context, vfs, folder_path, name)?.unwrap();
 
     if dir_snapshot.class_name != "Folder" {
         anyhow::bail!(
@@ -124,12 +133,87 @@ pub fn snapshot_lua_init(
 
     init_snapshot.children = dir_snapshot.children;
     init_snapshot.metadata = dir_snapshot.metadata;
+    init_snapshot
+        .metadata
+        .relevant_paths
+        .push(init_path.to_owned());
 
     if let Some(mut meta) = dir_meta(vfs, folder_path)? {
         meta.apply_all(&mut init_snapshot)?;
     }
 
     Ok(Some(init_snapshot))
+}
+
+pub fn syncback_lua<'sync>(
+    snapshot: &SyncbackSnapshot<'sync>,
+) -> anyhow::Result<SyncbackReturn<'sync>> {
+    let new_inst = snapshot.new_inst();
+
+    let contents = if let Some(Variant::String(source)) = new_inst.properties.get(&ustr("Source")) {
+        source.as_bytes().to_vec()
+    } else {
+        anyhow::bail!("Scripts must have a `Source` property that is a String")
+    };
+    let mut fs_snapshot = FsSnapshot::new();
+    fs_snapshot.add_file(&snapshot.path, contents);
+
+    let meta = AdjacentMetadata::from_syncback_snapshot(snapshot, snapshot.path.clone())?;
+    if let Some(mut meta) = meta {
+        meta.properties.remove(&ustr("Source"));
+
+        if !meta.is_empty() {
+            let parent_location = snapshot.path.parent_err()?;
+            fs_snapshot.add_file(
+                parent_location.join(format!("{}.meta.json", new_inst.name)),
+                serde_json::to_vec_pretty(&meta).context("cannot serialize metadata")?,
+            );
+        }
+    }
+
+    Ok(SyncbackReturn {
+        fs_snapshot,
+        // Scripts don't have a child!
+        children: Vec::new(),
+        removed_children: Vec::new(),
+    })
+}
+
+pub fn syncback_lua_init<'sync>(
+    script_type: ScriptType,
+    snapshot: &SyncbackSnapshot<'sync>,
+) -> anyhow::Result<SyncbackReturn<'sync>> {
+    let new_inst = snapshot.new_inst();
+    let path = snapshot.path.join(match script_type {
+        ScriptType::Server => "init.server.luau",
+        ScriptType::Client => "init.client.luau",
+        ScriptType::Module => "init.luau",
+        _ => anyhow::bail!("syncback is not yet implemented for {script_type:?}"),
+    });
+
+    let contents = if let Some(Variant::String(source)) = new_inst.properties.get(&ustr("Source")) {
+        source.as_bytes().to_vec()
+    } else {
+        anyhow::bail!("Scripts must have a `Source` property that is a String")
+    };
+
+    let mut dir_syncback = syncback_dir_no_meta(snapshot)?;
+    dir_syncback.fs_snapshot.add_file(&path, contents);
+
+    let meta = DirectoryMetadata::from_syncback_snapshot(snapshot, path.clone())?;
+    if let Some(mut meta) = meta {
+        meta.properties.remove(&ustr("Source"));
+
+        if !meta.is_empty() {
+            dir_syncback.fs_snapshot.add_file(
+                snapshot.path.join("init.meta.json"),
+                serde_json::to_vec_pretty(&meta)
+                    .context("could not serialize new init.meta.json")?,
+            );
+        }
+    }
+
+    Ok(dir_syncback)
 }
 
 #[cfg(test)]

@@ -1,0 +1,9 @@
+{
+  "name": "ref_properties_blank",
+  "tree": {
+    "$className": "DataModel",
+    "Workspace": {
+      "$path": "src"
+    }
+  }
+}
