@@ -28,9 +28,6 @@ pub struct AdjacentMetadata {
     #[serde(default, skip_serializing_if = "HashMap::is_empty")]
     pub attributes: HashMap<String, UnresolvedValue>,
 
-    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-    pub styles: HashMap<String, UnresolvedValue>,
-
     #[serde(skip)]
     pub path: PathBuf,
 }
@@ -76,19 +73,6 @@ impl AdjacentMetadata {
             snapshot
                 .properties
                 .insert("Attributes".into(), attributes.into());
-        }
-
-        if !self.styles.is_empty() {
-            let mut styles = Attributes::new();
-
-            for (key, unresolved) in self.styles.drain() {
-                let value = unresolved.resolve_unambiguous()?;
-                styles.insert(key, value);
-            }
-
-            snapshot
-                .properties
-                .insert("PropertiesSerialize".into(), styles.into());
         }
 
         Ok(())
@@ -137,9 +121,6 @@ pub struct DirectoryMetadata {
 
     #[serde(default, skip_serializing_if = "HashMap::is_empty")]
     pub attributes: HashMap<String, UnresolvedValue>,
-
-    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-    pub styles: HashMap<String, UnresolvedValue>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub class_name: Option<Ustr>,
@@ -214,19 +195,6 @@ impl DirectoryMetadata {
             snapshot
                 .properties
                 .insert("Attributes".into(), attributes.into());
-        }
-
-        if !self.styles.is_empty() {
-            let mut styles = Attributes::new();
-
-            for (key, unresolved) in self.styles.drain() {
-                let value = unresolved.resolve_unambiguous()?;
-                styles.insert(key, value);
-            }
-
-            snapshot
-                .properties
-                .insert("PropertiesSerialize".into(), styles.into());
         }
 
         Ok(())

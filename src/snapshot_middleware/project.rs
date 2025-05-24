@@ -268,23 +268,6 @@ pub fn snapshot_project_node(
         properties.insert("Attributes".into(), attributes.into());
     }
 
-    if !node.styles.is_empty() {
-        let mut properties_serialize = Attributes::new();
-
-        for (key, unresolved) in &node.styles {
-            let value = unresolved.clone().resolve_unambiguous().with_context(|| {
-                format!(
-                    "Unresolvable attribute in project at path {}",
-                    project_path.display()
-                )
-            })?;
-
-            properties_serialize.insert(key.clone(), value);
-        }
-
-        properties.insert("PropertiesSerialize".into(), properties_serialize.into());
-    }
-
     // If the user specified $ignoreUnknownInstances, overwrite the existing
     // value.
     //
