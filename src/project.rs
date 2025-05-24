@@ -347,13 +347,7 @@ pub struct ProjectNode {
     )]
     pub attributes: HashMap<String, UnresolvedValue>,
 
-    #[serde(
-        rename = "$styles",
-        default,
-
-
-        skip_serializing_if = "HashMap::is_empty"
-    )]
+    #[serde(rename = "$styles", default, skip_serializing_if = "HashMap::is_empty")]
     pub styles: HashMap<String, UnresolvedValue>,
 
     /// Defines the behavior when Rojo encounters unknown instances in Roblox
