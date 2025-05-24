@@ -208,4 +208,30 @@ return {
 			end,
 		},
 	},
+	StyleRule = {
+ 		PropertiesSerialize = {
+ 			read = function(instance)
+ 				return true, instance:GetProperties()
+ 			end,
+ 			write = function(instance, _, value)
+ 				if typeof(value) ~= "table" then
+ 					return false, Error.new(Error.Kind.CannotParseBinaryString)
+ 				end
+
+ 				local existing = instance:GetProperties()
+
+ 				for itemName, itemValue in pairs(value) do
+ 					instance:SetProperty(itemName, itemValue)
+ 				end
+
+ 				for existingItemName in pairs(existing) do
+ 					if value[existingItemName] == nil then
+ 						instance:SetProperty(existingItemName, nil)
+ 					end
+ 				end
+
+ 				return true
+ 			end,
+ 		},
+ 	}
 }

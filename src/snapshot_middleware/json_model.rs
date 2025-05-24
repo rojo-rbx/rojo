@@ -92,6 +92,9 @@ struct JsonModel {
 
     #[serde(default = "HashMap::new", skip_serializing_if = "HashMap::is_empty")]
     attributes: HashMap<String, UnresolvedValue>,
+
+    #[serde(default = "HashMap::new", skip_serializing_if = "HashMap::is_empty")]
+    styles: HashMap<String, UnresolvedValue>,
 }
 
 impl JsonModel {

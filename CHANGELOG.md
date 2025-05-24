@@ -1,5 +1,8 @@
 # Rojo Changelog
 
+## Unreleased
+ * Added support for StyleRule `PropertiesSerialize` property.
+
 ## 7.5.1 - April 25th, 2025
 * Fixed output spam related to `Instance.Capabilities` in the plugin
 
