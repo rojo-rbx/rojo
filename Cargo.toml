@@ -49,17 +49,17 @@ harness = false
 memofs = { version = "0.3.0", path = "crates/memofs" }
 
 # These dependencies can be uncommented when working on rbx-dom simultaneously
-rbx_binary = { path = "../rbx-dom/rbx_binary" }
-rbx_dom_weak = { path = "../rbx-dom/rbx_dom_weak" }
-rbx_reflection = { path = "../rbx-dom/rbx_reflection" }
-rbx_reflection_database = { path = "../rbx-dom/rbx_reflection_database" }
-rbx_xml = { path = "../rbx-dom/rbx_xml" }
+# rbx_binary = { path = "../rbx-dom/rbx_binary" }
+# rbx_dom_weak = { path = "../rbx-dom/rbx_dom_weak" }
+# rbx_reflection = { path = "../rbx-dom/rbx_reflection" }
+# rbx_reflection_database = { path = "../rbx-dom/rbx_reflection_database" }
+# rbx_xml = { path = "../rbx-dom/rbx_xml" }
 
-# rbx_binary = "1.0.0"
-# rbx_dom_weak = "3.0.0"
-# rbx_reflection = "5.0.0"
-# rbx_reflection_database = "1.0.3"
-# rbx_xml = "1.0.0"
+rbx_binary = "1.0.0"
+rbx_dom_weak = "3.0.0"
+rbx_reflection = "5.0.0"
+rbx_reflection_database = "1.0.3"
+rbx_xml = "1.0.0"
 
 anyhow = "1.0.80"
 backtrace = "0.3.69"
