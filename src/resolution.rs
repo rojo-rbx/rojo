@@ -2,7 +2,7 @@ use std::borrow::Borrow;
 
 use anyhow::{bail, format_err};
 use rbx_dom_weak::types::{
-    Attributes, CFrame, Color3, Content, ContentId, Enum, Font, MaterialColors, Matrix3, Tags,
+    SerializedMap, CFrame, Color3, Content, ContentId, Enum, Font, MaterialColors, Matrix3, Tags,
     Variant, VariantType, Vector2, Vector3,
 };
 use rbx_reflection::{DataType, PropertyDescriptor};
@@ -50,7 +50,7 @@ pub enum AmbiguousValue {
     Array3([f64; 3]),
     Array4([f64; 4]),
     Array12([f64; 12]),
-    Attributes(Attributes),
+    Attributes(SerializedMap),
     Font(Font),
     MaterialColors(MaterialColors),
 }
@@ -144,7 +144,7 @@ impl AmbiguousValue {
                     Ok(CFrame::new(pos, orientation).into())
                 }
 
-                (VariantType::Attributes, AmbiguousValue::Attributes(value)) => Ok(value.into()),
+                (VariantType::SerializedMap, AmbiguousValue::Attributes(value)) => Ok(value.into()),
 
                 (VariantType::Font, AmbiguousValue::Font(value)) => Ok(value.into()),
 

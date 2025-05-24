@@ -251,7 +251,7 @@ fn defer_ref_properties(tree: &mut RojoTree, id: Ref, context: &mut PatchApplyCo
         .get_instance(id)
         .expect("Instances should exist when calculating deferred refs");
     let attributes = match instance.properties().get(&ustr("Attributes")) {
-        Some(Variant::Attributes(attrs)) => attrs,
+        Some(Variant::SerializedMap(attrs)) => attrs,
         _ => return,
     };
 

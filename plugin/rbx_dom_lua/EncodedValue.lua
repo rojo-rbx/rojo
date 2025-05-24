@@ -27,7 +27,7 @@ local EncodedValue = {}
 
 local types
 types = {
-	Attributes = {
+	SerializedMap = {
 		fromPod = function(pod)
 			local output = {}
 
@@ -37,7 +37,7 @@ types = {
 				if ok then
 					output[key] = result
 				else
-					local warning = ("Could not decode attribute value of type %q: %s"):format(
+					local warning = ("Could not decode item value of type %q: %s"):format(
 						typeof(value),
 						tostring(result)
 					)
@@ -56,7 +56,7 @@ types = {
 				if ok then
 					output[key] = result
 				else
-					local warning = ("Could not encode attribute value of type %q: %s"):format(
+					local warning = ("Could not encode item value of type %q: %s"):format(
 						typeof(value),
 						tostring(result)
 					)

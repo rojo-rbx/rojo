@@ -281,7 +281,7 @@ fn compute_ref_properties(
 ) -> UstrMap<Option<Variant>> {
     let mut map = UstrMap::new();
     let attributes = match snapshot.properties.get(&ustr("Attributes")) {
-        Some(Variant::Attributes(attrs)) => attrs,
+        Some(Variant::SerializedMap(attrs)) => attrs,
         _ => return map,
     };
 

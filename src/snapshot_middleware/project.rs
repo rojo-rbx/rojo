@@ -3,7 +3,7 @@ use std::{borrow::Cow, path::Path};
 use anyhow::{bail, Context};
 use memofs::Vfs;
 use rbx_dom_weak::{
-    types::{Attributes, Ref},
+    types::{SerializedMap, Ref},
     ustr, HashMapExt as _, Ustr, UstrMap,
 };
 use rbx_reflection::ClassTag;
@@ -252,7 +252,7 @@ pub fn snapshot_project_node(
     }
 
     if !node.attributes.is_empty() {
-        let mut attributes = Attributes::new();
+        let mut attributes = SerializedMap::new();
 
         for (key, unresolved) in &node.attributes {
             let value = unresolved.clone().resolve_unambiguous().with_context(|| {
@@ -266,6 +266,23 @@ pub fn snapshot_project_node(
         }
 
         properties.insert("Attributes".into(), attributes.into());
+    }
+
+    if !node.styles.is_empty() {
+        let mut properties_serialize = SerializedMap::new();
+
+        for (key, unresolved) in &node.styles {
+            let value = unresolved.clone().resolve_unambiguous().with_context(|| {
+                format!(
+                    "Unresolvable attribute in project at path {}",
+                    project_path.display()
+                )
+            })?;
+
+            properties_serialize.insert(key.clone(), value);
+        }
+
+        properties.insert("PropertiesSerialize".into(), properties_serialize.into());
     }
 
     // If the user specified $ignoreUnknownInstances, overwrite the existing
