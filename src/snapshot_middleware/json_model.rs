@@ -92,6 +92,9 @@ struct JsonModel {
 
     #[serde(default = "HashMap::new", skip_serializing_if = "HashMap::is_empty")]
     attributes: HashMap<String, UnresolvedValue>,
+
+    #[serde(default = "HashMap::new", skip_serializing_if = "HashMap::is_empty")]
+    styles: HashMap<String, UnresolvedValue>,
 }
 
 impl JsonModel {
@@ -119,6 +122,17 @@ impl JsonModel {
             }
 
             properties.insert("Attributes".into(), attributes.into());
+        }
+
+        if !self.styles.is_empty() {
+            let mut styles = Attributes::new();
+
+            for (key, unresolved) in self.styles {
+                let value = unresolved.resolve_unambiguous()?;
+                styles.insert(key, value);
+            }
+
+            properties.insert("PropertiesSerialize".into(), styles.into());
         }
 
         Ok(InstanceSnapshot {
