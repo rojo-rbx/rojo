@@ -1583,6 +1583,7 @@ dependencies = [
  "rbx_dom_weak",
  "rbx_reflection",
  "rbx_reflection_database",
+ "serde",
  "thiserror",
  "zstd",
 ]

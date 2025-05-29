@@ -1,6 +1,6 @@
 use std::{fs, path::Path, process::Command};
 
-use insta::assert_snapshot;
+use insta::{assert_snapshot, assert_yaml_snapshot};
 use tempfile::tempdir;
 
 use crate::rojo_test::io_util::SYNCBACK_TESTS_PATH;
@@ -8,7 +8,8 @@ use crate::rojo_test::io_util::SYNCBACK_TESTS_PATH;
 use super::io_util::{copy_recursive, get_working_dir_path, ROJO_PATH};
 
 const INPUT_FILE_PROJECT: &str = "input-project";
-const INPUT_FILE: &str = "input.rbxl";
+const INPUT_FILE_PLACE: &str = "input.rbxl";
+const INPUT_FILE_MODEL: &str = "input.rbxm";
 
 /// Convenience method to run a `rojo syncback` test.
 ///
@@ -25,7 +26,16 @@ pub fn run_syncback_test(name: &str, callback: impl FnOnce(&Path)) {
     let source_path = Path::new(SYNCBACK_TESTS_PATH)
         .join(name)
         .join(INPUT_FILE_PROJECT);
-    let input_file = Path::new(SYNCBACK_TESTS_PATH).join(name).join(INPUT_FILE);
+    // We want to support both rbxls and rbxms as input
+    let input_file = {
+        let mut path = Path::new(SYNCBACK_TESTS_PATH)
+            .join(name)
+            .join(INPUT_FILE_PLACE);
+        if !path.exists() {
+            path.set_file_name(INPUT_FILE_MODEL);
+        }
+        path
+    };
 
     let test_dir = tempdir().expect("Couldn't create temporary directory");
     let project_path = test_dir
@@ -67,6 +77,8 @@ pub fn run_syncback_test(name: &str, callback: impl FnOnce(&Path)) {
         .parent()
         .unwrap()
         .join("syncback-test-snapshots");
+    settings.set_snapshot_path(snapshot_path);
+    settings.set_sort_maps(true);
 
     settings.bind(|| {
         assert_snapshot!(
@@ -75,7 +87,12 @@ pub fn run_syncback_test(name: &str, callback: impl FnOnce(&Path)) {
         )
     });
 
-    settings.set_snapshot_path(snapshot_path);
-    settings.set_sort_maps(true);
     settings.bind(|| callback(project_path.as_path()))
+}
+
+pub fn snapshot_rbxm(name: &str, input: Vec<u8>) {
+    assert_yaml_snapshot!(
+        name,
+        rbx_binary::text_format::DecodedModel::from_reader(input.as_slice())
+    )
 }
