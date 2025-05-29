@@ -144,24 +144,32 @@ impl FsSnapshot {
     /// Returns a list of file paths that would be added by this `FsSnapshot`
     #[inline]
     pub fn added_files(&self) -> Vec<&Path> {
-        self.added_files.keys().map(PathBuf::as_path).collect()
+        let mut added_files: Vec<_> = self.added_files.keys().map(PathBuf::as_path).collect();
+        added_files.sort_unstable();
+        added_files
     }
 
     /// Returns a list of directory paths that would be added by this `FsSnapshot`
     #[inline]
     pub fn added_dirs(&self) -> Vec<&Path> {
-        self.added_dirs.iter().map(PathBuf::as_path).collect()
+        let mut added_dirs: Vec<_> = self.added_dirs.iter().map(PathBuf::as_path).collect();
+        added_dirs.sort_unstable();
+        added_dirs
     }
 
     /// Returns a list of file paths that would be removed by this `FsSnapshot`
     #[inline]
     pub fn removed_files(&self) -> Vec<&Path> {
-        self.removed_files.iter().map(PathBuf::as_path).collect()
+        let mut removed_files: Vec<_> = self.removed_files.iter().map(PathBuf::as_path).collect();
+        removed_files.sort_unstable();
+        removed_files
     }
 
     /// Returns a list of directory paths that would be removed by this `FsSnapshot`
     #[inline]
     pub fn removed_dirs(&self) -> Vec<&Path> {
-        self.removed_dirs.iter().map(PathBuf::as_path).collect()
+        let mut removed_dirs: Vec<_> = self.removed_dirs.iter().map(PathBuf::as_path).collect();
+        removed_dirs.sort_unstable();
+        removed_dirs
     }
 }
