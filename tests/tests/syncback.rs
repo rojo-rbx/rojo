@@ -1,35 +1,16 @@
-use crate::rojo_test::syncback_util::basic_syncback_test;
+use std::fs;
 
-macro_rules! syncback_basic_test {
-    ($($test_name:ident$(,)?)*) => {$(
-        #[test]
-        fn $test_name() {
-            let _ = env_logger::try_init();
+use insta::assert_snapshot;
 
-            basic_syncback_test(stringify!($test_name)).unwrap()
-        }
-    )*};
-}
+use crate::rojo_test::syncback_util::run_syncback_test;
 
-syncback_basic_test! {
-    baseplate,
-    all_middleware,
-    unscriptable_properties,
-    respect_old_middleware,
-    rbxm_fallback
-    project_init,
-    nested_projects,
-    nested_projects_weird,
-    ref_properties,
-    ref_properties_blank,
-    ref_properties_update,
-    ignore_paths,
-    project_reserialize,
-    project_all_middleware,
-    duplicate_rojo_id,
-    string_value_project,
-    child_but_not,
-    ignore_trees,
-    ignore_paths_removing,
-    ignore_trees_removing,
+#[test]
+fn unscriptable_properties() {
+    run_syncback_test("unscriptable_properties", |path| {
+        let project_path = path.join("default.project.json");
+        let content =
+            fs::read_to_string(project_path).expect("could not read default.project.json");
+
+        assert_snapshot!("unscriptable_properties-default.project.json", content)
+    });
 }
