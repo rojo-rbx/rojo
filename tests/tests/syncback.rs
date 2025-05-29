@@ -11,7 +11,7 @@ macro_rules! syncback_tests {
             run_syncback_test(stringify!($test_name), |path| {
                 for name in $list {
                     let snapshot_name = format!(concat!(stringify!($test_name), "-{}"), name);
-                    let new = path.join(name);
+                    let new = path.join::<&str>(name);
                     if let Some("rbxm") = new.extension().and_then(OsStr::to_str) {
                         let content = fs::read(new).unwrap();
                         snapshot_rbxm(&snapshot_name, content);
