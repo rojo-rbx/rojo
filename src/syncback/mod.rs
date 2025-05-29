@@ -59,12 +59,26 @@ pub fn syncback_loop(
         .map(|rules| rules.compile_globs())
         .transpose()?;
 
-    // Strip out any objects from the new tree that aren't in the old tree. This
-    // is necessary so that hashing the roots of each tree won't always result
-    // in different hashes. Shout out to Roblox for serializing a bunch of
-    // Services nobody cares about.
-    log::debug!("Pruning new tree");
-    strip_unknown_root_children(&mut new_tree, old_tree);
+    // TODO: Add a better way to tell if the root of a project is a directory
+    let skip_pruning = if let Some(path) = &project.tree.path {
+        let middleware =
+            Middleware::middleware_for_path(vfs, &project.sync_rules, path.path()).unwrap();
+        if let Some(middleware) = middleware {
+            middleware.is_dir()
+        } else {
+            false
+        }
+    } else {
+        false
+    };
+    if !skip_pruning {
+        // Strip out any objects from the new tree that aren't in the old tree. This
+        // is necessary so that hashing the roots of each tree won't always result
+        // in different hashes. Shout out to Roblox for serializing a bunch of
+        // Services nobody cares about.
+        log::debug!("Pruning new tree");
+        strip_unknown_root_children(&mut new_tree, old_tree);
+    }
 
     log::debug!("Collecting referents for new DOM...");
     let deferred_referents = collect_referents(&new_tree);
