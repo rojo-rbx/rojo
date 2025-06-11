@@ -1,3 +1,7 @@
+---
+source: tests/tests/syncback.rs
+expression: container.model.json
+---
 {
   "className": "Folder",
   "children": [

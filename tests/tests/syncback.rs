@@ -14,10 +14,10 @@ macro_rules! syncback_tests {
                     let new = path.join::<&str>(name);
                     if let Some("rbxm") = new.extension().and_then(OsStr::to_str) {
                         let content = fs::read(new).unwrap();
-                        snapshot_rbxm(&snapshot_name, content);
+                        snapshot_rbxm(&snapshot_name, content, name);
                     } else {
                         let content = fs::read_to_string(new).unwrap();
-                        assert_snapshot!(snapshot_name, content);
+                        assert_snapshot!(snapshot_name, content, name);
                     }
                 }
             });
@@ -26,6 +26,19 @@ macro_rules! syncback_tests {
 }
 
 syncback_tests! {
+    // Ensures that there's only one copy written to disk if navigating a
+    // project file might yield two copies
+    child_but_not => ["OnlyOneCopy/child_of_one.luau", "ReplicatedStorage/child_replicated_storage.luau"],
+    // Ensures that if a RojoId is duplicated somewhere in the project, it's
+    // rewritten rather than synced back as a conflict
+    duplicate_rojo_id => ["container.model.json"],
+    // Ensures that the `ignorePaths` setting works for additions
+    ignore_paths_adding => ["src/int_value.model.json", "src/subfolder/string_value.txt"],
+    // Ensures that the `ignorePaths` setting works for removals
+    ignore_paths_removing => [],
+    // Ensures that StringValues inside project files are written to the
+    // project file, but only if they don't have `$path` set
     string_value_project => ["default.project.json"],
+    // Ensures that the `syncUnscriptable` setting works
     unscriptable_properties => ["default.project.json"],
 }

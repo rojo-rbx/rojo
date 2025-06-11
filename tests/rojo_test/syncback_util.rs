@@ -93,9 +93,10 @@ pub fn run_syncback_test(name: &str, callback: impl FnOnce(&Path)) {
     settings.bind(|| callback(project_path.as_path()))
 }
 
-pub fn snapshot_rbxm(name: &str, input: Vec<u8>) {
+pub fn snapshot_rbxm(name: &str, input: Vec<u8>, file_name: &str) {
     assert_yaml_snapshot!(
         name,
-        rbx_binary::text_format::DecodedModel::from_reader(input.as_slice())
+        rbx_binary::text_format::DecodedModel::from_reader(input.as_slice()),
+        file_name
     )
 }
