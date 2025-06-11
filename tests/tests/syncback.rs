@@ -25,6 +25,9 @@ macro_rules! syncback_tests {
     )*};
 }
 
+// TODO: All middleware, project all middleware
+// probably replace them with tests for CSV and the like
+
 syncback_tests! {
     // Ensures that there's only one copy written to disk if navigating a
     // project file might yield two copies
@@ -40,6 +43,14 @@ syncback_tests! {
     ignore_trees_adding => [],
     // Ensures that `ignoreTrees` works for removals
     ignore_trees_removing => [],
+    // Ensures projects that refer to other projects work as expected
+    nested_projects => ["nested.project.json", "string_value.txt"],
+    // Ensures files that are ignored by nested projects are picked up if
+    // they're included in second project. Unusual but perfectly workable
+    // pattern that syncback has to support.
+    nested_projects_weird => ["src/modules/ClientModule.luau", "src/modules/ServerModule.luau"],
+    // Ensures that projects respect `init` files when they're directly referenced from a node
+    project_init => ["src/init.luau"],
     // Ensures that StringValues inside project files are written to the
     // project file, but only if they don't have `$path` set
     string_value_project => ["default.project.json"],
