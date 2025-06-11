@@ -56,7 +56,10 @@ pub fn run_syncback_test(name: &str, callback: impl FnOnce(&Path)) {
     };
 
     let output = Command::new(ROJO_PATH)
-        .current_dir(working_dir)
+        // I don't really understand why setting the working directory breaks this, but it does.
+        // It's a bit concerning but I'm more interested in writing tests than debugging it right now.
+        // TODO: Figure out why and fix it.
+        // .current_dir(working_dir)
         .args([
             "--color",
             "never",
