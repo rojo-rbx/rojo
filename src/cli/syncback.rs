@@ -13,6 +13,7 @@ use rbx_dom_weak::{InstanceBuilder, WeakDom};
 use termcolor::{BufferWriter, Color, ColorChoice, ColorSpec, WriteColor};
 
 use crate::{
+    path_serializer::display_absolute,
     serve_session::ServeSession,
     syncback::{syncback_loop, FsSnapshot},
 };
@@ -267,7 +268,7 @@ fn list_files(snapshot: &FsSnapshot, color: ColorChoice, base_path: &Path) -> io
                 writeln!(
                     &mut buffer,
                     "{}",
-                    path.strip_prefix(base_path).unwrap_or(path).display()
+                    display_absolute(path.strip_prefix(base_path).unwrap_or(path))
                 )?;
             }
             buffer.set_color(&no_color)?;
@@ -280,7 +281,7 @@ fn list_files(snapshot: &FsSnapshot, color: ColorChoice, base_path: &Path) -> io
                 writeln!(
                     &mut buffer,
                     "{}",
-                    path.strip_prefix(base_path).unwrap_or(path).display()
+                    display_absolute(path.strip_prefix(base_path).unwrap_or(path))
                 )?;
             }
         }
