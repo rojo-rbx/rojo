@@ -36,6 +36,10 @@ syncback_tests! {
     ignore_paths_adding => ["src/int_value.model.json", "src/subfolder/string_value.txt"],
     // Ensures that the `ignorePaths` setting works for removals
     ignore_paths_removing => ["src/Message.rbxm"],
+    // Ensures that `ignoreTrees` works for additions
+    ignore_trees_adding => [],
+    // Ensures that `ignoreTrees` works for removals
+    ignore_trees_removing => [],
     // Ensures that StringValues inside project files are written to the
     // project file, but only if they don't have `$path` set
     string_value_project => ["default.project.json"],

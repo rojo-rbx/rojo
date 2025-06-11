@@ -1,5 +1,5 @@
 {
-  "name": "ignore_trees",
+  "name": "ignore_trees_adding",
   "tree": {
     "$className": "DataModel",
     "ReplicatedStorage": {
