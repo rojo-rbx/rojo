@@ -1,0 +1,14 @@
+---
+source: tests/rojo_test/syncback_util.rs
+expression: "String::from_utf8_lossy(&output.stderr)"
+---
+[WARN  librojo::syncback] Could not syncback ChildWithDuplicates as a Directory because: Instance has children with duplicate name (case may not exactly match):
+         DuplicateChild.
+        It will instead be synced back as a Rbxm.
+Writing files/directories:
+src/ChildWithDuplicates.rbxm
+src/ChildWithoutDuplicates/Child/.gitkeep
+src/ChildWithoutDuplicates
+src/ChildWithoutDuplicates/Child
+Removing files/directories:
+src/ChildWithDuplicates

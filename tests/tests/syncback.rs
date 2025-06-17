@@ -51,6 +51,16 @@ syncback_tests! {
     nested_projects_weird => ["src/modules/ClientModule.luau", "src/modules/ServerModule.luau"],
     // Ensures that projects respect `init` files when they're directly referenced from a node
     project_init => ["src/init.luau"],
+    // Ensures that projects can be reserialized by syncback and that
+    // default.project.json doesn't change unexpectedly.
+    project_reserialize => ["attribute_mismatch.luau", "property_mismatch.project.json"],
+    // Confirms that Instances that cannot serialize as directories serialize as rbxms
+    rbxm_fallback => ["src/ChildWithDuplicates.rbxm"],
+    // Ensures that ref properties are linked properly on the file system.
+    ref_properties => ["src/pointer.model.json", "src/target.model.json"],
+    // Ensures that ref properties are linked when no attributes are manually
+    // set in the DataModel.
+    ref_properties_blank => ["src/pointer.model.json", "src/target.meta.json", "src/target.txt"],
     // Ensures that StringValues inside project files are written to the
     // project file, but only if they don't have `$path` set
     string_value_project => ["default.project.json"],

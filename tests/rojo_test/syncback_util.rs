@@ -1,4 +1,6 @@
-use std::{fs, path::Path, process::Command};
+use std::{path::Path, process::Command};
+
+use fs_err as fs;
 
 use insta::{assert_snapshot, assert_yaml_snapshot};
 use tempfile::tempdir;

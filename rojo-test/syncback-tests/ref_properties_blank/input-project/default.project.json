@@ -2,7 +2,7 @@
   "name": "ref_properties_blank",
   "tree": {
     "$className": "DataModel",
-    "Workspace": {
+    "ReplicatedStorage": {
       "$path": "src"
     }
   }
