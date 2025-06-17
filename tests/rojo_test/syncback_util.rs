@@ -1,7 +1,5 @@
 use std::{path::Path, process::Command};
 
-use fs_err as fs;
-
 use insta::{assert_snapshot, assert_yaml_snapshot};
 use tempfile::tempdir;
 
@@ -23,7 +21,7 @@ const INPUT_FILE_MODEL: &str = "input.rbxm";
 pub fn run_syncback_test(name: &str, callback: impl FnOnce(&Path)) {
     let _ = env_logger::try_init();
 
-    let working_dir = get_working_dir_path();
+    // let working_dir = get_working_dir_path();
 
     let source_path = Path::new(SYNCBACK_TESTS_PATH)
         .join(name)
@@ -46,12 +44,12 @@ pub fn run_syncback_test(name: &str, callback: impl FnOnce(&Path)) {
         .expect("Couldn't canonicalize temporary directory path")
         .join(name);
 
-    let source_is_file = fs::metadata(&source_path).unwrap().is_file();
+    let source_is_file = fs_err::metadata(&source_path).unwrap().is_file();
 
     if source_is_file {
-        fs::copy(&source_path, &project_path).expect("couldn't copy project file");
+        fs_err::copy(&source_path, &project_path).expect("couldn't copy project file");
     } else {
-        fs::create_dir(&project_path).expect("Couldn't create temporary project subdirectory");
+        fs_err::create_dir(&project_path).expect("Couldn't create temporary project subdirectory");
 
         copy_recursive(&source_path, &project_path)
             .expect("Couldn't copy project to temporary directory");
