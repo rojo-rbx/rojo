@@ -1,9 +1,0 @@
-{
-  "className": "Part",
-  "children": [
-    {
-      "className": "Texture",
-      "name": "Texture"
-    }
-  ]
-}

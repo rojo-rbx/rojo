@@ -61,6 +61,7 @@ syncback_tests! {
     // Ensures that ref properties are linked when no attributes are manually
     // set in the DataModel.
     ref_properties_blank => ["src/pointer.model.json", "src/target.meta.json", "src/target.txt"],
+    respect_old_middleware => ["default.project.json", "src/model_json.model.json", "src/rbxm.rbxm", "src/rbxmx.rbxmx"],
     // Ensures that StringValues inside project files are written to the
     // project file, but only if they don't have `$path` set
     string_value_project => ["default.project.json"],
