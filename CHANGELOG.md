@@ -2,8 +2,10 @@
 
 ## Unreleased
 
+* Improved script source diff visualizer UX and performance ([#994])
 * Added an update indicator to the version header when a new version of the plugin is available. ([#1069])
 
+[#994]: https://github.com/rojo-rbx/rojo/pull/994
 [#1069]: https://github.com/rojo-rbx/rojo/pull/1069
 
 ## 7.5.1 - April 25th, 2025
