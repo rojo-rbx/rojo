@@ -2,8 +2,10 @@
 
 ## Unreleased
 
+* Added headless API for Studio companion plugins. ([#639])
 * Added an update indicator to the version header when a new version of the plugin is available. ([#1069])
 
+[#639]: https://github.com/rojo-rbx/rojo/pull/639
 [#1069]: https://github.com/rojo-rbx/rojo/pull/1069
 
 ## 7.5.1 - April 25th, 2025
@@ -199,6 +201,7 @@
 
 ## [7.4.0-rc1] - October 3, 2023
 ### Additions
+
 #### Project format
 * Added support for `.toml` files to `$path` ([#633])
 * Added support for `Font` and `CFrame` attributes ([rbx-dom#299], [rbx-dom#296])
