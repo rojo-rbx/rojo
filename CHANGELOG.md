@@ -1,10 +1,12 @@
 # Rojo Changelog
 
-## Unreleased Changes
+## Unreleased
 
 * Added headless API for Studio companion plugins. ([#639])
+* Added an update indicator to the version header when a new version of the plugin is available. ([#1069])
 
 [#639]: https://github.com/rojo-rbx/rojo/pull/639
+[#1069]: https://github.com/rojo-rbx/rojo/pull/1069
 
 ## 7.5.1 - April 25th, 2025
 * Fixed output spam related to `Instance.Capabilities` in the plugin

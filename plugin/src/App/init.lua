@@ -341,27 +341,10 @@ function App:closeNotification(id: number)
 end
 
 function App:checkForUpdates()
-	if not Settings:get("checkForUpdates") then
-		return
-	end
+	local updateMessage = Version.getUpdateMessage()
 
-	local isLocalInstall = string.find(debug.traceback(), "\n[^\n]-user_.-$") ~= nil
-	local latestCompatibleVersion = Version.retrieveLatestCompatible({
-		version = Config.version,
-		includePrereleases = isLocalInstall and Settings:get("checkForPrereleases"),
-	})
-	if not latestCompatibleVersion then
-		return
-	end
-
-	self:addNotification(
-		string.format(
-			"A newer compatible version of Rojo, %s, was published %s! Go to the Rojo releases page to learn more.",
-			Version.display(latestCompatibleVersion.version),
-			timeUtil.elapsedToText(DateTime.now().UnixTimestamp - latestCompatibleVersion.publishedUnixTimestamp)
-		),
-		500,
-		{
+	if updateMessage then
+		self:addNotification(updateMessage, 500, {
 			Dismiss = {
 				text = "Dismiss",
 				style = "Bordered",
@@ -370,8 +353,8 @@ function App:checkForUpdates()
 					notification:dismiss()
 				end,
 			},
-		}
-	)
+		})
+	end
 end
 
 function App:getPriorSyncInfo(): { host: string?, port: string?, projectName: string?, timestamp: number? }

@@ -216,7 +216,7 @@ function Trigger:managePopup()
 			return
 		end
 
-		self.showDelayThread = task.delay(DELAY, function()
+		self.showDelayThread = task.delay(self.props.delay or DELAY, function()
 			self.props.context.addTip(self.id, {
 				Text = self.props.text,
 				Position = self:getMousePos(),
