@@ -1,7 +1,6 @@
 ---
 source: tests/tests/serve.rs
 expression: "read_response.intern_and_redact(&mut redactions, root_id)"
-
 ---
 instances:
   id-2:
@@ -22,7 +21,8 @@ instances:
       ignoreUnknownInstances: false
     Name: test
     Parent: id-2
-    Properties: {}
+    Properties:
+      NeedsPivotMigration:
+        Bool: false
 messageCursor: 1
 sessionId: id-1
-

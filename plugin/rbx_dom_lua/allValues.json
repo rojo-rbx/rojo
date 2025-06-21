@@ -15,6 +15,12 @@
             0.0
           ]
         },
+        "TestEnumItem": {
+          "EnumItem": {
+            "type": "Material",
+            "value": 256
+          }
+        },
         "TestNumber": {
           "Float64": 1337.0
         },
@@ -170,9 +176,23 @@
     },
     "ty": "ColorSequence"
   },
-  "Content": {
+  "ContentId": {
     "value": {
-      "Content": "rbxassetid://12345"
+      "ContentId": "rbxassetid://12345"
+    },
+    "ty": "ContentId"
+  },
+  "Content_None": {
+    "value": {
+      "Content": "None"
+    },
+    "ty": "Content"
+  },
+  "Content_Uri": {
+    "value": {
+      "Content": {
+        "Uri": "rbxasset://abc/123.rojo"
+      }
     },
     "ty": "Content"
   },
@@ -181,6 +201,15 @@
       "Enum": 1234
     },
     "ty": "Enum"
+  },
+  "EnumItem": {
+    "value": {
+      "EnumItem": {
+        "type": "Material",
+        "value": 256
+      }
+    },
+    "ty": "EnumItem"
   },
   "Faces": {
     "value": {

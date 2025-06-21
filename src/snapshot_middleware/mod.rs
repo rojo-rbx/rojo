@@ -202,6 +202,11 @@ pub enum Middleware {
     ServerScript,
     ClientScript,
     ModuleScript,
+    PluginScript,
+    LegacyClientScript,
+    LegacyServerScript,
+    RunContextServerScript,
+    RunContextClientScript,
     Project,
     Rbxm,
     Rbxmx,
@@ -227,6 +232,19 @@ impl Middleware {
             Self::ServerScript => snapshot_lua(context, vfs, path, name, ScriptType::Server),
             Self::ClientScript => snapshot_lua(context, vfs, path, name, ScriptType::Client),
             Self::ModuleScript => snapshot_lua(context, vfs, path, name, ScriptType::Module),
+            Self::PluginScript => snapshot_lua(context, vfs, path, name, ScriptType::Plugin),
+            Self::LegacyClientScript => {
+                snapshot_lua(context, vfs, path, name, ScriptType::LegacyClient)
+            }
+            Self::LegacyServerScript => {
+                snapshot_lua(context, vfs, path, name, ScriptType::LegacyServer)
+            }
+            Self::RunContextClientScript => {
+                snapshot_lua(context, vfs, path, name, ScriptType::RunContextClient)
+            }
+            Self::RunContextServerScript => {
+                snapshot_lua(context, vfs, path, name, ScriptType::RunContextServer)
+            }
             Self::Project => snapshot_project(context, vfs, path, name),
             Self::Rbxm => snapshot_rbxm(context, vfs, path, name),
             Self::Rbxmx => snapshot_rbxmx(context, vfs, path, name),
@@ -286,6 +304,8 @@ pub fn default_sync_rules() -> &'static [SyncRule] {
             sync_rule!("*.server.luau", ServerScript, ".server.luau"),
             sync_rule!("*.client.lua", ClientScript, ".client.lua"),
             sync_rule!("*.client.luau", ClientScript, ".client.luau"),
+            sync_rule!("*.plugin.lua", PluginScript, ".plugin.lua"),
+            sync_rule!("*.plugin.luau", PluginScript, ".plugin.luau"),
             sync_rule!("*.{lua,luau}", ModuleScript),
             sync_rule!("*.project.json", Project, ".project.json"),
             sync_rule!("*.model.json", JsonModel, ".model.json"),

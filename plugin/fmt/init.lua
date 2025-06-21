@@ -70,7 +70,7 @@ local function debugImpl(buffer, value, extendedForm)
 	elseif valueType == "table" then
 		local valueMeta = getmetatable(value)
 
-		if valueMeta ~= nil and  valueMeta.__fmtDebug ~= nil then
+		if valueMeta ~= nil and valueMeta.__fmtDebug ~= nil then
 			-- This type implement's the metamethod we made up to line up with
 			-- Rust's 'Debug' trait.
 

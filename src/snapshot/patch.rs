@@ -1,8 +1,9 @@
 //! Defines the data structures used for describing instance patches.
 
-use std::collections::HashMap;
-
-use rbx_dom_weak::types::{Ref, Variant};
+use rbx_dom_weak::{
+    types::{Ref, Variant},
+    HashMapExt as _, Ustr, UstrMap,
+};
 use serde::{Deserialize, Serialize};
 
 use super::{InstanceMetadata, InstanceSnapshot};
@@ -41,11 +42,11 @@ pub struct PatchAdd {
 pub struct PatchUpdate {
     pub id: Ref,
     pub changed_name: Option<String>,
-    pub changed_class_name: Option<String>,
+    pub changed_class_name: Option<Ustr>,
 
     /// Contains all changed properties. If a property is assigned to `None`,
     /// then that property has been removed.
-    pub changed_properties: HashMap<String, Option<Variant>>,
+    pub changed_properties: UstrMap<Option<Variant>>,
 
     /// Changed Rojo-specific metadata, if any of it changed.
     pub changed_metadata: Option<InstanceMetadata>,
@@ -88,8 +89,8 @@ pub struct AppliedPatchUpdate {
 
     // TODO: Store previous values in order to detect application conflicts
     pub changed_name: Option<String>,
-    pub changed_class_name: Option<String>,
-    pub changed_properties: HashMap<String, Option<Variant>>,
+    pub changed_class_name: Option<Ustr>,
+    pub changed_properties: UstrMap<Option<Variant>>,
     pub changed_metadata: Option<InstanceMetadata>,
 }
 
@@ -99,7 +100,7 @@ impl AppliedPatchUpdate {
             id,
             changed_name: None,
             changed_class_name: None,
-            changed_properties: HashMap::new(),
+            changed_properties: UstrMap::new(),
             changed_metadata: None,
         }
     }

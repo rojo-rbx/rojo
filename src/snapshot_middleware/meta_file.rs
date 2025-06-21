@@ -1,7 +1,7 @@
-use std::{borrow::Cow, collections::HashMap, path::PathBuf};
+use std::{collections::HashMap, path::PathBuf};
 
 use anyhow::{format_err, Context};
-use rbx_dom_weak::types::Attributes;
+use rbx_dom_weak::{types::Attributes, Ustr, UstrMap};
 use serde::{Deserialize, Serialize};
 
 use crate::{resolution::UnresolvedValue, snapshot::InstanceSnapshot, RojoRef};
@@ -23,7 +23,7 @@ pub struct AdjacentMetadata {
     pub ignore_unknown_instances: Option<bool>,
 
     #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-    pub properties: HashMap<String, UnresolvedValue>,
+    pub properties: UstrMap<UnresolvedValue>,
 
     #[serde(default, skip_serializing_if = "HashMap::is_empty")]
     pub attributes: HashMap<String, UnresolvedValue>,
@@ -117,13 +117,13 @@ pub struct DirectoryMetadata {
     pub ignore_unknown_instances: Option<bool>,
 
     #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-    pub properties: HashMap<String, UnresolvedValue>,
+    pub properties: UstrMap<UnresolvedValue>,
 
     #[serde(default, skip_serializing_if = "HashMap::is_empty")]
     pub attributes: HashMap<String, UnresolvedValue>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub class_name: Option<String>,
+    pub class_name: Option<Ustr>,
 
     #[serde(skip)]
     pub path: PathBuf,
@@ -161,7 +161,7 @@ impl DirectoryMetadata {
                 ));
             }
 
-            snapshot.class_name = Cow::Owned(class_name);
+            snapshot.class_name = class_name;
         }
 
         Ok(())

@@ -1,6 +1,8 @@
 local CollectionService = game:GetService("CollectionService")
 local ScriptEditorService = game:GetService("ScriptEditorService")
 
+local Error = require(script.Parent.Error)
+
 --- A list of `Enum.Material` values that are used for Terrain.MaterialColors
 local TERRAIN_MATERIAL_COLORS = {
 	Enum.Material.Grass,
@@ -51,6 +53,10 @@ return {
 				return true, instance:GetAttributes()
 			end,
 			write = function(instance, _, value)
+				if typeof(value) ~= "table" then
+					return false, Error.new(Error.Kind.CannotParseBinaryString)
+				end
+
 				local existing = instance:GetAttributes()
 				local didAllWritesSucceed = true
 
@@ -160,9 +166,14 @@ return {
 				return true, colors
 			end,
 			write = function(instance: Terrain, _, value: { [Enum.Material]: Color3 })
+				if typeof(value) ~= "table" then
+					return false, Error.new(Error.Kind.CannotParseBinaryString)
+				end
+
 				for material, color in value do
 					instance:SetMaterialColor(material, color)
 				end
+
 				return true
 			end,
 		},

@@ -2,6 +2,7 @@ use std::path::Path;
 
 use anyhow::Context;
 use memofs::{IoResultExt, Vfs};
+use rbx_dom_weak::ustr;
 
 use crate::{
     lua_ast::{Expression, Statement},
@@ -23,14 +24,12 @@ pub fn snapshot_json(
 
     let as_lua = json_to_lua(value).to_string();
 
-    let properties = [("Source".to_owned(), as_lua.into())];
-
     let meta_path = path.with_file_name(format!("{}.meta.json", name));
 
     let mut snapshot = InstanceSnapshot::new()
         .name(name)
         .class_name("ModuleScript")
-        .properties(properties)
+        .property(ustr("Source"), as_lua)
         .metadata(
             InstanceMetadata::new()
                 .instigating_source(path)
@@ -98,11 +97,11 @@ mod test {
         )
         .unwrap();
 
-        let mut vfs = Vfs::new(imfs.clone());
+        let vfs = Vfs::new(imfs.clone());
 
         let instance_snapshot = snapshot_json(
             &InstanceContext::default(),
-            &mut vfs,
+            &vfs,
             Path::new("/foo.json"),
             "foo",
         )

@@ -8,7 +8,7 @@ use clap::Parser;
 use fs_err::File;
 use memofs::Vfs;
 use rayon::prelude::*;
-use rbx_dom_weak::types::Ref;
+use rbx_dom_weak::{types::Ref, Ustr};
 use serde::Serialize;
 use tokio::runtime::Runtime;
 
@@ -26,7 +26,7 @@ const PATH_STRIP_FAILED_ERR: &str = "Failed to create relative paths for project
 #[serde(rename_all = "camelCase")]
 struct SourcemapNode<'a> {
     name: &'a str,
-    class_name: &'a str,
+    class_name: Ustr,
 
     #[serde(skip_serializing_if = "Vec::is_empty")]
     file_paths: Vec<PathBuf>,
@@ -113,7 +113,7 @@ fn filter_nothing(_instance: &InstanceWithMeta) -> bool {
 
 fn filter_non_scripts(instance: &InstanceWithMeta) -> bool {
     matches!(
-        instance.class_name(),
+        instance.class_name().as_str(),
         "Script" | "LocalScript" | "ModuleScript"
     )
 }

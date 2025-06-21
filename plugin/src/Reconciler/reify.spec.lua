@@ -1,5 +1,6 @@
 return function()
 	local reify = require(script.Parent.reify)
+	local reifyInstance, applyDeferredRefs = reify.reifyInstance, reify.applyDeferredRefs
 
 	local PatchSet = require(script.Parent.Parent.PatchSet)
 	local InstanceMap = require(script.Parent.Parent.InstanceMap)
@@ -20,7 +21,11 @@ return function()
 
 	it("should throw when given a bogus ID", function()
 		expect(function()
-			reify(InstanceMap.new(), {}, "Hi, mom!", game)
+			local deferredRefs = {}
+			local instanceMap = InstanceMap.new()
+			local unappliedPatch = reifyInstance(deferredRefs, instanceMap, {}, "Hi, mom!", game)
+
+			applyDeferredRefs(instanceMap, deferredRefs, unappliedPatch)
 		end).to.throw()
 	end)
 
@@ -34,8 +39,11 @@ return function()
 			},
 		}
 
+		local deferredRefs = {}
 		local instanceMap = InstanceMap.new()
-		local unappliedPatch = reify(instanceMap, virtualInstances, "ROOT", nil)
+		local unappliedPatch = reifyInstance(deferredRefs, instanceMap, virtualInstances, "ROOT", nil)
+
+		applyDeferredRefs(instanceMap, deferredRefs, unappliedPatch)
 
 		assert(instanceMap:size() == 0, "expected instanceMap to be empty")
 
@@ -60,8 +68,11 @@ return function()
 			},
 		}
 
+		local deferredRefs = {}
 		local instanceMap = InstanceMap.new()
-		local unappliedPatch = reify(instanceMap, virtualInstances, "ROOT")
+		local unappliedPatch = reifyInstance(deferredRefs, instanceMap, virtualInstances, "ROOT")
+
+		applyDeferredRefs(instanceMap, deferredRefs, unappliedPatch)
 
 		assert(PatchSet.isEmpty(unappliedPatch), "expected remaining patch to be empty")
 
@@ -90,8 +101,11 @@ return function()
 			},
 		}
 
+		local deferredRefs = {}
 		local instanceMap = InstanceMap.new()
-		local unappliedPatch = reify(instanceMap, virtualInstances, "ROOT")
+		local unappliedPatch = reifyInstance(deferredRefs, instanceMap, virtualInstances, "ROOT")
+
+		applyDeferredRefs(instanceMap, deferredRefs, unappliedPatch)
 
 		assert(PatchSet.isEmpty(unappliedPatch), "expected remaining patch to be empty")
 
@@ -122,8 +136,11 @@ return function()
 			},
 		}
 
+		local deferredRefs = {}
 		local instanceMap = InstanceMap.new()
-		local unappliedPatch = reify(instanceMap, virtualInstances, "ROOT")
+		local unappliedPatch = reifyInstance(deferredRefs, instanceMap, virtualInstances, "ROOT")
+
+		applyDeferredRefs(instanceMap, deferredRefs, unappliedPatch)
 
 		expect(size(unappliedPatch.added)).to.equal(1)
 		expect(unappliedPatch.added["CHILD"]).to.equal(virtualInstances["CHILD"])
@@ -153,8 +170,11 @@ return function()
 			},
 		}
 
+		local deferredRefs = {}
 		local instanceMap = InstanceMap.new()
-		local unappliedPatch = reify(instanceMap, virtualInstances, "ROOT")
+		local unappliedPatch = reifyInstance(deferredRefs, instanceMap, virtualInstances, "ROOT")
+
+		applyDeferredRefs(instanceMap, deferredRefs, unappliedPatch)
 
 		local instance = instanceMap.fromIds["ROOT"]
 		expect(instance.ClassName).to.equal("StringValue")
@@ -196,8 +216,11 @@ return function()
 			},
 		}
 
+		local deferredRefs = {}
 		local instanceMap = InstanceMap.new()
-		local unappliedPatch = reify(instanceMap, virtualInstances, "ROOT")
+		local unappliedPatch = reifyInstance(deferredRefs, instanceMap, virtualInstances, "ROOT")
+
+		applyDeferredRefs(instanceMap, deferredRefs, unappliedPatch)
 
 		assert(PatchSet.isEmpty(unappliedPatch), "expected remaining patch to be empty")
 
@@ -223,13 +246,16 @@ return function()
 			},
 		}
 
+		local deferredRefs = {}
 		local instanceMap = InstanceMap.new()
 
 		local existing = Instance.new("Folder")
 		existing.Name = "Existing"
 		instanceMap:insert("EXISTING", existing)
 
-		local unappliedPatch = reify(instanceMap, virtualInstances, "ROOT")
+		local unappliedPatch = reifyInstance(deferredRefs, instanceMap, virtualInstances, "ROOT")
+
+		applyDeferredRefs(instanceMap, deferredRefs, unappliedPatch)
 
 		assert(PatchSet.isEmpty(unappliedPatch), "expected remaining patch to be empty")
 
@@ -268,8 +294,11 @@ return function()
 			},
 		}
 
+		local deferredRefs = {}
 		local instanceMap = InstanceMap.new()
-		local unappliedPatch = reify(instanceMap, virtualInstances, "ROOT")
+		local unappliedPatch = reifyInstance(deferredRefs, instanceMap, virtualInstances, "ROOT")
+
+		applyDeferredRefs(instanceMap, deferredRefs, unappliedPatch)
 
 		assert(PatchSet.isEmpty(unappliedPatch), "expected remaining patch to be empty")
 
@@ -307,8 +336,11 @@ return function()
 			},
 		}
 
+		local deferredRefs = {}
 		local instanceMap = InstanceMap.new()
-		local unappliedPatch = reify(instanceMap, virtualInstances, "ROOT")
+		local unappliedPatch = reifyInstance(deferredRefs, instanceMap, virtualInstances, "ROOT")
+
+		applyDeferredRefs(instanceMap, deferredRefs, unappliedPatch)
 
 		assert(PatchSet.isEmpty(unappliedPatch), "expected remaining patch to be empty")
 
@@ -332,8 +364,11 @@ return function()
 			},
 		}
 
+		local deferredRefs = {}
 		local instanceMap = InstanceMap.new()
-		local unappliedPatch = reify(instanceMap, virtualInstances, "ROOT")
+		local unappliedPatch = reifyInstance(deferredRefs, instanceMap, virtualInstances, "ROOT")
+
+		applyDeferredRefs(instanceMap, deferredRefs, unappliedPatch)
 
 		assert(not PatchSet.hasRemoves(unappliedPatch), "expected no removes")
 		assert(not PatchSet.hasAdditions(unappliedPatch), "expected no additions")

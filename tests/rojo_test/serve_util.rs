@@ -28,7 +28,7 @@ use crate::rojo_test::io_util::{
 pub fn run_serve_test(test_name: &str, callback: impl FnOnce(TestServeSession, RedactionMap)) {
     let _ = env_logger::try_init();
 
-    let mut redactions = RedactionMap::new();
+    let mut redactions = RedactionMap::default();
 
     let mut session = TestServeSession::new(test_name);
     let info = session.wait_to_come_online();

@@ -22,6 +22,7 @@ trait FmtLua {
     }
 }
 
+#[allow(dead_code)]
 struct DisplayLua<T>(T);
 
 impl<T> fmt::Display for DisplayLua<T>

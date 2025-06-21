@@ -40,7 +40,9 @@ instances:
       ignoreUnknownInstances: true
     Name: Workspace
     Parent: id-2
-    Properties: {}
+    Properties:
+      NeedsPivotMigration:
+        Bool: false
   id-4:
     Children: []
     ClassName: ObjectValue
@@ -104,6 +106,8 @@ instances:
         Attributes:
           Rojo_Target_PrimaryPart:
             String: model target
+      NeedsPivotMigration:
+        Bool: false
       PrimaryPart:
         Ref: id-7
   id-9:
@@ -118,4 +122,3 @@ instances:
     Properties: {}
 messageCursor: 0
 sessionId: id-1
-

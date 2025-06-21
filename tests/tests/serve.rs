@@ -502,16 +502,91 @@ fn ref_properties_patch_update() {
             read_response.intern_and_redact(&mut redactions, root_id)
         );
 
-        let project_path = session.path().join("default.project.json");
-        let mut project_content = fs::read(&project_path).unwrap();
-        // Adding a newline to force the change processor to pick up a change.
-        project_content.push(b'\n');
+        let target_path = session.path().join("ModelTarget.model.json");
 
-        fs::write(project_path, project_content).unwrap();
+        // Inserting scale just to force the change processor to run
+        fs::write(
+            target_path,
+            r#"{
+            "id": "model target",
+            "className": "Folder",
+            "children": [
+                {
+                    "name": "ModelPointer",
+                    "className": "Model",
+                    "attributes": {
+                        "Rojo_Target_PrimaryPart": "model target"
+                    },
+                    "properties": {
+                        "Scale": 1
+                    }
+                }
+            ]
+        }"#,
+        )
+        .unwrap();
+
+        let subscribe_response = session.get_api_subscribe(0).unwrap();
+        assert_yaml_snapshot!(
+            "ref_properties_patch_update_subscribe",
+            subscribe_response.intern_and_redact(&mut redactions, ())
+        );
 
         let read_response = session.get_api_read(root_id).unwrap();
         assert_yaml_snapshot!(
             "ref_properties_patch_update_all-2",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+    });
+}
+
+#[test]
+fn model_pivot_migration() {
+    run_serve_test("pivot_migration", |session, mut redactions| {
+        let info = session.get_api_rojo().unwrap();
+        let root_id = info.root_instance_id;
+
+        assert_yaml_snapshot!("pivot_migration_info", redactions.redacted_yaml(info));
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "pivot_migration_all",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+
+        let project_path = session.path().join("default.project.json");
+
+        fs::write(
+            project_path,
+            r#"{
+            "name": "pivot_migration",
+            "tree": {
+                "$className": "DataModel",
+                "Workspace": {
+                    "Model": {
+                        "$className": "Model"
+                    },
+                    "Tool": {
+                        "$path": "Tool.model.json"
+                    },
+                    "Actor": {
+                        "$className": "Actor"
+                    }
+                }
+            }
+        }"#,
+        )
+        .unwrap();
+
+        let subscribe_response = session.get_api_subscribe(0).unwrap();
+        assert_yaml_snapshot!(
+            "model_pivot_migration_all",
+            subscribe_response.intern_and_redact(&mut redactions, ())
+        );
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "model_pivot_migration_all-2",
             read_response.intern_and_redact(&mut redactions, root_id)
         );
     });

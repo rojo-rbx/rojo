@@ -1,0 +1,14 @@
+{
+  "name": "pivot_migration",
+  "tree": {
+    "$className": "DataModel",
+    "Workspace": {
+      "Model": {
+        "$className": "Model"
+      },
+      "Tool": {
+        "$path": "Tool.model.json"
+      }
+    }
+  }
+}

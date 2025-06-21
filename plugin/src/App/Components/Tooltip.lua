@@ -23,11 +23,8 @@ local TooltipContext = Roact.createContext({})
 
 local function Popup(props)
 	return Theme.with(function(theme)
-		local textXSpace = math.min(props.parentSize.X, 120)
-		local textBounds = Vector2.new(
-			textXSpace,
-			getTextBoundsAsync(props.Text, theme.Font.Main, theme.TextSize.Medium, textXSpace).Y
-		)
+		local textXSpace = math.min(props.parentSize.X, 250) - TEXT_PADDING.X
+		local textBounds = getTextBoundsAsync(props.Text, theme.Font.Main, theme.TextSize.Medium, textXSpace)
 		local contentSize = textBounds + TEXT_PADDING + (Vector2.one * 2)
 
 		local trigger = props.Trigger:getValue()
@@ -39,7 +36,7 @@ local function Popup(props)
 		-- If there's not enough space below, and there's more space above, then show the tooltip above the trigger
 		local displayAbove = spaceBelow < contentSize.Y and spaceAbove > spaceBelow
 
-		local X = math.clamp(props.Position.X - X_OFFSET, 0, props.parentSize.X - contentSize.X)
+		local X = math.clamp(props.Position.X - X_OFFSET, 0, math.max(props.parentSize.X - contentSize.X, 1))
 		local Y = 0
 
 		if displayAbove then
@@ -219,7 +216,7 @@ function Trigger:managePopup()
 			return
 		end
 
-		self.showDelayThread = task.delay(DELAY, function()
+		self.showDelayThread = task.delay(self.props.delay or DELAY, function()
 			self.props.context.addTip(self.id, {
 				Text = self.props.text,
 				Position = self:getMousePos(),
