@@ -8,6 +8,7 @@ local Theme = require(Plugin.App.Theme)
 local getTextBoundsAsync = require(Plugin.App.getTextBoundsAsync)
 
 local TextButton = require(Plugin.App.Components.TextButton)
+local Header = require(Plugin.App.Components.Header)
 local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
 local ScrollingFrame = require(Plugin.App.Components.ScrollingFrame)
 local Tooltip = require(Plugin.App.Components.Tooltip)
@@ -38,6 +39,7 @@ function Error:render()
 				return UDim2.new(1, 0, 0, math.min(outerSize.Y, maximumSize.Y))
 			end),
 			transparency = self.props.transparency,
+			layoutOrder = self.props.layoutOrder,
 		}, {
 			ScrollingFrame = e(ScrollingFrame, {
 				size = UDim2.new(1, 0, 1, 0),
@@ -108,16 +110,21 @@ function ErrorPage:render()
 			self.setContainerSize(object.AbsoluteSize)
 		end,
 	}, {
-		Error = e(Error, {
-			errorMessage = self.state.errorMessage,
-			containerSize = self.containerSize,
+		Header = e(Header, {
 			transparency = self.props.transparency,
 			layoutOrder = 1,
 		}),
 
+		Error = e(Error, {
+			errorMessage = self.state.errorMessage,
+			containerSize = self.containerSize,
+			transparency = self.props.transparency,
+			layoutOrder = 2,
+		}),
+
 		Buttons = e("Frame", {
 			Size = UDim2.new(1, 0, 0, 35),
-			LayoutOrder = 2,
+			LayoutOrder = 3,
 			BackgroundTransparency = 1,
 		}, {
 			Close = e(TextButton, {
