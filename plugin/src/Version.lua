@@ -1,6 +1,13 @@
 local Packages = script.Parent.Parent.Packages
 local Http = require(Packages.Http)
 local Promise = require(Packages.Promise)
+local Log = require(Packages.Log)
+
+type LatestReleaseInfo = {
+	version: { number },
+	prerelease: boolean,
+	publishedUnixTimestamp: number,
+}
 
 local function compare(a, b)
 	if a > b then
@@ -88,14 +95,26 @@ function Version.display(version)
 	return output
 end
 
+--[[
+	The GitHub API rate limit for unauthenticated requests is rather low,
+	and we don't release often enough to warrant checking it more than once a day.
+--]]
+Version._cachedLatestCompatible = nil :: {
+	value: LatestReleaseInfo?,
+	timestamp: number,
+}?
+
 function Version.retrieveLatestCompatible(options: {
 	version: { number },
 	includePrereleases: boolean?,
-}): {
-	version: { number },
-	prerelease: boolean,
-	publishedUnixTimestamp: number,
-}?
+}): LatestReleaseInfo?
+	if Version._cachedLatestCompatible and os.clock() - Version._cachedLatestCompatible.timestamp < 60 * 60 * 24 then
+		Log.debug("Using cached latest compatible version")
+		return Version._cachedLatestCompatible.value
+	end
+
+	Log.debug("Retrieving latest compatible version from GitHub")
+
 	local success, releases = Http.get("https://api.github.com/repos/rojo-rbx/rojo/releases?per_page=10")
 		:andThen(function(response)
 			if response.code >= 400 then
@@ -114,7 +133,7 @@ function Version.retrieveLatestCompatible(options: {
 	end
 
 	-- Iterate through releases, looking for the latest compatible version
-	local latestCompatible = nil
+	local latestCompatible: LatestReleaseInfo? = nil
 	for _, release in releases do
 		-- Skip prereleases if they are not requested
 		if (not options.includePrereleases) and release.prerelease then
@@ -142,8 +161,20 @@ function Version.retrieveLatestCompatible(options: {
 
 	-- Don't return anything if the latest found is not newer than the current version
 	if latestCompatible == nil or Version.compare(latestCompatible.version, options.version) <= 0 then
+		-- Cache as nil so we don't try again for a day
+		Version._cachedLatestCompatible = {
+			value = nil,
+			timestamp = os.clock(),
+		}
+
 		return nil
 	end
+
+	-- Cache the latest compatible version
+	Version._cachedLatestCompatible = {
+		value = latestCompatible,
+		timestamp = os.clock(),
+	}
 
 	return latestCompatible
 end
