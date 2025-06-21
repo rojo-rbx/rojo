@@ -1,7 +1,14 @@
-local Packages = script.Parent.Parent.Packages
+local Rojo = script:FindFirstAncestor("Rojo")
+local Plugin = Rojo.Plugin
+local Packages = Rojo.Packages
+
 local Http = require(Packages.Http)
 local Promise = require(Packages.Promise)
 local Log = require(Packages.Log)
+
+local Config = require(Plugin.Config)
+local Settings = require(Plugin.Settings)
+local timeUtil = require(Plugin.timeUtil)
 
 type LatestReleaseInfo = {
 	version: { number },
@@ -177,6 +184,27 @@ function Version.retrieveLatestCompatible(options: {
 	}
 
 	return latestCompatible
+end
+
+function Version.getUpdateMessage(): string?
+	if not Settings:get("checkForUpdates") then
+		return
+	end
+
+	local isLocalInstall = string.find(debug.traceback(), "\n[^\n]-user_.-$") ~= nil
+	local latestCompatibleVersion = Version.retrieveLatestCompatible({
+		version = Config.version,
+		includePrereleases = isLocalInstall and Settings:get("checkForPrereleases"),
+	})
+	if not latestCompatibleVersion then
+		return
+	end
+
+	return string.format(
+		"A newer compatible version of Rojo, %s, was published %s! Go to the Rojo releases page to learn more.",
+		Version.display(latestCompatibleVersion.version),
+		timeUtil.elapsedToText(DateTime.now().UnixTimestamp - latestCompatibleVersion.publishedUnixTimestamp)
+	)
 end
 
 return Version
