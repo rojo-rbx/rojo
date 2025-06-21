@@ -386,7 +386,8 @@ function App:releaseSyncLock()
 end
 
 function App:isAutoConnectPlaytestServerAvailable()
-	return RunService:IsRunMode()
+	return RunService:IsRunning()
+		and RunService:IsStudio()
 		and RunService:IsServer()
 		and Settings:get("autoConnectPlaytestServer")
 		and workspace:GetAttribute("__Rojo_ConnectionUrl")
