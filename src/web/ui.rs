@@ -271,7 +271,7 @@ impl UiService {
                     </style>
                 </head>
 
-                <body>
+                <body style="background-color:#1b1b1d;">
                     { body }
                 </body>
             </html>
