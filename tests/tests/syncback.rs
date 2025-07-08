@@ -37,6 +37,8 @@ syncback_tests! {
     duplicate_rojo_id => ["container.model.json"],
     // Ensures that the `ignorePaths` setting works for additions
     ignore_paths_adding => ["src/int_value.model.json", "src/subfolder/string_value.txt"],
+    // Ensures that the `ignorePaths` setting works for `init` files
+    ignore_paths_init => ["src/non-init.luau", "src/init-file/init.luau"],
     // Ensures that the `ignorePaths` setting works for removals
     ignore_paths_removing => ["src/Message.rbxm"],
     // Ensures that `ignoreTrees` works for additions
@@ -56,11 +58,12 @@ syncback_tests! {
     project_reserialize => ["attribute_mismatch.luau", "property_mismatch.project.json"],
     // Confirms that Instances that cannot serialize as directories serialize as rbxms
     rbxm_fallback => ["src/ChildWithDuplicates.rbxm"],
-    // Ensures that ref properties are linked properly on the file system.
+    // Ensures that ref properties are linked properly on the file system
     ref_properties => ["src/pointer.model.json", "src/target.model.json"],
     // Ensures that ref properties are linked when no attributes are manually
-    // set in the DataModel.
+    // set in the DataModel
     ref_properties_blank => ["src/pointer.model.json", "src/target.meta.json", "src/target.txt"],
+    // Ensures that the old middleware is respected during syncback
     respect_old_middleware => ["default.project.json", "src/model_json.model.json", "src/rbxm.rbxm", "src/rbxmx.rbxmx"],
     // Ensures that StringValues inside project files are written to the
     // project file, but only if they don't have `$path` set

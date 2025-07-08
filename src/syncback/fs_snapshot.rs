@@ -53,6 +53,22 @@ impl FsSnapshot {
         self.removed_dirs.extend(other.removed_dirs);
     }
 
+    /// Merges two `FsSnapshot`s together, with a filter applied to the paths.
+    #[inline]
+    pub fn merge_with_filter<F>(&mut self, other: Self, mut predicate: F)
+    where
+        F: FnMut(&Path) -> bool,
+    {
+        self.added_files
+            .extend(other.added_files.into_iter().filter(|(k, _)| predicate(k)));
+        self.added_dirs
+            .extend(other.added_dirs.into_iter().filter(|p| predicate(p)));
+        self.removed_files
+            .extend(other.removed_files.into_iter().filter(|p| predicate(p)));
+        self.removed_dirs
+            .extend(other.removed_dirs.into_iter().filter(|p| predicate(p)));
+    }
+
     /// Adds the provided path as a file with the given contents.
     pub fn add_file<P: AsRef<Path>>(&mut self, path: P, data: Vec<u8>) {
         self.added_files.insert(path.as_ref().to_path_buf(), data);

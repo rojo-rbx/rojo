@@ -279,7 +279,9 @@ pub fn syncback_loop(
 
         // TODO provide replacement snapshots for e.g. two way sync
 
-        fs_snapshot.merge(syncback.fs_snapshot);
+        fs_snapshot.merge_with_filter(syncback.fs_snapshot, |path| {
+            is_valid_path(&ignore_patterns, project_path, path)
+        });
 
         snapshots.extend(syncback.children);
     }
