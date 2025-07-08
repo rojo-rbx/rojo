@@ -1,0 +1,9 @@
+---
+source: tests/rojo_test/syncback_util.rs
+expression: "String::from_utf8_lossy(&output.stderr)"
+---
+Writing files/directories:
+src/dir_with_meta/init.meta.json
+src/model_json.model.json
+src/project_json.project.json
+src/dir_with_meta

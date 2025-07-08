@@ -1,4 +1,4 @@
-use std::{ffi::OsStr, fs};
+use std::ffi::OsStr;
 
 use insta::assert_snapshot;
 
@@ -13,10 +13,10 @@ macro_rules! syncback_tests {
                     let snapshot_name = format!(concat!(stringify!($test_name), "-{}"), name);
                     let new = path.join::<&str>(name);
                     if let Some("rbxm") = new.extension().and_then(OsStr::to_str) {
-                        let content = fs::read(new).unwrap();
+                        let content = fs_err::read(new).unwrap();
                         snapshot_rbxm(&snapshot_name, content, name);
                     } else {
-                        let content = fs::read_to_string(new).unwrap();
+                        let content = fs_err::read_to_string(new).unwrap();
                         assert_snapshot!(snapshot_name, content, name);
                     }
                 }
@@ -32,6 +32,8 @@ syncback_tests! {
     // Ensures that there's only one copy written to disk if navigating a
     // project file might yield two copies
     child_but_not => ["OnlyOneCopy/child_of_one.luau", "ReplicatedStorage/child_replicated_storage.luau"],
+    // Ensures that syncback works with CSVs
+    csv => ["src/csv_init/init.csv", "src/csv.csv"],
     // Ensures that if a RojoId is duplicated somewhere in the project, it's
     // rewritten rather than synced back as a conflict
     duplicate_rojo_id => ["container.model.json"],
@@ -45,6 +47,8 @@ syncback_tests! {
     ignore_trees_adding => [],
     // Ensures that `ignoreTrees` works for removals
     ignore_trees_removing => [],
+    // Ensures that all of the JSON middlewares are handled as expected
+    json_middlewares => ["src/dir_with_meta/init.meta.json", "src/model_json.model.json", "src/project_json.project.json"],
     // Ensures projects that refer to other projects work as expected
     nested_projects => ["nested.project.json", "string_value.txt"],
     // Ensures files that are ignored by nested projects are picked up if
