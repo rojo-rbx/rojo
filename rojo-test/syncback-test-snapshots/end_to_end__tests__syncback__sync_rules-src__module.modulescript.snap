@@ -1,0 +1,6 @@
+---
+source: tests/tests/syncback.rs
+expression: src/module.modulescript
+---
+-- This should be a in the file 'module.modulescript'. It should be updated to have a second line.
+-- This is the second line in 'module.modulescript'.

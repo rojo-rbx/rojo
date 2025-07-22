@@ -72,6 +72,9 @@ syncback_tests! {
     // Ensures that StringValues inside project files are written to the
     // project file, but only if they don't have `$path` set
     string_value_project => ["default.project.json"],
+    // Ensures that sync rules are respected. This is really just a test to
+    // ensure it uses the old path when possible, but we want the coverage.
+    sync_rules => ["src/module.modulescript", "src/text.text"],
     // Ensures that the `syncUnscriptable` setting works
     unscriptable_properties => ["default.project.json"],
 }
