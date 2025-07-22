@@ -1,9 +1,10 @@
 # Rojo Changelog
 
 ## Unreleased
-
+* Fixed `Auto Connect Playtest Server` no longer functioning due to Roblox change ([#1066])
 * Added an update indicator to the version header when a new version of the plugin is available. ([#1069])
 
+[#1049]: https://github.com/rojo-rbx/rojo/pull/1066
 [#1069]: https://github.com/rojo-rbx/rojo/pull/1069
 
 ## 7.5.1 - April 25th, 2025
