@@ -92,7 +92,7 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            output
+            target
           key: ${{ matrix.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Setup Aftman
@@ -102,10 +102,6 @@ jobs:
 
       - name: Build Release
         run: cargo build --release --locked --verbose --target ${{ matrix.target }}
-        env:
-          # Build into a known directory so we can find our build artifact more
-          # easily.
-          CARGO_TARGET_DIR: output
 
       - name: Save Rust Cache
         uses: actions/cache/save@v4
@@ -113,7 +109,7 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            output
+            target
           key: ${{ matrix.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Generate Artifact Name
@@ -131,11 +127,11 @@ jobs:
           mkdir staging
 
           if [ "${{ matrix.host }}" = "windows" ]; then
-            cp "output/${{ matrix.target }}/release/$BIN.exe" staging/
+            cp "target/${{ matrix.target }}/release/$BIN.exe" staging/
             cd staging
             7z a ../$ARTIFACT_NAME *
           else
-            cp "output/${{ matrix.target }}/release/$BIN" staging/
+            cp "target/${{ matrix.target }}/release/$BIN" staging/
             cd staging
             zip ../$ARTIFACT_NAME *
           fi
