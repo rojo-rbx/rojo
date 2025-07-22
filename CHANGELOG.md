@@ -1,5 +1,10 @@
 # Rojo Changelog
 
+## Unreleased
+* Fixed `Auto Connect Playtest Server` no longer functioning due to Roblox change ([#1049])
+
+[#1049]: https://github.com/rojo-rbx/rojo/issues/1049
+
 ## 7.5.1 - April 25th, 2025
 * Fixed output spam related to `Instance.Capabilities` in the plugin
 
