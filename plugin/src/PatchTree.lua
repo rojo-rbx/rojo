@@ -234,6 +234,9 @@ function PatchTree.build(patch, instanceMap, changeListHeaders)
 
 			local changeIndex = 0
 			local function addProp(prop: string, current: any?, incoming: any?, metadata: any?)
+				if current == nil and incoming == nil then
+					return
+				end
 				changeIndex += 1
 				changeList[changeIndex] = { prop, current, incoming, metadata }
 			end
