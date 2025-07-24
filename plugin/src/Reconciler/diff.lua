@@ -25,6 +25,10 @@ local function trueEquals(a, b): boolean
 		return true
 	end
 
+	if a == nil and b == nil then
+		return false
+	end
+
 	local typeA, typeB = typeof(a), typeof(b)
 
 	-- For tables, try recursive deep equality
