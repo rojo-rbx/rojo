@@ -25,6 +25,14 @@ local function trueEquals(a, b): boolean
 		return true
 	end
 
+	-- Treat nil and { Ref = "000...0" } as equal
+	if
+		(a == nil and type(b) == "table" and b.Ref == "00000000000000000000000000000000")
+		or (b == nil and type(a) == "table" and a.Ref == "00000000000000000000000000000000")
+	then
+		return true
+	end
+
 	local typeA, typeB = typeof(a), typeof(b)
 
 	-- For tables, try recursive deep equality
@@ -151,7 +159,24 @@ local function diff(instanceMap, virtualInstances, rootId)
 
 			if getProperySuccess then
 				local existingValue = existingValueOrErr
-				local decodeSuccess, decodedValue = decodeValue(virtualValue, instanceMap)
+				local decodeSuccess, decodedValue
+
+				-- If `virtualValue` is a ref then instead of decoding it to an instance,
+				-- we change `existingValue` to be a ref. This is because `virtualValue`
+				-- may point to an Instance which doesn't exist yet and therefore
+				-- decoding it may throw an error.
+				if next(virtualValue) == "Ref" then
+					decodeSuccess, decodedValue = true, virtualValue
+
+					if existingValue and typeof(existingValue) == "Instance" then
+						local existingValueRef = instanceMap.fromInstances[existingValue]
+						if existingValueRef then
+							existingValue = { Ref = existingValueRef }
+						end
+					end
+				else
+					decodeSuccess, decodedValue = decodeValue(virtualValue, instanceMap)
+				end
 
 				if decodeSuccess then
 					if not trueEquals(existingValue, decodedValue) then

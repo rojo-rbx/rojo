@@ -1,6 +1,20 @@
 # Rojo Changelog
 
-## Unreleased Changes
+## Unreleased
+* Fixed nil -> nil properties showing up as failing to sync in plugin's patch visualizer ([#1081])
+* Changed the background of the server's in-browser UI to be gray instead of white ([#1080]) 
+* Fixed `Auto Connect Playtest Server` no longer functioning due to Roblox change ([#1066])
+* Added an update indicator to the version header when a new version of the plugin is available. ([#1069])
+
+[#1081]: https://github.com/rojo-rbx/rojo/pull/1081
+[#1080]: https://github.com/rojo-rbx/rojo/pull/1080
+[#1049]: https://github.com/rojo-rbx/rojo/pull/1066
+[#1069]: https://github.com/rojo-rbx/rojo/pull/1069
+
+## 7.5.1 - April 25th, 2025
+* Fixed output spam related to `Instance.Capabilities` in the plugin
+
+## 7.5.0 - April 25th, 2025
 * Fixed an edge case that caused model pivots to not be built correctly in some cases ([#1027])
 * Add `blockedPlaceIds` project config field to allow blocking place ids from being live synced ([#1021])
 * Adds support for `.plugin.lua(u)` files - this applies the `Plugin` RunContext. ([#1008])

@@ -7,26 +7,6 @@ local PatchSet = require(script.Parent.Parent.PatchSet)
 local setProperty = require(script.Parent.setProperty)
 local decodeValue = require(script.Parent.decodeValue)
 
-local reifyInner, applyDeferredRefs
-
-local function reify(instanceMap, virtualInstances, rootId, parentInstance)
-	-- Create an empty patch that will be populated with any parts of this reify
-	-- that could not happen, like instances that couldn't be created and
-	-- properties that could not be assigned.
-	local unappliedPatch = PatchSet.newEmpty()
-
-	-- Contains a list of all of the ref properties that we'll need to assign
-	-- after all instances are created. We apply refs in a second pass, after
-	-- we create as many instances as we can, so that we ensure that referents
-	-- can be mapped to instances correctly.
-	local deferredRefs = {}
-
-	reifyInner(instanceMap, virtualInstances, rootId, parentInstance, unappliedPatch, deferredRefs)
-	applyDeferredRefs(instanceMap, deferredRefs, unappliedPatch)
-
-	return unappliedPatch
-end
-
 --[[
 	Add the given ID and all of its descendants in virtualInstances to the given
 	PatchSet, marked for addition.
@@ -40,10 +20,21 @@ local function addAllToPatch(patchSet, virtualInstances, id)
 	end
 end
 
+function reifyInstance(deferredRefs, instanceMap, virtualInstances, rootId, parentInstance)
+	-- Create an empty patch that will be populated with any parts of this reify
+	-- that could not happen, like instances that couldn't be created and
+	-- properties that could not be assigned.
+	local unappliedPatch = PatchSet.newEmpty()
+
+	reifyInstanceInner(unappliedPatch, deferredRefs, instanceMap, virtualInstances, rootId, parentInstance)
+
+	return unappliedPatch
+end
+
 --[[
 	Inner function that defines the core routine.
 ]]
-function reifyInner(instanceMap, virtualInstances, id, parentInstance, unappliedPatch, deferredRefs)
+function reifyInstanceInner(unappliedPatch, deferredRefs, instanceMap, virtualInstances, id, parentInstance)
 	local virtualInstance = virtualInstances[id]
 
 	if virtualInstance == nil then
@@ -102,7 +93,7 @@ function reifyInner(instanceMap, virtualInstances, id, parentInstance, unapplied
 	end
 
 	for _, childId in ipairs(virtualInstance.Children) do
-		reifyInner(instanceMap, virtualInstances, childId, instance, unappliedPatch, deferredRefs)
+		reifyInstanceInner(unappliedPatch, deferredRefs, instanceMap, virtualInstances, childId, instance)
 	end
 
 	instance.Parent = parentInstance
@@ -143,6 +134,7 @@ function applyDeferredRefs(instanceMap, deferredRefs, unappliedPatch)
 		end
 
 		local targetInstance = instanceMap.fromIds[refId]
+
 		if targetInstance == nil then
 			markFailed(entry.id, entry.propertyName, entry.virtualValue)
 			continue
@@ -155,4 +147,7 @@ function applyDeferredRefs(instanceMap, deferredRefs, unappliedPatch)
 	end
 end
 
-return reify
+return {
+	reifyInstance = reifyInstance,
+	applyDeferredRefs = applyDeferredRefs,
+}

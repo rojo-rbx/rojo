@@ -14,11 +14,17 @@ local invariant = require(script.Parent.Parent.invariant)
 
 local decodeValue = require(script.Parent.decodeValue)
 local reify = require(script.Parent.reify)
+local reifyInstance, applyDeferredRefs = reify.reifyInstance, reify.applyDeferredRefs
 local setProperty = require(script.Parent.setProperty)
 
 local function applyPatch(instanceMap, patch)
 	-- Tracks any portions of the patch that could not be applied to the DOM.
 	local unappliedPatch = PatchSet.newEmpty()
+
+	-- Contains a list of all of the ref properties that we'll need to assign.
+	-- It is imperative that refs are assigned after all instances are created
+	-- to ensure that referents can be mapped to instances correctly.
+	local deferredRefs = {}
 
 	for _, removedIdOrInstance in ipairs(patch.removed) do
 		local removeInstanceSuccess = pcall(function()
@@ -66,7 +72,7 @@ local function applyPatch(instanceMap, patch)
 			)
 		end
 
-		local failedToReify = reify(instanceMap, patch.added, id, parentInstance)
+		local failedToReify = reifyInstance(deferredRefs, instanceMap, patch.added, id, parentInstance)
 
 		if not PatchSet.isEmpty(failedToReify) then
 			Log.debug("Failed to reify as part of applying a patch: {:#?}", failedToReify)
@@ -131,7 +137,7 @@ local function applyPatch(instanceMap, patch)
 				[update.id] = mockVirtualInstance,
 			}
 
-			local failedToReify = reify(instanceMap, mockAdded, update.id, instance.Parent)
+			local failedToReify = reifyInstance(deferredRefs, instanceMap, mockAdded, update.id, instance.Parent)
 
 			local newInstance = instanceMap.fromIds[update.id]
 
@@ -194,6 +200,18 @@ local function applyPatch(instanceMap, patch)
 
 		if update.changedProperties ~= nil then
 			for propertyName, propertyValue in pairs(update.changedProperties) do
+				-- Because refs may refer to instances that we haven't constructed yet,
+				-- we defer applying any ref properties until all instances are created.
+				if next(propertyValue) == "Ref" then
+					table.insert(deferredRefs, {
+						id = update.id,
+						instance = instance,
+						propertyName = propertyName,
+						virtualValue = propertyValue,
+					})
+					continue
+				end
+
 				local decodeSuccess, decodedValue = decodeValue(propertyValue, instanceMap)
 				if not decodeSuccess then
 					unappliedUpdate.changedProperties[propertyName] = propertyValue
@@ -213,6 +231,8 @@ local function applyPatch(instanceMap, patch)
 			table.insert(unappliedPatch.updated, unappliedUpdate)
 		end
 	end
+
+	applyDeferredRefs(instanceMap, deferredRefs, unappliedPatch)
 
 	return unappliedPatch
 end
