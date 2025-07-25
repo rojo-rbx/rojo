@@ -25,6 +25,14 @@ local function trueEquals(a, b): boolean
 		return true
 	end
 
+	-- Treat nil and { Ref = "000...0" } as equal
+	if
+		(a == nil and type(b) == "table" and b.Ref == "00000000000000000000000000000000")
+		or (b == nil and type(a) == "table" and a.Ref == "00000000000000000000000000000000")
+	then
+		return true
+	end
+
 	local typeA, typeB = typeof(a), typeof(b)
 
 	-- For tables, try recursive deep equality
