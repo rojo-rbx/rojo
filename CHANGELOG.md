@@ -1,9 +1,11 @@
 # Rojo Changelog
 
 ## Unreleased
+* Changed the background of the server's in-browser UI to be gray instead of white ([#1080]) 
 * Fixed `Auto Connect Playtest Server` no longer functioning due to Roblox change ([#1066])
 * Added an update indicator to the version header when a new version of the plugin is available. ([#1069])
 
+[#1080]: https://github.com/rojo-rbx/rojo/pull/1080
 [#1049]: https://github.com/rojo-rbx/rojo/pull/1066
 [#1069]: https://github.com/rojo-rbx/rojo/pull/1069
 
