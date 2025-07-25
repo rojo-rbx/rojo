@@ -634,3 +634,26 @@ fn meshpart_with_id() {
         assert_snapshot!("meshpart_with_id_serialize_model", model);
     });
 }
+
+#[test]
+fn forced_parent() {
+    run_serve_test("forced_parent", |session, mut redactions| {
+        let info = session.get_api_rojo().unwrap();
+        let root_id = info.root_instance_id;
+
+        assert_yaml_snapshot!("forced_parent_info", redactions.redacted_yaml(&info));
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "forced_parent_all",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+
+        let serialize_response = session.get_api_serialize(&[root_id]).unwrap();
+
+        assert_eq!(serialize_response.session_id, info.session_id);
+
+        let model = serialize_to_xml_model(&serialize_response, &redactions);
+        assert_snapshot!("forced_parent_serialize_model", model);
+    });
+}
