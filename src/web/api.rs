@@ -217,6 +217,13 @@ impl ApiService {
         })
     }
 
+    /// Accepts a list of IDs and returns them serialized as a binary model.
+    /// The model is sent in a schema that causes Roblox to deserialize it as
+    /// a Luau `buffer`.
+    ///
+    /// The returned model is a folder that contains ObjectValues with names
+    /// that correspond to the requested Instances. These values have their
+    /// `Value` property set to point to the requested Instance.
     async fn handle_api_serialize(&self, request: Request<Body>) -> Response<Body> {
         let argument = &request.uri().path()["/api/serialize/".len()..];
         let requested_ids: Result<Vec<Ref>, _> = argument.split(',').map(Ref::from_str).collect();
@@ -241,13 +248,21 @@ impl ApiService {
                         .with_name(instance.name())
                         .with_properties(instance.properties().clone()),
                 );
-                let parent = response_dom.insert(
+                let object_value = response_dom.insert(
                     response_dom.root_ref(),
                     InstanceBuilder::new("ObjectValue")
                         .with_name(id.to_string())
                         .with_property("Value", clone),
                 );
-                response_dom.transfer_within(clone, parent);
+
+                let mut child_ref = clone;
+                if let Some(parent_class) = parent_requirements(&instance.class_name()) {
+                    child_ref =
+                        response_dom.insert(object_value, InstanceBuilder::new(parent_class));
+                    response_dom.transfer_within(clone, child_ref);
+                }
+
+                response_dom.transfer_within(child_ref, object_value);
             } else {
                 json(
                     ErrorResponse::bad_request(format!("provided id {id} is not in the tree")),
@@ -266,6 +281,10 @@ impl ApiService {
         })
     }
 
+    /// Returns a list of all referent properties that point towards the
+    /// provided IDs. Used because the plugin does not store a RojoTree,
+    /// and referent properties need to be updated after the serialize
+    /// endpoint is used.
     async fn handle_api_ref_patch(self, request: Request<Body>) -> Response<Body> {
         let argument = &request.uri().path()["/api/ref-patch/".len()..];
         let requested_ids: Result<HashSet<Ref>, _> =
@@ -422,4 +441,18 @@ fn pick_script_path(instance: InstanceWithMeta<'_>) -> Option<PathBuf> {
                 .unwrap_or(false)
         })
         .map(|path| path.to_owned())
+}
+
+/// Certain Instances MUST be a child of specific classes. This function
+/// tracks that information for the Serialize endpoint.
+///
+/// If a parent requirement exists, it will be returned.
+/// Otherwise returns `None`.
+fn parent_requirements(class: &str) -> Option<&str> {
+    Some(match class {
+        "Attachment" | "Bone" => "Part",
+        "Animator" => "Humanoid",
+        "BaseWrap" | "WrapLayer" | "WrapTarget" | "WrapDeformer" => "MeshPart",
+        _ => return None,
+    })
 }
