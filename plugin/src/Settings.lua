@@ -14,6 +14,7 @@ local defaultSettings = {
 	twoWaySync = false,
 	showNotifications = true,
 	syncReminder = true,
+	enableSyncFallback = true,
 	checkForUpdates = true,
 	checkForPrereleases = false,
 	autoConnectPlaytestServer = false,

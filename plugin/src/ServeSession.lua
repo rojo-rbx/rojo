@@ -353,24 +353,28 @@ function ServeSession:__applyPatch(patch)
 	local addedIdList = PatchSet.addedIdList(unappliedPatch)
 	local updatedIdList = PatchSet.updatedIdList(unappliedPatch)
 
-	Log.debug("ServeSession:__replaceInstances(unappliedPatch.added)")
-	Timer.start("ServeSession:__replaceInstances(unappliedPatch.added)")
-	local addSuccess, unappliedAddedRefs = self:__replaceInstances(addedIdList)
-	Timer.stop()
-
-	Log.debug("ServeSession:__replaceInstances(unappliedPatch.updated)")
-	Timer.start("ServeSession:__replaceInstances(unappliedPatch.updated)")
-	local updateSuccess, unappliedUpdateRefs = self:__replaceInstances(updatedIdList)
-	Timer.stop()
-
 	local actualUnappliedPatches = PatchSet.newEmpty()
-	if addSuccess then
-		table.clear(unappliedPatch.added)
-		PatchSet.assign(actualUnappliedPatches, unappliedAddedRefs)
-	end
-	if updateSuccess then
-		table.clear(unappliedPatch.updated)
-		PatchSet.assign(actualUnappliedPatches, unappliedUpdateRefs)
+	if Settings:get("enableSyncFallback") then
+		Log.debug("ServeSession:__replaceInstances(unappliedPatch.added)")
+		Timer.start("ServeSession:__replaceInstances(unappliedPatch.added)")
+		local addSuccess, unappliedAddedRefs = self:__replaceInstances(addedIdList)
+		Timer.stop()
+
+		Log.debug("ServeSession:__replaceInstances(unappliedPatch.updated)")
+		Timer.start("ServeSession:__replaceInstances(unappliedPatch.updated)")
+		local updateSuccess, unappliedUpdateRefs = self:__replaceInstances(updatedIdList)
+		Timer.stop()
+
+		if addSuccess then
+			table.clear(unappliedPatch.added)
+			PatchSet.assign(actualUnappliedPatches, unappliedAddedRefs)
+		end
+		if updateSuccess then
+			table.clear(unappliedPatch.updated)
+			PatchSet.assign(actualUnappliedPatches, unappliedUpdateRefs)
+		end
+	else
+		Log.debug("Skipping ServeSession:__replaceInstances because of setting")
 	end
 	PatchSet.assign(actualUnappliedPatches, unappliedPatch)
 
