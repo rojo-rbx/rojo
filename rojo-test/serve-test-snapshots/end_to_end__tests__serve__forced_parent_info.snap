@@ -1,0 +1,13 @@
+---
+source: tests/tests/serve.rs
+expression: redactions.redacted_yaml(&info)
+---
+expectedPlaceIds: ~
+gameId: ~
+placeId: ~
+projectName: forced_parent
+protocolVersion: 4
+rootInstanceId: id-2
+serverVersion: "[server-version]"
+sessionId: id-1
+unexpectedPlaceIds: ~
