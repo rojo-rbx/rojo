@@ -1,11 +1,17 @@
 # Rojo Changelog
 
 ## Unreleased
+* Added fallback method for when an Instance can't be synced through normal means ([#1030])
+ 	This should make it possible to sync `MeshParts` and `Unions`!
+    
+    The fallback involves deleting and recreating Instances. This will break
+    properties that reference them that Rojo does not know about, so be weary.
 * Fixed nil -> nil properties showing up as failing to sync in plugin's patch visualizer ([#1081])
 * Changed the background of the server's in-browser UI to be gray instead of white ([#1080]) 
 * Fixed `Auto Connect Playtest Server` no longer functioning due to Roblox change ([#1066])
 * Added an update indicator to the version header when a new version of the plugin is available. ([#1069])
 
+[#1030]: https://github.com/rojo-rbx/rojo/pull/1030
 [#1081]: https://github.com/rojo-rbx/rojo/pull/1081
 [#1080]: https://github.com/rojo-rbx/rojo/pull/1080
 [#1049]: https://github.com/rojo-rbx/rojo/pull/1066
