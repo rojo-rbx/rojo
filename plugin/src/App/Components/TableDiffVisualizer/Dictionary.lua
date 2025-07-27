@@ -114,7 +114,7 @@ function Dictionary:render()
 						TextXAlignment = Enum.TextXAlignment.Left,
 						FontFace = theme.Font.Main,
 						TextSize = theme.TextSize.Body,
-						TextColor3 = theme.Settings.Setting.DescriptionColor,
+						TextColor3 = Color3.new(0, 0, 0),
 						TextTruncate = Enum.TextTruncate.AtEnd,
 					}),
 					OldValue = e("Frame", {
@@ -125,7 +125,7 @@ function Dictionary:render()
 						e(DisplayValue, {
 							value = oldValue,
 							transparency = self.props.transparency,
-							textColor = theme.Settings.Setting.DescriptionColor,
+							textColor = Color3.new(0, 0, 0),
 						}),
 					}),
 					NewValue = e("Frame", {
@@ -136,7 +136,7 @@ function Dictionary:render()
 						e(DisplayValue, {
 							value = newValue,
 							transparency = self.props.transparency,
-							textColor = theme.Settings.Setting.DescriptionColor,
+							textColor = Color3.new(0, 0, 0),
 						}),
 					}),
 				})
