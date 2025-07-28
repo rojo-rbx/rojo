@@ -25,9 +25,6 @@ macro_rules! syncback_tests {
     )*};
 }
 
-// TODO: All middleware, project all middleware
-// probably replace them with tests for CSV and the like
-
 syncback_tests! {
     // Ensures that there's only one copy written to disk if navigating a
     // project file might yield two copies
