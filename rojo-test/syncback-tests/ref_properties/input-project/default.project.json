@@ -1,0 +1,9 @@
+{
+  "name": "ref_properties",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$path": "src"
+    }
+  }
+}

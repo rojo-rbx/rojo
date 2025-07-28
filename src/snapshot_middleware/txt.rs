@@ -1,11 +1,16 @@
 use std::{path::Path, str};
 
+use anyhow::Context as _;
 use memofs::{IoResultExt, Vfs};
+use rbx_dom_weak::types::Variant;
 use rbx_dom_weak::ustr;
 
-use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
+use crate::{
+    snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
+    syncback::{FsSnapshot, SyncbackReturn, SyncbackSnapshot},
+};
 
-use super::meta_file::AdjacentMetadata;
+use super::{meta_file::AdjacentMetadata, PathExt as _};
 
 pub fn snapshot_txt(
     context: &InstanceContext,
@@ -35,6 +40,39 @@ pub fn snapshot_txt(
     }
 
     Ok(Some(snapshot))
+}
+
+pub fn syncback_txt<'sync>(
+    snapshot: &SyncbackSnapshot<'sync>,
+) -> anyhow::Result<SyncbackReturn<'sync>> {
+    let new_inst = snapshot.new_inst();
+
+    let contents = if let Some(Variant::String(source)) = new_inst.properties.get(&ustr("Value")) {
+        source.as_bytes().to_vec()
+    } else {
+        anyhow::bail!("StringValues must have a `Value` property that is a String");
+    };
+    let mut fs_snapshot = FsSnapshot::new();
+    fs_snapshot.add_file(&snapshot.path, contents);
+
+    let meta = AdjacentMetadata::from_syncback_snapshot(snapshot, snapshot.path.clone())?;
+    if let Some(mut meta) = meta {
+        meta.properties.remove(&ustr("Value"));
+
+        if !meta.is_empty() {
+            let parent = snapshot.path.parent_err()?;
+            fs_snapshot.add_file(
+                parent.join(format!("{}.meta.json", new_inst.name)),
+                serde_json::to_vec_pretty(&meta).context("could not serialize metadata")?,
+            );
+        }
+    }
+
+    Ok(SyncbackReturn {
+        fs_snapshot,
+        children: Vec::new(),
+        removed_children: Vec::new(),
+    })
 }
 
 #[cfg(test)]

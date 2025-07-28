@@ -1,0 +1,9 @@
+{
+  "name": "unscriptable_properties",
+  "tree": {
+    "$className": "BinaryStringValue"
+  },
+  "syncbackRules": {
+    "syncUnscriptable": true
+  }
+}

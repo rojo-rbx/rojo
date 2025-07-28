@@ -1,0 +1,5 @@
+---
+source: tests/tests/syncback.rs
+expression: src/subfolder/string_value.txt
+---
+This memorial dedicated to Club Penguin.

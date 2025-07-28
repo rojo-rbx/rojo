@@ -1,0 +1,17 @@
+---
+source: tests/tests/syncback.rs
+expression: src/project_json.project.json
+---
+{
+  "name": "project_json",
+  "tree": {
+    "$className": "Color3Value",
+    "$properties": {
+      "Value": [
+        1337.0,
+        -1337.0,
+        1337.0
+      ]
+    }
+  }
+}

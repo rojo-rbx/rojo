@@ -55,7 +55,7 @@ memofs = { version = "0.3.0", path = "crates/memofs" }
 # rbx_reflection_database = { path = "../rbx-dom/rbx_reflection_database" }
 # rbx_xml = { path = "../rbx-dom/rbx_xml" }
 
-rbx_binary = "1.0.0"
+rbx_binary = { version = "1.0.0", features = ["unstable_text_format"] }
 rbx_dom_weak = "3.0.0"
 rbx_reflection = "5.0.0"
 rbx_reflection_database = "1.0.3"
@@ -93,6 +93,9 @@ tokio = { version = "1.36.0", features = ["rt", "rt-multi-thread"] }
 uuid = { version = "1.7.0", features = ["v4", "serde"] }
 clap = { version = "3.2.25", features = ["derive"] }
 profiling = "1.0.15"
+
+blake3 = "1.5.0"
+float-cmp = "0.9.0"
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.10.1"
