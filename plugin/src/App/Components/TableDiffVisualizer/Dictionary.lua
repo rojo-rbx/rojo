@@ -114,9 +114,7 @@ function Dictionary:render()
 						TextXAlignment = Enum.TextXAlignment.Left,
 						FontFace = theme.Font.Main,
 						TextSize = theme.TextSize.Body,
-						TextColor3 = if line.patchType ~= "Remain"
-							then Color3.new(0, 0, 0)
-							else theme.Settings.Setting.DescriptionColor,
+						TextColor3 = theme.Diff.Text[line.patchType],
 						TextTruncate = Enum.TextTruncate.AtEnd,
 					}),
 					OldValue = e("Frame", {
@@ -127,9 +125,7 @@ function Dictionary:render()
 						e(DisplayValue, {
 							value = oldValue,
 							transparency = self.props.transparency,
-							textColor = if line.patchType ~= "Remain"
-								then Color3.new(0, 0, 0)
-								else theme.Settings.Setting.DescriptionColor,
+							textColor = theme.Diff.Text[line.patchType],
 						}),
 					}),
 					NewValue = e("Frame", {
@@ -140,9 +136,7 @@ function Dictionary:render()
 						e(DisplayValue, {
 							value = newValue,
 							transparency = self.props.transparency,
-							textColor = if line.patchType ~= "Remain"
-								then Color3.new(0, 0, 0)
-								else theme.Settings.Setting.DescriptionColor,
+							textColor = theme.Diff.Text[line.patchType],
 						}),
 					}),
 				})
