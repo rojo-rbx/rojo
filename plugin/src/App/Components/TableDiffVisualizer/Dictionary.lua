@@ -91,9 +91,7 @@ function Dictionary:render()
 					LayoutOrder = order,
 					BorderSizePixel = 0,
 					BackgroundTransparency = if line.patchType == "Remain" then 1 else self.props.transparency,
-					BackgroundColor3 = if line.patchType == "Remain"
-						then theme.Diff.Row
-						else theme.Diff[line.patchType],
+					BackgroundColor3 = theme.Diff.Background[line.patchType],
 				}, {
 					DiffIcon = if line.patchType ~= "Remain"
 						then e("ImageLabel", {
