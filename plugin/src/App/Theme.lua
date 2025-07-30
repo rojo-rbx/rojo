@@ -173,11 +173,11 @@ function StudioProvider:updateTheme()
 			Warning = studioTheme:GetColor(Enum.StudioStyleGuideColor.WarningText),
 
 			Text = {
-				Add = if isDark then Color3.new(0, 0, 0) else Color3.new(1, 1, 1);
-				Remove = if isDark then Color3.new(0, 0, 0) else Color3.new(1, 1, 1);
-				Edit = if isDark then Color3.new(0, 0, 0) else Color3.new(1, 1, 1);
-				Remain = studioTheme:GetColor(Enum.StudioStyleGuideColor.MainText); -- FROM: theme.Settings.Setting.DescriptionColor
-			}
+				Add = if isDark then Color3.new(0, 0, 0) else Color3.new(1, 1, 1),
+				Remove = if isDark then Color3.new(0, 0, 0) else Color3.new(1, 1, 1),
+				Edit = if isDark then Color3.new(0, 0, 0) else Color3.new(1, 1, 1),
+				Remain = studioTheme:GetColor(Enum.StudioStyleGuideColor.MainText), -- FROM: theme.Settings.Setting.DescriptionColor
+			},
 		},
 		ConnectionDetails = {
 			ProjectNameColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.BrightText),
