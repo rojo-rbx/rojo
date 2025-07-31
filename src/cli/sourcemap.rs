@@ -28,7 +28,10 @@ struct SourcemapNode<'a> {
     name: &'a str,
     class_name: Ustr,
 
-    #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[serde(
+        skip_serializing_if = "Vec::is_empty",
+        serialize_with = "crate::path_serializer::serialize_vec_absolute"
+    )]
     file_paths: Vec<PathBuf>,
 
     #[serde(skip_serializing_if = "Vec::is_empty")]
