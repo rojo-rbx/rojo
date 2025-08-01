@@ -1,7 +1,7 @@
 use std::{
     io::{BufWriter, Write},
     mem::forget,
-    path::{Path, PathBuf},
+    path::{self, Path, PathBuf},
 };
 
 use clap::Parser;
@@ -20,6 +20,7 @@ use crate::{
 use super::resolve_path;
 
 const PATH_STRIP_FAILED_ERR: &str = "Failed to create relative paths for project file!";
+const ABSOLUTE_PATH_FAILED_ERR: &str = "Failed to turn relative path into absolute path!";
 
 /// Representation of a node in the generated sourcemap tree.
 #[derive(Serialize)]
@@ -60,6 +61,10 @@ pub struct SourcemapCommand {
     /// Whether to automatically recreate a snapshot when any input files change.
     #[clap(long)]
     pub watch: bool,
+
+    /// Whether the sourcemap should use absolute paths instead of relative paths.
+    #[clap(long)]
+    pub emit_absolute_paths: bool,
 }
 
 impl SourcemapCommand {
@@ -86,7 +91,12 @@ impl SourcemapCommand {
             .build_global()
             .unwrap();
 
-        write_sourcemap(&session, self.output.as_deref(), filter)?;
+        write_sourcemap(
+            &session,
+            self.output.as_deref(),
+            filter,
+            self.emit_absolute_paths,
+        )?;
 
         if self.watch {
             let rt = Runtime::new().unwrap();
@@ -97,7 +107,12 @@ impl SourcemapCommand {
                 cursor = new_cursor;
 
                 if patch_set_affects_sourcemap(&session, &patch_set, filter) {
-                    write_sourcemap(&session, self.output.as_deref(), filter)?;
+                    write_sourcemap(
+                        &session,
+                        self.output.as_deref(),
+                        filter,
+                        self.emit_absolute_paths,
+                    )?;
                 }
             }
         }
@@ -163,13 +178,16 @@ fn recurse_create_node<'a>(
     referent: Ref,
     project_dir: &Path,
     filter: fn(&InstanceWithMeta) -> bool,
+    use_absolute_paths: bool,
 ) -> Option<SourcemapNode<'a>> {
     let instance = tree.get_instance(referent).expect("instance did not exist");
 
     let children: Vec<_> = instance
         .children()
         .par_iter()
-        .filter_map(|&child_id| recurse_create_node(tree, child_id, project_dir, filter))
+        .filter_map(|&child_id| {
+            recurse_create_node(tree, child_id, project_dir, filter, use_absolute_paths)
+        })
         .collect();
 
     // If this object has no children and doesn't pass the filter, it doesn't
@@ -178,20 +196,32 @@ fn recurse_create_node<'a>(
         return None;
     }
 
-    let file_paths = instance
+    let file_paths: Vec<&Path> = instance
         .metadata()
         .relevant_paths
         .iter()
         // Not all paths listed as relevant are guaranteed to exist.
         .filter(|path| path.is_file())
         .map(|path| path.strip_prefix(project_dir).expect(PATH_STRIP_FAILED_ERR))
-        .map(|path| path.to_path_buf())
         .collect();
+
+    let mut file_path_buffs: Vec<PathBuf> = Vec::new();
+
+    if use_absolute_paths {
+        // It's somewhat important to note here that `path::absolute` takes in a Path and returns a PathBuf
+        for val in file_paths.iter() {
+            file_path_buffs.push(path::absolute(val).expect(ABSOLUTE_PATH_FAILED_ERR));
+        }
+    } else {
+        for val in file_paths.iter() {
+            file_path_buffs.push(val.to_path_buf());
+        }
+    };
 
     Some(SourcemapNode {
         name: instance.name(),
         class_name: instance.class_name(),
-        file_paths,
+        file_paths: file_path_buffs,
         children,
     })
 }
@@ -200,10 +230,17 @@ fn write_sourcemap(
     session: &ServeSession,
     output: Option<&Path>,
     filter: fn(&InstanceWithMeta) -> bool,
+    use_absolute_paths: bool,
 ) -> anyhow::Result<()> {
     let tree = session.tree();
 
-    let root_node = recurse_create_node(&tree, tree.get_root_id(), session.root_dir(), filter);
+    let root_node = recurse_create_node(
+        &tree,
+        tree.get_root_id(),
+        session.root_dir(),
+        filter,
+        use_absolute_paths,
+    );
 
     if let Some(output_path) = output {
         let mut file = BufWriter::new(File::create(output_path)?);
