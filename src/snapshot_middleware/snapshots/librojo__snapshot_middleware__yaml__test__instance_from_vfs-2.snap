@@ -1,0 +1,27 @@
+---
+source: src/snapshot_middleware/yaml.rs
+expression: source
+---
+return {
+	string = "this is a string",
+	boolean = true,
+	integer = 1337,
+	float = 123456789.5,
+	["value-with-hypen"] = "it sure is",
+	sequence = {"wow", 8675309},
+	map = {
+		key = "value",
+		key2 = "value 2",
+		key3 = "value 3",
+	},
+	["nested-map"] = {{
+		key = "value",
+	}, {
+		key2 = "value 2",
+	}, {
+		key3 = "value 3",
+	}},
+	whatever_this_is = {"i imagine", "it's", "a", "sequence?"},
+	null1 = nil,
+	null2 = nil,
+}

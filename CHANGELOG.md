@@ -1,7 +1,7 @@
 # Rojo Changelog
 
 ## Unreleased
-
+* Add support for syncing `yml` and `yaml` files (behaves similar to JSON and TOML) ([#1093])
 * Fixed colors of Table diff ([#1084])
 * Fixed `sourcemap` command outputting paths with OS-specific path separators ([#1085])
 * Fixed nil -> nil properties showing up as failing to sync in plugin's patch visualizer ([#1081])
@@ -9,6 +9,7 @@
 * Fixed `Auto Connect Playtest Server` no longer functioning due to Roblox change ([#1066])
 * Added an update indicator to the version header when a new version of the plugin is available. ([#1069])
 
+[#1093]: https://github.com/rojo-rbx/rojo/pull/1093
 [#1084]: https://github.com/rojo-rbx/rojo/pull/1084
 [#1085]: https://github.com/rojo-rbx/rojo/pull/1085
 [#1081]: https://github.com/rojo-rbx/rojo/pull/1081
