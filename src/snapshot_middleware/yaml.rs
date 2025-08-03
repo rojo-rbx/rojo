@@ -113,7 +113,8 @@ mod test {
 ---
 string: this is a string
 boolean: true
-number: 1337
+integer: 1337
+float: 123456789.5
 value-with-hypen: it sure is
 sequence:
   - wow

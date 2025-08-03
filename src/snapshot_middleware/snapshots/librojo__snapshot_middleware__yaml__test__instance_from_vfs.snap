@@ -17,5 +17,5 @@ name: foo
 class_name: ModuleScript
 properties:
   Source:
-    String: "return {\n\tstring = \"this is a string\",\n\tboolean = true,\n\tnumber = 1337,\n\t[\"value-with-hypen\"] = \"it sure is\",\n\tsequence = {\"wow\", 8675309},\n\tmap = {\n\t\tkey = \"value\",\n\t\tkey2 = \"value 2\",\n\t\tkey3 = \"value 3\",\n\t},\n\t[\"nested-map\"] = {{\n\t\tkey = \"value\",\n\t}, {\n\t\tkey2 = \"value 2\",\n\t}, {\n\t\tkey3 = \"value 3\",\n\t}},\n\twhatever_this_is = {\"i imagine\", \"it's\", \"a\", \"sequence?\"},\n\tnull1 = nil,\n\tnull2 = nil,\n}"
+    String: "return {\n\tstring = \"this is a string\",\n\tboolean = true,\n\tinteger = 1337,\n\tfloat = 123456789.5,\n\t[\"value-with-hypen\"] = \"it sure is\",\n\tsequence = {\"wow\", 8675309},\n\tmap = {\n\t\tkey = \"value\",\n\t\tkey2 = \"value 2\",\n\t\tkey3 = \"value 3\",\n\t},\n\t[\"nested-map\"] = {{\n\t\tkey = \"value\",\n\t}, {\n\t\tkey2 = \"value 2\",\n\t}, {\n\t\tkey3 = \"value 3\",\n\t}},\n\twhatever_this_is = {\"i imagine\", \"it's\", \"a\", \"sequence?\"},\n\tnull1 = nil,\n\tnull2 = nil,\n}"
 children: []
