@@ -17,6 +17,7 @@ mod rbxmx;
 mod toml;
 mod txt;
 mod util;
+mod yaml;
 
 use std::{
     path::{Path, PathBuf},
@@ -27,8 +28,8 @@ use anyhow::Context;
 use memofs::{IoResultExt, Vfs};
 use serde::{Deserialize, Serialize};
 
-use crate::glob::Glob;
 use crate::snapshot::{InstanceContext, InstanceSnapshot, SyncRule};
+use crate::{glob::Glob, snapshot_middleware::yaml::snapshot_yaml};
 
 use self::{
     csv::{snapshot_csv, snapshot_csv_init},
@@ -212,6 +213,7 @@ pub enum Middleware {
     Rbxmx,
     Toml,
     Text,
+    Yaml,
     Ignore,
 }
 
@@ -250,6 +252,7 @@ impl Middleware {
             Self::Rbxmx => snapshot_rbxmx(context, vfs, path, name),
             Self::Toml => snapshot_toml(context, vfs, path, name),
             Self::Text => snapshot_txt(context, vfs, path, name),
+            Self::Yaml => snapshot_yaml(context, vfs, path, name),
             Self::Ignore => Ok(None),
         }
     }
@@ -315,6 +318,7 @@ pub fn default_sync_rules() -> &'static [SyncRule] {
             sync_rule!("*.txt", Text),
             sync_rule!("*.rbxmx", Rbxmx),
             sync_rule!("*.rbxm", Rbxm),
+            sync_rule!("*.{yml,yaml}", Yaml),
         ]
     })
 }
