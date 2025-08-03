@@ -184,4 +184,50 @@ document-2: this is also a document"#,
         .unwrap()
         .unwrap();
     }
+
+    #[test]
+    #[should_panic = "cannot be losslessly converted into a Luau number"]
+    fn integer_border() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
+            "/allowed.yaml",
+            VfsSnapshot::file(
+                r#"
+value: 9007199254740992
+"#,
+            ),
+        )
+        .unwrap();
+        imfs.load_snapshot(
+            "/not-allowed.yaml",
+            VfsSnapshot::file(
+                r#"
+value: 9007199254740993
+"#,
+            ),
+        )
+        .unwrap();
+
+        let vfs = Vfs::new(imfs.clone());
+
+        assert!(
+            snapshot_yaml(
+                &InstanceContext::default(),
+                &vfs,
+                Path::new("/allowed.yaml"),
+                "allowed",
+            )
+            .is_ok(),
+            "snapshot_yaml failed to snapshot document with integer '9007199254740992' in it"
+        );
+
+        snapshot_yaml(
+            &InstanceContext::default(),
+            &vfs,
+            Path::new("/not-allowed.yaml"),
+            "not-allowed",
+        )
+        .unwrap()
+        .unwrap();
+    }
 }
