@@ -28,8 +28,8 @@ use anyhow::Context;
 use memofs::{IoResultExt, Vfs};
 use serde::{Deserialize, Serialize};
 
+use crate::glob::Glob;
 use crate::snapshot::{InstanceContext, InstanceSnapshot, SyncRule};
-use crate::{glob::Glob, snapshot_middleware::yaml::snapshot_yaml};
 
 use self::{
     csv::{snapshot_csv, snapshot_csv_init},
@@ -42,6 +42,7 @@ use self::{
     rbxmx::snapshot_rbxmx,
     toml::snapshot_toml,
     txt::snapshot_txt,
+    yaml::snapshot_yaml,
 };
 
 pub use self::{project::snapshot_project_node, util::emit_legacy_scripts_default};
