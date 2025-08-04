@@ -6,10 +6,11 @@ mod ref_properties;
 mod snapshot;
 
 use anyhow::Context;
+use indexmap::IndexMap;
 use memofs::Vfs;
 use rbx_dom_weak::{
     types::{Ref, Variant},
-    ustr, Instance, Ustr, UstrMap, UstrSet, WeakDom,
+    ustr, Instance, Ustr, UstrSet, WeakDom,
 };
 use serde::{Deserialize, Serialize};
 use std::{
@@ -382,8 +383,8 @@ pub struct SyncbackRules {
     ignore_paths: Vec<String>,
     /// A map of classes to properties to ignore for that class when doing
     /// syncback.
-    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-    ignore_properties: UstrMap<Vec<Ustr>>,
+    #[serde(default, skip_serializing_if = "IndexMap::is_empty")]
+    ignore_properties: IndexMap<Ustr, Vec<Ustr>>,
     /// Whether or not the `CurrentCamera` of `Workspace` is included in the
     /// syncback or not. Defaults to `false`.
     #[serde(skip_serializing_if = "Option::is_none")]

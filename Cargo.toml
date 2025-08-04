@@ -96,6 +96,7 @@ profiling = "1.0.15"
 
 blake3 = "1.5.0"
 float-cmp = "0.9.0"
+indexmap = { version = "2.10.0", features = ["serde"] }
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.10.1"

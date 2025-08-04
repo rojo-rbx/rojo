@@ -1,6 +1,7 @@
-use std::{borrow::Cow, collections::BTreeMap, path::Path, str};
+use std::{borrow::Cow, path::Path, str};
 
 use anyhow::Context;
+use indexmap::IndexMap;
 use memofs::Vfs;
 use rbx_dom_weak::{
     types::{Attributes, Ref, Variant},
@@ -92,8 +93,8 @@ fn json_model_from_pair<'sync>(
 
     filter_properties_preallocated(snapshot.project(), new_inst, prop_buffer);
 
-    let mut properties = BTreeMap::new();
-    let mut attributes = BTreeMap::new();
+    let mut properties = IndexMap::new();
+    let mut attributes = IndexMap::new();
     for (name, value) in prop_buffer.drain(..) {
         match value {
             Variant::Attributes(attrs) => {
@@ -165,12 +166,12 @@ struct JsonModel {
     #[serde(
         alias = "Properties",
         default,
-        skip_serializing_if = "BTreeMap::is_empty"
+        skip_serializing_if = "IndexMap::is_empty"
     )]
-    properties: BTreeMap<Ustr, UnresolvedValue>,
+    properties: IndexMap<Ustr, UnresolvedValue>,
 
-    #[serde(default = "BTreeMap::new", skip_serializing_if = "BTreeMap::is_empty")]
-    attributes: BTreeMap<String, UnresolvedValue>,
+    #[serde(default = "IndexMap::new", skip_serializing_if = "IndexMap::is_empty")]
+    attributes: IndexMap<String, UnresolvedValue>,
 }
 
 impl JsonModel {

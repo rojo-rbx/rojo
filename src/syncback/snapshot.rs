@@ -1,3 +1,4 @@
+use indexmap::IndexMap;
 use memofs::Vfs;
 use std::path::{Path, PathBuf};
 
@@ -188,7 +189,7 @@ impl<'sync> SyncbackSnapshot<'sync> {
 
     /// Returns user-specified property ignore rules.
     #[inline]
-    pub fn ignore_props(&self) -> Option<&UstrMap<Vec<Ustr>>> {
+    pub fn ignore_props(&self) -> Option<&IndexMap<Ustr, Vec<Ustr>>> {
         self.data
             .project
             .syncback_rules

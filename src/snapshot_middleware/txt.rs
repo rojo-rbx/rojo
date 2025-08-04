@@ -57,7 +57,9 @@ pub fn syncback_txt<'sync>(
 
     let meta = AdjacentMetadata::from_syncback_snapshot(snapshot, snapshot.path.clone())?;
     if let Some(mut meta) = meta {
-        meta.properties.remove(&ustr("Value"));
+        // StringValues have relatively few properties that we care about, so
+        // shifting is fine.
+        meta.properties.shift_remove(&ustr("Value"));
 
         if !meta.is_empty() {
             let parent = snapshot.path.parent_err()?;
