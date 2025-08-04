@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     io::{BufWriter, Write},
     mem::forget,
     path::{self, Path, PathBuf},
@@ -33,7 +34,7 @@ struct SourcemapNode<'a> {
         skip_serializing_if = "Vec::is_empty",
         serialize_with = "crate::path_serializer::serialize_vec_absolute"
     )]
-    file_paths: Vec<PathBuf>,
+    file_paths: Vec<Cow<'a, Path>>,
 
     #[serde(skip_serializing_if = "Vec::is_empty")]
     children: Vec<SourcemapNode<'a>>,
@@ -195,27 +196,27 @@ fn recurse_create_node<'a>(
         .map(|path| path.as_path())
         .collect();
 
-    let mut file_path_buffs: Vec<PathBuf> = Vec::new();
+    let mut output_file_paths: Vec<Cow<'a, Path>> = Vec::new();
 
     if use_absolute_paths {
         // It's somewhat important to note here that `path::absolute` takes in a Path and returns a PathBuf
         for val in file_paths.iter() {
-            file_path_buffs.push(path::absolute(val).expect(ABSOLUTE_PATH_FAILED_ERR));
+            output_file_paths.push(Cow::Owned(
+                path::absolute(val).expect(ABSOLUTE_PATH_FAILED_ERR),
+            ));
         }
     } else {
         for val in file_paths.iter() {
-            file_path_buffs.push(
-                val.strip_prefix(project_dir)
-                    .expect(PATH_STRIP_FAILED_ERR)
-                    .to_path_buf(),
-            );
+            output_file_paths.push(Cow::from(
+                val.strip_prefix(project_dir).expect(PATH_STRIP_FAILED_ERR),
+            ));
         }
     };
 
     Some(SourcemapNode {
         name: instance.name(),
         class_name: instance.class_name(),
-        file_paths: file_path_buffs,
+        file_paths: output_file_paths,
         children,
     })
 }
