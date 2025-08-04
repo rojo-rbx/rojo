@@ -405,7 +405,7 @@ function App:checkSyncReminder()
 
 				local timeSinceSync = timeUtil.elapsedToText(os.time() - priorSyncInfo.timestamp)
 				self:sendSyncReminder(
-					`You synced {priorSyncInfo.projectName} to this place {timeSinceSync}. Did you mean to run 'rojo serve' then reconnect?`
+					`You synced project '{priorSyncInfo.projectName}' to this place {timeSinceSync}. Did you mean to run 'rojo serve' and then connect?`
 				)
 			end
 		end)
