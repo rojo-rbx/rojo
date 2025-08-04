@@ -64,7 +64,7 @@ pub struct SourcemapCommand {
 
     /// Whether the sourcemap should use absolute paths instead of relative paths.
     #[clap(long)]
-    pub emit_absolute_paths: bool,
+    pub absolute: bool,
 }
 
 impl SourcemapCommand {
@@ -91,12 +91,7 @@ impl SourcemapCommand {
             .build_global()
             .unwrap();
 
-        write_sourcemap(
-            &session,
-            self.output.as_deref(),
-            filter,
-            self.emit_absolute_paths,
-        )?;
+        write_sourcemap(&session, self.output.as_deref(), filter, self.absolute)?;
 
         if self.watch {
             let rt = Runtime::new().unwrap();
@@ -107,12 +102,7 @@ impl SourcemapCommand {
                 cursor = new_cursor;
 
                 if patch_set_affects_sourcemap(&session, &patch_set, filter) {
-                    write_sourcemap(
-                        &session,
-                        self.output.as_deref(),
-                        filter,
-                        self.emit_absolute_paths,
-                    )?;
+                    write_sourcemap(&session, self.output.as_deref(), filter, self.absolute)?;
                 }
             }
         }
@@ -202,7 +192,7 @@ fn recurse_create_node<'a>(
         .iter()
         // Not all paths listed as relevant are guaranteed to exist.
         .filter(|path| path.is_file())
-        .map(|path| path.strip_prefix(project_dir).expect(PATH_STRIP_FAILED_ERR))
+        .map(|path| path.as_path())
         .collect();
 
     let mut file_path_buffs: Vec<PathBuf> = Vec::new();
@@ -214,7 +204,11 @@ fn recurse_create_node<'a>(
         }
     } else {
         for val in file_paths.iter() {
-            file_path_buffs.push(val.to_path_buf());
+            file_path_buffs.push(
+                val.strip_prefix(project_dir)
+                    .expect(PATH_STRIP_FAILED_ERR)
+                    .to_path_buf(),
+            );
         }
     };
 
