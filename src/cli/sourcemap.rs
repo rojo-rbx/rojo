@@ -187,26 +187,25 @@ fn recurse_create_node<'a>(
         return None;
     }
 
-    let file_paths: Vec<&Path> = instance
+    let file_paths = instance
         .metadata()
         .relevant_paths
         .iter()
         // Not all paths listed as relevant are guaranteed to exist.
         .filter(|path| path.is_file())
-        .map(|path| path.as_path())
-        .collect();
+        .map(|path| path.as_path());
 
     let mut output_file_paths: Vec<Cow<'a, Path>> = Vec::new();
 
     if use_absolute_paths {
         // It's somewhat important to note here that `path::absolute` takes in a Path and returns a PathBuf
-        for val in file_paths.iter() {
+        for val in file_paths {
             output_file_paths.push(Cow::Owned(
                 path::absolute(val).expect(ABSOLUTE_PATH_FAILED_ERR),
             ));
         }
     } else {
-        for val in file_paths.iter() {
+        for val in file_paths {
             output_file_paths.push(Cow::from(
                 val.strip_prefix(project_dir).expect(PATH_STRIP_FAILED_ERR),
             ));
