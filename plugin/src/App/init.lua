@@ -378,7 +378,7 @@ function App:checkSyncReminder()
 		then string.format("%s:%s", host, port)
 		else string.format("http://%s:%s", host, port)
 
-	Log.trace("Checking for active sync server at {}\n{}", baseUrl, debug.traceback())
+	Log.trace("Checking for active sync server at {}", baseUrl)
 
 	local apiContext = ApiContext.new(baseUrl)
 	apiContext
@@ -427,6 +427,11 @@ function App:startSyncReminderPolling()
 				-- The polling thread was stopped, so exit
 				return
 			end
+			if self.dismissSyncReminder then
+				-- There is already a sync reminder being shown
+				task.wait(5)
+				continue
+			end
 			self:checkSyncReminder()
 		end
 	end)
@@ -448,7 +453,7 @@ function App:sendSyncReminder(message: string)
 
 	self.dismissSyncReminder = self:addNotification({
 		text = message,
-		timeout = 29.5,
+		timeout = 60,
 		isFullscreen = Settings:get("syncReminderMode") == "Fullscreen",
 		onClose = function()
 			self.dismissSyncReminder = nil
