@@ -195,7 +195,8 @@ fn recurse_create_node<'a>(
         .filter(|path| path.is_file())
         .map(|path| path.as_path());
 
-    let mut output_file_paths: Vec<Cow<'a, Path>> = Vec::new();
+    let mut output_file_paths: Vec<Cow<'a, Path>> =
+        Vec::with_capacity(instance.metadata().relevant_paths.len());
 
     if use_absolute_paths {
         // It's somewhat important to note here that `path::absolute` takes in a Path and returns a PathBuf
