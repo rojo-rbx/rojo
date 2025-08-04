@@ -393,7 +393,7 @@ function App:checkSyncReminder()
 			else
 				-- We can't auto connect, but we can send a reminder about this active server
 				self:sendSyncReminder(
-					`Project '{serverInfo.projectName}' is serving at {host}:{port}. Would you like to connect?`
+					`Project '{serverInfo.projectName}' is serving at {host}:{port}.\nWould you like to connect?`
 				)
 			end
 		end)
@@ -405,7 +405,7 @@ function App:checkSyncReminder()
 
 				local timeSinceSync = timeUtil.elapsedToText(os.time() - priorSyncInfo.timestamp)
 				self:sendSyncReminder(
-					`You synced project '{priorSyncInfo.projectName}' to this place {timeSinceSync}. Did you mean to run 'rojo serve' and then connect?`
+					`You synced project '{priorSyncInfo.projectName}' to this place {timeSinceSync}.\nDid you mean to run 'rojo serve' and then connect?`
 				)
 			end
 		end)
