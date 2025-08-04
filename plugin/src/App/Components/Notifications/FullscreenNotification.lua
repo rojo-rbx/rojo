@@ -59,8 +59,8 @@ function FullscreenNotification:didMount()
 end
 
 function FullscreenNotification:willUnmount()
-	if self.timeout then
-		pcall(task.cancel, self.timeout)
+	if self.timeout and coroutine.status(self.timeout) ~= "dead" then
+		task.cancel(self.timeout)
 	end
 end
 
