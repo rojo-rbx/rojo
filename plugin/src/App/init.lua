@@ -393,7 +393,7 @@ function App:checkSyncReminder()
 			else
 				-- We can't auto connect, but we can send a reminder about this active server
 				self:sendSyncReminder(
-					`There is an active sync server at {host}:{port} for project '{serverInfo.projectName}'. Would you like to connect?`
+					`Project '{serverInfo.projectName}' is serving at {host}:{port}. Would you like to connect?`
 				)
 			end
 		end)
