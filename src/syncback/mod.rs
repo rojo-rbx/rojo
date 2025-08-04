@@ -23,7 +23,7 @@ use crate::{
     glob::Glob,
     snapshot::{InstanceWithMeta, RojoTree},
     snapshot_middleware::Middleware,
-    syncback::ref_properties::link_referents,
+    syncback::ref_properties::{collect_referents, link_referents},
     Project,
 };
 
@@ -31,7 +31,6 @@ pub use file_names::{extension_for_middleware, name_for_inst, validate_file_name
 pub use fs_snapshot::FsSnapshot;
 pub use hash::*;
 pub use property_filter::{filter_properties, filter_properties_preallocated};
-pub use ref_properties::collect_referents;
 pub use snapshot::{SyncbackData, SyncbackSnapshot};
 
 /// The name of an enviroment variable to use to override the behavior of
