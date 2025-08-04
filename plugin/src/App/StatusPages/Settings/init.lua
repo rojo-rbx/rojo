@@ -27,6 +27,7 @@ end
 
 local invertedLevels = invertTbl(Log.Level)
 local confirmationBehaviors = { "Initial", "Always", "Large Changes", "Unlisted PlaceId", "Never" }
+local syncReminderModes = { "Disabled", "Notify", "Fullscreen" }
 
 local function Navbar(props)
 	return Theme.with(function(theme)
@@ -101,13 +102,36 @@ function SettingsPage:render()
 				layoutOrder = layoutIncrement(),
 			}),
 
-			SyncReminder = e(Setting, {
-				id = "syncReminder",
+			SyncReminderMode = e(Setting, {
+				id = "syncReminderMode",
 				name = "Sync Reminder",
-				description = "Notify to sync when opening a place that has previously been synced",
+				description = "Reminders to sync your project",
 				transparency = self.props.transparency,
-				visible = Settings:getBinding("showNotifications"),
 				layoutOrder = layoutIncrement(),
+
+				options = syncReminderModes,
+			}),
+
+			SyncReminderAutoConnect = e(Setting, {
+				id = "syncReminderAutoConnect",
+				name = "Sync Reminder Auto Connect",
+				description = "Automatically connect to active sync server if it matches the last known sync",
+				transparency = self.props.transparency,
+				layoutOrder = layoutIncrement(),
+				visible = Settings:getBinding("syncReminderMode"):map(function(value)
+					return value ~= "Disabled"
+				end),
+			}),
+
+			SyncReminderPolling = e(Setting, {
+				id = "syncReminderPolling",
+				name = "Sync Reminder Polling",
+				description = "Look for available sync servers periodically",
+				transparency = self.props.transparency,
+				layoutOrder = layoutIncrement(),
+				visible = Settings:getBinding("syncReminderMode"):map(function(value)
+					return value ~= "Disabled"
+				end),
 			}),
 
 			ConfirmationBehavior = e(Setting, {
