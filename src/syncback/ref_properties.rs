@@ -5,7 +5,7 @@ use std::collections::{HashMap, HashSet, VecDeque};
 
 use rbx_dom_weak::{
     types::{Attributes, Ref, UniqueId, Variant},
-    ustr, Instance, WeakDom,
+    ustr, Instance, Ustr, WeakDom,
 };
 
 use crate::{multimap::MultiMap, REF_ID_ATTRIBUTE_NAME, REF_POINTER_ATTRIBUTE_PREFIX};
@@ -21,7 +21,7 @@ pub struct RefLinks {
 #[derive(PartialEq, Eq)]
 struct RefLink {
     /// The name of a property
-    name: String,
+    name: Ustr,
     /// The value of the property.
     value: Ref,
 }
@@ -50,7 +50,7 @@ pub fn collect_referents(dom: &WeakDom) -> RefLinks {
             links.insert(
                 inst_ref,
                 RefLink {
-                    name: prop_name.to_string(),
+                    name: *prop_name,
                     value: *prop_value,
                 },
             );
