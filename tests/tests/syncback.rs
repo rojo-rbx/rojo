@@ -64,6 +64,10 @@ syncback_tests! {
     // Ensures that ref properties are linked when no attributes are manually
     // set in the DataModel
     ref_properties_blank => ["src/pointer.model.json", "src/target.meta.json", "src/target.txt"],
+    // Ensures that if there is a conflict in RojoRefs, one of them is rewritten.
+    ref_properties_conflict => ["src/Pointer_2.model.json", "src/Target_2.model.json"],
+    // Ensures that having multiple pointers that are aimed at the same target doesn't trigger ref rewrites.
+    ref_properties_duplicate => [],
     // Ensures that the old middleware is respected during syncback
     respect_old_middleware => ["default.project.json", "src/model_json.model.json", "src/rbxm.rbxm", "src/rbxmx.rbxmx"],
     // Ensures that StringValues inside project files are written to the

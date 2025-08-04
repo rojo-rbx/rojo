@@ -1,6 +1,9 @@
 {
   "name": "ref_properties_conflict",
   "tree": {
-    "$path": "src"
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$path": "src"
+    }
   }
 }
