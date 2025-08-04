@@ -60,7 +60,7 @@ end
 
 function FullscreenNotification:willUnmount()
 	if self.timeout then
-		task.cancel(self.timeout)
+		pcall(task.cancel, self.timeout)
 	end
 end
 
