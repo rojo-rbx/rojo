@@ -1,6 +1,8 @@
 # Rojo Changelog
 
 ## Unreleased
+
+* Improved UX for sync reminder notifications ([#1096])
 * Add support for syncing `yml` and `yaml` files (behaves similar to JSON and TOML) ([#1093])
 * Fixed colors of Table diff ([#1084])
 * Fixed `sourcemap` command outputting paths with OS-specific path separators ([#1085])
@@ -9,12 +11,13 @@
 * Fixed `Auto Connect Playtest Server` no longer functioning due to Roblox change ([#1066])
 * Added an update indicator to the version header when a new version of the plugin is available. ([#1069])
 
+[#1096]: https://github.com/rojo-rbx/rojo/pull/1096
 [#1093]: https://github.com/rojo-rbx/rojo/pull/1093
 [#1084]: https://github.com/rojo-rbx/rojo/pull/1084
 [#1085]: https://github.com/rojo-rbx/rojo/pull/1085
 [#1081]: https://github.com/rojo-rbx/rojo/pull/1081
 [#1080]: https://github.com/rojo-rbx/rojo/pull/1080
-[#1049]: https://github.com/rojo-rbx/rojo/pull/1066
+[#1066]: https://github.com/rojo-rbx/rojo/pull/1066
 [#1069]: https://github.com/rojo-rbx/rojo/pull/1069
 
 ## 7.5.1 - April 25th, 2025
