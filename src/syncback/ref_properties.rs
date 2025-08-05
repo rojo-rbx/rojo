@@ -46,6 +46,9 @@ pub fn collect_referents(dom: &WeakDom) -> RefLinks {
             let Variant::Ref(prop_value) = prop_value else {
                 continue;
             };
+            if prop_value.is_none() {
+                continue;
+            }
 
             links.insert(
                 inst_ref,
