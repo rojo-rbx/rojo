@@ -9,6 +9,7 @@ local Packages = Rojo.Packages
 
 local Roact = require(Packages.Roact)
 local Log = require(Packages.Log)
+local Promise = require(Packages.Promise)
 
 local Assets = require(Plugin.Assets)
 local Version = require(Plugin.Version)
@@ -139,13 +140,18 @@ function App:init()
 	if RunService:IsEdit() then
 		self:checkForUpdates()
 
-		self:checkSyncReminder()
 		self:startSyncReminderPolling()
 		self.disconnectSyncReminderPollingChanged = Settings:onChanged("syncReminderPolling", function(enabled)
 			if enabled then
 				self:startSyncReminderPolling()
 			else
 				self:stopSyncReminderPolling()
+			end
+		end)
+
+		self:tryAutoReconnect():andThen(function(didReconnect)
+			if not didReconnect then
+				self:checkSyncReminder()
 			end
 		end)
 	end
@@ -195,15 +201,17 @@ function App:addNotification(notif: {
 	self.notifId += 1
 	local id = self.notifId
 
-	local notifications = table.clone(self.state.notifications)
-	notifications[id] = Dictionary.merge({
-		timestamp = DateTime.now().UnixTimestampMillis,
-		timeout = 3,
-	}, notif)
+	self:setState(function(prevState)
+		local notifications = table.clone(prevState.notifications)
+		notifications[id] = Dictionary.merge({
+			timeout = notif.timeout or 5,
+			isFullscreen = notif.isFullscreen or false,
+		}, notif)
 
-	self:setState({
-		notifications = notifications,
-	})
+		return {
+			notifications = notifications,
+		}
+	end)
 
 	return function()
 		self:closeNotification(id)
@@ -215,12 +223,14 @@ function App:closeNotification(id: number)
 		return
 	end
 
-	local notifications = table.clone(self.state.notifications)
-	notifications[id] = nil
+	self:setState(function(prevState)
+		local notifications = table.clone(prevState.notifications)
+		notifications[id] = nil
 
-	self:setState({
-		notifications = notifications,
-	})
+		return {
+			notifications = notifications,
+		}
+	end)
 end
 
 function App:checkForUpdates()
@@ -359,6 +369,52 @@ function App:releaseSyncLock()
 	Log.trace("Could not relase sync lock because it is owned by {}", lock.Value)
 end
 
+function App:findActiveServer()
+	local host, port = self:getHostAndPort()
+	local baseUrl = if string.find(host, "^https?://")
+		then string.format("%s:%s", host, port)
+		else string.format("http://%s:%s", host, port)
+
+	Log.trace("Checking for active sync server at {}", baseUrl)
+
+	local apiContext = ApiContext.new(baseUrl)
+	return apiContext:connect():andThen(function(serverInfo)
+		apiContext:disconnect()
+		return serverInfo, host, port
+	end)
+end
+
+function App:tryAutoReconnect()
+	if not Settings:get("autoReconnect") then
+		return Promise.resolve(false)
+	end
+
+	local priorSyncInfo = self:getPriorSyncInfo()
+	if not priorSyncInfo.projectName then
+		Log.trace("No prior sync info found, skipping auto-reconnect")
+		return Promise.resolve(false)
+	end
+
+	return self:findActiveServer()
+		:andThen(function(serverInfo)
+			-- change
+			if serverInfo.projectName == priorSyncInfo.projectName then
+				Log.trace("Auto-reconnect found matching server, reconnecting...")
+				self:addNotification({
+					text = `Auto-reconnect discovered project '{serverInfo.projectName}'...`,
+				})
+				self:startSession()
+				return true
+			end
+			Log.trace("Auto-reconnect found different server, not reconnecting")
+			return false
+		end)
+		:catch(function()
+			Log.trace("Auto-reconnect did not find a server, not reconnecting")
+			return false
+		end)
+end
+
 function App:checkSyncReminder()
 	local syncReminderMode = Settings:get("syncReminderMode")
 	if syncReminderMode == "Disabled" then
@@ -372,36 +428,17 @@ function App:checkSyncReminder()
 
 	local priorSyncInfo = self:getPriorSyncInfo()
 
-	-- Let's see what's at the current host and port
-	local host, port = self:getHostAndPort()
-	local baseUrl = if string.find(host, "^https?://")
-		then string.format("%s:%s", host, port)
-		else string.format("http://%s:%s", host, port)
-
-	Log.trace("Checking for active sync server at {}", baseUrl)
-
-	local apiContext = ApiContext.new(baseUrl)
-	apiContext
-		:connect()
-		:andThen(function(serverInfo)
-			apiContext:disconnect()
-
-			if Settings:get("syncReminderAutoConnect") and priorSyncInfo.projectName == serverInfo.projectName then
-				-- Same project as the last sync to this place and auto-connect is enabled
-				Log.trace("Sync reminder found active sync matching prior sync. Auto-connecting...")
-				self:startSession()
-			else
-				-- We can't auto connect, but we can send a reminder about this active server
-				self:sendSyncReminder(
-					`Project '{serverInfo.projectName}' is serving at {host}:{port}.\nWould you like to connect?`
-				)
-			end
+	self:findActiveServer()
+		:andThen(function(serverInfo, host, port)
+			self:sendSyncReminder(
+				`Project '{serverInfo.projectName}' is serving at {host}:{port}.\nWould you like to connect?`
+			)
 		end)
 		:catch(function()
-			if priorSyncInfo.timestamp then
+			if priorSyncInfo.timestamp and priorSyncInfo.projectName then
 				-- We didn't find an active server,
 				-- but this place has a prior sync
-				-- so we can remind the user to serve
+				-- so we should remind the user to serve
 
 				local timeSinceSync = timeUtil.elapsedToText(os.time() - priorSyncInfo.timestamp)
 				self:sendSyncReminder(
@@ -453,7 +490,7 @@ function App:sendSyncReminder(message: string)
 
 	self.dismissSyncReminder = self:addNotification({
 		text = message,
-		timeout = 60,
+		timeout = 120,
 		isFullscreen = Settings:get("syncReminderMode") == "Fullscreen",
 		onClose = function()
 			self.dismissSyncReminder = nil
@@ -616,7 +653,6 @@ function App:startSession()
 			})
 			self:addNotification({
 				text = "Connecting to session...",
-				timeout = 5,
 			})
 		elseif status == ServeSession.Status.Connected then
 			self.knownProjects[details] = true
@@ -632,7 +668,6 @@ function App:startSession()
 			})
 			self:addNotification({
 				text = string.format("Connected to session '%s' at %s.", details, address),
-				timeout = 5,
 			})
 		elseif status == ServeSession.Status.Disconnected then
 			self.serveSession = nil

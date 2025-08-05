@@ -3,8 +3,6 @@ local Rojo = script:FindFirstAncestor("Rojo")
 local Packages = Rojo.Packages
 local Roact = require(Packages.Roact)
 
-local baseClock = DateTime.now().UnixTimestampMillis
-
 local e = Roact.createElement
 
 local Notification = require(script.Notification)
@@ -22,10 +20,9 @@ function Notifications:render()
 		targetTable["NotifID_" .. id] = e(targetComponent, {
 			soundPlayer = self.props.soundPlayer,
 			text = notif.text,
-			timestamp = notif.timestamp,
 			timeout = notif.timeout,
 			actions = notif.actions,
-			layoutOrder = (notif.timestamp - baseClock),
+			layoutOrder = id,
 			onClose = function()
 				if notif.onClose then
 					notif.onClose()

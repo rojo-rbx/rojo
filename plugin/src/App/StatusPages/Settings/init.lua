@@ -94,6 +94,14 @@ function SettingsPage:render()
 			contentSize = self.contentSize,
 			transparency = self.props.transparency,
 		}, {
+			AutoReconnect = e(Setting, {
+				id = "autoReconnect",
+				name = "Auto Reconnect",
+				description = "Reconnect to server on place open if the served project matches the last sync to the place",
+				transparency = self.props.transparency,
+				layoutOrder = layoutIncrement(),
+			}),
+
 			ShowNotifications = e(Setting, {
 				id = "showNotifications",
 				name = "Show Notifications",
@@ -108,19 +116,9 @@ function SettingsPage:render()
 				description = "Reminders to sync your project",
 				transparency = self.props.transparency,
 				layoutOrder = layoutIncrement(),
+				visible = Settings:getBinding("showNotifications"),
 
 				options = syncReminderModes,
-			}),
-
-			SyncReminderAutoConnect = e(Setting, {
-				id = "syncReminderAutoConnect",
-				name = "Sync Reminder Auto Connect",
-				description = "Automatically connect to active sync server if it matches the last known sync",
-				transparency = self.props.transparency,
-				layoutOrder = layoutIncrement(),
-				visible = Settings:getBinding("syncReminderMode"):map(function(value)
-					return value ~= "Disabled"
-				end),
 			}),
 
 			SyncReminderPolling = e(Setting, {
@@ -129,8 +127,8 @@ function SettingsPage:render()
 				description = "Look for available sync servers periodically",
 				transparency = self.props.transparency,
 				layoutOrder = layoutIncrement(),
-				visible = Settings:getBinding("syncReminderMode"):map(function(value)
-					return value ~= "Disabled"
+				visible = Settings:getBindings("syncReminderMode", "showNotifications"):map(function(values)
+					return values.syncReminderMode ~= "Disabled" and values.showNotifications
 				end),
 			}),
 
