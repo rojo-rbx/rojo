@@ -16,8 +16,6 @@ local getTextBoundsAsync = require(Plugin.App.getTextBoundsAsync)
 local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
 local TextButton = require(Plugin.App.Components.TextButton)
 
-local baseClock = DateTime.now().UnixTimestampMillis
-
 local e = Roact.createElement
 
 local Notification = Roact.Component:extend("Notification")
@@ -77,7 +75,9 @@ function Notification:didMount()
 end
 
 function Notification:willUnmount()
-	task.cancel(self.timeout)
+	if self.timeout and coroutine.status(self.timeout) ~= "dead" then
+		task.cancel(self.timeout)
+	end
 end
 
 function Notification:render()
@@ -95,9 +95,12 @@ function Notification:render()
 					text = action.text,
 					style = action.style,
 					onClick = function()
-						local success, err = pcall(action.onClick, self)
-						if not success then
-							Log.warn("Error in notification action: " .. tostring(err))
+						self:dismiss()
+						if action.onClick then
+							local success, err = pcall(action.onClick, self)
+							if not success then
+								Log.warn("Error in notification action: " .. tostring(err))
+							end
 						end
 					end,
 					layoutOrder = -action.layoutOrder,
@@ -138,17 +141,17 @@ function Notification:render()
 		}, {
 			e(BorderedContainer, {
 				transparency = transparency,
-				size = UDim2.new(1, 0, 1, 0),
+				size = UDim2.fromScale(1, 1),
 			}, {
 				Contents = e("Frame", {
-					Size = UDim2.new(1, 0, 1, 0),
+					Size = UDim2.fromScale(1, 1),
 					BackgroundTransparency = 1,
 				}, {
 					Logo = e("ImageLabel", {
 						ImageTransparency = transparency,
 						Image = Assets.Images.PluginButton,
 						BackgroundTransparency = 1,
-						Size = UDim2.new(0, logoSize, 0, logoSize),
+						Size = UDim2.fromOffset(logoSize, logoSize),
 						Position = UDim2.new(0, 0, 0, 0),
 						AnchorPoint = Vector2.new(0, 0),
 					}),
@@ -171,7 +174,7 @@ function Notification:render()
 					Actions = if self.props.actions
 						then e("Frame", {
 							Size = UDim2.new(1, -40, 0, actionsY),
-							Position = UDim2.new(1, 0, 1, 0),
+							Position = UDim2.fromScale(1, 1),
 							AnchorPoint = Vector2.new(1, 1),
 							BackgroundTransparency = 1,
 						}, {
@@ -198,26 +201,4 @@ function Notification:render()
 	end)
 end
 
-local Notifications = Roact.Component:extend("Notifications")
-
-function Notifications:render()
-	local notifs = {}
-
-	for id, notif in self.props.notifications do
-		notifs["NotifID_" .. id] = e(Notification, {
-			soundPlayer = self.props.soundPlayer,
-			text = notif.text,
-			timestamp = notif.timestamp,
-			timeout = notif.timeout,
-			actions = notif.actions,
-			layoutOrder = (notif.timestamp - baseClock),
-			onClose = function()
-				self.props.onClose(id)
-			end,
-		})
-	end
-
-	return Roact.createFragment(notifs)
-end
-
-return Notifications
+return Notification

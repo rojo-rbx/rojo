@@ -9,6 +9,7 @@ local Packages = Rojo.Packages
 
 local Roact = require(Packages.Roact)
 local Log = require(Packages.Log)
+local Promise = require(Packages.Promise)
 
 local Assets = require(Plugin.Assets)
 local Version = require(Plugin.Version)
@@ -27,7 +28,7 @@ local timeUtil = require(Plugin.timeUtil)
 local Theme = require(script.Theme)
 
 local Page = require(script.Page)
-local Notifications = require(script.Notifications)
+local Notifications = require(script.Components.Notifications)
 local Tooltip = require(script.Components.Tooltip)
 local StudioPluginAction = require(script.Components.Studio.StudioPluginAction)
 local StudioToolbar = require(script.Components.Studio.StudioToolbar)
@@ -78,17 +79,18 @@ function App:init()
 				action
 			)
 		)
-		local dismissNotif = self:addNotification(
-			string.format("You've undone '%s'.\nIf this was not intended, please restore.", action),
-			10,
-			{
+		local dismissNotif = self:addNotification({
+			text = string.format("You've undone '%s'.\nIf this was not intended, please restore.", action),
+			timeout = 10,
+			onClose = function()
+				cleanup()
+			end,
+			actions = {
 				Restore = {
 					text = "Restore",
 					style = "Solid",
 					layoutOrder = 1,
-					onClick = function(notification)
-						cleanup()
-						notification:dismiss()
+					onClick = function()
 						ChangeHistoryService:Redo()
 					end,
 				},
@@ -96,13 +98,9 @@ function App:init()
 					text = "Dismiss",
 					style = "Bordered",
 					layoutOrder = 2,
-					onClick = function(notification)
-						cleanup()
-						notification:dismiss()
-					end,
 				},
-			}
-		)
+			},
+		})
 
 		undoConnection = ChangeHistoryService.OnUndo:Once(function()
 			-- Our notif is now out of date- redoing will not restore the patch
@@ -142,42 +140,20 @@ function App:init()
 	if RunService:IsEdit() then
 		self:checkForUpdates()
 
-		if
-			Settings:get("syncReminder")
-			and self.serveSession == nil
-			and self:getPriorSyncInfo().timestamp ~= nil
-			and (self:isSyncLockAvailable())
-		then
-			local syncInfo = self:getPriorSyncInfo()
-			local timeSinceSync = timeUtil.elapsedToText(os.time() - syncInfo.timestamp)
-			local syncDetail = if syncInfo.projectName
-				then `project '{syncInfo.projectName}'`
-				else `{syncInfo.host or Config.defaultHost}:{syncInfo.port or Config.defaultPort}`
+		self:startSyncReminderPolling()
+		self.disconnectSyncReminderPollingChanged = Settings:onChanged("syncReminderPolling", function(enabled)
+			if enabled then
+				self:startSyncReminderPolling()
+			else
+				self:stopSyncReminderPolling()
+			end
+		end)
 
-			self:addNotification(
-				`You synced {syncDetail} to this place {timeSinceSync}. Would you like to reconnect?`,
-				300,
-				{
-					Connect = {
-						text = "Connect",
-						style = "Solid",
-						layoutOrder = 1,
-						onClick = function(notification)
-							notification:dismiss()
-							self:startSession()
-						end,
-					},
-					Dismiss = {
-						text = "Dismiss",
-						style = "Bordered",
-						layoutOrder = 2,
-						onClick = function(notification)
-							notification:dismiss()
-						end,
-					},
-				}
-			)
-		end
+		self:tryAutoReconnect():andThen(function(didReconnect)
+			if not didReconnect then
+				self:checkSyncReminder()
+			end
+		end)
 	end
 
 	if self:isAutoConnectPlaytestServerAvailable() then
@@ -203,16 +179,23 @@ function App:willUnmount()
 
 	self.disconnectUpdatesCheckChanged()
 	self.disconnectPrereleasesCheckChanged()
+	if self.disconnectSyncReminderPollingChanged then
+		self.disconnectSyncReminderPollingChanged()
+	end
+
+	self:stopSyncReminderPolling()
 
 	self.autoConnectPlaytestServerListener()
 	self:clearRunningConnectionInfo()
 end
 
-function App:addNotification(
+function App:addNotification(notif: {
 	text: string,
+	isFullscreen: boolean?,
 	timeout: number?,
-	actions: { [string]: { text: string, style: string, layoutOrder: number, onClick: (any) -> () } }?
-)
+	actions: { [string]: { text: string, style: string, layoutOrder: number, onClick: (any) -> ()? } }?,
+	onClose: (any) -> ()?,
+})
 	if not Settings:get("showNotifications") then
 		return
 	end
@@ -220,17 +203,17 @@ function App:addNotification(
 	self.notifId += 1
 	local id = self.notifId
 
-	local notifications = table.clone(self.state.notifications)
-	notifications[id] = {
-		text = text,
-		timestamp = DateTime.now().UnixTimestampMillis,
-		timeout = timeout or 3,
-		actions = actions,
-	}
+	self:setState(function(prevState)
+		local notifications = table.clone(prevState.notifications)
+		notifications[id] = Dictionary.merge({
+			timeout = notif.timeout or 5,
+			isFullscreen = notif.isFullscreen or false,
+		}, notif)
 
-	self:setState({
-		notifications = notifications,
-	})
+		return {
+			notifications = notifications,
+		}
+	end)
 
 	return function()
 		self:closeNotification(id)
@@ -242,26 +225,29 @@ function App:closeNotification(id: number)
 		return
 	end
 
-	local notifications = table.clone(self.state.notifications)
-	notifications[id] = nil
+	self:setState(function(prevState)
+		local notifications = table.clone(prevState.notifications)
+		notifications[id] = nil
 
-	self:setState({
-		notifications = notifications,
-	})
+		return {
+			notifications = notifications,
+		}
+	end)
 end
 
 function App:checkForUpdates()
 	local updateMessage = Version.getUpdateMessage()
 
 	if updateMessage then
-		self:addNotification(updateMessage, 500, {
-			Dismiss = {
-				text = "Dismiss",
-				style = "Bordered",
-				layoutOrder = 2,
-				onClick = function(notification)
-					notification:dismiss()
-				end,
+		self:addNotification({
+			text = updateMessage,
+			timeout = 500,
+			actions = {
+				Dismiss = {
+					text = "Dismiss",
+					style = "Bordered",
+					layoutOrder = 2,
+				},
 			},
 		})
 	end
@@ -385,6 +371,155 @@ function App:releaseSyncLock()
 	Log.trace("Could not relase sync lock because it is owned by {}", lock.Value)
 end
 
+function App:findActiveServer()
+	local host, port = self:getHostAndPort()
+	local baseUrl = if string.find(host, "^https?://")
+		then string.format("%s:%s", host, port)
+		else string.format("http://%s:%s", host, port)
+
+	Log.trace("Checking for active sync server at {}", baseUrl)
+
+	local apiContext = ApiContext.new(baseUrl)
+	return apiContext:connect():andThen(function(serverInfo)
+		apiContext:disconnect()
+		return serverInfo, host, port
+	end)
+end
+
+function App:tryAutoReconnect()
+	if not Settings:get("autoReconnect") then
+		return Promise.resolve(false)
+	end
+
+	local priorSyncInfo = self:getPriorSyncInfo()
+	if not priorSyncInfo.projectName then
+		Log.trace("No prior sync info found, skipping auto-reconnect")
+		return Promise.resolve(false)
+	end
+
+	return self:findActiveServer()
+		:andThen(function(serverInfo)
+			-- change
+			if serverInfo.projectName == priorSyncInfo.projectName then
+				Log.trace("Auto-reconnect found matching server, reconnecting...")
+				self:addNotification({
+					text = `Auto-reconnect discovered project '{serverInfo.projectName}'...`,
+				})
+				self:startSession()
+				return true
+			end
+			Log.trace("Auto-reconnect found different server, not reconnecting")
+			return false
+		end)
+		:catch(function()
+			Log.trace("Auto-reconnect did not find a server, not reconnecting")
+			return false
+		end)
+end
+
+function App:checkSyncReminder()
+	local syncReminderMode = Settings:get("syncReminderMode")
+	if syncReminderMode == "None" then
+		return
+	end
+
+	if self.serveSession ~= nil or not self:isSyncLockAvailable() then
+		-- Already syncing or cannot sync, no reason to remind
+		return
+	end
+
+	local priorSyncInfo = self:getPriorSyncInfo()
+
+	self:findActiveServer()
+		:andThen(function(serverInfo, host, port)
+			self:sendSyncReminder(
+				`Project '{serverInfo.projectName}' is serving at {host}:{port}.\nWould you like to connect?`
+			)
+		end)
+		:catch(function()
+			if priorSyncInfo.timestamp and priorSyncInfo.projectName then
+				-- We didn't find an active server,
+				-- but this place has a prior sync
+				-- so we should remind the user to serve
+
+				local timeSinceSync = timeUtil.elapsedToText(os.time() - priorSyncInfo.timestamp)
+				self:sendSyncReminder(
+					`You synced project '{priorSyncInfo.projectName}' to this place {timeSinceSync}.\nDid you mean to run 'rojo serve' and then connect?`
+				)
+			end
+		end)
+end
+
+function App:startSyncReminderPolling()
+	if
+		self.syncReminderPollingThread ~= nil
+		or Settings:get("syncReminderMode") == "None"
+		or not Settings:get("syncReminderPolling")
+	then
+		return
+	end
+
+	Log.trace("Starting sync reminder polling thread")
+	self.syncReminderPollingThread = task.spawn(function()
+		while task.wait(30) do
+			if self.syncReminderPollingThread == nil then
+				-- The polling thread was stopped, so exit
+				return
+			end
+			if self.dismissSyncReminder then
+				-- There is already a sync reminder being shown
+				task.wait(5)
+				continue
+			end
+			self:checkSyncReminder()
+		end
+	end)
+end
+
+function App:stopSyncReminderPolling()
+	if self.syncReminderPollingThread then
+		Log.trace("Stopping sync reminder polling thread")
+		task.cancel(self.syncReminderPollingThread)
+		self.syncReminderPollingThread = nil
+	end
+end
+
+function App:sendSyncReminder(message: string)
+	local syncReminderMode = Settings:get("syncReminderMode")
+	if syncReminderMode == "None" then
+		return
+	end
+
+	self.dismissSyncReminder = self:addNotification({
+		text = message,
+		timeout = 120,
+		isFullscreen = Settings:get("syncReminderMode") == "Fullscreen",
+		onClose = function()
+			self.dismissSyncReminder = nil
+		end,
+		actions = {
+			Connect = {
+				text = "Connect",
+				style = "Solid",
+				layoutOrder = 1,
+				onClick = function()
+					self:startSession()
+				end,
+			},
+			Dismiss = {
+				text = "Dismiss",
+				style = "Bordered",
+				layoutOrder = 2,
+				onClick = function()
+					-- If the user dismisses the reminder,
+					-- then we don't need to remind them again
+					self:stopSyncReminderPolling()
+				end,
+			},
+		},
+	})
+end
+
 function App:isAutoConnectPlaytestServerAvailable()
 	return RunService:IsRunning()
 		and RunService:IsStudio()
@@ -435,7 +570,10 @@ function App:startSession()
 		local msg = string.format("Could not sync because user '%s' is already syncing", tostring(priorOwner))
 
 		Log.warn(msg)
-		self:addNotification(msg, 10)
+		self:addNotification({
+			text = msg,
+			timeout = 10,
+		})
 		self:setState({
 			appStatus = AppStatus.Error,
 			errorMessage = msg,
@@ -506,11 +644,18 @@ function App:startSession()
 
 	serveSession:onStatusChanged(function(status, details)
 		if status == ServeSession.Status.Connecting then
+			if self.dismissSyncReminder then
+				self.dismissSyncReminder()
+				self.dismissSyncReminder = nil
+			end
+
 			self:setState({
 				appStatus = AppStatus.Connecting,
 				toolbarIcon = Assets.Images.PluginButton,
 			})
-			self:addNotification("Connecting to session...")
+			self:addNotification({
+				text = "Connecting to session...",
+			})
 		elseif status == ServeSession.Status.Connected then
 			self.knownProjects[details] = true
 			self:setPriorSyncInfo(host, port, details)
@@ -523,7 +668,9 @@ function App:startSession()
 				address = address,
 				toolbarIcon = Assets.Images.PluginButtonConnected,
 			})
-			self:addNotification(string.format("Connected to session '%s' at %s.", details, address), 5)
+			self:addNotification({
+				text = string.format("Connected to session '%s' at %s.", details, address),
+			})
 		elseif status == ServeSession.Status.Disconnected then
 			self.serveSession = nil
 			self:releaseSyncLock()
@@ -546,13 +693,19 @@ function App:startSession()
 					errorMessage = tostring(details),
 					toolbarIcon = Assets.Images.PluginButtonWarning,
 				})
-				self:addNotification(tostring(details), 10)
+				self:addNotification({
+					text = tostring(details),
+					timeout = 10,
+				})
 			else
 				self:setState({
 					appStatus = AppStatus.NotConnected,
 					toolbarIcon = Assets.Images.PluginButton,
 				})
-				self:addNotification("Disconnected from session.")
+				self:addNotification({
+					text = "Disconnected from session.",
+					timeout = 10,
+				})
 			end
 		end
 	end)
@@ -630,13 +783,13 @@ function App:startSession()
 			toolbarIcon = Assets.Images.PluginButton,
 		})
 
-		self:addNotification(
-			string.format(
+		self:addNotification({
+			text = string.format(
 				"Please accept%sor abort the initializing sync session.",
 				Settings:get("twoWaySync") and ", reject, " or " "
 			),
-			7
-		)
+			timeout = 7,
+		})
 
 		return self.confirmationEvent:Wait()
 	end)
@@ -797,19 +950,7 @@ function App:render()
 					ResetOnSpawn = false,
 					DisplayOrder = 100,
 				}, {
-					layout = e("UIListLayout", {
-						SortOrder = Enum.SortOrder.LayoutOrder,
-						HorizontalAlignment = Enum.HorizontalAlignment.Right,
-						VerticalAlignment = Enum.VerticalAlignment.Bottom,
-						Padding = UDim.new(0, 5),
-					}),
-					padding = e("UIPadding", {
-						PaddingTop = UDim.new(0, 5),
-						PaddingBottom = UDim.new(0, 5),
-						PaddingLeft = UDim.new(0, 5),
-						PaddingRight = UDim.new(0, 5),
-					}),
-					notifs = e(Notifications, {
+					Notifications = e(Notifications, {
 						soundPlayer = self.props.soundPlayer,
 						notifications = self.state.notifications,
 						onClose = function(id)
