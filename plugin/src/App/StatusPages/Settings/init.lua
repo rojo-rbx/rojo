@@ -113,7 +113,7 @@ function SettingsPage:render()
 			SyncReminderMode = e(Setting, {
 				id = "syncReminderMode",
 				name = "Sync Reminder",
-				description = "Reminders to sync your project",
+				description = "Whether you get reminders to sync your project, and what type",
 				transparency = self.props.transparency,
 				layoutOrder = layoutIncrement(),
 				visible = Settings:getBinding("showNotifications"),
