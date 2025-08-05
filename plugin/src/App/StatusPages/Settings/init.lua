@@ -27,7 +27,7 @@ end
 
 local invertedLevels = invertTbl(Log.Level)
 local confirmationBehaviors = { "Initial", "Always", "Large Changes", "Unlisted PlaceId", "Never" }
-local syncReminderModes = { "Disabled", "Notify", "Fullscreen" }
+local syncReminderModes = { "None", "Notify", "Fullscreen" }
 
 local function Navbar(props)
 	return Theme.with(function(theme)
@@ -113,7 +113,7 @@ function SettingsPage:render()
 			SyncReminderMode = e(Setting, {
 				id = "syncReminderMode",
 				name = "Sync Reminder",
-				description = "Whether you get reminders to sync your project, and what type",
+				description = "What type of reminders you receive for syncing your project",
 				transparency = self.props.transparency,
 				layoutOrder = layoutIncrement(),
 				visible = Settings:getBinding("showNotifications"),
@@ -128,7 +128,7 @@ function SettingsPage:render()
 				transparency = self.props.transparency,
 				layoutOrder = layoutIncrement(),
 				visible = Settings:getBindings("syncReminderMode", "showNotifications"):map(function(values)
-					return values.syncReminderMode ~= "Disabled" and values.showNotifications
+					return values.syncReminderMode ~= "None" and values.showNotifications
 				end),
 			}),
 

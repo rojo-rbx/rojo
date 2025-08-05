@@ -419,7 +419,7 @@ end
 
 function App:checkSyncReminder()
 	local syncReminderMode = Settings:get("syncReminderMode")
-	if syncReminderMode == "Disabled" then
+	if syncReminderMode == "None" then
 		return
 	end
 
@@ -453,7 +453,7 @@ end
 function App:startSyncReminderPolling()
 	if
 		self.syncReminderPollingThread ~= nil
-		or Settings:get("syncReminderMode") == "Disabled"
+		or Settings:get("syncReminderMode") == "None"
 		or not Settings:get("syncReminderPolling")
 	then
 		return
@@ -486,7 +486,7 @@ end
 
 function App:sendSyncReminder(message: string)
 	local syncReminderMode = Settings:get("syncReminderMode")
-	if syncReminderMode == "Disabled" then
+	if syncReminderMode == "None" then
 		return
 	end
 
