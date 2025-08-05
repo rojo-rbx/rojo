@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Improved UX for sync reminder notifications ([#1096])
+* Add auto-reconnect and improve UX for sync reminders ([#1096])
 * Add support for syncing `yml` and `yaml` files (behaves similar to JSON and TOML) ([#1093])
 * Fixed colors of Table diff ([#1084])
 * Fixed `sourcemap` command outputting paths with OS-specific path separators ([#1085])
