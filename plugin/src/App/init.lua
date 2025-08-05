@@ -179,7 +179,9 @@ function App:willUnmount()
 
 	self.disconnectUpdatesCheckChanged()
 	self.disconnectPrereleasesCheckChanged()
-	self.disconnectSyncReminderPollingChanged()
+	if self.disconnectSyncReminderPollingChanged then
+		self.disconnectSyncReminderPollingChanged()
+	end
 
 	self:stopSyncReminderPolling()
 
