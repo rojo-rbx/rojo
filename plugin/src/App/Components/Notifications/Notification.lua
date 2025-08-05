@@ -75,7 +75,9 @@ function Notification:didMount()
 end
 
 function Notification:willUnmount()
-	task.cancel(self.timeout)
+	if self.timeout and coroutine.status(self.timeout) ~= "dead" then
+		task.cancel(self.timeout)
+	end
 end
 
 function Notification:render()
