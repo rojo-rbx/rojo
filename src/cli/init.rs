@@ -63,9 +63,9 @@ impl InitCommand {
         };
 
         match self.kind {
-            InitKind::Place => init_place(&base_path, project_params)?,
-            InitKind::Model => init_model(&base_path, project_params)?,
-            InitKind::Plugin => init_plugin(&base_path, project_params)?,
+            InitKind::Place => init_place(&base_path, project_params, self.no_git)?,
+            InitKind::Model => init_model(&base_path, project_params, self.no_git)?,
+            InitKind::Plugin => init_plugin(&base_path, project_params, self.no_git)?,
         }
 
         println!("Created project successfully.");
