@@ -168,7 +168,12 @@ fn init_model(base_path: &Path, project_params: ProjectParams, no_git: bool) -> 
 
     Ok(())
 }
-fn init_plugin(base_path: &Path, project_params: ProjectParams) -> anyhow::Result<()> {
+
+fn init_plugin(
+    base_path: &Path,
+    project_params: ProjectParams,
+    no_git: bool
+) -> anyhow::Result<()> {
     println!("Creating new plugin project '{}'", project_params.name);
 
     let project_file = project_params.render_template(PLUGIN_PROJECT);
@@ -182,12 +187,13 @@ fn init_plugin(base_path: &Path, project_params: ProjectParams) -> anyhow::Resul
 
     write_if_not_exists(&src.join("init.server.luau"), "print(\"Hello world, from plugin!\")\n")?;
 
-    let git_ignore = project_params.render_template(PLUGIN_GIT_IGNORE);
-    try_git_init(base_path, &git_ignore)?;
+    if !no_git {
+        let git_ignore = project_params.render_template(PLUGIN_GIT_IGNORE);
+        try_git_init(base_path, &git_ignore)?;
+    }
 
     Ok(())
 }
-
 /// Contains parameters used in templates to create a project.
 struct ProjectParams {
     name: String,
