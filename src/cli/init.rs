@@ -1,31 +1,36 @@
-use std::io::{self, Write};
-use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+use std::io::{ self, Write };
+use std::path::{ Path, PathBuf };
+use std::process::{ Command, Stdio };
 use std::str::FromStr;
 
-use anyhow::{bail, format_err};
+use anyhow::{ bail, format_err };
 use clap::Parser;
 use fs_err as fs;
 use fs_err::OpenOptions;
 
 use super::resolve_path;
 
-static MODEL_PROJECT: &str =
-    include_str!("../../assets/default-model-project/default.project.json");
+static MODEL_PROJECT: &str = include_str!(
+    "../../assets/default-model-project/default.project.json"
+);
 static MODEL_README: &str = include_str!("../../assets/default-model-project/README.md");
 static MODEL_INIT: &str = include_str!("../../assets/default-model-project/src-init.luau");
 static MODEL_GIT_IGNORE: &str = include_str!("../../assets/default-model-project/gitignore.txt");
 
-static PLACE_PROJECT: &str =
-    include_str!("../../assets/default-place-project/default.project.json");
+static PLACE_PROJECT: &str = include_str!(
+    "../../assets/default-place-project/default.project.json"
+);
 static PLACE_README: &str = include_str!("../../assets/default-place-project/README.md");
 static PLACE_GIT_IGNORE: &str = include_str!("../../assets/default-place-project/gitignore.txt");
 
-static PLUGIN_PROJECT: &str =
-    include_str!("../../assets/default-plugin-project/default.project.json");
+static PLUGIN_PROJECT: &str = include_str!(
+    "../../assets/default-plugin-project/default.project.json"
+);
 static PLUGIN_README: &str = include_str!("../../assets/default-plugin-project/README.md");
 static PLUGIN_GIT_IGNORE: &str = include_str!("../../assets/default-plugin-project/gitignore.txt");
 
+/// Initializes a new Rojo project.
+#[derive(Debug, Parser)]
 /// Initializes a new Rojo project.
 #[derive(Debug, Parser)]
 pub struct InitCommand {
@@ -36,6 +41,10 @@ pub struct InitCommand {
     /// The kind of project to create, 'place', 'plugin', or 'model'. Defaults to place.
     #[clap(long, default_value = "place")]
     pub kind: InitKind,
+
+    /// Skip Git initialisation.
+    #[clap(long = "no-git")]
+    pub no_git: bool,
 }
 
 impl InitCommand {
@@ -86,10 +95,10 @@ impl FromStr for InitKind {
             "place" => Ok(InitKind::Place),
             "model" => Ok(InitKind::Model),
             "plugin" => Ok(InitKind::Plugin),
-            _ => Err(format_err!(
-                "Invalid init kind '{}'. Valid kinds are: place, model, plugin",
-                source
-            )),
+            _ =>
+                Err(
+                    format_err!("Invalid init kind '{}'. Valid kinds are: place, model, plugin", source)
+                ),
         }
     }
 }
@@ -117,17 +126,17 @@ fn init_place(base_path: &Path, project_params: ProjectParams) -> anyhow::Result
 
     write_if_not_exists(
         &src_shared.join("Hello.luau"),
-        "return function()\n\tprint(\"Hello, world!\")\nend",
+        "return function()\n\tprint(\"Hello, world!\")\nend"
     )?;
 
     write_if_not_exists(
         &src_server.join("init.server.luau"),
-        "print(\"Hello world, from server!\")",
+        "print(\"Hello world, from server!\")"
     )?;
 
     write_if_not_exists(
         &src_client.join("init.client.luau"),
-        "print(\"Hello world, from client!\")",
+        "print(\"Hello world, from client!\")"
     )?;
 
     let git_ignore = project_params.render_template(PLACE_GIT_IGNORE);
@@ -169,10 +178,7 @@ fn init_plugin(base_path: &Path, project_params: ProjectParams) -> anyhow::Resul
     let src = base_path.join("src");
     fs::create_dir_all(&src)?;
 
-    write_if_not_exists(
-        &src.join("init.server.luau"),
-        "print(\"Hello world, from plugin!\")\n",
-    )?;
+    write_if_not_exists(&src.join("init.server.luau"), "print(\"Hello world, from plugin!\")\n")?;
 
     let git_ignore = project_params.render_template(PLUGIN_GIT_IGNORE);
     try_git_init(base_path, &git_ignore)?;
@@ -241,9 +247,11 @@ fn write_if_not_exists(path: &Path, contents: &str) -> Result<(), anyhow::Error>
         Ok(file) => file,
         Err(err) => {
             return match err.kind() {
-                io::ErrorKind::AlreadyExists => return Ok(()),
+                io::ErrorKind::AlreadyExists => {
+                    return Ok(());
+                }
                 _ => Err(err.into()),
-            }
+            };
         }
     };
 
@@ -256,10 +264,7 @@ fn write_if_not_exists(path: &Path, contents: &str) -> Result<(), anyhow::Error>
 fn try_create_project(base_path: &Path, contents: &str) -> Result<(), anyhow::Error> {
     let project_path = base_path.join("default.project.json");
 
-    let file_res = OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .open(&project_path);
+    let file_res = OpenOptions::new().write(true).create_new(true).open(&project_path);
 
     let mut file = match file_res {
         Ok(file) => file,
@@ -269,7 +274,7 @@ fn try_create_project(base_path: &Path, contents: &str) -> Result<(), anyhow::Er
                     bail!("Project file already exists: {}", project_path.display())
                 }
                 _ => Err(err.into()),
-            }
+            };
         }
     };
 
