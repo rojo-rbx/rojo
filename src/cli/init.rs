@@ -146,7 +146,7 @@ fn init_place(base_path: &Path, project_params: ProjectParams, no_git: bool) -> 
 
     Ok(())
 }
-fn init_model(base_path: &Path, project_params: ProjectParams) -> anyhow::Result<()> {
+fn init_model(base_path: &Path, project_params: ProjectParams, no_git: bool) -> anyhow::Result<()> {
     println!("Creating new model project '{}'", project_params.name);
 
     let project_file = project_params.render_template(MODEL_PROJECT);
@@ -161,12 +161,13 @@ fn init_model(base_path: &Path, project_params: ProjectParams) -> anyhow::Result
     let init = project_params.render_template(MODEL_INIT);
     write_if_not_exists(&src.join("init.luau"), &init)?;
 
-    let git_ignore = project_params.render_template(MODEL_GIT_IGNORE);
-    try_git_init(base_path, &git_ignore)?;
+    if !no_git {
+        let git_ignore = project_params.render_template(MODEL_GIT_IGNORE);
+        try_git_init(base_path, &git_ignore)?;
+    }
 
     Ok(())
 }
-
 fn init_plugin(base_path: &Path, project_params: ProjectParams) -> anyhow::Result<()> {
     println!("Creating new plugin project '{}'", project_params.name);
 
