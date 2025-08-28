@@ -103,7 +103,7 @@ impl FromStr for InitKind {
     }
 }
 
-fn init_place(base_path: &Path, project_params: ProjectParams) -> anyhow::Result<()> {
+fn init_place(base_path: &Path, project_params: ProjectParams, no_git: bool) -> anyhow::Result<()> {
     println!("Creating new place project '{}'", project_params.name);
 
     let project_file = project_params.render_template(PLACE_PROJECT);
@@ -116,13 +116,13 @@ fn init_place(base_path: &Path, project_params: ProjectParams) -> anyhow::Result
     fs::create_dir_all(&src)?;
 
     let src_shared = src.join("shared");
-    fs::create_dir_all(src.join(&src_shared))?;
+    fs::create_dir_all(&src_shared)?;
 
     let src_server = src.join("server");
-    fs::create_dir_all(src.join(&src_server))?;
+    fs::create_dir_all(&src_server)?;
 
     let src_client = src.join("client");
-    fs::create_dir_all(src.join(&src_client))?;
+    fs::create_dir_all(&src_client)?;
 
     write_if_not_exists(
         &src_shared.join("Hello.luau"),
@@ -139,12 +139,13 @@ fn init_place(base_path: &Path, project_params: ProjectParams) -> anyhow::Result
         "print(\"Hello world, from client!\")"
     )?;
 
-    let git_ignore = project_params.render_template(PLACE_GIT_IGNORE);
-    try_git_init(base_path, &git_ignore)?;
+    if !no_git {
+        let git_ignore = project_params.render_template(PLACE_GIT_IGNORE);
+        try_git_init(base_path, &git_ignore)?;
+    }
 
     Ok(())
 }
-
 fn init_model(base_path: &Path, project_params: ProjectParams) -> anyhow::Result<()> {
     println!("Creating new model project '{}'", project_params.name);
 
