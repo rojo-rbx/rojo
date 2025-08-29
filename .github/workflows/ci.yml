@@ -35,10 +35,10 @@ jobs:
           target
         key: ${{ matrix.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-    - name: Setup Aftman
-      uses: ok-nick/setup-aftman@v0.4.2
+    - name: Setup Rokit
+      uses: CompeyDev/setup-rokit@v0.1.2
       with:
-        version: 'v0.3.0'
+        version: 'v1.1.0'
 
     - name: Build
       run: cargo build --locked --verbose
@@ -76,10 +76,10 @@ jobs:
           target
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-    - name: Setup Aftman
-      uses: ok-nick/setup-aftman@v0.4.2
+    - name: Setup Rokit
+      uses: CompeyDev/setup-rokit@v0.1.2
       with:
-        version: 'v0.3.0'
+        version: 'v1.1.0'
 
     - name: Build
       run: cargo build --locked --verbose
@@ -116,10 +116,10 @@ jobs:
           target
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-    - name: Setup Aftman
-      uses: ok-nick/setup-aftman@v0.4.2
+    - name: Setup Rokit
+      uses: CompeyDev/setup-rokit@v0.1.2
       with:
-        version: 'v0.3.0'
+        version: 'v1.1.0'
 
     - name: Stylua
       run: stylua --check plugin/src
