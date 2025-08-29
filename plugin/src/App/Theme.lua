@@ -165,12 +165,29 @@ function StudioProvider:updateTheme()
 			BackgroundColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.InputFieldBackground),
 		},
 		Diff = {
-			-- Studio doesn't have good colors since their diffs use backgrounds, not text
-			Add = if isDark then Color3.fromRGB(143, 227, 154) else Color3.fromRGB(41, 164, 45),
-			Remove = if isDark then Color3.fromRGB(242, 125, 125) else Color3.fromRGB(150, 29, 29),
-			Edit = if isDark then Color3.fromRGB(120, 154, 248) else Color3.fromRGB(0, 70, 160),
+			-- Very bright different colors in case some places were not updated to use
+			-- the new background diff colors.
+			Add = Color3.fromRGB(255, 0, 255),
+			Remove = Color3.fromRGB(255, 0, 255),
+			Edit = Color3.fromRGB(255, 0, 255),
+
 			Row = studioTheme:GetColor(Enum.StudioStyleGuideColor.BrightText),
 			Warning = studioTheme:GetColor(Enum.StudioStyleGuideColor.WarningText),
+
+			Background = {
+				-- Studio doesn't have good colors since their diffs use backgrounds, not text
+				Add = if isDark then Color3.fromRGB(143, 227, 154) else Color3.fromRGB(41, 164, 45),
+				Remove = if isDark then Color3.fromRGB(242, 125, 125) else Color3.fromRGB(150, 29, 29),
+				Edit = if isDark then Color3.fromRGB(120, 154, 248) else Color3.fromRGB(0, 70, 160),
+				Remain = studioTheme:GetColor(Enum.StudioStyleGuideColor.BrightText),
+			},
+
+			Text = {
+				Add = if isDark then Color3.new(0, 0, 0) else Color3.new(1, 1, 1),
+				Remove = if isDark then Color3.new(0, 0, 0) else Color3.new(1, 1, 1),
+				Edit = if isDark then Color3.new(0, 0, 0) else Color3.new(1, 1, 1),
+				Remain = studioTheme:GetColor(Enum.StudioStyleGuideColor.MainText),
+			},
 		},
 		ConnectionDetails = {
 			ProjectNameColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.BrightText),
