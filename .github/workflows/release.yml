@@ -95,11 +95,6 @@ jobs:
             target
           key: ${{ matrix.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Setup Rokit
-        uses: CompeyDev/setup-rokit@v0.1.2
-        with:
-          version: 'v1.1.0'
-
       - name: Build Release
         run: cargo build --release --locked --verbose --target ${{ matrix.target }}
 
