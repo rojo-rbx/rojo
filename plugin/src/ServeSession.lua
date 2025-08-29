@@ -261,8 +261,15 @@ function ServeSession:__replaceInstances(idList)
 	local modelSuccess, replacements = self.__apiContext
 		:serialize(idList)
 		:andThen(function(response)
-			Log.debug("Deserializing results from model endpoint")
+			Log.debug("Deserializing results from serialize endpoint")
 			local objects = SerializationService:DeserializeInstancesAsync(response.modelContents)
+			if objects[1] then
+				return Promise.reject("Serialize endpoint did not deserialize into any Instances")
+			end
+			if #objects[1]:GetChildren() ~= #idList then
+				return Promise.reject("Serialize endpoint did not return the correct number of Instances")
+			end
+
 			local instanceMap = {}
 			for _, item in objects[1]:GetChildren() do
 				instanceMap[item.Name] = item.Value
