@@ -2,3 +2,6 @@ std = "roblox+testez"
 
 [config]
 unused_variable = { allow_unused_self = true }
+
+[lints]
+roblox_manual_fromscale_or_fromoffset = "allow"
