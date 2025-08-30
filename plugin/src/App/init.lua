@@ -595,13 +595,13 @@ function App:startSession()
 		twoWaySync = Settings:get("twoWaySync"),
 	})
 
-	self.cleanupPrecommit = serveSession.__reconciler:hookPrecommit(function(patch, instanceMap)
+	self.cleanupPrecommit = serveSession:hookPrecommit(function(patch, instanceMap)
 		-- Build new tree for patch
 		self:setState({
 			patchTree = PatchTree.build(patch, instanceMap, { "Property", "Old", "New" }),
 		})
 	end)
-	self.cleanupPostcommit = serveSession.__reconciler:hookPostcommit(function(patch, instanceMap, unappliedPatch)
+	self.cleanupPostcommit = serveSession:hookPostcommit(function(patch, instanceMap, unappliedPatch)
 		-- Update tree with unapplied metadata
 		self:setState(function(prevState)
 			return {

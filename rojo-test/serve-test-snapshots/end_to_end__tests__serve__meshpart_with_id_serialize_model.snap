@@ -1,0 +1,43 @@
+---
+source: tests/tests/serve.rs
+expression: model
+---
+<roblox version="4">
+  <Item class="Folder" referent="0">
+    <Properties>
+      <string name="Name">Folder</string>
+    </Properties>
+    <Item class="ObjectValue" referent="1">
+      <Properties>
+        <string name="Name">id-5</string>
+        <BinaryString name="AttributesSerialize"></BinaryString>
+        <Ref name="Value">2</Ref>
+      </Properties>
+      <Item class="MeshPart" referent="2">
+        <Properties>
+          <string name="Name">Sword</string>
+          <Content name="MeshContent">
+            <uri>rbxasset://fonts/sword.mesh</uri>
+          </Content>
+          <Content name="TextureContent">
+            <uri>rbxasset://textures/SwordTexture.png</uri>
+          </Content>
+        </Properties>
+      </Item>
+    </Item>
+    <Item class="ObjectValue" referent="3">
+      <Properties>
+        <string name="Name">id-4</string>
+        <BinaryString name="AttributesSerialize"></BinaryString>
+        <Ref name="Value">4</Ref>
+      </Properties>
+      <Item class="ObjectValue" referent="4">
+        <Properties>
+          <string name="Name">ObjectValue</string>
+          <BinaryString name="AttributesSerialize">AQAAABEAAABSb2pvX1RhcmdldF9WYWx1ZQIFAAAAc3dvcmQ=</BinaryString>
+          <Ref name="Value">null</Ref>
+        </Properties>
+      </Item>
+    </Item>
+  </Item>
+</roblox>

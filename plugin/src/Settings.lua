@@ -14,6 +14,7 @@ local defaultSettings = {
 	twoWaySync = false,
 	autoReconnect = false,
 	showNotifications = true,
+	enableSyncFallback = true,
 	syncReminderMode = "Notify" :: "None" | "Notify" | "Fullscreen",
 	syncReminderPolling = true,
 	checkForUpdates = true,

@@ -1,4 +1,5 @@
 use std::{
+    fmt::Write as _,
     fs,
     path::{Path, PathBuf},
     process::Command,
@@ -11,7 +12,7 @@ use rbx_dom_weak::types::Ref;
 
 use tempfile::{tempdir, TempDir};
 
-use librojo::web_api::{ReadResponse, ServerInfoResponse, SubscribeResponse};
+use librojo::web_api::{ReadResponse, SerializeResponse, ServerInfoResponse, SubscribeResponse};
 use rojo_insta_ext::RedactionMap;
 
 use crate::rojo_test::io_util::{
@@ -174,6 +175,18 @@ impl TestServeSession {
 
         reqwest::blocking::get(url)?.json()
     }
+
+    pub fn get_api_serialize(&self, ids: &[Ref]) -> Result<SerializeResponse, reqwest::Error> {
+        let mut id_list = String::with_capacity(ids.len() * 33);
+        for id in ids {
+            write!(id_list, "{id},").unwrap();
+        }
+        id_list.pop();
+
+        let url = format!("http://localhost:{}/api/serialize/{}", self.port, id_list);
+
+        reqwest::blocking::get(url)?.json()
+    }
 }
 
 /// Probably-okay way to generate random enough port numbers for running the
@@ -186,4 +199,28 @@ fn get_port_number() -> usize {
     static NEXT_PORT_NUMBER: AtomicUsize = AtomicUsize::new(35103);
 
     NEXT_PORT_NUMBER.fetch_add(1, Ordering::SeqCst)
+}
+
+/// Takes a SerializeResponse and creates an XML model out of the response.
+///
+/// Since the provided structure intentionally includes unredacted referents,
+/// some post-processing is done to ensure they don't show up in the model.
+pub fn serialize_to_xml_model(response: &SerializeResponse, redactions: &RedactionMap) -> String {
+    let model_content = data_encoding::BASE64
+        .decode(response.model_contents.model().as_bytes())
+        .unwrap();
+
+    let mut dom = rbx_binary::from_reader(model_content.as_slice()).unwrap();
+    // This makes me realize that maybe we need a `descendants_mut` iter.
+    let ref_list: Vec<Ref> = dom.descendants().map(|inst| inst.referent()).collect();
+    for referent in ref_list {
+        let inst = dom.get_by_ref_mut(referent).unwrap();
+        if let Some(id) = redactions.get_id_for_value(&inst.name) {
+            inst.name = format!("id-{id}");
+        }
+    }
+
+    let mut data = Vec::new();
+    rbx_xml::to_writer_default(&mut data, &dom, dom.root().children()).unwrap();
+    String::from_utf8(data).expect("rbx_xml should never produce invalid utf-8")
 }

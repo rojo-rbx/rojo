@@ -282,6 +282,22 @@ function PatchSet.assign(target, ...)
 	return target
 end
 
+function PatchSet.addedIdList(patchSet): { string }
+	local idList = table.create(#patchSet.added)
+	for id in patchSet.added do
+		table.insert(idList, id)
+	end
+	return table.freeze(idList)
+end
+
+function PatchSet.updatedIdList(patchSet): { string }
+	local idList = table.create(#patchSet.updated)
+	for _, item in patchSet.updated do
+		table.insert(idList, item.id)
+	end
+	return table.freeze(idList)
+end
+
 --[[
 	Create a list of human-readable statements summarizing the contents of this
 	patch, intended to be displayed to users.

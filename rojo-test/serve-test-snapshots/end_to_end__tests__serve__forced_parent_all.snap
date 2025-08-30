@@ -1,0 +1,16 @@
+---
+source: tests/tests/serve.rs
+expression: "read_response.intern_and_redact(&mut redactions, root_id)"
+---
+instances:
+  id-2:
+    Children: []
+    ClassName: Attachment
+    Id: id-2
+    Metadata:
+      ignoreUnknownInstances: true
+    Name: forced_parent
+    Parent: "00000000000000000000000000000000"
+    Properties: {}
+messageCursor: 0
+sessionId: id-1

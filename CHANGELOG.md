@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+* Added fallback method for when an Instance can't be synced through normal means ([#1030])
+ 	This should make it possible to sync `MeshParts` and `Unions`!
+
+ 	The fallback involves deleting and recreating Instances. This will break
+ 	properties that reference them that Rojo does not know about, so be weary.
+
 * Add auto-reconnect and improve UX for sync reminders ([#1096])
 * Add support for syncing `yml` and `yaml` files (behaves similar to JSON and TOML) ([#1093])
 * Fixed colors of Table diff ([#1084])
@@ -13,6 +19,7 @@
 * Added `--absolute` flag to the sourcemap subcommand, which will emit absolute paths instead of relative paths. ([#1092])
 * Fixed applying `gameId` and `placeId` before initial sync was accepted ([#1104])
 
+[#1030]: https://github.com/rojo-rbx/rojo/pull/1030
 [#1096]: https://github.com/rojo-rbx/rojo/pull/1096
 [#1093]: https://github.com/rojo-rbx/rojo/pull/1093
 [#1084]: https://github.com/rojo-rbx/rojo/pull/1084

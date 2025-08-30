@@ -1,0 +1,27 @@
+---
+source: tests/tests/serve.rs
+expression: model
+---
+<roblox version="4">
+  <Item class="Folder" referent="0">
+    <Properties>
+      <string name="Name">Folder</string>
+    </Properties>
+    <Item class="ObjectValue" referent="1">
+      <Properties>
+        <string name="Name">id-2</string>
+        <Ref name="Value">2</Ref>
+      </Properties>
+      <Item class="Part" referent="3">
+        <Properties>
+          <string name="Name">Part</string>
+        </Properties>
+        <Item class="Attachment" referent="2">
+          <Properties>
+            <string name="Name">forced_parent</string>
+          </Properties>
+        </Item>
+      </Item>
+    </Item>
+  </Item>
+</roblox>
