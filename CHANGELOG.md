@@ -1,6 +1,8 @@
 # Rojo Changelog
 
 ## Unreleased
+
+* Add auto-reconnect and improve UX for sync reminders ([#1096])
 * Add support for syncing `yml` and `yaml` files (behaves similar to JSON and TOML) ([#1093])
 * Fixed colors of Table diff ([#1084])
 * Fixed `sourcemap` command outputting paths with OS-specific path separators ([#1085])
@@ -9,15 +11,18 @@
 * Fixed `Auto Connect Playtest Server` no longer functioning due to Roblox change ([#1066])
 * Added an update indicator to the version header when a new version of the plugin is available. ([#1069])
 * Added `--absolute` flag to the sourcemap subcommand, which will emit absolute paths instead of relative paths. ([#1092])
+* Fixed applying `gameId` and `placeId` before initial sync was accepted ([#1104])
 
+[#1096]: https://github.com/rojo-rbx/rojo/pull/1096
 [#1093]: https://github.com/rojo-rbx/rojo/pull/1093
 [#1084]: https://github.com/rojo-rbx/rojo/pull/1084
 [#1085]: https://github.com/rojo-rbx/rojo/pull/1085
 [#1081]: https://github.com/rojo-rbx/rojo/pull/1081
 [#1080]: https://github.com/rojo-rbx/rojo/pull/1080
-[#1049]: https://github.com/rojo-rbx/rojo/pull/1066
+[#1066]: https://github.com/rojo-rbx/rojo/pull/1066
 [#1069]: https://github.com/rojo-rbx/rojo/pull/1069
 [#1092]: https://github.com/rojo-rbx/rojo/pull/1092
+[#1104]: https://github.com/rojo-rbx/rojo/pull/1104
 
 ## 7.5.1 - April 25th, 2025
 * Fixed output spam related to `Instance.Capabilities` in the plugin

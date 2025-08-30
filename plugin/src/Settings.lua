@@ -12,12 +12,14 @@ local Roact = require(Packages.Roact)
 local defaultSettings = {
 	openScriptsExternally = false,
 	twoWaySync = false,
+	autoReconnect = false,
 	showNotifications = true,
-	syncReminder = true,
+	syncReminderMode = "Notify" :: "None" | "Notify" | "Fullscreen",
+	syncReminderPolling = true,
 	checkForUpdates = true,
 	checkForPrereleases = false,
 	autoConnectPlaytestServer = false,
-	confirmationBehavior = "Initial",
+	confirmationBehavior = "Initial" :: "Never" | "Initial" | "Large Changes" | "Unlisted PlaceId",
 	largeChangesConfirmationThreshold = 5,
 	playSounds = true,
 	typecheckingEnabled = false,
@@ -106,6 +108,16 @@ function Settings:getBinding(name)
 	Log.trace(string.format("Created binding for setting '%s'", name))
 
 	return bind
+end
+
+function Settings:getBindings(...: string)
+	local bindings = {}
+	for i = 1, select("#", ...) do
+		local source = select(i, ...)
+		bindings[source] = self:getBinding(source)
+	end
+
+	return Roact.joinBindings(bindings)
 end
 
 return Settings
