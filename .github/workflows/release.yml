@@ -53,14 +53,24 @@ jobs:
         # https://doc.rust-lang.org/rustc/platform-support.html
         include:
           - host: linux
-            os: ubuntu-latest
+            os: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
             label: linux-x86_64
+
+          - host: linux
+            os: ubuntu-22.04-arm
+            target: aarch64-unknown-linux-gnu
+            label: linux-aarch64
 
           - host: windows
             os: windows-latest
             target: x86_64-pc-windows-msvc
             label: windows-x86_64
+
+          - host: windows
+            os: windows-11-arm
+            target: aarch64-pc-windows-msvc
+            label: windows-aarch64
 
           - host: macos
             os: macos-latest
