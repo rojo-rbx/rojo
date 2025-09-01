@@ -93,7 +93,7 @@ function Array:render()
 				e("Frame", {
 					Size = UDim2.new(1, 0, 0, 25),
 					BackgroundTransparency = if patchType == "Remain" then 1 else self.props.transparency,
-					BackgroundColor3 = if patchType == "Remain" then theme.Diff.Row else theme.Diff[patchType],
+					BackgroundColor3 = theme.Diff.Background[patchType],
 					BorderSizePixel = 0,
 					LayoutOrder = i,
 				}, {

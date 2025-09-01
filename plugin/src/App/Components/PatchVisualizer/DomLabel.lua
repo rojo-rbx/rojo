@@ -95,7 +95,7 @@ function DomLabel:render()
 	return Theme.with(function(theme)
 		local color = if props.isWarning
 			then theme.Diff.Warning
-			elseif props.patchType then theme.Diff[props.patchType]
+			elseif props.patchType then theme.Diff.Background[props.patchType]
 			else theme.TextColor
 
 		local indent = (depth - 1) * 12 + 15

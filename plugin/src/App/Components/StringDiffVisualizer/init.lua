@@ -328,7 +328,7 @@ function StringDiffVisualizer:render()
 					Size = UDim2.fromScale(0.5, 1 / maxLines),
 					Position = UDim2.fromScale(0, (lineNum - 1) / maxLines),
 					BorderSizePixel = 0,
-					BackgroundColor3 = theme.Diff.Remove,
+					BackgroundColor3 = theme.Diff.Background.Remove,
 				})
 			)
 		end
@@ -339,7 +339,7 @@ function StringDiffVisualizer:render()
 					Size = UDim2.fromScale(0.5, 1 / maxLines),
 					Position = UDim2.fromScale(0.5, (lineNum - 1) / maxLines),
 					BorderSizePixel = 0,
-					BackgroundColor3 = theme.Diff.Add,
+					BackgroundColor3 = theme.Diff.Background.Add,
 				})
 			)
 		end
@@ -411,7 +411,7 @@ function StringDiffVisualizer:render()
 								diffFrames[diffIdx] = e("Frame", {
 									Size = UDim2.new(0, math.max(charWidth * (stop - start), charWidth * 0.4), 1, 0),
 									Position = UDim2.fromOffset(charWidth * start, 0),
-									BackgroundColor3 = theme.Diff.Remove,
+									BackgroundColor3 = theme.Diff.Background.Remove,
 									BackgroundTransparency = 0.85,
 									BorderSizePixel = 0,
 									ZIndex = -1,
@@ -428,7 +428,7 @@ function StringDiffVisualizer:render()
 								BorderSizePixel = 0,
 								FontFace = theme.Font.Code,
 								TextSize = theme.TextSize.Body,
-								TextColor3 = if lineDiffs then theme.Diff.Remove else theme.SubTextColor,
+								TextColor3 = if lineDiffs then theme.Diff.Text.Remove else theme.SubTextColor,
 								TextXAlignment = Enum.TextXAlignment.Right,
 							}, {
 								Padding = e("UIPadding", { PaddingRight = UDim.new(0, 6) }),
@@ -444,7 +444,7 @@ function StringDiffVisualizer:render()
 									Position = UDim2.fromScale(0, 0),
 									Text = currentRichTextLines[i],
 									RichText = true,
-									BackgroundColor3 = theme.Diff.Remove,
+									BackgroundColor3 = theme.Diff.Background.Remove,
 									BackgroundTransparency = if lineDiffs then 0.95 else 1,
 									BorderSizePixel = 0,
 									FontFace = theme.Font.Code,
@@ -495,7 +495,7 @@ function StringDiffVisualizer:render()
 								diffFrames[diffIdx] = e("Frame", {
 									Size = UDim2.new(0, math.max(charWidth * (stop - start), charWidth * 0.4), 1, 0),
 									Position = UDim2.fromOffset(charWidth * start, 0),
-									BackgroundColor3 = theme.Diff.Add,
+									BackgroundColor3 = theme.Diff.Background.Add,
 									BackgroundTransparency = 0.85,
 									BorderSizePixel = 0,
 									ZIndex = -1,
@@ -512,7 +512,7 @@ function StringDiffVisualizer:render()
 								BorderSizePixel = 0,
 								FontFace = theme.Font.Code,
 								TextSize = theme.TextSize.Body,
-								TextColor3 = if lineDiffs then theme.Diff.Add else theme.SubTextColor,
+								TextColor3 = if lineDiffs then theme.Diff.Text.Add else theme.SubTextColor,
 								TextXAlignment = Enum.TextXAlignment.Right,
 							}, {
 								Padding = e("UIPadding", { PaddingRight = UDim.new(0, 6) }),
@@ -528,7 +528,7 @@ function StringDiffVisualizer:render()
 									Position = UDim2.fromScale(0, 0),
 									Text = incomingRichTextLines[i],
 									RichText = true,
-									BackgroundColor3 = theme.Diff.Add,
+									BackgroundColor3 = theme.Diff.Background.Add,
 									BackgroundTransparency = if lineDiffs then 0.95 else 1,
 									BorderSizePixel = 0,
 									FontFace = theme.Font.Code,

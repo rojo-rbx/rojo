@@ -91,9 +91,7 @@ function Dictionary:render()
 					LayoutOrder = order,
 					BorderSizePixel = 0,
 					BackgroundTransparency = if line.patchType == "Remain" then 1 else self.props.transparency,
-					BackgroundColor3 = if line.patchType == "Remain"
-						then theme.Diff.Row
-						else theme.Diff[line.patchType],
+					BackgroundColor3 = theme.Diff.Background[line.patchType],
 				}, {
 					DiffIcon = if line.patchType ~= "Remain"
 						then e("ImageLabel", {
@@ -114,7 +112,7 @@ function Dictionary:render()
 						TextXAlignment = Enum.TextXAlignment.Left,
 						FontFace = theme.Font.Main,
 						TextSize = theme.TextSize.Body,
-						TextColor3 = theme.Settings.Setting.DescriptionColor,
+						TextColor3 = theme.Diff.Text[line.patchType],
 						TextTruncate = Enum.TextTruncate.AtEnd,
 					}),
 					OldValue = e("Frame", {
@@ -125,7 +123,7 @@ function Dictionary:render()
 						e(DisplayValue, {
 							value = oldValue,
 							transparency = self.props.transparency,
-							textColor = theme.Settings.Setting.DescriptionColor,
+							textColor = theme.Diff.Text[line.patchType],
 						}),
 					}),
 					NewValue = e("Frame", {
@@ -136,7 +134,7 @@ function Dictionary:render()
 						e(DisplayValue, {
 							value = newValue,
 							transparency = self.props.transparency,
-							textColor = theme.Settings.Setting.DescriptionColor,
+							textColor = theme.Diff.Text[line.patchType],
 						}),
 					}),
 				})

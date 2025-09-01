@@ -139,10 +139,9 @@ function ServeSession:start()
 	self.__apiContext
 		:connect()
 		:andThen(function(serverInfo)
-			self:__applyGameAndPlaceId(serverInfo)
-
 			return self:__initialSync(serverInfo):andThen(function()
 				self:__setStatus(Status.Connected, serverInfo.projectName)
+				self:__applyGameAndPlaceId(serverInfo)
 
 				return self:__mainSyncLoop()
 			end)
