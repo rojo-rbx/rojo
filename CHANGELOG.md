@@ -720,7 +720,7 @@ This is a general maintenance release for the Rojo 0.5.x release series.
 
 ## [0.5.0 Alpha 11](https://github.com/rojo-rbx/rojo/releases/tag/v0.5.0-alpha.11) (May 29, 2019)
 * Added support for implicit property values in JSON model files ([#154](https://github.com/rojo-rbx/rojo/pull/154))
-* `Content` propertyes can now be specified in projects and model files as regular string literals.
+* `Content` properties can now be specified in projects and model files as regular string literals.
 * Added support for `BrickColor` properties.
 * Added support for properties added in client release 384, like `Lighting.Technology` being set to `"ShadowMap"`.
 * Improved performance when working with XML models and places
