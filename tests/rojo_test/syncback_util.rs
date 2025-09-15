@@ -1,11 +1,11 @@
-use std::{path::Path, process::Command};
+use std::{io::Write as _, path::Path, process::Command};
 
 use insta::{assert_snapshot, assert_yaml_snapshot};
 use tempfile::tempdir;
 
 use crate::rojo_test::io_util::SYNCBACK_TESTS_PATH;
 
-use super::io_util::{copy_recursive, get_working_dir_path, ROJO_PATH};
+use super::io_util::{copy_recursive, ROJO_PATH};
 
 const INPUT_FILE_PROJECT: &str = "input-project";
 const INPUT_FILE_PLACE: &str = "input.rbxl";
@@ -73,7 +73,21 @@ pub fn run_syncback_test(name: &str, callback: impl FnOnce(&Path)) {
         .output()
         .expect("Couldn't spawn syncback process");
 
-    assert!(output.status.success(), "Rojo did not exit correctly");
+    if !output.status.success() {
+        let mut lock = std::io::stderr().lock();
+        writeln!(
+            lock,
+            "Rojo exited with status code {:?}",
+            output.status.code()
+        )
+        .unwrap();
+        writeln!(lock, "Stdout from process:").unwrap();
+        lock.write_all(&output.stdout).unwrap();
+        writeln!(lock, "Stderr from process:").unwrap();
+        lock.write_all(&output.stderr).unwrap();
+
+        std::process::exit(1)
+    }
 
     let mut settings = insta::Settings::new();
     let snapshot_path = Path::new(SYNCBACK_TESTS_PATH)
