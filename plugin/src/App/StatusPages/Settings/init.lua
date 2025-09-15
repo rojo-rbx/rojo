@@ -27,6 +27,7 @@ end
 
 local invertedLevels = invertTbl(Log.Level)
 local confirmationBehaviors = { "Initial", "Always", "Large Changes", "Unlisted PlaceId", "Never" }
+local syncReminderModes = { "None", "Notify", "Fullscreen" }
 
 local function Navbar(props)
 	return Theme.with(function(theme)
@@ -93,6 +94,14 @@ function SettingsPage:render()
 			contentSize = self.contentSize,
 			transparency = self.props.transparency,
 		}, {
+			AutoReconnect = e(Setting, {
+				id = "autoReconnect",
+				name = "Auto Reconnect",
+				description = "Reconnect to server on place open if the served project matches the last sync to the place",
+				transparency = self.props.transparency,
+				layoutOrder = layoutIncrement(),
+			}),
+
 			ShowNotifications = e(Setting, {
 				id = "showNotifications",
 				name = "Show Notifications",
@@ -101,13 +110,26 @@ function SettingsPage:render()
 				layoutOrder = layoutIncrement(),
 			}),
 
-			SyncReminder = e(Setting, {
-				id = "syncReminder",
+			SyncReminderMode = e(Setting, {
+				id = "syncReminderMode",
 				name = "Sync Reminder",
-				description = "Notify to sync when opening a place that has previously been synced",
+				description = "What type of reminders you receive for syncing your project",
 				transparency = self.props.transparency,
-				visible = Settings:getBinding("showNotifications"),
 				layoutOrder = layoutIncrement(),
+				visible = Settings:getBinding("showNotifications"),
+
+				options = syncReminderModes,
+			}),
+
+			SyncReminderPolling = e(Setting, {
+				id = "syncReminderPolling",
+				name = "Sync Reminder Polling",
+				description = "Look for available sync servers periodically",
+				transparency = self.props.transparency,
+				layoutOrder = layoutIncrement(),
+				visible = Settings:getBindings("syncReminderMode", "showNotifications"):map(function(values)
+					return values.syncReminderMode ~= "None" and values.showNotifications
+				end),
 			}),
 
 			ConfirmationBehavior = e(Setting, {

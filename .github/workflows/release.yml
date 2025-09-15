@@ -25,10 +25,10 @@ jobs:
         with:
           submodules: true
 
-      - name: Setup Aftman
-        uses: ok-nick/setup-aftman@v0.4.2
+      - name: Setup Rokit
+        uses: CompeyDev/setup-rokit@v0.1.2
         with:
-          version: 'v0.3.0'
+          version: 'v1.1.0'
 
       - name: Build Plugin
         run: rojo build plugin.project.json --output Rojo.rbxm
@@ -53,14 +53,24 @@ jobs:
         # https://doc.rust-lang.org/rustc/platform-support.html
         include:
           - host: linux
-            os: ubuntu-latest
+            os: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
             label: linux-x86_64
+
+          - host: linux
+            os: ubuntu-22.04-arm
+            target: aarch64-unknown-linux-gnu
+            label: linux-aarch64
 
           - host: windows
             os: windows-latest
             target: x86_64-pc-windows-msvc
             label: windows-x86_64
+
+          - host: windows
+            os: windows-11-arm
+            target: aarch64-pc-windows-msvc
+            label: windows-aarch64
 
           - host: macos
             os: macos-latest
@@ -94,11 +104,6 @@ jobs:
             ~/.cargo/git
             target
           key: ${{ matrix.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Setup Aftman
-        uses: ok-nick/setup-aftman@v0.4.2
-        with:
-          version: 'v0.3.0'
 
       - name: Build Release
         run: cargo build --release --locked --verbose --target ${{ matrix.target }}
