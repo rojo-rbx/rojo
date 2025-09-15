@@ -29,6 +29,8 @@ const UNKNOWN_INPUT_KIND_ERR: &str = "Could not detect what kind of file was inp
 /// Syncback exists to convert Roblox files into a Rojo project automatically.
 /// It uses the project.json file provided to traverse the Roblox file passed as
 /// to serialize Instances to the file system in a format that Rojo understands.
+///
+/// To ease programmatic use, this command pipes all normal output to stderr.
 #[derive(Debug, Parser)]
 pub struct SyncbackCommand {
     /// Path to the project to sync back to.
@@ -40,7 +42,7 @@ pub struct SyncbackCommand {
     pub input: PathBuf,
 
     /// If provided, a list all of the files and directories that will be
-    /// added or removed is emitted.
+    /// added or removed is emitted into stdout.
     #[clap(long, short)]
     pub list: bool,
 
@@ -96,7 +98,7 @@ impl SyncbackCommand {
         }
 
         let syncback_timer = Instant::now();
-        println!("Beginning syncback...");
+        eprintln!("Beginning syncback...");
         let snapshot = syncback_loop(
             session_old.vfs(),
             &mut dom_old,
@@ -115,31 +117,31 @@ impl SyncbackCommand {
 
         if !self.dry_run {
             if !self.non_interactive {
-                println!(
+                eprintln!(
                     "Would write {} files/folders and remove {} files/folders.",
                     snapshot.added_paths().len(),
                     snapshot.removed_paths().len()
                 );
-                print!("Is this okay? (Y/N): ");
-                io::stdout().flush()?;
+                eprint!("Is this okay? (Y/N): ");
+                io::stderr().flush()?;
                 let mut line = String::with_capacity(1);
                 io::stdin().read_line(&mut line)?;
                 line = line.trim().to_lowercase();
                 if line != "y" {
-                    println!("Aborting due to user input!");
+                    eprintln!("Aborting due to user input!");
                     return Ok(());
                 }
             }
-            println!("Writing to the file system...");
+            eprintln!("Writing to the file system...");
             snapshot.write_to_vfs(base_path, session_old.vfs())?;
-            println!("Finished syncback.")
+            eprintln!("Finished syncback.")
         } else {
-            println!(
+            eprintln!(
                 "Would write {} files/folders and remove {} files/folders.",
                 snapshot.added_paths().len(),
                 snapshot.removed_paths().len()
             );
-            println!("Aborting before writing to file system due to `--dry-run`");
+            eprintln!("Aborting before writing to file system due to `--dry-run`");
         }
 
         // It is potentially prohibitively expensive to drop a ServeSession,
@@ -249,44 +251,32 @@ fn list_files(snapshot: &FsSnapshot, color: ColorChoice, base_path: &Path) -> io
     let mut remove_color = ColorSpec::new();
     remove_color.set_fg(Some(Color::Red));
 
-    // We emit this to stderr because otherwise it'd be impossible
-    // to pipe it separately from normal output.
-    let writer = BufferWriter::stderr(color);
+    let writer = BufferWriter::stdout(color);
     let mut buffer = writer.buffer();
 
-    if snapshot.is_empty() {
-        writeln!(
-            &mut buffer,
-            "No files/directories would be removed or added."
-        )?;
-    } else {
-        let added = snapshot.added_paths();
-        if !added.is_empty() {
-            writeln!(&mut buffer, "Writing files/directories:")?;
-            buffer.set_color(&add_color)?;
-            for path in added {
-                writeln!(
-                    &mut buffer,
-                    "{}",
-                    display_absolute(path.strip_prefix(base_path).unwrap_or(path))
-                )?;
-            }
-            buffer.set_color(&no_color)?;
+    let added = snapshot.added_paths();
+    if !added.is_empty() {
+        buffer.set_color(&add_color)?;
+        for path in added {
+            writeln!(
+                &mut buffer,
+                "Writing {}",
+                display_absolute(path.strip_prefix(base_path).unwrap_or(path))
+            )?;
         }
-        let removed = snapshot.removed_paths();
-        if !removed.is_empty() {
-            writeln!(&mut buffer, "Removing files/directories:")?;
-            buffer.set_color(&remove_color)?;
-            for path in removed {
-                writeln!(
-                    &mut buffer,
-                    "{}",
-                    display_absolute(path.strip_prefix(base_path).unwrap_or(path))
-                )?;
-            }
-        }
-        buffer.set_color(&no_color)?;
     }
+    let removed = snapshot.removed_paths();
+    if !removed.is_empty() {
+        buffer.set_color(&remove_color)?;
+        for path in removed {
+            writeln!(
+                &mut buffer,
+                "Removing {}",
+                display_absolute(path.strip_prefix(base_path).unwrap_or(path))
+            )?;
+        }
+    }
+    buffer.set_color(&no_color)?;
 
     writer.print(&buffer)
 }
