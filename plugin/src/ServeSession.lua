@@ -263,7 +263,7 @@ function ServeSession:__replaceInstances(idList)
 		:andThen(function(response)
 			Log.debug("Deserializing results from serialize endpoint")
 			local objects = SerializationService:DeserializeInstancesAsync(response.modelContents)
-			if objects[1] then
+			if not objects[1] then
 				return Promise.reject("Serialize endpoint did not deserialize into any Instances")
 			end
 			if #objects[1]:GetChildren() ~= #idList then
