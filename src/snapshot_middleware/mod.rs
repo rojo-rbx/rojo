@@ -285,6 +285,7 @@ impl Middleware {
             Middleware::Rbxmx => syncback_rbxmx(snapshot),
             Middleware::Toml => anyhow::bail!("cannot syncback Toml middleware"),
             Middleware::Text => syncback_txt(snapshot),
+            Middleware::Yaml => anyhow::bail!("cannot syncback Yaml middleware"),
             Middleware::Ignore => anyhow::bail!("cannot syncback Ignore middleware"),
             Middleware::Dir => syncback_dir(snapshot),
             Middleware::ServerScriptDir => syncback_lua_init(ScriptType::Server, snapshot),

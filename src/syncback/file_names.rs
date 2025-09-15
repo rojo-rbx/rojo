@@ -63,6 +63,7 @@ pub fn extension_for_middleware(middleware: Middleware) -> &'static str {
         Middleware::Rbxmx => "rbxmx",
         Middleware::Toml => "toml",
         Middleware::Text => "txt",
+        Middleware::Yaml => "yml",
 
         Middleware::LegacyServerScript
         | Middleware::LegacyClientScript
