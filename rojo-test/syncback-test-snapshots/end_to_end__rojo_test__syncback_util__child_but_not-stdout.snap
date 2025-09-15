@@ -1,0 +1,6 @@
+---
+source: tests/rojo_test/syncback_util.rs
+expression: "String::from_utf8_lossy(&output.stdout)"
+---
+Writing OnlyOneCopy/child_of_one.luau
+Writing ReplicatedStorage/child_replicated_storage.luau

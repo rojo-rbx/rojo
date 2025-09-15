@@ -85,8 +85,8 @@ pub fn run_syncback_test(name: &str, callback: impl FnOnce(&Path)) {
 
     settings.bind(|| {
         assert_snapshot!(
-            format!("{name}-stderr"),
-            String::from_utf8_lossy(&output.stderr)
+            format!("{name}-stdout"),
+            String::from_utf8_lossy(&output.stdout)
         )
     });
 
