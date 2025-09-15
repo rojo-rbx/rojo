@@ -99,11 +99,6 @@ impl AdjacentMetadata {
                         );
                     }
                 }
-                Variant::SharedString(_) => {
-                    log::warn!(
-                    "Rojo cannot serialize the property {}.{name} in meta.json files.\n\
-                    If this is not acceptable, resave the Instance at '{}' manually as an RBXM or RBXMX.", class, snapshot.get_new_inst_path(snapshot.new))
-                }
                 _ => {
                     properties.insert(
                         name,
@@ -288,11 +283,6 @@ impl DirectoryMetadata {
                             UnresolvedValue::from_variant_unambiguous(value.clone()),
                         );
                     }
-                }
-                Variant::SharedString(_) => {
-                    log::warn!(
-                    "Rojo cannot serialize the property {}.{name} in meta.json files.\n\
-                    If this is not acceptable, resave the Instance at '{}' manually as an RBXM or RBXMX.", class, snapshot.get_new_inst_path(snapshot.new))
                 }
                 _ => {
                     properties.insert(

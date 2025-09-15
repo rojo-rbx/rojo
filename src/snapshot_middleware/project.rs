@@ -522,7 +522,7 @@ pub fn syncback_project<'sync>(
 }
 
 fn project_node_property_syncback(
-    snapshot: &SyncbackSnapshot,
+    _snapshot: &SyncbackSnapshot,
     filtered_properties: UstrMap<&Variant>,
     new_inst: &Instance,
     node: &mut ProjectNode,
@@ -543,12 +543,6 @@ fn project_node_property_syncback(
                         UnresolvedValue::from_variant_unambiguous(attr_value.clone()),
                     );
                 }
-            }
-            Variant::SharedString(_) => {
-                log::warn!(
-                    "Rojo cannot serialize the property {}.{name} in project files.\n\
-                    If this is not acceptable, resave the Instance at '{}' manually as an RBXM or RBXMX.", new_inst.class, snapshot.get_new_inst_path(new_inst.referent())
-                );
             }
             _ => {
                 properties.insert(
