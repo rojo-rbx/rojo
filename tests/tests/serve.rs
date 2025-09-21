@@ -1,9 +1,12 @@
 use std::fs;
 
-use insta::{assert_yaml_snapshot, with_settings};
+use insta::{assert_snapshot, assert_yaml_snapshot, with_settings};
 use tempfile::tempdir;
 
-use crate::rojo_test::{internable::InternAndRedact, serve_util::run_serve_test};
+use crate::rojo_test::{
+    internable::InternAndRedact,
+    serve_util::{run_serve_test, serialize_to_xml_model},
+};
 
 #[test]
 fn empty() {
@@ -589,5 +592,68 @@ fn model_pivot_migration() {
             "model_pivot_migration_all-2",
             read_response.intern_and_redact(&mut redactions, root_id)
         );
+    });
+}
+
+#[test]
+fn meshpart_with_id() {
+    run_serve_test("meshpart_with_id", |session, mut redactions| {
+        let info = session.get_api_rojo().unwrap();
+        let root_id = info.root_instance_id;
+
+        assert_yaml_snapshot!("meshpart_with_id_info", redactions.redacted_yaml(&info));
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "meshpart_with_id_all",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+
+        // This is a bit awkward, but it's fine.
+        let (meshpart, _) = read_response
+            .instances
+            .iter()
+            .find(|(_, inst)| inst.class_name == "MeshPart")
+            .unwrap();
+        let (objectvalue, _) = read_response
+            .instances
+            .iter()
+            .find(|(_, inst)| inst.class_name == "ObjectValue")
+            .unwrap();
+
+        let serialize_response = session
+            .get_api_serialize(&[*meshpart, *objectvalue])
+            .unwrap();
+
+        // We don't assert a snapshot on the SerializeResponse because the model includes the
+        // Refs from the DOM as names, which means it will obviously be different every time
+        // this code runs. Still, we ensure that the SessionId is right at least.
+        assert_eq!(serialize_response.session_id, info.session_id);
+
+        let model = serialize_to_xml_model(&serialize_response, &redactions);
+        assert_snapshot!("meshpart_with_id_serialize_model", model);
+    });
+}
+
+#[test]
+fn forced_parent() {
+    run_serve_test("forced_parent", |session, mut redactions| {
+        let info = session.get_api_rojo().unwrap();
+        let root_id = info.root_instance_id;
+
+        assert_yaml_snapshot!("forced_parent_info", redactions.redacted_yaml(&info));
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "forced_parent_all",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+
+        let serialize_response = session.get_api_serialize(&[root_id]).unwrap();
+
+        assert_eq!(serialize_response.session_id, info.session_id);
+
+        let model = serialize_to_xml_model(&serialize_response, &redactions);
+        assert_snapshot!("forced_parent_serialize_model", model);
     });
 }

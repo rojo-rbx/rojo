@@ -181,6 +181,14 @@ function SettingsPage:render()
 				layoutOrder = layoutIncrement(),
 			}),
 
+			EnableSyncFallback = e(Setting, {
+				id = "enableSyncFallback",
+				name = "Enable Sync Fallback",
+				description = "Whether Instances that fail to sync are remade as a fallback. If this is enabled, Instances may be destroyed and remade when syncing.",
+				transparency = self.props.transparency,
+				layoutOrder = layoutIncrement(),
+			}),
+
 			CheckForUpdates = e(Setting, {
 				id = "checkForUpdates",
 				name = "Check For Updates",

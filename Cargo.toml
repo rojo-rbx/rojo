@@ -94,6 +94,7 @@ uuid = { version = "1.7.0", features = ["v4", "serde"] }
 clap = { version = "3.2.25", features = ["derive"] }
 profiling = "1.0.15"
 yaml-rust2 = "0.10.3"
+data-encoding = "2.8.0"
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.10.1"
