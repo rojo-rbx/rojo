@@ -1,0 +1,11 @@
+{
+  "name": "ignore_paths_adding",
+  "tree": {
+    "$path": "src"
+  },
+  "syncbackRules": {
+    "ignorePaths": [
+      "src/*.rbxm"
+    ]
+  }
+}

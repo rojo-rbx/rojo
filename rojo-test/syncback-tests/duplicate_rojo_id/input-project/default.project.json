@@ -1,0 +1,11 @@
+{
+  "name": "duplicate_rojo_id",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "container": {
+        "$path": "container.model.json"
+      }
+    }
+  }
+}

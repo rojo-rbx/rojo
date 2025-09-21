@@ -1,0 +1,6 @@
+---
+source: tests/rojo_test/syncback_util.rs
+expression: "String::from_utf8_lossy(&output.stdout)"
+---
+Writing src/Pointer_2.model.json
+Writing src/Target_2.model.json
