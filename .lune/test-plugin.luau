@@ -88,9 +88,18 @@ for _, log in logs do
 	stdio.write(`{stdio.color("reset")}\n`)
 end
 
+local results = luau_execute.get_output(task)[1]
+if not results then
+	error("plugin tests did not return any results")
+end
+
 local status = luau_execute.check_status(task)
 if status == "COMPLETE" then
-	process.exit(0)
+	if results.failureCount == 0 then
+		process.exit(0)
+	else
+		process.exit(1)
+	end
 else
 	print()
 	print("Task did not finish successfully")

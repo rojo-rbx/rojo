@@ -8,4 +8,12 @@ local Settings = require(Rojo.Plugin.Settings)
 Settings:set("logLevel", "Trace")
 Settings:set("typecheckingEnabled", true)
 
-require(Rojo.Plugin.runTests)(TestEZ)
+local results = require(Rojo.Plugin.runTests)(TestEZ)
+
+-- Roblox's Luau execution gets mad about cyclical tables.
+-- Rather than making TestEZ not do that, we just send back the important info.
+return {
+	failureCount = results.failureCount,
+	successCount = results.successCount,
+	skippedCount = results.skippedCount,
+}
