@@ -38,7 +38,7 @@ jobs:
     - name: Build
       run: cargo build --locked --verbose
 
-    - name: Test
+    - name: Test (CLI)
       run: cargo test --locked --verbose
 
     - name: Save Rust Cache
@@ -49,6 +49,13 @@ jobs:
           ~/.cargo/git
           target
         key: ${{ matrix.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Test (Plugin)
+      run: lune run test-plugin
+      env:
+        RBX_API_KEY: ${{ secrets.PLUGIN_TEST_API_KEY }}
+        RBX_UNIVERSE_ID: ${{ vars.PLUGIN_TEST_UNIVERSE_ID }}
+        RBX_PLACE_ID: ${{ vars.PLUGIN_TEST_PLACE_ID }}
 
   msrv:
     name: Check MSRV
