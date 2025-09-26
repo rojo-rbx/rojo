@@ -2,19 +2,34 @@
   "name": "{project_name}",
   "tree": {
     "$className": "DataModel",
-
+    "Lighting": {
+      "$properties": {
+        "Outlines": false,
+        "Ambient": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "GlobalShadows": true,
+        "Brightness": 2.0,
+        "Technology": "Voxel"
+      }
+    },
     "ReplicatedStorage": {
       "Shared": {
         "$path": "src/shared"
       }
     },
-
     "ServerScriptService": {
       "Server": {
         "$path": "src/server"
       }
     },
-
+    "SoundService": {
+      "$properties": {
+        "RespectFilteringEnabled": true
+      }
+    },
     "StarterPlayer": {
       "StarterPlayerScripts": {
         "Client": {
@@ -22,50 +37,28 @@
         }
       }
     },
-
     "Workspace": {
-      "$properties": {
-        "FilteringEnabled": true
-      },
       "Baseplate": {
         "$className": "Part",
         "$properties": {
-          "Anchored": true,
           "Color": [
             0.38823,
             0.37254,
             0.38823
           ],
-          "Locked": true,
           "Position": [
-            0,
-            -10,
-            0
+            0.0,
+            -10.0,
+            0.0
           ],
           "Size": [
-            512,
-            20,
-            512
-          ]
+            512.0,
+            20.0,
+            512.0
+          ],
+          "Anchored": true,
+          "Locked": true
         }
-      }
-    },
-    "Lighting": {
-      "$properties": {
-        "Ambient": [
-          0,
-          0,
-          0
-        ],
-        "Brightness": 2,
-        "GlobalShadows": true,
-        "Outlines": false,
-        "Technology": "Voxel"
-      }
-    },
-    "SoundService": {
-      "$properties": {
-        "RespectFilteringEnabled": true
       }
     }
   }
