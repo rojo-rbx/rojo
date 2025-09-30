@@ -1,0 +1,73 @@
+---
+source: tests/rojo_test/syncback_util.rs
+expression: src/Message.rbxm
+---
+num_types: 1
+num_instances: 1
+chunks:
+  - Inst:
+      type_id: 0
+      type_name: Message
+      object_format: 0
+      referents:
+        - 0
+  - Prop:
+      type_id: 0
+      prop_name: AttributesSerialize
+      prop_type: String
+      values:
+        - ""
+  - Prop:
+      type_id: 0
+      prop_name: Capabilities
+      prop_type: SecurityCapabilities
+      values:
+        - 0
+  - Prop:
+      type_id: 0
+      prop_name: HistoryId
+      prop_type: UniqueId
+      values:
+        - "00000000000000000000000000000000"
+  - Prop:
+      type_id: 0
+      prop_name: Name
+      prop_type: String
+      values:
+        - Message
+  - Prop:
+      type_id: 0
+      prop_name: DefinesCapabilities
+      prop_type: Bool
+      values:
+        - false
+  - Prop:
+      type_id: 0
+      prop_name: SourceAssetId
+      prop_type: Int64
+      values:
+        - -1
+  - Prop:
+      type_id: 0
+      prop_name: Tags
+      prop_type: String
+      values:
+        - ""
+  - Prop:
+      type_id: 0
+      prop_name: Text
+      prop_type: String
+      values:
+        - This message should be written to the disk.
+  - Prop:
+      type_id: 0
+      prop_name: UniqueId
+      prop_type: UniqueId
+      values:
+        - 2030b7775c30713f085b9d4800005a8b
+  - Prnt:
+      version: 0
+      links:
+        - - 0
+          - -1
+  - End
