@@ -22,15 +22,22 @@ const GIT_IGNORE_PLACEHOLDER: &str = "gitignore.txt";
 static TEMPLATE_BINCODE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/templates.bincode"));
 
 /// Initializes a new Rojo project.
+///
+/// By default, this will attempt to initialize a 'git' repository in the
+/// project directory if `git` is installed. To avoid this, pass `--skip-git`.
 #[derive(Debug, Parser)]
 pub struct InitCommand {
     /// Path to the place to create the project. Defaults to the current directory.
     #[clap(default_value = "")]
     pub path: PathBuf,
 
-    /// The kind of project to create, 'place', 'plugin', or 'model'. Defaults to place.
+    /// The kind of project to create, 'place', 'plugin', or 'model'.
     #[clap(long, default_value = "place")]
     pub kind: InitKind,
+
+    /// Skips the initialization of a git repository.
+    #[clap(long)]
+    pub skip_git: bool,
 }
 
 impl InitCommand {
@@ -73,7 +80,7 @@ impl InitCommand {
             } else {
                 let content = vfs.read_to_string_lf_normalized(&path)?;
                 if let Some(file_stem) = path.file_name().and_then(OsStr::to_str) {
-                    if file_stem == GIT_IGNORE_PLACEHOLDER {
+                    if file_stem == GIT_IGNORE_PLACEHOLDER && !self.skip_git {
                         path.set_file_name(".gitignore");
                     }
                 }
@@ -84,7 +91,7 @@ impl InitCommand {
             }
         }
 
-        if should_git_init(&base_path) {
+        if !self.skip_git && should_git_init(&base_path) {
             log::debug!("Initializing Git repository...");
 
             let status = Command::new("git")

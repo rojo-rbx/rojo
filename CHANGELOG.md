@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Added flag to `rojo init` to skip initializing a git repository ([#1122])
 * Added fallback method for when an Instance can't be synced through normal means ([#1030])
  	This should make it possible to sync `MeshParts` and `Unions`!
 
@@ -19,6 +20,7 @@
 * Added `--absolute` flag to the sourcemap subcommand, which will emit absolute paths instead of relative paths. ([#1092])
 * Fixed applying `gameId` and `placeId` before initial sync was accepted ([#1104])
 
+[#1122]: https://github.com/rojo-rbx/rojo/pull/1122
 [#1030]: https://github.com/rojo-rbx/rojo/pull/1030
 [#1096]: https://github.com/rojo-rbx/rojo/pull/1096
 [#1093]: https://github.com/rojo-rbx/rojo/pull/1093
