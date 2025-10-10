@@ -289,7 +289,7 @@ pub fn snapshot_project_node(
     metadata.instigating_source = Some(InstigatingSource::ProjectNode(
         project_path.to_path_buf(),
         instance_name.to_string(),
-        node.clone(),
+        Box::new(node.clone()),
         parent_class.map(|name| name.to_owned()),
     ));
 

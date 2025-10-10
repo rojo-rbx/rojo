@@ -221,7 +221,7 @@ pub enum InstigatingSource {
     ProjectNode(
         #[serde(serialize_with = "path_serializer::serialize_absolute")] PathBuf,
         String,
-        ProjectNode,
+        Box<ProjectNode>,
         Option<String>,
     ),
 }

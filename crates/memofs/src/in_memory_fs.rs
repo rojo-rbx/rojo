@@ -228,23 +228,17 @@ impl VfsBackend for InMemoryFs {
 }
 
 fn must_be_file<T>(path: &Path) -> io::Result<T> {
-    Err(io::Error::new(
-        io::ErrorKind::Other,
-        format!(
-            "path {} was a directory, but must be a file",
-            path.display()
-        ),
-    ))
+    Err(io::Error::other(format!(
+        "path {} was a directory, but must be a file",
+        path.display()
+    )))
 }
 
 fn must_be_dir<T>(path: &Path) -> io::Result<T> {
-    Err(io::Error::new(
-        io::ErrorKind::Other,
-        format!(
-            "path {} was a file, but must be a directory",
-            path.display()
-        ),
-    ))
+    Err(io::Error::other(format!(
+        "path {} was a file, but must be a directory",
+        path.display()
+    )))
 }
 
 fn not_found<T>(path: &Path) -> io::Result<T> {
