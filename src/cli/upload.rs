@@ -1,7 +1,6 @@
 use std::path::PathBuf;
-use std::str::FromStr;
 
-use anyhow::{bail, format_err, Context};
+use anyhow::{bail, Context};
 use clap::Parser;
 use memofs::Vfs;
 use reqwest::{
@@ -87,32 +86,6 @@ impl UploadCommand {
                 // API key is provided, universe id is not.
                 bail!("--universe_id must be provided to use the Open Cloud API");
             }
-        }
-    }
-}
-
-/// The kind of asset to upload to the website. Affects what endpoints Rojo uses
-/// and changes how the asset is built.
-#[derive(Debug, Clone, Copy)]
-enum UploadKind {
-    /// Upload to a place.
-    Place,
-
-    /// Upload to a model-like asset, like a Model, Plugin, or Package.
-    Model,
-}
-
-impl FromStr for UploadKind {
-    type Err = anyhow::Error;
-
-    fn from_str(source: &str) -> Result<Self, Self::Err> {
-        match source {
-            "place" => Ok(UploadKind::Place),
-            "model" => Ok(UploadKind::Model),
-            attempted => Err(format_err!(
-                "Invalid upload kind '{}'. Valid kinds are: place, model",
-                attempted
-            )),
         }
     }
 }
