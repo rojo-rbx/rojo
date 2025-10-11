@@ -60,7 +60,7 @@ jobs:
         submodules: true
 
     - name: Install Rust
-      uses: dtolnay/rust-toolchain@1.79.0
+      uses: dtolnay/rust-toolchain@1.83.0
 
     - name: Restore Rust Cache
       uses: actions/cache/restore@v4

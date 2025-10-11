@@ -378,13 +378,26 @@ types = {
 			if pod == "Default" then
 				return nil
 			else
-				return PhysicalProperties.new(
-					pod.density,
-					pod.friction,
-					pod.elasticity,
-					pod.frictionWeight,
-					pod.elasticityWeight
-				)
+				-- Passing `nil` instead of not passing anything gives
+				-- different results, so we have to branch here.
+				if pod.acousticAbsorption then
+					return (PhysicalProperties.new :: any)(
+						pod.density,
+						pod.friction,
+						pod.elasticity,
+						pod.frictionWeight,
+						pod.elasticityWeight,
+						pod.acousticAbsorption
+					)
+				else
+					return PhysicalProperties.new(
+						pod.density,
+						pod.friction,
+						pod.elasticity,
+						pod.frictionWeight,
+						pod.elasticityWeight
+					)
+				end
 			end
 		end,
 
@@ -398,6 +411,7 @@ types = {
 					elasticity = roblox.Elasticity,
 					frictionWeight = roblox.FrictionWeight,
 					elasticityWeight = roblox.ElasticityWeight,
+					acousticAbsorption = roblox.AcousticAbsorption,
 				}
 			end
 		end,
