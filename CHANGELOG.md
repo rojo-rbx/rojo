@@ -1,7 +1,6 @@
 # Rojo Changelog
 
-## Unreleased
-
+## 7.6.0 - October 10th, 2025
 * Added flag to `rojo init` to skip initializing a git repository ([#1122])
 * Added fallback method for when an Instance can't be synced through normal means ([#1030])
  	This should make it possible to sync `MeshParts` and `Unions`!
