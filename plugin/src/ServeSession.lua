@@ -349,18 +349,11 @@ function ServeSession:__applyPatch(patch)
 		error(unappliedPatch)
 	end
 
-	if PatchSet.isEmpty(unappliedPatch) then
-		if historyRecording then
-			ChangeHistoryService:FinishRecording(historyRecording, Enum.FinishRecordingOperation.Commit)
-		end
-		return
-	end
+	if Settings:get("enableSyncFallback") and not PatchSet.isEmpty(unappliedPatch) then
+		-- Some changes did not apply, let's try replacing them instead
+		local addedIdList = PatchSet.addedIdList(unappliedPatch)
+		local updatedIdList = PatchSet.updatedIdList(unappliedPatch)
 
-	local addedIdList = PatchSet.addedIdList(unappliedPatch)
-	local updatedIdList = PatchSet.updatedIdList(unappliedPatch)
-
-	local actualUnappliedPatches = PatchSet.newEmpty()
-	if Settings:get("enableSyncFallback") then
 		Log.debug("ServeSession:__replaceInstances(unappliedPatch.added)")
 		Timer.start("ServeSession:__replaceInstances(unappliedPatch.added)")
 		local addSuccess, unappliedAddedRefs = self:__replaceInstances(addedIdList)
@@ -371,20 +364,18 @@ function ServeSession:__applyPatch(patch)
 		local updateSuccess, unappliedUpdateRefs = self:__replaceInstances(updatedIdList)
 		Timer.stop()
 
+		-- Update the unapplied patch to reflect which Instances were replaced successfully
 		if addSuccess then
 			table.clear(unappliedPatch.added)
-			PatchSet.assign(actualUnappliedPatches, unappliedAddedRefs)
+			PatchSet.assign(unappliedPatch, unappliedAddedRefs)
 		end
 		if updateSuccess then
 			table.clear(unappliedPatch.updated)
-			PatchSet.assign(actualUnappliedPatches, unappliedUpdateRefs)
+			PatchSet.assign(unappliedPatch, unappliedUpdateRefs)
 		end
-	else
-		Log.debug("Skipping ServeSession:__replaceInstances because of setting")
 	end
-	PatchSet.assign(actualUnappliedPatches, unappliedPatch)
 
-	if not PatchSet.isEmpty(actualUnappliedPatches) then
+	if not PatchSet.isEmpty(unappliedPatch) then
 		Log.debug(
 			"Could not apply all changes requested by the Rojo server:\n{}",
 			PatchSet.humanSummary(self.__instanceMap, unappliedPatch)
@@ -396,7 +387,7 @@ function ServeSession:__applyPatch(patch)
 	-- guaranteed to be called after the commit
 	for _, callback in self.__postcommitCallbacks do
 		task.spawn(function()
-			local success, err = pcall(callback, patch, self.__instanceMap, actualUnappliedPatches)
+			local success, err = pcall(callback, patch, self.__instanceMap, unappliedPatch)
 			if not success then
 				Log.warn("Postcommit hook errored: {}", err)
 			end
