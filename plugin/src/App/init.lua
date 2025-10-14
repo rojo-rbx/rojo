@@ -602,44 +602,30 @@ function App:startSession()
 		})
 	end)
 	self.cleanupPostcommit = serveSession:hookPostcommit(function(patch, instanceMap, unappliedPatch)
-		-- Update tree with unapplied metadata
+		local now = DateTime.now().UnixTimestamp
 		self:setState(function(prevState)
+			local oldPatchData = prevState.patchData
+			local newPatchData = {
+				patch = patch,
+				unapplied = unappliedPatch,
+				timestamp = now,
+			}
+
+			if PatchSet.isEmpty(patch) then
+				-- Keep existing patch info, but use new timestamp
+				newPatchData.patch = oldPatchData.patch
+				newPatchData.unapplied = oldPatchData.unapplied
+			elseif now - oldPatchData.timestamp < 2 then
+				-- Patches that apply in the same second are combined for human clarity
+				newPatchData.patch = PatchSet.assign(PatchSet.newEmpty(), oldPatchData.patch, patch)
+				newPatchData.unapplied = PatchSet.assign(PatchSet.newEmpty(), oldPatchData.unapplied, unappliedPatch)
+			end
+
 			return {
 				patchTree = PatchTree.updateMetadata(prevState.patchTree, patch, instanceMap, unappliedPatch),
+				patchData = newPatchData,
 			}
 		end)
-	end)
-
-	serveSession:hookPostcommit(function(patch, _instanceMap, unapplied)
-		local now = DateTime.now().UnixTimestamp
-		local old = self.state.patchData
-
-		if PatchSet.isEmpty(patch) then
-			-- Ignore empty patch, but update timestamp
-			self:setState({
-				patchData = {
-					patch = old.patch,
-					unapplied = old.unapplied,
-					timestamp = now,
-				},
-			})
-			return
-		end
-
-		if now - old.timestamp < 2 then
-			-- Patches that apply in the same second are
-			-- considered to be part of the same change for human clarity
-			patch = PatchSet.assign(PatchSet.newEmpty(), old.patch, patch)
-			unapplied = PatchSet.assign(PatchSet.newEmpty(), old.unapplied, unapplied)
-		end
-
-		self:setState({
-			patchData = {
-				patch = patch,
-				unapplied = unapplied,
-				timestamp = now,
-			},
-		})
 	end)
 
 	serveSession:onStatusChanged(function(status, details)
