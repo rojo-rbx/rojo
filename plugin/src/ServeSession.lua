@@ -295,7 +295,12 @@ function ServeSession:__replaceInstances(idList)
 		Log.trace("Swapping Instance {} out via api/models/ endpoint", id)
 		local oldParent = oldInstance.Parent
 		for _, child in oldInstance:GetChildren() do
-			child.Parent = replacement
+			-- Some kinds of instances may be unable to be
+			-- reparented, period. TouchTransmitter is one example of
+			-- this.
+			pcall(function()
+				child.Parent = replacement
+			end)
 		end
 
 		replacement.Parent = oldParent
