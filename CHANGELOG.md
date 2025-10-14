@@ -24,6 +24,7 @@
 * Added an update indicator to the version header when a new version of the plugin is available. ([#1069])
 * Added `--absolute` flag to the sourcemap subcommand, which will emit absolute paths instead of relative paths. ([#1092])
 * Fixed applying `gameId` and `placeId` before initial sync was accepted ([#1104])
+* Improved script source diff visualizer UX and performance ([#994])
 
 [#1122]: https://github.com/rojo-rbx/rojo/pull/1122
 [#1030]: https://github.com/rojo-rbx/rojo/pull/1030
@@ -37,6 +38,7 @@
 [#1069]: https://github.com/rojo-rbx/rojo/pull/1069
 [#1092]: https://github.com/rojo-rbx/rojo/pull/1092
 [#1104]: https://github.com/rojo-rbx/rojo/pull/1104
+[#994]: https://github.com/rojo-rbx/rojo/pull/994
 
 ## 7.5.1 - April 25th, 2025
 * Fixed output spam related to `Instance.Capabilities` in the plugin
