@@ -48,6 +48,12 @@ local function debugPatch(object)
 	end)
 end
 
+local function attemptReparent(instance, parent)
+	return pcall(function()
+		instance.Parent = parent
+	end)
+end
+
 local ServeSession = {}
 ServeSession.__index = ServeSession
 
@@ -301,10 +307,8 @@ function ServeSession:__replaceInstances(idList)
 		Log.trace("Swapping Instance {} out via api/models/ endpoint", id)
 		local oldParent = oldInstance.Parent
 		for _, child in oldInstance:GetChildren() do
-			local reparentSuccess, reparentError = pcall(function()
-				-- Some children cannot be reparented, such as a TouchTransmitter
-				child.Parent = replacement
-			end)
+			-- Some children cannot be reparented, such as a TouchTransmitter
+			local reparentSuccess, reparentError = attemptReparent(child, replacement)
 			if not reparentSuccess then
 				Log.warn(
 					"Could not reparent child {} of instance {} during sync replacement: {}",
@@ -315,44 +319,25 @@ function ServeSession:__replaceInstances(idList)
 			end
 		end
 
-		local swapSuccess, swapError = pcall(function()
-			replacement.Parent = oldParent
-			-- ChangeHistoryService doesn't like it if an Instance has been
-			-- Destroyed. So, we have to accept the potential memory hit and
-			-- just set the parent to `nil`.
-			oldInstance.Parent = nil
-		end)
-		if not swapSuccess then
+		-- ChangeHistoryService doesn't like it if an Instance has been
+		-- Destroyed. So, we have to accept the potential memory hit and
+		-- just set the parent to `nil`.
+		local deleteSuccess, deleteError = attemptReparent(oldInstance, nil)
+		local replaceSuccess, replaceError = attemptReparent(replacement, oldParent)
+
+		if not (deleteSuccess and replaceSuccess) then
 			Log.warn(
 				"Could not swap instances {} and {} during sync replacement: {}",
 				oldInstance.Name,
 				replacement.Name,
-				swapError
+				(deleteError or "") .. "\n" .. (replaceError or "")
 			)
 
-			-- Well, that's not good. The replacement swap failed.
-			-- We need to revert the swap to avoid losing the old instance and children.
-			local revertSuccess, revertError = pcall(function()
-				-- Give back the children
-				for _, child in replacement:GetChildren() do
-					child.Parent = oldInstance
-				end
-				-- If it got parented to nil, bring it back
-				if oldInstance.Parent ~= oldParent then
-					oldInstance.Parent = oldParent
-				end
-			end)
-			if not revertSuccess then
-				-- Almost certainly impossible since anything that was able to be reparented should be able to be reparented back
-				-- but we'll log it just in case.
-				Log.warn(
-					"Could not revert swap of instances {} and {} after failed replacement swap: {}",
-					oldInstance.Name,
-					replacement.Name,
-					revertError
-				)
+			-- We need to revert the failed swap to avoid losing the old instance and children.
+			for _, child in replacement:GetChildren() do
+				attemptReparent(child, oldInstance)
 			end
-
+			attemptReparent(oldInstance, oldParent)
 			continue
 		end
 
