@@ -338,6 +338,9 @@ function ServeSession:__replaceInstances(idList)
 				attemptReparent(child, oldInstance)
 			end
 			attemptReparent(oldInstance, oldParent)
+
+			-- Our replacement should never have existed in the first place, so we can just destroy it.
+			replacement:Destroy()
 			continue
 		end
 
