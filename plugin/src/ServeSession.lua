@@ -291,18 +291,63 @@ function ServeSession:__replaceInstances(idList)
 
 	for id, replacement in replacements do
 		local oldInstance = self.__instanceMap.fromIds[id]
+		if not oldInstance then
+			Log.warn("Instance {} not found in InstanceMap during sync replacement", id)
+			continue
+		end
+
 		self.__instanceMap:insert(id, replacement)
 		Log.trace("Swapping Instance {} out via api/models/ endpoint", id)
 		local oldParent = oldInstance.Parent
 		for _, child in oldInstance:GetChildren() do
-			child.Parent = replacement
+			local reparentSuccess, reparentError = pcall(function()
+				-- Some children cannot be reparented, such as a TouchTransmitter
+				child.Parent = replacement
+			end)
+			if not reparentSuccess then
+				Log.warn(
+					"Could not reparent child {} of instance {} during sync replacement: {}",
+					child.Name,
+					oldInstance.Name,
+					reparentError
+				)
+			end
 		end
 
-		replacement.Parent = oldParent
-		-- ChangeHistoryService doesn't like it if an Instance has been
-		-- Destroyed. So, we have to accept the potential memory hit and
-		-- just set the parent to `nil`.
-		oldInstance.Parent = nil
+		local swapSuccess, swapError = pcall(function()
+			replacement.Parent = oldParent
+			-- ChangeHistoryService doesn't like it if an Instance has been
+			-- Destroyed. So, we have to accept the potential memory hit and
+			-- just set the parent to `nil`.
+			oldInstance.Parent = nil
+		end)
+		if not swapSuccess then
+			Log.warn(
+				"Could not swap instances {} and {} during sync replacement: {}",
+				oldInstance.Name,
+				replacement.Name,
+				swapError
+			)
+
+			-- Well, that's not good. The replacement swap failed.
+			-- We need to revert the swap to avoid losing the old instance and children.
+			local revertSuccess, revertError = pcall(function()
+				oldInstance.Parent = oldParent
+				for _, child in replacement:GetChildren() do
+					child.Parent = oldInstance
+				end
+			end)
+			if not revertSuccess then
+				Log.warn(
+					"Could not revert swap of instances {} and {} after failed replacement swap: {}",
+					oldInstance.Name,
+					replacement.Name,
+					revertError
+				)
+			end
+
+			continue
+		end
 
 		if selectionMap[oldInstance] then
 			-- This is a bit funky, but it saves the order of Selection
