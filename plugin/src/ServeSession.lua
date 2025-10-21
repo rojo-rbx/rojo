@@ -48,6 +48,12 @@ local function debugPatch(object)
 	end)
 end
 
+local function attemptReparent(instance, parent)
+	return pcall(function()
+		instance.Parent = parent
+	end)
+end
+
 local ServeSession = {}
 ServeSession.__index = ServeSession
 
@@ -291,18 +297,52 @@ function ServeSession:__replaceInstances(idList)
 
 	for id, replacement in replacements do
 		local oldInstance = self.__instanceMap.fromIds[id]
+		if not oldInstance then
+			-- TODO: Why would this happen?
+			Log.warn("Instance {} not found in InstanceMap during sync replacement", id)
+			continue
+		end
+
 		self.__instanceMap:insert(id, replacement)
 		Log.trace("Swapping Instance {} out via api/models/ endpoint", id)
 		local oldParent = oldInstance.Parent
 		for _, child in oldInstance:GetChildren() do
-			child.Parent = replacement
+			-- Some children cannot be reparented, such as a TouchTransmitter
+			local reparentSuccess, reparentError = attemptReparent(child, replacement)
+			if not reparentSuccess then
+				Log.warn(
+					"Could not reparent child {} of instance {} during sync replacement: {}",
+					child.Name,
+					oldInstance.Name,
+					reparentError
+				)
+			end
 		end
 
-		replacement.Parent = oldParent
 		-- ChangeHistoryService doesn't like it if an Instance has been
 		-- Destroyed. So, we have to accept the potential memory hit and
 		-- just set the parent to `nil`.
-		oldInstance.Parent = nil
+		local deleteSuccess, deleteError = attemptReparent(oldInstance, nil)
+		local replaceSuccess, replaceError = attemptReparent(replacement, oldParent)
+
+		if not (deleteSuccess and replaceSuccess) then
+			Log.warn(
+				"Could not swap instances {} and {} during sync replacement: {}",
+				oldInstance.Name,
+				replacement.Name,
+				(deleteError or "") .. "\n" .. (replaceError or "")
+			)
+
+			-- We need to revert the failed swap to avoid losing the old instance and children.
+			for _, child in replacement:GetChildren() do
+				attemptReparent(child, oldInstance)
+			end
+			attemptReparent(oldInstance, oldParent)
+
+			-- Our replacement should never have existed in the first place, so we can just destroy it.
+			replacement:Destroy()
+			continue
+		end
 
 		if selectionMap[oldInstance] then
 			-- This is a bit funky, but it saves the order of Selection
