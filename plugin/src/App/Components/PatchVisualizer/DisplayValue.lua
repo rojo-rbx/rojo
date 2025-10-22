@@ -8,9 +8,46 @@ local Theme = require(Plugin.App.Theme)
 
 local e = Roact.createElement
 
+local function fmtNum(n)
+	if math.abs(n - math.round(n)) < 0.0001 then
+		return tostring(math.round(n))
+	end
+	return (string.format("%.3f", n):gsub("0+$", ""):gsub("%.$", ""))
+end
+
 local function DisplayValue(props)
 	return Theme.with(function(theme)
 		local t = typeof(props.value)
+		local text
+
+		if t == "Vector3" then
+			text = string.format("(%s, %s, %s)", fmtNum(props.value.X), fmtNum(props.value.Y), fmtNum(props.value.Z))
+		elseif t == "Vector2" then
+			text = string.format("(%s, %s)", fmtNum(props.value.X), fmtNum(props.value.Y))
+		elseif t == "UDim2" then
+			local x, y = props.value.X, props.value.Y
+			text = string.format("{%s, %s}, {%s, %s}", fmtNum(x.Scale), fmtNum(x.Offset), fmtNum(y.Scale), fmtNum(y.Offset))
+		elseif t == "CFrame" then
+			local p = props.value.Position
+			text = string.format("(%s, %s, %s)", fmtNum(p.X), fmtNum(p.Y), fmtNum(p.Z))
+		elseif t == "NumberRange" then
+			text = string.format("[%s, %s]", fmtNum(props.value.Min), fmtNum(props.value.Max))
+		end
+
+		if text then
+			return e("TextLabel", {
+				Text = text,
+				BackgroundTransparency = 1,
+				FontFace = theme.Font.Main,
+				TextSize = theme.TextSize.Body,
+				TextColor3 = props.textColor,
+				TextXAlignment = Enum.TextXAlignment.Left,
+				TextTransparency = props.transparency,
+				TextTruncate = Enum.TextTruncate.AtEnd,
+				Size = UDim2.new(1, 0, 1, 0),
+			})
+		end
+
 		if t == "Color3" then
 			-- Colors get a blot that shows the color
 			return Roact.createFragment({
@@ -99,10 +136,6 @@ local function DisplayValue(props)
 				Size = UDim2.new(1, 0, 1, 0),
 			})
 		end
-
-		-- TODO: Maybe add visualizations to other datatypes?
-		-- Or special text handling tostring for some?
-		-- Will add as needed, let's see what cases arise.
 
 		local textRepresentation = string.gsub(tostring(props.value), "%s", " ")
 		if t == "string" then
