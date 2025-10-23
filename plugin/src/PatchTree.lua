@@ -16,6 +16,14 @@ local Types = require(Plugin.Types)
 local decodeValue = require(Plugin.Reconciler.decodeValue)
 local getProperty = require(Plugin.Reconciler.getProperty)
 
+local function yieldIfNeeded(clock)
+	if os.clock() - clock > 1 / 20 then
+		task.wait()
+		return os.clock()
+	end
+	return clock
+end
+
 local function alphabeticalNext(t, state)
 	-- Equivalent of the next function, but returns the keys in the alphabetic
 	-- order of node names. We use a temporary ordered key table that is stored in the
@@ -132,7 +140,6 @@ end
 -- props must contain id, and cannot contain children or parentId
 -- other than those three, it can hold anything
 function Tree:addNode(parent, props)
-	Timer.start("Tree:addNode")
 	assert(props.id, "props must contain id")
 
 	parent = parent or "ROOT"
@@ -143,7 +150,6 @@ function Tree:addNode(parent, props)
 		for k, v in props do
 			node[k] = v
 		end
-		Timer.stop()
 		return node
 	end
 
@@ -154,25 +160,25 @@ function Tree:addNode(parent, props)
 	local parentNode = self:getNode(parent)
 	if not parentNode then
 		Log.warn("Failed to create node since parent doesnt exist: {}, {}", parent, props)
-		Timer.stop()
 		return
 	end
 
 	parentNode.children[node.id] = node
 	self.idToNode[node.id] = node
 
-	Timer.stop()
 	return node
 end
 
 -- Given a list of ancestor ids in descending order, builds the nodes for them
 -- using the patch and instanceMap info
 function Tree:buildAncestryNodes(previousId: string?, ancestryIds: { string }, patch, instanceMap)
-	Timer.start("Tree:buildAncestryNodes")
+	local clock = os.clock()
 	-- Build nodes for ancestry by going up the tree
 	previousId = previousId or "ROOT"
 
 	for _, ancestorId in ancestryIds do
+		clock = yieldIfNeeded(clock)
+
 		local value = instanceMap.fromIds[ancestorId] or patch.added[ancestorId]
 		if not value then
 			Log.warn("Failed to find ancestor object for " .. ancestorId)
@@ -186,8 +192,6 @@ function Tree:buildAncestryNodes(previousId: string?, ancestryIds: { string }, p
 		})
 		previousId = ancestorId
 	end
-
-	Timer.stop()
 end
 
 local PatchTree = {}
@@ -196,12 +200,16 @@ local PatchTree = {}
 -- uses changeListHeaders in node.changeList
 function PatchTree.build(patch, instanceMap, changeListHeaders)
 	Timer.start("PatchTree.build")
+	local clock = os.clock()
+
 	local tree = Tree.new()
 
 	local knownAncestors = {}
 
 	Timer.start("patch.updated")
 	for _, change in patch.updated do
+		clock = yieldIfNeeded(clock)
+
 		local instance = instanceMap.fromIds[change.id]
 		if not instance then
 			continue
@@ -281,6 +289,8 @@ function PatchTree.build(patch, instanceMap, changeListHeaders)
 
 	Timer.start("patch.removed")
 	for _, idOrInstance in patch.removed do
+		clock = yieldIfNeeded(clock)
+
 		local instance = if Types.RbxId(idOrInstance) then instanceMap.fromIds[idOrInstance] else idOrInstance
 		if not instance then
 			-- If we're viewing a past patch, the instance is already removed
@@ -325,6 +335,8 @@ function PatchTree.build(patch, instanceMap, changeListHeaders)
 
 	Timer.start("patch.added")
 	for id, change in patch.added do
+		clock = yieldIfNeeded(clock)
+
 		-- Gather ancestors from existing DOM or future additions
 		local ancestryIds = {}
 		local parentId = change.Parent
