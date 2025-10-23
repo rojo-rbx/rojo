@@ -192,13 +192,53 @@ pub struct WriteResponse {
     pub session_id: SessionId,
 }
 
-/// Response body from /api/subscribe/{cursor}
+/// Packet type enum for different websocket message types
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct SubscribeResponse<'a> {
-    pub session_id: SessionId,
+pub enum SocketPacketType {
+    Messages,
+    Serialize,
+    RefPatch,
+}
+
+/// Body content for messages packet type
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MessagesPacket<'a> {
     pub message_cursor: u32,
     pub messages: Vec<SubscribeMessage<'a>>,
+}
+
+/// Body content for serialize packet type
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SerializePacket {
+    pub model_contents: BufferEncode,
+}
+
+/// Body content for ref patch packet type
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RefPatchPacket<'a> {
+    pub patch: SubscribeMessage<'a>,
+}
+
+/// Body content for different packet types
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum SocketPacketBody<'a> {
+    Messages(MessagesPacket<'a>),
+    Serialize(SerializePacket),
+    RefPatch(RefPatchPacket<'a>),
+}
+
+/// Message content from /api/socket
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SocketPacket<'a> {
+    pub session_id: SessionId,
+    pub packet_type: SocketPacketType,
+    pub body: SocketPacketBody<'a>,
 }
 
 /// Response body from /api/open/{id}

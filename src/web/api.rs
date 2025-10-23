@@ -24,9 +24,9 @@ use crate::{
     snapshot::{InstanceWithMeta, PatchSet, PatchUpdate},
     web::{
         interface::{
-            ErrorResponse, Instance, OpenResponse, ReadResponse, ServerInfoResponse,
-            SubscribeMessage, SubscribeResponse, WriteRequest, WriteResponse, PROTOCOL_VERSION,
-            SERVER_VERSION,
+            ErrorResponse, Instance, MessagesPacket, OpenResponse, ReadResponse,
+            ServerInfoResponse, SocketPacket, SocketPacketBody, SocketPacketType, SubscribeMessage,
+            WriteRequest, WriteResponse, PROTOCOL_VERSION, SERVER_VERSION,
         },
         util::{json, json_ok},
     },
@@ -41,14 +41,13 @@ pub async fn call(serve_session: Arc<ServeSession>, mut request: Request<Body>) 
         (&Method::GET, path) if path.starts_with("/api/read/") => {
             service.handle_api_read(request).await
         }
-        (&Method::GET, path) if path.starts_with("/api/subscribe/") => {
+        (&Method::GET, "/api/socket") => {
             if is_upgrade_request(&request) {
-                service.handle_api_subscribe(&mut request).await
+                service.handle_api_socket(&mut request).await
             } else {
-                // We don't support long polling anymore, throw an error
                 json(
                     ErrorResponse::bad_request(
-                        "Long polling is no longer supported; please use WebSockets",
+                        "/api/socket must be called as a websocket upgrade request",
                     ),
                     StatusCode::BAD_REQUEST,
                 )
@@ -101,18 +100,7 @@ impl ApiService {
     }
 
     /// Handle WebSocket upgrade for real-time message streaming
-    async fn handle_api_subscribe(&self, request: &mut Request<Body>) -> Response<Body> {
-        let argument = &request.uri().path()["/api/subscribe/".len()..];
-        let input_cursor: u32 = match argument.parse() {
-            Ok(v) => v,
-            Err(err) => {
-                return json(
-                    ErrorResponse::bad_request(format!("Malformed message cursor: {}", err)),
-                    StatusCode::BAD_REQUEST,
-                );
-            }
-        };
-
+    async fn handle_api_socket(&self, request: &mut Request<Body>) -> Response<Body> {
         // Upgrade the connection to WebSocket
         let (response, websocket) = match upgrade(request, None) {
             Ok(result) => result,
@@ -128,9 +116,7 @@ impl ApiService {
 
         // Spawn a task to handle the WebSocket connection
         tokio::spawn(async move {
-            if let Err(e) =
-                handle_websocket_subscription(serve_session, websocket, input_cursor).await
-            {
+            if let Err(e) = handle_websocket_subscription(serve_session, websocket).await {
                 log::error!("Error in websocket subscription: {}", e);
             }
         });
@@ -452,7 +438,6 @@ fn pick_script_path(instance: InstanceWithMeta<'_>) -> Option<PathBuf> {
 async fn handle_websocket_subscription(
     serve_session: Arc<ServeSession>,
     websocket: HyperWebsocket,
-    mut cursor: u32,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
     let mut websocket = websocket.await?;
 
@@ -461,13 +446,13 @@ async fn handle_websocket_subscription(
     let message_queue = serve_session.message_queue();
 
     log::debug!(
-        "WebSocket subscription established for session {}, starting at cursor {}",
-        session_id,
-        cursor
+        "WebSocket subscription established for session {}",
+        session_id
     );
 
     // Now continuously listen for new messages using select to handle both incoming messages
     // and WebSocket control messages concurrently
+    let mut cursor = message_queue.cursor();
     loop {
         let receiver = message_queue.subscribe(cursor);
 
@@ -484,10 +469,13 @@ async fn handle_websocket_subscription(
                                     .map(|patch| SubscribeMessage::from_patch_update(&tree, patch))
                                     .collect();
 
-                                let response = SubscribeResponse {
+                                let response = SocketPacket {
                                     session_id,
-                                    message_cursor: new_cursor,
-                                    messages: api_messages,
+                                    packet_type: SocketPacketType::Messages,
+                                    body: SocketPacketBody::Messages(MessagesPacket {
+                                        message_cursor: new_cursor,
+                                        messages: api_messages,
+                                    }),
                                 };
 
                                 serde_json::to_string(&response)?

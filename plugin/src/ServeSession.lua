@@ -190,16 +190,23 @@ function ServeSession:start()
 				self:__applyGameAndPlaceId(serverInfo)
 
 				return self.__apiContext:connectWebSocket({
-					onMessages = function(messages)
+					["messages"] = function(messagesPacket)
 						if self.__status == Status.Disconnected then
 							return
 						end
 
-						Log.debug("Received {} messages from Rojo server", #messages)
+						Log.debug("Received {} messages from Rojo server", #messagesPacket.messages)
 
-						for _, message in messages do
+						for _, message in messagesPacket.messages do
 							self:__applyPatch(message)
 						end
+						self.__apiContext:setMessageCursor(messagesPacket.messageCursor)
+					end,
+					["serialize"] = function(_serializePacket)
+						-- Currently unused
+					end,
+					["refPatch"] = function(_refPatchPacket)
+						-- Currently unused
 					end,
 				})
 			end)

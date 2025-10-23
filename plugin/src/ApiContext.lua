@@ -10,7 +10,7 @@ local Version = require(script.Parent.Version)
 
 local validateApiInfo = Types.ifEnabled(Types.ApiInfoResponse)
 local validateApiRead = Types.ifEnabled(Types.ApiReadResponse)
-local validateApiSubscribe = Types.ifEnabled(Types.ApiSubscribeResponse)
+local validateApiSocketPacket = Types.ifEnabled(Types.ApiSocketPacket)
 local validateApiSerialize = Types.ifEnabled(Types.ApiSerializeResponse)
 local validateApiRefPatch = Types.ifEnabled(Types.ApiRefPatchResponse)
 
@@ -215,36 +215,48 @@ function ApiContext:write(patch)
 	end)
 end
 
-function ApiContext:connectWebSocket(options)
-	local url = ("%s/api/subscribe/%s"):format(self.__baseUrl, self.__messageCursor):gsub("^https?", "ws")
+function ApiContext:connectWebSocket(packetHandlers)
+	local url = ("%s/api/socket"):format(self.__baseUrl):gsub("^https?", "ws")
 
-	-- Construct WebSocket client
-	self.__wsClient = HttpService:CreateWebStreamClient(Enum.WebStreamClientType.WebSocket, {
-		Url = url,
-	})
-
-	-- Setup message handler
-	self.__wsClient.MessageReceived:Connect(function(msg)
-		Log.trace("WebSocket message received: {}", msg)
-		local data = Http.jsonDecode(msg)
-		if data.sessionId ~= self.__sessionId then
-			Log.warn("Received message with wrong session ID; ignoring")
+	return Promise.new(function(resolve, reject)
+		local success, wsClient =
+			pcall(HttpService.CreateWebStreamClient, HttpService, Enum.WebStreamClientType.WebSocket, {
+				Url = url,
+			})
+		if not success then
+			reject("Failed to create WebSocket client: " .. tostring(wsClient))
 			return
 		end
+		self.__wsClient = wsClient
 
-		assert(validateApiSubscribe(data))
+		local closed, errored, received
 
-		self:setMessageCursor(data.messageCursor)
-		options.onMessages(data.messages)
-	end)
+		received = self.__wsClient.MessageReceived:Connect(function(msg)
+			local data = Http.jsonDecode(msg)
+			if data.sessionId ~= self.__sessionId then
+				Log.warn("Received message with wrong session ID; ignoring")
+				return
+			end
 
-	-- Promise to resolve/reject when the connection closes/errors
-	return Promise.new(function(resolve, reject)
-		local closed, errored
+			assert(validateApiSocketPacket(data))
 
-		closed = self.__wsClient.Closed:Once(function()
+			Log.trace("Received websocket packet: {:#?}", data)
+
+			local handler = packetHandlers[data.packetType]
+			if handler then
+				local ok, err = pcall(handler, data.body)
+				if not ok then
+					Log.error("Error in WebSocket packet handler for type '%s': %s", data.packetType, err)
+				end
+			else
+				Log.warn("No handler for WebSocket packet type '%s'", data.packetType)
+			end
+		end)
+
+		closed = self.__wsClient.Closed:Connect(function()
 			closed:Disconnect()
 			errored:Disconnect()
+			received:Disconnect()
 
 			if self.__connected then
 				reject("WebSocket connection closed unexpectedly")
@@ -252,9 +264,11 @@ function ApiContext:connectWebSocket(options)
 				resolve()
 			end
 		end)
-		errored = self.__wsClient.Error:Once(function(code, msg)
+
+		errored = self.__wsClient.Error:Connect(function(code, msg)
 			closed:Disconnect()
 			errored:Disconnect()
+			received:Disconnect()
 
 			reject("WebSocket error: " .. code .. " - " .. msg)
 		end)
