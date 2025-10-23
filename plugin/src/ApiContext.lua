@@ -1,4 +1,5 @@
 local Packages = script.Parent.Parent.Packages
+local HttpService = game:GetService("HttpService")
 local Http = require(Packages.Http)
 local Log = require(Packages.Log)
 local Promise = require(Packages.Promise)
@@ -99,6 +100,7 @@ function ApiContext.new(baseUrl)
 		__baseUrl = baseUrl,
 		__sessionId = nil,
 		__messageCursor = -1,
+		__wsClient = nil,
 		__connected = true,
 		__activeRequests = {},
 	}
@@ -126,6 +128,12 @@ function ApiContext:disconnect()
 		request:cancel()
 	end
 	self.__activeRequests = {}
+
+	if self.__wsClient then
+		Log.trace("Closing WebSocket client")
+		self.__wsClient:Close()
+	end
+	self.__wsClient = nil
 end
 
 function ApiContext:setMessageCursor(index)
@@ -207,38 +215,49 @@ function ApiContext:write(patch)
 	end)
 end
 
-function ApiContext:retrieveMessages()
-	local url = ("%s/api/subscribe/%s"):format(self.__baseUrl, self.__messageCursor)
+function ApiContext:connectWebSocket(options)
+	local url = ("%s/api/subscribe/%s"):format(self.__baseUrl, self.__messageCursor):gsub("^https?", "ws")
 
-	local function sendRequest()
-		local request = Http.get(url):catch(function(err)
-			if err.type == Http.Error.Kind.Timeout and self.__connected then
-				return sendRequest()
-			end
+	-- Construct WebSocket client
+	self.__wsClient = HttpService:CreateWebStreamClient(Enum.WebStreamClientType.WebSocket, {
+		Url = url,
+	})
 
-			return Promise.reject(err)
-		end)
-
-		Log.trace("Tracking request {}", request)
-		self.__activeRequests[request] = true
-
-		return request:finally(function(...)
-			Log.trace("Cleaning up request {}", request)
-			self.__activeRequests[request] = nil
-			return ...
-		end)
-	end
-
-	return sendRequest():andThen(rejectFailedRequests):andThen(Http.Response.json):andThen(function(body)
-		if body.sessionId ~= self.__sessionId then
-			return Promise.reject("Server changed ID")
+	-- Setup message handler
+	self.__wsClient.MessageReceived:Connect(function(msg)
+		Log.trace("WebSocket message received: {}", msg)
+		local data = Http.jsonDecode(msg)
+		if data.sessionId ~= self.__sessionId then
+			Log.warn("Received message with wrong session ID; ignoring")
+			return
 		end
 
-		assert(validateApiSubscribe(body))
+		assert(validateApiSubscribe(data))
 
-		self:setMessageCursor(body.messageCursor)
+		self:setMessageCursor(data.messageCursor)
+		options.onMessages(data.messages)
+	end)
 
-		return body.messages
+	-- Promise to resolve/reject when the connection closes/errors
+	return Promise.new(function(resolve, reject)
+		local closed, errored
+
+		closed = self.__wsClient.Closed:Once(function()
+			closed:Disconnect()
+			errored:Disconnect()
+
+			if self.__connected then
+				reject("WebSocket connection closed unexpectedly")
+			else
+				resolve()
+			end
+		end)
+		errored = self.__wsClient.Error:Once(function(code, msg)
+			closed:Disconnect()
+			errored:Disconnect()
+
+			reject("WebSocket error: " .. code .. " - " .. msg)
+		end)
 	end)
 end
 

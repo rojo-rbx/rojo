@@ -189,7 +189,19 @@ function ServeSession:start()
 				self:__setStatus(Status.Connected, serverInfo.projectName)
 				self:__applyGameAndPlaceId(serverInfo)
 
-				return self:__mainSyncLoop()
+				return self.__apiContext:connectWebSocket({
+					onMessages = function(messages)
+						if self.__status == Status.Disconnected then
+							return
+						end
+
+						Log.debug("Received {} messages from Rojo server", #messages)
+
+						for _, message in messages do
+							self:__applyPatch(message)
+						end
+					end,
+				})
 			end)
 		end)
 		:catch(function(err)
@@ -519,40 +531,6 @@ function ServeSession:__initialSync(serverInfo)
 		else
 			return Promise.reject("Invalid user decision: " .. userDecision)
 		end
-	end)
-end
-
-function ServeSession:__mainSyncLoop()
-	return Promise.new(function(resolve, reject)
-		while self.__status == Status.Connected do
-			local success, result = self.__apiContext
-				:retrieveMessages()
-				:andThen(function(messages)
-					if self.__status == Status.Disconnected then
-						-- In the time it took to retrieve messages, we disconnected
-						-- so we just resolve immediately without patching anything
-						return
-					end
-
-					Log.trace("Serve session {} retrieved {} messages", tostring(self), #messages)
-
-					for _, message in messages do
-						self:__applyPatch(message)
-					end
-				end)
-				:await()
-
-			if self.__status == Status.Disconnected then
-				-- If we are no longer connected after applying, we stop silently
-				-- without checking for errors as they are no longer relevant
-				break
-			elseif success == false then
-				reject(result)
-			end
-		end
-
-		-- We are no longer connected, so we resolve the promise
-		resolve()
 	end)
 end
 
