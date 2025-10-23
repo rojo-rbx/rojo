@@ -9,7 +9,10 @@ use std::{
     sync::Arc,
 };
 
+use futures::{sink::SinkExt, stream::StreamExt};
 use hyper::{body, Body, Method, Request, Response, StatusCode};
+use hyper_tungstenite::tungstenite::Message;
+use hyper_tungstenite::{is_upgrade_request, upgrade, HyperWebsocket};
 use opener::OpenError;
 use rbx_dom_weak::{
     types::{Ref, Variant},
@@ -30,7 +33,7 @@ use crate::{
     web_api::{BufferEncode, InstanceUpdate, RefPatchResponse, SerializeResponse},
 };
 
-pub async fn call(serve_session: Arc<ServeSession>, request: Request<Body>) -> Response<Body> {
+pub async fn call(serve_session: Arc<ServeSession>, mut request: Request<Body>) -> Response<Body> {
     let service = ApiService::new(serve_session);
 
     match (request.method(), request.uri().path()) {
@@ -39,7 +42,13 @@ pub async fn call(serve_session: Arc<ServeSession>, request: Request<Body>) -> R
             service.handle_api_read(request).await
         }
         (&Method::GET, path) if path.starts_with("/api/subscribe/") => {
-            service.handle_api_subscribe(request).await
+            // Check if this is a WebSocket upgrade request
+            if is_upgrade_request(&request) {
+                // Log the upgrade attempt
+                service.handle_api_subscribe_websocket(&mut request).await
+            } else {
+                service.handle_api_subscribe(request).await
+            }
         }
         (&Method::GET, path) if path.starts_with("/api/serialize/") => {
             service.handle_api_serialize(request).await
@@ -85,6 +94,44 @@ impl ApiService {
             game_id: self.serve_session.game_id(),
             root_instance_id,
         })
+    }
+
+    /// Handle WebSocket upgrade for real-time message streaming
+    async fn handle_api_subscribe_websocket(&self, request: &mut Request<Body>) -> Response<Body> {
+        let argument = &request.uri().path()["/api/subscribe/".len()..];
+        let input_cursor: u32 = match argument.parse() {
+            Ok(v) => v,
+            Err(err) => {
+                return json(
+                    ErrorResponse::bad_request(format!("Malformed message cursor: {}", err)),
+                    StatusCode::BAD_REQUEST,
+                );
+            }
+        };
+
+        // Upgrade the connection to WebSocket
+        let (response, websocket) = match upgrade(request, None) {
+            Ok(result) => result,
+            Err(err) => {
+                return json(
+                    ErrorResponse::internal_error(format!("WebSocket upgrade failed: {}", err)),
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                );
+            }
+        };
+
+        let serve_session = Arc::clone(&self.serve_session);
+
+        // Spawn a task to handle the WebSocket connection
+        tokio::spawn(async move {
+            if let Err(e) =
+                handle_websocket_subscription(serve_session, websocket, input_cursor).await
+            {
+                log::error!("Error in websocket subscription: {}", e);
+            }
+        });
+
+        response
     }
 
     /// Retrieve any messages past the given cursor index, and if
@@ -441,6 +488,108 @@ fn pick_script_path(instance: InstanceWithMeta<'_>) -> Option<PathBuf> {
                 .unwrap_or(false)
         })
         .map(|path| path.to_owned())
+}
+
+/// Handle WebSocket connection for streaming subscription messages
+async fn handle_websocket_subscription(
+    serve_session: Arc<ServeSession>,
+    websocket: HyperWebsocket,
+    mut cursor: u32,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+    let mut websocket = websocket.await?;
+
+    let session_id = serve_session.session_id();
+    let tree_handle = serve_session.tree_handle();
+    let message_queue = serve_session.message_queue();
+
+    log::debug!(
+        "WebSocket subscription established for session {}, starting at cursor {}",
+        session_id,
+        cursor
+    );
+
+    // Now continuously listen for new messages using select to handle both incoming messages
+    // and WebSocket control messages concurrently
+    loop {
+        let receiver = message_queue.subscribe(cursor);
+
+        tokio::select! {
+            // Handle new messages from the message queue
+            result = receiver => {
+                match result {
+                    Ok((new_cursor, messages)) => {
+                        if !messages.is_empty() {
+                            let json_message = {
+                                let tree = tree_handle.lock().unwrap();
+                                let api_messages = messages
+                                    .into_iter()
+                                    .map(|patch| SubscribeMessage::from_patch_update(&tree, patch))
+                                    .collect();
+
+                                let response = SubscribeResponse {
+                                    session_id,
+                                    message_cursor: new_cursor,
+                                    messages: api_messages,
+                                };
+
+                                serde_json::to_string(&response)?
+                            };
+
+                            log::debug!("Sending batch of messages over WebSocket subscription");
+
+                            if websocket.send(Message::Text(json_message.into())).await.is_err() {
+                                // Client disconnected
+                                break;
+                            }
+                            cursor = new_cursor;
+                        }
+                    }
+                    Err(_) => {
+                        // Message queue disconnected
+                        let _ = websocket.send(Message::Close(None)).await;
+                        break;
+                    }
+                }
+            }
+
+            // Handle incoming WebSocket messages (ping/pong/close)
+            msg = websocket.next() => {
+                match msg {
+                    Some(Ok(Message::Close(_))) => {
+                        log::info!("WebSocket subscription closed by client");
+                        break;
+                    }
+                    Some(Ok(Message::Ping(data))) => {
+                        // tungstenite handles pong automatically
+                        log::debug!("Received ping: {:?}", data);
+                    }
+                    Some(Ok(Message::Pong(data))) => {
+                        log::debug!("Received pong: {:?}", data);
+                    }
+                    Some(Ok(Message::Text(_))) | Some(Ok(Message::Binary(_))) => {
+                        // Ignore text/binary messages from client for subscription endpoint
+                        // TODO: Use this for bidirectional sync or requesting fallbacks?
+                        log::info!("Ignoring message from client on subscription WebSocket: {:?}", msg);
+                    }
+                    Some(Ok(Message::Frame(_))) => {
+                        // This should never happen according to tungstenite docs
+                        unreachable!();
+                    }
+                    Some(Err(e)) => {
+                        log::error!("WebSocket error: {}", e);
+                        break;
+                    }
+                    None => {
+                        // WebSocket stream ended
+                        log::debug!("WebSocket stream ended");
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(())
 }
 
 /// Certain Instances MUST be a child of specific classes. This function
