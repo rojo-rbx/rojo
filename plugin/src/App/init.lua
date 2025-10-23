@@ -762,8 +762,7 @@ function App:startSession()
 		self:setState({
 			appStatus = AppStatus.Confirming,
 			confirmData = {
-				instanceMap = instanceMap,
-				patch = patch,
+				patchTree = PatchTree.build(patch, instanceMap, { "Property", "Current", "Incoming" }),
 				serverInfo = serverInfo,
 			},
 			toolbarIcon = Assets.Images.PluginButton,
