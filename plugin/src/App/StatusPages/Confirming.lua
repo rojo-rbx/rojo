@@ -56,7 +56,7 @@ function ConfirmingPage:render()
 				transparency = self.props.transparency,
 				layoutOrder = 3,
 
-				patchTree = self.props.confirmData.patchTree,
+				patchTree = self.props.patchTree,
 
 				showStringDiff = function(oldString: string, newString: string)
 					self:setState({

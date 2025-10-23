@@ -770,8 +770,8 @@ function App:startSession()
 		})
 		self:setState({
 			appStatus = AppStatus.Confirming,
+			patchTree = PatchTree.build(patch, instanceMap, { "Property", "Current", "Incoming" }),
 			confirmData = {
-				patchTree = PatchTree.build(patch, instanceMap, { "Property", "Current", "Incoming" }),
 				serverInfo = serverInfo,
 			},
 			toolbarIcon = Assets.Images.PluginButton,
@@ -882,6 +882,7 @@ function App:render()
 
 					ConfirmingPage = createPageElement(AppStatus.Confirming, {
 						confirmData = self.state.confirmData,
+						patchTree = self.state.patchTree,
 						createPopup = not self.state.guiEnabled,
 
 						onAbort = function()
