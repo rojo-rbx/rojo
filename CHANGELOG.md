@@ -4,9 +4,11 @@
 
 * Fixed a bug where the last sync timestamp was not updating correctly in the plugin ([#1132])
 * Improved the reliability of sync replacements by adding better error handling and recovery ([#1135])
+* Small improvements to stability when syncing massive projects ([#1140])
 
 [#1132]: https://github.com/rojo-rbx/rojo/pull/1132
 [#1135]: https://github.com/rojo-rbx/rojo/pull/1135
+[#1140]: https://github.com/rojo-rbx/rojo/pull/1140
 
 ## 7.6.0 - October 10th, 2025
 * Added flag to `rojo init` to skip initializing a git repository ([#1122])
