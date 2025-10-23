@@ -4,8 +4,6 @@ local Packages = Rojo.Packages
 
 local Roact = require(Packages.Roact)
 
-local Timer = require(Plugin.Timer)
-local PatchTree = require(Plugin.PatchTree)
 local Settings = require(Plugin.Settings)
 local Theme = require(Plugin.App.Theme)
 local TextButton = require(Plugin.App.Components.TextButton)
