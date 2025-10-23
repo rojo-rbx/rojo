@@ -42,12 +42,16 @@ pub async fn call(serve_session: Arc<ServeSession>, mut request: Request<Body>) 
             service.handle_api_read(request).await
         }
         (&Method::GET, path) if path.starts_with("/api/subscribe/") => {
-            // Check if this is a WebSocket upgrade request
             if is_upgrade_request(&request) {
-                // Log the upgrade attempt
-                service.handle_api_subscribe_websocket(&mut request).await
+                service.handle_api_subscribe(&mut request).await
             } else {
-                service.handle_api_subscribe(request).await
+                // We don't support long polling anymore, throw an error
+                json(
+                    ErrorResponse::bad_request(
+                        "Long polling is no longer supported; please use WebSockets",
+                    ),
+                    StatusCode::BAD_REQUEST,
+                )
             }
         }
         (&Method::GET, path) if path.starts_with("/api/serialize/") => {
@@ -97,7 +101,7 @@ impl ApiService {
     }
 
     /// Handle WebSocket upgrade for real-time message streaming
-    async fn handle_api_subscribe_websocket(&self, request: &mut Request<Body>) -> Response<Body> {
+    async fn handle_api_subscribe(&self, request: &mut Request<Body>) -> Response<Body> {
         let argument = &request.uri().path()["/api/subscribe/".len()..];
         let input_cursor: u32 = match argument.parse() {
             Ok(v) => v,
@@ -132,52 +136,6 @@ impl ApiService {
         });
 
         response
-    }
-
-    /// Retrieve any messages past the given cursor index, and if
-    /// there weren't any, subscribe to receive any new messages.
-    async fn handle_api_subscribe(&self, request: Request<Body>) -> Response<Body> {
-        let argument = &request.uri().path()["/api/subscribe/".len()..];
-        let input_cursor: u32 = match argument.parse() {
-            Ok(v) => v,
-            Err(err) => {
-                return json(
-                    ErrorResponse::bad_request(format!("Malformed message cursor: {}", err)),
-                    StatusCode::BAD_REQUEST,
-                );
-            }
-        };
-
-        let session_id = self.serve_session.session_id();
-
-        let result = self
-            .serve_session
-            .message_queue()
-            .subscribe(input_cursor)
-            .await;
-
-        let tree_handle = self.serve_session.tree_handle();
-
-        match result {
-            Ok((message_cursor, messages)) => {
-                let tree = tree_handle.lock().unwrap();
-
-                let api_messages = messages
-                    .into_iter()
-                    .map(|patch| SubscribeMessage::from_patch_update(&tree, patch))
-                    .collect();
-
-                json_ok(SubscribeResponse {
-                    session_id,
-                    message_cursor,
-                    messages: api_messages,
-                })
-            }
-            Err(_) => json(
-                ErrorResponse::internal_error("Message queue disconnected sender"),
-                StatusCode::INTERNAL_SERVER_ERROR,
-            ),
-        }
     }
 
     async fn handle_api_write(&self, request: Request<Body>) -> Response<Body> {
@@ -539,6 +497,7 @@ async fn handle_websocket_subscription(
 
                             if websocket.send(Message::Text(json_message.into())).await.is_err() {
                                 // Client disconnected
+                                log::debug!("WebSocket subscription closed by client");
                                 break;
                             }
                             cursor = new_cursor;
@@ -546,6 +505,7 @@ async fn handle_websocket_subscription(
                     }
                     Err(_) => {
                         // Message queue disconnected
+                        log::debug!("Message queue disconnected; closing WebSocket subscription");
                         let _ = websocket.send(Message::Close(None)).await;
                         break;
                     }
@@ -556,7 +516,7 @@ async fn handle_websocket_subscription(
             msg = websocket.next() => {
                 match msg {
                     Some(Ok(Message::Close(_))) => {
-                        log::info!("WebSocket subscription closed by client");
+                        log::debug!("WebSocket subscription closed by client");
                         break;
                     }
                     Some(Ok(Message::Ping(data))) => {
