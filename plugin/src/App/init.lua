@@ -595,6 +595,12 @@ function App:startSession()
 		twoWaySync = Settings:get("twoWaySync"),
 	})
 
+	serveSession:setUpdateLoadingTextCallback(function(text: string)
+		self:setState({
+			connectingText = text,
+		})
+	end)
+
 	self.cleanupPrecommit = serveSession:hookPrecommit(function(patch, instanceMap)
 		-- Build new tree for patch
 		self:setState({
@@ -760,6 +766,9 @@ function App:startSession()
 		end
 
 		self:setState({
+			connectingText = "Computing diff view...",
+		})
+		self:setState({
 			appStatus = AppStatus.Confirming,
 			confirmData = {
 				patchTree = PatchTree.build(patch, instanceMap, { "Property", "Current", "Incoming" }),
@@ -886,7 +895,9 @@ function App:render()
 						end,
 					}),
 
-					Connecting = createPageElement(AppStatus.Connecting),
+					Connecting = createPageElement(AppStatus.Connecting, {
+						text = self.state.connectingText,
+					}),
 
 					Connected = createPageElement(AppStatus.Connected, {
 						projectName = self.state.projectName,
