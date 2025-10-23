@@ -483,7 +483,7 @@ async fn handle_websocket_subscription(
 
                             log::debug!("Sending batch of messages over WebSocket subscription");
 
-                            if websocket.send(Message::Text(json_message.into())).await.is_err() {
+                            if websocket.send(Message::Text(json_message)).await.is_err() {
                                 // Client disconnected
                                 log::debug!("WebSocket subscription closed by client");
                                 break;
