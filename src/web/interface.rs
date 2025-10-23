@@ -24,7 +24,7 @@ use crate::{
 pub(crate) const SERVER_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Current protocol version, which is required to match.
-pub const PROTOCOL_VERSION: u64 = 4;
+pub const PROTOCOL_VERSION: u64 = 5;
 
 /// Message returned by Rojo API when a change has occurred.
 #[derive(Debug, Serialize, Deserialize)]
