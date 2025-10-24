@@ -202,12 +202,6 @@ function ServeSession:start()
 						end
 						self.__apiContext:setMessageCursor(messagesPacket.messageCursor)
 					end,
-					["serialize"] = function(_serializePacket)
-						-- Currently unused
-					end,
-					["refPatch"] = function(_refPatchPacket)
-						-- Currently unused
-					end,
 				})
 			end)
 		end)

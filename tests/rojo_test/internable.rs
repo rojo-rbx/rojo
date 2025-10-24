@@ -4,8 +4,7 @@ use rbx_dom_weak::types::Ref;
 use serde::Serialize;
 
 use librojo::web_api::{
-    Instance, InstanceUpdate, MessagesPacket, ReadResponse, RefPatchPacket, SerializePacket,
-    SocketPacket, SocketPacketBody,
+    Instance, InstanceUpdate, MessagesPacket, ReadResponse, SocketPacket, SocketPacketBody,
 };
 use rojo_insta_ext::RedactionMap;
 
@@ -62,8 +61,6 @@ impl Internable<()> for SocketPacket<'_> {
         redactions.intern(&self.session_id);
         match &self.body {
             SocketPacketBody::Messages(packet) => packet.intern(redactions, extra),
-            SocketPacketBody::Serialize(packet) => packet.intern(redactions, extra),
-            SocketPacketBody::RefPatch(packet) => packet.intern(redactions, extra),
         }
     }
 }
@@ -74,19 +71,6 @@ impl Internable<()> for MessagesPacket<'_> {
             intern_instance_updates(redactions, &message.updated);
             intern_instance_additions(redactions, &message.added);
         }
-    }
-}
-
-impl Internable<()> for SerializePacket {
-    fn intern(&self, _redactions: &mut RedactionMap, _extra: ()) {
-        // SerializePacket currently has no data that needs to be redacted.
-    }
-}
-
-impl Internable<()> for RefPatchPacket<'_> {
-    fn intern(&self, redactions: &mut RedactionMap, _extra: ()) {
-        intern_instance_updates(redactions, &self.patch.updated);
-        intern_instance_additions(redactions, &self.patch.added);
     }
 }
 

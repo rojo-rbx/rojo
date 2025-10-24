@@ -200,8 +200,9 @@ pub struct WriteResponse {
 #[strum(serialize_all = "camelCase")]
 pub enum SocketPacketType {
     Messages,
-    Serialize,
-    RefPatch,
+    // TODO: Can we cleanly use the socket for all communication?
+    // Serialize,
+    // RefPatch,
 }
 
 /// Body content for messages packet type
@@ -212,27 +213,14 @@ pub struct MessagesPacket<'a> {
     pub messages: Vec<SubscribeMessage<'a>>,
 }
 
-/// Body content for serialize packet type
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SerializePacket {
-    pub model_contents: BufferEncode,
-}
-
-/// Body content for ref patch packet type
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct RefPatchPacket<'a> {
-    pub patch: SubscribeMessage<'a>,
-}
-
 /// Body content for different packet types
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum SocketPacketBody<'a> {
     Messages(MessagesPacket<'a>),
-    Serialize(SerializePacket),
-    RefPatch(RefPatchPacket<'a>),
+    // TODO: Can we cleanly use the socket for all communication?
+    // Serialize(SerializePacket),
+    // RefPatch(RefPatchPacket<'a>),
 }
 
 /// Message content from /api/socket

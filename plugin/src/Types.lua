@@ -49,22 +49,14 @@ local ApiReadResponse = t.interface({
 	instances = t.map(RbxId, ApiInstance),
 })
 
-local SocketPacketType = t.union(t.literal("messages"), t.literal("serialize"), t.literal("refPatch"))
+local SocketPacketType = t.union(t.literal("messages"))
 
 local MessagesPacket = t.interface({
 	messageCursor = t.number,
 	messages = t.array(ApiSubscribeMessage),
 })
 
-local SerializePacket = t.interface({
-	modelContents = t.buffer,
-})
-
-local RefPatchPacket = t.interface({
-	patch = ApiSubscribeMessage,
-})
-
-local SocketPacketBody = t.union(MessagesPacket, SerializePacket, RefPatchPacket)
+local SocketPacketBody = t.union(MessagesPacket)
 
 local ApiSocketPacket = t.interface({
 	sessionId = t.string,
