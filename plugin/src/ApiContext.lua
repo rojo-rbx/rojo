@@ -1,4 +1,5 @@
 local Packages = script.Parent.Parent.Packages
+local HttpService = game:GetService("HttpService")
 local Http = require(Packages.Http)
 local Log = require(Packages.Log)
 local Promise = require(Packages.Promise)
@@ -9,7 +10,7 @@ local Version = require(script.Parent.Version)
 
 local validateApiInfo = Types.ifEnabled(Types.ApiInfoResponse)
 local validateApiRead = Types.ifEnabled(Types.ApiReadResponse)
-local validateApiSubscribe = Types.ifEnabled(Types.ApiSubscribeResponse)
+local validateApiSocketPacket = Types.ifEnabled(Types.ApiSocketPacket)
 local validateApiSerialize = Types.ifEnabled(Types.ApiSerializeResponse)
 local validateApiRefPatch = Types.ifEnabled(Types.ApiRefPatchResponse)
 
@@ -99,6 +100,7 @@ function ApiContext.new(baseUrl)
 		__baseUrl = baseUrl,
 		__sessionId = nil,
 		__messageCursor = -1,
+		__wsClient = nil,
 		__connected = true,
 		__activeRequests = {},
 	}
@@ -126,6 +128,12 @@ function ApiContext:disconnect()
 		request:cancel()
 	end
 	self.__activeRequests = {}
+
+	if self.__wsClient then
+		Log.trace("Closing WebSocket client")
+		self.__wsClient:Close()
+	end
+	self.__wsClient = nil
 end
 
 function ApiContext:setMessageCursor(index)
@@ -207,38 +215,65 @@ function ApiContext:write(patch)
 	end)
 end
 
-function ApiContext:retrieveMessages()
-	local url = ("%s/api/subscribe/%s"):format(self.__baseUrl, self.__messageCursor)
+function ApiContext:connectWebSocket(packetHandlers)
+	local url = ("%s/api/socket/%s"):format(self.__baseUrl, self.__messageCursor)
+	-- Convert HTTP/HTTPS URL to WS/WSS
+	url = url:gsub("^http://", "ws://"):gsub("^https://", "wss://")
 
-	local function sendRequest()
-		local request = Http.get(url):catch(function(err)
-			if err.type == Http.Error.Kind.Timeout and self.__connected then
-				return sendRequest()
+	return Promise.new(function(resolve, reject)
+		local success, wsClient =
+			pcall(HttpService.CreateWebStreamClient, HttpService, Enum.WebStreamClientType.WebSocket, {
+				Url = url,
+			})
+		if not success then
+			reject("Failed to create WebSocket client: " .. tostring(wsClient))
+			return
+		end
+		self.__wsClient = wsClient
+
+		local closed, errored, received
+
+		received = self.__wsClient.MessageReceived:Connect(function(msg)
+			local data = Http.jsonDecode(msg)
+			if data.sessionId ~= self.__sessionId then
+				Log.warn("Received message with wrong session ID; ignoring")
+				return
 			end
 
-			return Promise.reject(err)
+			assert(validateApiSocketPacket(data))
+
+			Log.trace("Received websocket packet: {:#?}", data)
+
+			local handler = packetHandlers[data.packetType]
+			if handler then
+				local ok, err = pcall(handler, data.body)
+				if not ok then
+					Log.error("Error in WebSocket packet handler for type '%s': %s", data.packetType, err)
+				end
+			else
+				Log.warn("No handler for WebSocket packet type '%s'", data.packetType)
+			end
 		end)
 
-		Log.trace("Tracking request {}", request)
-		self.__activeRequests[request] = true
+		closed = self.__wsClient.Closed:Connect(function()
+			closed:Disconnect()
+			errored:Disconnect()
+			received:Disconnect()
 
-		return request:finally(function(...)
-			Log.trace("Cleaning up request {}", request)
-			self.__activeRequests[request] = nil
-			return ...
+			if self.__connected then
+				reject("WebSocket connection closed unexpectedly")
+			else
+				resolve()
+			end
 		end)
-	end
 
-	return sendRequest():andThen(rejectFailedRequests):andThen(Http.Response.json):andThen(function(body)
-		if body.sessionId ~= self.__sessionId then
-			return Promise.reject("Server changed ID")
-		end
+		errored = self.__wsClient.Error:Connect(function(code, msg)
+			closed:Disconnect()
+			errored:Disconnect()
+			received:Disconnect()
 
-		assert(validateApiSubscribe(body))
-
-		self:setMessageCursor(body.messageCursor)
-
-		return body.messages
+			reject("WebSocket error: " .. code .. " - " .. msg)
+		end)
 	end)
 end
 

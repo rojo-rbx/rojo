@@ -12,6 +12,7 @@ use rbx_dom_weak::{
     Ustr, UstrMap,
 };
 use serde::{Deserialize, Serialize};
+use strum::Display;
 
 use crate::{
     session_id::SessionId,
@@ -24,7 +25,7 @@ use crate::{
 pub(crate) const SERVER_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Current protocol version, which is required to match.
-pub const PROTOCOL_VERSION: u64 = 4;
+pub const PROTOCOL_VERSION: u64 = 5;
 
 /// Message returned by Rojo API when a change has occurred.
 #[derive(Debug, Serialize, Deserialize)]
@@ -192,13 +193,42 @@ pub struct WriteResponse {
     pub session_id: SessionId,
 }
 
-/// Response body from /api/subscribe/{cursor}
+/// Packet type enum for different websocket message types
+#[derive(Debug, Serialize, Deserialize, Display, Eq, PartialEq)]
+#[serde(rename_all = "camelCase")]
+#[strum(serialize_all = "camelCase")]
+pub enum SocketPacketType {
+    Messages,
+    // TODO: Can we cleanly use the socket for all communication?
+    // Serialize,
+    // RefPatch,
+}
+
+/// Body content for messages packet type
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct SubscribeResponse<'a> {
-    pub session_id: SessionId,
+pub struct MessagesPacket<'a> {
     pub message_cursor: u32,
     pub messages: Vec<SubscribeMessage<'a>>,
+}
+
+/// Body content for different packet types
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum SocketPacketBody<'a> {
+    Messages(MessagesPacket<'a>),
+    // TODO: Can we cleanly use the socket for all communication?
+    // Serialize(SerializePacket),
+    // RefPatch(RefPatchPacket<'a>),
+}
+
+/// Message content from /api/socket
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SocketPacket<'a> {
+    pub session_id: SessionId,
+    pub packet_type: SocketPacketType,
+    pub body: SocketPacketBody<'a>,
 }
 
 /// Response body from /api/open/{id}

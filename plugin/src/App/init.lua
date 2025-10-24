@@ -174,6 +174,8 @@ function App:init()
 end
 
 function App:willUnmount()
+	self:endSession()
+
 	self.waypointConnection:Disconnect()
 	self.confirmationBindable:Destroy()
 
