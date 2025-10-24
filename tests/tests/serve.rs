@@ -45,7 +45,7 @@ fn scripts() {
         fs::write(session.path().join("src/foo.lua"), "Updated foo!").unwrap();
 
         let socket_packet = session
-            .get_api_socket_packet(SocketPacketType::Messages)
+            .get_api_socket_packet(SocketPacketType::Messages, 0)
             .unwrap();
         assert_yaml_snapshot!(
             "scripts_subscribe",
@@ -79,7 +79,7 @@ fn add_folder() {
         fs::create_dir(session.path().join("src/my-new-folder")).unwrap();
 
         let socket_packet = session
-            .get_api_socket_packet(SocketPacketType::Messages)
+            .get_api_socket_packet(SocketPacketType::Messages, 0)
             .unwrap();
         assert_yaml_snapshot!(
             "add_folder_subscribe",
@@ -111,7 +111,7 @@ fn remove_file() {
         fs::remove_file(session.path().join("src/hello.txt")).unwrap();
 
         let socket_packet = session
-            .get_api_socket_packet(SocketPacketType::Messages)
+            .get_api_socket_packet(SocketPacketType::Messages, 0)
             .unwrap();
         assert_yaml_snapshot!(
             "remove_file_subscribe",
@@ -143,7 +143,7 @@ fn edit_init() {
         fs::write(session.path().join("src/init.lua"), b"-- Edited contents").unwrap();
 
         let socket_packet = session
-            .get_api_socket_packet(SocketPacketType::Messages)
+            .get_api_socket_packet(SocketPacketType::Messages, 0)
             .unwrap();
         assert_yaml_snapshot!(
             "edit_init_subscribe",
@@ -191,7 +191,7 @@ fn move_folder_of_stuff() {
         fs::rename(stuff_path, session.path().join("src/new-stuff")).unwrap();
 
         let socket_packet = session
-            .get_api_socket_packet(SocketPacketType::Messages)
+            .get_api_socket_packet(SocketPacketType::Messages, 0)
             .unwrap();
         assert_yaml_snapshot!(
             "move_folder_of_stuff_subscribe",
@@ -227,7 +227,7 @@ fn empty_json_model() {
         .unwrap();
 
         let socket_packet = session
-            .get_api_socket_packet(SocketPacketType::Messages)
+            .get_api_socket_packet(SocketPacketType::Messages, 0)
             .unwrap();
         assert_yaml_snapshot!(
             "empty_json_model_subscribe",
@@ -260,7 +260,7 @@ fn add_optional_folder() {
         fs::create_dir(session.path().join("create-later")).unwrap();
 
         let socket_packet = session
-            .get_api_socket_packet(SocketPacketType::Messages)
+            .get_api_socket_packet(SocketPacketType::Messages, 0)
             .unwrap();
         assert_yaml_snapshot!(
             "add_optional_folder_subscribe",
@@ -454,7 +454,7 @@ fn ref_properties() {
         .unwrap();
 
         let socket_packet = session
-            .get_api_socket_packet(SocketPacketType::Messages)
+            .get_api_socket_packet(SocketPacketType::Messages, 0)
             .unwrap();
         assert_yaml_snapshot!(
             "ref_properties_subscribe",
@@ -486,7 +486,7 @@ fn ref_properties_remove() {
         fs::remove_file(session.path().join("src/target.model.json")).unwrap();
 
         let socket_packet = session
-            .get_api_socket_packet(SocketPacketType::Messages)
+            .get_api_socket_packet(SocketPacketType::Messages, 0)
             .unwrap();
         assert_yaml_snapshot!(
             "ref_properties_remove_subscribe",
@@ -550,7 +550,7 @@ fn ref_properties_patch_update() {
         .unwrap();
 
         let socket_packet = session
-            .get_api_socket_packet(SocketPacketType::Messages)
+            .get_api_socket_packet(SocketPacketType::Messages, 0)
             .unwrap();
         assert_yaml_snapshot!(
             "ref_properties_patch_update_subscribe",
@@ -604,7 +604,7 @@ fn model_pivot_migration() {
         .unwrap();
 
         let socket_packet = session
-            .get_api_socket_packet(SocketPacketType::Messages)
+            .get_api_socket_packet(SocketPacketType::Messages, 0)
             .unwrap();
         assert_yaml_snapshot!(
             "model_pivot_migration_all",

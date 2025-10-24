@@ -173,8 +173,9 @@ impl TestServeSession {
     pub fn get_api_socket_packet(
         &self,
         packet_type: SocketPacketType,
+        cursor: u32,
     ) -> Result<SocketPacket<'static>, Box<dyn std::error::Error>> {
-        let url = format!("ws://localhost:{}/api/socket/0", self.port);
+        let url = format!("ws://localhost:{}/api/socket/{}", self.port, cursor);
 
         let (mut socket, _response) = connect(url)?;
 
