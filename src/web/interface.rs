@@ -5,6 +5,7 @@
 use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
+    fmt,
 };
 
 use rbx_dom_weak::{
@@ -12,6 +13,7 @@ use rbx_dom_weak::{
     Ustr, UstrMap,
 };
 use serde::{Deserialize, Serialize};
+use strum::Display;
 
 use crate::{
     session_id::SessionId,
@@ -193,8 +195,9 @@ pub struct WriteResponse {
 }
 
 /// Packet type enum for different websocket message types
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Display, Eq, PartialEq)]
 #[serde(rename_all = "camelCase")]
+#[strum(serialize_all = "camelCase")]
 pub enum SocketPacketType {
     Messages,
     Serialize,
@@ -262,6 +265,11 @@ pub struct BufferEncode {
     m: (),
     t: Cow<'static, str>,
     base64: String,
+}
+impl fmt::Display for BufferEncode {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "BufferEncode<{}>", self.base64)
+    }
 }
 
 impl BufferEncode {
