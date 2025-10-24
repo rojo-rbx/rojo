@@ -531,7 +531,7 @@ async fn handle_websocket_subscription(
                     Some(Ok(Message::Text(_))) | Some(Ok(Message::Binary(_))) => {
                         // Ignore text/binary messages from client for subscription endpoint
                         // TODO: Use this for bidirectional sync or requesting fallbacks?
-                        log::info!("Ignoring message from client on subscription WebSocket: {:?}", msg);
+                        log::debug!("Ignoring message from client since we don't use it for anything yet: {:?}", msg);
                     }
                     Some(Ok(Message::Frame(_))) => {
                         // This should never happen according to tungstenite docs
