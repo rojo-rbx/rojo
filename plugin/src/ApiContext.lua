@@ -216,7 +216,7 @@ function ApiContext:write(patch)
 end
 
 function ApiContext:connectWebSocket(packetHandlers)
-	local url = ("%s/api/socket"):format(self.__baseUrl):gsub("^https?", "ws")
+	local url = ("%s/api/socket/%s"):format(self.__baseUrl, self.__messageCursor):gsub("^https?", "ws")
 
 	return Promise.new(function(resolve, reject)
 		local success, wsClient =

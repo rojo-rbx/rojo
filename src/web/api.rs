@@ -41,7 +41,7 @@ pub async fn call(serve_session: Arc<ServeSession>, mut request: Request<Body>) 
         (&Method::GET, path) if path.starts_with("/api/read/") => {
             service.handle_api_read(request).await
         }
-        (&Method::GET, "/api/socket") => {
+        (&Method::GET, path) if path.starts_with("/api/socket/") => {
             if is_upgrade_request(&request) {
                 service.handle_api_socket(&mut request).await
             } else {
@@ -101,6 +101,17 @@ impl ApiService {
 
     /// Handle WebSocket upgrade for real-time message streaming
     async fn handle_api_socket(&self, request: &mut Request<Body>) -> Response<Body> {
+        let argument = &request.uri().path()["/api/socket/".len()..];
+        let input_cursor: u32 = match argument.parse() {
+            Ok(v) => v,
+            Err(err) => {
+                return json(
+                    ErrorResponse::bad_request(format!("Malformed message cursor: {}", err)),
+                    StatusCode::BAD_REQUEST,
+                );
+            }
+        };
+
         // Upgrade the connection to WebSocket
         let (response, websocket) = match upgrade(request, None) {
             Ok(result) => result,
@@ -116,7 +127,9 @@ impl ApiService {
 
         // Spawn a task to handle the WebSocket connection
         tokio::spawn(async move {
-            if let Err(e) = handle_websocket_subscription(serve_session, websocket).await {
+            if let Err(e) =
+                handle_websocket_subscription(serve_session, websocket, input_cursor).await
+            {
                 log::error!("Error in websocket subscription: {}", e);
             }
         });
@@ -438,6 +451,7 @@ fn pick_script_path(instance: InstanceWithMeta<'_>) -> Option<PathBuf> {
 async fn handle_websocket_subscription(
     serve_session: Arc<ServeSession>,
     websocket: HyperWebsocket,
+    input_cursor: u32,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
     let mut websocket = websocket.await?;
 
@@ -452,7 +466,7 @@ async fn handle_websocket_subscription(
 
     // Now continuously listen for new messages using select to handle both incoming messages
     // and WebSocket control messages concurrently
-    let mut cursor = message_queue.cursor();
+    let mut cursor = input_cursor;
     loop {
         let receiver = message_queue.subscribe(cursor);
 
