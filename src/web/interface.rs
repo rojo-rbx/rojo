@@ -5,7 +5,6 @@
 use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
-    fmt,
 };
 
 use rbx_dom_weak::{
@@ -253,11 +252,6 @@ pub struct BufferEncode {
     m: (),
     t: Cow<'static, str>,
     base64: String,
-}
-impl fmt::Display for BufferEncode {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "BufferEncode<{}>", self.base64)
-    }
 }
 
 impl BufferEncode {
