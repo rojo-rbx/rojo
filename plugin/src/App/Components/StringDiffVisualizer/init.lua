@@ -5,15 +5,15 @@ local Packages = Rojo.Packages
 local Roact = require(Packages.Roact)
 local Log = require(Packages.Log)
 local Highlighter = require(Packages.Highlighter)
+Highlighter.matchStudioSettings()
 local StringDiff = require(script:FindFirstChild("StringDiff"))
 
 local Timer = require(Plugin.Timer)
 local Theme = require(Plugin.App.Theme)
 local getTextBoundsAsync = require(Plugin.App.getTextBoundsAsync)
 
-local CodeLabel = require(Plugin.App.Components.CodeLabel)
 local BorderedContainer = require(Plugin.App.Components.BorderedContainer)
-local ScrollingFrame = require(Plugin.App.Components.ScrollingFrame)
+local VirtualScroller = require(Plugin.App.Components.VirtualScroller)
 
 local e = Roact.createElement
 
@@ -21,26 +21,35 @@ local StringDiffVisualizer = Roact.Component:extend("StringDiffVisualizer")
 
 function StringDiffVisualizer:init()
 	self.scriptBackground, self.setScriptBackground = Roact.createBinding(Color3.fromRGB(0, 0, 0))
-	self.contentSize, self.setContentSize = Roact.createBinding(Vector2.new(0, 0))
+	self.updateEvent = Instance.new("BindableEvent")
+	self.lineHeight, self.setLineHeight = Roact.createBinding(15)
+	self.canvasPosition, self.setCanvasPosition = Roact.createBinding(Vector2.zero)
+	self.windowWidth, self.setWindowWidth = Roact.createBinding(math.huge)
 
 	-- Ensure that the script background is up to date with the current theme
 	self.themeChangedConnection = settings().Studio.ThemeChanged:Connect(function()
-		task.defer(function()
-			-- Defer to allow Highlighter to process the theme change first
+		task.delay(1 / 20, function()
+			-- Delay to allow Highlighter to process the theme change first
 			self:updateScriptBackground()
+			-- Refresh the code label colors too
+			self.updateEvent:Fire()
 		end)
 	end)
 
 	self:updateScriptBackground()
 
 	self:setState({
-		add = {},
-		remove = {},
+		maxLines = 0,
+		currentRichTextLines = {},
+		incomingRichTextLines = {},
+		currentDiffs = {},
+		incomingDiffs = {},
 	})
 end
 
 function StringDiffVisualizer:willUnmount()
 	self.themeChangedConnection:Disconnect()
+	self.updateEvent:Destroy()
 end
 
 function StringDiffVisualizer:updateScriptBackground()
@@ -51,96 +60,188 @@ function StringDiffVisualizer:updateScriptBackground()
 end
 
 function StringDiffVisualizer:didUpdate(previousProps)
-	if previousProps.oldString ~= self.props.oldString or previousProps.newString ~= self.props.newString then
-		local add, remove = self:calculateDiffLines()
-		self:setState({
-			add = add,
-			remove = remove,
-		})
+	if
+		previousProps.currentString ~= self.props.currentString
+		or previousProps.incomingString ~= self.props.incomingString
+	then
+		self:updateDiffs()
 	end
 end
 
-function StringDiffVisualizer:calculateContentSize(theme)
-	local oldString, newString = self.props.oldString, self.props.newString
-
-	local oldStringBounds = getTextBoundsAsync(oldString, theme.Font.Code, theme.TextSize.Code, math.huge)
-	local newStringBounds = getTextBoundsAsync(newString, theme.Font.Code, theme.TextSize.Code, math.huge)
-
-	self.setContentSize(
-		Vector2.new(math.max(oldStringBounds.X, newStringBounds.X), math.max(oldStringBounds.Y, newStringBounds.Y))
-	)
-end
-
-function StringDiffVisualizer:calculateDiffLines()
-	Timer.start("StringDiffVisualizer:calculateDiffLines")
-	local oldString, newString = self.props.oldString, self.props.newString
+function StringDiffVisualizer:updateDiffs()
+	Timer.start("StringDiffVisualizer:updateDiffs")
+	local currentString, incomingString = self.props.currentString, self.props.incomingString
 
 	-- Diff the two texts
 	local startClock = os.clock()
-	local diffs = StringDiff.findDiffs(oldString, newString)
+	local diffs =
+		StringDiff.findDiffs((string.gsub(currentString, "\t", "    ")), (string.gsub(incomingString, "\t", "    ")))
 	local stopClock = os.clock()
 
 	Log.trace(
 		"Diffing {} byte and {} byte strings took {} microseconds and found {} diff sections",
-		#oldString,
-		#newString,
+		#currentString,
+		#incomingString,
 		math.round((stopClock - startClock) * 1000 * 1000),
 		#diffs
 	)
 
-	-- Determine which lines to highlight
-	local add, remove = {}, {}
+	-- Build the rich text lines
+	local currentRichTextLines = Highlighter.buildRichTextLines({
+		src = currentString,
+	})
+	local incomingRichTextLines = Highlighter.buildRichTextLines({
+		src = incomingString,
+	})
 
-	local oldLineNum, newLineNum = 1, 1
+	local maxLines = math.max(#currentRichTextLines, #incomingRichTextLines)
+
+	-- Find the diff locations
+	local currentDiffs, incomingDiffs = {}, {}
+	local firstDiffLineNum = 0
+
+	local currentLineNum, incomingLineNum = 1, 1
+	local currentIdx, incomingIdx = 1, 1
 	for _, diff in diffs do
 		local actionType, text = diff.actionType, diff.value
-		local lines = select(2, string.gsub(text, "\n", "\n"))
+		local lineCount = select(2, string.gsub(text, "\n", "\n"))
+		local lines = string.split(text, "\n")
 
 		if actionType == StringDiff.ActionTypes.Equal then
-			oldLineNum += lines
-			newLineNum += lines
-		elseif actionType == StringDiff.ActionTypes.Insert then
-			if lines > 0 then
-				local textLines = string.split(text, "\n")
-				for i, textLine in textLines do
-					if string.match(textLine, "%S") then
-						add[newLineNum + i - 1] = true
-					end
-				end
+			if lineCount > 0 then
+				-- Jump cursor ahead to last line
+				currentLineNum += lineCount
+				incomingLineNum += lineCount
+				currentIdx = #lines[#lines]
+				incomingIdx = #lines[#lines]
 			else
-				if string.match(text, "%S") then
-					add[newLineNum] = true
-				end
+				-- Move along this line
+				currentIdx += #text
+				incomingIdx += #text
 			end
-			newLineNum += lines
+
+			continue
+		end
+
+		if actionType == StringDiff.ActionTypes.Insert then
+			if firstDiffLineNum == 0 then
+				firstDiffLineNum = incomingLineNum
+			end
+
+			for i, lineText in lines do
+				if i > 1 then
+					-- Move to next line
+					incomingLineNum += 1
+					incomingIdx = 0
+				end
+				if not incomingDiffs[incomingLineNum] then
+					incomingDiffs[incomingLineNum] = {}
+				end
+				-- Mark these characters on this line
+				table.insert(incomingDiffs[incomingLineNum], {
+					start = incomingIdx,
+					stop = incomingIdx + #lineText,
+				})
+				incomingIdx += #lineText
+			end
 		elseif actionType == StringDiff.ActionTypes.Delete then
-			if lines > 0 then
-				local textLines = string.split(text, "\n")
-				for i, textLine in textLines do
-					if string.match(textLine, "%S") then
-						remove[oldLineNum + i - 1] = true
-					end
-				end
-			else
-				if string.match(text, "%S") then
-					remove[oldLineNum] = true
-				end
+			if firstDiffLineNum == 0 then
+				firstDiffLineNum = currentLineNum
 			end
-			oldLineNum += lines
+
+			for i, lineText in lines do
+				if i > 1 then
+					-- Move to next line
+					currentLineNum += 1
+					currentIdx = 0
+				end
+				if not currentDiffs[currentLineNum] then
+					currentDiffs[currentLineNum] = {}
+				end
+				-- Mark these characters on this line
+				table.insert(currentDiffs[currentLineNum], {
+					start = currentIdx,
+					stop = currentIdx + #lineText,
+				})
+				currentIdx += #lineText
+			end
 		else
 			Log.warn("Unknown diff action: {} {}", actionType, text)
 		end
 	end
 
 	Timer.stop()
-	return add, remove
+
+	self:setState({
+		maxLines = maxLines,
+		currentRichTextLines = currentRichTextLines,
+		incomingRichTextLines = incomingRichTextLines,
+		currentDiffs = currentDiffs,
+		incomingDiffs = incomingDiffs,
+	})
+
+	-- Scroll to the first diff line
+	task.defer(self.setCanvasPosition, Vector2.new(0, math.max(0, (firstDiffLineNum - 4) * 16)))
 end
 
 function StringDiffVisualizer:render()
-	local oldString, newString = self.props.oldString, self.props.newString
+	local currentDiffs, incomingDiffs = self.state.currentDiffs, self.state.incomingDiffs
+	local currentRichTextLines, incomingRichTextLines =
+		self.state.currentRichTextLines, self.state.incomingRichTextLines
+	local maxLines = self.state.maxLines
 
 	return Theme.with(function(theme)
-		self:calculateContentSize(theme)
+		self.setLineHeight(theme.TextSize.Code)
+
+		-- Calculate the width of the canvas
+		-- (One line at a time to avoid the char limit of getTextBoundsAsync)
+		local canvasWidth = 0
+		for i = 1, maxLines do
+			local currentLine = currentRichTextLines[i]
+			if currentLine and string.find(currentLine, "%S") then
+				local bounds = getTextBoundsAsync(currentLine, theme.Font.Code, theme.TextSize.Code, math.huge, true)
+				if bounds.X > canvasWidth then
+					canvasWidth = bounds.X
+				end
+			end
+			local incomingLine = incomingRichTextLines[i]
+			if incomingLine and string.find(incomingLine, "%S") then
+				local bounds = getTextBoundsAsync(incomingLine, theme.Font.Code, theme.TextSize.Code, math.huge, true)
+				if bounds.X > canvasWidth then
+					canvasWidth = bounds.X
+				end
+			end
+		end
+
+		local lineNumberWidth =
+			getTextBoundsAsync(tostring(maxLines), theme.Font.Code, theme.TextSize.Body, math.huge, true).X
+
+		canvasWidth += lineNumberWidth + 12
+
+		local removalScrollMarkers = {}
+		local insertionScrollMarkers = {}
+		for lineNum in currentDiffs do
+			table.insert(
+				removalScrollMarkers,
+				e("Frame", {
+					Size = UDim2.fromScale(0.5, 1 / maxLines),
+					Position = UDim2.fromScale(0, (lineNum - 1) / maxLines),
+					BorderSizePixel = 0,
+					BackgroundColor3 = theme.Diff.Background.Remove,
+				})
+			)
+		end
+		for lineNum in incomingDiffs do
+			table.insert(
+				insertionScrollMarkers,
+				e("Frame", {
+					Size = UDim2.fromScale(0.5, 1 / maxLines),
+					Position = UDim2.fromScale(0.5, (lineNum - 1) / maxLines),
+					BorderSizePixel = 0,
+					BackgroundColor3 = theme.Diff.Background.Add,
+				})
+			)
+		end
 
 		return e(BorderedContainer, {
 			size = self.props.size,
@@ -159,43 +260,196 @@ function StringDiffVisualizer:render()
 					CornerRadius = UDim.new(0, 5),
 				}),
 			}),
-			Separator = e("Frame", {
-				Size = UDim2.new(0, 2, 1, 0),
-				Position = UDim2.new(0.5, 0, 0, 0),
-				AnchorPoint = Vector2.new(0.5, 0),
-				BorderSizePixel = 0,
-				BackgroundColor3 = theme.BorderedContainer.BorderColor,
-				BackgroundTransparency = 0.5,
-			}),
-			Old = e(ScrollingFrame, {
-				position = UDim2.new(0, 2, 0, 2),
-				size = UDim2.new(0.5, -7, 1, -4),
-				scrollingDirection = Enum.ScrollingDirection.XY,
-				transparency = self.props.transparency,
-				contentSize = self.contentSize,
+			Main = e("Frame", {
+				Size = UDim2.new(1, -10, 1, -2),
+				Position = UDim2.new(0, 2, 0, 2),
+				BackgroundTransparency = 1,
+				[Roact.Change.AbsoluteSize] = function(rbx)
+					self.setWindowWidth(rbx.AbsoluteSize.X * 0.5 - 10)
+				end,
 			}, {
-				Source = e(CodeLabel, {
-					size = UDim2.new(1, 0, 1, 0),
+				Separator = e("Frame", {
+					Size = UDim2.new(0, 2, 1, 0),
+					Position = UDim2.new(0.5, 0, 0, 0),
+					AnchorPoint = Vector2.new(0.5, 0),
+					BorderSizePixel = 0,
+					BackgroundColor3 = theme.BorderedContainer.BorderColor,
+					BackgroundTransparency = 0.5,
+				}),
+				Current = e(VirtualScroller, {
 					position = UDim2.new(0, 0, 0, 0),
-					text = oldString,
-					lineBackground = theme.Diff.Background.Remove,
-					markedLines = self.state.remove,
+					size = UDim2.new(0.5, -1, 1, 0),
+					transparency = self.props.transparency,
+					count = maxLines,
+					updateEvent = self.updateEvent.Event,
+					canvasWidth = canvasWidth,
+					canvasPosition = self.canvasPosition,
+					onCanvasPositionChanged = self.setCanvasPosition,
+					render = function(i)
+						local lineDiffs = currentDiffs[i]
+						local diffFrames = table.create(if lineDiffs then #lineDiffs else 0)
+
+						-- Show diff markers over the specific changed characters
+						if lineDiffs then
+							local charWidth = math.round(theme.TextSize.Code * 0.5)
+							for diffIdx, diff in lineDiffs do
+								local start, stop = diff.start, diff.stop
+								diffFrames[diffIdx] = e("Frame", {
+									Size = if #lineDiffs == 1
+											and start == 0
+											and stop == 0
+										then UDim2.fromScale(1, 1)
+										else UDim2.new(
+											0,
+											math.max(charWidth * (stop - start), charWidth * 0.4),
+											1,
+											0
+										),
+									Position = UDim2.fromOffset(charWidth * start, 0),
+									BackgroundColor3 = theme.Diff.Background.Remove,
+									BackgroundTransparency = 0.85,
+									BorderSizePixel = 0,
+									ZIndex = -1,
+								})
+							end
+						end
+
+						return Roact.createFragment({
+							LineNumber = e("TextLabel", {
+								Size = UDim2.new(0, lineNumberWidth + 8, 1, 0),
+								Text = i,
+								BackgroundColor3 = Color3.new(0, 0, 0),
+								BackgroundTransparency = 0.9,
+								BorderSizePixel = 0,
+								FontFace = theme.Font.Code,
+								TextSize = theme.TextSize.Body,
+								TextColor3 = if lineDiffs then theme.Diff.Background.Remove else theme.SubTextColor,
+								TextXAlignment = Enum.TextXAlignment.Right,
+							}, {
+								Padding = e("UIPadding", { PaddingRight = UDim.new(0, 6) }),
+							}),
+							Content = e("Frame", {
+								Size = UDim2.new(1, -(lineNumberWidth + 10), 1, 0),
+								Position = UDim2.fromScale(1, 0),
+								AnchorPoint = Vector2.new(1, 0),
+								BackgroundColor3 = theme.Diff.Background.Remove,
+								BackgroundTransparency = if lineDiffs then 0.95 else 1,
+								BorderSizePixel = 0,
+							}, {
+								CodeLabel = e("TextLabel", {
+									Size = UDim2.fromScale(1, 1),
+									Position = UDim2.fromScale(0, 0),
+									Text = currentRichTextLines[i] or "",
+									RichText = true,
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									FontFace = theme.Font.Code,
+									TextSize = theme.TextSize.Code,
+									TextXAlignment = Enum.TextXAlignment.Left,
+									TextYAlignment = Enum.TextYAlignment.Top,
+									TextColor3 = Color3.fromRGB(255, 255, 255),
+								}),
+								DiffFrames = Roact.createFragment(diffFrames),
+							}),
+						})
+					end,
+					getHeightBinding = function()
+						return self.lineHeight
+					end,
+				}),
+				Incoming = e(VirtualScroller, {
+					position = UDim2.new(0.5, 1, 0, 0),
+					size = UDim2.new(0.5, -1, 1, 0),
+					transparency = self.props.transparency,
+					count = maxLines,
+					updateEvent = self.updateEvent.Event,
+					canvasWidth = canvasWidth,
+					canvasPosition = self.canvasPosition,
+					onCanvasPositionChanged = self.setCanvasPosition,
+					render = function(i)
+						local lineDiffs = incomingDiffs[i]
+						local diffFrames = table.create(if lineDiffs then #lineDiffs else 0)
+
+						-- Show diff markers over the specific changed characters
+						if lineDiffs then
+							local charWidth = math.round(theme.TextSize.Code * 0.5)
+							for diffIdx, diff in lineDiffs do
+								local start, stop = diff.start, diff.stop
+								diffFrames[diffIdx] = e("Frame", {
+									Size = if #lineDiffs == 1
+											and start == 0
+											and stop == 0
+										then UDim2.fromScale(1, 1)
+										else UDim2.new(
+											0,
+											math.max(charWidth * (stop - start), charWidth * 0.4),
+											1,
+											0
+										),
+									Position = UDim2.fromOffset(charWidth * start, 0),
+									BackgroundColor3 = theme.Diff.Background.Add,
+									BackgroundTransparency = 0.85,
+									BorderSizePixel = 0,
+									ZIndex = -1,
+								})
+							end
+						end
+
+						return Roact.createFragment({
+							LineNumber = e("TextLabel", {
+								Size = UDim2.new(0, lineNumberWidth + 8, 1, 0),
+								Text = i,
+								BackgroundColor3 = Color3.new(0, 0, 0),
+								BackgroundTransparency = 0.9,
+								BorderSizePixel = 0,
+								FontFace = theme.Font.Code,
+								TextSize = theme.TextSize.Body,
+								TextColor3 = if lineDiffs then theme.Diff.Background.Add else theme.SubTextColor,
+								TextXAlignment = Enum.TextXAlignment.Right,
+							}, {
+								Padding = e("UIPadding", { PaddingRight = UDim.new(0, 6) }),
+							}),
+							Content = e("Frame", {
+								Size = UDim2.new(1, -(lineNumberWidth + 10), 1, 0),
+								Position = UDim2.fromScale(1, 0),
+								AnchorPoint = Vector2.new(1, 0),
+								BackgroundColor3 = theme.Diff.Background.Add,
+								BackgroundTransparency = if lineDiffs then 0.95 else 1,
+								BorderSizePixel = 0,
+							}, {
+								CodeLabel = e("TextLabel", {
+									Size = UDim2.fromScale(1, 1),
+									Position = UDim2.fromScale(0, 0),
+									Text = incomingRichTextLines[i] or "",
+									RichText = true,
+									BackgroundColor3 = theme.Diff.Background.Add,
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									FontFace = theme.Font.Code,
+									TextSize = theme.TextSize.Code,
+									TextXAlignment = Enum.TextXAlignment.Left,
+									TextYAlignment = Enum.TextYAlignment.Top,
+									TextColor3 = Color3.fromRGB(255, 255, 255),
+								}),
+								DiffFrames = Roact.createFragment(diffFrames),
+							}),
+						})
+					end,
+					getHeightBinding = function()
+						return self.lineHeight
+					end,
 				}),
 			}),
-			New = e(ScrollingFrame, {
-				position = UDim2.new(0.5, 5, 0, 2),
-				size = UDim2.new(0.5, -7, 1, -4),
-				scrollingDirection = Enum.ScrollingDirection.XY,
-				transparency = self.props.transparency,
-				contentSize = self.contentSize,
+			ScrollMarkers = e("Frame", {
+				Size = self.windowWidth:map(function(windowWidth)
+					return UDim2.new(0, 8, 1, -4 - (if canvasWidth > windowWidth then 10 else 0))
+				end),
+				Position = UDim2.new(1, -2, 0, 2),
+				AnchorPoint = Vector2.new(1, 0),
+				BackgroundTransparency = 1,
 			}, {
-				Source = e(CodeLabel, {
-					size = UDim2.new(1, 0, 1, 0),
-					position = UDim2.new(0, 0, 0, 0),
-					text = newString,
-					lineBackground = theme.Diff.Background.Add,
-					markedLines = self.state.add,
-				}),
+				insertions = Roact.createFragment(insertionScrollMarkers),
+				removals = Roact.createFragment(removalScrollMarkers),
 			}),
 		})
 	end)
