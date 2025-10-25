@@ -28,10 +28,11 @@ function StringDiffVisualizer:init()
 
 	-- Ensure that the script background is up to date with the current theme
 	self.themeChangedConnection = settings().Studio.ThemeChanged:Connect(function()
+		-- Delay to allow Highlighter to process the theme change first
 		task.delay(1 / 20, function()
-			-- Delay to allow Highlighter to process the theme change first
 			self:updateScriptBackground()
-			-- Refresh the code label colors too
+			self:updateDiffs()
+			-- Rerender the virtual list elements
 			self.updateEvent:Fire()
 		end)
 	end)
