@@ -71,6 +71,16 @@ function StringDiff.findDiffs(text1: string, text2: string): Diffs
 	diffs = StringDiff._cleanupSemantic(diffs)
 	diffs = StringDiff._reorderAndMerge(diffs)
 
+	-- Remove any empty diffs
+	local cursor = 1
+	while cursor and diffs[cursor] do
+		if diffs[cursor].value == "" then
+			table.remove(diffs, cursor)
+		else
+			cursor += 1
+		end
+	end
+
 	return diffs
 end
 
@@ -423,8 +433,10 @@ function StringDiff._cleanupSemanticLossless(diffs: Diffs)
 				equality2 = string.sub(equality2, 2)
 				local score = StringDiff._cleanupSemanticScore(equality1, edit)
 					+ StringDiff._cleanupSemanticScore(edit, equality2)
-				-- The >= encourages trailing rather than leading whitespace on edits.
-				if score >= bestScore then
+				-- The > (rather than >=) encourages leading rather than trailing whitespace on edits.
+				-- I just think it looks better for indentation changes to start the line,
+				-- since then indenting several lines all have aligned diffs at the start
+				if score > bestScore then
 					bestScore = score
 					bestEquality1 = equality1
 					bestEdit = edit
