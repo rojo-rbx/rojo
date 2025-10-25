@@ -1,3 +1,4 @@
+--!strict
 --[[
     Based on DiffMatchPatch by Neil Fraser.
     https://github.com/google/diff-match-patch
@@ -67,7 +68,176 @@ function StringDiff.findDiffs(text1: string, text2: string): Diffs
 	end
 
 	-- Cleanup the diff
+	diffs = StringDiff._cleanupSemantic(diffs)
 	diffs = StringDiff._reorderAndMerge(diffs)
+
+	return diffs
+end
+
+function StringDiff._computeDiff(text1: string, text2: string): Diffs
+	-- Assumes that the prefix and suffix have already been trimmed off
+	-- and shortcut returns have been made so these texts must be different
+
+	local text1Length, text2Length = #text1, #text2
+
+	if text1Length == 0 then
+		-- It's simply inserting all of text2 into text1
+		return { { actionType = StringDiff.ActionTypes.Insert, value = text2 } }
+	end
+
+	if text2Length == 0 then
+		-- It's simply deleting all of text1
+		return { { actionType = StringDiff.ActionTypes.Delete, value = text1 } }
+	end
+
+	local longText = if text1Length > text2Length then text1 else text2
+	local shortText = if text1Length > text2Length then text2 else text1
+	local shortTextLength = #shortText
+
+	-- Shortcut if the shorter string exists entirely inside the longer one
+	local indexOf = if shortTextLength == 0 then nil else string.find(longText, shortText, 1, true)
+	if indexOf ~= nil then
+		local diffs = {
+			{ actionType = StringDiff.ActionTypes.Insert, value = string.sub(longText, 1, indexOf - 1) },
+			{ actionType = StringDiff.ActionTypes.Equal, value = shortText },
+			{ actionType = StringDiff.ActionTypes.Insert, value = string.sub(longText, indexOf + shortTextLength) },
+		}
+		-- Swap insertions for deletions if diff is reversed
+		if text1Length > text2Length then
+			diffs[1].actionType, diffs[3].actionType = StringDiff.ActionTypes.Delete, StringDiff.ActionTypes.Delete
+		end
+		return diffs
+	end
+
+	if shortTextLength == 1 then
+		-- Single character string
+		-- After the previous shortcut, the character can't be an equality
+		return {
+			{ actionType = StringDiff.ActionTypes.Delete, value = text1 },
+			{ actionType = StringDiff.ActionTypes.Insert, value = text2 },
+		}
+	end
+
+	return StringDiff._bisect(text1, text2)
+end
+
+function StringDiff._cleanupSemantic(diffs: Diffs): Diffs
+	-- Reduce the number of edits by eliminating semantically trivial equalities.
+	local changes = false
+	local equalities = {} -- Stack of indices where equalities are found.
+	local equalitiesLength = 0 -- Keeping our own length var is faster.
+	local lastEquality: string? = nil
+	-- Always equal to diffs[equalities[equalitiesLength]].value
+	local pointer = 1 -- Index of current position.
+	-- Number of characters that changed prior to the equality.
+	local length_insertions1 = 0
+	local length_deletions1 = 0
+	-- Number of characters that changed after the equality.
+	local length_insertions2 = 0
+	local length_deletions2 = 0
+
+	while diffs[pointer] do
+		if diffs[pointer].actionType == StringDiff.ActionTypes.Equal then -- Equality found.
+			equalitiesLength = equalitiesLength + 1
+			equalities[equalitiesLength] = pointer
+			length_insertions1 = length_insertions2
+			length_deletions1 = length_deletions2
+			length_insertions2 = 0
+			length_deletions2 = 0
+			lastEquality = diffs[pointer].value
+		else -- An insertion or deletion.
+			if diffs[pointer].actionType == StringDiff.ActionTypes.Insert then
+				length_insertions2 = length_insertions2 + #diffs[pointer].value
+			else
+				length_deletions2 = length_deletions2 + #diffs[pointer].value
+			end
+			-- Eliminate an equality that is smaller or equal to the edits on both
+			-- sides of it.
+			if
+				lastEquality
+				and (#lastEquality <= math.max(length_insertions1, length_deletions1))
+				and (#lastEquality <= math.max(length_insertions2, length_deletions2))
+			then
+				-- Duplicate record.
+				table.insert(
+					diffs,
+					equalities[equalitiesLength],
+					{ actionType = StringDiff.ActionTypes.Delete, value = lastEquality }
+				)
+				-- Change second copy to insert.
+				diffs[equalities[equalitiesLength] + 1].actionType = StringDiff.ActionTypes.Insert
+				-- Throw away the equality we just deleted.
+				equalitiesLength = equalitiesLength - 1
+				-- Throw away the previous equality (it needs to be reevaluated).
+				equalitiesLength = equalitiesLength - 1
+				pointer = (equalitiesLength > 0) and equalities[equalitiesLength] or 0
+				length_insertions1, length_deletions1 = 0, 0 -- Reset the counters.
+				length_insertions2, length_deletions2 = 0, 0
+				lastEquality = nil
+				changes = true
+			end
+		end
+		pointer = pointer + 1
+	end
+
+	-- Normalize the diff.
+	if changes then
+		StringDiff._reorderAndMerge(diffs)
+	end
+	StringDiff._cleanupSemanticLossless(diffs)
+
+	-- Find any overlaps between deletions and insertions.
+	-- e.g: <del>abcxxx</del><ins>xxxdef</ins>
+	--   -> <del>abc</del>xxx<ins>def</ins>
+	-- e.g: <del>xxxabc</del><ins>defxxx</ins>
+	--   -> <ins>def</ins>xxx<del>abc</del>
+	-- Only extract an overlap if it is as big as the edit ahead or behind it.
+	pointer = 2
+	while diffs[pointer] do
+		if
+			diffs[pointer - 1].actionType == StringDiff.ActionTypes.Delete
+			and diffs[pointer].actionType == StringDiff.ActionTypes.Insert
+		then
+			local deletion = diffs[pointer - 1].value
+			local insertion = diffs[pointer].value
+			local overlap_length1 = StringDiff._commonOverlap(deletion, insertion)
+			local overlap_length2 = StringDiff._commonOverlap(insertion, deletion)
+			if overlap_length1 >= overlap_length2 then
+				if overlap_length1 >= #deletion / 2 or overlap_length1 >= #insertion / 2 then
+					-- Overlap found.  Insert an equality and trim the surrounding edits.
+					table.insert(
+						diffs,
+						pointer,
+						{ actionType = StringDiff.ActionTypes.Equal, value = string.sub(insertion, 1, overlap_length1) }
+					)
+					diffs[pointer - 1].value = string.sub(deletion, 1, #deletion - overlap_length1)
+					diffs[pointer + 1].value = string.sub(insertion, overlap_length1 + 1)
+					pointer = pointer + 1
+				end
+			else
+				if overlap_length2 >= #deletion / 2 or overlap_length2 >= #insertion / 2 then
+					-- Reverse overlap found.
+					-- Insert an equality and swap and trim the surrounding edits.
+					table.insert(
+						diffs,
+						pointer,
+						{ actionType = StringDiff.ActionTypes.Equal, value = string.sub(deletion, 1, overlap_length2) }
+					)
+					diffs[pointer - 1] = {
+						actionType = StringDiff.ActionTypes.Insert,
+						value = string.sub(insertion, 1, #insertion - overlap_length2),
+					}
+					diffs[pointer + 1] = {
+						actionType = StringDiff.ActionTypes.Delete,
+						value = string.sub(deletion, overlap_length2 + 1),
+					}
+					pointer = pointer + 1
+				end
+			end
+			pointer = pointer + 1
+		end
+		pointer = pointer + 1
+	end
 
 	return diffs
 end
@@ -124,51 +294,162 @@ function StringDiff._sharedSuffix(text1: string, text2: string): number
 	return pointerMid
 end
 
-function StringDiff._computeDiff(text1: string, text2: string): Diffs
-	-- Assumes that the prefix and suffix have already been trimmed off
-	-- and shortcut returns have been made so these texts must be different
+function StringDiff._commonOverlap(text1: string, text2: string): number
+	-- Determine if the suffix of one string is the prefix of another.
 
-	local text1Length, text2Length = #text1, #text2
-
-	if text1Length == 0 then
-		-- It's simply inserting all of text2 into text1
-		return { { actionType = StringDiff.ActionTypes.Insert, value = text2 } }
+	-- Cache the text lengths to prevent multiple calls.
+	local text1_length = #text1
+	local text2_length = #text2
+	-- Eliminate the null case.
+	if text1_length == 0 or text2_length == 0 then
+		return 0
+	end
+	-- Truncate the longer string.
+	if text1_length > text2_length then
+		text1 = string.sub(text1, text1_length - text2_length + 1)
+	elseif text1_length < text2_length then
+		text2 = string.sub(text2, 1, text1_length)
+	end
+	local text_length = math.min(text1_length, text2_length)
+	-- Quick check for the worst case.
+	if text1 == text2 then
+		return text_length
 	end
 
-	if text2Length == 0 then
-		-- It's simply deleting all of text1
-		return { { actionType = StringDiff.ActionTypes.Delete, value = text1 } }
-	end
-
-	local longText = if text1Length > text2Length then text1 else text2
-	local shortText = if text1Length > text2Length then text2 else text1
-	local shortTextLength = #shortText
-
-	-- Shortcut if the shorter string exists entirely inside the longer one
-	local indexOf = if shortTextLength == 0 then nil else string.find(longText, shortText, 1, true)
-	if indexOf ~= nil then
-		local diffs = {
-			{ actionType = StringDiff.ActionTypes.Insert, value = string.sub(longText, 1, indexOf - 1) },
-			{ actionType = StringDiff.ActionTypes.Equal, value = shortText },
-			{ actionType = StringDiff.ActionTypes.Insert, value = string.sub(longText, indexOf + shortTextLength) },
-		}
-		-- Swap insertions for deletions if diff is reversed
-		if text1Length > text2Length then
-			diffs[1].actionType, diffs[3].actionType = StringDiff.ActionTypes.Delete, StringDiff.ActionTypes.Delete
+	-- Start by looking for a single character match
+	-- and increase length until no match is found.
+	-- Performance analysis: https://neil.fraser.name/news/2010/11/04/
+	local best = 0
+	local length = 1
+	while true do
+		local pattern = string.sub(text1, text_length - length + 1)
+		local found = string.find(text2, pattern, 1, true)
+		if found == nil then
+			return best
 		end
-		return diffs
+		length = length + found - 1
+		if found == 1 or string.sub(text1, text_length - length + 1) == string.sub(text2, 1, length) then
+			best = length
+			length = length + 1
+		end
+	end
+end
+
+function StringDiff._cleanupSemanticScore(one: string, two: string): number
+	-- Given two strings, compute a score representing whether the internal
+	-- boundary falls on logical boundaries.
+	-- Scores range from 6 (best) to 0 (worst).
+
+	if (#one == 0) or (#two == 0) then
+		-- Edges are the best.
+		return 6
 	end
 
-	if shortTextLength == 1 then
-		-- Single character string
-		-- After the previous shortcut, the character can't be an equality
-		return {
-			{ actionType = StringDiff.ActionTypes.Delete, value = text1 },
-			{ actionType = StringDiff.ActionTypes.Insert, value = text2 },
-		}
-	end
+	-- Each port of this function behaves slightly differently due to
+	-- subtle differences in each language's definition of things like
+	-- 'whitespace'.  Since this function's purpose is largely cosmetic,
+	-- the choice has been made to use each language's native features
+	-- rather than force total conformity.
+	local char1 = string.sub(one, -1)
+	local char2 = string.sub(two, 1, 1)
+	local nonAlphaNumeric1 = string.match(char1, "%W")
+	local nonAlphaNumeric2 = string.match(char2, "%W")
+	local whitespace1 = nonAlphaNumeric1 and string.match(char1, "%s")
+	local whitespace2 = nonAlphaNumeric2 and string.match(char2, "%s")
+	local lineBreak1 = whitespace1 and string.match(char1, "%c")
+	local lineBreak2 = whitespace2 and string.match(char2, "%c")
+	local blankLine1 = lineBreak1 and string.match(one, "\n\r?\n$")
+	local blankLine2 = lineBreak2 and string.match(two, "^\r?\n\r?\n")
 
-	return StringDiff._bisect(text1, text2)
+	if blankLine1 or blankLine2 then
+		-- Five points for blank lines.
+		return 5
+	elseif lineBreak1 or lineBreak2 then
+		-- Four points for line breaks
+		-- DEVIATION: Prefer to start on a line break instead of end on it
+		return if lineBreak1 then 4 else 4.5
+	elseif nonAlphaNumeric1 and not whitespace1 and whitespace2 then
+		-- Three points for end of sentences.
+		return 3
+	elseif whitespace1 or whitespace2 then
+		-- Two points for whitespace.
+		return 2
+	elseif nonAlphaNumeric1 or nonAlphaNumeric2 then
+		-- One point for non-alphanumeric.
+		return 1
+	end
+	return 0
+end
+
+function StringDiff._cleanupSemanticLossless(diffs: Diffs)
+	-- Look for single edits surrounded on both sides by equalities
+	-- which can be shifted sideways to align the edit to a word boundary.
+	-- e.g: The c<ins>at c</ins>ame. -> The <ins>cat </ins>came.
+
+	local pointer = 2
+	-- Intentionally ignore the first and last element (don't need checking).
+	while diffs[pointer + 1] do
+		local prevDiff, nextDiff = diffs[pointer - 1], diffs[pointer + 1]
+		if
+			(prevDiff.actionType == StringDiff.ActionTypes.Equal)
+			and (nextDiff.actionType == StringDiff.ActionTypes.Equal)
+		then
+			-- This is a single edit surrounded by equalities.
+			local diff = diffs[pointer]
+
+			local equality1 = prevDiff.value
+			local edit = diff.value
+			local equality2 = nextDiff.value
+
+			-- First, shift the edit as far left as possible.
+			local commonOffset = StringDiff._sharedSuffix(equality1, edit)
+			if commonOffset > 0 then
+				local commonString = string.sub(edit, -commonOffset)
+				equality1 = string.sub(equality1, 1, -commonOffset - 1)
+				edit = commonString .. string.sub(edit, 1, -commonOffset - 1)
+				equality2 = commonString .. equality2
+			end
+
+			-- Second, step character by character right, looking for the best fit.
+			local bestEquality1 = equality1
+			local bestEdit = edit
+			local bestEquality2 = equality2
+			local bestScore = StringDiff._cleanupSemanticScore(equality1, edit)
+				+ StringDiff._cleanupSemanticScore(edit, equality2)
+
+			while string.byte(edit, 1) == string.byte(equality2, 1) do
+				equality1 = equality1 .. string.sub(edit, 1, 1)
+				edit = string.sub(edit, 2) .. string.sub(equality2, 1, 1)
+				equality2 = string.sub(equality2, 2)
+				local score = StringDiff._cleanupSemanticScore(equality1, edit)
+					+ StringDiff._cleanupSemanticScore(edit, equality2)
+				-- The >= encourages trailing rather than leading whitespace on edits.
+				if score >= bestScore then
+					bestScore = score
+					bestEquality1 = equality1
+					bestEdit = edit
+					bestEquality2 = equality2
+				end
+			end
+			if prevDiff.value ~= bestEquality1 then
+				-- We have an improvement, save it back to the diff.
+				if #bestEquality1 > 0 then
+					diffs[pointer - 1].value = bestEquality1
+				else
+					table.remove(diffs, pointer - 1)
+					pointer = pointer - 1
+				end
+				diffs[pointer].value = bestEdit
+				if #bestEquality2 > 0 then
+					diffs[pointer + 1].value = bestEquality2
+				else
+					table.remove(diffs, pointer + 1)
+					pointer = pointer - 1
+				end
+			end
+		end
+		pointer = pointer + 1
+	end
 end
 
 function StringDiff._bisect(text1: string, text2: string): Diffs
