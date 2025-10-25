@@ -37,14 +37,7 @@ function StringDiffVisualizer:init()
 	end)
 
 	self:updateScriptBackground()
-
-	self:setState({
-		maxLines = 0,
-		currentRichTextLines = {},
-		incomingRichTextLines = {},
-		currentDiffs = {},
-		incomingDiffs = {},
-	})
+	self:updateDiffs()
 end
 
 function StringDiffVisualizer:willUnmount()
