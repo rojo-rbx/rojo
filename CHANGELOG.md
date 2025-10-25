@@ -2,9 +2,11 @@
 
 ## Unreleased
 
+* Fixed bugs and improved performance & UX for the script diff viewer ([#994])
 * Fixed a bug where the last sync timestamp was not updating correctly in the plugin ([#1132])
 * Improved the reliability of sync replacements by adding better error handling and recovery ([#1135])
 
+[#994]: https://github.com/rojo-rbx/rojo/pull/994
 [#1132]: https://github.com/rojo-rbx/rojo/pull/1132
 [#1135]: https://github.com/rojo-rbx/rojo/pull/1135
 
