@@ -237,23 +237,6 @@ function Notification:render()
 						})
 						else nil,
 				}),
-				Actions = if self.props.actions
-					then e("Frame", {
-						Size = UDim2.new(1, -40, 0, 35),
-						Position = UDim2.new(1, 0, 1, 0),
-						AnchorPoint = Vector2.new(1, 1),
-						BackgroundTransparency = 1,
-					}, {
-						Layout = e("UIListLayout", {
-							FillDirection = Enum.FillDirection.Horizontal,
-							HorizontalAlignment = Enum.HorizontalAlignment.Right,
-							VerticalAlignment = Enum.VerticalAlignment.Center,
-							SortOrder = Enum.SortOrder.LayoutOrder,
-							Padding = UDim.new(0, 5),
-						}),
-						Buttons = Roact.createFragment(actionButtons),
-					})
-					else nil,
 
 				Padding = e("UIPadding", {
 					PaddingLeft = UDim.new(0, 17),
