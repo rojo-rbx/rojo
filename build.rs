@@ -47,6 +47,7 @@ fn main() -> Result<(), anyhow::Error> {
 
     let root_dir = PathBuf::from(env::var_os("CARGO_MANIFEST_DIR").unwrap());
     let plugin_dir = root_dir.join("plugin");
+    let templates_dir = root_dir.join("assets").join("project-templates");
 
     let our_version = Version::parse(env::var_os("CARGO_PKG_VERSION").unwrap().to_str().unwrap())?;
     let plugin_version =
@@ -57,7 +58,9 @@ fn main() -> Result<(), anyhow::Error> {
         "plugin version does not match Cargo version"
     );
 
-    let snapshot = VfsSnapshot::dir(hashmap! {
+    let template_snapshot = snapshot_from_fs_path(&templates_dir)?;
+
+    let plugin_snapshot = VfsSnapshot::dir(hashmap! {
         "default.project.json" => snapshot_from_fs_path(&root_dir.join("plugin.project.json"))?,
         "plugin" => VfsSnapshot::dir(hashmap! {
             "fmt" => snapshot_from_fs_path(&plugin_dir.join("fmt"))?,
@@ -70,10 +73,11 @@ fn main() -> Result<(), anyhow::Error> {
         }),
     });
 
-    let out_path = Path::new(&out_dir).join("plugin.bincode");
-    let out_file = File::create(out_path)?;
+    let template_file = File::create(Path::new(&out_dir).join("templates.bincode"))?;
+    let plugin_file = File::create(Path::new(&out_dir).join("plugin.bincode"))?;
 
-    bincode::serialize_into(out_file, &snapshot)?;
+    bincode::serialize_into(plugin_file, &plugin_snapshot)?;
+    bincode::serialize_into(template_file, &template_snapshot)?;
 
     println!("cargo:rerun-if-changed=build/windows/rojo-manifest.rc");
     println!("cargo:rerun-if-changed=build/windows/rojo.manifest");

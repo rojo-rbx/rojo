@@ -441,7 +441,8 @@
         "friction": 1.0,
         "elasticity": 0.0,
         "frictionWeight": 50.0,
-        "elasticityWeight": 25.0
+        "elasticityWeight": 25.0,
+        "acousticAbsorption": 0.15625
       }
     },
     "ty": "PhysicalProperties"

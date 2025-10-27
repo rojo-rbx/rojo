@@ -1,7 +1,7 @@
 [package]
 name = "rojo"
-version = "7.5.1"
-rust-version = "1.70.0"
+version = "7.6.0"
+rust-version = "1.83"
 authors = [
     "Lucien Greathouse <me@lpghatguy.com>",
     "Micah Reid <git@dekkonot.com>",
@@ -55,11 +55,11 @@ memofs = { version = "0.3.0", path = "crates/memofs" }
 # rbx_reflection_database = { path = "../rbx-dom/rbx_reflection_database" }
 # rbx_xml = { path = "../rbx-dom/rbx_xml" }
 
-rbx_binary = "1.0.0"
-rbx_dom_weak = "3.0.0"
-rbx_reflection = "5.0.0"
-rbx_reflection_database = "1.0.3"
-rbx_xml = "1.0.0"
+rbx_binary = "2.0.0"
+rbx_dom_weak = "4.0.0"
+rbx_reflection = "6.0.0"
+rbx_reflection_database = "2.0.0"
+rbx_xml = "2.0.0"
 
 anyhow = "1.0.80"
 backtrace = "0.3.69"
@@ -93,6 +93,8 @@ tokio = { version = "1.36.0", features = ["rt", "rt-multi-thread"] }
 uuid = { version = "1.7.0", features = ["v4", "serde"] }
 clap = { version = "3.2.25", features = ["derive"] }
 profiling = "1.0.15"
+yaml-rust2 = "0.10.3"
+data-encoding = "2.8.0"
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.10.1"

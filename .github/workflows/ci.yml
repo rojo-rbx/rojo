@@ -16,7 +16,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-22.04, windows-latest, macos-latest, windows-11-arm, ubuntu-22.04-arm]
 
     steps:
     - uses: actions/checkout@v4
@@ -26,19 +26,29 @@ jobs:
     - name: Install Rust
       uses: dtolnay/rust-toolchain@stable
 
-    - name: Rust cache
-      uses: Swatinem/rust-cache@v2
-
-    - name: Setup Aftman
-      uses: ok-nick/setup-aftman@v0.4.2
+    - name: Restore Rust Cache
+      uses: actions/cache/restore@v4
       with:
-        version: 'v0.3.0'
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ matrix.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
     - name: Build
       run: cargo build --locked --verbose
 
     - name: Test
       run: cargo test --locked --verbose
+
+    - name: Save Rust Cache
+      uses: actions/cache/save@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ matrix.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
   msrv:
     name: Check MSRV
@@ -50,18 +60,28 @@ jobs:
         submodules: true
 
     - name: Install Rust
-      uses: dtolnay/rust-toolchain@1.70.0
+      uses: dtolnay/rust-toolchain@1.83.0
 
-    - name: Rust cache
-      uses: Swatinem/rust-cache@v2
-
-    - name: Setup Aftman
-      uses: ok-nick/setup-aftman@v0.4.2
+    - name: Restore Rust Cache
+      uses: actions/cache/restore@v4
       with:
-        version: 'v0.3.0'
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
     - name: Build
       run: cargo build --locked --verbose
+
+    - name: Save Rust Cache
+      uses: actions/cache/save@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
   lint:
     name: Rustfmt, Clippy, Stylua, & Selene
@@ -77,13 +97,19 @@ jobs:
       with:
         components: rustfmt, clippy
 
-    - name: Rust cache
-      uses: Swatinem/rust-cache@v2
-
-    - name: Setup Aftman
-      uses: ok-nick/setup-aftman@v0.4.2
+    - name: Restore Rust Cache
+      uses: actions/cache/restore@v4
       with:
-        version: 'v0.3.0'
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Setup Rokit
+      uses: CompeyDev/setup-rokit@v0.1.2
+      with:
+        version: 'v1.1.0'
 
     - name: Stylua
       run: stylua --check plugin/src
@@ -97,3 +123,11 @@ jobs:
     - name: Clippy
       run: cargo clippy
 
+    - name: Save Rust Cache
+      uses: actions/cache/save@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}

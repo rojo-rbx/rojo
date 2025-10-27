@@ -109,15 +109,13 @@ impl VfsBackend for StdBackend {
             self.watches.insert(path.to_path_buf());
             self.watcher
                 .watch(path, RecursiveMode::Recursive)
-                .map_err(|inner| io::Error::new(io::ErrorKind::Other, inner))
+                .map_err(io::Error::other)
         }
     }
 
     fn unwatch(&mut self, path: &Path) -> io::Result<()> {
         self.watches.remove(path);
-        self.watcher
-            .unwatch(path)
-            .map_err(|inner| io::Error::new(io::ErrorKind::Other, inner))
+        self.watcher.unwatch(path).map_err(io::Error::other)
     }
 }
 

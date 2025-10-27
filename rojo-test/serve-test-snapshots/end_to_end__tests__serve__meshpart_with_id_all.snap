@@ -1,0 +1,58 @@
+---
+source: tests/tests/serve.rs
+expression: "read_response.intern_and_redact(&mut redactions, root_id)"
+---
+instances:
+  id-2:
+    Children:
+      - id-3
+    ClassName: DataModel
+    Id: id-2
+    Metadata:
+      ignoreUnknownInstances: true
+    Name: meshpart
+    Parent: "00000000000000000000000000000000"
+    Properties: {}
+  id-3:
+    Children:
+      - id-4
+      - id-5
+    ClassName: Workspace
+    Id: id-3
+    Metadata:
+      ignoreUnknownInstances: true
+    Name: Workspace
+    Parent: id-2
+    Properties:
+      NeedsPivotMigration:
+        Bool: false
+  id-4:
+    Children: []
+    ClassName: ObjectValue
+    Id: id-4
+    Metadata:
+      ignoreUnknownInstances: true
+    Name: ObjectValue
+    Parent: id-3
+    Properties:
+      Attributes:
+        Attributes:
+          Rojo_Target_Value:
+            String: sword
+      Value:
+        Ref: id-5
+  id-5:
+    Children: []
+    ClassName: MeshPart
+    Id: id-5
+    Metadata:
+      ignoreUnknownInstances: true
+    Name: Sword
+    Parent: id-3
+    Properties:
+      MeshId:
+        ContentId: "rbxasset://fonts/sword.mesh"
+      TextureID:
+        ContentId: "rbxasset://textures/SwordTexture.png"
+messageCursor: 0
+sessionId: id-1

@@ -1,11 +1,20 @@
 //! Defines Rojo's HTTP API, all under /api. These endpoints generally return
 //! JSON.
 
-use std::{collections::HashMap, fs, path::PathBuf, str::FromStr, sync::Arc};
+use std::{
+    collections::{HashMap, HashSet},
+    fs,
+    path::PathBuf,
+    str::FromStr,
+    sync::Arc,
+};
 
 use hyper::{body, Body, Method, Request, Response, StatusCode};
 use opener::OpenError;
-use rbx_dom_weak::types::Ref;
+use rbx_dom_weak::{
+    types::{Ref, Variant},
+    InstanceBuilder, UstrMap, WeakDom,
+};
 
 use crate::{
     serve_session::ServeSession,
@@ -18,6 +27,7 @@ use crate::{
         },
         util::{json, json_ok},
     },
+    web_api::{BufferEncode, InstanceUpdate, RefPatchResponse, SerializeResponse},
 };
 
 pub async fn call(serve_session: Arc<ServeSession>, request: Request<Body>) -> Response<Body> {
@@ -31,10 +41,16 @@ pub async fn call(serve_session: Arc<ServeSession>, request: Request<Body>) -> R
         (&Method::GET, path) if path.starts_with("/api/subscribe/") => {
             service.handle_api_subscribe(request).await
         }
+        (&Method::GET, path) if path.starts_with("/api/serialize/") => {
+            service.handle_api_serialize(request).await
+        }
+        (&Method::GET, path) if path.starts_with("/api/ref-patch/") => {
+            service.handle_api_ref_patch(request).await
+        }
+
         (&Method::POST, path) if path.starts_with("/api/open/") => {
             service.handle_api_open(request).await
         }
-
         (&Method::POST, "/api/write") => service.handle_api_write(request).await,
 
         (_method, path) => json(
@@ -201,6 +217,126 @@ impl ApiService {
         })
     }
 
+    /// Accepts a list of IDs and returns them serialized as a binary model.
+    /// The model is sent in a schema that causes Roblox to deserialize it as
+    /// a Luau `buffer`.
+    ///
+    /// The returned model is a folder that contains ObjectValues with names
+    /// that correspond to the requested Instances. These values have their
+    /// `Value` property set to point to the requested Instance.
+    async fn handle_api_serialize(&self, request: Request<Body>) -> Response<Body> {
+        let argument = &request.uri().path()["/api/serialize/".len()..];
+        let requested_ids: Result<Vec<Ref>, _> = argument.split(',').map(Ref::from_str).collect();
+
+        let requested_ids = match requested_ids {
+            Ok(ids) => ids,
+            Err(_) => {
+                return json(
+                    ErrorResponse::bad_request("Malformed ID list"),
+                    StatusCode::BAD_REQUEST,
+                );
+            }
+        };
+        let mut response_dom = WeakDom::new(InstanceBuilder::new("Folder"));
+
+        let tree = self.serve_session.tree();
+        for id in &requested_ids {
+            if let Some(instance) = tree.get_instance(*id) {
+                let clone = response_dom.insert(
+                    Ref::none(),
+                    InstanceBuilder::new(instance.class_name())
+                        .with_name(instance.name())
+                        .with_properties(instance.properties().clone()),
+                );
+                let object_value = response_dom.insert(
+                    response_dom.root_ref(),
+                    InstanceBuilder::new("ObjectValue")
+                        .with_name(id.to_string())
+                        .with_property("Value", clone),
+                );
+
+                let mut child_ref = clone;
+                if let Some(parent_class) = parent_requirements(&instance.class_name()) {
+                    child_ref =
+                        response_dom.insert(object_value, InstanceBuilder::new(parent_class));
+                    response_dom.transfer_within(clone, child_ref);
+                }
+
+                response_dom.transfer_within(child_ref, object_value);
+            } else {
+                json(
+                    ErrorResponse::bad_request(format!("provided id {id} is not in the tree")),
+                    StatusCode::BAD_REQUEST,
+                );
+            }
+        }
+        drop(tree);
+
+        let mut source = Vec::new();
+        rbx_binary::to_writer(&mut source, &response_dom, &[response_dom.root_ref()]).unwrap();
+
+        json_ok(SerializeResponse {
+            session_id: self.serve_session.session_id(),
+            model_contents: BufferEncode::new(source),
+        })
+    }
+
+    /// Returns a list of all referent properties that point towards the
+    /// provided IDs. Used because the plugin does not store a RojoTree,
+    /// and referent properties need to be updated after the serialize
+    /// endpoint is used.
+    async fn handle_api_ref_patch(self, request: Request<Body>) -> Response<Body> {
+        let argument = &request.uri().path()["/api/ref-patch/".len()..];
+        let requested_ids: Result<HashSet<Ref>, _> =
+            argument.split(',').map(Ref::from_str).collect();
+
+        let requested_ids = match requested_ids {
+            Ok(ids) => ids,
+            Err(_) => {
+                return json(
+                    ErrorResponse::bad_request("Malformed ID list"),
+                    StatusCode::BAD_REQUEST,
+                );
+            }
+        };
+
+        let mut instance_updates: HashMap<Ref, InstanceUpdate> = HashMap::new();
+
+        let tree = self.serve_session.tree();
+        for instance in tree.descendants(tree.get_root_id()) {
+            for (prop_name, prop_value) in instance.properties() {
+                let Variant::Ref(prop_value) = prop_value else {
+                    continue;
+                };
+                if let Some(target_id) = requested_ids.get(prop_value) {
+                    let instance_id = instance.id();
+                    let update =
+                        instance_updates
+                            .entry(instance_id)
+                            .or_insert_with(|| InstanceUpdate {
+                                id: instance_id,
+                                changed_class_name: None,
+                                changed_name: None,
+                                changed_metadata: None,
+                                changed_properties: UstrMap::default(),
+                            });
+                    update
+                        .changed_properties
+                        .insert(*prop_name, Some(Variant::Ref(*target_id)));
+                }
+            }
+        }
+
+        json_ok(RefPatchResponse {
+            session_id: self.serve_session.session_id(),
+            patch: SubscribeMessage {
+                added: HashMap::new(),
+                removed: Vec::new(),
+                updated: instance_updates.into_values().collect(),
+            },
+        })
+    }
+
     /// Open a script with the given ID in the user's default text editor.
     async fn handle_api_open(&self, request: Request<Body>) -> Response<Body> {
         let argument = &request.uri().path()["/api/open/".len()..];
@@ -305,4 +441,18 @@ fn pick_script_path(instance: InstanceWithMeta<'_>) -> Option<PathBuf> {
                 .unwrap_or(false)
         })
         .map(|path| path.to_owned())
+}
+
+/// Certain Instances MUST be a child of specific classes. This function
+/// tracks that information for the Serialize endpoint.
+///
+/// If a parent requirement exists, it will be returned.
+/// Otherwise returns `None`.
+fn parent_requirements(class: &str) -> Option<&str> {
+    Some(match class {
+        "Attachment" | "Bone" => "Part",
+        "Animator" => "Humanoid",
+        "BaseWrap" | "WrapLayer" | "WrapTarget" | "WrapDeformer" => "MeshPart",
+        _ => return None,
+    })
 }
