@@ -28,7 +28,11 @@ pub fn snapshot_json_model(
         return Ok(None);
     }
 
-    let mut instance: JsonModel = serde_json::from_str(contents_str)
+    let value = jsonc_parser::parse_to_serde_value(contents_str, &Default::default())
+        .with_context(|| format!("File is not a valid JSON model: {}", path.display()))?
+        .ok_or_else(|| anyhow::anyhow!("File contains no JSON value: {}", path.display()))?;
+
+    let mut instance: JsonModel = serde_json::from_value(value)
         .with_context(|| format!("File is not a valid JSON model: {}", path.display()))?;
 
     if let Some(top_level_name) = &instance.name {

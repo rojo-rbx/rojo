@@ -18,9 +18,12 @@ pub fn snapshot_json(
     name: &str,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let contents = vfs.read(path)?;
+    let text = std::str::from_utf8(&contents)
+        .with_context(|| format!("File is not valid UTF-8: {}", path.display()))?;
 
-    let value: serde_json::Value = serde_json::from_slice(&contents)
-        .with_context(|| format!("File contains malformed JSON: {}", path.display()))?;
+    let value: serde_json::Value = jsonc_parser::parse_to_serde_value(text, &Default::default())
+        .with_context(|| format!("File contains malformed JSON: {}", path.display()))?
+        .ok_or_else(|| anyhow::anyhow!("File contains no JSON value: {}", path.display()))?;
 
     let as_lua = json_to_lua(value).to_string();
 

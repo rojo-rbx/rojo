@@ -250,12 +250,14 @@ mod test {
     use super::*;
 
     fn resolve(class: &str, prop: &str, json_value: &str) -> Variant {
-        let unresolved: UnresolvedValue = serde_json::from_str(json_value).unwrap();
+        let value = jsonc_parser::parse_to_serde_value(json_value, &Default::default()).unwrap().unwrap();
+        let unresolved: UnresolvedValue = serde_json::from_value(value).unwrap();
         unresolved.resolve(class, prop).unwrap()
     }
 
     fn resolve_unambiguous(json_value: &str) -> Variant {
-        let unresolved: UnresolvedValue = serde_json::from_str(json_value).unwrap();
+        let value = jsonc_parser::parse_to_serde_value(json_value, &Default::default()).unwrap().unwrap();
+        let unresolved: UnresolvedValue = serde_json::from_value(value).unwrap();
         unresolved.resolve_unambiguous().unwrap()
     }
 

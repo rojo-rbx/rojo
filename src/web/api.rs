@@ -139,7 +139,33 @@ impl ApiService {
 
         let body = body::to_bytes(request.into_body()).await.unwrap();
 
-        let request: WriteRequest = match serde_json::from_slice(&body) {
+        let text = match std::str::from_utf8(&body) {
+            Ok(text) => text,
+            Err(err) => {
+                return json(
+                    ErrorResponse::bad_request(format!("Body is not valid UTF-8: {}", err)),
+                    StatusCode::BAD_REQUEST,
+                );
+            }
+        };
+
+        let value = match jsonc_parser::parse_to_serde_value(text, &Default::default()) {
+            Ok(Some(value)) => value,
+            Ok(None) => {
+                return json(
+                    ErrorResponse::bad_request("Body contains no JSON value"),
+                    StatusCode::BAD_REQUEST,
+                );
+            }
+            Err(err) => {
+                return json(
+                    ErrorResponse::bad_request(format!("Invalid JSON: {}", err)),
+                    StatusCode::BAD_REQUEST,
+                );
+            }
+        };
+
+        let request: WriteRequest = match serde_json::from_value(value) {
             Ok(request) => request,
             Err(err) => {
                 return json(
