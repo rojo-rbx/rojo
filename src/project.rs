@@ -214,27 +214,26 @@ impl Project {
         project_file_location: PathBuf,
         fallback_name: Option<&str>,
     ) -> Result<Self, Error> {
-        let text = std::str::from_utf8(contents)
-            .map_err(|_| Error::Json {
-                source: serde_json::Error::io(std::io::Error::new(
-                    std::io::ErrorKind::InvalidData,
-                    "File is not valid UTF-8"
-                )),
-                path: project_file_location.clone(),
-            })?;
+        let text = std::str::from_utf8(contents).map_err(|_| Error::Json {
+            source: serde_json::Error::io(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "File is not valid UTF-8",
+            )),
+            path: project_file_location.clone(),
+        })?;
 
         let value = jsonc_parser::parse_to_serde_value(text, &Default::default())
             .map_err(|e| Error::Json {
                 source: serde_json::Error::io(std::io::Error::new(
                     std::io::ErrorKind::InvalidData,
-                    format!("JSON parse error: {}", e)
+                    format!("JSON parse error: {}", e),
                 )),
                 path: project_file_location.clone(),
             })?
             .ok_or_else(|| Error::Json {
                 source: serde_json::Error::io(std::io::Error::new(
                     std::io::ErrorKind::InvalidData,
-                    "File contains no JSON value"
+                    "File contains no JSON value",
                 )),
                 path: project_file_location.clone(),
             })?;
@@ -424,14 +423,19 @@ mod test {
 
     #[test]
     fn path_node_required() {
-        let value = jsonc_parser::parse_to_serde_value(r#""src""#, &Default::default()).unwrap().unwrap();
+        let value = jsonc_parser::parse_to_serde_value(r#""src""#, &Default::default())
+            .unwrap()
+            .unwrap();
         let path_node: PathNode = serde_json::from_value(value).unwrap();
         assert_eq!(path_node, PathNode::Required(PathBuf::from("src")));
     }
 
     #[test]
     fn path_node_optional() {
-        let value = jsonc_parser::parse_to_serde_value(r#"{ "optional": "src" }"#, &Default::default()).unwrap().unwrap();
+        let value =
+            jsonc_parser::parse_to_serde_value(r#"{ "optional": "src" }"#, &Default::default())
+                .unwrap()
+                .unwrap();
         let path_node: PathNode = serde_json::from_value(value).unwrap();
         assert_eq!(
             path_node,

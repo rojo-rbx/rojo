@@ -34,9 +34,8 @@ pub struct AdjacentMetadata {
 
 impl AdjacentMetadata {
     pub fn from_slice(slice: &[u8], path: PathBuf) -> anyhow::Result<Self> {
-        let text = std::str::from_utf8(slice).with_context(|| {
-            format!("File is not valid UTF-8: {}", path.display())
-        })?;
+        let text = std::str::from_utf8(slice)
+            .with_context(|| format!("File is not valid UTF-8: {}", path.display()))?;
 
         let value = jsonc_parser::parse_to_serde_value(text, &Default::default())
             .with_context(|| {
@@ -45,10 +44,9 @@ impl AdjacentMetadata {
                     path.display()
                 )
             })?
-            .ok_or_else(|| anyhow::format_err!(
-                "File contains no JSON value: {}",
-                path.display()
-            ))?;
+            .ok_or_else(|| {
+                anyhow::format_err!("File contains no JSON value: {}", path.display())
+            })?;
 
         let mut meta: Self = serde_json::from_value(value).with_context(|| {
             format!(
@@ -147,9 +145,8 @@ pub struct DirectoryMetadata {
 
 impl DirectoryMetadata {
     pub fn from_slice(slice: &[u8], path: PathBuf) -> anyhow::Result<Self> {
-        let text = std::str::from_utf8(slice).with_context(|| {
-            format!("File is not valid UTF-8: {}", path.display())
-        })?;
+        let text = std::str::from_utf8(slice)
+            .with_context(|| format!("File is not valid UTF-8: {}", path.display()))?;
 
         let value = jsonc_parser::parse_to_serde_value(text, &Default::default())
             .with_context(|| {
@@ -158,10 +155,9 @@ impl DirectoryMetadata {
                     path.display()
                 )
             })?
-            .ok_or_else(|| anyhow::format_err!(
-                "File contains no JSON value: {}",
-                path.display()
-            ))?;
+            .ok_or_else(|| {
+                anyhow::format_err!("File contains no JSON value: {}", path.display())
+            })?;
 
         let mut meta: Self = serde_json::from_value(value).with_context(|| {
             format!(
