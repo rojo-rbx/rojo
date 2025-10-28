@@ -34,10 +34,7 @@ pub struct AdjacentMetadata {
 
 impl AdjacentMetadata {
     pub fn from_slice(slice: &[u8], path: PathBuf) -> anyhow::Result<Self> {
-        let text = std::str::from_utf8(slice)
-            .with_context(|| format!("File is not valid UTF-8: {}", path.display()))?;
-
-        let mut meta: Self = json::from_str_with_context(text, || {
+        let mut meta: Self = json::from_slice_with_context(slice, || {
             format!(
                 "File contained malformed .meta.json data: {}",
                 path.display()
@@ -134,10 +131,7 @@ pub struct DirectoryMetadata {
 
 impl DirectoryMetadata {
     pub fn from_slice(slice: &[u8], path: PathBuf) -> anyhow::Result<Self> {
-        let text = std::str::from_utf8(slice)
-            .with_context(|| format!("File is not valid UTF-8: {}", path.display()))?;
-
-        let mut meta: Self = json::from_str_with_context(text, || {
+        let mut meta: Self = json::from_slice_with_context(slice, || {
             format!(
                 "File contained malformed init.meta.json data: {}",
                 path.display()

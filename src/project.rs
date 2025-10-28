@@ -214,15 +214,7 @@ impl Project {
         project_file_location: PathBuf,
         fallback_name: Option<&str>,
     ) -> Result<Self, Error> {
-        let text = std::str::from_utf8(contents).map_err(|_| Error::Json {
-            source: serde_json::Error::io(std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                "File is not valid UTF-8",
-            )),
-            path: project_file_location.clone(),
-        })?;
-
-        let mut project: Self = json::from_str(text).map_err(|e| Error::Json {
+        let mut project: Self = json::from_slice(contents).map_err(|e| Error::Json {
             source: serde_json::Error::io(std::io::Error::new(
                 std::io::ErrorKind::InvalidData,
                 e.to_string(),

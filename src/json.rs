@@ -76,6 +76,61 @@ pub fn from_str_with_context<T: DeserializeOwned>(
     serde_json::from_value(value).with_context(|| format!("{}: Invalid JSON structure", context()))
 }
 
+/// Parse JSONC bytes into a `serde_json::Value` with a custom context message.
+///
+/// This handles UTF-8 conversion and JSONC parsing in one step.
+///
+/// # Errors
+///
+/// Returns an error if:
+/// - The bytes are not valid UTF-8
+/// - The text is not valid JSONC
+/// - The text contains no JSON value
+pub fn parse_value_from_slice_with_context(
+    slice: &[u8],
+    context: impl Fn() -> String,
+) -> anyhow::Result<serde_json::Value> {
+    let text = std::str::from_utf8(slice)
+        .with_context(|| format!("{}: File is not valid UTF-8", context()))?;
+    parse_value_with_context(text, context)
+}
+
+/// Parse JSONC bytes and deserialize it into a specific type.
+///
+/// This handles UTF-8 conversion, JSONC parsing, and deserialization in one step.
+///
+/// # Errors
+///
+/// Returns an error if:
+/// - The bytes are not valid UTF-8
+/// - The text is not valid JSONC
+/// - The text contains no JSON value
+/// - The value cannot be deserialized into type `T`
+pub fn from_slice<T: DeserializeOwned>(slice: &[u8]) -> anyhow::Result<T> {
+    let text = std::str::from_utf8(slice).context("File is not valid UTF-8")?;
+    from_str(text)
+}
+
+/// Parse JSONC bytes and deserialize it into a specific type with a custom context message.
+///
+/// This handles UTF-8 conversion, JSONC parsing, and deserialization in one step.
+///
+/// # Errors
+///
+/// Returns an error if:
+/// - The bytes are not valid UTF-8
+/// - The text is not valid JSONC
+/// - The text contains no JSON value
+/// - The value cannot be deserialized into type `T`
+pub fn from_slice_with_context<T: DeserializeOwned>(
+    slice: &[u8],
+    context: impl Fn() -> String,
+) -> anyhow::Result<T> {
+    let text = std::str::from_utf8(slice)
+        .with_context(|| format!("{}: File is not valid UTF-8", context()))?;
+    from_str_with_context(text, context)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -182,5 +237,77 @@ mod tests {
         .unwrap_err();
         assert!(err.to_string().contains("config.json"));
         assert!(err.to_string().contains("Invalid JSON structure"));
+    }
+
+    #[test]
+    fn test_parse_value_from_slice_with_context() {
+        let err = parse_value_from_slice_with_context(b"{invalid}", || "test.json".to_string())
+            .unwrap_err();
+        assert!(err.to_string().contains("test.json"));
+        assert!(err.to_string().contains("parse"));
+    }
+
+    #[test]
+    fn test_parse_value_from_slice_with_context_invalid_utf8() {
+        let err = parse_value_from_slice_with_context(&[0xFF, 0xFF], || "test.json".to_string())
+            .unwrap_err();
+        assert!(err.to_string().contains("test.json"));
+        assert!(err.to_string().contains("UTF-8"));
+    }
+
+    #[test]
+    fn test_from_slice() {
+        let result: TestStruct = from_slice(br#"{"foo": "hello", "bar": 42}"#).unwrap();
+        assert_eq!(
+            result,
+            TestStruct {
+                foo: "hello".to_string(),
+                bar: 42
+            }
+        );
+    }
+
+    #[test]
+    fn test_from_slice_with_comments() {
+        let result: TestStruct = from_slice(
+            br#"{
+            // Comment
+            "foo": "hello",
+            "bar": 42, // Trailing comma is fine
+        }"#,
+        )
+        .unwrap();
+        assert_eq!(
+            result,
+            TestStruct {
+                foo: "hello".to_string(),
+                bar: 42
+            }
+        );
+    }
+
+    #[test]
+    fn test_from_slice_invalid_utf8() {
+        let err = from_slice::<TestStruct>(&[0xFF, 0xFF]).unwrap_err();
+        assert!(err.to_string().contains("UTF-8"));
+    }
+
+    #[test]
+    fn test_from_slice_with_context() {
+        let err = from_slice_with_context::<TestStruct>(br#"{"foo": "hello"}"#, || {
+            "config.json".to_string()
+        })
+        .unwrap_err();
+        assert!(err.to_string().contains("config.json"));
+        assert!(err.to_string().contains("Invalid JSON structure"));
+    }
+
+    #[test]
+    fn test_from_slice_with_context_invalid_utf8() {
+        let err =
+            from_slice_with_context::<TestStruct>(&[0xFF, 0xFF], || "config.json".to_string())
+                .unwrap_err();
+        assert!(err.to_string().contains("config.json"));
+        assert!(err.to_string().contains("UTF-8"));
     }
 }

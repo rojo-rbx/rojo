@@ -1,6 +1,5 @@
 use std::path::Path;
 
-use anyhow::Context;
 use memofs::{IoResultExt, Vfs};
 use rbx_dom_weak::ustr;
 
@@ -19,10 +18,8 @@ pub fn snapshot_json(
     name: &str,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let contents = vfs.read(path)?;
-    let text = std::str::from_utf8(&contents)
-        .with_context(|| format!("File is not valid UTF-8: {}", path.display()))?;
 
-    let value = json::parse_value_with_context(text, || {
+    let value = json::parse_value_from_slice_with_context(&contents, || {
         format!("File contains malformed JSON: {}", path.display())
     })?;
 

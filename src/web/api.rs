@@ -140,21 +140,11 @@ impl ApiService {
 
         let body = body::to_bytes(request.into_body()).await.unwrap();
 
-        let text = match std::str::from_utf8(&body) {
-            Ok(text) => text,
-            Err(err) => {
-                return json(
-                    ErrorResponse::bad_request(format!("Body is not valid UTF-8: {}", err)),
-                    StatusCode::BAD_REQUEST,
-                );
-            }
-        };
-
-        let request: WriteRequest = match json::from_str(text) {
+        let request: WriteRequest = match json::from_slice(&body) {
             Ok(request) => request,
             Err(err) => {
                 return json(
-                    ErrorResponse::bad_request(format!("Invalid JSON: {}", err)),
+                    ErrorResponse::bad_request(format!("Invalid body: {}", err)),
                     StatusCode::BAD_REQUEST,
                 );
             }
