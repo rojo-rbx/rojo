@@ -5,6 +5,7 @@ use memofs::{IoResultExt, Vfs};
 use rbx_dom_weak::ustr;
 
 use crate::{
+    json,
     lua_ast::{Expression, Statement},
     snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
 };
@@ -21,9 +22,9 @@ pub fn snapshot_json(
     let text = std::str::from_utf8(&contents)
         .with_context(|| format!("File is not valid UTF-8: {}", path.display()))?;
 
-    let value: serde_json::Value = jsonc_parser::parse_to_serde_value(text, &Default::default())
-        .with_context(|| format!("File contains malformed JSON: {}", path.display()))?
-        .ok_or_else(|| anyhow::anyhow!("File contains no JSON value: {}", path.display()))?;
+    let value = json::parse_value_with_context(text, || {
+        format!("File contains malformed JSON: {}", path.display())
+    })?;
 
     let as_lua = json_to_lua(value).to_string();
 

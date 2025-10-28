@@ -11,7 +11,7 @@ use rbx_dom_weak::{Ustr, UstrMap};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use crate::{glob::Glob, resolution::UnresolvedValue, snapshot::SyncRule};
+use crate::{glob::Glob, json, resolution::UnresolvedValue, snapshot::SyncRule};
 
 static PROJECT_FILENAME: &str = "default.project.json";
 
@@ -222,24 +222,11 @@ impl Project {
             path: project_file_location.clone(),
         })?;
 
-        let value = jsonc_parser::parse_to_serde_value(text, &Default::default())
-            .map_err(|e| Error::Json {
-                source: serde_json::Error::io(std::io::Error::new(
-                    std::io::ErrorKind::InvalidData,
-                    format!("JSON parse error: {}", e),
-                )),
-                path: project_file_location.clone(),
-            })?
-            .ok_or_else(|| Error::Json {
-                source: serde_json::Error::io(std::io::Error::new(
-                    std::io::ErrorKind::InvalidData,
-                    "File contains no JSON value",
-                )),
-                path: project_file_location.clone(),
-            })?;
-
-        let mut project: Self = serde_json::from_value(value).map_err(|source| Error::Json {
-            source,
+        let mut project: Self = json::from_str(text).map_err(|e| Error::Json {
+            source: serde_json::Error::io(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                e.to_string(),
+            )),
             path: project_file_location.clone(),
         })?;
         project.file_location = project_file_location;
@@ -423,20 +410,13 @@ mod test {
 
     #[test]
     fn path_node_required() {
-        let value = jsonc_parser::parse_to_serde_value(r#""src""#, &Default::default())
-            .unwrap()
-            .unwrap();
-        let path_node: PathNode = serde_json::from_value(value).unwrap();
+        let path_node: PathNode = json::from_str(r#""src""#).unwrap();
         assert_eq!(path_node, PathNode::Required(PathBuf::from("src")));
     }
 
     #[test]
     fn path_node_optional() {
-        let value =
-            jsonc_parser::parse_to_serde_value(r#"{ "optional": "src" }"#, &Default::default())
-                .unwrap()
-                .unwrap();
-        let path_node: PathNode = serde_json::from_value(value).unwrap();
+        let path_node: PathNode = json::from_str(r#"{ "optional": "src" }"#).unwrap();
         assert_eq!(
             path_node,
             PathNode::Optional(OptionalPathNode::new(PathBuf::from("src")))
@@ -445,15 +425,12 @@ mod test {
 
     #[test]
     fn project_node_required() {
-        let value = jsonc_parser::parse_to_serde_value(
+        let project_node: ProjectNode = json::from_str(
             r#"{
                 "$path": "src"
             }"#,
-            &Default::default(),
         )
-        .unwrap()
         .unwrap();
-        let project_node: ProjectNode = serde_json::from_value(value).unwrap();
 
         assert_eq!(
             project_node.path,
@@ -463,15 +440,12 @@ mod test {
 
     #[test]
     fn project_node_optional() {
-        let value = jsonc_parser::parse_to_serde_value(
+        let project_node: ProjectNode = json::from_str(
             r#"{
                 "$path": { "optional": "src" }
             }"#,
-            &Default::default(),
         )
-        .unwrap()
         .unwrap();
-        let project_node: ProjectNode = serde_json::from_value(value).unwrap();
 
         assert_eq!(
             project_node.path,
@@ -483,30 +457,24 @@ mod test {
 
     #[test]
     fn project_node_none() {
-        let value = jsonc_parser::parse_to_serde_value(
+        let project_node: ProjectNode = json::from_str(
             r#"{
                 "$className": "Folder"
             }"#,
-            &Default::default(),
         )
-        .unwrap()
         .unwrap();
-        let project_node: ProjectNode = serde_json::from_value(value).unwrap();
 
         assert_eq!(project_node.path, None);
     }
 
     #[test]
     fn project_node_optional_serialize_absolute() {
-        let value = jsonc_parser::parse_to_serde_value(
+        let project_node: ProjectNode = json::from_str(
             r#"{
                 "$path": { "optional": "..\\src" }
             }"#,
-            &Default::default(),
         )
-        .unwrap()
         .unwrap();
-        let project_node: ProjectNode = serde_json::from_value(value).unwrap();
 
         let serialized = serde_json::to_string(&project_node).unwrap();
         assert_eq!(serialized, r#"{"$path":{"optional":"../src"}}"#);
@@ -514,15 +482,12 @@ mod test {
 
     #[test]
     fn project_node_optional_serialize_absolute_no_change() {
-        let value = jsonc_parser::parse_to_serde_value(
+        let project_node: ProjectNode = json::from_str(
             r#"{
                 "$path": { "optional": "../src" }
             }"#,
-            &Default::default(),
         )
-        .unwrap()
         .unwrap();
-        let project_node: ProjectNode = serde_json::from_value(value).unwrap();
 
         let serialized = serde_json::to_string(&project_node).unwrap();
         assert_eq!(serialized, r#"{"$path":{"optional":"../src"}}"#);
@@ -530,15 +495,12 @@ mod test {
 
     #[test]
     fn project_node_optional_serialize_optional() {
-        let value = jsonc_parser::parse_to_serde_value(
+        let project_node: ProjectNode = json::from_str(
             r#"{
                 "$path": "..\\src"
             }"#,
-            &Default::default(),
         )
-        .unwrap()
         .unwrap();
-        let project_node: ProjectNode = serde_json::from_value(value).unwrap();
 
         let serialized = serde_json::to_string(&project_node).unwrap();
         assert_eq!(serialized, r#"{"$path":"../src"}"#);

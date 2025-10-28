@@ -4,7 +4,7 @@ use anyhow::{format_err, Context};
 use rbx_dom_weak::{types::Attributes, Ustr, UstrMap};
 use serde::{Deserialize, Serialize};
 
-use crate::{resolution::UnresolvedValue, snapshot::InstanceSnapshot, RojoRef};
+use crate::{json, resolution::UnresolvedValue, snapshot::InstanceSnapshot, RojoRef};
 
 /// Represents metadata in a sibling file with the same basename.
 ///
@@ -37,18 +37,7 @@ impl AdjacentMetadata {
         let text = std::str::from_utf8(slice)
             .with_context(|| format!("File is not valid UTF-8: {}", path.display()))?;
 
-        let value = jsonc_parser::parse_to_serde_value(text, &Default::default())
-            .with_context(|| {
-                format!(
-                    "File contained malformed .meta.json data: {}",
-                    path.display()
-                )
-            })?
-            .ok_or_else(|| {
-                anyhow::format_err!("File contains no JSON value: {}", path.display())
-            })?;
-
-        let mut meta: Self = serde_json::from_value(value).with_context(|| {
+        let mut meta: Self = json::from_str_with_context(text, || {
             format!(
                 "File contained malformed .meta.json data: {}",
                 path.display()
@@ -148,18 +137,7 @@ impl DirectoryMetadata {
         let text = std::str::from_utf8(slice)
             .with_context(|| format!("File is not valid UTF-8: {}", path.display()))?;
 
-        let value = jsonc_parser::parse_to_serde_value(text, &Default::default())
-            .with_context(|| {
-                format!(
-                    "File contained malformed init.meta.json data: {}",
-                    path.display()
-                )
-            })?
-            .ok_or_else(|| {
-                anyhow::format_err!("File contains no JSON value: {}", path.display())
-            })?;
-
-        let mut meta: Self = serde_json::from_value(value).with_context(|| {
+        let mut meta: Self = json::from_str_with_context(text, || {
             format!(
                 "File contained malformed init.meta.json data: {}",
                 path.display()

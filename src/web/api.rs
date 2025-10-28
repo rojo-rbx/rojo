@@ -17,6 +17,7 @@ use rbx_dom_weak::{
 };
 
 use crate::{
+    json,
     serve_session::ServeSession,
     snapshot::{InstanceWithMeta, PatchSet, PatchUpdate},
     web::{
@@ -149,27 +150,11 @@ impl ApiService {
             }
         };
 
-        let value = match jsonc_parser::parse_to_serde_value(text, &Default::default()) {
-            Ok(Some(value)) => value,
-            Ok(None) => {
-                return json(
-                    ErrorResponse::bad_request("Body contains no JSON value"),
-                    StatusCode::BAD_REQUEST,
-                );
-            }
-            Err(err) => {
-                return json(
-                    ErrorResponse::bad_request(format!("Invalid JSON: {}", err)),
-                    StatusCode::BAD_REQUEST,
-                );
-            }
-        };
-
-        let request: WriteRequest = match serde_json::from_value(value) {
+        let request: WriteRequest = match json::from_str(text) {
             Ok(request) => request,
             Err(err) => {
                 return json(
-                    ErrorResponse::bad_request(format!("Invalid body: {}", err)),
+                    ErrorResponse::bad_request(format!("Invalid JSON: {}", err)),
                     StatusCode::BAD_REQUEST,
                 );
             }

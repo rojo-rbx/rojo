@@ -248,20 +248,15 @@ fn nonexhaustive_list(values: &[&str]) -> String {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::json;
 
     fn resolve(class: &str, prop: &str, json_value: &str) -> Variant {
-        let value = jsonc_parser::parse_to_serde_value(json_value, &Default::default())
-            .unwrap()
-            .unwrap();
-        let unresolved: UnresolvedValue = serde_json::from_value(value).unwrap();
+        let unresolved: UnresolvedValue = json::from_str(json_value).unwrap();
         unresolved.resolve(class, prop).unwrap()
     }
 
     fn resolve_unambiguous(json_value: &str) -> Variant {
-        let value = jsonc_parser::parse_to_serde_value(json_value, &Default::default())
-            .unwrap()
-            .unwrap();
-        let unresolved: UnresolvedValue = serde_json::from_value(value).unwrap();
+        let unresolved: UnresolvedValue = json::from_str(json_value).unwrap();
         unresolved.resolve_unambiguous().unwrap()
     }
 
