@@ -39,8 +39,8 @@ Making a new release? Simply add the new header with the version and date undern
 
 [#1132]: https://github.com/rojo-rbx/rojo/pull/1132
 [#1135]: https://github.com/rojo-rbx/rojo/pull/1135
-[#1144]: https://github.com/rojo-rbx/rojo/pull/1142
-[#1142]: https://github.com/rojo-rbx/rojo/pull/1144
+[#1142]: https://github.com/rojo-rbx/rojo/pull/1142
+[#1144]: https://github.com/rojo-rbx/rojo/pull/1144
 [#1145]: https://github.com/rojo-rbx/rojo/pull/1145
 
 ## [7.6.0] (October 10th, 2025)
