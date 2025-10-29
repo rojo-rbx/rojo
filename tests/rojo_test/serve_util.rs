@@ -160,14 +160,20 @@ impl TestServeSession {
         let url = format!("http://localhost:{}/api/rojo", self.port);
         let body = reqwest::blocking::get(url)?.text()?;
 
-        Ok(serde_json::from_str(&body).expect("Server returned malformed response"))
+        let value = jsonc_parser::parse_to_serde_value(&body, &Default::default())
+            .expect("Failed to parse JSON")
+            .expect("No JSON value");
+        Ok(serde_json::from_value(value).expect("Server returned malformed response"))
     }
 
     pub fn get_api_read(&self, id: Ref) -> Result<ReadResponse<'_>, reqwest::Error> {
         let url = format!("http://localhost:{}/api/read/{}", self.port, id);
         let body = reqwest::blocking::get(url)?.text()?;
 
-        Ok(serde_json::from_str(&body).expect("Server returned malformed response"))
+        let value = jsonc_parser::parse_to_serde_value(&body, &Default::default())
+            .expect("Failed to parse JSON")
+            .expect("No JSON value");
+        Ok(serde_json::from_value(value).expect("Server returned malformed response"))
     }
 
     pub fn get_api_socket_packet(
