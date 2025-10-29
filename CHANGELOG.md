@@ -2,13 +2,17 @@
 
 ## Unreleased
 
+* Added `sourcemap.json` into the defualt `.gitignore` files ([#1145])
 * Fixed a bug where the last sync timestamp was not updating correctly in the plugin ([#1132])
 * Improved the reliability of sync replacements by adding better error handling and recovery ([#1135])
 * Small improvements to stability when syncing massive projects ([#1140])
+* Added support for JSON comments and trailing commas in project, meta, and model json files ([#1144])
 
+[#1145]: https://github.com/rojo-rbx/rojo/pull/1145
 [#1132]: https://github.com/rojo-rbx/rojo/pull/1132
 [#1135]: https://github.com/rojo-rbx/rojo/pull/1135
 [#1140]: https://github.com/rojo-rbx/rojo/pull/1140
+[#1144]: https://github.com/rojo-rbx/rojo/pull/1144
 
 ## 7.6.0 - October 10th, 2025
 * Added flag to `rojo init` to skip initializing a git repository ([#1122])

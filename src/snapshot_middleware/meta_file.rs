@@ -4,7 +4,7 @@ use anyhow::{format_err, Context};
 use rbx_dom_weak::{types::Attributes, Ustr, UstrMap};
 use serde::{Deserialize, Serialize};
 
-use crate::{resolution::UnresolvedValue, snapshot::InstanceSnapshot, RojoRef};
+use crate::{json, resolution::UnresolvedValue, snapshot::InstanceSnapshot, RojoRef};
 
 /// Represents metadata in a sibling file with the same basename.
 ///
@@ -34,7 +34,7 @@ pub struct AdjacentMetadata {
 
 impl AdjacentMetadata {
     pub fn from_slice(slice: &[u8], path: PathBuf) -> anyhow::Result<Self> {
-        let mut meta: Self = serde_json::from_slice(slice).with_context(|| {
+        let mut meta: Self = json::from_slice_with_context(slice, || {
             format!(
                 "File contained malformed .meta.json data: {}",
                 path.display()
@@ -131,7 +131,7 @@ pub struct DirectoryMetadata {
 
 impl DirectoryMetadata {
     pub fn from_slice(slice: &[u8], path: PathBuf) -> anyhow::Result<Self> {
-        let mut meta: Self = serde_json::from_slice(slice).with_context(|| {
+        let mut meta: Self = json::from_slice_with_context(slice, || {
             format!(
                 "File contained malformed init.meta.json data: {}",
                 path.display()
