@@ -11,7 +11,7 @@ use rbx_dom_weak::{Ustr, UstrMap};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use crate::{glob::Glob, resolution::UnresolvedValue, snapshot::SyncRule};
+use crate::{glob::Glob, json, resolution::UnresolvedValue, snapshot::SyncRule};
 
 static PROJECT_FILENAME: &str = "default.project.json";
 
@@ -214,8 +214,11 @@ impl Project {
         project_file_location: PathBuf,
         fallback_name: Option<&str>,
     ) -> Result<Self, Error> {
-        let mut project: Self = serde_json::from_slice(contents).map_err(|source| Error::Json {
-            source,
+        let mut project: Self = json::from_slice(contents).map_err(|e| Error::Json {
+            source: serde_json::Error::io(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                e.to_string(),
+            )),
             path: project_file_location.clone(),
         })?;
         project.file_location = project_file_location;
@@ -399,13 +402,13 @@ mod test {
 
     #[test]
     fn path_node_required() {
-        let path_node: PathNode = serde_json::from_str(r#""src""#).unwrap();
+        let path_node: PathNode = json::from_str(r#""src""#).unwrap();
         assert_eq!(path_node, PathNode::Required(PathBuf::from("src")));
     }
 
     #[test]
     fn path_node_optional() {
-        let path_node: PathNode = serde_json::from_str(r#"{ "optional": "src" }"#).unwrap();
+        let path_node: PathNode = json::from_str(r#"{ "optional": "src" }"#).unwrap();
         assert_eq!(
             path_node,
             PathNode::Optional(OptionalPathNode::new(PathBuf::from("src")))
@@ -414,7 +417,7 @@ mod test {
 
     #[test]
     fn project_node_required() {
-        let project_node: ProjectNode = serde_json::from_str(
+        let project_node: ProjectNode = json::from_str(
             r#"{
                 "$path": "src"
             }"#,
@@ -429,7 +432,7 @@ mod test {
 
     #[test]
     fn project_node_optional() {
-        let project_node: ProjectNode = serde_json::from_str(
+        let project_node: ProjectNode = json::from_str(
             r#"{
                 "$path": { "optional": "src" }
             }"#,
@@ -446,7 +449,7 @@ mod test {
 
     #[test]
     fn project_node_none() {
-        let project_node: ProjectNode = serde_json::from_str(
+        let project_node: ProjectNode = json::from_str(
             r#"{
                 "$className": "Folder"
             }"#,
@@ -458,7 +461,7 @@ mod test {
 
     #[test]
     fn project_node_optional_serialize_absolute() {
-        let project_node: ProjectNode = serde_json::from_str(
+        let project_node: ProjectNode = json::from_str(
             r#"{
                 "$path": { "optional": "..\\src" }
             }"#,
@@ -471,7 +474,7 @@ mod test {
 
     #[test]
     fn project_node_optional_serialize_absolute_no_change() {
-        let project_node: ProjectNode = serde_json::from_str(
+        let project_node: ProjectNode = json::from_str(
             r#"{
                 "$path": { "optional": "../src" }
             }"#,
@@ -484,7 +487,7 @@ mod test {
 
     #[test]
     fn project_node_optional_serialize_optional() {
-        let project_node: ProjectNode = serde_json::from_str(
+        let project_node: ProjectNode = json::from_str(
             r#"{
                 "$path": "..\\src"
             }"#,
@@ -493,5 +496,58 @@ mod test {
 
         let serialized = serde_json::to_string(&project_node).unwrap();
         assert_eq!(serialized, r#"{"$path":"../src"}"#);
+    }
+
+    #[test]
+    fn project_with_jsonc_features() {
+        // Test that JSONC features (comments and trailing commas) are properly handled
+        let project_json = r#"{
+            // This is a single-line comment
+            "name": "TestProject",
+            /* This is a
+               multi-line comment */
+            "tree": {
+                "$path": "src", // Comment after value
+            },
+            "servePort": 34567,
+            "emitLegacyScripts": false,
+            // Test glob parsing with comments
+            "globIgnorePaths": [
+                "**/*.spec.lua", // Ignore test files
+                "**/*.test.lua",
+            ],
+            "syncRules": [
+                {
+                    "pattern": "*.data.json",
+                    "use": "json", // Trailing comma in object
+                },
+                {
+                    "pattern": "*.module.lua",
+                    "use": "moduleScript",
+                }, // Trailing comma in array
+            ], // Another trailing comma
+        }"#;
+
+        let project = Project::load_from_slice(
+            project_json.as_bytes(),
+            PathBuf::from("/test/default.project.json"),
+            None,
+        )
+        .expect("Failed to parse project with JSONC features");
+
+        // Verify the parsed values
+        assert_eq!(project.name, Some("TestProject".to_string()));
+        assert_eq!(project.serve_port, Some(34567));
+        assert_eq!(project.emit_legacy_scripts, Some(false));
+
+        // Verify glob_ignore_paths were parsed correctly
+        assert_eq!(project.glob_ignore_paths.len(), 2);
+        assert!(project.glob_ignore_paths[0].is_match("test/foo.spec.lua"));
+        assert!(project.glob_ignore_paths[1].is_match("test/bar.test.lua"));
+
+        // Verify sync_rules were parsed correctly
+        assert_eq!(project.sync_rules.len(), 2);
+        assert!(project.sync_rules[0].include.is_match("data.data.json"));
+        assert!(project.sync_rules[1].include.is_match("init.module.lua"));
     }
 }

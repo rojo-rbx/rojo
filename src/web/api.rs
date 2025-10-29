@@ -17,6 +17,7 @@ use rbx_dom_weak::{
 };
 
 use crate::{
+    json,
     serve_session::ServeSession,
     snapshot::{InstanceWithMeta, PatchSet, PatchUpdate},
     web::{
@@ -139,7 +140,7 @@ impl ApiService {
 
         let body = body::to_bytes(request.into_body()).await.unwrap();
 
-        let request: WriteRequest = match serde_json::from_slice(&body) {
+        let request: WriteRequest = match json::from_slice(&body) {
             Ok(request) => request,
             Err(err) => {
                 return json(

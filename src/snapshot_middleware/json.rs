@@ -1,10 +1,10 @@
 use std::path::Path;
 
-use anyhow::Context;
 use memofs::{IoResultExt, Vfs};
 use rbx_dom_weak::ustr;
 
 use crate::{
+    json,
     lua_ast::{Expression, Statement},
     snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
 };
@@ -19,8 +19,9 @@ pub fn snapshot_json(
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let contents = vfs.read(path)?;
 
-    let value: serde_json::Value = serde_json::from_slice(&contents)
-        .with_context(|| format!("File contains malformed JSON: {}", path.display()))?;
+    let value = json::parse_value_from_slice_with_context(&contents, || {
+        format!("File contains malformed JSON: {}", path.display())
+    })?;
 
     let as_lua = json_to_lua(value).to_string();
 
