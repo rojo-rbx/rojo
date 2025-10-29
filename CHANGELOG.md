@@ -2,9 +2,11 @@
 
 ## Unreleased
 
-* Fixed a bug where the last sync timestamp was not updating correctly in the plugin ([#1132])
+* Fixed a bug where the last sync timestamp was not updating correctly in the plugin ([#1145])
 * Improved the reliability of sync replacements by adding better error handling and recovery ([#1135])
+* Added `sourcemap.json` into the defualt `.gitignore` files ([#1145])
 
+[#1145]: https://github.com/rojo-rbx/rojo/pull/1145
 [#1132]: https://github.com/rojo-rbx/rojo/pull/1132
 [#1135]: https://github.com/rojo-rbx/rojo/pull/1135
 
