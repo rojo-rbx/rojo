@@ -282,12 +282,13 @@ function ConnectedPage:startChangeInfoTextUpdater()
 			local updateInterval = 1
 
 			-- Update timestamp text as frequently as currently needed
-			for _, UnitData in ipairs(timeUtil.AGE_UNITS) do
-				local UnitSeconds = UnitData[1]
-				if elapsed > UnitSeconds then
-					updateInterval = UnitSeconds
-					break
+			for _, unit_seconds in timeUtil.AGE_UNITS do
+				if elapsed < unit_seconds then
+					continue
 				end
+
+				updateInterval = unit_seconds
+				break
 			end
 
 			task.wait(updateInterval)

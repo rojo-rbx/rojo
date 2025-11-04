@@ -1,3 +1,4 @@
+
 local base64 = require(script.Parent.base64)
 
 local function identity(...)
@@ -92,6 +93,7 @@ types = {
 		end,
 	},
 
+	-- TODO: use buffer here instead of strings, so the base64 encoding methods on EncodingService can be used instead
 	BinaryString = {
 		fromPod = base64.decode,
 		toPod = base64.encode,
