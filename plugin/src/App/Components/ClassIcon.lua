@@ -1,5 +1,11 @@
+
 local StudioService = game:GetService("StudioService")
 local AssetService = game:GetService("AssetService")
+
+type CachedImageInfo = {
+	pixels: buffer,
+	size: Vector2,
+}
 
 local Rojo = script:FindFirstAncestor("Rojo")
 local Plugin = Rojo.Plugin
@@ -11,44 +17,62 @@ local e = Roact.createElement
 
 local EditableImage = require(Plugin.App.Components.EditableImage)
 
-local imageCache = {}
-local function getImageSizeAndPixels(image)
-	if not imageCache[image] then
-		local editableImage = AssetService:CreateEditableImageAsync(image)
-		imageCache[image] = {
-			Size = editableImage.Size,
-			Pixels = editableImage:ReadPixels(Vector2.zero, editableImage.Size),
+local imageCache = {} :: { [string]: CachedImageInfo }
+
+local function getImageSizeAndPixels(image: string): (Vector2, buffer)
+	local cached_image = imageCache[image]
+
+	if not cached_image then
+		local editableImage = AssetService:CreateEditableImageAsync(Content.fromUri(image))
+		cached_image = {
+			size = editableImage.Size,
+			pixels = editableImage:ReadPixelsBuffer(Vector2.zero, editableImage.Size),
 		}
+		imageCache[image] = cached_image
 	end
 
-	return imageCache[image].Size, table.clone(imageCache[image].Pixels)
+	return cached_image.size, cached_image.pixels
 end
 
 local function getRecoloredClassIcon(className, color)
 	local iconProps = StudioService:GetClassIcon(className)
 
 	if iconProps and color then
-		local success, editableImageSize, editableImagePixels = pcall(function()
+		--stylua: ignore
+		local success, editableImageSize, editableImagePixels = pcall(@native function(iconProps: { [any]: any }, color: Color3): (Vector2, buffer)
 			local size, pixels = getImageSizeAndPixels(iconProps.Image)
+			local pixels_len = buffer.len(pixels)
 
 			local minVal, maxVal = math.huge, -math.huge
-			for i = 1, #pixels, 4 do
-				if pixels[i + 3] == 0 then
+
+			for i = 0, pixels_len, 4 do
+				if buffer.readu8(pixels, i + 3) == 0 then
 					continue
 				end
-				local pixelVal = math.max(pixels[i], pixels[i + 1], pixels[i + 2])
+				local pixelVal = math.max(
+					buffer.readu8(pixels, i),
+					buffer.readu8(pixels, i + 1),
+					buffer.readu8(pixels, i + 2)
+				)
 
 				minVal = math.min(minVal, pixelVal)
 				maxVal = math.max(maxVal, pixelVal)
 			end
 
 			local hue, sat, val = color:ToHSV()
-			for i = 1, #pixels, 4 do
-				if pixels[i + 3] == 0 then
+
+			for i = 0, pixels_len, 4 do
+				if buffer.readu8(pixels, i + 3) == 0 then
 					continue
 				end
+				local g_index = i + 1
+				local b_index = i + 2
 
-				local pixelVal = math.max(pixels[i], pixels[i + 1], pixels[i + 2])
+				local pixelVal = math.max(
+					buffer.readu8(pixels, i),
+					buffer.readu8(pixels, g_index),
+					buffer.readu8(pixels, b_index)
+				)
 				local newVal = val
 				if minVal < maxVal then
 					-- Remap minVal - maxVal to val*0.9 - val
@@ -56,10 +80,12 @@ local function getRecoloredClassIcon(className, color)
 				end
 
 				local newPixelColor = Color3.fromHSV(hue, sat, newVal)
-				pixels[i], pixels[i + 1], pixels[i + 2] = newPixelColor.R, newPixelColor.G, newPixelColor.B
+				buffer.writeu8(pixels, i, newPixelColor.R)
+				buffer.writeu8(pixels, g_index, newPixelColor.G)
+				buffer.writeu8(pixels, b_index, newPixelColor.B)
 			end
 			return size, pixels
-		end)
+		end, iconProps, color)
 		if success then
 			iconProps.EditableImagePixels = editableImagePixels
 			iconProps.EditableImageSize = editableImageSize
