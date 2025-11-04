@@ -19,19 +19,33 @@ local EditableImage = require(Plugin.App.Components.EditableImage)
 
 local imageCache = {} :: { [string]: CachedImageInfo }
 
+@native
+local function clone_buffer(b: buffer): buffer
+	local new_buffer = buffer.create(buffer.len(b))
+	buffer.copy(new_buffer, 0, b)
+	return new_buffer
+end
+
 local function getImageSizeAndPixels(image: string): (Vector2, buffer)
 	local cached_image = imageCache[image]
 
 	if not cached_image then
 		local editableImage = AssetService:CreateEditableImageAsync(Content.fromUri(image))
+		local size = editableImage.Size
+		local pixels = editableImage:ReadPixelsBuffer(Vector2.zero, size)
 		cached_image = {
 			size = editableImage.Size,
 			pixels = editableImage:ReadPixelsBuffer(Vector2.zero, editableImage.Size),
 		}
-		imageCache[image] = cached_image
+		imageCache[image] = {
+			pixels = pixels,
+			size = size,
+		}
+
+		return size, clone_buffer(pixels)
 	end
 
-	return cached_image.size, cached_image.pixels
+	return cached_image.size, clone_buffer(cached_image.pixels)
 end
 
 local function getRecoloredClassIcon(className, color)
