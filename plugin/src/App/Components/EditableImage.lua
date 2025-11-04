@@ -12,15 +12,17 @@ function EditableImage:init()
 end
 
 function EditableImage:writePixels()
-	local image = self.ref.current
+	local image = self.ref.current :: EditableImage
+	local props = self.props
+
 	if not image then
 		return
 	end
-	if not self.props.pixels then
+	if not props.pixels then
 		return
 	end
 
-	image:WritePixels(Vector2.zero, self.props.size, self.props.pixels)
+	image:WritePixelsBuffer(Vector2.zero, props.size, props.pixels)
 end
 
 function EditableImage:render()
