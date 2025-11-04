@@ -33,10 +33,6 @@ local function getImageSizeAndPixels(image: string): (Vector2, buffer)
 		local editableImage = AssetService:CreateEditableImageAsync(Content.fromUri(image))
 		local size = editableImage.Size
 		local pixels = editableImage:ReadPixelsBuffer(Vector2.zero, size)
-		cached_image = {
-			size = editableImage.Size,
-			pixels = editableImage:ReadPixelsBuffer(Vector2.zero, editableImage.Size),
-		}
 		imageCache[image] = {
 			pixels = pixels,
 			size = size,
