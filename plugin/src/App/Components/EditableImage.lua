@@ -21,7 +21,7 @@ function EditableImage:writePixels()
 		return
 	end
 
-	image:WritePixelsBuffer(Vector2.zero, props.size, self.props.pixels)
+	image:WritePixelsBuffer(Vector2.zero, self.props.size, self.props.pixels)
 end
 
 function EditableImage:render()
