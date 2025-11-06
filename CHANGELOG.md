@@ -33,11 +33,13 @@ Making a new release? Simply add the new header with the version and date undern
 
 * Fixed a bug where the last sync timestamp was not updating correctly in the plugin ([#1132])
 * Improved the reliability of sync replacements by adding better error handling and recovery ([#1135])
+* Small improvements to stability when syncing massive projects ([#1140])
 * Added support for JSON comments and trailing commas in project, meta, and model json files ([#1144])
 * Added `sourcemap.json` into the default `.gitignore` files ([#1145])
 
 [#1132]: https://github.com/rojo-rbx/rojo/pull/1132
 [#1135]: https://github.com/rojo-rbx/rojo/pull/1135
+[#1140]: https://github.com/rojo-rbx/rojo/pull/1140
 [#1144]: https://github.com/rojo-rbx/rojo/pull/1144
 [#1145]: https://github.com/rojo-rbx/rojo/pull/1145
 
