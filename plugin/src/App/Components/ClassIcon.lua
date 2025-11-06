@@ -17,19 +17,18 @@ local e = Roact.createElement
 
 local EditableImage = require(Plugin.App.Components.EditableImage)
 
-local imageCache = {} :: { [string]: CachedImageInfo }
+local imageCache: { [string]: CachedImageInfo } = {}
 
-@native
-local function clone_buffer(b: buffer): buffer
-	local new_buffer = buffer.create(buffer.len(b))
-	buffer.copy(new_buffer, 0, b)
-	return new_buffer
+local function cloneBuffer(b: buffer): buffer
+	local newBuffer = buffer.create(buffer.len(b))
+	buffer.copy(newBuffer, 0, b)
+	return newBuffer
 end
 
 local function getImageSizeAndPixels(image: string): (Vector2, buffer)
-	local cached_image = imageCache[image]
+	local cachedImage = imageCache[image]
 
-	if not cached_image then
+	if not cachedImage then
 		local editableImage = AssetService:CreateEditableImageAsync(Content.fromUri(image))
 		local size = editableImage.Size
 		local pixels = editableImage:ReadPixelsBuffer(Vector2.zero, size)
@@ -38,10 +37,10 @@ local function getImageSizeAndPixels(image: string): (Vector2, buffer)
 			size = size,
 		}
 
-		return size, clone_buffer(pixels)
+		return size, cloneBuffer(pixels)
 	end
 
-	return cached_image.size, clone_buffer(cached_image.pixels)
+	return cachedImage.size, cloneBuffer(cachedImage.pixels)
 end
 
 local function getRecoloredClassIcon(className, color)
@@ -49,13 +48,13 @@ local function getRecoloredClassIcon(className, color)
 
 	if iconProps and color then
 		--stylua: ignore
-		local success, editableImageSize, editableImagePixels = pcall(@native function(iconProps: { [any]: any }, color: Color3): (Vector2, buffer)
+		local success, editableImageSize, editableImagePixels = pcall(function(iconProps: { [any]: any }, color: Color3): (Vector2, buffer)
 			local size, pixels = getImageSizeAndPixels(iconProps.Image)
-			local pixels_len = buffer.len(pixels)
+			local pixelsLen = buffer.len(pixels)
 
 			local minVal, maxVal = math.huge, -math.huge
 
-			for i = 0, pixels_len, 4 do
+			for i = 0, pixelsLen, 4 do
 				if buffer.readu8(pixels, i + 3) == 0 then
 					continue
 				end
@@ -71,7 +70,7 @@ local function getRecoloredClassIcon(className, color)
 
 			local hue, sat, val = color:ToHSV()
 
-			for i = 0, pixels_len, 4 do
+			for i = 0, pixelsLen, 4 do
 				if buffer.readu8(pixels, i + 3) == 0 then
 					continue
 				end
