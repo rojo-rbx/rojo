@@ -16,3 +16,6 @@
 [submodule "plugin/Packages/Highlighter"]
 	path = plugin/Packages/Highlighter
 	url = https://github.com/boatbomber/highlighter.git
+[submodule ".lune/opencloud-execute"]
+	path = .lune/opencloud-execute
+	url = https://github.com/Dekkonot/opencloud-luau-execute-lune.git
