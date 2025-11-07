@@ -31,6 +31,10 @@ Making a new release? Simply add the new header with the version and date undern
 
 ## Unreleased
 
+* Added headless API for Studio companion plugins. ([#639])
+
+[#639]: https://github.com/rojo-rbx/rojo/pull/639
+
 ## [7.6.1] (November 6th, 2025)
 
 * Fixed a bug where the last sync timestamp was not updating correctly in the plugin ([#1132])
