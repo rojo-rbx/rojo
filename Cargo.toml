@@ -58,7 +58,7 @@ memofs = { version = "0.3.0", path = "crates/memofs" }
 rbx_binary = "2.0.0"
 rbx_dom_weak = "4.0.0"
 rbx_reflection = "6.0.0"
-rbx_reflection_database = "2.0.0"
+rbx_reflection_database = "2.0.1"
 rbx_xml = "2.0.0"
 
 anyhow = "1.0.80"
