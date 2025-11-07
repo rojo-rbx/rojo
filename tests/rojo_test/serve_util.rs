@@ -8,11 +8,14 @@ use std::{
     time::Duration,
 };
 
+use hyper_tungstenite::tungstenite::{connect, Message};
 use rbx_dom_weak::types::Ref;
 
 use tempfile::{tempdir, TempDir};
 
-use librojo::web_api::{ReadResponse, SerializeResponse, ServerInfoResponse, SubscribeResponse};
+use librojo::web_api::{
+    ReadResponse, SerializeResponse, ServerInfoResponse, SocketPacket, SocketPacketType,
+};
 use rojo_insta_ext::RedactionMap;
 
 use crate::rojo_test::io_util::{
@@ -173,13 +176,54 @@ impl TestServeSession {
         Ok(serde_json::from_value(value).expect("Server returned malformed response"))
     }
 
-    pub fn get_api_subscribe(
+    pub fn get_api_socket_packet(
         &self,
+        packet_type: SocketPacketType,
         cursor: u32,
-    ) -> Result<SubscribeResponse<'static>, reqwest::Error> {
-        let url = format!("http://localhost:{}/api/subscribe/{}", self.port, cursor);
+    ) -> Result<SocketPacket<'static>, Box<dyn std::error::Error>> {
+        let url = format!("ws://localhost:{}/api/socket/{}", self.port, cursor);
 
-        reqwest::blocking::get(url)?.json()
+        let (mut socket, _response) = connect(url)?;
+
+        // Wait for messages with a timeout
+        let timeout = Duration::from_secs(10);
+        let start = std::time::Instant::now();
+
+        loop {
+            if start.elapsed() > timeout {
+                return Err("Timeout waiting for packet from WebSocket".into());
+            }
+
+            match socket.read() {
+                Ok(Message::Text(text)) => {
+                    let packet: SocketPacket = serde_json::from_str(&text)?;
+                    if packet.packet_type != packet_type {
+                        continue;
+                    }
+
+                    // Close the WebSocket connection now that we got what we were waiting for
+                    let _ = socket.close(None);
+                    return Ok(packet);
+                }
+                Ok(Message::Close(_)) => {
+                    return Err("WebSocket closed before receiving messages".into());
+                }
+                Ok(_) => {
+                    // Ignore other message types (ping, pong, binary)
+                    continue;
+                }
+                Err(hyper_tungstenite::tungstenite::Error::Io(e))
+                    if e.kind() == std::io::ErrorKind::WouldBlock =>
+                {
+                    // No data available yet, sleep a bit and try again
+                    thread::sleep(Duration::from_millis(100));
+                    continue;
+                }
+                Err(e) => {
+                    return Err(e.into());
+                }
+            }
+        }
     }
 
     pub fn get_api_serialize(&self, ids: &[Ref]) -> Result<SerializeResponse, reqwest::Error> {

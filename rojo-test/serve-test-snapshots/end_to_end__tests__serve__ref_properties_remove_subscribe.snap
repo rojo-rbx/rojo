@@ -1,12 +1,13 @@
 ---
 source: tests/tests/serve.rs
-expression: "subscribe_response.intern_and_redact(&mut redactions, ())"
+expression: "socket_packet.intern_and_redact(&mut redactions, ())"
 ---
-messageCursor: 1
-messages:
-  - added: {}
-    removed:
-      - id-4
-    updated: []
+body:
+  messageCursor: 1
+  messages:
+    - added: {}
+      removed:
+        - id-4
+      updated: []
+packetType: messages
 sessionId: id-1
-

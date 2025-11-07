@@ -3,7 +3,9 @@ use std::collections::HashMap;
 use rbx_dom_weak::types::Ref;
 use serde::Serialize;
 
-use librojo::web_api::{Instance, InstanceUpdate, ReadResponse, SubscribeResponse};
+use librojo::web_api::{
+    Instance, InstanceUpdate, MessagesPacket, ReadResponse, SocketPacket, SocketPacketBody,
+};
 use rojo_insta_ext::RedactionMap;
 
 /// A convenience method to store all of the redactable data from a piece of
@@ -54,7 +56,16 @@ impl<'a> Internable<&'a HashMap<Ref, Instance<'_>>> for Instance<'a> {
     }
 }
 
-impl Internable<()> for SubscribeResponse<'_> {
+impl Internable<()> for SocketPacket<'_> {
+    fn intern(&self, redactions: &mut RedactionMap, extra: ()) {
+        redactions.intern(&self.session_id);
+        match &self.body {
+            SocketPacketBody::Messages(packet) => packet.intern(redactions, extra),
+        }
+    }
+}
+
+impl Internable<()> for MessagesPacket<'_> {
     fn intern(&self, redactions: &mut RedactionMap, _extra: ()) {
         for message in &self.messages {
             intern_instance_updates(redactions, &message.updated);

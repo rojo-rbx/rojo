@@ -31,6 +31,10 @@ Making a new release? Simply add the new header with the version and date undern
 
 ## Unreleased
 
+* Rebuilt the internal communication between the server and plugin to use [websockets](https://devforum.roblox.com/t/websockets-support-in-studio-is-now-available/4021932/1) instead of [long polling](https://en.wikipedia.org/wiki/Push_technology#Long_polling) ([#1142])
+
+[#1142]: https://github.com/rojo-rbx/rojo/pull/1142
+
 ## [7.6.1] (November 6th, 2025)
 
 * Fixed a bug where the last sync timestamp was not updating correctly in the plugin ([#1132])
