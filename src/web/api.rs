@@ -11,8 +11,7 @@ use std::{
 
 use futures::{sink::SinkExt, stream::StreamExt};
 use hyper::{body, Body, Method, Request, Response, StatusCode};
-use hyper_tungstenite::tungstenite::Message;
-use hyper_tungstenite::{is_upgrade_request, upgrade, HyperWebsocket};
+use hyper_tungstenite::{is_upgrade_request, tungstenite::Message, upgrade, HyperWebsocket};
 use opener::OpenError;
 use rbx_dom_weak::{
     types::{Ref, Variant},
@@ -453,7 +452,7 @@ async fn handle_websocket_subscription(
     serve_session: Arc<ServeSession>,
     websocket: HyperWebsocket,
     input_cursor: u32,
-) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+) -> anyhow::Result<()> {
     let mut websocket = websocket.await?;
 
     let session_id = serve_session.session_id();
