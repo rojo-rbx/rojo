@@ -60,7 +60,7 @@ return {
 				local existing = instance:GetAttributes()
 				local didAllWritesSucceed = true
 
-				for attributeName, attributeValue in value do
+				for attributeName, attributeValue in pairs(value) do
 					if isAttributeNameReserved(attributeName) then
 						-- If the attribute name is reserved, then we don't
 						-- really care about reporting any failures about
@@ -76,7 +76,7 @@ return {
 					instance:SetAttribute(attributeName, attributeValue)
 				end
 
-				for existingAttributeName in existing) do
+				for existingAttributeName in pairs(existing) do
 					if isAttributeNameReserved(existingAttributeName) then
 						continue
 					end
@@ -102,16 +102,16 @@ return {
 				local existingTags = CollectionService:GetTags(instance)
 
 				local unseenTags = {}
-				for _, tag in existingTags do
+				for _, tag in ipairs(existingTags) do
 					unseenTags[tag] = true
 				end
 
-				for _, tag in value do
+				for _, tag in ipairs(value) do
 					unseenTags[tag] = nil
 					CollectionService:AddTag(instance, tag)
 				end
 
-				for tag in unseenTags do
+				for tag in pairs(unseenTags) do
 					CollectionService:RemoveTag(instance, tag)
 				end
 
