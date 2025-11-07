@@ -15,7 +15,7 @@ local encodePatchUpdate = require(script.Parent.encodePatchUpdate)
 return function(instanceMap, propertyChanges)
 	local patch = PatchSet.newEmpty()
 
-	for instance, properties in pairs(propertyChanges) do
+	for instance, properties in propertyChanges do
 		local instanceId = instanceMap.fromInstances[instance]
 
 		if instanceId == nil then

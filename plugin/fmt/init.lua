@@ -25,7 +25,7 @@
 local function defaultTableDebug(buffer, input)
 	buffer:writeRaw("{")
 
-	for key, value in pairs(input) do
+	for key, value in input do
 		buffer:write("[{:?}] = {:?}", key, value)
 
 		if next(input, key) ~= nil then
@@ -50,7 +50,7 @@ local function defaultTableDebugExtended(buffer, input)
 	buffer:writeLineRaw("{")
 	buffer:indent()
 
-	for key, value in pairs(input) do
+	for key, value in input do
 		buffer:writeLine("[{:?}] = {:#?},", key, value)
 	end
 
