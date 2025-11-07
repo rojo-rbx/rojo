@@ -47,8 +47,8 @@ local function getRecoloredClassIcon(className, color)
 
 	if iconProps and color then
 		--stylua: ignore
-		local success, editableImageSize, editableImagePixels = pcall(function(iconProps: { [any]: any }, color: Color3): (Vector2, buffer)
-			local size, pixels = getImageSizeAndPixels(iconProps.Image)
+		local success, editableImageSize, editableImagePixels = pcall(function(_iconProps: { [any]: any }, _color: Color3): (Vector2, buffer)
+			local size, pixels = getImageSizeAndPixels(_iconProps.Image)
 			local pixelsLen = buffer.len(pixels)
 
 			local minVal, maxVal = math.huge, -math.huge
@@ -67,19 +67,19 @@ local function getRecoloredClassIcon(className, color)
 				maxVal = math.max(maxVal, pixelVal)
 			end
 
-			local hue, sat, val = color:ToHSV()
+			local hue, sat, val = _color:ToHSV()
 
 			for i = 0, pixelsLen, 4 do
 				if buffer.readu8(pixels, i + 3) == 0 then
 					continue
 				end
-				local g_index = i + 1
-				local b_index = i + 2
+				local gIndex = i + 1
+				local bIndex = i + 2
 
 				local pixelVal = math.max(
 					buffer.readu8(pixels, i),
-					buffer.readu8(pixels, g_index),
-					buffer.readu8(pixels, b_index)
+					buffer.readu8(pixels, gIndex),
+					buffer.readu8(pixels, bIndex)
 				)
 				local newVal = val
 				if minVal < maxVal then
@@ -89,8 +89,8 @@ local function getRecoloredClassIcon(className, color)
 
 				local newPixelColor = Color3.fromHSV(hue, sat, newVal)
 				buffer.writeu8(pixels, i, newPixelColor.R)
-				buffer.writeu8(pixels, g_index, newPixelColor.G)
-				buffer.writeu8(pixels, b_index, newPixelColor.B)
+				buffer.writeu8(pixels, gIndex, newPixelColor.G)
+				buffer.writeu8(pixels, bIndex, newPixelColor.B)
 			end
 			return size, pixels
 		end, iconProps, color)
