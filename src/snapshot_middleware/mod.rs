@@ -28,8 +28,8 @@ use anyhow::Context;
 use memofs::{IoResultExt, Vfs};
 use serde::{Deserialize, Serialize};
 
-use crate::glob::Glob;
 use crate::snapshot::{InstanceContext, InstanceSnapshot, SyncRule};
+use crate::{glob::Glob, project::DEFAULT_PROJECT_NAMES};
 
 use self::{
     csv::{snapshot_csv, snapshot_csv_init},
@@ -122,9 +122,11 @@ pub fn snapshot_from_vfs(
 fn get_init_path<P: AsRef<Path>>(vfs: &Vfs, dir: P) -> anyhow::Result<Option<PathBuf>> {
     let path = dir.as_ref();
 
-    let project_path = path.join("default.project.json");
-    if vfs.metadata(&project_path).with_not_found()?.is_some() {
-        return Ok(Some(project_path));
+    for default_project_name in DEFAULT_PROJECT_NAMES {
+        let project_path = path.join(default_project_name);
+        if vfs.metadata(&project_path).with_not_found()?.is_some() {
+            return Ok(Some(project_path));
+        }
     }
 
     let init_path = path.join("init.luau");
@@ -312,7 +314,9 @@ pub fn default_sync_rules() -> &'static [SyncRule] {
             sync_rule!("*.plugin.luau", PluginScript, ".plugin.luau"),
             sync_rule!("*.{lua,luau}", ModuleScript),
             sync_rule!("*.project.json", Project, ".project.json"),
+            sync_rule!("*.project.jsonc", Project, ".project.jsonc"),
             sync_rule!("*.model.json", JsonModel, ".model.json"),
+            sync_rule!("*.model.jsonc", JsonModel, ".model.jsonc"),
             sync_rule!("*.json", Json, ".json", "*.meta.json"),
             sync_rule!("*.toml", Toml),
             sync_rule!("*.csv", Csv),
