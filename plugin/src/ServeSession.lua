@@ -107,6 +107,7 @@ function ServeSession.new(options)
 		__connections = connections,
 		__precommitCallbacks = {},
 		__postcommitCallbacks = {},
+		__updateLoadingText = function() end,
 	}
 
 	setmetatable(self, ServeSession)
@@ -135,6 +136,14 @@ end
 
 function ServeSession:setConfirmCallback(callback)
 	self.__userConfirmCallback = callback
+end
+
+function ServeSession:setUpdateLoadingTextCallback(callback)
+	self.__updateLoadingText = callback
+end
+
+function ServeSession:setLoadingText(text: string)
+	self.__updateLoadingText(text)
 end
 
 --[=[
@@ -181,11 +190,14 @@ end
 
 function ServeSession:start()
 	self:__setStatus(Status.Connecting)
+	self:setLoadingText("Connecting to server...")
 
 	self.__apiContext
 		:connect()
 		:andThen(function(serverInfo)
+			self:setLoadingText("Loading initial data from server...")
 			return self:__initialSync(serverInfo):andThen(function()
+				self:setLoadingText("Starting sync loop...")
 				self:__setStatus(Status.Connected, serverInfo.projectName)
 				self:__applyGameAndPlaceId(serverInfo)
 
@@ -462,11 +474,13 @@ function ServeSession:__initialSync(serverInfo)
 		-- For any instances that line up with the Rojo server's view, start
 		-- tracking them in the reconciler.
 		Log.trace("Matching existing Roblox instances to Rojo IDs")
+		self:setLoadingText("Hydrating instance map...")
 		self.__reconciler:hydrate(readResponseBody.instances, serverInfo.rootInstanceId, game)
 
 		-- Calculate the initial patch to apply to the DataModel to catch us
 		-- up to what Rojo thinks the place should look like.
 		Log.trace("Computing changes that plugin needs to make to catch up to server...")
+		self:setLoadingText("Finding differences between server and Studio...")
 		local success, catchUpPatch =
 			self.__reconciler:diff(readResponseBody.instances, serverInfo.rootInstanceId, game)
 

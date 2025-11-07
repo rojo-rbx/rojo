@@ -31,15 +31,22 @@ Making a new release? Simply add the new header with the version and date undern
 
 ## Unreleased
 
+* Rebuilt the internal communication between the server and plugin to use [websockets](https://devforum.roblox.com/t/websockets-support-in-studio-is-now-available/4021932/1) instead of [long polling](https://en.wikipedia.org/wiki/Push_technology#Long_polling) ([#1142])
+
+[#1142]: https://github.com/rojo-rbx/rojo/pull/1142
+
+## [7.6.1] (November 6th, 2025)
+
 * Fixed a bug where the last sync timestamp was not updating correctly in the plugin ([#1132])
 * Improved the reliability of sync replacements by adding better error handling and recovery ([#1135])
-* Rebuilt the internal communication between the server and plugin to use [websockets](https://devforum.roblox.com/t/websockets-support-in-studio-is-now-available/4021932/1) instead of [long polling](https://en.wikipedia.org/wiki/Push_technology#Long_polling) ([#1142])
+* Small improvements to stability when syncing massive projects ([#1140])
 * Added support for JSON comments and trailing commas in project, meta, and model json files ([#1144])
 * Added `sourcemap.json` into the default `.gitignore` files ([#1145])
 
+[7.6.1]: https://github.com/rojo-rbx/rojo/releases/tag/v7.6.1
 [#1132]: https://github.com/rojo-rbx/rojo/pull/1132
 [#1135]: https://github.com/rojo-rbx/rojo/pull/1135
-[#1142]: https://github.com/rojo-rbx/rojo/pull/1142
+[#1140]: https://github.com/rojo-rbx/rojo/pull/1140
 [#1144]: https://github.com/rojo-rbx/rojo/pull/1144
 [#1145]: https://github.com/rojo-rbx/rojo/pull/1145
 
