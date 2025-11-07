@@ -31,6 +31,10 @@ Making a new release? Simply add the new header with the version and date undern
 
 ## Unreleased
 
+* Fixed bugs and improved performance & UX for the script diff viewer ([#994])
+
+[#994]: https://github.com/rojo-rbx/rojo/pull/994
+
 ## [7.6.1] (November 6th, 2025)
 
 * Fixed a bug where the last sync timestamp was not updating correctly in the plugin ([#1132])

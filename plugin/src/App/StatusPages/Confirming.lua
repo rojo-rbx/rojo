@@ -23,8 +23,8 @@ function ConfirmingPage:init()
 
 	self:setState({
 		showingStringDiff = false,
-		oldString = "",
-		newString = "",
+		currentString = "",
+		incomingString = "",
 		showingTableDiff = false,
 		oldTable = {},
 		newTable = {},
@@ -56,11 +56,11 @@ function ConfirmingPage:render()
 
 				patchTree = self.props.patchTree,
 
-				showStringDiff = function(oldString: string, newString: string)
+				showStringDiff = function(currentString: string, incomingString: string)
 					self:setState({
 						showingStringDiff = true,
-						oldString = oldString,
-						newString = newString,
+						currentString = currentString,
+						incomingString = incomingString,
 					})
 				end,
 				showTableDiff = function(oldTable: { [any]: any? }, newTable: { [any]: any? })
@@ -167,8 +167,8 @@ function ConfirmingPage:render()
 							anchorPoint = Vector2.new(0, 0),
 							transparency = self.props.transparency,
 
-							oldString = self.state.oldString,
-							newString = self.state.newString,
+							currentString = self.state.currentString,
+							incomingString = self.state.incomingString,
 						}),
 					}),
 				}),
