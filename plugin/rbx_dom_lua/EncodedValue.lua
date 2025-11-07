@@ -31,7 +31,7 @@ types = {
 		fromPod = function(pod)
 			local output = {}
 
-			for key, value in pairs(pod) do
+			for key, value in pod do
 				local ok, result = EncodedValue.decode(value)
 
 				if ok then
@@ -50,7 +50,7 @@ types = {
 		toPod = function(roblox)
 			local output = {}
 
-			for key, value in pairs(roblox) do
+			for key, value in roblox do
 				local ok, result = EncodedValue.encodeNaive(value)
 
 				if ok then
