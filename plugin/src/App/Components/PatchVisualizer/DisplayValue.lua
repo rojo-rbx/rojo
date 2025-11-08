@@ -29,7 +29,10 @@ local function DisplayValue(props)
 			text = string.format("{%s, %s}, {%s, %s}", fmtNum(x.Scale), fmtNum(x.Offset), fmtNum(y.Scale), fmtNum(y.Offset))
 		elseif t == "CFrame" then
 			local p = props.value.Position
-			text = string.format("(%s, %s, %s)", fmtNum(p.X), fmtNum(p.Y), fmtNum(p.Z))
+			local rx, ry, rz = props.value:ToOrientation()
+		text = string.format("(%s, %s, %s), (%s°, %s°, %s°)",
+			fmtNum(p.X), fmtNum(p.Y), fmtNum(p.Z),
+			fmtNum(math.deg(rx)), fmtNum(math.deg(ry)), fmtNum(math.deg(rz)))
 		elseif t == "NumberRange" then
 			text = string.format("[%s, %s]", fmtNum(props.value.Min), fmtNum(props.value.Max))
 		end
