@@ -1,6 +1,10 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 
 use anyhow::{format_err, Context};
+use memofs::{IoResultExt as _, Vfs};
 use rbx_dom_weak::{types::Attributes, Ustr, UstrMap};
 use serde::{Deserialize, Serialize};
 
@@ -33,6 +37,37 @@ pub struct AdjacentMetadata {
 }
 
 impl AdjacentMetadata {
+    /// Attempts to read a meta file for the provided path and name, and if
+    /// one exists applies it.
+    ///
+    /// Also inserts the potential metadata paths into the snapshot's relevant
+    /// paths for convenience purposes.
+    pub fn read_and_apply_all(
+        vfs: &Vfs,
+        path: &Path,
+        name: &str,
+        snapshot: &mut InstanceSnapshot,
+    ) -> anyhow::Result<()> {
+        let meta_path_json = path.with_file_name(format!("{name}.meta.json"));
+        let meta_path_jsonc = path.with_file_name(format!("{name}.meta.jsonc"));
+
+        if let Some(meta_contents) = vfs.read(&meta_path_json).with_not_found()? {
+            let mut metadata = Self::from_slice(&meta_contents, meta_path_json.clone())?;
+            metadata.apply_all(snapshot)?;
+        }
+
+        if let Some(meta_contents) = vfs.read(&meta_path_jsonc).with_not_found()? {
+            let mut metadata = Self::from_slice(&meta_contents, meta_path_json.clone())?;
+            metadata.apply_all(snapshot)?;
+        }
+
+        // Rather than pushing these in the snapshot middleware, we can just do it here.
+        snapshot.metadata.relevant_paths.push(meta_path_json);
+        snapshot.metadata.relevant_paths.push(meta_path_jsonc);
+
+        Ok(())
+    }
+
     pub fn from_slice(slice: &[u8], path: PathBuf) -> anyhow::Result<Self> {
         let mut meta: Self = json::from_slice_with_context(slice, || {
             format!(
