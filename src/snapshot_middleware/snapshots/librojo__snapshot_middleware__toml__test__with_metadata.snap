@@ -10,6 +10,7 @@ metadata:
   relevant_paths:
     - foo.toml
     - foo.meta.json
+    - foo.meta.jsonc
   context:
     emit_legacy_scripts: true
   specified_id: manually specified
