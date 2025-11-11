@@ -231,4 +231,40 @@ value: 9007199254740993
         .unwrap()
         .unwrap();
     }
+
+    #[test]
+    fn with_metadata() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
+            "foo.yaml",
+            VfsSnapshot::file(
+                r#"
+                value: 1234
+            "#,
+            ),
+        )
+        .unwrap();
+        imfs.load_snapshot(
+            "foo.meta.json",
+            VfsSnapshot::file(
+                r#"{
+                    "id": "manually specified",
+                }"#,
+            ),
+        )
+        .unwrap();
+
+        let vfs = Vfs::new(imfs.clone());
+
+        let instance_snapshot = snapshot_yaml(
+            &InstanceContext::default(),
+            &vfs,
+            Path::new("foo.yaml"),
+            "foo",
+        )
+        .unwrap()
+        .unwrap();
+
+        insta::assert_yaml_snapshot!(instance_snapshot);
+    }
 }

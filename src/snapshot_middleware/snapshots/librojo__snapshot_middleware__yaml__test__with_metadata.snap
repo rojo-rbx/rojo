@@ -1,0 +1,21 @@
+---
+source: src/snapshot_middleware/yaml.rs
+expression: instance_snapshot
+---
+snapshot_id: "00000000000000000000000000000000"
+metadata:
+  ignore_unknown_instances: false
+  instigating_source:
+    Path: foo.yaml
+  relevant_paths:
+    - foo.yaml
+    - foo.meta.json
+  context:
+    emit_legacy_scripts: true
+  specified_id: manually specified
+name: foo
+class_name: ModuleScript
+properties:
+  Source:
+    String: "return {\n\tvalue = 1234,\n}"
+children: []

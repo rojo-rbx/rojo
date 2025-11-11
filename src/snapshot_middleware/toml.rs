@@ -117,4 +117,42 @@ mod test {
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }
+
+    #[test]
+    fn with_metadata() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
+            "foo.toml",
+            VfsSnapshot::file(
+                r#"
+                  array = [1, 2, 3]
+                  int = 123
+                  bool = false
+                "#,
+            ),
+        )
+        .unwrap();
+        imfs.load_snapshot(
+            "foo.meta.json",
+            VfsSnapshot::file(
+                r#"{
+                    "id": "manually specified"
+                }"#,
+            ),
+        )
+        .unwrap();
+
+        let vfs = Vfs::new(imfs.clone());
+
+        let instance_snapshot = snapshot_toml(
+            &InstanceContext::default(),
+            &vfs,
+            Path::new("foo.toml"),
+            "foo",
+        )
+        .unwrap()
+        .unwrap();
+
+        insta::assert_yaml_snapshot!(instance_snapshot);
+    }
 }

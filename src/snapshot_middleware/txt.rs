@@ -62,4 +62,32 @@ mod test {
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }
+
+    #[test]
+    fn with_metadata() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot("/foo.txt", VfsSnapshot::file("Hello there!"))
+            .unwrap();
+        imfs.load_snapshot(
+            "/foo.meta.json",
+            VfsSnapshot::file(
+                r#"{
+                    "id": "manually specified"
+                }"#,
+            ),
+        )
+        .unwrap();
+        let vfs = Vfs::new(imfs.clone());
+
+        let instance_snapshot = snapshot_txt(
+            &InstanceContext::default(),
+            &vfs,
+            Path::new("/foo.txt"),
+            "foo",
+        )
+        .unwrap()
+        .unwrap();
+
+        insta::assert_yaml_snapshot!(instance_snapshot);
+    }
 }
