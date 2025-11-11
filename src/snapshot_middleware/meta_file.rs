@@ -165,6 +165,31 @@ pub struct DirectoryMetadata {
 }
 
 impl DirectoryMetadata {
+    pub fn read_and_apply_all(
+        vfs: &Vfs,
+        path: &Path,
+        snapshot: &mut InstanceSnapshot,
+    ) -> anyhow::Result<()> {
+        let meta_path_json = path.join("init.meta.json");
+        let meta_path_jsonc = path.join("init.meta.jsonc");
+
+        if let Some(meta_contents) = vfs.read(&meta_path_json).with_not_found()? {
+            let mut metadata = Self::from_slice(&meta_contents, meta_path_json.clone())?;
+            metadata.apply_all(snapshot)?;
+        }
+
+        if let Some(meta_contents) = vfs.read(&meta_path_jsonc).with_not_found()? {
+            let mut metadata = Self::from_slice(&meta_contents, meta_path_jsonc.clone())?;
+            metadata.apply_all(snapshot)?;
+        }
+
+        // Rather than pushing these in the snapshot middleware, we can just do it here.
+        snapshot.metadata.relevant_paths.push(meta_path_json);
+        snapshot.metadata.relevant_paths.push(meta_path_jsonc);
+
+        Ok(())
+    }
+
     pub fn from_slice(slice: &[u8], path: PathBuf) -> anyhow::Result<Self> {
         let mut meta: Self = json::from_slice_with_context(slice, || {
             format!(
@@ -285,6 +310,42 @@ mod test {
         let mut snapshot = InstanceSnapshot::new();
 
         AdjacentMetadata::read_and_apply_all(&vfs, path, "bar", &mut snapshot).unwrap();
+
+        insta::assert_yaml_snapshot!(snapshot);
+    }
+
+    #[test]
+    fn directory_read_json() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
+            "/foo/init.meta.json",
+            VfsSnapshot::file(r#"{"id": "manually specified"}"#),
+        )
+        .unwrap();
+
+        let vfs = Vfs::new(imfs);
+        let path = Path::new("/foo/");
+        let mut snapshot = InstanceSnapshot::new();
+
+        DirectoryMetadata::read_and_apply_all(&vfs, path, &mut snapshot).unwrap();
+
+        insta::assert_yaml_snapshot!(snapshot);
+    }
+
+    #[test]
+    fn directory_read_jsonc() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
+            "/foo/init.meta.jsonc",
+            VfsSnapshot::file(r#"{"id": "manually specified"}"#),
+        )
+        .unwrap();
+
+        let vfs = Vfs::new(imfs);
+        let path = Path::new("/foo/");
+        let mut snapshot = InstanceSnapshot::new();
+
+        DirectoryMetadata::read_and_apply_all(&vfs, path, &mut snapshot).unwrap();
 
         insta::assert_yaml_snapshot!(snapshot);
     }
