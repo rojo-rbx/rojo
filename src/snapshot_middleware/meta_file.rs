@@ -246,3 +246,46 @@ impl DirectoryMetadata {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod test {
+    use memofs::{InMemoryFs, VfsSnapshot};
+
+    use super::*;
+
+    #[test]
+    fn adjacent_read_json() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
+            "/foo/bar.meta.json",
+            VfsSnapshot::file(r#"{"id": "manually specified"}"#),
+        )
+        .unwrap();
+
+        let vfs = Vfs::new(imfs);
+        let path = Path::new("/foo/bar.rojo");
+        let mut snapshot = InstanceSnapshot::new();
+
+        AdjacentMetadata::read_and_apply_all(&vfs, path, "bar", &mut snapshot).unwrap();
+
+        insta::assert_yaml_snapshot!(snapshot);
+    }
+
+    #[test]
+    fn adjacent_read_jsonc() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
+            "/foo/bar.meta.jsonc",
+            VfsSnapshot::file(r#"{"id": "manually specified"}"#),
+        )
+        .unwrap();
+
+        let vfs = Vfs::new(imfs);
+        let path = Path::new("/foo/bar.rojo");
+        let mut snapshot = InstanceSnapshot::new();
+
+        AdjacentMetadata::read_and_apply_all(&vfs, path, "bar", &mut snapshot).unwrap();
+
+        insta::assert_yaml_snapshot!(snapshot);
+    }
+}
