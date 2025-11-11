@@ -16,9 +16,7 @@ pub fn snapshot_dir(
         None => return Ok(None),
     };
 
-    if let Some(mut meta) = dir_meta(vfs, path)? {
-        meta.apply_all(&mut snapshot)?;
-    }
+    DirectoryMetadata::read_and_apply_all(vfs, path, &mut snapshot)?;
 
     Ok(Some(snapshot))
 }
@@ -73,11 +71,8 @@ pub fn snapshot_dir_no_meta(
         .ok_or_else(|| anyhow::anyhow!("File name was not valid UTF-8: {}", path.display()))?
         .to_string();
 
-    let meta_path = path.join("init.meta.json");
-
     let relevant_paths = vec![
         path.to_path_buf(),
-        meta_path,
         // TODO: We shouldn't need to know about Lua existing in this
         // middleware. Should we figure out a way for that function to add
         // relevant paths to this middleware?
