@@ -295,7 +295,6 @@ mod test {
         });
     }
 
-    #[ignore = "init.lua functionality has moved to the root snapshot function"]
     #[test]
     fn init_module_from_vfs() {
         let mut imfs = InMemoryFs::new();
@@ -307,11 +306,10 @@ mod test {
 
         let vfs = Vfs::new(imfs);
 
-        let instance_snapshot = snapshot_lua(
+        let instance_snapshot = snapshot_lua_init(
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
             &vfs,
-            Path::new("/root"),
-            "root",
+            Path::new("/root/init.lua"),
             ScriptType::Module,
         )
         .unwrap()

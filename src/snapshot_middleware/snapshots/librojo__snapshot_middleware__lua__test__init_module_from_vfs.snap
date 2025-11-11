@@ -2,23 +2,26 @@
 source: src/snapshot_middleware/lua.rs
 expression: instance_snapshot
 ---
-snapshot_id: ~
+snapshot_id: "00000000000000000000000000000000"
 metadata:
   ignore_unknown_instances: false
   instigating_source:
     Path: /root
   relevant_paths:
     - /root
-    - /root/init.meta.json
     - /root/init.lua
+    - /root/init.luau
     - /root/init.server.lua
+    - /root/init.server.luau
     - /root/init.client.lua
+    - /root/init.client.luau
+    - /root/init.csv
   context:
-    script_type: Class
+    emit_legacy_scripts: true
+  specified_id: ~
 name: root
 class_name: ModuleScript
 properties:
   Source:
-    Type: String
-    Value: Hello!
+    String: Hello!
 children: []
