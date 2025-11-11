@@ -16,6 +16,8 @@ metadata:
     - /root/init.client.lua
     - /root/init.client.luau
     - /root/init.csv
+    - /root/init.meta.json
+    - /root/init.meta.jsonc
   context:
     emit_legacy_scripts: true
   specified_id: ~
