@@ -318,6 +318,7 @@ pub fn default_sync_rules() -> &'static [SyncRule] {
             sync_rule!("*.model.json", JsonModel, ".model.json"),
             sync_rule!("*.model.jsonc", JsonModel, ".model.jsonc"),
             sync_rule!("*.json", Json, ".json", "*.meta.json"),
+            sync_rule!("*.jsonc", Json, ".jsonc", "*.meta.jsonc"),
             sync_rule!("*.toml", Toml),
             sync_rule!("*.csv", Csv),
             sync_rule!("*.txt", Text),
