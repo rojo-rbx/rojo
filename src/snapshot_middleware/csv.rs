@@ -5,12 +5,12 @@ use memofs::Vfs;
 use rbx_dom_weak::ustr;
 use serde::Serialize;
 
-use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
-
-use super::{
-    dir::{dir_meta, snapshot_dir_no_meta},
-    meta_file::AdjacentMetadata,
+use crate::{
+    snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
+    snapshot_middleware::meta_file::DirectoryMetadata,
 };
+
+use super::{dir::snapshot_dir_no_meta, meta_file::AdjacentMetadata};
 
 pub fn snapshot_csv(
     _context: &InstanceContext,
@@ -71,9 +71,7 @@ pub fn snapshot_csv_init(
     init_snapshot.children = dir_snapshot.children;
     init_snapshot.metadata = dir_snapshot.metadata;
 
-    if let Some(mut meta) = dir_meta(vfs, folder_path)? {
-        meta.apply_all(&mut init_snapshot)?;
-    }
+    DirectoryMetadata::read_and_apply_all(vfs, folder_path, &mut init_snapshot)?;
 
     Ok(Some(init_snapshot))
 }
