@@ -6,15 +6,22 @@ snapshot_id: "00000000000000000000000000000000"
 metadata:
   ignore_unknown_instances: false
   instigating_source:
-    Path: /foo.csv
+    Path: /root
   relevant_paths:
-    - /foo.csv
-    - /foo.meta.json
-    - /foo.meta.jsonc
+    - /root
+    - /root/init.lua
+    - /root/init.luau
+    - /root/init.server.lua
+    - /root/init.server.luau
+    - /root/init.client.lua
+    - /root/init.client.luau
+    - /root/init.csv
+    - /root/init.meta.json
+    - /root/init.meta.jsonc
   context:
     emit_legacy_scripts: true
   specified_id: ~
-name: foo
+name: root
 class_name: LocalizationTable
 properties:
   Contents:

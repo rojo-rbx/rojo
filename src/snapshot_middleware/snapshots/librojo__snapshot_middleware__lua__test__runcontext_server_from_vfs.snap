@@ -10,6 +10,7 @@ metadata:
   relevant_paths:
     - /foo.server.lua
     - /foo.meta.json
+    - /foo.meta.jsonc
   context:
     emit_legacy_scripts: false
   specified_id: ~
@@ -21,4 +22,3 @@ properties:
   Source:
     String: Hello there!
 children: []
-

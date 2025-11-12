@@ -20,7 +20,7 @@ metadata:
     - /root/init.meta.jsonc
   context:
     emit_legacy_scripts: true
-  specified_id: ~
+  specified_id: manually specified
 name: root
 class_name: ModuleScript
 properties:
