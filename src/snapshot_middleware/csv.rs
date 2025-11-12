@@ -219,4 +219,72 @@ Ack,Ack!,,An exclamation of despair,¡Ay!"#,
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }
+
+    #[test]
+    fn csv_init() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
+            "/root",
+            VfsSnapshot::dir([(
+                "init.csv",
+                VfsSnapshot::file(
+                    r#"
+Key,Source,Context,Example,es
+Ack,Ack!,,An exclamation of despair,¡Ay!"#,
+                ),
+            )]),
+        )
+        .unwrap();
+
+        let vfs = Vfs::new(imfs);
+
+        let instance_snapshot = snapshot_csv_init(
+            &InstanceContext::with_emit_legacy_scripts(Some(true)),
+            &vfs,
+            Path::new("/root/init.csv"),
+        )
+        .unwrap()
+        .unwrap();
+
+        insta::with_settings!({ sort_maps => true }, {
+            insta::assert_yaml_snapshot!(instance_snapshot);
+        });
+    }
+
+    #[test]
+    fn csv_init_with_meta() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
+            "/root",
+            VfsSnapshot::dir([
+                (
+                    "init.csv",
+                    VfsSnapshot::file(
+                        r#"
+Key,Source,Context,Example,es
+Ack,Ack!,,An exclamation of despair,¡Ay!"#,
+                    ),
+                ),
+                (
+                    "init.meta.json",
+                    VfsSnapshot::file(r#"{"id": "manually specified"}"#),
+                ),
+            ]),
+        )
+        .unwrap();
+
+        let vfs = Vfs::new(imfs);
+
+        let instance_snapshot = snapshot_csv_init(
+            &InstanceContext::with_emit_legacy_scripts(Some(true)),
+            &vfs,
+            Path::new("/root/init.csv"),
+        )
+        .unwrap()
+        .unwrap();
+
+        insta::with_settings!({ sort_maps => true }, {
+            insta::assert_yaml_snapshot!(instance_snapshot);
+        });
+    }
 }
