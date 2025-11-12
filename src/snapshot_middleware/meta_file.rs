@@ -165,6 +165,11 @@ pub struct DirectoryMetadata {
 }
 
 impl DirectoryMetadata {
+    /// Attempts to read an `init.meta`` file for the provided path, and if
+    /// one exists applies it.
+    ///
+    /// Also inserts the potential metadata paths into the snapshot's relevant
+    /// paths for convenience purposes.
     pub fn read_and_apply_all(
         vfs: &Vfs,
         path: &Path,
