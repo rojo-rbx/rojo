@@ -68,7 +68,7 @@ impl AdjacentMetadata {
         Ok(())
     }
 
-    pub fn from_slice(slice: &[u8], path: PathBuf) -> anyhow::Result<Self> {
+    fn from_slice(slice: &[u8], path: PathBuf) -> anyhow::Result<Self> {
         let mut meta: Self = json::from_slice_with_context(slice, || {
             format!(
                 "File contained malformed .meta.json data: {}",
@@ -190,7 +190,7 @@ impl DirectoryMetadata {
         Ok(())
     }
 
-    pub fn from_slice(slice: &[u8], path: PathBuf) -> anyhow::Result<Self> {
+    fn from_slice(slice: &[u8], path: PathBuf) -> anyhow::Result<Self> {
         let mut meta: Self = json::from_slice_with_context(slice, || {
             format!(
                 "File contained malformed init.meta.json data: {}",

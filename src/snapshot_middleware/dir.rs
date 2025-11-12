@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use memofs::{DirEntry, IoResultExt, Vfs};
+use memofs::{DirEntry, Vfs};
 
 use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
 
@@ -19,19 +19,6 @@ pub fn snapshot_dir(
     DirectoryMetadata::read_and_apply_all(vfs, path, &mut snapshot)?;
 
     Ok(Some(snapshot))
-}
-
-/// Retrieves the meta file that should be applied for this directory, if it
-/// exists.
-pub fn dir_meta(vfs: &Vfs, path: &Path) -> anyhow::Result<Option<DirectoryMetadata>> {
-    let meta_path = path.join("init.meta.json");
-
-    if let Some(meta_contents) = vfs.read(&meta_path).with_not_found()? {
-        let metadata = DirectoryMetadata::from_slice(&meta_contents, meta_path)?;
-        Ok(Some(metadata))
-    } else {
-        Ok(None)
-    }
 }
 
 /// Snapshot a directory without applying meta files; useful for if the
