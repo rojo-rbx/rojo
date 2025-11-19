@@ -31,7 +31,7 @@ Making a new release? Simply add the new header with the version and date undern
 
 ## Unreleased
 
-* A new command `rojo syncback` has been added. It can be used as `rojo syncback [path to project] --input [path to file]`.
+* A new command `rojo syncback` has been added. It can be used as `rojo syncback [path to project] --input [path to file]`. ([#937])
  	This command takes a Roblox file and pulls Instances out of it and places them in the correct position in the provided project.
     Syncback is primarily controlled by the project file. Any Instances who are either referenced in the project file or a descendant
     of one that is will be placed in an appropriate location.
@@ -70,6 +70,7 @@ Making a new release? Simply add the new header with the version and date undern
 * Fixed bugs and improved performance & UX for the script diff viewer ([#994])
 * Added support for `.jsonc` files for all JSON-related files (e.g. `.project.jsonc` and `.meta.jsonc`) to accompany JSONC support ([#1159])
 
+[#937]: https://github.com/rojo-rbx/rojo/pull/937
 [#994]: https://github.com/rojo-rbx/rojo/pull/994
 [#1159]: https://github.com/rojo-rbx/rojo/pull/1159
 
