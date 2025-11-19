@@ -74,7 +74,7 @@ local Assets = {
 local function guardForTypos(name, map)
 	strict(name, map)
 
-	for key, child in pairs(map) do
+	for key, child in map do
 		if type(child) == "table" then
 			guardForTypos(("%s.%s"):format(name, key), child)
 		end

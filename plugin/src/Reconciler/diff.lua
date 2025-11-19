@@ -38,13 +38,13 @@ local function trueEquals(a, b): boolean
 	-- For tables, try recursive deep equality
 	if typeA == "table" and typeB == "table" then
 		local checkedKeys = {}
-		for key, value in pairs(a) do
+		for key, value in a do
 			checkedKeys[key] = true
 			if not trueEquals(value, b[key]) then
 				return false
 			end
 		end
-		for key, value in pairs(b) do
+		for key, value in b do
 			if checkedKeys[key] then
 				continue
 			end

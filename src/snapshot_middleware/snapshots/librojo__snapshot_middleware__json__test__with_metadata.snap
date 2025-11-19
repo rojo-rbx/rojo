@@ -1,24 +1,22 @@
 ---
-source: src/snapshot_middleware/lua.rs
+source: src/snapshot_middleware/json.rs
 expression: instance_snapshot
 ---
 snapshot_id: "00000000000000000000000000000000"
 metadata:
-  ignore_unknown_instances: true
+  ignore_unknown_instances: false
   instigating_source:
-    Path: /foo.server.lua
+    Path: /foo.json
   relevant_paths:
-    - /foo.server.lua
+    - /foo.json
     - /foo.meta.json
     - /foo.meta.jsonc
   context:
     emit_legacy_scripts: true
-  specified_id: ~
+  specified_id: manually specified
 name: foo
-class_name: Script
+class_name: ModuleScript
 properties:
-  RunContext:
-    Enum: 0
   Source:
-    String: Hello there!
+    String: "return {\n\tarray = {1, 2, 3},\n\tfloat = 1234.5452,\n\tint = 1234,\n}"
 children: []

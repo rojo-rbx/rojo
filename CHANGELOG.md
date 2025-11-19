@@ -32,8 +32,10 @@ Making a new release? Simply add the new header with the version and date undern
 ## Unreleased
 
 * Fixed bugs and improved performance & UX for the script diff viewer ([#994])
+* Added support for `.jsonc` files for all JSON-related files (e.g. `.project.jsonc` and `.meta.jsonc`) to accompany JSONC support ([#1159])
 
 [#994]: https://github.com/rojo-rbx/rojo/pull/994
+[#1159]: https://github.com/rojo-rbx/rojo/pull/1159
 
 ## [7.6.1] (November 6th, 2025)
 
