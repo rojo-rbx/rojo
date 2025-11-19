@@ -1,0 +1,22 @@
+---
+source: src/snapshot_middleware/txt.rs
+expression: instance_snapshot
+---
+snapshot_id: "00000000000000000000000000000000"
+metadata:
+  ignore_unknown_instances: false
+  instigating_source:
+    Path: /foo.txt
+  relevant_paths:
+    - /foo.txt
+    - /foo.meta.json
+    - /foo.meta.jsonc
+  context:
+    emit_legacy_scripts: true
+  specified_id: manually specified
+name: foo
+class_name: StringValue
+properties:
+  Value:
+    String: Hello there!
+children: []

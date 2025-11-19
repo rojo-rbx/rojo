@@ -10,6 +10,7 @@ use rbx_dom_weak::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    json,
     resolution::UnresolvedValue,
     snapshot::{InstanceContext, InstanceSnapshot},
     syncback::{filter_properties_preallocated, FsSnapshot, SyncbackReturn, SyncbackSnapshot},
@@ -30,8 +31,9 @@ pub fn snapshot_json_model(
         return Ok(None);
     }
 
-    let mut instance: JsonModel = serde_json::from_str(contents_str)
-        .with_context(|| format!("File is not a valid JSON model: {}", path.display()))?;
+    let mut instance: JsonModel = json::from_str_with_context(contents_str, || {
+        format!("File is not a valid JSON model: {}", path.display())
+    })?;
 
     if let Some(top_level_name) = &instance.name {
         let new_name = format!("{}.model.json", top_level_name);

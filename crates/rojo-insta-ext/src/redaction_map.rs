@@ -22,6 +22,12 @@ impl RedactionMap {
         }
     }
 
+    /// Returns the numeric ID that was assigned to the provided value,
+    /// if one exists.
+    pub fn get_id_for_value(&self, value: impl ToString) -> Option<usize> {
+        self.ids.get(&value.to_string()).cloned()
+    }
+
     pub fn intern(&mut self, id: impl ToString) {
         let last_id = &mut self.last_id;
 

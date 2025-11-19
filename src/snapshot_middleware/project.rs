@@ -633,7 +633,7 @@ fn infer_class_name(name: &str, parent_class: Option<&str>) -> Option<Ustr> {
         // Members of DataModel with names that match known services are
         // probably supposed to be those services.
 
-        let descriptor = rbx_reflection_database::get().classes.get(name)?;
+        let descriptor = rbx_reflection_database::get().unwrap().classes.get(name)?;
 
         if descriptor.tags.contains(&ClassTag::Service) {
             return Some(ustr(name));

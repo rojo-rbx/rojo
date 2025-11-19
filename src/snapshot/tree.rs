@@ -80,7 +80,7 @@ impl RojoTree {
             .expect("RojoTrees should have a root")
     }
 
-    pub fn get_instance(&self, id: Ref) -> Option<InstanceWithMeta> {
+    pub fn get_instance(&self, id: Ref) -> Option<InstanceWithMeta<'_>> {
         if let Some(instance) = self.inner.get_by_ref(id) {
             let metadata = self.metadata_map.get(&id).unwrap();
 
@@ -90,7 +90,7 @@ impl RojoTree {
         }
     }
 
-    pub fn get_instance_mut(&mut self, id: Ref) -> Option<InstanceWithMetaMut> {
+    pub fn get_instance_mut(&mut self, id: Ref) -> Option<InstanceWithMetaMut<'_>> {
         if let Some(instance) = self.inner.get_by_ref_mut(id) {
             let metadata = self.metadata_map.get_mut(&id).unwrap();
 

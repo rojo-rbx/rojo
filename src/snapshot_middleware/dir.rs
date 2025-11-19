@@ -26,24 +26,9 @@ pub fn snapshot_dir(
         None => return Ok(None),
     };
 
-    if let Some(mut meta) = dir_meta(vfs, path)? {
-        meta.apply_all(&mut snapshot)?;
-    }
+    DirectoryMetadata::read_and_apply_all(vfs, path, &mut snapshot)?;
 
     Ok(Some(snapshot))
-}
-
-/// Retrieves the meta file that should be applied for this directory, if it
-/// exists.
-pub fn dir_meta(vfs: &Vfs, path: &Path) -> anyhow::Result<Option<DirectoryMetadata>> {
-    let meta_path = path.join("init.meta.json");
-
-    if let Some(meta_contents) = vfs.read(&meta_path).with_not_found()? {
-        let metadata = DirectoryMetadata::from_slice(&meta_contents, meta_path)?;
-        Ok(Some(metadata))
-    } else {
-        Ok(None)
-    }
 }
 
 /// Snapshot a directory without applying meta files; useful for if the
@@ -77,9 +62,26 @@ pub fn snapshot_dir_no_meta(
         }
     }
 
-    let meta_path = path.join("init.meta.json");
+    let instance_name = path
+        .file_name()
+        .expect("Could not extract file name")
+        .to_str()
+        .ok_or_else(|| anyhow::anyhow!("File name was not valid UTF-8: {}", path.display()))?
+        .to_string();
 
-    let relevant_paths = vec![path.to_path_buf(), meta_path];
+    let relevant_paths = vec![
+        path.to_path_buf(),
+        // TODO: We shouldn't need to know about Lua existing in this
+        // middleware. Should we figure out a way for that function to add
+        // relevant paths to this middleware?
+        path.join("init.lua"),
+        path.join("init.luau"),
+        path.join("init.server.lua"),
+        path.join("init.server.luau"),
+        path.join("init.client.lua"),
+        path.join("init.client.luau"),
+        path.join("init.csv"),
+    ];
 
     let snapshot = InstanceSnapshot::new()
         .name(name)

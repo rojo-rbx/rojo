@@ -595,51 +595,43 @@ function App:startSession()
 		twoWaySync = Settings:get("twoWaySync"),
 	})
 
-	self.cleanupPrecommit = serveSession.__reconciler:hookPrecommit(function(patch, instanceMap)
+	serveSession:setUpdateLoadingTextCallback(function(text: string)
+		self:setState({
+			connectingText = text,
+		})
+	end)
+
+	self.cleanupPrecommit = serveSession:hookPrecommit(function(patch, instanceMap)
 		-- Build new tree for patch
 		self:setState({
 			patchTree = PatchTree.build(patch, instanceMap, { "Property", "Old", "New" }),
 		})
 	end)
-	self.cleanupPostcommit = serveSession.__reconciler:hookPostcommit(function(patch, instanceMap, unappliedPatch)
-		-- Update tree with unapplied metadata
+	self.cleanupPostcommit = serveSession:hookPostcommit(function(patch, instanceMap, unappliedPatch)
+		local now = DateTime.now().UnixTimestamp
 		self:setState(function(prevState)
+			local oldPatchData = prevState.patchData
+			local newPatchData = {
+				patch = patch,
+				unapplied = unappliedPatch,
+				timestamp = now,
+			}
+
+			if PatchSet.isEmpty(patch) then
+				-- Keep existing patch info, but use new timestamp
+				newPatchData.patch = oldPatchData.patch
+				newPatchData.unapplied = oldPatchData.unapplied
+			elseif now - oldPatchData.timestamp < 2 then
+				-- Patches that apply in the same second are combined for human clarity
+				newPatchData.patch = PatchSet.assign(PatchSet.newEmpty(), oldPatchData.patch, patch)
+				newPatchData.unapplied = PatchSet.assign(PatchSet.newEmpty(), oldPatchData.unapplied, unappliedPatch)
+			end
+
 			return {
 				patchTree = PatchTree.updateMetadata(prevState.patchTree, patch, instanceMap, unappliedPatch),
+				patchData = newPatchData,
 			}
 		end)
-	end)
-
-	serveSession:hookPostcommit(function(patch, _instanceMap, unapplied)
-		local now = DateTime.now().UnixTimestamp
-		local old = self.state.patchData
-
-		if PatchSet.isEmpty(patch) then
-			-- Ignore empty patch, but update timestamp
-			self:setState({
-				patchData = {
-					patch = old.patch,
-					unapplied = old.unapplied,
-					timestamp = now,
-				},
-			})
-			return
-		end
-
-		if now - old.timestamp < 2 then
-			-- Patches that apply in the same second are
-			-- considered to be part of the same change for human clarity
-			patch = PatchSet.assign(PatchSet.newEmpty(), old.patch, patch)
-			unapplied = PatchSet.assign(PatchSet.newEmpty(), old.unapplied, unapplied)
-		end
-
-		self:setState({
-			patchData = {
-				patch = patch,
-				unapplied = unapplied,
-				timestamp = now,
-			},
-		})
 	end)
 
 	serveSession:onStatusChanged(function(status, details)
@@ -774,10 +766,12 @@ function App:startSession()
 		end
 
 		self:setState({
+			connectingText = "Computing diff view...",
+		})
+		self:setState({
 			appStatus = AppStatus.Confirming,
+			patchTree = PatchTree.build(patch, instanceMap, { "Property", "Current", "Incoming" }),
 			confirmData = {
-				instanceMap = instanceMap,
-				patch = patch,
 				serverInfo = serverInfo,
 			},
 			toolbarIcon = Assets.Images.PluginButton,
@@ -888,6 +882,7 @@ function App:render()
 
 					ConfirmingPage = createPageElement(AppStatus.Confirming, {
 						confirmData = self.state.confirmData,
+						patchTree = self.state.patchTree,
 						createPopup = not self.state.guiEnabled,
 
 						onAbort = function()
@@ -901,7 +896,9 @@ function App:render()
 						end,
 					}),
 
-					Connecting = createPageElement(AppStatus.Connecting),
+					Connecting = createPageElement(AppStatus.Connecting, {
+						text = self.state.connectingText,
+					}),
 
 					Connected = createPageElement(AppStatus.Connected, {
 						projectName = self.state.projectName,

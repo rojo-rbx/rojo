@@ -1,7 +1,7 @@
 use std::{path::Path, str};
 
 use anyhow::Context as _;
-use memofs::{IoResultExt, Vfs};
+use memofs::Vfs;
 use rbx_dom_weak::types::Variant;
 use rbx_dom_weak::ustr;
 
@@ -21,8 +21,6 @@ pub fn snapshot_txt(
     let contents = vfs.read_to_string(path)?;
     let contents_str = contents.as_str();
 
-    let meta_path = path.with_file_name(format!("{}.meta.json", name));
-
     let mut snapshot = InstanceSnapshot::new()
         .name(name)
         .class_name("StringValue")
@@ -30,14 +28,11 @@ pub fn snapshot_txt(
         .metadata(
             InstanceMetadata::new()
                 .instigating_source(path)
-                .relevant_paths(vec![path.to_path_buf(), meta_path.clone()])
+                .relevant_paths(vec![path.to_path_buf()])
                 .context(context),
         );
 
-    if let Some(meta_contents) = vfs.read(&meta_path).with_not_found()? {
-        let mut metadata = AdjacentMetadata::from_slice(&meta_contents, meta_path)?;
-        metadata.apply_all(&mut snapshot)?;
-    }
+    AdjacentMetadata::read_and_apply_all(vfs, path, name, &mut snapshot)?;
 
     Ok(Some(snapshot))
 }
@@ -89,6 +84,34 @@ mod test {
         imfs.load_snapshot("/foo.txt", VfsSnapshot::file("Hello there!"))
             .unwrap();
 
+        let vfs = Vfs::new(imfs.clone());
+
+        let instance_snapshot = snapshot_txt(
+            &InstanceContext::default(),
+            &vfs,
+            Path::new("/foo.txt"),
+            "foo",
+        )
+        .unwrap()
+        .unwrap();
+
+        insta::assert_yaml_snapshot!(instance_snapshot);
+    }
+
+    #[test]
+    fn with_metadata() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot("/foo.txt", VfsSnapshot::file("Hello there!"))
+            .unwrap();
+        imfs.load_snapshot(
+            "/foo.meta.json",
+            VfsSnapshot::file(
+                r#"{
+                    "id": "manually specified"
+                }"#,
+            ),
+        )
+        .unwrap();
         let vfs = Vfs::new(imfs.clone());
 
         let instance_snapshot = snapshot_txt(

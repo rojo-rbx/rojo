@@ -11,9 +11,12 @@ use rbx_dom_weak::Ustr;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use crate::{glob::Glob, resolution::UnresolvedValue, snapshot::SyncRule, syncback::SyncbackRules};
+use crate::{
+    glob::Glob, json, resolution::UnresolvedValue, snapshot::SyncRule, syncback::SyncbackRules,
+};
 
-static PROJECT_FILENAME: &str = "default.project.json";
+/// Represents 'default' project names that act as `init` files
+pub static DEFAULT_PROJECT_NAMES: [&str; 2] = ["default.project.json", "default.project.jsonc"];
 
 /// Error type returned by any function that handles projects.
 #[derive(Debug, Error)]
@@ -135,7 +138,7 @@ impl Project {
     pub fn is_project_file(path: &Path) -> bool {
         path.file_name()
             .and_then(|name| name.to_str())
-            .map(|name| name.ends_with(".project.json"))
+            .map(|name| name.ends_with(".project.json") || name.ends_with(".project.jsonc"))
             .unwrap_or(false)
     }
 
@@ -153,18 +156,19 @@ impl Project {
                 None
             }
         } else {
-            let child_path = path.join(PROJECT_FILENAME);
-            let child_meta = fs::metadata(&child_path).ok()?;
+            for filename in DEFAULT_PROJECT_NAMES {
+                let child_path = path.join(filename);
+                let child_meta = fs::metadata(&child_path).ok()?;
 
-            if child_meta.is_file() {
-                Some(child_path)
-            } else {
-                // This is a folder with the same name as a Rojo default project
-                // file.
-                //
-                // That's pretty weird, but we can roll with it.
-                None
+                if child_meta.is_file() {
+                    return Some(child_path);
+                }
             }
+            // This is a folder with the same name as a Rojo default project
+            // file.
+            //
+            // That's pretty weird, but we can roll with it.
+            None
         }
     }
 
@@ -185,16 +189,20 @@ impl Project {
 
         // If you're editing this to be generic, make sure you also alter the
         // snapshot middleware to support generic init paths.
-        if file_name == PROJECT_FILENAME {
-            let folder_name = self.folder_location().file_name().and_then(OsStr::to_str);
-            if let Some(folder_name) = folder_name {
-                self.name = Some(folder_name.to_string());
-            } else {
-                return Err(Error::FolderNameInvalid {
-                    path: self.file_location.clone(),
-                });
+        for default_file_name in DEFAULT_PROJECT_NAMES {
+            if file_name == default_file_name {
+                let folder_name = self.folder_location().file_name().and_then(OsStr::to_str);
+                if let Some(folder_name) = folder_name {
+                    self.name = Some(folder_name.to_string());
+                    return Ok(());
+                } else {
+                    return Err(Error::FolderNameInvalid {
+                        path: self.file_location.clone(),
+                    });
+                }
             }
-        } else if let Some(fallback) = fallback {
+        }
+        if let Some(fallback) = fallback {
             self.name = Some(fallback.to_string());
         } else {
             // As of the time of writing (July 10, 2024) there is no way for
@@ -218,8 +226,11 @@ impl Project {
         project_file_location: PathBuf,
         fallback_name: Option<&str>,
     ) -> Result<Self, Error> {
-        let mut project: Self = serde_json::from_slice(contents).map_err(|source| Error::Json {
-            source,
+        let mut project: Self = json::from_slice(contents).map_err(|e| Error::Json {
+            source: serde_json::Error::io(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                e.to_string(),
+            )),
             path: project_file_location.clone(),
         })?;
         project.file_location = project_file_location;
@@ -258,6 +269,10 @@ impl Project {
         project_file_location: &Path,
         fallback_name: Option<&str>,
     ) -> Result<Self, ProjectError> {
+        log::debug!(
+            "Loading project file from {}",
+            project_file_location.display()
+        );
         let project_path = project_file_location.to_path_buf();
         let contents = vfs.read(&project_path).map_err(|e| match e.kind() {
             io::ErrorKind::NotFound => Error::NoProjectFound {
@@ -271,6 +286,24 @@ impl Project {
             project_path,
             fallback_name,
         )?)
+    }
+
+    pub(crate) fn load_initial_project(vfs: &Vfs, path: &Path) -> Result<Self, ProjectError> {
+        if Self::is_project_file(path) {
+            Self::load_exact(vfs, path, None)
+        } else {
+            // Check for default projects.
+            for default_project_name in DEFAULT_PROJECT_NAMES {
+                let project_path = path.join(default_project_name);
+                if project_path.exists() {
+                    return Self::load_exact(vfs, &project_path, None);
+                }
+            }
+            Err(Error::NoProjectFound {
+                path: path.to_path_buf(),
+            }
+            .into())
+        }
     }
 
     /// Checks if there are any compatibility issues with this project file and
@@ -412,13 +445,13 @@ mod test {
 
     #[test]
     fn path_node_required() {
-        let path_node: PathNode = serde_json::from_str(r#""src""#).unwrap();
+        let path_node: PathNode = json::from_str(r#""src""#).unwrap();
         assert_eq!(path_node, PathNode::Required(PathBuf::from("src")));
     }
 
     #[test]
     fn path_node_optional() {
-        let path_node: PathNode = serde_json::from_str(r#"{ "optional": "src" }"#).unwrap();
+        let path_node: PathNode = json::from_str(r#"{ "optional": "src" }"#).unwrap();
         assert_eq!(
             path_node,
             PathNode::Optional(OptionalPathNode::new(PathBuf::from("src")))
@@ -427,7 +460,7 @@ mod test {
 
     #[test]
     fn project_node_required() {
-        let project_node: ProjectNode = serde_json::from_str(
+        let project_node: ProjectNode = json::from_str(
             r#"{
                 "$path": "src"
             }"#,
@@ -442,7 +475,7 @@ mod test {
 
     #[test]
     fn project_node_optional() {
-        let project_node: ProjectNode = serde_json::from_str(
+        let project_node: ProjectNode = json::from_str(
             r#"{
                 "$path": { "optional": "src" }
             }"#,
@@ -459,7 +492,7 @@ mod test {
 
     #[test]
     fn project_node_none() {
-        let project_node: ProjectNode = serde_json::from_str(
+        let project_node: ProjectNode = json::from_str(
             r#"{
                 "$className": "Folder"
             }"#,
@@ -471,7 +504,7 @@ mod test {
 
     #[test]
     fn project_node_optional_serialize_absolute() {
-        let project_node: ProjectNode = serde_json::from_str(
+        let project_node: ProjectNode = json::from_str(
             r#"{
                 "$path": { "optional": "..\\src" }
             }"#,
@@ -484,7 +517,7 @@ mod test {
 
     #[test]
     fn project_node_optional_serialize_absolute_no_change() {
-        let project_node: ProjectNode = serde_json::from_str(
+        let project_node: ProjectNode = json::from_str(
             r#"{
                 "$path": { "optional": "../src" }
             }"#,
@@ -497,7 +530,7 @@ mod test {
 
     #[test]
     fn project_node_optional_serialize_optional() {
-        let project_node: ProjectNode = serde_json::from_str(
+        let project_node: ProjectNode = json::from_str(
             r#"{
                 "$path": "..\\src"
             }"#,
@@ -506,5 +539,58 @@ mod test {
 
         let serialized = serde_json::to_string(&project_node).unwrap();
         assert_eq!(serialized, r#"{"$path":"../src"}"#);
+    }
+
+    #[test]
+    fn project_with_jsonc_features() {
+        // Test that JSONC features (comments and trailing commas) are properly handled
+        let project_json = r#"{
+            // This is a single-line comment
+            "name": "TestProject",
+            /* This is a
+               multi-line comment */
+            "tree": {
+                "$path": "src", // Comment after value
+            },
+            "servePort": 34567,
+            "emitLegacyScripts": false,
+            // Test glob parsing with comments
+            "globIgnorePaths": [
+                "**/*.spec.lua", // Ignore test files
+                "**/*.test.lua",
+            ],
+            "syncRules": [
+                {
+                    "pattern": "*.data.json",
+                    "use": "json", // Trailing comma in object
+                },
+                {
+                    "pattern": "*.module.lua",
+                    "use": "moduleScript",
+                }, // Trailing comma in array
+            ], // Another trailing comma
+        }"#;
+
+        let project = Project::load_from_slice(
+            project_json.as_bytes(),
+            PathBuf::from("/test/default.project.jsonc"),
+            None,
+        )
+        .expect("Failed to parse project with JSONC features");
+
+        // Verify the parsed values
+        assert_eq!(project.name, Some("TestProject".to_string()));
+        assert_eq!(project.serve_port, Some(34567));
+        assert_eq!(project.emit_legacy_scripts, Some(false));
+
+        // Verify glob_ignore_paths were parsed correctly
+        assert_eq!(project.glob_ignore_paths.len(), 2);
+        assert!(project.glob_ignore_paths[0].is_match("test/foo.spec.lua"));
+        assert!(project.glob_ignore_paths[1].is_match("test/bar.test.lua"));
+
+        // Verify sync_rules were parsed correctly
+        assert_eq!(project.sync_rules.len(), 2);
+        assert!(project.sync_rules[0].include.is_match("data.data.json"));
+        assert!(project.sync_rules[1].include.is_match("init.module.lua"));
     }
 }

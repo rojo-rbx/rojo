@@ -1,5 +1,4 @@
 use std::{
-    borrow::Cow,
     collections::HashSet,
     io,
     net::IpAddr,
@@ -101,15 +100,7 @@ impl ServeSession {
 
         log::trace!("Starting new ServeSession at path {}", start_path.display());
 
-        let project_path = if Project::is_project_file(start_path) {
-            Cow::Borrowed(start_path)
-        } else {
-            Cow::Owned(start_path.join("default.project.json"))
-        };
-
-        log::debug!("Loading project file from {}", project_path.display());
-
-        let root_project = Project::load_exact(&vfs, &project_path, None)?;
+        let root_project = Project::load_initial_project(&vfs, start_path)?;
 
         let mut tree = RojoTree::new(InstanceSnapshot::new());
 

@@ -1,11 +1,15 @@
 local StudioService = game:GetService("StudioService")
 local RunService = game:GetService("RunService")
+local ChangeHistoryService = game:GetService("ChangeHistoryService")
+local SerializationService = game:GetService("SerializationService")
+local Selection = game:GetService("Selection")
 
 local Packages = script.Parent.Parent.Packages
 local Log = require(Packages.Log)
 local Fmt = require(Packages.Fmt)
 local t = require(Packages.t)
 local Promise = require(Packages.Promise)
+local Timer = require(script.Parent.Timer)
 
 local ChangeBatcher = require(script.Parent.ChangeBatcher)
 local encodePatchUpdate = require(script.Parent.ChangeBatcher.encodePatchUpdate)
@@ -41,6 +45,12 @@ local function debugPatch(object)
 
 		output:unindent()
 		output:write("}")
+	end)
+end
+
+local function attemptReparent(instance, parent)
+	return pcall(function()
+		instance.Parent = parent
 	end)
 end
 
@@ -95,6 +105,9 @@ function ServeSession.new(options)
 		__changeBatcher = changeBatcher,
 		__statusChangedCallback = nil,
 		__connections = connections,
+		__precommitCallbacks = {},
+		__postcommitCallbacks = {},
+		__updateLoadingText = function() end,
 	}
 
 	setmetatable(self, ServeSession)
@@ -125,21 +138,66 @@ function ServeSession:setConfirmCallback(callback)
 	self.__userConfirmCallback = callback
 end
 
-function ServeSession:hookPrecommit(callback)
-	return self.__reconciler:hookPrecommit(callback)
+function ServeSession:setUpdateLoadingTextCallback(callback)
+	self.__updateLoadingText = callback
 end
 
+function ServeSession:setLoadingText(text: string)
+	self.__updateLoadingText(text)
+end
+
+--[=[
+	Hooks a function to run before patch application.
+	The provided function is called with the incoming patch and an InstanceMap
+	as parameters.
+]=]
+function ServeSession:hookPrecommit(callback)
+	table.insert(self.__precommitCallbacks, callback)
+	Log.trace("Added precommit callback: {}", callback)
+
+	return function()
+		-- Remove the callback from the list
+		for i, cb in self.__precommitCallbacks do
+			if cb == callback then
+				table.remove(self.__precommitCallbacks, i)
+				Log.trace("Removed precommit callback: {}", callback)
+				break
+			end
+		end
+	end
+end
+
+--[=[
+	Hooks a function to run after patch application.
+	The provided function is called with the applied patch, the current
+	InstanceMap, and a PatchSet containing any unapplied changes.
+]=]
 function ServeSession:hookPostcommit(callback)
-	return self.__reconciler:hookPostcommit(callback)
+	table.insert(self.__postcommitCallbacks, callback)
+	Log.trace("Added postcommit callback: {}", callback)
+
+	return function()
+		-- Remove the callback from the list
+		for i, cb in self.__postcommitCallbacks do
+			if cb == callback then
+				table.remove(self.__postcommitCallbacks, i)
+				Log.trace("Removed postcommit callback: {}", callback)
+				break
+			end
+		end
+	end
 end
 
 function ServeSession:start()
 	self:__setStatus(Status.Connecting)
+	self:setLoadingText("Connecting to server...")
 
 	self.__apiContext
 		:connect()
 		:andThen(function(serverInfo)
+			self:setLoadingText("Loading initial data from server...")
 			return self:__initialSync(serverInfo):andThen(function()
+				self:setLoadingText("Starting sync loop...")
 				self:__setStatus(Status.Connected, serverInfo.projectName)
 				self:__applyGameAndPlaceId(serverInfo)
 
@@ -206,6 +264,194 @@ function ServeSession:__onActiveScriptChanged(activeScript)
 	self.__apiContext:open(scriptId)
 end
 
+function ServeSession:__replaceInstances(idList)
+	if #idList == 0 then
+		return true, PatchSet.newEmpty()
+	end
+	-- It would be annoying if selection went away, so we try to preserve it.
+	local selection = Selection:Get()
+	local selectionMap = {}
+	for i, instance in selection do
+		selectionMap[instance] = i
+	end
+
+	-- TODO: Should we do this in multiple requests so we can more granularly mark failures?
+	local modelSuccess, replacements = self.__apiContext
+		:serialize(idList)
+		:andThen(function(response)
+			Log.debug("Deserializing results from serialize endpoint")
+			local objects = SerializationService:DeserializeInstancesAsync(response.modelContents)
+			if not objects[1] then
+				return Promise.reject("Serialize endpoint did not deserialize into any Instances")
+			end
+			if #objects[1]:GetChildren() ~= #idList then
+				return Promise.reject("Serialize endpoint did not return the correct number of Instances")
+			end
+
+			local instanceMap = {}
+			for _, item in objects[1]:GetChildren() do
+				instanceMap[item.Name] = item.Value
+			end
+			return instanceMap
+		end)
+		:await()
+
+	local refSuccess, refPatch = self.__apiContext
+		:refPatch(idList)
+		:andThen(function(response)
+			return response.patch
+		end)
+		:await()
+
+	if not (modelSuccess and refSuccess) then
+		return false
+	end
+
+	for id, replacement in replacements do
+		local oldInstance = self.__instanceMap.fromIds[id]
+		if not oldInstance then
+			-- TODO: Why would this happen?
+			Log.warn("Instance {} not found in InstanceMap during sync replacement", id)
+			continue
+		end
+
+		self.__instanceMap:insert(id, replacement)
+		Log.trace("Swapping Instance {} out via api/models/ endpoint", id)
+		local oldParent = oldInstance.Parent
+		for _, child in oldInstance:GetChildren() do
+			-- Some children cannot be reparented, such as a TouchTransmitter
+			local reparentSuccess, reparentError = attemptReparent(child, replacement)
+			if not reparentSuccess then
+				Log.warn(
+					"Could not reparent child {} of instance {} during sync replacement: {}",
+					child.Name,
+					oldInstance.Name,
+					reparentError
+				)
+			end
+		end
+
+		-- ChangeHistoryService doesn't like it if an Instance has been
+		-- Destroyed. So, we have to accept the potential memory hit and
+		-- just set the parent to `nil`.
+		local deleteSuccess, deleteError = attemptReparent(oldInstance, nil)
+		local replaceSuccess, replaceError = attemptReparent(replacement, oldParent)
+
+		if not (deleteSuccess and replaceSuccess) then
+			Log.warn(
+				"Could not swap instances {} and {} during sync replacement: {}",
+				oldInstance.Name,
+				replacement.Name,
+				(deleteError or "") .. "\n" .. (replaceError or "")
+			)
+
+			-- We need to revert the failed swap to avoid losing the old instance and children.
+			for _, child in replacement:GetChildren() do
+				attemptReparent(child, oldInstance)
+			end
+			attemptReparent(oldInstance, oldParent)
+
+			-- Our replacement should never have existed in the first place, so we can just destroy it.
+			replacement:Destroy()
+			continue
+		end
+
+		if selectionMap[oldInstance] then
+			-- This is a bit funky, but it saves the order of Selection
+			-- which might matter for some use cases.
+			selection[selectionMap[oldInstance]] = replacement
+		end
+	end
+
+	local patchApplySuccess, unappliedPatch = pcall(self.__reconciler.applyPatch, self.__reconciler, refPatch)
+	if patchApplySuccess then
+		Selection:Set(selection)
+		return true, unappliedPatch
+	else
+		error(unappliedPatch)
+	end
+end
+
+function ServeSession:__applyPatch(patch)
+	local patchTimestamp = DateTime.now():FormatLocalTime("LTS", "en-us")
+	local historyRecording = ChangeHistoryService:TryBeginRecording("Rojo: Patch " .. patchTimestamp)
+	if not historyRecording then
+		-- There can only be one recording at a time
+		Log.debug("Failed to begin history recording for " .. patchTimestamp .. ". Another recording is in progress.")
+	end
+
+	Timer.start("precommitCallbacks")
+	-- Precommit callbacks must be serial in order to obey the contract that
+	-- they execute before commit
+	for _, callback in self.__precommitCallbacks do
+		local success, err = pcall(callback, patch, self.__instanceMap)
+		if not success then
+			Log.warn("Precommit hook errored: {}", err)
+		end
+	end
+	Timer.stop()
+
+	local patchApplySuccess, unappliedPatch = pcall(self.__reconciler.applyPatch, self.__reconciler, patch)
+	if not patchApplySuccess then
+		if historyRecording then
+			ChangeHistoryService:FinishRecording(historyRecording, Enum.FinishRecordingOperation.Commit)
+		end
+		-- This might make a weird stack trace but the only way applyPatch can
+		-- fail is if a bug occurs so it's probably fine.
+		error(unappliedPatch)
+	end
+
+	if Settings:get("enableSyncFallback") and not PatchSet.isEmpty(unappliedPatch) then
+		-- Some changes did not apply, let's try replacing them instead
+		local addedIdList = PatchSet.addedIdList(unappliedPatch)
+		local updatedIdList = PatchSet.updatedIdList(unappliedPatch)
+
+		Log.debug("ServeSession:__replaceInstances(unappliedPatch.added)")
+		Timer.start("ServeSession:__replaceInstances(unappliedPatch.added)")
+		local addSuccess, unappliedAddedRefs = self:__replaceInstances(addedIdList)
+		Timer.stop()
+
+		Log.debug("ServeSession:__replaceInstances(unappliedPatch.updated)")
+		Timer.start("ServeSession:__replaceInstances(unappliedPatch.updated)")
+		local updateSuccess, unappliedUpdateRefs = self:__replaceInstances(updatedIdList)
+		Timer.stop()
+
+		-- Update the unapplied patch to reflect which Instances were replaced successfully
+		if addSuccess then
+			table.clear(unappliedPatch.added)
+			PatchSet.assign(unappliedPatch, unappliedAddedRefs)
+		end
+		if updateSuccess then
+			table.clear(unappliedPatch.updated)
+			PatchSet.assign(unappliedPatch, unappliedUpdateRefs)
+		end
+	end
+
+	if not PatchSet.isEmpty(unappliedPatch) then
+		Log.debug(
+			"Could not apply all changes requested by the Rojo server:\n{}",
+			PatchSet.humanSummary(self.__instanceMap, unappliedPatch)
+		)
+	end
+
+	Timer.start("postcommitCallbacks")
+	-- Postcommit callbacks can be called with spawn since regardless of firing order, they are
+	-- guaranteed to be called after the commit
+	for _, callback in self.__postcommitCallbacks do
+		task.spawn(function()
+			local success, err = pcall(callback, patch, self.__instanceMap, unappliedPatch)
+			if not success then
+				Log.warn("Postcommit hook errored: {}", err)
+			end
+		end)
+	end
+	Timer.stop()
+
+	if historyRecording then
+		ChangeHistoryService:FinishRecording(historyRecording, Enum.FinishRecordingOperation.Commit)
+	end
+end
+
 function ServeSession:__initialSync(serverInfo)
 	return self.__apiContext:read({ serverInfo.rootInstanceId }):andThen(function(readResponseBody)
 		-- Tell the API Context that we're up-to-date with the version of
@@ -215,11 +461,13 @@ function ServeSession:__initialSync(serverInfo)
 		-- For any instances that line up with the Rojo server's view, start
 		-- tracking them in the reconciler.
 		Log.trace("Matching existing Roblox instances to Rojo IDs")
+		self:setLoadingText("Hydrating instance map...")
 		self.__reconciler:hydrate(readResponseBody.instances, serverInfo.rootInstanceId, game)
 
 		-- Calculate the initial patch to apply to the DataModel to catch us
 		-- up to what Rojo thinks the place should look like.
 		Log.trace("Computing changes that plugin needs to make to catch up to server...")
+		self:setLoadingText("Finding differences between server and Studio...")
 		local success, catchUpPatch =
 			self.__reconciler:diff(readResponseBody.instances, serverInfo.rootInstanceId, game)
 
@@ -280,15 +528,7 @@ function ServeSession:__initialSync(serverInfo)
 
 			return self.__apiContext:write(inversePatch)
 		elseif userDecision == "Accept" then
-			local unappliedPatch = self.__reconciler:applyPatch(catchUpPatch)
-
-			if not PatchSet.isEmpty(unappliedPatch) then
-				Log.debug(
-					"Could not apply all changes requested by the Rojo server:\n{}",
-					PatchSet.humanSummary(self.__instanceMap, unappliedPatch)
-				)
-			end
-
+			self:__applyPatch(catchUpPatch)
 			return Promise.resolve()
 		else
 			return Promise.reject("Invalid user decision: " .. userDecision)
@@ -311,14 +551,7 @@ function ServeSession:__mainSyncLoop()
 					Log.trace("Serve session {} retrieved {} messages", tostring(self), #messages)
 
 					for _, message in messages do
-						local unappliedPatch = self.__reconciler:applyPatch(message)
-
-						if not PatchSet.isEmpty(unappliedPatch) then
-							Log.debug(
-								"Could not apply all changes requested by the Rojo server:\n{}",
-								PatchSet.humanSummary(self.__instanceMap, unappliedPatch)
-							)
-						end
+						self:__applyPatch(message)
 					end
 				end)
 				:await()

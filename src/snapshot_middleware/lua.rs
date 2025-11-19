@@ -1,7 +1,7 @@
 use std::{path::Path, str};
 
 use anyhow::Context as _;
-use memofs::{IoResultExt, Vfs};
+use memofs::Vfs;
 use rbx_dom_weak::{
     types::{Enum, Variant},
     ustr, HashMapExt as _, UstrMap,
@@ -13,7 +13,7 @@ use crate::{
 };
 
 use super::{
-    dir::{dir_meta, snapshot_dir_no_meta, syncback_dir_no_meta},
+    dir::{snapshot_dir_no_meta, syncback_dir_no_meta},
     meta_file::{AdjacentMetadata, DirectoryMetadata},
     PathExt as _,
 };
@@ -39,6 +39,7 @@ pub fn snapshot_lua(
     script_type: ScriptType,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let run_context_enums = &rbx_reflection_database::get()
+        .unwrap()
         .enums
         .get("RunContext")
         .expect("Unable to get RunContext enums!")
@@ -80,8 +81,6 @@ pub fn snapshot_lua(
         );
     }
 
-    let meta_path = path.with_file_name(format!("{}.meta.json", name));
-
     let mut snapshot = InstanceSnapshot::new()
         .name(name)
         .class_name(class_name)
@@ -89,14 +88,11 @@ pub fn snapshot_lua(
         .metadata(
             InstanceMetadata::new()
                 .instigating_source(path)
-                .relevant_paths(vec![path.to_path_buf(), meta_path.clone()])
+                .relevant_paths(vec![path.to_path_buf()])
                 .context(context),
         );
 
-    if let Some(meta_contents) = vfs.read(&meta_path).with_not_found()? {
-        let mut metadata = AdjacentMetadata::from_slice(&meta_contents, meta_path)?;
-        metadata.apply_all(&mut snapshot)?;
-    }
+    AdjacentMetadata::read_and_apply_all(vfs, path, name, &mut snapshot)?;
 
     Ok(Some(snapshot))
 }
@@ -138,9 +134,7 @@ pub fn snapshot_lua_init(
         .relevant_paths
         .push(init_path.to_owned());
 
-    if let Some(mut meta) = dir_meta(vfs, folder_path)? {
-        meta.apply_all(&mut init_snapshot)?;
-    }
+    DirectoryMetadata::read_and_apply_all(vfs, folder_path, &mut init_snapshot)?;
 
     Ok(Some(init_snapshot))
 }
@@ -387,7 +381,6 @@ mod test {
         });
     }
 
-    #[ignore = "init.lua functionality has moved to the root snapshot function"]
     #[test]
     fn init_module_from_vfs() {
         let mut imfs = InMemoryFs::new();
@@ -399,11 +392,41 @@ mod test {
 
         let vfs = Vfs::new(imfs);
 
-        let instance_snapshot = snapshot_lua(
+        let instance_snapshot = snapshot_lua_init(
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
             &vfs,
-            Path::new("/root"),
-            "root",
+            Path::new("/root/init.lua"),
+            ScriptType::Module,
+        )
+        .unwrap()
+        .unwrap();
+
+        insta::with_settings!({ sort_maps => true }, {
+            insta::assert_yaml_snapshot!(instance_snapshot);
+        });
+    }
+
+    #[test]
+    fn init_module_from_vfs_with_meta() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
+            "/root",
+            VfsSnapshot::dir([
+                ("init.lua", VfsSnapshot::file("Hello!")),
+                (
+                    "init.meta.json",
+                    VfsSnapshot::file(r#"{"id": "manually specified"}"#),
+                ),
+            ]),
+        )
+        .unwrap();
+
+        let vfs = Vfs::new(imfs);
+
+        let instance_snapshot = snapshot_lua_init(
+            &InstanceContext::with_emit_legacy_scripts(Some(true)),
+            &vfs,
+            Path::new("/root/init.lua"),
             ScriptType::Module,
         )
         .unwrap()

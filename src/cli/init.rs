@@ -1,45 +1,49 @@
-use std::io::{self, Write};
-use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::str::FromStr;
+use std::{
+    collections::VecDeque,
+    path::{Path, PathBuf},
+};
+use std::{
+    ffi::OsStr,
+    io::{self, Write},
+};
 
 use anyhow::{bail, format_err};
 use clap::Parser;
 use fs_err as fs;
 use fs_err::OpenOptions;
+use memofs::{InMemoryFs, Vfs, VfsSnapshot};
 
 use super::resolve_path;
 
-static MODEL_PROJECT: &str =
-    include_str!("../../assets/default-model-project/default.project.json");
-static MODEL_README: &str = include_str!("../../assets/default-model-project/README.md");
-static MODEL_INIT: &str = include_str!("../../assets/default-model-project/src-init.luau");
-static MODEL_GIT_IGNORE: &str = include_str!("../../assets/default-model-project/gitignore.txt");
+const GIT_IGNORE_PLACEHOLDER: &str = "gitignore.txt";
 
-static PLACE_PROJECT: &str =
-    include_str!("../../assets/default-place-project/default.project.json");
-static PLACE_README: &str = include_str!("../../assets/default-place-project/README.md");
-static PLACE_GIT_IGNORE: &str = include_str!("../../assets/default-place-project/gitignore.txt");
-
-static PLUGIN_PROJECT: &str =
-    include_str!("../../assets/default-plugin-project/default.project.json");
-static PLUGIN_README: &str = include_str!("../../assets/default-plugin-project/README.md");
-static PLUGIN_GIT_IGNORE: &str = include_str!("../../assets/default-plugin-project/gitignore.txt");
+static TEMPLATE_BINCODE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/templates.bincode"));
 
 /// Initializes a new Rojo project.
+///
+/// By default, this will attempt to initialize a 'git' repository in the
+/// project directory if `git` is installed. To avoid this, pass `--skip-git`.
 #[derive(Debug, Parser)]
 pub struct InitCommand {
     /// Path to the place to create the project. Defaults to the current directory.
     #[clap(default_value = "")]
     pub path: PathBuf,
 
-    /// The kind of project to create, 'place', 'plugin', or 'model'. Defaults to place.
+    /// The kind of project to create, 'place', 'plugin', or 'model'.
     #[clap(long, default_value = "place")]
     pub kind: InitKind,
+
+    /// Skips the initialization of a git repository.
+    #[clap(long)]
+    pub skip_git: bool,
 }
 
 impl InitCommand {
     pub fn run(self) -> anyhow::Result<()> {
+        let template = self.kind.template();
+
         let base_path = resolve_path(&self.path);
         fs::create_dir_all(&base_path)?;
 
@@ -53,10 +57,51 @@ impl InitCommand {
             name: project_name.to_owned(),
         };
 
-        match self.kind {
-            InitKind::Place => init_place(&base_path, project_params)?,
-            InitKind::Model => init_model(&base_path, project_params)?,
-            InitKind::Plugin => init_plugin(&base_path, project_params)?,
+        println!(
+            "Creating new {:?} project '{}'",
+            self.kind, project_params.name
+        );
+
+        let vfs = Vfs::new(template);
+        vfs.set_watch_enabled(false);
+
+        let mut queue = VecDeque::with_capacity(8);
+        for entry in vfs.read_dir("")? {
+            queue.push_back(entry?.path().to_path_buf())
+        }
+
+        while let Some(mut path) = queue.pop_front() {
+            let metadata = vfs.metadata(&path)?;
+            if metadata.is_dir() {
+                fs_err::create_dir(base_path.join(&path))?;
+                for entry in vfs.read_dir(&path)? {
+                    queue.push_back(entry?.path().to_path_buf());
+                }
+            } else {
+                let content = vfs.read_to_string_lf_normalized(&path)?;
+                if let Some(file_stem) = path.file_name().and_then(OsStr::to_str) {
+                    if file_stem == GIT_IGNORE_PLACEHOLDER && !self.skip_git {
+                        path.set_file_name(".gitignore");
+                    }
+                }
+                write_if_not_exists(
+                    &base_path.join(&path),
+                    &project_params.render_template(&content),
+                )?;
+            }
+        }
+
+        if !self.skip_git && should_git_init(&base_path) {
+            log::debug!("Initializing Git repository...");
+
+            let status = Command::new("git")
+                .arg("init")
+                .current_dir(&base_path)
+                .status()?;
+
+            if !status.success() {
+                bail!("git init failed: status code {:?}", status.code());
+            }
         }
 
         println!("Created project successfully.");
@@ -78,6 +123,32 @@ pub enum InitKind {
     Plugin,
 }
 
+impl InitKind {
+    fn template(&self) -> InMemoryFs {
+        let template_path = match self {
+            Self::Place => "place",
+            Self::Model => "model",
+            Self::Plugin => "plugin",
+        };
+
+        let snapshot: VfsSnapshot = bincode::deserialize(TEMPLATE_BINCODE)
+            .expect("Rojo's templates were not properly packed into Rojo's binary");
+
+        if let VfsSnapshot::Dir { mut children } = snapshot {
+            if let Some(template) = children.remove(template_path) {
+                let mut fs = InMemoryFs::new();
+                fs.load_snapshot("", template)
+                    .expect("loading a template in memory should never fail");
+                fs
+            } else {
+                panic!("template for project type {:?} is missing", self)
+            }
+        } else {
+            panic!("Rojo's templates were packed as a file instead of a directory")
+        }
+    }
+}
+
 impl FromStr for InitKind {
     type Err = anyhow::Error;
 
@@ -94,92 +165,6 @@ impl FromStr for InitKind {
     }
 }
 
-fn init_place(base_path: &Path, project_params: ProjectParams) -> anyhow::Result<()> {
-    println!("Creating new place project '{}'", project_params.name);
-
-    let project_file = project_params.render_template(PLACE_PROJECT);
-    try_create_project(base_path, &project_file)?;
-
-    let readme = project_params.render_template(PLACE_README);
-    write_if_not_exists(&base_path.join("README.md"), &readme)?;
-
-    let src = base_path.join("src");
-    fs::create_dir_all(&src)?;
-
-    let src_shared = src.join("shared");
-    fs::create_dir_all(src.join(&src_shared))?;
-
-    let src_server = src.join("server");
-    fs::create_dir_all(src.join(&src_server))?;
-
-    let src_client = src.join("client");
-    fs::create_dir_all(src.join(&src_client))?;
-
-    write_if_not_exists(
-        &src_shared.join("Hello.luau"),
-        "return function()\n\tprint(\"Hello, world!\")\nend",
-    )?;
-
-    write_if_not_exists(
-        &src_server.join("init.server.luau"),
-        "print(\"Hello world, from server!\")",
-    )?;
-
-    write_if_not_exists(
-        &src_client.join("init.client.luau"),
-        "print(\"Hello world, from client!\")",
-    )?;
-
-    let git_ignore = project_params.render_template(PLACE_GIT_IGNORE);
-    try_git_init(base_path, &git_ignore)?;
-
-    Ok(())
-}
-
-fn init_model(base_path: &Path, project_params: ProjectParams) -> anyhow::Result<()> {
-    println!("Creating new model project '{}'", project_params.name);
-
-    let project_file = project_params.render_template(MODEL_PROJECT);
-    try_create_project(base_path, &project_file)?;
-
-    let readme = project_params.render_template(MODEL_README);
-    write_if_not_exists(&base_path.join("README.md"), &readme)?;
-
-    let src = base_path.join("src");
-    fs::create_dir_all(&src)?;
-
-    let init = project_params.render_template(MODEL_INIT);
-    write_if_not_exists(&src.join("init.luau"), &init)?;
-
-    let git_ignore = project_params.render_template(MODEL_GIT_IGNORE);
-    try_git_init(base_path, &git_ignore)?;
-
-    Ok(())
-}
-
-fn init_plugin(base_path: &Path, project_params: ProjectParams) -> anyhow::Result<()> {
-    println!("Creating new plugin project '{}'", project_params.name);
-
-    let project_file = project_params.render_template(PLUGIN_PROJECT);
-    try_create_project(base_path, &project_file)?;
-
-    let readme = project_params.render_template(PLUGIN_README);
-    write_if_not_exists(&base_path.join("README.md"), &readme)?;
-
-    let src = base_path.join("src");
-    fs::create_dir_all(&src)?;
-
-    write_if_not_exists(
-        &src.join("init.server.luau"),
-        "print(\"Hello world, from plugin!\")\n",
-    )?;
-
-    let git_ignore = project_params.render_template(PLUGIN_GIT_IGNORE);
-    try_git_init(base_path, &git_ignore)?;
-
-    Ok(())
-}
-
 /// Contains parameters used in templates to create a project.
 struct ProjectParams {
     name: String,
@@ -192,23 +177,6 @@ impl ProjectParams {
             .replace("{project_name}", &self.name)
             .replace("{rojo_version}", env!("CARGO_PKG_VERSION"))
     }
-}
-
-/// Attempt to initialize a Git repository if necessary, and create .gitignore.
-fn try_git_init(path: &Path, git_ignore: &str) -> Result<(), anyhow::Error> {
-    if should_git_init(path) {
-        log::debug!("Initializing Git repository...");
-
-        let status = Command::new("git").arg("init").current_dir(path).status()?;
-
-        if !status.success() {
-            bail!("git init failed: status code {:?}", status.code());
-        }
-    }
-
-    write_if_not_exists(&path.join(".gitignore"), git_ignore)?;
-
-    Ok(())
 }
 
 /// Tells whether we should initialize a Git repository inside the given path.
@@ -242,32 +210,6 @@ fn write_if_not_exists(path: &Path, contents: &str) -> Result<(), anyhow::Error>
         Err(err) => {
             return match err.kind() {
                 io::ErrorKind::AlreadyExists => return Ok(()),
-                _ => Err(err.into()),
-            }
-        }
-    };
-
-    file.write_all(contents.as_bytes())?;
-
-    Ok(())
-}
-
-/// Try to create a project file and fail if it already exists.
-fn try_create_project(base_path: &Path, contents: &str) -> Result<(), anyhow::Error> {
-    let project_path = base_path.join("default.project.json");
-
-    let file_res = OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .open(&project_path);
-
-    let mut file = match file_res {
-        Ok(file) => file,
-        Err(err) => {
-            return match err.kind() {
-                io::ErrorKind::AlreadyExists => {
-                    bail!("Project file already exists: {}", project_path.display())
-                }
                 _ => Err(err.into()),
             }
         }

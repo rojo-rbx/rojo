@@ -1,0 +1,6 @@
+{
+  "name": "forced_parent",
+  "tree": {
+    "$className": "Attachment"
+  }
+}

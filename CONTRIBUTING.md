@@ -37,7 +37,7 @@ bash scripts/unit-test-plugin.sh
 ## Documentation
 Documentation impacts way more people than the individual lines of code we write.
 
-If you find any problems in documentation, including typos, bad grammar, misleading phrasing, or missing content, feel free to file issues and pull requests to fix them.
+If you find any problems in the documentation, including typos, bad grammar, misleading phrasing, or missing content, feel free to file issues and pull requests to fix them.
 
 ## Bug Reports and Feature Requests
 Most of the tools around Rojo try to be clear when an issue is a bug. Even if they aren't, sometimes things don't work quite right.
