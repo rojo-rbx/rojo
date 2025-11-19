@@ -83,6 +83,7 @@ pub fn variant_eq(variant_a: &Variant, variant_b: &Variant) -> bool {
         (Variant::Int32(a), Variant::Int32(b)) => a == b,
         (Variant::Int64(a), Variant::Int64(b)) => a == b,
         (Variant::MaterialColors(a), Variant::MaterialColors(b)) => a.encode() == b.encode(),
+        (Variant::NetAssetRef(a), Variant::NetAssetRef(b)) => a == b,
         (Variant::NumberRange(a), Variant::NumberRange(b)) => {
             approx_eq!(f32, a.max, b.max) && approx_eq!(f32, a.min, b.min)
         }
@@ -123,6 +124,7 @@ pub fn variant_eq(variant_a: &Variant, variant_b: &Variant) -> bool {
                     && approx_eq!(f32, a2.friction(), b2.friction())
                     && approx_eq!(f32, a2.elasticity_weight(), b2.elasticity_weight())
                     && approx_eq!(f32, a2.friction_weight(), b2.friction_weight())
+                    && approx_eq!(f32, a2.acoustic_absorption(), b2.acoustic_absorption())
             }
             _ => false,
         },
