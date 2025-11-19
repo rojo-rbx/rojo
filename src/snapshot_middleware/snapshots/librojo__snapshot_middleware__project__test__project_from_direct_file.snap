@@ -12,6 +12,7 @@ metadata:
   context:
     emit_legacy_scripts: true
   specified_id: ~
+  middleware: ~
 name: direct-project
 class_name: Model
 properties: {}

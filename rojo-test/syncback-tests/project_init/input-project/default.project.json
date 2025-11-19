@@ -1,0 +1,11 @@
+{
+  "name": "project_init",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "script": {
+        "$path": "src"
+      }
+    }
+  }
+}

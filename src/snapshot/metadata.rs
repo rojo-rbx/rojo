@@ -62,6 +62,10 @@ pub struct InstanceMetadata {
 
     /// Indicates the ID used for Ref properties pointing to this Instance.
     pub specified_id: Option<RojoRef>,
+
+    /// The Middleware that was used to create this Instance. Should generally
+    /// not be `None` except if the snapshotting process is not completed.
+    pub middleware: Option<Middleware>,
 }
 
 impl InstanceMetadata {
@@ -72,6 +76,7 @@ impl InstanceMetadata {
             relevant_paths: Vec::new(),
             context: InstanceContext::default(),
             specified_id: None,
+            middleware: None,
         }
     }
 
@@ -106,6 +111,13 @@ impl InstanceMetadata {
     pub fn specified_id(self, id: Option<RojoRef>) -> Self {
         Self {
             specified_id: id,
+            ..self
+        }
+    }
+
+    pub fn middleware(self, middleware: Middleware) -> Self {
+        Self {
+            middleware: Some(middleware),
             ..self
         }
     }
@@ -215,22 +227,40 @@ impl PathIgnoreRule {
     }
 }
 
+/// Represents where a particular Instance or InstanceSnapshot came from.
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub enum InstigatingSource {
+    /// The path the Instance was made from.
     Path(#[serde(serialize_with = "path_serializer::serialize_absolute")] PathBuf),
-    ProjectNode(
-        #[serde(serialize_with = "path_serializer::serialize_absolute")] PathBuf,
-        String,
-        Box<ProjectNode>,
-        Option<String>,
-    ),
+    /// The node in a Project that the Instance was made from.
+    ProjectNode {
+        #[serde(serialize_with = "path_serializer::serialize_absolute")]
+        path: PathBuf,
+        name: String,
+        node: ProjectNode,
+        parent_class: Option<String>,
+    },
+}
+
+impl InstigatingSource {
+    pub fn path(&self) -> &Path {
+        match self {
+            Self::Path(path) => path.as_path(),
+            Self::ProjectNode { path, .. } => path.as_path(),
+        }
+    }
 }
 
 impl fmt::Debug for InstigatingSource {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             InstigatingSource::Path(path) => write!(formatter, "Path({})", path.display()),
-            InstigatingSource::ProjectNode(path, name, node, parent_class) => write!(
+            InstigatingSource::ProjectNode {
+                name,
+                node,
+                path,
+                parent_class,
+            } => write!(
                 formatter,
                 "ProjectNode({}: {:?}) from path {} and parent class {:?}",
                 name,

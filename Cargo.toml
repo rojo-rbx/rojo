@@ -55,7 +55,7 @@ memofs = { version = "0.3.0", path = "crates/memofs" }
 # rbx_reflection_database = { path = "../rbx-dom/rbx_reflection_database" }
 # rbx_xml = { path = "../rbx-dom/rbx_xml" }
 
-rbx_binary = "2.0.0"
+rbx_binary = { version = "2.0.0", features = ["unstable_text_format"] }
 rbx_dom_weak = "4.0.0"
 rbx_reflection = "6.0.0"
 rbx_reflection_database = "2.0.1"
@@ -96,6 +96,10 @@ clap = { version = "3.2.25", features = ["derive"] }
 profiling = "1.0.15"
 yaml-rust2 = "0.10.3"
 data-encoding = "2.8.0"
+
+blake3 = "1.5.0"
+float-cmp = "0.9.0"
+indexmap = { version = "2.10.0", features = ["serde"] }
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.10.1"

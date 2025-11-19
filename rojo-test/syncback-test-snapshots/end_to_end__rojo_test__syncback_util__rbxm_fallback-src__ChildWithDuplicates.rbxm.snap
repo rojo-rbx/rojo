@@ -1,0 +1,73 @@
+---
+source: tests/rojo_test/syncback_util.rs
+expression: src/ChildWithDuplicates.rbxm
+---
+num_types: 1
+num_instances: 3
+chunks:
+  - Inst:
+      type_id: 0
+      type_name: Folder
+      object_format: 0
+      referents:
+        - 0
+        - 1
+        - 2
+  - Prop:
+      type_id: 0
+      prop_name: AttributesSerialize
+      prop_type: String
+      values:
+        - ""
+        - ""
+        - ""
+  - Prop:
+      type_id: 0
+      prop_name: Capabilities
+      prop_type: SecurityCapabilities
+      values:
+        - 0
+        - 0
+        - 0
+  - Prop:
+      type_id: 0
+      prop_name: Name
+      prop_type: String
+      values:
+        - DuplicateChild
+        - DuplicateChild
+        - ChildWithDuplicates
+  - Prop:
+      type_id: 0
+      prop_name: DefinesCapabilities
+      prop_type: Bool
+      values:
+        - false
+        - false
+        - false
+  - Prop:
+      type_id: 0
+      prop_name: SourceAssetId
+      prop_type: Int64
+      values:
+        - -1
+        - -1
+        - -1
+  - Prop:
+      type_id: 0
+      prop_name: Tags
+      prop_type: String
+      values:
+        - ""
+        - ""
+        - ""
+  - Prnt:
+      version: 0
+      links:
+        - - 0
+          - 2
+        - - 1
+          - 2
+        - - 2
+          - -1
+  - End

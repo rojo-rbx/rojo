@@ -1,0 +1,11 @@
+---
+source: tests/tests/syncback.rs
+assertion_line: 28
+expression: src/Target_2.model.json
+---
+{
+  "className": "Folder",
+  "attributes": {
+    "Rojo_Id": "0bd3e9e11879191708a2bc4a00000c20"
+  }
+}

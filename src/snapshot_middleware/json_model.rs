@@ -1,17 +1,19 @@
-use std::{borrow::Cow, collections::HashMap, path::Path, str};
+use std::{borrow::Cow, path::Path, str};
 
 use anyhow::Context;
+use indexmap::IndexMap;
 use memofs::Vfs;
 use rbx_dom_weak::{
-    types::{Attributes, Ref},
+    types::{Attributes, Ref, Variant},
     HashMapExt as _, Ustr, UstrMap,
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     json,
     resolution::UnresolvedValue,
     snapshot::{InstanceContext, InstanceSnapshot},
+    syncback::{filter_properties_preallocated, FsSnapshot, SyncbackReturn, SyncbackSnapshot},
     RojoRef,
 };
 
@@ -63,13 +65,86 @@ pub fn snapshot_json_model(
     Ok(Some(snapshot))
 }
 
-#[derive(Debug, Deserialize)]
+pub fn syncback_json_model<'sync>(
+    snapshot: &SyncbackSnapshot<'sync>,
+) -> anyhow::Result<SyncbackReturn<'sync>> {
+    let mut property_buffer = Vec::with_capacity(snapshot.new_inst().properties.len());
+
+    let mut model = json_model_from_pair(snapshot, &mut property_buffer, snapshot.new);
+    // We don't need the name on the root, but we do for children.
+    model.name = None;
+
+    Ok(SyncbackReturn {
+        fs_snapshot: FsSnapshot::new().with_added_file(
+            &snapshot.path,
+            serde_json::to_vec_pretty(&model).context("failed to serialize new JSON Model")?,
+        ),
+        children: Vec::new(),
+        removed_children: Vec::new(),
+    })
+}
+
+fn json_model_from_pair<'sync>(
+    snapshot: &SyncbackSnapshot<'sync>,
+    prop_buffer: &mut Vec<(Ustr, &'sync Variant)>,
+    new: Ref,
+) -> JsonModel {
+    let new_inst = snapshot
+        .get_new_instance(new)
+        .expect("all new referents passed to json_model_from_pair should exist");
+
+    filter_properties_preallocated(snapshot.project(), new_inst, prop_buffer);
+
+    let mut properties = IndexMap::new();
+    let mut attributes = IndexMap::new();
+    for (name, value) in prop_buffer.drain(..) {
+        match value {
+            Variant::Attributes(attrs) => {
+                for (attr_name, attr_value) in attrs.iter() {
+                    // We (probably) don't want to preserve internal attributes,
+                    // only user defined ones.
+                    if attr_name.starts_with("RBX") {
+                        continue;
+                    }
+                    attributes.insert(
+                        attr_name.clone(),
+                        UnresolvedValue::from_variant_unambiguous(attr_value.clone()),
+                    );
+                }
+            }
+            _ => {
+                properties.insert(
+                    name,
+                    UnresolvedValue::from_variant(value.clone(), &new_inst.class, &name),
+                );
+            }
+        }
+    }
+
+    let mut children = Vec::with_capacity(new_inst.children().len());
+
+    for new_child_ref in new_inst.children() {
+        children.push(json_model_from_pair(snapshot, prop_buffer, *new_child_ref))
+    }
+
+    JsonModel {
+        name: Some(new_inst.name.clone()),
+        class_name: new_inst.class,
+        children,
+        properties,
+        attributes,
+        id: None,
+        schema: None,
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct JsonModel {
     #[serde(rename = "$schema", skip_serializing_if = "Option::is_none")]
     schema: Option<String>,
 
-    #[serde(alias = "Name")]
+    #[serde(alias = "Name", skip_serializing_if = "Option::is_none")]
     name: Option<String>,
 
     #[serde(alias = "ClassName")]
@@ -87,13 +162,13 @@ struct JsonModel {
 
     #[serde(
         alias = "Properties",
-        default = "UstrMap::new",
-        skip_serializing_if = "HashMap::is_empty"
+        default,
+        skip_serializing_if = "IndexMap::is_empty"
     )]
-    properties: UstrMap<UnresolvedValue>,
+    properties: IndexMap<Ustr, UnresolvedValue>,
 
-    #[serde(default = "HashMap::new", skip_serializing_if = "HashMap::is_empty")]
-    attributes: HashMap<String, UnresolvedValue>,
+    #[serde(default = "IndexMap::new", skip_serializing_if = "IndexMap::is_empty")]
+    attributes: IndexMap<String, UnresolvedValue>,
 }
 
 impl JsonModel {

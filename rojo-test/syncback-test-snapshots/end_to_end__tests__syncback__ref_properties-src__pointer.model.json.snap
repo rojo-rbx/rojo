@@ -1,0 +1,10 @@
+---
+source: tests/tests/syncback.rs
+expression: src/pointer.model.json
+---
+{
+  "className": "ObjectValue",
+  "attributes": {
+    "Rojo_Target_Value": "test referent id"
+  }
+}

@@ -5,24 +5,32 @@ use std::path::Path;
 
 use serde::{ser::SerializeSeq, Serialize, Serializer};
 
-pub fn serialize_absolute<S, T>(path: T, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-    T: AsRef<Path>,
-{
+/// Converts the provided value into a String with all directory separators
+/// converted into `/`.
+pub fn display_absolute<T: AsRef<Path>>(path: T) -> String {
     let as_str = path
         .as_ref()
         .as_os_str()
         .to_str()
         .expect("Invalid Unicode in file path, cannot serialize");
-    let replaced = as_str.replace('\\', "/");
+    as_str.replace('\\', "/")
+}
 
-    serializer.serialize_str(&replaced)
+/// A serializer for serde that serialize a value with all directory separators
+/// converted into `/`.
+pub fn serialize_absolute<S, T>(path: T, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+    T: AsRef<Path>,
+{
+    serializer.serialize_str(&display_absolute(path))
 }
 
 #[derive(Serialize)]
 struct WithAbsolute<'a>(#[serde(serialize_with = "serialize_absolute")] &'a Path);
 
+/// A serializer for serde that serialize a list of values with all directory
+/// separators converted into `/`.
 pub fn serialize_vec_absolute<S, T>(paths: &[T], serializer: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,

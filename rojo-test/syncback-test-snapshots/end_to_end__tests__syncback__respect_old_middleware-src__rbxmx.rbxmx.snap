@@ -1,0 +1,16 @@
+---
+source: tests/tests/syncback.rs
+expression: src/rbxmx.rbxmx
+---
+<roblox version="4">
+  <Item class="Folder" referent="0">
+    <Properties>
+      <string name="Name">rbxmx</string>
+      <BinaryString name="AttributesSerialize"></BinaryString>
+      <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+      <bool name="DefinesCapabilities">false</bool>
+      <int64 name="SourceAssetId">-1</int64>
+      <BinaryString name="Tags">cmJ4bXg=</BinaryString>
+    </Properties>
+  </Item>
+</roblox>

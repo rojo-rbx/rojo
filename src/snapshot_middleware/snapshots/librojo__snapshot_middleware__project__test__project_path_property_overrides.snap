@@ -13,6 +13,7 @@ metadata:
   context:
     emit_legacy_scripts: true
   specified_id: ~
+  middleware: project
 name: path-property-override
 class_name: StringValue
 properties:
