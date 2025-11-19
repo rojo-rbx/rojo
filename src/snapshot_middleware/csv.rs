@@ -79,10 +79,8 @@ pub fn snapshot_csv_init(
 
     init_snapshot.children = dir_snapshot.children;
     init_snapshot.metadata = dir_snapshot.metadata;
-    init_snapshot
-        .metadata
-        .relevant_paths
-        .push(init_path.to_owned());
+    // The directory snapshot middleware includes all possible init paths
+    // so we don't need to add it here.
 
     DirectoryMetadata::read_and_apply_all(vfs, folder_path, &mut init_snapshot)?;
 
