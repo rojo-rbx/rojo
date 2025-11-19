@@ -9,7 +9,6 @@ metadata:
     Path: /foo
   relevant_paths:
     - /foo
-    - /foo/init.meta.json
     - /foo/init.lua
     - /foo/init.luau
     - /foo/init.server.lua
@@ -17,6 +16,8 @@ metadata:
     - /foo/init.client.lua
     - /foo/init.client.luau
     - /foo/init.csv
+    - /foo/init.meta.json
+    - /foo/init.meta.jsonc
   context:
     emit_legacy_scripts: true
   specified_id: ~
@@ -24,4 +25,3 @@ name: foo
 class_name: Folder
 properties: {}
 children: []
-

@@ -1,22 +1,22 @@
 ---
-source: src/snapshot_middleware/lua.rs
+source: src/snapshot_middleware/toml.rs
 expression: instance_snapshot
 ---
 snapshot_id: "00000000000000000000000000000000"
 metadata:
   ignore_unknown_instances: false
   instigating_source:
-    Path: /foo.client.lua
+    Path: foo.toml
   relevant_paths:
-    - /foo.client.lua
-    - /foo.meta.json
-    - /foo.meta.jsonc
+    - foo.toml
+    - foo.meta.json
+    - foo.meta.jsonc
   context:
     emit_legacy_scripts: true
-  specified_id: ~
+  specified_id: manually specified
 name: foo
-class_name: LocalScript
+class_name: ModuleScript
 properties:
   Source:
-    String: Hello there!
+    String: "return {\n\tarray = {1, 2, 3},\n\tbool = false,\n\tint = 123,\n}"
 children: []

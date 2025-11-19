@@ -1,16 +1,16 @@
 use std::{collections::BTreeMap, path::Path};
 
 use anyhow::Context;
-use memofs::{IoResultExt, Vfs};
+use memofs::Vfs;
 use rbx_dom_weak::ustr;
 use serde::Serialize;
 
-use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
-
-use super::{
-    dir::{dir_meta, snapshot_dir_no_meta},
-    meta_file::AdjacentMetadata,
+use crate::{
+    snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
+    snapshot_middleware::meta_file::DirectoryMetadata,
 };
+
+use super::{dir::snapshot_dir_no_meta, meta_file::AdjacentMetadata};
 
 pub fn snapshot_csv(
     _context: &InstanceContext,
@@ -18,7 +18,6 @@ pub fn snapshot_csv(
     path: &Path,
     name: &str,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let meta_path = path.with_file_name(format!("{}.meta.json", name));
     let contents = vfs.read(path)?;
 
     let table_contents = convert_localization_csv(&contents).with_context(|| {
@@ -35,13 +34,10 @@ pub fn snapshot_csv(
         .metadata(
             InstanceMetadata::new()
                 .instigating_source(path)
-                .relevant_paths(vec![path.to_path_buf(), meta_path.clone()]),
+                .relevant_paths(vec![path.to_path_buf()]),
         );
 
-    if let Some(meta_contents) = vfs.read(&meta_path).with_not_found()? {
-        let mut metadata = AdjacentMetadata::from_slice(&meta_contents, meta_path)?;
-        metadata.apply_all(&mut snapshot)?;
-    }
+    AdjacentMetadata::read_and_apply_all(vfs, path, name, &mut snapshot)?;
 
     Ok(Some(snapshot))
 }
@@ -75,9 +71,7 @@ pub fn snapshot_csv_init(
     init_snapshot.children = dir_snapshot.children;
     init_snapshot.metadata = dir_snapshot.metadata;
 
-    if let Some(mut meta) = dir_meta(vfs, folder_path)? {
-        meta.apply_all(&mut init_snapshot)?;
-    }
+    DirectoryMetadata::read_and_apply_all(vfs, folder_path, &mut init_snapshot)?;
 
     Ok(Some(init_snapshot))
 }
@@ -222,5 +216,73 @@ Ack,Ack!,,An exclamation of despair,¡Ay!"#,
         .unwrap();
 
         insta::assert_yaml_snapshot!(instance_snapshot);
+    }
+
+    #[test]
+    fn csv_init() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
+            "/root",
+            VfsSnapshot::dir([(
+                "init.csv",
+                VfsSnapshot::file(
+                    r#"
+Key,Source,Context,Example,es
+Ack,Ack!,,An exclamation of despair,¡Ay!"#,
+                ),
+            )]),
+        )
+        .unwrap();
+
+        let vfs = Vfs::new(imfs);
+
+        let instance_snapshot = snapshot_csv_init(
+            &InstanceContext::with_emit_legacy_scripts(Some(true)),
+            &vfs,
+            Path::new("/root/init.csv"),
+        )
+        .unwrap()
+        .unwrap();
+
+        insta::with_settings!({ sort_maps => true }, {
+            insta::assert_yaml_snapshot!(instance_snapshot);
+        });
+    }
+
+    #[test]
+    fn csv_init_with_meta() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
+            "/root",
+            VfsSnapshot::dir([
+                (
+                    "init.csv",
+                    VfsSnapshot::file(
+                        r#"
+Key,Source,Context,Example,es
+Ack,Ack!,,An exclamation of despair,¡Ay!"#,
+                    ),
+                ),
+                (
+                    "init.meta.json",
+                    VfsSnapshot::file(r#"{"id": "manually specified"}"#),
+                ),
+            ]),
+        )
+        .unwrap();
+
+        let vfs = Vfs::new(imfs);
+
+        let instance_snapshot = snapshot_csv_init(
+            &InstanceContext::with_emit_legacy_scripts(Some(true)),
+            &vfs,
+            Path::new("/root/init.csv"),
+        )
+        .unwrap()
+        .unwrap();
+
+        insta::with_settings!({ sort_maps => true }, {
+            insta::assert_yaml_snapshot!(instance_snapshot);
+        });
     }
 }
