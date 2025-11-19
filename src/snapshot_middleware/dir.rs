@@ -4,7 +4,7 @@ use std::{
 };
 
 use anyhow::Context;
-use memofs::{DirEntry, IoResultExt, Vfs};
+use memofs::{DirEntry, Vfs};
 
 use crate::{
     snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot, InstigatingSource},
@@ -61,13 +61,6 @@ pub fn snapshot_dir_no_meta(
             snapshot_children.push(child_snapshot);
         }
     }
-
-    let instance_name = path
-        .file_name()
-        .expect("Could not extract file name")
-        .to_str()
-        .ok_or_else(|| anyhow::anyhow!("File name was not valid UTF-8: {}", path.display()))?
-        .to_string();
 
     let relevant_paths = vec![
         path.to_path_buf(),

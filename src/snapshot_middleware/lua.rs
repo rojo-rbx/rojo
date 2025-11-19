@@ -396,6 +396,7 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
             &vfs,
             Path::new("/root/init.lua"),
+            "root",
             ScriptType::Module,
         )
         .unwrap()
@@ -427,6 +428,7 @@ mod test {
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
             &vfs,
             Path::new("/root/init.lua"),
+            "root",
             ScriptType::Module,
         )
         .unwrap()

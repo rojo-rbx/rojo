@@ -49,7 +49,7 @@ impl UnresolvedValue {
                 Variant::Enum(rbx_enum) => {
                     if let Some(property) = descriptor {
                         if let DataType::Enum(enum_name) = &property.data_type {
-                            let database = rbx_reflection_database::get();
+                            let database = rbx_reflection_database::get().unwrap();
                             if let Some(enum_descriptor) = database.enums.get(enum_name) {
                                 for (variant_name, id) in &enum_descriptor.items {
                                     if *id == rbx_enum.to_u32() {

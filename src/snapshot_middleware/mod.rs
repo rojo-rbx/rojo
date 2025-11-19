@@ -129,7 +129,7 @@ fn get_dir_middleware<'path>(
     });
 
     for default_project_name in DEFAULT_PROJECT_NAMES {
-        let project_path = path.join(default_project_name);
+        let project_path = dir_path.join(default_project_name);
         if vfs.metadata(&project_path).with_not_found()?.is_some() {
             return Ok((Middleware::Project, dir_name, project_path));
         }

@@ -20,8 +20,6 @@ use super::{
     PathExt as _,
 };
 
-use super::{dir::snapshot_dir_no_meta, meta_file::AdjacentMetadata};
-
 pub fn snapshot_csv(
     _context: &InstanceContext,
     vfs: &Vfs,
@@ -384,6 +382,7 @@ Ack,Ack!,,An exclamation of despair,¡Ay!"#,
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
             &vfs,
             Path::new("/root/init.csv"),
+            "root",
         )
         .unwrap()
         .unwrap();
@@ -421,6 +420,7 @@ Ack,Ack!,,An exclamation of despair,¡Ay!"#,
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
             &vfs,
             Path::new("/root/init.csv"),
+            "root",
         )
         .unwrap()
         .unwrap();

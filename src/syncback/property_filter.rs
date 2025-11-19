@@ -29,6 +29,7 @@ pub fn filter_properties_preallocated<'inst>(
         .unwrap_or(true);
 
     let class_data = rbx_reflection_database::get()
+        .unwrap()
         .classes
         .get(inst.class.as_str());
 
@@ -77,7 +78,7 @@ pub fn filter_properties_preallocated<'inst>(
 }
 
 fn should_property_serialize(class_name: &str, prop_name: &str) -> bool {
-    let database = rbx_reflection_database::get();
+    let database = rbx_reflection_database::get().unwrap();
     let mut current_class_name = class_name;
 
     loop {

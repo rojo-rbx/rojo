@@ -135,11 +135,11 @@ pub fn hash_variant(hasher: &mut Hasher, value: &Variant) {
                 hash!(hasher, &[0x00]);
                 n_hash!(
                     hasher,
-                    round!(custom.density),
-                    round!(custom.friction),
-                    round!(custom.elasticity),
-                    round!(custom.friction_weight),
-                    round!(custom.elasticity_weight)
+                    round!(custom.density()),
+                    round!(custom.friction()),
+                    round!(custom.elasticity()),
+                    round!(custom.friction_weight()),
+                    round!(custom.elasticity_weight())
                 )
             }
         },

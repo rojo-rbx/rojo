@@ -1,12 +1,12 @@
-use std::{
-    collections::HashMap,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use anyhow::{format_err, Context};
 use indexmap::IndexMap;
 use memofs::{IoResultExt as _, Vfs};
-use rbx_dom_weak::{types::Attributes, Ustr, UstrMap};
+use rbx_dom_weak::{
+    types::{Attributes, Variant},
+    Ustr,
+};
 use serde::{Deserialize, Serialize};
 
 use crate::{

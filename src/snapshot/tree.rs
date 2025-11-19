@@ -75,7 +75,7 @@ impl RojoTree {
 
     /// Returns the root Instance of this tree.
     #[inline]
-    pub fn root(&self) -> InstanceWithMeta {
+    pub fn root(&self) -> InstanceWithMeta<'_> {
         self.get_instance(self.get_root_id())
             .expect("RojoTrees should have a root")
     }

@@ -118,11 +118,11 @@ pub fn variant_eq(variant_a: &Variant, variant_b: &Variant) -> bool {
         (Variant::PhysicalProperties(a), Variant::PhysicalProperties(b)) => match (a, b) {
             (PhysicalProperties::Default, PhysicalProperties::Default) => true,
             (PhysicalProperties::Custom(a2), PhysicalProperties::Custom(b2)) => {
-                approx_eq!(f32, a2.density, b2.density)
-                    && approx_eq!(f32, a2.elasticity, b2.elasticity)
-                    && approx_eq!(f32, a2.friction, b2.friction)
-                    && approx_eq!(f32, a2.elasticity_weight, b2.elasticity_weight)
-                    && approx_eq!(f32, a2.friction_weight, b2.friction_weight)
+                approx_eq!(f32, a2.density(), b2.density())
+                    && approx_eq!(f32, a2.elasticity(), b2.elasticity())
+                    && approx_eq!(f32, a2.friction(), b2.friction())
+                    && approx_eq!(f32, a2.elasticity_weight(), b2.elasticity_weight())
+                    && approx_eq!(f32, a2.friction_weight(), b2.friction_weight())
             }
             _ => false,
         },

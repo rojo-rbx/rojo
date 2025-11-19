@@ -96,6 +96,7 @@ fn hash_inst_prefilled<'inst>(
     prop_list.sort_unstable_by_key(|(name, _)| *name);
 
     let descriptor = rbx_reflection_database::get()
+        .unwrap()
         .classes
         .get(inst.class.as_str());
 

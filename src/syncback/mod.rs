@@ -460,7 +460,7 @@ fn get_property_filter(project: &Project, new_inst: &Instance) -> Option<UstrSet
     let filter = &project.syncback_rules.as_ref()?.ignore_properties;
     let mut set = UstrSet::default();
 
-    let database = rbx_reflection_database::get();
+    let database = rbx_reflection_database::get().unwrap();
     let mut current_class_name = new_inst.class.as_str();
 
     loop {
