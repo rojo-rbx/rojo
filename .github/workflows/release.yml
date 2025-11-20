@@ -39,11 +39,11 @@ jobs:
         run: |
           gh release upload ${{ github.ref_name }} Rojo.rbxm
 
-      - name: Upload Plugin to Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: Rojo.rbxm
-          path: Rojo.rbxm
+    #   - name: Upload Plugin to Artifacts
+    #     uses: actions/upload-artifact@v4
+    #     with:
+    #       name: Rojo.rbxm
+    #       path: Rojo.rbxm
 
   build:
     needs: ["create-release"]

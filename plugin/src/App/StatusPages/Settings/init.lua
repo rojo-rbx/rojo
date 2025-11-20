@@ -110,6 +110,14 @@ function SettingsPage:render()
 				layoutOrder = layoutIncrement(),
 			}),
 
+			Obfuscation = e(Setting, {
+				id = "obfuscation",
+				name = "Obfuscation",
+				description = "Toggle obfuscation",
+				transparency = self.props.transparency,
+				layoutOrder = layoutIncrement(),
+			}),
+
 			SyncReminderMode = e(Setting, {
 				id = "syncReminderMode",
 				name = "Sync Reminder",

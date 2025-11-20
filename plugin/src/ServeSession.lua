@@ -11,6 +11,7 @@ local t = require(Packages.t)
 local Promise = require(Packages.Promise)
 local Timer = require(script.Parent.Timer)
 
+local Obfuscator = require(script.Parent.Obfuscator)
 local ChangeBatcher = require(script.Parent.ChangeBatcher)
 local encodePatchUpdate = require(script.Parent.ChangeBatcher.encodePatchUpdate)
 local InstanceMap = require(script.Parent.InstanceMap)
@@ -62,6 +63,7 @@ ServeSession.Status = Status
 local validateServeOptions = t.strictInterface({
 	apiContext = t.table,
 	twoWaySync = t.boolean,
+	obfuscation = t.boolean,
 })
 
 function ServeSession.new(options)
@@ -100,6 +102,7 @@ function ServeSession.new(options)
 		__status = Status.NotStarted,
 		__apiContext = options.apiContext,
 		__twoWaySync = options.twoWaySync,
+		__obfuscation = options.obfuscation,
 		__reconciler = reconciler,
 		__instanceMap = instanceMap,
 		__changeBatcher = changeBatcher,
@@ -391,6 +394,10 @@ function ServeSession:__applyPatch(patch)
 	end
 	Timer.stop()
 
+	-- if Settings:get("obfuscation") == true then
+	-- 	Obfuscator:ObfuscatePatch(self, patch)
+	-- end
+
 	local patchApplySuccess, unappliedPatch = pcall(self.__reconciler.applyPatch, self.__reconciler, patch)
 	if not patchApplySuccess then
 		if historyRecording then
@@ -399,6 +406,10 @@ function ServeSession:__applyPatch(patch)
 		-- This might make a weird stack trace but the only way applyPatch can
 		-- fail is if a bug occurs so it's probably fine.
 		error(unappliedPatch)
+	end
+
+	if Settings:get("obfuscation") == true then
+		Obfuscator:ObfuscatePatch(self, patch)
 	end
 
 	if Settings:get("enableSyncFallback") and not PatchSet.isEmpty(unappliedPatch) then
@@ -528,7 +539,15 @@ function ServeSession:__initialSync(serverInfo)
 
 			return self.__apiContext:write(inversePatch)
 		elseif userDecision == "Accept" then
+			-- if Settings:get("obfuscation") == true then
+			-- 	Obfuscator:ObfuscatePatch(self, catchUpPatch)
+			-- end
 			self:__applyPatch(catchUpPatch)
+
+			if Settings:get("obfuscation") == true then
+				Obfuscator:ObfuscatePatch(self, catchUpPatch)
+			end
+
 			return Promise.resolve()
 		else
 			return Promise.reject("Invalid user decision: " .. userDecision)

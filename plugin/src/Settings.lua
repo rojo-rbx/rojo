@@ -10,6 +10,7 @@ local Log = require(Packages.Log)
 local Roact = require(Packages.Roact)
 
 local defaultSettings = {
+	obfuscation = false,
 	openScriptsExternally = false,
 	twoWaySync = false,
 	autoReconnect = false,

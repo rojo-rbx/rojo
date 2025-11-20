@@ -1,0 +1,101 @@
+PROMETHEUS LICENSE
+Copyright (c) 2025 Elias Oelschner
+https://github.com/prometheus-lua/Prometheus
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+  1. Retained Notice.
+     The above copyright notice and this permission notice shall be included
+     in all copies or substantial portions of the Software that are distributed
+     in source or object form, unless explicitly stated otherwise in this
+     license.
+
+  2. Attribution Requirement.
+     Any Product or Service that (a) includes, links to, wraps, depends on,
+     is derived from, uses, or otherwise incorporates the Software (including
+     via modification, obfuscation, binary linking, packaging, or embedding),
+     whether distributed, provided for use, or made available over a network
+     (collectively, "Using Products/Services"), must provide clear,
+     reasonably prominent attribution to Prometheus as follows:
+
+       "Based on Prometheus by Elias Oelschner, https://github.com/prometheus-lua/Prometheus"
+
+     This attribution must appear in at least one of the following locations,
+     as applicable and reasonably prominent for the type of Using Product/Service:
+
+       a) In-user interface: a visible "About", "Credits", or equivalent screen
+          within the product's primary user interface (graphical or web UI).
+       b) On the product web site: a visible place such as a footer, About page,
+          or documentation landing page that is accessible to the product's users.
+       c) In the tool itself: the program's --version, --help output, or similar
+          command-line/displayed metadata for CLI tools.
+       d) Documentation: in user or developer documentation, README, or product
+          manual that accompanies the product.
+
+     For Software provided as a Network Service or SaaS (i.e., made available
+     for use over a network rather than distributed as a copy), the attribution
+     must be visible on the public-facing web UI (for example on the login
+     screen, footer, About page, or a help/credits page accessible without an
+     account), and must include the exact phrase above and the URL.
+
+  3. Derivative Statement.
+     Any derivative work, modification, fork, or reimplementation of the
+     Software that is publicly distributed, publicly hosted, or provided as a
+     service must include a prominent statement in its README (or equivalent
+     public-facing documentation) that it is based on Prometheus and include the
+     exact attribution text in section 2.
+
+  4. Generated Output Exception.
+     Files or artifacts produced by running or using the Software (for example,
+     obfuscated output files, compiled artifacts, transformed source files,
+     or other generated outputs) are NOT required by this license to carry
+     copyright notices or license text. The attribution obligations in section 2
+     continue to apply to the Using Product/Service that produces, distributes,
+     or serves those outputs.
+
+  5. No Trademark License.
+     This license does not grant any rights to use the trade names, trademarks,
+     service marks, or product names of the Licensor except as required for the
+     textual attribution specified in section 2.
+
+  6. Compliance and Termination.
+     Any failure to comply with the obligations in sections 2 or 3 will
+     terminate the rights granted under this license for the non-compliant
+     party with respect to the Software. Rights may be reinstated if the
+     non-compliant party cures the breach within thirty (30) days after
+     receiving written notice from the Licensor and provides reasonable proof
+     of cure.
+
+  7. Sublicensing.
+     You may sublicense the Software, provided that any sublicensee is bound
+     by the terms of this license and the attribution obligations described
+     herein.
+
+  8. Warranty Disclaimer.
+     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+     MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+     IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+     CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+     TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+  9. Limitation of Liability.
+     IN NO EVENT WILL THE COPYRIGHT HOLDER BE LIABLE FOR ANY INDIRECT,
+     INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES ARISING IN ANY
+     WAY OUT OF THE USE OF THE SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
+     OF SUCH DAMAGE.
+
+  10. Governing Law.
+     This license shall be governed by and construed in accordance with the
+     laws of the jurisdiction chosen by the Licensor. This clause does not
+     limit any mandatory consumer protections that may apply in certain
+     jurisdictions.
+
+By exercising any rights granted to you under this License, you accept and
+agree to be bound by the terms and conditions of this License.

@@ -593,6 +593,7 @@ function App:startSession()
 	local serveSession = ServeSession.new({
 		apiContext = apiContext,
 		twoWaySync = Settings:get("twoWaySync"),
+		obfuscation = Settings:get("obfuscation"),
 	})
 
 	serveSession:setUpdateLoadingTextCallback(function(text: string)
