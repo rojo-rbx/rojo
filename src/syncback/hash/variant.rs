@@ -85,6 +85,10 @@ pub fn hash_variant(hasher: &mut Hasher, value: &Variant) {
             hash!(hasher, s.as_bytes())
         }
         Variant::Enum(e) => n_hash!(hasher, e.to_u32()),
+        Variant::EnumItem(e) => {
+            hash!(hasher, e.ty.as_bytes());
+            n_hash!(hasher, e.value);
+        }
         Variant::Faces(f) => hash!(hasher, &[f.bits()]),
         Variant::Float32(n) => n_hash!(hasher, round!(*n)),
         Variant::Float64(n) => n_hash!(hasher, round!(n)),
