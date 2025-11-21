@@ -1,6 +1,6 @@
 [package]
 name = "rojo"
-version = "7.6.1"
+version = "7.7.0-prealpha"
 rust-version = "1.88"
 authors = [
     "Lucien Greathouse <me@lpghatguy.com>",
