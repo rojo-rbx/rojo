@@ -1,7 +1,7 @@
 # memofs Changelog
 
 ## Unreleased Changes
-* Added `Vfs::exists` [#1169].
+* Added `Vfs::exists`. [#1169]
 
 [#1169]: https://github.com/rojo-rbx/rojo/pull/1169
 
