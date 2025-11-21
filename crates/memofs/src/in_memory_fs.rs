@@ -157,6 +157,11 @@ impl VfsBackend for InMemoryFs {
         )
     }
 
+    fn exists(&mut self, path: &Path) -> io::Result<bool> {
+        let inner = self.inner.lock().unwrap();
+        Ok(inner.entries.contains_key(path))
+    }
+
     fn read_dir(&mut self, path: &Path) -> io::Result<ReadDir> {
         let inner = self.inner.lock().unwrap();
 

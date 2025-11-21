@@ -70,6 +70,7 @@ impl<T> IoResultExt<T> for io::Result<T> {
 pub trait VfsBackend: sealed::Sealed + Send + 'static {
     fn read(&mut self, path: &Path) -> io::Result<Vec<u8>>;
     fn write(&mut self, path: &Path, data: &[u8]) -> io::Result<()>;
+    fn exists(&mut self, path: &Path) -> io::Result<bool>;
     fn read_dir(&mut self, path: &Path) -> io::Result<ReadDir>;
     fn create_dir(&mut self, path: &Path) -> io::Result<()>;
     fn create_dir_all(&mut self, path: &Path) -> io::Result<()>;
@@ -173,6 +174,11 @@ impl VfsInner {
         })?;
 
         Ok(Arc::new(contents_str.into()))
+    }
+
+    fn exists<P: AsRef<Path>>(&mut self, path: P) -> io::Result<bool> {
+        let path = path.as_ref();
+        self.backend.exists(path)
     }
 
     fn write<P: AsRef<Path>, C: AsRef<[u8]>>(&mut self, path: P, contents: C) -> io::Result<()> {
@@ -336,6 +342,17 @@ impl Vfs {
     pub fn read_dir<P: AsRef<Path>>(&self, path: P) -> io::Result<ReadDir> {
         let path = path.as_ref();
         self.inner.lock().unwrap().read_dir(path)
+    }
+
+    /// Return whether the given path exists.
+    ///
+    /// Roughly equivalent to [`std::fs::exists`][std::fs::exists].
+    ///
+    /// [std::fs::exists]: https://doc.rust-lang.org/stable/std/fs/fn.exists.html
+    #[inline]
+    pub fn exists<P: AsRef<Path>>(&self, path: P) -> io::Result<bool> {
+        let path = path.as_ref();
+        self.inner.lock().unwrap().exists(path)
     }
 
     /// Creates a directory at the provided location.

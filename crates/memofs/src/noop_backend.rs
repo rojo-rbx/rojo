@@ -22,6 +22,10 @@ impl VfsBackend for NoopBackend {
         Err(io::Error::other("NoopBackend doesn't do anything"))
     }
 
+    fn exists(&mut self, _path: &Path) -> io::Result<bool> {
+        Err(io::Error::other("NoopBackend doesn't do anything"))
+    }
+
     fn read_dir(&mut self, _path: &Path) -> io::Result<ReadDir> {
         Err(io::Error::other("NoopBackend doesn't do anything"))
     }
