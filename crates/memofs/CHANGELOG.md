@@ -1,6 +1,9 @@
 # memofs Changelog
 
 ## Unreleased Changes
+* Added `Vfs::exists` [#1169].
+
+[#1169]: https://github.com/rojo-rbx/rojo/pull/1169
 
 ## 0.3.0 (2024-03-15)
 * Changed `StdBackend` file watching component to use minimal recursive watches. [#830]
