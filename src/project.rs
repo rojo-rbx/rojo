@@ -295,7 +295,7 @@ impl Project {
             // Check for default projects.
             for default_project_name in DEFAULT_PROJECT_NAMES {
                 let project_path = path.join(default_project_name);
-                if project_path.exists() {
+                if let Ok(true) = vfs.exists(&project_path) {
                     return Self::load_exact(vfs, &project_path, None);
                 }
             }
