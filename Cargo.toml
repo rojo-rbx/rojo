@@ -1,5 +1,5 @@
 [package]
-name = "rojo + obfuscation"
+name = "rojo - obfuscation"
 version = "7.6.1"
 rust-version = "1.88"
 authors = [
