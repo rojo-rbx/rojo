@@ -818,7 +818,7 @@ function App:endSession()
 end
 
 function App:render()
-	local pluginName = "Rojo " .. Version.display(Config.version)
+	local pluginName = "Rojo + obfuscation " .. Version.display(Config.version)
 
 	local function createPageElement(appStatus, additionalProps)
 		additionalProps = additionalProps or {}
@@ -1005,7 +1005,7 @@ function App:render()
 				name = pluginName,
 			}, {
 				button = e(StudioToggleButton, {
-					name = "Rojo",
+					name = pluginName,
 					tooltip = "Show or hide the Rojo panel",
 					icon = self.state.toolbarIcon,
 					active = self.state.guiEnabled,

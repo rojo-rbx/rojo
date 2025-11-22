@@ -1,5 +1,5 @@
 [package]
-name = "rojo"
+name = "rojo + obfuscation"
 version = "7.6.1"
 rust-version = "1.88"
 authors = [
@@ -46,6 +46,7 @@ name = "build"
 harness = false
 
 [dependencies]
+mlua = { version = "0.9", features = ["lua54", "vendored"] }
 memofs = { version = "0.3.0", path = "crates/memofs" }
 
 # These dependencies can be uncommented when working on rbx-dom simultaneously

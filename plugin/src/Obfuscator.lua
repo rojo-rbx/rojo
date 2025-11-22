@@ -1,4 +1,4 @@
-local InstanceMap = require(script.Parent.InstanceMap)
+-- local InstanceMap = require(script.Parent.InstanceMap)
 
 local Module = {}
 
@@ -14,18 +14,18 @@ local function randomName(len)
 	return table.concat(out)
 end
 
--- Очень примитивная функция для поиска локальных переменных
+-- A very primitive function for finding local variables
 local function findLocals(Source: string)
 	local found = {}
 
-	-- локальные переменные
+	-- local variables
 	for var in Source:gmatch("local%s+([%a_][%w_]*)") do
 		if not found[var] and var ~= "function" then
 			found[var] = randomName(8)
 		end
 	end
 
-	-- локальные функции
+	-- local functions
 	for func in Source:gmatch("local%s+function%s+([%a_][%w_]*)") do
 		if not found[func] then
 			found[func] = randomName(8)
@@ -36,28 +36,28 @@ local function findLocals(Source: string)
 end
 
 function Module:Obfuscate(Source: string)
-	-- Убираем комментарии
-	Source = Source:gsub("%-%-%[%[.-%]%]", "") -- многострочные
-	Source = Source:gsub("%-%-.-\n", "\n") -- однострочные
+	-- Removing comments
+	Source = Source:gsub("%-%-%[%[.-%]%]", "") -- multiline
+	Source = Source:gsub("%-%-.-\n", "\n") -- singleline
 
-	-- Находим локальные переменные
+	-- Finding local variables
 	local vars = findLocals(Source)
 
-	-- Заменяем их на рандомные
-	for orig, obf in pairs(vars) do
-		-- чтобы избежать пересечения слов,
-		-- заменяем как отдельные токены
-		Source = Source:gsub("(%f[%w_])" .. orig .. "(%f[^%w_])", "%1" .. obf .. "%2")
+	-- We replace them with random ones
+	for original, obfuscated in pairs(vars) do
+		-- to avoid words crossing,
+		-- replace as separate tokens
+		Source = Source:gsub("(%f[%w_])" .. original .. "(%f[^%w_])", "%1" .. obfuscated .. "%2")
 	end
 
-	-- Убираем лишние пробелы
-	Source = Source:gsub("%s+", " ")
+	-- -- Removing extra spaces
+	-- Source = Source:gsub("%s+", " ")
 
-	-- Убираем пробелы перед \n
-	Source = Source:gsub(" %\n", "\n")
+	-- -- Remove spaces before \n
+	-- Source = Source:gsub(" %\n", "\n")
 
-	-- Сжимаем переносы
-	Source = Source:gsub("\n+", "\n")
+	-- -- Compressing hyphens
+	-- Source = Source:gsub("\n+", "\n")
 
 	return Source
 end
@@ -67,7 +67,6 @@ end
 --     local instance = self.__instanceMap.fromIds[update.id]
 
 --     if instance and (instance:IsA("Script") or instance:IsA("LocalScript") or instance:IsA("ModuleScript")) then
---         -- Подключаем модуль обфускатора
 --         local Obfuscator = require(script.Parent.Obfuscator)
 --         instance.Source = Obfuscator.Obfuscate(instance.Source)
 --     end

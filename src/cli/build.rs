@@ -12,6 +12,7 @@ use roblox_install::RobloxStudio;
 use tokio::runtime::Runtime;
 
 use crate::serve_session::ServeSession;
+use crate::obfuscator::{initialize_prometheus, obfuscate};
 
 use super::resolve_path;
 
@@ -38,6 +39,10 @@ pub struct BuildCommand {
     /// Should end in .rbxm or .rbxl.
     #[clap(long, short, conflicts_with = "output")]
     pub plugin: Option<PathBuf>,
+
+    /// Obfuscation
+    #[clap(default_value = true, long, short)]
+    pub obfuscation: Option<bool>
 
     /// Whether to automatically rebuild when any input files change.
     #[clap(long)]
@@ -198,6 +203,9 @@ fn write_model(
         .and_then(|name| name.to_str())
         .unwrap_or("<invalid utf-8>");
     println!("Built project to {}", filename);
+
+    initialize_prometheus()?;
+    println!("{}", obfuscate("Print('Hello World') local GuiService, var = game:GetService('GuiService'), 0")?);
 
     Ok(())
 }
