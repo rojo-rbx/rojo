@@ -24,8 +24,8 @@ pub struct ServeCommand {
     pub project: PathBuf,
 
     /// Obfuscation
-    #[clap(default_value = true, long, short)]
-    pub obfuscation: Option<bool>
+    #[clap(long)]
+    pub obfuscation: bool,
 
     /// The IP address to listen on. Defaults to `127.0.0.1`.
     #[clap(long)]

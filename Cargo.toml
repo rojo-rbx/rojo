@@ -46,8 +46,8 @@ name = "build"
 harness = false
 
 [dependencies]
-mlua = { version = "0.9", features = ["lua54", "vendored"] }
 memofs = { version = "0.3.0", path = "crates/memofs" }
+mlua = { version = "0.9", features = ["luajit", "vendored", "send"] }
 
 # These dependencies can be uncommented when working on rbx-dom simultaneously
 # rbx_binary = { path = "../rbx-dom/rbx_binary" }

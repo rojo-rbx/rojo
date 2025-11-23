@@ -25,6 +25,7 @@ mod snapshot_middleware;
 mod syncback;
 mod variant_eq;
 mod web;
+mod obfuscator;
 
 // TODO: Work out what we should expose publicly
 

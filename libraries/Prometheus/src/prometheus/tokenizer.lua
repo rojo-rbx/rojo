@@ -475,14 +475,20 @@ end
 
 function Tokenizer:symbol()
 	local startPos = self.index;
-	for len = self.MaxSymbolLength, 1, -1 do
+	local unknownSymbol = ""
+
+    for len = self.MaxSymbolLength, 1, -1 do
 		local str = self.source:sub(self.index + 1, self.index + len);
-		if self.SymbolsLookup[str] then
+		
+        if self.SymbolsLookup[str] then
 			self.index = self.index + len;
 			return token(self, startPos, Tokenizer.TokenKind.Symbol, str);
-		end
+        else
+            unknownSymbol = str
+        end
 	end
-	logger:error(generateError(self, "Unknown Symbol"));
+    
+	logger:error(generateError(self, "Unknown Symbol ["..unknownSymbol.."]"));
 end
 
 

@@ -12,7 +12,7 @@ use roblox_install::RobloxStudio;
 use tokio::runtime::Runtime;
 
 use crate::serve_session::ServeSession;
-use crate::obfuscator::{initialize_prometheus, obfuscate};
+use crate::obfuscator::initialize_prometheus;
 
 use super::resolve_path;
 
@@ -41,8 +41,8 @@ pub struct BuildCommand {
     pub plugin: Option<PathBuf>,
 
     /// Obfuscation
-    #[clap(default_value = true, long, short)]
-    pub obfuscation: Option<bool>
+    #[clap(long)]
+    pub obfuscation: bool,
 
     /// Whether to automatically rebuild when any input files change.
     #[clap(long)]
@@ -86,6 +86,7 @@ impl BuildCommand {
         let vfs = Vfs::new_default();
         vfs.set_watch_enabled(self.watch);
 
+        initialize_prometheus()?; // fuck this idk
         let session = ServeSession::new(vfs, project_path)?;
         let mut cursor = session.message_queue().cursor();
 
@@ -204,8 +205,8 @@ fn write_model(
         .unwrap_or("<invalid utf-8>");
     println!("Built project to {}", filename);
 
-    initialize_prometheus()?;
-    println!("{}", obfuscate("Print('Hello World') local GuiService, var = game:GetService('GuiService'), 0")?);
+    // initialize_prometheus()?;
+    // println!("{}", obfuscate("Print('Hello World') local GuiService, var = game:GetService('GuiService'), 0")?);
 
     Ok(())
 }

@@ -14,20 +14,35 @@ logger.LogLevel = {
 	Debug = 3,
 }
 
-logger.logLevel = logger.LogLevel.Log;
+logger.logLevel = logger.LogLevel.Error;
+
+-- functions
 
 logger.debugCallback = function(...)
 	print(colors(config.NameUpper .. ": " ..  ..., "grey"));
 end;
+
+logger.logCallback = function(...)
+	print(colors(config.NameUpper .. ": ", "magenta") .. ...);
+end;
+
+logger.warnCallback = function(...)
+	print(colors(config.NameUpper .. ": " .. ..., "yellow"));
+end;
+
+logger.errorCallback = function(...)
+	print(colors(config.NameUpper .. ": " .. ..., "red"))
+	error(...);
+end;
+
+-- interface methods
+
 function logger:debug(...)
 	if self.logLevel >= self.LogLevel.Debug then
 		self.debugCallback(...);
 	end
 end
 
-logger.logCallback = function(...)
-	print(colors(config.NameUpper .. ": ", "magenta") .. ...);
-end;
 function logger:log(...)
 	if self.logLevel >= self.LogLevel.Log then
 		self.logCallback(...);
@@ -40,19 +55,12 @@ function logger:info(...)
 	end
 end
 
-logger.warnCallback = function(...)
-	print(colors(config.NameUpper .. ": " .. ..., "yellow"));
-end;
 function logger:warn(...)
 	if self.logLevel >= self.LogLevel.Warn then
 		self.warnCallback(...);
 	end
 end
 
-logger.errorCallback = function(...)
-	print(colors(config.NameUpper .. ": " .. ..., "red"))
-	error(...);
-end;
 function logger:error(...)
 	self.errorCallback(...);
 	error(config.NameUpper .. ": logger.errorCallback did not throw an Error!");

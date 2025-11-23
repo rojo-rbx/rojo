@@ -15,6 +15,7 @@ use super::{
     InstanceSnapshot, RojoTree,
 };
 use crate::{multimap::MultiMap, RojoRef, REF_ID_ATTRIBUTE_NAME, REF_POINTER_ATTRIBUTE_PREFIX};
+use crate::obfuscator::obfuscate;
 
 /// Consumes the input `PatchSet`, applying all of its prescribed changes to the
 /// tree and returns an `AppliedPatchSet`, which can be used to keep another
@@ -152,6 +153,27 @@ fn apply_add_child(
         Variant::Ref(value) => value.is_some(),
         _ => false,
     });
+
+    // if context.options.obfuscation {
+    // println!("BEFORE {:#?}", snapshot.properties);
+    // snapshot.properties.insert(ustr("Source"), Variant::String("Player".into()));
+
+    if let Some(prop) = snapshot.properties.get_mut(&ustr("Source")) {
+        if let Variant::String(current) = prop {
+            match obfuscate(&current) {
+                Ok(obfuscated) => {
+                    // snapshot.properties.insert(ustr("Source"), Variant::String(obfuscated.into()));
+                    *prop = Variant::String(obfuscated.into());
+                },
+                Err(e) => {
+                    eprintln!("Obfuscation failed: {}", e)
+                },
+            }
+        }
+    }
+
+    // println!("AFTER {:#?}", snapshot.properties);
+    // }
 
     let id = tree.insert_instance(parent_id, snapshot);
     context.applied_patch_set.added.push(id);
