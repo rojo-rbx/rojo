@@ -31,6 +31,7 @@ Making a new release? Simply add the new header with the version and date undern
 
 ## Unreleased
 
+* Fixed a bug where passing `--skip-git` to `rojo init` would still create a file named `gitignore.txt` ([#1172])
 * A new command `rojo syncback` has been added. It can be used as `rojo syncback [path to project] --input [path to file]`. ([#937])
  	This command takes a Roblox file and pulls Instances out of it and places them in the correct position in the provided project.
     Syncback is primarily controlled by the project file. Any Instances who are either referenced in the project file or a descendant
@@ -73,6 +74,7 @@ Making a new release? Simply add the new header with the version and date undern
 [#937]: https://github.com/rojo-rbx/rojo/pull/937
 [#994]: https://github.com/rojo-rbx/rojo/pull/994
 [#1159]: https://github.com/rojo-rbx/rojo/pull/1159
+[#1172]: https://github.com/rojo-rbx/rojo/pull/1172
 
 ## [7.6.1] (November 6th, 2025)
 
