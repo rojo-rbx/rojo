@@ -115,6 +115,10 @@ impl AdjacentMetadata {
             .map(|inst| inst.metadata().ignore_unknown_instances)
             .unwrap_or_default();
 
+        let schema = snapshot
+            .old_inst()
+            .and_then(|inst| inst.metadata().schema.clone());
+
         let class = &snapshot.new_inst().class;
         for (name, value) in snapshot.get_path_filtered_properties(snapshot.new).unwrap() {
             match value {
@@ -150,7 +154,7 @@ impl AdjacentMetadata {
             attributes,
             path,
             id: None,
-            schema: None,
+            schema,
         }))
     }
 
@@ -201,10 +205,19 @@ impl AdjacentMetadata {
         Ok(())
     }
 
+    fn apply_schema(&mut self, snapshot: &mut InstanceSnapshot) -> anyhow::Result<()> {
+        if self.schema.is_some() && snapshot.metadata.schema.is_some() {
+            anyhow::bail!("cannot specify a schema using {} (instance has a schema from somewhere else. how did we get here?)", self.path.display());
+        }
+        snapshot.metadata.schema = self.schema.take();
+        Ok(())
+    }
+
     pub fn apply_all(&mut self, snapshot: &mut InstanceSnapshot) -> anyhow::Result<()> {
         self.apply_ignore_unknown_instances(snapshot);
         self.apply_properties(snapshot)?;
         self.apply_id(snapshot)?;
+        self.apply_schema(snapshot)?;
         Ok(())
     }
 
@@ -330,6 +343,10 @@ impl DirectoryMetadata {
             .map(|inst| inst.metadata().ignore_unknown_instances)
             .unwrap_or_default();
 
+        let schema = snapshot
+            .old_inst()
+            .and_then(|inst| inst.metadata().schema.clone());
+
         let class = &snapshot.new_inst().class;
         for (name, value) in snapshot.get_path_filtered_properties(snapshot.new).unwrap() {
             match value {
@@ -366,7 +383,7 @@ impl DirectoryMetadata {
             class_name: None,
             path,
             id: None,
-            schema: None,
+            schema,
         }))
     }
 
@@ -375,6 +392,7 @@ impl DirectoryMetadata {
         self.apply_class_name(snapshot)?;
         self.apply_properties(snapshot)?;
         self.apply_id(snapshot)?;
+        self.apply_schema(snapshot)?;
 
         Ok(())
     }
@@ -439,6 +457,13 @@ impl DirectoryMetadata {
         Ok(())
     }
 
+    fn apply_schema(&mut self, snapshot: &mut InstanceSnapshot) -> anyhow::Result<()> {
+        if self.schema.is_some() && snapshot.metadata.schema.is_some() {
+            anyhow::bail!("cannot specify a schema using {} (instance has a schema from somewhere else. how did we get here?)", self.path.display());
+        }
+        snapshot.metadata.schema = self.schema.take();
+        Ok(())
+    }
     /// Returns whether the metadata is 'empty', meaning it doesn't have anything
     /// worth persisting in it. Specifically:
     ///

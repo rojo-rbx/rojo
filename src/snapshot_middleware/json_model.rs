@@ -50,6 +50,7 @@ pub fn snapshot_json_model(
     instance.name = Some(name.to_owned());
 
     let id = instance.id.take().map(RojoRef::new);
+    let schema = instance.schema.take();
 
     let mut snapshot = instance
         .into_snapshot()
@@ -60,7 +61,8 @@ pub fn snapshot_json_model(
         .instigating_source(path)
         .relevant_paths(vec![path.to_path_buf()])
         .context(context)
-        .specified_id(id);
+        .specified_id(id)
+        .schema(schema);
 
     Ok(Some(snapshot))
 }
@@ -73,6 +75,13 @@ pub fn syncback_json_model<'sync>(
     let mut model = json_model_from_pair(snapshot, &mut property_buffer, snapshot.new);
     // We don't need the name on the root, but we do for children.
     model.name = None;
+
+    if let Some(old_inst) = snapshot.old_inst() {
+        // TODO: Is it worth this being an Arc or Rc? I doubt that enough
+        // schemas will ever exist in one project for it to matter, but it
+        // could have a performance cost.
+        model.schema = old_inst.metadata().schema.clone();
+    }
 
     Ok(SyncbackReturn {
         fs_snapshot: FsSnapshot::new().with_added_file(
