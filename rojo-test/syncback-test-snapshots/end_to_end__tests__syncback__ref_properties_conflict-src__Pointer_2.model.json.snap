@@ -1,0 +1,11 @@
+---
+source: tests/tests/syncback.rs
+assertion_line: 28
+expression: src/Pointer_2.model.json
+---
+{
+  "className": "ObjectValue",
+  "attributes": {
+    "Rojo_Target_Value": "0bd3e9e11879191708a2bc4a00000c20"
+  }
+}

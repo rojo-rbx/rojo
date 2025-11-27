@@ -1,0 +1,10 @@
+---
+source: tests/tests/syncback.rs
+expression: src/int_value.model.json
+---
+{
+  "className": "IntValue",
+  "properties": {
+    "Value": 1337.0
+  }
+}

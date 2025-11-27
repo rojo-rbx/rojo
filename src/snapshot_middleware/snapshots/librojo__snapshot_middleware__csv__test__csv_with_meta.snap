@@ -10,13 +10,15 @@ metadata:
   relevant_paths:
     - /foo.csv
     - /foo.meta.json
+    - /foo.meta.jsonc
   context:
     emit_legacy_scripts: true
   specified_id: ~
+  middleware: ~
+  schema: ~
 name: foo
 class_name: LocalizationTable
 properties:
   Contents:
     String: "[{\"key\":\"Ack\",\"example\":\"An exclamation of despair\",\"source\":\"Ack!\",\"values\":{\"es\":\"¡Ay!\"}}]"
 children: []
-

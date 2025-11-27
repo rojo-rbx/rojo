@@ -1,0 +1,10 @@
+---
+source: tests/tests/syncback.rs
+expression: src/adjacent.meta.json
+---
+{
+  "$schema": "rojo/adjacent-meta",
+  "attributes": {
+    "trigger_reserialization": true
+  }
+}

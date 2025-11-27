@@ -1,6 +1,11 @@
 # memofs Changelog
 
 ## Unreleased Changes
+* Added `Vfs::exists`. [#1169]
+* Added `create_dir` and `create_dir_all` to allow creating directories. [#937]
+
+[#1169]: https://github.com/rojo-rbx/rojo/pull/1169
+[#937]: https://github.com/rojo-rbx/rojo/pull/937
 
 ## 0.3.0 (2024-03-15)
 * Changed `StdBackend` file watching component to use minimal recursive watches. [#830]

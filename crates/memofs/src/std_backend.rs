@@ -63,6 +63,10 @@ impl VfsBackend for StdBackend {
         fs_err::write(path, data)
     }
 
+    fn exists(&mut self, path: &Path) -> io::Result<bool> {
+        std::fs::exists(path)
+    }
+
     fn read_dir(&mut self, path: &Path) -> io::Result<ReadDir> {
         let entries: Result<Vec<_>, _> = fs_err::read_dir(path)?.collect();
         let mut entries = entries?;
@@ -76,6 +80,14 @@ impl VfsBackend for StdBackend {
         Ok(ReadDir {
             inner: Box::new(inner),
         })
+    }
+
+    fn create_dir(&mut self, path: &Path) -> io::Result<()> {
+        fs_err::create_dir(path)
+    }
+
+    fn create_dir_all(&mut self, path: &Path) -> io::Result<()> {
+        fs_err::create_dir_all(path)
     }
 
     fn remove_file(&mut self, path: &Path) -> io::Result<()> {

@@ -1,0 +1,16 @@
+{
+  "name": "nested_projects_but_weird",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "modules": {
+        "$path": "client-only.project.json"
+      }
+    },
+    "ServerStorage": {
+      "modules": {
+        "$path": "server-only.project.json"
+      }
+    }
+  }
+}
