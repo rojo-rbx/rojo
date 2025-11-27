@@ -1792,9 +1792,9 @@ dependencies = [
 
 [[package]]
 name = "rbx_binary"
-version = "2.0.0"
+version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d419f67c8012bf83569086e1208c541478b3b8e4f523deaa0b80d723fb5ef22"
+checksum = "95e2b4a187679aa3d169ed50ed5eedbf26383459fec83bf1232c2934b35b24de"
 dependencies = [
  "ahash",
  "log",
@@ -1810,9 +1810,9 @@ dependencies = [
 
 [[package]]
 name = "rbx_dom_weak"
-version = "4.0.0"
+version = "4.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc74878a4a801afc8014b14ede4b38015a13de5d29ab0095d5ed284a744253f6"
+checksum = "a7a5c48c2605913fbb1986bceb3e18ef9f12eadedb7edd62bf9fb03447b57c46"
 dependencies = [
  "ahash",
  "rbx_types",
@@ -1822,9 +1822,9 @@ dependencies = [
 
 [[package]]
 name = "rbx_reflection"
-version = "6.0.0"
+version = "6.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "565dd3430991f35443fa6d23cc239fade2110c5089deb6bae5de77c400df4fd2"
+checksum = "84f635e79d5d710c82e9049faa57d32945e76a6b041280dc6274f732c0dd78dc"
 dependencies = [
  "rbx_types",
  "serde",
@@ -1833,9 +1833,9 @@ dependencies = [
 
 [[package]]
 name = "rbx_reflection_database"
-version = "2.0.1+roblox-697"
+version = "2.0.2+roblox-700"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d69035a14b103c5a9b8bc6a61d30f4ee6f2608afdee137dae09b26037dba5dc8"
+checksum = "de2753b896d08d74316d8b89fbeb2470ebd3986404ebba82fa85fcc0330955cf"
 dependencies = [
  "dirs 5.0.1",
  "log",
@@ -1846,9 +1846,9 @@ dependencies = [
 
 [[package]]
 name = "rbx_types"
-version = "3.0.0"
+version = "3.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "03220ffce2bd06ad04f77a003cb807f2e5b2a18e97623066a5ac735a978398af"
+checksum = "de3b89eefdd71f5e2a25543b1ead9f6ea2ed3fdfba8b397cbdb0de053eb2463e"
 dependencies = [
  "base64 0.13.1",
  "bitflags 1.3.2",
@@ -1861,9 +1861,9 @@ dependencies = [
 
 [[package]]
 name = "rbx_xml"
-version = "2.0.0"
+version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "be6c302cefe9c92ed09bcbb075cd24379271de135b0af331409a64c2ea3646ee"
+checksum = "e0cbaf53b44c9cc0fad1e5dc8ac63fb32fa0ecaa26d32b269cebe4dca8b7b4de"
 dependencies = [
  "ahash",
  "base64 0.13.1",
@@ -2037,7 +2037,7 @@ dependencies = [
 
 [[package]]
 name = "rojo"
-version = "7.7.0-prealpha"
+version = "7.7.0-rc.1"
 dependencies = [
  "anyhow",
  "backtrace",
