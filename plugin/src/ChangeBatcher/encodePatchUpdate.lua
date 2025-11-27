@@ -10,7 +10,7 @@ return function(instance, instanceId, properties)
 		changedProperties = {},
 	}
 
-	for propertyName in pairs(properties) do
+	for propertyName in properties do
 		if propertyName == "Name" then
 			update.changedName = instance.Name
 		else

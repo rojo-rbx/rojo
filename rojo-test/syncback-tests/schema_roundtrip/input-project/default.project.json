@@ -1,0 +1,13 @@
+{
+  "$schema": "rojo/project-schema",
+  "name": "schema_roundtrip",
+  "tree": {
+    "$className": "Folder",
+    "src": {
+      "$path": "src"
+    },
+    "trigger_reserialization": {
+      "$className": "BoolValue"
+    }
+  }
+}

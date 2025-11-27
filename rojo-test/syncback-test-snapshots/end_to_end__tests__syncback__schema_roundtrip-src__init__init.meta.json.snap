@@ -1,0 +1,10 @@
+---
+source: tests/tests/syncback.rs
+expression: src/init/init.meta.json
+---
+{
+  "$schema": "rojo/init-meta",
+  "attributes": {
+    "trigger_reserialization": true
+  }
+}

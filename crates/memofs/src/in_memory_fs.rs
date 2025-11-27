@@ -157,6 +157,11 @@ impl VfsBackend for InMemoryFs {
         )
     }
 
+    fn exists(&mut self, path: &Path) -> io::Result<bool> {
+        let inner = self.inner.lock().unwrap();
+        Ok(inner.entries.contains_key(path))
+    }
+
     fn read_dir(&mut self, path: &Path) -> io::Result<ReadDir> {
         let inner = self.inner.lock().unwrap();
 
@@ -174,6 +179,21 @@ impl VfsBackend for InMemoryFs {
             Some(Entry::File { .. }) => must_be_dir(path),
             None => not_found(path),
         }
+    }
+
+    fn create_dir(&mut self, path: &Path) -> io::Result<()> {
+        let mut inner = self.inner.lock().unwrap();
+        inner.load_snapshot(path.to_path_buf(), VfsSnapshot::empty_dir())
+    }
+
+    fn create_dir_all(&mut self, path: &Path) -> io::Result<()> {
+        let mut inner = self.inner.lock().unwrap();
+        let mut path_buf = path.to_path_buf();
+        while let Some(parent) = path_buf.parent() {
+            inner.load_snapshot(parent.to_path_buf(), VfsSnapshot::empty_dir())?;
+            path_buf.pop();
+        }
+        inner.load_snapshot(path.to_path_buf(), VfsSnapshot::empty_dir())
     }
 
     fn remove_file(&mut self, path: &Path) -> io::Result<()> {

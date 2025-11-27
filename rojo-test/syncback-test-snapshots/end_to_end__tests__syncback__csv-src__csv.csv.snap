@@ -1,0 +1,6 @@
+---
+source: tests/tests/syncback.rs
+expression: src/csv.csv
+---
+Key,Source,Context,Example,es
+Ack,Ack!,,An exclamation of despair,¡Ay!

@@ -10,9 +10,12 @@ metadata:
   relevant_paths:
     - /foo.plugin.lua
     - /foo.meta.json
+    - /foo.meta.jsonc
   context:
     emit_legacy_scripts: false
   specified_id: ~
+  middleware: ~
+  schema: ~
 name: foo
 class_name: Script
 properties:

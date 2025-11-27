@@ -1,0 +1,19 @@
+---
+source: src/snapshot_middleware/meta_file.rs
+expression: snapshot
+---
+snapshot_id: "00000000000000000000000000000000"
+metadata:
+  ignore_unknown_instances: false
+  relevant_paths:
+    - /foo/init.meta.json
+    - /foo/init.meta.jsonc
+  context:
+    emit_legacy_scripts: true
+  specified_id: manually specified
+  middleware: ~
+  schema: ~
+name: DEFAULT
+class_name: DEFAULT
+properties: {}
+children: []

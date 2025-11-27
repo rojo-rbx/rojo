@@ -1,13 +1,21 @@
 use std::{path::Path, str};
 
-use memofs::{IoResultExt, Vfs};
-use rbx_dom_weak::{types::Enum, ustr, HashMapExt as _, UstrMap};
+use anyhow::Context as _;
+use memofs::Vfs;
+use rbx_dom_weak::{
+    types::{Enum, Variant},
+    ustr, HashMapExt as _, UstrMap,
+};
 
-use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
+use crate::{
+    snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot},
+    syncback::{FsSnapshot, SyncbackReturn, SyncbackSnapshot},
+};
 
 use super::{
-    dir::{dir_meta, snapshot_dir_no_meta},
-    meta_file::AdjacentMetadata,
+    dir::{snapshot_dir_no_meta, syncback_dir_no_meta},
+    meta_file::{AdjacentMetadata, DirectoryMetadata},
+    PathExt as _,
 };
 
 #[derive(Debug)]
@@ -73,8 +81,6 @@ pub fn snapshot_lua(
         );
     }
 
-    let meta_path = path.with_file_name(format!("{}.meta.json", name));
-
     let mut snapshot = InstanceSnapshot::new()
         .name(name)
         .class_name(class_name)
@@ -82,14 +88,11 @@ pub fn snapshot_lua(
         .metadata(
             InstanceMetadata::new()
                 .instigating_source(path)
-                .relevant_paths(vec![path.to_path_buf(), meta_path.clone()])
+                .relevant_paths(vec![path.to_path_buf()])
                 .context(context),
         );
 
-    if let Some(meta_contents) = vfs.read(&meta_path).with_not_found()? {
-        let mut metadata = AdjacentMetadata::from_slice(&meta_contents, meta_path)?;
-        metadata.apply_all(&mut snapshot)?;
-    }
+    AdjacentMetadata::read_and_apply_all(vfs, path, name, &mut snapshot)?;
 
     Ok(Some(snapshot))
 }
@@ -103,10 +106,11 @@ pub fn snapshot_lua_init(
     context: &InstanceContext,
     vfs: &Vfs,
     init_path: &Path,
+    name: &str,
     script_type: ScriptType,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
     let folder_path = init_path.parent().unwrap();
-    let dir_snapshot = snapshot_dir_no_meta(context, vfs, folder_path)?.unwrap();
+    let dir_snapshot = snapshot_dir_no_meta(context, vfs, folder_path, name)?.unwrap();
 
     if dir_snapshot.class_name != "Folder" {
         anyhow::bail!(
@@ -125,12 +129,87 @@ pub fn snapshot_lua_init(
 
     init_snapshot.children = dir_snapshot.children;
     init_snapshot.metadata = dir_snapshot.metadata;
+    // The directory snapshot middleware includes all possible init paths
+    // so we don't need to add it here.
 
-    if let Some(mut meta) = dir_meta(vfs, folder_path)? {
-        meta.apply_all(&mut init_snapshot)?;
-    }
+    DirectoryMetadata::read_and_apply_all(vfs, folder_path, &mut init_snapshot)?;
 
     Ok(Some(init_snapshot))
+}
+
+pub fn syncback_lua<'sync>(
+    snapshot: &SyncbackSnapshot<'sync>,
+) -> anyhow::Result<SyncbackReturn<'sync>> {
+    let new_inst = snapshot.new_inst();
+
+    let contents = if let Some(Variant::String(source)) = new_inst.properties.get(&ustr("Source")) {
+        source.as_bytes().to_vec()
+    } else {
+        anyhow::bail!("Scripts must have a `Source` property that is a String")
+    };
+    let mut fs_snapshot = FsSnapshot::new();
+    fs_snapshot.add_file(&snapshot.path, contents);
+
+    let meta = AdjacentMetadata::from_syncback_snapshot(snapshot, snapshot.path.clone())?;
+    if let Some(mut meta) = meta {
+        // Scripts have relatively few properties that we care about, so shifting
+        // is fine.
+        meta.properties.shift_remove(&ustr("Source"));
+
+        if !meta.is_empty() {
+            let parent_location = snapshot.path.parent_err()?;
+            fs_snapshot.add_file(
+                parent_location.join(format!("{}.meta.json", new_inst.name)),
+                serde_json::to_vec_pretty(&meta).context("cannot serialize metadata")?,
+            );
+        }
+    }
+
+    Ok(SyncbackReturn {
+        fs_snapshot,
+        // Scripts don't have a child!
+        children: Vec::new(),
+        removed_children: Vec::new(),
+    })
+}
+
+pub fn syncback_lua_init<'sync>(
+    script_type: ScriptType,
+    snapshot: &SyncbackSnapshot<'sync>,
+) -> anyhow::Result<SyncbackReturn<'sync>> {
+    let new_inst = snapshot.new_inst();
+    let path = snapshot.path.join(match script_type {
+        ScriptType::Server => "init.server.luau",
+        ScriptType::Client => "init.client.luau",
+        ScriptType::Module => "init.luau",
+        _ => anyhow::bail!("syncback is not yet implemented for {script_type:?}"),
+    });
+
+    let contents = if let Some(Variant::String(source)) = new_inst.properties.get(&ustr("Source")) {
+        source.as_bytes().to_vec()
+    } else {
+        anyhow::bail!("Scripts must have a `Source` property that is a String")
+    };
+
+    let mut dir_syncback = syncback_dir_no_meta(snapshot)?;
+    dir_syncback.fs_snapshot.add_file(&path, contents);
+
+    let meta = DirectoryMetadata::from_syncback_snapshot(snapshot, path.clone())?;
+    if let Some(mut meta) = meta {
+        // Scripts have relatively few properties that we care about, so shifting
+        // is fine.
+        meta.properties.shift_remove(&ustr("Source"));
+
+        if !meta.is_empty() {
+            dir_syncback.fs_snapshot.add_file(
+                snapshot.path.join("init.meta.json"),
+                serde_json::to_vec_pretty(&meta)
+                    .context("could not serialize new init.meta.json")?,
+            );
+        }
+    }
+
+    Ok(dir_syncback)
 }
 
 #[cfg(test)]
@@ -300,7 +379,6 @@ mod test {
         });
     }
 
-    #[ignore = "init.lua functionality has moved to the root snapshot function"]
     #[test]
     fn init_module_from_vfs() {
         let mut imfs = InMemoryFs::new();
@@ -312,10 +390,42 @@ mod test {
 
         let vfs = Vfs::new(imfs);
 
-        let instance_snapshot = snapshot_lua(
+        let instance_snapshot = snapshot_lua_init(
             &InstanceContext::with_emit_legacy_scripts(Some(true)),
             &vfs,
-            Path::new("/root"),
+            Path::new("/root/init.lua"),
+            "root",
+            ScriptType::Module,
+        )
+        .unwrap()
+        .unwrap();
+
+        insta::with_settings!({ sort_maps => true }, {
+            insta::assert_yaml_snapshot!(instance_snapshot);
+        });
+    }
+
+    #[test]
+    fn init_module_from_vfs_with_meta() {
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
+            "/root",
+            VfsSnapshot::dir([
+                ("init.lua", VfsSnapshot::file("Hello!")),
+                (
+                    "init.meta.json",
+                    VfsSnapshot::file(r#"{"id": "manually specified"}"#),
+                ),
+            ]),
+        )
+        .unwrap();
+
+        let vfs = Vfs::new(imfs);
+
+        let instance_snapshot = snapshot_lua_init(
+            &InstanceContext::with_emit_legacy_scripts(Some(true)),
+            &vfs,
+            Path::new("/root/init.lua"),
             "root",
             ScriptType::Module,
         )

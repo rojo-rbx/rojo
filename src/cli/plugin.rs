@@ -46,10 +46,18 @@ impl PluginSubcommand {
     }
 }
 
-fn install_plugin() -> anyhow::Result<()> {
+fn initialize_plugin() -> anyhow::Result<ServeSession> {
     let plugin_snapshot: VfsSnapshot = bincode::deserialize(PLUGIN_BINCODE)
         .expect("Rojo's plugin was not properly packed into Rojo's binary");
 
+    let mut in_memory_fs = InMemoryFs::new();
+    in_memory_fs.load_snapshot("/plugin", plugin_snapshot)?;
+
+    let vfs = Vfs::new(in_memory_fs);
+    Ok(ServeSession::new(vfs, "/plugin")?)
+}
+
+fn install_plugin() -> anyhow::Result<()> {
     let studio = RobloxStudio::locate()?;
 
     let plugins_folder_path = studio.plugins_path();
@@ -59,17 +67,12 @@ fn install_plugin() -> anyhow::Result<()> {
         fs::create_dir(plugins_folder_path)?;
     }
 
-    let mut in_memory_fs = InMemoryFs::new();
-    in_memory_fs.load_snapshot("/plugin", plugin_snapshot)?;
-
-    let vfs = Vfs::new(in_memory_fs);
-    let session = ServeSession::new(vfs, "/plugin")?;
-
     let plugin_path = plugins_folder_path.join(PLUGIN_FILE_NAME);
     log::debug!("Writing plugin to {}", plugin_path.display());
 
     let mut file = BufWriter::new(File::create(plugin_path)?);
 
+    let session = initialize_plugin()?;
     let tree = session.tree();
     let root_id = tree.get_root_id();
 
@@ -91,4 +94,9 @@ fn uninstall_plugin() -> anyhow::Result<()> {
     }
 
     Ok(())
+}
+
+#[test]
+fn plugin_initialize() {
+    assert!(initialize_plugin().is_ok())
 }

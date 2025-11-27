@@ -1,0 +1,7 @@
+{
+  "$schema": "rojo/model.json",
+  "className": "BoolValue",
+  "properties": {
+    "Value": true
+  }
+}

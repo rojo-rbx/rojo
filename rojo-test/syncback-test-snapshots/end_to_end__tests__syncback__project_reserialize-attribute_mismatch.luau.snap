@@ -1,0 +1,5 @@
+---
+source: tests/tests/syncback.rs
+expression: attribute_mismatch.luau
+---
+-- This script is a part of project_reserialize

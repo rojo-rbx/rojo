@@ -1,5 +1,5 @@
 use std::{
-    collections::{BTreeMap, HashMap, HashSet},
+    collections::{BTreeMap, HashSet},
     ffi::OsStr,
     fs, io,
     net::IpAddr,
@@ -7,13 +7,16 @@ use std::{
 };
 
 use memofs::Vfs;
-use rbx_dom_weak::{Ustr, UstrMap};
+use rbx_dom_weak::Ustr;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use crate::{glob::Glob, json, resolution::UnresolvedValue, snapshot::SyncRule};
+use crate::{
+    glob::Glob, json, resolution::UnresolvedValue, snapshot::SyncRule, syncback::SyncbackRules,
+};
 
-static PROJECT_FILENAME: &str = "default.project.json";
+/// Represents 'default' project names that act as `init` files
+pub static DEFAULT_PROJECT_NAMES: [&str; 2] = ["default.project.json", "default.project.jsonc"];
 
 /// Error type returned by any function that handles projects.
 #[derive(Debug, Error)]
@@ -113,6 +116,10 @@ pub struct Project {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub glob_ignore_paths: Vec<Glob>,
 
+    /// A list of rules for syncback with this project file.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub syncback_rules: Option<SyncbackRules>,
+
     /// A list of mappings of globs to syncing rules. If a file matches a glob,
     /// it will be 'transformed' into an Instance following the rule provided.
     /// Globs are relative to the folder the project file is in.
@@ -131,7 +138,7 @@ impl Project {
     pub fn is_project_file(path: &Path) -> bool {
         path.file_name()
             .and_then(|name| name.to_str())
-            .map(|name| name.ends_with(".project.json"))
+            .map(|name| name.ends_with(".project.json") || name.ends_with(".project.jsonc"))
             .unwrap_or(false)
     }
 
@@ -149,18 +156,19 @@ impl Project {
                 None
             }
         } else {
-            let child_path = path.join(PROJECT_FILENAME);
-            let child_meta = fs::metadata(&child_path).ok()?;
+            for filename in DEFAULT_PROJECT_NAMES {
+                let child_path = path.join(filename);
+                let child_meta = fs::metadata(&child_path).ok()?;
 
-            if child_meta.is_file() {
-                Some(child_path)
-            } else {
-                // This is a folder with the same name as a Rojo default project
-                // file.
-                //
-                // That's pretty weird, but we can roll with it.
-                None
+                if child_meta.is_file() {
+                    return Some(child_path);
+                }
             }
+            // This is a folder with the same name as a Rojo default project
+            // file.
+            //
+            // That's pretty weird, but we can roll with it.
+            None
         }
     }
 
@@ -181,16 +189,20 @@ impl Project {
 
         // If you're editing this to be generic, make sure you also alter the
         // snapshot middleware to support generic init paths.
-        if file_name == PROJECT_FILENAME {
-            let folder_name = self.folder_location().file_name().and_then(OsStr::to_str);
-            if let Some(folder_name) = folder_name {
-                self.name = Some(folder_name.to_string());
-            } else {
-                return Err(Error::FolderNameInvalid {
-                    path: self.file_location.clone(),
-                });
+        for default_file_name in DEFAULT_PROJECT_NAMES {
+            if file_name == default_file_name {
+                let folder_name = self.folder_location().file_name().and_then(OsStr::to_str);
+                if let Some(folder_name) = folder_name {
+                    self.name = Some(folder_name.to_string());
+                    return Ok(());
+                } else {
+                    return Err(Error::FolderNameInvalid {
+                        path: self.file_location.clone(),
+                    });
+                }
             }
-        } else if let Some(fallback) = fallback {
+        }
+        if let Some(fallback) = fallback {
             self.name = Some(fallback.to_string());
         } else {
             // As of the time of writing (July 10, 2024) there is no way for
@@ -257,6 +269,10 @@ impl Project {
         project_file_location: &Path,
         fallback_name: Option<&str>,
     ) -> Result<Self, ProjectError> {
+        log::debug!(
+            "Loading project file from {}",
+            project_file_location.display()
+        );
         let project_path = project_file_location.to_path_buf();
         let contents = vfs.read(&project_path).map_err(|e| match e.kind() {
             io::ErrorKind::NotFound => Error::NoProjectFound {
@@ -270,6 +286,24 @@ impl Project {
             project_path,
             fallback_name,
         )?)
+    }
+
+    pub(crate) fn load_initial_project(vfs: &Vfs, path: &Path) -> Result<Self, ProjectError> {
+        if Self::is_project_file(path) {
+            Self::load_exact(vfs, path, None)
+        } else {
+            // Check for default projects.
+            for default_project_name in DEFAULT_PROJECT_NAMES {
+                let project_path = path.join(default_project_name);
+                if let Ok(true) = vfs.exists(&project_path) {
+                    return Self::load_exact(vfs, &project_path, None);
+                }
+            }
+            Err(Error::NoProjectFound {
+                path: path.to_path_buf(),
+            }
+            .into())
+        }
     }
 
     /// Checks if there are any compatibility issues with this project file and
@@ -304,11 +338,20 @@ pub enum PathNode {
 }
 
 impl PathNode {
+    /// Returns the path of the `PathNode`, without regard for if it's optional
+    // or not.
+    #[inline]
     pub fn path(&self) -> &Path {
         match self {
             PathNode::Required(pathbuf) => pathbuf,
             PathNode::Optional(OptionalPathNode { optional }) => optional,
         }
+    }
+
+    /// Returns whether this `PathNode` is optional or not.
+    #[inline]
+    pub fn is_optional(&self) -> bool {
+        matches!(self, PathNode::Optional(_))
     }
 }
 
@@ -339,16 +382,16 @@ pub struct ProjectNode {
     #[serde(
         rename = "$properties",
         default,
-        skip_serializing_if = "HashMap::is_empty"
+        skip_serializing_if = "BTreeMap::is_empty"
     )]
-    pub properties: UstrMap<UnresolvedValue>,
+    pub properties: BTreeMap<Ustr, UnresolvedValue>,
 
     #[serde(
         rename = "$attributes",
         default,
-        skip_serializing_if = "HashMap::is_empty"
+        skip_serializing_if = "BTreeMap::is_empty"
     )]
-    pub attributes: HashMap<String, UnresolvedValue>,
+    pub attributes: BTreeMap<String, UnresolvedValue>,
 
     /// Defines the behavior when Rojo encounters unknown instances in Roblox
     /// Studio during live sync. `$ignoreUnknownInstances` should be considered
@@ -530,7 +573,7 @@ mod test {
 
         let project = Project::load_from_slice(
             project_json.as_bytes(),
-            PathBuf::from("/test/default.project.json"),
+            PathBuf::from("/test/default.project.jsonc"),
             None,
         )
         .expect("Failed to parse project with JSONC features");

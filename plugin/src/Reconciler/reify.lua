@@ -126,7 +126,7 @@ function applyDeferredRefs(instanceMap, deferredRefs, unappliedPatch)
 		})
 	end
 
-	for _, entry in ipairs(deferredRefs) do
+	for _, entry in deferredRefs do
 		local _, refId = next(entry.virtualValue)
 
 		if refId == nil then

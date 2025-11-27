@@ -1,0 +1,11 @@
+{
+  "name": "nested_projects",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "Nested": {
+        "$path": "nested.project.json"
+      }
+    }
+  }
+}

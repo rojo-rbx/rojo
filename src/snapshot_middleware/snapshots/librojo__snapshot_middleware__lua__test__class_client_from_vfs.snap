@@ -10,13 +10,15 @@ metadata:
   relevant_paths:
     - /foo.client.lua
     - /foo.meta.json
+    - /foo.meta.jsonc
   context:
     emit_legacy_scripts: true
   specified_id: ~
+  middleware: ~
+  schema: ~
 name: foo
 class_name: LocalScript
 properties:
   Source:
     String: Hello there!
 children: []
-
