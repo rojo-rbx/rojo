@@ -67,9 +67,6 @@ Making a new release? Simply add the new header with the version and date undern
     - `syncCurrentCamera` is a toggle for whether to sync back the Workspace's CurrentCamera. Defaults to `false`.
     - `syncUnscriptable` is a toggle for whether to sync back properties that cannot be set by the Roblox Studio plugin. Defaults to `true`.
 
- 	If you are used to the `UpliftGames` version of this feature, there are a few notable differences:
-    - `syncUnscriptable` defaults to `true` instead of `false`
-    - `ignoreTrees` doesn't require the root of the project's name in it.
 * Fixed bugs and improved performance & UX for the script diff viewer ([#994])
 * Rebuilt the internal communication between the server and plugin to use [websockets](https://devforum.roblox.com/t/websockets-support-in-studio-is-now-available/4021932/1) instead of [long polling](https://en.wikipedia.org/wiki/Push_technology#Long_polling) ([#1142])
 * Added support for `.jsonc` files for all JSON-related files (e.g. `.project.jsonc` and `.meta.jsonc`) to accompany JSONC support ([#1159])
