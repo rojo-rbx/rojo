@@ -1,7 +1,0 @@
-{
-  "name": "msgpack",
-  "globIgnorePaths": ["**/*.spec.lua"],
-  "tree": {
-    "$path": "src/msgpack.lua"
-  }
-}
