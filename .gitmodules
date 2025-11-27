@@ -18,4 +18,4 @@
 	url = https://github.com/boatbomber/highlighter.git
 [submodule "plugin/Packages/msgpack-luau"]
 	path = plugin/Packages/msgpack-luau
-	url = https://github.com/cipharius/msgpack-luau
+	url = https://github.com/cipharius/msgpack-luau/
