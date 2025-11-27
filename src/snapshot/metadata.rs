@@ -66,6 +66,10 @@ pub struct InstanceMetadata {
     /// The Middleware that was used to create this Instance. Should generally
     /// not be `None` except if the snapshotting process is not completed.
     pub middleware: Option<Middleware>,
+
+    /// A schema provided via a JSON file, if one exists. Will be `None` for
+    /// all non-JSON middleware.
+    pub schema: Option<String>,
 }
 
 impl InstanceMetadata {
@@ -77,6 +81,7 @@ impl InstanceMetadata {
             context: InstanceContext::default(),
             specified_id: None,
             middleware: None,
+            schema: None,
         }
     }
 
@@ -120,6 +125,10 @@ impl InstanceMetadata {
             middleware: Some(middleware),
             ..self
         }
+    }
+
+    pub fn schema(self, schema: Option<String>) -> Self {
+        Self { schema, ..self }
     }
 }
 

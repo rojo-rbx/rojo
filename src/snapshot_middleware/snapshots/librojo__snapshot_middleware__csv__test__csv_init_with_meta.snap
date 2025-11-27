@@ -22,6 +22,7 @@ metadata:
     emit_legacy_scripts: true
   specified_id: manually specified
   middleware: ~
+  schema: ~
 name: root
 class_name: LocalizationTable
 properties:

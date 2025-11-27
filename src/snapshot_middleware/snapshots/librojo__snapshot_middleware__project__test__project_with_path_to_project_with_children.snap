@@ -14,6 +14,7 @@ metadata:
     emit_legacy_scripts: true
   specified_id: ~
   middleware: project
+  schema: ~
 name: path-child-project
 class_name: Folder
 properties: {}
@@ -33,8 +34,8 @@ children:
         emit_legacy_scripts: true
       specified_id: ~
       middleware: ~
+      schema: ~
     name: SomeChild
     class_name: Model
     properties: {}
     children: []
-

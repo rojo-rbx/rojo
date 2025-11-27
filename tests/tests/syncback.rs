@@ -12,6 +12,9 @@ macro_rules! syncback_tests {
                 for name in $list {
                     let snapshot_name = format!(concat!(stringify!($test_name), "-{}"), name);
                     let new = path.join::<&str>(name);
+                    if !new.exists() {
+                        panic!("the path stub '{}' does not exist after syncback runs. consider double checking for typos.", name);
+                    }
                     if let Some("rbxm") = new.extension().and_then(OsStr::to_str) {
                         let content = fs_err::read(new).unwrap();
                         snapshot_rbxm(&snapshot_name, content, name);
@@ -78,4 +81,5 @@ syncback_tests! {
     sync_rules => ["src/module.modulescript", "src/text.text"],
     // Ensures that the `syncUnscriptable` setting works
     unscriptable_properties => ["default.project.json"],
+    schema_roundtrip => ["default.project.json", "src/model.model.json", "src/init/init.meta.json", "src/adjacent.meta.json"]
 }

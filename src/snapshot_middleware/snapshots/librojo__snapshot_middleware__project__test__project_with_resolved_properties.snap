@@ -13,10 +13,10 @@ metadata:
     emit_legacy_scripts: true
   specified_id: ~
   middleware: ~
+  schema: ~
 name: resolved-properties
 class_name: StringValue
 properties:
   Value:
     String: "Hello, world!"
 children: []
-
