@@ -69,10 +69,12 @@ Making a new release? Simply add the new header with the version and date undern
     - `syncUnscriptable` defaults to `true` instead of `false`
     - `ignoreTrees` doesn't require the root of the project's name in it.
 * Fixed bugs and improved performance & UX for the script diff viewer ([#994])
+* Rebuilt the internal communication between the server and plugin to use [websockets](https://devforum.roblox.com/t/websockets-support-in-studio-is-now-available/4021932/1) instead of [long polling](https://en.wikipedia.org/wiki/Push_technology#Long_polling) ([#1142])
 * Added support for `.jsonc` files for all JSON-related files (e.g. `.project.jsonc` and `.meta.jsonc`) to accompany JSONC support ([#1159])
 
 [#937]: https://github.com/rojo-rbx/rojo/pull/937
 [#994]: https://github.com/rojo-rbx/rojo/pull/994
+[#1142]: https://github.com/rojo-rbx/rojo/pull/1142
 [#1159]: https://github.com/rojo-rbx/rojo/pull/1159
 [#1172]: https://github.com/rojo-rbx/rojo/pull/1172
 
