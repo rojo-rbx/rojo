@@ -31,6 +31,10 @@ Making a new release? Simply add the new header with the version and date undern
 
 ## Unreleased
 
+* `inf` and `nan` values in properties are now synced ([#1176])
+
+[#1176]: https://github.com/rojo-rbx/rojo/pull/1176
+
 ## [7.7.0-rc.1] (November 27th, 2025)
 
 * Fixed a bug where passing `--skip-git` to `rojo init` would still create a file named `gitignore.txt` ([#1172])
