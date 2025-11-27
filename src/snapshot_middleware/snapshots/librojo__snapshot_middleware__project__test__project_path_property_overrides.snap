@@ -14,10 +14,10 @@ metadata:
     emit_legacy_scripts: true
   specified_id: ~
   middleware: project
+  schema: ~
 name: path-property-override
 class_name: StringValue
 properties:
   Value:
     String: Changed
 children: []
-

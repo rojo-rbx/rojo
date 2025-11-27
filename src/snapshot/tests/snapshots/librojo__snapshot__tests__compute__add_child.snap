@@ -14,9 +14,9 @@ added_instances:
           emit_legacy_scripts: true
         specified_id: ~
         middleware: ~
+        schema: ~
       name: New
       class_name: Folder
       properties: {}
       children: []
 updated_instances: []
-

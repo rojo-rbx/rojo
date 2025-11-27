@@ -15,6 +15,7 @@ metadata:
     emit_legacy_scripts: true
   specified_id: ~
   middleware: ~
+  schema: ~
 name: foo
 class_name: ModuleScript
 properties:

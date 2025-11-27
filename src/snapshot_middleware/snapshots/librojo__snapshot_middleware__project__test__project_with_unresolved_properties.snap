@@ -13,10 +13,10 @@ metadata:
     emit_legacy_scripts: true
   specified_id: ~
   middleware: ~
+  schema: ~
 name: unresolved-properties
 class_name: StringValue
 properties:
   Value:
     String: Hi!
 children: []
-
