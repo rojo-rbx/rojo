@@ -11,6 +11,7 @@ use std::{
 use hyper_tungstenite::tungstenite::{connect, Message};
 use rbx_dom_weak::types::Ref;
 
+use serde::Deserialize;
 use tempfile::{tempdir, TempDir};
 
 use librojo::web_api::{
@@ -158,22 +159,16 @@ impl TestServeSession {
 
     pub fn get_api_rojo(&self) -> Result<ServerInfoResponse, reqwest::Error> {
         let url = format!("http://localhost:{}/api/rojo", self.port);
-        let body = reqwest::blocking::get(url)?.text()?;
+        let body = reqwest::blocking::get(url)?.bytes()?;
 
-        let value = jsonc_parser::parse_to_serde_value(&body, &Default::default())
-            .expect("Failed to parse JSON")
-            .expect("No JSON value");
-        Ok(serde_json::from_value(value).expect("Server returned malformed response"))
+        Ok(deserialize_msgpack(&body).expect("Server returned malformed response"))
     }
 
     pub fn get_api_read(&self, id: Ref) -> Result<ReadResponse<'_>, reqwest::Error> {
         let url = format!("http://localhost:{}/api/read/{}", self.port, id);
-        let body = reqwest::blocking::get(url)?.text()?;
+        let body = reqwest::blocking::get(url)?.bytes()?;
 
-        let value = jsonc_parser::parse_to_serde_value(&body, &Default::default())
-            .expect("Failed to parse JSON")
-            .expect("No JSON value");
-        Ok(serde_json::from_value(value).expect("Server returned malformed response"))
+        Ok(deserialize_msgpack(&body).expect("Server returned malformed response"))
     }
 
     pub fn get_api_socket_packet(
@@ -235,8 +230,18 @@ impl TestServeSession {
 
         let url = format!("http://localhost:{}/api/serialize/{}", self.port, id_list);
 
-        reqwest::blocking::get(url)?.json()
+        let body = reqwest::blocking::get(url)?.bytes()?;
+
+        Ok(deserialize_msgpack(&body).expect("Server returned malformed response"))
     }
+}
+
+fn deserialize_msgpack<'a, T: Deserialize<'a>>(
+    input: &'a [u8],
+) -> Result<T, rmp_serde::decode::Error> {
+    let mut deserializer = rmp_serde::Deserializer::new(input).with_human_readable();
+
+    T::deserialize(&mut deserializer)
 }
 
 /// Probably-okay way to generate random enough port numbers for running the
@@ -256,11 +261,7 @@ fn get_port_number() -> usize {
 /// Since the provided structure intentionally includes unredacted referents,
 /// some post-processing is done to ensure they don't show up in the model.
 pub fn serialize_to_xml_model(response: &SerializeResponse, redactions: &RedactionMap) -> String {
-    let model_content = data_encoding::BASE64
-        .decode(response.model_contents.model().as_bytes())
-        .unwrap();
-
-    let mut dom = rbx_binary::from_reader(model_content.as_slice()).unwrap();
+    let mut dom = rbx_binary::from_reader(response.model_contents.as_slice()).unwrap();
     // This makes me realize that maybe we need a `descendants_mut` iter.
     let ref_list: Vec<Ref> = dom.descendants().map(|inst| inst.referent()).collect();
     for referent in ref_list {

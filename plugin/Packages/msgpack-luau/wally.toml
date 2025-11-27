@@ -1,0 +1,11 @@
+[package]
+name = "cipharius/msgpack-luau"
+description = "A pure MessagePack binary serialization format implementation in Luau."
+version = "0.3.0"
+license = "MIT"
+authors = ["Valts Liepiņš <cipharius@pm.me>"]
+realm = "shared"
+registry = "https://github.com/UpliftGames/wally-index"
+
+[dev-dependencies]
+TestEZ = "roblox/testez@0.4.1"
