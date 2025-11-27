@@ -31,6 +31,8 @@ Making a new release? Simply add the new header with the version and date undern
 
 ## Unreleased
 
+## [7.7.0-rc.1] (November 27th, 2025)
+
 * Fixed a bug where passing `--skip-git` to `rojo init` would still create a file named `gitignore.txt` ([#1172])
 * A new command `rojo syncback` has been added. It can be used as `rojo syncback [path to project] --input [path to file]`. ([#937])
  	This command takes a Roblox file and pulls Instances out of it and places them in the correct position in the provided project.
@@ -72,6 +74,7 @@ Making a new release? Simply add the new header with the version and date undern
 * Rebuilt the internal communication between the server and plugin to use [websockets](https://devforum.roblox.com/t/websockets-support-in-studio-is-now-available/4021932/1) instead of [long polling](https://en.wikipedia.org/wiki/Push_technology#Long_polling) ([#1142])
 * Added support for `.jsonc` files for all JSON-related files (e.g. `.project.jsonc` and `.meta.jsonc`) to accompany JSONC support ([#1159])
 
+[7.7.0-rc.1]: https://github.com/rojo-rbx/rojo/releases/tag/v7.7.0-rc.1
 [#937]: https://github.com/rojo-rbx/rojo/pull/937
 [#994]: https://github.com/rojo-rbx/rojo/pull/994
 [#1142]: https://github.com/rojo-rbx/rojo/pull/1142
