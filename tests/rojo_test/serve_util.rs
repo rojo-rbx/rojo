@@ -190,8 +190,8 @@ impl TestServeSession {
             }
 
             match socket.read() {
-                Ok(Message::Text(text)) => {
-                    let packet: SocketPacket = serde_json::from_str(&text)?;
+                Ok(Message::Binary(binary)) => {
+                    let packet: SocketPacket = deserialize_msgpack(&binary)?;
                     if packet.packet_type != packet_type {
                         continue;
                     }
@@ -204,7 +204,7 @@ impl TestServeSession {
                     return Err("WebSocket closed before receiving messages".into());
                 }
                 Ok(_) => {
-                    // Ignore other message types (ping, pong, binary)
+                    // Ignore other message types (ping, pong, text)
                     continue;
                 }
                 Err(hyper_tungstenite::tungstenite::Error::Io(e))
