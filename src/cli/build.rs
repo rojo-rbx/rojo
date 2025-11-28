@@ -87,7 +87,7 @@ impl BuildCommand {
         vfs.set_watch_enabled(self.watch);
 
         initialize_prometheus()?; // fuck this idk
-        let session = ServeSession::new(vfs, project_path)?;
+        let session = ServeSession::new(vfs, project_path, Some(self.obfuscation))?;
         let mut cursor = session.message_queue().cursor();
 
         write_model(&session, &output_path, output_kind)?;
@@ -204,9 +204,6 @@ fn write_model(
         .and_then(|name| name.to_str())
         .unwrap_or("<invalid utf-8>");
     println!("Built project to {}", filename);
-
-    // initialize_prometheus()?;
-    // println!("{}", obfuscate("Print('Hello World') local GuiService, var = game:GetService('GuiService'), 0")?);
 
     Ok(())
 }

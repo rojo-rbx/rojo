@@ -51,7 +51,7 @@ pipeline = Pipeline:fromConfig{
     Ok(())
 }
 
-pub fn obfuscate(source: &str) -> LuaResult<String> {
+pub fn obfuscate(source: &str, class_name: &str, name: &str) -> LuaResult<String> {
     let lua_cell = LUA_VM
         .get()
         .ok_or_else(|| LuaError::RuntimeError("Lua VM not initialized".into()))?
@@ -78,28 +78,34 @@ pub fn obfuscate(source: &str) -> LuaResult<String> {
         },
         Err(LuaError::RuntimeError(msg)) => {
             // eprintln!("Lua error: {}", msg);
+            eprintln!("Lua error. ClassName: [{:#?}], Name: [{:#?}]", class_name, name);
             Ok(format!("
 --[[
     Obfuscation failed - LuaError
+    ClassName: [{}]
+    Name: [{}]
     Error: [
         {}
     ]
 ]]
 
-{}", msg, source
+{}", class_name, name, msg, source
 ))
         },
         Err(msg) => {
             // eprintln!("Other Lua error: {:?}", msg);
+            eprintln!("Other Lua error. ClassName: [{:#?}], Name: [{:#?}]", class_name, name);
             Ok(format!("
 --[[
     Obfuscation failed - Error
+    ClassName: [{}]
+    Name: [{}]
     Error: [
         {}
     ]
 ]]
 
-{}", msg, source
+{}", class_name, name, msg, source
 ))
         },
     }

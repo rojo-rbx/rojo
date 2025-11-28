@@ -73,7 +73,7 @@ impl SyncbackCommand {
         vfs.set_watch_enabled(false);
 
         let project_start_timer = Instant::now();
-        let session_old = ServeSession::new(vfs, path_old.clone())?;
+        let session_old = ServeSession::new(vfs, path_old.clone(), None)?;
         log::debug!(
             "Finished opening project in {:0.02}s",
             project_start_timer.elapsed().as_secs_f32()

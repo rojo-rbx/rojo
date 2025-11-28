@@ -94,7 +94,7 @@ impl ServeSession {
     /// The project file is expected to be loaded out-of-band since it's
     /// currently loaded from the filesystem directly instead of through the
     /// in-memory filesystem layer.
-    pub fn new<P: AsRef<Path>>(vfs: Vfs, start_path: P) -> Result<Self, ServeSessionError> {
+    pub fn new<P: AsRef<Path>>(vfs: Vfs, start_path: P, obfuscation: Option<bool>) -> Result<Self, ServeSessionError> {
         let start_path = start_path.as_ref();
         let start_time = Instant::now();
 
@@ -116,7 +116,7 @@ impl ServeSession {
         let patch_set = compute_patch_set(snapshot, &tree, root_id);
 
         log::trace!("Applying initial patch set");
-        apply_patch_set(&mut tree, patch_set);
+        apply_patch_set(&mut tree, patch_set, obfuscation);
 
         let session_id = SessionId::new();
         let message_queue = MessageQueue::new();

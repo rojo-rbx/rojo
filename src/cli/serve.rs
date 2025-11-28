@@ -10,6 +10,7 @@ use memofs::Vfs;
 use termcolor::{BufferWriter, Color, ColorChoice, ColorSpec, WriteColor};
 
 use crate::{serve_session::ServeSession, web::LiveServer};
+use crate::obfuscator::initialize_prometheus;
 
 use super::{resolve_path, GlobalOptions};
 
@@ -43,7 +44,8 @@ impl ServeCommand {
 
         let vfs = Vfs::new_default();
 
-        let session = Arc::new(ServeSession::new(vfs, project_path)?);
+        initialize_prometheus()?; // fuck this idk
+        let session = Arc::new(ServeSession::new(vfs, project_path, Some(self.obfuscation))?);
 
         let ip = self
             .address

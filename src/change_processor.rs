@@ -253,7 +253,7 @@ impl JobThreadContext {
                 }
             }
 
-            apply_patch_set(&mut tree, patch_set)
+            apply_patch_set(&mut tree, patch_set, None)
         };
 
         if !applied_patch.is_empty() {
@@ -297,7 +297,7 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref) -> Option<
                 };
 
                 let patch_set = compute_patch_set(snapshot, tree, id);
-                apply_patch_set(tree, patch_set)
+                apply_patch_set(tree, patch_set, None)
             }
             Ok(None) => {
                 // Our instance was previously created from a path, but that
@@ -309,7 +309,7 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref) -> Option<
                 let mut patch_set = PatchSet::new();
                 patch_set.removed_instances.push(id);
 
-                apply_patch_set(tree, patch_set)
+                apply_patch_set(tree, patch_set, None)
             }
             Err(err) => {
                 log::error!("Error processing filesystem change: {:?}", err);
@@ -345,7 +345,7 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref) -> Option<
             };
 
             let patch_set = compute_patch_set(snapshot, tree, id);
-            apply_patch_set(tree, patch_set)
+            apply_patch_set(tree, patch_set, None)
         }
     };
 

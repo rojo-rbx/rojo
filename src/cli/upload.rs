@@ -42,7 +42,7 @@ impl UploadCommand {
 
         let vfs = Vfs::new_default();
 
-        let session = ServeSession::new(vfs, project_path)?;
+        let session = ServeSession::new(vfs, project_path, None)?;
 
         let tree = session.tree();
         let inner_tree = tree.inner();
