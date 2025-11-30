@@ -30,6 +30,9 @@ Making a new release? Simply add the new header with the version and date undern
 -->
 
 ## Unreleased
+* Fixed a bug caused by having reference properties (such as `ObjectValue.Value`) that point to an Instance not included in syncback. ([#1179])
+
+[#1179]: https://github.com/rojo-rbx/rojo/pull/1179
 
 ## [7.7.0-rc.1] (November 27th, 2025)
 
