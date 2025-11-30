@@ -71,8 +71,13 @@ syncback_tests! {
     ref_properties_conflict => ["src/Pointer_2.model.json", "src/Target_2.model.json"],
     // Ensures that having multiple pointers that are aimed at the same target doesn't trigger ref rewrites.
     ref_properties_duplicate => [],
+    // Ensures that ref properties that point to nothing after the prune both
+    // do not leave any trace of themselves
+    ref_properties_pruned => ["src/Pointer1.model.json", "src/Pointer2.model.json", "src/Pointer3.model.json"],
     // Ensures that the old middleware is respected during syncback
     respect_old_middleware => ["default.project.json", "src/model_json.model.json", "src/rbxm.rbxm", "src/rbxmx.rbxmx"],
+    // Ensures that the `$schema` field roundtrips with syncback
+    schema_roundtrip => ["default.project.json", "src/model.model.json", "src/init/init.meta.json", "src/adjacent.meta.json"],
     // Ensures that StringValues inside project files are written to the
     // project file, but only if they don't have `$path` set
     string_value_project => ["default.project.json"],
@@ -81,8 +86,4 @@ syncback_tests! {
     sync_rules => ["src/module.modulescript", "src/text.text"],
     // Ensures that the `syncUnscriptable` setting works
     unscriptable_properties => ["default.project.json"],
-    schema_roundtrip => ["default.project.json", "src/model.model.json", "src/init/init.meta.json", "src/adjacent.meta.json"],
-    // Ensures that ref properties that point to nothing after the prune both
-    // do not leave any trace of themselves
-    ref_properties_pruned => ["src/Pointer1.model.json", "src/Pointer2.model.json", "src/Pointer3.model.json"],
 }
