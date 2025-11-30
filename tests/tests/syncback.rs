@@ -81,5 +81,8 @@ syncback_tests! {
     sync_rules => ["src/module.modulescript", "src/text.text"],
     // Ensures that the `syncUnscriptable` setting works
     unscriptable_properties => ["default.project.json"],
-    schema_roundtrip => ["default.project.json", "src/model.model.json", "src/init/init.meta.json", "src/adjacent.meta.json"]
+    schema_roundtrip => ["default.project.json", "src/model.model.json", "src/init/init.meta.json", "src/adjacent.meta.json"],
+    // Ensures that ref properties that point to nothing after the prune both
+    // do not leave any trace of themselves
+    ref_properties_pruned => ["src/Pointer1.model.json", "src/Pointer2.model.json", "src/Pointer3.model.json"],
 }

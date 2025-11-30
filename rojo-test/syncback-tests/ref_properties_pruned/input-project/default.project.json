@@ -1,0 +1,9 @@
+{
+  "name": "ref_properties_pruned",
+  "tree": {
+    "$className": "DataModel",
+    "ServerScriptService": {
+      "$path": "src"
+    }
+  }
+}
