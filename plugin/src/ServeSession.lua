@@ -331,6 +331,13 @@ function ServeSession:__replaceInstances(idList)
 		self.__instanceMap:insert(id, replacement)
 		Log.trace("Swapping Instance {} out via api/models/ endpoint", id)
 		local oldParent = oldInstance.Parent
+
+		-- Save PrimaryPart before moving children, as it will be lost when the old instance is discarded
+		local oldPrimaryPart = nil
+		if oldInstance:IsA("Model") and replacement:IsA("Model") then
+			oldPrimaryPart = oldInstance.PrimaryPart
+		end
+
 		for _, child in oldInstance:GetChildren() do
 			-- Some children cannot be reparented, such as a TouchTransmitter
 			local reparentSuccess, reparentError = attemptReparent(child, replacement)
@@ -341,6 +348,15 @@ function ServeSession:__replaceInstances(idList)
 					oldInstance.Name,
 					reparentError
 				)
+			end
+		end
+
+		-- Restore PrimaryPart after children are moved to the replacement
+		if oldPrimaryPart and not replacement.PrimaryPart then
+			-- Find the matching child by name in the replacement's descendants
+			local matchingPart = replacement:FindFirstChild(oldPrimaryPart.Name, true)
+			if matchingPart and matchingPart:IsA("BasePart") then
+				replacement.PrimaryPart = matchingPart
 			end
 		end
 
