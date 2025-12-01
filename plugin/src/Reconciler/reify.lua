@@ -46,7 +46,16 @@ function reifyInstanceInner(unappliedPatch, deferredRefs, instanceMap, virtualIn
 	-- something that requires higher security than we have.
 	local createSuccess, instance = pcall(Instance.new, virtualInstance.ClassName)
 
-	if not createSuccess then
+	-- MeshPart and UnionOperation require SerializationService to properly
+	-- set their mesh data (MeshId/MeshContent). Instance.new() now succeeds
+	-- for these classes but creates empty meshes, and the mesh properties
+	-- are read-only after creation. Force these to use the fallback mechanism.
+	local requiresFallback = virtualInstance.ClassName == "MeshPart"
+		or virtualInstance.ClassName == "UnionOperation"
+		or virtualInstance.ClassName == "IntersectOperation"
+		or virtualInstance.ClassName == "NegateOperation"
+
+	if not createSuccess or requiresFallback then
 		addAllToPatch(unappliedPatch, virtualInstances, id)
 		return
 	end

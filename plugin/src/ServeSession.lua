@@ -277,6 +277,12 @@ function ServeSession:__onActiveScriptChanged(activeScript)
 	self.__apiContext:open(scriptId)
 end
 
+-- Batch size for serialize/refPatch API calls to avoid URL length limits.
+-- Each Rojo ID is 32 hex characters, plus 1 comma separator = 33 chars per ID.
+-- With a conservative 2000 character URL limit and ~50 chars for base path,
+-- we can fit about 50-60 IDs per request. Use 50 to be safe.
+local SERIALIZE_BATCH_SIZE = 50
+
 function ServeSession:__replaceInstances(idList)
 	if #idList == 0 then
 		return true, PatchSet.newEmpty()
@@ -288,33 +294,78 @@ function ServeSession:__replaceInstances(idList)
 		selectionMap[instance] = i
 	end
 
-	-- TODO: Should we do this in multiple requests so we can more granularly mark failures?
-	local modelSuccess, replacements = self.__apiContext
-		:serialize(idList)
-		:andThen(function(response)
-			Log.debug("Deserializing results from serialize endpoint")
-			local objects = SerializationService:DeserializeInstancesAsync(response.modelContents)
-			if not objects[1] then
-				return Promise.reject("Serialize endpoint did not deserialize into any Instances")
-			end
-			if #objects[1]:GetChildren() ~= #idList then
-				return Promise.reject("Serialize endpoint did not return the correct number of Instances")
-			end
+	-- Process IDs in batches to avoid URL length limits
+	local allReplacements = {}
+	local modelSuccess = true
 
-			local instanceMap = {}
-			for _, item in objects[1]:GetChildren() do
-				instanceMap[item.Name] = item.Value
-			end
-			return instanceMap
-		end)
-		:await()
+	for batchStart = 1, #idList, SERIALIZE_BATCH_SIZE do
+		local batchEnd = math.min(batchStart + SERIALIZE_BATCH_SIZE - 1, #idList)
+		local batchIds = {}
+		for i = batchStart, batchEnd do
+			table.insert(batchIds, idList[i])
+		end
 
-	local refSuccess, refPatch = self.__apiContext
-		:refPatch(idList)
-		:andThen(function(response)
-			return response.patch
-		end)
-		:await()
+		local batchSuccess, batchResult = self.__apiContext
+			:serialize(batchIds)
+			:andThen(function(response)
+				Log.debug("Deserializing results from serialize endpoint (batch {}-{})", batchStart, batchEnd)
+				local objects = SerializationService:DeserializeInstancesAsync(response.modelContents)
+				if not objects[1] then
+					return Promise.reject("Serialize endpoint did not deserialize into any Instances")
+				end
+				if #objects[1]:GetChildren() ~= #batchIds then
+					return Promise.reject("Serialize endpoint did not return the correct number of Instances")
+				end
+
+				local instanceMap = {}
+				for _, item in objects[1]:GetChildren() do
+					instanceMap[item.Name] = item.Value
+				end
+				return instanceMap
+			end)
+			:await()
+
+		if not batchSuccess then
+			modelSuccess = false
+			break
+		end
+
+		-- Merge batch results into all replacements
+		for id, replacement in batchResult do
+			allReplacements[id] = replacement
+		end
+	end
+
+	local replacements = allReplacements
+
+	-- Process refPatch in batches as well
+	local allRefPatches = PatchSet.newEmpty()
+	local refSuccess = true
+
+	for batchStart = 1, #idList, SERIALIZE_BATCH_SIZE do
+		local batchEnd = math.min(batchStart + SERIALIZE_BATCH_SIZE - 1, #idList)
+		local batchIds = {}
+		for i = batchStart, batchEnd do
+			table.insert(batchIds, idList[i])
+		end
+
+		local batchRefSuccess, batchRefPatch = self.__apiContext
+			:refPatch(batchIds)
+			:andThen(function(response)
+				return response.patch
+			end)
+			:await()
+
+		if not batchRefSuccess then
+			refSuccess = false
+			break
+		end
+
+		-- Merge batch ref patches
+		PatchSet.assign(allRefPatches, batchRefPatch)
+	end
+
+	local refPatch = allRefPatches
 
 	if not (modelSuccess and refSuccess) then
 		return false
