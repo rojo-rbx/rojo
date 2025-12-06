@@ -222,19 +222,7 @@ pub fn filter_out_property(inst: &Instance, prop_name: &str) -> bool {
 }
 
 pub fn inst_path(dom: &WeakDom, referent: Ref) -> String {
-    let mut path = Vec::new();
-
-    let mut inst = dom.get_by_ref(referent);
-    while let Some(instance) = inst {
-        path.push(instance.name.as_str());
-        inst = dom.get_by_ref(instance.parent());
-    }
-    // This is to avoid the root's name from appearing in the path. Not
-    // optimal, but should be fine.
-    path.pop();
-
-    path.reverse();
-    path.join("/")
+    dom.full_name_for(referent, "/")
 }
 
 #[cfg(test)]
