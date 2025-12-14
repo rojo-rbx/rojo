@@ -222,7 +222,7 @@ pub fn filter_out_property(inst: &Instance, prop_name: &str) -> bool {
 }
 
 pub fn inst_path(dom: &WeakDom, referent: Ref) -> String {
-    dom.full_name_for(referent, "/")
+    dom.full_path_of(referent, "/")
 }
 
 #[cfg(test)]
