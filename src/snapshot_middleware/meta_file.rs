@@ -245,6 +245,9 @@ impl AdjacentMetadata {
                 self.path.display()
             );
         }
+        if let Some(name) = &self.name {
+            snapshot.name = name.clone().into();
+        }
         snapshot.metadata.specified_name = self.name.take();
         Ok(())
     }
@@ -533,6 +536,9 @@ impl DirectoryMetadata {
                 "cannot specify a name using {} (instance has a name from somewhere else)",
                 self.path.display()
             );
+        }
+        if let Some(name) = &self.name {
+            snapshot.name = name.clone().into();
         }
         snapshot.metadata.specified_name = self.name.take();
         Ok(())

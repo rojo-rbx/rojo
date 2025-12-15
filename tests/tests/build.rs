@@ -55,6 +55,7 @@ gen_build_tests! {
     script_meta_disabled,
     server_in_folder,
     server_init,
+    slugified_name_roundtrip,
     txt,
     txt_in_folder,
     unresolved_values,
