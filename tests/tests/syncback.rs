@@ -89,4 +89,6 @@ syncback_tests! {
     // Ensures that instances with names containing illegal characters get slugified filenames
     // and preserve their original names in meta.json
     slugified_name => ["src/_Script/init.meta.json", "src/_Script/init.server.luau", "src/_Folder/init.meta.json"],
+    // Ensures that .model.json files preserve the name property
+    model_json_name => ["src/foo.model.json"],
 }
