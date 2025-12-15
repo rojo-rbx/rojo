@@ -28,7 +28,7 @@ use crate::{
     Project,
 };
 
-pub use file_names::{extension_for_middleware, name_for_inst, validate_file_name};
+pub use file_names::{extension_for_middleware, name_for_inst, slugify_name, validate_file_name};
 pub use fs_snapshot::FsSnapshot;
 pub use hash::*;
 pub use property_filter::{filter_properties, filter_properties_preallocated};
@@ -350,6 +350,19 @@ pub fn get_best_middleware(snapshot: &SyncbackSnapshot) -> Middleware {
     }
 
     if !inst.children().is_empty() {
+        middleware = match middleware {
+            Middleware::ServerScript => Middleware::ServerScriptDir,
+            Middleware::ClientScript => Middleware::ClientScriptDir,
+            Middleware::ModuleScript => Middleware::ModuleScriptDir,
+            Middleware::Csv => Middleware::CsvDir,
+            Middleware::JsonModel | Middleware::Text => Middleware::Dir,
+            _ => middleware,
+        }
+    }
+
+    // If the instance name is invalid for the filesystem, use directory middleware
+    // to allow preserving the name in meta.json
+    if crate::syncback::file_names::validate_file_name(&inst.name).is_err() {
         middleware = match middleware {
             Middleware::ServerScript => Middleware::ServerScriptDir,
             Middleware::ClientScript => Middleware::ClientScriptDir,

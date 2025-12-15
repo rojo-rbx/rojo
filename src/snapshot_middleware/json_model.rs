@@ -81,6 +81,7 @@ pub fn syncback_json_model<'sync>(
         // schemas will ever exist in one project for it to matter, but it
         // could have a performance cost.
         model.schema = old_inst.metadata().schema.clone();
+        model.name = old_inst.metadata().specified_name.clone();
     }
 
     Ok(SyncbackReturn {

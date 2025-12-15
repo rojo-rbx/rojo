@@ -35,14 +35,23 @@ pub fn name_for_inst<'old>(
             | Middleware::CsvDir
             | Middleware::ServerScriptDir
             | Middleware::ClientScriptDir
-            | Middleware::ModuleScriptDir => Cow::Owned(new_inst.name.clone()),
+            | Middleware::ModuleScriptDir => {
+                let name = if validate_file_name(&new_inst.name).is_err() {
+                    Cow::Owned(slugify_name(&new_inst.name))
+                } else {
+                    Cow::Owned(new_inst.name.clone())
+                };
+                name
+            }
             _ => {
                 let extension = extension_for_middleware(middleware);
-                let name = &new_inst.name;
-                validate_file_name(name).with_context(|| {
-                    format!("name '{name}' is not legal to write to the file system")
-                })?;
-                Cow::Owned(format!("{name}.{extension}"))
+                let final_name = if validate_file_name(&new_inst.name).is_err() {
+                    slugify_name(&new_inst.name)
+                } else {
+                    new_inst.name.clone()
+                };
+
+                Cow::Owned(format!("{final_name}.{extension}"))
             }
         })
     }
@@ -93,6 +102,39 @@ const INVALID_WINDOWS_NAMES: [&str; 22] = [
 /// A list of all characters that are outright forbidden to be included
 /// in a file's name.
 const FORBIDDEN_CHARS: [char; 9] = ['<', '>', ':', '"', '/', '|', '?', '*', '\\'];
+
+/// Slugifies a name by replacing forbidden characters with underscores
+/// and ensuring the result is a valid file name
+pub fn slugify_name(name: &str) -> String {
+    let mut result = String::with_capacity(name.len());
+
+    for ch in name.chars() {
+        if FORBIDDEN_CHARS.contains(&ch) {
+            result.push('_');
+        } else {
+            result.push(ch);
+        }
+    }
+
+    // Handle Windows reserved names by appending an underscore
+    let result_lower = result.to_lowercase();
+    for forbidden in INVALID_WINDOWS_NAMES {
+        if result_lower == forbidden.to_lowercase() {
+            result.push('_');
+            break;
+        }
+    }
+
+    while result.ends_with(' ') || result.ends_with('.') {
+        result.pop();
+    }
+
+    if result.is_empty() || result.chars().all(|c| c == '_') {
+        result = "instance".to_string();
+    }
+
+    result
+}
 
 /// Validates a provided file name to ensure it's allowed on the file system. An
 /// error is returned if the name isn't allowed, indicating why.

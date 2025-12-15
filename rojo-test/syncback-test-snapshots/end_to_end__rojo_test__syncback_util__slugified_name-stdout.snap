@@ -1,0 +1,14 @@
+---
+source: tests/rojo_test/syncback_util.rs
+assertion_line: 101
+expression: "String::from_utf8_lossy(&output.stdout)"
+---
+Writing default.project.json
+Writing src/Camera.rbxm
+Writing src/Terrain.rbxm
+Writing src/_Folder/init.meta.json
+Writing src/_Script/init.meta.json
+Writing src/_Script/init.server.luau
+Writing src
+Writing src/_Folder
+Writing src/_Script

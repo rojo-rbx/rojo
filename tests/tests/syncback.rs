@@ -86,4 +86,7 @@ syncback_tests! {
     sync_rules => ["src/module.modulescript", "src/text.text"],
     // Ensures that the `syncUnscriptable` setting works
     unscriptable_properties => ["default.project.json"],
+    // Ensures that instances with names containing illegal characters get slugified filenames
+    // and preserve their original names in meta.json
+    slugified_name => ["src/_Script/init.meta.json", "src/_Script/init.server.luau", "src/_Folder/init.meta.json"],
 }
