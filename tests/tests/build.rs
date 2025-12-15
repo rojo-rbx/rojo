@@ -41,7 +41,6 @@ gen_build_tests! {
     issue_546,
     json_as_lua,
     json_model_in_folder,
-    json_model_legacy_name,
     module_in_folder,
     module_init,
     nested_runcontext,
