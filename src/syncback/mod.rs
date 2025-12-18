@@ -360,16 +360,25 @@ pub fn get_best_middleware(snapshot: &SyncbackSnapshot) -> Middleware {
         }
     }
 
-    // If the instance name is invalid for the filesystem, use directory middleware
-    // to allow preserving the name in meta.json
+    // If the name is invalid but the instance has no descendants and isn't a
+    // folder/config/tool, prefer slugified files over creating a directory.
+    // Only promote to directory when there are children (or dir-like classes).
     if crate::syncback::file_names::validate_file_name(&inst.name).is_err() {
         middleware = match middleware {
-            Middleware::ServerScript => Middleware::ServerScriptDir,
-            Middleware::ClientScript => Middleware::ClientScriptDir,
-            Middleware::ModuleScript => Middleware::ModuleScriptDir,
-            Middleware::Csv => Middleware::CsvDir,
-            Middleware::JsonModel | Middleware::Text => Middleware::Dir,
-            _ => middleware,
+            Middleware::ServerScript | Middleware::ClientScript | Middleware::ModuleScript
+                if inst.children().is_empty() =>
+            {
+                middleware
+            }
+            Middleware::JsonModel | Middleware::Text if inst.children().is_empty() => middleware,
+            _ => match middleware {
+                Middleware::ServerScript => Middleware::ServerScriptDir,
+                Middleware::ClientScript => Middleware::ClientScriptDir,
+                Middleware::ModuleScript => Middleware::ModuleScriptDir,
+                Middleware::Csv => Middleware::CsvDir,
+                Middleware::JsonModel | Middleware::Text => Middleware::Dir,
+                _ => middleware,
+            },
         }
     }
 
