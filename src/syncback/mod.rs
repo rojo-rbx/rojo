@@ -301,6 +301,7 @@ pub fn get_best_middleware(snapshot: &SyncbackSnapshot) -> Middleware {
     static JSON_MODEL_CLASSES: OnceLock<HashSet<&str>> = OnceLock::new();
     let json_model_classes = JSON_MODEL_CLASSES.get_or_init(|| {
         [
+            "Actor",
             "Sound",
             "SoundGroup",
             "Sky",
@@ -333,8 +334,6 @@ pub fn get_best_middleware(snapshot: &SyncbackSnapshot) -> Middleware {
         return override_middleware;
     } else if let Some(old_middleware) = old_middleware {
         return old_middleware;
-    } else if json_model_classes.contains(inst.class.as_str()) {
-        middleware = Middleware::JsonModel;
     } else {
         middleware = match inst.class.as_str() {
             "Folder" | "Configuration" | "Tool" => Middleware::Dir,
@@ -345,6 +344,7 @@ pub fn get_best_middleware(snapshot: &SyncbackSnapshot) -> Middleware {
             "LocalizationTable" => Middleware::Csv,
             // This isn't the ideal way to handle this but it works.
             name if name.ends_with("Value") => Middleware::JsonModel,
+            _ if json_model_classes.contains(inst.class.as_str()) => Middleware::JsonModel,
             _ => Middleware::Rbxm,
         }
     }
