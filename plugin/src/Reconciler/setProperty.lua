@@ -7,7 +7,7 @@ local Log = require(Packages.Log)
 local RbxDom = require(Packages.RbxDom)
 local Error = require(script.Parent.Error)
 
-local function setProperty(instance, propertyName, value)
+local function setProperty(instance: Instance, propertyName: string, value: unknown): boolean
 	local descriptor = RbxDom.findCanonicalPropertyDescriptor(instance.ClassName, propertyName)
 
 	-- We can skip unknown properties; they're not likely reflected to Lua.
@@ -26,6 +26,15 @@ local function setProperty(instance, propertyName, value)
 				className = instance.ClassName,
 				propertyName = propertyName,
 			})
+	end
+
+	-- TODO: Remove when port to MessagePack is complete, fixes overwriting of NaN/Infinity number props
+	-- See #363, #953, #955, #1041
+	if value == nil then
+		if descriptor.dataType == "Float32" or descriptor.dataType == "Float64" then
+			Log.trace("Skipping nil {} property {}.{}", descriptor.dataType, instance.ClassName, propertyName)
+			return true
+		end
 	end
 
 	local writeSuccess, err = descriptor:write(instance, value)
