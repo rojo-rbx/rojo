@@ -222,6 +222,7 @@ impl ApiService {
     /// that correspond to the requested Instances. These values have their
     /// `Value` property set to point to the requested Instance.
     async fn handle_api_serialize(&self, request: Request<Body>) -> Response<Body> {
+        let session_id = self.serve_session.session_id();
         let body = body::to_bytes(request.into_body()).await.unwrap();
 
         let request: SerializeRequest = match json::from_slice(&body) {
@@ -233,6 +234,14 @@ impl ApiService {
                 );
             }
         };
+
+        if request.session_id != session_id {
+            return json(
+                ErrorResponse::bad_request("Wrong session ID"),
+                StatusCode::BAD_REQUEST,
+            );
+        }
+
         let mut response_dom = WeakDom::new(InstanceBuilder::new("Folder"));
 
         let tree = self.serve_session.tree();
@@ -282,6 +291,7 @@ impl ApiService {
     /// and referent properties need to be updated after the serialize
     /// endpoint is used.
     async fn handle_api_ref_patch(self, request: Request<Body>) -> Response<Body> {
+        let session_id = self.serve_session.session_id();
         let body = body::to_bytes(request.into_body()).await.unwrap();
 
         let request: RefPatchRequest = match json::from_slice(&body) {
@@ -293,6 +303,13 @@ impl ApiService {
                 );
             }
         };
+
+        if request.session_id != session_id {
+            return json(
+                ErrorResponse::bad_request("Wrong session ID"),
+                StatusCode::BAD_REQUEST,
+            );
+        }
 
         let mut instance_updates: HashMap<Ref, InstanceUpdate> = HashMap::new();
 
