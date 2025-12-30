@@ -240,6 +240,13 @@ pub struct OpenResponse {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct SerializeRequest {
+    pub session_id: SessionId,
+    pub ids: Vec<Ref>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SerializeResponse {
     pub session_id: SessionId,
     pub model_contents: BufferEncode,
@@ -267,6 +274,13 @@ impl BufferEncode {
     pub fn model(&self) -> &str {
         &self.base64
     }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RefPatchRequest {
+    pub session_id: SessionId,
+    pub ids: HashSet<Ref>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

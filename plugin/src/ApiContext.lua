@@ -290,9 +290,10 @@ function ApiContext:open(id)
 end
 
 function ApiContext:serialize(ids: { string })
-	local url = ("%s/api/serialize/%s"):format(self.__baseUrl, table.concat(ids, ","))
+	local url = ("%s/api/serialize"):format(self.__baseUrl)
+	local body = Http.jsonEncode({ sessionId = self.__sessionId, ids = ids })
 
-	return Http.get(url):andThen(rejectFailedRequests):andThen(Http.Response.json):andThen(function(body)
+	return Http.post(url, body):andThen(rejectFailedRequests):andThen(Http.Response.json):andThen(function(body)
 		if body.sessionId ~= self.__sessionId then
 			return Promise.reject("Server changed ID")
 		end
@@ -304,9 +305,10 @@ function ApiContext:serialize(ids: { string })
 end
 
 function ApiContext:refPatch(ids: { string })
-	local url = ("%s/api/ref-patch/%s"):format(self.__baseUrl, table.concat(ids, ","))
+	local url = ("%s/api/ref-patch"):format(self.__baseUrl)
+	local body = Http.jsonEncode({ sessionId = self.__sessionId, ids = ids })
 
-	return Http.get(url):andThen(rejectFailedRequests):andThen(Http.Response.json):andThen(function(body)
+	return Http.post(url, body):andThen(rejectFailedRequests):andThen(Http.Response.json):andThen(function(body)
 		if body.sessionId ~= self.__sessionId then
 			return Promise.reject("Server changed ID")
 		end
