@@ -291,32 +291,38 @@ end
 
 function ApiContext:serialize(ids: { string })
 	local url = ("%s/api/serialize"):format(self.__baseUrl)
-	local body = Http.jsonEncode({ sessionId = self.__sessionId, ids = ids })
+	local request_body = Http.jsonEncode({ sessionId = self.__sessionId, ids = ids })
 
-	return Http.post(url, body):andThen(rejectFailedRequests):andThen(Http.Response.json):andThen(function(body)
-		if body.sessionId ~= self.__sessionId then
-			return Promise.reject("Server changed ID")
-		end
+	return Http.post(url, request_body)
+		:andThen(rejectFailedRequests)
+		:andThen(Http.Response.json)
+		:andThen(function(response_body)
+			if response_body.sessionId ~= self.__sessionId then
+				return Promise.reject("Server changed ID")
+			end
 
-		assert(validateApiSerialize(body))
+			assert(validateApiSerialize(response_body))
 
-		return body
-	end)
+			return response_body
+		end)
 end
 
 function ApiContext:refPatch(ids: { string })
 	local url = ("%s/api/ref-patch"):format(self.__baseUrl)
-	local body = Http.jsonEncode({ sessionId = self.__sessionId, ids = ids })
+	local request_body = Http.jsonEncode({ sessionId = self.__sessionId, ids = ids })
 
-	return Http.post(url, body):andThen(rejectFailedRequests):andThen(Http.Response.json):andThen(function(body)
-		if body.sessionId ~= self.__sessionId then
-			return Promise.reject("Server changed ID")
-		end
+	return Http.post(url, request_body)
+		:andThen(rejectFailedRequests)
+		:andThen(Http.Response.json)
+		:andThen(function(response_body)
+			if response_body.sessionId ~= self.__sessionId then
+				return Promise.reject("Server changed ID")
+			end
 
-		assert(validateApiRefPatch(body))
+			assert(validateApiRefPatch(response_body))
 
-		return body
-	end)
+			return response_body
+		end)
 end
 
 return ApiContext
