@@ -12,9 +12,12 @@ use rbx_dom_weak::types::Ref;
 
 use tempfile::{tempdir, TempDir};
 
-use librojo::web_api::{
-    ReadResponse, SerializeRequest, SerializeResponse, ServerInfoResponse, SocketPacket,
-    SocketPacketType,
+use librojo::{
+    web_api::{
+        ReadResponse, SerializeRequest, SerializeResponse, ServerInfoResponse, SocketPacket,
+        SocketPacketType,
+    },
+    SessionId,
 };
 use rojo_insta_ext::RedactionMap;
 
@@ -226,12 +229,15 @@ impl TestServeSession {
         }
     }
 
-    pub fn get_api_serialize(&self, ids: &[Ref]) -> Result<SerializeResponse, reqwest::Error> {
+    pub fn get_api_serialize(
+        &self,
+        ids: &[Ref],
+        session_id: SessionId,
+    ) -> Result<SerializeResponse, reqwest::Error> {
         let client = reqwest::blocking::Client::new();
         let url = format!("http://localhost:{}/api/serialize", self.port);
-        let info = self.get_api_rojo()?;
         let body = serde_json::to_string(&SerializeRequest {
-            session_id: info.session_id,
+            session_id,
             ids: ids.to_vec(),
         });
 
