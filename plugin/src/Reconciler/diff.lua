@@ -56,7 +56,6 @@ local function trueEquals(a, b): boolean
 
 	-- For NaN, check if both values are not equal to themselves
 	elseif a ~= a and b ~= b then
-		print("they are equal")
 		return true
 
 	-- For numbers, compare with epsilon of 0.0001 to avoid floating point inequality
