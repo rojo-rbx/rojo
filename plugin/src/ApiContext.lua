@@ -145,7 +145,7 @@ function ApiContext:connect()
 
 	return Http.get(url)
 		:andThen(rejectFailedRequests)
-		:andThen(Http.Response.json)
+		:andThen(Http.Response.msgpack)
 		:andThen(rejectWrongProtocolVersion)
 		:andThen(function(body)
 			assert(validateApiInfo(body))
@@ -163,7 +163,7 @@ end
 function ApiContext:read(ids)
 	local url = ("%s/api/read/%s"):format(self.__baseUrl, table.concat(ids, ","))
 
-	return Http.get(url):andThen(rejectFailedRequests):andThen(Http.Response.json):andThen(function(body)
+	return Http.get(url):andThen(rejectFailedRequests):andThen(Http.Response.msgpack):andThen(function(body)
 		if body.sessionId ~= self.__sessionId then
 			return Promise.reject("Server changed ID")
 		end
@@ -191,9 +191,9 @@ function ApiContext:write(patch)
 		table.insert(updated, fixedUpdate)
 	end
 
-	-- Only add the 'added' field if the table is non-empty, or else Roblox's
-	-- JSON implementation will turn the table into an array instead of an
-	-- object, causing API validation to fail.
+	-- Only add the 'added' field if the table is non-empty, or else the msgpack
+	-- encode implementation will turn the table into an array instead of a map,
+	-- causing API validation to fail.
 	local added
 	if next(patch.added) ~= nil then
 		added = patch.added
@@ -206,13 +206,16 @@ function ApiContext:write(patch)
 		added = added,
 	}
 
-	body = Http.jsonEncode(body)
+	body = Http.msgpackEncode(body)
 
-	return Http.post(url, body):andThen(rejectFailedRequests):andThen(Http.Response.json):andThen(function(responseBody)
-		Log.info("Write response: {:?}", responseBody)
+	return Http.post(url, body)
+		:andThen(rejectFailedRequests)
+		:andThen(Http.Response.msgpack)
+		:andThen(function(responseBody)
+			Log.info("Write response: {:?}", responseBody)
 
-		return responseBody
-	end)
+			return responseBody
+		end)
 end
 
 function ApiContext:connectWebSocket(packetHandlers)
@@ -234,7 +237,7 @@ function ApiContext:connectWebSocket(packetHandlers)
 		local closed, errored, received
 
 		received = self.__wsClient.MessageReceived:Connect(function(msg)
-			local data = Http.jsonDecode(msg)
+			local data = Http.msgpackDecode(msg)
 			if data.sessionId ~= self.__sessionId then
 				Log.warn("Received message with wrong session ID; ignoring")
 				return
@@ -280,7 +283,7 @@ end
 function ApiContext:open(id)
 	local url = ("%s/api/open/%s"):format(self.__baseUrl, id)
 
-	return Http.post(url, ""):andThen(rejectFailedRequests):andThen(Http.Response.json):andThen(function(body)
+	return Http.post(url, ""):andThen(rejectFailedRequests):andThen(Http.Response.msgpack):andThen(function(body)
 		if body.sessionId ~= self.__sessionId then
 			return Promise.reject("Server changed ID")
 		end
@@ -292,7 +295,7 @@ end
 function ApiContext:serialize(ids: { string })
 	local url = ("%s/api/serialize/%s"):format(self.__baseUrl, table.concat(ids, ","))
 
-	return Http.get(url):andThen(rejectFailedRequests):andThen(Http.Response.json):andThen(function(body)
+	return Http.get(url):andThen(rejectFailedRequests):andThen(Http.Response.msgpack):andThen(function(body)
 		if body.sessionId ~= self.__sessionId then
 			return Promise.reject("Server changed ID")
 		end
@@ -306,7 +309,7 @@ end
 function ApiContext:refPatch(ids: { string })
 	local url = ("%s/api/ref-patch/%s"):format(self.__baseUrl, table.concat(ids, ","))
 
-	return Http.get(url):andThen(rejectFailedRequests):andThen(Http.Response.json):andThen(function(body)
+	return Http.get(url):andThen(rejectFailedRequests):andThen(Http.Response.msgpack):andThen(function(body)
 		if body.sessionId ~= self.__sessionId then
 			return Promise.reject("Server changed ID")
 		end
