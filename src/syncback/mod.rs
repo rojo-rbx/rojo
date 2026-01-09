@@ -318,6 +318,11 @@ pub fn get_best_middleware(snapshot: &SyncbackSnapshot) -> Middleware {
             "ChatInputBarConfiguration",
             "BubbleChatConfiguration",
             "ChannelTabsConfiguration",
+            "RemoteEvent",
+            "UnreliableRemoteEvent",
+            "RemoteFunction",
+            "BindableEvent",
+            "BindableFunction",
         ]
         .into()
     });
