@@ -2,7 +2,7 @@ use std::{
     fs,
     sync::{Arc, Mutex},
 };
-
+use std::path::PathBuf;
 use crossbeam_channel::{select, Receiver, RecvError, Sender};
 use jod_thread::JoinHandle;
 use memofs::{IoResultExt, Vfs, VfsEvent};
@@ -114,6 +114,43 @@ struct JobThreadContext {
 }
 
 impl JobThreadContext {
+    fn apply_patches(&self, path: PathBuf) -> Vec<AppliedPatchSet> {
+        let mut tree = self.tree.lock().unwrap();
+        let mut applied_patches = Vec::new();
+
+        // Find the nearest ancestor to this path that has
+        // associated instances in the tree. This helps make sure
+        // that we handle additions correctly, especially if we
+        // receive events for descendants of a large tree being
+        // created all at once.
+        let mut current_path = path.as_path();
+        let affected_ids = loop {
+            let ids = tree.get_ids_at_path(current_path);
+
+            log::trace!("Path {} affects IDs {:?}", current_path.display(), ids);
+
+            if !ids.is_empty() {
+                break ids.to_vec();
+            }
+
+            log::trace!("Trying parent path...");
+            match current_path.parent() {
+                Some(parent) => current_path = parent,
+                None => break Vec::new(),
+            }
+        };
+
+        for id in affected_ids {
+            if let Some(patch) = compute_and_apply_changes(&mut tree, &self.vfs, id) {
+                if !patch.is_empty() {
+                    applied_patches.push(patch);
+                }
+            }
+        }
+
+        applied_patches
+    }
+
     fn handle_vfs_event(&self, event: VfsEvent) {
         log::trace!("Vfs event: {:?}", event);
 
