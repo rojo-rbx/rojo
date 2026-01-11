@@ -162,41 +162,16 @@ impl JobThreadContext {
         // For a given VFS event, we might have many changes to different parts
         // of the tree. Calculate and apply all of these changes.
         let applied_patches = match event {
-            VfsEvent::Create(path) | VfsEvent::Remove(path) | VfsEvent::Write(path) => {
-                let mut tree = self.tree.lock().unwrap();
-                let mut applied_patches = Vec::new();
-
-                // Find the nearest ancestor to this path that has
-                // associated instances in the tree. This helps make sure
-                // that we handle additions correctly, especially if we
-                // receive events for descendants of a large tree being
-                // created all at once.
-                let mut current_path = path.as_path();
-                let affected_ids = loop {
-                    let ids = tree.get_ids_at_path(current_path);
-
-                    log::trace!("Path {} affects IDs {:?}", current_path.display(), ids);
-
-                    if !ids.is_empty() {
-                        break ids.to_vec();
-                    }
-
-                    log::trace!("Trying parent path...");
-                    match current_path.parent() {
-                        Some(parent) => current_path = parent,
-                        None => break Vec::new(),
-                    }
-                };
-
-                for id in affected_ids {
-                    if let Some(patch) = compute_and_apply_changes(&mut tree, &self.vfs, id) {
-                        if !patch.is_empty() {
-                            applied_patches.push(patch);
-                        }
-                    }
-                }
-
-                applied_patches
+            VfsEvent::Create(path) | VfsEvent::Write(path) => {
+                self.apply_patches(self.vfs.normalize(&path).unwrap())
+            }
+            VfsEvent::Remove(path) => {
+                // MemoFS does not track parent removals yet, so we can canonicalize
+                // the parent path safely and then append the removed path's file name.
+                let parent = path.parent().unwrap();
+                let file_name = path.file_name().unwrap();
+                let parent_normalized = self.vfs.normalize(parent).unwrap();
+                self.apply_patches(parent_normalized.join(file_name))
             }
             _ => {
                 log::warn!("Unhandled VFS event: {:?}", event);
