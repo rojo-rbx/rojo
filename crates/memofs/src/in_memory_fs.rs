@@ -252,7 +252,7 @@ impl VfsBackend for InMemoryFs {
                 _ => normalized.push(component),
             }
         }
-        
+
         let inner = self.inner.lock().unwrap();
         match inner.entries.get(&normalized) {
             Some(_) => Ok(normalized),

@@ -608,10 +608,8 @@ mod test {
         // encapsulated in arc
         let contents = Arc::new("Lorem ipsum dolor sit amet.".to_string());
 
-        imfs.load_snapshot(
-            "/test/file.txt",
-            VfsSnapshot::file(contents.to_string())
-        ).unwrap();
+        imfs.load_snapshot("/test/file.txt", VfsSnapshot::file(contents.to_string()))
+            .unwrap();
 
         let vfs = Vfs::new(imfs);
 
@@ -620,7 +618,9 @@ mod test {
             PathBuf::from("/test/file.txt")
         );
         assert_eq!(
-            vfs.read_to_string(vfs.normalize("/test/nested/../file.txt").unwrap()).unwrap().to_string(),
+            vfs.read_to_string(vfs.normalize("/test/nested/../file.txt").unwrap())
+                .unwrap()
+                .to_string(),
             contents.to_string()
         );
     }

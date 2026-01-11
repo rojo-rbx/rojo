@@ -1,12 +1,12 @@
-use std::{
-    fs,
-    sync::{Arc, Mutex},
-};
-use std::path::PathBuf;
 use crossbeam_channel::{select, Receiver, RecvError, Sender};
 use jod_thread::JoinHandle;
 use memofs::{IoResultExt, Vfs, VfsEvent};
 use rbx_dom_weak::types::{Ref, Variant};
+use std::path::PathBuf;
+use std::{
+    fs,
+    sync::{Arc, Mutex},
+};
 
 use crate::{
     message_queue::MessageQueue,
