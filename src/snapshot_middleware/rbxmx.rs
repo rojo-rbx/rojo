@@ -31,7 +31,7 @@ pub fn snapshot_rbxmx(
             .metadata(
                 InstanceMetadata::new()
                     .instigating_source(path)
-                    .relevant_paths(vec![path.to_path_buf()])
+                    .relevant_paths(vec![vfs.normalize(path)?])
                     .context(context),
             );
 
