@@ -46,7 +46,7 @@ name = "build"
 harness = false
 
 [dependencies]
-memofs = { version = "0.3.1", path = "crates/memofs" }
+memofs = { version = "0.3.2", path = "crates/memofs" }
 
 # These dependencies can be uncommented when working on rbx-dom simultaneously
 # rbx_binary = { path = "../rbx-dom/rbx_binary", features = [

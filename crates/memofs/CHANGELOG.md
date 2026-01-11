@@ -2,6 +2,9 @@
 
 ## Unreleased Changes
 
+## 0.3.2 (2026-01-11)
+* Added `Vfs::normalize`. [#1201]
+
 ## 0.3.1 (2025-11-27)
 * Added `Vfs::exists`. [#1169]
 * Added `create_dir` and `create_dir_all` to allow creating directories. [#937]
