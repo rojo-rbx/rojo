@@ -45,10 +45,12 @@ pub fn name_for_inst<'old>(
             }
             _ => {
                 let extension = extension_for_middleware(middleware);
+                let slugified;
                 let final_name = if validate_file_name(&new_inst.name).is_err() {
-                    slugify_name(&new_inst.name)
+                    slugified = slugify_name(&new_inst.name);
+                    &slugified
                 } else {
-                    new_inst.name.clone()
+                    &new_inst.name
                 };
 
                 Cow::Owned(format!("{final_name}.{extension}"))
