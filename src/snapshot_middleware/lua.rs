@@ -159,10 +159,12 @@ pub fn syncback_lua<'sync>(
         if !meta.is_empty() {
             let parent_location = snapshot.path.parent_err()?;
             let instance_name = &snapshot.new_inst().name;
+            let slugified;
             let meta_name = if crate::syncback::validate_file_name(instance_name).is_err() {
-                crate::syncback::slugify_name(instance_name)
+                slugified = crate::syncback::slugify_name(instance_name);
+                &slugified
             } else {
-                instance_name.clone()
+                instance_name
             };
             fs_snapshot.add_file(
                 parent_location.join(format!("{}.meta.json", meta_name)),
