@@ -39,8 +39,9 @@ pub fn snapshot_json_model(
     let specified_name = instance.name.clone();
 
     // Use the name from JSON if present, otherwise fall back to filename-derived name
-    let instance_name = specified_name.clone().unwrap_or_else(|| name.to_owned());
-    instance.name = Some(instance_name);
+    if instance.name.is_none() {
+        instance.name = Some(name.to_owned());
+    }
 
     let id = instance.id.take().map(RojoRef::new);
     let schema = instance.schema.take();
