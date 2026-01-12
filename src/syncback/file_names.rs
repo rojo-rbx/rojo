@@ -8,11 +8,11 @@ use rbx_dom_weak::Instance;
 
 use crate::{snapshot::InstanceWithMeta, snapshot_middleware::Middleware};
 
-pub fn name_for_inst<'old>(
+pub fn name_for_inst<'a>(
     middleware: Middleware,
-    new_inst: &Instance,
-    old_inst: Option<InstanceWithMeta<'old>>,
-) -> anyhow::Result<Cow<'old, str>> {
+    new_inst: &'a Instance,
+    old_inst: Option<InstanceWithMeta<'a>>,
+) -> anyhow::Result<Cow<'a, str>> {
     if let Some(old_inst) = old_inst {
         if let Some(source) = old_inst.metadata().relevant_paths.first() {
             source
@@ -36,12 +36,11 @@ pub fn name_for_inst<'old>(
             | Middleware::ServerScriptDir
             | Middleware::ClientScriptDir
             | Middleware::ModuleScriptDir => {
-                let name = if validate_file_name(&new_inst.name).is_err() {
+                if validate_file_name(&new_inst.name).is_err() {
                     Cow::Owned(slugify_name(&new_inst.name))
                 } else {
-                    Cow::Owned(new_inst.name.clone())
-                };
-                name
+                    Cow::Borrowed(&new_inst.name)
+                }
             }
             _ => {
                 let extension = extension_for_middleware(middleware);
