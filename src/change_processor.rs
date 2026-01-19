@@ -114,6 +114,12 @@ struct JobThreadContext {
 }
 
 impl JobThreadContext {
+    /// Computes and applies patches to the DOM for a given file path.
+    ///
+    /// This function finds the nearest ancestor to the given path that has associated instances
+    /// in the tree.
+    /// It then computes and applies changes for each affected instance ID and
+    /// returns a vector of applied patch sets.
     fn apply_patches(&self, path: PathBuf) -> Vec<AppliedPatchSet> {
         let mut tree = self.tree.lock().unwrap();
         let mut applied_patches = Vec::new();
