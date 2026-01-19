@@ -30,6 +30,7 @@ Making a new release? Simply add the new header with the version and date undern
 -->
 
 ## Unreleased
+
 * Fixed a bug caused by having reference properties (such as `ObjectValue.Value`) that point to an Instance not included in syncback. ([#1179])
 * Fixed instance replacement fallback failing when too many instances needed to be replaced. ([#1192])
 * Fixed a bug where MacOS paths weren't being handled correctly. ([#1201])
