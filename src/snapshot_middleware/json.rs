@@ -32,7 +32,7 @@ pub fn snapshot_json(
         .metadata(
             InstanceMetadata::new()
                 .instigating_source(path)
-                .relevant_paths(vec![vfs.normalize(path)?])
+                .relevant_paths(vec![vfs.canonicalize(path)?])
                 .context(context),
         );
 

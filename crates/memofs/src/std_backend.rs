@@ -106,7 +106,7 @@ impl VfsBackend for StdBackend {
         })
     }
 
-    fn normalize(&mut self, path: &Path) -> io::Result<PathBuf> {
+    fn canonicalize(&mut self, path: &Path) -> io::Result<PathBuf> {
         fs_err::canonicalize(path)
     }
 

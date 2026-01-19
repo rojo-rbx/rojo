@@ -62,19 +62,19 @@ pub fn snapshot_dir_no_meta(
         }
     }
 
-    let normalized_path = vfs.normalize(path)?;
+    let normalized_path = vfs.canonicalize(path)?;
     let relevant_paths = vec![
         normalized_path.clone(),
         // TODO: We shouldn't need to know about Lua existing in this
         // middleware. Should we figure out a way for that function to add
         // relevant paths to this middleware?
-        normalized_path.clone().join("init.lua"),
-        normalized_path.clone().join("init.luau"),
-        normalized_path.clone().join("init.server.lua"),
-        normalized_path.clone().join("init.server.luau"),
-        normalized_path.clone().join("init.client.lua"),
-        normalized_path.clone().join("init.client.luau"),
-        normalized_path.clone().join("init.csv"),
+        normalized_path.join("init.lua"),
+        normalized_path.join("init.luau"),
+        normalized_path.join("init.server.lua"),
+        normalized_path.join("init.server.luau"),
+        normalized_path.join("init.client.lua"),
+        normalized_path.join("init.client.luau"),
+        normalized_path.join("init.csv"),
     ];
 
     let snapshot = InstanceSnapshot::new()

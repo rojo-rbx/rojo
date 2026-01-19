@@ -77,7 +77,7 @@ pub trait VfsBackend: sealed::Sealed + Send + 'static {
     fn metadata(&mut self, path: &Path) -> io::Result<Metadata>;
     fn remove_file(&mut self, path: &Path) -> io::Result<()>;
     fn remove_dir_all(&mut self, path: &Path) -> io::Result<()>;
-    fn normalize(&mut self, path: &Path) -> io::Result<PathBuf>;
+    fn canonicalize(&mut self, path: &Path) -> io::Result<PathBuf>;
 
     fn event_receiver(&self) -> crossbeam_channel::Receiver<VfsEvent>;
     fn watch(&mut self, path: &Path) -> io::Result<()>;
@@ -226,9 +226,9 @@ impl VfsInner {
         self.backend.metadata(path)
     }
 
-    fn normalize<P: AsRef<Path>>(&mut self, path: P) -> io::Result<PathBuf> {
+    fn canonicalize<P: AsRef<Path>>(&mut self, path: P) -> io::Result<PathBuf> {
         let path = path.as_ref();
-        self.backend.normalize(path)
+        self.backend.canonicalize(path)
     }
 
     fn event_receiver(&self) -> crossbeam_channel::Receiver<VfsEvent> {
@@ -427,9 +427,9 @@ impl Vfs {
     ///
     /// [std::fs::canonicalize]: https://doc.rust-lang.org/stable/std/fs/fn.canonicalize.html
     #[inline]
-    pub fn normalize<P: AsRef<Path>>(&self, path: P) -> io::Result<PathBuf> {
+    pub fn canonicalize<P: AsRef<Path>>(&self, path: P) -> io::Result<PathBuf> {
         let path = path.as_ref();
-        self.inner.lock().unwrap().normalize(path)
+        self.inner.lock().unwrap().canonicalize(path)
     }
 
     /// Retrieve a handle to the event receiver for this `Vfs`.
@@ -563,7 +563,7 @@ impl VfsLock<'_> {
     #[inline]
     pub fn normalize<P: AsRef<Path>>(&mut self, path: P) -> io::Result<PathBuf> {
         let path = path.as_ref();
-        self.inner.normalize(path)
+        self.inner.canonicalize(path)
     }
 
     /// Retrieve a handle to the event receiver for this `Vfs`.
@@ -605,8 +605,7 @@ mod test {
     #[test]
     fn normalize_in_memory_success() {
         let mut imfs = InMemoryFs::new();
-        // encapsulated in arc
-        let contents = Arc::new("Lorem ipsum dolor sit amet.".to_string());
+        let contents = "Lorem ipsum dolor sit amet.".to_string();
 
         imfs.load_snapshot("/test/file.txt", VfsSnapshot::file(contents.to_string()))
             .unwrap();
@@ -614,11 +613,11 @@ mod test {
         let vfs = Vfs::new(imfs);
 
         assert_eq!(
-            vfs.normalize("/test/nested/../file.txt").unwrap(),
+            vfs.canonicalize("/test/nested/../file.txt").unwrap(),
             PathBuf::from("/test/file.txt")
         );
         assert_eq!(
-            vfs.read_to_string(vfs.normalize("/test/nested/../file.txt").unwrap())
+            vfs.read_to_string(vfs.canonicalize("/test/nested/../file.txt").unwrap())
                 .unwrap()
                 .to_string(),
             contents.to_string()
@@ -630,19 +629,19 @@ mod test {
         let imfs = InMemoryFs::new();
         let vfs = Vfs::new(imfs);
 
-        let err = vfs.normalize("test").unwrap_err();
+        let err = vfs.canonicalize("test").unwrap_err();
         assert_eq!(err.kind(), io::ErrorKind::NotFound);
     }
 
     #[test]
     fn normalize_std_backend_success() {
-        let contents = Arc::new("Lorem ipsum dolor sit amet.".to_string());
+        let contents = "Lorem ipsum dolor sit amet.".to_string();
         let dir = tempfile::tempdir().unwrap();
         let file_path = dir.path().join("file.txt");
         fs_err::write(&file_path, contents.to_string()).unwrap();
 
         let vfs = Vfs::new(StdBackend::new());
-        let normalized = vfs.normalize(&file_path).unwrap();
+        let normalized = vfs.canonicalize(&file_path).unwrap();
         assert_eq!(normalized, file_path.canonicalize().unwrap());
         assert_eq!(
             vfs.read_to_string(&normalized).unwrap().to_string(),
@@ -656,7 +655,7 @@ mod test {
         let file_path = dir.path().join("test");
 
         let vfs = Vfs::new(StdBackend::new());
-        let err = vfs.normalize(&file_path).unwrap_err();
+        let err = vfs.canonicalize(&file_path).unwrap_err();
         assert_eq!(err.kind(), io::ErrorKind::NotFound);
     }
 }

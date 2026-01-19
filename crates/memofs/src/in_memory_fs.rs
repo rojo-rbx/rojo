@@ -238,10 +238,9 @@ impl VfsBackend for InMemoryFs {
     // Example: "/Users/username/project/../other/file.txt" ->
     // "/Users/username/other/file.txt"
     // Erroneous example: "/Users/../../other/file.txt" -> "/other/file.txt"
-    // This is not very robust. We should implement proper path normalization here.
-    // Warning: This has security implications as it may allow path traversal attacks
-    // if used inappropriately.
-    fn normalize(&mut self, path: &Path) -> io::Result<PathBuf> {
+    // This is not very robust. We should implement proper path normalization here or otherwise
+    // warn if we are missing context and can not fully canonicalize the path correctly.
+    fn canonicalize(&mut self, path: &Path) -> io::Result<PathBuf> {
         let mut normalized = PathBuf::new();
         for component in path.components() {
             match component {

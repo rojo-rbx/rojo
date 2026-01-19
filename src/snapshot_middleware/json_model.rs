@@ -59,7 +59,7 @@ pub fn snapshot_json_model(
     snapshot.metadata = snapshot
         .metadata
         .instigating_source(path)
-        .relevant_paths(vec![vfs.normalize(path)?])
+        .relevant_paths(vec![vfs.canonicalize(path)?])
         .context(context)
         .specified_id(id)
         .schema(schema);

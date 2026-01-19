@@ -50,7 +50,7 @@ impl VfsBackend for NoopBackend {
         Err(io::Error::other("NoopBackend doesn't do anything"))
     }
 
-    fn normalize(&mut self, _path: &Path) -> io::Result<PathBuf> {
+    fn canonicalize(&mut self, _path: &Path) -> io::Result<PathBuf> {
         Err(io::Error::other("NoopBackend doesn't do anything"))
     }
 

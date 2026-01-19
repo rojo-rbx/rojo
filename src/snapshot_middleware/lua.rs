@@ -88,7 +88,7 @@ pub fn snapshot_lua(
         .metadata(
             InstanceMetadata::new()
                 .instigating_source(path)
-                .relevant_paths(vec![vfs.normalize(path)?])
+                .relevant_paths(vec![vfs.canonicalize(path)?])
                 .context(context),
         );
 
