@@ -33,10 +33,12 @@ Making a new release? Simply add the new header with the version and date undern
 * Fixed a bug caused by having reference properties (such as `ObjectValue.Value`) that point to an Instance not included in syncback. ([#1179])
 * Fixed instance replacement fallback failing when too many instances needed to be replaced. ([#1192])
 * Fixed a bug where MacOS paths weren't being handled correctly. ([#1201])
+* Fixed a bug where the notification timeout thread would fail to cancel on unmount ([#1211])
 
 [#1179]: https://github.com/rojo-rbx/rojo/pull/1179
 [#1192]: https://github.com/rojo-rbx/rojo/pull/1192
 [#1201]: https://github.com/rojo-rbx/rojo/pull/1201
+[#1211]: https://github.com/rojo-rbx/rojo/pull/1211
 
 ## [7.7.0-rc.1] (November 27th, 2025)
 
