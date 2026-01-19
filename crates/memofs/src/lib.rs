@@ -584,7 +584,6 @@ mod test {
     use crate::{InMemoryFs, StdBackend, Vfs, VfsSnapshot};
     use std::io;
     use std::path::PathBuf;
-    use std::sync::Arc;
 
     /// https://github.com/rojo-rbx/rojo/issues/899
     #[test]
