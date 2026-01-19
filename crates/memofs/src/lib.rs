@@ -603,7 +603,7 @@ mod test {
 
     /// https://github.com/rojo-rbx/rojo/issues/1200
     #[test]
-    fn normalize_in_memory_success() {
+    fn canonicalize_in_memory_success() {
         let mut imfs = InMemoryFs::new();
         let contents = "Lorem ipsum dolor sit amet.".to_string();
 
@@ -625,7 +625,7 @@ mod test {
     }
 
     #[test]
-    fn normalize_in_memory_missing_errors() {
+    fn canonicalize_in_memory_missing_errors() {
         let imfs = InMemoryFs::new();
         let vfs = Vfs::new(imfs);
 
@@ -634,23 +634,23 @@ mod test {
     }
 
     #[test]
-    fn normalize_std_backend_success() {
+    fn canonicalize_std_backend_success() {
         let contents = "Lorem ipsum dolor sit amet.".to_string();
         let dir = tempfile::tempdir().unwrap();
         let file_path = dir.path().join("file.txt");
         fs_err::write(&file_path, contents.to_string()).unwrap();
 
         let vfs = Vfs::new(StdBackend::new());
-        let normalized = vfs.canonicalize(&file_path).unwrap();
-        assert_eq!(normalized, file_path.canonicalize().unwrap());
+        let canonicalized = vfs.canonicalize(&file_path).unwrap();
+        assert_eq!(canonicalized, file_path.canonicalize().unwrap());
         assert_eq!(
-            vfs.read_to_string(&normalized).unwrap().to_string(),
+            vfs.read_to_string(&canonicalized).unwrap().to_string(),
             contents.to_string()
         );
     }
 
     #[test]
-    fn normalize_std_backend_missing_errors() {
+    fn canonicalize_std_backend_missing_errors() {
         let dir = tempfile::tempdir().unwrap();
         let file_path = dir.path().join("test");
 
