@@ -67,7 +67,6 @@ end
 function FullscreenNotification:willUnmount()
 	if self.timeout and coroutine.status(self.timeout) == "suspended" then
 		task.cancel(self.timeout)
-		self.timeout = nil
 	end
 end
 
