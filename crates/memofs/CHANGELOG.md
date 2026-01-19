@@ -2,7 +2,6 @@
 
 ## Unreleased Changes
 
-## 0.3.2 (2026-01-11)
 * Added `Vfs::normalize`. [#1201]
 
 ## 0.3.1 (2025-11-27)
