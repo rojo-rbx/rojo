@@ -1,13 +1,7 @@
 //! Defines Rojo's HTTP API, all under /api. These endpoints generally return
 //! JSON.
 
-use std::{
-    collections::{HashMap, HashSet},
-    fs,
-    path::PathBuf,
-    str::FromStr,
-    sync::Arc,
-};
+use std::{collections::HashMap, fs, path::PathBuf, str::FromStr, sync::Arc};
 
 use futures::{sink::SinkExt, stream::StreamExt};
 use hyper::{body, Body, Method, Request, Response, StatusCode};
@@ -30,7 +24,10 @@ use crate::{
         },
         util::{json, json_ok},
     },
-    web_api::{BufferEncode, InstanceUpdate, RefPatchResponse, SerializeResponse},
+    web_api::{
+        BufferEncode, InstanceUpdate, RefPatchRequest, RefPatchResponse, SerializeRequest,
+        SerializeResponse,
+    },
 };
 
 pub async fn call(serve_session: Arc<ServeSession>, mut request: Request<Body>) -> Response<Body> {
@@ -53,12 +50,8 @@ pub async fn call(serve_session: Arc<ServeSession>, mut request: Request<Body>) 
                 )
             }
         }
-        (&Method::GET, path) if path.starts_with("/api/serialize/") => {
-            service.handle_api_serialize(request).await
-        }
-        (&Method::GET, path) if path.starts_with("/api/ref-patch/") => {
-            service.handle_api_ref_patch(request).await
-        }
+        (&Method::POST, "/api/serialize") => service.handle_api_serialize(request).await,
+        (&Method::POST, "/api/ref-patch") => service.handle_api_ref_patch(request).await,
 
         (&Method::POST, path) if path.starts_with("/api/open/") => {
             service.handle_api_open(request).await
@@ -229,22 +222,30 @@ impl ApiService {
     /// that correspond to the requested Instances. These values have their
     /// `Value` property set to point to the requested Instance.
     async fn handle_api_serialize(&self, request: Request<Body>) -> Response<Body> {
-        let argument = &request.uri().path()["/api/serialize/".len()..];
-        let requested_ids: Result<Vec<Ref>, _> = argument.split(',').map(Ref::from_str).collect();
+        let session_id = self.serve_session.session_id();
+        let body = body::to_bytes(request.into_body()).await.unwrap();
 
-        let requested_ids = match requested_ids {
-            Ok(ids) => ids,
-            Err(_) => {
+        let request: SerializeRequest = match json::from_slice(&body) {
+            Ok(request) => request,
+            Err(err) => {
                 return json(
-                    ErrorResponse::bad_request("Malformed ID list"),
+                    ErrorResponse::bad_request(format!("Invalid body: {}", err)),
                     StatusCode::BAD_REQUEST,
                 );
             }
         };
+
+        if request.session_id != session_id {
+            return json(
+                ErrorResponse::bad_request("Wrong session ID"),
+                StatusCode::BAD_REQUEST,
+            );
+        }
+
         let mut response_dom = WeakDom::new(InstanceBuilder::new("Folder"));
 
         let tree = self.serve_session.tree();
-        for id in &requested_ids {
+        for id in &request.ids {
             if let Some(instance) = tree.get_instance(*id) {
                 let clone = response_dom.insert(
                     Ref::none(),
@@ -290,19 +291,25 @@ impl ApiService {
     /// and referent properties need to be updated after the serialize
     /// endpoint is used.
     async fn handle_api_ref_patch(self, request: Request<Body>) -> Response<Body> {
-        let argument = &request.uri().path()["/api/ref-patch/".len()..];
-        let requested_ids: Result<HashSet<Ref>, _> =
-            argument.split(',').map(Ref::from_str).collect();
+        let session_id = self.serve_session.session_id();
+        let body = body::to_bytes(request.into_body()).await.unwrap();
 
-        let requested_ids = match requested_ids {
-            Ok(ids) => ids,
-            Err(_) => {
+        let request: RefPatchRequest = match json::from_slice(&body) {
+            Ok(request) => request,
+            Err(err) => {
                 return json(
-                    ErrorResponse::bad_request("Malformed ID list"),
+                    ErrorResponse::bad_request(format!("Invalid body: {}", err)),
                     StatusCode::BAD_REQUEST,
                 );
             }
         };
+
+        if request.session_id != session_id {
+            return json(
+                ErrorResponse::bad_request("Wrong session ID"),
+                StatusCode::BAD_REQUEST,
+            );
+        }
 
         let mut instance_updates: HashMap<Ref, InstanceUpdate> = HashMap::new();
 
@@ -312,7 +319,7 @@ impl ApiService {
                 let Variant::Ref(prop_value) = prop_value else {
                     continue;
                 };
-                if let Some(target_id) = requested_ids.get(prop_value) {
+                if let Some(target_id) = request.ids.get(prop_value) {
                     let instance_id = instance.id();
                     let update =
                         instance_updates
