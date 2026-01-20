@@ -31,8 +31,14 @@ Making a new release? Simply add the new header with the version and date undern
 
 ## Unreleased
 * Fixed a bug caused by having reference properties (such as `ObjectValue.Value`) that point to an Instance not included in syncback. ([#1179])
+* Fixed instance replacement fallback failing when too many instances needed to be replaced. ([#1192])
+* Added actors and bindable/remote event/function variants to be synced back as JSON files. ([#1199])
+* Fixed a bug where MacOS paths weren't being handled correctly. ([#1201])
 
 [#1179]: https://github.com/rojo-rbx/rojo/pull/1179
+[#1192]: https://github.com/rojo-rbx/rojo/pull/1192
+[#1199]: https://github.com/rojo-rbx/rojo/pull/1199
+[#1201]: https://github.com/rojo-rbx/rojo/pull/1201
 
 ## [7.7.0-rc.1] (November 27th, 2025)
 
