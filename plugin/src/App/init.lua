@@ -301,6 +301,19 @@ function App:setPriorSyncInfo(host: string, port: string, projectName: string)
 	Settings:set("priorEndpoints", priorSyncInfos)
 end
 
+function App:forgetPriorSyncInfo()
+	local priorSyncInfos = Settings:get("priorEndpoints")
+	if not priorSyncInfos then
+		priorSyncInfos = {}
+	end
+
+	local id = tostring(game.PlaceId)
+	priorSyncInfos[id] = nil
+	Log.trace("Erased last used endpoint for {}", game.PlaceId)
+
+	Settings:set("priorEndpoints", priorSyncInfos)
+end
+
 function App:getHostAndPort()
 	local host = self.host:getValue()
 	local port = self.port:getValue()
@@ -435,7 +448,8 @@ function App:checkSyncReminder()
 	self:findActiveServer()
 		:andThen(function(serverInfo, host, port)
 			self:sendSyncReminder(
-				`Project '{serverInfo.projectName}' is serving at {host}:{port}.\nWould you like to connect?`
+				`Project '{serverInfo.projectName}' is serving at {host}:{port}.\nWould you like to connect?`,
+				{ "Connect", "Dismiss" }
 			)
 		end)
 		:catch(function()
@@ -446,7 +460,8 @@ function App:checkSyncReminder()
 
 				local timeSinceSync = timeUtil.elapsedToText(os.time() - priorSyncInfo.timestamp)
 				self:sendSyncReminder(
-					`You synced project '{priorSyncInfo.projectName}' to this place {timeSinceSync}.\nDid you mean to run 'rojo serve' and then connect?`
+					`You synced project '{priorSyncInfo.projectName}' to this place {timeSinceSync}.\nDid you mean to run 'rojo serve' and then connect?`,
+					{ "Connect", "Forget", "Dismiss" }
 				)
 			end
 		end)
@@ -486,11 +501,15 @@ function App:stopSyncReminderPolling()
 	end
 end
 
-function App:sendSyncReminder(message: string)
+function App:sendSyncReminder(message: string, shownActions: { string })
 	local syncReminderMode = Settings:get("syncReminderMode")
 	if syncReminderMode == "None" then
 		return
 	end
+
+	local connectIndex = table.find(shownActions, "Connect")
+	local forgetIndex = table.find(shownActions, "Forget")
+	local dismissIndex = table.find(shownActions, "Dismiss")
 
 	self.dismissSyncReminder = self:addNotification({
 		text = message,
@@ -500,24 +519,39 @@ function App:sendSyncReminder(message: string)
 			self.dismissSyncReminder = nil
 		end,
 		actions = {
-			Connect = {
-				text = "Connect",
-				style = "Solid",
-				layoutOrder = 1,
-				onClick = function()
-					self:startSession()
-				end,
-			},
-			Dismiss = {
-				text = "Dismiss",
-				style = "Bordered",
-				layoutOrder = 2,
-				onClick = function()
-					-- If the user dismisses the reminder,
-					-- then we don't need to remind them again
-					self:stopSyncReminderPolling()
-				end,
-			},
+			Connect = if connectIndex
+				then {
+					text = "Connect",
+					style = "Solid",
+					layoutOrder = connectIndex,
+					onClick = function()
+						self:startSession()
+					end,
+				}
+				else nil,
+			Forget = if forgetIndex
+				then {
+					text = "Forget",
+					style = "Bordered",
+					layoutOrder = forgetIndex,
+					onClick = function()
+						-- The user doesn't want to be reminded again about this sync
+						self:forgetPriorSyncInfo()
+					end,
+				}
+				else nil,
+			Dismiss = if dismissIndex
+				then {
+					text = "Dismiss",
+					style = "Bordered",
+					layoutOrder = dismissIndex,
+					onClick = function()
+						-- If the user dismisses the reminder,
+						-- then we don't need to remind them again
+						self:stopSyncReminderPolling()
+					end,
+				}
+				else nil,
 		},
 	})
 end
