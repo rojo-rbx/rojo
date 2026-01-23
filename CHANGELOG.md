@@ -32,6 +32,21 @@ Making a new release? Simply add the new header with the version and date undern
 ## Unreleased
 
 * Added headless API for Studio companion plugins. ([#639])
+* Fixed a bug caused by having reference properties (such as `ObjectValue.Value`) that point to an Instance not included in syncback. ([#1179])
+* Fixed instance replacement fallback failing when too many instances needed to be replaced. ([#1192])
+* Fixed a bug where MacOS paths weren't being handled correctly. ([#1201])
+* Fixed a bug where the notification timeout thread would fail to cancel on unmount ([#1211])
+* Added a "Forget" option to the sync reminder notification to avoid being reminded for that place in the future ([#1215])
+
+[#639]: https://github.com/rojo-rbx/rojo/pull/639
+[#1179]: https://github.com/rojo-rbx/rojo/pull/1179
+[#1192]: https://github.com/rojo-rbx/rojo/pull/1192
+[#1201]: https://github.com/rojo-rbx/rojo/pull/1201
+[#1211]: https://github.com/rojo-rbx/rojo/pull/1211
+[#1215]: https://github.com/rojo-rbx/rojo/pull/1215
+
+## [7.7.0-rc.1] (November 27th, 2025)
+
 * Fixed a bug where passing `--skip-git` to `rojo init` would still create a file named `gitignore.txt` ([#1172])
 * A new command `rojo syncback` has been added. It can be used as `rojo syncback [path to project] --input [path to file]`. ([#937])
  	This command takes a Roblox file and pulls Instances out of it and places them in the correct position in the provided project.
@@ -66,14 +81,11 @@ Making a new release? Simply add the new header with the version and date undern
     - `syncCurrentCamera` is a toggle for whether to sync back the Workspace's CurrentCamera. Defaults to `false`.
     - `syncUnscriptable` is a toggle for whether to sync back properties that cannot be set by the Roblox Studio plugin. Defaults to `true`.
 
- 	If you are used to the `UpliftGames` version of this feature, there are a few notable differences:
-    - `syncUnscriptable` defaults to `true` instead of `false`
-    - `ignoreTrees` doesn't require the root of the project's name in it.
 * Fixed bugs and improved performance & UX for the script diff viewer ([#994])
 * Rebuilt the internal communication between the server and plugin to use [websockets](https://devforum.roblox.com/t/websockets-support-in-studio-is-now-available/4021932/1) instead of [long polling](https://en.wikipedia.org/wiki/Push_technology#Long_polling) ([#1142])
 * Added support for `.jsonc` files for all JSON-related files (e.g. `.project.jsonc` and `.meta.jsonc`) to accompany JSONC support ([#1159])
 
-[#639]: https://github.com/rojo-rbx/rojo/pull/639
+[7.7.0-rc.1]: https://github.com/rojo-rbx/rojo/releases/tag/v7.7.0-rc.1
 [#937]: https://github.com/rojo-rbx/rojo/pull/937
 [#994]: https://github.com/rojo-rbx/rojo/pull/994
 [#1142]: https://github.com/rojo-rbx/rojo/pull/1142

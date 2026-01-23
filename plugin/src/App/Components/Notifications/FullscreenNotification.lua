@@ -19,9 +19,15 @@ local FullscreenNotification = Roact.Component:extend("FullscreeFullscreenNotifi
 function FullscreenNotification:init()
 	self.transparency, self.setTransparency = Roact.createBinding(0)
 	self.lifetime = self.props.timeout
+	self.dismissed = false
 end
 
 function FullscreenNotification:dismiss()
+	if self.dismissed then
+		return
+	end
+	self.dismissed = true
+
 	if self.props.onClose then
 		self.props.onClose()
 	end
@@ -59,7 +65,7 @@ function FullscreenNotification:didMount()
 end
 
 function FullscreenNotification:willUnmount()
-	if self.timeout and coroutine.status(self.timeout) ~= "dead" then
+	if self.timeout and coroutine.status(self.timeout) == "suspended" then
 		task.cancel(self.timeout)
 	end
 end

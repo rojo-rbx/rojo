@@ -1,0 +1,7 @@
+---
+source: tests/tests/syncback.rs
+expression: src/Pointer1.model.json
+---
+{
+  "className": "ObjectValue"
+}

@@ -8,7 +8,10 @@ use rbx_dom_weak::{
     ustr, Instance, Ustr, WeakDom,
 };
 
-use crate::{multimap::MultiMap, REF_ID_ATTRIBUTE_NAME, REF_POINTER_ATTRIBUTE_PREFIX};
+use crate::{
+    multimap::MultiMap, syncback::snapshot::inst_path, REF_ID_ATTRIBUTE_NAME,
+    REF_POINTER_ATTRIBUTE_PREFIX,
+};
 
 pub struct RefLinks {
     /// A map of referents to each of their Ref properties.
@@ -50,6 +53,22 @@ pub fn collect_referents(dom: &WeakDom) -> RefLinks {
                 continue;
             }
 
+            let target = match dom.get_by_ref(*prop_value) {
+                Some(inst) => inst,
+                None => {
+                    // Properties that are Some but point to nothing may as
+                    // well be `nil`. Roblox and us never produce these values
+                    // but syncback prunes trees without adjusting ref
+                    // properties for performance reasons.
+                    log::warn!(
+                        "Property {}.{} will be `nil` on the disk because the actual value is not being included in syncback",
+                        inst_path(dom, inst_ref),
+                        prop_name
+                    );
+                    continue;
+                }
+            };
+
             links.insert(
                 inst_ref,
                 RefLink {
@@ -57,10 +76,6 @@ pub fn collect_referents(dom: &WeakDom) -> RefLinks {
                     value: *prop_value,
                 },
             );
-
-            let target = dom
-                .get_by_ref(*prop_value)
-                .expect("Refs in DOM should point to valid Instances");
 
             // 1. Check if target has an ID
             if let Some(id) = get_existing_id(target) {

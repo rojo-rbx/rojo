@@ -1,5 +1,5 @@
 use std::io;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use crate::{Metadata, ReadDir, VfsBackend, VfsEvent};
 
@@ -31,17 +31,11 @@ impl VfsBackend for NoopBackend {
     }
 
     fn create_dir(&mut self, _path: &Path) -> io::Result<()> {
-        Err(io::Error::new(
-            io::ErrorKind::Other,
-            "NoopBackend doesn't do anything",
-        ))
+        Err(io::Error::other("NoopBackend doesn't do anything"))
     }
 
     fn create_dir_all(&mut self, _path: &Path) -> io::Result<()> {
-        Err(io::Error::new(
-            io::ErrorKind::Other,
-            "NoopBackend doesn't do anything",
-        ))
+        Err(io::Error::other("NoopBackend doesn't do anything"))
     }
 
     fn remove_file(&mut self, _path: &Path) -> io::Result<()> {
@@ -53,6 +47,10 @@ impl VfsBackend for NoopBackend {
     }
 
     fn metadata(&mut self, _path: &Path) -> io::Result<Metadata> {
+        Err(io::Error::other("NoopBackend doesn't do anything"))
+    }
+
+    fn canonicalize(&mut self, _path: &Path) -> io::Result<PathBuf> {
         Err(io::Error::other("NoopBackend doesn't do anything"))
     }
 

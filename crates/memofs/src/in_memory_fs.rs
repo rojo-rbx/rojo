@@ -232,6 +232,33 @@ impl VfsBackend for InMemoryFs {
         }
     }
 
+    // TODO: We rely on Rojo to prepend cwd to any relative path before storing paths
+    // in MemoFS. The current implementation will error if no prepended absolute path
+    // is found. It really only normalizes paths within the provided path's context.
+    // Example: "/Users/username/project/../other/file.txt" ->
+    // "/Users/username/other/file.txt"
+    // Erroneous example: "/Users/../../other/file.txt" -> "/other/file.txt"
+    // This is not very robust. We should implement proper path normalization here or otherwise
+    // warn if we are missing context and can not fully canonicalize the path correctly.
+    fn canonicalize(&mut self, path: &Path) -> io::Result<PathBuf> {
+        let mut normalized = PathBuf::new();
+        for component in path.components() {
+            match component {
+                std::path::Component::ParentDir => {
+                    normalized.pop();
+                }
+                std::path::Component::CurDir => {}
+                _ => normalized.push(component),
+            }
+        }
+
+        let inner = self.inner.lock().unwrap();
+        match inner.entries.get(&normalized) {
+            Some(_) => Ok(normalized),
+            None => not_found(&normalized),
+        }
+    }
+
     fn event_receiver(&self) -> crossbeam_channel::Receiver<VfsEvent> {
         let inner = self.inner.lock().unwrap();
 

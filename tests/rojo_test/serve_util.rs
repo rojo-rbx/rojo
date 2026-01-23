@@ -1,5 +1,4 @@
 use std::{
-    fmt::Write as _,
     fs,
     path::{Path, PathBuf},
     process::Command,
@@ -13,8 +12,12 @@ use rbx_dom_weak::types::Ref;
 
 use tempfile::{tempdir, TempDir};
 
-use librojo::web_api::{
-    ReadResponse, SerializeResponse, ServerInfoResponse, SocketPacket, SocketPacketType,
+use librojo::{
+    web_api::{
+        ReadResponse, SerializeRequest, SerializeResponse, ServerInfoResponse, SocketPacket,
+        SocketPacketType,
+    },
+    SessionId,
 };
 use rojo_insta_ext::RedactionMap;
 
@@ -226,16 +229,19 @@ impl TestServeSession {
         }
     }
 
-    pub fn get_api_serialize(&self, ids: &[Ref]) -> Result<SerializeResponse, reqwest::Error> {
-        let mut id_list = String::with_capacity(ids.len() * 33);
-        for id in ids {
-            write!(id_list, "{id},").unwrap();
-        }
-        id_list.pop();
+    pub fn get_api_serialize(
+        &self,
+        ids: &[Ref],
+        session_id: SessionId,
+    ) -> Result<SerializeResponse, reqwest::Error> {
+        let client = reqwest::blocking::Client::new();
+        let url = format!("http://localhost:{}/api/serialize", self.port);
+        let body = serde_json::to_string(&SerializeRequest {
+            session_id,
+            ids: ids.to_vec(),
+        });
 
-        let url = format!("http://localhost:{}/api/serialize/{}", self.port, id_list);
-
-        reqwest::blocking::get(url)?.json()
+        client.post(url).body((body).unwrap()).send()?.json()
     }
 }
 
