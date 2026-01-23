@@ -1,0 +1,11 @@
+{
+  "name": "model_json_name_input",
+  "tree": {
+    "$className": "DataModel",
+    "Workspace": {
+      "$className": "Workspace",
+      "$path": "src"
+    }
+  }
+}
+
