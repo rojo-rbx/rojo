@@ -12,6 +12,7 @@ local Theme = require(Plugin.App.Theme)
 local IconButton = require(Plugin.App.Components.IconButton)
 local ScrollingFrame = require(Plugin.App.Components.ScrollingFrame)
 local Tooltip = require(Plugin.App.Components.Tooltip)
+local SlicedImage = require(Plugin.App.Components.SlicedImage)
 local TextInput = require(Plugin.App.Components.TextInput)
 local Setting = require(script.Setting)
 
@@ -171,6 +172,45 @@ function SettingsPage:render()
 						end
 					end,
 				}),
+			}),
+
+			Permissions = e(Setting, {
+				name = "Third Party Permissions",
+				description = "Manage permissions for third party plugins",
+				transparency = self.props.transparency,
+				layoutOrder = layoutIncrement(),
+				input = Theme.with(function(theme)
+					return e("TextButton", {
+						Text = "",
+						BackgroundTransparency = 1,
+						Size = UDim2.fromOffset(28, 28),
+						Position = UDim2.fromScale(1, 0.5),
+						AnchorPoint = Vector2.new(1, 0.5),
+
+						[Roact.Event.Activated] = function()
+							self.props.onNavigatePermissions()
+						end,
+					}, {
+						Button = e(SlicedImage, {
+							slice = Assets.Slices.RoundedBackground,
+							color = theme.Checkbox.Active.BackgroundColor,
+							transparency = self.props.transparency,
+							size = UDim2.new(1, 0, 1, 0),
+						}, {
+							Icon = e("ImageLabel", {
+								Image = Assets.Images.Icons.Expand,
+								ImageColor3 = theme.Checkbox.Active.IconColor,
+								ImageTransparency = self.props.transparency,
+
+								Size = UDim2.new(0, 16, 0, 16),
+								Position = UDim2.new(0.5, 0, 0.5, 0),
+								AnchorPoint = Vector2.new(0.5, 0.5),
+
+								BackgroundTransparency = 1,
+							}),
+						}),
+					})
+				end),
 			}),
 
 			PlaySounds = e(Setting, {
