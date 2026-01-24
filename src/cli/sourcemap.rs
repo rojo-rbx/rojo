@@ -10,7 +10,7 @@ use fs_err::File;
 use memofs::Vfs;
 use rayon::prelude::*;
 use rbx_dom_weak::{types::Ref, Ustr};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tokio::runtime::Runtime;
 
 use crate::{
@@ -24,19 +24,20 @@ const PATH_STRIP_FAILED_ERR: &str = "Failed to create relative paths for project
 const ABSOLUTE_PATH_FAILED_ERR: &str = "Failed to turn relative path into absolute path!";
 
 /// Representation of a node in the generated sourcemap tree.
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct SourcemapNode<'a> {
     name: &'a str,
     class_name: Ustr,
 
     #[serde(
+        default,
         skip_serializing_if = "Vec::is_empty",
         serialize_with = "crate::path_serializer::serialize_vec_absolute"
     )]
     file_paths: Vec<Cow<'a, Path>>,
 
-    #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     children: Vec<SourcemapNode<'a>>,
 }
 
@@ -70,12 +71,13 @@ pub struct SourcemapCommand {
 
 impl SourcemapCommand {
     pub fn run(self) -> anyhow::Result<()> {
-        let project_path = resolve_path(&self.project);
+        let project_path = fs_err::canonicalize(resolve_path(&self.project))?;
 
-        log::trace!("Constructing in-memory filesystem");
+        log::trace!("Constructing filesystem with StdBackend");
         let vfs = Vfs::new_default();
         vfs.set_watch_enabled(self.watch);
 
+        log::trace!("Setting up session for sourcemap generation");
         let session = ServeSession::new(vfs, project_path)?;
         let mut cursor = session.message_queue().cursor();
 
@@ -87,14 +89,17 @@ impl SourcemapCommand {
 
         // Pre-build a rayon threadpool with a low number of threads to avoid
         // dynamic creation overhead on systems with a high number of cpus.
+        log::trace!("Setting rayon global threadpool");
         rayon::ThreadPoolBuilder::new()
             .num_threads(num_cpus::get().min(6))
             .build_global()
-            .unwrap();
+            .ok();
 
+        log::trace!("Writing initial sourcemap");
         write_sourcemap(&session, self.output.as_deref(), filter, self.absolute)?;
 
         if self.watch {
+            log::trace!("Setting up runtime for watch mode");
             let rt = Runtime::new().unwrap();
 
             loop {
@@ -141,26 +146,26 @@ fn patch_set_affects_sourcemap(
         !set.removed.is_empty()
             // 2. A newly added instance passes the filter
             || set.added.iter().any(|referent| {
-                let instance = tree
-                    .get_instance(*referent)
-                    .expect("instance did not exist when updating sourcemap");
-                filter(&instance)
-            })
+            let instance = tree
+                .get_instance(*referent)
+                .expect("instance did not exist when updating sourcemap");
+            filter(&instance)
+        })
             // 3. An existing instance has its class name, name,
             // or file paths changed, and passes the filter
             || set.updated.iter().any(|updated| {
-                let changed = updated.changed_class_name.is_some()
-                    || updated.changed_name.is_some()
-                    || updated.changed_metadata.is_some();
-                if changed {
-                    let instance = tree
-                        .get_instance(updated.id)
-                        .expect("instance did not exist when updating sourcemap");
-                    filter(&instance)
-                } else {
-                    false
-                }
-            })
+            let changed = updated.changed_class_name.is_some()
+                || updated.changed_name.is_some()
+                || updated.changed_metadata.is_some();
+            if changed {
+                let instance = tree
+                    .get_instance(updated.id)
+                    .expect("instance did not exist when updating sourcemap");
+                filter(&instance)
+            } else {
+                false
+            }
+        })
     })
 }
 
@@ -208,7 +213,7 @@ fn recurse_create_node<'a>(
     } else {
         for val in file_paths {
             output_file_paths.push(Cow::from(
-                val.strip_prefix(project_dir).expect(PATH_STRIP_FAILED_ERR),
+                pathdiff::diff_paths(val, project_dir).expect(PATH_STRIP_FAILED_ERR),
             ));
         }
     };
