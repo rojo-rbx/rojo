@@ -83,6 +83,27 @@ jobs:
           target
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
+  test-plugin:
+    name: Test Plugin
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+
+    - name: Setup Rokit
+      uses: CompeyDev/setup-rokit@v0.1.2
+      with:
+        version: 'v1.1.0'
+    
+    - name: Test
+      run: lune run test-plugin
+      env:
+        RBX_API_KEY: ${{ secrets.PLUGIN_TEST_API_KEY }}
+        RBX_UNIVERSE_ID: ${{ vars.PLUGIN_TEST_UNIVERSE_ID }}
+        RBX_PLACE_ID: ${{ vars.PLUGIN_TEST_PLACE_ID }}
+
   lint:
     name: Rustfmt, Clippy, Stylua, & Selene
     runs-on: ubuntu-latest
