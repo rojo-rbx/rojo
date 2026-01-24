@@ -1,0 +1,35 @@
+---
+source: src/cli/sourcemap.rs
+expression: sourcemap_contents
+---
+{
+  "name": "default",
+  "className": "DataModel",
+  "filePaths": "[...paths omitted...]",
+  "children": [
+    {
+      "name": "ReplicatedStorage",
+      "className": "ReplicatedStorage",
+      "children": [
+        {
+          "name": "Project",
+          "className": "ModuleScript",
+          "filePaths": "[...paths omitted...]",
+          "children": [
+            {
+              "name": "Module",
+              "className": "Folder",
+              "children": [
+                {
+                  "name": "module",
+                  "className": "ModuleScript",
+                  "filePaths": "[...paths omitted...]"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -255,3 +255,64 @@ fn write_sourcemap(
 
     Ok(())
 }
+
+#[cfg(test)]
+mod test {
+    use crate::cli::sourcemap::SourcemapNode;
+    use crate::cli::SourcemapCommand;
+    use std::path::Path;
+
+    #[test]
+    fn maps_relative_paths() {
+        let sourcemap_dir = tempfile::tempdir().unwrap();
+        let sourcemap_output = sourcemap_dir.path().join("sourcemap.json");
+        let project_path = fs_err::canonicalize(
+            Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("test-projects")
+                .join("relative_paths")
+                .join("project"),
+        )
+        .unwrap();
+        let sourcemap_command = SourcemapCommand {
+            project: project_path,
+            output: Some(sourcemap_output.clone()),
+            include_non_scripts: false,
+            watch: false,
+            absolute: false,
+        };
+        assert!(sourcemap_command.run().is_ok());
+
+        let raw_sourcemap_contents = fs_err::read_to_string(sourcemap_output.as_path()).unwrap();
+        let sourcemap_contents =
+            serde_json::from_str::<SourcemapNode>(&raw_sourcemap_contents).unwrap();
+        insta::assert_json_snapshot!(sourcemap_contents);
+    }
+
+    #[test]
+    fn maps_absolute_paths() {
+        let sourcemap_dir = tempfile::tempdir().unwrap();
+        let sourcemap_output = sourcemap_dir.path().join("sourcemap.json");
+        let project_path = fs_err::canonicalize(
+            Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("test-projects")
+                .join("relative_paths")
+                .join("project"),
+        )
+        .unwrap();
+        let sourcemap_command = SourcemapCommand {
+            project: project_path,
+            output: Some(sourcemap_output.clone()),
+            include_non_scripts: false,
+            watch: false,
+            absolute: true,
+        };
+        assert!(sourcemap_command.run().is_ok());
+
+        let raw_sourcemap_contents = fs_err::read_to_string(sourcemap_output.as_path()).unwrap();
+        let sourcemap_contents =
+            serde_json::from_str::<SourcemapNode>(&raw_sourcemap_contents).unwrap();
+        insta::assert_json_snapshot!(sourcemap_contents, {
+            ".**.filePaths" => "[...paths omitted...]"
+        });
+    }
+}
