@@ -72,6 +72,11 @@ function DomLabel:init()
 	end)
 end
 
+function DomLabel:willUnmount()
+	-- Stop the motor to prevent onStep callbacks after unmount
+	self.motor:stop()
+end
+
 function DomLabel:didUpdate(prevProps)
 	if
 		prevProps.instance ~= self.props.instance

@@ -751,36 +751,38 @@ function App:startSession()
 		end
 
 		local confirmationBehavior = Settings:get("confirmationBehavior")
-		if confirmationBehavior == "Initial" then
-			-- Only confirm if we haven't synced this project yet this session
-			if self.knownProjects[serverInfo.projectName] then
-				Log.trace(
-					"Accepting patch without confirmation because project has already been connected and behavior is set to Initial"
-				)
-				return "Accept"
-			end
-		elseif confirmationBehavior == "Large Changes" then
-			-- Only confirm if the patch impacts many instances
-			if PatchSet.countInstances(patch) < Settings:get("largeChangesConfirmationThreshold") then
-				Log.trace(
-					"Accepting patch without confirmation because patch is small and behavior is set to Large Changes"
-				)
-				return "Accept"
-			end
-		elseif confirmationBehavior == "Unlisted PlaceId" then
-			-- Only confirm if the current placeId is not in the servePlaceIds allowlist
-			if serverInfo.expectedPlaceIds then
-				local isListed = table.find(serverInfo.expectedPlaceIds, game.PlaceId) ~= nil
-				if isListed then
+		if confirmationBehavior ~= "Always" then
+			if confirmationBehavior == "Initial" then
+				-- Only confirm if we haven't synced this project yet this session
+				if self.knownProjects[serverInfo.projectName] then
 					Log.trace(
-						"Accepting patch without confirmation because placeId is listed and behavior is set to Unlisted PlaceId"
+						"Accepting patch without confirmation because project has already been connected and behavior is set to Initial"
 					)
 					return "Accept"
 				end
+			elseif confirmationBehavior == "Large Changes" then
+				-- Only confirm if the patch impacts many instances
+				if PatchSet.countInstances(patch) < Settings:get("largeChangesConfirmationThreshold") then
+					Log.trace(
+						"Accepting patch without confirmation because patch is small and behavior is set to Large Changes"
+					)
+					return "Accept"
+				end
+			elseif confirmationBehavior == "Unlisted PlaceId" then
+				-- Only confirm if the current placeId is not in the servePlaceIds allowlist
+				if serverInfo.expectedPlaceIds then
+					local isListed = table.find(serverInfo.expectedPlaceIds, game.PlaceId) ~= nil
+					if isListed then
+						Log.trace(
+							"Accepting patch without confirmation because placeId is listed and behavior is set to Unlisted PlaceId"
+						)
+						return "Accept"
+					end
+				end
+			elseif confirmationBehavior == "Never" then
+				Log.trace("Accepting patch without confirmation because behavior is set to Never")
+				return "Accept"
 			end
-		elseif confirmationBehavior == "Never" then
-			Log.trace("Accepting patch without confirmation because behavior is set to Never")
-			return "Accept"
 		end
 
 		-- The datamodel name gets overwritten by Studio, making confirmation of it intrusive
@@ -821,7 +823,36 @@ function App:startSession()
 			timeout = 7,
 		})
 
-		return self.confirmationEvent:Wait()
+		local result = self.confirmationEvent:Wait()
+
+		-- Reset UI state back to Connected after confirmation
+		-- This is needed for ongoing WebSocket patches where the session
+		-- is already connected and won't trigger a status change
+		if self.serveSession and self.serveSession:getStatus() == ServeSession.Status.Connected then
+			self:setState({
+				appStatus = AppStatus.Connected,
+				toolbarIcon = Assets.Images.PluginButtonConnected,
+				-- Clear patchTree to avoid animation issues when the
+				-- PatchVisualizer unmounts while Flipper motors are running
+				patchTree = nil,
+			})
+		end
+
+		return result
+	end)
+
+	serveSession:setPatchUpdateCallback(function(instanceMap, patch)
+		-- If all changes have been reverted, auto-accept the empty patch
+		if PatchSet.isEmpty(patch) then
+			Log.trace("Patch became empty after merging, auto-accepting")
+			self.confirmationBindable:Fire("Accept")
+			return
+		end
+
+		-- Update the patchTree when new changes arrive during confirmation
+		self:setState({
+			patchTree = PatchTree.build(patch, instanceMap, { "Property", "Current", "Incoming" }),
+		})
 	end)
 
 	serveSession:start()

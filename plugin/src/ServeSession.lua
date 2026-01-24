@@ -104,6 +104,10 @@ function ServeSession.new(options)
 		__instanceMap = instanceMap,
 		__changeBatcher = changeBatcher,
 		__statusChangedCallback = nil,
+		__userConfirmCallback = nil,
+		__patchUpdateCallback = nil,
+		__serverInfo = nil,
+		__confirmingPatch = nil,
 		__connections = connections,
 		__precommitCallbacks = {},
 		__postcommitCallbacks = {},
@@ -136,6 +140,10 @@ end
 
 function ServeSession:setConfirmCallback(callback)
 	self.__userConfirmCallback = callback
+end
+
+function ServeSession:setPatchUpdateCallback(callback)
+	self.__patchUpdateCallback = callback
 end
 
 function ServeSession:setUpdateLoadingTextCallback(callback)
@@ -188,6 +196,62 @@ function ServeSession:hookPostcommit(callback)
 	end
 end
 
+function ServeSession:__onWebSocketMessage(messagesPacket)
+	if self.__status == Status.Disconnected then
+		return
+	end
+
+	Log.debug("Received {} messages from Rojo server", #messagesPacket.messages)
+
+	-- Combine all messages into a single patch
+	local combinedPatch = PatchSet.newEmpty()
+	for _, message in messagesPacket.messages do
+		PatchSet.assign(combinedPatch, message)
+	end
+
+	-- If we're already waiting for confirmation, merge into the patch being confirmed
+	if self.__confirmingPatch ~= nil then
+		Log.trace("Already confirming, merging into current patch")
+		PatchSet.merge(self.__confirmingPatch, combinedPatch, self.__instanceMap)
+		-- Notify the UI to update the displayed patch
+		if self.__patchUpdateCallback ~= nil then
+			self.__patchUpdateCallback(self.__instanceMap, self.__confirmingPatch)
+		end
+		self.__apiContext:setMessageCursor(messagesPacket.messageCursor)
+		return
+	end
+
+	-- Set confirming patch before spawning to prevent race condition
+	-- where another message arrives before the spawned thread starts
+	self.__confirmingPatch = combinedPatch
+
+	-- Spawn a new thread to handle potentially yielding confirmation
+	task.spawn(function()
+		Log.trace("Processing WebSocket patch, callback exists: {}", self.__userConfirmCallback ~= nil)
+		Log.trace("ServerInfo exists: {}", self.__serverInfo ~= nil)
+
+		local userDecision = "Accept"
+		if self.__userConfirmCallback ~= nil then
+			userDecision = self.__userConfirmCallback(self.__instanceMap, combinedPatch, self.__serverInfo)
+		end
+		self.__confirmingPatch = nil
+
+		Log.trace("WebSocket patch decision: {}", userDecision)
+
+		if userDecision == "Abort" then
+			self:__stopInternal("Aborted Rojo sync operation")
+			return
+		elseif userDecision == "Accept" then
+			-- combinedPatch may have been updated with additional changes
+			-- that arrived while we were waiting for confirmation
+			self:__applyPatch(combinedPatch)
+		end
+		-- Note: "Reject" is not handled for ongoing patches, only for initial sync
+	end)
+
+	self.__apiContext:setMessageCursor(messagesPacket.messageCursor)
+end
+
 function ServeSession:start()
 	self:__setStatus(Status.Connecting)
 	self:setLoadingText("Connecting to server...")
@@ -196,25 +260,26 @@ function ServeSession:start()
 		:connect()
 		:andThen(function(serverInfo)
 			self:setLoadingText("Loading initial data from server...")
-			return self:__initialSync(serverInfo):andThen(function()
+			self.__serverInfo = serverInfo
+			return self:__computeInitialPatch(serverInfo):andThen(function(catchUpPatch)
 				self:setLoadingText("Starting sync loop...")
-				self:__setStatus(Status.Connected, serverInfo.projectName)
-				self:__applyGameAndPlaceId(serverInfo)
 
-				return self.__apiContext:connectWebSocket({
+				-- Connect WebSocket BEFORE showing confirmation so changes
+				-- during confirmation can be merged into the patch
+				-- Note: connectWebSocket returns a Promise that only resolves when
+				-- the connection closes, so we don't chain .andThen() on it
+				self.__apiContext:connectWebSocket({
 					["messages"] = function(messagesPacket)
-						if self.__status == Status.Disconnected then
-							return
-						end
-
-						Log.debug("Received {} messages from Rojo server", #messagesPacket.messages)
-
-						for _, message in messagesPacket.messages do
-							self:__applyPatch(message)
-						end
-						self.__apiContext:setMessageCursor(messagesPacket.messageCursor)
+						self:__onWebSocketMessage(messagesPacket)
 					end,
-				})
+				}):catch(function(err)
+					if self.__status ~= Status.Disconnected then
+						self:__stopInternal(err)
+					end
+				end)
+
+				-- Now show confirmation and wait for user decision
+				return self:__confirmAndApplyInitialPatch(catchUpPatch, serverInfo)
 			end)
 		end)
 		:catch(function(err)
@@ -465,7 +530,7 @@ function ServeSession:__applyPatch(patch)
 	end
 end
 
-function ServeSession:__initialSync(serverInfo)
+function ServeSession:__computeInitialPatch(serverInfo)
 	return self.__apiContext:read({ serverInfo.rootInstanceId }):andThen(function(readResponseBody)
 		-- Tell the API Context that we're up-to-date with the version of
 		-- the tree defined in this response.
@@ -503,50 +568,60 @@ function ServeSession:__initialSync(serverInfo)
 
 		Log.trace("Computed hydration patch: {:#?}", debugPatch(catchUpPatch))
 
-		local userDecision = "Accept"
-		if self.__userConfirmCallback ~= nil then
-			userDecision = self.__userConfirmCallback(self.__instanceMap, catchUpPatch, serverInfo)
-		end
-
-		if userDecision == "Abort" then
-			return Promise.reject("Aborted Rojo sync operation")
-		elseif userDecision == "Reject" then
-			if not self.__twoWaySync then
-				return Promise.reject("Cannot reject sync operation without two-way sync enabled")
-			end
-			-- The user wants their studio DOM to write back to their Rojo DOM
-			-- so we will reverse the patch and send it back
-
-			local inversePatch = PatchSet.newEmpty()
-
-			-- Send back the current properties
-			for _, change in catchUpPatch.updated do
-				local instance = self.__instanceMap.fromIds[change.id]
-				if not instance then
-					continue
-				end
-
-				local update = encodePatchUpdate(instance, change.id, change.changedProperties)
-				table.insert(inversePatch.updated, update)
-			end
-			-- Add the removed instances back to Rojo
-			-- selene:allow(empty_if, unused_variable, empty_loop)
-			for _, instance in catchUpPatch.removed do
-				-- TODO: Generate ID for our instance and add it to inversePatch.added
-			end
-			-- Remove the additions we've rejected
-			for id, _change in catchUpPatch.added do
-				table.insert(inversePatch.removed, id)
-			end
-
-			return self.__apiContext:write(inversePatch)
-		elseif userDecision == "Accept" then
-			self:__applyPatch(catchUpPatch)
-			return Promise.resolve()
-		else
-			return Promise.reject("Invalid user decision: " .. userDecision)
-		end
+		return catchUpPatch
 	end)
+end
+
+function ServeSession:__confirmAndApplyInitialPatch(catchUpPatch, serverInfo)
+	local userDecision = "Accept"
+	if self.__userConfirmCallback ~= nil then
+		-- Set confirming patch so WebSocket messages that arrive during
+		-- confirmation can be merged into this patch
+		self.__confirmingPatch = catchUpPatch
+		userDecision = self.__userConfirmCallback(self.__instanceMap, catchUpPatch, serverInfo)
+		self.__confirmingPatch = nil
+	end
+
+	if userDecision == "Abort" then
+		return Promise.reject("Aborted Rojo sync operation")
+	elseif userDecision == "Reject" then
+		if not self.__twoWaySync then
+			return Promise.reject("Cannot reject sync operation without two-way sync enabled")
+		end
+		-- The user wants their studio DOM to write back to their Rojo DOM
+		-- so we will reverse the patch and send it back
+
+		local inversePatch = PatchSet.newEmpty()
+
+		-- Send back the current properties
+		for _, change in catchUpPatch.updated do
+			local instance = self.__instanceMap.fromIds[change.id]
+			if not instance then
+				continue
+			end
+
+			local update = encodePatchUpdate(instance, change.id, change.changedProperties)
+			table.insert(inversePatch.updated, update)
+		end
+		-- Add the removed instances back to Rojo
+		-- selene:allow(empty_if, unused_variable, empty_loop)
+		for _, instance in catchUpPatch.removed do
+			-- TODO: Generate ID for our instance and add it to inversePatch.added
+		end
+		-- Remove the additions we've rejected
+		for id, _change in catchUpPatch.added do
+			table.insert(inversePatch.removed, id)
+		end
+
+		return self.__apiContext:write(inversePatch)
+	elseif userDecision == "Accept" then
+		self:__setStatus(Status.Connected, serverInfo.projectName)
+		self:__applyGameAndPlaceId(serverInfo)
+		self:__applyPatch(catchUpPatch)
+		return Promise.resolve()
+	else
+		return Promise.reject("Invalid user decision: " .. userDecision)
+	end
 end
 
 function ServeSession:__stopInternal(err)
