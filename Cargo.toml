@@ -123,7 +123,7 @@ semver = "1.0.22"
 rojo-insta-ext = { path = "crates/rojo-insta-ext" }
 
 criterion = "0.3.6"
-insta = { version = "1.36.1", features = ["redactions", "yaml"] }
+insta = { version = "1.36.1", features = ["redactions", "yaml", "json"] }
 paste = "1.0.14"
 pretty_assertions = "1.4.0"
 serde_yaml = "0.8.26"
