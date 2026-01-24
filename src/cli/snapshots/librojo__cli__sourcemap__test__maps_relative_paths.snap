@@ -1,0 +1,41 @@
+---
+source: src/cli/sourcemap.rs
+expression: sourcemap_contents
+---
+{
+  "name": "default",
+  "className": "DataModel",
+  "filePaths": [
+    "default.project.json"
+  ],
+  "children": [
+    {
+      "name": "ReplicatedStorage",
+      "className": "ReplicatedStorage",
+      "children": [
+        {
+          "name": "Project",
+          "className": "ModuleScript",
+          "filePaths": [
+            "src/init.luau"
+          ],
+          "children": [
+            {
+              "name": "Module",
+              "className": "Folder",
+              "children": [
+                {
+                  "name": "module",
+                  "className": "ModuleScript",
+                  "filePaths": [
+                    "../module/module.luau"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
