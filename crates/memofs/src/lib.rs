@@ -657,4 +657,6 @@ mod test {
         let err = vfs.canonicalize(&file_path).unwrap_err();
         assert_eq!(err.kind(), io::ErrorKind::NotFound);
     }
+
+    // TODO: Add a test to check whether new_default uses StdBackend.
 }
