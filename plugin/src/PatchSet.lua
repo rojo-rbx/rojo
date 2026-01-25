@@ -7,6 +7,7 @@ local Packages = script.Parent.Parent.Packages
 local t = require(Packages.t)
 
 local Types = require(script.Parent.Types)
+local decodeValue = require(script.Parent.Reconciler.decodeValue)
 
 local function deepEqual(a: any, b: any): boolean
 	local typeA = typeof(a)
@@ -275,6 +276,101 @@ function PatchSet.assign(target, ...)
 		end
 
 		for _, update in ipairs(sourcePatch.updated) do
+			table.insert(target.updated, update)
+		end
+	end
+
+	return target
+end
+
+--[[
+	Merge a source PatchSet into the target, properly reconciling conflicts.
+	Unlike assign(), this handles cases where a removal cancels out an addition,
+	or where an update supersedes a previous update to the same instance.
+
+	If instanceMap is provided, updates that revert to the current instance state
+	will be removed from the patch entirely.
+]]
+function PatchSet.merge(target, source, instanceMap)
+	-- Process removals: if we're removing something that was added, just delete the addition
+	for _, removed in ipairs(source.removed) do
+		if target.added[removed] ~= nil then
+			-- This removal cancels out a previous addition
+			target.added[removed] = nil
+		else
+			table.insert(target.removed, removed)
+		end
+	end
+
+	-- Process additions
+	for id, added in pairs(source.added) do
+		target.added[id] = added
+	end
+
+	-- Process updates: merge with existing updates to the same instance
+	for _, update in ipairs(source.updated) do
+		local existingIndex = nil
+		for i, existing in ipairs(target.updated) do
+			if existing.id == update.id then
+				existingIndex = i
+				break
+			end
+		end
+
+		if existingIndex then
+			-- Merge the updates
+			local existing = target.updated[existingIndex]
+			if update.changedName ~= nil then
+				existing.changedName = update.changedName
+			end
+			if update.changedClassName ~= nil then
+				existing.changedClassName = update.changedClassName
+			end
+			if update.changedMetadata ~= nil then
+				existing.changedMetadata = update.changedMetadata
+			end
+			for prop, value in pairs(update.changedProperties) do
+				existing.changedProperties[prop] = value
+			end
+
+			-- Check if this update now matches current instance state (i.e., reverted)
+			-- If so, remove properties that match or remove the update entirely
+			if instanceMap then
+				local instance = instanceMap.fromIds[existing.id]
+				if instance then
+					-- Check if name change matches current
+					if existing.changedName ~= nil and existing.changedName == instance.Name then
+						existing.changedName = nil
+					end
+					-- Check if class change matches current
+					if existing.changedClassName ~= nil and existing.changedClassName == instance.ClassName then
+						existing.changedClassName = nil
+					end
+					-- Check each changed property against current instance value
+					for propName, encodedValue in pairs(existing.changedProperties) do
+						local decodeSuccess, decodedValue = decodeValue(encodedValue, instanceMap)
+						if decodeSuccess then
+							local currentSuccess, currentValue = pcall(function()
+								return instance[propName]
+							end)
+							if currentSuccess and deepEqual(decodedValue, currentValue) then
+								existing.changedProperties[propName] = nil
+							end
+						end
+					end
+
+					-- If no changes remain, remove the update entirely
+					local hasChanges = existing.changedName ~= nil
+						or existing.changedClassName ~= nil
+						or existing.changedMetadata ~= nil
+						or next(existing.changedProperties) ~= nil
+
+					if not hasChanges then
+						table.remove(target.updated, existingIndex)
+					end
+				end
+			end
+		else
 			table.insert(target.updated, update)
 		end
 	end
