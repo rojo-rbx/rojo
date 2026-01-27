@@ -5,7 +5,7 @@ expression: sourcemap_contents
 {
   "name": "default",
   "className": "DataModel",
-  "filePaths": "[...paths omitted...]",
+  "filePaths": "[...1 path omitted...]",
   "children": [
     {
       "name": "ReplicatedStorage",
@@ -14,7 +14,7 @@ expression: sourcemap_contents
         {
           "name": "Project",
           "className": "ModuleScript",
-          "filePaths": "[...paths omitted...]",
+          "filePaths": "[...1 path omitted...]",
           "children": [
             {
               "name": "Module",
@@ -23,7 +23,7 @@ expression: sourcemap_contents
                 {
                   "name": "module",
                   "className": "ModuleScript",
-                  "filePaths": "[...paths omitted...]"
+                  "filePaths": "[...1 path omitted...]"
                 }
               ]
             }

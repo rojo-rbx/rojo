@@ -260,6 +260,7 @@ fn write_sourcemap(
 mod test {
     use crate::cli::sourcemap::SourcemapNode;
     use crate::cli::SourcemapCommand;
+    use insta::internals::Content;
     use std::path::Path;
 
     #[test]
@@ -312,7 +313,22 @@ mod test {
         let sourcemap_contents =
             serde_json::from_str::<SourcemapNode>(&raw_sourcemap_contents).unwrap();
         insta::assert_json_snapshot!(sourcemap_contents, {
-            ".**.filePaths" => "[...paths omitted...]"
+            ".**.filePaths" => insta::dynamic_redaction(|mut value, _path| {
+                let mut paths_count = 0;
+
+                match value {
+                    Content::Seq(ref mut vec) => {
+                        for path in vec.iter().map(|i| i.as_str().unwrap()) {
+                            assert_eq!(fs_err::canonicalize(path).is_ok(), true, "path was not valid");
+                            assert_eq!(Path::new(path).is_absolute(), true, "path was not absolute");
+
+                            paths_count += 1;
+                        }
+                    }
+                    _ => panic!("Expected filePaths to be a sequence"),
+                }
+                format!("[...{} path{} omitted...]", paths_count, if paths_count != 1 { "s" } else { "" } )
+            })
         });
     }
 }
