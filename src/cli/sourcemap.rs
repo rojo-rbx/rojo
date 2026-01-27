@@ -10,7 +10,7 @@ use fs_err::File;
 use memofs::Vfs;
 use rayon::prelude::*;
 use rbx_dom_weak::{types::Ref, Ustr};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tokio::runtime::Runtime;
 
 use crate::{
@@ -24,19 +24,20 @@ const PATH_STRIP_FAILED_ERR: &str = "Failed to create relative paths for project
 const ABSOLUTE_PATH_FAILED_ERR: &str = "Failed to turn relative path into absolute path!";
 
 /// Representation of a node in the generated sourcemap tree.
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct SourcemapNode<'a> {
     name: &'a str,
     class_name: Ustr,
 
     #[serde(
+        default,
         skip_serializing_if = "Vec::is_empty",
         serialize_with = "crate::path_serializer::serialize_vec_absolute"
     )]
     file_paths: Vec<Cow<'a, Path>>,
 
-    #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     children: Vec<SourcemapNode<'a>>,
 }
 
@@ -70,12 +71,13 @@ pub struct SourcemapCommand {
 
 impl SourcemapCommand {
     pub fn run(self) -> anyhow::Result<()> {
-        let project_path = resolve_path(&self.project);
+        let project_path = fs_err::canonicalize(resolve_path(&self.project))?;
 
-        log::trace!("Constructing in-memory filesystem");
+        log::trace!("Constructing filesystem with StdBackend");
         let vfs = Vfs::new_default();
         vfs.set_watch_enabled(self.watch);
 
+        log::trace!("Setting up session for sourcemap generation");
         let session = ServeSession::new(vfs, project_path)?;
         let mut cursor = session.message_queue().cursor();
 
@@ -87,14 +89,17 @@ impl SourcemapCommand {
 
         // Pre-build a rayon threadpool with a low number of threads to avoid
         // dynamic creation overhead on systems with a high number of cpus.
+        log::trace!("Setting rayon global threadpool");
         rayon::ThreadPoolBuilder::new()
             .num_threads(num_cpus::get().min(6))
             .build_global()
-            .unwrap();
+            .ok();
 
+        log::trace!("Writing initial sourcemap");
         write_sourcemap(&session, self.output.as_deref(), filter, self.absolute)?;
 
         if self.watch {
+            log::trace!("Setting up runtime for watch mode");
             let rt = Runtime::new().unwrap();
 
             loop {
@@ -208,7 +213,7 @@ fn recurse_create_node<'a>(
     } else {
         for val in file_paths {
             output_file_paths.push(Cow::from(
-                val.strip_prefix(project_dir).expect(PATH_STRIP_FAILED_ERR),
+                pathdiff::diff_paths(val, project_dir).expect(PATH_STRIP_FAILED_ERR),
             ));
         }
     };
@@ -249,4 +254,81 @@ fn write_sourcemap(
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod test {
+    use crate::cli::sourcemap::SourcemapNode;
+    use crate::cli::SourcemapCommand;
+    use insta::internals::Content;
+    use std::path::Path;
+
+    #[test]
+    fn maps_relative_paths() {
+        let sourcemap_dir = tempfile::tempdir().unwrap();
+        let sourcemap_output = sourcemap_dir.path().join("sourcemap.json");
+        let project_path = fs_err::canonicalize(
+            Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("test-projects")
+                .join("relative_paths")
+                .join("project"),
+        )
+        .unwrap();
+        let sourcemap_command = SourcemapCommand {
+            project: project_path,
+            output: Some(sourcemap_output.clone()),
+            include_non_scripts: false,
+            watch: false,
+            absolute: false,
+        };
+        assert!(sourcemap_command.run().is_ok());
+
+        let raw_sourcemap_contents = fs_err::read_to_string(sourcemap_output.as_path()).unwrap();
+        let sourcemap_contents =
+            serde_json::from_str::<SourcemapNode>(&raw_sourcemap_contents).unwrap();
+        insta::assert_json_snapshot!(sourcemap_contents);
+    }
+
+    #[test]
+    fn maps_absolute_paths() {
+        let sourcemap_dir = tempfile::tempdir().unwrap();
+        let sourcemap_output = sourcemap_dir.path().join("sourcemap.json");
+        let project_path = fs_err::canonicalize(
+            Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("test-projects")
+                .join("relative_paths")
+                .join("project"),
+        )
+        .unwrap();
+        let sourcemap_command = SourcemapCommand {
+            project: project_path,
+            output: Some(sourcemap_output.clone()),
+            include_non_scripts: false,
+            watch: false,
+            absolute: true,
+        };
+        assert!(sourcemap_command.run().is_ok());
+
+        let raw_sourcemap_contents = fs_err::read_to_string(sourcemap_output.as_path()).unwrap();
+        let sourcemap_contents =
+            serde_json::from_str::<SourcemapNode>(&raw_sourcemap_contents).unwrap();
+        insta::assert_json_snapshot!(sourcemap_contents, {
+            ".**.filePaths" => insta::dynamic_redaction(|mut value, _path| {
+                let mut paths_count = 0;
+
+                match value {
+                    Content::Seq(ref mut vec) => {
+                        for path in vec.iter().map(|i| i.as_str().unwrap()) {
+                            assert_eq!(fs_err::canonicalize(path).is_ok(), true, "path was not valid");
+                            assert_eq!(Path::new(path).is_absolute(), true, "path was not absolute");
+
+                            paths_count += 1;
+                        }
+                    }
+                    _ => panic!("Expected filePaths to be a sequence"),
+                }
+                format!("[...{} path{} omitted...]", paths_count, if paths_count != 1 { "s" } else { "" } )
+            })
+        });
+    }
 }

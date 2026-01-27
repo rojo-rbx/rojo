@@ -14,6 +14,7 @@ Code contributions are welcome for features and bugs that have been reported in 
 You'll want these tools to work on Rojo:
 
 * Latest stable Rust compiler
+  * Rustfmt and Clippy are used for code formatting and linting.
 * Latest stable [Rojo](https://github.com/rojo-rbx/rojo)
 * [Rokit](https://github.com/rojo-rbx/rokit)
 * [Luau Language Server](https://github.com/JohnnyMorganz/luau-lsp) (Only needed if working on the Studio plugin.)
