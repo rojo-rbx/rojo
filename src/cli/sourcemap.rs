@@ -146,26 +146,26 @@ fn patch_set_affects_sourcemap(
         !set.removed.is_empty()
             // 2. A newly added instance passes the filter
             || set.added.iter().any(|referent| {
-            let instance = tree
-                .get_instance(*referent)
-                .expect("instance did not exist when updating sourcemap");
-            filter(&instance)
-        })
+                let instance = tree
+                    .get_instance(*referent)
+                    .expect("instance did not exist when updating sourcemap");
+                filter(&instance)
+            })
             // 3. An existing instance has its class name, name,
             // or file paths changed, and passes the filter
             || set.updated.iter().any(|updated| {
-            let changed = updated.changed_class_name.is_some()
-                || updated.changed_name.is_some()
-                || updated.changed_metadata.is_some();
-            if changed {
-                let instance = tree
-                    .get_instance(updated.id)
-                    .expect("instance did not exist when updating sourcemap");
-                filter(&instance)
-            } else {
-                false
-            }
-        })
+                let changed = updated.changed_class_name.is_some()
+                    || updated.changed_name.is_some()
+                    || updated.changed_metadata.is_some();
+                if changed {
+                    let instance = tree
+                        .get_instance(updated.id)
+                        .expect("instance did not exist when updating sourcemap");
+                    filter(&instance)
+                } else {
+                    false
+                }
+            })
     })
 }
 
