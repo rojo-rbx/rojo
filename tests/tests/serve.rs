@@ -126,6 +126,41 @@ fn remove_file() {
     });
 }
 
+/// Test that removing a folder (directory) with contents doesn't crash the server.
+/// This is a regression test for a bug where deleting a folder would cause a panic
+/// due to the parent path no longer existing when processing child removal events.
+#[test]
+fn remove_folder() {
+    run_serve_test("remove_folder", |session, mut redactions| {
+        let info = session.get_api_rojo().unwrap();
+        let root_id = info.root_instance_id;
+
+        assert_yaml_snapshot!("remove_folder_info", redactions.redacted_yaml(info));
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "remove_folder_all",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+
+        fs::remove_dir_all(session.path().join("src/my-folder")).unwrap();
+
+        let socket_packet = session
+            .get_api_socket_packet(SocketPacketType::Messages, 0)
+            .unwrap();
+        assert_yaml_snapshot!(
+            "remove_folder_subscribe",
+            socket_packet.intern_and_redact(&mut redactions, ())
+        );
+
+        let read_response = session.get_api_read(root_id).unwrap();
+        assert_yaml_snapshot!(
+            "remove_folder_all-2",
+            read_response.intern_and_redact(&mut redactions, root_id)
+        );
+    });
+}
+
 #[test]
 fn edit_init() {
     run_serve_test("edit_init", |session, mut redactions| {
