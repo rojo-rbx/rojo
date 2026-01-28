@@ -1,0 +1,6 @@
+{
+	"name": "remove_folder",
+	"tree": {
+		"$path": "src"
+	}
+}

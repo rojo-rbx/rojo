@@ -1,0 +1,13 @@
+---
+source: tests/tests/serve.rs
+expression: "socket_packet.intern_and_redact(&mut redactions, ())"
+---
+body:
+  messageCursor: 1
+  messages:
+    - added: {}
+      removed:
+        - id-3
+      updated: []
+packetType: messages
+sessionId: id-1
