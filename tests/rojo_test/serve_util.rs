@@ -1,5 +1,4 @@
 use std::{
-    fmt::Write as _,
     fs,
     path::{Path, PathBuf},
     process::Command,
@@ -11,11 +10,15 @@ use std::{
 use hyper_tungstenite::tungstenite::{connect, Message};
 use rbx_dom_weak::types::Ref;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tempfile::{tempdir, TempDir};
 
-use librojo::web_api::{
-    ReadResponse, SerializeResponse, ServerInfoResponse, SocketPacket, SocketPacketType,
+use librojo::{
+    web_api::{
+        ReadResponse, SerializeRequest, SerializeResponse, ServerInfoResponse, SocketPacket,
+        SocketPacketType,
+    },
+    SessionId,
 };
 use rojo_insta_ext::RedactionMap;
 
@@ -221,19 +224,34 @@ impl TestServeSession {
         }
     }
 
-    pub fn get_api_serialize(&self, ids: &[Ref]) -> Result<SerializeResponse, reqwest::Error> {
-        let mut id_list = String::with_capacity(ids.len() * 33);
-        for id in ids {
-            write!(id_list, "{id},").unwrap();
-        }
-        id_list.pop();
+    pub fn get_api_serialize(
+        &self,
+        ids: &[Ref],
+        session_id: SessionId,
+    ) -> Result<SerializeResponse, reqwest::Error> {
+        let client = reqwest::blocking::Client::new();
+        let url = format!("http://localhost:{}/api/serialize", self.port);
+        let body = serialize_msgpack(&SerializeRequest {
+            session_id,
+            ids: ids.to_vec(),
+        })
+        .unwrap();
 
-        let url = format!("http://localhost:{}/api/serialize/{}", self.port, id_list);
-
-        let body = reqwest::blocking::get(url)?.bytes()?;
+        let body = client.post(url).body(body).send()?.bytes()?;
 
         Ok(deserialize_msgpack(&body).expect("Server returned malformed response"))
     }
+}
+
+fn serialize_msgpack<T: Serialize>(value: T) -> Result<Vec<u8>, rmp_serde::encode::Error> {
+    let mut serialized = Vec::new();
+    let mut serializer = rmp_serde::Serializer::new(&mut serialized)
+        .with_human_readable()
+        .with_struct_map();
+
+    value.serialize(&mut serializer)?;
+
+    Ok(serialized)
 }
 
 fn deserialize_msgpack<'a, T: Deserialize<'a>>(

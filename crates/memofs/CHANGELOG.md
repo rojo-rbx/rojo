@@ -1,6 +1,7 @@
 # memofs Changelog
 
 ## Unreleased Changes
+* Added `Vfs::canonicalize`. [#1201]
 
 ## 0.3.1 (2025-11-27)
 * Added `Vfs::exists`. [#1169]

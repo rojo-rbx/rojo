@@ -19,3 +19,6 @@ crossbeam-channel = "0.5.12"
 fs-err = "2.11.0"
 notify = "4.0.17"
 serde = { version = "1.0.197", features = ["derive"] }
+
+[dev-dependencies]
+tempfile = "3.10.1"

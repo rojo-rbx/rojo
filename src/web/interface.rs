@@ -240,10 +240,24 @@ pub struct OpenResponse {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct SerializeRequest {
+    pub session_id: SessionId,
+    pub ids: Vec<Ref>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SerializeResponse {
     pub session_id: SessionId,
     #[serde(with = "serde_bytes")]
     pub model_contents: Vec<u8>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RefPatchRequest {
+    pub session_id: SessionId,
+    pub ids: HashSet<Ref>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
