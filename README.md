@@ -12,7 +12,7 @@
 
 <hr />
 
-**Rojo** is a tool designed to enable Roblox developers to use professional-grade software engineering tools.
+**Rojo** is the tool designed to enable Roblox developers to use professional-grade software engineering tools.
 
 With Rojo, it's possible to use industry-leading tools like **Visual Studio Code** and **Git**.
 
