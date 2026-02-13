@@ -1,5 +1,7 @@
 local HttpService = game:GetService("HttpService")
 
+local msgpack = require(script.Parent.Parent.msgpack)
+
 local stringTemplate = [[
 Http.Response {
 	code: %d
@@ -29,6 +31,10 @@ end
 
 function Response:json()
 	return HttpService:JSONDecode(self.body)
+end
+
+function Response:msgpack()
+	return msgpack.decode(self.body)
 end
 
 return Response
