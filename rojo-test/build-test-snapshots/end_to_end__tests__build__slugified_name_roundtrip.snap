@@ -1,0 +1,20 @@
+---
+source: tests/tests/build.rs
+assertion_line: 108
+expression: contents
+---
+<roblox version="4">
+  <Item class="Folder" referent="0">
+    <Properties>
+      <string name="Name">slugified_name_roundtrip</string>
+    </Properties>
+    <Item class="Script" referent="1">
+      <Properties>
+        <string name="Name">/Script</string>
+        <token name="RunContext">0</token>
+        <string name="Source"><![CDATA[print("Hello world!")
+]]></string>
+      </Properties>
+    </Item>
+  </Item>
+</roblox>
