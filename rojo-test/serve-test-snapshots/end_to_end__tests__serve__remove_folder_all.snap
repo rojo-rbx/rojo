@@ -33,6 +33,6 @@ instances:
     Parent: id-3
     Properties:
       Value:
-        String: "This file is inside my-folder\r\n"
+        String: "This file is inside my-folder\n"
 messageCursor: 0
 sessionId: id-1
