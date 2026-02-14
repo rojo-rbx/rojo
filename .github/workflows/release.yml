@@ -50,7 +50,7 @@ jobs:
           RBX_API_KEY: ${{ secrets.PLUGIN_UPLOAD_TOKEN }}
           RBX_UNIVERSE_ID: ${{ vars.PLUGIN_CI_PLACE_ID }}
           RBX_PLACE_ID: ${{ vars.PLUGIN_CI_UNIVERSE_ID }}
-        run: lune run upload-plugin
+        run: lune run upload-plugin Rojo.rbxm
 
   build:
     needs: ["create-release"]
