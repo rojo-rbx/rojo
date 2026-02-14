@@ -1,0 +1,9 @@
+{
+  "name": "base_merge_delete",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$path": "src"
+    }
+  }
+}

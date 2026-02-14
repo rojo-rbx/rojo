@@ -67,6 +67,27 @@ gen_build_tests! {
     no_name_top_level_project,
 }
 
+macro_rules! gen_build_base_tests {
+    ( $($test_name: ident, $base_file: expr, $output_ext: expr,)* ) => {
+        $(
+            paste::item! {
+                #[test]
+                fn [<build_ $test_name>]() {
+                    let _ = env_logger::try_init();
+
+                    run_build_base_test(stringify!($test_name), $base_file, $output_ext);
+                }
+            }
+        )*
+    };
+}
+
+gen_build_base_tests! {
+    base_merge_place, "base.rbxlx", "rbxlx",
+    base_merge_delete, "base.rbxlx", "rbxlx",
+    base_merge_model, "base.rbxmx", "rbxmx",
+}
+
 fn run_build_test(test_name: &str) {
     let working_dir = get_working_dir_path();
 
@@ -81,6 +102,52 @@ fn run_build_test(test_name: &str) {
             input_path.to_str().unwrap(),
             "-o",
             output_path.to_str().unwrap(),
+        ])
+        .env("RUST_LOG", "error")
+        .current_dir(working_dir)
+        .output()
+        .expect("Couldn't start Rojo");
+
+    print!("{}", String::from_utf8_lossy(&output.stdout));
+    eprint!("{}", String::from_utf8_lossy(&output.stderr));
+
+    assert!(output.status.success(), "Rojo did not exit successfully");
+
+    let contents = fs::read_to_string(&output_path).expect("Couldn't read output file");
+
+    let mut settings = insta::Settings::new();
+
+    let snapshot_path = Path::new(BUILD_TESTS_PATH)
+        .parent()
+        .unwrap()
+        .join("build-test-snapshots");
+
+    settings.set_snapshot_path(snapshot_path);
+
+    settings.bind(|| {
+        assert_snapshot!(test_name, contents);
+    });
+}
+
+fn run_build_base_test(test_name: &str, base_file: &str, output_ext: &str) {
+    let working_dir = get_working_dir_path();
+
+    let input_path = Path::new(BUILD_TESTS_PATH).join(test_name);
+    let base_path = input_path.join(base_file);
+
+    let output_dir = tempdir().expect("couldn't create temporary directory");
+    let output_path = output_dir
+        .path()
+        .join(format!("{}.{}", test_name, output_ext));
+
+    let output = Command::new(ROJO_PATH)
+        .args([
+            "build",
+            input_path.to_str().unwrap(),
+            "-o",
+            output_path.to_str().unwrap(),
+            "--base",
+            base_path.to_str().unwrap(),
         ])
         .env("RUST_LOG", "error")
         .current_dir(working_dir)

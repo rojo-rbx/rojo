@@ -11,7 +11,7 @@ use memofs::Vfs;
 use roblox_install::RobloxStudio;
 use tokio::runtime::Runtime;
 
-use crate::serve_session::ServeSession;
+use crate::{merge_base, serve_session::ServeSession};
 
 use super::resolve_path;
 
@@ -38,6 +38,13 @@ pub struct BuildCommand {
     /// Should end in .rbxm or .rbxl.
     #[clap(long, short, conflicts_with = "output")]
     pub plugin: Option<PathBuf>,
+
+    /// Path to a base Roblox file (.rbxl, .rbxlx, .rbxm, .rbxmx) to merge
+    /// the project into. The Rojo project tree is merged into this file so
+    /// that the output contains both the base content and the project's
+    /// scripts/configuration.
+    #[clap(long)]
+    pub base: Option<PathBuf>,
 
     /// Whether to automatically rebuild when any input files change.
     #[clap(long)]
@@ -84,7 +91,7 @@ impl BuildCommand {
         let session = ServeSession::new(vfs, project_path)?;
         let mut cursor = session.message_queue().cursor();
 
-        write_model(&session, &output_path, output_kind)?;
+        write_model(&session, &output_path, output_kind, self.base.as_deref())?;
 
         if self.watch {
             let rt = Runtime::new().unwrap();
@@ -94,7 +101,7 @@ impl BuildCommand {
                 let (new_cursor, _patch_set) = rt.block_on(receiver).unwrap();
                 cursor = new_cursor;
 
-                write_model(&session, &output_path, output_kind)?;
+                write_model(&session, &output_path, output_kind, self.base.as_deref())?;
             }
         }
 
@@ -155,39 +162,70 @@ fn write_model(
     session: &ServeSession,
     output: &Path,
     output_kind: OutputKind,
+    base_path: Option<&Path>,
 ) -> anyhow::Result<()> {
     println!("Building project '{}'", session.project_name());
 
     let tree = session.tree();
-    let root_id = tree.get_root_id();
 
     log::trace!("Opening output file for write");
     let mut file = BufWriter::new(File::create(output)?);
 
-    match output_kind {
-        OutputKind::Rbxm => {
-            rbx_binary::to_writer(&mut file, tree.inner(), &[root_id])?;
+    if let Some(base_path) = base_path {
+        let base_path = super::resolve_path(base_path);
+
+        log::trace!("Reading base file: {}", base_path.display());
+        let base_dom = merge_base::read_base_dom(&base_path)?;
+
+        log::trace!("Merging Rojo project into base file");
+        let merged_dom = merge_base::merge_rojo_into_base(base_dom, &tree)?;
+
+        // The merged DOM's root is always the WeakDom synthetic root
+        // (DataModel). For both place and model output, we encode its
+        // children — the services/instances — not the root itself.
+        let encode_ids = merged_dom.root().children().to_vec();
+
+        match output_kind {
+            OutputKind::Rbxl | OutputKind::Rbxm => {
+                rbx_binary::to_writer(&mut file, &merged_dom, &encode_ids)?;
+            }
+            OutputKind::Rbxlx | OutputKind::Rbxmx => {
+                rbx_xml::to_writer(&mut file, &merged_dom, &encode_ids, xml_encode_config())?;
+            }
         }
-        OutputKind::Rbxl => {
-            let root_instance = tree.get_instance(root_id).unwrap();
-            let top_level_ids = root_instance.children();
+    } else {
+        let root_id = tree.get_root_id();
 
-            rbx_binary::to_writer(&mut file, tree.inner(), top_level_ids)?;
-        }
-        OutputKind::Rbxmx => {
-            // Model files include the root instance of the tree and all its
-            // descendants.
+        match output_kind {
+            OutputKind::Rbxm => {
+                rbx_binary::to_writer(&mut file, tree.inner(), &[root_id])?;
+            }
+            OutputKind::Rbxl => {
+                let root_instance = tree.get_instance(root_id).unwrap();
+                let top_level_ids = root_instance.children();
 
-            rbx_xml::to_writer(&mut file, tree.inner(), &[root_id], xml_encode_config())?;
-        }
-        OutputKind::Rbxlx => {
-            // Place files don't contain an entry for the DataModel, but our
-            // WeakDom representation does.
+                rbx_binary::to_writer(&mut file, tree.inner(), top_level_ids)?;
+            }
+            OutputKind::Rbxmx => {
+                // Model files include the root instance of the tree and all its
+                // descendants.
 
-            let root_instance = tree.get_instance(root_id).unwrap();
-            let top_level_ids = root_instance.children();
+                rbx_xml::to_writer(&mut file, tree.inner(), &[root_id], xml_encode_config())?;
+            }
+            OutputKind::Rbxlx => {
+                // Place files don't contain an entry for the DataModel, but our
+                // WeakDom representation does.
 
-            rbx_xml::to_writer(&mut file, tree.inner(), top_level_ids, xml_encode_config())?;
+                let root_instance = tree.get_instance(root_id).unwrap();
+                let top_level_ids = root_instance.children();
+
+                rbx_xml::to_writer(
+                    &mut file,
+                    tree.inner(),
+                    top_level_ids,
+                    xml_encode_config(),
+                )?;
+            }
         }
     }
 

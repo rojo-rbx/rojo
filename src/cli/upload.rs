@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{mem::forget, path::PathBuf};
 
 use anyhow::{bail, Context};
 use clap::Parser;
@@ -8,7 +8,7 @@ use reqwest::{
     StatusCode,
 };
 
-use crate::{auth_cookie::get_auth_cookie, serve_session::ServeSession};
+use crate::{auth_cookie::get_auth_cookie, merge_base, serve_session::ServeSession};
 
 use super::resolve_path;
 
@@ -18,6 +18,13 @@ pub struct UploadCommand {
     /// Path to the project to upload. Defaults to the current directory.
     #[clap(default_value = "")]
     pub project: PathBuf,
+
+    /// Path to a base Roblox file (.rbxl, .rbxlx, .rbxm, .rbxmx) to merge
+    /// with the project before uploading. When provided, the Rojo project
+    /// tree is merged into this file so that the upload contains both the
+    /// base content and the project's scripts.
+    #[clap(long)]
+    pub base: Option<PathBuf>,
 
     /// Authenication cookie to use. If not specified, Rojo will attempt to find one from the system automatically.
     #[clap(long)]
@@ -44,19 +51,39 @@ impl UploadCommand {
 
         let session = ServeSession::new(vfs, project_path)?;
 
-        let tree = session.tree();
-        let inner_tree = tree.inner();
-        let root = inner_tree.root();
-
-        let encode_ids = match root.class.as_str() {
-            "DataModel" => root.children().to_vec(),
-            _ => vec![root.referent()],
-        };
-
         let mut buffer = Vec::new();
 
-        log::trace!("Encoding binary model");
-        rbx_binary::to_writer(&mut buffer, tree.inner(), &encode_ids)?;
+        if let Some(base_path) = &self.base {
+            let base_path = resolve_path(base_path);
+
+            log::trace!("Reading base file: {}", base_path.display());
+            let base_dom = merge_base::read_base_dom(&base_path)?;
+
+            log::trace!("Merging Rojo project into base file");
+            let tree = session.tree();
+            let merged_dom = merge_base::merge_rojo_into_base(base_dom, &tree)?;
+
+            let encode_ids = merged_dom.root().children().to_vec();
+
+            log::trace!("Encoding merged binary model");
+            rbx_binary::to_writer(&mut buffer, &merged_dom, &encode_ids)?;
+        } else {
+            let tree = session.tree();
+            let inner_tree = tree.inner();
+            let root = inner_tree.root();
+
+            let encode_ids = match root.class.as_str() {
+                "DataModel" => root.children().to_vec(),
+                _ => vec![root.referent()],
+            };
+
+            log::trace!("Encoding binary model");
+            rbx_binary::to_writer(&mut buffer, inner_tree, &encode_ids)?;
+        }
+
+        // Avoid dropping ServeSession: it's potentially very expensive to
+        // drop and we're about to exit anyway.
+        forget(session);
 
         match (self.cookie, self.api_key, self.universe_id) {
             (cookie, None, universe) => {
