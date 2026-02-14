@@ -7,6 +7,13 @@ local luau_execute = require("./opencloud-execute")
 local UNIVERSE_ID = process.env["RBX_UNIVERSE_ID"]
 local PLACE_ID = process.env["RBX_PLACE_ID"]
 
+local version_string = fs.readFile("plugin/Version.txt")
+local versions = { string.match(version_string, "^v?(%d+)%.(%d+)%.(%d+)(.*)$") }
+if versions[4] ~= "" then
+	print("This release is a pre-release. Skipping uploading plugin.")
+	process.exit(0)
+end
+
 local plugin_path = process.args[1]
 assert(
 	typeof(plugin_path) == "string",
