@@ -1,0 +1,23 @@
+<roblox version="4">
+  <Item class="ReplicatedStorage" referent="RBX1">
+    <Properties>
+      <string name="Name">ReplicatedStorage</string>
+    </Properties>
+    <Item class="ModuleScript" referent="RBX2">
+      <Properties>
+        <string name="Name">ShouldBeDeleted</string>
+        <ProtectedString name="Source"><![CDATA[-- this should be removed]]></ProtectedString>
+      </Properties>
+    </Item>
+  </Item>
+  <Item class="Workspace" referent="RBX3">
+    <Properties>
+      <string name="Name">Workspace</string>
+    </Properties>
+    <Item class="Part" referent="RBX4">
+      <Properties>
+        <string name="Name">PreservedPart</string>
+      </Properties>
+    </Item>
+  </Item>
+</roblox>

@@ -1,0 +1,7 @@
+<roblox version="4">
+  <Item class="Folder" referent="RBX1">
+    <Properties>
+      <string name="Name">BaseFolder</string>
+    </Properties>
+  </Item>
+</roblox>
