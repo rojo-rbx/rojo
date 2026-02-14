@@ -22,6 +22,9 @@
     },
     "Version": {
       "$path": "plugin/Version.txt"
+    },
+    "UploadDetails": {
+      "$path": "plugin/UploadDetails.json"
     }
   }
 }

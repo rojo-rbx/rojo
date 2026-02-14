@@ -19,3 +19,6 @@
 [submodule "plugin/Packages/msgpack-luau"]
 	path = plugin/Packages/msgpack-luau
 	url = https://github.com/cipharius/msgpack-luau/
+[submodule ".lune/opencloud-execute"]
+	path = .lune/opencloud-execute
+	url = https://github.com/Dekkonot/opencloud-luau-execute-lune.git
