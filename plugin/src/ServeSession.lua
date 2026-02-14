@@ -203,6 +203,15 @@ function ServeSession:__onWebSocketMessage(messagesPacket)
 
 	Log.debug("Received {} messages from Rojo server", #messagesPacket.messages)
 
+	-- If not "Every Change", apply patches directly without confirmation
+	if Settings:get("confirmationBehavior") ~= "Every Change" then
+		for _, message in messagesPacket.messages do
+			self:__applyPatch(message)
+		end
+		self.__apiContext:setMessageCursor(messagesPacket.messageCursor)
+		return
+	end
+
 	-- Combine all messages into a single patch
 	local combinedPatch = PatchSet.newEmpty()
 	for _, message in messagesPacket.messages do

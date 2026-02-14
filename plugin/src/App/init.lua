@@ -751,38 +751,36 @@ function App:startSession()
 		end
 
 		local confirmationBehavior = Settings:get("confirmationBehavior")
-		if confirmationBehavior ~= "Always" then
-			if confirmationBehavior == "Initial" then
-				-- Only confirm if we haven't synced this project yet this session
-				if self.knownProjects[serverInfo.projectName] then
-					Log.trace(
-						"Accepting patch without confirmation because project has already been connected and behavior is set to Initial"
-					)
-					return "Accept"
-				end
-			elseif confirmationBehavior == "Large Changes" then
-				-- Only confirm if the patch impacts many instances
-				if PatchSet.countInstances(patch) < Settings:get("largeChangesConfirmationThreshold") then
-					Log.trace(
-						"Accepting patch without confirmation because patch is small and behavior is set to Large Changes"
-					)
-					return "Accept"
-				end
-			elseif confirmationBehavior == "Unlisted PlaceId" then
-				-- Only confirm if the current placeId is not in the servePlaceIds allowlist
-				if serverInfo.expectedPlaceIds then
-					local isListed = table.find(serverInfo.expectedPlaceIds, game.PlaceId) ~= nil
-					if isListed then
-						Log.trace(
-							"Accepting patch without confirmation because placeId is listed and behavior is set to Unlisted PlaceId"
-						)
-						return "Accept"
-					end
-				end
-			elseif confirmationBehavior == "Never" then
-				Log.trace("Accepting patch without confirmation because behavior is set to Never")
+		if confirmationBehavior == "Initial" then
+			-- Only confirm if we haven't synced this project yet this session
+			if self.knownProjects[serverInfo.projectName] then
+				Log.trace(
+					"Accepting patch without confirmation because project has already been connected and behavior is set to Initial"
+				)
 				return "Accept"
 			end
+		elseif confirmationBehavior == "Large Changes" then
+			-- Only confirm if the patch impacts many instances
+			if PatchSet.countInstances(patch) < Settings:get("largeChangesConfirmationThreshold") then
+				Log.trace(
+					"Accepting patch without confirmation because patch is small and behavior is set to Large Changes"
+				)
+				return "Accept"
+			end
+		elseif confirmationBehavior == "Unlisted PlaceId" then
+			-- Only confirm if the current placeId is not in the servePlaceIds allowlist
+			if serverInfo.expectedPlaceIds then
+				local isListed = table.find(serverInfo.expectedPlaceIds, game.PlaceId) ~= nil
+				if isListed then
+					Log.trace(
+						"Accepting patch without confirmation because placeId is listed and behavior is set to Unlisted PlaceId"
+					)
+					return "Accept"
+				end
+			end
+		elseif confirmationBehavior == "Never" then
+			Log.trace("Accepting patch without confirmation because behavior is set to Never")
+			return "Accept"
 		end
 
 		-- The datamodel name gets overwritten by Studio, making confirmation of it intrusive
