@@ -26,7 +26,7 @@ local function invertTbl(tbl)
 end
 
 local invertedLevels = invertTbl(Log.Level)
-local confirmationBehaviors = { "Initial", "Always", "Large Changes", "Unlisted PlaceId", "Never" }
+local confirmationBehaviors = { "Initial", "Always", "Every Change", "Large Changes", "Unlisted PlaceId", "Never" }
 local syncReminderModes = { "None", "Notify", "Fullscreen" }
 
 local function Navbar(props)
