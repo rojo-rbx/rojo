@@ -24,10 +24,10 @@ local PLUGIN_CREATOR_ID = UploadDetails.creatorId
 local PLUGIN_CREATOR_TYPE = UploadDetails.creatorType
 
 assert(typeof(PLUGIN_ID) == "number", "UploadDetails did not contain a number field 'assetId'")
-assert(typeof(PLUGIN_NAME) == "string", "UploadDetails did not contain a string field 'assetId'")
-assert(typeof(PLUGIN_DESCRIPTION) == "string", "UploadDetails did not contain a string field 'assetId'")
-assert(typeof(PLUGIN_CREATOR_ID) == "number", "UploadDetails did not contain a number field 'assetId'")
-assert(typeof(PLUGIN_CREATOR_TYPE) == "string", "UploadDetails did not contain a string field 'assetId'")
+assert(typeof(PLUGIN_NAME) == "string", "UploadDetails did not contain a string field 'name'")
+assert(typeof(PLUGIN_DESCRIPTION) == "string", "UploadDetails did not contain a string field 'description'")
+assert(typeof(PLUGIN_CREATOR_ID) == "number", "UploadDetails did not contain a number field 'creatorId'")
+assert(typeof(PLUGIN_CREATOR_TYPE) == "string", "UploadDetails did not contain a string field 'creatorType'")
 assert(
 	Enum.AssetCreatorType:FromName(PLUGIN_CREATOR_TYPE) ~= nil,
 	"UploadDetails field 'creatorType' was not a valid member of Enum.AssetCreatorType"
