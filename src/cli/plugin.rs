@@ -98,5 +98,5 @@ fn uninstall_plugin() -> anyhow::Result<()> {
 
 #[test]
 fn plugin_initialize() {
-    assert!(initialize_plugin().is_ok())
+    let _ = initialize_plugin().unwrap();
 }
