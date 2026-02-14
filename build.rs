@@ -75,6 +75,7 @@ fn main() -> Result<(), anyhow::Error> {
             "src" => snapshot_from_fs_path(&plugin_dir.join("src"))?,
             "Packages" => snapshot_from_fs_path(&plugin_dir.join("Packages"))?,
             "Version.txt" => snapshot_from_fs_path(&plugin_dir.join("Version.txt"))?,
+            "UploadDetails.json" => snapshot_from_fs_path(&plugin_dir.join("UploadDetails.json"))?,
         }),
     });
 
