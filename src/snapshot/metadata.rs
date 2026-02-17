@@ -70,6 +70,12 @@ pub struct InstanceMetadata {
     /// A schema provided via a JSON file, if one exists. Will be `None` for
     /// all non-JSON middleware.
     pub schema: Option<String>,
+
+    /// A custom name specified via meta.json or model.json files. If present,
+    /// this name will be used for the instance while the filesystem name will
+    /// be slugified to remove illegal characters.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub specified_name: Option<String>,
 }
 
 impl InstanceMetadata {
@@ -82,6 +88,7 @@ impl InstanceMetadata {
             specified_id: None,
             middleware: None,
             schema: None,
+            specified_name: None,
         }
     }
 
@@ -129,6 +136,13 @@ impl InstanceMetadata {
 
     pub fn schema(self, schema: Option<String>) -> Self {
         Self { schema, ..self }
+    }
+
+    pub fn specified_name(self, specified_name: Option<String>) -> Self {
+        Self {
+            specified_name,
+            ..self
+        }
     }
 }
 

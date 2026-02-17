@@ -1,0 +1,23 @@
+---
+source: tests/tests/build.rs
+assertion_line: 109
+expression: contents
+---
+<roblox version="4">
+  <Item class="DataModel" referent="0">
+    <Properties>
+      <string name="Name">model_json_name_input</string>
+    </Properties>
+    <Item class="Workspace" referent="1">
+      <Properties>
+        <string name="Name">Workspace</string>
+        <bool name="NeedsPivotMigration">false</bool>
+      </Properties>
+      <Item class="StringValue" referent="2">
+        <Properties>
+          <string name="Name">/Bar</string>
+        </Properties>
+      </Item>
+    </Item>
+  </Item>
+</roblox>
