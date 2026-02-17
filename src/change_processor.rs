@@ -2,7 +2,7 @@ use crossbeam_channel::{select, Receiver, RecvError, Sender};
 use jod_thread::JoinHandle;
 use memofs::{IoResultExt, Vfs, VfsEvent};
 use rbx_dom_weak::types::{Ref, Variant};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::{
     fs,
     sync::{Arc, Mutex},
@@ -200,7 +200,19 @@ impl JobThreadContext {
                 if let Some(instance) = tree.get_instance(id) {
                     if let Some(instigating_source) = &instance.metadata().instigating_source {
                         match instigating_source {
-                            InstigatingSource::Path(path) => fs::remove_file(path).unwrap(),
+                            InstigatingSource::Path(path) => {
+                                if path.is_dir() {
+                                    if let Err(err) = fs::remove_dir_all(path) {
+                                        log::warn!(
+                                            "Failed to remove directory {}: {}",
+                                            path.display(),
+                                            err
+                                        );
+                                    }
+                                } else {
+                                    fs::remove_file(path).unwrap();
+                                }
+                            }
                             InstigatingSource::ProjectNode { .. } => {
                                 log::warn!(
                                     "Cannot remove instance {:?}, it's from a project file",
@@ -244,7 +256,17 @@ impl JobThreadContext {
                                 match instigating_source {
                                     InstigatingSource::Path(path) => {
                                         if let Some(Variant::String(value)) = changed_value {
-                                            fs::write(path, value).unwrap();
+                                            match resolve_init_path(path) {
+                                                Some(resolved) => {
+                                                    fs::write(&resolved, value).unwrap();
+                                                }
+                                                None => {
+                                                    log::warn!(
+                                                        "Could not resolve init file for directory {}, skipping write",
+                                                        path.display()
+                                                    );
+                                                }
+                                            }
                                         } else {
                                             log::warn!("Cannot change Source to non-string value.");
                                         }
@@ -278,6 +300,33 @@ impl JobThreadContext {
             self.message_queue.push_messages(&[applied_patch]);
         }
     }
+}
+
+// If the path is a directory, try to find the init file inside it.
+// Returns None if it's a directory but no init file exists.
+fn resolve_init_path(path: &Path) -> Option<PathBuf> {
+    if !path.is_dir() {
+        return Some(path.to_path_buf());
+    }
+
+    const INIT_FILENAMES: &[&str] = &[
+        "init.luau",
+        "init.lua",
+        "init.server.luau",
+        "init.server.lua",
+        "init.client.luau",
+        "init.client.lua",
+        "init.csv",
+    ];
+
+    for filename in INIT_FILENAMES {
+        let candidate = path.join(filename);
+        if candidate.is_file() {
+            return Some(candidate);
+        }
+    }
+
+    None
 }
 
 fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref) -> Option<AppliedPatchSet> {
