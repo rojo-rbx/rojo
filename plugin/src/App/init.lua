@@ -19,6 +19,7 @@ local strict = require(Plugin.strict)
 local Dictionary = require(Plugin.Dictionary)
 local ServeSession = require(Plugin.ServeSession)
 local ApiContext = require(Plugin.ApiContext)
+local HeadlessSync = require(Plugin.HeadlessSync)
 local PatchSet = require(Plugin.PatchSet)
 local PatchTree = require(Plugin.PatchTree)
 local preloadAssets = require(Plugin.preloadAssets)
@@ -61,6 +62,11 @@ function App:init()
 	self.confirmationEvent = self.confirmationBindable.Event
 	self.knownProjects = {}
 	self.notifId = 0
+	self.headlessRequestConnection = nil
+	self.lastHeadlessRequestId = nil
+	self.pendingHeadlessAttach = nil
+	self.currentProjectName = nil
+	self.currentAddress = nil
 
 	self.waypointConnection = ChangeHistoryService.OnUndo:Connect(function(action: string)
 		if not string.find(action, "^Rojo: Patch") then
@@ -139,6 +145,7 @@ function App:init()
 
 	if RunService:IsEdit() then
 		self:checkForUpdates()
+		self:connectHeadlessRequestListener()
 
 		self:startSyncReminderPolling()
 		self.disconnectSyncReminderPollingChanged = Settings:onChanged("syncReminderPolling", function(enabled)
@@ -189,6 +196,11 @@ function App:willUnmount()
 
 	self.autoConnectPlaytestServerListener()
 	self:clearRunningConnectionInfo()
+
+	if self.headlessRequestConnection ~= nil then
+		self.headlessRequestConnection:Disconnect()
+		self.headlessRequestConnection = nil
+	end
 end
 
 function App:addNotification(notif: {
@@ -600,7 +612,194 @@ function App:useRunningConnectionInfo()
 	self.setPort(port)
 end
 
+function App:buildBaseUrl(host: string, port: string): string
+	return if string.find(host, "^https?://")
+		then string.format("%s:%s", host, port)
+		else string.format("http://%s:%s", host, port)
+end
+
+function App:getCurrentBaseUrl(): string?
+	if self.serveSession == nil then
+		return nil
+	end
+
+	return self.serveSession.__apiContext.__baseUrl
+end
+
+function App:getHeadlessSnapshot(extraFields)
+	local mergeFields = extraFields or {}
+	local connectionStatus = if self.serveSession ~= nil then self.serveSession:getStatus() else "NotStarted"
+	local connectionFields = if self.serveSession ~= nil
+		then {
+			projectName = self.currentProjectName,
+			address = self.currentAddress,
+			baseUrl = self:getCurrentBaseUrl(),
+		}
+		else {}
+
+	return Dictionary.merge({
+		connected = connectionStatus == ServeSession.Status.Connected,
+		appStatus = self.state.appStatus,
+		connectionStatus = connectionStatus,
+	}, connectionFields, mergeFields)
+end
+
+function App:publishHeadlessResponse(requestId: string, fields)
+	local response = Dictionary.merge({
+		requestId = requestId,
+	}, fields)
+	workspace:SetAttribute(HeadlessSync.responseAttribute, HeadlessSync.encodeResponse(response))
+end
+
+function App:publishHeadlessError(requestId: string, message: string, extraFields)
+	self:publishHeadlessResponse(
+		requestId,
+		Dictionary.merge(self:getHeadlessSnapshot(extraFields), {
+			success = false,
+			status = "error",
+			error = message,
+		})
+	)
+end
+
+function App:cancelPendingHeadlessAttach(message: string, extraFields)
+	local pendingAttach = self.pendingHeadlessAttach
+	if pendingAttach == nil then
+		return
+	end
+
+	self.pendingHeadlessAttach = nil
+	self:publishHeadlessError(
+		pendingAttach.requestId,
+		message,
+		Dictionary.merge({
+			baseUrl = pendingAttach.baseUrl,
+		}, extraFields)
+	)
+end
+
+function App:processHeadlessRequest()
+	local rawRequest = workspace:GetAttribute(HeadlessSync.requestAttribute)
+	if type(rawRequest) ~= "string" or rawRequest == "" then
+		return
+	end
+
+	local request, decodeError = HeadlessSync.decodeRequest(rawRequest)
+	if request == nil then
+		local requestId = HeadlessSync.extractRequestId(rawRequest)
+		if requestId ~= nil and requestId ~= self.lastHeadlessRequestId then
+			self.lastHeadlessRequestId = requestId
+			self:publishHeadlessError(requestId, decodeError or "Headless Rojo request was invalid.")
+		else
+			Log.warn("Ignoring invalid headless Rojo request: {}", decodeError)
+		end
+
+		return
+	end
+
+	if request.requestId == self.lastHeadlessRequestId then
+		return
+	end
+
+	self.lastHeadlessRequestId = request.requestId
+
+	if request.kind == "status" then
+		self:publishHeadlessResponse(
+			request.requestId,
+			Dictionary.merge(self:getHeadlessSnapshot(), {
+				success = true,
+				status = "status",
+			})
+		)
+		return
+	end
+
+	if request.kind == "detach" then
+		self:cancelPendingHeadlessAttach("Rojo attach was canceled by a detach request.")
+		self:endSession()
+		self:publishHeadlessResponse(
+			request.requestId,
+			Dictionary.merge(self:getHeadlessSnapshot({
+				connected = false,
+				appStatus = AppStatus.NotConnected,
+				connectionStatus = "NotStarted",
+				projectName = nil,
+				address = nil,
+				baseUrl = nil,
+			}), {
+				success = true,
+				status = "disconnected",
+			})
+		)
+		return
+	end
+
+	local host, port, parseError = HeadlessSync.parseBaseUrl(request.baseUrl)
+	if host == nil or port == nil then
+		self:publishHeadlessError(request.requestId, parseError or "Rojo baseUrl was invalid.")
+		return
+	end
+
+	local normalizedBaseUrl = self:buildBaseUrl(host, port)
+	local currentBaseUrl = self:getCurrentBaseUrl()
+	if currentBaseUrl ~= nil then
+		local currentStatus = self.serveSession:getStatus()
+		if currentBaseUrl == normalizedBaseUrl and currentStatus == ServeSession.Status.Connected then
+			self:publishHeadlessResponse(
+				request.requestId,
+				Dictionary.merge(self:getHeadlessSnapshot(), {
+					success = true,
+					status = "already_connected",
+				})
+			)
+			return
+		end
+
+		if request.force ~= true then
+			self:publishHeadlessError(
+				request.requestId,
+				("Rojo is already connected to %s. Pass force=true to replace it."):format(currentBaseUrl)
+			)
+			return
+		end
+
+		self:cancelPendingHeadlessAttach(
+			("Rojo attach was canceled by a replacement request for %s."):format(normalizedBaseUrl)
+		)
+		self:endSession()
+	end
+
+	self.setHost(host)
+	self.setPort(port)
+	self.pendingHeadlessAttach = {
+		requestId = request.requestId,
+		baseUrl = normalizedBaseUrl,
+	}
+
+	local started, startError = self:startSession()
+	if not started then
+		self.pendingHeadlessAttach = nil
+		self:publishHeadlessError(request.requestId, startError or "Rojo failed to start a sync session.")
+	end
+end
+
+function App:connectHeadlessRequestListener()
+	if self.headlessRequestConnection ~= nil then
+		return
+	end
+
+	self.headlessRequestConnection = workspace:GetAttributeChangedSignal(HeadlessSync.requestAttribute):Connect(function()
+		self:processHeadlessRequest()
+	end)
+	self:processHeadlessRequest()
+end
+
 function App:startSession()
+	if self.serveSession ~= nil then
+		local activeBaseUrl = self:getCurrentBaseUrl() or "an active server"
+		return false, ("Rojo is already connecting or connected to %s."):format(activeBaseUrl)
+	end
+
 	local claimedLock, priorOwner = self:claimSyncLock()
 	if not claimedLock then
 		local msg = string.format("Could not sync because user '%s' is already syncing", tostring(priorOwner))
@@ -616,14 +815,11 @@ function App:startSession()
 			toolbarIcon = Assets.Images.PluginButtonWarning,
 		})
 
-		return
+		return false, msg
 	end
 
 	local host, port = self:getHostAndPort()
-
-	local baseUrl = if string.find(host, "^https?://")
-		then string.format("%s:%s", host, port)
-		else string.format("http://%s:%s", host, port)
+	local baseUrl = self:buildBaseUrl(host, port)
 	local apiContext = ApiContext.new(baseUrl)
 
 	local serveSession = ServeSession.new({
@@ -670,8 +866,8 @@ function App:startSession()
 		end)
 	end)
 
-	serveSession:onStatusChanged(function(status, details)
-		if status == ServeSession.Status.Connecting then
+		serveSession:onStatusChanged(function(status, details)
+			if status == ServeSession.Status.Connecting then
 			if self.dismissSyncReminder then
 				self.dismissSyncReminder()
 				self.dismissSyncReminder = nil
@@ -684,29 +880,55 @@ function App:startSession()
 			self:addNotification({
 				text = "Connecting to session...",
 			})
-		elseif status == ServeSession.Status.Connected then
-			self.knownProjects[details] = true
-			self:setPriorSyncInfo(host, port, details)
-			self:setRunningConnectionInfo(baseUrl)
+			elseif status == ServeSession.Status.Connected then
+				self.knownProjects[details] = true
+				self:setPriorSyncInfo(host, port, details)
+				self:setRunningConnectionInfo(baseUrl)
 
 			local address = ("%s:%s"):format(host, port)
+			self.currentProjectName = details
+			self.currentAddress = address
 			self:setState({
 				appStatus = AppStatus.Connected,
 				projectName = details,
 				address = address,
 				toolbarIcon = Assets.Images.PluginButtonConnected,
 			})
-			self:addNotification({
-				text = string.format("Connected to session '%s' at %s.", details, address),
-			})
-		elseif status == ServeSession.Status.Disconnected then
-			self.serveSession = nil
-			self:releaseSyncLock()
-			self:clearRunningConnectionInfo()
-			self:setState({
-				patchData = {
-					patch = PatchSet.newEmpty(),
-					unapplied = PatchSet.newEmpty(),
+				self:addNotification({
+					text = string.format("Connected to session '%s' at %s.", details, address),
+				})
+				if self.pendingHeadlessAttach ~= nil then
+					local pendingAttach = self.pendingHeadlessAttach
+					self.pendingHeadlessAttach = nil
+					self:publishHeadlessResponse(
+						pendingAttach.requestId,
+						Dictionary.merge(self:getHeadlessSnapshot({
+							connected = true,
+							appStatus = AppStatus.Connected,
+							connectionStatus = ServeSession.Status.Connected,
+							projectName = details,
+							address = address,
+							baseUrl = baseUrl,
+						}), {
+							success = true,
+							status = "connected",
+						})
+					)
+				end
+			elseif status == ServeSession.Status.Disconnected then
+				local pendingAttach = self.pendingHeadlessAttach
+				self.pendingHeadlessAttach = nil
+				self.serveSession = nil
+				self.currentProjectName = nil
+				self.currentAddress = nil
+				self:releaseSyncLock()
+				self:clearRunningConnectionInfo()
+				self:setState({
+					projectName = nil,
+					address = nil,
+					patchData = {
+						patch = PatchSet.newEmpty(),
+						unapplied = PatchSet.newEmpty(),
 					timestamp = os.time(),
 				},
 			})
@@ -721,22 +943,36 @@ function App:startSession()
 					errorMessage = tostring(details),
 					toolbarIcon = Assets.Images.PluginButtonWarning,
 				})
-				self:addNotification({
-					text = tostring(details),
-					timeout = 10,
+					self:addNotification({
+						text = tostring(details),
+						timeout = 10,
+					})
+					if pendingAttach ~= nil then
+						self:publishHeadlessError(pendingAttach.requestId, tostring(details), {
+							baseUrl = pendingAttach.baseUrl,
+						})
+					end
+				else
+					self:setState({
+						appStatus = AppStatus.NotConnected,
+						toolbarIcon = Assets.Images.PluginButton,
 				})
-			else
-				self:setState({
-					appStatus = AppStatus.NotConnected,
-					toolbarIcon = Assets.Images.PluginButton,
-				})
-				self:addNotification({
-					text = "Disconnected from session.",
-					timeout = 10,
-				})
+					self:addNotification({
+						text = "Disconnected from session.",
+						timeout = 10,
+					})
+					if pendingAttach ~= nil then
+						self:publishHeadlessError(
+							pendingAttach.requestId,
+							"Rojo disconnected before the headless attach completed.",
+							{
+								baseUrl = pendingAttach.baseUrl,
+							}
+						)
+					end
+				end
 			end
-		end
-	end)
+		end)
 
 	serveSession:setConfirmCallback(function(instanceMap, patch, serverInfo)
 		if PatchSet.isEmpty(patch) then
@@ -745,10 +981,15 @@ function App:startSession()
 		end
 
 		-- Play solo auto-connect does not require confirmation
-		if self:isAutoConnectPlaytestServerAvailable() then
-			Log.trace("Accepting patch without confirmation because play solo auto-connect is enabled")
-			return "Accept"
-		end
+			if self:isAutoConnectPlaytestServerAvailable() then
+				Log.trace("Accepting patch without confirmation because play solo auto-connect is enabled")
+				return "Accept"
+			end
+
+			if self.pendingHeadlessAttach ~= nil then
+				Log.trace("Accepting patch without confirmation because a headless attach is in progress")
+				return "Accept"
+			end
 
 		local confirmationBehavior = Settings:get("confirmationBehavior")
 		if confirmationBehavior == "Initial" then
@@ -827,6 +1068,7 @@ function App:startSession()
 	serveSession:start()
 
 	self.serveSession = serveSession
+	return true
 end
 
 function App:endSession()
@@ -838,8 +1080,12 @@ function App:endSession()
 
 	self.serveSession:stop()
 	self.serveSession = nil
+	self.currentProjectName = nil
+	self.currentAddress = nil
 	self:setState({
 		appStatus = AppStatus.NotConnected,
+		projectName = nil,
+		address = nil,
 	})
 
 	if self.cleanupPrecommit ~= nil then
