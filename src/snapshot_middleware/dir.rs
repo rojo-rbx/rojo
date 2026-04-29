@@ -74,6 +74,8 @@ pub fn snapshot_dir_no_meta(
         normalized_path.join("init.server.luau"),
         normalized_path.join("init.client.lua"),
         normalized_path.join("init.client.luau"),
+        normalized_path.join("init.plugin.lua"),
+        normalized_path.join("init.plugin.luau"),
         normalized_path.join("init.csv"),
     ];
 

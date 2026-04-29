@@ -359,6 +359,7 @@ pub fn get_best_middleware(snapshot: &SyncbackSnapshot) -> Middleware {
         middleware = match middleware {
             Middleware::ServerScript => Middleware::ServerScriptDir,
             Middleware::ClientScript => Middleware::ClientScriptDir,
+            Middleware::PluginScript => Middleware::PluginScriptDir,
             Middleware::ModuleScript => Middleware::ModuleScriptDir,
             Middleware::Csv => Middleware::CsvDir,
             Middleware::JsonModel | Middleware::Text => Middleware::Dir,
