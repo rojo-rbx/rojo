@@ -14,6 +14,13 @@ local Http = {}
 Http.Error = HttpError
 Http.Response = HttpResponse
 
+-- Monkey patch msgpack.UInt64.new to lossily convert the low and high bits of the integer
+-- to a native Luau number. We should change the upstream decoder to emit a native
+-- integer, once those are live.
+function msgpack.UInt64.new(mostSignificantPart: number, leastSignificantPart: number): number
+	return mostSignificantPart * 2 ^ 32 + (leastSignificantPart % 2 ^ 32)
+end
+
 local function performRequest(requestParams)
 	local requestId = lastRequestId + 1
 	lastRequestId = requestId
