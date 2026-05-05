@@ -2,7 +2,7 @@ use std::path::Path;
 
 use memofs::{DirEntry, IoResultExt, Vfs};
 
-use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot};
+use crate::snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot, is_path_ignored};
 
 use super::{meta_file::DirectoryMetadata, snapshot_from_vfs};
 
@@ -45,12 +45,8 @@ pub fn snapshot_dir_no_meta(
     vfs: &Vfs,
     path: &Path,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let passes_filter_rules = |child: &DirEntry| {
-        context
-            .path_ignore_rules
-            .iter()
-            .all(|rule| rule.passes(child.path()))
-    };
+    let passes_filter_rules =
+        |child: &DirEntry| !is_path_ignored(&context.path_ignore_rules, child.path());
 
     let mut snapshot_children = Vec::new();
 

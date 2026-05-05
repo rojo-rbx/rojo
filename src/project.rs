@@ -11,7 +11,7 @@ use rbx_dom_weak::{Ustr, UstrMap};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use crate::{glob::Glob, json, resolution::UnresolvedValue, snapshot::SyncRule};
+use crate::{glob::IgnorableGlob, json, resolution::UnresolvedValue, snapshot::SyncRule};
 
 static PROJECT_FILENAME: &str = "default.project.json";
 
@@ -111,7 +111,7 @@ pub struct Project {
     /// A list of globs, relative to the folder the project file is in, that
     /// match files that should be excluded if Rojo encounters them.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub glob_ignore_paths: Vec<Glob>,
+    pub glob_ignore_paths: Vec<IgnorableGlob>,
 
     /// A list of mappings of globs to syncing rules. If a file matches a glob,
     /// it will be 'transformed' into an Instance following the rule provided.
@@ -549,5 +549,56 @@ mod test {
         assert_eq!(project.sync_rules.len(), 2);
         assert!(project.sync_rules[0].include.is_match("data.data.json"));
         assert!(project.sync_rules[1].include.is_match("init.module.lua"));
+    }
+
+    #[test]
+    fn glob_ignore_paths_negation() {
+        let project_json = r#"{
+            "name": "TestProject",
+            "tree": { "$path": "src" },
+            "globIgnorePaths": [
+                "**/*.spec.lua",
+                "!keep.spec.lua",
+                "\\!literal.lua"
+            ]
+        }"#;
+
+        let project = Project::load_from_slice(
+            project_json.as_bytes(),
+            PathBuf::from("/test/default.project.json"),
+            None,
+        )
+        .expect("project should parse");
+
+        let paths = &project.glob_ignore_paths;
+        assert_eq!(paths.len(), 3);
+
+        assert!(!paths[0].is_negation());
+        assert!(paths[0].is_match("foo.spec.lua"));
+
+        assert!(paths[1].is_negation());
+        assert!(paths[1].is_match("keep.spec.lua"));
+
+        // `\!literal.lua` should match a file literally named `!literal.lua`,
+        // not be parsed as a negation.
+        assert!(!paths[2].is_negation());
+        assert!(paths[2].is_match("!literal.lua"));
+
+        let rules: Vec<_> = paths
+            .iter()
+            .map(|g| crate::snapshot::PathIgnoreRule {
+                base_path: PathBuf::from("/test"),
+                glob: g.clone(),
+            })
+            .collect();
+        assert!(crate::snapshot::is_path_ignored(
+            &rules,
+            "/test/foo.spec.lua"
+        ));
+        assert!(!crate::snapshot::is_path_ignored(
+            &rules,
+            "/test/keep.spec.lua"
+        ));
+        assert!(!crate::snapshot::is_path_ignored(&rules, "/test/plain.lua"));
     }
 }
