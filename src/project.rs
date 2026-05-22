@@ -12,10 +12,7 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 use crate::{
-    glob::{Glob, IgnorableGlob},
-    json,
-    resolution::UnresolvedValue,
-    snapshot::SyncRule,
+    glob::IgnorableGlob, json, resolution::UnresolvedValue, snapshot::SyncRule,
     syncback::SyncbackRules,
 };
 
