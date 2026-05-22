@@ -70,10 +70,14 @@ impl<T> IoResultExt<T> for io::Result<T> {
 pub trait VfsBackend: sealed::Sealed + Send + 'static {
     fn read(&mut self, path: &Path) -> io::Result<Vec<u8>>;
     fn write(&mut self, path: &Path, data: &[u8]) -> io::Result<()>;
+    fn exists(&mut self, path: &Path) -> io::Result<bool>;
     fn read_dir(&mut self, path: &Path) -> io::Result<ReadDir>;
+    fn create_dir(&mut self, path: &Path) -> io::Result<()>;
+    fn create_dir_all(&mut self, path: &Path) -> io::Result<()>;
     fn metadata(&mut self, path: &Path) -> io::Result<Metadata>;
     fn remove_file(&mut self, path: &Path) -> io::Result<()>;
     fn remove_dir_all(&mut self, path: &Path) -> io::Result<()>;
+    fn canonicalize(&mut self, path: &Path) -> io::Result<PathBuf>;
 
     fn event_receiver(&self) -> crossbeam_channel::Receiver<VfsEvent>;
     fn watch(&mut self, path: &Path) -> io::Result<()>;
@@ -173,6 +177,11 @@ impl VfsInner {
         Ok(Arc::new(contents_str.into()))
     }
 
+    fn exists<P: AsRef<Path>>(&mut self, path: P) -> io::Result<bool> {
+        let path = path.as_ref();
+        self.backend.exists(path)
+    }
+
     fn write<P: AsRef<Path>, C: AsRef<[u8]>>(&mut self, path: P, contents: C) -> io::Result<()> {
         let path = path.as_ref();
         let contents = contents.as_ref();
@@ -190,6 +199,16 @@ impl VfsInner {
         Ok(dir)
     }
 
+    fn create_dir<P: AsRef<Path>>(&mut self, path: P) -> io::Result<()> {
+        let path = path.as_ref();
+        self.backend.create_dir(path)
+    }
+
+    fn create_dir_all<P: AsRef<Path>>(&mut self, path: P) -> io::Result<()> {
+        let path = path.as_ref();
+        self.backend.create_dir_all(path)
+    }
+
     fn remove_file<P: AsRef<Path>>(&mut self, path: P) -> io::Result<()> {
         let path = path.as_ref();
         let _ = self.backend.unwatch(path);
@@ -205,6 +224,11 @@ impl VfsInner {
     fn metadata<P: AsRef<Path>>(&mut self, path: P) -> io::Result<Metadata> {
         let path = path.as_ref();
         self.backend.metadata(path)
+    }
+
+    fn canonicalize<P: AsRef<Path>>(&mut self, path: P) -> io::Result<PathBuf> {
+        let path = path.as_ref();
+        self.backend.canonicalize(path)
     }
 
     fn event_receiver(&self) -> crossbeam_channel::Receiver<VfsEvent> {
@@ -326,6 +350,42 @@ impl Vfs {
         self.inner.lock().unwrap().read_dir(path)
     }
 
+    /// Return whether the given path exists.
+    ///
+    /// Roughly equivalent to [`std::fs::exists`][std::fs::exists].
+    ///
+    /// [std::fs::exists]: https://doc.rust-lang.org/stable/std/fs/fn.exists.html
+    #[inline]
+    pub fn exists<P: AsRef<Path>>(&self, path: P) -> io::Result<bool> {
+        let path = path.as_ref();
+        self.inner.lock().unwrap().exists(path)
+    }
+
+    /// Creates a directory at the provided location.
+    ///
+    /// Roughly equivalent to [`std::fs::create_dir`][std::fs::create_dir].
+    /// Similiar to that function, this function will fail if the parent of the
+    /// path does not exist.
+    ///
+    /// [std::fs::create_dir]: https://doc.rust-lang.org/stable/std/fs/fn.create_dir.html
+    #[inline]
+    pub fn create_dir<P: AsRef<Path>>(&self, path: P) -> io::Result<()> {
+        let path = path.as_ref();
+        self.inner.lock().unwrap().create_dir(path)
+    }
+
+    /// Creates a directory at the provided location, recursively creating
+    /// all parent components if they are missing.
+    ///
+    /// Roughly equivalent to [`std::fs::create_dir_all`][std::fs::create_dir_all].
+    ///
+    /// [std::fs::create_dir_all]: https://doc.rust-lang.org/stable/std/fs/fn.create_dir_all.html
+    #[inline]
+    pub fn create_dir_all<P: AsRef<Path>>(&self, path: P) -> io::Result<()> {
+        let path = path.as_ref();
+        self.inner.lock().unwrap().create_dir_all(path)
+    }
+
     /// Remove a file.
     ///
     /// Roughly equivalent to [`std::fs::remove_file`][std::fs::remove_file].
@@ -357,6 +417,19 @@ impl Vfs {
     pub fn metadata<P: AsRef<Path>>(&self, path: P) -> io::Result<Metadata> {
         let path = path.as_ref();
         self.inner.lock().unwrap().metadata(path)
+    }
+
+    /// Normalize a path via the underlying backend.
+    ///
+    /// Roughly equivalent to [`std::fs::canonicalize`][std::fs::canonicalize]. Relative paths are
+    /// resolved against the backend's current working directory (if applicable) and errors are
+    /// surfaced directly from the backend.
+    ///
+    /// [std::fs::canonicalize]: https://doc.rust-lang.org/stable/std/fs/fn.canonicalize.html
+    #[inline]
+    pub fn canonicalize<P: AsRef<Path>>(&self, path: P) -> io::Result<PathBuf> {
+        let path = path.as_ref();
+        self.inner.lock().unwrap().canonicalize(path)
     }
 
     /// Retrieve a handle to the event receiver for this `Vfs`.
@@ -428,6 +501,31 @@ impl VfsLock<'_> {
         self.inner.read_dir(path)
     }
 
+    /// Creates a directory at the provided location.
+    ///
+    /// Roughly equivalent to [`std::fs::create_dir`][std::fs::create_dir].
+    /// Similiar to that function, this function will fail if the parent of the
+    /// path does not exist.
+    ///
+    /// [std::fs::create_dir]: https://doc.rust-lang.org/stable/std/fs/fn.create_dir.html
+    #[inline]
+    pub fn create_dir<P: AsRef<Path>>(&mut self, path: P) -> io::Result<()> {
+        let path = path.as_ref();
+        self.inner.create_dir(path)
+    }
+
+    /// Creates a directory at the provided location, recursively creating
+    /// all parent components if they are missing.
+    ///
+    /// Roughly equivalent to [`std::fs::create_dir_all`][std::fs::create_dir_all].
+    ///
+    /// [std::fs::create_dir_all]: https://doc.rust-lang.org/stable/std/fs/fn.create_dir_all.html
+    #[inline]
+    pub fn create_dir_all<P: AsRef<Path>>(&mut self, path: P) -> io::Result<()> {
+        let path = path.as_ref();
+        self.inner.create_dir_all(path)
+    }
+
     /// Remove a file.
     ///
     /// Roughly equivalent to [`std::fs::remove_file`][std::fs::remove_file].
@@ -461,6 +559,13 @@ impl VfsLock<'_> {
         self.inner.metadata(path)
     }
 
+    /// Normalize a path via the underlying backend.
+    #[inline]
+    pub fn normalize<P: AsRef<Path>>(&mut self, path: P) -> io::Result<PathBuf> {
+        let path = path.as_ref();
+        self.inner.canonicalize(path)
+    }
+
     /// Retrieve a handle to the event receiver for this `Vfs`.
     #[inline]
     pub fn event_receiver(&self) -> crossbeam_channel::Receiver<VfsEvent> {
@@ -476,7 +581,9 @@ impl VfsLock<'_> {
 
 #[cfg(test)]
 mod test {
-    use crate::{InMemoryFs, Vfs, VfsSnapshot};
+    use crate::{InMemoryFs, StdBackend, Vfs, VfsSnapshot};
+    use std::io;
+    use std::path::PathBuf;
 
     /// https://github.com/rojo-rbx/rojo/issues/899
     #[test]
@@ -491,5 +598,63 @@ mod test {
             vfs.read_to_string_lf_normalized("test").unwrap().as_str(),
             "bar\nfoo\n\n"
         );
+    }
+
+    /// https://github.com/rojo-rbx/rojo/issues/1200
+    #[test]
+    fn canonicalize_in_memory_success() {
+        let mut imfs = InMemoryFs::new();
+        let contents = "Lorem ipsum dolor sit amet.".to_string();
+
+        imfs.load_snapshot("/test/file.txt", VfsSnapshot::file(contents.to_string()))
+            .unwrap();
+
+        let vfs = Vfs::new(imfs);
+
+        assert_eq!(
+            vfs.canonicalize("/test/nested/../file.txt").unwrap(),
+            PathBuf::from("/test/file.txt")
+        );
+        assert_eq!(
+            vfs.read_to_string(vfs.canonicalize("/test/nested/../file.txt").unwrap())
+                .unwrap()
+                .to_string(),
+            contents.to_string()
+        );
+    }
+
+    #[test]
+    fn canonicalize_in_memory_missing_errors() {
+        let imfs = InMemoryFs::new();
+        let vfs = Vfs::new(imfs);
+
+        let err = vfs.canonicalize("test").unwrap_err();
+        assert_eq!(err.kind(), io::ErrorKind::NotFound);
+    }
+
+    #[test]
+    fn canonicalize_std_backend_success() {
+        let contents = "Lorem ipsum dolor sit amet.".to_string();
+        let dir = tempfile::tempdir().unwrap();
+        let file_path = dir.path().join("file.txt");
+        fs_err::write(&file_path, contents.to_string()).unwrap();
+
+        let vfs = Vfs::new(StdBackend::new());
+        let canonicalized = vfs.canonicalize(&file_path).unwrap();
+        assert_eq!(canonicalized, file_path.canonicalize().unwrap());
+        assert_eq!(
+            vfs.read_to_string(&canonicalized).unwrap().to_string(),
+            contents.to_string()
+        );
+    }
+
+    #[test]
+    fn canonicalize_std_backend_missing_errors() {
+        let dir = tempfile::tempdir().unwrap();
+        let file_path = dir.path().join("test");
+
+        let vfs = Vfs::new(StdBackend::new());
+        let err = vfs.canonicalize(&file_path).unwrap_err();
+        assert_eq!(err.kind(), io::ErrorKind::NotFound);
     }
 }

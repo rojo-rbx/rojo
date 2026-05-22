@@ -1,0 +1,9 @@
+{
+  "name": "respect_old_middleware",
+  "tree": {
+    "$path": "src",
+    "project_node": {
+      "$className": "BoolValue"
+    }
+  }
+}

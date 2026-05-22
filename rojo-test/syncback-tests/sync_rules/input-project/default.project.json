@@ -1,0 +1,16 @@
+{
+  "name": "sync_rules",
+  "tree": {
+    "$path": "src"
+  },
+  "syncRules": [
+    {
+      "use": "text",
+      "pattern": "*.text"
+    },
+    {
+      "use": "moduleScript",
+      "pattern": "*.modulescript"
+    }
+  ]
+}

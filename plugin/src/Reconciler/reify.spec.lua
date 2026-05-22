@@ -12,7 +12,7 @@ return function()
 	local function size(dict)
 		local len = 0
 
-		for _ in pairs(dict) do
+		for _ in dict do
 			len = len + 1
 		end
 

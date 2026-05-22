@@ -1,0 +1,6 @@
+---
+source: tests/tests/syncback.rs
+expression: src/csv_init/init.csv
+---
+Key,Source,Context,Example,en
+Rojo,Rojo,,Rojo is a really cool program,Red

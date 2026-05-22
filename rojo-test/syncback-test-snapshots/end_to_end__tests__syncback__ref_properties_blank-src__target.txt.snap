@@ -1,0 +1,5 @@
+---
+source: tests/tests/syncback.rs
+expression: src/target.txt
+---
+This is a target.

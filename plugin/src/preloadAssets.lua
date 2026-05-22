@@ -9,7 +9,7 @@ local gatherAssetUrlsRecursive
 function gatherAssetUrlsRecursive(currentTable, currentUrls)
 	currentUrls = currentUrls or {}
 
-	for _, value in pairs(currentTable) do
+	for _, value in currentTable do
 		if typeof(value) == "string" then
 			table.insert(currentUrls, value)
 		elseif typeof(value) == "table" then

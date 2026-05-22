@@ -1,12 +1,12 @@
-use std::{
-    fs,
-    sync::{Arc, Mutex},
-};
-
 use crossbeam_channel::{select, Receiver, RecvError, Sender};
 use jod_thread::JoinHandle;
 use memofs::{IoResultExt, Vfs, VfsEvent};
 use rbx_dom_weak::types::{Ref, Variant};
+use std::path::PathBuf;
+use std::{
+    fs,
+    sync::{Arc, Mutex},
+};
 
 use crate::{
     message_queue::MessageQueue,
@@ -114,6 +114,49 @@ struct JobThreadContext {
 }
 
 impl JobThreadContext {
+    /// Computes and applies patches to the DOM for a given file path.
+    ///
+    /// This function finds the nearest ancestor to the given path that has associated instances
+    /// in the tree.
+    /// It then computes and applies changes for each affected instance ID and
+    /// returns a vector of applied patch sets.
+    fn apply_patches(&self, path: PathBuf) -> Vec<AppliedPatchSet> {
+        let mut tree = self.tree.lock().unwrap();
+        let mut applied_patches = Vec::new();
+
+        // Find the nearest ancestor to this path that has
+        // associated instances in the tree. This helps make sure
+        // that we handle additions correctly, especially if we
+        // receive events for descendants of a large tree being
+        // created all at once.
+        let mut current_path = path.as_path();
+        let affected_ids = loop {
+            let ids = tree.get_ids_at_path(current_path);
+
+            log::trace!("Path {} affects IDs {:?}", current_path.display(), ids);
+
+            if !ids.is_empty() {
+                break ids.to_vec();
+            }
+
+            log::trace!("Trying parent path...");
+            match current_path.parent() {
+                Some(parent) => current_path = parent,
+                None => break Vec::new(),
+            }
+        };
+
+        for id in affected_ids {
+            if let Some(patch) = compute_and_apply_changes(&mut tree, &self.vfs, id) {
+                if !patch.is_empty() {
+                    applied_patches.push(patch);
+                }
+            }
+        }
+
+        applied_patches
+    }
+
     fn handle_vfs_event(&self, event: VfsEvent) {
         log::trace!("Vfs event: {:?}", event);
 
@@ -125,41 +168,16 @@ impl JobThreadContext {
         // For a given VFS event, we might have many changes to different parts
         // of the tree. Calculate and apply all of these changes.
         let applied_patches = match event {
-            VfsEvent::Create(path) | VfsEvent::Remove(path) | VfsEvent::Write(path) => {
-                let mut tree = self.tree.lock().unwrap();
-                let mut applied_patches = Vec::new();
-
-                // Find the nearest ancestor to this path that has
-                // associated instances in the tree. This helps make sure
-                // that we handle additions correctly, especially if we
-                // receive events for descendants of a large tree being
-                // created all at once.
-                let mut current_path = path.as_path();
-                let affected_ids = loop {
-                    let ids = tree.get_ids_at_path(current_path);
-
-                    log::trace!("Path {} affects IDs {:?}", current_path.display(), ids);
-
-                    if !ids.is_empty() {
-                        break ids.to_vec();
-                    }
-
-                    log::trace!("Trying parent path...");
-                    match current_path.parent() {
-                        Some(parent) => current_path = parent,
-                        None => break Vec::new(),
-                    }
-                };
-
-                for id in affected_ids {
-                    if let Some(patch) = compute_and_apply_changes(&mut tree, &self.vfs, id) {
-                        if !patch.is_empty() {
-                            applied_patches.push(patch);
-                        }
-                    }
-                }
-
-                applied_patches
+            VfsEvent::Create(path) | VfsEvent::Write(path) => {
+                self.apply_patches(self.vfs.canonicalize(&path).unwrap())
+            }
+            VfsEvent::Remove(path) => {
+                // MemoFS does not track parent removals yet, so we can canonicalize
+                // the parent path safely and then append the removed path's file name.
+                let parent = path.parent().unwrap();
+                let file_name = path.file_name().unwrap();
+                let parent_normalized = self.vfs.canonicalize(parent).unwrap();
+                self.apply_patches(parent_normalized.join(file_name))
             }
             _ => {
                 log::warn!("Unhandled VFS event: {:?}", event);
@@ -183,7 +201,7 @@ impl JobThreadContext {
                     if let Some(instigating_source) = &instance.metadata().instigating_source {
                         match instigating_source {
                             InstigatingSource::Path(path) => fs::remove_file(path).unwrap(),
-                            InstigatingSource::ProjectNode(_, _, _, _) => {
+                            InstigatingSource::ProjectNode { .. } => {
                                 log::warn!(
                                     "Cannot remove instance {:?}, it's from a project file",
                                     id
@@ -231,7 +249,7 @@ impl JobThreadContext {
                                             log::warn!("Cannot change Source to non-string value.");
                                         }
                                     }
-                                    InstigatingSource::ProjectNode(_, _, _, _) => {
+                                    InstigatingSource::ProjectNode { .. } => {
                                         log::warn!(
                                             "Cannot remove instance {:?}, it's from a project file",
                                             id
@@ -317,16 +335,21 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref) -> Option<
             }
         },
 
-        InstigatingSource::ProjectNode(project_path, instance_name, project_node, parent_class) => {
+        InstigatingSource::ProjectNode {
+            path,
+            name,
+            node,
+            parent_class,
+        } => {
             // This instance is the direct subject of a project node. Since
             // there might be information associated with our instance from
             // the project file, we snapshot the entire project node again.
 
             let snapshot_result = snapshot_project_node(
                 &metadata.context,
-                project_path,
-                instance_name,
-                project_node,
+                path,
+                name,
+                node,
                 vfs,
                 parent_class.as_ref().map(|name| name.as_str()),
             );

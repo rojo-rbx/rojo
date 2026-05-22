@@ -12,6 +12,8 @@ metadata:
   context:
     emit_legacy_scripts: true
   specified_id: ~
+  middleware: ~
+  schema: ~
 name: foo
 class_name: IntValue
 properties:
@@ -25,8 +27,9 @@ children:
       context:
         emit_legacy_scripts: true
       specified_id: ~
+      middleware: ~
+      schema: ~
     name: The Child
     class_name: StringValue
     properties: {}
     children: []
-

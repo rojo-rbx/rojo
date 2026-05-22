@@ -1,0 +1,6 @@
+{
+  "name": "property_mismatch",
+  "tree": {
+    "$className": "BrickColorValue"
+  }
+}

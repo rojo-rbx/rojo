@@ -1,0 +1,5 @@
+---
+source: tests/tests/syncback.rs
+expression: string_value.txt
+---
+Nested project string value :-)

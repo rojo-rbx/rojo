@@ -1,27 +1,29 @@
 ---
 source: tests/tests/serve.rs
-expression: "subscribe_response.intern_and_redact(&mut redactions, ())"
+expression: "socket_packet.intern_and_redact(&mut redactions, ())"
 ---
-messageCursor: 1
-messages:
-  - added:
-      id-6:
-        Children: []
-        ClassName: Actor
-        Id: id-6
-        Metadata:
-          ignoreUnknownInstances: true
-        Name: Actor
-        Parent: id-3
-        Properties:
-          NeedsPivotMigration:
-            Bool: false
-    removed: []
-    updated:
-      - changedClassName: ~
-        changedMetadata:
-          ignoreUnknownInstances: true
-        changedName: ~
-        changedProperties: {}
-        id: id-3
+body:
+  messageCursor: 1
+  messages:
+    - added:
+        id-6:
+          Children: []
+          ClassName: Actor
+          Id: id-6
+          Metadata:
+            ignoreUnknownInstances: true
+          Name: Actor
+          Parent: id-3
+          Properties:
+            NeedsPivotMigration:
+              Bool: false
+      removed: []
+      updated:
+        - changedClassName: ~
+          changedMetadata:
+            ignoreUnknownInstances: true
+          changedName: ~
+          changedProperties: {}
+          id: id-3
+packetType: messages
 sessionId: id-1

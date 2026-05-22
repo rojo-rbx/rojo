@@ -1,0 +1,8 @@
+---
+source: tests/tests/syncback.rs
+expression: src/model.model.json
+---
+{
+  "$schema": "rojo/model.json",
+  "className": "BoolValue"
+}

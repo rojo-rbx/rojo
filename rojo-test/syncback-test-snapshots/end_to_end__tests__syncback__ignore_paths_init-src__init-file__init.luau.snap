@@ -1,0 +1,5 @@
+---
+source: tests/tests/syncback.rs
+expression: src/init-file/init.luau
+---
+-- This file SHOULD NOT be updated

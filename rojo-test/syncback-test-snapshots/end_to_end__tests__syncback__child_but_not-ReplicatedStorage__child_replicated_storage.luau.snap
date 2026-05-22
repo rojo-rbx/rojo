@@ -1,0 +1,5 @@
+---
+source: tests/tests/syncback.rs
+expression: ReplicatedStorage/child_replicated_storage.luau
+---
+-- -- this should be in child_replicated_storage

@@ -1,0 +1,9 @@
+---
+source: tests/rojo_test/syncback_util.rs
+expression: "String::from_utf8_lossy(&output.stdout)"
+---
+Writing src/ChildWithDuplicates.rbxm
+Writing src/ChildWithoutDuplicates/Child/.gitkeep
+Writing src/ChildWithoutDuplicates
+Writing src/ChildWithoutDuplicates/Child
+Removing src/ChildWithDuplicates

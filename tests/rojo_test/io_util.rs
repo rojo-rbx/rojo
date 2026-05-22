@@ -10,6 +10,8 @@ use walkdir::WalkDir;
 pub static ROJO_PATH: &str = env!("CARGO_BIN_EXE_rojo");
 pub static BUILD_TESTS_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/rojo-test/build-tests");
 pub static SERVE_TESTS_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/rojo-test/serve-tests");
+pub static SYNCBACK_TESTS_PATH: &str =
+    concat!(env!("CARGO_MANIFEST_DIR"), "/rojo-test/syncback-tests");
 
 pub fn get_working_dir_path() -> PathBuf {
     let mut manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));

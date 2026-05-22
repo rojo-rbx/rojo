@@ -1,0 +1,12 @@
+{
+  "name": "child_but_not",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$path": "ReplicatedStorage",
+      "OnlyOneCopy": {
+        "$path": "OnlyOneCopy"
+      }
+    }
+  }
+}

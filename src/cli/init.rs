@@ -80,8 +80,12 @@ impl InitCommand {
             } else {
                 let content = vfs.read_to_string_lf_normalized(&path)?;
                 if let Some(file_stem) = path.file_name().and_then(OsStr::to_str) {
-                    if file_stem == GIT_IGNORE_PLACEHOLDER && !self.skip_git {
-                        path.set_file_name(".gitignore");
+                    if file_stem == GIT_IGNORE_PLACEHOLDER {
+                        if self.skip_git {
+                            continue;
+                        } else {
+                            path.set_file_name(".gitignore");
+                        }
                     }
                 }
                 write_if_not_exists(

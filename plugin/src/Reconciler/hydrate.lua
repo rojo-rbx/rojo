@@ -26,7 +26,7 @@ local function hydrate(instanceMap, virtualInstances, rootId, rootInstance)
 	for _, childId in ipairs(virtualInstance.Children) do
 		local virtualChild = virtualInstances[childId]
 
-		for childIndex, childInstance in ipairs(existingChildren) do
+		for childIndex, childInstance in existingChildren do
 			if not isExistingChildVisited[childIndex] then
 				-- We guard accessing Name and ClassName in order to avoid
 				-- tripping over children of DataModel that Rojo won't have

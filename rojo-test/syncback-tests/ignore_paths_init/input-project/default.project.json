@@ -1,0 +1,11 @@
+{
+  "name": "ignore_paths_init",
+  "tree": {
+    "$path": "src"
+  },
+  "syncbackRules": {
+    "ignorePaths": [
+      "**/init-file/*.luau"
+    ]
+  }
+}

@@ -38,13 +38,13 @@ local function trueEquals(a, b): boolean
 	-- For tables, try recursive deep equality
 	if typeA == "table" and typeB == "table" then
 		local checkedKeys = {}
-		for key, value in pairs(a) do
+		for key, value in a do
 			checkedKeys[key] = true
 			if not trueEquals(value, b[key]) then
 				return false
 			end
 		end
-		for key, value in pairs(b) do
+		for key, value in b do
 			if checkedKeys[key] then
 				continue
 			end
@@ -52,6 +52,10 @@ local function trueEquals(a, b): boolean
 				return false
 			end
 		end
+		return true
+
+	-- For NaN, check if both values are not equal to themselves
+	elseif a ~= a and b ~= b then
 		return true
 
 	-- For numbers, compare with epsilon of 0.0001 to avoid floating point inequality

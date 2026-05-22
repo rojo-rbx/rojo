@@ -1,0 +1,10 @@
+---
+source: tests/rojo_test/syncback_util.rs
+expression: "String::from_utf8_lossy(&output.stdout)"
+---
+Writing default.project.json
+Writing src/adjacent.luau
+Writing src/adjacent.meta.json
+Writing src/init/init.meta.json
+Writing src/model.model.json
+Writing src/init

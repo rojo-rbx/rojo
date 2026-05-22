@@ -9,7 +9,6 @@ metadata:
     Path: /foo
   relevant_paths:
     - /foo
-    - /foo/init.meta.json
     - /foo/init.lua
     - /foo/init.luau
     - /foo/init.server.lua
@@ -17,9 +16,13 @@ metadata:
     - /foo/init.client.lua
     - /foo/init.client.luau
     - /foo/init.csv
+    - /foo/init.meta.json
+    - /foo/init.meta.jsonc
   context:
     emit_legacy_scripts: true
   specified_id: ~
+  middleware: ~
+  schema: ~
 name: foo
 class_name: Folder
 properties: {}
@@ -31,7 +34,6 @@ children:
         Path: /foo/Child
       relevant_paths:
         - /foo/Child
-        - /foo/Child/init.meta.json
         - /foo/Child/init.lua
         - /foo/Child/init.luau
         - /foo/Child/init.server.lua
@@ -39,11 +41,14 @@ children:
         - /foo/Child/init.client.lua
         - /foo/Child/init.client.luau
         - /foo/Child/init.csv
+        - /foo/Child/init.meta.json
+        - /foo/Child/init.meta.jsonc
       context:
         emit_legacy_scripts: true
       specified_id: ~
+      middleware: dir
+      schema: ~
     name: Child
     class_name: Folder
     properties: {}
     children: []
-

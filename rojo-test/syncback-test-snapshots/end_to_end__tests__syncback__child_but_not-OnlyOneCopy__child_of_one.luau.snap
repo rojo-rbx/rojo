@@ -1,0 +1,5 @@
+---
+source: tests/tests/syncback.rs
+expression: OnlyOneCopy/child_of_one.luau
+---
+-- this should be in OnlyOneCopy/child_of_one

@@ -14,7 +14,7 @@ local function merge(...)
 		local source = select(i, ...)
 
 		if source ~= nil then
-			for key, value in pairs(source) do
+			for key, value in source do
 				if value == None then
 					output[key] = nil
 				else

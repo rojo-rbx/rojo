@@ -31,6 +31,71 @@ Making a new release? Simply add the new header with the version and date undern
 
 ## Unreleased
 
+* `inf` and `nan` values in properties are now synced ([#1176])
+* Fixed a bug caused by having reference properties (such as `ObjectValue.Value`) that point to an Instance not included in syncback. ([#1179])
+* Fixed instance replacement fallback failing when too many instances needed to be replaced. ([#1192])
+* Added actors and bindable/remote event/function variants to be synced back as JSON files. ([#1199])
+* Fixed a bug where MacOS paths weren't being handled correctly. ([#1201])
+* Fixed a bug where the notification timeout thread would fail to cancel on unmount ([#1211])
+* Added a "Forget" option to the sync reminder notification to avoid being reminded for that place in the future ([#1215])
+* Improves relative path calculation for sourcemap generation to avoid issues with Windows UNC paths. ([#1217])
+
+[#1176]: https://github.com/rojo-rbx/rojo/pull/1176
+[#1179]: https://github.com/rojo-rbx/rojo/pull/1179
+[#1192]: https://github.com/rojo-rbx/rojo/pull/1192
+[#1199]: https://github.com/rojo-rbx/rojo/pull/1199
+[#1201]: https://github.com/rojo-rbx/rojo/pull/1201
+[#1211]: https://github.com/rojo-rbx/rojo/pull/1211
+[#1215]: https://github.com/rojo-rbx/rojo/pull/1215
+[#1217]: https://github.com/rojo-rbx/rojo/pull/1217
+
+## [7.7.0-rc.1] (November 27th, 2025)
+
+* Fixed a bug where passing `--skip-git` to `rojo init` would still create a file named `gitignore.txt` ([#1172])
+* A new command `rojo syncback` has been added. It can be used as `rojo syncback [path to project] --input [path to file]`. ([#937])
+ 	This command takes a Roblox file and pulls Instances out of it and places them in the correct position in the provided project.
+    Syncback is primarily controlled by the project file. Any Instances who are either referenced in the project file or a descendant
+    of one that is will be placed in an appropriate location.
+
+    In addition, a new field has been added to project files, `syncbackRules` to control how it behaves:
+
+    ```json
+    {
+        "syncbackRules": {
+            "ignoreTrees": [
+                "ServerStorage/ImportantSecrets",
+            ],
+            "ignorePaths": [
+                "src/ServerStorage/Secrets/*"
+            ],
+            "ignoreProperties": {
+                "BasePart": ["Color"]
+            },
+            "syncCurrentCamera": false,
+            "syncUnscriptable": true,
+        }
+    }
+    ```
+
+    A brief explanation of each field:
+
+    - `ignoreTrees` is a list of paths in the **roblox file** that should be ignored
+    - `ignorePaths` is a list of paths in the **file system** that should be ignored
+    - `ignoreProperties` is a list of properties that won't be synced back
+    - `syncCurrentCamera` is a toggle for whether to sync back the Workspace's CurrentCamera. Defaults to `false`.
+    - `syncUnscriptable` is a toggle for whether to sync back properties that cannot be set by the Roblox Studio plugin. Defaults to `true`.
+
+* Fixed bugs and improved performance & UX for the script diff viewer ([#994])
+* Rebuilt the internal communication between the server and plugin to use [websockets](https://devforum.roblox.com/t/websockets-support-in-studio-is-now-available/4021932/1) instead of [long polling](https://en.wikipedia.org/wiki/Push_technology#Long_polling) ([#1142])
+* Added support for `.jsonc` files for all JSON-related files (e.g. `.project.jsonc` and `.meta.jsonc`) to accompany JSONC support ([#1159])
+
+[7.7.0-rc.1]: https://github.com/rojo-rbx/rojo/releases/tag/v7.7.0-rc.1
+[#937]: https://github.com/rojo-rbx/rojo/pull/937
+[#994]: https://github.com/rojo-rbx/rojo/pull/994
+[#1142]: https://github.com/rojo-rbx/rojo/pull/1142
+[#1159]: https://github.com/rojo-rbx/rojo/pull/1159
+[#1172]: https://github.com/rojo-rbx/rojo/pull/1172
+
 ## [7.6.1] (November 6th, 2025)
 
 * Fixed a bug where the last sync timestamp was not updating correctly in the plugin ([#1132])

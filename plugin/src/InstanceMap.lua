@@ -63,7 +63,7 @@ function InstanceMap:__fmtDebug(output)
 	-- Collect all of the entries in the InstanceMap and sort them by their
 	-- label, which helps make our output deterministic.
 	local entries = {}
-	for id, instance in pairs(self.fromIds) do
+	for id, instance in self.fromIds do
 		local label = string.format("%s (%s)", instance:GetFullName(), instance.ClassName)
 
 		table.insert(entries, { id, label })
@@ -73,7 +73,7 @@ function InstanceMap:__fmtDebug(output)
 		return a[2] < b[2]
 	end)
 
-	for _, entry in ipairs(entries) do
+	for _, entry in entries do
 		output:writeLine("{}: {}", entry[1], entry[2])
 	end
 
@@ -227,7 +227,7 @@ function InstanceMap:__disconnectSignals(instance)
 		-- around the extra table. ValueBase objects force us to use multiple
 		-- signals to emulate the Instance.Changed event, however.
 		if typeof(signals) == "table" then
-			for _, signal in ipairs(signals) do
+			for _, signal in signals do
 				signal:Disconnect()
 			end
 		else

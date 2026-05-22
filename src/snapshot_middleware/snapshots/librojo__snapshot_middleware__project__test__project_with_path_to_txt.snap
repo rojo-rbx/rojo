@@ -10,14 +10,16 @@ metadata:
   relevant_paths:
     - /foo/other.txt
     - /foo/other.meta.json
+    - /foo/other.meta.jsonc
     - /foo/default.project.json
   context:
     emit_legacy_scripts: true
   specified_id: ~
+  middleware: text
+  schema: ~
 name: path-project
 class_name: StringValue
 properties:
   Value:
     String: "Hello, world!"
 children: []
-

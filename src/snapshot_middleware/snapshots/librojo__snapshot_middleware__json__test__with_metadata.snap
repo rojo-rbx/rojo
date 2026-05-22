@@ -1,0 +1,24 @@
+---
+source: src/snapshot_middleware/json.rs
+expression: instance_snapshot
+---
+snapshot_id: "00000000000000000000000000000000"
+metadata:
+  ignore_unknown_instances: false
+  instigating_source:
+    Path: /foo.json
+  relevant_paths:
+    - /foo.json
+    - /foo.meta.json
+    - /foo.meta.jsonc
+  context:
+    emit_legacy_scripts: true
+  specified_id: manually specified
+  middleware: ~
+  schema: ~
+name: foo
+class_name: ModuleScript
+properties:
+  Source:
+    String: "return {\n\tarray = {1, 2, 3},\n\tfloat = 1234.5452,\n\tint = 1234,\n}"
+children: []

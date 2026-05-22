@@ -1,0 +1,15 @@
+{
+  "name": "project_reserialize",
+  "tree": {
+    "$className": "Folder",
+    "attribute_mismatch": {
+      "$attributes": {
+        "foo": "bar"
+      },
+      "$path": "attribute_mismatch.luau"
+    },
+    "property_mismatch": {
+      "$path": "property_mismatch.project.json"
+    }
+  }
+}

@@ -13,8 +13,9 @@ metadata:
   context:
     emit_legacy_scripts: true
   specified_id: ~
+  middleware: project
+  schema: ~
 name: path-project
 class_name: Model
 properties: {}
 children: []
-

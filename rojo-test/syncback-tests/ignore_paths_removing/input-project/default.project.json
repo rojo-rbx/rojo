@@ -1,0 +1,14 @@
+{
+  "name": "ignore_paths_removing",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$path": "src"
+    }
+  },
+  "syncbackRules": {
+    "ignorePaths": [
+      "*.luau"
+    ]
+  }
+}

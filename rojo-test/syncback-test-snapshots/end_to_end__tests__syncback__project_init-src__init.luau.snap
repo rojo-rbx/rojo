@@ -1,0 +1,5 @@
+---
+source: tests/tests/syncback.rs
+expression: src/init.luau
+---
+-- Project init script
