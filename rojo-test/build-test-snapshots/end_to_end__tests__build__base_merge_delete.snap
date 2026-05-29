@@ -1,0 +1,29 @@
+---
+source: tests/tests/build.rs
+assertion_line: 112
+expression: contents
+---
+<roblox version="4">
+  <Item class="ReplicatedStorage" referent="0">
+    <Properties>
+      <string name="Name">ReplicatedStorage</string>
+    </Properties>
+    <Item class="ModuleScript" referent="1">
+      <Properties>
+        <string name="Name">Hello</string>
+        <string name="Source"><![CDATA[-- hello from rojo
+]]></string>
+      </Properties>
+    </Item>
+  </Item>
+  <Item class="Workspace" referent="2">
+    <Properties>
+      <string name="Name">Workspace</string>
+    </Properties>
+    <Item class="Part" referent="3">
+      <Properties>
+        <string name="Name">PreservedPart</string>
+      </Properties>
+    </Item>
+  </Item>
+</roblox>

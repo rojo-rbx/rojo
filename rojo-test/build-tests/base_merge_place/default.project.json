@@ -1,0 +1,11 @@
+{
+  "name": "base_merge_place",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "Hello": {
+        "$path": "src/Hello.luau"
+      }
+    }
+  }
+}
