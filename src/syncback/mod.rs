@@ -301,6 +301,7 @@ pub fn get_best_middleware(snapshot: &SyncbackSnapshot) -> Middleware {
     static JSON_MODEL_CLASSES: OnceLock<HashSet<&str>> = OnceLock::new();
     let json_model_classes = JSON_MODEL_CLASSES.get_or_init(|| {
         [
+            "Actor",
             "Sound",
             "SoundGroup",
             "Sky",
@@ -318,6 +319,11 @@ pub fn get_best_middleware(snapshot: &SyncbackSnapshot) -> Middleware {
             "ChatInputBarConfiguration",
             "BubbleChatConfiguration",
             "ChannelTabsConfiguration",
+            "RemoteEvent",
+            "UnreliableRemoteEvent",
+            "RemoteFunction",
+            "BindableEvent",
+            "BindableFunction",
         ]
         .into()
     });

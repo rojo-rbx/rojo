@@ -249,31 +249,8 @@ pub struct SerializeRequest {
 #[serde(rename_all = "camelCase")]
 pub struct SerializeResponse {
     pub session_id: SessionId,
-    pub model_contents: BufferEncode,
-}
-
-/// Using this struct we can force Roblox to JSONDecode this as a buffer.
-/// This is what Roblox's serde APIs use, so it saves a step in the plugin.
-#[derive(Debug, Serialize, Deserialize)]
-pub struct BufferEncode {
-    m: (),
-    t: Cow<'static, str>,
-    base64: String,
-}
-
-impl BufferEncode {
-    pub fn new(content: Vec<u8>) -> Self {
-        let base64 = data_encoding::BASE64.encode(&content);
-        Self {
-            m: (),
-            t: Cow::Borrowed("buffer"),
-            base64,
-        }
-    }
-
-    pub fn model(&self) -> &str {
-        &self.base64
-    }
+    #[serde(with = "serde_bytes")]
+    pub model_contents: Vec<u8>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
