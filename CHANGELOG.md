@@ -39,6 +39,7 @@ Making a new release? Simply add the new header with the version and date undern
 * Fixed a bug where the notification timeout thread would fail to cancel on unmount ([#1211])
 * Added a "Forget" option to the sync reminder notification to avoid being reminded for that place in the future ([#1215])
 * Improves relative path calculation for sourcemap generation to avoid issues with Windows UNC paths. ([#1217])
+* Instances that share a name and class are now robustly matched on resync by comparing their properties, instead of relying on child order alone. ([#1266])
 
 [#1176]: https://github.com/rojo-rbx/rojo/pull/1176
 [#1179]: https://github.com/rojo-rbx/rojo/pull/1179
@@ -48,6 +49,7 @@ Making a new release? Simply add the new header with the version and date undern
 [#1211]: https://github.com/rojo-rbx/rojo/pull/1211
 [#1215]: https://github.com/rojo-rbx/rojo/pull/1215
 [#1217]: https://github.com/rojo-rbx/rojo/pull/1217
+[#1266]: https://github.com/rojo-rbx/rojo/pull/1266
 
 ## [7.7.0-rc.1] (November 27th, 2025)
 
