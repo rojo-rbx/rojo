@@ -3,6 +3,9 @@
 	concrete instances and assigning them IDs.
 ]]
 
+local Packages = script.Parent.Parent.Parent.Packages
+local Log = require(Packages.Log)
+
 local invariant = require(script.Parent.Parent.invariant)
 local countMatchingProperties = require(script.Parent.countMatchingProperties)
 
@@ -15,7 +18,7 @@ local countMatchingProperties = require(script.Parent.countMatchingProperties)
 -- group regardless of how large the group is.
 local MAX_CANDIDATES_TO_SCORE = 32
 
-local function hydrate(instanceMap, virtualInstances, rootId, rootInstance)
+local function hydrateInner(stats, instanceMap, virtualInstances, rootId, rootInstance)
 	local virtualInstance = virtualInstances[rootId]
 
 	if virtualInstance == nil then
@@ -23,6 +26,7 @@ local function hydrate(instanceMap, virtualInstances, rootId, rootInstance)
 	end
 
 	instanceMap:insert(rootId, rootInstance)
+	stats.hydrated += 1
 
 	local existingChildren = rootInstance:GetChildren()
 
@@ -67,6 +71,13 @@ local function hydrate(instanceMap, virtualInstances, rootId, rootInstance)
 		local bucketsByClassName = buckets[virtualChild.Name]
 		local bucket = bucketsByClassName and bucketsByClassName[virtualChild.ClassName]
 		if bucket == nil then
+			-- No existing instance matches; diff will mark this id for creation.
+			Log.trace(
+				"hydrate: no existing instance matches {} ({}) for id {}",
+				virtualChild.Name,
+				virtualChild.ClassName,
+				childId
+			)
 			continue
 		end
 
@@ -79,6 +90,13 @@ local function hydrate(instanceMap, virtualInstances, rootId, rootInstance)
 			bucket.cursor += 1
 		end
 		if bucket.cursor > #instances then
+			-- Every matching instance has already been paired with an earlier id.
+			Log.trace(
+				"hydrate: no unpaired instance left for {} ({}) for id {}",
+				virtualChild.Name,
+				virtualChild.ClassName,
+				childId
+			)
 			continue
 		end
 
@@ -96,6 +114,14 @@ local function hydrate(instanceMap, virtualInstances, rootId, rootInstance)
 			-- Too many to score affordably; take the earliest in child order,
 			-- reproducing the original Name + ClassName behavior.
 			match = instances[bucket.cursor]
+			Log.trace(
+				"hydrate: {} candidates named {} ({}) exceeds the scoring cap of {}; matching id {} by child order",
+				remaining,
+				virtualChild.Name,
+				virtualChild.ClassName,
+				MAX_CANDIDATES_TO_SCORE,
+				childId
+			)
 		else
 			-- Collect the (at most `remaining`) unvisited candidates.
 			local candidates = {}
@@ -121,12 +147,42 @@ local function hydrate(instanceMap, virtualInstances, rootId, rootInstance)
 						match = childInstance
 					end
 				end
+
+				stats.ambiguousGroups += 1
+				stats.candidatesScored += #candidates
+				Log.trace(
+					"hydrate: disambiguated {} candidates named {} ({}) for id {} by property match (best score {})",
+					#candidates,
+					virtualChild.Name,
+					virtualChild.ClassName,
+					childId,
+					bestScore
+				)
 			end
 		end
 
 		visited[match] = true
-		hydrate(instanceMap, virtualInstances, childId, match)
+		hydrateInner(stats, instanceMap, virtualInstances, childId, match)
 	end
+end
+
+local function hydrate(instanceMap, virtualInstances, rootId, rootInstance)
+	-- Tallies of the work hydration did, surfaced in a single debug log below so
+	-- the cost of property-based disambiguation is visible without per-node spam.
+	local stats = {
+		hydrated = 0,
+		ambiguousGroups = 0,
+		candidatesScored = 0,
+	}
+
+	hydrateInner(stats, instanceMap, virtualInstances, rootId, rootInstance)
+
+	Log.debug(
+		"Hydrated {} instances ({} ambiguous name+class groups, {} candidates scored)",
+		stats.hydrated,
+		stats.ambiguousGroups,
+		stats.candidatesScored
+	)
 end
 
 return hydrate
