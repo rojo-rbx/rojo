@@ -7,12 +7,13 @@ use serde::{ser::SerializeSeq, Serialize, Serializer};
 
 /// Converts the provided value into a String with all directory separators
 /// converted into `/`.
-///
-/// Paths that contain invalid Unicode are converted lossily (invalid sequences
-/// become the replacement character), since such paths cannot be represented
-/// faithfully in a UTF-8 string regardless.
 pub fn display_absolute<T: AsRef<Path>>(path: T) -> String {
-    path.as_ref().to_string_lossy().replace('\\', "/")
+    let as_str = path
+        .as_ref()
+        .as_os_str()
+        .to_str()
+        .expect("Invalid Unicode in file path, cannot serialize");
+    as_str.replace('\\', "/")
 }
 
 /// A serializer for serde that serialize a value with all directory separators
