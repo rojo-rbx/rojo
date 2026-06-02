@@ -53,22 +53,22 @@ If your build fails with "Error: failed to open file `D:\code\rojo\plugin\module
 Run the command and try building again: `git submodule update --init --recursive`.
 
 ## Pushing a Rojo Release
-The Rojo release process is pretty manual right now. If you need to do it, here's how:
+The Rojo release process is driven by the GitHub Actions release workflow. If you need to do it, here's how:
 
 1. Bump server version in [`Cargo.toml`](Cargo.toml)
-2. Bump plugin version in [`plugin/src/Config.lua`](plugin/src/Config.lua)
-3. Run `cargo test` to update `Cargo.lock` and run tests
+2. Bump plugin version in [`plugin/Version.txt`](plugin/Version.txt)
+   * The build checks that the Cargo and plugin versions match.
+3. Run `cargo test` to update `Cargo.lock` after the version bump and run tests
 4. Update [`CHANGELOG.md`](CHANGELOG.md)
 5. Commit!
     * `git add . && git commit -m "Release vX.Y.Z"`
 6. Tag the commit
     * `git tag vX.Y.Z`
-7. Publish the CLI
-    * `cargo publish`
-8. Publish the Plugin
-    * `cargo run -- upload plugin --asset_id 6415005344`
-9. Push commits and tags
+7. Push commits and tags
     * `git push && git push --tags`
+8. Wait for the GitHub Actions release workflow to create the draft release and upload CLI/plugin artifacts
+9. Publish the CLI crate
+    * `cargo publish`
 10. Copy GitHub release content from previous release
     * Update the leading text with a summary about the release
     * Paste the changelog notes (as-is!) from [`CHANGELOG.md`](CHANGELOG.md)
