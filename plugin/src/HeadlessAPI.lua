@@ -415,8 +415,21 @@ function API.new(app)
 		Type = "Method",
 		Description = "Gets a Rojo setting",
 	}
+
+	-- We only allow reading the sync-related behaviors
+	-- to allow plugins to adapt/match their behavior
+	local allowedSettings = {
+		twoWaySync = true,
+		autoReconnect = true,
+		enableSyncFallback = true,
+		autoConnectPlaytestServer = true,
+		playSounds = true,
+		logLevel = true,
+	}
+
 	function Rojo:GetSetting(setting: string): any
 		assert(type(setting) == "string", "Setting must be type `string`")
+		assert(allowedSettings[setting], `Setting '{setting}' is not allowed to be read by third-party plugins`)
 
 		return Settings:get(setting)
 	end
