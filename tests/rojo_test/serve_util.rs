@@ -229,6 +229,16 @@ impl TestServeSession {
         ids: &[Ref],
         session_id: SessionId,
     ) -> Result<SerializeResponse, reqwest::Error> {
+        let body = self.post_api_serialize(ids, session_id)?.bytes()?;
+
+        Ok(deserialize_msgpack(&body).expect("Server returned malformed response"))
+    }
+
+    pub fn post_api_serialize(
+        &self,
+        ids: &[Ref],
+        session_id: SessionId,
+    ) -> Result<reqwest::blocking::Response, reqwest::Error> {
         let client = reqwest::blocking::Client::new();
         let url = format!("http://localhost:{}/api/serialize", self.port);
         let body = serialize_msgpack(&SerializeRequest {
@@ -237,9 +247,7 @@ impl TestServeSession {
         })
         .unwrap();
 
-        let body = client.post(url).body(body).send()?.bytes()?;
-
-        Ok(deserialize_msgpack(&body).expect("Server returned malformed response"))
+        client.post(url).body(body).send()
     }
 }
 

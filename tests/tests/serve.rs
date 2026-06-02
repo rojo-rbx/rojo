@@ -1,6 +1,8 @@
 use std::fs;
 
 use insta::{assert_snapshot, assert_yaml_snapshot, with_settings};
+use rbx_dom_weak::types::Ref;
+use reqwest::StatusCode;
 use tempfile::tempdir;
 
 use crate::rojo_test::{
@@ -656,6 +658,20 @@ fn meshpart_with_id() {
 
         let model = serialize_to_xml_model(&serialize_response, &redactions);
         assert_snapshot!("meshpart_with_id_serialize_model", model);
+    });
+}
+
+#[test]
+fn serialize_missing_id() {
+    run_serve_test("empty", |session, _| {
+        let info = session.get_api_rojo().unwrap();
+        let missing_id = Ref::new();
+
+        let response = session
+            .post_api_serialize(&[missing_id], info.session_id)
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
     });
 }
 
