@@ -195,7 +195,7 @@ struct LocalizationEntry<'a> {
 /// https://github.com/BurntSushi/rust-csv/issues/151
 ///
 /// This function operates in one step in order to minimize data-copying.
-fn convert_localization_csv(contents: &[u8]) -> Result<String, csv::Error> {
+fn convert_localization_csv(contents: &[u8]) -> anyhow::Result<String> {
     let mut reader = csv::Reader::from_reader(contents);
 
     let headers = reader.headers()?.clone();
@@ -237,7 +237,7 @@ fn convert_localization_csv(contents: &[u8]) -> Result<String, csv::Error> {
     }
 
     let encoded =
-        serde_json::to_string(&entries).expect("Could not encode JSON for localization table");
+        serde_json::to_string(&entries).context("Could not encode JSON for localization table")?;
 
     Ok(encoded)
 }

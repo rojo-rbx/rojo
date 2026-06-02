@@ -18,6 +18,7 @@ local PatchSet = require(script.Parent.PatchSet)
 local Reconciler = require(script.Parent.Reconciler)
 local strict = require(script.Parent.strict)
 local Settings = require(script.Parent.Settings)
+local orderSwaps = require(script.Parent.orderSwaps)
 
 local Status = strict("Session.Status", {
 	NotStarted = "NotStarted",
@@ -320,6 +321,14 @@ function ServeSession:__replaceInstances(idList)
 		return false
 	end
 
+	-- Roblox appends to GetChildren() on every reparent, so the order in which
+	-- we re-parent replacements determines their final sibling order.
+	-- We process ancestors before descendants (so each replacement's
+	-- parent already exists when we re-parent it) and siblings in their original
+	-- GetChildren() order. Because the loop below moves the old instance's
+	-- children into the replacement *before* re-parenting the replacement, this
+	-- rebuilds GetChildren() exactly as it was before the swap.
+	local swaps = {}
 	for id, replacement in replacements do
 		local oldInstance = self.__instanceMap.fromIds[id]
 		if not oldInstance then
@@ -327,6 +336,16 @@ function ServeSession:__replaceInstances(idList)
 			Log.warn("Instance {} not found in InstanceMap during sync replacement", id)
 			continue
 		end
+
+		table.insert(swaps, {
+			id = id,
+			replacement = replacement,
+			oldInstance = oldInstance,
+		})
+	end
+
+	for _, swap in orderSwaps(swaps) do
+		local id, replacement, oldInstance = swap.id, swap.replacement, swap.oldInstance
 
 		self.__instanceMap:insert(id, replacement)
 		Log.trace("Swapping Instance {} out via api/models/ endpoint", id)
