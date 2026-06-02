@@ -39,7 +39,7 @@ Making a new release? Simply add the new header with the version and date undern
 * Fixed a bug where the notification timeout thread would fail to cancel on unmount ([#1211])
 * Added a "Forget" option to the sync reminder notification to avoid being reminded for that place in the future ([#1215])
 * Improves relative path calculation for sourcemap generation to avoid issues with Windows UNC paths. ([#1217])
-* Add support for gitignore-style negation in globIgnorePaths ([#1256])
+* Add support for gitignore-style negation in `globIgnorePaths` and syncback's `ignorePaths` ([#1256])
 * Fixed the sync fallback scrambling sibling order; replacements are now re-parented ancestors-first and in their original child order. ([#1265])
 * Instances that share a name and class are now robustly matched on resync by comparing their properties, instead of relying on child order alone. ([#1266])
 * Rojo now reports a clear error instead of panicking in several cases, including when the `serve` port is already in use, when a synced file is read-only or locked, when the filesystem watcher can't be created, and when the working directory is inaccessible. ([#1267])
