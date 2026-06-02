@@ -75,10 +75,10 @@ impl BuildCommand {
             _ => unreachable!(),
         };
 
-        let project_path = resolve_path(&self.project);
+        let project_path = resolve_path(&self.project)?;
 
         log::trace!("Constructing in-memory filesystem");
-        let vfs = Vfs::new_default();
+        let vfs = Vfs::new_default()?;
         vfs.set_watch_enabled(self.watch);
 
         let session = ServeSession::new(vfs, project_path)?;
@@ -87,11 +87,16 @@ impl BuildCommand {
         write_model(&session, &output_path, output_kind)?;
 
         if self.watch {
-            let rt = Runtime::new().unwrap();
+            let rt = Runtime::new().context("Failed to start the async runtime for watch mode")?;
 
             loop {
                 let receiver = session.message_queue().subscribe(cursor);
-                let (new_cursor, _patch_set) = rt.block_on(receiver).unwrap();
+                let (new_cursor, _patch_set) = match rt.block_on(receiver) {
+                    Ok(message) => message,
+                    // The message queue was dropped, so there is nothing left
+                    // to watch. Stop watching gracefully.
+                    Err(_) => break,
+                };
                 cursor = new_cursor;
 
                 write_model(&session, &output_path, output_kind)?;
