@@ -35,9 +35,9 @@ pub struct ServeCommand {
 
 impl ServeCommand {
     pub fn run(self, global: GlobalOptions) -> anyhow::Result<()> {
-        let project_path = resolve_path(&self.project);
+        let project_path = resolve_path(&self.project)?;
 
-        let vfs = Vfs::new_default();
+        let vfs = Vfs::new_default()?;
 
         let session = Arc::new(ServeSession::new(vfs, project_path)?);
 
@@ -53,8 +53,9 @@ impl ServeCommand {
 
         let server = LiveServer::new(session);
 
-        let _ = show_start_message(ip, port, global.color.into());
-        server.start((ip, port).into());
+        server.start((ip, port).into(), || {
+            let _ = show_start_message(ip, port, global.color.into());
+        })?;
 
         Ok(())
     }

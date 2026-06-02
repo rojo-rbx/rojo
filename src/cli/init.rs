@@ -9,7 +9,7 @@ use std::{
     io::{self, Write},
 };
 
-use anyhow::{bail, format_err};
+use anyhow::{bail, format_err, Context};
 use clap::Parser;
 use fs_err as fs;
 use fs_err::OpenOptions;
@@ -42,9 +42,9 @@ pub struct InitCommand {
 
 impl InitCommand {
     pub fn run(self) -> anyhow::Result<()> {
-        let template = self.kind.template();
+        let template = self.kind.template()?;
 
-        let base_path = resolve_path(&self.path);
+        let base_path = resolve_path(&self.path)?;
         fs::create_dir_all(&base_path)?;
 
         let canonical = fs::canonicalize(&base_path)?;
@@ -128,7 +128,7 @@ pub enum InitKind {
 }
 
 impl InitKind {
-    fn template(&self) -> InMemoryFs {
+    fn template(&self) -> anyhow::Result<InMemoryFs> {
         let template_path = match self {
             Self::Place => "place",
             Self::Model => "model",
@@ -136,20 +136,24 @@ impl InitKind {
         };
 
         let snapshot: VfsSnapshot = bincode::deserialize(TEMPLATE_BINCODE)
-            .expect("Rojo's templates were not properly packed into Rojo's binary");
+            .context("Rojo's templates were not properly packed into Rojo's binary. This is a bug in Rojo; please file an issue.")?;
 
-        if let VfsSnapshot::Dir { mut children } = snapshot {
-            if let Some(template) = children.remove(template_path) {
-                let mut fs = InMemoryFs::new();
-                fs.load_snapshot("", template)
-                    .expect("loading a template in memory should never fail");
-                fs
-            } else {
-                panic!("template for project type {:?} is missing", self)
-            }
-        } else {
-            panic!("Rojo's templates were packed as a file instead of a directory")
-        }
+        let VfsSnapshot::Dir { mut children } = snapshot else {
+            bail!("Rojo's templates were packed as a file instead of a directory. This is a bug in Rojo; please file an issue.");
+        };
+
+        let template = children.remove(template_path).ok_or_else(|| {
+            format_err!(
+                "The template for project type {:?} is missing. This is a bug in Rojo; please file an issue.",
+                self
+            )
+        })?;
+
+        let mut fs = InMemoryFs::new();
+        fs.load_snapshot("", template)
+            .context("Failed to load Rojo's bundled template into memory")?;
+
+        Ok(fs)
     }
 }
 

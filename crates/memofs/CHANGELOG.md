@@ -2,6 +2,9 @@
 
 ## Unreleased Changes
 * Added `Vfs::canonicalize`. [#1201]
+* **Breaking:** `StdBackend::new` and `Vfs::new_default` now return `io::Result`, so a failure to create the filesystem watcher is reported as an error instead of panicking. The `Default` implementation for `StdBackend` has been removed as a result. [#1267]
+
+[#1267]: https://github.com/rojo-rbx/rojo/pull/1267
 
 ## 0.3.1 (2025-11-27)
 * Added `Vfs::exists`. [#1169]

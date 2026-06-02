@@ -17,9 +17,9 @@ pub struct StdBackend {
 }
 
 impl StdBackend {
-    pub fn new() -> StdBackend {
+    pub fn new() -> io::Result<StdBackend> {
         let (notify_tx, notify_rx) = mpsc::channel();
-        let watcher = watcher(notify_tx, Duration::from_millis(50)).unwrap();
+        let watcher = watcher(notify_tx, Duration::from_millis(50)).map_err(io::Error::other)?;
 
         let (tx, rx) = crossbeam_channel::unbounded();
 
@@ -46,11 +46,11 @@ impl StdBackend {
             Result::<(), crossbeam_channel::SendError<VfsEvent>>::Ok(())
         });
 
-        Self {
+        Ok(Self {
             watcher,
             watcher_receiver: rx,
             watches: HashSet::new(),
-        }
+        })
     }
 }
 
@@ -132,11 +132,5 @@ impl VfsBackend for StdBackend {
     fn unwatch(&mut self, path: &Path) -> io::Result<()> {
         self.watches.remove(path);
         self.watcher.unwatch(path).map_err(io::Error::other)
-    }
-}
-
-impl Default for StdBackend {
-    fn default() -> Self {
-        Self::new()
     }
 }

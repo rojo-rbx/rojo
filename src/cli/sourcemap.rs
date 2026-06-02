@@ -5,6 +5,7 @@ use std::{
     path::{self, Path, PathBuf},
 };
 
+use anyhow::Context;
 use clap::Parser;
 use fs_err::File;
 use memofs::Vfs;
@@ -71,10 +72,10 @@ pub struct SourcemapCommand {
 
 impl SourcemapCommand {
     pub fn run(self) -> anyhow::Result<()> {
-        let project_path = fs_err::canonicalize(resolve_path(&self.project))?;
+        let project_path = fs_err::canonicalize(resolve_path(&self.project)?)?;
 
         log::trace!("Constructing filesystem with StdBackend");
-        let vfs = Vfs::new_default();
+        let vfs = Vfs::new_default()?;
         vfs.set_watch_enabled(self.watch);
 
         log::trace!("Setting up session for sourcemap generation");
@@ -100,11 +101,16 @@ impl SourcemapCommand {
 
         if self.watch {
             log::trace!("Setting up runtime for watch mode");
-            let rt = Runtime::new().unwrap();
+            let rt = Runtime::new().context("Failed to start the async runtime for watch mode")?;
 
             loop {
                 let receiver = session.message_queue().subscribe(cursor);
-                let (new_cursor, patch_set) = rt.block_on(receiver).unwrap();
+                let (new_cursor, patch_set) = match rt.block_on(receiver) {
+                    Ok(message) => message,
+                    // The message queue was dropped, so there is nothing left
+                    // to watch. Stop watching gracefully.
+                    Err(_) => break,
+                };
                 cursor = new_cursor;
 
                 if patch_set_affects_sourcemap(&session, &patch_set, filter) {
