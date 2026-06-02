@@ -87,6 +87,25 @@ fn show_start_message(bind_address: IpAddr, port: u16, color: ColorChoice) -> io
 
     writeln!(&mut buffer)?;
 
+    if !bind_address.is_loopback() {
+        let mut warning = ColorSpec::new();
+        warning.set_fg(Some(Color::Yellow)).set_bold(true);
+
+        buffer.set_color(&warning)?;
+        writeln!(
+            &mut buffer,
+            "WARNING: This server is bound to {address_string}, which is reachable from the \
+             network.\n\
+             The serve API is unauthenticated, so anyone who can reach {address_string}:{port} \
+             can read\n\
+             and modify your project's source. Prefer binding to localhost and tunneling (e.g. \
+             SSH,\n\
+             Tailscale, or WireGuard) when you need remote access."
+        )?;
+        buffer.set_color(&ColorSpec::new())?;
+        writeln!(&mut buffer)?;
+    }
+
     buffer.set_color(&ColorSpec::new())?;
     write!(&mut buffer, "Visit ")?;
 

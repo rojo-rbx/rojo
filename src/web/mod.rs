@@ -5,6 +5,7 @@
 mod api;
 mod assets;
 pub mod interface;
+mod origin;
 mod ui;
 mod util;
 
@@ -14,7 +15,7 @@ use std::sync::Arc;
 
 use anyhow::Context;
 use hyper::{
-    server::Server,
+    server::{conn::AddrStream, Server},
     service::{make_service_fn, service_fn},
     Body, Request,
 };
@@ -38,17 +39,29 @@ impl LiveServer {
     /// after binding can no longer fail (e.g. due to the port being in use).
     pub fn start(self, address: SocketAddr, on_listening: impl FnOnce()) -> anyhow::Result<()> {
         let serve_session = Arc::clone(&self.serve_session);
+        let allowed_hosts = origin::allowed_hosts(address.ip(), address.port());
 
-        let make_service = make_service_fn(move |_conn| {
+        let make_service = make_service_fn(move |conn: &AddrStream| {
             let serve_session = Arc::clone(&serve_session);
+            let allowed_hosts = allowed_hosts.clone();
+            let remote_addr = conn.remote_addr();
 
-            async {
+            async move {
                 let service = move |req: Request<Body>| {
                     let serve_session = Arc::clone(&serve_session);
+                    let allowed_hosts = allowed_hosts.clone();
 
                     async move {
+                        // Reject cross-origin requests before doing any work, to
+                        // defend the local server against DNS rebinding.
+                        if let Some(response) =
+                            origin::check_request_origin(&req, allowed_hosts.as_ref())
+                        {
+                            return Ok::<_, Infallible>(response);
+                        }
+
                         if req.uri().path().starts_with("/api") {
-                            Ok::<_, Infallible>(api::call(serve_session, req).await)
+                            Ok::<_, Infallible>(api::call(serve_session, remote_addr, req).await)
                         } else {
                             Ok::<_, Infallible>(ui::call(serve_session, req).await)
                         }
