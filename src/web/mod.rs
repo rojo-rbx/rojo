@@ -65,7 +65,7 @@ impl LiveServer {
             .with_context(|| {
                 format!(
                     "Could not start the Rojo server on {address}.\n\
-                     The address may already be in use \u{2014} another Rojo server might already \
+                     The address may already be in use or reserved. Another Rojo server might already \
                      be running, or another program may be using that port.\n\
                      You can pick a different port with the --port option."
                 )
