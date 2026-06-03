@@ -34,12 +34,20 @@ impl LiveServer {
 
     /// Starts the server on the given address, blocking until it stops.
     ///
+    /// `allowed_hosts` are extra `Host`/`Origin` values to accept in addition to
+    /// localhost and the bind address (see [`origin::allowed_hosts`]).
+    ///
     /// `on_listening` is invoked once the server has successfully bound to the
     /// address, so callers can defer printing any "listening" message until
     /// after binding can no longer fail (e.g. due to the port being in use).
-    pub fn start(self, address: SocketAddr, on_listening: impl FnOnce()) -> anyhow::Result<()> {
+    pub fn start(
+        self,
+        address: SocketAddr,
+        allowed_hosts: Vec<String>,
+        on_listening: impl FnOnce(),
+    ) -> anyhow::Result<()> {
         let serve_session = Arc::clone(&self.serve_session);
-        let allowed_hosts = origin::allowed_hosts(address.ip(), address.port());
+        let allowed_hosts = origin::allowed_hosts(address.ip(), address.port(), &allowed_hosts);
 
         let make_service = make_service_fn(move |conn: &AddrStream| {
             let serve_session = Arc::clone(&serve_session);

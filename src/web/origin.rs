@@ -29,6 +29,13 @@
 //! does nothing against a hostile peer already on the LAN, who can reach the
 //! unauthenticated API directly. Both are the network-exposure risk the startup
 //! warning addresses, not something the `Host` check is meant to cover.
+//!
+//! The allowlist can be widened with extra hosts (the `--allowed-hosts` CLI
+//! option or a project's `serveAllowedHosts`), for example a hostname like
+//! `mypc.lan` for reaching a network-exposed server by name. Listing any extra
+//! host also turns enforcement back on for an unspecified or public bind that
+//! would otherwise disable it, restricting that bind to localhost, the bind IP,
+//! and the listed hosts.
 
 use std::net::IpAddr;
 
@@ -45,16 +52,23 @@ use crate::web::util::response;
 pub struct AllowedHosts {
     port: u16,
     /// The bind IP accepted in addition to `localhost`/loopback, set only for a
-    /// private (LAN) bind. `None` for a loopback bind, which accepts localhost
-    /// and loopback literals only.
+    /// private (LAN) bind or a specific public bind that has extra hosts. `None`
+    /// for a loopback or unspecified bind, which has no single address to add.
     bind_ip: Option<IpAddr>,
+    /// Extra `Host`/`Origin` values the user explicitly allowed, via the
+    /// `--allowed-hosts` option or a project's `serveAllowedHosts`. These are
+    /// hostnames such as `mypc.lan`, or IP literals, accepted in addition to
+    /// localhost and the bind IP. Each entry is already passed through
+    /// [`normalize_host`].
+    extra_hosts: Vec<String>,
 }
 
 impl AllowedHosts {
     /// Returns whether the given host and optional port are allowed. The host is
-    /// accepted if it is `localhost`, a loopback IP literal, or (on a private
-    /// bind) the exact bind IP. A request with no explicit port is accepted (the
-    /// host already has to be one we recognize).
+    /// accepted if it is `localhost`, a loopback IP literal, (on a private or
+    /// specific public bind) the exact bind IP, or one of the explicitly allowed
+    /// extra hosts. A request with no explicit port is accepted (the host
+    /// already has to be one we recognize).
     fn allows(&self, host: &str, port: Option<u16>) -> bool {
         let host = normalize_host(host);
         let host_ok = host.eq_ignore_ascii_case("localhost")
@@ -62,25 +76,62 @@ impl AllowedHosts {
                 .parse::<IpAddr>()
                 .ok()
                 .map(canonical)
-                .is_some_and(|ip| ip.is_loopback() || self.bind_ip == Some(ip));
+                .is_some_and(|ip| ip.is_loopback() || self.bind_ip == Some(ip))
+            || self.allows_extra(host);
 
         host_ok && port.is_none_or(|port| port == self.port)
     }
+
+    /// Returns whether `host` matches one of the explicitly allowed extra hosts.
+    /// Entries that are IP literals are compared as addresses, so equivalent
+    /// forms (such as an IPv4-mapped IPv6 literal) match; everything else is
+    /// compared as a case-insensitive hostname.
+    fn allows_extra(&self, host: &str) -> bool {
+        let host_ip = host.parse::<IpAddr>().ok().map(canonical);
+        self.extra_hosts.iter().any(|allowed| {
+            match (host_ip, allowed.parse::<IpAddr>().map(canonical)) {
+                (Some(host_ip), Ok(allowed_ip)) => host_ip == allowed_ip,
+                _ => host.eq_ignore_ascii_case(allowed),
+            }
+        })
+    }
 }
 
-/// Builds the allowlist for a given bind address. Returns `None` (validation
-/// disabled) when bound to an unspecified (`0.0.0.0`/`::`) or public address,
-/// where arbitrary hostnames may legitimately resolve to the server.
-pub fn allowed_hosts(bind: IpAddr, port: u16) -> Option<AllowedHosts> {
+/// Builds the allowlist for a given bind address and any extra allowed hosts.
+/// Returns `None` (validation disabled) when bound to an unspecified
+/// (`0.0.0.0`/`::`) or public address and no extra hosts were given, where
+/// arbitrary hostnames may legitimately resolve to the server. Listing extra
+/// hosts keeps validation on even for those binds.
+pub fn allowed_hosts(bind: IpAddr, port: u16, extra: &[String]) -> Option<AllowedHosts> {
+    let extra_hosts: Vec<String> = extra
+        .iter()
+        .map(|host| normalize_host(host.trim()).to_owned())
+        .filter(|host| !host.is_empty())
+        .collect();
+
     if bind.is_loopback() {
         Some(AllowedHosts {
             port,
             bind_ip: None,
+            extra_hosts,
         })
     } else if is_private_bind(bind) {
         Some(AllowedHosts {
             port,
             bind_ip: Some(canonical(bind)),
+            extra_hosts,
+        })
+    } else if !extra_hosts.is_empty() {
+        // The bind is unspecified or public, where validation is normally
+        // disabled. By listing explicit hosts the user has opted back into it,
+        // so we accept localhost, the bind IP (when it is a specific address),
+        // and those hosts. An unspecified bind (`0.0.0.0`/`::`) has no single
+        // address to add.
+        let bind_ip = (!bind.is_unspecified()).then(|| canonical(bind));
+        Some(AllowedHosts {
+            port,
+            bind_ip,
+            extra_hosts,
         })
     } else {
         None
@@ -213,12 +264,18 @@ mod test {
     const PORT: u16 = 34872;
 
     fn loopback_allowlist() -> Option<AllowedHosts> {
-        allowed_hosts(IpAddr::V4(Ipv4Addr::LOCALHOST), PORT)
+        allowed_hosts(IpAddr::V4(Ipv4Addr::LOCALHOST), PORT, &[])
     }
 
     /// An allowlist for a server bound to a specific private (LAN) address.
     fn private_allowlist() -> Option<AllowedHosts> {
-        allowed_hosts(IpAddr::V4(Ipv4Addr::new(192, 168, 1, 5)), PORT)
+        allowed_hosts(IpAddr::V4(Ipv4Addr::new(192, 168, 1, 5)), PORT, &[])
+    }
+
+    /// An allowlist for `bind` with the given extra allowed hosts.
+    fn allowlist_with_hosts(bind: IpAddr, hosts: &[&str]) -> Option<AllowedHosts> {
+        let hosts: Vec<String> = hosts.iter().map(|host| host.to_string()).collect();
+        allowed_hosts(bind, PORT, &hosts)
     }
 
     fn request_with(headers: &[(&'static str, &str)]) -> Request<Body> {
@@ -231,8 +288,8 @@ mod test {
 
     #[test]
     fn loopback_bind_enables_enforcement() {
-        assert!(allowed_hosts(IpAddr::V4(Ipv4Addr::LOCALHOST), PORT).is_some());
-        assert!(allowed_hosts(IpAddr::V6(Ipv6Addr::LOCALHOST), PORT).is_some());
+        assert!(allowed_hosts(IpAddr::V4(Ipv4Addr::LOCALHOST), PORT, &[]).is_some());
+        assert!(allowed_hosts(IpAddr::V6(Ipv6Addr::LOCALHOST), PORT, &[]).is_some());
     }
 
     #[test]
@@ -246,7 +303,7 @@ mod test {
             IpAddr::V6(Ipv6Addr::new(0xfe80, 0, 0, 0, 0, 0, 0, 1)), // link-local
         ] {
             assert!(
-                allowed_hosts(bind, PORT).is_some(),
+                allowed_hosts(bind, PORT, &[]).is_some(),
                 "private bind {bind} should enable enforcement"
             );
         }
@@ -261,7 +318,7 @@ mod test {
             IpAddr::V6(Ipv6Addr::new(0x2001, 0x4860, 0, 0, 0, 0, 0, 0x8888)), // public
         ] {
             assert!(
-                allowed_hosts(bind, PORT).is_none(),
+                allowed_hosts(bind, PORT, &[]).is_none(),
                 "bind {bind} should disable enforcement"
             );
         }
@@ -428,12 +485,89 @@ mod test {
     }
 
     #[test]
+    fn allowed_hosts_extend_the_allowlist() {
+        // A hostname listed as an allowed host is accepted on a loopback bind,
+        // with the usual port check still applied; an unlisted host is not.
+        let allowed = allowlist_with_hosts(IpAddr::V4(Ipv4Addr::LOCALHOST), &["mypc.lan"]);
+
+        let ok = request_with(&[("host", &format!("mypc.lan:{PORT}"))]);
+        assert!(check_request_origin(&ok, allowed.as_ref()).is_none());
+
+        let wrong_port = request_with(&[("host", "mypc.lan:1234")]);
+        assert!(check_request_origin(&wrong_port, allowed.as_ref()).is_some());
+
+        let other = request_with(&[("host", &format!("other.lan:{PORT}"))]);
+        assert!(check_request_origin(&other, allowed.as_ref()).is_some());
+    }
+
+    #[test]
+    fn allowed_hosts_apply_to_origin() {
+        let allowed = allowlist_with_hosts(IpAddr::V4(Ipv4Addr::LOCALHOST), &["mypc.lan"]);
+
+        let ok = request_with(&[
+            ("host", &format!("mypc.lan:{PORT}")),
+            ("origin", &format!("http://mypc.lan:{PORT}")),
+        ]);
+        assert!(check_request_origin(&ok, allowed.as_ref()).is_none());
+
+        let foreign_origin = request_with(&[
+            ("host", &format!("mypc.lan:{PORT}")),
+            ("origin", &format!("http://evil.com:{PORT}")),
+        ]);
+        assert!(check_request_origin(&foreign_origin, allowed.as_ref()).is_some());
+    }
+
+    #[test]
+    fn allowed_hosts_enable_enforcement_on_exposed_bind() {
+        // Binding to 0.0.0.0 normally disables validation, but listing a host
+        // turns it back on: localhost and the listed host are accepted while
+        // everything else is rejected.
+        let allowed = allowlist_with_hosts(IpAddr::V4(Ipv4Addr::UNSPECIFIED), &["mypc.lan"]);
+        assert!(allowed.is_some());
+
+        for host in [format!("mypc.lan:{PORT}"), format!("localhost:{PORT}")] {
+            let request = request_with(&[("host", &host)]);
+            assert!(
+                check_request_origin(&request, allowed.as_ref()).is_none(),
+                "host {host} should be allowed"
+            );
+        }
+
+        let evil = request_with(&[("host", "evil.com")]);
+        assert!(check_request_origin(&evil, allowed.as_ref()).is_some());
+    }
+
+    #[test]
+    fn allowed_hosts_on_public_bind_accept_the_bind_ip() {
+        // A specific public bind with an allowed host accepts localhost, the
+        // listed host, and the bind IP itself, but nothing else. (203.0.113.0/24
+        // is the TEST-NET-3 documentation range, treated here as a public IP.)
+        let bind = IpAddr::V4(Ipv4Addr::new(203, 0, 113, 5));
+        let allowed = allowlist_with_hosts(bind, &["mypc.lan"]);
+
+        for host in [
+            format!("203.0.113.5:{PORT}"),
+            format!("mypc.lan:{PORT}"),
+            format!("localhost:{PORT}"),
+        ] {
+            let request = request_with(&[("host", &host)]);
+            assert!(
+                check_request_origin(&request, allowed.as_ref()).is_none(),
+                "host {host} should be allowed"
+            );
+        }
+
+        let evil = request_with(&[("host", "evil.com")]);
+        assert!(check_request_origin(&evil, allowed.as_ref()).is_some());
+    }
+
+    #[test]
     fn disabled_allowlist_accepts_foreign_host() {
         for bind in [
             IpAddr::V4(Ipv4Addr::UNSPECIFIED),
             IpAddr::V4(Ipv4Addr::new(8, 8, 8, 8)),
         ] {
-            let allowed = allowed_hosts(bind, PORT);
+            let allowed = allowed_hosts(bind, PORT, &[]);
             let request = request_with(&[("host", "evil.com")]);
             assert!(
                 check_request_origin(&request, allowed.as_ref()).is_none(),

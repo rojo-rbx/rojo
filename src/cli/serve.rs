@@ -31,6 +31,14 @@ pub struct ServeCommand {
     /// it has none.
     #[clap(long)]
     pub port: Option<u16>,
+
+    /// Extra `Host`/`Origin` values the server will accept, beyond localhost and
+    /// the bind address (for example a hostname like `mypc.lan`). Repeat the
+    /// option or comma-separate to allow several. When given, this overrides the
+    /// project's `serveAllowedHosts`. Listing any host also turns on Host/Origin
+    /// validation for binds where it is otherwise off (such as `0.0.0.0`).
+    #[clap(long, value_delimiter = ',')]
+    pub allowed_hosts: Vec<String>,
 }
 
 impl ServeCommand {
@@ -51,9 +59,17 @@ impl ServeCommand {
             .or_else(|| session.project_port())
             .unwrap_or(DEFAULT_PORT);
 
+        // The CLI flag, when given, replaces the project's list rather than
+        // merging with it, matching how --address and --port override theirs.
+        let allowed_hosts = if self.allowed_hosts.is_empty() {
+            session.serve_allowed_hosts().to_vec()
+        } else {
+            self.allowed_hosts
+        };
+
         let server = LiveServer::new(session);
 
-        server.start((ip, port).into(), || {
+        server.start((ip, port).into(), allowed_hosts, || {
             let _ = show_start_message(ip, port, global.color.into());
         })?;
 
