@@ -359,16 +359,16 @@ impl ApiService {
         // Opening a file launches a local program, so it must never be reachable
         // by a remote client even when the server is bound to an exposed address.
         //
-        // `remote_addr` is the immediate peer, which is the strongest locality
-        // signal available: the legitimate caller is a sandboxed Roblox plugin
-        // whose only credential is being able to reach the port, so there is no
-        // secret to authenticate it with. A connection forwarded over loopback by
-        // an SSH/Tailscale tunnel or a local reverse proxy therefore appears local
-        // and is allowed. We treat that as delegated trust rather than a bypass:
-        // by deliberately standing up that tunnel/proxy the user has decided the
-        // remote end is trusted, and reachability is bounded by *that* hop's own
-        // authentication (SSH keys, Tailscale ACLs, ...). This gate's job is to
-        // stop direct, unauthenticated peers, which it does.
+        // `remote_addr` is the immediate peer, which is the best locality signal
+        // we have: the legitimate caller is a sandboxed Roblox plugin whose only
+        // credential is being able to reach the port, so there is no secret to
+        // authenticate it with. A connection forwarded over loopback by an
+        // SSH/Tailscale tunnel or a local reverse proxy therefore appears local
+        // and is allowed. That is delegated trust rather than a bypass: by
+        // standing up that tunnel or proxy the user has decided the remote end is
+        // trusted, and reachability is bounded by that hop's own authentication
+        // (e.g. SSH keys or Tailscale ACLs). This gate only stops direct,
+        // unauthenticated peers.
         if !self.remote_addr.ip().is_loopback() {
             return msgpack(
                 ErrorResponse::forbidden("/api/open is only available to local clients"),

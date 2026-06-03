@@ -247,9 +247,13 @@ impl TestServeSession {
     }
 
     /// Sends a GET to `/api/rojo` with the given extra request headers and
-    /// returns the response status code. Used to exercise the Host/Origin
-    /// allowlist that guards against DNS rebinding.
-    pub fn api_rojo_status_with_headers(&self, headers: &[(&str, &str)]) -> reqwest::StatusCode {
+    /// returns the full response. Used to exercise the Host/Origin allowlist that
+    /// guards against DNS rebinding, including asserting that a rejection reveals
+    /// nothing about the server.
+    pub fn api_rojo_response_with_headers(
+        &self,
+        headers: &[(&str, &str)],
+    ) -> reqwest::blocking::Response {
         let client = reqwest::blocking::Client::new();
         let url = format!("http://localhost:{}/api/rojo", self.port);
 
@@ -258,7 +262,7 @@ impl TestServeSession {
             request = request.header(*name, *value);
         }
 
-        request.send().expect("Failed to send request").status()
+        request.send().expect("Failed to send request")
     }
 
     /// Sends a POST to `/api/open/<id>` and returns the response status code.
