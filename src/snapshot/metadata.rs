@@ -8,7 +8,7 @@ use anyhow::Context;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    glob::Glob,
+    glob::{Glob, IgnorableGlob},
     path_serializer,
     project::ProjectNode,
     snapshot_middleware::{emit_legacy_scripts_default, Middleware},
@@ -222,18 +222,37 @@ pub struct PathIgnoreRule {
     pub base_path: PathBuf,
 
     /// The actual glob that can be matched against the input path.
-    pub glob: Glob,
+    pub glob: IgnorableGlob,
 }
 
 impl PathIgnoreRule {
-    pub fn passes<P: AsRef<Path>>(&self, path: P) -> bool {
+    pub fn matches<P: AsRef<Path>>(&self, path: P) -> bool {
         let path = path.as_ref();
 
         match path.strip_prefix(&self.base_path) {
-            Ok(suffix) => !self.glob.is_match(suffix),
-            Err(_) => true,
+            Ok(suffix) => self.glob.is_match(suffix),
+            Err(_) => false,
         }
     }
+
+    pub fn is_negation(&self) -> bool {
+        self.glob.is_negation()
+    }
+}
+
+/// Evaluates an ordered list of [`PathIgnoreRule`]s against a path using
+/// gitignore-style "last match wins" semantics: a path is ignored if the last
+/// rule whose pattern matches it is non-negated. Paths matched by no rule are
+/// not ignored.
+pub fn is_path_ignored<P: AsRef<Path>>(rules: &[PathIgnoreRule], path: P) -> bool {
+    let path = path.as_ref();
+    let mut ignored = false;
+    for rule in rules {
+        if rule.matches(path) {
+            ignored = !rule.is_negation();
+        }
+    }
+    ignored
 }
 
 /// Represents where a particular Instance or InstanceSnapshot came from.
