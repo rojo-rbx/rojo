@@ -139,8 +139,9 @@ pub fn allowed_hosts(bind: IpAddr, port: u16, extra: &[String]) -> Option<Allowe
 }
 
 /// Collapses an IPv4-mapped IPv6 address (`::ffff:192.168.0.1`) to its IPv4 form
-/// so it classifies and compares consistently with the bare IPv4 address.
-fn canonical(ip: IpAddr) -> IpAddr {
+/// so it classifies and compares consistently with the bare IPv4 address. Shared
+/// with the `/api/open` peer check so it recognizes a mapped loopback peer too.
+pub(crate) fn canonical(ip: IpAddr) -> IpAddr {
     match ip {
         IpAddr::V6(v6) => v6.to_ipv4_mapped().map(IpAddr::V4).unwrap_or(ip),
         v4 => v4,
@@ -472,6 +473,16 @@ mod test {
         let allowed = private_allowlist();
         let request = request_with(&[("host", &format!("[::ffff:192.168.1.5]:{PORT}"))]);
         assert!(check_request_origin(&request, allowed.as_ref()).is_none());
+    }
+
+    #[test]
+    fn canonical_collapses_ipv4_mapped_loopback() {
+        // The `/api/open` peer gate relies on this: an IPv4 loopback client
+        // reaching a dual-stack (`::`) bind arrives as `::ffff:127.0.0.1`, which
+        // is only recognized as loopback after canonicalization.
+        let mapped: IpAddr = "::ffff:127.0.0.1".parse().unwrap();
+        assert!(!mapped.is_loopback());
+        assert!(canonical(mapped).is_loopback());
     }
 
     #[test]

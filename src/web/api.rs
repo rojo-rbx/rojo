@@ -21,6 +21,7 @@ use crate::{
             ServerInfoResponse, SocketPacket, SocketPacketBody, SocketPacketType, SubscribeMessage,
             WriteRequest, WriteResponse, PROTOCOL_VERSION, SERVER_VERSION,
         },
+        origin::canonical,
         util::{deserialize_msgpack, msgpack, msgpack_ok, serialize_msgpack},
     },
     web_api::{
@@ -369,7 +370,11 @@ impl ApiService {
         // trusted, and reachability is bounded by that hop's own authentication
         // (e.g. SSH keys or Tailscale ACLs). This gate only stops direct,
         // unauthenticated peers.
-        if !self.remote_addr.ip().is_loopback() {
+        //
+        // An IPv4 client reaching a dual-stack (`::`) bind appears as an
+        // IPv4-mapped IPv6 peer (`::ffff:127.0.0.1`), so canonicalize to the bare
+        // IPv4 form before the loopback test, matching `origin`'s handling.
+        if !canonical(self.remote_addr.ip()).is_loopback() {
             return msgpack(
                 ErrorResponse::forbidden("/api/open is only available to local clients"),
                 StatusCode::FORBIDDEN,
