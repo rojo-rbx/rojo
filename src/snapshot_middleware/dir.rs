@@ -7,7 +7,9 @@ use anyhow::Context;
 use memofs::{DirEntry, Vfs};
 
 use crate::{
-    snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot, InstigatingSource},
+    snapshot::{
+        is_path_ignored, InstanceContext, InstanceMetadata, InstanceSnapshot, InstigatingSource,
+    },
     syncback::{hash_instance, FsSnapshot, SyncbackReturn, SyncbackSnapshot},
 };
 
@@ -41,12 +43,8 @@ pub fn snapshot_dir_no_meta(
     path: &Path,
     name: &str,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let passes_filter_rules = |child: &DirEntry| {
-        context
-            .path_ignore_rules
-            .iter()
-            .all(|rule| rule.passes(child.path()))
-    };
+    let passes_filter_rules =
+        |child: &DirEntry| !is_path_ignored(&context.path_ignore_rules, child.path());
 
     let mut snapshot_children = Vec::new();
 

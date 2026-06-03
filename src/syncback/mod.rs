@@ -21,7 +21,7 @@ use std::{
 };
 
 use crate::{
-    glob::Glob,
+    glob::{Glob, IgnorableGlob},
     snapshot::{InstanceWithMeta, RojoTree},
     snapshot_middleware::Middleware,
     syncback::ref_properties::{collect_referents, link_referents},
@@ -414,18 +414,18 @@ pub struct SyncbackRules {
 }
 
 impl SyncbackRules {
-    pub fn compile_globs(&self) -> anyhow::Result<Vec<Glob>> {
+    pub fn compile_globs(&self) -> anyhow::Result<Vec<IgnorableGlob>> {
         let mut globs = Vec::with_capacity(self.ignore_paths.len());
         let dir_ignore_paths = self.create_ignore_dir_paths.unwrap_or(true);
 
         for pattern in &self.ignore_paths {
-            let glob = Glob::new(pattern)
+            let glob = IgnorableGlob::new(pattern)
                 .with_context(|| format!("the pattern '{pattern}' is not a valid glob"))?;
             globs.push(glob);
 
             if dir_ignore_paths {
                 if let Some(dir_pattern) = pattern.strip_suffix("/**") {
-                    if let Ok(glob) = Glob::new(dir_pattern) {
+                    if let Ok(glob) = IgnorableGlob::new(dir_pattern) {
                         globs.push(glob)
                     }
                 }
@@ -436,7 +436,7 @@ impl SyncbackRules {
     }
 }
 
-fn is_valid_path(globs: &Option<Vec<Glob>>, base_path: &Path, path: &Path) -> bool {
+fn is_valid_path(globs: &Option<Vec<IgnorableGlob>>, base_path: &Path, path: &Path) -> bool {
     let git_glob = GIT_IGNORE_GLOB.get_or_init(|| Glob::new(".git/**").unwrap());
     let test_path = match path.strip_prefix(base_path) {
         Ok(suffix) => suffix,
@@ -446,10 +446,15 @@ fn is_valid_path(globs: &Option<Vec<Glob>>, base_path: &Path, path: &Path) -> bo
         return false;
     }
     if let Some(ref ignore_paths) = globs {
+        // Gitignore-style "last match wins"
+        let mut ignored = false;
         for glob in ignore_paths {
             if glob.is_match(test_path) {
-                return false;
+                ignored = !glob.is_negation();
             }
+        }
+        if ignored {
+            return false;
         }
     }
     true
@@ -536,5 +541,73 @@ fn strip_unknown_root_children(new: &mut WeakDom, old: &RojoTree) {
         }
         log::trace!("Pruning root child {} of class {}", child.name, child.class);
         new.destroy(child_ref);
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    fn rules(ignore_paths: &[&str], create_ignore_dir_paths: Option<bool>) -> SyncbackRules {
+        SyncbackRules {
+            ignore_trees: Vec::new(),
+            ignore_paths: ignore_paths.iter().map(|s| s.to_string()).collect(),
+            ignore_properties: IndexMap::new(),
+            sync_current_camera: None,
+            sync_unscriptable: None,
+            ignore_referents: None,
+            create_ignore_dir_paths,
+        }
+    }
+
+    #[test]
+    fn ignore_paths_negation() {
+        let globs = Some(
+            rules(&["**/*.lua", "!keep.lua"], Some(false))
+                .compile_globs()
+                .unwrap(),
+        );
+        let base = Path::new("/test");
+
+        // A later negation re-includes a path matched by an earlier pattern.
+        assert!(!is_valid_path(&globs, base, Path::new("/test/foo.lua")));
+        assert!(is_valid_path(&globs, base, Path::new("/test/keep.lua")));
+        // Paths matched by no rule are valid.
+        assert!(is_valid_path(&globs, base, Path::new("/test/plain.txt")));
+    }
+
+    #[test]
+    fn ignore_paths_negation_with_dir_expansion() {
+        // With `create_ignore_dir_paths`, a negated `foo/**` pattern should also
+        // re-include the `foo` directory itself, mirroring the file rule.
+        let globs = Some(
+            rules(&["**/*", "!keep/**"], Some(true))
+                .compile_globs()
+                .unwrap(),
+        );
+        let base = Path::new("/test");
+
+        assert!(!is_valid_path(&globs, base, Path::new("/test/drop/a.lua")));
+        assert!(is_valid_path(&globs, base, Path::new("/test/keep")));
+        assert!(is_valid_path(&globs, base, Path::new("/test/keep/a.lua")));
+    }
+
+    #[test]
+    fn ignore_paths_escaped_bang_is_literal() {
+        // `\!literal.lua` should ignore a file literally named `!literal.lua`
+        // rather than being parsed as a negation.
+        let globs = Some(
+            rules(&[r"\!literal.lua"], Some(false))
+                .compile_globs()
+                .unwrap(),
+        );
+        let base = Path::new("/test");
+
+        assert!(!globs.as_ref().unwrap()[0].is_negation());
+        assert!(!is_valid_path(
+            &globs,
+            base,
+            Path::new("/test/!literal.lua")
+        ));
     }
 }
