@@ -12,6 +12,7 @@ use std::convert::Infallible;
 use std::net::SocketAddr;
 use std::sync::Arc;
 
+use anyhow::Context;
 use hyper::{
     server::Server,
     service::{make_service_fn, service_fn},
@@ -30,7 +31,12 @@ impl LiveServer {
         LiveServer { serve_session }
     }
 
-    pub fn start(self, address: SocketAddr) {
+    /// Starts the server on the given address, blocking until it stops.
+    ///
+    /// `on_listening` is invoked once the server has successfully bound to the
+    /// address, so callers can defer printing any "listening" message until
+    /// after binding can no longer fail (e.g. due to the port being in use).
+    pub fn start(self, address: SocketAddr, on_listening: impl FnOnce()) -> anyhow::Result<()> {
         let serve_session = Arc::clone(&self.serve_session);
 
         let make_service = make_service_fn(move |_conn| {
@@ -53,9 +59,25 @@ impl LiveServer {
             }
         });
 
-        let rt = Runtime::new().unwrap();
+        let rt = Runtime::new().context("Failed to start the async runtime for the web server")?;
         let _guard = rt.enter();
-        let server = Server::bind(&address).serve(make_service);
-        rt.block_on(server).unwrap();
+        let server = Server::try_bind(&address)
+            .with_context(|| {
+                format!(
+                    "Could not start the Rojo server on {address}.\n\
+                     The address may already be in use or reserved. Another Rojo server might already \
+                     be running, or another program may be using that port.\n\
+                     You can pick a different port with the --port option."
+                )
+            })?
+            .serve(make_service);
+
+        // Binding succeeded, so it's now safe to tell the user we're listening.
+        on_listening();
+
+        rt.block_on(server)
+            .context("The Rojo web server encountered a fatal error")?;
+
+        Ok(())
     }
 }
