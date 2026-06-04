@@ -35,19 +35,13 @@ pub fn snapshot_json_model(
         format!("File is not a valid JSON model: {}", path.display())
     })?;
 
-    if let Some(top_level_name) = &instance.name {
-        let new_name = format!("{}.model.json", top_level_name);
+    // If the JSON has a name property, preserve it in metadata for syncback
+    let specified_name = instance.name.clone();
 
-        log::warn!(
-            "Model at path {} had a top-level Name field. \
-            This field has been ignored since Rojo 6.0.\n\
-            Consider removing this field and renaming the file to {}.",
-            new_name,
-            path.display()
-        );
+    // Use the name from JSON if present, otherwise fall back to filename-derived name
+    if instance.name.is_none() {
+        instance.name = Some(name.to_owned());
     }
-
-    instance.name = Some(name.to_owned());
 
     let id = instance.id.take().map(RojoRef::new);
     let schema = instance.schema.take();
@@ -62,7 +56,8 @@ pub fn snapshot_json_model(
         .relevant_paths(vec![vfs.canonicalize(path)?])
         .context(context)
         .specified_id(id)
-        .schema(schema);
+        .schema(schema)
+        .specified_name(specified_name);
 
     Ok(Some(snapshot))
 }
@@ -81,6 +76,7 @@ pub fn syncback_json_model<'sync>(
         // schemas will ever exist in one project for it to matter, but it
         // could have a performance cost.
         model.schema = old_inst.metadata().schema.clone();
+        model.name = old_inst.metadata().specified_name.clone();
     }
 
     Ok(SyncbackReturn {

@@ -1,0 +1,10 @@
+{
+  "name": "slugified_name",
+  "tree": {
+    "$className": "DataModel",
+    "Workspace": {
+      "$className": "Workspace",
+      "$path": "src"
+    }
+  }
+}

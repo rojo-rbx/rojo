@@ -1,0 +1,8 @@
+---
+source: tests/tests/syncback.rs
+assertion_line: 31
+expression: src/_Script/init.meta.json
+---
+{
+  "name": "/Script"
+}
