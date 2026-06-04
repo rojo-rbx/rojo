@@ -7,10 +7,10 @@ use tempfile::tempdir;
 
 use crate::rojo_test::{
     internable::InternAndRedact,
-    serve_util::{run_serve_test, serialize_to_xml_model},
+    serve_util::{deserialize_msgpack, run_serve_test, serialize_to_xml_model},
 };
 
-use librojo::web_api::SocketPacketType;
+use librojo::web_api::{SerializeResponse, SocketPacketType};
 
 #[test]
 fn empty() {
@@ -647,9 +647,13 @@ fn meshpart_with_id() {
             .find(|(_, inst)| inst.class_name == "ObjectValue")
             .unwrap();
 
-        let serialize_response = session
-            .get_api_serialize(&[*meshpart, *objectvalue], info.session_id)
+        let body = session
+            .post_api_serialize(&[*meshpart, *objectvalue], info.session_id)
+            .unwrap()
+            .bytes()
             .unwrap();
+        let serialize_response: SerializeResponse =
+            deserialize_msgpack(&body).expect("Server returned malformed response");
 
         // We don't assert a snapshot on the SerializeResponse because the model includes the
         // Refs from the DOM as names, which means it will obviously be different every time
@@ -689,9 +693,13 @@ fn forced_parent() {
             read_response.intern_and_redact(&mut redactions, root_id)
         );
 
-        let serialize_response = session
-            .get_api_serialize(&[root_id], info.session_id)
+        let body = session
+            .post_api_serialize(&[root_id], info.session_id)
+            .unwrap()
+            .bytes()
             .unwrap();
+        let serialize_response: SerializeResponse =
+            deserialize_msgpack(&body).expect("Server returned malformed response");
 
         assert_eq!(serialize_response.session_id, info.session_id);
 

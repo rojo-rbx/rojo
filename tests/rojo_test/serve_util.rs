@@ -224,16 +224,6 @@ impl TestServeSession {
         }
     }
 
-    pub fn get_api_serialize(
-        &self,
-        ids: &[Ref],
-        session_id: SessionId,
-    ) -> Result<SerializeResponse, reqwest::Error> {
-        let body = self.post_api_serialize(ids, session_id)?.bytes()?;
-
-        Ok(deserialize_msgpack(&body).expect("Server returned malformed response"))
-    }
-
     pub fn post_api_serialize(
         &self,
         ids: &[Ref],
@@ -262,7 +252,7 @@ fn serialize_msgpack<T: Serialize>(value: T) -> Result<Vec<u8>, rmp_serde::encod
     Ok(serialized)
 }
 
-fn deserialize_msgpack<'a, T: Deserialize<'a>>(
+pub fn deserialize_msgpack<'a, T: Deserialize<'a>>(
     input: &'a [u8],
 ) -> Result<T, rmp_serde::decode::Error> {
     let mut deserializer = rmp_serde::Deserializer::new(input).with_human_readable();
