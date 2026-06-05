@@ -43,6 +43,7 @@ Making a new release? Simply add the new header with the version and date undern
 * Fixed the sync fallback scrambling sibling order; replacements are now re-parented ancestors-first and in their original child order. ([#1265])
 * Instances that share a name and class are now robustly matched on resync by comparing their properties, instead of relying on child order alone. ([#1266])
 * Rojo now reports a clear error instead of panicking in several cases, including when the `serve` port is already in use, when a synced file is read-only or locked, when the filesystem watcher can't be created, and when the working directory is inaccessible. ([#1267])
+* Rojo now returns a structured error response instead of panicking when `serve` API request bodies fail to read. ([#1276])
 
 [#1176]: https://github.com/rojo-rbx/rojo/pull/1176
 [#1179]: https://github.com/rojo-rbx/rojo/pull/1179
@@ -56,6 +57,7 @@ Making a new release? Simply add the new header with the version and date undern
 [#1265]: https://github.com/rojo-rbx/rojo/pull/1265
 [#1266]: https://github.com/rojo-rbx/rojo/pull/1266
 [#1267]: https://github.com/rojo-rbx/rojo/pull/1267
+[#1276]: https://github.com/rojo-rbx/rojo/pull/1276
 
 ## [7.7.0-rc.1] (November 27th, 2025)
 
