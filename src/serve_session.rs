@@ -207,6 +207,10 @@ impl ServeSession {
         self.root_project.serve_address
     }
 
+    pub fn serve_allowed_hosts(&self) -> &[String] {
+        &self.root_project.serve_allowed_hosts
+    }
+
     pub fn root_dir(&self) -> &Path {
         self.root_project.folder_location()
     }
