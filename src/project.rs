@@ -106,6 +106,15 @@ pub struct Project {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub serve_address: Option<IpAddr>,
 
+    /// Additional `Host`/`Origin` header values that `rojo serve` will accept
+    /// beyond `localhost` and the bind address, such as a hostname like
+    /// `mypc.lan` used to reach a network-exposed server by name. Listing any
+    /// host also turns on `Host`/`Origin` validation for binds where it is
+    /// otherwise off (such as `0.0.0.0`). The `--allowed-hosts` CLI option
+    /// overrides this field when provided.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub serve_allowed_hosts: Vec<String>,
+
     /// Determines if Rojo should emit scripts with the appropriate `RunContext`
     /// for `*.client.lua` and `*.server.lua` files in the project instead of
     /// using `Script` and `LocalScript` Instances.
@@ -593,6 +602,41 @@ mod test {
         assert_eq!(project.sync_rules.len(), 2);
         assert!(project.sync_rules[0].include.is_match("data.data.json"));
         assert!(project.sync_rules[1].include.is_match("init.module.lua"));
+    }
+
+    #[test]
+    fn project_with_serve_allowed_hosts() {
+        let project_json = r#"{
+            "name": "TestProject",
+            "tree": { "$path": "src" },
+            "serveAllowedHosts": ["mypc.lan", "192.168.1.5"]
+        }"#;
+
+        let project = Project::load_from_slice(
+            project_json.as_bytes(),
+            PathBuf::from("/test/default.project.json"),
+            None,
+        )
+        .expect("Failed to parse project with serveAllowedHosts");
+
+        assert_eq!(project.serve_allowed_hosts, vec!["mypc.lan", "192.168.1.5"]);
+    }
+
+    #[test]
+    fn project_without_serve_allowed_hosts_defaults_to_empty() {
+        let project_json = r#"{
+            "name": "TestProject",
+            "tree": { "$path": "src" }
+        }"#;
+
+        let project = Project::load_from_slice(
+            project_json.as_bytes(),
+            PathBuf::from("/test/default.project.json"),
+            None,
+        )
+        .expect("Failed to parse project");
+
+        assert!(project.serve_allowed_hosts.is_empty());
     }
 
     #[test]

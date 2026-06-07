@@ -11,6 +11,74 @@ use crate::rojo_test::{
 use librojo::web_api::SocketPacketType;
 
 #[test]
+fn rejects_dns_rebinding_requests() {
+    run_serve_test("empty", |session, _redactions| {
+        let port = session.port();
+        let local_host = format!("localhost:{port}");
+
+        // A request carrying a local Host header is served normally.
+        assert_eq!(
+            session
+                .api_rojo_response_with_headers(&[("host", &local_host)])
+                .status(),
+            reqwest::StatusCode::OK,
+        );
+
+        // A request whose Host is a foreign hostname, as a DNS-rebound page
+        // would send, is rejected with a generic 404 that reveals nothing about
+        // the server.
+        assert_rejected(session.api_rojo_response_with_headers(&[("host", "evil.com")]));
+
+        // Even with a local Host, a present-but-foreign Origin is rejected.
+        let foreign_origin = format!("http://evil.com:{port}");
+        assert_rejected(
+            session.api_rojo_response_with_headers(&[
+                ("host", &local_host),
+                ("origin", &foreign_origin),
+            ]),
+        );
+    });
+}
+
+/// Asserts that a Host/Origin rejection is a generic 404 whose body and
+/// content-type do not identify the server as Rojo.
+fn assert_rejected(response: reqwest::blocking::Response) {
+    assert_eq!(response.status(), reqwest::StatusCode::NOT_FOUND);
+
+    let content_type = response
+        .headers()
+        .get(reqwest::header::CONTENT_TYPE)
+        .and_then(|value| value.to_str().ok())
+        .unwrap_or_default()
+        .to_owned();
+    assert!(
+        !content_type.contains("msgpack"),
+        "rejection should not use the msgpack API content-type, got {content_type:?}",
+    );
+
+    let body = response.text().expect("Failed to read response body");
+    let body_lower = body.to_lowercase();
+    assert!(
+        !body_lower.contains("rojo") && !body_lower.contains("rebinding"),
+        "rejection body should not identify the server, got {body:?}",
+    );
+}
+
+#[test]
+fn allows_api_open_from_loopback_peer() {
+    run_serve_test("empty", |session, _redactions| {
+        // The harness always connects over loopback, so the local-only gate on
+        // /api/open must let the request through. A bogus instance id then fails
+        // id parsing with 400, which confirms we got past the gate rather than
+        // being rejected with 403.
+        assert_eq!(
+            session.api_open_status("not-a-real-ref"),
+            reqwest::StatusCode::BAD_REQUEST,
+        );
+    });
+}
+
+#[test]
 fn empty() {
     run_serve_test("empty", |session, mut redactions| {
         let info = session.get_api_rojo().unwrap();
