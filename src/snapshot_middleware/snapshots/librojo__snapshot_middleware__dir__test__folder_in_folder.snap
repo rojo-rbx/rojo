@@ -15,6 +15,8 @@ metadata:
     - /foo/init.server.luau
     - /foo/init.client.lua
     - /foo/init.client.luau
+    - /foo/init.plugin.lua
+    - /foo/init.plugin.luau
     - /foo/init.csv
     - /foo/init.meta.json
     - /foo/init.meta.jsonc
@@ -40,6 +42,8 @@ children:
         - /foo/Child/init.server.luau
         - /foo/Child/init.client.lua
         - /foo/Child/init.client.luau
+        - /foo/Child/init.plugin.lua
+        - /foo/Child/init.plugin.luau
         - /foo/Child/init.csv
         - /foo/Child/init.meta.json
         - /foo/Child/init.meta.jsonc
