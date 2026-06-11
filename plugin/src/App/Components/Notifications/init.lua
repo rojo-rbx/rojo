@@ -18,11 +18,13 @@ function Notifications:render()
 		local targetTable = if notif.isFullscreen then fullscreenNotifs else popupNotifs
 		local targetComponent = if notif.isFullscreen then FullscreenNotification else Notification
 		targetTable["NotifID_" .. id] = e(targetComponent, {
-			soundPlayer = self.props.soundPlayer,
+			layoutOrder = id,
 			text = notif.text,
 			timeout = notif.timeout,
 			actions = notif.actions,
-			layoutOrder = id,
+			soundPlayer = self.props.soundPlayer,
+			thirdParty = notif.thirdParty,
+			callerInfo = notif.callerInfo,
 			onClose = function()
 				if notif.onClose then
 					notif.onClose()

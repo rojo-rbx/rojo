@@ -19,6 +19,7 @@ local strict = require(Plugin.strict)
 local Dictionary = require(Plugin.Dictionary)
 local ServeSession = require(Plugin.ServeSession)
 local ApiContext = require(Plugin.ApiContext)
+local HeadlessAPI = require(Plugin.HeadlessAPI)
 local PatchSet = require(Plugin.PatchSet)
 local PatchTree = require(Plugin.PatchTree)
 local preloadAssets = require(Plugin.preloadAssets)
@@ -29,6 +30,8 @@ local Theme = require(script.Theme)
 
 local Page = require(script.Page)
 local Notifications = require(script.Components.Notifications)
+local PermissionPopup = require(script.PermissionPopup)
+local ConflictAPIPopup = require(script.ConflictAPIPopup)
 local Tooltip = require(script.Components.Tooltip)
 local StudioPluginAction = require(script.Components.Studio.StudioPluginAction)
 local StudioToolbar = require(script.Components.Studio.StudioToolbar)
@@ -40,6 +43,7 @@ local StatusPages = require(script.StatusPages)
 local AppStatus = strict("AppStatus", {
 	NotConnected = "NotConnected",
 	Settings = "Settings",
+	Permissions = "Permissions",
 	Connecting = "Connecting",
 	Confirming = "Confirming",
 	Connected = "Connected",
@@ -135,7 +139,59 @@ function App:init()
 		},
 		notifications = {},
 		toolbarIcon = Assets.Images.PluginButton,
+		popups = {},
 	})
+
+	self.headlessAPI, self.readOnlyHeadlessAPI = HeadlessAPI.new(self)
+
+	local existingAPIModule = game:FindFirstChild("Rojo")
+	if existingAPIModule and existingAPIModule:IsA("ModuleScript") then
+		local existingAPI = require(existingAPIModule :: ModuleScript)
+
+		local responseEvent = Instance.new("BindableEvent")
+		responseEvent.Event:Once(function(accepted)
+			if accepted then
+				existingAPI.API = self.readOnlyHeadlessAPI
+			end
+
+			responseEvent:Destroy()
+			self:setState(function(state)
+				state.popups["apiReplacement"] = nil
+				return state
+			end)
+		end)
+
+		self:setState(function(state)
+			state.popups["apiReplacement"] = {
+				name = "Headless API Conflict",
+				dockState = Enum.InitialDockState.Float,
+				onClose = function()
+					responseEvent:Fire(false)
+				end,
+				content = e(ConflictAPIPopup, {
+					existingAPI = existingAPI.API,
+					onAccept = function()
+						responseEvent:Fire(true)
+					end,
+					onDeny = function()
+						responseEvent:Fire(false)
+					end,
+					transparency = Roact.createBinding(0),
+				}),
+			}
+			return state
+		end)
+	else
+		local ExposedAPIModule = Instance.new("ModuleScript")
+		ExposedAPIModule.Name = "Rojo"
+		ExposedAPIModule.Archivable = false
+		ExposedAPIModule.Source = "return { API = nil }"
+
+		local ExposedAPI = require(ExposedAPIModule)
+		ExposedAPI.API = self.readOnlyHeadlessAPI
+
+		ExposedAPIModule.Parent = game
+	end
 
 	if RunService:IsEdit() then
 		self:checkForUpdates()
@@ -216,6 +272,40 @@ function App:addNotification(notif: {
 			notifications = notifications,
 		}
 	end)
+
+	return function()
+		self:closeNotification(id)
+	end
+end
+
+function App:addThirdPartyNotification(
+	callerInfo: HeadlessAPI.CallerInfo,
+	text: string,
+	timeout: number?,
+	actions: {
+		[string]: { text: string, style: string, layoutOrder: number, onClick: (any) -> () },
+	}?
+)
+	if not Settings:get("showNotifications") then
+		return
+	end
+
+	self.notifId += 1
+	local id = self.notifId
+
+	local notifications = table.clone(self.state.notifications)
+	notifications[id] = {
+		text = text,
+		timestamp = DateTime.now().UnixTimestampMillis,
+		timeout = timeout or 3,
+		actions = actions,
+		thirdParty = true,
+		callerInfo = callerInfo,
+	}
+
+	self:setState({
+		notifications = notifications,
+	})
 
 	return function()
 		self:closeNotification(id)
@@ -314,7 +404,7 @@ function App:forgetPriorSyncInfo()
 	Settings:set("priorEndpoints", priorSyncInfos)
 end
 
-function App:getHostAndPort()
+function App:getHostAndPort(): (string, string)
 	local host = self.host:getValue()
 	local port = self.port:getValue()
 
@@ -383,7 +473,60 @@ function App:releaseSyncLock()
 		return
 	end
 
-	Log.trace("Could not relase sync lock because it is owned by {}", lock.Value)
+	Log.trace("Could not release sync lock because it is owned by {}", lock.Value)
+end
+
+function App:requestPermission(
+	plugin: Plugin,
+	source: string,
+	name: string,
+	apis: { string },
+	initialState: boolean?
+): { [string]: boolean }
+	local responseEvent = Instance.new("BindableEvent")
+
+	Log.info("The third-party plugin '{}' is requesting permission to use the API!", name)
+
+	local unloadProtection = if plugin
+		then plugin.Unloading:Connect(function()
+			Log.warn(
+				"Cancelling API permission request for '{}' because the third-party plugin has been removed.",
+				name
+			)
+			responseEvent:Fire(initialState or false)
+		end)
+		else nil
+
+	self:setState(function(state)
+		state.popups[source .. " Permissions"] = {
+			name = name,
+			content = e(PermissionPopup, {
+				responseEvent = responseEvent,
+				source = source,
+				name = name,
+				apis = apis,
+				apiDescriptions = self.headlessAPI._apiDescriptions,
+				transparency = Roact.createBinding(0),
+			}),
+			onClose = function()
+				responseEvent:Fire(initialState or false)
+			end,
+		}
+		return state
+	end)
+
+	local response = responseEvent.Event:Wait()
+	responseEvent:Destroy()
+	if unloadProtection then
+		unloadProtection:Disconnect()
+	end
+
+	self:setState(function(state)
+		state.popups[source .. " Permissions"] = nil
+		return state
+	end)
+
+	return response
 end
 
 function App:findActiveServer()
@@ -600,7 +743,7 @@ function App:useRunningConnectionInfo()
 	self.setPort(port)
 end
 
-function App:startSession()
+function App:startSession(host: string?, port: string?)
 	local claimedLock, priorOwner = self:claimSyncLock()
 	if not claimedLock then
 		local msg = string.format("Could not sync because user '%s' is already syncing", tostring(priorOwner))
@@ -619,7 +762,9 @@ function App:startSession()
 		return
 	end
 
-	local host, port = self:getHostAndPort()
+	if host == nil or port == nil then
+		host, port = self:getHostAndPort()
+	end
 
 	local baseUrl = if string.find(host, "^https?://")
 		then string.format("%s:%s", host, port)
@@ -685,11 +830,15 @@ function App:startSession()
 				text = "Connecting to session...",
 			})
 		elseif status == ServeSession.Status.Connected then
+			local address = string.format("%s:%s", host :: string, port :: string)
+
+			self.headlessAPI:_updateProperty("Address", address)
+			self.headlessAPI:_updateProperty("ProjectName", details)
+
 			self.knownProjects[details] = true
 			self:setPriorSyncInfo(host, port, details)
 			self:setRunningConnectionInfo(baseUrl)
 
-			local address = ("%s:%s"):format(host, port)
 			self:setState({
 				appStatus = AppStatus.Connected,
 				projectName = details,
@@ -735,6 +884,12 @@ function App:startSession()
 					timeout = 10,
 				})
 			end
+		end
+
+		self.headlessAPI:_updateProperty("Connected", status == ServeSession.Status.Connected)
+		if not self.headlessAPI.Connected then
+			self.headlessAPI:_updateProperty("Address", nil)
+			self.headlessAPI:_updateProperty("ProjectName", nil)
 		end
 	end)
 
@@ -866,11 +1021,33 @@ function App:render()
 		return e(Page, props)
 	end
 
+	local popups = {}
+	for id, popup in self.state.popups do
+		popups["Rojo_" .. id] = e(StudioPluginGui, {
+			id = id,
+			title = popup.name,
+			active = true,
+			isEphemeral = true,
+
+			initDockState = popup.dockState or Enum.InitialDockState.Top,
+			initEnabled = true,
+			overridePreviousState = true,
+			floatingSize = Vector2.new(400, 300),
+			minimumSize = Vector2.new(390, 240) or popup.minimumSize,
+
+			zIndexBehavior = Enum.ZIndexBehavior.Sibling,
+
+			onClose = popup.onClose,
+		}, popup.content)
+	end
+
 	return e(StudioPluginContext.Provider, {
 		value = self.props.plugin,
 	}, {
 		e(Theme.StudioProvider, nil, {
 			tooltip = e(Tooltip.Provider, nil, {
+				popups = Roact.createFragment(popups),
+
 				gui = e(StudioPluginGui, {
 					id = pluginName,
 					title = pluginName,
@@ -963,6 +1140,38 @@ function App:render()
 							self:setState({
 								appStatus = self.backPage or AppStatus.NotConnected,
 							})
+						end,
+
+						onNavigatePermissions = function()
+							self:setState({
+								appStatus = AppStatus.Permissions,
+							})
+						end,
+					}),
+
+					Permissions = createPageElement(AppStatus.Permissions, {
+						headlessAPI = self.headlessAPI,
+
+						onBack = function()
+							self:setState({
+								appStatus = AppStatus.Settings,
+							})
+						end,
+
+						onEdit = function(plugin, source, callerInfo, apiMap)
+							local name = string.format("%s by %s", callerInfo.Name, callerInfo.Creator.Name)
+							local apiList = {}
+							for api in apiMap do
+								table.insert(apiList, api)
+							end
+							table.sort(apiList)
+
+							local granted = self:requestPermission(plugin, source, name, apiList, true)
+							if granted then
+								self.headlessAPI:_setPermissions(source, name, apiList)
+							else
+								self.headlessAPI:_removePermissions(source, name)
+							end
 						end,
 					}),
 
