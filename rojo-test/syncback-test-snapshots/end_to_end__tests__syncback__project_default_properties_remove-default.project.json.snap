@@ -37,6 +37,15 @@ expression: default.project.json
         "MeshStreamingAndImprovedLods": {
           "Enum": 0
         },
+        "NextGenerationReplication": {
+          "Enum": 0
+        },
+        "PlayerScriptsUseInputActionSystem": {
+          "Enum": 0
+        },
+        "UseFixedSimulation": {
+          "Enum": 0
+        },
         "UseNewLuauTypeSolver": "Disabled",
         "ValidateEnabledProximityPrompt": {
           "Enum": 0
