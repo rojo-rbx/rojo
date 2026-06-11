@@ -228,11 +228,11 @@ impl TestServeSession {
         }
     }
 
-    pub fn get_api_serialize(
+    pub fn post_api_serialize(
         &self,
         ids: &[Ref],
         session_id: SessionId,
-    ) -> Result<SerializeResponse, reqwest::Error> {
+    ) -> Result<reqwest::blocking::Response, reqwest::Error> {
         let client = reqwest::blocking::Client::new();
         let url = format!("http://localhost:{}/api/serialize", self.port);
         let body = serialize_msgpack(&SerializeRequest {
@@ -241,9 +241,7 @@ impl TestServeSession {
         })
         .unwrap();
 
-        let body = client.post(url).body(body).send()?.bytes()?;
-
-        Ok(deserialize_msgpack(&body).expect("Server returned malformed response"))
+        client.post(url).body(body).send()
     }
 
     /// Sends a GET to `/api/rojo` with the given extra request headers and
@@ -291,7 +289,7 @@ fn serialize_msgpack<T: Serialize>(value: T) -> Result<Vec<u8>, rmp_serde::encod
     Ok(serialized)
 }
 
-fn deserialize_msgpack<'a, T: Deserialize<'a>>(
+pub fn deserialize_msgpack<'a, T: Deserialize<'a>>(
     input: &'a [u8],
 ) -> Result<T, rmp_serde::decode::Error> {
     let mut deserializer = rmp_serde::Deserializer::new(input).with_human_readable();

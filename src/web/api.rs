@@ -276,7 +276,7 @@ impl ApiService {
 
                 response_dom.transfer_within(child_ref, object_value);
             } else {
-                msgpack(
+                return msgpack(
                     ErrorResponse::bad_request(format!("provided id {id} is not in the tree")),
                     StatusCode::BAD_REQUEST,
                 );

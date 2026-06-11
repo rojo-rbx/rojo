@@ -1,14 +1,16 @@
 use std::fs;
 
 use insta::{assert_snapshot, assert_yaml_snapshot, with_settings};
+use rbx_dom_weak::types::Ref;
+use reqwest::StatusCode;
 use tempfile::tempdir;
 
 use crate::rojo_test::{
     internable::InternAndRedact,
-    serve_util::{run_serve_test, serialize_to_xml_model},
+    serve_util::{deserialize_msgpack, run_serve_test, serialize_to_xml_model},
 };
 
-use librojo::web_api::SocketPacketType;
+use librojo::web_api::{SerializeResponse, SocketPacketType};
 
 #[test]
 fn rejects_dns_rebinding_requests() {
@@ -713,9 +715,13 @@ fn meshpart_with_id() {
             .find(|(_, inst)| inst.class_name == "ObjectValue")
             .unwrap();
 
-        let serialize_response = session
-            .get_api_serialize(&[*meshpart, *objectvalue], info.session_id)
+        let body = session
+            .post_api_serialize(&[*meshpart, *objectvalue], info.session_id)
+            .unwrap()
+            .bytes()
             .unwrap();
+        let serialize_response: SerializeResponse =
+            deserialize_msgpack(&body).expect("Server returned malformed response");
 
         // We don't assert a snapshot on the SerializeResponse because the model includes the
         // Refs from the DOM as names, which means it will obviously be different every time
@@ -724,6 +730,20 @@ fn meshpart_with_id() {
 
         let model = serialize_to_xml_model(&serialize_response, &redactions);
         assert_snapshot!("meshpart_with_id_serialize_model", model);
+    });
+}
+
+#[test]
+fn serialize_missing_id() {
+    run_serve_test("empty", |session, _| {
+        let info = session.get_api_rojo().unwrap();
+        let missing_id = Ref::new();
+
+        let response = session
+            .post_api_serialize(&[missing_id], info.session_id)
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
     });
 }
 
@@ -741,9 +761,13 @@ fn forced_parent() {
             read_response.intern_and_redact(&mut redactions, root_id)
         );
 
-        let serialize_response = session
-            .get_api_serialize(&[root_id], info.session_id)
+        let body = session
+            .post_api_serialize(&[root_id], info.session_id)
+            .unwrap()
+            .bytes()
             .unwrap();
+        let serialize_response: SerializeResponse =
+            deserialize_msgpack(&body).expect("Server returned malformed response");
 
         assert_eq!(serialize_response.session_id, info.session_id);
 
