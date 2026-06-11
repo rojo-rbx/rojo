@@ -1,7 +1,7 @@
 //! Defines Rojo's HTTP API, all under /api. These endpoints generally return
 //! JSON.
 
-use std::{collections::HashMap, fs, path::PathBuf, str::FromStr, sync::Arc};
+use std::{collections::HashMap, fs, net::SocketAddr, path::PathBuf, str::FromStr, sync::Arc};
 
 use futures::{sink::SinkExt, stream::StreamExt};
 use hyper::{
@@ -24,6 +24,7 @@ use crate::{
             ServerInfoResponse, SocketPacket, SocketPacketBody, SocketPacketType, SubscribeMessage,
             WriteRequest, WriteResponse, PROTOCOL_VERSION, SERVER_VERSION,
         },
+        origin::canonical,
         util::{deserialize_msgpack, msgpack, msgpack_ok, serialize_msgpack},
     },
     web_api::{
@@ -31,8 +32,12 @@ use crate::{
     },
 };
 
-pub async fn call(serve_session: Arc<ServeSession>, mut request: Request<Body>) -> Response<Body> {
-    let service = ApiService::new(serve_session);
+pub async fn call(
+    serve_session: Arc<ServeSession>,
+    remote_addr: SocketAddr,
+    mut request: Request<Body>,
+) -> Response<Body> {
+    let service = ApiService::new(serve_session, remote_addr);
 
     match (request.method(), request.uri().path()) {
         (&Method::GET, "/api/rojo") => service.handle_api_rojo().await,
@@ -68,11 +73,15 @@ pub async fn call(serve_session: Arc<ServeSession>, mut request: Request<Body>) 
 
 pub struct ApiService {
     serve_session: Arc<ServeSession>,
+    remote_addr: SocketAddr,
 }
 
 impl ApiService {
-    pub fn new(serve_session: Arc<ServeSession>) -> Self {
-        ApiService { serve_session }
+    pub fn new(serve_session: Arc<ServeSession>, remote_addr: SocketAddr) -> Self {
+        ApiService {
+            serve_session,
+            remote_addr,
+        }
     }
 
     /// Get a summary of information about the server
@@ -276,7 +285,7 @@ impl ApiService {
 
                 response_dom.transfer_within(child_ref, object_value);
             } else {
-                msgpack(
+                return msgpack(
                     ErrorResponse::bad_request(format!("provided id {id} is not in the tree")),
                     StatusCode::BAD_REQUEST,
                 );
@@ -360,6 +369,30 @@ impl ApiService {
 
     /// Open a script with the given ID in the user's default text editor.
     async fn handle_api_open(&self, request: Request<Body>) -> Response<Body> {
+        // Opening a file launches a local program, so it must never be reachable
+        // by a remote client even when the server is bound to an exposed address.
+        //
+        // `remote_addr` is the immediate peer, which is the best locality signal
+        // we have: the legitimate caller is a sandboxed Roblox plugin whose only
+        // credential is being able to reach the port, so there is no secret to
+        // authenticate it with. A connection forwarded over loopback by an
+        // SSH/Tailscale tunnel or a local reverse proxy therefore appears local
+        // and is allowed. That is delegated trust rather than a bypass: by
+        // standing up that tunnel or proxy the user has decided the remote end is
+        // trusted, and reachability is bounded by that hop's own authentication
+        // (e.g. SSH keys or Tailscale ACLs). This gate only stops direct,
+        // unauthenticated peers.
+        //
+        // An IPv4 client reaching a dual-stack (`::`) bind appears as an
+        // IPv4-mapped IPv6 peer (`::ffff:127.0.0.1`), so canonicalize to the bare
+        // IPv4 form before the loopback test, matching `origin`'s handling.
+        if !canonical(self.remote_addr.ip()).is_loopback() {
+            return msgpack(
+                ErrorResponse::forbidden("/api/open is only available to local clients"),
+                StatusCode::FORBIDDEN,
+            );
+        }
+
         let argument = &request.uri().path()["/api/open/".len()..];
         let requested_id = match Ref::from_str(argument) {
             Ok(id) => id,
