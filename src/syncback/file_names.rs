@@ -35,6 +35,7 @@ pub fn name_for_inst<'old>(
             | Middleware::CsvDir
             | Middleware::ServerScriptDir
             | Middleware::ClientScriptDir
+            | Middleware::PluginScriptDir
             | Middleware::ModuleScriptDir => Cow::Owned(new_inst.name.clone()),
             _ => {
                 let extension = extension_for_middleware(middleware);
@@ -78,6 +79,7 @@ pub fn extension_for_middleware(middleware: Middleware) -> &'static str {
         | Middleware::CsvDir
         | Middleware::ServerScriptDir
         | Middleware::ClientScriptDir
+        | Middleware::PluginScriptDir
         | Middleware::ModuleScriptDir => {
             unimplemented!("directory middleware requires special treatment")
         }

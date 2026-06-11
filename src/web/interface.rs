@@ -290,6 +290,13 @@ impl ErrorResponse {
         }
     }
 
+    pub fn forbidden<S: Into<String>>(details: S) -> Self {
+        Self {
+            kind: ErrorResponseKind::Forbidden,
+            details: details.into(),
+        }
+    }
+
     pub fn internal_error<S: Into<String>>(details: S) -> Self {
         Self {
             kind: ErrorResponseKind::InternalError,
@@ -302,5 +309,6 @@ impl ErrorResponse {
 pub enum ErrorResponseKind {
     NotFound,
     BadRequest,
+    Forbidden,
     InternalError,
 }

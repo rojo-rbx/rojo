@@ -126,6 +126,10 @@ impl TestServeSession {
         &self.project_path
     }
 
+    pub fn port(&self) -> usize {
+        self.port
+    }
+
     /// Waits for the `rojo serve` server to come online with expontential
     /// backoff.
     pub fn wait_to_come_online(&mut self) -> ServerInfoResponse {
@@ -238,6 +242,39 @@ impl TestServeSession {
         .unwrap();
 
         client.post(url).body(body).send()
+    }
+
+    /// Sends a GET to `/api/rojo` with the given extra request headers and
+    /// returns the full response. Used to exercise the Host/Origin allowlist that
+    /// guards against DNS rebinding, including asserting that a rejection reveals
+    /// nothing about the server.
+    pub fn api_rojo_response_with_headers(
+        &self,
+        headers: &[(&str, &str)],
+    ) -> reqwest::blocking::Response {
+        let client = reqwest::blocking::Client::new();
+        let url = format!("http://localhost:{}/api/rojo", self.port);
+
+        let mut request = client.get(url);
+        for (name, value) in headers {
+            request = request.header(*name, *value);
+        }
+
+        request.send().expect("Failed to send request")
+    }
+
+    /// Sends a POST to `/api/open/<id>` and returns the response status code.
+    /// Used to verify that the local-only gate on `/api/open` admits loopback
+    /// peers (the test harness always connects over loopback).
+    pub fn api_open_status(&self, id: &str) -> reqwest::StatusCode {
+        let client = reqwest::blocking::Client::new();
+        let url = format!("http://localhost:{}/api/open/{}", self.port, id);
+
+        client
+            .post(url)
+            .send()
+            .expect("Failed to send request")
+            .status()
     }
 }
 
