@@ -45,6 +45,7 @@ Making a new release? Simply add the new header with the version and date undern
 * Instances that share a name and class are now robustly matched on resync by comparing their properties, instead of relying on child order alone. ([#1266])
 * Rojo now reports a clear error instead of panicking in several cases, including when the `serve` port is already in use, when a synced file is read-only or locked, when the filesystem watcher can't be created, and when the working directory is inaccessible. ([#1267])
 * `rojo serve` now validates the `Host`/`Origin` headers to protect the local/private server against DNS rebinding, gates `/api/open` to local clients, and warns when bound to a network-reachable address. The accepted hosts can be extended with the `--allowed-hosts` option or a project's `serveAllowedHosts` field, for example to reach a network-exposed server by hostname. ([#1270])
+* Fixed syncback not removing stale `$properties` entries when Studio resets a property to its engine default. ([#1244])
 
 [#1176]: https://github.com/rojo-rbx/rojo/pull/1176
 [#1179]: https://github.com/rojo-rbx/rojo/pull/1179
@@ -60,6 +61,7 @@ Making a new release? Simply add the new header with the version and date undern
 [#1266]: https://github.com/rojo-rbx/rojo/pull/1266
 [#1267]: https://github.com/rojo-rbx/rojo/pull/1267
 [#1270]: https://github.com/rojo-rbx/rojo/pull/1270
+[#1244]: https://github.com/rojo-rbx/rojo/pull/1244
 
 ## [7.7.0-rc.1] (November 27th, 2025)
 
