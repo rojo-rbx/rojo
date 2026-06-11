@@ -31,13 +31,21 @@ pub struct ServeCommand {
     /// it has none.
     #[clap(long)]
     pub port: Option<u16>,
+
+    /// Extra `Host`/`Origin` values the server will accept, beyond localhost and
+    /// the bind address (for example a hostname like `mypc.lan`). Repeat the
+    /// option or comma-separate to allow several. When given, this overrides the
+    /// project's `serveAllowedHosts`. Listing any host also turns on Host/Origin
+    /// validation for binds where it is otherwise off (such as `0.0.0.0`).
+    #[clap(long, value_delimiter = ',')]
+    pub allowed_hosts: Vec<String>,
 }
 
 impl ServeCommand {
     pub fn run(self, global: GlobalOptions) -> anyhow::Result<()> {
-        let project_path = resolve_path(&self.project);
+        let project_path = resolve_path(&self.project)?;
 
-        let vfs = Vfs::new_default();
+        let vfs = Vfs::new_default()?;
 
         let session = Arc::new(ServeSession::new(vfs, project_path)?);
 
@@ -51,10 +59,19 @@ impl ServeCommand {
             .or_else(|| session.project_port())
             .unwrap_or(DEFAULT_PORT);
 
+        // The CLI flag, when given, replaces the project's list rather than
+        // merging with it, matching how --address and --port override theirs.
+        let allowed_hosts = if self.allowed_hosts.is_empty() {
+            session.serve_allowed_hosts().to_vec()
+        } else {
+            self.allowed_hosts
+        };
+
         let server = LiveServer::new(session);
 
-        let _ = show_start_message(ip, port, global.color.into());
-        server.start((ip, port).into());
+        server.start((ip, port).into(), allowed_hosts, || {
+            let _ = show_start_message(ip, port, global.color.into());
+        })?;
 
         Ok(())
     }
@@ -85,6 +102,25 @@ fn show_start_message(bind_address: IpAddr, port: u16, color: ColorChoice) -> io
     writeln!(&mut buffer, "{}", port)?;
 
     writeln!(&mut buffer)?;
+
+    if !bind_address.is_loopback() {
+        let mut warning = ColorSpec::new();
+        warning.set_fg(Some(Color::Yellow)).set_bold(true);
+
+        buffer.set_color(&warning)?;
+        writeln!(
+            &mut buffer,
+            "WARNING: This server is bound to {address_string}, which is reachable from the \
+             network.\n\
+             The serve API is unauthenticated, so anyone who can reach {address_string}:{port} \
+             can read\n\
+             and modify your project's source. Prefer binding to localhost and tunneling (e.g. \
+             SSH,\n\
+             Tailscale, or WireGuard) when you need remote access."
+        )?;
+        buffer.set_color(&ColorSpec::new())?;
+        writeln!(&mut buffer)?;
+    }
 
     buffer.set_color(&ColorSpec::new())?;
     write!(&mut buffer, "Visit ")?;

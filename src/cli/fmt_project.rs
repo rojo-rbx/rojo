@@ -18,10 +18,10 @@ pub struct FmtProjectCommand {
 
 impl FmtProjectCommand {
     pub fn run(self) -> anyhow::Result<()> {
-        let vfs = Vfs::new_default();
+        let vfs = Vfs::new_default()?;
         vfs.set_watch_enabled(false);
 
-        let base_path = resolve_path(&self.project);
+        let base_path = resolve_path(&self.project)?;
         let project = Project::load_fuzzy(&vfs, &base_path)?
             .context("A project file is required to run 'rojo fmt-project'")?;
 
