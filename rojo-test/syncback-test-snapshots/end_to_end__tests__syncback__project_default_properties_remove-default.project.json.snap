@@ -1,0 +1,59 @@
+---
+source: tests/tests/syncback.rs
+expression: default.project.json
+---
+{
+  "name": "SyncbackTest",
+  "tree": {
+    "$className": "DataModel",
+    "Workspace": {
+      "$className": "Workspace",
+      "TestPart": {
+        "$className": "Part",
+        "$properties": {
+          "Anchored": true,
+          "Color": {
+            "Color3uint8": [
+              0,
+              0,
+              255
+            ]
+          }
+        }
+      },
+      "$properties": {
+        "EnableSLIMAvatars": {
+          "Enum": 0
+        },
+        "ImprovedAnimationConstraint": {
+          "Enum": 0
+        },
+        "ImprovedPhysicsReplication": {
+          "Enum": 0
+        },
+        "LayeredClothingCacheOptimizations": {
+          "Enum": 0
+        },
+        "MeshStreamingAndImprovedLods": {
+          "Enum": 0
+        },
+        "NextGenerationReplication": {
+          "Enum": 0
+        },
+        "PlayerScriptsUseInputActionSystem": {
+          "Enum": 0
+        },
+        "UseFixedSimulation": {
+          "Enum": 0
+        },
+        "UseNewLuauTypeSolver": "Disabled",
+        "ValidateEnabledProximityPrompt": {
+          "Enum": 0
+        }
+      },
+      "$attributes": {
+        "Rojo_Target_CurrentCamera": "302d573157260ee80a3baa32000003b5"
+      }
+    }
+  }
+}
