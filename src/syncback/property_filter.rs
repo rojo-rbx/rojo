@@ -101,7 +101,7 @@ fn should_property_serialize(class_name: &str, prop_name: &str) -> bool {
                 }
                 kind => unimplemented!("unknown property kind {kind:?}"),
             };
-        } else if let Some(super_class) = class_data.superclass.as_ref() {
+        } else if let Some(super_class) = class_data.superclass {
             current_class_name = super_class;
         } else {
             break;
