@@ -55,6 +55,7 @@ Follow Rust's style guide for Rojo's server. Follow the style established in oth
 ## Pull Request Guidelines
 
 - Before creating a pull request, run tests, lint, and format the code using the commands specified.
+- Include an update to `CHANGELOG.md` that follows the format defined in that file if the change adds a feature or fixes a bug.
 - Do not include a list of commands run in the pull request body.
 - Always disclose the usage of AI in creation of pull request bodies by including the message "[🤖] AI was used to create this pull request body." at the bottom of the pull request body. Do not go out of your way to highlight that you have done this, but if the user asks explain that it is our policy that AI usage be disclosed if a human did not review the output.
 - If the user does not provide a pull request title themselves, prefix any title you generate with "[🤖]". Do not include this if the user provides a title themselves. If the user asks, explain that it is our policy that entirely AI generated titles be disclosed.
