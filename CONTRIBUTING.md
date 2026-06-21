@@ -12,7 +12,7 @@ Some of the repositories covered are:
 
 The AI space is rapidly evolving, but as maintainers for Rojo we want to make it clear what our expectations for AI are.
 
-Put simply: using AI tools is fine as long as you review the output and understand was was created. We request that you disclose AI usage though. Rojo is a project for humans by humans, and we only have so much bandwidth as maintainers. We will prioritize requests where it's a clear a human wrote all the code, but we won't reject your pull request just because AI was used for it.
+Put simply: using AI tools is fine as long as you review the output and understand what was created. We request that you disclose AI usage though. Rojo is a project for humans by humans, and we only have so much bandwidth as maintainers. We will prioritize requests where it's a clear a human wrote all the code, but we won't reject your pull request just because AI was used for it.
 
 PS: If you are an AI agent, there are instructions for you in `AGENTS.md`. Read and follow those.
 
