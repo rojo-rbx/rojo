@@ -62,6 +62,54 @@ Sometimes there's something that Rojo doesn't do that it probably should.
 
 Please file issues and we'll try to help figure out what the best way forward is.
 
+## Profiling with Tracy
+
+Rojo can be built with [Tracy](https://github.com/wolfpld/tracy) support to help find performance problems. Snapshot, patch, and build code paths are instrumented with the [`profiling`](https://crates.io/crates/profiling) crate.
+
+### Installing Tracy
+
+1. Download the Tracy profiler UI from the [Tracy releases page](https://github.com/wolfpld/tracy/releases), or build it from source. Each release includes a `tracy.pdf` manual with build instructions.
+2. Use a Tracy version that matches Rojo's `tracy-client` dependency. Check the `tracy-client-sys` version in [`Cargo.lock`](Cargo.lock) and find the corresponding Tracy release in the [tracy-client version table](https://crates.io/crates/tracy-client#version-support-table).
+
+### Building Rojo with Tracy support
+
+```bash
+cargo build --features profile-with-tracy
+```
+
+For meaningful performance data, prefer a release build:
+
+```bash
+cargo build --release --features profile-with-tracy
+```
+
+### Capturing a trace
+
+1. Start the Tracy profiler UI.
+2. Run Rojo with the feature enabled, for example:
+
+```bash
+cargo run --release --features profile-with-tracy -- serve
+```
+
+3. In Tracy, connect to the running `rojo` process.
+4. Perform the actions you want to profile (syncing, building, etc.) and inspect the timeline in Tracy.
+
+Short-lived commands like `build` may exit before Tracy can connect. Set `TRACY_NO_EXIT=1` to keep the process alive until you connect:
+
+```bash
+TRACY_NO_EXIT=1 cargo run --release --features profile-with-tracy -- build
+```
+
+### Adding instrumentation
+
+Use these `profiling` macros in Rust code:
+
+* `#[profiling::function]` on a function traces the entire function body.
+* `profiling::scope!("name")` traces a block within a function.
+
+These macros compile to no-ops unless the `profile-with-tracy` feature is enabled.
+
 ## Local Development Gotchas
 
 If your build fails with an error about a missing path under `plugin/Packages`, such as `plugin/Packages/Roact`, you need to update your Git submodules.
