@@ -95,11 +95,13 @@ cargo run --release --features profile-with-tracy -- serve
 3. In Tracy, connect to the running `rojo` process.
 4. Perform the actions you want to profile (syncing, building, etc.) and inspect the timeline in Tracy.
 
-Short-lived commands like `build` may exit before Tracy can connect. Set `TRACY_NO_EXIT=1` to keep the process alive until you connect:
+Short-lived commands like `build` may exit before Tracy can connect. Set `TRACY_NO_EXIT=1` to keep the process alive until you connect (not supported on macOS):
 
 ```bash
-TRACY_NO_EXIT=1 cargo run --release --features profile-with-tracy -- build
+TRACY_NO_EXIT=1 cargo run --release --features profile-with-tracy -- build test-projects/benchmark_small_place --output /tmp/out.rbxlx
 ```
+
+On macOS, prefer profiling long-running commands like `serve` instead.
 
 ### Adding instrumentation
 

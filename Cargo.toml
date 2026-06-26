@@ -31,7 +31,8 @@ default = []
 dev_live_assets = []
 
 # Run Rojo with this feature to open a Tracy session.
-# Currently uses protocol v63, last supported in Tracy 0.9.1.
+# See CONTRIBUTING.md for setup instructions. Match the Tracy GUI version to
+# the tracy-client-sys version in Cargo.lock (see the tracy-client version table).
 profile-with-tracy = ["profiling/profile-with-tracy"]
 
 [workspace]
