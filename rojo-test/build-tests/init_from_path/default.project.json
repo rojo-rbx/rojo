@@ -1,0 +1,9 @@
+{
+  "name": "init_from_path",
+  "tree": {
+    "$className": "Folder",
+    "folder": {
+      "$path": "folder/init.luau"
+    }
+  }
+}
