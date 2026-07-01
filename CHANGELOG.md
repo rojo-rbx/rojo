@@ -49,6 +49,7 @@ Making a new release? Simply add the new header with the version and date undern
 * Fixed syncback not removing stale `$properties` entries when Studio resets a property to its engine default. ([#1244])
 * Fixed a bug where `$path` in an instance description couldn't reference an init script (i.e init.luau, init.sever.luau, etc). ([#1285])
 
+[#1285]: https://github.com/rojo-rbx/rojo/pull/1285
 [#1176]: https://github.com/rojo-rbx/rojo/pull/1176
 [#1179]: https://github.com/rojo-rbx/rojo/pull/1179
 [#1192]: https://github.com/rojo-rbx/rojo/pull/1192
