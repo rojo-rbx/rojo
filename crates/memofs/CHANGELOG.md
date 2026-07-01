@@ -1,6 +1,8 @@
 # memofs Changelog
 
 ## Unreleased Changes
+
+# 0.4.0 (2026-07-01)
 * Added `Vfs::canonicalize`. [#1201]
 * **Breaking:** `StdBackend::new` and `Vfs::new_default` now return `io::Result`, so a failure to create the filesystem watcher is reported as an error instead of panicking. The `Default` implementation for `StdBackend` has been removed as a result. [#1267]
 
