@@ -437,11 +437,11 @@ dependencies = [
 
 [[package]]
 name = "dirs"
-version = "5.0.1"
+version = "6.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "44c45a9d03d6676652bcb5e724c7e988de1acad23a711b5217ab9cbecbec2225"
+checksum = "c3e8aa94d75141228480295a7d0e7feb620b1a5ad9f12bc40be62411e38cce4e"
 dependencies = [
- "dirs-sys 0.4.1",
+ "dirs-sys 0.5.0",
 ]
 
 [[package]]
@@ -451,20 +451,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1b1d1d91c932ef41c0f2663aa8b0ca0342d444d842c06914aa0a7e352d0bada6"
 dependencies = [
  "libc",
- "redox_users",
+ "redox_users 0.4.6",
  "winapi 0.3.9",
 ]
 
 [[package]]
 name = "dirs-sys"
-version = "0.4.1"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "520f05a5cbd335fae5a99ff7a6ab8627577660ee5cfd6a94a6a929b52ff0321c"
+checksum = "e01a3366d27ee9890022452ee61b2b63a67e6f13f58900b651ff5665f0bb1fab"
 dependencies = [
  "libc",
  "option-ext",
- "redox_users",
- "windows-sys 0.48.0",
+ "redox_users 0.5.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -1283,9 +1283,9 @@ dependencies = [
 
 [[package]]
 name = "lz4_flex"
-version = "0.11.5"
+version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "08ab2867e3eeeca90e844d1940eab391c9dc5228783db2ed999acbc0a9ed375a"
+checksum = "7ef0d4ed8669f8f8826eb00dc878084aa8f253506c4fd5e8f58f5bce72ddb97e"
 dependencies = [
  "twox-hash",
 ]
@@ -1313,7 +1313,7 @@ checksum = "f52b00d39961fc5b2736ea853c9cc86238e165017a493d1d5c8eac6bdc4cc273"
 
 [[package]]
 name = "memofs"
-version = "0.3.1"
+version = "0.4.0"
 dependencies = [
  "crossbeam-channel",
  "fs-err",
@@ -1799,9 +1799,9 @@ dependencies = [
 
 [[package]]
 name = "rbx_binary"
-version = "2.0.1"
+version = "3.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "95e2b4a187679aa3d169ed50ed5eedbf26383459fec83bf1232c2934b35b24de"
+checksum = "d0a6f15a595fab79d15d50799335543ac5b97618c31ad3d0c93e2713a8bf8d34"
 dependencies = [
  "ahash",
  "log",
@@ -1811,15 +1811,15 @@ dependencies = [
  "rbx_reflection",
  "rbx_reflection_database",
  "serde",
- "thiserror",
+ "thiserror 1.0.69",
  "zstd",
 ]
 
 [[package]]
 name = "rbx_dom_weak"
-version = "4.1.0"
+version = "4.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a7a5c48c2605913fbb1986bceb3e18ef9f12eadedb7edd62bf9fb03447b57c46"
+checksum = "63614f84aae649ff71ef6e693d4fc9e2184c6ef55852d48a29685ebd0470114f"
 dependencies = [
  "ahash",
  "rbx_types",
@@ -1829,22 +1829,22 @@ dependencies = [
 
 [[package]]
 name = "rbx_reflection"
-version = "6.1.0"
+version = "7.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "84f635e79d5d710c82e9049faa57d32945e76a6b041280dc6274f732c0dd78dc"
+checksum = "1f53e5c4cf136060f7c514bd4d6f02436a57e36754c544965a7840123bc662d7"
 dependencies = [
  "rbx_types",
  "serde",
- "thiserror",
+ "thiserror 1.0.69",
 ]
 
 [[package]]
 name = "rbx_reflection_database"
-version = "2.0.2+roblox-700"
+version = "3.0.0+roblox-728"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "de2753b896d08d74316d8b89fbeb2470ebd3986404ebba82fa85fcc0330955cf"
+checksum = "3f5dd357c4c95d43e12283b9065b8b7b41788219db7a0f3a77a6e111f51522e6"
 dependencies = [
- "dirs 5.0.1",
+ "dirs 6.0.0",
  "log",
  "rbx_reflection",
  "rmp-serde",
@@ -1863,14 +1863,14 @@ dependencies = [
  "lazy_static",
  "rand",
  "serde",
- "thiserror",
+ "thiserror 1.0.69",
 ]
 
 [[package]]
 name = "rbx_xml"
-version = "2.0.1"
+version = "3.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e0cbaf53b44c9cc0fad1e5dc8ac63fb32fa0ecaa26d32b269cebe4dca8b7b4de"
+checksum = "f2e38c283450c4874262c61e68f70f037c9394a08b36fd59468657a4d8761e5e"
 dependencies = [
  "ahash",
  "base64 0.13.1",
@@ -1898,7 +1898,18 @@ checksum = "ba009ff324d1fc1b900bd1fdb31564febe58a8ccc8a6fdbb93b543d33b13ca43"
 dependencies = [
  "getrandom 0.2.16",
  "libredox",
- "thiserror",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "redox_users"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a4e608c6638b9c18977b00b475ac1f28d14e84b27d8d42f70e0bf1e3dec127ac"
+dependencies = [
+ "getrandom 0.2.16",
+ "libredox",
+ "thiserror 2.0.18",
 ]
 
 [[package]]
@@ -2038,13 +2049,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "743bb8c693a387f1ae8d2026d82d8b0c175cc4777b97c1f7b12fdb3be595bb13"
 dependencies = [
  "dirs 2.0.2",
- "thiserror",
+ "thiserror 1.0.69",
  "winreg 0.6.2",
 ]
 
 [[package]]
 name = "rojo"
-version = "7.7.0-rc.1"
+version = "7.7.0"
 dependencies = [
  "anyhow",
  "backtrace",
@@ -2096,7 +2107,7 @@ dependencies = [
  "strum",
  "tempfile",
  "termcolor",
- "thiserror",
+ "thiserror 1.0.69",
  "tokio",
  "toml",
  "uuid",
@@ -2528,7 +2539,16 @@ version = "1.0.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b6aaf5339b578ea85b50e080feb250a3e8ae8cfcdff9a461c9ec2904bc923f52"
 dependencies = [
- "thiserror-impl",
+ "thiserror-impl 1.0.69",
+]
+
+[[package]]
+name = "thiserror"
+version = "2.0.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4288b5bcbc7920c07a1149a35cf9590a2aa808e0bc1eafaade0b80947865fbc4"
+dependencies = [
+ "thiserror-impl 2.0.18",
 ]
 
 [[package]]
@@ -2536,6 +2556,17 @@ name = "thiserror-impl"
 version = "1.0.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4fee6c4efc90059e10f81e6d42c60a18f76588c3d74cb83a0b242a2b6c7504c1"
+dependencies = [
+ "proc-macro2 1.0.103",
+ "quote 1.0.42",
+ "syn 2.0.111",
+]
+
+[[package]]
+name = "thiserror-impl"
+version = "2.0.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ebc4ee7f67670e9b64d05fa4253e753e016c6c95ff35b89b7941d6b856dec1d5"
 dependencies = [
  "proc-macro2 1.0.103",
  "quote 1.0.42",
@@ -2737,7 +2768,7 @@ dependencies = [
  "log",
  "rand",
  "sha1",
- "thiserror",
+ "thiserror 1.0.69",
  "url",
  "utf-8",
 ]
@@ -3415,10 +3446,19 @@ dependencies = [
 ]
 
 [[package]]
-name = "xml-rs"
-version = "0.8.28"
+name = "xml"
+version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3ae8337f8a065cfc972643663ea4279e04e7256de865aa66fe25cec5fb912d3f"
+checksum = "636f85e5ca6488e96401b61eb7de54f4e44755c988af0f52cf90230c312a1a89"
+
+[[package]]
+name = "xml-rs"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c3a56132a0d6ecbe77352edc10232f788fc4ceefefff4cab784a98e0e16b6b51"
+dependencies = [
+ "xml",
+]
 
 [[package]]
 name = "yaml-rust"
