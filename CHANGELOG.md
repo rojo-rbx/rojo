@@ -31,6 +31,10 @@ Making a new release? Simply add the new header with the version and date undern
 
 ## Unreleased
 
+* Fixed a bug where `$path` in an instance description couldn't reference an init script (i.e init.luau, init.sever.luau, etc). ([#1285])
+
+[#1285]: https://github.com/rojo-rbx/rojo/pull/1285
+
 ## [7.7.0] (July 1st, 2026)
 
 * `inf` and `nan` values in properties are now synced ([#1176])
@@ -49,9 +53,7 @@ Making a new release? Simply add the new header with the version and date undern
 * Fixed `/api/serialize` returning success when a requested instance ID is missing from the serve session tree. ([#1272])
 * `rojo serve` now validates the `Host`/`Origin` headers to protect the local/private server against DNS rebinding, gates `/api/open` to local clients, and warns when bound to a network-reachable address. The accepted hosts can be extended with the `--allowed-hosts` option or a project's `serveAllowedHosts` field, for example to reach a network-exposed server by hostname. ([#1270])
 * Fixed syncback not removing stale `$properties` entries when Studio resets a property to its engine default. ([#1244])
-* Fixed a bug where `$path` in an instance description couldn't reference an init script (i.e init.luau, init.sever.luau, etc). ([#1285])
 
-[#1285]: https://github.com/rojo-rbx/rojo/pull/1285
 [#1176]: https://github.com/rojo-rbx/rojo/pull/1176
 [#1179]: https://github.com/rojo-rbx/rojo/pull/1179
 [#1192]: https://github.com/rojo-rbx/rojo/pull/1192
