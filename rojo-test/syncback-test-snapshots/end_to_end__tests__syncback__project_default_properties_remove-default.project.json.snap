@@ -22,34 +22,10 @@ expression: default.project.json
         }
       },
       "$properties": {
-        "EnableSLIMAvatars": {
+        "PhysicsImprovedSleep": {
           "Enum": 0
         },
-        "ImprovedAnimationConstraint": {
-          "Enum": 0
-        },
-        "ImprovedPhysicsReplication": {
-          "Enum": 0
-        },
-        "LayeredClothingCacheOptimizations": {
-          "Enum": 0
-        },
-        "MeshStreamingAndImprovedLods": {
-          "Enum": 0
-        },
-        "NextGenerationReplication": {
-          "Enum": 0
-        },
-        "PlayerScriptsUseInputActionSystem": {
-          "Enum": 0
-        },
-        "UseFixedSimulation": {
-          "Enum": 0
-        },
-        "UseNewLuauTypeSolver": "Disabled",
-        "ValidateEnabledProximityPrompt": {
-          "Enum": 0
-        }
+        "UseNewLuauTypeSolver": "Disabled"
       },
       "$attributes": {
         "Rojo_Target_CurrentCamera": "302d573157260ee80a3baa32000003b5"

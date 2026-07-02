@@ -31,6 +31,8 @@ Making a new release? Simply add the new header with the version and date undern
 
 ## Unreleased
 
+## [7.7.0] (July 1st, 2026)
+
 * `inf` and `nan` values in properties are now synced ([#1176])
 * Added an "Every Change" confirmation behavior option that prompts for confirmation on every sync patch (not just the initial sync). Changes that arrive during confirmation are merged into the pending patch and the UI updates in real-time. ([#1216])
 * Fixed a bug caused by having reference properties (such as `ObjectValue.Value`) that point to an Instance not included in syncback. ([#1179])
