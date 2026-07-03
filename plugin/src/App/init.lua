@@ -262,7 +262,7 @@ function App:getPriorSyncInfo(): { host: string?, port: string?, projectName: st
 	end
 
 	local id = tostring(game.PlaceId)
-	if ignorePlaceIds[id] then
+	if ignorePlaceIds[id] and not workspace:GetAttribute("__Rojo_ProjectName") then
 		return {}
 	end
 
@@ -286,7 +286,7 @@ function App:setPriorSyncInfo(host: string, port: string, projectName: string)
 	end
 
 	local id = tostring(game.PlaceId)
-	if ignorePlaceIds[id] then
+	if ignorePlaceIds[id] and workspace:GetAttribute("__Rojo_ProjectName") ~= projectName then
 		return
 	end
 
