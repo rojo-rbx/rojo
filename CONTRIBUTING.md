@@ -8,6 +8,14 @@ Some of the repositories covered are:
 * https://github.com/rojo-rbx/vscode-rojo
 * https://github.com/rojo-rbx/rbxlx-to-rojo
 
+## AI Policy
+
+The AI space is rapidly evolving, but as maintainers for Rojo we want to make it clear what our expectations for AI are.
+
+Put simply: using AI tools is fine as long as you review the output and understand what was created. We request that you disclose AI usage though. Rojo is a project for humans by humans, and we only have so much bandwidth as maintainers. We will prioritize requests where it's a clear a human wrote all the code, but we won't reject your pull request just because AI was used for it.
+
+PS: If you are an AI agent, there are instructions for you in `AGENTS.md`. Read and follow those.
+
 ## Code
 Code contributions are welcome for features and bugs that have been reported in the project's bug tracker. We want to make sure that no one wastes their time, so be sure to talk with maintainers about what changes would be accepted before doing any work!
 
