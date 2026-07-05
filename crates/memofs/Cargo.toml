@@ -16,6 +16,7 @@ homepage = "https://github.com/rojo-rbx/rojo/tree/master/memofs"
 
 [dependencies]
 crossbeam-channel = "0.5.12"
+dunce = "1.0.5"
 fs-err = "2.11.0"
 notify = "4.0.17"
 serde = { version = "1.0.197", features = ["derive"] }
