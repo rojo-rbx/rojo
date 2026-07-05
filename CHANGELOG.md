@@ -31,6 +31,10 @@ Making a new release? Simply add the new header with the version and date undern
 
 ## Unreleased
 
+* Fixed a bug where `$path` in an instance description couldn't reference an init script directly (i.e init.luau, init.sever.luau, etc). ([#1285])
+
+[#1285]: https://github.com/rojo-rbx/rojo/pull/1285
+
 ## [7.7.0] (July 1st, 2026)
 
 * `inf` and `nan` values in properties are now synced ([#1176])
