@@ -259,7 +259,10 @@ local function getActiveProjectIdentifier(): string
 	local placeId = tostring(game.PlaceId)
 
 	local attributeProjectName = workspace:GetAttribute("__Rojo_ProjectName")
-	assert(typeof(attributeProjectName) == "string" or typeof(attributeProjectName) == "nil", `Expected Workspace attribute '__Rojo_ProjectName' to be a string or nil, got {typeof(attributeProjectName)}`)
+	assert(
+		typeof(attributeProjectName) == "string" or typeof(attributeProjectName) == "nil",
+		`Expected Workspace attribute '__Rojo_ProjectName' to be a string or nil, got {typeof(attributeProjectName)}`
+	)
 
 	local identifier = attributeProjectName or placeId
 
