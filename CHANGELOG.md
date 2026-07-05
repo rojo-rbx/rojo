@@ -35,6 +35,8 @@ Making a new release? Simply add the new header with the version and date undern
 * Fixed `rojo serve` silently stopping syncing file changes on Windows when the served project path was a verbatim (`\\?\`) path, because tree paths and file-watcher event paths were canonicalized to different forms. ([#1290])
 * Fixed `rojo sourcemap --absolute` emitting verbatim (`\\?\`) paths on Windows, which broke require types in luau-lsp. ([#1290])
 
+[#1290]: https://github.com/rojo-rbx/rojo/pull/1290
+
 ## [7.7.0] (July 1st, 2026)
 
 * `inf` and `nan` values in properties are now synced ([#1176])
@@ -70,7 +72,6 @@ Making a new release? Simply add the new header with the version and date undern
 [#1272]: https://github.com/rojo-rbx/rojo/pull/1272
 [#1270]: https://github.com/rojo-rbx/rojo/pull/1270
 [#1244]: https://github.com/rojo-rbx/rojo/pull/1244
-[#1290]: https://github.com/rojo-rbx/rojo/pull/1290
 
 ## [7.7.0-rc.1] (November 27th, 2025)
 
