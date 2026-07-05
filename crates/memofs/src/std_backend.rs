@@ -107,7 +107,7 @@ impl VfsBackend for StdBackend {
     }
 
     fn canonicalize(&mut self, path: &Path) -> io::Result<PathBuf> {
-        fs_err::canonicalize(path)
+        dunce::canonicalize(path)
     }
 
     fn event_receiver(&self) -> crossbeam_channel::Receiver<VfsEvent> {
