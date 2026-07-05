@@ -255,18 +255,29 @@ function App:checkForUpdates()
 	end
 end
 
+local function getActiveProjectIdentifier(): string
+	local placeId = tostring(game.PlaceId)
+
+	local attributeProjectName = workspace:GetAttribute("__Rojo_ProjectName")
+	assert(typeof(attributeProjectName) == "string" or typeof(attributeProjectName) == "nil", `Expected Workspace attribute '__Rojo_ProjectName' to be a string or nil, got {typeof(attributeProjectName)}`)
+
+	local identifier = attributeProjectName or placeId
+
+	return identifier
+end
+
 function App:getPriorSyncInfo(): { host: string?, port: string?, projectName: string?, timestamp: number? }
 	local priorSyncInfos = Settings:get("priorEndpoints")
 	if not priorSyncInfos then
 		return {}
 	end
 
-	local id = tostring(game.PlaceId)
-	if ignorePlaceIds[id] and not workspace:GetAttribute("__Rojo_ProjectName") then
+	local identifier = getActiveProjectIdentifier()
+	if ignorePlaceIds[identifier] then
 		return {}
 	end
 
-	return priorSyncInfos[id] or {}
+	return priorSyncInfos[identifier] or {}
 end
 
 function App:setPriorSyncInfo(host: string, port: string, projectName: string)
@@ -278,25 +289,25 @@ function App:setPriorSyncInfo(host: string, port: string, projectName: string)
 	local now = os.time()
 
 	-- Clear any stale saves to avoid disc bloat
-	for placeId, syncInfo in priorSyncInfos do
+	for identifier, syncInfo in priorSyncInfos do
 		if now - (syncInfo.timestamp or now) > 12_960_000 then
-			priorSyncInfos[placeId] = nil
-			Log.trace("Cleared stale saved endpoint for {}", placeId)
+			priorSyncInfos[identifier] = nil
+			Log.trace("Cleared stale saved endpoint for {}", identifier)
 		end
 	end
 
-	local id = tostring(game.PlaceId)
-	if ignorePlaceIds[id] and workspace:GetAttribute("__Rojo_ProjectName") ~= projectName then
+	local identifier = getActiveProjectIdentifier()
+	if ignorePlaceIds[identifier] then
 		return
 	end
 
-	priorSyncInfos[id] = {
+	priorSyncInfos[identifier] = {
 		host = if host ~= Config.defaultHost then host else nil,
 		port = if port ~= Config.defaultPort then port else nil,
 		projectName = projectName,
 		timestamp = now,
 	}
-	Log.trace("Saved last used endpoint for {}", game.PlaceId)
+	Log.trace("Saved last used endpoint for {}", identifier)
 
 	Settings:set("priorEndpoints", priorSyncInfos)
 end
@@ -307,9 +318,9 @@ function App:forgetPriorSyncInfo()
 		priorSyncInfos = {}
 	end
 
-	local id = tostring(game.PlaceId)
-	priorSyncInfos[id] = nil
-	Log.trace("Erased last used endpoint for {}", game.PlaceId)
+	local identifier = getActiveProjectIdentifier()
+	priorSyncInfos[identifier] = nil
+	Log.trace("Erased last used endpoint for {}", identifier)
 
 	Settings:set("priorEndpoints", priorSyncInfos)
 end
