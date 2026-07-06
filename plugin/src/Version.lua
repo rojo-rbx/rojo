@@ -111,6 +111,23 @@ Version._cachedLatestCompatible = nil :: {
 	timestamp: number,
 }?
 
+--[[
+	A user may choose to reject requests to api.github.com. If they do, we want
+	to disable the option to enable checks altogether.
+]]
+Version._apiBlocked = nil :: boolean?
+
+function Version.isApiBlocked(): boolean
+	if Version._apiBlocked == nil then
+		local isLocalInstall = string.find(debug.traceback(), "\n[^\n]-user_.-$") ~= nil
+		Version.retrieveLatestCompatible({
+			version = Config.version,
+			includePrereleases = isLocalInstall and Settings:get("checkForPrereleases"),
+		})
+	end
+	return Version._apiBlocked
+end
+
 function Version.retrieveLatestCompatible(options: {
 	version: { number },
 	includePrereleases: boolean?,
@@ -136,8 +153,15 @@ function Version.retrieveLatestCompatible(options: {
 		:await()
 
 	if success == false or type(releases) ~= "table" or next(releases) ~= 1 then
+		-- Roblox's HTTP errors are weird!
+		if string.find(tostring(releases), "^Unknown HTTP error: HttpService permission denied") then
+			Log.debug("Requests to api.github were denied by user, disabling update check")
+			Settings:set("checkForUpdates", false)
+			Version._apiBlocked = true
+		end
 		return nil
 	end
+	Version._apiBlocked = false
 
 	-- Iterate through releases, looking for the latest compatible version
 	local latestCompatible: LatestReleaseInfo? = nil

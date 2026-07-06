@@ -8,6 +8,7 @@ local Log = require(Packages.Log)
 local Assets = require(Plugin.Assets)
 local Settings = require(Plugin.Settings)
 local Theme = require(Plugin.App.Theme)
+local Version = require(Plugin.Version)
 
 local IconButton = require(Plugin.App.Components.IconButton)
 local ScrollingFrame = require(Plugin.App.Components.ScrollingFrame)
@@ -193,6 +194,8 @@ function SettingsPage:render()
 				id = "checkForUpdates",
 				name = "Check For Updates",
 				description = "Notify about newer compatible Rojo releases",
+				locked = Version.isApiBlocked(),
+				lockedTooltip = "(HTTP requests to api.github.com are blocked, Rojo cannot fetch what the latest version is.)",
 				transparency = self.props.transparency,
 				layoutOrder = layoutIncrement(),
 			}),
