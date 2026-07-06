@@ -113,7 +113,8 @@ Version._cachedLatestCompatible = nil :: {
 
 --[[
 	A user may choose to reject requests to api.github.com. If they do, we want
-	to disable the option to enable checks altogether.
+	to disable the setting for checking for updates to indicate that it does
+	nothing.
 ]]
 Version._apiBlocked = nil :: boolean?
 
