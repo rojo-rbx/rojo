@@ -155,8 +155,6 @@ function Version.retrieveLatestCompatible(options: {
 	if success == false or type(releases) ~= "table" or next(releases) ~= 1 then
 		-- Roblox's HTTP errors are weird!
 		if string.find(tostring(releases), "^Unknown HTTP error: HttpService permission denied") then
-			Log.debug("Requests to api.github were denied by user, disabling update check")
-			Settings:set("checkForUpdates", false)
 			Version._apiBlocked = true
 		end
 		return nil
