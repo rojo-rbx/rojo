@@ -42,6 +42,7 @@ Making a new release? Simply add the new header with the version and date undern
 ## [7.7.0] (July 1st, 2026)
 
 * `inf` and `nan` values in properties are now synced ([#1176])
+* Added an "Every Change" confirmation behavior option that prompts for confirmation on every sync patch (not just the initial sync). Changes that arrive during confirmation are merged into the pending patch and the UI updates in real-time. ([#1216])
 * Fixed a bug caused by having reference properties (such as `ObjectValue.Value`) that point to an Instance not included in syncback. ([#1179])
 * Fixed instance replacement fallback failing when too many instances needed to be replaced. ([#1192])
 * Added actors and bindable/remote event/function variants to be synced back as JSON files. ([#1199])
@@ -65,6 +66,7 @@ Making a new release? Simply add the new header with the version and date undern
 [#1201]: https://github.com/rojo-rbx/rojo/pull/1201
 [#1211]: https://github.com/rojo-rbx/rojo/pull/1211
 [#1215]: https://github.com/rojo-rbx/rojo/pull/1215
+[#1216]: https://github.com/rojo-rbx/rojo/pull/1216
 [#1217]: https://github.com/rojo-rbx/rojo/pull/1217
 [#1252]: https://github.com/rojo-rbx/rojo/pull/1252
 [#1256]: https://github.com/rojo-rbx/rojo/pull/1256

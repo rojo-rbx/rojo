@@ -821,7 +821,36 @@ function App:startSession()
 			timeout = 7,
 		})
 
-		return self.confirmationEvent:Wait()
+		local result = self.confirmationEvent:Wait()
+
+		-- Reset UI state back to Connected after confirmation
+		-- This is needed for ongoing WebSocket patches where the session
+		-- is already connected and won't trigger a status change
+		if self.serveSession and self.serveSession:getStatus() == ServeSession.Status.Connected then
+			self:setState({
+				appStatus = AppStatus.Connected,
+				toolbarIcon = Assets.Images.PluginButtonConnected,
+				-- Clear patchTree to avoid animation issues when the
+				-- PatchVisualizer unmounts while Flipper motors are running
+				patchTree = nil,
+			})
+		end
+
+		return result
+	end)
+
+	serveSession:setPatchUpdateCallback(function(instanceMap, patch)
+		-- If all changes have been reverted, auto-accept the empty patch
+		if PatchSet.isEmpty(patch) then
+			Log.trace("Patch became empty after merging, auto-accepting")
+			self.confirmationBindable:Fire("Accept")
+			return
+		end
+
+		-- Update the patchTree when new changes arrive during confirmation
+		self:setState({
+			patchTree = PatchTree.build(patch, instanceMap, { "Property", "Current", "Incoming" }),
+		})
 	end)
 
 	serveSession:start()
