@@ -8,10 +8,8 @@ use rbx_dom_weak::{
     ustr, Instance, Ustr, WeakDom,
 };
 
-use crate::{
-    multimap::MultiMap, syncback::snapshot::inst_path, REF_ID_ATTRIBUTE_NAME,
-    REF_POINTER_ATTRIBUTE_PREFIX,
-};
+use crate::syncback::snapshot::inst_path;
+use crate::{multimap::MultiMap, REF_ID_ATTRIBUTE_NAME, REF_POINTER_ATTRIBUTE_PREFIX};
 
 pub struct RefLinks {
     /// A map of referents to each of their Ref properties.
