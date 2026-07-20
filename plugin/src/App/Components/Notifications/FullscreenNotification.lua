@@ -116,6 +116,7 @@ function FullscreenNotification:render()
 				Image = Assets.Images.Logo,
 				ImageColor3 = theme.Header.LogoColor,
 				BackgroundTransparency = 1,
+				ScaleType = Enum.ScaleType.Fit,
 				Size = UDim2.fromOffset(27, 27),
 				LayoutOrder = 1,
 			}),

@@ -72,6 +72,7 @@ local function Navbar(props)
 				ImageColor3 = theme.Header.LogoColor,
 				ImageTransparency = props.transparency,
 				BackgroundTransparency = 1,
+				ScaleType = Enum.ScaleType.Fit,
 				Size = UDim2.fromOffset(24, 24),
 				Position = UDim2.new(1, -4, 0.5, 0),
 				AnchorPoint = Vector2.new(1, 0.5),

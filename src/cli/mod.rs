@@ -1,4 +1,4 @@
-//! Defines Rojo's CLI through clap types.
+//! Defines Prism's CLI through clap types.
 
 mod automation;
 mod build;
@@ -13,9 +13,12 @@ mod sourcemap;
 mod syncback;
 mod upload;
 
-use std::{borrow::Cow, env, path::Path, str::FromStr};
+use std::{borrow::Cow, env, panic, path::Path, process, str::FromStr};
 
 use anyhow::Context;
+use backtrace::Backtrace;
+#[cfg(test)]
+use clap::CommandFactory;
 use clap::Parser;
 use thiserror::Error;
 
@@ -31,9 +34,13 @@ pub use self::sourcemap::SourcemapCommand;
 pub use self::syncback::SyncbackCommand;
 pub use self::upload::UploadCommand;
 
-/// Command line options that Rojo accepts, defined using the clap crate.
+/// Command line options that Prism accepts, defined using the clap crate.
 #[derive(Debug, Parser)]
-#[clap(name = "Rojo", version, about)]
+#[clap(
+    name = "Prism",
+    version,
+    about = "Prism developer tooling for Roblox, derived from Rojo"
+)]
 pub struct Options {
     #[clap(flatten)]
     pub global: GlobalOptions,
@@ -41,6 +48,72 @@ pub struct Options {
     /// Subcommand to run in this invocation.
     #[clap(subcommand)]
     pub subcommand: Subcommand,
+}
+
+pub fn run() {
+    #[cfg(feature = "profile-with-tracy")]
+    profiling::tracy_client::Client::start();
+
+    panic::set_hook(Box::new(|panic_info| {
+        let message = match panic_info.payload().downcast_ref::<&str>() {
+            Some(&message) => message.to_string(),
+            None => match panic_info.payload().downcast_ref::<String>() {
+                Some(message) => message.clone(),
+                None => "<no message>".to_string(),
+            },
+        };
+
+        log::error!(
+            "Prism crashed! You are running Prism {}.",
+            env!("CARGO_PKG_VERSION")
+        );
+        log::error!("This is probably a Prism bug.");
+        log::error!("");
+        log::error!("Please report this Prism build through its distribution channel.");
+        log::error!("");
+        log::error!("Details: {}", message);
+
+        if let Some(location) = panic_info.location() {
+            log::error!("in file {} on line {}", location.file(), location.line());
+        }
+
+        let should_backtrace = env::var("RUST_BACKTRACE")
+            .map(|var| var == "1")
+            .unwrap_or(false);
+
+        if should_backtrace {
+            eprintln!("{:?}", Backtrace::new());
+        } else {
+            eprintln!(
+                "note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace."
+            );
+        }
+
+        process::exit(1);
+    }));
+
+    let options = Options::parse();
+
+    let log_filter = match options.global.verbosity {
+        0 => "info",
+        1 => "info,librojo=debug",
+        2 => "info,librojo=trace",
+        _ => "trace",
+    };
+
+    let log_env = env_logger::Env::default().default_filter_or(log_filter);
+
+    env_logger::Builder::from_env(log_env)
+        .format_module_path(false)
+        .format_timestamp(None)
+        .format_indent(Some(8))
+        .write_style(options.global.color.into())
+        .init();
+
+    if let Err(err) = options.run() {
+        log::error!("{:?}", err);
+        process::exit(1);
+    }
 }
 
 impl Options {
@@ -141,8 +214,26 @@ pub(super) fn resolve_path(path: &Path) -> anyhow::Result<Cow<'_, Path>> {
     } else {
         let current_dir = env::current_dir().context(
             "Could not determine the current working directory. \
-             It may have been deleted, or Rojo may not have permission to access it.",
+             It may have been deleted, or Prism may not have permission to access it.",
         )?;
         Ok(Cow::Owned(current_dir.join(path)))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn help_and_version_are_prism_branded() {
+        let command = Options::command();
+        assert_eq!(command.get_name(), "Prism");
+        assert_eq!(command.get_version(), Some(env!("CARGO_PKG_VERSION")));
+
+        let mut help = Vec::new();
+        Options::command().write_long_help(&mut help).unwrap();
+        let help = String::from_utf8(help).unwrap();
+        assert!(help.contains("Prism developer tooling for Roblox"));
+        assert!(help.contains("USAGE:\n    Prism"));
     }
 }

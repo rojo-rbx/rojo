@@ -1,6 +1,7 @@
 [package]
 name = "rojo"
 version = "7.7.0"
+autobins = false
 rust-version = "1.88"
 authors = [
     "Lucien Greathouse <me@lpghatguy.com>",
@@ -40,6 +41,14 @@ members = ["crates/*"]
 [lib]
 name = "librojo"
 path = "src/lib.rs"
+
+[[bin]]
+name = "prism"
+path = "src/main.rs"
+
+[[bin]]
+name = "rojo"
+path = "src/bin/rojo.rs"
 
 [[bench]]
 name = "build"

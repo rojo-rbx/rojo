@@ -28,6 +28,7 @@ const DEFAULT_MAX_INSTANCES: u32 = 2_000;
 const POLL_INTERVAL: Duration = Duration::from_millis(250);
 const LOCAL_TIMEOUT: Duration = Duration::from_secs(50);
 
+/// Inspect a DataModel path through a connected Prism Studio plugin.
 #[derive(Debug, Parser)]
 pub struct InspectCommand {
     /// DataModel path to inspect.
@@ -407,7 +408,7 @@ mod tests {
 
     #[test]
     fn parses_command_defaults_and_custom_values() {
-        let options = Options::try_parse_from(["rojo", "inspect", "Workspace"]).unwrap();
+        let options = Options::try_parse_from(["prism", "inspect", "Workspace"]).unwrap();
         let crate::cli::Subcommand::Inspect(command) = options.subcommand else {
             panic!("expected inspect command")
         };
@@ -419,7 +420,7 @@ mod tests {
         assert!(command.tags);
 
         let options = Options::try_parse_from([
-            "rojo",
+            "prism",
             "inspect",
             "Workspace",
             "--depth",
@@ -445,9 +446,11 @@ mod tests {
 
     #[test]
     fn validates_depth_and_child_limits() {
-        assert!(Options::try_parse_from(["rojo", "inspect", "Workspace", "--depth", "9"]).is_err());
         assert!(
-            Options::try_parse_from(["rojo", "inspect", "Workspace", "--max-children", "0"])
+            Options::try_parse_from(["prism", "inspect", "Workspace", "--depth", "9"]).is_err()
+        );
+        assert!(
+            Options::try_parse_from(["prism", "inspect", "Workspace", "--max-children", "0"])
                 .is_err()
         );
     }
@@ -490,7 +493,7 @@ mod tests {
 
     #[test]
     fn rejects_missing_target() {
-        assert!(Options::try_parse_from(["rojo", "inspect"]).is_err());
+        assert!(Options::try_parse_from(["prism", "inspect"]).is_err());
     }
 
     fn sample_result() -> InspectResult {

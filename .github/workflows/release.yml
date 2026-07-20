@@ -31,26 +31,19 @@ jobs:
           version: 'v1.1.0'
 
       - name: Build Plugin
-        run: rojo build plugin.project.json --output Rojo.rbxm
+        run: rojo build plugin.project.json --output Prism.rbxm
 
       - name: Upload Plugin to Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload ${{ github.ref_name }} Rojo.rbxm
+          gh release upload ${{ github.ref_name }} Prism.rbxm
 
       - name: Upload Plugin to Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Rojo.rbxm
-          path: Rojo.rbxm
-      
-      - name: Upload Plugin to Roblox
-        env:
-          RBX_API_KEY: ${{ secrets.PLUGIN_UPLOAD_TOKEN }}
-          RBX_UNIVERSE_ID: ${{ vars.PLUGIN_CI_PLACE_ID }}
-          RBX_PLACE_ID: ${{ vars.PLUGIN_CI_UNIVERSE_ID }}
-        run: lune run upload-plugin Rojo.rbxm
+          name: Prism.rbxm
+          path: Prism.rbxm
 
   build:
     needs: ["create-release"]
@@ -92,7 +85,7 @@ jobs:
     name: Build (${{ matrix.target }})
     runs-on: ${{ matrix.os }}
     env:
-      BIN: rojo
+      BIN: prism
     steps:
       - uses: actions/checkout@v4
         with:

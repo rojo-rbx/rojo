@@ -27,6 +27,7 @@ function ConnectingPage:render()
 				Image = Assets.Images.Logo,
 				ImageColor3 = Color3.new(1, 1, 1),
 				ImageTransparency = self.props.transparency,
+				ScaleType = Enum.ScaleType.Fit,
 				BackgroundTransparency = 1,
 				Size = UDim2.fromOffset(30, 30),
 				Position = UDim2.new(0.5, -20, 0, 12),

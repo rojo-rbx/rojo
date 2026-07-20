@@ -472,7 +472,7 @@ mod test {
 
     #[test]
     fn clap_parses_exec_file() {
-        let options = parse(&["rojo", "exec", "file.lua"]).unwrap();
+        let options = parse(&["prism", "exec", "file.lua"]).unwrap();
         let Subcommand::Exec(command) = options.subcommand else {
             panic!("expected exec command");
         };
@@ -482,7 +482,7 @@ mod test {
 
     #[test]
     fn clap_uses_default_address_and_port() {
-        let options = parse(&["rojo", "exec", "file.lua"]).unwrap();
+        let options = parse(&["prism", "exec", "file.lua"]).unwrap();
         let Subcommand::Exec(command) = options.subcommand else {
             panic!("expected exec command");
         };
@@ -494,7 +494,7 @@ mod test {
     #[test]
     fn clap_accepts_custom_address_and_port() {
         let options = parse(&[
-            "rojo",
+            "prism",
             "exec",
             "file.lua",
             "--address",
@@ -513,12 +513,12 @@ mod test {
 
     #[test]
     fn clap_rejects_missing_file() {
-        assert!(parse(&["rojo", "exec"]).is_err());
+        assert!(parse(&["prism", "exec"]).is_err());
     }
 
     #[test]
     fn clap_rejects_inline_source() {
-        assert!(parse(&["rojo", "exec", "-e", "return true"]).is_err());
+        assert!(parse(&["prism", "exec", "-e", "return true"]).is_err());
     }
 
     #[test]

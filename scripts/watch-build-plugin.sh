@@ -1,1 +1,1 @@
-rojo build plugin.project.json --plugin Rojo.rbxm --watch
+rojo build plugin.project.json --plugin Prism.rbxm --watch

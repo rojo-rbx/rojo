@@ -156,6 +156,7 @@ function Notification:render()
 					Logo = e("ImageLabel", {
 						ImageTransparency = transparency,
 						Image = Assets.Images.PluginButton,
+						ScaleType = Enum.ScaleType.Fit,
 						BackgroundTransparency = 1,
 						Size = UDim2.fromOffset(logoSize, logoSize),
 						Position = UDim2.new(0, 0, 0, 0),

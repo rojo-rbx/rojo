@@ -45,6 +45,7 @@ function ConfirmingPage:render()
 					ImageColor3 = Color3.new(1, 1, 1),
 					ImageTransparency = self.props.transparency,
 					BackgroundTransparency = 1,
+					ScaleType = Enum.ScaleType.Fit,
 					Size = UDim2.fromOffset(24, 24),
 					Position = UDim2.new(0, 0, 0.5, 0),
 					AnchorPoint = Vector2.new(0, 0.5),
