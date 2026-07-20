@@ -4,6 +4,9 @@ use std::{
     time::{Duration, Instant},
 };
 
+use serde::de::{self, MapAccess, SeqAccess, Visitor};
+use serde::Deserializer;
+use serde::Serializer;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use uuid::Uuid;
@@ -128,9 +131,17 @@ pub struct InspectNode {
     pub name: String,
     pub class_name: String,
     pub path: String,
-    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    #[serde(
+        default,
+        with = "string_map_or_empty_array",
+        skip_serializing_if = "BTreeMap::is_empty"
+    )]
     pub properties: BTreeMap<String, AutomationValue>,
-    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    #[serde(
+        default,
+        with = "string_map_or_empty_array",
+        skip_serializing_if = "BTreeMap::is_empty"
+    )]
     pub attributes: BTreeMap<String, AutomationValue>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub tags: Vec<String>,
@@ -529,6 +540,61 @@ fn enforce_terminal_limit(inner: &mut AutomationJobStoreInner) {
     while inner.terminal.len() > MAX_RETAINED_AUTOMATION_JOBS {
         if let Some(id) = inner.terminal.pop_front() {
             inner.jobs.remove(&id);
+        }
+    }
+}
+
+mod string_map_or_empty_array {
+    use super::*;
+    use std::fmt;
+
+    pub fn serialize<S>(
+        value: &BTreeMap<String, AutomationValue>,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        BTreeMap::serialize(value, serializer)
+    }
+
+    pub fn deserialize<'de, D>(
+        deserializer: D,
+    ) -> Result<BTreeMap<String, AutomationValue>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_any(MapVisitor)
+    }
+
+    struct MapVisitor;
+
+    impl<'de> Visitor<'de> for MapVisitor {
+        type Value = BTreeMap<String, AutomationValue>;
+
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            formatter.write_str("a map, or an empty array")
+        }
+
+        fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+        where
+            A: MapAccess<'de>,
+        {
+            let mut output = BTreeMap::new();
+            while let Some((key, value)) = map.next_entry::<String, AutomationValue>()? {
+                output.insert(key, value);
+            }
+            Ok(output)
+        }
+
+        fn visit_seq<A>(self, mut sequence: A) -> Result<Self::Value, A::Error>
+        where
+            A: SeqAccess<'de>,
+        {
+            if sequence.next_element::<de::IgnoredAny>()?.is_some() {
+                return Err(de::Error::invalid_length(1, &"an empty array"));
+            }
+            Ok(BTreeMap::new())
         }
     }
 }
