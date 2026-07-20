@@ -6,6 +6,7 @@ local Roact = require(Packages.Roact)
 
 local Settings = require(Plugin.Settings)
 local Theme = require(Plugin.App.Theme)
+local Assets = require(Plugin.Assets)
 local TextButton = require(Plugin.App.Components.TextButton)
 local StudioPluginGui = require(Plugin.App.Components.Studio.StudioPluginGui)
 local Tooltip = require(Plugin.App.Components.Tooltip)
@@ -34,19 +35,36 @@ end
 function ConfirmingPage:render()
 	return Theme.with(function(theme)
 		local pageContent = Roact.createFragment({
-			Title = e("TextLabel", {
-				Text = string.format(
-					"Sync changes for project '%s':",
-					self.props.confirmData.serverInfo.projectName or "UNKNOWN"
-				),
-				FontFace = theme.Font.Thin,
-				LineHeight = 1.2,
-				TextSize = theme.TextSize.Body,
-				TextColor3 = theme.TextColor,
-				TextXAlignment = Enum.TextXAlignment.Left,
-				TextTransparency = self.props.transparency,
-				Size = UDim2.new(1, 0, 0, theme.TextSize.Large + 2),
+			TitleRow = e("Frame", {
+				Size = UDim2.new(1, 0, 0, 28),
 				BackgroundTransparency = 1,
+				LayoutOrder = 1,
+			}, {
+				Logo = e("ImageLabel", {
+					Image = Assets.Images.PluginButtonWarning,
+					ImageColor3 = Color3.new(1, 1, 1),
+					ImageTransparency = self.props.transparency,
+					BackgroundTransparency = 1,
+					Size = UDim2.fromOffset(24, 24),
+					Position = UDim2.new(0, 0, 0.5, 0),
+					AnchorPoint = Vector2.new(0, 0.5),
+				}),
+				Title = e("TextLabel", {
+					Text = string.format(
+						"Review Prism sync changes for '%s'",
+						self.props.confirmData.serverInfo.projectName or "UNKNOWN"
+					),
+					FontFace = theme.Font.Main,
+					LineHeight = 1.2,
+					TextSize = theme.TextSize.Body,
+					TextColor3 = theme.Tokens.PrimaryText,
+					TextXAlignment = Enum.TextXAlignment.Left,
+					TextTransparency = self.props.transparency,
+					TextTruncate = Enum.TextTruncate.AtEnd,
+					Position = UDim2.fromOffset(32, 0),
+					Size = UDim2.new(1, -32, 1, 0),
+					BackgroundTransparency = 1,
+				}),
 			}),
 
 			PatchVisualizer = e(PatchVisualizer, {
@@ -136,81 +154,85 @@ function ConfirmingPage:render()
 				Padding = UDim.new(0, 10),
 			}),
 
-			StringDiff = e(StudioPluginGui, {
-				id = "Rojo_ConfirmingStringDiff",
-				title = "String diff",
-				active = self.state.showingStringDiff,
-				isEphemeral = true,
+			StringDiff = if self.state.showingStringDiff
+				then e(StudioPluginGui, {
+					id = "Rojo_ConfirmingStringDiff",
+					title = "String diff",
+					active = self.state.showingStringDiff,
+					isEphemeral = true,
 
-				initDockState = Enum.InitialDockState.Float,
-				overridePreviousState = true,
-				floatingSize = Vector2.new(500, 350),
-				minimumSize = Vector2.new(400, 250),
+					initDockState = Enum.InitialDockState.Float,
+					overridePreviousState = true,
+					floatingSize = Vector2.new(500, 350),
+					minimumSize = Vector2.new(400, 250),
 
-				zIndexBehavior = Enum.ZIndexBehavior.Sibling,
+					zIndexBehavior = Enum.ZIndexBehavior.Sibling,
 
-				onClose = function()
-					self:setState({
-						showingStringDiff = false,
-					})
-				end,
-			}, {
-				TooltipsProvider = e(Tooltip.Provider, nil, {
-					Tooltips = e(Tooltip.Container, nil),
-					Content = e("Frame", {
-						Size = UDim2.fromScale(1, 1),
-						BackgroundTransparency = 1,
-					}, {
-						e(StringDiffVisualizer, {
-							size = UDim2.new(1, -10, 1, -10),
-							position = UDim2.new(0, 5, 0, 5),
-							anchorPoint = Vector2.new(0, 0),
-							transparency = self.props.transparency,
+					onClose = function()
+						self:setState({
+							showingStringDiff = false,
+						})
+					end,
+				}, {
+					TooltipsProvider = e(Tooltip.Provider, nil, {
+						Tooltips = e(Tooltip.Container, nil),
+						Content = e("Frame", {
+							Size = UDim2.fromScale(1, 1),
+							BackgroundTransparency = 1,
+						}, {
+							e(StringDiffVisualizer, {
+								size = UDim2.new(1, -10, 1, -10),
+								position = UDim2.new(0, 5, 0, 5),
+								anchorPoint = Vector2.new(0, 0),
+								transparency = self.props.transparency,
 
-							currentString = self.state.currentString,
-							incomingString = self.state.incomingString,
+								currentString = self.state.currentString,
+								incomingString = self.state.incomingString,
+							}),
 						}),
 					}),
-				}),
-			}),
+				})
+				else nil,
 
-			TableDiff = e(StudioPluginGui, {
-				id = "Rojo_ConfirmingTableDiff",
-				title = "Table diff",
-				active = self.state.showingTableDiff,
-				isEphemeral = true,
+			TableDiff = if self.state.showingTableDiff
+				then e(StudioPluginGui, {
+					id = "Rojo_ConfirmingTableDiff",
+					title = "Table diff",
+					active = self.state.showingTableDiff,
+					isEphemeral = true,
 
-				initDockState = Enum.InitialDockState.Float,
-				overridePreviousState = true,
-				floatingSize = Vector2.new(500, 350),
-				minimumSize = Vector2.new(400, 250),
+					initDockState = Enum.InitialDockState.Float,
+					overridePreviousState = true,
+					floatingSize = Vector2.new(500, 350),
+					minimumSize = Vector2.new(400, 250),
 
-				zIndexBehavior = Enum.ZIndexBehavior.Sibling,
+					zIndexBehavior = Enum.ZIndexBehavior.Sibling,
 
-				onClose = function()
-					self:setState({
-						showingTableDiff = false,
-					})
-				end,
-			}, {
-				TooltipsProvider = e(Tooltip.Provider, nil, {
-					Tooltips = e(Tooltip.Container, nil),
-					Content = e("Frame", {
-						Size = UDim2.fromScale(1, 1),
-						BackgroundTransparency = 1,
-					}, {
-						e(TableDiffVisualizer, {
-							size = UDim2.new(1, -10, 1, -10),
-							position = UDim2.new(0, 5, 0, 5),
-							anchorPoint = Vector2.new(0, 0),
-							transparency = self.props.transparency,
+					onClose = function()
+						self:setState({
+							showingTableDiff = false,
+						})
+					end,
+				}, {
+					TooltipsProvider = e(Tooltip.Provider, nil, {
+						Tooltips = e(Tooltip.Container, nil),
+						Content = e("Frame", {
+							Size = UDim2.fromScale(1, 1),
+							BackgroundTransparency = 1,
+						}, {
+							e(TableDiffVisualizer, {
+								size = UDim2.new(1, -10, 1, -10),
+								position = UDim2.new(0, 5, 0, 5),
+								anchorPoint = Vector2.new(0, 0),
+								transparency = self.props.transparency,
 
-							oldTable = self.state.oldTable,
-							newTable = self.state.newTable,
+								oldTable = self.state.oldTable,
+								newTable = self.state.newTable,
+							}),
 						}),
 					}),
-				}),
-			}),
+				})
+				else nil,
 		})
 
 		if self.props.createPopup then

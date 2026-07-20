@@ -56,7 +56,7 @@ local function Navbar(props)
 			}),
 
 			Text = e("TextLabel", {
-				Text = "Settings",
+				Text = "Prism Settings",
 				FontFace = theme.Font.Thin,
 				TextSize = theme.TextSize.Large,
 				TextColor3 = navbarTheme.TextColor,
@@ -65,6 +65,16 @@ local function Navbar(props)
 				Size = UDim2.new(1, 0, 1, 0),
 
 				BackgroundTransparency = 1,
+			}),
+
+			Logo = e("ImageLabel", {
+				Image = Assets.Images.Logo,
+				ImageColor3 = theme.Header.LogoColor,
+				ImageTransparency = props.transparency,
+				BackgroundTransparency = 1,
+				Size = UDim2.fromOffset(24, 24),
+				Position = UDim2.new(1, -4, 0.5, 0),
+				AnchorPoint = Vector2.new(1, 0.5),
 			}),
 		})
 	end)

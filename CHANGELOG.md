@@ -1,5 +1,16 @@
 # Rojo Changelog
 
+## Prism 0.1 (Development)
+
+* Made `prism` the primary executable while retaining a thin `rojo` compatibility executable and the `librojo` library/crate identity.
+* Added deterministic current-directory project discovery for `prism serve`.
+* Changed managed local installation to `PrismManagedPlugin.rbxm` and added read-only local plugin diagnostics with `prism plugin list`.
+* Completed Prism branding across the Studio plugin while preserving Rojo-compatible project, protocol, widget, action, setting, and layout identifiers.
+* Redesigned the existing Studio panel with a responsive dark glass theme, Prism assets, and a low-motion ambient color background.
+* Removed the exec feasibility spike after moving its unique cleanup regression into the production exec tests.
+
+The entries below are the retained upstream Rojo changelog and attribution.
+
 <!-- DIRECTIONS
 Thanks for contributing to Rojo! Please add your change to the "Unreleased" section below.
 

@@ -12,6 +12,7 @@ local Log = require(Packages.Log)
 local Promise = require(Packages.Promise)
 
 local Assets = require(Plugin.Assets)
+local Branding = require(Plugin.Branding)
 local Version = require(Plugin.Version)
 local Config = require(Plugin.Config)
 local Settings = require(Plugin.Settings)
@@ -28,6 +29,7 @@ local timeUtil = require(Plugin.timeUtil)
 local Theme = require(script.Theme)
 
 local Page = require(script.Page)
+local PrismBackground = require(script.Components.PrismBackground)
 local Notifications = require(script.Components.Notifications)
 local Tooltip = require(script.Components.Tooltip)
 local StudioPluginAction = require(script.Components.Studio.StudioPluginAction)
@@ -460,7 +462,7 @@ function App:checkSyncReminder()
 
 				local timeSinceSync = timeUtil.elapsedToText(os.time() - priorSyncInfo.timestamp)
 				self:sendSyncReminder(
-					`You synced project '{priorSyncInfo.projectName}' to this place {timeSinceSync}.\nDid you mean to run 'rojo serve' and then connect?`,
+					`You synced project '{priorSyncInfo.projectName}' to this place {timeSinceSync}.\nDid you mean to run 'prism serve' and then connect?`,
 					{ "Connect", "Forget", "Dismiss" }
 				)
 			end
@@ -854,8 +856,8 @@ end
 
 function App:render()
 	-- Keep the legacy widget ID so existing Studio dock state is preserved.
-	local pluginId = "Rojo " .. Version.display(Config.version)
-	local pluginName = "Prism " .. Version.display(Config.version)
+	local pluginId = Branding.Compatibility.DockWidgetIdPrefix .. Version.display(Config.version)
+	local pluginName = Branding.DockWidgetTitlePrefix .. Version.display(Config.version)
 
 	local function createPageElement(appStatus, additionalProps)
 		additionalProps = additionalProps or {}
@@ -863,6 +865,7 @@ function App:render()
 		local props = Dictionary.merge(additionalProps, {
 			component = StatusPages[appStatus],
 			active = self.state.appStatus == appStatus,
+			zIndex = 2,
 		})
 
 		return e(Page, props)
@@ -898,6 +901,10 @@ function App:render()
 						})
 					end,
 				}, {
+					PrismBackground = e(PrismBackground, {
+						active = self.state.guiEnabled,
+					}),
+
 					Tooltips = e(Tooltip.Container, nil),
 
 					NotConnectedPage = createPageElement(AppStatus.NotConnected, {
@@ -980,7 +987,7 @@ function App:render()
 					}),
 				}),
 
-				RojoNotifications = e("ScreenGui", {
+				PrismNotifications = e("ScreenGui", {
 					ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
 					ResetOnSpawn = false,
 					DisplayOrder = 100,
@@ -997,7 +1004,7 @@ function App:render()
 
 			-- Keep action IDs stable so existing Studio shortcuts continue to work.
 			toggleAction = e(StudioPluginAction, {
-				name = "RojoConnection",
+				name = Branding.Compatibility.ToggleActionId,
 				title = "Prism: Connect/Disconnect",
 				description = "Toggles the server for a Prism sync session",
 				icon = Assets.Images.PluginButton,
@@ -1014,7 +1021,7 @@ function App:render()
 			}),
 
 			connectAction = e(StudioPluginAction, {
-				name = "RojoConnect",
+				name = Branding.Compatibility.ConnectActionId,
 				title = "Prism: Connect",
 				description = "Connects the server for a Prism sync session",
 				icon = Assets.Images.PluginButton,
@@ -1027,7 +1034,7 @@ function App:render()
 			}),
 
 			disconnectAction = e(StudioPluginAction, {
-				name = "RojoDisconnect",
+				name = Branding.Compatibility.DisconnectActionId,
 				title = "Prism: Disconnect",
 				description = "Disconnects the server for a Prism sync session",
 				icon = Assets.Images.PluginButton,
@@ -1040,10 +1047,12 @@ function App:render()
 			}),
 
 			toolbar = e(StudioToolbar, {
-				name = pluginName,
+				name = Branding.Name,
 			}, {
 				button = e(StudioToggleButton, {
-					name = "Rojo", -- Legacy toolbar button ID.
+					-- The first value is the retained shortcut ID; text is the visible label.
+					name = Branding.Compatibility.ToolbarButtonId,
+					text = Branding.Name,
 					tooltip = "Show or hide the Prism panel",
 					icon = self.state.toolbarIcon,
 					active = self.state.guiEnabled,

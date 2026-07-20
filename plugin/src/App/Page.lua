@@ -50,6 +50,7 @@ function Page:render()
 		end),
 		Size = UDim2.new(1, 0, 1, 0),
 		BackgroundTransparency = 1,
+		ZIndex = self.props.zIndex or 2,
 	}, {
 		Component = e(
 			self.props.component,

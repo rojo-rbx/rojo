@@ -360,6 +360,21 @@ return function()
 			expect(state.finishCount).to.equal(1)
 		end)
 
+		it("cleans up after temporary module configuration fails", function()
+			local dependencies, state = makeRunDependencies()
+			dependencies.configureTemporaryModule = function()
+				error("Source assignment was rejected")
+			end
+
+			local payload = runWith(dependencies)
+
+			expect(payload.outcome).to.equal("runtimeFailure")
+			expect(payload.error:find("Source assignment was rejected", 1, true)).to.be.ok()
+			expect(state.invocationCount).to.equal(0)
+			expect(state.finishCount).to.equal(0)
+			expect(state.cleanupCount).to.equal(1)
+		end)
+
 		it("returns a timeout payload and cancels the worker", function()
 			local dependencies, state = makeRunDependencies()
 			local releaseWorker = Instance.new("BindableEvent")

@@ -9,7 +9,7 @@ local Roact = require(Packages.Roact)
 local Theme = require(Plugin.App.Theme)
 local Assets = require(Plugin.Assets)
 
-local ROTATIONS_PER_SECOND = 1.75
+local ROTATIONS_PER_SECOND = 0.75
 
 local e = Roact.createElement
 

@@ -5,6 +5,7 @@ local Packages = Rojo.Packages
 local Roact = require(Packages.Roact)
 
 local Theme = require(Plugin.App.Theme)
+local Assets = require(Plugin.Assets)
 local getTextBoundsAsync = require(Plugin.App.getTextBoundsAsync)
 
 local TextButton = require(Plugin.App.Components.TextButton)
@@ -39,6 +40,7 @@ function Error:render()
 				return UDim2.new(1, 0, 0, math.min(outerSize.Y, maximumSize.Y))
 			end),
 			transparency = self.props.transparency,
+			borderColor = theme.Tokens.Danger,
 			layoutOrder = self.props.layoutOrder,
 		}, {
 			ScrollingFrame = e(ScrollingFrame, {
@@ -111,6 +113,7 @@ function ErrorPage:render()
 		end,
 	}, {
 		Header = e(Header, {
+			icon = Assets.Images.PluginButtonWarning,
 			transparency = self.props.transparency,
 			layoutOrder = 1,
 		}),

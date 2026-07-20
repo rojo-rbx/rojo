@@ -20,12 +20,19 @@ local e = Roact.createElement
 
 local TextInput = Roact.Component:extend("TextInput")
 
+TextInput.defaultProps = {
+	enabled = true,
+}
+
 function TextInput:init()
 	self.motor = Flipper.GroupMotor.new({
 		hover = 0,
 		enabled = self.props.enabled and 1 or 0,
 	})
 	self.binding = bindingUtil.fromMotor(self.motor)
+	self:setState({
+		focused = false,
+	})
 end
 
 function TextInput:didUpdate(lastProps)
@@ -45,11 +52,13 @@ function TextInput:render()
 
 		return e(SlicedImage, {
 			slice = Assets.Slices.RoundedBorder,
-			color = bindingUtil.mapLerp(
-				bindingEnabled,
-				textInputTheme.Enabled.BorderColor,
-				textInputTheme.Disabled.BorderColor
-			),
+			color = if self.state.focused
+				then textInputTheme.FocusBorderColor
+				else bindingUtil.mapLerp(
+					bindingEnabled,
+					textInputTheme.Enabled.BorderColor,
+					textInputTheme.Disabled.BorderColor
+				),
 			transparency = self.props.transparency,
 
 			size = self.props.size or UDim2.new(1, 0, 1, 0),
@@ -57,6 +66,13 @@ function TextInput:render()
 			layoutOrder = self.props.layoutOrder,
 			anchorPoint = self.props.anchorPoint,
 		}, {
+			Background = e(SlicedImage, {
+				slice = Assets.Slices.RoundedBackground,
+				color = theme.Tokens.InputBackground,
+				transparency = self.props.transparency,
+				size = UDim2.fromScale(1, 1),
+				zIndex = -2,
+			}),
 			HoverOverlay = e(SlicedImage, {
 				slice = Assets.Slices.RoundedBackground,
 				color = textInputTheme.ActionFillColor,
@@ -94,6 +110,13 @@ function TextInput:render()
 				TextSize = theme.TextSize.Large,
 				TextEditable = self.props.enabled,
 				ClearTextOnFocus = self.props.clearTextOnFocus,
+				Selectable = self.props.enabled,
+
+				[Roact.Event.Focused] = function()
+					self:setState({
+						focused = true,
+					})
+				end,
 
 				[Roact.Event.MouseEnter] = function()
 					self.motor:setGoal({
@@ -108,7 +131,12 @@ function TextInput:render()
 				end,
 
 				[Roact.Event.FocusLost] = function(rbx)
-					self.props.onEntered(rbx.Text)
+					self:setState({
+						focused = false,
+					})
+					if self.props.onEntered then
+						self.props.onEntered(rbx.Text)
+					end
 				end,
 			}),
 			Children = Roact.createFragment(self.props[Roact.Children]),

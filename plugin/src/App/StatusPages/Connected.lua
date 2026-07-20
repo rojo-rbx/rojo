@@ -208,52 +208,62 @@ local function ConnectionDetails(props)
 	return Theme.with(function(theme)
 		return e(BorderedContainer, {
 			transparency = props.transparency,
-			size = UDim2.new(1, 0, 0, 70),
+			size = UDim2.new(1, 0, 0, 76),
 			layoutOrder = props.layoutOrder,
 		}, {
-			TextContainer = e("Frame", {
-				Size = UDim2.new(1, 0, 1, 0),
+			Status = e("Frame", {
+				Size = UDim2.fromOffset(88, 22),
+				Position = UDim2.new(1, -12, 0, 7),
+				AnchorPoint = Vector2.new(1, 0),
 				BackgroundTransparency = 1,
 			}, {
-				ProjectName = e("TextLabel", {
-					Text = props.projectName,
-					FontFace = theme.Font.Bold,
-					TextSize = theme.TextSize.Large,
-					TextColor3 = theme.ConnectionDetails.ProjectNameColor,
+				Dot = e("Frame", {
+					Size = UDim2.fromOffset(7, 7),
+					Position = UDim2.new(0, 0, 0.5, 0),
+					AnchorPoint = Vector2.new(0, 0.5),
+					BackgroundColor3 = theme.Tokens.Success,
+					BackgroundTransparency = props.transparency,
+					BorderSizePixel = 0,
+				}, {
+					Corner = e("UICorner", {
+						CornerRadius = UDim.new(1, 0),
+					}),
+				}),
+				Text = e("TextLabel", {
+					Text = "Connected",
+					FontFace = theme.Font.Main,
+					TextSize = theme.TextSize.Small,
+					TextColor3 = theme.Tokens.Success,
 					TextTransparency = props.transparency,
 					TextXAlignment = Enum.TextXAlignment.Left,
-
-					Size = UDim2.new(1, 0, 0, theme.TextSize.Large),
-
-					LayoutOrder = 1,
 					BackgroundTransparency = 1,
-				}),
-
-				Address = e("TextLabel", {
-					Text = props.address,
-					FontFace = theme.Font.Code,
-					TextSize = theme.TextSize.Medium,
-					TextColor3 = theme.ConnectionDetails.AddressColor,
-					TextTransparency = props.transparency,
-					TextXAlignment = Enum.TextXAlignment.Left,
-
-					Size = UDim2.new(1, 0, 0, theme.TextSize.Medium),
-
-					LayoutOrder = 2,
-					BackgroundTransparency = 1,
-				}),
-
-				Layout = e("UIListLayout", {
-					VerticalAlignment = Enum.VerticalAlignment.Center,
-					FillDirection = Enum.FillDirection.Vertical,
-					SortOrder = Enum.SortOrder.LayoutOrder,
-					Padding = UDim.new(0, 6),
+					Position = UDim2.fromOffset(14, 0),
+					Size = UDim2.new(1, -14, 1, 0),
 				}),
 			}),
-
-			Padding = e("UIPadding", {
-				PaddingLeft = UDim.new(0, 17),
-				PaddingRight = UDim.new(0, 15),
+			ProjectName = e("TextLabel", {
+				Text = props.projectName,
+				FontFace = theme.Font.Bold,
+				TextSize = theme.TextSize.Large,
+				TextColor3 = theme.ConnectionDetails.ProjectNameColor,
+				TextTransparency = props.transparency,
+				TextXAlignment = Enum.TextXAlignment.Left,
+				TextTruncate = Enum.TextTruncate.AtEnd,
+				Position = UDim2.fromOffset(15, 7),
+				Size = UDim2.new(1, -118, 0, theme.TextSize.Large + 3),
+				BackgroundTransparency = 1,
+			}),
+			Address = e("TextLabel", {
+				Text = props.address,
+				FontFace = theme.Font.Code,
+				TextSize = theme.TextSize.Medium,
+				TextColor3 = theme.ConnectionDetails.AddressColor,
+				TextTransparency = props.transparency,
+				TextXAlignment = Enum.TextXAlignment.Left,
+				TextTruncate = Enum.TextTruncate.AtEnd,
+				Position = UDim2.fromOffset(15, 39),
+				Size = UDim2.new(1, -30, 0, theme.TextSize.Medium + 3),
+				BackgroundTransparency = 1,
 			}),
 		})
 	end)
@@ -462,7 +472,7 @@ function ConnectedPage:render()
 
 				Disconnect = e(TextButton, {
 					text = "Disconnect",
-					style = "Solid",
+					style = "Danger",
 					transparency = self.props.transparency,
 					layoutOrder = 2,
 					onClick = self.props.onDisconnect,
@@ -480,136 +490,142 @@ function ConnectedPage:render()
 				}),
 			}),
 
-			ChangesViewer = e(StudioPluginGui, {
-				id = "Rojo_ChangesViewer",
-				title = "View changes",
-				active = self.state.renderChanges,
-				isEphemeral = true,
+			ChangesViewer = if self.state.renderChanges
+				then e(StudioPluginGui, {
+					id = "Rojo_ChangesViewer",
+					title = "View changes",
+					active = self.state.renderChanges,
+					isEphemeral = true,
 
-				initDockState = Enum.InitialDockState.Float,
-				overridePreviousState = true,
-				floatingSize = Vector2.new(400, 500),
-				minimumSize = Vector2.new(300, 300),
+					initDockState = Enum.InitialDockState.Float,
+					overridePreviousState = true,
+					floatingSize = Vector2.new(400, 500),
+					minimumSize = Vector2.new(300, 300),
 
-				zIndexBehavior = Enum.ZIndexBehavior.Sibling,
+					zIndexBehavior = Enum.ZIndexBehavior.Sibling,
 
-				onClose = function()
-					self:setState({
-						renderChanges = false,
-					})
-				end,
-			}, {
-				TooltipsProvider = e(Tooltip.Provider, nil, {
-					Tooltips = e(Tooltip.Container, nil),
-					Content = e("Frame", {
-						Size = UDim2.fromScale(1, 1),
-						BackgroundTransparency = 1,
-					}, {
-						Changes = e(ChangesViewer, {
-							transparency = self.props.transparency,
-							rendered = self.state.renderChanges,
-							patchData = self.props.patchData,
-							patchTree = self.props.patchTree,
-							serveSession = self.props.serveSession,
-							showStringDiff = function(currentString: string, incomingString: string)
-								self:setState({
-									showingStringDiff = true,
-									currentString = currentString,
-									incomingString = incomingString,
-								})
-							end,
-							showTableDiff = function(oldTable: { [any]: any? }, newTable: { [any]: any? })
-								self:setState({
-									showingTableDiff = true,
-									oldTable = oldTable,
-									newTable = newTable,
-								})
-							end,
-							onBack = function()
-								self:setState({
-									renderChanges = false,
-								})
-							end,
+					onClose = function()
+						self:setState({
+							renderChanges = false,
+						})
+					end,
+				}, {
+					TooltipsProvider = e(Tooltip.Provider, nil, {
+						Tooltips = e(Tooltip.Container, nil),
+						Content = e("Frame", {
+							Size = UDim2.fromScale(1, 1),
+							BackgroundTransparency = 1,
+						}, {
+							Changes = e(ChangesViewer, {
+								transparency = self.props.transparency,
+								rendered = self.state.renderChanges,
+								patchData = self.props.patchData,
+								patchTree = self.props.patchTree,
+								serveSession = self.props.serveSession,
+								showStringDiff = function(currentString: string, incomingString: string)
+									self:setState({
+										showingStringDiff = true,
+										currentString = currentString,
+										incomingString = incomingString,
+									})
+								end,
+								showTableDiff = function(oldTable: { [any]: any? }, newTable: { [any]: any? })
+									self:setState({
+										showingTableDiff = true,
+										oldTable = oldTable,
+										newTable = newTable,
+									})
+								end,
+								onBack = function()
+									self:setState({
+										renderChanges = false,
+									})
+								end,
+							}),
 						}),
 					}),
-				}),
-			}),
+				})
+				else nil,
 
-			StringDiff = e(StudioPluginGui, {
-				id = "Rojo_ConnectedStringDiff",
-				title = "String diff",
-				active = self.state.showingStringDiff,
-				isEphemeral = true,
+			StringDiff = if self.state.showingStringDiff
+				then e(StudioPluginGui, {
+					id = "Rojo_ConnectedStringDiff",
+					title = "String diff",
+					active = self.state.showingStringDiff,
+					isEphemeral = true,
 
-				initDockState = Enum.InitialDockState.Float,
-				overridePreviousState = false,
-				floatingSize = Vector2.new(500, 350),
-				minimumSize = Vector2.new(400, 250),
+					initDockState = Enum.InitialDockState.Float,
+					overridePreviousState = false,
+					floatingSize = Vector2.new(500, 350),
+					minimumSize = Vector2.new(400, 250),
 
-				zIndexBehavior = Enum.ZIndexBehavior.Sibling,
+					zIndexBehavior = Enum.ZIndexBehavior.Sibling,
 
-				onClose = function()
-					self:setState({
-						showingStringDiff = false,
-					})
-				end,
-			}, {
-				TooltipsProvider = e(Tooltip.Provider, nil, {
-					Tooltips = e(Tooltip.Container, nil),
-					Content = e("Frame", {
-						Size = UDim2.fromScale(1, 1),
-						BackgroundTransparency = 1,
-					}, {
-						e(StringDiffVisualizer, {
-							size = UDim2.new(1, -10, 1, -10),
-							position = UDim2.new(0, 5, 0, 5),
-							anchorPoint = Vector2.new(0, 0),
-							transparency = self.props.transparency,
+					onClose = function()
+						self:setState({
+							showingStringDiff = false,
+						})
+					end,
+				}, {
+					TooltipsProvider = e(Tooltip.Provider, nil, {
+						Tooltips = e(Tooltip.Container, nil),
+						Content = e("Frame", {
+							Size = UDim2.fromScale(1, 1),
+							BackgroundTransparency = 1,
+						}, {
+							e(StringDiffVisualizer, {
+								size = UDim2.new(1, -10, 1, -10),
+								position = UDim2.new(0, 5, 0, 5),
+								anchorPoint = Vector2.new(0, 0),
+								transparency = self.props.transparency,
 
-							currentString = self.state.currentString,
-							incomingString = self.state.incomingString,
+								currentString = self.state.currentString,
+								incomingString = self.state.incomingString,
+							}),
 						}),
 					}),
-				}),
-			}),
+				})
+				else nil,
 
-			TableDiff = e(StudioPluginGui, {
-				id = "Rojo_ConnectedTableDiff",
-				title = "Table diff",
-				active = self.state.showingTableDiff,
-				isEphemeral = true,
+			TableDiff = if self.state.showingTableDiff
+				then e(StudioPluginGui, {
+					id = "Rojo_ConnectedTableDiff",
+					title = "Table diff",
+					active = self.state.showingTableDiff,
+					isEphemeral = true,
 
-				initDockState = Enum.InitialDockState.Float,
-				overridePreviousState = false,
-				floatingSize = Vector2.new(500, 350),
-				minimumSize = Vector2.new(400, 250),
+					initDockState = Enum.InitialDockState.Float,
+					overridePreviousState = false,
+					floatingSize = Vector2.new(500, 350),
+					minimumSize = Vector2.new(400, 250),
 
-				zIndexBehavior = Enum.ZIndexBehavior.Sibling,
+					zIndexBehavior = Enum.ZIndexBehavior.Sibling,
 
-				onClose = function()
-					self:setState({
-						showingTableDiff = false,
-					})
-				end,
-			}, {
-				TooltipsProvider = e(Tooltip.Provider, nil, {
-					Tooltips = e(Tooltip.Container, nil),
-					Content = e("Frame", {
-						Size = UDim2.fromScale(1, 1),
-						BackgroundTransparency = 1,
-					}, {
-						e(TableDiffVisualizer, {
-							size = UDim2.new(1, -10, 1, -10),
-							position = UDim2.new(0, 5, 0, 5),
-							anchorPoint = Vector2.new(0, 0),
-							transparency = self.props.transparency,
+					onClose = function()
+						self:setState({
+							showingTableDiff = false,
+						})
+					end,
+				}, {
+					TooltipsProvider = e(Tooltip.Provider, nil, {
+						Tooltips = e(Tooltip.Container, nil),
+						Content = e("Frame", {
+							Size = UDim2.fromScale(1, 1),
+							BackgroundTransparency = 1,
+						}, {
+							e(TableDiffVisualizer, {
+								size = UDim2.new(1, -10, 1, -10),
+								position = UDim2.new(0, 5, 0, 5),
+								anchorPoint = Vector2.new(0, 0),
+								transparency = self.props.transparency,
 
-							oldTable = self.state.oldTable,
-							newTable = self.state.newTable,
+								oldTable = self.state.oldTable,
+								newTable = self.state.newTable,
+							}),
 						}),
 					}),
-				}),
-			}),
+				})
+				else nil,
 		})
 	end)
 end

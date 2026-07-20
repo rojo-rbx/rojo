@@ -22,6 +22,10 @@ local e = Roact.createElement
 
 local TextButton = Roact.Component:extend("TextButton")
 
+TextButton.defaultProps = {
+	enabled = true,
+}
+
 function TextButton:init()
 	self.motor = Flipper.GroupMotor.new({
 		hover = 0,
@@ -56,8 +60,15 @@ function TextButton:render()
 
 			LayoutOrder = self.props.layoutOrder,
 			BackgroundTransparency = 1,
+			AutoButtonColor = false,
+			Active = self.props.enabled,
+			Selectable = self.props.enabled,
 
-			[Roact.Event.Activated] = self.props.onClick,
+			[Roact.Event.Activated] = function()
+				if self.props.enabled and self.props.onClick then
+					self.props.onClick()
+				end
+			end,
 
 			[Roact.Event.MouseEnter] = function()
 				self.motor:setGoal({
@@ -72,7 +83,7 @@ function TextButton:render()
 			end,
 		}, {
 			TouchRipple = e(TouchRipple, {
-				color = buttonTheme.ActionFillColor,
+				color = buttonTheme.PressedColor,
 				transparency = self.props.transparency:map(function(value)
 					return bindingUtil.blendAlpha({ buttonTheme.ActionFillTransparency, value })
 				end),
@@ -95,7 +106,7 @@ function TextButton:render()
 				BackgroundTransparency = 1,
 			}),
 
-			Border = style == "Bordered" and e(SlicedImage, {
+			Border = buttonTheme.HasBorder and e(SlicedImage, {
 				slice = Assets.Slices.RoundedBorder,
 				color = bindingUtil.mapLerp(
 					bindingEnabled,
@@ -130,7 +141,7 @@ function TextButton:render()
 				zIndex = -1,
 			}),
 
-			Background = style == "Solid" and e(SlicedImage, {
+			Background = buttonTheme.HasBackground and e(SlicedImage, {
 				slice = Assets.Slices.RoundedBackground,
 				color = bindingUtil.mapLerp(
 					bindingEnabled,

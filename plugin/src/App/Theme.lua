@@ -1,10 +1,10 @@
 --[[
-	Theming system provided through Roact's context.
-	Uses Studio colors when possible.
+	Prism's theme is provided through Roact context. The fixed dark palette keeps
+	the plugin recognizable and readable in either Studio theme while retaining
+	the existing Theme API used by the upstream-compatible UI components.
 ]]
 
--- Studio does not exist outside Roblox Studio, so we'll lazily initialize it
--- when possible.
+-- Studio does not exist outside Roblox Studio, so we'll lazily initialize it.
 local _Studio
 local function getStudio()
 	if _Studio == nil then
@@ -23,19 +23,33 @@ local Roact = require(Packages.Roact)
 
 local strict = require(script.Parent.Parent.strict)
 
-local BRAND_COLOR = Color3.fromHex("E13835")
+local Tokens = table.freeze({
+	PanelBackground = Color3.fromHex("080D18"),
+	CardBackground = Color3.fromHex("101827"),
+	ElevatedCardBackground = Color3.fromHex("172238"),
+	Border = Color3.fromHex("33415C"),
+	PrimaryText = Color3.fromHex("F3F7FF"),
+	SecondaryText = Color3.fromHex("C4CDDF"),
+	MutedText = Color3.fromHex("8793AA"),
+	PrimaryAccent = Color3.fromHex("62DDF2"),
+	Success = Color3.fromHex("54D9AA"),
+	Warning = Color3.fromHex("F1B85B"),
+	Danger = Color3.fromHex("FF7185"),
+	ButtonHover = Color3.fromHex("FFFFFF"),
+	ButtonPressed = Color3.fromHex("D8E5FF"),
+	InputBackground = Color3.fromHex("0C1423"),
+	InputBorder = Color3.fromHex("40506D"),
+	OverlayDarkness = 0.68,
+	CornerRadius = 8,
+})
 
 local Context = Roact.createContext({})
 
 local StudioProvider = Roact.Component:extend("StudioProvider")
 
--- Pull the current theme from Roblox Studio and update state with it.
 function StudioProvider:updateTheme()
-	local studioTheme = getStudio().Theme
-
-	local isDark = studioTheme.Name == "Dark"
-
-	local theme = strict(studioTheme.Name .. "Theme", {
+	local theme = strict("PrismTheme", {
+		Tokens = Tokens,
 		Font = {
 			Main = Font.new("rbxasset://fonts/families/Montserrat.json", Enum.FontWeight.Medium, Enum.FontStyle.Normal),
 			Bold = Font.new("rbxasset://fonts/families/Montserrat.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal),
@@ -57,169 +71,150 @@ function StudioProvider:updateTheme()
 			Large = 18,
 			Code = 16,
 		},
-		BrandColor = BRAND_COLOR,
-		BackgroundColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.MainBackground),
-		TextColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.MainText),
-		SubTextColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.SubText),
+		BrandColor = Tokens.PrimaryAccent,
+		BackgroundColor = Tokens.PanelBackground,
+		TextColor = Tokens.PrimaryText,
+		SubTextColor = Tokens.SecondaryText,
 		Button = {
 			Solid = {
-				-- Solid uses brand theming, not Studio theming.
-				ActionFillColor = Color3.fromHex("FFFFFF"),
-				ActionFillTransparency = 0.8,
+				HasBackground = true,
+				HasBorder = false,
+				PressedColor = Tokens.ButtonPressed,
+				ActionFillColor = Tokens.ButtonHover,
+				ActionFillTransparency = 0.86,
 				Enabled = {
-					TextColor = Color3.fromHex("FFFFFF"),
-					BackgroundColor = BRAND_COLOR,
+					TextColor = Tokens.PanelBackground,
+					BackgroundColor = Tokens.PrimaryAccent,
 				},
 				Disabled = {
-					TextColor = Color3.fromHex("FFFFFF"),
-					BackgroundColor = BRAND_COLOR,
+					TextColor = Tokens.MutedText,
+					BackgroundColor = Tokens.Border,
 				},
 			},
 			Bordered = {
-				ActionFillColor = studioTheme:GetColor(
-					Enum.StudioStyleGuideColor.ButtonText,
-					Enum.StudioStyleGuideModifier.Selected
-				),
-				ActionFillTransparency = 0.9,
+				HasBackground = false,
+				HasBorder = true,
+				PressedColor = Tokens.ButtonPressed,
+				ActionFillColor = Tokens.ButtonHover,
+				ActionFillTransparency = 0.91,
 				Enabled = {
-					TextColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.ButtonText),
-					BorderColor = studioTheme:GetColor(
-						Enum.StudioStyleGuideColor.CheckedFieldBorder,
-						Enum.StudioStyleGuideModifier.Disabled
-					),
+					TextColor = Tokens.SecondaryText,
+					BorderColor = Tokens.Border,
 				},
 				Disabled = {
-					TextColor = studioTheme:GetColor(
-						Enum.StudioStyleGuideColor.ButtonText,
-						Enum.StudioStyleGuideModifier.Disabled
-					),
-					BorderColor = studioTheme:GetColor(
-						Enum.StudioStyleGuideColor.CheckedFieldBorder,
-						Enum.StudioStyleGuideModifier.Disabled
-					),
+					TextColor = Tokens.MutedText,
+					BorderColor = Tokens.InputBorder,
+				},
+			},
+			Danger = {
+				HasBackground = false,
+				HasBorder = true,
+				PressedColor = Tokens.Danger,
+				ActionFillColor = Tokens.Danger,
+				ActionFillTransparency = 0.91,
+				Enabled = {
+					TextColor = Tokens.Danger,
+					BorderColor = Tokens.Danger,
+				},
+				Disabled = {
+					TextColor = Tokens.MutedText,
+					BorderColor = Tokens.Border,
 				},
 			},
 		},
 		Checkbox = {
 			Active = {
-				-- Active checkboxes use brand theming, not Studio theming.
-				IconColor = Color3.fromHex("FFFFFF"),
-				BackgroundColor = BRAND_COLOR,
+				IconColor = Tokens.PanelBackground,
+				BackgroundColor = Tokens.PrimaryAccent,
 			},
 			Inactive = {
-				IconColor = studioTheme:GetColor(
-					Enum.StudioStyleGuideColor.CheckedFieldIndicator,
-					Enum.StudioStyleGuideModifier.Disabled
-				),
-				BorderColor = studioTheme:GetColor(
-					Enum.StudioStyleGuideColor.CheckedFieldBorder,
-					Enum.StudioStyleGuideModifier.Disabled
-				),
+				IconColor = Tokens.MutedText,
+				BorderColor = Tokens.InputBorder,
 			},
 		},
 		Dropdown = {
-			TextColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.ButtonText),
-			BorderColor = studioTheme:GetColor(
-				Enum.StudioStyleGuideColor.CheckedFieldBorder,
-				Enum.StudioStyleGuideModifier.Disabled
-			),
-			BackgroundColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.MainBackground),
-			IconColor = studioTheme:GetColor(
-				Enum.StudioStyleGuideColor.CheckedFieldIndicator,
-				Enum.StudioStyleGuideModifier.Disabled
-			),
+			TextColor = Tokens.PrimaryText,
+			BorderColor = Tokens.InputBorder,
+			BackgroundColor = Tokens.ElevatedCardBackground,
+			IconColor = Tokens.SecondaryText,
 		},
 		TextInput = {
 			Enabled = {
-				TextColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.BrightText),
-				PlaceholderColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.SubText),
-				BorderColor = studioTheme:GetColor(
-					Enum.StudioStyleGuideColor.CheckedFieldBorder,
-					Enum.StudioStyleGuideModifier.Disabled
-				),
+				TextColor = Tokens.PrimaryText,
+				PlaceholderColor = Tokens.MutedText,
+				BorderColor = Tokens.InputBorder,
 			},
 			Disabled = {
-				TextColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.MainText),
-				PlaceholderColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.SubText),
-				BorderColor = studioTheme:GetColor(
-					Enum.StudioStyleGuideColor.CheckedFieldBorder,
-					Enum.StudioStyleGuideModifier.Disabled
-				),
+				TextColor = Tokens.MutedText,
+				PlaceholderColor = Tokens.MutedText,
+				BorderColor = Tokens.Border,
 			},
-			ActionFillColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.BrightText),
-			ActionFillTransparency = 0.9,
+			ActionFillColor = Tokens.ButtonHover,
+			ActionFillTransparency = 0.94,
+			FocusBorderColor = Tokens.PrimaryAccent,
 		},
 		AddressEntry = {
-			TextColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.BrightText),
-			PlaceholderColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.SubText),
+			TextColor = Tokens.PrimaryText,
+			PlaceholderColor = Tokens.MutedText,
+			LabelColor = Tokens.MutedText,
+			FocusBorderColor = Tokens.PrimaryAccent,
 		},
 		BorderedContainer = {
-			BorderColor = studioTheme:GetColor(
-				Enum.StudioStyleGuideColor.CheckedFieldBorder,
-				Enum.StudioStyleGuideModifier.Disabled
-			),
-			BackgroundColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.InputFieldBackground),
+			BorderColor = Tokens.Border,
+			BorderedColor = Tokens.ElevatedCardBackground,
+			BackgroundColor = Tokens.CardBackground,
 		},
 		Spinner = {
-			ForegroundColor = BRAND_COLOR,
-			BackgroundColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.InputFieldBackground),
+			ForegroundColor = Tokens.PrimaryAccent,
+			BackgroundColor = Tokens.Border,
 		},
 		Diff = {
-			-- Very bright different colors in case some places were not updated to use
-			-- the new background diff colors.
-			Add = Color3.fromRGB(255, 0, 255),
-			Remove = Color3.fromRGB(255, 0, 255),
-			Edit = Color3.fromRGB(255, 0, 255),
-
-			Row = studioTheme:GetColor(Enum.StudioStyleGuideColor.BrightText),
-			Warning = studioTheme:GetColor(Enum.StudioStyleGuideColor.WarningText),
-
+			Add = Tokens.Success,
+			Remove = Tokens.Danger,
+			Edit = Color3.fromHex("7F9DFF"),
+			Row = Tokens.PrimaryText,
+			Warning = Tokens.Warning,
 			Background = {
-				-- Studio doesn't have good colors since their diffs use backgrounds, not text
-				Add = if isDark then Color3.fromRGB(143, 227, 154) else Color3.fromRGB(41, 164, 45),
-				Remove = if isDark then Color3.fromRGB(242, 125, 125) else Color3.fromRGB(150, 29, 29),
-				Edit = if isDark then Color3.fromRGB(120, 154, 248) else Color3.fromRGB(0, 70, 160),
-				Remain = studioTheme:GetColor(Enum.StudioStyleGuideColor.BrightText),
+				Add = Color3.fromHex("8DE4B9"),
+				Remove = Color3.fromHex("FF9AA8"),
+				Edit = Color3.fromHex("9EB3FF"),
+				Remain = Tokens.PrimaryText,
 			},
-
 			Text = {
-				Add = if isDark then Color3.new(0, 0, 0) else Color3.new(1, 1, 1),
-				Remove = if isDark then Color3.new(0, 0, 0) else Color3.new(1, 1, 1),
-				Edit = if isDark then Color3.new(0, 0, 0) else Color3.new(1, 1, 1),
-				Remain = studioTheme:GetColor(Enum.StudioStyleGuideColor.MainText),
+				Add = Tokens.PanelBackground,
+				Remove = Tokens.PanelBackground,
+				Edit = Tokens.PanelBackground,
+				Remain = Tokens.PrimaryText,
 			},
 		},
 		ConnectionDetails = {
-			ProjectNameColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.BrightText),
-			AddressColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.BrightText),
-			DisconnectColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.BrightText),
+			ProjectNameColor = Tokens.PrimaryText,
+			AddressColor = Tokens.SecondaryText,
+			DisconnectColor = Tokens.Danger,
 		},
 		Settings = {
-			DividerColor = studioTheme:GetColor(
-				Enum.StudioStyleGuideColor.CheckedFieldBorder,
-				Enum.StudioStyleGuideModifier.Disabled
-			),
+			DividerColor = Tokens.Border,
 			Navbar = {
-				BackButtonColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.BrightText),
-				TextColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.BrightText),
+				BackButtonColor = Tokens.SecondaryText,
+				TextColor = Tokens.PrimaryText,
 			},
 			Setting = {
-				NameColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.BrightText),
-				DescriptionColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.MainText),
-				UnstableColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.WarningText),
-				DebugColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.InfoText),
+				NameColor = Tokens.PrimaryText,
+				DescriptionColor = Tokens.SecondaryText,
+				UnstableColor = Tokens.Warning,
+				DebugColor = Tokens.PrimaryAccent,
 			},
 		},
 		Header = {
-			LogoColor = BRAND_COLOR,
-			VersionColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.MainText),
+			LogoColor = Color3.new(1, 1, 1),
+			VersionColor = Tokens.MutedText,
 		},
 		Notification = {
-			InfoColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.BrightText),
-			CloseColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.BrightText),
+			InfoColor = Tokens.PrimaryText,
+			CloseColor = Tokens.SecondaryText,
 		},
-		ErrorColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.BrightText),
-		ScrollBarColor = studioTheme:GetColor(Enum.StudioStyleGuideColor.BrightText),
+		ErrorColor = Tokens.PrimaryText,
+		ScrollBarColor = Tokens.SecondaryText,
 	})
 
 	self:setState({
@@ -230,7 +225,6 @@ end
 function StudioProvider:init()
 	self:updateTheme()
 
-	-- Preload the Fonts so that getTextBoundsAsync won't yield
 	local fontAssetIds = {}
 	for _, font in self.state.theme.Font do
 		table.insert(fontAssetIds, font.Family)
@@ -261,6 +255,7 @@ local function with(callback)
 end
 
 return {
+	Tokens = Tokens,
 	StudioProvider = StudioProvider,
 	Consumer = Context.Consumer,
 	with = with,

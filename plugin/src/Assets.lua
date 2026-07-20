@@ -1,4 +1,5 @@
 local strict = require(script.Parent.strict)
+local Branding = require(script.Parent.Branding)
 
 local Assets = {
 	Sprites = {},
@@ -16,16 +17,17 @@ local Assets = {
 		},
 	},
 	Images = {
-		Logo = "rbxassetid://84145747248222",
-		PluginButton = "rbxassetid://84145747248222",
-		PluginButtonConnected = "rbxassetid://9529783993",
-		PluginButtonWarning = "rbxassetid://9529784530",
+		Logo = Branding.IconAssetId,
+		FullLogo = Branding.FullLogoAssetId,
+		PluginButton = Branding.IconAssetId,
+		PluginButtonConnected = Branding.IconAssetId,
+		PluginButtonWarning = Branding.WarningAssetId,
 		Icons = {
 			Close = "rbxassetid://6012985953",
 			Back = "rbxassetid://6017213752",
 			Reset = "rbxassetid://10142422327",
 			Expand = "rbxassetid://12045401097",
-			Warning = "rbxassetid://16571019891",
+			Warning = Branding.WarningAssetId,
 			Debug = "rbxassetid://16588411361",
 			Checkmark = "rbxassetid://16571012729",
 			Exclamation = "rbxassetid://16571172190",
