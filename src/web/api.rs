@@ -4,30 +4,72 @@
 use std::{collections::HashMap, fs, net::SocketAddr, path::PathBuf, str::FromStr, sync::Arc};
 
 use futures::{sink::SinkExt, stream::StreamExt};
-use hyper::{body, Body, Method, Request, Response, StatusCode};
+use hyper::{
+    body::{self, HttpBody},
+    header::{HeaderValue, CACHE_CONTROL},
+    Body, Method, Request, Response, StatusCode,
+};
 use hyper_tungstenite::{is_upgrade_request, tungstenite::Message, upgrade, HyperWebsocket};
 use opener::OpenError;
 use rbx_dom_weak::{
     types::{Ref, Variant},
     InstanceBuilder, UstrMap, WeakDom,
 };
+use uuid::Uuid;
 
 use crate::{
+    exec::{ExecJobStoreError, MAX_SOURCE_SIZE_BYTES},
     serve_session::ServeSession,
     snapshot::{InstanceWithMeta, PatchSet, PatchUpdate},
     web::{
         interface::{
-            ErrorResponse, Instance, MessagesPacket, OpenResponse, ReadResponse,
-            ServerInfoResponse, SocketPacket, SocketPacketBody, SocketPacketType, SubscribeMessage,
-            WriteRequest, WriteResponse, PROTOCOL_VERSION, SERVER_VERSION,
+            ErrorResponse, ExecJobClaimResponse, ExecJobCompletionRequest, ExecJobResponse,
+            ExecJobSubmissionRequest, ExecLog, Instance, MessagesPacket, OpenResponse,
+            ReadResponse, ServerInfoResponse, SocketPacket, SocketPacketBody, SocketPacketType,
+            SubscribeMessage, WriteRequest, WriteResponse, PROTOCOL_VERSION, SERVER_VERSION,
         },
         origin::canonical,
-        util::{deserialize_msgpack, msgpack, msgpack_ok, serialize_msgpack},
+        util::{deserialize_msgpack, msgpack, msgpack_ok, response, serialize_msgpack},
     },
     web_api::{
         InstanceUpdate, RefPatchRequest, RefPatchResponse, SerializeRequest, SerializeResponse,
     },
 };
+
+const EXEC_SUBMISSION_BODY_LIMIT_BYTES: usize = MAX_SOURCE_SIZE_BYTES + 64 * 1024;
+const EXEC_COMPLETION_BODY_LIMIT_BYTES: usize = 256 * 1024;
+
+enum ExecRoute {
+    Submit,
+    ClaimNext,
+    Status(String),
+    Complete(String),
+}
+
+impl ExecRoute {
+    fn parse(method: &Method, path: &str) -> Option<Self> {
+        match (method, path) {
+            (&Method::POST, "/api/exec/jobs") => return Some(Self::Submit),
+            (&Method::GET, "/api/exec/jobs/next") => return Some(Self::ClaimNext),
+            _ => {}
+        }
+
+        let remainder = path.strip_prefix("/api/exec/jobs/")?;
+        let mut segments = remainder.split('/');
+        let id = segments.next()?;
+        let suffix = segments.next();
+
+        if id.is_empty() || segments.next().is_some() {
+            return None;
+        }
+
+        match (method, suffix) {
+            (&Method::GET, None) => Some(Self::Status(id.to_owned())),
+            (&Method::POST, Some("complete")) => Some(Self::Complete(id.to_owned())),
+            _ => None,
+        }
+    }
+}
 
 pub async fn call(
     serve_session: Arc<ServeSession>,
@@ -35,6 +77,21 @@ pub async fn call(
     mut request: Request<Body>,
 ) -> Response<Body> {
     let service = ApiService::new(serve_session, remote_addr);
+
+    if let Some(route) = ExecRoute::parse(request.method(), request.uri().path()) {
+        if let Some(response) = service.reject_non_local("/api/exec") {
+            return response;
+        }
+
+        service.serve_session.exec_job_store().cleanup_expired();
+
+        return match route {
+            ExecRoute::Submit => service.handle_api_exec_submit(request).await,
+            ExecRoute::ClaimNext => service.handle_api_exec_claim_next(),
+            ExecRoute::Status(id) => service.handle_api_exec_status(&id),
+            ExecRoute::Complete(id) => service.handle_api_exec_complete(&id, request).await,
+        };
+    }
 
     match (request.method(), request.uri().path()) {
         (&Method::GET, "/api/rojo") => service.handle_api_rojo().await,
@@ -78,6 +135,144 @@ impl ApiService {
         ApiService {
             serve_session,
             remote_addr,
+        }
+    }
+
+    fn reject_non_local(&self, route: &str) -> Option<Response<Body>> {
+        if canonical(self.remote_addr.ip()).is_loopback() {
+            return None;
+        }
+
+        Some(msgpack(
+            ErrorResponse::forbidden(format!("{route} is only available to local clients")),
+            StatusCode::FORBIDDEN,
+        ))
+    }
+
+    async fn handle_api_exec_submit(&self, request: Request<Body>) -> Response<Body> {
+        let body = match read_exec_body(request.into_body(), EXEC_SUBMISSION_BODY_LIMIT_BYTES).await
+        {
+            Ok(body) => body,
+            Err(response) => return response,
+        };
+        let request: ExecJobSubmissionRequest = match deserialize_msgpack(&body) {
+            Ok(request) => request,
+            Err(err) => {
+                return msgpack(
+                    ErrorResponse::bad_request(format!("Invalid body: {err}")),
+                    StatusCode::BAD_REQUEST,
+                );
+            }
+        };
+
+        if request.script_name.is_empty() {
+            return msgpack(
+                ErrorResponse::bad_request("Exec script name must not be empty"),
+                StatusCode::BAD_REQUEST,
+            );
+        }
+
+        if request.script_name.chars().any(char::is_control) {
+            return msgpack(
+                ErrorResponse::bad_request("Exec script name must not contain control characters"),
+                StatusCode::BAD_REQUEST,
+            );
+        }
+
+        match self
+            .serve_session
+            .exec_job_store()
+            .submit(request.script_name, request.source)
+        {
+            Ok(job) => msgpack(ExecJobResponse::from(job), StatusCode::CREATED),
+            Err(err) => exec_store_error(err),
+        }
+    }
+
+    fn handle_api_exec_claim_next(&self) -> Response<Body> {
+        match self.serve_session.exec_job_store().claim_next() {
+            Some(job) => no_store(msgpack_ok(ExecJobClaimResponse::from(job))),
+            None => no_store(response(
+                StatusCode::NO_CONTENT,
+                "application/msgpack",
+                Body::empty(),
+            )),
+        }
+    }
+
+    fn handle_api_exec_status(&self, id: &str) -> Response<Body> {
+        let id = match Uuid::parse_str(id) {
+            Ok(id) => id,
+            Err(err) => {
+                return msgpack(
+                    ErrorResponse::bad_request(format!("Malformed exec job ID: {err}")),
+                    StatusCode::BAD_REQUEST,
+                );
+            }
+        };
+
+        match self.serve_session.exec_job_store().get(id) {
+            Ok(job) => no_store(msgpack_ok(ExecJobResponse::from(job))),
+            Err(err) => exec_store_error(err),
+        }
+    }
+
+    async fn handle_api_exec_complete(&self, id: &str, request: Request<Body>) -> Response<Body> {
+        let id = match Uuid::parse_str(id) {
+            Ok(id) => id,
+            Err(err) => {
+                return msgpack(
+                    ErrorResponse::bad_request(format!("Malformed exec job ID: {err}")),
+                    StatusCode::BAD_REQUEST,
+                );
+            }
+        };
+
+        let body = match read_exec_body(request.into_body(), EXEC_COMPLETION_BODY_LIMIT_BYTES).await
+        {
+            Ok(body) => body,
+            Err(response) => return response,
+        };
+        let request: ExecJobCompletionRequest = match deserialize_msgpack(&body) {
+            Ok(request) => request,
+            Err(err) => {
+                return msgpack(
+                    ErrorResponse::bad_request(format!("Invalid body: {err}")),
+                    StatusCode::BAD_REQUEST,
+                );
+            }
+        };
+
+        let store = self.serve_session.exec_job_store();
+        let result = match request {
+            ExecJobCompletionRequest::Success { result, logs } => {
+                store.complete_success(id, result.map(Into::into), into_stored_logs(logs))
+            }
+            ExecJobCompletionRequest::CompileFailure {
+                error,
+                traceback,
+                logs,
+            }
+            | ExecJobCompletionRequest::RuntimeFailure {
+                error,
+                traceback,
+                logs,
+            }
+            | ExecJobCompletionRequest::Rejected {
+                error,
+                traceback,
+                logs,
+            } => store.complete_failure(id, Some(error), traceback, into_stored_logs(logs)),
+            ExecJobCompletionRequest::Timeout {
+                error,
+                traceback,
+                logs,
+            } => store.complete_timeout(id, Some(error), traceback, into_stored_logs(logs)),
+        };
+
+        match result {
+            Ok(job) => no_store(msgpack_ok(ExecJobResponse::from(job))),
+            Err(err) => exec_store_error(err),
         }
     }
 
@@ -374,11 +569,8 @@ impl ApiService {
         // An IPv4 client reaching a dual-stack (`::`) bind appears as an
         // IPv4-mapped IPv6 peer (`::ffff:127.0.0.1`), so canonicalize to the bare
         // IPv4 form before the loopback test, matching `origin`'s handling.
-        if !canonical(self.remote_addr.ip()).is_loopback() {
-            return msgpack(
-                ErrorResponse::forbidden("/api/open is only available to local clients"),
-                StatusCode::FORBIDDEN,
-            );
+        if let Some(response) = self.reject_non_local("/api/open") {
+            return response;
         }
 
         let argument = &request.uri().path()["/api/open/".len()..];
@@ -454,6 +646,84 @@ impl ApiService {
             session_id: self.serve_session.session_id(),
         })
     }
+}
+
+async fn read_exec_body(mut body: Body, limit: usize) -> Result<Vec<u8>, Response<Body>> {
+    if body
+        .size_hint()
+        .upper()
+        .is_some_and(|size| size > limit as u64)
+    {
+        return Err(exec_body_too_large(limit));
+    }
+
+    let capacity = body.size_hint().lower().min(limit as u64) as usize;
+    let mut bytes = Vec::with_capacity(capacity);
+
+    while let Some(chunk) = body.data().await {
+        let chunk = match chunk {
+            Ok(chunk) => chunk,
+            Err(err) => {
+                return Err(msgpack(
+                    ErrorResponse::bad_request(format!("Failed to read request body: {err}")),
+                    StatusCode::BAD_REQUEST,
+                ));
+            }
+        };
+
+        if bytes.len().saturating_add(chunk.len()) > limit {
+            return Err(exec_body_too_large(limit));
+        }
+
+        bytes.extend_from_slice(&chunk);
+    }
+
+    Ok(bytes)
+}
+
+fn exec_body_too_large(limit: usize) -> Response<Body> {
+    msgpack(
+        ErrorResponse::payload_too_large(format!(
+            "Exec request body exceeds the {limit}-byte limit"
+        )),
+        StatusCode::PAYLOAD_TOO_LARGE,
+    )
+}
+
+fn exec_store_error(error: ExecJobStoreError) -> Response<Body> {
+    let details = error.to_string();
+
+    match error {
+        ExecJobStoreError::SourceTooLarge { .. } => msgpack(
+            ErrorResponse::payload_too_large(details),
+            StatusCode::PAYLOAD_TOO_LARGE,
+        ),
+        ExecJobStoreError::PendingQueueFull { .. } => msgpack(
+            ErrorResponse::too_many_requests(details),
+            StatusCode::TOO_MANY_REQUESTS,
+        ),
+        ExecJobStoreError::UnknownJob { .. } => {
+            msgpack(ErrorResponse::not_found(details), StatusCode::NOT_FOUND)
+        }
+        ExecJobStoreError::JobNotClaimed { .. } | ExecJobStoreError::DuplicateCompletion { .. } => {
+            msgpack(ErrorResponse::conflict(details), StatusCode::CONFLICT)
+        }
+    }
+}
+
+fn into_stored_logs(logs: Vec<ExecLog>) -> Option<Vec<crate::exec::ExecLog>> {
+    if logs.is_empty() {
+        None
+    } else {
+        Some(logs.into_iter().map(Into::into).collect())
+    }
+}
+
+fn no_store(mut response: Response<Body>) -> Response<Body> {
+    response
+        .headers_mut()
+        .insert(CACHE_CONTROL, HeaderValue::from_static("no-store"));
+    response
 }
 
 /// If this instance is represented by a script, try to find the correct .lua or .luau
@@ -604,4 +874,51 @@ fn parent_requirements(class: &str) -> Option<&str> {
         "BaseWrap" | "WrapLayer" | "WrapTarget" | "WrapDeformer" => "MeshPart",
         _ => return None,
     })
+}
+
+#[cfg(test)]
+mod test {
+    use memofs::{StdBackend, Vfs};
+
+    use super::*;
+
+    #[tokio::test]
+    async fn exec_routes_reject_non_loopback_peers() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::write(
+            dir.path().join("default.project.json"),
+            r#"{ "name": "test", "tree": { "$className": "Folder" } }"#,
+        )
+        .unwrap();
+
+        let start_path = std::fs::canonicalize(dir.path()).unwrap();
+        let vfs = Vfs::new(StdBackend::new().unwrap());
+        let serve_session = Arc::new(ServeSession::new(vfs, start_path).unwrap());
+        let id = Uuid::new_v4();
+        let routes = [
+            (Method::POST, "/api/exec/jobs".to_owned()),
+            (Method::GET, "/api/exec/jobs/next".to_owned()),
+            (Method::GET, format!("/api/exec/jobs/{id}")),
+            (Method::POST, format!("/api/exec/jobs/{id}/complete")),
+        ];
+
+        for (method, route) in routes {
+            let request = Request::builder()
+                .method(method)
+                .uri(route)
+                .body(Body::empty())
+                .unwrap();
+            let response = call(
+                Arc::clone(&serve_session),
+                "192.0.2.1:4567".parse().unwrap(),
+                request,
+            )
+            .await;
+
+            assert_eq!(response.status(), StatusCode::FORBIDDEN);
+            let body = body::to_bytes(response.into_body()).await.unwrap();
+            let error: serde_json::Value = deserialize_msgpack(&body).unwrap();
+            assert_eq!(error["kind"], "Forbidden");
+        }
+    }
 }

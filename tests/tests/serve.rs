@@ -3,14 +3,333 @@ use std::fs;
 use insta::{assert_snapshot, assert_yaml_snapshot, with_settings};
 use rbx_dom_weak::types::Ref;
 use reqwest::StatusCode;
+use serde::de::DeserializeOwned;
 use tempfile::tempdir;
+use uuid::Uuid;
 
 use crate::rojo_test::{
     internable::InternAndRedact,
-    serve_util::{deserialize_msgpack, run_serve_test, serialize_to_xml_model},
+    serve_util::{deserialize_msgpack, run_serve_test, serialize_to_xml_model, TestServeSession},
 };
 
-use librojo::web_api::{SerializeResponse, SocketPacketType};
+use librojo::{
+    exec::{MAX_PENDING_JOBS, MAX_SOURCE_SIZE_BYTES},
+    web_api::{
+        ExecJobClaimResponse, ExecJobCompletionRequest, ExecJobResponse,
+        ExecJobState as ApiExecJobState, ExecJobSubmissionRequest, ExecLog, ExecLogLevel,
+        ExecValue, SerializeResponse, SocketPacketType,
+    },
+};
+
+#[test]
+fn exec_jobs_submit_claim_complete_and_release_slot() {
+    run_serve_test("empty", |session, _redactions| {
+        let submission_response = session.post_api_exec_job(&ExecJobSubmissionRequest {
+            script_name: "first.lua".to_owned(),
+            source: "return true".to_owned(),
+        });
+        assert_eq!(submission_response.status(), StatusCode::CREATED);
+        let submission_body = submission_response.bytes().unwrap();
+        let submission_value: serde_json::Value = deserialize_msgpack(&submission_body).unwrap();
+        assert!(submission_value.get("source").is_none());
+        let first: ExecJobResponse = deserialize_msgpack(&submission_body).unwrap();
+        let second = submit_exec_job(&session, "second.lua", "return 'second'");
+
+        assert_eq!(first.script_name, "first.lua");
+        assert_eq!(first.state, ApiExecJobState::Pending);
+        assert_eq!(second.state, ApiExecJobState::Pending);
+
+        let status_response = session.get_api_exec_status(&first.job_id);
+        assert_eq!(status_response.status(), StatusCode::OK);
+        let status_body = status_response.bytes().unwrap();
+        let status_value: serde_json::Value = deserialize_msgpack(&status_body).unwrap();
+        assert_eq!(status_value["state"], "pending");
+        assert!(status_value.get("source").is_none());
+
+        let claim_response = session.get_api_exec_next();
+        assert_eq!(claim_response.status(), StatusCode::OK);
+        let claim: ExecJobClaimResponse = decode_response(claim_response);
+        assert_eq!(claim.job_id, first.job_id);
+        assert_eq!(claim.source, "return true");
+        assert_eq!(claim.state, ApiExecJobState::Claimed);
+
+        let claimed_status: ExecJobResponse =
+            decode_response(session.get_api_exec_status(&first.job_id));
+        assert_eq!(claimed_status.state, ApiExecJobState::Claimed);
+
+        let blocked = session.get_api_exec_next();
+        assert_eq!(blocked.status(), StatusCode::NO_CONTENT);
+        assert!(blocked.bytes().unwrap().is_empty());
+
+        let expected_logs = vec![ExecLog {
+            level: ExecLogLevel::Print,
+            message: "finished".to_owned(),
+        }];
+        let completion = ExecJobCompletionRequest::Success {
+            result: Some(ExecValue::Boolean { value: true }),
+            logs: expected_logs.clone(),
+        };
+        let completion_response = session.post_api_exec_complete(&first.job_id, &completion);
+        assert_eq!(completion_response.status(), StatusCode::OK);
+        let completed: ExecJobResponse = decode_response(completion_response);
+        assert_eq!(completed.state, ApiExecJobState::Succeeded);
+        assert_eq!(completed.result, Some(ExecValue::Boolean { value: true }));
+        assert_eq!(completed.logs, Some(expected_logs));
+
+        let succeeded_status: ExecJobResponse =
+            decode_response(session.get_api_exec_status(&first.job_id));
+        assert_eq!(succeeded_status.state, ApiExecJobState::Succeeded);
+
+        let second_claim: ExecJobClaimResponse = decode_response(session.get_api_exec_next());
+        assert_eq!(second_claim.job_id, second.job_id);
+        assert_eq!(second_claim.source, "return 'second'");
+
+        let second_completion = ExecJobCompletionRequest::Success {
+            result: Some(ExecValue::Nil),
+            logs: Vec::new(),
+        };
+        assert_eq!(
+            session
+                .post_api_exec_complete(&second.job_id, &second_completion)
+                .status(),
+            StatusCode::OK,
+        );
+
+        let empty = session.get_api_exec_next();
+        assert_eq!(empty.status(), StatusCode::NO_CONTENT);
+        assert!(empty.bytes().unwrap().is_empty());
+    });
+}
+
+#[test]
+fn exec_jobs_record_failure_and_timeout_outcomes() {
+    run_serve_test("empty", |session, _redactions| {
+        let compile_job = submit_exec_job(&session, "compile.lua", "not valid luau");
+        assert_eq!(
+            decode_response::<ExecJobClaimResponse>(session.get_api_exec_next()).job_id,
+            compile_job.job_id,
+        );
+        let compile_failure = ExecJobCompletionRequest::CompileFailure {
+            error: "expected identifier".to_owned(),
+            traceback: None,
+            logs: Vec::new(),
+        };
+        let compile_response =
+            session.post_api_exec_complete(&compile_job.job_id, &compile_failure);
+        assert_eq!(compile_response.status(), StatusCode::OK);
+        let compile_status: ExecJobResponse = decode_response(compile_response);
+        assert_eq!(compile_status.state, ApiExecJobState::Failed);
+        assert_eq!(compile_status.error.as_deref(), Some("expected identifier"));
+        assert_eq!(compile_status.traceback, None);
+
+        assert_eq!(
+            session
+                .post_api_exec_complete(&compile_job.job_id, &compile_failure)
+                .status(),
+            StatusCode::CONFLICT,
+        );
+
+        let runtime_job = submit_exec_job(&session, "runtime.lua", "error('boom')");
+        decode_response::<ExecJobClaimResponse>(session.get_api_exec_next());
+        let expected_logs = vec![ExecLog {
+            level: ExecLogLevel::Warn,
+            message: "about to fail".to_owned(),
+        }];
+        let runtime_failure = ExecJobCompletionRequest::RuntimeFailure {
+            error: "boom".to_owned(),
+            traceback: Some("runtime.lua:1".to_owned()),
+            logs: expected_logs.clone(),
+        };
+        assert_eq!(
+            session
+                .post_api_exec_complete(&runtime_job.job_id, &runtime_failure)
+                .status(),
+            StatusCode::OK,
+        );
+        let runtime_status: ExecJobResponse =
+            decode_response(session.get_api_exec_status(&runtime_job.job_id));
+        assert_eq!(runtime_status.state, ApiExecJobState::Failed);
+        assert_eq!(runtime_status.error.as_deref(), Some("boom"));
+        assert_eq!(runtime_status.traceback.as_deref(), Some("runtime.lua:1"));
+        assert_eq!(runtime_status.logs, Some(expected_logs));
+
+        let rejected_job = submit_exec_job(&session, "rejected.lua", "return nil");
+        decode_response::<ExecJobClaimResponse>(session.get_api_exec_next());
+        let rejected = ExecJobCompletionRequest::Rejected {
+            error: "Rojo exec is only available in edit mode".to_owned(),
+            traceback: None,
+            logs: Vec::new(),
+        };
+        let rejected_status: ExecJobResponse =
+            decode_response(session.post_api_exec_complete(&rejected_job.job_id, &rejected));
+        assert_eq!(rejected_status.state, ApiExecJobState::Failed);
+
+        let timeout_job = submit_exec_job(&session, "timeout.lua", "task.wait(60)");
+        decode_response::<ExecJobClaimResponse>(session.get_api_exec_next());
+        let timeout = ExecJobCompletionRequest::Timeout {
+            error: "execution timed out".to_owned(),
+            traceback: Some("timeout.lua:1".to_owned()),
+            logs: Vec::new(),
+        };
+        let timeout_status: ExecJobResponse =
+            decode_response(session.post_api_exec_complete(&timeout_job.job_id, &timeout));
+        assert_eq!(timeout_status.state, ApiExecJobState::TimedOut);
+        assert_eq!(timeout_status.error.as_deref(), Some("execution timed out"));
+
+        let retained_timeout: ExecJobResponse =
+            decode_response(session.get_api_exec_status(&timeout_job.job_id));
+        assert_eq!(retained_timeout.state, ApiExecJobState::TimedOut);
+    });
+}
+
+#[test]
+fn exec_jobs_validate_requests_routes_and_limits() {
+    run_serve_test("empty", |session, _redactions| {
+        let pending = submit_exec_job(&session, "pending.lua", "return nil");
+        let success = ExecJobCompletionRequest::Success {
+            result: None,
+            logs: Vec::new(),
+        };
+        assert_eq!(
+            session
+                .post_api_exec_complete(&pending.job_id, &success)
+                .status(),
+            StatusCode::CONFLICT,
+        );
+
+        assert_eq!(
+            session.get_api_exec_status("not-a-uuid").status(),
+            StatusCode::BAD_REQUEST,
+        );
+        let unknown_id = Uuid::new_v4().to_string();
+        assert_eq!(
+            session.get_api_exec_status(&unknown_id).status(),
+            StatusCode::NOT_FOUND,
+        );
+        assert_eq!(
+            session
+                .post_api_exec_complete(&unknown_id, &success)
+                .status(),
+            StatusCode::NOT_FOUND,
+        );
+
+        decode_response::<ExecJobClaimResponse>(session.get_api_exec_next());
+        let malformed_path = format!("/api/exec/jobs/{}/complete", pending.job_id);
+        assert_eq!(
+            session
+                .api_request(reqwest::Method::POST, &malformed_path, Some(vec![0xc1]))
+                .status(),
+            StatusCode::BAD_REQUEST,
+        );
+
+        let oversized_completion = ExecJobCompletionRequest::RuntimeFailure {
+            error: "x".repeat(300 * 1024),
+            traceback: None,
+            logs: Vec::new(),
+        };
+        assert_eq!(
+            session
+                .post_api_exec_complete(&pending.job_id, &oversized_completion)
+                .status(),
+            StatusCode::PAYLOAD_TOO_LARGE,
+        );
+        assert_eq!(
+            session
+                .post_api_exec_complete(&pending.job_id, &success)
+                .status(),
+            StatusCode::OK,
+        );
+
+        for (method, path) in [
+            (reqwest::Method::GET, "/api/exec/jobs/"),
+            (reqwest::Method::GET, "/api/exec/jobs/next/extra"),
+            (
+                reqwest::Method::POST,
+                "/api/exec/jobs/not-a-uuid/complete/extra",
+            ),
+        ] {
+            assert_eq!(
+                session.api_request(method, path, None).status(),
+                StatusCode::NOT_FOUND,
+            );
+        }
+        assert_eq!(
+            session
+                .api_request(reqwest::Method::POST, "/api/exec/jobs/next", None)
+                .status(),
+            StatusCode::NOT_FOUND,
+        );
+
+        assert_eq!(
+            session
+                .post_api_exec_job(&ExecJobSubmissionRequest {
+                    script_name: String::new(),
+                    source: "return nil".to_owned(),
+                })
+                .status(),
+            StatusCode::BAD_REQUEST,
+        );
+        assert_eq!(
+            session
+                .post_api_exec_job(&ExecJobSubmissionRequest {
+                    script_name: "bad\nname.lua".to_owned(),
+                    source: "return nil".to_owned(),
+                })
+                .status(),
+            StatusCode::BAD_REQUEST,
+        );
+        assert_eq!(
+            session
+                .api_request(reqwest::Method::POST, "/api/exec/jobs", Some(vec![0xc1]))
+                .status(),
+            StatusCode::BAD_REQUEST,
+        );
+        assert_eq!(
+            session
+                .post_api_exec_job(&ExecJobSubmissionRequest {
+                    script_name: "large.lua".to_owned(),
+                    source: "x".repeat(MAX_SOURCE_SIZE_BYTES + 1),
+                })
+                .status(),
+            StatusCode::PAYLOAD_TOO_LARGE,
+        );
+
+        for index in 0..MAX_PENDING_JOBS {
+            assert_eq!(
+                session
+                    .post_api_exec_job(&ExecJobSubmissionRequest {
+                        script_name: format!("queue-{index}.lua"),
+                        source: "return nil".to_owned(),
+                    })
+                    .status(),
+                StatusCode::CREATED,
+            );
+        }
+        assert_eq!(
+            session
+                .post_api_exec_job(&ExecJobSubmissionRequest {
+                    script_name: "queue-overflow.lua".to_owned(),
+                    source: "return nil".to_owned(),
+                })
+                .status(),
+            StatusCode::TOO_MANY_REQUESTS,
+        );
+    });
+}
+
+fn submit_exec_job(session: &TestServeSession, script_name: &str, source: &str) -> ExecJobResponse {
+    let response = session.post_api_exec_job(&ExecJobSubmissionRequest {
+        script_name: script_name.to_owned(),
+        source: source.to_owned(),
+    });
+    assert_eq!(response.status(), StatusCode::CREATED);
+    decode_response(response)
+}
+
+fn decode_response<T: DeserializeOwned>(response: reqwest::blocking::Response) -> T {
+    let body = response.bytes().expect("Failed to read response body");
+    deserialize_msgpack(&body).expect("Server returned malformed response")
+}
 
 #[test]
 fn rejects_dns_rebinding_requests() {

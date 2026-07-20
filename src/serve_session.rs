@@ -13,6 +13,7 @@ use thiserror::Error;
 
 use crate::{
     change_processor::ChangeProcessor,
+    exec::ExecJobStore,
     message_queue::MessageQueue,
     project::{Project, ProjectError},
     session_id::SessionId,
@@ -82,6 +83,9 @@ pub struct ServeSession {
     /// to be applied.
     message_queue: Arc<MessageQueue<AppliedPatchSet>>,
 
+    /// Execution jobs submitted to this serve session.
+    exec_job_store: ExecJobStore,
+
     /// A channel to send mutation requests on. These will be handled by the
     /// ChangeProcessor and trigger changes in the tree.
     tree_mutation_sender: Sender<PatchSet>,
@@ -143,6 +147,7 @@ impl ServeSession {
             root_project,
             tree,
             message_queue,
+            exec_job_store: ExecJobStore::new(),
             tree_mutation_sender,
             vfs,
         })
@@ -167,6 +172,10 @@ impl ServeSession {
 
     pub fn message_queue(&self) -> &MessageQueue<AppliedPatchSet> {
         &self.message_queue
+    }
+
+    pub fn exec_job_store(&self) -> &ExecJobStore {
+        &self.exec_job_store
     }
 
     pub fn session_id(&self) -> SessionId {

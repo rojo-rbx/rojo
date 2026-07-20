@@ -15,8 +15,8 @@ use tempfile::{tempdir, TempDir};
 
 use librojo::{
     web_api::{
-        ReadResponse, SerializeRequest, SerializeResponse, ServerInfoResponse, SocketPacket,
-        SocketPacketType,
+        ExecJobCompletionRequest, ExecJobSubmissionRequest, ReadResponse, SerializeRequest,
+        SerializeResponse, ServerInfoResponse, SocketPacket, SocketPacketType,
     },
     SessionId,
 };
@@ -275,6 +275,54 @@ impl TestServeSession {
             .send()
             .expect("Failed to send request")
             .status()
+    }
+
+    pub fn post_api_exec_job(
+        &self,
+        request: &ExecJobSubmissionRequest,
+    ) -> reqwest::blocking::Response {
+        let body = serialize_msgpack(request).unwrap();
+        self.api_request(reqwest::Method::POST, "/api/exec/jobs", Some(body))
+    }
+
+    pub fn get_api_exec_next(&self) -> reqwest::blocking::Response {
+        self.api_request(reqwest::Method::GET, "/api/exec/jobs/next", None)
+    }
+
+    pub fn get_api_exec_status(&self, id: &str) -> reqwest::blocking::Response {
+        self.api_request(reqwest::Method::GET, &format!("/api/exec/jobs/{id}"), None)
+    }
+
+    pub fn post_api_exec_complete(
+        &self,
+        id: &str,
+        request: &ExecJobCompletionRequest,
+    ) -> reqwest::blocking::Response {
+        let body = serialize_msgpack(request).unwrap();
+        self.api_request(
+            reqwest::Method::POST,
+            &format!("/api/exec/jobs/{id}/complete"),
+            Some(body),
+        )
+    }
+
+    pub fn api_request(
+        &self,
+        method: reqwest::Method,
+        path: &str,
+        body: Option<Vec<u8>>,
+    ) -> reqwest::blocking::Response {
+        let client = reqwest::blocking::Client::new();
+        let url = format!("http://localhost:{}{}", self.port, path);
+        let mut request = client.request(method, url);
+
+        if let Some(body) = body {
+            request = request
+                .header(reqwest::header::CONTENT_TYPE, "application/msgpack")
+                .body(body);
+        }
+
+        request.send().expect("Failed to send request")
     }
 }
 

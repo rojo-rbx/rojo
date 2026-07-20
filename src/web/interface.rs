@@ -15,6 +15,10 @@ use serde::{Deserialize, Serialize};
 use strum::Display;
 
 use crate::{
+    exec::{
+        ExecJob as StoredExecJob, ExecJobState as StoredExecJobState, ExecLog as StoredExecLog,
+        ExecLogLevel as StoredExecLogLevel, ExecValue as StoredExecValue,
+    },
     session_id::SessionId,
     snapshot::{
         AppliedPatchSet, InstanceMetadata as RojoInstanceMetadata, InstanceWithMeta, RojoTree,
@@ -267,6 +271,223 @@ pub struct RefPatchResponse<'a> {
     pub patch: SubscribeMessage<'a>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct ExecJobSubmissionRequest {
+    pub script_name: String,
+    pub source: String,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub enum ExecJobState {
+    Pending,
+    Claimed,
+    Succeeded,
+    Failed,
+    TimedOut,
+}
+
+impl From<StoredExecJobState> for ExecJobState {
+    fn from(value: StoredExecJobState) -> Self {
+        match value {
+            StoredExecJobState::Pending => Self::Pending,
+            StoredExecJobState::Claimed => Self::Claimed,
+            StoredExecJobState::Succeeded => Self::Succeeded,
+            StoredExecJobState::Failed => Self::Failed,
+            StoredExecJobState::TimedOut => Self::TimedOut,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(tag = "kind", rename_all = "camelCase")]
+pub enum ExecValue {
+    Nil,
+    String { value: String },
+    Number { value: f64 },
+    Boolean { value: bool },
+    Array { value: Vec<ExecValue> },
+    Table { value: Vec<ExecTableEntry> },
+}
+
+impl From<StoredExecValue> for ExecValue {
+    fn from(value: StoredExecValue) -> Self {
+        match value {
+            StoredExecValue::Nil => Self::Nil,
+            StoredExecValue::String(value) => Self::String { value },
+            StoredExecValue::Number(value) => Self::Number { value },
+            StoredExecValue::Boolean(value) => Self::Boolean { value },
+            StoredExecValue::Array(value) => Self::Array {
+                value: value.into_iter().map(Into::into).collect(),
+            },
+            StoredExecValue::Table(value) => Self::Table {
+                value: value
+                    .into_iter()
+                    .map(|(key, value)| ExecTableEntry {
+                        key,
+                        value: value.into(),
+                    })
+                    .collect(),
+            },
+        }
+    }
+}
+
+impl From<ExecValue> for StoredExecValue {
+    fn from(value: ExecValue) -> Self {
+        match value {
+            ExecValue::Nil => Self::Nil,
+            ExecValue::String { value } => Self::String(value),
+            ExecValue::Number { value } => Self::Number(value),
+            ExecValue::Boolean { value } => Self::Boolean(value),
+            ExecValue::Array { value } => Self::Array(value.into_iter().map(Into::into).collect()),
+            ExecValue::Table { value } => Self::Table(
+                value
+                    .into_iter()
+                    .map(|entry| (entry.key, entry.value.into()))
+                    .collect(),
+            ),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct ExecTableEntry {
+    pub key: String,
+    pub value: ExecValue,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub enum ExecLogLevel {
+    Print,
+    Warn,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct ExecLog {
+    pub level: ExecLogLevel,
+    pub message: String,
+}
+
+impl From<StoredExecLog> for ExecLog {
+    fn from(value: StoredExecLog) -> Self {
+        Self {
+            level: match value.level {
+                StoredExecLogLevel::Print => ExecLogLevel::Print,
+                StoredExecLogLevel::Warn => ExecLogLevel::Warn,
+            },
+            message: value.message,
+        }
+    }
+}
+
+impl From<ExecLog> for StoredExecLog {
+    fn from(value: ExecLog) -> Self {
+        Self {
+            level: match value.level {
+                ExecLogLevel::Print => StoredExecLogLevel::Print,
+                ExecLogLevel::Warn => StoredExecLogLevel::Warn,
+            },
+            message: value.message,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct ExecJobResponse {
+    pub job_id: String,
+    pub script_name: String,
+    pub state: ExecJobState,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub result: Option<ExecValue>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub logs: Option<Vec<ExecLog>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub traceback: Option<String>,
+}
+
+impl From<StoredExecJob> for ExecJobResponse {
+    fn from(value: StoredExecJob) -> Self {
+        Self {
+            job_id: value.id.to_string(),
+            script_name: value.script_name,
+            state: value.state.into(),
+            result: value.result.map(Into::into),
+            logs: value
+                .logs
+                .map(|logs| logs.into_iter().map(Into::into).collect()),
+            error: value.runtime_error,
+            traceback: value.traceback,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct ExecJobClaimResponse {
+    pub job_id: String,
+    pub script_name: String,
+    pub source: String,
+    pub state: ExecJobState,
+}
+
+impl From<StoredExecJob> for ExecJobClaimResponse {
+    fn from(value: StoredExecJob) -> Self {
+        Self {
+            job_id: value.id.to_string(),
+            script_name: value.script_name,
+            source: value.source,
+            state: value.state.into(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(tag = "outcome", rename_all = "camelCase")]
+pub enum ExecJobCompletionRequest {
+    Success {
+        #[serde(default)]
+        result: Option<ExecValue>,
+        #[serde(default)]
+        logs: Vec<ExecLog>,
+    },
+    CompileFailure {
+        error: String,
+        #[serde(default)]
+        traceback: Option<String>,
+        #[serde(default)]
+        logs: Vec<ExecLog>,
+    },
+    RuntimeFailure {
+        error: String,
+        #[serde(default)]
+        traceback: Option<String>,
+        #[serde(default)]
+        logs: Vec<ExecLog>,
+    },
+    Rejected {
+        error: String,
+        #[serde(default)]
+        traceback: Option<String>,
+        #[serde(default)]
+        logs: Vec<ExecLog>,
+    },
+    Timeout {
+        error: String,
+        #[serde(default)]
+        traceback: Option<String>,
+        #[serde(default)]
+        logs: Vec<ExecLog>,
+    },
+}
+
 /// General response type returned from all Rojo routes
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -297,6 +518,27 @@ impl ErrorResponse {
         }
     }
 
+    pub fn conflict<S: Into<String>>(details: S) -> Self {
+        Self {
+            kind: ErrorResponseKind::Conflict,
+            details: details.into(),
+        }
+    }
+
+    pub fn payload_too_large<S: Into<String>>(details: S) -> Self {
+        Self {
+            kind: ErrorResponseKind::PayloadTooLarge,
+            details: details.into(),
+        }
+    }
+
+    pub fn too_many_requests<S: Into<String>>(details: S) -> Self {
+        Self {
+            kind: ErrorResponseKind::TooManyRequests,
+            details: details.into(),
+        }
+    }
+
     pub fn internal_error<S: Into<String>>(details: S) -> Self {
         Self {
             kind: ErrorResponseKind::InternalError,
@@ -310,5 +552,8 @@ pub enum ErrorResponseKind {
     NotFound,
     BadRequest,
     Forbidden,
+    Conflict,
+    PayloadTooLarge,
+    TooManyRequests,
     InternalError,
 }

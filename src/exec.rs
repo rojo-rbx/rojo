@@ -157,6 +157,16 @@ impl ExecJobStore {
         self.complete_failure_at(id, runtime_error, traceback, logs, Instant::now())
     }
 
+    pub fn complete_timeout(
+        &self,
+        id: Uuid,
+        runtime_error: Option<String>,
+        traceback: Option<String>,
+        logs: Option<Vec<ExecLog>>,
+    ) -> Result<ExecJob, ExecJobStoreError> {
+        self.complete_timeout_at(id, runtime_error, traceback, logs, Instant::now())
+    }
+
     pub fn get(&self, id: Uuid) -> Result<ExecJob, ExecJobStoreError> {
         let inner = self.inner.lock().unwrap();
 
@@ -303,6 +313,34 @@ impl ExecJobStore {
         {
             let job = inner.jobs.get_mut(&id).unwrap();
             job.state = ExecJobState::Failed;
+            job.source.clear();
+            job.result = None;
+            job.logs = logs;
+            job.runtime_error = runtime_error;
+            job.traceback = traceback;
+            job.terminal_at = Some(now);
+        }
+
+        inner.claimed_job = None;
+        track_terminal_job(&mut inner, id);
+
+        Ok(inner.jobs.get(&id).unwrap().clone())
+    }
+
+    fn complete_timeout_at(
+        &self,
+        id: Uuid,
+        runtime_error: Option<String>,
+        traceback: Option<String>,
+        logs: Option<Vec<ExecLog>>,
+        now: Instant,
+    ) -> Result<ExecJob, ExecJobStoreError> {
+        let mut inner = self.inner.lock().unwrap();
+        ensure_job_can_complete(&inner, id)?;
+
+        {
+            let job = inner.jobs.get_mut(&id).unwrap();
+            job.state = ExecJobState::TimedOut;
             job.source.clear();
             job.result = None;
             job.logs = logs;
@@ -594,6 +632,38 @@ mod test {
         assert_eq!(completed.result, None);
         assert_eq!(completed.logs, Some(logs));
         assert_eq!(completed.runtime_error.as_deref(), Some("oh no"));
+        assert_eq!(completed.traceback.as_deref(), Some("traceback"));
+    }
+
+    #[test]
+    fn complete_timeout_stores_timeout_details() {
+        let store = test_store();
+        let now = Instant::now();
+        let job = submit_at(&store, "timeout.lua", "task.wait(60)", now);
+        store.claim_next_at(now).unwrap();
+        let logs = vec![ExecLog {
+            level: ExecLogLevel::Warn,
+            message: "still running".to_owned(),
+        }];
+
+        let completed = store
+            .complete_timeout_at(
+                job.id,
+                Some("execution timed out".to_owned()),
+                Some("traceback".to_owned()),
+                Some(logs.clone()),
+                now,
+            )
+            .unwrap();
+
+        assert_eq!(completed.state, ExecJobState::TimedOut);
+        assert!(completed.source.is_empty());
+        assert_eq!(completed.result, None);
+        assert_eq!(completed.logs, Some(logs));
+        assert_eq!(
+            completed.runtime_error.as_deref(),
+            Some("execution timed out")
+        );
         assert_eq!(completed.traceback.as_deref(), Some("traceback"));
     }
 
