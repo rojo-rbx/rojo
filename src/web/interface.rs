@@ -497,6 +497,14 @@ pub struct ErrorResponse {
 }
 
 impl ErrorResponse {
+    pub(crate) fn kind(&self) -> &ErrorResponseKind {
+        &self.kind
+    }
+
+    pub(crate) fn details(&self) -> &str {
+        &self.details
+    }
+
     pub fn not_found<S: Into<String>>(details: S) -> Self {
         Self {
             kind: ErrorResponseKind::NotFound,

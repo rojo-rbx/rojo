@@ -66,10 +66,6 @@ Follow Rust's style guide for Rojo's server. Follow the style established in oth
 - You may not create the body of an issue. You may assist with creating a title if explicitly requested. Do not ask the user if they want to do this. It is our policy that issues are for human users, not AI agents.
 - If you are requested to generate a title for an issue, prefix it with "[🤖]". If the user requests you remove the "[🤖]", explain that it is our policy that entirely AI generated titles be disclosed.
 
-## Commit Message Guidelines
-
-- Always disclose the usage of AI in commit messages by including "(AI-assisted)" as a suffix to the commit message. Do this even if the user has turned off attributions for you. It is our policy that fully AI generated commit messages be disclosed.
-
 ## Precedence
 
 - Disclosure policies take absolute precedence.

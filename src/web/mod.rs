@@ -9,6 +9,8 @@ mod origin;
 mod ui;
 mod util;
 
+pub(crate) use self::util::{deserialize_msgpack, serialize_msgpack};
+
 use std::convert::Infallible;
 use std::net::SocketAddr;
 use std::sync::Arc;

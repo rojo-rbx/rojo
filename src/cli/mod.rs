@@ -2,6 +2,7 @@
 
 mod build;
 mod doc;
+mod exec;
 mod fmt_project;
 mod init;
 mod plugin;
@@ -18,6 +19,7 @@ use thiserror::Error;
 
 pub use self::build::BuildCommand;
 pub use self::doc::DocCommand;
+pub use self::exec::ExecCommand;
 pub use self::fmt_project::FmtProjectCommand;
 pub use self::init::{InitCommand, InitKind};
 pub use self::plugin::{PluginCommand, PluginSubcommand};
@@ -44,6 +46,7 @@ impl Options {
             Subcommand::Init(subcommand) => subcommand.run(),
             Subcommand::Serve(subcommand) => subcommand.run(self.global),
             Subcommand::Build(subcommand) => subcommand.run(),
+            Subcommand::Exec(subcommand) => subcommand.run(),
             Subcommand::Upload(subcommand) => subcommand.run(),
             Subcommand::Sourcemap(subcommand) => subcommand.run(),
             Subcommand::FmtProject(subcommand) => subcommand.run(),
@@ -118,6 +121,7 @@ pub enum Subcommand {
     Init(InitCommand),
     Serve(ServeCommand),
     Build(BuildCommand),
+    Exec(ExecCommand),
     Upload(UploadCommand),
     Sourcemap(SourcemapCommand),
     FmtProject(FmtProjectCommand),
