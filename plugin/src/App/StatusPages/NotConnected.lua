@@ -132,7 +132,7 @@ function NotConnectedPage:render()
 				onClick = self.props.onConnect,
 			}, {
 				Tip = e(Tooltip.Trigger, {
-					text = "Connect to a Rojo sync server",
+					text = "Connect to a Prism sync server",
 				}),
 			}),
 

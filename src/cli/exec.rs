@@ -39,7 +39,7 @@ const REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
 const MAX_RESPONSE_SIZE_BYTES: usize = 2 * MAX_SOURCE_SIZE_BYTES;
 const MSGPACK_CONTENT_TYPE: &str = "application/msgpack";
 
-/// Runs a trusted Luau file through a connected Rojo Studio plugin.
+/// Runs a trusted Luau file through a connected Prism Studio plugin.
 #[derive(Debug, Parser)]
 pub struct ExecCommand {
     /// Path to the Luau file to execute.
@@ -62,7 +62,7 @@ impl ExecCommand {
             .connect_timeout(CONNECT_TIMEOUT)
             .timeout(REQUEST_TIMEOUT)
             .build()
-            .context("Could not create the HTTP client for rojo exec")?;
+            .context("Could not create the HTTP client for Prism exec")?;
 
         verify_rojo_server(&client, &server_url)?;
         let submitted = submit_job(&client, &server_url, &script)?;
@@ -95,7 +95,7 @@ fn read_exec_script(path: &Path) -> anyhow::Result<ExecScript> {
         bail!("Exec script '{}' is not a regular file.", path.display());
     }
 
-    if metadata.len() > MAX_SOURCE_SIZE_BYTES as u64 {
+    if metadata.len() > (MAX_SOURCE_SIZE_BYTES + '\u{FEFF}'.len_utf8()) as u64 {
         bail!(
             "Exec script '{}' is {} bytes, exceeding the {}-byte source limit.",
             path.display(),
@@ -108,6 +108,10 @@ fn read_exec_script(path: &Path) -> anyhow::Result<ExecScript> {
     let source = std::fs::read(path.as_ref())
         .with_context(|| format!("Could not read exec script '{}'.", path.display()))?;
 
+    let mut source = String::from_utf8(source)
+        .with_context(|| format!("Exec script '{}' is not valid UTF-8.", path.display()))?;
+    normalize_source(&mut source);
+
     if source.len() > MAX_SOURCE_SIZE_BYTES {
         bail!(
             "Exec script '{}' is {} bytes, exceeding the {}-byte source limit.",
@@ -117,13 +121,16 @@ fn read_exec_script(path: &Path) -> anyhow::Result<ExecScript> {
         );
     }
 
-    let source = String::from_utf8(source)
-        .with_context(|| format!("Exec script '{}' is not valid UTF-8.", path.display()))?;
-
     Ok(ExecScript {
         script_name,
         source,
     })
+}
+
+fn normalize_source(source: &mut String) {
+    if source.starts_with('\u{FEFF}') {
+        source.replace_range(..'\u{FEFF}'.len_utf8(), "");
+    }
 }
 
 fn script_name_from_path(path: &Path) -> anyhow::Result<String> {
@@ -181,7 +188,7 @@ fn verify_rojo_server(client: &Client, server_url: &str) -> anyhow::Result<()> {
 
     if info.protocol_version != PROTOCOL_VERSION {
         bail!(
-            "The Rojo server at {server_url} uses protocol version {}, but this rojo exec client requires version {}.",
+            "The Rojo server at {server_url} uses protocol version {}, but this Prism exec client requires version {}.",
             info.protocol_version,
             PROTOCOL_VERSION
         );
@@ -388,11 +395,11 @@ fn decode_buffered_exec_response<T: DeserializeOwned>(
 fn exec_http_error(response: &BufferedResponse, operation: &str) -> anyhow::Error {
     let summary = match response.status {
         StatusCode::BAD_REQUEST => "Rojo server rejected the request as malformed",
-        StatusCode::FORBIDDEN => "Rojo exec API is not available from this peer",
-        StatusCode::NOT_FOUND => "Rojo exec job disappeared or expired",
-        StatusCode::CONFLICT => "Rojo exec job has an unexpected state conflict",
-        StatusCode::PAYLOAD_TOO_LARGE => "Rojo exec source or output is too large",
-        StatusCode::TOO_MANY_REQUESTS => "Rojo exec queue is full",
+        StatusCode::FORBIDDEN => "Prism exec API is not available from this peer",
+        StatusCode::NOT_FOUND => "Prism exec job disappeared or expired",
+        StatusCode::CONFLICT => "Prism exec job has an unexpected state conflict",
+        StatusCode::PAYLOAD_TOO_LARGE => "Prism exec source or output is too large",
+        StatusCode::TOO_MANY_REQUESTS => "Prism exec queue is full",
         StatusCode::INTERNAL_SERVER_ERROR => "Rojo server reported an internal error",
         _ => "Rojo server returned an unexpected HTTP status",
     };
@@ -480,9 +487,9 @@ fn terminal_failure_message(job: &ExecJobResponse, timed_out: bool) -> String {
         .filter(|error| !error.is_empty())
         .unwrap_or(fallback);
     let mut message = if timed_out {
-        format!("Rojo exec timed out: {error}")
+        format!("Prism exec timed out: {error}")
     } else {
-        format!("Rojo exec failed: {error}")
+        format!("Prism exec failed: {error}")
     };
 
     if let Some(traceback) = job
@@ -684,6 +691,65 @@ mod test {
     }
 
     #[test]
+    fn normalization_preserves_source_without_bom() {
+        let mut source = "return true".to_owned();
+
+        normalize_source(&mut source);
+
+        assert_eq!(source, "return true");
+    }
+
+    #[test]
+    fn normalization_removes_one_leading_bom() {
+        let mut source = "\u{FEFF}return true".to_owned();
+
+        normalize_source(&mut source);
+
+        assert_eq!(source, "return true");
+    }
+
+    #[test]
+    fn normalization_preserves_interior_bom() {
+        let mut source = "print(\"\u{FEFF}\")".to_owned();
+
+        normalize_source(&mut source);
+
+        assert_eq!(source, "print(\"\u{FEFF}\")");
+    }
+
+    #[test]
+    fn normalization_turns_single_bom_into_empty_source() {
+        let mut source = "\u{FEFF}".to_owned();
+
+        normalize_source(&mut source);
+
+        assert_eq!(source, "");
+    }
+
+    #[test]
+    fn normalization_removes_only_first_of_two_leading_boms() {
+        let mut source = "\u{FEFF}\u{FEFF}return true".to_owned();
+
+        normalize_source(&mut source);
+
+        assert_eq!(source, "\u{FEFF}return true");
+    }
+
+    #[test]
+    fn source_limit_applies_after_bom_normalization() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("maximum-size.lua");
+        let mut source = "\u{FEFF}".as_bytes().to_vec();
+        source.extend(std::iter::repeat_n(b'x', MAX_SOURCE_SIZE_BYTES));
+        fs::write(&path, source).unwrap();
+
+        let script = read_exec_script(&path).unwrap();
+
+        assert_eq!(script.source.len(), MAX_SOURCE_SIZE_BYTES);
+        assert!(!script.source.starts_with('\u{FEFF}'));
+    }
+
+    #[test]
     fn rejects_invalid_utf8_source() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("invalid.lua");
@@ -861,7 +927,7 @@ mod test {
         let error = finish_job(&response, &mut Vec::new(), &mut Vec::new()).unwrap_err();
         assert_eq!(
             error.to_string(),
-            "Rojo exec failed: attempt to index nil\nstack traceback:\n  test.lua:1"
+            "Prism exec failed: attempt to index nil\nstack traceback:\n  test.lua:1"
         );
     }
 
@@ -873,7 +939,7 @@ mod test {
         let error = finish_job(&response, &mut Vec::new(), &mut Vec::new()).unwrap_err();
         assert_eq!(
             error.to_string(),
-            "Rojo exec timed out: execution exceeded its deadline"
+            "Prism exec timed out: execution exceeded its deadline"
         );
     }
 

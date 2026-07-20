@@ -16,8 +16,8 @@ local Assets = {
 		},
 	},
 	Images = {
-		Logo = "rbxassetid://5990772764",
-		PluginButton = "rbxassetid://3405341609",
+		Logo = "rbxassetid://84145747248222",
+		PluginButton = "rbxassetid://84145747248222",
 		PluginButtonConnected = "rbxassetid://9529783993",
 		PluginButtonWarning = "rbxassetid://9529784530",
 		Icons = {

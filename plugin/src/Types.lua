@@ -74,6 +74,102 @@ local ApiRefPatchResponse = t.interface({
 	patch = ApiSubscribeMessage,
 })
 
+local function Uuid(value)
+	if type(value) ~= "string" then
+		return false, string.format("string expected, got %s", type(value))
+	end
+
+	local first, second, third, fourth, fifth =
+		value:match("^([0-9a-fA-F]+)%-([0-9a-fA-F]+)%-([0-9a-fA-F]+)%-([0-9a-fA-F]+)%-([0-9a-fA-F]+)$")
+	if first == nil or #first ~= 8 or #second ~= 4 or #third ~= 4 or #fourth ~= 4 or #fifth ~= 12 then
+		return false, "UUID string expected"
+	end
+
+	return true
+end
+
+local ExecJobState = t.union(
+	t.literal("pending"),
+	t.literal("claimed"),
+	t.literal("succeeded"),
+	t.literal("failed"),
+	t.literal("timedOut")
+)
+
+local ExecLogLevel = t.union(t.literal("print"), t.literal("warn"))
+
+local ExecLog = t.strictInterface({
+	level = ExecLogLevel,
+	message = t.string,
+})
+
+local function ExecValue(value, seen)
+	if type(value) ~= "table" then
+		return false, string.format("exec result table expected, got %s", type(value))
+	end
+
+	seen = seen or {}
+	if seen[value] then
+		return false, "cyclic exec result value"
+	end
+	seen[value] = true
+
+	local kind = value.kind
+	local valid, message
+	if kind == "nil" then
+		valid, message = t.strictInterface({ kind = t.literal("nil") })(value)
+	elseif kind == "string" then
+		valid, message = t.strictInterface({ kind = t.literal("string"), value = t.string })(value)
+	elseif kind == "number" then
+		valid, message = t.strictInterface({ kind = t.literal("number"), value = t.number })(value)
+	elseif kind == "boolean" then
+		valid, message = t.strictInterface({ kind = t.literal("boolean"), value = t.boolean })(value)
+	elseif kind == "array" then
+		valid, message = t.strictInterface({ kind = t.literal("array"), value = t.table })(value)
+		if valid then
+			valid, message = t.array(function(child)
+				return ExecValue(child, seen)
+			end)(value.value)
+		end
+	elseif kind == "table" then
+		valid, message = t.strictInterface({ kind = t.literal("table"), value = t.table })(value)
+		if valid then
+			valid, message = t.array(function(entry)
+				local entryValid, entryMessage = t.strictInterface({
+					key = t.string,
+					value = t.table,
+				})(entry)
+				if not entryValid then
+					return false, entryMessage
+				end
+				return ExecValue(entry.value, seen)
+			end)(value.value)
+		end
+	else
+		valid, message = false, string.format("unknown exec result kind %q", tostring(kind))
+	end
+
+	seen[value] = nil
+	return valid, message
+end
+
+local ApiExecClaimResponse = t.strictInterface({
+	jobId = Uuid,
+	scriptName = t.string,
+	source = t.string,
+	state = t.literal("claimed"),
+})
+
+local ApiExecJobResponse = t.strictInterface({
+	jobId = Uuid,
+	scriptName = t.string,
+	state = ExecJobState,
+	result = t.optional(ExecValue),
+	logs = t.optional(t.array(ExecLog)),
+	error = t.optional(t.string),
+	traceback = t.optional(t.string),
+})
+
 local ApiError = t.interface({
 	kind = t.union(t.literal("NotFound"), t.literal("BadRequest"), t.literal("InternalError")),
 	details = t.string,
@@ -103,6 +199,13 @@ return strict("Types", {
 	ApiSubscribeMessage = ApiSubscribeMessage,
 	ApiSerializeResponse = ApiSerializeResponse,
 	ApiRefPatchResponse = ApiRefPatchResponse,
+	ApiExecClaimResponse = ApiExecClaimResponse,
+	ApiExecJobResponse = ApiExecJobResponse,
+	ExecJobState = ExecJobState,
+	ExecValue = ExecValue,
+	ExecLog = ExecLog,
+	ExecLogLevel = ExecLogLevel,
+	Uuid = Uuid,
 	ApiValue = ApiValue,
 	RbxId = RbxId,
 

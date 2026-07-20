@@ -98,7 +98,7 @@ function ConfirmingPage:render()
 						onClick = self.props.onReject,
 					}, {
 						Tip = e(Tooltip.Trigger, {
-							text = "Push Studio changes to the Rojo server",
+							text = "Push Studio changes to the Prism server",
 						}),
 					})
 					else nil,
@@ -111,7 +111,7 @@ function ConfirmingPage:render()
 					onClick = self.props.onAccept,
 				}, {
 					Tip = e(Tooltip.Trigger, {
-						text = "Pull Rojo server changes to Studio",
+						text = "Pull Prism server changes to Studio",
 					}),
 				}),
 

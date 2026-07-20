@@ -14,6 +14,8 @@ local validateApiSocketPacket = Types.ifEnabled(Types.ApiSocketPacket)
 local validateApiSerialize = Types.ifEnabled(Types.ApiSerializeResponse)
 local validateApiRefPatch = Types.ifEnabled(Types.ApiRefPatchResponse)
 
+local EXEC_COMPLETION_BODY_LIMIT_BYTES = 256 * 1024
+
 local function rejectFailedRequests(response)
 	if response.code >= 400 then
 		local message = string.format("HTTP %s:\n%s", tostring(response.code), response.body)
@@ -24,11 +26,37 @@ local function rejectFailedRequests(response)
 	return response
 end
 
+local function decodeExecResponse(response, validator, description)
+	local decodeOk, body = pcall(response.msgpack, response)
+	if not decodeOk then
+		return Promise.reject(
+			string.format("Prism exec protocol error: could not decode %s: %s", description, tostring(body))
+		)
+	end
+
+	local valid, validationError = validator(body)
+	if not valid then
+		return Promise.reject(
+			string.format("Prism exec protocol error: malformed %s: %s", description, tostring(validationError))
+		)
+	end
+
+	return body
+end
+
+local function isCompletionConflict(errorValue)
+	-- The existing HTTP wrapper intentionally turns every non-2xx response
+	-- into Http.Error.Unknown and includes the status at the start of its
+	-- message. Keep this compatibility check here instead of creating another
+	-- HTTP connection path just for exec.
+	return tostring(errorValue):find("^Unknown HTTP error: 409:") ~= nil
+end
+
 local function rejectWrongProtocolVersion(infoResponseBody)
 	if infoResponseBody.protocolVersion ~= Config.protocolVersion then
 		local message = (
-			"Found a Rojo dev server, but it's using a different protocol version, and is incompatible."
-			.. "\nMake sure you have matching versions of both the Rojo plugin and server!"
+			"Found a Prism dev server, but it's using a different protocol version, and is incompatible."
+			.. "\nMake sure you have matching versions of both the Prism plugin and server!"
 			.. "\n\nYour client is version %s, with protocol version %s. It expects server version %s."
 			.. "\nYour server is version %s, with protocol version %s."
 			.. "\n\nGo to https://github.com/rojo-rbx/rojo for more details."
@@ -57,7 +85,7 @@ local function rejectWrongPlaceId(infoResponseBody)
 			end
 
 			local message = (
-				"Found a Rojo server, but its project is set to only be used with a specific list of places."
+				"Found a Prism server, but its project is set to only be used with a specific list of places."
 				.. "\nYour place ID is %u, but needs to be one of these:"
 				.. "\n%s"
 				.. "\n\nTo change this list, edit 'servePlaceIds' in your .project.json file."
@@ -77,7 +105,7 @@ local function rejectWrongPlaceId(infoResponseBody)
 			end
 
 			local message = (
-				"Found a Rojo server, but its project is set to not be used with a specific list of places."
+				"Found a Prism server, but its project is set to not be used with a specific list of places."
 				.. "\nYour place ID is %u, but needs to not be one of these:"
 				.. "\n%s"
 				.. "\n\nTo change this list, edit 'blockedPlaceIds' in your .project.json file."
@@ -325,6 +353,71 @@ function ApiContext:refPatch(ids: { string })
 			assert(validateApiRefPatch(response_body))
 
 			return response_body
+		end)
+end
+
+function ApiContext:claimNextExecJob()
+	local url = ("%s/api/exec/jobs/next"):format(self.__baseUrl)
+
+	return Http.get(url):andThen(function(response)
+		if response.code == 204 then
+			return nil
+		end
+
+		if response.code ~= 200 then
+			return Promise.reject(string.format("Unexpected exec claim response status %s", tostring(response.code)))
+		end
+
+		return decodeExecResponse(response, Types.ApiExecClaimResponse, "claimed-job response")
+	end)
+end
+
+function ApiContext:completeExecJob(jobId, payload)
+	local validJobId, jobIdError = Types.Uuid(jobId)
+	if not validJobId then
+		return Promise.reject(string.format("Cannot complete exec job: %s", tostring(jobIdError)))
+	end
+
+	local encodeOk, body = pcall(Http.msgpackEncode, payload)
+	if not encodeOk then
+		return Promise.reject("Could not encode exec completion payload: " .. tostring(body))
+	end
+	if #body > EXEC_COMPLETION_BODY_LIMIT_BYTES then
+		return Promise.reject(
+			string.format(
+				"Exec completion payload is %d bytes, exceeding the %d-byte server limit",
+				#body,
+				EXEC_COMPLETION_BODY_LIMIT_BYTES
+			)
+		)
+	end
+
+	local url = ("%s/api/exec/jobs/%s/complete"):format(self.__baseUrl, jobId)
+
+	return Http.post(url, body)
+		:andThen(function(response)
+			if response.code ~= 200 then
+				return Promise.reject(
+					string.format("Unexpected exec completion response status %s", tostring(response.code))
+				)
+			end
+
+			local responseBody = decodeExecResponse(response, Types.ApiExecJobResponse, "completion response")
+			return Promise.resolve(responseBody):andThen(function(validatedBody)
+				return {
+					status = "accepted",
+					job = validatedBody,
+				}
+			end)
+		end)
+		:catch(function(errorValue)
+			if isCompletionConflict(errorValue) then
+				return {
+					status = "conflict",
+				}
+			end
+
+			return Promise.reject(errorValue)
 		end)
 end
 

@@ -85,7 +85,7 @@ local function Header(props)
 				ImageColor3 = theme.Header.LogoColor,
 				ImageTransparency = props.transparency,
 
-				Size = UDim2.new(0, 60, 0, 27),
+				Size = UDim2.fromOffset(27, 27),
 
 				LayoutOrder = 1,
 				BackgroundTransparency = 1,

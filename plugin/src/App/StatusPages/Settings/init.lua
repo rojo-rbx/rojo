@@ -214,7 +214,7 @@ function SettingsPage:render()
 			AutoConnectPlaytestServer = e(Setting, {
 				id = "autoConnectPlaytestServer",
 				name = "Auto Connect Playtest Server",
-				description = "Automatically connect game server to Rojo when playtesting while connected in Edit",
+				description = "Automatically connect game server to Prism when playtesting while connected in Edit",
 				tag = "unstable",
 				transparency = self.props.transparency,
 				layoutOrder = layoutIncrement(),
@@ -269,7 +269,7 @@ function SettingsPage:render()
 			TimingLogsEnabled = e(Setting, {
 				id = "timingLogsEnabled",
 				name = "Timing Logs",
-				description = "Toggle logging timing of internal actions for benchmarking Rojo performance",
+				description = "Toggle logging timing of internal actions for benchmarking Prism performance",
 				tag = "debug",
 				transparency = self.props.transparency,
 				layoutOrder = layoutIncrement(),

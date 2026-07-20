@@ -13,6 +13,7 @@ local Timer = require(script.Parent.Timer)
 
 local ChangeBatcher = require(script.Parent.ChangeBatcher)
 local encodePatchUpdate = require(script.Parent.ChangeBatcher.encodePatchUpdate)
+local Exec = require(script.Parent.Exec)
 local InstanceMap = require(script.Parent.InstanceMap)
 local PatchSet = require(script.Parent.PatchSet)
 local Reconciler = require(script.Parent.Reconciler)
@@ -113,6 +114,15 @@ function ServeSession.new(options)
 
 	setmetatable(self, ServeSession)
 
+	self.__exec = Exec.new({
+		apiContext = self.__apiContext,
+		onError = function(errorValue)
+			if self.__status ~= Status.Disconnected then
+				self:__stopInternal(errorValue)
+			end
+		end,
+	})
+
 	return self
 end
 
@@ -202,13 +212,13 @@ function ServeSession:start()
 				self:__setStatus(Status.Connected, serverInfo.projectName)
 				self:__applyGameAndPlaceId(serverInfo)
 
-				return self.__apiContext:connectWebSocket({
+				local websocketPromise = self.__apiContext:connectWebSocket({
 					["messages"] = function(messagesPacket)
 						if self.__status == Status.Disconnected then
 							return
 						end
 
-						Log.debug("Received {} messages from Rojo server", #messagesPacket.messages)
+						Log.debug("Received {} messages from Prism server", #messagesPacket.messages)
 
 						for _, message in messagesPacket.messages do
 							self:__applyPatch(message)
@@ -216,6 +226,11 @@ function ServeSession:start()
 						self.__apiContext:setMessageCursor(messagesPacket.messageCursor)
 					end,
 				})
+
+				-- connectWebSocket creates the stream client synchronously. Starting
+				-- here keeps exec on the same stable, fully-synced session lifecycle.
+				self.__exec:start()
+				return websocketPromise
 			end)
 		end)
 		:catch(function(err)
@@ -254,7 +269,7 @@ function ServeSession:__onActiveScriptChanged(activeScript)
 
 	local scriptId = self.__instanceMap.fromInstances[activeScript]
 	if scriptId == nil then
-		Log.trace("Not opening script {} because it is not known by Rojo.", activeScript)
+		Log.trace("Not opening script {} because it is not known by Prism.", activeScript)
 
 		return
 	end
@@ -406,7 +421,7 @@ end
 
 function ServeSession:__applyPatch(patch)
 	local patchTimestamp = DateTime.now():FormatLocalTime("LTS", "en-us")
-	local historyRecording = ChangeHistoryService:TryBeginRecording("Rojo: Patch " .. patchTimestamp)
+	local historyRecording = ChangeHistoryService:TryBeginRecording("Prism: Patch " .. patchTimestamp)
 	if not historyRecording then
 		-- There can only be one recording at a time
 		Log.debug("Failed to begin history recording for " .. patchTimestamp .. ". Another recording is in progress.")
@@ -461,7 +476,7 @@ function ServeSession:__applyPatch(patch)
 
 	if not PatchSet.isEmpty(unappliedPatch) then
 		Log.debug(
-			"Could not apply all changes requested by the Rojo server:\n{}",
+			"Could not apply all changes requested by the Prism server:\n{}",
 			PatchSet.humanSummary(self.__instanceMap, unappliedPatch)
 		)
 	end
@@ -492,7 +507,7 @@ function ServeSession:__initialSync(serverInfo)
 
 		-- For any instances that line up with the Rojo server's view, start
 		-- tracking them in the reconciler.
-		Log.trace("Matching existing Roblox instances to Rojo IDs")
+		Log.trace("Matching existing Roblox instances to Prism IDs")
 		self:setLoadingText("Hydrating instance map...")
 		self.__reconciler:hydrate(readResponseBody.instances, serverInfo.rootInstanceId, game)
 
@@ -504,7 +519,7 @@ function ServeSession:__initialSync(serverInfo)
 			self.__reconciler:diff(readResponseBody.instances, serverInfo.rootInstanceId, game)
 
 		if not success then
-			Log.error("Could not compute a diff to catch up to the Rojo server: {:#?}", catchUpPatch)
+			Log.error("Could not compute a diff to catch up to the Prism server: {:#?}", catchUpPatch)
 		end
 
 		for _, update in catchUpPatch.updated do
@@ -514,7 +529,7 @@ function ServeSession:__initialSync(serverInfo)
 				-- message instead of crashing.
 				return Promise.reject(
 					"Cannot sync a model as a place."
-						.. "\nEnsure Rojo is serving a project file that has a DataModel at the root of its tree and try again."
+						.. "\nEnsure Prism is serving a project file that has a DataModel at the root of its tree and try again."
 						.. "\nSee project file docs: https://rojo.space/docs/v7/project-format/"
 				)
 			end
@@ -528,7 +543,7 @@ function ServeSession:__initialSync(serverInfo)
 		end
 
 		if userDecision == "Abort" then
-			return Promise.reject("Aborted Rojo sync operation")
+			return Promise.reject("Aborted Prism sync operation")
 		elseif userDecision == "Reject" then
 			if not self.__twoWaySync then
 				return Promise.reject("Cannot reject sync operation without two-way sync enabled")
@@ -569,6 +584,7 @@ function ServeSession:__initialSync(serverInfo)
 end
 
 function ServeSession:__stopInternal(err)
+	self.__exec:stop()
 	self:__setStatus(Status.Disconnected, err)
 	self.__apiContext:disconnect()
 	self.__instanceMap:stop()

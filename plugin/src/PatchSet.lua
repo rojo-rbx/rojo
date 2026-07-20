@@ -375,7 +375,7 @@ function PatchSet.humanSummary(instanceMap, patchSet)
 		local updatedProperties = {}
 
 		if update.changedMetadata ~= nil then
-			table.insert(updatedProperties, "Rojo's Metadata")
+			table.insert(updatedProperties, "Prism's Metadata")
 		end
 
 		if update.changedName ~= nil then

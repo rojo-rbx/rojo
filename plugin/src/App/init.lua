@@ -63,7 +63,7 @@ function App:init()
 	self.notifId = 0
 
 	self.waypointConnection = ChangeHistoryService.OnUndo:Connect(function(action: string)
-		if not string.find(action, "^Rojo: Patch") then
+		if not string.find(action, "^Prism: Patch") then
 			return
 		end
 
@@ -853,7 +853,9 @@ function App:endSession()
 end
 
 function App:render()
-	local pluginName = "Rojo " .. Version.display(Config.version)
+	-- Keep the legacy widget ID so existing Studio dock state is preserved.
+	local pluginId = "Rojo " .. Version.display(Config.version)
+	local pluginName = "Prism " .. Version.display(Config.version)
 
 	local function createPageElement(appStatus, additionalProps)
 		additionalProps = additionalProps or {}
@@ -872,7 +874,7 @@ function App:render()
 		e(Theme.StudioProvider, nil, {
 			tooltip = e(Tooltip.Provider, nil, {
 				gui = e(StudioPluginGui, {
-					id = pluginName,
+					id = pluginId,
 					title = pluginName,
 					active = self.state.guiEnabled,
 					isEphemeral = false,
@@ -993,10 +995,11 @@ function App:render()
 				}),
 			}),
 
+			-- Keep action IDs stable so existing Studio shortcuts continue to work.
 			toggleAction = e(StudioPluginAction, {
 				name = "RojoConnection",
-				title = "Rojo: Connect/Disconnect",
-				description = "Toggles the server for a Rojo sync session",
+				title = "Prism: Connect/Disconnect",
+				description = "Toggles the server for a Prism sync session",
 				icon = Assets.Images.PluginButton,
 				bindable = true,
 				onTriggered = function()
@@ -1012,8 +1015,8 @@ function App:render()
 
 			connectAction = e(StudioPluginAction, {
 				name = "RojoConnect",
-				title = "Rojo: Connect",
-				description = "Connects the server for a Rojo sync session",
+				title = "Prism: Connect",
+				description = "Connects the server for a Prism sync session",
 				icon = Assets.Images.PluginButton,
 				bindable = true,
 				onTriggered = function()
@@ -1025,8 +1028,8 @@ function App:render()
 
 			disconnectAction = e(StudioPluginAction, {
 				name = "RojoDisconnect",
-				title = "Rojo: Disconnect",
-				description = "Disconnects the server for a Rojo sync session",
+				title = "Prism: Disconnect",
+				description = "Disconnects the server for a Prism sync session",
 				icon = Assets.Images.PluginButton,
 				bindable = true,
 				onTriggered = function()
@@ -1040,8 +1043,8 @@ function App:render()
 				name = pluginName,
 			}, {
 				button = e(StudioToggleButton, {
-					name = "Rojo",
-					tooltip = "Show or hide the Rojo panel",
+					name = "Rojo", -- Legacy toolbar button ID.
+					tooltip = "Show or hide the Prism panel",
 					icon = self.state.toolbarIcon,
 					active = self.state.guiEnabled,
 					enabled = true,

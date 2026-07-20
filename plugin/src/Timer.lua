@@ -9,7 +9,7 @@ local Timer = {
 function Timer._start(label)
 	local start = clock()
 	if not label then
-		error("[Rojo-Timer] Timer.start: label is required", 2)
+		error("[Prism-Timer] Timer.start: label is required", 2)
 		return
 	end
 
@@ -21,7 +21,7 @@ function Timer._stop()
 
 	local entry = table.remove(Timer._entries)
 	if not entry then
-		error("[Rojo-Timer] Timer.stop: no label to stop", 2)
+		error("[Prism-Timer] Timer.stop: no label to stop", 2)
 		return
 	end
 
@@ -36,7 +36,7 @@ function Timer._stop()
 
 	local start = entry[2]
 	local duration = stop - start
-	print(string.format("[Rojo-Timer] %s took %.3f ms", label, duration * 1000))
+	print(string.format("[Prism-Timer] %s took %.3f ms", label, duration * 1000))
 end
 
 -- Replace functions with no-op if not in debug mode

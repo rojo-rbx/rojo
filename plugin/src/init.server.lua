@@ -2,6 +2,7 @@ if not plugin then
 	return
 end
 
+-- Keep the packaged root name for compatibility with existing module lookups.
 local Rojo = script:FindFirstAncestor("Rojo")
 local Packages = Rojo.Packages
 

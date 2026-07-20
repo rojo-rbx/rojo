@@ -16,10 +16,10 @@ local function addTags(tag, message)
 	return tag .. message:gsub("\n", "\n" .. tag)
 end
 
-local TRACE_TAG = (" "):rep(15) .. "[Rojo-Trace] "
-local INFO_TAG = (" "):rep(15) .. "[Rojo-Info] "
-local DEBUG_TAG = (" "):rep(15) .. "[Rojo-Debug] "
-local WARN_TAG = "[Rojo-Warn] "
+local TRACE_TAG = (" "):rep(15) .. "[Prism-Trace] "
+local INFO_TAG = (" "):rep(15) .. "[Prism-Info] "
+local DEBUG_TAG = (" "):rep(15) .. "[Prism-Debug] "
+local WARN_TAG = "[Prism-Warn] "
 
 local Log = {}
 

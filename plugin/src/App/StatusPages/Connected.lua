@@ -468,7 +468,7 @@ function ConnectedPage:render()
 					onClick = self.props.onDisconnect,
 				}, {
 					Tip = e(Tooltip.Trigger, {
-						text = "Disconnect from the Rojo sync server",
+						text = "Disconnect from the Prism sync server",
 					}),
 				}),
 

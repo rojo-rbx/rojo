@@ -19,7 +19,7 @@ return function(instanceMap, propertyChanges)
 		local instanceId = instanceMap.fromInstances[instance]
 
 		if instanceId == nil then
-			Log.warn("Ignoring change for instance {:?} as it is unknown to Rojo", instance)
+			Log.warn("Ignoring change for instance {:?} as it is unknown to Prism", instance)
 			continue
 		end
 

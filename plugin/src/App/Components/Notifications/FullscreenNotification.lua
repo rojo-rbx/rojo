@@ -116,7 +116,7 @@ function FullscreenNotification:render()
 				Image = Assets.Images.Logo,
 				ImageColor3 = theme.Header.LogoColor,
 				BackgroundTransparency = 1,
-				Size = UDim2.fromOffset(60, 27),
+				Size = UDim2.fromOffset(27, 27),
 				LayoutOrder = 1,
 			}),
 			Info = e("TextLabel", {
