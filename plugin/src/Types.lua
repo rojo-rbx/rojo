@@ -96,6 +96,54 @@ local ExecJobState = t.union(
 	t.literal("timedOut")
 )
 
+local StudioMode = t.union(t.literal("edit"), t.literal("play"), t.literal("run"), t.literal("unknown"))
+
+local AutomationRegistration = t.union(t.literal("registered"), t.literal("refreshed"), t.literal("conflict"))
+
+local ApiAutomationHeartbeatResponse = t.strictInterface({
+	registration = AutomationRegistration,
+	activePluginSessionId = t.optional(Uuid),
+})
+
+local AutomationJobState = t.union(
+	t.literal("pending"),
+	t.literal("claimed"),
+	t.literal("succeeded"),
+	t.literal("failed"),
+	t.literal("timedOut")
+)
+
+local InspectTarget = t.strictInterface({
+	kind = t.literal("path"),
+	segments = t.array(t.string),
+})
+
+local InspectRequest = t.strictInterface({
+	kind = t.literal("inspect"),
+	target = InspectTarget,
+	depth = t.number,
+	maxChildren = t.number,
+	maxInstances = t.number,
+	includeProperties = t.boolean,
+	includeAttributes = t.boolean,
+	includeTags = t.boolean,
+})
+
+local ApiAutomationClaimResponse = t.strictInterface({
+	jobId = Uuid,
+	state = t.literal("claimed"),
+	request = InspectRequest,
+	executionTimeoutMs = t.number,
+})
+
+local ApiAutomationJobResponse = t.strictInterface({
+	jobId = Uuid,
+	state = AutomationJobState,
+	claimedByPluginSessionId = t.optional(Uuid),
+	result = t.optional(t.table),
+	error = t.optional(t.string),
+})
+
 local ExecLogLevel = t.union(t.literal("print"), t.literal("warn"))
 
 local ExecLog = t.strictInterface({
@@ -201,6 +249,12 @@ return strict("Types", {
 	ApiRefPatchResponse = ApiRefPatchResponse,
 	ApiExecClaimResponse = ApiExecClaimResponse,
 	ApiExecJobResponse = ApiExecJobResponse,
+	ApiAutomationHeartbeatResponse = ApiAutomationHeartbeatResponse,
+	ApiAutomationClaimResponse = ApiAutomationClaimResponse,
+	ApiAutomationJobResponse = ApiAutomationJobResponse,
+	AutomationJobState = AutomationJobState,
+	AutomationRegistration = AutomationRegistration,
+	StudioMode = StudioMode,
 	ExecJobState = ExecJobState,
 	ExecValue = ExecValue,
 	ExecLog = ExecLog,

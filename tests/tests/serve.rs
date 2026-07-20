@@ -1,4 +1,4 @@
-use std::fs;
+use std::{collections::BTreeMap, fs};
 
 use insta::{assert_snapshot, assert_yaml_snapshot, with_settings};
 use rbx_dom_weak::types::Ref;
@@ -13,13 +13,397 @@ use crate::rojo_test::{
 };
 
 use librojo::{
+    automation::{
+        AutomationJobState, AutomationRequest, AutomationResult, InspectNode, InspectRequest,
+        InspectResult, InspectTarget, InstanceReference, MAX_AUTOMATION_REQUEST_BODY_BYTES,
+        MAX_PENDING_AUTOMATION_JOBS,
+    },
     exec::{MAX_PENDING_JOBS, MAX_SOURCE_SIZE_BYTES},
     web_api::{
-        ExecJobClaimResponse, ExecJobCompletionRequest, ExecJobResponse,
+        AutomationHeartbeatRequest, AutomationHeartbeatResponse, AutomationJobClaimResponse,
+        AutomationJobCompletion, AutomationJobCompletionRequest, AutomationJobResponse,
+        AutomationRegistration, AutomationStatusResponse, ExecJobClaimResponse,
+        ExecJobCompletionEnvelope, ExecJobCompletionRequest, ExecJobResponse,
         ExecJobState as ApiExecJobState, ExecJobSubmissionRequest, ExecLog, ExecLogLevel,
-        ExecValue, SerializeResponse, SocketPacketType,
+        ExecValue, SerializeResponse, SocketPacketType, StudioMode,
     },
 };
+
+fn inspect_request(target: &str) -> AutomationRequest {
+    AutomationRequest::Inspect(InspectRequest {
+        target: InspectTarget::Path {
+            segments: vec![target.to_owned()],
+        },
+        depth: 1,
+        max_children: 100,
+        max_instances: 2_000,
+        include_properties: false,
+        include_attributes: true,
+        include_tags: true,
+    })
+}
+
+fn inspect_result(session_id: &str, target: &str) -> AutomationResult {
+    AutomationResult::Inspect(InspectResult {
+        root: InspectNode {
+            reference: InstanceReference {
+                session_id: session_id.to_owned(),
+                id: "pinst-00000001".to_owned(),
+                path: target.to_owned(),
+                name: target.to_owned(),
+                class_name: "Workspace".to_owned(),
+            },
+            name: target.to_owned(),
+            class_name: "Workspace".to_owned(),
+            path: target.to_owned(),
+            properties: BTreeMap::new(),
+            attributes: BTreeMap::new(),
+            tags: Vec::new(),
+            children: Vec::new(),
+            truncated: false,
+        },
+        visited_instances: 1,
+        truncated: false,
+        truncation_reason: None,
+    })
+}
+
+#[test]
+fn typed_automation_jobs_enforce_fifo_session_and_limits() {
+    run_serve_test("empty", |session, _redactions| {
+        let server_info = session.get_api_rojo().unwrap();
+        let plugin_id = Uuid::new_v4().to_string();
+        let other_id = Uuid::new_v4().to_string();
+        let heartbeat = AutomationHeartbeatRequest {
+            plugin_session_id: plugin_id.clone(),
+            server_session_id: server_info.session_id,
+            studio_mode: StudioMode::Edit,
+            exec_handler_available: true,
+            automation_handler_version: 2,
+            plugin_version: Some("test".to_owned()),
+        };
+        assert_eq!(
+            session
+                .get_api_automation_next(&plugin_id, StudioMode::Edit)
+                .status(),
+            StatusCode::CONFLICT
+        );
+        assert_eq!(
+            session.post_api_automation_heartbeat(&heartbeat).status(),
+            StatusCode::OK
+        );
+
+        let first_response = session.post_api_automation_job(&inspect_request("Workspace"));
+        assert_eq!(first_response.status(), StatusCode::CREATED);
+        let first: AutomationJobResponse = decode_response(first_response);
+        let second: AutomationJobResponse =
+            decode_response(session.post_api_automation_job(&inspect_request("Lighting")));
+        assert_eq!(first.state, AutomationJobState::Pending);
+
+        let counts: AutomationStatusResponse = decode_response(session.get_api_automation_status());
+        assert_eq!(counts.queues.automation_pending, 2);
+        assert_eq!(counts.queues.automation_claimed, 0);
+
+        let claim: AutomationJobClaimResponse =
+            decode_response(session.get_api_automation_next(&plugin_id, StudioMode::Edit));
+        assert_eq!(claim.job_id, first.job_id);
+        assert_eq!(claim.state, AutomationJobState::Claimed);
+        assert_eq!(claim.execution_timeout_ms, 15_000);
+        let claimed_counts: AutomationStatusResponse =
+            decode_response(session.get_api_automation_status());
+        assert_eq!(claimed_counts.queues.automation_claimed, 1);
+        assert_eq!(
+            claimed_counts
+                .queues
+                .automation_claimed_by_plugin_session_id
+                .as_deref(),
+            Some(plugin_id.as_str())
+        );
+        assert_eq!(
+            session
+                .get_api_automation_next(&plugin_id, StudioMode::Edit)
+                .status(),
+            StatusCode::NO_CONTENT
+        );
+        assert_eq!(
+            session
+                .get_api_automation_next(&other_id, StudioMode::Edit)
+                .status(),
+            StatusCode::CONFLICT
+        );
+
+        let wrong_completion = AutomationJobCompletionRequest {
+            completion: AutomationJobCompletion::Success {
+                result: Box::new(inspect_result(&other_id, "Workspace")),
+            },
+            plugin_session_id: other_id,
+            studio_mode: StudioMode::Edit,
+        };
+        assert_eq!(
+            session
+                .post_api_automation_complete(&first.job_id, &wrong_completion)
+                .status(),
+            StatusCode::CONFLICT
+        );
+
+        let completion = AutomationJobCompletionRequest {
+            completion: AutomationJobCompletion::Success {
+                result: Box::new(inspect_result(&plugin_id, "Workspace")),
+            },
+            plugin_session_id: plugin_id.clone(),
+            studio_mode: StudioMode::Edit,
+        };
+        let completed: AutomationJobResponse =
+            decode_response(session.post_api_automation_complete(&first.job_id, &completion));
+        assert_eq!(completed.state, AutomationJobState::Succeeded);
+        assert_eq!(
+            session
+                .post_api_automation_complete(&first.job_id, &completion)
+                .status(),
+            StatusCode::CONFLICT
+        );
+
+        let second_claim: AutomationJobClaimResponse =
+            decode_response(session.get_api_automation_next(&plugin_id, StudioMode::Edit));
+        assert_eq!(second_claim.job_id, second.job_id);
+        let failed = AutomationJobCompletionRequest {
+            completion: AutomationJobCompletion::Failure {
+                error: "inspection failed".to_owned(),
+            },
+            plugin_session_id: plugin_id.clone(),
+            studio_mode: StudioMode::Edit,
+        };
+        assert_eq!(
+            session
+                .post_api_automation_complete(&second.job_id, &failed)
+                .status(),
+            StatusCode::OK
+        );
+        let failed_status: AutomationJobResponse =
+            decode_response(session.get_api_automation_job_status(&second.job_id));
+        assert_eq!(failed_status.state, AutomationJobState::Failed);
+        assert_eq!(failed_status.error.as_deref(), Some("inspection failed"));
+        assert_eq!(
+            session
+                .get_api_automation_next(&plugin_id, StudioMode::Edit)
+                .status(),
+            StatusCode::NO_CONTENT
+        );
+
+        let pending: AutomationJobResponse =
+            decode_response(session.post_api_automation_job(&inspect_request("Workspace")));
+        assert_eq!(
+            session
+                .post_api_automation_complete(&pending.job_id, &failed)
+                .status(),
+            StatusCode::CONFLICT
+        );
+        assert_eq!(
+            session
+                .api_request(
+                    reqwest::Method::POST,
+                    &format!("/api/automation/jobs/{}/complete", pending.job_id),
+                    Some(vec![
+                        0;
+                        librojo::automation::MAX_AUTOMATION_RESULT_BODY_BYTES
+                            + 1
+                    ]),
+                )
+                .status(),
+            StatusCode::PAYLOAD_TOO_LARGE
+        );
+        assert_eq!(
+            session.get_api_automation_job_status("not-a-uuid").status(),
+            StatusCode::BAD_REQUEST
+        );
+        assert_eq!(
+            session
+                .api_request(
+                    reqwest::Method::POST,
+                    &format!("/api/automation/jobs/{}/complete", pending.job_id),
+                    Some(vec![0xc1]),
+                )
+                .status(),
+            StatusCode::BAD_REQUEST
+        );
+
+        for (method, path) in [
+            (reqwest::Method::GET, "/api/automation/jobs/".to_owned()),
+            (
+                reqwest::Method::GET,
+                "/api/automation/jobs/next/extra".to_owned(),
+            ),
+            (
+                reqwest::Method::POST,
+                format!("/api/automation/jobs/{}/complete/extra", pending.job_id),
+            ),
+        ] {
+            assert_eq!(
+                session.api_request(method, &path, None).status(),
+                StatusCode::NOT_FOUND
+            );
+        }
+        assert_eq!(
+            session
+                .get_api_automation_job_status(&Uuid::new_v4().to_string())
+                .status(),
+            StatusCode::NOT_FOUND
+        );
+        assert_eq!(
+            session
+                .api_request(
+                    reqwest::Method::POST,
+                    "/api/automation/jobs",
+                    Some(vec![0; MAX_AUTOMATION_REQUEST_BODY_BYTES + 1]),
+                )
+                .status(),
+            StatusCode::PAYLOAD_TOO_LARGE
+        );
+        assert_eq!(
+            session
+                .api_request(
+                    reqwest::Method::POST,
+                    "/api/automation/jobs",
+                    Some(vec![0xc1]),
+                )
+                .status(),
+            StatusCode::BAD_REQUEST
+        );
+
+        for _ in 1..MAX_PENDING_AUTOMATION_JOBS {
+            assert_eq!(
+                session
+                    .post_api_automation_job(&inspect_request("Workspace"))
+                    .status(),
+                StatusCode::CREATED
+            );
+        }
+        assert_eq!(
+            session
+                .post_api_automation_job(&inspect_request("Workspace"))
+                .status(),
+            StatusCode::TOO_MANY_REQUESTS
+        );
+    });
+}
+
+#[test]
+fn automation_status_tracks_plugin_identity_and_exec_queue() {
+    run_serve_test("empty", |session, _redactions| {
+        let server_info = session.get_api_rojo().unwrap();
+        let initial: AutomationStatusResponse =
+            decode_response(session.get_api_automation_status());
+        assert_eq!(initial.server_session_id, server_info.session_id);
+        assert_eq!(initial.protocol_version, server_info.protocol_version);
+        assert_eq!(initial.automation_handler_version, 2);
+        assert!(!initial.automation_available);
+        assert!(!initial.exec_available);
+        assert!(!initial.typed_automation_available);
+        assert_eq!(initial.plugin, None);
+        assert_eq!(initial.queues.exec_pending, 0);
+        assert_eq!(initial.queues.exec_claimed, 0);
+
+        let first_plugin_session_id = Uuid::new_v4().to_string();
+        let heartbeat = AutomationHeartbeatRequest {
+            plugin_session_id: first_plugin_session_id.clone(),
+            server_session_id: server_info.session_id,
+            studio_mode: StudioMode::Edit,
+            exec_handler_available: true,
+            automation_handler_version: 2,
+            plugin_version: Some("7.7.0-test".to_owned()),
+        };
+        let registered: AutomationHeartbeatResponse =
+            decode_response(session.post_api_automation_heartbeat(&heartbeat));
+        assert_eq!(registered.registration, AutomationRegistration::Registered);
+
+        let mut refreshed_heartbeat = heartbeat.clone();
+        refreshed_heartbeat.studio_mode = StudioMode::Play;
+        let refreshed: AutomationHeartbeatResponse =
+            decode_response(session.post_api_automation_heartbeat(&refreshed_heartbeat));
+        assert_eq!(refreshed.registration, AutomationRegistration::Refreshed);
+
+        let pending = submit_exec_job(&session, "status.lua", "return true");
+        let pending_status: AutomationStatusResponse =
+            decode_response(session.get_api_automation_status());
+        assert_eq!(pending_status.queues.exec_pending, 1);
+
+        let claim: ExecJobClaimResponse = decode_response(
+            session.get_api_exec_next_for_session(&first_plugin_session_id, StudioMode::Edit),
+        );
+        assert_eq!(claim.job_id, pending.job_id);
+        let connected: AutomationStatusResponse =
+            decode_response(session.get_api_automation_status());
+        let plugin = connected.plugin.unwrap();
+        assert!(plugin.connected);
+        assert_eq!(plugin.plugin_session_id, first_plugin_session_id);
+        assert_eq!(plugin.studio_mode, StudioMode::Edit);
+        assert_eq!(plugin.plugin_version.as_deref(), Some("7.7.0-test"));
+        assert!(connected.automation_available);
+        assert!(connected.exec_available);
+        assert!(connected.typed_automation_available);
+        assert_eq!(connected.queues.exec_pending, 0);
+        assert_eq!(connected.queues.exec_claimed, 1);
+        assert_eq!(
+            connected
+                .queues
+                .exec_claimed_by_plugin_session_id
+                .as_deref(),
+            Some(first_plugin_session_id.as_str())
+        );
+
+        let completion = ExecJobCompletionEnvelope {
+            completion: ExecJobCompletionRequest::Success {
+                result: Some(ExecValue::Boolean { value: true }),
+                logs: Vec::new(),
+            },
+            plugin_session_id: Some(first_plugin_session_id.clone()),
+            studio_mode: Some(StudioMode::Edit),
+        };
+        assert_eq!(
+            session
+                .post_api_exec_complete_for_session(&pending.job_id, &completion)
+                .status(),
+            StatusCode::OK
+        );
+        let completed_status: AutomationStatusResponse =
+            decode_response(session.get_api_automation_status());
+        assert_eq!(completed_status.queues.exec_claimed, 0);
+        assert_eq!(
+            completed_status.queues.exec_claimed_by_plugin_session_id,
+            None
+        );
+
+        let second_heartbeat = AutomationHeartbeatRequest {
+            plugin_session_id: Uuid::new_v4().to_string(),
+            ..heartbeat
+        };
+        let conflict: AutomationHeartbeatResponse =
+            decode_response(session.post_api_automation_heartbeat(&second_heartbeat));
+        assert_eq!(conflict.registration, AutomationRegistration::Conflict);
+        let duplicate: AutomationStatusResponse =
+            decode_response(session.get_api_automation_status());
+        assert!(duplicate.duplicate_session_detected);
+
+        let malformed = AutomationHeartbeatRequest {
+            plugin_session_id: "not-a-uuid".to_owned(),
+            ..second_heartbeat
+        };
+        assert_eq!(
+            session.post_api_automation_heartbeat(&malformed).status(),
+            StatusCode::BAD_REQUEST
+        );
+        assert_eq!(
+            session
+                .api_request(
+                    reqwest::Method::GET,
+                    "/api/exec/jobs/next?pluginSessionId=not-a-uuid&studioMode=edit",
+                    None,
+                )
+                .status(),
+            StatusCode::BAD_REQUEST
+        );
+    });
+}
 
 #[test]
 fn exec_jobs_submit_claim_complete_and_release_slot() {

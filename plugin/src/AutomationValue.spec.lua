@@ -1,0 +1,40 @@
+return function()
+	local AutomationValue = require(script.Parent.AutomationValue)
+
+	describe("AutomationValue", function()
+		it("encodes scalar and Roblox values", function()
+			expect(AutomationValue.encode(nil).kind).to.equal("nil")
+			expect(AutomationValue.encode(true).kind).to.equal("boolean")
+			expect(AutomationValue.encode(4).kind).to.equal("number")
+			expect(AutomationValue.encode("value").kind).to.equal("string")
+			expect(AutomationValue.encode(Vector3.new(1, 2, 3)).kind).to.equal("vector3")
+			expect(AutomationValue.encode(CFrame.new()).kind).to.equal("cFrame")
+			expect(AutomationValue.encode(Color3.new()).kind).to.equal("color3")
+			expect(AutomationValue.encode(UDim2.new()).kind).to.equal("uDim2")
+			expect(AutomationValue.encode(Rect.new(Vector2.zero, Vector2.one)).kind).to.equal("rect")
+			expect(AutomationValue.encode(Enum.Material.Plastic).kind).to.equal("enumItem")
+			expect(AutomationValue.encode(BrickColor.new("Bright red")).kind).to.equal("brickColor")
+			expect(AutomationValue.encode(NumberRange.new(1, 2)).kind).to.equal("numberRange")
+		end)
+
+		it("encodes dense arrays and sorted maps", function()
+			local array = AutomationValue.encode({ "a", "b" })
+			expect(array.kind).to.equal("array")
+			expect(array.value[2].value).to.equal("b")
+
+			local map = AutomationValue.encode({ z = 1, a = 2 })
+			expect(map.kind).to.equal("map")
+			expect(map.value[1].key).to.equal("a")
+			expect(map.value[2].key).to.equal("z")
+		end)
+
+		it("rejects cycles, sparse values, unsupported values, and non-finite numbers", function()
+			local cyclic = {}
+			cyclic.self = cyclic
+			expect(select(1, AutomationValue.encode(cyclic))).never.to.be.ok()
+			expect(select(1, AutomationValue.encode({ [2] = true }))).never.to.be.ok()
+			expect(select(1, AutomationValue.encode(function() end))).never.to.be.ok()
+			expect(select(1, AutomationValue.encode(math.huge))).never.to.be.ok()
+		end)
+	end)
+end

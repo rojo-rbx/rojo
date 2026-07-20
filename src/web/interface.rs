@@ -14,6 +14,13 @@ use rbx_dom_weak::{
 use serde::{Deserialize, Serialize};
 use strum::Display;
 
+pub use crate::automation::{
+    AutomationJobState, AutomationMapEntry, AutomationRequest, AutomationResult, AutomationUdim,
+    AutomationValue, AutomationVector2, InspectNode, InspectRequest, InspectResult, InspectTarget,
+    InstanceReference,
+};
+pub use crate::automation_status::{AutomationRegistration, StudioMode};
+
 use crate::{
     exec::{
         ExecJob as StoredExecJob, ExecJobState as StoredExecJobState, ExecLog as StoredExecLog,
@@ -486,6 +493,143 @@ pub enum ExecJobCompletionRequest {
         #[serde(default)]
         logs: Vec<ExecLog>,
     },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct ExecJobCompletionEnvelope {
+    #[serde(flatten)]
+    pub completion: ExecJobCompletionRequest,
+    #[serde(default)]
+    pub plugin_session_id: Option<String>,
+    #[serde(default)]
+    pub studio_mode: Option<StudioMode>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct AutomationHeartbeatRequest {
+    pub plugin_session_id: String,
+    pub server_session_id: SessionId,
+    pub studio_mode: StudioMode,
+    pub exec_handler_available: bool,
+    pub automation_handler_version: u32,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub plugin_version: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct AutomationHeartbeatResponse {
+    pub registration: AutomationRegistration,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub active_plugin_session_id: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct AutomationPluginStatusResponse {
+    pub connected: bool,
+    pub plugin_session_id: String,
+    pub studio_mode: StudioMode,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub plugin_version: Option<String>,
+    pub automation_handler_version: u32,
+    pub last_seen_at_ms: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct AutomationQueueStatusResponse {
+    pub exec_pending: usize,
+    pub exec_claimed: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub exec_claimed_by_plugin_session_id: Option<String>,
+    pub automation_pending: usize,
+    pub automation_claimed: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub automation_claimed_by_plugin_session_id: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct AutomationStatusResponse {
+    pub server_session_id: SessionId,
+    pub server_version: String,
+    pub protocol_version: u64,
+    pub automation_handler_version: u32,
+    pub automation_available: bool,
+    pub exec_available: bool,
+    pub typed_automation_available: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub plugin: Option<AutomationPluginStatusResponse>,
+    pub duplicate_session_detected: bool,
+    pub queues: AutomationQueueStatusResponse,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct AutomationJobResponse {
+    pub job_id: String,
+    pub state: AutomationJobState,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub claimed_by_plugin_session_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub result: Option<AutomationResult>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+}
+
+impl From<crate::automation::AutomationJob> for AutomationJobResponse {
+    fn from(job: crate::automation::AutomationJob) -> Self {
+        Self {
+            job_id: job.id.to_string(),
+            state: job.state,
+            claimed_by_plugin_session_id: job.claimed_by.map(|id| id.to_string()),
+            result: job.result,
+            error: job.error,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct AutomationJobClaimResponse {
+    pub job_id: String,
+    pub state: AutomationJobState,
+    pub request: AutomationRequest,
+    pub execution_timeout_ms: u64,
+}
+
+impl From<crate::automation::AutomationJob> for AutomationJobClaimResponse {
+    fn from(job: crate::automation::AutomationJob) -> Self {
+        Self {
+            job_id: job.id.to_string(),
+            state: job.state,
+            request: job.request,
+            execution_timeout_ms: job
+                .execution_timeout
+                .as_millis()
+                .try_into()
+                .unwrap_or(u64::MAX),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(tag = "outcome", rename_all = "camelCase")]
+pub enum AutomationJobCompletion {
+    Success { result: Box<AutomationResult> },
+    Failure { error: String },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct AutomationJobCompletionRequest {
+    #[serde(flatten)]
+    pub completion: AutomationJobCompletion,
+    pub plugin_session_id: String,
+    pub studio_mode: StudioMode,
 }
 
 /// General response type returned from all Rojo routes

@@ -394,6 +394,43 @@ return function()
 	end)
 
 	describe("Exec poller", function()
+		it("classifies edit, play, run, and unknown modes", function()
+			expect(helpers.classifyStudioMode(true, false, false)).to.equal("edit")
+			expect(helpers.classifyStudioMode(false, false, true)).to.equal("play")
+			expect(helpers.classifyStudioMode(false, true, true)).to.equal("run")
+			expect(helpers.classifyStudioMode(false, false, false)).to.equal("unknown")
+		end)
+
+		it("includes Studio mode in claim and completion calls", function()
+			local claimMode
+			local completionMode
+			local poller = Exec.new({
+				apiContext = {
+					claimNextExecJob = function(_, mode)
+						claimMode = mode
+						return Promise.resolve(claimedJob())
+					end,
+					completeExecJob = function(_, _jobId, _payload, mode)
+						completionMode = mode
+						return Promise.resolve({ status = "accepted" })
+					end,
+				},
+				dependencies = {
+					studioMode = function()
+						return "edit"
+					end,
+					execute = function()
+						return Promise.resolve({ outcome = "success", logs = {} })
+					end,
+				},
+			})
+
+			poller:start()
+			expect(claimMode).to.equal("edit")
+			expect(completionMode).to.equal("edit")
+			poller:stop()
+		end)
+
 		it("starts only once", function()
 			local scheduler = makeScheduler()
 			local claimCount = 0

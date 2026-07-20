@@ -1,10 +1,12 @@
 //! Defines Rojo's CLI through clap types.
 
+mod automation;
 mod build;
 mod doc;
 mod exec;
 mod fmt_project;
 mod init;
+mod inspect;
 mod plugin;
 mod serve;
 mod sourcemap;
@@ -22,6 +24,7 @@ pub use self::doc::DocCommand;
 pub use self::exec::ExecCommand;
 pub use self::fmt_project::FmtProjectCommand;
 pub use self::init::{InitCommand, InitKind};
+pub use self::inspect::InspectCommand;
 pub use self::plugin::{PluginCommand, PluginSubcommand};
 pub use self::serve::ServeCommand;
 pub use self::sourcemap::SourcemapCommand;
@@ -47,6 +50,7 @@ impl Options {
             Subcommand::Serve(subcommand) => subcommand.run(self.global),
             Subcommand::Build(subcommand) => subcommand.run(),
             Subcommand::Exec(subcommand) => subcommand.run(),
+            Subcommand::Inspect(subcommand) => subcommand.run(),
             Subcommand::Upload(subcommand) => subcommand.run(),
             Subcommand::Sourcemap(subcommand) => subcommand.run(),
             Subcommand::FmtProject(subcommand) => subcommand.run(),
@@ -122,6 +126,7 @@ pub enum Subcommand {
     Serve(ServeCommand),
     Build(BuildCommand),
     Exec(ExecCommand),
+    Inspect(InspectCommand),
     Upload(UploadCommand),
     Sourcemap(SourcemapCommand),
     FmtProject(FmtProjectCommand),

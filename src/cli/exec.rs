@@ -1,43 +1,49 @@
 use std::{
-    io::{self, Read, Write},
+    io::{self, Write},
     net::IpAddr,
     path::{Path, PathBuf},
-    thread,
-    time::{Duration, Instant},
+    time::Duration,
 };
 
 use anyhow::{anyhow, bail, Context};
 use clap::Parser;
 use reqwest::{
-    blocking::{Client, RequestBuilder, Response},
+    blocking::Client,
     header::{ACCEPT, CONTENT_TYPE},
     StatusCode,
 };
-use serde::de::DeserializeOwned;
 use uuid::Uuid;
+
+#[cfg(test)]
+use serde::de::DeserializeOwned;
 
 use crate::{
     exec::MAX_SOURCE_SIZE_BYTES,
     web::{
-        deserialize_msgpack,
         interface::{
-            ErrorResponse, ExecJobResponse, ExecJobState, ExecJobSubmissionRequest, ExecLog,
-            ExecLogLevel, ExecValue, ServerInfoResponse, PROTOCOL_VERSION,
+            ExecJobResponse, ExecJobState, ExecJobSubmissionRequest, ExecLog, ExecLogLevel,
+            ExecValue,
         },
         serialize_msgpack,
     },
 };
 
-use super::resolve_path;
+#[cfg(test)]
+use crate::web::interface::ErrorResponse;
 
-const DEFAULT_ADDRESS: &str = "127.0.0.1";
-const DEFAULT_PORT: u16 = 34872;
+use super::{
+    automation::{
+        build_client, decode_response, poll_status, send_request, server_url, verify_rojo_server,
+        PollOptions, DEFAULT_ADDRESS, DEFAULT_PORT, MSGPACK_CONTENT_TYPE,
+    },
+    resolve_path,
+};
+
+#[cfg(test)]
+use super::automation::{decode_buffered_response, BufferedResponse};
+
 const POLL_INTERVAL: Duration = Duration::from_millis(250);
 const LOCAL_TIMEOUT: Duration = Duration::from_secs(70);
-const CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
-const REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
-const MAX_RESPONSE_SIZE_BYTES: usize = 2 * MAX_SOURCE_SIZE_BYTES;
-const MSGPACK_CONTENT_TYPE: &str = "application/msgpack";
 
 /// Runs a trusted Luau file through a connected Prism Studio plugin.
 #[derive(Debug, Parser)]
@@ -58,13 +64,9 @@ impl ExecCommand {
     pub fn run(self) -> anyhow::Result<()> {
         let script = read_exec_script(&self.file)?;
         let server_url = server_url(self.address, self.port);
-        let client = Client::builder()
-            .connect_timeout(CONNECT_TIMEOUT)
-            .timeout(REQUEST_TIMEOUT)
-            .build()
-            .context("Could not create the HTTP client for Prism exec")?;
+        let client = build_client("Prism exec")?;
 
-        verify_rojo_server(&client, &server_url)?;
+        verify_rojo_server(&client, &server_url, "Prism exec client")?;
         let submitted = submit_job(&client, &server_url, &script)?;
         let job_id = parse_response_job_id(&submitted.job_id, "submission")?;
         log::debug!("Submitted exec job {}", job_id);
@@ -148,55 +150,6 @@ fn script_name_from_path(path: &Path) -> anyhow::Result<String> {
     Ok(file_name.to_owned())
 }
 
-fn server_url(address: IpAddr, port: u16) -> String {
-    match address {
-        IpAddr::V4(address) => format!("http://{address}:{port}"),
-        IpAddr::V6(address) => format!("http://[{address}]:{port}"),
-    }
-}
-
-fn verify_rojo_server(client: &Client, server_url: &str) -> anyhow::Result<()> {
-    let response = send_request(
-        client
-            .get(format!("{server_url}/api/rojo"))
-            .header(ACCEPT, MSGPACK_CONTENT_TYPE),
-        server_url,
-        "checking the server",
-    )?;
-    let response = buffer_response(response, "checking the server")?;
-
-    if response.status != StatusCode::OK {
-        let details = error_details(&response).unwrap_or_default();
-        bail!(
-            "The HTTP service at {server_url} did not return Rojo server information (HTTP {}){details}.",
-            response.status
-        );
-    }
-
-    if !response.is_msgpack {
-        let content_type = response.content_type.as_deref().unwrap_or("missing");
-        bail!(
-            "The HTTP service at {server_url} returned content type '{content_type}' from /api/rojo, not {MSGPACK_CONTENT_TYPE}; it does not appear to be a compatible Rojo server."
-        );
-    }
-
-    let info: ServerInfoResponse = deserialize_msgpack(&response.body).map_err(|error| {
-        anyhow!(
-            "The Rojo server at {server_url} returned malformed MessagePack from /api/rojo: {error}"
-        )
-    })?;
-
-    if info.protocol_version != PROTOCOL_VERSION {
-        bail!(
-            "The Rojo server at {server_url} uses protocol version {}, but this Prism exec client requires version {}.",
-            info.protocol_version,
-            PROTOCOL_VERSION
-        );
-    }
-
-    Ok(())
-}
-
 fn submit_job(
     client: &Client,
     server_url: &str,
@@ -217,11 +170,12 @@ fn submit_job(
         server_url,
         "submitting the exec job",
     )?;
-    let job: ExecJobResponse = decode_exec_response(
+    let job: ExecJobResponse = decode_response(
         response,
         StatusCode::CREATED,
         server_url,
         "submitting the exec job",
+        exec_http_summary,
     )?;
 
     if job.state != ExecJobState::Pending {
@@ -240,54 +194,39 @@ fn poll_job(
     job_id: Uuid,
     timeout: Duration,
 ) -> anyhow::Result<ExecJobResponse> {
-    let started_at = Instant::now();
-
-    loop {
-        let elapsed = started_at.elapsed();
-        if elapsed >= timeout {
-            return Err(local_timeout_error(job_id, timeout));
-        }
-        let remaining = timeout - elapsed;
-
-        let response = send_request(
-            client
-                .get(format!("{server_url}/api/exec/jobs/{job_id}"))
-                .timeout(REQUEST_TIMEOUT.min(remaining))
-                .header(ACCEPT, MSGPACK_CONTENT_TYPE),
+    let path = format!("/api/exec/jobs/{job_id}");
+    poll_status(
+        client,
+        PollOptions {
             server_url,
-            "polling the exec job",
-        )
-        .map_err(|error| {
-            if started_at.elapsed() >= timeout {
-                local_timeout_error(job_id, timeout)
-            } else {
-                error
+            path: &path,
+            timeout,
+            interval: POLL_INTERVAL,
+            operation: "polling the exec job",
+        },
+        |response| {
+            decode_response(
+                response,
+                StatusCode::OK,
+                server_url,
+                "polling the exec job",
+                exec_http_summary,
+            )
+        },
+        |job: &ExecJobResponse| {
+            let response_job_id = parse_response_job_id(&job.job_id, "status")?;
+            if response_job_id != job_id {
+                bail!(
+                    "The Rojo server at {server_url} returned status for exec job {response_job_id} while job {job_id} was requested."
+                );
             }
-        })?;
-        let job: ExecJobResponse =
-            decode_exec_response(response, StatusCode::OK, server_url, "polling the exec job")?;
-        let response_job_id = parse_response_job_id(&job.job_id, "status")?;
-
-        if response_job_id != job_id {
-            bail!(
-                "The Rojo server at {server_url} returned status for exec job {response_job_id} while job {job_id} was requested."
-            );
-        }
-
-        if matches!(
-            job.state,
-            ExecJobState::Succeeded | ExecJobState::Failed | ExecJobState::TimedOut
-        ) {
-            return Ok(job);
-        }
-
-        let elapsed = started_at.elapsed();
-        if elapsed >= timeout {
-            return Err(local_timeout_error(job_id, timeout));
-        }
-
-        thread::sleep(POLL_INTERVAL.min(timeout - elapsed));
-    }
+            Ok(matches!(
+                job.state,
+                ExecJobState::Succeeded | ExecJobState::Failed | ExecJobState::TimedOut
+            ))
+        },
+        || local_timeout_error(job_id, timeout),
+    )
 }
 
 fn parse_response_job_id(job_id: &str, response_kind: &str) -> anyhow::Result<Uuid> {
@@ -303,97 +242,24 @@ fn local_timeout_error(job_id: Uuid, timeout: Duration) -> anyhow::Error {
     )
 }
 
-fn send_request(
-    request: RequestBuilder,
-    server_url: &str,
-    operation: &str,
-) -> anyhow::Result<Response> {
-    request.send().map_err(|error| {
-        if error.is_connect() {
-            anyhow!("Could not connect to the Rojo server at {server_url} while {operation}: {error}")
-        } else if error.is_timeout() {
-            anyhow!("The request to the Rojo server at {server_url} timed out while {operation}: {error}")
-        } else {
-            anyhow!("The request to the Rojo server at {server_url} failed while {operation}: {error}")
-        }
-    })
-}
-
-struct BufferedResponse {
-    status: StatusCode,
-    content_type: Option<String>,
-    is_msgpack: bool,
-    body: Vec<u8>,
-}
-
-fn buffer_response(response: Response, operation: &str) -> anyhow::Result<BufferedResponse> {
-    let status = response.status();
-    let content_type = response
-        .headers()
-        .get(CONTENT_TYPE)
-        .and_then(|value| value.to_str().ok())
-        .map(str::to_owned);
-    let is_msgpack = content_type
-        .as_deref()
-        .and_then(|value| value.split(';').next())
-        .is_some_and(|value| value.trim().eq_ignore_ascii_case(MSGPACK_CONTENT_TYPE));
-    let mut body = Vec::new();
-    let mut limited = response.take((MAX_RESPONSE_SIZE_BYTES + 1) as u64);
-    limited
-        .read_to_end(&mut body)
-        .with_context(|| format!("Could not read the server response while {operation}"))?;
-
-    if body.len() > MAX_RESPONSE_SIZE_BYTES {
-        bail!(
-            "The Rojo server response exceeded the {}-byte client limit while {operation}.",
-            MAX_RESPONSE_SIZE_BYTES
-        );
-    }
-
-    Ok(BufferedResponse {
-        status,
-        content_type,
-        is_msgpack,
-        body,
-    })
-}
-
-fn decode_exec_response<T: DeserializeOwned>(
-    response: Response,
-    expected_status: StatusCode,
-    server_url: &str,
-    operation: &str,
-) -> anyhow::Result<T> {
-    let response = buffer_response(response, operation)?;
-    decode_buffered_exec_response(&response, expected_status, server_url, operation)
-}
-
+#[cfg(test)]
 fn decode_buffered_exec_response<T: DeserializeOwned>(
     response: &BufferedResponse,
     expected_status: StatusCode,
     server_url: &str,
     operation: &str,
 ) -> anyhow::Result<T> {
-    if response.status != expected_status {
-        return Err(exec_http_error(response, operation));
-    }
-
-    if !response.is_msgpack {
-        let content_type = response.content_type.as_deref().unwrap_or("missing");
-        bail!(
-            "The Rojo server at {server_url} returned content type '{content_type}' while {operation}; expected {MSGPACK_CONTENT_TYPE}."
-        );
-    }
-
-    deserialize_msgpack(&response.body).map_err(|error| {
-        anyhow!(
-            "The Rojo server at {server_url} returned malformed MessagePack while {operation}: {error}"
-        )
-    })
+    decode_buffered_response(
+        response,
+        expected_status,
+        server_url,
+        operation,
+        exec_http_summary,
+    )
 }
 
-fn exec_http_error(response: &BufferedResponse, operation: &str) -> anyhow::Error {
-    let summary = match response.status {
+fn exec_http_summary(status: StatusCode) -> &'static str {
+    match status {
         StatusCode::BAD_REQUEST => "Rojo server rejected the request as malformed",
         StatusCode::FORBIDDEN => "Prism exec API is not available from this peer",
         StatusCode::NOT_FOUND => "Prism exec job disappeared or expired",
@@ -402,25 +268,6 @@ fn exec_http_error(response: &BufferedResponse, operation: &str) -> anyhow::Erro
         StatusCode::TOO_MANY_REQUESTS => "Prism exec queue is full",
         StatusCode::INTERNAL_SERVER_ERROR => "Rojo server reported an internal error",
         _ => "Rojo server returned an unexpected HTTP status",
-    };
-    let details = error_details(response).unwrap_or_default();
-
-    anyhow!(
-        "{summary} while {operation} (HTTP {}){details}.",
-        response.status
-    )
-}
-
-fn error_details(response: &BufferedResponse) -> Option<String> {
-    if !response.is_msgpack {
-        return None;
-    }
-
-    let error: ErrorResponse = deserialize_msgpack(&response.body).ok()?;
-    if error.details().is_empty() {
-        Some(format!(" [{:?}]", error.kind()))
-    } else {
-        Some(format!(" [{:?}: {}]", error.kind(), error.details()))
     }
 }
 

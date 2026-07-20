@@ -100,6 +100,12 @@ pub struct ExecCleanupStats {
     pub removed_terminal: usize,
 }
 
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct ExecQueueCounts {
+    pub pending: usize,
+    pub claimed: usize,
+}
+
 #[derive(Debug)]
 pub struct ExecJobStore {
     inner: Mutex<ExecJobStoreInner>,
@@ -179,6 +185,14 @@ impl ExecJobStore {
 
     pub fn cleanup_expired(&self) -> ExecCleanupStats {
         self.cleanup_expired_at(Instant::now())
+    }
+
+    pub fn queue_counts(&self) -> ExecQueueCounts {
+        let inner = self.inner.lock().unwrap();
+        ExecQueueCounts {
+            pending: inner.pending_jobs.len(),
+            claimed: usize::from(inner.claimed_job.is_some()),
+        }
     }
 
     fn with_durations(

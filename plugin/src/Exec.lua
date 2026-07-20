@@ -565,14 +565,36 @@ end
 local Exec = {}
 Exec.__index = Exec
 
+local function classifyStudioMode(isEdit, isRunMode, isRunning)
+	if isEdit then
+		return "edit"
+	elseif isRunMode then
+		return "run"
+	elseif isRunning then
+		return "play"
+	else
+		return "unknown"
+	end
+end
+
+local function currentStudioMode()
+	return classifyStudioMode(RunService:IsEdit(), RunService:IsRunMode(), RunService:IsRunning())
+end
+
 function Exec.new(options)
 	assert(type(options) == "table", "Exec options must be a table")
 	assert(type(options.apiContext) == "table", "Exec apiContext must be a table")
 
 	local dependencies = options.dependencies or {}
+	local isEdit = dependencies.isEdit or defaultExecutionDependencies.isEdit
 	local self = {
 		__apiContext = options.apiContext,
-		__isEdit = dependencies.isEdit or defaultExecutionDependencies.isEdit,
+		__studioMode = dependencies.studioMode or function()
+			if dependencies.isEdit ~= nil then
+				return if isEdit() then "edit" else "play"
+			end
+			return currentStudioMode()
+		end,
 		__delay = dependencies.delay or Promise.delay,
 		__execute = dependencies.execute or function(job)
 			return startExecution(job, defaultExecutionDependencies, EXECUTION_TIMEOUT_SECONDS)
@@ -636,7 +658,8 @@ function Exec:__complete(generation, jobId, payload, attempt)
 		return
 	end
 
-	local requestOk, completionPromise = pcall(self.__apiContext.completeExecJob, self.__apiContext, jobId, payload)
+	local requestOk, completionPromise =
+		pcall(self.__apiContext.completeExecJob, self.__apiContext, jobId, payload, self.__studioMode())
 	if not requestOk then
 		self:__fail(generation, completionPromise)
 		return
@@ -712,13 +735,14 @@ function Exec:__poll(generation)
 		return
 	end
 
-	if not self.__isEdit() then
+	local studioMode = self.__studioMode()
+	if studioMode ~= "edit" then
 		self:__schedulePoll(generation, POLL_INTERVAL_SECONDS)
 		return
 	end
 
 	self.__busy = true
-	local claimOk, claimPromise = pcall(self.__apiContext.claimNextExecJob, self.__apiContext)
+	local claimOk, claimPromise = pcall(self.__apiContext.claimNextExecJob, self.__apiContext, studioMode)
 	if not claimOk then
 		self:__fail(generation, claimPromise)
 		return
@@ -785,6 +809,7 @@ Exec._test = {
 	runJob = runJob,
 	sanitizeScriptName = sanitizeScriptName,
 	startExecution = startExecution,
+	classifyStudioMode = classifyStudioMode,
 	constants = {
 		completionAttempts = COMPLETION_ATTEMPTS,
 		maxCompletionBodyBytes = MAX_COMPLETION_BODY_BYTES,

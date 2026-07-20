@@ -15,8 +15,10 @@ use tempfile::{tempdir, TempDir};
 
 use librojo::{
     web_api::{
-        ExecJobCompletionRequest, ExecJobSubmissionRequest, ReadResponse, SerializeRequest,
-        SerializeResponse, ServerInfoResponse, SocketPacket, SocketPacketType,
+        AutomationHeartbeatRequest, AutomationJobCompletionRequest, AutomationRequest,
+        ExecJobCompletionEnvelope, ExecJobCompletionRequest, ExecJobSubmissionRequest,
+        ReadResponse, SerializeRequest, SerializeResponse, ServerInfoResponse, SocketPacket,
+        SocketPacketType, StudioMode,
     },
     SessionId,
 };
@@ -289,6 +291,87 @@ impl TestServeSession {
         self.api_request(reqwest::Method::GET, "/api/exec/jobs/next", None)
     }
 
+    pub fn get_api_exec_next_for_session(
+        &self,
+        plugin_session_id: &str,
+        studio_mode: StudioMode,
+    ) -> reqwest::blocking::Response {
+        let studio_mode = match studio_mode {
+            StudioMode::Edit => "edit",
+            StudioMode::Play => "play",
+            StudioMode::Run => "run",
+            StudioMode::Unknown => "unknown",
+        };
+        self.api_request(
+            reqwest::Method::GET,
+            &format!(
+                "/api/exec/jobs/next?pluginSessionId={plugin_session_id}&studioMode={studio_mode}"
+            ),
+            None,
+        )
+    }
+
+    pub fn get_api_automation_status(&self) -> reqwest::blocking::Response {
+        self.api_request(reqwest::Method::GET, "/api/automation/status", None)
+    }
+
+    pub fn post_api_automation_heartbeat(
+        &self,
+        request: &AutomationHeartbeatRequest,
+    ) -> reqwest::blocking::Response {
+        let body = serialize_msgpack(request).unwrap();
+        self.api_request(reqwest::Method::POST, "/api/automation/status", Some(body))
+    }
+
+    pub fn post_api_automation_job(
+        &self,
+        request: &AutomationRequest,
+    ) -> reqwest::blocking::Response {
+        let body = serialize_msgpack(request).unwrap();
+        self.api_request(reqwest::Method::POST, "/api/automation/jobs", Some(body))
+    }
+
+    pub fn get_api_automation_next(
+        &self,
+        plugin_session_id: &str,
+        studio_mode: StudioMode,
+    ) -> reqwest::blocking::Response {
+        let studio_mode = match studio_mode {
+            StudioMode::Edit => "edit",
+            StudioMode::Play => "play",
+            StudioMode::Run => "run",
+            StudioMode::Unknown => "unknown",
+        };
+        self.api_request(
+            reqwest::Method::GET,
+            &format!(
+                "/api/automation/jobs/next?pluginSessionId={plugin_session_id}&studioMode={studio_mode}"
+            ),
+            None,
+        )
+    }
+
+    pub fn get_api_automation_job_status(&self, id: &str) -> reqwest::blocking::Response {
+        self.api_request(
+            reqwest::Method::GET,
+            &format!("/api/automation/jobs/{id}"),
+            None,
+        )
+    }
+
+    pub fn post_api_automation_complete(
+        &self,
+        id: &str,
+        request: &AutomationJobCompletionRequest,
+    ) -> reqwest::blocking::Response {
+        let body = serialize_msgpack(request).unwrap();
+        self.api_request(
+            reqwest::Method::POST,
+            &format!("/api/automation/jobs/{id}/complete"),
+            Some(body),
+        )
+    }
+
     pub fn get_api_exec_status(&self, id: &str) -> reqwest::blocking::Response {
         self.api_request(reqwest::Method::GET, &format!("/api/exec/jobs/{id}"), None)
     }
@@ -297,6 +380,19 @@ impl TestServeSession {
         &self,
         id: &str,
         request: &ExecJobCompletionRequest,
+    ) -> reqwest::blocking::Response {
+        let body = serialize_msgpack(request).unwrap();
+        self.api_request(
+            reqwest::Method::POST,
+            &format!("/api/exec/jobs/{id}/complete"),
+            Some(body),
+        )
+    }
+
+    pub fn post_api_exec_complete_for_session(
+        &self,
+        id: &str,
+        request: &ExecJobCompletionEnvelope,
     ) -> reqwest::blocking::Response {
         let body = serialize_msgpack(request).unwrap();
         self.api_request(

@@ -9,6 +9,8 @@ pub mod exec;
 mod tree_view;
 
 mod auth_cookie;
+pub mod automation;
+mod automation_status;
 mod change_processor;
 mod glob;
 mod json;
