@@ -3,6 +3,7 @@
 #![recursion_limit = "1024"]
 
 pub mod cli;
+pub mod exec;
 
 #[cfg(test)]
 mod tree_view;
