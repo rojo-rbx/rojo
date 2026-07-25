@@ -1,1 +1,1 @@
-This pull request is AI generated
+Used AI to create init.spec.luau to test the code
