@@ -415,7 +415,7 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref) -> Option<
 mod test {
     use super::*;
 
-    use memofs::{InMemoryFs, VfsSnapshot};
+    use memofs::{InMemoryFs, StdBackend, VfsSnapshot};
 
     use crate::snapshot::InstanceSnapshot;
 
@@ -447,5 +447,21 @@ mod test {
         let context = stale_event_context();
 
         context.handle_vfs_event(VfsEvent::Write("/project/out/server/deep/file.luau".into()));
+    }
+
+    #[test]
+    fn stale_event_path_canonicalizes_with_std_backend() {
+        let dir = tempfile::tempdir().unwrap();
+        let missing_suffix = Path::new("out/server/deep/file.luau");
+        let missing_path = dir.path().join(missing_suffix);
+        let expected_path = dunce::canonicalize(dir.path())
+            .unwrap()
+            .join(missing_suffix);
+        let vfs = Vfs::new(StdBackend::new().unwrap());
+
+        assert_eq!(
+            canonicalize_event_path(&vfs, &missing_path).unwrap(),
+            expected_path
+        );
     }
 }
