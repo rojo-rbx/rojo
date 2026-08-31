@@ -270,6 +270,39 @@ mod test {
     use std::path::Path;
 
     #[test]
+    fn internal_metadata_change_still_invalidates_sourcemap() {
+        use crate::cli::sourcemap::{filter_nothing, patch_set_affects_sourcemap};
+        use crate::serve_session::ServeSession;
+        use crate::snapshot::{AppliedPatchSet, AppliedPatchUpdate, InstanceMetadata};
+        use memofs::Vfs;
+
+        let project_path = fs_err::canonicalize(
+            Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("test-projects")
+                .join("relative_paths")
+                .join("project"),
+        )
+        .unwrap();
+        let session = ServeSession::new(Vfs::new_default().unwrap(), project_path).unwrap();
+
+        let mut update = AppliedPatchUpdate::new(session.tree().get_root_id());
+        update.changed_metadata = Some(InstanceMetadata::new());
+        assert_eq!(update.changed_ignore_unknown_instances, None);
+
+        let patch_set = vec![AppliedPatchSet {
+            removed: Vec::new(),
+            added: Vec::new(),
+            updated: vec![update],
+        }];
+
+        assert!(patch_set_affects_sourcemap(
+            &session,
+            &patch_set,
+            filter_nothing
+        ));
+    }
+
+    #[test]
     fn maps_relative_paths() {
         let sourcemap_dir = tempfile::tempdir().unwrap();
         let sourcemap_output = sourcemap_dir.path().join("sourcemap.json");
