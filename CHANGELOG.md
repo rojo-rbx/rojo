@@ -32,6 +32,8 @@ Making a new release? Simply add the new header with the version and date undern
 ## Unreleased
 
 * Added headless API for Studio companion plugins. ([#639])
+* `Rojo:ConnectAsync` now returns whether the session was established, along with the reason it was not. ([#639])
+* Granted headless API permissions are no longer forgotten when Studio restarts, since a plugin source is no longer stored as a table key. ([#639])
 * Fixed `$path` values that point outside the project folder failing to match `syncRule`s on Windows, which broke `rojo sourcemap` with a "could not be turned into a Roblox Instance" error. ([#1290])
 * Fixed `rojo serve` silently stopping syncing file changes on Windows when the served project path was a verbatim (`\\?\`) path, because tree paths and file-watcher event paths were canonicalized to different forms. ([#1290])
 * Fixed `rojo sourcemap --absolute` emitting verbatim (`\\?\`) paths on Windows, which broke require types in luau-lsp. ([#1290])

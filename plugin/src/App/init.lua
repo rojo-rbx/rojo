@@ -759,6 +759,8 @@ function App:startSession(host: string?, port: string?)
 			toolbarIcon = Assets.Images.PluginButtonWarning,
 		})
 
+		self.headlessAPI:_settleConnectAttempt(false, msg)
+
 		return
 	end
 
@@ -890,6 +892,17 @@ function App:startSession(host: string?, port: string?)
 		if not self.headlessAPI.Connected then
 			self.headlessAPI:_updateProperty("Address", nil)
 			self.headlessAPI:_updateProperty("ProjectName", nil)
+		end
+
+		-- Settled last so that a caller waiting on ConnectAsync sees the API
+		-- properties already describing the session it asked for.
+		if status == ServeSession.Status.Connected then
+			self.headlessAPI:_settleConnectAttempt(true)
+		elseif status == ServeSession.Status.Disconnected then
+			self.headlessAPI:_settleConnectAttempt(
+				false,
+				if details ~= nil then tostring(details) else "Disconnected from session"
+			)
 		end
 	end)
 
