@@ -105,7 +105,7 @@ value.Parent = game"#,
         server.start((ip, port).into(), allowed_hosts, || {
             let _ = show_start_message(ip, port, global.color.into());
 
-            // Wait for a successful bind so the plugin can't connect to another server on this address.
+            // Only launch Studio if the server successfully started.
             if let Err(err) = command.spawn() {
                 log::error!("Could not launch Roblox Studio: {err}");
             }
