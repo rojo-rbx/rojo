@@ -183,6 +183,12 @@ function App:checkForRojoOpen()
 		end
 
 		local host = instance:GetAttribute("Host")
+		if host == "127.0.0.1" then
+			-- The server default is 127.0.0.1 but the plugin's is localhost.
+			-- Change it to localhost so the address box shows the default value.
+			host = "localhost"
+		end
+
 		local port = instance:GetAttribute("Port")
 		local sessionId = instance:GetAttribute("SessionId")
 
