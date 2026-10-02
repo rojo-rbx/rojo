@@ -1144,4 +1144,67 @@ mod test {
 
         insta::assert_yaml_snapshot!(instance_snapshot);
     }
+
+    #[test]
+    fn sync_rule_child_pattern_dir() {
+        let _ = env_logger::try_init();
+
+        let mut imfs = InMemoryFs::new();
+        imfs.load_snapshot(
+            "/foo",
+            VfsSnapshot::dir([
+                (
+                    "default.project.json",
+                    VfsSnapshot::file(
+                        r#"
+                    {
+                        "name": "child-pattern-test",
+                        "syncRules": [
+                            {
+                                "pattern": "**/*.local.luau",
+                                "child_pattern": "init.local.luau",
+                                "use": "legacyClientScript"
+                            }
+                        ],
+                        "tree": {
+                            "$path": "src"
+                        }
+                    }
+                    "#,
+                    ),
+                ),
+                (
+                    "src",
+                    VfsSnapshot::dir([(
+                        "MyLocalComponent",
+                        VfsSnapshot::dir([
+                            ("init.local.luau", VfsSnapshot::file("print('hello')")),
+                            ("ChildModule.luau", VfsSnapshot::file("return {}")),
+                        ]),
+                    )]),
+                ),
+            ]),
+        )
+        .unwrap();
+
+        let vfs = Vfs::new(imfs);
+
+        let instance_snapshot = snapshot_project(
+            &InstanceContext::default(),
+            &vfs,
+            Path::new("/foo/default.project.json"),
+            "child_pattern_test",
+        )
+        .expect("snapshot error")
+        .expect("snapshot returned no instances");
+
+        assert_eq!(instance_snapshot.children.len(), 1);
+        let comp = &instance_snapshot.children[0];
+        assert_eq!(comp.name, "MyLocalComponent");
+        assert_eq!(comp.class_name, "LocalScript");
+        assert_eq!(comp.children.len(), 1);
+        let child = &comp.children[0];
+        assert_eq!(child.name, "ChildModule");
+        assert_eq!(child.class_name, "ModuleScript");
+    }
 }

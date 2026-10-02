@@ -25,6 +25,10 @@ impl Glob {
     pub fn is_match<P: AsRef<Path>>(&self, path: P) -> bool {
         self.matcher.is_match(path)
     }
+
+    pub fn as_str(&self) -> &str {
+        self.inner.glob()
+    }
 }
 
 impl PartialEq for Glob {
