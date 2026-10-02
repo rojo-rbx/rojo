@@ -145,7 +145,7 @@ end
 --[[
 	Pause updates for an instance.
 ]]
-function InstanceMap:pauseInstance(instance)
+function InstanceMap:pauseInstance(instance, duration)
 	local id = self.fromInstances[instance]
 
 	-- If we don't know about this instance, ignore it.
@@ -153,7 +153,8 @@ function InstanceMap:pauseInstance(instance)
 		return
 	end
 
-	self.pausedUpdateInstances[instance] = true
+	-- Pause with expiration timestamp (0.6s) to ensure property replication signals settle
+	self.pausedUpdateInstances[instance] = os.clock() + (duration or 0.6)
 end
 
 --[[
@@ -202,8 +203,13 @@ end
 function InstanceMap:__maybeFireInstanceChanged(instance, propertyName)
 	Log.trace("{}.{} changed", instance:GetFullName(), propertyName)
 
-	if self.pausedUpdateInstances[instance] then
-		return
+	local pauseExpiry = self.pausedUpdateInstances[instance]
+	if pauseExpiry ~= nil then
+		if os.clock() < pauseExpiry then
+			return
+		else
+			self.pausedUpdateInstances[instance] = nil
+		end
 	end
 
 	if self.onInstanceChanged == nil then
