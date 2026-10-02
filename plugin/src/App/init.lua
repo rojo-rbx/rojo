@@ -743,7 +743,25 @@ function App:useRunningConnectionInfo()
 	self.setPort(port)
 end
 
-function App:startSession(host: string?, port: string?)
+function App:startSession(host: string?, port: string?, onSettled: ((boolean, string?) -> ())?)
+	-- A caller that waits on this session is answered exactly once, and only
+	-- about the session it started.
+	local report = onSettled
+	local function settle(success: boolean, message: string?)
+		if report == nil then
+			return
+		end
+
+		local reportSettled = report
+		report = nil
+		reportSettled(success, message)
+	end
+
+	if self.serveSession ~= nil then
+		settle(false, "A sync session is already running")
+		return
+	end
+
 	local claimedLock, priorOwner = self:claimSyncLock()
 	if not claimedLock then
 		local msg = string.format("Could not sync because user '%s' is already syncing", tostring(priorOwner))
@@ -758,6 +776,8 @@ function App:startSession(host: string?, port: string?)
 			errorMessage = msg,
 			toolbarIcon = Assets.Images.PluginButtonWarning,
 		})
+
+		settle(false, msg)
 
 		return
 	end
@@ -890,6 +910,14 @@ function App:startSession(host: string?, port: string?)
 		if not self.headlessAPI.Connected then
 			self.headlessAPI:_updateProperty("Address", nil)
 			self.headlessAPI:_updateProperty("ProjectName", nil)
+		end
+
+		-- Settled last so that a caller waiting on this session sees the API
+		-- properties already describing it.
+		if status == ServeSession.Status.Connected then
+			settle(true)
+		elseif status == ServeSession.Status.Disconnected then
+			settle(false, if details ~= nil then tostring(details) else "Disconnected from session")
 		end
 	end)
 

@@ -17,6 +17,10 @@ local apiPermissionAllowlist = {
 	RequestAccess = true,
 }
 
+-- Callers with no plugin of their own in the traceback are attributed to this
+-- source: the command bar, and any chunk a plugin compiles at runtime.
+local COMMAND_BAR_SOURCE = "RobloxStudio_CommandBar"
+
 export type CallerInfo = {
 	Source: string,
 	Type: "Local" | "Cloud" | "Studio",
@@ -31,12 +35,58 @@ export type CallerInfo = {
 
 local API = {}
 
+-- Permissions are stored as a list of records rather than a map because
+-- source strings contain '.' and cannot be used as JSON keys.
+local function loadPermissions(): { [string]: { [string]: boolean } }
+	local permissions = {}
+	local stored = Settings:get("apiPermissions")
+	if type(stored) ~= "table" then
+		return permissions
+	end
+
+	for _, record in stored do
+		if type(record) ~= "table" or type(record.source) ~= "string" or type(record.apis) ~= "table" then
+			continue
+		end
+
+		local apis = {}
+		for _, api in record.apis do
+			if type(api) ~= "string" then
+				continue
+			end
+			apis[api] = true
+		end
+
+		permissions[record.source] = apis
+	end
+
+	return permissions
+end
+
+local function savePermissions(permissions: { [string]: { [string]: boolean } })
+	local stored = {}
+	for source, apis in permissions do
+		local list = {}
+		for api in apis do
+			table.insert(list, api)
+		end
+		table.sort(list)
+
+		table.insert(stored, { source = source, apis = list })
+	end
+	table.sort(stored, function(a, b)
+		return a.source < b.source
+	end)
+
+	Settings:set("apiPermissions", stored)
+end
+
 function API.new(app)
 	local Rojo = {}
 
 	Rojo._rateLimit = {}
 	Rojo._sourceToPlugin = {}
-	Rojo._permissions = Settings:get("apiPermissions") or {}
+	Rojo._permissions = loadPermissions()
 	Rojo._activePermissionRequests = {}
 	Rojo._changedEvent = Instance.new("BindableEvent")
 	Rojo._apiDescriptions = {}
@@ -97,7 +147,7 @@ function API.new(app)
 			return cloudPlugin
 		end
 
-		return "RobloxStudio_CommandBar"
+		return COMMAND_BAR_SOURCE
 	end
 
 	function Rojo:_getCallerName()
@@ -273,7 +323,7 @@ function API.new(app)
 
 		-- Update stored permissions
 		Rojo._permissions[source] = sourcePermissions
-		Settings:set("apiPermissions", Rojo._permissions)
+		savePermissions(Rojo._permissions)
 
 		-- Share changes
 		Rojo._permissionsChangedEvent:Fire(source, sourcePermissions)
@@ -284,7 +334,7 @@ function API.new(app)
 		Log.info(string.format("Denying access to Rojo APIs for '%s'", name))
 
 		-- Update stored permissions
-		Settings:set("apiPermissions", Rojo._permissions)
+		savePermissions(Rojo._permissions)
 
 		-- Share changes
 		Rojo._permissionsChangedEvent:Fire(source, nil)
@@ -386,17 +436,34 @@ function API.new(app)
 
 	Rojo._apiDescriptions.ConnectAsync = {
 		Type = "Method",
-		Description = "Connects to a Rojo server",
+		Description = "Connects to a Rojo server and returns whether the session was established",
 	}
-	function Rojo:ConnectAsync(host: string?, port: string?)
+	function Rojo:ConnectAsync(host: string?, port: string?): (boolean, string?)
 		assert(type(host) == "string" or host == nil, "Host must be type `string?`")
 		assert(type(port) == "string" or port == nil, "Port must be type `string?`")
 
 		if Rojo:_checkRateLimit("ConnectAsync") then
-			return
+			return false, "Rojo:ConnectAsync is being rate limited"
 		end
 
-		app:startSession(host, port)
+		-- The session can settle before startSession returns, as it does when one
+		-- is already running, so the thread yields only while still waiting.
+		local thread = coroutine.running()
+		local settled, success, message = false, false, nil :: string?
+
+		app:startSession(host, port, function(attemptSuccess: boolean, attemptMessage: string?)
+			settled, success, message = true, attemptSuccess, attemptMessage
+
+			if coroutine.status(thread) == "suspended" then
+				task.spawn(thread)
+			end
+		end)
+
+		while not settled do
+			coroutine.yield()
+		end
+
+		return success, message
 	end
 
 	Rojo._apiDescriptions.DisconnectAsync = {
