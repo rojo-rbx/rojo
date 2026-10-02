@@ -54,12 +54,14 @@ impl<'a> SubscribeMessage<'a> {
             .updated
             .into_iter()
             .map(|update| {
-                let changed_metadata = update
-                    .changed_metadata
-                    .as_ref()
-                    .map(InstanceMetadata::from_rojo_metadata);
+                let changed_metadata =
+                    update
+                        .changed_ignore_unknown_instances
+                        .map(|ignore_unknown_instances| InstanceMetadata {
+                            ignore_unknown_instances,
+                        });
 
-                let changed_properties = update
+                let changed_properties: UstrMap<Option<Variant>> = update
                     .changed_properties
                     .into_iter()
                     .filter(|(_key, value)| property_filter(value.as_ref()))
@@ -72,6 +74,12 @@ impl<'a> SubscribeMessage<'a> {
                     changed_properties,
                     changed_metadata,
                 }
+            })
+            .filter(|update| {
+                update.changed_name.is_some()
+                    || update.changed_class_name.is_some()
+                    || !update.changed_properties.is_empty()
+                    || update.changed_metadata.is_some()
             })
             .collect();
 
@@ -311,4 +319,72 @@ pub enum ErrorResponseKind {
     BadRequest,
     Forbidden,
     InternalError,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use rbx_dom_weak::ustr;
+
+    use crate::snapshot::{AppliedPatchUpdate, InstanceSnapshot};
+
+    fn empty_tree() -> RojoTree {
+        RojoTree::new(InstanceSnapshot::new().name("ROOT").class_name("ROOT"))
+    }
+
+    fn update_for(update: AppliedPatchUpdate) -> Vec<InstanceUpdate> {
+        let patch = AppliedPatchSet {
+            removed: Vec::new(),
+            added: Vec::new(),
+            updated: vec![update],
+        };
+
+        SubscribeMessage::from_patch_update(&empty_tree(), patch).updated
+    }
+
+    #[test]
+    fn name_only_update_is_kept() {
+        let mut update = AppliedPatchUpdate::new(Ref::none());
+        update.changed_name = Some("Renamed".to_owned());
+
+        let updated = update_for(update);
+        assert_eq!(updated.len(), 1);
+        assert_eq!(updated[0].changed_name.as_deref(), Some("Renamed"));
+    }
+
+    #[test]
+    fn class_name_only_update_is_kept() {
+        let mut update = AppliedPatchUpdate::new(Ref::none());
+        update.changed_class_name = Some(ustr("Folder"));
+
+        let updated = update_for(update);
+        assert_eq!(updated.len(), 1);
+        assert_eq!(updated[0].changed_class_name, Some(ustr("Folder")));
+    }
+
+    #[test]
+    fn ignore_unknown_instances_change_is_reported() {
+        let mut update = AppliedPatchUpdate::new(Ref::none());
+        update.changed_metadata = Some(RojoInstanceMetadata::new().ignore_unknown_instances(true));
+        update.changed_ignore_unknown_instances = Some(true);
+
+        let updated = update_for(update);
+        assert_eq!(updated.len(), 1);
+        assert_eq!(
+            updated[0]
+                .changed_metadata
+                .as_ref()
+                .map(|metadata| metadata.ignore_unknown_instances),
+            Some(true)
+        );
+    }
+
+    #[test]
+    fn internal_metadata_only_update_is_dropped() {
+        let mut update = AppliedPatchUpdate::new(Ref::none());
+        update.changed_metadata = Some(RojoInstanceMetadata::new());
+
+        assert!(update_for(update).is_empty());
+    }
 }
