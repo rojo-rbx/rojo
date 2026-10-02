@@ -17,6 +17,8 @@ use super::resolve_path;
 
 const UNKNOWN_OUTPUT_KIND_ERR: &str = "Could not detect what kind of file to build. \
                                        Expected output file to end in .rbxl, .rbxlx, .rbxm, or .rbxmx.";
+pub(super) const UNKNOWN_PLACE_KIND_ERR: &str = "Could not detect what kind of file to build. \
+                                                 Expected place file to end in .rbxl or .rbxlx.";
 const UNKNOWN_PLUGIN_KIND_ERR: &str = "Could not detect what kind of file to build. \
                                        Expected plugin file to end in .rbxm or .rbxmx.";
 
@@ -113,7 +115,7 @@ impl BuildCommand {
 
 /// The different kinds of output that Rojo can build to.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum OutputKind {
+pub(super) enum OutputKind {
     /// An XML model file.
     Rbxmx,
 
@@ -140,6 +142,16 @@ impl OutputKind {
         }
     }
 
+    pub(super) fn from_place_path(output: &Path) -> Option<OutputKind> {
+        let extension = output.extension()?.to_str()?;
+
+        match extension {
+            "rbxlx" => Some(OutputKind::Rbxlx),
+            "rbxl" => Some(OutputKind::Rbxl),
+            _ => None,
+        }
+    }
+
     fn from_plugin_path(output: &Path) -> Option<OutputKind> {
         let extension = output.extension()?.to_str()?;
 
@@ -156,7 +168,7 @@ fn xml_encode_config() -> rbx_xml::EncodeOptions<'static> {
 }
 
 #[profiling::function]
-fn write_model(
+pub(super) fn write_model(
     session: &ServeSession,
     output: &Path,
     output_kind: OutputKind,
