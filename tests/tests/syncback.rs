@@ -86,4 +86,7 @@ syncback_tests! {
     sync_rules => ["src/module.modulescript", "src/text.text"],
     // Ensures that the `syncUnscriptable` setting works
     unscriptable_properties => ["default.project.json"],
+    // Ensures that syncback correctly removes default values from projects rather
+    // than leaving an incorrect value.
+    project_default_properties_remove => ["default.project.json"],
 }

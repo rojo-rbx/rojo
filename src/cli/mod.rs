@@ -12,6 +12,7 @@ mod upload;
 
 use std::{borrow::Cow, env, path::Path, str::FromStr};
 
+use anyhow::Context;
 use clap::Parser;
 use thiserror::Error;
 
@@ -125,10 +126,14 @@ pub enum Subcommand {
     Syncback(SyncbackCommand),
 }
 
-pub(super) fn resolve_path(path: &Path) -> Cow<'_, Path> {
+pub(super) fn resolve_path(path: &Path) -> anyhow::Result<Cow<'_, Path>> {
     if path.is_absolute() {
-        Cow::Borrowed(path)
+        Ok(Cow::Borrowed(path))
     } else {
-        Cow::Owned(env::current_dir().unwrap().join(path))
+        let current_dir = env::current_dir().context(
+            "Could not determine the current working directory. \
+             It may have been deleted, or Rojo may not have permission to access it.",
+        )?;
+        Ok(Cow::Owned(current_dir.join(path)))
     }
 }
