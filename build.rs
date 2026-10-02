@@ -30,6 +30,11 @@ fn snapshot_from_fs_path(path: &Path) -> io::Result<VfsSnapshot> {
                 continue;
             }
 
+            // Ignore images in msgpack-luau because they aren't UTF-8 encoded.
+            if file_name.ends_with(".png") {
+                continue;
+            }
+
             let child_snapshot = snapshot_from_fs_path(&entry.path())?;
             children.push((file_name, child_snapshot));
         }
@@ -70,6 +75,7 @@ fn main() -> Result<(), anyhow::Error> {
             "src" => snapshot_from_fs_path(&plugin_dir.join("src"))?,
             "Packages" => snapshot_from_fs_path(&plugin_dir.join("Packages"))?,
             "Version.txt" => snapshot_from_fs_path(&plugin_dir.join("Version.txt"))?,
+            "UploadDetails.json" => snapshot_from_fs_path(&plugin_dir.join("UploadDetails.json"))?,
         }),
     });
 

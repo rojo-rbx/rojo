@@ -7,7 +7,9 @@ use anyhow::Context;
 use memofs::{DirEntry, Vfs};
 
 use crate::{
-    snapshot::{InstanceContext, InstanceMetadata, InstanceSnapshot, InstigatingSource},
+    snapshot::{
+        is_path_ignored, InstanceContext, InstanceMetadata, InstanceSnapshot, InstigatingSource,
+    },
     syncback::{hash_instance, FsSnapshot, SyncbackReturn, SyncbackSnapshot},
 };
 
@@ -41,12 +43,8 @@ pub fn snapshot_dir_no_meta(
     path: &Path,
     name: &str,
 ) -> anyhow::Result<Option<InstanceSnapshot>> {
-    let passes_filter_rules = |child: &DirEntry| {
-        context
-            .path_ignore_rules
-            .iter()
-            .all(|rule| rule.passes(child.path()))
-    };
+    let passes_filter_rules =
+        |child: &DirEntry| !is_path_ignored(&context.path_ignore_rules, child.path());
 
     let mut snapshot_children = Vec::new();
 
@@ -62,18 +60,21 @@ pub fn snapshot_dir_no_meta(
         }
     }
 
+    let normalized_path = vfs.canonicalize(path)?;
     let relevant_paths = vec![
-        path.to_path_buf(),
+        normalized_path.clone(),
         // TODO: We shouldn't need to know about Lua existing in this
         // middleware. Should we figure out a way for that function to add
         // relevant paths to this middleware?
-        path.join("init.lua"),
-        path.join("init.luau"),
-        path.join("init.server.lua"),
-        path.join("init.server.luau"),
-        path.join("init.client.lua"),
-        path.join("init.client.luau"),
-        path.join("init.csv"),
+        normalized_path.join("init.lua"),
+        normalized_path.join("init.luau"),
+        normalized_path.join("init.server.lua"),
+        normalized_path.join("init.server.luau"),
+        normalized_path.join("init.client.lua"),
+        normalized_path.join("init.client.luau"),
+        normalized_path.join("init.plugin.lua"),
+        normalized_path.join("init.plugin.luau"),
+        normalized_path.join("init.csv"),
     ];
 
     let snapshot = InstanceSnapshot::new()

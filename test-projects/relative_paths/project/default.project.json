@@ -1,0 +1,14 @@
+{
+  "name": "default",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "Project": {
+        "$path": "src/",
+        "Module": {
+          "$path": "../module"
+        }
+      }
+    }
+  }
+}

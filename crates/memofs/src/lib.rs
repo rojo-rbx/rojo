@@ -77,6 +77,7 @@ pub trait VfsBackend: sealed::Sealed + Send + 'static {
     fn metadata(&mut self, path: &Path) -> io::Result<Metadata>;
     fn remove_file(&mut self, path: &Path) -> io::Result<()>;
     fn remove_dir_all(&mut self, path: &Path) -> io::Result<()>;
+    fn canonicalize(&mut self, path: &Path) -> io::Result<PathBuf>;
 
     fn event_receiver(&self) -> crossbeam_channel::Receiver<VfsEvent>;
     fn watch(&mut self, path: &Path) -> io::Result<()>;
@@ -225,6 +226,11 @@ impl VfsInner {
         self.backend.metadata(path)
     }
 
+    fn canonicalize<P: AsRef<Path>>(&mut self, path: P) -> io::Result<PathBuf> {
+        let path = path.as_ref();
+        self.backend.canonicalize(path)
+    }
+
     fn event_receiver(&self) -> crossbeam_channel::Receiver<VfsEvent> {
         self.backend.event_receiver()
     }
@@ -249,8 +255,11 @@ pub struct Vfs {
 
 impl Vfs {
     /// Creates a new `Vfs` with the default backend, `StdBackend`.
-    pub fn new_default() -> Self {
-        Self::new(StdBackend::new())
+    ///
+    /// Returns an error if the filesystem watcher could not be initialized,
+    /// which can happen in restricted or sandboxed environments.
+    pub fn new_default() -> io::Result<Self> {
+        Ok(Self::new(StdBackend::new()?))
     }
 
     /// Creates a new `Vfs` with the given backend.
@@ -413,6 +422,19 @@ impl Vfs {
         self.inner.lock().unwrap().metadata(path)
     }
 
+    /// Normalize a path via the underlying backend.
+    ///
+    /// Roughly equivalent to [`std::fs::canonicalize`][std::fs::canonicalize]. Relative paths are
+    /// resolved against the backend's current working directory (if applicable) and errors are
+    /// surfaced directly from the backend.
+    ///
+    /// [std::fs::canonicalize]: https://doc.rust-lang.org/stable/std/fs/fn.canonicalize.html
+    #[inline]
+    pub fn canonicalize<P: AsRef<Path>>(&self, path: P) -> io::Result<PathBuf> {
+        let path = path.as_ref();
+        self.inner.lock().unwrap().canonicalize(path)
+    }
+
     /// Retrieve a handle to the event receiver for this `Vfs`.
     #[inline]
     pub fn event_receiver(&self) -> crossbeam_channel::Receiver<VfsEvent> {
@@ -540,6 +562,13 @@ impl VfsLock<'_> {
         self.inner.metadata(path)
     }
 
+    /// Normalize a path via the underlying backend.
+    #[inline]
+    pub fn normalize<P: AsRef<Path>>(&mut self, path: P) -> io::Result<PathBuf> {
+        let path = path.as_ref();
+        self.inner.canonicalize(path)
+    }
+
     /// Retrieve a handle to the event receiver for this `Vfs`.
     #[inline]
     pub fn event_receiver(&self) -> crossbeam_channel::Receiver<VfsEvent> {
@@ -555,7 +584,9 @@ impl VfsLock<'_> {
 
 #[cfg(test)]
 mod test {
-    use crate::{InMemoryFs, Vfs, VfsSnapshot};
+    use crate::{InMemoryFs, StdBackend, Vfs, VfsSnapshot};
+    use std::io;
+    use std::path::PathBuf;
 
     /// https://github.com/rojo-rbx/rojo/issues/899
     #[test]
@@ -570,5 +601,99 @@ mod test {
             vfs.read_to_string_lf_normalized("test").unwrap().as_str(),
             "bar\nfoo\n\n"
         );
+    }
+
+    /// https://github.com/rojo-rbx/rojo/issues/1200
+    #[test]
+    fn canonicalize_in_memory_success() {
+        let mut imfs = InMemoryFs::new();
+        let contents = "Lorem ipsum dolor sit amet.".to_string();
+
+        imfs.load_snapshot("/test/file.txt", VfsSnapshot::file(contents.to_string()))
+            .unwrap();
+
+        let vfs = Vfs::new(imfs);
+
+        assert_eq!(
+            vfs.canonicalize("/test/nested/../file.txt").unwrap(),
+            PathBuf::from("/test/file.txt")
+        );
+        assert_eq!(
+            vfs.read_to_string(vfs.canonicalize("/test/nested/../file.txt").unwrap())
+                .unwrap()
+                .to_string(),
+            contents.to_string()
+        );
+    }
+
+    #[test]
+    fn canonicalize_in_memory_missing_errors() {
+        let imfs = InMemoryFs::new();
+        let vfs = Vfs::new(imfs);
+
+        let err = vfs.canonicalize("test").unwrap_err();
+        assert_eq!(err.kind(), io::ErrorKind::NotFound);
+    }
+
+    #[test]
+    fn canonicalize_std_backend_success() {
+        let contents = "Lorem ipsum dolor sit amet.".to_string();
+        let dir = tempfile::tempdir().unwrap();
+        let file_path = dir.path().join("file.txt");
+        fs_err::write(&file_path, contents.to_string()).unwrap();
+
+        let vfs = Vfs::new(StdBackend::new().unwrap());
+        let canonicalized = vfs.canonicalize(&file_path).unwrap();
+        assert_eq!(canonicalized, dunce::canonicalize(&file_path).unwrap());
+        assert_eq!(
+            vfs.read_to_string(&canonicalized).unwrap().to_string(),
+            contents.to_string()
+        );
+    }
+
+    #[test]
+    #[cfg(windows)]
+    fn canonicalize_std_backend_not_verbatim() {
+        use std::path::{Component, Prefix};
+
+        let dir = tempfile::tempdir().unwrap();
+        let file_path = dir.path().join("file.txt");
+        fs_err::write(&file_path, "hello").unwrap();
+
+        let vfs = Vfs::new(StdBackend::new().unwrap());
+        let canonicalized = vfs.canonicalize(&file_path).unwrap();
+
+        let is_verbatim = matches!(
+            canonicalized.components().next(),
+            Some(Component::Prefix(prefix)) if matches!(
+                prefix.kind(),
+                Prefix::Verbatim(_) | Prefix::VerbatimDisk(_) | Prefix::VerbatimUNC(_, _)
+            )
+        );
+        assert!(
+            !is_verbatim,
+            "expected a non-verbatim path, got {:?}",
+            canonicalized
+        );
+
+        // Joining a relative parent path must preserve the `..` segment. On a
+        // verbatim path Rust would drop it lexically, which is the root cause
+        // of the bug.
+        let joined = canonicalized.join("..").join("sibling");
+        assert!(
+            joined.components().any(|c| c == Component::ParentDir),
+            "`..` should be preserved when joining onto {:?}",
+            canonicalized
+        );
+    }
+
+    #[test]
+    fn canonicalize_std_backend_missing_errors() {
+        let dir = tempfile::tempdir().unwrap();
+        let file_path = dir.path().join("test");
+
+        let vfs = Vfs::new(StdBackend::new().unwrap());
+        let err = vfs.canonicalize(&file_path).unwrap_err();
+        assert_eq!(err.kind(), io::ErrorKind::NotFound);
     }
 }

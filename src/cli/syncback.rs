@@ -58,8 +58,8 @@ pub struct SyncbackCommand {
 
 impl SyncbackCommand {
     pub fn run(&self, global: GlobalOptions) -> anyhow::Result<()> {
-        let path_old = resolve_path(&self.project);
-        let path_new = resolve_path(&self.input);
+        let path_old = resolve_path(&self.project)?;
+        let path_new = resolve_path(&self.input)?;
 
         let input_kind = FileKind::from_path(&path_new).context(UNKNOWN_INPUT_KIND_ERR)?;
         let dom_start_timer = Instant::now();
@@ -69,7 +69,7 @@ impl SyncbackCommand {
             dom_start_timer.elapsed().as_secs_f32()
         );
 
-        let vfs = Vfs::new_default();
+        let vfs = Vfs::new_default()?;
         vfs.set_watch_enabled(false);
 
         let project_start_timer = Instant::now();

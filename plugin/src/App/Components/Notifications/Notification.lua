@@ -25,6 +25,7 @@ function Notification:init()
 	self.binding = bindingUtil.fromMotor(self.motor)
 
 	self.lifetime = self.props.timeout
+	self.dismissed = false
 
 	self.motor:onStep(function(value)
 		if value <= 0 and self.props.onClose then
@@ -34,6 +35,11 @@ function Notification:init()
 end
 
 function Notification:dismiss()
+	if self.dismissed then
+		return
+	end
+	self.dismissed = true
+
 	self.motor:setGoal(Flipper.Spring.new(0, {
 		frequency = 5,
 		dampingRatio = 1,
@@ -75,7 +81,7 @@ function Notification:didMount()
 end
 
 function Notification:willUnmount()
-	if self.timeout and coroutine.status(self.timeout) ~= "dead" then
+	if self.timeout and coroutine.status(self.timeout) == "suspended" then
 		task.cancel(self.timeout)
 	end
 end

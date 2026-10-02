@@ -8,7 +8,7 @@ use rbx_dom_weak::{
     ustr, HashMapExt as _, UstrMap, UstrSet,
 };
 
-use crate::{RojoRef, REF_POINTER_ATTRIBUTE_PREFIX};
+use crate::{variant_eq::variant_eq, RojoRef, REF_POINTER_ATTRIBUTE_PREFIX};
 
 use super::{
     patch::{PatchAdd, PatchSet, PatchUpdate},
@@ -127,7 +127,7 @@ fn compute_property_patches(
 
         match instance.properties().get(&name) {
             Some(instance_value) => {
-                if &snapshot_value != instance_value {
+                if !variant_eq(&snapshot_value, instance_value) {
                     changed_properties.insert(name, Some(snapshot_value));
                 }
             }

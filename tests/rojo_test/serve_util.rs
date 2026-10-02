@@ -1,5 +1,4 @@
 use std::{
-    fmt::Write as _,
     fs,
     path::{Path, PathBuf},
     process::Command,
@@ -11,10 +10,15 @@ use std::{
 use hyper_tungstenite::tungstenite::{connect, Message};
 use rbx_dom_weak::types::Ref;
 
+use serde::{Deserialize, Serialize};
 use tempfile::{tempdir, TempDir};
 
-use librojo::web_api::{
-    ReadResponse, SerializeResponse, ServerInfoResponse, SocketPacket, SocketPacketType,
+use librojo::{
+    web_api::{
+        ReadResponse, SerializeRequest, SerializeResponse, ServerInfoResponse, SocketPacket,
+        SocketPacketType,
+    },
+    SessionId,
 };
 use rojo_insta_ext::RedactionMap;
 
@@ -122,6 +126,10 @@ impl TestServeSession {
         &self.project_path
     }
 
+    pub fn port(&self) -> usize {
+        self.port
+    }
+
     /// Waits for the `rojo serve` server to come online with expontential
     /// backoff.
     pub fn wait_to_come_online(&mut self) -> ServerInfoResponse {
@@ -158,22 +166,16 @@ impl TestServeSession {
 
     pub fn get_api_rojo(&self) -> Result<ServerInfoResponse, reqwest::Error> {
         let url = format!("http://localhost:{}/api/rojo", self.port);
-        let body = reqwest::blocking::get(url)?.text()?;
+        let body = reqwest::blocking::get(url)?.bytes()?;
 
-        let value = jsonc_parser::parse_to_serde_value(&body, &Default::default())
-            .expect("Failed to parse JSON")
-            .expect("No JSON value");
-        Ok(serde_json::from_value(value).expect("Server returned malformed response"))
+        Ok(deserialize_msgpack(&body).expect("Server returned malformed response"))
     }
 
     pub fn get_api_read(&self, id: Ref) -> Result<ReadResponse<'_>, reqwest::Error> {
         let url = format!("http://localhost:{}/api/read/{}", self.port, id);
-        let body = reqwest::blocking::get(url)?.text()?;
+        let body = reqwest::blocking::get(url)?.bytes()?;
 
-        let value = jsonc_parser::parse_to_serde_value(&body, &Default::default())
-            .expect("Failed to parse JSON")
-            .expect("No JSON value");
-        Ok(serde_json::from_value(value).expect("Server returned malformed response"))
+        Ok(deserialize_msgpack(&body).expect("Server returned malformed response"))
     }
 
     pub fn get_api_socket_packet(
@@ -195,8 +197,8 @@ impl TestServeSession {
             }
 
             match socket.read() {
-                Ok(Message::Text(text)) => {
-                    let packet: SocketPacket = serde_json::from_str(&text)?;
+                Ok(Message::Binary(binary)) => {
+                    let packet: SocketPacket = deserialize_msgpack(&binary)?;
                     if packet.packet_type != packet_type {
                         continue;
                     }
@@ -209,7 +211,7 @@ impl TestServeSession {
                     return Err("WebSocket closed before receiving messages".into());
                 }
                 Ok(_) => {
-                    // Ignore other message types (ping, pong, binary)
+                    // Ignore other message types (ping, pong, text)
                     continue;
                 }
                 Err(hyper_tungstenite::tungstenite::Error::Io(e))
@@ -226,17 +228,73 @@ impl TestServeSession {
         }
     }
 
-    pub fn get_api_serialize(&self, ids: &[Ref]) -> Result<SerializeResponse, reqwest::Error> {
-        let mut id_list = String::with_capacity(ids.len() * 33);
-        for id in ids {
-            write!(id_list, "{id},").unwrap();
-        }
-        id_list.pop();
+    pub fn post_api_serialize(
+        &self,
+        ids: &[Ref],
+        session_id: SessionId,
+    ) -> Result<reqwest::blocking::Response, reqwest::Error> {
+        let client = reqwest::blocking::Client::new();
+        let url = format!("http://localhost:{}/api/serialize", self.port);
+        let body = serialize_msgpack(&SerializeRequest {
+            session_id,
+            ids: ids.to_vec(),
+        })
+        .unwrap();
 
-        let url = format!("http://localhost:{}/api/serialize/{}", self.port, id_list);
-
-        reqwest::blocking::get(url)?.json()
+        client.post(url).body(body).send()
     }
+
+    /// Sends a GET to `/api/rojo` with the given extra request headers and
+    /// returns the full response. Used to exercise the Host/Origin allowlist that
+    /// guards against DNS rebinding, including asserting that a rejection reveals
+    /// nothing about the server.
+    pub fn api_rojo_response_with_headers(
+        &self,
+        headers: &[(&str, &str)],
+    ) -> reqwest::blocking::Response {
+        let client = reqwest::blocking::Client::new();
+        let url = format!("http://localhost:{}/api/rojo", self.port);
+
+        let mut request = client.get(url);
+        for (name, value) in headers {
+            request = request.header(*name, *value);
+        }
+
+        request.send().expect("Failed to send request")
+    }
+
+    /// Sends a POST to `/api/open/<id>` and returns the response status code.
+    /// Used to verify that the local-only gate on `/api/open` admits loopback
+    /// peers (the test harness always connects over loopback).
+    pub fn api_open_status(&self, id: &str) -> reqwest::StatusCode {
+        let client = reqwest::blocking::Client::new();
+        let url = format!("http://localhost:{}/api/open/{}", self.port, id);
+
+        client
+            .post(url)
+            .send()
+            .expect("Failed to send request")
+            .status()
+    }
+}
+
+fn serialize_msgpack<T: Serialize>(value: T) -> Result<Vec<u8>, rmp_serde::encode::Error> {
+    let mut serialized = Vec::new();
+    let mut serializer = rmp_serde::Serializer::new(&mut serialized)
+        .with_human_readable()
+        .with_struct_map();
+
+    value.serialize(&mut serializer)?;
+
+    Ok(serialized)
+}
+
+pub fn deserialize_msgpack<'a, T: Deserialize<'a>>(
+    input: &'a [u8],
+) -> Result<T, rmp_serde::decode::Error> {
+    let mut deserializer = rmp_serde::Deserializer::new(input).with_human_readable();
+
+    T::deserialize(&mut deserializer)
 }
 
 /// Probably-okay way to generate random enough port numbers for running the
@@ -256,11 +314,7 @@ fn get_port_number() -> usize {
 /// Since the provided structure intentionally includes unredacted referents,
 /// some post-processing is done to ensure they don't show up in the model.
 pub fn serialize_to_xml_model(response: &SerializeResponse, redactions: &RedactionMap) -> String {
-    let model_content = data_encoding::BASE64
-        .decode(response.model_contents.model().as_bytes())
-        .unwrap();
-
-    let mut dom = rbx_binary::from_reader(model_content.as_slice()).unwrap();
+    let mut dom = rbx_binary::from_reader(response.model_contents.as_slice()).unwrap();
     // This makes me realize that maybe we need a `descendants_mut` iter.
     let ref_list: Vec<Ref> = dom.descendants().map(|inst| inst.referent()).collect();
     for referent in ref_list {

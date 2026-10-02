@@ -1,7 +1,8 @@
 local HttpService = game:GetService("HttpService")
 
-local Promise = require(script.Parent.Promise)
 local Log = require(script.Parent.Log)
+local msgpack = require(script.Parent.msgpack)
+local Promise = require(script.Parent.Promise)
 
 local HttpError = require(script.Error)
 local HttpResponse = require(script.Response)
@@ -12,6 +13,13 @@ local Http = {}
 
 Http.Error = HttpError
 Http.Response = HttpResponse
+
+-- Monkey patch msgpack.UInt64.new to lossily convert the low and high bits of the integer
+-- to a native Luau number. We should change the upstream decoder to emit a native
+-- integer, once those are live.
+function msgpack.UInt64.new(mostSignificantPart: number, leastSignificantPart: number): number
+	return (mostSignificantPart % 2 ^ 32) * 2 ^ 32 + (leastSignificantPart % 2 ^ 32)
+end
 
 local function performRequest(requestParams)
 	local requestId = lastRequestId + 1
@@ -66,6 +74,14 @@ end
 
 function Http.jsonDecode(source)
 	return HttpService:JSONDecode(source)
+end
+
+function Http.msgpackEncode(object)
+	return msgpack.encode(object)
+end
+
+function Http.msgpackDecode(source)
+	return msgpack.decode(source)
 end
 
 return Http
