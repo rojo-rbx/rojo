@@ -38,6 +38,7 @@ Making a new release? Simply add the new header with the version and date undern
 * Fixed `rojo sourcemap --absolute` emitting verbatim (`\\?\`) paths on Windows, which broke require types in luau-lsp. ([#1290])
 * The plugin now disables the `Check for Updates` setting if you block access to `api.github.com`. ([#1297])
 
+[7.7.1]: https://github.com/rojo-rbx/rojo/releases/tag/v7.7.1
 [#1290]: https://github.com/rojo-rbx/rojo/pull/1290
 [#1297]: https://github.com/rojo-rbx/rojo/pull/1297
 
@@ -60,6 +61,7 @@ Making a new release? Simply add the new header with the version and date undern
 * `rojo serve` now validates the `Host`/`Origin` headers to protect the local/private server against DNS rebinding, gates `/api/open` to local clients, and warns when bound to a network-reachable address. The accepted hosts can be extended with the `--allowed-hosts` option or a project's `serveAllowedHosts` field, for example to reach a network-exposed server by hostname. ([#1270])
 * Fixed syncback not removing stale `$properties` entries when Studio resets a property to its engine default. ([#1244])
 
+[7.7.0]: https://github.com/rojo-rbx/rojo/releases/tag/v7.7.0
 [#1176]: https://github.com/rojo-rbx/rojo/pull/1176
 [#1179]: https://github.com/rojo-rbx/rojo/pull/1179
 [#1192]: https://github.com/rojo-rbx/rojo/pull/1192
