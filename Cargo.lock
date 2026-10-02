@@ -1806,9 +1806,9 @@ dependencies = [
 
 [[package]]
 name = "rbx_binary"
-version = "3.0.0"
+version = "3.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d0a6f15a595fab79d15d50799335543ac5b97618c31ad3d0c93e2713a8bf8d34"
+checksum = "4f57d390e10fc236919088e9d973774bf006dcab137b443d1341a39317ebee4a"
 dependencies = [
  "ahash",
  "log",
@@ -1847,9 +1847,9 @@ dependencies = [
 
 [[package]]
 name = "rbx_reflection_database"
-version = "3.0.0+roblox-728"
+version = "3.0.1+roblox-741"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f5dd357c4c95d43e12283b9065b8b7b41788219db7a0f3a77a6e111f51522e6"
+checksum = "74d54d92786425d3fd3e4ba8f006b17d83f5e93dad6eb4fccf6f1d9d86222a7b"
 dependencies = [
  "dirs 6.0.0",
  "log",
@@ -1875,9 +1875,9 @@ dependencies = [
 
 [[package]]
 name = "rbx_xml"
-version = "3.0.0"
+version = "3.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2e38c283450c4874262c61e68f70f037c9394a08b36fd59468657a4d8761e5e"
+checksum = "df4dba3154bef50fe1ba41cf06a066b9cd33bcfbf1c103e8db0818d8b4528b31"
 dependencies = [
  "ahash",
  "base64 0.13.1",
