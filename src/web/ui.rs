@@ -6,7 +6,7 @@
 
 use std::{borrow::Cow, sync::Arc, time::Duration};
 
-use hyper::{header, Body, Method, Request, Response, StatusCode};
+use hyper::{Body, Method, Request, Response, StatusCode};
 use rbx_dom_weak::types::{Ref, Variant};
 use ritz::{html, Fragment, HtmlContent, HtmlSelfClosingTag};
 
@@ -16,7 +16,7 @@ use crate::{
     web::{
         assets,
         interface::{ErrorResponse, SERVER_VERSION},
-        util::json,
+        util::{json, response},
     },
 };
 
@@ -45,17 +45,11 @@ impl UiService {
     }
 
     fn handle_logo(&self) -> Response<Body> {
-        Response::builder()
-            .header(header::CONTENT_TYPE, "image/png")
-            .body(Body::from(assets::logo()))
-            .unwrap()
+        response(StatusCode::OK, "image/png", assets::logo())
     }
 
     fn handle_icon(&self) -> Response<Body> {
-        Response::builder()
-            .header(header::CONTENT_TYPE, "image/png")
-            .body(Body::from(assets::icon()))
-            .unwrap()
+        response(StatusCode::OK, "image/png", assets::icon())
     }
 
     fn handle_home(&self) -> Response<Body> {
@@ -66,10 +60,11 @@ impl UiService {
             </div>
         });
 
-        Response::builder()
-            .header(header::CONTENT_TYPE, "text/html")
-            .body(Body::from(format!("<!DOCTYPE html>{}", page)))
-            .unwrap()
+        response(
+            StatusCode::OK,
+            "text/html",
+            format!("<!DOCTYPE html>{}", page),
+        )
     }
 
     fn handle_show_instances(&self) -> Response<Body> {
@@ -80,10 +75,11 @@ impl UiService {
             { Self::instance(&tree, root_id) }
         });
 
-        Response::builder()
-            .header(header::CONTENT_TYPE, "text/html")
-            .body(Body::from(format!("<!DOCTYPE html>{}", page)))
-            .unwrap()
+        response(
+            StatusCode::OK,
+            "text/html",
+            format!("<!DOCTYPE html>{}", page),
+        )
     }
 
     fn instance(tree: &RojoTree, id: Ref) -> HtmlContent<'_> {

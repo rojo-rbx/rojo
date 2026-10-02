@@ -32,6 +32,21 @@ Making a new release? Simply add the new header with the version and date undern
 ## Unreleased
 
 * Added headless API for Studio companion plugins. ([#639])
+
+[#639]: https://github.com/rojo-rbx/rojo/pull/639
+
+## [7.7.1] (October 1st, 2026)
+
+* Fixed `$path` values that point outside the project folder failing to match `syncRule`s on Windows, which broke `rojo sourcemap` with a "could not be turned into a Roblox Instance" error. ([#1290])
+* Fixed `rojo serve` silently stopping syncing file changes on Windows when the served project path was a verbatim (`\\?\`) path, because tree paths and file-watcher event paths were canonicalized to different forms. ([#1290])
+* Fixed `rojo sourcemap --absolute` emitting verbatim (`\\?\`) paths on Windows, which broke require types in luau-lsp. ([#1290])
+* The plugin now disables the `Check for Updates` setting if you block access to `api.github.com`. ([#1297])
+
+[#1290]: https://github.com/rojo-rbx/rojo/pull/1290
+[#1297]: https://github.com/rojo-rbx/rojo/pull/1297
+
+## [7.7.0] (July 1st, 2026)
+
 * `inf` and `nan` values in properties are now synced ([#1176])
 * Fixed a bug caused by having reference properties (such as `ObjectValue.Value`) that point to an Instance not included in syncback. ([#1179])
 * Fixed instance replacement fallback failing when too many instances needed to be replaced. ([#1192])
@@ -40,8 +55,15 @@ Making a new release? Simply add the new header with the version and date undern
 * Fixed a bug where the notification timeout thread would fail to cancel on unmount ([#1211])
 * Added a "Forget" option to the sync reminder notification to avoid being reminded for that place in the future ([#1215])
 * Improves relative path calculation for sourcemap generation to avoid issues with Windows UNC paths. ([#1217])
+* Fixed missing support for init.plugin.lua and init.plugin.luau. ([#1252])
+* Add support for gitignore-style negation in `globIgnorePaths` and syncback's `ignorePaths` ([#1256])
+* Fixed the sync fallback scrambling sibling order; replacements are now re-parented ancestors-first and in their original child order. ([#1265])
+* Instances that share a name and class are now robustly matched on resync by comparing their properties, instead of relying on child order alone. ([#1266])
+* Rojo now reports a clear error instead of panicking in several cases, including when the `serve` port is already in use, when a synced file is read-only or locked, when the filesystem watcher can't be created, and when the working directory is inaccessible. ([#1267])
+* Fixed `/api/serialize` returning success when a requested instance ID is missing from the serve session tree. ([#1272])
+* `rojo serve` now validates the `Host`/`Origin` headers to protect the local/private server against DNS rebinding, gates `/api/open` to local clients, and warns when bound to a network-reachable address. The accepted hosts can be extended with the `--allowed-hosts` option or a project's `serveAllowedHosts` field, for example to reach a network-exposed server by hostname. ([#1270])
+* Fixed syncback not removing stale `$properties` entries when Studio resets a property to its engine default. ([#1244])
 
-[#639]: https://github.com/rojo-rbx/rojo/pull/639
 [#1176]: https://github.com/rojo-rbx/rojo/pull/1176
 [#1179]: https://github.com/rojo-rbx/rojo/pull/1179
 [#1192]: https://github.com/rojo-rbx/rojo/pull/1192
@@ -50,6 +72,14 @@ Making a new release? Simply add the new header with the version and date undern
 [#1211]: https://github.com/rojo-rbx/rojo/pull/1211
 [#1215]: https://github.com/rojo-rbx/rojo/pull/1215
 [#1217]: https://github.com/rojo-rbx/rojo/pull/1217
+[#1252]: https://github.com/rojo-rbx/rojo/pull/1252
+[#1256]: https://github.com/rojo-rbx/rojo/pull/1256
+[#1265]: https://github.com/rojo-rbx/rojo/pull/1265
+[#1266]: https://github.com/rojo-rbx/rojo/pull/1266
+[#1267]: https://github.com/rojo-rbx/rojo/pull/1267
+[#1272]: https://github.com/rojo-rbx/rojo/pull/1272
+[#1270]: https://github.com/rojo-rbx/rojo/pull/1270
+[#1244]: https://github.com/rojo-rbx/rojo/pull/1244
 
 ## [7.7.0-rc.1] (November 27th, 2025)
 

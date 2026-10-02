@@ -1,0 +1,21 @@
+{
+  "name": "SyncbackTest",
+  "tree": {
+    "$className": "DataModel",
+    "Workspace": {
+      "$className": "Workspace",
+      "TestPart": {
+        "$className": "Part",
+        "$properties": {
+          "Transparency": 1.0,
+          "Anchored": true,
+          "Color": [
+            1.0,
+            0.0,
+            0.0
+          ]
+        }
+      }
+    }
+  }
+}

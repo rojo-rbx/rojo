@@ -344,6 +344,11 @@ pub fn syncback_project<'sync>(
     let mut new_child_map = HashMap::new();
 
     let mut node_changed_map = Vec::new();
+    // Tracks whether any stale default-valued properties were removed from
+    // project nodes. If so, we must reserialize even if
+    // project_node_should_reserialize wouldn't otherwise detect a change
+    // (it only compares node properties forward, not in reverse).
+    let mut removed_stale_properties = false;
     let mut node_queue = VecDeque::with_capacity(1);
     node_queue.push_back((&mut project.tree, old_inst, snapshot.new_inst()));
 
@@ -402,10 +407,12 @@ pub fn syncback_project<'sync>(
 
             // We only want to set properties if it needs it.
             if !middleware.handles_own_properties() {
-                project_node_property_syncback_path(snapshot, new_inst, node);
+                removed_stale_properties |=
+                    project_node_property_syncback_path(snapshot, new_inst, node);
             }
         } else {
-            project_node_property_syncback_no_path(snapshot, new_inst, node);
+            removed_stale_properties |=
+                project_node_property_syncback_no_path(snapshot, new_inst, node);
         }
 
         for child_ref in new_inst.children() {
@@ -507,11 +514,17 @@ pub fn syncback_project<'sync>(
     }
     let mut fs_snapshot = FsSnapshot::new();
 
-    for (node_properties, node_attributes, old_inst) in node_changed_map {
-        if project_node_should_reserialize(node_properties, node_attributes, old_inst)? {
-            fs_snapshot.add_file(project_path, serde_json::to_vec_pretty(&project)?);
-            break;
+    let mut needs_reserialize = removed_stale_properties;
+    if !needs_reserialize {
+        for (node_properties, node_attributes, old_inst) in node_changed_map {
+            if project_node_should_reserialize(node_properties, node_attributes, old_inst)? {
+                needs_reserialize = true;
+                break;
+            }
         }
+    }
+    if needs_reserialize {
+        fs_snapshot.add_file(project_path, serde_json::to_vec_pretty(&project)?);
     }
 
     Ok(SyncbackReturn {
@@ -521,15 +534,18 @@ pub fn syncback_project<'sync>(
     })
 }
 
+/// Syncs properties from the new instance into the project node.
+/// Returns `true` if any stale properties were removed (i.e. properties
+/// that existed in the project node but are now at their engine default).
 fn project_node_property_syncback(
     _snapshot: &SyncbackSnapshot,
     filtered_properties: UstrMap<&Variant>,
     new_inst: &Instance,
     node: &mut ProjectNode,
-) {
+) -> bool {
     let properties = &mut node.properties;
     let mut attributes = BTreeMap::new();
-    for (name, value) in filtered_properties {
+    for (&name, &value) in &filtered_properties {
         match value {
             Variant::Attributes(attrs) => {
                 for (attr_name, attr_value) in attrs.iter() {
@@ -552,14 +568,48 @@ fn project_node_property_syncback(
             }
         }
     }
+
+    // Remove stale properties: entries that exist in the project node's
+    // $properties but are no longer in the filtered (non-default) properties
+    // from the instance. This handles the case where Studio resets a property
+    // to its engine default — filter_properties won't include it, so we need
+    // to clean up the now-stale project entry.
+    let class_data = rbx_reflection_database::get()
+        .ok()
+        .and_then(|db| db.classes.get(new_inst.class.as_str()));
+    let len_before = properties.len();
+    properties.retain(|prop_name, _| {
+        if filtered_properties.contains_key(prop_name) {
+            return true;
+        }
+        // Only remove if the property has a known default value in the
+        // reflection database. If there's no default, the property might be
+        // absent from the instance for other reasons (e.g. unknown property),
+        // so we conservatively keep it.
+        if let Some(data) = &class_data {
+            if data.default_properties.contains_key(prop_name.as_str()) {
+                log::debug!(
+                    "Removing stale property '{}' from project node for class '{}': \
+                     value has been reset to engine default",
+                    prop_name,
+                    new_inst.class
+                );
+                return false;
+            }
+        }
+        true
+    });
+    let removed_stale = properties.len() < len_before;
+
     node.attributes = attributes;
+    removed_stale
 }
 
 fn project_node_property_syncback_path(
     snapshot: &SyncbackSnapshot,
     new_inst: &Instance,
     node: &mut ProjectNode,
-) {
+) -> bool {
     let filtered_properties = snapshot
         .get_path_filtered_properties(new_inst.referent())
         .unwrap();
@@ -570,7 +620,7 @@ fn project_node_property_syncback_no_path(
     snapshot: &SyncbackSnapshot,
     new_inst: &Instance,
     node: &mut ProjectNode,
-) {
+) -> bool {
     let filtered_properties = filter_properties(snapshot.project(), new_inst);
     project_node_property_syncback(snapshot, filtered_properties, new_inst, node)
 }

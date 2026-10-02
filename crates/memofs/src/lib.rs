@@ -255,8 +255,11 @@ pub struct Vfs {
 
 impl Vfs {
     /// Creates a new `Vfs` with the default backend, `StdBackend`.
-    pub fn new_default() -> Self {
-        Self::new(StdBackend::new())
+    ///
+    /// Returns an error if the filesystem watcher could not be initialized,
+    /// which can happen in restricted or sandboxed environments.
+    pub fn new_default() -> io::Result<Self> {
+        Ok(Self::new(StdBackend::new()?))
     }
 
     /// Creates a new `Vfs` with the given backend.
@@ -639,12 +642,48 @@ mod test {
         let file_path = dir.path().join("file.txt");
         fs_err::write(&file_path, contents.to_string()).unwrap();
 
-        let vfs = Vfs::new(StdBackend::new());
+        let vfs = Vfs::new(StdBackend::new().unwrap());
         let canonicalized = vfs.canonicalize(&file_path).unwrap();
-        assert_eq!(canonicalized, file_path.canonicalize().unwrap());
+        assert_eq!(canonicalized, dunce::canonicalize(&file_path).unwrap());
         assert_eq!(
             vfs.read_to_string(&canonicalized).unwrap().to_string(),
             contents.to_string()
+        );
+    }
+
+    #[test]
+    #[cfg(windows)]
+    fn canonicalize_std_backend_not_verbatim() {
+        use std::path::{Component, Prefix};
+
+        let dir = tempfile::tempdir().unwrap();
+        let file_path = dir.path().join("file.txt");
+        fs_err::write(&file_path, "hello").unwrap();
+
+        let vfs = Vfs::new(StdBackend::new().unwrap());
+        let canonicalized = vfs.canonicalize(&file_path).unwrap();
+
+        let is_verbatim = matches!(
+            canonicalized.components().next(),
+            Some(Component::Prefix(prefix)) if matches!(
+                prefix.kind(),
+                Prefix::Verbatim(_) | Prefix::VerbatimDisk(_) | Prefix::VerbatimUNC(_, _)
+            )
+        );
+        assert!(
+            !is_verbatim,
+            "expected a non-verbatim path, got {:?}",
+            canonicalized
+        );
+
+        // Joining a relative parent path must preserve the `..` segment. On a
+        // verbatim path Rust would drop it lexically, which is the root cause
+        // of the bug.
+        let joined = canonicalized.join("..").join("sibling");
+        assert!(
+            joined.components().any(|c| c == Component::ParentDir),
+            "`..` should be preserved when joining onto {:?}",
+            canonicalized
         );
     }
 
@@ -653,7 +692,7 @@ mod test {
         let dir = tempfile::tempdir().unwrap();
         let file_path = dir.path().join("test");
 
-        let vfs = Vfs::new(StdBackend::new());
+        let vfs = Vfs::new(StdBackend::new().unwrap());
         let err = vfs.canonicalize(&file_path).unwrap_err();
         assert_eq!(err.kind(), io::ErrorKind::NotFound);
     }
