@@ -72,7 +72,7 @@ pub struct SourcemapCommand {
 
 impl SourcemapCommand {
     pub fn run(self) -> anyhow::Result<()> {
-        let project_path = fs_err::canonicalize(resolve_path(&self.project)?)?;
+        let project_path = dunce::canonicalize(resolve_path(&self.project)?)?;
 
         log::trace!("Constructing filesystem with StdBackend");
         let vfs = Vfs::new_default()?;

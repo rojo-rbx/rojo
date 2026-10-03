@@ -481,7 +481,7 @@ fn get_property_filter(project: &Project, new_inst: &Instance) -> Option<UstrSet
         }
 
         let class = database.classes.get(current_class_name)?;
-        if let Some(super_class) = class.superclass.as_ref() {
+        if let Some(super_class) = class.superclass {
             current_class_name = super_class;
         } else {
             break;

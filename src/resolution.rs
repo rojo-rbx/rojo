@@ -304,7 +304,7 @@ fn find_descriptor(
             return Some(descriptor);
         }
 
-        current_class_name = class.superclass.as_deref()?;
+        current_class_name = class.superclass?;
     }
 }
 
