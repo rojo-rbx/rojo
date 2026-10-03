@@ -72,32 +72,18 @@ pub fn snapshot_from_vfs(
         None => return Ok(None),
     };
 
-    if meta.is_dir() {
-        let (middleware, dir_name, init_path) = get_dir_middleware(vfs, path)?;
-        // TODO: Support user defined init paths
-        // If and when we do, make sure to go support it in
-        // `Project::set_file_name`, as right now it special-cases
-        // `default.project.json` as an `init` path.
-        match middleware {
-            Middleware::Dir => middleware.snapshot(context, vfs, path, dir_name),
-            _ => middleware.snapshot(context, vfs, &init_path, dir_name),
-        }
-    } else {
-        let file_name = path
-            .file_name()
-            .and_then(|n| n.to_str())
-            .with_context(|| format!("file name of {} is invalid", path.display()))?;
+    if !meta.is_dir() {
+        return snapshot_from_path(context, vfs, path);
+    }
 
-        // TODO: Is this even necessary anymore?
-        match file_name {
-            "init.server.luau" | "init.server.lua" | "init.client.luau" | "init.client.lua"
-            | "init.plugin.luau" | "init.plugin.lua" | "init.luau" | "init.lua" | "init.csv" => {
-                return Ok(None)
-            }
-            _ => {}
-        }
-
-        snapshot_from_path(context, vfs, path)
+    let (middleware, dir_name, init_path) = get_dir_middleware(vfs, path)?;
+    // TODO: Support user defined init paths
+    // If and when we do, make sure to go support it in
+    // `Project::set_file_name`, as right now it special-cases
+    // `default.project.json` as an `init` path.
+    match middleware {
+        Middleware::Dir => middleware.snapshot(context, vfs, path, dir_name),
+        _ => middleware.snapshot(context, vfs, &init_path, dir_name),
     }
 }
 

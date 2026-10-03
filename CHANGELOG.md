@@ -31,6 +31,10 @@ Making a new release? Simply add the new header with the version and date undern
 
 ## Unreleased
 
+* Fixed a bug where `$path` in an instance description couldn't reference an init script directly (i.e init.luau, init.sever.luau, etc). ([#1285])
+
+[#1285]: https://github.com/rojo-rbx/rojo/pull/1285
+
 ## [7.7.1] (October 1st, 2026)
 
 * Fixed `$path` values that point outside the project folder failing to match `syncRule`s on Windows, which broke `rojo sourcemap` with a "could not be turned into a Roblox Instance" error. ([#1290])

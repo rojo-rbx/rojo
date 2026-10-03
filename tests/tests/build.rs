@@ -66,6 +66,7 @@ gen_build_tests! {
     no_name_project,
     no_name_top_level_project,
     plugin_init,
+    init_from_path,
 }
 
 fn run_build_test(test_name: &str) {

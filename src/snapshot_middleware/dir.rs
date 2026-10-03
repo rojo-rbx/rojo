@@ -51,7 +51,7 @@ pub fn snapshot_dir_no_meta(
     for entry in vfs.read_dir(path)? {
         let entry = entry?;
 
-        if !passes_filter_rules(&entry) {
+        if !passes_filter_rules(&entry) || is_init_file(entry.path()).unwrap() {
             continue;
         }
 
@@ -219,6 +219,21 @@ pub fn syncback_dir_no_meta<'sync>(
         children,
         removed_children,
     })
+}
+
+fn is_init_file(path: &Path) -> anyhow::Result<bool> {
+    let file_name = path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .with_context(|| format!("file name of {} is invalid", path.display()))?;
+
+    match file_name {
+        "init.server.luau" | "init.server.lua" | "init.client.luau" | "init.client.lua"
+        | "init.plugin.luau" | "init.plugin.lua" | "init.luau" | "init.lua" | "init.csv" => {
+            Ok(true)
+        }
+        _ => Ok(false),
+    }
 }
 
 #[cfg(test)]
