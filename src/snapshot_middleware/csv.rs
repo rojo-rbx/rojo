@@ -162,13 +162,11 @@ pub fn syncback_csv_init<'sync>(
 ///
 /// We manually deserialize into this table from CSV, but let serde_json handle
 /// serialization.
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct LocalizationEntry<'a> {
-    #[serde(skip_serializing_if = "Option::is_none")]
     key: Option<Cow<'a, str>>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
     context: Option<Cow<'a, str>>,
 
     // Roblox writes `examples` for LocalizationTable's Content property, which
@@ -176,14 +174,75 @@ struct LocalizationEntry<'a> {
     // This is reported here: https://devforum.roblox.com/t/2908720.
     //
     // To support their mistake, we support an alias named `examples`.
-    #[serde(skip_serializing_if = "Option::is_none", alias = "examples")]
+    #[serde(alias = "examples")]
     example: Option<Cow<'a, str>>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
     source: Option<Cow<'a, str>>,
 
     // We use a BTreeMap here to get deterministic output order.
     values: BTreeMap<Cow<'a, str>, Cow<'a, str>>,
+}
+
+// Guarantee a specific order of both fields and entries so that diff always match up
+impl<'a> Serialize for LocalizationEntry<'a> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut btree = BTreeMap::new();
+
+        if let Some(key) = &self.key {
+            btree.insert(
+                "key",
+                serde_json::to_value(key).map_err(serde::ser::Error::custom)?,
+            );
+        }
+
+        if let Some(context) = &self.context {
+            btree.insert(
+                "context",
+                serde_json::to_value(context).map_err(serde::ser::Error::custom)?,
+            );
+        }
+
+        if let Some(example) = &self.example {
+            btree.insert(
+                "example",
+                serde_json::to_value(example).map_err(serde::ser::Error::custom)?,
+            );
+        }
+
+        if let Some(source) = &self.source {
+            btree.insert(
+                "source",
+                serde_json::to_value(source).map_err(serde::ser::Error::custom)?,
+            );
+        }
+
+        btree.insert(
+            "values",
+            serde_json::to_value(&self.values).map_err(serde::ser::Error::custom)?,
+        );
+
+        btree.serialize(serializer)
+    }
+}
+
+fn sort_localization_entries(mut entries: Vec<LocalizationEntry>) -> Vec<LocalizationEntry> {
+    entries.sort_by(|a, b| {
+        a.key
+            .as_deref()
+            .unwrap_or_default()
+            .cmp(&b.key.as_deref().unwrap_or_default())
+            .then_with(|| {
+                a.source
+                    .as_deref()
+                    .unwrap_or_default()
+                    .cmp(&b.source.as_deref().unwrap_or_default())
+            })
+    });
+
+    entries
 }
 
 /// Normally, we'd be able to let the csv crate construct our struct for us.
@@ -236,8 +295,8 @@ fn convert_localization_csv(contents: &[u8]) -> anyhow::Result<String> {
         entries.push(entry);
     }
 
-    let encoded =
-        serde_json::to_string(&entries).context("Could not encode JSON for localization table")?;
+    let encoded = serde_json::to_string(&sort_localization_entries(entries))
+        .context("Could not encode JSON for localization table")?;
 
     Ok(encoded)
 }
@@ -249,11 +308,9 @@ fn localization_to_csv(csv_contents: &str) -> anyhow::Result<Vec<u8>> {
     let mut out = Vec::new();
     let mut writer = csv::Writer::from_writer(&mut out);
 
-    let mut csv: Vec<LocalizationEntry> =
-        serde_json::from_str(csv_contents).context("cannot decode JSON from localization table")?;
-
-    // TODO sort this better
-    csv.sort_by(|a, b| a.source.partial_cmp(&b.source).unwrap());
+    let csv: Vec<LocalizationEntry> = sort_localization_entries(
+        serde_json::from_str(csv_contents).context("cannot decode JSON from localization table")?,
+    );
 
     let mut headers = vec!["Key", "Source", "Context", "Example"];
     // We want both order and a lack of duplicates, so we use a BTreeSet.
