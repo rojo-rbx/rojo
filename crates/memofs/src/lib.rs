@@ -82,6 +82,14 @@ pub trait VfsBackend: sealed::Sealed + Send + 'static {
     fn event_receiver(&self) -> crossbeam_channel::Receiver<VfsEvent>;
     fn watch(&mut self, path: &Path) -> io::Result<()>;
     fn unwatch(&mut self, path: &Path) -> io::Result<()>;
+
+    fn commit_event(&mut self, event: &VfsEvent) -> io::Result<()> {
+        if let VfsEvent::Remove(path) = event {
+            let _ = self.unwatch(path);
+        }
+
+        Ok(())
+    }
 }
 
 /// Vfs equivalent to [`std::fs::DirEntry`][std::fs::DirEntry].
@@ -138,6 +146,10 @@ pub enum VfsEvent {
     Create(PathBuf),
     Write(PathBuf),
     Remove(PathBuf),
+    /// Re-resolve a watched logical path and resnapshot its parent.
+    ///
+    /// This is used when the destination of a symbolic link may have changed.
+    Rescan(PathBuf),
 }
 
 /// Contains implementation details of the Vfs, wrapped by `Vfs` and `VfsLock`,
@@ -236,11 +248,7 @@ impl VfsInner {
     }
 
     fn commit_event(&mut self, event: &VfsEvent) -> io::Result<()> {
-        if let VfsEvent::Remove(path) = event {
-            let _ = self.backend.unwatch(path);
-        }
-
-        Ok(())
+        self.backend.commit_event(event)
     }
 }
 

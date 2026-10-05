@@ -157,28 +157,93 @@ impl JobThreadContext {
         applied_patches
     }
 
+    fn apply_existing_path(&self, path: &std::path::Path) -> Vec<AppliedPatchSet> {
+        match self.vfs.canonicalize(path) {
+            Ok(path) => self.apply_patches(path),
+            Err(err) if err.kind() == std::io::ErrorKind::NotFound => self.apply_missing_path(path),
+            Err(err) => {
+                log::warn!(
+                    "Could not canonicalize filesystem event path {}: {}",
+                    path.display(),
+                    err
+                );
+                Vec::new()
+            }
+        }
+    }
+
+    fn apply_missing_path(&self, path: &std::path::Path) -> Vec<AppliedPatchSet> {
+        let (Some(parent), Some(file_name)) = (path.parent(), path.file_name()) else {
+            log::warn!(
+                "Could not determine the parent of filesystem event path {}",
+                path.display()
+            );
+            return Vec::new();
+        };
+
+        match self.vfs.canonicalize(parent) {
+            Ok(parent) => self.apply_patches(parent.join(file_name)),
+            Err(err) if err.kind() == std::io::ErrorKind::NotFound => {
+                log::trace!(
+                    "Ignoring stale filesystem event for missing path {}",
+                    path.display()
+                );
+                Vec::new()
+            }
+            Err(err) => {
+                log::warn!(
+                    "Could not canonicalize parent of filesystem event path {}: {}",
+                    path.display(),
+                    err
+                );
+                Vec::new()
+            }
+        }
+    }
+
+    fn apply_rescan(&self, path: &std::path::Path) -> Vec<AppliedPatchSet> {
+        let Some(parent) = path.parent() else {
+            log::warn!(
+                "Could not determine the parent of filesystem rescan path {}",
+                path.display()
+            );
+            return Vec::new();
+        };
+
+        match self.vfs.canonicalize(parent) {
+            Ok(parent) => self.apply_patches(parent),
+            Err(err) if err.kind() == std::io::ErrorKind::NotFound => {
+                log::trace!(
+                    "Ignoring filesystem rescan for missing path {}",
+                    path.display()
+                );
+                Vec::new()
+            }
+            Err(err) => {
+                log::warn!(
+                    "Could not canonicalize parent of filesystem rescan path {}: {}",
+                    path.display(),
+                    err
+                );
+                Vec::new()
+            }
+        }
+    }
+
     fn handle_vfs_event(&self, event: VfsEvent) {
         log::trace!("Vfs event: {:?}", event);
 
         // Update the VFS immediately with the event.
-        self.vfs
-            .commit_event(&event)
-            .expect("Error applying VFS change");
+        if let Err(err) = self.vfs.commit_event(&event) {
+            log::warn!("Error applying VFS change {:?}: {}", event, err);
+        }
 
         // For a given VFS event, we might have many changes to different parts
         // of the tree. Calculate and apply all of these changes.
         let applied_patches = match event {
-            VfsEvent::Create(path) | VfsEvent::Write(path) => {
-                self.apply_patches(self.vfs.canonicalize(&path).unwrap())
-            }
-            VfsEvent::Remove(path) => {
-                // MemoFS does not track parent removals yet, so we can canonicalize
-                // the parent path safely and then append the removed path's file name.
-                let parent = path.parent().unwrap();
-                let file_name = path.file_name().unwrap();
-                let parent_normalized = self.vfs.canonicalize(parent).unwrap();
-                self.apply_patches(parent_normalized.join(file_name))
-            }
+            VfsEvent::Create(path) | VfsEvent::Write(path) => self.apply_existing_path(&path),
+            VfsEvent::Remove(path) => self.apply_missing_path(&path),
+            VfsEvent::Rescan(path) => self.apply_rescan(&path),
             _ => {
                 log::warn!("Unhandled VFS event: {:?}", event);
                 Vec::new()
@@ -382,4 +447,37 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref) -> Option<
     };
 
     Some(applied_patch_set)
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use memofs::StdBackend;
+
+    use crate::snapshot::InstanceSnapshot;
+
+    #[test]
+    fn missing_nested_watcher_paths_do_not_panic() {
+        let dir = tempfile::tempdir().unwrap();
+        let missing_path = dir
+            .path()
+            .join("Packages")
+            .join("_Index")
+            .join("package@1.0.0")
+            .join("module.lua");
+
+        let context = JobThreadContext {
+            tree: Arc::new(Mutex::new(RojoTree::new(
+                InstanceSnapshot::new().class_name("Folder"),
+            ))),
+            vfs: Arc::new(Vfs::new(StdBackend::new().unwrap())),
+            message_queue: Arc::new(MessageQueue::new()),
+        };
+
+        // Package managers replace nested dependency trees non-atomically. By
+        // the time a queued write or remove event is processed, both the event
+        // path and its parent can already be gone.
+        context.handle_vfs_event(VfsEvent::Write(missing_path.clone()));
+        context.handle_vfs_event(VfsEvent::Remove(missing_path));
+    }
 }
