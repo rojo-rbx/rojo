@@ -1,9 +1,9 @@
 # memofs Changelog
 
 ## Unreleased Changes
-* Fixed native Windows symlink watches missing physical-target changes and becoming stale when links were recreated or repointed. [#278]
+* Fixed native Windows symlink watches missing physical-target changes and becoming stale when links were recreated or repointed. [#1335]
 
-[#278]: https://github.com/rojo-rbx/rojo/issues/278
+[#1335]: https://github.com/rojo-rbx/rojo/pull/1335
 
 # 0.4.0 (2026-07-01)
 * Added `Vfs::canonicalize`. [#1201]
