@@ -276,4 +276,252 @@ mod test {
             canonical.display(),
         );
     }
+
+    #[cfg(windows)]
+    fn source_for_descendant(session: &ServeSession, name: &str) -> Option<String> {
+        use rbx_dom_weak::{types::Variant, ustr};
+
+        let tree = session.tree();
+        tree.descendants(tree.get_root_id())
+            .find(|instance| instance.name() == name)
+            .and_then(
+                |instance| match instance.properties().get(&ustr("Source")) {
+                    Some(Variant::String(source)) => Some(source.clone()),
+                    _ => None,
+                },
+            )
+    }
+
+    #[cfg(windows)]
+    fn wait_for_tree(
+        session: &ServeSession,
+        description: &str,
+        mut predicate: impl FnMut(&ServeSession) -> bool,
+    ) {
+        use std::{
+            thread,
+            time::{Duration, Instant},
+        };
+
+        let deadline = Instant::now() + Duration::from_secs(5);
+        while Instant::now() < deadline {
+            if predicate(session) {
+                return;
+            }
+            thread::sleep(Duration::from_millis(10));
+        }
+
+        panic!("timed out waiting for serve session to {description}");
+    }
+
+    #[test]
+    #[cfg(windows)]
+    fn applies_windows_symlink_updates_without_restarting() {
+        use std::os::windows::fs::{symlink_dir, symlink_file};
+
+        let temp = tempfile::tempdir().unwrap();
+        let project = temp.path().join("project");
+        let source = project.join("src");
+        let directory_target_a = temp.path().join("directory-target-a");
+        let directory_target_b = temp.path().join("directory-target-b");
+        let directory_alias = source.join("linked");
+        let file_target = temp.path().join("file-target.lua");
+        let file_alias = source.join("file-alias.lua");
+        let second_file_alias = source.join("second-file-alias.lua");
+
+        std::fs::create_dir(&project).unwrap();
+        std::fs::create_dir(&source).unwrap();
+        std::fs::create_dir(&directory_target_a).unwrap();
+        std::fs::create_dir(&directory_target_b).unwrap();
+        std::fs::write(directory_target_a.join("module.lua"), "return \"initial\"").unwrap();
+        std::fs::write(
+            directory_target_b.join("replacement.lua"),
+            "return \"replacement\"",
+        )
+        .unwrap();
+        std::fs::write(&file_target, "return \"file initial\"").unwrap();
+        symlink_dir(&directory_target_a, &directory_alias)
+            .expect("this Windows regression test requires permission to create symlinks");
+        symlink_file(&file_target, &file_alias).unwrap();
+        symlink_file(&file_target, &second_file_alias).unwrap();
+        std::fs::write(
+            project.join("default.project.json"),
+            r#"{ "name": "test", "tree": { "$path": "src" } }"#,
+        )
+        .unwrap();
+
+        let session = ServeSession::new(Vfs::new(StdBackend::new().unwrap()), &project).unwrap();
+        let initial_cursor = session.message_queue().cursor();
+        assert_eq!(
+            source_for_descendant(&session, "module").as_deref(),
+            Some("return \"initial\"")
+        );
+        assert_eq!(
+            source_for_descendant(&session, "file-alias").as_deref(),
+            Some("return \"file initial\"")
+        );
+        assert_eq!(
+            source_for_descendant(&session, "second-file-alias").as_deref(),
+            Some("return \"file initial\"")
+        );
+
+        std::fs::write(directory_target_a.join("module.lua"), "return \"physical\"").unwrap();
+        wait_for_tree(&session, "apply a physical-target write", |session| {
+            source_for_descendant(session, "module").as_deref() == Some("return \"physical\"")
+        });
+
+        std::fs::write(directory_alias.join("module.lua"), "return \"alias\"").unwrap();
+        wait_for_tree(&session, "apply an alias-path write", |session| {
+            source_for_descendant(session, "module").as_deref() == Some("return \"alias\"")
+        });
+
+        std::fs::write(directory_alias.join("created.lua"), "return \"created\"").unwrap();
+        wait_for_tree(&session, "add a linked child", |session| {
+            source_for_descendant(session, "created").as_deref() == Some("return \"created\"")
+        });
+
+        std::fs::rename(
+            directory_alias.join("created.lua"),
+            directory_alias.join("renamed.lua"),
+        )
+        .unwrap();
+        wait_for_tree(&session, "rename a linked child", |session| {
+            source_for_descendant(session, "created").is_none()
+                && source_for_descendant(session, "renamed").as_deref()
+                    == Some("return \"created\"")
+        });
+
+        std::fs::remove_file(directory_alias.join("renamed.lua")).unwrap();
+        wait_for_tree(&session, "remove a linked child", |session| {
+            source_for_descendant(session, "renamed").is_none()
+        });
+
+        std::fs::write(&file_target, "return \"file physical\"").unwrap();
+        wait_for_tree(&session, "apply a file-symlink target write", |session| {
+            source_for_descendant(session, "file-alias").as_deref()
+                == Some("return \"file physical\"")
+                && source_for_descendant(session, "second-file-alias").as_deref()
+                    == Some("return \"file physical\"")
+        });
+
+        std::fs::remove_file(&file_alias).unwrap();
+        wait_for_tree(&session, "remove one of two aliases", |session| {
+            source_for_descendant(session, "file-alias").is_none()
+                && source_for_descendant(session, "second-file-alias").is_some()
+        });
+        std::fs::write(&file_target, "return \"file still watched\"").unwrap();
+        wait_for_tree(
+            &session,
+            "keep a shared target watched for its remaining alias",
+            |session| {
+                source_for_descendant(session, "second-file-alias").as_deref()
+                    == Some("return \"file still watched\"")
+            },
+        );
+
+        let replacement_target = temp.path().join("file-target-replacement.lua");
+        std::fs::write(&replacement_target, "return \"file replaced\"").unwrap();
+        std::fs::remove_file(&file_target).unwrap();
+        std::fs::rename(&replacement_target, &file_target).unwrap();
+        wait_for_tree(
+            &session,
+            "apply an atomic-style file target replacement",
+            |session| {
+                source_for_descendant(session, "second-file-alias").as_deref()
+                    == Some("return \"file replaced\"")
+            },
+        );
+
+        std::fs::remove_file(&file_target).unwrap();
+        wait_for_tree(
+            &session,
+            "remove a file symlink whose target vanished",
+            |session| source_for_descendant(session, "second-file-alias").is_none(),
+        );
+        std::fs::write(&file_target, "return \"file restored\"").unwrap();
+        wait_for_tree(&session, "restore a recreated file target", |session| {
+            source_for_descendant(session, "second-file-alias").as_deref()
+                == Some("return \"file restored\"")
+        });
+
+        std::fs::remove_dir(&directory_alias).unwrap();
+        wait_for_tree(&session, "remove a directory symlink", |session| {
+            source_for_descendant(session, "module").is_none()
+        });
+
+        symlink_dir(&directory_target_a, &directory_alias).unwrap();
+        wait_for_tree(&session, "recreate a directory symlink", |session| {
+            source_for_descendant(session, "module").as_deref() == Some("return \"alias\"")
+        });
+
+        std::fs::remove_dir(&directory_alias).unwrap();
+        wait_for_tree(
+            &session,
+            "remove a directory symlink before repointing",
+            |session| source_for_descendant(session, "module").is_none(),
+        );
+        symlink_dir(&directory_target_b, &directory_alias).unwrap();
+        wait_for_tree(&session, "repoint a directory symlink", |session| {
+            source_for_descendant(session, "replacement").as_deref()
+                == Some("return \"replacement\"")
+        });
+
+        assert!(
+            session.message_queue().cursor() > initial_cursor,
+            "serve session should publish applied symlink updates"
+        );
+    }
+
+    #[test]
+    #[cfg(windows)]
+    fn applies_windows_junction_updates_without_restarting() {
+        let temp = tempfile::tempdir().unwrap();
+        let project = temp.path().join("project");
+        let source = project.join("src");
+        let target = temp.path().join("junction-target");
+        let junction = source.join("junctioned");
+
+        std::fs::create_dir(&project).unwrap();
+        std::fs::create_dir(&source).unwrap();
+        std::fs::create_dir(&target).unwrap();
+        std::fs::write(target.join("module.lua"), "return \"initial\"").unwrap();
+        // std has no API for junctions; `mklink /J` needs no elevation.
+        let status = std::process::Command::new("cmd")
+            .arg("/C")
+            .arg("mklink")
+            .arg("/J")
+            .arg(&junction)
+            .arg(&target)
+            .stdout(std::process::Stdio::null())
+            .status()
+            .unwrap();
+        assert!(status.success(), "mklink /J failed: {status}");
+        std::fs::write(
+            project.join("default.project.json"),
+            r#"{ "name": "test", "tree": { "$path": "src" } }"#,
+        )
+        .unwrap();
+
+        let session = ServeSession::new(Vfs::new(StdBackend::new().unwrap()), &project).unwrap();
+        let initial_cursor = session.message_queue().cursor();
+        assert_eq!(
+            source_for_descendant(&session, "module").as_deref(),
+            Some("return \"initial\"")
+        );
+
+        std::fs::write(target.join("module.lua"), "return \"physical\"").unwrap();
+        wait_for_tree(&session, "apply a junction-target write", |session| {
+            source_for_descendant(session, "module").as_deref() == Some("return \"physical\"")
+        });
+
+        std::fs::write(target.join("created.lua"), "return \"created\"").unwrap();
+        wait_for_tree(&session, "add a child through a junction", |session| {
+            source_for_descendant(session, "created").as_deref() == Some("return \"created\"")
+        });
+
+        assert!(
+            session.message_queue().cursor() > initial_cursor,
+            "serve session should publish applied junction updates"
+        );
+    }
 }
