@@ -183,6 +183,13 @@ impl JobThreadContext {
 
         match self.vfs.canonicalize(parent) {
             Ok(parent) => self.apply_patches(parent.join(file_name)),
+            Err(err) if err.kind() == std::io::ErrorKind::NotFound => {
+                log::trace!(
+                    "Ignoring stale filesystem event for missing path {}",
+                    path.display()
+                );
+                Vec::new()
+            }
             Err(err) => {
                 log::warn!(
                     "Could not canonicalize parent of filesystem event path {}: {}",
@@ -205,6 +212,13 @@ impl JobThreadContext {
 
         match self.vfs.canonicalize(parent) {
             Ok(parent) => self.apply_patches(parent),
+            Err(err) if err.kind() == std::io::ErrorKind::NotFound => {
+                log::trace!(
+                    "Ignoring filesystem rescan for missing path {}",
+                    path.display()
+                );
+                Vec::new()
+            }
             Err(err) => {
                 log::warn!(
                     "Could not canonicalize parent of filesystem rescan path {}: {}",
@@ -433,4 +447,37 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref) -> Option<
     };
 
     Some(applied_patch_set)
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use memofs::StdBackend;
+
+    use crate::snapshot::InstanceSnapshot;
+
+    #[test]
+    fn missing_nested_watcher_paths_do_not_panic() {
+        let dir = tempfile::tempdir().unwrap();
+        let missing_path = dir
+            .path()
+            .join("Packages")
+            .join("_Index")
+            .join("package@1.0.0")
+            .join("module.lua");
+
+        let context = JobThreadContext {
+            tree: Arc::new(Mutex::new(RojoTree::new(
+                InstanceSnapshot::new().class_name("Folder"),
+            ))),
+            vfs: Arc::new(Vfs::new(StdBackend::new().unwrap())),
+            message_queue: Arc::new(MessageQueue::new()),
+        };
+
+        // Package managers replace nested dependency trees non-atomically. By
+        // the time a queued write or remove event is processed, both the event
+        // path and its parent can already be gone.
+        context.handle_vfs_event(VfsEvent::Write(missing_path.clone()));
+        context.handle_vfs_event(VfsEvent::Remove(missing_path));
+    }
 }
