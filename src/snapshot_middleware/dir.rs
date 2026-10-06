@@ -61,7 +61,7 @@ pub fn snapshot_dir_no_meta(
     }
 
     let normalized_path = vfs.canonicalize(path)?;
-    let relevant_paths = vec![
+    let mut relevant_paths = vec![
         normalized_path.clone(),
         // TODO: We shouldn't need to know about Lua existing in this
         // middleware. Should we figure out a way for that function to add
@@ -76,6 +76,19 @@ pub fn snapshot_dir_no_meta(
         normalized_path.join("init.plugin.luau"),
         normalized_path.join("init.csv"),
     ];
+
+    for rule in &context.sync_rules {
+        if let Some(child_pattern) = &rule.child_pattern {
+            let pattern_str = child_pattern.as_str();
+            if !pattern_str.contains('*')
+                && !pattern_str.contains('?')
+                && !pattern_str.contains('[')
+                && !pattern_str.contains('{')
+            {
+                relevant_paths.push(normalized_path.join(pattern_str));
+            }
+        }
+    }
 
     let snapshot = InstanceSnapshot::new()
         .name(name)
