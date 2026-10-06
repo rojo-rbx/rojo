@@ -26,8 +26,7 @@ body:
       removed: []
       updated:
         - changedClassName: ~
-          changedMetadata:
-            ignoreUnknownInstances: false
+          changedMetadata: ~
           changedName: ~
           changedProperties:
             Attributes:

@@ -3,8 +3,12 @@ use insta::assert_yaml_snapshot;
 use rbx_dom_weak::{ustr, UstrMap};
 use rojo_insta_ext::RedactionMap;
 
+use std::path::PathBuf;
+
 use crate::{
-    snapshot::{apply_patch_set, InstanceSnapshot, PatchSet, PatchUpdate, RojoTree},
+    snapshot::{
+        apply_patch_set, InstanceMetadata, InstanceSnapshot, PatchSet, PatchUpdate, RojoTree,
+    },
     tree_view::{intern_tree, view_tree},
 };
 
@@ -99,6 +103,54 @@ fn remove_property() {
 
     let applied_patch_value = redactions.redacted_yaml(applied_patch_set);
     assert_yaml_snapshot!("remove_property_appied_patch", applied_patch_value);
+}
+
+#[test]
+fn changed_ignore_unknown_instances_is_set_when_it_changes() {
+    let mut tree = empty_tree();
+    let id = tree.get_root_id();
+
+    let patch_set = PatchSet {
+        updated_instances: vec![PatchUpdate {
+            id,
+            changed_name: None,
+            changed_class_name: None,
+            changed_properties: Default::default(),
+            changed_metadata: Some(InstanceMetadata::new().ignore_unknown_instances(true)),
+        }],
+        ..Default::default()
+    };
+
+    let applied_patch_set = apply_patch_set(&mut tree, patch_set);
+    let update = &applied_patch_set.updated[0];
+
+    assert_eq!(update.changed_ignore_unknown_instances, Some(true));
+    assert!(update.changed_metadata.is_some());
+}
+
+#[test]
+fn changed_ignore_unknown_instances_is_unset_when_only_internal_metadata_changes() {
+    let mut tree = empty_tree();
+    let id = tree.get_root_id();
+
+    let patch_set = PatchSet {
+        updated_instances: vec![PatchUpdate {
+            id,
+            changed_name: None,
+            changed_class_name: None,
+            changed_properties: Default::default(),
+            changed_metadata: Some(
+                InstanceMetadata::new().relevant_paths(vec![PathBuf::from("some/new/path.lua")]),
+            ),
+        }],
+        ..Default::default()
+    };
+
+    let applied_patch_set = apply_patch_set(&mut tree, patch_set);
+    let update = &applied_patch_set.updated[0];
+
+    assert_eq!(update.changed_ignore_unknown_instances, None);
+    assert!(update.changed_metadata.is_some());
 }
 
 fn empty_tree() -> RojoTree {

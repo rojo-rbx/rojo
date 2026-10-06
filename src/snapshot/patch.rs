@@ -92,6 +92,9 @@ pub struct AppliedPatchUpdate {
     pub changed_class_name: Option<Ustr>,
     pub changed_properties: UstrMap<Option<Variant>>,
     pub changed_metadata: Option<InstanceMetadata>,
+
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub changed_ignore_unknown_instances: Option<bool>,
 }
 
 impl AppliedPatchUpdate {
@@ -102,6 +105,7 @@ impl AppliedPatchUpdate {
             changed_class_name: None,
             changed_properties: UstrMap::new(),
             changed_metadata: None,
+            changed_ignore_unknown_instances: None,
         }
     }
 }
