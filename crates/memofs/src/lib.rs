@@ -262,6 +262,16 @@ impl Vfs {
         Ok(Self::new(StdBackend::new()?))
     }
 
+    /// Creates a `Vfs` with `StdBackend` and automatic file watching disabled.
+    ///
+    /// No filesystem watcher is allocated unless automatic watching is later
+    /// enabled and a file or directory is read.
+    pub fn new_default_without_watcher() -> Self {
+        let vfs = Self::new(StdBackend::new_without_watcher());
+        vfs.set_watch_enabled(false);
+        vfs
+    }
+
     /// Creates a new `Vfs` with the given backend.
     pub fn new<B: VfsBackend>(backend: B) -> Self {
         let lock = VfsInner {
@@ -587,6 +597,30 @@ mod test {
     use crate::{InMemoryFs, StdBackend, Vfs, VfsSnapshot};
     use std::io;
     use std::path::PathBuf;
+
+    #[test]
+    fn watching_can_be_enabled_after_starting_without_watcher(
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let dir = tempfile::tempdir()?;
+        let dir_path = dunce::canonicalize(dir.path())?;
+        let vfs = Vfs::new_default_without_watcher();
+        let receiver = vfs.event_receiver();
+
+        assert_eq!(vfs.read_dir(&dir_path)?.count(), 0);
+        vfs.set_watch_enabled(true);
+        assert_eq!(vfs.read_dir(&dir_path)?.count(), 0);
+
+        let file_path = dir_path.join("new.txt");
+        fs_err::write(&file_path, "created after watching was enabled")?;
+        let event = receiver.recv_timeout(std::time::Duration::from_secs(5))?;
+        assert!(
+            matches!(&event, crate::VfsEvent::Create(path) if path == &file_path),
+            "expected creation of {}, got {:?}",
+            file_path.display(),
+            event
+        );
+        Ok(())
+    }
 
     /// https://github.com/rojo-rbx/rojo/issues/899
     #[test]

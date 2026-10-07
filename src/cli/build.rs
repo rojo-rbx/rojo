@@ -78,8 +78,11 @@ impl BuildCommand {
         let project_path = resolve_path(&self.project)?;
 
         log::trace!("Constructing in-memory filesystem");
-        let vfs = Vfs::new_default()?;
-        vfs.set_watch_enabled(self.watch);
+        let vfs = if self.watch {
+            Vfs::new_default()?
+        } else {
+            Vfs::new_default_without_watcher()
+        };
 
         let session = ServeSession::new(vfs, project_path)?;
         let mut cursor = session.message_queue().cursor();
