@@ -31,6 +31,7 @@ Making a new release? Simply add the new header with the version and date undern
 
 ## Unreleased
 
+* Fixed `rojo build` allocating a filesystem watcher without `--watch`, which could fail when inotify instances were exhausted. Watcher errors now preserve the underlying I/O error.
 * LocalizationTables no longer report as changed when nothing changes. [(#1333)]
 
 [#1333]: https://github.com/rojo-rbx/rojo/pull/1333

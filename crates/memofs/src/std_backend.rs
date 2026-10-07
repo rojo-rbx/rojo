@@ -4,24 +4,45 @@ use std::thread;
 use std::time::Duration;
 use std::{collections::HashSet, io};
 
-use crossbeam_channel::Receiver;
+use crossbeam_channel::{Receiver, Sender};
 use notify::{watcher, DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher};
 
 use crate::{DirEntry, Metadata, ReadDir, VfsBackend, VfsEvent};
 
 /// `VfsBackend` that uses `std::fs` and the `notify` crate.
 pub struct StdBackend {
-    watcher: RecommendedWatcher,
+    watcher: Option<RecommendedWatcher>,
+    watcher_sender: Sender<VfsEvent>,
     watcher_receiver: Receiver<VfsEvent>,
     watches: HashSet<PathBuf>,
 }
 
 impl StdBackend {
+    /// Creates a filesystem backend with an initialized file watcher.
+    ///
+    /// Returns an error if the platform's watcher cannot be created.
     pub fn new() -> io::Result<StdBackend> {
-        let (notify_tx, notify_rx) = mpsc::channel();
-        let watcher = watcher(notify_tx, Duration::from_millis(50)).map_err(io::Error::other)?;
+        let mut backend = Self::new_without_watcher();
+        backend.watcher = Some(Self::create_watcher(backend.watcher_sender.clone())?);
+        Ok(backend)
+    }
 
+    /// Creates a filesystem backend without allocating a file watcher.
+    ///
+    /// A watcher is initialized only if `watch` is subsequently called.
+    pub fn new_without_watcher() -> StdBackend {
         let (tx, rx) = crossbeam_channel::unbounded();
+        Self {
+            watcher: None,
+            watcher_sender: tx,
+            watcher_receiver: rx,
+            watches: HashSet::new(),
+        }
+    }
+
+    fn create_watcher(tx: Sender<VfsEvent>) -> io::Result<RecommendedWatcher> {
+        let (notify_tx, notify_rx) = mpsc::channel();
+        let watcher = watcher(notify_tx, Duration::from_millis(50)).map_err(notify_error_to_io)?;
 
         thread::spawn(move || {
             for event in notify_rx {
@@ -46,11 +67,7 @@ impl StdBackend {
             Result::<(), crossbeam_channel::SendError<VfsEvent>>::Ok(())
         });
 
-        Ok(Self {
-            watcher,
-            watcher_receiver: rx,
-            watches: HashSet::new(),
-        })
+        Ok(watcher)
     }
 }
 
@@ -122,15 +139,47 @@ impl VfsBackend for StdBackend {
         {
             Ok(())
         } else {
+            let watcher = match &mut self.watcher {
+                Some(watcher) => watcher,
+                slot @ None => slot.insert(Self::create_watcher(self.watcher_sender.clone())?),
+            };
             self.watches.insert(path.to_path_buf());
-            self.watcher
+            watcher
                 .watch(path, RecursiveMode::Recursive)
-                .map_err(io::Error::other)
+                .map_err(notify_error_to_io)
         }
     }
 
     fn unwatch(&mut self, path: &Path) -> io::Result<()> {
         self.watches.remove(path);
-        self.watcher.unwatch(path).map_err(io::Error::other)
+        match &mut self.watcher {
+            Some(watcher) => watcher.unwatch(path).map_err(notify_error_to_io),
+            None => Ok(()),
+        }
+    }
+}
+
+fn notify_error_to_io(error: notify::Error) -> io::Error {
+    match error {
+        // notify 4 formats I/O errors using the deprecated Error::description,
+        // which can hide the actual operating system error.
+        notify::Error::Io(error) => error,
+        error => io::Error::other(error),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::notify_error_to_io;
+    use std::io;
+
+    #[test]
+    fn notify_io_error_preserves_message_and_kind() {
+        let message = "filesystem watcher permission denied";
+        let source = io::Error::new(io::ErrorKind::PermissionDenied, message);
+        let error = notify_error_to_io(notify::Error::Io(source));
+
+        assert_eq!(error.to_string(), message);
+        assert_eq!(error.kind(), io::ErrorKind::PermissionDenied);
     }
 }

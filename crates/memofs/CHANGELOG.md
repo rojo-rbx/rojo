@@ -2,6 +2,9 @@
 
 ## Unreleased Changes
 
+* Added `StdBackend::new_without_watcher` and `Vfs::new_default_without_watcher` for filesystem access without allocating a watcher. Watching can be enabled later.
+* Watcher I/O errors now preserve their original message and error kind.
+
 # 0.4.0 (2026-07-01)
 * Added `Vfs::canonicalize`. [#1201]
 * **Breaking:** `StdBackend::new` and `Vfs::new_default` now return `io::Result`, so a failure to create the filesystem watcher is reported as an error instead of panicking. The `Default` implementation for `StdBackend` has been removed as a result. [#1267]
