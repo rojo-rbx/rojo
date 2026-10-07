@@ -2,8 +2,10 @@
 
 ## Unreleased Changes
 
-* Added `StdBackend::new_without_watcher` and `Vfs::new_default_without_watcher` for filesystem access without allocating a watcher. Watching can be enabled later.
-* Watcher I/O errors now preserve their original message and error kind.
+* Added `StdBackend::new_without_watcher` and `Vfs::new_default_without_watcher` for filesystem access without allocating a watcher. Watching can be enabled later. [#1337]
+* Watcher I/O errors now preserve their original message and error kind. [#1337]
+
+[#1337]: https://github.com/rojo-rbx/rojo/pull/1337
 
 # 0.4.0 (2026-07-01)
 * Added `Vfs::canonicalize`. [#1201]
