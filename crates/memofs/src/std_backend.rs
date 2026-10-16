@@ -122,15 +122,54 @@ impl VfsBackend for StdBackend {
         {
             Ok(())
         } else {
+            // This recursive watch covers any watch we already hold below
+            // `path`. Release those, so that every path in `watches` is the
+            // only watch covering it and `unwatch` can trust that. Release them
+            // first: on inotify this watch shares their per-directory entries,
+            // and unwatching them afterwards would delete its coverage too.
+            let covered: Vec<PathBuf> = self
+                .watches
+                .iter()
+                .filter(|watched| watched.starts_with(path))
+                .cloned()
+                .collect();
+            for watched in &covered {
+                self.watches.remove(watched);
+                let _ = self.watcher.unwatch(watched);
+            }
+
+            if let Err(err) = self.watcher.watch(path, RecursiveMode::Recursive) {
+                // Put back what we released, so a failed watch loses nothing.
+                // inotify keeps whatever part of the walk succeeded, so drop
+                // that first to free its watches.
+                let _ = self.watcher.unwatch(path);
+                for watched in covered {
+                    if self
+                        .watcher
+                        .watch(&watched, RecursiveMode::Recursive)
+                        .is_ok()
+                    {
+                        self.watches.insert(watched);
+                    }
+                }
+                return Err(io::Error::other(err));
+            }
             self.watches.insert(path.to_path_buf());
-            self.watcher
-                .watch(path, RecursiveMode::Recursive)
-                .map_err(io::Error::other)
+            Ok(())
         }
     }
 
     fn unwatch(&mut self, path: &Path) -> io::Result<()> {
-        self.watches.remove(path);
-        self.watcher.unwatch(path).map_err(io::Error::other)
+        // Only stop a watch we started. Any other path is covered by an
+        // ancestor's recursive watch, for which inotify keeps an entry per
+        // directory, keyed by path. By the time a removal is committed, that
+        // entry may belong to a new directory created at the same path, and
+        // unwatching it would stop events for that directory and everything
+        // under it.
+        if self.watches.remove(path) {
+            self.watcher.unwatch(path).map_err(io::Error::other)
+        } else {
+            Ok(())
+        }
     }
 }

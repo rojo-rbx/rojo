@@ -1,6 +1,9 @@
 # memofs Changelog
 
 ## Unreleased Changes
+* Fixed `StdBackend` on Linux dropping the watches on a directory recreated at a path whose removal was committed afterwards, which stopped events for everything inside it. [#1341]
+
+[#1341]: https://github.com/rojo-rbx/rojo/pull/1341
 
 # 0.4.0 (2026-07-01)
 * Added `Vfs::canonicalize`. [#1201]

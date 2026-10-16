@@ -32,8 +32,10 @@ Making a new release? Simply add the new header with the version and date undern
 ## Unreleased
 
 * LocalizationTables no longer report as changed when nothing changes. [(#1333)]
+* Fixed live sync on Linux (`rojo serve` and the `--watch` modes) missing every change inside a directory that was removed or moved aside and then recreated at the same path within another synced directory. ([#1341])
 
 [#1333]: https://github.com/rojo-rbx/rojo/pull/1333
+[#1341]: https://github.com/rojo-rbx/rojo/pull/1341
 
 ## [7.7.1] (October 1st, 2026)
 
