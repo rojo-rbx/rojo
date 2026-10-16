@@ -21,12 +21,38 @@ function gatherAssetUrlsRecursive(currentTable, currentUrls)
 end
 
 local function preloadAssets()
-	local contentUrls = gatherAssetUrlsRecursive(Assets)
+	local contentUrls = {}
+	local soundUrls = {}
+
+	for key, value in Assets do
+		if key == "Sounds" then
+			gatherAssetUrlsRecursive(value, soundUrls)
+		elseif typeof(value) == "string" then
+			table.insert(contentUrls, value)
+		elseif typeof(value) == "table" then
+			gatherAssetUrlsRecursive(value, contentUrls)
+		end
+	end
 
 	Log.trace("Preloading assets: {:?}", contentUrls)
+	Log.trace("Preloading sounds: {:?}", soundUrls)
+
+	-- PreloadAsync fetches a bare string as an image, so sounds go in as Sound
+	-- instances, which load their SoundId as audio.
+	local preloadList = table.clone(contentUrls)
+	local sounds = {}
+	for _, soundId in soundUrls do
+		local sound = Instance.new("Sound")
+		sound.SoundId = soundId
+		table.insert(sounds, sound)
+		table.insert(preloadList, sound)
+	end
 
 	coroutine.wrap(function()
-		ContentProvider:PreloadAsync(contentUrls)
+		ContentProvider:PreloadAsync(preloadList)
+		for _, sound in sounds do
+			sound:Destroy()
+		end
 	end)()
 end
 
