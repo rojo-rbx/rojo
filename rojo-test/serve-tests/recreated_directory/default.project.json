@@ -1,0 +1,12 @@
+{
+  "name": "recreated_directory",
+  "tree": {
+    "$className": "Folder",
+    "Loader": {
+      "$path": "deps/package"
+    },
+    "Packages": {
+      "$path": "deps"
+    }
+  }
+}

@@ -584,9 +584,10 @@ impl VfsLock<'_> {
 
 #[cfg(test)]
 mod test {
-    use crate::{InMemoryFs, StdBackend, Vfs, VfsSnapshot};
+    use crate::{InMemoryFs, StdBackend, Vfs, VfsEvent, VfsSnapshot};
     use std::io;
-    use std::path::PathBuf;
+    use std::path::{Path, PathBuf};
+    use std::time::{Duration, Instant};
 
     /// https://github.com/rojo-rbx/rojo/issues/899
     #[test]
@@ -685,6 +686,73 @@ mod test {
             "`..` should be preserved when joining onto {:?}",
             canonicalized
         );
+    }
+
+    fn saw_event_for(vfs: &Vfs, path: &Path, timeout: Duration) -> bool {
+        let receiver = vfs.event_receiver();
+        let deadline = Instant::now() + timeout;
+        loop {
+            match receiver.recv_deadline(deadline) {
+                Ok(VfsEvent::Create(event_path) | VfsEvent::Write(event_path))
+                    if event_path == path =>
+                {
+                    return true
+                }
+                Ok(_) => continue,
+                Err(_) => return false,
+            }
+        }
+    }
+
+    /// Package managers replace a package by moving its directory aside and
+    /// creating a new one at the same path. The move reaches the change
+    /// processor as a `Remove` for that path, which it commits after the new
+    /// directory already exists and is being watched. Only notify's inotify
+    /// backend splits a recursive watch into per-directory entries shared by
+    /// every root, so this fails before the fix on Linux alone.
+    fn assert_watches_directory_recreated_at_removed_path(watch_package_first: bool) {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dunce::canonicalize(dir.path()).unwrap();
+        let package = root.join("package");
+        fs_err::create_dir_all(package.join("src")).unwrap();
+
+        let vfs = Vfs::new(StdBackend::new().unwrap());
+        if watch_package_first {
+            vfs.read_dir(&package).unwrap();
+        }
+        vfs.read_dir(&root).unwrap();
+
+        fs_err::rename(&package, root.join(".package-old")).unwrap();
+        fs_err::create_dir_all(package.join("src")).unwrap();
+        // Files written before the watcher reaches a new directory raise no
+        // events, so rewrite a probe until one arrives.
+        let probe = package.join("src").join("probe.luau");
+        let watched = (0..50).any(|_| {
+            fs_err::write(&probe, "return {}").unwrap();
+            saw_event_for(&vfs, &probe, Duration::from_millis(100))
+        });
+        assert!(watched, "the recreated directory was never watched");
+
+        vfs.commit_event(&VfsEvent::Remove(package.clone()))
+            .unwrap();
+
+        let module = package.join("src").join("module.luau");
+        fs_err::write(&module, "return {}").unwrap();
+        assert!(
+            saw_event_for(&vfs, &module, Duration::from_secs(5)),
+            "no event for {} after the removal of its old directory was committed",
+            module.display()
+        );
+    }
+
+    #[test]
+    fn std_backend_watches_directory_recreated_at_removed_path() {
+        assert_watches_directory_recreated_at_removed_path(false);
+    }
+
+    #[test]
+    fn std_backend_watches_recreated_directory_watched_before_its_parent() {
+        assert_watches_directory_recreated_at_removed_path(true);
     }
 
     #[test]

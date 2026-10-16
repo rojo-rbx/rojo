@@ -1,13 +1,20 @@
-use std::fs;
+use std::{
+    collections::HashMap,
+    fs, thread,
+    time::{Duration, Instant},
+};
 
 use insta::{assert_snapshot, assert_yaml_snapshot, with_settings};
-use rbx_dom_weak::types::Ref;
+use rbx_dom_weak::{
+    types::{Ref, Variant},
+    ustr,
+};
 use reqwest::StatusCode;
 use tempfile::tempdir;
 
 use crate::rojo_test::{
     internable::InternAndRedact,
-    serve_util::{deserialize_msgpack, run_serve_test, serialize_to_xml_model},
+    serve_util::{deserialize_msgpack, run_serve_test, serialize_to_xml_model, TestServeSession},
 };
 
 use librojo::web_api::{SerializeResponse, SocketPacketType};
@@ -274,6 +281,90 @@ fn move_folder_of_stuff() {
             read_response.intern_and_redact(&mut redactions, root_id)
         );
     });
+}
+
+#[test]
+fn recreated_directory() {
+    run_serve_test("recreated_directory", |session, _redactions| {
+        let root_id = session.get_api_rojo().unwrap().root_instance_id;
+        let package = session.path().join("deps/package");
+
+        fs::write(package.join("Old.luau"), "return 0").unwrap();
+        wait_for_sources(&session, root_id, |sources| {
+            sources["Loader/Old"] == "return 0" && sources["Packages/package/Old"] == "return 0"
+        });
+
+        // Package managers replace a package by moving its directory aside and
+        // creating a new one at the same path. `Loader` sorts before
+        // `Packages`, so the package directory is watched before its parent.
+        // The moved copy is kept, because deleting it hits a separate panic in
+        // the change processor.
+        fs::rename(&package, session.path().join("deps/.package-old")).unwrap();
+        fs::create_dir(&package).unwrap();
+        wait_for_sources(&session, root_id, |sources| {
+            sources.contains_key("Packages/.package-old/Old")
+        });
+
+        let module = package.join("New.luau");
+        fs::write(&module, "return 1").unwrap();
+        wait_for_sources(&session, root_id, |sources| {
+            !sources.contains_key("Loader/Old")
+                && sources.contains_key("Loader/New")
+                && sources.contains_key("Packages/package/New")
+        });
+
+        // Creating the directory can still be pending when `New` is written,
+        // and handling it rereads the directory. Only a live watch reports an
+        // edit to a file that already exists.
+        fs::write(&module, "return 2").unwrap();
+        wait_for_sources(&session, root_id, |sources| {
+            sources["Loader/New"] == "return 2" && sources["Packages/package/New"] == "return 2"
+        });
+    });
+}
+
+/// Polls the served tree until `ready` accepts it. The tree is given as a map
+/// from each instance's path below `root_id`, written as names joined by `/`,
+/// to its `Source`, or an empty string if it has none.
+fn wait_for_sources(
+    session: &TestServeSession,
+    root_id: Ref,
+    ready: impl Fn(&HashMap<String, String>) -> bool,
+) {
+    let deadline = Instant::now() + Duration::from_secs(10);
+    loop {
+        let read_response = session.get_api_read(root_id).unwrap();
+        let instances = &read_response.instances;
+        let sources: HashMap<String, String> = instances
+            .values()
+            .filter(|instance| instance.id != root_id)
+            .map(|instance| {
+                let mut names = vec![instance.name.to_string()];
+                let mut parent = instance.parent;
+                while parent != root_id {
+                    let ancestor = &instances[&parent];
+                    names.push(ancestor.name.to_string());
+                    parent = ancestor.parent;
+                }
+                names.reverse();
+
+                let source = match instance.properties.get(&ustr("Source")).map(AsRef::as_ref) {
+                    Some(Variant::String(source)) => source.clone(),
+                    _ => String::new(),
+                };
+                (names.join("/"), source)
+            })
+            .collect();
+
+        if ready(&sources) {
+            return;
+        }
+        assert!(
+            Instant::now() < deadline,
+            "served tree never reached the expected state: {sources:?}"
+        );
+        thread::sleep(Duration::from_millis(100));
+    }
 }
 
 #[test]
