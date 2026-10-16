@@ -32,8 +32,10 @@ Making a new release? Simply add the new header with the version and date undern
 ## Unreleased
 
 * LocalizationTables no longer report as changed when nothing changes. [(#1333)]
+* Fixed the plugin preloading its notification sound as an image, which printed "Asset type does not match requested type" in Studio. ([#1344])
 
 [#1333]: https://github.com/rojo-rbx/rojo/pull/1333
+[#1344]: https://github.com/rojo-rbx/rojo/pull/1344
 
 ## [7.7.1] (October 1st, 2026)
 
