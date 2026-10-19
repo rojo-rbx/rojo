@@ -32,8 +32,10 @@ Making a new release? Simply add the new header with the version and date undern
 ## Unreleased
 
 * LocalizationTables no longer report as changed when nothing changes. [(#1333)]
+* Fixed `rojo serve` on macOS missing file changes made while files were being deleted (for example during a `git checkout`), which left the served tree stale. ([#1345])
 
 [#1333]: https://github.com/rojo-rbx/rojo/pull/1333
+[#1345]: https://github.com/rojo-rbx/rojo/pull/1345
 
 ## [7.7.1] (October 1st, 2026)
 

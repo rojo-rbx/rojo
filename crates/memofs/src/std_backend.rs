@@ -130,7 +130,65 @@ impl VfsBackend for StdBackend {
     }
 
     fn unwatch(&mut self, path: &Path) -> io::Result<()> {
-        self.watches.remove(path);
-        self.watcher.unwatch(path).map_err(io::Error::other)
+        // `Vfs::commit_event` calls this for every removed path, but only the roots passed to
+        // `watch` are watched. Forwarding any other path to notify made its FSEvents backend on
+        // macOS restart the event stream, and changes made during the restart were lost.
+        if self.watches.remove(path) {
+            self.watcher.unwatch(path).map_err(io::Error::other)
+        } else {
+            Ok(())
+        }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use std::fs;
+    use std::time::Instant;
+
+    /// `Vfs::commit_event` calls `unwatch` for every removed path, though only the roots passed
+    /// to `watch` are watched. Forwarding those paths to notify made its macOS (FSEvents) backend
+    /// restart its event stream each time, and events that happened during a restart were never
+    /// delivered: deleting files while others were being created lost some of the creations.
+    #[test]
+    fn unwatching_paths_that_were_never_watched_loses_no_events() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dunce::canonicalize(dir.path()).unwrap();
+        let (old, new) = (root.join("old"), root.join("new"));
+        fs::create_dir(&old).unwrap();
+        fs::create_dir(&new).unwrap();
+        for i in 0..100 {
+            fs::write(old.join(format!("{i}.txt")), "").unwrap();
+        }
+
+        let mut backend = StdBackend::new().unwrap();
+        backend.watch(&root).unwrap();
+        thread::sleep(Duration::from_millis(500));
+        let events = backend.event_receiver();
+        while events.try_recv().is_ok() {}
+
+        for i in 0..100 {
+            let removed = old.join(format!("{i}.txt"));
+            fs::remove_file(&removed).unwrap();
+            let _ = backend.unwatch(&removed);
+            fs::write(new.join(format!("{i}.txt")), "").unwrap();
+            // Paced so the OS does not coalesce the burst into a rescan, which notify 4 drops on
+            // its own; this test is about the events unwatch loses.
+            thread::sleep(Duration::from_millis(5));
+        }
+
+        let mut created = HashSet::new();
+        let deadline = Instant::now() + Duration::from_secs(5);
+        while created.len() < 100 && Instant::now() < deadline {
+            if let Ok(VfsEvent::Create(path) | VfsEvent::Write(path)) =
+                events.recv_timeout(Duration::from_millis(100))
+            {
+                if path.parent() == Some(new.as_path()) {
+                    created.insert(path);
+                }
+            }
+        }
+        assert_eq!(created.len(), 100, "file creations were not reported");
     }
 }
