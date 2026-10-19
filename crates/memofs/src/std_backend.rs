@@ -173,6 +173,9 @@ mod test {
             fs::remove_file(&removed).unwrap();
             let _ = backend.unwatch(&removed);
             fs::write(new.join(format!("{i}.txt")), "").unwrap();
+            // Paced so the OS does not coalesce the burst into a rescan, which notify 4 drops on
+            // its own; this test is about the events unwatch loses.
+            thread::sleep(Duration::from_millis(5));
         }
 
         let mut created = HashSet::new();
