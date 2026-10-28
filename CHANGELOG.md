@@ -32,10 +32,10 @@ Making a new release? Simply add the new header with the version and date undern
 ## Unreleased
 
 * LocalizationTables no longer report as changed when nothing changes. [(#1333)]
-* Fixed `rojo serve` crashing with a `NotFound` error when a file or folder was deleted or moved before Rojo processed its change, such as during `git checkout` or a recursive delete. ([#1338])
+* Fixed `rojo serve` crashing with a `NotFound` error when a file or folder was deleted or moved before Rojo processed its change, such as during `git checkout` or a recursive delete. ([#1350])
 
 [#1333]: https://github.com/rojo-rbx/rojo/pull/1333
-[#1338]: https://github.com/rojo-rbx/rojo/issues/1338
+[#1350]: https://github.com/rojo-rbx/rojo/pull/1350
 
 ## [7.7.1] (October 1st, 2026)
 
