@@ -32,7 +32,9 @@ Making a new release? Simply add the new header with the version and date undern
 ## Unreleased
 
 * LocalizationTables no longer report as changed when nothing changes. [(#1333)]
+* Fixed `rojo serve` crashing when queued filesystem events refer to paths whose ancestors have already been removed. ([#1319])
 
+[#1319]: https://github.com/rojo-rbx/rojo/pull/1319
 [#1333]: https://github.com/rojo-rbx/rojo/pull/1333
 
 ## [7.7.1] (October 1st, 2026)
