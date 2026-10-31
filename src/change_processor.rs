@@ -2,7 +2,9 @@ use crossbeam_channel::{select, Receiver, RecvError, Sender};
 use jod_thread::JoinHandle;
 use memofs::{IoResultExt, Vfs, VfsEvent};
 use rbx_dom_weak::types::{Ref, Variant};
+use std::collections::HashMap;
 use std::path::PathBuf;
+use std::time::{Duration, Instant};
 use std::{
     fs,
     sync::{Arc, Mutex},
@@ -54,10 +56,12 @@ impl ChangeProcessor {
     ) -> Self {
         let (shutdown_sender, shutdown_receiver) = crossbeam_channel::bounded(1);
         let vfs_receiver = vfs.event_receiver();
+        let recent_writes = Arc::new(Mutex::new(HashMap::new()));
         let task = JobThreadContext {
             tree,
             vfs,
             message_queue,
+            recent_writes,
         };
 
         let job_thread = jod_thread::Builder::new()
@@ -111,6 +115,10 @@ struct JobThreadContext {
     /// Whenever changes are applied to the DOM, we should push those changes
     /// into this message queue to inform any connected clients.
     message_queue: Arc<MessageQueue<AppliedPatchSet>>,
+
+    /// Tracks recent filesystem writes initiated by Studio client two-way sync,
+    /// suppressing file-watcher echo loops back into the message queue.
+    recent_writes: Arc<Mutex<HashMap<PathBuf, Instant>>>,
 }
 
 impl JobThreadContext {
@@ -164,6 +172,18 @@ impl JobThreadContext {
         self.vfs
             .commit_event(&event)
             .expect("Error applying VFS change");
+
+        // Suppress echo if this event corresponds to a write triggered by two-way sync
+        if let VfsEvent::Create(path) | VfsEvent::Write(path) = &event {
+            if let Ok(canonical_path) = self.vfs.canonicalize(path) {
+                let mut writes = self.recent_writes.lock().unwrap();
+                writes.retain(|_, time| time.elapsed() < Duration::from_secs(3));
+                if writes.remove(&canonical_path).is_some() {
+                    log::trace!("Suppressing VFS echo for client-originated write: {:?}", canonical_path);
+                    return;
+                }
+            }
+        }
 
         // For a given VFS event, we might have many changes to different parts
         // of the tree. Calculate and apply all of these changes.
@@ -258,6 +278,9 @@ impl JobThreadContext {
                                                     path.display(),
                                                     err
                                                 );
+                                            } else if let Ok(canonical_path) = self.vfs.canonicalize(path) {
+                                                let mut writes = self.recent_writes.lock().unwrap();
+                                                writes.insert(canonical_path, Instant::now());
                                             }
                                         } else {
                                             log::warn!("Cannot change Source to non-string value.");
@@ -288,9 +311,8 @@ impl JobThreadContext {
             apply_patch_set(&mut tree, patch_set)
         };
 
-        if !applied_patch.is_empty() {
-            self.message_queue.push_messages(&[applied_patch]);
-        }
+        // Suppress pushing self-generated patch back to message queue to eliminate client echo
+        let _ = applied_patch;
     }
 }
 

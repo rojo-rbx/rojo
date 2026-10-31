@@ -235,7 +235,6 @@ function SettingsPage:render()
 				description = "Editing files in Studio will sync them into the filesystem",
 				locked = self.props.syncActive,
 				lockedTooltip = "(Cannot change while currently syncing. Disconnect first.)",
-				tag = "unstable",
 				transparency = self.props.transparency,
 				layoutOrder = layoutIncrement(),
 			}),

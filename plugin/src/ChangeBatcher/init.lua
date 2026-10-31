@@ -60,8 +60,6 @@ function ChangeBatcher:__cycle(dt)
 			self.__onChangesFlushed(patch)
 		end
 	end
-
-	self.__instanceMap:unpauseAllInstances()
 end
 
 function ChangeBatcher:__flush()
