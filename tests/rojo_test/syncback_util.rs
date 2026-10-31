@@ -112,5 +112,5 @@ pub fn snapshot_rbxm(name: &str, input: Vec<u8>, file_name: &str) {
         name,
         rbx_binary::text_format::DecodedModel::from_reader(input.as_slice()),
         file_name
-    )
+    );
 }

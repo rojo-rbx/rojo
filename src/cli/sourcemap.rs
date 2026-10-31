@@ -325,8 +325,8 @@ mod test {
                 match value {
                     Content::Seq(ref mut vec) => {
                         for path in vec.iter().map(|i| i.as_str().unwrap()) {
-                            assert_eq!(fs_err::canonicalize(path).is_ok(), true, "path was not valid");
-                            assert_eq!(Path::new(path).is_absolute(), true, "path was not absolute");
+                            assert!(fs_err::canonicalize(path).is_ok(), "path was not valid");
+                            assert!(Path::new(path).is_absolute(), "path was not absolute");
 
                             paths_count += 1;
                         }
