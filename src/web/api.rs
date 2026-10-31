@@ -4,7 +4,10 @@
 use std::{collections::HashMap, fs, net::SocketAddr, path::PathBuf, str::FromStr, sync::Arc};
 
 use futures::{sink::SinkExt, stream::StreamExt};
-use hyper::{body, Body, Method, Request, Response, StatusCode};
+use hyper::{
+    body::{self, Bytes},
+    Body, Method, Request, Response, StatusCode,
+};
 use hyper_tungstenite::{is_upgrade_request, tungstenite::Message, upgrade, HyperWebsocket};
 use opener::OpenError;
 use rbx_dom_weak::{
@@ -141,7 +144,10 @@ impl ApiService {
         let session_id = self.serve_session.session_id();
         let tree_mutation_sender = self.serve_session.tree_mutation_sender();
 
-        let body = body::to_bytes(request.into_body()).await.unwrap();
+        let body = match read_request_body(request.into_body()).await {
+            Ok(body) => body,
+            Err(response) => return response,
+        };
 
         let request: WriteRequest = match deserialize_msgpack(&body) {
             Ok(request) => request,
@@ -230,7 +236,10 @@ impl ApiService {
     /// `Value` property set to point to the requested Instance.
     async fn handle_api_serialize(&self, request: Request<Body>) -> Response<Body> {
         let session_id = self.serve_session.session_id();
-        let body = body::to_bytes(request.into_body()).await.unwrap();
+        let body = match read_request_body(request.into_body()).await {
+            Ok(body) => body,
+            Err(response) => return response,
+        };
 
         let request: SerializeRequest = match deserialize_msgpack(&body) {
             Ok(request) => request,
@@ -299,7 +308,10 @@ impl ApiService {
     /// endpoint is used.
     async fn handle_api_ref_patch(self, request: Request<Body>) -> Response<Body> {
         let session_id = self.serve_session.session_id();
-        let body = body::to_bytes(request.into_body()).await.unwrap();
+        let body = match read_request_body(request.into_body()).await {
+            Ok(body) => body,
+            Err(response) => return response,
+        };
 
         let request: RefPatchRequest = match deserialize_msgpack(&body) {
             Ok(request) => request,
@@ -456,6 +468,15 @@ impl ApiService {
     }
 }
 
+async fn read_request_body(body: Body) -> Result<Bytes, Response<Body>> {
+    body::to_bytes(body).await.map_err(|err| {
+        msgpack(
+            ErrorResponse::bad_request(format!("Failed to read request body: {}", err)),
+            StatusCode::BAD_REQUEST,
+        )
+    })
+}
+
 /// If this instance is represented by a script, try to find the correct .lua or .luau
 /// file to open to edit it.
 fn pick_script_path(instance: InstanceWithMeta<'_>) -> Option<PathBuf> {
@@ -604,4 +625,46 @@ fn parent_requirements(class: &str) -> Option<&str> {
         "BaseWrap" | "WrapLayer" | "WrapTarget" | "WrapDeformer" => "MeshPart",
         _ => return None,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use serde::Deserialize;
+
+    #[derive(Debug, Deserialize, PartialEq)]
+    enum ApiErrorKind {
+        BadRequest,
+    }
+
+    #[derive(Debug, Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    struct ApiError {
+        kind: ApiErrorKind,
+        details: String,
+    }
+
+    #[tokio::test]
+    async fn read_request_body_returns_body_bytes() {
+        let body = read_request_body(Body::from("hello")).await.unwrap();
+
+        assert_eq!(body, Bytes::from_static(b"hello"));
+    }
+
+    #[tokio::test]
+    async fn read_request_body_returns_structured_bad_request_for_body_errors() {
+        let (sender, body) = Body::channel();
+        sender.abort();
+
+        let response = read_request_body(body).await.unwrap_err();
+
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+        let body = body::to_bytes(response.into_body()).await.unwrap();
+        let error: ApiError = deserialize_msgpack(&body).unwrap();
+
+        assert_eq!(error.kind, ApiErrorKind::BadRequest);
+        assert!(error.details.contains("Failed to read request body"));
+    }
 }
