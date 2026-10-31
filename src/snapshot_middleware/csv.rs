@@ -233,12 +233,12 @@ fn sort_localization_entries(mut entries: Vec<LocalizationEntry>) -> Vec<Localiz
         a.key
             .as_deref()
             .unwrap_or_default()
-            .cmp(&b.key.as_deref().unwrap_or_default())
+            .cmp(b.key.as_deref().unwrap_or_default())
             .then_with(|| {
                 a.source
                     .as_deref()
                     .unwrap_or_default()
-                    .cmp(&b.source.as_deref().unwrap_or_default())
+                    .cmp(b.source.as_deref().unwrap_or_default())
             })
     });
 
@@ -270,7 +270,7 @@ fn convert_localization_csv(contents: &[u8]) -> anyhow::Result<String> {
     for record in &records {
         let mut entry = LocalizationEntry::default();
 
-        for (header, value) in headers.iter().zip(record.into_iter()) {
+        for (header, value) in headers.iter().zip(record) {
             if header.is_empty() || value.is_empty() {
                 continue;
             }
