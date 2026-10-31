@@ -63,6 +63,7 @@ ServeSession.Status = Status
 local validateServeOptions = t.strictInterface({
 	apiContext = t.table,
 	twoWaySync = t.boolean,
+	expectedSessionId = t.optional(t.string),
 })
 
 function ServeSession.new(options)
@@ -101,6 +102,7 @@ function ServeSession.new(options)
 		__status = Status.NotStarted,
 		__apiContext = options.apiContext,
 		__twoWaySync = options.twoWaySync,
+		__expectedSessionId = options.expectedSessionId,
 		__reconciler = reconciler,
 		__instanceMap = instanceMap,
 		__changeBatcher = changeBatcher,
@@ -196,6 +198,10 @@ function ServeSession:start()
 	self.__apiContext
 		:connect()
 		:andThen(function(serverInfo)
+			if self.__expectedSessionId ~= nil and serverInfo.sessionId ~= self.__expectedSessionId then
+				return Promise.reject("Connected to a different Rojo server than the one that opened this place")
+			end
+
 			self:setLoadingText("Loading initial data from server...")
 			return self:__initialSync(serverInfo):andThen(function()
 				self:setLoadingText("Starting sync loop...")

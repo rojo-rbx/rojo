@@ -16,13 +16,8 @@ use super::{resolve_path, GlobalOptions};
 const DEFAULT_BIND_ADDRESS: Ipv4Addr = Ipv4Addr::new(127, 0, 0, 1);
 const DEFAULT_PORT: u16 = 34872;
 
-/// Expose a Rojo project to the Rojo Studio plugin.
 #[derive(Debug, Parser)]
-pub struct ServeCommand {
-    /// Path to the project to serve. Defaults to the current directory.
-    #[clap(default_value = "")]
-    pub project: PathBuf,
-
+pub struct ServerOptions {
     /// The IP address to listen on. Defaults to `127.0.0.1`.
     #[clap(long)]
     pub address: Option<IpAddr>,
@@ -41,14 +36,19 @@ pub struct ServeCommand {
     pub allowed_hosts: Vec<String>,
 }
 
-impl ServeCommand {
-    pub fn run(self, global: GlobalOptions) -> anyhow::Result<()> {
-        let project_path = resolve_path(&self.project)?;
+/// Expose a Rojo project to the Rojo Studio plugin.
+#[derive(Debug, Parser)]
+pub struct ServeCommand {
+    /// Path to the project to serve. Defaults to the current directory.
+    #[clap(default_value = "")]
+    pub project: PathBuf,
 
-        let vfs = Vfs::new_default()?;
+    #[clap(flatten)]
+    pub server: ServerOptions,
+}
 
-        let session = Arc::new(ServeSession::new(vfs, project_path)?);
-
+impl ServerOptions {
+    pub(super) fn resolve_options(self, session: &ServeSession) -> (IpAddr, u16, Vec<String>) {
         let ip = self
             .address
             .or_else(|| session.serve_address())
@@ -67,6 +67,20 @@ impl ServeCommand {
             self.allowed_hosts
         };
 
+        (ip, port, allowed_hosts)
+    }
+}
+
+impl ServeCommand {
+    pub fn run(self, global: GlobalOptions) -> anyhow::Result<()> {
+        let project_path = resolve_path(&self.project)?;
+
+        let vfs = Vfs::new_default()?;
+
+        let session = Arc::new(ServeSession::new(vfs, project_path)?);
+
+        let (ip, port, allowed_hosts) = self.server.resolve_options(&session);
+
         let server = LiveServer::new(session);
 
         server.start((ip, port).into(), allowed_hosts, || {
@@ -77,7 +91,11 @@ impl ServeCommand {
     }
 }
 
-fn show_start_message(bind_address: IpAddr, port: u16, color: ColorChoice) -> io::Result<()> {
+pub(super) fn show_start_message(
+    bind_address: IpAddr,
+    port: u16,
+    color: ColorChoice,
+) -> io::Result<()> {
     let mut green = ColorSpec::new();
     green.set_fg(Some(Color::Green)).set_bold(true);
 
