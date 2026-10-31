@@ -17,11 +17,11 @@ end
 local function preloadAssets()
 	local contentUrls = {}
 	local soundInstances = {}
-	
+
 	local function addToContentUrls(value)
 		table.insert(contentUrls, value)
 	end
-	
+
 	local gatherAssetUrlsRules
 	gatherAssetUrlsRules = {
 		["table"] = function(value)
@@ -29,7 +29,7 @@ local function preloadAssets()
 		end,
 		["string"] = addToContentUrls,
 	}
-	
+
 	local gatherSoundUrlsRules
 	gatherSoundUrlsRules = {
 		["table"] = function(value)
@@ -42,7 +42,7 @@ local function preloadAssets()
 			table.insert(contentUrls, sound)
 		end,
 	}
-	
+
 	gatherAssetUrlsRecursive(Assets, {
 		["table"] = function(value, key)
 			if key ~= "Sounds" then -- an exception!
