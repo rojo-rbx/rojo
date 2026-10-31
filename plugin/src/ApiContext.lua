@@ -90,8 +90,49 @@ local function rejectWrongPlaceId(infoResponseBody)
 	return Promise.resolve(infoResponseBody)
 end
 
+local LOST_CONNECTION_MESSAGE = "Lost connection to the Rojo server. Make sure `rojo serve` is still running."
+
+local LOST_CONNECTION_ERRORS = {
+	{
+		code = 400,
+		messagePatterns = {
+			"failed ws recv",
+			"failure when receiving data from the peer",
+			"connection reset",
+		},
+	},
+}
+
+local function matchesWebSocketError(errorInfo, code, message)
+	if errorInfo.code ~= nil and tostring(errorInfo.code) ~= tostring(code) then
+		return false
+	end
+
+	for _, pattern in ipairs(errorInfo.messagePatterns) do
+		if string.find(message, pattern, 1, true) ~= nil then
+			return true
+		end
+	end
+
+	return false
+end
+
+local function formatWebSocketError(code, msg)
+	local message = if msg == nil then "" else tostring(msg)
+	local normalizedMessage = string.lower(message)
+
+	for _, errorInfo in ipairs(LOST_CONNECTION_ERRORS) do
+		if matchesWebSocketError(errorInfo, code, normalizedMessage) then
+			return LOST_CONNECTION_MESSAGE
+		end
+	end
+
+	return ("WebSocket error: %s - %s"):format(tostring(code), message)
+end
+
 local ApiContext = {}
 ApiContext.__index = ApiContext
+ApiContext.__formatWebSocketError = formatWebSocketError
 
 function ApiContext.new(baseUrl)
 	assert(type(baseUrl) == "string", "baseUrl must be a string")
@@ -275,7 +316,7 @@ function ApiContext:connectWebSocket(packetHandlers)
 			errored:Disconnect()
 			received:Disconnect()
 
-			reject("WebSocket error: " .. code .. " - " .. msg)
+			reject(formatWebSocketError(code, msg))
 		end)
 	end)
 end
