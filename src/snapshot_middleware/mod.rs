@@ -73,14 +73,10 @@ pub fn snapshot_from_vfs(
     };
 
     if meta.is_dir() {
-        let (middleware, dir_name, init_path) = get_dir_middleware(vfs, path)?;
-        // TODO: Support user defined init paths
-        // If and when we do, make sure to go support it in
-        // `Project::set_file_name`, as right now it special-cases
-        // `default.project.json` as an `init` path.
+        let (middleware, dir_name, init_path) = get_dir_middleware(vfs, path, &context.sync_rules)?;
         match middleware {
             Middleware::Dir => middleware.snapshot(context, vfs, path, dir_name),
-            _ => middleware.snapshot(context, vfs, &init_path, dir_name),
+            _ => middleware.snapshot_init(context, vfs, &init_path, dir_name),
         }
     } else {
         let file_name = path
@@ -97,25 +93,55 @@ pub fn snapshot_from_vfs(
             _ => {}
         }
 
+        if context.is_child_pattern_match(file_name) {
+            return Ok(None);
+        }
+
         snapshot_from_path(context, vfs, path)
     }
 }
 
 /// Gets the appropriate middleware for a directory by checking for `init`
-/// files. This uses an intrinsic priority list and for compatibility,
-/// that order should be left unchanged.
+/// files. This first checks user-defined sync rules with `child_pattern` or `suffix`,
+/// then falls back to an intrinsic priority list.
 ///
 /// Returns the middleware, the name of the directory, and the path to
 /// the init location.
 fn get_dir_middleware<'path>(
     vfs: &Vfs,
     dir_path: &'path Path,
+    sync_rules: &[SyncRule],
 ) -> anyhow::Result<(Middleware, &'path str, PathBuf)> {
     let dir_name = dir_path
         .file_name()
         .expect("Could not extract directory name")
         .to_str()
         .ok_or_else(|| anyhow::anyhow!("File name was not valid UTF-8: {}", dir_path.display()))?;
+
+    for default_project_name in DEFAULT_PROJECT_NAMES {
+        let project_path = dir_path.join(default_project_name);
+        if vfs.metadata(&project_path).with_not_found()?.is_some() {
+            return Ok((Middleware::Project, dir_name, project_path));
+        }
+    }
+
+    if let Ok(entries) = vfs.read_dir(dir_path) {
+        let mut child_entries = Vec::new();
+        for entry in entries {
+            if let Ok(entry) = entry {
+                let entry_path = entry.path().to_path_buf();
+                child_entries.push(entry_path);
+            }
+        }
+
+        for rule in sync_rules {
+            for entry_path in &child_entries {
+                if rule.matches_child_path(entry_path) {
+                    return Ok((rule.middleware, dir_name, entry_path.clone()));
+                }
+            }
+        }
+    }
 
     static INIT_PATHS: OnceLock<Vec<(Middleware, &str)>> = OnceLock::new();
     let order = INIT_PATHS.get_or_init(|| {
@@ -131,13 +157,6 @@ fn get_dir_middleware<'path>(
             (Middleware::CsvDir, "init.csv"),
         ]
     });
-
-    for default_project_name in DEFAULT_PROJECT_NAMES {
-        let project_path = dir_path.join(default_project_name);
-        if vfs.metadata(&project_path).with_not_found()?.is_some() {
-            return Ok((Middleware::Project, dir_name, project_path));
-        }
-    }
 
     for (middleware, name) in order {
         let test_path = dir_path.join(name);
@@ -349,6 +368,50 @@ impl Middleware {
         )
     }
 
+    /// Creates a snapshot for an init file inside a directory, usurping the
+    /// directory and attaching the directory's other children.
+    pub fn snapshot_init(
+        &self,
+        context: &InstanceContext,
+        vfs: &Vfs,
+        init_path: &Path,
+        name: &str,
+    ) -> anyhow::Result<Option<InstanceSnapshot>> {
+        let mut output = match self {
+            Self::ServerScript | Self::ServerScriptDir => {
+                snapshot_lua_init(context, vfs, init_path, name, ScriptType::Server)
+            }
+            Self::ClientScript | Self::ClientScriptDir => {
+                snapshot_lua_init(context, vfs, init_path, name, ScriptType::Client)
+            }
+            Self::PluginScript | Self::PluginScriptDir => {
+                snapshot_lua_init(context, vfs, init_path, name, ScriptType::Plugin)
+            }
+            Self::ModuleScript | Self::ModuleScriptDir => {
+                snapshot_lua_init(context, vfs, init_path, name, ScriptType::Module)
+            }
+            Self::LegacyClientScript => {
+                snapshot_lua_init(context, vfs, init_path, name, ScriptType::LegacyClient)
+            }
+            Self::LegacyServerScript => {
+                snapshot_lua_init(context, vfs, init_path, name, ScriptType::LegacyServer)
+            }
+            Self::RunContextClientScript => {
+                snapshot_lua_init(context, vfs, init_path, name, ScriptType::RunContextClient)
+            }
+            Self::RunContextServerScript => {
+                snapshot_lua_init(context, vfs, init_path, name, ScriptType::RunContextServer)
+            }
+            Self::Csv | Self::CsvDir => snapshot_csv_init(context, vfs, init_path, name),
+            Self::Project => snapshot_project(context, vfs, init_path, name),
+            _ => self.snapshot(context, vfs, init_path, name),
+        };
+        if let Ok(Some(ref mut snapshot)) = output {
+            snapshot.metadata.middleware = Some(*self);
+        }
+        output
+    }
+
     /// Attempts to return a middleware that should be used for the given path.
     ///
     /// Returns `Err` only if the Vfs cannot read information about the path.
@@ -363,7 +426,7 @@ impl Middleware {
         };
 
         if meta.is_dir() {
-            let (middleware, _, _) = get_dir_middleware(vfs, path)?;
+            let (middleware, _, _) = get_dir_middleware(vfs, path, sync_rules)?;
             Ok(Some(middleware))
         } else {
             for rule in sync_rules.iter().chain(default_sync_rules()) {
@@ -390,6 +453,7 @@ macro_rules! sync_rule {
             include: Glob::new($pattern).unwrap(),
             exclude: None,
             suffix: None,
+            child_pattern: None,
             base_path: PathBuf::new(),
         }
     };
@@ -399,6 +463,7 @@ macro_rules! sync_rule {
             include: Glob::new($pattern).unwrap(),
             exclude: None,
             suffix: Some($suffix.into()),
+            child_pattern: None,
             base_path: PathBuf::new(),
         }
     };
@@ -408,6 +473,7 @@ macro_rules! sync_rule {
             include: Glob::new($pattern).unwrap(),
             exclude: Some(Glob::new($exclude).unwrap()),
             suffix: Some($suffix.into()),
+            child_pattern: None,
             base_path: PathBuf::new(),
         }
     };

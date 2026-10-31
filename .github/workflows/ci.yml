@@ -1,9 +1,11 @@
 name: CI
 
 on:
+  workflow_dispatch:
   push:
     branches:
     - master
+    - "feat/**"
 
   pull_request:
     branches:

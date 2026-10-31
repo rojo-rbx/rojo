@@ -205,6 +205,20 @@ impl InstanceContext {
     pub fn get_user_sync_rule(&self, path: &Path) -> Option<&SyncRule> {
         self.sync_rules.iter().find(|&rule| rule.matches(path))
     }
+
+    /// Returns the first sync rule whose child_pattern matches the given file name.
+    pub fn get_user_sync_rule_for_child(&self, file_name: &str) -> Option<&SyncRule> {
+        self.sync_rules
+            .iter()
+            .find(|rule| rule.matches_child(file_name))
+    }
+
+    /// Returns whether any user sync rule has a child_pattern matching this file name.
+    pub fn is_child_pattern_match(&self, file_name: &str) -> bool {
+        self.sync_rules
+            .iter()
+            .any(|rule| rule.matches_child(file_name))
+    }
 }
 
 impl Default for InstanceContext {
@@ -329,6 +343,14 @@ pub struct SyncRule {
     /// If not specified, the file extension is the only thing cut off.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub suffix: Option<String>,
+    /// A pattern matching child init files within a directory for this SyncRule.
+    #[serde(
+        rename = "child_pattern",
+        alias = "childPattern",
+        default,
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub child_pattern: Option<Glob>,
     /// The 'base' of the glob above, allowing it to be used
     /// relative to a path instead of absolute.
     #[serde(skip)]
@@ -349,6 +371,38 @@ impl SyncRule {
             }
             Err(_) => false,
         }
+    }
+
+    /// Returns whether this rule matches the given child file name.
+    pub fn matches_child(&self, file_name: &str) -> bool {
+        if let Some(pattern) = &self.child_pattern {
+            return pattern.is_match(file_name);
+        }
+        if let Some(suffix) = &self.suffix {
+            let expected = format!("init{suffix}");
+            return file_name == expected;
+        }
+        false
+    }
+
+    /// Returns whether this rule matches the given child path.
+    pub fn matches_child_path(&self, path: &Path) -> bool {
+        if let Some(file_name) = path.file_name().and_then(|s| s.to_str()) {
+            if !self.matches_child(file_name) {
+                return false;
+            }
+            if !self.base_path.as_os_str().is_empty() {
+                if let Ok(suffix) = path.strip_prefix(&self.base_path) {
+                    if let Some(exclude) = &self.exclude {
+                        if exclude.is_match(suffix) {
+                            return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+        false
     }
 
     pub fn file_name_for_path<'a>(&self, path: &'a Path) -> anyhow::Result<&'a str> {
