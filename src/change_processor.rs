@@ -2,7 +2,7 @@ use crossbeam_channel::{select, Receiver, RecvError, Sender};
 use jod_thread::JoinHandle;
 use memofs::{IoResultExt, Vfs, VfsEvent};
 use rbx_dom_weak::types::{Ref, Variant};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::{
     fs,
     sync::{Arc, Mutex},
@@ -168,16 +168,8 @@ impl JobThreadContext {
         // For a given VFS event, we might have many changes to different parts
         // of the tree. Calculate and apply all of these changes.
         let applied_patches = match event {
-            VfsEvent::Create(path) | VfsEvent::Write(path) => {
-                self.apply_patches(self.vfs.canonicalize(&path).unwrap())
-            }
-            VfsEvent::Remove(path) => {
-                // MemoFS does not track parent removals yet, so we can canonicalize
-                // the parent path safely and then append the removed path's file name.
-                let parent = path.parent().unwrap();
-                let file_name = path.file_name().unwrap();
-                let parent_normalized = self.vfs.canonicalize(parent).unwrap();
-                self.apply_patches(parent_normalized.join(file_name))
+            VfsEvent::Create(path) | VfsEvent::Write(path) | VfsEvent::Remove(path) => {
+                self.apply_patches(canonicalize_best_effort(&self.vfs, &path))
             }
             _ => {
                 log::warn!("Unhandled VFS event: {:?}", event);
@@ -291,6 +283,24 @@ impl JobThreadContext {
         if !applied_patch.is_empty() {
             self.message_queue.push_messages(&[applied_patch]);
         }
+    }
+}
+
+/// Canonicalizes the deepest ancestor of `path` that still exists and adds the
+/// rest of `path` back on.
+///
+/// Events are handled some time after they happen on disk, so their paths may
+/// already be gone: editors write a temp file and rename it over the real one,
+/// and a recursive delete removes a folder right after its children. Unwrapping
+/// here killed `rojo serve` in both cases.
+fn canonicalize_best_effort(vfs: &Vfs, path: &Path) -> PathBuf {
+    if let Ok(canonical) = vfs.canonicalize(path) {
+        return canonical;
+    }
+
+    match (path.parent(), path.file_name()) {
+        (Some(parent), Some(file_name)) => canonicalize_best_effort(vfs, parent).join(file_name),
+        _ => path.to_path_buf(),
     }
 }
 

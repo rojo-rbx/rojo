@@ -1,98 +1,22 @@
 name: Release
 
+# Trimmed for this fork: only the Windows exe. Upstream's full workflow also uploads the
+# plugin to Roblox, which needs secrets this fork doesn't have.
 on:
   push:
     tags: ["v*"]
 
+permissions:
+  contents: write
+
+env:
+  TARGET: x86_64-pc-windows-msvc
+
 jobs:
-  create-release:
-    name: Create Release
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Create Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release create ${{ github.ref_name }} --draft --verify-tag --title ${{ github.ref_name }}
-
-  build-plugin:
-    needs: ["create-release"]
-    name: Build Roblox Studio Plugin
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: true
-
-      - name: Setup Rokit
-        uses: CompeyDev/setup-rokit@v0.1.2
-        with:
-          version: 'v1.1.0'
-
-      - name: Build Plugin
-        run: rojo build plugin.project.json --output Rojo.rbxm
-
-      - name: Upload Plugin to Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release upload ${{ github.ref_name }} Rojo.rbxm
-
-      - name: Upload Plugin to Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: Rojo.rbxm
-          path: Rojo.rbxm
-      
-      - name: Upload Plugin to Roblox
-        env:
-          RBX_API_KEY: ${{ secrets.PLUGIN_UPLOAD_TOKEN }}
-          RBX_UNIVERSE_ID: ${{ vars.PLUGIN_CI_PLACE_ID }}
-          RBX_PLACE_ID: ${{ vars.PLUGIN_CI_UNIVERSE_ID }}
-        run: lune run upload-plugin Rojo.rbxm
-
   build:
-    needs: ["create-release"]
-    strategy:
-      fail-fast: false
-      matrix:
-        # https://doc.rust-lang.org/rustc/platform-support.html
-        include:
-          - host: linux
-            os: ubuntu-22.04
-            target: x86_64-unknown-linux-gnu
-            label: linux-x86_64
-
-          - host: linux
-            os: ubuntu-22.04-arm
-            target: aarch64-unknown-linux-gnu
-            label: linux-aarch64
-
-          - host: windows
-            os: windows-latest
-            target: x86_64-pc-windows-msvc
-            label: windows-x86_64
-
-          - host: windows
-            os: windows-11-arm
-            target: aarch64-pc-windows-msvc
-            label: windows-aarch64
-
-          - host: macos
-            os: macos-latest
-            target: x86_64-apple-darwin
-            label: macos-x86_64
-
-          - host: macos
-            os: macos-latest
-            target: aarch64-apple-darwin
-            label: macos-aarch64
-
-    name: Build (${{ matrix.target }})
-    runs-on: ${{ matrix.os }}
-    env:
-      BIN: rojo
+    name: Build (x86_64-pc-windows-msvc)
+    runs-on: windows-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
         with:
@@ -101,57 +25,27 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.target }}
-
-      - name: Restore Rust Cache
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ matrix.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          targets: ${{ env.TARGET }}
 
       - name: Build Release
-        run: cargo build --release --locked --verbose --target ${{ matrix.target }}
+        run: cargo build --release --locked --verbose --target ${{ env.TARGET }}
 
-      - name: Save Rust Cache
-        uses: actions/cache/save@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ matrix.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      # A failure here shows in the run but still publishes, so its log can be read and
+      # judged before anyone uses the exe.
+      - name: Test
+        run: cargo test --locked --verbose
+        continue-on-error: true
+        timeout-minutes: 25
 
-      - name: Generate Artifact Name
-        shell: bash
-        env:
-          TAG_NAME: ${{ github.ref_name }}
-        run: |
-          echo "ARTIFACT_NAME=$BIN-${TAG_NAME#v}-${{ matrix.label }}.zip" >> "$GITHUB_ENV"
-
-      - name: Create Archive and Upload to Release
+      - name: Publish Release
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ github.ref_name }}
         run: |
+          ARTIFACT_NAME="rojo-${TAG_NAME#v}-windows-x86_64.zip"
           mkdir staging
-
-          if [ "${{ matrix.host }}" = "windows" ]; then
-            cp "target/${{ matrix.target }}/release/$BIN.exe" staging/
-            cd staging
-            7z a ../$ARTIFACT_NAME *
-          else
-            cp "target/${{ matrix.target }}/release/$BIN" staging/
-            cd staging
-            zip ../$ARTIFACT_NAME *
-          fi
-
-          gh release upload ${{ github.ref_name }} ../$ARTIFACT_NAME
-
-      - name: Upload Archive to Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          path: ${{ env.ARTIFACT_NAME }}
-          name: ${{ env.ARTIFACT_NAME }}
+          cp "target/$TARGET/release/rojo.exe" staging/
+          (cd staging && 7z a "../$ARTIFACT_NAME" *)
+          gh release create "$TAG_NAME" "$ARTIFACT_NAME" --verify-tag --title "$TAG_NAME" \
+            --notes "Rojo 7.7.1 with one change: rojo serve no longer crashes when a watched path vanishes before its event is handled. Unofficial."
