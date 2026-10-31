@@ -34,6 +34,7 @@ Making a new release? Simply add the new header with the version and date undern
 * LocalizationTables no longer report as changed when nothing changes. [(#1333)]
 
 [#1333]: https://github.com/rojo-rbx/rojo/pull/1333
+[#1351]: https://github.com/rojo-rbx/rojo/pull/1351
 
 ## [7.7.1] (October 1st, 2026)
 
