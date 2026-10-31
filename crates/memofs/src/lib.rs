@@ -640,7 +640,7 @@ mod test {
         let contents = "Lorem ipsum dolor sit amet.".to_string();
         let dir = tempfile::tempdir().unwrap();
         let file_path = dir.path().join("file.txt");
-        fs_err::write(&file_path, contents.to_string()).unwrap();
+        fs_err::write(&file_path, &contents).unwrap();
 
         let vfs = Vfs::new(StdBackend::new().unwrap());
         let canonicalized = vfs.canonicalize(&file_path).unwrap();

@@ -32,10 +32,12 @@ Making a new release? Simply add the new header with the version and date undern
 ## Unreleased
 
 * Added the `rojo open` command, which serves a project and opens a place in Roblox Studio that automatically connects to it. The place can be an existing place file (`--place`), a fresh build of the project (`--output`), or a published place (`--place-id` and `--universe-id`). ([#1326])
-* LocalizationTables no longer report as changed when nothing changes. [(#1333)]
+* LocalizationTables no longer report as changed when nothing changes. ([#1333])
+* Sounds now preloaded correctly. The warning "*ContentId: rbxassetid://203785492 failed due to: Asset type does not match requested type*" is fixed. ([#1351])
 
 [#1333]: https://github.com/rojo-rbx/rojo/pull/1333
 [#1326]: https://github.com/rojo-rbx/rojo/pull/1326
+[#1351]: https://github.com/rojo-rbx/rojo/pull/1351
 
 ## [7.7.1] (October 1st, 2026)
 

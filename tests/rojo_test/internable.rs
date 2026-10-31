@@ -58,7 +58,7 @@ impl<'a> Internable<&'a HashMap<Ref, Instance<'_>>> for Instance<'a> {
 
 impl Internable<()> for SocketPacket<'_> {
     fn intern(&self, redactions: &mut RedactionMap, extra: ()) {
-        redactions.intern(&self.session_id);
+        redactions.intern(self.session_id);
         match &self.body {
             SocketPacketBody::Messages(packet) => packet.intern(redactions, extra),
         }

@@ -1,6 +1,6 @@
 [tools]
-rojo = "rojo-rbx/rojo@7.5.1"
-selene = "Kampfkarren/selene@0.29.0"
-stylua = "JohnnyMorganz/stylua@2.1.0"
+rojo = "rojo-rbx/rojo@7.7.1"
+selene = "Kampfkarren/selene@0.32.0"
+stylua = "JohnnyMorganz/stylua@2.6.0"
 run-in-roblox = "rojo-rbx/run-in-roblox@0.3.0"
-lune = "lune-org/lune@0.10.4"
+lune = "lune-org/lune@0.11.1"
