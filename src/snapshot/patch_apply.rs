@@ -175,6 +175,12 @@ fn apply_update_child(context: &mut PatchApplyContext, tree: &mut RojoTree, patc
     let mut applied_patch = AppliedPatchUpdate::new(patch.id);
 
     if let Some(metadata) = patch.changed_metadata {
+        applied_patch.changed_ignore_unknown_instances = tree
+            .get_instance(patch.id)
+            .map(|instance| instance.metadata().ignore_unknown_instances)
+            .filter(|previous| *previous != metadata.ignore_unknown_instances)
+            .map(|_| metadata.ignore_unknown_instances);
+
         tree.update_metadata(patch.id, metadata.clone());
         applied_patch.changed_metadata = Some(metadata);
     }

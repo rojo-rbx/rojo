@@ -775,3 +775,80 @@ fn forced_parent() {
         assert_snapshot!("forced_parent_serialize_model", model);
     });
 }
+
+#[test]
+fn changed_metadata() {
+    run_serve_test("changed_metadata", |session, mut redactions| {
+        let _ = session.get_api_rojo().unwrap();
+
+        let project = |anchored: bool, ignore_unknown: Option<bool>, path: &str| {
+            let ignore_unknown = match ignore_unknown {
+                Some(value) => format!("\"$ignoreUnknownInstances\": {value},"),
+                None => String::new(),
+            };
+
+            format!(
+                r#"{{
+  "name": "changed_metadata",
+  "tree": {{
+    "$className": "DataModel",
+    "Workspace": {{
+      "$className": "Workspace",
+      "Baseplate": {{
+        "$className": "Part",
+        {ignore_unknown}
+        "$properties": {{
+          "Anchored": {anchored}
+        }}
+      }},
+      "Thing": {{
+        "$path": "{path}"
+      }}
+    }}
+  }}
+}}
+"#
+            )
+        };
+
+        let write_project = |contents: String| {
+            fs::write(session.path().join("default.project.json"), contents).unwrap();
+        };
+
+        write_project(project(false, None, "a"));
+        let packet = session
+            .get_api_socket_packet(SocketPacketType::Messages, 0)
+            .unwrap();
+        assert_yaml_snapshot!(
+            "changed_metadata_property_only",
+            packet.intern_and_redact(&mut redactions, ())
+        );
+
+        write_project(project(false, Some(false), "a"));
+        let packet = session
+            .get_api_socket_packet(SocketPacketType::Messages, 1)
+            .unwrap();
+        assert_yaml_snapshot!(
+            "changed_metadata_metadata_only",
+            packet.intern_and_redact(&mut redactions, ())
+        );
+
+        write_project(project(true, Some(true), "a"));
+        let packet = session
+            .get_api_socket_packet(SocketPacketType::Messages, 2)
+            .unwrap();
+        assert_yaml_snapshot!(
+            "changed_metadata_property_and_metadata",
+            packet.intern_and_redact(&mut redactions, ())
+        );
+
+        write_project(project(true, Some(true), "b"));
+        let packet = session
+            .get_api_socket_packet(SocketPacketType::Messages, 3)
+            .unwrap();
+        assert_yaml_snapshot!(
+            "changed_metadata_relevant_paths_only",
+            packet.intern_and_redact(&mut redactions, ())
+        );
+    });
+}

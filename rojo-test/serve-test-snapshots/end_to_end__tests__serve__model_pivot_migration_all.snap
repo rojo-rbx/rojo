@@ -18,12 +18,6 @@ body:
             NeedsPivotMigration:
               Bool: false
       removed: []
-      updated:
-        - changedClassName: ~
-          changedMetadata:
-            ignoreUnknownInstances: true
-          changedName: ~
-          changedProperties: {}
-          id: id-3
+      updated: []
 packetType: messages
 sessionId: id-1
