@@ -7,8 +7,8 @@ local Assets = require(script.Parent.Assets)
 
 local function gatherAssetUrlsRecursive(currentTable, typeCallbacks)
 	for key, value in currentTable do
-		const callback = typeCallbacks[type(value)]
-		if type(callback) == `function` then
+		local callback = typeCallbacks[type(value)]
+		if type(callback) == "function" then
 			callback(value, key)
 		end
 	end
@@ -18,25 +18,25 @@ local function preloadAssets()
 	local contentUrls = {}
 	local soundInstances = {}
 	
-	const function addToContentUrls(value)
+	local function addToContentUrls(value)
 		table.insert(contentUrls, value)
 	end
 	
 	local gatherAssetUrlsRules
 	gatherAssetUrlsRules = {
-		[`table`] = function(value)
+		["table"] = function(value)
 			gatherAssetUrlsRecursive(value, gatherAssetUrlsRules)
 		end,
-		[`string`] = addToContentUrls,
+		["string"] = addToContentUrls,
 	}
 	
 	local gatherSoundUrlsRules
 	gatherSoundUrlsRules = {
-		[`table`] = function(value)
+		["table"] = function(value)
 			gatherAssetUrlsRecursive(value, gatherSoundUrlsRules)
 		end,
-		[`string`] = function(value)
-			const sound = Instance.new(`Sound`)
+		["string"] = function(value)
+			local sound = Instance.new("Sound")
 			sound.SoundId = value
 			table.insert(soundInstances, sound)
 			table.insert(contentUrls, sound)
@@ -44,14 +44,14 @@ local function preloadAssets()
 	}
 	
 	gatherAssetUrlsRecursive(Assets, {
-		[`table`] = function(value, key)
-			if key ~= `Sounds` then -- an exception!
+		["table"] = function(value, key)
+			if key ~= "Sounds" then -- an exception!
 				gatherAssetUrlsRecursive(value, gatherAssetUrlsRules)
 				return
 			end
 			gatherAssetUrlsRecursive(value, gatherSoundUrlsRules)
 		end,
-		[`string`] = addToContentUrls,
+		["string"] = addToContentUrls,
 	})
 
 	Log.trace("Preloading assets: {:?}", contentUrls)
