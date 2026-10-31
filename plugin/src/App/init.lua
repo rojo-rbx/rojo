@@ -601,6 +601,13 @@ function App:useRunningConnectionInfo()
 end
 
 function App:startSession()
+	if self.serveSession ~= nil then
+		-- A session is already active
+		-- Without this guard double clicking connect starts 2 serve sessions and leaks the first and crashes the plugn
+		Log.trace("Ignoring startSession because a session is already active")
+		return
+	end
+
 	local claimedLock, priorOwner = self:claimSyncLock()
 	if not claimedLock then
 		local msg = string.format("Could not sync because user '%s' is already syncing", tostring(priorOwner))
@@ -630,6 +637,8 @@ function App:startSession()
 		apiContext = apiContext,
 		twoWaySync = Settings:get("twoWaySync"),
 	})
+	-- Assign before start() so the guard above rejects simultaneous calls
+	self.serveSession = serveSession
 
 	serveSession:setUpdateLoadingTextCallback(function(text: string)
 		self:setState({
@@ -825,8 +834,6 @@ function App:startSession()
 	end)
 
 	serveSession:start()
-
-	self.serveSession = serveSession
 end
 
 function App:endSession()
