@@ -1,4 +1,5 @@
 {
   "luau-lsp.sourcemap.rojoProjectFile": "plugin.project.json",
+  "luau-lsp.fflags.enableNewSolver": false,
   "luau-lsp.sourcemap.autogenerate": true
 }
