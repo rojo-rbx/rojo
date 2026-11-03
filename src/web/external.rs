@@ -66,6 +66,10 @@ struct AssetResponse {
     // revision_create_time: String,
 }
 
+/// Replaces the asset at `asset_id` with the provided `contents`, authenticating with
+/// an Open Cloud API key.
+///
+/// If `publish` is true, then the asset will be published if it is a place.
 #[inline]
 pub fn patch_asset_open_cloud(
     api_key: &str,
@@ -82,6 +86,10 @@ pub fn patch_asset_open_cloud(
     )
 }
 
+/// Replaces the asset at `asset_id` with the provided `contents`, authenticating with
+/// the provided cookie.
+///
+/// If `publish` is true, then the asset will be published if it is a place.
 #[inline]
 pub fn patch_asset_cookie(
     cookie: &str,
