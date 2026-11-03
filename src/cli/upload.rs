@@ -23,22 +23,22 @@ pub struct UploadCommand {
 
     /// API key obtained from create.roblox.com/dashboard/credentials.
     /// Rojo will use the Open Cloud API when this is provided.
-    #[clap(long = "api_key")]
+    #[clap(long = "api-key", alias = "api_key")]
     pub api_key: Option<String>,
 
     /// The Universe ID of the given place. Required when using the Open Cloud API.
     ///
     /// No longer used, but supported for compatibility.
-    #[clap(hidden = true, long = "universe_id")]
+    #[clap(hidden = true, long = "universe_id", alias = "universe_id")]
     pub universe_id: Option<u64>,
 
     /// Asset ID to upload to.
-    #[clap(long = "asset_id")]
+    #[clap(long = "asset-id", alias = "asset_id")]
     pub asset_id: u64,
 
     /// If passed, publishing will be skipped for an uploaded place.
     /// Does nothing for models and other asset types.
-    #[clap(long)]
+    #[clap(long = "skip-publish", alias = "skip_publish")]
     pub skip_publish: bool,
 }
 
