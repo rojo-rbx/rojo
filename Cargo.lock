@@ -2591,7 +2591,6 @@ dependencies = [
  "toml",
  "uuid",
  "walkdir",
- "winreg 0.10.1",
  "yaml-rust2",
 ]
 
