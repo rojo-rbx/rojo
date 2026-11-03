@@ -27,15 +27,7 @@ use tokio::runtime::Runtime;
 use crate::serve_session::ServeSession;
 
 /// A user agent used for external requests sent via this module.
-const USER_AGENT: &str = concat!(
-    env!("CARGO_PKG_NAME"),
-    " ",
-    env!("CARGO_PKG_VERSION"),
-    cfg_select! {
-        debug_assertions => "-indev",
-        _ => "",
-    }
-);
+const USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), " ", env!("CARGO_PKG_VERSION"));
 
 pub struct LiveServer {
     serve_session: Arc<ServeSession>,
