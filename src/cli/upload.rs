@@ -23,6 +23,8 @@ pub struct UploadCommand {
 
     /// API key obtained from create.roblox.com/dashboard/credentials.
     /// Rojo will use the Open Cloud API when this is provided.
+    ///
+    /// This API key must have `asset:read` and `asset:write` permissions.
     #[clap(long = "api-key", alias = "api_key")]
     pub api_key: Option<String>,
 
