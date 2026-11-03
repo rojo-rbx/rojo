@@ -1,9 +1,12 @@
-//! Defines the Rojo web interface. This is what the Roblox Studio plugin
-//! communicates with. Eventually, we'll make this API stable, produce better
-//! documentation for it, and open it up for other consumers.
+//! Defines the Rojo web interface, along with the API used by the
+//! Roblox Studio plugin and any other web requests that Rojo has to perform.
+//!
+//! Eventually, the server's API will be stablized and we'll document it so
+//! other consumers can use it.
 
 mod api;
 mod assets;
+pub mod external;
 pub mod interface;
 mod origin;
 mod ui;
@@ -22,6 +25,17 @@ use hyper::{
 use tokio::runtime::Runtime;
 
 use crate::serve_session::ServeSession;
+
+/// A user agent used for external requests sent via this module.
+const USER_AGENT: &str = concat!(
+    env!("CARGO_PKG_NAME"),
+    " ",
+    env!("CARGO_PKG_VERSION"),
+    cfg_select! {
+        debug_assertions => "-indev",
+        _ => "",
+    }
+);
 
 pub struct LiveServer {
     serve_session: Arc<ServeSession>,
