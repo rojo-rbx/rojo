@@ -58,7 +58,7 @@ fn main() {
     let options = Options::parse();
 
     let log_filter = match options.global.verbosity {
-        0 => "info",
+        0 => "info,rbx_cookie=off",
         1 => "info,librojo=debug",
         2 => "info,librojo=trace",
         _ => "trace",
