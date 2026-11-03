@@ -33,9 +33,16 @@ Making a new release? Simply add the new header with the version and date undern
 
 * LocalizationTables no longer report as changed when nothing changes. ([#1333])
 * Sounds now preloaded correctly. The warning "*ContentId: rbxassetid://203785492 failed due to: Asset type does not match requested type*" is fixed. ([#1351])
+* `rojo upload` now uses modern endpoints for uploading assets in preparation for upcoming Roblox changes. ([#1355])
+ 	Unfortunately, this means the scopes required for API keys have changed.
+ 	They WERE: `universe.place:write`. They are now: `assets:read` and `assets:write`.
+* `rojo upload` now supports kebab-case parameters, like `--api-key` rather than just `--api_key` ([#1355])
+* `rojo upload` now supports uploading with cookies again ([#1355])
+* `rojo upload` no longer requires `--universe-id` to be specified ([#1355]) 
 
 [#1333]: https://github.com/rojo-rbx/rojo/pull/1333
 [#1351]: https://github.com/rojo-rbx/rojo/pull/1351
+[#1355]: https://github.com/rojo-rbx/rojo/pull/1355
 
 ## [7.7.1] (October 1st, 2026)
 
