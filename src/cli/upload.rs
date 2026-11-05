@@ -95,7 +95,7 @@ impl UploadCommand {
             (Some(_), Some(_)) => {
                 bail!("You must specify either --cookie or --api-key to upload, not both")
             }
-        }
+        };
 
         Ok(())
     }

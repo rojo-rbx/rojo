@@ -67,7 +67,7 @@ struct AssetResponse {
 }
 
 /// Replaces the asset at `asset_id` with the provided `contents`, authenticating with
-/// an Open Cloud API key.
+/// an Open Cloud API key. Returns the new revision ID of the uploaded asset.
 ///
 /// If `publish` is true, then the asset will be published if it is a place.
 #[inline]
@@ -76,7 +76,7 @@ pub fn patch_asset_open_cloud(
     asset_id: u64,
     contents: Vec<u8>,
     publish: bool,
-) -> anyhow::Result<()> {
+) -> anyhow::Result<String> {
     patch_asset(
         (API_KEY_HEADER, api_key),
         ASSET_BASE_URL_OPEN_CLOUD,
@@ -87,7 +87,7 @@ pub fn patch_asset_open_cloud(
 }
 
 /// Replaces the asset at `asset_id` with the provided `contents`, authenticating with
-/// the provided cookie.
+/// the provided cookie. Returns the new revision ID of the uploaded asset.
 ///
 /// If `publish` is true, then the asset will be published if it is a place.
 #[inline]
@@ -96,7 +96,7 @@ pub fn patch_asset_cookie(
     asset_id: u64,
     contents: Vec<u8>,
     publish: bool,
-) -> anyhow::Result<()> {
+) -> anyhow::Result<String> {
     patch_asset(
         ("Cookie", &format!(".ROBLOSECURITY={cookie}")),
         ASSET_BASE_URL_COOKIE,
@@ -112,6 +112,7 @@ pub fn patch_asset_cookie(
 /// - If it fails with a 403, it retries to get a CSRF token in case it's needed
 /// - If either of the requests succeed, polls for the resulting operation to be finished
 /// - Reports either error or success depending upon the result of that poll
+/// - Returns the new revision ID if the upload succeeded
 ///
 /// `authentication` is expected to be in the format (Header_Name, Header_Value).
 /// `base_url` is meant to be a URL that can be used as a prefix for operations.
@@ -124,7 +125,7 @@ fn patch_asset(
     asset_id: u64,
     contents: Vec<u8>,
     publish: bool,
-) -> anyhow::Result<()> {
+) -> anyhow::Result<String> {
     let client = client();
     let asset_url = format!("{base_url}/assets/{asset_id}");
 
@@ -242,9 +243,10 @@ fn patch_asset(
         } else {
             log::info!("Revision {revision} of asset '{name}' is available but not published");
         }
+        Ok(response.revision_id)
+    } else {
+        bail!("The upload completed but did not return an appropriate response")
     }
-
-    Ok(())
 }
 
 /// If given an API key and an operation ID, will poll it until it is done.
