@@ -417,7 +417,7 @@ mod test {
             panic!("no 'UPLOAD_COMMAND_TEST_TOKEN' env var set")
         };
 
-        let old_revision = client()
+        let old_revision_response: serde_json::Value = client()
             .get(format!(
                 "{ASSET_BASE_URL_OPEN_CLOUD}/assets/{OPEN_CLOUD_MODEL_ID}"
             ))
@@ -425,7 +425,12 @@ mod test {
             .header(API_KEY_HEADER, &api_key)
             .send()
             .expect("requests to Roblox should not fail")
-            .json::<AssetResponse>()
+            .json()
+            .expect("deserializing the response from Roblox as JSON should not fail");
+
+        println!("response for old revision: {}", old_revision_response);
+
+        let old_revision = serde_json::from_value::<AssetResponse>(old_revision_response)
             .expect("deserializing the response from Roblox should not fail")
             .revision_id;
 
@@ -453,7 +458,7 @@ mod test {
             panic!("no 'UPLOAD_COMMAND_TEST_TOKEN' env var set")
         };
 
-        let old_revision = client()
+        let old_revision_response: serde_json::Value = client()
             .get(format!(
                 "{ASSET_BASE_URL_OPEN_CLOUD}/assets/{OPEN_CLOUD_PLACE_ID}"
             ))
@@ -461,7 +466,12 @@ mod test {
             .header(API_KEY_HEADER, &api_key)
             .send()
             .expect("requests to Roblox should not fail")
-            .json::<AssetResponse>()
+            .json()
+            .expect("deserializing the response from Roblox as JSON should not fail");
+
+        println!("response for old revision: {}", old_revision_response);
+
+        let old_revision = serde_json::from_value::<AssetResponse>(old_revision_response)
             .expect("deserializing the response from Roblox should not fail")
             .revision_id;
 
@@ -492,7 +502,7 @@ mod test {
             panic!("no 'BOT_ACCOUNT_COOKIE' env var set")
         };
 
-        let old_revision = client()
+        let old_revision_response: serde_json::Value = client()
             .get(format!(
                 "{ASSET_BASE_URL_OPEN_CLOUD}/assets/{COOKIE_MODEL_ID}"
             ))
@@ -500,7 +510,12 @@ mod test {
             .header(API_KEY_HEADER, &api_key)
             .send()
             .expect("requests to Roblox should not fail")
-            .json::<AssetResponse>()
+            .json()
+            .expect("deserializing the response from Roblox as JSON should not fail");
+
+        println!("response for old revision: {}", old_revision_response);
+
+        let old_revision = serde_json::from_value::<AssetResponse>(old_revision_response)
             .expect("deserializing the response from Roblox should not fail")
             .revision_id;
 
@@ -530,7 +545,7 @@ mod test {
             panic!("no 'BOT_ACCOUNT_COOKIE' env var set")
         };
 
-        let old_revision = client()
+        let old_revision_response: serde_json::Value = client()
             .get(format!(
                 "{ASSET_BASE_URL_OPEN_CLOUD}/assets/{COOKIE_PLACE_ID}"
             ))
@@ -538,7 +553,12 @@ mod test {
             .header(API_KEY_HEADER, &api_key)
             .send()
             .expect("requests to Roblox should not fail")
-            .json::<AssetResponse>()
+            .json()
+            .expect("deserializing the response from Roblox as JSON should not fail");
+
+        println!("response for old revision: {}", old_revision_response);
+
+        let old_revision = serde_json::from_value::<AssetResponse>(old_revision_response)
             .expect("deserializing the response from Roblox should not fail")
             .revision_id;
 
