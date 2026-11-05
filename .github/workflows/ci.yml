@@ -39,6 +39,9 @@ jobs:
       run: cargo build --locked --verbose
 
     - name: Test
+      env:
+        BOT_ACCOUNT_COOKIE: ${{ secrets.BOT_ACCOUNT_COOKIE }}
+        UPLOAD_COMMAND_TEST_TOKEN: ${{ secrets.UPLOAD_COMMAND_TEST_TOKEN }}
       run: cargo test --locked --verbose
 
     - name: Save Rust Cache
