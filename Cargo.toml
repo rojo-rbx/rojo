@@ -131,3 +131,12 @@ pretty_assertions = "1.4.0"
 serde_yaml = "0.8.26"
 tempfile = "3.10.1"
 walkdir = "2.5.0"
+
+# We do not use gzip outside of tests.
+reqwest = { version = "*", default-features = false, features = [
+    "blocking",
+    "json",
+    "rustls",
+    "multipart",
+    "gzip",
+] }
