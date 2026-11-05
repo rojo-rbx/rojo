@@ -390,3 +390,168 @@ fn client() -> Client {
     //     .build()
     //     .unwrap()
 }
+
+#[cfg(test)]
+mod test {
+    use rbx_dom_weak::{InstanceBuilder, WeakDom};
+    use uuid::Uuid;
+
+    use super::*;
+
+    // These assets are owned by the Roblox community 'Rojo Foundation'
+    // Located here: https://www.roblox.com/communities/32644114/Rojo-Foundation
+    // To avoid accidentally double-uploading an asset (and thus ruining the test)
+    // we use a separate place/model for each upload type.
+    const OPEN_CLOUD_MODEL_ID: u64 = 136940743748740;
+    const COOKIE_MODEL_ID: u64 = 136033424984300;
+    const OPEN_CLOUD_PLACE_ID: u64 = 73509996833283;
+    const COOKIE_PLACE_ID: u64 = 99207739640685;
+
+    #[test]
+    fn upload_model_open_cloud() {
+        if !matches!(std::env::var("CI").as_deref(), Ok("true")) {
+            println!("upload tests only run in CI in Rojo's repository due to requiring secrets");
+            return;
+        }
+        let Ok(api_key) = std::env::var("UPLOAD_COMMAND_TEST_TOKEN") else {
+            panic!("no 'UPLOAD_COMMAND_TEST_TOKEN' env var set")
+        };
+
+        let old_revision = client()
+            .get(format!(
+                "{ASSET_BASE_URL_OPEN_CLOUD}/assets/{OPEN_CLOUD_MODEL_ID}"
+            ))
+            .header("User-Agent", crate::web::USER_AGENT)
+            .header(API_KEY_HEADER, &api_key)
+            .send()
+            .expect("requests to Roblox should not fail")
+            .json::<AssetResponse>()
+            .expect("deserializing the response from Roblox should not fail")
+            .revision_id;
+
+        let dom = WeakDom::new(InstanceBuilder::new("Workspace").with_name(Uuid::new_v4()));
+
+        let mut buffer = Vec::new();
+        rbx_binary::to_writer(&mut buffer, &dom, &[dom.root_ref()]).unwrap();
+
+        let new_revision =
+            patch_asset_open_cloud(&api_key, OPEN_CLOUD_MODEL_ID, buffer, true).unwrap();
+
+        assert_ne!(
+            old_revision, new_revision,
+            "revision ID before uploading should not equal revision ID after uploading"
+        )
+    }
+
+    #[test]
+    fn upload_place_open_cloud() {
+        if !matches!(std::env::var("CI").as_deref(), Ok("true")) {
+            println!("upload tests only run in CI in Rojo's repository due to requiring secrets");
+            return;
+        }
+        let Ok(api_key) = std::env::var("UPLOAD_COMMAND_TEST_TOKEN") else {
+            panic!("no 'UPLOAD_COMMAND_TEST_TOKEN' env var set")
+        };
+
+        let old_revision = client()
+            .get(format!(
+                "{ASSET_BASE_URL_OPEN_CLOUD}/assets/{OPEN_CLOUD_PLACE_ID}"
+            ))
+            .header("User-Agent", crate::web::USER_AGENT)
+            .header(API_KEY_HEADER, &api_key)
+            .send()
+            .expect("requests to Roblox should not fail")
+            .json::<AssetResponse>()
+            .expect("deserializing the response from Roblox should not fail")
+            .revision_id;
+
+        let dom = WeakDom::new(InstanceBuilder::new("Workspace").with_name(Uuid::new_v4()));
+
+        let mut buffer = Vec::new();
+        rbx_binary::to_writer(&mut buffer, &dom, &[dom.root_ref()]).unwrap();
+
+        let new_revision =
+            patch_asset_open_cloud(&api_key, OPEN_CLOUD_PLACE_ID, buffer, true).unwrap();
+
+        assert_ne!(
+            old_revision, new_revision,
+            "revision ID before uploading should not equal revision ID after uploading"
+        )
+    }
+
+    #[test]
+    fn upload_model_cookie() {
+        if !matches!(std::env::var("CI").as_deref(), Ok("true")) {
+            println!("upload tests only run in CI in Rojo's repository due to requiring secrets");
+            return;
+        }
+        let Ok(api_key) = std::env::var("UPLOAD_COMMAND_TEST_TOKEN") else {
+            panic!("no 'UPLOAD_COMMAND_TEST_TOKEN' env var set")
+        };
+        let Ok(cookie) = std::env::var("BOT_ACCOUNT_COOKIE") else {
+            panic!("no 'BOT_ACCOUNT_COOKIE' env var set")
+        };
+
+        let old_revision = client()
+            .get(format!(
+                "{ASSET_BASE_URL_OPEN_CLOUD}/assets/{COOKIE_MODEL_ID}"
+            ))
+            .header("User-Agent", crate::web::USER_AGENT)
+            .header(API_KEY_HEADER, &api_key)
+            .send()
+            .expect("requests to Roblox should not fail")
+            .json::<AssetResponse>()
+            .expect("deserializing the response from Roblox should not fail")
+            .revision_id;
+
+        let dom = WeakDom::new(InstanceBuilder::new("Workspace").with_name(Uuid::new_v4()));
+
+        let mut buffer = Vec::new();
+        rbx_binary::to_writer(&mut buffer, &dom, &[dom.root_ref()]).unwrap();
+
+        let new_revision = patch_asset_cookie(&cookie, COOKIE_MODEL_ID, buffer, true).unwrap();
+
+        assert_ne!(
+            old_revision, new_revision,
+            "revision ID before uploading should not equal revision ID after uploading"
+        )
+    }
+
+    #[test]
+    fn upload_place_cookie() {
+        if !matches!(std::env::var("CI").as_deref(), Ok("true")) {
+            println!("upload tests only run in CI in Rojo's repository due to requiring secrets");
+            return;
+        }
+        let Ok(api_key) = std::env::var("UPLOAD_COMMAND_TEST_TOKEN") else {
+            panic!("no 'UPLOAD_COMMAND_TEST_TOKEN' env var set")
+        };
+        let Ok(cookie) = std::env::var("BOT_ACCOUNT_COOKIE") else {
+            panic!("no 'BOT_ACCOUNT_COOKIE' env var set")
+        };
+
+        let old_revision = client()
+            .get(format!(
+                "{ASSET_BASE_URL_OPEN_CLOUD}/assets/{COOKIE_PLACE_ID}"
+            ))
+            .header("User-Agent", crate::web::USER_AGENT)
+            .header(API_KEY_HEADER, &api_key)
+            .send()
+            .expect("requests to Roblox should not fail")
+            .json::<AssetResponse>()
+            .expect("deserializing the response from Roblox should not fail")
+            .revision_id;
+
+        let dom = WeakDom::new(InstanceBuilder::new("Workspace").with_name(Uuid::new_v4()));
+
+        let mut buffer = Vec::new();
+        rbx_binary::to_writer(&mut buffer, &dom, &[dom.root_ref()]).unwrap();
+
+        let new_revision = patch_asset_cookie(&cookie, COOKIE_PLACE_ID, buffer, true).unwrap();
+
+        assert_ne!(
+            old_revision, new_revision,
+            "revision ID before uploading should not equal revision ID after uploading"
+        )
+    }
+}
