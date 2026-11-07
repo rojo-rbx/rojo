@@ -67,6 +67,7 @@ local ApiSocketPacket = t.interface({
 local ApiSerializeResponse = t.interface({
 	sessionId = t.string,
 	modelContents = t.buffer,
+	missingIds = t.optional(t.array(RbxId)),
 })
 
 local ApiRefPatchResponse = t.interface({

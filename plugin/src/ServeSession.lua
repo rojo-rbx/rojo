@@ -278,6 +278,11 @@ function ServeSession:__onActiveScriptChanged(activeScript)
 	self.__apiContext:open(scriptId)
 end
 
+-- Separate so specs can supply instances without a real serialized model.
+function ServeSession:__deserializeInstances(modelContents)
+	return SerializationService:DeserializeInstancesAsync(modelContents)
+end
+
 function ServeSession:__replaceInstances(idList)
 	if #idList == 0 then
 		return true, PatchSet.newEmpty()
@@ -290,15 +295,36 @@ function ServeSession:__replaceInstances(idList)
 	end
 
 	-- TODO: Should we do this in multiple requests so we can more granularly mark failures?
+	local presentIds = idList
 	local modelSuccess, replacements = self.__apiContext
 		:serialize(idList)
 		:andThen(function(response)
+			-- The server leaves out IDs that were removed since the patch was
+			-- sent. Those instances are about to be removed by a later message,
+			-- so they are left alone here rather than counted as failures.
+			if response.missingIds ~= nil and #response.missingIds > 0 then
+				local missing = {}
+				for _, id in response.missingIds do
+					missing[id] = true
+				end
+				presentIds = {}
+				for _, id in idList do
+					if not missing[id] then
+						table.insert(presentIds, id)
+					end
+				end
+				Log.debug("Serialize endpoint skipped {} removed instances", #idList - #presentIds)
+			end
+			if #presentIds == 0 then
+				return {}
+			end
+
 			Log.debug("Deserializing results from serialize endpoint")
-			local objects = SerializationService:DeserializeInstancesAsync(response.modelContents)
+			local objects = self:__deserializeInstances(response.modelContents)
 			if not objects[1] then
 				return Promise.reject("Serialize endpoint did not deserialize into any Instances")
 			end
-			if #objects[1]:GetChildren() ~= #idList then
+			if #objects[1]:GetChildren() ~= #presentIds then
 				return Promise.reject("Serialize endpoint did not return the correct number of Instances")
 			end
 
@@ -310,8 +336,12 @@ function ServeSession:__replaceInstances(idList)
 		end)
 		:await()
 
+	if modelSuccess and #presentIds == 0 then
+		return true, PatchSet.newEmpty()
+	end
+
 	local refSuccess, refPatch = self.__apiContext
-		:refPatch(idList)
+		:refPatch(presentIds)
 		:andThen(function(response)
 			return response.patch
 		end)
