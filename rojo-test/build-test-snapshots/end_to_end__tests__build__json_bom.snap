@@ -1,0 +1,22 @@
+---
+source: tests/tests/build.rs
+expression: contents
+---
+<roblox version="4">
+  <Item class="Folder" referent="0">
+    <Properties>
+      <string name="Name">json_bom</string>
+    </Properties>
+    <Item class="Folder" referent="1">
+      <Properties>
+        <string name="Name">model</string>
+      </Properties>
+      <Item class="StringValue" referent="2">
+        <Properties>
+          <string name="Name">Value</string>
+          <string name="Value">Saved with a byte order mark</string>
+        </Properties>
+      </Item>
+    </Item>
+  </Item>
+</roblox>

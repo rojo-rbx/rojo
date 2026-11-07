@@ -17,9 +17,16 @@ use serde::de::DeserializeOwned;
 /// - The text is not valid JSONC
 /// - The text contains no JSON value
 pub fn parse_value(text: &str) -> anyhow::Result<serde_json::Value> {
-    jsonc_parser::parse_to_serde_value(text, &Default::default())
+    jsonc_parser::parse_to_serde_value(strip_bom(text), &Default::default())
         .context("Failed to parse JSONC")?
         .ok_or_else(|| anyhow::anyhow!("File contains no JSON value"))
+}
+
+/// Removes a leading UTF-8 byte order mark. Some Windows editors, like
+/// Notepad and Visual Studio, save one at the start of JSON files, and the
+/// parser rejects it as an unexpected token.
+fn strip_bom(text: &str) -> &str {
+    text.strip_prefix('\u{feff}').unwrap_or(text)
 }
 
 /// Parse JSONC text into a `serde_json::Value` with a custom context message.
@@ -36,7 +43,7 @@ pub fn parse_value_with_context(
     text: &str,
     context: impl Fn() -> String,
 ) -> anyhow::Result<serde_json::Value> {
-    jsonc_parser::parse_to_serde_value(text, &Default::default())
+    jsonc_parser::parse_to_serde_value(strip_bom(text), &Default::default())
         .with_context(|| format!("{}: JSONC parse error", context()))?
         .ok_or_else(|| anyhow::anyhow!("{}: File contains no JSON value", context()))
 }
@@ -135,6 +142,17 @@ pub fn from_slice_with_context<T: DeserializeOwned>(
 mod tests {
     use super::*;
     use serde::Deserialize;
+
+    #[test]
+    fn leading_utf8_bom_is_accepted() {
+        // Only the leading byte order mark is removed, not one inside a string.
+        let input = "\u{feff}{\"name\":\"a\u{feff}b\"}";
+        assert_eq!(parse_value(input).unwrap()["name"], "a\u{feff}b");
+        assert_eq!(
+            parse_value_with_context(input, || "model.json".into()).unwrap(),
+            parse_value(input).unwrap()
+        );
+    }
 
     #[test]
     fn test_parse_value() {

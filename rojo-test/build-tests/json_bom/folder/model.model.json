@@ -1,0 +1,12 @@
+﻿{
+  "className": "Folder",
+  "children": [
+    {
+      "name": "Value",
+      "className": "StringValue",
+      "properties": {
+        "Value": "Saved with a byte order mark"
+      }
+    }
+  ]
+}

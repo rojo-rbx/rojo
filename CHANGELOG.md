@@ -37,6 +37,8 @@ Making a new release? Simply add the new header with the version and date undern
 * Fixed `rojo serve` crashing when the served project folder is removed, for example during a branch switch. Rojo now logs a warning and keeps serving the last synced project; restart `rojo serve` after restoring the folder. ([#TBD])
 * `rojo build` now writes to a temporary file and replaces the output only once it is complete. A failed build, or an output file that another program such as Studio holds open, leaves the previous file in place. On Unix, the replaced file keeps its permissions and a new file is created according to the umask, as before. When the output is a symlink, the file it points to is replaced and the link is kept. Hard links to the previous output are not updated. ([#TBD])
 * `/api/serialize` now leaves out IDs that are no longer in the tree and lists them in `missingIds`, instead of failing the whole request. The plugin's sync fallback replaces the remaining instances. ([#TBD])
+* JSON files may now start with a UTF-8 byte order mark. ([#TBD])
+* `Color3uint8` properties can now be specified as an array of three integers from 0 to 255. ([#TBD])
 
 [#1333]: https://github.com/rojo-rbx/rojo/pull/1333
 [#1351]: https://github.com/rojo-rbx/rojo/pull/1351
