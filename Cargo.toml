@@ -94,6 +94,8 @@ jsonc-parser = { version = "0.27.0", features = ["serde"] }
 strum = { version = "0.27", features = ["derive"] }
 toml = "0.5.11"
 termcolor = "1.4.1"
+# Already used by the tests. `rojo build` stages its output in a temporary file.
+tempfile = "3.10.1"
 thiserror = "1.0.57"
 tokio = { version = "1.36.0", features = ["rt", "rt-multi-thread", "macros"] }
 uuid = { version = "1.7.0", features = ["v4", "serde"] }
@@ -130,5 +132,4 @@ insta = { version = "1.36.1", features = ["redactions", "yaml", "json"] }
 paste = "1.0.14"
 pretty_assertions = "1.4.0"
 serde_yaml = "0.8.26"
-tempfile = "3.10.1"
 walkdir = "2.5.0"
