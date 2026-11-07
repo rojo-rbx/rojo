@@ -742,8 +742,46 @@ fn serialize_missing_id() {
         let response = session
             .post_api_serialize(&[missing_id], info.session_id)
             .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
 
-        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        // The missing ID is reported rather than silently left out.
+        let body = response.bytes().unwrap();
+        let serialize_response: SerializeResponse =
+            deserialize_msgpack(&body).expect("Server returned malformed response");
+        assert_eq!(serialize_response.missing_ids, vec![missing_id]);
+
+        let model = rbx_binary::from_reader(serialize_response.model_contents.as_slice()).unwrap();
+        let folder = model.get_by_ref(model.root().children()[0]).unwrap();
+        assert!(folder.children().is_empty());
+    });
+}
+
+#[test]
+fn serialize_skips_missing_ids() {
+    run_serve_test("empty", |session, _| {
+        let info = session.get_api_rojo().unwrap();
+        let missing_id = Ref::new();
+
+        // One stale ID in a fallback batch must not fail the instances that
+        // still exist.
+        let response = session
+            .post_api_serialize(&[missing_id, info.root_instance_id], info.session_id)
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+
+        let body = response.bytes().unwrap();
+        let serialize_response: SerializeResponse =
+            deserialize_msgpack(&body).expect("Server returned malformed response");
+        assert_eq!(serialize_response.missing_ids, vec![missing_id]);
+
+        let model = rbx_binary::from_reader(serialize_response.model_contents.as_slice()).unwrap();
+        let folder = model.get_by_ref(model.root().children()[0]).unwrap();
+        let names: Vec<_> = folder
+            .children()
+            .iter()
+            .map(|child| model.get_by_ref(*child).unwrap().name.clone())
+            .collect();
+        assert_eq!(names, vec![info.root_instance_id.to_string()]);
     });
 }
 

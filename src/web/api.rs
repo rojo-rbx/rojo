@@ -227,7 +227,9 @@ impl ApiService {
     ///
     /// The returned model is a folder that contains ObjectValues with names
     /// that correspond to the requested Instances. These values have their
-    /// `Value` property set to point to the requested Instance.
+    /// `Value` property set to point to the requested Instance. Requested IDs
+    /// that are no longer in the tree are left out of the model and listed in
+    /// `missingIds` instead.
     async fn handle_api_serialize(&self, request: Request<Body>) -> Response<Body> {
         let session_id = self.serve_session.session_id();
         let body = body::to_bytes(request.into_body()).await.unwrap();
@@ -250,6 +252,7 @@ impl ApiService {
         }
 
         let mut response_dom = WeakDom::new(InstanceBuilder::new("Folder"));
+        let mut missing_ids = Vec::new();
 
         let tree = self.serve_session.tree();
         for id in &request.ids {
@@ -276,10 +279,10 @@ impl ApiService {
 
                 response_dom.transfer_within(child_ref, object_value);
             } else {
-                return msgpack(
-                    ErrorResponse::bad_request(format!("provided id {id} is not in the tree")),
-                    StatusCode::BAD_REQUEST,
-                );
+                // The plugin batches every instance a patch failed to apply,
+                // and a later change may already have removed some of them.
+                // Reporting those keeps the rest of the batch usable.
+                missing_ids.push(*id);
             }
         }
         drop(tree);
@@ -290,6 +293,7 @@ impl ApiService {
         msgpack_ok(SerializeResponse {
             session_id: self.serve_session.session_id(),
             model_contents: source,
+            missing_ids,
         })
     }
 

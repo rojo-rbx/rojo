@@ -40,6 +40,7 @@ gen_build_tests! {
     init_with_children,
     issue_546,
     json_as_lua,
+    json_bom,
     json_model_in_folder,
     json_model_legacy_name,
     module_in_folder,

@@ -251,6 +251,10 @@ pub struct SerializeResponse {
     pub session_id: SessionId,
     #[serde(with = "serde_bytes")]
     pub model_contents: Vec<u8>,
+    /// Requested IDs that are no longer in the tree and so are not part of
+    /// `model_contents`.
+    #[serde(default)]
+    pub missing_ids: Vec<Ref>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

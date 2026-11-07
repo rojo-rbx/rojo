@@ -2,8 +2,8 @@ use std::borrow::Borrow;
 
 use anyhow::{bail, format_err};
 use rbx_dom_weak::types::{
-    Attributes, CFrame, Color3, Content, ContentId, ContentType, Enum, Font, MaterialColors,
-    Matrix3, Tags, Variant, VariantType, Vector2, Vector3,
+    Attributes, CFrame, Color3, Color3uint8, Content, ContentId, ContentType, Enum, Font,
+    MaterialColors, Matrix3, Tags, Variant, VariantType, Vector2, Vector3,
 };
 use rbx_reflection::{DataType, PropertyDescriptor};
 use serde::{Deserialize, Serialize};
@@ -224,6 +224,22 @@ impl AmbiguousValue {
                     Ok(Color3::new(value[0] as f32, value[1] as f32, value[2] as f32).into())
                 }
 
+                (VariantType::Color3uint8, AmbiguousValue::Array3(value)) => {
+                    // Casting would silently clamp or truncate anything else.
+                    if !value
+                        .iter()
+                        .all(|v| (0.0..=255.0).contains(v) && v.fract() == 0.0)
+                    {
+                        bail!(
+                            "{}.{} expects three integers between 0 and 255",
+                            class_name,
+                            prop_name
+                        );
+                    }
+                    let [r, g, b] = value.map(|v| v as u8);
+                    Ok(Color3uint8::new(r, g, b).into())
+                }
+
                 (VariantType::CFrame, AmbiguousValue::Array12(value)) => {
                     let value = value.map(|v| v as f32);
                     let pos = Vector3::new(value[0], value[1], value[2]);
@@ -439,8 +455,16 @@ mod test {
             Variant::Color3(Color3::new(1.0, 1.0, 1.0)),
         );
 
-        // There aren't any user-facing Color3uint8 properties. If there are
-        // some, we should treat them the same in the future.
+        assert_eq!(
+            resolve("Part", "Color3uint8", "[91, 154, 76]"),
+            Variant::Color3uint8(Color3uint8::new(91, 154, 76))
+        );
+        assert!(AmbiguousValue::Array3([256.0, 0.0, 0.0])
+            .resolve("Part", "Color3uint8")
+            .is_err());
+        assert!(AmbiguousValue::Array3([0.5, 0.0, 0.0])
+            .resolve("Part", "Color3uint8")
+            .is_err());
     }
 
     #[test]
