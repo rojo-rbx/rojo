@@ -696,4 +696,32 @@ mod test {
         let err = vfs.canonicalize(&file_path).unwrap_err();
         assert_eq!(err.kind(), io::ErrorKind::NotFound);
     }
+
+    #[test]
+    fn std_backend_cache_sees_changes() {
+        let dir = tempfile::tempdir().unwrap();
+        let file_path = dir.path().join("file.txt");
+
+        let vfs = Vfs::new(StdBackend::new().unwrap());
+        assert!(!vfs.exists(&file_path).unwrap());
+
+        vfs.write(&file_path, "hello").unwrap();
+        assert_eq!(vfs.read_to_string(&file_path).unwrap().as_str(), "hello");
+
+        vfs.remove_file(&file_path).unwrap();
+        let err = vfs.metadata(&file_path).unwrap_err();
+        assert_eq!(err.kind(), io::ErrorKind::NotFound);
+    }
+
+    #[test]
+    #[cfg(any(windows, target_os = "macos"))]
+    fn std_backend_cache_is_case_insensitive() {
+        let dir = tempfile::tempdir().unwrap();
+        fs_err::write(dir.path().join("File.txt"), "hello").unwrap();
+
+        let vfs = Vfs::new(StdBackend::new().unwrap());
+        vfs.read_dir(dir.path()).unwrap();
+        let contents = vfs.read_to_string(dir.path().join("file.txt")).unwrap();
+        assert_eq!(contents.as_str(), "hello");
+    }
 }
