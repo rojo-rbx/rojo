@@ -4,7 +4,9 @@ use memofs::{IoResultExt, Vfs, VfsEvent};
 use rbx_dom_weak::types::{Ref, Variant};
 use std::path::PathBuf;
 use std::{
+    collections::HashSet,
     fs,
+    iter::{once, successors},
     sync::{Arc, Mutex},
 };
 
@@ -68,7 +70,11 @@ impl ChangeProcessor {
                 loop {
                     select! {
                         recv(vfs_receiver) -> event => {
-                            task.handle_vfs_event(event?);
+                            // Handle everything that queued up while we were
+                            // busy together, so a burst of changes (like a git
+                            // checkout) becomes one update for clients.
+                            let events = once(event?).chain(vfs_receiver.try_iter());
+                            task.handle_vfs_events(events.collect());
                         },
                         recv(tree_mutation_receiver) -> patch_set => {
                             task.handle_tree_event(patch_set?);
@@ -114,80 +120,99 @@ struct JobThreadContext {
 }
 
 impl JobThreadContext {
-    /// Computes and applies patches to the DOM for a given file path.
+    /// Computes and applies patches to the DOM for the given file paths and
+    /// merges them into one applied patch set.
     ///
-    /// This function finds the nearest ancestor to the given path that has associated instances
-    /// in the tree.
-    /// It then computes and applies changes for each affected instance ID and
-    /// returns a vector of applied patch sets.
-    fn apply_patches(&self, path: PathBuf) -> Vec<AppliedPatchSet> {
+    /// For each path, this function finds the nearest ancestor that has
+    /// associated instances in the tree. It then computes and applies changes
+    /// for each affected instance ID.
+    fn apply_patches(&self, paths: &[PathBuf]) -> AppliedPatchSet {
         let mut tree = self.tree.lock().unwrap();
-        let mut applied_patches = Vec::new();
+        let mut affected_ids = Vec::new();
 
-        // Find the nearest ancestor to this path that has
-        // associated instances in the tree. This helps make sure
-        // that we handle additions correctly, especially if we
-        // receive events for descendants of a large tree being
-        // created all at once.
-        let mut current_path = path.as_path();
-        let affected_ids = loop {
-            let ids = tree.get_ids_at_path(current_path);
+        for path in paths {
+            // Find the nearest ancestor to this path that has
+            // associated instances in the tree. This helps make sure
+            // that we handle additions correctly, especially if we
+            // receive events for descendants of a large tree being
+            // created all at once.
+            let mut current_path = path.as_path();
+            affected_ids.extend(loop {
+                let ids = tree.get_ids_at_path(current_path);
 
-            log::trace!("Path {} affects IDs {:?}", current_path.display(), ids);
+                log::trace!("Path {} affects IDs {:?}", current_path.display(), ids);
 
-            if !ids.is_empty() {
-                break ids.to_vec();
-            }
+                if !ids.is_empty() {
+                    break ids.to_vec();
+                }
 
-            log::trace!("Trying parent path...");
-            match current_path.parent() {
-                Some(parent) => current_path = parent,
-                None => break Vec::new(),
-            }
+                log::trace!("Trying parent path...");
+                match current_path.parent() {
+                    Some(parent) => current_path = parent,
+                    None => break Vec::new(),
+                }
+            });
+        }
+
+        // Re-snapshotting an instance covers its whole subtree, so each
+        // instance only needs to be handled once, and not at all if one of its
+        // ancestors is also affected.
+        let ancestors = |id| {
+            successors(Some(id), |&id| {
+                tree.get_instance(id).map(|instance| instance.parent())
+            })
         };
+        let affected_set: HashSet<Ref> = affected_ids.iter().copied().collect();
+        let mut seen = HashSet::new();
+        affected_ids.retain(|&id| {
+            seen.insert(id) && !ancestors(id).skip(1).any(|id| affected_set.contains(&id))
+        });
 
+        let mut applied_patch = AppliedPatchSet::new();
         for id in affected_ids {
             if let Some(patch) = compute_and_apply_changes(&mut tree, &self.vfs, id) {
-                if !patch.is_empty() {
-                    applied_patches.push(patch);
-                }
+                applied_patch.removed.extend(patch.removed);
+                applied_patch.added.extend(patch.added);
+                applied_patch.updated.extend(patch.updated);
             }
         }
 
-        applied_patches
+        applied_patch
     }
 
-    fn handle_vfs_event(&self, event: VfsEvent) {
-        log::trace!("Vfs event: {:?}", event);
+    fn handle_vfs_events(&self, events: Vec<VfsEvent>) {
+        let mut paths = Vec::with_capacity(events.len());
 
-        // Update the VFS immediately with the event.
-        self.vfs
-            .commit_event(&event)
-            .expect("Error applying VFS change");
+        for event in events {
+            log::trace!("Vfs event: {:?}", event);
 
-        // For a given VFS event, we might have many changes to different parts
-        // of the tree. Calculate and apply all of these changes.
-        let applied_patches = match event {
-            VfsEvent::Create(path) | VfsEvent::Write(path) => {
-                self.apply_patches(self.vfs.canonicalize(&path).unwrap())
+            // Update the VFS immediately with the event.
+            self.vfs
+                .commit_event(&event)
+                .expect("Error applying VFS change");
+
+            match event {
+                VfsEvent::Create(path) | VfsEvent::Write(path) => {
+                    paths.push(self.vfs.canonicalize(&path).unwrap())
+                }
+                VfsEvent::Remove(path) => {
+                    // MemoFS does not track parent removals yet, so we can canonicalize
+                    // the parent path safely and then append the removed path's file name.
+                    let parent = path.parent().unwrap();
+                    let file_name = path.file_name().unwrap();
+                    let parent_normalized = self.vfs.canonicalize(parent).unwrap();
+                    paths.push(parent_normalized.join(file_name))
+                }
+                _ => log::warn!("Unhandled VFS event: {:?}", event),
             }
-            VfsEvent::Remove(path) => {
-                // MemoFS does not track parent removals yet, so we can canonicalize
-                // the parent path safely and then append the removed path's file name.
-                let parent = path.parent().unwrap();
-                let file_name = path.file_name().unwrap();
-                let parent_normalized = self.vfs.canonicalize(parent).unwrap();
-                self.apply_patches(parent_normalized.join(file_name))
-            }
-            _ => {
-                log::warn!("Unhandled VFS event: {:?}", event);
-                Vec::new()
-            }
-        };
+        }
 
         // Notify anyone listening to the message queue about the changes we
         // just made.
-        self.message_queue.push_messages(&applied_patches);
+        let applied_patch = self.apply_patches(&paths);
+        if !applied_patch.is_empty() {
+            self.message_queue.push_messages(&[applied_patch]);
+        }
     }
 
     fn handle_tree_event(&self, patch_set: PatchSet) {
