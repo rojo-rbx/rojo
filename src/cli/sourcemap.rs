@@ -88,14 +88,6 @@ impl SourcemapCommand {
             filter_non_scripts
         };
 
-        // Pre-build a rayon threadpool with a low number of threads to avoid
-        // dynamic creation overhead on systems with a high number of cpus.
-        log::trace!("Setting rayon global threadpool");
-        rayon::ThreadPoolBuilder::new()
-            .num_threads(num_cpus::get().min(6))
-            .build_global()
-            .ok();
-
         log::trace!("Writing initial sourcemap");
         write_sourcemap(&session, self.output.as_deref(), filter, self.absolute)?;
 
@@ -176,6 +168,7 @@ fn patch_set_affects_sourcemap(
 }
 
 fn recurse_create_node<'a>(
+    vfs: &Vfs,
     tree: &'a RojoTree,
     referent: Ref,
     project_dir: &Path,
@@ -188,7 +181,7 @@ fn recurse_create_node<'a>(
         .children()
         .par_iter()
         .filter_map(|&child_id| {
-            recurse_create_node(tree, child_id, project_dir, filter, use_absolute_paths)
+            recurse_create_node(vfs, tree, child_id, project_dir, filter, use_absolute_paths)
         })
         .collect();
 
@@ -203,7 +196,7 @@ fn recurse_create_node<'a>(
         .relevant_paths
         .iter()
         // Not all paths listed as relevant are guaranteed to exist.
-        .filter(|path| path.is_file())
+        .filter(|path| vfs.metadata(path).is_ok_and(|meta| meta.is_file()))
         .map(|path| path.as_path());
 
     let mut output_file_paths: Vec<Cow<'a, Path>> =
@@ -241,6 +234,7 @@ fn write_sourcemap(
     let tree = session.tree();
 
     let root_node = recurse_create_node(
+        session.vfs(),
         &tree,
         tree.get_root_id(),
         session.root_dir(),

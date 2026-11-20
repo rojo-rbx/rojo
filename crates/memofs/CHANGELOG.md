@@ -1,6 +1,10 @@
 # memofs Changelog
 
 ## Unreleased Changes
+* `StdBackend` now caches directory listings, so looking up paths in a directory it has already listed doesn't need a syscall. The cache is cleared whenever the filesystem changes. [#1368]
+* `Vfs` reads no longer block each other. `VfsBackend` now requires `Sync`, and its read-only methods take `&self`. [#1368]
+
+[#1368]: https://github.com/rojo-rbx/rojo/pull/1368
 
 # 0.4.0 (2026-07-01)
 * Added `Vfs::canonicalize`. [#1201]

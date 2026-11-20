@@ -23,7 +23,7 @@ mod snapshot;
 mod std_backend;
 
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex, MutexGuard};
+use std::sync::{Arc, RwLock, RwLockWriteGuard};
 use std::{io, str};
 
 pub use in_memory_fs::InMemoryFs;
@@ -67,20 +67,20 @@ impl<T> IoResultExt<T> for io::Result<T> {
 /// Backend that can be used to create a `Vfs`.
 ///
 /// This trait is sealed and cannot not be implemented outside this crate.
-pub trait VfsBackend: sealed::Sealed + Send + 'static {
-    fn read(&mut self, path: &Path) -> io::Result<Vec<u8>>;
+pub trait VfsBackend: sealed::Sealed + Send + Sync + 'static {
+    fn read(&self, path: &Path) -> io::Result<Vec<u8>>;
     fn write(&mut self, path: &Path, data: &[u8]) -> io::Result<()>;
-    fn exists(&mut self, path: &Path) -> io::Result<bool>;
-    fn read_dir(&mut self, path: &Path) -> io::Result<ReadDir>;
+    fn exists(&self, path: &Path) -> io::Result<bool>;
+    fn read_dir(&self, path: &Path) -> io::Result<ReadDir>;
     fn create_dir(&mut self, path: &Path) -> io::Result<()>;
     fn create_dir_all(&mut self, path: &Path) -> io::Result<()>;
-    fn metadata(&mut self, path: &Path) -> io::Result<Metadata>;
+    fn metadata(&self, path: &Path) -> io::Result<Metadata>;
     fn remove_file(&mut self, path: &Path) -> io::Result<()>;
     fn remove_dir_all(&mut self, path: &Path) -> io::Result<()>;
-    fn canonicalize(&mut self, path: &Path) -> io::Result<PathBuf>;
+    fn canonicalize(&self, path: &Path) -> io::Result<PathBuf>;
 
     fn event_receiver(&self) -> crossbeam_channel::Receiver<VfsEvent>;
-    fn watch(&mut self, path: &Path) -> io::Result<()>;
+    fn watch(&self, path: &Path) -> io::Result<()>;
     fn unwatch(&mut self, path: &Path) -> io::Result<()>;
 }
 
@@ -148,7 +148,7 @@ struct VfsInner {
 }
 
 impl VfsInner {
-    fn read<P: AsRef<Path>>(&mut self, path: P) -> io::Result<Arc<Vec<u8>>> {
+    fn read<P: AsRef<Path>>(&self, path: P) -> io::Result<Arc<Vec<u8>>> {
         let path = path.as_ref();
         let contents = self.backend.read(path)?;
 
@@ -159,7 +159,7 @@ impl VfsInner {
         Ok(Arc::new(contents))
     }
 
-    fn read_to_string<P: AsRef<Path>>(&mut self, path: P) -> io::Result<Arc<String>> {
+    fn read_to_string<P: AsRef<Path>>(&self, path: P) -> io::Result<Arc<String>> {
         let path = path.as_ref();
         let contents = self.backend.read(path)?;
 
@@ -177,7 +177,7 @@ impl VfsInner {
         Ok(Arc::new(contents_str.into()))
     }
 
-    fn exists<P: AsRef<Path>>(&mut self, path: P) -> io::Result<bool> {
+    fn exists<P: AsRef<Path>>(&self, path: P) -> io::Result<bool> {
         let path = path.as_ref();
         self.backend.exists(path)
     }
@@ -188,7 +188,7 @@ impl VfsInner {
         self.backend.write(path, contents)
     }
 
-    fn read_dir<P: AsRef<Path>>(&mut self, path: P) -> io::Result<ReadDir> {
+    fn read_dir<P: AsRef<Path>>(&self, path: P) -> io::Result<ReadDir> {
         let path = path.as_ref();
         let dir = self.backend.read_dir(path)?;
 
@@ -221,12 +221,12 @@ impl VfsInner {
         self.backend.remove_dir_all(path)
     }
 
-    fn metadata<P: AsRef<Path>>(&mut self, path: P) -> io::Result<Metadata> {
+    fn metadata<P: AsRef<Path>>(&self, path: P) -> io::Result<Metadata> {
         let path = path.as_ref();
         self.backend.metadata(path)
     }
 
-    fn canonicalize<P: AsRef<Path>>(&mut self, path: P) -> io::Result<PathBuf> {
+    fn canonicalize<P: AsRef<Path>>(&self, path: P) -> io::Result<PathBuf> {
         let path = path.as_ref();
         self.backend.canonicalize(path)
     }
@@ -250,7 +250,7 @@ impl VfsInner {
 /// large batches of operations, it might be more performant to call `lock()`
 /// and use [`VfsLock`](struct.VfsLock.html) instead.
 pub struct Vfs {
-    inner: Mutex<VfsInner>,
+    inner: RwLock<VfsInner>,
 }
 
 impl Vfs {
@@ -270,14 +270,14 @@ impl Vfs {
         };
 
         Self {
-            inner: Mutex::new(lock),
+            inner: RwLock::new(lock),
         }
     }
 
     /// Manually lock the Vfs, useful for large batches of operations.
     pub fn lock(&self) -> VfsLock<'_> {
         VfsLock {
-            inner: self.inner.lock().unwrap(),
+            inner: self.inner.write().unwrap(),
         }
     }
 
@@ -287,7 +287,7 @@ impl Vfs {
     /// on platforms like macOS where registering file watches has significant
     /// performance cost.
     pub fn set_watch_enabled(&self, enabled: bool) {
-        let mut inner = self.inner.lock().unwrap();
+        let mut inner = self.inner.write().unwrap();
         inner.watch_enabled = enabled;
     }
 
@@ -300,7 +300,7 @@ impl Vfs {
     #[inline]
     pub fn read<P: AsRef<Path>>(&self, path: P) -> io::Result<Arc<Vec<u8>>> {
         let path = path.as_ref();
-        self.inner.lock().unwrap().read(path)
+        self.inner.read().unwrap().read(path)
     }
 
     /// Read a file from the VFS (or from the underlying backend if it isn't
@@ -312,7 +312,7 @@ impl Vfs {
     #[inline]
     pub fn read_to_string<P: AsRef<Path>>(&self, path: P) -> io::Result<Arc<String>> {
         let path = path.as_ref();
-        self.inner.lock().unwrap().read_to_string(path)
+        self.inner.read().unwrap().read_to_string(path)
     }
 
     /// Read a file from the VFS (or the underlying backend if it isn't
@@ -325,7 +325,7 @@ impl Vfs {
     #[inline]
     pub fn read_to_string_lf_normalized<P: AsRef<Path>>(&self, path: P) -> io::Result<Arc<String>> {
         let path = path.as_ref();
-        let contents = self.inner.lock().unwrap().read_to_string(path)?;
+        let contents = self.inner.read().unwrap().read_to_string(path)?;
 
         Ok(contents.replace("\r\n", "\n").into())
     }
@@ -339,7 +339,7 @@ impl Vfs {
     pub fn write<P: AsRef<Path>, C: AsRef<[u8]>>(&self, path: P, contents: C) -> io::Result<()> {
         let path = path.as_ref();
         let contents = contents.as_ref();
-        self.inner.lock().unwrap().write(path, contents)
+        self.inner.write().unwrap().write(path, contents)
     }
 
     /// Read all of the children of a directory.
@@ -350,7 +350,7 @@ impl Vfs {
     #[inline]
     pub fn read_dir<P: AsRef<Path>>(&self, path: P) -> io::Result<ReadDir> {
         let path = path.as_ref();
-        self.inner.lock().unwrap().read_dir(path)
+        self.inner.read().unwrap().read_dir(path)
     }
 
     /// Return whether the given path exists.
@@ -361,7 +361,7 @@ impl Vfs {
     #[inline]
     pub fn exists<P: AsRef<Path>>(&self, path: P) -> io::Result<bool> {
         let path = path.as_ref();
-        self.inner.lock().unwrap().exists(path)
+        self.inner.read().unwrap().exists(path)
     }
 
     /// Creates a directory at the provided location.
@@ -374,7 +374,7 @@ impl Vfs {
     #[inline]
     pub fn create_dir<P: AsRef<Path>>(&self, path: P) -> io::Result<()> {
         let path = path.as_ref();
-        self.inner.lock().unwrap().create_dir(path)
+        self.inner.write().unwrap().create_dir(path)
     }
 
     /// Creates a directory at the provided location, recursively creating
@@ -386,7 +386,7 @@ impl Vfs {
     #[inline]
     pub fn create_dir_all<P: AsRef<Path>>(&self, path: P) -> io::Result<()> {
         let path = path.as_ref();
-        self.inner.lock().unwrap().create_dir_all(path)
+        self.inner.write().unwrap().create_dir_all(path)
     }
 
     /// Remove a file.
@@ -397,7 +397,7 @@ impl Vfs {
     #[inline]
     pub fn remove_file<P: AsRef<Path>>(&self, path: P) -> io::Result<()> {
         let path = path.as_ref();
-        self.inner.lock().unwrap().remove_file(path)
+        self.inner.write().unwrap().remove_file(path)
     }
 
     /// Remove a directory and all of its descendants.
@@ -408,7 +408,7 @@ impl Vfs {
     #[inline]
     pub fn remove_dir_all<P: AsRef<Path>>(&self, path: P) -> io::Result<()> {
         let path = path.as_ref();
-        self.inner.lock().unwrap().remove_dir_all(path)
+        self.inner.write().unwrap().remove_dir_all(path)
     }
 
     /// Query metadata about the given path.
@@ -419,7 +419,7 @@ impl Vfs {
     #[inline]
     pub fn metadata<P: AsRef<Path>>(&self, path: P) -> io::Result<Metadata> {
         let path = path.as_ref();
-        self.inner.lock().unwrap().metadata(path)
+        self.inner.read().unwrap().metadata(path)
     }
 
     /// Normalize a path via the underlying backend.
@@ -432,19 +432,19 @@ impl Vfs {
     #[inline]
     pub fn canonicalize<P: AsRef<Path>>(&self, path: P) -> io::Result<PathBuf> {
         let path = path.as_ref();
-        self.inner.lock().unwrap().canonicalize(path)
+        self.inner.read().unwrap().canonicalize(path)
     }
 
     /// Retrieve a handle to the event receiver for this `Vfs`.
     #[inline]
     pub fn event_receiver(&self) -> crossbeam_channel::Receiver<VfsEvent> {
-        self.inner.lock().unwrap().event_receiver()
+        self.inner.read().unwrap().event_receiver()
     }
 
     /// Commit an event to this `Vfs`.
     #[inline]
     pub fn commit_event(&self, event: &VfsEvent) -> io::Result<()> {
-        self.inner.lock().unwrap().commit_event(event)
+        self.inner.write().unwrap().commit_event(event)
     }
 }
 
@@ -452,7 +452,7 @@ impl Vfs {
 ///
 /// Implements roughly the same API as [`Vfs`](struct.Vfs.html).
 pub struct VfsLock<'a> {
-    inner: MutexGuard<'a, VfsInner>,
+    inner: RwLockWriteGuard<'a, VfsInner>,
 }
 
 impl VfsLock<'_> {
@@ -695,5 +695,33 @@ mod test {
         let vfs = Vfs::new(StdBackend::new().unwrap());
         let err = vfs.canonicalize(&file_path).unwrap_err();
         assert_eq!(err.kind(), io::ErrorKind::NotFound);
+    }
+
+    #[test]
+    fn std_backend_cache_sees_changes() {
+        let dir = tempfile::tempdir().unwrap();
+        let file_path = dir.path().join("file.txt");
+
+        let vfs = Vfs::new(StdBackend::new().unwrap());
+        assert!(!vfs.exists(&file_path).unwrap());
+
+        vfs.write(&file_path, "hello").unwrap();
+        assert_eq!(vfs.read_to_string(&file_path).unwrap().as_str(), "hello");
+
+        vfs.remove_file(&file_path).unwrap();
+        let err = vfs.metadata(&file_path).unwrap_err();
+        assert_eq!(err.kind(), io::ErrorKind::NotFound);
+    }
+
+    #[test]
+    #[cfg(any(windows, target_os = "macos"))]
+    fn std_backend_cache_is_case_insensitive() {
+        let dir = tempfile::tempdir().unwrap();
+        fs_err::write(dir.path().join("File.txt"), "hello").unwrap();
+
+        let vfs = Vfs::new(StdBackend::new().unwrap());
+        vfs.read_dir(dir.path()).unwrap();
+        let contents = vfs.read_to_string(dir.path().join("file.txt")).unwrap();
+        assert_eq!(contents.as_str(), "hello");
     }
 }
