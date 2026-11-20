@@ -13,9 +13,9 @@ use crate::{DirEntry, Metadata, ReadDir, VfsBackend, VfsEvent};
 
 /// `VfsBackend` that uses `std::fs` and the `notify` crate.
 pub struct StdBackend {
-    watcher: RecommendedWatcher,
+    watcher: Mutex<RecommendedWatcher>,
     watcher_receiver: Receiver<VfsEvent>,
-    watches: HashSet<PathBuf>,
+    watches: Mutex<HashSet<PathBuf>>,
     cache: Arc<Mutex<Cache>>,
 }
 
@@ -79,9 +79,9 @@ impl StdBackend {
         });
 
         Ok(Self {
-            watcher,
+            watcher: Mutex::new(watcher),
             watcher_receiver: rx,
-            watches: HashSet::new(),
+            watches: Mutex::new(HashSet::new()),
             cache,
         })
     }
@@ -178,7 +178,7 @@ fn join_canonical(parent: &Path, name: &OsStr) -> PathBuf {
 }
 
 impl VfsBackend for StdBackend {
-    fn read(&mut self, path: &Path) -> io::Result<Vec<u8>> {
+    fn read(&self, path: &Path) -> io::Result<Vec<u8>> {
         if let Some(None) = self.lookup(path, true) {
             return Err(not_found(path));
         }
@@ -191,7 +191,7 @@ impl VfsBackend for StdBackend {
         fs_err::write(path, data)
     }
 
-    fn exists(&mut self, path: &Path) -> io::Result<bool> {
+    fn exists(&self, path: &Path) -> io::Result<bool> {
         match self.lookup(path, true) {
             Some(Some(Kind::File | Kind::Dir)) => Ok(true),
             Some(None) => Ok(false),
@@ -199,7 +199,7 @@ impl VfsBackend for StdBackend {
         }
     }
 
-    fn read_dir(&mut self, path: &Path) -> io::Result<ReadDir> {
+    fn read_dir(&self, path: &Path) -> io::Result<ReadDir> {
         let inner = self
             .listing(path)?
             .paths
@@ -232,7 +232,7 @@ impl VfsBackend for StdBackend {
         fs_err::remove_dir_all(path)
     }
 
-    fn metadata(&mut self, path: &Path) -> io::Result<Metadata> {
+    fn metadata(&self, path: &Path) -> io::Result<Metadata> {
         match self.lookup(path, true) {
             Some(Some(Kind::File)) => return Ok(Metadata { is_file: true }),
             Some(Some(Kind::Dir)) => return Ok(Metadata { is_file: false }),
@@ -247,7 +247,7 @@ impl VfsBackend for StdBackend {
         })
     }
 
-    fn canonicalize(&mut self, path: &Path) -> io::Result<PathBuf> {
+    fn canonicalize(&self, path: &Path) -> io::Result<PathBuf> {
         if let Some(canonical) = self.cache.lock().unwrap().canonical.get(path) {
             return Ok(canonical.clone());
         }
@@ -274,23 +274,26 @@ impl VfsBackend for StdBackend {
         self.watcher_receiver.clone()
     }
 
-    fn watch(&mut self, path: &Path) -> io::Result<()> {
-        if self.watches.contains(path)
-            || path
-                .ancestors()
-                .any(|ancestor| self.watches.contains(ancestor))
-        {
+    fn watch(&self, path: &Path) -> io::Result<()> {
+        let mut watches = self.watches.lock().unwrap();
+        if watches.contains(path) || path.ancestors().any(|ancestor| watches.contains(ancestor)) {
             Ok(())
         } else {
-            self.watches.insert(path.to_path_buf());
+            watches.insert(path.to_path_buf());
             self.watcher
+                .lock()
+                .unwrap()
                 .watch(path, RecursiveMode::Recursive)
                 .map_err(io::Error::other)
         }
     }
 
     fn unwatch(&mut self, path: &Path) -> io::Result<()> {
-        self.watches.remove(path);
-        self.watcher.unwatch(path).map_err(io::Error::other)
+        self.watches.get_mut().unwrap().remove(path);
+        self.watcher
+            .get_mut()
+            .unwrap()
+            .unwatch(path)
+            .map_err(io::Error::other)
     }
 }

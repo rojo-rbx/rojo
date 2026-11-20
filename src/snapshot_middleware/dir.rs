@@ -1,10 +1,12 @@
 use std::{
     collections::{HashMap, HashSet},
+    io,
     path::Path,
 };
 
 use anyhow::Context;
 use memofs::{DirEntry, Vfs};
+use rayon::prelude::*;
 
 use crate::{
     snapshot::{
@@ -46,19 +48,15 @@ pub fn snapshot_dir_no_meta(
     let passes_filter_rules =
         |child: &DirEntry| !is_path_ignored(&context.path_ignore_rules, child.path());
 
-    let mut snapshot_children = Vec::new();
-
-    for entry in vfs.read_dir(path)? {
-        let entry = entry?;
-
-        if !passes_filter_rules(&entry) {
-            continue;
-        }
-
-        if let Some(child_snapshot) = snapshot_from_vfs(context, vfs, entry.path())? {
-            snapshot_children.push(child_snapshot);
-        }
-    }
+    let entries = vfs.read_dir(path)?.collect::<io::Result<Vec<_>>>()?;
+    let snapshot_children: Vec<_> = entries
+        .par_iter()
+        .filter(|entry| passes_filter_rules(entry))
+        .map(|entry| snapshot_from_vfs(context, vfs, entry.path()))
+        .collect::<anyhow::Result<Vec<_>>>()?
+        .into_iter()
+        .flatten()
+        .collect();
 
     let normalized_path = vfs.canonicalize(path)?;
     let relevant_paths = vec![

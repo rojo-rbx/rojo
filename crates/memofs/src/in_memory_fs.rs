@@ -136,7 +136,7 @@ enum Entry {
 }
 
 impl VfsBackend for InMemoryFs {
-    fn read(&mut self, path: &Path) -> io::Result<Vec<u8>> {
+    fn read(&self, path: &Path) -> io::Result<Vec<u8>> {
         let inner = self.inner.lock().unwrap();
 
         match inner.entries.get(path) {
@@ -157,12 +157,12 @@ impl VfsBackend for InMemoryFs {
         )
     }
 
-    fn exists(&mut self, path: &Path) -> io::Result<bool> {
+    fn exists(&self, path: &Path) -> io::Result<bool> {
         let inner = self.inner.lock().unwrap();
         Ok(inner.entries.contains_key(path))
     }
 
-    fn read_dir(&mut self, path: &Path) -> io::Result<ReadDir> {
+    fn read_dir(&self, path: &Path) -> io::Result<ReadDir> {
         let inner = self.inner.lock().unwrap();
 
         match inner.entries.get(path) {
@@ -222,7 +222,7 @@ impl VfsBackend for InMemoryFs {
         }
     }
 
-    fn metadata(&mut self, path: &Path) -> io::Result<Metadata> {
+    fn metadata(&self, path: &Path) -> io::Result<Metadata> {
         let inner = self.inner.lock().unwrap();
 
         match inner.entries.get(path) {
@@ -240,7 +240,7 @@ impl VfsBackend for InMemoryFs {
     // Erroneous example: "/Users/../../other/file.txt" -> "/other/file.txt"
     // This is not very robust. We should implement proper path normalization here or otherwise
     // warn if we are missing context and can not fully canonicalize the path correctly.
-    fn canonicalize(&mut self, path: &Path) -> io::Result<PathBuf> {
+    fn canonicalize(&self, path: &Path) -> io::Result<PathBuf> {
         let mut normalized = PathBuf::new();
         for component in path.components() {
             match component {
@@ -265,7 +265,7 @@ impl VfsBackend for InMemoryFs {
         inner.event_receiver.clone()
     }
 
-    fn watch(&mut self, _path: &Path) -> io::Result<()> {
+    fn watch(&self, _path: &Path) -> io::Result<()> {
         Ok(())
     }
 
