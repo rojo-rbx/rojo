@@ -77,7 +77,7 @@ pub fn snapshot_from_vfs(
         // TODO: Support user defined init paths
         // If and when we do, make sure to go support it in
         // `Project::set_file_name`, as right now it special-cases
-        // `default.project.json` as an `init` path.
+        // default project names as `init` paths.
         match middleware {
             Middleware::Dir => middleware.snapshot(context, vfs, path, dir_name),
             _ => middleware.snapshot(context, vfs, &init_path, dir_name),
@@ -430,6 +430,8 @@ pub fn default_sync_rules() -> &'static [SyncRule] {
             sync_rule!("*.{lua,luau}", ModuleScript),
             sync_rule!("*.project.json", Project, ".project.json"),
             sync_rule!("*.project.jsonc", Project, ".project.jsonc"),
+            sync_rule!("*.project.yaml", Project, ".project.yaml"),
+            sync_rule!("*.project.toml", Project, ".project.toml"),
             sync_rule!("*.model.json", JsonModel, ".model.json"),
             sync_rule!("*.model.jsonc", JsonModel, ".model.jsonc"),
             sync_rule!("*.json", Json, ".json", "*.meta.json"),

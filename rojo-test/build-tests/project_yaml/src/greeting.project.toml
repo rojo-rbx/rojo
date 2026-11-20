@@ -1,0 +1,5 @@
+[tree]
+"$className" = "StringValue"
+
+[tree."$properties"]
+Value = "Hello from TOML!"

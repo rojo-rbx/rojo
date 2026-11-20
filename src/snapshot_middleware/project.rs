@@ -524,7 +524,12 @@ pub fn syncback_project<'sync>(
         }
     }
     if needs_reserialize {
-        fs_snapshot.add_file(project_path, serde_json::to_vec_pretty(&project)?);
+        fs_snapshot.add_file(
+            project_path,
+            project.to_bytes().with_context(|| {
+                format!("Could not re-encode project {}", project_path.display())
+            })?,
+        );
     }
 
     Ok(SyncbackReturn {

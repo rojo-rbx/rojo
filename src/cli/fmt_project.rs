@@ -8,7 +8,7 @@ use crate::project::Project;
 
 use super::resolve_path;
 
-/// Reformat a Rojo project using the standard JSON formatting rules.
+/// Reformat a Rojo project in its existing file format.
 #[derive(Debug, Parser)]
 pub struct FmtProjectCommand {
     /// Path to the project to format. Defaults to the current directory.
@@ -25,12 +25,47 @@ impl FmtProjectCommand {
         let project = Project::load_fuzzy(&vfs, &base_path)?
             .context("A project file is required to run 'rojo fmt-project'")?;
 
-        let serialized = serde_json::to_string_pretty(&project)
-            .context("could not re-encode project file as JSON")?;
+        let serialized = project
+            .to_bytes()
+            .context("could not re-encode project file")?;
 
         fs_err::write(&project.file_location, serialized)
             .context("could not write back to project file")?;
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn format_yaml_and_toml_default_projects() {
+        for (name, contents, formatted) in [
+            (
+                "default.project.yaml",
+                "tree: { $className: Folder }",
+                "tree:\n",
+            ),
+            (
+                "default.project.toml",
+                "tree = { '$className' = 'Folder' }",
+                "[tree]\n",
+            ),
+        ] {
+            let dir = tempfile::tempdir().unwrap();
+            let file = dir.path().join(name);
+            fs_err::write(&file, contents).unwrap();
+
+            FmtProjectCommand {
+                project: dir.path().to_path_buf(),
+            }
+            .run()
+            .unwrap();
+
+            let output = fs_err::read_to_string(file).unwrap();
+            assert!(output.contains(formatted), "{output}");
+        }
     }
 }

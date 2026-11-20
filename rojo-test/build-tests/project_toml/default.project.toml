@@ -1,0 +1,4 @@
+# An unnamed default project takes the name of its directory.
+[tree]
+"$className" = "Folder"
+"$path" = "src"
