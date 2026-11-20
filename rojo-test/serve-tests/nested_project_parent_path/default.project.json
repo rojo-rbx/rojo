@@ -1,0 +1,6 @@
+{
+  "name": "nested_project_parent_path",
+  "tree": {
+    "$path": "wrapper"
+  }
+}

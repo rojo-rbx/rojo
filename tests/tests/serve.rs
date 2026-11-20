@@ -1,7 +1,13 @@
-use std::fs;
+use std::{
+    fs, thread,
+    time::{Duration, Instant},
+};
 
 use insta::{assert_snapshot, assert_yaml_snapshot, with_settings};
-use rbx_dom_weak::types::Ref;
+use rbx_dom_weak::{
+    types::{Ref, Variant},
+    ustr,
+};
 use reqwest::StatusCode;
 use tempfile::tempdir;
 
@@ -129,6 +135,43 @@ fn scripts() {
                 read_response.intern_and_redact(&mut redactions, root_id)
             );
         });
+    });
+}
+
+#[test]
+fn watches_nested_project_path_outside_its_directory() {
+    run_serve_test("nested_project_parent_path", |session, _| {
+        let root_id = session.get_api_rojo().unwrap().root_instance_id;
+        let read = session.get_api_read(root_id).unwrap();
+        let script = read
+            .instances
+            .values()
+            .find(|instance| instance.name == "hello")
+            .unwrap();
+        let script_id = script.id;
+        let source_key = ustr("Source");
+        assert_eq!(
+            script.properties[&source_key].as_ref(),
+            &Variant::String("return 1\n".into())
+        );
+
+        let source = "return 2";
+        let expected = Variant::String(source.into());
+        fs::write(session.path().join("src/hello.luau"), source).unwrap();
+
+        let deadline = Instant::now() + Duration::from_secs(5);
+        loop {
+            let read = session.get_api_read(script_id).unwrap();
+            let actual = read.instances[&script_id].properties[&source_key].as_ref();
+            if actual == &expected {
+                break;
+            }
+            assert!(
+                Instant::now() < deadline,
+                "Rojo did not pick up the edit to the nested project's source: {actual:?}"
+            );
+            thread::sleep(Duration::from_millis(50));
+        }
     });
 }
 

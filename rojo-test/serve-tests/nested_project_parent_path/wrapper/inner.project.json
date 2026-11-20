@@ -1,0 +1,6 @@
+{
+  "name": "inner",
+  "tree": {
+    "$path": "../src"
+  }
+}
