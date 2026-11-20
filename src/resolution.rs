@@ -2,8 +2,8 @@ use std::borrow::Borrow;
 
 use anyhow::{bail, format_err};
 use rbx_dom_weak::types::{
-    Attributes, CFrame, Color3, Content, ContentId, ContentType, Enum, Font, MaterialColors,
-    Matrix3, Tags, Variant, VariantType, Vector2, Vector3,
+    Attributes, CFrame, Color3, Color3uint8, Content, ContentId, ContentType, Enum, Font,
+    MaterialColors, Matrix3, Tags, Variant, VariantType, Vector2, Vector3,
 };
 use rbx_reflection::{DataType, PropertyDescriptor};
 use serde::{Deserialize, Serialize};
@@ -224,6 +224,10 @@ impl AmbiguousValue {
                     Ok(Color3::new(value[0] as f32, value[1] as f32, value[2] as f32).into())
                 }
 
+                (VariantType::Color3uint8, AmbiguousValue::Array3(value)) => {
+                    Ok(Color3uint8::new(value[0] as u8, value[1] as u8, value[2] as u8).into())
+                }
+
                 (VariantType::CFrame, AmbiguousValue::Array12(value)) => {
                     let value = value.map(|v| v as f32);
                     let pos = Vector3::new(value[0], value[1], value[2]);
@@ -438,9 +442,34 @@ mod test {
             resolve("Part", "Color", "[1, 1, 1]"),
             Variant::Color3(Color3::new(1.0, 1.0, 1.0)),
         );
+    }
 
-        // There aren't any user-facing Color3uint8 properties. If there are
-        // some, we should treat them the same in the future.
+    #[test]
+    fn color3uint8_array() {
+        assert_eq!(
+            resolve("Part", "Color3uint8", "[163, 162, 165]"),
+            Variant::Color3uint8(Color3uint8::new(163, 162, 165)),
+        );
+        assert_eq!(
+            resolve("Part", "Color3uint8", "[0, 255, 0]"),
+            Variant::Color3uint8(Color3uint8::new(0, 255, 0)),
+        );
+    }
+
+    #[test]
+    fn color3uint8_explicit() {
+        assert_eq!(
+            resolve("Part", "Color3uint8", r#"{"Color3uint8": [163, 162, 165]}"#),
+            Variant::Color3uint8(Color3uint8::new(163, 162, 165)),
+        );
+    }
+
+    #[test]
+    fn color3uint8_wrong_shape() {
+        for json_value in ["[]", "[163, 162]", "[163, 162, 165, 0]", "\"gray\""] {
+            let unresolved: UnresolvedValue = json::from_str(json_value).unwrap();
+            assert!(unresolved.resolve("Part", "Color3uint8").is_err());
+        }
     }
 
     #[test]
