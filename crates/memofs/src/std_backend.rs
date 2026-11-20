@@ -115,18 +115,21 @@ impl VfsBackend for StdBackend {
     }
 
     fn watch(&mut self, path: &Path) -> io::Result<()> {
-        if self.watches.contains(path)
-            || path
-                .ancestors()
-                .any(|ancestor| self.watches.contains(ancestor))
-        {
-            Ok(())
-        } else {
-            self.watches.insert(path.to_path_buf());
-            self.watcher
-                .watch(path, RecursiveMode::Recursive)
-                .map_err(io::Error::other)
+        for ancestor in path.ancestors() {
+            if self.watches.contains(ancestor) {
+                return Ok(());
+            }
+            // Removing a `..` component can lead to a directory that does not contain the target.
+            if ancestor.ends_with("..") {
+                break;
+            }
         }
+
+        self.watcher
+            .watch(path, RecursiveMode::Recursive)
+            .map_err(io::Error::other)?;
+        self.watches.insert(path.to_path_buf());
+        Ok(())
     }
 
     fn unwatch(&mut self, path: &Path) -> io::Result<()> {
