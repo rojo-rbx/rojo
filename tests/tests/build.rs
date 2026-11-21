@@ -50,6 +50,7 @@ gen_build_tests! {
     project_composed_file,
     project_root_name,
     project_yaml,
+    project_yml,
     project_toml,
     rbxm_in_folder,
     rbxmx_in_folder,

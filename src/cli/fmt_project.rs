@@ -49,6 +49,11 @@ mod test {
                 "tree:\n",
             ),
             (
+                "default.project.yml",
+                "tree: { $className: Folder }",
+                "tree:\n",
+            ),
+            (
                 "default.project.toml",
                 "tree = { '$className' = 'Folder' }",
                 "[tree]\n",

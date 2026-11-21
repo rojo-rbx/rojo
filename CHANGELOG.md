@@ -33,11 +33,11 @@ Making a new release? Simply add the new header with the version and date undern
 
 * LocalizationTables no longer report as changed when nothing changes. ([#1333])
 * Sounds now preloaded correctly. The warning "*ContentId: rbxassetid://203785492 failed due to: Asset type does not match requested type*" is fixed. ([#1351])
-* Rojo project files can now use YAML (`.project.yaml`) or TOML (`.project.toml`) in addition to JSON and JSONC. ([#1360])
+* Rojo project files can now use YAML (`.project.yaml` or `.project.yml`) or TOML (`.project.toml`) in addition to JSON and JSONC. ([#1367])
 
 [#1333]: https://github.com/rojo-rbx/rojo/pull/1333
 [#1351]: https://github.com/rojo-rbx/rojo/pull/1351
-[#1360]: https://github.com/rojo-rbx/rojo/issues/1360
+[#1367]: https://github.com/rojo-rbx/rojo/pull/1367
 
 ## [7.7.1] (October 1st, 2026)
 

@@ -431,6 +431,7 @@ pub fn default_sync_rules() -> &'static [SyncRule] {
             sync_rule!("*.project.json", Project, ".project.json"),
             sync_rule!("*.project.jsonc", Project, ".project.jsonc"),
             sync_rule!("*.project.yaml", Project, ".project.yaml"),
+            sync_rule!("*.project.yml", Project, ".project.yml"),
             sync_rule!("*.project.toml", Project, ".project.toml"),
             sync_rule!("*.model.json", JsonModel, ".model.json"),
             sync_rule!("*.model.jsonc", JsonModel, ".model.jsonc"),

@@ -17,10 +17,11 @@ use crate::{
 };
 
 /// Represents 'default' project names that act as `init` files
-pub static DEFAULT_PROJECT_NAMES: [&str; 4] = [
+pub static DEFAULT_PROJECT_NAMES: [&str; 5] = [
     "default.project.json",
     "default.project.jsonc",
     "default.project.yaml",
+    "default.project.yml",
     "default.project.toml",
 ];
 
@@ -35,7 +36,7 @@ impl ProjectFormat {
         let (name, extension) = file_name.rsplit_once(".project.")?;
         let format = match extension {
             "json" | "jsonc" => Self::Json,
-            "yaml" => Self::Yaml,
+            "yaml" | "yml" => Self::Yaml,
             "toml" => Self::Toml,
             _ => return None,
         };
@@ -88,7 +89,7 @@ enum Error {
 /// Contains all of the configuration for a Rojo-managed project.
 ///
 /// Project files can use the `.project.json`, `.project.jsonc`,
-/// `.project.yaml`, or `.project.toml` suffix.
+/// `.project.yaml`, `.project.yml`, or `.project.toml` suffix.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct Project {
@@ -635,6 +636,33 @@ mod test {
         assert_eq!(project.sync_rules.len(), 2);
         assert!(project.sync_rules[0].include.is_match("data.data.json"));
         assert!(project.sync_rules[1].include.is_match("init.module.lua"));
+    }
+
+    #[test]
+    fn default_project_discovery_prefers_yaml_to_yml_and_yml_to_toml() {
+        let dir = tempfile::tempdir().unwrap();
+        let vfs = Vfs::new_default().unwrap();
+        vfs.set_watch_enabled(false);
+
+        for (name, contents) in [
+            ("default.project.yaml", "tree: { $className: Folder }"),
+            ("default.project.yml", "tree: { $className: Folder }"),
+            ("default.project.toml", "tree = { '$className' = 'Folder' }"),
+        ] {
+            fs::write(dir.path().join(name), contents).unwrap();
+        }
+
+        for name in [
+            "default.project.yaml",
+            "default.project.yml",
+            "default.project.toml",
+        ] {
+            let selected = dir.path().join(name);
+            let project = Project::load_initial_project(&vfs, dir.path()).unwrap();
+            assert_eq!(project.file_location, selected);
+            assert_eq!(Project::locate(dir.path()), Some(selected.clone()));
+            fs::remove_file(selected).unwrap();
+        }
     }
 
     #[test]
