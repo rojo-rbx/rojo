@@ -169,15 +169,33 @@ impl JobThreadContext {
         // of the tree. Calculate and apply all of these changes.
         let applied_patches = match event {
             VfsEvent::Create(path) | VfsEvent::Write(path) => {
-                self.apply_patches(self.vfs.canonicalize(&path).unwrap())
+                let patch_path = self.vfs.canonicalize(&path).unwrap_or_else(|e| {
+                    log::warn!(
+                        "VfsEvent::Write failed to canonicalize path {:?}: {e}",
+                        path
+                    );
+                    // fall back to the given path, matching old behaviour.
+                    path
+                });
+                self.apply_patches(patch_path)
             }
             VfsEvent::Remove(path) => {
                 // MemoFS does not track parent removals yet, so we can canonicalize
                 // the parent path safely and then append the removed path's file name.
                 let parent = path.parent().unwrap();
                 let file_name = path.file_name().unwrap();
-                let parent_normalized = self.vfs.canonicalize(parent).unwrap();
-                self.apply_patches(parent_normalized.join(file_name))
+                let patch_path = match self.vfs.canonicalize(parent) {
+                    Ok(canonicalized) => canonicalized.join(file_name),
+                    Err(e) => {
+                        log::warn!(
+                            "VfsEvent::Remove failed to canonicalize path {:?}: {e}",
+                            parent
+                        );
+                        // fall back to the given path, matching old behaviour.
+                        path
+                    }
+                };
+                self.apply_patches(patch_path)
             }
             _ => {
                 log::warn!("Unhandled VFS event: {:?}", event);
@@ -382,4 +400,133 @@ fn compute_and_apply_changes(tree: &mut RojoTree, vfs: &Vfs, id: Ref) -> Option<
     };
 
     Some(applied_patch_set)
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use std::path::Path;
+
+    use memofs::StdBackend;
+    use tempfile::TempDir;
+
+    use crate::snapshot::{InstanceContext, InstanceSnapshot};
+
+    /// Creates a project in a temporary directory and returns its root. The
+    /// root is canonicalized the same way the VFS does, so that it matches the
+    /// paths in the tree on every platform.
+    fn make_project() -> (TempDir, PathBuf) {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dunce::canonicalize(dir.path()).unwrap().join("project");
+
+        let comm = root.join("src").join("Packages").join("knit").join("Comm");
+        fs::create_dir_all(&comm).unwrap();
+        fs::write(
+            root.join("default.project.json"),
+            r#"{ "name": "test", "tree": { "$path": "src" } }"#,
+        )
+        .unwrap();
+        fs::write(comm.parent().unwrap().join("init.luau"), "return {}").unwrap();
+        fs::write(comm.join("init.luau"), "return {}").unwrap();
+
+        (dir, root)
+    }
+
+    /// Builds a tree for the project at `root` like `ServeSession` does, so
+    /// that VFS events can be fed to it directly in whatever order a test
+    /// needs.
+    fn context_for(root: &Path) -> JobThreadContext {
+        let vfs = Vfs::new(StdBackend::new().unwrap());
+        vfs.set_watch_enabled(false);
+
+        let mut tree = RojoTree::new(InstanceSnapshot::new());
+        let root_id = tree.get_root_id();
+        let snapshot = snapshot_from_vfs(&InstanceContext::new(), &vfs, root).unwrap();
+        let patch_set = compute_patch_set(snapshot, &tree, root_id);
+        apply_patch_set(&mut tree, patch_set);
+
+        JobThreadContext {
+            tree: Arc::new(Mutex::new(tree)),
+            vfs: Arc::new(vfs),
+            message_queue: Arc::new(MessageQueue::new()),
+        }
+    }
+
+    fn is_in_tree(context: &JobThreadContext, path: &Path) -> bool {
+        !context
+            .tree
+            .lock()
+            .unwrap()
+            .get_ids_at_path(path)
+            .is_empty()
+    }
+
+    /// Sends `Remove` events for `knit` and everything in it, children first,
+    /// the way a recursive delete reports them.
+    fn send_knit_removals(context: &JobThreadContext, knit: &Path) {
+        let comm = knit.join("Comm");
+        for path in [
+            comm.join("init.luau"),
+            comm,
+            knit.join("init.luau"),
+            knit.to_path_buf(),
+        ] {
+            context.handle_vfs_event(VfsEvent::Remove(path));
+        }
+    }
+
+    /// https://github.com/rojo-rbx/rojo/issues/1338
+    ///
+    /// By the time we process the event for a removed file, a recursive
+    /// delete may have removed its parent as well.
+    #[test]
+    fn remove_events_after_parent_is_gone() {
+        let (_dir, root) = make_project();
+        let context = context_for(&root);
+        let packages = root.join("src").join("Packages");
+        let knit = packages.join("knit");
+        assert!(is_in_tree(&context, &knit));
+
+        fs::remove_dir_all(&knit).unwrap();
+        send_knit_removals(&context, &knit);
+
+        assert!(!is_in_tree(&context, &knit));
+        assert!(is_in_tree(&context, &packages));
+    }
+
+    /// https://github.com/rojo-rbx/rojo/issues/1349
+    ///
+    /// A file can be written to and then deleted before we process the write.
+    #[test]
+    fn write_event_after_path_is_gone() {
+        let (_dir, root) = make_project();
+        let context = context_for(&root);
+        let comm = root.join("src").join("Packages").join("knit").join("Comm");
+        assert!(is_in_tree(&context, &comm));
+
+        fs::remove_dir_all(&comm).unwrap();
+        context.handle_vfs_event(VfsEvent::Write(comm.join("init.luau")));
+
+        assert!(!is_in_tree(&context, &comm));
+    }
+
+    /// Events can name a path differently from the tree, which is why event
+    /// paths are canonicalized. That still has to happen when the path is
+    /// gone, or the event won't match anything in the tree.
+    #[cfg(unix)]
+    #[test]
+    fn remove_events_through_symlink_after_parent_is_gone() {
+        let (dir, root) = make_project();
+        let context = context_for(&root);
+        let link = dir.path().join("link");
+        std::os::unix::fs::symlink(&root, &link).unwrap();
+
+        let knit = root.join("src").join("Packages").join("knit");
+        let linked_knit = link.join("src").join("Packages").join("knit");
+
+        fs::remove_dir_all(&linked_knit).unwrap();
+        send_knit_removals(&context, &linked_knit);
+
+        assert!(!is_in_tree(&context, &knit));
+    }
 }
