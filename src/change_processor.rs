@@ -192,7 +192,7 @@ impl JobThreadContext {
                             parent
                         );
                         // fall back to the given path, matching old behaviour.
-                        parent.join(file_name)
+                        path
                     }
                 };
                 self.apply_patches(patch_path)
