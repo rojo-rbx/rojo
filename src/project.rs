@@ -17,7 +17,39 @@ use crate::{
 };
 
 /// Represents 'default' project names that act as `init` files
-pub static DEFAULT_PROJECT_NAMES: [&str; 2] = ["default.project.json", "default.project.jsonc"];
+pub static DEFAULT_PROJECT_NAMES: [&str; 5] = [
+    "default.project.json",
+    "default.project.jsonc",
+    "default.project.yaml",
+    "default.project.yml",
+    "default.project.toml",
+];
+
+enum ProjectFormat {
+    Json,
+    Yaml,
+    Toml,
+}
+
+impl ProjectFormat {
+    fn from_file_name(file_name: &str) -> Option<(&str, Self)> {
+        let (name, extension) = file_name.rsplit_once(".project.")?;
+        let format = match extension {
+            "json" | "jsonc" => Self::Json,
+            "yaml" | "yml" => Self::Yaml,
+            "toml" => Self::Toml,
+            _ => return None,
+        };
+        Some((name, format))
+    }
+
+    fn for_path(path: &Path) -> Self {
+        path.file_name()
+            .and_then(OsStr::to_str)
+            .and_then(Self::from_file_name)
+            .map_or(Self::Json, |(_, format)| format)
+    }
+}
 
 /// Error type returned by any function that handles projects.
 #[derive(Debug, Error)]
@@ -48,15 +80,16 @@ enum Error {
     },
 
     #[error("Error parsing Rojo project in path {}", .path.display())]
-    Json {
-        source: serde_json::Error,
+    Parse {
+        source: anyhow::Error,
         path: PathBuf,
     },
 }
 
 /// Contains all of the configuration for a Rojo-managed project.
 ///
-/// Project files are stored in `.project.json` files.
+/// Project files can use the `.project.json`, `.project.jsonc`,
+/// `.project.yaml`, `.project.yml`, or `.project.toml` suffix.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct Project {
@@ -147,15 +180,15 @@ impl Project {
     /// Tells whether the given path describes a Rojo project.
     pub fn is_project_file(path: &Path) -> bool {
         path.file_name()
-            .and_then(|name| name.to_str())
-            .map(|name| name.ends_with(".project.json") || name.ends_with(".project.jsonc"))
-            .unwrap_or(false)
+            .and_then(OsStr::to_str)
+            .and_then(ProjectFormat::from_file_name)
+            .is_some()
     }
 
     /// Attempt to locate a project represented by the given path.
     ///
-    /// This will find a project if the path refers to a `.project.json` file,
-    /// or is a folder that contains a `default.project.json` file.
+    /// The path may point to a project file or a folder containing a default
+    /// project file.
     fn locate(path: &Path) -> Option<PathBuf> {
         let meta = fs::metadata(path).ok()?;
 
@@ -168,26 +201,19 @@ impl Project {
         } else {
             for filename in DEFAULT_PROJECT_NAMES {
                 let child_path = path.join(filename);
-                let child_meta = fs::metadata(&child_path).ok()?;
-
-                if child_meta.is_file() {
+                if child_path.is_file() {
                     return Some(child_path);
                 }
             }
-            // This is a folder with the same name as a Rojo default project
-            // file.
-            //
-            // That's pretty weird, but we can roll with it.
             None
         }
     }
 
     /// Sets the name of a project. The order it handles is as follows:
     ///
-    /// - If the project is a `default.project.json`, uses the folder's name
+    /// - If this is a default project, uses the folder's name
     /// - If a fallback is specified, uses that blindly
-    /// - Otherwise, loops through sync rules (including the default ones!) and
-    ///   uses the name of the first one that matches and is a project file
+    /// - Otherwise, uses the file name without the project suffix
     fn set_file_name(&mut self, fallback: Option<&str>) -> Result<(), Error> {
         let file_name = self
             .file_location
@@ -214,16 +240,12 @@ impl Project {
         }
         if let Some(fallback) = fallback {
             self.name = Some(fallback.to_string());
+        } else if let Some((name, _)) = ProjectFormat::from_file_name(file_name) {
+            self.name = Some(name.to_string());
         } else {
-            // As of the time of writing (July 10, 2024) there is no way for
-            // this code path to be reachable. It can in theory be reached from
-            // both `load_fuzzy` and `load_exact` but in practice it's never
-            // invoked.
-            // If you're adding this codepath, make sure a test for it exists
-            // and that it handles sync rules appropriately.
-            todo!(
-                "set_file_name doesn't support loading project files that aren't default.project.json without a fallback provided"
-            );
+            return Err(Error::ProjectNameInvalid {
+                path: self.file_location.clone(),
+            });
         }
 
         Ok(())
@@ -236,11 +258,13 @@ impl Project {
         project_file_location: PathBuf,
         fallback_name: Option<&str>,
     ) -> Result<Self, Error> {
-        let mut project: Self = json::from_slice(contents).map_err(|e| Error::Json {
-            source: serde_json::Error::io(std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                e.to_string(),
-            )),
+        let mut project: Self = match ProjectFormat::for_path(&project_file_location) {
+            ProjectFormat::Json => json::from_slice(contents),
+            ProjectFormat::Yaml => serde_yaml::from_slice(contents).map_err(Into::into),
+            ProjectFormat::Toml => toml::from_slice(contents).map_err(Into::into),
+        }
+        .map_err(|source| Error::Parse {
+            source,
             path: project_file_location.clone(),
         })?;
         project.file_location = project_file_location;
@@ -252,9 +276,19 @@ impl Project {
         Ok(project)
     }
 
+    pub(crate) fn to_bytes(&self) -> anyhow::Result<Vec<u8>> {
+        Ok(match ProjectFormat::for_path(&self.file_location) {
+            ProjectFormat::Json => serde_json::to_vec_pretty(self)?,
+            ProjectFormat::Yaml => serde_yaml::to_vec(self)?,
+            ProjectFormat::Toml => {
+                // TOML requires values to be written before nested tables.
+                toml::to_vec(&toml::Value::try_from(self)?)?
+            }
+        })
+    }
+
     /// Loads a Project from a path. This will find the project if it refers to
-    /// a `.project.json` file or if it refers to a directory that contains a
-    /// file named `default.project.json`.
+    /// a project file or a directory that contains a default project file.
     pub fn load_fuzzy(
         vfs: &Vfs,
         fuzzy_project_location: &Path,
@@ -602,6 +636,86 @@ mod test {
         assert_eq!(project.sync_rules.len(), 2);
         assert!(project.sync_rules[0].include.is_match("data.data.json"));
         assert!(project.sync_rules[1].include.is_match("init.module.lua"));
+    }
+
+    #[test]
+    fn default_project_discovery_prefers_yaml_to_yml_and_yml_to_toml() {
+        let dir = tempfile::tempdir().unwrap();
+        let vfs = Vfs::new_default().unwrap();
+        vfs.set_watch_enabled(false);
+
+        for (name, contents) in [
+            ("default.project.yaml", "tree: { $className: Folder }"),
+            ("default.project.yml", "tree: { $className: Folder }"),
+            ("default.project.toml", "tree = { '$className' = 'Folder' }"),
+        ] {
+            fs::write(dir.path().join(name), contents).unwrap();
+        }
+
+        for name in [
+            "default.project.yaml",
+            "default.project.yml",
+            "default.project.toml",
+        ] {
+            let selected = dir.path().join(name);
+            let project = Project::load_initial_project(&vfs, dir.path()).unwrap();
+            assert_eq!(project.file_location, selected);
+            assert_eq!(Project::locate(dir.path()), Some(selected.clone()));
+            fs::remove_file(selected).unwrap();
+        }
+    }
+
+    #[test]
+    fn yaml_and_toml_projects_roundtrip() {
+        let yaml = r#"
+# A YAML project
+servePort: 34567
+tree:
+  $className: Folder
+  Greeting:
+    $className: StringValue
+    $properties:
+      Value: "123"
+  Source:
+    $path:
+      optional: src
+"#;
+        let toml = r#"
+# A TOML project
+servePort = 34567
+
+[tree]
+"$className" = "Folder"
+
+[tree.Greeting]
+"$className" = "StringValue"
+
+[tree.Greeting."$properties"]
+Value = "123"
+
+[tree.Source]
+"$path" = { optional = "src" }
+"#;
+
+        let yaml_path = PathBuf::from("/test/example.project.yaml");
+        let toml_path = PathBuf::from("/test/example.project.toml");
+        let mut yaml_project =
+            Project::load_from_slice(yaml.as_bytes(), yaml_path.clone(), None).unwrap();
+        let toml_project =
+            Project::load_from_slice(toml.as_bytes(), toml_path.clone(), None).unwrap();
+        assert_eq!(toml_project.name.as_deref(), Some("example"));
+        assert_eq!(toml_project.serve_port, Some(34567));
+
+        for project in [&yaml_project, &toml_project] {
+            let encoded = project.to_bytes().unwrap();
+            assert_eq!(
+                &Project::load_from_slice(&encoded, project.file_location.clone(), None).unwrap(),
+                project
+            );
+        }
+
+        yaml_project.file_location = toml_path;
+        assert_eq!(yaml_project, toml_project);
     }
 
     #[test]

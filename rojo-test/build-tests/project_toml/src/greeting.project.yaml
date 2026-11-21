@@ -1,0 +1,4 @@
+tree:
+  $className: StringValue
+  $properties:
+    Value: Hello from YAML!

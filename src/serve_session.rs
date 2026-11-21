@@ -51,11 +51,8 @@ pub struct ServeSession {
     /// diagnostics.
     start_time: Instant,
 
-    /// The root project for the serve session.
-    ///
-    /// This will be defined if a folder with a `default.project.json` file was
-    /// used for starting the serve session, or if the user specified a full
-    /// path to a `.project.json` file.
+    /// The root project loaded from a directory's default project file or
+    /// from the project file specified directly.
     root_project: Project,
 
     /// A randomly generated ID for this serve session. It's used to ensure that
