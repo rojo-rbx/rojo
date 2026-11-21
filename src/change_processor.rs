@@ -169,7 +169,7 @@ impl JobThreadContext {
         // of the tree. Calculate and apply all of these changes.
         let applied_patches = match event {
             VfsEvent::Create(path) | VfsEvent::Write(path) => {
-                let path = self.vfs.canonicalize(&path).unwrap_or_else(|e| {
+                let patch_path = self.vfs.canonicalize(&path).unwrap_or_else(|e| {
                     log::warn!(
                         "VfsEvent::Write failed to canonicalize path {:?}: {e}",
                         path
@@ -177,15 +177,15 @@ impl JobThreadContext {
                     // fall back to the given path, matching old behaviour.
                     path
                 });
-                self.apply_patches(path)
+                self.apply_patches(patch_path)
             }
             VfsEvent::Remove(path) => {
                 // MemoFS does not track parent removals yet, so we can canonicalize
                 // the parent path safely and then append the removed path's file name.
                 let parent = path.parent().unwrap();
                 let file_name = path.file_name().unwrap();
-                let path = match self.vfs.canonicalize(parent) {
-                    Ok(path) => path.join(file_name),
+                let patch_path = match self.vfs.canonicalize(parent) {
+                    Ok(canonicalized) => canonicalized.join(file_name),
                     Err(e) => {
                         log::warn!(
                             "VfsEvent::Remove failed to canonicalize path {:?}: {e}",
@@ -195,7 +195,7 @@ impl JobThreadContext {
                         parent.join(file_name)
                     }
                 };
-                self.apply_patches(path)
+                self.apply_patches(patch_path)
             }
             _ => {
                 log::warn!("Unhandled VFS event: {:?}", event);
