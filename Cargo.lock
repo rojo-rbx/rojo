@@ -1324,6 +1324,7 @@ dependencies = [
  "crossbeam-channel",
  "dunce",
  "fs-err",
+ "log",
  "notify",
  "serde",
  "tempfile",
