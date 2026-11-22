@@ -1,6 +1,9 @@
 # memofs Changelog
 
 ## Unreleased Changes
+* Added trace-level logging of file watches and filesystem events via the `log` crate. [#1370]
+
+[#1370]: https://github.com/rojo-rbx/rojo/pull/1370
 
 # 0.4.0 (2026-07-01)
 * Added `Vfs::canonicalize`. [#1201]

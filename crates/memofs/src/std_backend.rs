@@ -25,6 +25,8 @@ impl StdBackend {
 
         thread::spawn(move || {
             for event in notify_rx {
+                log::trace!("Received notify event: {:?}", event);
+
                 match event {
                     DebouncedEvent::Create(path) => {
                         tx.send(VfsEvent::Create(path))?;
@@ -39,7 +41,7 @@ impl StdBackend {
                         tx.send(VfsEvent::Remove(from))?;
                         tx.send(VfsEvent::Create(to))?;
                     }
-                    _ => {}
+                    _ => log::trace!("Ignoring notify event"),
                 }
             }
 
@@ -120,8 +122,10 @@ impl VfsBackend for StdBackend {
                 .ancestors()
                 .any(|ancestor| self.watches.contains(ancestor))
         {
+            log::trace!("Already watching {}", path.display());
             Ok(())
         } else {
+            log::trace!("Watching {}", path.display());
             self.watches.insert(path.to_path_buf());
             self.watcher
                 .watch(path, RecursiveMode::Recursive)
@@ -130,6 +134,7 @@ impl VfsBackend for StdBackend {
     }
 
     fn unwatch(&mut self, path: &Path) -> io::Result<()> {
+        log::trace!("Unwatching {}", path.display());
         self.watches.remove(path);
         self.watcher.unwatch(path).map_err(io::Error::other)
     }
