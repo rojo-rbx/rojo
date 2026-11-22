@@ -16,6 +16,29 @@ local decodeValue = require(script.Parent.decodeValue)
 local reify = require(script.Parent.reify)
 local reifyInstance, applyDeferredRefs = reify.reifyInstance, reify.applyDeferredRefs
 local setProperty = require(script.Parent.setProperty)
+local hydrate = require(script.Parent.hydrate)
+local diff = require(script.Parent.diff)
+
+-- Finds a child of `parentInstance` that Rojo isn't tracking and that has the
+-- same Name and ClassName as `virtualInstance`.
+local function findUntrackedMatch(instanceMap, parentInstance, virtualInstance)
+	for _, childInstance in parentInstance:GetChildren() do
+		if instanceMap.fromInstances[childInstance] ~= nil then
+			continue
+		end
+
+		-- Guarded like hydrate, since some children of DataModel can't be read.
+		local accessSuccess, name, className = pcall(function()
+			return childInstance.Name, childInstance.ClassName
+		end)
+
+		if accessSuccess and name == virtualInstance.Name and className == virtualInstance.ClassName then
+			return childInstance
+		end
+	end
+
+	return nil
+end
 
 local function applyPatch(instanceMap, patch)
 	-- Tracks any portions of the patch that could not be applied to the DOM.
@@ -70,6 +93,27 @@ local function applyPatch(instanceMap, patch)
 				virtualInstance.Parent,
 				instanceMap
 			)
+		end
+
+		-- The instance may already exist without Rojo tracking it, for example
+		-- when it was inserted in Studio and then saved into a model file that
+		-- Rojo syncs. Creating it again would leave a duplicate next to it
+		-- (#673), so adopt it the way hydration does on connect, then patch
+		-- it to match.
+		local existingInstance = findUntrackedMatch(instanceMap, parentInstance, virtualInstance)
+
+		if existingInstance ~= nil then
+			hydrate(instanceMap, patch.added, id, existingInstance)
+
+			local diffSuccess, catchUpPatch = diff(instanceMap, patch.added, id)
+
+			if diffSuccess then
+				PatchSet.assign(unappliedPatch, applyPatch(instanceMap, catchUpPatch))
+			else
+				Log.warn("Could not diff adopted instance {}: {:#?}", existingInstance:GetFullName(), catchUpPatch)
+			end
+
+			continue
 		end
 
 		local failedToReify = reifyInstance(deferredRefs, instanceMap, patch.added, id, parentInstance)
