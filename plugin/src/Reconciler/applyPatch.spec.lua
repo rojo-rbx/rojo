@@ -156,6 +156,99 @@ return function()
 		expect(#root:GetChildren()).to.equal(0)
 	end)
 
+	it("should adopt a matching untracked instance instead of duplicating it", function()
+		local root = Instance.new("Folder")
+		root.Name = "ROOT"
+		root.Parent = container
+
+		-- Inserted by the user in Studio, so Rojo doesn't track it yet.
+		local existing = Instance.new("StringValue")
+		existing.Name = "Child"
+		existing.Value = "OLD"
+		existing.Parent = root
+
+		local existingGrandchild = Instance.new("Folder")
+		existingGrandchild.Name = "Grandchild"
+		existingGrandchild.Parent = existing
+
+		local instanceMap = InstanceMap.new()
+		instanceMap:insert("ROOT", root)
+
+		local patch = PatchSet.newEmpty()
+		patch.added["CHILD"] = {
+			Id = "CHILD",
+			ClassName = "StringValue",
+			Name = "Child",
+			Parent = "ROOT",
+			Children = { "GRANDCHILD", "NEW" },
+			Properties = {
+				Value = { String = "NEW" },
+			},
+		}
+		patch.added["GRANDCHILD"] = {
+			Id = "GRANDCHILD",
+			ClassName = "Folder",
+			Name = "Grandchild",
+			Parent = "CHILD",
+			Children = {},
+			Properties = {},
+		}
+		patch.added["NEW"] = {
+			Id = "NEW",
+			ClassName = "Folder",
+			Name = "New",
+			Parent = "CHILD",
+			Children = {},
+			Properties = {},
+		}
+
+		local unapplied = applyPatch(instanceMap, patch)
+		assert(PatchSet.isEmpty(unapplied), "expected remaining patch to be empty")
+
+		expect(#root:GetChildren()).to.equal(1)
+		expect(instanceMap.fromIds["CHILD"]).to.equal(existing)
+		expect(existing.Value).to.equal("NEW")
+
+		expect(#existing:GetChildren()).to.equal(2)
+		expect(instanceMap.fromIds["GRANDCHILD"]).to.equal(existingGrandchild)
+		expect(instanceMap.fromIds["NEW"]).to.equal(existing:FindFirstChild("New"))
+
+		instanceMap:stop()
+	end)
+
+	it("should not adopt an instance Rojo already tracks", function()
+		local root = Instance.new("Folder")
+		root.Name = "ROOT"
+		root.Parent = container
+
+		local tracked = Instance.new("Folder")
+		tracked.Name = "Child"
+		tracked.Parent = root
+
+		local instanceMap = InstanceMap.new()
+		instanceMap:insert("ROOT", root)
+		instanceMap:insert("TRACKED", tracked)
+
+		local patch = PatchSet.newEmpty()
+		patch.added["CHILD"] = {
+			Id = "CHILD",
+			ClassName = "Folder",
+			Name = "Child",
+			Parent = "ROOT",
+			Children = {},
+			Properties = {},
+		}
+
+		local unapplied = applyPatch(instanceMap, patch)
+		assert(PatchSet.isEmpty(unapplied), "expected remaining patch to be empty")
+
+		expect(#root:GetChildren()).to.equal(2)
+		expect(instanceMap.fromIds["TRACKED"]).to.equal(tracked)
+		expect(instanceMap.fromIds["CHILD"]).never.to.equal(tracked)
+
+		instanceMap:stop()
+	end)
+
 	it("should apply property changes to instances", function()
 		local value = Instance.new("StringValue")
 		value.Value = "HELLO"
