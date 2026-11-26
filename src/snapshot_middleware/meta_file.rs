@@ -14,6 +14,58 @@ use crate::{
     RojoRef,
 };
 
+/// Keys read from an adjacent `.meta.json` file.
+const ADJACENT_METADATA_KEYS: &[&str] = &[
+    "$schema",
+    "id",
+    "ignoreUnknownInstances",
+    "properties",
+    "attributes",
+];
+
+/// Keys read from an `init.meta.json` file.
+const DIRECTORY_METADATA_KEYS: &[&str] = &[
+    "$schema",
+    "id",
+    "ignoreUnknownInstances",
+    "properties",
+    "attributes",
+    "className",
+];
+
+/// Returns a warning for each top-level key of a meta file that Rojo does not
+/// read. Unknown keys are otherwise ignored silently, which hides mistakes such
+/// as writing the project file key `$ignoreUnknownInstances` in a meta file,
+/// where it is spelled `ignoreUnknownInstances`.
+fn unknown_key_warnings(slice: &[u8], known: &[&str], path: &Path) -> Vec<String> {
+    // A malformed file is reported by the real parse, so there is nothing to add here.
+    let Ok(serde_json::Value::Object(object)) =
+        json::parse_value_from_slice_with_context(slice, String::new)
+    else {
+        return Vec::new();
+    };
+
+    object
+        .keys()
+        .filter(|key| !known.contains(&key.as_str()))
+        .map(|key| {
+            let suggestion = known
+                .iter()
+                .find(|known| key.strip_prefix('$') == Some(**known))
+                .map(|known| {
+                    format!(
+                        " Did you mean `{known}`? Meta files do not use the `$` prefix of project files."
+                    )
+                })
+                .unwrap_or_default();
+            format!(
+                "Unknown key `{key}` in {} is ignored.{suggestion}",
+                path.display()
+            )
+        })
+        .collect()
+}
+
 /// Represents metadata in a sibling file with the same basename.
 ///
 /// As an example, hello.meta.json next to hello.lua would allow assigning
@@ -79,6 +131,10 @@ impl AdjacentMetadata {
                 path.display()
             )
         })?;
+
+        for warning in unknown_key_warnings(slice, ADJACENT_METADATA_KEYS, &path) {
+            log::warn!("{warning}");
+        }
 
         meta.path = path;
         Ok(meta)
@@ -305,6 +361,10 @@ impl DirectoryMetadata {
             )
         })?;
 
+        for warning in unknown_key_warnings(slice, DIRECTORY_METADATA_KEYS, &path) {
+            log::warn!("{warning}");
+        }
+
         meta.path = path;
         Ok(meta)
     }
@@ -517,6 +577,43 @@ mod test {
     use memofs::{InMemoryFs, VfsSnapshot};
 
     use super::*;
+
+    #[test]
+    fn unknown_keys_warn_with_suggestion() {
+        let warnings = unknown_key_warnings(
+            br#"{"$ignoreUnknownInstances": true, "className": "Folder", "other": 1, "id": "x"}"#,
+            ADJACENT_METADATA_KEYS,
+            Path::new("/foo/bar.meta.json"),
+        );
+
+        assert_eq!(warnings.len(), 3);
+        assert!(warnings[0].contains("`$ignoreUnknownInstances`"));
+        assert!(warnings[0].contains("Did you mean `ignoreUnknownInstances`?"));
+        // className is only read from init.meta.json
+        assert!(warnings[1].contains("`className`"));
+        assert!(!warnings[1].contains("Did you mean"));
+        assert!(warnings[2].contains("`other`"));
+    }
+
+    #[test]
+    fn known_keys_do_not_warn() {
+        let directory = unknown_key_warnings(
+            br#"{"$schema": "s", "id": "x", "ignoreUnknownInstances": true, "properties": {}, "attributes": {}, "className": "Folder"}"#,
+            DIRECTORY_METADATA_KEYS,
+            Path::new("/foo/init.meta.json"),
+        );
+        assert!(directory.is_empty(), "{directory:?}");
+
+        let jsonc = unknown_key_warnings(
+            b"{
+  // comment
+  \"ignoreUnknownInstances\": true,
+}",
+            ADJACENT_METADATA_KEYS,
+            Path::new("/foo/bar.meta.jsonc"),
+        );
+        assert!(jsonc.is_empty(), "{jsonc:?}");
+    }
 
     #[test]
     fn adjacent_read_json() {

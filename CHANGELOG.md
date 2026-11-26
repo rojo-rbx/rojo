@@ -33,9 +33,11 @@ Making a new release? Simply add the new header with the version and date undern
 
 * LocalizationTables no longer report as changed when nothing changes. ([#1333])
 * Sounds now preloaded correctly. The warning "*ContentId: rbxassetid://203785492 failed due to: Asset type does not match requested type*" is fixed. ([#1351])
+* Rojo now warns about unknown keys in `.meta.json` and `init.meta.json` files instead of ignoring them silently, and suggests the right key for project-file spellings like `$ignoreUnknownInstances`. ([#1374])
 
 [#1333]: https://github.com/rojo-rbx/rojo/pull/1333
 [#1351]: https://github.com/rojo-rbx/rojo/pull/1351
+[#1374]: https://github.com/rojo-rbx/rojo/pull/1374
 
 ## [7.7.1] (October 1st, 2026)
 
